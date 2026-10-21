@@ -66,7 +66,6 @@ describe('resolveAddTarget', () => {
     name: 'a.md',
     kind: SkillFileNodeKind.File,
   };
-  const rootFile = { path: 'b.md', name: 'b.md', kind: SkillFileNodeKind.File };
 
   it('targets the root from the header when nothing is selected', () => {
     expect(resolveAddTarget(SkillAddSource.Header, undefined)).toBe('');
@@ -82,14 +81,6 @@ describe('resolveAddTarget', () => {
 
   it('adds a child inside the folder', () => {
     expect(resolveAddTarget(SkillAddSource.Child, folder)).toBe('docs');
-  });
-
-  it('adds a sibling next to a nested node', () => {
-    expect(resolveAddTarget(SkillAddSource.Sibling, nestedFile)).toBe('docs');
-  });
-
-  it('adds a sibling of a top-level node at the root', () => {
-    expect(resolveAddTarget(SkillAddSource.Sibling, rootFile)).toBe('');
   });
 });
 

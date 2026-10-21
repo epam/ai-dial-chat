@@ -9,6 +9,7 @@ import {
   DialFileManagerVariant,
   formatFileSize,
   type DialFileManagerShellLabels,
+  mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
   DialFileManagerTabs,
@@ -26,6 +27,7 @@ import { useDialFileManagerHostOptions } from '../../components/DialFileManagerS
 import { getFileDeleteConfirmTitle } from '../../components/FileDeleteConfirmContent/file-delete-confirm-title';
 import FileDeleteConfirmContent from '../../components/FileDeleteConfirmContent/FileDeleteConfirmContent';
 import { useFileUnshareConfirmation } from '../../components/FileUnshareConfirmation/useFileUnshareConfirmation';
+import { PAGE_HEADER_ROW_CLASS } from '../../constants/layout';
 import {
   BasicI18nKeys,
   ButtonsI18nKeys,
@@ -33,8 +35,17 @@ import {
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
+import { useDialFilePreview } from '../../hooks/files/useDialFilePreview';
 import { useSearchPlaceholderByTab } from '../../hooks/files/useSearchPlaceholderByTab';
 import { useUploadQueueLabels } from '../../hooks/files/useUploadQueueLabels';
+
+/*
+ * The folders panel sits in the page's card, so it is divided from the grid by
+ * a line on its end edge instead of the file manager's default shadow. Width
+ * and height repeat that default.
+ */
+const TREE_PANEL_CLASS_NAME =
+  'h-full min-h-0 w-[360px] shrink-0 border-e border-tertiary bg-layer-raised';
 
 const DialFileManagerPage: FC = () => {
   const { t } = useTranslation();
@@ -197,6 +208,11 @@ const DialFileManagerPage: FC = () => {
     [t],
   );
 
+  const { onPreview, previewExtensions } = useDialFilePreview(
+    controller.items,
+    bucket,
+  );
+
   const uploadQueueLabels = useUploadQueueLabels();
   const searchPlaceholderByTab = useSearchPlaceholderByTab();
 
@@ -234,6 +250,7 @@ const DialFileManagerPage: FC = () => {
       moveSourceDisabledTooltip: t(
         DialFileManagerI18nKeys.MoveSourceDisabledTooltip,
       ),
+      movedIntoItselfTooltip: t(DialFileManagerI18nKeys.MovedIntoItselfTooltip),
       folderPickerLoadingTooltip: t(
         DialFileManagerI18nKeys.FolderPickerLoadingTooltip,
       ),
@@ -275,6 +292,7 @@ const DialFileManagerPage: FC = () => {
       removeAccessLabel: t(DialFileManagerI18nKeys.RemoveAccessAction),
       removingAccessLabel: t(DialFileManagerI18nKeys.RemovingAccessLabel),
       infoLabel: t(DialFileManagerI18nKeys.InfoAction),
+      previewLabel: t(BasicI18nKeys.Preview),
       metadataHeader: t(DialFileManagerI18nKeys.MetadataHeader),
       metadataNameLabel: t(DialFileManagerI18nKeys.MetadataNameLabel),
       metadataPathLabel: t(DialFileManagerI18nKeys.MetadataPathLabel),
@@ -295,8 +313,10 @@ const DialFileManagerPage: FC = () => {
     ],
   );
 
-  return (
-    <div className="flex size-full min-h-0 flex-col">
+  /* The shell paints its surface with `--dfms-surface`; the card from the
+     desktop band up is the surface, so the shell goes transparent there. */
+  const shell = (
+    <div className="contents [--dfms-surface:var(--bg-layer-base)] desktop:[--dfms-surface:transparent]">
       <DialFileManagerShell
         hookResult={controller}
         labels={labels}
@@ -310,7 +330,33 @@ const DialFileManagerPage: FC = () => {
         autoSelectUploadedItems={false}
         maxSelectableFileSize={maxAttachmentFileSizeBytes}
         oversizedUploadMessage={oversizedUploadMessage}
+        onPreview={onPreview}
+        previewExtensions={previewExtensions}
+        treeContainerClassName={TREE_PANEL_CLASS_NAME}
       />
+    </div>
+  );
+
+  /* From the desktop band up the page is framed: a title, 32px side margins and
+     a raised card with 20px of inner padding, so the manager is not pressed
+     against the navigation. A phone keeps the full-bleed manager. */
+  return (
+    <div className="flex size-full min-h-0 flex-col">
+      <header
+        className={mergeClasses(
+          'hidden items-center px-8 desktop:flex',
+          PAGE_HEADER_ROW_CLASS,
+        )}
+      >
+        <h1 className="dial-h1-text m-0 text-primary">
+          {t(DialFileManagerI18nKeys.PageTitle)}
+        </h1>
+      </header>
+      <div className="flex min-h-0 flex-1 flex-col desktop:px-8 desktop:pb-4">
+        <div className="flex min-h-0 flex-1 flex-col desktop:rounded-xl desktop:bg-layer-raised desktop:p-5 desktop:shadow-sm">
+          {shell}
+        </div>
+      </div>
       {unshareConfirmation}
     </div>
   );

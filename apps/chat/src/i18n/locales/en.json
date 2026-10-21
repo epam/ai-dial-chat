@@ -83,12 +83,12 @@
   },
   "navigation": {
     "ariaLabel": "Main navigation",
-    "home": "Chat",
     "catalog": "Catalog",
-    "openMenu": "Open navigation menu",
-    "menu": "Main menu",
-    "profile": "Profile",
-    "back": "Back"
+    "menu": "Navigation menu",
+    "back": "Back",
+    "sidebar": "Sidebar",
+    "collapseSidebar": "Collapse sidebar",
+    "expandSidebar": "Expand sidebar"
   },
   "favorites": {
     "title": "Your Favorites",
@@ -125,6 +125,7 @@
       "nameAZ": "Name A-Z"
     },
     "featuredLabel": "Featured",
+    "noFolderLabel": "No folder",
     "gridViewLabel": "Grid view",
     "listViewLabel": "List view",
     "viewToggleLabel": "View mode",
@@ -290,7 +291,8 @@
       "prompt": "Prompt",
       "skill": "Skill",
       "skillWriteInstructions": "Write instructions",
-      "skillUpload": "Upload"
+      "skillUpload": "Upload",
+      "runners": "Runners"
     },
     "publishFolderSearchPlaceholder": "Search folders",
     "publishFolderEmptyState": "No folders match \"{{query}}\".",
@@ -453,11 +455,16 @@
     },
     "attachMenuDialFileSystem": "DIAL file system",
     "addMenuTitle": "Add",
-    "messageTooLong": "Max allowed message length is {{max}}"
+    "messageTooLong": "Max allowed message length is {{max}}",
+    "startedToday": "Today {{time}}",
+    "startedYesterday": "Yesterday {{time}}"
   },
   "conversationPanel": {
-    "title": "Chats",
-    "toggleAriaLabel": "Conversation panel",
+    "chatsAndTasks": "Chats and tasks",
+    "search": {
+      "open": "Search chats",
+      "close": "Close search"
+    },
     "empty": "No conversations yet",
     "filter": {
       "all": "All",
@@ -657,7 +664,10 @@
     "extensions": "Extensions",
     "defaultAgent": "Default agent for new chats",
     "defaultAgentOptionDefault": "Default agent",
-    "defaultAgentOptionLastUsed": "Last used agent"
+    "defaultAgentOptionLastUsed": "Last used agent",
+    "general": "General",
+    "celebrations": "Seasonal celebrations",
+    "celebrationsDescription": "Show holiday decorations and animations on the start page."
   },
   "extensions": {
     "description": "Access additional tools and capabilities through extensions.",
@@ -875,7 +885,8 @@
     },
     "conversationPanel": {
       "modelLabel": "Model",
-      "currentRunLabel": "Current run"
+      "currentRunLabel": "Current run",
+      "historyUnavailableLabel": "History is unavailable"
     },
     "offlineCredentialsBanner": {
       "title": "Log in required.",
@@ -915,6 +926,8 @@
     "uploadFailed": "Upload failed",
     "uploadSuccess": "The file has been uploaded successfully to “{{parentPath}}”",
     "uploadConflict": "A file with this name already exists",
+    "uploadFailedTooLarge": "The file is too large to upload",
+    "uploadFailedUnavailable": "The file service is unavailable. Please try again later.",
     "forbiddenSymbolsTooltip": "File name should not contain special symbols {{notAllowedSymbols}}",
     "conflictSingleTitle": "Replace or Duplicate Item",
     "conflictMultipleTitle": "Replace or Duplicate Items",
@@ -937,6 +950,14 @@
     "uploadQueueCancelFileAriaLabel": "Cancel uploading \"{{fileName}}\"",
     "uploadQueueFileProgressAriaLabel": "Uploading \"{{fileName}}\"",
     "uploadQueueProgressAriaLabel": "Upload progress",
+    "downloadQueueTitle_one": "Downloading {{count}} file",
+    "downloadQueueTitle_other": "Downloading {{count}} files",
+    "transferQueueTitle_one": "Transferring {{count}} file",
+    "transferQueueTitle_other": "Transferring {{count}} files",
+    "downloadQueueCancelFileAriaLabel": "Cancel downloading \"{{fileName}}\"",
+    "downloadQueueFileProgressAriaLabel": "Downloading \"{{fileName}}\"",
+    "downloadQueueProgressAriaLabel": "Download progress",
+    "transferQueueProgressAriaLabel": "Transfer progress",
     "fileCopiedSuccessfully": "File \"{{name}}\" copied successfully",
     "folderCopiedSuccessfully": "Folder \"{{name}}\" copied successfully",
     "copiedToFolder": "Copied to folder \"{{folder}}\"",
@@ -1017,6 +1038,7 @@
     "moveHeaderSingle": "Move \"{{name}}\"",
     "moveHeaderMultiple": "Move {{count}} items",
     "moveSourceDisabledTooltip": "Unavailable for the original location. Please select another folder",
+    "movedIntoItselfTooltip": "A folder can't be moved into itself or its subfolders",
     "folderPickerLoadingTooltip": "Loading folder contents. Please wait",
     "folderPickerEmptyStateTitle": "This folder is empty",
     "folderPickerEmptyStateDescription": "Create a folder or choose another location",
@@ -1046,6 +1068,7 @@
       "emptyStateDescription": "No files are available in the organization storage"
     },
     "page": {
+      "title": "File manager",
       "navLabel": "File Manager"
     },
     "unshareConfirmTitleFile": "Remove file from My List?",
@@ -1507,7 +1530,6 @@
     "createFolder": "Create folder",
     "uploadArchive": "Upload archive from device",
     "openFileSystem": "Open DIAL file system",
-    "addSibling": "Add sibling",
     "newFolderDefaultName": "New folder",
     "folderNameRequired": "Enter a folder name",
     "folderNameInvalid": "Folder name can't contain / or \\, or be . or ..",
@@ -1749,7 +1771,7 @@
     "undo": "Undo",
     "error": "Could not refine this text. Please try again.",
     "pending": "Refining text",
-    "success": "Text refined. Undo is available.",
+    "success": "Text refined",
     "restored": "Original text restored.",
     "unchanged": "No changes were needed."
   },

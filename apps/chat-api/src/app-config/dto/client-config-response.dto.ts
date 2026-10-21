@@ -270,6 +270,14 @@ export class ClientConfigDto {
     example: 75,
   })
   usageLimitsWarningThresholdPercent!: number;
+
+  @ApiProperty({
+    type: Boolean,
+    description:
+      'Operator default for the seasonal-celebrations switch, applied to users who have not saved a choice of their own; a saved choice overrides it. Sourced from UI_EVENT_ENABLED_BY_DEFAULT; true unless it is false, 0 or no. Has no visible effect while activeEventId is null.',
+    example: true,
+  })
+  celebrationsEnabledByDefault!: boolean;
 }
 
 export class ClientConfigMetadataDto {

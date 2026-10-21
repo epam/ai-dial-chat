@@ -1,12 +1,7 @@
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { render, screen } from '@testing-library/react';
-import type { ComponentProps } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  ButtonsI18nKeys,
-  ConversationPanelI18nKeys,
-} from '../../../constants/translation-keys';
 import * as useUiFeatureModule from '../../../hooks/useUiFeature';
 import ChatLayout from '../ChatLayout';
 
@@ -17,42 +12,12 @@ vi.mock('../../Header/SourcesSidebarToggle', () => ({
 vi.mock('../../Header/Logo', () => ({
   default: () => <a href="/" aria-label="Logo" />,
 }));
-vi.mock('@epam/ai-dial-ui-kit', () => ({
-  DIAL_KIT_ICON_STROKE: 1.5,
-  DIAL_ICON_SIZE: { LG: 24 },
-  GhostIconButton: ({
-    'aria-label': ariaLabel,
-    onClick,
-    className,
-  }: {
-    'aria-label': string;
-    onClick: () => void;
-    className?: string;
-  }) => (
-    <button
-      type="button"
-      aria-label={ariaLabel}
-      onClick={onClick}
-      className={className}
-    />
-  ),
-}));
 
-const renderChatLayout = (props?: Partial<ComponentProps<typeof ChatLayout>>) =>
+const renderChatLayout = () =>
   render(
     <MemoryRouter initialEntries={['/conversations/test']}>
       <Routes>
-        <Route
-          path="*"
-          element={
-            <ChatLayout
-              isPanelOpen={false}
-              onTogglePanel={vi.fn()}
-              onNewChat={vi.fn()}
-              {...props}
-            />
-          }
-        />
+        <Route path="*" element={<ChatLayout />} />
       </Routes>
     </MemoryRouter>,
   );
@@ -62,53 +27,15 @@ describe('ChatLayout', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockUseUiFeature.mockImplementation(
-      (feature) => feature !== OverlayFeature.HideNewConversation,
-    );
+    mockUseUiFeature.mockReturnValue(true);
   });
 
-  it('renders the conversations-panel-toggle button by default', () => {
-    renderChatLayout();
-    expect(
-      screen.getByRole('button', {
-        name: ConversationPanelI18nKeys.ToggleAriaLabel,
-      }),
-    ).toBeTruthy();
-  });
-
-  it('hides the conversations-panel-toggle button when disabled', () => {
-    mockUseUiFeature.mockImplementation(
-      (feature) => feature !== OverlayFeature.ConversationsPanelToggle,
-    );
-    renderChatLayout();
-    expect(
-      screen.queryByRole('button', {
-        name: ConversationPanelI18nKeys.ToggleAriaLabel,
-      }),
-    ).toBeNull();
-  });
-
-  it('renders the new-conversation button when the panel is closed', () => {
-    renderChatLayout({ isPanelOpen: false });
-    expect(
-      screen.getByRole('button', { name: ButtonsI18nKeys.NewChat }),
-    ).toBeTruthy();
-  });
-
-  it('hides the new-conversation button when hide-new-conversation is enabled', () => {
-    mockUseUiFeature.mockImplementation(
-      (feature) => feature === OverlayFeature.HideNewConversation,
-    );
-    renderChatLayout({ isPanelOpen: false });
-    expect(
-      screen.queryByRole('button', { name: ButtonsI18nKeys.NewChat }),
-    ).toBeNull();
-  });
   it('renders the logo in the top bar when show-header-logo is enabled', () => {
     mockUseUiFeature.mockImplementation(
       (feature) => feature === OverlayFeature.ShowHeaderLogo,
     );
     renderChatLayout();
+
     expect(screen.getByRole('link', { name: 'Logo' })).toBeTruthy();
   });
 
@@ -117,6 +44,13 @@ describe('ChatLayout', () => {
       (feature) => feature !== OverlayFeature.ShowHeaderLogo,
     );
     renderChatLayout();
+
     expect(screen.queryByRole('link', { name: 'Logo' })).toBeNull();
+  });
+
+  it('renders no panel toggle or new-chat button, which live in the sidebar', () => {
+    renderChatLayout();
+
+    expect(screen.queryByRole('button')).toBeNull();
   });
 });

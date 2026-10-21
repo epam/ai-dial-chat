@@ -153,7 +153,7 @@ import { AttachmentCanvasBody } from '@epam/ai-dial-attachment-canvas';
 
 ### AttachmentCanvasContainer
 
-Context-connected container that reads state from `AttachmentCanvasProvider` and renders `AttachmentCanvas` with download support wired up. Every prop is optional — `labels` fields all have English defaults. Forwards the table copy/download labels and `tableDownloadFilename` to `AttachmentCanvas` for the `MarkdownTable` content type, and the code-block and formula labels for `Markdown`/`MarkdownTable` content. `leftActions` is forwarded to `AttachmentCanvas` unchanged — use it for host navigation that the full-width mobile panel would otherwise cover.
+Context-connected container that reads state from `AttachmentCanvasProvider` and renders `AttachmentCanvas` with download support wired up. Every prop is optional — `labels` fields all have English defaults. Forwards the table copy/download labels and `tableDownloadFilename` to `AttachmentCanvas` for the `MarkdownTable` content type, and the code-block and formula labels for `Markdown`/`MarkdownTable` content. `defaultWidth`, `minWidth` and `maxWidth` size the resizable desktop panel (`minWidth` defaults to 600). `leftActions` is forwarded to `AttachmentCanvas` unchanged — use it for host navigation that the full-width mobile panel would otherwise cover.
 
 Pass `loadPdf?: (url: string) => Promise<Blob>` to provide a host-owned PDF
 loader. It is forwarded to the viewer, just as on `AttachmentCanvas` and

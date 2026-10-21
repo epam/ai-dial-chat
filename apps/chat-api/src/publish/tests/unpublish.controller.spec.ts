@@ -1,4 +1,5 @@
 import {
+  BadGatewayException,
   ForbiddenException,
   INestApplication,
   NotFoundException,
@@ -66,6 +67,7 @@ describe('PublishController — POST /api/v1/catalog/:entityType/:entityId/unpub
     publish: ReturnType<typeof vi.fn>;
     unpublish: ReturnType<typeof vi.fn>;
     getPublishHistory: ReturnType<typeof vi.fn>;
+    canUnpublish: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
@@ -73,6 +75,7 @@ describe('PublishController — POST /api/v1/catalog/:entityType/:entityId/unpub
       publish: vi.fn(),
       unpublish: vi.fn().mockResolvedValue(unpublishResult),
       getPublishHistory: vi.fn().mockResolvedValue([]),
+      canUnpublish: vi.fn().mockResolvedValue(true),
     };
     app = await buildApp(service);
   });
@@ -90,8 +93,7 @@ describe('PublishController — POST /api/v1/catalog/:entityType/:entityId/unpub
 
     expect(res.body).toEqual(unpublishResult);
     expect(service.unpublish).toHaveBeenCalledWith(
-      TEST_USER.at,
-      TEST_USER.bucket,
+      TEST_USER,
       'toolset',
       'tool-abc123',
       'Organization/Data Science',
@@ -107,8 +109,7 @@ describe('PublishController — POST /api/v1/catalog/:entityType/:entityId/unpub
       .expect(200);
 
     expect(service.unpublish).toHaveBeenCalledWith(
-      TEST_USER.at,
-      TEST_USER.bucket,
+      TEST_USER,
       'prompt',
       'Work/AI/summarize',
       'Organization/Prompts',
@@ -124,8 +125,7 @@ describe('PublishController — POST /api/v1/catalog/:entityType/:entityId/unpub
       .expect(200);
 
     expect(service.unpublish).toHaveBeenCalledWith(
-      TEST_USER.at,
-      TEST_USER.bucket,
+      TEST_USER,
       'toolset',
       'tool-abc123',
       '',
@@ -181,5 +181,88 @@ describe('PublishController — POST /api/v1/catalog/:entityType/:entityId/unpub
       .post('/api/v1/catalog/toolset/tool-abc123/unpublish')
       .send({ folderPath: 'Organization/Data Science' })
       .expect(404);
+  });
+});
+
+describe('PublishController — unpublish ownership', () => {
+  let app: INestApplication;
+  const service = {
+    unpublish: vi.fn(),
+    canUnpublish: vi.fn(),
+  };
+
+  beforeEach(async () => {
+    app = await buildApp(service);
+  });
+
+  afterEach(async () => {
+    vi.clearAllMocks();
+    await app.close();
+  });
+
+  it('returns 403 when a non-owner, non-admin asks to unpublish', async () => {
+    service.unpublish.mockRejectedValue(
+      new ForbiddenException('You can only unpublish resources you published'),
+    );
+
+    const res = await request(app.getHttpServer())
+      .post(
+        '/api/v1/catalog/toolset/toolsets%2Fpublic%2FTeam%2Ftool__1.0.0/unpublish',
+      )
+      .send({ folderPath: 'Team' })
+      .expect(403);
+
+    expect(res.body.message).toBe(
+      'You can only unpublish resources you published',
+    );
+  });
+
+  it('reports that the publisher may unpublish their copy', async () => {
+    service.canUnpublish.mockResolvedValue(true);
+
+    const res = await request(app.getHttpServer())
+      .get(
+        '/api/v1/catalog/toolset/toolsets%2Fpublic%2FTeam%2Ftool__1.0.0/unpublish-access',
+      )
+      .expect(200);
+
+    expect(res.body).toEqual({ canUnpublish: true });
+    expect(service.canUnpublish).toHaveBeenCalledWith(
+      TEST_USER,
+      'toolset',
+      'toolsets/public/Team/tool__1.0.0',
+    );
+  });
+
+  it('reports a refusal as a 200 answer, not an error', async () => {
+    service.canUnpublish.mockResolvedValue(false);
+
+    const res = await request(app.getHttpServer())
+      .get(
+        '/api/v1/catalog/toolset/toolsets%2Fpublic%2FTeam%2Ftool__1.0.0/unpublish-access',
+      )
+      .expect(200);
+
+    expect(res.body).toEqual({ canUnpublish: false });
+  });
+
+  it('rejects an unknown entityType with 400 before checking access', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/catalog/notAnEntity/tool-abc123/unpublish-access')
+      .expect(400);
+
+    expect(service.canUnpublish).not.toHaveBeenCalled();
+  });
+
+  it('surfaces an unreadable publication list as 502', async () => {
+    service.canUnpublish.mockRejectedValue(
+      new BadGatewayException('Failed to read publications from DIAL Core'),
+    );
+
+    await request(app.getHttpServer())
+      .get(
+        '/api/v1/catalog/toolset/toolsets%2Fpublic%2FTeam%2Ftool__1.0.0/unpublish-access',
+      )
+      .expect(502);
   });
 });

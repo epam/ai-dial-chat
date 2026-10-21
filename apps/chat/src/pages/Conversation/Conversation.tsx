@@ -23,6 +23,7 @@ import {
   type Conversation,
   type Message,
 } from '@epam/ai-dial-chat-shared';
+import { ConversationStartTimestamp } from '@epam/ai-dial-conversation-messages';
 import {
   ConfirmationPopup,
   ConfirmationPopupVariant,
@@ -45,6 +46,7 @@ import {
 import {
   ButtonsI18nKeys,
   ChatI18nKeys,
+  ConversationI18nKeys,
   ConversationPanelI18nKeys,
   RateI18nKeys,
   ToolsI18nKeys,
@@ -65,6 +67,7 @@ import { useActiveConversationBridge } from '../../hooks/conversation/useActiveC
 import { useAudioTranscription } from '../../hooks/conversation/useAudioTranscription';
 import { useVisualizerMessageSendHandler } from '../../hooks/conversation/useVisualizerMessageSendHandler';
 import { useCustomViewer } from '../../hooks/custom-viewer/useCustomViewer';
+import { useLanguage } from '../../hooks/language/useLanguage';
 import { useDeploymentChangeEffect } from '../../hooks/useDeploymentChangeEffect';
 import {
   conversationsApi as configuredConversationsApi,
@@ -100,6 +103,22 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   const [isFetching, setIsFetching] = useState(
     !prefetchedConversation && !!conversationId,
   );
+  /*
+   * Id of the conversation this page instance just created (it arrived with
+   * router `state.conversation` from the first send). Captured here rather
+   * than read from `useLocation().state` because the page clears that state
+   * right after mount; re-derived whenever `conversationId` changes, so leaving
+   * and returning to the conversation shows its start label again.
+   */
+  const [createdHereId, setCreatedHereId] = useState<string | null>(
+    prefetchedConversation ? (conversationId ?? null) : null,
+  );
+  const [trackedConversationId, setTrackedConversationId] =
+    useState(conversationId);
+  if (trackedConversationId !== conversationId) {
+    setTrackedConversationId(conversationId);
+    setCreatedHereId(prefetchedConversation ? (conversationId ?? null) : null);
+  }
   const conversationRef = useRef<Conversation | null>(null);
   const displayNameWatchCleanupRef = useRef<(() => void) | null>(null);
   const displayNameWatchKeyRef = useRef<string | null>(null);
@@ -109,6 +128,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   const appliedFormSchemaKeyRef = useRef<string | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { language } = useLanguage();
   const {
     items: deployments,
     restoreSelectedItemId,
@@ -842,14 +862,42 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     [t],
   );
 
-  const topContent = useMemo(
-    () =>
-      activeScheduledTaskStatus ===
-      ActiveScheduledTaskStatus.TaskConversation ? (
-        <ScheduledTaskConversationBanner />
-      ) : undefined,
-    [activeScheduledTaskStatus],
+  const conversationStartLabels = useMemo(
+    () => ({
+      today: (time: string) => t(ConversationI18nKeys.StartedToday, { time }),
+      yesterday: (time: string) =>
+        t(ConversationI18nKeys.StartedYesterday, { time }),
+    }),
+    [t],
   );
+
+  const startTimestamp =
+    createdHereId != null && createdHereId === conversationId
+      ? undefined
+      : conversation?.messages[0]?.timestamp;
+
+  const topContent = useMemo(() => {
+    const isTaskConversation =
+      activeScheduledTaskStatus === ActiveScheduledTaskStatus.TaskConversation;
+    if (!isTaskConversation && !startTimestamp) return undefined;
+    return (
+      <>
+        {isTaskConversation && <ScheduledTaskConversationBanner />}
+        {startTimestamp && (
+          <ConversationStartTimestamp
+            timestamp={startTimestamp}
+            locale={language}
+            labels={conversationStartLabels}
+          />
+        )}
+      </>
+    );
+  }, [
+    activeScheduledTaskStatus,
+    startTimestamp,
+    language,
+    conversationStartLabels,
+  ]);
 
   const handleCustomViewerConversationCreated = useCallback(
     (createdId: string) => {
@@ -959,6 +1007,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           toolsMenuTitle={t(ToolsI18nKeys.MenuTitle)}
           toolsChipLabels={toolsChipLabels}
           topContent={topContent}
+          hasMessageTimestamps
         />
       </div>
 

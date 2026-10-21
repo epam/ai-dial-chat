@@ -1,15 +1,17 @@
 import type { CelebrationProviderProps } from '@epam/ai-dial-celebrations';
 import { HALLOWEEN_LABELS } from '@epam/ai-dial-celebrations/halloween';
 import { NEW_YEAR_LABELS } from '@epam/ai-dial-celebrations/new-year';
-import { render, screen } from '@testing-library/react';
+import { act, render, renderHook, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Link, MemoryRouter } from 'react-router';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   HalloweenI18nKeys,
   NewYearI18nKeys,
 } from '../../constants/translation-keys';
+import { useCelebrationPreference } from '../../hooks/celebration/useCelebrationPreference';
 import en from '../../i18n/locales/en.json';
+import { StorageKey } from '../../types/storage-key';
 import { UserConfigStatus } from '../../types/user-config-status';
 import { useAppConfig } from '../AppConfigContext';
 import { CelebrationHost } from '../CelebrationHost';
@@ -45,11 +47,12 @@ const lastProps = () => receivedProps[receivedProps.length - 1];
 const setConfig = (
   activeEventId: string | null,
   status = UserConfigStatus.Ready,
+  celebrationsEnabledByDefault = true,
 ) => {
   vi.mocked(useAppConfig).mockReturnValue({
     status,
     features: {},
-    config: { activeEventId },
+    config: { activeEventId, celebrationsEnabledByDefault },
   } as ReturnType<typeof useAppConfig>);
 };
 
@@ -67,6 +70,7 @@ describe('CelebrationHost', () => {
   beforeEach(() => {
     receivedProps.length = 0;
     vi.clearAllMocks();
+    localStorage.setItem(StorageKey.CelebrationsEnabled, 'true');
     setConfig('halloween');
     vi.mocked(useNotification).mockReturnValue({
       showSuccessNotification,
@@ -79,6 +83,37 @@ describe('CelebrationHost', () => {
     expect(lastProps().activeEventId).toBe('halloween');
     expect(lastProps().isMobile).toBe(true);
     expect(Object.keys(lastProps().events)).toEqual(['halloween', 'new-year']);
+  });
+
+  afterEach(() => {
+    localStorage.clear();
+  });
+
+  it('passes the event to a user who never chose while the operator default is on', () => {
+    localStorage.clear();
+    renderHost();
+
+    expect(lastProps().activeEventId).toBe('halloween');
+  });
+
+  it('withholds the event from a user who turned celebrations off', () => {
+    localStorage.setItem(StorageKey.CelebrationsEnabled, 'false');
+    renderHost();
+
+    expect(lastProps().activeEventId).toBeNull();
+  });
+
+  it('withholds the event until the user turns celebrations on when the operator default is off', () => {
+    localStorage.clear();
+    setConfig('halloween', UserConfigStatus.Ready, false);
+    renderHost();
+
+    expect(lastProps().activeEventId).toBeNull();
+
+    const { result } = renderHook(() => useCelebrationPreference());
+    act(() => result.current.setIsEnabled(true));
+
+    expect(lastProps().activeEventId).toBe('halloween');
   });
 
   it.each([

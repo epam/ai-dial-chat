@@ -101,7 +101,7 @@ describe('DeploymentsController (integration)', () => {
         .expect(200);
 
       expect(res.body).toEqual(mockResponse);
-      expect(res.headers['cache-control']).toBe('private, max-age=30');
+      expect(res.headers['cache-control']).toBe('private, no-store');
       expect(service.listDeployments).toHaveBeenCalledWith(
         TEST_USER.sub,
         TEST_USER.at,

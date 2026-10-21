@@ -348,48 +348,11 @@ export const resolvePublicationsForSource = async <T extends PublicationLike>(
   logger?: Logger,
   context?: string,
 ): Promise<T[]> => {
-  const resolved: (T | null)[] = publications.map(() => null);
-  const candidates: { index: number; url: string }[] = [];
-
-  publications.forEach((publication, index) => {
-    if (publication.resources != null) {
-      resolved[index] = publication;
-      return;
-    }
-    if (!isDetailCandidate(publication.status)) {
-      return;
-    }
-    if (!publication.url) {
-      return;
-    }
-    candidates.push({ index, url: publication.url });
-  });
-
-  logger?.debug(
-    `Resolving ${candidates.length} of ${publications.length} publication(s)${context ? ` for ${context}` : ''}`,
-  );
-
-  for (
-    let start = 0;
-    start < candidates.length;
-    start += PUBLICATION_DETAIL_CONCURRENCY
-  ) {
-    const batch = candidates.slice(
-      start,
-      start + PUBLICATION_DETAIL_CONCURRENCY,
-    );
-    const details = await Promise.all(
-      batch.map((candidate) => fetchPublication(candidate.url)),
-    );
-    details.forEach((detail, offset) => {
-      if (detail != null) {
-        resolved[batch[offset].index] = detail;
-      }
-    });
-  }
-
-  const referencing = resolved.filter(
-    (publication): publication is T => publication != null,
+  const referencing = await resolvePublicationDetails(
+    publications,
+    fetchPublication,
+    logger,
+    context,
   );
 
   /*
@@ -478,4 +441,130 @@ export const resolvePublicationsForSource = async <T extends PublicationLike>(
       copyKey == null ? undefined : removedAtByCopy.get(copyKey),
     ].every((removedAt) => removedAt == null || addedAt > removedAt);
   });
+};
+
+/**
+ * Whether `publications` hold a live publication of the published copy at
+ * `copyUrl` — an `APPROVED` (or unlabelled) publishing resource whose
+ * `targetUrl` is that copy, not cancelled by an `APPROVED` removal of the same
+ * folder and `targetUrl` created at or after it.
+ *
+ * Read off the caller's own bucket, this is what makes the caller the copy's
+ * publisher. It matches by `targetUrl` because a public copy's id names the
+ * copy, never the author's source url the `ADD` carries as `sourceUrl`.
+ * Undateable records are ordered as in `resolvePublicationsForSource`: an
+ * undateable approved removal cancels every matching `ADD`.
+ */
+export const publishesCopy = (
+  publications: PublicationLike[],
+  copyUrl: string,
+): boolean => {
+  const addedAtByCopy = new Map<string, number>();
+  for (const publication of publications) {
+    if (!isDetailCandidate(publication.status)) {
+      continue;
+    }
+    for (const resource of publication.resources ?? []) {
+      if (
+        resource.action === PublicationResourceAction.Delete ||
+        !resource.targetUrl ||
+        !isSameResourceUrl(resource.targetUrl, copyUrl)
+      ) {
+        continue;
+      }
+      const copyKey = toPublishedCopyKey(
+        publication.targetFolder,
+        resource.targetUrl,
+      );
+      addedAtByCopy.set(
+        copyKey,
+        Math.max(
+          addedAtByCopy.get(copyKey) ?? Number.NEGATIVE_INFINITY,
+          toPublicationTime(publication.createdAt, 0),
+        ),
+      );
+    }
+  }
+
+  const removedAtByCopy = new Map<string, number>();
+  for (const publication of publications) {
+    if (!isApprovedRemoval(publication.status)) {
+      continue;
+    }
+    const removedAt = toPublicationTime(
+      publication.createdAt,
+      Number.POSITIVE_INFINITY,
+    );
+    for (const copyKey of getRemovedCopyKeys(publication)) {
+      removedAtByCopy.set(
+        copyKey,
+        Math.max(
+          removedAtByCopy.get(copyKey) ?? Number.NEGATIVE_INFINITY,
+          removedAt,
+        ),
+      );
+    }
+  }
+
+  return [...addedAtByCopy].some(([copyKey, addedAt]) => {
+    const removedAt = removedAtByCopy.get(copyKey);
+    return removedAt == null || addedAt > removedAt;
+  });
+};
+
+/**
+ * The publications whose full record — `resources` included — is known:
+ * those already carrying `resources`, plus every `APPROVED` (or unlabelled)
+ * one re-read through `fetchPublication`, in batches. A failed lookup drops
+ * that one publication.
+ */
+export const resolvePublicationDetails = async <T extends PublicationLike>(
+  publications: T[],
+  fetchPublication: (url: string) => Promise<T | null>,
+  logger?: Logger,
+  context?: string,
+): Promise<T[]> => {
+  const resolved: (T | null)[] = publications.map(() => null);
+  const candidates: { index: number; url: string }[] = [];
+
+  publications.forEach((publication, index) => {
+    if (publication.resources != null) {
+      resolved[index] = publication;
+      return;
+    }
+    if (!isDetailCandidate(publication.status)) {
+      return;
+    }
+    if (!publication.url) {
+      return;
+    }
+    candidates.push({ index, url: publication.url });
+  });
+
+  logger?.debug(
+    `Resolving ${candidates.length} of ${publications.length} publication(s)${context ? ` for ${context}` : ''}`,
+  );
+
+  for (
+    let start = 0;
+    start < candidates.length;
+    start += PUBLICATION_DETAIL_CONCURRENCY
+  ) {
+    const batch = candidates.slice(
+      start,
+      start + PUBLICATION_DETAIL_CONCURRENCY,
+    );
+    const details = await Promise.all(
+      batch.map((candidate) => fetchPublication(candidate.url)),
+    );
+    details.forEach((detail, offset) => {
+      if (detail != null) {
+        resolved[batch[offset].index] = detail;
+      }
+    });
+  }
+
+  return resolved.filter(
+    (publication): publication is T => publication != null,
+  );
 };

@@ -19,6 +19,7 @@ import {
 import type { Request, Response } from 'express';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../../config/environment.config';
+import { AdminRoleService } from '../admin-role.service';
 import type * as AuthMetricsModule from '../auth-metrics';
 import { AuthSource } from '../auth-source.enum';
 import type { AuthController as AuthControllerClass } from '../auth.controller';
@@ -150,6 +151,9 @@ describe('auth and session metrics', () => {
       {
         getUserBucket: vi.fn().mockResolvedValue({ bucket: 'bucket-1' }),
       } as unknown as BucketService,
+      new AdminRoleService(
+        (overrides.registry ?? {}) as ProviderRegistryService,
+      ),
     );
 
   const executionContext = (request: Request, response: Response) =>

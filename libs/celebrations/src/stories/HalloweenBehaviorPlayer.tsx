@@ -48,7 +48,7 @@ export const HalloweenBehaviorPlayer: FC<HalloweenBehaviorPlayerProps> = ({
           <HalloweenDecor onActivate={() => setClicks((count) => count + 1)} />
         </StoryHostPage>
       </CelebrationEnvironmentContext.Provider>
-      <p role="status" className="fixed end-3 top-3 rounded border p-2">
+      <p role="status" className="fixed inset-e-3 top-3 rounded border p-2">
         Pumpkin clicks: {clicks}
       </p>
     </div>

@@ -21,7 +21,7 @@ export const OperationLoaderModal: FC<OperationLoaderModalProps> = ({
   onCancel,
 }) => (
   <Popup
-    className="!h-fit !max-h-full !w-[400px]"
+    className="h-fit! max-h-full! w-[400px]!"
     open
     closeOnOutsideClick={false}
     hideClose

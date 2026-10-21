@@ -206,6 +206,47 @@ import { MessageBubble } from '@epam/ai-dial-conversation-messages';
 <MessageBubble role={message.role} text={message.content} />;
 ```
 
+Pass `timestamp` (the message's ISO send time) to show a relative time (`3 hours ago`) with the full date and time in a tooltip. The time:
+
+- sits on the outer edge of the actions row: before the buttons of a user message, after those of an assistant response;
+- appears while the bubble is hovered or holds keyboard focus, and is always shown on devices without hover;
+- refreshes every minute.
+
+`locale` sets the BCP 47 locale for the wording and the date; it defaults to the runtime default. `styles.timestampClassName` replaces the default `'dial-small-text text-secondary'` classes. Formatting uses `Intl`, so no labels are needed.
+
+```tsx
+import { MessageBubble } from '@epam/ai-dial-conversation-messages';
+
+<MessageBubble
+  role={message.role}
+  text={message.content}
+  timestamp={message.timestamp}
+  locale={language}
+/>;
+```
+
+### ConversationStartTimestamp
+
+Centered label for when a conversation started:
+
+- `Today 11:51 AM` or `Yesterday 3:24 PM`, by local calendar day;
+- otherwise the full date and time (`Sep 20, 2026, 10:15 AM`).
+
+It renders nothing for a missing or unparsable `timestamp`. Time and date come from `Intl` in `locale`. The `labels.today` and `labels.yesterday` templates receive the localized time and default to English. The host decides _when_ to show the label (for example, not for a conversation the user has just created).
+
+```tsx
+import { ConversationStartTimestamp } from '@epam/ai-dial-conversation-messages';
+
+<ConversationStartTimestamp
+  timestamp={conversation.messages[0].timestamp}
+  locale={language}
+  labels={{
+    today: (time) => t('conversation.startedToday', { time }),
+    yesterday: (time) => t('conversation.startedYesterday', { time }),
+  }}
+/>;
+```
+
 ### MessageActions
 
 Toolbar with per-message actions. `role` selects the action set: `MessageRole.User` (the default) shows Copy/Edit/Delete, any other role shows Regenerate/Copy/Like/Dislike. Usually passed to a bubble through its `actions` prop rather than rendered directly.
@@ -228,6 +269,17 @@ import { MessageActions } from '@epam/ai-dial-conversation-messages';
       copiedMessageStatus: 'Message copied to clipboard',
     },
   }}
+/>;
+```
+
+`leadingContent` renders host content at the start of the toolbar row, before the buttons, and `trailingContent` at its end, after them — for example a send time with its own tooltip. The library does not format or style either; the host passes a ready element. The toolbar renders when either slot is set even if no action handler is passed.
+
+```tsx
+import { MessageActions } from '@epam/ai-dial-conversation-messages';
+
+<MessageActions
+  onCopy={handleCopy}
+  leadingContent={<time dateTime={message.timestamp}>{relativeTime}</time>}
 />;
 ```
 
@@ -336,6 +388,8 @@ import type {
   MessageActionColors,
   MessageActionTooltips,
   MessageActionAriaLabels,
+  ConversationStartTimestampProps,
+  ConversationStartTimestampLabels,
 } from '@epam/ai-dial-conversation-messages';
 ```
 

@@ -573,7 +573,7 @@
             "name": "refresh",
             "required": false,
             "in": "query",
-            "description": "Bypass the short server-side deployments list cache and refresh from DIAL Core",
+            "description": "Bypass the short server-side deployments list cache and refresh from DIAL Core.",
             "schema": {
               "type": "boolean"
             }
@@ -7470,7 +7470,7 @@
             "description": "Not authenticated — valid session cookie required"
           },
           "403": {
-            "description": "Caller lacks write access to the target folder"
+            "description": "Caller is neither an administrator nor the publisher of this copy, or lacks write access to the target folder"
           },
           "404": {
             "description": "DIAL Core reports the entity or target folder as unknown"
@@ -7495,6 +7495,79 @@
           }
         },
         "summary": "Request removal of a published catalog entity from a folder",
+        "tags": ["publish"]
+      }
+    },
+    "/api/v1/catalog/{entityType}/{entityId}/unpublish-access": {
+      "get": {
+        "description": "Reports whether the session user may submit an unpublish request for this entity: true for an administrator, for an entity in their own bucket, and for the publisher of a public copy (the bucket holding the live publication that created it). It reveals only the caller’s own permission, never who published the entity, and creates nothing. A negative answer is a 200 with `canUnpublish: false`.",
+        "operationId": "getCatalogUnpublishAccess",
+        "parameters": [
+          {
+            "name": "entityType",
+            "required": true,
+            "in": "path",
+            "description": "Catalog entity kind.",
+            "schema": {
+              "example": "toolset",
+              "type": "string",
+              "enum": ["model", "toolset", "application", "prompt", "skill"]
+            }
+          },
+          {
+            "name": "entityId",
+            "required": true,
+            "in": "path",
+            "description": "The entity's DIAL Core resource path, used directly as the Publication API `sourceUrl`.",
+            "schema": {
+              "example": "tool-abc123",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Whether the caller may request removal of the entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnpublishAccessDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid entityType or entityId"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "DIAL Core denied access to the resource"
+          },
+          "404": {
+            "description": "DIAL Core resource not found"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error for the publication list, or was unreachable"
+          },
+          "503": {
+            "description": "The session user bucket could not be resolved because DIAL Core is unavailable (raised by session authentication; an unreachable DIAL Core during the call itself is reported as 502)"
+          }
+        },
+        "summary": "Check whether the caller may request removal of a catalog entity",
         "tags": ["publish"]
       }
     },
@@ -9533,6 +9606,11 @@
             "type": "number",
             "description": "Percentage (1–99) of a capped day/week/month usage limit at which the composer shows its usage banner. Sourced from USAGE_LIMITS_WARNING_THRESHOLD_PERCENT; governs the banner only, not the usage dial.",
             "example": 75
+          },
+          "celebrationsEnabledByDefault": {
+            "type": "boolean",
+            "description": "Operator default for the seasonal-celebrations switch, applied to users who have not saved a choice of their own; a saved choice overrides it. Sourced from UI_EVENT_ENABLED_BY_DEFAULT; true unless it is false, 0 or no. Has no visible effect while activeEventId is null.",
+            "example": true
           }
         },
         "required": [
@@ -9551,7 +9629,8 @@
           "customVariables",
           "publicationFilterSources",
           "maxAttachmentFileSizeBytes",
-          "usageLimitsWarningThresholdPercent"
+          "usageLimitsWarningThresholdPercent",
+          "celebrationsEnabledByDefault"
         ]
       },
       "ClientConfigMetadataDto": {
@@ -9771,6 +9850,13 @@
             "type": "boolean",
             "default": false,
             "description": "Store applicationProperties verbatim, including schema-specific features. Use top-level attachment fields for Core capabilities."
+          },
+          "features": {
+            "type": "object",
+            "example": {
+              "tools_supported": true
+            },
+            "description": "Top-level DIAL Core application features, stored as supplied. Takes precedence over features hoisted from applicationProperties and turns off the Quick App system_prompt_supported default."
           },
           "inputAttachmentTypes": {
             "example": ["image/png"],
@@ -14814,6 +14900,17 @@
           "requestedBy"
         ]
       },
+      "UnpublishAccessDto": {
+        "type": "object",
+        "properties": {
+          "canUnpublish": {
+            "type": "boolean",
+            "description": "Whether the caller may request removal of this entity: true for an administrator or the publisher of the copy",
+            "example": true
+          }
+        },
+        "required": ["canUnpublish"]
+      },
       "PublishHistoryEntryDto": {
         "type": "object",
         "properties": {
@@ -15223,6 +15320,11 @@
             "type": "string",
             "description": "Failure stage reported by DIAL Scheduler. Only a string result.stage is exposed.",
             "example": "credentials"
+          },
+          "errorText": {
+            "type": "string",
+            "description": "Failure details reported by DIAL Scheduler (result.error_text) for a failed run. Only a non-blank string is exposed; the rest of the upstream result is not.",
+            "example": "target request failed with status 502"
           }
         },
         "required": ["id", "status", "startTime"]

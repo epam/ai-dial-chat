@@ -5,6 +5,7 @@ import {
   getPublicationSourceCredentials,
   PublicationResourceAction,
   PublicationStatus,
+  publishesCopy,
   publishesSource,
   removesSource,
   resolvePublicationsForSource,
@@ -913,4 +914,105 @@ describe('resolvePublicationsForSource, removals filed from the public copy', ()
       ).toEqual([]);
     },
   );
+});
+
+describe('publishesCopy', () => {
+  const COPY_URL = 'applications/public/Org/my-app__1.0.0';
+
+  const add = (
+    createdAt: number,
+    targetUrl = COPY_URL,
+    status: PublicationStatus | undefined = PublicationStatus.Approved,
+  ) => ({
+    status,
+    targetFolder: 'public/Org/',
+    createdAt,
+    resources: [
+      {
+        action: PublicationResourceAction.Add,
+        sourceUrl: 'applications/bucket-1/my-app__1.0.0',
+        targetUrl,
+      },
+    ],
+  });
+
+  const removal = (
+    createdAt: number | undefined,
+    status = PublicationStatus.Approved,
+  ) => ({
+    status,
+    targetFolder: 'public/Org/',
+    createdAt,
+    resources: [
+      {
+        action: PublicationResourceAction.Delete,
+        sourceUrl: COPY_URL,
+        targetUrl: COPY_URL,
+      },
+    ],
+  });
+
+  it('reports the copy published by an approved ADD targeting it', () => {
+    expect(publishesCopy([add(1)], COPY_URL)).toBe(true);
+  });
+
+  it('treats a publication with no reported status as live', () => {
+    expect(publishesCopy([add(1, COPY_URL, undefined)], COPY_URL)).toBe(true);
+  });
+
+  it('matches a percent-encoded target against a plain copy url', () => {
+    expect(
+      publishesCopy(
+        [add(1, 'applications/public/New%20Folder/my-app__1.0.0')],
+        'applications/public/New Folder/my-app__1.0.0',
+      ),
+    ).toBe(true);
+  });
+
+  it('does not report a copy no publication targets', () => {
+    expect(
+      publishesCopy(
+        [add(1, 'applications/public/Org/other-app__1.0.0')],
+        COPY_URL,
+      ),
+    ).toBe(false);
+  });
+
+  it('confers nothing for a pending or rejected ADD', () => {
+    expect(
+      publishesCopy(
+        [
+          add(1, COPY_URL, PublicationStatus.Pending),
+          add(2, COPY_URL, PublicationStatus.Rejected),
+        ],
+        COPY_URL,
+      ),
+    ).toBe(false);
+  });
+
+  it('is cancelled by a later approved removal of the same copy', () => {
+    expect(publishesCopy([add(1), removal(2)], COPY_URL)).toBe(false);
+  });
+
+  it('is not cancelled by a pending removal', () => {
+    expect(
+      publishesCopy([add(1), removal(2, PublicationStatus.Pending)], COPY_URL),
+    ).toBe(true);
+  });
+
+  it('reports a re-publish made after an approved removal', () => {
+    expect(publishesCopy([add(1), removal(2), add(3)], COPY_URL)).toBe(true);
+  });
+
+  it('lets an undateable approved removal cancel every matching ADD', () => {
+    expect(publishesCopy([add(1), removal(undefined), add(3)], COPY_URL)).toBe(
+      false,
+    );
+  });
+
+  it('never counts a DELETE resource as publishing the copy', () => {
+    expect(
+      publishesCopy([removal(1, PublicationStatus.Approved)], COPY_URL),
+    ).toBe(false);
+  });
 });

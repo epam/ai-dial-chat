@@ -81,7 +81,9 @@ value. This is the single most common way a theme "half applies".
 
 `UI_EVENT=halloween` or `UI_EVENT=new-year` selects a bundled celebration on the
 start page. `UI_EVENT=none` or an omitted value disables it. Unknown event IDs
-leave the normal interface intact. The former `HALLOWEEN_ENABLED` setting has
+leave the normal interface intact. Each user can turn the event off or on with
+**Seasonal celebrations** in Settings → Preferences. Until they do, the switch
+follows `UI_EVENT_ENABLED_BY_DEFAULT` (on unless set to `false`, `0` or `no`). The former `HALLOWEEN_ENABLED` setting has
 been removed; use `UI_EVENT=halloween` instead.
 
 The selected event replaces the existing favicon slot in desktop navigation
@@ -269,13 +271,16 @@ fence at 48px, and filled glyphs carry no icon stroke at all.
 **Shadows**
 
 ```text
-shadow-xs-1  shadow-xs-2  shadow-sm  shadow-md  shadow-lg
+shadow-xs-1  shadow-xs-2  shadow-sm-1  shadow-sm-2  shadow-md-1  shadow-md-2  shadow-lg
 ```
 
 The variables are named after the elevation that consumes them, not after their
 hue. `shadow-xs` paints two layers — a wide blue one from `shadow-xs-1` and a
-tight grey one from `shadow-xs-2`. `shadow-sm`, `shadow-md`, and `shadow-lg`
-are a single blue layer each, so they take one variable apiece. Themes that set
+tight grey one from `shadow-xs-2`. `shadow-sm` and `shadow-md` paint two blue
+layers too, as the design's Shadow SM and Shadow MD: a drop from `shadow-sm-2` /
+`shadow-md-2` and a tight halo from `shadow-sm-1` / `shadow-md-1`. A theme that
+still sets the old single `shadow-sm` / `shadow-md` colour keeps it on the drop
+layer. `shadow-lg` is a single blue layer with one variable. Themes that set
 the pre-spec `shadow-xs-sm-1` / `shadow-xs-sm-2` need to move to the
 `shadow-xs-*` names; `shadow-sm` was retuned for the side panels and now has
 its own variable.

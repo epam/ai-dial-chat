@@ -605,6 +605,12 @@ The display-name resolution (`resolveListDisplayTitle`, also used by `getConvers
 - **WHEN** `GET /api/v1/conversations` is called
 - **THEN** the matching list item `title` is `"New Title"` (not the filename-derived `"Old Title"`)
 
+#### Scenario: An older renamed conversation is listed under the title opening it returns
+
+- **GIVEN** an application conversation stored at `Untitled app 1__0.0.1__Say hello in exactly three words` with `name: "Three-Word Greeting"` and `llmNamingDone: true`, and at least twenty more recently updated conversations
+- **WHEN** `GET /api/v1/conversations` is called, and the conversation is then opened through `GET /api/v1/conversations?path=...`
+- **THEN** the list item `title` and the opened conversation's display title are both `"Three-Word Greeting"`, so opening it does not change the title the panel search matched against
+
 #### Scenario: GET reflects manually-renamed display name when filename diverges
 
 - **GIVEN** the same manually-renamed conversation

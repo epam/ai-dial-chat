@@ -169,8 +169,6 @@ export interface SkillEditorLabels extends TextRefinementLabels {
   uploadArchiveLabel?: string;
   /** Add-menu entry that opens the host's file-system picker. Defaults to `'Open DIAL file system'`. */
   openFileSystemLabel?: string;
-  /** Node context-menu submenu that adds next to the node. Defaults to `'Add sibling'`. */
-  addSiblingLabel?: string;
   /** Node context-menu action that removes the node. Defaults to `'Delete'`. */
   deleteLabel?: string;
   /** Name prefilled in a folder being created inline. Defaults to `'New folder'`. */

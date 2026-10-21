@@ -3,7 +3,7 @@
 }
 
 .successIcon {
-  color: var(--strhl-success-icon, var(--text-success, #007274));
+  color: var(--strhl-success-icon, var(--text-secondary, #57647a));
 }
 
 .errorIcon {
@@ -25,7 +25,7 @@
 .interactiveRow:hover {
   background: var(
     --strhl-row-hover-bg,
-    var(--bg-control-accent-alpha, #2764d90f)
+    var(--bg-control-accent-alpha-hover-subtle, #2764d90a)
   );
 }
 
@@ -33,7 +33,10 @@
 .interactiveRow:focus-visible {
   background: var(
     --strhl-row-focus-bg,
-    var(--strhl-row-hover-bg, var(--bg-control-accent-alpha, #2764d90f))
+    var(
+      --strhl-row-hover-bg,
+      var(--bg-control-accent-alpha-hover-subtle, #2764d90a)
+    )
   );
   outline: 2px solid var(--strhl-row-focus-outline, var(--text-accent, #1d4ed8));
   outline-offset: -2px;

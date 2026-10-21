@@ -82,7 +82,7 @@ export interface ScheduledTaskDetailViewColors {
   detailsColumnBorder?: string;
   /** Section subtitle and status-message text color. Fallback: `--text-secondary`. */
   subtitleText?: string;
-  /** Success status icon color. Fallback: `--text-success`. */
+  /** Success status icon color. Fallback: `--text-secondary`. */
   successIconColor?: string;
   /** Error status icon color. Fallback: `--text-error`. */
   errorIconColor?: string;

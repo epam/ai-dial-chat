@@ -1201,6 +1201,12 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   usageLimitsWarningThresholdPercent: number;
+  /**
+   * Operator default for the seasonal-celebrations switch, applied to users who have not saved a choice of their own; a saved choice overrides it. Sourced from UI_EVENT_ENABLED_BY_DEFAULT; true unless it is false, 0 or no. Has no visible effect while activeEventId is null.
+   * @type {boolean}
+   * @memberof ClientConfigDto
+   */
+  celebrationsEnabledByDefault: boolean;
 }
 
 /**
@@ -2052,6 +2058,12 @@ export interface CreateApplicationBodyDto {
    * @memberof CreateApplicationBodyDto
    */
   preserveApplicationProperties?: boolean;
+  /**
+   * Top-level DIAL Core application features, stored as supplied. Takes precedence over features hoisted from applicationProperties and turns off the Quick App system_prompt_supported default.
+   * @type {object}
+   * @memberof CreateApplicationBodyDto
+   */
+  features?: object;
   /**
    *
    * @type {Array<string>}
@@ -6449,6 +6461,12 @@ export interface ScheduledTaskRunDto {
    * @memberof ScheduledTaskRunDto
    */
   resultStage?: string;
+  /**
+   * Failure details reported by DIAL Scheduler (result.error_text) for a failed run. Only a non-blank string is exposed; the rest of the upstream result is not.
+   * @type {string}
+   * @memberof ScheduledTaskRunDto
+   */
+  errorText?: string;
 }
 
 /**
@@ -7719,6 +7737,19 @@ export interface TranscribeAudioDto {
    * @memberof TranscribeAudioDto
    */
   mimeType: string;
+}
+/**
+ *
+ * @export
+ * @interface UnpublishAccessDto
+ */
+export interface UnpublishAccessDto {
+  /**
+   * Whether the caller may request removal of this entity: true for an administrator or the publisher of the copy
+   * @type {boolean}
+   * @memberof UnpublishAccessDto
+   */
+  canUnpublish: boolean;
 }
 /**
  *

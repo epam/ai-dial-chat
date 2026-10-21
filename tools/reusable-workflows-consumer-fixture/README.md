@@ -102,17 +102,20 @@ Beyond typecheck/bundle success, `scripts/run.mjs` asserts:
   `--fp-header-text` for `@epam/ai-dial-prompts`), proving each package's
   `./styles.css` actually reached the build rather than resolving to an empty
   or wrong file.
-- The bundle's main chunk contains no `ag-grid-community` — the string
-  literal AG Grid's own compiled source carries verbatim, so it survives
-  minification. `usePromptSelectorOverlay` renders `PromptParametersPopup`
-  (which reaches `@epam/ai-dial-catalog`'s AG-Grid-backed `ListView`) behind a
-  `React.lazy()`/`Suspense` boundary; a regression that inlines it back into
-  `usePromptSelectorOverlay`'s eager import graph would put AG Grid in every
-  consumer's initial chunk even when the parameters popup never opens.
-- At least one _other_ emitted chunk **does** contain `ag-grid-community` —
-  proving the split actually happened, rather than the marker being absent
-  for an unrelated reason (e.g. the entry never reaching
-  `usePromptSelectorOverlay` at all).
+- No eagerly loaded chunk — the main chunk plus every chunk it reaches
+  through static imports, including shared chunks such as the one carrying
+  `@epam/ai-dial-catalog` — contains `ag-grid-community`. A regression that
+  pulls a grid-backed component (e.g. `@epam/ai-dial-catalog`'s `ListView`)
+  into the eager import graph would put AG Grid in every consumer's initial
+  load.
+- The main chunk reaches a chunk exporting `PromptParametersPopup` only
+  through a dynamic `import()`, and that chunk is outside the static-import
+  closure — proving `LazyPromptParametersPopup`'s `React.lazy()`/`Suspense`
+  split actually survives into a consumer's build. The check does not
+  require AG Grid in the lazy chunk: the popup uses only `AppIdentity`,
+  `ContentTab` and `DeploymentSize` from `@epam/ai-dial-catalog`, so a
+  bundler that tree-shakes the unused `ListView` correctly emits no AG Grid
+  at all.
 
 ## Running it
 

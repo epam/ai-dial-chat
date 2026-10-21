@@ -1,6 +1,7 @@
 import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { ScheduledTaskRunHistoryListLabels } from '../../../models/scheduled-task-run-history-list-props';
 import type { ScheduledTaskRunItem } from '../../../models/scheduled-task-run-item';
@@ -22,10 +23,22 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     label: string;
     onClick?: () => void;
   }) => <button onClick={onClick}>{label}</button>,
+  Tooltip: ({
+    tooltip,
+    children,
+  }: {
+    tooltip: string;
+    children: ReactNode;
+  }) => (
+    <>
+      {children}
+      <span role="tooltip">{tooltip}</span>
+    </>
+  ),
 }));
 
 vi.mock('@tabler/icons-react', () => ({
-  IconCircleCheck: (props: Record<string, unknown>) => (
+  IconCheck: (props: Record<string, unknown>) => (
     <svg data-icon="success" {...props} />
   ),
   IconCircleX: (props: Record<string, unknown>) => (
@@ -79,6 +92,28 @@ describe('ScheduledTaskRunHistoryList', () => {
     expect(screen.getAllByRole('listitem')).toHaveLength(2);
     expect(screen.getByText('today at 9:01 AM (99s)')).toBeTruthy();
     expect(screen.getByText('Jul 10 at 9:46 AM (154s)')).toBeTruthy();
+  });
+
+  it('renders the duration as a separate secondary-colored label and includes it in the accessible name', () => {
+    render(
+      <ScheduledTaskRunHistoryList
+        items={[
+          buildRun({
+            timestampLabel: 'today at 9:01 AM',
+            durationLabel: '(3s)',
+          }),
+        ]}
+        labels={labels}
+      />,
+    );
+
+    expect(screen.getByText('today at 9:01 AM')).toBeTruthy();
+    expect(screen.getByText('(3s)').className).toContain('subtitleText');
+    expect(
+      screen.getByRole('listitem', {
+        name: 'Succeeded today at 9:01 AM (3s)',
+      }),
+    ).toBeTruthy();
   });
 
   it('shows skeleton rows during initial loading', () => {
@@ -233,6 +268,78 @@ describe('ScheduledTaskRunHistoryList', () => {
     expect(screen.getByRole('listitem', { name: /Unread$/ })).toBeTruthy();
   });
 
+  describe('ScheduledTaskRunHistoryList — error details', () => {
+    const errorText = 'target request failed with status 502';
+
+    it('shows errorText in a tooltip and the accessible name of an Error row', () => {
+      render(
+        <ScheduledTaskRunHistoryList
+          items={[
+            buildRun({ status: ScheduledTaskRunStatus.Error, errorText }),
+          ]}
+          labels={labels}
+        />,
+      );
+
+      expect(screen.getByRole('tooltip').textContent).toBe(errorText);
+      expect(
+        screen.getByRole('listitem', {
+          name: `Failed today at 9:01 AM (99s) — ${errorText}`,
+        }),
+      ).toBeTruthy();
+    });
+
+    it('makes the tooltip trigger focusable only when the row is static', () => {
+      const { rerender } = render(
+        <ScheduledTaskRunHistoryList
+          items={[
+            buildRun({ status: ScheduledTaskRunStatus.Error, errorText }),
+          ]}
+          labels={labels}
+        />,
+      );
+      const row = screen.getByRole('listitem');
+      // eslint-disable-next-line testing-library/no-node-access -- the trigger wrapper has no role; its tabIndex is the assertion
+      expect(row.querySelector('[tabindex="0"]')).toBeTruthy();
+
+      rerender(
+        <ScheduledTaskRunHistoryList
+          items={[
+            buildRun({
+              status: ScheduledTaskRunStatus.Error,
+              errorText,
+              conversationId: 'conversations/bucket/run_1',
+            }),
+          ]}
+          labels={labels}
+          onRunClick={vi.fn()}
+        />,
+      );
+      const clickableRow = screen.getByRole('button');
+      // eslint-disable-next-line testing-library/no-node-access -- see above
+      expect(clickableRow.querySelector('[tabindex="0"]')).toBeNull();
+      expect(screen.getByRole('tooltip').textContent).toBe(errorText);
+    });
+
+    it('ignores errorText on a non-Error row', () => {
+      render(
+        <ScheduledTaskRunHistoryList
+          items={[
+            buildRun({ status: ScheduledTaskRunStatus.Success, errorText }),
+          ]}
+          labels={labels}
+        />,
+      );
+
+      expect(screen.queryByRole('tooltip')).toBeNull();
+      expect(
+        screen.getByRole('listitem', {
+          name: 'Succeeded today at 9:01 AM (99s)',
+        }),
+      ).toBeTruthy();
+    });
+  });
+
   it('uses a custom unreadIndicatorLabel when provided', () => {
     render(
       <ScheduledTaskRunHistoryList
@@ -324,7 +431,7 @@ describe('ScheduledTaskRunHistoryList', () => {
     const icon = startGroup.querySelector('[data-icon="success"]');
     expect(icon).toBeTruthy();
     expect(icon?.getAttribute('stroke')).toBe(`${DIAL_KIT_ICON_STROKE}`);
-    expect(icon?.getAttribute('size')).toBe(`${DIAL_ICON_SIZE.MD}`);
+    expect(icon?.getAttribute('size')).toBe(`${DIAL_ICON_SIZE.SM}`);
     /* The pill carries the design's 12px horizontal padding on both sides. */
     expect(row.className).toContain('px-3');
     expect(row.className).not.toContain('pe-2');

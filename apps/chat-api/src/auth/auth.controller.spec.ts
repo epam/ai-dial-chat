@@ -19,6 +19,7 @@ import {
 } from 'jose';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../config/environment.config';
+import { AdminRoleService } from './admin-role.service';
 import { AuthController } from './auth.controller';
 import { BucketService } from './bucket/bucket.service';
 import { KeysService } from './keys/keys.service';
@@ -188,6 +189,7 @@ async function buildApp(): Promise<INestApplication> {
       { provide: KeysService, useValue: keysServiceMock },
       { provide: SessionService, useValue: sessionService },
       { provide: ProviderRegistryService, useValue: registryMock },
+      AdminRoleService,
       { provide: ConfigService, useValue: configMock },
       { provide: RefreshService, useValue: MOCK_REFRESH_SERVICE },
       { provide: BucketService, useValue: MOCK_BUCKET_SERVICE },

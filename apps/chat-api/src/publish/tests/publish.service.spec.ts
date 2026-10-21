@@ -1,5 +1,6 @@
 import { BadGatewayException, ForbiddenException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { AdminRoleService } from '../../auth/admin-role.service';
 import type { DialClientService } from '../../dial/dial-client.service';
 import { CatalogEntityType } from '../dto/catalog-entity-params.dto';
 import { PublishRuleFunction } from '../dto/publish-rule.dto';
@@ -32,12 +33,17 @@ const makeService = () => {
   const dialClient = {
     client: {
       createPublication: vi.fn(),
+      getCustomApplication: vi.fn().mockResolvedValue(okResponse({})),
       getPublication: vi.fn(),
       getPublications: vi.fn(),
     },
   } as unknown as DialClientService;
   const cacheManager = makeCacheManager();
-  const service = new PublishService(dialClient, cacheManager as never);
+  const service = new PublishService(
+    dialClient,
+    cacheManager as never,
+    { isAdmin: vi.fn().mockReturnValue(false) } as unknown as AdminRoleService,
+  );
   return { service, dialClient, cacheManager };
 };
 
@@ -451,6 +457,151 @@ describe('PublishService', () => {
           rules: [],
         },
       });
+    });
+
+    it('publishes an application uploaded icon alongside the app, nested under its versioned target name', async () => {
+      const { service, dialClient } = makeService();
+      vi.mocked(dialClient.client.getCustomApplication).mockResolvedValue(
+        okResponse({ iconUrl: 'files/bucket-123/icons/app%20icon.png?v=1' }),
+      );
+      vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+        okResponse({}),
+      );
+
+      await service.publish(
+        'token-abc',
+        TEST_BUCKET,
+        CatalogEntityType.Application,
+        'applications/bucket-123/My App__0.0.1',
+        'Team',
+        '0.0.2',
+        'Test User',
+      );
+
+      expect(dialClient.client.getCustomApplication).toHaveBeenCalledWith(
+        'bucket-123',
+        'My%20App__0.0.1',
+        { headers: { Authorization: 'Bearer token-abc' } },
+      );
+      expect(dialClient.client.createPublication).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({
+            resources: [
+              {
+                action: 'ADD',
+                sourceUrl: 'applications/bucket-123/My%20App__0.0.1',
+                targetUrl: 'applications/public/Team/My%20App__0.0.2',
+              },
+              {
+                action: 'ADD',
+                sourceUrl: 'files/bucket-123/icons/app%20icon.png',
+                targetUrl: 'files/public/Team/My%20App__0.0.2/app%20icon.png',
+              },
+            ],
+          }),
+        }),
+      );
+    });
+
+    it.each([
+      ['a public-bucket file', { iconUrl: 'files/public/icons/app.png' }],
+      ['another bucket file', { iconUrl: 'files/other/icons/app.png' }],
+      ['an absolute URL', { iconUrl: 'https://example.com/app.png' }],
+      ['a theme icon name', { icon_url: 'app-theme-icon.svg' }],
+    ])(
+      'publishes the application alone when its icon is %s',
+      async (_label, application) => {
+        const { service, dialClient } = makeService();
+        vi.mocked(dialClient.client.getCustomApplication).mockResolvedValue(
+          okResponse(application),
+        );
+        vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+          okResponse({}),
+        );
+
+        await service.publish(
+          'token-abc',
+          TEST_BUCKET,
+          CatalogEntityType.Application,
+          'applications/bucket-123/my-app__0.0.1',
+          'Team',
+          undefined,
+          'Test User',
+        );
+
+        expect(dialClient.client.createPublication).toHaveBeenCalledWith(
+          expect.objectContaining({
+            body: expect.objectContaining({
+              resources: [
+                {
+                  action: 'ADD',
+                  sourceUrl: 'applications/bucket-123/my-app__0.0.1',
+                  targetUrl: 'applications/public/Team/my-app__0.0.1',
+                },
+              ],
+            }),
+          }),
+        );
+      },
+    );
+
+    it.each([
+      ['rejects', () => Promise.reject(new Error('network'))],
+      ['returns an upstream error', () => Promise.resolve(errResponse(500))],
+    ])(
+      'still publishes the application alone when the application read %s',
+      async (_label, readResult) => {
+        const { service, dialClient } = makeService();
+        vi.mocked(dialClient.client.getCustomApplication).mockImplementation(
+          readResult as never,
+        );
+        vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+          okResponse({}),
+        );
+
+        await service.publish(
+          'token-abc',
+          TEST_BUCKET,
+          CatalogEntityType.Application,
+          'applications/bucket-123/my-app__0.0.1',
+          'Team',
+          undefined,
+          'Test User',
+        );
+
+        expect(dialClient.client.createPublication).toHaveBeenCalledWith(
+          expect.objectContaining({
+            body: expect.objectContaining({
+              resources: [
+                {
+                  action: 'ADD',
+                  sourceUrl: 'applications/bucket-123/my-app__0.0.1',
+                  targetUrl: 'applications/public/Team/my-app__0.0.1',
+                },
+              ],
+            }),
+          }),
+        );
+      },
+    );
+
+    it('does not read the entity for a non-application publish', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+        okResponse({}),
+      );
+
+      await service.publish(
+        'token-abc',
+        TEST_BUCKET,
+        CatalogEntityType.Toolset,
+        'toolsets/bucket-123/tool__1.0.0',
+        'Team',
+        undefined,
+        'Test User',
+      );
+
+      expect(dialClient.client.getCustomApplication).not.toHaveBeenCalled();
     });
 
     it('uses a bare "public/" targetFolder when publishing to the public root (no subfolder)', async () => {

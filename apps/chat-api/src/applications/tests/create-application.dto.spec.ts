@@ -96,3 +96,21 @@ describe('CreateApplicationBodyDto — version', () => {
     },
   );
 });
+
+describe('CreateApplicationBodyDto — features', () => {
+  it('passes with a top-level features object', async () => {
+    const errors = await validateDto({
+      ...BASE_BODY,
+      features: { tools_supported: true },
+    });
+    expect(errors).toHaveLength(0);
+  });
+
+  it.each([[['tools_supported']], ['tools_supported'], [true]])(
+    'rejects non-object features (%j)',
+    async (features) => {
+      const errors = await validateDto({ ...BASE_BODY, features });
+      expect(errors.some((e) => e.property === 'features')).toBe(true);
+    },
+  );
+});

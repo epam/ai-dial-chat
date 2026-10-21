@@ -144,7 +144,7 @@ const HalloweenWitches: FC = () => {
       data-ended={ended || changed}
       data-stationary={stationary}
     >
-      <div ref={copiesRef} className="absolute inset-0 z-[2]" />
+      <div ref={copiesRef} className="absolute inset-0 z-2" />
       {!stationary && (
         <div ref={templateRef} className="hidden">
           <HalloweenFrogFeatures />
@@ -169,7 +169,7 @@ const HalloweenWitches: FC = () => {
             ref={(node) => {
               actorsRef.current[index] = node;
             }}
-            className="absolute top-0 z-[3] size-0 opacity-0"
+            className="absolute top-0 z-3 size-0 opacity-0"
             data-witch-actor={index}
             style={{
               left: 0,

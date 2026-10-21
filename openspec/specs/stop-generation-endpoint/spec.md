@@ -22,6 +22,11 @@ Otherwise the handler calls `generationService.abort(ownerKey, path, generationI
 - **WHEN** the posted `generationId` matches no active generation for the path and no background message in the conversation carries it
 - **THEN** the endpoint returns 404
 
+#### Scenario: Stop arrives after the generation ended or is already being stopped
+
+- **WHEN** the posted `generationId` + `path` match a generation of the caller's own principal that has already finished, or that an earlier Stop has already begun cancelling, and no pending background message carries the id
+- **THEN** the endpoint returns 404 — the response is identical to that for an unknown generation, and clients such as `useConversationStream` treat it as benign when their own generation has ended
+
 #### Scenario: A bearer-authenticated caller can stop its own generation
 
 - **WHEN** a caller authenticated as `AuthSource.Header`, with no session cookie, posts a valid `generationId` + `path` for a generation its own principal started

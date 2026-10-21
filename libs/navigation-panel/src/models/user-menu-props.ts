@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import type { UserMenuTriggerVariant } from '../types/user-menu-trigger-variant';
 import type { NavigationMenuGroup } from './navigation-menu';
 import type { NavigationUserProfile } from './user-profile';
 
@@ -10,8 +11,10 @@ export interface UserMenuColors {
   avatarText?: string;
   /** Menu label text color. */
   text?: string;
-  /** Trigger background on hover. */
+  /** Trigger background on hover and keyboard focus. */
   triggerHoverBackground?: string;
+  /** Background of the `Profile` and `Compact` triggers while the menu is open. Defaults to `--bg-control-accent-alpha-active-subtle`. */
+  triggerOpenBackground?: string;
 }
 
 /** Typography overrides for `UserMenu`. */
@@ -58,6 +61,8 @@ export interface UserMenuProps {
   onLogout: () => void;
   /** When provided, renders a Settings entry that invokes this callback. */
   onSettings?: () => void;
+  /** Presentation of the trigger. Defaults to `UserMenuTriggerVariant.Avatar`. */
+  triggerVariant?: UserMenuTriggerVariant;
   /** Hides the avatar tooltip — set on touch layouts where hover never fires. */
   isTooltipHidden?: boolean;
   /** Style overrides for colors, typography, and class names. */

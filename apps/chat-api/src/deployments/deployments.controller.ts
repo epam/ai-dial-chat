@@ -45,7 +45,7 @@ export class DeploymentsController {
     required: false,
     type: Boolean,
     description:
-      'Bypass the short server-side deployments list cache and refresh from DIAL Core',
+      'Bypass the short server-side deployments list cache and refresh from DIAL Core.',
   })
   @ApiDialCoreErrors()
   @ApiResponse({ status: 200, type: DeploymentsResponseDto })
@@ -69,10 +69,7 @@ export class DeploymentsController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const { sub, at, bucket, claims } = req.user as SessionUser;
-    res.setHeader(
-      'Cache-Control',
-      query.refresh ? 'private, no-store' : 'private, max-age=30',
-    );
+    res.setHeader('Cache-Control', 'private, no-store');
     return this.deploymentsService.listDeployments(
       sub,
       at,

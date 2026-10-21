@@ -270,7 +270,12 @@ export const Input = forwardRef<InputHandle, InputProps>(
         textareaRef.current?.selectionStart ?? message.length,
       );
     };
+    const skipFocusMenuEvaluationRef = useRef(false);
     const handleTextareaFocus = () => {
+      if (skipFocusMenuEvaluationRef.current) {
+        skipFocusMenuEvaluationRef.current = false;
+        return;
+      }
       requestAnimationFrame(() => {
         const textarea = textareaRef.current;
         latestCommandMenuCaretMoveRef.current(
@@ -568,7 +573,21 @@ export const Input = forwardRef<InputHandle, InputProps>(
           focusAfterTranscriptRef.current)
       ) {
         focusAfterTranscriptRef.current = false;
-        textareaRef.current?.focus();
+        const textarea = textareaRef.current;
+        if (textarea != null) {
+          /*
+           * The textarea is unmounted while recording, so it comes back as a
+           * fresh element whose caret sits at the start; a plain `focus()`
+           * would leave it there and the focus handler would re-open the
+           * command menu over a leading `/skill`. Put the caret at the end
+           * and skip that one focus-time menu evaluation.
+           */
+          skipFocusMenuEvaluationRef.current =
+            document.activeElement !== textarea;
+          textarea.focus();
+          const end = textarea.value.length;
+          textarea.setSelectionRange(end, end);
+        }
       }
     }, [voiceState, textareaRef]);
 
@@ -837,7 +856,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
               key="caret-marker"
               ref={caretMarkerRef}
               aria-hidden
-              className="inline-block h-[1lh] w-0 align-text-top"
+              className="inline-block h-lh w-0 align-text-top"
             />
           ),
         });
@@ -1022,7 +1041,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
                * caret marker's box. See `openspec/changes/archive/2026-09-25-multi-skill-message-mentions/design.md` Decision 3b
                * (multi-skill-message-mentions).
                */}
-              <span aria-hidden className="inline-block h-[1lh] w-0" />
+              <span aria-hidden className="inline-block h-lh w-0" />
             </Dropdown>
           </div>
         )}
@@ -1227,7 +1246,10 @@ export const Input = forwardRef<InputHandle, InputProps>(
           />
         )}
         {voiceError && (
-          <ErrorText text={voiceError} className="min-w-0 px-1 break-words" />
+          <ErrorText
+            text={voiceError}
+            className="min-w-0 px-1 wrap-break-word"
+          />
         )}
         {isVoiceActive && (
           <VoiceBar
@@ -1311,7 +1333,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
                       }
                       aria-label={micLabel}
                       tooltipProps={{ tooltip: micLabel }}
-                      className="size-[40px] flex-shrink-0 mobile:min-h-11 mobile:min-w-11"
+                      className="size-[40px] shrink-0 mobile:min-h-11 mobile:min-w-11"
                       onClick={() =>
                         startRecording(VoiceRecordingMode.Dictation)
                       }

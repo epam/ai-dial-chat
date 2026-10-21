@@ -4,6 +4,7 @@ export * from './file-manager-variant';
 export * from './file-upload-validation';
 export * from './labels';
 export * from './path';
+export * from './shell-styles';
 export * from './upload-batch';
 export * from './useGridEditingScroll/useGridEditingScroll';
 export * from './OperationLoaderModal/OperationLoaderModal';

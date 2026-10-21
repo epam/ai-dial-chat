@@ -433,7 +433,7 @@ describe('useDialFileUploadBatch', () => {
   });
 
   describe('onUploadArchive', () => {
-    it('invalidates the destination cache and reports UploadCompleted on full success', async () => {
+    it('invalidates the destination cache and shows no notification on full success', async () => {
       const filesApi = makeFilesApi();
       vi.mocked(filesApi.uploadArchive).mockResolvedValue({
         results: [
@@ -458,12 +458,7 @@ describe('useDialFileUploadBatch', () => {
           FileUploadStatus.Completed,
         ),
       );
-      expect(onNotification).toHaveBeenCalledOnce();
-      expect(onNotification).toHaveBeenCalledWith({
-        variant: NotificationVariant.Success,
-        reason: FileManagerNotificationReason.UploadCompleted,
-        folder: 'reports/',
-      });
+      expect(onNotification).not.toHaveBeenCalled();
       expect(invalidateFolders).toHaveBeenCalledWith(['reports/']);
       expect(bumpRetry).toHaveBeenCalled();
     });

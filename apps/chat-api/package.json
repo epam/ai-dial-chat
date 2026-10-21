@@ -157,9 +157,9 @@
     "proxy-from-env": "^2.1.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.0",
-    "sanitize-html": "^2.17.7",
+    "sanitize-html": "^2.18.0",
     "tslib": "^2.3.0",
-    "undici": "^6.21.1",
+    "undici": "^6.29.1",
     "yauzl": "^3.4.0"
   },
   "devDependencies": {

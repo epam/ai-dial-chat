@@ -27,7 +27,7 @@ It already includes the styles of the publish flow from `@epam/ai-dial-publish-p
 ## Peer Dependencies
 
 - `react`
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.11 (requires the public `/grid` entry)
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.22 (requires the public `/grid` entry)
 - `@epam/ai-dial-chat-shared`
 
 `ag-grid-community` and `@epam/ai-dial-publish-panel` are normal package
@@ -278,6 +278,29 @@ const browseSettings: Partial<BrowseSettingsSheetLabels> = {
 <Catalog items={items} titles={{ browseSettings }} />;
 ```
 
+#### Create menu sections
+
+`createOptions` may contain `DropdownItemType.Divider` and
+`DropdownItemType.PlainText` items to split the Create menu into sections, for
+example a divider plus a section header. Search highlighting leaves them alone.
+The desktop dropdown renders them with the kit's own styles. Below the desktop
+breakpoint, the bottom sheet renders the divider as `role="separator"` and the
+header as a non-interactive caption, neither of them a `menuitem`. Restyle them
+through `styles.colors.createMenu` (`CreateMenuColors`) and
+`styles.typography.createMenuSectionHeaderClassName` (defaults to
+`'dial-caption-text'`).
+
+```tsx
+import type { CreateMenuColors } from '@epam/ai-dial-catalog';
+
+const createMenu: CreateMenuColors = {
+  divider: 'var(--stroke-secondary)',
+  sectionHeaderText: 'var(--text-primary)',
+};
+
+<Catalog items={items} styles={{ colors: { createMenu } }} />;
+```
+
 #### Custom empty state
 
 By default, the Browse section renders a `PanelEmptyState` (an icon plus
@@ -389,7 +412,7 @@ import { Card } from '@epam/ai-dial-catalog';
 />;
 ```
 
-The card's `description` is rendered as sanitized Markdown using the same rendering pipeline as the About tab's details view (sanitization via `rehypeSanitize`). Markdown syntax (e.g. `**bold**`, lists, links), HTML-like snippets, and plain text all render correctly. Inline images are suppressed to keep the description within the card's fixed 2-line clamp; they appear normally in the About tab. Links render as real `<a>` elements and activate independently without triggering the card's own `onClick` handler; clicks on other description content still open the card details. When the clamp actually hides text, hovering the description opens an interactive panel (the kit `InteractiveTooltip`) with the full Markdown; it stays open while the pointer moves into it, its links are clickable, and clicks inside it never open the card. The panel is capped at the viewport height and scrolls, so a description longer than the screen stays readable to the end ([#9363](https://github.com/epam/ai-dial-chat/issues/9363)); a description that fits gets no panel.
+The card's `description` is rendered as sanitized Markdown using the same rendering pipeline as the About tab's details view (sanitization via `rehypeSanitize`). Markdown syntax (e.g. `**bold**`, lists, links), HTML-like snippets, and plain text all render correctly. Inline images are suppressed to keep the description within the card's line clamp — 2 lines, or 3 when the item has no `topics` and the tag row is empty; they appear normally in the About tab. Links render as real `<a>` elements and activate independently without triggering the card's own `onClick` handler; clicks on other description content still open the card details. When the clamp actually hides text, hovering the description opens an interactive panel (the kit `InteractiveTooltip`) with the full Markdown; it stays open while the pointer moves into it, its links are clickable, and clicks inside it never open the card. The panel is capped at the viewport height and scrolls, so a description longer than the screen stays readable to the end ([#9363](https://github.com/epam/ai-dial-chat/issues/9363)); a description that fits gets no panel. An item with no folder path shows `noFolderLabel` (default `'No folder'`) in the footer instead of an empty row; a read-only card drops that footer instead.
 
 The "Featured" chip's colors follow the item's entity type by default. Override
 it for every entity type with `styles.colors.featuredChipStyle` (merged over

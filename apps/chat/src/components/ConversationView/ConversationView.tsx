@@ -225,6 +225,12 @@ interface Props {
    * Never persisted as a message.
    */
   topContent?: ReactNode;
+  /**
+   * Shows each message's relative send time in its action row, revealed on
+   * hover or focus (always on devices without hover). Off by default so hosts
+   * such as the app preview chat stay unchanged.
+   */
+  hasMessageTimestamps?: boolean;
   /** A terminal read failed; received output remains in the view. */
   hasConversationReloadError?: boolean;
   /** Disables read retry while its request is pending. */
@@ -276,6 +282,7 @@ const ConversationView: FC<Props> = ({
   toolsMenuTitle,
   toolsChipLabels,
   topContent,
+  hasMessageTimestamps = false,
 }) => {
   const isModelFixed = !!fixedModel;
   const { renderOverlay, catalogModal } = useDeploymentSelectorOverlay();
@@ -1160,6 +1167,7 @@ const ConversationView: FC<Props> = ({
                 >
                   <ConversationMessageItem
                     msg={msg}
+                    hasTimestamp={hasMessageTimestamps}
                     contentRef={reply.contentRef}
                     index={index}
                     totalCount={messages.length}

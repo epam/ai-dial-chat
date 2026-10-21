@@ -38,6 +38,7 @@ import { ShareInvitationErrorCode } from '../types/share-invitation-error-code.e
 import {
   CONVERSATION_RESOURCE_PREFIX,
   FILE_RESOURCE_PREFIX,
+  collectApplicationIconResourceUrl,
   collectApplicationPromptResourceUrls,
   collectConversationResourceUrls,
   deriveInvitationExpiry,
@@ -226,11 +227,12 @@ export class ShareInvitationService {
   }
 
   /*
-   * Loads a quick app's `application_properties` and returns the prompt
-   * resource urls it references via `skills[]` (`type: 'dial-prompt'`), so the
-   * attached prompts are granted alongside the app itself — otherwise the
-   * recipient hits "Access denied to the prompt" when they open the shared
-   * app ([#8529](https://github.com/epam/ai-dial-chat/issues/8529)). Reuses the same `applications/{bucket}/{path}` →
+   * Loads a quick app and returns the prompt resource urls it references via
+   * `application_properties.skills[]` (`type: 'dial-prompt'`), plus its
+   * uploaded `files/...` icon, so both are granted alongside the app itself —
+   * otherwise the recipient hits "Access denied to the prompt" when they open
+   * the shared app ([#8529](https://github.com/epam/ai-dial-chat/issues/8529))
+   * and sees no icon ([#9317](https://github.com/epam/ai-dial-chat/issues/9317)). Reuses the same `applications/{bucket}/{path}` →
    * `getCustomApplication` resolution `buildApplicationDetails` uses.
    *
    * Best-effort: the pre-read MUST NOT block sharing the application itself.
@@ -245,8 +247,8 @@ export class ShareInvitationService {
    *
    * Same cross-bucket rule as conversations: DIAL Core rejects a single share
    * request mixing more than one owning bucket, and the caller cannot grant
-   * access to a prompt in another user's private bucket, so a referenced
-   * prompt whose bucket is not the app's own is silently dropped rather than
+   * access to a prompt or icon in another user's private bucket, so a related
+   * resource whose bucket is not the app's own is silently dropped rather than
    * failing the whole share. See openspec/specs/conversation-share/spec.md.
    */
   private async getApplicationRelatedResourceUrls(
@@ -282,7 +284,13 @@ export class ShareInvitationService {
       return [];
     }
 
-    return collectApplicationPromptResourceUrls(result.data).filter((url) => {
+    const iconResourceUrl = collectApplicationIconResourceUrl(result.data);
+    const relatedResourceUrls = [
+      ...collectApplicationPromptResourceUrls(result.data),
+      ...(iconResourceUrl != null ? [iconResourceUrl] : []),
+    ];
+
+    return relatedResourceUrls.filter((url) => {
       /*
        * `collectApplicationPromptResourceUrls` normalizes each url through
        * `toShareResourceUrl`, so the bucket segment read here is the encoded
@@ -292,9 +300,9 @@ export class ShareInvitationService {
        * percent-encoded bucket name (S3-style) matches regardless of which
        * side carries the encoding.
        */
-      const promptBucket = safeDecodeURIComponent(getResourceBucket(url));
+      const relatedBucket = safeDecodeURIComponent(getResourceBucket(url));
       const appBucket = safeDecodeURIComponent(resource.bucket);
-      return promptBucket === appBucket;
+      return relatedBucket === appBucket;
     });
   }
 

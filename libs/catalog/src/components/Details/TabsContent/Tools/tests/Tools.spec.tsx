@@ -62,18 +62,18 @@ describe('Tools', () => {
     });
 
     it('narrows the list by name or description, ignoring case', () => {
-      render(<Tools tools={MANY_TOOLS} />);
+      const { container } = render(<Tools tools={MANY_TOOLS} />);
       const search = screen.getByRole('textbox');
 
       fireEvent.change(search, { target: { value: 'NOTION' } });
-      expect(screen.getByText('notion-search')).toBeTruthy();
-      expect(screen.getByText('notion-fetch')).toBeTruthy();
-      expect(screen.queryByText('create-attachment')).toBeNull();
+      expect(container.textContent).toContain('notion-search');
+      expect(container.textContent).toContain('notion-fetch');
+      expect(container.textContent).not.toContain('create-attachment');
       expect(screen.getByRole('status').textContent).toBe('2 tools');
 
       fireEvent.change(search, { target: { value: ' file ' } });
-      expect(screen.getByText('create-attachment')).toBeTruthy();
-      expect(screen.queryByText('notion-fetch')).toBeNull();
+      expect(container.textContent).toContain('create-attachment');
+      expect(container.textContent).not.toContain('notion-fetch');
       expect(screen.getByRole('status').textContent).toBe('1 tools');
     });
 
@@ -105,6 +105,85 @@ describe('Tools', () => {
         target: { value: 'zzz' },
       });
       expect(screen.getByText('Aucun résultat')).toBeTruthy();
+    });
+  });
+  describe('search highlighting', () => {
+    const HIGHLIGHT_TOOLS: CatalogItemTools = {
+      tools: [
+        { name: 'notion-search', description: 'Searches pages (beta) [x]' },
+        { name: 'create-attachment', description: 'Uploads a FILE' },
+      ],
+    };
+    const marks = () =>
+      screen
+        .queryAllByText((_, element) => element?.tagName === 'MARK')
+        .map((mark) => mark.textContent);
+
+    it('highlights the match in the name and the description', () => {
+      render(<Tools tools={HIGHLIGHT_TOOLS} />);
+
+      fireEvent.change(screen.getByRole('textbox'), {
+        target: { value: 'search' },
+      });
+
+      expect(marks()).toEqual(['search', 'Search']);
+    });
+
+    it('matches regardless of case, keeping the original casing', () => {
+      render(<Tools tools={HIGHLIGHT_TOOLS} />);
+
+      fireEvent.change(screen.getByRole('textbox'), {
+        target: { value: 'file' },
+      });
+
+      expect(marks()).toEqual(['FILE']);
+    });
+
+    it('ignores surrounding whitespace in the query', () => {
+      render(<Tools tools={HIGHLIGHT_TOOLS} />);
+
+      fireEvent.change(screen.getByRole('textbox'), {
+        target: { value: '  file ' },
+      });
+
+      expect(marks()).toEqual(['FILE']);
+    });
+
+    it('treats regex characters in the query literally', () => {
+      render(<Tools tools={HIGHLIGHT_TOOLS} />);
+      const search = screen.getByRole('textbox');
+
+      fireEvent.change(search, { target: { value: '(beta)' } });
+      expect(marks()).toEqual(['(beta)']);
+
+      fireEvent.change(search, { target: { value: '[x]' } });
+      expect(marks()).toEqual(['[x]']);
+
+      fireEvent.change(search, { target: { value: '.*' } });
+      expect(marks()).toEqual([]);
+      expect(screen.getByText('No results found')).toBeTruthy();
+    });
+
+    it('highlights nothing for an empty or blank query', () => {
+      render(<Tools tools={HIGHLIGHT_TOOLS} />);
+
+      expect(marks()).toEqual([]);
+
+      fireEvent.change(screen.getByRole('textbox'), {
+        target: { value: '   ' },
+      });
+      expect(marks()).toEqual([]);
+      expect(screen.getByRole('status').textContent).toBe('2 tools');
+    });
+
+    it('highlights nothing when no tool matches', () => {
+      render(<Tools tools={HIGHLIGHT_TOOLS} />);
+
+      fireEvent.change(screen.getByRole('textbox'), {
+        target: { value: 'zzz' },
+      });
+
+      expect(marks()).toEqual([]);
     });
   });
 });

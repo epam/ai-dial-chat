@@ -630,15 +630,23 @@ export const PdfContent: FC<PdfContentProps> = ({
   return (
     <div className="relative flex h-full overflow-hidden">
       {totalPages > 0 && (
-        <div className="absolute start-3 top-3 z-10">
+        <div className="absolute inset-s-3 top-3 z-10">
           <Dropdown
             open={isThumbnailsOpen}
             onOpenChange={setIsThumbnailsOpen}
-            placement="bottom-start"
+            /* The only allowed placement, so the panel never flips above the
+             * button; the list below caps itself to the room that is left. */
+            allowedPlacements={['bottom-start']}
             matchReferenceWidth={false}
+            // Opening by click must not focus the page input: the overlay is
+            // still unpositioned at that moment, and focusing it scrolls the
+            // page to the overlay's initial spot (and raises the mobile
+            // keyboard).
+            initialFocus={-1}
             renderOverlay={() => (
               <div className="flex w-36 flex-col">
-                <div className="shrink-0 p-1">
+                {/* An 80px field plus the 4px padding on each side. */}
+                <div className="w-[88px] shrink-0 p-1">
                   <Input
                     size={ElementSize.Small}
                     aria-label={pageNumberLabel}
@@ -658,7 +666,7 @@ export const PdfContent: FC<PdfContentProps> = ({
                   role="region"
                   aria-label={thumbnailsLabel}
                   onScroll={handlePanelScroll}
-                  className="max-h-[70vh] min-h-0 [scrollbar-gutter:stable] overflow-x-hidden overflow-y-auto p-1"
+                  className="max-h-[min(70vh,calc(var(--fui-available-height,70vh)-2.5rem))] min-h-0 [scrollbar-gutter:stable_both-edges] overflow-x-hidden overflow-y-auto p-1"
                 >
                   <div style={{ height: topSpacerHeight }} />
                   {thumbnailItems}

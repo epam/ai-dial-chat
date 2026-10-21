@@ -1423,6 +1423,7 @@ describe('AppConfigService', () => {
         'publicationFilterSources',
         'maxAttachmentFileSizeBytes',
         'usageLimitsWarningThresholdPercent',
+        'celebrationsEnabledByDefault',
       ]);
       expect(Object.keys(result.features)).toEqual([
         'footer',

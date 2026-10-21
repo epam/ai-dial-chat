@@ -119,6 +119,10 @@ the package instead of hand-copying `apps/chat/src/server-api/*.ts`.
 - **WHEN** `stopCompletion({ generationId, path })` is called
 - **THEN** it sends a request to `${deps.completionsBasePath}/completions/stop` with the same body shape as the pre-move implementation, and throws when the response is not OK
 
+#### Scenario: A rejected stop exposes the HTTP status
+- **WHEN** the stop request resolves with a non-OK status
+- **THEN** `stopCompletion` rejects with a `StopCompletionError` (message `stopCompletion failed: <status>`) whose `status` is that HTTP status, so callers can tell a `404` ("nothing active to stop") from other failures
+
 #### Scenario: A persistence error chunk exposes the rejected write's status
 - **WHEN** the stream includes `{"error": {"type": "conversation_save_failed", "message": "…", "status": 401}}`
 - **THEN** `onError` receives a `GenerationPersistenceError` whose `status` is `401`; the same chunk without `status`, or with a non-numeric `status`, yields a `GenerationPersistenceError` whose `status` is `undefined`

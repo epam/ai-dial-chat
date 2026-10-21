@@ -24,8 +24,7 @@ The endpoint:
 - SHALL cache the unfiltered DIAL Core response under key `deployments:list:<userSub>` for 30 000 ms and filtered DIAL Core responses under key `deployments:list:<userSub>:interface:<type[,type]>` for 30 000 ms.
 - SHALL, when a filtered cache entry is absent but the unfiltered cache entry is present, apply `interface_type` filtering in-process after cache retrieval without calling DIAL Core.
 - SHALL bypass server-side deployments cache entirely when `refresh=true`, call DIAL Core, and replace the relevant cache entry with the fresh mapped response.
-- SHALL set response header `Cache-Control: private, max-age=30` for normal requests.
-- SHALL set response header `Cache-Control: private, no-store` when `refresh=true`.
+- SHALL set response header `Cache-Control: private, no-store` on every response, with or without `refresh=true`. A browser `max-age` is keyed by URL only, so it would serve one user's `isMy` / `canEdit` / `sharedWithMe` flags to the next user signed in on the same browser; freshness is owned by the per-user server-side cache above, which still bounds DIAL Core load.
 - MUST NOT log the session access token.
 
 #### Scenario: Authenticated user receives all deployments without filter
@@ -100,6 +99,11 @@ The endpoint:
 
 - **WHEN** `deployments:list:<userSub>` is present in cache and `interface_type=chat` is requested
 - **THEN** the service returns cached deployments filtered in-process without calling DIAL Core
+
+#### Scenario: Response is never cached by the browser
+
+- **WHEN** `GET /api/v1/deployments` is requested without `refresh`
+- **THEN** the response header is `Cache-Control: private, no-store`, not a `max-age` directive, so a browser cannot serve the previous user's ownership flags after a user switch within any time window
 
 #### Scenario: Refresh bypasses deployments cache
 
@@ -326,7 +330,7 @@ The backend SHALL implement the deployments feature in `apps/chat-api/src/deploy
 #### Scenario: Controller delegates to service with parsed query
 
 - **WHEN** `listDeployments` is called with a validated `DeploymentsQueryDto`
-- **THEN** the controller extracts `sub`, `at`, `bucket`, and `claims` from `req.user`, sets the appropriate `Cache-Control` header, and calls `deploymentsService.listDeployments(sub, at, bucket, query.interface_type, query.refresh, getJobTitleClaim(claims))`
+- **THEN** the controller extracts `sub`, `at`, `bucket`, and `claims` from `req.user`, sets `Cache-Control: private, no-store`, and calls `deploymentsService.listDeployments(sub, at, bucket, query.interface_type, query.refresh, getJobTitleClaim(claims))`
 
 ---
 

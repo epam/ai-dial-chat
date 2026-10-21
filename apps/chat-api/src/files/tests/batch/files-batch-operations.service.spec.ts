@@ -1319,5 +1319,43 @@ describe('FilesBatchOperationsService', () => {
       expect(result.results[0].success).toBe(true);
       expect(sdkClient.moveResource).not.toHaveBeenCalled();
     });
+
+    it.each([
+      ['into itself', 'drafts/', 'drafts/drafts/'],
+      ['into its subfolder', 'drafts', 'drafts/inner/drafts'],
+      ['onto its own path', 'drafts/', 'drafts/'],
+    ])(
+      'rejects moving a folder %s without touching DIAL Core',
+      async (_label, sourcePath, destinationPath) => {
+        const { service, sdkClient } = makeService();
+
+        const result = await service.moveFiles(
+          [folderItem({ sourcePath, destinationPath })],
+          'token',
+        );
+
+        expect(result.results[0]).toEqual({
+          sourcePath,
+          destinationPath,
+          success: false,
+          error: 'Cannot move a folder into itself or its subfolders',
+        });
+        expect(sdkClient.getFileMetadata).not.toHaveBeenCalled();
+        expect(sdkClient.moveResource).not.toHaveBeenCalled();
+      },
+    );
+
+    it('moves a folder into a sibling that only shares its name prefix', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getFileMetadata.mockResolvedValue(makeFileMetadataPage([]));
+
+      const result = await service.moveFiles(
+        [folderItem({ destinationPath: 'drafts-old/drafts/' })],
+        'token',
+      );
+
+      expect(result.results[0].success).toBe(true);
+      expect(sdkClient.getFileMetadata).toHaveBeenCalled();
+    });
   });
 });

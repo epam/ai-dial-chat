@@ -6,55 +6,48 @@ import {
   GhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import {
+  IconLayoutSidebar,
   IconLayoutSidebarRight,
-  IconMenu2,
   IconPlus,
 } from '@tabler/icons-react';
 import type { FC } from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMatch } from 'react-router';
+import { MOBILE_SIDEBAR_ID } from '../../constants/layout';
 import {
   ButtonsI18nKeys,
   ConversationPanelI18nKeys,
   NavigationI18nKeys,
 } from '../../constants/translation-keys';
+import { useMobileSidebarContent } from '../../hooks/navigation/useMobileSidebarContent';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { ROUTES } from '../../types/routes';
-import styles from './Header.module.scss';
 import Logo from './Logo';
 import SourcesSidebarToggle from './SourcesSidebarToggle';
 
 interface Props {
+  /** Opens or closes the sidebar drawer. */
   onMenuToggle: () => void;
-  isConversationPanelOpen?: boolean;
-  onConversationPanelToggle?: () => void;
+  /** Whether the sidebar drawer is open; drives the toggle's `aria-expanded`. */
+  isMenuOpen?: boolean;
   onNewChat?: () => void;
 }
 
-const Header: FC<Props> = ({
-  onMenuToggle,
-  isConversationPanelOpen,
-  onConversationPanelToggle,
-  onNewChat,
-}) => {
+/**
+ * The mobile header: the sidebar toggle and New chat on the start side, the
+ * logo in the middle and the sources toggle on the end side, over a 1px divider.
+ */
+const Header: FC<Props> = ({ onMenuToggle, isMenuOpen = false, onNewChat }) => {
   const { t } = useTranslation();
-  const isConversationRoute = !!useMatch(`${ROUTES.Conversations}/*`);
   const isRootRoute = !!useMatch(ROUTES.Root);
-  /* The panel toggle belongs on both the start page and an open conversation;
-     the + button only on the latter — see the new-chat button below. */
-  const isConversationPanel = isConversationRoute || isRootRoute;
   const isHeaderEnabled = useUiFeature(OverlayFeature.Header);
   const isHeaderLogoShown = useUiFeature(OverlayFeature.ShowHeaderLogo);
-  const isConversationsPanelToggleEnabled = useUiFeature(
-    OverlayFeature.ConversationsPanelToggle,
-  );
   const isNewConversationHidden = useUiFeature(
     OverlayFeature.HideNewConversation,
   );
-  const isNavigationMenuHidden = useUiFeature(
-    OverlayFeature.HideNavigationMenu,
-  );
+  const { hasNavigation, isReachable: isSidebarReachable } =
+    useMobileSidebarContent();
 
   /* `show-header-logo` keeps the brand visible on mobile even when the host
      turns the header off: the row then carries only the logo. */
@@ -65,84 +58,53 @@ const Header: FC<Props> = ({
   return (
     <header
       className={mergeClasses(
-        'z-30 grid min-h-[48px] w-full grid-cols-[1fr_auto_1fr] items-center bg-transparent pt-1 desktop:hidden',
+        'z-30 grid min-h-[48px] w-full grid-cols-[1fr_auto_1fr] items-center border-b border-b-tertiary bg-transparent desktop:hidden',
         isRootRoute ? 'absolute inset-x-0 top-0' : 'relative',
       )}
     >
       <div className="flex items-center gap-1 ps-3">
-        {isHeaderEnabled && !isNavigationMenuHidden && (
+        {isHeaderEnabled && isSidebarReachable && (
           <GhostIconButton
             icon={
-              <IconMenu2
+              <IconLayoutSidebar
                 size={DIAL_ICON_SIZE.LG}
                 stroke={DIAL_KIT_ICON_STROKE}
+                className="rtl:scale-x-[-1]"
+                aria-hidden
               />
             }
-            aria-label={t(NavigationI18nKeys.OpenMenu)}
+            aria-label={t(
+              hasNavigation
+                ? NavigationI18nKeys.Menu
+                : ConversationPanelI18nKeys.ChatsAndTasks,
+            )}
+            aria-expanded={isMenuOpen}
+            aria-controls={MOBILE_SIDEBAR_ID}
             onClick={onMenuToggle}
           />
         )}
-        {isHeaderEnabled &&
-          onConversationPanelToggle != null &&
-          isConversationPanel &&
-          isConversationsPanelToggleEnabled && (
-            <GhostIconButton
-              icon={
-                <IconLayoutSidebarRight
-                  size={DIAL_ICON_SIZE.LG}
-                  stroke={DIAL_KIT_ICON_STROKE}
-                  className={
-                    !isConversationPanelOpen ? 'scale-x-[-1]' : undefined
-                  }
-                />
-              }
-              aria-label={t(ConversationPanelI18nKeys.ToggleAriaLabel)}
-              aria-pressed={isConversationPanelOpen}
-              tooltipProps={{
-                tooltip: t(ConversationPanelI18nKeys.ToggleAriaLabel),
-              }}
-              onClick={onConversationPanelToggle}
-            />
-          )}
-        {/* Deliberately gated to a conversation route: the start page renders
-            its own composer with `NewChatInput`, so a + button there would
-            duplicate it. The desktop equivalent lives in `ChatLayout`, which
-            keeps the button on every route because its header row has no
-            composer beneath it — keep the two in sync knowingly. */}
-        {isHeaderEnabled &&
-          onNewChat != null &&
-          isConversationRoute &&
-          !isNewConversationHidden && (
-            <div
-              className={mergeClasses(
-                'overflow-hidden transition-all duration-200 ease-in-out',
-                isConversationPanelOpen
-                  ? 'max-w-0 opacity-0'
-                  : 'max-w-[40px] opacity-100',
-              )}
-            >
-              <GhostIconButton
-                icon={
-                  <IconPlus
-                    size={DIAL_ICON_SIZE.LG}
-                    stroke={DIAL_KIT_ICON_STROKE}
-                    className={
-                      !isConversationPanelOpen
-                        ? styles.newChatIconPop
-                        : undefined
-                    }
-                  />
-                }
-                onClick={onNewChat}
-                aria-label={t(ButtonsI18nKeys.NewChat)}
-                tabIndex={isConversationPanelOpen ? -1 : 0}
+        {isHeaderEnabled && onNewChat != null && !isNewConversationHidden && (
+          <GhostIconButton
+            icon={
+              <IconPlus
+                size={DIAL_ICON_SIZE.LG}
+                stroke={DIAL_KIT_ICON_STROKE}
+                aria-hidden
               />
-            </div>
-          )}
+            }
+            onClick={onNewChat}
+            aria-label={t(ButtonsI18nKeys.NewChat)}
+          />
+        )}
       </div>
       <Logo />
       <div className="flex justify-end pe-3">
-        {isHeaderEnabled && <SourcesSidebarToggle />}
+        {isHeaderEnabled && (
+          <SourcesSidebarToggle
+            icon={IconLayoutSidebarRight}
+            iconClassName="rtl:scale-x-[-1]"
+          />
+        )}
       </div>
     </header>
   );

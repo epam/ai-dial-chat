@@ -5,6 +5,7 @@ import {
 import {
   ScheduledTasks,
   ScheduledTasksSortKey,
+  type ScheduledTasksStyles,
 } from '@epam/ai-dial-scheduled-tasks';
 import {
   memo,
@@ -78,6 +79,16 @@ const resolveBannerState = ({
     return ScheduledTasksLoginBannerState.Shown;
   }
   return undefined;
+};
+
+/* The page header: a 40px title row over a
+   small-text description, as on the other pages. */
+const PAGE_STYLES: ScheduledTasksStyles = {
+  typography: {
+    titleClassName: 'dial-h1-text flex min-h-10 items-center',
+    /* `!mt-0.5` replaces the library's 4px gap under the title with the 2px used on the other pages. */
+    subtitleClassName: 'dial-small-text !mt-0.5',
+  },
 };
 
 const ScheduledTasksPage: FC = () => {
@@ -212,6 +223,7 @@ const ScheduledTasksPage: FC = () => {
   return (
     <ScheduledTasks
       labels={labels}
+      styles={PAGE_STYLES}
       onCreateClick={handleCreateClick}
       searchQuery={searchQuery}
       onSearchQueryChange={setSearchQuery}

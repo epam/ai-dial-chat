@@ -7,6 +7,7 @@ import type {
 import {
   DialFileManagerActionProfile,
   DialFileManagerVariant,
+  FileDownloadStatus,
   FileUploadStatus,
 } from '@epam/ai-dial-chat-shared';
 import type { DialFileManagerShellLabels } from '@epam/ai-dial-chat-shared';
@@ -25,7 +26,8 @@ interface CapturedActionLabels {
 
 interface CapturedTreeOptions extends CapturedActionLabels {
   activeTab?: DialFileManagerTabs;
-  header?: string;
+  header?: string | null;
+  tabsAriaLabel?: string;
   containerClassName?: string;
   loadedPaths?: Set<string>;
   loadingPaths?: Set<string>;
@@ -39,6 +41,8 @@ const capturedDialFileManagerProps: {
     onFolderPopupPathChange?: unknown;
     autoSelectUploadedItems?: boolean;
     onGetInfo?: unknown;
+    onPreview?: unknown;
+    previewExtensions?: string[];
     gridOptions?: CapturedActionLabels;
     treeOptions?: CapturedTreeOptions;
     navigationPanelOptions?: { placeholder?: string };
@@ -65,6 +69,7 @@ const capturedDialFileManagerProps: {
       destinationFolderPath?: string;
       setDestinationFolderPath?: (path?: string) => void;
       disabledPathTooltip?: string;
+      movedIntoItselfTooltip?: string;
       filesLoading?: boolean;
     };
   } | null;
@@ -86,11 +91,14 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
         destinationFolderPath?: string;
         setDestinationFolderPath?: (path?: string) => void;
         disabledPathTooltip?: string;
+        movedIntoItselfTooltip?: string;
         filesLoading?: boolean;
       };
       onCreateFolder?: unknown;
       onFolderPopupPathChange?: unknown;
       onGetInfo?: unknown;
+      onPreview?: unknown;
+      previewExtensions?: string[];
       autoSelectUploadedItems?: boolean;
       gridOptions?: CapturedActionLabels;
       treeOptions?: CapturedTreeOptions;
@@ -152,6 +160,10 @@ const baseHookResult: UseDialFileManagerResult = {
   isCreatingFolder: false,
   onDownloadFiles: vi.fn(),
   isDownloading: false,
+  downloadBatchState: null,
+  cancelDownloadFile: vi.fn(),
+  cancelAllDownloads: vi.fn(),
+  clearDownloadBatch: vi.fn(),
   onDeleteFiles: vi.fn(),
   isDeleting: false,
   onRenameValidate: vi.fn(),
@@ -209,6 +221,7 @@ const baseLabels: DialFileManagerShellLabels = {
   getMoveHeader: (count, name) =>
     count === 1 ? `Move "${name}"` : `Move ${count} items`,
   moveSourceDisabledTooltip: 'Unavailable for the original location',
+  movedIntoItselfTooltip: 'Not into itself',
   folderPickerLoadingTooltip: 'Loading folder contents. Please wait',
   folderPickerEmptyStateTitle: 'No folders here',
   folderPickerEmptyStateDescription: 'Create a folder or choose another',
@@ -278,6 +291,8 @@ const renderShell = (
     actionProfile?: DialFileManagerActionProfile;
     labels?: DialFileManagerShellLabels;
     treeContainerClassName?: string;
+    onPreview?: (path?: string) => void;
+    previewExtensions?: string[];
   } = {},
 ) =>
   render(
@@ -292,6 +307,8 @@ const renderShell = (
       variant={options.variant ?? DialFileManagerVariant.Standalone}
       actionProfile={options.actionProfile ?? DialFileManagerActionProfile.Full}
       treeContainerClassName={options.treeContainerClassName}
+      onPreview={options.onPreview}
+      previewExtensions={options.previewExtensions}
     />,
   );
 
@@ -402,6 +419,97 @@ describe('DialFileManagerShell', () => {
     expect(clearUploadBatch).toHaveBeenCalledOnce();
   });
 
+  it('shows uploads and downloads in one queue, titled from both counts', () => {
+    renderShell(
+      {
+        uploadBatchState: {
+          isOpen: true,
+          files: [
+            { id: 'u1', name: 'a.pdf', status: FileUploadStatus.Uploading },
+          ],
+        },
+        downloadBatchState: {
+          isOpen: true,
+          files: [
+            {
+              id: 'd1',
+              name: 'files.zip',
+              status: FileDownloadStatus.Downloading,
+            },
+          ],
+        },
+      },
+      new Set(),
+      {
+        labels: {
+          ...baseLabels,
+          getTransferQueueTitle: ({ uploads, downloads }) =>
+            `${uploads} up, ${downloads} down`,
+        },
+      },
+    );
+
+    expect(screen.getByText('1 up, 1 down')).toBeTruthy();
+    expect(screen.getByText('a.pdf')).toBeTruthy();
+    expect(screen.getByText('files.zip')).toBeTruthy();
+  });
+
+  it('cancels a download from its queue row', async () => {
+    const cancelDownloadFile = vi.fn();
+    const cancelUploadFile = vi.fn();
+    renderShell({
+      cancelDownloadFile,
+      cancelUploadFile,
+      downloadBatchState: {
+        isOpen: true,
+        files: [
+          {
+            id: 'd1',
+            name: 'report.pdf',
+            status: FileDownloadStatus.Downloading,
+          },
+        ],
+      },
+    });
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Cancel "report.pdf"' }),
+    );
+
+    expect(cancelDownloadFile).toHaveBeenCalledWith('d1');
+    expect(cancelUploadFile).not.toHaveBeenCalled();
+  });
+
+  it('stops and clears uploads and downloads alike when the queue is closed', async () => {
+    const cancelAllDownloads = vi.fn();
+    const clearDownloadBatch = vi.fn();
+    const cancelUpload = vi.fn();
+    const clearUploadBatch = vi.fn();
+    renderShell({
+      cancelAllDownloads,
+      clearDownloadBatch,
+      cancelUpload,
+      clearUploadBatch,
+      downloadBatchState: {
+        isOpen: true,
+        files: [
+          {
+            id: 'd1',
+            name: 'report.pdf',
+            status: FileDownloadStatus.Completed,
+          },
+        ],
+      },
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+
+    expect(cancelAllDownloads).toHaveBeenCalledOnce();
+    expect(clearDownloadBatch).toHaveBeenCalledOnce();
+    expect(cancelUpload).toHaveBeenCalledOnce();
+    expect(clearUploadBatch).toHaveBeenCalledOnce();
+  });
+
   it('sets destinationFolderPopupOptions.sourceFolder to the common parent when all selected items share one', () => {
     renderShell(
       undefined,
@@ -439,6 +547,15 @@ describe('DialFileManagerShell', () => {
     expect(options?.disabledPathTooltip).toBe(
       baseLabels.folderPickerLoadingTooltip,
     );
+  });
+
+  it('passes the moved-into-itself tooltip to the destination-folder popup', () => {
+    renderShell();
+
+    expect(
+      capturedDialFileManagerProps.current?.destinationFolderPopupOptions
+        ?.movedIntoItselfTooltip,
+    ).toBe(baseLabels.movedIntoItselfTooltip);
   });
 
   it('passes the hook result onCreateFolder straight through to DialFileManager without wrapping it, so the destination-folder popup targets its own browsed path via the same fallback', () => {
@@ -620,6 +737,71 @@ describe('DialFileManagerShell', () => {
     expect(capturedDialFileManagerProps.current?.onGetInfo).toBe(onGetInfo);
   });
 
+  describe('Preview action', () => {
+    const labelsWithPreview: DialFileManagerShellLabels = {
+      ...baseLabels,
+      previewLabel: 'Preview',
+    };
+
+    it('adds Preview to gridOptions action labels when labels.previewLabel is given', () => {
+      renderShell(undefined, new Set(), { labels: labelsWithPreview });
+      expect(
+        capturedDialFileManagerProps.current?.gridOptions?.actionLabels?.[
+          DialFileManagerActions.Preview
+        ],
+      ).toBe('Preview');
+    });
+
+    it('omits Preview from gridOptions action labels without labels.previewLabel', () => {
+      renderShell();
+      expect(
+        capturedDialFileManagerProps.current?.gridOptions?.actionLabels?.[
+          DialFileManagerActions.Preview
+        ],
+      ).toBeUndefined();
+    });
+
+    it('keeps Info alongside Preview in gridOptions action labels', () => {
+      renderShell(
+        {
+          actionLabels: {
+            [DialFileManagerActions.Download]: 'Download',
+            [DialFileManagerActions.Info]: 'Info',
+          },
+        },
+        new Set(),
+        { labels: labelsWithPreview },
+      );
+      const labels =
+        capturedDialFileManagerProps.current?.gridOptions?.actionLabels;
+      expect(labels?.[DialFileManagerActions.Preview]).toBe('Preview');
+      expect(labels?.[DialFileManagerActions.Info]).toBe(baseLabels.infoLabel);
+    });
+
+    it('never includes Preview in treeOptions or bulkActionsToolbarOptions action labels', () => {
+      renderShell(undefined, new Set(), { labels: labelsWithPreview });
+      expect(
+        capturedDialFileManagerProps.current?.treeOptions?.actionLabels?.[
+          DialFileManagerActions.Preview
+        ],
+      ).toBeUndefined();
+      expect(
+        capturedDialFileManagerProps.current?.bulkActionsToolbarOptions
+          ?.actionLabels?.[DialFileManagerActions.Preview],
+      ).toBeUndefined();
+    });
+
+    it('passes onPreview and previewExtensions straight through to DialFileManager', () => {
+      const onPreview = vi.fn();
+      const previewExtensions = ['.md', '.txt'];
+      renderShell(undefined, new Set(), { onPreview, previewExtensions });
+      expect(capturedDialFileManagerProps.current?.onPreview).toBe(onPreview);
+      expect(capturedDialFileManagerProps.current?.previewExtensions).toBe(
+        previewExtensions,
+      );
+    });
+  });
+
   it('builds fileMetadataPopupOptions from hook state and translated labels', () => {
     const fileMetadata = {
       name: 'report.pdf',
@@ -644,7 +826,6 @@ describe('DialFileManagerShell', () => {
 
   describe('consolidated operation overlay', () => {
     const consolidatedOverlayLabels = [
-      baseLabels.downloadingLabel,
       baseLabels.deletingLabel,
       baseLabels.renamingLabel,
       baseLabels.unsharingLabel,
@@ -657,11 +838,11 @@ describe('DialFileManagerShell', () => {
       });
     };
 
-    it('shows the downloading label while isDownloading is true', () => {
+    it('shows no overlay while a download runs, since downloads are queue rows', () => {
       renderShell({ isDownloading: true });
-      expect(
-        screen.getByRole('img', { name: baseLabels.downloadingLabel }),
-      ).toBeTruthy();
+
+      expectNoConsolidatedOverlay();
+      expect(screen.queryByRole('img', { name: 'Downloading…' })).toBeNull();
     });
 
     it('shows the deleting label while isDeleting is true', () => {
@@ -726,14 +907,11 @@ describe('DialFileManagerShell', () => {
       expectNoConsolidatedOverlay();
     });
 
-    it('prioritizes the downloading label over the deleting label when both are unexpectedly true', () => {
+    it('shows the deleting label even while a download runs, since downloads have no overlay', () => {
       renderShell({ isDownloading: true, isDeleting: true });
       expect(
-        screen.getByRole('img', { name: baseLabels.downloadingLabel }),
+        screen.getByRole('img', { name: baseLabels.deletingLabel }),
       ).toBeTruthy();
-      expect(
-        screen.queryByRole('img', { name: baseLabels.deletingLabel }),
-      ).toBeNull();
     });
 
     it('prioritizes the deleting label over the renaming label when both are unexpectedly true', () => {
@@ -904,14 +1082,17 @@ describe('DialFileManagerShell', () => {
       expect(screen.getByText('Nothing shared with you yet')).toBeTruthy();
     });
 
-    it('keeps All as the strip value and tree header key', () => {
+    it('keeps All as the strip value and as the tabs label key, with no visible tree header', () => {
       renderAll(DialFileManagerTabs.Shared);
       expect(capturedDialFileManagerProps.current?.treeOptions?.activeTab).toBe(
         DialFileManagerTabs.All,
       );
-      expect(capturedDialFileManagerProps.current?.treeOptions?.header).toBe(
-        'File storage',
-      );
+      expect(
+        capturedDialFileManagerProps.current?.treeOptions?.header,
+      ).toBeNull();
+      expect(
+        capturedDialFileManagerProps.current?.treeOptions?.tabsAriaLabel,
+      ).toBe('File storage');
     });
 
     it('gates on activeTab when the controller has no sectionTab', () => {

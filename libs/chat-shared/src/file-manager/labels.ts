@@ -11,6 +11,7 @@ import type {
 } from '@epam/ai-dial-react-file-manager';
 import type { TransferQueueLabels } from '@epam/ai-dial-ui-kit';
 import type { ComponentProps, ReactNode } from 'react';
+import type { FileUploadFailureReason } from './upload-batch';
 
 type DialFileManagerComponentProps = ComponentProps<typeof DialFileManager>;
 
@@ -63,8 +64,11 @@ export interface DialFileManagerShellLabels {
   newFolderLabel: string;
   /** Label for the Download action. */
   downloadLabel: string;
-  /** Overlay label shown while a download is in progress. */
-  downloadingLabel: string;
+  /**
+   * Overlay label shown while a download was in progress.
+   * @deprecated Not read: downloads run as transfer-queue rows with no overlay.
+   */
+  downloadingLabel?: string;
   /** Label for the Delete action. */
   deleteLabel: string;
   /** Overlay label shown while a delete operation is in progress. */
@@ -89,6 +93,8 @@ export interface DialFileManagerShellLabels {
   getMoveHeader: (count: number, name?: string) => string;
   /** Tooltip shown on the disabled source folder in the destination picker. */
   moveSourceDisabledTooltip: string;
+  /** Tooltip shown when the move destination is a moved folder or lies inside one. */
+  movedIntoItselfTooltip: string;
   /** Tooltip shown when a destination folder is still loading. */
   folderPickerLoadingTooltip: string;
   /** Empty-state title in the destination-folder picker. */
@@ -119,6 +125,22 @@ export interface DialFileManagerShellLabels {
   getUploadQueueTitle: (count: number) => string;
   /** Translated strings for the upload `TransferQueue`; unset ones fall back to the kit's English defaults. */
   uploadQueueLabels?: Partial<TransferQueueLabels>;
+  /** Tooltip and accessible name of a failed upload or download row, per failure reason; a reason without one shows `uploadQueueLabels.failedMessage`. */
+  uploadFailureMessages?: Partial<Record<FileUploadFailureReason, string>>;
+  /** Returns the transfer queue heading from the number of upload and download rows; unset falls back to `getUploadQueueTitle` with the total. */
+  getTransferQueueTitle?: (counts: {
+    uploads: number;
+    downloads: number;
+  }) => string;
+  /** Download-row wording of the transfer queue (cancel and progress names, and the aggregate bar's name when only downloads run); unset ones use `uploadQueueLabels`. */
+  downloadQueueLabels?: Partial<
+    Pick<
+      TransferQueueLabels,
+      'cancelItemAriaLabel' | 'itemProgressAriaLabel' | 'queueProgressAriaLabel'
+    >
+  >;
+  /** Accessible name of the queue's aggregate progress bar while uploads and downloads both run; unset uses `uploadQueueLabels.queueProgressAriaLabel`. */
+  transferQueueProgressAriaLabel?: string;
   /** Empty-state title when a search yields no results. */
   searchEmptyStateTitle: string;
   /** Empty-state title for an empty subfolder. */
@@ -145,6 +167,8 @@ export interface DialFileManagerShellLabels {
   removingAccessLabel: string;
   /** Label for the Info action. */
   infoLabel: string;
+  /** Label for the Preview action. Omit to hide the action. */
+  previewLabel?: string;
   /** Header for the metadata popup. */
   metadataHeader: string;
   /** Label for the file name in the metadata popup. */

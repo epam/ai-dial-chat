@@ -9,3 +9,11 @@
 .settingsDot {
   background: var(--cat-browse-settings-dot, var(--bg-control-accent, #1d4ed8));
 }
+
+/* Keeps the large field's 48px height without `.dial-kit-input-large`, whose
+ * 16/26 body text is too big for the catalog search: the base `.dial-kit-input`
+ * text (14/24) applies instead. Doubled to win over the unlayered
+ * `.dial-kit-input` height regardless of stylesheet order. */
+.searchField.searchField {
+  height: 48px;
+}

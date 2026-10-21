@@ -33,6 +33,7 @@ const labels: CatalogEditNavigationLabels = {
   createSkillWriteInstructions: 'Write instructions',
   createSkillUpload: 'Upload',
   createPrompt: 'Create prompt',
+  createRunners: 'Runners',
   deleteError: 'delete-error',
 };
 
@@ -467,19 +468,19 @@ describe('useCatalogEditNavigation', () => {
       );
     });
 
-    it('offers one create option per runner schema, labelled with its display name and sorted with the static options', () => {
+    it('offers one create option per runner schema, labelled with its display name and listed after the entity options under a Runners header', () => {
       const { result, onNavigate } = renderEditNavigation({
         isCustomAppsEnabled: true,
         schemas: [
           quickAppSchema,
           {
-            id: 'ocr-schema',
-            displayName: 'OCR',
+            id: 'mind-map-schema',
+            displayName: 'Mind Map',
             schemaEndpoint: SCHEMA_ENDPOINT,
           },
           {
-            id: 'ocr-schema',
-            displayName: 'OCR',
+            id: 'mind-map-schema',
+            displayName: 'Mind Map',
             schemaEndpoint: SCHEMA_ENDPOINT,
           },
           {
@@ -506,23 +507,27 @@ describe('useCatalogEditNavigation', () => {
           option.label,
         ]),
       ).toEqual([
-        ['custom-app', 'Create custom app'],
         ['prompt', 'Create prompt'],
         ['toolset', 'Create toolset'],
+        ['skill', 'Skill'],
+        ['create-sections-divider', undefined],
+        ['runners-header', 'Runners'],
+        ['custom-app', 'Create custom app'],
+        ['runner:mind-map-schema', 'Mind Map'],
         ['runner:editorless-runner', 'No editor'],
-        ['runner:ocr-schema', 'OCR'],
         ['runner:foo-quickapps', 'Quick app'],
         ['runner:foo-quickapps2', 'Quick app 2.0'],
-        ['skill', 'Skill'],
       ]);
 
       result.current.createOptions
-        .find((option) => option.key === 'runner:ocr-schema')
+        .find((option) => option.key === 'runner:mind-map-schema')
         ?.onClick?.({
-          key: 'runner:ocr-schema',
+          key: 'runner:mind-map-schema',
           domEvent: {} as never,
         });
-      expect(onNavigate).toHaveBeenCalledWith('create:quick-app:ocr-schema');
+      expect(onNavigate).toHaveBeenCalledWith(
+        'create:quick-app:mind-map-schema',
+      );
     });
 
     it('lists every runner option, sorted alphabetically', () => {
@@ -561,45 +566,11 @@ describe('useCatalogEditNavigation', () => {
         'Iota',
         'Kappa',
         'Lambda',
+        'Mind map',
         'OCR',
         'Theta',
         'Zeta',
       ]);
-    });
-
-    it('omits Mind Map runners from the Create menu', () => {
-      const { result } = renderEditNavigation({
-        schemas: [
-          { id: 'mind-map', displayName: 'Mind map', editorUrl: EDITOR_URL },
-          {
-            id: 'https://runner.example/schemas/mindmap',
-            displayName: 'Brainstorm',
-            editorUrl: EDITOR_URL,
-          },
-          { id: 'ocr', displayName: 'OCR', schemaEndpoint: SCHEMA_ENDPOINT },
-        ],
-      });
-
-      const runnerKeys = result.current.createOptions
-        .filter((option) => option.key.startsWith('runner:'))
-        .map((option) => option.key);
-
-      expect(runnerKeys).toEqual(['runner:ocr']);
-      expect(
-        result.current.createMenuByType[CatalogEntityType.Agent]?.options.map(
-          (option) => option.key,
-        ),
-      ).not.toContain('runner:mind-map');
-    });
-
-    it('offers no search field when Mind Map is the only runner', () => {
-      const { result } = renderEditNavigation({
-        schemas: [
-          { id: 'mind-map', displayName: 'Mind map', editorUrl: EDITOR_URL },
-        ],
-      });
-
-      expect(result.current.createSearch).toBeUndefined();
     });
 
     it('filters runner and static options by the search query, case-insensitively', () => {
@@ -611,11 +582,11 @@ describe('useCatalogEditNavigation', () => {
         ],
       });
 
-      act(() => result.current.createSearch?.onChange('oCr'));
+      act(() => result.current.createSearch?.onChange('MAP'));
 
-      expect(result.current.createSearch?.value).toBe('oCr');
+      expect(result.current.createSearch?.value).toBe('MAP');
       expect(result.current.createOptions.map((option) => option.key)).toEqual([
-        'runner:ocr',
+        'runner:mind-map',
       ]);
 
       act(() => result.current.createSearch?.onChange('upload'));
@@ -626,6 +597,44 @@ describe('useCatalogEditNavigation', () => {
       expect(
         result.current.createOptions[0].children?.map((child) => child.key),
       ).toEqual(['skill-upload']);
+    });
+
+    it('shows no section divider or header when hide-custom-app-creation leaves no runner section', () => {
+      const { result } = renderEditNavigation({
+        isCustomAppsEnabled: true,
+        isHideCustomAppCreationEnabled: true,
+        schemas: [quickAppSchema],
+      });
+
+      expect(result.current.createOptions.map((option) => option.key)).toEqual([
+        'prompt',
+        'toolset',
+        'skill',
+      ]);
+    });
+
+    it('shows only the runner section, without a header, when no entity option is offered', () => {
+      const { result } = renderEditNavigation({
+        isCustomAppsEnabled: true,
+        isToolsetsEnabled: false,
+        isPromptsEnabled: false,
+        schemas: [quickAppSchema],
+      });
+
+      act(() => result.current.createSearch?.onChange('app'));
+
+      expect(result.current.createOptions.map((option) => option.key)).toEqual([
+        'custom-app',
+        'runner:foo-quickapps2',
+      ]);
+    });
+
+    it('leaves no options when the search matches nothing', () => {
+      const { result } = renderEditNavigation({ schemas: [quickAppSchema] });
+
+      act(() => result.current.createSearch?.onChange('zzz'));
+
+      expect(result.current.createOptions).toEqual([]);
     });
 
     it('offers no search field when no runner option is available', () => {

@@ -535,12 +535,17 @@ describe('MarkdownRenderer', () => {
      * the <math> element only appears after that async load resolves.
      * MathML's `<math>` element also crashes `getByRole` under jsdom (jsdom
      * cannot compute styles for MathML elements), so a plain selector is
-     * the only reliable way to assert its presence here.
+     * the only reliable way to assert its presence here. This is the first
+     * test to trigger the cold KaTeX import, so it can exceed the default
+     * 1s `waitFor` timeout on a loaded machine.
      */
-    await waitFor(() => {
-      // eslint-disable-next-line testing-library/no-node-access
-      expect(document.querySelector('math')).toBeTruthy();
-    });
+    await waitFor(
+      () => {
+        // eslint-disable-next-line testing-library/no-node-access
+        expect(document.querySelector('math')).toBeTruthy();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it('wraps block LaTeX in a horizontally scrollable container so a wide formula stays reachable', async () => {
@@ -668,6 +673,24 @@ describe('MarkdownRenderer', () => {
     expect(paragraph?.className).toContain('break-words');
     expect(link.className).toContain('break-words');
     expect(link.getAttribute('href')).toBe(longUrl);
+  });
+
+  it('lets long unbreakable text wrap in elements that carry no class of their own', () => {
+    const longToken =
+      'docs.example.com/very/long/path/segment/that/never/breaks/document-name.pdf';
+    const { container } = render(
+      <MarkdownRenderer
+        content={`# ${longToken}\n\n- ${longToken}\n- **${longToken}**`}
+        containerClassName="host-class"
+      />,
+    );
+
+    // The root container has no accessible role of its own.
+    // eslint-disable-next-line testing-library/no-node-access
+    const root = container.firstElementChild;
+
+    expect(root?.className).toContain('[overflow-wrap:anywhere]');
+    expect(root?.className).toContain('host-class');
   });
 
   it('does not treat a currency amount as LaTeX', () => {

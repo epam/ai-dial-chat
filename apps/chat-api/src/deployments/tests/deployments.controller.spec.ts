@@ -43,7 +43,7 @@ describe('DeploymentsController', () => {
 
     expect(mockRes.setHeader).toHaveBeenCalledWith(
       'Cache-Control',
-      'private, max-age=30',
+      'private, no-store',
     );
     expect(service.listDeployments).toHaveBeenCalledWith(
       TEST_USER.sub,

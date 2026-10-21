@@ -79,6 +79,21 @@ rest behind the "…" button:
 />
 ```
 
+Each starter pill renders the UI kit's default sparkles icon. Pass
+`isIconHidden` to render label-only pills instead:
+
+```tsx
+<StarterButtons
+  starters={deployment.starters}
+  isIconHidden
+  labels={{
+    list: 'Conversation starters',
+    overflow: 'More starter prompts',
+  }}
+  onSelect={handleStarterSelect}
+/>
+```
+
 ## Types
 
 ```tsx

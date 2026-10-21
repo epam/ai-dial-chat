@@ -294,7 +294,7 @@ export const FileManagerAttachModal: FC<FileManagerAttachModalProps> = memo(
         }
         ariaLabel={title}
         size={PopupSize.Lg}
-        className="flex !h-[min(900px,100dvh)] w-full !max-w-[1600px] flex-col !bg-layer-base mobile:!h-full mobile:!max-w-full mobile:rounded-none"
+        className="flex h-[min(900px,100dvh)]! w-full max-w-[1600px]! flex-col bg-layer-raised! mobile:h-full! mobile:max-w-full! mobile:rounded-none"
         overlayClassName="mobile:p-0"
         headerClassName="pb-0"
         footerClassName="pt-0"
@@ -321,6 +321,8 @@ export const FileManagerAttachModal: FC<FileManagerAttachModalProps> = memo(
             selectedPaths={selectedPaths}
             onSelectedPathsChange={handleSelectedPathsChange}
             variant={variant}
+            /* The modal is a raised layer; the picker sits on it, not on the base layer. */
+            styles={{ colors: { surface: 'var(--bg-layer-raised)' } }}
             actionProfile={actionProfile}
             autoSelectUploadedItems={autoSelectUploadedItems}
             allowedFileTypes={allowedFileTypes}

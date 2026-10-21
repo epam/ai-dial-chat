@@ -83,15 +83,10 @@ export const joinSkillPath = (
   relativePath: string,
 ): string => (folderPath ? `${folderPath}/${relativePath}` : relativePath);
 
-/** The folder containing `path`, or `''` for a top-level entry. */
-export const parentSkillPath = (path: string): string =>
-  splitParentPath(path) ?? '';
-
 /**
  * Resolves the folder an add action targets (`''` is the skill root). The
  * header adds into the selected folder, or the root when a file (or nothing)
- * is selected; a folder's own menu entries add into it; "Add sibling" adds
- * next to the node.
+ * is selected; a folder's own menu entries add into it.
  */
 export const resolveAddTarget = (
   source: SkillAddSource,
@@ -101,8 +96,6 @@ export const resolveAddTarget = (
   switch (source) {
     case SkillAddSource.Child:
       return node.path;
-    case SkillAddSource.Sibling:
-      return parentSkillPath(node.path);
     case SkillAddSource.Header:
       return node.kind === SkillFileNodeKind.Folder ? node.path : '';
   }
