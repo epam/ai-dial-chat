@@ -342,8 +342,8 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
 
   const treeOptions = useMemo(
     () => ({
-      /* No title above the tabs in either variant; the tabs keep their name. */
-      header: null,
+      /* No title above the tabs unless the host provides one; the tabs keep their name. */
+      header: labels.treeHeader ?? null,
       containerClassName:
         treeContainerClassName ??
         (variant === DialFileManagerVariant.Attach
@@ -360,6 +360,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
       actionLabels,
     }),
     [
+      labels.treeHeader,
       labels.treeHeaderByTab,
       treeContainerClassName,
       variant,
