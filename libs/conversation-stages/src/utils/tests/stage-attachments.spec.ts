@@ -48,6 +48,29 @@ describe('mapStageAttachmentsToDisplay', () => {
     ]);
   });
 
+  it('resolves an image preview URL through the host-supplied resolver', () => {
+    const url = 'files/bucket/appdata/app/render_pages-2026-10-21T12-15-11.png';
+    const [attachment] = mapStageAttachmentsToDisplay(
+      [{ title: 'render.png', type: 'image/png', url }],
+      { resolvePreviewUrl: (dto) => `/download?path=${dto.url}` },
+    );
+
+    expect(attachment.previewUrl).toBe(`/download?path=${url}`);
+    expect(attachment.url).toBe(url);
+  });
+
+  it('falls back to the raw url as the image preview when no resolver is supplied', () => {
+    const [attachment] = mapStageAttachmentsToDisplay([
+      {
+        title: 'render.png',
+        type: 'image/png',
+        url: 'files/bucket/render.png',
+      },
+    ]);
+
+    expect(attachment.previewUrl).toBe('files/bucket/render.png');
+  });
+
   it('returns an empty array when there are no attachments', () => {
     expect(mapStageAttachmentsToDisplay(undefined)).toEqual([]);
     expect(mapStageAttachmentsToDisplay([])).toEqual([]);

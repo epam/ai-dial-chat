@@ -1,4 +1,5 @@
 import type {
+  AttachmentDisplayResolvers,
   DisplayAttachment,
   MessageAttachment,
 } from '@epam/ai-dial-chat-shared';
@@ -11,11 +12,14 @@ import { messageAttachmentsToDisplayAttachments } from '@epam/ai-dial-chat-share
  * the source document a search result was extracted from, not at the
  * attachment's own content, so the generic message-attachment mapper's
  * reference-url-first inference produces the wrong content type here.
+ * Host-owned URL resolution (e.g. turning a `files/...` id into a download
+ * URL for an image preview) is applied through `resolvers`.
  */
 export const mapStageAttachmentsToDisplay = (
   attachments?: MessageAttachment[],
+  resolvers?: AttachmentDisplayResolvers,
 ): DisplayAttachment[] => {
-  const mapped = messageAttachmentsToDisplayAttachments(attachments);
+  const mapped = messageAttachmentsToDisplayAttachments(attachments, resolvers);
   if (!attachments?.length) return mapped;
 
   /*

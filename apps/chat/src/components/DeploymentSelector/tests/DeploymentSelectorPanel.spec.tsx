@@ -65,7 +65,7 @@ describe('DeploymentSelectorPanel — long version', () => {
     renderPanel([longVersionItem]);
 
     const version = screen.getByText('With Google Search Grounding');
-    expect(version.className).toContain('break-words');
+    expect(version.className).toContain('wrap-break-word');
     /* The wrap rule lives on the name+version wrapper, which the version text
        node is the only stable handle on. */
     expect(version.parentElement?.className).toContain('flex-wrap');

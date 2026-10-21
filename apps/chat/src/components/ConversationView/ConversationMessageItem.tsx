@@ -1065,6 +1065,7 @@ const ConversationMessageItem: FC<Props> = ({
                   isStreaming={isStreaming}
                   labels={stageLabels}
                   onAttachmentClick={handleStageAttachmentClick}
+                  attachmentDisplayResolvers={attachmentDisplayResolvers}
                 />
               )}
               {groupedVisualizer != null &&
@@ -1125,7 +1126,7 @@ const ConversationMessageItem: FC<Props> = ({
                     title={t(ChatI18nKeys.StreamErrorTitle)}
                     message={
                       <span className="flex flex-wrap items-center justify-between gap-2 text-start">
-                        <span className="min-w-0 [overflow-wrap:anywhere]">
+                        <span className="min-w-0 wrap-anywhere">
                           {msg.streamErrorMessage ||
                             t(ChatI18nKeys.StreamError)}
                         </span>

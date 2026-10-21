@@ -1435,7 +1435,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         }
         description={
           <>
-            <span className="break-words">
+            <span className="wrap-break-word">
               {hasUnpublishFolderChoice
                 ? t(ConversationUnpublishI18nKeys.SelectFolderMessage, {
                     name: pendingUnpublish?.title ?? '',
@@ -1485,7 +1485,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         isLoading={isUnsharing}
         description={
           <>
-            <span className="break-words">
+            <span className="wrap-break-word">
               {t(ConversationPanelI18nKeys.UnshareConfirmMessage, {
                 name: pendingUnshareTitle,
               })}
@@ -1512,7 +1512,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         isLoading={isRevoking}
         description={
           <>
-            <span className="break-words">
+            <span className="wrap-break-word">
               {t(ConversationPanelI18nKeys.RevokeConfirmMessage, {
                 name: pendingRevokeTitle,
               })}
