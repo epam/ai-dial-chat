@@ -141,11 +141,11 @@ describe('toUpstreamSchedulePayload', () => {
         url: 'http://dial-core/openai',
         api_version: DIAL_API_VERSION,
         create_conversation: true,
-        stream: true,
         extra_headers: {},
         retry: null,
         timeout: null,
         payload: {
+          stream: true,
           messages: [{ role: 'user', content: 'Summarize my inbox' }],
           model: 'gpt-4.1-mini-2025-04-14',
         },
@@ -171,12 +171,12 @@ describe('toUpstreamSchedulePayload', () => {
     expect(upstream.trigger).toEqual({
       cron: { fields: { minute: '0', hour: '*' } },
     });
-    expect(upstream.properties.stream).toBe(true);
+    expect(upstream.properties.payload.stream).toBe(true);
     expect(upstream.properties.create_conversation).toBe(true);
     expect(upstream.properties.extra_headers).toEqual({});
     expect(upstream.properties.retry).toBeNull();
     expect(upstream.properties.timeout).toBeNull();
-    expect(upstream.properties.payload).not.toHaveProperty('stream');
+    expect(upstream.properties).not.toHaveProperty('stream');
   });
 
   it('rejects a trigger with both date and cron', () => {
