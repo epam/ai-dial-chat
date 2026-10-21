@@ -18,7 +18,6 @@ import {
   composeLocalizedFields,
   toLocalizedValue,
 } from '../common/utils/compose-localized-fields';
-import { buildIfMatchHeaders } from '../common/utils/conditional-headers';
 import {
   parseDialApplicationResource,
   type DialApplicationResource,
@@ -284,22 +283,15 @@ export class ApplicationsService {
     }
   }
 
-  /**
-   * `ifMatch` is the version the caller last read (`etag` from the deployment details or a previous
-   * update). Forwarded to Core's save, it refuses to overwrite a newer version (412); absent, the
-   * update is unconditional, as before.
-   */
   async updateApplication(
     userSub: string,
     accessToken: string,
     applicationName: string,
     body: UpdateApplicationBodyDto,
-    ifMatch?: string,
   ): Promise<UpdatedApplicationDto> {
     const authHeaders = getBearerAuthHeaders(accessToken);
     let bucket: string;
     let path: string;
-    let etag: string | undefined;
 
     try {
       ({ bucket, path } = await this.resolveApplicationResource(
@@ -398,7 +390,7 @@ export class ApplicationsService {
         bucket,
         path,
         {
-          headers: { ...authHeaders, ...buildIfMatchHeaders(ifMatch) },
+          headers: authHeaders,
           body: mergedBody,
         },
       );
@@ -410,7 +402,6 @@ export class ApplicationsService {
           this.logger,
         );
       }
-      etag = saveResponse.response.headers?.get('etag') ?? undefined;
     } catch (err) {
       return handleDialFetchError(
         err,
@@ -452,7 +443,7 @@ export class ApplicationsService {
       );
     }
 
-    return { id: `applications/${bucket}/${path}`, etag };
+    return { id: `applications/${bucket}/${path}` };
   }
 
   async deleteApplication(

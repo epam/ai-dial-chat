@@ -1,7 +1,7 @@
 ## Context
 
 Editors that run on their own `ai-dial-chat-bff` instance (Quick Apps, the DIAL Loop editor) hold no
-token and reach Core only through the BFF. The three operations below exist in
+token and reach Core only through the BFF. The two operations below exist in
 `@epam/ai-dial-typescript-sdk` but have no BFF route. `apps/chat-api/AGENTS.md` governs the
 implementation (URI versioning, thin controllers + Swagger, validated DTOs, typed HTTP exceptions) and is
 not repeated here.
@@ -23,14 +23,11 @@ not repeated here.
   are — changing them is out of scope (follow-up task).
 - **Idempotent removals.** A Core `404` on `deleteExternalService` / `deleteInvitation` answers `204`, as
   `signOut` already treats "nothing to revoke".
-- **If-Match as a header, etag as a field** — the skills contract (`IF_MATCH_HEADER`,
-  `buildIfMatchHeaders`, `etag` on the response DTO). The details cache stays: a stale cached `etag`
-  makes `If-Match` fail with `412`, which is correct, so no new cache or invalidation is needed.
 - **Secrets.** `clientSecret` is write-only in Swagger, forwarded to Core, never logged (the service logs
   only the id and auth type) and never in a response.
 
 Authorization for every route is DIAL Core's, with the caller's session token: editing the application
-for declare/remove/update, owning the invitation for withdraw.
+for declare/remove, owning the invitation for withdraw.
 
 ## Risks / Trade-offs
 

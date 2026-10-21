@@ -413,12 +413,6 @@ export interface ApplicationDetailsDto {
    * @memberof ApplicationDetailsDto
    */
   createdAt?: number;
-  /**
-   * The stored application's version (DIAL Core's ETag from getCustomApplication). Send it as If-Match on PATCH /api/v1/applications/{applicationName} to refuse overwriting a newer version. Absent when the application is not readable as a custom application. The details are cached for 60 seconds, so this may name an older version — a stale If-Match then answers 412, which is the intended outcome.
-   * @type {string}
-   * @memberof ApplicationDetailsDto
-   */
-  etag?: string;
 }
 /**
  *
@@ -8222,12 +8216,6 @@ export interface UpdatedApplicationDto {
    * @memberof UpdatedApplicationDto
    */
   object?: string;
-  /**
-   * The application's new version (DIAL Core's ETag), for the next update's If-Match. Absent when Core sent none.
-   * @type {string}
-   * @memberof UpdatedApplicationDto
-   */
-  etag?: string;
 }
 /**
  *

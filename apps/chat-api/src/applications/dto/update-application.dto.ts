@@ -180,11 +180,4 @@ export class UpdatedApplicationDto {
 
   @ApiPropertyOptional({ example: 'application' })
   object?: string;
-
-  @ApiPropertyOptional({
-    description:
-      "The application's new version (DIAL Core's ETag), for the next update's If-Match. Absent when Core sent none.",
-    example: '"a1b2c3"',
-  })
-  etag?: string;
 }

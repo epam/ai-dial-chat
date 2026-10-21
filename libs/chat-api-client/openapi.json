@@ -440,7 +440,7 @@
     },
     "/api/v1/applications/{applicationName}": {
       "patch": {
-        "description": "Updates the General-step fields (name, description, iconUrl, topics) of an existing application for the authenticated session user, by proxying DIAL Core. Settings-step configuration (application_properties) is preserved untouched unless the request supplies applicationProperties, in which case it fully replaces the stored value. With an If-Match header the update is refused (412) when the stored version has moved on; the response carries the new version as etag. Invalidates the applications and deployments list caches on success.",
+        "description": "Updates the General-step fields (name, description, iconUrl, topics) of an existing application for the authenticated session user, by proxying DIAL Core. Settings-step configuration (application_properties) is preserved untouched unless the request supplies applicationProperties, in which case it fully replaces the stored value. Invalidates the applications and deployments list caches on success.",
         "operationId": "updateApplication",
         "parameters": [
           {
@@ -451,15 +451,6 @@
             "schema": {
               "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
               "example": "my-app__1.0",
-              "type": "string"
-            }
-          },
-          {
-            "name": "If-Match",
-            "in": "header",
-            "description": "The application version the caller last read (etag from GET /api/v1/deployments/{deployment}/details or a previous update). When set, a newer stored version answers 412 and nothing is written.",
-            "required": false,
-            "schema": {
               "type": "string"
             }
           }
@@ -499,9 +490,6 @@
           },
           "409": {
             "description": "DIAL Core reported a conflict with the current resource state"
-          },
-          "412": {
-            "description": "If-Match precondition failed — the application changed since that version"
           },
           "413": {
             "description": "DIAL Core rejected the payload as too large"
@@ -10222,11 +10210,6 @@
           "object": {
             "type": "string",
             "example": "application"
-          },
-          "etag": {
-            "type": "string",
-            "description": "The application's new version (DIAL Core's ETag), for the next update's If-Match. Absent when Core sent none.",
-            "example": "\"a1b2c3\""
           }
         },
         "required": ["id"]
@@ -10883,11 +10866,6 @@
           "createdAt": {
             "type": "number",
             "description": "Timestamp of creation time from DIAL Core (e.g. 1714768496000)"
-          },
-          "etag": {
-            "type": "string",
-            "description": "The stored application's version (DIAL Core's ETag from getCustomApplication). Send it as If-Match on PATCH /api/v1/applications/{applicationName} to refuse overwriting a newer version. Absent when the application is not readable as a custom application. The details are cached for 60 seconds, so this may name an older version — a stale If-Match then answers 412, which is the intended outcome.",
-            "example": "\"a1b2c3\""
           }
         }
       },
