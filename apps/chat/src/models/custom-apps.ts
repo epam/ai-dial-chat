@@ -6,8 +6,3 @@ export interface CustomAppFormData {
   inputAttachmentTypes: string[];
   maxInputAttachments: number | '';
 }
-
-export interface CustomAppFormErrors {
-  completionUrl?: string;
-  inputAttachmentTypes?: string;
-}
