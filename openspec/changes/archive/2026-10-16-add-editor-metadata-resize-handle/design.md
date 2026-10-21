@@ -39,4 +39,4 @@ Decision 3's internal `ResizeHandle` was moved into `@epam/ai-dial-ui-kit` as th
 - **API:** the kit component is controlled (`width`, `minWidth`, `maxWidth`, `defaultWidth`, `onWidthChange`, `label`, `tooltip`, `keyboardStep`, `className`). It has no `containerRef`; `EditorLayout` keeps `clampLeftColumnWidth` and passes the container-limited `maxWidth`, so `aria-valuemax` now reports the effective limit. Direction is read from the handle's own element.
 - **Unchanged:** drag, keyboard, double-click reset, RTL mirroring, the 1 s rest delay and the themed cursor. The `EditorLayout` and `EntityEditor` specs pass unmodified.
 - **Host-side:** the `hidden desktop:block` visibility stays in `EditorLayout` (the wrapper around the handle). The unused `--el-resize-handle-color` override is dropped; the kit colors the line from its border tokens.
-- **Dependency:** requires a published `@epam/ai-dial-ui-kit` version that includes `ResizeHandle`; bump the version in `package.json` before merging.
+- **Dependency:** `@epam/ai-dial-ui-kit` `^0.16.0-dev.22`, the first dev release that exports `ResizeHandle`.
