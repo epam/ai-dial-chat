@@ -4,8 +4,9 @@ import { useAppConfig } from '../../../context/AppConfigContext';
 import { StorageKey } from '../../../types/storage-key';
 import { useCelebrationPreference } from '../useCelebrationPreference';
 
-vi.mock('../../../context/AppConfigContext', async () =>
-  import('../../../context/tests/app-config-context-mock'),
+vi.mock(
+  '../../../context/AppConfigContext',
+  async () => import('../../../context/tests/app-config-context-mock'),
 );
 
 const setOperatorDefault = (celebrationsEnabledByDefault: boolean) => {
