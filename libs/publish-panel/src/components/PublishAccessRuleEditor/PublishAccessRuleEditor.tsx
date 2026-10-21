@@ -4,6 +4,7 @@ import {
   TAG_INPUT_TAG_CLASS_NAME,
 } from '@epam/ai-dial-chat-shared';
 import {
+  ErrorText,
   GhostButton,
   Highlight,
   Input,
@@ -49,7 +50,7 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
   disabled = false,
   maxTargets = MAX_TARGETS_DEFAULT,
   labels = {},
-  errorClassName = 'dial-small-text',
+  errorClassName = 'dial-tiny-text',
   styles: stylesProp = {},
 }) => {
   const cssVars = {
@@ -290,17 +291,15 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
             disabled={disabled}
           />
           {(pattern.length > 0 || hasAttemptedSave) && !isPatternValid && (
-            <span
+            <ErrorText
               id={patternErrorId}
-              role="alert"
               className={mergeClasses(
                 'mt-1 block',
                 errorClassName,
                 styles.error,
               )}
-            >
-              {invalidRegexError}
-            </span>
+              text={invalidRegexError}
+            />
           )}
         </div>
       ) : (
