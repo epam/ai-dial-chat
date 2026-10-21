@@ -45,4 +45,33 @@ describe('StarterButtons', () => {
     expect(screen.getByText('Starter 5')).toBeDefined();
     expect(screen.queryByRole('button', { name: labels.overflow })).toBeNull();
   });
+
+  it('renders the default sparkles icon on each starter button', () => {
+    render(
+      <StarterButtons
+        starters={buildStarters(1)}
+        onSelect={vi.fn()}
+        labels={labels}
+      />,
+    );
+
+    const button = screen.getByRole('button', { name: 'Starter 0' });
+    // eslint-disable-next-line testing-library/no-node-access -- the sparkles icon is aria-hidden and has no accessible role or text to query
+    expect(button.querySelector('svg')).toBeTruthy();
+  });
+
+  it('omits the starter icon when isIconHidden is true', () => {
+    render(
+      <StarterButtons
+        starters={buildStarters(1)}
+        onSelect={vi.fn()}
+        isIconHidden
+        labels={labels}
+      />,
+    );
+
+    const button = screen.getByRole('button', { name: 'Starter 0' });
+    // eslint-disable-next-line testing-library/no-node-access -- the sparkles icon is aria-hidden and has no accessible role or text to query
+    expect(button.querySelector('svg')).toBeNull();
+  });
 });

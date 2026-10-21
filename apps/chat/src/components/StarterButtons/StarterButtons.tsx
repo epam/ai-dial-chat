@@ -16,6 +16,7 @@ const StarterButtons: FC<Props> = ({ starters, onSelect }) => {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   const isEveryStarterShown = useUiFeature(OverlayFeature.ShowAllStarters);
+  const isStarterIconHidden = useUiFeature(OverlayFeature.HideStarterIcon);
 
   return (
     <StarterButtonsLib
@@ -23,6 +24,7 @@ const StarterButtons: FC<Props> = ({ starters, onSelect }) => {
       onSelect={onSelect}
       isMobile={isMobile}
       isCollapsible={!isEveryStarterShown}
+      isIconHidden={isStarterIconHidden}
       labels={{
         list: t(ChatI18nKeys.ConversationStarters),
         overflow: t(ChatI18nKeys.StarterButtonsOverflow),

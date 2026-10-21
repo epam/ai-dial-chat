@@ -147,13 +147,13 @@ Cache key owned by context: none — context relies on the backend cache.
 
 ### Requirement: StarterButtons component renders conversation starters
 
-`apps/chat/src/components/StarterButtons/StarterButtons.tsx` SHALL be a thin app wrapper around `StarterButtons` from `@epam/ai-dial-starter-buttons`. It forwards `starters` and `onSelect`, passes `isMobile` from `useIsMobile()`, sets `isCollapsible` to `!useUiFeature(OverlayFeature.ShowAllStarters)`, and supplies translated `labels`: `list` from `ChatI18nKeys.ConversationStarters` and `overflow` from `ChatI18nKeys.StarterButtonsOverflow`.
+`apps/chat/src/components/StarterButtons/StarterButtons.tsx` SHALL be a thin app wrapper around `StarterButtons` from `@epam/ai-dial-starter-buttons`. It forwards `starters` and `onSelect`, passes `isMobile` from `useIsMobile()`, sets `isCollapsible` to `!useUiFeature(OverlayFeature.ShowAllStarters)`, sets `isIconHidden` to `useUiFeature(OverlayFeature.HideStarterIcon)`, and supplies translated `labels`: `list` from `ChatI18nKeys.ConversationStarters` and `overflow` from `ChatI18nKeys.StarterButtonsOverflow`.
 
 Props:
 - `starters: StarterOption[]` — starter options to display
 - `onSelect: (starter: StarterOption) => void` — called with the whole selected `StarterOption`
 
-The lib component renders a `role="list"` container labelled `labels.list`, with one `role="listitem"` holding a `StarterButton` labelled `starter.title` per visible starter. When `isCollapsible` is true, starters that do not fit are moved into a `Dropdown` opened by an icon button labelled `labels.overflow`; when false, every starter is rendered in a column. It returns `null` when `starters` is empty.
+The lib component renders a `role="list"` container labelled `labels.list`, with one `role="listitem"` holding a `StarterButton` labelled `starter.title` per visible starter. When `isCollapsible` is true, starters that do not fit are moved into a `Dropdown` opened by an icon button labelled `labels.overflow`; when false, every starter is rendered in a column. Each `StarterButton` receives `iconBefore={null}` when `isIconHidden` is true, omitting the sparkles icon the UI kit renders there by default. It returns `null` when `starters` is empty.
 
 #### Scenario: Buttons render for each starter
 
@@ -169,6 +169,11 @@ The lib component renders a `role="list"` container labelled `labels.list`, with
 
 - **WHEN** `OverlayFeature.ShowAllStarters` is enabled
 - **THEN** `isCollapsible` is `false` and no overflow button is rendered
+
+#### Scenario: Starter icon hidden when the overlay asks for it
+
+- **WHEN** `OverlayFeature.HideStarterIcon` is enabled
+- **THEN** `isIconHidden` is `true` and every visible `StarterButton` renders with no sparkles icon
 
 #### Scenario: Empty starters renders nothing
 

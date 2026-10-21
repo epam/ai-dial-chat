@@ -33,7 +33,7 @@
 
 ### Requirement: Default baseline preserves current unconditional behavior
 
-`DEFAULT_ENABLED_UI_FEATURES` SHALL contain exactly the 27 default-on keys and exclude the 25 default-off (`Hide*`/restrictive modifier and not-yet-defaulted) keys (`header`, `conversations-section`, `conversations-panel-toggle`, `showConversationsSectionByDefault`, `attachments-manager`, `likes`, `dislike-comment`, `input-files`, `live-chat-interaction`, `catalog`, `catalog-table-view`, `file-manager`, `toolsets`, `prompts`, `skills`, `conversation-drafts`... are default-on; `hide-edit-user-message`, `disabled-send`, `hide-change-agent`, `hide-navigation-menu`... are default-off — the full 52-key membership is the `OverlayFeature` enum itself (`libs/chat-overlay/src/protocol/overlay-protocol.ts`), not restated here). With no `enabledUiFeatures` and no overlay override, `isEnabled` SHALL return exactly the default-on classification for every one of the 52 keys.
+`DEFAULT_ENABLED_UI_FEATURES` SHALL contain exactly the 27 default-on keys and exclude the 26 default-off (`Hide*`/restrictive modifier and not-yet-defaulted) keys (`header`, `conversations-section`, `conversations-panel-toggle`, `showConversationsSectionByDefault`, `attachments-manager`, `likes`, `dislike-comment`, `input-files`, `live-chat-interaction`, `catalog`, `catalog-table-view`, `file-manager`, `toolsets`, `prompts`, `skills`, `conversation-drafts`... are default-on; `hide-edit-user-message`, `disabled-send`, `hide-change-agent`, `hide-navigation-menu`, `hide-starter-icon`... are default-off — the full 53-key membership is the `OverlayFeature` enum itself (`libs/chat-overlay/src/protocol/overlay-protocol.ts`), not restated here). With no `enabledUiFeatures` and no overlay override, `isEnabled` SHALL return exactly the default-on classification for every one of the 53 keys.
 
 `catalog-table-view` is the one initial-state modifier that defaults on rather than matching the surface's original unconditional behavior. It no longer gates anything: `CatalogView` leaves `initialViewMode` unset, so Browse always opens in `Catalog`'s own default view (`CatalogViewMode.Grid`, the card grid). The key stays default-on so an overlay host still sending it is not warned about an unknown feature. Every other modifier still defaults off, so a deployment that configures nothing observes no other behavior change.
 
@@ -137,7 +137,7 @@ The effective visibility of the voice-input UI affordance SHALL be `isEnabled('v
 
 ### Requirement: Each transferable feature key gates exactly one owning surface
 
-Each of the 52 transferable `OverlayFeature` values SHALL gate exactly the owning component/container documented in `design.md`'s classification table, and SHALL NOT alter the visibility or behavior of any other feature's surface. Hidden surfaces SHALL be conditionally unmounted (not rendered), not merely visually hidden, so no focus trap or hidden-but-tabbable control is left behind (per this repo's `inert`-over-`aria-hidden` accessibility rule for hidden interactive regions where applicable).
+Each of the 53 transferable `OverlayFeature` values SHALL gate exactly the owning component/container documented in `design.md`'s classification table, and SHALL NOT alter the visibility or behavior of any other feature's surface. Hidden surfaces SHALL be conditionally unmounted (not rendered), not merely visually hidden, so no focus trap or hidden-but-tabbable control is left behind (per this repo's `inert`-over-`aria-hidden` accessibility rule for hidden interactive regions where applicable).
 
 **Accessibility:** Conditionally-unmounted controls remove themselves from both the accessibility tree and the tab order by not rendering — no `aria-hidden` container with focusable descendants is introduced by this change.
 
@@ -342,6 +342,24 @@ Route gating SHALL NOT be treated as an authorization boundary: the backend SHAL
 
 - **WHEN** `isEnabled('starters-below-greeting')` is `false`
 - **THEN** the starters render after the input
+
+### Requirement: hide-starter-icon removes the sparkles icon from starter pills
+
+`apps/chat/src/components/StarterButtons/StarterButtons.tsx` SHALL pass `isIconHidden={true}` to `StarterButtons` from `@epam/ai-dial-starter-buttons` when `isEnabled('hide-starter-icon')` is `true`, and `isIconHidden={false}` when the key is off. The lib component SHALL forward `isIconHidden` to each `StarterButton`'s `iconBefore` prop as `null` when `true`, omitting the sparkles icon the UI kit renders there by default, and SHALL leave `iconBefore` at its default otherwise. The key SHALL NOT change the overflow dropdown's own icon. The key is a modifier key and SHALL be absent from `DEFAULT_ENABLED_UI_FEATURES`, so a deployment that configures nothing observes no change.
+
+**Accessibility:** The icon is decorative (`aria-hidden`) either way; removing it does not change the button's accessible name, which stays `starter.title`.
+
+**i18n impact:** None.
+
+#### Scenario: The icon is omitted when the key is on
+
+- **WHEN** `isEnabled('hide-starter-icon')` is `true`
+- **THEN** every visible starter pill renders as a label-only button, with no sparkles icon
+
+#### Scenario: The icon renders by default
+
+- **WHEN** `isEnabled('hide-starter-icon')` is `false`
+- **THEN** every visible starter pill renders the UI kit's default sparkles icon
 
 ### Requirement: hide-greeting removes the empty-chat greeting
 

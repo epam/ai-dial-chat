@@ -793,6 +793,7 @@ disable-input-history-navigation
 hide-conversation-export
 hide-settings-page
 show-header-logo
+hide-starter-icon
 ```
 
 #### Navigation sidebar
@@ -920,6 +921,11 @@ shows it whenever `header` is on; with `header` off, `show-header-logo` still
 renders that header row, carrying only the logo and none of its buttons. The
 mobile header shows the theme's `favicon`, or a smaller full `logo` when the
 theme defines no `favicon`.
+
+`hide-starter-icon` removes the sparkles icon the UI kit renders by default on
+every conversation-starter pill, leaving a label-only button. It does not
+change which starters render, their order, or how `show-all-starters` /
+`starters-below-greeting` lay them out — only the per-pill icon.
 
 `voice-input` additionally adds `microphone` to the iframe's `allow`
 attribute. That attribute is computed once, when `ChatOverlay` is
