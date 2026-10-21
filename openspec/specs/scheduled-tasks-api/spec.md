@@ -173,11 +173,10 @@ The service SHALL build the upstream body server-side with `service_id` set from
 - `url`: built by `buildScheduledTaskChatCompletionUrl(DialClientService.baseUrl)` — the base URL (backed by `DIAL_CORE_URL`) with any trailing slash stripped, followed by `/openai` (no double slashes)
 - `api_version`: `DialClientService.dialApiVersion` (the same value `ChatService.sendCompletion` sends as `api-version`, backed by `DIAL_API_VERSION`, defaulting to `2024-10-21`)
 - `create_conversation: true` — required for the Scheduler run to create a conversation under the reserved `.scheduler/{scheduleId}/{runId}/` path
-- `stream: true` — fixed (not client-controllable); this field is NOT nested inside `payload`
 - `extra_headers: {}` — fixed
 - `retry: null` — fixed
 - `timeout: null` — fixed
-- `payload: { messages: [{ role: "user", content: prompt, custom_content?: { skills: [{ url }] } }], model }` (the extension is present only with an effective skill) — no `stream` field inside `payload`
+- `payload: { stream: true, messages: [{ role: "user", content: prompt, custom_content?: { skills: [{ url }] } }], model }` (the extension is present only with an effective skill) — `stream` is fixed (not client-controllable) and appears only inside `properties.payload`
 
 and a top-level `description` field (mapped 1:1, never merged into `properties` or `properties.payload`) when provided. On success it SHALL call `POST {DIAL_CORE_URL}/v1/deployments/applications/{SCHEDULER_APP_ID}/route/v1/schedules/`, return **201** with `CreatedScheduledTaskDto` (at least `id`, `displayName`, `trigger`), and invalidate that user's list cache.
 
@@ -189,7 +188,7 @@ and a top-level `description` field (mapped 1:1, never merged into `properties` 
 #### Scenario: Upstream properties include the fixed Scheduler call fields
 
 - **WHEN** a valid create request is submitted
-- **THEN** the upstream request body's `properties` includes `create_conversation: true`, `stream: true`, `extra_headers: {}`, `retry: null`, and `timeout: null`, and `properties.payload` contains only `messages` and `model` (no `stream` key)
+- **THEN** the upstream request body's `properties` includes `create_conversation: true`, `extra_headers: {}`, `retry: null`, and `timeout: null`, and `properties.payload` contains `stream: true`, `messages`, and `model`; `properties` itself has no `stream` key
 
 #### Scenario: Upstream url is built from the normalized DIAL Core base URL
 
@@ -423,7 +422,7 @@ Example request: `GET /api/v1/scheduled-tasks/sched_123/runs?limit=20&offset=40`
 
 ### Requirement: Update scheduled task
 
-`PUT /api/v1/scheduled-tasks/:scheduleId` SHALL accept the same `UpdateScheduledTaskBodyDto` shape as create (`displayName`, `trigger`, `model`, `prompt`, optional array `skillUrls?: string[]`, optional `description` (≤500 chars); no client-supplied `service_id` or `stream`), apply the same server-side `service_id` (from `SCHEDULER_SERVICE_ID`)/`target_type`/`url`/`api_version`/`create_conversation`/`stream`/`extra_headers`/`retry`/`timeout`/`payload`/`description` construction as create, proxy `PUT {DIAL_CORE_URL}/v1/deployments/applications/{SCHEDULER_APP_ID}/route/v1/schedules/{scheduleId}` with the session bearer token, return `200 OK` with the updated `ScheduledTaskDto`, and invalidate that user's list cache on success.
+`PUT /api/v1/scheduled-tasks/:scheduleId` SHALL accept the same `UpdateScheduledTaskBodyDto` shape as create (`displayName`, `trigger`, `model`, `prompt`, optional array `skillUrls?: string[]`, optional `description` (≤500 chars); no client-supplied `service_id` or `stream`), apply the same server-side `service_id` (from `SCHEDULER_SERVICE_ID`)/`target_type`/`url`/`api_version`/`create_conversation`/`extra_headers`/`retry`/`timeout`/`payload` (including `properties.payload.stream: true`)/`description` construction as create, proxy `PUT {DIAL_CORE_URL}/v1/deployments/applications/{SCHEDULER_APP_ID}/route/v1/schedules/{scheduleId}` with the session bearer token, return `200 OK` with the updated `ScheduledTaskDto`, and invalidate that user's list cache on success.
 
 #### Scenario: Valid update succeeds and invalidates list cache
 
@@ -433,7 +432,7 @@ Example request: `GET /api/v1/scheduled-tasks/sched_123/runs?limit=20&offset=40`
 #### Scenario: Update carries the same fixed Scheduler call properties as create
 
 - **WHEN** an authenticated, feature-enabled user submits a valid update body for an existing `scheduleId`
-- **THEN** the upstream `PUT` request body's `properties` includes `create_conversation: true`, `stream: true`, `extra_headers: {}`, `retry: null`, and `timeout: null`, matching the create request shape, and `service_id` equals the configured `SCHEDULER_SERVICE_ID` value
+- **THEN** the upstream `PUT` request body's `properties` includes `create_conversation: true`, `extra_headers: {}`, `retry: null`, and `timeout: null`, with `stream: true` only inside `properties.payload`, matching the create request shape, and `service_id` equals the configured `SCHEDULER_SERVICE_ID` value
 
 #### Scenario: Update of unknown schedule id returns 404
 

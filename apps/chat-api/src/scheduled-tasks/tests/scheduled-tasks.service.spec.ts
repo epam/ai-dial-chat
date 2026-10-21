@@ -104,6 +104,8 @@ describe('scheduled task skill persistence and validation', () => {
         }),
       ).toMatchObject({ prompt: 'Instructions', skillUrls: [] });
       const sent = JSON.parse(fetchMock.mock.calls.at(-1)![1].body);
+      expect(sent.properties.payload.stream).toBe(true);
+      expect(sent.properties).not.toHaveProperty('stream');
       expect(sent.properties.payload.messages[0]).not.toHaveProperty(
         'custom_content',
       );
@@ -681,12 +683,12 @@ describe('ScheduledTasksService', () => {
     expect(sentBody.service_id).toBe('my-oauth-service');
     expect(sentBody.properties).toMatchObject({
       create_conversation: true,
-      stream: true,
       extra_headers: {},
       retry: null,
       timeout: null,
+      payload: { stream: true },
     });
-    expect(sentBody.properties.payload).not.toHaveProperty('stream');
+    expect(sentBody.properties).not.toHaveProperty('stream');
   });
 
   it('throws ServiceUnavailableException on create when SCHEDULER_SERVICE_ID is unset', async () => {
