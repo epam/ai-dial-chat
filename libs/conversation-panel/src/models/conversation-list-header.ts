@@ -1,5 +1,6 @@
 import type { FilterTab } from '@epam/ai-dial-chat-shared';
 import type { ReactNode } from 'react';
+import type { ConversationTypeFilter } from '../types/conversation-kind';
 import type { FilterLabels } from './panel-props';
 
 /** Localised labels for `ConversationListHeader`. */
@@ -62,8 +63,12 @@ export interface ConversationListHeaderProps {
   onSearchOpenChange?: (isOpen: boolean) => void;
   /** Filter tab marked as chosen in the filter menu. Defaults to `FilterTab.All`. */
   activeFilter?: FilterTab;
-  /** Called when a filter option is chosen. The filter trigger renders only when this is provided. */
+  /** Called when an origin is chosen. The "Origin" submenu renders only when this is provided; the filter trigger renders when this or `onTypeFilterChange` is. */
   onFilterChange?: (tab: FilterTab) => void;
+  /** Kind marked as chosen in the "Type" submenu. Defaults to `ConversationTypeFilter.All`. */
+  activeTypeFilter?: ConversationTypeFilter;
+  /** Called when a type is chosen. The "Type" submenu renders only when this is provided. */
+  onTypeFilterChange?: (type: ConversationTypeFilter) => void;
   /** Filter options to omit from the menu (see `ConversationListProps.hiddenSources`). */
   hiddenSources?: FilterTab[];
   /** Extra controls rendered after the filter trigger, e.g. an overflow menu. */
