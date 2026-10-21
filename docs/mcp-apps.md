@@ -31,7 +31,7 @@ sequenceDiagram
     BFF->>Core: tools/list (MCP proxy)
     Core-->>BFF: tools with _meta.ui.resourceUri
     BFF-->>UI: McpAppToolRef[]
-    Note over UI: assistant message streams in;<br/>findMcpAppForMessage matches it
+    Note over UI: assistant message streams in,<br/>findMcpAppForMessage matches it
     UI->>BFF: GET /api/v1/toolsets/{id}/mcp-app-resource?resourceUri=ui://…
     BFF->>Core: GET /v1/deployments/{id}/mcp/resources?uri=…
     Core-->>BFF: HTML (raw passthrough)
@@ -53,7 +53,7 @@ sequenceDiagram
 The UI resource is a property of the **tool declaration**, not of a stage or tool-call result: DIAL Core returns it from `tools/list` as `_meta.ui.resourceUri`. `useMcpAppTools(client, deployment, messages, toolsets)` collects the tools that declare one, from two sources:
 
 - **Direct.** The active deployment has `features.mcp === true` and is a toolset or an application. Its own `tools/list` is queried. These refs carry `discovery: 'direct'`.
-- **Indirect.** An application without MCP support may call an MCP-capable toolset internally. Core does not expose that link, so the hook guesses it from tool-call names already seen in the conversation: the orchestrator calls a toolset's tool as `sanitizeToolName(`${toolsetDisplayName}_${toolName}`)`, so a call named `Entity_MCP_Server_show_entity_card` points at the toolset `Entity MCP Server`. Each matching toolset is queried once per session. These refs carry `discovery: 'indirect'`.
+- **Indirect.** An application without MCP support may call an MCP-capable toolset internally. Core does not expose that link, so the hook guesses it from tool-call names already seen in the conversation: the orchestrator calls a toolset's tool as ``sanitizeToolName(`${toolsetDisplayName}_${toolName}`)``, so a call named `Entity_MCP_Server_show_entity_card` points at the toolset `Entity MCP Server`. Each matching toolset is queried once per session. These refs carry `discovery: 'indirect'`.
 
 Every ref keeps two names. `toolName` is the name as it appears in the message (prefixed for indirect discovery) and is used for matching. `mcpToolName` is the tool's real name and is what a live re-call sends — the app only recognizes its own name.
 
