@@ -172,6 +172,58 @@ describe('stripConversationAttachments', () => {
     ]);
   });
 
+  it('removes the source documents of the citation pool while keeping every other view-state key', () => {
+    const conversation = makeConversation({
+      customViewState: {
+        annotations: [
+          {
+            target: { selector: { type: 'html_tag', id: 'e1' } },
+            body: {
+              quote: 'Section 3',
+              source: {
+                type: 'attachment',
+                attachment: {
+                  type: 'application/pdf',
+                  url: 'files/bucket/spec.pdf#page=3',
+                },
+              },
+            },
+          },
+        ],
+        layout: 'wide',
+      },
+    });
+
+    const stripped = stripConversationAttachments(conversation);
+
+    expect(stripped.customViewState).toEqual({
+      annotations: [
+        {
+          target: { selector: { type: 'html_tag', id: 'e1' } },
+          body: { quote: 'Section 3' },
+        },
+      ],
+      layout: 'wide',
+    });
+  });
+
+  it('leaves the view state absent when the conversation has none', () => {
+    const stripped = stripConversationAttachments(makeConversation());
+
+    expect(stripped).not.toHaveProperty('customViewState');
+  });
+
+  it.each([
+    ['a pool that is not an array', { annotations: 'not-an-array' }],
+    ['null and primitive pool entries', { annotations: [null, 42] }],
+  ])('carries %s through unchanged', (_label, customViewState) => {
+    const stripped = stripConversationAttachments(
+      makeConversation({ customViewState }),
+    );
+
+    expect(stripped.customViewState).toBe(customViewState);
+  });
+
   it('leaves a message without custom_content untouched', () => {
     const message = {
       role: 'user' as Conversation['messages'][number]['role'],

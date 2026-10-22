@@ -1,4 +1,4 @@
-import type { Conversation } from '@epam/ai-dial-chat-shared';
+import type { Annotation, Conversation } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import { createUploadPathAllocator } from '../build-upload-path';
 import {
@@ -413,6 +413,18 @@ const makeAttachmentMessage = (
   custom_content: { attachments: [{ title, url: fileId }] },
 });
 
+/** Builds a conversation-level citation-pool entry whose source document is `url`. */
+const makePoolCitation = (url: string, quote = 'Cited text'): Annotation => ({
+  target: { selector: { type: 'html_tag', id: url } },
+  body: {
+    quote,
+    source: {
+      type: 'attachment',
+      attachment: { type: 'application/pdf', url, title: 'source.pdf' },
+    },
+  },
+});
+
 describe('rewriteAttachmentUrls', () => {
   it('rewrites a matched url and reference_url without mutating the input', () => {
     const conversation = makeConversation({
@@ -628,6 +640,91 @@ describe('rewriteAttachmentUrls', () => {
     });
   });
 
+  it('rewrites a citation-pool source document, keeping its anchor and applying a renamed title', () => {
+    const conversation = makeConversation({
+      customViewState: {
+        annotations: [
+          makePoolCitation('files/old-bucket/sources/spec.pdf#page=7'),
+        ],
+        layout: 'wide',
+      },
+    });
+    const targetMap = new Map([
+      [
+        'files/old-bucket/sources/spec.pdf',
+        {
+          url: 'files/new-bucket/uploads/2026-07/spec (1).pdf',
+          title: 'spec (1).pdf',
+        },
+      ],
+    ]);
+
+    const result = rewriteAttachmentUrls(conversation, targetMap);
+    const pool = result.customViewState?.['annotations'] as Annotation[];
+
+    expect(pool[0].body?.source?.attachment).toMatchObject({
+      url: 'files/new-bucket/uploads/2026-07/spec (1).pdf#page=7',
+      title: 'spec (1).pdf',
+    });
+    expect(result.customViewState?.['layout']).toBe('wide');
+  });
+
+  it('points a message citation and its pool copy at the same upload', () => {
+    const url = 'files/old-bucket/sources/spec.pdf#page=7';
+    const conversation = makeConversation({
+      messages: [
+        {
+          role: 'assistant' as Conversation['messages'][number]['role'],
+          content: '',
+          timestamp: '2026-07-10T00:00:00.000Z',
+          custom_content: { annotations: [makePoolCitation(url)] },
+        },
+      ],
+      customViewState: { annotations: [makePoolCitation(url)] },
+    });
+    const targetMap = new Map([
+      [
+        'files/old-bucket/sources/spec.pdf',
+        { url: 'files/new-bucket/uploads/2026-07/spec.pdf' },
+      ],
+    ]);
+
+    const result = rewriteAttachmentUrls(conversation, targetMap);
+    const pool = result.customViewState?.['annotations'] as Annotation[];
+    const expectedUrl = 'files/new-bucket/uploads/2026-07/spec.pdf#page=7';
+
+    expect(
+      result.messages[0].custom_content?.annotations?.[0].body?.source
+        ?.attachment?.url,
+    ).toBe(expectedUrl);
+    expect(pool[0].body?.source?.attachment?.url).toBe(expectedUrl);
+  });
+
+  it('returns the view state as is when no pool entry was uploaded', () => {
+    const customViewState = {
+      annotations: [makePoolCitation('files/old-bucket/sources/other.pdf')],
+    };
+
+    const result = rewriteAttachmentUrls(
+      makeConversation({ customViewState }),
+      new Map(),
+    );
+
+    expect(result.customViewState).toBe(customViewState);
+  });
+
+  it.each([
+    ['a pool that is not an array', { annotations: 'not-an-array' }],
+    ['null and primitive pool entries', { annotations: [null, 42] }],
+  ])('carries %s through unchanged', (_label, customViewState) => {
+    const result = rewriteAttachmentUrls(
+      makeConversation({ customViewState }),
+      new Map([['files/a/b.pdf', { url: 'files/c/b.pdf' }]]),
+    );
+
+    expect(result.customViewState).toBe(customViewState);
+  });
+
   it('leaves messages without attachments untouched', () => {
     const conversation = makeConversation({
       messages: [
@@ -671,6 +768,34 @@ describe('planAttachmentUploads', () => {
     expect(plan.map((item) => item.allocated.fileName)).toEqual([
       'q1.pdf',
       'q2.pdf',
+    ]);
+  });
+
+  it('plans a file only the citation pool references after the message files', () => {
+    const conversation = makeConversation({
+      messages: [
+        makeAttachmentMessage('files/old-bucket/reports/q1.pdf', 'q1.pdf'),
+      ],
+      customViewState: {
+        annotations: [makePoolCitation('files/old-bucket/sources/q1.pdf')],
+      },
+    });
+    const attachmentBytes = new Map([
+      ['reports/q1.pdf', new Uint8Array([1])],
+      ['sources/q1.pdf', new Uint8Array([2])],
+    ]);
+    const allocator = createUploadPathAllocator({ date });
+
+    const { plan, skippedNames } = planAttachmentUploads(
+      conversation,
+      attachmentBytes,
+      allocator,
+    );
+
+    expect(skippedNames).toEqual([]);
+    expect(plan.map((item) => [item.fileId, item.allocated.fileName])).toEqual([
+      ['files/old-bucket/reports/q1.pdf', 'q1.pdf'],
+      ['files/old-bucket/sources/q1.pdf', 'q1 (1).pdf'],
     ]);
   });
 
@@ -930,6 +1055,94 @@ describe('dropForeignAttachmentRefs', () => {
       { body: { quote: 'Section 3' } },
     ]);
     expect(droppedNames).toEqual(['spec.pdf']);
+  });
+
+  it('removes a foreign citation-pool source, keeping its quote and the other view-state keys', () => {
+    const conversation = makeConversation({
+      customViewState: {
+        annotations: [makePoolCitation('files/bucket-a/pool-only.txt')],
+        layout: 'wide',
+      },
+    });
+
+    const { conversation: result, droppedNames } = dropForeignAttachmentRefs(
+      conversation,
+      'bucket-b',
+    );
+
+    expect(result.customViewState).toEqual({
+      annotations: [
+        {
+          target: {
+            selector: { type: 'html_tag', id: 'files/bucket-a/pool-only.txt' },
+          },
+          body: { quote: 'Cited text' },
+        },
+      ],
+      layout: 'wide',
+    });
+    expect(droppedNames).toEqual(['pool-only.txt']);
+  });
+
+  it('drops a foreign file from both a message citation and its pool copy', () => {
+    const url = 'files/bucket-a/cite.txt';
+    const conversation = makeConversation({
+      messages: [
+        {
+          role: 'assistant' as Conversation['messages'][number]['role'],
+          content: 'Answer',
+          timestamp: '2026-07-10T00:00:00.000Z',
+          custom_content: { annotations: [makePoolCitation(url)] },
+        },
+      ],
+      customViewState: { annotations: [makePoolCitation(url)] },
+    });
+
+    const { conversation: result, droppedNames } = dropForeignAttachmentRefs(
+      conversation,
+      'bucket-b',
+    );
+    const pool = result.customViewState?.['annotations'] as Annotation[];
+
+    expect(
+      result.messages[0].custom_content?.annotations?.[0].body,
+    ).not.toHaveProperty('source');
+    expect(pool[0].body).not.toHaveProperty('source');
+    expect(droppedNames).toContain('cite.txt');
+  });
+
+  it("keeps pool sources in the importing user's own bucket and in public", () => {
+    const conversation = makeConversation({
+      customViewState: {
+        annotations: [
+          makePoolCitation('files/bucket-b/mine.pdf'),
+          makePoolCitation('files/public/shared.pdf'),
+        ],
+      },
+    });
+
+    const { conversation: result, droppedNames } = dropForeignAttachmentRefs(
+      conversation,
+      'bucket-b',
+    );
+
+    expect(result).toBe(conversation);
+    expect(droppedNames).toEqual([]);
+  });
+
+  it.each([
+    ['a pool that is not an array', { annotations: 'not-an-array' }],
+    ['null and primitive pool entries', { annotations: [null, 42] }],
+  ])('carries %s through unchanged', (_label, customViewState) => {
+    const conversation = makeConversation({ customViewState });
+
+    const { conversation: result, droppedNames } = dropForeignAttachmentRefs(
+      conversation,
+      'bucket-b',
+    );
+
+    expect(result).toBe(conversation);
+    expect(droppedNames).toEqual([]);
   });
 
   it('does not mutate the source conversation', () => {
