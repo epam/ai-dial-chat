@@ -13,7 +13,11 @@ import {
 import { Test } from '@nestjs/testing';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DialClientService } from '../../dial/dial-client.service';
-import type { CustomApiOperation } from '../custom-api-registry.service';
+import {
+  CustomApiBody,
+  CustomApiMethod,
+  type CustomApiOperation,
+} from '../custom-api-registry.service';
 import {
   CLIENT_CLOSED_REQUEST_STATUS,
   CustomApiClientClosedException,
@@ -22,8 +26,10 @@ import {
 
 const OPERATION: CustomApiOperation = {
   id: 'data-products',
-  method: 'GET',
+  method: CustomApiMethod.Get,
   corePath: '/data-products',
+  query: [],
+  body: CustomApiBody.None,
   timeoutMs: 10_000,
   maxResponseBytes: 1_048_576,
 };
@@ -101,6 +107,100 @@ describe('CustomApiService', () => {
     });
   });
 
+  it('sends the configured method, the allowlisted query and the JSON body with its Content-Type', async () => {
+    const fetchCore = vi.fn().mockResolvedValue(bytesResponse('{"ok":true}'));
+    const service = await createService(fetchCore);
+
+    await service.callOperation(
+      {
+        ...OPERATION,
+        method: CustomApiMethod.Put,
+        corePath: '/dial-loop/editor/teams/binding',
+        query: ['application_id'],
+        body: CustomApiBody.Json,
+      },
+      'user-access-token',
+      undefined,
+      {
+        query: new URLSearchParams({ application_id: 'applications/b/a b' }),
+        body: '{"enabled":true}',
+      },
+    );
+
+    const [destination, init] = fetchCore.mock.calls[0];
+    expect(String(destination)).toBe(
+      'https://core-api.com/dial-loop/editor/teams/binding?application_id=applications%2Fb%2Fa+b',
+    );
+    expect(init).toMatchObject({
+      method: 'PUT',
+      redirect: 'manual',
+      body: '{"enabled":true}',
+    });
+    expect(init.headers).toEqual({
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer user-access-token',
+    });
+  });
+
+  it('sends a bodiless DELETE without Content-Type', async () => {
+    const fetchCore = vi.fn().mockResolvedValue(bytesResponse('{}'));
+    const service = await createService(fetchCore);
+
+    await service.callOperation(
+      { ...OPERATION, method: CustomApiMethod.Delete },
+      'token',
+    );
+
+    const [, init] = fetchCore.mock.calls[0];
+    expect(init.method).toBe('DELETE');
+    expect(init).not.toHaveProperty('body');
+    expect(init.headers).not.toHaveProperty('Content-Type');
+  });
+
+  it('returns the JSON of an upstream 201', async () => {
+    const fetchCore = vi
+      .fn()
+      .mockResolvedValue(bytesResponse('{"id":"new"}', { status: 201 }));
+    const service = await createService(fetchCore);
+
+    await expect(service.callOperation(OPERATION, 'token')).resolves.toEqual({
+      data: { id: 'new' },
+      bytes: 12,
+    });
+  });
+
+  it('returns data null for an upstream 204 without a body', async () => {
+    const fetchCore = vi
+      .fn()
+      .mockResolvedValue(new Response(null, { status: 204 }));
+    const service = await createService(fetchCore);
+
+    await expect(service.callOperation(OPERATION, 'token')).resolves.toEqual({
+      data: null,
+      bytes: 0,
+    });
+  });
+
+  it('maps an upstream 204 that carries bytes to a sanitized 502', async () => {
+    const fetchCore = vi.fn().mockResolvedValue({
+      type: 'default',
+      status: 204,
+      headers: new Headers(),
+      body: new Response('secret-internal-detail').body,
+    } as unknown as Response);
+    const service = await createService(fetchCore);
+
+    const thrown = await service
+      .callOperation(OPERATION, 'token')
+      .catch((error: unknown) => error);
+
+    expect(thrown).toBeInstanceOf(BadGatewayException);
+    expect(
+      JSON.stringify((thrown as HttpException).getResponse()),
+    ).not.toContain('secret-internal-detail');
+  });
+
   it('returns the parsed data and byte count on a 200 JSON response, preserving additive fields', async () => {
     const fetchCore = vi
       .fn()
@@ -165,8 +265,6 @@ describe('CustomApiService', () => {
     [409, 409],
     [422, 422],
     [429, 429],
-    [201, 502],
-    [204, 502],
     [405, 502],
     [410, 502],
     [412, 502],
@@ -177,14 +275,11 @@ describe('CustomApiService', () => {
   ])(
     'maps upstream %d to BFF status %d with a generic message',
     async (upstream, expected) => {
-      const fetchCore = vi
-        .fn()
-        .mockResolvedValue(
-          new Response(
-            upstream === 204 ? null : '{"error":"secret-internal-detail"}',
-            { status: upstream },
-          ),
-        );
+      const fetchCore = vi.fn().mockResolvedValue(
+        new Response('{"error":"secret-internal-detail"}', {
+          status: upstream,
+        }),
+      );
       const service = await createService(fetchCore);
 
       const thrown = await service
@@ -238,6 +333,37 @@ describe('CustomApiService', () => {
     await expect(service.callOperation(OPERATION, 'token')).rejects.toThrow(
       GatewayTimeoutException,
     );
+  });
+
+  it('holds an opted-in long operation past 10 s and cuts it at its own deadline', async () => {
+    vi.useFakeTimers();
+    try {
+      let upstreamSignal: AbortSignal | undefined;
+      const fetchCore = vi.fn(
+        (_url: unknown, init?: RequestInit) =>
+          new Promise<Response>((_resolve, reject) => {
+            upstreamSignal = init?.signal as AbortSignal;
+            upstreamSignal.addEventListener('abort', () =>
+              reject(
+                Object.assign(new Error('aborted'), { name: 'AbortError' }),
+              ),
+            );
+          }),
+      );
+      const service = await createService(fetchCore);
+
+      const pending = service
+        .callOperation({ ...OPERATION, timeoutMs: 300_000 }, 'token')
+        .catch((error: unknown) => error);
+
+      await vi.advanceTimersByTimeAsync(10_001);
+      expect(upstreamSignal?.aborted).toBe(false);
+
+      await vi.advanceTimersByTimeAsync(290_000);
+      expect(await pending).toBeInstanceOf(GatewayTimeoutException);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('aborts body consumption at the deadline and maps it to 504', async () => {
