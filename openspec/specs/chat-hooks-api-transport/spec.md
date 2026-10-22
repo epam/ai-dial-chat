@@ -97,7 +97,7 @@ the package instead of hand-copying `apps/chat/src/server-api/*.ts`.
 
 #### Scenario: Backend error chunks surface through `onError`; malformed events are skipped
 - **WHEN** the stream includes a malformed SSE event or a backend-emitted error chunk
-- **THEN** a malformed event (unparseable JSON) is skipped silently, while a backend error chunk invokes `onError` once — with `GenerationPersistenceError` for `error.type === 'conversation_save_failed'` (carrying `error.status` when it is a number), otherwise `StreamUpstreamError(error.message)` — and `onComplete` is then not invoked
+- **THEN** a malformed event (unparseable JSON) is skipped silently, while a backend error chunk invokes `onError` once — with `GenerationPersistenceError` for `error.type === 'conversation_save_failed'` (carrying `error.status` when it is a number), otherwise `StreamUpstreamError(error.display_message ?? error.message)` — and `onComplete` is then not invoked
 
 #### Scenario: Abort during streaming stops processing without invoking `onComplete`
 - **WHEN** the caller's `AbortSignal` is aborted mid-stream
