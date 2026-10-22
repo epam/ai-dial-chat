@@ -9,6 +9,18 @@ far as 1.1 and confirmed 1.2's approach doesn't work, but blocked on 1.4: `@nx/n
 chose to hold rather than take the available `overrides` workaround. All package.json edits from
 that attempt were reverted; checkboxes below reset to reflect that.
 
+Re-checked 2026-10-22: the fix is approved upstream but targets Nx 24.1, so section 0 below is a
+prerequisite landed as its own change (design.md D4).
+
+## 0. Prerequisites (outside this change)
+
+- [ ] 0.1 Nx 23.2.1 → 24.x upgrade merged on `development` as a separate change/PR (design.md
+  D4 Step A). Not blocked by the Nest fix.
+- [ ] 0.2 An Nx 24.1 release is published with `@nx/nest` peers `@nestjs/core`/`@nestjs/common`
+  `<13.0.0` (`npm view @nx/nest@<24.1.x> peerDependencies`), and its `migrations.json` still
+  contains `upgrade-to-nest-12`. Track
+  [nrwl/nx#36937](https://redirect.github.com/nrwl/nx/pull/36937).
+
 ## 1. Bump `@nestjs/*` versions
 
 - [ ] 1.1 Run `npm exec nx run-many -t build --projects=chat-api,mcp-app-sandbox` once
@@ -20,26 +32,27 @@ that attempt were reverted; checkboxes below reset to reflect that.
   schematic — it's new in v12) instead of the v12 copy the CLI fetches for itself. Reproduced
   the failure against this repo's root and reproduced success with the identical command in an
   isolated scratch directory with no pre-existing `@nestjs/schematics` install, confirming the
-  cause (see design.md D1, updated). Hand-edit per the issue's version table instead.
-- [ ] 1.3 Hand-edit root `package.json`, `apps/chat-api/package.json`, and
-  `apps/mcp-app-sandbox/package.json` so that: `@nestjs/common`/`@nestjs/core`/
-  `@nestjs/platform-express`/`@nestjs/testing` are at `^12.0.0`; root-only `@nestjs/schematics`
-  is at `^12.0.0`; `apps/chat-api/package.json`'s `@nestjs/swagger`, `@nestjs/cache-manager`,
+  cause (see design.md D1, updated). Use 1.3 (nx migration) plus 1.4 (hand-edits) instead.
+- [ ] 1.3 Bump all `@nx/*` and `nx` to the 24.1 release, then run
+  `npx nx migrate @nx/nest@<24.1.x> --from=@nx/nest@24.0.0 --include=all` and
+  `npx nx migrate --run-migration=@nx/nest:upgrade-to-nest-12` (design.md D4 Step B). Review the
+  diff: expect only the root `@nestjs/common`/`core`/`platform-express`/`schematics`/`testing`
+  at `^12.0.1`, no TypeScript change (already `~6.0.2`), and no Jest rewiring (Vitest). Read the
+  migration's AI-prompt notes, and treat anything beyond that as a finding to investigate.
+- [ ] 1.4 Hand-edit `apps/chat-api/package.json` and `apps/mcp-app-sandbox/package.json` (and
+  any root entry the migration skipped) so that: `@nestjs/common`/`@nestjs/core`/
+  `@nestjs/platform-express`/`@nestjs/testing` are at `^12.0.1`, matching root;
+  `apps/chat-api/package.json`'s `@nestjs/swagger`, `@nestjs/cache-manager`,
   `@nestjs/serve-static`, `@nestjs/config` are at `^12.0.0`; `apps/mcp-app-sandbox/package.json`'s
   `@nestjs/config` is at `^12.0.0`; `@nestjs/throttler` to `^6.7.0` (root and
   `apps/chat-api/package.json` — this is the actual v12-compatible line per the issue's table;
   `^6.5.0`'s own peer range only reaches `@nestjs/core@^11`, confirmed by the ERESOLVE below).
-- [ ] 1.4 Resolve the `@nx/nest` peer conflict before `npm install` will succeed:
-  `@nx/nest@23.2.1` (current `latest`, and every prerelease as of 2026-09-21) declares
-  `@nestjs/core`/`@nestjs/common: ">=10.0.0 <12.0.0"` as a `peerOptional` dependency, which
-  still hard-fails npm's resolver against this change's `^12.0.0` bump. Confirmed `@nx/nest`
-  only uses those packages in its generator/scaffolding code
-  (`assert-supported-nestjs-version.js`, `nx g @nx/nest:application`/`:library` templates), not
-  in the `@nx/webpack`/`@nx/node`/`@nx/js` executors this repo's build/serve/test targets run —
-  get explicit sign-off on the fix approach (scoped npm `overrides` pinning `@nx/nest`'s peer
-  resolution to the installed versions is the lowest-risk option evaluated) before applying it,
-  since holding the migration until a stable `@nx/nest` release lifts the cap is also on the
-  table.
+- [ ] 1.5 ~~Resolve the `@nx/nest` peer conflict with an `overrides` entry~~ — superseded by
+  0.2/1.3. `@nx/nest@23.2.1` and `24.0.0` declare `@nestjs/core`/`@nestjs/common:
+  ">=10.0.0 <12.0.0"` as a `peerOptional` dependency, which still hard-fails npm's resolver
+  against a v12 bump. `@nx/nest` uses those packages only in its generator/scaffolding code, not
+  in the `@nx/webpack`/`@nx/node`/`@nx/js` executors this repo runs. So a scoped npm `overrides`
+  entry stays the fallback if Nx 24.1 slips, and still needs explicit sign-off before it is used.
 
 ### Verification
 
@@ -119,6 +132,8 @@ that attempt were reverted; checkboxes below reset to reflect that.
 - [ ] 6.2 Grep both apps for `@Optional()` usage on a subclassed provider constructor; confirm
   the issue's "no current usages" finding still holds (guard check only — no code change
   expected).
+- [ ] 6.3 Grep both apps for custom `PipeTransform` implementations using `ArgumentMetadata`
+  (v12 makes it generic); none existed on 2026-10-22, so this is a guard check only.
 
 ### Verification
 
@@ -142,15 +157,14 @@ that attempt were reverted; checkboxes below reset to reflect that.
 
 ## 8. CI Node-version floor check
 
-- [ ] 8.1 Confirm the Node 24 minor resolved by `actions/setup-node` in
+- [x] 8.1 Confirm the Node 24 minor resolved by `actions/setup-node` in
   `.github/workflows/pr.yml` / `release.yml` satisfies `@nestjs/schematics`' v12 floor
-  (`^22.22.3 || ^24.15.0 || >=26`); if it does not, pin `node-version` to a satisfying 24.x value
-  in both workflow files (per design.md's Open Question — this cannot be resolved from repo
-  contents alone).
+  (`^22.22.3 || ^24.15.0 || >=26`). Confirmed 2026-10-22: `node-version: 24` resolves to the
+  newest 24.x, `v24.22.1`. No workflow change needed.
 
 ### Verification
 
-- No local command; confirmed against the CI runner's actual resolved Node version.
+- Re-confirm in the CI log of the implementation PR (`node -v` in the setup-node step).
 
 ## 9. Update documentation
 

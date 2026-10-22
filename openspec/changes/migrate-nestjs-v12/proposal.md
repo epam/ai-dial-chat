@@ -5,11 +5,17 @@ published prerelease) caps `@nestjs/core`/`@nestjs/common` peer support below v1
 `npm install` after the version bump. See design.md's "Status: On Hold" section for the full
 findings and how to resume.
 
+Re-checked 2026-10-22: still blocked, but the unblock path is now concrete. Nx 24.0.0 shipped on
+2026-10-21 with the same `<12.0.0` cap. The upstream fix
+([nrwl/nx#36937](https://redirect.github.com/nrwl/nx/pull/36937)) is approved but not merged, and
+it targets **Nx 24.1**, not a 23.x patch. Resuming this change therefore depends on a separate
+Nx 23 → 24 upgrade first (design.md D4).
+
 ## Why
 
 `@nestjs/core`/`@nestjs/common`/`@nestjs/platform-express` are pinned to `^11.0.0` in the root
 `package.json`, `apps/chat-api/package.json`, and `apps/mcp-app-sandbox/package.json`. NestJS 11
-moved to the `legacy` dist-tag once v12 (`12.0.3`) shipped, so the project is on an unsupported
+moved to the `legacy` dist-tag once v12 shipped (`12.2.0` is `latest` as of 2026-10-22), so the project is on an unsupported
 line for security fixes and new companion-package releases. Related packages
 (`@nestjs/config` `^4.0.4`, `@nestjs/swagger` `^11.4.1`, `@nestjs/cache-manager` `^3.1.2`,
 `@nestjs/serve-static` `^5.0.5`, `@nestjs/schematics` `^11.0.0`) drift further behind the longer
@@ -19,19 +25,22 @@ migrating one major now. Tracked in
 
 ## What Changes
 
+- Prerequisite, landed as its own change: all `@nx/*` and `nx` at the Nx 24.1 release that ships
+  NestJS 12 peer support (design.md D4).
 - Bump `@nestjs/common`, `@nestjs/core`, `@nestjs/platform-express`, `@nestjs/testing`,
-  `@nestjs/schematics` to `^12.0.0` in the root `package.json`, and
-  `@nestjs/common`/`@nestjs/core`/`@nestjs/platform-express`/`@nestjs/testing` to `^12.0.0` in
-  `apps/chat-api/package.json` and `apps/mcp-app-sandbox/package.json`.
+  `@nestjs/schematics` to `^12.0.1` in the root `package.json`, and
+  `@nestjs/common`/`@nestjs/core`/`@nestjs/platform-express`/`@nestjs/testing` to `^12.0.1` in
+  `apps/chat-api/package.json` and `apps/mcp-app-sandbox/package.json`. The floor is `12.0.1`
+  because `12.0.0` shipped with its own inter-package peers still on `^11`.
 - Bump `@nestjs/swagger` (`^11.4.1` → `^12.0.0`), `@nestjs/cache-manager` (`^3.1.2` → `^12.0.0`),
   `@nestjs/serve-static` (`^5.0.5` → `^12.0.0`), and `@nestjs/config` (`^4.0.4` → `^12.0.0`) in
   `apps/chat-api/package.json` (and `apps/mcp-app-sandbox/package.json` for `@nestjs/config`).
   `@nestjs/throttler` bumps from `^6.5.0` to `^6.7.0` (the actual v12-compatible line per the
   issue's table — `6.5.0`'s own peer range only reaches `@nestjs/core@^11`).
-- Run the framework's own `nest upgrade` CLI (with `--dry-run` first) from the workspace root to
-  apply the mechanical parts of the migration (see
-  [migration guide](https://docs.nestjs.com/migration-guide)), then hand-verify every risk area
-  the guide and the issue call out: ESM-shipped core packages under `@nx/webpack`'s CommonJS
+- Apply the root core-package bump with `@nx/nest`'s optional `upgrade-to-nest-12` migration
+  (`nx migrate`), hand-edit the rest (`nest upgrade` does not work in this repo, see design.md
+  D1/D4; [migration guide](https://docs.nestjs.com/migration-guide)), then hand-verify every
+  risk area the guide and the issue call out: ESM-shipped core packages under `@nx/webpack`'s CommonJS
   bundling (`apps/chat-api/webpack.shared.js` dynamic-module aliases), `ConsoleLogger`
   structured-params behavior in `apps/chat-api/src/telemetry/nestjs-otel-logger.ts`,
   `@nestjs/config` v12's Standard-Schema validation option shape in
@@ -42,9 +51,9 @@ migrating one major now. Tracked in
   telemetry, cache warm-up, and scheduled tasks.
 - **BREAKING** (internal/tooling only, not user-facing): raises the minimum Node.js runtime to
   `>=20.19.0 <21 || >=22.12.0 <23 || >=24` and the `@nestjs/schematics` CLI floor to
-  `^22.22.3 || ^24.15.0 || >=26`. CI already pins Node 24 (`.github/workflows/pr.yml`,
-  `release.yml`), so this requires confirming the resolved Node 24 minor satisfies the
-  schematics floor (pin explicitly if not) rather than changing CI's major version.
+  `^22.22.3 || ^24.15.0 || >=26`. CI pins `node-version: 24` (`.github/workflows/pr.yml`,
+  `release.yml`), which `actions/setup-node` resolves to the newest 24.x (`v24.22.1` on
+  2026-10-22), so CI already clears the schematics floor and needs no change.
 - No externally observable HTTP behavior changes: environment-variable fail-fast validation,
   `ValidationPipe`'s `{ whitelist: true, forbidNonWhitelisted: true, transform: true }` contract
   and its 400 error body shape, the shared in-memory cache's TTL/LRU/eviction semantics, and the
@@ -83,8 +92,9 @@ _None._ This is a framework-version migration; no new user-facing capability is 
 - **Dependencies**: `@nestjs/*` packages across root, `apps/chat-api`, and `apps/mcp-app-sandbox`;
   transitively `cache-manager` (`^7.2.8`, already satisfies v12's `>=6` floor) and `keyv`
   (already satisfies `>=5`) need no version change themselves.
-- **CI/tooling**: `.github/workflows/pr.yml` / `release.yml` Node 24 pin must be confirmed to
-  satisfy `@nestjs/schematics`'s v12 floor.
+- **CI/tooling**: depends on the Nx 24.1 upgrade landing first (separate change). The
+  `.github/workflows/pr.yml` / `release.yml` Node 24 pin already satisfies
+  `@nestjs/schematics`'s v12 floor.
 - **Docs**: `docs/architecture.md` (Monorepo & Tooling version table), root `README.md`
   tech-stack list, and `apps/chat-api/README.md` if any env/script surface changes.
 - **i18n**: none — no user-visible strings are added or changed.
