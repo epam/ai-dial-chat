@@ -156,11 +156,6 @@ const isDefaultAgentSentinel = (value: string): boolean =>
   value === DefaultAgentMode.DefaultAgent ||
   value === DefaultAgentMode.LastUsedAgent;
 
-const isDeploymentPresent = (
-  deployments: DeploymentItemDto[],
-  id: string | null,
-): boolean => id != null && deployments.some((d) => d.id === id);
-
 /* A deployment the operator hid via HIDDEN_ENTITY_TAGS must not become a new
    chat's model through a stored or configured preference ([#9150](https://github.com/epam/ai-dial-chat/issues/9150)). */
 const isDeploymentSelectable = (
@@ -200,8 +195,17 @@ const resolveInitialSelection = (
   configuredDefaultId: string | null,
   overlayModelId: string | null,
 ): string | null => {
-  if (isDeploymentPresent(deployments, inMemoryId)) {
-    return inMemoryId;
+  /*
+   * A conversation restored before the catalog loaded keeps its stored value,
+   * which may be a `reference` or a differently encoded id. Resolve it to the
+   * catalog `id` instead of discarding it for the default ([#9275](https://github.com/epam/ai-dial-chat/issues/9275)).
+   */
+  const inMemoryDeployment = findDeploymentByIdOrReference(
+    deployments,
+    inMemoryId,
+  );
+  if (inMemoryDeployment) {
+    return inMemoryDeployment.id;
   }
   const overlayDeployment = findDeploymentByIdOrReference(
     deployments,
