@@ -45,6 +45,7 @@ import {
 import {
   findPendingBackgroundMessage,
   neutralizeForeignPendingMessages,
+  type StoredMessage,
 } from '../generation/background-message';
 import {
   GenerationApi,
@@ -816,7 +817,7 @@ export class ConversationStreamingService {
         | GenerationStatus.Done
         | GenerationStatus.Stopped
         | GenerationStatus.Error,
-      partialMessage: ConversationMessageDto,
+      partialMessage: StoredMessage,
     ): Promise<void> => {
       let customViewState = startConversation.customViewState;
       try {
