@@ -230,7 +230,7 @@ The system SHALL display export progress and history in a non-modal, non-blockin
 
 The panel SHALL support **multiple concurrent export jobs**: starting a new export (single-conversation JSON, single-conversation ZIP, or export-all) while one or more others are still running SHALL add an independent entry rather than replacing or queuing behind the existing one(s); each job's fetch/outcome SHALL be tracked independently — including the single-JSON export, which typically completes almost immediately and so appears in the panel only briefly before settling to success.
 
-Each in-progress row SHALL show an indeterminate kit `Spinner` (accessible name from `labels.itemProgressAriaLabel(fileName)`); a row never renders its own percentage. While the queue is **collapsed** and at least one job is in progress, the kit SHALL render one aggregate `ProgressBar` in place of the rows. Its value is the unweighted mean of the items' `percent` (each job's `progress.percent`; see `conversation-transfer-progress`), and its `aria-valuetext` comes from `labels.queueProgressValueText(settled, total)`. No aggregate bar is shown while the queue is expanded. The panel header SHALL contain a count-based title composed by the app (`"Exporting 1 file"` / `"Exporting 3 files"`), a collapse/expand toggle that hides or shows the individual job rows without removing the panel itself, a panel-level close control that clears the whole queue (see the dismissal requirement below), and, when at least one job has failed, a failed-count badge.
+Each in-progress row SHALL show an indeterminate kit `Spinner` (accessible name from `labels.itemProgressAriaLabel(fileName)`); a row never renders its own percentage. While the queue is **collapsed** and at least one job is in progress, the kit SHALL render one aggregate `ProgressBar` in place of the rows. Its value is the unweighted mean of the items' `percent` (each job's `progress.percent`; see `conversation-transfer-progress`), and its `aria-valuetext` comes from `labels.queueProgressValueText(settled, total)`. No aggregate bar is shown while the queue is expanded. The panel header SHALL contain a count-based title composed by the app (`"Exporting 1 file"` / `"Exporting 3 files"`), a collapse/expand toggle that hides or shows the individual job rows without removing the panel itself, and a panel-level close control that clears the whole queue (see the dismissal requirement below). The header carries no failed-count badge; each failed row reports its own failure through its error icon and reason.
 
 Each job SHALL be one of five states (`ConversationTransferJobStatus` in `libs/chat-shared/src/models/conversation-transfer.ts`): **in progress**, **success**, **warning**, **failed**, or **canceled**. **Warning** means the file was delivered but is incomplete: a with-attachments export that skipped an attachment settles as `Warning` at 100%. Its row shows an amber warning icon whose tooltip and accessible name give the reason (`ConversationExportI18nKeys.WarningAttachmentSkipped`). Each job SHALL render as its own row identified by the **file name** the export writes, with a leading file-type icon and state-appropriate controls (see the requirements below for exactly which controls appear per state). The conversation title and source-folder breadcrumb SHALL NOT appear in a row.
 
@@ -300,15 +300,15 @@ An **in-progress** job row SHALL expose a per-row cancel control, revealed on ro
 
 #### Scenario: The panel-level close clears the whole queue
 
-- **GIVEN** every job in the queue has settled as success, warning, or canceled, with none in progress or failed
+- **GIVEN** every job in the queue has settled as success, warning, failed, or canceled, with none in progress
 - **WHEN** the user activates the panel-level close control in the header
-- **THEN** every job is removed immediately (no confirmation), any still-in-progress request is aborted, and the panel disappears
+- **THEN** every job is removed immediately (no confirmation) and the panel disappears
 
 ---
 
 ### Requirement: Confirming panel-level close when work would be lost
 
-Activating the panel-level close control SHALL clear the queue immediately, without confirmation, when no job is in progress or failed (every job is success, warning, or canceled) — a canceled job represents work the user already chose to stop, so nothing further is lost. If at least one job is still **in progress** or has **failed**, activating the panel-level close control SHALL first show the `TransferQueue` component's own `ConfirmationPopup` (danger variant, `role="dialog"`) asking the user to confirm. Its description is `closeConfirmDescriptionInProgress`, `closeConfirmDescriptionFailed` or `closeConfirmDescriptionMixed`, depending on which of those states are present. Confirmation is needed because closing would abort in-progress work or discard the record of a failure the user has not yet acknowledged. Confirming clears the queue exactly as described above; cancelling the confirmation dismisses only the dialog and leaves the queue untouched. This confirmation is the one deliberate, user-triggered exception to the panel's otherwise non-modal design (see the queue-panel requirement above), and it is rendered by the kit component itself, driven by the `labels` object the app supplies.
+Activating the panel-level close control SHALL clear the queue immediately, without confirmation, when no job is in progress (every job is success, warning, failed, or canceled) — a settled job, failed ones included, has no work left to lose. If at least one job is still **in progress**, activating the panel-level close control SHALL first show the `TransferQueue` component's own `ConfirmationPopup` (danger variant, `role="dialog"`) asking the user to confirm, because closing would abort that work. Its description is `closeConfirmDescriptionMixed` when the queue also holds a failed job, and `closeConfirmDescriptionInProgress` otherwise. Confirming clears the queue exactly as described above; cancelling the confirmation dismisses only the dialog and leaves the queue untouched. This confirmation is the one deliberate, user-triggered exception to the panel's otherwise non-modal design (see the queue-panel requirement above), and it is rendered by the kit component itself, driven by the `labels` object the app supplies.
 
 #### Scenario: Closing an all-succeeded queue needs no confirmation
 
@@ -322,11 +322,23 @@ Activating the panel-level close control SHALL clear the queue immediately, with
 - **WHEN** the user activates the panel-level close control
 - **THEN** the queue is cleared immediately and no confirmation dialog appears
 
-#### Scenario: Closing a queue with in-progress or failed work asks for confirmation
+#### Scenario: Closing a queue whose only unfinished work failed needs no confirmation
 
-- **GIVEN** the queue contains at least one job that is in progress or failed
+- **GIVEN** the queue contains a failed job and no job in progress
+- **WHEN** the user activates the panel-level close control
+- **THEN** the queue is cleared immediately and no confirmation dialog appears
+
+#### Scenario: Closing a queue with in-progress work asks for confirmation
+
+- **GIVEN** the queue contains at least one job that is in progress
 - **WHEN** the user activates the panel-level close control
 - **THEN** a confirmation dialog appears and the queue is not yet cleared
+
+#### Scenario: Running and failed work together use the mixed description
+
+- **GIVEN** the queue contains one job in progress and one failed job
+- **WHEN** the user activates the panel-level close control
+- **THEN** the confirmation dialog's description is `closeConfirmDescriptionMixed`
 
 #### Scenario: Confirming the close clears the queue
 

@@ -13,16 +13,6 @@ import {
   EditorI18nKeys,
 } from '../constants/translation-keys';
 
-/*
- * Codes that are reported while the user is still typing. A required-field
- * error waits for blur/submit so an empty field is not flagged the moment
- * it is focused; a too-long or control-character value is flagged at once.
- */
-const LIVE_ERROR_CODES = new Set<DeploymentCreationFieldErrorCode>([
-  DeploymentCreationFieldErrorCode.TooLong,
-  DeploymentCreationFieldErrorCode.ControlCharacters,
-]);
-
 const translateNameCode = (
   code: DeploymentCreationFieldErrorCode,
   t: TFunction,
@@ -57,20 +47,4 @@ export const translateDeploymentCreationErrors = (
     });
   }
   return errors;
-};
-
-/** Returns the as-you-type errors (too long, control characters) for the fields in `changedKeys`, keyed like the form's errors. */
-export const getLiveDeploymentCreationErrors = (
-  codes: DeploymentCreationFormErrorCodes,
-  changedKeys: string[],
-  t: TFunction,
-): DeploymentCreationFormFieldErrors => {
-  const liveCodes: DeploymentCreationFormErrorCodes = {};
-  for (const key of ['name', 'description'] as const) {
-    const code = codes[key];
-    if (changedKeys.includes(key) && code && LIVE_ERROR_CODES.has(code)) {
-      liveCodes[key] = code;
-    }
-  }
-  return translateDeploymentCreationErrors(liveCodes, t);
 };

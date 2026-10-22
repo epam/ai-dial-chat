@@ -37,6 +37,7 @@ import {
   isStatusMessage,
   StatusEvent,
   type Annotation,
+  type AttachResult,
   type Attachment,
   type Conversation,
   type MessageRating,
@@ -115,7 +116,6 @@ import { attachmentCanvasUrlResolvers } from '../../utils/attachment-display-res
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
 import { useDeploymentSelectorOverlay } from '../DeploymentSelector/useDeploymentSelectorOverlay';
-import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
 import FileDeleteConfirmContent from '../FileDeleteConfirmContent/FileDeleteConfirmContent';
 import FooterMessage from '../FooterMessage/FooterMessage';
 import { usePromptSelectorOverlay } from '../PromptSelector/usePromptSelectorOverlay';
