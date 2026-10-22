@@ -14,6 +14,7 @@ import type { DialFileManagerShellLabels } from '@epam/ai-dial-chat-shared';
 import {
   DialFileManagerActions,
   DialFileManagerTabs,
+  type FileManagerGridRow,
 } from '@epam/ai-dial-react-file-manager';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -35,6 +36,8 @@ interface CapturedTreeOptions extends CapturedActionLabels {
 
 const capturedDialFileManagerProps: {
   current: {
+    className?: string;
+    contentClassName?: string;
     emptyStateTitle?: string;
     searchEmptyStateTitle?: string;
     onCreateFolder?: unknown;
@@ -42,6 +45,7 @@ const capturedDialFileManagerProps: {
     autoSelectUploadedItems?: boolean;
     onGetInfo?: unknown;
     onPreview?: unknown;
+    onTableFileClick?: unknown;
     previewExtensions?: string[];
     gridOptions?: CapturedActionLabels;
     treeOptions?: CapturedTreeOptions;
@@ -98,6 +102,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       onFolderPopupPathChange?: unknown;
       onGetInfo?: unknown;
       onPreview?: unknown;
+      onTableFileClick?: unknown;
       previewExtensions?: string[];
       autoSelectUploadedItems?: boolean;
       gridOptions?: CapturedActionLabels;
@@ -292,6 +297,7 @@ const renderShell = (
     labels?: DialFileManagerShellLabels;
     treeContainerClassName?: string;
     onPreview?: (path?: string) => void;
+    onTableFileClick?: (row: FileManagerGridRow) => void;
     previewExtensions?: string[];
   } = {},
 ) =>
@@ -308,6 +314,7 @@ const renderShell = (
       actionProfile={options.actionProfile ?? DialFileManagerActionProfile.Full}
       treeContainerClassName={options.treeContainerClassName}
       onPreview={options.onPreview}
+      onTableFileClick={options.onTableFileClick}
       previewExtensions={options.previewExtensions}
     />,
   );
@@ -791,6 +798,14 @@ describe('DialFileManagerShell', () => {
       ).toBeUndefined();
     });
 
+    it('passes onTableFileClick straight through to DialFileManager', () => {
+      const onTableFileClick = vi.fn();
+      renderShell(undefined, new Set(), { onTableFileClick });
+      expect(capturedDialFileManagerProps.current?.onTableFileClick).toBe(
+        onTableFileClick,
+      );
+    });
+
     it('passes onPreview and previewExtensions straight through to DialFileManager', () => {
       const onPreview = vi.fn();
       const previewExtensions = ['.md', '.txt'];
@@ -1107,6 +1122,44 @@ describe('DialFileManagerShell', () => {
       expect(capturedDialFileManagerProps.current?.treeOptions?.header).toBe(
         'File storage',
       );
+    });
+
+    it('aligns the mobile content with the 12px page padding on the standalone page', () => {
+      renderAll(DialFileManagerTabs.Shared);
+      const props = capturedDialFileManagerProps.current;
+      expect(props?.contentClassName?.split(' ')).toContain('mobile:px-0');
+      expect(props?.className?.split(' ')).toContain('mobile:pt-2');
+    });
+
+    it('renders the treeHeader as a mobile-only page heading on the standalone page', () => {
+      renderAll(
+        DialFileManagerTabs.Shared,
+        {},
+        {
+          ...baseLabels,
+          treeHeader: 'File storage',
+        },
+      );
+      const heading = screen.getByRole('heading', {
+        level: 1,
+        name: 'File storage',
+      });
+      expect(heading.className.split(' ')).toContain('mobile:flex');
+      expect(heading.className.split(' ')).toContain('hidden');
+    });
+
+    it('renders no mobile heading without treeHeader', () => {
+      renderAll(DialFileManagerTabs.Shared);
+      expect(screen.queryByRole('heading', { level: 1 })).toBeNull();
+    });
+
+    it('does not apply the mobile page padding in the attach modal', () => {
+      renderShell({ uploadEnabled: true }, new Set(), {
+        variant: DialFileManagerVariant.Attach,
+      });
+      const props = capturedDialFileManagerProps.current;
+      expect(props?.contentClassName).toBe('px-0 pb-0');
+      expect(props?.className?.split(' ')).not.toContain('mobile:pt-2');
     });
 
     it('gates on activeTab when the controller has no sectionTab', () => {

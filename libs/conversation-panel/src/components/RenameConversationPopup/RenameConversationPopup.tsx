@@ -109,11 +109,14 @@ export const RenameConversationPopup: FC<RenameConversationPopupProps> = memo(
       }
     }, [isGenerating, onGenerateWithAi, labels.renameWithAiError]);
 
+    /* A failed save or AI generation interrupts the user; the length check is
+       a field error the input describes on its own. */
+    const failureMessage = generateError ?? error ?? undefined;
     let inputError: string | undefined;
     if (isTooLong) {
       inputError = labels.nameTooLongError;
     } else {
-      inputError = generateError ?? error ?? undefined;
+      inputError = failureMessage;
     }
 
     return (
@@ -143,6 +146,10 @@ export const RenameConversationPopup: FC<RenameConversationPopupProps> = memo(
             </div>
           ) : (
             <div className="flex items-start gap-2 px-6 py-3">
+              {/* Stays mounted so the failure is announced when it appears. */}
+              <span role="alert" className="sr-only">
+                {isTooLong ? '' : (failureMessage ?? '')}
+              </span>
               <div className="min-w-0 flex-1">
                 <Input
                   inputRef={inputRef}

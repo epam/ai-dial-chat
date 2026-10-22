@@ -15,8 +15,7 @@ import {
   resolveTextCanvasContent,
   resolveVisualizerCanvasContent,
 } from '@epam/ai-dial-chat-hooks';
-import { useCallback, useMemo } from 'react';
-import { useConversationPanel } from '../../context/ConversationPanelContext';
+import { useMemo } from 'react';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useTheme } from '../../context/ThemeContext';
 import { attachmentCanvasUrlResolvers } from '../../utils/attachment-display-resolvers';
@@ -88,15 +87,11 @@ export const useAttachmentCanvasResolvers = (): {
   resolvers: UseOpenAttachmentCanvasResolvers;
   options: UseOpenAttachmentCanvasOptions;
 } => {
-  const { closePanel } = useConversationPanel();
-  const { handleClose: closeSourcesPanel } = useSourcesSidebar();
+  /* The canvas takes the sources panel's place at the end edge; the navigation
+     sidebar is left as the user set it. */
+  const { handleClose: onBeforeOpen } = useSourcesSidebar();
   const customVisualizers = useCustomVisualizers();
   const { currentTheme: themeId } = useTheme();
-
-  const onBeforeOpen = useCallback(() => {
-    closePanel();
-    closeSourcesPanel();
-  }, [closePanel, closeSourcesPanel]);
 
   return useMemo(
     () => ({

@@ -94,6 +94,7 @@ export const ScheduledTaskHistorySection: FC<
       labels={{
         historyTitle: labels.historyTitle,
         emptyLabel: labels.historyEmptyLabel,
+        emptyDescription: labels.historyEmptyDescription,
         errorLabel: labels.historyErrorLabel,
         retryLabel: labels.historyRetryLabel,
         runStatusLabels: labels.runStatusLabels,

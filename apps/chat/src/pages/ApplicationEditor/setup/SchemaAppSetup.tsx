@@ -1,5 +1,6 @@
 import {
   ErrorMessageNotification,
+  ErrorText,
   type JsonSchema,
   NoDataContent,
   SchemaRenderer,
@@ -136,11 +137,7 @@ const SchemaAppSetup: FC<Props> = ({
 
   return (
     <div className="flex flex-col gap-2">
-      {errors.properties && (
-        <p role="alert" className="dial-small-text text-error">
-          {errors.properties}
-        </p>
-      )}
+      {errors.properties && <ErrorText text={errors.properties} />}
       <SchemaRenderer
         schema={schema}
         variant={SchemaRendererVariant.Flat}

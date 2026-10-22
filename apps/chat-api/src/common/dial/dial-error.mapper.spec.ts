@@ -15,6 +15,7 @@ import {
 } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import {
+  extractDialErrorMessage,
   handleDialFetchError,
   handleDialSdkError,
   isUpstreamTextExposable,
@@ -144,6 +145,42 @@ describe('mapDialHttpStatus', () => {
     expect(logger.warn).toHaveBeenCalledWith(
       'DIAL Core error body for ctx: {"code":"bad"}',
     );
+  });
+});
+
+describe('extractDialErrorMessage', () => {
+  it('returns a plain string payload as-is', () => {
+    expect(extractDialErrorMessage('Endpoint unreachable')).toBe(
+      'Endpoint unreachable',
+    );
+  });
+
+  it('prefers error.display_message over error.message in an envelope', () => {
+    expect(
+      extractDialErrorMessage({
+        error: { message: 'Error code: 429', display_message: 'Limit hit' },
+      }),
+    ).toBe('Limit hit');
+  });
+
+  it('prefers display_message over message on a bare error object', () => {
+    expect(
+      extractDialErrorMessage({
+        message: 'Error code: 429',
+        display_message: 'Limit hit',
+      }),
+    ).toBe('Limit hit');
+  });
+
+  it('falls back to message when no display_message is present', () => {
+    expect(extractDialErrorMessage({ message: 'Model overloaded' })).toBe(
+      'Model overloaded',
+    );
+  });
+
+  it('returns undefined when the payload carries no text', () => {
+    expect(extractDialErrorMessage({ code: '500' })).toBeUndefined();
+    expect(extractDialErrorMessage(null)).toBeUndefined();
   });
 });
 

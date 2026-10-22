@@ -55,6 +55,13 @@ const startAttachRequest = async (app: INestApplication) =>
     .send({ path: PATH })
     .expect(200);
 
+/* Decodes the `data:` lines of an SSE body, skipping keepalive comments. */
+const parseSseEvents = (body: string): Record<string, unknown>[] =>
+  body
+    .split('\n')
+    .filter((line) => line.startsWith('data: '))
+    .map((line) => JSON.parse(line.slice('data: '.length)));
+
 const waitForSubscribers = async (
   service: ConversationGenerationService,
   ownerKey: string,
@@ -173,6 +180,69 @@ describe('POST /conversations/completions/attach (integration)', () => {
 
     const res = await reqPromise;
     expect(res.text).toContain('"type":"stopped"');
+  });
+
+  it('announces the generation id on the snapshot event', async () => {
+    const lease = generationService.register(COOKIE_OWNER_KEY, PATH, GEN_ID);
+    generationService.seedAssembledMessage(lease, makeMessage(''));
+
+    const reqPromise = startAttachRequest(app);
+    await waitForSubscribers(generationService, COOKIE_OWNER_KEY);
+    generationService.complete(lease);
+
+    const res = await reqPromise;
+
+    const snapshot = parseSseEvents(res.text).find(
+      (event) => event.type === 'snapshot',
+    );
+    expect(snapshot?.generationId).toBe(GEN_ID);
+    expect(snapshot?.message).toMatchObject({ role: 'assistant', content: '' });
+  });
+
+  it('lets the announced id stop the generation it was attached to', async () => {
+    const lease = generationService.register(COOKIE_OWNER_KEY, PATH, GEN_ID);
+    generationService.seedAssembledMessage(lease, makeMessage(''));
+
+    const reqPromise = startAttachRequest(app);
+    await waitForSubscribers(generationService, COOKIE_OWNER_KEY);
+    await request(app.getHttpServer())
+      .post('/conversations/completions/stop')
+      .send({ generationId: GEN_ID, path: PATH })
+      .expect(204);
+    generationService.error(lease);
+
+    const res = await reqPromise;
+    const events = parseSseEvents(res.text);
+    expect(
+      events.find((event) => event.type === 'snapshot')?.generationId,
+    ).toBe(GEN_ID);
+    expect(events.at(-1)?.type).toBe('stopped');
+  });
+
+  it('keeps the message and the chunk events unchanged by the announced id', async () => {
+    const lease = generationService.register(COOKIE_OWNER_KEY, PATH, GEN_ID);
+    generationService.seedAssembledMessage(lease, makeMessage(''));
+
+    const reqPromise = startAttachRequest(app);
+    await waitForSubscribers(generationService, COOKIE_OWNER_KEY);
+    generationService.applyChunk(
+      lease,
+      { choices: [{ delta: { content: 'Hi' } }] },
+      makeMessage('Hi'),
+    );
+    generationService.complete(lease);
+
+    const events = parseSseEvents((await reqPromise).text);
+
+    expect(events.map((event) => event.type)).toEqual([
+      'snapshot',
+      'chunk',
+      'done',
+    ]);
+    expect(events[1]).toEqual({
+      type: 'chunk',
+      chunk: { choices: [{ delta: { content: 'Hi' } }] },
+    });
   });
 
   it('supports two concurrent subscribers on the same generation, each with their own snapshot', async () => {

@@ -157,7 +157,9 @@ An `assistant` history message SHALL always be mapped to an `input` item whose `
 - `response.completed` → validate `response.status`; if terminal-success (`status` absent or `'completed'`), record an explicit success terminal signal, emit the final compatible chunk (mirroring the Chat Completions terminal chunk shape), and persist `message.responseId` from `response.id`; if `status` is present and not `'completed'`, record an explicit stream-error terminal signal instead — this generation SHALL NOT be treated as successful.
 - `response.failed` → record an explicit terminal-error signal. Extract a human-readable message from `response.error` using the repository's established DIAL error-extraction conventions (`extractDialErrorMessage`); fall back to a stable generic message when no usable text is available. Preserve any assistant text assembled from prior `response.output_text.delta` events. SHALL NOT be counted as an unknown event, SHALL NOT cause a downstream `data: [DONE]` write, and SHALL NOT trigger a Chat Completions retry.
 - `response.incomplete` → finalize the generation the same way an in-progress error/stop is finalized today: record an explicit terminal-error signal and save the partial assistant message accumulated so far via the existing `backend-owned-generation-persistence` partial-save path.
-- An in-band `error` event or an error payload embedded in another event → record an explicit terminal-error signal and terminate the stream via the existing stream-error path (no Chat Completions retry).
+- An in-band `error` event or an error payload embedded in another event → record an explicit terminal-error signal and terminate the stream via the existing stream-error path (no Chat Completions retry). Extract its message with `extractDialErrorMessage`, falling back to a stable generic message.
+
+For both `response.failed` and an in-band `error` event, a `display_message` carried by the error SHALL take precedence over its `message`, because DIAL Core puts the user-facing text (e.g. a token-limit notice with its reset time) there while `message` may hold the raw upstream error.
 - `response.reasoning_text.delta` → discard silently: not forwarded to the browser, not added to the assembled message, not counted as an unknown event, and not a terminal signal.
 - Any other event `type` → skip without forwarding to the browser; count it by `event.type` in metrics; MUST NOT log event content or prompt/response text; MUST NOT be treated as a terminal signal of any kind.
 
@@ -199,6 +201,11 @@ The upstream socket closing (end of stream) SHALL NOT by itself imply successful
 
 - **WHEN** `response.failed` carries a structured `response.error.message`
 - **THEN** the extracted message is used as the error outcome's message, and no log statement contains the raw event payload
+
+#### Scenario: A failure's display_message takes precedence over its message
+
+- **WHEN** `response.failed` carries a `response.error` with both `message` and `display_message`, or an in-band `error` event carries an `error` with both
+- **THEN** the error outcome's `displayMessage` is the `display_message`
 
 #### Scenario: response.failed is not recorded as an unknown event
 

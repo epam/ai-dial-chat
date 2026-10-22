@@ -13,7 +13,11 @@ import type {
   MessageAttachment,
   Stage,
 } from '@epam/ai-dial-chat-shared';
-import { collectAttachmentRefs, splitFileIdAnchor } from './attachment-refs';
+import {
+  collectAttachmentRefs,
+  mapAnnotationPool,
+  splitFileIdAnchor,
+} from './attachment-refs';
 import type { AttachmentReference } from './attachment-refs';
 import type {
   AllocatedUploadPath,
@@ -343,39 +347,38 @@ const rewriteStages = (
       : stage,
   );
 
+/** Rewrites the source document a citation points at, or returns it unchanged when that document was not uploaded. */
+const rewriteAnnotation = (
+  annotation: Annotation,
+  targetMap: Map<string, RewrittenAttachmentTarget>,
+): Annotation => {
+  const source = annotation.body?.source;
+  if (source?.attachment == null) return annotation;
+
+  const patch = buildAttachmentPatch(source.attachment, targetMap);
+  if (patch == null) return annotation;
+
+  return {
+    ...annotation,
+    body: {
+      ...annotation.body,
+      source: {
+        ...source,
+        attachment: { ...source.attachment, ...patch },
+      },
+    },
+  };
+};
+
 /** Rewrites the source document each citation points at. */
 const rewriteAnnotations = (
   annotations: Annotation[],
   targetMap: Map<string, RewrittenAttachmentTarget>,
 ): Annotation[] =>
-  annotations.map((annotation) => {
-    const source = annotation.body?.source;
-    if (source?.attachment == null) return annotation;
+  annotations.map((annotation) => rewriteAnnotation(annotation, targetMap));
 
-    const patch = buildAttachmentPatch(source.attachment, targetMap);
-    if (patch == null) return annotation;
-
-    return {
-      ...annotation,
-      body: {
-        ...annotation.body,
-        source: {
-          ...source,
-          attachment: { ...source.attachment, ...patch },
-        },
-      },
-    };
-  });
-
-/**
- * Rewrites every attachment reference a message carries — its own
- * `custom_content.attachments`, the attachments of each execution stage, and
- * the source document of each citation — from an old file id to its new
- * uploaded location, and its `title` when the target carries a renamed one.
- * References not present in `targetMap` are left untouched (immutable —
- * returns a new conversation).
- */
-export const rewriteAttachmentUrls = (
+/** Rewrites the attachment references of every message, leaving the citation pool to the caller. */
+const rewriteMessageAttachmentUrls = (
   conversation: Conversation,
   targetMap: Map<string, RewrittenAttachmentTarget>,
 ): Conversation => ({
@@ -409,6 +412,24 @@ export const rewriteAttachmentUrls = (
     };
   }),
 });
+
+/**
+ * Rewrites every attachment reference a conversation carries — each
+ * message's own `custom_content.attachments`, the attachments of each
+ * execution stage, the source document of each citation, and the source
+ * document of each entry in the conversation-level citation pool — from an
+ * old file id to its new uploaded location, and its `title` when the target
+ * carries a renamed one. References not present in `targetMap` are left
+ * untouched (immutable — returns a new conversation).
+ */
+export const rewriteAttachmentUrls = (
+  conversation: Conversation,
+  targetMap: Map<string, RewrittenAttachmentTarget>,
+): Conversation =>
+  mapAnnotationPool(
+    rewriteMessageAttachmentUrls(conversation, targetMap),
+    (annotation) => rewriteAnnotation(annotation, targetMap),
+  );
 
 /**
  * Returns the file name `url` points at when it is a DIAL file in a bucket
@@ -460,20 +481,29 @@ const dropForeignAttachments = (
   });
 
 /** Removes a citation's source document when it is foreign, keeping its quote, title and target. */
+const dropForeignAnnotationSource = (
+  annotation: Annotation,
+  bucket: string,
+  droppedNames: string[],
+): Annotation => {
+  const body = annotation.body;
+  const name = getForeignFileName(body?.source?.attachment?.url, bucket);
+  if (body == null || name == null) return annotation;
+
+  droppedNames.push(name);
+  const { source: _source, ...keptBody } = body;
+  return { ...annotation, body: keptBody };
+};
+
+/** Removes every foreign citation source document, keeping each citation's quote, title and target. */
 const dropForeignAnnotationSources = (
   annotations: Annotation[],
   bucket: string,
   droppedNames: string[],
 ): Annotation[] =>
-  annotations.map((annotation) => {
-    const body = annotation.body;
-    const name = getForeignFileName(body?.source?.attachment?.url, bucket);
-    if (body == null || name == null) return annotation;
-
-    droppedNames.push(name);
-    const { source: _source, ...keptBody } = body;
-    return { ...annotation, body: keptBody };
-  });
+  annotations.map((annotation) =>
+    dropForeignAnnotationSource(annotation, bucket, droppedNames),
+  );
 
 /**
  * Removes every attachment reference that still points into another user's
@@ -486,6 +516,10 @@ const dropForeignAnnotationSources = (
  * user's own files on a re-import — and so are public ones. A file another
  * user shared with the importing user is dropped too: nothing here can tell
  * it apart from one they never had access to.
+ *
+ * The conversation-level citation pool is covered as well: a message
+ * citation stripped of its source would otherwise resolve its `<cit>` from
+ * the pool's copy, which still names the foreign file.
  *
  * Returns the conversation (unchanged when nothing was foreign) and the name
  * of every dropped file, for the skipped-attachment warning.
@@ -546,9 +580,16 @@ export const dropForeignAttachmentRefs = (
     };
   });
 
-  return droppedNames.length
-    ? { conversation: { ...conversation, messages }, droppedNames }
-    : { conversation, droppedNames };
+  const withMessages = droppedNames.length
+    ? { ...conversation, messages }
+    : conversation;
+
+  return {
+    conversation: mapAnnotationPool(withMessages, (annotation) =>
+      dropForeignAnnotationSource(annotation, bucket, droppedNames),
+    ),
+    droppedNames,
+  };
 };
 
 /** Best-effort display name for a fileId that failed to resolve to a `{bucket, path}` pair. */

@@ -73,12 +73,13 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       <input
         ref={inputRef}
         aria-label="Conversation title"
+        aria-describedby={error ? 'input-error' : undefined}
         value={value ?? ''}
         placeholder={placeholder}
         onChange={(e) => onChange?.(e.target.value)}
         onKeyDown={onKeyDown}
       />
-      {error && <p role="alert">{error}</p>}
+      {error && <p id="input-error">{error}</p>}
     </>
   ),
   Spinner: () => <span role="status">Loading</span>,
@@ -287,9 +288,9 @@ describe('RenameConversationPopup', () => {
   it('shows byte-length validation error when title exceeds 255 UTF-8 bytes', () => {
     render(<RenameConversationPopup {...DEFAULT_PROPS} currentTitle="" />);
     fireEvent.change(getInput(), { target: { value: 'a'.repeat(256) } });
-    expect(screen.getByRole('alert').textContent).toContain(
-      DEFAULT_LABELS.nameTooLongError,
-    );
+    expect(getInput().getAttribute('aria-describedby')).toBe('input-error');
+    expect(screen.getByText(DEFAULT_LABELS.nameTooLongError)).toBeTruthy();
+    expect(screen.getByRole('alert').textContent).toBe('');
   });
 
   it('byte-length error takes precedence over the error prop', () => {
@@ -301,12 +302,9 @@ describe('RenameConversationPopup', () => {
       />,
     );
     fireEvent.change(getInput(), { target: { value: 'a'.repeat(256) } });
-    expect(screen.getByRole('alert').textContent).toContain(
-      DEFAULT_LABELS.nameTooLongError,
-    );
-    expect(screen.getByRole('alert').textContent).not.toContain(
-      'API error message',
-    );
+    expect(getInput().getAttribute('aria-describedby')).toBe('input-error');
+    expect(screen.getByText(DEFAULT_LABELS.nameTooLongError)).toBeTruthy();
+    expect(screen.queryByText('API error message')).toBeNull();
   });
 
   it('does not render when isOpen is false', () => {

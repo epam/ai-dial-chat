@@ -204,6 +204,8 @@ export class ConversationListingService {
           sharedWithMe?: boolean;
           publishedWithMe?: boolean;
           isReadonly?: boolean;
+          /* Only the caller's own bucket holds their scheduled-task runs. */
+          isOwnBucket?: boolean;
         } = {},
       ): ConversationListItemDto[] =>
         items
@@ -215,7 +217,9 @@ export class ConversationListingService {
             const isReadonly =
               overrides.isReadonly ??
               !(item.permissions?.includes('WRITE') ?? false);
-            const scheduledTask = parseScheduledTaskConversationPath(id);
+            const scheduledTask = overrides.isOwnBucket
+              ? parseScheduledTaskConversationPath(id)
+              : null;
             return {
               id,
               title: getConversationTitleFromName(
@@ -255,8 +259,15 @@ export class ConversationListingService {
        * and any link built from the merged item to point at the wrong
        * bucket. Keeping both means every link/pin/permission stays scoped
        * to the bucket it actually belongs to.
+       *
+       * A published or shared copy of a scheduled-task run is an ordinary
+       * conversation for its recipient: they cannot open the task, and the
+       * viewed-ids file in their bucket is keyed by their own bucket, so an
+       * unread mark on the copy could never be cleared (#9501).
        */
-      const userItems = mapItems(resolvedUserData.items ?? []);
+      const userItems = mapItems(resolvedUserData.items ?? [], {
+        isOwnBucket: true,
+      });
 
       const publicItems =
         publicError == null && publicData
@@ -290,7 +301,6 @@ export class ConversationListingService {
               .map(({ resource: r }) => {
                 const id = r.url ?? `${r.parentPath ?? ''}/${r.name ?? ''}`;
                 const decodedId = safeDecodeURIComponent(id);
-                const scheduledTask = parseScheduledTaskConversationPath(id);
                 return {
                   id,
                   title: getConversationTitleFromName(
@@ -302,14 +312,7 @@ export class ConversationListingService {
                   publishedWithMe: false,
                   isPinned: pinnedSet.has(decodedId),
                   isReadonly: true,
-                  isScheduledTask: scheduledTask !== null,
-                  ...(scheduledTask !== null
-                    ? {
-                        scheduleId: scheduledTask.scheduleId,
-                        runId: scheduledTask.runId,
-                        isUnread: !viewedSet.has(decodedId),
-                      }
-                    : {}),
+                  isScheduledTask: false,
                 };
               })
           : [];

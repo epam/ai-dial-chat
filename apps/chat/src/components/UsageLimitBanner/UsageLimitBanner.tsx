@@ -4,7 +4,8 @@ import { type FC, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
-import { getDeploymentLimits } from '../../server-api/deployment-limits';
+import { getDeploymentUsage } from '../../server-api/deployment-limits';
+import { getUserUsage } from '../../server-api/user-limits';
 
 interface Props {
   /** ID of the currently selected deployment. */
@@ -30,7 +31,8 @@ const UsageLimitBanner: FC<Props> = ({
   const { banner } = useUsageLimitBanner({
     deploymentId,
     isGenerationInProgress,
-    getDeploymentLimits,
+    getDeploymentUsage,
+    getAccountUsage: getUserUsage,
     warningThresholdPercent: usageLimitsWarningThresholdPercent,
     activeLocale,
     t,

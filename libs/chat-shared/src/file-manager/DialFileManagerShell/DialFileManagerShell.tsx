@@ -129,6 +129,8 @@ export interface DialFileManagerShellProps {
   treeContainerClassName?: string;
   /** Called with the virtual path of the file the user chose to preview. */
   onPreview?: (path?: string) => void;
+  /** Called with the grid row when the user clicks a file (folders open instead). */
+  onTableFileClick?: (row: FileManagerGridRow) => void;
   /** Dotted extensions (e.g. `.md`) the Preview row action is offered for. The file manager matches them exactly as written, so list every spelling that should qualify. */
   previewExtensions?: string[];
   /** Color overrides, e.g. a different surface background. */
@@ -159,6 +161,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
   unsupportedFileTypeTooltip,
   treeContainerClassName,
   onPreview,
+  onTableFileClick,
   previewExtensions,
   styles: shellStyles,
 }) => {
@@ -611,6 +614,12 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
 
   return (
     <>
+      {/* The tree header is hidden on mobile (the tree becomes a folder dropdown), so the page title is rendered here. */}
+      {!isAttachVariant && labels.treeHeader != null && (
+        <h1 className="dial-h1-text m-0 hidden min-h-12 shrink-0 items-center px-3 py-1 text-primary mobile:flex">
+          {labels.treeHeader}
+        </h1>
+      )}
       {error != null ? (
         <div role="alert" className="flex flex-col items-center gap-4 p-6">
           <p>{labels.errorMessage}</p>
@@ -629,13 +638,10 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
             className={mergeClasses(
               'min-h-0 w-full grow',
               styles.surface,
-              isAttachVariant && 'p-0',
+              isAttachVariant ? 'p-0' : 'mobile:pt-2',
             )}
-            contentClassName={
-              variant === DialFileManagerVariant.Attach
-                ? 'px-0 pb-0'
-                : undefined
-            }
+            /* On mobile the page already pads 12px, so drop the content column's own 20px inset to match the design. */
+            contentClassName={isAttachVariant ? 'px-0 pb-0' : 'mobile:px-0'}
             gridClassName={
               variant === DialFileManagerVariant.Attach
                 ? 'size-full gap-6 px-6 py-4'
@@ -682,6 +688,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
             fileMetadataPopupOptions={fileMetadataPopupOptions}
             onGetInfo={onGetInfo}
             onPreview={onPreview}
+            onTableFileClick={onTableFileClick}
             previewExtensions={previewExtensions}
             onUploadFiles={onUploadFiles}
             onUploadArchive={onUploadArchive}

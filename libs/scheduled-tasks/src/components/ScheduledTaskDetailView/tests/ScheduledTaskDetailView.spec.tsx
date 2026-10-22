@@ -33,6 +33,20 @@ vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_KIT_ICON_STROKE: 1.5,
+  NoDataContent: ({
+    title,
+    description,
+    live,
+  }: {
+    title: string;
+    description?: string;
+    live?: boolean;
+  }) => (
+    <div role={live ? 'status' : undefined}>
+      <span>{title}</span>
+      {description != null && <span>{description}</span>}
+    </div>
+  ),
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   ButtonVariant: { Primary: 'primary', Neutral: 'neutral', Danger: 'danger' },
   Switch: ({

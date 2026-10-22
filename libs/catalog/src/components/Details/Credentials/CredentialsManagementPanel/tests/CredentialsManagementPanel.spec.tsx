@@ -14,6 +14,8 @@ import { CredentialsManagementPanel } from '../CredentialsManagementPanel';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_KIT_ICON_STROKE: 1.5,
+  CaptionText: ({ id, text }: { id?: string; text?: string }) =>
+    text ? <span id={id}>{text}</span> : null,
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   ButtonAppearance: {
     Solid: 'solid',
@@ -21,6 +23,8 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     Ghost: 'ghost',
     Link: 'link',
   },
+  ErrorText: ({ text }: { text?: string }) =>
+    text ? <span role="alert">{text}</span> : null,
   Input: ({
     onChange,
     labelProps,

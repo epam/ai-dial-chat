@@ -9,7 +9,6 @@ import {
   DialFileManagerVariant,
   formatFileSize,
   type DialFileManagerShellLabels,
-  mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
   DialFileManagerTabs,
@@ -27,7 +26,6 @@ import { useDialFileManagerHostOptions } from '../../components/DialFileManagerS
 import { getFileDeleteConfirmTitle } from '../../components/FileDeleteConfirmContent/file-delete-confirm-title';
 import FileDeleteConfirmContent from '../../components/FileDeleteConfirmContent/FileDeleteConfirmContent';
 import { useFileUnshareConfirmation } from '../../components/FileUnshareConfirmation/useFileUnshareConfirmation';
-import { PAGE_HEADER_ROW_CLASS } from '../../constants/layout';
 import {
   BasicI18nKeys,
   ButtonsI18nKeys,
@@ -208,9 +206,10 @@ const DialFileManagerPage: FC = () => {
     [t],
   );
 
-  const { onPreview, previewExtensions } = useDialFilePreview(
+  const { onPreview, onFileClick, previewExtensions } = useDialFilePreview(
     controller.items,
     bucket,
+    controller.searchResults,
   );
 
   const uploadQueueLabels = useUploadQueueLabels();
@@ -331,23 +330,19 @@ const DialFileManagerPage: FC = () => {
         maxSelectableFileSize={maxAttachmentFileSizeBytes}
         oversizedUploadMessage={oversizedUploadMessage}
         onPreview={onPreview}
+        onTableFileClick={onFileClick}
         previewExtensions={previewExtensions}
         treeContainerClassName={TREE_PANEL_CLASS_NAME}
       />
     </div>
   );
 
-  /* From the desktop band up the page is framed: a title, 32px side margins and
-     a raised card with 20px of inner padding, so the manager is not pressed
-     against the navigation. A phone keeps the full-bleed manager. */
+  /* From the desktop band up the page is framed: 32px side margins and a raised
+     card with 20px of inner padding, so the manager is not pressed against the
+     navigation. A phone keeps the full-bleed manager under a compact title. */
   return (
     <div className="flex size-full min-h-0 flex-col">
-      <header
-        className={mergeClasses(
-          'hidden items-center px-8 desktop:flex',
-          PAGE_HEADER_ROW_CLASS,
-        )}
-      >
+      <header className="flex min-h-12 items-center px-3 py-1 desktop:min-h-[72px] desktop:px-8 desktop:py-4">
         <h1 className="dial-h1-text m-0 text-primary">
           {t(DialFileManagerI18nKeys.PageTitle)}
         </h1>

@@ -1,9 +1,11 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   ButtonAppearance,
+  CaptionText,
   DangerButton,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
+  ErrorText,
   Input,
   LinkButton,
   NeutralButton,
@@ -241,27 +243,24 @@ export const CredentialsRow: FC<CredentialsRowProps> = ({
               {/*
                * Rendered below the input+button row, not through Input's own
                * `caption`/`error` props, so the button never shifts when they
-               * appear. Input's `caption` also carries no id to describe the
-               * field by and is announced as an alert; the header hint is static.
+               * appear. The hint keeps `headerHintId`, which the field's
+               * `aria-describedby` points at.
                */}
-              {headerHint && (
-                <span
-                  id={headerHintId}
-                  className={mergeClasses(
-                    descriptionClassName,
-                    styles.rowDescription,
-                  )}
-                >
-                  {headerHint}
-                </span>
-              )}
+              <CaptionText
+                id={headerHintId}
+                text={headerHint}
+                className={mergeClasses(
+                  descriptionClassName,
+                  styles.rowDescription,
+                )}
+              />
               {hasEmptyKeyError && (
-                <span
-                  role="alert"
+                <ErrorText
                   className={mergeClasses(errorClassName, styles.errorText)}
-                >
-                  {texts?.apiKeyRequiredErrorMessage ?? 'API key is required.'}
-                </span>
+                  text={
+                    texts?.apiKeyRequiredErrorMessage ?? 'API key is required.'
+                  }
+                />
               )}
             </div>
           )}

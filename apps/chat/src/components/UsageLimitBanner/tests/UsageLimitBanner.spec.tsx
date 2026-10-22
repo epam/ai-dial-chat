@@ -1,5 +1,8 @@
 import type { DeploymentLimitsResponseDto } from '@epam/ai-dial-chat-api-client';
-import { resetUsageLimitBannerDismissals } from '@epam/ai-dial-chat-hooks';
+import {
+  type AccountUsage,
+  resetUsageLimitBannerDismissals,
+} from '@epam/ai-dial-chat-hooks';
 import {
   UsageLimitBannerSeverity,
   UsageLimitBannerView,
@@ -9,7 +12,11 @@ import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAppConfig } from '../../../context/AppConfigContext';
-import { getDeploymentLimits } from '../../../server-api/deployment-limits';
+import {
+  getDeploymentLimits,
+  getDeploymentUsage,
+} from '../../../server-api/deployment-limits';
+import { getUserUsage } from '../../../server-api/user-limits';
 import UsageLimitBanner from '../UsageLimitBanner';
 
 /* Resolves keys against the real en.json, so the assertions read the English
@@ -52,10 +59,17 @@ vi.mock(
 
 vi.mock('../../../server-api/deployment-limits', () => ({
   getDeploymentLimits: vi.fn(),
+  getDeploymentUsage: vi.fn(),
+}));
+
+vi.mock('../../../server-api/user-limits', () => ({
+  getUserUsage: vi.fn(),
 }));
 
 const mockUseAppConfig = vi.mocked(useAppConfig);
 const mockGetDeploymentLimits = vi.mocked(getDeploymentLimits);
+const mockGetDeploymentUsage = vi.mocked(getDeploymentUsage);
+const mockGetUserUsage = vi.mocked(getUserUsage);
 
 /* Places the test in UTC by stubbing only the zero-argument zone resolution;
    the real formatter does the formatting (see usage-reset-time.spec.ts). */
@@ -88,8 +102,22 @@ const dayAt = (used: number, resetsAt: string | null = DAY_RESET) => ({
   dayTokenStats: { used, total: 100, resetsAt: resetsAt ?? undefined },
 });
 
-const setLimits = (limitsDto: DeploymentLimitsResponseDto): void => {
-  mockGetDeploymentLimits.mockResolvedValue(limitsDto);
+/* Splits a combined fixture the way the two endpoints return it: day, week,
+   and month cost stats on the account usage, the rest on the deployment's
+   own usage. */
+const setLimits = (dto: DeploymentLimitsResponseDto): void => {
+  const deployment: DeploymentLimitsResponseDto = { ...dto };
+  const account: AccountUsage = {};
+  for (const key of [
+    'dayCostStats',
+    'weekCostStats',
+    'monthCostStats',
+  ] as const) {
+    account[key] = dto[key];
+    delete deployment[key];
+  }
+  mockGetDeploymentUsage.mockResolvedValue(deployment);
+  mockGetUserUsage.mockResolvedValue(account);
 };
 
 const setThreshold = (usageLimitsWarningThresholdPercent: number): void => {
@@ -201,6 +229,21 @@ describe('UsageLimitBanner', () => {
     expect(screen.queryByRole('status')).toBeNull();
   });
 
+  it('renders nothing for an agent while the account budget is comfortable', async () => {
+    mockGetDeploymentUsage.mockResolvedValue({
+      dayTokenStats: { used: 0, total: 2_000_000 },
+      weekCostStats: { used: 130.98, total: Number.MAX_SAFE_INTEGER },
+    });
+    mockGetUserUsage.mockResolvedValue({
+      weekCostStats: { used: 132.24, total: 200 },
+    });
+    await renderBanner('dial-chathub-v2');
+
+    expect(mockGetUserUsage).toHaveBeenCalledOnce();
+    expect(mockGetDeploymentLimits).not.toHaveBeenCalled();
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
   it('follows a custom threshold', async () => {
     setThreshold(90);
     setLimits(dayAt(80));
@@ -213,9 +256,8 @@ describe('UsageLimitBanner', () => {
   });
 
   it('renders nothing while the first fetch is pending', async () => {
-    mockGetDeploymentLimits.mockReturnValue(
-      new Promise<never>(() => undefined),
-    );
+    mockGetDeploymentUsage.mockReturnValue(new Promise<never>(() => undefined));
+    mockGetUserUsage.mockReturnValue(new Promise<never>(() => undefined));
     await renderBanner(DEPLOYMENT_ID);
 
     expect(screen.queryByRole('status')).toBeNull();
@@ -226,7 +268,8 @@ describe('UsageLimitBanner', () => {
     await renderBanner(undefined);
 
     expect(screen.queryByRole('status')).toBeNull();
-    expect(mockGetDeploymentLimits).not.toHaveBeenCalled();
+    expect(mockGetDeploymentUsage).not.toHaveBeenCalled();
+    expect(mockGetUserUsage).not.toHaveBeenCalled();
   });
 
   it('omits the reset sentence when resetsAt is absent', async () => {
@@ -299,14 +342,17 @@ describe('UsageLimitBanner', () => {
       <UsageLimitBanner deploymentId="gpt-4o" isGenerationInProgress />,
     );
     await settle();
-    expect(mockGetDeploymentLimits).toHaveBeenCalledTimes(1);
+    expect(mockGetDeploymentUsage).toHaveBeenCalledOnce();
+    expect(mockGetUserUsage).toHaveBeenCalledOnce();
 
     rerender(
       <UsageLimitBanner deploymentId="gpt-4o" isGenerationInProgress={false} />,
     );
     await settle();
 
-    expect(mockGetDeploymentLimits).toHaveBeenCalledTimes(2);
+    expect(mockGetDeploymentUsage).toHaveBeenCalledTimes(2);
+    expect(mockGetUserUsage).toHaveBeenCalledTimes(2);
+    expect(mockGetDeploymentLimits).not.toHaveBeenCalled();
   });
 
   it('keeps its content order and roles under dir="rtl"', async () => {

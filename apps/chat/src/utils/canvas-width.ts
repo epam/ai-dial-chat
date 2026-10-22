@@ -3,6 +3,8 @@ import {
   FILE_MANAGER_CANVAS_MIN_WIDTH,
   FILE_MANAGER_CANVAS_WIDTH_RATIO,
   MIN_CONTENT_AREA_WIDTH,
+  NAVIGATION_SIDEBAR_COLLAPSED_WIDTH,
+  NAVIGATION_SIDEBAR_EXPANDED_WIDTH,
 } from '../constants/layout';
 
 /** Inputs for {@link resolveCanvasWidth}. */
@@ -27,9 +29,10 @@ interface CanvasWidth {
 
 /**
  * Picks the attachment canvas panel's initial and minimum width. A conversation
- * opens it at half the viewport; the file manager page opens it narrower,
- * about a third of the viewport kept within its own bounds, so the grid beside
- * it stays usable. On mobile the panel fills the viewport.
+ * opens it at half the room the navigation sidebar leaves (`maxWidth` already
+ * excludes the sidebar); the file manager page opens it narrower, about a third
+ * of the viewport kept within its own bounds, so the grid beside it stays
+ * usable. On mobile the panel fills the viewport.
  */
 export const resolveCanvasWidth = ({
   isFileManagerRoute,
@@ -62,3 +65,9 @@ export const resolveCanvasWidth = ({
     minWidth,
   };
 };
+
+/** Desktop navigation sidebar width in pixels for its expanded or collapsed state. */
+export const getNavigationSidebarWidth = (isExpanded: boolean): number =>
+  isExpanded
+    ? NAVIGATION_SIDEBAR_EXPANDED_WIDTH
+    : NAVIGATION_SIDEBAR_COLLAPSED_WIDTH;

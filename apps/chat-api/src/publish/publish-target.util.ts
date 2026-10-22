@@ -159,6 +159,54 @@ export const getPublishedIconTargetUrl = (
     `${targetResourceName}/${getResourceName(iconUrl)}`,
   );
 
+const CONVERSATION_RESOURCE_PREFIX = 'conversations/';
+
+/**
+ * The folder holding the attachment files of a published conversation:
+ * `files/` plus the published conversation's own path, trailing-slashed, e.g.
+ * `conversations/public/Org/my-chat` -> `files/public/Org/my-chat/`.
+ *
+ * The one derivation shared by publish (where the files are written), unpublish
+ * (which lists the folder to delete its files) and the read-time resolution of
+ * folder attachments, so the three can never disagree on where the files are.
+ * @param publishedConversationUrl - `conversations/public/{folder}/{name}`, encoded
+ */
+export const getPublishedAttachmentsFolderUrl = (
+  publishedConversationUrl: string,
+): string =>
+  `files/${publishedConversationUrl.slice(
+    publishedConversationUrl.startsWith(CONVERSATION_RESOURCE_PREFIX)
+      ? CONVERSATION_RESOURCE_PREFIX.length
+      : 0,
+  )}/`;
+
+/**
+ * The published path of one attachment file:
+ * `files/public/{folderPath}/{conversationResourceName}/{source bucket}/{path in that bucket}`.
+ * Nesting under the conversation's own target name keeps same-named files of
+ * different conversations from colliding in one Organization folder, the same
+ * way {@link getPublishedIconTargetUrl} does for an app icon; keeping the
+ * source bucket as a segment ties every published file to the bucket it came
+ * from, and keeping the bucket-relative path preserves folder structure.
+ * @param folderPath - plain publish target folder
+ * @param conversationResourceName - the conversation's resource name (last segment of its path)
+ * @param sourceBucket - the bucket the file is published from
+ * @param bucketRelativePath - the file's path inside `sourceBucket`, already percent-encoded
+ */
+export const getPublishedAttachmentTargetUrl = (
+  folderPath: string,
+  conversationResourceName: string,
+  sourceBucket: string,
+  bucketRelativePath: string,
+): string =>
+  `${getPublishedAttachmentsFolderUrl(
+    getPublishedTargetUrl(
+      'conversations',
+      folderPath,
+      conversationResourceName,
+    ),
+  )}${sourceBucket}/${bucketRelativePath}`;
+
 /*
  * DIAL Core stores applications and toolsets as `{name}__{version}`, but
  * editing an existing one's version only rewrites the version field inside the

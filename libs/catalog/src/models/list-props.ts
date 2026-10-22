@@ -58,6 +58,8 @@ export interface ListViewProps {
   ariaLabel?: string;
   /** Grid empty-state title. */
   emptyStateTitle?: string;
+  /** Secondary line under the grid empty-state title. Omitted when not set. */
+  emptyStateDescription?: string;
   /** Grouped typography and color overrides for table cells. */
   styles?: ListViewStyles;
   /** Called when the star icon is toggled on a row. */

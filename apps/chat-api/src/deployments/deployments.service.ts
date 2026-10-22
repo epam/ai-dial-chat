@@ -41,6 +41,9 @@ export class DeploymentsService {
   getDeploymentLimits = this.detailsService.getDeploymentLimits.bind(
     this.detailsService,
   );
+  getDeploymentUsage = this.detailsService.getDeploymentUsage.bind(
+    this.detailsService,
+  );
   getUserLimits = this.detailsService.getUserLimits.bind(this.detailsService);
   getUserUsage = this.detailsService.getUserUsage.bind(this.detailsService);
   getDeploymentInterfaces = this.detailsService.getDeploymentInterfaces.bind(

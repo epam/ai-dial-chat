@@ -26,8 +26,13 @@ vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
   };
 });
 
+const { mockUseDialFilePreview, mockOnFileClick } = vi.hoisted(() => ({
+  mockUseDialFilePreview: vi.fn(),
+  mockOnFileClick: vi.fn(),
+}));
+
 vi.mock('../../../hooks/files/useDialFilePreview', () => ({
-  useDialFilePreview: () => ({ onPreview: vi.fn(), previewExtensions: [] }),
+  useDialFilePreview: mockUseDialFilePreview,
 }));
 
 vi.mock('../../../context/NotificationContext', () => ({
@@ -96,6 +101,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       uploadValidationMessages,
       selectedPaths,
       onSelectedPathsChange,
+      onTableFileClick,
       className,
     }: {
       items?: { path: string }[];
@@ -118,6 +124,12 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       };
       selectedPaths?: Set<string>;
       onSelectedPathsChange?: (paths: Set<string>) => void;
+      onTableFileClick?: (row: {
+        id: string;
+        name: string;
+        path: string;
+        nodeType: DialFileNodeType;
+      }) => void;
       autoSelectUploadedItems?: boolean;
       maxSelectableFileSize?: number;
       maxFileSize?: number;
@@ -198,6 +210,19 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
           }
         >
           Select report
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            onTableFileClick?.({
+              id: 'report.pdf',
+              name: 'report.pdf',
+              path: '/My files/report.pdf',
+              nodeType: DialFileNodeType.ITEM,
+            })
+          }
+        >
+          Click report
         </button>
         <span>{selectedPaths?.size ?? 0} selected</span>
       </div>
@@ -285,9 +310,34 @@ beforeEach(() => {
   mockActiveTab.value = undefined;
   mockFileManagerTabs.value = ['my_files', 'shared', 'organization'];
   mockUseDialFileManager.mockReturnValue(defaultHookResult);
+  mockUseDialFilePreview.mockReturnValue({
+    onPreview: vi.fn(),
+    onFileClick: mockOnFileClick,
+    previewExtensions: [],
+  });
 });
 
 describe('DialFileManagerPage', () => {
+  it('gives the preview hook the listing, the bucket and the search results', () => {
+    render(<DialFileManagerPage />);
+
+    expect(mockUseDialFilePreview).toHaveBeenCalledWith(
+      defaultHookResult.items,
+      'test-bucket',
+      defaultHookResult.searchResults,
+    );
+  });
+
+  it('opens a clicked file through the preview hook', async () => {
+    render(<DialFileManagerPage />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Click report' }));
+
+    expect(mockOnFileClick).toHaveBeenCalledWith(
+      expect.objectContaining({ path: '/My files/report.pdf' }),
+    );
+  });
+
   it('renders the shell with items from the hook result', () => {
     render(<DialFileManagerPage />);
     expect(screen.getByRole('region', { name: 'file manager' })).toBeTruthy();
@@ -520,6 +570,16 @@ describe('DialFileManagerPage — page frame', () => {
         name: 'dialFileManager.page.title',
       }),
     ).toBeTruthy();
+  });
+
+  it('shows the page title on a phone too, with the design 12px/4px padding', () => {
+    render(<DialFileManagerPage />);
+
+    const classes = screen.getByRole('banner').className.split(' ');
+    expect(classes).toContain('flex');
+    expect(classes).not.toContain('hidden');
+    expect(classes).toContain('px-3');
+    expect(classes).toContain('py-1');
   });
 
   it('sets the shell surface to the base layer on a phone and transparent inside the desktop card', () => {

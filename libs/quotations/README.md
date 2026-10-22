@@ -210,6 +210,36 @@ const { processedContent, markdownComponents } = useCitationMarkdownComponents(
 );
 ```
 
+### `useCitationTagRenderer`
+
+Returns a memoized `(dataId, children) => ReactNode` that renders a `<cit data-id="…">` element as the group's `CitationDropdown`, or as the literal markup when no `html_tag` group claims the id. It takes the same `groups`, callbacks and optional `fallbackGroups` as `useCitationMarkdownComponents` (`groups` win a colliding id), and is meant for markdown surfaces other than the message body, such as stage content: it returns no `p`/`li` overrides, so the surface keeps its own typography, and it ignores offset-based groups, whose offsets point into the message text. Prepare the surface's markdown with `prepareCitationContent` and render the result inside the same `CitationCardProvider` as the message, so one card is open at a time across both.
+
+```tsx
+import { MarkdownRenderer } from '@epam/ai-dial-chat-shared/markdown';
+import {
+  prepareCitationContent,
+  useCitationTagRenderer,
+} from '@epam/ai-dial-quotations';
+import type { ReactNode } from 'react';
+import type { Components } from 'react-markdown';
+
+const renderCitation = useCitationTagRenderer(
+  citationGroups,
+  citationCallbacks,
+  fallbackCitationGroups,
+);
+
+<MarkdownRenderer
+  content={prepareCitationContent(stage.content, isStreaming)}
+  components={
+    {
+      cit: (props: { 'data-id'?: string; children?: ReactNode }) =>
+        renderCitation(props['data-id'], props.children),
+    } as Components
+  }
+/>;
+```
+
 ## Utilities
 
 Raw `html_tag` normalization preserves an optional `body.selector` (object or array)
@@ -228,6 +258,7 @@ are omitted so quote-only streaming deltas preserve an earlier page.
 - `getAnnotationPdfPage(annotation)` — returns the page to open from its `pdf_bbox`/`pdf_region` body selectors: the first selector with valid geometry wins, so the page matches its highlight; otherwise the first one with a positive integer `page`, so a page-only selector such as `{ type: 'pdf_region', page: 2 }` still navigates (with no highlight); returns `undefined` when no valid page exists
 - `injectCitationSentinels(content, groups)` — inserts sentinel strings at character offsets in markdown, for offset-based (non-`html_tag`) groups only
 - `stripCitTagsWhileStreaming(content)` — hides supported paired citation elements while streaming and escapes every other `cit` shape for literal display
+- `prepareCitationContent(content, isStreaming)` — prepares markdown for a surface that renders `<cit>` elements but no offset markers: `stripCitTagsWhileStreaming` while streaming, otherwise escapes every unsupported `cit` shape; never injects sentinels and returns content without `<cit` unchanged
 - `replaceSentinelsInChildren(children, renderMarker)` — replaces sentinels with React nodes in a rendered tree
 - `replaceCitTagsWithSourceNames(content, groups, fallbackGroups?)` — replaces each supported `<cit data-id="…"></cit>` element that resolves to a group (message `groups` first, then `fallbackGroups`) with the group's Markdown-escaped `sourceName`, leaving unresolved tags untouched. Use it before serializing content outside the renderer (e.g. the message Copy action), where the `cit` override never runs and the element would otherwise copy as nothing
 - `getReferenceAttachmentGroups(dtos)` — maps reference-only attachments to synthetic annotation groups

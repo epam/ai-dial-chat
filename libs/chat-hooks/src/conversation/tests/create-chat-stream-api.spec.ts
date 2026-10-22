@@ -206,6 +206,100 @@ describe('createChatStreamApi', () => {
     expect(error.message).toBe('Model overloaded');
   });
 
+  it('reports the display_message of an in-band DIAL Core error chunk over its raw message', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        streamOf(
+          `data: ${JSON.stringify({
+            error: {
+              message:
+                "Error code: 429 - {'error': {'message': 'Hit token rate limit.'}}",
+              display_message:
+                "You've exceeded your weekly token limit. Please try again in 4 days 16 hours",
+              type: 'rate_limit_exceeded',
+            },
+          })}\n\n`,
+        ),
+        { status: 200 },
+      ),
+    );
+
+    const error = await failStreamRequest();
+
+    expect(error).toBeInstanceOf(StreamUpstreamError);
+    expect(error.message).toBe(
+      "You've exceeded your weekly token limit. Please try again in 4 days 16 hours",
+    );
+  });
+
+  it('reports the persistence failure that follows an in-band error, with its terminal marker', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        streamOf(
+          'data: {"error":{"message":"Rate limit exceeded"}}\n\n' +
+            'data: [DONE]\n\n' +
+            'data: {"error":{"type":"conversation_save_failed","message":"saved failed","status":401,"streamErrorMessage":"Rate limit exceeded"}}\n\n',
+        ),
+        { status: 200 },
+      ),
+    );
+
+    const error = await failStreamRequest();
+
+    expect(error).toBeInstanceOf(GenerationPersistenceError);
+    expect((error as GenerationPersistenceError).status).toBe(401);
+    expect((error as GenerationPersistenceError).terminalMarker).toEqual({
+      streamErrorMessage: 'Rate limit exceeded',
+    });
+  });
+
+  it('reports an in-band error once, and ignores chunks after it', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        streamOf(
+          'data: {"error":{"message":"Model overloaded"}}\n\n' +
+            'data: {"choices":[{"delta":{"content":"late"}}]}\n\n' +
+            'data: {"error":{"message":"Second failure"}}\n\n',
+        ),
+        { status: 200 },
+      ),
+    );
+    const onChunk = vi.fn();
+    const onError = vi.fn();
+
+    await new Promise<void>((resolve) => {
+      makeApi().streamCompletion('gpt-4o__Hello__uuid', 'hello', 'gpt-4o', {
+        onChunk,
+        onComplete: () => resolve(),
+        onError: (error) => {
+          onError(error);
+          resolve();
+        },
+      });
+    });
+
+    expect(onError).toHaveBeenCalledOnce();
+    expect(onError.mock.calls[0][0].message).toBe('Model overloaded');
+    expect(onChunk).not.toHaveBeenCalled();
+  });
+
+  it('reports a stopped answer marker on a persistence failure', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        streamOf(
+          'data: {"error":{"type":"conversation_save_failed","message":"saved failed","status":401,"wasStoppedByUser":true}}\n\n',
+        ),
+        { status: 200 },
+      ),
+    );
+
+    const error = await failStreamRequest();
+
+    expect((error as GenerationPersistenceError).terminalMarker).toEqual({
+      wasStoppedByUser: true,
+    });
+  });
+
   describe('non-network transport failures stay untagged', () => {
     const expectUntagged = (error: Error) => {
       expect(error).not.toBeInstanceOf(StreamUpstreamError);

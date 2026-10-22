@@ -10,9 +10,9 @@ export interface PersonalEmptyStateProps {
   description: string;
   /** Props of the Create button below the text; omit to render no button. */
   createButton?: CreateButtonProps;
-  /** CSS class applied to the headline. Defaults to `'dial-small-semi-text text-primary'`. */
+  /** CSS class applied to the headline, on top of the kit's title typography. */
   titleClassName?: string;
-  /** CSS class applied to the secondary line. Defaults to `'dial-tiny-text text-secondary'`. */
+  /** CSS class applied to the secondary line, on top of the kit's description typography. */
   descriptionClassName?: string;
 }
 
@@ -21,19 +21,18 @@ export const PersonalEmptyState: FC<PersonalEmptyStateProps> = ({
   title,
   description,
   createButton,
-  titleClassName = 'dial-small-semi-text text-primary',
-  descriptionClassName = 'dial-tiny-text text-secondary',
+  titleClassName,
+  descriptionClassName,
 }) => (
-  <div className="flex size-full flex-col items-center justify-center gap-4 text-center">
-    <NoDataContent
-      title={title}
-      description={description}
-      className="size-auto"
-      titleClassName={titleClassName}
-      descriptionClassName={descriptionClassName}
-    />
-    {createButton != null && (
-      <CreateButton variant={ButtonVariant.Secondary} {...createButton} />
-    )}
-  </div>
+  <NoDataContent
+    title={title}
+    description={description}
+    titleClassName={titleClassName}
+    descriptionClassName={descriptionClassName}
+    action={
+      createButton != null ? (
+        <CreateButton variant={ButtonVariant.Secondary} {...createButton} />
+      ) : undefined
+    }
+  />
 );

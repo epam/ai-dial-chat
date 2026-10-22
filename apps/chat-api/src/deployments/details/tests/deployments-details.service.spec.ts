@@ -35,6 +35,7 @@ function makeService() {
   const sdkClient = {
     configurationDeployment: vi.fn(),
     getDeploymentLimits: vi.fn(),
+    getDeploymentUsage: vi.fn(),
     getUserLimits: vi.fn(),
     getUserUsage: vi.fn(),
     getModel: vi.fn(),
@@ -306,6 +307,75 @@ describe('DeploymentsDetailsService', () => {
       sdkClient.getDeploymentLimits.mockResolvedValue(errResponse(502));
       await expect(
         service.getDeploymentLimits('gpt-4o', 'token'),
+      ).rejects.toThrow(BadGatewayException);
+    });
+  });
+
+  describe('getDeploymentUsage', () => {
+    const mockUsage = {
+      dayTokenStats: { total: 10000, used: 4000 },
+      dayCostStats: { total: 2 ** 63, used: 0.03 },
+    };
+
+    it('returns usage from upstream', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getDeploymentUsage.mockResolvedValue(okResponse(mockUsage));
+
+      const result = await service.getDeploymentUsage('gpt-4o', 'token');
+      expect(result).toEqual(mockUsage);
+    });
+
+    it('forwards Authorization header and encodes the deployment path', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getDeploymentUsage.mockResolvedValue(okResponse(mockUsage));
+
+      await service.getDeploymentUsage(
+        'applications/bucket/My%20App#1',
+        'my-token',
+      );
+      expect(sdkClient.getDeploymentUsage).toHaveBeenCalledWith(
+        'applications/bucket/My%20App%231',
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: 'Bearer my-token',
+          }),
+        }),
+      );
+    });
+
+    it('does not use cache — two calls invoke upstream twice', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getDeploymentUsage.mockResolvedValue(okResponse(mockUsage));
+
+      await service.getDeploymentUsage('gpt-4o', 'token');
+      await service.getDeploymentUsage('gpt-4o', 'token');
+
+      expect(sdkClient.getDeploymentUsage).toHaveBeenCalledTimes(2);
+    });
+
+    it('throws NotFoundException on upstream 404', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getDeploymentUsage.mockResolvedValue(errResponse(404));
+      await expect(
+        service.getDeploymentUsage('unknown', 'token'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws ServiceUnavailableException on network error', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getDeploymentUsage.mockRejectedValue(
+        new TypeError('fetch failed'),
+      );
+      await expect(
+        service.getDeploymentUsage('gpt-4o', 'token'),
+      ).rejects.toThrow(ServiceUnavailableException);
+    });
+
+    it('throws BadGatewayException on upstream 5xx', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getDeploymentUsage.mockResolvedValue(errResponse(502));
+      await expect(
+        service.getDeploymentUsage('gpt-4o', 'token'),
       ).rejects.toThrow(BadGatewayException);
     });
   });
