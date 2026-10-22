@@ -8,8 +8,6 @@ interface UseConversationPanelRouteStateParams {
   isCanvasOpen: boolean;
   /** `showConversationsSectionByDefault` — the initial state, not a lock. */
   isOpenByDefault: boolean;
-  /** Whether the user can expand and collapse the sidebar (`conversations-panel-toggle`). Defaults to `true`. */
-  isToggleEnabled?: boolean;
   onCloseCanvas: () => void;
   onCloseSourcesPanel: () => void;
 }
@@ -25,11 +23,9 @@ interface ConversationPanelRouteState {
  *
  * `isPanelOpen` means "expanded". `showConversationsSectionByDefault` is an
  * initial-state modifier: it decides the state until the user touches the
- * toggle, and from then on their own choice survives. The page route has no say
- * in it, because the sidebar carries the conversation list on every page.
- * Opening the attachment canvas collapses the sidebar and expanding it closes
- * the canvas. Without a toggle the user could never re-expand it, so it then
- * returns to its initial state when the canvas closes.
+ * toggle, and from then on their own choice survives. Only the user's toggle
+ * changes it afterwards: neither the page route nor the attachment canvas
+ * collapses or expands the sidebar.
  *
  * On a mobile viewport the sidebar is a drawer owned by the app shell, so this
  * state is reset and ignored there.
@@ -39,7 +35,6 @@ export const useConversationPanelRouteState = ({
   isMobile,
   isCanvasOpen,
   isOpenByDefault,
-  isToggleEnabled = true,
   onCloseCanvas,
   onCloseSourcesPanel,
 }: UseConversationPanelRouteStateParams): ConversationPanelRouteState => {
@@ -49,16 +44,13 @@ export const useConversationPanelRouteState = ({
   const userPanelPreferenceRef = useRef<boolean | null>(null);
 
   const togglePanel = useCallback(() => {
-    if (!isPanelOpen) {
-      onCloseCanvas();
-    }
     userPanelPreferenceRef.current = !isPanelOpen;
     if (isPanelOpen) {
       closePanel();
     } else {
       openPanel();
     }
-  }, [isPanelOpen, onCloseCanvas, openPanel, closePanel]);
+  }, [isPanelOpen, openPanel, closePanel]);
 
   /* Always close the panel when switching to mobile so a stored desktop `true`
      doesn't bleed through. */
@@ -76,7 +68,7 @@ export const useConversationPanelRouteState = ({
   /* Applies the default once the desktop layout is in use, and again if the
      default itself changes — never on navigation. */
   useEffect(() => {
-    if (isMobile || isCanvasOpen) return;
+    if (isMobile) return;
 
     const shouldPanelBeOpen = userPanelPreferenceRef.current ?? isOpenByDefault;
     if (shouldPanelBeOpen) {
@@ -86,22 +78,12 @@ export const useConversationPanelRouteState = ({
     }
   }, [isMobile, isOpenByDefault]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* Without a toggle nothing can re-expand a sidebar the canvas collapsed, so
-     it returns to its initial state once the canvas closes. */
-  useEffect(() => {
-    if (isToggleEnabled || isMobile || isCanvasOpen) return;
-    if (isOpenByDefault) {
-      openPanel();
-    } else {
-      closePanel();
-    }
-  }, [isCanvasOpen]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  /* Safety net for openCanvas call sites that bypass useOpenAttachmentCanvas
-     (e.g. citation preview, collapsed stage attachments). */
+  /* The canvas and the sources panel share the end edge, so whichever opens
+     replaces the other — including openCanvas call sites that bypass
+     useOpenAttachmentCanvas (e.g. citation preview, collapsed stage
+     attachments). */
   useEffect(() => {
     if (isCanvasOpen) {
-      closePanel();
       onCloseSourcesPanel();
     }
   }, [isCanvasOpen]); // eslint-disable-line react-hooks/exhaustive-deps
