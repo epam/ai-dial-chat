@@ -2,6 +2,7 @@ import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   CaptionText,
   DIAL_KIT_ICON_STROKE,
+  ErrorText,
   Input,
   LinkButton,
   NeutralButton,
@@ -187,9 +188,10 @@ export const CredentialsApiKeyOverlay: FC<CredentialsApiKeyOverlayProps> = ({
             className={mergeClasses('dial-caption-text', styles.hint)}
           />
           {hasEmptyKeyError && (
-            <span className="dial-caption-text text-error">
-              {emptyKeyErrorMessage}
-            </span>
+            <ErrorText
+              className="dial-caption-text"
+              text={emptyKeyErrorMessage}
+            />
           )}
         </div>
       )}

@@ -2581,6 +2581,153 @@
         },
         "summary": "Get application external-service metadata",
         "tags": ["external-services"]
+      },
+      "put": {
+        "description": "Declares or replaces one external service on an application the caller may edit, by proxying DIAL Core (PUT /v1/applications/{appId}/external-services/{id}). An API_KEY service carries only the header name — each person's key is signed in separately; an OAUTH service carries its client settings. The client secret is never logged or returned.",
+        "operationId": "putExternalService",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "description": "Application identifier the external service belongs to. Slash-separated paths must be percent-encoded in the URL (%2F).",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "example": "applications%2Fpublic%2Ffinhub-via-openapi__1.0.0",
+              "type": "string"
+            }
+          },
+          {
+            "name": "serviceId",
+            "required": true,
+            "in": "path",
+            "description": "The external service id in the application's `external_services` config: one path segment.",
+            "schema": {
+              "pattern": "^(?!\\.{1,2}$)[A-Za-z0-9._~-]{1,128}$",
+              "example": "teams-bot",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExternalServiceDefinitionBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The declared service, secrets stripped",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetExternalServiceResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid path segments or body"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller may not edit the application, or the liveChatInteraction feature is not enabled"
+          },
+          "404": {
+            "description": "Application not found"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core unavailable"
+          }
+        },
+        "summary": "Declare an application external service",
+        "tags": ["external-services"]
+      },
+      "delete": {
+        "description": "Removes one external service from an application the caller may edit, by proxying DIAL Core (DELETE /v1/applications/{appId}/external-services/{id}); Core purges its application-level credentials with it. Removing a service that is already gone succeeds.",
+        "operationId": "deleteExternalService",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "description": "Application identifier the external service belongs to. Slash-separated paths must be percent-encoded in the URL (%2F).",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "example": "applications%2Fpublic%2Ffinhub-via-openapi__1.0.0",
+              "type": "string"
+            }
+          },
+          {
+            "name": "serviceId",
+            "required": true,
+            "in": "path",
+            "description": "The external service id in the application's `external_services` config: one path segment.",
+            "schema": {
+              "pattern": "^(?!\\.{1,2}$)[A-Za-z0-9._~-]{1,128}$",
+              "example": "teams-bot",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "External service removed"
+          },
+          "400": {
+            "description": "Invalid path segments"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller may not edit the application, or the liveChatInteraction feature is not enabled"
+          },
+          "404": {
+            "description": "DIAL Core resource not found"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core unavailable"
+          }
+        },
+        "summary": "Remove an application external service",
+        "tags": ["external-services"]
       }
     },
     "/api/v1/external-services/{appId}/{serviceId}/signin": {
@@ -3733,10 +3880,17 @@
             "description": "An answer in the conversation is still being generated in the background; publish after it finishes"
           },
           "413": {
-            "description": "DIAL Core rejected the payload as too large"
+            "description": "The conversation attachments (files plus every file inside attached folders) exceed PUBLISH_ATTACHMENTS_MAX_FILES"
           },
           "422": {
-            "description": "DIAL Core could not process the request"
+            "description": "A file the conversation attachments reference no longer exists (`code: conversationAttachmentMissing`, `missingFiles` lists the urls); nothing is published",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationAttachmentMissingErrorDto"
+                }
+              }
+            }
           },
           "429": {
             "description": "DIAL Core rate-limited the request"
@@ -5978,6 +6132,60 @@
           }
         },
         "summary": "Accept a share invitation",
+        "tags": ["share"]
+      },
+      "delete": {
+        "description": "Withdraws one invitation the caller created, by proxying DIAL Core (DELETE /v1/invitations/{id}). Access already accepted from it stays; only the link stops working. Withdrawing an invitation that is already gone succeeds. Unlike POST /api/v1/share/revoke, which revokes every share of a resource at once.",
+        "operationId": "deleteInvitation",
+        "parameters": [
+          {
+            "name": "invitationId",
+            "required": true,
+            "in": "path",
+            "description": "Invitation identifier extracted from the share link.",
+            "schema": {
+              "pattern": "^[\\w-]+$",
+              "example": "abc123",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Invitation withdrawn"
+          },
+          "400": {
+            "description": "Validation error — invalid invitationId"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "The invitation is not the caller’s to withdraw"
+          },
+          "404": {
+            "description": "DIAL Core resource not found"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Withdraw a share invitation",
         "tags": ["share"]
       }
     },
@@ -12542,6 +12750,64 @@
         },
         "required": ["credentialsLevel", "authenticationType"]
       },
+      "ExternalServiceAuthSettingsBodyDto": {
+        "type": "object",
+        "properties": {
+          "authenticationType": {
+            "type": "string",
+            "enum": ["API_KEY", "OAUTH"],
+            "example": "API_KEY"
+          },
+          "apiKeyHeader": {
+            "type": "string",
+            "description": "API_KEY: the header the stored key is sent under. The key itself is never part of the definition.",
+            "example": "PRIVATE-TOKEN"
+          },
+          "clientId": {
+            "type": "string",
+            "description": "OAUTH: the client id.",
+            "example": "dial-loop"
+          },
+          "clientSecret": {
+            "type": "string",
+            "description": "OAUTH: the client secret. Write-only: never returned, never logged.",
+            "writeOnly": true
+          },
+          "authorizationEndpoint": {
+            "type": "string",
+            "example": "https://idp.example.com/oauth/authorize"
+          },
+          "tokenEndpoint": {
+            "type": "string",
+            "example": "https://idp.example.com/oauth/token"
+          },
+          "scopesSupported": {
+            "example": ["openid", "offline_access"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["authenticationType"]
+      },
+      "ExternalServiceDefinitionBodyDto": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "example": "GitLab (PAT)"
+          },
+          "description": {
+            "type": "string",
+            "example": "The project’s GitLab token"
+          },
+          "authSettings": {
+            "$ref": "#/components/schemas/ExternalServiceAuthSettingsBodyDto"
+          }
+        },
+        "required": ["displayName", "authSettings"]
+      },
       "CreateConversationDto": {
         "type": "object",
         "properties": {
@@ -13041,7 +13307,11 @@
       },
       "ConversationErrorCode": {
         "type": "string",
-        "enum": ["conversationDuplicateModelHidden", "conversationModelHidden"],
+        "enum": [
+          "conversationDuplicateModelHidden",
+          "conversationModelHidden",
+          "conversationAttachmentMissing"
+        ],
         "description": "Present when the request was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`, so it cannot be duplicated. `conversationModelHidden`: the model a completion, share or publish would use is hidden through `HIDDEN_ENTITY_TAGS`."
       },
       "ConversationModelHiddenErrorDto": {
@@ -13320,6 +13590,40 @@
           }
         },
         "required": ["path", "folderPath", "publishedAt", "publishedBy"]
+      },
+      "ConversationAttachmentMissingErrorDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 422
+          },
+          "error": {
+            "type": "string",
+            "example": "Unprocessable Entity"
+          },
+          "message": {
+            "type": "string",
+            "example": "The conversation references attachment files that no longer exist: files/bucket-123/old.pdf"
+          },
+          "code": {
+            "example": "conversationAttachmentMissing",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConversationErrorCode"
+              }
+            ]
+          },
+          "missingFiles": {
+            "example": ["files/bucket-123/old.pdf"],
+            "description": "Urls of the attachment files that no longer exist",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["statusCode", "error", "message", "code", "missingFiles"]
       },
       "UnpublishConversationDto": {
         "type": "object",

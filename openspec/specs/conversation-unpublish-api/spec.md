@@ -2,7 +2,9 @@
 
 ## Purpose
 Backend endpoint `POST /api/v1/conversations/unpublish` that submits a DIAL Core `DELETE`-action publication request to remove an owned conversation from one published folder, pending administrator approval.
+
 ## Requirements
+
 ### Requirement: Conversation unpublish endpoint submits a DELETE-action publication
 
 The backend SHALL expose `POST /api/v1/conversations/unpublish?path=<conversation-path>` in `apps/chat-api/src/conversations/` (`conversation-publish.controller.ts`, `conversation-publish.service.ts`, `dto/unpublish-conversation.dto.ts`, `dto/unpublish-conversation-result.dto.ts`), mirroring the existing `POST /api/v1/conversations/publish` shape: the conversation is addressed by the bucket-relative `path` query param (no `conversations/` prefix — the same convention rename/delete/duplicate use), and the body carries only `folderPath`.
@@ -73,3 +75,17 @@ On success the service SHALL synchronously delete `conversation-publish-history:
 - **WHEN** an unpublish request for a conversation `path` succeeds
 - **THEN** the next publish-history request for that path re-reads Core
 
+### Requirement: Unpublish request also removes the published attachment files
+
+`POST /api/v1/conversations/unpublish` SHALL add a `DELETE` resource for every file found under the conversation's published attachment namespace (see `conversation-published-attachments`) to the removal request, after the conversation `DELETE` resource. Each file `targetUrl` SHALL be taken from the live listing, not recomputed from the conversation, so only files that exist are named (Core rejects a `DELETE` of a target that does not exist). `sourceUrl`, authorization, error mapping, request and response shapes and cache invalidation SHALL be unchanged.
+
+#### Scenario: Removal request contains the files
+
+- **GIVEN** the published namespace of the conversation holds `reports/a.pdf` and `reports/sub/b.pdf`
+- **WHEN** the conversation is unpublished
+- **THEN** the `createPublication` body contains `DELETE` resources for the conversation and for both files
+
+#### Scenario: Listing the namespace fails
+
+- **WHEN** listing the published namespace fails
+- **THEN** the endpoint maps the error through the existing DIAL error mapper and no removal request is created

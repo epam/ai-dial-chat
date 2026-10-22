@@ -1,4 +1,5 @@
 import { encodePlainDialResourcePath } from '../common/utils/encode-dial-path';
+import { safeDecodeURIComponent } from '../common/utils/uri';
 
 /** Builds the `files/{bucket}/{path}` DIAL resource URL from a relative path. */
 export const buildDialFileUrl = (bucket: string, path: string): string =>
@@ -27,3 +28,10 @@ export const toRelativePath = (path: string, bucket: string): string => {
   const prefix = `files/${bucket}/`;
   return path.startsWith(prefix) ? path.slice(prefix.length) : path;
 };
+
+/**
+ * Turns a percent-encoded DIAL resource path into the plain path the files API
+ * takes (the inverse of {@link encodeDialFilePath}), decoding each segment once.
+ */
+export const toPlainDialPath = (encodedPath: string): string =>
+  encodedPath.split('/').map(safeDecodeURIComponent).join('/');

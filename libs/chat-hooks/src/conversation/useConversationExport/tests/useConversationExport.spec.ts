@@ -418,6 +418,49 @@ describe('useConversationExport', () => {
     expect(envelope.history[0].messages[0].custom_content).toBeUndefined();
   });
 
+  it('strips citation-pool source documents from an export-all', async () => {
+    const { result } = renderExport();
+    listConversations.mockResolvedValueOnce({
+      items: [
+        { id: 'a', title: 'A', sharedWithMe: false, publishedWithMe: false },
+      ],
+    });
+    getConversation.mockResolvedValue(
+      makeConversation({
+        customViewState: {
+          annotations: [
+            {
+              target: { selector: { type: 'html_tag', id: 'e1' } },
+              body: {
+                quote: 'Section 3',
+                source: {
+                  type: 'attachment',
+                  attachment: {
+                    type: 'application/pdf',
+                    url: 'files/bucket-a/spec.pdf',
+                  },
+                },
+              },
+            },
+          ],
+        },
+      }),
+    );
+
+    await act(() => result.current.exportAll());
+
+    const [blob] = vi.mocked(triggerBlobDownload).mock.calls[0];
+    const text = await readBlobAsText(blob as Blob);
+    expect(text).not.toContain('files/bucket-a/spec.pdf');
+    const envelope = JSON.parse(text);
+    expect(envelope.history[0].customViewState.annotations).toEqual([
+      {
+        target: { selector: { type: 'html_tag', id: 'e1' } },
+        body: { quote: 'Section 3' },
+      },
+    ]);
+  });
+
   it('dismisses a finished job', async () => {
     const { result } = renderExport();
     await act(() =>

@@ -639,4 +639,36 @@ export class ShareInvitationService {
       return {};
     }
   }
+
+  /**
+   * Withdraws one invitation through Core's `DELETE /v1/invitations/{id}`. What was already accepted
+   * from it stays shared; only the link stops working. An invitation that is already gone (404) is the
+   * state a withdrawal wants, so it is success.
+   */
+  async withdrawInvitation(
+    accessToken: string,
+    invitationId: string,
+  ): Promise<void> {
+    this.logger.debug(`Withdrawing invitation ${invitationId}`);
+    try {
+      const result = await this.dialClient.client.deleteInvitation(
+        invitationId,
+        { headers: getBearerAuthHeaders(accessToken) },
+      );
+      if (result.error && result.response.status !== 404) {
+        return mapDialHttpStatus(
+          result.response.status,
+          `withdraw invitation ${invitationId}`,
+          this.logger,
+        );
+      }
+    } catch (err) {
+      return handleDialFetchError(
+        err,
+        `withdraw invitation ${invitationId}`,
+        this.logger,
+        0,
+      );
+    }
+  }
 }

@@ -115,7 +115,7 @@
     "prettier-plugin-tailwindcss": "^0.8.1",
     "run-script-webpack-plugin": "^0.2.3",
     "sass": "^1.99.0",
-    "storybook": "^10.6.0",
+    "storybook": "^10.6.3",
     "supertest": "^7.2.2",
     "tailwindcss": "^4.3.3",
     "tslib": "^2.3.0",
