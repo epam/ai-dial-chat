@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
 import { AppConfigModule } from '../app-config/app-config.module';
 import { DeploymentsModule } from '../deployments/deployments.module';
+import { FilesListingModule } from '../files/listing/files-listing.module';
 import { ScheduledTaskUnreadModule } from '../scheduled-task-unread/scheduled-task-unread.module';
 import { UserConfigModule } from '../user-config/user-config.module';
 import { ConversationGenerationService } from './conversation-generation.service';
 import { ConversationNamingService } from './conversation-naming.service';
 import { CONVERSATION_PERSISTENCE } from './conversation-persistence.port';
+import { ConversationPublishAttachmentsService } from './conversation-publish-attachments.service';
 import { ConversationPublishController } from './conversation-publish.controller';
 import { ConversationPublishService } from './conversation-publish.service';
 import { ConversationController } from './conversation.controller';
@@ -17,6 +19,7 @@ import { ResponsesAdapter } from './generation/responses.adapter';
 import { ConversationLifecycleService } from './lifecycle/conversation-lifecycle.service';
 import { ConversationListingService } from './listing/conversation-listing.service';
 import { ConversationPersistenceService } from './persistence/conversation-persistence.service';
+import { PublishedFolderAttachmentsService } from './published-folder-attachments.service';
 import { ConversationStreamingService } from './streaming/conversation-streaming.service';
 
 @Module({
@@ -25,6 +28,7 @@ import { ConversationStreamingService } from './streaming/conversation-streaming
     ScheduledTaskUnreadModule,
     AppConfigModule,
     DeploymentsModule,
+    FilesListingModule,
   ],
   controllers: [ConversationController, ConversationPublishController],
   providers: [
@@ -40,6 +44,8 @@ import { ConversationStreamingService } from './streaming/conversation-streaming
     },
     ConversationGenerationService,
     ConversationPublishService,
+    ConversationPublishAttachmentsService,
+    PublishedFolderAttachmentsService,
     ChatCompletionsAdapter,
     ResponsesAdapter,
     CoreResponsesClient,

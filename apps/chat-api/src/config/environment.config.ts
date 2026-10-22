@@ -658,6 +658,12 @@ export class EnvironmentVariables {
   ARCHIVE_UPLOAD_TIMEOUT_MS?: number = 300_000;
 
   @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  PUBLISH_ATTACHMENTS_MAX_FILES?: number = 1000;
+
+  @IsOptional()
   @IsString()
   DEFAULT_DEPLOYMENT?: string;
 

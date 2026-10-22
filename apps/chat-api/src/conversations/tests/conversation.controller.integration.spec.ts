@@ -1,3 +1,4 @@
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   BadGatewayException,
   INestApplication,
@@ -36,6 +37,7 @@ import { ResponsesAdapter } from '../generation/responses.adapter';
 import { ConversationLifecycleService } from '../lifecycle/conversation-lifecycle.service';
 import { ConversationListingService } from '../listing/conversation-listing.service';
 import { ConversationPersistenceService } from '../persistence/conversation-persistence.service';
+import { PublishedFolderAttachmentsService } from '../published-folder-attachments.service';
 import { ConversationStreamingService } from '../streaming/conversation-streaming.service';
 
 const TEST_USER = {
@@ -272,6 +274,8 @@ describe('ConversationController (integration)', () => {
           ConversationPersistenceService,
           ConversationListingService,
           ConversationLifecycleService,
+          PublishedFolderAttachmentsService,
+          { provide: CACHE_MANAGER, useValue: { get: vi.fn(), set: vi.fn() } },
           ConversationStreamingService,
           UserConfigService,
           ScheduledTaskUnreadService,

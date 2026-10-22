@@ -1272,6 +1272,44 @@ export interface ClientConfigResponseDto {
 /**
  *
  * @export
+ * @interface ConversationAttachmentMissingErrorDto
+ */
+export interface ConversationAttachmentMissingErrorDto {
+  /**
+   *
+   * @type {number}
+   * @memberof ConversationAttachmentMissingErrorDto
+   */
+  statusCode: number;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationAttachmentMissingErrorDto
+   */
+  error: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationAttachmentMissingErrorDto
+   */
+  message: string;
+  /**
+   *
+   * @type {ConversationErrorCode}
+   * @memberof ConversationAttachmentMissingErrorDto
+   */
+  code: ConversationErrorCode;
+  /**
+   * Urls of the attachment files that no longer exist
+   * @type {Array<string>}
+   * @memberof ConversationAttachmentMissingErrorDto
+   */
+  missingFiles: Array<string>;
+}
+
+/**
+ *
+ * @export
  * @interface ConversationDeletionFailureDto
  */
 export interface ConversationDeletionFailureDto {
@@ -1340,6 +1378,7 @@ export interface ConversationDeletionResultDto {
 export const ConversationErrorCode = {
   ConversationDuplicateModelHidden: 'conversationDuplicateModelHidden',
   ConversationModelHidden: 'conversationModelHidden',
+  ConversationAttachmentMissing: 'conversationAttachmentMissing',
 } as const;
 export type ConversationErrorCode =
   (typeof ConversationErrorCode)[keyof typeof ConversationErrorCode];

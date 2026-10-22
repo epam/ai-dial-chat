@@ -36,6 +36,7 @@ import {
   updateConversationUnlessPending,
 } from '../generation/background-message';
 import { ConversationPersistenceService } from '../persistence/conversation-persistence.service';
+import { PublishedFolderAttachmentsService } from '../published-folder-attachments.service';
 import { ConversationErrorCode } from '../types/conversation-error-code.enum';
 import type { MetadataResult } from '../types/conversation.types';
 import {
@@ -62,6 +63,7 @@ export class ConversationLifecycleService {
     private readonly userConfigService: UserConfigService,
     private readonly persistenceService: ConversationPersistenceService,
     private readonly deploymentsService: DeploymentsService,
+    private readonly publishedFolderAttachments: PublishedFolderAttachmentsService,
   ) {}
 
   async createConversation(
@@ -321,6 +323,18 @@ export class ConversationLifecycleService {
     await this.assertDuplicateModelVisible(sourceData, token, sessionBucket);
 
     /*
+     * A conversation published with a folder attachment still points at the
+     * author's private folder; the copy must carry the published folder or
+     * it cannot be sent to an agent by the user who duplicated it.
+     */
+    const resolvedSource = await this.publishedFolderAttachments.resolve(
+      sourceData,
+      sourcePath,
+      token,
+      sessionBucket,
+    );
+
+    /*
      * Prefer the stored `name` field (set by LLM naming) over the path-derived
      * title so that conversations renamed by the model keep that name in the copy.
      */
@@ -381,8 +395,8 @@ export class ConversationLifecycleService {
         {
           headers: getBearerAuthHeaders(token),
           body: {
-            ...sourceData,
-            messages: neutralizeForeignPendingMessages(sourceData.messages),
+            ...resolvedSource,
+            messages: neutralizeForeignPendingMessages(resolvedSource.messages),
             id: `${sessionBucket}/${decodedDestinationSubPath}`,
             folderId,
             name: uniqueTitle,

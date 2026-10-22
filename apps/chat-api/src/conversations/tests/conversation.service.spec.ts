@@ -45,6 +45,10 @@ describe('ConversationService facade', () => {
       markViewed: vi.fn().mockResolvedValue(undefined),
     };
 
+    const publishedFolderAttachments = {
+      resolve: vi.fn(async (conversation: unknown) => conversation),
+    };
+
     const service = new ConversationService(
       persistenceService as never,
       listingService as never,
@@ -52,10 +56,12 @@ describe('ConversationService facade', () => {
       streamingService as never,
       conversationNamingService as never,
       scheduledTaskUnreadService as never,
+      publishedFolderAttachments as never,
     );
 
     return {
       service,
+      publishedFolderAttachments,
       persistenceService,
       listingService,
       lifecycleService,
@@ -65,7 +71,7 @@ describe('ConversationService facade', () => {
     };
   };
 
-  it('delegates getConversation to ConversationPersistenceService', async () => {
+  it('reads getConversation from ConversationPersistenceService', async () => {
     const { service, persistenceService } = makeService();
 
     const result = await service.getConversation('path', 'token', 'bucket');
@@ -76,6 +82,23 @@ describe('ConversationService facade', () => {
       'bucket',
     );
     expect(result).toBe('persistence-get');
+  });
+
+  it('returns the conversation with its published folder attachments resolved', async () => {
+    const { service, publishedFolderAttachments } = makeService();
+    publishedFolderAttachments.resolve.mockResolvedValue(
+      'resolved-conversation',
+    );
+
+    const result = await service.getConversation('path', 'token', 'bucket');
+
+    expect(publishedFolderAttachments.resolve).toHaveBeenCalledWith(
+      'persistence-get',
+      'path',
+      'token',
+      'bucket',
+    );
+    expect(result).toBe('resolved-conversation');
   });
 
   it('delegates listConversations to ConversationListingService', async () => {

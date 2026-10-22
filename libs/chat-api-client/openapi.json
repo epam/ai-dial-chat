@@ -3880,10 +3880,17 @@
             "description": "An answer in the conversation is still being generated in the background; publish after it finishes"
           },
           "413": {
-            "description": "DIAL Core rejected the payload as too large"
+            "description": "The conversation attachments (files plus every file inside attached folders) exceed PUBLISH_ATTACHMENTS_MAX_FILES"
           },
           "422": {
-            "description": "DIAL Core could not process the request"
+            "description": "A file the conversation attachments reference no longer exists (`code: conversationAttachmentMissing`, `missingFiles` lists the urls); nothing is published",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationAttachmentMissingErrorDto"
+                }
+              }
+            }
           },
           "429": {
             "description": "DIAL Core rate-limited the request"
@@ -13300,7 +13307,11 @@
       },
       "ConversationErrorCode": {
         "type": "string",
-        "enum": ["conversationDuplicateModelHidden", "conversationModelHidden"],
+        "enum": [
+          "conversationDuplicateModelHidden",
+          "conversationModelHidden",
+          "conversationAttachmentMissing"
+        ],
         "description": "Present when the request was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`, so it cannot be duplicated. `conversationModelHidden`: the model a completion, share or publish would use is hidden through `HIDDEN_ENTITY_TAGS`."
       },
       "ConversationModelHiddenErrorDto": {
@@ -13579,6 +13590,40 @@
           }
         },
         "required": ["path", "folderPath", "publishedAt", "publishedBy"]
+      },
+      "ConversationAttachmentMissingErrorDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 422
+          },
+          "error": {
+            "type": "string",
+            "example": "Unprocessable Entity"
+          },
+          "message": {
+            "type": "string",
+            "example": "The conversation references attachment files that no longer exist: files/bucket-123/old.pdf"
+          },
+          "code": {
+            "example": "conversationAttachmentMissing",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConversationErrorCode"
+              }
+            ]
+          },
+          "missingFiles": {
+            "example": ["files/bucket-123/old.pdf"],
+            "description": "Urls of the attachment files that no longer exist",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["statusCode", "error", "message", "code", "missingFiles"]
       },
       "UnpublishConversationDto": {
         "type": "object",
