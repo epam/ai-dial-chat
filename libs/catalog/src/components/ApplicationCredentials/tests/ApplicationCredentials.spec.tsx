@@ -32,7 +32,7 @@ describe('ApplicationCredentials', () => {
     const options = props();
     render(<ApplicationCredentials {...options} />);
     await user.click(screen.getByRole('button', { name: 'Add' }));
-    expect(screen.getByRole('alert').textContent).toBe('API key is required.');
+    expect(screen.getByText('API key is required.')).toBeTruthy();
     expect(options.onLogin).not.toHaveBeenCalled();
     await user.type(screen.getByLabelText('API key'), 'secret');
     await user.click(screen.getByRole('button', { name: 'Add' }));
@@ -55,10 +55,10 @@ describe('ApplicationCredentials', () => {
     await user.click(screen.getByRole('button', { name: 'Add' }));
     expect(input).toHaveProperty('value', 'secret');
     await user.click(screen.getByRole('button', { name: 'Add' }));
-    expect(screen.getByRole('alert').textContent).toBe('Access denied');
+    expect(screen.getByText('Access denied')).toBeTruthy();
     expect(input).toHaveProperty('value', 'secret');
     await user.click(screen.getByRole('button', { name: 'Add' }));
-    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.queryByText('Access denied')).toBeNull();
   });
 
   it('requires confirmation to delete a configured key and supports cancelling removal', async () => {

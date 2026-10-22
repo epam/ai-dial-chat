@@ -12,7 +12,14 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
     ...actual,
     Select: (props: Record<string, unknown>) => {
       selectProps.current = props;
-      return <input role="combobox" aria-label="Skills" />;
+      return (
+        <input
+          role="combobox"
+          aria-label="Skills"
+          aria-controls="skills-listbox"
+          aria-expanded={false}
+        />
+      );
     },
   };
 });

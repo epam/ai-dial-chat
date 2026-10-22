@@ -3,17 +3,13 @@ import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   GhostButton,
+  NoDataContent,
   Skeleton,
   SkeletonVariant,
   Spinner,
   Tooltip,
 } from '@epam/ai-dial-ui-kit';
-import {
-  IconAlertTriangle,
-  IconCheck,
-  IconCircleX,
-  IconClipboardX,
-} from '@tabler/icons-react';
+import { IconAlertTriangle, IconCheck, IconCircleX } from '@tabler/icons-react';
 import { type CSSProperties, type FC, type KeyboardEvent } from 'react';
 import type { ScheduledTaskRunHistoryListProps } from '../../models/scheduled-task-run-history-list-props';
 import type { ScheduledTaskRunItem } from '../../models/scheduled-task-run-item';
@@ -278,19 +274,12 @@ export const ScheduledTaskRunHistoryList: FC<
 
   if (items.length === 0) {
     return (
-      <div
-        style={cssVars}
-        className="flex w-full flex-col items-center justify-center gap-2 py-4"
-      >
-        <IconClipboardX
-          size={44}
-          stroke={DIAL_KIT_ICON_STROKE}
-          className={styles.subtitleText}
-          aria-hidden
+      <div style={cssVars} className="w-full py-4">
+        <NoDataContent
+          title={labels.emptyLabel}
+          description={labels.emptyDescription}
+          live
         />
-        <p role="status" className={runTimestampClassName}>
-          {labels.emptyLabel}
-        </p>
       </div>
     );
   }

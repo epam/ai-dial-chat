@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { useState } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { FavoritePromptItem } from '../../../models/favorite-prompt-item';
 import type { UsePromptSelectorOverlayOptions } from '../../../models/prompt-selector-overlay';
 import { usePromptSelectorOverlay } from '../usePromptSelectorOverlay';
@@ -91,6 +91,15 @@ const Harness = ({ onInsertText = vi.fn(), ...overrides }: HarnessProps) => {
 };
 
 describe('usePromptSelectorOverlay', () => {
+  /*
+   * Warm the lazily imported parameters popup once (it pulls AG Grid through
+   * @epam/ai-dial-catalog), so its cold module transform cannot outrun a single
+   * test's timeout and every test sees the same, already-loaded chunk.
+   */
+  beforeAll(async () => {
+    await import('../../../entry-points/parameters-popup');
+  }, 60_000);
+
   afterEach(() => {
     vi.useRealTimers();
   });

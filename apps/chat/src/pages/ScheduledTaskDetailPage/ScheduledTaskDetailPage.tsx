@@ -436,6 +436,9 @@ const ScheduledTaskDetailPage: FC = () => {
       retryLabel: t(ScheduledTasksI18nKeys.ListRetryLabel),
       historyTitle: t(ScheduledTasksI18nKeys.DetailHistoryTitle),
       historyEmptyLabel: t(ScheduledTasksI18nKeys.DetailHistoryEmptyLabel),
+      historyEmptyDescription: t(
+        ScheduledTasksI18nKeys.DetailHistoryEmptyDescription,
+      ),
       historyErrorLabel: t(ScheduledTasksI18nKeys.DetailHistoryErrorLabel),
       historyRetryLabel: t(ScheduledTasksI18nKeys.ListRetryLabel),
       historyLoadingMoreLabel: t(

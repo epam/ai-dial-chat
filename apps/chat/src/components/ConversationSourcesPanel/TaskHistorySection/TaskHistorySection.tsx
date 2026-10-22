@@ -59,6 +59,7 @@ const TaskHistorySection: FC<Props> = ({
       title: t(ScheduledTasksI18nKeys.DetailHistoryTitle),
       showMoreLabel: t(ButtonsI18nKeys.ShowMore),
       emptyLabel: t(ScheduledTasksI18nKeys.DetailHistoryEmptyLabel),
+      emptyDescription: t(ScheduledTasksI18nKeys.DetailHistoryEmptyDescription),
       errorLabel: t(ScheduledTasksI18nKeys.DetailHistoryErrorLabel),
       retryLabel: t(ScheduledTasksI18nKeys.ListRetryLabel),
       unavailableLabel: t(

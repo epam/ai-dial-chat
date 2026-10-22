@@ -192,6 +192,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
       labels={{
         historyTitle: labels.historyTitle,
         historyEmptyLabel: labels.historyEmptyLabel,
+        historyEmptyDescription: labels.historyEmptyDescription,
         historyErrorLabel: labels.historyErrorLabel,
         historyLoadMoreErrorLabel: labels.historyLoadMoreErrorLabel,
         historyRetryLabel: labels.historyRetryLabel,

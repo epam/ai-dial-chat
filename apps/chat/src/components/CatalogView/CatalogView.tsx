@@ -684,8 +684,10 @@ const CatalogView: FC<Props> = ({
           favoritesTitle: t(FavoritesI18nKeys.Title),
           browseTitle: t(ButtonsI18nKeys.Browse),
           searchPlaceholder,
-          noResultsTitle: (query) =>
-            t(CatalogI18nKeys.NoResultsTitle, { query }),
+          noResultsTitle: () => t(CatalogI18nKeys.NoResultsTitle),
+          noResultsDescription: t(BasicI18nKeys.NoResultsDescription),
+          emptyTitle: t(CatalogI18nKeys.EmptyTitle),
+          emptyDescription: t(CatalogI18nKeys.EmptyDescription),
           myAppsEmptyTitle: (tab) => getCatalogMyAppsEmptyTitle(tab, t),
           myAppsEmptyDescription: t(CatalogI18nKeys.MyAppsEmptyDescription),
           sortLabel: t(ButtonsI18nKeys.Sort),
