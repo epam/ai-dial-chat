@@ -4,12 +4,12 @@ import {
   type UseDeploymentUsageLimitsResult,
   useDeploymentUsageLimits,
 } from '@epam/ai-dial-chat-hooks';
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { useUiFeature } from '../../../hooks/useUiFeature';
 import {
