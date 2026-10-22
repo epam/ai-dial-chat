@@ -173,6 +173,52 @@ describe('useConversationImport', () => {
     );
   });
 
+  it("drops another user's files from the citation pool and names each once", async () => {
+    const { result } = renderImport('new-bucket');
+    const citation = (id: string, url: string) => ({
+      target: { selector: { type: 'html_tag', id } },
+      body: {
+        quote: 'Cited text',
+        source: {
+          type: 'attachment',
+          attachment: { type: 'text/plain', url },
+        },
+      },
+    });
+    const conversation = makeConversation({
+      messages: [
+        {
+          role: 'assistant',
+          content: 'Answer',
+          timestamp: '2026-07-10T00:00:00.000Z',
+          custom_content: {
+            annotations: [citation('e1', 'files/old-bucket/cite.txt')],
+          },
+        },
+      ],
+      customViewState: {
+        annotations: [
+          citation('e1', 'files/old-bucket/cite.txt'),
+          citation('e2', 'files/old-bucket/pool-only.txt'),
+        ],
+      },
+    });
+
+    await act(() =>
+      result.current.importConversations(jsonFile([conversation])),
+    );
+
+    const [params] = saveConversation.mock.calls[0];
+    expect(
+      JSON.stringify(params.saveConversationBodyDto.conversation),
+    ).not.toContain('files/old-bucket/');
+    expect(result.current.jobs[0]).toMatchObject({
+      status: ConversationTransferJobStatus.Warning,
+      warningCode: ConversationTransferWarningCode.AttachmentSkipped,
+      warningNames: ['cite.txt', 'pool-only.txt'],
+    });
+  });
+
   it("drops a missing archive attachment's reference into the source bucket", async () => {
     const { result } = renderImport('new-bucket');
     const conversation = makeConversation({
