@@ -182,18 +182,21 @@ export const getPublishedAttachmentsFolderUrl = (
 
 /**
  * The published path of one attachment file:
- * `files/public/{folderPath}/{conversationResourceName}/{path in the author's bucket}`.
+ * `files/public/{folderPath}/{conversationResourceName}/{source bucket}/{path in that bucket}`.
  * Nesting under the conversation's own target name keeps same-named files of
  * different conversations from colliding in one Organization folder, the same
- * way {@link getPublishedIconTargetUrl} does for an app icon, and keeping the
- * bucket-relative path preserves folder structure.
+ * way {@link getPublishedIconTargetUrl} does for an app icon; keeping the
+ * source bucket as a segment ties every published file to the bucket it came
+ * from, and keeping the bucket-relative path preserves folder structure.
  * @param folderPath - plain publish target folder
  * @param conversationResourceName - the conversation's resource name (last segment of its path)
- * @param bucketRelativePath - the file's path inside the author's bucket, already percent-encoded
+ * @param sourceBucket - the bucket the file is published from
+ * @param bucketRelativePath - the file's path inside `sourceBucket`, already percent-encoded
  */
 export const getPublishedAttachmentTargetUrl = (
   folderPath: string,
   conversationResourceName: string,
+  sourceBucket: string,
   bucketRelativePath: string,
 ): string =>
   `${getPublishedAttachmentsFolderUrl(
@@ -202,7 +205,7 @@ export const getPublishedAttachmentTargetUrl = (
       folderPath,
       conversationResourceName,
     ),
-  )}${bucketRelativePath}`;
+  )}${sourceBucket}/${bucketRelativePath}`;
 
 /*
  * DIAL Core stores applications and toolsets as `{name}__{version}`, but

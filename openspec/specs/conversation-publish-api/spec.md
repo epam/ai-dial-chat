@@ -223,7 +223,7 @@ Generated-client impact: no new `operationId`; `publishConversation` keeps its r
 
 - **GIVEN** `path` is `bucket-123/my-chat` and the conversation references `files/bucket-123/docs/report.pdf`
 - **WHEN** it is published to `Organization/Data Science`
-- **THEN** the `createPublication` body contains the conversation `ADD` resource and an `ADD` resource with `sourceUrl: files/bucket-123/docs/report.pdf` and `targetUrl: files/public/Organization/Data Science/my-chat/docs/report.pdf`
+- **THEN** the `createPublication` body contains the conversation `ADD` resource and an `ADD` resource with `sourceUrl: files/bucket-123/docs/report.pdf` and `targetUrl: files/public/Organization/Data Science/my-chat/bucket-123/docs/report.pdf`
 
 #### Scenario: Publish history still lists one entry per folder
 

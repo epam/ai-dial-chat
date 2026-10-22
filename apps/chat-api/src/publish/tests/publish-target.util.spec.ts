@@ -182,26 +182,29 @@ describe('getPublishedIconTargetUrl', () => {
  * it, so these pin the exact strings and that the two derivations agree.
  */
 describe('published attachment paths', () => {
-  it('nests a file under the published conversation name, keeping its bucket-relative path', () => {
+  it('nests a file under the published conversation name and its source bucket, keeping the bucket-relative path', () => {
     expect(
       getPublishedAttachmentTargetUrl(
         'Organization/Data Science',
         'my-chat',
+        'bucket1',
         'docs/sub/b.pdf',
       ),
-    ).toBe('files/public/Organization/Data%20Science/my-chat/docs/sub/b.pdf');
+    ).toBe(
+      'files/public/Organization/Data%20Science/my-chat/bucket1/docs/sub/b.pdf',
+    );
   });
 
   it('uses the public root when folderPath is empty', () => {
-    expect(getPublishedAttachmentTargetUrl('', 'my-chat', 'a.pdf')).toBe(
-      'files/public/my-chat/a.pdf',
+    expect(getPublishedAttachmentTargetUrl('', 'my-chat', 'b', 'a.pdf')).toBe(
+      'files/public/my-chat/b/a.pdf',
     );
   });
 
   it('percent-encodes a non-ASCII folder name like every other published path', () => {
     expect(
-      getPublishedAttachmentTargetUrl('test 14.04/Ünïcode', 'c', 'a.pdf'),
-    ).toBe('files/public/test%2014.04/%C3%9Cn%C3%AFcode/c/a.pdf');
+      getPublishedAttachmentTargetUrl('test 14.04/Ünïcode', 'c', 'b', 'a.pdf'),
+    ).toBe('files/public/test%2014.04/%C3%9Cn%C3%AFcode/c/b/a.pdf');
   });
 
   it('derives the attachments folder from the published conversation url', () => {
@@ -215,7 +218,12 @@ describe('published attachment paths', () => {
       getPublishedTargetUrl('conversations', 'Org/Chats', 'my-chat'),
     );
     expect(
-      getPublishedAttachmentTargetUrl('Org/Chats', 'my-chat', 'docs/a.pdf'),
-    ).toBe(`${folder}docs/a.pdf`);
+      getPublishedAttachmentTargetUrl(
+        'Org/Chats',
+        'my-chat',
+        'b',
+        'docs/a.pdf',
+      ),
+    ).toBe(`${folder}b/docs/a.pdf`);
   });
 });

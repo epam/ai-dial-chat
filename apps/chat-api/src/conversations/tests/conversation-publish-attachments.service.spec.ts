@@ -6,12 +6,17 @@ import {
 import { describe, expect, it, vi } from 'vitest';
 import { ConversationPublishAttachmentsService } from '../conversation-publish-attachments.service';
 import { ConversationErrorCode } from '../types/conversation-error-code.enum';
+import type {
+  AttachmentRef,
+  ConversationAttachmentView,
+} from '../utils/conversation-attachments.util';
 
 const BUCKET = 'bucket-123';
 
-const conversationWith = (attachments: unknown[]) => ({
-  name: 'chat',
-  messages: [{ role: 'user', content: 'hi', custom_content: { attachments } }],
+const conversationWith = (
+  attachments: AttachmentRef[],
+): ConversationAttachmentView => ({
+  messages: [{ custom_content: { attachments } }],
 });
 
 const expanded = (...paths: string[]) =>
@@ -40,7 +45,7 @@ const makeService = (maxFiles?: number) => {
 
 const buildAdd = (
   service: ConversationPublishAttachmentsService,
-  conversation: unknown,
+  conversation: ConversationAttachmentView,
 ) =>
   service.buildAddResources(
     'token',
@@ -74,7 +79,7 @@ describe('ConversationPublishAttachmentsService.buildAddResources', () => {
         action: 'ADD',
         sourceUrl: `files/${BUCKET}/docs/report.pdf`,
         targetUrl:
-          'files/public/Organization/Data%20Science/my-chat/docs/report.pdf',
+          'files/public/Organization/Data%20Science/my-chat/bucket-123/docs/report.pdf',
       },
     ]);
   });
@@ -101,13 +106,13 @@ describe('ConversationPublishAttachmentsService.buildAddResources', () => {
         action: 'ADD',
         sourceUrl: `files/${BUCKET}/docs/a.pdf`,
         targetUrl:
-          'files/public/Organization/Data%20Science/my-chat/docs/a.pdf',
+          'files/public/Organization/Data%20Science/my-chat/bucket-123/docs/a.pdf',
       },
       {
         action: 'ADD',
         sourceUrl: `files/${BUCKET}/docs/sub/b%20c.pdf`,
         targetUrl:
-          'files/public/Organization/Data%20Science/my-chat/docs/sub/b%20c.pdf',
+          'files/public/Organization/Data%20Science/my-chat/bucket-123/docs/sub/b%20c.pdf',
       },
     ]);
   });

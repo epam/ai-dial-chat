@@ -1,7 +1,7 @@
 # conversation-published-attachments Specification
 
 ## Purpose
-Defines which attachments of a conversation are published together with it, where the published files live, how an attached folder keeps working for viewers of the published copy, and how the files are removed when the conversation is unpublished.
+Defines which attachments of a conversation are published together with it, where the published files live, how the attachment links of the published copy keep working for its viewers, and how the files are removed when the conversation is unpublished.
 
 ## Requirements
 
@@ -76,7 +76,7 @@ The total number of files published for one conversation SHALL NOT exceed a conf
 
 ### Requirement: Published attachment files live in a per-conversation namespace
 
-The published path of an attachment file SHALL be `files/public/{folderPath}/{conversationResourceName}/{path of the file relative to the author's bucket}`, where `{folderPath}` is the publish target folder and `{conversationResourceName}` is the last segment of the published conversation's own `targetUrl`. Path segments of the source file SHALL be carried over unchanged. The namespace SHALL be derived by one shared function used by publish, unpublish and the folder-link resolution on read, so all three always agree.
+The published path of an attachment file SHALL be `files/public/{folderPath}/{conversationResourceName}/{source bucket}/{path of the file relative to that bucket}`, where `{folderPath}` is the publish target folder and `{conversationResourceName}` is the last segment of the published conversation's own `targetUrl`. The source bucket is a path segment of its own, so a published file can only ever be matched with the bucket it came from. Path segments of the source file SHALL be carried over unchanged. The namespace SHALL be derived by one shared function used by publish, unpublish and the link resolution on read, so all three always agree.
 
 #### Scenario: Same-named folders of two authors do not collide
 
@@ -87,7 +87,7 @@ The published path of an attachment file SHALL be `files/public/{folderPath}/{co
 #### Scenario: Folder structure is preserved
 
 - **GIVEN** `files/bucket-123/docs/sub/b.pdf` is published with conversation `my-chat` to `Org`
-- **THEN** its published path is `files/public/Org/my-chat/docs/sub/b.pdf`
+- **THEN** its published path is `files/public/Org/my-chat/bucket-123/docs/sub/b.pdf`
 
 ### Requirement: A missing attachment file fails publish with a readable error
 
@@ -104,21 +104,27 @@ If any individually referenced attachment file (not a file found inside an expan
 - **WHEN** the web client receives `conversationAttachmentMissing`
 - **THEN** the publish error notification shows the server message naming the missing file(s) instead of a generic failure
 
-### Requirement: Folder attachments of a published conversation resolve to the published folder
+### Requirement: Attachment links of a published conversation resolve to the published copies
 
-Core does not rewrite a folder attachment link in the published conversation copy, so the backend SHALL resolve it when the copy is read. When a conversation stored in the public bucket is returned, each message attachment whose `url` is a folder URL (`files/{bucket}/…/`, or the legacy `metadata/files/{bucket}/…/` form) of a bucket other than the public bucket SHALL be returned with `url` rewritten to `files/public/{conversation public path}/{path relative to {bucket}}` (keeping the `metadata/` prefix when the original had it), where `{conversation public path}` is the published conversation's own path without its `conversations/` prefix. The rewrite SHALL apply only when that published folder exists; a folder whose published counterpart does not exist (a folder in another user's bucket that was never published, a folder with no files, a conversation published before this change) SHALL keep its original URL. The attachment SHALL remain one folder attachment (its `title` and other fields unchanged). Conversations outside the public bucket SHALL be returned unchanged, and so SHALL attachments that are not folders.
+Core rewrites only the `url` of message attachment *files* that are published with the conversation. It does not rewrite a folder link, nor any reference in execution stages or citations, nor `reference_url`. So the backend SHALL resolve them when the copy is read. When a conversation stored in the public bucket is returned, every reference the publish collector reads (`url` and `reference_url` of message attachments, stage attachments and citation source attachments) that is a `files/{bucket}/…` file or folder URL (or the legacy `metadata/files/{bucket}/…/` folder form) of a bucket other than the public bucket SHALL be returned rewritten to `files/public/{conversation public path}/{bucket}/{path relative to bucket}`, where `{conversation public path}` is the published conversation's own path without its `conversations/` prefix. A `#fragment` and the `metadata/` prefix SHALL be preserved. The rewrite SHALL apply only when that published file exists (or that published folder holds a file); because the source bucket is part of the published path, a reference into another user's bucket can never be matched with the author's published files and SHALL keep its original URL, as SHALL any reference whose published counterpart does not exist (never published, empty folder, published before this change). A folder attachment SHALL remain one attachment (`title` and other fields unchanged). Conversations outside the public bucket SHALL be returned unchanged, and so SHALL references that are already public, external or inline.
 
 The rewrite SHALL apply to the conversation returned to callers, not to the version used to save a conversation.
 
-When a conversation from the public bucket is duplicated, the stored copy SHALL carry the same rewritten URLs, so the duplicate's folder attachments remain readable by the user who duplicated it.
+When a conversation from the public bucket is duplicated, the stored copy SHALL carry the same rewritten URLs, so the duplicate's attachments remain readable by the user who duplicated it.
 
-Existence of a published folder MAY be cached for at most 60 seconds.
+Whether a published copy exists MAY be cached for at most 60 seconds, and only a definite answer (found or `404`) SHALL be cached. Any other failure to look it up (a non-`404` status or a network error) SHALL fail the read or the duplicate with the mapped HTTP error and SHALL NOT be treated as "does not exist", so a duplicate is never saved with a link that would stay private.
 
 #### Scenario: Viewer opens a published conversation with a folder attachment
 
 - **GIVEN** the published conversation `conversations/public/Org/my-chat` has a folder attachment `files/bucket-123/docs/`
 - **WHEN** another user reads that conversation
-- **THEN** the folder attachment's `url` is `files/public/Org/my-chat/docs/` and it is still one folder attachment
+- **THEN** the folder attachment's `url` is `files/public/Org/my-chat/bucket-123/docs/` and it is still one folder attachment
+
+#### Scenario: Same folder path in two buckets
+
+- **GIVEN** a published conversation has folder attachments `files/bucket-123/docs/` (the author's, published) and `files/colleague/docs/` (not published)
+- **WHEN** another user reads it
+- **THEN** the first is rewritten to `files/public/Org/my-chat/bucket-123/docs/` and the second keeps `files/colleague/docs/`
 
 #### Scenario: Folder that was not published keeps its URL
 
@@ -130,7 +136,13 @@ Existence of a published folder MAY be cached for at most 60 seconds.
 
 - **GIVEN** a published conversation has an attachment with `url: metadata/files/bucket-123/docs/` whose published folder exists
 - **WHEN** another user reads it
-- **THEN** the `url` is `metadata/files/public/Org/my-chat/docs/`
+- **THEN** the `url` is `metadata/files/public/Org/my-chat/bucket-123/docs/`
+
+#### Scenario: Stage, citation and reference links
+
+- **GIVEN** a published conversation has a stage attachment `files/bucket-123/out/chart.png` and a citation whose `reference_url` is `files/bucket-123/a.pdf#page=2`, both published
+- **WHEN** another user reads it
+- **THEN** they are returned as `files/public/Org/my-chat/bucket-123/out/chart.png` and `files/public/Org/my-chat/bucket-123/a.pdf#page=2`
 
 #### Scenario: Owner's own conversation is untouched
 
@@ -140,13 +152,19 @@ Existence of a published folder MAY be cached for at most 60 seconds.
 #### Scenario: Duplicate of a published conversation
 
 - **WHEN** a user duplicates a conversation from the public bucket
-- **THEN** the duplicate is stored in the user's bucket with the rewritten folder URL
+- **THEN** the duplicate is stored in the user's bucket with the rewritten URLs
 
-#### Scenario: File attachments are not rewritten
+#### Scenario: Lookup failure does not produce a broken duplicate
 
-- **GIVEN** a published conversation has a file attachment whose link Core already rewrote
+- **GIVEN** DIAL Core answers `503` (or the request fails) when the backend checks whether a published folder exists
+- **WHEN** a user duplicates the conversation
+- **THEN** the request fails with the mapped error and nothing is saved
+
+#### Scenario: Already public links are not rewritten
+
+- **GIVEN** a published conversation has a file attachment whose link Core already rewrote to `files/public/…`
 - **WHEN** it is read
-- **THEN** that link is returned unchanged
+- **THEN** that link is returned unchanged and no lookup is made for it
 
 ### Requirement: Unpublishing a conversation removes its published attachment files
 

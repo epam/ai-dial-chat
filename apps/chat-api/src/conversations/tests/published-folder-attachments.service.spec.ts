@@ -1,15 +1,10 @@
+import { HttpException, ServiceUnavailableException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PublishedFolderAttachmentsService } from '../published-folder-attachments.service';
+import type { ConversationAttachmentView } from '../utils/conversation-attachments.util';
 
-const conversationWithFolder = (url: string) => ({
-  name: 'chat',
-  messages: [
-    {
-      role: 'user',
-      content: 'hi',
-      custom_content: { attachments: [{ title: 'docs', url }] },
-    },
-  ],
+const conversationWithFolder = (url: string): ConversationAttachmentView => ({
+  messages: [{ custom_content: { attachments: [{ title: 'docs', url }] } }],
 });
 
 const listing = (status: number, items: unknown[] = []) =>
@@ -36,12 +31,8 @@ const makeService = () => {
   return { service, dialClient, cacheManager };
 };
 
-const attachmentUrl = (conversation: unknown): string =>
-  (
-    conversation as {
-      messages: { custom_content: { attachments: { url: string }[] } }[];
-    }
-  ).messages[0].custom_content.attachments[0].url;
+const attachmentUrl = (conversation: ConversationAttachmentView) =>
+  conversation.messages?.[0].custom_content?.attachments?.[0].url;
 
 describe('PublishedFolderAttachmentsService', () => {
   beforeEach(() => {
@@ -77,11 +68,11 @@ describe('PublishedFolderAttachmentsService', () => {
     );
 
     expect(attachmentUrl(result)).toBe(
-      'files/public/Org/Data%20Science/my-chat/docs/',
+      'files/public/Org/Data%20Science/my-chat/author/docs/',
     );
     expect(dialClient.client.getFileMetadata).toHaveBeenCalledWith(
       'public',
-      'Org/Data%20Science/my-chat/docs/',
+      'Org/Data%20Science/my-chat/author/docs/',
       expect.objectContaining({
         params: { query: { limit: 1, recursive: false } },
       }),
@@ -129,32 +120,52 @@ describe('PublishedFolderAttachmentsService', () => {
     expect(dialClient.client.getFileMetadata).toHaveBeenCalledOnce();
   });
 
-  it('does not cache a failed lookup and keeps the stored url', async () => {
-    const { service, dialClient, cacheManager } = makeService();
-    dialClient.client.getFileMetadata.mockRejectedValue(new Error('down'));
+  it('rewrites a file reference when its published copy exists', async () => {
+    const { service, dialClient } = makeService();
+    dialClient.client.getFileMetadata.mockResolvedValue({
+      data: { name: 'a.pdf' },
+      response: { status: 200 } as Response,
+    } as never);
 
     const result = await service.resolve(
-      conversationWithFolder('files/author/docs/'),
+      conversationWithFolder('files/author/out/a.pdf#page=2'),
       'public/Org/my-chat',
       'token',
       'test-bucket',
     );
 
-    expect(attachmentUrl(result)).toBe('files/author/docs/');
+    expect(attachmentUrl(result)).toBe(
+      'files/public/Org/my-chat/author/out/a.pdf#page=2',
+    );
+  });
+
+  it('fails the read, and caches nothing, when the lookup throws', async () => {
+    const { service, dialClient, cacheManager } = makeService();
+    dialClient.client.getFileMetadata.mockRejectedValue(new TypeError('down'));
+
+    await expect(
+      service.resolve(
+        conversationWithFolder('files/author/docs/'),
+        'public/Org/my-chat',
+        'token',
+        'test-bucket',
+      ),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
     expect(cacheManager.set).not.toHaveBeenCalled();
   });
 
-  it('does not cache an unexpected non-404 error status', async () => {
+  it('fails the read, and caches nothing, on a non-404 error status', async () => {
     const { service, dialClient, cacheManager } = makeService();
     dialClient.client.getFileMetadata.mockResolvedValue(listing(503));
 
-    await service.resolve(
-      conversationWithFolder('files/author/docs/'),
-      'public/Org/my-chat',
-      'token',
-      'test-bucket',
-    );
-
+    await expect(
+      service.resolve(
+        conversationWithFolder('files/author/docs/'),
+        'public/Org/my-chat',
+        'token',
+        'test-bucket',
+      ),
+    ).rejects.toBeInstanceOf(HttpException);
     expect(cacheManager.set).not.toHaveBeenCalled();
   });
 });

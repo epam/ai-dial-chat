@@ -15,7 +15,10 @@ import {
 import { FilesListingService } from '../files/listing/files-listing.service';
 import { getPublishedAttachmentTargetUrl } from '../publish/publish-target.util';
 import { ConversationErrorCode } from './types/conversation-error-code.enum';
-import { collectOwnedAttachmentRefs } from './utils/conversation-attachments.util';
+import {
+  type ConversationAttachmentView,
+  collectOwnedAttachmentRefs,
+} from './utils/conversation-attachments.util';
 
 /** Files whose existence is checked in one round of parallel requests. */
 const EXISTENCE_CHECK_CONCURRENCY = 8;
@@ -36,7 +39,7 @@ export interface PublicationFileResource {
  *
  * Publish collects the author's own attachment files, expands attached folders
  * recursively and nests every file under the published conversation's own
- * folder; unpublish lists that folder to delete what was published.
+ * folder and its source bucket; unpublish lists that folder to delete what was published.
  */
 @Injectable()
 export class ConversationPublishAttachmentsService {
@@ -64,7 +67,7 @@ export class ConversationPublishAttachmentsService {
   async buildAddResources(
     accessToken: string,
     bucket: string,
-    conversation: unknown,
+    conversation: ConversationAttachmentView,
     folderPath: string,
     conversationResourceName: string,
   ): Promise<PublicationFileResource[]> {
@@ -122,6 +125,7 @@ export class ConversationPublishAttachmentsService {
       targetUrl: getPublishedAttachmentTargetUrl(
         folderPath,
         conversationResourceName,
+        bucket,
         sourceUrl.split('/').slice(2).join('/'),
       ),
     }));
