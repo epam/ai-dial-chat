@@ -12,7 +12,7 @@ Core's `GET /v1/user/offline-credentials` via `DialClientService` using the
 session user's bearer access token, and SHALL require a valid session and
 at least one of `scheduledTasksEnabled` or `liveChatInteraction` before returning a response. Both flags SHALL be evaluated for the same caller and roles. No new flag is introduced.
 
-The response SHALL additionally carry `schedulerServiceConsent`, the consent state of the `DIAL_NATIVE` scheduler external service, read per request (never cached) from Core's application resource via the shared consent read owned by `SchedulerConsentService` (`apps/chat-api/src/external-services/scheduler-consent.service.ts`) — the same read `ScheduledTasksService.assertSchedulerConsent` applies to mutations. The field SHALL take the value `signed_out` only when the scheduler service's `appLevelAuthStatus` reports an explicit `SIGNED_OUT` on a `DIAL_NATIVE` service; `signed_in` when it reports `SIGNED_IN`; and `unknown` when the read itself fails (logged at warn) — including a non-`DIAL_NATIVE` scheduler service, an absent status, or any unexpected value. A failed consent read SHALL NOT fail the status call: `available` and `connected` keep their meaning and the endpoint still returns `200` with `schedulerServiceConsent: 'unknown'`.
+The response SHALL additionally carry `schedulerServiceConsent`, the consent state of the `DIAL_NATIVE` scheduler external service, read per request (never cached) from Core's application resource via the shared consent read owned by `SchedulerConsentService` (`apps/chat-api/src/external-services/scheduler-consent.service.ts`) — the same read `ScheduledTasksService.assertSchedulerConsent` applies to mutations. The read starts before the Core status call is awaited (the two round-trips run in parallel) and is bounded by an application deadline — past it, the abort cancels the upstream reads and the field defers to `unknown`. The field SHALL take the value `signed_out` only when the scheduler service's `appLevelAuthStatus` reports an explicit `SIGNED_OUT` on a `DIAL_NATIVE` service; `signed_in` when it reports `SIGNED_IN`; and `unknown` when the read itself fails (logged at warn) — including a non-`DIAL_NATIVE` scheduler service, an absent status, or any unexpected value. A failed consent read SHALL NOT fail the status call: `available` and `connected` keep their meaning and the endpoint still returns `200` with `schedulerServiceConsent: 'unknown'`.
 
 Example — consent revoked, user connected:
 
@@ -47,6 +47,14 @@ No telemetry is added; a failed consent read emits a server-side warn log only. 
 #### Scenario: Failed consent read does not fail the status call
 - **WHEN** the consent read of the scheduler external service throws (HTTP or network error)
 - **THEN** the endpoint logs a warning and returns `200` with the correct `available`/`connected` and `schedulerServiceConsent: 'unknown'`
+
+#### Scenario: Consent read runs in parallel with the Core status call
+- **WHEN** the status endpoint reads the scheduler service consent
+- **THEN** the consent read starts before the Core status call is awaited, so the status response pays one round-trip of added latency instead of two in series
+
+#### Scenario: Stalled consent read is bounded by a deadline
+- **WHEN** the scheduler-metadata read (including its fallback reads) stalls and does not settle within the read deadline
+- **THEN** the deadline aborts the upstream reads, the endpoint logs a warning, and the response returns `200` with the correct `available`/`connected` and `schedulerServiceConsent: 'unknown'` instead of being held open
 
 #### Scenario: Missing scheduler configuration defers to unknown
 - **WHEN** `SCHEDULER_APP_ID` or `SCHEDULER_SERVICE_ID` is unset so the scheduler identity cannot be resolved

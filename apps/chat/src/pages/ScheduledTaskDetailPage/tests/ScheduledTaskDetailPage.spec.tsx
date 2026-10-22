@@ -859,6 +859,91 @@ describe('ScheduledTaskDetailPage', () => {
         }),
       ).toBeTruthy();
     });
+
+    const renderLoadedTaskWithActive = (isActive: boolean) => {
+      useOfflineCredentialsGateMock.mockReturnValue({
+        status: 'hidden',
+        connect: undefined,
+        connected: true,
+        schedulerServiceConsent: 'signed_out',
+        refetch: vi.fn(),
+      });
+      getScheduledTaskMock.mockResolvedValue({
+        id: 'sched_123',
+        displayName: 'Daily summary',
+        trigger: {},
+        isActive,
+      });
+      useScheduledTaskRunsMock.mockReturnValue({
+        items: [],
+        isLoading: false,
+        isLoadingMore: false,
+        error: null,
+        hasMore: false,
+        loadMore: vi.fn(),
+        refetch: vi.fn(),
+      });
+      renderDetailPage();
+    };
+
+    it('hides Start now and disables the paused Active switch with no reason under signed-out consent', async () => {
+      renderLoadedTaskWithActive(false);
+
+      const activeSwitch = await screen.findByRole('switch', {
+        name: 'scheduledTasks.detail.activeStatusLabel',
+      });
+      expect(activeSwitch).toHaveProperty('disabled', true);
+      /* Limited access disables the switch on its own — no reason label
+       * renders beside the disabled control. */
+      expect(screen.queryByText(/^disabledReason:/)).toBeNull();
+      expect(
+        screen.queryByRole('button', {
+          name: 'scheduledTasks.detail.startNow',
+        }),
+      ).toBeNull();
+    });
+
+    it('keeps the Active switch enabled for pausing an active task under signed-out consent', async () => {
+      renderLoadedTaskWithActive(true);
+
+      const activeSwitch = await screen.findByRole('switch', {
+        name: 'scheduledTasks.detail.activeStatusLabel',
+      });
+      expect(activeSwitch).toHaveProperty('disabled', false);
+      expect(screen.queryByText(/^disabledReason:/)).toBeNull();
+    });
+
+    it('keeps the Start now button when the consent read failed (unknown)', async () => {
+      useOfflineCredentialsGateMock.mockReturnValue({
+        status: 'hidden',
+        connect: undefined,
+        connected: true,
+        schedulerServiceConsent: 'unknown',
+        refetch: vi.fn(),
+      });
+      getScheduledTaskMock.mockResolvedValue({
+        id: 'sched_123',
+        displayName: 'Daily summary',
+        trigger: {},
+        isActive: false,
+      });
+      useScheduledTaskRunsMock.mockReturnValue({
+        items: [],
+        isLoading: false,
+        isLoadingMore: false,
+        error: null,
+        hasMore: false,
+        loadMore: vi.fn(),
+        refetch: vi.fn(),
+      });
+      renderDetailPage();
+
+      expect(
+        await screen.findByRole('button', {
+          name: 'scheduledTasks.detail.startNow',
+        }),
+      ).toBeTruthy();
+    });
   });
 
   it('rechecks a previously connected credential gate when a new run fails at credentials', async () => {

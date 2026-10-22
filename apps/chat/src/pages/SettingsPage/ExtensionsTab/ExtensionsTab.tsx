@@ -1,7 +1,6 @@
 import {
   OfflineCredentialsGateStatus,
   OfflineCredentialsLogoutOutcomeType,
-  SchedulerServiceConsentStatus,
 } from '@epam/ai-dial-chat-hooks';
 import {
   ExtensionsSection,
@@ -41,6 +40,7 @@ import {
   getOfflineCredentialsLogoutAnnouncementKey,
   OFFLINE_CREDENTIALS_LOGIN_ANNOUNCEMENT_KEYS,
 } from '../../../utils/offline-credentials-announcements';
+import { isSchedulerConsentMissing } from '../../../utils/scheduler-consent';
 
 const ExtensionsTab: FC = () => {
   const { t } = useTranslation();
@@ -168,8 +168,7 @@ const ExtensionsTab: FC = () => {
    * tooltip (its state is carried by the badge's own text). `unknown` (a
    * failed consent read) fails open — the login-state branch decides.
    */
-  const isLimitedAccess =
-    schedulerServiceConsent === SchedulerServiceConsentStatus.SignedOut;
+  const isLimitedAccess = isSchedulerConsentMissing(schedulerServiceConsent);
 
   const isServiceRowVisible =
     status === OfflineCredentialsGateStatus.Hidden ||
@@ -199,7 +198,7 @@ const ExtensionsTab: FC = () => {
             ? t(ExtensionsI18nKeys.ServiceLimitedAccessLabel)
             : undefined,
           limitedAccessTooltipTitle: isLimitedAccess
-            ? t(ScheduledTasksI18nKeys.LimitedAccessBannerTitle)
+            ? t(ExtensionsI18nKeys.ServiceLimitedAccessTooltipTitle)
             : undefined,
           limitedAccessTooltipDescription: isLimitedAccess
             ? t(ExtensionsI18nKeys.ServiceLimitedAccessTooltipDescription)

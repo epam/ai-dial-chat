@@ -44,6 +44,26 @@ describe('SchedulerConsentService', () => {
       'token',
       APP_ID,
       SERVICE_ID,
+      undefined,
+    );
+  });
+
+  it('passes a caller-supplied abort signal through to the upstream read', async () => {
+    const { service, externalServices } = makeService(
+      makeExternalServices({
+        authenticationType: ExternalServiceAuthType.DialNative,
+        appLevelAuthStatus: 'SIGNED_IN',
+      }),
+    );
+    const signal = new AbortController().signal;
+
+    await service.getSchedulerServiceConsent('token', signal);
+
+    expect(externalServices.getExternalService).toHaveBeenCalledWith(
+      'token',
+      APP_ID,
+      SERVICE_ID,
+      signal,
     );
   });
 

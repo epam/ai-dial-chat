@@ -27,6 +27,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { SCHEDULED_TASKS_GRID_DEFAULT_MAX_WIDTH } from '../../models/scheduled-task-card-grid-props';
 import { ScheduledTasksProps } from '../../models/scheduled-tasks-props';
 import { ScheduledTasksSortKey } from '../../types/scheduled-tasks-sort-key';
 import { ScheduledTaskCardGrid } from '../ScheduledTaskCardGrid/ScheduledTaskCardGrid';
@@ -374,7 +375,10 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
          * empty flex child (and no gap row) between toolbar and content. */
         <div
           className="mx-auto w-full min-w-0"
-          style={{ maxWidth: gridLayout?.maxWidth ?? '1180px' }}
+          style={{
+            maxWidth:
+              gridLayout?.maxWidth ?? SCHEDULED_TASKS_GRID_DEFAULT_MAX_WIDTH,
+          }}
         >
           {banner}
         </div>

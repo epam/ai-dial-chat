@@ -35,11 +35,9 @@ import { useOfflineCredentialsGate } from '../../hooks/offlineCredentials/useOff
 import { useScheduledTasks } from '../../hooks/scheduled-tasks/useScheduledTasks';
 import { ROUTES } from '../../types/routes';
 import { UserConfigStatus } from '../../types/user-config-status';
-import {
-  isSchedulerConsentMissing,
-  mapScheduledTaskDtosToItems,
-} from '../../utils/map-scheduled-task-dto';
+import { mapScheduledTaskDtosToItems } from '../../utils/map-scheduled-task-dto';
 import { OFFLINE_CREDENTIALS_LOGIN_ANNOUNCEMENT_KEYS } from '../../utils/offline-credentials-announcements';
+import { isSchedulerConsentMissing } from '../../utils/scheduler-consent';
 import NotFoundPage from '../NotFound/NotFound';
 
 interface NavigationState {
@@ -171,6 +169,14 @@ const ScheduledTasksPage: FC = () => {
     status: credentialsStatus,
   });
 
+  /*
+   * Consent is evaluated before the login state: with the scheduler service
+   * consent missing, neither logging in nor logging out can restore it, so
+   * the create action withdraws and the limited-access banner replaces the
+   * login banner. `unknown` (a failed consent read) fails open.
+   */
+  const isLimitedAccess = isSchedulerConsentMissing(schedulerServiceConsent);
+
   const labels = useMemo(
     () => ({
       title: t(ScheduledTasksI18nKeys.PageTitle),
@@ -228,63 +234,75 @@ const ScheduledTasksPage: FC = () => {
     return <NotFoundPage />;
   }
 
+  /* No banner has visible content (the connected/checking/error gate
+   * states): the login banner would render only its sr-only status span,
+   * and passing it into the banner slot keeps that slot as an in-flow flex
+   * child that adds a gap between the toolbar and the content, so the
+   * hidden banner's live region renders at page level instead, outside the
+   * lib's layout entirely — while a visible banner renders, its own
+   * aria-live region carries the announcements. */
+  const isBannerSlotEmpty = !isLimitedAccess && bannerState == null;
+
   return (
-    <ScheduledTasks
-      labels={labels}
-      styles={PAGE_STYLES}
-      onCreateClick={
-        isSchedulerConsentMissing(schedulerServiceConsent)
-          ? undefined
-          : handleCreateClick
-      }
-      searchQuery={searchQuery}
-      onSearchQueryChange={setSearchQuery}
-      sortKey={sortKey}
-      onSortChange={setSortKey}
-      items={items}
-      isLoading={isLoading}
-      error={error}
-      onRetry={refetch}
-      hasMore={hasMore}
-      isLoadingMore={isLoadingMore}
-      loadMoreError={loadMoreError}
-      onLoadMore={loadMore}
-      onRetryLoadMore={retryLoadMore}
-      onCardClick={handleCardClick}
-      banner={
-        isSchedulerConsentMissing(schedulerServiceConsent) ? (
-          <ScheduledTasksLimitedAccessBanner
-            title={t(ScheduledTasksI18nKeys.LimitedAccessBannerTitle)}
-            body={t(ScheduledTasksI18nKeys.LimitedAccessBannerBody)}
-          />
-        ) : (
-          <ScheduledTasksLoginBanner
-            state={bannerState}
-            title={t(ScheduledTasksI18nKeys.OfflineCredentialsBannerTitle)}
-            body={t(ScheduledTasksI18nKeys.OfflineCredentialsBannerBody)}
-            loginButtonLabel={t(ButtonsI18nKeys.LogIn)}
-            retryButtonLabel={t(ButtonsI18nKeys.Retry)}
-            loggingInLabel={t(
-              ScheduledTasksI18nKeys.OfflineCredentialsBannerLoggingInLabel,
-            )}
-            popupBlockedMessage={t(
-              ScheduledTasksI18nKeys.OfflineCredentialsBannerPopupBlockedMessage,
-            )}
-            cancelledMessage={t(
-              ScheduledTasksI18nKeys.OfflineCredentialsBannerCancelledMessage,
-            )}
-            timeoutMessage={t(
-              ScheduledTasksI18nKeys.OfflineCredentialsBannerTimeoutMessage,
-            )}
-            failedMessage={t(
-              ScheduledTasksI18nKeys.OfflineCredentialsBannerFailedMessage,
-            )}
-            liveAnnouncement={liveAnnouncement}
-            onLogIn={connect ? logIn : undefined}
-          />
-        )
-      }
-    />
+    <>
+      {isBannerSlotEmpty && (
+        <span role="status" aria-live="polite" className="sr-only">
+          {liveAnnouncement}
+        </span>
+      )}
+      <ScheduledTasks
+        labels={labels}
+        styles={PAGE_STYLES}
+        onCreateClick={isLimitedAccess ? undefined : handleCreateClick}
+        searchQuery={searchQuery}
+        onSearchQueryChange={setSearchQuery}
+        sortKey={sortKey}
+        onSortChange={setSortKey}
+        items={items}
+        isLoading={isLoading}
+        error={error}
+        onRetry={refetch}
+        hasMore={hasMore}
+        isLoadingMore={isLoadingMore}
+        loadMoreError={loadMoreError}
+        onLoadMore={loadMore}
+        onRetryLoadMore={retryLoadMore}
+        onCardClick={handleCardClick}
+        banner={
+          isLimitedAccess ? (
+            <ScheduledTasksLimitedAccessBanner
+              title={t(ScheduledTasksI18nKeys.LimitedAccessBannerTitle)}
+              body={t(ScheduledTasksI18nKeys.LimitedAccessBannerBody)}
+            />
+          ) : bannerState != null ? (
+            <ScheduledTasksLoginBanner
+              state={bannerState}
+              title={t(ScheduledTasksI18nKeys.OfflineCredentialsBannerTitle)}
+              body={t(ScheduledTasksI18nKeys.OfflineCredentialsBannerBody)}
+              loginButtonLabel={t(ButtonsI18nKeys.LogIn)}
+              retryButtonLabel={t(ButtonsI18nKeys.Retry)}
+              loggingInLabel={t(
+                ScheduledTasksI18nKeys.OfflineCredentialsBannerLoggingInLabel,
+              )}
+              popupBlockedMessage={t(
+                ScheduledTasksI18nKeys.OfflineCredentialsBannerPopupBlockedMessage,
+              )}
+              cancelledMessage={t(
+                ScheduledTasksI18nKeys.OfflineCredentialsBannerCancelledMessage,
+              )}
+              timeoutMessage={t(
+                ScheduledTasksI18nKeys.OfflineCredentialsBannerTimeoutMessage,
+              )}
+              failedMessage={t(
+                ScheduledTasksI18nKeys.OfflineCredentialsBannerFailedMessage,
+              )}
+              liveAnnouncement={liveAnnouncement}
+              onLogIn={connect ? logIn : undefined}
+            />
+          ) : undefined
+        }
+      />
+    </>
   );
 };
 

@@ -136,7 +136,12 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
           <span>completed:{String(item.isCompleted)}</span>
         </div>
       ))}
-      {banner}
+      {banner != null && (
+        <div>
+          <span>bannerSlot</span>
+          {banner}
+        </div>
+      )}
     </div>
   ),
 }));
@@ -492,7 +497,7 @@ describe('ScheduledTasksPage', () => {
   });
 
   describe('offline-credentials login banner', () => {
-    it('does not render the banner while status is checking', () => {
+    it('passes no banner into the banner slot while status is checking', () => {
       useFeatureFlagMock.mockReturnValue(true);
       useOfflineCredentialsGateMock.mockReturnValue({
         status: 'checking',
@@ -501,7 +506,12 @@ describe('ScheduledTasksPage', () => {
       });
       renderScheduledTasksPage();
 
+      /* No in-flow banner child renders between the toolbar and the
+       * content (no extra gap); only the page-level sr-only live region
+       * renders, outside the lib's layout. */
       expect(screen.queryByRole('alert')).toBeNull();
+      expect(screen.queryByText('bannerSlot')).toBeNull();
+      expect(screen.getByRole('status')).toBeTruthy();
     });
 
     it('renders the banner without a login action when credentials are unavailable', () => {

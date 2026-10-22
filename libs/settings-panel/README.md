@@ -109,7 +109,7 @@ name, and description typography classes.
 - `SettingsPanelProps` — `{ items, activeId, onSelect, sectionLabel?, styles?, className? }`
 - `SettingsPanelStyles` — `{ typography? }`
 - `SettingsPanelTypography` — `{ sectionLabelClassName? }`
-- `ExtensionServiceItem` — `{ id, displayName, avatarColor?, description, isWarningVisible, limitedAccessLabel?, limitedAccessTooltipTitle?, limitedAccessTooltipDescription?, action }` — `avatarColor` is an `AVATAR_PALETTE` entry (`@epam/ai-dial-ui-kit`) pinned by the host; omitted keeps the name-derived colour — while `limitedAccessLabel` is set the row renders the red limited-access `Badge` with a two-line hover tooltip (bold `limitedAccessTooltipTitle`, normal `limitedAccessTooltipDescription`) instead of the `action`
+- `ExtensionServiceItem` — `{ id, displayName, avatarColor?, description, isWarningVisible, limitedAccessLabel?, limitedAccessTooltipTitle?, limitedAccessTooltipDescription?, action }` — `avatarColor` is an `AVATAR_PALETTE` entry (`@epam/ai-dial-ui-kit`) pinned by the host; omitted keeps the name-derived colour — while `limitedAccessLabel` is set the row renders the red limited-access `Badge` with a two-line hover tooltip (bold `limitedAccessTooltipTitle`, normal `limitedAccessTooltipDescription`) instead of the `action`; because the tooltip is hover-only, `limitedAccessTooltipDescription` is also rendered as an `sr-only` span that the `Badge` references through `aria-describedby`
 - `ExtensionsLabels` — `{ tableAriaLabel, nameColumnLabel, descriptionColumnLabel, actionsColumnLabel }`
 - `ExtensionsSectionProps` — `{ rows, labels, styles? }`
 - `ExtensionsStyles` — `{ colors?, typography? }`

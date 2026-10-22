@@ -117,6 +117,33 @@ describe('ExtensionsSection', () => {
     expect(screen.queryByRole('button', { name: 'Log in' })).toBeNull();
   });
 
+  it('exposes the limited-access tooltip description to screen readers through aria-describedby', () => {
+    renderSection([
+      makeRow({
+        isWarningVisible: true,
+        limitedAccessLabel: 'Limited access',
+        limitedAccessTooltipTitle: 'Limited access.',
+        limitedAccessTooltipDescription:
+          'Contact your administrator for more details.',
+      }),
+    ]);
+
+    /* The badge is not a control, so the hover tooltip's explanation must
+     * also live in an sr-only description the badge references. */
+    const description = screen.getByText(
+      'Contact your administrator for more details.',
+    );
+    expect(description.className).toContain('sr-only');
+    /* ARIA wiring has no semantic query — the badge is matched by walking up
+     * from its label text to the element that carries the attribute. */
+    /* eslint-disable testing-library/no-node-access */
+    const badge = screen
+      .getByText('Limited access')
+      .closest('[aria-describedby]');
+    expect(badge?.getAttribute('aria-describedby')).toBe(description.id);
+    /* eslint-enable testing-library/no-node-access */
+  });
+
   it('renders multiple rows in display order', () => {
     renderSection([
       makeRow({ id: 'first', displayName: 'First service' }),

@@ -65,10 +65,12 @@ export class SchedulerConsentService {
    * Resolves the scheduler service's consent state: `signed_out` only for an
    * explicit `SIGNED_OUT` on a `DIAL_NATIVE` service, `signed_in` for
    * `SIGNED_IN`, `unknown` for anything else (a failed lookup is logged at
-   * warn and defers rather than failing the caller's operation).
+   * warn and defers rather than failing the caller's operation). An optional
+   * `signal` cancels the upstream reads, which the caller maps to `unknown`.
    */
   async getSchedulerServiceConsent(
     accessToken: string,
+    signal?: AbortSignal,
   ): Promise<SchedulerServiceConsentStatus> {
     const appId = this.getSchedulerAppId();
     const serviceId = this.getSchedulerServiceId();
@@ -79,6 +81,7 @@ export class SchedulerConsentService {
         accessToken,
         appId,
         serviceId,
+        signal,
       );
     } catch (err) {
       this.logger.warn(

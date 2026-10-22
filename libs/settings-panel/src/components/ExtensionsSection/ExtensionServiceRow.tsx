@@ -7,7 +7,7 @@ import {
   Tooltip,
 } from '@epam/ai-dial-ui-kit';
 import { IconAlertTriangleFilled } from '@tabler/icons-react';
-import { type FC } from 'react';
+import { useId, type FC } from 'react';
 import type {
   ExtensionServiceItem,
   ExtensionsTypography,
@@ -55,6 +55,9 @@ export const ExtensionServiceRow: FC<ExtensionServiceRowProps> = ({
   } = row;
 
   const isLimitedAccess = limitedAccessLabel != null;
+  /* Identifies the sr-only limited-access explanation so the badge can
+   * point at it through aria-describedby. */
+  const limitedAccessDescriptionId = useId();
 
   return (
     <div
@@ -111,30 +114,39 @@ export const ExtensionServiceRow: FC<ExtensionServiceRowProps> = ({
       </div>
       <div role="cell" className="flex items-center justify-end">
         {isLimitedAccess ? (
-          /* The position sits on the tooltip's own trigger so the hover
-           * reference has the badge's real size — positioning a child instead
-           * leaves the reference zero-sized and the tooltip flickers. The
-           * tooltip is a hover enhancement: the badge's own label text is
-           * its accessible name, so the state never depends on the tooltip
-           * (which renders nothing on touch-only devices). */
-          <Tooltip
-            tooltip={
-              <span className="flex flex-col gap-1 text-start">
-                <span className="dial-small-semi-text">
-                  {limitedAccessTooltipTitle}
+          <>
+            {/* The tooltip is a hover enhancement, so its explanation would
+             * never reach keyboard and screen-reader users on its own: the
+             * same text is mirrored into this sr-only description, which the
+             * badge references through aria-describedby. */}
+            <span id={limitedAccessDescriptionId} className="sr-only">
+              {limitedAccessTooltipDescription}
+            </span>
+            {/* The position sits on the tooltip's own trigger so the hover
+             * reference has the badge's real size — positioning a child
+             * instead leaves the reference zero-sized and the tooltip
+             * flickers. The tooltip renders nothing on touch-only devices,
+             * where the sr-only description above carries the explanation. */}
+            <Tooltip
+              tooltip={
+                <span className="flex flex-col gap-1 text-start">
+                  <span className="dial-small-semi-text">
+                    {limitedAccessTooltipTitle}
+                  </span>
+                  <span className="dial-small-text">
+                    {limitedAccessTooltipDescription}
+                  </span>
                 </span>
-                <span className="dial-small-text">
-                  {limitedAccessTooltipDescription}
-                </span>
-              </span>
-            }
-          >
-            <Badge
-              label={limitedAccessLabel}
-              variant={BadgeVariant.Filled}
-              color={BadgeColor.Red}
-            />
-          </Tooltip>
+              }
+            >
+              <Badge
+                label={limitedAccessLabel}
+                variant={BadgeVariant.Filled}
+                color={BadgeColor.Red}
+                aria-describedby={limitedAccessDescriptionId}
+              />
+            </Tooltip>
+          </>
         ) : (
           action
         )}

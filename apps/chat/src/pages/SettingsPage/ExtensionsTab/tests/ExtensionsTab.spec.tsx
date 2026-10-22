@@ -201,6 +201,7 @@ describe('ExtensionsTab', () => {
 
     const { container } = renderTab();
 
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
     expect(container.querySelector('.bg-violet-1')).toBeTruthy();
   });
 

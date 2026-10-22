@@ -695,6 +695,7 @@
       "defaultName": "Dial native",
       "description": "Provides access to built-in apps within the platform.",
       "limitedAccessLabel": "Limited access",
+      "limitedAccessTooltipTitle": "Limited access.",
       "limitedAccessTooltipDescription": "Contact your administrator for more details."
     }
   },

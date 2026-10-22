@@ -4,10 +4,13 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DialClientService } from '../../dial/dial-client.service';
 import { SchedulerServiceConsentStatus } from '../../external-services/types/scheduler-service-consent-status.enum';
-import { OfflineCredentialsService } from '../offline-credentials.service';
+import {
+  OfflineCredentialsService,
+  SCHEDULER_CONSENT_READ_TIMEOUT_MS,
+} from '../offline-credentials.service';
 
 const okResponse = (data: unknown) =>
   ({ data, response: { status: 200 } as Response }) as never;
@@ -43,6 +46,10 @@ describe('OfflineCredentialsService', () => {
     vi.restoreAllMocks();
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   describe('getOfflineCredentialsStatus', () => {
     it('returns mapped status on success', async () => {
       const { service, dialClient, schedulerConsent } = makeService();
@@ -59,10 +66,64 @@ describe('OfflineCredentialsService', () => {
       });
       expect(schedulerConsent.getSchedulerServiceConsent).toHaveBeenCalledWith(
         'token',
+        expect.any(AbortSignal),
       );
       expect(dialClient.client.getOfflineCredentials).toHaveBeenCalledWith({
         headers: { Authorization: 'Bearer token' },
       });
+    });
+
+    it('starts the consent read before the Core status call settles', async () => {
+      const { service, dialClient, schedulerConsent } = makeService();
+      let resolveStatus: (value: unknown) => void = () => undefined;
+      vi.mocked(dialClient.client.getOfflineCredentials).mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            resolveStatus = resolve;
+          }) as never,
+      );
+
+      const call = service.getOfflineCredentialsStatus('token');
+
+      /* The consent read is in flight while the status call is still
+       * pending — the two Core round-trips run in parallel. */
+      expect(
+        schedulerConsent.getSchedulerServiceConsent,
+      ).toHaveBeenCalledOnce();
+
+      resolveStatus(okResponse({ available: true, connected: false }));
+      await expect(call).resolves.toMatchObject({
+        schedulerServiceConsent: SchedulerServiceConsentStatus.SignedIn,
+      });
+    });
+
+    it('defers the consent to unknown when the scheduler-metadata read stalls past the deadline', async () => {
+      vi.useFakeTimers();
+      const { service, dialClient, schedulerConsent } = makeService();
+      vi.mocked(dialClient.client.getOfflineCredentials).mockResolvedValue(
+        okResponse({ available: true, connected: true }),
+      );
+      schedulerConsent.getSchedulerServiceConsent.mockImplementation(
+        (_token: string, signal: AbortSignal) =>
+          new Promise((_resolve, reject) => {
+            signal.addEventListener('abort', () =>
+              reject(new Error('The operation was aborted')),
+            );
+          }),
+      );
+      const warnSpy = vi
+        .spyOn(Logger.prototype, 'warn')
+        .mockImplementation(() => undefined);
+
+      const call = service.getOfflineCredentialsStatus('token');
+      await vi.advanceTimersByTimeAsync(SCHEDULER_CONSENT_READ_TIMEOUT_MS);
+
+      await expect(call).resolves.toEqual({
+        available: true,
+        connected: true,
+        schedulerServiceConsent: SchedulerServiceConsentStatus.Unknown,
+      });
+      expect(warnSpy).toHaveBeenCalled();
     });
 
     it('debug-logs the status and raw body returned by Core', async () => {

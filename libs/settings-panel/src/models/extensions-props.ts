@@ -13,7 +13,7 @@ export interface ExtensionServiceItem {
   description: string;
   /** Whether the disconnected-state warning badge renders on the avatar's corner. */
   isWarningVisible: boolean;
-  /** Label of the red limited-access `Badge` that replaces the row's action while the scheduler service consent is missing; the row renders no badge when omitted. */
+  /** Label of the red limited-access `Badge` that replaces the row's action while the host reports limited access; the row renders no badge when omitted. */
   limitedAccessLabel?: string;
   /** Bold title line of the limited-access badge's tooltip. */
   limitedAccessTooltipTitle?: string;

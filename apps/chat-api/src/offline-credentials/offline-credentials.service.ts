@@ -18,6 +18,15 @@ import {
 } from './offline-credentials.mapper';
 
 /**
+ * Bounds the scheduler-consent read that rides along on the status response:
+ * a stalled scheduler-metadata response must not hold
+ * `GET /api/v1/offline-credentials` open after Core has already returned the
+ * credentials state — past this deadline the read defers as `unknown` and the
+ * abort cancels the upstream lookup.
+ */
+export const SCHEDULER_CONSENT_READ_TIMEOUT_MS = 5_000;
+
+/**
  * Proxies DIAL Core's per-user offline-credentials operations
  * (`GET /v1/user/offline-credentials`,
  * `POST /v1/user/offline-credentials/signin`) for the Scheduled Tasks
@@ -40,6 +49,13 @@ export class OfflineCredentialsService {
     this.logger.debug('Fetching offline-credentials status');
 
     try {
+      /*
+       * The consent read is independent of Core's status call and never
+       * rejects, so both start at once — the status response pays one
+       * round-trip of added latency instead of two in series. If the status
+       * call fails, the read settles on its own and its result is dropped.
+       */
+      const consentRead = this.readSchedulerServiceConsent(accessToken);
       const response = await this.dialClient.client.getOfflineCredentials({
         headers: authHeaders,
       });
@@ -65,8 +81,7 @@ export class OfflineCredentialsService {
       );
       return {
         ...mapped,
-        schedulerServiceConsent:
-          await this.readSchedulerServiceConsent(accessToken),
+        schedulerServiceConsent: await consentRead,
       };
     } catch (err) {
       return handleDialFetchError(
@@ -81,14 +96,23 @@ export class OfflineCredentialsService {
   /*
    * The scheduler service consent rides along on the status response; a
    * failed read (including missing scheduler configuration) must not fail
-   * the status call itself — it logs a warn and defers as `unknown`.
+   * the status call itself — it logs a warn and defers as `unknown`. The
+   * whole lookup is bounded by `SCHEDULER_CONSENT_READ_TIMEOUT_MS`: the
+   * deadline aborts the upstream reads (primary and fallbacks) so a stalled
+   * scheduler-metadata response cannot hold the status endpoint open.
    */
   private async readSchedulerServiceConsent(
     accessToken: string,
   ): Promise<SchedulerServiceConsentStatus> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(
+      () => controller.abort(),
+      SCHEDULER_CONSENT_READ_TIMEOUT_MS,
+    );
     try {
       return await this.schedulerConsentService.getSchedulerServiceConsent(
         accessToken,
+        controller.signal,
       );
     } catch (err) {
       this.logger.warn(
@@ -96,6 +120,8 @@ export class OfflineCredentialsService {
         err instanceof Error ? err.message : undefined,
       );
       return SchedulerServiceConsentStatus.Unknown;
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 

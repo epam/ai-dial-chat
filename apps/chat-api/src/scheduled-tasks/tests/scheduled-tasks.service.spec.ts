@@ -1256,6 +1256,7 @@ describe('ScheduledTasksService', () => {
         'token',
         'scheduler-app',
         'my-oauth-service',
+        undefined,
       );
       expect(cache.del).not.toHaveBeenCalled();
       expect(cache.set).not.toHaveBeenCalled();
@@ -2303,6 +2304,7 @@ describe('ScheduledTasksService — DIAL_NATIVE application consent', () => {
         'token',
         'scheduler-app',
         'my-oauth-service',
+        undefined,
       );
       expect(fetchMock).not.toHaveBeenCalled();
     },

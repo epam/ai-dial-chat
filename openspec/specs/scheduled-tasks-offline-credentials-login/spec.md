@@ -155,7 +155,11 @@ has no dismiss/close action.
 
 #### Scenario: Already connected
 - **WHEN** the status check returns `{ available: true, connected: true }`
-- **THEN** the banner does not render
+- **THEN** the banner does not render, the page passes no `banner` into the
+  lib's banner slot (no in-flow flex child — and no gap row — renders between
+  the toolbar and the content), and the login flow's polite `aria-live`
+  status region renders at page level, outside the width-constrained banner
+  slot, so announcements continue while no visible banner renders
 
 #### Scenario: Revoked consent suppresses the login banner
 - **WHEN** the status check returns `schedulerServiceConsent: 'signed_out'`
