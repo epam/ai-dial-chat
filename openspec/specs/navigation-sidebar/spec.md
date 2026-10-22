@@ -113,7 +113,8 @@ While the sidebar is active, the existing UI-feature keys SHALL keep these meani
 | `hide-conversations-filter` | No filter trigger in the conversation block header |
 | `hide-new-conversation` | No New chat item |
 | `hide-user-menu` | No user menu in the footer, on desktop and in the mobile drawer (the earlier mobile sheet ignored this key) |
-| `hide-settings-page` | No Usage link in the footer and no Settings entry in the user menu |
+| `hide-settings-page` | No Settings entry in the user menu |
+| `hide-usage-page` | No Usage link in the footer |
 | `catalog`, `file-manager` | Their items are gated as before |
 | `show-header-logo` | The top bar and mobile header logo render as before; the sidebar header logo is unaffected |
 | `header` | Hides the mobile header row (and with it the toggle and New chat button) |
@@ -325,7 +326,7 @@ The footer SHALL render the user menu only when the user is authenticated and `i
 The footer SHALL render a Usage link to the standalone Usage page, `ROUTES.Usage` (`/usage`):
 - named and tooltipped `t('basic.usage')`;
 - carrying `aria-current="page"` on that route;
-- omitted when `isEnabled('hide-settings-page')` is `true`.
+- omitted when `isEnabled('hide-usage-page')` is `true`, and unaffected by `hide-settings-page`.
 
 DOM order SHALL match visual order in both states:
 - **expanded:** user menu, then Usage;
@@ -339,7 +340,12 @@ DOM order SHALL match visual order in both states:
 #### Scenario: Settings page hidden
 
 - **WHEN** `isEnabled('hide-settings-page')` is `true`
-- **THEN** no Usage link renders and the user menu offers no Settings entry
+- **THEN** the user menu offers no Settings entry and the Usage link still renders
+
+#### Scenario: Usage page hidden
+
+- **WHEN** `isEnabled('hide-usage-page')` is `true`
+- **THEN** no Usage link renders
 
 #### Scenario: Collapsed footer focus order
 
@@ -403,7 +409,7 @@ The block's props from `ConversationPanelView` SHALL be referentially stable acr
 
 ### Requirement: Usage is a standalone page
 
-`/usage` SHALL render the usage dashboard as its own page, with the page title and description above the period cards and the model limits table. `/usage` SHALL redirect to `/` when `isEnabled('hide-settings-page')` is `true`. The Settings page SHALL NOT offer a Usage tab in this layout, and `/settings/usage` SHALL redirect to `/usage`. The page title SHALL be the page's `h1` there and an `h2` inside the Settings tab, under the Settings page's own `h1`. The page header's vertical padding is 16px above and below, and the Settings Usage tab uses the same header.
+`/usage` SHALL render the usage dashboard as its own page, with the page title and description above the period cards and the model limits table. `/usage` SHALL redirect to `/` when `isEnabled('hide-usage-page')` is `true`; `hide-settings-page` SHALL NOT affect it. The Settings page SHALL NOT offer a Usage tab in this layout, and `/settings/usage` SHALL redirect to `/usage`. The page title SHALL be the page's `h1` there and an `h2` inside the Settings tab, under the Settings page's own `h1`. The page header's vertical padding is 16px above and below, and the Settings Usage tab uses the same header.
 
 #### Scenario: Usage opens from the footer
 

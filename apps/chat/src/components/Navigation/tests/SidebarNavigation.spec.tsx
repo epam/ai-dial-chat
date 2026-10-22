@@ -250,7 +250,8 @@ const setDefaults = (
       feature !== OverlayFeature.HideUserSettings &&
       feature !== OverlayFeature.HideKeyboardShortcuts &&
       feature !== OverlayFeature.HideNavigationMenu &&
-      feature !== OverlayFeature.HideSettingsPage,
+      feature !== OverlayFeature.HideSettingsPage &&
+      feature !== OverlayFeature.HideUsagePage,
   );
 };
 
@@ -338,6 +339,7 @@ const enableSidebar = (
       feature !== OverlayFeature.HideKeyboardShortcuts &&
       feature !== OverlayFeature.HideNavigationMenu &&
       feature !== OverlayFeature.HideSettingsPage &&
+      feature !== OverlayFeature.HideUsagePage &&
       feature !== OverlayFeature.HideNewConversation &&
       !disabled.includes(feature),
   );
@@ -448,9 +450,24 @@ describe('SidebarNavigation', () => {
     ).toBe('/usage');
   });
 
-  it('omits the Usage link when the settings page is hidden', () => {
+  it('keeps the Usage link when only the settings page is hidden', () => {
     mockUseUiFeature.mockImplementation(
       (feature) => feature === OverlayFeature.HideSettingsPage,
+    );
+    render(
+      <MemoryRouter>
+        <SidebarNavigation />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByRole('link', { name: BasicI18nKeys.Usage }),
+    ).toBeTruthy();
+  });
+
+  it('omits the Usage link when the usage page is hidden', () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature === OverlayFeature.HideUsagePage,
     );
     render(
       <MemoryRouter>

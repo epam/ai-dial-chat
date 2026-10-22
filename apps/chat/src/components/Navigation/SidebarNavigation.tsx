@@ -82,6 +82,7 @@ const SidebarNavigation: FC<Props> = ({
   const { currentThemeFavicon, currentThemeLogo } = useTheme();
   const isUserMenuHidden = useUiFeature(OverlayFeature.HideUserMenu);
   const isSettingsPageHidden = useUiFeature(OverlayFeature.HideSettingsPage);
+  const isUsagePageHidden = useUiFeature(OverlayFeature.HideUsagePage);
   const isToggleEnabled = useUiFeature(OverlayFeature.ConversationsPanelToggle);
   const { hasNavigation } = useMobileSidebarContent();
   /* TODO: remove in next release, with the isolated view. It shows the chats
@@ -122,7 +123,7 @@ const SidebarNavigation: FC<Props> = ({
     !isUserMenuHidden &&
     isNavigationShown;
   const items = isNavigationShown ? allItems : [];
-  const isUsageShown = !isSettingsPageHidden && isNavigationShown;
+  const isUsageShown = !isUsagePageHidden && isNavigationShown;
   const iconUrl = currentThemeFavicon
     ? (event?.iconUrl ?? getIconPath(currentThemeFavicon))
     : undefined;
