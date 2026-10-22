@@ -30,10 +30,17 @@ describe('ScheduledTaskRunAtField — real Calendar', () => {
 
   it('disables past days and reports only selectable ones through onChange', async () => {
     render(
-      <ScheduledTaskRunAtField label="Run at" value="" onChange={onChange} />,
+      <ScheduledTaskRunAtField
+        label="Date and time"
+        placeholder="Pick date and time"
+        value=""
+        onChange={onChange}
+      />,
     );
 
-    await userEvent.click(screen.getByRole('button', { name: /Run at/ }));
+    await userEvent.click(
+      screen.getByRole('button', { name: /Date and time/ }),
+    );
 
     /* The initial month view always contains yesterday (previous-month
        tail) and tomorrow (next-month head) inside its six-week window. */
@@ -74,13 +81,16 @@ describe('ScheduledTaskRunAtField — real Calendar', () => {
     const picked = `${pickedDate.getFullYear()}-${pad(pickedDate.getMonth() + 1)}-${pad(pickedDate.getDate())}T09:30`;
     render(
       <ScheduledTaskRunAtField
-        label="Run at"
+        label="Date and time"
+        placeholder="Pick date and time"
         value={picked}
         onChange={onChange}
       />,
     );
 
-    await userEvent.click(screen.getByRole('button', { name: /Run at/ }));
+    await userEvent.click(
+      screen.getByRole('button', { name: /Date and time/ }),
+    );
 
     /* The value's month opens as the initial view. */
     const selectedDay = screen.getByRole('button', {

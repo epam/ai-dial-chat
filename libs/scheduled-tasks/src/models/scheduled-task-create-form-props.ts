@@ -27,9 +27,9 @@ export interface ScheduledTaskCreateFormValues {
   dayOfMonth?: string;
   /** Minute of the hour (`'0'`-`'59'`) used when `repeat` is `'hourly'`. */
   minute?: string;
-  /** Date-only value bounding the start of a recurring schedule's activity window. Ignored when `repeat` is `'oneTime'`. */
+  /** Window-start boundary: `YYYY-MM-DD` for day-based repeats, `YYYY-MM-DDTHH:mm` for `'hourly'`. Ignored when `repeat` is `'oneTime'`. */
   startDate?: string;
-  /** Date-only value bounding the end of a recurring schedule's activity window. Ignored when `repeat` is `'oneTime'`. */
+  /** Window-end boundary: `YYYY-MM-DD` for day-based repeats, `YYYY-MM-DDTHH:mm` for `'hourly'`. Ignored when `repeat` is `'oneTime'`. */
   endDate?: string;
   /** Selected deployment id sent to the BFF as `model` (required). */
   modelId: string;
@@ -81,14 +81,14 @@ export interface ScheduledTaskCreateFormLabels extends TextRefinementLabels {
   detailsSectionSubtitle: string;
   /** Section heading for the Configuration column. */
   configurationSectionTitle: string;
-  /** Section subtitle for the Configuration column. */
-  configurationSectionSubtitle: string;
   /** Display name field label. */
   displayNameLabel: string;
   /** Display name required-field validation message. */
   displayNameRequired: string;
   /** Run-at field label (shown when `repeat` is "oneTime"). */
   runAtLabel: string;
+  /** Placeholder shown in the run-at picker when unset. */
+  runAtPlaceholder: string;
   /** Time-of-day field label (shown when `repeat` is "daily", "weekly", or "monthly"). */
   timeLabel: string;
   /** Validation message shown under the time field when its visible draft is not a complete `HH:mm` value. */
@@ -105,10 +105,14 @@ export interface ScheduledTaskCreateFormLabels extends TextRefinementLabels {
   minuteLabel: string;
   /** Start-date field label (shown when `repeat` is not "oneTime"; the field itself is optional, so this label carries no required marker). */
   startDateLabel: string;
+  /** Start-date-and-time field label (shown when `repeat` is "hourly"; the field itself is optional, so this label carries no required marker). */
+  startDateAndTimeLabel: string;
   /** Placeholder shown in the start-date picker when unset. */
   startDatePlaceholder: string;
   /** End-date field label (shown when `repeat` is not "oneTime"; the field itself is optional, so this label carries no required marker). */
   endDateLabel: string;
+  /** End-date-and-time field label (shown when `repeat` is "hourly"; the field itself is optional, so this label carries no required marker). */
+  endDateAndTimeLabel: string;
   /** Placeholder shown in the end-date picker when unset. */
   endDatePlaceholder: string;
   /** Label for the Model or Agent field, rendered above `modelSelector`. */

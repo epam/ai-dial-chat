@@ -19,7 +19,8 @@ import type {
 import styles from './SkillSelectorField.module.scss';
 
 const EMPTY_SKILLS: SkillSelectorOption[] = [];
-const DEFAULT_UNAVAILABLE_TOOLTIP_LABEL =
+
+const DEFAULT_UNAVAILABLE_HINT_LABEL =
   'Selected model does not support skills. Select a different model to use a skill.';
 
 /** Controlled multi-skill Select listing the given skills as checkbox options. */
@@ -44,13 +45,19 @@ export const SkillSelectorField: FC<SkillSelectorFieldProps> = ({
   );
   const canAdd = isSkillsSupported && !isDisabled;
   const open = isOpen && canAdd;
+  /* The unsupported reason exists only while a selection is present; with no
+   * selection and no support the field is simply disabled, without a
+   * tooltip or caption. */
   const unsupportedReason =
-    value.length > 0
-      ? labels.unsupportedTooltipLabel
-      : (labels.unavailableTooltipLabel ?? DEFAULT_UNAVAILABLE_TOOLTIP_LABEL);
+    value.length > 0 ? labels.unsupportedTooltipLabel : undefined;
   const isUnavailableHintShown = !isSkillsSupported && value.length === 0;
-  const description =
-    error ?? (isUnavailableHintShown ? unsupportedReason : undefined);
+  /* The design shows no visible tooltip or caption for the disabled empty
+   * field, so the reason reaches assistive tech through the screen-reader-only
+   * description alone. A host validation error is passed to Select as the
+   * error, never aliased into this description. */
+  const description = isUnavailableHintShown
+    ? (labels.unavailableHintLabel ?? DEFAULT_UNAVAILABLE_HINT_LABEL)
+    : undefined;
   const optionItems = new Map(
     value.map((url) => [url, { id: url, name: displayNames?.[url] || url }]),
   );
@@ -120,7 +127,6 @@ export const SkillSelectorField: FC<SkillSelectorFieldProps> = ({
             placeholder={labels.placeholder}
             labelProps={{ label: labels.fieldLabel }}
             error={error}
-            caption={isUnavailableHintShown ? unsupportedReason : undefined}
             searchPlaceholder={labels.searchPlaceholder ?? 'Search skills'}
             emptyStateTitle={
               query.trim()
