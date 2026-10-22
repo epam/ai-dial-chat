@@ -412,20 +412,23 @@ setRefreshToken((token) => token + 1);
 
 ### useUsageLimitBanner
 
-Everything the composer usage-limit banner needs except its rendering: fetches the selected deployment's limits, refreshes them once after each generation ends, picks the day/week/month token or cost limit closest to its cap, translates the limit and reset sentences, and tracks tab-lifetime dismissal. Spread the returned `banner` onto `UsageLimitBannerView` from `@epam/ai-dial-conversation-input`. Available from the root and from `@epam/ai-dial-chat-hooks/usage-limits`; needs the optional `@epam/ai-dial-conversation-input` peer (it supplies the `UsageLimitBannerSeverity` enum at runtime).
+Everything the composer usage-limit banner needs except its rendering: fetches the selected deployment's own usage and the caller's account usage, refreshes both once after each generation ends, picks the day/week/month token limit (from the deployment) or cost budget (from the account) closest to its cap, translates the limit and reset sentences, and tracks tab-lifetime dismissal. Spread the returned `banner` onto `UsageLimitBannerView` from `@epam/ai-dial-conversation-input`. Available from the root and from `@epam/ai-dial-chat-hooks/usage-limits`; needs the optional `@epam/ai-dial-conversation-input` peer (it supplies the `UsageLimitBannerSeverity` enum at runtime).
 
 ```tsx
 import { useUsageLimitBanner } from '@epam/ai-dial-chat-hooks/usage-limits';
 import { UsageLimitBannerView } from '@epam/ai-dial-conversation-input';
 import { useTranslation } from 'react-i18next';
-import { getDeploymentLimits } from './server-api/deployment-limits'; // host-owned configured call
+// host-owned configured calls: GET /deployments/{id}/usage and GET /user/usage
+import { getDeploymentUsage } from './server-api/deployment-limits';
+import { getUserUsage } from './server-api/user-limits';
 
 const UsageBanner = ({ deploymentId, isGenerating }) => {
   const { t, i18n } = useTranslation();
   const { banner } = useUsageLimitBanner({
     deploymentId,
     isGenerationInProgress: isGenerating,
-    getDeploymentLimits,
+    getDeploymentUsage,
+    getAccountUsage: getUserUsage,
     warningThresholdPercent: 75,
     activeLocale: i18n.language,
     t,
@@ -437,20 +440,51 @@ const UsageBanner = ({ deploymentId, isGenerating }) => {
 
 **Options** (`UseUsageLimitBannerOptions`):
 
-| Name                      | Type                                                             | Description                                                                                         |
-| ------------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `deploymentId`            | `string \| undefined`                                            | Selected deployment. Nothing is fetched while it is `undefined`.                                    |
-| `isGenerationInProgress`  | `boolean` (default `false`)                                      | A `true` → `false` edge triggers one limits refresh.                                                |
-| `getDeploymentLimits`     | `(deploymentId: string) => Promise<DeploymentLimitsResponseDto>` | Host-configured fetch — the hook never constructs a client. Its identity is not a re-fetch trigger. |
-| `warningThresholdPercent` | `number`                                                         | Used percentage at or above which a not-yet-exhausted limit raises a warning.                       |
-| `activeLocale`            | `string`                                                         | Locale for the reset time.                                                                          |
-| `t`                       | `(key: string, options?: Record<string, unknown>) => string`     | i18next-compatible translate function.                                                              |
+| Name                      | Type                                                             | Description                                                                                                            |
+| ------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `deploymentId`            | `string \| undefined`                                            | Selected deployment. Nothing is fetched while it is `undefined`.                                                       |
+| `isGenerationInProgress`  | `boolean` (default `false`)                                      | A `true` → `false` edge triggers one refresh of both sources.                                                          |
+| `getDeploymentUsage`      | `(deploymentId: string) => Promise<DeploymentLimitsResponseDto>` | Host-configured fetch of the deployment's own usage (token stats are read). The hook never constructs a client.        |
+| `getAccountUsage`         | `() => Promise<AccountUsage>`                                    | Host-configured fetch of the caller's account usage (top-level cost stats are read). A user-usage response fits as-is. |
+| `warningThresholdPercent` | `number`                                                         | Used percentage at or above which a not-yet-exhausted limit raises a warning.                                          |
+| `activeLocale`            | `string`                                                         | Locale for the reset time.                                                                                             |
+| `t`                       | `(key: string, options?: Record<string, unknown>) => string`     | i18next-compatible translate function.                                                                                 |
 
 **Returns** (`UseUsageLimitBannerResult`): `banner` — `severity`, `limitText`, `reset`, `onClose`, `closeAriaLabel`, or `undefined` when nothing should render (no deployment, below the threshold, or dismissed).
 
 `USAGE_BANNER_I18N_KEYS` and `USAGE_RESET_I18N_KEYS` list the default key paths passed to `t` (include them in your translation bundle); the sentences receive `{ percent }`, `{ time }` and `{ date }`. Dismissals are keyed `${deploymentId}:${period}:${severity}`, so a banner returns when usage escalates from warning to reached, and are held in a module-scoped, in-memory store shared by every consumer of the same package copy.
 
-The pieces are exported separately for hosts that render their own banner or a usage dial: `useDeploymentUsageLimits(deploymentId, getDeploymentLimits)` (race-safe fetch, keeps the last response when a refresh fails), `useRefreshUsageAfterGeneration({ isGenerationInProgress, isLoading, refresh })`, `useUsageLimitBannerDismissal()` (plus `resetUsageLimitBannerDismissals()` for test isolation), `selectUsageBannerSource(dto, thresholdPercent)`, `isCappedStat(total)`, `UsagePeriod`, `formatUsageResetTime(resetsAt, locale, t)` and `formatUsageResetShort(resetsAt, period, locale, t)`. Both formatters return `undefined` on an absent, unparseable or `Intl`-less value, so a missing reset time never hides the limit itself.
+The pieces are exported separately for hosts that render their own banner or a usage dial: `useDeploymentUsageLimits(deploymentId, api)` (see below), `useRefreshUsageAfterGeneration({ isGenerationInProgress, isLoading, refresh })`, `useUsageLimitBannerDismissal()` (plus `resetUsageLimitBannerDismissals()` for test isolation), `selectUsageBannerSource(sources, thresholdPercent)`, `isCappedStat(total)`, `UsagePeriod`, `formatUsageResetTime(resetsAt, locale, t)` and `formatUsageResetShort(resetsAt, period, locale, t)`. Both formatters return `undefined` on an absent, unparseable or `Intl`-less value, so a missing reset time never hides the limit itself.
+
+### useDeploymentUsageLimits
+
+Fetches the two usage sources the banner and the usage dial are mapped from, each with a single scope, and returns them as a `UsageLimitsSources` pair:
+
+- `deployment`: the selected deployment's own usage (`GET /deployments/{id}/usage`). Only its token stats are read.
+- `account`: the caller's account budget and spend, an `AccountUsage` (the top level of `GET /user/usage`). Only its day/week/month cost stats are read.
+
+A deployment-limits response (`GET /deployments/{id}/limits`) is deliberately not a source: for an application, its cost `used` adds the application's aggregated callee cost to the account spend that already contains it, so an agent's spend would be counted twice.
+
+Both calls run together on mount, on a `deploymentId` change, and on `refresh()`, under one monotonic request ID, so a slower response for an earlier deployment never replaces the current one. Each source keeps its last value when its own call fails (`hasError` is then `true`), and `account` survives a deployment change. The identity of `api` is not a re-fetch trigger.
+
+```ts
+import {
+  type UsageLimitsApi,
+  useDeploymentUsageLimits,
+} from '@epam/ai-dial-chat-hooks/usage-limits';
+import { getDeploymentUsage } from './server-api/deployment-limits';
+import { getUserUsage } from './server-api/user-limits';
+
+const usageLimitsApi: UsageLimitsApi = {
+  getDeploymentUsage,
+  getAccountUsage: getUserUsage,
+};
+
+const { sources, isLoading, hasError, refresh } = useDeploymentUsageLimits(
+  deploymentId,
+  usageLimitsApi,
+);
+```
 
 ### useConversationScroll
 
@@ -3089,9 +3123,9 @@ const api = kind && buildConnectApi(baseUrl, toolsetId, kind);
 
 ### mapDeploymentLimitsToInput
 
-Maps a deployment-limits response into display-ready `CatalogItemLimits` for a conversation-input usage affordance, or `undefined` when nothing reports a usable limit. It emits up to two groups: the deployment's day/week/month **token** limits, formatted with compact K/M notation, followed by the caller's day/week/month **cost** budget, formatted as currency. The worst-case `CatalogLimitStatus` is taken across the capped rows of both.
+Maps a `UsageLimitsSources` pair (see `useDeploymentUsageLimits`) into display-ready `CatalogItemLimits` for a conversation-input usage affordance, or `undefined` when nothing reports a usable limit. It emits up to two groups: the day/week/month **token** limits of `sources.deployment`, formatted with compact K/M notation, followed by the day/week/month **cost** budget of `sources.account`, formatted as currency. The worst-case `CatalogLimitStatus` is taken across the capped rows of both. Cost stats on `sources.deployment` are never read, and a missing source drops only its own group.
 
-The cost stats on a deployment-limits response are the caller's own budget and span every deployment, not the one that was queried — the same figures come back whichever deployment is asked. They are therefore listed as their own group, whose label should say so, and never as a caption on a token row, which would read as that model's spend. No row carries a `captionLabel`.
+The cost group is the caller's account budget and spans every deployment — the same figures whichever deployment is selected. It is therefore listed as its own group, whose label should say so, and never as a caption on a token row, which would read as that model's spend. No row carries a `captionLabel`.
 
 **Only limits at or past 75% of their cap are mapped** — the same threshold `CatalogLimitStatus` uses for running-low. The affordance this feeds is a warning, not a dashboard: a deployment at 2% of its token allowance listed beside an account budget at 90% buries the figure worth acting on. When nothing reaches the threshold the function returns `undefined`, which is how a host removes the affordance entirely. A period whose total is the uncapped sentinel (`total >= Number.MAX_SAFE_INTEGER`) has no ratio and is therefore never listed.
 
@@ -3117,7 +3151,7 @@ const labels: ConversationInputLimitsLabels = {
 };
 
 const limits = mapDeploymentLimitsToInput(
-  deploymentLimitsDto,
+  { deployment: deploymentUsageDto, account: userUsageDto },
   labels,
   formatResetTime,
 );

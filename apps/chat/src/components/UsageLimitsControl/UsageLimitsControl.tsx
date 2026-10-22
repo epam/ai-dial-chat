@@ -6,6 +6,7 @@ import {
 import {
   formatUsageResetTime,
   mapDeploymentLimitsToInput,
+  type UsageLimitsApi,
   useDeploymentUsageLimits,
   useRefreshUsageAfterGeneration,
 } from '@epam/ai-dial-chat-hooks';
@@ -30,7 +31,8 @@ import { getSettingsTabRoute } from '../../constants/routes';
 import { ConversationInputI18nKeys } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
-import { getDeploymentLimits } from '../../server-api/deployment-limits';
+import { getDeploymentUsage } from '../../server-api/deployment-limits';
+import { getUserUsage } from '../../server-api/user-limits';
 import { SettingsTabs } from '../../types/settings-tabs';
 import { resolveLocalizedText } from '../../utils/locale';
 import {
@@ -39,6 +41,13 @@ import {
   getViewportClampShift,
 } from '../../utils/usage-limits';
 import styles from './UsageLimitsControl.module.scss';
+
+/* The deployment's own token stats and the account's cost budget, each from
+   the endpoint that scopes it; `/limits` would count an agent's spend twice. */
+const USAGE_LIMITS_API: UsageLimitsApi = {
+  getDeploymentUsage,
+  getAccountUsage: getUserUsage,
+};
 
 interface Props {
   /** ID of the currently selected deployment. */
@@ -58,9 +67,9 @@ const UsageLimitsControl: FC<Props> = ({
   };
   const { language: activeLocale } = useLanguage();
   const { items: deployments } = useDeployments();
-  const { limitsDto, isLoading, hasError, refresh } = useDeploymentUsageLimits(
+  const { sources, isLoading, hasError, refresh } = useDeploymentUsageLimits(
     deploymentId,
-    getDeploymentLimits,
+    USAGE_LIMITS_API,
   );
   const [isOpen, setIsOpen] = useState(false);
   const [popoverShiftPx, setPopoverShiftPx] = useState(0);
@@ -98,8 +107,8 @@ const UsageLimitsControl: FC<Props> = ({
   );
 
   const limits = useMemo(
-    () => mapDeploymentLimitsToInput(limitsDto, labels, formatResetTime),
-    [limitsDto, labels, formatResetTime],
+    () => mapDeploymentLimitsToInput(sources, labels, formatResetTime),
+    [sources, labels, formatResetTime],
   );
 
   const worstRow = useMemo(() => findWorstCappedRow(limits), [limits]);

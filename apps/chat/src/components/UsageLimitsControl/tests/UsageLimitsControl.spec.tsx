@@ -1,5 +1,6 @@
 import type { DeploymentLimitsResponseDto } from '@epam/ai-dial-chat-api-client';
 import {
+  type AccountUsage,
   type UseDeploymentUsageLimitsResult,
   useDeploymentUsageLimits,
 } from '@epam/ai-dial-chat-hooks';
@@ -9,6 +10,11 @@ import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useDeployments } from '../../../context/DeploymentsContext';
+import {
+  getDeploymentLimits,
+  getDeploymentUsage,
+} from '../../../server-api/deployment-limits';
+import { getUserUsage } from '../../../server-api/user-limits';
 import UsageLimitsControl from '../UsageLimitsControl';
 
 vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
@@ -47,8 +53,20 @@ vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: vi.fn(),
 }));
 
+vi.mock('../../../server-api/deployment-limits', () => ({
+  getDeploymentLimits: vi.fn(),
+  getDeploymentUsage: vi.fn(),
+}));
+
+vi.mock('../../../server-api/user-limits', () => ({
+  getUserUsage: vi.fn(),
+}));
+
 const mockUseDeploymentUsageLimits = vi.mocked(useDeploymentUsageLimits);
 const mockUseDeployments = vi.mocked(useDeployments);
+const mockGetDeploymentLimits = vi.mocked(getDeploymentLimits);
+const mockGetDeploymentUsage = vi.mocked(getDeploymentUsage);
+const mockGetUserUsage = vi.mocked(getUserUsage);
 
 const DEPLOYMENT_NAME = 'GPT-4o mini';
 
@@ -68,8 +86,36 @@ const threePeriodsDto: DeploymentLimitsResponseDto = {
   monthTokenStats: { used: 320, total: 400 },
 };
 
-const defaultHookResult: UseDeploymentUsageLimitsResult = {
-  limitsDto: threePeriodsDto,
+/* A combined fixture: `dto`'s day, week, and month cost stats become the
+   account source and the rest the deployment source, as the two endpoints
+   return them. */
+type HookFixture = Omit<UseDeploymentUsageLimitsResult, 'sources'> & {
+  dto?: DeploymentLimitsResponseDto;
+};
+
+const COST_KEYS = ['dayCostStats', 'weekCostStats', 'monthCostStats'] as const;
+
+const mockHookResult = ({ dto, ...rest }: HookFixture) => {
+  if (dto == null) {
+    return mockUseDeploymentUsageLimits.mockReturnValue({
+      ...rest,
+      sources: { deployment: undefined, account: undefined },
+    });
+  }
+  const deployment: DeploymentLimitsResponseDto = { ...dto };
+  const account: AccountUsage = {};
+  for (const key of COST_KEYS) {
+    account[key] = dto[key];
+    delete deployment[key];
+  }
+  return mockUseDeploymentUsageLimits.mockReturnValue({
+    ...rest,
+    sources: { deployment, account },
+  });
+};
+
+const defaultHookResult: HookFixture = {
+  dto: threePeriodsDto,
   isLoading: false,
   hasError: false,
   refresh: vi.fn(),
@@ -89,7 +135,7 @@ const openPopover = async (user: ReturnType<typeof userEvent.setup>) => {
 
 describe('UsageLimitsControl', () => {
   beforeEach(() => {
-    mockUseDeploymentUsageLimits.mockReturnValue({
+    mockHookResult({
       ...defaultHookResult,
       refresh: vi.fn(),
     });
@@ -115,9 +161,9 @@ describe('UsageLimitsControl', () => {
   });
 
   it('lists the account-wide cost budget as a second group', async () => {
-    mockUseDeploymentUsageLimits.mockReturnValue({
+    mockHookResult({
       ...defaultHookResult,
-      limitsDto: {
+      dto: {
         dayTokenStats: { used: 45000, total: 50000 },
         dayCostStats: { used: 90, total: 100 },
         monthCostStats: { used: 450, total: 500 },
@@ -142,9 +188,9 @@ describe('UsageLimitsControl', () => {
   });
 
   it('shows no spend caption on a token row, the cost counter spanning every agent', async () => {
-    mockUseDeploymentUsageLimits.mockReturnValue({
+    mockHookResult({
       ...defaultHookResult,
-      limitsDto: {
+      dto: {
         dayTokenStats: { used: 45000, total: 50000 },
         dayCostStats: { used: 90, total: 100 },
       },
@@ -158,9 +204,9 @@ describe('UsageLimitsControl', () => {
   });
 
   it('surfaces a stretched account budget while this model is barely used', async () => {
-    mockUseDeploymentUsageLimits.mockReturnValue({
+    mockHookResult({
       ...defaultHookResult,
-      limitsDto: {
+      dto: {
         dayTokenStats: { used: 2, total: 100 },
         weekTokenStats: { used: 2, total: 100 },
         monthTokenStats: { used: 2, total: 100 },
@@ -189,9 +235,9 @@ describe('UsageLimitsControl', () => {
   });
 
   it('renders nothing when no period carries a usable limit', () => {
-    mockUseDeploymentUsageLimits.mockReturnValue({
+    mockHookResult({
       ...defaultHookResult,
-      limitsDto: { minuteTokenStats: { used: 9, total: 10 } },
+      dto: { minuteTokenStats: { used: 9, total: 10 } },
     });
 
     renderControl();
@@ -201,9 +247,9 @@ describe('UsageLimitsControl', () => {
 
   describe('trigger', () => {
     it('reports the worst capped period, not the month', () => {
-      mockUseDeploymentUsageLimits.mockReturnValue({
+      mockHookResult({
         ...defaultHookResult,
-        limitsDto: {
+        dto: {
           dayTokenStats: { used: 90, total: 100 },
           monthTokenStats: { used: 80, total: 100 },
         },
@@ -218,9 +264,9 @@ describe('UsageLimitsControl', () => {
     });
 
     it('takes the error state when a capped period has reached its limit while the month is low', () => {
-      mockUseDeploymentUsageLimits.mockReturnValue({
+      mockHookResult({
         ...defaultHookResult,
-        limitsDto: {
+        dto: {
           dayTokenStats: { used: 100, total: 100 },
           monthTokenStats: { used: 80, total: 100 },
         },
@@ -232,9 +278,9 @@ describe('UsageLimitsControl', () => {
     });
 
     it('takes the warning state while a capped period is running low', () => {
-      mockUseDeploymentUsageLimits.mockReturnValue({
+      mockHookResult({
         ...defaultHookResult,
-        limitsDto: { dayTokenStats: { used: 80, total: 100 } },
+        dto: { dayTokenStats: { used: 80, total: 100 } },
       });
 
       renderControl();
@@ -245,9 +291,9 @@ describe('UsageLimitsControl', () => {
     });
 
     it('does not render at all while every limit is comfortable', () => {
-      mockUseDeploymentUsageLimits.mockReturnValue({
+      mockHookResult({
         ...defaultHookResult,
-        limitsDto: {
+        dto: {
           dayTokenStats: { used: 2, total: 100 },
           monthCostStats: { used: 1, total: 500 },
         },
@@ -261,9 +307,9 @@ describe('UsageLimitsControl', () => {
 
   describe('reset line', () => {
     it('shows a reset line for a period that carries one', async () => {
-      mockUseDeploymentUsageLimits.mockReturnValue({
+      mockHookResult({
         ...defaultHookResult,
-        limitsDto: {
+        dto: {
           dayTokenStats: {
             used: 90,
             total: 100,
@@ -292,9 +338,9 @@ describe('UsageLimitsControl', () => {
     });
 
     it('renders the rows unchanged when the timestamp cannot be parsed', async () => {
-      mockUseDeploymentUsageLimits.mockReturnValue({
+      mockHookResult({
         ...defaultHookResult,
-        limitsDto: {
+        dto: {
           dayTokenStats: { used: 90, total: 100, resetsAt: 'not-a-date' },
         },
       });
@@ -312,7 +358,7 @@ describe('UsageLimitsControl', () => {
   describe('popover', () => {
     it('refreshes limits when opened', async () => {
       const refresh = vi.fn();
-      mockUseDeploymentUsageLimits.mockReturnValue({
+      mockHookResult({
         ...defaultHookResult,
         refresh,
       });
@@ -337,7 +383,7 @@ describe('UsageLimitsControl', () => {
     });
 
     it('announces a failed refresh politely while keeping the rows visible', async () => {
-      mockUseDeploymentUsageLimits.mockReturnValue({
+      mockHookResult({
         ...defaultHookResult,
         hasError: true,
       });
@@ -448,7 +494,7 @@ describe('UsageLimitsControl', () => {
   describe('generation lifecycle', () => {
     it('refreshes once when an active generation ends', () => {
       const refresh = vi.fn();
-      mockUseDeploymentUsageLimits.mockReturnValue({
+      mockHookResult({
         ...defaultHookResult,
         refresh,
       });
@@ -466,6 +512,67 @@ describe('UsageLimitsControl', () => {
       );
 
       expect(refresh).toHaveBeenCalledOnce();
+    });
+  });
+  describe('usage sources', () => {
+    beforeEach(async () => {
+      const actual = await vi.importActual<
+        typeof import('@epam/ai-dial-chat-hooks')
+      >('@epam/ai-dial-chat-hooks');
+      mockUseDeploymentUsageLimits.mockImplementation(
+        actual.useDeploymentUsageLimits,
+      );
+    });
+
+    const agentUsage: DeploymentLimitsResponseDto = {
+      dayTokenStats: { used: 0, total: 2_000_000 },
+      weekCostStats: { used: 130.98, total: Number.MAX_SAFE_INTEGER },
+    };
+
+    it('reads the deployment usage and the account usage, never the deployment limits', async () => {
+      mockGetDeploymentUsage.mockResolvedValue(agentUsage);
+      mockGetUserUsage.mockResolvedValue({
+        weekCostStats: { used: 190, total: 200 },
+      });
+      renderControl('dial-chathub-v2');
+
+      expect(await screen.findByRole('button')).toBeTruthy();
+      expect(mockGetDeploymentUsage).toHaveBeenCalledWith('dial-chathub-v2');
+      expect(mockGetUserUsage).toHaveBeenCalledOnce();
+      expect(mockGetDeploymentLimits).not.toHaveBeenCalled();
+    });
+
+    it('renders no trigger for an agent while the account budget is comfortable', async () => {
+      mockGetDeploymentUsage.mockResolvedValue(agentUsage);
+      mockGetUserUsage.mockResolvedValue({
+        weekCostStats: { used: 132.24, total: 200 },
+      });
+      renderControl('dial-chathub-v2');
+
+      await waitFor(() => expect(mockGetUserUsage).toHaveBeenCalledOnce());
+      await act(() => Promise.resolve());
+
+      expect(screen.queryByRole('button')).toBeNull();
+    });
+
+    it('keeps the cost rows and announces the error when the deployment usage fails', async () => {
+      mockGetDeploymentUsage.mockRejectedValue(new Error('Not Found'));
+      mockGetUserUsage.mockResolvedValue({
+        dayCostStats: { used: 90, total: 100 },
+      });
+      const user = userEvent.setup();
+      renderControl();
+
+      await screen.findByRole('button');
+      await openPopover(user);
+
+      expect(screen.getByText(ERROR_LABEL).getAttribute('aria-live')).toBe(
+        'polite',
+      );
+      expect(screen.getAllByRole('progressbar')).toHaveLength(1);
+      expect(
+        screen.getByText('conversationInput.usageLimits.costGroup'),
+      ).toBeTruthy();
     });
   });
 });

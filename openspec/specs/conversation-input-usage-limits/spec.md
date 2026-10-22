@@ -10,29 +10,46 @@ conversation input.
 ### Requirement: Period deployment usage
 
 `@epam/ai-dial-chat-hooks` SHALL export
-`mapDeploymentLimitsToInput(dto: DeploymentLimitsResponseDto | undefined, labels:
-ConversationInputLimitsLabels, formatResetTime?: FormatResetTime): CatalogItemLimits | undefined`.
+`mapDeploymentLimitsToInput(sources: UsageLimitsSources, labels: ConversationInputLimitsLabels,
+formatResetTime?: FormatResetTime): CatalogItemLimits | undefined`, together with the
+`UsageLimitsSources` and `AccountUsage` types it takes.
+
+`UsageLimitsSources` carries two inputs, each with a single scope:
+
+- `deployment: DeploymentLimitsResponseDto | undefined`: the selected deployment's own stats, as
+  returned by `GET /api/v1/deployments/{deployment}/usage` (capability `deployment-limits-api`).
+- `account: AccountUsage | undefined`, where `AccountUsage` is
+  `Pick<UserLimitStatsResponseDto, 'dayCostStats' | 'weekCostStats' | 'monthCostStats'>`: the
+  caller's account-wide cost budget and spend, the top level of `GET /api/v1/user/usage`.
 
 The function SHALL emit up to two `UsageLimitGroup`s, in this order:
 
-1. **Token limits**, labelled from `labels.tokenGroup`, mapping `dayTokenStats`, `weekTokenStats`,
-   and `monthTokenStats` in that order. Figures SHALL be formatted with compact K/M notation.
-2. **Cost limits**, labelled from `labels.costGroup`, mapping `dayCostStats`, `weekCostStats`, and
-   `monthCostStats` in that order. Figures SHALL be formatted as currency through `formatCost`.
+1. **Token limits**, labelled from `labels.tokenGroup`, mapping `sources.deployment`'s
+   `dayTokenStats`, `weekTokenStats`, and `monthTokenStats` in that order. Figures SHALL be
+   formatted with compact K/M notation.
+2. **Cost limits**, labelled from `labels.costGroup`, mapping `sources.account`'s `dayCostStats`,
+   `weekCostStats`, and `monthCostStats` in that order. Figures SHALL be formatted as currency
+   through `formatCost`.
 
-The cost stats on a deployment-limits response are the **caller's own budget and span every
-deployment**, not the one that was queried — the same figures come back whichever deployment is
-asked. They SHALL therefore be listed as their own group, whose label SHALL say so, and SHALL NOT be
-rendered as a caption on a token row, which would read as that model's spend. `captionLabel` SHALL
-NOT be set on any row, and `labels` SHALL carry no spend-caption formatter.
+The function SHALL NOT read any cost stat from `sources.deployment`, and SHALL NOT read any stat
+other than the three cost stats from `sources.account`. A deployment-limits response
+(`GET /deployments/{id}/limits`) SHALL NOT be passed as either source. That response's cost `used`
+adds an application's aggregated callee cost to the account spend that already contains it, so an
+agent's spend would be counted twice (issue #9361).
+
+The cost group is the account budget and spans every deployment, so the same figures come back
+whichever deployment is selected. It SHALL therefore be listed as its own group, whose label SHALL
+say so, and SHALL NOT be rendered as a caption on a token row, which would read as that model's
+spend. `captionLabel` SHALL NOT be set on any row, and `labels` SHALL carry no spend-caption
+formatter.
 
 The function SHALL NOT map `minuteTokenStats`, `minuteCostStats`, `hourRequestStats`, or
 `dayRequestStats`.
 
 **Only limits at or past the running-low mark are listed.** A stat SHALL produce a row only when its
 `total` and `used` are both finite, `total` is greater than `0`, and its used/total ratio is at or
-above `0.75` — the same threshold `CatalogLimitStatus` already uses for running-low, so one number
-decides both the bar's warning fill and whether the row exists.
+above `0.75`. This is the same threshold `CatalogLimitStatus` already uses for running-low, so one
+number decides both the bar's warning fill and whether the row exists.
 
 This is deliberate: the control sits beside the message input and its job is to warn, not to report.
 A deployment at `2%` of its token allowance listed beside an account budget at `90%` buries the one
@@ -42,16 +59,17 @@ A row whose `total` is at or above `Number.MAX_SAFE_INTEGER` has no cap and ther
 it can never reach the threshold and SHALL never be listed. The function SHALL NOT emit an
 `isUnlimited` row, and `labels` SHALL carry no note or ARIA formatter for one.
 
-`used` SHALL be clamped to a minimum of `0`. When no stat qualifies, or `dto` is `undefined`, the
-function SHALL return `undefined` rather than a group with an empty `rows` array — which is what
-removes the trigger entirely while every limit is comfortable.
+`used` SHALL be clamped to a minimum of `0`. When no stat qualifies, or both sources are
+`undefined`, the function SHALL return `undefined` rather than a group with an empty `rows` array.
+That is what removes the trigger entirely while every limit is comfortable. Either source being
+`undefined` alone SHALL drop only its own group.
 
 Each row SHALL set `valueLabel` and `ariaLabel` through the injected formatter callbacks and SHALL
 NOT build either string from its own template literal.
 
 The result's `status` SHALL be the worst case across every listed row of **both** groups, so a cost
-budget nearing its cap drives the trigger just as a token limit does. Every listed row being at or
-past the running-low mark, the status SHALL never be absent when a result is produced —
+budget nearing its cap drives the trigger just as a token limit does. Since every listed row is at
+or past the running-low mark, the status SHALL never be absent when a result is produced:
 `CatalogLimitStatus.LimitReached` when any capped row's used/total ratio is at or above `1`,
 otherwise `CatalogLimitStatus.RunningLow` when any is at or above `0.75`, otherwise absent.
 
@@ -60,30 +78,73 @@ on a defined result, set the row's `resetLabel`, `resetIsoValue`, and `resetAria
 present-or-all-absent trio. The function SHALL NOT construct a `Date`, call a date/time `Intl` API,
 or import `react-i18next`, `i18next`'s `TFunction`, or any app translation-key enum.
 
-`libs/chat-hooks/src/usage/useDeploymentUsageLimits/useDeploymentUsageLimits.ts` SHALL continue to own the fetch: an
-`AbortController` plus a `cancelled` flag in the effect cleanup, and a monotonic request id so a
-response for an earlier deployment never overwrites the current one. Refresh failures SHALL preserve
-the last known limits and SHALL NOT affect message entry or sending.
+`libs/chat-hooks/src/usage/useDeploymentUsageLimits/useDeploymentUsageLimits.ts` SHALL own the
+fetch of both sources as `useDeploymentUsageLimits(deploymentId, api: UsageLimitsApi)`, where
+`UsageLimitsApi` is `{ getDeploymentUsage: (deploymentId: string) =>
+Promise<DeploymentLimitsResponseDto>; getAccountUsage: () => Promise<AccountUsage> }`, supplied by
+the host already configured. The hook SHALL return
+`{ sources: UsageLimitsSources; isLoading; hasError; refresh }` and SHALL:
+
+- issue both calls together on each run, with a `cancelled` flag in the effect cleanup and one
+  monotonic request id, so a response for an earlier deployment never overwrites the current one;
+- keep `isLoading` `true` until both calls settle;
+- replace a source only when its own call fulfils. A rejected call SHALL keep that source's last
+  known value and set `hasError`;
+- clear `sources.deployment` when `deploymentId` changes or becomes empty, and keep
+  `sources.account`, which does not depend on the selection;
+- not treat the identity of `api` as a re-fetch trigger.
+
+Refresh failures SHALL NOT affect message entry or sending. The hook SHALL NOT construct an API
+client, name an endpoint path, or import `@epam/ai-dial-chat-api-client` beyond its types.
+
+The app SHALL pass `getDeploymentUsage` from `apps/chat/src/server-api/deployment-limits.ts` and
+`getUserUsage` from `apps/chat/src/server-api/user-limits.ts` as `getAccountUsage`.
+`UsageLimitsControl` SHALL NOT import `getDeploymentLimits`.
+
+**Feature gate:** none beyond `features.usageLimitsControl` (below). It is not gated by
+`ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES`. **Caching:** none beyond the hook's in-memory last
+value per source. **Observability:** none.
+
+#### Scenario: An agent's spend is not counted twice
+
+- **WHEN** an agent is selected, `sources.account.weekCostStats` is `{ used: 132.24, total: 200 }`,
+  and the agent's `/limits` would report `{ used: 263.22, total: 200 }`
+- **THEN** no cost row is emitted (`66%` is below the running-low mark), and no result status is
+  `CatalogLimitStatus.LimitReached` on account of cost
+
+#### Scenario: Cost rows are independent of the selected deployment
+
+- **WHEN** the same `sources.account` is mapped once with a model's `sources.deployment` and once
+  with an agent's
+- **THEN** both results carry an identical cost group
+
+#### Scenario: Cost stats on the deployment source are ignored
+
+- **WHEN** `sources.account` is `undefined` and `sources.deployment.weekCostStats` is
+  `{ used: 100, total: 100 }`
+- **THEN** no cost group is emitted
 
 #### Scenario: Three stretched periods produce three rows
 
-- **WHEN** `dayTokenStats`, `weekTokenStats`, and `monthTokenStats` are each at or past `75%`
+- **WHEN** `sources.deployment`'s `dayTokenStats`, `weekTokenStats`, and `monthTokenStats` are
+  each at or past `75%`
 - **THEN** the result contains one group with three rows in day, week, month order
 
 #### Scenario: Minute stats are never mapped
 
-- **WHEN** `dto` carries a usable `minuteTokenStats` or `minuteCostStats`
+- **WHEN** a source carries a usable `minuteTokenStats` or `minuteCostStats`
 - **THEN** no row is emitted for it, and its presence alone does not produce a result
 
 #### Scenario: The cost budget is its own group
 
-- **WHEN** `dto` carries both token stats and day/week/month cost stats
+- **WHEN** `sources.deployment` carries stretched token stats and `sources.account` carries
+  stretched day/week/month cost stats
 - **THEN** the result has a token group followed by a cost group, and no row in either carries a
   `captionLabel`
 
 #### Scenario: Cost figures are currency-formatted
 
-- **WHEN** `dayCostStats` is `{ used: 90.5, total: 100 }`
+- **WHEN** `sources.account.dayCostStats` is `{ used: 90.5, total: 100 }`
 - **THEN** the row's `usedLabel`/`totalLabel` are `"$90.5"`/`"$100"`
 
 #### Scenario: A cost row can drive the status
@@ -93,7 +154,7 @@ the last known limits and SHALL NOT affect message entry or sending.
 
 #### Scenario: A missing period is skipped without shifting the others
 
-- **WHEN** `dto` omits `weekTokenStats` but carries stretched day and month stats
+- **WHEN** `sources.deployment` omits `weekTokenStats` but carries stretched day and month stats
 - **THEN** the result contains two rows, day before month, with no placeholder row
 
 #### Scenario: A comfortable period is not listed
@@ -108,8 +169,13 @@ the last known limits and SHALL NOT affect message entry or sending.
 
 #### Scenario: A stretched account budget outlives a barely-used model
 
-- **WHEN** every token stat is at `2%` and `monthCostStats` is at `90%`
+- **WHEN** every token stat is at `2%` and `sources.account.monthCostStats` is at `90%`
 - **THEN** the result carries the cost group alone, with the month row, and no token group
+
+#### Scenario: One source missing drops only its group
+
+- **WHEN** `sources.deployment` is `undefined` and `sources.account.dayCostStats` is at `90%`
+- **THEN** the result carries the cost group alone
 
 #### Scenario: Comfortable everywhere removes the control
 
@@ -123,7 +189,8 @@ the last known limits and SHALL NOT affect message entry or sending.
 
 #### Scenario: No qualifying stat returns undefined
 
-- **WHEN** every token stat is absent, non-finite, or has a non-positive total
+- **WHEN** both sources are `undefined`, or every stat read is absent, non-finite, or has a
+  non-positive total
 - **THEN** the function returns `undefined`, not a group with an empty `rows` array
 
 #### Scenario: Worst-case status wins
@@ -152,6 +219,18 @@ the last known limits and SHALL NOT affect message entry or sending.
 
 - **WHEN** an earlier deployment's request resolves after the selected deployment has changed
 - **THEN** its result is ignored
+
+#### Scenario: Account figures survive a deployment change
+
+- **WHEN** the selected deployment changes after both sources loaded
+- **THEN** `sources.deployment` is cleared until the new deployment's usage arrives, and
+  `sources.account` keeps its value
+
+#### Scenario: One failed call keeps the other source
+
+- **WHEN** a refresh's `getDeploymentUsage` rejects and its `getAccountUsage` fulfils
+- **THEN** `sources.account` holds the new value, `sources.deployment` keeps its last known value,
+  and `hasError` is `true`
 
 ---
 
@@ -300,18 +379,20 @@ Its body SHALL be rendered by `LimitsTab` imported from `@epam/ai-dial-catalog`,
 hand-roll a second row renderer, and SHALL NOT import `LimitRow` or `LimitGroupSection`.
 
 In that layout each row puts its label and value on one line, with a full-width progress bar and the
-reset caption beneath, so the popover SHALL be wide enough for a label and its value side by side
-and SHALL retain a viewport-relative maximum width so mobile layout does not overflow horizontally.
+reset caption beneath. The popover SHALL therefore be wide enough for a label and its value side by
+side, and SHALL retain a viewport-relative maximum width so mobile layout does not overflow
+horizontally.
 
-The popover SHALL refresh limits on open without displaying a loading indicator, and the control
-SHALL refresh once when an active generation ends so the trigger reflects the latest usage without
-being opened. It SHALL support Escape, outside activation, trigger reactivation, and predictable
-focus return to the trigger. A failed refresh SHALL be announced through an `aria-live="polite"`
-region using `conversationInput.usageLimits.error` while the previously rendered rows remain visible.
+The popover SHALL refresh both usage sources on open without displaying a loading indicator. The
+control SHALL refresh both once when an active generation ends, so the trigger reflects the latest
+usage without being opened. It SHALL support Escape, outside activation, trigger reactivation, and
+predictable focus return to the trigger. A failed refresh of either source SHALL be announced
+through an `aria-live="polite"` region using `conversationInput.usageLimits.error`, while the
+previously rendered rows remain visible.
 
 All visible and accessible text SHALL come from app-owned i18n. `UsageLimitsControl` SHALL resolve
 its own strings through `useTranslation` and its own locale through the app's language hook, and
-SHALL NOT accept a `labels` prop — it is an `apps/chat` component, and two call sites building
+SHALL NOT accept a `labels` prop. It is an `apps/chat` component, and two call sites building
 byte-identical label objects is the duplication this removes. Its remaining props SHALL be
 `deploymentId` and `isGenerationInProgress`.
 
@@ -320,22 +401,26 @@ i18n keys under `conversationInput.usageLimits.*`: `tokenGroup`, `costGroup`, `p
 "See all usage"), plus the pre-existing `popoverTitle`, `error`, and `triggerAriaLabel`. The
 three period labels SHALL be shared by both groups rather than duplicated per group, since they name
 a calendar period and not what is being metered. `triggerAriaLabel` SHALL name the reported period
-without naming tokens, the worst capped row now being a cost row as readily as a token one.
+without naming tokens, since the worst capped row can be a cost row as readily as a token one.
 `usage.resetsAtLabel` and `usage.resetsAtAriaLabel` are reused unchanged. Period labels SHALL use
 calendar wording (`Today`, `This week`, `This month`) and SHALL NOT describe the periods as trailing
-or rolling windows.
+or rolling windows. No new i18n key is introduced by reading the two sources.
 
-No feature gate, new endpoint, cache, polling, telemetry, or boundary-triggered re-fetch SHALL be
-introduced. The control is not gated behind `ENABLED_FEATURES` or `ENABLED_FEATURES_ROLES`; it is
-shown whenever the selected deployment has a usable limit.
+The control SHALL read the deployment-usage endpoint (`GET /api/v1/deployments/{deployment}/usage`)
+and the account usage (`GET /api/v1/user/usage`), and SHALL NOT read
+`GET /api/v1/deployments/{deployment}/limits`. No feature gate, cache, polling, telemetry, or
+boundary-triggered re-fetch SHALL be introduced, and no endpoint other than these two SHALL be
+read. The control is not gated behind `ENABLED_FEATURES` or `ENABLED_FEATURES_ROLES`. It is shown
+whenever a listed row reaches the running-low mark.
 
 **RTL:** the popover uses logical properties only (`start-*`/`end-*`, `ms-*`/`me-*`,
 `ps-*`/`pe-*`). Its only directional icon is the footer link's trailing `IconChevronRight`
-(`aria-hidden`), which SHALL be mirrored with `rtl:scale-x-[-1]`; the dial is not mirrored (see
-above). **Memoisation:** the
-`CatalogItemLimits` value SHALL be produced inside a `useMemo`, and the `formatResetTime` callback
-SHALL be `useCallback`-stable on the active locale and `t`, so the memo does not recompute every
-render. **A11y:** the trigger keeps `aria-expanded` and `aria-haspopup="dialog"`, the panel keeps
+(`aria-hidden`), which SHALL be mirrored with `rtl:scale-x-[-1]`. The dial is not mirrored (see
+above). **Memoisation:** the `CatalogItemLimits` value SHALL be produced inside a `useMemo` keyed
+on both sources, the labels, and `formatResetTime`. The `formatResetTime` callback SHALL be
+`useCallback`-stable on the active locale and `t`, so the memo does not recompute every render.
+The `UsageLimitsApi` object passed to the hook SHALL be a module-level constant or `useMemo`-stable.
+**A11y:** the trigger keeps `aria-expanded` and `aria-haspopup="dialog"`, the panel keeps
 `role="dialog"` with `aria-labelledby` pointing at its title, and every progress bar carries an
 `aria-valuetext` from its row's `ariaLabel`.
 
@@ -369,14 +454,20 @@ render. **A11y:** the trigger keeps `aria-expanded` and `aria-haspopup="dialog"`
 #### Scenario: Generation completes
 
 - **WHEN** an active generation ends
-- **THEN** the control refreshes the selected deployment's limits once and updates the trigger
-  without the popover being opened
+- **THEN** the control refreshes the selected deployment's usage and the account usage once each
+  and updates the trigger without the popover being opened
 
 #### Scenario: Refresh fails
 
-- **WHEN** the refresh request rejects
+- **WHEN** either refresh request rejects
 - **THEN** the error is announced politely, the last successful rows stay rendered, and the composer
   remains usable
+
+#### Scenario: The deployment-limits endpoint is not read
+
+- **WHEN** the control mounts, opens, or refreshes after a generation
+- **THEN** it requests `/api/v1/deployments/{deployment}/usage` and `/api/v1/user/usage`, and never
+  `/api/v1/deployments/{deployment}/limits`
 
 #### Scenario: Keyboard dismissal returns focus
 
@@ -396,7 +487,7 @@ render. **A11y:** the trigger keeps `aria-expanded` and `aria-haspopup="dialog"`
 - **THEN** its content wraps within the viewport-relative maximum width and the page does not scroll
   horizontally
 - **AND** when the end-anchored panel would extend past either viewport edge, it is shifted
-  horizontally so the whole panel — title and "See all usage" link included — sits inside a 16px
+  horizontally so the whole panel, title and "See all usage" link included, sits inside a 16px
   viewport gutter; the shift is re-measured on window resize
 
 #### Scenario: RTL layout mirrors through the cascade

@@ -76,6 +76,7 @@ describe('DeploymentsController (integration)', () => {
     listDeployments: ReturnType<typeof vi.fn>;
     getDeploymentConfiguration: ReturnType<typeof vi.fn>;
     getDeploymentLimits: ReturnType<typeof vi.fn>;
+    getDeploymentUsage: ReturnType<typeof vi.fn>;
     getDeploymentDetails: ReturnType<typeof vi.fn>;
   };
 
@@ -84,6 +85,7 @@ describe('DeploymentsController (integration)', () => {
       listDeployments: vi.fn().mockResolvedValue(mockResponse),
       getDeploymentConfiguration: vi.fn(),
       getDeploymentLimits: vi.fn(),
+      getDeploymentUsage: vi.fn(),
       getDeploymentDetails: vi.fn(),
     };
     app = await buildApp(service);
@@ -285,6 +287,7 @@ describe('DeploymentsController (integration)', () => {
     it.each([
       ['configuration', 'getDeploymentConfiguration'],
       ['limits', 'getDeploymentLimits'],
+      ['usage', 'getDeploymentUsage'],
       ['details', 'getDeploymentDetails'],
     ] as const)(
       'returns 400 for traversal before calling the %s service',
@@ -424,6 +427,55 @@ describe('DeploymentsController (integration)', () => {
 
       await request(app.getHttpServer())
         .get('/api/v1/deployments/gpt-4o/limits')
+        .expect(503);
+    });
+  });
+
+  describe('GET /api/v1/deployments/:deployment/usage', () => {
+    const mockUsage = {
+      dayCostStats: { total: 2 ** 63, used: 0.03 },
+    };
+
+    it('returns 200 with deployment usage and no-store caching', async () => {
+      service.getDeploymentUsage.mockResolvedValue(mockUsage);
+
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/deployments/applications%2Ffoo%2Fbar/usage')
+        .expect(200);
+
+      expect(res.body).toEqual(mockUsage);
+      expect(res.headers['cache-control']).toBe('private, no-store');
+      expect(service.getDeploymentUsage).toHaveBeenCalledWith(
+        'applications/foo/bar',
+        TEST_USER.at,
+      );
+    });
+
+    it('returns 404 when the deployment is not found', async () => {
+      const { NotFoundException } = await import('@nestjs/common');
+      service.getDeploymentUsage.mockRejectedValue(new NotFoundException());
+
+      await request(app.getHttpServer())
+        .get('/api/v1/deployments/unknown/usage')
+        .expect(404);
+    });
+
+    it('returns 401 when service throws UnauthorizedException', async () => {
+      service.getDeploymentUsage.mockRejectedValue(new UnauthorizedException());
+
+      await request(app.getHttpServer())
+        .get('/api/v1/deployments/gpt-4o/usage')
+        .expect(401);
+    });
+
+    it('returns 503 when DIAL Core is unreachable', async () => {
+      const { ServiceUnavailableException } = await import('@nestjs/common');
+      service.getDeploymentUsage.mockRejectedValue(
+        new ServiceUnavailableException(),
+      );
+
+      await request(app.getHttpServer())
+        .get('/api/v1/deployments/gpt-4o/usage')
         .expect(503);
     });
   });

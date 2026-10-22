@@ -5,3 +5,8 @@ export const getDeploymentLimits = (
   deploymentName: string,
 ): Promise<DeploymentLimitsResponseDto> =>
   deploymentsApi.getDeploymentLimits({ deployment: deploymentName });
+
+export const getDeploymentUsage = (
+  deploymentName: string,
+): Promise<DeploymentLimitsResponseDto> =>
+  deploymentsApi.getDeploymentUsage({ deployment: deploymentName });
