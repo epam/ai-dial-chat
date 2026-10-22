@@ -50,10 +50,55 @@ const renderActions = (
       messages,
       pickFromFileSystem,
     });
-    return { files, ...actions };
+    return { files, filesContentRef, ...actions };
   });
 
 describe('useSkillFileActions', () => {
+  it('overwrites the bytes of a replaced file without adding a second node', async () => {
+    const existing = {
+      path: 'notes.md',
+      name: 'notes.md',
+      kind: SkillFileNodeKind.File,
+    };
+    const { result } = renderActions([existing]);
+
+    let commitResult: { error?: string } | undefined;
+    await act(async () => {
+      commitResult = await result.current.fileActions.commitBatch([
+        {
+          id: 'candidate-1',
+          file: new File(['fresh'], 'notes.md'),
+          path: 'notes.md',
+          replacesExisting: true,
+        },
+      ]);
+    });
+
+    expect(commitResult).toEqual({});
+    expect(result.current.files).toEqual([existing]);
+    expect(result.current.contentRevisions).toEqual({ 'notes.md': 1 });
+    expect(
+      new TextDecoder().decode(
+        result.current.filesContentRef.current.get('notes.md')?.bytes,
+      ),
+    ).toBe('fresh');
+  });
+
+  it('rejects a file uploaded at the path of an existing folder', async () => {
+    const folder = {
+      path: 'scripts',
+      name: 'scripts',
+      kind: SkillFileNodeKind.Folder,
+    };
+    const { result } = renderActions([folder]);
+
+    const { results } = await result.current.fileActions.validateBatch([
+      { id: 'candidate-1', file: new File(['x'], 'scripts'), path: 'scripts' },
+    ]);
+
+    expect(results[0].error).toBe(messages.pathDuplicate);
+  });
+
   it('adds a created folder as a folder node', () => {
     const { result } = renderActions();
 

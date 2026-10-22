@@ -299,6 +299,33 @@ describe('useSkillEditorSubmit retryable failures', () => {
     expect(result.current.isSubmitErrorRetryable).toBe(false);
   });
 
+  it('rebuilds the payload on retry when a file was replaced after the failure', async () => {
+    const { client, params } = makeHarness(false);
+    const encode = (text: string) => new TextEncoder().encode(text);
+    params.filesContentRef.current.set('notes.md', { bytes: encode('old') });
+    const files = [
+      { path: 'notes.md', name: 'notes.md', kind: SkillFileNodeKind.File },
+    ];
+    vi.mocked(client.createSkill).mockRejectedValueOnce(rejectWith(503));
+    const { result, rerender } = renderHook(
+      (props: { contentRevisions: Record<string, number> }) =>
+        useSkillEditorSubmit({ ...params, files, ...props }),
+      { initialProps: { contentRevisions: {} } },
+    );
+
+    await act(async () => {
+      await result.current.handleSubmit(makeValues());
+    });
+    params.filesContentRef.current.set('notes.md', { bytes: encode('new') });
+    rerender({ contentRevisions: { 'notes.md': 1 } });
+    await act(async () => {
+      result.current.retrySubmit();
+    });
+
+    const [, , , , sentFiles] = vi.mocked(client.createSkill).mock.calls[1];
+    expect(await sentFiles[0].text()).toBe('new');
+  });
+
   it('offers no retry for a failure a re-send cannot clear', async () => {
     const { client, params } = makeHarness(false);
     vi.mocked(client.createSkill).mockRejectedValueOnce(rejectWith(413));

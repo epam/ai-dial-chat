@@ -71,6 +71,8 @@ export interface UseSkillFileActionsResult {
   pendingManifestImport: boolean;
   /** Resolves the in-flight manifest-import confirmation with the user's choice. */
   resolveManifestImport: (accepted: boolean) => void;
+  /** How many times each supporting file's bytes were replaced in place, keyed by path; absent means never. */
+  contentRevisions: Readonly<Record<string, number>>;
 }
 
 /*
@@ -100,6 +102,9 @@ export const useSkillFileActions = ({
   pickFromFileSystem,
 }: UseSkillFileActionsParams): UseSkillFileActionsResult => {
   const [pendingManifestImport, setPendingManifestImport] = useState(false);
+  const [contentRevisions, setContentRevisions] = useState<
+    Readonly<Record<string, number>>
+  >({});
   const manifestImportResolveRef = useRef<((accepted: boolean) => void) | null>(
     null,
   );
@@ -117,9 +122,11 @@ export const useSkillFileActions = ({
       .filter((node) => node.kind === SkillFileNodeKind.File)
       .map((node) => node.path);
     let existingTotalBytes = 0;
+    const existingFileBytes = new Map<string, number>();
     for (const path of existingPaths) {
-      existingTotalBytes +=
-        filesContentRef.current.get(path)?.bytes.length ?? 0;
+      const bytes = filesContentRef.current.get(path)?.bytes.length ?? 0;
+      existingFileBytes.set(path, bytes);
+      existingTotalBytes += bytes;
     }
     const baseline = {
       name: loadedValues?.name ?? '',
@@ -137,6 +144,10 @@ export const useSkillFileActions = ({
     return {
       existingPaths,
       existingTotalBytes,
+      existingFileBytes,
+      existingFolderPaths: files
+        .filter((node) => node.kind === SkillFileNodeKind.Folder)
+        .map((node) => node.path),
       manifestByteLength: getUtf8ByteLength(manifestText),
       messages,
     };
@@ -203,11 +214,18 @@ export const useSkillFileActions = ({
           const supportingCandidates = candidates.filter(
             (candidate) => candidate.id !== manifestCandidate?.candidateId,
           );
+          const existingFilePaths = new Set(
+            files
+              .filter((node) => node.kind === SkillFileNodeKind.File)
+              .map((node) => node.path),
+          );
           const reads = await Promise.all(
             supportingCandidates.map(async (candidate) => ({
               path: candidate.path,
               bytes: new Uint8Array(await candidate.file.arrayBuffer()),
               mimeType: candidate.file.type || undefined,
+              // Validation passed, so a path already in the tree is a confirmed replacement.
+              isReplacement: existingFilePaths.has(candidate.path),
             })),
           );
 
@@ -217,15 +235,29 @@ export const useSkillFileActions = ({
               mimeType: read.mimeType,
             });
           }
-          if (reads.length > 0) {
+          const added = reads.filter((read) => !read.isReplacement);
+          if (added.length > 0) {
             setFiles((prev) => [
               ...prev,
-              ...reads.map((read) => ({
+              ...added.map((read) => ({
                 path: read.path,
                 name: nameFromPath(read.path),
                 kind: SkillFileNodeKind.File,
               })),
             ]);
+          }
+          // A replaced file keeps its node, so its bytes changing is signalled here instead.
+          const replacedPaths = reads
+            .filter((read) => read.isReplacement)
+            .map((read) => read.path);
+          if (replacedPaths.length > 0) {
+            setContentRevisions((prev) => {
+              const next = { ...prev };
+              for (const path of replacedPaths) {
+                next[path] = (next[path] ?? 0) + 1;
+              }
+              return next;
+            });
           }
 
           if (manifestCandidate) {
@@ -286,6 +318,7 @@ export const useSkillFileActions = ({
     }),
     [
       buildBatchValidationContext,
+      files,
       isEditMode,
       isDirty,
       loadedValues,
@@ -300,5 +333,10 @@ export const useSkillFileActions = ({
     ],
   );
 
-  return { fileActions, pendingManifestImport, resolveManifestImport };
+  return {
+    fileActions,
+    pendingManifestImport,
+    resolveManifestImport,
+    contentRevisions,
+  };
 };

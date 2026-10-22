@@ -1,0 +1,16 @@
+.card {
+  background: var(--se-files-card-bg, var(--bg-layer-base, #f5f7fa));
+  border-color: var(--se-files-card-border, var(--stroke-tertiary, #e0e6f0));
+}
+
+.label {
+  color: var(--se-helper-text-color, var(--text-secondary, #57647a));
+}
+
+.fileName {
+  color: var(--se-title-color, var(--text-primary, #161b2d));
+}
+
+.caret {
+  color: var(--se-helper-text-color, var(--text-secondary, #57647a));
+}

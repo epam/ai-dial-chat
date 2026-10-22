@@ -1,0 +1,9 @@
+/*
+ * The sheet renders in a portal, outside the editor root's `--se-*` vars, and
+ * the footer must match the kit panel it sits on, so it reads the same theme
+ * tokens the kit `BottomSheet` panel and header divider use.
+ */
+.footer {
+  background: var(--bg-layer-raised, #fcfcfc);
+  border-color: var(--stroke-tertiary, #e0e6f0);
+}

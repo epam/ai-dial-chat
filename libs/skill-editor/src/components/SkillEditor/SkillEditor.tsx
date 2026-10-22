@@ -24,7 +24,6 @@ import {
   DialFoldersTree,
 } from '@epam/ai-dial-react-file-manager';
 import {
-  Accordion,
   ButtonAppearance,
   ButtonDropdown,
   ButtonVariant,
@@ -86,7 +85,9 @@ import { SkillFileUploadMode } from '../../types/skill-file-upload-mode';
 import { SkillFilesPane } from '../../types/skill-files-pane';
 import { buildDialFileTree, resolveAddTarget } from '../../utils/file-tree';
 import { renderIcon } from '../../utils/icon';
+import { SkillCreateFolderDialog } from '../SkillCreateFolderDialog/SkillCreateFolderDialog';
 import { SkillFileDropOverlay } from '../SkillFileDropOverlay/SkillFileDropOverlay';
+import { SkillFilesSummary } from '../SkillFilesSummary/SkillFilesSummary';
 import { SkillFileUploadDialog } from '../SkillFileUploadDialog/SkillFileUploadDialog';
 import styles from './SkillEditor.module.scss';
 
@@ -123,10 +124,11 @@ const INSTRUCTIONS_EDITOR_BOTTOM_GAP = 24;
 const INSTRUCTIONS_EDITOR_MIN_HEIGHT = 300;
 
 /* Paddings of the Files column, the selected-file column and the host aside column, as before the shared editor. */
-const FILES_SECTION_CLASS_NAME = 'desktop:px-8 desktop:py-6';
+const FILES_SECTION_CLASS_NAME = 'pb-0 desktop:px-8 desktop:py-6';
 const ASIDE_SECTION_CLASS_NAME = 'desktop:px-8 desktop:py-6';
+/* In the stacked mobile column the Files card sits 20px above the selected file's heading: no bottom padding on the Files section, `pt-5` here. */
 const SETUP_SECTION_CLASS_NAME =
-  'gap-4 px-4 py-6 desktop:gap-5 desktop:px-8 desktop:py-6';
+  'gap-4 px-4 pt-5 pb-6 desktop:gap-5 desktop:px-8 desktop:py-6';
 
 const LazyMarkdown = lazy(async () => {
   const { MarkdownEditor } = await LazyMarkdownEditor();
@@ -243,6 +245,8 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   const seededInitialValuesRef = useRef(initialValues);
   const isReseeding = seededInitialValuesRef.current !== initialValues;
   const seededFilesRef = useRef<SkillFileTreeNode[]>(files);
+  /* A replaced file keeps its node, so `files` alone cannot show that its bytes changed since seeding. */
+  const [hasReplacedFileContent, setHasReplacedFileContent] = useState(false);
   useEffect(() => {
     seededInitialValuesRef.current = initialValues;
     const seeded = {
@@ -253,6 +257,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     valuesRef.current = seeded;
     setValues(seeded);
     seededFilesRef.current = files;
+    setHasReplacedFileContent(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- re-seeding is keyed on `initialValues` identity only, per this component's documented contract
   }, [initialValues]);
 
@@ -269,12 +274,20 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     };
     const isDirty =
       JSON.stringify(values) !== JSON.stringify(seededValues) ||
-      sortedFilesKey(files) !== sortedFilesKey(seededFilesRef.current);
+      sortedFilesKey(files) !== sortedFilesKey(seededFilesRef.current) ||
+      hasReplacedFileContent;
     if (isDirty !== isDirtyRef.current) {
       isDirtyRef.current = isDirty;
       onDirtyChange?.(isDirty);
     }
-  }, [values, files, initialValues, isReseeding, onDirtyChange]);
+  }, [
+    values,
+    files,
+    initialValues,
+    isReseeding,
+    hasReplacedFileContent,
+    onDirtyChange,
+  ]);
 
   const [internalSelectedPath, setInternalSelectedPath] =
     useState(SKILL_MANIFEST_PATH);
@@ -355,6 +368,8 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     '--se-helper-text-color': colors?.helperText,
     '--se-refine-action-text': colors?.refineActionText,
     '--se-refine-error-text': colors?.refineErrorText,
+    '--se-files-card-bg': colors?.filesCardBackground,
+    '--se-files-card-border': colors?.filesCardBorder,
   });
 
   const refinementStyles = {
@@ -471,6 +486,28 @@ export const SkillEditor: FC<SkillEditorProps> = ({
 
   const { startDraft } = draftFolder;
   const { onCreateFolder, extractArchive, pickFromFileSystem } = fileActions;
+  /* Parent of the folder the mobile Create folder dialog is naming; `null` while it is closed. */
+  const [createFolderParentPath, setCreateFolderParentPath] = useState<
+    string | null
+  >(null);
+  /* Desktop names a new folder inline in the tree; the narrow layout asks in a dialog instead. */
+  const handleCreateFolderClick = useCallback(
+    (parentPath: string, pane: SkillFilesPane) => {
+      if (pane === SkillFilesPane.Mobile) {
+        setCreateFolderParentPath(parentPath);
+        return;
+      }
+      startDraft(parentPath, pane);
+    },
+    [startDraft],
+  );
+  const existingFilePaths = useMemo(
+    () =>
+      files
+        .filter((node) => node.kind === SkillFileNodeKind.File)
+        .map((node) => node.path),
+    [files],
+  );
 
   const handlePickFromFileSystem = useCallback(
     async (targetFolderPath: string) => {
@@ -496,7 +533,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
           key: 'create-folder',
           label: t.createFolderLabel ?? 'Create folder',
           icon: menuIcon(IconFolderPlus),
-          onClick: () => startDraft(targetFolderPath, pane),
+          onClick: () => handleCreateFolderClick(targetFolderPath, pane),
         });
       }
       items.push({
@@ -540,7 +577,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
       t.uploadFilesLabel,
       t.uploadArchiveLabel,
       t.openFileSystemLabel,
-      startDraft,
+      handleCreateFolderClick,
       openUploadDialog,
       handlePickFromFileSystem,
     ],
@@ -907,15 +944,16 @@ export const SkillEditor: FC<SkillEditorProps> = ({
           <>
             {/* Mobile: collapsible file-list summary, collapsed by default. */}
             <div className="desktop:hidden">
-              <Accordion
-                title={t.editingFileLabel ?? 'Editing file'}
-                description={selectedNode?.name ?? SKILL_MANIFEST_PATH}
-                expanded={isFilesExpanded}
+              <SkillFilesSummary
+                label={t.editingFileLabel ?? 'Editing file'}
+                fileName={selectedNode?.name ?? SKILL_MANIFEST_PATH}
+                isExpanded={isFilesExpanded}
                 onToggle={setIsFilesExpanded}
-                ariaLabel={t.editingFileLabel ?? 'Editing file'}
+                labelClassName={typography.editingFileLabelClassName}
+                fileNameClassName={typography.editingFileNameClassName}
               >
                 {renderFilesPane(SkillFilesPane.Mobile)}
-              </Accordion>
+              </SkillFilesSummary>
             </div>
 
             {/* Desktop: always-visible Files panel. */}
@@ -975,7 +1013,32 @@ export const SkillEditor: FC<SkillEditorProps> = ({
         targetFolderPath={uploadRequest.targetFolderPath}
         initialFiles={uploadRequest.initialFiles}
         initialEntries={uploadRequest.initialEntries}
+        existingFilePaths={existingFilePaths}
+        onCommitted={(candidates) => {
+          if (candidates.some((candidate) => candidate.replacesExisting)) {
+            setHasReplacedFileContent(true);
+          }
+        }}
+        messageClassName={typography.uploadMessageClassName}
+        rowCaptionClassName={typography.uploadRowCaptionClassName}
         labels={labels}
+      />
+
+      <SkillCreateFolderDialog
+        isOpen={createFolderParentPath != null}
+        onClose={() => setCreateFolderParentPath(null)}
+        validateName={(name) =>
+          draftFolder.validateNewFolder(name, createFolderParentPath ?? '')
+        }
+        onCreate={(name) =>
+          draftFolder.createFolder(name, createFolderParentPath ?? '')
+        }
+        title={t.createFolderLabel ?? 'Create folder'}
+        nameLabel={t.createFolderNameLabel ?? 'Name'}
+        namePlaceholder={t.createFolderNamePlaceholder ?? 'Enter folder name'}
+        createLabel={t.createFolderConfirmLabel ?? 'Create'}
+        cancelLabel={t.cancelLabel ?? 'Cancel'}
+        closeAriaLabel={t.createFolderCloseAriaLabel ?? 'Close'}
       />
     </div>
   );

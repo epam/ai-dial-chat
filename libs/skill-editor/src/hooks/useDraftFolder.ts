@@ -56,6 +56,10 @@ export interface UseDraftFolderResult {
   handleSave: (value: string) => void;
   /** `DialFoldersTree` `onRenameCancel`. */
   handleCancel: () => void;
+  /** Returns the error for naming a new folder `name` inside `parentPath`, or `undefined` when it can be created. */
+  validateNewFolder: (name: string, parentPath: string) => string | undefined;
+  /** Creates a folder named `name` inside `parentPath` through the host, without a tree draft. */
+  createFolder: (name: string, parentPath: string) => void;
 }
 
 interface ValidationCall {
@@ -135,6 +139,16 @@ export const useDraftFolder = ({
     setDraft(null);
   }, []);
 
+  const createFolder = useCallback(
+    (value: string, parent: string) => {
+      const path = joinSkillPath(parent, value.trim());
+      fileActions.onCreateFolder?.(path);
+      if (parent !== '') onRevealFolder(parent);
+      onCreated(path);
+    },
+    [fileActions, onRevealFolder, onCreated],
+  );
+
   const handleSave = useCallback(
     (value: string) => {
       if (parentPath == null) return;
@@ -155,12 +169,10 @@ export const useDraftFolder = ({
         handleCancel();
         return;
       }
-      const path = joinSkillPath(parentPath, value.trim());
       handleCancel();
-      fileActions.onCreateFolder?.(path);
-      onCreated(path);
+      createFolder(value, parentPath);
     },
-    [parentPath, validateName, handleCancel, fileActions, onCreated],
+    [parentPath, validateName, handleCancel, createFolder],
   );
 
   return {
@@ -171,5 +183,7 @@ export const useDraftFolder = ({
     handleValidate,
     handleSave,
     handleCancel,
+    validateNewFolder: validateName,
+    createFolder,
   };
 };

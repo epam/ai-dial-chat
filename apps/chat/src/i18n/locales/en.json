@@ -1545,7 +1545,12 @@
     "uploadArchiveError": "Couldn't read this archive",
     "uploadArchiveEmpty": "This archive has no files",
     "uploadArchiveExtractingAriaLabel": "Reading archive",
-    "fileSystemDownloadError": "Couldn't copy files from the DIAL file system"
+    "fileSystemDownloadError": "Couldn't copy files from the DIAL file system",
+    "createFolderNamePlaceholder": "Enter folder name",
+    "uploadArchiveFormats": "File format .zip",
+    "uploadConflictTitle": "Replace or duplicate it?",
+    "uploadConflictMessage": "Item with the same name \"{{path}}\" already exists.",
+    "uploadReplaceRowNote": "Will replace the existing file"
   },
   "skillArchiveImport": {
     "fileInputAriaLabel": "Upload a skill ZIP archive or a SKILL.md file",

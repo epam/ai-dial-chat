@@ -106,6 +106,62 @@ describe('validateSkillFileBatch', () => {
     expect(results[0].error).toBe(messages.pathDuplicate);
   });
 
+  it('accepts an upload that replaces the existing file at its path', async () => {
+    const candidate = {
+      ...buildCandidate('notes.md'),
+      replacesExisting: true,
+    };
+    const { results } = await validateSkillFileBatch([candidate], {
+      ...baseContext,
+      existingPaths: ['notes.md'],
+    });
+
+    expect(results[0].status).toBe(SkillFileValidationStatus.Valid);
+  });
+
+  it('rejects a file at the path of an existing folder, even as a replacement', async () => {
+    const candidate = { ...buildCandidate('scripts'), replacesExisting: true };
+    const { results } = await validateSkillFileBatch([candidate], {
+      ...baseContext,
+      existingFolderPaths: ['scripts'],
+    });
+
+    expect(results[0].error).toBe(messages.pathDuplicate);
+  });
+
+  it('still rejects two staged uploads replacing the same path', async () => {
+    const first = { ...buildCandidate('notes.md'), replacesExisting: true };
+    const second = { ...buildCandidate('notes.md'), replacesExisting: true };
+    const { results } = await validateSkillFileBatch([first, second], {
+      ...baseContext,
+      existingPaths: ['notes.md'],
+    });
+
+    expect(results.map((result) => result.error)).toEqual([
+      messages.pathDuplicate,
+      messages.pathDuplicate,
+    ]);
+  });
+
+  it('frees the bytes and count of a replaced file from the projected totals', async () => {
+    const existingPaths = Array.from(
+      { length: SKILL_UPLOAD_MAX_FILES - 1 },
+      (_, index) => `file-${index}.md`,
+    );
+    const candidate = {
+      ...buildCandidate('file-0.md', 'small'),
+      replacesExisting: true,
+    };
+    const { batchErrors } = await validateSkillFileBatch([candidate], {
+      ...baseContext,
+      existingPaths,
+      existingTotalBytes: SKILL_UPLOAD_MAX_TOTAL_BYTES - 200,
+      existingFileBytes: new Map([['file-0.md', 1_000]]),
+    });
+
+    expect(batchErrors).toHaveLength(0);
+  });
+
   it('rejects the whole batch when projected total size exceeds the limit', async () => {
     const candidate = buildCandidate('big.md');
     const { batchErrors } = await validateSkillFileBatch([candidate], {

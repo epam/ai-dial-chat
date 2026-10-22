@@ -4,6 +4,7 @@ import {
   isValidSkillRelativePath,
   parseSkillResourceUrl,
   SkillEditorLoadState,
+  SKILL_FILE_UPLOAD_MAX_BYTES,
   SKILL_MANIFEST_FILE,
   useSkillEditorLoad,
   useSkillEditorSubmit,
@@ -14,7 +15,7 @@ import {
   type SkillEditorSubmitNotification,
   type SkillFileActionsMessages,
 } from '@epam/ai-dial-chat-hooks';
-import { PUBLIC_BUCKET } from '@epam/ai-dial-chat-shared';
+import { formatFileSize, PUBLIC_BUCKET } from '@epam/ai-dial-chat-shared';
 import {
   SkillEditor as SkillEditorForm,
   type SkillEditorLabels,
@@ -35,6 +36,7 @@ import { SkillFilePreview } from '../../components/SkillFilePreview/SkillFilePre
 import SkillFileSystemModal from '../../components/SkillFileSystemModal/SkillFileSystemModal';
 import {
   ButtonsI18nKeys,
+  DialFileManagerI18nKeys,
   EditorI18nKeys,
   SkillEditorI18nKeys,
 } from '../../constants/translation-keys';
@@ -196,13 +198,6 @@ const SkillEditorPage: FC = () => {
     [bucket, skillPath, isManifestSelected, selectedPath],
   );
 
-  const { state: previewState, retry: retryPreview } = useSkillFilePreviewSync({
-    selectedPath,
-    canvasAttachmentId,
-    files,
-    filesContentRef,
-  });
-
   const handleSelectedPathChange = useCallback((path: string) => {
     setSelectedPath(path);
     setHasReturnedToManifest(false);
@@ -235,20 +230,32 @@ const SkillEditorPage: FC = () => {
 
   const fileSystemPicker = useSkillFileSystemPicker(bucket);
 
-  const { fileActions, pendingManifestImport, resolveManifestImport } =
-    useSkillFileActions({
-      files,
-      setFiles,
-      filesContentRef,
-      frontmatterRef,
-      loadedValues,
-      setLoadedValues,
-      isEditMode,
-      isDirty,
-      setSelectedPath,
-      messages: fileActionsMessages,
-      pickFromFileSystem: fileSystemPicker.pickFromFileSystem,
-    });
+  const {
+    fileActions,
+    pendingManifestImport,
+    resolveManifestImport,
+    contentRevisions,
+  } = useSkillFileActions({
+    files,
+    setFiles,
+    filesContentRef,
+    frontmatterRef,
+    loadedValues,
+    setLoadedValues,
+    isEditMode,
+    isDirty,
+    setSelectedPath,
+    messages: fileActionsMessages,
+    pickFromFileSystem: fileSystemPicker.pickFromFileSystem,
+  });
+
+  const { state: previewState, retry: retryPreview } = useSkillFilePreviewSync({
+    selectedPath,
+    canvasAttachmentId,
+    files,
+    filesContentRef,
+    contentRevision: contentRevisions[selectedPath],
+  });
 
   const submitMessages = useMemo<SkillEditorSubmitMessages>(
     () => ({
@@ -294,6 +301,7 @@ const SkillEditorPage: FC = () => {
     isEditMode,
     files,
     filesContentRef,
+    contentRevisions,
     frontmatterRef,
     loadedPathRef,
     etagRef,
@@ -428,6 +436,25 @@ const SkillEditorPage: FC = () => {
       ),
       dropOverlayTitle: t(SkillEditorI18nKeys.DropOverlayTitle),
       dropOverlaySubtitle: t(SkillEditorI18nKeys.DropOverlaySubtitle),
+      uploadDropZoneDescription: t(DialFileManagerI18nKeys.MaxSizeOnly, {
+        maxSize: formatFileSize(SKILL_FILE_UPLOAD_MAX_BYTES),
+      }),
+      uploadArchiveDropZoneDescription: t(
+        SkillEditorI18nKeys.UploadArchiveFormats,
+      ),
+      uploadConflictTitle: t(SkillEditorI18nKeys.UploadConflictTitle),
+      uploadConflictMessage: (path) =>
+        t(SkillEditorI18nKeys.UploadConflictMessage, { path }),
+      uploadConflictReplaceLabel: t(ButtonsI18nKeys.Replace),
+      uploadConflictDuplicateLabel: t(ButtonsI18nKeys.Duplicate),
+      uploadConflictConfirmLabel: t(ButtonsI18nKeys.Confirm),
+      uploadReplaceRowNote: t(SkillEditorI18nKeys.UploadReplaceRowNote),
+      createFolderNameLabel: t(SkillEditorI18nKeys.NameLabel),
+      createFolderNamePlaceholder: t(
+        SkillEditorI18nKeys.CreateFolderNamePlaceholder,
+      ),
+      createFolderCloseAriaLabel: t(ButtonsI18nKeys.Close),
+      createFolderConfirmLabel: t(ButtonsI18nKeys.Create),
     }),
     [t, isEditMode, loadState, refinementLabels],
   );
