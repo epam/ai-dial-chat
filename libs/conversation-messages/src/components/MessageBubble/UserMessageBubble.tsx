@@ -193,7 +193,14 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
           <div
             className={mergeClasses(
               styles.userBubble,
-              'flex w-fit items-center justify-end rounded-ss-2xl rounded-es-2xl border px-6 py-4',
+              /*
+               * `max-w-full min-w-0` caps the fit-content width at the column:
+               * without it a code line or an unbreakable token (a long URL)
+               * sets the bubble's min-content width and stretches the layout.
+               * `wrap-anywhere` lets such tokens break in every markdown block
+               * (list items, headings), not only paragraphs and links.
+               */
+              'flex w-fit max-w-full min-w-0 items-center justify-end rounded-ss-2xl rounded-es-2xl border px-6 py-4 wrap-anywhere',
               positionRadius,
               bubbleClassName,
               CONVERSATION_MESSAGES_CLASS.userBubble,

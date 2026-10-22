@@ -211,8 +211,7 @@ type-check against a lib signature.
 #### Scenario: App constants keep only their routing members
 
 - **WHEN** `apps/chat/src/constants/toolsets.ts` is inspected
-- **THEN** it retains exactly its routing-owned members — `ToolsetEditorSteps` and
-  `ToolsetEditorQuery` — and re-exports none of the declarations owned elsewhere;
+- **THEN** it retains exactly its routing-owned member — `ToolsetEditorQuery` — and re-exports none of the declarations owned elsewhere;
   `ToolsetTransportType` and the default-toolset constants live in
   `@epam/ai-dial-toolset-editor`
 

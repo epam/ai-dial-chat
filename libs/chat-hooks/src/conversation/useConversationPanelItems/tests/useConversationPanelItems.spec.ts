@@ -2,7 +2,7 @@ import type {
   ConversationListItemDto,
   DeploymentItemDto,
 } from '@epam/ai-dial-chat-api-client';
-import { FilterTab } from '@epam/ai-dial-chat-shared';
+import { ConversationKind, FilterTab } from '@epam/ai-dial-chat-shared';
 import { renderHook } from '@testing-library/react';
 import { createElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -130,6 +130,8 @@ describe('useConversationPanelItems', () => {
     expect(task.leadingIcon).toBe(leadingIcon);
     expect(task.isUnread).toBe(true);
     expect(task).not.toHaveProperty('showTaskBadge');
+    expect(task.kind).toBe(ConversationKind.Task);
+    expect(chat.kind).toBe(ConversationKind.Chat);
     expect(chat.leadingIcon).toBeUndefined();
     expect(chat.isUnread).toBeUndefined();
   });

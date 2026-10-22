@@ -32,6 +32,7 @@ vi.mock('../../ConversationListHeader/ConversationListHeader', () => ({
     onSearchChange,
     onSearchOpenChange,
     onFilterChange,
+    onTypeFilterChange,
     searchQuery,
     activeFilter,
     hiddenSources,
@@ -42,6 +43,7 @@ vi.mock('../../ConversationListHeader/ConversationListHeader', () => ({
     onSearchChange?: (query: string) => void;
     onSearchOpenChange?: (isOpen: boolean) => void;
     onFilterChange?: (tab: string) => void;
+    onTypeFilterChange?: (type: string) => void;
     searchQuery?: string;
     activeFilter?: string;
     hiddenSources?: string[];
@@ -65,6 +67,12 @@ vi.mock('../../ConversationListHeader/ConversationListHeader', () => ({
         <button
           aria-label="choose shared"
           onClick={() => onFilterChange('shared')}
+        />
+      )}
+      {onTypeFilterChange && (
+        <button
+          aria-label="choose tasks"
+          onClick={() => onTypeFilterChange('task')}
         />
       )}
       <span aria-label="header state">{`${searchQuery}|${activeFilter}|${hiddenSources?.join(',') ?? ''}`}</span>
@@ -188,6 +196,23 @@ describe('ConversationListSection', () => {
     );
 
     expect(listProps.current?.activeFilter).toBe('shared');
+  });
+
+  it('hands the chosen type to the list and reports it', () => {
+    const onTypeFilterChange = vi.fn();
+    renderSection({ onTypeFilterChange });
+
+    fireEvent.click(screen.getByRole('button', { name: 'choose tasks' }));
+
+    expect(listProps.current?.activeTypeFilter).toBe('task');
+    expect(onTypeFilterChange).toHaveBeenCalledExactlyOnceWith('task');
+  });
+
+  it('omits the type filter when it is hidden, and keeps the origin filter', () => {
+    renderSection({ onFilterChange: vi.fn(), isTypeFilterHidden: true });
+
+    expect(screen.queryByRole('button', { name: 'choose tasks' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'choose shared' })).toBeTruthy();
   });
 
   it('omits the filter control when it is hidden', () => {

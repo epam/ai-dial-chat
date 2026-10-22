@@ -1,9 +1,10 @@
-import { FilterTab } from '@epam/ai-dial-chat-shared';
+import { ConversationKind, FilterTab } from '@epam/ai-dial-chat-shared';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { CONVERSATION_PANEL_CLASS } from '../../../constants/public-class-names';
 import { ConversationItem } from '../../../models/panel-props';
+import { ConversationTypeFilter } from '../../../types/conversation-kind';
 import { ConversationList } from '../ConversationList';
 
 /* Records one entry per ConversationRow body render (its title renders once). */
@@ -115,6 +116,7 @@ vi.mock('@epam/ai-dial-chat-shared', () => ({
     Shared: 'shared',
     Organization: 'organization',
   },
+  ConversationKind: { Chat: 'chat', Task: 'task' },
   DeploymentIcon: () => null,
   mergeClasses: (...args: (string | undefined | false | null)[]) =>
     args.filter(Boolean).join(' '),
@@ -291,6 +293,34 @@ describe('ConversationList', () => {
     /* eslint-enable testing-library/no-node-access */
 
     expect(root?.classList).toContain('dial-small-text');
+  });
+
+  it('shows only tasks, or only chats, for the type filter', () => {
+    const mixed: ConversationItem[] = [
+      { id: 't1', title: 'Daily digest', kind: ConversationKind.Task },
+      { id: 'c1', title: 'Plain chat' },
+    ];
+    const { rerender } = render(
+      <ConversationList
+        {...BASE_PROPS}
+        conversations={mixed}
+        activeTypeFilter={ConversationTypeFilter.Task}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Daily digest' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Plain chat' })).toBeNull();
+
+    rerender(
+      <ConversationList
+        {...BASE_PROPS}
+        conversations={mixed}
+        activeTypeFilter={ConversationTypeFilter.Chat}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Plain chat' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Daily digest' })).toBeNull();
   });
 
   it('applies the controlled filter', () => {

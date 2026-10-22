@@ -1,9 +1,53 @@
 import { FilterTab } from '@epam/ai-dial-chat-shared';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import React, { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { CONVERSATION_PANEL_CLASS } from '../../../constants/public-class-names';
+import { ConversationTypeFilter } from '../../../types/conversation-kind';
 import { ConversationListHeader } from '../ConversationListHeader';
+
+interface MockMenuItem {
+  key: string;
+  label: React.ReactNode;
+  renderItem?: (item: MockMenuItem) => React.ReactNode;
+  checked?: boolean;
+  onClick?: () => void;
+  children?: MockMenuItem[];
+}
+
+/* Renders items flat; a row with children becomes a labelled submenu list. */
+/* eslint-disable testing-library/no-node-access -- `children` is the menu item's own submenu field here, not a DOM node */
+const MockMenu = ({
+  items,
+  label,
+}: {
+  items: MockMenuItem[];
+  label: string;
+}) => (
+  <ul aria-label={label}>
+    {items.map((item) => (
+      <li key={item.key}>
+        {item.children ? (
+          <>
+            <span role="menuitem">
+              {item.renderItem ? item.renderItem(item) : item.label}
+            </span>
+            <MockMenu items={item.children} label={item.key} />
+          </>
+        ) : (
+          <button
+            role="menuitemradio"
+            aria-checked={item.checked}
+            onClick={item.onClick}
+          >
+            {item.label}
+          </button>
+        )}
+      </li>
+    ))}
+  </ul>
+);
+/* eslint-enable testing-library/no-node-access */
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_KIT_ICON_STROKE: 1.5,
@@ -21,28 +65,11 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     items,
   }: {
     children: React.ReactNode;
-    items: {
-      key: string;
-      label: React.ReactNode;
-      checked?: boolean;
-      onClick?: () => void;
-    }[];
+    items: MockMenuItem[];
   }) => (
     <>
       {children}
-      <ul aria-label="filter menu">
-        {items.map((item) => (
-          <li key={item.key}>
-            <button
-              role="menuitemradio"
-              aria-checked={item.checked}
-              onClick={item.onClick}
-            >
-              {item.label}
-            </button>
-          </li>
-        ))}
-      </ul>
+      <MockMenu items={items} label="filter menu" />
     </>
   ),
   Search: ({
@@ -104,6 +131,11 @@ const LABELS = {
     myChats: 'My chats',
     shared: 'Shared',
     organization: 'Organization',
+    personal: 'Personal',
+    type: 'Type',
+    origin: 'Origin',
+    chat: 'Chat',
+    task: 'Task',
   },
 };
 
@@ -118,6 +150,7 @@ const Harness = ({
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [filter, setFilter] = useState(FilterTab.All);
+  const [typeFilter, setTypeFilter] = useState(ConversationTypeFilter.All);
 
   return (
     <ConversationListHeader
@@ -131,6 +164,8 @@ const Harness = ({
       onSearchOpenChange={setIsOpen}
       activeFilter={filter}
       onFilterChange={setFilter}
+      activeTypeFilter={typeFilter}
+      onTypeFilterChange={setTypeFilter}
       hiddenSources={hiddenSources}
       actions={<button>overflow</button>}
     />
@@ -225,33 +260,97 @@ describe('ConversationListHeader', () => {
     expect(screen.queryByRole('searchbox')).toBeNull();
   });
 
-  it('marks the active filter and reports a new choice', () => {
+  it('offers a Type and an Origin submenu, each showing its current value', () => {
     render(<Harness />);
 
+    const [typeRow, originRow] = screen.getAllByRole('menuitem');
+    expect(typeRow.textContent).toBe('TypeAll');
+    expect(originRow.textContent).toBe('OriginAll');
+  });
+
+  it('marks the active origin and reports a new choice', () => {
+    render(<Harness />);
+    const origin = within(screen.getByRole('list', { name: 'filter-origin' }));
+
     expect(
-      screen
+      origin
         .getByRole('menuitemradio', { name: 'All' })
         .getAttribute('aria-checked'),
     ).toBe('true');
 
-    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Shared' }));
+    fireEvent.click(origin.getByRole('menuitemradio', { name: 'Shared' }));
 
     expect(
-      screen
+      origin
         .getByRole('menuitemradio', { name: 'Shared' })
         .getAttribute('aria-checked'),
     ).toBe('true');
+    expect(screen.getAllByRole('menuitem')[1].textContent).toBe('OriginShared');
   });
 
-  it('omits hidden sources from the filter menu', () => {
-    render(<Harness hiddenSources={[FilterTab.Organization]} />);
+  it('names the My chats origin Personal', () => {
+    render(<Harness />);
 
     expect(
-      screen.queryByRole('menuitemradio', { name: 'Organization' }),
-    ).toBeNull();
-    expect(
-      screen.getByRole('menuitemradio', { name: 'My chats' }),
+      within(screen.getByRole('list', { name: 'filter-origin' })).getByRole(
+        'menuitemradio',
+        { name: 'Personal' },
+      ),
     ).toBeTruthy();
+  });
+
+  it('marks the active type and reports a new choice', () => {
+    render(<Harness />);
+    const type = within(screen.getByRole('list', { name: 'filter-type' }));
+
+    expect(
+      type.getAllByRole('menuitemradio').map((option) => option.textContent),
+    ).toEqual(['All', 'Chat', 'Task']);
+
+    fireEvent.click(type.getByRole('menuitemradio', { name: 'Task' }));
+
+    expect(
+      type
+        .getByRole('menuitemradio', { name: 'Task' })
+        .getAttribute('aria-checked'),
+    ).toBe('true');
+    expect(screen.getAllByRole('menuitem')[0].textContent).toBe('TypeTask');
+  });
+
+  it('omits hidden sources from the origin submenu', () => {
+    render(<Harness hiddenSources={[FilterTab.Organization]} />);
+    const origin = within(screen.getByRole('list', { name: 'filter-origin' }));
+
+    expect(
+      origin.queryByRole('menuitemradio', { name: 'Organization' }),
+    ).toBeNull();
+    expect(origin.getByRole('menuitemradio', { name: 'Shared' })).toBeTruthy();
+  });
+
+  it('shows only the Origin submenu when no type handler is given', () => {
+    render(
+      <ConversationListHeader
+        labels={LABELS}
+        onFilterChange={vi.fn()}
+        actions={<b>slot</b>}
+      />,
+    );
+
+    expect(screen.queryByRole('list', { name: 'filter-type' })).toBeNull();
+    expect(screen.getByRole('list', { name: 'filter-origin' })).toBeTruthy();
+  });
+
+  it('shows only the Type submenu when no origin handler is given', () => {
+    render(
+      <ConversationListHeader
+        labels={LABELS}
+        onTypeFilterChange={vi.fn()}
+        actions={<b>slot</b>}
+      />,
+    );
+
+    expect(screen.getByRole('list', { name: 'filter-type' })).toBeTruthy();
+    expect(screen.queryByRole('list', { name: 'filter-origin' })).toBeNull();
   });
 
   it('omits the search and filter controls when their props are absent', () => {

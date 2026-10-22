@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import ScheduledTaskDeleteModal from '../ScheduledTaskDeleteModal';
+import styles from '../ScheduledTaskDeleteModal.module.scss';
 
 /*
  * The kit's `Popup` renders for real here: mocking it hid that the dialog used
@@ -30,6 +31,18 @@ describe('ScheduledTaskDeleteModal', () => {
         name: 'scheduledTasks.detail.deleteConfirmTitle',
       }),
     ).toBeTruthy();
+  });
+
+  /* The cap was lost once already, when the bespoke modal was replaced with
+     the shared dialog whose `PopupSize.Sm` default caps at 400px. */
+  it('caps the dialog width at the design cap class', () => {
+    renderModal();
+
+    expect(
+      screen.getByRole('dialog', {
+        name: 'scheduledTasks.detail.deleteConfirmTitle',
+      }).className,
+    ).toContain(styles.modal);
   });
 
   it('identifies the task by name only, without a type label', () => {

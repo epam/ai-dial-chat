@@ -170,11 +170,15 @@ import { ConversationListHeader } from '@epam/ai-dial-conversation-panel';
 ```
 
 Each control renders only when its props are present: the search control needs
-both `onSearchChange` and `onSearchOpenChange`, the filter needs
-`onFilterChange`. While the search is open it replaces the row, with a separate
+both `onSearchChange` and `onSearchOpenChange`, the filter menu needs
+`onFilterChange` (its "Origin" submenu) or `onTypeFilterChange` (its "Type"
+submenu). While the search is open it replaces the row, with a separate
 Close search button. Closing — by that button or Escape — calls
-`onSearchChange('')` and returns focus to the search toggle. The filter menu is
-single-select with a check on `activeFilter`, and omits `hiddenSources`.
+`onSearchChange('')` and returns focus to the search toggle. The filter menu has two rows, each showing its current value and opening a
+single-select submenu: "Type" (All, Chat, Task; `activeTypeFilter`) and "Origin"
+(All, Personal, Shared, Organization; `activeFilter`, omitting `hiddenSources`).
+Their labels come from `labels.filterLabels` (`type`, `origin`, `chat`, `task`,
+`personal`, with English defaults).
 The filter trigger is named by `labels.filterLabels.groupAriaLabel` (default
 `'Filter chats'`). `styles.typography.titleClassName` and
 `styles.typography.searchTextClassName` set the title and search text
@@ -218,8 +222,12 @@ import { ConversationListSection } from '@epam/ai-dial-conversation-panel';
 
 `requestedFilter` makes the section adopt a filter whenever it changes (the user
 can still pick another afterwards), `onFilterChange` reports the user's choice,
-`isFilterHidden` drops the filter trigger and `hiddenSources` removes sources
-from the list altogether. Row actions, `onActionMenuOpen` and
+`isFilterHidden` drops the filter trigger, `isTypeFilterHidden` drops only its
+"Type" submenu (a host with no scheduled tasks), `onTypeFilterChange` reports
+the chosen type, and `hiddenSources` removes sources from the list altogether.
+A conversation is a task when its `ConversationItem.kind` is
+`ConversationKind.Task` (from `@epam/ai-dial-chat-shared`); without a kind it is
+a chat. Row actions, `onActionMenuOpen` and
 `onMoveConversation` go to the list unchanged, `headerActions` to the header,
 and `styles.header` / `styles.list` to the matching component. `listClassName`
 is merged onto the list root, for a host anchor. The section fills the height
@@ -352,6 +360,17 @@ FilterTab.Pinned; // 'pinned' — also identifies the Pinned collapsible group
 FilterTab.MyChats; // 'my-chats' — also used as a conversation's source/ownership
 FilterTab.Shared; // 'shared'
 FilterTab.Organization; // 'organization'
+```
+
+`ConversationTypeFilter` is owned by this package; a conversation's own `kind` is
+`ConversationKind` from `@epam/ai-dial-chat-shared`:
+
+```tsx
+import { ConversationTypeFilter } from '@epam/ai-dial-conversation-panel';
+
+ConversationTypeFilter.All; // 'all'
+ConversationTypeFilter.Chat; // 'chat'
+ConversationTypeFilter.Task; // 'task'
 ```
 
 `ConversationRowVariant` is owned by this package:

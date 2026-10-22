@@ -5,6 +5,16 @@ const pad = (value: number): string => String(value).padStart(2, '0');
 /** 24-hour `HH:mm` time-of-day, matching the `Calendar` time control's value shape. */
 export const TIME_OF_DAY_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
+/** Separator between the date and time parts of a `datetime-local` value. */
+export const DATETIME_LOCAL_SEPARATOR = 'T';
+
+/** Length of a date-only `YYYY-MM-DD` value; longer values carry a `THH:mm` time part. */
+export const DATE_ONLY_VALUE_LENGTH = 10;
+
+/** Whether a value carries a time part (`YYYY-MM-DDTHH:mm`), rather than being date-only `YYYY-MM-DD`. */
+export const isDateTimeLocalValue = (value: string): boolean =>
+  value.length > DATE_ONLY_VALUE_LENGTH;
+
 /** Converts the `datetime-local`-style `values.runAt` string to a `Date` for `Calendar`'s controlled value, or `null` when empty. */
 export const runAtToCalendarValue = (runAt: string | undefined): Date | null =>
   runAt ? new Date(runAt) : null;
@@ -18,7 +28,7 @@ export const calendarValueToRunAt = (value: CalendarValue): string => {
   if (Number.isNaN(date.getTime())) {
     return '';
   }
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}${DATETIME_LOCAL_SEPARATOR}${pad(date.getHours())}:${pad(date.getMinutes())}`;
 };
 
 /*
@@ -27,12 +37,17 @@ export const calendarValueToRunAt = (value: CalendarValue): string => {
  * as UTC midnight per the ECMA-262 date-time string format — which would
  * shift the displayed calendar day by one in any timezone behind UTC.
  */
-/** Converts a `YYYY-MM-DD` date-only string (`values.startDate`/`endDate`) to a `Date` for `Calendar`'s controlled value, or `null` when empty. */
+/** Converts a window-boundary value — date-only `YYYY-MM-DD` or hourly `YYYY-MM-DDTHH:mm` — to a `Date` for `Calendar`'s controlled value, or `null` when empty. */
 export const dateValueToCalendarValue = (
   dateValue: string | undefined,
 ): Date | null => {
   if (!dateValue) {
     return null;
+  }
+  /* A datetime-local string parses as local wall-clock; only the bare
+   * date-only form needs component-wise construction. */
+  if (isDateTimeLocalValue(dateValue)) {
+    return new Date(dateValue);
   }
   const [year, month, day] = dateValue.split('-').map(Number);
   return new Date(year, month - 1, day);

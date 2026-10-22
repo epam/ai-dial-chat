@@ -45,6 +45,14 @@ describe('dateValueToCalendarValue', () => {
     expect((result as Date).getFullYear()).toBe(2026);
   });
 
+  it('parses an hourly YYYY-MM-DDTHH:mm string into a Date keeping its time-of-day', () => {
+    const result = dateValueToCalendarValue('2026-08-05T09:30');
+
+    expect(result).toBeInstanceOf(Date);
+    expect((result as Date).getHours()).toBe(9);
+    expect((result as Date).getMinutes()).toBe(30);
+  });
+
   it('returns null when the date value is undefined', () => {
     expect(dateValueToCalendarValue(undefined)).toBeNull();
   });

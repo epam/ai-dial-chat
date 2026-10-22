@@ -340,6 +340,14 @@ A `Warning` job delivered its file, but not everything the user asked for made i
 
 Warning jobs may also carry `warningNames?: string[]`: untranslated names of skipped attachments. Import jobs retain the same unique names emitted in their warning event so hosts can identify the skipped files after the notification disappears. Names are optional for compatibility with export jobs and older producers.
 
+### ConversationKind
+
+What a conversation is: `ConversationKind.Chat` (`'chat'`) or `ConversationKind.Task` (`'task'`, the run of a scheduled task). The headless items hook sets it on each panel item and the conversation panel's type filter reads it.
+
+```tsx
+import { ConversationKind } from '@epam/ai-dial-chat-shared';
+```
+
 ### FilterTab
 
 Canonical conversation ownership/grouping identifiers shared by the headless mapping hooks and the conversation panel. `@epam/ai-dial-conversation-panel` re-exports the same enum for compatibility.
@@ -810,7 +818,8 @@ Pass `identity` to replace the default card for a resource that has no
 (such as the names a bulk action affects), and `children` for a step that needs an input before it can
 be confirmed — the caller owns that input's state and disables confirming
 until it is satisfied. With neither `item` nor `identity` the card is omitted,
-which suits a confirmation that is not about a particular resource.
+which suits a confirmation that is not about a particular resource. `className`
+is merged onto the view root, e.g. `pt-0` to drop its default top padding.
 
 ### ConfirmationFooter
 
@@ -871,7 +880,11 @@ click all stop working, because dismissing mid-request would leave the surface
 behind contradicting an action that is still running.
 
 `title` is a string rather than a node so the kit names the dialog with it; a
-node header would open the dialog unnamed.
+node header would open the dialog unnamed. `viewClassName` is merged onto the
+content view root and `footerStyles` is forwarded to the action row — e.g.
+`viewClassName="pt-0"` with `footerStyles={{ colors: { border: 'transparent' } }}`
+drops the content view's top padding and the action row's top border, as the
+scheduled-task delete modal does.
 
 ```tsx
 import { ConfirmationDialog } from '@epam/ai-dial-chat-shared';

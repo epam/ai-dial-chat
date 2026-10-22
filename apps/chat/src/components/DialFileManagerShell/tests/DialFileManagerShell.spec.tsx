@@ -1095,6 +1095,20 @@ describe('DialFileManagerShell', () => {
       ).toBe('File storage');
     });
 
+    it('shows the host-provided treeHeader above the tabs', () => {
+      renderAll(
+        DialFileManagerTabs.Shared,
+        {},
+        {
+          ...baseLabels,
+          treeHeader: 'File storage',
+        },
+      );
+      expect(capturedDialFileManagerProps.current?.treeOptions?.header).toBe(
+        'File storage',
+      );
+    });
+
     it('gates on activeTab when the controller has no sectionTab', () => {
       renderShell({ uploadEnabled: true }, new Set(), {
         activeTab: DialFileManagerTabs.Shared,
