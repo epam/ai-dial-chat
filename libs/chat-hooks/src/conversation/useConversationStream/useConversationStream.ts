@@ -818,6 +818,9 @@ export const useConversationStream = ({
          * ([#9324](https://github.com/epam/ai-dial-chat/issues/9324)). A 401
          * means nothing was stored, so one save from here cannot duplicate a
          * committed write; the warning is shown only if that save fails too.
+         * A stopped or failed answer is saved the same way, with the terminal
+         * markers the error carries: left as the stored placeholder, it would
+         * read as a generation still running after a reload ([#9370](https://github.com/epam/ai-dial-chat/issues/9370)).
          */
         if (
           buffered &&
@@ -908,9 +911,16 @@ export const useConversationStream = ({
             showFailure(error, buffered);
             return;
           }
+          /* A stopped or failed answer keeps the outcome the rejected write carried. */
+          const answer = error.terminalMarker
+            ? {
+                ...buffered,
+                message: { ...buffered.message, ...error.terminalMarker },
+              }
+            : buffered;
           const saved = await saveConversation(
             conversationPath,
-            restoreBufferedMessage(stored, buffered),
+            restoreBufferedMessage(stored, answer),
           );
           if (!isSaveCurrent()) return;
           bufferedGenerationsRef.current.delete(conversationPath);

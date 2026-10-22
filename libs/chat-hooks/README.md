@@ -1336,21 +1336,30 @@ states are transient and are discarded on unmount.
 
 `createChatStreamApi` recognizes `error.type: "conversation_save_failed"` as
 `GenerationPersistenceError`, even after an upstream `[DONE]` frame. A numeric
-`error.status` on that chunk (the rejected write's status, sent only for a
-completed answer) is exposed as
-`GenerationPersistenceError.status`; it is `undefined` when absent. The error
-class (including its static `type`) and the default message are exported from
-`@epam/ai-dial-chat-hooks`. Custom transports can report this error through
-`onError`; the hook uses the host's warning rather than raw upstream error text.
+`error.status` on that chunk (the rejected write's status) is exposed as
+`GenerationPersistenceError.status`; it is `undefined` when absent. For an
+answer that did not complete, the chunk also carries the terminal markers the
+rejected write held — `streamErrorMessage` or `wasStoppedByUser: true` — exposed
+as `GenerationPersistenceError.terminalMarker`
+(`GenerationPersistenceTerminalMarker`); it is `undefined` for a completed
+answer. An in-band upstream error is held until the stream ends, so a
+persistence failure that follows it is the one reported. The error class
+(including its static `type`), the marker type, and the default message are
+exported from `@epam/ai-dial-chat-hooks`. Custom transports can report this
+error through `onError`; the hook uses the host's warning rather than raw
+upstream error text.
 
 When a stream started by `startStream` reports this error with `status: 401`
 and the transport implements `saveConversation`, the backend's terminal save
 was refused for its credentials, which can expire during a long generation.
 The hook then makes one recovery save instead of showing the warning: it reads
 the conversation through `getConversation`, restores the received answer at its
-index, and saves it once. The warning is shown only if that read or save fails.
-Any other status, a missing status, an attached generation, or a transport
-without `saveConversation` shows the warning immediately, as before.
+index with the error's `terminalMarker` applied, and saves it once. A stopped or
+failed answer is therefore stored as stopped or failed, not left as a
+placeholder that reads as a running generation after a reload. The warning is
+shown only if that read or save fails. Any other status, a missing status, an
+attached generation, or a transport without `saveConversation` shows the
+warning immediately, as before.
 
 #### applyChunkToMessages / mergeStages
 
