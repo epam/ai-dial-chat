@@ -10,7 +10,6 @@ interface HookProps {
   isMobile: boolean;
   isCanvasOpen: boolean;
   isOpenByDefault: boolean;
-  isToggleEnabled?: boolean;
 }
 
 const wrapper: FC<{ children: ReactNode }> = ({ children }) => (
@@ -111,31 +110,7 @@ describe('useConversationPanelRouteState', () => {
     expect(result.current.isPanelOpen).toBe(true);
   });
 
-  it('does not reopen a sidebar collapsed by the canvas when navigating', () => {
-    const { result, rerender } = renderSidebarState();
-
-    rerender({
-      ...DEFAULT_PROPS,
-      isCanvasOpen: true,
-      pathname: `${ROUTES.Conversations}/first`,
-    });
-    expect(result.current.isPanelOpen).toBe(false);
-
-    rerender({
-      ...DEFAULT_PROPS,
-      isCanvasOpen: true,
-      pathname: `${ROUTES.Conversations}/second`,
-    });
-    expect(result.current.isPanelOpen).toBe(false);
-  });
-
-  it('starts collapsed when the canvas is already open on the first render', () => {
-    const { result } = renderSidebarState({ isCanvasOpen: true });
-
-    expect(result.current.isPanelOpen).toBe(false);
-  });
-
-  it('collapses and closes the sources panel when the canvas opens, without closing the canvas', () => {
+  it('keeps the sidebar expanded when the canvas opens, and closes only the sources panel', () => {
     const { result, rerender, onCloseCanvas, onCloseSourcesPanel } =
       renderSidebarState();
     expect(result.current.isPanelOpen).toBe(true);
@@ -143,20 +118,48 @@ describe('useConversationPanelRouteState', () => {
 
     rerender({ ...DEFAULT_PROPS, isCanvasOpen: true });
 
-    expect(result.current.isPanelOpen).toBe(false);
+    expect(result.current.isPanelOpen).toBe(true);
     expect(onCloseSourcesPanel).toHaveBeenCalledOnce();
     expect(onCloseCanvas).not.toHaveBeenCalled();
   });
 
-  it('closes the canvas when the user expands the sidebar', () => {
-    const { result, rerender, onCloseCanvas } = renderSidebarState();
+  it('starts from the default when the canvas is already open on the first render', () => {
+    const { result } = renderSidebarState({ isCanvasOpen: true });
+
+    expect(result.current.isPanelOpen).toBe(true);
+  });
+
+  it('keeps the sidebar expanded when the canvas closes', () => {
+    const { result, rerender } = renderSidebarState();
+
     rerender({ ...DEFAULT_PROPS, isCanvasOpen: true });
+    rerender({ ...DEFAULT_PROPS, isCanvasOpen: false });
+
+    expect(result.current.isPanelOpen).toBe(true);
+  });
+
+  it('keeps the user collapse while the canvas opens and closes', () => {
+    const { result, rerender } = renderSidebarState();
+    act(() => result.current.togglePanel());
+
+    rerender({ ...DEFAULT_PROPS, isCanvasOpen: true });
+    expect(result.current.isPanelOpen).toBe(false);
+
+    rerender({ ...DEFAULT_PROPS, isCanvasOpen: false });
+    expect(result.current.isPanelOpen).toBe(false);
+  });
+
+  it('leaves the canvas open when the user expands the sidebar', () => {
+    const { result, rerender, onCloseCanvas } = renderSidebarState({
+      isOpenByDefault: false,
+    });
+    rerender({ ...DEFAULT_PROPS, isOpenByDefault: false, isCanvasOpen: true });
 
     onCloseCanvas.mockClear();
     act(() => result.current.togglePanel());
 
     expect(result.current.isPanelOpen).toBe(true);
-    expect(onCloseCanvas).toHaveBeenCalled();
+    expect(onCloseCanvas).not.toHaveBeenCalled();
   });
 
   it('closes the canvas on every navigation', () => {
@@ -169,25 +172,5 @@ describe('useConversationPanelRouteState', () => {
     });
 
     expect(onCloseCanvas).toHaveBeenCalledTimes(2);
-  });
-
-  it('restores the default when the canvas closes and there is no toggle', () => {
-    const props = { isToggleEnabled: false };
-    const { result, rerender } = renderSidebarState(props);
-
-    rerender({ ...DEFAULT_PROPS, ...props, isCanvasOpen: true });
-    expect(result.current.isPanelOpen).toBe(false);
-
-    rerender({ ...DEFAULT_PROPS, ...props, isCanvasOpen: false });
-    expect(result.current.isPanelOpen).toBe(true);
-  });
-
-  it('keeps a canvas collapse after the canvas closes while the toggle is available', () => {
-    const { result, rerender } = renderSidebarState();
-
-    rerender({ ...DEFAULT_PROPS, isCanvasOpen: true });
-    rerender({ ...DEFAULT_PROPS, isCanvasOpen: false });
-
-    expect(result.current.isPanelOpen).toBe(false);
   });
 });
