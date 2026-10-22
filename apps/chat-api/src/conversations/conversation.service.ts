@@ -4,6 +4,7 @@ import { ConversationNamingService } from './conversation-naming.service';
 import { ConversationLifecycleService } from './lifecycle/conversation-lifecycle.service';
 import { ConversationListingService } from './listing/conversation-listing.service';
 import { ConversationPersistenceService } from './persistence/conversation-persistence.service';
+import { PublishedFolderAttachmentsService } from './published-folder-attachments.service';
 import { ConversationStreamingService } from './streaming/conversation-streaming.service';
 import {
   buildConversationUrl,
@@ -27,12 +28,34 @@ export class ConversationService {
     private readonly streamingService: ConversationStreamingService,
     private readonly conversationNamingService: ConversationNamingService,
     private readonly scheduledTaskUnreadService: ScheduledTaskUnreadService,
+    private readonly publishedFolderAttachments: PublishedFolderAttachmentsService,
   ) {}
 
   // Persistence
-  getConversation = this.persistenceService.getConversation.bind(
-    this.persistenceService,
-  );
+  /**
+   * Reads a conversation for a caller. A conversation from the public bucket
+   * has its folder attachments resolved to the published folder, because DIAL
+   * Core leaves those links pointing at the author's private bucket. Internal
+   * readers (streaming, naming, saving) use the persistence service directly
+   * and always see the stored body.
+   */
+  async getConversation(
+    conversationPath: string,
+    token: string,
+    sessionBucket: string,
+  ) {
+    const conversation = await this.persistenceService.getConversation(
+      conversationPath,
+      token,
+      sessionBucket,
+    );
+    return this.publishedFolderAttachments.resolve(
+      conversation,
+      conversationPath,
+      token,
+      sessionBucket,
+    );
+  }
 
   // Listing
   listConversations = this.listingService.listConversations.bind(

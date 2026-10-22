@@ -445,7 +445,7 @@ describe('UsageLimitsControl', () => {
       try {
         const dialog = await openPopover(user);
 
-        expect(dialog.className).toContain('end-0');
+        expect(dialog.className).toContain('inset-e-0');
         expect(dialog.className).not.toMatch(/(^|\s)(left|right)-/);
       } finally {
         document.documentElement.removeAttribute('dir');

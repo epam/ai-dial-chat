@@ -20,6 +20,12 @@ const localDateOnly = (offsetDays: number): string => {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 };
 
+/* An hourly boundary is an exact picked moment — the `YYYY-MM-DDTHH:mm`
+   shape hourly's date-and-time pickers write, unlike `localDateOnly`'s
+   whole-day shape. */
+const localDateTime = (offsetDays: number): string =>
+  `${localDateOnly(offsetDays)}T09:00`;
+
 const baseValues: ScheduledTaskCreateFormValues = {
   displayName: 'Daily summary',
   repeat: ScheduledTaskRepeat.OneTime,
@@ -258,8 +264,8 @@ describe('validateScheduledTaskForm', () => {
         repeat: ScheduledTaskRepeat.Hourly,
         time: '',
         minute: '0',
-        startDate: localDateOnly(1),
-        endDate: localDateOnly(10),
+        startDate: localDateTime(1),
+        endDate: localDateTime(10),
       },
       t,
     );

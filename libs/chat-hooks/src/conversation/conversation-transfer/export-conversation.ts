@@ -6,6 +6,7 @@ import type {
   Message,
   Stage,
 } from '@epam/ai-dial-chat-shared';
+import { mapAnnotationPool } from './attachment-refs';
 import { formatDateYMD } from './date';
 import { ExportFileNameKind } from './types';
 
@@ -16,13 +17,16 @@ export const EXPORT_APP_NAME = 'ai_dial';
 const stripStageAttachments = (stages: Stage[]): Stage[] =>
   stages.map(({ attachments: _attachments, ...stage }) => stage);
 
+/** Drops the cited source document from an annotation, keeping its quote, title and target. */
+const stripAnnotationSource = (annotation: Annotation): Annotation => {
+  if (annotation.body?.source == null) return annotation;
+  const { source: _source, ...body } = annotation.body;
+  return { ...annotation, body };
+};
+
 /** Drops the cited source document from every annotation, keeping its quote, title and target. */
 const stripAnnotationSources = (annotations: Annotation[]): Annotation[] =>
-  annotations.map((annotation) => {
-    if (annotation.body?.source == null) return annotation;
-    const { source: _source, ...body } = annotation.body;
-    return { ...annotation, body };
-  });
+  annotations.map(stripAnnotationSource);
 
 /**
  * Drops `custom_content.attachments`, every stage's attachments and every
@@ -53,13 +57,21 @@ const stripMessageAttachments = (message: Message): Message => {
   return messageWithoutContent as Message;
 };
 
-/** Returns the conversation with every message-, stage- and citation-level attachment reference removed. */
+/**
+ * Returns the conversation with every message-, stage- and citation-level
+ * attachment reference removed, including the source documents of the
+ * conversation-level citation pool.
+ */
 export const stripConversationAttachments = (
   conversation: Conversation,
-): Conversation => ({
-  ...conversation,
-  messages: conversation.messages.map(stripMessageAttachments),
-});
+): Conversation =>
+  mapAnnotationPool(
+    {
+      ...conversation,
+      messages: conversation.messages.map(stripMessageAttachments),
+    },
+    stripAnnotationSource,
+  );
 
 export const buildExportEnvelope = (
   conversations: Conversation[],

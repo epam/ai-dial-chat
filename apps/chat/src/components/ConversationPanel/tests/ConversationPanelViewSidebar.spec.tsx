@@ -7,6 +7,7 @@ import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { cloneElement, ReactElement, ReactNode, useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useFeatureFlag } from '../../../context/AppConfigContext';
 import { useConversations } from '../../../context/ConversationsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
@@ -305,6 +306,10 @@ vi.mock('react-router', () => ({
   useNavigate: () => mockNavigate,
 }));
 
+vi.mock(
+  '../../../context/AppConfigContext',
+  async () => import('../../../context/tests/app-config-context-mock'),
+);
 vi.mock('../../../context/ConversationsContext');
 vi.mock('../../../context/NotificationContext');
 vi.mock('../../../server-api/share.api');
@@ -539,6 +544,20 @@ describe('ConversationPanelView', () => {
 
     expect(onActiveFilterChange).toHaveBeenCalledWith('shared');
     expect(onRequestedFilterChange).toHaveBeenCalled();
+  });
+
+  it('offers the type filter only while scheduled tasks are enabled', () => {
+    vi.mocked(useFeatureFlag).mockImplementation(
+      (key?: string) => key === 'scheduledTasksEnabled',
+    );
+    const { unmount } = renderSidebar();
+    expect(sectionProps.current?.isTypeFilterHidden).toBe(false);
+    unmount();
+
+    vi.mocked(useFeatureFlag).mockReturnValue(false);
+    renderSidebar();
+
+    expect(sectionProps.current?.isTypeFilterHidden).toBe(true);
   });
 
   it('hands a filter requested by the app to the section', () => {

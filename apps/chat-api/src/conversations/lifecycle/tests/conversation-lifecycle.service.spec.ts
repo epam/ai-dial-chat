@@ -48,6 +48,9 @@ describe('ConversationLifecycleService', () => {
   let mockDeploymentsService: {
     resolveDeploymentItem: ReturnType<typeof vi.fn>;
   };
+  let mockPublishedFolderAttachments: {
+    resolve: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
     mockDialClient = {
@@ -78,11 +81,15 @@ describe('ConversationLifecycleService', () => {
     mockDeploymentsService = {
       resolveDeploymentItem: vi.fn().mockResolvedValue(null),
     };
+    mockPublishedFolderAttachments = {
+      resolve: vi.fn(async (conversation: unknown) => conversation),
+    };
     service = new ConversationLifecycleService(
       mockDialClient,
       mockUserConfigService as never,
       persistenceService,
       mockDeploymentsService as never,
+      mockPublishedFolderAttachments as never,
     );
     vi.mocked(handleDialSdkError).mockReset();
     vi.spyOn(mockDialClient.client, 'saveConversation').mockResolvedValue({
@@ -323,6 +330,38 @@ describe('ConversationLifecycleService', () => {
         backgroundGeneration: { generationId: 'gen-1', status: 'failed' },
       });
       expect(pendingMessage.backgroundGeneration.status).toBe('pending');
+    });
+
+    it('stores the folder attachments resolved for a conversation read from the public bucket', async () => {
+      mockGetConversation();
+      mockPublishedFolderAttachments.resolve.mockImplementation(
+        async (conversation: { messages: unknown[] }) => ({
+          ...conversation,
+          messages: [{ role: 'user', content: 'resolved' }],
+        }),
+      );
+      const saveSpy = vi
+        .spyOn(mockDialClient.client, 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
+
+      await service.duplicateConversation(
+        'public/Org/gpt-4o__New%20chat',
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(mockPublishedFolderAttachments.resolve).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'New chat' }),
+        'public/Org/gpt-4o__New%20chat',
+        'test-token',
+        'test-bucket',
+      );
+      const body = (
+        saveSpy.mock.calls[0][2] as unknown as {
+          body: { messages: Array<Record<string, unknown>> };
+        }
+      ).body;
+      expect(body.messages).toEqual([{ role: 'user', content: 'resolved' }]);
     });
 
     it('decodes the encoded filename so the title is not mangled (no "New20 chat")', async () => {

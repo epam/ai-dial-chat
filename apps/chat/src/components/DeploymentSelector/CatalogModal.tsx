@@ -33,7 +33,7 @@ const CatalogModal: FC<Props> = ({ isOpen, onClose, onSelect }) => {
        * important `!max-w` below is base-only, so `mobile:!max-w-full`
        * overrides it inside the mobile variant). Desktop keeps the large
        * centered popup. */
-      className="h-[min(90vh,860px)] !max-w-[min(95vw,1200px)] overflow-hidden mobile:h-full mobile:!max-w-full mobile:rounded-none"
+      className="h-[min(90vh,860px)] max-w-[min(95vw,1200px)]! overflow-hidden mobile:h-full mobile:max-w-full! mobile:rounded-none"
       overlayClassName="mobile:p-0"
       onClose={onClose}
     >

@@ -297,7 +297,7 @@ const UsageLimitsControl: FC<Props> = ({
           role="dialog"
           aria-labelledby={titleId}
           tabIndex={-1}
-          className="absolute end-0 bottom-full z-50 mb-2 flex w-[22.5rem] max-w-[calc(100vw-2rem)] flex-col gap-3 rounded-lg bg-layer-raised p-4 shadow-lg focus:outline-hidden"
+          className="absolute inset-e-0 bottom-full z-50 mb-2 flex w-90 max-w-[calc(100vw-2rem)] flex-col gap-3 rounded-lg bg-layer-raised p-4 shadow-lg focus:outline-hidden"
           /* Measured in physical viewport pixels, so the shift is physical too
              and stays correct under RTL. */
           style={

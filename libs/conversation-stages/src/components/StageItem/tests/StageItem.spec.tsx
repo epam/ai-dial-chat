@@ -459,3 +459,62 @@ describe('StageItem — child stages', () => {
     expect(onToggle).toHaveBeenCalledWith(false);
   });
 });
+
+describe('StageItem — citation elements', () => {
+  const citedStage = {
+    ...baseStage,
+    content: 'Rates rose<cit data-id="c1"></cit> in Q2.',
+  };
+  const renderCitation = (dataId: string | undefined) => (
+    <button type="button">{`Cite ${dataId}`}</button>
+  );
+
+  it('renders a cit element through the supplied renderer', async () => {
+    render(
+      <StageItem
+        stage={citedStage}
+        isLive={false}
+        renderCitation={renderCitation}
+      />,
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: /Parsed user intent/ }),
+    );
+
+    expect(screen.getByRole('button', { name: 'Cite c1' })).toBeTruthy();
+    expect(screen.queryByText(/<cit data-id="c1">/)).toBeNull();
+  });
+
+  it('renders a cit element as literal text without a renderer', async () => {
+    render(<StageItem stage={citedStage} isLive={false} />);
+    await userEvent.click(
+      screen.getByRole('button', { name: /Parsed user intent/ }),
+    );
+
+    expect(
+      screen.getByText('Rates rose<cit data-id="c1"></cit> in Q2.'),
+    ).toBeTruthy();
+  });
+
+  it('keeps the stage paragraph typography around a rendered citation', async () => {
+    render(
+      <StageItem
+        stage={citedStage}
+        isLive={false}
+        typography={{ contentClassName: 'dial-small-text' }}
+        renderCitation={renderCitation}
+      />,
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: /Parsed user intent/ }),
+    );
+
+    const citation = screen.getByRole('button', { name: 'Cite c1' });
+    // eslint-disable-next-line testing-library/no-node-access -- asserts the enclosing paragraph's typography classes; no semantic query applies
+    const paragraph = citation.closest('p');
+    expect(paragraph?.classList.contains('dial-small-text')).toBe(true);
+    expect(paragraph?.classList.contains('dial-body-paragraph-text')).toBe(
+      false,
+    );
+  });
+});

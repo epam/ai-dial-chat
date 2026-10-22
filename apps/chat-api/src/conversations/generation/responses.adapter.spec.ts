@@ -723,6 +723,18 @@ describe('ResponsesAdapter', () => {
       expect(mockDialClient.client.createResponse).toHaveBeenCalledOnce();
     });
 
+    it('prefers display_message over message on an in-band error event', async () => {
+      const { adapter, mockDialClient } = makeAdapter();
+      const { result } = await relay(adapter, mockDialClient, [
+        'data: {"type":"error","error":{"message":"Error code: 429","display_message":"Weekly token limit exceeded"}}\n\n',
+      ]);
+
+      expect(result.outcome).toBe('error');
+      if (result.outcome === 'error') {
+        expect(result.displayMessage).toBe('Weekly token limit exceeded');
+      }
+    });
+
     it('skips unknown event types without forwarding them or breaking the stream', async () => {
       const { adapter, mockDialClient } = makeAdapter();
       const { result, res } = await relay(adapter, mockDialClient, [
@@ -761,6 +773,18 @@ describe('ResponsesAdapter', () => {
       }
       expect(res.getWritten()).not.toContain('[DONE]');
       expect(mockDialClient.client.createResponse).toHaveBeenCalledOnce();
+    });
+
+    it('prefers display_message over message on response.failed', async () => {
+      const { adapter, mockDialClient } = makeAdapter();
+      const { result } = await relay(adapter, mockDialClient, [
+        'data: {"type":"response.failed","response":{"id":"resp-9","error":{"message":"Error code: 429","display_message":"Weekly token limit exceeded"}}}\n\n',
+      ]);
+
+      expect(result.outcome).toBe('error');
+      if (result.outcome === 'error') {
+        expect(result.displayMessage).toBe('Weekly token limit exceeded');
+      }
     });
 
     it('exposes no user-facing text when the stream ends without a terminal signal', async () => {

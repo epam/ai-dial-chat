@@ -8,6 +8,7 @@ export type {
   CollapsedGroupTypography,
 } from './models/collapsed-group';
 export type {
+  StageCitationRenderer,
   StagesPanelColors,
   StagesPanelLabels,
   StagesPanelProps,

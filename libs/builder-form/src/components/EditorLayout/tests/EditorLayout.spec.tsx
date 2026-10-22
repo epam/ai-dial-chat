@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EditorLayoutProps } from '../../../models/editor-layout-props';
 import { EditorLayout } from '../EditorLayout';
 
@@ -66,5 +66,159 @@ describe('EditorLayout rightContent', () => {
     const utilityClasses = panel.className.replace(/\[[^\]]*\]/g, '');
     expect(utilityClasses).not.toMatch(PHYSICAL_DIRECTION_CLASS);
     expect(panel.className).toContain('desktop:border-s');
+  });
+});
+
+describe('EditorLayout resizableLeftColumn', () => {
+  beforeEach(() => {
+    /* jsdom has no PointerEvent, so fireEvent.pointer* would drop clientX and button. */
+    vi.stubGlobal(
+      'PointerEvent',
+      class extends MouseEvent {
+        pointerId: number;
+
+        constructor(type: string, init: PointerEventInit = {}) {
+          super(type, init);
+          this.pointerId = init.pointerId ?? 0;
+        }
+      },
+    );
+    Element.prototype.setPointerCapture = vi.fn();
+    Element.prototype.releasePointerCapture = vi.fn();
+    Element.prototype.hasPointerCapture = vi.fn(() => true);
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+      cb(0);
+      return 0;
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const renderResizable = (
+    props: Partial<EditorLayoutProps> = {},
+    width = 400,
+  ) => {
+    const onWidthChange = vi.fn();
+    renderLayout({
+      resizableLeftColumn: { width, onWidthChange },
+      ...props,
+    });
+
+    return { onWidthChange, handle: screen.getByRole('separator') };
+  };
+
+  it('renders no separator without the prop', () => {
+    renderLayout();
+
+    expect(screen.queryByRole('separator')).toBeNull();
+  });
+
+  it('renders no separator without a center column', () => {
+    renderLayout({
+      resizableLeftColumn: { width: 400, onWidthChange: vi.fn() },
+      centerContent: undefined,
+    });
+
+    expect(screen.queryByRole('separator')).toBeNull();
+  });
+
+  it('exposes separator semantics with the current limits', () => {
+    const { handle } = renderResizable({}, 500);
+
+    expect(handle.getAttribute('aria-orientation')).toBe('vertical');
+    expect(handle.getAttribute('aria-valuenow')).toBe('500');
+    expect(handle.getAttribute('aria-valuemin')).toBe('280');
+    expect(handle.getAttribute('aria-valuemax')).toBe('640');
+    expect(handle.tabIndex).toBe(0);
+    expect(handle.getAttribute('aria-label')).toBe('Resize columns');
+  });
+
+  it('uses the host-provided label', () => {
+    renderResizable({ labels: { resizeHandleLabel: 'Resize panels' } });
+
+    expect(
+      screen.getByRole('separator', { name: 'Resize panels' }),
+    ).toBeTruthy();
+  });
+
+  it('widens the column when dragged toward the inline end', () => {
+    const { handle, onWidthChange } = renderResizable();
+
+    fireEvent.pointerDown(handle, { clientX: 400, button: 0, pointerId: 1 });
+    fireEvent.pointerMove(handle, { clientX: 500, pointerId: 1 });
+
+    expect(onWidthChange).toHaveBeenLastCalledWith(500);
+  });
+
+  it('clamps a drag at the maximum and the minimum', () => {
+    const { handle, onWidthChange } = renderResizable();
+
+    fireEvent.pointerDown(handle, { clientX: 400, button: 0, pointerId: 1 });
+    fireEvent.pointerMove(handle, { clientX: 5000, pointerId: 1 });
+    expect(onWidthChange).toHaveBeenLastCalledWith(640);
+    fireEvent.pointerMove(handle, { clientX: -5000, pointerId: 1 });
+    expect(onWidthChange).toHaveBeenLastCalledWith(280);
+  });
+
+  it('mirrors the drag direction in RTL', () => {
+    const { handle, onWidthChange } = renderResizable({ dir: 'rtl' });
+
+    fireEvent.pointerDown(handle, { clientX: 400, button: 0, pointerId: 1 });
+    fireEvent.pointerMove(handle, { clientX: 300, pointerId: 1 });
+
+    expect(onWidthChange).toHaveBeenLastCalledWith(500);
+  });
+
+  it('ignores pointer moves after release', () => {
+    const { handle, onWidthChange } = renderResizable();
+
+    fireEvent.pointerDown(handle, { clientX: 400, button: 0, pointerId: 1 });
+    fireEvent.pointerUp(handle, { pointerId: 1 });
+    fireEvent.pointerMove(handle, { clientX: 500, pointerId: 1 });
+
+    expect(onWidthChange).not.toHaveBeenCalled();
+  });
+
+  it('resizes with the arrow keys', () => {
+    const { handle, onWidthChange } = renderResizable();
+
+    fireEvent.keyDown(handle, { key: 'ArrowRight' });
+    expect(onWidthChange).toHaveBeenLastCalledWith(416);
+    fireEvent.keyDown(handle, { key: 'ArrowLeft' });
+    expect(onWidthChange).toHaveBeenLastCalledWith(384);
+  });
+
+  it('mirrors the arrow keys in RTL', () => {
+    const { handle, onWidthChange } = renderResizable({ dir: 'rtl' });
+
+    fireEvent.keyDown(handle, { key: 'ArrowLeft' });
+
+    expect(onWidthChange).toHaveBeenLastCalledWith(416);
+  });
+
+  it('jumps to the limits with Home and End', () => {
+    const { handle, onWidthChange } = renderResizable();
+
+    fireEvent.keyDown(handle, { key: 'Home' });
+    expect(onWidthChange).toHaveBeenLastCalledWith(280);
+    fireEvent.keyDown(handle, { key: 'End' });
+    expect(onWidthChange).toHaveBeenLastCalledWith(640);
+  });
+
+  it('resets to the default width on double-click', () => {
+    const { handle, onWidthChange } = renderResizable({}, 600);
+
+    fireEvent.doubleClick(handle);
+
+    expect(onWidthChange).toHaveBeenCalledWith(400);
+  });
+
+  it('uses logical direction classes only on the handle', () => {
+    const { handle } = renderResizable();
+
+    const utilityClasses = handle.className.replace(/\[[^\]]*\]/g, '');
+    expect(utilityClasses).not.toMatch(PHYSICAL_DIRECTION_CLASS);
   });
 });

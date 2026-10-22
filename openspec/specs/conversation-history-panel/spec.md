@@ -787,7 +787,7 @@ The root element SHALL carry the public class `dial-cp-list` and merge the host'
 
 `ConversationListHeader` SHALL render a title button with `aria-expanded`, reporting its toggle through `onToggleExpanded`. It SHALL also render these optional controls, each present only when the host passes its props:
 - **Search toggle.** It swaps the row for the kit `Search`, with a separate Close search button. Escape also closes it. Closing calls `onSearchOpenChange(false)` and `onSearchChange('')` and returns focus to the toggle.
-- **Filter trigger.** It opens a `Dropdown` of the four `FilterTab` options, excluding `hiddenSources`, single-select with a check on the active option.
+- **Filter trigger.** It opens a `Dropdown` of two rows, each showing its current value and opening a single-select submenu with a check on the active option: **Type** (`All`, `Chat`, `Task`, from `activeTypeFilter`, present when `onTypeFilterChange` is passed) and **Origin** (`All`, `Personal`, `Shared`, `Organization`, from `activeFilter`, excluding `hiddenSources`, present when `onFilterChange` is passed). A conversation is a task when its `kind` is `ConversationKind.Task` and a chat otherwise; `ConversationList` shows only the kind the type filter selects. `ConversationListSection` exposes `isTypeFilterHidden` to drop the Type row, and `apps/chat` passes it while `scheduledTasksEnabled` is off.
 - **`actions` slot.**
 
 Every label SHALL be a prop. The root SHALL carry the public class `dial-cp-list-header`.

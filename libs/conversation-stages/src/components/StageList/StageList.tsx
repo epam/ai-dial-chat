@@ -34,6 +34,10 @@ interface StageLevelProps {
   labels?: StagesPanelLabels;
   /** Called when a stage attachment tile is clicked/activated. See {@link StagesPanelProps.onAttachmentClick}. */
   onAttachmentClick?: StagesPanelProps['onAttachmentClick'];
+  /** Host-owned URL resolvers for stage attachment tiles. See {@link StagesPanelProps.attachmentDisplayResolvers}. */
+  attachmentDisplayResolvers?: StagesPanelProps['attachmentDisplayResolvers'];
+  /** Host-owned renderer for `<cit>` elements in stage content. See {@link StagesPanelProps.renderCitation}. */
+  renderCitation?: StagesPanelProps['renderCitation'];
 }
 
 /** Props for {@link StageList}. */
@@ -81,6 +85,8 @@ const StageNodeItem: FC<StageNodeItemProps> = ({
   typography,
   labels,
   onAttachmentClick,
+  attachmentDisplayResolvers,
+  renderCitation,
 }) => {
   const key = getStageExpansionKey(node.stage.index);
   const childDepth = depth + 1;
@@ -93,6 +99,8 @@ const StageNodeItem: FC<StageNodeItemProps> = ({
       typography={typography}
       labels={labels}
       onAttachmentClick={onAttachmentClick}
+      attachmentDisplayResolvers={attachmentDisplayResolvers}
+      renderCitation={renderCitation}
       isExpanded={expansion.isExpanded(key)}
       onToggle={(isExpanded) => expansion.onToggle(key, isExpanded)}
       childList={
@@ -106,6 +114,8 @@ const StageNodeItem: FC<StageNodeItemProps> = ({
             typography={typography}
             labels={labels}
             onAttachmentClick={onAttachmentClick}
+            attachmentDisplayResolvers={attachmentDisplayResolvers}
+            renderCitation={renderCitation}
           />
         ) : undefined
       }
@@ -122,6 +132,8 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
   typography,
   labels,
   onAttachmentClick,
+  attachmentDisplayResolvers,
+  renderCitation,
 }) => {
   const {
     runningAriaLabel,
@@ -204,6 +216,8 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
                 typography={typography}
                 labels={labels}
                 onAttachmentClick={onAttachmentClick}
+                attachmentDisplayResolvers={attachmentDisplayResolvers}
+                renderCitation={renderCitation}
               />
             </li>
           ))}

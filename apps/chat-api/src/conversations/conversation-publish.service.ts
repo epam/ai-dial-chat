@@ -26,10 +26,12 @@ import {
 import {
   getPublicationsListScope,
   getPublicTargetFolder,
+  getPublishedAttachmentsFolderUrl,
   getPublishedTargetUrl,
   getResourceName,
   stripPublicTargetFolder,
 } from '../publish/publish-target.util';
+import { ConversationPublishAttachmentsService } from './conversation-publish-attachments.service';
 import type { ConversationMessageDto } from './dto/conversation-message.dto';
 import { PublishConversationResultDto } from './dto/publish-conversation-result.dto';
 import { UnpublishConversationResultDto } from './dto/unpublish-conversation-result.dto';
@@ -76,6 +78,7 @@ export class ConversationPublishService {
     private readonly dialClient: DialClientService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly deploymentsService: DeploymentsService,
+    private readonly attachmentsService: ConversationPublishAttachmentsService,
   ) {}
 
   /**
@@ -147,10 +150,21 @@ export class ConversationPublishService {
       getResourceName(sourceUrl),
     );
 
+    const attachmentResources = await this.attachmentsService.buildAddResources(
+      accessToken,
+      bucket,
+      conversation,
+      folderPath,
+      getResourceName(sourceUrl),
+    );
+
     const requestBody = {
       name: conversation.name,
       targetFolder: publicTargetFolder,
-      resources: [{ action: 'ADD' as const, sourceUrl, targetUrl }],
+      resources: [
+        { action: 'ADD' as const, sourceUrl, targetUrl },
+        ...attachmentResources,
+      ],
       displayAuthor: author,
       rules: rules ?? [],
     };
@@ -259,6 +273,24 @@ export class ConversationPublishService {
     );
 
     /*
+     * The attachment files are removed only when the publish history confirms
+     * this conversation is published to `folderPath`. The published folder is
+     * named after the conversation's resource name, which another author's
+     * conversation in the same folder can share, so listing it without that
+     * check could name files the caller never published.
+     */
+    const history = await this.getPublishHistory(accessToken, bucket, path);
+    const isPublishedToFolder = history.some(
+      (entry) => entry.folderPath === folderPath,
+    );
+    const attachmentResources = isPublishedToFolder
+      ? await this.attachmentsService.buildDeleteResources(
+          accessToken,
+          getPublishedAttachmentsFolderUrl(targetUrl),
+        )
+      : [];
+
+    /*
      * `sourceUrl` is sent even though Core allows it to be omitted for a
      * `DELETE` action: it keeps the resource shape identical to the ADD one
      * publish sends. `rules` is omitted entirely.
@@ -266,7 +298,10 @@ export class ConversationPublishService {
     const requestBody = {
       name: conversation.name,
       targetFolder: publicTargetFolder,
-      resources: [{ action: 'DELETE' as const, sourceUrl, targetUrl }],
+      resources: [
+        { action: 'DELETE' as const, sourceUrl, targetUrl },
+        ...attachmentResources,
+      ],
       displayAuthor: author,
     };
 

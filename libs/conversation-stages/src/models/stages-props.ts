@@ -1,4 +1,15 @@
-import type { DisplayAttachment, Stage } from '@epam/ai-dial-chat-shared';
+import type {
+  AttachmentDisplayResolvers,
+  DisplayAttachment,
+  Stage,
+} from '@epam/ai-dial-chat-shared';
+import type { ReactNode } from 'react';
+
+/** Renders a `<cit data-id="…">` element found in stage content, given its `data-id` value and children. */
+export type StageCitationRenderer = (
+  dataId: string | undefined,
+  children: ReactNode,
+) => ReactNode;
 
 /** Typography class overrides for stage name and expanded content elements in `StagesPanel`. */
 export interface StageTypography {
@@ -96,4 +107,8 @@ export interface StagesPanelProps {
   labels?: StagesPanelLabels;
   /** Called when a stage attachment tile is clicked/activated. Receives the mapped display attachment. */
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
+  /** Host-owned URL resolvers applied when mapping stage attachments; without them an image tile previews its raw `url`. */
+  attachmentDisplayResolvers?: AttachmentDisplayResolvers;
+  /** Host-owned renderer for `<cit data-id="…">` elements in stage content; without it they render as literal text. */
+  renderCitation?: StageCitationRenderer;
 }

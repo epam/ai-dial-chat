@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   getPublicTargetFolder,
+  getPublishedAttachmentsFolderUrl,
+  getPublishedAttachmentTargetUrl,
   getPublishableIconUrl,
   getPublishedIconTargetUrl,
   getPublishedTargetUrl,
@@ -171,5 +173,57 @@ describe('getPublishedIconTargetUrl', () => {
     expect(
       getPublishedIconTargetUrl('', 'my-app__1.0.0', 'files/b/app.png'),
     ).toBe('files/public/my-app__1.0.0/app.png');
+  });
+});
+
+/*
+ * Publish writes the files to `getPublishedAttachmentTargetUrl`, unpublish lists
+ * `getPublishedAttachmentsFolderUrl` and the read path rewrites folder links to
+ * it, so these pin the exact strings and that the two derivations agree.
+ */
+describe('published attachment paths', () => {
+  it('nests a file under the published conversation name and its source bucket, keeping the bucket-relative path', () => {
+    expect(
+      getPublishedAttachmentTargetUrl(
+        'Organization/Data Science',
+        'my-chat',
+        'bucket1',
+        'docs/sub/b.pdf',
+      ),
+    ).toBe(
+      'files/public/Organization/Data%20Science/my-chat/bucket1/docs/sub/b.pdf',
+    );
+  });
+
+  it('uses the public root when folderPath is empty', () => {
+    expect(getPublishedAttachmentTargetUrl('', 'my-chat', 'b', 'a.pdf')).toBe(
+      'files/public/my-chat/b/a.pdf',
+    );
+  });
+
+  it('percent-encodes a non-ASCII folder name like every other published path', () => {
+    expect(
+      getPublishedAttachmentTargetUrl('test 14.04/Ünïcode', 'c', 'b', 'a.pdf'),
+    ).toBe('files/public/test%2014.04/%C3%9Cn%C3%AFcode/c/b/a.pdf');
+  });
+
+  it('derives the attachments folder from the published conversation url', () => {
+    expect(
+      getPublishedAttachmentsFolderUrl('conversations/public/Org/my-chat'),
+    ).toBe('files/public/Org/my-chat/');
+  });
+
+  it('is the folder every published attachment file path starts with', () => {
+    const folder = getPublishedAttachmentsFolderUrl(
+      getPublishedTargetUrl('conversations', 'Org/Chats', 'my-chat'),
+    );
+    expect(
+      getPublishedAttachmentTargetUrl(
+        'Org/Chats',
+        'my-chat',
+        'b',
+        'docs/a.pdf',
+      ),
+    ).toBe(`${folder}b/docs/a.pdf`);
   });
 });
