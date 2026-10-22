@@ -21,6 +21,8 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     Ghost: 'ghost',
     Link: 'link',
   },
+  ErrorText: ({ text }: { text?: string }) =>
+    text ? <span role="alert">{text}</span> : null,
   Input: ({
     onChange,
     labelProps,
