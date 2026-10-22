@@ -867,3 +867,276 @@ describe('fetchConversationForRecovery — pending results', () => {
     expect(load).toHaveBeenCalledOnce();
   });
 });
+
+describe('attach-supplied generation id', () => {
+  const CONVERSATION_ID = 'bucket/gpt-4o__Hello';
+  const PATH = 'gpt-4o__Hello';
+  const ATTACH_ID = 'gen-attach';
+  const encoder = new TextEncoder();
+  const user = {
+    role: MessageRole.User,
+    content: 'Hello',
+    timestamp: new Date().toISOString(),
+  };
+  const placeholder = {
+    role: MessageRole.Assistant,
+    content: '',
+    timestamp: new Date().toISOString(),
+  };
+  const pendingBackground = {
+    ...placeholder,
+    responseId: 'dial_r1',
+    backgroundGeneration: {
+      generationId: 'gen-bg',
+      status: BackgroundGenerationStatus.Pending,
+      startedAt: 1,
+    },
+  };
+
+  const makeEventStream = () => {
+    let controller!: ReadableStreamDefaultController<Uint8Array>;
+    const stream = new ReadableStream<Uint8Array>({
+      start(streamController) {
+        controller = streamController;
+      },
+    });
+    return {
+      stream,
+      emit: (event: unknown) =>
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify(event)}\n\n`),
+        ),
+      end: () => controller.close(),
+    };
+  };
+
+  const stoppedPartial = makeConversation({
+    messages: [
+      user,
+      { ...placeholder, content: 'Hel', wasStoppedByUser: true },
+    ],
+  });
+
+  const makeHarness = ({
+    conversation = makeConversation({ messages: [user, placeholder] }),
+    transportOverrides = {},
+    depsOverrides = {},
+  }: {
+    conversation?: Conversation;
+    transportOverrides?: Partial<ConversationStreamTransport>;
+    depsOverrides?: Partial<
+      Parameters<typeof createResumeIfAwaitingGeneration>[0]
+    >;
+  } = {}) => {
+    const events = makeEventStream();
+    let displayed: Conversation = conversation;
+    const setConversation = vi.fn((update: unknown) => {
+      displayed =
+        typeof update === 'function'
+          ? (update as (prev: Conversation) => Conversation)(displayed)
+          : (update as Conversation);
+    });
+    const rememberResumedGenerationId = vi.fn();
+    const forgetResumedGenerationId = vi.fn();
+    const stoppedGenerationIdsRef = { current: new Set<string>() };
+    const transport: ConversationStreamTransport = {
+      streamCompletion: vi.fn(),
+      stopCompletion: vi.fn(),
+      watchConversation: vi.fn().mockRejectedValue(new Error('no watch')),
+      attachToGeneration: vi.fn().mockResolvedValue(events.stream),
+      getConversation: vi.fn().mockResolvedValue(stoppedPartial),
+      ...transportOverrides,
+    };
+    const resume = createResumeIfAwaitingGeneration({
+      transport,
+      setConversation: setConversation as never,
+      conversationRef: { current: conversation },
+      resumingPathsRef: { current: new Set<string>() },
+      bufferedGenerationsRef: {
+        current: new Map<string, BufferedGeneration>(),
+      },
+      addStreamingPath: vi.fn(),
+      removeStreamingPath: vi.fn(),
+      isPathDisplayed: () => true,
+      stoppedGenerationIdsRef,
+      rememberResumedGenerationId,
+      forgetResumedGenerationId,
+      ...depsOverrides,
+    });
+    return {
+      conversation,
+      events,
+      transport,
+      resume,
+      stoppedGenerationIdsRef,
+      rememberResumedGenerationId,
+      forgetResumedGenerationId,
+      getDisplayed: () => displayed,
+    };
+  };
+
+  const snapshot = (message: unknown = placeholder) => ({
+    type: 'snapshot',
+    message,
+    generationId: ATTACH_ID,
+  });
+
+  it('reports the id of a snapshot when the resume asks to track it', async () => {
+    const harness = makeHarness();
+
+    harness.resume(CONVERSATION_ID, harness.conversation, {
+      trackAttachGenerationId: true,
+    });
+    harness.events.emit(snapshot());
+
+    await vi.waitFor(() =>
+      expect(harness.rememberResumedGenerationId).toHaveBeenCalledWith(
+        PATH,
+        ATTACH_ID,
+      ),
+    );
+    expect(harness.rememberResumedGenerationId).toHaveBeenCalledOnce();
+  });
+
+  it('ignores the id of a snapshot when the resume does not ask to track it', async () => {
+    const harness = makeHarness();
+
+    harness.resume(CONVERSATION_ID, harness.conversation);
+    harness.events.emit(snapshot());
+    harness.events.emit({
+      type: 'chunk',
+      chunk: { choices: [{ delta: { content: 'Hel' } }] },
+    });
+
+    await vi.waitFor(() =>
+      expect(harness.getDisplayed().messages[1].content).toBe('Hel'),
+    );
+    expect(harness.rememberResumedGenerationId).not.toHaveBeenCalled();
+  });
+
+  it('does not take the id for a resumed background message, which carries its own', async () => {
+    const harness = makeHarness({
+      conversation: makeConversation({ messages: [user, pendingBackground] }),
+    });
+
+    harness.resume(CONVERSATION_ID, harness.conversation, {
+      trackAttachGenerationId: true,
+    });
+    harness.events.emit(snapshot(pendingBackground));
+    harness.events.emit({
+      type: 'chunk',
+      chunk: { choices: [{ delta: { content: 'Hel' } }] },
+    });
+
+    await vi.waitFor(() =>
+      expect(harness.getDisplayed().messages[1].content).toBe('Hel'),
+    );
+    expect(harness.rememberResumedGenerationId).not.toHaveBeenCalled();
+  });
+
+  it('forgets the id once when the attach ends with a terminal event', async () => {
+    const harness = makeHarness();
+
+    harness.resume(CONVERSATION_ID, harness.conversation, {
+      trackAttachGenerationId: true,
+    });
+    harness.events.emit(snapshot());
+    await vi.waitFor(() =>
+      expect(harness.rememberResumedGenerationId).toHaveBeenCalled(),
+    );
+    harness.events.emit({ type: 'stopped' });
+
+    await vi.waitFor(() =>
+      expect(harness.forgetResumedGenerationId).toHaveBeenCalledWith(
+        PATH,
+        ATTACH_ID,
+      ),
+    );
+    expect(harness.forgetResumedGenerationId).toHaveBeenCalledOnce();
+  });
+
+  it('forgets the id before falling back to the watch when the attach ends without a terminal event', async () => {
+    let forgottenBeforeWatch: number | undefined;
+    const harness = makeHarness({
+      transportOverrides: {
+        watchConversation: vi.fn().mockImplementation(() => {
+          forgottenBeforeWatch ??=
+            harness.forgetResumedGenerationId.mock.calls.length;
+          return Promise.reject(new Error('no watch'));
+        }),
+      },
+    });
+
+    harness.resume(CONVERSATION_ID, harness.conversation, {
+      trackAttachGenerationId: true,
+    });
+    harness.events.emit(snapshot());
+    await vi.waitFor(() =>
+      expect(harness.rememberResumedGenerationId).toHaveBeenCalled(),
+    );
+    harness.events.end();
+
+    await vi.waitFor(() =>
+      expect(harness.transport.watchConversation).toHaveBeenCalled(),
+    );
+    expect(forgottenBeforeWatch).toBe(1);
+    expect(harness.forgetResumedGenerationId).toHaveBeenCalledOnce();
+  });
+
+  it('forgets the id when the final reload after the terminal event fails', async () => {
+    const harness = makeHarness({
+      transportOverrides: {
+        getConversation: vi.fn().mockRejectedValue(new Error('reload failed')),
+      },
+      depsOverrides: { onReloadError: vi.fn() },
+    });
+
+    harness.resume(CONVERSATION_ID, harness.conversation, {
+      trackAttachGenerationId: true,
+    });
+    harness.events.emit(snapshot());
+    await vi.waitFor(() =>
+      expect(harness.rememberResumedGenerationId).toHaveBeenCalled(),
+    );
+    harness.events.emit({ type: 'done' });
+
+    await vi.waitFor(() =>
+      expect(harness.forgetResumedGenerationId).toHaveBeenCalledWith(
+        PATH,
+        ATTACH_ID,
+      ),
+    );
+    expect(harness.forgetResumedGenerationId).toHaveBeenCalledOnce();
+  });
+
+  it('shows no more replayed text once the user stopped the attach-supplied id', async () => {
+    const harness = makeHarness();
+
+    harness.resume(CONVERSATION_ID, harness.conversation, {
+      trackAttachGenerationId: true,
+    });
+    harness.events.emit(snapshot());
+    harness.events.emit({
+      type: 'chunk',
+      chunk: { choices: [{ delta: { content: 'Hel' } }] },
+    });
+    await vi.waitFor(() =>
+      expect(harness.getDisplayed().messages[1].content).toBe('Hel'),
+    );
+    harness.stoppedGenerationIdsRef.current.add(ATTACH_ID);
+    harness.events.emit({
+      type: 'chunk',
+      chunk: { choices: [{ delta: { content: 'lo' } }] },
+    });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    expect(harness.getDisplayed().messages[1].content).toBe('Hel');
+
+    harness.events.emit({ type: 'stopped' });
+    await vi.waitFor(() =>
+      expect(harness.stoppedGenerationIdsRef.current.has(ATTACH_ID)).toBe(
+        false,
+      ),
+    );
+  });
+});
