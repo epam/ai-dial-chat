@@ -10,8 +10,9 @@ import {
 import {
   DialFileNodeType,
   type DialFile,
+  type FileManagerGridRow,
 } from '@epam/ai-dial-react-file-manager';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { resolveDialUrl } from '../../utils/dial-file';
 import { useAttachmentCanvasResolvers } from '../attachment/useAttachmentCanvasResolvers';
 
@@ -62,29 +63,67 @@ export const DIAL_FILE_PREVIEW_EXTENSIONS = [
 
 /**
  * Opens a File Manager file in the attachment canvas. `onPreview` receives the
- * virtual path, so the file is looked up in the loaded tree and converted with
- * the same mapper the attach flow uses. When the canvas cannot open the file
- * it shows its own "unsupported" state, with a download button where the file
- * has a URL, so a chosen Preview never ends in silence.
+ * virtual path, so the file is looked up in the loaded tree, or among the
+ * search results when the grid shows a search, and converted with the same
+ * mapper the attach flow uses. When the canvas cannot open the file it shows
+ * its own "unsupported" state, with a download button where the file has a
+ * URL, so a chosen Preview never ends in silence. `onFileClick` opens the
+ * clicked row the same way, whatever its extension, as a conversation does
+ * for an attachment. A preview that a later one supersedes, or that finishes
+ * after the page is gone, opens nothing.
  * @param items - folder tree the file manager is showing
  * @param bucket - the user's DIAL storage bucket
+ * @param searchResults - files the grid currently lists as search hits
  */
 export const useDialFilePreview = (
   items: DialFile[],
   bucket: string,
+  searchResults: DialFile[] | null = null,
 ): {
   onPreview: (path?: string) => void;
+  onFileClick: (row: FileManagerGridRow) => void;
   previewExtensions: string[];
 } => {
   const { resolvers, options } = useAttachmentCanvasResolvers();
   const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
   const { openCanvas } = useAttachmentCanvas();
 
+  /*
+   * The latest listing is read through refs so the callbacks keep their
+   * identity when the listing refreshes; the file manager rebuilds its grid
+   * options whenever a callback it holds changes.
+   */
+  const itemsRef = useRef(items);
+  const searchResultsRef = useRef(searchResults);
+  useEffect(() => {
+    itemsRef.current = items;
+    searchResultsRef.current = searchResults;
+  }, [items, searchResults]);
+
+  /*
+   * Each preview takes a generation. One that a later preview supersedes, or
+   * that outlives the page, must not open the canvas when its content arrives.
+   */
+  const generationRef = useRef(0);
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   const onPreview = useCallback(
     (path?: string) => {
       if (path == null) return;
-      const file = findDialFileByPath(items, path);
+      const file =
+        findDialFileByPath(itemsRef.current, path) ??
+        findDialFileByPath(searchResultsRef.current ?? [], path);
       if (file?.nodeType !== DialFileNodeType.ITEM) return;
+
+      const generation = (generationRef.current += 1);
+      const isCurrent = () =>
+        isMountedRef.current && generationRef.current === generation;
 
       const attachment = dialFileToAttachment(file, bucket);
       if (attachment == null) {
@@ -92,18 +131,29 @@ export const useDialFilePreview = (
         return;
       }
 
-      void openAttachmentCanvas(attachment).then((opened) => {
-        if (!opened) {
-          openCanvas(
-            createUnsupportedCanvasContent(resolveDialUrl(attachment)),
-            attachment.name,
-            attachment.id,
-          );
-        }
-      });
+      void openAttachmentCanvas(attachment, undefined, isCurrent).then(
+        (opened) => {
+          if (!opened && isCurrent()) {
+            openCanvas(
+              createUnsupportedCanvasContent(resolveDialUrl(attachment)),
+              attachment.name,
+              attachment.id,
+            );
+          }
+        },
+      );
     },
-    [items, bucket, openAttachmentCanvas, openCanvas],
+    [bucket, openAttachmentCanvas, openCanvas],
   );
 
-  return { onPreview, previewExtensions: DIAL_FILE_PREVIEW_EXTENSIONS };
+  const onFileClick = useCallback(
+    (row: FileManagerGridRow) => onPreview(row.path),
+    [onPreview],
+  );
+
+  return {
+    onPreview,
+    onFileClick,
+    previewExtensions: DIAL_FILE_PREVIEW_EXTENSIONS,
+  };
 };

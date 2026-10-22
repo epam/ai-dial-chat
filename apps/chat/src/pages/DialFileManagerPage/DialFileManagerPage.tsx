@@ -208,9 +208,10 @@ const DialFileManagerPage: FC = () => {
     [t],
   );
 
-  const { onPreview, previewExtensions } = useDialFilePreview(
+  const { onPreview, onFileClick, previewExtensions } = useDialFilePreview(
     controller.items,
     bucket,
+    controller.searchResults,
   );
 
   const uploadQueueLabels = useUploadQueueLabels();
@@ -331,6 +332,7 @@ const DialFileManagerPage: FC = () => {
         maxSelectableFileSize={maxAttachmentFileSizeBytes}
         oversizedUploadMessage={oversizedUploadMessage}
         onPreview={onPreview}
+        onTableFileClick={onFileClick}
         previewExtensions={previewExtensions}
         treeContainerClassName={TREE_PANEL_CLASS_NAME}
       />
