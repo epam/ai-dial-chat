@@ -51,7 +51,7 @@ const PanelMenuTrigger: FC<PanelMenuTriggerProps> = ({ items, label }) => {
           />
         }
         className={mergeClasses(
-          '!size-6 !min-h-0 !min-w-0 !p-1',
+          'size-6! min-h-0! min-w-0! p-1!',
           isOpen && 'bg-control-accent-alpha-hover',
         )}
       />
@@ -63,7 +63,8 @@ interface Props {
   activeConversationId?: string;
   /** Omit to hide the "Export all" entry. */
   onExportAll?: () => void;
-  onImport: () => void;
+  /** Omit to hide the "Import" entry. */
+  onImport?: () => void;
 }
 
 const ConversationPanelMenu: FC<Props> = ({
@@ -102,18 +103,22 @@ const ConversationPanelMenu: FC<Props> = ({
             },
           ]
         : []),
-      {
-        key: 'import',
-        label: t(ConversationImportI18nKeys.ImportLabel),
-        icon: (
-          <IconFileArrowLeft
-            size={DIAL_ICON_SIZE.MD}
-            className="text-secondary"
-            stroke={DIAL_KIT_ICON_STROKE}
-          />
-        ),
-        onClick: onImport,
-      },
+      ...(onImport
+        ? [
+            {
+              key: 'import',
+              label: t(ConversationImportI18nKeys.ImportLabel),
+              icon: (
+                <IconFileArrowLeft
+                  size={DIAL_ICON_SIZE.MD}
+                  className="text-secondary"
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              ),
+              onClick: onImport,
+            },
+          ]
+        : []),
       {
         key: 'delete-all',
         label: t(ConversationPanelI18nKeys.DeleteAllChatsLabel),

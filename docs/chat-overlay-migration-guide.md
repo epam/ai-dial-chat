@@ -791,6 +791,7 @@ hide-footer-version
 show-agent-description
 disable-input-history-navigation
 hide-conversation-export
+hide-conversation-import
 hide-settings-page
 show-header-logo
 hide-starter-icon
@@ -904,6 +905,10 @@ Export entry (with its "with attachments" / "without attachments" submenu) on
 every conversation's row menu, and "Export all" in the conversations panel
 menu. Import and Delete all stay. It hides the entry points only — it does
 not block the export API.
+
+`hide-conversation-import` removes the Import entry from the conversations
+panel menu. Export all and Delete all stay. Like the export key, it hides the
+entry point only — it does not block the import API.
 
 `hide-settings-page` removes the Settings page: the Settings entry in the
 sidebar's user menu, on desktop and mobile. A direct `/settings` URL redirects to `/`. The preferences the

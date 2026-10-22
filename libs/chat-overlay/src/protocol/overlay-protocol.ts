@@ -208,6 +208,11 @@ export enum OverlayFeature {
    */
   HideConversationExport = 'hide-conversation-export',
   /**
+   * Hides conversation import: the conversations panel's "Import" entry.
+   * Export stays available.
+   */
+  HideConversationImport = 'hide-conversation-import',
+  /**
    * Hides the Settings page: its entry in the desktop user menu and on the
    * mobile navigation sheet's profile page. A direct `/settings` URL
    * redirects to `/`.
