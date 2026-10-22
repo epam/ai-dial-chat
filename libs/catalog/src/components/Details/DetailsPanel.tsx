@@ -491,8 +491,12 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
       } catch {
         if (publishHistoryRequestedItemIdRef.current !== requestedItemId)
           return;
-        /* Cleared so the next Manage-menu or publish open retries the lookup. */
+        /* Cleared so the next Manage-menu or publish open retries the lookup.
+         * Settled all the same, with no folder: the header holds its Manage
+         * slot back until the lookup settles, so a failure left pending would
+         * hide every other Manage entry along with Unpublish. */
         publishHistoryRequestedItemIdRef.current = null;
+        setIsPublishHistoryResolved(true);
       }
     };
     void resolve();
