@@ -34,6 +34,10 @@ export interface CreateShareLinkRequest {
   createShareLinkDto: CreateShareLinkDto;
 }
 
+export interface DeleteInvitationRequest {
+  invitationId: string;
+}
+
 export interface DiscardSharedCatalogItemRequest {
   discardSharedCatalogItemDto: DiscardSharedCatalogItemDto;
 }
@@ -171,6 +175,64 @@ export class ShareApi extends runtime.BaseAPI {
       initOverrides,
     );
     return await response.value();
+  }
+
+  /**
+   * Withdraws one invitation the caller created, by proxying DIAL Core (DELETE /v1/invitations/{id}). Access already accepted from it stays; only the link stops working. Withdrawing an invitation that is already gone succeeds. Unlike POST /api/v1/share/revoke, which revokes every share of a resource at once.
+   * Withdraw a share invitation
+   */
+  async deleteInvitationRaw(
+    requestParameters: DeleteInvitationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters['invitationId'] == null) {
+      throw new runtime.RequiredError(
+        'invitationId',
+        'Required parameter "invitationId" was null or undefined when calling deleteInvitation().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/share/invitations/{invitationId}`;
+    urlPath = urlPath.replace(
+      `{${'invitationId'}}`,
+      encodeURIComponent(String(requestParameters['invitationId'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Withdraws one invitation the caller created, by proxying DIAL Core (DELETE /v1/invitations/{id}). Access already accepted from it stays; only the link stops working. Withdrawing an invitation that is already gone succeeds. Unlike POST /api/v1/share/revoke, which revokes every share of a resource at once.
+   * Withdraw a share invitation
+   */
+  async deleteInvitation(
+    requestParameters: DeleteInvitationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.deleteInvitationRaw(requestParameters, initOverrides);
   }
 
   /**

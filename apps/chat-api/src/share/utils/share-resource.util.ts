@@ -1,6 +1,7 @@
 import type { components } from '@epam/ai-dial-typescript-sdk';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../../common/utils/uri';
+import { collectConversationAttachmentUrls } from '../../conversations/utils/conversation-attachments.util';
 import {
   getConversationTitleFromName,
   isApplicationDeploymentPath,
@@ -148,73 +149,20 @@ export const getSharedConversationTitle = (
   return title || undefined;
 };
 
-interface AnnotationWithAttachment {
-  body?: {
-    source?: {
-      attachment?: unknown;
-    };
-  };
-}
-
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
-
-const collectAttachmentResourceUrls = (
-  attachments: unknown,
-  resourceUrls: Set<string>,
-): void => {
-  if (!Array.isArray(attachments)) return;
-
-  for (const attachment of attachments) {
-    if (!isRecord(attachment)) continue;
-
-    for (const field of ['url', 'reference_url'] as const) {
-      const url = attachment[field];
-      if (typeof url !== 'string') continue;
-
-      const resourceUrl = url.split('#', 1)[0];
-      if (resourceUrl.startsWith(FILE_RESOURCE_PREFIX)) {
-        resourceUrls.add(resourceUrl);
-      }
-    }
-  }
-};
 
 /** Collects unique DIAL file resources referenced by messages, stages, and citations. */
 export const collectConversationResourceUrls = (
   conversation: unknown,
 ): string[] => {
-  if (!isRecord(conversation) || !Array.isArray(conversation.messages)) {
-    return [];
-  }
-
   const resourceUrls = new Set<string>();
-  for (const message of conversation.messages) {
-    if (!isRecord(message) || !isRecord(message.custom_content)) continue;
-
-    collectAttachmentResourceUrls(
-      message.custom_content.attachments,
-      resourceUrls,
-    );
-
-    const stages = message.custom_content.stages;
-    if (Array.isArray(stages)) {
-      for (const stage of stages) {
-        if (isRecord(stage)) {
-          collectAttachmentResourceUrls(stage.attachments, resourceUrls);
-        }
-      }
-    }
-
-    const annotations = message.custom_content.annotations;
-    if (!Array.isArray(annotations)) continue;
-    for (const annotation of annotations) {
-      const attachment = (annotation as AnnotationWithAttachment)?.body?.source
-        ?.attachment;
-      collectAttachmentResourceUrls([attachment], resourceUrls);
+  for (const value of collectConversationAttachmentUrls(conversation)) {
+    const resourceUrl = value.split('#', 1)[0];
+    if (resourceUrl.startsWith(FILE_RESOURCE_PREFIX)) {
+      resourceUrls.add(resourceUrl);
     }
   }
-
   return [...resourceUrls];
 };
 

@@ -87,6 +87,22 @@ export const stripCitTagsWhileStreaming = (content: string): string => {
   return escapeUnsupportedCitTags(content).replace(CIT_ELEMENT_RE, '');
 };
 
+/**
+ * Prepares markdown for a surface that renders `<cit>` elements but no
+ * offset-based markers (e.g. stage content): hides supported elements while
+ * streaming, otherwise escapes every unsupported `cit` shape. Unlike the
+ * message body's preparation, it never injects sentinels.
+ */
+export const prepareCitationContent = (
+  content: string,
+  isStreaming: boolean,
+): string => {
+  if (!content.includes('<cit')) return content;
+  return isStreaming
+    ? stripCitTagsWhileStreaming(content)
+    : escapeUnsupportedCitTags(content);
+};
+
 /*
  * Narrowed via an explicit cast rather than control-flow narrowing, because
  * `AnnotationSelector`'s open catch-all variant (`{ type: string; [key:

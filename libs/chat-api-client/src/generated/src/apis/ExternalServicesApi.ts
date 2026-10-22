@@ -16,10 +16,16 @@ import * as runtime from '../runtime';
 import type {
   ApplicationExternalServiceDto,
   ExternalServiceAuthResultDto,
+  ExternalServiceDefinitionBodyDto,
   ExternalServiceLogoutBodyDto,
   ExternalServiceSigninBodyDto,
   GetExternalServiceResponseDto,
 } from '../models/index';
+
+export interface DeleteExternalServiceRequest {
+  appId: string;
+  serviceId: string;
+}
 
 export interface GetExternalServiceRequest {
   appId: string;
@@ -28,6 +34,12 @@ export interface GetExternalServiceRequest {
 
 export interface ListExternalServicesRequest {
   appId: string;
+}
+
+export interface PutExternalServiceRequest {
+  appId: string;
+  serviceId: string;
+  externalServiceDefinitionBodyDto: ExternalServiceDefinitionBodyDto;
 }
 
 export interface SignInExternalServiceRequest {
@@ -46,6 +58,75 @@ export interface SignOutExternalServiceRequest {
  *
  */
 export class ExternalServicesApi extends runtime.BaseAPI {
+  /**
+   * Removes one external service from an application the caller may edit, by proxying DIAL Core (DELETE /v1/applications/{appId}/external-services/{id}); Core purges its application-level credentials with it. Removing a service that is already gone succeeds.
+   * Remove an application external service
+   */
+  async deleteExternalServiceRaw(
+    requestParameters: DeleteExternalServiceRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters['appId'] == null) {
+      throw new runtime.RequiredError(
+        'appId',
+        'Required parameter "appId" was null or undefined when calling deleteExternalService().',
+      );
+    }
+
+    if (requestParameters['serviceId'] == null) {
+      throw new runtime.RequiredError(
+        'serviceId',
+        'Required parameter "serviceId" was null or undefined when calling deleteExternalService().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/external-services/{appId}/{serviceId}`;
+    urlPath = urlPath.replace(
+      `{${'appId'}}`,
+      encodeURIComponent(String(requestParameters['appId'])),
+    );
+    urlPath = urlPath.replace(
+      `{${'serviceId'}}`,
+      encodeURIComponent(String(requestParameters['serviceId'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Removes one external service from an application the caller may edit, by proxying DIAL Core (DELETE /v1/applications/{appId}/external-services/{id}); Core purges its application-level credentials with it. Removing a service that is already gone succeeds.
+   * Remove an application external service
+   */
+  async deleteExternalService(
+    requestParameters: DeleteExternalServiceRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.deleteExternalServiceRaw(requestParameters, initOverrides);
+  }
+
   /**
    * Returns an application external service\'s display metadata and authentication type by proxying DIAL Core (GET /v1/applications/{appId}/external-services/{id}) using the caller\'s session access token.
    * Get application external-service metadata
@@ -177,6 +258,89 @@ export class ExternalServicesApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<Array<ApplicationExternalServiceDto>> {
     const response = await this.listExternalServicesRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Declares or replaces one external service on an application the caller may edit, by proxying DIAL Core (PUT /v1/applications/{appId}/external-services/{id}). An API_KEY service carries only the header name — each person\'s key is signed in separately; an OAUTH service carries its client settings. The client secret is never logged or returned.
+   * Declare an application external service
+   */
+  async putExternalServiceRaw(
+    requestParameters: PutExternalServiceRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<GetExternalServiceResponseDto>> {
+    if (requestParameters['appId'] == null) {
+      throw new runtime.RequiredError(
+        'appId',
+        'Required parameter "appId" was null or undefined when calling putExternalService().',
+      );
+    }
+
+    if (requestParameters['serviceId'] == null) {
+      throw new runtime.RequiredError(
+        'serviceId',
+        'Required parameter "serviceId" was null or undefined when calling putExternalService().',
+      );
+    }
+
+    if (requestParameters['externalServiceDefinitionBodyDto'] == null) {
+      throw new runtime.RequiredError(
+        'externalServiceDefinitionBodyDto',
+        'Required parameter "externalServiceDefinitionBodyDto" was null or undefined when calling putExternalService().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/external-services/{appId}/{serviceId}`;
+    urlPath = urlPath.replace(
+      `{${'appId'}}`,
+      encodeURIComponent(String(requestParameters['appId'])),
+    );
+    urlPath = urlPath.replace(
+      `{${'serviceId'}}`,
+      encodeURIComponent(String(requestParameters['serviceId'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'PUT',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['externalServiceDefinitionBodyDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<GetExternalServiceResponseDto>(response);
+  }
+
+  /**
+   * Declares or replaces one external service on an application the caller may edit, by proxying DIAL Core (PUT /v1/applications/{appId}/external-services/{id}). An API_KEY service carries only the header name — each person\'s key is signed in separately; an OAUTH service carries its client settings. The client secret is never logged or returned.
+   * Declare an application external service
+   */
+  async putExternalService(
+    requestParameters: PutExternalServiceRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<GetExternalServiceResponseDto> {
+    const response = await this.putExternalServiceRaw(
       requestParameters,
       initOverrides,
     );

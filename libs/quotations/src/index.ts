@@ -28,6 +28,7 @@ export { useAnnotations } from './utils/useAnnotations';
 export { useCitationCard } from './utils/useCitationCard';
 export { useCitationMarkdownComponents } from './hooks/useCitationMarkdownComponents/useCitationMarkdownComponents';
 export type { UseCitationMarkdownComponentsCallbacks } from './hooks/useCitationMarkdownComponents/useCitationMarkdownComponents';
+export { useCitationTagRenderer } from './hooks/useCitationTagRenderer/useCitationTagRenderer';
 
 // Utils
 export {
@@ -60,6 +61,7 @@ export type {
 
 export {
   injectCitationSentinels,
+  prepareCitationContent,
   replaceCitTagsWithSourceNames,
   replaceSentinelsInChildren,
   stripCitTagsWhileStreaming,

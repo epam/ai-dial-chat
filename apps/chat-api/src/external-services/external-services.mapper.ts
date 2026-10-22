@@ -1,4 +1,5 @@
 import type { components, operations } from '@epam/ai-dial-typescript-sdk';
+import type { ExternalServiceDefinitionBodyDto } from './dto/external-service-definition.dto';
 import {
   ExternalServiceAuthType,
   type ExternalServiceSigninBodyDto,
@@ -43,6 +44,7 @@ export const toDialExternalServiceAppId = (appId: string): string =>
     : appId;
 
 type DialExternalServiceData = components['schemas']['ExternalServiceData'];
+type DialExternalServiceDefinition = components['schemas']['ExternalService'];
 type DialExternalServiceSigninBody =
   operations['externalServiceSignIn']['requestBody']['content']['application/json'];
 type DialExternalServiceSignoutBody =
@@ -89,3 +91,26 @@ export const mapDialExternalServiceToDto = (
   codeChallenge: data.auth_settings?.code_challenge,
   codeChallengeMethod: data.auth_settings?.code_challenge_method,
 });
+
+/** A service definition as DIAL Core's `putExternalService` takes it. Fields left out stay out. */
+export const toDialExternalServiceDefinition = (
+  body: ExternalServiceDefinitionBodyDto,
+): DialExternalServiceDefinition => {
+  const auth = body.authSettings;
+  const authSettings = Object.fromEntries(
+    Object.entries({
+      authentication_type: auth.authenticationType,
+      api_key_header: auth.apiKeyHeader,
+      client_id: auth.clientId,
+      client_secret: auth.clientSecret,
+      authorization_endpoint: auth.authorizationEndpoint,
+      token_endpoint: auth.tokenEndpoint,
+      scopes_supported: auth.scopesSupported,
+    }).filter(([, value]) => value !== undefined),
+  ) as DialExternalServiceDefinition['auth_settings'];
+  return {
+    display_name: body.displayName,
+    ...(body.description !== undefined && { description: body.description }),
+    auth_settings: authSettings,
+  };
+};

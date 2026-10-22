@@ -29,6 +29,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
   styles: groupStyles,
   onAttachmentClick,
   attachmentDisplayResolvers,
+  renderCitation,
 }) => {
   const {
     executedLabel = 'Executed',
@@ -114,6 +115,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
         labels={panelLabels}
         onAttachmentClick={onAttachmentClick}
         attachmentDisplayResolvers={attachmentDisplayResolvers}
+        renderCitation={renderCitation}
       />
     );
   }
@@ -231,6 +233,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
             className="pt-1"
             onAttachmentClick={onAttachmentClick}
             attachmentDisplayResolvers={attachmentDisplayResolvers}
+            renderCitation={renderCitation}
           />
         )}
       </Accordion>

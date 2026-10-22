@@ -280,6 +280,38 @@ describe('CollapsedGroup — onAttachmentClick', () => {
   });
 });
 
+describe('CollapsedGroup — renderCitation', () => {
+  it('forwards renderCitation to a grandchild stage', async () => {
+    const user = userEvent.setup();
+    const renderCitation = vi.fn((dataId: string | undefined) => (
+      <button type="button">{`Cite ${dataId}`}</button>
+    ));
+    render(
+      <CollapsedGroup
+        stages={[
+          completed(0, 'Plan'),
+          { ...completed(1, 'Search'), parent_stage_index: 0 },
+          {
+            ...completed(2, 'Read'),
+            parent_stage_index: 1,
+            content: 'Found it<cit data-id="g1"></cit>.',
+          },
+        ]}
+        isStreaming={false}
+        renderCitation={renderCitation}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: /Executed 3 steps/ }));
+    await user.click(screen.getByRole('button', { name: /Plan/ }));
+    await user.click(screen.getByRole('button', { name: /Search/ }));
+    await user.click(screen.getByRole('button', { name: /Read/ }));
+
+    expect(screen.getByRole('button', { name: 'Cite g1' })).toBeTruthy();
+    expect(renderCitation).toHaveBeenCalledWith('g1', undefined);
+  });
+});
+
 describe('CollapsedGroup — labels', () => {
   it('uses the supplied executedLabel/stepsLabel for the finished summary', () => {
     render(
