@@ -125,10 +125,10 @@ Two exceptions, and only these two:
 - **Filled glyphs** (`Icon*Filled`) — Tabler drops the `stroke` prop for the
   filled set, so passing it is dead code. Leave it off.
 - **Empty-state illustrations** — a 48px+ illustration above an empty-state
-  message stays at `stroke={1}`; 1.5 reads as a fence at that size. The kit
-  makes the same exception for its own `NoDataContent`, which draws a generic
-  document mark by default; `PanelEmptyState` forwards an optional `icon` to
-  replace it with a feature illustration.
+  message stays at `stroke={1}`; 1.5 reads as a fence at that size. Prefer
+  not to pass one at all: the kit's `NoDataContent` (and `PanelEmptyState`,
+  which wraps it) draws the shared Patterns 2.0 empty-state illustration by
+  default, so every empty list looks the same.
 
 The border half of the same scale is plain Tailwind: `border` (1px) for
 controls, standalone dividers and table frames, `border-2` for active/selected

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveCanvasWidth } from '../canvas-width';
+import { getNavigationSidebarWidth, resolveCanvasWidth } from '../canvas-width';
 
 const fileManager = (viewportWidth: number, maxWidth = viewportWidth - 400) =>
   resolveCanvasWidth({
@@ -69,5 +69,15 @@ describe('resolveCanvasWidth', () => {
         ).toBe(390);
       }
     });
+  });
+});
+
+describe('getNavigationSidebarWidth', () => {
+  it('returns the expanded column width', () => {
+    expect(getNavigationSidebarWidth(true)).toBe(336);
+  });
+
+  it('returns the collapsed rail width', () => {
+    expect(getNavigationSidebarWidth(false)).toBe(72);
   });
 });

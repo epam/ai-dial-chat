@@ -51,6 +51,8 @@ export interface ScheduledTaskDetailViewLabels extends ScheduledTaskInstructions
   historyTitle: string;
   /** Message shown when the task has no runs yet. */
   historyEmptyLabel: string;
+  /** Secondary line under `historyEmptyLabel`. Omitted when not set. */
+  historyEmptyDescription?: string;
   /** Message shown alongside the retry action when `runsError` is set. */
   historyErrorLabel: string;
   /** Next-page failure message; falls back to historyErrorLabel. */

@@ -230,12 +230,11 @@ describe('PublishAccessRuleEditor', () => {
     const patternInput = screen.getByLabelText('Pattern');
     await userEvent.type(patternInput, '(unclosed');
 
-    expect(screen.getByRole('alert').textContent).toContain(
-      'Enter a valid regular expression.',
-    );
     const describedBy = patternInput.getAttribute('aria-describedby');
     expect(describedBy).toBeTruthy();
-    expect(screen.getByRole('alert').id).toBe(describedBy);
+    expect(screen.getByText('Enter a valid regular expression.').id).toBe(
+      describedBy,
+    );
   });
 
   it('treats an empty/whitespace-only regex as invalid and does not save', async () => {
@@ -249,9 +248,9 @@ describe('PublishAccessRuleEditor', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     expect(onSave).not.toHaveBeenCalled();
-    expect(screen.getByRole('alert').textContent).toContain(
-      'Enter a valid regular expression.',
-    );
+    expect(
+      screen.getByLabelText('Pattern').getAttribute('aria-describedby'),
+    ).toBe(screen.getByText('Enter a valid regular expression.').id);
   });
 
   it('rejects a regex pattern longer than 200 characters', async () => {
@@ -265,9 +264,9 @@ describe('PublishAccessRuleEditor', () => {
       target: { value: 'a'.repeat(201) },
     });
 
-    expect(screen.getByRole('alert').textContent).toContain(
-      'Enter a valid regular expression.',
-    );
+    expect(
+      screen.getByLabelText('Pattern').getAttribute('aria-describedby'),
+    ).toBe(screen.getByText('Enter a valid regular expression.').id);
   });
 
   it('clears the pattern state when switching from REGEX to CONTAIN', async () => {

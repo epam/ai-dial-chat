@@ -117,7 +117,10 @@ export const CardGrid: FC<CardGridProps> = memo(
     if (items.length === 0) {
       return (
         <div className="flex size-full flex-col items-center justify-center">
-          <PanelEmptyState label={noResultsTitle} />
+          <PanelEmptyState
+            label={noResultsTitle}
+            description={titles?.noResultsDescription}
+          />
         </div>
       );
     }

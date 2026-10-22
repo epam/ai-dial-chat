@@ -69,10 +69,22 @@ describe('custom API telemetry', () => {
     );
   });
 
+  it.each([
+    ['GET', 'GET'],
+    ['put', 'PUT'],
+    ['DELETE', 'DELETE'],
+    ['PATCH', 'other'],
+    ['HEAD', 'other'],
+    ['X-SECRET-VERB', 'other'],
+  ])('bounds the method label: %s records as %s', (method, label) => {
+    expect(telemetry.resolveCustomApiMethodLabel(method)).toBe(label);
+  });
+
   it('records duration and byte count only with bounded attributes for a successful call', async () => {
     telemetry.recordCustomApiCall({
       operationId: 'data-products',
       known: true,
+      method: 'GET',
       result: telemetry.CustomApiResultCategory.Success,
       durationSeconds: 0.2,
       bytes: 512,
@@ -91,14 +103,19 @@ describe('custom API telemetry', () => {
     expect(bytesPoint).toBeDefined();
     expect(Object.keys(durationPoint!.attributes)).toEqual([
       telemetry.CUSTOM_API_OPERATION_ATTRIBUTE,
+      telemetry.CUSTOM_API_METHOD_ATTRIBUTE,
       telemetry.CUSTOM_API_RESULT_ATTRIBUTE,
     ]);
+    expect(
+      durationPoint?.attributes[telemetry.CUSTOM_API_METHOD_ATTRIBUTE],
+    ).toBe('GET');
   });
 
   it('records a failed call for an unknown id under the constant label and omits bytes', async () => {
     telemetry.recordCustomApiCall({
       operationId: undefined,
       known: false,
+      method: 'GET',
       result: telemetry.CustomApiResultCategory.NotFound,
       durationSeconds: 0,
     });
@@ -116,6 +133,7 @@ describe('custom API telemetry', () => {
     telemetry.recordCustomApiCall({
       operationId: 'data-products',
       known: true,
+      method: 'PUT',
       result: telemetry.CustomApiResultCategory.UpstreamError,
       durationSeconds: 0.01,
     });

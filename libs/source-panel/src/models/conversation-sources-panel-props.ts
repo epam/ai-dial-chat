@@ -16,8 +16,12 @@ export interface ConversationSourcesPanelLabels {
   searchClearLabel: string;
   /** Text shown in the centred empty state when the panel has no files or sources. */
   noDataLabel: string;
+  /** Secondary line under `noDataLabel`. Omitted when not set. */
+  noDataDescription?: string;
   /** Text shown when a search query matches nothing. */
   noResultsLabel: string;
+  /** Secondary line under `noResultsLabel`. Omitted when not set. */
+  noResultsDescription?: string;
   /** Accessible label for the download-all icon button. */
   downloadAllLabel: string;
   /** Heading text for the uploaded-files section. */

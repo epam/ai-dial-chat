@@ -10,7 +10,7 @@ import {
   Select,
   Tooltip,
 } from '@epam/ai-dial-ui-kit';
-import { useId, useLayoutEffect, useRef, useState, type FC } from 'react';
+import { useId, useState, type FC } from 'react';
 import { SKILLS_CLASS } from '../../constants/public-class-names';
 import type {
   SkillSelectorFieldProps,
@@ -38,7 +38,6 @@ export const SkillSelectorField: FC<SkillSelectorFieldProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const rootRef = useRef<HTMLDivElement>(null);
   const descriptionId = useId();
   const unsupported = value.some((url) =>
     isSkillSelectionUnsupported(url, isSkillsSupported),
@@ -86,23 +85,8 @@ export const SkillSelectorField: FC<SkillSelectorFieldProps> = ({
     setIsOpen(nextOpen);
   };
 
-  /* Select does not expose the combobox ARIA state directly, so bridge the
-   * host validation description onto its focus target until the kit does. */
-  useLayoutEffect(() => {
-    const combobox =
-      rootRef.current?.querySelector<HTMLInputElement>('[role="combobox"]');
-    if (!combobox) return;
-
-    if (description) combobox.setAttribute('aria-describedby', descriptionId);
-    else combobox.removeAttribute('aria-describedby');
-
-    if (error || unsupported) combobox.setAttribute('aria-invalid', 'true');
-    else combobox.removeAttribute('aria-invalid');
-  }, [description, descriptionId, error, isDisabled, unsupported]);
-
   return (
     <div
-      ref={rootRef}
       className={mergeClasses('min-w-0', className, SKILLS_CLASS.selectorField)}
       style={cssVars}
     >
@@ -127,6 +111,7 @@ export const SkillSelectorField: FC<SkillSelectorFieldProps> = ({
             placeholder={labels.placeholder}
             labelProps={{ label: labels.fieldLabel }}
             error={error}
+            ariaDescribedBy={description ? descriptionId : undefined}
             searchPlaceholder={labels.searchPlaceholder ?? 'Search skills'}
             emptyStateTitle={
               query.trim()

@@ -68,7 +68,10 @@ import {
       { value: ScheduledTasksSortKey.LastToRun, label: 'Last to run' },
     ],
     emptyStateLabel: 'No scheduled tasks yet',
-    noResultsLabel: 'No results',
+    emptyStateDescription:
+      'Scheduled tasks will appear here once you create one.',
+    noResultsLabel: 'No scheduled tasks found',
+    noResultsDescription: 'Try a different search term or check your filters.',
     errorLabel: 'Something went wrong',
     retryLabel: 'Retry',
   }}

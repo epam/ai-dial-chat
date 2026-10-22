@@ -6,6 +6,8 @@ import type { CatalogMarkdownLabels } from './item-details-props';
 export interface CardGridTitles {
   /** Empty-state heading text. Default: `'No results'`. */
   noResultsTitle?: string;
+  /** Secondary line under the empty-state heading. Omitted when not set. */
+  noResultsDescription?: string;
   /** Label for the "Featured" tag on cards. Default: `'Featured'`. */
   featuredLabel?: string;
   /** Accessible label for the star button when the item is not starred. Default: `'Add to favorites'`. */

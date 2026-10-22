@@ -10,6 +10,20 @@ import { ScheduledTaskRunHistoryList } from '../ScheduledTaskRunHistoryList';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_KIT_ICON_STROKE: 1.5,
+  NoDataContent: ({
+    title,
+    description,
+    live,
+  }: {
+    title: string;
+    description?: string;
+    live?: boolean;
+  }) => (
+    <div role={live ? 'status' : undefined}>
+      <span>{title}</span>
+      {description != null && <span>{description}</span>}
+    </div>
+  ),
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   Spinner: () => <div role="progressbar" />,
   Skeleton: (props: Record<string, unknown>) => (
@@ -47,7 +61,6 @@ vi.mock('@tabler/icons-react', () => ({
   IconAlertTriangle: (props: Record<string, unknown>) => (
     <svg data-icon="missed" {...props} />
   ),
-  IconClipboardX: () => <svg data-icon="empty" />,
 }));
 
 const labels: ScheduledTaskRunHistoryListLabels = {
