@@ -151,7 +151,7 @@ export interface DialFileManagerShellLabels {
   emptyStateByTab: Record<DialFileManagerTabs, EmptyStateCopy>;
   /** Per-tab tree header label. */
   treeHeaderByTab: Record<DialFileManagerTabs, string>;
-  /** Optional title rendered above the tabs. Omitted by default, so the tabs stand alone; the per-tab label above is then only used as the tabs' aria-label. */
+  /** Optional title rendered above the tabs on desktop, and as the page heading on mobile (standalone variant only). Omitted by default, so the tabs stand alone; the per-tab label above is then only used as the tabs' aria-label. */
   treeHeader?: string;
   /** Search field placeholder per source tab of the browsed folder; a tab without an entry keeps the file manager's default. */
   searchPlaceholderByTab?: Partial<Record<DialFileManagerTabs, string>>;

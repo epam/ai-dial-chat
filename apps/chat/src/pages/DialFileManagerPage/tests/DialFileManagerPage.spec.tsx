@@ -572,6 +572,16 @@ describe('DialFileManagerPage — page frame', () => {
     ).toBeTruthy();
   });
 
+  it('shows the page title on a phone too, with the design 12px/4px padding', () => {
+    render(<DialFileManagerPage />);
+
+    const classes = screen.getByRole('banner').className.split(' ');
+    expect(classes).toContain('flex');
+    expect(classes).not.toContain('hidden');
+    expect(classes).toContain('px-3');
+    expect(classes).toContain('py-1');
+  });
+
   it('sets the shell surface to the base layer on a phone and transparent inside the desktop card', () => {
     render(<DialFileManagerPage />);
 
