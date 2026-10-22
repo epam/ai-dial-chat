@@ -67,8 +67,9 @@ export class GenerationConflictError extends Error {
 
 /**
  * Reported through `onError` when DIAL Core itself signals a failure with an
- * in-band `{ error: { message } }` SSE chunk. Its `message` is upstream text
- * intended for the user, unlike a transport failure (failed `fetch`, non-OK
+ * in-band `{ error: { message, display_message? } }` SSE chunk. Its `message`
+ * is upstream text intended for the user — the chunk's `display_message` when
+ * present, else its `message` — unlike a transport failure (failed `fetch`, non-OK
  * status, broken stream), whose message is technical detail. A custom
  * transport raises this for any user-facing upstream error text.
  */
@@ -256,7 +257,9 @@ const parseSSELine = (
               readErrorStatus(parsed.error),
               readTerminalMarker(parsed.error),
             )
-          : new StreamUpstreamError(parsed.error.message),
+          : new StreamUpstreamError(
+              parsed.error.display_message ?? parsed.error.message,
+            ),
       );
       return;
     }

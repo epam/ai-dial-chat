@@ -41,9 +41,11 @@ joins the running generation" defines, and SHALL reach this conflict
 message only when that handover cannot resolve the generation.
 
 When the transport reports a `StreamUpstreamError` — DIAL Core sent an
-in-band `{ error: { message } }` SSE chunk — the hook SHALL write that
-error's `message` to `streamErrorMessage`, because it is upstream text
-intended for the user.
+in-band `{ error: { message, display_message? } }` SSE chunk — the hook
+SHALL write that error's `message` to `streamErrorMessage`, because it is
+upstream text intended for the user. The live value SHALL match what the
+backend persists for the same chunk, so a reload does not change the
+displayed error text.
 
 When the transport reports a `GenerationPersistenceError` — the backend
 sent an in-band error chunk with `error.type === 'conversation_save_failed'`
@@ -86,7 +88,10 @@ built-in `createChatStreamApi` transport SHALL raise `StreamUpstreamError`
 for every in-band SSE error chunk except one whose `error.type` is
 `conversation_save_failed` (raised as `GenerationPersistenceError`), and
 `StreamInterruptedError` for the network-level failures listed in
-`generation-stream-recovery`.
+`generation-stream-recovery`. A `StreamUpstreamError`'s `message` SHALL be
+the chunk's `error.display_message` when present, and its `error.message`
+otherwise — the same precedence the backend applies when persisting
+`streamErrorMessage`.
 
 #### Scenario: Conflict shows the host's message
 - **WHEN** `onError` receives a `GenerationConflictError` for a start that
@@ -130,6 +135,15 @@ for every in-band SSE error chunk except one whose `error.type` is
 - **THEN** `onError` is called once, with the `GenerationPersistenceError`,
   so the recovery save can run; the in-band text arrives as that error's
   `terminalMarker.streamErrorMessage`
+
+#### Scenario: The built-in transport prefers an in-band error's display_message
+- **WHEN** `createChatStreamApi`'s stream reader parses an in-band error
+  chunk carrying both a raw `error.message` (e.g. `'Error code: 429 - …'`)
+  and an `error.display_message` (e.g. a token-limit notice with its reset
+  time)
+- **THEN** it calls `onError` with a `StreamUpstreamError` whose `message`
+  is the `display_message`, so the streaming view shows the same text the
+  conversation shows after a reload
 
 #### Scenario: The built-in transport leaves non-network failures untagged
 - **WHEN** the response is non-OK and not 409, or the body is missing

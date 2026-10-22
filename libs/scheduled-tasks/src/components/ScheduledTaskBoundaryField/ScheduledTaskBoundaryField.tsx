@@ -3,6 +3,7 @@ import {
   Calendar,
   CalendarMode,
   type CalendarValue,
+  ErrorText,
 } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { usePickerErrorAssociation } from '../../hooks/usePickerErrorAssociation/usePickerErrorAssociation';
@@ -76,13 +77,12 @@ export const ScheduledTaskBoundaryField: FC<
         disabled={disabled}
       />
       {error && (
-        <p
+        <ErrorText
           id={errorId}
           role="alert"
           className={mergeClasses(errorClassName, styles.error)}
-        >
-          {error}
-        </p>
+          text={error}
+        />
       )}
     </div>
   );

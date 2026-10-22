@@ -10,12 +10,13 @@ import { FilesDownloadService } from './download/files-download.service';
 import { FilesController } from './files.controller';
 import { FilesService } from './files.service';
 import { FilesFolderService } from './folder/files-folder.service';
-import { FilesListingService } from './listing/files-listing.service';
+import { FilesListingModule } from './listing/files-listing.module';
 import { FilesSharingService } from './sharing/files-sharing.service';
 import { FilesUploadService } from './upload/files-upload.service';
 
 @Module({
   imports: [
+    FilesListingModule,
     MulterModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -31,7 +32,6 @@ import { FilesUploadService } from './upload/files-upload.service';
   providers: [
     ArchiveUploadInterceptor,
     FilesService,
-    FilesListingService,
     FilesUploadService,
     FilesFolderService,
     FilesDownloadService,

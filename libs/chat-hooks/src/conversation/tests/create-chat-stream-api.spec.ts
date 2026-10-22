@@ -206,6 +206,32 @@ describe('createChatStreamApi', () => {
     expect(error.message).toBe('Model overloaded');
   });
 
+  it('reports the display_message of an in-band DIAL Core error chunk over its raw message', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        streamOf(
+          `data: ${JSON.stringify({
+            error: {
+              message:
+                "Error code: 429 - {'error': {'message': 'Hit token rate limit.'}}",
+              display_message:
+                "You've exceeded your weekly token limit. Please try again in 4 days 16 hours",
+              type: 'rate_limit_exceeded',
+            },
+          })}\n\n`,
+        ),
+        { status: 200 },
+      ),
+    );
+
+    const error = await failStreamRequest();
+
+    expect(error).toBeInstanceOf(StreamUpstreamError);
+    expect(error.message).toBe(
+      "You've exceeded your weekly token limit. Please try again in 4 days 16 hours",
+    );
+  });
+
   it('reports the persistence failure that follows an in-band error, with its terminal marker', async () => {
     fetchMock.mockResolvedValue(
       new Response(

@@ -34,6 +34,8 @@ export interface StageItemProps {
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
   /** Host-owned URL resolvers applied when mapping this stage's attachments. See {@link StagesPanelProps.attachmentDisplayResolvers}. */
   attachmentDisplayResolvers?: StagesPanelProps['attachmentDisplayResolvers'];
+  /** Host-owned renderer for `<cit>` elements in this stage's content. See {@link StagesPanelProps.renderCitation}. */
+  renderCitation?: StagesPanelProps['renderCitation'];
   /** Nested list of this stage's child stages, rendered after its own markdown and attachments. Makes the row expandable on its own. */
   childList?: ReactNode;
   /** Controlled expanded state of the disclosure; uncontrolled (initially collapsed) when omitted. The body mounts only while expanded. */
@@ -90,6 +92,7 @@ export const StageItem: FC<StageItemProps> = ({
   nameOverride,
   onAttachmentClick,
   attachmentDisplayResolvers,
+  renderCitation,
   childList,
   isExpanded,
   onToggle,
@@ -220,6 +223,7 @@ export const StageItem: FC<StageItemProps> = ({
                 copiedLabel={codeBlockCopiedLabel}
                 tableScrollRegionAriaLabel={tableScrollRegionAriaLabel}
                 mathScrollRegionAriaLabel={mathScrollRegionAriaLabel}
+                renderCitation={renderCitation}
               />
             </div>
           )}

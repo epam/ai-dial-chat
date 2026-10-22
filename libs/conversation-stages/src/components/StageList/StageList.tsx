@@ -36,6 +36,8 @@ interface StageLevelProps {
   onAttachmentClick?: StagesPanelProps['onAttachmentClick'];
   /** Host-owned URL resolvers for stage attachment tiles. See {@link StagesPanelProps.attachmentDisplayResolvers}. */
   attachmentDisplayResolvers?: StagesPanelProps['attachmentDisplayResolvers'];
+  /** Host-owned renderer for `<cit>` elements in stage content. See {@link StagesPanelProps.renderCitation}. */
+  renderCitation?: StagesPanelProps['renderCitation'];
 }
 
 /** Props for {@link StageList}. */
@@ -84,6 +86,7 @@ const StageNodeItem: FC<StageNodeItemProps> = ({
   labels,
   onAttachmentClick,
   attachmentDisplayResolvers,
+  renderCitation,
 }) => {
   const key = getStageExpansionKey(node.stage.index);
   const childDepth = depth + 1;
@@ -97,6 +100,7 @@ const StageNodeItem: FC<StageNodeItemProps> = ({
       labels={labels}
       onAttachmentClick={onAttachmentClick}
       attachmentDisplayResolvers={attachmentDisplayResolvers}
+      renderCitation={renderCitation}
       isExpanded={expansion.isExpanded(key)}
       onToggle={(isExpanded) => expansion.onToggle(key, isExpanded)}
       childList={
@@ -111,6 +115,7 @@ const StageNodeItem: FC<StageNodeItemProps> = ({
             labels={labels}
             onAttachmentClick={onAttachmentClick}
             attachmentDisplayResolvers={attachmentDisplayResolvers}
+            renderCitation={renderCitation}
           />
         ) : undefined
       }
@@ -128,6 +133,7 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
   labels,
   onAttachmentClick,
   attachmentDisplayResolvers,
+  renderCitation,
 }) => {
   const {
     runningAriaLabel,
@@ -211,6 +217,7 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
                 labels={labels}
                 onAttachmentClick={onAttachmentClick}
                 attachmentDisplayResolvers={attachmentDisplayResolvers}
+                renderCitation={renderCitation}
               />
             </li>
           ))}

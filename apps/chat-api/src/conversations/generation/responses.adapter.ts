@@ -409,9 +409,7 @@ export class ResponsesAdapter {
             terminalSignal = {
               state: ResponsesTerminalState.StreamError,
               message:
-                (event as { error?: { message?: string } }).error?.message ??
-                (event as { message?: string }).message ??
-                'Responses stream error',
+                extractDialErrorMessage(event) ?? 'Responses stream error',
             };
             isDone = true;
             return;

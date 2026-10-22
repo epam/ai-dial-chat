@@ -12,6 +12,8 @@ import { CredentialsApiKeyOverlay } from '../CredentialsApiKeyOverlay';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_KIT_ICON_STROKE: 1.5,
+  ErrorText: ({ text }: { text?: string }) =>
+    text ? <span role="alert">{text}</span> : null,
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   Input: ({
     onChange,

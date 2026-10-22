@@ -1,4 +1,4 @@
-import type { Conversation } from '@epam/ai-dial-chat-shared';
+import type { Annotation, Conversation } from '@epam/ai-dial-chat-shared';
 
 /** Whether `url` is a DIAL Core file reference (`files/{bucket}/{path}`). */
 const isDialFileId = (url: string): boolean => url.startsWith('files/');
@@ -54,21 +54,74 @@ export const splitFileIdAnchor = (
   };
 };
 
+/**
+ * Whether a citation-pool entry is an object the transfer helpers may read.
+ * The pool is untrusted persisted JSON (an import writes it verbatim), so a
+ * `null` or primitive entry is passed through untouched instead of being
+ * dereferenced.
+ */
+const isPoolAnnotation = (entry: unknown): entry is Annotation =>
+  entry != null && typeof entry === 'object';
+
+/**
+ * Returns the readable entries of the conversation-level citation pool
+ * (`customViewState.annotations`, [#9002](https://github.com/epam/ai-dial-chat/issues/9002)), or an empty list when the
+ * pool is absent or not an array.
+ */
+const getAnnotationPool = (conversation: Conversation): Annotation[] => {
+  const pool = conversation.customViewState?.['annotations'];
+  return Array.isArray(pool) ? pool.filter(isPoolAnnotation) : [];
+};
+
+/**
+ * Applies `mapAnnotation` to every readable entry of the citation pool,
+ * keeping unreadable entries and every other `customViewState` key as they
+ * are. Returns `conversation` itself when no entry changed, so a caller can
+ * tell by identity that the pool needed no work.
+ */
+export const mapAnnotationPool = (
+  conversation: Conversation,
+  mapAnnotation: (annotation: Annotation) => Annotation,
+): Conversation => {
+  const customViewState = conversation.customViewState;
+  const pool = customViewState?.['annotations'];
+  if (!Array.isArray(pool)) return conversation;
+
+  let changed = false;
+  const annotations = pool.map((entry: unknown) => {
+    if (!isPoolAnnotation(entry)) return entry;
+    const mapped = mapAnnotation(entry);
+    if (mapped !== entry) changed = true;
+    return mapped;
+  });
+
+  return changed
+    ? { ...conversation, customViewState: { ...customViewState, annotations } }
+    : conversation;
+};
+
 /** A unique DIAL file reference found in a conversation's messages. */
 export interface AttachmentRef {
   fileId: string;
 }
 
 /**
- * Visits every attachment a conversation's messages carry, in render order.
+ * Visits every attachment a conversation carries — its messages' in render
+ * order, then the conversation-level citation pool's.
  *
  * Reading only `custom_content.attachments` misses the files an agent
  * produces inside an execution stage and the source documents a citation
  * points at, which is how app-generated files usually reach a conversation
- * ([#8708](https://github.com/epam/ai-dial-chat/issues/8708)). The backend's share flow already grants access to all three
- * (`collectConversationResourceUrls` in `apps/chat-api/src/share/share.service.ts`);
+ * ([#8708](https://github.com/epam/ai-dial-chat/issues/8708)). The backend's share flow already grants access to those three
+ * (`collectConversationResourceUrls` in `apps/chat-api/src/share/utils/share-resource.util.ts`);
  * export and import have to bundle and re-point the same set, or the imported
  * conversation keeps referencing files in the exporting user's bucket.
+ *
+ * The pool is visited too: once a message citation loses or changes its
+ * source, a `<cit>` resolves from the pool's copy instead, and the pool can
+ * cite a file no remaining message does ([#9003](https://github.com/epam/ai-dial-chat/issues/9003)). Visiting it last keeps
+ * upload planning — and the ` (n)` suffixes it assigns — unchanged for
+ * every message reference.
  */
 const forEachAttachmentReference = (
   conversation: Conversation,
@@ -91,11 +144,17 @@ const forEachAttachmentReference = (
       if (attachment) visit(attachment);
     }
   }
+
+  for (const annotation of getAnnotationPool(conversation)) {
+    const attachment = annotation.body?.source?.attachment;
+    if (attachment) visit(attachment);
+  }
 };
 
 /**
  * Collects unique attachment references across all messages — message
- * attachments, stage attachments, and citation source documents — with any
+ * attachments, stage attachments, and citation source documents — and the
+ * conversation-level citation pool, with any
  * `#…` anchor stripped. The same file can be referenced more than once (by a
  * later turn, by a stage and the message it belongs to, or by several
  * citations), so dedupe by file id and process it only once.

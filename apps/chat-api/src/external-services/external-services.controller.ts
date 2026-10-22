@@ -1,11 +1,13 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Header,
   HttpCode,
   Param,
   Post,
+  Put,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -16,6 +18,7 @@ import { FeatureGuard } from '../app-config/feature-flags/feature.guard';
 import { RequireFeature } from '../app-config/feature-flags/require-feature.decorator';
 import type { SessionUser } from '../auth/session/session.types';
 import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
+import { ExternalServiceDefinitionBodyDto } from './dto/external-service-definition.dto';
 import {
   ApplicationExternalServiceDto,
   ExternalServiceAuthResultDto,
@@ -24,6 +27,7 @@ import {
   GetExternalServiceResponseDto,
 } from './dto/external-service.dto';
 import {
+  ExternalServiceDefinitionParamsDto,
   GetExternalServiceDto,
   ListExternalServicesDto,
 } from './dto/get-external-service.dto';
@@ -214,5 +218,96 @@ export class ExternalServicesController {
       body,
     );
     return { success: true };
+  }
+
+  @Put(':appId/:serviceId')
+  @UseGuards(FeatureGuard)
+  @RequireFeature(FeatureKey.LiveChatInteraction)
+  @HttpCode(200)
+  @ApiOperation({
+    operationId: 'putExternalService',
+    summary: 'Declare an application external service',
+    description:
+      'Declares or replaces one external service on an application the caller may edit, by ' +
+      'proxying DIAL Core (PUT /v1/applications/{appId}/external-services/{id}). An API_KEY ' +
+      "service carries only the header name — each person's key is signed in separately; an " +
+      'OAUTH service carries its client settings. The client secret is never logged or returned.',
+  })
+  @ApiBody({ type: ExternalServiceDefinitionBodyDto })
+  @ApiDialCoreErrors()
+  @ApiResponse({
+    status: 200,
+    description: 'The declared service, secrets stripped',
+    type: GetExternalServiceResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid path segments or body' })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authenticated — valid session cookie required',
+  })
+  @ApiResponse({
+    status: 403,
+    description:
+      'Caller may not edit the application, or the liveChatInteraction feature is not enabled',
+  })
+  @ApiResponse({ status: 404, description: 'Application not found' })
+  @ApiResponse({
+    status: 502,
+    description: 'DIAL Core returned an error response',
+  })
+  @ApiResponse({ status: 503, description: 'DIAL Core unavailable' })
+  putExternalService(
+    @Req() req: Request,
+    @Param() params: ExternalServiceDefinitionParamsDto,
+    @Body() body: ExternalServiceDefinitionBodyDto,
+  ): Promise<GetExternalServiceResponseDto> {
+    const { at } = req.user as SessionUser;
+    return this.externalServicesService.putExternalService(
+      at,
+      params.appId,
+      params.serviceId,
+      body,
+    );
+  }
+
+  @Delete(':appId/:serviceId')
+  @UseGuards(FeatureGuard)
+  @RequireFeature(FeatureKey.LiveChatInteraction)
+  @HttpCode(204)
+  @ApiOperation({
+    operationId: 'deleteExternalService',
+    summary: 'Remove an application external service',
+    description:
+      'Removes one external service from an application the caller may edit, by proxying DIAL ' +
+      'Core (DELETE /v1/applications/{appId}/external-services/{id}); Core purges its ' +
+      'application-level credentials with it. Removing a service that is already gone succeeds.',
+  })
+  @ApiDialCoreErrors()
+  @ApiResponse({ status: 204, description: 'External service removed' })
+  @ApiResponse({ status: 400, description: 'Invalid path segments' })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authenticated — valid session cookie required',
+  })
+  @ApiResponse({
+    status: 403,
+    description:
+      'Caller may not edit the application, or the liveChatInteraction feature is not enabled',
+  })
+  @ApiResponse({
+    status: 502,
+    description: 'DIAL Core returned an error response',
+  })
+  @ApiResponse({ status: 503, description: 'DIAL Core unavailable' })
+  async deleteExternalService(
+    @Req() req: Request,
+    @Param() params: ExternalServiceDefinitionParamsDto,
+  ): Promise<void> {
+    const { at } = req.user as SessionUser;
+    await this.externalServicesService.deleteExternalService(
+      at,
+      params.appId,
+      params.serviceId,
+    );
   }
 }

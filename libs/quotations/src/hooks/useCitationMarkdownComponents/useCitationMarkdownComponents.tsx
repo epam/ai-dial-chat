@@ -2,7 +2,6 @@ import { mergeClasses, type Annotation } from '@epam/ai-dial-chat-shared';
 import { useMemo, type ReactNode } from 'react';
 import type { Components } from 'react-markdown';
 import type { CitationCardLabels } from '../../components/CitationCard/CitationCard';
-import { CitationDropdown } from '../../components/CitationDropdown/CitationDropdown';
 import type { CitationMarkerLabels } from '../../components/CitationMarker/CitationMarker';
 import {
   buildCitGroupsByTagId,
@@ -12,6 +11,10 @@ import {
   stripCitTagsWhileStreaming,
 } from '../../utils/citation-injection';
 import type { AnnotationGroup } from '../../utils/group-annotations-by-source';
+import {
+  createCitationGroupRenderer,
+  renderCitTagAsText,
+} from '../citation-rendering';
 
 /** Host-supplied callbacks and label builder consumed by `useCitationMarkdownComponents`. */
 export interface UseCitationMarkdownComponentsCallbacks {
@@ -46,17 +49,6 @@ const NO_CITATION_COMPONENTS: Components = {};
  * `markdownComponents` memo on every re-render even when nothing changed.
  */
 const EMPTY_FALLBACK_GROUPS: AnnotationGroup[] = [];
-
-const renderCitTagAsText = (
-  dataId: string | undefined,
-  children: ReactNode,
-) => (
-  <>
-    {dataId == null ? '<cit>' : `<cit data-id="${dataId}">`}
-    {children}
-    {'</cit>'}
-  </>
-);
 
 /**
  * Builds react-markdown component overrides that inject citation markers
@@ -120,24 +112,15 @@ export const useCitationMarkdownComponents = (
   const markdownComponents = useMemo((): Components => {
     const citGroupsByTagId = buildCitGroupsByTagId(groups, fallbackGroups);
 
-    const renderGroup = (group: AnnotationGroup) => {
-      const { cardLabels, markerLabels } = buildLabels(group);
-
-      return (
-        <CitationDropdown
-          key={`citation-${group.groupKey}`}
-          group={group}
-          onPreview={(annotation) => onPreview(annotation, group)}
-          isPreviewable={isPreviewable}
-          onOpenInBrowser={onOpenInBrowser}
-          isDownloadEnabled={isDownloadEnabled}
-          isPreviewOpen={isPreviewOpen}
-          previewFilesOnMarkerClick={previewFilesOnMarkerClick}
-          cardLabels={cardLabels}
-          markerLabels={markerLabels}
-        />
-      );
-    };
+    const renderGroup = createCitationGroupRenderer({
+      onPreview,
+      isPreviewable,
+      onOpenInBrowser,
+      isDownloadEnabled,
+      isPreviewOpen,
+      previewFilesOnMarkerClick,
+      buildLabels,
+    });
 
     const renderMarker = (idx: number) => {
       const group = groups[idx];

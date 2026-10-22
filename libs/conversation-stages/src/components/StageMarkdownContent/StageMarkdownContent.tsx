@@ -1,8 +1,19 @@
 import { MarkdownRenderer, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { type FC, memo, type ReactNode } from 'react';
-import type { StageTypography } from '../../models/stages-props';
+import {
+  type ComponentProps,
+  type FC,
+  memo,
+  type ReactNode,
+  useMemo,
+} from 'react';
+import type {
+  StageCitationRenderer,
+  StageTypography,
+} from '../../models/stages-props';
 import styles from '../StagesPanel/StagesPanel.module.scss';
 import { StageCodeBlock } from './StageCodeBlock';
+
+type MarkdownComponents = ComponentProps<typeof MarkdownRenderer>['components'];
 
 /** Props for the {@link StageMarkdownContent} markdown renderer used in stage content areas. */
 interface Props {
@@ -18,6 +29,8 @@ interface Props {
   tableScrollRegionAriaLabel?: string;
   /** Accessible label for a block formula's scrollable region. Defaults to `'Scrollable formula'`. */
   mathScrollRegionAriaLabel?: string;
+  /** Renders `<cit data-id="…">` elements; without it they render as literal text. */
+  renderCitation?: StageCitationRenderer;
 }
 
 /** Renders stage content as formatted markdown, styled via CSS custom properties. */
@@ -29,6 +42,7 @@ export const StageMarkdownContent: FC<Props> = memo(
     copiedLabel,
     tableScrollRegionAriaLabel,
     mathScrollRegionAriaLabel,
+    renderCitation,
   }) => {
     const blockSpacing = 'mb-1.5 last:mb-0';
     const paragraphSpacing = 'mb-1.5';
@@ -36,6 +50,59 @@ export const StageMarkdownContent: FC<Props> = memo(
       typography?.headingClassName ?? 'dial-small-semi-text',
       styles.stageContent,
       blockSpacing,
+    );
+
+    const components = useMemo(
+      (): MarkdownComponents => ({
+        code: ({
+          children,
+          className,
+        }: {
+          children?: ReactNode;
+          className?: string;
+        }) => {
+          const isBlock = className?.includes('language-');
+          if (!isBlock) {
+            return (
+              <code
+                className={mergeClasses(
+                  /* Inline (not inline-block) so the padding never grows the
+                   line box past the surrounding text's line-height. */
+                  'px-1 py-0.5',
+                  typography?.codeClassName ?? 'dial-tiny-text rounded-md',
+                  styles.codeInline,
+                )}
+              >
+                {children}
+              </code>
+            );
+          }
+          return (
+            <StageCodeBlock
+              codeClassName={className}
+              blockClassName={typography?.codeBlockClassName}
+              copyAriaLabel={copyAriaLabel}
+              copiedLabel={copiedLabel}
+            >
+              {children}
+            </StageCodeBlock>
+          );
+        },
+        /* `cit` isn't a JSX intrinsic element, hence the cast; without a
+           host renderer the shared default prints it as literal text. */
+        ...(renderCitation != null &&
+          ({
+            cit: (props: { 'data-id'?: string; children?: ReactNode }) =>
+              renderCitation(props['data-id'], props.children),
+          } as MarkdownComponents)),
+      }),
+      [
+        typography?.codeClassName,
+        typography?.codeBlockClassName,
+        copyAriaLabel,
+        copiedLabel,
+        renderCitation,
+      ],
     );
 
     return (
@@ -86,42 +153,7 @@ export const StageMarkdownContent: FC<Props> = memo(
             styles.tableCell,
           ),
         }}
-        components={{
-          code: ({
-            children,
-            className,
-          }: {
-            children?: ReactNode;
-            className?: string;
-          }) => {
-            const isBlock = className?.includes('language-');
-            if (!isBlock) {
-              return (
-                <code
-                  className={mergeClasses(
-                    /* Inline (not inline-block) so the padding never grows the
-                       line box past the surrounding text's line-height. */
-                    'px-1 py-0.5',
-                    typography?.codeClassName ?? 'dial-tiny-text rounded-md',
-                    styles.codeInline,
-                  )}
-                >
-                  {children}
-                </code>
-              );
-            }
-            return (
-              <StageCodeBlock
-                codeClassName={className}
-                blockClassName={typography?.codeBlockClassName}
-                copyAriaLabel={copyAriaLabel}
-                copiedLabel={copiedLabel}
-              >
-                {children}
-              </StageCodeBlock>
-            );
-          },
-        }}
+        components={components}
       />
     );
   },

@@ -79,7 +79,7 @@ export interface PublishAccessRuleEditorProps {
   maxTargets?: number;
   /** Text overrides. */
   labels?: PublishAccessRuleEditorLabels;
-  /** Typography class for validation errors. Defaults to `'dial-small-text'`. */
+  /** Typography class for validation errors. Defaults to `'dial-tiny-text'`. */
   errorClassName?: string;
   /** Style overrides. */
   styles?: PublishAccessRuleEditorStyles;

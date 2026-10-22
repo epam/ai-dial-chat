@@ -159,7 +159,6 @@ export const TextRefinementField: FC<TextRefinementFieldProps> = ({
       </div>
       {error && (
         <ErrorText
-          role="alert"
           id={fieldId + '-refinement-error'}
           className={mergeClasses(feedbackClassName, errorClassName)}
           text={
