@@ -1438,7 +1438,7 @@ export interface ConversationListItemDto {
    */
   isReadonly: boolean;
   /**
-   * True when this conversation was created by a DIAL Scheduler run (its resource path matches the `.scheduler/{scheduleId}/{filename}` reserved segment, with `{filename}` shaped `{deploymentId}__{title}__{runId}`).
+   * True when this conversation is a DIAL Scheduler run in the caller's own bucket (its resource path matches the `.scheduler/{scheduleId}/{filename}` reserved segment, with `{filename}` shaped `{deploymentId}__{title}__{runId}`). Always false for published and shared conversations, even when their path has that shape.
    * @type {boolean}
    * @memberof ConversationListItemDto
    */
