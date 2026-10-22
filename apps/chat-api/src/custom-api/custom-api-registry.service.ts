@@ -2,11 +2,28 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EnvironmentVariables } from '../config/environment.config';
 
-/** One allowlisted Core GET call. See CUSTOM_CORE_API_CONFIG in environment.config.ts. */
+/** The HTTP methods an operation may be configured with. */
+export enum CustomApiMethod {
+  Get = 'GET',
+  Post = 'POST',
+  Put = 'PUT',
+  Delete = 'DELETE',
+}
+
+/** What an operation accepts as a request body. */
+export enum CustomApiBody {
+  None = 'none',
+  Json = 'json',
+}
+
+/** One allowlisted Core call. See CUSTOM_CORE_API_CONFIG in environment.config.ts. */
 export interface CustomApiOperation {
   readonly id: string;
-  readonly method: 'GET';
+  readonly method: CustomApiMethod;
   readonly corePath: string;
+  /** Query parameter names the caller may pass, in the order they are forwarded. */
+  readonly query: readonly string[];
+  readonly body: CustomApiBody;
   readonly timeoutMs: number;
   readonly maxResponseBytes: number;
 }
@@ -15,12 +32,26 @@ export interface CustomApiOperation {
 export const CUSTOM_API_CONFIG_MAX_BYTES = 16 * 1024;
 /** Hard ceiling for the number of configured operations. */
 export const CUSTOM_API_MAX_OPERATIONS = 64;
-/** Hard ceiling an entry's optional `timeoutMs` may only lower, never exceed. */
-export const CUSTOM_API_MAX_TIMEOUT_MS = 10_000;
+/** Deadline of an entry without `timeoutMs`. */
+export const CUSTOM_API_DEFAULT_TIMEOUT_MS = 10_000;
+/*
+ * Hard ceiling for an entry's explicit `timeoutMs`. Above the default so one
+ * named operation (a repository clone behind a Core Route) can opt in; every
+ * other entry keeps the 10 s default.
+ */
+export const CUSTOM_API_MAX_TIMEOUT_MS = 300_000;
 /** Hard ceiling an entry's optional `maxResponseBytes` may only lower, never exceed. */
 export const CUSTOM_API_MAX_RESPONSE_BYTES = 1_048_576;
+/** Hard ceiling for the number of query parameter names one entry may allow. */
+export const CUSTOM_API_MAX_QUERY_NAMES = 16;
 
 const ID_PATTERN = /^[a-z][a-z0-9-]{0,63}$/;
+const QUERY_NAME_PATTERN = /^[a-z][a-z0-9_]{0,31}$/;
+const METHODS: ReadonlySet<string> = new Set(Object.values(CustomApiMethod));
+const BODY_METHODS: ReadonlySet<CustomApiMethod> = new Set([
+  CustomApiMethod.Post,
+  CustomApiMethod.Put,
+]);
 /*
  * One leading slash, nonempty ASCII letter/digit/underscore/hyphen segments
  * separated by single slashes, no trailing slash. The restricted alphabet
@@ -35,6 +66,8 @@ const ALLOWED_OPERATION_KEYS = new Set([
   'id',
   'method',
   'corePath',
+  'query',
+  'body',
   'timeoutMs',
   'maxResponseBytes',
 ]);
@@ -63,8 +96,9 @@ const parseOptionalLimit = (
   value: unknown,
   ceiling: number,
   field: string,
+  fallback = ceiling,
 ): number => {
-  if (value === undefined) return ceiling;
+  if (value === undefined) return fallback;
   if (
     typeof value !== 'number' ||
     !Number.isInteger(value) ||
@@ -78,6 +112,39 @@ const parseOptionalLimit = (
   return value;
 };
 
+const parseQueryNames = (value: unknown, context: string): string[] => {
+  if (value === undefined) return [];
+  if (
+    !Array.isArray(value) ||
+    value.length > CUSTOM_API_MAX_QUERY_NAMES ||
+    value.some(
+      (name) => typeof name !== 'string' || !QUERY_NAME_PATTERN.test(name),
+    )
+  ) {
+    throw new CustomApiConfigError(
+      `${context}.query must be at most ${CUSTOM_API_MAX_QUERY_NAMES} valid parameter names`,
+    );
+  }
+  if (new Set(value).size !== value.length) {
+    throw new CustomApiConfigError(`${context}.query has a duplicate name`);
+  }
+  return value as string[];
+};
+
+const parseBody = (
+  value: unknown,
+  method: CustomApiMethod,
+  context: string,
+): CustomApiBody => {
+  if (value === undefined) return CustomApiBody.None;
+  if (value !== CustomApiBody.Json || !BODY_METHODS.has(method)) {
+    throw new CustomApiConfigError(
+      `${context}.body must be "json", and only on POST or PUT`,
+    );
+  }
+  return CustomApiBody.Json;
+};
+
 const parseOperation = (entry: unknown, index: number): CustomApiOperation => {
   const context = `operations[${index}]`;
   if (!isPlainObject(entry)) {
@@ -85,26 +152,33 @@ const parseOperation = (entry: unknown, index: number): CustomApiOperation => {
   }
   assertNoUnknownKeys(entry, ALLOWED_OPERATION_KEYS, context);
 
-  const { id, method, corePath, timeoutMs, maxResponseBytes } = entry;
+  const { id, method, corePath, query, body, timeoutMs, maxResponseBytes } =
+    entry;
 
   if (typeof id !== 'string' || !ID_PATTERN.test(id)) {
     throw new CustomApiConfigError(`${context}.id is invalid`);
   }
-  if (method !== 'GET') {
-    throw new CustomApiConfigError(`${context}.method must be "GET"`);
+  if (typeof method !== 'string' || !METHODS.has(method)) {
+    throw new CustomApiConfigError(
+      `${context}.method must be one of GET, POST, PUT, DELETE`,
+    );
   }
+  const verb = method as CustomApiMethod;
   if (typeof corePath !== 'string' || !CORE_PATH_PATTERN.test(corePath)) {
     throw new CustomApiConfigError(`${context}.corePath is invalid`);
   }
 
   return {
     id,
-    method: 'GET',
+    method: verb,
     corePath,
+    query: parseQueryNames(query, context),
+    body: parseBody(body, verb, context),
     timeoutMs: parseOptionalLimit(
       timeoutMs,
       CUSTOM_API_MAX_TIMEOUT_MS,
       `${context}.timeoutMs`,
+      CUSTOM_API_DEFAULT_TIMEOUT_MS,
     ),
     maxResponseBytes: parseOptionalLimit(
       maxResponseBytes,
@@ -177,26 +251,32 @@ export const parseCustomApiRegistry = (
  * preserving an intentional base path prefix (e.g. a base of
  * `https://core-api.com/dial` plus `/data-products` resolves to
  * `https://core-api.com/dial/data-products`). Never inserts `/v1`, `/openai`,
- * `/api` or an api-version segment, and never carries a query or fragment.
- * Re-parses the assembled URL and asserts its origin and pathname match what
- * was intended before returning it, so a caller never dispatches a request
- * whose destination silently diverged from the configured Core base.
+ * `/api` or an api-version segment, and never carries a fragment. The only
+ * query is the one passed in — the operation's allowlisted parameters, already
+ * re-encoded by the BFF. Re-parses the assembled URL and asserts its origin,
+ * pathname and query match what was intended before returning it, so a caller
+ * never dispatches a request whose destination silently diverged from the
+ * configured Core base.
  */
 export const resolveCustomApiDestination = (
   baseUrl: string,
   corePath: string,
+  query: URLSearchParams = new URLSearchParams(),
 ): URL => {
   const base = new URL(baseUrl);
   const basePath = base.pathname.endsWith('/')
     ? base.pathname.slice(0, -1)
     : base.pathname;
   const expectedPathname = `${basePath}${corePath}`;
+  const encodedQuery = query.toString();
+  const expectedSearch = encodedQuery ? `?${encodedQuery}` : '';
 
   const destination = new URL(`${base.origin}${expectedPathname}`);
+  destination.search = encodedQuery;
   if (
     destination.origin !== base.origin ||
     destination.pathname !== expectedPathname ||
-    destination.search !== '' ||
+    destination.search !== expectedSearch ||
     destination.hash !== ''
   ) {
     throw new Error(

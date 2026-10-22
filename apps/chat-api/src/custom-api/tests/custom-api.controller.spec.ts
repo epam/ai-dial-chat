@@ -24,7 +24,11 @@ import { AUTH_STRATEGIES } from '../../auth/strategies/auth-strategies.token';
 import type { AuthStrategy } from '../../auth/strategies/auth-strategy.interface';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { CustomApiAdmissionService } from '../custom-api-admission.service';
-import { CustomApiRegistryService } from '../custom-api-registry.service';
+import {
+  CustomApiBody,
+  CustomApiMethod,
+  CustomApiRegistryService,
+} from '../custom-api-registry.service';
 import { CustomApiController } from '../custom-api.controller';
 import { CustomApiService } from '../custom-api.service';
 
@@ -38,8 +42,10 @@ const USER: SessionUser = {
 
 const OPERATION = {
   id: 'data-products',
-  method: 'GET' as const,
+  method: CustomApiMethod.Get,
   corePath: '/data-products',
+  query: [] as string[],
+  body: CustomApiBody.None,
   timeoutMs: 10_000,
   maxResponseBytes: 1_048_576,
 };
@@ -94,7 +100,6 @@ describe('CustomApiController', () => {
       requestWith(USER),
       fakeResponse(),
       { id: 'data-products' },
-      {},
     );
 
     expect(result).toEqual({ data: [1, 2, 3] });
@@ -102,6 +107,7 @@ describe('CustomApiController', () => {
       OPERATION,
       USER.at,
       expect.any(AbortSignal),
+      { query: new URLSearchParams() },
     );
   });
 
@@ -121,12 +127,9 @@ describe('CustomApiController', () => {
     });
     const res = fakeResponse();
 
-    const pending = controller.getCustomApiOperation(
-      requestWith(USER),
-      res,
-      { id: 'data-products' },
-      {},
-    );
+    const pending = controller.getCustomApiOperation(requestWith(USER), res, {
+      id: 'data-products',
+    });
     res.emit('close');
 
     await expect(pending).rejects.toThrow(HttpException);
@@ -141,12 +144,9 @@ describe('CustomApiController', () => {
     });
 
     await expect(
-      controller.getCustomApiOperation(
-        requestWith(USER),
-        fakeResponse(),
-        { id: 'unregistered' },
-        {},
-      ),
+      controller.getCustomApiOperation(requestWith(USER), fakeResponse(), {
+        id: 'unregistered',
+      }),
     ).rejects.toThrow(NotFoundException);
     expect(admission.tryAcquire).not.toHaveBeenCalled();
   });
@@ -162,7 +162,6 @@ describe('CustomApiController', () => {
         requestWith(USER),
         fakeResponse(),
         { id: 'data-products' },
-        {},
       );
     } catch (error) {
       thrown = error;
@@ -179,25 +178,71 @@ describe('CustomApiController', () => {
     });
 
     await expect(
-      controller.getCustomApiOperation(
-        requestWith(USER),
-        fakeResponse(),
-        { id: 'data-products' },
-        {},
-      ),
+      controller.getCustomApiOperation(requestWith(USER), fakeResponse(), {
+        id: 'data-products',
+      }),
     ).rejects.toThrow(BadGatewayException);
     expect(admission.release).toHaveBeenCalledOnce();
   });
 
-  it('rejects every non-GET verb with 405 without calling the service', async () => {
+  it('rejects HEAD and PATCH with 405 without calling the service', async () => {
     const { controller, customApiService } = await buildController();
 
     expect(() => controller.rejectHead()).toThrow(MethodNotAllowedException);
-    expect(() => controller.rejectPost()).toThrow(MethodNotAllowedException);
-    expect(() => controller.rejectPut()).toThrow(MethodNotAllowedException);
     expect(() => controller.rejectPatch()).toThrow(MethodNotAllowedException);
-    expect(() => controller.rejectDelete()).toThrow(MethodNotAllowedException);
     expect(customApiService.callOperation).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['POST', 'postCustomApiOperation'],
+    ['PUT', 'putCustomApiOperation'],
+    ['DELETE', 'deleteCustomApiOperation'],
+  ] as const)(
+    'rejects %s on a GET operation with 405 before admission',
+    async (_method, handler) => {
+      const { controller, customApiService, admission } =
+        await buildController();
+
+      await expect(
+        controller[handler](requestWith(USER), fakeResponse(), {
+          id: 'data-products',
+        }),
+      ).rejects.toThrow(MethodNotAllowedException);
+      expect(admission.tryAcquire).not.toHaveBeenCalled();
+      expect(customApiService.callOperation).not.toHaveBeenCalled();
+    },
+  );
+
+  it('dispatches a DELETE operation with its allowlisted query', async () => {
+    const operation = {
+      ...OPERATION,
+      method: CustomApiMethod.Delete,
+      query: ['application_id'],
+    };
+    const { controller, customApiService } = await buildController({
+      registryGet: vi.fn(() => operation),
+    });
+    const req = {
+      user: USER,
+      body: {},
+      headers: {},
+      query: { application_id: 'applications/b/loop__1.0.0' },
+    } as unknown as Request;
+
+    await controller.deleteCustomApiOperation(req, fakeResponse(), {
+      id: 'data-products',
+    });
+
+    expect(customApiService.callOperation).toHaveBeenCalledWith(
+      operation,
+      USER.at,
+      expect.any(AbortSignal),
+      {
+        query: new URLSearchParams({
+          application_id: 'applications/b/loop__1.0.0',
+        }),
+      },
+    );
   });
 });
 
@@ -266,8 +311,11 @@ const sessionUser = (overrides: Partial<SessionUser> = {}): SessionUser => ({
 
 const headerUser = (user: SessionUser) => JSON.stringify(user);
 
-async function buildIntegrationApp(callOperation: ReturnType<typeof vi.fn>) {
-  const registry = { get: vi.fn(() => OPERATION) };
+async function buildIntegrationApp(
+  callOperation: ReturnType<typeof vi.fn>,
+  operation: typeof OPERATION = OPERATION,
+) {
+  const registry = { get: vi.fn(() => operation) };
   const customApiService = { callOperation };
 
   const configStub = {
@@ -346,6 +394,7 @@ describe('CustomApiController (real guards, integration)', () => {
       OPERATION,
       'header-token',
       expect.any(AbortSignal),
+      { query: new URLSearchParams() },
     );
   });
 
@@ -370,6 +419,7 @@ describe('CustomApiController (real guards, integration)', () => {
       OPERATION,
       'refreshed-token',
       expect.any(AbortSignal),
+      { query: new URLSearchParams() },
     );
     const setCookie = res.headers['set-cookie'] as unknown as
       string[] | string | undefined;
@@ -465,6 +515,140 @@ describe('CustomApiController (real guards, integration)', () => {
     expect(callOperation).not.toHaveBeenCalled();
   });
 
+  describe('configured query and writes', () => {
+    const PROBE = {
+      ...OPERATION,
+      id: 'loop-probe',
+      query: ['url'],
+    };
+    const BINDING_PUT = {
+      ...OPERATION,
+      id: 'loop-teams-binding-put',
+      method: CustomApiMethod.Put,
+      query: ['application_id'],
+      body: CustomApiBody.Json,
+    };
+
+    it('forwards an allowlisted query parameter and refuses any other', async () => {
+      const callOperation = vi.fn().mockResolvedValue({ data: {}, bytes: 2 });
+      ({ app } = await buildIntegrationApp(callOperation, PROBE));
+      const user = sessionUser();
+
+      await request(app.getHttpServer())
+        .get('/api/v1/custom-api/loop-probe')
+        .query({ url: 'https://svc.example/x' })
+        .set('x-test-cookie-user', headerUser(user))
+        .expect(200);
+      await request(app.getHttpServer())
+        .get('/api/v1/custom-api/loop-probe?url=a&path=b')
+        .set('x-test-cookie-user', headerUser(user))
+        .expect(400);
+      await request(app.getHttpServer())
+        .get('/api/v1/custom-api/loop-probe?url=a&url=b')
+        .set('x-test-cookie-user', headerUser(user))
+        .expect(400);
+
+      expect(callOperation).toHaveBeenCalledOnce();
+      expect(callOperation).toHaveBeenCalledWith(
+        PROBE,
+        user.at,
+        expect.any(AbortSignal),
+        { query: new URLSearchParams({ url: 'https://svc.example/x' }) },
+      );
+    });
+
+    it('dispatches a configured PUT with its JSON body once CSRF passes', async () => {
+      const callOperation = vi
+        .fn()
+        .mockResolvedValue({ data: { enabled: true }, bytes: 16 });
+      ({ app } = await buildIntegrationApp(callOperation, BINDING_PUT));
+      const user = sessionUser();
+
+      const res = await request(app.getHttpServer())
+        .put('/api/v1/custom-api/loop-teams-binding-put')
+        .query({ application_id: 'applications/b/loop__1.0.0' })
+        .set('x-test-cookie-user', headerUser(user))
+        .set('Origin', APP_ORIGIN)
+        .set('x-csrf-token', user.csrf as string)
+        .send({ enabled: true })
+        .expect(200);
+
+      expect(res.body).toEqual({ data: { enabled: true } });
+      expect(callOperation).toHaveBeenCalledWith(
+        BINDING_PUT,
+        user.at,
+        expect.any(AbortSignal),
+        {
+          query: new URLSearchParams({
+            application_id: 'applications/b/loop__1.0.0',
+          }),
+          body: '{"enabled":true}',
+        },
+      );
+    });
+
+    it('refuses a configured PUT without the CSRF token', async () => {
+      const callOperation = vi.fn();
+      ({ app } = await buildIntegrationApp(callOperation, BINDING_PUT));
+
+      await request(app.getHttpServer())
+        .put('/api/v1/custom-api/loop-teams-binding-put')
+        .set('x-test-cookie-user', headerUser(sessionUser()))
+        .send({ enabled: true })
+        .expect(403);
+
+      expect(callOperation).not.toHaveBeenCalled();
+    });
+
+    it('answers 405 for GET on a PUT operation', async () => {
+      const callOperation = vi.fn();
+      ({ app } = await buildIntegrationApp(callOperation, BINDING_PUT));
+
+      await request(app.getHttpServer())
+        .get('/api/v1/custom-api/loop-teams-binding-put')
+        .set('x-test-cookie-user', headerUser(sessionUser()))
+        .expect(405);
+
+      expect(callOperation).not.toHaveBeenCalled();
+    });
+
+    it('refuses an oversized or non-JSON body with 400 before dispatch', async () => {
+      const callOperation = vi.fn();
+      const built = await buildIntegrationApp(callOperation, BINDING_PUT);
+      app = built.app;
+      const server = built.app.getHttpServer();
+      const user = sessionUser();
+      const send = () =>
+        request(server)
+          .put('/api/v1/custom-api/loop-teams-binding-put')
+          .set('x-test-cookie-user', headerUser(user))
+          .set('Origin', APP_ORIGIN)
+          .set('x-csrf-token', user.csrf as string);
+
+      await send()
+        .send({ blob: 'x'.repeat(70_000) })
+        .expect(400);
+      await send()
+        .set('Content-Type', 'text/plain')
+        .send('enabled')
+        .expect(400);
+
+      expect(callOperation).not.toHaveBeenCalled();
+    });
+
+    it('returns 401 for a write without a session', async () => {
+      const callOperation = vi.fn();
+      ({ app } = await buildIntegrationApp(callOperation, BINDING_PUT));
+
+      await request(app.getHttpServer())
+        .put('/api/v1/custom-api/loop-teams-binding-put')
+        .send({ enabled: true })
+        .expect(401);
+
+      expect(callOperation).not.toHaveBeenCalled();
+    });
+  });
+
   it('returns 404 for a disabled/unknown operation ID without acquiring admission', async () => {
     const callOperation = vi.fn();
     const registry = { get: vi.fn(() => undefined) };
@@ -533,6 +717,7 @@ describe('CustomApiController (real guards, integration)', () => {
         OPERATION,
         'stable-token',
         expect.any(AbortSignal),
+        { query: new URLSearchParams() },
       ]);
     }
   });
