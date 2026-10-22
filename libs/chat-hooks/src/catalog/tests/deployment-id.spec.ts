@@ -79,7 +79,10 @@ describe('findDeploymentByIdOrReference', () => {
 
   it('prefers an exact reference match over an encoding-insensitive id match', () => {
     const encodedItem = { id: 'a%20b' } as DeploymentItemDto;
-    const referencedItem = { id: 'other', reference: 'a b' } as DeploymentItemDto;
+    const referencedItem = {
+      id: 'other',
+      reference: 'a b',
+    } as DeploymentItemDto;
     expect(
       findDeploymentByIdOrReference([encodedItem, referencedItem], 'a b'),
     ).toBe(referencedItem);

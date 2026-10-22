@@ -763,7 +763,7 @@ describe('DeploymentsContext', () => {
       mockGetDeployments.mockReturnValueOnce(
         pending as ReturnType<typeof deploymentsApi.getDeployments>,
       );
-      const hook = renderHook(() => useDeployments(), {
+      const view = renderHook(() => useDeployments(), {
         wrapper: DeploymentsProvider,
       });
       const resolveCatalog = async () => {
@@ -771,9 +771,9 @@ describe('DeploymentsContext', () => {
           resolveDeployments({ deployments: [mockItem1, loopAgent] });
           await pending;
         });
-        await waitFor(() => expect(hook.result.current.isLoading).toBe(false));
+        await waitFor(() => expect(view.result.current.isLoading).toBe(false));
       };
-      return { ...hook, resolveCatalog };
+      return { ...view, resolveCatalog };
     };
 
     it.each([
