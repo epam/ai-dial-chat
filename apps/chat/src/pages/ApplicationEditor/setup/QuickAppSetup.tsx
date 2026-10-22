@@ -77,6 +77,8 @@ const QuickAppSetup: FC<Props> = ({
   const [isLoggedOut, setIsLoggedOut] = useState(false);
   const [isEditorValid, setIsEditorValid] = useState(true);
   const [isUnresponsive, setIsUnresponsive] = useState(false);
+  const [isReadinessTimedOut, setIsReadinessTimedOut] = useState(false);
+  const [editorLoadVersion, setEditorLoadVersion] = useState(0);
   const [saveError, setSaveError] = useState('');
 
   // Without an app there is nothing to save yet, so the page's Create stays available.
@@ -86,22 +88,16 @@ const QuickAppSetup: FC<Props> = ({
     onReadyChange(isReady);
   }, [isReady, onReadyChange]);
 
-  /*
-   * Re-gates readiness when the editor is (re)loaded for a different app or
-   * schema — including the in-place switch after Create. Seeded from the
-   * current values so it only resets on a later change: on mount, the
-   * iframe's own effects may already have reported readiness.
-   */
-  const readyKeyRef = useRef(`${schema?.id ?? ''}|${appId ?? ''}`);
-  useEffect(() => {
-    const key = `${schema?.id ?? ''}|${appId ?? ''}`;
-    if (readyKeyRef.current === key) return;
-    readyKeyRef.current = key;
+  /* A new iframe load needs a fresh deadline even if the previous one never
+   * became ready. Save failures remain independent of this loading state. */
+  const handleLoadStart = useCallback(() => {
     setIsEditorReady(false);
     setIsEditorValid(true);
     setIsLoggedOut(false);
     setIsUnresponsive(false);
-  }, [schema, appId]);
+    setIsReadinessTimedOut(false);
+    setEditorLoadVersion((version) => version + 1);
+  }, []);
 
   /*
    * A logged-out or unresponsive editor never becomes ready, and both already
@@ -115,20 +111,19 @@ const QuickAppSetup: FC<Props> = ({
   }, [isNotReadyExplained]);
 
   useEffect(() => {
-    if (!isNotReadyExplained) return;
-    setSaveError((prev) =>
-      prev === t(AppsEditorI18nKeys.ErrorSettingsNotReady) ? '' : prev,
-    );
-  }, [isNotReadyExplained, t]);
+    if (!hasEditor || isEditorReady || isNotReadyExplained) {
+      setIsReadinessTimedOut(false);
+    }
+  }, [hasEditor, isEditorReady, isNotReadyExplained]);
 
   useEffect(() => {
     if (!hasEditor || isEditorReady) return;
     const timeoutId = setTimeout(() => {
       if (isNotReadyExplainedRef.current) return;
-      setSaveError(t(AppsEditorI18nKeys.ErrorSettingsNotReady));
+      setIsReadinessTimedOut(true);
     }, SETUP_READY_TIMEOUT_MS);
     return () => clearTimeout(timeoutId);
-  }, [hasEditor, isEditorReady, appId, schema, t]);
+  }, [hasEditor, isEditorReady, editorLoadVersion]);
 
   // Rejects a save still in flight when the component unmounts.
   useEffect(
@@ -271,9 +266,13 @@ const QuickAppSetup: FC<Props> = ({
     );
   }
 
+  const errorMessage =
+    saveError ||
+    (isReadinessTimedOut ? t(AppsEditorI18nKeys.ErrorSettingsNotReady) : '');
+
   return (
     <div className="flex min-h-[640px] flex-1 flex-col gap-2">
-      {saveError && <ErrorMessageNotification message={saveError} />}
+      {errorMessage && <ErrorMessageNotification message={errorMessage} />}
       <div className="relative min-h-0 flex-1">
         {/* Absolutely positioned, so the iframe gets a definite height to fill. */}
         <div className="absolute inset-0">
@@ -281,6 +280,7 @@ const QuickAppSetup: FC<Props> = ({
             ref={iframeRef}
             schema={schema}
             appId={appId}
+            onLoadStart={handleLoadStart}
             onUpdated={handleUpdated}
             onSaveSuccess={handleSaveSuccess}
             onSaveError={handleSaveError}

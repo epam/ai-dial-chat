@@ -107,6 +107,7 @@ export class ChatVisualizerConnector {
   /**
    * Posts an application-editor message as is — no `${appName}/` prefix — to every configured host,
    * or only to `dialHost` when given. Fields go where the host reads them (see `AppsEditorMessages`).
+   * @deprecated Use `AppsEditorClient` for direction-safe messages and validated incoming requests.
    */
   sendEditorMessage(
     message: { type: AppsEditorMessages } & Record<string, unknown>,
