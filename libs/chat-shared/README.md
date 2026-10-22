@@ -630,12 +630,12 @@ import { TableHeader } from '@epam/ai-dial-chat-shared';
 
 ### DeploymentIcon
 
-Renders the icon associated with a deployment entity.
+Renders a deployment's icon inside a rounded badge, falling back to the initials of `initialsName` (or a custom `fallback`) when `src` is absent or fails to load. The badge background resolves `styles.colors.background`, then the `--bg-entity-icon` theme token, then `--bg-layer-sunken` — a dark theme sets `--bg-entity-icon` to a light value so a dark, transparent vendor logo stays visible.
 
 ```tsx
 import { DeploymentIcon } from '@epam/ai-dial-chat-shared';
 
-<DeploymentIcon deployment={deployment} size={24} />;
+<DeploymentIcon src={iconUrl} size={24} initialsName="GPT-4o" />;
 ```
 
 ### InitialsAvatar
