@@ -327,6 +327,8 @@ export interface StreamChunk {
   error?: {
     /** Human-readable error description. */
     message: string;
+    /** User-facing error text (e.g. a rate-limit notice with its reset time); preferred over `message` when present. */
+    display_message?: string;
     /** Machine-readable error category (e.g. `'invalid_request_error'`). */
     type?: string;
   };
