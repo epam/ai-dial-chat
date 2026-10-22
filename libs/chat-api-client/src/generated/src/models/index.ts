@@ -4231,6 +4231,91 @@ export interface ExternalServiceAuthResultDto {
 /**
  *
  * @export
+ * @interface ExternalServiceAuthSettingsBodyDto
+ */
+export interface ExternalServiceAuthSettingsBodyDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ExternalServiceAuthSettingsBodyDto
+   */
+  authenticationType: ExternalServiceAuthSettingsBodyDtoAuthenticationTypeEnum;
+  /**
+   * API_KEY: the header the stored key is sent under. The key itself is never part of the definition.
+   * @type {string}
+   * @memberof ExternalServiceAuthSettingsBodyDto
+   */
+  apiKeyHeader?: string;
+  /**
+   * OAUTH: the client id.
+   * @type {string}
+   * @memberof ExternalServiceAuthSettingsBodyDto
+   */
+  clientId?: string;
+  /**
+   * OAUTH: the client secret. Write-only: never returned, never logged.
+   * @type {string}
+   * @memberof ExternalServiceAuthSettingsBodyDto
+   */
+  clientSecret?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ExternalServiceAuthSettingsBodyDto
+   */
+  authorizationEndpoint?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ExternalServiceAuthSettingsBodyDto
+   */
+  tokenEndpoint?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ExternalServiceAuthSettingsBodyDto
+   */
+  scopesSupported?: Array<string>;
+}
+
+/**
+ * @export
+ */
+export const ExternalServiceAuthSettingsBodyDtoAuthenticationTypeEnum = {
+  ApiKey: 'API_KEY',
+  Oauth: 'OAUTH',
+} as const;
+export type ExternalServiceAuthSettingsBodyDtoAuthenticationTypeEnum =
+  (typeof ExternalServiceAuthSettingsBodyDtoAuthenticationTypeEnum)[keyof typeof ExternalServiceAuthSettingsBodyDtoAuthenticationTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface ExternalServiceDefinitionBodyDto
+ */
+export interface ExternalServiceDefinitionBodyDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ExternalServiceDefinitionBodyDto
+   */
+  displayName: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ExternalServiceDefinitionBodyDto
+   */
+  description?: string;
+  /**
+   *
+   * @type {ExternalServiceAuthSettingsBodyDto}
+   * @memberof ExternalServiceDefinitionBodyDto
+   */
+  authSettings: ExternalServiceAuthSettingsBodyDto;
+}
+/**
+ *
+ * @export
  * @interface ExternalServiceLogoutBodyDto
  */
 export interface ExternalServiceLogoutBodyDto {
