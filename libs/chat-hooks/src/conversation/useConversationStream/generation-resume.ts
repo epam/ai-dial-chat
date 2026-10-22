@@ -149,7 +149,7 @@ export const fetchConversationForRecovery = async (
 
 /** One event on the `attachToGeneration` SSE stream (`generation-live-replay`). */
 type GenerationAttachEvent =
-  | { type: 'snapshot'; message: Message }
+  | { type: 'snapshot'; message: Message; generationId?: string }
   | { type: 'chunk'; chunk: StreamChunk }
   | { type: 'done' }
   | { type: 'error'; message?: string; errorType?: string }
@@ -217,6 +217,12 @@ export interface ResumeGenerationOptions {
   onSettled?: () => void;
   /** Resumes even though the path is already in `resumingPathsRef`, for a caller that reserved it itself. */
   skipDedupe?: boolean;
+  /**
+   * Takes the `generationId` the attach `snapshot` carries so Stop can reach a resumed
+   * non-background generation. Set only by the public entry point: stream recovery
+   * already knows its local id, and the conflict handover keeps Stop unavailable.
+   */
+  trackAttachGenerationId?: boolean;
 }
 
 /** Host-owned state {@link createResumeIfAwaitingGeneration} reads/writes through. */
@@ -246,6 +252,13 @@ export interface ResumeIfAwaitingGenerationDeps {
    * its id is removed when the resume settles.
    */
   stoppedGenerationIdsRef?: MutableRefObject<Set<string>>;
+  /** Records the id an attach `snapshot` supplied for `path`, so the host can offer Stop for it. */
+  rememberResumedGenerationId?: (path: string, generationId: string) => void;
+  /**
+   * Drops that id again once the resume no longer owns an attached generation. Compare-and-clear:
+   * the host removes the entry only while it still holds `generationId`.
+   */
+  forgetResumedGenerationId?: (path: string, generationId: string) => void;
 }
 
 /**
@@ -274,6 +287,8 @@ export const createResumeIfAwaitingGeneration = ({
   generationPersistenceErrorMessage = DEFAULT_GENERATION_PERSISTENCE_ERROR_MESSAGE,
   frameScheduler,
   stoppedGenerationIdsRef,
+  rememberResumedGenerationId,
+  forgetResumedGenerationId,
   onReloadError,
   onReloadSuccess,
 }: ResumeIfAwaitingGenerationDeps) => {
@@ -311,15 +326,42 @@ export const createResumeIfAwaitingGeneration = ({
     const backgroundGenerationId = isBackground
       ? conversation.messages[messageIndex].backgroundGeneration?.generationId
       : undefined;
-    const isStoppedByUser = () =>
-      backgroundGenerationId != null &&
-      (stoppedGenerationIdsRef?.current.has(backgroundGenerationId) ?? false);
+    /* The id an attach `snapshot` supplied for a non-background generation, while this resume owns it. */
+    let attachGenerationId: string | undefined;
+    const isStoppedByUser = () => {
+      const stoppableId = backgroundGenerationId ?? attachGenerationId;
+      return (
+        stoppableId != null &&
+        (stoppedGenerationIdsRef?.current.has(stoppableId) ?? false)
+      );
+    };
+    const rememberAttachGenerationId = (generationId?: string) => {
+      if (
+        !options.trackAttachGenerationId ||
+        isBackground ||
+        generationId == null ||
+        !ownsBuffer()
+      ) {
+        return;
+      }
+      attachGenerationId = generationId;
+      rememberResumedGenerationId?.(conversationPath, generationId);
+    };
+    /* Safe to call repeatedly: only the first call after a `remember` reaches the host. */
+    const forgetAttachGenerationId = () => {
+      if (attachGenerationId == null) return;
+      const generationId = attachGenerationId;
+      attachGenerationId = undefined;
+      stoppedGenerationIdsRef?.current.delete(generationId);
+      forgetResumedGenerationId?.(conversationPath, generationId);
+    };
 
     const finish = (result?: Conversation, persistenceFailed = false) => {
       frameScheduler?.flush(conversationPath);
       if (backgroundGenerationId != null) {
         stoppedGenerationIdsRef?.current.delete(backgroundGenerationId);
       }
+      forgetAttachGenerationId();
       if (!ownsBuffer()) return;
       resumingPathsRef.current.delete(conversationPath);
       removeStreamingPath(conversationPath);
@@ -375,6 +417,7 @@ export const createResumeIfAwaitingGeneration = ({
         if (backgroundGenerationId != null) {
           stoppedGenerationIdsRef?.current.delete(backgroundGenerationId);
         }
+        forgetAttachGenerationId();
         onReloadError?.(conversationPath, finalCheck, ownsBuffer);
       }
     };
@@ -516,6 +559,7 @@ export const createResumeIfAwaitingGeneration = ({
         if (!ownsBuffer()) return true;
         switch (event.type) {
           case 'snapshot':
+            rememberAttachGenerationId(event.generationId);
             applySnapshot(event.message);
             return false;
           case 'chunk':
@@ -537,6 +581,8 @@ export const createResumeIfAwaitingGeneration = ({
         else await finalCheck();
         return true;
       }
+      /* The watch fallback cannot prove this instance still runs the generation, so Stop goes away. */
+      forgetAttachGenerationId();
       return !ownsBuffer();
     };
 

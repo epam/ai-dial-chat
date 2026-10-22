@@ -45,10 +45,11 @@ export const SkillFilePreview: FC<Props> = ({ state, onRetry }) => {
 
   if (state === SkillFilePreviewState.Error) {
     return (
-      /* `ErrorText` is itself the `role="alert"` region; wrapping it in a
-         second one would announce the failure twice. */
       <div className="flex h-full min-h-0 min-w-0 flex-col items-center justify-center gap-3">
-        <ErrorText text={t(AttachmentCanvasI18nKeys.LoadErrorLabel)} />
+        {/* A failed load with a retry is not a field error: announce it. */}
+        <div role="alert">
+          <ErrorText text={t(AttachmentCanvasI18nKeys.LoadErrorLabel)} />
+        </div>
         {onRetry != null && (
           <NeutralButton label={t(ButtonsI18nKeys.Retry)} onClick={onRetry} />
         )}

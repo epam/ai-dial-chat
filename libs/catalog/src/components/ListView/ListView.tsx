@@ -50,7 +50,10 @@ export const ListView: FC<ListViewProps> = (props) => {
           CATALOG_CLASS.listView,
         )}
       >
-        <PanelEmptyState label={props.emptyStateTitle ?? 'No results'} />
+        <PanelEmptyState
+          label={props.emptyStateTitle ?? 'No results'}
+          description={props.emptyStateDescription}
+        />
       </div>
     );
   }

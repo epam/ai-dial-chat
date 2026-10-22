@@ -94,7 +94,10 @@ Empty-state block shown when a panel has no items at all.
 ```tsx
 import { PanelEmpty } from '@epam/ai-dial-sidebar';
 
-<PanelEmpty label="No conversations" />;
+<PanelEmpty
+  label="No chats yet"
+  description="Chats will appear here once you start one."
+/>;
 ```
 
 ### PanelNoResults
@@ -104,7 +107,10 @@ No-results state shown when a search or filter produces no matches.
 ```tsx
 import { PanelNoResults } from '@epam/ai-dial-sidebar';
 
-<PanelNoResults label="No results" />;
+<PanelNoResults
+  label="No chats found"
+  description="Try a different search term or check your filters."
+/>;
 ```
 
 ## Public class names

@@ -176,6 +176,20 @@ describe('ConversationGenerationService', () => {
       service.complete(lease);
       expect(service.attach(OWNER_KEY, PATH)).toBeUndefined();
     });
+
+    it('returns the id the active generation was registered with', () => {
+      service.register(OWNER_KEY, PATH, GENERATION_ID);
+
+      expect(service.attach(OWNER_KEY, PATH)?.generationId).toBe(GENERATION_ID);
+    });
+
+    it('returns the id of the replacing generation after the path is reused', () => {
+      const firstLease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      service.complete(firstLease);
+      service.register(OWNER_KEY, PATH, 'gen-2');
+
+      expect(service.attach(OWNER_KEY, PATH)?.generationId).toBe('gen-2');
+    });
   });
 
   describe('seedAssembledMessage / applyChunk', () => {

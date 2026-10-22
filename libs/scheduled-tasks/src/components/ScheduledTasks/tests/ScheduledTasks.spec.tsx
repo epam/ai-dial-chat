@@ -92,10 +92,19 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
     text: ReactNode;
     className?: string;
   }) => <span className={className}>{text}</span>,
-  NoDataContent: ({ title, icon }: { title: string; icon?: ReactNode }) => (
+  NoDataContent: ({
+    title,
+    description,
+    icon,
+  }: {
+    title: string;
+    description?: string;
+    icon?: ReactNode;
+  }) => (
     <div>
-      {icon}
+      {icon ?? <span>default illustration</span>}
       <span>{title}</span>
+      {description != null && <span>{description}</span>}
     </div>
   ),
   ButtonVariant: { Primary: 'primary', Neutral: 'neutral' },
@@ -106,9 +115,6 @@ vi.mock('@tabler/icons-react', () => ({
   IconArrowsSort: () => <svg />,
   IconCalendarTime: () => <svg />,
   IconCheck: () => <svg />,
-  IconClockHour3: ({ stroke }: { stroke?: number }) => (
-    <span>clock-hour-3 icon, stroke {stroke}</span>
-  ),
   IconChevronDown: () => <svg />,
   IconChevronUp: () => <svg />,
   IconChevronRight: () => <svg />,
@@ -249,16 +255,31 @@ describe('ScheduledTasks', () => {
     ).toBeGreaterThan(0);
   });
 
-  it('illustrates the empty state with the scheduled-task clock at illustration weight', () => {
-    renderScheduledTasks({ items: [] });
+  it('illustrates the empty state with the kit default illustration and its description', () => {
+    renderScheduledTasks({
+      items: [],
+      labels: {
+        ...baseLabels,
+        emptyStateDescription: 'Tasks will appear here',
+      },
+    });
 
-    expect(screen.getByText('clock-hour-3 icon, stroke 1')).toBeTruthy();
+    expect(screen.getByText('default illustration')).toBeTruthy();
+    expect(screen.getByText('Tasks will appear here')).toBeTruthy();
   });
 
-  it('shows no clock illustration in the no-results state', () => {
-    renderScheduledTasks({ items: [], searchQuery: 'missing' });
+  it('renders the no-results state as an empty state with its description', () => {
+    renderScheduledTasks({
+      items: [],
+      searchQuery: 'missing',
+      labels: {
+        ...baseLabels,
+        noResultsDescription: 'Try a different search term',
+      },
+    });
 
-    expect(screen.queryByText(/clock-hour-3 icon/)).toBeNull();
+    expect(screen.getByText('default illustration')).toBeTruthy();
+    expect(screen.getByText('Try a different search term')).toBeTruthy();
   });
 
   it('renders the no-results state, not the empty state, when the server returns zero matches for an active search', () => {

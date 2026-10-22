@@ -23,6 +23,7 @@ import ScheduledTasksLoginBanner, {
 } from '../../components/ScheduledTasksLoginBanner/ScheduledTasksLoginBanner';
 import { getScheduledTaskDetailRoute } from '../../constants/routes';
 import {
+  BasicI18nKeys,
   ButtonsI18nKeys,
   ScheduledTasksI18nKeys,
 } from '../../constants/translation-keys';
@@ -193,7 +194,9 @@ const ScheduledTasksPage: FC = () => {
         },
       ],
       emptyStateLabel: t(ScheduledTasksI18nKeys.EmptyStateLabel),
+      emptyStateDescription: t(ScheduledTasksI18nKeys.EmptyStateDescription),
       noResultsLabel: t(ScheduledTasksI18nKeys.ListNoResultsLabel),
+      noResultsDescription: t(BasicI18nKeys.NoResultsDescription),
       errorLabel: t(ScheduledTasksI18nKeys.ListErrorLabel),
       retryLabel: t(ScheduledTasksI18nKeys.ListRetryLabel),
       loadingMoreLabel: t(ScheduledTasksI18nKeys.ListLoadingMoreLabel),

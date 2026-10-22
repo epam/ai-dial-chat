@@ -2601,7 +2601,7 @@ describe('ConversationStreamingService', () => {
       expect(res.getWritten()).not.toContain('Bad Authorization header');
     });
 
-    it('omits the status when the 401 write belonged to an answer that did not complete', async () => {
+    it('reports the status and terminal markers when the 401 write belonged to an answer that did not complete', async () => {
       vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
         data: TEST_CONVERSATION,
       } as never);
@@ -2649,8 +2649,72 @@ describe('ConversationStreamingService', () => {
         error: {
           type: 'conversation_save_failed',
           message: GENERATION_PERSISTENCE_ERROR.message,
+          status: 401,
+          streamErrorMessage: 'Model failed',
         },
       });
+    });
+
+    it('reports the stop marker when the rejected write belonged to an answer the user stopped', async () => {
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
+        data: TEST_CONVERSATION,
+      } as never);
+      vi.spyOn(mockDialClient.client, 'saveConversation')
+        .mockResolvedValueOnce({ data: {} } as never) // start-state write
+        .mockResolvedValueOnce({
+          error: 'Bad Authorization header',
+          response: { status: 401 },
+        } as never); // terminal write of the stopped answer
+      const generationAbortController = new AbortController();
+      vi.mocked(mockGenerationService.register).mockReturnValue(
+        makeLease(generationAbortController),
+      );
+      vi.mocked(mockGenerationService.getCancellation).mockReturnValue({
+        requested: true,
+        reason: GenerationCancelReason.UserStop,
+      });
+      const pendingStream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(
+            new TextEncoder().encode(
+              'data: {"choices":[{"delta":{"content":"Partial"}}]}\n\n',
+            ),
+          );
+        },
+      });
+      vi.spyOn(
+        mockDialClient.client,
+        'sendChatCompletionRequest',
+      ).mockResolvedValue({
+        response: new Response(pendingStream, { status: 200 }),
+      } as never);
+
+      const res = makeMockRes();
+      const streamPromise = runStreamCompletion(
+        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        'test-token',
+        'test-bucket',
+        'test-gen-id',
+        CompletionMode.Append,
+        'Hello',
+        undefined,
+        'gpt-4o',
+        undefined,
+        'test-session-id',
+        res as never,
+      );
+      await vi.waitFor(() => expect(res.write).toHaveBeenCalled());
+
+      generationAbortController.abort();
+      await streamPromise;
+
+      const errorFrame = res
+        .getWritten()
+        .split('\n\n')
+        .find((frame) => frame.includes('conversation_save_failed'));
+      expect(
+        JSON.parse((errorFrame ?? '').replace(/^data: /, '')).error,
+      ).toMatchObject({ status: 401, wasStoppedByUser: true });
     });
   });
 

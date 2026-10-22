@@ -147,8 +147,7 @@ export const Catalog: FC<CatalogProps> = ({
   const browseTitle = titles?.browseTitle ?? 'Browse';
   const searchPlaceholder =
     titles?.searchPlaceholder ?? 'Search models, tools, agents…';
-  const noResultsTitle =
-    titles?.noResultsTitle ?? ((q: string) => `No results for "${q}"`);
+  const noResultsTitle = titles?.noResultsTitle ?? (() => 'No items found');
   const myAppsEmptyTitle =
     titles?.myAppsEmptyTitle ?? (() => 'No personal items yet');
   const myAppsEmptyDescription =
@@ -530,7 +529,16 @@ export const Catalog: FC<CatalogProps> = ({
    * gain or lose entries and is dropped rather than shown frozen. */
   const isFavoritesVisible = isFavoritesRendered && !isReadonly;
 
-  const emptyTitle = query ? noResultsTitle(query) : 'No items';
+  /* A search or a topic filter narrowed the tab to nothing, so the empty
+   * state explains how to widen it; otherwise the tab itself is empty. */
+  const isNarrowed = query !== '' || filters.size > 0;
+  const emptyTitle = isNarrowed
+    ? noResultsTitle(query)
+    : (titles?.emptyTitle ?? 'No items yet');
+  const emptyDescription = isNarrowed
+    ? (titles?.noResultsDescription ??
+      'Try a different search term or check your filters.')
+    : titles?.emptyDescription;
   /* Keyed on the strings, not `detailsTexts`, which hosts often pass inline;
    * a fresh object here would invalidate every virtual grid row. */
   const {
@@ -560,6 +568,7 @@ export const Catalog: FC<CatalogProps> = ({
   const cardGridTitles = useMemo(
     () => ({
       noResultsTitle: emptyTitle,
+      noResultsDescription: emptyDescription,
       featuredLabel,
       noFolderLabel: titles?.noFolderLabel,
       credentialsBadgeLoggedOutLabel:
@@ -567,6 +576,7 @@ export const Catalog: FC<CatalogProps> = ({
     }),
     [
       emptyTitle,
+      emptyDescription,
       featuredLabel,
       titles?.noFolderLabel,
       detailsTexts?.credentialsBadgeLoggedOutLabel,
@@ -812,6 +822,7 @@ export const Catalog: FC<CatalogProps> = ({
                     query={query}
                     ariaLabel={resolvedAriaLabel}
                     emptyStateTitle={emptyTitle}
+                    emptyStateDescription={emptyDescription}
                     onToggleFavorite={onToggleFavorite}
                     isFavoriteVisible={isFavoriteVisible}
                     columnVisibility={columnVisibility}

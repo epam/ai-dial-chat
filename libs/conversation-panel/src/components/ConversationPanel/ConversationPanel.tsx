@@ -60,7 +60,9 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     const {
       title,
       emptyLabel,
+      emptyDescription,
       noResultsLabel,
+      noResultsDescription,
       loadingLabel,
       newChatLabel,
       searchPlaceholder,
@@ -97,7 +99,9 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     const listLabels = useMemo<ConversationListLabels>(
       () => ({
         emptyLabel,
+        emptyDescription,
         noResultsLabel,
+        noResultsDescription,
         loadingLabel,
         groupLabels,
         actionsLabel,
@@ -105,7 +109,9 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       }),
       [
         emptyLabel,
+        emptyDescription,
         noResultsLabel,
+        noResultsDescription,
         loadingLabel,
         groupLabels,
         actionsLabel,

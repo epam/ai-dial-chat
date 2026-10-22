@@ -15,8 +15,22 @@
 import * as runtime from '../runtime';
 import type { CustomApiResponseDto } from '../models/index';
 
+export interface DeleteCustomApiOperationRequest {
+  id: string;
+}
+
 export interface GetCustomApiOperationRequest {
   id: string;
+}
+
+export interface PostCustomApiOperationRequest {
+  id: string;
+  requestBody?: { [key: string]: unknown };
+}
+
+export interface PutCustomApiOperationRequest {
+  id: string;
+  requestBody?: { [key: string]: unknown };
 }
 
 /**
@@ -24,8 +38,70 @@ export interface GetCustomApiOperationRequest {
  */
 export class CustomApiApi extends runtime.BaseAPI {
   /**
-   * Dispatches an authenticated GET request to the exact Core path configured for this operation ID under CUSTOM_CORE_API_CONFIG, using the caller\'s own session access token. Accepts no query parameters and no request body. Core remains the authority for route role authorization and business rate limits; this endpoint adds no BFF business schema or field filtering, so the response is an opaque JSON value the calling application must validate for its own domain.
-   * Call a deployment-configured custom Core API operation
+   * Dispatches an authenticated request to the exact Core path configured for this operation ID under CUSTOM_CORE_API_CONFIG, using the caller\'s own session access token and the operation\'s configured method; a different method returns 405. Core remains the authority for route role authorization and business rate limits; this endpoint adds no BFF business schema or field filtering, so the response is an opaque JSON value the calling application must validate for its own domain. Query parameters are accepted only by the names the operation allowlists (each at most once); they are not declared here because each deployment configures its own. A caller passing them builds the request URL itself on the generated client\'s Configuration.fetchApi — a documented generator gap.
+   * Call a deployment-configured custom Core API DELETE operation
+   */
+  async deleteCustomApiOperationRaw(
+    requestParameters: DeleteCustomApiOperationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<CustomApiResponseDto>> {
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling deleteCustomApiOperation().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/custom-api/{id}`;
+    urlPath = urlPath.replace(
+      `{${'id'}}`,
+      encodeURIComponent(String(requestParameters['id'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<CustomApiResponseDto>(response);
+  }
+
+  /**
+   * Dispatches an authenticated request to the exact Core path configured for this operation ID under CUSTOM_CORE_API_CONFIG, using the caller\'s own session access token and the operation\'s configured method; a different method returns 405. Core remains the authority for route role authorization and business rate limits; this endpoint adds no BFF business schema or field filtering, so the response is an opaque JSON value the calling application must validate for its own domain. Query parameters are accepted only by the names the operation allowlists (each at most once); they are not declared here because each deployment configures its own. A caller passing them builds the request URL itself on the generated client\'s Configuration.fetchApi — a documented generator gap.
+   * Call a deployment-configured custom Core API DELETE operation
+   */
+  async deleteCustomApiOperation(
+    requestParameters: DeleteCustomApiOperationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<CustomApiResponseDto> {
+    const response = await this.deleteCustomApiOperationRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Dispatches an authenticated request to the exact Core path configured for this operation ID under CUSTOM_CORE_API_CONFIG, using the caller\'s own session access token and the operation\'s configured method; a different method returns 405. Core remains the authority for route role authorization and business rate limits; this endpoint adds no BFF business schema or field filtering, so the response is an opaque JSON value the calling application must validate for its own domain. Query parameters are accepted only by the names the operation allowlists (each at most once); they are not declared here because each deployment configures its own. A caller passing them builds the request URL itself on the generated client\'s Configuration.fetchApi — a documented generator gap.
+   * Call a deployment-configured custom Core API GET operation
    */
   async getCustomApiOperationRaw(
     requestParameters: GetCustomApiOperationRequest,
@@ -71,14 +147,144 @@ export class CustomApiApi extends runtime.BaseAPI {
   }
 
   /**
-   * Dispatches an authenticated GET request to the exact Core path configured for this operation ID under CUSTOM_CORE_API_CONFIG, using the caller\'s own session access token. Accepts no query parameters and no request body. Core remains the authority for route role authorization and business rate limits; this endpoint adds no BFF business schema or field filtering, so the response is an opaque JSON value the calling application must validate for its own domain.
-   * Call a deployment-configured custom Core API operation
+   * Dispatches an authenticated request to the exact Core path configured for this operation ID under CUSTOM_CORE_API_CONFIG, using the caller\'s own session access token and the operation\'s configured method; a different method returns 405. Core remains the authority for route role authorization and business rate limits; this endpoint adds no BFF business schema or field filtering, so the response is an opaque JSON value the calling application must validate for its own domain. Query parameters are accepted only by the names the operation allowlists (each at most once); they are not declared here because each deployment configures its own. A caller passing them builds the request URL itself on the generated client\'s Configuration.fetchApi — a documented generator gap.
+   * Call a deployment-configured custom Core API GET operation
    */
   async getCustomApiOperation(
     requestParameters: GetCustomApiOperationRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<CustomApiResponseDto> {
     const response = await this.getCustomApiOperationRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Dispatches an authenticated request to the exact Core path configured for this operation ID under CUSTOM_CORE_API_CONFIG, using the caller\'s own session access token and the operation\'s configured method; a different method returns 405. Core remains the authority for route role authorization and business rate limits; this endpoint adds no BFF business schema or field filtering, so the response is an opaque JSON value the calling application must validate for its own domain. Query parameters are accepted only by the names the operation allowlists (each at most once); they are not declared here because each deployment configures its own. A caller passing them builds the request URL itself on the generated client\'s Configuration.fetchApi — a documented generator gap.
+   * Call a deployment-configured custom Core API POST operation
+   */
+  async postCustomApiOperationRaw(
+    requestParameters: PostCustomApiOperationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<CustomApiResponseDto>> {
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling postCustomApiOperation().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/custom-api/{id}`;
+    urlPath = urlPath.replace(
+      `{${'id'}}`,
+      encodeURIComponent(String(requestParameters['id'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['requestBody'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<CustomApiResponseDto>(response);
+  }
+
+  /**
+   * Dispatches an authenticated request to the exact Core path configured for this operation ID under CUSTOM_CORE_API_CONFIG, using the caller\'s own session access token and the operation\'s configured method; a different method returns 405. Core remains the authority for route role authorization and business rate limits; this endpoint adds no BFF business schema or field filtering, so the response is an opaque JSON value the calling application must validate for its own domain. Query parameters are accepted only by the names the operation allowlists (each at most once); they are not declared here because each deployment configures its own. A caller passing them builds the request URL itself on the generated client\'s Configuration.fetchApi — a documented generator gap.
+   * Call a deployment-configured custom Core API POST operation
+   */
+  async postCustomApiOperation(
+    requestParameters: PostCustomApiOperationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<CustomApiResponseDto> {
+    const response = await this.postCustomApiOperationRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Dispatches an authenticated request to the exact Core path configured for this operation ID under CUSTOM_CORE_API_CONFIG, using the caller\'s own session access token and the operation\'s configured method; a different method returns 405. Core remains the authority for route role authorization and business rate limits; this endpoint adds no BFF business schema or field filtering, so the response is an opaque JSON value the calling application must validate for its own domain. Query parameters are accepted only by the names the operation allowlists (each at most once); they are not declared here because each deployment configures its own. A caller passing them builds the request URL itself on the generated client\'s Configuration.fetchApi — a documented generator gap.
+   * Call a deployment-configured custom Core API PUT operation
+   */
+  async putCustomApiOperationRaw(
+    requestParameters: PutCustomApiOperationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<CustomApiResponseDto>> {
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling putCustomApiOperation().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/custom-api/{id}`;
+    urlPath = urlPath.replace(
+      `{${'id'}}`,
+      encodeURIComponent(String(requestParameters['id'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'PUT',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['requestBody'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<CustomApiResponseDto>(response);
+  }
+
+  /**
+   * Dispatches an authenticated request to the exact Core path configured for this operation ID under CUSTOM_CORE_API_CONFIG, using the caller\'s own session access token and the operation\'s configured method; a different method returns 405. Core remains the authority for route role authorization and business rate limits; this endpoint adds no BFF business schema or field filtering, so the response is an opaque JSON value the calling application must validate for its own domain. Query parameters are accepted only by the names the operation allowlists (each at most once); they are not declared here because each deployment configures its own. A caller passing them builds the request URL itself on the generated client\'s Configuration.fetchApi — a documented generator gap.
+   * Call a deployment-configured custom Core API PUT operation
+   */
+  async putCustomApiOperation(
+    requestParameters: PutCustomApiOperationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<CustomApiResponseDto> {
+    const response = await this.putCustomApiOperationRaw(
       requestParameters,
       initOverrides,
     );

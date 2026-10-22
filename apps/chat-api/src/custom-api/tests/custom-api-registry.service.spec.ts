@@ -51,6 +51,8 @@ describe('CustomApiRegistryService', () => {
         id: 'data-products',
         method: 'GET',
         corePath: '/data-products',
+        query: [],
+        body: 'none',
         timeoutMs: 10_000,
         maxResponseBytes: 1_048_576,
       });
@@ -105,7 +107,7 @@ describe('CustomApiRegistryService', () => {
       ).rejects.toThrow();
     });
 
-    it.each(['access', 'query', 'responseSchema', 'role', 'upstream'])(
+    it.each(['access', 'responseSchema', 'role', 'upstream'])(
       'rejects the unsupported field "%s"',
       async (field) => {
         await expect(
@@ -116,13 +118,16 @@ describe('CustomApiRegistryService', () => {
       },
     );
 
-    it('rejects a non-GET method', async () => {
-      await expect(
-        createService(buildConfig([{ ...VALID_OPERATION, method: 'POST' }])),
-      ).rejects.toThrow();
-    });
+    it.each(['PATCH', 'HEAD', 'get', 1])(
+      'rejects the method %p',
+      async (method) => {
+        await expect(
+          createService(buildConfig([{ ...VALID_OPERATION, method }])),
+        ).rejects.toThrow();
+      },
+    );
 
-    it.each([-1, 0, 1.5, 10_001, '10000'])(
+    it.each([-1, 0, 1.5, 300_001, '10000'])(
       'rejects invalid timeoutMs %p',
       async (timeoutMs) => {
         await expect(
@@ -165,6 +170,80 @@ describe('CustomApiRegistryService', () => {
       }
       expect(thrown).toBeInstanceOf(Error);
       expect((thrown as Error).message).not.toContain('should-not-leak');
+    });
+  });
+
+  describe('methods, query and body', () => {
+    it.each(['GET', 'POST', 'PUT', 'DELETE'])(
+      'accepts the method %s',
+      async (method) => {
+        const service = await createService(
+          buildConfig([{ ...VALID_OPERATION, method }]),
+        );
+        expect(service.get('data-products')?.method).toBe(method);
+      },
+    );
+
+    it('keeps the allowlisted query names in configuration order', async () => {
+      const service = await createService(
+        buildConfig([
+          { ...VALID_OPERATION, query: ['url', 'repo', 'sub_path'] },
+        ]),
+      );
+      expect(service.get('data-products')?.query).toEqual([
+        'url',
+        'repo',
+        'sub_path',
+      ]);
+    });
+
+    it.each([
+      ['a string', 'url'],
+      ['an uppercase name', ['Url']],
+      ['a hyphenated name', ['a-b']],
+      ['a name starting with a digit', ['1url']],
+      ['a 33-character name', ['a'.repeat(33)]],
+      ['a non-string name', [1]],
+      ['a duplicate name', ['url', 'url']],
+      ['more than 16 names', Array.from({ length: 17 }, (_, i) => `p${i}`)],
+    ])('rejects query as %s', async (_name, query) => {
+      await expect(
+        createService(buildConfig([{ ...VALID_OPERATION, query }])),
+      ).rejects.toThrow();
+    });
+
+    it.each(['POST', 'PUT'])('accepts a JSON body on %s', async (method) => {
+      const service = await createService(
+        buildConfig([{ ...VALID_OPERATION, method, body: 'json' }]),
+      );
+      expect(service.get('data-products')?.body).toBe('json');
+    });
+
+    it.each([
+      ['GET', 'json'],
+      ['DELETE', 'json'],
+      ['POST', 'text'],
+      ['PUT', true],
+    ])('rejects body on %s with %p', async (method, body) => {
+      await expect(
+        createService(buildConfig([{ ...VALID_OPERATION, method, body }])),
+      ).rejects.toThrow();
+    });
+
+    it('defaults the deadline to 10 s and lets an entry opt in to 300 s', async () => {
+      const service = await createService(
+        buildConfig([
+          VALID_OPERATION,
+          {
+            id: 'discover',
+            method: 'GET',
+            corePath: '/discover',
+            timeoutMs: 300_000,
+          },
+        ]),
+      );
+      expect(service.get('data-products')?.timeoutMs).toBe(10_000);
+      expect(service.get('discover')?.timeoutMs).toBe(300_000);
     });
   });
 
@@ -257,5 +336,19 @@ describe('resolveCustomApiDestination', () => {
     );
     expect(destination.pathname).not.toMatch(/\/(v1|openai|api)(\/|$)/);
     expect(destination.search).toBe('');
+  });
+
+  it('appends the given query without changing origin or path', () => {
+    const destination = resolveCustomApiDestination(
+      'https://core-api.com/dial',
+      '/dial-loop/editor/probe',
+      new URLSearchParams({ url: 'https://other.example/../admin?x=1#f' }),
+    );
+    expect(destination.origin).toBe('https://core-api.com');
+    expect(destination.pathname).toBe('/dial/dial-loop/editor/probe');
+    expect(destination.searchParams.get('url')).toBe(
+      'https://other.example/../admin?x=1#f',
+    );
+    expect(destination.hash).toBe('');
   });
 });

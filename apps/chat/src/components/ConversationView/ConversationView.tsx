@@ -97,7 +97,6 @@ import {
 } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
-import { useConversationPanel } from '../../context/ConversationPanelContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
@@ -568,12 +567,9 @@ const ConversationView: FC<Props> = ({
   const fallbackCitationGroups = useConversationAnnotationPool(conversation);
   const mcpAppCache = useMcpAppResponseCache(conversation.id);
   const mcpAppHostAdapter = useMcpAppHostAdapter('fullscreen');
-  const { closePanel } = useConversationPanel();
+  /* The MCP app canvas takes the sources panel's place at the end edge; the
+     navigation sidebar is left as the user set it. */
   const { handleClose: closeSourcesPanel } = useSourcesSidebar();
-  const closeMcpAppCanvasBlockers = useCallback(() => {
-    closePanel();
-    closeSourcesPanel();
-  }, [closePanel, closeSourcesPanel]);
   const mcpAppCanvasLabels = useMemo(
     () => ({
       forbiddenErrorLabel: t(
@@ -587,7 +583,7 @@ const ConversationView: FC<Props> = ({
     mcpAppCache,
     mcpAppHostAdapter,
     mcpAppCanvasLabels,
-    closeMcpAppCanvasBlockers,
+    closeSourcesPanel,
   );
   const { openCanvas, attachmentId: selectedAttachmentKey } =
     useAttachmentCanvas();

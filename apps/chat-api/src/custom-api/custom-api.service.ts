@@ -13,6 +13,7 @@ import {
   CustomApiOperation,
   resolveCustomApiDestination,
 } from './custom-api-registry.service';
+import type { CustomApiRequestInput } from './custom-api-request';
 import {
   CustomApiTransportError,
   readBoundedJson,
@@ -49,9 +50,14 @@ export class CustomApiClientClosedException extends HttpException {
   }
 }
 
+/** Upstream statuses that succeed with a JSON body. */
+const JSON_SUCCESS_STATUSES: ReadonlySet<number> = new Set([200, 201]);
+const NO_CONTENT_STATUS = 204;
+
 /**
- * Dispatches one allowlisted GET call to Core using the caller's own access
- * token. See openspec/changes/archive/2026-10-02-add-configured-core-api-operations/design.md
+ * Dispatches one allowlisted call to Core using the caller's own access
+ * token, with the operation's configured method and the caller's validated
+ * query and body (custom-api-request.ts). See openspec/changes/archive/2026-10-02-add-configured-core-api-operations/design.md
  * §3 and §5 for the transport and error-mapping contract this implements.
  */
 @Injectable()
@@ -64,6 +70,7 @@ export class CustomApiService {
     operation: CustomApiOperation,
     accessToken: string,
     clientSignal?: AbortSignal,
+    input: CustomApiRequestInput = { query: new URLSearchParams() },
   ): Promise<CustomApiCallResult> {
     const context = `custom-api.${operation.id}`;
     if (clientSignal?.aborted) {
@@ -72,6 +79,7 @@ export class CustomApiService {
     const destination = resolveCustomApiDestination(
       this.dialClient.baseUrl,
       operation.corePath,
+      input.query,
     );
 
     const controller = new AbortController();
@@ -83,13 +91,17 @@ export class CustomApiService {
 
     try {
       const response = await this.dialClient.fetchCore(destination, {
-        method: 'GET',
+        method: operation.method,
         redirect: 'manual',
         signal,
         headers: {
           Accept: 'application/json',
+          ...(input.body === undefined
+            ? {}
+            : { 'Content-Type': 'application/json' }),
           ...getBearerAuthHeaders(accessToken),
         },
+        ...(input.body === undefined ? {} : { body: input.body }),
       });
 
       if (
@@ -103,7 +115,11 @@ export class CustomApiService {
         );
       }
 
-      if (response.status !== 200) {
+      if (response.status === NO_CONTENT_STATUS) {
+        return readNoContent(response, context, this.logger);
+      }
+
+      if (!JSON_SUCCESS_STATUSES.has(response.status)) {
         await response.body?.cancel().catch(() => undefined);
         if (!RETAINED_UPSTREAM_STATUSES.has(response.status)) {
           this.logger.warn(
@@ -156,3 +172,24 @@ export class CustomApiService {
     }
   }
 }
+
+/*
+ * A 204 is a success with no data. Bytes on it are a contract violation the
+ * BFF does not relay, so it reads at most one chunk to tell the two apart.
+ */
+const readNoContent = async (
+  response: Response,
+  context: string,
+  logger: Logger,
+): Promise<CustomApiCallResult> => {
+  const reader = response.body?.getReader();
+  if (!reader) return { data: null, bytes: 0 };
+  try {
+    const { done, value } = await reader.read();
+    if (done || value.byteLength === 0) return { data: null, bytes: 0 };
+  } finally {
+    await reader.cancel().catch(() => undefined);
+  }
+  logger.warn(`DIAL Core returned a 204 with a body for ${context}`);
+  throw new BadGatewayException('DIAL Core returned an unsupported response');
+};

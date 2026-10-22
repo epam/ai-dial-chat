@@ -32,8 +32,12 @@ export interface ScheduledTasksLabels {
   sortOptions: SelectOption[];
   /** Message shown when the fetched task list is empty. */
   emptyStateLabel: string;
+  /** Secondary line under `emptyStateLabel`. Omitted when not set. */
+  emptyStateDescription?: string;
   /** Message shown when `searchQuery` filters every task out. */
   noResultsLabel: string;
+  /** Secondary line under `noResultsLabel`. Omitted when not set. */
+  noResultsDescription?: string;
   /** Message shown alongside the retry action when `error` is set. */
   errorLabel: string;
   /** Label for the retry action shown when `error` is set. */

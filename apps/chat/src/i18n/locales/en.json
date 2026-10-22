@@ -4,6 +4,7 @@
     "searchPlaceholder": "Search...",
     "clearSearch": "Clear search",
     "noResults": "No results found",
+    "noResultsDescription": "Try a different search term or check your filters.",
     "noData": "No data",
     "organization": "Organization",
     "urlPlaceholder": "https://...",
@@ -113,7 +114,9 @@
       "prompts": "prompts",
       "skills": "skills"
     },
-    "noResultsTitle": "No results for \"{{query}}\"",
+    "noResultsTitle": "No items found",
+    "emptyTitle": "No items yet",
+    "emptyDescription": "Items will appear here once they are published to the catalog.",
     "myAppsEmpty": {
       "title": "No personal {{entities}} yet",
       "titleGeneric": "No personal items yet",
@@ -428,6 +431,9 @@
     },
     "sources": {
       "ariaLabel": "Conversation sources",
+      "emptyTitle": "No files or sources yet",
+      "emptyDescription": "Files and sources from this chat will appear here.",
+      "noResultsTitle": "No files or sources found",
       "downloadAll": "Download all",
       "sections": {
         "uploadedFiles": "Uploaded Files",
@@ -465,7 +471,9 @@
       "open": "Search chats",
       "close": "Close search"
     },
-    "empty": "No conversations yet",
+    "empty": "No chats yet",
+    "emptyDescription": "Chats will appear here once you start one.",
+    "noResults": "No chats found",
     "filter": {
       "all": "All",
       "groupAriaLabel": "Filter chats",
@@ -760,10 +768,11 @@
       "sortNameAZ": "Name A-Z"
     },
     "emptyState": {
-      "label": "No scheduled tasks yet"
+      "label": "No scheduled tasks yet",
+      "description": "Scheduled tasks will appear here once you create one."
     },
     "list": {
-      "noResultsLabel": "No results",
+      "noResultsLabel": "No scheduled tasks found",
       "errorLabel": "Failed to load scheduled tasks",
       "retryLabel": "Retry",
       "loadingMoreLabel": "Loading more scheduled tasks…",
@@ -836,6 +845,7 @@
       "nextRunLabel": "Next run: {{value}}",
       "historyTitle": "History",
       "historyEmptyLabel": "No runs yet",
+      "historyEmptyDescription": "Runs will appear here once the task starts.",
       "historyErrorLabel": "Failed to load history",
       "historyLoadingMoreLabel": "Loading more runs…",
       "historyTodayAt": "today at {{time}}",

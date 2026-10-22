@@ -129,15 +129,14 @@ describe('TextRefinementField', () => {
     expect(screen.queryByRole('status')).toBeNull();
   });
 
-  it('shows the error as an alert that describes the group', () => {
+  it('shows the error as text that describes the group', () => {
     renderField(makeRefinement({ state: TextRefinementState.Error }));
 
-    const alert = screen.getByRole('alert');
-    expect(alert.textContent).toBe(
+    const error = screen.getByText(
       'Could not refine this text. Please try again.',
     );
     expect(screen.getByRole('group').getAttribute('aria-describedby')).toBe(
-      alert.id,
+      error.id,
     );
   });
 });
