@@ -129,6 +129,8 @@ export interface DialFileManagerShellProps {
   treeContainerClassName?: string;
   /** Called with the virtual path of the file the user chose to preview. */
   onPreview?: (path?: string) => void;
+  /** Called with the grid row when the user clicks a file (folders open instead). */
+  onTableFileClick?: (row: FileManagerGridRow) => void;
   /** Dotted extensions (e.g. `.md`) the Preview row action is offered for. The file manager matches them exactly as written, so list every spelling that should qualify. */
   previewExtensions?: string[];
   /** Color overrides, e.g. a different surface background. */
@@ -159,6 +161,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
   unsupportedFileTypeTooltip,
   treeContainerClassName,
   onPreview,
+  onTableFileClick,
   previewExtensions,
   styles: shellStyles,
 }) => {
@@ -682,6 +685,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
             fileMetadataPopupOptions={fileMetadataPopupOptions}
             onGetInfo={onGetInfo}
             onPreview={onPreview}
+            onTableFileClick={onTableFileClick}
             previewExtensions={previewExtensions}
             onUploadFiles={onUploadFiles}
             onUploadArchive={onUploadArchive}

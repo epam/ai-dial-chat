@@ -767,6 +767,72 @@
         "tags": ["deployments"]
       }
     },
+    "/api/v1/deployments/{deployment}/usage": {
+      "get": {
+        "description": "Returns a single deployment's own usage. Token and request stats are the same as on /limits, but cost stats are this deployment's own direct plus aggregated spend against DIAL Core's unlimited sentinel, not the caller's account-wide budget. Proxies GET /v1/deployments/{deployment_name}/usage using the caller's session access token. Not cached — every request hits DIAL Core for real-time usage data.",
+        "operationId": "getDeploymentUsage",
+        "parameters": [
+          {
+            "name": "deployment",
+            "required": true,
+            "in": "path",
+            "description": "DIAL deployment identifier. Slash-separated identifiers must be percent-encoded as one request path parameter.",
+            "schema": {
+              "maxLength": 2048,
+              "example": "applications/bucket/My App",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved deployment usage",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeploymentLimitsResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid deployment identifier"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission to access deployment usage"
+          },
+          "404": {
+            "description": "Deployment not found or not visible to the caller"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Get deployment attributed usage",
+        "tags": ["deployments"]
+      }
+    },
     "/api/v1/deployments/{deployment}/details": {
       "get": {
         "description": "Fetches the full per-entity payload for a model, application, or toolset by id (dispatching to DIAL Core's getModel/getApplication/getToolset based on the resolved deployment type) and maps it into a frontend-safe DeploymentDetailsDto. Results are cached server-side for 60 seconds per user; the response sets Cache-Control to private, no-store so browsers and intermediaries never reuse a stale copy after the active user or toolset credentials change.",

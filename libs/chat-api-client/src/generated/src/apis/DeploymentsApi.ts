@@ -32,6 +32,10 @@ export interface GetDeploymentLimitsRequest {
   deployment: string;
 }
 
+export interface GetDeploymentUsageRequest {
+  deployment: string;
+}
+
 export interface ListDeploymentsRequest {
   refresh?: boolean;
   interfaceType?: Array<ListDeploymentsInterfaceTypeEnum>;
@@ -221,6 +225,68 @@ export class DeploymentsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<DeploymentLimitsResponseDto> {
     const response = await this.getDeploymentLimitsRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Returns a single deployment\'s own usage. Token and request stats are the same as on /limits, but cost stats are this deployment\'s own direct plus aggregated spend against DIAL Core\'s unlimited sentinel, not the caller\'s account-wide budget. Proxies GET /v1/deployments/{deployment_name}/usage using the caller\'s session access token. Not cached — every request hits DIAL Core for real-time usage data.
+   * Get deployment attributed usage
+   */
+  async getDeploymentUsageRaw(
+    requestParameters: GetDeploymentUsageRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<DeploymentLimitsResponseDto>> {
+    if (requestParameters['deployment'] == null) {
+      throw new runtime.RequiredError(
+        'deployment',
+        'Required parameter "deployment" was null or undefined when calling getDeploymentUsage().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/deployments/{deployment}/usage`;
+    urlPath = urlPath.replace(
+      `{${'deployment'}}`,
+      encodeURIComponent(String(requestParameters['deployment'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<DeploymentLimitsResponseDto>(response);
+  }
+
+  /**
+   * Returns a single deployment\'s own usage. Token and request stats are the same as on /limits, but cost stats are this deployment\'s own direct plus aggregated spend against DIAL Core\'s unlimited sentinel, not the caller\'s account-wide budget. Proxies GET /v1/deployments/{deployment_name}/usage using the caller\'s session access token. Not cached — every request hits DIAL Core for real-time usage data.
+   * Get deployment attributed usage
+   */
+  async getDeploymentUsage(
+    requestParameters: GetDeploymentUsageRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<DeploymentLimitsResponseDto> {
+    const response = await this.getDeploymentUsageRaw(
       requestParameters,
       initOverrides,
     );

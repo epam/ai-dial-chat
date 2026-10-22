@@ -10,6 +10,7 @@ import type {
 } from '@epam/ai-dial-chat-api-client';
 import { formatCost } from '@epam/ai-dial-chat-shared';
 import type { FormatResetTime } from '../usage/map-usage-data-to-dashboard';
+import type { UsageLimitsSources } from '../usage/useDeploymentUsageLimits/useDeploymentUsageLimits';
 
 /** Labels and formatter callbacks for the conversation-input limits mapping utility. */
 export interface ConversationInputLimitsLabels {
@@ -53,14 +54,15 @@ const TOKEN_MAPPINGS: PeriodMapping[] = [
 ];
 
 /*
- * The cost stats on a deployment-limits response measure against the caller's
- * own budget, not a per-deployment cap. Since DIAL Core #2032 their `used` is
- * the caller's global spend plus the cost the queried deployment aggregated
- * from deployments it called — zero for a plain model, so a model's figures
- * are the same whichever model is asked, but a router's run higher (its
- * descendants' cost is already in the global spend; the suspected double count
- * is tracked upstream). They are listed as their own group, and never as a
- * caption on a token row, so the spend is not read as this model's alone.
+ * The cost group is the caller's account budget and spend, read from the top
+ * level of the user-usage response — the same figures whichever deployment is
+ * selected. It is never read from a deployment-limits response: there, since
+ * DIAL Core #2032, `used` adds the queried deployment's aggregated callee cost
+ * to the account spend that already contains it, so an agent's spend would be
+ * counted twice (#9361). Nor from the deployment-usage response, whose cost
+ * stats are that deployment's own spend against the unlimited sentinel. The
+ * rows are listed as their own group, and never as a caption on a token row,
+ * so the spend is not read as this model's alone.
  */
 const COST_MAPPINGS: PeriodMapping[] = [
   { key: 'dayCostStats', labelField: 'periodDay' },
@@ -215,9 +217,14 @@ const getOverallStatus = (
     return worst;
   }, undefined);
 
+/** Any response that carries some of the deployment-limits stat fields. */
+type StatsSource = Partial<
+  Record<keyof DeploymentLimitsResponseDto, LimitStatsDto>
+>;
+
 /** Collects the qualifying rows of one group, pushing each contributing stat onto `usableStats`. */
 const buildGroup = (
-  dto: DeploymentLimitsResponseDto,
+  dto: StatsSource | undefined,
   mappings: PeriodMapping[],
   groupLabel: string,
   labels: ConversationInputLimitsLabels,
@@ -226,7 +233,7 @@ const buildGroup = (
   usableStats: LimitStatsDto[],
 ): UsageLimitGroup | undefined => {
   const rows = mappings.flatMap((mapping) => {
-    const stats = dto[mapping.key];
+    const stats = dto?.[mapping.key];
     if (!isUsableLimitStats(stats) || !isWorthShowing(stats)) {
       return [];
     }
@@ -246,20 +253,16 @@ const buildGroup = (
   return rows.length > 0 ? { label: groupLabel, rows } : undefined;
 };
 
-/** Maps a deployment's day, week, and month token limits and the caller's cost budget to display-ready rows, or `undefined` when none qualify. */
+/** Maps the deployment's day, week, and month token limits (from `sources.deployment`) and the account cost budget (from `sources.account`) to display-ready rows, or `undefined` when none qualify. */
 export const mapDeploymentLimitsToInput = (
-  dto: DeploymentLimitsResponseDto | undefined,
+  sources: UsageLimitsSources,
   labels: ConversationInputLimitsLabels,
   formatResetTime?: FormatResetTime,
 ): CatalogItemLimits | undefined => {
-  if (dto == null) {
-    return undefined;
-  }
-
   const usableStats: LimitStatsDto[] = [];
 
   const tokenGroup = buildGroup(
-    dto,
+    sources.deployment,
     TOKEN_MAPPINGS,
     labels.tokenGroup,
     labels,
@@ -273,7 +276,7 @@ export const mapDeploymentLimitsToInput = (
   );
 
   const costGroup = buildGroup(
-    dto,
+    sources.account,
     COST_MAPPINGS,
     labels.costGroup,
     labels,

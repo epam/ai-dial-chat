@@ -14,6 +14,7 @@ import type { DialFileManagerShellLabels } from '@epam/ai-dial-chat-shared';
 import {
   DialFileManagerActions,
   DialFileManagerTabs,
+  type FileManagerGridRow,
 } from '@epam/ai-dial-react-file-manager';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -42,6 +43,7 @@ const capturedDialFileManagerProps: {
     autoSelectUploadedItems?: boolean;
     onGetInfo?: unknown;
     onPreview?: unknown;
+    onTableFileClick?: unknown;
     previewExtensions?: string[];
     gridOptions?: CapturedActionLabels;
     treeOptions?: CapturedTreeOptions;
@@ -98,6 +100,7 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       onFolderPopupPathChange?: unknown;
       onGetInfo?: unknown;
       onPreview?: unknown;
+      onTableFileClick?: unknown;
       previewExtensions?: string[];
       autoSelectUploadedItems?: boolean;
       gridOptions?: CapturedActionLabels;
@@ -292,6 +295,7 @@ const renderShell = (
     labels?: DialFileManagerShellLabels;
     treeContainerClassName?: string;
     onPreview?: (path?: string) => void;
+    onTableFileClick?: (row: FileManagerGridRow) => void;
     previewExtensions?: string[];
   } = {},
 ) =>
@@ -308,6 +312,7 @@ const renderShell = (
       actionProfile={options.actionProfile ?? DialFileManagerActionProfile.Full}
       treeContainerClassName={options.treeContainerClassName}
       onPreview={options.onPreview}
+      onTableFileClick={options.onTableFileClick}
       previewExtensions={options.previewExtensions}
     />,
   );
@@ -789,6 +794,14 @@ describe('DialFileManagerShell', () => {
         capturedDialFileManagerProps.current?.bulkActionsToolbarOptions
           ?.actionLabels?.[DialFileManagerActions.Preview],
       ).toBeUndefined();
+    });
+
+    it('passes onTableFileClick straight through to DialFileManager', () => {
+      const onTableFileClick = vi.fn();
+      renderShell(undefined, new Set(), { onTableFileClick });
+      expect(capturedDialFileManagerProps.current?.onTableFileClick).toBe(
+        onTableFileClick,
+      );
     });
 
     it('passes onPreview and previewExtensions straight through to DialFileManager', () => {

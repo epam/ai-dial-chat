@@ -4,6 +4,7 @@ import {
   DangerButton,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
+  ErrorText,
   Input,
   LinkButton,
   NeutralButton,
@@ -256,12 +257,12 @@ export const CredentialsRow: FC<CredentialsRowProps> = ({
                 </span>
               )}
               {hasEmptyKeyError && (
-                <span
-                  role="alert"
+                <ErrorText
                   className={mergeClasses(errorClassName, styles.errorText)}
-                >
-                  {texts?.apiKeyRequiredErrorMessage ?? 'API key is required.'}
-                </span>
+                  text={
+                    texts?.apiKeyRequiredErrorMessage ?? 'API key is required.'
+                  }
+                />
               )}
             </div>
           )}

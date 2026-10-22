@@ -4,6 +4,7 @@ import type {
 } from '@epam/ai-dial-chat-api-client';
 import { UsageLimitBannerSeverity } from '@epam/ai-dial-conversation-input';
 import { UsagePeriod } from './usage-period';
+import type { UsageLimitsSources } from './useDeploymentUsageLimits/useDeploymentUsageLimits';
 
 /** The day/week/month usage stat the composer banner reports on, and how close it is to its limit. */
 export interface UsageBannerSource {
@@ -37,38 +38,49 @@ type CalendarStatKey = keyof Pick<
   | 'monthCostStats'
 >;
 
+/** Which source a candidate stat is read from. */
+type StatSource = keyof UsageLimitsSources;
+
 /*
  * Visited in tie-break order: a longer period wins an equal ratio, and within
  * a period the token stat wins over the cost stat. Only a strictly higher
  * ratio replaces the current pick, so the first entry of a tie is kept. The
  * minute stats are a rolling counter the user cannot act on, so they are left
  * out, as in the usage dial.
+ *
+ * Token stats come from the deployment's own usage and cost stats from the
+ * account usage, never the other way round: the account budget is the only
+ * cost cap, and reading it from a deployment-limits response would count an
+ * agent's spend twice (#9361).
  */
 const BANNER_CANDIDATE_STATS: ReadonlyArray<
-  readonly [CalendarStatKey, UsagePeriod]
+  readonly [StatSource, CalendarStatKey, UsagePeriod]
 > = [
-  ['monthTokenStats', UsagePeriod.Month],
-  ['monthCostStats', UsagePeriod.Month],
-  ['weekTokenStats', UsagePeriod.Week],
-  ['weekCostStats', UsagePeriod.Week],
-  ['dayTokenStats', UsagePeriod.Day],
-  ['dayCostStats', UsagePeriod.Day],
+  ['deployment', 'monthTokenStats', UsagePeriod.Month],
+  ['account', 'monthCostStats', UsagePeriod.Month],
+  ['deployment', 'weekTokenStats', UsagePeriod.Week],
+  ['account', 'weekCostStats', UsagePeriod.Week],
+  ['deployment', 'dayTokenStats', UsagePeriod.Day],
+  ['account', 'dayCostStats', UsagePeriod.Day],
 ];
 
 /**
- * Returns the capped day/week/month token or cost stat with the highest
- * used/total ratio, classified against `thresholdPercent`, or `undefined` when
- * no stat is capped or the worst one is below the threshold.
+ * Returns the capped day/week/month token stat of `sources.deployment` or cost
+ * stat of `sources.account` with the highest used/total ratio, classified
+ * against `thresholdPercent`, or `undefined` when no stat is capped or the
+ * worst one is below the threshold.
  */
 export const selectUsageBannerSource = (
-  dto: DeploymentLimitsResponseDto | undefined,
+  sources: UsageLimitsSources,
   thresholdPercent: number,
 ): UsageBannerSource | undefined => {
   let worst:
     { stat: LimitStatsDto; period: UsagePeriod; ratio: number } | undefined;
 
-  for (const [key, period] of BANNER_CANDIDATE_STATS) {
-    const stat = dto?.[key];
+  for (const [source, key, period] of BANNER_CANDIDATE_STATS) {
+    const stats: Partial<Record<CalendarStatKey, LimitStatsDto>> | undefined =
+      sources[source];
+    const stat = stats?.[key];
     if (stat == null || !isCappedStat(stat.total)) {
       continue;
     }
