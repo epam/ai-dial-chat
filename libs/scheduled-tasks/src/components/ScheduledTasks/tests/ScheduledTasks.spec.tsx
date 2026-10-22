@@ -258,7 +258,10 @@ describe('ScheduledTasks', () => {
   it('illustrates the empty state with the kit default illustration and its description', () => {
     renderScheduledTasks({
       items: [],
-      labels: { ...baseLabels, emptyStateDescription: 'Tasks will appear here' },
+      labels: {
+        ...baseLabels,
+        emptyStateDescription: 'Tasks will appear here',
+      },
     });
 
     expect(screen.getByText('default illustration')).toBeTruthy();
