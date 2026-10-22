@@ -912,7 +912,7 @@ describe('ConversationListingService', () => {
       ]);
     });
 
-    it('tags a public-bucket item created by a scheduled task independently of its own path', async () => {
+    it('lists a published scheduled-task run as an ordinary conversation', async () => {
       mockMetadata(
         [],
         [
@@ -932,14 +932,16 @@ describe('ConversationListingService', () => {
 
       expect(result.items).toEqual([
         expect.objectContaining({
-          isScheduledTask: true,
-          scheduleId: 'sched_pub',
-          runId: 'd8bfff5d-d883-47e8-adc3-8a6afee46411',
+          publishedWithMe: true,
+          isScheduledTask: false,
         }),
       ]);
+      expect(result.items[0]).not.toHaveProperty('scheduleId');
+      expect(result.items[0]).not.toHaveProperty('runId');
+      expect(result.items[0]).not.toHaveProperty('isUnread');
     });
 
-    it('tags a shared item created by a scheduled task using its own resource id', async () => {
+    it('lists a scheduled-task run shared with the user as an ordinary conversation', async () => {
       mockMetadata([]);
       vi.spyOn(mockDialClient.client, 'getSharedResources').mockResolvedValue({
         data: {
@@ -960,12 +962,39 @@ describe('ConversationListingService', () => {
 
       expect(result.items).toEqual([
         expect.objectContaining({
-          isScheduledTask: true,
-          scheduleId: 'sched_shr',
-          runId: 'a1b2c3d4-e5f6-4789-abcd-ef0123456789',
           sharedWithMe: true,
+          isScheduledTask: false,
         }),
       ]);
+      expect(result.items[0]).not.toHaveProperty('scheduleId');
+      expect(result.items[0]).not.toHaveProperty('runId');
+      expect(result.items[0]).not.toHaveProperty('isUnread');
+    });
+
+    it('never marks a shared scheduled-task run unread, even with its path viewed under the caller bucket', async () => {
+      mockMetadata([]);
+      vi.spyOn(mockDialClient.client, 'getSharedResources').mockResolvedValue({
+        data: {
+          resources: [
+            {
+              url: 'conversations/other-bucket/.scheduler/sched_shr/gpt-4o__title__a1b2c3d4-e5f6-4789-abcd-ef0123456789',
+              nodeType: 'FILE',
+            },
+          ],
+        },
+      } as never);
+      mockUserConfigService.getPinnedIds.mockResolvedValue([]);
+      mockScheduledTaskUnreadService.getViewedIds.mockResolvedValue([
+        'conversations/test-bucket/.scheduler/sched_shr/gpt-4o__title__a1b2c3d4-e5f6-4789-abcd-ef0123456789',
+      ]);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items[0].isScheduledTask).toBe(false);
+      expect(result.items[0]).not.toHaveProperty('isUnread');
     });
 
     it('sets isScheduledTask: false with no scheduleId/runId for a normal conversation', async () => {
