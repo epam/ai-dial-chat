@@ -153,6 +153,7 @@ const App: FC = () => {
   );
   const isFileManagerEnabled = useUiFeature(OverlayFeature.FileManager);
   const isSettingsPageHidden = useUiFeature(OverlayFeature.HideSettingsPage);
+  const isUsagePageHidden = useUiFeature(OverlayFeature.HideUsagePage);
 
   const { closeCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
   const handleCanvasVisualizerSendMessage = useCanvasVisualizerMessageHandler();
@@ -367,7 +368,7 @@ const App: FC = () => {
                   )
                 }
               />
-              {renderUsageRoute(isSettingsPageHidden)}
+              {renderUsageRoute(isUsagePageHidden)}
               <Route
                 path={ROUTES.ScheduledTasks}
                 element={

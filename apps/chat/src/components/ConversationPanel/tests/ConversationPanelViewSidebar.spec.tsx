@@ -466,7 +466,9 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockUseIsMobile.mockReturnValue(false);
   vi.mocked(useUiFeature).mockImplementation(
-    (feature) => feature !== OverlayFeature.HideConversationExport,
+    (feature) =>
+      feature !== OverlayFeature.HideConversationExport &&
+      feature !== OverlayFeature.HideConversationImport,
   );
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   vi.mocked(useConversations).mockReturnValue(baseContextValue as any);
@@ -534,6 +536,7 @@ describe('ConversationPanelView', () => {
   it('reports the chosen filter to the app', () => {
     enableAllExcept(
       OverlayFeature.HideConversationExport,
+      OverlayFeature.HideConversationImport,
       OverlayFeature.HideConversationsFilter,
     );
     const onActiveFilterChange = vi.fn();
@@ -569,7 +572,10 @@ describe('ConversationPanelView', () => {
   it('hides the filter under hide-conversations-filter', () => {
     /* The default posture of this file's mock turns every other key on,
        `hide-conversations-filter` included. */
-    enableAllExcept(OverlayFeature.HideConversationExport);
+    enableAllExcept(
+      OverlayFeature.HideConversationExport,
+      OverlayFeature.HideConversationImport,
+    );
     renderSidebar();
 
     expect(sectionProps.current?.isFilterHidden).toBe(true);
