@@ -136,6 +136,12 @@ export type { FavoriteCardProps } from './components/Favorites/FavoriteCard';
 
 export { Filter } from './components/Filter/Filter';
 export type { FilterColors, FilterProps } from './components/Filter/Filter';
+export { CatalogPickerModal } from './components/CatalogPickerModal/CatalogPickerModal';
+export type {
+  CatalogPickerModalLabels,
+  CatalogPickerModalProps,
+} from './components/CatalogPickerModal/CatalogPickerModal';
+export { CatalogLoadStatus } from './types/load-status';
 
 export { TopicTag } from './components/TopicTag/TopicTag';
 export type {

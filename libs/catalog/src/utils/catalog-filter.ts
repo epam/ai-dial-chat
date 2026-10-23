@@ -1,4 +1,5 @@
 import type { CatalogItem } from '../models/catalog-item';
+import { sortCatalogItems } from './catalog-sort';
 
 /** Returns the filter label for the From dropdown: the default label when nothing (or everything) is selected, or a compact summary otherwise. */
 export const getFromLabel = (
@@ -67,4 +68,31 @@ export const toggleTopic = (
     next.add(topic);
   }
   return next;
+};
+
+/** A catalog toolbar's search, From filter and sort, as `filterCatalogItemsByQuery` applies them. */
+export interface CatalogItemsQuery {
+  /** Name search, case-insensitive and trimmed. */
+  search: string;
+  /** Topics to keep; an empty set keeps every item. */
+  topics: Set<string>;
+  /** Whether to keep only the user's own items (`isMyApp`). */
+  isMyOnly: boolean;
+  /** A `CatalogSortKey` value. */
+  sortKey: string;
+}
+
+/**
+ * Applies a catalog toolbar's search, From filter (topics and "My") and sort,
+ * in the order and with the meaning of the catalog's own toolbar.
+ */
+export const filterCatalogItemsByQuery = (
+  items: CatalogItem[],
+  { search, topics, isMyOnly, sortKey }: CatalogItemsQuery,
+): CatalogItem[] => {
+  const byTopics = filterByTopics(filterCatalogItems(items, search), topics);
+  return sortCatalogItems(
+    isMyOnly ? filterByMyApp(byTopics) : byTopics,
+    sortKey,
+  );
 };

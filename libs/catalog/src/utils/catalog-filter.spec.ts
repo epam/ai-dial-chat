@@ -1,7 +1,12 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import type { CatalogItem } from '../models/catalog-item';
-import { filterCatalogItems, getTopicOptions } from './catalog-filter';
+import { CatalogSortKey } from '../types/sort';
+import {
+  filterCatalogItems,
+  filterCatalogItemsByQuery,
+  getTopicOptions,
+} from './catalog-filter';
 
 const makeItem = (
   overrides: Partial<CatalogItem> & Pick<CatalogItem, 'id' | 'name'>,
@@ -96,5 +101,38 @@ describe('getTopicOptions', () => {
   it('returns an empty set when no items have topics', () => {
     const items = [makeItem({ id: '1', name: 'GPT-4' })];
     expect(getTopicOptions(items)).toEqual(new Set());
+  });
+});
+
+describe('filterCatalogItemsByQuery', () => {
+  const items = [
+    makeItem({ id: 'b', name: 'Beta', topics: ['code'], isMyApp: true }),
+    makeItem({ id: 'a', name: 'Alpha', topics: ['code'] }),
+    makeItem({ id: 'g', name: 'Gamma', topics: ['chat'], isMyApp: true }),
+  ];
+  const query = {
+    search: '',
+    topics: new Set<string>(),
+    isMyOnly: false,
+    sortKey: CatalogSortKey.NameAZ,
+  };
+
+  it('keeps every item, sorted, when nothing is filtered', () => {
+    expect(filterCatalogItemsByQuery(items, query).map((i) => i.id)).toEqual([
+      'a',
+      'b',
+      'g',
+    ]);
+  });
+
+  it('applies the search, the topics and "My" together', () => {
+    expect(
+      filterCatalogItemsByQuery(items, {
+        ...query,
+        search: 'a',
+        topics: new Set(['code']),
+        isMyOnly: true,
+      }).map((i) => i.id),
+    ).toEqual(['b']);
   });
 });

@@ -185,3 +185,47 @@ describe('ListView single selection', () => {
     expect(screen.queryByRole('checkbox')).toBeNull();
   });
 });
+
+describe('ListView single selection keyboard', () => {
+  const cellOf = async (name: string) => {
+    await screen.findByText(name);
+    const cell = screen
+      .getAllByRole('gridcell')
+      .find((gridCell) => gridCell.textContent?.includes(name));
+    expect(cell).toBeDefined();
+    return cell as HTMLElement;
+  };
+
+  it.each(['Enter', ' '])(
+    'picks a row with %j on one of its cells, as a click does',
+    async (key) => {
+      const onItemClick = vi.fn();
+      render(
+        <ListView
+          type={CatalogEntityType.Skill}
+          items={ITEMS}
+          onItemClick={onItemClick}
+        />,
+      );
+
+      fireEvent.keyDown(await cellOf('Beta'), { key });
+
+      expect(onItemClick).toHaveBeenCalledWith(ITEMS[1]);
+    },
+  );
+
+  it('ignores other keys', async () => {
+    const onItemClick = vi.fn();
+    render(
+      <ListView
+        type={CatalogEntityType.Skill}
+        items={ITEMS}
+        onItemClick={onItemClick}
+      />,
+    );
+
+    fireEvent.keyDown(await cellOf('Beta'), { key: 'a' });
+
+    expect(onItemClick).not.toHaveBeenCalled();
+  });
+});
