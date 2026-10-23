@@ -119,24 +119,24 @@ When `item.iconTooltip` is provided and `item.isIconLoading` is `false` or `unde
 - **WHEN** `conversations` is an empty array
 - **THEN** the `labels.emptyLabel` text is rendered instead of sections
 
-`ConversationList` SHALL show `labels.noResultsLabel` only when a non-empty search query matches no conversation. When the origin or type filters match nothing and no search is typed, it SHALL show the empty state instead: `labels.sharedEmptyLabel` / `labels.sharedEmptyDescription` under `FilterTab.Shared` (each falling back to `emptyLabel` / `emptyDescription`), and `emptyLabel` / `emptyDescription` otherwise. The same message is announced through the list's `role="status"` region. `ConversationPanelView` passes `conversationPanel.sharedEmpty` and `conversationPanel.sharedEmptyDescription` as the shared labels (Issue #9476).
+`ConversationList` SHALL follow the Patterns 2.0 empty-state rules. It SHALL show `labels.emptyLabel` / `labels.emptyDescription` ("No [entities] yet") when the list is empty with no search typed and both filters at `All`, and `labels.noResultsLabel` / `labels.noResultsDescription` ("No [entities] found") when a search query or a filter — `activeFilter` other than `FilterTab.All`, or `activeTypeFilter` other than `ConversationTypeFilter.All` — matches nothing. Under `FilterTab.Shared` with no search typed, the description SHALL be `labels.sharedEmptyDescription`, falling back to `labels.noResultsDescription`. The same title is announced through the list's `role="status"` region. `ConversationPanelView` passes `conversationPanel.sharedEmptyDescription` as `sharedEmptyDescription` (Issue #9476).
 
-#### Scenario: A filter that matches nothing shows the empty state
+#### Scenario: A filter that matches nothing reports no results
 
 - **GIVEN** the user has personal chats only and no search is typed
 - **WHEN** the Type filter is set to Task
-- **THEN** `labels.emptyLabel` is rendered and announced, not `labels.noResultsLabel`
+- **THEN** `labels.noResultsLabel` and `labels.noResultsDescription` are rendered, and `labels.noResultsLabel` is announced
 
-#### Scenario: The Shared filter shows its own empty state
+#### Scenario: The Shared filter says where shared chats come from
 
 - **GIVEN** no conversation is shared with the user and no search is typed
 - **WHEN** the Origin filter is set to Shared
-- **THEN** `labels.sharedEmptyLabel` and `labels.sharedEmptyDescription` are rendered
+- **THEN** `labels.noResultsLabel` is rendered with `labels.sharedEmptyDescription` as its description
 
-#### Scenario: A search that matches nothing still reports no results
+#### Scenario: A search under the Shared filter keeps the search description
 
-- **WHEN** a search query matches no conversation under any filter
-- **THEN** `labels.noResultsLabel` is rendered
+- **WHEN** the Origin filter is Shared and a search query matches nothing
+- **THEN** `labels.noResultsLabel` is rendered with `labels.noResultsDescription`
 
 ---
 

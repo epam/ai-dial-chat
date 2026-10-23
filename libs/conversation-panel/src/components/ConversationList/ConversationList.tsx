@@ -73,8 +73,7 @@ export const ConversationList: FC<ConversationListProps> = memo(
       emptyDescription,
       noResultsLabel,
       noResultsDescription,
-      sharedEmptyLabel = emptyLabel,
-      sharedEmptyDescription = emptyDescription,
+      sharedEmptyDescription = noResultsDescription,
       loadingLabel = 'Loading conversations',
       groupLabels,
       actionsLabel,
@@ -376,23 +375,25 @@ export const ConversationList: FC<ConversationListProps> = memo(
       ],
     );
 
-    /* "No results" is the answer to a search only. A filter that matches
-       nothing, with no search typed, is an empty state: the user has nothing
-       of that kind yet, not a query to rephrase. */
+    /* Patterns 2.0: "No [entities] found" answers a search or a filter;
+       "No [entities] yet" is for a list with neither applied. */
+    const isNarrowed =
+      searchQuery !== '' ||
+      activeFilter !== FilterTab.All ||
+      activeTypeFilter !== ConversationTypeFilter.All;
     const isListEmpty = filteredItems.length === 0;
-    const isNoResults =
-      isListEmpty && visibleConversations.length > 0 && searchQuery !== '';
-    const isSharedEmpty =
-      isListEmpty && !isNoResults && activeFilter === FilterTab.Shared;
-    const isEmpty = isListEmpty && !isNoResults;
-    const currentEmptyLabel = isSharedEmpty ? sharedEmptyLabel : emptyLabel;
-    const currentEmptyDescription = isSharedEmpty
-      ? sharedEmptyDescription
-      : emptyDescription;
+    const isNoResults = isListEmpty && isNarrowed;
+    const isEmpty = isListEmpty && !isNarrowed;
+    /* Under the Shared filter alone there is no query to rephrase: say where
+       shared chats come from instead. */
+    const currentNoResultsDescription =
+      activeFilter === FilterTab.Shared && searchQuery === ''
+        ? sharedEmptyDescription
+        : noResultsDescription;
 
     const getStatusMessage = (): string => {
       if (isLoading) return loadingLabel;
-      if (isEmpty) return currentEmptyLabel;
+      if (isEmpty) return emptyLabel;
       if (isNoResults) return noResultsLabel;
       return '';
     };
@@ -415,17 +416,12 @@ export const ConversationList: FC<ConversationListProps> = memo(
         );
       }
       if (isEmpty)
-        return (
-          <PanelEmpty
-            label={currentEmptyLabel}
-            description={currentEmptyDescription}
-          />
-        );
+        return <PanelEmpty label={emptyLabel} description={emptyDescription} />;
       if (isNoResults)
         return (
           <PanelNoResults
             label={noResultsLabel}
-            description={noResultsDescription}
+            description={currentNoResultsDescription}
           />
         );
       return (

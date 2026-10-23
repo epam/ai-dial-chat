@@ -57,7 +57,6 @@ import type { ConversationPanelProps } from '@epam/ai-dial-conversation-panel';
     emptyDescription: 'Chats will appear here once you start one.',
     noResultsLabel: 'No chats found',
     noResultsDescription: 'Try a different search term or check your filters.',
-    sharedEmptyLabel: 'No shared chats yet',
     sharedEmptyDescription:
       'Chats other people share with you will show up here.',
     newChatLabel: 'New chat',
@@ -225,11 +224,11 @@ import { ConversationListSection } from '@epam/ai-dial-conversation-panel';
 />;
 ```
 
-The list shows `noResultsLabel` only when a search query matches nothing. When
-the filters match nothing and no search is typed, it shows the empty state
-(`emptyLabel` / `emptyDescription`); under the `Shared` filter it uses
-`sharedEmptyLabel` / `sharedEmptyDescription`, which fall back to the empty
-labels.
+The list shows `emptyLabel` / `emptyDescription` when it is empty with no
+search and no filter applied, and `noResultsLabel` / `noResultsDescription`
+when a search or a filter (origin or type other than `All`) matches nothing.
+Under the `Shared` filter with no search, the description is
+`sharedEmptyDescription`, which falls back to `noResultsDescription`.
 
 `requestedFilter` makes the section adopt a filter whenever it changes (the user
 can still pick another afterwards), `onFilterChange` reports the user's choice,

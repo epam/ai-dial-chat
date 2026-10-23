@@ -782,7 +782,6 @@ export enum ConversationPanelI18nKeys {
   Empty = 'conversationPanel.empty',
   EmptyDescription = 'conversationPanel.emptyDescription',
   NoResults = 'conversationPanel.noResults',
-  SharedEmpty = 'conversationPanel.sharedEmpty',
   SharedEmptyDescription = 'conversationPanel.sharedEmptyDescription',
   FilterAll = 'conversationPanel.filter.all',
   FilterGroupAriaLabel = 'conversationPanel.filter.groupAriaLabel',

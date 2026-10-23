@@ -1349,7 +1349,6 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       emptyDescription: t(ConversationPanelI18nKeys.EmptyDescription),
       noResultsLabel: t(ConversationPanelI18nKeys.NoResults),
       noResultsDescription: t(BasicI18nKeys.NoResultsDescription),
-      sharedEmptyLabel: t(ConversationPanelI18nKeys.SharedEmpty),
       sharedEmptyDescription: t(
         ConversationPanelI18nKeys.SharedEmptyDescription,
       ),

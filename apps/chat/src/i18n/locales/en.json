@@ -474,7 +474,6 @@
     "empty": "No chats yet",
     "emptyDescription": "Chats will appear here once you start one.",
     "noResults": "No chats found",
-    "sharedEmpty": "No shared chats yet",
     "sharedEmptyDescription": "Chats other people share with you will show up here.",
     "filter": {
       "all": "All",

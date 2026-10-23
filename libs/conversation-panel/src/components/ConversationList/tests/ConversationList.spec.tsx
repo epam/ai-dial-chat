@@ -137,7 +137,18 @@ vi.mock('@epam/ai-dial-sidebar', () => ({
       {description && <p>{description}</p>}
     </div>
   ),
-  PanelNoResults: ({ label }: { label: string }) => <div>{label}</div>,
+  PanelNoResults: ({
+    label,
+    description,
+  }: {
+    label: string;
+    description?: string;
+  }) => (
+    <div>
+      {label}
+      {description && <p>{description}</p>}
+    </div>
+  ),
   SidebarOrientation: { Left: 'left', Right: 'right' },
   /*
    * The real panel puts `styles.headerClassName` on its header bar and
@@ -372,77 +383,78 @@ describe('ConversationList', () => {
     expect(screen.getAllByText('No results found').length).toBeGreaterThan(0);
   });
 
-  describe('when the filters match nothing', () => {
+  describe('empty and no-results states', () => {
     const personalOnly = items.filter(
       (item) => item.source === FilterTab.MyChats,
     );
-    const sharedLabels = {
+    const labels = {
       ...LABELS,
-      emptyDescription: 'Chats will appear here.',
-      sharedEmptyLabel: 'No shared chats yet',
+      noResultsDescription:
+        'Try a different search term or check your filters.',
       sharedEmptyDescription: 'Chats other people share with you show up here.',
     };
 
-    it('shows the empty state instead of no results while no search is typed', () => {
+    it('reports no results when a filter matches nothing', () => {
       render(
         <ConversationList
           {...BASE_PROPS}
+          labels={labels}
           conversations={personalOnly}
           activeTypeFilter={ConversationTypeFilter.Task}
         />,
       );
 
-      expect(screen.getByRole('status').textContent).toBe(
-        'No conversations yet',
-      );
-      expect(screen.queryByText('No results found')).toBeNull();
+      expect(screen.getByRole('status').textContent).toBe('No results found');
+      expect(
+        screen.getByText('Try a different search term or check your filters.'),
+      ).toBeTruthy();
     });
 
-    it('shows the shared empty state for the Shared filter', () => {
+    it('reports no results with the shared description under the Shared filter', () => {
       render(
         <ConversationList
           {...BASE_PROPS}
-          labels={sharedLabels}
+          labels={labels}
           conversations={personalOnly}
           activeFilter={FilterTab.Shared}
         />,
       );
 
-      expect(screen.getByRole('status').textContent).toBe(
-        'No shared chats yet',
-      );
+      expect(screen.getByRole('status').textContent).toBe('No results found');
       expect(
         screen.getByText('Chats other people share with you show up here.'),
       ).toBeTruthy();
     });
 
-    it('falls back to the empty labels for the Shared filter when no shared labels are given', () => {
+    it('keeps the search description for a search under the Shared filter', () => {
       render(
         <ConversationList
           {...BASE_PROPS}
-          conversations={personalOnly}
-          activeFilter={FilterTab.Shared}
-        />,
-      );
-
-      expect(screen.getByRole('status').textContent).toBe(
-        'No conversations yet',
-      );
-    });
-
-    it('still reports no results for a search under the Shared filter', () => {
-      render(
-        <ConversationList
-          {...BASE_PROPS}
-          labels={sharedLabels}
+          labels={labels}
           conversations={personalOnly}
           activeFilter={FilterTab.Shared}
           searchQuery="zzz"
         />,
       );
 
+      expect(
+        screen.getByText('Try a different search term or check your filters.'),
+      ).toBeTruthy();
+      expect(
+        screen.queryByText('Chats other people share with you show up here.'),
+      ).toBeNull();
+    });
+
+    it('reports no results when a filter is set and there are no conversations at all', () => {
+      render(
+        <ConversationList
+          {...BASE_PROPS}
+          conversations={[]}
+          activeFilter={FilterTab.Shared}
+        />,
+      );
+
       expect(screen.getByRole('status').textContent).toBe('No results found');
-      expect(screen.queryByText('No shared chats yet')).toBeNull();
     });
   });
 
