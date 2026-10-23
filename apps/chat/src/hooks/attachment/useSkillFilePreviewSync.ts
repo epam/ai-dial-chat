@@ -26,6 +26,8 @@ interface UseSkillFilePreviewSyncParams {
   canvasAttachmentId: string | undefined;
   files: SkillFileTreeNode[];
   filesContentRef: React.MutableRefObject<Map<string, SkillFileContent>>;
+  /** How many times the selected file's bytes were replaced in place; a change reopens its preview. Defaults to `0`. */
+  contentRevision?: number;
 }
 
 interface UseSkillFilePreviewSyncResult {
@@ -44,6 +46,7 @@ export const useSkillFilePreviewSync = ({
   canvasAttachmentId,
   files,
   filesContentRef,
+  contentRevision = 0,
 }: UseSkillFilePreviewSyncParams): UseSkillFilePreviewSyncResult => {
   const { resolvers, options } = useAttachmentCanvasResolvers();
   const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
@@ -73,6 +76,12 @@ export const useSkillFilePreviewSync = ({
    * error state could never settle.
    */
   const inFlightIdRef = useRef<string | undefined>(undefined);
+  /*
+   * The revision the current canvas id was last opened at. A replaced file
+   * keeps its path, and so its canvas id; comparing ids alone would keep
+   * showing the old bytes.
+   */
+  const openedRevisionRef = useRef<number | undefined>(undefined);
   const isMountedRef = useRef(true);
   useEffect(() => {
     isMountedRef.current = true;
@@ -133,9 +142,11 @@ export const useSkillFilePreviewSync = ({
       if (isCanvasOpen || isCanvasLoading) closeCanvas();
       return;
     }
+    const isOpenedRevision = openedRevisionRef.current === contentRevision;
     if (
       currentCanvasId === canvasAttachmentId &&
-      (isCanvasLoading || isCanvasOpen)
+      (isCanvasLoading || isCanvasOpen) &&
+      isOpenedRevision
     ) {
       return;
     }
@@ -143,7 +154,9 @@ export const useSkillFilePreviewSync = ({
        re-running this effect — otherwise a failing file would reopen in a
        loop. */
     if (failedId === canvasAttachmentId) return;
-    if (inFlightIdRef.current === canvasAttachmentId) return;
+    if (inFlightIdRef.current === canvasAttachmentId && isOpenedRevision) {
+      return;
+    }
 
     /*
      * Every writer fills `filesContentRef` before it publishes the node in
@@ -159,12 +172,14 @@ export const useSkillFilePreviewSync = ({
 
     const openedId = canvasAttachmentId as string;
     inFlightIdRef.current = openedId;
+    openedRevisionRef.current = contentRevision;
     void openPreview(node, content, openedId);
   }, [
     selectedPath,
     canvasAttachmentId,
     files,
     filesContentRef,
+    contentRevision,
     currentCanvasId,
     isCanvasLoading,
     isCanvasOpen,

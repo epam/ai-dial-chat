@@ -61,6 +61,10 @@ export interface SkillFileBatchValidationContext {
   existingPaths: string[];
   /** Sum of the bytes already held for existing supporting files. */
   existingTotalBytes: number;
+  /** Bytes held for each existing supporting file, keyed by path; a replacing upload frees its target's share. Defaults to none. */
+  existingFileBytes?: ReadonlyMap<string, number>;
+  /** Paths of the folders in the tree; a file can never take one over, so a candidate at such a path is a duplicate. Defaults to none. */
+  existingFolderPaths?: string[];
   /** UTF-8 byte length of the currently generated/loaded root `SKILL.md`. */
   manifestByteLength: number;
   /** Localized messages. */
@@ -90,11 +94,18 @@ export const validateSkillFileBatch = async (
   candidates: SkillFileUploadCandidate[],
   context: SkillFileBatchValidationContext,
 ): Promise<SkillFileBatchValidationOutcome> => {
-  const { existingPaths, existingTotalBytes, manifestByteLength, messages } =
-    context;
+  const {
+    existingPaths,
+    existingTotalBytes,
+    existingFileBytes,
+    existingFolderPaths,
+    manifestByteLength,
+    messages,
+  } = context;
   const results: SkillFileValidationResult[] = [];
   const batchErrors: SkillFileBatchError[] = [];
   const existingPathSet = new Set(existingPaths);
+  const existingFolderPathSet = new Set(existingFolderPaths);
 
   // Count occurrences of each supporting-file path up front, so every
   // candidate sharing a duplicated path is marked invalid — not just the
@@ -106,6 +117,7 @@ export const validateSkillFileBatch = async (
   }
 
   let stagedSupportingBytes = 0;
+  let replacedExistingBytes = 0;
   const countedSupportingPaths = new Set<string>();
   let manifestCandidate: SkillManifestImportCandidate | undefined;
   let manifestFileSize = manifestByteLength;
@@ -113,6 +125,9 @@ export const validateSkillFileBatch = async (
 
   for (const candidate of candidates) {
     const { id, file, path } = candidate;
+    /* The user chose to overwrite this existing file, so its path is not a clash. */
+    const isReplacing =
+      candidate.replacesExisting === true && existingPathSet.has(path);
     let error: string | undefined;
     let kind = SkillFileCandidateKind.SupportingFile;
 
@@ -164,7 +179,8 @@ export const validateSkillFileBatch = async (
     } else if (!isValidSkillRelativePath(path)) {
       error = messages.pathInvalid;
     } else if (
-      existingPathSet.has(path) ||
+      (existingPathSet.has(path) && !isReplacing) ||
+      existingFolderPathSet.has(path) ||
       (pathOccurrences.get(path) ?? 0) > 1
     ) {
       error = messages.pathDuplicate;
@@ -177,6 +193,9 @@ export const validateSkillFileBatch = async (
     if (!error && kind === SkillFileCandidateKind.SupportingFile) {
       countedSupportingPaths.add(path);
       stagedSupportingBytes += file.size;
+      if (isReplacing) {
+        replacedExistingBytes += existingFileBytes?.get(path) ?? 0;
+      }
     }
 
     results.push({
@@ -202,13 +221,17 @@ export const validateSkillFileBatch = async (
   }
 
   const projectedTotalBytes =
-    existingTotalBytes + stagedSupportingBytes + manifestFileSize;
+    existingTotalBytes -
+    replacedExistingBytes +
+    stagedSupportingBytes +
+    manifestFileSize;
   if (projectedTotalBytes > SKILL_UPLOAD_MAX_TOTAL_BYTES) {
     batchErrors.push({ message: messages.totalSizeExceeded });
   }
 
+  // A replaced path is already one of the existing files, so it is counted once.
   const projectedTotalFiles =
-    existingPathSet.size + countedSupportingPaths.size + 1;
+    new Set([...existingPathSet, ...countedSupportingPaths]).size + 1;
   if (projectedTotalFiles > SKILL_UPLOAD_MAX_FILES) {
     batchErrors.push({ message: messages.totalCountExceeded });
   }

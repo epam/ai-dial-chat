@@ -4132,6 +4132,8 @@ const {
   isEditMode,
   files,
   filesContentRef,
+  // From `useSkillFileActions`; optional.
+  contentRevisions,
   frontmatterRef,
   loadedPathRef,
   etagRef,
@@ -4165,41 +4167,47 @@ const {
 
 Owns a Skill Editor's batch file upload workflow: validating a staged batch, committing it atomically (supporting files plus an optional `SKILL.md` manifest import, with a confirmation gate), creating empty folders, expanding `.zip` archives for staging, and removing already-committed nodes. Accepts a `messages` object (host-translated strings) rather than resolving them itself.
 
+`commitBatch` overwrites the bytes of a candidate that replaces an existing file instead of adding a second node, and bumps that path in the returned `contentRevisions` (`Readonly<Record<string, number>>`). A replaced file keeps its node, so pass `contentRevisions` to `useSkillEditorSubmit` (a retry must not reuse a payload built from the old bytes) and to any preview that has to reopen the file.
+
 The returned `fileActions` also carries `onCreateFolder` (adds a folder node, ignoring an existing path), `validateFolderPath` (`messages.pathInvalid` for a path `isValidSkillRelativePath` rejects), and `extractArchive` (reads a `.zip` with `fflate`, skipping directory, `__MACOSX/`, `.DS_Store` and `.dial_folder` marker entries; path and size limits apply afterwards through `validateBatch`). The optional `pickFromFileSystem` param is passed through unchanged as `fileActions.pickFromFileSystem` — the host owns the picker, buckets and downloads.
 
 ```ts
 import { useSkillFileActions } from '@epam/ai-dial-chat-hooks';
 
-const { fileActions, pendingManifestImport, resolveManifestImport } =
-  useSkillFileActions({
-    files,
-    setFiles,
-    filesContentRef,
-    frontmatterRef,
-    loadedValues,
-    setLoadedValues,
-    isEditMode,
-    isDirty,
-    setSelectedPath,
-    messages: {
-      required: 'Required',
-      pathReserved: 'Reserved name',
-      pathInvalid: 'Invalid path',
-      pathDuplicate: 'Duplicate path',
-      fileTooLarge: (maxSize) => `File exceeds ${maxSize}`,
-      manifestCasingInvalid: 'Must be exactly SKILL.md',
-      manifestDuplicate: 'Only one SKILL.md allowed',
-      manifestInvalidUtf8: 'Invalid UTF-8',
-      manifestInvalidFrontmatter: 'Invalid frontmatter',
-      totalSizeExceeded: 'Total size exceeded',
-      totalCountExceeded: 'Total count exceeded',
-      manifestNameMismatch: "Manifest name doesn't match this skill",
-      manifestImportDeclined: 'Manifest import was declined',
-      saveError: 'Could not save the skill',
-    },
-    // Optional: enables the editor's "Open DIAL file system" entry.
-    pickFromFileSystem: openHostFilePicker,
-  });
+const {
+  fileActions,
+  pendingManifestImport,
+  resolveManifestImport,
+  contentRevisions,
+} = useSkillFileActions({
+  files,
+  setFiles,
+  filesContentRef,
+  frontmatterRef,
+  loadedValues,
+  setLoadedValues,
+  isEditMode,
+  isDirty,
+  setSelectedPath,
+  messages: {
+    required: 'Required',
+    pathReserved: 'Reserved name',
+    pathInvalid: 'Invalid path',
+    pathDuplicate: 'Duplicate path',
+    fileTooLarge: (maxSize) => `File exceeds ${maxSize}`,
+    manifestCasingInvalid: 'Must be exactly SKILL.md',
+    manifestDuplicate: 'Only one SKILL.md allowed',
+    manifestInvalidUtf8: 'Invalid UTF-8',
+    manifestInvalidFrontmatter: 'Invalid frontmatter',
+    totalSizeExceeded: 'Total size exceeded',
+    totalCountExceeded: 'Total count exceeded',
+    manifestNameMismatch: "Manifest name doesn't match this skill",
+    manifestImportDeclined: 'Manifest import was declined',
+    saveError: 'Could not save the skill',
+  },
+  // Optional: enables the editor's "Open DIAL file system" entry.
+  pickFromFileSystem: openHostFilePicker,
+});
 ```
 
 ### useSkillArchiveImport
@@ -4297,6 +4305,8 @@ if (error === SkillPreviewErrorKind.Forbidden) {
 
 Validates a staged skill-file upload batch against per-file/limit and path-safety rules, in-batch and against-existing duplicates, and projected total size/count — mirroring the BFF's authoritative limits for immediate feedback; the server remains the final gate. Detects at most one root `SKILL.md` in the batch as a manifest-import candidate.
 
+A candidate with `replacesExisting: true` whose path is in `existingPaths` is a confirmed overwrite, not a duplicate: it is counted once toward the file limit, and the optional `existingFileBytes` (bytes per existing path) lets the projected size drop the replaced file's share. Two candidates at the same path are still both duplicates. A candidate at a path in the optional `existingFolderPaths` is always a duplicate — a file never replaces a folder.
+
 ```ts
 import { validateSkillFileBatch } from '@epam/ai-dial-chat-hooks';
 
@@ -4304,6 +4314,8 @@ const { results, batchErrors, manifestCandidate } =
   await validateSkillFileBatch(candidates, {
     existingPaths: ['agents/analyzer.md'],
     existingTotalBytes: 2048,
+    existingFileBytes: new Map([['agents/analyzer.md', 2048]]),
+    existingFolderPaths: ['agents'],
     manifestByteLength: 256,
     messages: {
       required: 'Required',

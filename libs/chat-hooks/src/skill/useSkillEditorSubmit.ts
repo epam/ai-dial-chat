@@ -28,18 +28,25 @@ import type { SkillFileContent } from './skill-file-preview';
 type SubmitPhase = 'idle' | 'submitting' | 'success' | 'failure';
 
 /*
- * Fingerprints the in-memory package (form values + supporting-file paths) so
+ * Fingerprints the in-memory package (form values, supporting-file paths, and
+ * how often each file's bytes were replaced in place) so
  * a retried submission after a 503 resubmits the exact same request payload
  * rather than re-deriving it from (possibly since-edited) current form state.
  */
 const fingerprintAttempt = (
   values: SkillEditorValues,
   files: SkillFileTreeNode[],
+  contentRevisions: Readonly<Record<string, number>>,
 ): string =>
   JSON.stringify({
     values,
     files: [...files].sort((a, b) => a.path.localeCompare(b.path)),
+    contentRevisions: Object.entries(contentRevisions).sort(([a], [b]) =>
+      a.localeCompare(b),
+    ),
   });
+
+const NO_CONTENT_REVISIONS: Readonly<Record<string, number>> = {};
 
 interface LastAttempt {
   fingerprint: string;
@@ -129,6 +136,8 @@ export interface UseSkillEditorSubmitParams {
   files: SkillFileTreeNode[];
   /** In-memory bytes for every supporting file, keyed by relative path. */
   filesContentRef: React.MutableRefObject<Map<string, SkillFileContent>>;
+  /** `useSkillFileActions`'s `contentRevisions`; a replaced file's new bytes must not reuse a cached retry payload. Defaults to none. */
+  contentRevisions?: Readonly<Record<string, number>>;
   /** The loaded (or imported) manifest's full parsed frontmatter. */
   frontmatterRef: React.MutableRefObject<Record<string, unknown>>;
   /** The path the currently loaded edit-mode state belongs to. */
@@ -188,6 +197,7 @@ export const useSkillEditorSubmit = ({
   isEditMode,
   files,
   filesContentRef,
+  contentRevisions = NO_CONTENT_REVISIONS,
   frontmatterRef,
   loadedPathRef,
   etagRef,
@@ -270,7 +280,7 @@ export const useSkillEditorSubmit = ({
         return;
       }
 
-      const fingerprint = fingerprintAttempt(values, files);
+      const fingerprint = fingerprintAttempt(values, files, contentRevisions);
       const cached = lastAttemptRef.current;
       const canReuse = cached != null && cached.fingerprint === fingerprint;
 
@@ -335,6 +345,7 @@ export const useSkillEditorSubmit = ({
       bucket,
       files,
       filesContentRef,
+      contentRevisions,
       frontmatterRef,
       messages,
       client,

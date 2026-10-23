@@ -1205,6 +1205,11 @@ export enum SkillEditorI18nKeys {
   UploadArchiveEmpty = 'skillEditor.uploadArchiveEmpty',
   UploadArchiveExtractingAriaLabel = 'skillEditor.uploadArchiveExtractingAriaLabel',
   FileSystemDownloadError = 'skillEditor.fileSystemDownloadError',
+  CreateFolderNamePlaceholder = 'skillEditor.createFolderNamePlaceholder',
+  UploadArchiveFormats = 'skillEditor.uploadArchiveFormats',
+  UploadConflictTitle = 'skillEditor.uploadConflictTitle',
+  UploadConflictMessage = 'skillEditor.uploadConflictMessage',
+  UploadReplaceRowNote = 'skillEditor.uploadReplaceRowNote',
 }
 
 export enum SkillArchiveImportI18nKeys {

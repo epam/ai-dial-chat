@@ -64,6 +64,8 @@ export interface SkillFileUploadCandidate {
   file: File;
   /** Resolved relative path (`webkitRelativePath` falling back to `File.name`, `/`-normalized). */
   path: string;
+  /** Set when the user chose to replace the file already at `path`; the commit then overwrites it instead of adding a node. */
+  replacesExisting?: boolean;
 }
 
 /** Host validation outcome for one staged candidate. */
@@ -161,8 +163,16 @@ export interface SkillEditorLabels extends TextRefinementLabels {
   filesTreeAriaLabel?: string;
   /** Label of the Files pane's Add dropdown trigger. Defaults to `'Add'`. */
   addLabel?: string;
-  /** Add-menu entry that creates a folder inline. Defaults to `'Create folder'`. */
+  /** Add-menu entry that creates a folder — inline on desktop, in a dialog of the same title below the `desktop` breakpoint. Defaults to `'Create folder'`. */
   createFolderLabel?: string;
+  /** Name field label of the mobile Create folder dialog. Defaults to `'Name'`. */
+  createFolderNameLabel?: string;
+  /** Name field placeholder of the mobile Create folder dialog. Defaults to `'Enter folder name'`. */
+  createFolderNamePlaceholder?: string;
+  /** Accessible label of the mobile Create folder dialog's close control. Defaults to `'Close'`. */
+  createFolderCloseAriaLabel?: string;
+  /** Confirm button label of the mobile Create folder dialog. Defaults to `'Create'`. */
+  createFolderConfirmLabel?: string;
   /** Add-menu entry that opens the upload dialog for device files. Defaults to `'Upload files from device'`. */
   uploadFilesLabel?: string;
   /** Add-menu entry that opens the upload dialog for a `.zip` archive. Defaults to `'Upload archive from device'`. */
@@ -237,6 +247,22 @@ export interface SkillEditorLabels extends TextRefinementLabels {
   uploadDropZoneMobileLabel?: string;
   /** Accessible label of the drop zone / native-picker trigger. Defaults to `'Upload files'`. */
   uploadDropZoneAriaLabel?: string;
+  /** Secondary drop-zone line, e.g. the accepted formats. Hidden by default. */
+  uploadDropZoneDescription?: string;
+  /** Secondary archive-mode drop-zone line, e.g. the accepted formats. Hidden by default. */
+  uploadArchiveDropZoneDescription?: string;
+  /** Title of the step that asks how to resolve an upload whose path already holds a file. Defaults to `'Replace or duplicate it?'`. */
+  uploadConflictTitle?: string;
+  /** Builds that step's message, given the conflicting path. Defaults to a sentence naming the path. */
+  uploadConflictMessage?: (path: string) => string;
+  /** Option that overwrites the existing file. Defaults to `'Replace'`. */
+  uploadConflictReplaceLabel?: string;
+  /** Option that keeps both files, staging the upload as `name (n).ext`. Defaults to `'Duplicate'`. */
+  uploadConflictDuplicateLabel?: string;
+  /** Confirm button label of that step. Defaults to `'Confirm'`. */
+  uploadConflictConfirmLabel?: string;
+  /** Note on a staged row that will overwrite an existing file. Defaults to `'Will replace the existing file'`. */
+  uploadReplaceRowNote?: string;
   /** Builds the accessible label of a staged row's remove control, given its path. Defaults to a sentence naming the path. */
   uploadRemoveCandidateLabel?: (path: string) => string;
   /** Explanatory copy on a manifest-kind staged row. Defaults to a sentence explaining it will populate/replace the Skill's metadata. */
@@ -270,10 +296,18 @@ export interface SkillEditorColors {
   refineActionText?: string;
   /** Refinement error color. Defaults to --text-error. */
   refineErrorText?: string;
-  /** Color of the "Files" heading and of the Metadata and Setup section headings. Defaults to `--text-primary`. */
+  /** Color of the "Files" heading, the Metadata and Setup section headings, and the mobile "Editing file" file name. Defaults to `--text-primary`. */
   title?: string;
-  /** Color of the hand-rendered Instructions field label. Defaults to `--text-secondary`. */
+  /** Color of the hand-rendered Instructions field label and of the mobile "Editing file" caption and caret. Defaults to `--text-secondary`. */
   helperText?: string;
+  /** Background of the mobile "Editing file" card. Defaults to `--bg-layer-base`. */
+  filesCardBackground?: string;
+  /** Border color of the mobile "Editing file" card. Defaults to `--stroke-tertiary`. */
+  filesCardBorder?: string;
+  /** Background of the mobile upload and create-folder sheet footer. Defaults to `--bg-layer-raised`. */
+  dialogFooterBackground?: string;
+  /** Top border color of the mobile upload and create-folder sheet footer. Defaults to `--stroke-tertiary`. */
+  dialogFooterBorder?: string;
   /** Border color of the layout header row and Files sidebar divider. Defaults to `--stroke-tertiary`. */
   border?: string;
 }
@@ -290,6 +324,14 @@ export interface SkillEditorTypography {
   removeIconClassName?: string;
   /** Color class applied to the file tree Add-menu entry icons. Defaults to `'text-secondary'`. */
   menuIconClassName?: string;
+  /** Typography class applied to the mobile "Editing file" caption. Defaults to `'dial-tiny-lead-text'`. */
+  editingFileLabelClassName?: string;
+  /** Typography class applied to the mobile "Editing file" file name. Defaults to `'dial-small-text'`. */
+  editingFileNameClassName?: string;
+  /** Typography class applied to the upload dialog's Replace-or-duplicate message. Defaults to `'dial-small-text'`. */
+  uploadMessageClassName?: string;
+  /** Typography and color classes applied to a staged upload row's size and notes. Defaults to `'dial-tiny-text text-secondary'`. */
+  uploadRowCaptionClassName?: string;
 }
 
 /** Grouped style overrides for `SkillEditor`. */
