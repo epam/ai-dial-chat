@@ -1,5 +1,5 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../models/catalog-item';
@@ -46,11 +46,22 @@ const renderPicker = (props: Partial<CatalogPickerModalProps> = {}) => {
   return handlers;
 };
 
+/*
+ * The kit's Popup moves focus to the dialog on a deferred tick after mount;
+ * typing before that lands the click on the input and the keys on the dialog.
+ */
+const typeSearch = async (text: string) => {
+  await waitFor(() =>
+    expect(document.activeElement).toBe(screen.getByRole('dialog')),
+  );
+  await userEvent.type(screen.getByRole('textbox', { name: 'Search' }), text);
+};
+
 describe('CatalogPickerModal', () => {
   it('renders the items through renderList, with the search query', async () => {
     renderPicker();
 
-    await userEvent.type(screen.getByRole('textbox', { name: 'Search' }), 'be');
+    await typeSearch('be');
 
     const list = screen.getByRole('list', { name: 'Rows for "be"' });
     expect(list.textContent).toBe('Beta');
@@ -117,7 +128,7 @@ describe('CatalogPickerModal', () => {
   it('says no results when the search leaves nothing', async () => {
     renderPicker();
 
-    await userEvent.type(screen.getByRole('textbox', { name: 'Search' }), 'zz');
+    await typeSearch('zz');
 
     expect(screen.getByText('No results found')).toBeTruthy();
   });
