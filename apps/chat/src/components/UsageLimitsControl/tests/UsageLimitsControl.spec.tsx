@@ -4,12 +4,14 @@ import {
   type UseDeploymentUsageLimitsResult,
   useDeploymentUsageLimits,
 } from '@epam/ai-dial-chat-hooks';
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useDeployments } from '../../../context/DeploymentsContext';
+import { useUiFeature } from '../../../hooks/useUiFeature';
 import {
   getDeploymentLimits,
   getDeploymentUsage,
@@ -62,11 +64,16 @@ vi.mock('../../../server-api/user-limits', () => ({
   getUserUsage: vi.fn(),
 }));
 
+vi.mock('../../../hooks/useUiFeature', () => ({
+  useUiFeature: vi.fn(() => false),
+}));
+
 const mockUseDeploymentUsageLimits = vi.mocked(useDeploymentUsageLimits);
 const mockUseDeployments = vi.mocked(useDeployments);
 const mockGetDeploymentLimits = vi.mocked(getDeploymentLimits);
 const mockGetDeploymentUsage = vi.mocked(getDeploymentUsage);
 const mockGetUserUsage = vi.mocked(getUserUsage);
+const mockUseUiFeature = vi.mocked(useUiFeature);
 
 const DEPLOYMENT_NAME = 'GPT-4o mini';
 
@@ -142,6 +149,7 @@ describe('UsageLimitsControl', () => {
     mockUseDeployments.mockReturnValue({
       items: [{ id: 'gpt-4o', displayName: DEPLOYMENT_NAME }],
     } as unknown as ReturnType<typeof useDeployments>);
+    mockUseUiFeature.mockReturnValue(false);
   });
 
   afterEach(() => {
@@ -410,6 +418,22 @@ describe('UsageLimitsControl', () => {
       await user.click(link);
 
       expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
+    it('omits the Usage page link when hide-usage-page is on', async () => {
+      mockUseUiFeature.mockImplementation(
+        (feature) => feature === OverlayFeature.HideUsagePage,
+      );
+      const user = userEvent.setup();
+      renderControl();
+
+      await openPopover(user);
+
+      expect(
+        screen.queryByRole('link', {
+          name: 'conversationInput.usageLimits.fullUsageLink',
+        }),
+      ).toBeNull();
     });
 
     it('titles the popover with the selected deployment and labels the dialog with it', async () => {

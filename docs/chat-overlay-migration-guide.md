@@ -780,7 +780,9 @@ hide-footer-version
 show-agent-description
 disable-input-history-navigation
 hide-conversation-export
+hide-conversation-import
 hide-settings-page
+hide-usage-page
 show-header-logo
 ```
 
@@ -860,13 +862,25 @@ every conversation's row menu, and "Export all" in the conversations panel
 menu. Import and Delete all stay. It hides the entry points only — it does
 not block the export API.
 
+`hide-conversation-import` removes the Import entry from the conversations
+panel menu. Export all and Delete all stay. Like the export key, it hides the
+entry point only — it does not block the import API.
+
 `hide-settings-page` removes the Settings page: the Settings entry in the
 desktop user menu and the Settings row on the mobile navigation sheet's
-profile page. A direct `/settings` URL redirects to `/`. The preferences the
+profile page. A direct `/settings` URL redirects to `/`. Usage is a Settings
+tab, so it goes too. The preferences the
 page edits keep their stored values. Use it when the host owns user
 preferences itself; `hide-user-settings` instead keeps the page and removes
 its controls — language, theme, keyboard shortcuts, and the default agent
 picker.
+
+`hide-usage-page` removes Usage and keeps the rest of Settings: the Settings
+page's Usage tab and the "Full usage" link in the usage-limits popover beside
+the chat input. A direct `/settings/usage` URL redirects to the first
+remaining Settings tab. It is independent of the backend
+`USAGE_LIMITS_CONTROL_ENABLED` flag, which decides whether that popover's
+control renders at all.
 
 `show-header-logo` renders the theme logo in the desktop top bar, centered
 between the conversation-panel and new-chat buttons and the sources toggle, so

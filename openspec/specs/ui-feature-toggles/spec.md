@@ -33,7 +33,7 @@
 
 ### Requirement: Default baseline preserves current unconditional behavior
 
-`DEFAULT_ENABLED_UI_FEATURES` SHALL contain exactly the 26 default-on keys and exclude the 25 default-off (`Hide*`/restrictive modifier and not-yet-defaulted) keys (`header`, `conversations-section`, `conversations-panel-toggle`, `showConversationsSectionByDefault`, `attachments-manager`, `likes`, `dislike-comment`, `input-files`, `live-chat-interaction`, `catalog`, `catalog-table-view`, `file-manager`, `toolsets`, `prompts`, `skills`... are default-on; `hide-edit-user-message`, `disabled-send`, `hide-change-agent`, `hide-navigation-menu`... are default-off — the full 51-key membership is the `OverlayFeature` enum itself (`libs/chat-overlay/src/protocol/overlay-protocol.ts`), not restated here). With no `enabledUiFeatures` and no overlay override, `isEnabled` SHALL return exactly the default-on classification for every one of the 51 keys.
+`DEFAULT_ENABLED_UI_FEATURES` SHALL contain exactly the 26 default-on keys and exclude the 27 default-off (`Hide*`/restrictive modifier and not-yet-defaulted) keys (`header`, `conversations-section`, `conversations-panel-toggle`, `showConversationsSectionByDefault`, `attachments-manager`, `likes`, `dislike-comment`, `input-files`, `live-chat-interaction`, `catalog`, `catalog-table-view`, `file-manager`, `toolsets`, `prompts`, `skills`... are default-on; `hide-edit-user-message`, `disabled-send`, `hide-change-agent`, `hide-navigation-menu`... are default-off — the full 53-key membership is the `OverlayFeature` enum itself (`libs/chat-overlay/src/protocol/overlay-protocol.ts`), not restated here). With no `enabledUiFeatures` and no overlay override, `isEnabled` SHALL return exactly the default-on classification for every one of the 53 keys.
 
 `catalog-table-view` is the one initial-state modifier that defaults on rather than matching the surface's original unconditional behavior. It no longer gates anything: `CatalogView` leaves `initialViewMode` unset, so Browse always opens in `Catalog`'s own default view (`CatalogViewMode.Grid`, the card grid). The key stays default-on so an overlay host still sending it is not warned about an unknown feature. Every other modifier still defaults off, so a deployment that configures nothing observes no other behavior change.
 
@@ -137,7 +137,7 @@ The effective visibility of the voice-input UI affordance SHALL be `isEnabled('v
 
 ### Requirement: Each transferable feature key gates exactly one owning surface
 
-Each of the 51 transferable `OverlayFeature` values SHALL gate exactly the owning component/container documented in `design.md`'s classification table, and SHALL NOT alter the visibility or behavior of any other feature's surface. Hidden surfaces SHALL be conditionally unmounted (not rendered), not merely visually hidden, so no focus trap or hidden-but-tabbable control is left behind (per this repo's `inert`-over-`aria-hidden` accessibility rule for hidden interactive regions where applicable).
+Each of the 53 transferable `OverlayFeature` values SHALL gate exactly the owning component/container documented in `design.md`'s classification table, and SHALL NOT alter the visibility or behavior of any other feature's surface. Hidden surfaces SHALL be conditionally unmounted (not rendered), not merely visually hidden, so no focus trap or hidden-but-tabbable control is left behind (per this repo's `inert`-over-`aria-hidden` accessibility rule for hidden interactive regions where applicable).
 
 **Accessibility:** Conditionally-unmounted controls remove themselves from both the accessibility tree and the tab order by not rendering — no `aria-hidden` container with focusable descendants is introduced by this change.
 
@@ -363,7 +363,7 @@ Route gating SHALL NOT be treated as an authorization boundary: the backend SHAL
 
 ### Requirement: The Settings page is reachable on both layouts and hide-settings-page removes it
 
-`Navigation` SHALL offer the Settings page on both layouts: the desktop `UserMenu` Settings entry, and a Settings row on the mobile `NavigationSheet` profile page, above Log out, that closes the sheet and navigates to `/settings`. When `isEnabled('hide-settings-page')` is `true`, both entries SHALL be omitted and the `/settings` route SHALL redirect to `/` with `replace`. `SettingsPage` SHALL stack its section list above the active tab at full width on the mobile breakpoint and keep the 240px side column on desktop.
+`Navigation` SHALL offer the Settings page on both layouts: the desktop `UserMenu` Settings entry, and a Settings row on the mobile `NavigationSheet` profile page, above Log out, that closes the sheet and navigates to `/settings`. When `isEnabled('hide-settings-page')` is `true`, both entries SHALL be omitted and the `/settings` routes SHALL redirect to `/` with `replace`; the Usage tab goes with the page. `SettingsPage` SHALL stack its section list above the active tab at full width on the mobile breakpoint and keep the 240px side column on desktop.
 
 **Accessibility:** The sheet row is a labeled button like its siblings; its icon is `aria-hidden`.
 
@@ -378,6 +378,32 @@ Route gating SHALL NOT be treated as an authorization boundary: the backend SHAL
 
 - **WHEN** `isEnabled('hide-settings-page')` is `true`
 - **THEN** neither the desktop user menu nor the mobile profile page renders a Settings entry, and a direct `/settings` URL redirects to `/`
+
+### Requirement: hide-conversation-import removes the conversation import entry point
+
+`ConversationPanelView` SHALL omit the panel menu's "Import" entry when `isEnabled('hide-conversation-import')` is `true`. Export all and Delete all SHALL stay. The key hides the UI entry point only and SHALL NOT be treated as an authorization control.
+
+**Accessibility:** The removed entry leaves no empty or disabled menu item behind.
+
+**i18n impact:** None.
+
+#### Scenario: Import entry is gone when the key is on
+
+- **WHEN** `isEnabled('hide-conversation-import')` is `true`
+- **THEN** the panel menu renders Export all and Delete all but no Import
+
+### Requirement: hide-usage-page removes the Usage tab and its entry points
+
+When `isEnabled('hide-usage-page')` is `true`, `useSettingsTabConfig` SHALL withhold the Usage entry, so `SettingsPage` renders the remaining tabs and redirects `/settings/usage` to the first of them with `replace`, and `UsageLimitsControl` SHALL omit its popover's "Full usage" link. The key is a modifier key, absent from `DEFAULT_ENABLED_UI_FEATURES`. It hides UI entry points only and SHALL NOT be treated as an authorization control. It is independent of the `features.usageLimitsControl` backend flag, which decides whether `UsageLimitsControl` renders at all.
+
+**Accessibility:** Removed tabs and links leave no empty or disabled control behind.
+
+**i18n impact:** None.
+
+#### Scenario: hide-usage-page removes every Usage entry point
+
+- **WHEN** `isEnabled('hide-usage-page')` is `true`
+- **THEN** the Settings page renders no Usage tab, a direct `/settings/usage` URL redirects to the first remaining tab, and the usage-limits popover renders no "Full usage" link
 
 ### Requirement: show-header-logo renders the theme logo in the desktop top bar
 

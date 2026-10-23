@@ -60,7 +60,8 @@ interface Props {
   activeConversationId?: string;
   /** Omit to hide the "Export all" entry. */
   onExportAll?: () => void;
-  onImport: () => void;
+  /** Omit to hide the "Import" entry. */
+  onImport?: () => void;
 }
 
 const ConversationPanelMenu: FC<Props> = ({
@@ -99,18 +100,22 @@ const ConversationPanelMenu: FC<Props> = ({
             },
           ]
         : []),
-      {
-        key: 'import',
-        label: t(ConversationImportI18nKeys.ImportLabel),
-        icon: (
-          <IconFileArrowLeft
-            size={DIAL_ICON_SIZE.SM}
-            className="text-secondary"
-            stroke={DIAL_KIT_ICON_STROKE}
-          />
-        ),
-        onClick: onImport,
-      },
+      ...(onImport
+        ? [
+            {
+              key: 'import',
+              label: t(ConversationImportI18nKeys.ImportLabel),
+              icon: (
+                <IconFileArrowLeft
+                  size={DIAL_ICON_SIZE.SM}
+                  className="text-secondary"
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              ),
+              onClick: onImport,
+            },
+          ]
+        : []),
       {
         key: 'delete-all',
         label: t(ConversationPanelI18nKeys.DeleteAllChatsLabel),

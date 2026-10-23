@@ -160,7 +160,11 @@ export enum OverlayFeature {
   CustomApps = 'custom-apps',
   /** Hides the user avatar/menu button in the header. */
   HideUserMenu = 'hide-user-menu',
-  /** Hides the settings entry in the user menu. */
+  /**
+   * Hides the user's preference controls — language, theme, keyboard
+   * shortcuts and the default agent — in the user menu and the Settings
+   * page. The Settings entry itself is gated by `HideSettingsPage`.
+   */
   HideUserSettings = 'hide-user-settings',
   /** Hides the keyboard-shortcuts entry in the user menu and the mobile profile sheet. */
   HideKeyboardShortcuts = 'hide-keyboard-shortcuts',
@@ -208,11 +212,22 @@ export enum OverlayFeature {
    */
   HideConversationExport = 'hide-conversation-export',
   /**
+   * Hides conversation import: the conversations panel's "Import" entry.
+   * Export stays available.
+   */
+  HideConversationImport = 'hide-conversation-import',
+  /**
    * Hides the Settings page: its entry in the desktop user menu and on the
    * mobile navigation sheet's profile page. A direct `/settings` URL
-   * redirects to `/`.
+   * redirects to `/`. Usage is a Settings tab, so it goes too.
    */
   HideSettingsPage = 'hide-settings-page',
+  /**
+   * Hides Usage: the Settings page's Usage tab and the usage-limits popover's
+   * "Full usage" link. A direct `/settings/usage` URL redirects to the first
+   * remaining Settings tab.
+   */
+  HideUsagePage = 'hide-usage-page',
   /**
    * Renders the theme logo in the desktop top bar, centered between the
    * conversation controls and the sources toggle. The mobile header shows the

@@ -245,7 +245,8 @@ one entry there. Two tabs ship, in rail order: `PreferencesTab` then `UsageTab`.
 Each tab is a location. `ROUTES.SettingsTab` (`/settings/:tab`) is a single dynamic pattern rather
 than one route per tab, so adding a tab stays a config change; `app/settings-routes.tsx` registers
 it alongside the bare `ROUTES.Settings`, applying the `OverlayFeature.HideSettingsPage` gate to
-both so neither path mounts the lazy chunk while the page is hidden. `SettingsPage` reads the
+both so neither path mounts the lazy chunk while the page is hidden. `OverlayFeature.HideUsagePage`
+withholds the Usage entry from the tab config, so only that tab goes. `SettingsPage` reads the
 segment from the URL — it holds no selection state — resolves it against the ids the config
 returned, and redirects a bare, unknown, or withheld segment to the first configured tab. Build a
 concrete path with `getSettingsTabRoute` (`constants/routes.ts`, beside the other route builders)

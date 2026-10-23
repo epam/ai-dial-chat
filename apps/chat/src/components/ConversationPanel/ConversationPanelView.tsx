@@ -229,6 +229,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   const isConversationExportHidden = useUiFeature(
     OverlayFeature.HideConversationExport,
   );
+  const isConversationImportHidden = useUiFeature(
+    OverlayFeature.HideConversationImport,
+  );
   const {
     conversations: items,
     isLoading,
@@ -1334,12 +1337,13 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       <ConversationPanelMenu
         activeConversationId={activeConversationId}
         onExportAll={isConversationExportHidden ? undefined : handleExportAll}
-        onImport={handleImportClick}
+        onImport={isConversationImportHidden ? undefined : handleImportClick}
       />
     ),
     [
       activeConversationId,
       isConversationExportHidden,
+      isConversationImportHidden,
       handleExportAll,
       handleImportClick,
     ],

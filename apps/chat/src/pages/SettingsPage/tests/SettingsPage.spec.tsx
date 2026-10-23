@@ -1,4 +1,5 @@
 import * as useUsageDataModule from '@epam/ai-dial-chat-hooks';
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { FC } from 'react';
@@ -15,6 +16,7 @@ import {
 import { createDeploymentsContextValue } from '../../../context/tests/deployments-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { useSettingsTabConfig } from '../../../hooks/useSettingsTabConfig';
+import { useUiFeature } from '../../../hooks/useUiFeature';
 import { ROUTES } from '../../../types/routes';
 import { SettingsTabs } from '../../../types/settings-tabs';
 import { UserConfigStatus } from '../../../types/user-config-status';
@@ -54,7 +56,7 @@ vi.mock('../../../hooks/useSettingsTabConfig', async (importOriginal) => {
  * dependencies even though it exercises none of them.
  */
 vi.mock('../../../hooks/useUiFeature', () => ({
-  useUiFeature: () => false,
+  useUiFeature: vi.fn(() => false),
 }));
 
 /*
@@ -118,6 +120,7 @@ const renderPreferences = () =>
 describe('SettingsPage', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
+    vi.mocked(useUiFeature).mockReturnValue(false);
     mockUseFeatureFlag.mockReturnValue(true);
     /*
      * PreferencesTab holds its rows behind a spinner until the app config is
@@ -241,6 +244,19 @@ describe('SettingsPage', () => {
       expect(currentPath()).toBe(
         `${ROUTES.Settings}/${SettingsTabs.Preferences}`,
       );
+    });
+
+    it('withholds the Usage tab and redirects its URL under hide-usage-page', () => {
+      vi.mocked(useUiFeature).mockImplementation(
+        (feature) => feature === OverlayFeature.HideUsagePage,
+      );
+
+      renderAt(`${ROUTES.Settings}/${SettingsTabs.Usage}`);
+
+      expect(currentPath()).toBe(
+        `${ROUTES.Settings}/${SettingsTabs.Preferences}`,
+      );
+      expect(screen.getAllByRole('tab')).toHaveLength(1);
     });
 
     it('renders the empty shell without navigating when no tab is configured', () => {

@@ -1,3 +1,4 @@
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import type { SettingsPanelItem } from '@epam/ai-dial-settings-panel';
 import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
 import { IconAdjustmentsHorizontal, IconChartBar } from '@tabler/icons-react';
@@ -8,6 +9,7 @@ import { BasicI18nKeys, SettingsI18nKeys } from '../constants/translation-keys';
 import PreferencesTab from '../pages/SettingsPage/PreferencesTab/PreferencesTab';
 import UsageTab from '../pages/SettingsPage/UsageTab/UsageTab';
 import { SettingsTabs } from '../types/settings-tabs';
+import { useUiFeature } from './useUiFeature';
 
 export interface SettingsTabConfigEntry {
   item: SettingsPanelItem;
@@ -22,9 +24,12 @@ export interface UseSettingsTabConfigResult {
 /*
  * A single source of truth for the Settings tab list: adding a future tab is
  * one new entry here, with no change to SettingsPage's rendering logic.
+ * `hide-usage-page` withholds the Usage entry, and SettingsPage redirects a
+ * withheld tab's URL to the first configured one.
  */
 export const useSettingsTabConfig = (): UseSettingsTabConfigResult => {
   const { t } = useTranslation();
+  const isUsagePageHidden = useUiFeature(OverlayFeature.HideUsagePage);
 
   const entries: SettingsTabConfigEntry[] = useMemo(
     () => [
@@ -42,22 +47,26 @@ export const useSettingsTabConfig = (): UseSettingsTabConfigResult => {
         },
         Component: PreferencesTab,
       },
-      {
-        item: {
-          id: SettingsTabs.Usage,
-          label: t(BasicI18nKeys.Usage),
-          icon: (
-            <IconChartBar
-              size={DIAL_ICON_SIZE.MD}
-              aria-hidden
-              stroke={DIAL_KIT_ICON_STROKE}
-            />
-          ),
-        },
-        Component: UsageTab,
-      },
+      ...(isUsagePageHidden
+        ? []
+        : [
+            {
+              item: {
+                id: SettingsTabs.Usage,
+                label: t(BasicI18nKeys.Usage),
+                icon: (
+                  <IconChartBar
+                    size={DIAL_ICON_SIZE.MD}
+                    aria-hidden
+                    stroke={DIAL_KIT_ICON_STROKE}
+                  />
+                ),
+              },
+              Component: UsageTab,
+            },
+          ]),
     ],
-    [t],
+    [t, isUsagePageHidden],
   );
 
   return useMemo(
