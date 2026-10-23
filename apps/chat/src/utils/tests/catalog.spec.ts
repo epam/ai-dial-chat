@@ -3,7 +3,10 @@ import type { TFunction } from 'i18next';
 import { describe, expect, it } from 'vitest';
 import en from '../../i18n/locales/en.json';
 import {
+  getCatalogEmptyDescription,
+  getCatalogEmptyTitle,
   getCatalogMyAppsEmptyTitle,
+  getCatalogNoResultsTitle,
   getCatalogSearchPlaceholder,
 } from '../catalog';
 
@@ -67,5 +70,30 @@ describe('getCatalogMyAppsEmptyTitle', () => {
 
   it('falls back to a generic title for an unknown tab', () => {
     expect(getCatalogMyAppsEmptyTitle('', t)).toBe('No personal items yet');
+  });
+});
+
+describe('catalog empty-state texts', () => {
+  it('names the active tab entity in the no-results title', () => {
+    expect(getCatalogNoResultsTitle(CatalogEntityType.Model, t)).toBe(
+      'No models found',
+    );
+  });
+
+  it('names the active tab entity in the empty title and description', () => {
+    expect(getCatalogEmptyTitle(CatalogEntityType.Agent, t)).toBe(
+      'No agents yet',
+    );
+    expect(getCatalogEmptyDescription(CatalogEntityType.Agent, t)).toBe(
+      'Agents will appear here once they are published to the catalog.',
+    );
+  });
+
+  it('falls back to the generic texts for an unknown tab', () => {
+    expect(getCatalogNoResultsTitle('', t)).toBe('No items found');
+    expect(getCatalogEmptyTitle('', t)).toBe('No items yet');
+    expect(getCatalogEmptyDescription('', t)).toBe(
+      'Items will appear here once they are published to the catalog.',
+    );
   });
 });

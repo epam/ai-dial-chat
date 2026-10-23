@@ -50,7 +50,10 @@ export const ListView: FC<ListViewProps> = (props) => {
           CATALOG_CLASS.listView,
         )}
       >
-        <PanelEmptyState label={props.emptyStateTitle ?? 'No results'} />
+        <PanelEmptyState
+          label={props.emptyStateTitle ?? 'No results'}
+          description={props.emptyStateDescription}
+        />
       </div>
     );
   }
@@ -194,6 +197,29 @@ const WindowedListView: FC<ListViewProps> = ({
     },
     [toggleSelection],
   );
+  /*
+   * Enter or Space on a row picks it in single mode, as a click does. A
+   * control inside the cell (the favourite star) handles its own keys.
+   */
+  const handleItemKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      if (!(event.target instanceof Element)) return;
+      if (event.target.closest('button, input, a, [role="button"]')) return;
+      const rowId = event.target.closest('[row-id]')?.getAttribute('row-id');
+      const item =
+        rowId == null ? undefined : items.find((i) => i.id === rowId);
+      if (item == null) return;
+      event.preventDefault();
+      onItemClick?.(item);
+    },
+    [items, onItemClick],
+  );
+  const getKeyDownHandler = () => {
+    if (isMultiSelect) return handleSelectionKeyDown;
+    if (onItemClick) return handleItemKeyDown;
+    return undefined;
+  };
   const gridOptions = useMemo<GridOptions<CatalogItem>>(
     () => ({
       domLayout: 'autoHeight',
@@ -290,11 +316,11 @@ const WindowedListView: FC<ListViewProps> = ({
         CATALOG_CLASS.listView,
       )}
     >
-      {/* Delegates Space from the grid's focusable cells; see handleSelectionKeyDown. */}
+      {/* Delegates row keys from the grid's focusable cells; see handleSelectionKeyDown and handleItemKeyDown. */}
       {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
       <div
         ref={containerRef}
-        onKeyDown={isMultiSelect ? handleSelectionKeyDown : undefined}
+        onKeyDown={getKeyDownHandler()}
         /* AG Grid can append restored columns out of visual order. Its edge
            classes keep header and cell padding aligned across tab changes. */
         className={mergeClasses(

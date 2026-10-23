@@ -49,9 +49,11 @@ export interface CreateButtonProps {
   colors?: CreateMenuColors;
   /** Typography class of a section header in the mobile menu sheet. Defaults to `'dial-caption-text'`. */
   sectionHeaderClassName?: string;
+  /** Renders a round icon-only `+` button, named by `label`, that opens any menu as a sheet; the caller positions it. Defaults to `false`. */
+  isFloating?: boolean;
 }
 
-/** Renders a plain primary button, a split-chevron dropdown, a searchable dropdown, or — on mobile — a menu sheet. */
+/** Renders a plain primary button, a split-chevron dropdown, a searchable dropdown, or — on mobile — a menu sheet; optionally as a round floating button. */
 export const CreateButton: FC<CreateButtonProps> = ({
   label,
   options,
@@ -65,6 +67,7 @@ export const CreateButton: FC<CreateButtonProps> = ({
   variant = ButtonVariant.Primary,
   colors,
   sectionHeaderClassName,
+  isFloating = false,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -79,8 +82,24 @@ export const CreateButton: FC<CreateButtonProps> = ({
     />
   );
 
-  // A floating menu's side flyouts fall off a phone screen, so below the desktop breakpoint the menu is a sheet.
-  if (isMobile && (search || options?.length)) {
+  /* The kit's FabButton is a neutral surface; the floating Create keeps the
+   * header button's colour variant, so it is that Button shaped as a circle. */
+  const floatingShapeProps = {
+    iconBefore: (
+      <IconPlus
+        size={DIAL_ICON_SIZE.LG}
+        stroke={DIAL_KIT_ICON_STROKE}
+        aria-hidden
+      />
+    ),
+    'aria-label': label,
+    className: 'size-12 rounded-full px-0',
+  };
+
+  /* A floating menu's side flyouts fall off a phone screen, so below the
+   * desktop breakpoint — and always from the round floating button, which is
+   * only shown there — the menu is a sheet. */
+  if ((isMobile || isFloating) && (search || options?.length)) {
     const handleSheetClose = () => {
       setIsOpen(false);
       search?.onChange('');
@@ -89,10 +108,9 @@ export const CreateButton: FC<CreateButtonProps> = ({
     return (
       <>
         <Button
-          label={label}
+          {...(isFloating ? floatingShapeProps : { label, iconAfter: chevron })}
           variant={variant}
           appearance={ButtonAppearance.Solid}
-          iconAfter={chevron}
           aria-haspopup="dialog"
           aria-expanded={isOpen}
           onClick={() => setIsOpen(true)}
@@ -112,6 +130,17 @@ export const CreateButton: FC<CreateButtonProps> = ({
           sectionHeaderClassName={sectionHeaderClassName}
         />
       </>
+    );
+  }
+
+  if (isFloating) {
+    return (
+      <Button
+        {...floatingShapeProps}
+        variant={variant}
+        appearance={ButtonAppearance.Solid}
+        onClick={onClick}
+      />
     );
   }
 

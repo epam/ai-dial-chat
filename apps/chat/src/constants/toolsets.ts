@@ -3,8 +3,3 @@ export enum ToolsetEditorQuery {
   Id = 'id',
   Step = 'step',
 }
-
-export enum ToolsetEditorSteps {
-  General = 'general',
-  Settings = 'settings',
-}

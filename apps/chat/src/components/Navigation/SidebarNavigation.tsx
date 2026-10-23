@@ -41,7 +41,6 @@ import { useNavigationUserProfile } from '../../hooks/navigation/useNavigationUs
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { AuthStatus } from '../../types/auth-status';
 import { getIconPath } from '../../utils/icon-path';
-import FooterMessage from '../FooterMessage/FooterMessage';
 import LogoutConfirmationModal from '../LogoutConfirmation/LogoutConfirmationModal';
 import UsageLink from './UsageLink';
 
@@ -82,7 +81,11 @@ const SidebarNavigation: FC<Props> = ({
   const { hasUnsavedChanges, requestDiscard } = useUnsavedChanges();
   const { currentThemeFavicon, currentThemeLogo } = useTheme();
   const isUserMenuHidden = useUiFeature(OverlayFeature.HideUserMenu);
+  const isUserMenuIdentityHidden = useUiFeature(
+    OverlayFeature.HideUserMenuIdentity,
+  );
   const isSettingsPageHidden = useUiFeature(OverlayFeature.HideSettingsPage);
+  const isUsagePageHidden = useUiFeature(OverlayFeature.HideUsagePage);
   const isToggleEnabled = useUiFeature(OverlayFeature.ConversationsPanelToggle);
   const { hasNavigation } = useMobileSidebarContent();
   /* TODO: remove in next release, with the isolated view. It shows the chats
@@ -123,7 +126,7 @@ const SidebarNavigation: FC<Props> = ({
     !isUserMenuHidden &&
     isNavigationShown;
   const items = isNavigationShown ? allItems : [];
-  const isUsageShown = !isSettingsPageHidden && isNavigationShown;
+  const isUsageShown = !isUsagePageHidden && isNavigationShown;
   const iconUrl = currentThemeFavicon
     ? (event?.iconUrl ?? getIconPath(currentThemeFavicon))
     : undefined;
@@ -180,6 +183,7 @@ const SidebarNavigation: FC<Props> = ({
             profile={profile}
             groups={userMenuGroups.length > 0 ? userMenuGroups : undefined}
             triggerVariant={getUserMenuTriggerVariant()}
+            isIdentityHidden={isUserMenuIdentityHidden}
             labels={{
               trigger: t(AuthI18nKeys.SignedInAs, { email: profile.email }),
               avatarAlt: t(AuthI18nKeys.UserAvatar),
@@ -194,9 +198,6 @@ const SidebarNavigation: FC<Props> = ({
       footerActions={isUsageShown ? <UsageLink /> : undefined}
     >
       {chats}
-      {/* The drawer repeats the operator footer on every route, as the sheet
-          it replaced did; on desktop it stays under the chat input. */}
-      {isMobile && <FooterMessage />}
     </NavigationSidebar>
   );
 

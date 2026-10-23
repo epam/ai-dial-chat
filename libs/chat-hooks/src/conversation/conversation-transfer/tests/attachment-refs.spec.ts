@@ -1,4 +1,8 @@
-import type { Conversation, Message } from '@epam/ai-dial-chat-shared';
+import type {
+  Annotation,
+  Conversation,
+  Message,
+} from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import { collectAttachmentRefs, splitFileIdAnchor } from '../attachment-refs';
 
@@ -23,6 +27,21 @@ const makeMessage = (customContent: Message['custom_content']): Message =>
     timestamp: '2026-07-10T00:00:00.000Z',
     custom_content: customContent,
   }) as Message;
+
+const makeCitation = (url: string): Annotation => ({
+  target: { selector: { type: 'html_tag', id: url } },
+  body: {
+    source: {
+      type: 'attachment',
+      attachment: { type: 'application/pdf', url, title: 'source.pdf' },
+    },
+  },
+});
+
+const withPool = (
+  conversation: Conversation,
+  annotations: unknown,
+): Conversation => ({ ...conversation, customViewState: { annotations } });
 
 describe('splitFileIdAnchor', () => {
   it('separates a trailing anchor from the file id', () => {
@@ -155,6 +174,60 @@ describe('collectAttachmentRefs', () => {
     ]);
 
     expect(collectAttachmentRefs(conversation)).toEqual([{ fileId }]);
+  });
+
+  it('collects a file only the conversation-level citation pool references', () => {
+    const conversation = withPool(makeConversation([]), [
+      makeCitation('files/b/sources/old.pdf'),
+    ]);
+
+    expect(collectAttachmentRefs(conversation)).toEqual([
+      { fileId: 'files/b/sources/old.pdf' },
+    ]);
+  });
+
+  it('collects a file cited by a message and its pool copy once', () => {
+    const conversation = withPool(
+      makeConversation([
+        makeMessage({
+          annotations: [makeCitation('files/b/sources/spec.pdf#page=7')],
+        }),
+      ]),
+      [makeCitation('files/b/sources/spec.pdf')],
+    );
+
+    expect(collectAttachmentRefs(conversation)).toEqual([
+      { fileId: 'files/b/sources/spec.pdf' },
+    ]);
+  });
+
+  it('lists pool references after every message reference', () => {
+    const conversation = withPool(
+      makeConversation([
+        makeMessage({
+          attachments: [{ title: 'q1.pdf', url: 'files/b/reports/q1.pdf' }],
+        }),
+        makeMessage({
+          attachments: [{ title: 'q2.pdf', url: 'files/b/reports/q2.pdf' }],
+        }),
+      ]),
+      [makeCitation('files/b/sources/old.pdf')],
+    );
+
+    expect(collectAttachmentRefs(conversation)).toEqual([
+      { fileId: 'files/b/reports/q1.pdf' },
+      { fileId: 'files/b/reports/q2.pdf' },
+      { fileId: 'files/b/sources/old.pdf' },
+    ]);
+  });
+
+  it.each([
+    ['a string pool', 'not-an-array'],
+    ['a pool of null, primitive, and source-less entries', [null, 42, {}]],
+  ])('collects nothing from %s', (_label, pool) => {
+    const conversation = withPool(makeConversation([]), pool);
+
+    expect(collectAttachmentRefs(conversation)).toEqual([]);
   });
 
   it('ignores references that are not DIAL file ids', () => {

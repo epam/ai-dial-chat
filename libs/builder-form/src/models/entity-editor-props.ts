@@ -1,9 +1,16 @@
 import type { ReactNode } from 'react';
-import type { EditorLayoutStyles } from './editor-layout-props';
+import type {
+  EditorLayoutLabels,
+  EditorLayoutStyles,
+  ResizableLeftColumn,
+} from './editor-layout-props';
 import type { EditorSectionStyles } from './editor-section-props';
 
 /** Text labels for `EntityEditor`. All strings have English defaults. */
-export interface EntityEditorLabels {
+export interface EntityEditorLabels extends Pick<
+  EditorLayoutLabels,
+  'resizeHandleLabel' | 'resizeHandleTooltip'
+> {
   /** Heading of the left section. Defaults to `'Metadata'`. */
   metadataTitle?: string;
   /** Heading of the right section when `setupTitle` is not set. Defaults to `'Setup'`. */
@@ -77,6 +84,8 @@ export interface EntityEditorProps {
   asideTitle?: string;
   /** Class added to the Aside section root, e.g. to drop its padding for edge-to-edge content. */
   asideSectionClassName?: string;
+  /** Makes the left (Metadata) column resizable on desktop when a Setup column exists. Forwarded to `EditorLayout`. */
+  resizableLeftColumn?: ResizableLeftColumn;
   /** Text labels with English defaults. */
   labels?: EntityEditorLabels;
   /** Style overrides. */

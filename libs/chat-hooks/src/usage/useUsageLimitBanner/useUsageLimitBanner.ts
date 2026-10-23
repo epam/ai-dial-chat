@@ -7,7 +7,7 @@ import { selectUsageBannerSource } from '../usage-banner-source';
 import { UsagePeriod } from '../usage-period';
 import { type TranslateFn, formatUsageResetShort } from '../usage-reset-time';
 import {
-  type GetDeploymentLimits,
+  type UsageLimitsApi,
   useDeploymentUsageLimits,
 } from '../useDeploymentUsageLimits/useDeploymentUsageLimits';
 import { useRefreshUsageAfterGeneration } from '../useRefreshUsageAfterGeneration/useRefreshUsageAfterGeneration';
@@ -58,8 +58,10 @@ export interface UseUsageLimitBannerOptions {
   deploymentId: string | undefined;
   /** Whether the selected deployment is currently generating a response. Defaults to `false`. */
   isGenerationInProgress?: boolean;
-  /** Host-configured call that fetches one deployment's limits. */
-  getDeploymentLimits: GetDeploymentLimits;
+  /** Host-configured call that fetches one deployment's own usage. */
+  getDeploymentUsage: UsageLimitsApi['getDeploymentUsage'];
+  /** Host-configured call that fetches the caller's account usage. */
+  getAccountUsage: UsageLimitsApi['getAccountUsage'];
   /** Used percentage at or above which a not-yet-exhausted limit raises a warning. */
   warningThresholdPercent: number;
   /** Active UI locale, used to format the reset time. */
@@ -82,22 +84,27 @@ export interface UseUsageLimitBannerResult {
 
 /**
  * Everything the composer usage banner needs except its rendering: fetches the
- * selected deployment's limits, refreshes them after each generation, picks
- * the limit worth reporting, formats its sentences, and tracks tab-lifetime
- * dismissal. Spread `banner` onto `UsageLimitBannerView` from
- * `@epam/ai-dial-conversation-input`.
+ * selected deployment's own usage and the account usage, refreshes both after
+ * each generation, picks the limit worth reporting, formats its sentences, and
+ * tracks tab-lifetime dismissal. Spread `banner` onto `UsageLimitBannerView`
+ * from `@epam/ai-dial-conversation-input`.
  */
 export const useUsageLimitBanner = ({
   deploymentId,
   isGenerationInProgress = false,
-  getDeploymentLimits,
+  getDeploymentUsage,
+  getAccountUsage,
   warningThresholdPercent,
   activeLocale,
   t,
 }: UseUsageLimitBannerOptions): UseUsageLimitBannerResult => {
-  const { limitsDto, isLoading, refresh } = useDeploymentUsageLimits(
+  const api = useMemo(
+    () => ({ getDeploymentUsage, getAccountUsage }),
+    [getDeploymentUsage, getAccountUsage],
+  );
+  const { sources, isLoading, refresh } = useDeploymentUsageLimits(
     deploymentId,
-    getDeploymentLimits,
+    api,
   );
   const { isDismissed, dismiss } = useUsageLimitBannerDismissal();
 
@@ -108,8 +115,8 @@ export const useUsageLimitBanner = ({
   });
 
   const source = useMemo(
-    () => selectUsageBannerSource(limitsDto, warningThresholdPercent),
-    [limitsDto, warningThresholdPercent],
+    () => selectUsageBannerSource(sources, warningThresholdPercent),
+    [sources, warningThresholdPercent],
   );
 
   const display = useMemo(() => {

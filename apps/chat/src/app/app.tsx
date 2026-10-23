@@ -3,7 +3,10 @@ import {
   useAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
 import { clearAttachmentCache } from '@epam/ai-dial-chat-hooks/file-manager-canvas';
-import { usePanelMaxWidth } from '@epam/ai-dial-chat-hooks/viewport-layout';
+import {
+  usePanelMaxWidth,
+  useViewportWidth,
+} from '@epam/ai-dial-chat-hooks/viewport-layout';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { CodeBlockTheme, FilterTab } from '@epam/ai-dial-chat-shared';
 import {
@@ -61,6 +64,10 @@ import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
 import { ApplicationEditorKind } from '../types/application-editor';
 import { ROUTES } from '../types/routes';
 import { ThemeId } from '../types/theme-id';
+import {
+  getNavigationSidebarWidth,
+  resolveCanvasWidth,
+} from '../utils/canvas-width';
 import { configurePdfWorker } from '../utils/pdf';
 import { renderSettingsRoutes, renderUsageRoute } from './settings-routes';
 
@@ -116,13 +123,8 @@ const App: FC = () => {
   const { pathname } = useLocation();
   const isMobile = useIsMobile();
   const loadPdf = usePdfPreviewLoader();
-  const canvasMaxWidth = usePanelMaxWidth(MIN_CONTENT_AREA_WIDTH);
-  const canvasDefaultWidth = isMobile
-    ? window.innerWidth
-    : Math.min(
-        canvasMaxWidth,
-        Math.round((canvasMaxWidth + MIN_CONTENT_AREA_WIDTH) * 0.5),
-      );
+  const isFileManagerRoute = !!useMatch(ROUTES.FileManager);
+  const viewportWidth = useViewportWidth();
   const { currentTheme } = useTheme();
   const codeBlockTheme =
     currentTheme === ThemeId.Light ? CodeBlockTheme.Light : CodeBlockTheme.Dark;
@@ -150,10 +152,8 @@ const App: FC = () => {
     OverlayFeature.AttachmentsManager,
   );
   const isFileManagerEnabled = useUiFeature(OverlayFeature.FileManager);
-  const isConversationsPanelToggleEnabled = useUiFeature(
-    OverlayFeature.ConversationsPanelToggle,
-  );
   const isSettingsPageHidden = useUiFeature(OverlayFeature.HideSettingsPage);
+  const isUsagePageHidden = useUiFeature(OverlayFeature.HideUsagePage);
 
   const { closeCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
   const handleCanvasVisualizerSendMessage = useCanvasVisualizerMessageHandler();
@@ -164,10 +164,26 @@ const App: FC = () => {
     isMobile,
     isCanvasOpen,
     isOpenByDefault: isConversationsSectionOpenByDefault,
-    isToggleEnabled: isConversationsPanelToggleEnabled,
     onCloseCanvas: closeCanvas,
     onCloseSourcesPanel: closeSourcesPanel,
   });
+
+  /* The canvas opens beside the sidebar in whatever state the user left it, so
+     its width is bounded by the room the sidebar leaves; on mobile the sidebar
+     is a drawer and takes none. */
+  const navigationSidebarWidth = isMobile
+    ? 0
+    : getNavigationSidebarWidth(isPanelOpen);
+  const canvasMaxWidth = usePanelMaxWidth(
+    MIN_CONTENT_AREA_WIDTH + navigationSidebarWidth,
+  );
+  const { defaultWidth: canvasDefaultWidth, minWidth: canvasMinWidth } =
+    resolveCanvasWidth({
+      isFileManagerRoute,
+      isMobile,
+      viewportWidth,
+      maxWidth: canvasMaxWidth,
+    });
 
   useEffect(() => {
     clearAttachmentCache();
@@ -352,7 +368,7 @@ const App: FC = () => {
                   )
                 }
               />
-              {renderUsageRoute(isSettingsPageHidden)}
+              {renderUsageRoute(isUsagePageHidden)}
               <Route
                 path={ROUTES.ScheduledTasks}
                 element={
@@ -483,7 +499,8 @@ const App: FC = () => {
           </main>
           {isConversationRoute && <ConversationSourcesPanel />}
         </ActiveScheduledTaskProvider>
-        {isConversationRoute && isAttachmentsManagerEnabled && (
+        {(isFileManagerRoute ||
+          (isConversationRoute && isAttachmentsManagerEnabled)) && (
           <AttachmentCanvasContainer
             loadPdf={loadPdf}
             onVisualizerSendMessage={handleCanvasVisualizerSendMessage}
@@ -558,6 +575,7 @@ const App: FC = () => {
             leftActions={isMobile ? <SourcesSidebarToggle /> : undefined}
             isMobile={isMobile}
             defaultWidth={canvasDefaultWidth}
+            minWidth={canvasMinWidth}
             maxWidth={canvasMaxWidth}
             codeBlockTheme={codeBlockTheme}
             configurePdfWorker={configurePdfWorker}

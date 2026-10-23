@@ -7,6 +7,7 @@ import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { cloneElement, ReactElement, ReactNode, useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useFeatureFlag } from '../../../context/AppConfigContext';
 import { useConversations } from '../../../context/ConversationsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
@@ -305,6 +306,10 @@ vi.mock('react-router', () => ({
   useNavigate: () => mockNavigate,
 }));
 
+vi.mock(
+  '../../../context/AppConfigContext',
+  async () => import('../../../context/tests/app-config-context-mock'),
+);
 vi.mock('../../../context/ConversationsContext');
 vi.mock('../../../context/NotificationContext');
 vi.mock('../../../server-api/share.api');
@@ -461,7 +466,9 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockUseIsMobile.mockReturnValue(false);
   vi.mocked(useUiFeature).mockImplementation(
-    (feature) => feature !== OverlayFeature.HideConversationExport,
+    (feature) =>
+      feature !== OverlayFeature.HideConversationExport &&
+      feature !== OverlayFeature.HideConversationImport,
   );
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   vi.mocked(useConversations).mockReturnValue(baseContextValue as any);
@@ -529,6 +536,7 @@ describe('ConversationPanelView', () => {
   it('reports the chosen filter to the app', () => {
     enableAllExcept(
       OverlayFeature.HideConversationExport,
+      OverlayFeature.HideConversationImport,
       OverlayFeature.HideConversationsFilter,
     );
     const onActiveFilterChange = vi.fn();
@@ -541,6 +549,20 @@ describe('ConversationPanelView', () => {
     expect(onRequestedFilterChange).toHaveBeenCalled();
   });
 
+  it('offers the type filter only while scheduled tasks are enabled', () => {
+    vi.mocked(useFeatureFlag).mockImplementation(
+      (key?: string) => key === 'scheduledTasksEnabled',
+    );
+    const { unmount } = renderSidebar();
+    expect(sectionProps.current?.isTypeFilterHidden).toBe(false);
+    unmount();
+
+    vi.mocked(useFeatureFlag).mockReturnValue(false);
+    renderSidebar();
+
+    expect(sectionProps.current?.isTypeFilterHidden).toBe(true);
+  });
+
   it('hands a filter requested by the app to the section', () => {
     renderSidebar({ requestedFilter: 'my-chats' });
 
@@ -550,7 +572,10 @@ describe('ConversationPanelView', () => {
   it('hides the filter under hide-conversations-filter', () => {
     /* The default posture of this file's mock turns every other key on,
        `hide-conversations-filter` included. */
-    enableAllExcept(OverlayFeature.HideConversationExport);
+    enableAllExcept(
+      OverlayFeature.HideConversationExport,
+      OverlayFeature.HideConversationImport,
+    );
     renderSidebar();
 
     expect(sectionProps.current?.isFilterHidden).toBe(true);

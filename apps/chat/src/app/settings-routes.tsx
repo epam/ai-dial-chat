@@ -40,17 +40,17 @@ export const renderSettingsRoutes = (
   ));
 
 /*
- * Usage is its own page, not a Settings tab. A hidden settings page gates it
- * like the rest of Settings.
+ * Usage is its own page, not a Settings tab, so it has its own gate:
+ * `hide-settings-page` leaves it reachable.
  */
 export const renderUsageRoute = (
-  isSettingsPageHidden: boolean,
+  isUsagePageHidden: boolean,
 ): ReactElement<{ path: string }> => (
   <Route
     key={ROUTES.Usage}
     path={ROUTES.Usage}
     element={
-      isSettingsPageHidden ? (
+      isUsagePageHidden ? (
         <Navigate to={ROUTES.Root} replace />
       ) : (
         <RouteErrorBoundary>

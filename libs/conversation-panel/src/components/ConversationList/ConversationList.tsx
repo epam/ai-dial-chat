@@ -19,9 +19,14 @@ import { List, type ListImperativeAPI } from 'react-window';
 import { CONVERSATION_PANEL_CLASS } from '../../constants/public-class-names';
 import type { ConversationListProps } from '../../models/conversation-list';
 import type { RowRendererData, VirtualRow } from '../../models/virtual-row';
+import { ConversationTypeFilter } from '../../types/conversation-kind';
 import { ConversationRowVariant } from '../../types/conversation-row-variant';
 import { VirtualRowKind } from '../../types/virtual-row';
-import { matchesSearch, matchesTab } from '../../utils/conversation-filter';
+import {
+  matchesKind,
+  matchesSearch,
+  matchesTab,
+} from '../../utils/conversation-filter';
 import {
   getOverscanCount,
   getRowHeight,
@@ -52,6 +57,7 @@ export const ConversationList: FC<ConversationListProps> = memo(
     labels,
     searchQuery = '',
     activeFilter = FilterTab.All,
+    activeTypeFilter = ConversationTypeFilter.All,
     hiddenSources,
     rowVariant,
     getActions,
@@ -64,7 +70,10 @@ export const ConversationList: FC<ConversationListProps> = memo(
     const { colors, typography, itemIconBadgeClassName } = styles ?? {};
     const {
       emptyLabel,
+      emptyDescription,
       noResultsLabel,
+      noResultsDescription,
+      sharedEmptyDescription = noResultsDescription,
       loadingLabel = 'Loading conversations',
       groupLabels,
       actionsLabel,
@@ -197,9 +206,11 @@ export const ConversationList: FC<ConversationListProps> = memo(
       () =>
         visibleConversations.filter(
           (item) =>
-            matchesTab(item, activeFilter) && matchesSearch(item, searchQuery),
+            matchesTab(item, activeFilter) &&
+            matchesKind(item, activeTypeFilter) &&
+            matchesSearch(item, searchQuery),
         ),
-      [visibleConversations, activeFilter, searchQuery],
+      [visibleConversations, activeFilter, activeTypeFilter, searchQuery],
     );
 
     const pinnedItems = useMemo(
@@ -364,13 +375,25 @@ export const ConversationList: FC<ConversationListProps> = memo(
       ],
     );
 
-    const isNoConversations = visibleConversations.length === 0;
-    const isNoResults =
-      visibleConversations.length > 0 && filteredItems.length === 0;
+    /* Patterns 2.0: "No [entities] found" answers a search or a filter;
+       "No [entities] yet" is for a list with neither applied. */
+    const isNarrowed =
+      searchQuery !== '' ||
+      activeFilter !== FilterTab.All ||
+      activeTypeFilter !== ConversationTypeFilter.All;
+    const isListEmpty = filteredItems.length === 0;
+    const isNoResults = isListEmpty && isNarrowed;
+    const isEmpty = isListEmpty && !isNarrowed;
+    /* Under the Shared filter alone there is no query to rephrase: say where
+       shared chats come from instead. */
+    const currentNoResultsDescription =
+      activeFilter === FilterTab.Shared && searchQuery === ''
+        ? sharedEmptyDescription
+        : noResultsDescription;
 
     const getStatusMessage = (): string => {
       if (isLoading) return loadingLabel;
-      if (isNoConversations) return emptyLabel;
+      if (isEmpty) return emptyLabel;
       if (isNoResults) return noResultsLabel;
       return '';
     };
@@ -392,8 +415,15 @@ export const ConversationList: FC<ConversationListProps> = memo(
           </div>
         );
       }
-      if (isNoConversations) return <PanelEmpty label={emptyLabel} />;
-      if (isNoResults) return <PanelNoResults label={noResultsLabel} />;
+      if (isEmpty)
+        return <PanelEmpty label={emptyLabel} description={emptyDescription} />;
+      if (isNoResults)
+        return (
+          <PanelNoResults
+            label={noResultsLabel}
+            description={currentNoResultsDescription}
+          />
+        );
       return (
         <List<RowRendererData>
           listRef={listRef}

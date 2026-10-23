@@ -198,10 +198,6 @@ vi.mock('../../SettingsModal/SettingsModal', () => ({
   ),
 }));
 
-vi.mock('../../FooterMessage/FooterMessage', () => ({
-  default: () => <div>Footer message</div>,
-}));
-
 vi.mock('../../LogoutConfirmation/LogoutConfirmationModal', () => ({
   default: ({ isOpen }: { isOpen: boolean }) =>
     isOpen ? <p>Log out confirmation</p> : null,
@@ -251,10 +247,12 @@ const setDefaults = (
     (feature) =>
       feature !== OverlayFeature.HideNewConversation &&
       feature !== OverlayFeature.HideUserMenu &&
+      feature !== OverlayFeature.HideUserMenuIdentity &&
       feature !== OverlayFeature.HideUserSettings &&
       feature !== OverlayFeature.HideKeyboardShortcuts &&
       feature !== OverlayFeature.HideNavigationMenu &&
-      feature !== OverlayFeature.HideSettingsPage,
+      feature !== OverlayFeature.HideSettingsPage &&
+      feature !== OverlayFeature.HideUsagePage,
   );
 };
 
@@ -338,10 +336,12 @@ const enableSidebar = (
   mockUseUiFeature.mockImplementation(
     (feature) =>
       feature !== OverlayFeature.HideUserMenu &&
+      feature !== OverlayFeature.HideUserMenuIdentity &&
       feature !== OverlayFeature.HideUserSettings &&
       feature !== OverlayFeature.HideKeyboardShortcuts &&
       feature !== OverlayFeature.HideNavigationMenu &&
       feature !== OverlayFeature.HideSettingsPage &&
+      feature !== OverlayFeature.HideUsagePage &&
       feature !== OverlayFeature.HideNewConversation &&
       !disabled.includes(feature),
   );
@@ -356,16 +356,6 @@ describe('SidebarNavigation', () => {
     userMenuProps.current = undefined;
     setDefaults(mockUseUiFeature);
     enableSidebar(mockUseUiFeature);
-  });
-
-  it('leaves the operator footer to the chat input on desktop', () => {
-    render(
-      <MemoryRouter>
-        <SidebarNavigation chats={<span>chat list</span>} />
-      </MemoryRouter>,
-    );
-
-    expect(screen.queryByText('Footer message')).toBeNull();
   });
 
   it('renders the sidebar instead of the rail', () => {
@@ -462,9 +452,24 @@ describe('SidebarNavigation', () => {
     ).toBe('/usage');
   });
 
-  it('omits the Usage link when the settings page is hidden', () => {
+  it('keeps the Usage link when only the settings page is hidden', () => {
     mockUseUiFeature.mockImplementation(
       (feature) => feature === OverlayFeature.HideSettingsPage,
+    );
+    render(
+      <MemoryRouter>
+        <SidebarNavigation />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByRole('link', { name: BasicI18nKeys.Usage }),
+    ).toBeTruthy();
+  });
+
+  it('omits the Usage link when the usage page is hidden', () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature === OverlayFeature.HideUsagePage,
     );
     render(
       <MemoryRouter>
@@ -641,6 +646,17 @@ describe('SidebarNavigation', () => {
       renderMenu();
       expect(userMenuProps.current?.onSettings).toBeUndefined();
     });
+
+    it('keeps the identity row by default and hides it under hide-user-menu-identity', () => {
+      renderMenu();
+      expect(userMenuProps.current?.isIdentityHidden).toBe(false);
+
+      mockUseUiFeature.mockImplementation(
+        (feature) => feature === OverlayFeature.HideUserMenuIdentity,
+      );
+      renderMenu();
+      expect(userMenuProps.current?.isIdentityHidden).toBe(true);
+    });
   });
 });
 
@@ -679,10 +695,18 @@ describe('SidebarNavigation — mobile drawer', () => {
     expect(screen.getByRole('button', { name: 'user menu' })).toBeTruthy();
   });
 
-  it('carries the operator footer below the chats on every route', () => {
+  it('hides the identity row of the drawer menu under hide-user-menu-identity', () => {
+    const drawerPosture = mockUseUiFeature.getMockImplementation();
+    mockUseUiFeature.mockImplementation(
+      (feature) =>
+        feature === OverlayFeature.HideUserMenuIdentity ||
+        !!drawerPosture?.(feature),
+    );
     renderDrawer();
 
-    expect(screen.getByText('Footer message')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'user menu' })).toBeTruthy();
+
+    expect(userMenuProps.current?.isIdentityHidden).toBe(true);
   });
 
   it('closes through the close button', async () => {

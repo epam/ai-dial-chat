@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   escapeUnsupportedCitTags,
   injectCitationSentinels,
+  prepareCitationContent,
   replaceCitTagsWithSourceNames,
   stripCitTagsWhileStreaming,
 } from '../citation-injection';
@@ -143,6 +144,44 @@ describe('escapeUnsupportedCitTags', () => {
       '&lt;CIT data-id="e1"&gt;&lt;/CIT&gt;',
     );
   });
+});
+
+describe('prepareCitationContent', () => {
+  it('hides a complete element while streaming', () => {
+    expect(prepareCitationContent('a <cit data-id="x"></cit> b', true)).toBe(
+      'a  b',
+    );
+  });
+
+  it('keeps a partial element visible as escaped text while streaming', () => {
+    expect(prepareCitationContent('a <cit data-id="x', true)).toBe(
+      'a &lt;cit data-id="x',
+    );
+  });
+
+  it('keeps the supported element and escapes a malformed one when finished', () => {
+    expect(
+      prepareCitationContent(
+        '<cit data-id="x"></cit> and <cit data-id="y></cit>',
+        false,
+      ),
+    ).toBe('<cit data-id="x"></cit> and &lt;cit data-id="y&gt;&lt;/cit&gt;');
+  });
+
+  it('never injects sentinels', () => {
+    expect(
+      prepareCitationContent('a <cit data-id="x"></cit>', false),
+    ).not.toMatch(/⟦C\d+⟧/);
+  });
+
+  it.each([true, false])(
+    'returns content without citation markup unchanged (streaming: %s)',
+    (isStreaming) => {
+      expect(prepareCitationContent('plain text', isStreaming)).toBe(
+        'plain text',
+      );
+    },
+  );
 });
 
 describe('replaceCitTagsWithSourceNames', () => {

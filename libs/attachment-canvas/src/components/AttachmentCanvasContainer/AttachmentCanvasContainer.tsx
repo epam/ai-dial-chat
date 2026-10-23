@@ -25,6 +25,8 @@ export interface AttachmentCanvasContainerProps {
   isMobile?: boolean;
   /** Initial panel width in pixels. When omitted, SidebarPanel uses its own default. */
   defaultWidth?: number;
+  /** Minimum panel width in pixels (desktop resize). Defaults to the panel's own minimum (600). */
+  minWidth?: number;
   /** Maximum panel width in pixels. Constrains drag-to-resize so the chat area is never fully hidden. */
   maxWidth?: number;
   /** Syntax highlight color theme forwarded to MarkdownRenderer code blocks. */
@@ -57,6 +59,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
       leftActions,
       isMobile = false,
       defaultWidth,
+      minWidth,
       maxWidth,
       codeBlockTheme,
       tableDownloadFilename,
@@ -200,6 +203,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
           tableDownloadFilename={tableDownloadFilename}
           isMobile={isMobile}
           defaultWidth={defaultWidth}
+          minWidth={minWidth}
           maxWidth={maxWidth}
           codeBlockTheme={codeBlockTheme}
           configurePdfWorker={configurePdfWorker}

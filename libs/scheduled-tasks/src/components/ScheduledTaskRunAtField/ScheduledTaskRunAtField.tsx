@@ -3,8 +3,10 @@ import {
   Calendar,
   CalendarMode,
   type CalendarValue,
+  ErrorText,
 } from '@epam/ai-dial-ui-kit';
 import { useRef, type FC } from 'react';
+import { usePickerErrorAssociation } from '../../hooks/usePickerErrorAssociation/usePickerErrorAssociation';
 import {
   calendarValueToRunAt,
   runAtToCalendarValue,
@@ -14,23 +16,29 @@ import styles from './ScheduledTaskRunAtField.module.scss';
 export interface ScheduledTaskRunAtFieldProps {
   /** Label rendered above the picker by the kit Calendar. */
   label: string;
+  /** Placeholder shown in the picker when unset. */
+  placeholder: string;
   /** Current `datetime-local`-style value (`YYYY-MM-DDTHH:mm`), empty when unset. */
   value: string;
   /** Called with the next `datetime-local`-style value. */
   onChange: (value: string) => void;
-  /** Submit-time validation error rendered under the picker. */
+  /** Disables the picker, e.g. while the form is submitting. */
+  disabled?: boolean;
+  /** Submit-time validation error rendered under the picker, associated with it via `aria-describedby` and announced via `role="alert"` when it appears. */
   error?: string;
-  /** CSS class applied to the error text. Defaults to `'dial-small-text'`. */
+  /** CSS class applied to the error text. Defaults to `'dial-tiny-text'`. */
   errorClassName?: string;
 }
 
 /** One-shot "run at" date-time picker for the create/edit form: the kit's masked `Calendar` whose earliest selectable moment is pinned at mount, and the submit-time error below it. */
 export const ScheduledTaskRunAtField: FC<ScheduledTaskRunAtFieldProps> = ({
   label,
+  placeholder,
   value,
   onChange,
+  disabled,
   error,
-  errorClassName = 'dial-small-text',
+  errorClassName = 'dial-tiny-text',
 }) => {
   /* Pinned at mount through a ref — `useMemo` is only a performance hint
    * React may discard, and the earliest selectable moment must stay fixed for
@@ -39,6 +47,8 @@ export const ScheduledTaskRunAtField: FC<ScheduledTaskRunAtFieldProps> = ({
 
   const handleCalendarChange = (next: CalendarValue) =>
     onChange(calendarValueToRunAt(next));
+
+  const errorId = usePickerErrorAssociation('scheduled-task-run-at', error);
 
   return (
     <div className="flex flex-col gap-1">
@@ -49,10 +59,17 @@ export const ScheduledTaskRunAtField: FC<ScheduledTaskRunAtFieldProps> = ({
         onChange={handleCalendarChange}
         minDate={minDate}
         labelProps={{ label, required: true }}
+        placeholder={placeholder}
         invalid={Boolean(error)}
+        disabled={disabled}
       />
       {error && (
-        <p className={mergeClasses(errorClassName, styles.error)}>{error}</p>
+        <ErrorText
+          id={errorId}
+          role="alert"
+          className={mergeClasses(errorClassName, styles.error)}
+          text={error}
+        />
       )}
     </div>
   );

@@ -65,6 +65,10 @@ When the host passes `isNameReadOnly`, the Name field SHALL render as non-editab
 - **WHEN** a user changes any field or adds/removes a file after the form has seeded from `initialValues`
 - **THEN** `onDirtyChange(true)` is called; if the user then reverts to the exact seeded values, `onDirtyChange(false)` is called
 
+#### Scenario: Replacing a file's content makes the form dirty
+- **WHEN** an upload committed with `replacesExisting: true` overwrites an existing file, leaving `files` unchanged
+- **THEN** `onDirtyChange(true)` is called, and the form stays dirty until it is re-seeded from a new `initialValues`
+
 ### Requirement: File-tree selection and protected `SKILL.md` node
 `SkillEditor` SHALL render a file tree seeded from a `files` prop (the in-memory supporting-file/folder structure) plus an always-present, always-first root `SKILL.md` node. The library SHALL own which tree node is currently selected and which folder nodes are expanded as internal state (overridable via optional `selectedPath`/`expandedPaths` + `onSelectedPathChange`/`onExpandedPathsChange` controlled props, mirroring `PublishFoldersTree`'s controlled/uncontrolled pattern). The `SKILL.md` node SHALL NOT expose rename, move, or delete affordances; all other nodes SHALL. When a supporting-file node (not `SKILL.md`, not a folder) is selected, the main pane SHALL render the host-supplied `supportingFileContent` prop when present, falling back to the existing `labels.supportingFileNote` text when it is not. Selecting a folder node SHALL only select or expand/collapse that folder and SHALL NOT render `supportingFileContent` or `supportingFileNote`.
 
@@ -177,7 +181,7 @@ When the host passes `isNameReadOnly`, the Name field SHALL render as non-editab
 `SkillEditor` SHALL use `EntityEditor` from `@epam/ai-dial-builder-form` as its outer shell, the same shell every entity editor uses. The skill keeps its Files | selected-file arrangement on that shell. `EntityEditor` SHALL receive the following:
 
 - `onBack`, `labels.backAriaLabel` and `title`, forwarded from `SkillEditorProps`.
-- `metadataTitle={null}` and `metadata`: the Files pane, which carries its own "Files" heading. On mobile it sits inside the collapsible "Editing file" accordion.
+- `metadataTitle={null}` and `metadata`: the Files pane, which carries its own "Files" heading. On mobile it sits inside the collapsible "Editing file" card, whose summary row shows the caption and the selected file's type icon and name next to a down/up caret.
 - `setupTitle`: `SKILL.md`, or `labels.selectedFileHeading(name)` for a supporting file.
 - `setup`: for `SKILL.md`, the shared `MetadataForm` followed by the Instructions editor, which fills the height left below the fields. `MetadataForm` gets these settings:
   - `fields={[MetadataField.Name, MetadataField.Description]}`
@@ -199,9 +203,9 @@ When the host passes `isNameReadOnly`, the Name field SHALL render as non-editab
 - **THEN** the left panel shows the Files tree and no "Metadata" heading
 - **AND** the right panel shows a section titled with the selected file path; for `SKILL.md` it holds Name, Description and Instructions
 
-#### Scenario: Mobile accordion comes first
+#### Scenario: Mobile Editing file card comes first
 - **WHEN** `SkillEditor` renders at mobile width
-- **THEN** the collapsible "Editing file" accordion renders first, followed by the selected file's section
+- **THEN** the collapsible "Editing file" card renders first, followed by the selected file's section
 
 #### Scenario: Name and Description belong to SKILL.md
 - **WHEN** a supporting file is selected in the Files tree

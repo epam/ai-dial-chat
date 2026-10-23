@@ -70,7 +70,7 @@ A folder node in the editor's file tree has no content of its own — DIAL Core 
 
 ### Requirement: Batch validation mirrors BFF package limits before commit
 
-In create mode, the `fileActions.validateBatch` implementation the `SkillEditor` page gets from `useSkillFileActions` (`@epam/ai-dial-chat-hooks`, backed by `validateSkillFileBatch` in `libs/chat-hooks/src/skill/skill-file-batch-validation.ts`) SHALL, for every staged candidate, reject: a per-file size over `SKILL_FILE_UPLOAD_MAX_BYTES` (1 MiB); an invalid or unsafe path per the existing client-side `isValidSkillRelativePath` mirror; a path traversal attempt; a duplicate path within the staged batch itself; a duplicate path against a file already present in the editor's `files` state; and a reserved root path. At the batch level, it SHALL reject the whole batch if the projected total package size (sum of all already-present supporting-file bytes, all staged supporting-file bytes, and the UTF-8 byte size of the current or imported root `SKILL.md`) would exceed `SKILL_UPLOAD_MAX_TOTAL_BYTES` (16 MiB), or if the projected total file count (already-present supporting files, plus staged supporting files, plus exactly one for the root `SKILL.md`) would exceed `SKILL_UPLOAD_MAX_FILES` (100). These three limit constants SHALL be defined once and imported, not duplicated as inline magic numbers, and SHALL be documented as a client-side mirror of the BFF's authoritative `SkillsPackageService` limits — the BFF remains the final gate.
+In create mode, the `fileActions.validateBatch` implementation the `SkillEditor` page gets from `useSkillFileActions` (`@epam/ai-dial-chat-hooks`, backed by `validateSkillFileBatch` in `libs/chat-hooks/src/skill/skill-file-batch-validation.ts`) SHALL, for every staged candidate, reject: a per-file size over `SKILL_FILE_UPLOAD_MAX_BYTES` (1 MiB); an invalid or unsafe path per the existing client-side `isValidSkillRelativePath` mirror; a path traversal attempt; a duplicate path within the staged batch itself; a duplicate path against a file already present in the editor's `files` state, unless the candidate carries `replacesExisting: true` (the user chose Replace in the upload dialog); a path equal to an existing folder node, which no candidate may take over; and a reserved root path. A replacing candidate SHALL count once toward the projected file count, and its target's bytes (passed as `existingFileBytes`) SHALL be subtracted from the projected size. At the batch level, it SHALL reject the whole batch if the projected total package size (sum of all already-present supporting-file bytes, all staged supporting-file bytes, and the UTF-8 byte size of the current or imported root `SKILL.md`) would exceed `SKILL_UPLOAD_MAX_TOTAL_BYTES` (16 MiB), or if the projected total file count (already-present supporting files, plus staged supporting files, plus exactly one for the root `SKILL.md`) would exceed `SKILL_UPLOAD_MAX_FILES` (100). These three limit constants SHALL be defined once and imported, not duplicated as inline magic numbers, and SHALL be documented as a client-side mirror of the BFF's authoritative `SkillsPackageService` limits — the BFF remains the final gate.
 
 #### Scenario: Oversized file is rejected per-candidate
 - **WHEN** a staged candidate's `File.size` exceeds `SKILL_FILE_UPLOAD_MAX_BYTES`
@@ -89,8 +89,16 @@ In create mode, the `fileActions.validateBatch` implementation the `SkillEditor`
 - **THEN** both are marked invalid with a duplicate-path error, and neither can be committed without first removing one
 
 #### Scenario: A staged path duplicating an existing file is rejected
-- **WHEN** a staged candidate's path matches a path already present in the editor's `files` state
+- **WHEN** a staged candidate's path matches a path already present in the editor's `files` state and the candidate does not carry `replacesExisting: true`
 - **THEN** that candidate is marked invalid with a duplicate error; it is not silently treated as a replacement
+
+#### Scenario: An explicit replacement overwrites the existing file
+- **WHEN** a staged candidate carries `replacesExisting: true` and its path matches an existing supporting file
+- **THEN** `validateBatch` accepts it, the projected totals count that path once and subtract the replaced file's bytes, and `commitBatch` overwrites the file's bytes in `filesContentRef` without adding a second node and bumps that path in `contentRevisions`
+
+#### Scenario: A file never takes over a folder's path
+- **WHEN** a staged candidate's path equals an existing folder node's path, with or without `replacesExisting`
+- **THEN** `validateBatch` marks it invalid with the duplicate-path error, so the upload cannot vanish into a folder node
 
 ### Requirement: Dropping a valid root SKILL.md populates the create form, with confirmation when dirty
 
@@ -164,6 +172,10 @@ The `SkillEditor` page SHALL interpret `createSkill` failures as follows and ren
 - **WHEN** `createSkill` rejects with `503`
 - **THEN** the page shows a retry action that resubmits the exact same in-memory manifest/files rather than reconstructing them from current form state
 
+#### Scenario: A file replaced after the failure invalidates the cached payload
+- **WHEN** `createSkill` rejects with `503` and the user then replaces a supporting file's bytes before retrying
+- **THEN** the retry rebuilds the payload with the new bytes, because `useSkillEditorSubmit` fingerprints `contentRevisions` together with the form values and file paths
+
 ### Requirement: Name, Description, and Instructions are all required
 Although DIAL Core's own `SKILL.md` validation (`SkillHandler.validate`) only requires non-empty `name`/`description`, the product's own create/edit form SHALL additionally require a non-empty `instructions` value, matching the design's required-field marker on all three fields. The `SkillEditor` page SHALL require non-empty `name`, `description`, and `instructions` values before allowing submission in both create and edit mode.
 
@@ -220,7 +232,7 @@ A `failure` phase SHALL NOT navigate away.
 - **WHEN** `createSkill` resolves successfully
 - **THEN** the page transitions to `success`, shows a success notification, and navigates to the Catalog `itemId` URL of the new skill exactly once, without the unsaved-changes dialog intercepting it
 
-### Requirement: Responsive layout — mobile inline accordion, desktop two-pane
+### Requirement: Responsive layout — mobile Editing file card, desktop two-pane
 At the `desktop` breakpoint, the page SHALL render the shared two-pane layout, with Cancel/Create in the page header:
 
 - **Left panel:** the Files pane.
@@ -228,7 +240,7 @@ At the `desktop` breakpoint, the page SHALL render the shared two-pane layout, w
 
 At the `mobile` breakpoint, the page SHALL render a single scrolling column:
 
-1. The Files pane, which starts collapsed as an "Editing file" summary row and expands in place to show the file tree.
+1. The Files pane, inside an "Editing file" card that starts collapsed — the caption, the selected file's type icon and name, and a down caret — and expands in place (caret up) to show the Files heading, the Add menu and the file tree. The card sits 20px above the selected file's heading.
 2. The selected file.
 
 At `mobile`, Cancel/Create SHALL render in a bottom action bar (the `EditorLayout` bar from `libs/builder-form`) placed after, and outside, the scrollable body, so it remains reachable at any scroll position. Both breakpoints SHALL keep Back reachable in the page header.

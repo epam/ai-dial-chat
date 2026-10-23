@@ -39,7 +39,7 @@ import '@epam/ai-dial-prompt-editor/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.16.0-dev.20`
+- `@epam/ai-dial-ui-kit` `^0.16.0-dev.35`
 - `@epam/ai-dial-chat-shared` `*`
 
 Installed for you as dependencies: `@epam/ai-dial-builder-form`,

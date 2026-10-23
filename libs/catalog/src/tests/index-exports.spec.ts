@@ -40,3 +40,17 @@ describe('@epam/ai-dial-catalog public header, Connect and credentials surface',
     expect(catalog.CredentialsBannerState).toBe(mapping.CredentialsBannerState);
   });
 });
+
+describe('@epam/ai-dial-catalog public picker surface', () => {
+  it('exports CatalogPickerModal and its load status from the package root', () => {
+    expect(typeof catalog.CatalogPickerModal).toBe('function');
+    expect(catalog.CatalogLoadStatus.Ready).toBe('ready');
+  });
+
+  it('exports the toolbar query filter from the headless entry point and the root', () => {
+    expect(typeof mapping.filterCatalogItemsByQuery).toBe('function');
+    expect(catalog.filterCatalogItemsByQuery).toBe(
+      mapping.filterCatalogItemsByQuery,
+    );
+  });
+});

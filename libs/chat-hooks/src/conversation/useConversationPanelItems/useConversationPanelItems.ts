@@ -2,7 +2,7 @@ import type {
   ConversationListItemDto,
   DeploymentItemDto,
 } from '@epam/ai-dial-chat-api-client';
-import { FilterTab } from '@epam/ai-dial-chat-shared';
+import { ConversationKind, FilterTab } from '@epam/ai-dial-chat-shared';
 import { useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { safeDecodeURIComponent } from '../../shared/string-utils';
 import {
@@ -144,6 +144,10 @@ export const useConversationPanelItems = ({
         iconTooltip: resolveIconTooltip(deployment, fallbackTooltip),
         isIconLoading: isDeploymentsLoading,
         source: getConversationSource(item),
+        kind:
+          taskPresentation != null
+            ? ConversationKind.Task
+            : ConversationKind.Chat,
         href: resolveHref(id),
         ...(taskPresentation != null
           ? {

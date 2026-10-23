@@ -8,6 +8,7 @@ import {
   Matches,
   ValidateIf,
 } from 'class-validator';
+import { DEPLOYMENT_ID_PATTERN } from '../../common/validators/deployment-id.pattern';
 import { ToolsetAuthType } from './toolset-body.dto';
 
 export enum ToolsetCredentialsLevel {
@@ -21,10 +22,11 @@ export enum ToolsetCredentialsLevel {
  * backward compatibility with existing clients and written to log lines, but
  * the service derives the actual url sent to DIAL Core from the trusted
  * `toolsetName` route parameter rather than this field — see
- * `resolveToolsetLoginUrl` in `toolsets.service.ts`. Mirrors the
- * deployment-id character set.
+ * `resolveToolsetLoginUrl` in `toolsets.service.ts`. Shares the
+ * deployment-id character set with the `toolsetName` path parameter, so an
+ * id DIAL Core emits with literal `(` / `)` passes both.
  */
-const TOOLSET_URL_PATTERN = /^(?:[\w.\-:@/]|%[\dA-Fa-f]{2})+$/;
+const TOOLSET_URL_PATTERN = DEPLOYMENT_ID_PATTERN;
 const TOOLSET_URL_MESSAGE =
   'Must contain only supported characters or valid percent-encoded bytes';
 

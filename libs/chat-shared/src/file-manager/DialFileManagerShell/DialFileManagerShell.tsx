@@ -127,6 +127,12 @@ export interface DialFileManagerShellProps {
    * Omit to keep the variant's default.
    */
   treeContainerClassName?: string;
+  /** Called with the virtual path of the file the user chose to preview. */
+  onPreview?: (path?: string) => void;
+  /** Called with the grid row when the user clicks a file (folders open instead). */
+  onTableFileClick?: (row: FileManagerGridRow) => void;
+  /** Dotted extensions (e.g. `.md`) the Preview row action is offered for. The file manager matches them exactly as written, so list every spelling that should qualify. */
+  previewExtensions?: string[];
   /** Color overrides, e.g. a different surface background. */
   styles?: DialFileManagerShellStyles;
 }
@@ -154,6 +160,9 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
   getDisabledTooltip,
   unsupportedFileTypeTooltip,
   treeContainerClassName,
+  onPreview,
+  onTableFileClick,
+  previewExtensions,
   styles: shellStyles,
 }) => {
   const {
@@ -269,9 +278,19 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
   ]);
 
   const gridActionLabels = useMemo(() => {
-    if (!(DialFileManagerActions.Info in tabActionLabels)) return actionLabels;
-    return { ...actionLabels, [DialFileManagerActions.Info]: labels.infoLabel };
-  }, [actionLabels, tabActionLabels, labels.infoLabel]);
+    const withPreview =
+      labels.previewLabel != null
+        ? {
+            ...actionLabels,
+            [DialFileManagerActions.Preview]: labels.previewLabel,
+          }
+        : actionLabels;
+    if (!(DialFileManagerActions.Info in tabActionLabels)) return withPreview;
+    return {
+      ...withPreview,
+      [DialFileManagerActions.Info]: labels.infoLabel,
+    };
+  }, [actionLabels, tabActionLabels, labels.infoLabel, labels.previewLabel]);
 
   const allSelectedItemsSharedByMe = useMemo(() => {
     if (selectedPaths.size === 0) return false;
@@ -297,8 +316,12 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
   const gridOptions = useMemo(
     () => ({
       selectionMode: GridSelectionMode.MULTIPLE,
-      /* Attach is a picker: column filters are redundant next to the search bar. */
-      ...(isAttachVariant ? { filterable: false } : {}),
+      /* Column filters are redundant next to the search bar. */
+      filterable: false,
+      /* The grid is a flat table in both variants: no vertical header borders,
+         and no card shadow or rounding of its own. */
+      withoutHeaderBorders: true,
+      containerClassName: 'rounded-none shadow-none',
       visibleColumns,
       dateLocale,
       dateOptions,
@@ -312,7 +335,6 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
       actionLabels: gridActionLabels,
     }),
     [
-      isAttachVariant,
       visibleColumns,
       dateLocale,
       dateOptions,
@@ -323,14 +345,12 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
 
   const treeOptions = useMemo(
     () => ({
-      header:
-        variant === DialFileManagerVariant.Attach
-          ? null
-          : labels.treeHeaderByTab[activeTab],
+      /* No title above the tabs unless the host provides one; the tabs keep their name. */
+      header: labels.treeHeader ?? null,
       containerClassName:
         treeContainerClassName ??
         (variant === DialFileManagerVariant.Attach
-          ? 'min-h-0 h-full w-[360px] shrink-0 rounded-xl bg-layer-raised shadow-sm'
+          ? 'min-h-0 h-full w-[360px] shrink-0 border-e border-tertiary bg-layer-raised'
           : undefined),
       tabsAriaLabel: labels.treeHeaderByTab[activeTab],
       tabs,
@@ -343,6 +363,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
       actionLabels,
     }),
     [
+      labels.treeHeader,
       labels.treeHeaderByTab,
       treeContainerClassName,
       variant,
@@ -613,11 +634,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
               styles.surface,
               isAttachVariant && 'p-0',
             )}
-            contentClassName={
-              variant === DialFileManagerVariant.Attach
-                ? 'px-0 pb-0'
-                : undefined
-            }
+            contentClassName={isAttachVariant ? 'px-0 pb-0' : undefined}
             gridClassName={
               variant === DialFileManagerVariant.Attach
                 ? 'size-full gap-6 px-6 py-4'
@@ -663,6 +680,9 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
             onRemoveFilesAccess={onRemoveFilesAccess}
             fileMetadataPopupOptions={fileMetadataPopupOptions}
             onGetInfo={onGetInfo}
+            onPreview={onPreview}
+            onTableFileClick={onTableFileClick}
+            previewExtensions={previewExtensions}
             onUploadFiles={onUploadFiles}
             onUploadArchive={onUploadArchive}
             onValidateUpload={onValidateUpload}

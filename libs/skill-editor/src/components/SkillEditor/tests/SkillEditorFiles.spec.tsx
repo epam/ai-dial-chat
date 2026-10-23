@@ -1,6 +1,12 @@
 import type { DialFile } from '@epam/ai-dial-react-file-manager';
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type {
   ComponentProps,
@@ -167,17 +173,59 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   EditorThemes: { dark: 'dark', light: 'light' },
   TextareaResize: { Vertical: 'vertical' },
   TagInput: () => null,
+  DialItemType: { File: 'file', Folder: 'folder' },
+  FileIcon: () => null,
   Accordion: ({
     title,
+    description,
+    expanded,
+    onToggle,
     children,
   }: {
     title: ReactNode;
-    children: ReactNode;
+    description?: ReactNode;
+    expanded?: boolean;
+    onToggle?: (expanded: boolean) => void;
+    children?: ReactNode;
   }) => (
-    <section>
-      <h3>{title}</h3>
-      {children}
-    </section>
+    <div>
+      <button
+        type="button"
+        aria-expanded={expanded}
+        onClick={() => onToggle?.(!expanded)}
+      >
+        {title} {description}
+      </button>
+      <div inert={!expanded}>{children}</div>
+    </div>
+  ),
+  FileName: ({ name, details }: { name: string; details?: ReactNode }) => (
+    <span>
+      {name}
+      {details}
+    </span>
+  ),
+  RadioGroup: ({
+    items,
+    value,
+    onChange,
+  }: {
+    items: { value: string; label?: ReactNode }[];
+    value?: string;
+    onChange: (value: string) => void;
+  }) => (
+    <div role="radiogroup">
+      {items.map((item) => (
+        <label key={item.value}>
+          <input
+            type="radio"
+            checked={item.value === value}
+            onChange={() => onChange(item.value)}
+          />
+          {item.label}
+        </label>
+      ))}
+    </div>
   ),
   CaptionText: ({ text }: { text?: string }) => <span>{text}</span>,
   ErrorText: ({ text }: { text?: string }) => <span>{text}</span>,
@@ -359,6 +407,7 @@ vi.mock('@epam/ai-dial-ui-kit/editors', () => ({
 
 vi.mock('@tabler/icons-react', () => ({
   IconArrowNarrowLeft: () => <svg />,
+  IconChevronDown: () => <svg />,
   IconDatabase: () => <svg />,
   IconFileText: () => <svg />,
   IconFileZip: () => <svg />,
@@ -732,8 +781,8 @@ describe('SkillEditor — files pane', () => {
   it('orders the Editing file accordion, then the SKILL.md heading, then Name in the stacked mobile column', () => {
     renderEditor();
 
-    const filesAccordion = screen.getByRole('heading', {
-      name: 'Editing file',
+    const filesAccordion = screen.getByRole('button', {
+      name: /Editing file/,
     });
     const manifestHeading = screen.getByRole('heading', { name: 'SKILL.md' });
     const nameField = screen.getByRole('textbox', { name: /Name/ });
@@ -892,6 +941,41 @@ describe('SkillEditor — Add dropdown', () => {
     expect(stagedPaths(actions.commitBatch)).toEqual(['docs/a.md']);
   });
 
+  it('expands the target folder once its upload is committed', async () => {
+    const user = userEvent.setup({ delay: null });
+    const onExpandedPathsChange = vi.fn();
+    renderEditor(
+      { files: [docsFolder], selectedPath: 'docs', onExpandedPathsChange },
+      fullFileActions(),
+    );
+
+    await openUploadDialog(user);
+    stageFile(new File(['x'], 'a.md'));
+    await screen.findByText('docs/a.md');
+    expect(onExpandedPathsChange).not.toHaveBeenCalled();
+    await confirmDialog(user);
+
+    expect(onExpandedPathsChange).toHaveBeenCalledWith(['docs']);
+  });
+
+  it('leaves the target folder collapsed when the upload commit fails', async () => {
+    const user = userEvent.setup({ delay: null });
+    const onExpandedPathsChange = vi.fn();
+    renderEditor(
+      { files: [docsFolder], selectedPath: 'docs', onExpandedPathsChange },
+      fullFileActions({
+        commitBatch: vi.fn(async () => ({ error: 'Upload failed' })),
+      }),
+    );
+
+    await openUploadDialog(user);
+    stageFile(new File(['x'], 'a.md'));
+    await screen.findByText('docs/a.md');
+    await confirmDialog(user);
+
+    expect(onExpandedPathsChange).not.toHaveBeenCalled();
+  });
+
   it('stages header uploads at the root when a file is selected', async () => {
     const user = userEvent.setup({ delay: null });
     renderEditor(
@@ -1005,8 +1089,11 @@ describe('SkillEditor — node menu', () => {
 });
 
 describe('SkillEditor — Create folder', () => {
+  /* The inline draft belongs to the desktop pane, which renders after the mobile one. */
   const startCreateFromHeader = async (user: User) => {
-    const menu = await openAddMenu(user);
+    const addTriggers = screen.getAllByRole('button', { name: 'Add' });
+    await user.click(addTriggers[addTriggers.length - 1]);
+    const menu = screen.getAllByRole('menu')[0];
     await user.click(
       within(menu).getByRole('menuitem', { name: 'Create folder' }),
     );
@@ -1038,7 +1125,8 @@ describe('SkillEditor — Create folder', () => {
       fullFileActions({ onCreateFolder }),
     );
 
-    await user.click(queryDirectMenuItems('Create folder')[0]);
+    const createFolderItems = queryDirectMenuItems('Create folder');
+    await user.click(createFolderItems[createFolderItems.length - 1]);
 
     expect(onExpandedPathsChange).toHaveBeenCalledWith(['docs']);
     const input = screen.getAllByLabelText('Folder name')[0];
@@ -1138,6 +1226,75 @@ describe('SkillEditor — Create folder', () => {
   });
 });
 
+describe('SkillEditor — Create folder (mobile pane)', () => {
+  /* The mobile pane renders first; its Create folder asks in a dialog instead of a tree draft. */
+  const openCreateFolderDialog = async (user: User) => {
+    const menu = await openAddMenu(user);
+    await user.click(
+      within(menu).getByRole('menuitem', { name: 'Create folder' }),
+    );
+    return screen.getByRole('dialog', { name: 'Create folder' });
+  };
+
+  it('opens a Create folder dialog instead of an inline draft', async () => {
+    const user = userEvent.setup({ delay: null });
+    renderEditor({}, fullFileActions());
+
+    const dialog = await openCreateFolderDialog(user);
+
+    expect(within(dialog).getByLabelText('Name')).toBeTruthy();
+    expect(screen.queryByLabelText('Folder name')).toBeNull();
+  });
+
+  it('creates the named folder inside the target folder and closes', async () => {
+    const user = userEvent.setup({ delay: null });
+    const onCreateFolder = vi.fn();
+    const onSelectedPathChange = vi.fn();
+    renderEditor(
+      { files: [docsFolder], selectedPath: 'docs', onSelectedPathChange },
+      fullFileActions({ onCreateFolder }),
+    );
+
+    const dialog = await openCreateFolderDialog(user);
+    await user.type(within(dialog).getByLabelText('Name'), 'img');
+    await user.click(within(dialog).getByRole('button', { name: 'Create' }));
+
+    expect(onCreateFolder).toHaveBeenCalledWith('docs/img');
+    expect(onSelectedPathChange).toHaveBeenLastCalledWith('docs/img');
+    expect(screen.queryByRole('dialog', { name: 'Create folder' })).toBeNull();
+  });
+
+  it('shows the name error on Create and keeps the dialog open', async () => {
+    const user = userEvent.setup({ delay: null });
+    const onCreateFolder = vi.fn();
+    renderEditor({ files: [docsFolder] }, fullFileActions({ onCreateFolder }));
+
+    const dialog = await openCreateFolderDialog(user);
+    await user.click(within(dialog).getByRole('button', { name: 'Create' }));
+    expect(within(dialog).getByText('Enter a folder name')).toBeTruthy();
+
+    // The kit mock renders the error inside the label, so the field is found by role.
+    await user.type(within(dialog).getByRole('textbox'), 'docs');
+    expect(
+      within(dialog).getByText('An item with this name already exists here'),
+    ).toBeTruthy();
+    expect(onCreateFolder).not.toHaveBeenCalled();
+  });
+
+  it('closes on Cancel without calling the host', async () => {
+    const user = userEvent.setup({ delay: null });
+    const onCreateFolder = vi.fn();
+    renderEditor({}, fullFileActions({ onCreateFolder }));
+
+    const dialog = await openCreateFolderDialog(user);
+    await user.type(within(dialog).getByLabelText('Name'), 'scripts');
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+
+    expect(screen.queryByRole('dialog', { name: 'Create folder' })).toBeNull();
+    expect(onCreateFolder).not.toHaveBeenCalled();
+  });
+});
+
 describe('SkillEditor — Upload archive', () => {
   const openArchiveDialogFor = async (user: User) => {
     await user.click(queryDirectMenuItems('Upload archive from device')[0]);
@@ -1227,6 +1384,31 @@ describe('SkillEditor — Upload archive', () => {
     stageFile(new File(['zip'], 'empty.zip'));
 
     expect(await screen.findByText('This archive has no files')).toBeTruthy();
+  });
+});
+
+describe('SkillEditor — replacing an existing file', () => {
+  it('reports the editor dirty once a replacing upload is committed', async () => {
+    const user = userEvent.setup({ delay: null });
+    const onDirtyChange = vi.fn();
+    const notes = {
+      path: 'notes.md',
+      name: 'notes.md',
+      kind: SkillFileNodeKind.File,
+    };
+    renderEditor({ files: [notes], onDirtyChange }, fullFileActions());
+
+    await openUploadDialog(user);
+    stageFile(new File(['new'], 'notes.md'));
+    await user.click(
+      within(screen.getByRole('dialog')).getByRole('button', {
+        name: 'Confirm',
+      }),
+    );
+    await screen.findByText('Will replace the existing file');
+    await confirmDialog(user);
+
+    await waitFor(() => expect(onDirtyChange).toHaveBeenLastCalledWith(true));
   });
 });
 

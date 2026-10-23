@@ -108,12 +108,13 @@ While the sidebar is active, the existing UI-feature keys SHALL keep these meani
 | Key | Effect in the sidebar |
 |---|---|
 | `conversations-section` off | No conversation block; header, items and footer remain |
-| `conversations-panel-toggle` off | No desktop expand/collapse toggle; the sidebar stays in its initial state, and returns to it when the canvas closes. On mobile it only matters under `hide-navigation-menu`, where it keeps the header toggle |
+| `conversations-panel-toggle` off | No desktop expand/collapse toggle; the sidebar stays in its initial state, whether or not the canvas is open. On mobile it only matters under `hide-navigation-menu`, where it keeps the header toggle |
 | `showConversationsSectionByDefault` | Initial state: expanded when on, collapsed when off |
 | `hide-conversations-filter` | No filter trigger in the conversation block header |
 | `hide-new-conversation` | No New chat item |
 | `hide-user-menu` | No user menu in the footer, on desktop and in the mobile drawer (the earlier mobile sheet ignored this key) |
-| `hide-settings-page` | No Usage link in the footer and no Settings entry in the user menu |
+| `hide-settings-page` | No Settings entry in the user menu |
+| `hide-usage-page` | No Usage link in the footer |
 | `catalog`, `file-manager` | Their items are gated as before |
 | `show-header-logo` | The top bar and mobile header logo render as before; the sidebar header logo is unaffected |
 | `header` | Hides the mobile header row (and with it the toggle and New chat button) |
@@ -129,10 +130,10 @@ While the sidebar is active, the existing UI-feature keys SHALL keep these meani
 - **WHEN** `conversations-panel-toggle` is off and `showConversationsSectionByDefault` is on
 - **THEN** the sidebar renders expanded with no expand/collapse control
 
-#### Scenario: No toggle recovers from the canvas
+#### Scenario: No toggle keeps the initial state beside the canvas
 
 - **WHEN** `conversations-panel-toggle` is off, the sidebar is expanded and the attachment canvas opens and then closes
-- **THEN** the sidebar is collapsed while the canvas is open and expanded again once it closes
+- **THEN** the sidebar stays expanded throughout
 
 ---
 
@@ -192,7 +193,7 @@ On desktop, `ConversationPanelContext`'s `isPanelOpen` SHALL mean "expanded"; on
 - SHALL NOT change the state on any route change, inside or outside the conversation section;
 - SHALL start from `showConversationsSectionByDefault` and keep the user's own choice for the rest of the page session.
 
-The state SHALL NOT be persisted across reloads. Opening the attachment canvas, or any existing `closePanel` caller such as `ConversationView` and `useAttachmentCanvasResolvers`, SHALL collapse the sidebar. Expanding the sidebar SHALL close the attachment canvas, as opening the panel does today.
+The state SHALL NOT be persisted across reloads. After the initial state, only the user's own toggle SHALL collapse or expand the sidebar: opening the attachment canvas or an MCP app canvas, from any call site, SHALL leave it as it is, and expanding the sidebar SHALL leave the attachment canvas open. The canvas's width is bounded by the room the sidebar leaves (see the `canvas` capability), so both fit side by side.
 
 When `isEnabled('conversations-panel-toggle')` is `false`, no toggle SHALL render and the sidebar SHALL stay in its initial state.
 
@@ -216,10 +217,15 @@ When `isEnabled('conversations-panel-toggle')` is `false`, no toggle SHALL rende
 - **WHEN** the user collapses the sidebar and reloads the page with `showConversationsSectionByDefault` enabled
 - **THEN** the sidebar starts expanded
 
-#### Scenario: Opening the canvas collapses the sidebar
+#### Scenario: Opening the canvas keeps the sidebar expanded
 
 - **WHEN** the sidebar is expanded and an attachment opens in the canvas
-- **THEN** the sidebar collapses to 72px
+- **THEN** the sidebar stays expanded at 336px and the canvas opens beside it
+
+#### Scenario: Expanding the sidebar keeps the canvas open
+
+- **WHEN** the canvas is open, the sidebar is collapsed and the user expands it
+- **THEN** the sidebar expands and the canvas stays open
 
 ---
 
@@ -266,7 +272,7 @@ When `isEnabled('conversations-section')` is `true`, the expanded sidebar SHALL 
 - **Title.** A button with `aria-expanded` that collapses and expands the list beneath it.
 - **Search toggle.** Named `t('conversationPanel.search.open')` ("Search chats"). It replaces the row with a search field (placeholder `basic.searchPlaceholder`, clear button `basic.clearSearch`) and moves focus into it.
 - **Close search button.** Named `t('conversationPanel.search.close')` ("Close search"). It closes the field, as Escape does. Closing clears the query and returns focus to the search toggle.
-- **Filter trigger.** Named by `conversationPanel.filter.groupAriaLabel`. It opens a single-select menu of All, My chats, Shared and Organization (`conversationPanel.filter.*`, `basic.organization`) that excludes any hidden source and marks the active option with a check.
+- **Filter trigger.** Named by `conversationPanel.filter.groupAriaLabel`. It opens a single-select menu of All, My chats, Shared and Organization (`conversationPanel.filter.*`, `basic.organization`) that excludes any hidden source and marks the active option with a check. While the origin or type filter is not All, the trigger SHALL carry an accent dot (decorative, `aria-hidden`) and be described through `aria-describedby` by `t('conversationPanel.filter.applied')` ("Filters applied"), so an empty filtered list is told apart from a list with no chats (Issue #9476).
 - **Overflow menu.** The existing panel menu (see `conversation-panel-header-menu`).
 
 **List:**
@@ -320,7 +326,7 @@ The footer SHALL render the user menu only when the user is authenticated and `i
 The footer SHALL render a Usage link to the standalone Usage page, `ROUTES.Usage` (`/usage`):
 - named and tooltipped `t('basic.usage')`;
 - carrying `aria-current="page"` on that route;
-- omitted when `isEnabled('hide-settings-page')` is `true`.
+- omitted when `isEnabled('hide-usage-page')` is `true`, and unaffected by `hide-settings-page`.
 
 DOM order SHALL match visual order in both states:
 - **expanded:** user menu, then Usage;
@@ -334,7 +340,12 @@ DOM order SHALL match visual order in both states:
 #### Scenario: Settings page hidden
 
 - **WHEN** `isEnabled('hide-settings-page')` is `true`
-- **THEN** no Usage link renders and the user menu offers no Settings entry
+- **THEN** the user menu offers no Settings entry and the Usage link still renders
+
+#### Scenario: Usage page hidden
+
+- **WHEN** `isEnabled('hide-usage-page')` is `true`
+- **THEN** no Usage link renders
 
 #### Scenario: Collapsed footer focus order
 
@@ -398,7 +409,7 @@ The block's props from `ConversationPanelView` SHALL be referentially stable acr
 
 ### Requirement: Usage is a standalone page
 
-`/usage` SHALL render the usage dashboard as its own page, with the page title and description above the period cards and the model limits table. `/usage` SHALL redirect to `/` when `isEnabled('hide-settings-page')` is `true`. The Settings page SHALL NOT offer a Usage tab in this layout, and `/settings/usage` SHALL redirect to `/usage`. The page title SHALL be the page's `h1` there and an `h2` inside the Settings tab, under the Settings page's own `h1`. The page header's vertical padding is 16px above and below, and the Settings Usage tab uses the same header.
+`/usage` SHALL render the usage dashboard as its own page, with the page title and description above the period cards and the model limits table. `/usage` SHALL redirect to `/` when `isEnabled('hide-usage-page')` is `true`; `hide-settings-page` SHALL NOT affect it. The Settings page SHALL NOT offer a Usage tab in this layout, and `/settings/usage` SHALL redirect to `/usage`. The page title SHALL be the page's `h1` there and an `h2` inside the Settings tab, under the Settings page's own `h1`. The page header's vertical padding is 16px above and below, and the Settings Usage tab uses the same header.
 
 #### Scenario: Usage opens from the footer
 

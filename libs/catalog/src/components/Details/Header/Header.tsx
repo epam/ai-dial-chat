@@ -215,10 +215,11 @@ export interface HeaderProps {
    * combined (AND) with `hasPublishedFolders` and the presence of
    * `onOpenUnpublish`. Defaults to `true` when absent. When the entry ends up
    * shown, it replaces "Publish" rather than joining it. Supplying it also
-   * keeps the Manage trigger rendered for an item it returns `true` for while
+   * withholds the Manage slot for an item it returns `true` for while
    * `isPublishHistoryResolved` is still `false`, and lets a lone "Unpublish"
-   * render as its own button once history resolves — so the host should
-   * resolve history for such an item without waiting for hover.
+   * render as its own button once history resolves — so the host must
+   * resolve history for such an item without waiting for hover, and settle
+   * it on failure too.
    */
   isUnpublishVisible?: (item: CatalogItem) => boolean;
   /**
@@ -505,19 +506,18 @@ export const Header: FC<HeaderProps> = ({
     (isUnpublishVisible?.(item) ?? true);
 
   /*
-   * The lookup that produces the "Unpublish" entry is started by hovering,
-   * focusing or opening the Manage trigger — so an item whose only entry
-   * would be "Unpublish" is deadlocked: the trigger is hidden while the menu
-   * is empty, and the menu stays empty while the trigger is hidden. A
-   * published copy under the organization's public area is exactly that item
-   * (its owner-side entries — Share, Edit, Delete, Revoke — are all gated on
-   * `isMyApp`), which is how [#8691](https://github.com/epam/ai-dial-chat/issues/8691) left one with no action at all.
+   * An item the host affirmatively calls unpublishable has its history
+   * resolved up front, without waiting for hover — which is what un-deadlocks
+   * a published copy whose only entry would be "Unpublish" ([#8691](https://github.com/epam/ai-dial-chat/issues/8691)).
+   * While that lookup is outstanding the Manage slot renders nothing at all:
+   * the caller may turn out to have no right to unpublish, and a speculative
+   * trigger shown in the meantime flashed and vanished on every first open
+   * ([#9500](https://github.com/epam/ai-dial-chat/issues/9500)). The slot
+   * appears once, in its settled form.
    *
-   * So the trigger also renders while the lookup is outstanding and the host
-   * has affirmatively said this item is unpublishable. That last part is why
-   * it reads `=== true` rather than defaulting the way `shouldShowUnpublish`
-   * does: a host that supplies no rule at all gets no speculative trigger,
-   * and so keeps its current behaviour exactly.
+   * It reads `=== true` rather than defaulting the way `shouldShowUnpublish`
+   * does: a host that supplies no rule gets no up-front lookup, so holding
+   * the slot back would hide its menu until a hover that could never happen.
    */
   const isUnpublishPending =
     !isReadonly &&
@@ -1051,8 +1051,7 @@ export const Header: FC<HeaderProps> = ({
     (isPublishInActionRow && shouldShowUnpublish) ||
     (isPublishInActionRow && shouldShowPublish) ||
     (shouldShowCredentialsAction && !isCredentialsActionPrimary) ||
-    manageItems.length > 0 ||
-    isUnpublishPending;
+    (manageItems.length > 0 && !isUnpublishPending);
 
   return (
     <div className="flex flex-col gap-3 px-6 py-4">
@@ -1162,10 +1161,10 @@ export const Header: FC<HeaderProps> = ({
           {shouldShowCredentialsAction &&
             !isCredentialsActionPrimary &&
             renderCredentialsButton(NeutralButton)}
-          {promotedManageAction
-            ? renderPromotedManageAction(promotedManageAction)
-            : (manageItems.length > 0 || isUnpublishPending) &&
-              renderManageMenu()}
+          {!isUnpublishPending &&
+            (promotedManageAction
+              ? renderPromotedManageAction(promotedManageAction)
+              : manageItems.length > 0 && renderManageMenu())}
         </div>
       )}
     </div>

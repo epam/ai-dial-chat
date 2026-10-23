@@ -1,3 +1,7 @@
 .agentIconBadge {
-  background: var(--di-icon-bg, var(--bg-layer-sunken, #eef1f7));
+  // Vendor logos are often a dark glyph on transparency; a dark theme lightens the plate via `--bg-entity-icon`.
+  background: var(
+    --di-icon-bg,
+    var(--bg-entity-icon, var(--bg-layer-sunken, #eef1f7))
+  );
 }

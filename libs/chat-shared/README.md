@@ -33,7 +33,7 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 
 ## Peer Dependencies
 
-`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.16.0-dev.20`) are the mandatory peers,
+`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.16.0-dev.35`) are the mandatory peers,
 required by every entry point below. The markdown stack is **not** a peer any more: the root
 entry imports it unconditionally, so this package installs it itself and a consumer never
 names it.
@@ -48,7 +48,7 @@ entry's own imports.
 Peers:
 
 - `react` ^19.2.8
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.20
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.35
 - `@epam/ai-dial-react-file-manager` ^0.4.0-dev.11 \*
 - `ag-grid-community` ^35.3.0 \*
 
@@ -340,6 +340,14 @@ A `Warning` job delivered its file, but not everything the user asked for made i
 
 Warning jobs may also carry `warningNames?: string[]`: untranslated names of skipped attachments. Import jobs retain the same unique names emitted in their warning event so hosts can identify the skipped files after the notification disappears. Names are optional for compatibility with export jobs and older producers.
 
+### ConversationKind
+
+What a conversation is: `ConversationKind.Chat` (`'chat'`) or `ConversationKind.Task` (`'task'`, the run of a scheduled task). The headless items hook sets it on each panel item and the conversation panel's type filter reads it.
+
+```tsx
+import { ConversationKind } from '@epam/ai-dial-chat-shared';
+```
+
 ### FilterTab
 
 Canonical conversation ownership/grouping identifiers shared by the headless mapping hooks and the conversation panel. `@epam/ai-dial-conversation-panel` re-exports the same enum for compatibility.
@@ -622,12 +630,12 @@ import { TableHeader } from '@epam/ai-dial-chat-shared';
 
 ### DeploymentIcon
 
-Renders the icon associated with a deployment entity.
+Renders a deployment's icon inside a rounded badge, falling back to the initials of `initialsName` (or a custom `fallback`) when `src` is absent or fails to load. The badge background resolves `styles.colors.background`, then the `--bg-entity-icon` theme token, then `--bg-layer-sunken` — a dark theme sets `--bg-entity-icon` to a light value so a dark, transparent vendor logo stays visible.
 
 ```tsx
 import { DeploymentIcon } from '@epam/ai-dial-chat-shared';
 
-<DeploymentIcon deployment={deployment} size={24} />;
+<DeploymentIcon src={iconUrl} size={24} initialsName="GPT-4o" />;
 ```
 
 ### InitialsAvatar
@@ -642,19 +650,26 @@ import { InitialsAvatar } from '@epam/ai-dial-chat-shared';
 
 ### PanelEmptyState
 
-Generic empty-state placeholder used inside panels. Without `icon` it shows the
-kit's default `NoDataContent` document mark; pass a decorative feature
-illustration to replace it.
+Generic empty-state placeholder used inside panels, built on the kit's
+`NoDataContent`: an illustration, a title (`label`), an optional `description`
+and an optional `action`. Without `icon` it shows the kit's default empty-state
+illustration, which every panel shares. Follow the Patterns 2.0 wording:
+"No [entities] yet" / "[Entities] will appear here once [condition]." for an
+empty list, and "No [entities] found" / "Try a different search term or check
+your filters." after a search or filter.
 
 ```tsx
 import { PanelEmptyState } from '@epam/ai-dial-chat-shared';
-import { IconClockHour3 } from '@tabler/icons-react';
-
-<PanelEmptyState label="No conversations" />;
 
 <PanelEmptyState
-  label="No scheduled tasks yet"
-  icon={<IconClockHour3 size={48} stroke={1} aria-hidden />}
+  label="No chats yet"
+  description="Chats will appear here once you start one."
+/>;
+
+<PanelEmptyState
+  label="No chats found"
+  description="Try a different search term or check your filters."
+  live
 />;
 ```
 
@@ -810,7 +825,8 @@ Pass `identity` to replace the default card for a resource that has no
 (such as the names a bulk action affects), and `children` for a step that needs an input before it can
 be confirmed — the caller owns that input's state and disables confirming
 until it is satisfied. With neither `item` nor `identity` the card is omitted,
-which suits a confirmation that is not about a particular resource.
+which suits a confirmation that is not about a particular resource. `className`
+is merged onto the view root, e.g. `pt-0` to drop its default top padding.
 
 ### ConfirmationFooter
 
@@ -871,7 +887,11 @@ click all stop working, because dismissing mid-request would leave the surface
 behind contradicting an action that is still running.
 
 `title` is a string rather than a node so the kit names the dialog with it; a
-node header would open the dialog unnamed.
+node header would open the dialog unnamed. `viewClassName` is merged onto the
+content view root and `footerStyles` is forwarded to the action row — e.g.
+`viewClassName="pt-0"` with `footerStyles={{ colors: { border: 'transparent' } }}`
+drops the content view's top padding and the action row's top border, as the
+scheduled-task delete modal does.
 
 ```tsx
 import { ConfirmationDialog } from '@epam/ai-dial-chat-shared';

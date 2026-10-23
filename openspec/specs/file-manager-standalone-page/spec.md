@@ -59,7 +59,7 @@ Specifies the standalone `/files` route: its registration (`apps/chat/src/types/
 
 - Renders `DialFileManagerShell` fed by the composer's result, including its `sectionTab`. Below the `desktop` band (1279px and narrower) the shell fills the full page with no additional chrome.
 - From 1280px the page frames the shell: the page title `t('dialFileManager.page.title')` as its `h1` in a header row that uses `PAGE_HEADER_ROW_CLASS` (`apps/chat/src/constants/layout.ts`), 32px of horizontal margin, and the shell inside a raised `bg-layer-raised` card with 20px of inner padding. The frame is the same in both navigation layouts.
-- For `DialFileManagerVariant.Standalone`, the shell paints its content wrapper and `<DialFileManager>` (search, grid and the rest of the right-hand area) with `--dfms-surface`, which defaults to `--bg-layer-base` (`DialFileManagerShellStyles.colors.surface` overrides it). From 1280px the page sets `--dfms-surface: transparent` on a wrapper around the shell, so they are transparent inside the card. The attach modal keeps `bg-layer-sunken`.
+- For `DialFileManagerVariant.Standalone`, the shell paints its content wrapper and `<DialFileManager>` (search, grid and the rest of the right-hand area) with `--dfms-surface`, which defaults to `--bg-layer-base` (`DialFileManagerShellStyles.colors.surface` overrides it). From 1280px the page sets `--dfms-surface: transparent` on a wrapper around the shell, so they are transparent inside the card. The attach modal keeps `bg-layer-sunken`. The folders panel is divided from the grid by a line on its inline-end edge (`border-e border-tertiary`, no shadow), and the grid is a flat table: the shell passes `gridOptions` with `containerClassName: 'rounded-none shadow-none'`, `filterable: false` and `withoutHeaderBorders: true`.
 - `treeHeaderByTab[All]` is `t(DialFileManagerI18nKeys.MyFilesTreeHeader)`.
 - Clears the grid selection whenever the active tab or the composer's `sectionTab` changes.
 - Forwards `maxSelectableFileSize` (for existing-file selection and grid `isRowSelectable`; see `dial-file-manager-attach-validation`) and a translated `oversizedUploadMessage` (built from the i18n key `dialFileManager.uploadFileTooLarge`) to `DialFileManagerShell`. The shell forwards them to `<DialFileManager>` as `maxSelectableFileSize` and as `maxFileSize`/`uploadValidationMessages.oversizedFiles` respectively.
@@ -127,3 +127,12 @@ Specifies the standalone `/files` route: its registration (`apps/chat/src/types/
 
 - **WHEN** the active language is Arabic
 - **THEN** the page flips direction correctly via inherited `dir="rtl"` and logical-property classes, with no visually mirrored physical-class artifacts
+
+### Requirement: The page wires Preview for files
+
+`DialFileManagerPage` SHALL call `useDialFilePreview` with the composer's `items`, the user's `bucket` and the composer's search results, SHALL set `labels.previewLabel` to `t(BasicI18nKeys.Preview)` and SHALL pass `onPreview`, `onTableFileClick` and `previewExtensions` to `DialFileManagerShell`. The behavior behind those props is specified by the `file-manager-preview` capability. The page's exclusions are unchanged: it still renders no attach footer and passes no attach-only props.
+
+#### Scenario: The page passes the preview props to the shell
+
+- **WHEN** `DialFileManagerPage` is rendered
+- **THEN** `DialFileManagerShell` receives `labels.previewLabel`, `onPreview`, `onTableFileClick` and `previewExtensions`

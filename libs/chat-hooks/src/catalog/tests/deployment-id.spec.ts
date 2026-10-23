@@ -65,6 +65,29 @@ describe('findDeploymentByIdOrReference', () => {
     ).toBe(itemWithIdX);
   });
 
+  it('matches an id regardless of percent-encoding', () => {
+    const loopAgent = {
+      id: 'applications/bucket/My%20Loop__1.0',
+    } as DeploymentItemDto;
+    expect(
+      findDeploymentByIdOrReference(
+        [gpt4o, loopAgent],
+        'applications/bucket/My Loop__1.0',
+      ),
+    ).toBe(loopAgent);
+  });
+
+  it('prefers an exact reference match over an encoding-insensitive id match', () => {
+    const encodedItem = { id: 'a%20b' } as DeploymentItemDto;
+    const referencedItem = {
+      id: 'other',
+      reference: 'a b',
+    } as DeploymentItemDto;
+    expect(
+      findDeploymentByIdOrReference([encodedItem, referencedItem], 'a b'),
+    ).toBe(referencedItem);
+  });
+
   it('returns undefined for null, undefined, or empty input', () => {
     expect(findDeploymentByIdOrReference(deployments, null)).toBeUndefined();
     expect(

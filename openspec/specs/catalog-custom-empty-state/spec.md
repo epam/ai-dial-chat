@@ -119,3 +119,17 @@ The `CatalogEmptyStateContext` passed to `renderEmptyState` SHALL reflect `Catal
 
 - **WHEN** a host renders `ListView` directly (not through `Catalog`) with an empty `items` array
 - **THEN** `ListView` renders its existing `PanelEmptyState` exactly as before this change, and `ListViewProps` exposes no new prop
+
+### Requirement: Default empty-state texts name the active tab's entity
+
+`Catalog` SHALL call `titles.noResultsTitle(query, activeTab)` with the resolved active tab, and SHALL accept `titles.emptyTitle` and `titles.emptyDescription` either as a string or as a `(activeTab: string) => string` callback that it calls with the resolved active tab. This lets a host follow the Patterns 2.0 rule "No [entities] yet" / "No [entities] found" / "[Entities] will appear here once [Condition].". `CatalogView` in `apps/chat` passes `getCatalogNoResultsTitle`, `getCatalogEmptyTitle` and `getCatalogEmptyDescription` from `apps/chat/src/utils/catalog.ts`. They resolve the i18n keys `catalog.noResultsEntityTitle`, `catalog.emptyEntityTitle` and `catalog.emptyEntityDescription` with the tab's entity noun, and fall back to `catalog.noResultsTitle`, `catalog.emptyTitle` and `catalog.emptyDescription` for an unknown tab (Issue #9476).
+
+#### Scenario: A search on the Models tab names models
+
+- **WHEN** a search on the Models tab matches nothing
+- **THEN** the default empty state reads "No models found" with "Try a different search term or check your filters."
+
+#### Scenario: An empty Agents tab names agents
+
+- **WHEN** the Agents tab has nothing to show and no search or topic filter is applied
+- **THEN** the default empty state reads "No agents yet" with "Agents will appear here once they are published to the catalog."

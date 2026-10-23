@@ -4,6 +4,7 @@
     "searchPlaceholder": "Search...",
     "clearSearch": "Clear search",
     "noResults": "No results found",
+    "noResultsDescription": "Try a different search term or check your filters.",
     "noData": "No data",
     "organization": "Organization",
     "urlPlaceholder": "https://...",
@@ -113,7 +114,12 @@
       "prompts": "prompts",
       "skills": "skills"
     },
-    "noResultsTitle": "No results for \"{{query}}\"",
+    "noResultsTitle": "No items found",
+    "emptyTitle": "No items yet",
+    "emptyDescription": "Items will appear here once they are published to the catalog.",
+    "noResultsEntityTitle": "No {{entities}} found",
+    "emptyEntityTitle": "No {{entities}} yet",
+    "emptyEntityDescription": "{{entities}} will appear here once they are published to the catalog.",
     "myAppsEmpty": {
       "title": "No personal {{entities}} yet",
       "titleGeneric": "No personal items yet",
@@ -350,7 +356,7 @@
     "noMatchingSkillsLabel": "No matching skills",
     "noSkillsLabel": "No skills available",
     "unsupportedTooltipLabel": "Selected model does not support skills. Remove the skill or select different model to proceed.",
-    "unavailableTooltipLabel": "Selected model does not support skills. Select a different model to use a skill.",
+    "unavailableHintLabel": "Selected model does not support skills. Select a different model to use a skill.",
     "deletedTooltipLabel": "This skill has been deleted. Its details are no longer available.",
     "notSharedTooltipLabel": "You don't have access to this skill, so its details aren't shown. Ask the chat owner to share it with you.",
     "viewDetailsLabel": "View details",
@@ -428,6 +434,9 @@
     },
     "sources": {
       "ariaLabel": "Conversation sources",
+      "emptyTitle": "No files or sources yet",
+      "emptyDescription": "Files and sources from this chat will appear here.",
+      "noResultsTitle": "No files or sources found",
       "downloadAll": "Download all",
       "sections": {
         "uploadedFiles": "Uploaded Files",
@@ -465,11 +474,20 @@
       "open": "Search chats",
       "close": "Close search"
     },
-    "empty": "No conversations yet",
+    "empty": "No chats yet",
+    "emptyDescription": "Chats will appear here once you start one.",
+    "noResults": "No chats found",
+    "sharedEmptyDescription": "Chats other people share with you will show up here.",
     "filter": {
       "all": "All",
       "groupAriaLabel": "Filter chats",
+      "applied": "Filters applied",
       "shared": "Shared",
+      "personal": "Personal",
+      "type": "Type",
+      "origin": "Origin",
+      "chat": "Chat",
+      "task": "Task",
       "pinnedSection": "Pinned",
       "myChatsSection": "My chats"
     },
@@ -609,7 +627,6 @@
     "closeQueueAriaLabel": "Close queue",
     "closeQueueConfirmHeader": "Close queue?",
     "closeQueueConfirmDescriptionInProgress": "Some items are still in progress.",
-    "closeQueueConfirmDescriptionFailed": "Some items have failed.",
     "closeQueueConfirmDescriptionMixed": "Some items are still in progress, and some have failed."
   },
   "conversationImport": {
@@ -665,7 +682,9 @@
     "defaultAgent": "Default agent for new chats",
     "defaultAgentOptionDefault": "Default agent",
     "defaultAgentOptionLastUsed": "Last used agent",
-    "general": "General"
+    "general": "General",
+    "celebrations": "Seasonal celebrations",
+    "celebrationsDescription": "Show holiday decorations and animations on the start page."
   },
   "extensions": {
     "description": "Access additional tools and capabilities through extensions.",
@@ -754,10 +773,11 @@
       "sortNameAZ": "Name A-Z"
     },
     "emptyState": {
-      "label": "No scheduled tasks yet"
+      "label": "No scheduled tasks yet",
+      "description": "Scheduled tasks will appear here once you create one."
     },
     "list": {
-      "noResultsLabel": "No results",
+      "noResultsLabel": "No scheduled tasks found",
       "errorLabel": "Failed to load scheduled tasks",
       "retryLabel": "Retry",
       "loadingMoreLabel": "Loading more scheduled tasks…",
@@ -783,8 +803,8 @@
       "detailsSectionTitle": "Details",
       "detailsSectionSubtitle": "Basic info about this scheduled task",
       "configurationSectionTitle": "Configuration",
-      "configurationSectionSubtitle": "Choose a skill, write custom instructions, or combine both",
-      "runAtLabel": "Run at",
+      "runAtLabel": "Date and time",
+      "runAtPlaceholder": "Pick date and time",
       "runAtRequired": "Choose a future date and time",
       "repeatLabel": "Repeat",
       "repeatOneTime": "One-time",
@@ -794,17 +814,19 @@
       "repeatMonthly": "Monthly",
       "timeLabel": "Time",
       "timeInvalid": "Enter a valid time",
-      "dayOfWeekLabel": "Day of week",
+      "dayOfWeekLabel": "Day",
       "dayOfWeekRequired": "Day of week is required",
       "dayOfMonthLabel": "Day of month",
       "dayOfMonthRequired": "Day of month is required",
       "minuteLabel": "Minutes past the hour",
       "minuteInvalid": "Enter a minute between 0 and 59",
       "startDateLabel": "Start date",
+      "startDateAndTimeLabel": "Start date and time",
       "startDatePlaceholder": "Pick start date",
       "startDateInvalid": "Enter a valid start date",
       "startDateInPast": "Start date cannot be in the past",
       "endDateLabel": "End date",
+      "endDateAndTimeLabel": "End date and time",
       "endDatePlaceholder": "Pick end date",
       "endDateBeforeStartError": "End date must be after start date",
       "endDateInPast": "End date cannot be in the past",
@@ -828,6 +850,7 @@
       "nextRunLabel": "Next run: {{value}}",
       "historyTitle": "History",
       "historyEmptyLabel": "No runs yet",
+      "historyEmptyDescription": "Runs will appear here once the task starts.",
       "historyErrorLabel": "Failed to load history",
       "historyLoadingMoreLabel": "Loading more runs…",
       "historyTodayAt": "today at {{time}}",
@@ -1197,6 +1220,8 @@
     "savingStatus": "Saving",
     "metadataSectionTitle": "Metadata",
     "setupSectionTitle": "Setup",
+    "resizeHandleAriaLabel": "Resize the Metadata and Setup columns",
+    "resizeHandleTooltip": "Drag to resize",
     "nameLabel": "Name",
     "nameRequired": "Name is required",
     "fieldTooLong": "Use {{count}} characters or fewer.",
@@ -1535,7 +1560,12 @@
     "uploadArchiveError": "Couldn't read this archive",
     "uploadArchiveEmpty": "This archive has no files",
     "uploadArchiveExtractingAriaLabel": "Reading archive",
-    "fileSystemDownloadError": "Couldn't copy files from the DIAL file system"
+    "fileSystemDownloadError": "Couldn't copy files from the DIAL file system",
+    "createFolderNamePlaceholder": "Enter folder name",
+    "uploadArchiveFormats": "File format .zip",
+    "uploadConflictTitle": "Replace or duplicate it?",
+    "uploadConflictMessage": "Item with the same name \"{{path}}\" already exists.",
+    "uploadReplaceRowNote": "Will replace the existing file"
   },
   "skillArchiveImport": {
     "fileInputAriaLabel": "Upload a skill ZIP archive or a SKILL.md file",

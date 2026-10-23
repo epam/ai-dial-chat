@@ -78,13 +78,16 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   NoDataContent: ({
     title,
     description,
+    action,
   }: {
     title: React.ReactNode;
     description?: React.ReactNode;
+    action?: React.ReactNode;
   }) => (
     <div>
       <span>{title}</span>
       <span>{description}</span>
+      {action}
     </div>
   ),
 }));
@@ -164,13 +167,20 @@ vi.mock('../../CardGrid/CardGrid', () => ({
     items,
     onItemClick,
     selectedItemId,
+    titles,
   }: {
     items: CatalogItem[];
     onItemClick: (item: CatalogItem) => void;
     selectedItemId?: string;
+    titles?: { noResultsTitle?: string; noResultsDescription?: string };
   }) => (
     <div role="grid" aria-label="catalog grid">
       {items.length} items
+      {items.length === 0 && (
+        <p>
+          {titles?.noResultsTitle} {titles?.noResultsDescription}
+        </p>
+      )}
       {items.map((item) => (
         <button
           key={item.id}
@@ -1359,6 +1369,46 @@ describe('Catalog', () => {
     expect(screen.getByText('Nothing here yet')).toBeTruthy();
     expect(screen.queryByLabelText('catalog grid')).toBeNull();
     expect(screen.queryByText('No items')).toBeNull();
+  });
+
+  it('names the active tab in the empty-state title and description', () => {
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude', { type: CatalogEntityType.Model })]}
+        favorites={[]}
+        activeTab={CatalogEntityType.Agent}
+        titles={{
+          emptyTitle: (tab) => `No ${tab} yet`,
+          emptyDescription: (tab) => `${tab} will appear here.`,
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByText(
+        `No ${CatalogEntityType.Agent} yet ${CatalogEntityType.Agent} will appear here.`,
+      ),
+    ).toBeTruthy();
+  });
+
+  it('passes the active tab to the no-results title', async () => {
+    const noResultsTitle = vi.fn(
+      (query: string, tab: string) => `No ${tab} found for ${query}`,
+    );
+    render(
+      <Catalog
+        items={[makeItem('1', 'Claude', { type: CatalogEntityType.Model })]}
+        favorites={[]}
+        titles={{ noResultsTitle }}
+      />,
+    );
+
+    await userEvent.type(screen.getByPlaceholderText('search'), 'zzz');
+
+    expect(noResultsTitle).toHaveBeenLastCalledWith(
+      'zzz',
+      CatalogEntityType.Model,
+    );
   });
 
   it('renders the personal empty state with a Create button when My Apps has nothing to show', () => {

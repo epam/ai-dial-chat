@@ -9,7 +9,6 @@ import {
   DialFileManagerVariant,
   formatFileSize,
   type DialFileManagerShellLabels,
-  mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
   DialFileManagerTabs,
@@ -27,7 +26,6 @@ import { useDialFileManagerHostOptions } from '../../components/DialFileManagerS
 import { getFileDeleteConfirmTitle } from '../../components/FileDeleteConfirmContent/file-delete-confirm-title';
 import FileDeleteConfirmContent from '../../components/FileDeleteConfirmContent/FileDeleteConfirmContent';
 import { useFileUnshareConfirmation } from '../../components/FileUnshareConfirmation/useFileUnshareConfirmation';
-import { PAGE_HEADER_ROW_CLASS } from '../../constants/layout';
 import {
   BasicI18nKeys,
   ButtonsI18nKeys,
@@ -35,16 +33,17 @@ import {
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
+import { useDialFilePreview } from '../../hooks/files/useDialFilePreview';
 import { useSearchPlaceholderByTab } from '../../hooks/files/useSearchPlaceholderByTab';
 import { useUploadQueueLabels } from '../../hooks/files/useUploadQueueLabels';
 
 /*
- * The folders panel sits next to the app's navigation rail, so it is divided
- * from it by a line on its start edge, like the chats panel, instead of the
- * file manager's default shadow. Width and height repeat that default.
+ * The folders panel sits in the page's card, so it is divided from the grid by
+ * a line on its end edge instead of the file manager's default shadow. Width
+ * and height repeat that default.
  */
 const TREE_PANEL_CLASS_NAME =
-  'h-full min-h-0 w-[360px] shrink-0 border-s border-tertiary bg-layer-raised';
+  'h-full min-h-0 w-[360px] shrink-0 border-e border-tertiary bg-layer-raised';
 
 const DialFileManagerPage: FC = () => {
   const { t } = useTranslation();
@@ -207,6 +206,12 @@ const DialFileManagerPage: FC = () => {
     [t],
   );
 
+  const { onPreview, onFileClick, previewExtensions } = useDialFilePreview(
+    controller.items,
+    bucket,
+    controller.searchResults,
+  );
+
   const uploadQueueLabels = useUploadQueueLabels();
   const searchPlaceholderByTab = useSearchPlaceholderByTab();
 
@@ -286,6 +291,7 @@ const DialFileManagerPage: FC = () => {
       removeAccessLabel: t(DialFileManagerI18nKeys.RemoveAccessAction),
       removingAccessLabel: t(DialFileManagerI18nKeys.RemovingAccessLabel),
       infoLabel: t(DialFileManagerI18nKeys.InfoAction),
+      previewLabel: t(BasicI18nKeys.Preview),
       metadataHeader: t(DialFileManagerI18nKeys.MetadataHeader),
       metadataNameLabel: t(DialFileManagerI18nKeys.MetadataNameLabel),
       metadataPathLabel: t(DialFileManagerI18nKeys.MetadataPathLabel),
@@ -306,10 +312,10 @@ const DialFileManagerPage: FC = () => {
     ],
   );
 
-  /* The shell paints its surface with `--dfms-surface`; the card from the
-     desktop band up is the surface, so the shell goes transparent there. */
+  /* The shell paints its surface with `--dfms-surface`; the page's card is the
+     surface at every width, so the shell goes transparent. */
   const shell = (
-    <div className="contents [--dfms-surface:var(--bg-layer-base)] desktop:[--dfms-surface:transparent]">
+    <div className="contents [--dfms-surface:transparent]">
       <DialFileManagerShell
         hookResult={controller}
         labels={labels}
@@ -323,28 +329,27 @@ const DialFileManagerPage: FC = () => {
         autoSelectUploadedItems={false}
         maxSelectableFileSize={maxAttachmentFileSizeBytes}
         oversizedUploadMessage={oversizedUploadMessage}
+        onPreview={onPreview}
+        onTableFileClick={onFileClick}
+        previewExtensions={previewExtensions}
         treeContainerClassName={TREE_PANEL_CLASS_NAME}
       />
     </div>
   );
 
-  /* From the desktop band up the page is framed: a title, 32px side margins and
-     a raised card with 20px of inner padding, so the manager is not pressed
-     against the navigation. A phone keeps the full-bleed manager. */
+  /* The page is framed at every width: a title, then the manager in a raised
+     card. A phone repeats the desktop frame with tighter spacing (12px margins
+     and 8px card padding instead of 32px and 20px); the side padding sits inside
+     the manager so the grid's shadow is not clipped. */
   return (
     <div className="flex size-full min-h-0 flex-col">
-      <header
-        className={mergeClasses(
-          'hidden items-center px-8 desktop:flex',
-          PAGE_HEADER_ROW_CLASS,
-        )}
-      >
+      <header className="flex min-h-12 items-center px-3 py-1 desktop:min-h-[72px] desktop:px-8 desktop:py-4">
         <h1 className="dial-h1-text m-0 text-primary">
           {t(DialFileManagerI18nKeys.PageTitle)}
         </h1>
       </header>
-      <div className="flex min-h-0 flex-1 flex-col desktop:px-8 desktop:pb-4">
-        <div className="flex min-h-0 flex-1 flex-col desktop:rounded-xl desktop:bg-layer-raised desktop:p-5 desktop:shadow-sm">
+      <div className="flex min-h-0 flex-1 flex-col px-3 pb-3 desktop:px-8 desktop:pb-4">
+        <div className="flex min-h-0 flex-1 flex-col rounded-xl bg-layer-raised py-2 shadow-sm desktop:p-5">
           {shell}
         </div>
       </div>

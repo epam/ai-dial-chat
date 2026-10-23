@@ -30,6 +30,7 @@ import { useCatalogSortFilterPreference } from '../../../hooks/useCatalogSortFil
 import { useUiFeature } from '../../../hooks/useUiFeature';
 import { getDeploymentLimits } from '../../../server-api/deployment-limits';
 import { deletePrompt } from '../../../server-api/prompts.api';
+import { getCatalogUnpublishAccess } from '../../../server-api/publish.api';
 import { deleteSkill } from '../../../server-api/skills.api';
 import { AuthStatus } from '../../../types/auth-status';
 import { UserConfigStatus } from '../../../types/user-config-status';
@@ -85,6 +86,7 @@ vi.mock('../../../server-api/publish.api', async (importOriginal) => ({
   publishCatalogEntity: vi.fn(),
   unpublishCatalogEntity: vi.fn(),
   getCatalogPublishHistory: vi.fn().mockResolvedValue([]),
+  getCatalogUnpublishAccess: vi.fn(),
 }));
 
 vi.mock('../../../server-api/publish-rules.api', () => ({
@@ -722,6 +724,7 @@ describe('CatalogView', () => {
         publicationFilterSources: ['title', 'role', 'dial_roles'],
         maxAttachmentFileSizeBytes: 536_870_912,
         usageLimitsWarningThresholdPercent: 75,
+        celebrationsEnabledByDefault: true,
       },
     });
   });
@@ -894,6 +897,70 @@ describe('CatalogView', () => {
       expect(
         screen.getByLabelText('Publish credentials hint').textContent,
       ).toBe(CatalogI18nKeys.PublishCredentialsHint);
+    });
+  });
+
+  /*
+   * [#9180](https://github.com/epam/ai-dial-chat/issues/9180): the catalog
+   * offers Unpublish when the copy's history resolves a folder, so the
+   * history the app supplies is what decides who sees it.
+   */
+  describe('unpublish wiring', () => {
+    const publicCopy = {
+      id: 'applications/public/Data Science/Revenue bot',
+      type: CatalogEntityType.Agent,
+      name: 'Revenue bot',
+      version: '1.0.0',
+      lastUsed: 'now',
+      description: '',
+      folder: [],
+      topics: [],
+      isMyApp: false,
+    } as CatalogItem;
+
+    it('gives a non-admin who did not publish the copy no folder to unpublish', async () => {
+      vi.mocked(getCatalogUnpublishAccess).mockResolvedValue({
+        canUnpublish: false,
+      });
+      render(<CatalogView />);
+
+      expect(
+        capturedPublishProps.current?.isUnpublishVisible?.(publicCopy),
+      ).toBe(true);
+      await expect(
+        capturedPublishProps.current?.getPublishHistory?.(publicCopy),
+      ).resolves.toEqual([]);
+    });
+
+    it('gives the copy’s publisher its folder', async () => {
+      vi.mocked(getCatalogUnpublishAccess).mockResolvedValue({
+        canUnpublish: true,
+      });
+      render(<CatalogView />);
+
+      await expect(
+        capturedPublishProps.current?.getPublishHistory?.(publicCopy),
+      ).resolves.toHaveLength(1);
+    });
+
+    it('gives an administrator the folder without asking the backend', async () => {
+      vi.mocked(useUser).mockReturnValue({
+        status: AuthStatus.Authenticated,
+        user: {
+          sub: 'admin-1',
+          providerId: 'keycloak',
+          claims: {},
+          isAdmin: true,
+        },
+        refresh: vi.fn(),
+        reset: vi.fn(),
+      });
+      render(<CatalogView />);
+
+      await expect(
+        capturedPublishProps.current?.getPublishHistory?.(publicCopy),
+      ).resolves.toHaveLength(1);
+      expect(getCatalogUnpublishAccess).not.toHaveBeenCalled();
     });
   });
 

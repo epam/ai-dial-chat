@@ -781,6 +781,7 @@ hide-delete-user-message
 hide-edit-user-message
 hide-regenerate-assistant-message
 hide-user-menu
+hide-user-menu-identity
 hide-user-settings
 hide-keyboard-shortcuts
 hide-navigation-menu
@@ -791,8 +792,11 @@ hide-footer-version
 show-agent-description
 disable-input-history-navigation
 hide-conversation-export
+hide-conversation-import
 hide-settings-page
+hide-usage-page
 show-header-logo
+hide-starter-icon
 ```
 
 #### Navigation sidebar
@@ -822,8 +826,18 @@ it — `hide-conversations-filter` removes the filter, `hide-new-conversation`
 removes the New chat item, `hide-user-menu` removes the user menu — the
 sidebar's profile trigger and, on mobile, the same menu in the drawer (the
 earlier mobile sheet ignored this key, so a host that set it still showed the
-menu there) — and `hide-settings-page` removes the Usage link and the Settings
-entry. The sidebar's elements carry their own `dial-navigation-panel-sidebar*` and
+menu there) — `hide-settings-page` removes the Settings entry, and
+`hide-usage-page` removes the Usage link.
+
+`hide-user-menu-identity` keeps the user menu but removes the row at the top
+of its dropdown that repeats the avatar and the user's name, on desktop and in
+the drawer. Settings and Log out stay. Use it when the sidebar trigger already
+shows the name, so the menu would only say it twice. `hide-user-menu` overrides
+it. In the collapsed desktop sidebar the trigger shows the avatar alone, so with
+the key on the user is identified there only by the avatar and its email
+tooltip.
+
+The sidebar's elements carry their own `dial-navigation-panel-sidebar*` and
 `dial-cp-list*` classes; CSS written against `dial-navigation-panel-rail` or
 `dial-sb-aside` does not reach them, so review such overrides before upgrading.
 
@@ -904,12 +918,26 @@ every conversation's row menu, and "Export all" in the conversations panel
 menu. Import and Delete all stay. It hides the entry points only — it does
 not block the export API.
 
-`hide-settings-page` removes the Settings page: the Settings entry in the
-sidebar's user menu, on desktop and mobile. A direct `/settings` URL redirects to `/`. The preferences the
+`hide-conversation-import` removes the Import entry from the conversations
+panel menu. Export all and Delete all stay. Like the export key, it hides the
+entry point only — it does not block the import API.
+
+`hide-settings-page` removes Settings: the Settings entry in the sidebar's
+user menu, on desktop and mobile. A direct `/settings` URL redirects to `/`.
+It no longer affects Usage, which moved out of Settings into its own page. The preferences the
 page edits keep their stored values. Use it when the host owns user
 preferences itself; `hide-user-settings` instead keeps the page and removes
 its controls — language, theme, keyboard shortcuts, and the default agent
 picker.
+
+`hide-usage-page` removes the Usage page: the Usage link in the sidebar
+footer and the "Full usage" link in the usage-limits popover beside the chat
+input. A direct `/usage` URL redirects to `/`. It is independent of the
+backend `USAGE_LIMITS_CONTROL_ENABLED` flag, which decides whether that
+popover's control renders at all.
+
+**Upgrading:** `hide-settings-page` used to hide Usage as well. A host that
+relied on it to hide Usage must add `hide-usage-page`.
 
 `show-header-logo` renders the theme logo in the desktop top bar, centered
 between the conversation-panel and new-chat buttons and the sources toggle, so
@@ -920,6 +948,11 @@ shows it whenever `header` is on; with `header` off, `show-header-logo` still
 renders that header row, carrying only the logo and none of its buttons. The
 mobile header shows the theme's `favicon`, or a smaller full `logo` when the
 theme defines no `favicon`.
+
+`hide-starter-icon` removes the sparkles icon the UI kit renders by default on
+every conversation-starter pill, leaving a label-only button. It does not
+change which starters render, their order, or how `show-all-starters` /
+`starters-below-greeting` lay them out — only the per-pill icon.
 
 `voice-input` additionally adds `microphone` to the iframe's `allow`
 attribute. That attribute is computed once, when `ChatOverlay` is

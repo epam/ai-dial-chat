@@ -306,12 +306,12 @@ const DeploymentSelectorPanel: FC<Props> = ({
               <Highlight
                 text={option.label}
                 query={query}
-                className="dial-small-text min-w-0 !flex-initial"
+                className="dial-small-text min-w-0 flex-initial!"
               />
             ) : (
               <EllipsisTooltip
                 text={option.label}
-                className="dial-small-text min-w-0 !flex-initial"
+                className="dial-small-text min-w-0 flex-initial!"
               />
             )
           }
@@ -368,16 +368,16 @@ const DeploymentSelectorPanel: FC<Props> = ({
                 <Highlight
                   text={item.name}
                   query={query}
-                  className="dial-small-text min-w-0 !flex-initial"
+                  className="dial-small-text min-w-0 flex-initial!"
                 />
               ) : (
                 <EllipsisTooltip
                   text={item.name}
-                  className="dial-small-text min-w-0 !flex-initial"
+                  className="dial-small-text min-w-0 flex-initial!"
                 />
               )}
               {item.version && (
-                <span className="dial-tiny-text min-w-0 break-words text-secondary">
+                <span className="dial-tiny-text min-w-0 wrap-break-word text-secondary">
                   {item.version}
                 </span>
               )}

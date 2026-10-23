@@ -26,6 +26,15 @@ vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
   };
 });
 
+const { mockUseDialFilePreview, mockOnFileClick } = vi.hoisted(() => ({
+  mockUseDialFilePreview: vi.fn(),
+  mockOnFileClick: vi.fn(),
+}));
+
+vi.mock('../../../hooks/files/useDialFilePreview', () => ({
+  useDialFilePreview: mockUseDialFilePreview,
+}));
+
 vi.mock('../../../context/NotificationContext', () => ({
   useNotification: () => createNotificationContextValue(vi.fn()),
 }));
@@ -92,11 +101,15 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       uploadValidationMessages,
       selectedPaths,
       onSelectedPathsChange,
+      onTableFileClick,
       className,
     }: {
       items?: { path: string }[];
       gridOptions?: {
         actionLabels?: Partial<Record<DialFileManagerActions, string>>;
+        containerClassName?: string;
+        filterable?: boolean;
+        withoutHeaderBorders?: boolean;
       };
       bulkActionsToolbarOptions?: {
         actionLabels?: Partial<Record<DialFileManagerActions, string>>;
@@ -107,9 +120,16 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       treeOptions?: {
         tabs?: Array<{ value: string; label: string }>;
         activeTab?: string;
+        containerClassName?: string;
       };
       selectedPaths?: Set<string>;
       onSelectedPathsChange?: (paths: Set<string>) => void;
+      onTableFileClick?: (row: {
+        id: string;
+        name: string;
+        path: string;
+        nodeType: DialFileNodeType;
+      }) => void;
       autoSelectUploadedItems?: boolean;
       maxSelectableFileSize?: number;
       maxFileSize?: number;
@@ -121,6 +141,10 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
         aria-label="file manager"
         className={className}
         data-tab-count={treeOptions?.tabs?.length}
+        data-grid-container-class={gridOptions?.containerClassName}
+        data-grid-filterable={String(gridOptions?.filterable)}
+        data-grid-no-header-borders={String(gridOptions?.withoutHeaderBorders)}
+        data-tree-container-class={treeOptions?.containerClassName}
         data-max-selectable-file-size={maxSelectableFileSize}
         data-max-file-size={maxFileSize}
         data-oversized-files-message={uploadValidationMessages?.oversizedFiles}
@@ -186,6 +210,19 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
           }
         >
           Select report
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            onTableFileClick?.({
+              id: 'report.pdf',
+              name: 'report.pdf',
+              path: '/My files/report.pdf',
+              nodeType: DialFileNodeType.ITEM,
+            })
+          }
+        >
+          Click report
         </button>
         <span>{selectedPaths?.size ?? 0} selected</span>
       </div>
@@ -273,9 +310,34 @@ beforeEach(() => {
   mockActiveTab.value = undefined;
   mockFileManagerTabs.value = ['my_files', 'shared', 'organization'];
   mockUseDialFileManager.mockReturnValue(defaultHookResult);
+  mockUseDialFilePreview.mockReturnValue({
+    onPreview: vi.fn(),
+    onFileClick: mockOnFileClick,
+    previewExtensions: [],
+  });
 });
 
 describe('DialFileManagerPage', () => {
+  it('gives the preview hook the listing, the bucket and the search results', () => {
+    render(<DialFileManagerPage />);
+
+    expect(mockUseDialFilePreview).toHaveBeenCalledWith(
+      defaultHookResult.items,
+      'test-bucket',
+      defaultHookResult.searchResults,
+    );
+  });
+
+  it('opens a clicked file through the preview hook', async () => {
+    render(<DialFileManagerPage />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Click report' }));
+
+    expect(mockOnFileClick).toHaveBeenCalledWith(
+      expect.objectContaining({ path: '/My files/report.pdf' }),
+    );
+  });
+
   it('renders the shell with items from the hook result', () => {
     render(<DialFileManagerPage />);
     expect(screen.getByRole('region', { name: 'file manager' })).toBeTruthy();
@@ -510,7 +572,35 @@ describe('DialFileManagerPage — page frame', () => {
     ).toBeTruthy();
   });
 
-  it('sets the shell surface to the base layer on a phone and transparent inside the desktop card', () => {
+  it('shows the page title on a phone too, with the design 12px/4px padding', () => {
+    render(<DialFileManagerPage />);
+
+    const classes = screen.getByRole('banner').className.split(' ');
+    expect(classes).toContain('flex');
+    expect(classes).not.toContain('hidden');
+    expect(classes).toContain('px-3');
+    expect(classes).toContain('py-1');
+  });
+
+  it('frames the manager in a raised card on a phone too, with tighter spacing than desktop', () => {
+    render(<DialFileManagerPage />);
+
+    /* eslint-disable testing-library/no-node-access */
+    const card = screen.getByRole('region', { name: 'file manager' })
+      .parentElement?.parentElement?.parentElement;
+    /* eslint-enable testing-library/no-node-access */
+    const classes = card?.className.split(' ') ?? [];
+    expect(classes).toEqual(
+      expect.arrayContaining([
+        'rounded-xl',
+        'bg-layer-raised',
+        'py-2',
+        'desktop:p-5',
+      ]),
+    );
+  });
+
+  it('makes the shell surface transparent at every width so the card is the surface', () => {
     render(<DialFileManagerPage />);
 
     /* The surface is a CSS variable set on the wrapper around the shell; neither
@@ -519,11 +609,25 @@ describe('DialFileManagerPage — page frame', () => {
     const wrapper = screen.getByRole('region', { name: 'file manager' })
       .parentElement?.parentElement;
     /* eslint-enable testing-library/no-node-access */
+    expect(wrapper?.classList.contains('[--dfms-surface:transparent]')).toBe(
+      true,
+    );
+  });
+
+  it('divides the folders panel from the grid with a line on its end edge and makes the grid a flat table without shadow, filters or header borders', () => {
+    render(<DialFileManagerPage />);
+
+    const manager = screen.getByRole('region', { name: 'file manager' });
+    const treeClasses = (
+      manager.getAttribute('data-tree-container-class') ?? ''
+    ).split(' ');
+    expect(treeClasses).toContain('border-e');
+    expect(treeClasses).not.toContain('border-s');
+    expect(treeClasses).not.toContain('shadow-sm');
     expect(
-      wrapper?.classList.contains('[--dfms-surface:var(--bg-layer-base)]'),
-    ).toBe(true);
-    expect(
-      wrapper?.classList.contains('desktop:[--dfms-surface:transparent]'),
-    ).toBe(true);
+      (manager.getAttribute('data-grid-container-class') ?? '').split(' '),
+    ).toEqual(expect.arrayContaining(['shadow-none', 'rounded-none']));
+    expect(manager.getAttribute('data-grid-filterable')).toBe('false');
+    expect(manager.getAttribute('data-grid-no-header-borders')).toBe('true');
   });
 });

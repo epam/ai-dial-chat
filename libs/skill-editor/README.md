@@ -46,7 +46,7 @@ import '@epam/ai-dial-skill-editor/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.16.0-dev.20`
+- `@epam/ai-dial-ui-kit` `^0.16.0-dev.35`
 - `@epam/ai-dial-react-file-manager` `^0.4.0-dev.11`
 - `@epam/ai-dial-chat-shared` `*`
 
@@ -159,7 +159,7 @@ capability is supplied:
 
 | Entry                      | Requires                         | Behaviour                                                                                                             |
 | -------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Create folder              | `fileActions.onCreateFolder`     | Inline-named draft folder; confirmed names reach `onCreateFolder(path)`                                               |
+| Create folder              | `fileActions.onCreateFolder`     | Inline-named draft folder on desktop, a Create folder dialog on mobile; confirmed names reach `onCreateFolder(path)`  |
 | Upload files from device   | —                                | Opens the upload dialog (`SkillFileUploadMode.Files`)                                                                 |
 | Upload archive from device | `fileActions.extractArchive`     | Opens the upload dialog in `SkillFileUploadMode.Archive`; each `.zip` is expanded by the host and staged              |
 | Open DIAL file system      | `fileActions.pickFromFileSystem` | Awaits the host picker; resolved `SkillFileSourceEntry[]` open the upload dialog pre-staged (`undefined` = cancelled) |
@@ -170,12 +170,27 @@ entries, that folder. Staged paths are prefixed with it. Files
 from every source go through `fileActions.validateBatch` and
 `fileActions.commitBatch`, so per-file errors look the same whatever the source.
 
-An inline folder name is rejected when it is empty, contains `/` or `\`, is
+On mobile, Create folder opens a dialog with a required Name field instead of a
+tree draft; the same rules apply, shown under the field once Create is pressed.
+
+A folder name is rejected when it is empty, contains `/` or `\`, is
 `.`/`..`, or matches a sibling (or `SKILL.md` at the root); after that,
 `fileActions.validateFolderPath` may reject it with a host message. The library
 treats a folder as a plain node in `files` whether or not anything is under it;
 persisting it is the host's concern. The DIAL Chat host keeps an empty folder
 across Save and reload through a storage marker the library never sees.
+
+An upload whose path already holds a supporting file (never `SKILL.md`, which
+is a metadata import) is not staged straight away: the dialog first asks
+**Replace** or **Duplicate**, one file at a time. Replace stages it with
+`replacesExisting: true` on its `SkillFileUploadCandidate`, so the host
+validates and commits it as an overwrite; Duplicate stages it as the first free
+`name (n).ext` beside the original; Cancel drops it. Pass the dialog nothing
+extra — the editor reads the existing paths from `files`.
+
+Below the `desktop` breakpoint the upload, Replace-or-duplicate and Create
+folder dialogs render as a ui-kit `BottomSheet` with Confirm and Cancel pinned
+at the bottom; on desktop they stay a centred `Popup`.
 
 **Delete** removes the node (a folder with everything under it) immediately,
 with no confirmation, and calls `fileActions.onRemoveNode(path)`. The library
@@ -212,7 +227,9 @@ move to a fixed bottom bar. The primary button reads `labels.createLabel`
 label there.
 
 On mobile the column stacks the Files pane as a collapsed "Editing file"
-accordion, then the selected file. Its heading is `SKILL.md` for the manifest,
+card — the caption, the selected file's type icon and name, and a down caret —
+which expands in place to show the Files heading, the Add menu and the tree,
+then the selected file. Its heading is `SKILL.md` for the manifest,
 or `labels.selectedFileHeading(name)` for a supporting file; Name and
 Description show only while `SKILL.md` is selected. `submitError` and
 `conflict` (with its "Reload latest" action) render in a `role="alert"` region
@@ -250,13 +267,21 @@ file-tree entries are `addLabel`, `createFolderLabel`, `uploadFilesLabel`,
 `folderNameDuplicateError`, and the archive dialog's
 `uploadArchiveDialogTitle`, `uploadArchiveDropZoneLabel`,
 `uploadArchiveDropZoneMobileLabel`, `uploadArchiveErrorMessage`,
-`uploadArchiveEmptyMessage` and `uploadArchiveExtractingAriaLabel`.
+`uploadArchiveEmptyMessage` and `uploadArchiveExtractingAriaLabel`. The
+optional `uploadDropZoneDescription` and `uploadArchiveDropZoneDescription` add
+a second drop-zone line (e.g. accepted formats) and are hidden when unset. The
+Replace-or-duplicate step reads `uploadConflictTitle`,
+`uploadConflictMessage(path)`, `uploadConflictReplaceLabel`,
+`uploadConflictDuplicateLabel`, `uploadConflictConfirmLabel` and
+`uploadReplaceRowNote`; the mobile Create folder dialog reads
+`createFolderNameLabel`, `createFolderNamePlaceholder`,
+`createFolderConfirmLabel` and `createFolderCloseAriaLabel`.
 `styles.typography.menuIconClassName`
 colors the Add-menu icons (`'text-secondary'` by default);
 the Delete entry renders as a danger (red) item, and `removeIconClassName`
 overrides its icon color.
 
-`styles.colors` (`SkillEditorColors`) overrides the heading, Instructions-label, and border colors as CSS custom properties, falling back to this app's theme tokens (`--text-primary`, `--text-secondary`, `--stroke-tertiary`) and then to a hard-coded hex when no theme is present:
+`styles.colors` (`SkillEditorColors`) overrides the heading, Instructions-label, and border colors, plus the mobile "Editing file" card's `filesCardBackground` and `filesCardBorder` and the mobile upload and create-folder sheet footer's `dialogFooterBackground` and `dialogFooterBorder`, as CSS custom properties, falling back to this app's theme tokens (`--text-primary`, `--text-secondary`, `--stroke-tertiary`, `--bg-layer-base`, `--bg-layer-raised`) and then to a hard-coded hex when no theme is present. `styles.typography.editingFileLabelClassName` (`'dial-tiny-lead-text'`) and `editingFileNameClassName` (`'dial-small-text'`) set the card's caption and file-name type:
 
 ```tsx
 <SkillEditor

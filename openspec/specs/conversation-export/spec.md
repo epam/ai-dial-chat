@@ -41,13 +41,25 @@ Envelope building is owned by pure helpers in `libs/chat-hooks/src/conversation/
 
 The system SHALL let a user export one conversation, without attachments, from the conversation's context menu. `useConversationExport` (`libs/chat-hooks/src/conversation/useConversationExport/useConversationExport.ts`, exported from `@epam/ai-dial-chat-hooks/conversation-transfer`) SHALL fetch the full conversation through the injected generated-client operation `ConversationsApi.getConversation({ path })`, where `path` comes from the host's `normalizeConversationPath(conversationId)`. A `429` response SHALL be retried up to 5 attempts, waiting `Retry-After` seconds when present and otherwise `2000 ms × attempt`. The conversation is serialized into the JSON v5 envelope, wrapped in a `Blob` of type `application/json`, and downloaded with `triggerBlobDownload(blob, filename)` from `@epam/ai-dial-chat-shared` (`libs/chat-shared/src/utils/file-download.ts`); no new `<a download>` is hand-rolled. Like every other export mode, this path SHALL create a queue job (see the export-queue requirement) so the user has one consistent place to see the status of every export they trigger, even ones that complete almost immediately. The downloaded file SHALL be named per the file-naming requirement.
 
-Because this mode ships no attachment bytes, the system SHALL remove every attachment reference from the exported conversation — `custom_content.attachments`, each stage's `attachments`, and each annotation's `body.source` (the cited document), keeping the annotation's quote, title and target. A kept reference is a `files/{bucket}/{path}` id in the exporting user's bucket: the importing user either cannot read it (403 on every preview) or, re-importing their own file, gets back the very attachments the mode excluded (issues #8663, #9003).
+Because this mode ships no attachment bytes, the system SHALL remove every attachment reference from the exported conversation — `custom_content.attachments`, each stage's `attachments`, each message annotation's `body.source` (the cited document), and the `body.source` of each entry in the conversation-level citation pool `customViewState.annotations` (see the `conversation-custom-view-state` capability) — keeping each annotation's quote, title and target. Every other `customViewState` key SHALL be kept verbatim. The pool is untrusted persisted JSON: when `customViewState.annotations` is not an array, it SHALL be left as it is, and a `null` or non-object entry in it SHALL be kept unchanged rather than thrown on. A kept reference is a `files/{bucket}/{path}` id in the exporting user's bucket: the importing user either cannot read it (403 on every preview) or, re-importing their own file, gets back the very attachments the mode excluded (issues #8663, #9003). A pool reference is not redundant with the message citation it was copied from: once the message citation loses its source, the citation renderer resolves the same `<cit>` from the pool, so a pool reference left behind is still opened.
 
 #### Scenario: Without-attachments export carries no attachment references
 
 - **GIVEN** a conversation whose messages carry attachments, stage attachments, and a citation with a source document
 - **WHEN** the user chooses Export → "without attachments"
 - **THEN** the downloaded `.json` contains no `files/…` reference to any of them, and the citation keeps its quote
+
+#### Scenario: Pool citation sources are stripped too
+
+- **GIVEN** a conversation whose `customViewState` is `{ annotations: [<html_tag citation citing files/{bucket}/a.pdf>], layout: 'wide' }`
+- **WHEN** the user chooses Export → "without attachments", or "Export all conversations"
+- **THEN** the exported pool entry has no `body.source`, keeps its quote, title and target, and `customViewState.layout` is still `'wide'`
+
+#### Scenario: A malformed pool does not break export
+
+- **GIVEN** a conversation whose `customViewState.annotations` is a string, or an array containing `null`
+- **WHEN** the conversation is exported without attachments
+- **THEN** the export succeeds and the malformed value or entry is carried through unchanged
 
 #### Scenario: Single JSON export downloads immediately
 
@@ -65,7 +77,9 @@ Because this mode ships no attachment bytes, the system SHALL remove every attac
 
 ### Requirement: Export a single conversation with attachments as a `.dial` ZIP
 
-The system SHALL let a user export one conversation, with attachments, producing a `.dial` ZIP archive (built with `fflate`) that contains the conversation's JSON v5 envelope plus every referenced attachment file. The set of referenced files SHALL be collected from every place a message can carry one — `custom_content.attachments`, the attachments of each entry in `custom_content.stages` (how an agent returns a generated file), and the `body.source.attachment` of each entry in `custom_content.annotations` (a citation source document) — reading both `url` and `reference_url`, mirroring the set the backend share flow grants access to. A trailing `#…` display anchor (e.g. a PDF `#page=N`) SHALL be stripped before a reference is resolved to `{bucket, path}`, since it is not part of the stored resource path. Each attachment SHALL be fetched through the injected generated-client operation `FilesApi.downloadFileRaw({ bucket, path })` (the existing `GET /api/v1/files/download` endpoint), and placed inside the archive under a `res/<relative-path>/<filename>` layout. Attachment fetches SHALL run with a bounded parallelism of at most 5 concurrent requests. This path SHALL create a queue job (see the export-queue requirement) because it is a potentially long operation; the app remains fully usable while it runs. The downloaded file SHALL be named per the file-naming requirement.
+The system SHALL let a user export one conversation, with attachments, producing a `.dial` ZIP archive (built with `fflate`) that contains the conversation's JSON v5 envelope plus every referenced attachment file. The set of referenced files SHALL be collected from every place a conversation can carry one — `custom_content.attachments`, the attachments of each entry in `custom_content.stages` (how an agent returns a generated file), the `body.source.attachment` of each entry in `custom_content.annotations` (a citation source document), and the `body.source.attachment` of each entry in the conversation-level citation pool `customViewState.annotations` — reading both `url` and `reference_url`. Pool entries are visited after every message, and a `null`, non-object or source-less pool entry, or a pool that is not an array, contributes nothing. The pool can reference a file no remaining message references (its entries accumulate and are never removed when a message is deleted or regenerated), and a later turn's `<cit>` resolves through it (issue #9002), so a pool-only file SHALL be bundled like any other. A trailing `#…` display anchor (e.g. a PDF `#page=N`) SHALL be stripped before a reference is resolved to `{bucket, path}`, since it is not part of the stored resource path. Each attachment SHALL be fetched through the injected generated-client operation `FilesApi.downloadFileRaw({ bucket, path })` (the existing `GET /api/v1/files/download` endpoint), and placed inside the archive under a `res/<relative-path>/<filename>` layout. Attachment fetches SHALL run with a bounded parallelism of at most 5 concurrent requests. This path SHALL create a queue job (see the export-queue requirement) because it is a potentially long operation; the app remains fully usable while it runs. The downloaded file SHALL be named per the file-naming requirement.
+
+The backend share flow (`collectConversationResourceUrls` in `apps/chat-api/src/share/utils/share-resource.util.ts`) does not yet visit the pool; export and import cover it regardless, and aligning the share flow is tracked separately.
 
 #### Scenario: ZIP export bundles conversation and attachments
 
@@ -84,6 +98,18 @@ The system SHALL let a user export one conversation, with attachments, producing
 - **GIVEN** a conversation whose assistant turn produced a file inside an execution stage and cites a source document through an annotation
 - **WHEN** the ZIP export runs
 - **THEN** both files are fetched and written under `res/…` alongside the message-level attachments
+
+#### Scenario: A file referenced only by the citation pool is bundled
+
+- **GIVEN** a conversation whose `customViewState.annotations` cites `files/{bucket}/sources/old.pdf` and no message references that file
+- **WHEN** the ZIP export runs
+- **THEN** `old.pdf` is fetched once and written under `res/sources/old.pdf`
+
+#### Scenario: A file cited by both a message and the pool is fetched once
+
+- **GIVEN** a message citation and its pool copy both reference `files/{bucket}/sources/spec.pdf#page=7`
+- **WHEN** the ZIP export runs
+- **THEN** exactly one download is requested for `sources/spec.pdf`
 
 #### Scenario: A reference carrying a display anchor resolves to the file itself
 
@@ -230,7 +256,7 @@ The system SHALL display export progress and history in a non-modal, non-blockin
 
 The panel SHALL support **multiple concurrent export jobs**: starting a new export (single-conversation JSON, single-conversation ZIP, or export-all) while one or more others are still running SHALL add an independent entry rather than replacing or queuing behind the existing one(s); each job's fetch/outcome SHALL be tracked independently — including the single-JSON export, which typically completes almost immediately and so appears in the panel only briefly before settling to success.
 
-Each in-progress row SHALL show an indeterminate kit `Spinner` (accessible name from `labels.itemProgressAriaLabel(fileName)`); a row never renders its own percentage. While the queue is **collapsed** and at least one job is in progress, the kit SHALL render one aggregate `ProgressBar` in place of the rows. Its value is the unweighted mean of the items' `percent` (each job's `progress.percent`; see `conversation-transfer-progress`), and its `aria-valuetext` comes from `labels.queueProgressValueText(settled, total)`. No aggregate bar is shown while the queue is expanded. The panel header SHALL contain a count-based title composed by the app (`"Exporting 1 file"` / `"Exporting 3 files"`), a collapse/expand toggle that hides or shows the individual job rows without removing the panel itself, a panel-level close control that clears the whole queue (see the dismissal requirement below), and, when at least one job has failed, a failed-count badge.
+Each in-progress row SHALL show an indeterminate kit `Spinner` (accessible name from `labels.itemProgressAriaLabel(fileName)`); a row never renders its own percentage. While the queue is **collapsed** and at least one job is in progress, the kit SHALL render one aggregate `ProgressBar` in place of the rows. Its value is the unweighted mean of the items' `percent` (each job's `progress.percent`; see `conversation-transfer-progress`), and its `aria-valuetext` comes from `labels.queueProgressValueText(settled, total)`. No aggregate bar is shown while the queue is expanded. The panel header SHALL contain a count-based title composed by the app (`"Exporting 1 file"` / `"Exporting 3 files"`), a collapse/expand toggle that hides or shows the individual job rows without removing the panel itself, and a panel-level close control that clears the whole queue (see the dismissal requirement below). The header carries no failed-count badge; each failed row reports its own failure through its error icon and reason.
 
 Each job SHALL be one of five states (`ConversationTransferJobStatus` in `libs/chat-shared/src/models/conversation-transfer.ts`): **in progress**, **success**, **warning**, **failed**, or **canceled**. **Warning** means the file was delivered but is incomplete: a with-attachments export that skipped an attachment settles as `Warning` at 100%. Its row shows an amber warning icon whose tooltip and accessible name give the reason (`ConversationExportI18nKeys.WarningAttachmentSkipped`). Each job SHALL render as its own row identified by the **file name** the export writes, with a leading file-type icon and state-appropriate controls (see the requirements below for exactly which controls appear per state). The conversation title and source-folder breadcrumb SHALL NOT appear in a row.
 
@@ -300,15 +326,15 @@ An **in-progress** job row SHALL expose a per-row cancel control, revealed on ro
 
 #### Scenario: The panel-level close clears the whole queue
 
-- **GIVEN** every job in the queue has settled as success, warning, or canceled, with none in progress or failed
+- **GIVEN** every job in the queue has settled as success, warning, failed, or canceled, with none in progress
 - **WHEN** the user activates the panel-level close control in the header
-- **THEN** every job is removed immediately (no confirmation), any still-in-progress request is aborted, and the panel disappears
+- **THEN** every job is removed immediately (no confirmation) and the panel disappears
 
 ---
 
 ### Requirement: Confirming panel-level close when work would be lost
 
-Activating the panel-level close control SHALL clear the queue immediately, without confirmation, when no job is in progress or failed (every job is success, warning, or canceled) — a canceled job represents work the user already chose to stop, so nothing further is lost. If at least one job is still **in progress** or has **failed**, activating the panel-level close control SHALL first show the `TransferQueue` component's own `ConfirmationPopup` (danger variant, `role="dialog"`) asking the user to confirm. Its description is `closeConfirmDescriptionInProgress`, `closeConfirmDescriptionFailed` or `closeConfirmDescriptionMixed`, depending on which of those states are present. Confirmation is needed because closing would abort in-progress work or discard the record of a failure the user has not yet acknowledged. Confirming clears the queue exactly as described above; cancelling the confirmation dismisses only the dialog and leaves the queue untouched. This confirmation is the one deliberate, user-triggered exception to the panel's otherwise non-modal design (see the queue-panel requirement above), and it is rendered by the kit component itself, driven by the `labels` object the app supplies.
+Activating the panel-level close control SHALL clear the queue immediately, without confirmation, when no job is in progress (every job is success, warning, failed, or canceled) — a settled job, failed ones included, has no work left to lose. If at least one job is still **in progress**, activating the panel-level close control SHALL first show the `TransferQueue` component's own `ConfirmationPopup` (danger variant, `role="dialog"`) asking the user to confirm, because closing would abort that work. Its description is `closeConfirmDescriptionMixed` when the queue also holds a failed job, and `closeConfirmDescriptionInProgress` otherwise. Confirming clears the queue exactly as described above; cancelling the confirmation dismisses only the dialog and leaves the queue untouched. This confirmation is the one deliberate, user-triggered exception to the panel's otherwise non-modal design (see the queue-panel requirement above), and it is rendered by the kit component itself, driven by the `labels` object the app supplies.
 
 #### Scenario: Closing an all-succeeded queue needs no confirmation
 
@@ -322,11 +348,23 @@ Activating the panel-level close control SHALL clear the queue immediately, with
 - **WHEN** the user activates the panel-level close control
 - **THEN** the queue is cleared immediately and no confirmation dialog appears
 
-#### Scenario: Closing a queue with in-progress or failed work asks for confirmation
+#### Scenario: Closing a queue whose only unfinished work failed needs no confirmation
 
-- **GIVEN** the queue contains at least one job that is in progress or failed
+- **GIVEN** the queue contains a failed job and no job in progress
+- **WHEN** the user activates the panel-level close control
+- **THEN** the queue is cleared immediately and no confirmation dialog appears
+
+#### Scenario: Closing a queue with in-progress work asks for confirmation
+
+- **GIVEN** the queue contains at least one job that is in progress
 - **WHEN** the user activates the panel-level close control
 - **THEN** a confirmation dialog appears and the queue is not yet cleared
+
+#### Scenario: Running and failed work together use the mixed description
+
+- **GIVEN** the queue contains one job in progress and one failed job
+- **WHEN** the user activates the panel-level close control
+- **THEN** the confirmation dialog's description is `closeConfirmDescriptionMixed`
 
 #### Scenario: Confirming the close clears the queue
 

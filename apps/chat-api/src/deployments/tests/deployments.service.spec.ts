@@ -22,6 +22,7 @@ describe('DeploymentsService facade', () => {
       getDeploymentDetails: vi.fn().mockResolvedValue('details-get'),
       getDeploymentConfiguration: vi.fn().mockResolvedValue('details-config'),
       getDeploymentLimits: vi.fn().mockResolvedValue('details-limits'),
+      getDeploymentUsage: vi.fn().mockResolvedValue('details-usage'),
       getUserLimits: vi.fn().mockResolvedValue('details-user-limits'),
       getUserUsage: vi.fn().mockResolvedValue('details-user-usage'),
       invalidateDetailsCache: vi.fn().mockResolvedValue(undefined),
@@ -127,6 +128,18 @@ describe('DeploymentsService facade', () => {
       'token',
     );
     expect(result).toBe('details-limits');
+  });
+
+  it('delegates getDeploymentUsage to DeploymentsDetailsService', async () => {
+    const { service, detailsService } = makeService();
+
+    const result = await service.getDeploymentUsage('gpt-4o', 'token');
+
+    expect(detailsService.getDeploymentUsage).toHaveBeenCalledWith(
+      'gpt-4o',
+      'token',
+    );
+    expect(result).toBe('details-usage');
   });
 
   it('delegates getUserLimits to DeploymentsDetailsService', async () => {

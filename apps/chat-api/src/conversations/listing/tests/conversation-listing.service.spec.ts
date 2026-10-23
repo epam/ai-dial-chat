@@ -1,6 +1,7 @@
 import { BadGatewayException, NotFoundException } from '@nestjs/common';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { handleDialSdkError } from '../../../common/dial/dial-error.mapper';
+import { safeDecodeURIComponent } from '../../../common/utils/uri';
 import type { DialClientService } from '../../../dial/dial-client.service';
 import { ConversationPersistenceService } from '../../persistence/conversation-persistence.service';
 import { ConversationListingService } from '../conversation-listing.service';
@@ -192,7 +193,7 @@ describe('ConversationListingService', () => {
         mockScheduledTaskUnreadService.getViewedIds,
       ).toHaveBeenCalledOnce();
       expect(mockDialClient.client.getSharedResources).toHaveBeenCalledOnce();
-      expect(mockDialClient.client.getConversation).toHaveBeenCalledTimes(20);
+      expect(mockDialClient.client.getConversation).toHaveBeenCalledTimes(1001);
     });
 
     it('follows public cursors independently and continues through empty pages', async () => {
@@ -317,8 +318,8 @@ describe('ConversationListingService', () => {
       ).toHaveLength(2);
     });
 
-    it('enriches display names for at most the most recently updated owned items', async () => {
-      const items = Array.from({ length: 25 }, (_, index) => ({
+    it('enriches the display name of every owned item, however old', async () => {
+      const items = Array.from({ length: 60 }, (_, index) => ({
         url: `conversations/bucket/conv-${index}`,
         nodeType: 'FILE' as const,
         updatedAt: index,
@@ -333,10 +334,57 @@ describe('ConversationListingService', () => {
 
       await service.listConversations('test-token', 'test-bucket');
 
-      expect(getConversationSpy).toHaveBeenCalledTimes(20);
+      expect(getConversationSpy).toHaveBeenCalledTimes(60);
+      expect(getConversationSpy).toHaveBeenCalledWith(
+        'bucket',
+        'conv-0',
+        expect.anything(),
+      );
     });
 
-    it('enriches display names per source group so published copies do not starve owned items', async () => {
+    it('lists an older renamed application conversation under the title opening it returns (Issue #9336)', async () => {
+      const filename =
+        'Untitled app 1__0.0.1__Say hello in exactly three words';
+      mockMetadata([
+        {
+          url: `conversations/test-bucket/applications/catalog/${encodeURIComponent(filename)}`,
+          nodeType: 'FILE',
+          name: filename,
+          parentPath: 'applications/catalog',
+          updatedAt: 0,
+        },
+        ...Array.from({ length: 20 }, (_, index) => ({
+          url: `conversations/test-bucket/gpt-4o__recent ${index}`,
+          nodeType: 'FILE',
+          name: `gpt-4o__recent ${index}`,
+          updatedAt: 100 + index,
+        })),
+      ]);
+      vi.spyOn(mockDialClient.client, 'getConversation').mockImplementation(
+        (_bucket: string, path: string) =>
+          Promise.resolve({
+            data: safeDecodeURIComponent(path).includes('Say hello')
+              ? { name: 'Three-Word Greeting', llmNamingDone: true }
+              : { name: 'Stored display title' },
+            response: new Response(null, { status: 200 }),
+          }) as never,
+      );
+
+      const list = await service.listConversations('test-token', 'test-bucket');
+      const opened = await persistenceService.getConversation(
+        `test-bucket/applications/catalog/${filename}`,
+        'test-token',
+        'test-bucket',
+      );
+
+      const listTitle = list.items.find((item) =>
+        item.id.includes('applications'),
+      )?.title;
+      expect(listTitle).toBe('Three-Word Greeting');
+      expect(listTitle).toBe(opened.name);
+    });
+
+    it('enriches display names of owned items and published copies alike', async () => {
       const buildItems = (bucket: string, count: number) =>
         Array.from({ length: count }, (_, index) => ({
           url: `conversations/${bucket}/conv-${index}`,
@@ -353,7 +401,7 @@ describe('ConversationListingService', () => {
 
       await service.listConversations('test-token', 'test-bucket');
 
-      expect(getConversationSpy).toHaveBeenCalledTimes(40);
+      expect(getConversationSpy).toHaveBeenCalledTimes(50);
       expect(getConversationSpy).toHaveBeenCalledWith(
         'test-bucket',
         'conv-24',
@@ -864,7 +912,7 @@ describe('ConversationListingService', () => {
       ]);
     });
 
-    it('tags a public-bucket item created by a scheduled task independently of its own path', async () => {
+    it('lists a published scheduled-task run as an ordinary conversation', async () => {
       mockMetadata(
         [],
         [
@@ -884,14 +932,16 @@ describe('ConversationListingService', () => {
 
       expect(result.items).toEqual([
         expect.objectContaining({
-          isScheduledTask: true,
-          scheduleId: 'sched_pub',
-          runId: 'd8bfff5d-d883-47e8-adc3-8a6afee46411',
+          publishedWithMe: true,
+          isScheduledTask: false,
         }),
       ]);
+      expect(result.items[0]).not.toHaveProperty('scheduleId');
+      expect(result.items[0]).not.toHaveProperty('runId');
+      expect(result.items[0]).not.toHaveProperty('isUnread');
     });
 
-    it('tags a shared item created by a scheduled task using its own resource id', async () => {
+    it('lists a scheduled-task run shared with the user as an ordinary conversation', async () => {
       mockMetadata([]);
       vi.spyOn(mockDialClient.client, 'getSharedResources').mockResolvedValue({
         data: {
@@ -912,12 +962,39 @@ describe('ConversationListingService', () => {
 
       expect(result.items).toEqual([
         expect.objectContaining({
-          isScheduledTask: true,
-          scheduleId: 'sched_shr',
-          runId: 'a1b2c3d4-e5f6-4789-abcd-ef0123456789',
           sharedWithMe: true,
+          isScheduledTask: false,
         }),
       ]);
+      expect(result.items[0]).not.toHaveProperty('scheduleId');
+      expect(result.items[0]).not.toHaveProperty('runId');
+      expect(result.items[0]).not.toHaveProperty('isUnread');
+    });
+
+    it('never marks a shared scheduled-task run unread, even with its path viewed under the caller bucket', async () => {
+      mockMetadata([]);
+      vi.spyOn(mockDialClient.client, 'getSharedResources').mockResolvedValue({
+        data: {
+          resources: [
+            {
+              url: 'conversations/other-bucket/.scheduler/sched_shr/gpt-4o__title__a1b2c3d4-e5f6-4789-abcd-ef0123456789',
+              nodeType: 'FILE',
+            },
+          ],
+        },
+      } as never);
+      mockUserConfigService.getPinnedIds.mockResolvedValue([]);
+      mockScheduledTaskUnreadService.getViewedIds.mockResolvedValue([
+        'conversations/test-bucket/.scheduler/sched_shr/gpt-4o__title__a1b2c3d4-e5f6-4789-abcd-ef0123456789',
+      ]);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items[0].isScheduledTask).toBe(false);
+      expect(result.items[0]).not.toHaveProperty('isUnread');
     });
 
     it('sets isScheduledTask: false with no scheduleId/runId for a normal conversation', async () => {

@@ -1,5 +1,6 @@
 import { BadGatewayException, ForbiddenException } from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { AdminRoleService } from '../../auth/admin-role.service';
 import type { DialClientService } from '../../dial/dial-client.service';
 import { CatalogEntityType } from '../dto/catalog-entity-params.dto';
 import { PublishRuleFunction } from '../dto/publish-rule.dto';
@@ -38,7 +39,11 @@ const makeService = () => {
     },
   } as unknown as DialClientService;
   const cacheManager = makeCacheManager();
-  const service = new PublishService(dialClient, cacheManager as never);
+  const service = new PublishService(
+    dialClient,
+    cacheManager as never,
+    { isAdmin: vi.fn().mockReturnValue(false) } as unknown as AdminRoleService,
+  );
   return { service, dialClient, cacheManager };
 };
 

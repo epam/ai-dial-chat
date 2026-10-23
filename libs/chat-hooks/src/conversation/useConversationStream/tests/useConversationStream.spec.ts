@@ -305,6 +305,248 @@ describe('useConversationStream', () => {
     });
   });
 
+  describe('attach-supplied generation id for a resumed non-background generation', () => {
+    const ATTACH_ID = 'gen-attach';
+    const encoder = new TextEncoder();
+    const userMessage = {
+      role: MessageRole.User,
+      content: 'question',
+      timestamp: 't0',
+    };
+    const placeholder = () =>
+      makeConversation({
+        messages: [
+          userMessage,
+          { role: MessageRole.Assistant, content: '', timestamp: 't1' },
+        ],
+      });
+    const stoppedPartial = () =>
+      makeConversation({
+        messages: [
+          userMessage,
+          {
+            role: MessageRole.Assistant,
+            content: 'Hel',
+            timestamp: 't1',
+            wasStoppedByUser: true,
+          },
+        ],
+      });
+    const snapshotOf = (content: string, generationId?: string) => ({
+      type: 'snapshot',
+      message: { role: MessageRole.Assistant, content, timestamp: 't1' },
+      ...(generationId != null && { generationId }),
+    });
+
+    /** An attach SSE stream the test pushes events into. */
+    const makeAttachStream = () => {
+      let controller!: ReadableStreamDefaultController<Uint8Array>;
+      const stream = new ReadableStream<Uint8Array>({
+        start(streamController) {
+          controller = streamController;
+        },
+      });
+      return {
+        stream,
+        emit: (event: unknown) =>
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify(event)}\n\n`),
+          ),
+        end: () => controller.close(),
+      };
+    };
+
+    const renderResumed = async (initial: Conversation) => {
+      const attach = makeAttachStream();
+      transport.attachToGeneration = vi.fn().mockResolvedValue(attach.stream);
+      const view = renderHook(() =>
+        useHookHarness({
+          transport,
+          conversationId: 'bucket/conv',
+          initialConversation: initial,
+        }),
+      );
+      act(() =>
+        view.result.current.stream.resumeIfAwaitingGeneration(
+          'bucket/conv',
+          initial,
+        ),
+      );
+      await waitFor(() =>
+        expect(view.result.current.stream.isStreaming).toBe(true),
+      );
+      await waitFor(() =>
+        expect(transport.attachToGeneration).toHaveBeenCalled(),
+      );
+      return { ...view, attach };
+    };
+
+    it('offers Stop after the attach snapshot announces an id and sends that id', async () => {
+      const { result, attach } = await renderResumed(placeholder());
+      expect(result.current.stream.canStopStreaming).toBe(false);
+
+      await act(async () => {
+        attach.emit(snapshotOf('Hel', ATTACH_ID));
+      });
+
+      await waitFor(() =>
+        expect(result.current.stream.canStopStreaming).toBe(true),
+      );
+      act(() => result.current.stream.handleStop());
+      expect(transport.stopCompletion).toHaveBeenCalledOnce();
+      expect(transport.stopCompletion).toHaveBeenCalledWith({
+        generationId: ATTACH_ID,
+        path: 'conv',
+        content: 'Hel',
+      });
+    });
+
+    it('settles on the stopped partial after the attach reports stopped', async () => {
+      vi.mocked(transport.getConversation).mockResolvedValue(stoppedPartial());
+      const { result, attach } = await renderResumed(placeholder());
+      await act(async () => {
+        attach.emit(snapshotOf('Hel', ATTACH_ID));
+      });
+      await waitFor(() =>
+        expect(result.current.stream.canStopStreaming).toBe(true),
+      );
+      act(() => result.current.stream.handleStop());
+
+      await act(async () => {
+        attach.emit({ type: 'stopped' });
+      });
+
+      await waitFor(() =>
+        expect(result.current.stream.isStreaming).toBe(false),
+      );
+      expect(result.current.stream.canStopStreaming).toBe(false);
+      expect(result.current.conversation?.messages[1]).toMatchObject({
+        content: 'Hel',
+        wasStoppedByUser: true,
+      });
+    });
+
+    it('keeps Stop unavailable when the snapshot carries no id', async () => {
+      const { result, attach } = await renderResumed(placeholder());
+
+      await act(async () => {
+        attach.emit(snapshotOf('Hel'));
+      });
+      await waitFor(() =>
+        expect(result.current.conversation?.messages[1].content).toBe('Hel'),
+      );
+
+      expect(result.current.stream.canStopStreaming).toBe(false);
+      act(() => result.current.stream.handleStop());
+      expect(transport.stopCompletion).not.toHaveBeenCalled();
+    });
+
+    it('drops Stop when the attach ends without a terminal event and the watch fallback takes over', async () => {
+      vi.mocked(transport.watchConversation).mockResolvedValue(
+        new ReadableStream<Uint8Array>({
+          start() {
+            /* stays open: the watch is still waiting for the final save */
+          },
+        }),
+      );
+      vi.mocked(transport.getConversation).mockResolvedValue(placeholder());
+      const { result, attach } = await renderResumed(placeholder());
+      await act(async () => {
+        attach.emit(snapshotOf('Hel', ATTACH_ID));
+      });
+      await waitFor(() =>
+        expect(result.current.stream.canStopStreaming).toBe(true),
+      );
+
+      await act(async () => {
+        attach.end();
+      });
+
+      await waitFor(() =>
+        expect(transport.watchConversation).toHaveBeenCalled(),
+      );
+      await waitFor(() =>
+        expect(result.current.stream.canStopStreaming).toBe(false),
+      );
+      expect(result.current.stream.isStreaming).toBe(true);
+    });
+
+    it('sends the stored background id, not the announced one, for a pending background message', async () => {
+      const pendingBackground = makeConversation({
+        messages: [
+          userMessage,
+          {
+            role: MessageRole.Assistant,
+            content: '',
+            timestamp: 't1',
+            responseId: 'dial_r1',
+            backgroundGeneration: {
+              generationId: 'gen-bg',
+              status: BackgroundGenerationStatus.Pending,
+              startedAt: 1,
+            },
+          },
+        ],
+      });
+      const { result, attach } = await renderResumed(pendingBackground);
+      await act(async () => {
+        attach.emit(snapshotOf('Hel', ATTACH_ID));
+      });
+
+      act(() => result.current.stream.handleStop());
+
+      expect(transport.stopCompletion).toHaveBeenCalledWith(
+        expect.objectContaining({ generationId: 'gen-bg' }),
+      );
+    });
+
+    it('keeps the Stop of a live local generation when a resume of the same path ends', async () => {
+      vi.mocked(transport.getConversation).mockResolvedValue(stoppedPartial());
+      const attach = makeAttachStream();
+      transport.attachToGeneration = vi.fn().mockResolvedValue(attach.stream);
+      const initial = placeholder();
+      const { result } = renderHook(() =>
+        useHookHarness({
+          transport,
+          conversationId: 'bucket/conv',
+          initialConversation: initial,
+        }),
+      );
+      await act(async () => {
+        result.current.stream.startStream(
+          'bucket/conv',
+          'question',
+          1,
+          'gpt-4o',
+          undefined,
+          'gen-local',
+        );
+      });
+      expect(result.current.stream.canStopStreaming).toBe(true);
+
+      act(() =>
+        result.current.stream.resumeIfAwaitingGeneration(
+          'bucket/conv',
+          initial,
+        ),
+      );
+      await waitFor(() =>
+        expect(transport.attachToGeneration).toHaveBeenCalled(),
+      );
+      await act(async () => {
+        attach.emit(snapshotOf('Hel', ATTACH_ID));
+        attach.emit({ type: 'done' });
+      });
+      await waitFor(() => expect(transport.getConversation).toHaveBeenCalled());
+
+      expect(result.current.stream.canStopStreaming).toBe(true);
+      act(() => result.current.stream.handleStop());
+      expect(transport.stopCompletion).toHaveBeenCalledWith(
+        expect.objectContaining({ generationId: 'gen-local' }),
+      );
+    });
+  });
+
   describe('batchChunksPerFrame', () => {
     const streaming = () =>
       makeConversation({
@@ -1270,6 +1512,32 @@ describe('useConversationStream', () => {
           ),
         ).toEqual(initial);
       });
+
+      it.each([
+        ['failed', { streamErrorMessage: 'Rate limit exceeded' }],
+        ['stopped', { wasStoppedByUser: true }],
+      ])(
+        'saves a %s answer with the terminal marker the error carries',
+        async (_outcome, terminalMarker) => {
+          const saved = savedConversation();
+          const saveConversation = vi.fn().mockResolvedValue(saved);
+          const { result } = renderWithSave(saveConversation);
+
+          await streamAnswerThenFail(
+            result,
+            new GenerationPersistenceError(401, terminalMarker),
+          );
+
+          await waitFor(() =>
+            expect(result.current.conversation).toEqual(saved),
+          );
+          expect(saveConversation).toHaveBeenCalledOnce();
+          expect(saveConversation.mock.calls[0][1].messages[1]).toMatchObject({
+            content: 'Visible answer',
+            ...terminalMarker,
+          });
+        },
+      );
 
       it('shows the answer without the warning while the save is pending', async () => {
         const pending = deferred<Conversation>();
@@ -3355,6 +3623,37 @@ describe('useConversationStream', () => {
       return view;
     };
 
+    it('keeps stopping with the local id when the rejoined attach announces another id', async () => {
+      const attach = makeAttachStream();
+      vi.mocked(transport.getConversation).mockResolvedValueOnce(placeholder());
+      transport.attachToGeneration = vi.fn().mockResolvedValue(attach.stream);
+
+      const { result } = await renderAndInterrupt();
+      await waitFor(() =>
+        expect(transport.attachToGeneration).toHaveBeenCalled(),
+      );
+      const partial = result.current.conversation?.messages[1];
+      await act(async () => {
+        attach.emit({
+          type: 'snapshot',
+          message: { ...partial, content: 'Partial answer, continued' },
+          generationId: 'gen-announced',
+        });
+      });
+      await waitFor(() =>
+        expect(result.current.conversation?.messages[1]?.content).toBe(
+          'Partial answer, continued',
+        ),
+      );
+
+      expect(result.current.stream.canStopStreaming).toBe(true);
+      act(() => result.current.stream.handleStop());
+      expect(transport.stopCompletion).toHaveBeenCalledOnce();
+      expect(transport.stopCompletion).toHaveBeenCalledWith(
+        expect.objectContaining({ generationId: GENERATION_ID, path: 'conv' }),
+      );
+    });
+
     it('rejoins a generation the backend is still running without showing an error', async () => {
       const attach = makeAttachStream();
       const overlay = { notifyGenerationEnd: vi.fn() };
@@ -3736,6 +4035,36 @@ describe('useConversationStream', () => {
       expect(onStreamError).toHaveBeenCalledWith(
         expect.any(GenerationConflictError),
       );
+    });
+
+    it('keeps Stop unavailable after the joined generation announces an id', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const attach = makeAttachStream();
+      vi.mocked(transport.getConversation)
+        .mockResolvedValueOnce(preStart())
+        .mockResolvedValue(placeholder());
+      transport.attachToGeneration = vi.fn().mockResolvedValue(attach.stream);
+
+      const { result } = await renderAndConflict();
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1000);
+      });
+      await waitFor(() =>
+        expect(transport.attachToGeneration).toHaveBeenCalled(),
+      );
+      await act(async () => {
+        attach.emit({
+          type: 'snapshot',
+          message: { role: MessageRole.Assistant, content: 'Saved' },
+          generationId: 'gen-joined',
+        });
+      });
+      await waitFor(() =>
+        expect(result.current.conversation?.messages[1]?.content).toBe('Saved'),
+      );
+
+      expect(result.current.stream.isStreaming).toBe(true);
+      expect(result.current.stream.canStopStreaming).toBe(false);
     });
 
     it('shows the saved answer when the running generation already finished', async () => {

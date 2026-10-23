@@ -53,8 +53,12 @@ import type { ConversationPanelProps } from '@epam/ai-dial-conversation-panel';
   onMoveConversation={handleMove}
   labels={{
     title: 'Chats',
-    emptyLabel: 'No conversations yet',
-    noResultsLabel: 'No results found',
+    emptyLabel: 'No chats yet',
+    emptyDescription: 'Chats will appear here once you start one.',
+    noResultsLabel: 'No chats found',
+    noResultsDescription: 'Try a different search term or check your filters.',
+    sharedEmptyDescription:
+      'Chats other people share with you will show up here.',
     newChatLabel: 'New chat',
     searchPlaceholder: 'Search…',
     searchClearLabel: 'Clear search',
@@ -170,17 +174,26 @@ import { ConversationListHeader } from '@epam/ai-dial-conversation-panel';
 ```
 
 Each control renders only when its props are present: the search control needs
-both `onSearchChange` and `onSearchOpenChange`, the filter needs
-`onFilterChange`. While the search is open it replaces the row, with a separate
+both `onSearchChange` and `onSearchOpenChange`, the filter menu needs
+`onFilterChange` (its "Origin" submenu) or `onTypeFilterChange` (its "Type"
+submenu). While the search is open it replaces the row, with a separate
 Close search button. Closing — by that button or Escape — calls
-`onSearchChange('')` and returns focus to the search toggle. The filter menu is
-single-select with a check on `activeFilter`, and omits `hiddenSources`.
+`onSearchChange('')` and returns focus to the search toggle. The filter menu has two rows, each showing its current value and opening a
+single-select submenu: "Type" (All, Chat, Task; `activeTypeFilter`) and "Origin"
+(All, Personal, Shared, Organization; `activeFilter`, omitting `hiddenSources`).
+Their labels come from `labels.filterLabels` (`type`, `origin`, `chat`, `task`,
+`personal`, with English defaults).
 The filter trigger is named by `labels.filterLabels.groupAriaLabel` (default
 `'Filter chats'`). `styles.typography.titleClassName` and
 `styles.typography.searchTextClassName` set the title and search text
 typography; `styles.colors.title` and `styles.colors.titleFocus` recolor the
 title at rest and under keyboard focus (`--cp-list-header-title`,
 `--cp-list-header-title-focus`).
+While `activeFilter` or `activeTypeFilter` is not `All`, the filter trigger
+carries a dot and is described by `labels.filterActiveLabel` (default
+`'Filters applied'`) for assistive tech; `styles.colors.filterIndicator`
+recolors the dot (`--cp-list-header-filter-indicator`, defaults to
+`--text-accent`).
 
 ### ConversationListSection
 
@@ -216,10 +229,20 @@ import { ConversationListSection } from '@epam/ai-dial-conversation-panel';
 />;
 ```
 
+The list shows `emptyLabel` / `emptyDescription` when it is empty with no
+search and no filter applied, and `noResultsLabel` / `noResultsDescription`
+when a search or a filter (origin or type other than `All`) matches nothing.
+Under the `Shared` filter with no search, the description is
+`sharedEmptyDescription`, which falls back to `noResultsDescription`.
+
 `requestedFilter` makes the section adopt a filter whenever it changes (the user
 can still pick another afterwards), `onFilterChange` reports the user's choice,
-`isFilterHidden` drops the filter trigger and `hiddenSources` removes sources
-from the list altogether. Row actions, `onActionMenuOpen` and
+`isFilterHidden` drops the filter trigger, `isTypeFilterHidden` drops only its
+"Type" submenu (a host with no scheduled tasks), `onTypeFilterChange` reports
+the chosen type, and `hiddenSources` removes sources from the list altogether.
+A conversation is a task when its `ConversationItem.kind` is
+`ConversationKind.Task` (from `@epam/ai-dial-chat-shared`); without a kind it is
+a chat. Row actions, `onActionMenuOpen` and
 `onMoveConversation` go to the list unchanged, `headerActions` to the header,
 and `styles.header` / `styles.list` to the matching component. `listClassName`
 is merged onto the list root, for a host anchor. The section fills the height
@@ -354,6 +377,17 @@ FilterTab.Shared; // 'shared'
 FilterTab.Organization; // 'organization'
 ```
 
+`ConversationTypeFilter` is owned by this package; a conversation's own `kind` is
+`ConversationKind` from `@epam/ai-dial-chat-shared`:
+
+```tsx
+import { ConversationTypeFilter } from '@epam/ai-dial-conversation-panel';
+
+ConversationTypeFilter.All; // 'all'
+ConversationTypeFilter.Chat; // 'chat'
+ConversationTypeFilter.Task; // 'task'
+```
+
 `ConversationRowVariant` is owned by this package:
 
 ```tsx
@@ -456,7 +490,7 @@ Payload for a completed drag-and-drop move: the dragged `draggedId`, the
 
 The floating queue that shows export/import job progress is no longer part of
 this package: it is the UI kit's generic `TransferQueue`
-(`@epam/ai-dial-ui-kit` `^0.16.0-dev.20`). A host maps its
+(`@epam/ai-dial-ui-kit` `^0.16.0-dev.35`). A host maps its
 `ConversationTransferJob`s (from `@epam/ai-dial-chat-shared`) onto
 `TransferQueueItem`s — `id`, `fileName` as `name`, the status, `progress.percent`
 as `percent`, and the translated failure or warning reason as `message` — and

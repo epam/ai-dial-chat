@@ -84,6 +84,34 @@ export const joinSkillPath = (
 ): string => (folderPath ? `${folderPath}/${relativePath}` : relativePath);
 
 /**
+ * Returns the first `name (n).ext` sibling of `path` that `takenPaths` does not
+ * hold, numbering from 1 the way the DIAL file manager names a duplicate.
+ */
+export const buildDuplicatePath = (
+  path: string,
+  takenPaths: ReadonlySet<string>,
+): string => {
+  const separatorIndex = path.lastIndexOf('/');
+  const folderPath = separatorIndex === -1 ? '' : path.slice(0, separatorIndex);
+  const fileName = path.slice(separatorIndex + 1);
+  // A leading dot starts a hidden name (`.env`), not an extension.
+  const extensionIndex = fileName.lastIndexOf('.');
+  const hasExtension = extensionIndex > 0;
+  const baseName = hasExtension ? fileName.slice(0, extensionIndex) : fileName;
+  const extension = hasExtension ? fileName.slice(extensionIndex) : '';
+  let index = 1;
+  let candidate = joinSkillPath(
+    folderPath,
+    `${baseName} (${index})${extension}`,
+  );
+  while (takenPaths.has(candidate)) {
+    index += 1;
+    candidate = joinSkillPath(folderPath, `${baseName} (${index})${extension}`);
+  }
+  return candidate;
+};
+
+/**
  * Resolves the folder an add action targets (`''` is the skill root). The
  * header adds into the selected folder, or the root when a file (or nothing)
  * is selected; a folder's own menu entries add into it.

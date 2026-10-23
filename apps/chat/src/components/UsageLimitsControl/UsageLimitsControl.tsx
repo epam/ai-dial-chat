@@ -6,9 +6,11 @@ import {
 import {
   formatUsageResetTime,
   mapDeploymentLimitsToInput,
+  type UsageLimitsApi,
   useDeploymentUsageLimits,
   useRefreshUsageAfterGeneration,
 } from '@epam/ai-dial-chat-hooks';
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
 import { IconChevronRight } from '@tabler/icons-react';
@@ -29,7 +31,9 @@ import { Link } from 'react-router';
 import { ConversationInputI18nKeys } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
-import { getDeploymentLimits } from '../../server-api/deployment-limits';
+import { useUiFeature } from '../../hooks/useUiFeature';
+import { getDeploymentUsage } from '../../server-api/deployment-limits';
+import { getUserUsage } from '../../server-api/user-limits';
 import { ROUTES } from '../../types/routes';
 import { resolveLocalizedText } from '../../utils/locale';
 import {
@@ -38,6 +42,13 @@ import {
   getViewportClampShift,
 } from '../../utils/usage-limits';
 import styles from './UsageLimitsControl.module.scss';
+
+/* The deployment's own token stats and the account's cost budget, each from
+   the endpoint that scopes it; `/limits` would count an agent's spend twice. */
+const USAGE_LIMITS_API: UsageLimitsApi = {
+  getDeploymentUsage,
+  getAccountUsage: getUserUsage,
+};
 
 interface Props {
   /** ID of the currently selected deployment. */
@@ -57,9 +68,10 @@ const UsageLimitsControl: FC<Props> = ({
   };
   const { language: activeLocale } = useLanguage();
   const { items: deployments } = useDeployments();
-  const { limitsDto, isLoading, hasError, refresh } = useDeploymentUsageLimits(
+  const isUsagePageHidden = useUiFeature(OverlayFeature.HideUsagePage);
+  const { sources, isLoading, hasError, refresh } = useDeploymentUsageLimits(
     deploymentId,
-    getDeploymentLimits,
+    USAGE_LIMITS_API,
   );
   const [isOpen, setIsOpen] = useState(false);
   const [popoverShiftPx, setPopoverShiftPx] = useState(0);
@@ -97,8 +109,8 @@ const UsageLimitsControl: FC<Props> = ({
   );
 
   const limits = useMemo(
-    () => mapDeploymentLimitsToInput(limitsDto, labels, formatResetTime),
-    [limitsDto, labels, formatResetTime],
+    () => mapDeploymentLimitsToInput(sources, labels, formatResetTime),
+    [sources, labels, formatResetTime],
   );
 
   const worstRow = useMemo(() => findWorstCappedRow(limits), [limits]);
@@ -288,7 +300,7 @@ const UsageLimitsControl: FC<Props> = ({
           role="dialog"
           aria-labelledby={titleId}
           tabIndex={-1}
-          className="absolute end-0 bottom-full z-50 mb-2 flex w-[22.5rem] max-w-[calc(100vw-2rem)] flex-col gap-3 rounded-lg bg-layer-raised p-4 shadow-lg focus:outline-hidden"
+          className="absolute inset-e-0 bottom-full z-50 mb-2 flex w-90 max-w-[calc(100vw-2rem)] flex-col gap-3 rounded-lg bg-layer-raised p-4 shadow-lg focus:outline-hidden"
           /* Measured in physical viewport pixels, so the shift is physical too
              and stays correct under RTL. */
           style={
@@ -314,21 +326,23 @@ const UsageLimitsControl: FC<Props> = ({
                way to the whole picture from the conversation. */
             footerClassName="dial-caption-text pt-3"
             footerNote={
-              <Link
-                to={ROUTES.Usage}
-                onClick={() => setIsOpen(false)}
-                /* The negative inline-start margin cancels the pill's own
-                   padding so the label still lines up with the rows above. */
-                className="dial-tiny-semi-text -ms-2 inline-flex h-6 items-center gap-1 rounded-full px-2 text-accent hover:bg-control-accent-alpha-hover focus-visible:outline focus-visible:-outline-offset-1 focus-visible:outline-focus"
-              >
-                {t(ConversationInputI18nKeys.FullUsageLink)}
-                <IconChevronRight
-                  size={DIAL_ICON_SIZE.SM}
-                  stroke={DIAL_KIT_ICON_STROKE}
-                  aria-hidden
-                  className="rtl:scale-x-[-1]"
-                />
-              </Link>
+              isUsagePageHidden ? undefined : (
+                <Link
+                  to={ROUTES.Usage}
+                  onClick={() => setIsOpen(false)}
+                  /* The negative inline-start margin cancels the pill's own
+                     padding so the label still lines up with the rows above. */
+                  className="dial-tiny-semi-text -ms-2 inline-flex h-6 items-center gap-1 rounded-full px-2 text-accent hover:bg-control-accent-alpha-hover focus-visible:outline focus-visible:-outline-offset-1 focus-visible:outline-focus"
+                >
+                  {t(ConversationInputI18nKeys.FullUsageLink)}
+                  <IconChevronRight
+                    size={DIAL_ICON_SIZE.SM}
+                    stroke={DIAL_KIT_ICON_STROKE}
+                    aria-hidden
+                    className="rtl:scale-x-[-1]"
+                  />
+                </Link>
+              )
             }
           />
         </div>

@@ -126,7 +126,7 @@ const SigninRow: FC<SigninRowProps> = ({
       {rowState.error && (
         <div
           role="alert"
-          className="dial-small-text flex flex-wrap items-center gap-2 break-words text-error"
+          className="dial-small-text flex flex-wrap items-center gap-2 wrap-break-word text-error"
         >
           <IconAlertCircleFilled size={DIAL_ICON_SIZE.SM} aria-hidden />
           <span>{rowState.error}</span>
@@ -141,7 +141,7 @@ const SigninRow: FC<SigninRowProps> = ({
       )}
 
       {info.authenticationType === RowAuthType.DialNative && (
-        <p className="dial-small-text break-words text-secondary">
+        <p className="dial-small-text wrap-break-word text-secondary">
           {t(ToolsetSigninI18nKeys.DialNativeHint)}
         </p>
       )}

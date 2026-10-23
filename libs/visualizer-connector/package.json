@@ -1,6 +1,6 @@
 {
   "name": "@epam/ai-dial-visualizer-connector",
-  "description": "Host-side postMessage connector that mounts a custom visualizer iframe and delivers its data",
+  "description": "Host-side and iframe-side postMessage connectors for DIAL Chat custom visualizers and application editors",
   "version": "0.0.1",
   "private": true,
   "license": "Apache-2.0",

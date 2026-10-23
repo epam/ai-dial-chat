@@ -119,6 +119,25 @@ When `item.iconTooltip` is provided and `item.isIconLoading` is `false` or `unde
 - **WHEN** `conversations` is an empty array
 - **THEN** the `labels.emptyLabel` text is rendered instead of sections
 
+`ConversationList` SHALL follow the Patterns 2.0 empty-state rules. It SHALL show `labels.emptyLabel` / `labels.emptyDescription` ("No [entities] yet") when the list is empty with no search typed and both filters at `All`, and `labels.noResultsLabel` / `labels.noResultsDescription` ("No [entities] found") when a search query or a filter — `activeFilter` other than `FilterTab.All`, or `activeTypeFilter` other than `ConversationTypeFilter.All` — matches nothing. Under `FilterTab.Shared` with no search typed, the description SHALL be `labels.sharedEmptyDescription`, falling back to `labels.noResultsDescription`. The same title is announced through the list's `role="status"` region. `ConversationPanelView` passes `conversationPanel.sharedEmptyDescription` as `sharedEmptyDescription` (Issue #9476).
+
+#### Scenario: A filter that matches nothing reports no results
+
+- **GIVEN** the user has personal chats only and no search is typed
+- **WHEN** the Type filter is set to Task
+- **THEN** `labels.noResultsLabel` and `labels.noResultsDescription` are rendered, and `labels.noResultsLabel` is announced
+
+#### Scenario: The Shared filter says where shared chats come from
+
+- **GIVEN** no conversation is shared with the user and no search is typed
+- **WHEN** the Origin filter is set to Shared
+- **THEN** `labels.noResultsLabel` is rendered with `labels.sharedEmptyDescription` as its description
+
+#### Scenario: A search under the Shared filter keeps the search description
+
+- **WHEN** the Origin filter is Shared and a search query matches nothing
+- **THEN** `labels.noResultsLabel` is rendered with `labels.noResultsDescription`
+
 ---
 
 ### Requirement: Panel shows a skeleton loader while conversations are loading
@@ -787,7 +806,7 @@ The root element SHALL carry the public class `dial-cp-list` and merge the host'
 
 `ConversationListHeader` SHALL render a title button with `aria-expanded`, reporting its toggle through `onToggleExpanded`. It SHALL also render these optional controls, each present only when the host passes its props:
 - **Search toggle.** It swaps the row for the kit `Search`, with a separate Close search button. Escape also closes it. Closing calls `onSearchOpenChange(false)` and `onSearchChange('')` and returns focus to the toggle.
-- **Filter trigger.** It opens a `Dropdown` of the four `FilterTab` options, excluding `hiddenSources`, single-select with a check on the active option.
+- **Filter trigger.** It opens a `Dropdown` of two rows, each showing its current value and opening a single-select submenu with a check on the active option: **Type** (`All`, `Chat`, `Task`, from `activeTypeFilter`, present when `onTypeFilterChange` is passed) and **Origin** (`All`, `Personal`, `Shared`, `Organization`, from `activeFilter`, excluding `hiddenSources`, present when `onFilterChange` is passed). A conversation is a task when its `kind` is `ConversationKind.Task` and a chat otherwise; `ConversationList` shows only the kind the type filter selects. `ConversationListSection` exposes `isTypeFilterHidden` to drop the Type row, and `apps/chat` passes it while `scheduledTasksEnabled` is off.
 - **`actions` slot.**
 
 Every label SHALL be a prop. The root SHALL carry the public class `dial-cp-list-header`.

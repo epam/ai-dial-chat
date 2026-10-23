@@ -165,6 +165,18 @@ for the expanded `NavigationSidebar` footer. `UserMenuTriggerVariant.Compact` dr
 also opens the menu at the start edge; it is the collapsed sidebar's footer.
 The menu's items are the same in all three. `Avatar` and `Compact` are named by `labels.trigger`; `Profile` is named by its visible display name followed by `labels.trigger`, so the name a voice-control user reads off the screen activates it.
 
+Pass `isIdentityHidden` to drop the identity row (avatar initials and display name) from the top of the dropdown, for a host whose trigger already shows the name. The divider then renders only when a settings group sits above it, so the menu never opens on a divider. The trigger is unchanged.
+
+```tsx
+<UserMenu
+  profile={profile}
+  labels={labels}
+  triggerVariant={UserMenuTriggerVariant.Profile}
+  isIdentityHidden
+  onLogout={openLogoutConfirmation}
+/>
+```
+
 ### NavigationSheet
 
 The mobile counterpart. `onSelectItem` fires after the sheet closes so the host can navigate. Pass `onSettings` with `labels.settings` to add a Settings row to the profile page, above Log out — the sheet closes first, then the host navigates, the same entry `UserMenu` offers on desktop.

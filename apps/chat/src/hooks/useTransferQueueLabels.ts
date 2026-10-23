@@ -27,9 +27,6 @@ export const useTransferQueueLabels = (): Partial<TransferQueueLabels> => {
       closeConfirmDescriptionInProgress: t(
         ConversationExportI18nKeys.CloseQueueConfirmDescriptionInProgress,
       ),
-      closeConfirmDescriptionFailed: t(
-        ConversationExportI18nKeys.CloseQueueConfirmDescriptionFailed,
-      ),
       closeConfirmDescriptionMixed: t(
         ConversationExportI18nKeys.CloseQueueConfirmDescriptionMixed,
       ),

@@ -1,17 +1,23 @@
 # skill-file-drag-drop Specification
 
 ## Purpose
-Specifies `libs/skill-editor`'s file-upload dialog: opening it from the Add menu entries (device files, a `.zip` archive, or a host file-system pick) or from a page-wide drag-and-drop, staging multiple candidates with drag-and-drop or the native file picker, resolving and normalizing candidate paths, driving per-row and batch-level feedback through host-supplied `validateBatch`/`commitBatch` callbacks, distinguishing a manifest-kind candidate, and the dialog's accessibility and RTL/localization requirements.
+Specifies `libs/skill-editor`'s file-upload dialog: opening it from the Add menu entries (device files, a `.zip` archive, or a host file-system pick) or from a page-wide drag-and-drop, staging multiple candidates with drag-and-drop or the native file picker, resolving and normalizing candidate paths, asking whether an upload onto an existing file replaces or duplicates it, driving per-row and batch-level feedback through host-supplied `validateBatch`/`commitBatch` callbacks, distinguishing a manifest-kind candidate, and the dialog's accessibility and RTL/localization requirements.
 
 ## Requirements
 
 ### Requirement: Upload dialog opens from "Upload from device" and supports drag-and-drop plus click-to-browse
 
-`libs/skill-editor` SHALL open a dialog (a responsive centered modal at every breakpoint — a bottom-sheet deviation for `mobile` was considered but rejected because the ui kit's `Popup` has no sheet variant, documented in design.md) when an Add entry that stages files is activated: **Upload files from device** opens it in files mode, **Upload archive from device** opens it in archive mode (`SkillFileUploadMode.Archive`), and a resolved **Open DIAL file system** pick opens it in files mode pre-staged with the picked entries. The dialog SHALL contain a drop zone that accepts a file-bearing drag from anywhere over the zone and, on drop, stages every dropped file (in archive mode: every entry of every dropped `.zip`, as resolved by `fileActions.extractArchive`); clicking the drop zone SHALL open the native OS file picker configured for multiple selection (in archive mode: restricted to `.zip`). The dialog SHALL remain open and accept additional drags/drops or additional picker selections until the user confirms or cancels.
+`libs/skill-editor` SHALL open a dialog (a centred ui-kit `Popup` at the `desktop` breakpoint and a ui-kit `BottomSheet` below it, with Confirm and Cancel pinned at the sheet's bottom) when an Add entry that stages files is activated: **Upload files from device** opens it in files mode, **Upload archive from device** opens it in archive mode (`SkillFileUploadMode.Archive`), and a resolved **Open DIAL file system** pick opens it in files mode pre-staged with the picked entries. The dialog SHALL contain a drop zone that accepts a file-bearing drag from anywhere over the zone and, on drop, stages every dropped file (in archive mode: every entry of every dropped `.zip`, as resolved by `fileActions.extractArchive`); clicking the drop zone SHALL open the native OS file picker configured for multiple selection (in archive mode: restricted to `.zip`). The dialog SHALL remain open and accept additional drags/drops or additional picker selections until the user confirms or cancels.
+
+The drop zone SHALL show `labels.uploadDropZoneDescription` (files mode) or `labels.uploadArchiveDropZoneDescription` (archive mode) as a second line when the host supplies it; the DIAL Chat host passes the per-file size limit and "File format .zip" (`skillEditor.uploadArchiveFormats`).
 
 #### Scenario: Activating "Upload files from device" opens the dialog
 - **WHEN** a user activates Add → Upload files from device
 - **THEN** the upload dialog opens in files mode, showing an empty drop zone and no staged files
+
+#### Scenario: The dialog is a bottom sheet on mobile
+- **WHEN** the upload dialog opens below the `desktop` breakpoint
+- **THEN** it renders as a `BottomSheet` with the dialog title, a close control, and Confirm/Cancel buttons at its bottom
 
 #### Scenario: Activating "Upload archive from device" opens the archive dialog
 - **WHEN** a user activates Add → Upload archive from device
@@ -148,6 +154,28 @@ When a host-supplied validation result marks a staged candidate's kind as the ma
 #### Scenario: The dialog performs no manifest parsing itself
 - **WHEN** `libs/skill-editor/src/**` is searched for `yaml`/frontmatter-parsing logic
 - **THEN** none is found; the manifest kind is only ever a tag supplied by the host's validation result
+
+### Requirement: An upload onto an existing file asks to replace or duplicate it
+
+`SkillEditor` SHALL pass the paths of its supporting files (`files` nodes of kind `File`) to the upload dialog as `existingFilePaths`. A candidate whose path is one of them — from any source, and never the root `SKILL.md` — SHALL NOT be staged on arrival; the dialog SHALL instead switch to a step titled `labels.uploadConflictTitle` ("Replace or duplicate it?") with `labels.uploadConflictMessage(path)`, a Replace/Duplicate radio group (Replace selected) and Confirm (`labels.uploadConflictConfirmLabel`) / Cancel, asking about one conflicting candidate at a time while the others wait. Replace SHALL stage the candidate with `replacesExisting: true` and the row note `labels.uploadReplaceRowNote`; Duplicate SHALL stage it at the first `name (n).ext` path (numbering from 1) that neither an existing file nor another staged or waiting candidate holds; Cancel, Escape or the close control SHALL drop it. Non-conflicting candidates from the same pick SHALL be staged immediately. The step SHALL render in the same dialog surface, so it is a `BottomSheet` below the `desktop` breakpoint. Because the step swaps the dialog body, focus SHALL move to the step's message when a question appears (so it is read out) and back to the drop zone once the last question is answered. A committed batch SHALL be reported through `onCommitted(candidates)`, which `SkillEditor` uses to mark the form dirty after a replacement.
+
+App keys: `skillEditor.uploadConflictTitle`, `skillEditor.uploadConflictMessage`, `skillEditor.uploadReplaceRowNote`; the option and Confirm labels reuse `buttons.replace`, `buttons.duplicate` and `buttons.confirm`.
+
+#### Scenario: Replace stages an overwrite
+- **WHEN** `notes.md` exists and the user uploads `notes.md`, then confirms with Replace selected
+- **THEN** a `notes.md` row is staged with `replacesExisting: true` and the "Will replace the existing file" note
+
+#### Scenario: Duplicate stages a numbered copy
+- **WHEN** `notes.md` and `notes (1).md` exist and the user uploads `notes.md`, chooses Duplicate and confirms
+- **THEN** the upload is staged as `notes (2).md`
+
+#### Scenario: Focus follows the question
+- **WHEN** an upload conflicts and the step opens, and the user then confirms it
+- **THEN** focus lands on the step's message while it is shown, and returns to the drop zone after Confirm
+
+#### Scenario: Cancel drops only the conflicting file
+- **WHEN** the user uploads `a.md` and `notes.md` while `notes.md` exists, then cancels the step
+- **THEN** `a.md` stays staged and `notes.md` is not
 
 ### Requirement: Upload dialog accessibility
 

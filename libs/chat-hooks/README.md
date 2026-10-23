@@ -83,7 +83,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.20
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.35
 - `@epam/ai-dial-usage-dashboard` \*
 - `@mcp-ui/client` ^7.1.1
 - `@modelcontextprotocol/sdk` ^1.32.1
@@ -436,20 +436,23 @@ setRefreshToken((token) => token + 1);
 
 ### useUsageLimitBanner
 
-Everything the composer usage-limit banner needs except its rendering: fetches the selected deployment's limits, refreshes them once after each generation ends, picks the day/week/month token or cost limit closest to its cap, translates the limit and reset sentences, and tracks tab-lifetime dismissal. Spread the returned `banner` onto `UsageLimitBannerView` from `@epam/ai-dial-conversation-input`. Available from the root and from `@epam/ai-dial-chat-hooks/usage-limits`; needs the optional `@epam/ai-dial-conversation-input` peer (it supplies the `UsageLimitBannerSeverity` enum at runtime).
+Everything the composer usage-limit banner needs except its rendering: fetches the selected deployment's own usage and the caller's account usage, refreshes both once after each generation ends, picks the day/week/month token limit (from the deployment) or cost budget (from the account) closest to its cap, translates the limit and reset sentences, and tracks tab-lifetime dismissal. Spread the returned `banner` onto `UsageLimitBannerView` from `@epam/ai-dial-conversation-input`. Available from the root and from `@epam/ai-dial-chat-hooks/usage-limits`; needs the optional `@epam/ai-dial-conversation-input` peer (it supplies the `UsageLimitBannerSeverity` enum at runtime).
 
 ```tsx
 import { useUsageLimitBanner } from '@epam/ai-dial-chat-hooks/usage-limits';
 import { UsageLimitBannerView } from '@epam/ai-dial-conversation-input';
 import { useTranslation } from 'react-i18next';
-import { getDeploymentLimits } from './server-api/deployment-limits'; // host-owned configured call
+// host-owned configured calls: GET /deployments/{id}/usage and GET /user/usage
+import { getDeploymentUsage } from './server-api/deployment-limits';
+import { getUserUsage } from './server-api/user-limits';
 
 const UsageBanner = ({ deploymentId, isGenerating }) => {
   const { t, i18n } = useTranslation();
   const { banner } = useUsageLimitBanner({
     deploymentId,
     isGenerationInProgress: isGenerating,
-    getDeploymentLimits,
+    getDeploymentUsage,
+    getAccountUsage: getUserUsage,
     warningThresholdPercent: 75,
     activeLocale: i18n.language,
     t,
@@ -461,20 +464,51 @@ const UsageBanner = ({ deploymentId, isGenerating }) => {
 
 **Options** (`UseUsageLimitBannerOptions`):
 
-| Name                      | Type                                                             | Description                                                                                         |
-| ------------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `deploymentId`            | `string \| undefined`                                            | Selected deployment. Nothing is fetched while it is `undefined`.                                    |
-| `isGenerationInProgress`  | `boolean` (default `false`)                                      | A `true` → `false` edge triggers one limits refresh.                                                |
-| `getDeploymentLimits`     | `(deploymentId: string) => Promise<DeploymentLimitsResponseDto>` | Host-configured fetch — the hook never constructs a client. Its identity is not a re-fetch trigger. |
-| `warningThresholdPercent` | `number`                                                         | Used percentage at or above which a not-yet-exhausted limit raises a warning.                       |
-| `activeLocale`            | `string`                                                         | Locale for the reset time.                                                                          |
-| `t`                       | `(key: string, options?: Record<string, unknown>) => string`     | i18next-compatible translate function.                                                              |
+| Name                      | Type                                                             | Description                                                                                                            |
+| ------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `deploymentId`            | `string \| undefined`                                            | Selected deployment. Nothing is fetched while it is `undefined`.                                                       |
+| `isGenerationInProgress`  | `boolean` (default `false`)                                      | A `true` → `false` edge triggers one refresh of both sources.                                                          |
+| `getDeploymentUsage`      | `(deploymentId: string) => Promise<DeploymentLimitsResponseDto>` | Host-configured fetch of the deployment's own usage (token stats are read). The hook never constructs a client.        |
+| `getAccountUsage`         | `() => Promise<AccountUsage>`                                    | Host-configured fetch of the caller's account usage (top-level cost stats are read). A user-usage response fits as-is. |
+| `warningThresholdPercent` | `number`                                                         | Used percentage at or above which a not-yet-exhausted limit raises a warning.                                          |
+| `activeLocale`            | `string`                                                         | Locale for the reset time.                                                                                             |
+| `t`                       | `(key: string, options?: Record<string, unknown>) => string`     | i18next-compatible translate function.                                                                                 |
 
 **Returns** (`UseUsageLimitBannerResult`): `banner` — `severity`, `limitText`, `reset`, `onClose`, `closeAriaLabel`, or `undefined` when nothing should render (no deployment, below the threshold, or dismissed).
 
 `USAGE_BANNER_I18N_KEYS` and `USAGE_RESET_I18N_KEYS` list the default key paths passed to `t` (include them in your translation bundle); the sentences receive `{ percent }`, `{ time }` and `{ date }`. Dismissals are keyed `${deploymentId}:${period}:${severity}`, so a banner returns when usage escalates from warning to reached, and are held in a module-scoped, in-memory store shared by every consumer of the same package copy.
 
-The pieces are exported separately for hosts that render their own banner or a usage dial: `useDeploymentUsageLimits(deploymentId, getDeploymentLimits)` (race-safe fetch, keeps the last response when a refresh fails), `useRefreshUsageAfterGeneration({ isGenerationInProgress, isLoading, refresh })`, `useUsageLimitBannerDismissal()` (plus `resetUsageLimitBannerDismissals()` for test isolation), `selectUsageBannerSource(dto, thresholdPercent)`, `isCappedStat(total)`, `UsagePeriod`, `formatUsageResetTime(resetsAt, locale, t)` and `formatUsageResetShort(resetsAt, period, locale, t)`. Both formatters return `undefined` on an absent, unparseable or `Intl`-less value, so a missing reset time never hides the limit itself.
+The pieces are exported separately for hosts that render their own banner or a usage dial: `useDeploymentUsageLimits(deploymentId, api)` (see below), `useRefreshUsageAfterGeneration({ isGenerationInProgress, isLoading, refresh })`, `useUsageLimitBannerDismissal()` (plus `resetUsageLimitBannerDismissals()` for test isolation), `selectUsageBannerSource(sources, thresholdPercent)`, `isCappedStat(total)`, `UsagePeriod`, `formatUsageResetTime(resetsAt, locale, t)` and `formatUsageResetShort(resetsAt, period, locale, t)`. Both formatters return `undefined` on an absent, unparseable or `Intl`-less value, so a missing reset time never hides the limit itself.
+
+### useDeploymentUsageLimits
+
+Fetches the two usage sources the banner and the usage dial are mapped from, each with a single scope, and returns them as a `UsageLimitsSources` pair:
+
+- `deployment`: the selected deployment's own usage (`GET /deployments/{id}/usage`). Only its token stats are read.
+- `account`: the caller's account budget and spend, an `AccountUsage` (the top level of `GET /user/usage`). Only its day/week/month cost stats are read.
+
+A deployment-limits response (`GET /deployments/{id}/limits`) is deliberately not a source: for an application, its cost `used` adds the application's aggregated callee cost to the account spend that already contains it, so an agent's spend would be counted twice.
+
+Both calls run together on mount, on a `deploymentId` change, and on `refresh()`, under one monotonic request ID, so a slower response for an earlier deployment never replaces the current one. Each source keeps its last value when its own call fails (`hasError` is then `true`), and `account` survives a deployment change. The identity of `api` is not a re-fetch trigger.
+
+```ts
+import {
+  type UsageLimitsApi,
+  useDeploymentUsageLimits,
+} from '@epam/ai-dial-chat-hooks/usage-limits';
+import { getDeploymentUsage } from './server-api/deployment-limits';
+import { getUserUsage } from './server-api/user-limits';
+
+const usageLimitsApi: UsageLimitsApi = {
+  getDeploymentUsage,
+  getAccountUsage: getUserUsage,
+};
+
+const { sources, isLoading, hasError, refresh } = useDeploymentUsageLimits(
+  deploymentId,
+  usageLimitsApi,
+);
+```
 
 ### useConversationScroll
 
@@ -1269,6 +1303,8 @@ When the transport reports a `StreamInterruptedError` — the connection was los
 
 **Background generations.** A message whose `backgroundGeneration.status` (from `@epam/ai-dial-chat-shared`) is `BackgroundGenerationStatus.Pending` is still being produced by a server-side background job. `resumeIfAwaitingGeneration` resumes it wherever it sits in the conversation — even with a `responseId` already set or a status message after it — and applies the replayed chunks at that message's position. When a completion stream ends and the reload still shows such a message, the hook resumes through `transport.attachToGeneration` instead of settling. `canStopStreaming` is `true` while a pending background message is being resumed, and `handleStop` sends its stored `backgroundGeneration.generationId` to `transport.stopCompletion`. `handleStop` always passes the answer text shown so far as `content`; the backend saves it as the stopped answer of a background generation, whose text it does not hold, and ignores it otherwise. The hook only reads this message field; it makes no decision about which deployments run in the background.
 
+**Stopping a resumed non-background generation.** A resumed generation that is not a background job has no stored id, so the attach stream supplies one: when the `snapshot` event read from `transport.attachToGeneration` carries a `generationId`, `canStopStreaming` becomes `true` and `handleStop` sends that id to `transport.stopCompletion`, so a refreshed page can stop what it rejoined. The id is taken only for a resume started through `resumeIfAwaitingGeneration`: stream recovery keeps using its local id, and a conflict handover (`resumeOnConflict`) keeps `canStopStreaming` `false`. A local id and a stored background id take precedence over it. The id is dropped when the resume settles or when the attach ends without a terminal event and the watch fallback takes over, where Stop stays unavailable; a `snapshot` without the field keeps Stop hidden. The host passes the attach stream through unchanged and needs no extra wiring.
+
 Also exports the standalone `getConversationPath` (strips a conversation id's bucket segment and decodes it) and `isAwaitingGenerationResume` (the placeholder-detection predicate the hook is built on, which also returns `true` for a pending background message) for hosts that need the same checks outside the hook.
 
 `generationPersistenceErrorMessage?: string` supplies a host-translated warning
@@ -1300,21 +1336,30 @@ states are transient and are discarded on unmount.
 
 `createChatStreamApi` recognizes `error.type: "conversation_save_failed"` as
 `GenerationPersistenceError`, even after an upstream `[DONE]` frame. A numeric
-`error.status` on that chunk (the rejected write's status, sent only for a
-completed answer) is exposed as
-`GenerationPersistenceError.status`; it is `undefined` when absent. The error
-class (including its static `type`) and the default message are exported from
-`@epam/ai-dial-chat-hooks`. Custom transports can report this error through
-`onError`; the hook uses the host's warning rather than raw upstream error text.
+`error.status` on that chunk (the rejected write's status) is exposed as
+`GenerationPersistenceError.status`; it is `undefined` when absent. For an
+answer that did not complete, the chunk also carries the terminal markers the
+rejected write held — `streamErrorMessage` or `wasStoppedByUser: true` — exposed
+as `GenerationPersistenceError.terminalMarker`
+(`GenerationPersistenceTerminalMarker`); it is `undefined` for a completed
+answer. An in-band upstream error is held until the stream ends, so a
+persistence failure that follows it is the one reported. The error class
+(including its static `type`), the marker type, and the default message are
+exported from `@epam/ai-dial-chat-hooks`. Custom transports can report this
+error through `onError`; the hook uses the host's warning rather than raw
+upstream error text.
 
 When a stream started by `startStream` reports this error with `status: 401`
 and the transport implements `saveConversation`, the backend's terminal save
 was refused for its credentials, which can expire during a long generation.
 The hook then makes one recovery save instead of showing the warning: it reads
 the conversation through `getConversation`, restores the received answer at its
-index, and saves it once. The warning is shown only if that read or save fails.
-Any other status, a missing status, an attached generation, or a transport
-without `saveConversation` shows the warning immediately, as before.
+index with the error's `terminalMarker` applied, and saves it once. A stopped or
+failed answer is therefore stored as stopped or failed, not left as a
+placeholder that reads as a running generation after a reload. The warning is
+shown only if that read or save fails. Any other status, a missing status, an
+attached generation, or a transport without `saveConversation` shows the
+warning immediately, as before.
 
 #### applyChunkToMessages / mergeStages
 
@@ -3245,9 +3290,9 @@ const api = kind && buildConnectApi(baseUrl, toolsetId, kind);
 
 ### mapDeploymentLimitsToInput
 
-Maps a deployment-limits response into display-ready `CatalogItemLimits` for a conversation-input usage affordance, or `undefined` when nothing reports a usable limit. It emits up to two groups: the deployment's day/week/month **token** limits, formatted with compact K/M notation, followed by the caller's day/week/month **cost** budget, formatted as currency. The worst-case `CatalogLimitStatus` is taken across the capped rows of both.
+Maps a `UsageLimitsSources` pair (see `useDeploymentUsageLimits`) into display-ready `CatalogItemLimits` for a conversation-input usage affordance, or `undefined` when nothing reports a usable limit. It emits up to two groups: the day/week/month **token** limits of `sources.deployment`, formatted with compact K/M notation, followed by the day/week/month **cost** budget of `sources.account`, formatted as currency. The worst-case `CatalogLimitStatus` is taken across the capped rows of both. Cost stats on `sources.deployment` are never read, and a missing source drops only its own group.
 
-The cost stats on a deployment-limits response are the caller's own budget and span every deployment, not the one that was queried — the same figures come back whichever deployment is asked. They are therefore listed as their own group, whose label should say so, and never as a caption on a token row, which would read as that model's spend. No row carries a `captionLabel`.
+The cost group is the caller's account budget and spans every deployment — the same figures whichever deployment is selected. It is therefore listed as its own group, whose label should say so, and never as a caption on a token row, which would read as that model's spend. No row carries a `captionLabel`.
 
 **Only limits at or past 75% of their cap are mapped** — the same threshold `CatalogLimitStatus` uses for running-low. The affordance this feeds is a warning, not a dashboard: a deployment at 2% of its token allowance listed beside an account budget at 90% buries the figure worth acting on. When nothing reaches the threshold the function returns `undefined`, which is how a host removes the affordance entirely. A period whose total is the uncapped sentinel (`total >= Number.MAX_SAFE_INTEGER`) has no ratio and is therefore never listed.
 
@@ -3273,7 +3318,7 @@ const labels: ConversationInputLimitsLabels = {
 };
 
 const limits = mapDeploymentLimitsToInput(
-  deploymentLimitsDto,
+  { deployment: deploymentUsageDto, account: userUsageDto },
   labels,
   formatResetTime,
 );
@@ -4089,6 +4134,8 @@ const {
   isEditMode,
   files,
   filesContentRef,
+  // From `useSkillFileActions`; optional.
+  contentRevisions,
   frontmatterRef,
   loadedPathRef,
   etagRef,
@@ -4122,41 +4169,47 @@ const {
 
 Owns a Skill Editor's batch file upload workflow: validating a staged batch, committing it atomically (supporting files plus an optional `SKILL.md` manifest import, with a confirmation gate), creating empty folders, expanding `.zip` archives for staging, and removing already-committed nodes. Accepts a `messages` object (host-translated strings) rather than resolving them itself.
 
+`commitBatch` overwrites the bytes of a candidate that replaces an existing file instead of adding a second node, and bumps that path in the returned `contentRevisions` (`Readonly<Record<string, number>>`). A replaced file keeps its node, so pass `contentRevisions` to `useSkillEditorSubmit` (a retry must not reuse a payload built from the old bytes) and to any preview that has to reopen the file.
+
 The returned `fileActions` also carries `onCreateFolder` (adds a folder node, ignoring an existing path), `validateFolderPath` (`messages.pathInvalid` for a path `isValidSkillRelativePath` rejects), and `extractArchive` (reads a `.zip` with `fflate`, skipping directory, `__MACOSX/`, `.DS_Store` and `.dial_folder` marker entries; path and size limits apply afterwards through `validateBatch`). The optional `pickFromFileSystem` param is passed through unchanged as `fileActions.pickFromFileSystem` — the host owns the picker, buckets and downloads.
 
 ```ts
 import { useSkillFileActions } from '@epam/ai-dial-chat-hooks';
 
-const { fileActions, pendingManifestImport, resolveManifestImport } =
-  useSkillFileActions({
-    files,
-    setFiles,
-    filesContentRef,
-    frontmatterRef,
-    loadedValues,
-    setLoadedValues,
-    isEditMode,
-    isDirty,
-    setSelectedPath,
-    messages: {
-      required: 'Required',
-      pathReserved: 'Reserved name',
-      pathInvalid: 'Invalid path',
-      pathDuplicate: 'Duplicate path',
-      fileTooLarge: (maxSize) => `File exceeds ${maxSize}`,
-      manifestCasingInvalid: 'Must be exactly SKILL.md',
-      manifestDuplicate: 'Only one SKILL.md allowed',
-      manifestInvalidUtf8: 'Invalid UTF-8',
-      manifestInvalidFrontmatter: 'Invalid frontmatter',
-      totalSizeExceeded: 'Total size exceeded',
-      totalCountExceeded: 'Total count exceeded',
-      manifestNameMismatch: "Manifest name doesn't match this skill",
-      manifestImportDeclined: 'Manifest import was declined',
-      saveError: 'Could not save the skill',
-    },
-    // Optional: enables the editor's "Open DIAL file system" entry.
-    pickFromFileSystem: openHostFilePicker,
-  });
+const {
+  fileActions,
+  pendingManifestImport,
+  resolveManifestImport,
+  contentRevisions,
+} = useSkillFileActions({
+  files,
+  setFiles,
+  filesContentRef,
+  frontmatterRef,
+  loadedValues,
+  setLoadedValues,
+  isEditMode,
+  isDirty,
+  setSelectedPath,
+  messages: {
+    required: 'Required',
+    pathReserved: 'Reserved name',
+    pathInvalid: 'Invalid path',
+    pathDuplicate: 'Duplicate path',
+    fileTooLarge: (maxSize) => `File exceeds ${maxSize}`,
+    manifestCasingInvalid: 'Must be exactly SKILL.md',
+    manifestDuplicate: 'Only one SKILL.md allowed',
+    manifestInvalidUtf8: 'Invalid UTF-8',
+    manifestInvalidFrontmatter: 'Invalid frontmatter',
+    totalSizeExceeded: 'Total size exceeded',
+    totalCountExceeded: 'Total count exceeded',
+    manifestNameMismatch: "Manifest name doesn't match this skill",
+    manifestImportDeclined: 'Manifest import was declined',
+    saveError: 'Could not save the skill',
+  },
+  // Optional: enables the editor's "Open DIAL file system" entry.
+  pickFromFileSystem: openHostFilePicker,
+});
 ```
 
 ### useSkillArchiveImport
@@ -4254,6 +4307,8 @@ if (error === SkillPreviewErrorKind.Forbidden) {
 
 Validates a staged skill-file upload batch against per-file/limit and path-safety rules, in-batch and against-existing duplicates, and projected total size/count — mirroring the BFF's authoritative limits for immediate feedback; the server remains the final gate. Detects at most one root `SKILL.md` in the batch as a manifest-import candidate.
 
+A candidate with `replacesExisting: true` whose path is in `existingPaths` is a confirmed overwrite, not a duplicate: it is counted once toward the file limit, and the optional `existingFileBytes` (bytes per existing path) lets the projected size drop the replaced file's share. Two candidates at the same path are still both duplicates. A candidate at a path in the optional `existingFolderPaths` is always a duplicate — a file never replaces a folder.
+
 ```ts
 import { validateSkillFileBatch } from '@epam/ai-dial-chat-hooks';
 
@@ -4261,6 +4316,8 @@ const { results, batchErrors, manifestCandidate } =
   await validateSkillFileBatch(candidates, {
     existingPaths: ['agents/analyzer.md'],
     existingTotalBytes: 2048,
+    existingFileBytes: new Map([['agents/analyzer.md', 2048]]),
+    existingFolderPaths: ['agents'],
     manifestByteLength: 256,
     messages: {
       required: 'Required',

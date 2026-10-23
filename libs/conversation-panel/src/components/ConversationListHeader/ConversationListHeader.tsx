@@ -26,24 +26,45 @@ import {
   memo,
   useCallback,
   useEffect,
+  useId,
   useMemo,
   useRef,
 } from 'react';
 import { CONVERSATION_PANEL_CLASS } from '../../constants/public-class-names';
 import type { ConversationListHeaderProps } from '../../models/conversation-list-header';
 import type { FilterLabels } from '../../models/panel-props';
+import { ConversationTypeFilter } from '../../types/conversation-kind';
 import styles from './ConversationListHeader.module.scss';
 
 /* The kit's small icon button is larger than the design's 24px box (16px glyph). */
 const ICON_BUTTON_CLASS = '!size-6 !min-h-0 !min-w-0 !p-1';
 
-type FilterTabLabelKey = Exclude<keyof FilterLabels, 'groupAriaLabel'>;
+const ORIGIN_OPTIONS: ReadonlyArray<{
+  value: FilterTab;
+  getLabel: (labels: FilterLabels) => string;
+}> = [
+  { value: FilterTab.All, getLabel: (labels) => labels.all },
+  {
+    value: FilterTab.MyChats,
+    getLabel: (labels) => labels.personal ?? 'Personal',
+  },
+  { value: FilterTab.Shared, getLabel: (labels) => labels.shared },
+  { value: FilterTab.Organization, getLabel: (labels) => labels.organization },
+];
 
-const FILTER_OPTIONS: { value: FilterTab; labelKey: FilterTabLabelKey }[] = [
-  { value: FilterTab.All, labelKey: 'all' },
-  { value: FilterTab.MyChats, labelKey: 'myChats' },
-  { value: FilterTab.Shared, labelKey: 'shared' },
-  { value: FilterTab.Organization, labelKey: 'organization' },
+const TYPE_OPTIONS: ReadonlyArray<{
+  value: ConversationTypeFilter;
+  getLabel: (labels: FilterLabels) => string;
+}> = [
+  { value: ConversationTypeFilter.All, getLabel: (labels) => labels.all },
+  {
+    value: ConversationTypeFilter.Chat,
+    getLabel: (labels) => labels.chat ?? 'Chat',
+  },
+  {
+    value: ConversationTypeFilter.Task,
+    getLabel: (labels) => labels.task ?? 'Task',
+  },
 ];
 
 /** Header row for `ConversationList`: a collapsible title, a search toggle, a filter menu and a slot for extra actions. */
@@ -59,6 +80,8 @@ export const ConversationListHeader: FC<ConversationListHeaderProps> = memo(
     onSearchOpenChange,
     activeFilter = FilterTab.All,
     onFilterChange,
+    activeTypeFilter = ConversationTypeFilter.All,
+    onTypeFilterChange,
     hiddenSources,
     actions,
     styles: headerStyles,
@@ -74,6 +97,11 @@ export const ConversationListHeader: FC<ConversationListHeaderProps> = memo(
 
     const filterTriggerLabel =
       labels.filterLabels.groupAriaLabel ?? 'Filter chats';
+    const filterActiveLabel = labels.filterActiveLabel ?? 'Filters applied';
+    const filterActiveId = useId();
+    const isFilterActive =
+      activeFilter !== FilterTab.All ||
+      activeTypeFilter !== ConversationTypeFilter.All;
     const isSearchAvailable =
       onSearchChange != null && onSearchOpenChange != null;
 
@@ -111,27 +139,92 @@ export const ConversationListHeader: FC<ConversationListHeaderProps> = memo(
       [handleCloseSearch],
     );
 
-    const filterItems = useMemo<DropdownItem[]>(
-      () =>
-        FILTER_OPTIONS.filter(
-          ({ value }) => !hiddenSources?.includes(value),
-        ).map(({ value, labelKey }) => ({
+    /* One row per filter, each showing its current value and opening a
+       single-select submenu. */
+    const filterItems = useMemo<DropdownItem[]>(() => {
+      const { filterLabels } = labels;
+      /* The kit draws a submenu row's chevron itself and ignores
+         `rightControl` there, so the row's content is supplied whole: the
+         name, then the current value right before the chevron. */
+      const renderRow = (name: string, value: string) => () => (
+        <>
+          <span className="min-w-0 flex-1 truncate text-start">{name}</span>
+          <span className="shrink-0 text-secondary">{value}</span>
+        </>
+      );
+      const items: DropdownItem[] = [];
+
+      if (onTypeFilterChange) {
+        const typeOptions = TYPE_OPTIONS.map(({ value, getLabel }) => ({
           key: value,
-          label: labels.filterLabels[labelKey],
+          label: getLabel(filterLabels),
           mark: MenuItemMark.Check,
-          checked: value === activeFilter,
-          onClick: () => onFilterChange?.(value),
-        })),
-      [hiddenSources, labels.filterLabels, activeFilter, onFilterChange],
-    );
+          checked: value === activeTypeFilter,
+          onClick: () => onTypeFilterChange(value),
+        }));
+        const activeType = TYPE_OPTIONS.find(
+          ({ value }) => value === activeTypeFilter,
+        );
+        items.push({
+          key: 'filter-type',
+          label: filterLabels.type ?? 'Type',
+          renderItem: renderRow(
+            filterLabels.type ?? 'Type',
+            activeType ? activeType.getLabel(filterLabels) : filterLabels.all,
+          ),
+          children: typeOptions,
+        });
+      }
+
+      if (onFilterChange) {
+        const visibleOrigins = ORIGIN_OPTIONS.filter(
+          ({ value }) => !hiddenSources?.includes(value),
+        );
+        const activeOrigin = visibleOrigins.find(
+          ({ value }) => value === activeFilter,
+        );
+        items.push({
+          key: 'filter-origin',
+          label: filterLabels.origin ?? 'Origin',
+          renderItem: renderRow(
+            filterLabels.origin ?? 'Origin',
+            activeOrigin
+              ? activeOrigin.getLabel(filterLabels)
+              : filterLabels.all,
+          ),
+          children: visibleOrigins.map(({ value, getLabel }) => ({
+            key: value,
+            label: getLabel(filterLabels),
+            mark: MenuItemMark.Check,
+            checked: value === activeFilter,
+            onClick: () => onFilterChange(value),
+          })),
+        });
+      }
+
+      return items;
+    }, [
+      labels,
+      hiddenSources,
+      activeFilter,
+      activeTypeFilter,
+      onFilterChange,
+      onTypeFilterChange,
+    ]);
 
     const cssVars = useMemo(
       () =>
         buildCssVars({
           '--cp-list-header-title': headerStyles?.colors?.title,
           '--cp-list-header-title-focus': headerStyles?.colors?.titleFocus,
+          '--cp-list-header-filter-indicator':
+            headerStyles?.colors?.filterIndicator,
         }),
-      [headerStyles?.colors?.title, headerStyles?.colors?.titleFocus],
+      [
+        headerStyles?.colors?.title,
+        headerStyles?.colors?.titleFocus,
+        headerStyles?.colors?.filterIndicator,
+      ],
     );
 
     /* The search row swaps in a wider gap; the public class stays last on both. */
@@ -235,7 +328,7 @@ export const ConversationListHeader: FC<ConversationListHeaderProps> = memo(
               onClick={handleOpenSearch}
             />
           )}
-          {onFilterChange && (
+          {(onFilterChange || onTypeFilterChange) && (
             <Dropdown
               items={filterItems}
               placement="bottom-end"
@@ -243,17 +336,36 @@ export const ConversationListHeader: FC<ConversationListHeaderProps> = memo(
             >
               <GhostIconButton
                 icon={
-                  <IconFilter2
-                    size={DIAL_ICON_SIZE.SM}
-                    stroke={DIAL_KIT_ICON_STROKE}
-                    aria-hidden
-                  />
+                  <span className="relative inline-flex">
+                    <IconFilter2
+                      size={DIAL_ICON_SIZE.SM}
+                      stroke={DIAL_KIT_ICON_STROKE}
+                      aria-hidden
+                    />
+                    {/* Decorative: the applied state reaches assistive tech
+                        through the trigger's description. */}
+                    {isFilterActive && (
+                      <span
+                        aria-hidden
+                        className={mergeClasses(
+                          styles.filterIndicator,
+                          'absolute -end-0.5 -top-0.5 size-1.5 rounded-full',
+                        )}
+                      />
+                    )}
+                  </span>
                 }
                 size={ElementSize.Small}
                 className={ICON_BUTTON_CLASS}
                 aria-label={filterTriggerLabel}
+                aria-describedby={isFilterActive ? filterActiveId : undefined}
               />
             </Dropdown>
+          )}
+          {isFilterActive && (onFilterChange || onTypeFilterChange) && (
+            <span id={filterActiveId} className="sr-only">
+              {filterActiveLabel}
+            </span>
           )}
           {actions}
         </div>

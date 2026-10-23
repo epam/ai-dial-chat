@@ -1,5 +1,6 @@
 import type { FilterTab } from '@epam/ai-dial-chat-shared';
 import type { ReactNode } from 'react';
+import type { ConversationTypeFilter } from '../types/conversation-kind';
 import type { FilterLabels } from './panel-props';
 
 /** Localised labels for `ConversationListHeader`. */
@@ -16,6 +17,8 @@ export interface ConversationListHeaderLabels {
   searchClearLabel: string;
   /** Labels of the filter options; `groupAriaLabel` names the filter trigger. */
   filterLabels: FilterLabels;
+  /** Description announced on the filter trigger while a filter is applied. Defaults to `'Filters applied'`. */
+  filterActiveLabel?: string;
 }
 
 /** Color overrides for `ConversationListHeader`, applied as CSS custom properties on its root. */
@@ -24,6 +27,8 @@ export interface ConversationListHeaderColors {
   title?: string;
   /** Title color while the title button has keyboard focus. Defaults to `--text-primary`. */
   titleFocus?: string;
+  /** Color of the dot on the filter trigger while a filter is applied. Defaults to `--text-accent`. */
+  filterIndicator?: string;
 }
 
 /** Typography overrides for `ConversationListHeader`. */
@@ -36,7 +41,7 @@ export interface ConversationListHeaderTypography {
 
 /** Style overrides for `ConversationListHeader`. */
 export interface ConversationListHeaderStyles {
-  /** Color overrides for the title. */
+  /** Color overrides for the title and the filter indicator. */
   colors?: ConversationListHeaderColors;
   /** Typography overrides for the title and the search field. */
   typography?: ConversationListHeaderTypography;
@@ -62,8 +67,12 @@ export interface ConversationListHeaderProps {
   onSearchOpenChange?: (isOpen: boolean) => void;
   /** Filter tab marked as chosen in the filter menu. Defaults to `FilterTab.All`. */
   activeFilter?: FilterTab;
-  /** Called when a filter option is chosen. The filter trigger renders only when this is provided. */
+  /** Called when an origin is chosen. The "Origin" submenu renders only when this is provided; the filter trigger renders when this or `onTypeFilterChange` is. */
   onFilterChange?: (tab: FilterTab) => void;
+  /** Kind marked as chosen in the "Type" submenu. Defaults to `ConversationTypeFilter.All`. */
+  activeTypeFilter?: ConversationTypeFilter;
+  /** Called when a type is chosen. The "Type" submenu renders only when this is provided. */
+  onTypeFilterChange?: (type: ConversationTypeFilter) => void;
   /** Filter options to omit from the menu (see `ConversationListProps.hiddenSources`). */
   hiddenSources?: FilterTab[];
   /** Extra controls rendered after the filter trigger, e.g. an overflow menu. */

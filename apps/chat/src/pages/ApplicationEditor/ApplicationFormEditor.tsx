@@ -43,6 +43,7 @@ import { useApplicationAvatarPicker } from '../../hooks/application-editor/useAp
 import { useEditedApplication } from '../../hooks/application-editor/useEditedApplication';
 import { useMetadataLabels } from '../../hooks/application-editor/useMetadataLabels';
 import { useBuilderLeaveGuard } from '../../hooks/unsaved-changes/useBuilderLeaveGuard';
+import useLocalStorage from '../../hooks/useLocalStorage';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
 import { useTextRefinementLabels } from '../../hooks/useTextRefinementLabels';
@@ -56,6 +57,7 @@ import type {
 import { ApplicationCreateStrategy } from '../../types/application-editor';
 import { EntityOperation } from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
+import { StorageKey } from '../../types/storage-key';
 import {
   areSetupValuesEqual,
   deploymentToMetadata,
@@ -68,6 +70,9 @@ interface Props {
 }
 
 type SetupErrors = ApplicationSetupErrors<Record<string, unknown>>;
+
+/* Matches the fixed Metadata column width the editor had before it became resizable. */
+const DEFAULT_METADATA_COLUMN_WIDTH = 400;
 
 const ApplicationFormEditor: FC<Props> = ({ definition }) => {
   const { t } = useTranslation();
@@ -187,6 +192,19 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
   }, [appId, definition]);
 
   const { avatarPicker, avatarPickerLabels } = useApplicationAvatarPicker();
+  const [storedMetadataWidth, setStoredMetadataWidth] = useLocalStorage<number>(
+    StorageKey.ApplicationEditorMetadataWidth,
+    DEFAULT_METADATA_COLUMN_WIDTH,
+  );
+  const resizableMetadata = useMemo(
+    () => ({
+      width: Number.isFinite(storedMetadataWidth)
+        ? storedMetadataWidth
+        : DEFAULT_METADATA_COLUMN_WIDTH,
+      onWidthChange: setStoredMetadataWidth,
+    }),
+    [storedMetadataWidth, setStoredMetadataWidth],
+  );
   const metadataFormLabels = useMetadataLabels(
     definition.getMetadataLabelOverrides,
   );
@@ -555,11 +573,14 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
           isSubmitting={isSaving}
           isSubmitDisabled={!isSetupReady || descriptionRefinement.isPending}
           extraActions={extraActions}
+          resizableLeftColumn={resizableMetadata}
           labels={{
             backAriaLabel: t(EditorI18nKeys.BackAriaLabel),
             savingStatusLabel: t(EditorI18nKeys.SavingStatus),
             metadataTitle: t(EditorI18nKeys.MetadataSectionTitle),
             setupTitle: t(EditorI18nKeys.SetupSectionTitle),
+            resizeHandleLabel: t(EditorI18nKeys.ResizeHandleAriaLabel),
+            resizeHandleTooltip: t(EditorI18nKeys.ResizeHandleTooltip),
             cancelLabel: t(ButtonsI18nKeys.Cancel),
           }}
           setupTitle={

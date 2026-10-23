@@ -35,6 +35,7 @@ export const UserMenu: FC<UserMenuProps> = memo(
     onSettings,
     triggerVariant = UserMenuTriggerVariant.Avatar,
     isTooltipHidden,
+    isIdentityHidden = false,
     styles: menuStyles,
   }) => {
     const { colors, typography, className, cssVars } = menuStyles ?? {};
@@ -81,26 +82,36 @@ export const UserMenu: FC<UserMenuProps> = memo(
           })),
         }));
 
+      const identityItems: DropdownItem[] = isIdentityHidden
+        ? []
+        : [
+            {
+              key: 'identity',
+              type: DropdownItemType.PlainText,
+              label: (
+                <div className="flex h-[40px] min-w-0 items-center gap-3">
+                  <AvatarInitials shortName={profile.shortName} />
+                  <EllipsisTooltip
+                    text={profile.displayName}
+                    className={mergeClasses(
+                      styles.identityText,
+                      labelClassName,
+                      'min-w-0 flex-1 truncate',
+                    )}
+                  />
+                </div>
+              ),
+            },
+          ];
+      const headItems = [...identityItems, ...groupItems];
+
       return [
-        {
-          key: 'identity',
-          type: DropdownItemType.PlainText,
-          label: (
-            <div className="flex h-[40px] min-w-0 items-center gap-3">
-              <AvatarInitials shortName={profile.shortName} />
-              <EllipsisTooltip
-                text={profile.displayName}
-                className={mergeClasses(
-                  styles.identityText,
-                  labelClassName,
-                  'min-w-0 flex-1 truncate',
-                )}
-              />
-            </div>
-          ),
-        },
-        ...groupItems,
-        { key: 'divider-1', type: DropdownItemType.Divider },
+        ...headItems,
+        /* Nothing above the divider means nothing to separate: the menu must
+           not open on one. */
+        ...(headItems.length > 0
+          ? [{ key: 'divider-1', type: DropdownItemType.Divider }]
+          : []),
         ...(onSettings
           ? [
               {
@@ -134,6 +145,7 @@ export const UserMenu: FC<UserMenuProps> = memo(
       ];
     }, [
       groups,
+      isIdentityHidden,
       labelClassName,
       menuLabelClassName,
       labels.logOut,
@@ -223,10 +235,17 @@ export const UserMenu: FC<UserMenuProps> = memo(
           isStartPlacement
             ? 'flex min-w-0 items-center'
             : 'flex size-[60px] items-center justify-center',
+          /* The profile trigger takes the room its neighbours leave, so a long
+             name is truncated instead of running under them. */
+          isProfileTrigger && 'flex-1',
           className,
         )}
       >
         <Dropdown
+          /* The trigger wrapper is a flex item: without `min-w-0` it cannot
+             shrink below its text, and a long name runs past the wrapper
+             instead of being truncated. */
+          className={isStartPlacement ? 'max-w-full min-w-0' : undefined}
           placement={isStartPlacement ? 'top-start' : 'top-end'}
           matchReferenceWidth={false}
           items={items}

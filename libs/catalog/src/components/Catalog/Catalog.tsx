@@ -1,4 +1,8 @@
-import { CatalogEntityType, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  CatalogEntityType,
+  mergeClasses,
+  useIsMobile,
+} from '@epam/ai-dial-chat-shared';
 import { SelectOption, Spinner, Tabs } from '@epam/ai-dial-ui-kit';
 import {
   FC,
@@ -26,6 +30,7 @@ import { sortCatalogItems } from '../../utils/catalog-sort';
 import {
   buildCatalogTabs,
   getCatalogItemTabs,
+  resolveTabText,
   scrollSelectedTabIntoView,
 } from '../../utils/catalog-tabs';
 import { getTabCreateButtonConfig } from '../../utils/create-menu';
@@ -122,6 +127,7 @@ export const Catalog: FC<CatalogProps> = ({
   isReadonly = false,
   initialViewMode = CatalogViewMode.Grid,
   isFullWidth = false,
+  isFavoritesPaginationHidden = false,
   selectedItemId,
   onCardClick,
   isLoading,
@@ -142,14 +148,15 @@ export const Catalog: FC<CatalogProps> = ({
   const { typography, headingRowClassName = 'h-[64px]' } = catalogStyles ?? {};
   const cssVars = getStyles(catalogStyles);
 
+  const isMobile = useIsMobile();
+
   const pageTitle = titles?.pageTitle ?? 'Catalog';
   const createLabel = titles?.createLabel ?? 'Create';
   const favoritesTitle = titles?.favoritesTitle ?? 'Your favorites';
   const browseTitle = titles?.browseTitle ?? 'Browse';
   const searchPlaceholder =
     titles?.searchPlaceholder ?? 'Search models, tools, agents…';
-  const noResultsTitle =
-    titles?.noResultsTitle ?? ((q: string) => `No results for "${q}"`);
+  const noResultsTitle = titles?.noResultsTitle ?? (() => 'No items found');
   const myAppsEmptyTitle =
     titles?.myAppsEmptyTitle ?? (() => 'No personal items yet');
   const myAppsEmptyDescription =
@@ -529,11 +536,24 @@ export const Catalog: FC<CatalogProps> = ({
   }, []);
 
   const isCreateButtonVisible = !hideCreateButton && !isReadonly;
+  /* Below the desktop breakpoint the header's Create button becomes a round
+   * "+" pinned to the bottom of the catalog, as on other mobile screens. */
+  const isFloatingCreateVisible = isCreateButtonVisible && isMobile;
+  const isHeaderCreateVisible = isCreateButtonVisible && !isMobile;
   /* A read-only catalog cannot favorite anything, so the strip has no way to
    * gain or lose entries and is dropped rather than shown frozen. */
   const isFavoritesVisible = isFavoritesRendered && !isReadonly;
 
-  const emptyTitle = query ? noResultsTitle(query) : 'No items';
+  /* A search or a topic filter narrowed the tab to nothing, so the empty
+   * state explains how to widen it; otherwise the tab itself is empty. */
+  const isNarrowed = query !== '' || filters.size > 0;
+  const emptyTitle = isNarrowed
+    ? noResultsTitle(query, activeTab)
+    : (resolveTabText(titles?.emptyTitle, activeTab) ?? 'No items yet');
+  const emptyDescription = isNarrowed
+    ? (titles?.noResultsDescription ??
+      'Try a different search term or check your filters.')
+    : resolveTabText(titles?.emptyDescription, activeTab);
   /* Keyed on the strings, not `detailsTexts`, which hosts often pass inline;
    * a fresh object here would invalidate every virtual grid row. */
   const {
@@ -563,6 +583,7 @@ export const Catalog: FC<CatalogProps> = ({
   const cardGridTitles = useMemo(
     () => ({
       noResultsTitle: emptyTitle,
+      noResultsDescription: emptyDescription,
       featuredLabel,
       noFolderLabel: titles?.noFolderLabel,
       credentialsBadgeLoggedOutLabel:
@@ -570,6 +591,7 @@ export const Catalog: FC<CatalogProps> = ({
     }),
     [
       emptyTitle,
+      emptyDescription,
       featuredLabel,
       titles?.noFolderLabel,
       detailsTexts?.credentialsBadgeLoggedOutLabel,
@@ -635,13 +657,13 @@ export const Catalog: FC<CatalogProps> = ({
     <section
       aria-label={resolvedAriaLabel}
       className={mergeClasses(
-        'flex size-full min-h-0 flex-1 flex-col',
+        'relative flex size-full min-h-0 flex-1 flex-col',
         styles.root,
         CATALOG_CLASS.root,
       )}
       style={cssVars}
     >
-      {(!hidePageTitle || isCreateButtonVisible) && (
+      {(!hidePageTitle || isHeaderCreateVisible) && (
         <div className={mergeClasses('shrink-0', styles.heading)}>
           <div
             className={mergeClasses(
@@ -659,12 +681,25 @@ export const Catalog: FC<CatalogProps> = ({
                 {pageTitle}
               </h1>
             )}
-            {isCreateButtonVisible && <CreateButton {...createButtonProps} />}
+            {isHeaderCreateVisible && <CreateButton {...createButtonProps} />}
           </div>
         </div>
       )}
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto">
+      {isFloatingCreateVisible && (
+        <div className="absolute inset-e-4 bottom-4 z-10">
+          <CreateButton {...createButtonProps} isFloating />
+        </div>
+      )}
+
+      {/* With the floating Create button, extra bottom space keeps it from
+          covering the last row of cards once scrolled to the end. */}
+      <div
+        className={mergeClasses(
+          'flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto',
+          isFloatingCreateVisible && 'pb-16',
+        )}
+      >
         {isFavoritesVisible && (
           <div className="w-full px-4 desktop:px-8">
             <Favorites
@@ -680,6 +715,7 @@ export const Catalog: FC<CatalogProps> = ({
               credentialsBadgeLoggedOutLabel={
                 detailsTexts?.credentialsBadgeLoggedOutLabel
               }
+              isPaginationHidden={isFavoritesPaginationHidden}
             />
           </div>
         )}
@@ -818,6 +854,7 @@ export const Catalog: FC<CatalogProps> = ({
                     query={query}
                     ariaLabel={resolvedAriaLabel}
                     emptyStateTitle={emptyTitle}
+                    emptyStateDescription={emptyDescription}
                     onToggleFavorite={onToggleFavorite}
                     isFavoriteVisible={isFavoriteVisible}
                     columnVisibility={columnVisibility}

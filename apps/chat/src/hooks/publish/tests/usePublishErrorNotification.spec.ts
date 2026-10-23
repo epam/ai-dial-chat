@@ -77,6 +77,33 @@ describe('usePublishErrorNotification', () => {
     );
   });
 
+  it('names the missing attachment files when publish is refused with conversationAttachmentMissing', async () => {
+    const { result } = renderHook(() => usePublishErrorNotification());
+
+    result.current(
+      apiError(
+        {
+          statusCode: 422,
+          code: 'conversationAttachmentMissing',
+          message:
+            'The conversation references attachment files that no longer exist: files/bucket-123/old.pdf',
+          missingFiles: ['files/bucket-123/old.pdf'],
+        },
+        422,
+      ),
+    );
+
+    await waitFor(() =>
+      expect(mockShowNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          variant: NotificationVariant.Error,
+          title: 'publish.failedTitle',
+          message: expect.stringContaining('files/bucket-123/old.pdf'),
+        }),
+      ),
+    );
+  });
+
   it('falls back to the generic message when the error carries no server message', async () => {
     const { result } = renderHook(() => usePublishErrorNotification());
 

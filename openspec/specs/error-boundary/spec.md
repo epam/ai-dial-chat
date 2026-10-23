@@ -141,8 +141,9 @@ The per-route `ErrorBoundary` SHALL reset its error state automatically when the
 ### Requirement: Boundary placement in the application tree
 Two boundary instances SHALL be integrated into the application entry points.
 
-**Root boundary** (`apps/chat/src/main.tsx`):
+**Root boundary** (`apps/chat/src/main.tsx` and `apps/chat/src/app-routes.tsx`):
 - Wraps the entire provider + router tree after `<React.StrictMode>` but before any context providers.
+- A data router catches render errors in its own route boundary before they reach anything wrapping `<RouterProvider>`, so `buildAppRoutes` also wraps the splat route element (`AppRoot`) in `RootErrorBoundary`; React Router's default error page with the raw stack is never shown. The outer `RootErrorBoundary` in `main.tsx` covers only what renders outside the router.
 - Recovery action: reload via `window.location.reload()` only after an explicit button click.
 
 **Per-route boundaries** (`apps/chat/src/app/app.tsx`):

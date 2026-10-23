@@ -14,6 +14,7 @@ import type { DialFileManagerShellLabels } from '@epam/ai-dial-chat-shared';
 import {
   DialFileManagerActions,
   DialFileManagerTabs,
+  type FileManagerGridRow,
 } from '@epam/ai-dial-react-file-manager';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -26,7 +27,8 @@ interface CapturedActionLabels {
 
 interface CapturedTreeOptions extends CapturedActionLabels {
   activeTab?: DialFileManagerTabs;
-  header?: string;
+  header?: string | null;
+  tabsAriaLabel?: string;
   containerClassName?: string;
   loadedPaths?: Set<string>;
   loadingPaths?: Set<string>;
@@ -34,12 +36,17 @@ interface CapturedTreeOptions extends CapturedActionLabels {
 
 const capturedDialFileManagerProps: {
   current: {
+    className?: string;
+    contentClassName?: string;
     emptyStateTitle?: string;
     searchEmptyStateTitle?: string;
     onCreateFolder?: unknown;
     onFolderPopupPathChange?: unknown;
     autoSelectUploadedItems?: boolean;
     onGetInfo?: unknown;
+    onPreview?: unknown;
+    onTableFileClick?: unknown;
+    previewExtensions?: string[];
     gridOptions?: CapturedActionLabels;
     treeOptions?: CapturedTreeOptions;
     navigationPanelOptions?: { placeholder?: string };
@@ -94,6 +101,9 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
       onCreateFolder?: unknown;
       onFolderPopupPathChange?: unknown;
       onGetInfo?: unknown;
+      onPreview?: unknown;
+      onTableFileClick?: unknown;
+      previewExtensions?: string[];
       autoSelectUploadedItems?: boolean;
       gridOptions?: CapturedActionLabels;
       treeOptions?: CapturedTreeOptions;
@@ -286,6 +296,9 @@ const renderShell = (
     actionProfile?: DialFileManagerActionProfile;
     labels?: DialFileManagerShellLabels;
     treeContainerClassName?: string;
+    onPreview?: (path?: string) => void;
+    onTableFileClick?: (row: FileManagerGridRow) => void;
+    previewExtensions?: string[];
   } = {},
 ) =>
   render(
@@ -300,6 +313,9 @@ const renderShell = (
       variant={options.variant ?? DialFileManagerVariant.Standalone}
       actionProfile={options.actionProfile ?? DialFileManagerActionProfile.Full}
       treeContainerClassName={options.treeContainerClassName}
+      onPreview={options.onPreview}
+      onTableFileClick={options.onTableFileClick}
+      previewExtensions={options.previewExtensions}
     />,
   );
 
@@ -728,6 +744,79 @@ describe('DialFileManagerShell', () => {
     expect(capturedDialFileManagerProps.current?.onGetInfo).toBe(onGetInfo);
   });
 
+  describe('Preview action', () => {
+    const labelsWithPreview: DialFileManagerShellLabels = {
+      ...baseLabels,
+      previewLabel: 'Preview',
+    };
+
+    it('adds Preview to gridOptions action labels when labels.previewLabel is given', () => {
+      renderShell(undefined, new Set(), { labels: labelsWithPreview });
+      expect(
+        capturedDialFileManagerProps.current?.gridOptions?.actionLabels?.[
+          DialFileManagerActions.Preview
+        ],
+      ).toBe('Preview');
+    });
+
+    it('omits Preview from gridOptions action labels without labels.previewLabel', () => {
+      renderShell();
+      expect(
+        capturedDialFileManagerProps.current?.gridOptions?.actionLabels?.[
+          DialFileManagerActions.Preview
+        ],
+      ).toBeUndefined();
+    });
+
+    it('keeps Info alongside Preview in gridOptions action labels', () => {
+      renderShell(
+        {
+          actionLabels: {
+            [DialFileManagerActions.Download]: 'Download',
+            [DialFileManagerActions.Info]: 'Info',
+          },
+        },
+        new Set(),
+        { labels: labelsWithPreview },
+      );
+      const labels =
+        capturedDialFileManagerProps.current?.gridOptions?.actionLabels;
+      expect(labels?.[DialFileManagerActions.Preview]).toBe('Preview');
+      expect(labels?.[DialFileManagerActions.Info]).toBe(baseLabels.infoLabel);
+    });
+
+    it('never includes Preview in treeOptions or bulkActionsToolbarOptions action labels', () => {
+      renderShell(undefined, new Set(), { labels: labelsWithPreview });
+      expect(
+        capturedDialFileManagerProps.current?.treeOptions?.actionLabels?.[
+          DialFileManagerActions.Preview
+        ],
+      ).toBeUndefined();
+      expect(
+        capturedDialFileManagerProps.current?.bulkActionsToolbarOptions
+          ?.actionLabels?.[DialFileManagerActions.Preview],
+      ).toBeUndefined();
+    });
+
+    it('passes onTableFileClick straight through to DialFileManager', () => {
+      const onTableFileClick = vi.fn();
+      renderShell(undefined, new Set(), { onTableFileClick });
+      expect(capturedDialFileManagerProps.current?.onTableFileClick).toBe(
+        onTableFileClick,
+      );
+    });
+
+    it('passes onPreview and previewExtensions straight through to DialFileManager', () => {
+      const onPreview = vi.fn();
+      const previewExtensions = ['.md', '.txt'];
+      renderShell(undefined, new Set(), { onPreview, previewExtensions });
+      expect(capturedDialFileManagerProps.current?.onPreview).toBe(onPreview);
+      expect(capturedDialFileManagerProps.current?.previewExtensions).toBe(
+        previewExtensions,
+      );
+    });
+  });
+
   it('builds fileMetadataPopupOptions from hook state and translated labels', () => {
     const fileMetadata = {
       name: 'report.pdf',
@@ -1008,14 +1097,59 @@ describe('DialFileManagerShell', () => {
       expect(screen.getByText('Nothing shared with you yet')).toBeTruthy();
     });
 
-    it('keeps All as the strip value and tree header key', () => {
+    it('keeps All as the strip value and as the tabs label key, with no visible tree header', () => {
       renderAll(DialFileManagerTabs.Shared);
       expect(capturedDialFileManagerProps.current?.treeOptions?.activeTab).toBe(
         DialFileManagerTabs.All,
       );
+      expect(
+        capturedDialFileManagerProps.current?.treeOptions?.header,
+      ).toBeNull();
+      expect(
+        capturedDialFileManagerProps.current?.treeOptions?.tabsAriaLabel,
+      ).toBe('File storage');
+    });
+
+    it('shows the host-provided treeHeader above the tabs', () => {
+      renderAll(
+        DialFileManagerTabs.Shared,
+        {},
+        {
+          ...baseLabels,
+          treeHeader: 'File storage',
+        },
+      );
       expect(capturedDialFileManagerProps.current?.treeOptions?.header).toBe(
         'File storage',
       );
+    });
+
+    it('leaves the file manager content padding to the manager on the standalone page', () => {
+      renderAll(DialFileManagerTabs.Shared);
+      const props = capturedDialFileManagerProps.current;
+      expect(props?.contentClassName).toBeUndefined();
+      expect(props?.className?.split(' ')).not.toContain('p-0');
+    });
+
+    it('never renders a page heading of its own, even with a treeHeader', () => {
+      renderAll(
+        DialFileManagerTabs.Shared,
+        {},
+        {
+          ...baseLabels,
+          treeHeader: 'File storage',
+        },
+      );
+      expect(screen.queryByRole('heading', { level: 1 })).toBeNull();
+    });
+
+    it('keeps the attach modal content flush with its own padding', () => {
+      renderShell({ uploadEnabled: true }, new Set(), {
+        variant: DialFileManagerVariant.Attach,
+      });
+      const props = capturedDialFileManagerProps.current;
+      expect(props?.contentClassName).toBe('px-0 pb-0');
+      expect(props?.className?.split(' ')).toContain('p-0');
     });
 
     it('gates on activeTab when the controller has no sectionTab', () => {

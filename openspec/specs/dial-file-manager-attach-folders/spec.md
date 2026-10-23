@@ -35,7 +35,7 @@ Memoisation: `isRowSelectable` is a `useCallback` in `useFileAttachmentPicker`; 
 
 ### Requirement: onAttach returns both files and folder paths
 
-`DialFileManagerModal` SHALL expose an `onAttach` callback of signature `(result: AttachResult) => void`, where `AttachResult` is exported from `@epam/ai-dial-chat-shared` (`libs/chat-shared/src/file-manager/attach-result.ts`; an identical app-local copy also exists at `apps/chat/src/components/DialFileManagerModal/types/attach-result.ts`):
+`DialFileManagerModal` SHALL expose an `onAttach` callback of signature `(result: AttachResult) => void`, where `AttachResult` is exported from `@epam/ai-dial-chat-shared` (`libs/chat-shared/src/file-manager/attach-result.ts`; the app imports it from there and keeps no local copy):
 
 ```ts
 interface AttachResult {

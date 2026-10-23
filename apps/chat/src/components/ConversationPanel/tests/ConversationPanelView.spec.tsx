@@ -390,6 +390,10 @@ vi.mock('react-router', () => ({
   useNavigate: () => mockNavigate,
 }));
 
+vi.mock(
+  '../../../context/AppConfigContext',
+  async () => import('../../../context/tests/app-config-context-mock'),
+);
 vi.mock('../../../context/ConversationsContext');
 vi.mock('../../../context/NotificationContext');
 vi.mock('../../../server-api/share.api');
@@ -588,7 +592,9 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockUseIsMobile.mockReturnValue(false);
   vi.mocked(useUiFeature).mockImplementation(
-    (feature) => feature !== OverlayFeature.HideConversationExport,
+    (feature) =>
+      feature !== OverlayFeature.HideConversationExport &&
+      feature !== OverlayFeature.HideConversationImport,
   );
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   vi.mocked(useConversations).mockReturnValue(baseContextValue as any);
@@ -1936,6 +1942,18 @@ describe('ConversationPanelView — import header action', () => {
     expect(screen.getAllByRole('button', { name: IMPORT_LABEL })).toHaveLength(
       1,
     );
+  });
+
+  it('hides Import but keeps Export all when hide-conversation-import is on', () => {
+    vi.mocked(useUiFeature).mockImplementation(
+      (feature) => feature !== OverlayFeature.HideConversationExport,
+    );
+    render(<ConversationPanelView {...defaultProps} />);
+    openDropdown();
+    expect(screen.queryByRole('button', { name: IMPORT_LABEL })).toBeNull();
+    expect(
+      screen.getAllByRole('button', { name: EXPORT_ALL_LABEL }),
+    ).toHaveLength(1);
   });
 
   it('clicking Import triggers the hidden file input', () => {

@@ -1201,6 +1201,12 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   usageLimitsWarningThresholdPercent: number;
+  /**
+   * Operator default for the seasonal-celebrations switch, applied to users who have not saved a choice of their own; a saved choice overrides it. Sourced from UI_EVENT_ENABLED_BY_DEFAULT; true unless it is false, 0 or no. Has no visible effect while activeEventId is null.
+   * @type {boolean}
+   * @memberof ClientConfigDto
+   */
+  celebrationsEnabledByDefault: boolean;
 }
 
 /**
@@ -1263,6 +1269,44 @@ export interface ClientConfigResponseDto {
    */
   metadata?: ClientConfigMetadataDto;
 }
+/**
+ *
+ * @export
+ * @interface ConversationAttachmentMissingErrorDto
+ */
+export interface ConversationAttachmentMissingErrorDto {
+  /**
+   *
+   * @type {number}
+   * @memberof ConversationAttachmentMissingErrorDto
+   */
+  statusCode: number;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationAttachmentMissingErrorDto
+   */
+  error: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationAttachmentMissingErrorDto
+   */
+  message: string;
+  /**
+   *
+   * @type {ConversationErrorCode}
+   * @memberof ConversationAttachmentMissingErrorDto
+   */
+  code: ConversationErrorCode;
+  /**
+   * Urls of the attachment files that no longer exist
+   * @type {Array<string>}
+   * @memberof ConversationAttachmentMissingErrorDto
+   */
+  missingFiles: Array<string>;
+}
+
 /**
  *
  * @export
@@ -1334,6 +1378,7 @@ export interface ConversationDeletionResultDto {
 export const ConversationErrorCode = {
   ConversationDuplicateModelHidden: 'conversationDuplicateModelHidden',
   ConversationModelHidden: 'conversationModelHidden',
+  ConversationAttachmentMissing: 'conversationAttachmentMissing',
 } as const;
 export type ConversationErrorCode =
   (typeof ConversationErrorCode)[keyof typeof ConversationErrorCode];
@@ -1393,7 +1438,7 @@ export interface ConversationListItemDto {
    */
   isReadonly: boolean;
   /**
-   * True when this conversation was created by a DIAL Scheduler run (its resource path matches the `.scheduler/{scheduleId}/{filename}` reserved segment, with `{filename}` shaped `{deploymentId}__{title}__{runId}`).
+   * True when this conversation is a DIAL Scheduler run in the caller's own bucket (its resource path matches the `.scheduler/{scheduleId}/{filename}` reserved segment, with `{filename}` shaped `{deploymentId}__{title}__{runId}`). Always false for published and shared conversations, even when their path has that shape.
    * @type {boolean}
    * @memberof ConversationListItemDto
    */
@@ -4221,6 +4266,91 @@ export interface ExternalServiceAuthResultDto {
    * @memberof ExternalServiceAuthResultDto
    */
   success: boolean;
+}
+/**
+ *
+ * @export
+ * @interface ExternalServiceAuthSettingsBodyDto
+ */
+export interface ExternalServiceAuthSettingsBodyDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ExternalServiceAuthSettingsBodyDto
+   */
+  authenticationType: ExternalServiceAuthSettingsBodyDtoAuthenticationTypeEnum;
+  /**
+   * API_KEY: the header the stored key is sent under. The key itself is never part of the definition.
+   * @type {string}
+   * @memberof ExternalServiceAuthSettingsBodyDto
+   */
+  apiKeyHeader?: string;
+  /**
+   * OAUTH: the client id.
+   * @type {string}
+   * @memberof ExternalServiceAuthSettingsBodyDto
+   */
+  clientId?: string;
+  /**
+   * OAUTH: the client secret. Write-only: never returned, never logged.
+   * @type {string}
+   * @memberof ExternalServiceAuthSettingsBodyDto
+   */
+  clientSecret?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ExternalServiceAuthSettingsBodyDto
+   */
+  authorizationEndpoint?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ExternalServiceAuthSettingsBodyDto
+   */
+  tokenEndpoint?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ExternalServiceAuthSettingsBodyDto
+   */
+  scopesSupported?: Array<string>;
+}
+
+/**
+ * @export
+ */
+export const ExternalServiceAuthSettingsBodyDtoAuthenticationTypeEnum = {
+  ApiKey: 'API_KEY',
+  Oauth: 'OAUTH',
+} as const;
+export type ExternalServiceAuthSettingsBodyDtoAuthenticationTypeEnum =
+  (typeof ExternalServiceAuthSettingsBodyDtoAuthenticationTypeEnum)[keyof typeof ExternalServiceAuthSettingsBodyDtoAuthenticationTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface ExternalServiceDefinitionBodyDto
+ */
+export interface ExternalServiceDefinitionBodyDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ExternalServiceDefinitionBodyDto
+   */
+  displayName: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ExternalServiceDefinitionBodyDto
+   */
+  description?: string;
+  /**
+   *
+   * @type {ExternalServiceAuthSettingsBodyDto}
+   * @memberof ExternalServiceDefinitionBodyDto
+   */
+  authSettings: ExternalServiceAuthSettingsBodyDto;
 }
 /**
  *
@@ -7731,6 +7861,19 @@ export interface TranscribeAudioDto {
    * @memberof TranscribeAudioDto
    */
   mimeType: string;
+}
+/**
+ *
+ * @export
+ * @interface UnpublishAccessDto
+ */
+export interface UnpublishAccessDto {
+  /**
+   * Whether the caller may request removal of this entity: true for an administrator or the publisher of the copy
+   * @type {boolean}
+   * @memberof UnpublishAccessDto
+   */
+  canUnpublish: boolean;
 }
 /**
  *

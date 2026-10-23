@@ -15,7 +15,7 @@ import {
 import type { AnnotationGroup } from '@epam/ai-dial-quotations';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { ComponentProps } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   AttachmentsI18nKeys,
@@ -128,9 +128,16 @@ vi.mock('@epam/ai-dial-conversation-stages', () => ({
     stages,
     labels,
     onAttachmentClick,
+    renderCitation,
   }: {
     labels?: Record<string, unknown>;
+    renderCitation?: (
+      dataId: string | undefined,
+      children: ReactNode,
+    ) => ReactNode;
     stages: {
+      name?: string;
+      content?: string;
       attachments?: {
         title: string;
         data?: string;
@@ -146,6 +153,30 @@ vi.mock('@epam/ai-dial-conversation-stages', () => ({
     capturedStageGroupProps = { stages, labels };
     return (
       <>
+        {/* Stands in for the stage markdown: each supported cit element goes
+            through the host's renderCitation, everything else stays text. */}
+        {stages.map((stage, stageIndex) =>
+          stage.content == null ? null : (
+            <section key={stageIndex} aria-label={`Stage ${stage.name}`}>
+              <p>
+                {stage.content
+                  .split(/(<cit data-id="[^"]+"><\/cit>)/)
+                  .map((part, partIndex) => {
+                    const dataId = /^<cit data-id="([^"]+)"><\/cit>$/.exec(
+                      part,
+                    )?.[1];
+                    return (
+                      <span key={partIndex}>
+                        {dataId != null && renderCitation
+                          ? renderCitation(dataId, undefined)
+                          : part}
+                      </span>
+                    );
+                  })}
+              </p>
+            </section>
+          ),
+        )}
         {stages
           .flatMap((stage) => stage.attachments ?? [])
           .map((attachment) => (
@@ -2102,7 +2133,7 @@ describe('ConversationMessageItem — stream error banner (issue #8979)', () => 
     const { className } = screen.getByText(longPath);
 
     expect(className).toContain('min-w-0');
-    expect(className).toContain('[overflow-wrap:anywhere]');
+    expect(className).toContain('wrap-anywhere');
   });
 
   it.each([
@@ -2345,5 +2376,162 @@ describe('ConversationMessageItem — stage normalization at the app boundary', 
     });
     expect(labels.attemptLabel(2)).toBe('conversation.stages.attempt');
     expect(labels.failedCountLabel(3)).toBe('conversation.stages.failedCount');
+  });
+});
+
+describe('ConversationMessageItem — stage citations', () => {
+  const webAnnotation = (id: string): Annotation => ({
+    target: { selector: { type: 'html_tag', tag: 'cit', id } },
+    body: {
+      title: 'Report page',
+      source: {
+        type: 'attachment',
+        attachment: { type: 'text/html', url: 'https://example.com/page.html' },
+      },
+    },
+  });
+  const messageWith = (
+    content: string,
+    stageContent: string,
+    annotations: Annotation[] = [],
+  ): Message => ({
+    role: MessageRole.Assistant,
+    content,
+    timestamp: '2026-10-21T10:00:00Z',
+    custom_content: {
+      annotations,
+      stages: [
+        {
+          index: 0,
+          name: 'Search documents',
+          status: StageStatus.Completed,
+          content: stageContent,
+        },
+      ],
+    },
+  });
+  const stageRegion = () =>
+    screen.getByRole('region', { name: 'Stage Search documents' });
+
+  it('resolves a stage marker from the message annotations and opens its card outside the stage', async () => {
+    const onAttachmentClick = vi.fn();
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={messageWith('Answer.', 'Searched<cit data-id="s1"></cit>', [
+          webAnnotation('s1'),
+        ])}
+        index={1}
+        onAttachmentClick={onAttachmentClick}
+      />,
+    );
+
+    await userEvent.click(
+      within(stageRegion()).getByRole('button', {
+        name: CitationsI18nKeys.MarkerAriaLabel,
+      }),
+    );
+    /* The card is portalled, so the stage's scroll box cannot clip it. */
+    expect(
+      within(stageRegion()).queryByRole('button', {
+        name: BasicI18nKeys.Preview,
+      }),
+    ).toBeNull();
+    await userEvent.click(
+      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+    );
+
+    expect(onAttachmentClick).toHaveBeenCalledWith(
+      expect.objectContaining({ url: 'https://example.com/page.html' }),
+      1,
+    );
+  });
+
+  it('resolves a stage marker from the conversation annotation pool', () => {
+    const poolAnnotation = webAnnotation('pooled-1');
+    const poolGroup: AnnotationGroup = {
+      groupKey: 'cit:pooled-1',
+      sourceUrl: 'https://example.com/page.html',
+      sourceName: 'Report page',
+      annotations: [poolAnnotation],
+      primaryAnnotation: poolAnnotation,
+    };
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={messageWith('Answer.', 'Searched<cit data-id="pooled-1"></cit>')}
+        index={1}
+        fallbackCitationGroups={[poolGroup]}
+      />,
+    );
+
+    expect(
+      within(stageRegion()).getByRole('button', {
+        name: CitationsI18nKeys.MarkerAriaLabel,
+      }),
+    ).toBeTruthy();
+  });
+
+  it('renders an unclaimed stage marker as literal text', () => {
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={messageWith('Answer.', 'Searched<cit data-id="zz"></cit>')}
+        index={1}
+      />,
+    );
+
+    expect(within(stageRegion()).queryByRole('button')).toBeNull();
+    expect(
+      within(stageRegion()).getByText('<cit data-id="zz"></cit>'),
+    ).toBeTruthy();
+  });
+
+  it('hides complete stage markers and keeps partial markup literal while streaming', () => {
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={messageWith(
+          'Answer',
+          'Searched<cit data-id="s1"></cit> then <cit data-id="s',
+          [webAnnotation('s1')],
+        )}
+        index={1}
+        totalCount={2}
+        isAssistantTyping
+      />,
+    );
+
+    expect(
+      screen.queryByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
+    ).toBeNull();
+    expect(capturedStageGroupProps?.stages).toEqual([
+      expect.objectContaining({
+        content: 'Searched then &lt;cit data-id="s',
+      }),
+    ]);
+  });
+
+  it('keeps one citation card open across the body and a stage', async () => {
+    render(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={messageWith(
+          'Answer<cit data-id="s1"></cit>.',
+          'Searched<cit data-id="s1"></cit>',
+          [webAnnotation('s1')],
+        )}
+        index={1}
+      />,
+    );
+    const [bodyMarker, stageMarker] = screen.getAllByRole('button', {
+      name: CitationsI18nKeys.MarkerAriaLabel,
+    });
+
+    await userEvent.click(bodyMarker);
+    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+    await userEvent.click(stageMarker);
+
+    expect(screen.getAllByRole('dialog')).toHaveLength(1);
   });
 });

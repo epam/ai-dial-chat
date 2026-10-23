@@ -2,9 +2,8 @@ import {
   dialFilesToAttachments,
   dialFolderPathToAttachment,
 } from '@epam/ai-dial-chat-hooks';
-import type { Attachment } from '@epam/ai-dial-chat-shared';
+import type { AttachResult, Attachment } from '@epam/ai-dial-chat-shared';
 import { useCallback, useState } from 'react';
-import type { AttachResult } from '../../components/DialFileManagerModal/types/attach-result';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 
 export interface UseDialFileManagerStateResult {

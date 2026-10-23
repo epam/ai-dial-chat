@@ -96,6 +96,7 @@ import {
   ConversationUnpublishI18nKeys,
   ShareI18nKeys,
 } from '../../constants/translation-keys';
+import { useFeatureFlag } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
@@ -213,11 +214,15 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   const isConversationsPublishingEnabled = useUiFeature(
     OverlayFeature.ConversationsPublishing,
   );
+  const isScheduledTasksEnabled = useFeatureFlag('scheduledTasksEnabled');
   const isConversationsFilterHidden = useUiFeature(
     OverlayFeature.HideConversationsFilter,
   );
   const isConversationExportHidden = useUiFeature(
     OverlayFeature.HideConversationExport,
+  );
+  const isConversationImportHidden = useUiFeature(
+    OverlayFeature.HideConversationImport,
   );
   const {
     conversations: items,
@@ -634,6 +639,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       myChats: t(ConversationPanelI18nKeys.MyChatsSection),
       shared: t(ConversationPanelI18nKeys.FilterShared),
       organization: t(BasicI18nKeys.Organization),
+      personal: t(ConversationPanelI18nKeys.FilterPersonal),
+      type: t(ConversationPanelI18nKeys.FilterType),
+      origin: t(ConversationPanelI18nKeys.FilterOrigin),
+      chat: t(ConversationPanelI18nKeys.FilterChat),
+      task: t(ConversationPanelI18nKeys.FilterTask),
       groupAriaLabel: t(ConversationPanelI18nKeys.FilterGroupAriaLabel),
     }),
     [t],
@@ -1314,12 +1324,13 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       <ConversationPanelMenu
         activeConversationId={activeConversationId}
         onExportAll={isConversationExportHidden ? undefined : handleExportAll}
-        onImport={handleImportClick}
+        onImport={isConversationImportHidden ? undefined : handleImportClick}
       />
     ),
     [
       activeConversationId,
       isConversationExportHidden,
+      isConversationImportHidden,
       handleExportAll,
       handleImportClick,
     ],
@@ -1334,8 +1345,14 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       searchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
       searchClearLabel: t(BasicI18nKeys.ClearSearch),
       filterLabels,
+      filterActiveLabel: t(ConversationPanelI18nKeys.FilterApplied),
       emptyLabel: t(ConversationPanelI18nKeys.Empty),
-      noResultsLabel: t(BasicI18nKeys.NoResults),
+      emptyDescription: t(ConversationPanelI18nKeys.EmptyDescription),
+      noResultsLabel: t(ConversationPanelI18nKeys.NoResults),
+      noResultsDescription: t(BasicI18nKeys.NoResultsDescription),
+      sharedEmptyDescription: t(
+        ConversationPanelI18nKeys.SharedEmptyDescription,
+      ),
       groupLabels,
       actionsLabel: t(ConversationPanelI18nKeys.ActionsLabel),
       unreadIndicatorLabel,
@@ -1350,6 +1367,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       activeConversationId={panelActiveConversationId}
       requestedFilter={requestedFilter}
       isFilterHidden={isConversationsFilterHidden}
+      isTypeFilterHidden={!isScheduledTasksEnabled}
       labels={sectionLabels}
       headerActions={panelHeaderActions}
       onSelectConversation={onSelectConversation}
@@ -1435,7 +1453,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         }
         description={
           <>
-            <span className="break-words">
+            <span className="wrap-break-word">
               {hasUnpublishFolderChoice
                 ? t(ConversationUnpublishI18nKeys.SelectFolderMessage, {
                     name: pendingUnpublish?.title ?? '',
@@ -1485,7 +1503,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         isLoading={isUnsharing}
         description={
           <>
-            <span className="break-words">
+            <span className="wrap-break-word">
               {t(ConversationPanelI18nKeys.UnshareConfirmMessage, {
                 name: pendingUnshareTitle,
               })}
@@ -1512,7 +1530,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         isLoading={isRevoking}
         description={
           <>
-            <span className="break-words">
+            <span className="wrap-break-word">
               {t(ConversationPanelI18nKeys.RevokeConfirmMessage, {
                 name: pendingRevokeTitle,
               })}

@@ -9,6 +9,7 @@ import type {
   SkillEditorFileActions,
   SkillEditorProps,
 } from '../../../models/skill-editor-props';
+import { SkillFileNodeKind } from '../../../types/skill-file-node-kind';
 import { SkillEditor } from '../SkillEditor';
 
 const renderFileNode = (
@@ -43,29 +44,37 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   EditorThemes: { dark: 'dark', light: 'light' },
   TextareaResize: { Vertical: 'vertical' },
   TagInput: () => null,
+  DialItemType: { File: 'file', Folder: 'folder' },
+  FileIcon: () => null,
   Accordion: ({
     title,
-    children,
+    description,
     expanded,
     onToggle,
+    children,
   }: {
     title: ReactNode;
-    children: ReactNode;
+    description?: ReactNode;
     expanded?: boolean;
-    onToggle?: (next: boolean) => void;
+    onToggle?: (expanded: boolean) => void;
+    children?: ReactNode;
   }) => (
-    <section>
-      <h3>
-        <button
-          type="button"
-          aria-expanded={expanded ?? false}
-          onClick={() => onToggle?.(!expanded)}
-        >
-          {title}
-        </button>
-      </h3>
-      {expanded !== false && children}
-    </section>
+    <div>
+      <button
+        type="button"
+        aria-expanded={expanded}
+        onClick={() => onToggle?.(!expanded)}
+      >
+        {title} {description}
+      </button>
+      <div inert={!expanded}>{children}</div>
+    </div>
+  ),
+  FileName: ({ name, details }: { name: string; details?: ReactNode }) => (
+    <span>
+      {name}
+      {details}
+    </span>
   ),
   CaptionText: ({ text }: { text?: string }) => <span>{text}</span>,
   ErrorText: ({ text }: { text?: string }) => <span>{text}</span>,
@@ -286,6 +295,7 @@ vi.mock('@epam/ai-dial-ui-kit/editors', () => ({
 
 vi.mock('@tabler/icons-react', () => ({
   IconArrowNarrowLeft: () => <svg />,
+  IconChevronDown: () => <svg />,
   IconDatabase: () => <svg />,
   IconFileZip: () => <svg />,
   IconFolderPlus: () => <svg />,
@@ -604,20 +614,37 @@ describe('SkillEditor', () => {
 
     expect(
       screen
-        .getByRole('button', { name: 'Editing file' })
+        .getByRole('button', { name: 'Editing file SKILL.md' })
         .getAttribute('aria-expanded'),
     ).toBe('false');
+  });
+
+  it('names the selected file in the mobile Files summary', async () => {
+    const user = userEvent.setup({ delay: null });
+    renderEditor({
+      files: [
+        { path: 'notes.md', name: 'notes.md', kind: SkillFileNodeKind.File },
+      ],
+    });
+
+    await user.click(screen.getAllByRole('button', { name: 'notes.md' })[0]);
+
+    expect(
+      screen.getByRole('button', { name: 'Editing file notes.md' }),
+    ).toBeTruthy();
   });
 
   it('expands the mobile Files accordion once its header is activated', async () => {
     const user = userEvent.setup();
     renderEditor();
 
-    await user.click(screen.getByRole('button', { name: 'Editing file' }));
+    await user.click(
+      screen.getByRole('button', { name: 'Editing file SKILL.md' }),
+    );
 
     expect(
       screen
-        .getByRole('button', { name: 'Editing file' })
+        .getByRole('button', { name: 'Editing file SKILL.md' })
         .getAttribute('aria-expanded'),
     ).toBe('true');
   });

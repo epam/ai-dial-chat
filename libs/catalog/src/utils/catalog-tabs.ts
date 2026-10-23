@@ -63,3 +63,9 @@ export const scrollSelectedTabIntoView = (row: HTMLElement): void => {
     row.scrollLeft += tabRect.right - (rowRect.right - endGap);
   }
 };
+
+/** Returns a tab-dependent text: the string itself, or the callback's result for `activeTab`. */
+export const resolveTabText = (
+  text: string | ((activeTab: string) => string) | undefined,
+  activeTab: string,
+): string | undefined => (typeof text === 'function' ? text(activeTab) : text);

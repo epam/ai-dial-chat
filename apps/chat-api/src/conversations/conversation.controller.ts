@@ -526,7 +526,7 @@ export class ConversationController {
     operationId: 'attachToGeneration',
     summary: 'Attach to an active generation and replay it live',
     description:
-      'Opens an SSE stream for the active generation on this conversation path: one `snapshot` event carrying the assistant message as assembled so far, then a `chunk` event for every subsequent delta, then exactly one terminal event (`done`/`error`/`stopped`). Used by the frontend to show progressive content when reopening a conversation mid-generation instead of only a typing indicator. Principal-scoped — only the principal that could stop the generation can attach to it.',
+      'Opens an SSE stream for the active generation on this conversation path: one `snapshot` event carrying the assistant message as assembled so far and, when the generation runs on this instance outside DIAL Core background mode, its `generationId` — the id `completions/stop` accepts for this path, so a client that attached after a refresh can stop it — then a `chunk` event for every subsequent delta, then exactly one terminal event (`done`/`error`/`stopped`). Used by the frontend to show progressive content when reopening a conversation mid-generation instead of only a typing indicator. Principal-scoped — only the principal that could stop the generation can attach to it.',
   })
   @ApiResponse({
     status: 200,
@@ -636,7 +636,11 @@ export class ConversationController {
       cleanup();
     };
 
-    writeEvent({ type: 'snapshot', message: attachment.assembledMessage });
+    writeEvent({
+      type: 'snapshot',
+      message: attachment.assembledMessage,
+      generationId: attachment.generationId,
+    });
     if (isCleanedUp) return;
 
     timers.keepalive = setInterval(() => {

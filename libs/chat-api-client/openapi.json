@@ -767,6 +767,72 @@
         "tags": ["deployments"]
       }
     },
+    "/api/v1/deployments/{deployment}/usage": {
+      "get": {
+        "description": "Returns a single deployment's own usage. Token and request stats are the same as on /limits, but cost stats are this deployment's own direct plus aggregated spend against DIAL Core's unlimited sentinel, not the caller's account-wide budget. Proxies GET /v1/deployments/{deployment_name}/usage using the caller's session access token. Not cached — every request hits DIAL Core for real-time usage data.",
+        "operationId": "getDeploymentUsage",
+        "parameters": [
+          {
+            "name": "deployment",
+            "required": true,
+            "in": "path",
+            "description": "DIAL deployment identifier. Slash-separated identifiers must be percent-encoded as one request path parameter.",
+            "schema": {
+              "maxLength": 2048,
+              "example": "applications/bucket/My App",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved deployment usage",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeploymentLimitsResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid deployment identifier"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission to access deployment usage"
+          },
+          "404": {
+            "description": "Deployment not found or not visible to the caller"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Get deployment attributed usage",
+        "tags": ["deployments"]
+      }
+    },
     "/api/v1/deployments/{deployment}/details": {
       "get": {
         "description": "Fetches the full per-entity payload for a model, application, or toolset by id (dispatching to DIAL Core's getModel/getApplication/getToolset based on the resolved deployment type) and maps it into a frontend-safe DeploymentDetailsDto. Results are cached server-side for 60 seconds per user; the response sets Cache-Control to private, no-store so browsers and intermediaries never reuse a stale copy after the active user or toolset credentials change.",
@@ -2581,6 +2647,153 @@
         },
         "summary": "Get application external-service metadata",
         "tags": ["external-services"]
+      },
+      "put": {
+        "description": "Declares or replaces one external service on an application the caller may edit, by proxying DIAL Core (PUT /v1/applications/{appId}/external-services/{id}). An API_KEY service carries only the header name — each person's key is signed in separately; an OAUTH service carries its client settings. The client secret is never logged or returned.",
+        "operationId": "putExternalService",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "description": "Application identifier the external service belongs to. Slash-separated paths must be percent-encoded in the URL (%2F).",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "example": "applications%2Fpublic%2Ffinhub-via-openapi__1.0.0",
+              "type": "string"
+            }
+          },
+          {
+            "name": "serviceId",
+            "required": true,
+            "in": "path",
+            "description": "The external service id in the application's `external_services` config: one path segment.",
+            "schema": {
+              "pattern": "^(?!\\.{1,2}$)[A-Za-z0-9._~-]{1,128}$",
+              "example": "teams-bot",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExternalServiceDefinitionBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The declared service, secrets stripped",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetExternalServiceResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid path segments or body"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller may not edit the application, or the liveChatInteraction feature is not enabled"
+          },
+          "404": {
+            "description": "Application not found"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core unavailable"
+          }
+        },
+        "summary": "Declare an application external service",
+        "tags": ["external-services"]
+      },
+      "delete": {
+        "description": "Removes one external service from an application the caller may edit, by proxying DIAL Core (DELETE /v1/applications/{appId}/external-services/{id}); Core purges its application-level credentials with it. Removing a service that is already gone succeeds.",
+        "operationId": "deleteExternalService",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "path",
+            "description": "Application identifier the external service belongs to. Slash-separated paths must be percent-encoded in the URL (%2F).",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/()]|%[\\dA-Fa-f]{2})+$",
+              "example": "applications%2Fpublic%2Ffinhub-via-openapi__1.0.0",
+              "type": "string"
+            }
+          },
+          {
+            "name": "serviceId",
+            "required": true,
+            "in": "path",
+            "description": "The external service id in the application's `external_services` config: one path segment.",
+            "schema": {
+              "pattern": "^(?!\\.{1,2}$)[A-Za-z0-9._~-]{1,128}$",
+              "example": "teams-bot",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "External service removed"
+          },
+          "400": {
+            "description": "Invalid path segments"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller may not edit the application, or the liveChatInteraction feature is not enabled"
+          },
+          "404": {
+            "description": "DIAL Core resource not found"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core unavailable"
+          }
+        },
+        "summary": "Remove an application external service",
+        "tags": ["external-services"]
       }
     },
     "/api/v1/external-services/{appId}/{serviceId}/signin": {
@@ -3317,7 +3530,7 @@
     },
     "/api/v1/conversations/completions/attach": {
       "post": {
-        "description": "Opens an SSE stream for the active generation on this conversation path: one `snapshot` event carrying the assistant message as assembled so far, then a `chunk` event for every subsequent delta, then exactly one terminal event (`done`/`error`/`stopped`). Used by the frontend to show progressive content when reopening a conversation mid-generation instead of only a typing indicator. Principal-scoped — only the principal that could stop the generation can attach to it.",
+        "description": "Opens an SSE stream for the active generation on this conversation path: one `snapshot` event carrying the assistant message as assembled so far and, when the generation runs on this instance outside DIAL Core background mode, its `generationId` — the id `completions/stop` accepts for this path, so a client that attached after a refresh can stop it — then a `chunk` event for every subsequent delta, then exactly one terminal event (`done`/`error`/`stopped`). Used by the frontend to show progressive content when reopening a conversation mid-generation instead of only a typing indicator. Principal-scoped — only the principal that could stop the generation can attach to it.",
         "operationId": "attachToGeneration",
         "parameters": [],
         "requestBody": {
@@ -3733,10 +3946,17 @@
             "description": "An answer in the conversation is still being generated in the background; publish after it finishes"
           },
           "413": {
-            "description": "DIAL Core rejected the payload as too large"
+            "description": "The conversation attachments (files plus every file inside attached folders) exceed PUBLISH_ATTACHMENTS_MAX_FILES"
           },
           "422": {
-            "description": "DIAL Core could not process the request"
+            "description": "A file the conversation attachments reference no longer exists (`code: conversationAttachmentMissing`, `missingFiles` lists the urls); nothing is published",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationAttachmentMissingErrorDto"
+                }
+              }
+            }
           },
           "429": {
             "description": "DIAL Core rate-limited the request"
@@ -5979,6 +6199,60 @@
         },
         "summary": "Accept a share invitation",
         "tags": ["share"]
+      },
+      "delete": {
+        "description": "Withdraws one invitation the caller created, by proxying DIAL Core (DELETE /v1/invitations/{id}). Access already accepted from it stays; only the link stops working. Withdrawing an invitation that is already gone succeeds. Unlike POST /api/v1/share/revoke, which revokes every share of a resource at once.",
+        "operationId": "deleteInvitation",
+        "parameters": [
+          {
+            "name": "invitationId",
+            "required": true,
+            "in": "path",
+            "description": "Invitation identifier extracted from the share link.",
+            "schema": {
+              "pattern": "^[\\w-]+$",
+              "example": "abc123",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Invitation withdrawn"
+          },
+          "400": {
+            "description": "Validation error — invalid invitationId"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "The invitation is not the caller’s to withdraw"
+          },
+          "404": {
+            "description": "DIAL Core resource not found"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Withdraw a share invitation",
+        "tags": ["share"]
       }
     },
     "/api/v1/share/discard": {
@@ -7470,7 +7744,7 @@
             "description": "Not authenticated — valid session cookie required"
           },
           "403": {
-            "description": "Caller lacks write access to the target folder"
+            "description": "Caller is neither an administrator nor the publisher of this copy, or lacks write access to the target folder"
           },
           "404": {
             "description": "DIAL Core reports the entity or target folder as unknown"
@@ -7495,6 +7769,79 @@
           }
         },
         "summary": "Request removal of a published catalog entity from a folder",
+        "tags": ["publish"]
+      }
+    },
+    "/api/v1/catalog/{entityType}/{entityId}/unpublish-access": {
+      "get": {
+        "description": "Reports whether the session user may submit an unpublish request for this entity: true for an administrator, for an entity in their own bucket, and for the publisher of a public copy (the bucket holding the live publication that created it). It reveals only the caller’s own permission, never who published the entity, and creates nothing. A negative answer is a 200 with `canUnpublish: false`.",
+        "operationId": "getCatalogUnpublishAccess",
+        "parameters": [
+          {
+            "name": "entityType",
+            "required": true,
+            "in": "path",
+            "description": "Catalog entity kind.",
+            "schema": {
+              "example": "toolset",
+              "type": "string",
+              "enum": ["model", "toolset", "application", "prompt", "skill"]
+            }
+          },
+          {
+            "name": "entityId",
+            "required": true,
+            "in": "path",
+            "description": "The entity's DIAL Core resource path, used directly as the Publication API `sourceUrl`.",
+            "schema": {
+              "example": "tool-abc123",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Whether the caller may request removal of the entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnpublishAccessDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — invalid entityType or entityId"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "DIAL Core denied access to the resource"
+          },
+          "404": {
+            "description": "DIAL Core resource not found"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error for the publication list, or was unreachable"
+          },
+          "503": {
+            "description": "The session user bucket could not be resolved because DIAL Core is unavailable (raised by session authentication; an unreachable DIAL Core during the call itself is reported as 502)"
+          }
+        },
+        "summary": "Check whether the caller may request removal of a catalog entity",
         "tags": ["publish"]
       }
     },
@@ -9013,7 +9360,7 @@
     },
     "/api/v1/custom-api/{id}": {
       "get": {
-        "description": "Dispatches an authenticated GET request to the exact Core path configured for this operation ID under CUSTOM_CORE_API_CONFIG, using the caller's own session access token. Accepts no query parameters and no request body. Core remains the authority for route role authorization and business rate limits; this endpoint adds no BFF business schema or field filtering, so the response is an opaque JSON value the calling application must validate for its own domain.",
+        "description": "Dispatches an authenticated request to the exact Core path configured for this operation ID under CUSTOM_CORE_API_CONFIG, using the caller's own session access token and the operation's configured method; a different method returns 405. Core remains the authority for route role authorization and business rate limits; this endpoint adds no BFF business schema or field filtering, so the response is an opaque JSON value the calling application must validate for its own domain. Query parameters are accepted only by the names the operation allowlists (each at most once); they are not declared here because each deployment configures its own. A caller passing them builds the request URL itself on the generated client's Configuration.fetchApi — a documented generator gap.",
         "operationId": "getCustomApiOperation",
         "parameters": [
           {
@@ -9030,7 +9377,7 @@
         ],
         "responses": {
           "200": {
-            "description": "The configured operation succeeded",
+            "description": "The configured operation succeeded (Core 200 or 201; Core 204 returns data null)",
             "content": {
               "application/json": {
                 "schema": {
@@ -9040,19 +9387,19 @@
             }
           },
           "400": {
-            "description": "Invalid operation ID, or a query/body value was supplied"
+            "description": "DIAL Core rejected the request as invalid\n\nInvalid operation ID, a query parameter the operation does not allow, or a body it does not accept"
           },
           "401": {
-            "description": "Not authenticated — valid session cookie required"
+            "description": "Not authenticated, or DIAL Core rejected the session token\n\nNot authenticated — valid session cookie required"
           },
           "403": {
             "description": "DIAL Core denied access to the resource"
           },
           "404": {
-            "description": "No operation is configured for this ID, or DIAL Core reported the resource as not found"
+            "description": "DIAL Core resource not found\n\nNo operation is configured for this ID, or DIAL Core reported the resource as not found"
           },
           "405": {
-            "description": "Only GET is supported for custom API operations"
+            "description": "The request method is not the operation's configured method"
           },
           "409": {
             "description": "DIAL Core reported a conflict with the current resource state"
@@ -9061,19 +9408,235 @@
             "description": "DIAL Core could not process the request"
           },
           "429": {
-            "description": "Local in-flight call capacity exhausted, or DIAL Core rate-limited the call"
+            "description": "DIAL Core rate-limited the request\n\nLocal in-flight call capacity exhausted, or DIAL Core rate-limited the call"
           },
           "502": {
-            "description": "DIAL Core returned an error, a redirect, or an invalid/oversized response"
+            "description": "DIAL Core returned a server error or an unexpected response\n\nDIAL Core returned an error, a redirect, or an invalid/oversized response"
           },
           "503": {
-            "description": "DIAL Core is unreachable"
+            "description": "DIAL Core is unreachable or timed out\n\nDIAL Core is unreachable"
           },
           "504": {
             "description": "DIAL Core request exceeded its configured deadline"
           }
         },
-        "summary": "Call a deployment-configured custom Core API operation",
+        "summary": "Call a deployment-configured custom Core API GET operation",
+        "tags": ["custom-api"]
+      },
+      "post": {
+        "description": "Dispatches an authenticated request to the exact Core path configured for this operation ID under CUSTOM_CORE_API_CONFIG, using the caller's own session access token and the operation's configured method; a different method returns 405. Core remains the authority for route role authorization and business rate limits; this endpoint adds no BFF business schema or field filtering, so the response is an opaque JSON value the calling application must validate for its own domain. Query parameters are accepted only by the names the operation allowlists (each at most once); they are not declared here because each deployment configures its own. A caller passing them builds the request URL itself on the generated client's Configuration.fetchApi — a documented generator gap.",
+        "operationId": "postCustomApiOperation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Operation ID from the deployment-configured CUSTOM_CORE_API_CONFIG registry.",
+            "schema": {
+              "pattern": "^[a-z][a-z0-9-]{0,63}$",
+              "example": "data-products",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "description": "JSON object or array for an operation configured with body \"json\" (at most 65,536 bytes, depth 32); omitted for every other operation.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The configured operation succeeded (Core 200 or 201; Core 204 returns data null)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomApiResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "DIAL Core rejected the request as invalid\n\nInvalid operation ID, a query parameter the operation does not allow, or a body it does not accept"
+          },
+          "401": {
+            "description": "Not authenticated, or DIAL Core rejected the session token\n\nNot authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "DIAL Core denied access to the resource"
+          },
+          "404": {
+            "description": "DIAL Core resource not found\n\nNo operation is configured for this ID, or DIAL Core reported the resource as not found"
+          },
+          "405": {
+            "description": "The request method is not the operation's configured method"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request\n\nLocal in-flight call capacity exhausted, or DIAL Core rate-limited the call"
+          },
+          "502": {
+            "description": "DIAL Core returned a server error or an unexpected response\n\nDIAL Core returned an error, a redirect, or an invalid/oversized response"
+          },
+          "503": {
+            "description": "DIAL Core is unreachable or timed out\n\nDIAL Core is unreachable"
+          },
+          "504": {
+            "description": "DIAL Core request exceeded its configured deadline"
+          }
+        },
+        "summary": "Call a deployment-configured custom Core API POST operation",
+        "tags": ["custom-api"]
+      },
+      "put": {
+        "description": "Dispatches an authenticated request to the exact Core path configured for this operation ID under CUSTOM_CORE_API_CONFIG, using the caller's own session access token and the operation's configured method; a different method returns 405. Core remains the authority for route role authorization and business rate limits; this endpoint adds no BFF business schema or field filtering, so the response is an opaque JSON value the calling application must validate for its own domain. Query parameters are accepted only by the names the operation allowlists (each at most once); they are not declared here because each deployment configures its own. A caller passing them builds the request URL itself on the generated client's Configuration.fetchApi — a documented generator gap.",
+        "operationId": "putCustomApiOperation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Operation ID from the deployment-configured CUSTOM_CORE_API_CONFIG registry.",
+            "schema": {
+              "pattern": "^[a-z][a-z0-9-]{0,63}$",
+              "example": "data-products",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "description": "JSON object or array for an operation configured with body \"json\" (at most 65,536 bytes, depth 32); omitted for every other operation.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The configured operation succeeded (Core 200 or 201; Core 204 returns data null)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomApiResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "DIAL Core rejected the request as invalid\n\nInvalid operation ID, a query parameter the operation does not allow, or a body it does not accept"
+          },
+          "401": {
+            "description": "Not authenticated, or DIAL Core rejected the session token\n\nNot authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "DIAL Core denied access to the resource"
+          },
+          "404": {
+            "description": "DIAL Core resource not found\n\nNo operation is configured for this ID, or DIAL Core reported the resource as not found"
+          },
+          "405": {
+            "description": "The request method is not the operation's configured method"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request\n\nLocal in-flight call capacity exhausted, or DIAL Core rate-limited the call"
+          },
+          "502": {
+            "description": "DIAL Core returned a server error or an unexpected response\n\nDIAL Core returned an error, a redirect, or an invalid/oversized response"
+          },
+          "503": {
+            "description": "DIAL Core is unreachable or timed out\n\nDIAL Core is unreachable"
+          },
+          "504": {
+            "description": "DIAL Core request exceeded its configured deadline"
+          }
+        },
+        "summary": "Call a deployment-configured custom Core API PUT operation",
+        "tags": ["custom-api"]
+      },
+      "delete": {
+        "description": "Dispatches an authenticated request to the exact Core path configured for this operation ID under CUSTOM_CORE_API_CONFIG, using the caller's own session access token and the operation's configured method; a different method returns 405. Core remains the authority for route role authorization and business rate limits; this endpoint adds no BFF business schema or field filtering, so the response is an opaque JSON value the calling application must validate for its own domain. Query parameters are accepted only by the names the operation allowlists (each at most once); they are not declared here because each deployment configures its own. A caller passing them builds the request URL itself on the generated client's Configuration.fetchApi — a documented generator gap.",
+        "operationId": "deleteCustomApiOperation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Operation ID from the deployment-configured CUSTOM_CORE_API_CONFIG registry.",
+            "schema": {
+              "pattern": "^[a-z][a-z0-9-]{0,63}$",
+              "example": "data-products",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The configured operation succeeded (Core 200 or 201; Core 204 returns data null)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomApiResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "DIAL Core rejected the request as invalid\n\nInvalid operation ID, a query parameter the operation does not allow, or a body it does not accept"
+          },
+          "401": {
+            "description": "Not authenticated, or DIAL Core rejected the session token\n\nNot authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "DIAL Core denied access to the resource"
+          },
+          "404": {
+            "description": "DIAL Core resource not found\n\nNo operation is configured for this ID, or DIAL Core reported the resource as not found"
+          },
+          "405": {
+            "description": "The request method is not the operation's configured method"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request\n\nLocal in-flight call capacity exhausted, or DIAL Core rate-limited the call"
+          },
+          "502": {
+            "description": "DIAL Core returned a server error or an unexpected response\n\nDIAL Core returned an error, a redirect, or an invalid/oversized response"
+          },
+          "503": {
+            "description": "DIAL Core is unreachable or timed out\n\nDIAL Core is unreachable"
+          },
+          "504": {
+            "description": "DIAL Core request exceeded its configured deadline"
+          }
+        },
+        "summary": "Call a deployment-configured custom Core API DELETE operation",
         "tags": ["custom-api"]
       }
     }
@@ -9533,6 +10096,11 @@
             "type": "number",
             "description": "Percentage (1–99) of a capped day/week/month usage limit at which the composer shows its usage banner. Sourced from USAGE_LIMITS_WARNING_THRESHOLD_PERCENT; governs the banner only, not the usage dial.",
             "example": 75
+          },
+          "celebrationsEnabledByDefault": {
+            "type": "boolean",
+            "description": "Operator default for the seasonal-celebrations switch, applied to users who have not saved a choice of their own; a saved choice overrides it. Sourced from UI_EVENT_ENABLED_BY_DEFAULT; true unless it is false, 0 or no. Has no visible effect while activeEventId is null.",
+            "example": true
           }
         },
         "required": [
@@ -9551,7 +10119,8 @@
           "customVariables",
           "publicationFilterSources",
           "maxAttachmentFileSizeBytes",
-          "usageLimitsWarningThresholdPercent"
+          "usageLimitsWarningThresholdPercent",
+          "celebrationsEnabledByDefault"
         ]
       },
       "ClientConfigMetadataDto": {
@@ -12463,6 +13032,64 @@
         },
         "required": ["credentialsLevel", "authenticationType"]
       },
+      "ExternalServiceAuthSettingsBodyDto": {
+        "type": "object",
+        "properties": {
+          "authenticationType": {
+            "type": "string",
+            "enum": ["API_KEY", "OAUTH"],
+            "example": "API_KEY"
+          },
+          "apiKeyHeader": {
+            "type": "string",
+            "description": "API_KEY: the header the stored key is sent under. The key itself is never part of the definition.",
+            "example": "PRIVATE-TOKEN"
+          },
+          "clientId": {
+            "type": "string",
+            "description": "OAUTH: the client id.",
+            "example": "dial-loop"
+          },
+          "clientSecret": {
+            "type": "string",
+            "description": "OAUTH: the client secret. Write-only: never returned, never logged.",
+            "writeOnly": true
+          },
+          "authorizationEndpoint": {
+            "type": "string",
+            "example": "https://idp.example.com/oauth/authorize"
+          },
+          "tokenEndpoint": {
+            "type": "string",
+            "example": "https://idp.example.com/oauth/token"
+          },
+          "scopesSupported": {
+            "example": ["openid", "offline_access"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["authenticationType"]
+      },
+      "ExternalServiceDefinitionBodyDto": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "example": "GitLab (PAT)"
+          },
+          "description": {
+            "type": "string",
+            "example": "The project’s GitLab token"
+          },
+          "authSettings": {
+            "$ref": "#/components/schemas/ExternalServiceAuthSettingsBodyDto"
+          }
+        },
+        "required": ["displayName", "authSettings"]
+      },
       "CreateConversationDto": {
         "type": "object",
         "properties": {
@@ -12787,7 +13414,7 @@
           },
           "isScheduledTask": {
             "type": "boolean",
-            "description": "True when this conversation was created by a DIAL Scheduler run (its resource path matches the `.scheduler/{scheduleId}/{filename}` reserved segment, with `{filename}` shaped `{deploymentId}__{title}__{runId}`).",
+            "description": "True when this conversation is a DIAL Scheduler run in the caller's own bucket (its resource path matches the `.scheduler/{scheduleId}/{filename}` reserved segment, with `{filename}` shaped `{deploymentId}__{title}__{runId}`). Always false for published and shared conversations, even when their path has that shape.",
             "example": false
           },
           "scheduleId": {
@@ -12962,7 +13589,11 @@
       },
       "ConversationErrorCode": {
         "type": "string",
-        "enum": ["conversationDuplicateModelHidden", "conversationModelHidden"],
+        "enum": [
+          "conversationDuplicateModelHidden",
+          "conversationModelHidden",
+          "conversationAttachmentMissing"
+        ],
         "description": "Present when the request was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`, so it cannot be duplicated. `conversationModelHidden`: the model a completion, share or publish would use is hidden through `HIDDEN_ENTITY_TAGS`."
       },
       "ConversationModelHiddenErrorDto": {
@@ -13241,6 +13872,40 @@
           }
         },
         "required": ["path", "folderPath", "publishedAt", "publishedBy"]
+      },
+      "ConversationAttachmentMissingErrorDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 422
+          },
+          "error": {
+            "type": "string",
+            "example": "Unprocessable Entity"
+          },
+          "message": {
+            "type": "string",
+            "example": "The conversation references attachment files that no longer exist: files/bucket-123/old.pdf"
+          },
+          "code": {
+            "example": "conversationAttachmentMissing",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConversationErrorCode"
+              }
+            ]
+          },
+          "missingFiles": {
+            "example": ["files/bucket-123/old.pdf"],
+            "description": "Urls of the attachment files that no longer exist",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["statusCode", "error", "message", "code", "missingFiles"]
       },
       "UnpublishConversationDto": {
         "type": "object",
@@ -14820,6 +15485,17 @@
           "requestedAt",
           "requestedBy"
         ]
+      },
+      "UnpublishAccessDto": {
+        "type": "object",
+        "properties": {
+          "canUnpublish": {
+            "type": "boolean",
+            "description": "Whether the caller may request removal of this entity: true for an administrator or the publisher of the copy",
+            "example": true
+          }
+        },
+        "required": ["canUnpublish"]
       },
       "PublishHistoryEntryDto": {
         "type": "object",

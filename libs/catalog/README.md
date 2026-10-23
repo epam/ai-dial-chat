@@ -27,7 +27,7 @@ It already includes the styles of the publish flow from `@epam/ai-dial-publish-p
 ## Peer Dependencies
 
 - `react`
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.20 (requires the public `/grid` entry)
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.35 (requires the public `/grid` entry)
 - `@epam/ai-dial-chat-shared`
 
 `ag-grid-community` and `@epam/ai-dial-publish-panel` are normal package
@@ -43,7 +43,7 @@ installing both is required rather than optional.
 (`.`) entry: `CredentialsLevel`, `CredentialsBadgeState`, `CredentialStatus`,
 `CredentialsUiState`, `ToolsetAuthenticationType`, `CatalogSortKey`,
 `CatalogItem`, `CatalogItemCredentials`, `filterCatalogItems`,
-`getTopicOptions`, `sortCatalogItems`, `buildCatalogTabs`, `getCatalogItemTabs`,
+`filterCatalogItemsByQuery`, `CatalogItemsQuery`, `getTopicOptions`, `sortCatalogItems`, `buildCatalogTabs`, `getCatalogItemTabs`,
 `getCredentialsBadgeState`, `getCredentialsUiState`, and `getSignedInLevel` —
 the headless enums and pure item-mapping functions a host can use (e.g. to
 sort/filter/tab a catalog item list, or read a toolset's credential state)
@@ -310,9 +310,13 @@ const createMenu: CreateMenuColors = {
 
 #### Custom empty state
 
-By default, the Browse section renders a `PanelEmptyState` (an icon plus
-`titles.noResultsTitle`) when the current search/filter/tab combination
-matches nothing. While the "My Apps" filter is on with no search query and no
+By default, the Browse section renders a `PanelEmptyState` (the kit's
+empty-state illustration, a title and a description) when the active tab shows
+nothing. After a search or a topic filter it shows
+`titles.noResultsTitle(query, activeTab)` with `titles.noResultsDescription`;
+with neither applied it shows `titles.emptyTitle` with `titles.emptyDescription`.
+Each of those two is either a string or a `(activeTab) => string` callback, so
+a host can name the tab's entity ("No models yet"). While the "My Apps" filter is on with no search query and no
 topic filter, it instead renders a personal empty state: the heading from
 `titles.myAppsEmptyTitle(activeTab)`, the `titles.myAppsEmptyDescription` line
 and — unless the catalog is read-only or `hideCreateButton` is set — the same
@@ -502,9 +506,64 @@ const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 - `selectedItemId`'s single-row highlight is not drawn in this mode.
 - The label props default to `Select <item name>` and `'Select all'`.
 
+In the default single mode, Enter or Space on one of a row's cells calls
+`onItemClick` with that row, as a click does. A control inside the cell (the
+Favorite star) keeps its own keys.
+
+### CatalogPickerModal
+
+The shell of a picker dialog over catalog items (Add toolset, Change model):
+the header with sort, search and the From filter, and the loading, failure and
+empty states. The list and its selection are the host's, from `renderList`,
+which receives the searched, filtered and sorted items and the search query.
+Mount it only while open, so search, filter and sort start fresh each time.
+
+```tsx
+import {
+  CatalogLoadStatus,
+  CatalogPickerModal,
+  ListView,
+} from '@epam/ai-dial-catalog';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+
+<CatalogPickerModal
+  items={items}
+  labels={{ title: t('Change model'), catalog: t('Models catalog') }}
+  status={isLoading ? CatalogLoadStatus.Loading : CatalogLoadStatus.Ready}
+  isConfirmDisabled={selectedId == null}
+  onConfirm={handleConfirm}
+  onClose={handleClose}
+  renderList={(rows, query) => (
+    <ListView
+      type={CatalogEntityType.Model}
+      items={rows}
+      query={query}
+      selectedItemId={selectedId}
+      onItemClick={(item) => setSelectedId(item.id)}
+    />
+  )}
+/>;
+```
+
+- `status={CatalogLoadStatus.Error}` shows `labels.failedToLoad` and `error`,
+  with a Retry button only when `onRetry` is given.
+- `footerStart` puts the choice's own options (a model's effort, say) at the
+  footer's start, before Cancel and Add.
+- Every other string in `labels` has an English default. The library does no
+  i18n.
+- The dialog fills the screen below 768px, the kit `Popup`'s own breakpoint,
+  and is a centred dialog from there up. The footer rule drawn with
+  `footerStart` reads `--cat-picker-footer-border`, falling back to
+  `--stroke-tertiary`.
+
 ### Favorites
 
-Renders the user's favorited items in a dedicated, paginated section.
+Renders the user's favorited items in a dedicated, paginated section. On
+desktop it is a grid of up to two rows per page; below the desktop breakpoint
+every favorite sits in a single row the user swipes through, and the pager
+steps that row one card at a time. Pass `isPaginationHidden` to drop the pager:
+the desktop grid then shows every favorite at once and the mobile row is only
+swiped. `Catalog` forwards its own `isFavoritesPaginationHidden` prop here.
 
 ```tsx
 import { Favorites } from '@epam/ai-dial-catalog';
@@ -824,6 +883,7 @@ declare const signOut: (id: string, level: CredentialsLevel) => Promise<void>;
 
 ```tsx
 import {
+  CatalogLoadStatus,
   CatalogSortKey,
   CatalogViewMode,
   CatalogDetailsTab,
@@ -1378,6 +1438,7 @@ sentinel rather than a cap, so it renders its note instead of a progress bar.
 import {
   buildCatalogTabs,
   filterCatalogItems,
+  filterCatalogItemsByQuery,
   getCatalogItemTabs,
   getTopicOptions,
   sortCatalogItems,
@@ -1390,6 +1451,17 @@ import {
  */
 const filtered = filterCatalogItems(items, 'gpt');
 const sorted = sortCatalogItems(filtered, CatalogSortKey.NameAZ);
+
+/*
+ * A toolbar's search, From filter (topics and "My") and sort at once, in the
+ * catalog toolbar's order — what `CatalogPickerModal` applies to its items.
+ */
+const rows = filterCatalogItemsByQuery(items, {
+  search: 'gpt',
+  topics: new Set(['Code']),
+  isMyOnly: false,
+  sortKey: CatalogSortKey.NameAZ,
+});
 
 /*
  * Derives the entity-type tabs / Topics filter options that `Catalog` would

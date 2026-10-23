@@ -69,6 +69,7 @@ import {
   useAnnotations,
   useCitationCard,
   useCitationMarkdownComponents,
+  useCitationTagRenderer,
   type AnnotationGroup,
 } from '@epam/ai-dial-quotations';
 import {
@@ -121,6 +122,7 @@ import {
   getMessageStarterProps,
   getStatusMessageProps,
   isStreamingMessage,
+  prepareStageCitations,
 } from './utils/message-display';
 
 const EditMessageInput = lazy(async () => {
@@ -621,6 +623,17 @@ const ConversationMessageItem: FC<Props> = ({
       isCompactTypography,
       fallbackCitationGroups,
     );
+  /* Stage markers resolve against the same message-level annotations as the
+     body: producers send annotations on the message, never on a stage. */
+  const renderStageCitation = useCitationTagRenderer(
+    citationGroups,
+    citationCallbacks,
+    fallbackCitationGroups,
+  );
+  const displayStages = useMemo(
+    () => prepareStageCitations(stages, isStreaming),
+    [stages, isStreaming],
+  );
   /* The Copy actions serialize markdown outside the renderer, so a `<cit>`
      element has to be swapped for the source name its marker shows — a
      references-table title cell is otherwise copied empty (issue #9245). */
@@ -1061,10 +1074,12 @@ const ConversationMessageItem: FC<Props> = ({
               )}
               {hasStages && (
                 <CollapsedGroup
-                  stages={stages}
+                  stages={displayStages}
                   isStreaming={isStreaming}
                   labels={stageLabels}
                   onAttachmentClick={handleStageAttachmentClick}
+                  attachmentDisplayResolvers={attachmentDisplayResolvers}
+                  renderCitation={renderStageCitation}
                 />
               )}
               {groupedVisualizer != null &&
@@ -1125,7 +1140,7 @@ const ConversationMessageItem: FC<Props> = ({
                     title={t(ChatI18nKeys.StreamErrorTitle)}
                     message={
                       <span className="flex flex-wrap items-center justify-between gap-2 text-start">
-                        <span className="min-w-0 [overflow-wrap:anywhere]">
+                        <span className="min-w-0 wrap-anywhere">
                           {msg.streamErrorMessage ||
                             t(ChatI18nKeys.StreamError)}
                         </span>

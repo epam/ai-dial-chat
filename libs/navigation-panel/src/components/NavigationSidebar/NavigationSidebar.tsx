@@ -368,7 +368,7 @@ export const NavigationSidebar: FC<NavigationSidebarProps> = memo(
             styles.footer,
             isCollapsed
               ? 'flex-col items-start gap-2'
-              : 'items-center justify-between',
+              : 'items-center justify-between gap-2',
             NAVIGATION_PANEL_CLASS.sidebarFooter,
           )}
         >

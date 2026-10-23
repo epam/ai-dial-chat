@@ -10,13 +10,17 @@ import type { FC, ReactNode } from 'react';
 export interface ScheduledTaskDeleteConfirmationColors {
   /** Type label above the task name. Defaults to `--text-secondary`. */
   typeLabelText?: string;
+  /** Identity summary row background. Defaults to `--bg-error` (`#F3D6D8`). */
+  summaryBackground?: string;
+  /** Identity summary row border color. Defaults to `--stroke-error-alpha` (`#AE2F2F73`). */
+  summaryBorder?: string;
 }
 
 /** Style overrides for `ScheduledTaskDeleteConfirmation`. */
 export interface ScheduledTaskDeleteConfirmationStyles {
   /** CSS class applied to the popup container, for example to constrain its width. */
   popupClassName?: string;
-  /** CSS class applied to the dialog title. */
+  /** CSS class applied to the dialog title. Defaults to `'dial-body-semi-text'` (16px/24px, replacing the kit `Popup`'s `dial-h1-text`). */
   titleClassName?: string;
   /** Typography class applied to the warning sentence and the consequence bullets. Defaults to `'dial-body-paragraph-text'`. */
   messageClassName?: string;
@@ -81,15 +85,31 @@ export const ScheduledTaskDeleteConfirmation: FC<
     {...dialogProps}
     variant={ConfirmationPopupVariant.Danger}
     popupClassName={stylesProp?.popupClassName}
-    titleClassName={stylesProp?.titleClassName}
+    titleClassName={stylesProp?.titleClassName ?? 'dial-body-semi-text'}
     messageClassName={
       stylesProp?.messageClassName ?? 'dial-body-paragraph-text'
     }
+    /* The task modal drops the content view's top padding and the action
+     * row's top border, so the copy sits closer to the identity card and the
+     * actions sit on the plain dialog surface. */
+    viewClassName="pt-0"
+    footerStyles={{ colors: { border: 'transparent' } }}
     message={body}
     isLoading={isDeleting}
     loadingStatusLabel={pendingLabel}
     identity={
-      <ResourceSummary>
+      <ResourceSummary
+        styles={{
+          colors: {
+            background:
+              stylesProp?.colors?.summaryBackground ??
+              'var(--bg-error, #f3d6d8)',
+            border:
+              stylesProp?.colors?.summaryBorder ??
+              'var(--stroke-error-alpha, #ae2f2f73)',
+          },
+        }}
+      >
         <ConfirmationIdentityRow
           icon={icon}
           typeLabel={typeLabel}

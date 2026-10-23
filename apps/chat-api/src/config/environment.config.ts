@@ -658,6 +658,12 @@ export class EnvironmentVariables {
   ARCHIVE_UPLOAD_TIMEOUT_MS?: number = 300_000;
 
   @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  PUBLISH_ATTACHMENTS_MAX_FILES?: number = 1000;
+
+  @IsOptional()
   @IsString()
   DEFAULT_DEPLOYMENT?: string;
 
@@ -929,6 +935,21 @@ export class EnvironmentVariables {
     message: 'UI_EVENT must be a lowercase kebab-case event ID or none',
   })
   UI_EVENT?: string;
+
+  /*
+   * Operator default for the user's seasonal-celebrations switch; a choice the
+   * user saved overrides it. Cosmetic and on by default, so only an explicit
+   * false/0/no turns it off and a typo keeps the default.
+   */
+  @IsOptional()
+  @Transform(({ obj, key }) => {
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    return !['false', '0', 'no'].includes(String(raw).trim().toLowerCase());
+  })
+  @IsBoolean()
+  UI_EVENT_ENABLED_BY_DEFAULT?: boolean = true;
 
   @IsOptional()
   @Transform(({ value }) => {

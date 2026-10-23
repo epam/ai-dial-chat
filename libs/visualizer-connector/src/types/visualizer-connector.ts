@@ -18,3 +18,46 @@ export enum VisualizerConnectorEvents {
   UpdatedConversationSuccess = 'UPDATED_CONVERSATION_SUCCESS',
   UpdatedApplicationSuccess = 'UPDATED_APPLICATION_SUCCESS',
 }
+
+/**
+ * Messages an application-editor iframe posts to DIAL Chat's application editor, as
+ * `${applicationName}/${value}`. The camelCase wire values are the ones the editor host matches on;
+ * they are not the visualizer events above.
+ */
+export enum AppsEditorEvents {
+  /** The editor's UI has rendered; the host drops its loading overlay. */
+  ReadyToInteract = 'readyToInteract',
+  /** The editor's model is loaded and can handle `TRIGGER_SAVE`; form validity is reported separately. May repeat. */
+  ReadyToSave = 'readyToSave',
+  /** The editor's session resolved signed out, so `ReadyToSave` will not arrive. */
+  LoggedOut = 'loggedOut',
+  /** The editor saved the application; the host refreshes its own copy. */
+  UpdatedApplicationSuccess = 'updatedApplicationSuccess',
+}
+
+/**
+ * The application editor's save and auth messages, posted WITHOUT the `${applicationName}/` prefix.
+ * Field placement follows what DIAL Chat's application editor reads (top level unless noted).
+ */
+export enum AppsEditorMessages {
+  /** Host → editor: save now. Carries the General step as `general` when the host owns it. */
+  TriggerSave = 'TRIGGER_SAVE',
+  /** Editor → host: the save landed; `hasChanges: boolean`. */
+  SaveSuccess = 'SAVE_SUCCESS',
+  /** Editor → host: the save failed or was refused; `error: string`. */
+  SaveError = 'SAVE_ERROR',
+  /** Editor → host: the form's validity; `payload.isValid: boolean`. */
+  ValidityState = 'VALIDITY_STATE',
+  /** Editor → host: unsaved edits; `payload.isDirty: boolean` (top-level `isDirty` also read). */
+  DirtyState = 'DIRTY_STATE',
+  /** Editor → host: start a toolset OAuth login; `toolsetId: string`. */
+  RequestToolsetLogin = 'REQUEST_TOOLSET_LOGIN',
+  /** Host → editor: outcome of `RequestToolsetLogin`. */
+  ToolsetLoginResult = 'TOOLSET_LOGIN_RESULT',
+  /** Editor → host: log a toolset out; `toolsetId: string`. */
+  RequestToolsetLogout = 'REQUEST_TOOLSET_LOGOUT',
+  /** Host → editor: outcome of `RequestToolsetLogout`. */
+  ToolsetLogoutResult = 'TOOLSET_LOGOUT_RESULT',
+  /** Editor → host: open the host's credential forms; `appId: string`. No credential crosses the frame. */
+  RequestApplicationCredentials = 'REQUEST_APPLICATION_CREDENTIALS',
+}

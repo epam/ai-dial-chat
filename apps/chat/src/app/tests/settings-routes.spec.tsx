@@ -84,13 +84,13 @@ describe('renderSettingsRoutes', () => {
 });
 
 describe('renderUsageRoute', () => {
-  const renderUsageAt = (isSettingsPageHidden: boolean) =>
+  const renderUsageAt = (isUsagePageHidden: boolean) =>
     render(
       <MemoryRouter initialEntries={[ROUTES.Usage]}>
         <LocationProbe />
         <Routes>
           <Route path={ROUTES.Root} element={<span>{ROOT_MARKER}</span>} />
-          {renderUsageRoute(isSettingsPageHidden)}
+          {renderUsageRoute(isUsagePageHidden)}
         </Routes>
       </MemoryRouter>,
     );
@@ -102,7 +102,7 @@ describe('renderUsageRoute', () => {
     expect(currentPath()).toBe(ROUTES.Usage);
   });
 
-  it('redirects to the root when the settings page is hidden', () => {
+  it('redirects to the root when the usage page is hidden', () => {
     renderUsageAt(true);
 
     expect(screen.getByText(ROOT_MARKER)).toBeTruthy();

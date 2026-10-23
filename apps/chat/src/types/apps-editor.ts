@@ -1,6 +1,10 @@
 import type { CatalogItemCredentials } from '@epam/ai-dial-catalog';
 import type { LocaleTextEntryDto } from '@epam/ai-dial-chat-api-client';
 import { type ToolsetCredentialsLevel } from '@epam/ai-dial-chat-hooks';
+import {
+  AppsEditorEvents,
+  AppsEditorMessages,
+} from '@epam/ai-dial-visualizer-connector';
 
 export enum AppsEditorQuery {
   Schema = 'schema',
@@ -16,57 +20,15 @@ export enum AppsEditorIframeQuery {
   ApplicationName = 'applicationName',
 }
 
-export enum AppsEditorEvent {
-  /** Sent once the embedded QuickApps iframe's UI has rendered. Controls only the loading-spinner overlay — it does NOT indicate the iframe's data model is loaded/safe to save; see `ReadyToSave`. */
-  ReadyToInteract = 'readyToInteract',
-  /**
-   * Sent by the embedded QuickApps iframe once its session has resolved and
-   * the user is not authenticated (or the session errored). In this case the
-   * iframe never becomes safe to save (`ReadyToSave` will not arrive), so the
-   * host treats this as an expected non-ready state rather than a failure —
-   * see the "Settings step readiness gates Save and Preview" requirement in
-   * the `quick-app-authoring` spec.
-   */
-  LoggedOut = 'loggedOut',
-  /**
-   * Sent by the embedded QuickApps iframe once its own internal application
-   * model has finished loading and validating, and it is safe for the host
-   * to send `TriggerSave`. Distinct from `ReadyToInteract` (UI rendered) —
-   * gates the Save/Preview buttons. May be sent more than once (e.g. after
-   * an internal reload); the host takes the latest occurrence at face value.
-   */
-  ReadyToSave = 'readyToSave',
-  UpdatedSuccess = 'updatedApplicationSuccess',
-  TriggerSave = 'TRIGGER_SAVE',
-  SaveSuccess = 'SAVE_SUCCESS',
-  SaveError = 'SAVE_ERROR',
-  /**
-   * Sent by the embedded QuickApps iframe, carrying `{ isValid: boolean }`,
-   * whenever its form's validity changes (it posts `{ isValid: false }` on
-   * mount when the form starts invalid, e.g. blank Instructions). The host
-   * disables Save/Preview while it is `false`. Independent of
-   * `ReadyToSave`, and of `DirtyState`.
-   */
-  ValidityState = 'VALIDITY_STATE',
-  /**
-   * Sent by the embedded QuickApps iframe whenever its form gains or loses
-   * unsaved edits, carrying a boolean `isDirty` (read from `payload.isDirty`
-   * like `ValidityState`, or from the message itself). Feeds the builder
-   * leave guard. The payload shape is unconfirmed with the QuickApps team, so
-   * anything but a boolean is ignored — a wrong guess fails open (no dialog).
-   */
-  DirtyState = 'DIRTY_STATE',
-  /** Sent by the embedded QuickApps iframe to request a toolset OAuth login, carrying `{ toolsetId: string }`. */
-  RequestToolsetLogin = 'REQUEST_TOOLSET_LOGIN',
-  /** Sent back to the iframe with the outcome of a `RequestToolsetLogin`. */
-  ToolsetLoginResult = 'TOOLSET_LOGIN_RESULT',
-  /** Sent by the embedded QuickApps iframe to request a toolset logout, carrying `{ toolsetId: string }`. */
-  RequestToolsetLogout = 'REQUEST_TOOLSET_LOGOUT',
-  /** Sent back to the iframe with the outcome of a `RequestToolsetLogout`. */
-  ToolsetLogoutResult = 'TOOLSET_LOGOUT_RESULT',
-  /** Opens the host's credential forms for `{ appId: string }`; no credential material crosses the iframe boundary. */
-  RequestApplicationCredentials = 'REQUEST_APPLICATION_CREDENTIALS',
-}
+/** Shared editor wire values, retaining the app's existing event names. */
+export const AppsEditorEvent = {
+  ...AppsEditorEvents,
+  ...AppsEditorMessages,
+  UpdatedSuccess: AppsEditorEvents.UpdatedApplicationSuccess,
+} as const;
+
+export type AppsEditorEvent =
+  (typeof AppsEditorEvent)[keyof typeof AppsEditorEvent];
 
 /**
  * Refreshed toolset credentials/status, fetched via the same
@@ -79,7 +41,7 @@ type RefreshedToolsetCredentials = CatalogItemCredentials | undefined;
 
 /** Payload of a `ToolsetLoginResult` message posted back to the QuickApps iframe. */
 export interface ToolsetLoginResultPayload {
-  type: AppsEditorEvent.ToolsetLoginResult;
+  type: AppsEditorMessages.ToolsetLoginResult;
   toolsetId: string;
   success: boolean;
   credentialsLevel?: ToolsetCredentialsLevel;
@@ -89,7 +51,7 @@ export interface ToolsetLoginResultPayload {
 
 /** Payload of a `ToolsetLogoutResult` message posted back to the QuickApps iframe. */
 export interface ToolsetLogoutResultPayload {
-  type: AppsEditorEvent.ToolsetLogoutResult;
+  type: AppsEditorMessages.ToolsetLogoutResult;
   toolsetId: string;
   success: boolean;
   credentialsLevel?: ToolsetCredentialsLevel;
@@ -118,7 +80,7 @@ export interface TriggerSaveGeneralPayload {
 
 /** Payload of a `TriggerSave` message posted to the embedded QuickApps iframe. */
 export interface TriggerSaveMessage {
-  type: AppsEditorEvent.TriggerSave;
+  type: AppsEditorMessages.TriggerSave;
   general?: TriggerSaveGeneralPayload;
 }
 
@@ -130,6 +92,6 @@ export interface TriggerSaveMessage {
  * embedded editors that predate this contract — treat as `false` in that case.
  */
 export interface SaveSuccessMessage {
-  type: AppsEditorEvent.SaveSuccess;
+  type: AppsEditorMessages.SaveSuccess;
   hasChanges?: boolean;
 }

@@ -1,11 +1,15 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   BadGatewayException,
+  ForbiddenException,
+  HttpException,
   Inject,
   Injectable,
   Logger,
 } from '@nestjs/common';
 import type { Cache } from 'cache-manager';
+import { AdminRoleService } from '../auth/admin-role.service';
+import type { SessionUser } from '../auth/session/session.types';
 import {
   extractDialErrorMessage,
   mapDialHttpStatus,
@@ -21,10 +25,13 @@ import { CatalogEntityType } from './dto/catalog-entity-params.dto';
 import { PublishHistoryEntryDto } from './dto/publish-history-entry.dto';
 import { PublishResultDto } from './dto/publish-result.dto';
 import type { PublishRuleDto } from './dto/publish-rule.dto';
+import type { UnpublishAccessDto } from './dto/unpublish-access.dto';
 import { UnpublishResultDto } from './dto/unpublish-result.dto';
 import {
   getPublicationSourceCredentials,
   getPublicationSourceTargetUrl,
+  publishesCopy,
+  resolvePublicationDetails,
   resolvePublicationsForSource,
   toPublicationList,
 } from './publication.util';
@@ -34,6 +41,7 @@ import {
   getPublishableIconUrl,
   getPublishedIconTargetUrl,
   getPublishedTargetUrl,
+  getResourceBucket,
   getResourceName,
   getResourceTypePrefix,
   getVersionedTargetResourceName,
@@ -47,6 +55,15 @@ import {
  */
 const historyCacheKey = (entityType: CatalogEntityType, entityId: string) =>
   `publish-history:${entityType}:${entityId}`;
+
+/* Keyed by the caller's bucket, so one caller's answer is never served to another. */
+const unpublishAccessCacheKey = (
+  bucket: string,
+  entityType: CatalogEntityType,
+  entityId: string,
+) => `unpublish-access:${bucket}:${entityType}:${entityId}`;
+
+const UNPUBLISH_ACCESS_TTL_MS = 60 * 1000;
 
 /**
  * Catalog entity names are always `{name}__{version}` (see
@@ -103,6 +120,7 @@ export class PublishService {
   constructor(
     private readonly dialClient: DialClientService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly adminRoleService: AdminRoleService,
   ) {}
 
   /**
@@ -290,19 +308,31 @@ export class PublishService {
    * published copy stays visible to everyone who could already see it until an
    * administrator approves. Nothing in the result may assert otherwise.
    *
+   * Only an administrator or the copy's publisher may ask (see
+   * `canUnpublish`); anyone else is refused before Core is called.
+   *
    * @throws {NotFoundException} When Core reports the entity or target as unknown
-   * @throws {ForbiddenException} When the caller lacks write access to `folderPath`
+   * @throws {ForbiddenException} When the caller is neither an administrator nor the publisher, or lacks write access to `folderPath`
    * @throws {BadGatewayException} When Core returns an unexpected error, a 5xx, or is unreachable
    */
   async unpublish(
-    accessToken: string,
-    bucket: string,
+    user: SessionUser,
     entityType: CatalogEntityType,
     entityId: string,
     folderPath: string,
     version: string | undefined,
     author: string,
   ): Promise<UnpublishResultDto> {
+    const { at: accessToken, bucket } = user;
+    if (!(await this.canUnpublish(user, entityType, entityId))) {
+      this.logger.warn(
+        `Refused unpublish of ${entityType} "${entityId}": caller is neither an administrator nor its publisher`,
+      );
+      throw new ForbiddenException(
+        'You can only unpublish resources you published',
+      );
+    }
+
     /* See the matching `sourceUrl` encoding comment in `publish` above. */
     const sourceUrl = encodeDialResourcePath(entityId);
     const publicTargetFolder = getPublicTargetFolder(folderPath);
@@ -395,6 +425,69 @@ export class PublishService {
   }
 
   /**
+   * Whether the caller may request removal of `entityId`: an administrator
+   * (`AdminRoleService`), the owner of a resource in their own bucket, or the
+   * publisher of a public copy — the bucket holding the live `ADD` publication
+   * that created it (`publishesCopy`). Names (`displayAuthor`, `author`) never
+   * count: they are free text.
+   *
+   * Only the publisher lookup is cached, per caller and entity, for 60 s;
+   * ownership changes when an administrator approves a publication in Core,
+   * which this service is not told about, so the TTL bounds staleness.
+   *
+   * Fails closed: an unreadable publication list throws instead of answering.
+   *
+   * @throws {BadGatewayException} When Core returns an error for the publication list or is unreachable
+   */
+  async canUnpublish(
+    user: SessionUser,
+    entityType: CatalogEntityType,
+    entityId: string,
+  ): Promise<boolean> {
+    if (this.adminRoleService.isAdmin(user)) {
+      return true;
+    }
+    /* An unresolved (empty) bucket owns nothing, so a bare id cannot match it. */
+    if (user.bucket && getResourceBucket(entityId) === user.bucket) {
+      return true;
+    }
+
+    const cacheKey = unpublishAccessCacheKey(user.bucket, entityType, entityId);
+    /* An object, not a bare boolean, so a cached `false` still reads as a hit. */
+    const cached = await this.cacheManager.get<UnpublishAccessDto>(cacheKey);
+    if (cached) {
+      return cached.canUnpublish;
+    }
+
+    const context = `unpublish access to ${entityType} "${entityId}"`;
+    let publications: Awaited<ReturnType<typeof this.listResolvedPublications>>;
+    try {
+      publications = await this.listResolvedPublications(
+        user.at,
+        user.bucket,
+        context,
+      );
+    } catch (err) {
+      if (err instanceof HttpException) {
+        throw err;
+      }
+      this.logger.error(
+        `Unexpected error checking ${context}`,
+        err instanceof Error ? err.stack : undefined,
+      );
+      throw new BadGatewayException(
+        'Failed to read publications from DIAL Core',
+      );
+    }
+
+    const access: UnpublishAccessDto = {
+      canUnpublish: publishesCopy(publications, entityId),
+    };
+    await this.cacheManager.set(cacheKey, access, UNPUBLISH_ACCESS_TTL_MS);
+    return access.canUnpublish;
+  }
+
+  /**
    * @throws {BadGatewayException} When Core returns an unexpected error
    * @throws {ServiceUnavailableException} When Core is unreachable or times out
    */
@@ -477,6 +570,44 @@ export class PublishService {
      * publishing kept working, which silently hid Unpublish.
      * `conversation-publish.service.ts` already scoped by session bucket.
      */
+    return resolvePublicationsForSource(
+      await this.listPublications(accessToken, bucket, context),
+      sourceUrl,
+      (url) => this.fetchPublication(accessToken, url),
+      this.logger,
+      context,
+    );
+  }
+
+  /**
+   * Every publication in the caller's bucket whose full record can be read,
+   * `resources` included — whatever it publishes.
+   *
+   * @throws {BadGatewayException} When Core returns an unexpected error
+   */
+  private async listResolvedPublications(
+    accessToken: string,
+    bucket: string,
+    context: string,
+  ) {
+    return resolvePublicationDetails(
+      await this.listPublications(accessToken, bucket, context),
+      (url) => this.fetchPublication(accessToken, url),
+      this.logger,
+      context,
+    );
+  }
+
+  /**
+   * The caller's own publication list — metadata only, no `resources`.
+   *
+   * @throws {BadGatewayException} When Core returns an unexpected error
+   */
+  private async listPublications(
+    accessToken: string,
+    bucket: string,
+    context: string,
+  ) {
     const result = await this.dialClient.client.getPublications({
       headers: getBearerAuthHeaders(accessToken),
       body: { url: getPublicationsListScope(bucket) },
@@ -491,14 +622,8 @@ export class PublishService {
       );
     }
 
-    return resolvePublicationsForSource(
-      toPublicationList<(typeof result.data)[number]>(
-        result.data,
-        this.logger,
-        context,
-      ),
-      sourceUrl,
-      (url) => this.fetchPublication(accessToken, url),
+    return toPublicationList<(typeof result.data)[number]>(
+      result.data,
       this.logger,
       context,
     );

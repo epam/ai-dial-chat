@@ -194,6 +194,7 @@ vi.mock('../Header/Header', () => ({
     onOpenUnpublish,
     isUnpublishVisible,
     hasPublishedFolders,
+    isPublishHistoryResolved,
     onRequestPublishHistory,
   }: {
     item: CatalogItem;
@@ -209,9 +210,11 @@ vi.mock('../Header/Header', () => ({
     onOpenUnpublish?: () => void;
     isUnpublishVisible?: (item: CatalogItem) => boolean;
     hasPublishedFolders?: boolean;
+    isPublishHistoryResolved?: boolean;
     onRequestPublishHistory?: () => void;
   }) => (
     <>
+      {isPublishHistoryResolved && <span>PublishHistorySettled</span>}
       <button onClick={onOpenPublish}>Publish</button>
       {/* Stands in for hovering/opening the real Manage menu, which is what
        * starts the panel's publish-history lookup. */}
@@ -2566,6 +2569,24 @@ describe('DetailsPanel — Unpublish', () => {
       await screen.findByRole('button', { name: 'UnpublishTrigger' }),
     ).toBeTruthy();
     expect(getPublishHistory).toHaveBeenCalledTimes(2);
+  });
+
+  /*
+   * [#9500](https://github.com/epam/ai-dial-chat/issues/9500): the header
+   * holds its Manage slot back until the up-front lookup settles, so a failed
+   * lookup must settle too or every other entry stays hidden with Unpublish.
+   */
+  it('settles the up-front lookup with no folder when it fails', async () => {
+    renderPanel({
+      getPublishHistory: vi.fn().mockRejectedValue(new Error('503')),
+      onUnpublish: vi.fn(),
+      isUnpublishVisible: () => true,
+    });
+
+    expect(await screen.findByText('PublishHistorySettled')).toBeTruthy();
+    expect(
+      screen.queryByRole('button', { name: 'UnpublishTrigger' }),
+    ).toBeNull();
   });
 
   it('requests the history up front for an item the host calls unpublishable', async () => {

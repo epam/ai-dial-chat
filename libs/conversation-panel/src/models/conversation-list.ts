@@ -1,5 +1,6 @@
 import type { FilterTab } from '@epam/ai-dial-chat-shared';
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
+import type { ConversationTypeFilter } from '../types/conversation-kind';
 import type { ConversationRowVariant } from '../types/conversation-row-variant';
 import type { ConversationItem, ConversationMove } from './panel-props';
 
@@ -53,10 +54,16 @@ export interface ConversationListStyles {
 
 /** Localised labels for `ConversationList`. */
 export interface ConversationListLabels {
-  /** Message shown when `conversations` is empty. */
+  /** Message shown when the list is empty with no search or filter applied. */
   emptyLabel: string;
-  /** Message shown when conversations exist but none match the filter and search. */
+  /** Secondary line under `emptyLabel`, e.g. what will fill the list. Omitted when not set. */
+  emptyDescription?: string;
+  /** Message shown when a search or a filter matches no conversation. */
   noResultsLabel: string;
+  /** Secondary line under `noResultsLabel`, e.g. how to widen the search. Omitted when not set. */
+  noResultsDescription?: string;
+  /** Secondary line under `noResultsLabel` when the `Shared` filter matches nothing and no search is typed. Defaults to `noResultsDescription`. */
+  sharedEmptyDescription?: string;
   /** Status message announced to assistive tech while conversations are loading. Defaults to `'Loading conversations'`. */
   loadingLabel?: string;
   /** Labels for collapsible group section headings. */
@@ -92,6 +99,8 @@ export interface ConversationListProps {
   searchQuery?: string;
   /** Filter tab applied to the list. Defaults to `FilterTab.All`. */
   activeFilter?: FilterTab;
+  /** Which kinds of conversation to show. Defaults to `ConversationTypeFilter.All`. */
+  activeTypeFilter?: ConversationTypeFilter;
   /** Sources to exclude entirely, before filtering and grouping. */
   hiddenSources?: FilterTab[];
   /** Presentation of rows and group headers. Defaults to `ConversationRowVariant.Avatar`. */

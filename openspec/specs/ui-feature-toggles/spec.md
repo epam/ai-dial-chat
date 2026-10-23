@@ -33,7 +33,7 @@
 
 ### Requirement: Default baseline preserves current unconditional behavior
 
-`DEFAULT_ENABLED_UI_FEATURES` SHALL contain exactly the 27 default-on keys and exclude the 25 default-off (`Hide*`/restrictive modifier and not-yet-defaulted) keys (`header`, `conversations-section`, `conversations-panel-toggle`, `showConversationsSectionByDefault`, `attachments-manager`, `likes`, `dislike-comment`, `input-files`, `live-chat-interaction`, `catalog`, `catalog-table-view`, `file-manager`, `toolsets`, `prompts`, `skills`, `conversation-drafts`... are default-on; `hide-edit-user-message`, `disabled-send`, `hide-change-agent`, `hide-navigation-menu`... are default-off — the full 52-key membership is the `OverlayFeature` enum itself (`libs/chat-overlay/src/protocol/overlay-protocol.ts`), not restated here). With no `enabledUiFeatures` and no overlay override, `isEnabled` SHALL return exactly the default-on classification for every one of the 52 keys.
+`DEFAULT_ENABLED_UI_FEATURES` SHALL contain exactly the 27 default-on keys and exclude the 28 default-off (`Hide*`/restrictive modifier and not-yet-defaulted) keys (`header`, `conversations-section`, `conversations-panel-toggle`, `showConversationsSectionByDefault`, `attachments-manager`, `likes`, `dislike-comment`, `input-files`, `live-chat-interaction`, `catalog`, `catalog-table-view`, `file-manager`, `toolsets`, `prompts`, `skills`, `conversation-drafts`... are default-on; `hide-edit-user-message`, `disabled-send`, `hide-change-agent`, `hide-navigation-menu`, `hide-starter-icon`... are default-off — the full 55-key membership is the `OverlayFeature` enum itself (`libs/chat-overlay/src/protocol/overlay-protocol.ts`), not restated here). With no `enabledUiFeatures` and no overlay override, `isEnabled` SHALL return exactly the default-on classification for every one of the 55 keys.
 
 `catalog-table-view` is the one initial-state modifier that defaults on rather than matching the surface's original unconditional behavior. It no longer gates anything: `CatalogView` leaves `initialViewMode` unset, so Browse always opens in `Catalog`'s own default view (`CatalogViewMode.Grid`, the card grid). The key stays default-on so an overlay host still sending it is not warned about an unknown feature. Every other modifier still defaults off, so a deployment that configures nothing observes no other behavior change.
 
@@ -137,7 +137,7 @@ The effective visibility of the voice-input UI affordance SHALL be `isEnabled('v
 
 ### Requirement: Each transferable feature key gates exactly one owning surface
 
-Each of the 52 transferable `OverlayFeature` values SHALL gate exactly the owning component/container documented in `design.md`'s classification table, and SHALL NOT alter the visibility or behavior of any other feature's surface. Hidden surfaces SHALL be conditionally unmounted (not rendered), not merely visually hidden, so no focus trap or hidden-but-tabbable control is left behind (per this repo's `inert`-over-`aria-hidden` accessibility rule for hidden interactive regions where applicable).
+Each of the 55 transferable `OverlayFeature` values SHALL gate exactly the owning component/container documented in `design.md`'s classification table, and SHALL NOT alter the visibility or behavior of any other feature's surface. Hidden surfaces SHALL be conditionally unmounted (not rendered), not merely visually hidden, so no focus trap or hidden-but-tabbable control is left behind (per this repo's `inert`-over-`aria-hidden` accessibility rule for hidden interactive regions where applicable).
 
 **Accessibility:** Conditionally-unmounted controls remove themselves from both the accessibility tree and the tab order by not rendering — no `aria-hidden` container with focusable descendants is introduced by this change.
 
@@ -302,6 +302,19 @@ Route gating SHALL NOT be treated as an authorization boundary: the backend SHAL
 - **WHEN** `isEnabled('hide-conversation-export')` is `true`
 - **THEN** no conversation row menu renders an Export item, and the panel menu renders Import and Delete all but no Export all
 
+### Requirement: hide-conversation-import removes the conversation import entry point
+
+`ConversationPanelView` SHALL omit the panel menu's "Import" entry when `isEnabled('hide-conversation-import')` is `true`. Export all and Delete all SHALL stay. The key hides the UI entry point only and SHALL NOT be treated as an authorization control.
+
+**Accessibility:** The removed entry leaves no empty or disabled menu item behind.
+
+**i18n impact:** None.
+
+#### Scenario: Import entry is gone when the key is on
+
+- **WHEN** `isEnabled('hide-conversation-import')` is `true`
+- **THEN** the panel menu renders Export all and Delete all but no Import
+
 ### Requirement: show-header-logo renders the theme logo in the desktop top bar
 
 `ChatLayout`'s desktop top bar SHALL render the theme logo, centered between the start-side conversation controls and the end-side sources toggle, when `isEnabled('show-header-logo')` is `true`. Nothing SHALL render there when the key is off, and the bar's other controls SHALL keep their positions either way. The mobile `Header` renders the logo whenever `header` is on; when `header` is off and this key is on, the mobile `Header` SHALL still render, carrying only the logo and none of its buttons. Below the desktop breakpoint `Logo` shows the theme `favicon`, or a smaller full `logo` when the theme defines no `favicon`. The key SHALL NOT affect the desktop navigation rail. The key is a modifier key and SHALL be absent from `DEFAULT_ENABLED_UI_FEATURES`, so a deployment that configures nothing observes no change.
@@ -342,6 +355,24 @@ Route gating SHALL NOT be treated as an authorization boundary: the backend SHAL
 
 - **WHEN** `isEnabled('starters-below-greeting')` is `false`
 - **THEN** the starters render after the input
+
+### Requirement: hide-starter-icon removes the sparkles icon from starter pills
+
+`apps/chat/src/components/StarterButtons/StarterButtons.tsx` SHALL pass `isIconHidden={true}` to `StarterButtons` from `@epam/ai-dial-starter-buttons` when `isEnabled('hide-starter-icon')` is `true`, and `isIconHidden={false}` when the key is off. The lib component SHALL forward `isIconHidden` to each `StarterButton`'s `iconBefore` prop as `null` when `true`, omitting the sparkles icon the UI kit renders there by default, and SHALL leave `iconBefore` at its default otherwise. The key SHALL NOT change the overflow dropdown's own icon. The key is a modifier key and SHALL be absent from `DEFAULT_ENABLED_UI_FEATURES`, so a deployment that configures nothing observes no change.
+
+**Accessibility:** The icon is decorative (`aria-hidden`) either way; removing it does not change the button's accessible name, which stays `starter.title`.
+
+**i18n impact:** None.
+
+#### Scenario: The icon is omitted when the key is on
+
+- **WHEN** `isEnabled('hide-starter-icon')` is `true`
+- **THEN** every visible starter pill renders as a label-only button, with no sparkles icon
+
+#### Scenario: The icon renders by default
+
+- **WHEN** `isEnabled('hide-starter-icon')` is `false`
+- **THEN** every visible starter pill renders the UI kit's default sparkles icon
 
 ### Requirement: hide-greeting removes the empty-chat greeting
 
@@ -457,7 +488,7 @@ Hiding the entry SHALL NOT change send behavior: the `SendOnEnter` preference is
 
 ### Requirement: The Settings dialog is reachable from the user menu and hide-settings-page removes it
 
-`SidebarNavigation` SHALL offer Settings through the sidebar user menu's Settings entry, in the desktop column and in the mobile drawer, which opens the Settings dialog. The `/settings` page remains routable. When `isEnabled('hide-settings-page')` is `true`, the Settings entry and the Usage link SHALL be omitted, and the `/settings` and `/usage` routes SHALL redirect to `/` with `replace`. `SettingsPage` SHALL stack its section list above the active tab at full width on the mobile breakpoint and keep the 240px side column on desktop.
+`SidebarNavigation` SHALL offer Settings through the sidebar user menu's Settings entry, in the desktop column and in the mobile drawer, which opens the Settings dialog. The `/settings` page remains routable. When `isEnabled('hide-settings-page')` is `true`, the Settings entry SHALL be omitted, and the `/settings` routes SHALL redirect to `/` with `replace`. The key SHALL NOT affect the Usage page; `hide-usage-page` gates it. `SettingsPage` SHALL stack its section list above the active tab at full width on the mobile breakpoint and keep the 240px side column on desktop.
 
 **Accessibility:** The Settings entry is a labeled menu item; its icon is `aria-hidden`.
 
@@ -471,4 +502,51 @@ Hiding the entry SHALL NOT change send behavior: the `SendOnEnter` preference is
 #### Scenario: hide-settings-page removes every entry point
 
 - **WHEN** `isEnabled('hide-settings-page')` is `true`
-- **THEN** the user menu renders no Settings entry, the footer renders no Usage link, and a direct `/settings` or `/usage` URL redirects to `/`
+- **THEN** the user menu renders no Settings entry and a direct `/settings` URL redirects to `/`, while the footer's Usage link and `/usage` stay available
+
+### Requirement: hide-usage-page removes every Usage page entry point
+
+When `isEnabled('hide-usage-page')` is `true`, `SidebarNavigation` SHALL omit the footer's Usage link (desktop column and mobile drawer), `UsageLimitsControl` SHALL omit its popover's "Full usage" link, and the `/usage` route SHALL redirect to `/` with `replace`. The key is a modifier key, absent from `DEFAULT_ENABLED_UI_FEATURES`. It hides UI entry points only and SHALL NOT be treated as an authorization control. It is independent of the `features.usageLimitsControl` backend flag, which decides whether `UsageLimitsControl` renders at all.
+
+**Accessibility:** Removed links leave no empty or disabled control behind.
+
+**i18n impact:** None.
+
+#### Scenario: hide-usage-page removes every Usage entry point
+
+- **WHEN** `isEnabled('hide-usage-page')` is `true`
+- **THEN** the footer renders no Usage link, the usage-limits popover renders no "Full usage" link, and a direct `/usage` URL redirects to `/`
+
+### Requirement: hide-user-menu-identity removes the identity row from the user menu
+
+When `isEnabled('hide-user-menu-identity')` is `true`, `SidebarNavigation` SHALL pass `isIdentityHidden` to `UserMenu`, in the desktop column and in the mobile drawer. The menu's dropdown then omits its identity row (avatar initials and display name). Preference submenus, Settings and Log out SHALL stay. The trigger SHALL keep its avatar, display name and accessible name.
+
+The key is a modifier key, absent from `DEFAULT_ENABLED_UI_FEATURES`, and `KNOWN_UI_FEATURES` SHALL accept it. It exists for embeds whose sidebar trigger already shows the user's name, where repeating it at the top of a small menu is noise. Unlike `hide-user-menu`, it keeps Log out. It changes presentation only and SHALL NOT be treated as an authorization control.
+
+`hide-user-menu` takes precedence: when it is on, there is no user menu and this key has no effect. On mobile, `hide-navigation-menu` also removes the menu, and this key has no effect there either.
+
+**Accessibility:** The removed row was non-interactive plain text, so no focus stop disappears. The user's identity stays exposed through the trigger's accessible name and email tooltip.
+
+**i18n impact:** None.
+
+#### Scenario: hide-user-menu-identity removes the identity row on desktop
+
+- **GIVEN** the viewport is desktop and the user is authenticated
+- **WHEN** `isEnabled('hide-user-menu-identity')` is `true` and the user opens the sidebar's user menu
+- **THEN** the dropdown shows no avatar-and-name row and no leading divider, and it still offers Settings and Log out
+
+#### Scenario: hide-user-menu-identity removes the identity row in the mobile drawer
+
+- **GIVEN** the viewport is mobile, the drawer is open and `hide-navigation-menu` is off
+- **WHEN** `isEnabled('hide-user-menu-identity')` is `true` and the user opens the drawer's user menu
+- **THEN** the dropdown shows no avatar-and-name row, and it still offers Log out
+
+#### Scenario: The key is off by default
+
+- **WHEN** no source enables `hide-user-menu-identity`
+- **THEN** the user menu's dropdown starts with the identity row, followed by a divider
+
+#### Scenario: hide-user-menu still removes the whole menu
+
+- **WHEN** `isEnabled('hide-user-menu')` and `isEnabled('hide-user-menu-identity')` are both `true`
+- **THEN** no user menu is rendered in the sidebar or the drawer

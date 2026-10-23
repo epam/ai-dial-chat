@@ -2,6 +2,7 @@ import {
   buildCssVars,
   ItemHeader,
   mergeClasses,
+  useIsMobile,
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_KIT_ICON_STROKE,
@@ -11,6 +12,7 @@ import {
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import {
   FC,
+  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -18,6 +20,10 @@ import {
   useState,
 } from 'react';
 import { FavoritesProps } from '../../models/favorites';
+import {
+  getRowActiveIndex,
+  getRowScrollDelta,
+} from '../../utils/favorites-row';
 import { useFavColumns } from '../../utils/use-fav-columns';
 import { FavoriteCard } from './FavoriteCard';
 import styles from './Favorites.module.scss';
@@ -54,8 +60,8 @@ const getLayoutRect = (el: HTMLElement): DOMRect => {
 };
 
 /**
- * Favorites strip with responsive grid, pagination, and a fade-in animation.
- * Column count adapts to viewport width via `useFavColumns`.
+ * Favorites strip: a paginated responsive grid on desktop, a single
+ * horizontally scrollable row below the desktop breakpoint.
  */
 export const Favorites: FC<FavoritesProps> = ({
   items,
@@ -73,6 +79,7 @@ export const Favorites: FC<FavoritesProps> = ({
   removeFromFavoritesAriaLabel,
   selectedItemId,
   credentialsBadgeLoggedOutLabel,
+  isPaginationHidden = false,
 }) => {
   const titleClassName =
     favoritesStyles?.typography?.titleClassName ?? 'dial-body-semi-text';
@@ -107,13 +114,25 @@ export const Favorites: FC<FavoritesProps> = ({
 
   const [favPage, setFavPage] = useState(1);
   const favColumns = useFavColumns();
+  /* Below the desktop breakpoint every favorite sits in one row the user
+   * swipes through; a page is then one card, and the pager scrolls the row. */
+  const isRow = useIsMobile();
+  const isPaged = !isPaginationHidden && !isRow;
   const favPerPage = favColumns * FAV_ROWS;
   const favStart = (favPage - 1) * favPerPage;
   const favSlice = useMemo(
-    () => sortedItems.slice(favStart, favStart + favPerPage),
-    [sortedItems, favStart, favPerPage],
+    () =>
+      isPaged
+        ? sortedItems.slice(favStart, favStart + favPerPage)
+        : sortedItems,
+    [isPaged, sortedItems, favStart, favPerPage],
   );
-  const favTotalPages = Math.ceil(sortedItems.length / favPerPage);
+  let favTotalPages = 1;
+  if (isPaged) {
+    favTotalPages = Math.ceil(sortedItems.length / favPerPage);
+  } else if (isRow && !isPaginationHidden) {
+    favTotalPages = sortedItems.length;
+  }
   const displayCount = totalCount ?? items.length;
 
   /*
@@ -132,18 +151,21 @@ export const Favorites: FC<FavoritesProps> = ({
     number | undefined
   >();
   const prevColumnsRef = useRef(favColumns);
+  const prevIsRowRef = useRef(isRow);
 
   /*
-   * When the column count changes (viewport resize), go back to page 1 and
-   * re-measure so the locked heights stay accurate.
+   * When the column count or the row/grid layout changes (viewport resize),
+   * go back to page 1 and re-measure so the locked heights stay accurate.
    */
   useEffect(() => {
-    if (prevColumnsRef.current === favColumns) return;
+    if (prevColumnsRef.current === favColumns && prevIsRowRef.current === isRow)
+      return;
     prevColumnsRef.current = favColumns;
+    prevIsRowRef.current = isRow;
     setFavPage(1);
     setLockedGridHeight(undefined);
     setLockedSectionHeight(undefined);
-  }, [favColumns]);
+  }, [favColumns, isRow]);
 
   /*
    * Reset to the last valid page when items are removed and the current page
@@ -169,11 +191,13 @@ export const Favorites: FC<FavoritesProps> = ({
     }
   }, [favTotalPages, lockedGridHeight, lockedSectionHeight]);
 
-  // Capture both heights while on the first (full) page; skip if already locked.
+  /* Capture both heights while on the first (full) page; skip if already
+   * locked. A row is one card tall on every page, so it never needs the lock. */
   useLayoutEffect(() => {
     if (
       !gridRef.current ||
       !sectionRef.current ||
+      isRow ||
       favTotalPages <= 1 ||
       favPage !== 1 ||
       lockedGridHeight !== undefined
@@ -185,7 +209,7 @@ export const Favorites: FC<FavoritesProps> = ({
      */
     setLockedGridHeight(gridRef.current.offsetHeight);
     setLockedSectionHeight(sectionRef.current.offsetHeight);
-  }, [favTotalPages, favPage, lockedGridHeight]);
+  }, [isRow, favTotalPages, favPage, lockedGridHeight]);
 
   /*
    * FLIP: when items are removed/added and cards shift grid positions, animate
@@ -213,7 +237,9 @@ export const Favorites: FC<FavoritesProps> = ({
       w.style.transition = '';
     }
 
-    const pageChanged = prevFavPageForFlipRef.current !== favPage;
+    /* In a row, paging only scrolls it, and page-absolute rects ignore the
+     * row's own scroll offset, so its cards are never FLIPped. */
+    const pageChanged = isRow || prevFavPageForFlipRef.current !== favPage;
     const columnsChanged = prevFavColumnsForFlipRef.current !== favColumns;
     prevFavPageForFlipRef.current = favPage;
     prevFavColumnsForFlipRef.current = favColumns;
@@ -335,7 +361,7 @@ export const Favorites: FC<FavoritesProps> = ({
         ? el.offsetHeight
         : inlineH;
     }
-  }, [favSlice, favPage, favColumns, isLeaving]);
+  }, [favSlice, favPage, favColumns, isRow, isLeaving]);
 
   /*
    * On mount: grow from 0 → natural height so the Browse section slides down smoothly.
@@ -371,10 +397,12 @@ export const Favorites: FC<FavoritesProps> = ({
     // Fallback: clear in case transitionend is delayed (e.g. background tab).
     const fallback = setTimeout(clearStyles, 400);
     el.addEventListener('transitionend', onEnd);
-    return () => {
-      clearTimeout(fallback);
-      el.removeEventListener('transitionend', onEnd);
-    };
+    /*
+     * Clear on cleanup too. StrictMode re-runs this effect mid-transition, when
+     * offsetHeight reads 0 and the re-run bails out; without this the wrapper
+     * kept its mount-time height for good and left a gap below the strip.
+     */
+    return clearStyles;
   }, []);
 
   /*
@@ -392,6 +420,66 @@ export const Favorites: FC<FavoritesProps> = ({
     el.style.height = '0px';
     // No cleanup needed — section is unmounted via onExitComplete after sectionExit fires.
   }, [isLeaving]);
+
+  const getRowCards = useCallback(
+    (): HTMLElement[] =>
+      gridRef.current
+        ? Array.from(
+            gridRef.current.querySelectorAll<HTMLElement>('[data-card-id]'),
+          )
+        : [],
+    [],
+  );
+
+  /*
+   * The page a pager tap is smooth-scrolling the row to. Until the row gets
+   * there, scroll frames still report the card it is leaving, so they must not
+   * move the counter back — that flickered it and made a quick second tap
+   * start from the old page.
+   */
+  const pagerTargetPageRef = useRef<number | null>(null);
+
+  // Keeps the page counter on the card the user swiped to.
+  const rowScrollFrameRef = useRef<number | null>(null);
+  const handleRowScroll = useCallback(() => {
+    if (rowScrollFrameRef.current != null) return;
+    rowScrollFrameRef.current = requestAnimationFrame(() => {
+      rowScrollFrameRef.current = null;
+      const row = gridRef.current;
+      if (!row) return;
+      const page = getRowActiveIndex(row, getRowCards()) + 1;
+      if (pagerTargetPageRef.current != null) {
+        if (page !== pagerTargetPageRef.current) return;
+        pagerTargetPageRef.current = null;
+      }
+      setFavPage(page);
+    });
+  }, [getRowCards]);
+
+  // The scroll settled, or the user took over with a swipe.
+  const handleRowScrollRelease = useCallback(() => {
+    pagerTargetPageRef.current = null;
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (rowScrollFrameRef.current != null)
+        cancelAnimationFrame(rowScrollFrameRef.current);
+    },
+    [],
+  );
+
+  const handlePageChange = (page: number) => {
+    setFavPage(page);
+    if (!isRow || !gridRef.current) return;
+    const card = getRowCards()[page - 1];
+    if (!card) return;
+    const delta = getRowScrollDelta(gridRef.current, card);
+    // Already in place: no scroll event will come to release the target.
+    if (Math.abs(delta) < 1) return;
+    pagerTargetPageRef.current = page;
+    gridRef.current.scrollBy({ left: delta, behavior: 'smooth' });
+  };
 
   return (
     <div ref={sectionWrapperRef}>
@@ -424,7 +512,7 @@ export const Favorites: FC<FavoritesProps> = ({
                   size={ElementSize.Small}
                   aria-label={prevPageAriaLabel}
                   disabled={favPage === 1}
-                  onClick={() => setFavPage((p) => p - 1)}
+                  onClick={() => handlePageChange(favPage - 1)}
                   className={mergeClasses('rounded-full', styles.navBtn)}
                   icon={
                     <IconChevronLeft
@@ -448,7 +536,7 @@ export const Favorites: FC<FavoritesProps> = ({
                   size={ElementSize.Small}
                   aria-label={nextPageAriaLabel}
                   disabled={favPage === favTotalPages}
-                  onClick={() => setFavPage((p) => p + 1)}
+                  onClick={() => handlePageChange(favPage + 1)}
                   className={mergeClasses('rounded-full', styles.navBtn)}
                   icon={
                     <IconChevronRight
@@ -466,15 +554,32 @@ export const Favorites: FC<FavoritesProps> = ({
 
         <div
           ref={gridRef}
-          className={mergeClasses('grid content-start gap-5', styles.gridPage)}
+          className={mergeClasses(
+            'grid content-start',
+            /* In a row each card keeps most of the width so the next one
+               peeks in; the scrollbar is hidden, as on the tabs row, and
+               swipes still scroll. The 4px padding, cancelled by the negative
+               margin, keeps focus rings and shadows clear of the scroll box. */
+            isRow
+              ? '-m-1 snap-x snap-mandatory scroll-p-1 scrollbar-none auto-cols-[min(85%,320px)] grid-flow-col gap-3 overflow-x-auto p-1 [&>*]:snap-start'
+              : 'gap-5',
+            styles.gridPage,
+          )}
           style={{
-            gridTemplateColumns: `repeat(${favColumns}, minmax(0, 1fr))`,
+            gridTemplateColumns: isRow
+              ? undefined
+              : `repeat(${favColumns}, minmax(0, 1fr))`,
             minHeight: lockedGridHeight,
           }}
+          onScroll={isRow ? handleRowScroll : undefined}
+          onScrollEnd={isRow ? handleRowScrollRelease : undefined}
+          onPointerDown={isRow ? handleRowScrollRelease : undefined}
         >
           {favSlice.map((item) => (
             <FavoriteCard
-              key={`${favPage}-${item.id}`}
+              /* A paged grid remounts its cards per page to replay the
+                 fade-in; a row keeps them, or every swipe would re-animate. */
+              key={isPaged ? `${favPage}-${item.id}` : item.id}
               item={item}
               onToggle={onToggleFavorite}
               isFavoriteVisible={isFavoriteVisible}
