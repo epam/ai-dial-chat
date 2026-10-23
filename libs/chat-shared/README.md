@@ -33,7 +33,7 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 
 ## Peer Dependencies
 
-`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.16.0-dev.33`) are the mandatory peers,
+`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.16.0-dev.35`) are the mandatory peers,
 required by every entry point below. The markdown stack is **not** a peer any more: the root
 entry imports it unconditionally, so this package installs it itself and a consumer never
 names it.
@@ -48,7 +48,7 @@ entry's own imports.
 Peers:
 
 - `react` ^19.2.8
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.33
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.35
 - `@epam/ai-dial-react-file-manager` ^0.4.0-dev.11 \*
 - `ag-grid-community` ^35.3.0 \*
 
@@ -630,12 +630,12 @@ import { TableHeader } from '@epam/ai-dial-chat-shared';
 
 ### DeploymentIcon
 
-Renders the icon associated with a deployment entity.
+Renders a deployment's icon inside a rounded badge, falling back to the initials of `initialsName` (or a custom `fallback`) when `src` is absent or fails to load. The badge background resolves `styles.colors.background`, then the `--bg-entity-icon` theme token, then `--bg-layer-sunken` — a dark theme sets `--bg-entity-icon` to a light value so a dark, transparent vendor logo stays visible.
 
 ```tsx
 import { DeploymentIcon } from '@epam/ai-dial-chat-shared';
 
-<DeploymentIcon deployment={deployment} size={24} />;
+<DeploymentIcon src={iconUrl} size={24} initialsName="GPT-4o" />;
 ```
 
 ### InitialsAvatar

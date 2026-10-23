@@ -192,8 +192,13 @@ These are the CSS custom properties the application reads. Anything else in
 ```text
 bg-layer-sunken   bg-layer-base     bg-layer-raised
 bg-backdrop       bg-error          bg-warning
-bg-info           bg-success
+bg-info           bg-success        bg-entity-icon
 ```
+
+`bg-entity-icon` is the plate behind a model's, agent's or other entity's icon
+image. Many vendor logos are a monochrome dark glyph on a transparent
+background, so a dark theme should set it to a light value — otherwise such a
+logo disappears into the dark plate. Unset, it follows `bg-layer-sunken`.
 
 **Controls**
 
@@ -379,7 +384,7 @@ same role) are omitted: `bg-error`, `bg-warning`, `bg-info`, `bg-success`,
 | `stroke-accent-primary`                                                                                                                           | `stroke-accent`, plus `stroke-accent-focus` for accent focus rings                                 |
 | `bg-accent-secondary`, `bg-accent-tertiary`, `stroke-accent-secondary`, `stroke-accent-tertiary`, `text-accent-secondary`, `text-accent-tertiary` | No equivalent — the three-accent scheme became a single accent                                     |
 | `bg-auth-layer-0`, `bg-auth-layer-1`                                                                                                              | No equivalent — the login page uses the shared surface tokens                                      |
-| `bg-model-icon`                                                                                                                                   | No equivalent                                                                                      |
+| `bg-model-icon`                                                                                                                                   | `bg-entity-icon` — the plate behind entity icons                                                   |
 | `border-radius`                                                                                                                                   | No equivalent — radii are Tailwind classes, not a themeable variable                               |
 | `codeblock-font`, `theme-font`                                                                                                                    | No equivalent in practice — see [Fonts are not themeable](#fonts-are-not-themeable)                |
 
