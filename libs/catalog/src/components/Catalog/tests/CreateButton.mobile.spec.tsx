@@ -185,4 +185,33 @@ describe('CreateButton — mobile', () => {
       menu.style.getPropertyValue('--cat-create-menu-section-header-text'),
     ).toBe('#00ff00');
   });
+
+  it('renders a floating trigger as a round button that opens the sheet', async () => {
+    render(
+      <CreateButton
+        label="Create"
+        options={[{ key: 'prompt', label: 'Prompt', onClick: vi.fn() }]}
+        isFloating
+      />,
+    );
+
+    const trigger = screen.getByRole('button', { name: 'Create' });
+    expect(trigger.textContent).toBe('');
+    expect(trigger.className).toContain('rounded-full');
+    expect(trigger.getAttribute('aria-haspopup')).toBe('dialog');
+
+    await userEvent.click(trigger);
+
+    expect(await screen.findByRole('dialog', { name: 'Create' })).toBeTruthy();
+  });
+
+  it('calls onClick from a floating trigger that has no options', async () => {
+    const onClick = vi.fn();
+    render(<CreateButton label="Create" onClick={onClick} isFloating />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Create' }));
+
+    expect(onClick).toHaveBeenCalledOnce();
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
 });

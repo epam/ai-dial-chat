@@ -463,6 +463,8 @@ export interface CatalogProps {
    * and the wider container yields more card columns. Default: false.
    */
   isFullWidth?: boolean;
+  /** Drops the favorites pager: the desktop grid shows every favorite at once, and the mobile row is only swiped. Default: false. */
+  isFavoritesPaginationHidden?: boolean;
   /** ID of an item to visually mark as selected (border, tint, and checkmark) in the Browse grid. */
   selectedItemId?: string;
   /**

@@ -1,4 +1,8 @@
-import { CatalogEntityType, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  CatalogEntityType,
+  mergeClasses,
+  useIsMobile,
+} from '@epam/ai-dial-chat-shared';
 import { SelectOption, Spinner, Tabs } from '@epam/ai-dial-ui-kit';
 import {
   FC,
@@ -121,6 +125,7 @@ export const Catalog: FC<CatalogProps> = ({
   isReadonly = false,
   initialViewMode = CatalogViewMode.Grid,
   isFullWidth = false,
+  isFavoritesPaginationHidden = false,
   selectedItemId,
   onCardClick,
   isLoading,
@@ -140,6 +145,8 @@ export const Catalog: FC<CatalogProps> = ({
 }) => {
   const { typography, headingRowClassName = 'h-[64px]' } = catalogStyles ?? {};
   const cssVars = getStyles(catalogStyles);
+
+  const isMobile = useIsMobile();
 
   const pageTitle = titles?.pageTitle ?? 'Catalog';
   const createLabel = titles?.createLabel ?? 'Create';
@@ -525,6 +532,10 @@ export const Catalog: FC<CatalogProps> = ({
   }, []);
 
   const isCreateButtonVisible = !hideCreateButton && !isReadonly;
+  /* Below the desktop breakpoint the header's Create button becomes a round
+   * "+" pinned to the bottom of the catalog, as on other mobile screens. */
+  const isFloatingCreateVisible = isCreateButtonVisible && isMobile;
+  const isHeaderCreateVisible = isCreateButtonVisible && !isMobile;
   /* A read-only catalog cannot favorite anything, so the strip has no way to
    * gain or lose entries and is dropped rather than shown frozen. */
   const isFavoritesVisible = isFavoritesRendered && !isReadonly;
@@ -642,13 +653,13 @@ export const Catalog: FC<CatalogProps> = ({
     <section
       aria-label={resolvedAriaLabel}
       className={mergeClasses(
-        'flex size-full min-h-0 flex-1 flex-col',
+        'relative flex size-full min-h-0 flex-1 flex-col',
         styles.root,
         CATALOG_CLASS.root,
       )}
       style={cssVars}
     >
-      {(!hidePageTitle || isCreateButtonVisible) && (
+      {(!hidePageTitle || isHeaderCreateVisible) && (
         <div className={mergeClasses('shrink-0', styles.heading)}>
           <div
             className={mergeClasses(
@@ -666,12 +677,25 @@ export const Catalog: FC<CatalogProps> = ({
                 {pageTitle}
               </h1>
             )}
-            {isCreateButtonVisible && <CreateButton {...createButtonProps} />}
+            {isHeaderCreateVisible && <CreateButton {...createButtonProps} />}
           </div>
         </div>
       )}
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto">
+      {isFloatingCreateVisible && (
+        <div className="absolute inset-e-4 bottom-4 z-10">
+          <CreateButton {...createButtonProps} isFloating />
+        </div>
+      )}
+
+      {/* With the floating Create button, extra bottom space keeps it from
+          covering the last row of cards once scrolled to the end. */}
+      <div
+        className={mergeClasses(
+          'flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto',
+          isFloatingCreateVisible && 'pb-16',
+        )}
+      >
         {isFavoritesVisible && (
           <div className="w-full px-4 desktop:px-8">
             <Favorites
@@ -687,6 +711,7 @@ export const Catalog: FC<CatalogProps> = ({
               credentialsBadgeLoggedOutLabel={
                 detailsTexts?.credentialsBadgeLoggedOutLabel
               }
+              isPaginationHidden={isFavoritesPaginationHidden}
             />
           </div>
         )}

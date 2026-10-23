@@ -74,4 +74,6 @@ export interface FavoritesProps {
   selectedItemId?: string;
   /** Accessible label for the logged-out warning icon on a favorited item's avatar, and the text shown in its hover tooltip. Default: `'Authorize to use this toolset.'`. */
   credentialsBadgeLoggedOutLabel?: string;
+  /** Drops the pager: the desktop grid shows every favorite at once, and the mobile row is only swiped. Default: `false`. */
+  isPaginationHidden?: boolean;
 }
