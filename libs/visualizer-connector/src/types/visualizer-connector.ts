@@ -27,7 +27,7 @@ export enum VisualizerConnectorEvents {
 export enum AppsEditorEvents {
   /** The editor's UI has rendered; the host drops its loading overlay. */
   ReadyToInteract = 'readyToInteract',
-  /** The editor's own model is loaded and valid, so a `TRIGGER_SAVE` saves correctly. May repeat. */
+  /** The editor's model is loaded and can handle `TRIGGER_SAVE`; form validity is reported separately. May repeat. */
   ReadyToSave = 'readyToSave',
   /** The editor's session resolved signed out, so `ReadyToSave` will not arrive. */
   LoggedOut = 'loggedOut',

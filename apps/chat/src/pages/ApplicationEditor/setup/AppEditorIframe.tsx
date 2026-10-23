@@ -26,6 +26,10 @@ import {
   WarningMessageNotification,
 } from '@epam/ai-dial-ui-kit';
 import {
+  AppsEditorHost,
+  type AppsEditorClientMessage,
+} from '@epam/ai-dial-visualizer-connector';
+import {
   forwardRef,
   memo,
   useCallback,
@@ -52,7 +56,6 @@ import type {
   ToolsetLoginResultPayload,
   ToolsetLogoutResultPayload,
   TriggerSaveGeneralPayload,
-  TriggerSaveMessage,
 } from '../../../types/apps-editor';
 import {
   AppsEditorEvent,
@@ -72,9 +75,16 @@ export interface AppEditorIframeHandle {
   triggerSave: (general?: TriggerSaveGeneralPayload) => void;
 }
 
+type EditorHost = AppsEditorHost<
+  TriggerSaveGeneralPayload,
+  CatalogItemCredentials
+>;
+
 interface Props {
   schema: ApplicationSchemaSummaryDto;
   appId: string;
+  /** Starts a new readiness wait on mount, URL change, or explicit Reload. */
+  onLoadStart?: () => void;
   onUpdated?: () => void;
   /**
    * Called when the embedded editor's `SaveSuccess` message resolves, with
@@ -105,14 +115,13 @@ interface Props {
   onReadyChange?: (isReady: boolean) => void;
   /**
    * Notifies the host whenever the iframe reports the user is logged out
-   * (`AppsEditorEvent.LoggedOut`). Since `ReadyToSave` will never arrive in
-   * that case, the host uses this to distinguish an expected "not
-   * authenticated" state from a genuine readiness failure.
+   * (`AppsEditorEvent.LoggedOut`). The host treats this as an expected
+   * unauthenticated state until a later `ReadyToSave` confirms recovery.
    */
   onLoggedOutChange?: (isLoggedOut: boolean) => void;
   /**
    * Notifies the host whenever the embedded editor is reported as not
-   * responding: no postMessage arrived from its origin within
+   * responding: no postMessage arrived from its window and origin within
    * `EDITOR_RESPONSE_TIMEOUT_MS`. Like `onLoggedOutChange`, it explains why
    * `ReadyToSave` never arrives, so the host can skip its generic error.
    */
@@ -124,6 +133,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
     {
       schema,
       appId,
+      onLoadStart,
       onUpdated,
       onSaveSuccess,
       onSaveError,
@@ -157,6 +167,12 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
     const [reloadKey, setReloadKey] = useState(0);
     const isUnresponsive = isResponseTimedOut && !hasEditorResponded;
     const iframeRef = useRef<HTMLIFrameElement>(null);
+    const editorHostRef = useRef<EditorHost | null>(null);
+    const onLoadStartRef = useRef(onLoadStart);
+
+    useEffect(() => {
+      onLoadStartRef.current = onLoadStart;
+    }, [onLoadStart]);
 
     /* Single source for the name sent in the iframe URL and used as the
      * postMessage type prefix (`${applicationName}/readyToInteract`, ...). */
@@ -192,48 +208,38 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
      * guard-then-parse-`schema.editorUrl` logic, so it's computed once here
      * instead of being repeated (and risking drifting out of sync, e.g. one
      * site guarding against a malformed URL and another not) at each site.
-     * `null` covers both a missing `editorUrl` and one that fails to parse.
+     * `null` covers missing, malformed, and opaque editor origins.
      */
     const targetOrigin = useMemo(() => {
       if (!schema.editorUrl) return null;
       try {
-        return new URL(schema.editorUrl).origin;
+        const origin = new URL(schema.editorUrl).origin;
+        return origin === 'null' ? null : origin;
       } catch {
         return null;
       }
     }, [schema.editorUrl]);
 
-    /**
-     * Posts the outcome of a `RequestToolsetLogin` back into the iframe.
-     * Kept as a plain function (not a hook-tracked callback) since it takes
-     * no closed-over state — the caller passes the current `targetOrigin`
-     * explicitly.
-     */
+    /* Each async request replies through its original host. A destroyed host
+     * drops the result instead of sending it into a newly loaded editor. */
     const postToolsetLoginResult = (
-      targetOrigin: string,
+      host: EditorHost,
       payload: Omit<ToolsetLoginResultPayload, 'type'>,
     ) => {
-      const message: ToolsetLoginResultPayload = {
+      host.send({
         type: AppsEditorEvent.ToolsetLoginResult,
         ...payload,
-      };
-      iframeRef.current?.contentWindow?.postMessage(message, targetOrigin);
+      });
     };
 
-    /**
-     * Posts the outcome of a `RequestToolsetLogout` back into the iframe.
-     * See `postToolsetLoginResult` above for why this stays a plain
-     * function rather than a hook-tracked callback.
-     */
     const postToolsetLogoutResult = (
-      targetOrigin: string,
+      host: EditorHost,
       payload: Omit<ToolsetLogoutResultPayload, 'type'>,
     ) => {
-      const message: ToolsetLogoutResultPayload = {
+      host.send({
         type: AppsEditorEvent.ToolsetLogoutResult,
         ...payload,
-      };
-      iframeRef.current?.contentWindow?.postMessage(message, targetOrigin);
+      });
     };
 
     /**
@@ -281,8 +287,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
      * async `postMessage`.
      */
     const handleToolsetLoginRequest = useCallback(
-      async (toolsetId: string) => {
-        if (!targetOrigin) return;
+      async (toolsetId: string, host: EditorHost) => {
         /*
          * The iframe is expected to send the raw, human-readable id (e.g.
          * contains a real space) — the toolsets API requires the
@@ -299,7 +304,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
 
         const popup = openToolsetOAuthPopup();
         if (!popup) {
-          postToolsetLoginResult(targetOrigin, {
+          postToolsetLoginResult(host, {
             toolsetId,
             success: false,
             reason: 'popup-blocked',
@@ -313,7 +318,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
 
         if (!auth) {
           popup.close();
-          postToolsetLoginResult(targetOrigin, {
+          postToolsetLoginResult(host, {
             toolsetId,
             success: false,
             reason: 'toolset-fetch-failed',
@@ -323,7 +328,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
 
         if (auth.authenticationType !== ToolsetAuthTypes.OAuth) {
           popup.close();
-          postToolsetLoginResult(targetOrigin, {
+          postToolsetLoginResult(host, {
             toolsetId,
             success: false,
             reason: 'not-oauth',
@@ -341,7 +346,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
           credentialsLevel,
         );
         if (initiation.type !== ToolsetOAuthInitiationResultType.Started) {
-          postToolsetLoginResult(targetOrigin, {
+          postToolsetLoginResult(host, {
             toolsetId,
             success: false,
             reason: 'invalid-config',
@@ -359,7 +364,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
           },
         );
         if (result.type === ToolsetOAuthResultType.Success) {
-          postToolsetLoginResult(targetOrigin, {
+          postToolsetLoginResult(host, {
             toolsetId,
             success: true,
             credentialsLevel: result.credentialsLevel,
@@ -368,7 +373,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
           return;
         }
         if (result.type === ToolsetOAuthResultType.Failure) {
-          postToolsetLoginResult(targetOrigin, {
+          postToolsetLoginResult(host, {
             toolsetId,
             success: false,
             reason: result.reason,
@@ -389,7 +394,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
             credentialsLevel,
           );
           if (statusField === 'SIGNED_IN') {
-            postToolsetLoginResult(targetOrigin, {
+            postToolsetLoginResult(host, {
               toolsetId,
               success: true,
               credentialsLevel,
@@ -400,13 +405,13 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
         } catch {
           // Best-effort verification only — a genuine cancel stays silent.
         }
-        postToolsetLoginResult(targetOrigin, {
+        postToolsetLoginResult(host, {
           toolsetId,
           success: false,
           reason: 'cancelled',
         });
       },
-      [targetOrigin, fetchToolsetCredentials],
+      [fetchToolsetCredentials],
     );
 
     /**
@@ -418,8 +423,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
      * call the way login does.
      */
     const handleToolsetLogoutRequest = useCallback(
-      async (toolsetId: string) => {
-        if (!targetOrigin) return;
+      async (toolsetId: string, host: EditorHost) => {
         const encodedToolsetId = normalizeToolsetId(toolsetId);
         const credentialsLevel =
           resolveToolsetCredentialsLevel(encodedToolsetId);
@@ -429,101 +433,69 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
             url: encodedToolsetId,
             credentialsLevel,
           });
-          postToolsetLogoutResult(targetOrigin, {
+          postToolsetLogoutResult(host, {
             toolsetId,
             success: true,
             credentialsLevel,
             credentials: await fetchToolsetCredentials(encodedToolsetId),
           });
         } catch {
-          postToolsetLogoutResult(targetOrigin, {
+          postToolsetLogoutResult(host, {
             toolsetId,
             success: false,
             reason: 'logout-failed',
           });
         }
       },
-      [targetOrigin, fetchToolsetCredentials],
+      [fetchToolsetCredentials],
     );
 
     const handleMessage = useCallback(
-      (event: MessageEvent) => {
-        if (!targetOrigin || event.origin !== targetOrigin) return;
-        setHasEditorResponded(true);
-        switch (event.data?.type) {
+      (message: AppsEditorClientMessage, host: EditorHost) => {
+        switch (message.type) {
           case AppsEditorEvent.RequestApplicationCredentials:
-            if (
-              event.source === iframeRef.current?.contentWindow &&
-              isApplicationAuthCapable &&
-              isApplicationAuthEnabled &&
-              typeof event.data.appId === 'string' &&
-              event.data.appId.length > 0
-            ) {
-              setCredentialsAppId(normalizeDeploymentId(event.data.appId));
+            if (isApplicationAuthCapable && isApplicationAuthEnabled) {
+              setCredentialsAppId(normalizeDeploymentId(message.appId));
             }
             break;
-          case `${applicationName}/${AppsEditorEvent.ReadyToInteract}`:
+          case AppsEditorEvent.ReadyToInteract:
             setIsUiLoading(false);
             break;
-          case `${applicationName}/${AppsEditorEvent.ReadyToSave}`:
+          case AppsEditorEvent.ReadyToSave:
+            setIsLoggedOut(false);
             setIsReadyToSave(true);
             break;
-          case `${applicationName}/${AppsEditorEvent.LoggedOut}`:
+          case AppsEditorEvent.LoggedOut:
+            setIsReadyToSave(false);
             setIsLoggedOut(true);
             break;
-          case `${applicationName}/${AppsEditorEvent.UpdatedSuccess}`:
+          case AppsEditorEvent.UpdatedSuccess:
             onUpdated?.();
             break;
           case AppsEditorEvent.SaveSuccess:
             setIsFormDirty(false);
-            onSaveSuccess?.(event.data?.hasChanges === true);
+            onSaveSuccess?.(message.hasChanges === true);
             break;
           case AppsEditorEvent.SaveError:
-            onSaveError?.(event.data?.error ?? '');
+            onSaveError?.(message.error);
             break;
           case AppsEditorEvent.ValidityState:
-            if (
-              event.source === iframeRef.current?.contentWindow &&
-              typeof event.data?.payload?.isValid === 'boolean'
-            ) {
-              setIsFormValid(event.data.payload.isValid);
-            }
+            setIsFormValid(message.payload.isValid);
             break;
-          case AppsEditorEvent.DirtyState: {
-            const isDirty = event.data?.payload?.isDirty ?? event.data?.isDirty;
-            if (
-              event.source === iframeRef.current?.contentWindow &&
-              typeof isDirty === 'boolean'
-            ) {
-              setIsFormDirty(isDirty);
-            }
+          case AppsEditorEvent.DirtyState:
+            setIsFormDirty(message.payload.isDirty);
             break;
-          }
           case AppsEditorEvent.RequestToolsetLogin:
-            if (
-              event.source === iframeRef.current?.contentWindow &&
-              typeof event.data?.toolsetId === 'string' &&
-              event.data.toolsetId
-            ) {
-              void handleToolsetLoginRequest(event.data.toolsetId);
-            }
+            void handleToolsetLoginRequest(message.toolsetId, host);
             break;
           case AppsEditorEvent.RequestToolsetLogout:
-            if (
-              event.source === iframeRef.current?.contentWindow &&
-              typeof event.data?.toolsetId === 'string' &&
-              event.data.toolsetId
-            ) {
-              void handleToolsetLogoutRequest(event.data.toolsetId);
-            }
+            void handleToolsetLogoutRequest(message.toolsetId, host);
             break;
           default:
             break;
         }
       },
       [
-        targetOrigin,
-        applicationName,
         onUpdated,
         onSaveSuccess,
         onSaveError,
@@ -534,12 +506,27 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
       ],
     );
 
+    const handleMessageRef = useRef(handleMessage);
     useEffect(() => {
-      window.addEventListener('message', handleMessage);
-      return () => {
-        window.removeEventListener('message', handleMessage);
-      };
+      handleMessageRef.current = handleMessage;
     }, [handleMessage]);
+
+    useEffect(() => {
+      const targetWindow = iframeRef.current?.contentWindow;
+      if (!targetOrigin || !targetWindow) return;
+      const host: EditorHost = new AppsEditorHost({
+        targetWindow,
+        targetOrigin,
+        applicationName,
+        onMessage: (message) => handleMessageRef.current(message, host),
+        onActivity: () => setHasEditorResponded(true),
+      });
+      editorHostRef.current = host;
+      return () => {
+        host.destroy();
+        editorHostRef.current = null;
+      };
+    }, [targetOrigin, applicationName, iframeUrl, reloadKey]);
 
     /*
      * Keeps the iframe's toolset status in sync with logins completed
@@ -563,19 +550,17 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
       let isStale = false;
       const unsubscribe = subscribeToolsetLoginSuccess<ToolsetCredentialsLevel>(
         ({ toolsetId, credentialsLevel }) => {
+          const host = editorHostRef.current;
+          if (!host) return;
           const rawToolsetId = decodeToolsetId(toolsetId);
           void (async () => {
             const credentials = await fetchToolsetCredentials(toolsetId);
             /*
-             * Re-checked after the await: if `targetOrigin` changed (a
-             * different app/schema loaded) while this fetch was in flight,
-             * this effect has already been cleaned up and the closed-over
-             * `targetOrigin` is stale — posting to it would either hit the
-             * wrong iframe origin or be silently dropped by the browser,
-             * permanently losing the update for the new iframe.
+             * Unsubscribe cleanup suppresses old callbacks; the captured host
+             * also drops replies after an iframe reload at the same origin.
              */
             if (isStale) return;
-            postToolsetLoginResult(targetOrigin, {
+            postToolsetLoginResult(host, {
               toolsetId: rawToolsetId,
               success: true,
               credentialsLevel,
@@ -605,6 +590,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
      * previous app don't leak into the newly loaded one — the new iframe
      * must send its own ReadyToSave/LoggedOut. */
     useEffect(() => {
+      onLoadStartRef.current?.();
       setIsReadyToSave(false);
       setIsLoggedOut(false);
       setIsFormValid(true);
@@ -652,15 +638,13 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
       ref,
       () => ({
         triggerSave: (general?: TriggerSaveGeneralPayload) => {
-          if (!targetOrigin) return;
-          const message: TriggerSaveMessage = {
+          editorHostRef.current?.send({
             type: AppsEditorEvent.TriggerSave,
             general,
-          };
-          iframeRef.current?.contentWindow?.postMessage(message, targetOrigin);
+          });
         },
       }),
-      [targetOrigin],
+      [],
     );
 
     return (

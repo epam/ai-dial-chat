@@ -51,7 +51,10 @@ export interface VisualizerGroupedAttachmentsData {
   layout: Record<string, unknown>;
 }
 
-/** An unprefixed application-editor message; the fields beyond `type` depend on it (see `AppsEditorMessages`). */
+/**
+ * An unprefixed legacy application-editor message with application-defined fields.
+ * @deprecated Use `AppsEditorHostMessage` / `AppsEditorClientMessage` with the dedicated editor connectors.
+ */
 export interface AppsEditorMessage {
   /** The message, as posted, with no `${applicationName}/` prefix. */
   type: AppsEditorMessages;
