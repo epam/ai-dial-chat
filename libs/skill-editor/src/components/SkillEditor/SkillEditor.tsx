@@ -77,6 +77,7 @@ import type {
   SkillEditorValues,
   SkillFileSourceEntry,
   SkillFileTreeNode,
+  SkillFileUploadCandidate,
 } from '../../models/skill-editor-props';
 import { SkillAddSource } from '../../types/skill-add-source';
 import { SKILL_MANIFEST_PATH } from '../../types/skill-editor-defaults';
@@ -421,6 +422,21 @@ export const SkillEditor: FC<SkillEditorProps> = ({
       handleExpandedPathsChange(new Set([...expandedPathsSet, path]));
     },
     [expandedPathsSet, handleExpandedPathsChange],
+  );
+  const uploadTargetFolderPath = uploadRequest.targetFolderPath;
+  /* Reveal the target folder once its upload lands, so the new files are visible without expanding it by hand. */
+  const uploadDialogFileActions = useMemo(
+    () => ({
+      ...fileActions,
+      commitBatch: async (candidates: SkillFileUploadCandidate[]) => {
+        const result = await fileActions.commitBatch(candidates);
+        if (!result.error && uploadTargetFolderPath !== '') {
+          revealFolder(uploadTargetFolderPath);
+        }
+        return result;
+      },
+    }),
+    [fileActions, uploadTargetFolderPath, revealFolder],
   );
   const draftFolder = useDraftFolder({
     files,
@@ -1012,7 +1028,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
       <SkillFileUploadDialog
         isOpen={isUploadDialogOpen}
         onClose={() => setIsUploadDialogOpen(false)}
-        fileActions={fileActions}
+        fileActions={uploadDialogFileActions}
         mode={uploadRequest.mode}
         targetFolderPath={uploadRequest.targetFolderPath}
         initialFiles={uploadRequest.initialFiles}
