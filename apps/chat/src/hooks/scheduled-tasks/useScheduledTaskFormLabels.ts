@@ -8,9 +8,15 @@ import {
 } from '../../constants/translation-keys';
 import { useTextRefinementLabels } from '../useTextRefinementLabels';
 
+/** Week counts offered by the Custom repeat's "Every" dropdown. */
+const EVERY_WEEKS_COUNTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
+
+/** APScheduler-convention day values (`'0'` Monday – `'6'` Sunday) for the Custom repeat's day row. */
+const CUSTOM_DAY_VALUES = ['0', '1', '2', '3', '4', '5', '6'] as const;
+
 /** Keeps create/edit form copy and repeat options identical at the app edge. */
 export const useScheduledTaskFormLabels = (mode: 'create' | 'edit') => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const refinementLabels = useTextRefinementLabels();
   return useMemo(
     () => ({
@@ -42,6 +48,7 @@ export const useScheduledTaskFormLabels = (mode: 'create' | 'edit') => {
         ScheduledTaskRepeat.Daily,
         ScheduledTaskRepeat.Weekly,
         ScheduledTaskRepeat.Monthly,
+        ScheduledTaskRepeat.Custom,
       ].map((key) => ({
         key,
         label: t(
@@ -56,9 +63,34 @@ export const useScheduledTaskFormLabels = (mode: 'create' | 'edit') => {
               ScheduledTasksI18nKeys.CreateRepeatWeekly,
             [ScheduledTaskRepeat.Monthly]:
               ScheduledTasksI18nKeys.CreateRepeatMonthly,
+            [ScheduledTaskRepeat.Custom]:
+              ScheduledTasksI18nKeys.CreateRepeatCustom,
           }[key],
         ),
       })),
+      everyLabel: t(ScheduledTasksI18nKeys.CreateEveryLabel),
+      everyWeekOptions: EVERY_WEEKS_COUNTS.map((count) => ({
+        value: String(count),
+        label: t(ScheduledTasksI18nKeys.CreateEveryWeeksOption, { count }),
+      })),
+      /* 2023-01-02 is a Monday; the APScheduler day value counts Monday-first,
+       * so the reference lands on each segment's own day. Both formatters run
+       * in UTC so the localized weekday is the segment's day, not the local
+       * calendar's. */
+      customDayOptions: CUSTOM_DAY_VALUES.map((value) => {
+        const dayDate = new Date(Date.UTC(2023, 0, 2 + Number(value)));
+        return {
+          value,
+          shortLabel: new Intl.DateTimeFormat(i18n.language, {
+            weekday: 'narrow',
+            timeZone: 'UTC',
+          }).format(dayDate),
+          fullName: new Intl.DateTimeFormat(i18n.language, {
+            weekday: 'long',
+            timeZone: 'UTC',
+          }).format(dayDate),
+        };
+      }),
       dayOfWeekLabel: t(ScheduledTasksI18nKeys.CreateDayOfWeekLabel),
       dayOfMonthLabel: t(ScheduledTasksI18nKeys.CreateDayOfMonthLabel),
       minuteLabel: t(ScheduledTasksI18nKeys.CreateMinuteLabel),
@@ -85,6 +117,6 @@ export const useScheduledTaskFormLabels = (mode: 'create' | 'edit') => {
           : ButtonsI18nKeys.Saving,
       ),
     }),
-    [mode, t, refinementLabels],
+    [mode, t, i18n.language, refinementLabels],
   );
 };
