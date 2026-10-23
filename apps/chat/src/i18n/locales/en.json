@@ -117,6 +117,9 @@
     "noResultsTitle": "No items found",
     "emptyTitle": "No items yet",
     "emptyDescription": "Items will appear here once they are published to the catalog.",
+    "noResultsEntityTitle": "No {{entities}} found",
+    "emptyEntityTitle": "No {{entities}} yet",
+    "emptyEntityDescription": "{{entities}} will appear here once they are published to the catalog.",
     "myAppsEmpty": {
       "title": "No personal {{entities}} yet",
       "titleGeneric": "No personal items yet",
@@ -478,6 +481,7 @@
     "filter": {
       "all": "All",
       "groupAriaLabel": "Filter chats",
+      "applied": "Filters applied",
       "shared": "Shared",
       "personal": "Personal",
       "type": "Type",

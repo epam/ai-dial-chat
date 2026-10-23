@@ -17,6 +17,8 @@ export interface ConversationListHeaderLabels {
   searchClearLabel: string;
   /** Labels of the filter options; `groupAriaLabel` names the filter trigger. */
   filterLabels: FilterLabels;
+  /** Description announced on the filter trigger while a filter is applied. Defaults to `'Filters applied'`. */
+  filterActiveLabel?: string;
 }
 
 /** Color overrides for `ConversationListHeader`, applied as CSS custom properties on its root. */
@@ -25,6 +27,8 @@ export interface ConversationListHeaderColors {
   title?: string;
   /** Title color while the title button has keyboard focus. Defaults to `--text-primary`. */
   titleFocus?: string;
+  /** Color of the dot on the filter trigger while a filter is applied. Defaults to `--text-accent`. */
+  filterIndicator?: string;
 }
 
 /** Typography overrides for `ConversationListHeader`. */
@@ -37,7 +41,7 @@ export interface ConversationListHeaderTypography {
 
 /** Style overrides for `ConversationListHeader`. */
 export interface ConversationListHeaderStyles {
-  /** Color overrides for the title. */
+  /** Color overrides for the title and the filter indicator. */
   colors?: ConversationListHeaderColors;
   /** Typography overrides for the title and the search field. */
   typography?: ConversationListHeaderTypography;

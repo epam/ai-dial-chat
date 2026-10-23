@@ -26,6 +26,7 @@ import {
   memo,
   useCallback,
   useEffect,
+  useId,
   useMemo,
   useRef,
 } from 'react';
@@ -96,6 +97,11 @@ export const ConversationListHeader: FC<ConversationListHeaderProps> = memo(
 
     const filterTriggerLabel =
       labels.filterLabels.groupAriaLabel ?? 'Filter chats';
+    const filterActiveLabel = labels.filterActiveLabel ?? 'Filters applied';
+    const filterActiveId = useId();
+    const isFilterActive =
+      activeFilter !== FilterTab.All ||
+      activeTypeFilter !== ConversationTypeFilter.All;
     const isSearchAvailable =
       onSearchChange != null && onSearchOpenChange != null;
 
@@ -211,8 +217,14 @@ export const ConversationListHeader: FC<ConversationListHeaderProps> = memo(
         buildCssVars({
           '--cp-list-header-title': headerStyles?.colors?.title,
           '--cp-list-header-title-focus': headerStyles?.colors?.titleFocus,
+          '--cp-list-header-filter-indicator':
+            headerStyles?.colors?.filterIndicator,
         }),
-      [headerStyles?.colors?.title, headerStyles?.colors?.titleFocus],
+      [
+        headerStyles?.colors?.title,
+        headerStyles?.colors?.titleFocus,
+        headerStyles?.colors?.filterIndicator,
+      ],
     );
 
     /* The search row swaps in a wider gap; the public class stays last on both. */
@@ -324,17 +336,36 @@ export const ConversationListHeader: FC<ConversationListHeaderProps> = memo(
             >
               <GhostIconButton
                 icon={
-                  <IconFilter2
-                    size={DIAL_ICON_SIZE.SM}
-                    stroke={DIAL_KIT_ICON_STROKE}
-                    aria-hidden
-                  />
+                  <span className="relative inline-flex">
+                    <IconFilter2
+                      size={DIAL_ICON_SIZE.SM}
+                      stroke={DIAL_KIT_ICON_STROKE}
+                      aria-hidden
+                    />
+                    {/* Decorative: the applied state reaches assistive tech
+                        through the trigger's description. */}
+                    {isFilterActive && (
+                      <span
+                        aria-hidden
+                        className={mergeClasses(
+                          styles.filterIndicator,
+                          'absolute -end-0.5 -top-0.5 size-1.5 rounded-full',
+                        )}
+                      />
+                    )}
+                  </span>
                 }
                 size={ElementSize.Small}
                 className={ICON_BUTTON_CLASS}
                 aria-label={filterTriggerLabel}
+                aria-describedby={isFilterActive ? filterActiveId : undefined}
               />
             </Dropdown>
+          )}
+          {isFilterActive && (onFilterChange || onTypeFilterChange) && (
+            <span id={filterActiveId} className="sr-only">
+              {filterActiveLabel}
+            </span>
           )}
           {actions}
         </div>

@@ -10,3 +10,11 @@
     color: var(--cp-list-header-title-focus, var(--text-primary, #161b2d));
   }
 }
+
+/* Marks the filter trigger while an origin or type filter is applied. */
+.filterIndicator {
+  background-color: var(
+    --cp-list-header-filter-indicator,
+    var(--text-accent, #1d4ed8)
+  );
+}

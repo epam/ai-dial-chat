@@ -189,6 +189,11 @@ The filter trigger is named by `labels.filterLabels.groupAriaLabel` (default
 typography; `styles.colors.title` and `styles.colors.titleFocus` recolor the
 title at rest and under keyboard focus (`--cp-list-header-title`,
 `--cp-list-header-title-focus`).
+While `activeFilter` or `activeTypeFilter` is not `All`, the filter trigger
+carries a dot and is described by `labels.filterActiveLabel` (default
+`'Filters applied'`) for assistive tech; `styles.colors.filterIndicator`
+recolors the dot (`--cp-list-header-filter-indicator`, defaults to
+`--text-accent`).
 
 ### ConversationListSection
 

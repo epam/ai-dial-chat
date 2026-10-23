@@ -29,6 +29,7 @@ import {
 import { sortCatalogItems } from '../../utils/catalog-sort';
 import {
   buildCatalogTabs,
+  resolveTabText,
   scrollSelectedTabIntoView,
 } from '../../utils/catalog-tabs';
 import { getTabCreateButtonConfig } from '../../utils/create-menu';
@@ -544,12 +545,12 @@ export const Catalog: FC<CatalogProps> = ({
    * state explains how to widen it; otherwise the tab itself is empty. */
   const isNarrowed = query !== '' || filters.size > 0;
   const emptyTitle = isNarrowed
-    ? noResultsTitle(query)
-    : (titles?.emptyTitle ?? 'No items yet');
+    ? noResultsTitle(query, activeTab)
+    : (resolveTabText(titles?.emptyTitle, activeTab) ?? 'No items yet');
   const emptyDescription = isNarrowed
     ? (titles?.noResultsDescription ??
       'Try a different search term or check your filters.')
-    : titles?.emptyDescription;
+    : resolveTabText(titles?.emptyDescription, activeTab);
   /* Keyed on the strings, not `detailsTexts`, which hosts often pass inline;
    * a fresh object here would invalidate every virtual grid row. */
   const {

@@ -70,7 +70,10 @@ import { EditorQuery } from '../../types/editor-query';
 import { EntityOperation } from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
 import {
+  getCatalogEmptyDescription,
+  getCatalogEmptyTitle,
   getCatalogMyAppsEmptyTitle,
+  getCatalogNoResultsTitle,
   getCatalogSearchPlaceholder,
 } from '../../utils/catalog';
 import {
@@ -684,10 +687,10 @@ const CatalogView: FC<Props> = ({
           favoritesTitle: t(FavoritesI18nKeys.Title),
           browseTitle: t(ButtonsI18nKeys.Browse),
           searchPlaceholder,
-          noResultsTitle: () => t(CatalogI18nKeys.NoResultsTitle),
+          noResultsTitle: (_query, tab) => getCatalogNoResultsTitle(tab, t),
           noResultsDescription: t(BasicI18nKeys.NoResultsDescription),
-          emptyTitle: t(CatalogI18nKeys.EmptyTitle),
-          emptyDescription: t(CatalogI18nKeys.EmptyDescription),
+          emptyTitle: (tab) => getCatalogEmptyTitle(tab, t),
+          emptyDescription: (tab) => getCatalogEmptyDescription(tab, t),
           myAppsEmptyTitle: (tab) => getCatalogMyAppsEmptyTitle(tab, t),
           myAppsEmptyDescription: t(CatalogI18nKeys.MyAppsEmptyDescription),
           sortLabel: t(ButtonsI18nKeys.Sort),

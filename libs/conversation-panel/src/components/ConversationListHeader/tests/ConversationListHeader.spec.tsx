@@ -56,10 +56,24 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   MenuItemMark: { Check: 'check' },
   GhostIconButton: React.forwardRef<
     HTMLButtonElement,
-    { 'aria-label'?: string; onClick?: () => void }
-  >(({ 'aria-label': ariaLabel, onClick }, ref) => (
-    <button ref={ref} aria-label={ariaLabel} onClick={onClick} />
-  )),
+    {
+      'aria-label'?: string;
+      'aria-describedby'?: string;
+      onClick?: () => void;
+    }
+  >(
+    (
+      { 'aria-label': ariaLabel, 'aria-describedby': ariaDescribedBy, onClick },
+      ref,
+    ) => (
+      <button
+        ref={ref}
+        aria-label={ariaLabel}
+        aria-describedby={ariaDescribedBy}
+        onClick={onClick}
+      />
+    ),
+  ),
   Dropdown: ({
     children,
     items,
@@ -420,6 +434,52 @@ describe('ConversationListHeader — labels and typography', () => {
     );
 
     expect(screen.getByRole('button', { name: 'Show only' })).toBeTruthy();
+  });
+
+  describe('applied-filter indicator', () => {
+    it('describes nothing while every filter is All', () => {
+      render(
+        <ConversationListHeader labels={LABELS} onFilterChange={vi.fn()} />,
+      );
+
+      expect(
+        screen.getByRole('button', { name: 'Filter chats', description: '' }),
+      ).toBeTruthy();
+    });
+
+    it('describes the trigger as applied under an origin filter', () => {
+      render(
+        <ConversationListHeader
+          labels={LABELS}
+          activeFilter={FilterTab.Shared}
+          onFilterChange={vi.fn()}
+        />,
+      );
+
+      expect(
+        screen.getByRole('button', {
+          name: 'Filter chats',
+          description: 'Filters applied',
+        }),
+      ).toBeTruthy();
+    });
+
+    it('describes the trigger with the host label under a type filter', () => {
+      render(
+        <ConversationListHeader
+          labels={{ ...LABELS, filterActiveLabel: 'Filtered' }}
+          activeTypeFilter={ConversationTypeFilter.Task}
+          onTypeFilterChange={vi.fn()}
+        />,
+      );
+
+      expect(
+        screen.getByRole('button', {
+          name: 'Filter chats',
+          description: 'Filtered',
+        }),
+      ).toBeTruthy();
+    });
   });
 
   it('defaults the filter trigger name to "Filter chats"', () => {

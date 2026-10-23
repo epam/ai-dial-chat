@@ -1345,6 +1345,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       searchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
       searchClearLabel: t(BasicI18nKeys.ClearSearch),
       filterLabels,
+      filterActiveLabel: t(ConversationPanelI18nKeys.FilterApplied),
       emptyLabel: t(ConversationPanelI18nKeys.Empty),
       emptyDescription: t(ConversationPanelI18nKeys.EmptyDescription),
       noResultsLabel: t(ConversationPanelI18nKeys.NoResults),

@@ -272,7 +272,7 @@ When `isEnabled('conversations-section')` is `true`, the expanded sidebar SHALL 
 - **Title.** A button with `aria-expanded` that collapses and expands the list beneath it.
 - **Search toggle.** Named `t('conversationPanel.search.open')` ("Search chats"). It replaces the row with a search field (placeholder `basic.searchPlaceholder`, clear button `basic.clearSearch`) and moves focus into it.
 - **Close search button.** Named `t('conversationPanel.search.close')` ("Close search"). It closes the field, as Escape does. Closing clears the query and returns focus to the search toggle.
-- **Filter trigger.** Named by `conversationPanel.filter.groupAriaLabel`. It opens a single-select menu of All, My chats, Shared and Organization (`conversationPanel.filter.*`, `basic.organization`) that excludes any hidden source and marks the active option with a check.
+- **Filter trigger.** Named by `conversationPanel.filter.groupAriaLabel`. It opens a single-select menu of All, My chats, Shared and Organization (`conversationPanel.filter.*`, `basic.organization`) that excludes any hidden source and marks the active option with a check. While the origin or type filter is not All, the trigger SHALL carry an accent dot (decorative, `aria-hidden`) and be described through `aria-describedby` by `t('conversationPanel.filter.applied')` ("Filters applied"), so an empty filtered list is told apart from a list with no chats (Issue #9476).
 - **Overflow menu.** The existing panel menu (see `conversation-panel-header-menu`).
 
 **List:**

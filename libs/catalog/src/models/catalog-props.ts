@@ -50,16 +50,16 @@ export interface CatalogTitles {
   /** Search input placeholder. Default: 'Search models, tools, agents…'. */
   searchPlaceholder?: string;
   /**
-   * Returns the "no results" heading given the active query, shown when a search or topic filter leaves the tab empty.
+   * Returns the "no results" heading given the active query and tab, shown when a search or topic filter leaves the tab empty.
    * The query is `''` when only topic filters are applied. Default: () => 'No items found'.
    */
-  noResultsTitle?: (query: string) => string;
+  noResultsTitle?: (query: string, activeTab: string) => string;
   /** Secondary line under the "no results" heading. Default: 'Try a different search term or check your filters.'. */
   noResultsDescription?: string;
-  /** Heading shown when the active tab has nothing to show and no search or topic filter is applied. Default: 'No items yet'. */
-  emptyTitle?: string;
-  /** Secondary line under `emptyTitle`. Omitted when not set. */
-  emptyDescription?: string;
+  /** Heading shown when the active tab has nothing to show and no search or topic filter is applied, or a function of the active tab returning it. Default: 'No items yet'. */
+  emptyTitle?: string | ((activeTab: string) => string);
+  /** Secondary line under `emptyTitle`, or a function of the active tab returning it. Omitted when not set. */
+  emptyDescription?: string | ((activeTab: string) => string);
   /**
    * Returns the empty-state heading shown while the "My Apps" filter is on, no
    * search or topic filter is applied and the active tab has nothing to show.
