@@ -419,12 +419,12 @@ describe('Header', () => {
   });
 
   /*
-   * [#8691](https://github.com/epam/ai-dial-chat/issues/8691): a published copy under `public/` has no owner-side entries at
-   * all, so its Manage menu is empty until the publish-history lookup that
-   * produces Unpublish resolves — and that lookup is started by reaching for
-   * this very trigger. A hidden trigger left the copy permanently unactionable.
+   * [#9500](https://github.com/epam/ai-dial-chat/issues/9500): a published
+   * copy's history is resolved up front by the panel, so the Manage slot waits
+   * for it rather than showing a speculative trigger that vanishes once the
+   * lookup says the caller may not unpublish.
    */
-  describe('Manage trigger while the unpublish lookup is outstanding', () => {
+  describe('Manage slot while the unpublish lookup is outstanding', () => {
     const renderPublishedCopy = (
       props?: Partial<ComponentProps<typeof Header>>,
     ) =>
@@ -439,18 +439,27 @@ describe('Header', () => {
         />,
       );
 
-    it('renders the trigger for an item the host says is unpublishable', () => {
+    it('renders no trigger for an item the host says is unpublishable', () => {
       renderPublishedCopy();
-      expect(screen.getByRole('button', { name: 'Manage' })).toBeTruthy();
+      expect(screen.queryByRole('button', { name: 'Manage' })).toBeNull();
     });
 
-    it('starts the lookup when the trigger is hovered', async () => {
-      const onRequestPublishHistory = vi.fn();
-      renderPublishedCopy({ onRequestPublishHistory });
+    it('withholds the other Manage entries too until the lookup settles', () => {
+      renderPublishedCopy({ onDownload: vi.fn() });
 
-      await userEvent.hover(screen.getByRole('button', { name: 'Manage' }));
+      expect(screen.queryByRole('button', { name: 'Manage' })).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Download' })).toBeNull();
+    });
 
-      expect(onRequestPublishHistory).toHaveBeenCalled();
+    it('shows the remaining entry once the lookup settles with no folder', () => {
+      renderPublishedCopy({
+        onDownload: vi.fn(),
+        isPublishHistoryResolved: true,
+        hasPublishedFolders: false,
+      });
+
+      expect(screen.getByRole('button', { name: 'Download' })).toBeTruthy();
+      expect(screen.queryByRole('button', { name: 'Unpublish' })).toBeNull();
     });
 
     it('shows Unpublish once the lookup resolves to a folder', () => {
@@ -2056,7 +2065,7 @@ describe('Header — the last action standing', () => {
     expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull();
   });
 
-  it('holds the overflow menu for an item whose Unpublish entry resolves lazily', () => {
+  it('holds back the Manage slot for an item whose Unpublish entry is still resolving', () => {
     render(
       <Header
         item={{ ...makeItem(CatalogEntityType.Agent), isMyApp: false }}
@@ -2067,7 +2076,7 @@ describe('Header — the last action standing', () => {
       />,
     );
 
-    expect(screen.getByRole('button', { name: 'Manage' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Manage' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Publish' })).toBeNull();
   });
 
