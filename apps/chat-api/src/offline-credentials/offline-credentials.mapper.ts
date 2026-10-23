@@ -9,9 +9,21 @@ type DialOfflineCredentialsStatus =
 type DialOfflineCredentialsSignInRequest =
   operations['offlineCredentialsSignIn']['requestBody']['content']['application/json'];
 
+/*
+ * `schedulerServiceConsent` is deliberately omitted: Core's
+ * `/v1/user/offline-credentials` response does not carry it — the BFF's
+ * `OfflineCredentialsService` appends the field from its own
+ * `SchedulerConsentService` read, so the mapper's result is the Core-mapped
+ * part of the DTO only.
+ */
+export type CoreOfflineCredentialsStatusDto = Omit<
+  GetOfflineCredentialsResponseDto,
+  'schedulerServiceConsent'
+>;
+
 export const mapDialOfflineCredentialsToDto = (
   data: DialOfflineCredentialsStatus,
-): GetOfflineCredentialsResponseDto => {
+): CoreOfflineCredentialsStatusDto => {
   const available = data.available ?? false;
   const connected = data.connected ?? false;
   const connect = data.connect;

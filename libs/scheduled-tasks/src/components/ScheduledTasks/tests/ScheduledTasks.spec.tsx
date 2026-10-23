@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { SCHEDULED_TASKS_CLASS } from '../../../constants/public-class-names';
 import type { ScheduledTaskItem } from '../../../models/scheduled-task-item';
 import { ScheduledTasksProps } from '../../../models/scheduled-tasks-props';
 import { ScheduledTasksSortKey } from '../../../types/scheduled-tasks-sort-key';
@@ -155,11 +156,17 @@ const baseLabels: ScheduledTasksProps['labels'] = {
   loadingMoreLabel: 'Loading more scheduled tasks…',
 };
 
+let onCreateClickMock: (() => void) | undefined = vi.fn();
+
+beforeEach(() => {
+  onCreateClickMock = vi.fn();
+});
+
 const renderScheduledTasks = (overrides?: Partial<ScheduledTasksProps>) =>
   render(
     <ScheduledTasks
       labels={baseLabels}
-      onCreateClick={vi.fn()}
+      onCreateClick={onCreateClickMock}
       searchQuery=""
       onSearchQueryChange={vi.fn()}
       sortKey={ScheduledTasksSortKey.FirstToRun}
@@ -331,12 +338,19 @@ describe('ScheduledTasks', () => {
   });
 
   it('calls onCreateClick when the create button is clicked', async () => {
-    const onCreateClick = vi.fn();
-    renderScheduledTasks({ onCreateClick });
+    onCreateClickMock = vi.fn();
+    renderScheduledTasks();
 
     await userEvent.click(screen.getByRole('button', { name: 'New task' }));
 
-    expect(onCreateClick).toHaveBeenCalledOnce();
+    expect(onCreateClickMock).toHaveBeenCalledOnce();
+  });
+
+  it('renders no create button when no onCreateClick callback is provided', () => {
+    onCreateClickMock = undefined;
+    renderScheduledTasks();
+
+    expect(screen.queryByRole('button', { name: 'New task' })).toBeNull();
   });
 
   it('renders exactly one header action button — the create action, with no disconnect/logout affordance', () => {
@@ -628,6 +642,27 @@ describe('ScheduledTasks', () => {
       renderScheduledTasks({ items: [buildItem()] });
 
       expect(screen.queryByText('Example banner')).toBeNull();
+    });
+
+    it('caps the banner to the card grid width so the two align horizontally', () => {
+      renderScheduledTasks({
+        items: [buildItem({ displayName: 'Daily summary' })],
+        banner: <div>Example banner</div>,
+      });
+
+      /* eslint-disable testing-library/no-node-access -- CSS-level alignment
+       * assertion: the banner wrapper and the card grid carry the same
+       * maxWidth style, so a banner never renders wider than the cards below
+       * it; no semantic query reaches a style attribute. */
+      const bannerWrapper = screen.getByText('Example banner').parentElement;
+      const cardGrid = screen
+        .getByText('Daily summary')
+        .closest(`.${SCHEDULED_TASKS_CLASS.cardGrid}`);
+      /* eslint-enable testing-library/no-node-access */
+      expect(bannerWrapper?.getAttribute('style')).toContain(
+        'max-width: 1180px',
+      );
+      expect(cardGrid?.getAttribute('style')).toContain('max-width: 1180px');
     });
 
     it('renders the banner during the loading state', () => {

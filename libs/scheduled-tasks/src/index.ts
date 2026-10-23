@@ -24,6 +24,7 @@ export type {
   ScheduledTaskCardGridLabels,
   ScheduledTaskCardGridLayout,
 } from './models/scheduled-task-card-grid-props';
+export { SCHEDULED_TASKS_GRID_DEFAULT_MAX_WIDTH } from './models/scheduled-task-card-grid-props';
 export { ScheduledTaskCardSkeleton } from './components/ScheduledTaskCardSkeleton/ScheduledTaskCardSkeleton';
 export type {
   ScheduledTaskCardSkeletonProps,

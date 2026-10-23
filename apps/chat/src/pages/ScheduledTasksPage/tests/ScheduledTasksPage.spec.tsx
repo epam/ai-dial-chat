@@ -98,7 +98,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
         completedBadgeLabel?: string;
       };
     };
-    onCreateClick: () => void;
+    onCreateClick?: () => void;
     items: { id: string; isCompleted?: boolean }[];
     error: Error | null;
     onRetry: () => void;
@@ -122,7 +122,9 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       <span>hasMore:{String(hasMore)}</span>
       <span>isLoadingMore:{String(isLoadingMore)}</span>
       {error && <button onClick={onRetry}>{labels.retryLabel}</button>}
-      <button onClick={onCreateClick}>{labels.createButtonLabel}</button>
+      {onCreateClick != null && (
+        <button onClick={onCreateClick}>{labels.createButtonLabel}</button>
+      )}
       <button onClick={() => onSearchQueryChange('daily')}>set search</button>
       <button onClick={onLoadMore}>load more</button>
       <span>completedBadgeLabel:{labels.cardLabels?.completedBadgeLabel}</span>
@@ -134,7 +136,12 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
           <span>completed:{String(item.isCompleted)}</span>
         </div>
       ))}
-      {banner}
+      {banner != null && (
+        <div>
+          <span>bannerSlot</span>
+          {banner}
+        </div>
+      )}
     </div>
   ),
 }));
@@ -203,6 +210,7 @@ describe('ScheduledTasksPage', () => {
       status: 'hidden',
       connect: undefined,
       connected: false,
+      schedulerServiceConsent: 'signed_in',
       refetch: refetchCredentialsMock,
     });
     useOfflineCredentialsAuthMock.mockReturnValue(makeAuthResult());
@@ -382,8 +390,114 @@ describe('ScheduledTasksPage', () => {
     expect(refetchMock).toHaveBeenCalledOnce();
   });
 
+  describe('limited-access banner and create gating', () => {
+    it('shows the limited-access banner and no New task button when the scheduler consent is signed out and the user is connected', () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      useOfflineCredentialsGateMock.mockReturnValue({
+        status: 'hidden',
+        connect: undefined,
+        connected: true,
+        schedulerServiceConsent: 'signed_out',
+        refetch: refetchCredentialsMock,
+      });
+      renderScheduledTasksPage();
+
+      const alert = screen.getByRole('alert');
+      expect(alert.textContent).toContain(
+        'scheduledTasks.limitedAccessBanner.title',
+      );
+      expect(alert.textContent).toContain(
+        'scheduledTasks.limitedAccessBanner.body',
+      );
+      expect(
+        screen.queryByRole('button', {
+          name: 'scheduledTasks.toolbar.createButtonLabel',
+        }),
+      ).toBeNull();
+    });
+
+    it('shows the limited-access banner instead of the login banner when the consent is signed out and the user is disconnected', () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      useOfflineCredentialsGateMock.mockReturnValue({
+        status: 'available',
+        connect: CONNECT_SETTINGS,
+        connected: false,
+        schedulerServiceConsent: 'signed_out',
+        refetch: refetchCredentialsMock,
+      });
+      renderScheduledTasksPage();
+
+      const alert = screen.getByRole('alert');
+      expect(alert.textContent).toContain(
+        'scheduledTasks.limitedAccessBanner.title',
+      );
+      expect(alert.textContent).not.toContain(
+        'scheduledTasks.offlineCredentialsBanner.title',
+      );
+      expect(
+        screen.queryByRole('button', { name: 'buttons.logIn' }),
+      ).toBeNull();
+      expect(
+        screen.queryByRole('button', {
+          name: 'scheduledTasks.toolbar.createButtonLabel',
+        }),
+      ).toBeNull();
+    });
+
+    it('keeps the login banner and the New task button when the consent read failed (unknown)', () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      useOfflineCredentialsGateMock.mockReturnValue({
+        status: 'available',
+        connect: CONNECT_SETTINGS,
+        connected: false,
+        schedulerServiceConsent: 'unknown',
+        refetch: refetchCredentialsMock,
+      });
+      renderScheduledTasksPage();
+
+      expect(screen.getByRole('alert').textContent).toContain(
+        'scheduledTasks.offlineCredentialsBanner.title',
+      );
+      expect(
+        screen.getByRole('button', {
+          name: 'scheduledTasks.toolbar.createButtonLabel',
+        }),
+      ).toBeTruthy();
+    });
+
+    it('keeps the list usable while the limited-access banner is shown', () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      useOfflineCredentialsGateMock.mockReturnValue({
+        status: 'hidden',
+        connect: undefined,
+        connected: true,
+        schedulerServiceConsent: 'signed_out',
+        refetch: refetchCredentialsMock,
+      });
+      useScheduledTasksMock.mockReturnValue({
+        items: [{ id: 'sched_1', displayName: 'Daily summary', trigger: {} }],
+        searchQuery: '',
+        setSearchQuery: setSearchQueryMock,
+        sortKey: 'firstToRun',
+        setSortKey: setSortKeyMock,
+        isLoading: false,
+        isLoadingMore: false,
+        error: null,
+        hasMore: false,
+        loadMore: loadMoreMock,
+        refetch: refetchMock,
+      });
+      renderScheduledTasksPage();
+
+      expect(screen.getByRole('alert').textContent).toContain(
+        'scheduledTasks.limitedAccessBanner.title',
+      );
+      expect(screen.getByRole('button', { name: 'card:sched_1' })).toBeTruthy();
+    });
+  });
+
   describe('offline-credentials login banner', () => {
-    it('does not render the banner while status is checking', () => {
+    it('passes no banner into the banner slot while status is checking', () => {
       useFeatureFlagMock.mockReturnValue(true);
       useOfflineCredentialsGateMock.mockReturnValue({
         status: 'checking',
@@ -392,7 +506,12 @@ describe('ScheduledTasksPage', () => {
       });
       renderScheduledTasksPage();
 
+      /* No in-flow banner child renders between the toolbar and the
+       * content (no extra gap); only the page-level sr-only live region
+       * renders, outside the lib's layout. */
       expect(screen.queryByRole('alert')).toBeNull();
+      expect(screen.queryByText('bannerSlot')).toBeNull();
+      expect(screen.getByRole('status')).toBeTruthy();
     });
 
     it('renders the banner without a login action when credentials are unavailable', () => {
