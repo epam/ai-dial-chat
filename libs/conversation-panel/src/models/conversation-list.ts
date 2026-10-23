@@ -54,14 +54,18 @@ export interface ConversationListStyles {
 
 /** Localised labels for `ConversationList`. */
 export interface ConversationListLabels {
-  /** Message shown when `conversations` is empty. */
+  /** Message shown when `conversations` is empty, or when the filters match nothing and no search is active. */
   emptyLabel: string;
   /** Secondary line under `emptyLabel`, e.g. what will fill the list. Omitted when not set. */
   emptyDescription?: string;
-  /** Message shown when conversations exist but none match the filter and search. */
+  /** Message shown when a search query matches no conversation. */
   noResultsLabel: string;
   /** Secondary line under `noResultsLabel`, e.g. how to widen the search. Omitted when not set. */
   noResultsDescription?: string;
+  /** Message shown when the `Shared` filter matches nothing and no search is active. Defaults to `emptyLabel`. */
+  sharedEmptyLabel?: string;
+  /** Secondary line under `sharedEmptyLabel`. Defaults to `emptyDescription`. */
+  sharedEmptyDescription?: string;
   /** Status message announced to assistive tech while conversations are loading. Defaults to `'Loading conversations'`. */
   loadingLabel?: string;
   /** Labels for collapsible group section headings. */

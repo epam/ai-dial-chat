@@ -119,6 +119,25 @@ When `item.iconTooltip` is provided and `item.isIconLoading` is `false` or `unde
 - **WHEN** `conversations` is an empty array
 - **THEN** the `labels.emptyLabel` text is rendered instead of sections
 
+`ConversationList` SHALL show `labels.noResultsLabel` only when a non-empty search query matches no conversation. When the origin or type filters match nothing and no search is typed, it SHALL show the empty state instead: `labels.sharedEmptyLabel` / `labels.sharedEmptyDescription` under `FilterTab.Shared` (each falling back to `emptyLabel` / `emptyDescription`), and `emptyLabel` / `emptyDescription` otherwise. The same message is announced through the list's `role="status"` region. `ConversationPanelView` passes `conversationPanel.sharedEmpty` and `conversationPanel.sharedEmptyDescription` as the shared labels (Issue #9476).
+
+#### Scenario: A filter that matches nothing shows the empty state
+
+- **GIVEN** the user has personal chats only and no search is typed
+- **WHEN** the Type filter is set to Task
+- **THEN** `labels.emptyLabel` is rendered and announced, not `labels.noResultsLabel`
+
+#### Scenario: The Shared filter shows its own empty state
+
+- **GIVEN** no conversation is shared with the user and no search is typed
+- **WHEN** the Origin filter is set to Shared
+- **THEN** `labels.sharedEmptyLabel` and `labels.sharedEmptyDescription` are rendered
+
+#### Scenario: A search that matches nothing still reports no results
+
+- **WHEN** a search query matches no conversation under any filter
+- **THEN** `labels.noResultsLabel` is rendered
+
 ---
 
 ### Requirement: Panel shows a skeleton loader while conversations are loading

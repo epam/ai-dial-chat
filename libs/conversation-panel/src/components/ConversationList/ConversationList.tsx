@@ -73,6 +73,8 @@ export const ConversationList: FC<ConversationListProps> = memo(
       emptyDescription,
       noResultsLabel,
       noResultsDescription,
+      sharedEmptyLabel = emptyLabel,
+      sharedEmptyDescription = emptyDescription,
       loadingLabel = 'Loading conversations',
       groupLabels,
       actionsLabel,
@@ -374,13 +376,23 @@ export const ConversationList: FC<ConversationListProps> = memo(
       ],
     );
 
-    const isNoConversations = visibleConversations.length === 0;
+    /* "No results" is the answer to a search only. A filter that matches
+       nothing, with no search typed, is an empty state: the user has nothing
+       of that kind yet, not a query to rephrase. */
+    const isListEmpty = filteredItems.length === 0;
     const isNoResults =
-      visibleConversations.length > 0 && filteredItems.length === 0;
+      isListEmpty && visibleConversations.length > 0 && searchQuery !== '';
+    const isSharedEmpty =
+      isListEmpty && !isNoResults && activeFilter === FilterTab.Shared;
+    const isEmpty = isListEmpty && !isNoResults;
+    const currentEmptyLabel = isSharedEmpty ? sharedEmptyLabel : emptyLabel;
+    const currentEmptyDescription = isSharedEmpty
+      ? sharedEmptyDescription
+      : emptyDescription;
 
     const getStatusMessage = (): string => {
       if (isLoading) return loadingLabel;
-      if (isNoConversations) return emptyLabel;
+      if (isEmpty) return currentEmptyLabel;
       if (isNoResults) return noResultsLabel;
       return '';
     };
@@ -402,8 +414,13 @@ export const ConversationList: FC<ConversationListProps> = memo(
           </div>
         );
       }
-      if (isNoConversations)
-        return <PanelEmpty label={emptyLabel} description={emptyDescription} />;
+      if (isEmpty)
+        return (
+          <PanelEmpty
+            label={currentEmptyLabel}
+            description={currentEmptyDescription}
+          />
+        );
       if (isNoResults)
         return (
           <PanelNoResults
