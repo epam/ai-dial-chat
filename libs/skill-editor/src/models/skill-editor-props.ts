@@ -304,6 +304,10 @@ export interface SkillEditorColors {
   filesCardBackground?: string;
   /** Border color of the mobile "Editing file" card. Defaults to `--stroke-tertiary`. */
   filesCardBorder?: string;
+  /** Background of the mobile upload and create-folder sheet footer. Defaults to `--bg-layer-raised`. */
+  dialogFooterBackground?: string;
+  /** Top border color of the mobile upload and create-folder sheet footer. Defaults to `--stroke-tertiary`. */
+  dialogFooterBorder?: string;
   /** Border color of the layout header row and Files sidebar divider. Defaults to `--stroke-tertiary`. */
   border?: string;
 }

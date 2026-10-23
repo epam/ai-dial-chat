@@ -1,3 +1,5 @@
+import type { SkillEditorDialogColors } from './skill-editor-dialog-props';
+
 /** Props for `SkillCreateFolderDialog`. */
 export interface SkillCreateFolderDialogProps {
   /** Whether the dialog is shown. */
@@ -20,4 +22,6 @@ export interface SkillCreateFolderDialogProps {
   cancelLabel: string;
   /** Accessible name of the close control. */
   closeAriaLabel: string;
+  /** Color overrides for the mobile sheet footer. */
+  dialogColors?: SkillEditorDialogColors;
 }

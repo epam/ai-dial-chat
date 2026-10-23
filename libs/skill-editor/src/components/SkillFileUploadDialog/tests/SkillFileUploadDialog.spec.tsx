@@ -92,6 +92,12 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       )}
     </div>
   ),
+  FileName: ({ name, details }: { name: string; details?: ReactNode }) => (
+    <div>
+      <span>{name}</span>
+      {details}
+    </div>
+  ),
   GhostButton: ({
     label,
     onClick,

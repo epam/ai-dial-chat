@@ -7,6 +7,10 @@ import type { SkillEditorDialogProps } from '../../../models/skill-editor-dialog
 import { SkillEditorDialog } from '../SkillEditorDialog';
 
 vi.mock('@epam/ai-dial-chat-shared', () => ({
+  buildCssVars: (vars: Record<string, string | undefined>) =>
+    Object.fromEntries(
+      Object.entries(vars).filter(([, value]) => value != null),
+    ),
   mergeClasses: (...classes: unknown[]) => classes.filter(Boolean).join(' '),
   useIsMobile: vi.fn(() => false),
 }));
@@ -132,5 +136,22 @@ describe('SkillEditorDialog', () => {
     expect(
       screen.getByRole('button', { name: 'Create' }).hasAttribute('disabled'),
     ).toBe(true);
+  });
+
+  it('sets the footer color overrides as CSS vars on the sheet footer', () => {
+    vi.mocked(useIsMobile).mockReturnValue(true);
+    renderDialog({
+      colors: { footerBackground: '#111111', footerBorder: '#222222' },
+    });
+
+    // eslint-disable-next-line testing-library/no-node-access -- the vars sit on the footer row, which has no role of its own
+    const footer = screen.getByRole('button', { name: 'Create' }).parentElement;
+
+    expect(footer?.style.getPropertyValue('--se-dialog-footer-bg')).toBe(
+      '#111111',
+    );
+    expect(footer?.style.getPropertyValue('--se-dialog-footer-border')).toBe(
+      '#222222',
+    );
   });
 });

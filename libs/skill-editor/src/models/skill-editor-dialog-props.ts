@@ -1,5 +1,13 @@
 import type { ReactNode } from 'react';
 
+/** Color overrides for the mobile `BottomSheet` footer of `SkillEditorDialog`. */
+export interface SkillEditorDialogColors {
+  /** Background of the sheet footer. Defaults to `--bg-layer-raised`. */
+  footerBackground?: string;
+  /** Top border color of the sheet footer. Defaults to `--stroke-tertiary`. */
+  footerBorder?: string;
+}
+
 /** Props for `SkillEditorDialog`. */
 export interface SkillEditorDialogProps {
   /** Whether the dialog is shown. */
@@ -24,4 +32,6 @@ export interface SkillEditorDialogProps {
   isConfirming?: boolean;
   /** Content of the dialog body, which brings its own padding. */
   children: ReactNode;
+  /** Color overrides for the mobile sheet footer. */
+  colors?: SkillEditorDialogColors;
 }

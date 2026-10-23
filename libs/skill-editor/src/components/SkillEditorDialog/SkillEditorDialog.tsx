@@ -1,4 +1,8 @@
-import { mergeClasses, useIsMobile } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  mergeClasses,
+  useIsMobile,
+} from '@epam/ai-dial-chat-shared';
 import {
   BottomSheet,
   ButtonAppearance,
@@ -26,6 +30,7 @@ export const SkillEditorDialog: FC<SkillEditorDialogProps> = ({
   isConfirmDisabled = false,
   isConfirming = false,
   children,
+  colors,
 }) => {
   const isMobile = useIsMobile();
   const confirmIcon = isConfirming ? (
@@ -33,6 +38,12 @@ export const SkillEditorDialog: FC<SkillEditorDialogProps> = ({
   ) : undefined;
 
   if (isMobile) {
+    // The sheet renders in a portal outside the editor root, so the footer carries its own vars.
+    const footerCssVars = buildCssVars({
+      '--se-dialog-footer-bg': colors?.footerBackground,
+      '--se-dialog-footer-border': colors?.footerBorder,
+    });
+
     return (
       <BottomSheet
         open={isOpen}
@@ -47,6 +58,7 @@ export const SkillEditorDialog: FC<SkillEditorDialogProps> = ({
             'sticky bottom-0 flex gap-3 border-t p-4',
             styles.footer,
           )}
+          style={footerCssVars}
         >
           <PrimaryButton
             className="flex-1"

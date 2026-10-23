@@ -3,13 +3,15 @@ import {
   DIAL_KIT_ICON_STROKE,
   ErrorText,
   FileDropzone,
+  FileName,
   GhostIconButton,
   RadioGroup,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
-import { IconFileText, IconTrashX } from '@tabler/icons-react';
+import { IconTrashX } from '@tabler/icons-react';
 import type { FC } from 'react';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import type { SkillEditorDialogColors } from '../../models/skill-editor-dialog-props';
 import type {
   SkillEditorFileActions,
   SkillEditorLabels,
@@ -60,6 +62,8 @@ export interface SkillFileUploadDialogProps {
   rowCaptionClassName?: string;
   /** Text overrides. */
   labels?: SkillEditorLabels;
+  /** Color overrides for the mobile sheet footer. */
+  dialogColors?: SkillEditorDialogColors;
 }
 
 const ARCHIVE_ACCEPT = '.zip,application/zip';
@@ -95,6 +99,7 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
   messageClassName = 'dial-small-text',
   rowCaptionClassName = 'dial-tiny-text text-secondary',
   labels,
+  dialogColors,
 }) => {
   const t = labels ?? {};
   const [candidates, setCandidates] = useState<SkillFileUploadCandidate[]>([]);
@@ -352,6 +357,7 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
         onConfirm={() => resolveConflict(conflictResolution)}
         cancelLabel={cancelLabel}
         onCancel={() => resolveConflict(null)}
+        colors={dialogColors}
       >
         <div className="flex flex-col gap-4 px-4 py-4 desktop:px-6">
           {/* Focused programmatically when the step opens, so it is not a tab stop and draws no ring. */}
@@ -405,6 +411,7 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
       isConfirming={isCommitting}
       cancelLabel={cancelLabel}
       onCancel={onClose}
+      colors={dialogColors}
     >
       <div className="flex flex-col gap-4 px-4 py-4 desktop:px-6">
         <FileDropzone
@@ -484,34 +491,32 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
                   key={candidate.id}
                   className="flex items-center gap-2 rounded-lg border border-tertiary p-2"
                 >
-                  <IconFileText
-                    size={20}
-                    aria-hidden
-                    stroke={DIAL_KIT_ICON_STROKE}
+                  <FileName
+                    name={candidate.path}
+                    className="min-w-0 flex-1"
+                    details={
+                      <>
+                        <span className={rowCaptionClassName}>
+                          {formatFileSize(candidate.file.size)}
+                        </span>
+                        {isInvalid && result?.error && (
+                          <ErrorText text={result.error} />
+                        )}
+                        {isManifest && !isInvalid && (
+                          <span className={rowCaptionClassName}>
+                            {t.uploadManifestRowNote ??
+                              "Will replace this Skill's name, description, and instructions"}
+                          </span>
+                        )}
+                        {candidate.replacesExisting && !isInvalid && (
+                          <span className={rowCaptionClassName}>
+                            {t.uploadReplaceRowNote ??
+                              'Will replace the existing file'}
+                          </span>
+                        )}
+                      </>
+                    }
                   />
-                  <div className="flex min-w-0 flex-1 flex-col">
-                    <span className="dial-small-text truncate">
-                      {candidate.path}
-                    </span>
-                    <span className={rowCaptionClassName}>
-                      {formatFileSize(candidate.file.size)}
-                    </span>
-                    {isInvalid && result?.error && (
-                      <ErrorText text={result.error} />
-                    )}
-                    {isManifest && !isInvalid && (
-                      <span className={rowCaptionClassName}>
-                        {t.uploadManifestRowNote ??
-                          "Will replace this Skill's name, description, and instructions"}
-                      </span>
-                    )}
-                    {candidate.replacesExisting && !isInvalid && (
-                      <span className={rowCaptionClassName}>
-                        {t.uploadReplaceRowNote ??
-                          'Will replace the existing file'}
-                      </span>
-                    )}
-                  </div>
                   <GhostIconButton
                     icon={
                       <IconTrashX

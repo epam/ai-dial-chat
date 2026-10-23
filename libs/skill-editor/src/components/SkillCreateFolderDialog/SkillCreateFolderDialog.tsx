@@ -16,6 +16,7 @@ export const SkillCreateFolderDialog: FC<SkillCreateFolderDialogProps> = ({
   createLabel,
   cancelLabel,
   closeAriaLabel,
+  dialogColors,
 }) => {
   const inputId = useId();
   const [name, setName] = useState('');
@@ -47,6 +48,7 @@ export const SkillCreateFolderDialog: FC<SkillCreateFolderDialogProps> = ({
       onConfirm={handleCreate}
       cancelLabel={cancelLabel}
       onCancel={onClose}
+      colors={dialogColors}
     >
       <form
         className="px-4 py-4 desktop:px-6"

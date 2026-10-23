@@ -175,6 +175,36 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   TagInput: () => null,
   DialItemType: { File: 'file', Folder: 'folder' },
   FileIcon: () => null,
+  Accordion: ({
+    title,
+    description,
+    expanded,
+    onToggle,
+    children,
+  }: {
+    title: ReactNode;
+    description?: ReactNode;
+    expanded?: boolean;
+    onToggle?: (expanded: boolean) => void;
+    children?: ReactNode;
+  }) => (
+    <div>
+      <button
+        type="button"
+        aria-expanded={expanded}
+        onClick={() => onToggle?.(!expanded)}
+      >
+        {title} {description}
+      </button>
+      <div inert={!expanded}>{children}</div>
+    </div>
+  ),
+  FileName: ({ name, details }: { name: string; details?: ReactNode }) => (
+    <span>
+      {name}
+      {details}
+    </span>
+  ),
   RadioGroup: ({
     items,
     value,

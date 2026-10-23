@@ -371,6 +371,10 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     '--se-files-card-bg': colors?.filesCardBackground,
     '--se-files-card-border': colors?.filesCardBorder,
   });
+  const dialogColors = {
+    footerBackground: colors?.dialogFooterBackground,
+    footerBorder: colors?.dialogFooterBorder,
+  };
 
   const refinementStyles = {
     feedbackClassName: mergeClasses(
@@ -1022,6 +1026,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
         messageClassName={typography.uploadMessageClassName}
         rowCaptionClassName={typography.uploadRowCaptionClassName}
         labels={labels}
+        dialogColors={dialogColors}
       />
 
       <SkillCreateFolderDialog
@@ -1039,6 +1044,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
         createLabel={t.createFolderConfirmLabel ?? 'Create'}
         cancelLabel={t.cancelLabel ?? 'Cancel'}
         closeAriaLabel={t.createFolderCloseAriaLabel ?? 'Close'}
+        dialogColors={dialogColors}
       />
     </div>
   );

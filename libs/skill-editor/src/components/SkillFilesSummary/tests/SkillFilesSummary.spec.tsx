@@ -4,13 +4,6 @@ import { describe, expect, it, vi } from 'vitest';
 import type { SkillFilesSummaryProps } from '../../../models/skill-files-summary-props';
 import { SkillFilesSummary } from '../SkillFilesSummary';
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
-  DIAL_KIT_ICON_STROKE: 1.5,
-  DIAL_ICON_SIZE: { LG: 24, MD: 20, SM: 16 },
-  DialItemType: { File: 'file', Folder: 'folder' },
-  FileIcon: () => null,
-}));
-
 describe('SkillFilesSummary', () => {
   const renderSummary = (props?: Partial<SkillFilesSummaryProps>) =>
     render(

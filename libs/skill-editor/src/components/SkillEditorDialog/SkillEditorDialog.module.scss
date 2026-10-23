@@ -1,9 +1,13 @@
 /*
- * The sheet renders in a portal, outside the editor root's `--se-*` vars, and
- * the footer must match the kit panel it sits on, so it reads the same theme
- * tokens the kit `BottomSheet` panel and header divider use.
+ * The sheet renders in a portal, outside the editor root's `--se-*` vars, so
+ * `SkillEditorDialog` sets the footer vars on the footer itself. Unset, they
+ * fall back to the theme tokens the kit `BottomSheet` panel and header divider
+ * use, so the footer matches the panel it sits on.
  */
 .footer {
-  background: var(--bg-layer-raised, #fcfcfc);
-  border-color: var(--stroke-tertiary, #e0e6f0);
+  background: var(--se-dialog-footer-bg, var(--bg-layer-raised, #fcfcfc));
+  border-color: var(
+    --se-dialog-footer-border,
+    var(--stroke-tertiary, #e0e6f0)
+  );
 }
