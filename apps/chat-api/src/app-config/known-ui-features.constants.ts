@@ -48,6 +48,7 @@ export const KNOWN_UI_FEATURES: ReadonlySet<string> = new Set([
   'skills',
   'custom-apps',
   'hide-user-menu',
+  'hide-user-menu-identity',
   'hide-user-settings',
   'hide-keyboard-shortcuts',
   'voice-input',

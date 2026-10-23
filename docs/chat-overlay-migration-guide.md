@@ -781,6 +781,7 @@ hide-delete-user-message
 hide-edit-user-message
 hide-regenerate-assistant-message
 hide-user-menu
+hide-user-menu-identity
 hide-user-settings
 hide-keyboard-shortcuts
 hide-navigation-menu
@@ -826,7 +827,17 @@ removes the New chat item, `hide-user-menu` removes the user menu — the
 sidebar's profile trigger and, on mobile, the same menu in the drawer (the
 earlier mobile sheet ignored this key, so a host that set it still showed the
 menu there) — `hide-settings-page` removes the Settings entry, and
-`hide-usage-page` removes the Usage link. The sidebar's elements carry their own `dial-navigation-panel-sidebar*` and
+`hide-usage-page` removes the Usage link.
+
+`hide-user-menu-identity` keeps the user menu but removes the row at the top
+of its dropdown that repeats the avatar and the user's name, on desktop and in
+the drawer. Settings and Log out stay. Use it when the sidebar trigger already
+shows the name, so the menu would only say it twice. `hide-user-menu` overrides
+it. In the collapsed desktop sidebar the trigger shows the avatar alone, so with
+the key on the user is identified there only by the avatar and its email
+tooltip.
+
+The sidebar's elements carry their own `dial-navigation-panel-sidebar*` and
 `dial-cp-list*` classes; CSS written against `dial-navigation-panel-rail` or
 `dial-sb-aside` does not reach them, so review such overrides before upgrading.
 

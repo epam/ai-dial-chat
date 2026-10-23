@@ -65,6 +65,8 @@ export interface UserMenuProps {
   triggerVariant?: UserMenuTriggerVariant;
   /** Hides the avatar tooltip — set on touch layouts where hover never fires. */
   isTooltipHidden?: boolean;
+  /** Omits the identity row — avatar initials and display name — from the top of the dropdown. Defaults to `false`. */
+  isIdentityHidden?: boolean;
   /** Style overrides for colors, typography, and class names. */
   styles?: UserMenuStyles;
 }
