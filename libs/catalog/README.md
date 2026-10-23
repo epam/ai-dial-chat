@@ -499,7 +499,12 @@ const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
 ### Favorites
 
-Renders the user's favorited items in a dedicated, paginated section.
+Renders the user's favorited items in a dedicated, paginated section. On
+desktop it is a grid of up to two rows per page; below the desktop breakpoint
+every favorite sits in a single row the user swipes through, and the pager
+steps that row one card at a time. Pass `isPaginationHidden` to drop the pager:
+the desktop grid then shows every favorite at once and the mobile row is only
+swiped. `Catalog` forwards its own `isFavoritesPaginationHidden` prop here.
 
 ```tsx
 import { Favorites } from '@epam/ai-dial-catalog';
