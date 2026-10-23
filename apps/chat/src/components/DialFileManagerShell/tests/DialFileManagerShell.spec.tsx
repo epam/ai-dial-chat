@@ -1127,11 +1127,11 @@ describe('DialFileManagerShell', () => {
     it('aligns the mobile content with the 12px page padding on the standalone page', () => {
       renderAll(DialFileManagerTabs.Shared);
       const props = capturedDialFileManagerProps.current;
-      expect(props?.contentClassName?.split(' ')).toContain('mobile:px-0');
+      expect(props?.contentClassName?.split(' ')).toContain('mobile:px-2');
       expect(props?.className?.split(' ')).toContain('mobile:pt-2');
     });
 
-    it('renders the treeHeader as a mobile-only page heading on the standalone page', () => {
+    it('never renders a page heading of its own, even with a treeHeader', () => {
       renderAll(
         DialFileManagerTabs.Shared,
         {},
@@ -1140,16 +1140,6 @@ describe('DialFileManagerShell', () => {
           treeHeader: 'File storage',
         },
       );
-      const heading = screen.getByRole('heading', {
-        level: 1,
-        name: 'File storage',
-      });
-      expect(heading.className.split(' ')).toContain('mobile:flex');
-      expect(heading.className.split(' ')).toContain('hidden');
-    });
-
-    it('renders no mobile heading without treeHeader', () => {
-      renderAll(DialFileManagerTabs.Shared);
       expect(screen.queryByRole('heading', { level: 1 })).toBeNull();
     });
 

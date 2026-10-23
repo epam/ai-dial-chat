@@ -614,12 +614,6 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
 
   return (
     <>
-      {/* The tree header is hidden on mobile (the tree becomes a folder dropdown), so the page title is rendered here. */}
-      {!isAttachVariant && labels.treeHeader != null && (
-        <h1 className="dial-h1-text m-0 hidden min-h-12 shrink-0 items-center px-3 py-1 text-primary mobile:flex">
-          {labels.treeHeader}
-        </h1>
-      )}
       {error != null ? (
         <div role="alert" className="flex flex-col items-center gap-4 p-6">
           <p>{labels.errorMessage}</p>
@@ -640,8 +634,8 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
               styles.surface,
               isAttachVariant ? 'p-0' : 'mobile:pt-2',
             )}
-            /* On mobile the page already pads 12px, so drop the content column's own 20px inset to match the design. */
-            contentClassName={isAttachVariant ? 'px-0 pb-0' : 'mobile:px-0'}
+            /* On mobile the content column insets 8px instead of 20px (the page card adds no side padding), so the grid's shadow is not clipped by the manager's overflow. */
+            contentClassName={isAttachVariant ? 'px-0 pb-0' : 'mobile:px-2'}
             gridClassName={
               variant === DialFileManagerVariant.Attach
                 ? 'size-full gap-6 px-6 py-4'

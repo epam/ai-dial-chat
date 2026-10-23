@@ -582,7 +582,25 @@ describe('DialFileManagerPage — page frame', () => {
     expect(classes).toContain('py-1');
   });
 
-  it('sets the shell surface to the base layer on a phone and transparent inside the desktop card', () => {
+  it('frames the manager in a raised card on a phone too, with tighter spacing than desktop', () => {
+    render(<DialFileManagerPage />);
+
+    /* eslint-disable testing-library/no-node-access */
+    const card = screen.getByRole('region', { name: 'file manager' })
+      .parentElement?.parentElement?.parentElement;
+    /* eslint-enable testing-library/no-node-access */
+    const classes = card?.className.split(' ') ?? [];
+    expect(classes).toEqual(
+      expect.arrayContaining([
+        'rounded-xl',
+        'bg-layer-raised',
+        'py-2',
+        'desktop:p-5',
+      ]),
+    );
+  });
+
+  it('makes the shell surface transparent at every width so the card is the surface', () => {
     render(<DialFileManagerPage />);
 
     /* The surface is a CSS variable set on the wrapper around the shell; neither
@@ -591,12 +609,9 @@ describe('DialFileManagerPage — page frame', () => {
     const wrapper = screen.getByRole('region', { name: 'file manager' })
       .parentElement?.parentElement;
     /* eslint-enable testing-library/no-node-access */
-    expect(
-      wrapper?.classList.contains('[--dfms-surface:var(--bg-layer-base)]'),
-    ).toBe(true);
-    expect(
-      wrapper?.classList.contains('desktop:[--dfms-surface:transparent]'),
-    ).toBe(true);
+    expect(wrapper?.classList.contains('[--dfms-surface:transparent]')).toBe(
+      true,
+    );
   });
 
   it('divides the folders panel from the grid with a line on its end edge and makes the grid a flat table without shadow, filters or header borders', () => {

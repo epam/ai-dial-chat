@@ -8,6 +8,7 @@ import {
   DialFileManagerActionProfile,
   DialFileManagerVariant,
   formatFileSize,
+  mergeClasses,
   type DialFileManagerShellLabels,
 } from '@epam/ai-dial-chat-shared';
 import {
@@ -44,6 +45,19 @@ import { useUploadQueueLabels } from '../../hooks/files/useUploadQueueLabels';
  */
 const TREE_PANEL_CLASS_NAME =
   'h-full min-h-0 w-[360px] shrink-0 border-e border-tertiary bg-layer-raised';
+
+/*
+ * The file manager exposes no class hooks for these two parts of its compact
+ * view, so they are restyled from the wrapper around the shell:
+ * - the folder dropdown card (the only element that holds the trigger button
+ *   with `aria-expanded`) sits on the sunken layer instead of the raised one;
+ * - the grid region lifts off the page card with the raised surface, rounded
+ *   corners and the medium shadow, overriding the shell's flat-table classes.
+ */
+const COMPACT_DROPDOWN_CLASS_NAME =
+  '[&_div.bg-layer-raised.shadow-xs:has(>button[aria-expanded])]:bg-layer-sunken';
+const COMPACT_GRID_CLASS_NAME =
+  "mobile:[&_section[aria-label='File_Manager_Grid_View']]:rounded-xl mobile:[&_section[aria-label='File_Manager_Grid_View']]:bg-layer-raised mobile:[&_section[aria-label='File_Manager_Grid_View']]:shadow-md";
 
 const DialFileManagerPage: FC = () => {
   const { t } = useTranslation();
@@ -312,10 +326,16 @@ const DialFileManagerPage: FC = () => {
     ],
   );
 
-  /* The shell paints its surface with `--dfms-surface`; the card from the
-     desktop band up is the surface, so the shell goes transparent there. */
+  /* The shell paints its surface with `--dfms-surface`; the page's card is the
+     surface at every width, so the shell goes transparent. */
   const shell = (
-    <div className="contents [--dfms-surface:var(--bg-layer-base)] desktop:[--dfms-surface:transparent]">
+    <div
+      className={mergeClasses(
+        'contents [--dfms-surface:transparent]',
+        COMPACT_DROPDOWN_CLASS_NAME,
+        COMPACT_GRID_CLASS_NAME,
+      )}
+    >
       <DialFileManagerShell
         hookResult={controller}
         labels={labels}
@@ -337,9 +357,10 @@ const DialFileManagerPage: FC = () => {
     </div>
   );
 
-  /* From the desktop band up the page is framed: 32px side margins and a raised
-     card with 20px of inner padding, so the manager is not pressed against the
-     navigation. A phone keeps the full-bleed manager under a compact title. */
+  /* The page is framed at every width: a title, then the manager in a raised
+     card. A phone repeats the desktop frame with tighter spacing (12px margins
+     and 8px card padding instead of 32px and 20px); the side padding sits inside
+     the manager so the grid's shadow is not clipped. */
   return (
     <div className="flex size-full min-h-0 flex-col">
       <header className="flex min-h-12 items-center px-3 py-1 desktop:min-h-[72px] desktop:px-8 desktop:py-4">
@@ -347,8 +368,8 @@ const DialFileManagerPage: FC = () => {
           {t(DialFileManagerI18nKeys.PageTitle)}
         </h1>
       </header>
-      <div className="flex min-h-0 flex-1 flex-col desktop:px-8 desktop:pb-4">
-        <div className="flex min-h-0 flex-1 flex-col desktop:rounded-xl desktop:bg-layer-raised desktop:p-5 desktop:shadow-sm">
+      <div className="flex min-h-0 flex-1 flex-col px-3 pb-3 desktop:px-8 desktop:pb-4">
+        <div className="flex min-h-0 flex-1 flex-col rounded-xl bg-layer-raised py-2 shadow-sm desktop:p-5">
           {shell}
         </div>
       </div>
