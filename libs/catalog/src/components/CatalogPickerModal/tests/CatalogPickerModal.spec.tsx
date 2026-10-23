@@ -52,7 +52,7 @@ const renderPicker = (props: Partial<CatalogPickerModalProps> = {}) => {
  */
 const typeSearch = async (text: string) => {
   await waitFor(() =>
-    expect(document.activeElement).toBe(screen.getByRole('dialog')),
+    expect(screen.getByRole('dialog').matches(':focus')).toBe(true),
   );
   await userEvent.type(screen.getByRole('textbox', { name: 'Search' }), text);
 };
