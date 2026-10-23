@@ -3389,6 +3389,8 @@ Maps a deployment or toolset listing row into a catalog `CatalogItem`. Both take
 
 For application deployments, `resolveDeploymentFolder` gives ownership flags priority: owned applications use the Personal label, and shared applications use the Shared label. Other applications with no folder path use the Public label (displayed as **Organization** by the chat app). Public application paths retain their nested folders. Models do not receive this fallback.
 
+`mapDeploymentToCatalogItem` also sets `catalogTabs` from the deployment's DIAL Core `interfaces`, keeping `type: Agent` for every application: an application exposing `chat` or `custom_ui` is listed under Agents, one exposing `mcp` under Toolsets, one exposing both under both. Models, deployments without `interfaces`, and applications exposing none of these get no `catalogTabs` (their tab is their `type`). Pass `isToolsetTabEnabled: false` (default `true`) when the host shows no Toolsets tab; Toolsets is then dropped, and an MCP-only application stays under Agents.
+
 `mapToolsetToCatalogItem` applies the same label priority when `folderLabels` are supplied: Personal for owned toolsets, Shared for shared toolsets, and Public for configured toolsets with plain IDs. Toolset resource paths retain their nested folders. When labels are omitted, no root label is added.
 
 ```ts
@@ -3775,7 +3777,7 @@ import {
   reconcileFilterTopics,
 } from '@epam/ai-dial-chat-hooks';
 
-// Keep only items whose type is in visibleTypes and whose supportsChat is not false (for selector mode)
+// Keep only items listed under a tab in visibleTypes (getCatalogItemTabs) whose supportsChat is not false (for selector mode)
 const selected = filterCatalogItemsBySelector(
   items,
   new Set([CatalogEntityType.Model]),
@@ -3787,7 +3789,7 @@ const visible = filterHiddenOwnedItems(items, hideOwned);
 // Extract user-favorited items in original order
 const favorites = deriveFavoriteItems(items);
 
-// Derive available tab ids (in tabOrder sequence) from present entity types
+// Derive available tab ids (in tabOrder sequence) from the tabs items are listed under
 const tabs = deriveAvailableTabIds(items, tabOrder);
 
 // Intersect persisted filter topics with those that still exist in items

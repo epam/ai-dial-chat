@@ -64,8 +64,10 @@ The frontend toolsets adapter (`apps/chat/src/server-api/toolsets.ts`) SHALL pas
 
 `CatalogView` SHALL build catalog items through the app-level `useCatalogItems` hook (`apps/chat/src/hooks/useCatalogItems/useCatalogItems.ts`), which combines (alongside prompts and skills):
 
-- `DeploymentsContextType.items`, mapped with the deployment-to-catalog mapper
+- `DeploymentsContextType.items`, mapped with the deployment-to-catalog mapper, passing `isToolsetTabEnabled: isToolsetsEnabled` so MCP applications are listed under Toolsets only while the Toolsets UI feature is on (see [catalog-interface-classification](../catalog-interface-classification/spec.md))
 - `DeploymentsContextType.toolsets`, mapped with the app-level `mapToolsetToCatalogItem` (`apps/chat/src/utils/map-deployment-to-catalog-item.ts`) — only while the `OverlayFeature.Toolsets` UI feature (`isToolsetsEnabled`) is on
+
+The Toolsets tab therefore lists both toolsets and MCP applications. An MCP application keeps its application entity kind (`type: CatalogEntityType.Agent`) and its application behavior (edit, delete, share, publish, favorites, application MCP URL); it is never mapped through the toolset mapper and never gets toolset credentials, a toolset id, or a `toolsets.installed` favorite.
 
 The toolset mapper SHALL convert each `DialToolsetDto` to a `CatalogItem` with:
 
@@ -94,11 +96,18 @@ The app-owned wrapper in `apps/chat` SHALL resolve translations and icon URLs an
 - **THEN** the `Catalog` component receives one model catalog item
 - **AND** one toolset catalog item with `type: CatalogEntityType.Toolset`
 
+#### Scenario: MCP application is listed under Toolsets as an application
+
+- **GIVEN** `DeploymentsContextType.items` contains an application with `interfaces: ['mcp']`
+- **AND** the `OverlayFeature.Toolsets` UI feature is enabled
+- **WHEN** `CatalogView` renders
+- **THEN** the `Catalog` component receives one item for it with `type: CatalogEntityType.Agent` and `catalogTabs: [CatalogEntityType.Toolset]`
+
 #### Scenario: Conversation selector remains deployment-only
 
 - **GIVEN** `DeploymentsContextType.toolsets` contains toolsets
 - **WHEN** conversation/model selector surfaces read `DeploymentsContextType.items`
-- **THEN** they receive only the deployments loaded from `getDeployments([ListDeploymentsInterfaceTypeEnum.Chat, ListDeploymentsInterfaceTypeEnum.Mcp])`, never `DialToolsetDto` entries
+- **THEN** they receive only the deployments loaded from `getDeployments([ListDeploymentsInterfaceTypeEnum.Chat, ListDeploymentsInterfaceTypeEnum.Mcp, ListDeploymentsInterfaceTypeEnum.CustomUi])`, never `DialToolsetDto` entries
 
 #### Scenario: Installed toolsets appear as catalog favorites
 
@@ -112,6 +121,12 @@ The app-owned wrapper in `apps/chat` SHALL resolve translations and icon URLs an
 - **WHEN** the user favorites or unfavorites a toolset catalog item
 - **THEN** the frontend calls the user-config toolset installed endpoint
 - **AND** it MUST NOT call the deployments installed endpoint for that toolset
+
+#### Scenario: Toggling an MCP application favorite from the Toolsets tab updates deployment installation config
+
+- **WHEN** the user favorites an MCP application from the Toolsets tab
+- **THEN** the frontend calls the deployments installed endpoint, as for any application
+- **AND** it MUST NOT call the user-config toolset installed endpoint
 
 ### Requirement: Catalog UI labels include Toolsets
 

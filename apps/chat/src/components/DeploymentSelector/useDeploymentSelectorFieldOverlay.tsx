@@ -10,7 +10,9 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { useLanguage } from '../../hooks/language/useLanguage';
+import { useUiFeature } from '../../hooks/useUiFeature';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
 import type { DeploymentSelectorExtraOption } from './DeploymentSelectorPanel';
 
@@ -62,6 +64,7 @@ export function useDeploymentSelectorFieldOverlay(
   const { items, isLoading, error } = useDeployments();
   const { favoriteIds, toggleFavorite } = useFavoriteApplications();
   const { language } = useLanguage();
+  const isToolsetsEnabled = useUiFeature(OverlayFeature.Toolsets);
 
   const favoriteCatalogItems = useMemo(
     () =>
@@ -72,9 +75,10 @@ export function useDeploymentSelectorFieldOverlay(
             favoriteIds,
             t,
             activeLocale: language,
+            isToolsetTabEnabled: isToolsetsEnabled,
           }),
         ),
-    [items, favoriteIds, t, language],
+    [items, favoriteIds, t, language, isToolsetsEnabled],
   );
 
   const selectedDeployment = useMemo(
@@ -89,9 +93,10 @@ export function useDeploymentSelectorFieldOverlay(
             favoriteIds,
             t,
             activeLocale: language,
+            isToolsetTabEnabled: isToolsetsEnabled,
           })
         : undefined,
-    [selectedDeployment, favoriteIds, t, language],
+    [selectedDeployment, favoriteIds, t, language, isToolsetsEnabled],
   );
 
   const resolvedLabel = useMemo(() => {

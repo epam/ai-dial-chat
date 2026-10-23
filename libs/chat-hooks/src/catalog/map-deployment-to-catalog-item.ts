@@ -189,7 +189,38 @@ export interface MapDeploymentToCatalogItemOptions {
   primaryLocale: string;
   /** Resolves a deployment's raw `iconUrl` to a displayable URL. Host-owned. */
   resolveIconUrl: (iconUrl: string | undefined) => string | undefined;
+  /** Whether MCP applications may be listed under the Toolsets tab. Defaults to `true`. */
+  isToolsetTabEnabled?: boolean;
 }
+
+const CONVERSATION_INTERFACES = ['chat', 'custom_ui'];
+const MCP_INTERFACE = 'mcp';
+
+/*
+ * An application is listed by what DIAL Core says it exposes: chat or custom-UI
+ * under Agents, MCP under Toolsets, both under both. Models, deployments
+ * without `interfaces` and applications matching none of these keep the
+ * type-based tab (no membership).
+ */
+const resolveDeploymentCatalogTabs = (
+  interfaces: string[] | undefined,
+  normalizedType: string,
+  isToolsetTabEnabled: boolean,
+): CatalogEntityType[] | undefined => {
+  if (normalizedType !== 'application' || interfaces == null) return undefined;
+
+  const hasMcp = interfaces.includes(MCP_INTERFACE);
+  const tabs: CatalogEntityType[] = [];
+  if (interfaces.some((iface) => CONVERSATION_INTERFACES.includes(iface))) {
+    tabs.push(CatalogEntityType.Agent);
+  }
+  if (hasMcp && isToolsetTabEnabled) {
+    tabs.push(CatalogEntityType.Toolset);
+  }
+  if (tabs.length > 0) return tabs;
+  // MCP-only with the Toolsets tab unavailable stays under Agents, as before.
+  return hasMcp ? [CatalogEntityType.Agent] : undefined;
+};
 
 /** Maps a deployment listing row into the catalog UI's `CatalogItem` shape. */
 export const mapDeploymentToCatalogItem = (
@@ -203,16 +234,23 @@ export const mapDeploymentToCatalogItem = (
     activeLocale,
     primaryLocale,
     resolveIconUrl,
+    isToolsetTabEnabled = true,
   }: MapDeploymentToCatalogItemOptions,
 ): CatalogItem => {
   const name =
     resolveLocalizedText(deployment.displayName, activeLocale, primaryLocale) ||
     deployment.id;
   const normalizedType = (deployment.type ?? '').toLowerCase();
+  const catalogTabs = resolveDeploymentCatalogTabs(
+    deployment.interfaces,
+    normalizedType,
+    isToolsetTabEnabled,
+  );
 
   return {
     id: deployment.id,
     type: TYPE_MAP[normalizedType] ?? CatalogEntityType.Model,
+    ...(catalogTabs != null && { catalogTabs }),
     name,
     description: resolveLocalizedText(
       deployment.description,

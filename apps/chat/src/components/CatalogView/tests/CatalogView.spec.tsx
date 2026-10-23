@@ -236,6 +236,11 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
         <output aria-label="Catalog item ids">
           {(items ?? []).map((item) => `${item.id}:${item.type}`).join(',')}
         </output>
+        <output aria-label="Catalog item tabs">
+          {(items ?? [])
+            .map((item) => `${item.id}:${(item.catalogTabs ?? []).join('+')}`)
+            .join(',')}
+        </output>
         <output aria-label="Is full width">
           {String(Boolean(isFullWidth))}
         </output>
@@ -803,6 +808,72 @@ describe('CatalogView', () => {
     expect(screen.getByLabelText('API key header hint').textContent).toBe(
       CatalogI18nKeys.CredentialsApiKeyHeaderHint,
     );
+  });
+
+  describe('MCP applications under Toolsets', () => {
+    const mcpAppId = 'applications/bucket/openapi-mcp';
+
+    const mockMcpApplication = () =>
+      vi.mocked(useDeployments).mockReturnValue({
+        items: [
+          {
+            id: mcpAppId,
+            displayName: 'OpenAPI MCP',
+            type: 'application',
+            interfaces: ['mcp'],
+          },
+        ],
+        selectedItemId: null,
+        setSelectedItemId: vi.fn(),
+        restoreSelectedItemId: vi.fn(),
+        restoreDefaultSelection: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [],
+        toolsets: [],
+        refetchToolsets: vi.fn(),
+        refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
+        mergeSharedItem: vi.fn(),
+      });
+
+    it('lists an MCP-only application under Toolsets while keeping it an agent', () => {
+      mockMcpApplication();
+
+      render(<CatalogView />);
+
+      expect(screen.getByLabelText('Catalog item ids').textContent).toBe(
+        `${mcpAppId}:${CatalogEntityType.Agent}`,
+      );
+      expect(screen.getByLabelText('Catalog item tabs').textContent).toBe(
+        `${mcpAppId}:${CatalogEntityType.Toolset}`,
+      );
+    });
+
+    it('favorites an MCP application as a deployment, not a toolset', async () => {
+      mockMcpApplication();
+      const toggleFavorite = vi.fn().mockResolvedValue(undefined);
+      vi.mocked(useFavoriteApplications).mockReturnValue({
+        favoriteIds: new Set([mcpAppId]),
+        isLoading: false,
+        toggleFavorite,
+      });
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: `favorite ${mcpAppId}` }),
+      );
+
+      await waitFor(() =>
+        expect(toggleFavorite).toHaveBeenCalledWith(
+          mcpAppId,
+          true,
+          FavoriteEntityType.Deployment,
+        ),
+      );
+    });
   });
 
   describe('publish wiring', () => {
