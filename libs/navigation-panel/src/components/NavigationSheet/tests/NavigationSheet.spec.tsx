@@ -131,6 +131,15 @@ describe('NavigationSheet', () => {
     expect(screen.getByRole('button', { name: 'Log out' })).toBeTruthy();
   });
 
+  it('omits the identity row from the profile page when isIdentityHidden is set', async () => {
+    const user = userEvent.setup();
+    renderSheet({ isIdentityHidden: true });
+
+    await user.click(screen.getByRole('button', { name: 'Profile' }));
+    expect(screen.queryByText('John Doe')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Log out' })).toBeTruthy();
+  });
+
   it('closes the sheet and requests log-out from the profile page', async () => {
     const onClose = vi.fn();
     const onLogout = vi.fn();

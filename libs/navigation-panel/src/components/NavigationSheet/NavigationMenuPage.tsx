@@ -28,6 +28,8 @@ export interface NavigationMenuPageProps {
   profile?: NavigationUserProfile;
   /** Settings groups listed on the profile page; empty groups are skipped. */
   groups?: NavigationMenuGroup[];
+  /** Omits the identity row from the top of the profile page. Defaults to `false`. */
+  isIdentityHidden?: boolean;
   /** Rendered below the row list — typically a footer message. */
   footer?: ReactNode;
   /** CSS class controlling the row labels' type scale. Defaults to `'dial-small-text'`. */
@@ -46,6 +48,7 @@ export const NavigationMenuPage: FC<NavigationMenuPageProps> = memo(
     onSettings,
     profile,
     groups,
+    isIdentityHidden,
     footer,
     textClassName,
   }) => {
@@ -64,6 +67,7 @@ export const NavigationMenuPage: FC<NavigationMenuPageProps> = memo(
           <ProfilePage
             profile={profile}
             groups={groups}
+            isIdentityHidden={isIdentityHidden}
             logOutLabel={logOutLabel}
             onLogout={onLogout}
             settingsLabel={settingsLabel}

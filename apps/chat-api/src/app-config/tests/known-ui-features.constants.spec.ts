@@ -13,8 +13,8 @@ import {
  * them in the same change as any `OverlayFeature` addition, removal, or rename.
  */
 describe('KNOWN_UI_FEATURES', () => {
-  it('has exactly 53 members, one per OverlayFeature key', () => {
-    expect(KNOWN_UI_FEATURES.size).toBe(53);
+  it('has exactly 54 members, one per OverlayFeature key', () => {
+    expect(KNOWN_UI_FEATURES.size).toBe(54);
   });
 
   it('includes representative transferable keys', () => {

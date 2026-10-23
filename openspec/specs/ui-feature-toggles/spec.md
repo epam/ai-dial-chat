@@ -405,6 +405,35 @@ When `isEnabled('hide-usage-page')` is `true`, `useSettingsTabConfig` SHALL with
 - **WHEN** `isEnabled('hide-usage-page')` is `true`
 - **THEN** the Settings page renders no Usage tab, a direct `/settings/usage` URL redirects to the first remaining tab, and the usage-limits popover renders no "Full usage" link
 
+### Requirement: hide-user-menu-identity removes the identity row from the user menu
+
+When `isEnabled('hide-user-menu-identity')` is `true`, `Navigation` (`apps/chat/src/components/Navigation/Navigation.tsx`) SHALL pass `isIdentityHidden` to the desktop rail's `UserMenu` and to the mobile `NavigationSheet`. The `UserMenu` dropdown then omits its identity row (avatar initials and display name), and the sheet's profile page omits its avatar-and-name row. Preference groups, Settings and Log out SHALL stay on both surfaces, and the sheet's Profile row SHALL stay. The desktop trigger SHALL keep its avatar, accessible name and email tooltip.
+
+The key is a modifier key, absent from `DEFAULT_ENABLED_UI_FEATURES`, and `KNOWN_UI_FEATURES` SHALL accept it. Unlike `hide-user-menu`, it keeps Log out. It changes presentation only and SHALL NOT be treated as an authorization control.
+
+`hide-user-menu` takes precedence on desktop: when it is on, there is no rail user menu and this key has no effect there. On mobile, `hide-navigation-menu` removes the sheet, and this key has no effect there either.
+
+**Accessibility:** The removed rows were non-interactive, so no focus stop disappears. The user's identity stays exposed through the desktop trigger's accessible name and email tooltip.
+
+**i18n impact:** None.
+
+#### Scenario: hide-user-menu-identity removes the identity row on desktop
+
+- **GIVEN** the viewport is desktop and the user is authenticated
+- **WHEN** `isEnabled('hide-user-menu-identity')` is `true` and the user opens the rail's user menu
+- **THEN** the dropdown shows no avatar-and-name row and no leading divider, and it still offers Settings and Log out
+
+#### Scenario: hide-user-menu-identity removes the identity row from the mobile profile page
+
+- **GIVEN** the viewport is mobile, the navigation sheet is open and `hide-navigation-menu` is off
+- **WHEN** `isEnabled('hide-user-menu-identity')` is `true` and the user opens the sheet's profile page
+- **THEN** the page shows no avatar-and-name row, and it still offers Log out
+
+#### Scenario: The key is off by default
+
+- **WHEN** no source enables `hide-user-menu-identity`
+- **THEN** the user menu's dropdown starts with the identity row, followed by a divider, and the sheet's profile page starts with the avatar-and-name row
+
 ### Requirement: show-header-logo renders the theme logo in the desktop top bar
 
 `ChatLayout`'s desktop top bar SHALL render the theme logo, centered between the start-side conversation controls and the end-side sources toggle, when `isEnabled('show-header-logo')` is `true`. Nothing SHALL render there when the key is off, and the bar's other controls SHALL keep their positions either way. The mobile `Header` renders the logo whenever `header` is on; when `header` is off and this key is on, the mobile `Header` SHALL still render, carrying only the logo and none of its buttons. Below the desktop breakpoint `Logo` shows the theme `favicon`, or a smaller full `logo` when the theme defines no `favicon`. The key SHALL NOT affect the desktop navigation rail. The key is a modifier key and SHALL be absent from `DEFAULT_ENABLED_UI_FEATURES`, so a deployment that configures nothing observes no change.

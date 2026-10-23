@@ -7,6 +7,7 @@ import { UserMenu } from '../UserMenu';
 
 interface MockDropdownItem {
   key: string;
+  type?: string;
   label?: ReactNode;
   mark?: string;
   checked?: boolean;
@@ -40,33 +41,39 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       <>
         {children}
         <ul>
-          {items.map(({ children: subItems, ...item }) => (
-            <li key={item.key}>
-              <button type="button" onClick={item.onClick}>
-                {item.label}
-              </button>
-              {subItems && (
-                <ul>
-                  {subItems.map((child) => (
-                    <li key={child.key}>
-                      <button
-                        type="button"
-                        role={
-                          child.mark === 'check' ? 'menuitemradio' : 'menuitem'
-                        }
-                        aria-checked={
-                          child.mark === 'check' ? !!child.checked : undefined
-                        }
-                        onClick={child.onClick}
-                      >
-                        {child.label}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </li>
-          ))}
+          {items.map(({ children: subItems, ...item }) =>
+            item.type === 'divider' ? (
+              <li key={item.key} role="separator" />
+            ) : (
+              <li key={item.key}>
+                <button type="button" onClick={item.onClick}>
+                  {item.label}
+                </button>
+                {subItems && (
+                  <ul>
+                    {subItems.map((child) => (
+                      <li key={child.key}>
+                        <button
+                          type="button"
+                          role={
+                            child.mark === 'check'
+                              ? 'menuitemradio'
+                              : 'menuitem'
+                          }
+                          aria-checked={
+                            child.mark === 'check' ? !!child.checked : undefined
+                          }
+                          onClick={child.onClick}
+                        >
+                          {child.label}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ),
+          )}
         </ul>
       </>
     ),
@@ -247,5 +254,67 @@ describe('UserMenu', () => {
     );
     fireEvent.click(screen.getByText('Settings'));
     expect(onSettings).toHaveBeenCalledOnce();
+  });
+
+  describe('identity row', () => {
+    const languageGroup: NavigationMenuGroup = {
+      id: 'language',
+      label: 'Language',
+      options: [
+        { id: 'en', label: 'English', isActive: true, onSelect: vi.fn() },
+      ],
+    };
+
+    it('shows the display name and a divider by default', () => {
+      render(<UserMenu profile={profile} labels={labels} onLogout={vi.fn()} />);
+      expect(screen.getByText(profile.displayName)).toBeTruthy();
+      expect(screen.getByRole('separator')).toBeTruthy();
+    });
+
+    it('omits the display name when isIdentityHidden is set and keeps the trigger name', () => {
+      render(
+        <UserMenu
+          profile={profile}
+          labels={labels}
+          onLogout={vi.fn()}
+          isIdentityHidden
+        />,
+      );
+      expect(screen.queryByText(profile.displayName)).toBeNull();
+      expect(screen.getByRole('button', { name: labels.trigger })).toBeTruthy();
+    });
+
+    it('drops the divider when nothing precedes it', () => {
+      render(
+        <UserMenu
+          profile={profile}
+          labels={{ ...labels, settings: 'Settings' }}
+          onLogout={vi.fn()}
+          onSettings={vi.fn()}
+          isIdentityHidden
+        />,
+      );
+      expect(screen.queryByRole('separator')).toBeNull();
+      expect(screen.getByRole('button', { name: 'Settings' })).toBeTruthy();
+      expect(screen.getByRole('button', { name: labels.logOut })).toBeTruthy();
+    });
+
+    it('keeps the divider after a preference group', () => {
+      render(
+        <UserMenu
+          profile={profile}
+          labels={labels}
+          groups={[languageGroup]}
+          onLogout={vi.fn()}
+          isIdentityHidden
+        />,
+      );
+      const separator = screen.getByRole('separator');
+      const group = screen.getByRole('button', { name: 'Language' });
+      expect(
+        group.compareDocumentPosition(separator) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
   });
 });

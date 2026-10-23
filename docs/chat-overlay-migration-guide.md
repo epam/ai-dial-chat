@@ -770,6 +770,7 @@ hide-delete-user-message
 hide-edit-user-message
 hide-regenerate-assistant-message
 hide-user-menu
+hide-user-menu-identity
 hide-user-settings
 hide-keyboard-shortcuts
 hide-navigation-menu
@@ -792,6 +793,13 @@ the profile row, keyboard shortcuts, and log out. Reach for it when the host
 portal already owns sign-in and sign-out, so the sheet's log-out row would only
 mislead. It leaves the desktop navigation rail and its user menu alone; that
 surface is `hide-user-menu`'s.
+
+`hide-user-menu-identity` keeps the user menu but removes the row that repeats
+the avatar and the user's name: the row at the top of the desktop user menu's
+dropdown and the one at the top of the mobile sheet's profile page. Settings
+and Log out stay. `hide-user-menu` overrides it on desktop. The desktop trigger
+shows the avatar alone, so with the key on the user is identified there only
+by the avatar and its email tooltip.
 
 `disallow-change-agent` and `hide-change-agent` both act on the in-chat
 agent selector, and either one removes it: a control the user cannot open is

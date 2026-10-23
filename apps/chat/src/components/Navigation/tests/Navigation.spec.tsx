@@ -221,6 +221,7 @@ const setDefaults = (
   mockUseUiFeature.mockImplementation(
     (feature) =>
       feature !== OverlayFeature.HideUserMenu &&
+      feature !== OverlayFeature.HideUserMenuIdentity &&
       feature !== OverlayFeature.HideUserSettings &&
       feature !== OverlayFeature.HideKeyboardShortcuts &&
       feature !== OverlayFeature.HideNavigationMenu &&
@@ -437,6 +438,20 @@ describe('Navigation user menu', () => {
 
     expect(screen.queryByText(BasicI18nKeys.Settings)).toBeNull();
   });
+
+  it('keeps the identity row by default and hides it under hide-user-menu-identity', () => {
+    const { unmount } = renderNavigation();
+    expect(screen.getByText('John Doe')).toBeTruthy();
+    unmount();
+
+    mockUseUiFeature.mockImplementation(
+      (feature) => feature === OverlayFeature.HideUserMenuIdentity,
+    );
+    renderNavigation();
+
+    expect(screen.queryByText('John Doe')).toBeNull();
+    expect(screen.getByText(ButtonsI18nKeys.LogOut)).toBeTruthy();
+  });
 });
 
 describe('Navigation mobile sheet', () => {
@@ -499,6 +514,29 @@ describe('Navigation mobile sheet', () => {
     expect(
       sheet.queryByRole('button', { name: BasicI18nKeys.Settings }),
     ).toBeNull();
+  });
+
+  it('hides the identity row of the profile page under hide-user-menu-identity', async () => {
+    mockUseUiFeature.mockImplementation(
+      (feature) =>
+        feature === OverlayFeature.HideUserMenuIdentity ||
+        (feature !== OverlayFeature.HideNavigationMenu &&
+          feature !== OverlayFeature.HideUserMenu &&
+          feature !== OverlayFeature.HideUserSettings &&
+          feature !== OverlayFeature.HideKeyboardShortcuts &&
+          feature !== OverlayFeature.HideSettingsPage),
+    );
+    const user = userEvent.setup();
+    renderNavigation({ isOpen: true });
+    const sheet = within(screen.getByRole('dialog'));
+
+    await user.click(
+      sheet.getByRole('button', { name: NavigationI18nKeys.Profile }),
+    );
+    expect(sheet.queryByText('John Doe')).toBeNull();
+    expect(
+      sheet.getByRole('button', { name: ButtonsI18nKeys.LogOut }),
+    ).toBeTruthy();
   });
 
   it('reaches the keyboard-shortcut options through the profile page', async () => {

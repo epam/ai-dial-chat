@@ -81,6 +81,8 @@ export interface NavigationSheetProps {
   profile?: NavigationUserProfile;
   /** Single-select settings groups listed on the profile page; empty groups are skipped. */
   groups?: NavigationMenuGroup[];
+  /** Omits the identity row — avatar and display name — from the top of the profile page. Defaults to `false`. */
+  isIdentityHidden?: boolean;
   /** Called when the user taps "Log out"; the host owns the confirmation flow. */
   onLogout: () => void;
   /**

@@ -18,6 +18,7 @@ export const NavigationSheet: FC<NavigationSheetProps> = memo(
     labels,
     profile,
     groups,
+    isIdentityHidden,
     onLogout,
     onSettings,
     footer,
@@ -64,6 +65,7 @@ export const NavigationSheet: FC<NavigationSheetProps> = memo(
           onSettings={onSettings}
           profile={profile}
           groups={groups}
+          isIdentityHidden={isIdentityHidden}
           footer={footer}
           textClassName={typography?.fontClassName}
         />

@@ -32,6 +32,8 @@ export interface ProfilePageProps {
   onSettings?: () => void;
   /** Settings groups listed above the log-out row; empty groups are skipped. */
   groups?: NavigationMenuGroup[];
+  /** Omits the identity row — avatar and display name — from the top of the page. Defaults to `false`. */
+  isIdentityHidden?: boolean;
   /** CSS class controlling the row labels' type scale. Defaults to `'dial-small-text'`. */
   textClassName?: string;
 }
@@ -48,6 +50,7 @@ export const ProfilePage: FC<ProfilePageProps> = memo(
     settingsLabel,
     onSettings,
     groups,
+    isIdentityHidden = false,
     textClassName = 'dial-small-text',
   }) => {
     const { push, close } = useSheetNavigation();
@@ -68,17 +71,19 @@ export const ProfilePage: FC<ProfilePageProps> = memo(
 
     return (
       <>
-        <div className="flex h-[56px] items-center gap-3 px-4 py-2">
-          <UserAvatar profile={profile} alt="" />
-          <EllipsisTooltip
-            text={profile.displayName}
-            className={mergeClasses(
-              styles.mutedText,
-              textClassName,
-              'min-w-0 flex-1 truncate',
-            )}
-          />
-        </div>
+        {!isIdentityHidden && (
+          <div className="flex h-[56px] items-center gap-3 px-4 py-2">
+            <UserAvatar profile={profile} alt="" />
+            <EllipsisTooltip
+              text={profile.displayName}
+              className={mergeClasses(
+                styles.mutedText,
+                textClassName,
+                'min-w-0 flex-1 truncate',
+              )}
+            />
+          </div>
+        )}
 
         {settingsGroups.length > 0 && (
           <>

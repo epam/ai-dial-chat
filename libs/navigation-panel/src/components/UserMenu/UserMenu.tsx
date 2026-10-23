@@ -28,6 +28,7 @@ export const UserMenu: FC<UserMenuProps> = memo(
     onLogout,
     onSettings,
     isTooltipHidden,
+    isIdentityHidden = false,
     styles: menuStyles,
   }) => {
     const { colors, typography, className, cssVars } = menuStyles ?? {};
@@ -69,26 +70,36 @@ export const UserMenu: FC<UserMenuProps> = memo(
           })),
         }));
 
+      const identityItems: DropdownItem[] = isIdentityHidden
+        ? []
+        : [
+            {
+              key: 'identity',
+              type: DropdownItemType.PlainText,
+              label: (
+                <div className="flex h-[40px] min-w-0 items-center gap-3">
+                  <AvatarInitials shortName={profile.shortName} />
+                  <EllipsisTooltip
+                    text={profile.displayName}
+                    className={mergeClasses(
+                      styles.identityText,
+                      labelClassName,
+                      'min-w-0 flex-1 truncate',
+                    )}
+                  />
+                </div>
+              ),
+            },
+          ];
+      const headItems = [...identityItems, ...groupItems];
+
       return [
-        {
-          key: 'identity',
-          type: DropdownItemType.PlainText,
-          label: (
-            <div className="flex h-[40px] min-w-0 items-center gap-3">
-              <AvatarInitials shortName={profile.shortName} />
-              <EllipsisTooltip
-                text={profile.displayName}
-                className={mergeClasses(
-                  styles.identityText,
-                  labelClassName,
-                  'min-w-0 flex-1 truncate',
-                )}
-              />
-            </div>
-          ),
-        },
-        ...groupItems,
-        { key: 'divider-1', type: DropdownItemType.Divider },
+        ...headItems,
+        /* Nothing above the divider means nothing to separate: the menu must
+           not open on one. */
+        ...(headItems.length > 0
+          ? [{ key: 'divider-1', type: DropdownItemType.Divider }]
+          : []),
         ...(onSettings
           ? [
               {
@@ -122,6 +133,7 @@ export const UserMenu: FC<UserMenuProps> = memo(
       ];
     }, [
       groups,
+      isIdentityHidden,
       labelClassName,
       menuLabelClassName,
       labels.logOut,

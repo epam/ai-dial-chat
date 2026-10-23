@@ -81,9 +81,22 @@ Avatar trigger plus dropdown: identity row, one submenu per settings group, divi
 />
 ```
 
+Pass `isIdentityHidden` to drop the identity row (avatar initials and display name) from the top of the dropdown. The divider then renders only when a settings group sits above it, so the menu never opens on a divider. The trigger is unchanged.
+
+```tsx
+<UserMenu
+  profile={profile}
+  labels={labels}
+  isIdentityHidden
+  onLogout={openLogoutConfirmation}
+/>
+```
+
 ### NavigationSheet
 
 The mobile counterpart. `onSelectItem` fires after the sheet closes so the host can navigate. Pass `onSettings` with `labels.settings` to add a Settings row to the profile page, above Log out — the sheet closes first, then the host navigates, the same entry `UserMenu` offers on desktop.
+
+Pass `isIdentityHidden` to drop the identity row (avatar and display name) from the top of the profile page; the groups, Settings and Log out rows stay.
 
 ```tsx
 <NavigationSheet

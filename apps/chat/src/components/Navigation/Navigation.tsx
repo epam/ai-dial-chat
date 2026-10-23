@@ -51,6 +51,9 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
   const { isLogoutOpen, openLogout, closeLogout } = useLogout();
   const { currentThemeFavicon } = useTheme();
   const isUserMenuHidden = useUiFeature(OverlayFeature.HideUserMenu);
+  const isUserMenuIdentityHidden = useUiFeature(
+    OverlayFeature.HideUserMenuIdentity,
+  );
   const isNavigationMenuHidden = useUiFeature(
     OverlayFeature.HideNavigationMenu,
   );
@@ -91,6 +94,7 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
               <UserMenu
                 profile={profile}
                 groups={languageGroup ? [languageGroup] : undefined}
+                isIdentityHidden={isUserMenuIdentityHidden}
                 labels={{
                   trigger: t(AuthI18nKeys.SignedInAs, { email: profile.email }),
                   avatarAlt: t(AuthI18nKeys.UserAvatar),
@@ -115,6 +119,7 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
           onSelectItem={handleSelectItem}
           profile={profile}
           groups={keyboardGroup ? [keyboardGroup] : undefined}
+          isIdentityHidden={isUserMenuIdentityHidden}
           onLogout={openLogout}
           onSettings={handleOpenSettings}
           footer={<FooterMessage />}
