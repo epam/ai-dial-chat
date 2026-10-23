@@ -1124,11 +1124,11 @@ describe('DialFileManagerShell', () => {
       );
     });
 
-    it('aligns the mobile content with the 12px page padding on the standalone page', () => {
+    it('leaves the file manager content padding to the manager on the standalone page', () => {
       renderAll(DialFileManagerTabs.Shared);
       const props = capturedDialFileManagerProps.current;
-      expect(props?.contentClassName?.split(' ')).toContain('mobile:px-2');
-      expect(props?.className?.split(' ')).toContain('mobile:pt-2');
+      expect(props?.contentClassName).toBeUndefined();
+      expect(props?.className?.split(' ')).not.toContain('p-0');
     });
 
     it('never renders a page heading of its own, even with a treeHeader', () => {
@@ -1143,13 +1143,13 @@ describe('DialFileManagerShell', () => {
       expect(screen.queryByRole('heading', { level: 1 })).toBeNull();
     });
 
-    it('does not apply the mobile page padding in the attach modal', () => {
+    it('keeps the attach modal content flush with its own padding', () => {
       renderShell({ uploadEnabled: true }, new Set(), {
         variant: DialFileManagerVariant.Attach,
       });
       const props = capturedDialFileManagerProps.current;
       expect(props?.contentClassName).toBe('px-0 pb-0');
-      expect(props?.className?.split(' ')).not.toContain('mobile:pt-2');
+      expect(props?.className?.split(' ')).toContain('p-0');
     });
 
     it('gates on activeTab when the controller has no sectionTab', () => {
