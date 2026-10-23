@@ -32,7 +32,7 @@ export interface CitationDropdownProps {
   onOpenInBrowser: (annotation: Annotation) => void;
   /** Whether the card shows the "Download" button for a previewable file. Defaults to `true`. */
   isDownloadEnabled?: boolean;
-  /** Whether the host's preview panel is open; a marker click then previews the active annotation directly instead of showing the card. Defaults to `false`. */
+  /** Whether the host's preview panel is open; a marker click then previews a single-citation group's annotation directly instead of showing the card, while multi-citation groups keep the card. Defaults to `false`. */
   isPreviewOpen?: boolean;
   /** Whether a marker click previews a single-citation file source directly instead of showing the card; web-link (HTML/XHTML) sources and multi-citation groups keep the card. Defaults to `false`. */
   previewFilesOnMarkerClick?: boolean;
@@ -92,12 +92,15 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
   );
 
   const handleMarkerOpen = useCallback(() => {
-    /* A multi-citation group keeps the card: its switcher is the only way to
-       reach the other citations, which may point at different files. */
+    /* A multi-citation group keeps the card, even while the preview is open:
+       its switcher is the only way to reach the other citations, which may
+       point at different files. */
+    const isSingleCitation = group.annotations.length === 1;
     const isSingleFileCitation =
-      group.annotations.length === 1 && !isWebLinkAnnotation(annotation);
+      isSingleCitation && !isWebLinkAnnotation(annotation);
     const previewsDirectly =
-      isPreviewOpen || (previewFilesOnMarkerClick && isSingleFileCitation);
+      (isPreviewOpen && isSingleCitation) ||
+      (previewFilesOnMarkerClick && isSingleFileCitation);
     if (previewsDirectly && handlePreview) {
       handlePreview(annotation);
       return;

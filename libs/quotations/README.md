@@ -116,7 +116,9 @@ Availability is checked again when the user switches annotations within a card.
 Pass `isPreviewOpen` while the host's preview panel is open: a marker click
 then calls `onPreview` for the active annotation directly, without showing the
 card, so the user can switch the previewed citation from badge to badge. A
-non-previewable annotation still opens the card.
+non-previewable annotation and a group with more than one annotation still
+open the card, whose Previous/Next switcher is the only way to reach the
+group's other citations.
 
 Pass `previewFilesOnMarkerClick` (defaults to `false`) to make a marker that
 holds a single previewable file citation call `onPreview` directly even while

@@ -82,7 +82,7 @@ The hook SHALL achieve this without changing citation data: it SHALL NOT dedupli
 
 Consequently:
 
-- Activating any marker SHALL open exactly one card, anchored to that marker's own trigger element — except when the host passes `isPreviewOpen: true` and the displayed annotation is previewable, in which case activating the marker calls `onPreview` directly for that annotation and opens no card; and except when the host passes `previewFilesOnMarkerClick: true` and the group holds a single previewable annotation that is not a web link (see the `citation-card` capability), which likewise calls `onPreview` directly and opens no card.
+- Activating any marker SHALL open exactly one card, anchored to that marker's own trigger element — except when the host passes `isPreviewOpen: true`, the group holds a single annotation, and that annotation is previewable, in which case activating the marker calls `onPreview` directly for that annotation and opens no card; and except when the host passes `previewFilesOnMarkerClick: true` and the group holds a single previewable annotation that is not a web link (see the `citation-card` capability), which likewise calls `onPreview` directly and opens no card.
 - At most one citation card SHALL be present in the document at any time within one message.
 - Activating a different occurrence SHALL transfer the open card to it.
 - `onPreview` and `onOpenInBrowser` SHALL each be invoked **exactly once** per user activation, with the `Annotation` the open card is currently displaying, and with that annotation reference-identical to the object held in the `groups` array the hook was given.

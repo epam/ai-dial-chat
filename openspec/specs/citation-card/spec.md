@@ -67,7 +67,7 @@ interface CitationDropdownProps {
   markerLabelClassName?: string;
 }
 ```
-`CitationDropdown` SHALL only invoke `citationCard.closePopup()` on preview (see next requirement) when `onPreview` is provided; when `onPreview` is absent, there is no preview action to wrap. When `isPreviewOpen` is `true` (the host's preview panel is already open) and a preview action exists, a marker click SHALL preview the active annotation directly instead of opening the card.
+`CitationDropdown` SHALL only invoke `citationCard.closePopup()` on preview (see next requirement) when `onPreview` is provided; when `onPreview` is absent, there is no preview action to wrap. When `isPreviewOpen` is `true` (the host's preview panel is already open), a preview action exists, and the group holds exactly one annotation, a marker click SHALL preview that annotation directly instead of opening the card. A group holding more than one annotation SHALL open the card even while the preview panel is open, so its Previous/Next switcher stays reachable (Issue #9269).
 
 When `previewFilesOnMarkerClick` is `true` (defaults to `false`), a marker click SHALL likewise preview the active annotation directly — calling `onPreview` exactly once and opening no card — whenever a preview action exists for it (`onPreview` is provided and `isPreviewable` does not return `false`), the group holds exactly one annotation, and the annotation is not a web link. An annotation is a web link when its source attachment type is `text/html` or `application/xhtml+xml`; this classification SHALL be the single helper `isWebLinkAnnotation` in `libs/quotations/src/utils/citation-source-kind.ts`, shared with the card's "Open in browser" vs "Download" label so the two cannot disagree. A web-link annotation, one with no preview action, or a group holding more than one annotation SHALL open the card exactly as when the flag is `false` — the card's switcher is the only way to reach a grouped marker's other citations, which may point at different files. The flag is a plain boolean; DIAL-specific previewability stays in the host's `isPreviewable` callback.
 
@@ -151,6 +151,11 @@ DIAL-specific classification SHALL remain outside `libs/quotations`.
 
 - **WHEN** `previewFilesOnMarkerClick` is `true` and the marker's group holds two PDF annotations
 - **THEN** the marker click opens the citation card with its Previous/Next switcher, and `onPreview` is called only from the card's "Preview" action
+
+#### Scenario: Multi-citation marker opens the card while the preview panel is open
+
+- **WHEN** `isPreviewOpen` is `true` (for example, a document was opened from the Sources panel) and the user clicks a marker whose group holds two annotations, with or without `previewFilesOnMarkerClick`
+- **THEN** the citation card opens with its Previous/Next switcher, `onPreview` is not called by the click, and choosing Next then Preview calls `onPreview` once with the second annotation
 
 #### Scenario: Flag omitted preserves the card-first behaviour
 

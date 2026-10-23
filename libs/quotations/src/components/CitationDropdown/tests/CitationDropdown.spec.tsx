@@ -170,6 +170,53 @@ describe('CitationDropdown', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
+  describe('with a multi-citation group while the preview panel is open', () => {
+    const makeMultiGroup = (): AnnotationGroup => {
+      const group = makeGroup();
+      const second: Annotation = {
+        body: { ...group.primaryAnnotation.body, quote: 'Second quote' },
+      };
+      return { ...group, annotations: [group.primaryAnnotation, second] };
+    };
+
+    it.each([false, true])(
+      'opens the card instead of previewing directly (previewFilesOnMarkerClick: %s)',
+      async (previewFilesOnMarkerClick) => {
+        const onPreview = vi.fn();
+        render(
+          <Wrapper
+            group={makeMultiGroup()}
+            onPreview={onPreview}
+            onOpenInBrowser={vi.fn()}
+            isPreviewOpen
+            previewFilesOnMarkerClick={previewFilesOnMarkerClick}
+          />,
+        );
+        await userEvent.click(screen.getByRole('button'));
+        expect(screen.getByRole('dialog')).toBeTruthy();
+        expect(onPreview).not.toHaveBeenCalled();
+      },
+    );
+
+    it('previews the citation chosen with Next', async () => {
+      const group = makeMultiGroup();
+      const onPreview = vi.fn();
+      render(
+        <Wrapper
+          group={group}
+          onPreview={onPreview}
+          onOpenInBrowser={vi.fn()}
+          isPreviewOpen
+        />,
+      );
+      await userEvent.click(screen.getByRole('button'));
+      await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Preview' }));
+      expect(onPreview).toHaveBeenCalledExactlyOnceWith(group.annotations[1]);
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+  });
+
   describe('with previewFilesOnMarkerClick', () => {
     const makeSourceGroup = (type: string): AnnotationGroup => {
       const group = makeGroup();
