@@ -3568,6 +3568,13 @@ units, `supertest` for e2e. A domain's tests cover the happy path, every thrown
 exception, validation rejections (including path traversal), and the rate-limit
 boundary.
 
+A test that depends on an environment variable stubs it with `vi.stubEnv` in a
+scoped `describe` whose `afterEach` calls `vi.unstubAllEnvs()`: NestJS
+`ConfigService` resolves `process.env` before the config passed to its
+constructor, so a developer's shell or local env file otherwise leaks into the
+seeded test — `app-config`'s `aiTextRefinementAvailable` cases against
+`UTILITY_MODEL` are the reference.
+
 ## CORS Configuration
 
 The API is configured to accept requests from the React application. The allowed origin is configured via the `CORS_ORIGIN` environment variable.

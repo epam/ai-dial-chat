@@ -14,6 +14,8 @@
 export const CONVERSATION_MESSAGES_CLASS = {
   /** The user message's bubble element. */
   userBubble: 'dial-cm-user-bubble',
+  /** The user message's text content region. */
+  userContent: 'dial-cm-user-content',
   /** The assistant message's streamed content region. */
   assistantContent: 'dial-cm-assistant-content',
 } as const;
