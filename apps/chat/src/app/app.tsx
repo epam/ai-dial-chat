@@ -64,7 +64,10 @@ import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
 import { ApplicationEditorKind } from '../types/application-editor';
 import { ROUTES } from '../types/routes';
 import { ThemeId } from '../types/theme-id';
-import { resolveCanvasWidth } from '../utils/canvas-width';
+import {
+  getNavigationSidebarWidth,
+  resolveCanvasWidth,
+} from '../utils/canvas-width';
 import { configurePdfWorker } from '../utils/pdf';
 import { renderSettingsRoutes, renderUsageRoute } from './settings-routes';
 
@@ -122,14 +125,6 @@ const App: FC = () => {
   const loadPdf = usePdfPreviewLoader();
   const isFileManagerRoute = !!useMatch(ROUTES.FileManager);
   const viewportWidth = useViewportWidth();
-  const canvasMaxWidth = usePanelMaxWidth(MIN_CONTENT_AREA_WIDTH);
-  const { defaultWidth: canvasDefaultWidth, minWidth: canvasMinWidth } =
-    resolveCanvasWidth({
-      isFileManagerRoute,
-      isMobile,
-      viewportWidth,
-      maxWidth: canvasMaxWidth,
-    });
   const { currentTheme } = useTheme();
   const codeBlockTheme =
     currentTheme === ThemeId.Light ? CodeBlockTheme.Light : CodeBlockTheme.Dark;
@@ -157,9 +152,6 @@ const App: FC = () => {
     OverlayFeature.AttachmentsManager,
   );
   const isFileManagerEnabled = useUiFeature(OverlayFeature.FileManager);
-  const isConversationsPanelToggleEnabled = useUiFeature(
-    OverlayFeature.ConversationsPanelToggle,
-  );
   const isSettingsPageHidden = useUiFeature(OverlayFeature.HideSettingsPage);
 
   const { closeCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
@@ -171,10 +163,26 @@ const App: FC = () => {
     isMobile,
     isCanvasOpen,
     isOpenByDefault: isConversationsSectionOpenByDefault,
-    isToggleEnabled: isConversationsPanelToggleEnabled,
     onCloseCanvas: closeCanvas,
     onCloseSourcesPanel: closeSourcesPanel,
   });
+
+  /* The canvas opens beside the sidebar in whatever state the user left it, so
+     its width is bounded by the room the sidebar leaves; on mobile the sidebar
+     is a drawer and takes none. */
+  const navigationSidebarWidth = isMobile
+    ? 0
+    : getNavigationSidebarWidth(isPanelOpen);
+  const canvasMaxWidth = usePanelMaxWidth(
+    MIN_CONTENT_AREA_WIDTH + navigationSidebarWidth,
+  );
+  const { defaultWidth: canvasDefaultWidth, minWidth: canvasMinWidth } =
+    resolveCanvasWidth({
+      isFileManagerRoute,
+      isMobile,
+      viewportWidth,
+      maxWidth: canvasMaxWidth,
+    });
 
   useEffect(() => {
     clearAttachmentCache();

@@ -108,7 +108,7 @@ While the sidebar is active, the existing UI-feature keys SHALL keep these meani
 | Key | Effect in the sidebar |
 |---|---|
 | `conversations-section` off | No conversation block; header, items and footer remain |
-| `conversations-panel-toggle` off | No desktop expand/collapse toggle; the sidebar stays in its initial state, and returns to it when the canvas closes. On mobile it only matters under `hide-navigation-menu`, where it keeps the header toggle |
+| `conversations-panel-toggle` off | No desktop expand/collapse toggle; the sidebar stays in its initial state, whether or not the canvas is open. On mobile it only matters under `hide-navigation-menu`, where it keeps the header toggle |
 | `showConversationsSectionByDefault` | Initial state: expanded when on, collapsed when off |
 | `hide-conversations-filter` | No filter trigger in the conversation block header |
 | `hide-new-conversation` | No New chat item |
@@ -129,10 +129,10 @@ While the sidebar is active, the existing UI-feature keys SHALL keep these meani
 - **WHEN** `conversations-panel-toggle` is off and `showConversationsSectionByDefault` is on
 - **THEN** the sidebar renders expanded with no expand/collapse control
 
-#### Scenario: No toggle recovers from the canvas
+#### Scenario: No toggle keeps the initial state beside the canvas
 
 - **WHEN** `conversations-panel-toggle` is off, the sidebar is expanded and the attachment canvas opens and then closes
-- **THEN** the sidebar is collapsed while the canvas is open and expanded again once it closes
+- **THEN** the sidebar stays expanded throughout
 
 ---
 
@@ -192,7 +192,7 @@ On desktop, `ConversationPanelContext`'s `isPanelOpen` SHALL mean "expanded"; on
 - SHALL NOT change the state on any route change, inside or outside the conversation section;
 - SHALL start from `showConversationsSectionByDefault` and keep the user's own choice for the rest of the page session.
 
-The state SHALL NOT be persisted across reloads. Opening the attachment canvas, or any existing `closePanel` caller such as `ConversationView` and `useAttachmentCanvasResolvers`, SHALL collapse the sidebar. Expanding the sidebar SHALL close the attachment canvas, as opening the panel does today.
+The state SHALL NOT be persisted across reloads. After the initial state, only the user's own toggle SHALL collapse or expand the sidebar: opening the attachment canvas or an MCP app canvas, from any call site, SHALL leave it as it is, and expanding the sidebar SHALL leave the attachment canvas open. The canvas's width is bounded by the room the sidebar leaves (see the `canvas` capability), so both fit side by side.
 
 When `isEnabled('conversations-panel-toggle')` is `false`, no toggle SHALL render and the sidebar SHALL stay in its initial state.
 
@@ -216,10 +216,15 @@ When `isEnabled('conversations-panel-toggle')` is `false`, no toggle SHALL rende
 - **WHEN** the user collapses the sidebar and reloads the page with `showConversationsSectionByDefault` enabled
 - **THEN** the sidebar starts expanded
 
-#### Scenario: Opening the canvas collapses the sidebar
+#### Scenario: Opening the canvas keeps the sidebar expanded
 
 - **WHEN** the sidebar is expanded and an attachment opens in the canvas
-- **THEN** the sidebar collapses to 72px
+- **THEN** the sidebar stays expanded at 336px and the canvas opens beside it
+
+#### Scenario: Expanding the sidebar keeps the canvas open
+
+- **WHEN** the canvas is open, the sidebar is collapsed and the user expands it
+- **THEN** the sidebar expands and the canvas stays open
 
 ---
 

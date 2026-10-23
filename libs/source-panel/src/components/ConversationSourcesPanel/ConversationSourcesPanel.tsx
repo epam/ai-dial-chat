@@ -107,7 +107,10 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
   if (isGloballyEmpty) {
     bodyContent = (
       <div className="flex h-full items-center justify-center">
-        <NoDataContent title={labels.noDataLabel} />
+        <NoDataContent
+          title={labels.noDataLabel}
+          description={labels.noDataDescription}
+        />
       </div>
     );
   } else {
@@ -115,7 +118,10 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
       <>
         {additionalSections}
         {isNoResults ? (
-          <PanelNoResults label={labels.noResultsLabel} />
+          <PanelNoResults
+            label={labels.noResultsLabel}
+            description={labels.noResultsDescription}
+          />
         ) : (
           <>
             <FilesSection

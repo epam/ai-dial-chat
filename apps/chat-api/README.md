@@ -301,7 +301,7 @@ setting is read at Core startup, so restart DIAL Core after changing it.
 | `MAX_GENERATION_DURATION_MS`             | `1800000`                          | Milliseconds from registry admission before an entry still in `active` receives a `max_duration` cancellation request (default 30 min). The key remains owned until its worker settles; this is not a deadline for preflight, persistence, or an upstream call that does not settle after abort. Independent of the originating client connection.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `GENERATION_FINALIZE_TIMEOUT_MS`         | `60000`                            | Milliseconds from entering terminal finalization before existing attachment listeners are notified and removed and timers cleared. On expiry, the entry becomes `settling` and retains its registry key, assembled snapshot, pending write, and generation-gauge contribution. The write is not cancelled and its worker may remain pending; same-process admission stays blocked until settlement or restart. This does not bound attachments created after the timeout. See the [lifecycle limits](../../docs/observability.md#process-memory-and-outstanding-work).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `CUSTOM_CLIENT_VARIABLES`                | `{}`                               | Public client-owned settings as a JSON object, exposed unchanged under `config.customVariables` in client-config. Arbitrary nested JSON values are supported; the BFF does not interpret keys or merge them into built-in config or feature flags. Unset, blank, malformed JSON and non-object roots fall back to `{}`. All allowed clients receive the same object, including before authentication.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| `CUSTOM_CORE_API_CONFIG`                 | — (disabled)                       | Server-only allowlist of exact GET Core paths exposed through `GET /api/v1/custom-api/:operationId`. Unset, empty, or whitespace-only disables the bridge entirely. See [Custom Core API operations](#custom-core-api-operations).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `CUSTOM_CORE_API_CONFIG`                 | — (disabled)                       | Server-only allowlist of exact Core paths (GET, or a configured POST/PUT/DELETE) exposed through `/api/v1/custom-api/:operationId`. Unset, empty, or whitespace-only disables the bridge entirely. See [Custom Core API operations](#custom-core-api-operations).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `DEFAULT_DEPLOYMENT_PINNED`              | `false`                            | Client-visible feature flag. When `true`, `DEFAULT_DEPLOYMENT` takes priority over the user's persisted deployment for new conversations and is pinned to the top of the picker. When `false`, the existing user-preference precedence and alphabetical ordering remain unchanged. Takes effect on the next service restart.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `ALLOW_VISUALIZER_SEND_MESSAGES`         | `false`                            | Client-visible feature flag, exposed as `features.visualizerSendMessages`. When `true`, a custom or application visualizer iframe may post `SEND_MESSAGE` with `{ message: string }`, and its text is sent as a user message in the conversation that renders it. The message is dropped while a response streams, in read-only conversations, when an overlay host enables `disabled-send`, and from a canvas opened in another conversation. Enable it only for visualizers you trust: an opted-in visualizer can send messages as the user. Only `true`, `1` and `yes` (case-insensitive) enable it; any other value, including an empty one, leaves it off. Takes effect on the next service restart.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `USAGE_LIMITS_CONTROL_ENABLED`           | `false`                            | Client-visible feature flag, exposed as `features.usageLimitsControl`. When `true`, the conversation input shows the token/cost usage-limits control next to the model selector in both the new-chat composer and an open conversation. When `false` (the default), the control is not rendered and the composers show the usage banner above the input instead (see `USAGE_LIMITS_WARNING_THRESHOLD_PERCENT`). Takes effect on the next service restart.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
@@ -420,7 +420,7 @@ A verified token must carry a non-empty `sub` claim. One that passes issuer allo
 
 **Chat generation under header auth.** `POST /api/v1/conversations/completions`, `.../completions/stop` and `.../completions/attach` all work for a header-authenticated caller. Two consequences operators should plan for:
 
-- **All clients of one (`providerId`, `sub`) are a single generation owner.** A bearer request carries no server-issued session artifact, so the subject is the finest identity the server can verify — distinguishing one client of a subject from another would mean trusting a client-asserted value. For one conversation path, requests reaching the same backend process share registry ownership: a second start gets `409` while any lifecycle state retains the key, and those clients can stop or attach to its running entry. The registry does not coordinate ownership, stop, or attach across pods. This mirrors how multiple browser tabs of a single cookie session already behave. A different `sub`, or the same `sub` from a different `providerId`, is a different principal and gets `404` — the same answer as a path with no generation at all.
+- **All clients of one (`providerId`, `sub`) are a single generation owner.** A bearer request carries no server-issued session artifact, so the subject is the finest identity the server can verify — distinguishing one client of a subject from another would mean trusting a client-asserted value. For one conversation path, requests reaching the same backend process share registry ownership: a second start gets `409` while any lifecycle state retains the key, and those clients can stop or attach to its running entry; the `snapshot` event of such an attach carries the entry's `generationId`, so a client that joined by path can send it to `.../completions/stop`. The registry does not coordinate ownership, stop, or attach across pods. This mirrors how multiple browser tabs of a single cookie session already behave. A different `sub`, or the same `sub` from a different `providerId`, is a different principal and gets `404` — the same answer as a path with no generation at all.
 - **The token captured at generation start is used for the whole generation.** `streamCompletion` captures the access token once, at request start, and reuses it for the upstream relay _and_ the persistence writes that follow. Because the BFF performs no server-side refresh for header callers by contract, a token that expires mid-generation fails that generation. `MAX_GENERATION_DURATION_MS` requests cancellation of active work; it does not bound the later persistence wait or a request that does not settle after abort. Account for those phases when choosing token lifetime.
 
 Ownership does not depend on the token itself — it is derived from `providerId` + `sub` — so renewing an access token mid-generation keeps the caller's ability to stop and attach to what it started.
@@ -722,13 +722,16 @@ recognition requests receive this response.
 
 ### Custom Core API operations
 
-`GET /api/v1/custom-api/:operationId` is a disabled-by-default, generic bridge
-to a small, explicitly allowlisted set of exact GET paths under `DIAL_CORE_URL`
+`/api/v1/custom-api/:operationId` is a disabled-by-default, generic bridge
+to a small, explicitly allowlisted set of exact paths under `DIAL_CORE_URL`
 — for example a global Route configured in Admin's Entities → Routes, such as
 `/data-products`. It exists so a client application can reach a
 deployment-specific Core catalog endpoint without adding its own business
-controller, DTOs, or public BFF release to this repository. See
-`openspec/changes/add-configured-core-api-operations/design.md` for the full
+controller, DTOs, or public BFF release to this repository. Each operation is
+one method on one path: GET by default, or a POST/PUT/DELETE with an
+allowlist of query parameter names and, for POST/PUT, a JSON body. See
+`openspec/changes/archive/2026-10-02-add-configured-core-api-operations/design.md`
+and `openspec/changes/extend-custom-api-operations/design.md` for the full
 rationale and trust-boundary analysis; this section is the operator-facing
 summary.
 
@@ -798,17 +801,2447 @@ invalid value, and the invalid value itself is never logged):
   unset).
 - The raw environment value must be at most 16 KiB measured in UTF-8 bytes,
   checked before parsing.
-- Each entry has only `id`, `method`, `corePath`, and optional `timeoutMs` /
-  `maxResponseBytes` — no `access`, `query`, or `responseSchema` field exists
-  in this contract, and an unknown key fails startup.
-- `method` must be `"GET"`. `id` must match `^[a-z][a-z0-9-]{0,63}$` and be
+- Each entry has only `id`, `method`, `corePath`, and optional `query`,
+  `body`, `timeoutMs` and `maxResponseBytes` — no `access` or
+  `responseSchema` field exists in this contract, and an unknown key fails
+  startup.
+- `method` must be one of `"GET"`, `"POST"`, `"PUT"` or `"DELETE"`. A path
+  served with several methods is several entries, one per method. `id` must
+  match `^[a-z][a-z0-9-]{0,63}# Chat API
+
+## Scheduled task manual-run contract
+
+`POST /api/v1/scheduled-tasks/:scheduleId/run` submits the saved Scheduler
+definition without a body and returns HTTP 202 with a camelCase
+`ScheduledTaskRunDto`. It does not resume paused/completed tasks, invalidate a
+schedule-list cache, or precheck external sign-in. Automatic trigger exhaustion
+does not prohibit this manual execution; only a deleted task is rejected with 409. The endpoint uses the existing session, feature, role, and CSRF guards.
+
+`GET /api/v1/scheduled-tasks/:scheduleId/runs/:runId` returns the same DTO for
+the caller-owned run. The DTO's optional `resultStage` is a narrow string
+projection of Scheduler's `result.stage`, and the optional `errorText` is a
+non-blank, trimmed `result.error_text` capped at 1000 characters; arbitrary
+Scheduler result data (e.g. `credentials_response`) is not exposed. Scheduler's
+run list omits `result`, so `GET /api/v1/scheduled-tasks/:scheduleId/runs`
+re-reads `Error` runs through the single-run route to fill in `errorText`. The
+fan-out is bounded: each resolved value (including "no error text") is cached
+per run for 24 hours, so History's background refreshes do not repeat the
+reads, and at most 10 uncached runs are re-read per list call (newest first).
+A failed re-read is logged, not cached, and leaves that run without
+`errorText`. Start and get-one responses use the same camelCase DTO fields as
+run-history responses, including `conversationId` when available. A terminal
+credentials stage is recorded as a run error for the client to recover through
+the offline-credentials flow; it is not a failed start request and does not
+trigger an automatic retry.
+
+Rate-limited manual starts and single-run reads preserve Scheduler's valid `Retry-After` header
+(delay seconds or an HTTP date) alongside the existing mapped error body.
+
+## Scheduled task skill contract
+
+Scheduled-task POST/PUT bodies accept optional `skillUrls: string[]`, validated
+per entry as a DIAL `skills/{bucket}/{path}` resource reference. The 1024-character path
+limit is measured after percent-decoding, so a saved encoded Unicode reference
+remains valid on update. Raw-reference safety checks still apply. `prompt` remains a
+required string; it may be empty when an effective skill exists. POST
+omission or [] means no skills; null is rejected. PUT first reads authoritative
+detail: omission preserves saved references, [] removes all skills, and a
+nonempty array replaces the complete selection. Identical references are
+deduplicated in selection order. This replaces the old single-reference field
+and requires callers to migrate together with the app/BFF release.
+
+Skill-bearing writes resolve model/agent capabilities with the session token
+and bucket through DeploymentsService's lookup facade and require
+`features.skillsSupported === true`. Rejections use codes
+`scheduledTaskSkillUnsupported`, `scheduledTaskInstructionsOrSkillRequired`,
+or `scheduledTaskDeploymentUnavailable`; failed validation never mutates a
+schedule or invalidates its list cache.
+
+The mapper encodes every resource exactly as chat and writes the array to
+`properties.payload.messages[0].custom_content.skills: [{ url }]` in the
+Scheduler completion payload. Detail/create/update responses expose optional
+`skillUrls`; sparse list responses may omit it. There is no local Scheduler
+worker. The Scheduler integration contract covers persistence, explicit removal,
+and forwarding skills with optional instructions through the existing offline
+execution flow, as defined in the
+[change design](../../openspec/changes/archive/2026-09-24-add-scheduled-task-skills/design.md).
+
+NestJS backend-for-frontend for the AI DIAL Chat platform. It terminates
+authentication, brokers every call to DIAL Core, exposes a versioned REST API to
+the SPA, and serves the built frontend in production.
+
+The frontend never talks to DIAL Core directly: this service holds the session,
+attaches the caller's access token upstream, and adapts DIAL Core's surface into
+the endpoints `apps/chat` consumes.
+
+## Scheduled task application consent and upstream errors
+
+When the `SCHEDULER_SERVICE_ID` external service is `DIAL_NATIVE`, every
+schedule runs under an application consent an administrator can revoke.
+Create, update, and resume re-read that service's `app_level_auth_status`
+from DIAL Core before calling DIAL Scheduler (never cached); `SIGNED_OUT`
+rejects with `403` and code `scheduledTaskAdminConsentRequired`, and nothing
+is sent upstream. Pause and delete skip the check so a user can always stop a
+task. A failed consent lookup or an unreported status defers to DIAL Scheduler.
+
+When DIAL Scheduler itself rejects a request, the response keeps the generic
+`message` (for example `DIAL Core returned a server error`) and adds
+Scheduler's own reason and code as `upstreamMessage` and `upstreamCode`. The
+message is trimmed and capped at 1000 characters; the code is kept only when it
+matches `^[A-Za-z0-9_.:-]{1,128}$`. Neither field is ever added for 401, 403,
+or 404 (the shared `isUpstreamTextExposable` rule), the raw upstream body is
+never forwarded, and the typed `code` never comes from the upstream body.
+
+## Completion persistence failures
+
+The backend saves an empty assistant placeholder before streaming and attempts
+one terminal save after the model finishes, stops, or fails. If that write
+rejects, the completion stream emits an error with
+`error.type: "conversation_save_failed"` before EOF; an attached generation
+subscriber receives `type: "error"` with the same value in `errorType`. The
+stream error of a completed answer also carries `error.status`, the status of
+the HTTP error the write raised (`401` when DIAL Core rejected the credentials,
+`502` for a storage `5xx`), and never the storage response body. A stopped,
+aborted, or failed answer is reported without `status`, because its write
+carries terminal markers the client does not hold.
+Upstream `[DONE]` alone is not confirmation of persistence. The error uses safe
+fallback text, and the original failure is logged as `Failed to save ... conversation`.
+The backend performs no automatic write retry because a rejected request can
+have an ambiguous commit outcome. Clients retain received output and warn that
+it may be lost after reloading or leaving the page; this is not durable
+recovery. The one exception is `status: 401`: the write was refused before
+anything was stored, so the client that started the generation makes one
+recovery save through the ordinary conversation save, which carries its own,
+current session.
+
+The terminal write uses the token captured when the completion request started.
+A token expiring during generation can therefore make the terminal write fail
+even though the initial save and upstream stream succeeded. The HTTP regression
+in `src/conversations/tests/completion-persistence.integration.spec.ts` exercises
+this path using a local Core stand-in and the installed SDK, alongside a 503
+storage-failure case. See [architecture](../../docs/architecture.md#sse-streaming).
+
+## Features
+
+- 🚀 NestJS framework with TypeScript
+- 🔐 OIDC login/logout with an encrypted session cookie, transparent token refresh, and CSRF protection
+- 🪪 Optional header bearer-token authentication verified against provider JWKS
+- 🔌 DIAL Core integration through `@epam/ai-dial-typescript-sdk`
+- 🌊 SSE streaming for chat completions and the client channel
+- 📚 Swagger/OpenAPI documentation, and a generated typed client (`libs/chat-api-client`)
+- 🌐 CORS configuration
+- 📦 Static file serving for the React frontend and the overlay sandbox
+- ⚙️ Environment validation at startup
+- 🎨 Theme management endpoints
+- 🏥 Health check endpoint
+- ✅ Input validation with class-validator
+- 🛡️ Path traversal protection
+- ⏱️ Configurable request timeouts
+- 📝 Comprehensive error handling
+- 🗄️ In-memory caching (5-minute TTL)
+- 🔒 Security headers (helmet middleware)
+- 🚦 Rate limiting (100 req/min default, per-endpoint overrides)
+- 📊 Request metrics logging
+- 🔭 OpenTelemetry traces, logs, and Prometheus-compatible metrics (opt-in, see [Observability](#observability))
+
+## PDF citation metadata
+
+Citation messages retain two independent selectors: `target.selector` associates
+an inline `<cit data-id="...">` marker, while optional `body.selector` identifies
+a PDF location. The body selector accepts an object or an array, including
+`{ type: 'pdf_bbox', page: 3, x1: 0, y1: 0, x2: 0, y2: 0 }` with 1-based pages.
+Raw annotation normalization preserves this field and supplied annotation indexes
+through stream assembly and persistence. Later quote-only deltas retain the
+earlier selector. The same optional field is part of the validated conversation
+message DTO and generated OpenAPI client.
+
+## Prerequisites
+
+- Node.js 24+
+- npm 11+
+- Access to an AI DIAL Core service
+- An OIDC identity provider (at least one configured — see below)
+- Access to a themes configuration service (optional; theming falls back to defaults)
+
+## Getting Started
+
+### 1. Install Dependencies
+
+From the root of the monorepo:
+
+```bash
+npm install
+```
+
+### 2. Environment Configuration
+
+Create a `.env.local` file in the project root:
+
+```bash
+# Required
+AUTH_SESSION_SECRET=<64-character-hex-secret>
+AUTH_CALLBACK_BASE_URL=http://localhost:5000
+
+# At least one identity provider must be configured — example for Auth0:
+AUTH_AUTH0_CLIENT_ID=your-client-id
+AUTH_AUTH0_SECRET=<client-secret>
+AUTH_AUTH0_HOST=your-tenant.auth0.com
+
+# Optional — CORS_ORIGIN and AUTH_POST_LOGOUT_REDIRECT_URI default to
+# AUTH_CALLBACK_BASE_URL above when unset; set them explicitly only when the
+# frontend origin, or the post-logout landing page, must differ from it.
+PORT=5000
+API_PREFIX=api
+# CORS_ORIGIN=http://localhost:4207
+# AUTH_POST_LOGOUT_REDIRECT_URI=http://localhost:4207
+DIAL_CORE_URL=https://your-dial-service.com
+DIAL_API_VERSION=2024-10-21
+DIAL_API_KEY=your-secret-api-key
+THEMES_CONFIG_URL=https://your-themes-service.com
+THEMES_SERVICE_TIMEOUT_MS=5000
+# Local HTTP smoke only. Keep true/default for HTTPS and production-like runs.
+AUTH_COOKIE_SECURE=false
+# Allow iframe integrations and embedding this app by allowed origins
+ALLOWED_IFRAME_ORIGINS=
+# Enable chat overlay runtime mode; requires ALLOWED_IFRAME_ORIGINS
+OVERLAY_ENABLED=false
+# Serve overlay sandbox at /overlay-sandbox/
+OVERLAY_SANDBOX_ENABLED=false
+```
+
+**Note**: `.env.local` takes precedence over `.env` and is not committed to version control.
+
+#### Environment Variables
+
+**Required:**
+
+| Variable                 | Description                                            | Example                     |
+| ------------------------ | ------------------------------------------------------ | --------------------------- |
+| `AUTH_SESSION_SECRET`    | 32-byte session encryption key encoded as 64 hex chars | `<64-character-hex-secret>` |
+| `AUTH_CALLBACK_BASE_URL` | Public API base URL used for OIDC redirect URIs        | `http://localhost:5000`     |
+
+At least one identity provider (see [Auth provider environment variables](#auth-provider-environment-variables) below) must also be configured for login to work; the application otherwise boots with no providers registered.
+
+Each configured provider needs two URLs registered in its own client
+configuration on the identity provider side:
+
+| Registered in the IdP as    | Value                                                                                        |
+| --------------------------- | -------------------------------------------------------------------------------------------- |
+| Redirect URI / callback URL | `{AUTH_CALLBACK_BASE_URL}/api/v1/auth/callback/{providerId}`                                 |
+| Post-logout redirect URI    | the value of `AUTH_POST_LOGOUT_REDIRECT_URI`, or `AUTH_CALLBACK_BASE_URL` when it is not set |
+
+`{providerId}` is the provider's fixed id, e.g.
+`http://localhost:5000/api/v1/auth/callback/keycloak`. Note that the `/api/v1`
+part of the callback is a literal in `src/auth/auth.controller.ts` and does not
+follow `API_PREFIX`, so a deployment that overrides `API_PREFIX` sends the IdP a
+`redirect_uri` that no longer resolves to a route.
+
+#### DIAL Core OAuth redirect allowlist
+
+Toolset OAuth needs the public Chat callback URL to be allowed by DIAL Core.
+Add `<CHAT_PUBLIC_ORIGIN>/auth/toolset-signin` to Core's
+[`toolsets.security.allowedRedirectUris`](https://github.com/epam/ai-dial-core/blob/development/README.md#static-settings).
+For example, the relevant part of `aidial.settings.json` is:
+
+```json
+{
+  "toolsets": {
+    "security": {
+      "allowedRedirectUris": ["https://chat.example.com/auth/toolset-signin"]
+    }
+  }
+}
+```
+
+Use the public origin from which users open Chat. The SPA builds this URI from
+`window.location.origin`, so it is not necessarily the same as
+`AUTH_CALLBACK_BASE_URL` when the frontend and API are exposed separately. Add
+the Chat URI without removing entries for other clients, such as the Admin
+panel. Core accepts a client-provided OAuth redirect URI only when it is in this
+allowlist or equals the toolset's own `redirect_uri`; the allowlist is therefore
+required when more than one client can start sign-in for the same toolset. The
+setting is read at Core startup, so restart DIAL Core after changing it.
+
+**Optional:**
+
+| Variable                                 | Default                            | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ---------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`                                   | `5000`                             | HTTP server port                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `API_PREFIX`                             | `api`                              | Global route prefix for all API endpoints                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `CORS_ORIGIN`                            | `AUTH_CALLBACK_BASE_URL`           | Allowed CORS origin for the frontend. Defaults to `AUTH_CALLBACK_BASE_URL`; set explicitly when the frontend is served from a different origin.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `ALLOWED_CONNECT_ORIGINS`                | `[]`                               | Comma-separated trusted HTTP(S) origins added to CSP `connect-src` for external document previews; supports a leading `*.` subdomain pattern. Applies to both enforced and report-only policies. Does not configure upstream CORS or iframe permissions. See [Content Security Policy](#content-security-policy).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `CSP_MODE`                               | `report-only`                      | CSP rollout mode: `report-only` preserves existing enforcement and reports the strict candidate; `enforce` blocks unapproved inline CSS. See [CSP rollout](#content-security-policy).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `CSP_REPORT_URI`                         | —                                  | Optional HTTPS CSP reporting service URL; enables both legacy reporting and the Reporting API.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `LOG_LEVEL`                              | Environment-dependent              | Minimum NestJS log level: `debug`, `log`, `warn`, or `error`. Defaults to `log` in production and `debug` otherwise.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `AUTH_SESSION_COOKIE_NAME`               | `__Host-chat.sess`                 | Session cookie name                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `AUTH_SESSION_MAX_AGE_SECONDS`           | `2592000` (30 days)                | Rolling session lifetime, independent of `offline_access`. Integer seconds from 1 to 2147483647. Successful token refresh resets the deadline; configuration changes apply at login and renewal. A known refresh-token expiry, or access-token expiry when no refresh token exists, can shorten it.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `AUTH_TRANSACTION_COOKIE_NAME`           | `__Host-chat.tx`                   | Login transaction cookie name                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `AUTH_COOKIE_SECURE`                     | `true`                             | Set to `false` only for local HTTP smoke testing; runtime drops `__Host-` from cookie names and disables HSTS plus CSP `upgrade-insecure-requests` when disabled                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `AUTH_LEGACY_COOKIE_NAMES`               | —                                  | Comma-separated cookie names to actively expire (`Set-Cookie: ...; Max-Age=0`) on every request that still carries them, e.g. leftovers from a previous auth stack on the same origin. See "Legacy cookie cleanup" below.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `AUTH_POST_LOGOUT_REDIRECT_URI`          | `AUTH_CALLBACK_BASE_URL`           | Where the browser lands after IdP logout, applied to every configured provider. Defaults to `AUTH_CALLBACK_BASE_URL`; set explicitly when the post-logout landing page must differ from it.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `ADMIN_ROLE_NAMES`                       | `admin`                            | Comma-separated fallback admin role names, used by any provider that doesn't set its own `AUTH_{PROVIDER}_ADMIN_ROLE_NAMES`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `DIAL_ROLES_FIELD`                       | `dial_roles`                       | Fallback dot-separated path to the roles claim in the ID/access token, used by any provider that doesn't set its own `AUTH_{PROVIDER}_DIAL_ROLES_FIELD`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `DIAL_CORE_URL`                          | —                                  | AI DIAL core service URL                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `DIAL_API_VERSION`                       | `2024-10-21`                       | API version query parameter sent to DIAL Core chat completion requests                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `USER_USAGE_DEPLOYMENT_TYPES`            | `model,application`                | Comma-separated deployment kinds (`model`, `application`) that `GET /api/v1/user/limits` and `GET /api/v1/user/usage` report when the request carries no `deploymentTypes`; a request value always wins. Set `model` to restore the model-only report. Validated at startup — any other value fails boot                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `DIAL_API_KEY`                           | —                                  | Server-only API key sent as `Api-Key` to DIAL Core for utility-model naming. Not used for user-scoped routes; those continue to use the session access token. Must be stored as a deployment secret.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `THEMES_CONFIG_URL`                      | —                                  | Base URL for theme configuration and icons                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `THEMES_SERVICE_TIMEOUT_MS`              | `5000`                             | Timeout for theme service requests (milliseconds)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `FILE_UPLOAD_MAX_BYTES`                  | `536870912`                        | Maximum file upload size in bytes (default 512 MB); multer rejects larger payloads with 413. Also exposed to the client as `config.maxAttachmentFileSizeBytes` via `GET /api/v1/client-config`, so the frontend can reject an oversized file before attempting to upload it.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `FILE_TRANSFER_TIMEOUT_MS`               | `30000`                            | Timeout for DIAL Core file download, listing, delete and other file operation fetch requests (milliseconds). For `POST /api/v1/files` uploads it is the maximum time the transfer may go without moving any data (a slow but progressing upload is not aborted); raise it only if DIAL Core needs longer to answer after the last byte.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `ARCHIVE_DOWNLOAD_CONCURRENCY`           | `32`                               | Concurrent DIAL Core downloads used while streaming ZIP archives; range 1–32                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `ARCHIVE_UPLOAD_MAX_BYTES`               | `536870912`                        | Maximum size (bytes) of an uploaded ZIP archive request body for `POST /api/v1/files/upload-archive` (default 512 MB)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `ARCHIVE_UPLOAD_MAX_FILES`               | `1000`                             | Maximum number of non-directory entries extracted from one uploaded archive                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `ARCHIVE_UPLOAD_MAX_UNCOMPRESSED_BYTES`  | `2147483648`                       | Maximum cumulative decompressed bytes across all entries of an uploaded archive, checked incrementally during extraction (default 2 GB)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `ARCHIVE_UPLOAD_TIMEOUT_MS`              | `300000`                           | Wall-clock budget (milliseconds) for extracting and uploading an entire archive (default 5 min)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `PUBLISH_ATTACHMENTS_MAX_FILES`          | `1000`                             | Maximum number of attachment files (individual files plus every file inside attached folders) published together with one conversation by `POST /api/v1/conversations/publish`; a larger conversation is rejected with 413 before DIAL Core is called                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `SKILL_UPLOAD_MAX_FILES`                 | `100`                              | Maximum number of files (including `SKILL.md`) in a whole-skill create/update via `POST`/`PUT /api/v1/skills`; rejected with 400                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `SKILL_FILE_UPLOAD_MAX_BYTES`            | `1048576`                          | Maximum size (bytes) of a single file in a whole-skill create/update, via `PUT /api/v1/skills/files`, or of a standalone `SKILL.md` uploaded to `POST /api/v1/skills/import` (default 1 MB); rejected with 413                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `SKILL_UPLOAD_MAX_TOTAL_BYTES`           | `16777216`                         | Maximum cumulative content size (bytes) of a whole-skill create/update, including `SKILL.md` (default 16 MB); rejected with 413                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `SKILL_TRANSFER_TIMEOUT_MS`              | `60000`                            | Timeout for all skills-domain DIAL Core requests (milliseconds)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `SKILL_ARCHIVE_UPLOAD_MAX_BYTES`         | `20971520`                         | Maximum size (bytes) of the compressed ZIP archive accepted by `POST /api/v1/skills/import` before extraction (default 20 MB); rejected with 413. Distinct from `SKILL_UPLOAD_MAX_TOTAL_BYTES`, which bounds decompressed content                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `ASR_MODEL`                              | —                                  | Deployment ID of a dedicated speech-to-text model. When set (together with the `voice-input` feature), the mic button is always shown and recorded audio is transcribed by this model via `POST /api/v1/transcription`. When absent, the mic button is shown only for deployments whose `inputAttachmentTypes` include an audio MIME type, and transcription is handled by the selected chat deployment.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `TRANSCRIBE_SIZE_LIMIT_BYTES`            | `5242880`                          | Maximum audio file size (in bytes) accepted for transcription. The frontend applies this limit to the complete recording before upload. Default is 5 MB.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `UTILITY_MODEL`                          | —                                  | Shared deployment ID for conversation naming and AI text refinement. The ID stays server-side. Naming requires `DIAL_API_KEY` and `LLM_CONVERSATION_NAMING_ENABLED=true`. Refinement uses caller credentials independently of naming; only `config.aiTextRefinementAvailable` is exposed, and unset/blank values disable it.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `LLM_CONVERSATION_NAMING_ENABLED`        | `false`                            | When `true` and `UTILITY_MODEL` is set, the backend asynchronously renames conversations after the first assistant reply using the utility model.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `UTILITY_NAMING_TIMEOUT_MS`              | `10000`                            | Timeout in milliseconds for utility-model conversation naming requests.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `RESPONSES_API_ENABLED`                  | `false`                            | Server-only kill switch for routing eligible generations through the OpenAI Responses API. Even when a deployment reports `features.responsesApi=true`, Responses is only used when this is also `true`; otherwise Chat Completions is used. Not exposed to the frontend. Takes effect on the next service restart.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `RESPONSES_BACKGROUND_ENABLED`           | `false`                            | Server-only switch for starting eligible Responses generations as DIAL Core background jobs (`background: true`, `store: true`), so a generation survives browser disconnects and BFF restarts. Used only when `RESPONSES_API_ENABLED` is also `true`, the deployment reports `features.responsesApi=true`, and its DIAL Core `interfaces` include `openaiResponses`. Affects only new generations: in-flight background jobs stay recoverable, stoppable and finalizable when it is turned off. The first text of a background generation arrives later than on the stateless path, because the job waits in the model provider's queue first (see `docs/responses-api-integration.md`). Requires DIAL Core 0.48.0 or later. Not exposed to the frontend. Takes effect on the next service restart.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `MAX_GENERATION_DURATION_MS`             | `1800000`                          | Milliseconds from registry admission before an entry still in `active` receives a `max_duration` cancellation request (default 30 min). The key remains owned until its worker settles; this is not a deadline for preflight, persistence, or an upstream call that does not settle after abort. Independent of the originating client connection.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `GENERATION_FINALIZE_TIMEOUT_MS`         | `60000`                            | Milliseconds from entering terminal finalization before existing attachment listeners are notified and removed and timers cleared. On expiry, the entry becomes `settling` and retains its registry key, assembled snapshot, pending write, and generation-gauge contribution. The write is not cancelled and its worker may remain pending; same-process admission stays blocked until settlement or restart. This does not bound attachments created after the timeout. See the [lifecycle limits](../../docs/observability.md#process-memory-and-outstanding-work).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `CUSTOM_CLIENT_VARIABLES`                | `{}`                               | Public client-owned settings as a JSON object, exposed unchanged under `config.customVariables` in client-config. Arbitrary nested JSON values are supported; the BFF does not interpret keys or merge them into built-in config or feature flags. Unset, blank, malformed JSON and non-object roots fall back to `{}`. All allowed clients receive the same object, including before authentication.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `CUSTOM_CORE_API_CONFIG`                 | — (disabled)                       | Server-only allowlist of exact Core paths (GET, or a configured POST/PUT/DELETE) exposed through `/api/v1/custom-api/:operationId`. Unset, empty, or whitespace-only disables the bridge entirely. See [Custom Core API operations](#custom-core-api-operations).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `DEFAULT_DEPLOYMENT_PINNED`              | `false`                            | Client-visible feature flag. When `true`, `DEFAULT_DEPLOYMENT` takes priority over the user's persisted deployment for new conversations and is pinned to the top of the picker. When `false`, the existing user-preference precedence and alphabetical ordering remain unchanged. Takes effect on the next service restart.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `ALLOW_VISUALIZER_SEND_MESSAGES`         | `false`                            | Client-visible feature flag, exposed as `features.visualizerSendMessages`. When `true`, a custom or application visualizer iframe may post `SEND_MESSAGE` with `{ message: string }`, and its text is sent as a user message in the conversation that renders it. The message is dropped while a response streams, in read-only conversations, when an overlay host enables `disabled-send`, and from a canvas opened in another conversation. Enable it only for visualizers you trust: an opted-in visualizer can send messages as the user. Only `true`, `1` and `yes` (case-insensitive) enable it; any other value, including an empty one, leaves it off. Takes effect on the next service restart.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `USAGE_LIMITS_CONTROL_ENABLED`           | `false`                            | Client-visible feature flag, exposed as `features.usageLimitsControl`. When `true`, the conversation input shows the token/cost usage-limits control next to the model selector in both the new-chat composer and an open conversation. When `false` (the default), the control is not rendered and the composers show the usage banner above the input instead (see `USAGE_LIMITS_WARNING_THRESHOLD_PERCENT`). Takes effect on the next service restart.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `USAGE_LIMITS_WARNING_THRESHOLD_PERCENT` | `75`                               | Client-visible config, exposed as `config.usageLimitsWarningThresholdPercent`. Integer 1–99; a value outside that range or a non-integer fails validation at boot. The percentage of a capped day/week/month token or cost limit at which the usage banner appears above the conversation input, while `USAGE_LIMITS_CONTROL_ENABLED` is `false`. Governs the banner only: the usage dial and the Settings → Usage page keep their fixed 75% running-low mark.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `UI_EVENT`                               | —                                  | Start-page celebration module ID, exposed as `config.activeEventId` in client-config. Use `halloween` or `new-year`; unset or `none` disables celebrations. Each user can turn a set event off or on with **Seasonal celebrations** in Settings → Preferences; decides its state until they do. IDs must use lowercase kebab-case; unsupported IDs are returned unchanged and safely ignored by the frontend, so new event modules need no backend enum change. Modules replace the existing navigation/header icon and supply decorations, random click scenes, notifications, and optional secret chat phrases on `/` only. Effects clear on navigation, persist no event state, play no sound, and respect reduced motion. Takes effect on the next service restart.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `UI_EVENT_ENABLED_BY_DEFAULT`            | `true`                             | Client-visible config, exposed as `config.celebrationsEnabledByDefault`. The default state of the **Seasonal celebrations** switch in Settings → Preferences for users who have not saved a choice of their own; a saved choice always wins, and the default is never written to the browser, so changing it reaches everyone who never chose. Only `false`, `0` and `no` (case-insensitive) turn it off, which makes a configured `UI_EVENT` opt-in; any other value keeps it on. Has no visible effect without `UI_EVENT`. Takes effect on the next service restart.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `FEATURED_MODEL_IDS`                     | —                                  | Comma-separated list of model (or application) IDs to mark as featured in the catalog. Matching is exact and case-sensitive against the item's `id` field. Example: `chat-hub-v2,gpt-4o,dial-rag`. Takes effect on the next service restart; changing it without a restart has no effect.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `HIDDEN_ENTITY_TAGS`                     | `[]`                               | Comma-separated topic tags marking models and toolsets that stay hidden in the Catalog while remaining visible in the Quick App 2.0 form. Example: `internal,experimental`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `ALLOWED_IFRAME_ORIGINS`                 | —                                  | Comma-separated list of origins allowed to frame this app and be loaded by it (added to CSP `frame-ancestors` and `frame-src`). Each entry must be an origin only (`scheme://host[:port]`, no path or query string) with an `https://` (or `http://` for local development only) scheme, and may optionally use a single leading `*.` wildcard label to allow a whole subdomain family. Required for chat overlay mode and iframe integrations such as Quick Apps editors, and for every origin used by `CUSTOM_VISUALIZERS` — `frame-src` draws from this list only. Examples: `https://quickapps.example.com` , `https://*.example.com` (matches `https://portal.example.com` and `https://a.b.example.com`, but not the bare `https://example.com`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `OVERLAY_ENABLED`                        | `false`                            | Enables embedded chat overlay runtime mode. Has no effect unless `ALLOWED_IFRAME_ORIGINS` also includes at least one allowed host origin.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `OVERLAY_SANDBOX_ENABLED`                | `false`                            | Serves the overlay sandbox static app at `/overlay-sandbox/`. Intended for development/test environments only; the route is not served when disabled.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `FILE_MANAGER_AVAILABLE_TABS`            | `all,my_files,shared,organization` | Comma-separated subset of `all`, `my_files`, `shared`, `organization` controlling which File Manager tabs are shown. `all` adds a combined tab on the File storage page with one top-level folder per enabled source tab; it is shown only when at least two source tabs are enabled and is never offered in attach pickers. Unknown values (including `review`) are dropped; an unset or fully-invalid value falls back to all four ids.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `ENABLED_UI_FEATURES`                    | —                                  | When set, becomes the complete list of enabled `OverlayFeature` values (replace semantics). Supports both positive flags (e.g. `header`, `likes`) and modifier/hide flags (e.g. `hide-new-conversation`). Unrecognized entries are dropped with a warning; if all entries are unrecognized, falls back to the compiled-in `DEFAULT_ENABLED_UI_FEATURES` baseline. A renamed value listed in `DEPRECATED_UI_FEATURE_ALIASES` (currently `custom-applications` → `schema-apps`) is accepted transitionally: it resolves to its replacement and logs a deprecation warning. When unset or empty, the compiled-in defaults apply. An overlay host that supplies its own `enabledFeatures` always overrides this server baseline. Example: `header,likes,conversations-sharing,hide-new-conversation`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `LIVE_CHAT_INTERACTION_ENABLED`          | `false`                            | Enables the interactive toolset sign-in flow: the frontend subscribes to DIAL Core's client-channel and shows a global sign-in dialog when a completion needs mid-stream toolset credentials (`features.liveChatInteraction`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `LIVE_CHAT_INTERACTION_ENABLED_ROLES`    | —                                  | Comma-separated roles allowed to use the feature above when it is enabled. Unset or empty means unrestricted (all authenticated users).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `SCHEDULER_APP_ID`                       | —                                  | DIAL Core application id of the DIAL Scheduler routed deployment, used to build the `/v1/deployments/applications/{id}/route/v1/schedules` upstream path for the `/api/v1/scheduled-tasks*` endpoints. Required only when `features.scheduledTasksEnabled` is used; if unset, those endpoints fail fast with `503`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `SCHEDULER_SERVICE_ID`                   | —                                  | Upstream `service_id` sent to DIAL Scheduler on schedule create/update. Required only when `features.scheduledTasksEnabled` is used; if unset, create/update fail fast with `503` (list/get are unaffected).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `SCHEDULER_SERVICE_TIMEOUT_MS`           | `10000`                            | Timeout for DIAL Scheduler proxy requests (milliseconds)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `WELCOME_SCREEN_DESCRIPTION`             | —                                  | Operator-authored plain-text copy shown below the greeting heading on the new-chat start screen. Never interpreted as markup. Unset or blank hides it.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `FOOTER_HTML_MESSAGE`                    | —                                  | Operator-authored HTML shown in the footer of the chat input area (desktop) and mobile user panel. Supports `%%VERSION%%` token replaced server-side with the resolved chat version (`CHAT_VERSION` when set, otherwise the workspace root `package.json` version). Sanitized server-side (allowlist: `a span strong u em br p`). Unset or empty hides the footer.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `CHAT_VERSION`                           | root `package.json` version        | Version string shown in the footer's corner version label, substituted for the `%%VERSION%%` footer token, and reported as `version` by `GET /api/health`. Set from CI/CD to surface the deployed build. Blank or unset falls back to the workspace root `package.json` version — the only manifest the release pipeline stamps — so a version label is always shown. Exposed to clients as `config.appVersion`; not role-gated.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `ANNOUNCEMENT_TITLE`                     | —                                  | Bold heading of the top-of-app announcement banner. Plain text — never interpreted as markup, so `<b>` renders literally. Set this or `ANNOUNCEMENT_DESCRIPTION` to render the banner; leaving both unset hides it. Blank is treated as unset.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `ANNOUNCEMENT_DESCRIPTION`               | —                                  | Supporting copy shown after the banner title. Sanitized server-side (allowlist: `a b strong em br span`); non-hash anchors are forced to `target="_blank" rel="noopener noreferrer"`. Text that overruns the banner width is clipped to one line with an ellipsis; a chevron beside the close control then expands the banner so the whole message can be read. Short copy still reads best, since the collapsed line is what most users see. Blank, or markup that sanitizes away entirely, is treated as unset.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `ANNOUNCEMENTS`                          | `[]`                               | JSON array feeding the `+N announcements` popover: `[{ "title": "…", "description": "…", "link": { "label": "…", "href": "https://…" } }]`. `description` and `link` are optional; an entry with no link renders without a call to action. Max 10 entries. Validation is drop-and-log and never fatal — an entry is dropped if its title is blank, or if its link is present but has a blank label or an `href` that is not an absolute `http`/`https` URL (relative paths are rejected). Malformed JSON resolves to `[]`. Rejected entries appear only in the server log.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `CUSTOM_VISUALIZERS`                     | `[]`                               | JSON array of MIME → visualizer iframe mappings: `[{ "title": "my-viz", "url": "https://viz.example.com", "contentType": "application/x-my-viz,application/x-my-viz-v2" }]`. An attachment whose MIME type matches an entry opens in the Attachment Canvas rendered by that visualizer's iframe instead of the default preview; `contentType` accepts a comma-separated MIME list. `title` is the postMessage namespace and MUST equal the `appName` passed to `ChatVisualizerConnector` inside the visualizer app — a mismatch loads the iframe but never sends it data. Registering a URL grants that origin in-app iframe privileges (downloads, popups, modals, clipboard, fullscreen), so list only vetted visualizers. Registering it here does **not** by itself let the browser load it: CSP `frame-src` is built from `ALLOWED_IFRAME_ORIGINS` alone, so each visualizer URL's origin must also be listed there or the iframe is blocked and the canvas never renders. Mind the coupling — that same list also feeds `frame-ancestors`, so adding a visualizer origin additionally permits that origin to embed this app. Unset means the feature is dark. Invalid JSON or invalid entries are dropped with an error log; boot never fails on malformed config.                                                                                                                                      |
+| `APPLICATION_VISUALIZERS`                | `{}`                               | JSON **object** (not an array) keyed by application id — the effective deployment id of a message: `{"my-app":{"title":"my-viz","url":"https://viz.example.com","contentType":"application/x-my-viz","height":600,"mobileHeight":400}}`. Every attachment an entry claims is delivered to one iframe together via `SEND_GROUPED_VISUALIZE_DATA`, rendered inline in the message with an expand-to-canvas control, rather than one iframe per attachment. Unlike `CUSTOM_VISUALIZERS`, `contentType` is **optional**: when set it claims only those MIME types and the message's other attachments stay ordinary tiles; when omitted it claims every attachment that carries a URL. An entry **takes precedence over `CUSTOM_VISUALIZERS`** for the attachments it claims. The same `ALLOWED_IFRAME_ORIGINS` requirement and `title`/`appName` contract as `CUSTOM_VISUALIZERS` apply. Optional booleans `borderless` (drop the inline frame's border, background, and header divider) and `withoutTitle` (hide the inline header's title text) carry over from legacy Chat 0.x. `passAuthInfo` and `passExplicitToken` are accepted for parity with legacy Chat 0.x and are inert — auth is server-side and the browser holds no access token; legacy `expanded` is logged as unrecognized and ignored. Invalid JSON, a non-object value, or invalid entries are dropped with an error log; boot never fails. |
+
+#### Built-in prompt overrides
+
+These optional server-only variables replace the complete built-in instruction for their operation:
+
+| Variable                                             | Operation                                           | Default  |
+| ---------------------------------------------------- | --------------------------------------------------- | -------- |
+| `TEXT_REFINEMENT_SKILL_DESCRIPTION_PROMPT`           | Refine a skill description                          | Built-in |
+| `TEXT_REFINEMENT_SKILL_INSTRUCTIONS_PROMPT`          | Refine skill instructions                           | Built-in |
+| `TEXT_REFINEMENT_SCHEDULED_TASK_DESCRIPTION_PROMPT`  | Refine a scheduled task description                 | Built-in |
+| `TEXT_REFINEMENT_SCHEDULED_TASK_INSTRUCTIONS_PROMPT` | Refine scheduled task instructions                  | Built-in |
+| `TEXT_REFINEMENT_APPLICATION_DESCRIPTION_PROMPT`     | Refine an application description                   | Built-in |
+| `TEXT_REFINEMENT_TOOLSET_DESCRIPTION_PROMPT`         | Refine a toolset description                        | Built-in |
+| `TEXT_REFINEMENT_PROMPT_DESCRIPTION_PROMPT`          | Refine a prompt description                         | Built-in |
+| `TEXT_REFINEMENT_PROMPT_INSTRUCTIONS_PROMPT`         | Refine prompt instructions                          | Built-in |
+| `CONVERSATION_NAMING_SYSTEM_PROMPT`                  | Automatic naming and the Rename conversation action | Built-in |
+| `TRANSCRIPTION_PROMPT`                               | Dedicated audio transcription via `ASR_MODEL`       | None     |
+
+Unset, empty, and whitespace-only values retain the existing defaults; `TRANSCRIPTION_PROMPT` has no default, so the ASR request carries only the audio attachment, because dedicated transcription models reject text input. Nonblank overrides preserve their whitespace, Markdown, Unicode, and line breaks. They are not appended to the defaults, and placeholders are not interpolated. Prompt settings do not change model selection, authorization, feature availability, timeouts, or response validation. Refinement and naming still use `UTILITY_MODEL`; transcription uses `ASR_MODEL`.
+
+Quote multiline values in `apps/chat-api/.env`, for example:
+
+```dotenv
+CONVERSATION_NAMING_SYSTEM_PROMPT="Create a concise conversation title.
+Return only the title, in the language of the conversation."
+```
+
+Double-quoted `\n` escapes also produce line breaks. Restart the backend after changing a value. Remove an override and restart to restore its default. Keep the operation's expected output format in custom prompts: refinement returns only rewritten text, naming only a title, and transcription only recognized speech. These settings are consumed by the backend and are not added to browser configuration.
+
+#### Outbound DIAL Core client identity
+
+Every request from Chat API to DIAL Core carries
+`User-Agent: ai-dial-chat/<normalized-version>`. This applies to requests made
+through the shared DIAL SDK client and to the raw Core transports used for
+rating, scheduled tasks, and streaming archive uploads. Requests to non-Core
+services, such as the theme service, keep their own transport and identity.
+
+The version is resolved from `CHAT_VERSION`; blank or unset values fall back to
+the workspace root `package.json` version. For the header only, runs of characters outside
+`A-Z`, `a-z`, `0-9`, `.`, `_`, and `-` become `-`, leading and trailing `-` are
+removed, and an empty normalized value becomes `unknown`. The header is intended
+only for operational diagnostics and client-version attribution. It contains no
+user, tenant, authentication, conversation, or other runtime request data.
+
+Banner dismissal is content-keyed and persists in the browser's `localStorage`: a user who closes the banner keeps it hidden across restarts, and it reappears automatically for everyone once an operator changes any of the content it renders — the title, the description, or an `ANNOUNCEMENTS` entry (its title, description or link) — with no version counter or manual reset. Note that dismissing the banner also hides the announcements popover, since the pill lives inside the banner; that is why editing the popover list alone is enough to bring the banner back.
+
+The dismissal is keyed on content only, so redeploying with the same copy does not re-show the banner, and users who never dismissed the previous announcement are unaffected. Deployments that leave `ANNOUNCEMENTS` empty keep the signatures their users already stored, so adding the popover list to the key does not re-show the banner on its own.
+
+| Variable                    | Default | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| --------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ANNOUNCEMENT_HTML_MESSAGE` | —       | Deprecated. Renders the legacy centered banner with the same content-keyed dismissal as the structured form. Unlike the description, it is not truncated and accepts `<p>` and `<u>` on top of the inline set (`<a>`, `<b>`, `<strong>`, `<em>`, `<br>`, `<span>`), so a multi-paragraph message renders as stacked centered lines. `style` attributes are stripped — links are underlined by the app — and `target`/`rel` are not added for you, so author them yourself. Ignored when `ANNOUNCEMENT_TITLE` or `ANNOUNCEMENT_DESCRIPTION` is set. Use the structured pair for new deployments. |
+
+#### Session expiration and upgrade
+
+`AUTH_SESSION_MAX_AGE_SECONDS` limits the local Chat session, independently of
+provider scopes. Keycloak's positive numeric `refresh_expires_in` can shorten
+that deadline; zero or missing metadata leaves the refresh-token expiry unknown.
+Other providers currently use the Chat limit when a refresh token is present.
+Without a refresh token the session cannot outlive its access token.
+
+Session payload v2 enforces expiry on the server as well as in browser cookies.
+After upgrading from v1, existing sessions require a new login; deploy auth
+replicas together to avoid inconsistent enforcement during rollout. In-progress
+OIDC transactions can still complete within their original ten-minute window.
+Successful token refresh resets the deadline to the current time plus the configured
+lifetime (30 days by default). Protected requests refresh within 60 seconds of access-token
+or effective session expiry; optional authentication and bucket-only cookie rewrites do
+not renew it. Failed refreshes do not extend it. Changing the setting affects new logins
+and successful renewals; already-issued cookies retain their deadline until then.
+Expiration can return the
+user through an existing IdP SSO session without a password prompt; password/MFA
+reauthentication is a separate IdP policy.
+
+See [session lifetime policy](../../docs/auth/auth-bff-encrypted-cookie.md#35-session-lifetime-policy)
+for provider metadata, rotation, and migration details.
+
+#### Header bearer-token authentication
+
+Alongside the encrypted session cookie, the BFF can optionally authenticate requests that carry an `Authorization: Bearer <token>` header, verifying the token's signature locally against the JWKS of whichever registered OIDC provider issued it. When present and valid, a header token takes precedence over the session cookie and is exempt from CSRF checks (see `docs/auth/auth-bff-encrypted-cookie.md`). The feature is off by default — enabling it widens the BFF's trust boundary from "our SPA in a browser" to "anyone holding a valid IdP token" — and requires an explicit issuer allowlist.
+
+| Variable                                     | Default | Description                                                                                                                                  |
+| -------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AUTH_HEADER_TOKEN_ENABLED`                  | `false` | Master feature flag. When `false`, any `Authorization` header is ignored entirely and only the session cookie is used.                       |
+| `AUTH_HEADER_TOKEN_ALLOWED_ISSUERS`          | —       | Comma-separated allowlist of trusted `iss` values. **Required** (application fails to boot otherwise) when `AUTH_HEADER_TOKEN_ENABLED=true`. |
+| `AUTH_HEADER_TOKEN_CLOCK_TOLERANCE_SECONDS`  | `30`    | Clock-skew tolerance (seconds) applied when verifying a header token's `exp`/`nbf`.                                                          |
+| `AUTH_HEADER_TOKEN_JWKS_CACHE_TTL_SECONDS`   | `600`   | How long a provider's remote JWK set is cached before being refreshed.                                                                       |
+| `AUTH_HEADER_TOKEN_BUCKET_CACHE_TTL_SECONDS` | `60`    | TTL for the DIAL Core bucket resolved for a header-authenticated caller, cached by a hash of the token.                                      |
+
+A verified token must carry a non-empty `sub` claim. One that passes issuer allowlisting, provider matching and signature/time verification but has no `sub` (or an empty one) is rejected with `401` / `AUTH_HEADER_TOKEN_INVALID`, because `sub` is the server-verified identity the BFF derives per-caller state from.
+
+**Chat generation under header auth.** `POST /api/v1/conversations/completions`, `.../completions/stop` and `.../completions/attach` all work for a header-authenticated caller. Two consequences operators should plan for:
+
+- **All clients of one (`providerId`, `sub`) are a single generation owner.** A bearer request carries no server-issued session artifact, so the subject is the finest identity the server can verify — distinguishing one client of a subject from another would mean trusting a client-asserted value. For one conversation path, requests reaching the same backend process share registry ownership: a second start gets `409` while any lifecycle state retains the key, and those clients can stop or attach to its running entry; the `snapshot` event of such an attach carries the entry's `generationId`, so a client that joined by path can send it to `.../completions/stop`. The registry does not coordinate ownership, stop, or attach across pods. This mirrors how multiple browser tabs of a single cookie session already behave. A different `sub`, or the same `sub` from a different `providerId`, is a different principal and gets `404` — the same answer as a path with no generation at all.
+- **The token captured at generation start is used for the whole generation.** `streamCompletion` captures the access token once, at request start, and reuses it for the upstream relay _and_ the persistence writes that follow. Because the BFF performs no server-side refresh for header callers by contract, a token that expires mid-generation fails that generation. `MAX_GENERATION_DURATION_MS` requests cancellation of active work; it does not bound the later persistence wait or a request that does not settle after abort. Account for those phases when choosing token lifetime.
+
+Ownership does not depend on the token itself — it is derived from `providerId` + `sub` — so renewing an access token mid-generation keeps the caller's ability to stop and attach to what it started.
+
+#### Auth provider environment variables
+
+Each identity provider is configured through its own set of discrete environment variables, following the `AUTH_{PROVIDER_TYPE}_{FIELD_NAME}` convention. A provider is registered only when its `CLIENT_ID` variable is set; an unconfigured provider is silently skipped. If `CLIENT_ID` is set but another field that provider requires is missing, the application fails to boot with an error naming the missing variable. The provider's `id` (used in `/api/v1/auth/login/<id>` and in the `/api/v1/auth/providers` response) is fixed in code and cannot be overridden. Only one instance of each provider type is supported.
+
+Every `AUTH_{PROVIDER_TYPE}_HOST` variable (`AUTH_AUTH0_HOST`, `AUTH_GITLAB_HOST`, `AUTH_KEYCLOAK_HOST`, `AUTH_PING_ID_HOST`, `AUTH_COGNITO_HOST`) accepts either form:
+
+- a bare host, optionally with a path — `keycloak.example.com/realms/dial` — in which case HTTPS is assumed and `https://` is prepended;
+- a full URL whose scheme is used as given — `http://keycloak.internal:8080/realms/dial` — which is how a provider reachable only over plain HTTP (an in-cluster Keycloak, a local test instance) is configured.
+
+A trailing slash is normalised away. A scheme other than `http` or `https` fails boot with an error naming the variable.
+
+The configured host is used as the OIDC discovery location. After discovery,
+Chat uses the canonical `issuer` returned by the provider metadata for callback
+and token issuer validation. This allows an in-cluster discovery URL to return
+the provider's externally advertised issuer without causing a false issuer
+mismatch; the canonical issuer remains subject to strict validation.
+
+**Auth0** (`id: auth0`)
+
+| Variable                      | Required | Default                               |
+| ----------------------------- | :------: | ------------------------------------- |
+| `AUTH_AUTH0_CLIENT_ID`        |  Yes\*   | —                                     |
+| `AUTH_AUTH0_SECRET`           |  Yes\*   | —                                     |
+| `AUTH_AUTH0_HOST`             |  Yes\*   | —                                     |
+| `AUTH_AUTH0_AUDIENCE`         |    No    | —                                     |
+| `AUTH_AUTH0_NAME`             |    No    | `Auth0`                               |
+| `AUTH_AUTH0_SCOPE`            |    No    | `openid email profile offline_access` |
+| `AUTH_AUTH0_ADMIN_ROLE_NAMES` |    No    | `ADMIN_ROLE_NAMES`                    |
+| `AUTH_AUTH0_DIAL_ROLES_FIELD` |    No    | `DIAL_ROLES_FIELD`                    |
+
+**Azure AD** (`id: azure-ad`)
+
+| Variable                         | Required | Default                                         |
+| -------------------------------- | :------: | ----------------------------------------------- |
+| `AUTH_AZURE_AD_CLIENT_ID`        |  Yes\*   | —                                               |
+| `AUTH_AZURE_AD_SECRET`           |  Yes\*   | —                                               |
+| `AUTH_AZURE_AD_TENANT_ID`        |  Yes\*   | —                                               |
+| `AUTH_AZURE_AD_NAME`             |    No    | `Azure AD`                                      |
+| `AUTH_AZURE_AD_SCOPE`            |    No    | `openid profile user.Read email offline_access` |
+| `AUTH_AZURE_AD_ADMIN_ROLE_NAMES` |    No    | `ADMIN_ROLE_NAMES`                              |
+| `AUTH_AZURE_AD_DIAL_ROLES_FIELD` |    No    | `DIAL_ROLES_FIELD`                              |
+
+**Azure B2C** (`id: azure-b2c`)
+
+| Variable                          | Required | Default                               |
+| --------------------------------- | :------: | ------------------------------------- |
+| `AUTH_AZURE_B2C_CLIENT_ID`        |  Yes\*   | —                                     |
+| `AUTH_AZURE_B2C_CLIENT_SECRET`    |  Yes\*   | —                                     |
+| `AUTH_AZURE_B2C_TENANT_ID`        | Yes\*\*  | —                                     |
+| `AUTH_AZURE_B2C_USER_FLOW`        | Yes\*\*  | —                                     |
+| `AUTH_AZURE_B2C_ISSUER`           | Yes\*\*  | —                                     |
+| `AUTH_AZURE_B2C_NAME`             |    No    | `Azure B2C`                           |
+| `AUTH_AZURE_B2C_SCOPE`            |    No    | `openid profile email offline_access` |
+| `AUTH_AZURE_B2C_ADMIN_ROLE_NAMES` |    No    | `ADMIN_ROLE_NAMES`                    |
+| `AUTH_AZURE_B2C_DIAL_ROLES_FIELD` |    No    | `DIAL_ROLES_FIELD`                    |
+
+\*\* Either `AUTH_AZURE_B2C_ISSUER` on its own, or both `AUTH_AZURE_B2C_TENANT_ID` and `AUTH_AZURE_B2C_USER_FLOW` together. When `AUTH_AZURE_B2C_ISSUER` is not set, the issuer is derived as `https://${TENANT_ID}.b2clogin.com/${TENANT_ID}.onmicrosoft.com/${USER_FLOW}/v2.0`.
+
+**GitLab** (`id: gitlab`)
+
+| Variable                       | Required | Default            |
+| ------------------------------ | :------: | ------------------ |
+| `AUTH_GITLAB_CLIENT_ID`        |  Yes\*   | —                  |
+| `AUTH_GITLAB_SECRET`           |  Yes\*   | —                  |
+| `AUTH_GITLAB_HOST`             |  Yes\*   | —                  |
+| `AUTH_GITLAB_NAME`             |    No    | `GitLab`           |
+| `AUTH_GITLAB_SCOPE`            |    No    | `read_user`        |
+| `AUTH_GITLAB_ADMIN_ROLE_NAMES` |    No    | `ADMIN_ROLE_NAMES` |
+| `AUTH_GITLAB_DIAL_ROLES_FIELD` |    No    | `DIAL_ROLES_FIELD` |
+
+**Google** (`id: google`)
+
+| Variable                | Required | Default                               |
+| ----------------------- | :------: | ------------------------------------- |
+| `AUTH_GOOGLE_CLIENT_ID` |  Yes\*   | —                                     |
+| `AUTH_GOOGLE_SECRET`    |  Yes\*   | —                                     |
+| `AUTH_GOOGLE_NAME`      |    No    | `Google`                              |
+| `AUTH_GOOGLE_SCOPE`     |    No    | `openid email profile offline_access` |
+
+Google has no host variable (issuer is the fixed `https://accounts.google.com`) and no per-provider admin-role/roles-claim override — it always uses `ADMIN_ROLE_NAMES` / `DIAL_ROLES_FIELD`.
+
+**Keycloak** (`id: keycloak`)
+
+| Variable                         | Required | Default                                                             |
+| -------------------------------- | :------: | ------------------------------------------------------------------- |
+| `AUTH_KEYCLOAK_CLIENT_ID`        |  Yes\*   | —                                                                   |
+| `AUTH_KEYCLOAK_SECRET`           |  Yes\*   | —                                                                   |
+| `AUTH_KEYCLOAK_HOST`             |  Yes\*   | — (include the realm path, e.g. `keycloak.example.com/realms/dial`) |
+| `AUTH_KEYCLOAK_NAME`             |    No    | `Keycloak`                                                          |
+| `AUTH_KEYCLOAK_SCOPE`            |    No    | `openid email profile offline_access`                               |
+| `AUTH_KEYCLOAK_ADMIN_ROLE_NAMES` |    No    | `ADMIN_ROLE_NAMES`                                                  |
+| `AUTH_KEYCLOAK_DIAL_ROLES_FIELD` |    No    | `DIAL_ROLES_FIELD`                                                  |
+
+**PingID** (`id: ping-id`)
+
+| Variable                        | Required | Default            |
+| ------------------------------- | :------: | ------------------ |
+| `AUTH_PING_ID_CLIENT_ID`        |  Yes\*   | —                  |
+| `AUTH_PING_ID_SECRET`           |  Yes\*   | —                  |
+| `AUTH_PING_ID_HOST`             |  Yes\*   | —                  |
+| `AUTH_PING_ID_NAME`             |    No    | `PingID`           |
+| `AUTH_PING_ID_SCOPE`            |    No    | `offline_access`   |
+| `AUTH_PING_ID_ADMIN_ROLE_NAMES` |    No    | `ADMIN_ROLE_NAMES` |
+| `AUTH_PING_ID_DIAL_ROLES_FIELD` |    No    | `DIAL_ROLES_FIELD` |
+
+**Cognito** (`id: cognito`)
+
+| Variable                        | Required | Default                                                    |
+| ------------------------------- | :------: | ---------------------------------------------------------- |
+| `AUTH_COGNITO_CLIENT_ID`        |  Yes\*   | —                                                          |
+| `AUTH_COGNITO_SECRET`           |  Yes\*   | —                                                          |
+| `AUTH_COGNITO_HOST`             |  Yes\*   | — (e.g. `cognito-idp.{region}.amazonaws.com/{userPoolId}`) |
+| `AUTH_COGNITO_NAME`             |    No    | `Cognito`                                                  |
+| `AUTH_COGNITO_SCOPE`            |    No    | `openid email profile`                                     |
+| `AUTH_COGNITO_ADMIN_ROLE_NAMES` |    No    | `ADMIN_ROLE_NAMES`                                         |
+| `AUTH_COGNITO_DIAL_ROLES_FIELD` |    No    | `DIAL_ROLES_FIELD`                                         |
+
+**Okta** (`id: okta`)
+
+| Variable                     | Required | Default                                                             |
+| ---------------------------- | :------: | ------------------------------------------------------------------- |
+| `AUTH_OKTA_CLIENT_ID`        |  Yes\*   | —                                                                   |
+| `AUTH_OKTA_CLIENT_SECRET`    |  Yes\*   | —                                                                   |
+| `AUTH_OKTA_ISSUER`           |  Yes\*   | — (full issuer URL, e.g. `https://dev-123.okta.com/oauth2/default`) |
+| `AUTH_OKTA_NAME`             |    No    | `Okta`                                                              |
+| `AUTH_OKTA_SCOPE`            |    No    | `openid email profile`                                              |
+| `AUTH_OKTA_ADMIN_ROLE_NAMES` |    No    | `ADMIN_ROLE_NAMES`                                                  |
+| `AUTH_OKTA_DIAL_ROLES_FIELD` |    No    | `DIAL_ROLES_FIELD`                                                  |
+
+\* Required only if that provider is being configured at all (signaled by its `CLIENT_ID` variable being set); the provider is skipped entirely otherwise.
+
+#### Trusting a private certificate authority
+
+At startup, `chat-api` discovers every configured OIDC provider over HTTPS. If
+an identity provider uses a certificate issued by a private CA, the Node.js
+process must trust that CA before the application starts; otherwise provider
+discovery fails and the application does not boot.
+
+Mount a PEM-encoded CA bundle into the container and point
+[`NODE_EXTRA_CA_CERTS`](https://nodejs.org/api/cli.html#node_extra_ca_certsfile)
+to it. For example, with Docker Compose:
+
+```yaml
+services:
+  chat:
+    environment:
+      NODE_EXTRA_CA_CERTS: /certificates/company-ca.pem
+    volumes:
+      - ./company-ca.pem:/certificates/company-ca.pem:ro
+```
+
+The bundle should contain the issuing root and any required intermediate CA
+certificates. If the server certificate is genuinely self-signed, include that
+certificate itself. The file must exist when the Node.js process starts because
+`NODE_EXTRA_CA_CERTS` is read only at process launch.
+
+`NODE_EXTRA_CA_CERTS` is a Node.js runtime variable, not an application-owned
+variable validated by `chat-api`. Do not use `NODE_TLS_REJECT_UNAUTHORIZED=0`:
+it disables certificate verification for every HTTPS connection made by the
+process.
+
+### Legacy cookie cleanup
+
+If a previous deployment on the same origin set cookies this app never reads
+(a prior auth stack, a renamed `AUTH_SESSION_COOKIE_NAME`/`AUTH_TRANSACTION_COOKIE_NAME`,
+or a different `AUTH_COOKIE_SECURE` flipping the `__Host-` prefix), those cookies
+are never sent to the browser's own expiry logic by anything in this app — the
+service that originally set them is gone, so nothing will ever clear them
+unless this one does. List their exact names in `AUTH_LEGACY_COOKIE_NAMES`
+(comma-separated); a global middleware in `main.ts` checks every incoming
+request for them and, only when one is actually present, responds with a
+`Max-Age=0` `Set-Cookie` to expire it. Leave it unset once no client still
+carries the old cookies.
+
+### 3. Run the Application
+
+**Development mode:**
+
+```bash
+npm run start:api          # same as: npm exec nx serve chat-api
+```
+
+**Development mode with webpack HMR:**
+
+```bash
+npm run start:api:dev
+```
+
+**Start both the frontend and the API:**
+
+```bash
+npm run start:all
+```
+
+**Production build:**
+
+```bash
+npm run build && npm run build:api
+```
+
+Output lands in `apps/chat-api/dist/` (and `apps/chat/dist/` for the frontend it
+serves); run it with `node apps/chat-api/dist/main.js`.
+
+The API will be available at:
+
+- **API**: `http://localhost:5000/api`
+- **Swagger Docs**: `http://localhost:5000/api/docs` (development only)
+- **Health Check**: `http://localhost:5000/api/health`
+
+## API Documentation
+
+Interactive API documentation is available at `/api/docs` when the application is running. The documentation is auto-generated from TypeScript decorators and includes:
+
+- All available endpoints
+- Request/response schemas
+- Error responses
+- Query parameter validation rules
+- Authentication: two security schemes — `session` (the encrypted session cookie,
+  `__Host-chat.sess` by default) and `bearer` (an `Authorization: Bearer` token,
+  see [Header bearer-token authentication](#header-bearer-token-authentication)).
+  The document requires either one on every operation; `@Public()` routes
+  (health, themes, client-config, auth providers/login/callback/logout) are
+  emitted with `security: []`. The opt-out is derived from `@Public()` itself by
+  `createOpenApiDocument` in `src/openapi/openapi.config.ts`, so a new public
+  route needs no extra Swagger decorator.
+
+## API Endpoints
+
+Business endpoints are URI-versioned: `main.ts` sets a global `api` prefix and
+enables `VersioningType.URI`, so a controller declared as
+`@Controller({ path: 'conversations', version: '1' })` resolves to
+`/api/v1/conversations`. Infrastructure endpoints (health, themes) are
+unversioned by design.
+
+Swagger at `/api/docs` is the authoritative per-route reference — the table below
+maps each backend domain to its base path.
+
+### Infrastructure
+
+| Method | Path               | Description                                                                                                                                                 |
+| ------ | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET`  | `/api/health`      | Health status: `{ status, timestamp, version, buildId }` (`version` from `CHAT_VERSION`; `buildId` — see [Docker image (BFF only)](#docker-image-bff-only)) |
+| `GET`  | `/api/themes`      | Theme configuration. Errors: 404, 502, 503                                                                                                                  |
+| `GET`  | `/api/themes/icon` | Theme icon SVG by validated `iconName`. Errors: 400, 404, 502, 503                                                                                          |
+
+### Versioned domains (`/api/v1/...`)
+
+| Base path             | Source folder          | Responsibility                                                     |
+| --------------------- | ---------------------- | ------------------------------------------------------------------ |
+| `auth`                | `auth/`                | Provider list, login/callback, logout, session, CSRF, `me`         |
+| `client-config`       | `app-config/`          | Server-resolved client configuration and feature flags             |
+| `user-config`         | `user-config/`         | Per-user persisted preferences                                     |
+| `chat`                | `chat/`                | Chat completions, streamed over SSE                                |
+| `conversations`       | `conversations/`       | Conversation CRUD, plus publish operations                         |
+| `models`              | `models/`              | Available models                                                   |
+| `deployments`         | `deployments/`         | Deployment metadata and usage limits                               |
+| `applications`        | `applications/`        | Application CRUD                                                   |
+| `application-schemas` | `application-schemas/` | Quick App / custom application schemas                             |
+| `toolsets`            | `toolsets/`            | Toolsets and their credential state                                |
+| `skills`              | `skills/`              | Skill CRUD, metadata lookup, and skill file transfer               |
+| `prompts`             | `prompts/`             | Prompt CRUD and folders                                            |
+| `files`               | `files/`               | File upload/download, archive upload, ZIP streaming                |
+| `share`               | `share/`               | Share links and recipient management                               |
+| `catalog`             | `publish/`             | Publication requests and published-resource listing                |
+| `publish`             | `publish/`             | Publication rules                                                  |
+| `rate`                | `rate/`                | Message rating (like/dislike) and feedback                         |
+| `transcription`       | `transcription/`       | Audio transcription through the ASR model                          |
+| `scheduled-tasks`     | `scheduled-tasks/`     | DIAL Scheduler proxy — schedules and run history                   |
+| `client-channel`      | `client-channel/`      | Server-initiated interactions (mid-stream toolset sign-in), SSE    |
+| `offline-credentials` | `offline-credentials/` | Offline credential consent flow                                    |
+| `external-services`   | `external-services/`   | External service registry and sign-in state                        |
+| `apps`                | `app/`                 | Root application controller                                        |
+| `custom-api`          | `custom-api/`          | Deployment-configured custom Core API bridge (disabled by default) |
+
+`libs/chat-api-client` is generated from this surface. After changing any
+controller or DTO, run `npm run openapi` and `npm run openapi:check` — handler
+names become the generated SDK's method names, so name them like
+`listModels` / `getCurrentUser`.
+
+### Transcription availability
+
+`POST /api/v1/transcription` maps upstream 429 and 503 responses to HTTP 503 and
+forwards the upstream `Retry-After` header when present. Other upstream errors use
+the shared DIAL error mapper. The frontend surfaces 429/503 immediately and
+restores the editable draft with an error message. Only gateway failures
+(502/504) retry recognition of the same file, at most twice with a six-second
+total delay budget, respecting `Retry-After`. The backend adds no retry loop.
+
+In the local Core implementation, `Service is not available` is produced by the
+upstream balancer when all upstream states have status 429. Check Core logs for
+`Upstream ... limit hit` and the ASR provider's quotas/capacity. Dictation submits one
+complete recording after Stop. Raising a DIAL token limit does not increase the
+provider's request quota. The configured deployment can be valid even when some
+recognition requests receive this response.
+
+### Custom Core API operations
+
+`/api/v1/custom-api/:operationId` is a disabled-by-default, generic bridge
+to a small, explicitly allowlisted set of exact paths under `DIAL_CORE_URL`
+— for example a global Route configured in Admin's Entities → Routes, such as
+`/data-products`. It exists so a client application can reach a
+deployment-specific Core catalog endpoint without adding its own business
+controller, DTOs, or public BFF release to this repository. Each operation is
+one method on one path: GET by default, or a POST/PUT/DELETE with an
+allowlist of query parameter names and, for POST/PUT, a JSON body. See
+`openspec/changes/archive/2026-10-02-add-configured-core-api-operations/design.md`
+and `openspec/changes/extend-custom-api-operations/design.md` for the full
+rationale and trust-boundary analysis; this section is the operator-facing
+summary.
+
+**Who owns what:**
+
+- **Admin** owns the Route's path/method, `rewritePath`, upstream or static
+  response, and **role policy** (`userRoles`). Admin's own `/api/v1/routes`
+  management API is never called by the BFF — the BFF only ever dispatches the
+  one runtime path a Route exposes, the same way any Core client would.
+- **Core** matches the request against its configured routes in priority
+  order, enforces the route's roles (a `null` `userRoles` permits any
+  authenticated role; an empty set denies all; a non-empty set requires an
+  intersection — see `RoleBasedEntity` in `ai-dial-core`), applies its own
+  business rate limiting, and either returns a static JSON body or proxies to
+  the configured upstream. Built-in Core controllers are matched before the
+  global-route fallback, so the BFF cannot prove from a path string alone
+  which controller actually serves it.
+- **The upstream service behind a Route** (when not static) owns safe,
+  per-user response contents. A global Route checks **roles**, not per-object
+  or per-tenant permissions — if a response must be filtered per caller, that
+  authorization belongs in the upstream service, not in this BFF bridge.
+- **This BFF** owns exactly three things: (1) the exact allowlist of operation
+  IDs it will dispatch at all (`CUSTOM_CORE_API_CONFIG`), (2) translating the
+  caller's own session into the Core bearer token for that one call, and (3)
+  bounded, sanitized transport (timeouts, byte/depth limits, redirect
+  rejection, generic error mapping). It adds no second role check, no business
+  response schema, and no field filtering — Core's role check and the
+  upstream's own response safety are the only authorization layers.
+- **The calling client application** owns the operation ID it chooses to call,
+  and all domain decoding/validation/presentation of the opaque JSON it gets
+  back. A field already present in the JSON response has already reached the
+  browser; frontend validation is a correctness aid, not a confidentiality
+  boundary.
+
+**Enabling it — `CUSTOM_CORE_API_CONFIG`:**
+
+The repository and `.env.template` ship this setting blank, so the bridge is
+inert out of the box: every request to `/api/v1/custom-api/:id` returns 404
+with no Core dispatch, and startup performs no network or file read related to
+this feature. To enable one or more operations, set the environment variable
+to a JSON object and restart the BFF (no configuration file or volume mount is
+read):
+
+```dotenv
+CUSTOM_CORE_API_CONFIG='{"version":1,"operations":[{"id":"data-products","method":"GET","corePath":"/data-products"}]}'
+```
+
+The outer single quotes above are `.env` file quoting, not part of the JSON
+value — a raw deployment environment variable (Kubernetes `env`, a platform's
+environment-variable UI, etc.) should be set to the JSON text only, without
+those quotes:
+
+```json
+{
+  "version": 1,
+  "operations": [
+    { "id": "data-products", "method": "GET", "corePath": "/data-products" }
+  ]
+}
+```
+
+Rules enforced at startup, failing closed (the process does not boot on an
+invalid value, and the invalid value itself is never logged):
+
+- `version` must equal `1`; `operations` must be an array of at most 64
+  entries (an empty array is valid and equivalent to leaving the variable
+  unset).
+- The raw environment value must be at most 16 KiB measured in UTF-8 bytes,
+  checked before parsing.
+  and be
   unique within the registry. `corePath` must be one leading slash followed by
   nonempty, slash-separated ASCII letter/digit/underscore/hyphen segments —
   dots, percent-encoding, backslashes, doubled/trailing slashes, a full URL,
   or a query/fragment all fail startup.
-- `timeoutMs` and `maxResponseBytes`, when set, may only **lower** the hard
-  ceilings of 10,000 ms and 1,048,576 decoded bytes, and must be positive
-  integers.
+- `query`, when set, lists at most 16 unique parameter names, each matching
+  `^[a-z][a-z0-9_]{0,31}# Chat API
+
+## Scheduled task manual-run contract
+
+`POST /api/v1/scheduled-tasks/:scheduleId/run` submits the saved Scheduler
+definition without a body and returns HTTP 202 with a camelCase
+`ScheduledTaskRunDto`. It does not resume paused/completed tasks, invalidate a
+schedule-list cache, or precheck external sign-in. Automatic trigger exhaustion
+does not prohibit this manual execution; only a deleted task is rejected with 409. The endpoint uses the existing session, feature, role, and CSRF guards.
+
+`GET /api/v1/scheduled-tasks/:scheduleId/runs/:runId` returns the same DTO for
+the caller-owned run. The DTO's optional `resultStage` is a narrow string
+projection of Scheduler's `result.stage`, and the optional `errorText` is a
+non-blank, trimmed `result.error_text` capped at 1000 characters; arbitrary
+Scheduler result data (e.g. `credentials_response`) is not exposed. Scheduler's
+run list omits `result`, so `GET /api/v1/scheduled-tasks/:scheduleId/runs`
+re-reads `Error` runs through the single-run route to fill in `errorText`. The
+fan-out is bounded: each resolved value (including "no error text") is cached
+per run for 24 hours, so History's background refreshes do not repeat the
+reads, and at most 10 uncached runs are re-read per list call (newest first).
+A failed re-read is logged, not cached, and leaves that run without
+`errorText`. Start and get-one responses use the same camelCase DTO fields as
+run-history responses, including `conversationId` when available. A terminal
+credentials stage is recorded as a run error for the client to recover through
+the offline-credentials flow; it is not a failed start request and does not
+trigger an automatic retry.
+
+Rate-limited manual starts and single-run reads preserve Scheduler's valid `Retry-After` header
+(delay seconds or an HTTP date) alongside the existing mapped error body.
+
+## Scheduled task skill contract
+
+Scheduled-task POST/PUT bodies accept optional `skillUrls: string[]`, validated
+per entry as a DIAL `skills/{bucket}/{path}` resource reference. The 1024-character path
+limit is measured after percent-decoding, so a saved encoded Unicode reference
+remains valid on update. Raw-reference safety checks still apply. `prompt` remains a
+required string; it may be empty when an effective skill exists. POST
+omission or [] means no skills; null is rejected. PUT first reads authoritative
+detail: omission preserves saved references, [] removes all skills, and a
+nonempty array replaces the complete selection. Identical references are
+deduplicated in selection order. This replaces the old single-reference field
+and requires callers to migrate together with the app/BFF release.
+
+Skill-bearing writes resolve model/agent capabilities with the session token
+and bucket through DeploymentsService's lookup facade and require
+`features.skillsSupported === true`. Rejections use codes
+`scheduledTaskSkillUnsupported`, `scheduledTaskInstructionsOrSkillRequired`,
+or `scheduledTaskDeploymentUnavailable`; failed validation never mutates a
+schedule or invalidates its list cache.
+
+The mapper encodes every resource exactly as chat and writes the array to
+`properties.payload.messages[0].custom_content.skills: [{ url }]` in the
+Scheduler completion payload. Detail/create/update responses expose optional
+`skillUrls`; sparse list responses may omit it. There is no local Scheduler
+worker. The Scheduler integration contract covers persistence, explicit removal,
+and forwarding skills with optional instructions through the existing offline
+execution flow, as defined in the
+[change design](../../openspec/changes/archive/2026-09-24-add-scheduled-task-skills/design.md).
+
+NestJS backend-for-frontend for the AI DIAL Chat platform. It terminates
+authentication, brokers every call to DIAL Core, exposes a versioned REST API to
+the SPA, and serves the built frontend in production.
+
+The frontend never talks to DIAL Core directly: this service holds the session,
+attaches the caller's access token upstream, and adapts DIAL Core's surface into
+the endpoints `apps/chat` consumes.
+
+## Scheduled task application consent and upstream errors
+
+When the `SCHEDULER_SERVICE_ID` external service is `DIAL_NATIVE`, every
+schedule runs under an application consent an administrator can revoke.
+Create, update, and resume re-read that service's `app_level_auth_status`
+from DIAL Core before calling DIAL Scheduler (never cached); `SIGNED_OUT`
+rejects with `403` and code `scheduledTaskAdminConsentRequired`, and nothing
+is sent upstream. Pause and delete skip the check so a user can always stop a
+task. A failed consent lookup or an unreported status defers to DIAL Scheduler.
+
+When DIAL Scheduler itself rejects a request, the response keeps the generic
+`message` (for example `DIAL Core returned a server error`) and adds
+Scheduler's own reason and code as `upstreamMessage` and `upstreamCode`. The
+message is trimmed and capped at 1000 characters; the code is kept only when it
+matches `^[A-Za-z0-9_.:-]{1,128}$`. Neither field is ever added for 401, 403,
+or 404 (the shared `isUpstreamTextExposable` rule), the raw upstream body is
+never forwarded, and the typed `code` never comes from the upstream body.
+
+## Completion persistence failures
+
+The backend saves an empty assistant placeholder before streaming and attempts
+one terminal save after the model finishes, stops, or fails. If that write
+rejects, the completion stream emits an error with
+`error.type: "conversation_save_failed"` before EOF; an attached generation
+subscriber receives `type: "error"` with the same value in `errorType`. The
+stream error of a completed answer also carries `error.status`, the status of
+the HTTP error the write raised (`401` when DIAL Core rejected the credentials,
+`502` for a storage `5xx`), and never the storage response body. A stopped,
+aborted, or failed answer is reported without `status`, because its write
+carries terminal markers the client does not hold.
+Upstream `[DONE]` alone is not confirmation of persistence. The error uses safe
+fallback text, and the original failure is logged as `Failed to save ... conversation`.
+The backend performs no automatic write retry because a rejected request can
+have an ambiguous commit outcome. Clients retain received output and warn that
+it may be lost after reloading or leaving the page; this is not durable
+recovery. The one exception is `status: 401`: the write was refused before
+anything was stored, so the client that started the generation makes one
+recovery save through the ordinary conversation save, which carries its own,
+current session.
+
+The terminal write uses the token captured when the completion request started.
+A token expiring during generation can therefore make the terminal write fail
+even though the initial save and upstream stream succeeded. The HTTP regression
+in `src/conversations/tests/completion-persistence.integration.spec.ts` exercises
+this path using a local Core stand-in and the installed SDK, alongside a 503
+storage-failure case. See [architecture](../../docs/architecture.md#sse-streaming).
+
+## Features
+
+- 🚀 NestJS framework with TypeScript
+- 🔐 OIDC login/logout with an encrypted session cookie, transparent token refresh, and CSRF protection
+- 🪪 Optional header bearer-token authentication verified against provider JWKS
+- 🔌 DIAL Core integration through `@epam/ai-dial-typescript-sdk`
+- 🌊 SSE streaming for chat completions and the client channel
+- 📚 Swagger/OpenAPI documentation, and a generated typed client (`libs/chat-api-client`)
+- 🌐 CORS configuration
+- 📦 Static file serving for the React frontend and the overlay sandbox
+- ⚙️ Environment validation at startup
+- 🎨 Theme management endpoints
+- 🏥 Health check endpoint
+- ✅ Input validation with class-validator
+- 🛡️ Path traversal protection
+- ⏱️ Configurable request timeouts
+- 📝 Comprehensive error handling
+- 🗄️ In-memory caching (5-minute TTL)
+- 🔒 Security headers (helmet middleware)
+- 🚦 Rate limiting (100 req/min default, per-endpoint overrides)
+- 📊 Request metrics logging
+- 🔭 OpenTelemetry traces, logs, and Prometheus-compatible metrics (opt-in, see [Observability](#observability))
+
+## PDF citation metadata
+
+Citation messages retain two independent selectors: `target.selector` associates
+an inline `<cit data-id="...">` marker, while optional `body.selector` identifies
+a PDF location. The body selector accepts an object or an array, including
+`{ type: 'pdf_bbox', page: 3, x1: 0, y1: 0, x2: 0, y2: 0 }` with 1-based pages.
+Raw annotation normalization preserves this field and supplied annotation indexes
+through stream assembly and persistence. Later quote-only deltas retain the
+earlier selector. The same optional field is part of the validated conversation
+message DTO and generated OpenAPI client.
+
+## Prerequisites
+
+- Node.js 24+
+- npm 11+
+- Access to an AI DIAL Core service
+- An OIDC identity provider (at least one configured — see below)
+- Access to a themes configuration service (optional; theming falls back to defaults)
+
+## Getting Started
+
+### 1. Install Dependencies
+
+From the root of the monorepo:
+
+```bash
+npm install
+```
+
+### 2. Environment Configuration
+
+Create a `.env.local` file in the project root:
+
+```bash
+# Required
+AUTH_SESSION_SECRET=<64-character-hex-secret>
+AUTH_CALLBACK_BASE_URL=http://localhost:5000
+
+# At least one identity provider must be configured — example for Auth0:
+AUTH_AUTH0_CLIENT_ID=your-client-id
+AUTH_AUTH0_SECRET=<client-secret>
+AUTH_AUTH0_HOST=your-tenant.auth0.com
+
+# Optional — CORS_ORIGIN and AUTH_POST_LOGOUT_REDIRECT_URI default to
+# AUTH_CALLBACK_BASE_URL above when unset; set them explicitly only when the
+# frontend origin, or the post-logout landing page, must differ from it.
+PORT=5000
+API_PREFIX=api
+# CORS_ORIGIN=http://localhost:4207
+# AUTH_POST_LOGOUT_REDIRECT_URI=http://localhost:4207
+DIAL_CORE_URL=https://your-dial-service.com
+DIAL_API_VERSION=2024-10-21
+DIAL_API_KEY=your-secret-api-key
+THEMES_CONFIG_URL=https://your-themes-service.com
+THEMES_SERVICE_TIMEOUT_MS=5000
+# Local HTTP smoke only. Keep true/default for HTTPS and production-like runs.
+AUTH_COOKIE_SECURE=false
+# Allow iframe integrations and embedding this app by allowed origins
+ALLOWED_IFRAME_ORIGINS=
+# Enable chat overlay runtime mode; requires ALLOWED_IFRAME_ORIGINS
+OVERLAY_ENABLED=false
+# Serve overlay sandbox at /overlay-sandbox/
+OVERLAY_SANDBOX_ENABLED=false
+```
+
+**Note**: `.env.local` takes precedence over `.env` and is not committed to version control.
+
+#### Environment Variables
+
+**Required:**
+
+| Variable                 | Description                                            | Example                     |
+| ------------------------ | ------------------------------------------------------ | --------------------------- |
+| `AUTH_SESSION_SECRET`    | 32-byte session encryption key encoded as 64 hex chars | `<64-character-hex-secret>` |
+| `AUTH_CALLBACK_BASE_URL` | Public API base URL used for OIDC redirect URIs        | `http://localhost:5000`     |
+
+At least one identity provider (see [Auth provider environment variables](#auth-provider-environment-variables) below) must also be configured for login to work; the application otherwise boots with no providers registered.
+
+Each configured provider needs two URLs registered in its own client
+configuration on the identity provider side:
+
+| Registered in the IdP as    | Value                                                                                        |
+| --------------------------- | -------------------------------------------------------------------------------------------- |
+| Redirect URI / callback URL | `{AUTH_CALLBACK_BASE_URL}/api/v1/auth/callback/{providerId}`                                 |
+| Post-logout redirect URI    | the value of `AUTH_POST_LOGOUT_REDIRECT_URI`, or `AUTH_CALLBACK_BASE_URL` when it is not set |
+
+`{providerId}` is the provider's fixed id, e.g.
+`http://localhost:5000/api/v1/auth/callback/keycloak`. Note that the `/api/v1`
+part of the callback is a literal in `src/auth/auth.controller.ts` and does not
+follow `API_PREFIX`, so a deployment that overrides `API_PREFIX` sends the IdP a
+`redirect_uri` that no longer resolves to a route.
+
+#### DIAL Core OAuth redirect allowlist
+
+Toolset OAuth needs the public Chat callback URL to be allowed by DIAL Core.
+Add `<CHAT_PUBLIC_ORIGIN>/auth/toolset-signin` to Core's
+[`toolsets.security.allowedRedirectUris`](https://github.com/epam/ai-dial-core/blob/development/README.md#static-settings).
+For example, the relevant part of `aidial.settings.json` is:
+
+```json
+{
+  "toolsets": {
+    "security": {
+      "allowedRedirectUris": ["https://chat.example.com/auth/toolset-signin"]
+    }
+  }
+}
+```
+
+Use the public origin from which users open Chat. The SPA builds this URI from
+`window.location.origin`, so it is not necessarily the same as
+`AUTH_CALLBACK_BASE_URL` when the frontend and API are exposed separately. Add
+the Chat URI without removing entries for other clients, such as the Admin
+panel. Core accepts a client-provided OAuth redirect URI only when it is in this
+allowlist or equals the toolset's own `redirect_uri`; the allowlist is therefore
+required when more than one client can start sign-in for the same toolset. The
+setting is read at Core startup, so restart DIAL Core after changing it.
+
+**Optional:**
+
+| Variable                                 | Default                            | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ---------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`                                   | `5000`                             | HTTP server port                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `API_PREFIX`                             | `api`                              | Global route prefix for all API endpoints                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `CORS_ORIGIN`                            | `AUTH_CALLBACK_BASE_URL`           | Allowed CORS origin for the frontend. Defaults to `AUTH_CALLBACK_BASE_URL`; set explicitly when the frontend is served from a different origin.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `ALLOWED_CONNECT_ORIGINS`                | `[]`                               | Comma-separated trusted HTTP(S) origins added to CSP `connect-src` for external document previews; supports a leading `*.` subdomain pattern. Applies to both enforced and report-only policies. Does not configure upstream CORS or iframe permissions. See [Content Security Policy](#content-security-policy).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `CSP_MODE`                               | `report-only`                      | CSP rollout mode: `report-only` preserves existing enforcement and reports the strict candidate; `enforce` blocks unapproved inline CSS. See [CSP rollout](#content-security-policy).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `CSP_REPORT_URI`                         | —                                  | Optional HTTPS CSP reporting service URL; enables both legacy reporting and the Reporting API.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `LOG_LEVEL`                              | Environment-dependent              | Minimum NestJS log level: `debug`, `log`, `warn`, or `error`. Defaults to `log` in production and `debug` otherwise.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `AUTH_SESSION_COOKIE_NAME`               | `__Host-chat.sess`                 | Session cookie name                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `AUTH_SESSION_MAX_AGE_SECONDS`           | `2592000` (30 days)                | Rolling session lifetime, independent of `offline_access`. Integer seconds from 1 to 2147483647. Successful token refresh resets the deadline; configuration changes apply at login and renewal. A known refresh-token expiry, or access-token expiry when no refresh token exists, can shorten it.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `AUTH_TRANSACTION_COOKIE_NAME`           | `__Host-chat.tx`                   | Login transaction cookie name                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `AUTH_COOKIE_SECURE`                     | `true`                             | Set to `false` only for local HTTP smoke testing; runtime drops `__Host-` from cookie names and disables HSTS plus CSP `upgrade-insecure-requests` when disabled                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `AUTH_LEGACY_COOKIE_NAMES`               | —                                  | Comma-separated cookie names to actively expire (`Set-Cookie: ...; Max-Age=0`) on every request that still carries them, e.g. leftovers from a previous auth stack on the same origin. See "Legacy cookie cleanup" below.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `AUTH_POST_LOGOUT_REDIRECT_URI`          | `AUTH_CALLBACK_BASE_URL`           | Where the browser lands after IdP logout, applied to every configured provider. Defaults to `AUTH_CALLBACK_BASE_URL`; set explicitly when the post-logout landing page must differ from it.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `ADMIN_ROLE_NAMES`                       | `admin`                            | Comma-separated fallback admin role names, used by any provider that doesn't set its own `AUTH_{PROVIDER}_ADMIN_ROLE_NAMES`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `DIAL_ROLES_FIELD`                       | `dial_roles`                       | Fallback dot-separated path to the roles claim in the ID/access token, used by any provider that doesn't set its own `AUTH_{PROVIDER}_DIAL_ROLES_FIELD`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `DIAL_CORE_URL`                          | —                                  | AI DIAL core service URL                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `DIAL_API_VERSION`                       | `2024-10-21`                       | API version query parameter sent to DIAL Core chat completion requests                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `USER_USAGE_DEPLOYMENT_TYPES`            | `model,application`                | Comma-separated deployment kinds (`model`, `application`) that `GET /api/v1/user/limits` and `GET /api/v1/user/usage` report when the request carries no `deploymentTypes`; a request value always wins. Set `model` to restore the model-only report. Validated at startup — any other value fails boot                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `DIAL_API_KEY`                           | —                                  | Server-only API key sent as `Api-Key` to DIAL Core for utility-model naming. Not used for user-scoped routes; those continue to use the session access token. Must be stored as a deployment secret.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `THEMES_CONFIG_URL`                      | —                                  | Base URL for theme configuration and icons                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `THEMES_SERVICE_TIMEOUT_MS`              | `5000`                             | Timeout for theme service requests (milliseconds)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `FILE_UPLOAD_MAX_BYTES`                  | `536870912`                        | Maximum file upload size in bytes (default 512 MB); multer rejects larger payloads with 413. Also exposed to the client as `config.maxAttachmentFileSizeBytes` via `GET /api/v1/client-config`, so the frontend can reject an oversized file before attempting to upload it.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `FILE_TRANSFER_TIMEOUT_MS`               | `30000`                            | Timeout for DIAL Core file download, listing, delete and other file operation fetch requests (milliseconds). For `POST /api/v1/files` uploads it is the maximum time the transfer may go without moving any data (a slow but progressing upload is not aborted); raise it only if DIAL Core needs longer to answer after the last byte.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `ARCHIVE_DOWNLOAD_CONCURRENCY`           | `32`                               | Concurrent DIAL Core downloads used while streaming ZIP archives; range 1–32                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `ARCHIVE_UPLOAD_MAX_BYTES`               | `536870912`                        | Maximum size (bytes) of an uploaded ZIP archive request body for `POST /api/v1/files/upload-archive` (default 512 MB)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `ARCHIVE_UPLOAD_MAX_FILES`               | `1000`                             | Maximum number of non-directory entries extracted from one uploaded archive                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `ARCHIVE_UPLOAD_MAX_UNCOMPRESSED_BYTES`  | `2147483648`                       | Maximum cumulative decompressed bytes across all entries of an uploaded archive, checked incrementally during extraction (default 2 GB)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `ARCHIVE_UPLOAD_TIMEOUT_MS`              | `300000`                           | Wall-clock budget (milliseconds) for extracting and uploading an entire archive (default 5 min)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `PUBLISH_ATTACHMENTS_MAX_FILES`          | `1000`                             | Maximum number of attachment files (individual files plus every file inside attached folders) published together with one conversation by `POST /api/v1/conversations/publish`; a larger conversation is rejected with 413 before DIAL Core is called                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `SKILL_UPLOAD_MAX_FILES`                 | `100`                              | Maximum number of files (including `SKILL.md`) in a whole-skill create/update via `POST`/`PUT /api/v1/skills`; rejected with 400                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `SKILL_FILE_UPLOAD_MAX_BYTES`            | `1048576`                          | Maximum size (bytes) of a single file in a whole-skill create/update, via `PUT /api/v1/skills/files`, or of a standalone `SKILL.md` uploaded to `POST /api/v1/skills/import` (default 1 MB); rejected with 413                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `SKILL_UPLOAD_MAX_TOTAL_BYTES`           | `16777216`                         | Maximum cumulative content size (bytes) of a whole-skill create/update, including `SKILL.md` (default 16 MB); rejected with 413                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `SKILL_TRANSFER_TIMEOUT_MS`              | `60000`                            | Timeout for all skills-domain DIAL Core requests (milliseconds)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `SKILL_ARCHIVE_UPLOAD_MAX_BYTES`         | `20971520`                         | Maximum size (bytes) of the compressed ZIP archive accepted by `POST /api/v1/skills/import` before extraction (default 20 MB); rejected with 413. Distinct from `SKILL_UPLOAD_MAX_TOTAL_BYTES`, which bounds decompressed content                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `ASR_MODEL`                              | —                                  | Deployment ID of a dedicated speech-to-text model. When set (together with the `voice-input` feature), the mic button is always shown and recorded audio is transcribed by this model via `POST /api/v1/transcription`. When absent, the mic button is shown only for deployments whose `inputAttachmentTypes` include an audio MIME type, and transcription is handled by the selected chat deployment.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `TRANSCRIBE_SIZE_LIMIT_BYTES`            | `5242880`                          | Maximum audio file size (in bytes) accepted for transcription. The frontend applies this limit to the complete recording before upload. Default is 5 MB.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `UTILITY_MODEL`                          | —                                  | Shared deployment ID for conversation naming and AI text refinement. The ID stays server-side. Naming requires `DIAL_API_KEY` and `LLM_CONVERSATION_NAMING_ENABLED=true`. Refinement uses caller credentials independently of naming; only `config.aiTextRefinementAvailable` is exposed, and unset/blank values disable it.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `LLM_CONVERSATION_NAMING_ENABLED`        | `false`                            | When `true` and `UTILITY_MODEL` is set, the backend asynchronously renames conversations after the first assistant reply using the utility model.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `UTILITY_NAMING_TIMEOUT_MS`              | `10000`                            | Timeout in milliseconds for utility-model conversation naming requests.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `RESPONSES_API_ENABLED`                  | `false`                            | Server-only kill switch for routing eligible generations through the OpenAI Responses API. Even when a deployment reports `features.responsesApi=true`, Responses is only used when this is also `true`; otherwise Chat Completions is used. Not exposed to the frontend. Takes effect on the next service restart.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `RESPONSES_BACKGROUND_ENABLED`           | `false`                            | Server-only switch for starting eligible Responses generations as DIAL Core background jobs (`background: true`, `store: true`), so a generation survives browser disconnects and BFF restarts. Used only when `RESPONSES_API_ENABLED` is also `true`, the deployment reports `features.responsesApi=true`, and its DIAL Core `interfaces` include `openaiResponses`. Affects only new generations: in-flight background jobs stay recoverable, stoppable and finalizable when it is turned off. The first text of a background generation arrives later than on the stateless path, because the job waits in the model provider's queue first (see `docs/responses-api-integration.md`). Requires DIAL Core 0.48.0 or later. Not exposed to the frontend. Takes effect on the next service restart.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `MAX_GENERATION_DURATION_MS`             | `1800000`                          | Milliseconds from registry admission before an entry still in `active` receives a `max_duration` cancellation request (default 30 min). The key remains owned until its worker settles; this is not a deadline for preflight, persistence, or an upstream call that does not settle after abort. Independent of the originating client connection.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `GENERATION_FINALIZE_TIMEOUT_MS`         | `60000`                            | Milliseconds from entering terminal finalization before existing attachment listeners are notified and removed and timers cleared. On expiry, the entry becomes `settling` and retains its registry key, assembled snapshot, pending write, and generation-gauge contribution. The write is not cancelled and its worker may remain pending; same-process admission stays blocked until settlement or restart. This does not bound attachments created after the timeout. See the [lifecycle limits](../../docs/observability.md#process-memory-and-outstanding-work).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `CUSTOM_CLIENT_VARIABLES`                | `{}`                               | Public client-owned settings as a JSON object, exposed unchanged under `config.customVariables` in client-config. Arbitrary nested JSON values are supported; the BFF does not interpret keys or merge them into built-in config or feature flags. Unset, blank, malformed JSON and non-object roots fall back to `{}`. All allowed clients receive the same object, including before authentication.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `CUSTOM_CORE_API_CONFIG`                 | — (disabled)                       | Server-only allowlist of exact Core paths (GET, or a configured POST/PUT/DELETE) exposed through `/api/v1/custom-api/:operationId`. Unset, empty, or whitespace-only disables the bridge entirely. See [Custom Core API operations](#custom-core-api-operations).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `DEFAULT_DEPLOYMENT_PINNED`              | `false`                            | Client-visible feature flag. When `true`, `DEFAULT_DEPLOYMENT` takes priority over the user's persisted deployment for new conversations and is pinned to the top of the picker. When `false`, the existing user-preference precedence and alphabetical ordering remain unchanged. Takes effect on the next service restart.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `ALLOW_VISUALIZER_SEND_MESSAGES`         | `false`                            | Client-visible feature flag, exposed as `features.visualizerSendMessages`. When `true`, a custom or application visualizer iframe may post `SEND_MESSAGE` with `{ message: string }`, and its text is sent as a user message in the conversation that renders it. The message is dropped while a response streams, in read-only conversations, when an overlay host enables `disabled-send`, and from a canvas opened in another conversation. Enable it only for visualizers you trust: an opted-in visualizer can send messages as the user. Only `true`, `1` and `yes` (case-insensitive) enable it; any other value, including an empty one, leaves it off. Takes effect on the next service restart.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `USAGE_LIMITS_CONTROL_ENABLED`           | `false`                            | Client-visible feature flag, exposed as `features.usageLimitsControl`. When `true`, the conversation input shows the token/cost usage-limits control next to the model selector in both the new-chat composer and an open conversation. When `false` (the default), the control is not rendered and the composers show the usage banner above the input instead (see `USAGE_LIMITS_WARNING_THRESHOLD_PERCENT`). Takes effect on the next service restart.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `USAGE_LIMITS_WARNING_THRESHOLD_PERCENT` | `75`                               | Client-visible config, exposed as `config.usageLimitsWarningThresholdPercent`. Integer 1–99; a value outside that range or a non-integer fails validation at boot. The percentage of a capped day/week/month token or cost limit at which the usage banner appears above the conversation input, while `USAGE_LIMITS_CONTROL_ENABLED` is `false`. Governs the banner only: the usage dial and the Settings → Usage page keep their fixed 75% running-low mark.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `UI_EVENT`                               | —                                  | Start-page celebration module ID, exposed as `config.activeEventId` in client-config. Use `halloween` or `new-year`; unset or `none` disables celebrations. Each user can turn a set event off or on with **Seasonal celebrations** in Settings → Preferences; decides its state until they do. IDs must use lowercase kebab-case; unsupported IDs are returned unchanged and safely ignored by the frontend, so new event modules need no backend enum change. Modules replace the existing navigation/header icon and supply decorations, random click scenes, notifications, and optional secret chat phrases on `/` only. Effects clear on navigation, persist no event state, play no sound, and respect reduced motion. Takes effect on the next service restart.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `UI_EVENT_ENABLED_BY_DEFAULT`            | `true`                             | Client-visible config, exposed as `config.celebrationsEnabledByDefault`. The default state of the **Seasonal celebrations** switch in Settings → Preferences for users who have not saved a choice of their own; a saved choice always wins, and the default is never written to the browser, so changing it reaches everyone who never chose. Only `false`, `0` and `no` (case-insensitive) turn it off, which makes a configured `UI_EVENT` opt-in; any other value keeps it on. Has no visible effect without `UI_EVENT`. Takes effect on the next service restart.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `FEATURED_MODEL_IDS`                     | —                                  | Comma-separated list of model (or application) IDs to mark as featured in the catalog. Matching is exact and case-sensitive against the item's `id` field. Example: `chat-hub-v2,gpt-4o,dial-rag`. Takes effect on the next service restart; changing it without a restart has no effect.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `HIDDEN_ENTITY_TAGS`                     | `[]`                               | Comma-separated topic tags marking models and toolsets that stay hidden in the Catalog while remaining visible in the Quick App 2.0 form. Example: `internal,experimental`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `ALLOWED_IFRAME_ORIGINS`                 | —                                  | Comma-separated list of origins allowed to frame this app and be loaded by it (added to CSP `frame-ancestors` and `frame-src`). Each entry must be an origin only (`scheme://host[:port]`, no path or query string) with an `https://` (or `http://` for local development only) scheme, and may optionally use a single leading `*.` wildcard label to allow a whole subdomain family. Required for chat overlay mode and iframe integrations such as Quick Apps editors, and for every origin used by `CUSTOM_VISUALIZERS` — `frame-src` draws from this list only. Examples: `https://quickapps.example.com` , `https://*.example.com` (matches `https://portal.example.com` and `https://a.b.example.com`, but not the bare `https://example.com`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `OVERLAY_ENABLED`                        | `false`                            | Enables embedded chat overlay runtime mode. Has no effect unless `ALLOWED_IFRAME_ORIGINS` also includes at least one allowed host origin.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `OVERLAY_SANDBOX_ENABLED`                | `false`                            | Serves the overlay sandbox static app at `/overlay-sandbox/`. Intended for development/test environments only; the route is not served when disabled.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `FILE_MANAGER_AVAILABLE_TABS`            | `all,my_files,shared,organization` | Comma-separated subset of `all`, `my_files`, `shared`, `organization` controlling which File Manager tabs are shown. `all` adds a combined tab on the File storage page with one top-level folder per enabled source tab; it is shown only when at least two source tabs are enabled and is never offered in attach pickers. Unknown values (including `review`) are dropped; an unset or fully-invalid value falls back to all four ids.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `ENABLED_UI_FEATURES`                    | —                                  | When set, becomes the complete list of enabled `OverlayFeature` values (replace semantics). Supports both positive flags (e.g. `header`, `likes`) and modifier/hide flags (e.g. `hide-new-conversation`). Unrecognized entries are dropped with a warning; if all entries are unrecognized, falls back to the compiled-in `DEFAULT_ENABLED_UI_FEATURES` baseline. A renamed value listed in `DEPRECATED_UI_FEATURE_ALIASES` (currently `custom-applications` → `schema-apps`) is accepted transitionally: it resolves to its replacement and logs a deprecation warning. When unset or empty, the compiled-in defaults apply. An overlay host that supplies its own `enabledFeatures` always overrides this server baseline. Example: `header,likes,conversations-sharing,hide-new-conversation`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `LIVE_CHAT_INTERACTION_ENABLED`          | `false`                            | Enables the interactive toolset sign-in flow: the frontend subscribes to DIAL Core's client-channel and shows a global sign-in dialog when a completion needs mid-stream toolset credentials (`features.liveChatInteraction`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `LIVE_CHAT_INTERACTION_ENABLED_ROLES`    | —                                  | Comma-separated roles allowed to use the feature above when it is enabled. Unset or empty means unrestricted (all authenticated users).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `SCHEDULER_APP_ID`                       | —                                  | DIAL Core application id of the DIAL Scheduler routed deployment, used to build the `/v1/deployments/applications/{id}/route/v1/schedules` upstream path for the `/api/v1/scheduled-tasks*` endpoints. Required only when `features.scheduledTasksEnabled` is used; if unset, those endpoints fail fast with `503`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `SCHEDULER_SERVICE_ID`                   | —                                  | Upstream `service_id` sent to DIAL Scheduler on schedule create/update. Required only when `features.scheduledTasksEnabled` is used; if unset, create/update fail fast with `503` (list/get are unaffected).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `SCHEDULER_SERVICE_TIMEOUT_MS`           | `10000`                            | Timeout for DIAL Scheduler proxy requests (milliseconds)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `WELCOME_SCREEN_DESCRIPTION`             | —                                  | Operator-authored plain-text copy shown below the greeting heading on the new-chat start screen. Never interpreted as markup. Unset or blank hides it.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `FOOTER_HTML_MESSAGE`                    | —                                  | Operator-authored HTML shown in the footer of the chat input area (desktop) and mobile user panel. Supports `%%VERSION%%` token replaced server-side with the resolved chat version (`CHAT_VERSION` when set, otherwise the workspace root `package.json` version). Sanitized server-side (allowlist: `a span strong u em br p`). Unset or empty hides the footer.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `CHAT_VERSION`                           | root `package.json` version        | Version string shown in the footer's corner version label, substituted for the `%%VERSION%%` footer token, and reported as `version` by `GET /api/health`. Set from CI/CD to surface the deployed build. Blank or unset falls back to the workspace root `package.json` version — the only manifest the release pipeline stamps — so a version label is always shown. Exposed to clients as `config.appVersion`; not role-gated.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `ANNOUNCEMENT_TITLE`                     | —                                  | Bold heading of the top-of-app announcement banner. Plain text — never interpreted as markup, so `<b>` renders literally. Set this or `ANNOUNCEMENT_DESCRIPTION` to render the banner; leaving both unset hides it. Blank is treated as unset.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `ANNOUNCEMENT_DESCRIPTION`               | —                                  | Supporting copy shown after the banner title. Sanitized server-side (allowlist: `a b strong em br span`); non-hash anchors are forced to `target="_blank" rel="noopener noreferrer"`. Text that overruns the banner width is clipped to one line with an ellipsis; a chevron beside the close control then expands the banner so the whole message can be read. Short copy still reads best, since the collapsed line is what most users see. Blank, or markup that sanitizes away entirely, is treated as unset.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `ANNOUNCEMENTS`                          | `[]`                               | JSON array feeding the `+N announcements` popover: `[{ "title": "…", "description": "…", "link": { "label": "…", "href": "https://…" } }]`. `description` and `link` are optional; an entry with no link renders without a call to action. Max 10 entries. Validation is drop-and-log and never fatal — an entry is dropped if its title is blank, or if its link is present but has a blank label or an `href` that is not an absolute `http`/`https` URL (relative paths are rejected). Malformed JSON resolves to `[]`. Rejected entries appear only in the server log.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `CUSTOM_VISUALIZERS`                     | `[]`                               | JSON array of MIME → visualizer iframe mappings: `[{ "title": "my-viz", "url": "https://viz.example.com", "contentType": "application/x-my-viz,application/x-my-viz-v2" }]`. An attachment whose MIME type matches an entry opens in the Attachment Canvas rendered by that visualizer's iframe instead of the default preview; `contentType` accepts a comma-separated MIME list. `title` is the postMessage namespace and MUST equal the `appName` passed to `ChatVisualizerConnector` inside the visualizer app — a mismatch loads the iframe but never sends it data. Registering a URL grants that origin in-app iframe privileges (downloads, popups, modals, clipboard, fullscreen), so list only vetted visualizers. Registering it here does **not** by itself let the browser load it: CSP `frame-src` is built from `ALLOWED_IFRAME_ORIGINS` alone, so each visualizer URL's origin must also be listed there or the iframe is blocked and the canvas never renders. Mind the coupling — that same list also feeds `frame-ancestors`, so adding a visualizer origin additionally permits that origin to embed this app. Unset means the feature is dark. Invalid JSON or invalid entries are dropped with an error log; boot never fails on malformed config.                                                                                                                                      |
+| `APPLICATION_VISUALIZERS`                | `{}`                               | JSON **object** (not an array) keyed by application id — the effective deployment id of a message: `{"my-app":{"title":"my-viz","url":"https://viz.example.com","contentType":"application/x-my-viz","height":600,"mobileHeight":400}}`. Every attachment an entry claims is delivered to one iframe together via `SEND_GROUPED_VISUALIZE_DATA`, rendered inline in the message with an expand-to-canvas control, rather than one iframe per attachment. Unlike `CUSTOM_VISUALIZERS`, `contentType` is **optional**: when set it claims only those MIME types and the message's other attachments stay ordinary tiles; when omitted it claims every attachment that carries a URL. An entry **takes precedence over `CUSTOM_VISUALIZERS`** for the attachments it claims. The same `ALLOWED_IFRAME_ORIGINS` requirement and `title`/`appName` contract as `CUSTOM_VISUALIZERS` apply. Optional booleans `borderless` (drop the inline frame's border, background, and header divider) and `withoutTitle` (hide the inline header's title text) carry over from legacy Chat 0.x. `passAuthInfo` and `passExplicitToken` are accepted for parity with legacy Chat 0.x and are inert — auth is server-side and the browser holds no access token; legacy `expanded` is logged as unrecognized and ignored. Invalid JSON, a non-object value, or invalid entries are dropped with an error log; boot never fails. |
+
+#### Built-in prompt overrides
+
+These optional server-only variables replace the complete built-in instruction for their operation:
+
+| Variable                                             | Operation                                           | Default  |
+| ---------------------------------------------------- | --------------------------------------------------- | -------- |
+| `TEXT_REFINEMENT_SKILL_DESCRIPTION_PROMPT`           | Refine a skill description                          | Built-in |
+| `TEXT_REFINEMENT_SKILL_INSTRUCTIONS_PROMPT`          | Refine skill instructions                           | Built-in |
+| `TEXT_REFINEMENT_SCHEDULED_TASK_DESCRIPTION_PROMPT`  | Refine a scheduled task description                 | Built-in |
+| `TEXT_REFINEMENT_SCHEDULED_TASK_INSTRUCTIONS_PROMPT` | Refine scheduled task instructions                  | Built-in |
+| `TEXT_REFINEMENT_APPLICATION_DESCRIPTION_PROMPT`     | Refine an application description                   | Built-in |
+| `TEXT_REFINEMENT_TOOLSET_DESCRIPTION_PROMPT`         | Refine a toolset description                        | Built-in |
+| `TEXT_REFINEMENT_PROMPT_DESCRIPTION_PROMPT`          | Refine a prompt description                         | Built-in |
+| `TEXT_REFINEMENT_PROMPT_INSTRUCTIONS_PROMPT`         | Refine prompt instructions                          | Built-in |
+| `CONVERSATION_NAMING_SYSTEM_PROMPT`                  | Automatic naming and the Rename conversation action | Built-in |
+| `TRANSCRIPTION_PROMPT`                               | Dedicated audio transcription via `ASR_MODEL`       | None     |
+
+Unset, empty, and whitespace-only values retain the existing defaults; `TRANSCRIPTION_PROMPT` has no default, so the ASR request carries only the audio attachment, because dedicated transcription models reject text input. Nonblank overrides preserve their whitespace, Markdown, Unicode, and line breaks. They are not appended to the defaults, and placeholders are not interpolated. Prompt settings do not change model selection, authorization, feature availability, timeouts, or response validation. Refinement and naming still use `UTILITY_MODEL`; transcription uses `ASR_MODEL`.
+
+Quote multiline values in `apps/chat-api/.env`, for example:
+
+```dotenv
+CONVERSATION_NAMING_SYSTEM_PROMPT="Create a concise conversation title.
+Return only the title, in the language of the conversation."
+```
+
+Double-quoted `\n` escapes also produce line breaks. Restart the backend after changing a value. Remove an override and restart to restore its default. Keep the operation's expected output format in custom prompts: refinement returns only rewritten text, naming only a title, and transcription only recognized speech. These settings are consumed by the backend and are not added to browser configuration.
+
+#### Outbound DIAL Core client identity
+
+Every request from Chat API to DIAL Core carries
+`User-Agent: ai-dial-chat/<normalized-version>`. This applies to requests made
+through the shared DIAL SDK client and to the raw Core transports used for
+rating, scheduled tasks, and streaming archive uploads. Requests to non-Core
+services, such as the theme service, keep their own transport and identity.
+
+The version is resolved from `CHAT_VERSION`; blank or unset values fall back to
+the workspace root `package.json` version. For the header only, runs of characters outside
+`A-Z`, `a-z`, `0-9`, `.`, `_`, and `-` become `-`, leading and trailing `-` are
+removed, and an empty normalized value becomes `unknown`. The header is intended
+only for operational diagnostics and client-version attribution. It contains no
+user, tenant, authentication, conversation, or other runtime request data.
+
+Banner dismissal is content-keyed and persists in the browser's `localStorage`: a user who closes the banner keeps it hidden across restarts, and it reappears automatically for everyone once an operator changes any of the content it renders — the title, the description, or an `ANNOUNCEMENTS` entry (its title, description or link) — with no version counter or manual reset. Note that dismissing the banner also hides the announcements popover, since the pill lives inside the banner; that is why editing the popover list alone is enough to bring the banner back.
+
+The dismissal is keyed on content only, so redeploying with the same copy does not re-show the banner, and users who never dismissed the previous announcement are unaffected. Deployments that leave `ANNOUNCEMENTS` empty keep the signatures their users already stored, so adding the popover list to the key does not re-show the banner on its own.
+
+| Variable                    | Default | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| --------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ANNOUNCEMENT_HTML_MESSAGE` | —       | Deprecated. Renders the legacy centered banner with the same content-keyed dismissal as the structured form. Unlike the description, it is not truncated and accepts `<p>` and `<u>` on top of the inline set (`<a>`, `<b>`, `<strong>`, `<em>`, `<br>`, `<span>`), so a multi-paragraph message renders as stacked centered lines. `style` attributes are stripped — links are underlined by the app — and `target`/`rel` are not added for you, so author them yourself. Ignored when `ANNOUNCEMENT_TITLE` or `ANNOUNCEMENT_DESCRIPTION` is set. Use the structured pair for new deployments. |
+
+#### Session expiration and upgrade
+
+`AUTH_SESSION_MAX_AGE_SECONDS` limits the local Chat session, independently of
+provider scopes. Keycloak's positive numeric `refresh_expires_in` can shorten
+that deadline; zero or missing metadata leaves the refresh-token expiry unknown.
+Other providers currently use the Chat limit when a refresh token is present.
+Without a refresh token the session cannot outlive its access token.
+
+Session payload v2 enforces expiry on the server as well as in browser cookies.
+After upgrading from v1, existing sessions require a new login; deploy auth
+replicas together to avoid inconsistent enforcement during rollout. In-progress
+OIDC transactions can still complete within their original ten-minute window.
+Successful token refresh resets the deadline to the current time plus the configured
+lifetime (30 days by default). Protected requests refresh within 60 seconds of access-token
+or effective session expiry; optional authentication and bucket-only cookie rewrites do
+not renew it. Failed refreshes do not extend it. Changing the setting affects new logins
+and successful renewals; already-issued cookies retain their deadline until then.
+Expiration can return the
+user through an existing IdP SSO session without a password prompt; password/MFA
+reauthentication is a separate IdP policy.
+
+See [session lifetime policy](../../docs/auth/auth-bff-encrypted-cookie.md#35-session-lifetime-policy)
+for provider metadata, rotation, and migration details.
+
+#### Header bearer-token authentication
+
+Alongside the encrypted session cookie, the BFF can optionally authenticate requests that carry an `Authorization: Bearer <token>` header, verifying the token's signature locally against the JWKS of whichever registered OIDC provider issued it. When present and valid, a header token takes precedence over the session cookie and is exempt from CSRF checks (see `docs/auth/auth-bff-encrypted-cookie.md`). The feature is off by default — enabling it widens the BFF's trust boundary from "our SPA in a browser" to "anyone holding a valid IdP token" — and requires an explicit issuer allowlist.
+
+| Variable                                     | Default | Description                                                                                                                                  |
+| -------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AUTH_HEADER_TOKEN_ENABLED`                  | `false` | Master feature flag. When `false`, any `Authorization` header is ignored entirely and only the session cookie is used.                       |
+| `AUTH_HEADER_TOKEN_ALLOWED_ISSUERS`          | —       | Comma-separated allowlist of trusted `iss` values. **Required** (application fails to boot otherwise) when `AUTH_HEADER_TOKEN_ENABLED=true`. |
+| `AUTH_HEADER_TOKEN_CLOCK_TOLERANCE_SECONDS`  | `30`    | Clock-skew tolerance (seconds) applied when verifying a header token's `exp`/`nbf`.                                                          |
+| `AUTH_HEADER_TOKEN_JWKS_CACHE_TTL_SECONDS`   | `600`   | How long a provider's remote JWK set is cached before being refreshed.                                                                       |
+| `AUTH_HEADER_TOKEN_BUCKET_CACHE_TTL_SECONDS` | `60`    | TTL for the DIAL Core bucket resolved for a header-authenticated caller, cached by a hash of the token.                                      |
+
+A verified token must carry a non-empty `sub` claim. One that passes issuer allowlisting, provider matching and signature/time verification but has no `sub` (or an empty one) is rejected with `401` / `AUTH_HEADER_TOKEN_INVALID`, because `sub` is the server-verified identity the BFF derives per-caller state from.
+
+**Chat generation under header auth.** `POST /api/v1/conversations/completions`, `.../completions/stop` and `.../completions/attach` all work for a header-authenticated caller. Two consequences operators should plan for:
+
+- **All clients of one (`providerId`, `sub`) are a single generation owner.** A bearer request carries no server-issued session artifact, so the subject is the finest identity the server can verify — distinguishing one client of a subject from another would mean trusting a client-asserted value. For one conversation path, requests reaching the same backend process share registry ownership: a second start gets `409` while any lifecycle state retains the key, and those clients can stop or attach to its running entry; the `snapshot` event of such an attach carries the entry's `generationId`, so a client that joined by path can send it to `.../completions/stop`. The registry does not coordinate ownership, stop, or attach across pods. This mirrors how multiple browser tabs of a single cookie session already behave. A different `sub`, or the same `sub` from a different `providerId`, is a different principal and gets `404` — the same answer as a path with no generation at all.
+- **The token captured at generation start is used for the whole generation.** `streamCompletion` captures the access token once, at request start, and reuses it for the upstream relay _and_ the persistence writes that follow. Because the BFF performs no server-side refresh for header callers by contract, a token that expires mid-generation fails that generation. `MAX_GENERATION_DURATION_MS` requests cancellation of active work; it does not bound the later persistence wait or a request that does not settle after abort. Account for those phases when choosing token lifetime.
+
+Ownership does not depend on the token itself — it is derived from `providerId` + `sub` — so renewing an access token mid-generation keeps the caller's ability to stop and attach to what it started.
+
+#### Auth provider environment variables
+
+Each identity provider is configured through its own set of discrete environment variables, following the `AUTH_{PROVIDER_TYPE}_{FIELD_NAME}` convention. A provider is registered only when its `CLIENT_ID` variable is set; an unconfigured provider is silently skipped. If `CLIENT_ID` is set but another field that provider requires is missing, the application fails to boot with an error naming the missing variable. The provider's `id` (used in `/api/v1/auth/login/<id>` and in the `/api/v1/auth/providers` response) is fixed in code and cannot be overridden. Only one instance of each provider type is supported.
+
+Every `AUTH_{PROVIDER_TYPE}_HOST` variable (`AUTH_AUTH0_HOST`, `AUTH_GITLAB_HOST`, `AUTH_KEYCLOAK_HOST`, `AUTH_PING_ID_HOST`, `AUTH_COGNITO_HOST`) accepts either form:
+
+- a bare host, optionally with a path — `keycloak.example.com/realms/dial` — in which case HTTPS is assumed and `https://` is prepended;
+- a full URL whose scheme is used as given — `http://keycloak.internal:8080/realms/dial` — which is how a provider reachable only over plain HTTP (an in-cluster Keycloak, a local test instance) is configured.
+
+A trailing slash is normalised away. A scheme other than `http` or `https` fails boot with an error naming the variable.
+
+The configured host is used as the OIDC discovery location. After discovery,
+Chat uses the canonical `issuer` returned by the provider metadata for callback
+and token issuer validation. This allows an in-cluster discovery URL to return
+the provider's externally advertised issuer without causing a false issuer
+mismatch; the canonical issuer remains subject to strict validation.
+
+**Auth0** (`id: auth0`)
+
+| Variable                      | Required | Default                               |
+| ----------------------------- | :------: | ------------------------------------- |
+| `AUTH_AUTH0_CLIENT_ID`        |  Yes\*   | —                                     |
+| `AUTH_AUTH0_SECRET`           |  Yes\*   | —                                     |
+| `AUTH_AUTH0_HOST`             |  Yes\*   | —                                     |
+| `AUTH_AUTH0_AUDIENCE`         |    No    | —                                     |
+| `AUTH_AUTH0_NAME`             |    No    | `Auth0`                               |
+| `AUTH_AUTH0_SCOPE`            |    No    | `openid email profile offline_access` |
+| `AUTH_AUTH0_ADMIN_ROLE_NAMES` |    No    | `ADMIN_ROLE_NAMES`                    |
+| `AUTH_AUTH0_DIAL_ROLES_FIELD` |    No    | `DIAL_ROLES_FIELD`                    |
+
+**Azure AD** (`id: azure-ad`)
+
+| Variable                         | Required | Default                                         |
+| -------------------------------- | :------: | ----------------------------------------------- |
+| `AUTH_AZURE_AD_CLIENT_ID`        |  Yes\*   | —                                               |
+| `AUTH_AZURE_AD_SECRET`           |  Yes\*   | —                                               |
+| `AUTH_AZURE_AD_TENANT_ID`        |  Yes\*   | —                                               |
+| `AUTH_AZURE_AD_NAME`             |    No    | `Azure AD`                                      |
+| `AUTH_AZURE_AD_SCOPE`            |    No    | `openid profile user.Read email offline_access` |
+| `AUTH_AZURE_AD_ADMIN_ROLE_NAMES` |    No    | `ADMIN_ROLE_NAMES`                              |
+| `AUTH_AZURE_AD_DIAL_ROLES_FIELD` |    No    | `DIAL_ROLES_FIELD`                              |
+
+**Azure B2C** (`id: azure-b2c`)
+
+| Variable                          | Required | Default                               |
+| --------------------------------- | :------: | ------------------------------------- |
+| `AUTH_AZURE_B2C_CLIENT_ID`        |  Yes\*   | —                                     |
+| `AUTH_AZURE_B2C_CLIENT_SECRET`    |  Yes\*   | —                                     |
+| `AUTH_AZURE_B2C_TENANT_ID`        | Yes\*\*  | —                                     |
+| `AUTH_AZURE_B2C_USER_FLOW`        | Yes\*\*  | —                                     |
+| `AUTH_AZURE_B2C_ISSUER`           | Yes\*\*  | —                                     |
+| `AUTH_AZURE_B2C_NAME`             |    No    | `Azure B2C`                           |
+| `AUTH_AZURE_B2C_SCOPE`            |    No    | `openid profile email offline_access` |
+| `AUTH_AZURE_B2C_ADMIN_ROLE_NAMES` |    No    | `ADMIN_ROLE_NAMES`                    |
+| `AUTH_AZURE_B2C_DIAL_ROLES_FIELD` |    No    | `DIAL_ROLES_FIELD`                    |
+
+\*\* Either `AUTH_AZURE_B2C_ISSUER` on its own, or both `AUTH_AZURE_B2C_TENANT_ID` and `AUTH_AZURE_B2C_USER_FLOW` together. When `AUTH_AZURE_B2C_ISSUER` is not set, the issuer is derived as `https://${TENANT_ID}.b2clogin.com/${TENANT_ID}.onmicrosoft.com/${USER_FLOW}/v2.0`.
+
+**GitLab** (`id: gitlab`)
+
+| Variable                       | Required | Default            |
+| ------------------------------ | :------: | ------------------ |
+| `AUTH_GITLAB_CLIENT_ID`        |  Yes\*   | —                  |
+| `AUTH_GITLAB_SECRET`           |  Yes\*   | —                  |
+| `AUTH_GITLAB_HOST`             |  Yes\*   | —                  |
+| `AUTH_GITLAB_NAME`             |    No    | `GitLab`           |
+| `AUTH_GITLAB_SCOPE`            |    No    | `read_user`        |
+| `AUTH_GITLAB_ADMIN_ROLE_NAMES` |    No    | `ADMIN_ROLE_NAMES` |
+| `AUTH_GITLAB_DIAL_ROLES_FIELD` |    No    | `DIAL_ROLES_FIELD` |
+
+**Google** (`id: google`)
+
+| Variable                | Required | Default                               |
+| ----------------------- | :------: | ------------------------------------- |
+| `AUTH_GOOGLE_CLIENT_ID` |  Yes\*   | —                                     |
+| `AUTH_GOOGLE_SECRET`    |  Yes\*   | —                                     |
+| `AUTH_GOOGLE_NAME`      |    No    | `Google`                              |
+| `AUTH_GOOGLE_SCOPE`     |    No    | `openid email profile offline_access` |
+
+Google has no host variable (issuer is the fixed `https://accounts.google.com`) and no per-provider admin-role/roles-claim override — it always uses `ADMIN_ROLE_NAMES` / `DIAL_ROLES_FIELD`.
+
+**Keycloak** (`id: keycloak`)
+
+| Variable                         | Required | Default                                                             |
+| -------------------------------- | :------: | ------------------------------------------------------------------- |
+| `AUTH_KEYCLOAK_CLIENT_ID`        |  Yes\*   | —                                                                   |
+| `AUTH_KEYCLOAK_SECRET`           |  Yes\*   | —                                                                   |
+| `AUTH_KEYCLOAK_HOST`             |  Yes\*   | — (include the realm path, e.g. `keycloak.example.com/realms/dial`) |
+| `AUTH_KEYCLOAK_NAME`             |    No    | `Keycloak`                                                          |
+| `AUTH_KEYCLOAK_SCOPE`            |    No    | `openid email profile offline_access`                               |
+| `AUTH_KEYCLOAK_ADMIN_ROLE_NAMES` |    No    | `ADMIN_ROLE_NAMES`                                                  |
+| `AUTH_KEYCLOAK_DIAL_ROLES_FIELD` |    No    | `DIAL_ROLES_FIELD`                                                  |
+
+**PingID** (`id: ping-id`)
+
+| Variable                        | Required | Default            |
+| ------------------------------- | :------: | ------------------ |
+| `AUTH_PING_ID_CLIENT_ID`        |  Yes\*   | —                  |
+| `AUTH_PING_ID_SECRET`           |  Yes\*   | —                  |
+| `AUTH_PING_ID_HOST`             |  Yes\*   | —                  |
+| `AUTH_PING_ID_NAME`             |    No    | `PingID`           |
+| `AUTH_PING_ID_SCOPE`            |    No    | `offline_access`   |
+| `AUTH_PING_ID_ADMIN_ROLE_NAMES` |    No    | `ADMIN_ROLE_NAMES` |
+| `AUTH_PING_ID_DIAL_ROLES_FIELD` |    No    | `DIAL_ROLES_FIELD` |
+
+**Cognito** (`id: cognito`)
+
+| Variable                        | Required | Default                                                    |
+| ------------------------------- | :------: | ---------------------------------------------------------- |
+| `AUTH_COGNITO_CLIENT_ID`        |  Yes\*   | —                                                          |
+| `AUTH_COGNITO_SECRET`           |  Yes\*   | —                                                          |
+| `AUTH_COGNITO_HOST`             |  Yes\*   | — (e.g. `cognito-idp.{region}.amazonaws.com/{userPoolId}`) |
+| `AUTH_COGNITO_NAME`             |    No    | `Cognito`                                                  |
+| `AUTH_COGNITO_SCOPE`            |    No    | `openid email profile`                                     |
+| `AUTH_COGNITO_ADMIN_ROLE_NAMES` |    No    | `ADMIN_ROLE_NAMES`                                         |
+| `AUTH_COGNITO_DIAL_ROLES_FIELD` |    No    | `DIAL_ROLES_FIELD`                                         |
+
+**Okta** (`id: okta`)
+
+| Variable                     | Required | Default                                                             |
+| ---------------------------- | :------: | ------------------------------------------------------------------- |
+| `AUTH_OKTA_CLIENT_ID`        |  Yes\*   | —                                                                   |
+| `AUTH_OKTA_CLIENT_SECRET`    |  Yes\*   | —                                                                   |
+| `AUTH_OKTA_ISSUER`           |  Yes\*   | — (full issuer URL, e.g. `https://dev-123.okta.com/oauth2/default`) |
+| `AUTH_OKTA_NAME`             |    No    | `Okta`                                                              |
+| `AUTH_OKTA_SCOPE`            |    No    | `openid email profile`                                              |
+| `AUTH_OKTA_ADMIN_ROLE_NAMES` |    No    | `ADMIN_ROLE_NAMES`                                                  |
+| `AUTH_OKTA_DIAL_ROLES_FIELD` |    No    | `DIAL_ROLES_FIELD`                                                  |
+
+\* Required only if that provider is being configured at all (signaled by its `CLIENT_ID` variable being set); the provider is skipped entirely otherwise.
+
+#### Trusting a private certificate authority
+
+At startup, `chat-api` discovers every configured OIDC provider over HTTPS. If
+an identity provider uses a certificate issued by a private CA, the Node.js
+process must trust that CA before the application starts; otherwise provider
+discovery fails and the application does not boot.
+
+Mount a PEM-encoded CA bundle into the container and point
+[`NODE_EXTRA_CA_CERTS`](https://nodejs.org/api/cli.html#node_extra_ca_certsfile)
+to it. For example, with Docker Compose:
+
+```yaml
+services:
+  chat:
+    environment:
+      NODE_EXTRA_CA_CERTS: /certificates/company-ca.pem
+    volumes:
+      - ./company-ca.pem:/certificates/company-ca.pem:ro
+```
+
+The bundle should contain the issuing root and any required intermediate CA
+certificates. If the server certificate is genuinely self-signed, include that
+certificate itself. The file must exist when the Node.js process starts because
+`NODE_EXTRA_CA_CERTS` is read only at process launch.
+
+`NODE_EXTRA_CA_CERTS` is a Node.js runtime variable, not an application-owned
+variable validated by `chat-api`. Do not use `NODE_TLS_REJECT_UNAUTHORIZED=0`:
+it disables certificate verification for every HTTPS connection made by the
+process.
+
+### Legacy cookie cleanup
+
+If a previous deployment on the same origin set cookies this app never reads
+(a prior auth stack, a renamed `AUTH_SESSION_COOKIE_NAME`/`AUTH_TRANSACTION_COOKIE_NAME`,
+or a different `AUTH_COOKIE_SECURE` flipping the `__Host-` prefix), those cookies
+are never sent to the browser's own expiry logic by anything in this app — the
+service that originally set them is gone, so nothing will ever clear them
+unless this one does. List their exact names in `AUTH_LEGACY_COOKIE_NAMES`
+(comma-separated); a global middleware in `main.ts` checks every incoming
+request for them and, only when one is actually present, responds with a
+`Max-Age=0` `Set-Cookie` to expire it. Leave it unset once no client still
+carries the old cookies.
+
+### 3. Run the Application
+
+**Development mode:**
+
+```bash
+npm run start:api          # same as: npm exec nx serve chat-api
+```
+
+**Development mode with webpack HMR:**
+
+```bash
+npm run start:api:dev
+```
+
+**Start both the frontend and the API:**
+
+```bash
+npm run start:all
+```
+
+**Production build:**
+
+```bash
+npm run build && npm run build:api
+```
+
+Output lands in `apps/chat-api/dist/` (and `apps/chat/dist/` for the frontend it
+serves); run it with `node apps/chat-api/dist/main.js`.
+
+The API will be available at:
+
+- **API**: `http://localhost:5000/api`
+- **Swagger Docs**: `http://localhost:5000/api/docs` (development only)
+- **Health Check**: `http://localhost:5000/api/health`
+
+## API Documentation
+
+Interactive API documentation is available at `/api/docs` when the application is running. The documentation is auto-generated from TypeScript decorators and includes:
+
+- All available endpoints
+- Request/response schemas
+- Error responses
+- Query parameter validation rules
+- Authentication: two security schemes — `session` (the encrypted session cookie,
+  `__Host-chat.sess` by default) and `bearer` (an `Authorization: Bearer` token,
+  see [Header bearer-token authentication](#header-bearer-token-authentication)).
+  The document requires either one on every operation; `@Public()` routes
+  (health, themes, client-config, auth providers/login/callback/logout) are
+  emitted with `security: []`. The opt-out is derived from `@Public()` itself by
+  `createOpenApiDocument` in `src/openapi/openapi.config.ts`, so a new public
+  route needs no extra Swagger decorator.
+
+## API Endpoints
+
+Business endpoints are URI-versioned: `main.ts` sets a global `api` prefix and
+enables `VersioningType.URI`, so a controller declared as
+`@Controller({ path: 'conversations', version: '1' })` resolves to
+`/api/v1/conversations`. Infrastructure endpoints (health, themes) are
+unversioned by design.
+
+Swagger at `/api/docs` is the authoritative per-route reference — the table below
+maps each backend domain to its base path.
+
+### Infrastructure
+
+| Method | Path               | Description                                                                                                                                                 |
+| ------ | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET`  | `/api/health`      | Health status: `{ status, timestamp, version, buildId }` (`version` from `CHAT_VERSION`; `buildId` — see [Docker image (BFF only)](#docker-image-bff-only)) |
+| `GET`  | `/api/themes`      | Theme configuration. Errors: 404, 502, 503                                                                                                                  |
+| `GET`  | `/api/themes/icon` | Theme icon SVG by validated `iconName`. Errors: 400, 404, 502, 503                                                                                          |
+
+### Versioned domains (`/api/v1/...`)
+
+| Base path             | Source folder          | Responsibility                                                     |
+| --------------------- | ---------------------- | ------------------------------------------------------------------ |
+| `auth`                | `auth/`                | Provider list, login/callback, logout, session, CSRF, `me`         |
+| `client-config`       | `app-config/`          | Server-resolved client configuration and feature flags             |
+| `user-config`         | `user-config/`         | Per-user persisted preferences                                     |
+| `chat`                | `chat/`                | Chat completions, streamed over SSE                                |
+| `conversations`       | `conversations/`       | Conversation CRUD, plus publish operations                         |
+| `models`              | `models/`              | Available models                                                   |
+| `deployments`         | `deployments/`         | Deployment metadata and usage limits                               |
+| `applications`        | `applications/`        | Application CRUD                                                   |
+| `application-schemas` | `application-schemas/` | Quick App / custom application schemas                             |
+| `toolsets`            | `toolsets/`            | Toolsets and their credential state                                |
+| `skills`              | `skills/`              | Skill CRUD, metadata lookup, and skill file transfer               |
+| `prompts`             | `prompts/`             | Prompt CRUD and folders                                            |
+| `files`               | `files/`               | File upload/download, archive upload, ZIP streaming                |
+| `share`               | `share/`               | Share links and recipient management                               |
+| `catalog`             | `publish/`             | Publication requests and published-resource listing                |
+| `publish`             | `publish/`             | Publication rules                                                  |
+| `rate`                | `rate/`                | Message rating (like/dislike) and feedback                         |
+| `transcription`       | `transcription/`       | Audio transcription through the ASR model                          |
+| `scheduled-tasks`     | `scheduled-tasks/`     | DIAL Scheduler proxy — schedules and run history                   |
+| `client-channel`      | `client-channel/`      | Server-initiated interactions (mid-stream toolset sign-in), SSE    |
+| `offline-credentials` | `offline-credentials/` | Offline credential consent flow                                    |
+| `external-services`   | `external-services/`   | External service registry and sign-in state                        |
+| `apps`                | `app/`                 | Root application controller                                        |
+| `custom-api`          | `custom-api/`          | Deployment-configured custom Core API bridge (disabled by default) |
+
+`libs/chat-api-client` is generated from this surface. After changing any
+controller or DTO, run `npm run openapi` and `npm run openapi:check` — handler
+names become the generated SDK's method names, so name them like
+`listModels` / `getCurrentUser`.
+
+### Transcription availability
+
+`POST /api/v1/transcription` maps upstream 429 and 503 responses to HTTP 503 and
+forwards the upstream `Retry-After` header when present. Other upstream errors use
+the shared DIAL error mapper. The frontend surfaces 429/503 immediately and
+restores the editable draft with an error message. Only gateway failures
+(502/504) retry recognition of the same file, at most twice with a six-second
+total delay budget, respecting `Retry-After`. The backend adds no retry loop.
+
+In the local Core implementation, `Service is not available` is produced by the
+upstream balancer when all upstream states have status 429. Check Core logs for
+`Upstream ... limit hit` and the ASR provider's quotas/capacity. Dictation submits one
+complete recording after Stop. Raising a DIAL token limit does not increase the
+provider's request quota. The configured deployment can be valid even when some
+recognition requests receive this response.
+
+### Custom Core API operations
+
+`/api/v1/custom-api/:operationId` is a disabled-by-default, generic bridge
+to a small, explicitly allowlisted set of exact paths under `DIAL_CORE_URL`
+— for example a global Route configured in Admin's Entities → Routes, such as
+`/data-products`. It exists so a client application can reach a
+deployment-specific Core catalog endpoint without adding its own business
+controller, DTOs, or public BFF release to this repository. Each operation is
+one method on one path: GET by default, or a POST/PUT/DELETE with an
+allowlist of query parameter names and, for POST/PUT, a JSON body. See
+`openspec/changes/archive/2026-10-02-add-configured-core-api-operations/design.md`
+and `openspec/changes/extend-custom-api-operations/design.md` for the full
+rationale and trust-boundary analysis; this section is the operator-facing
+summary.
+
+**Who owns what:**
+
+- **Admin** owns the Route's path/method, `rewritePath`, upstream or static
+  response, and **role policy** (`userRoles`). Admin's own `/api/v1/routes`
+  management API is never called by the BFF — the BFF only ever dispatches the
+  one runtime path a Route exposes, the same way any Core client would.
+- **Core** matches the request against its configured routes in priority
+  order, enforces the route's roles (a `null` `userRoles` permits any
+  authenticated role; an empty set denies all; a non-empty set requires an
+  intersection — see `RoleBasedEntity` in `ai-dial-core`), applies its own
+  business rate limiting, and either returns a static JSON body or proxies to
+  the configured upstream. Built-in Core controllers are matched before the
+  global-route fallback, so the BFF cannot prove from a path string alone
+  which controller actually serves it.
+- **The upstream service behind a Route** (when not static) owns safe,
+  per-user response contents. A global Route checks **roles**, not per-object
+  or per-tenant permissions — if a response must be filtered per caller, that
+  authorization belongs in the upstream service, not in this BFF bridge.
+- **This BFF** owns exactly three things: (1) the exact allowlist of operation
+  IDs it will dispatch at all (`CUSTOM_CORE_API_CONFIG`), (2) translating the
+  caller's own session into the Core bearer token for that one call, and (3)
+  bounded, sanitized transport (timeouts, byte/depth limits, redirect
+  rejection, generic error mapping). It adds no second role check, no business
+  response schema, and no field filtering — Core's role check and the
+  upstream's own response safety are the only authorization layers.
+- **The calling client application** owns the operation ID it chooses to call,
+  and all domain decoding/validation/presentation of the opaque JSON it gets
+  back. A field already present in the JSON response has already reached the
+  browser; frontend validation is a correctness aid, not a confidentiality
+  boundary.
+
+**Enabling it — `CUSTOM_CORE_API_CONFIG`:**
+
+The repository and `.env.template` ship this setting blank, so the bridge is
+inert out of the box: every request to `/api/v1/custom-api/:id` returns 404
+with no Core dispatch, and startup performs no network or file read related to
+this feature. To enable one or more operations, set the environment variable
+to a JSON object and restart the BFF (no configuration file or volume mount is
+read):
+
+```dotenv
+CUSTOM_CORE_API_CONFIG='{"version":1,"operations":[{"id":"data-products","method":"GET","corePath":"/data-products"}]}'
+```
+
+The outer single quotes above are `.env` file quoting, not part of the JSON
+value — a raw deployment environment variable (Kubernetes `env`, a platform's
+environment-variable UI, etc.) should be set to the JSON text only, without
+those quotes:
+
+```json
+{
+  "version": 1,
+  "operations": [
+    { "id": "data-products", "method": "GET", "corePath": "/data-products" }
+  ]
+}
+```
+
+Rules enforced at startup, failing closed (the process does not boot on an
+invalid value, and the invalid value itself is never logged):
+
+- `version` must equal `1`; `operations` must be an array of at most 64
+  entries (an empty array is valid and equivalent to leaving the variable
+  unset).
+- The raw environment value must be at most 16 KiB measured in UTF-8 bytes,
+  checked before parsing.
+- Each entry has only `id`, `method`, `corePath`, and optional `query`,
+  `body`, `timeoutMs` and `maxResponseBytes` — no `access` or
+  `responseSchema` field exists in this contract, and an unknown key fails
+  startup.
+- `method` must be one of `"GET"`, `"POST"`, `"PUT"` or `"DELETE"`. A path
+  served with several methods is several entries, one per method. `id` must
+  match `^[a-z][a-z0-9-]{0,63}# Chat API
+
+## Scheduled task manual-run contract
+
+`POST /api/v1/scheduled-tasks/:scheduleId/run` submits the saved Scheduler
+definition without a body and returns HTTP 202 with a camelCase
+`ScheduledTaskRunDto`. It does not resume paused/completed tasks, invalidate a
+schedule-list cache, or precheck external sign-in. Automatic trigger exhaustion
+does not prohibit this manual execution; only a deleted task is rejected with 409. The endpoint uses the existing session, feature, role, and CSRF guards.
+
+`GET /api/v1/scheduled-tasks/:scheduleId/runs/:runId` returns the same DTO for
+the caller-owned run. The DTO's optional `resultStage` is a narrow string
+projection of Scheduler's `result.stage`, and the optional `errorText` is a
+non-blank, trimmed `result.error_text` capped at 1000 characters; arbitrary
+Scheduler result data (e.g. `credentials_response`) is not exposed. Scheduler's
+run list omits `result`, so `GET /api/v1/scheduled-tasks/:scheduleId/runs`
+re-reads `Error` runs through the single-run route to fill in `errorText`. The
+fan-out is bounded: each resolved value (including "no error text") is cached
+per run for 24 hours, so History's background refreshes do not repeat the
+reads, and at most 10 uncached runs are re-read per list call (newest first).
+A failed re-read is logged, not cached, and leaves that run without
+`errorText`. Start and get-one responses use the same camelCase DTO fields as
+run-history responses, including `conversationId` when available. A terminal
+credentials stage is recorded as a run error for the client to recover through
+the offline-credentials flow; it is not a failed start request and does not
+trigger an automatic retry.
+
+Rate-limited manual starts and single-run reads preserve Scheduler's valid `Retry-After` header
+(delay seconds or an HTTP date) alongside the existing mapped error body.
+
+## Scheduled task skill contract
+
+Scheduled-task POST/PUT bodies accept optional `skillUrls: string[]`, validated
+per entry as a DIAL `skills/{bucket}/{path}` resource reference. The 1024-character path
+limit is measured after percent-decoding, so a saved encoded Unicode reference
+remains valid on update. Raw-reference safety checks still apply. `prompt` remains a
+required string; it may be empty when an effective skill exists. POST
+omission or [] means no skills; null is rejected. PUT first reads authoritative
+detail: omission preserves saved references, [] removes all skills, and a
+nonempty array replaces the complete selection. Identical references are
+deduplicated in selection order. This replaces the old single-reference field
+and requires callers to migrate together with the app/BFF release.
+
+Skill-bearing writes resolve model/agent capabilities with the session token
+and bucket through DeploymentsService's lookup facade and require
+`features.skillsSupported === true`. Rejections use codes
+`scheduledTaskSkillUnsupported`, `scheduledTaskInstructionsOrSkillRequired`,
+or `scheduledTaskDeploymentUnavailable`; failed validation never mutates a
+schedule or invalidates its list cache.
+
+The mapper encodes every resource exactly as chat and writes the array to
+`properties.payload.messages[0].custom_content.skills: [{ url }]` in the
+Scheduler completion payload. Detail/create/update responses expose optional
+`skillUrls`; sparse list responses may omit it. There is no local Scheduler
+worker. The Scheduler integration contract covers persistence, explicit removal,
+and forwarding skills with optional instructions through the existing offline
+execution flow, as defined in the
+[change design](../../openspec/changes/archive/2026-09-24-add-scheduled-task-skills/design.md).
+
+NestJS backend-for-frontend for the AI DIAL Chat platform. It terminates
+authentication, brokers every call to DIAL Core, exposes a versioned REST API to
+the SPA, and serves the built frontend in production.
+
+The frontend never talks to DIAL Core directly: this service holds the session,
+attaches the caller's access token upstream, and adapts DIAL Core's surface into
+the endpoints `apps/chat` consumes.
+
+## Scheduled task application consent and upstream errors
+
+When the `SCHEDULER_SERVICE_ID` external service is `DIAL_NATIVE`, every
+schedule runs under an application consent an administrator can revoke.
+Create, update, and resume re-read that service's `app_level_auth_status`
+from DIAL Core before calling DIAL Scheduler (never cached); `SIGNED_OUT`
+rejects with `403` and code `scheduledTaskAdminConsentRequired`, and nothing
+is sent upstream. Pause and delete skip the check so a user can always stop a
+task. A failed consent lookup or an unreported status defers to DIAL Scheduler.
+
+When DIAL Scheduler itself rejects a request, the response keeps the generic
+`message` (for example `DIAL Core returned a server error`) and adds
+Scheduler's own reason and code as `upstreamMessage` and `upstreamCode`. The
+message is trimmed and capped at 1000 characters; the code is kept only when it
+matches `^[A-Za-z0-9_.:-]{1,128}$`. Neither field is ever added for 401, 403,
+or 404 (the shared `isUpstreamTextExposable` rule), the raw upstream body is
+never forwarded, and the typed `code` never comes from the upstream body.
+
+## Completion persistence failures
+
+The backend saves an empty assistant placeholder before streaming and attempts
+one terminal save after the model finishes, stops, or fails. If that write
+rejects, the completion stream emits an error with
+`error.type: "conversation_save_failed"` before EOF; an attached generation
+subscriber receives `type: "error"` with the same value in `errorType`. The
+stream error of a completed answer also carries `error.status`, the status of
+the HTTP error the write raised (`401` when DIAL Core rejected the credentials,
+`502` for a storage `5xx`), and never the storage response body. A stopped,
+aborted, or failed answer is reported without `status`, because its write
+carries terminal markers the client does not hold.
+Upstream `[DONE]` alone is not confirmation of persistence. The error uses safe
+fallback text, and the original failure is logged as `Failed to save ... conversation`.
+The backend performs no automatic write retry because a rejected request can
+have an ambiguous commit outcome. Clients retain received output and warn that
+it may be lost after reloading or leaving the page; this is not durable
+recovery. The one exception is `status: 401`: the write was refused before
+anything was stored, so the client that started the generation makes one
+recovery save through the ordinary conversation save, which carries its own,
+current session.
+
+The terminal write uses the token captured when the completion request started.
+A token expiring during generation can therefore make the terminal write fail
+even though the initial save and upstream stream succeeded. The HTTP regression
+in `src/conversations/tests/completion-persistence.integration.spec.ts` exercises
+this path using a local Core stand-in and the installed SDK, alongside a 503
+storage-failure case. See [architecture](../../docs/architecture.md#sse-streaming).
+
+## Features
+
+- 🚀 NestJS framework with TypeScript
+- 🔐 OIDC login/logout with an encrypted session cookie, transparent token refresh, and CSRF protection
+- 🪪 Optional header bearer-token authentication verified against provider JWKS
+- 🔌 DIAL Core integration through `@epam/ai-dial-typescript-sdk`
+- 🌊 SSE streaming for chat completions and the client channel
+- 📚 Swagger/OpenAPI documentation, and a generated typed client (`libs/chat-api-client`)
+- 🌐 CORS configuration
+- 📦 Static file serving for the React frontend and the overlay sandbox
+- ⚙️ Environment validation at startup
+- 🎨 Theme management endpoints
+- 🏥 Health check endpoint
+- ✅ Input validation with class-validator
+- 🛡️ Path traversal protection
+- ⏱️ Configurable request timeouts
+- 📝 Comprehensive error handling
+- 🗄️ In-memory caching (5-minute TTL)
+- 🔒 Security headers (helmet middleware)
+- 🚦 Rate limiting (100 req/min default, per-endpoint overrides)
+- 📊 Request metrics logging
+- 🔭 OpenTelemetry traces, logs, and Prometheus-compatible metrics (opt-in, see [Observability](#observability))
+
+## PDF citation metadata
+
+Citation messages retain two independent selectors: `target.selector` associates
+an inline `<cit data-id="...">` marker, while optional `body.selector` identifies
+a PDF location. The body selector accepts an object or an array, including
+`{ type: 'pdf_bbox', page: 3, x1: 0, y1: 0, x2: 0, y2: 0 }` with 1-based pages.
+Raw annotation normalization preserves this field and supplied annotation indexes
+through stream assembly and persistence. Later quote-only deltas retain the
+earlier selector. The same optional field is part of the validated conversation
+message DTO and generated OpenAPI client.
+
+## Prerequisites
+
+- Node.js 24+
+- npm 11+
+- Access to an AI DIAL Core service
+- An OIDC identity provider (at least one configured — see below)
+- Access to a themes configuration service (optional; theming falls back to defaults)
+
+## Getting Started
+
+### 1. Install Dependencies
+
+From the root of the monorepo:
+
+```bash
+npm install
+```
+
+### 2. Environment Configuration
+
+Create a `.env.local` file in the project root:
+
+```bash
+# Required
+AUTH_SESSION_SECRET=<64-character-hex-secret>
+AUTH_CALLBACK_BASE_URL=http://localhost:5000
+
+# At least one identity provider must be configured — example for Auth0:
+AUTH_AUTH0_CLIENT_ID=your-client-id
+AUTH_AUTH0_SECRET=<client-secret>
+AUTH_AUTH0_HOST=your-tenant.auth0.com
+
+# Optional — CORS_ORIGIN and AUTH_POST_LOGOUT_REDIRECT_URI default to
+# AUTH_CALLBACK_BASE_URL above when unset; set them explicitly only when the
+# frontend origin, or the post-logout landing page, must differ from it.
+PORT=5000
+API_PREFIX=api
+# CORS_ORIGIN=http://localhost:4207
+# AUTH_POST_LOGOUT_REDIRECT_URI=http://localhost:4207
+DIAL_CORE_URL=https://your-dial-service.com
+DIAL_API_VERSION=2024-10-21
+DIAL_API_KEY=your-secret-api-key
+THEMES_CONFIG_URL=https://your-themes-service.com
+THEMES_SERVICE_TIMEOUT_MS=5000
+# Local HTTP smoke only. Keep true/default for HTTPS and production-like runs.
+AUTH_COOKIE_SECURE=false
+# Allow iframe integrations and embedding this app by allowed origins
+ALLOWED_IFRAME_ORIGINS=
+# Enable chat overlay runtime mode; requires ALLOWED_IFRAME_ORIGINS
+OVERLAY_ENABLED=false
+# Serve overlay sandbox at /overlay-sandbox/
+OVERLAY_SANDBOX_ENABLED=false
+```
+
+**Note**: `.env.local` takes precedence over `.env` and is not committed to version control.
+
+#### Environment Variables
+
+**Required:**
+
+| Variable                 | Description                                            | Example                     |
+| ------------------------ | ------------------------------------------------------ | --------------------------- |
+| `AUTH_SESSION_SECRET`    | 32-byte session encryption key encoded as 64 hex chars | `<64-character-hex-secret>` |
+| `AUTH_CALLBACK_BASE_URL` | Public API base URL used for OIDC redirect URIs        | `http://localhost:5000`     |
+
+At least one identity provider (see [Auth provider environment variables](#auth-provider-environment-variables) below) must also be configured for login to work; the application otherwise boots with no providers registered.
+
+Each configured provider needs two URLs registered in its own client
+configuration on the identity provider side:
+
+| Registered in the IdP as    | Value                                                                                        |
+| --------------------------- | -------------------------------------------------------------------------------------------- |
+| Redirect URI / callback URL | `{AUTH_CALLBACK_BASE_URL}/api/v1/auth/callback/{providerId}`                                 |
+| Post-logout redirect URI    | the value of `AUTH_POST_LOGOUT_REDIRECT_URI`, or `AUTH_CALLBACK_BASE_URL` when it is not set |
+
+`{providerId}` is the provider's fixed id, e.g.
+`http://localhost:5000/api/v1/auth/callback/keycloak`. Note that the `/api/v1`
+part of the callback is a literal in `src/auth/auth.controller.ts` and does not
+follow `API_PREFIX`, so a deployment that overrides `API_PREFIX` sends the IdP a
+`redirect_uri` that no longer resolves to a route.
+
+#### DIAL Core OAuth redirect allowlist
+
+Toolset OAuth needs the public Chat callback URL to be allowed by DIAL Core.
+Add `<CHAT_PUBLIC_ORIGIN>/auth/toolset-signin` to Core's
+[`toolsets.security.allowedRedirectUris`](https://github.com/epam/ai-dial-core/blob/development/README.md#static-settings).
+For example, the relevant part of `aidial.settings.json` is:
+
+```json
+{
+  "toolsets": {
+    "security": {
+      "allowedRedirectUris": ["https://chat.example.com/auth/toolset-signin"]
+    }
+  }
+}
+```
+
+Use the public origin from which users open Chat. The SPA builds this URI from
+`window.location.origin`, so it is not necessarily the same as
+`AUTH_CALLBACK_BASE_URL` when the frontend and API are exposed separately. Add
+the Chat URI without removing entries for other clients, such as the Admin
+panel. Core accepts a client-provided OAuth redirect URI only when it is in this
+allowlist or equals the toolset's own `redirect_uri`; the allowlist is therefore
+required when more than one client can start sign-in for the same toolset. The
+setting is read at Core startup, so restart DIAL Core after changing it.
+
+**Optional:**
+
+| Variable                                 | Default                            | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ---------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`                                   | `5000`                             | HTTP server port                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `API_PREFIX`                             | `api`                              | Global route prefix for all API endpoints                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `CORS_ORIGIN`                            | `AUTH_CALLBACK_BASE_URL`           | Allowed CORS origin for the frontend. Defaults to `AUTH_CALLBACK_BASE_URL`; set explicitly when the frontend is served from a different origin.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `ALLOWED_CONNECT_ORIGINS`                | `[]`                               | Comma-separated trusted HTTP(S) origins added to CSP `connect-src` for external document previews; supports a leading `*.` subdomain pattern. Applies to both enforced and report-only policies. Does not configure upstream CORS or iframe permissions. See [Content Security Policy](#content-security-policy).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `CSP_MODE`                               | `report-only`                      | CSP rollout mode: `report-only` preserves existing enforcement and reports the strict candidate; `enforce` blocks unapproved inline CSS. See [CSP rollout](#content-security-policy).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `CSP_REPORT_URI`                         | —                                  | Optional HTTPS CSP reporting service URL; enables both legacy reporting and the Reporting API.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `LOG_LEVEL`                              | Environment-dependent              | Minimum NestJS log level: `debug`, `log`, `warn`, or `error`. Defaults to `log` in production and `debug` otherwise.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `AUTH_SESSION_COOKIE_NAME`               | `__Host-chat.sess`                 | Session cookie name                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `AUTH_SESSION_MAX_AGE_SECONDS`           | `2592000` (30 days)                | Rolling session lifetime, independent of `offline_access`. Integer seconds from 1 to 2147483647. Successful token refresh resets the deadline; configuration changes apply at login and renewal. A known refresh-token expiry, or access-token expiry when no refresh token exists, can shorten it.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `AUTH_TRANSACTION_COOKIE_NAME`           | `__Host-chat.tx`                   | Login transaction cookie name                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `AUTH_COOKIE_SECURE`                     | `true`                             | Set to `false` only for local HTTP smoke testing; runtime drops `__Host-` from cookie names and disables HSTS plus CSP `upgrade-insecure-requests` when disabled                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `AUTH_LEGACY_COOKIE_NAMES`               | —                                  | Comma-separated cookie names to actively expire (`Set-Cookie: ...; Max-Age=0`) on every request that still carries them, e.g. leftovers from a previous auth stack on the same origin. See "Legacy cookie cleanup" below.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `AUTH_POST_LOGOUT_REDIRECT_URI`          | `AUTH_CALLBACK_BASE_URL`           | Where the browser lands after IdP logout, applied to every configured provider. Defaults to `AUTH_CALLBACK_BASE_URL`; set explicitly when the post-logout landing page must differ from it.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `ADMIN_ROLE_NAMES`                       | `admin`                            | Comma-separated fallback admin role names, used by any provider that doesn't set its own `AUTH_{PROVIDER}_ADMIN_ROLE_NAMES`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `DIAL_ROLES_FIELD`                       | `dial_roles`                       | Fallback dot-separated path to the roles claim in the ID/access token, used by any provider that doesn't set its own `AUTH_{PROVIDER}_DIAL_ROLES_FIELD`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `DIAL_CORE_URL`                          | —                                  | AI DIAL core service URL                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `DIAL_API_VERSION`                       | `2024-10-21`                       | API version query parameter sent to DIAL Core chat completion requests                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `USER_USAGE_DEPLOYMENT_TYPES`            | `model,application`                | Comma-separated deployment kinds (`model`, `application`) that `GET /api/v1/user/limits` and `GET /api/v1/user/usage` report when the request carries no `deploymentTypes`; a request value always wins. Set `model` to restore the model-only report. Validated at startup — any other value fails boot                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `DIAL_API_KEY`                           | —                                  | Server-only API key sent as `Api-Key` to DIAL Core for utility-model naming. Not used for user-scoped routes; those continue to use the session access token. Must be stored as a deployment secret.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `THEMES_CONFIG_URL`                      | —                                  | Base URL for theme configuration and icons                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `THEMES_SERVICE_TIMEOUT_MS`              | `5000`                             | Timeout for theme service requests (milliseconds)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `FILE_UPLOAD_MAX_BYTES`                  | `536870912`                        | Maximum file upload size in bytes (default 512 MB); multer rejects larger payloads with 413. Also exposed to the client as `config.maxAttachmentFileSizeBytes` via `GET /api/v1/client-config`, so the frontend can reject an oversized file before attempting to upload it.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `FILE_TRANSFER_TIMEOUT_MS`               | `30000`                            | Timeout for DIAL Core file download, listing, delete and other file operation fetch requests (milliseconds). For `POST /api/v1/files` uploads it is the maximum time the transfer may go without moving any data (a slow but progressing upload is not aborted); raise it only if DIAL Core needs longer to answer after the last byte.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `ARCHIVE_DOWNLOAD_CONCURRENCY`           | `32`                               | Concurrent DIAL Core downloads used while streaming ZIP archives; range 1–32                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `ARCHIVE_UPLOAD_MAX_BYTES`               | `536870912`                        | Maximum size (bytes) of an uploaded ZIP archive request body for `POST /api/v1/files/upload-archive` (default 512 MB)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `ARCHIVE_UPLOAD_MAX_FILES`               | `1000`                             | Maximum number of non-directory entries extracted from one uploaded archive                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `ARCHIVE_UPLOAD_MAX_UNCOMPRESSED_BYTES`  | `2147483648`                       | Maximum cumulative decompressed bytes across all entries of an uploaded archive, checked incrementally during extraction (default 2 GB)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `ARCHIVE_UPLOAD_TIMEOUT_MS`              | `300000`                           | Wall-clock budget (milliseconds) for extracting and uploading an entire archive (default 5 min)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `PUBLISH_ATTACHMENTS_MAX_FILES`          | `1000`                             | Maximum number of attachment files (individual files plus every file inside attached folders) published together with one conversation by `POST /api/v1/conversations/publish`; a larger conversation is rejected with 413 before DIAL Core is called                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `SKILL_UPLOAD_MAX_FILES`                 | `100`                              | Maximum number of files (including `SKILL.md`) in a whole-skill create/update via `POST`/`PUT /api/v1/skills`; rejected with 400                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `SKILL_FILE_UPLOAD_MAX_BYTES`            | `1048576`                          | Maximum size (bytes) of a single file in a whole-skill create/update, via `PUT /api/v1/skills/files`, or of a standalone `SKILL.md` uploaded to `POST /api/v1/skills/import` (default 1 MB); rejected with 413                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `SKILL_UPLOAD_MAX_TOTAL_BYTES`           | `16777216`                         | Maximum cumulative content size (bytes) of a whole-skill create/update, including `SKILL.md` (default 16 MB); rejected with 413                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `SKILL_TRANSFER_TIMEOUT_MS`              | `60000`                            | Timeout for all skills-domain DIAL Core requests (milliseconds)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `SKILL_ARCHIVE_UPLOAD_MAX_BYTES`         | `20971520`                         | Maximum size (bytes) of the compressed ZIP archive accepted by `POST /api/v1/skills/import` before extraction (default 20 MB); rejected with 413. Distinct from `SKILL_UPLOAD_MAX_TOTAL_BYTES`, which bounds decompressed content                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `ASR_MODEL`                              | —                                  | Deployment ID of a dedicated speech-to-text model. When set (together with the `voice-input` feature), the mic button is always shown and recorded audio is transcribed by this model via `POST /api/v1/transcription`. When absent, the mic button is shown only for deployments whose `inputAttachmentTypes` include an audio MIME type, and transcription is handled by the selected chat deployment.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `TRANSCRIBE_SIZE_LIMIT_BYTES`            | `5242880`                          | Maximum audio file size (in bytes) accepted for transcription. The frontend applies this limit to the complete recording before upload. Default is 5 MB.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `UTILITY_MODEL`                          | —                                  | Shared deployment ID for conversation naming and AI text refinement. The ID stays server-side. Naming requires `DIAL_API_KEY` and `LLM_CONVERSATION_NAMING_ENABLED=true`. Refinement uses caller credentials independently of naming; only `config.aiTextRefinementAvailable` is exposed, and unset/blank values disable it.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `LLM_CONVERSATION_NAMING_ENABLED`        | `false`                            | When `true` and `UTILITY_MODEL` is set, the backend asynchronously renames conversations after the first assistant reply using the utility model.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `UTILITY_NAMING_TIMEOUT_MS`              | `10000`                            | Timeout in milliseconds for utility-model conversation naming requests.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `RESPONSES_API_ENABLED`                  | `false`                            | Server-only kill switch for routing eligible generations through the OpenAI Responses API. Even when a deployment reports `features.responsesApi=true`, Responses is only used when this is also `true`; otherwise Chat Completions is used. Not exposed to the frontend. Takes effect on the next service restart.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `RESPONSES_BACKGROUND_ENABLED`           | `false`                            | Server-only switch for starting eligible Responses generations as DIAL Core background jobs (`background: true`, `store: true`), so a generation survives browser disconnects and BFF restarts. Used only when `RESPONSES_API_ENABLED` is also `true`, the deployment reports `features.responsesApi=true`, and its DIAL Core `interfaces` include `openaiResponses`. Affects only new generations: in-flight background jobs stay recoverable, stoppable and finalizable when it is turned off. The first text of a background generation arrives later than on the stateless path, because the job waits in the model provider's queue first (see `docs/responses-api-integration.md`). Requires DIAL Core 0.48.0 or later. Not exposed to the frontend. Takes effect on the next service restart.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `MAX_GENERATION_DURATION_MS`             | `1800000`                          | Milliseconds from registry admission before an entry still in `active` receives a `max_duration` cancellation request (default 30 min). The key remains owned until its worker settles; this is not a deadline for preflight, persistence, or an upstream call that does not settle after abort. Independent of the originating client connection.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `GENERATION_FINALIZE_TIMEOUT_MS`         | `60000`                            | Milliseconds from entering terminal finalization before existing attachment listeners are notified and removed and timers cleared. On expiry, the entry becomes `settling` and retains its registry key, assembled snapshot, pending write, and generation-gauge contribution. The write is not cancelled and its worker may remain pending; same-process admission stays blocked until settlement or restart. This does not bound attachments created after the timeout. See the [lifecycle limits](../../docs/observability.md#process-memory-and-outstanding-work).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `CUSTOM_CLIENT_VARIABLES`                | `{}`                               | Public client-owned settings as a JSON object, exposed unchanged under `config.customVariables` in client-config. Arbitrary nested JSON values are supported; the BFF does not interpret keys or merge them into built-in config or feature flags. Unset, blank, malformed JSON and non-object roots fall back to `{}`. All allowed clients receive the same object, including before authentication.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `CUSTOM_CORE_API_CONFIG`                 | — (disabled)                       | Server-only allowlist of exact Core paths (GET, or a configured POST/PUT/DELETE) exposed through `/api/v1/custom-api/:operationId`. Unset, empty, or whitespace-only disables the bridge entirely. See [Custom Core API operations](#custom-core-api-operations).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `DEFAULT_DEPLOYMENT_PINNED`              | `false`                            | Client-visible feature flag. When `true`, `DEFAULT_DEPLOYMENT` takes priority over the user's persisted deployment for new conversations and is pinned to the top of the picker. When `false`, the existing user-preference precedence and alphabetical ordering remain unchanged. Takes effect on the next service restart.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `ALLOW_VISUALIZER_SEND_MESSAGES`         | `false`                            | Client-visible feature flag, exposed as `features.visualizerSendMessages`. When `true`, a custom or application visualizer iframe may post `SEND_MESSAGE` with `{ message: string }`, and its text is sent as a user message in the conversation that renders it. The message is dropped while a response streams, in read-only conversations, when an overlay host enables `disabled-send`, and from a canvas opened in another conversation. Enable it only for visualizers you trust: an opted-in visualizer can send messages as the user. Only `true`, `1` and `yes` (case-insensitive) enable it; any other value, including an empty one, leaves it off. Takes effect on the next service restart.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `USAGE_LIMITS_CONTROL_ENABLED`           | `false`                            | Client-visible feature flag, exposed as `features.usageLimitsControl`. When `true`, the conversation input shows the token/cost usage-limits control next to the model selector in both the new-chat composer and an open conversation. When `false` (the default), the control is not rendered and the composers show the usage banner above the input instead (see `USAGE_LIMITS_WARNING_THRESHOLD_PERCENT`). Takes effect on the next service restart.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `USAGE_LIMITS_WARNING_THRESHOLD_PERCENT` | `75`                               | Client-visible config, exposed as `config.usageLimitsWarningThresholdPercent`. Integer 1–99; a value outside that range or a non-integer fails validation at boot. The percentage of a capped day/week/month token or cost limit at which the usage banner appears above the conversation input, while `USAGE_LIMITS_CONTROL_ENABLED` is `false`. Governs the banner only: the usage dial and the Settings → Usage page keep their fixed 75% running-low mark.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `UI_EVENT`                               | —                                  | Start-page celebration module ID, exposed as `config.activeEventId` in client-config. Use `halloween` or `new-year`; unset or `none` disables celebrations. Each user can turn a set event off or on with **Seasonal celebrations** in Settings → Preferences; decides its state until they do. IDs must use lowercase kebab-case; unsupported IDs are returned unchanged and safely ignored by the frontend, so new event modules need no backend enum change. Modules replace the existing navigation/header icon and supply decorations, random click scenes, notifications, and optional secret chat phrases on `/` only. Effects clear on navigation, persist no event state, play no sound, and respect reduced motion. Takes effect on the next service restart.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `UI_EVENT_ENABLED_BY_DEFAULT`            | `true`                             | Client-visible config, exposed as `config.celebrationsEnabledByDefault`. The default state of the **Seasonal celebrations** switch in Settings → Preferences for users who have not saved a choice of their own; a saved choice always wins, and the default is never written to the browser, so changing it reaches everyone who never chose. Only `false`, `0` and `no` (case-insensitive) turn it off, which makes a configured `UI_EVENT` opt-in; any other value keeps it on. Has no visible effect without `UI_EVENT`. Takes effect on the next service restart.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `FEATURED_MODEL_IDS`                     | —                                  | Comma-separated list of model (or application) IDs to mark as featured in the catalog. Matching is exact and case-sensitive against the item's `id` field. Example: `chat-hub-v2,gpt-4o,dial-rag`. Takes effect on the next service restart; changing it without a restart has no effect.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `HIDDEN_ENTITY_TAGS`                     | `[]`                               | Comma-separated topic tags marking models and toolsets that stay hidden in the Catalog while remaining visible in the Quick App 2.0 form. Example: `internal,experimental`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `ALLOWED_IFRAME_ORIGINS`                 | —                                  | Comma-separated list of origins allowed to frame this app and be loaded by it (added to CSP `frame-ancestors` and `frame-src`). Each entry must be an origin only (`scheme://host[:port]`, no path or query string) with an `https://` (or `http://` for local development only) scheme, and may optionally use a single leading `*.` wildcard label to allow a whole subdomain family. Required for chat overlay mode and iframe integrations such as Quick Apps editors, and for every origin used by `CUSTOM_VISUALIZERS` — `frame-src` draws from this list only. Examples: `https://quickapps.example.com` , `https://*.example.com` (matches `https://portal.example.com` and `https://a.b.example.com`, but not the bare `https://example.com`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `OVERLAY_ENABLED`                        | `false`                            | Enables embedded chat overlay runtime mode. Has no effect unless `ALLOWED_IFRAME_ORIGINS` also includes at least one allowed host origin.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `OVERLAY_SANDBOX_ENABLED`                | `false`                            | Serves the overlay sandbox static app at `/overlay-sandbox/`. Intended for development/test environments only; the route is not served when disabled.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `FILE_MANAGER_AVAILABLE_TABS`            | `all,my_files,shared,organization` | Comma-separated subset of `all`, `my_files`, `shared`, `organization` controlling which File Manager tabs are shown. `all` adds a combined tab on the File storage page with one top-level folder per enabled source tab; it is shown only when at least two source tabs are enabled and is never offered in attach pickers. Unknown values (including `review`) are dropped; an unset or fully-invalid value falls back to all four ids.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `ENABLED_UI_FEATURES`                    | —                                  | When set, becomes the complete list of enabled `OverlayFeature` values (replace semantics). Supports both positive flags (e.g. `header`, `likes`) and modifier/hide flags (e.g. `hide-new-conversation`). Unrecognized entries are dropped with a warning; if all entries are unrecognized, falls back to the compiled-in `DEFAULT_ENABLED_UI_FEATURES` baseline. A renamed value listed in `DEPRECATED_UI_FEATURE_ALIASES` (currently `custom-applications` → `schema-apps`) is accepted transitionally: it resolves to its replacement and logs a deprecation warning. When unset or empty, the compiled-in defaults apply. An overlay host that supplies its own `enabledFeatures` always overrides this server baseline. Example: `header,likes,conversations-sharing,hide-new-conversation`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `LIVE_CHAT_INTERACTION_ENABLED`          | `false`                            | Enables the interactive toolset sign-in flow: the frontend subscribes to DIAL Core's client-channel and shows a global sign-in dialog when a completion needs mid-stream toolset credentials (`features.liveChatInteraction`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `LIVE_CHAT_INTERACTION_ENABLED_ROLES`    | —                                  | Comma-separated roles allowed to use the feature above when it is enabled. Unset or empty means unrestricted (all authenticated users).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `SCHEDULER_APP_ID`                       | —                                  | DIAL Core application id of the DIAL Scheduler routed deployment, used to build the `/v1/deployments/applications/{id}/route/v1/schedules` upstream path for the `/api/v1/scheduled-tasks*` endpoints. Required only when `features.scheduledTasksEnabled` is used; if unset, those endpoints fail fast with `503`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `SCHEDULER_SERVICE_ID`                   | —                                  | Upstream `service_id` sent to DIAL Scheduler on schedule create/update. Required only when `features.scheduledTasksEnabled` is used; if unset, create/update fail fast with `503` (list/get are unaffected).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `SCHEDULER_SERVICE_TIMEOUT_MS`           | `10000`                            | Timeout for DIAL Scheduler proxy requests (milliseconds)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `WELCOME_SCREEN_DESCRIPTION`             | —                                  | Operator-authored plain-text copy shown below the greeting heading on the new-chat start screen. Never interpreted as markup. Unset or blank hides it.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `FOOTER_HTML_MESSAGE`                    | —                                  | Operator-authored HTML shown in the footer of the chat input area (desktop) and mobile user panel. Supports `%%VERSION%%` token replaced server-side with the resolved chat version (`CHAT_VERSION` when set, otherwise the workspace root `package.json` version). Sanitized server-side (allowlist: `a span strong u em br p`). Unset or empty hides the footer.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `CHAT_VERSION`                           | root `package.json` version        | Version string shown in the footer's corner version label, substituted for the `%%VERSION%%` footer token, and reported as `version` by `GET /api/health`. Set from CI/CD to surface the deployed build. Blank or unset falls back to the workspace root `package.json` version — the only manifest the release pipeline stamps — so a version label is always shown. Exposed to clients as `config.appVersion`; not role-gated.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `ANNOUNCEMENT_TITLE`                     | —                                  | Bold heading of the top-of-app announcement banner. Plain text — never interpreted as markup, so `<b>` renders literally. Set this or `ANNOUNCEMENT_DESCRIPTION` to render the banner; leaving both unset hides it. Blank is treated as unset.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `ANNOUNCEMENT_DESCRIPTION`               | —                                  | Supporting copy shown after the banner title. Sanitized server-side (allowlist: `a b strong em br span`); non-hash anchors are forced to `target="_blank" rel="noopener noreferrer"`. Text that overruns the banner width is clipped to one line with an ellipsis; a chevron beside the close control then expands the banner so the whole message can be read. Short copy still reads best, since the collapsed line is what most users see. Blank, or markup that sanitizes away entirely, is treated as unset.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `ANNOUNCEMENTS`                          | `[]`                               | JSON array feeding the `+N announcements` popover: `[{ "title": "…", "description": "…", "link": { "label": "…", "href": "https://…" } }]`. `description` and `link` are optional; an entry with no link renders without a call to action. Max 10 entries. Validation is drop-and-log and never fatal — an entry is dropped if its title is blank, or if its link is present but has a blank label or an `href` that is not an absolute `http`/`https` URL (relative paths are rejected). Malformed JSON resolves to `[]`. Rejected entries appear only in the server log.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `CUSTOM_VISUALIZERS`                     | `[]`                               | JSON array of MIME → visualizer iframe mappings: `[{ "title": "my-viz", "url": "https://viz.example.com", "contentType": "application/x-my-viz,application/x-my-viz-v2" }]`. An attachment whose MIME type matches an entry opens in the Attachment Canvas rendered by that visualizer's iframe instead of the default preview; `contentType` accepts a comma-separated MIME list. `title` is the postMessage namespace and MUST equal the `appName` passed to `ChatVisualizerConnector` inside the visualizer app — a mismatch loads the iframe but never sends it data. Registering a URL grants that origin in-app iframe privileges (downloads, popups, modals, clipboard, fullscreen), so list only vetted visualizers. Registering it here does **not** by itself let the browser load it: CSP `frame-src` is built from `ALLOWED_IFRAME_ORIGINS` alone, so each visualizer URL's origin must also be listed there or the iframe is blocked and the canvas never renders. Mind the coupling — that same list also feeds `frame-ancestors`, so adding a visualizer origin additionally permits that origin to embed this app. Unset means the feature is dark. Invalid JSON or invalid entries are dropped with an error log; boot never fails on malformed config.                                                                                                                                      |
+| `APPLICATION_VISUALIZERS`                | `{}`                               | JSON **object** (not an array) keyed by application id — the effective deployment id of a message: `{"my-app":{"title":"my-viz","url":"https://viz.example.com","contentType":"application/x-my-viz","height":600,"mobileHeight":400}}`. Every attachment an entry claims is delivered to one iframe together via `SEND_GROUPED_VISUALIZE_DATA`, rendered inline in the message with an expand-to-canvas control, rather than one iframe per attachment. Unlike `CUSTOM_VISUALIZERS`, `contentType` is **optional**: when set it claims only those MIME types and the message's other attachments stay ordinary tiles; when omitted it claims every attachment that carries a URL. An entry **takes precedence over `CUSTOM_VISUALIZERS`** for the attachments it claims. The same `ALLOWED_IFRAME_ORIGINS` requirement and `title`/`appName` contract as `CUSTOM_VISUALIZERS` apply. Optional booleans `borderless` (drop the inline frame's border, background, and header divider) and `withoutTitle` (hide the inline header's title text) carry over from legacy Chat 0.x. `passAuthInfo` and `passExplicitToken` are accepted for parity with legacy Chat 0.x and are inert — auth is server-side and the browser holds no access token; legacy `expanded` is logged as unrecognized and ignored. Invalid JSON, a non-object value, or invalid entries are dropped with an error log; boot never fails. |
+
+#### Built-in prompt overrides
+
+These optional server-only variables replace the complete built-in instruction for their operation:
+
+| Variable                                             | Operation                                           | Default  |
+| ---------------------------------------------------- | --------------------------------------------------- | -------- |
+| `TEXT_REFINEMENT_SKILL_DESCRIPTION_PROMPT`           | Refine a skill description                          | Built-in |
+| `TEXT_REFINEMENT_SKILL_INSTRUCTIONS_PROMPT`          | Refine skill instructions                           | Built-in |
+| `TEXT_REFINEMENT_SCHEDULED_TASK_DESCRIPTION_PROMPT`  | Refine a scheduled task description                 | Built-in |
+| `TEXT_REFINEMENT_SCHEDULED_TASK_INSTRUCTIONS_PROMPT` | Refine scheduled task instructions                  | Built-in |
+| `TEXT_REFINEMENT_APPLICATION_DESCRIPTION_PROMPT`     | Refine an application description                   | Built-in |
+| `TEXT_REFINEMENT_TOOLSET_DESCRIPTION_PROMPT`         | Refine a toolset description                        | Built-in |
+| `TEXT_REFINEMENT_PROMPT_DESCRIPTION_PROMPT`          | Refine a prompt description                         | Built-in |
+| `TEXT_REFINEMENT_PROMPT_INSTRUCTIONS_PROMPT`         | Refine prompt instructions                          | Built-in |
+| `CONVERSATION_NAMING_SYSTEM_PROMPT`                  | Automatic naming and the Rename conversation action | Built-in |
+| `TRANSCRIPTION_PROMPT`                               | Dedicated audio transcription via `ASR_MODEL`       | None     |
+
+Unset, empty, and whitespace-only values retain the existing defaults; `TRANSCRIPTION_PROMPT` has no default, so the ASR request carries only the audio attachment, because dedicated transcription models reject text input. Nonblank overrides preserve their whitespace, Markdown, Unicode, and line breaks. They are not appended to the defaults, and placeholders are not interpolated. Prompt settings do not change model selection, authorization, feature availability, timeouts, or response validation. Refinement and naming still use `UTILITY_MODEL`; transcription uses `ASR_MODEL`.
+
+Quote multiline values in `apps/chat-api/.env`, for example:
+
+```dotenv
+CONVERSATION_NAMING_SYSTEM_PROMPT="Create a concise conversation title.
+Return only the title, in the language of the conversation."
+```
+
+Double-quoted `\n` escapes also produce line breaks. Restart the backend after changing a value. Remove an override and restart to restore its default. Keep the operation's expected output format in custom prompts: refinement returns only rewritten text, naming only a title, and transcription only recognized speech. These settings are consumed by the backend and are not added to browser configuration.
+
+#### Outbound DIAL Core client identity
+
+Every request from Chat API to DIAL Core carries
+`User-Agent: ai-dial-chat/<normalized-version>`. This applies to requests made
+through the shared DIAL SDK client and to the raw Core transports used for
+rating, scheduled tasks, and streaming archive uploads. Requests to non-Core
+services, such as the theme service, keep their own transport and identity.
+
+The version is resolved from `CHAT_VERSION`; blank or unset values fall back to
+the workspace root `package.json` version. For the header only, runs of characters outside
+`A-Z`, `a-z`, `0-9`, `.`, `_`, and `-` become `-`, leading and trailing `-` are
+removed, and an empty normalized value becomes `unknown`. The header is intended
+only for operational diagnostics and client-version attribution. It contains no
+user, tenant, authentication, conversation, or other runtime request data.
+
+Banner dismissal is content-keyed and persists in the browser's `localStorage`: a user who closes the banner keeps it hidden across restarts, and it reappears automatically for everyone once an operator changes any of the content it renders — the title, the description, or an `ANNOUNCEMENTS` entry (its title, description or link) — with no version counter or manual reset. Note that dismissing the banner also hides the announcements popover, since the pill lives inside the banner; that is why editing the popover list alone is enough to bring the banner back.
+
+The dismissal is keyed on content only, so redeploying with the same copy does not re-show the banner, and users who never dismissed the previous announcement are unaffected. Deployments that leave `ANNOUNCEMENTS` empty keep the signatures their users already stored, so adding the popover list to the key does not re-show the banner on its own.
+
+| Variable                    | Default | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| --------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ANNOUNCEMENT_HTML_MESSAGE` | —       | Deprecated. Renders the legacy centered banner with the same content-keyed dismissal as the structured form. Unlike the description, it is not truncated and accepts `<p>` and `<u>` on top of the inline set (`<a>`, `<b>`, `<strong>`, `<em>`, `<br>`, `<span>`), so a multi-paragraph message renders as stacked centered lines. `style` attributes are stripped — links are underlined by the app — and `target`/`rel` are not added for you, so author them yourself. Ignored when `ANNOUNCEMENT_TITLE` or `ANNOUNCEMENT_DESCRIPTION` is set. Use the structured pair for new deployments. |
+
+#### Session expiration and upgrade
+
+`AUTH_SESSION_MAX_AGE_SECONDS` limits the local Chat session, independently of
+provider scopes. Keycloak's positive numeric `refresh_expires_in` can shorten
+that deadline; zero or missing metadata leaves the refresh-token expiry unknown.
+Other providers currently use the Chat limit when a refresh token is present.
+Without a refresh token the session cannot outlive its access token.
+
+Session payload v2 enforces expiry on the server as well as in browser cookies.
+After upgrading from v1, existing sessions require a new login; deploy auth
+replicas together to avoid inconsistent enforcement during rollout. In-progress
+OIDC transactions can still complete within their original ten-minute window.
+Successful token refresh resets the deadline to the current time plus the configured
+lifetime (30 days by default). Protected requests refresh within 60 seconds of access-token
+or effective session expiry; optional authentication and bucket-only cookie rewrites do
+not renew it. Failed refreshes do not extend it. Changing the setting affects new logins
+and successful renewals; already-issued cookies retain their deadline until then.
+Expiration can return the
+user through an existing IdP SSO session without a password prompt; password/MFA
+reauthentication is a separate IdP policy.
+
+See [session lifetime policy](../../docs/auth/auth-bff-encrypted-cookie.md#35-session-lifetime-policy)
+for provider metadata, rotation, and migration details.
+
+#### Header bearer-token authentication
+
+Alongside the encrypted session cookie, the BFF can optionally authenticate requests that carry an `Authorization: Bearer <token>` header, verifying the token's signature locally against the JWKS of whichever registered OIDC provider issued it. When present and valid, a header token takes precedence over the session cookie and is exempt from CSRF checks (see `docs/auth/auth-bff-encrypted-cookie.md`). The feature is off by default — enabling it widens the BFF's trust boundary from "our SPA in a browser" to "anyone holding a valid IdP token" — and requires an explicit issuer allowlist.
+
+| Variable                                     | Default | Description                                                                                                                                  |
+| -------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AUTH_HEADER_TOKEN_ENABLED`                  | `false` | Master feature flag. When `false`, any `Authorization` header is ignored entirely and only the session cookie is used.                       |
+| `AUTH_HEADER_TOKEN_ALLOWED_ISSUERS`          | —       | Comma-separated allowlist of trusted `iss` values. **Required** (application fails to boot otherwise) when `AUTH_HEADER_TOKEN_ENABLED=true`. |
+| `AUTH_HEADER_TOKEN_CLOCK_TOLERANCE_SECONDS`  | `30`    | Clock-skew tolerance (seconds) applied when verifying a header token's `exp`/`nbf`.                                                          |
+| `AUTH_HEADER_TOKEN_JWKS_CACHE_TTL_SECONDS`   | `600`   | How long a provider's remote JWK set is cached before being refreshed.                                                                       |
+| `AUTH_HEADER_TOKEN_BUCKET_CACHE_TTL_SECONDS` | `60`    | TTL for the DIAL Core bucket resolved for a header-authenticated caller, cached by a hash of the token.                                      |
+
+A verified token must carry a non-empty `sub` claim. One that passes issuer allowlisting, provider matching and signature/time verification but has no `sub` (or an empty one) is rejected with `401` / `AUTH_HEADER_TOKEN_INVALID`, because `sub` is the server-verified identity the BFF derives per-caller state from.
+
+**Chat generation under header auth.** `POST /api/v1/conversations/completions`, `.../completions/stop` and `.../completions/attach` all work for a header-authenticated caller. Two consequences operators should plan for:
+
+- **All clients of one (`providerId`, `sub`) are a single generation owner.** A bearer request carries no server-issued session artifact, so the subject is the finest identity the server can verify — distinguishing one client of a subject from another would mean trusting a client-asserted value. For one conversation path, requests reaching the same backend process share registry ownership: a second start gets `409` while any lifecycle state retains the key, and those clients can stop or attach to its running entry; the `snapshot` event of such an attach carries the entry's `generationId`, so a client that joined by path can send it to `.../completions/stop`. The registry does not coordinate ownership, stop, or attach across pods. This mirrors how multiple browser tabs of a single cookie session already behave. A different `sub`, or the same `sub` from a different `providerId`, is a different principal and gets `404` — the same answer as a path with no generation at all.
+- **The token captured at generation start is used for the whole generation.** `streamCompletion` captures the access token once, at request start, and reuses it for the upstream relay _and_ the persistence writes that follow. Because the BFF performs no server-side refresh for header callers by contract, a token that expires mid-generation fails that generation. `MAX_GENERATION_DURATION_MS` requests cancellation of active work; it does not bound the later persistence wait or a request that does not settle after abort. Account for those phases when choosing token lifetime.
+
+Ownership does not depend on the token itself — it is derived from `providerId` + `sub` — so renewing an access token mid-generation keeps the caller's ability to stop and attach to what it started.
+
+#### Auth provider environment variables
+
+Each identity provider is configured through its own set of discrete environment variables, following the `AUTH_{PROVIDER_TYPE}_{FIELD_NAME}` convention. A provider is registered only when its `CLIENT_ID` variable is set; an unconfigured provider is silently skipped. If `CLIENT_ID` is set but another field that provider requires is missing, the application fails to boot with an error naming the missing variable. The provider's `id` (used in `/api/v1/auth/login/<id>` and in the `/api/v1/auth/providers` response) is fixed in code and cannot be overridden. Only one instance of each provider type is supported.
+
+Every `AUTH_{PROVIDER_TYPE}_HOST` variable (`AUTH_AUTH0_HOST`, `AUTH_GITLAB_HOST`, `AUTH_KEYCLOAK_HOST`, `AUTH_PING_ID_HOST`, `AUTH_COGNITO_HOST`) accepts either form:
+
+- a bare host, optionally with a path — `keycloak.example.com/realms/dial` — in which case HTTPS is assumed and `https://` is prepended;
+- a full URL whose scheme is used as given — `http://keycloak.internal:8080/realms/dial` — which is how a provider reachable only over plain HTTP (an in-cluster Keycloak, a local test instance) is configured.
+
+A trailing slash is normalised away. A scheme other than `http` or `https` fails boot with an error naming the variable.
+
+The configured host is used as the OIDC discovery location. After discovery,
+Chat uses the canonical `issuer` returned by the provider metadata for callback
+and token issuer validation. This allows an in-cluster discovery URL to return
+the provider's externally advertised issuer without causing a false issuer
+mismatch; the canonical issuer remains subject to strict validation.
+
+**Auth0** (`id: auth0`)
+
+| Variable                      | Required | Default                               |
+| ----------------------------- | :------: | ------------------------------------- |
+| `AUTH_AUTH0_CLIENT_ID`        |  Yes\*   | —                                     |
+| `AUTH_AUTH0_SECRET`           |  Yes\*   | —                                     |
+| `AUTH_AUTH0_HOST`             |  Yes\*   | —                                     |
+| `AUTH_AUTH0_AUDIENCE`         |    No    | —                                     |
+| `AUTH_AUTH0_NAME`             |    No    | `Auth0`                               |
+| `AUTH_AUTH0_SCOPE`            |    No    | `openid email profile offline_access` |
+| `AUTH_AUTH0_ADMIN_ROLE_NAMES` |    No    | `ADMIN_ROLE_NAMES`                    |
+| `AUTH_AUTH0_DIAL_ROLES_FIELD` |    No    | `DIAL_ROLES_FIELD`                    |
+
+**Azure AD** (`id: azure-ad`)
+
+| Variable                         | Required | Default                                         |
+| -------------------------------- | :------: | ----------------------------------------------- |
+| `AUTH_AZURE_AD_CLIENT_ID`        |  Yes\*   | —                                               |
+| `AUTH_AZURE_AD_SECRET`           |  Yes\*   | —                                               |
+| `AUTH_AZURE_AD_TENANT_ID`        |  Yes\*   | —                                               |
+| `AUTH_AZURE_AD_NAME`             |    No    | `Azure AD`                                      |
+| `AUTH_AZURE_AD_SCOPE`            |    No    | `openid profile user.Read email offline_access` |
+| `AUTH_AZURE_AD_ADMIN_ROLE_NAMES` |    No    | `ADMIN_ROLE_NAMES`                              |
+| `AUTH_AZURE_AD_DIAL_ROLES_FIELD` |    No    | `DIAL_ROLES_FIELD`                              |
+
+**Azure B2C** (`id: azure-b2c`)
+
+| Variable                          | Required | Default                               |
+| --------------------------------- | :------: | ------------------------------------- |
+| `AUTH_AZURE_B2C_CLIENT_ID`        |  Yes\*   | —                                     |
+| `AUTH_AZURE_B2C_CLIENT_SECRET`    |  Yes\*   | —                                     |
+| `AUTH_AZURE_B2C_TENANT_ID`        | Yes\*\*  | —                                     |
+| `AUTH_AZURE_B2C_USER_FLOW`        | Yes\*\*  | —                                     |
+| `AUTH_AZURE_B2C_ISSUER`           | Yes\*\*  | —                                     |
+| `AUTH_AZURE_B2C_NAME`             |    No    | `Azure B2C`                           |
+| `AUTH_AZURE_B2C_SCOPE`            |    No    | `openid profile email offline_access` |
+| `AUTH_AZURE_B2C_ADMIN_ROLE_NAMES` |    No    | `ADMIN_ROLE_NAMES`                    |
+| `AUTH_AZURE_B2C_DIAL_ROLES_FIELD` |    No    | `DIAL_ROLES_FIELD`                    |
+
+\*\* Either `AUTH_AZURE_B2C_ISSUER` on its own, or both `AUTH_AZURE_B2C_TENANT_ID` and `AUTH_AZURE_B2C_USER_FLOW` together. When `AUTH_AZURE_B2C_ISSUER` is not set, the issuer is derived as `https://${TENANT_ID}.b2clogin.com/${TENANT_ID}.onmicrosoft.com/${USER_FLOW}/v2.0`.
+
+**GitLab** (`id: gitlab`)
+
+| Variable                       | Required | Default            |
+| ------------------------------ | :------: | ------------------ |
+| `AUTH_GITLAB_CLIENT_ID`        |  Yes\*   | —                  |
+| `AUTH_GITLAB_SECRET`           |  Yes\*   | —                  |
+| `AUTH_GITLAB_HOST`             |  Yes\*   | —                  |
+| `AUTH_GITLAB_NAME`             |    No    | `GitLab`           |
+| `AUTH_GITLAB_SCOPE`            |    No    | `read_user`        |
+| `AUTH_GITLAB_ADMIN_ROLE_NAMES` |    No    | `ADMIN_ROLE_NAMES` |
+| `AUTH_GITLAB_DIAL_ROLES_FIELD` |    No    | `DIAL_ROLES_FIELD` |
+
+**Google** (`id: google`)
+
+| Variable                | Required | Default                               |
+| ----------------------- | :------: | ------------------------------------- |
+| `AUTH_GOOGLE_CLIENT_ID` |  Yes\*   | —                                     |
+| `AUTH_GOOGLE_SECRET`    |  Yes\*   | —                                     |
+| `AUTH_GOOGLE_NAME`      |    No    | `Google`                              |
+| `AUTH_GOOGLE_SCOPE`     |    No    | `openid email profile offline_access` |
+
+Google has no host variable (issuer is the fixed `https://accounts.google.com`) and no per-provider admin-role/roles-claim override — it always uses `ADMIN_ROLE_NAMES` / `DIAL_ROLES_FIELD`.
+
+**Keycloak** (`id: keycloak`)
+
+| Variable                         | Required | Default                                                             |
+| -------------------------------- | :------: | ------------------------------------------------------------------- |
+| `AUTH_KEYCLOAK_CLIENT_ID`        |  Yes\*   | —                                                                   |
+| `AUTH_KEYCLOAK_SECRET`           |  Yes\*   | —                                                                   |
+| `AUTH_KEYCLOAK_HOST`             |  Yes\*   | — (include the realm path, e.g. `keycloak.example.com/realms/dial`) |
+| `AUTH_KEYCLOAK_NAME`             |    No    | `Keycloak`                                                          |
+| `AUTH_KEYCLOAK_SCOPE`            |    No    | `openid email profile offline_access`                               |
+| `AUTH_KEYCLOAK_ADMIN_ROLE_NAMES` |    No    | `ADMIN_ROLE_NAMES`                                                  |
+| `AUTH_KEYCLOAK_DIAL_ROLES_FIELD` |    No    | `DIAL_ROLES_FIELD`                                                  |
+
+**PingID** (`id: ping-id`)
+
+| Variable                        | Required | Default            |
+| ------------------------------- | :------: | ------------------ |
+| `AUTH_PING_ID_CLIENT_ID`        |  Yes\*   | —                  |
+| `AUTH_PING_ID_SECRET`           |  Yes\*   | —                  |
+| `AUTH_PING_ID_HOST`             |  Yes\*   | —                  |
+| `AUTH_PING_ID_NAME`             |    No    | `PingID`           |
+| `AUTH_PING_ID_SCOPE`            |    No    | `offline_access`   |
+| `AUTH_PING_ID_ADMIN_ROLE_NAMES` |    No    | `ADMIN_ROLE_NAMES` |
+| `AUTH_PING_ID_DIAL_ROLES_FIELD` |    No    | `DIAL_ROLES_FIELD` |
+
+**Cognito** (`id: cognito`)
+
+| Variable                        | Required | Default                                                    |
+| ------------------------------- | :------: | ---------------------------------------------------------- |
+| `AUTH_COGNITO_CLIENT_ID`        |  Yes\*   | —                                                          |
+| `AUTH_COGNITO_SECRET`           |  Yes\*   | —                                                          |
+| `AUTH_COGNITO_HOST`             |  Yes\*   | — (e.g. `cognito-idp.{region}.amazonaws.com/{userPoolId}`) |
+| `AUTH_COGNITO_NAME`             |    No    | `Cognito`                                                  |
+| `AUTH_COGNITO_SCOPE`            |    No    | `openid email profile`                                     |
+| `AUTH_COGNITO_ADMIN_ROLE_NAMES` |    No    | `ADMIN_ROLE_NAMES`                                         |
+| `AUTH_COGNITO_DIAL_ROLES_FIELD` |    No    | `DIAL_ROLES_FIELD`                                         |
+
+**Okta** (`id: okta`)
+
+| Variable                     | Required | Default                                                             |
+| ---------------------------- | :------: | ------------------------------------------------------------------- |
+| `AUTH_OKTA_CLIENT_ID`        |  Yes\*   | —                                                                   |
+| `AUTH_OKTA_CLIENT_SECRET`    |  Yes\*   | —                                                                   |
+| `AUTH_OKTA_ISSUER`           |  Yes\*   | — (full issuer URL, e.g. `https://dev-123.okta.com/oauth2/default`) |
+| `AUTH_OKTA_NAME`             |    No    | `Okta`                                                              |
+| `AUTH_OKTA_SCOPE`            |    No    | `openid email profile`                                              |
+| `AUTH_OKTA_ADMIN_ROLE_NAMES` |    No    | `ADMIN_ROLE_NAMES`                                                  |
+| `AUTH_OKTA_DIAL_ROLES_FIELD` |    No    | `DIAL_ROLES_FIELD`                                                  |
+
+\* Required only if that provider is being configured at all (signaled by its `CLIENT_ID` variable being set); the provider is skipped entirely otherwise.
+
+#### Trusting a private certificate authority
+
+At startup, `chat-api` discovers every configured OIDC provider over HTTPS. If
+an identity provider uses a certificate issued by a private CA, the Node.js
+process must trust that CA before the application starts; otherwise provider
+discovery fails and the application does not boot.
+
+Mount a PEM-encoded CA bundle into the container and point
+[`NODE_EXTRA_CA_CERTS`](https://nodejs.org/api/cli.html#node_extra_ca_certsfile)
+to it. For example, with Docker Compose:
+
+```yaml
+services:
+  chat:
+    environment:
+      NODE_EXTRA_CA_CERTS: /certificates/company-ca.pem
+    volumes:
+      - ./company-ca.pem:/certificates/company-ca.pem:ro
+```
+
+The bundle should contain the issuing root and any required intermediate CA
+certificates. If the server certificate is genuinely self-signed, include that
+certificate itself. The file must exist when the Node.js process starts because
+`NODE_EXTRA_CA_CERTS` is read only at process launch.
+
+`NODE_EXTRA_CA_CERTS` is a Node.js runtime variable, not an application-owned
+variable validated by `chat-api`. Do not use `NODE_TLS_REJECT_UNAUTHORIZED=0`:
+it disables certificate verification for every HTTPS connection made by the
+process.
+
+### Legacy cookie cleanup
+
+If a previous deployment on the same origin set cookies this app never reads
+(a prior auth stack, a renamed `AUTH_SESSION_COOKIE_NAME`/`AUTH_TRANSACTION_COOKIE_NAME`,
+or a different `AUTH_COOKIE_SECURE` flipping the `__Host-` prefix), those cookies
+are never sent to the browser's own expiry logic by anything in this app — the
+service that originally set them is gone, so nothing will ever clear them
+unless this one does. List their exact names in `AUTH_LEGACY_COOKIE_NAMES`
+(comma-separated); a global middleware in `main.ts` checks every incoming
+request for them and, only when one is actually present, responds with a
+`Max-Age=0` `Set-Cookie` to expire it. Leave it unset once no client still
+carries the old cookies.
+
+### 3. Run the Application
+
+**Development mode:**
+
+```bash
+npm run start:api          # same as: npm exec nx serve chat-api
+```
+
+**Development mode with webpack HMR:**
+
+```bash
+npm run start:api:dev
+```
+
+**Start both the frontend and the API:**
+
+```bash
+npm run start:all
+```
+
+**Production build:**
+
+```bash
+npm run build && npm run build:api
+```
+
+Output lands in `apps/chat-api/dist/` (and `apps/chat/dist/` for the frontend it
+serves); run it with `node apps/chat-api/dist/main.js`.
+
+The API will be available at:
+
+- **API**: `http://localhost:5000/api`
+- **Swagger Docs**: `http://localhost:5000/api/docs` (development only)
+- **Health Check**: `http://localhost:5000/api/health`
+
+## API Documentation
+
+Interactive API documentation is available at `/api/docs` when the application is running. The documentation is auto-generated from TypeScript decorators and includes:
+
+- All available endpoints
+- Request/response schemas
+- Error responses
+- Query parameter validation rules
+- Authentication: two security schemes — `session` (the encrypted session cookie,
+  `__Host-chat.sess` by default) and `bearer` (an `Authorization: Bearer` token,
+  see [Header bearer-token authentication](#header-bearer-token-authentication)).
+  The document requires either one on every operation; `@Public()` routes
+  (health, themes, client-config, auth providers/login/callback/logout) are
+  emitted with `security: []`. The opt-out is derived from `@Public()` itself by
+  `createOpenApiDocument` in `src/openapi/openapi.config.ts`, so a new public
+  route needs no extra Swagger decorator.
+
+## API Endpoints
+
+Business endpoints are URI-versioned: `main.ts` sets a global `api` prefix and
+enables `VersioningType.URI`, so a controller declared as
+`@Controller({ path: 'conversations', version: '1' })` resolves to
+`/api/v1/conversations`. Infrastructure endpoints (health, themes) are
+unversioned by design.
+
+Swagger at `/api/docs` is the authoritative per-route reference — the table below
+maps each backend domain to its base path.
+
+### Infrastructure
+
+| Method | Path               | Description                                                                                                                                                 |
+| ------ | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET`  | `/api/health`      | Health status: `{ status, timestamp, version, buildId }` (`version` from `CHAT_VERSION`; `buildId` — see [Docker image (BFF only)](#docker-image-bff-only)) |
+| `GET`  | `/api/themes`      | Theme configuration. Errors: 404, 502, 503                                                                                                                  |
+| `GET`  | `/api/themes/icon` | Theme icon SVG by validated `iconName`. Errors: 400, 404, 502, 503                                                                                          |
+
+### Versioned domains (`/api/v1/...`)
+
+| Base path             | Source folder          | Responsibility                                                     |
+| --------------------- | ---------------------- | ------------------------------------------------------------------ |
+| `auth`                | `auth/`                | Provider list, login/callback, logout, session, CSRF, `me`         |
+| `client-config`       | `app-config/`          | Server-resolved client configuration and feature flags             |
+| `user-config`         | `user-config/`         | Per-user persisted preferences                                     |
+| `chat`                | `chat/`                | Chat completions, streamed over SSE                                |
+| `conversations`       | `conversations/`       | Conversation CRUD, plus publish operations                         |
+| `models`              | `models/`              | Available models                                                   |
+| `deployments`         | `deployments/`         | Deployment metadata and usage limits                               |
+| `applications`        | `applications/`        | Application CRUD                                                   |
+| `application-schemas` | `application-schemas/` | Quick App / custom application schemas                             |
+| `toolsets`            | `toolsets/`            | Toolsets and their credential state                                |
+| `skills`              | `skills/`              | Skill CRUD, metadata lookup, and skill file transfer               |
+| `prompts`             | `prompts/`             | Prompt CRUD and folders                                            |
+| `files`               | `files/`               | File upload/download, archive upload, ZIP streaming                |
+| `share`               | `share/`               | Share links and recipient management                               |
+| `catalog`             | `publish/`             | Publication requests and published-resource listing                |
+| `publish`             | `publish/`             | Publication rules                                                  |
+| `rate`                | `rate/`                | Message rating (like/dislike) and feedback                         |
+| `transcription`       | `transcription/`       | Audio transcription through the ASR model                          |
+| `scheduled-tasks`     | `scheduled-tasks/`     | DIAL Scheduler proxy — schedules and run history                   |
+| `client-channel`      | `client-channel/`      | Server-initiated interactions (mid-stream toolset sign-in), SSE    |
+| `offline-credentials` | `offline-credentials/` | Offline credential consent flow                                    |
+| `external-services`   | `external-services/`   | External service registry and sign-in state                        |
+| `apps`                | `app/`                 | Root application controller                                        |
+| `custom-api`          | `custom-api/`          | Deployment-configured custom Core API bridge (disabled by default) |
+
+`libs/chat-api-client` is generated from this surface. After changing any
+controller or DTO, run `npm run openapi` and `npm run openapi:check` — handler
+names become the generated SDK's method names, so name them like
+`listModels` / `getCurrentUser`.
+
+### Transcription availability
+
+`POST /api/v1/transcription` maps upstream 429 and 503 responses to HTTP 503 and
+forwards the upstream `Retry-After` header when present. Other upstream errors use
+the shared DIAL error mapper. The frontend surfaces 429/503 immediately and
+restores the editable draft with an error message. Only gateway failures
+(502/504) retry recognition of the same file, at most twice with a six-second
+total delay budget, respecting `Retry-After`. The backend adds no retry loop.
+
+In the local Core implementation, `Service is not available` is produced by the
+upstream balancer when all upstream states have status 429. Check Core logs for
+`Upstream ... limit hit` and the ASR provider's quotas/capacity. Dictation submits one
+complete recording after Stop. Raising a DIAL token limit does not increase the
+provider's request quota. The configured deployment can be valid even when some
+recognition requests receive this response.
+
+### Custom Core API operations
+
+`/api/v1/custom-api/:operationId` is a disabled-by-default, generic bridge
+to a small, explicitly allowlisted set of exact paths under `DIAL_CORE_URL`
+— for example a global Route configured in Admin's Entities → Routes, such as
+`/data-products`. It exists so a client application can reach a
+deployment-specific Core catalog endpoint without adding its own business
+controller, DTOs, or public BFF release to this repository. Each operation is
+one method on one path: GET by default, or a POST/PUT/DELETE with an
+allowlist of query parameter names and, for POST/PUT, a JSON body. See
+`openspec/changes/archive/2026-10-02-add-configured-core-api-operations/design.md`
+and `openspec/changes/extend-custom-api-operations/design.md` for the full
+rationale and trust-boundary analysis; this section is the operator-facing
+summary.
+
+**Who owns what:**
+
+- **Admin** owns the Route's path/method, `rewritePath`, upstream or static
+  response, and **role policy** (`userRoles`). Admin's own `/api/v1/routes`
+  management API is never called by the BFF — the BFF only ever dispatches the
+  one runtime path a Route exposes, the same way any Core client would.
+- **Core** matches the request against its configured routes in priority
+  order, enforces the route's roles (a `null` `userRoles` permits any
+  authenticated role; an empty set denies all; a non-empty set requires an
+  intersection — see `RoleBasedEntity` in `ai-dial-core`), applies its own
+  business rate limiting, and either returns a static JSON body or proxies to
+  the configured upstream. Built-in Core controllers are matched before the
+  global-route fallback, so the BFF cannot prove from a path string alone
+  which controller actually serves it.
+- **The upstream service behind a Route** (when not static) owns safe,
+  per-user response contents. A global Route checks **roles**, not per-object
+  or per-tenant permissions — if a response must be filtered per caller, that
+  authorization belongs in the upstream service, not in this BFF bridge.
+- **This BFF** owns exactly three things: (1) the exact allowlist of operation
+  IDs it will dispatch at all (`CUSTOM_CORE_API_CONFIG`), (2) translating the
+  caller's own session into the Core bearer token for that one call, and (3)
+  bounded, sanitized transport (timeouts, byte/depth limits, redirect
+  rejection, generic error mapping). It adds no second role check, no business
+  response schema, and no field filtering — Core's role check and the
+  upstream's own response safety are the only authorization layers.
+- **The calling client application** owns the operation ID it chooses to call,
+  and all domain decoding/validation/presentation of the opaque JSON it gets
+  back. A field already present in the JSON response has already reached the
+  browser; frontend validation is a correctness aid, not a confidentiality
+  boundary.
+
+**Enabling it — `CUSTOM_CORE_API_CONFIG`:**
+
+The repository and `.env.template` ship this setting blank, so the bridge is
+inert out of the box: every request to `/api/v1/custom-api/:id` returns 404
+with no Core dispatch, and startup performs no network or file read related to
+this feature. To enable one or more operations, set the environment variable
+to a JSON object and restart the BFF (no configuration file or volume mount is
+read):
+
+```dotenv
+CUSTOM_CORE_API_CONFIG='{"version":1,"operations":[{"id":"data-products","method":"GET","corePath":"/data-products"}]}'
+```
+
+The outer single quotes above are `.env` file quoting, not part of the JSON
+value — a raw deployment environment variable (Kubernetes `env`, a platform's
+environment-variable UI, etc.) should be set to the JSON text only, without
+those quotes:
+
+```json
+{
+  "version": 1,
+  "operations": [
+    { "id": "data-products", "method": "GET", "corePath": "/data-products" }
+  ]
+}
+```
+
+Rules enforced at startup, failing closed (the process does not boot on an
+invalid value, and the invalid value itself is never logged):
+
+- `version` must equal `1`; `operations` must be an array of at most 64
+  entries (an empty array is valid and equivalent to leaving the variable
+  unset).
+- The raw environment value must be at most 16 KiB measured in UTF-8 bytes,
+  checked before parsing.
+  and be
+  unique within the registry. `corePath` must be one leading slash followed by
+  nonempty, slash-separated ASCII letter/digit/underscore/hyphen segments —
+  dots, percent-encoding, backslashes, doubled/trailing slashes, a full URL,
+  or a query/fragment all fail startup.
+  . Only these names are accepted from the caller and
+  forwarded; without `query` the operation accepts no query at all.
+- `body`, when set, must be `"json"` and is only valid on `POST`/`PUT`.
+  Without it the operation accepts no request body (a bodiless write is a
+  POST/PUT/DELETE without `body`).
+- `timeoutMs` defaults to 10,000 ms; an entry may set it to any positive
+  integer up to **300,000 ms** for a named long-running call (for example one
+  that clones a repository). `maxResponseBytes` may only **lower** the hard
+  ceiling of 1,048,576 decoded bytes. Both must be positive integers.
 
 The parsed registry is immutable for the life of the process — editing the
 environment variable has no effect until the BFF is restarted. Disable the
@@ -816,10 +3249,19 @@ bridge again by unsetting the variable (or setting it blank/whitespace) and
 restarting; this does not touch the Core Route itself, which remains active
 for any other client configured to reach it.
 
-**Request contract:** `GET /api/v1/custom-api/:operationId` only. No query
-parameters and no request body are accepted (400 before any Core dispatch).
-Every other verb, including `HEAD`, returns 405 without dispatching — HEAD is
-intentionally not served by implicit GET fallback. A syntactically valid but
+**Request contract:** `/api/v1/custom-api/:operationId` with the operation's
+configured method; any other of GET/POST/PUT/DELETE returns 405, and `HEAD`
+and `PATCH` always do, without dispatching — HEAD is intentionally not served
+by implicit GET fallback. Query parameters are accepted only by the names the
+entry's `query` lists, each at most once, at most 2,048 bytes per value and
+8 KiB in total; anything else is 400 before any Core dispatch. They are
+re-encoded by the BFF and appended to the exact `corePath`, so a value can
+never change the destination's origin or path. A `body: "json"` operation
+requires `Content-Type: application/json` and a JSON object or array of at
+most 65,536 bytes and 32 levels of nesting, forwarded re-serialized; every
+other operation rejects a nonempty body with 400. POST, PUT and DELETE go
+through the normal CSRF check (`X-CSRF-Token` and a matching `Origin`), so a
+write without them is 403 `CSRF_INVALID` before dispatch. A syntactically valid but
 unconfigured/disabled ID returns 404 after normal session authentication.
 `corePath` resolves directly against `DIAL_CORE_URL` with no inserted `/v1`,
 `/openai`, `/api`, or api-version segment, preserving an intentional base path
@@ -829,7 +3271,8 @@ to exactly `https://core.example.com/dial/data-products`).
 
 **Response contract:** a successful call returns
 `200 { "data": <opaque JSON value> }` with `Content-Type: application/json`
-and `Cache-Control: private, no-store`. Both an upstream JSON response
+and `Cache-Control: private, no-store`. Core `200` and `201` with JSON are
+successes, and a Core `204` with no body returns `{ "data": null }`. Both an upstream JSON response
 (`application/json` or `application/*+json`, parameters allowed) and an Admin
 **static** Response — which may omit `Content-Type` entirely — are accepted;
 any other explicit MIME type (HTML, plain text, etc.) is rejected. Upstream
@@ -846,10 +3289,57 @@ excess calls return 429 immediately. This bounds local memory only; it is not
 a cross-replica quota, and it does not replace Core's own business rate
 limiting (which remains fully in effect, and may be unconfigured — size
 ingress/replica-level controls accordingly for a replicated deployment).
+A long-deadline operation holds its permit for as long as it runs.
 Telemetry records only the configured operation ID (an unregistered/rejected
-ID is recorded under a constant `unknown` label, never the raw value), a
-bounded result category, duration, and decoded byte count — never tokens,
-cookies, bodies, configuration contents, or full URLs.
+ID is recorded under a constant `unknown` label, never the raw value), the
+method (`other` for anything outside GET/POST/PUT/DELETE), a bounded result
+category, duration, and decoded byte count — never tokens, cookies, bodies,
+query values, configuration contents, or full URLs.
+
+**Writes and query parameters behind Core Routes:** a write operation needs a
+Core Route that allows that method on that path. For a Route whose upstream
+should receive the caller's query, use `rewritePath: true`, which copies the
+incoming query to the upstream. Core may forward the caller's `Authorization`
+to the upstream as well as its own key, and a write hands the upstream JSON the
+caller chose: put only trusted upstreams behind these Routes, and let the
+upstream validate every input as it would from any client. Check that Core's
+Route timeout allows a long-deadline operation's `timeoutMs`.
+
+Example — a runner's probe (GET with one parameter), a repository discovery
+that may take minutes, and a write with a JSON body:
+
+```json
+{
+  "version": 1,
+  "operations": [
+    {
+      "id": "loop-probe",
+      "method": "GET",
+      "corePath": "/dial-loop/editor/probe",
+      "query": ["url"]
+    },
+    {
+      "id": "loop-discover-skills",
+      "method": "GET",
+      "corePath": "/dial-loop/editor/discover-skills",
+      "query": ["host", "repo", "ref", "subpath"],
+      "timeoutMs": 300000
+    },
+    {
+      "id": "loop-teams-binding-put",
+      "method": "PUT",
+      "corePath": "/dial-loop/editor/teams/binding",
+      "body": "json"
+    }
+  ]
+}
+```
+
+**Generated client:** `getCustomApiOperation`, `postCustomApiOperation`,
+`putCustomApiOperation` and `deleteCustomApiOperation`. The query allowlist is
+per deployment, so OpenAPI declares no query parameters (a free-form object
+parameter would be serialized as `params[name]=…`); a caller that passes them
+builds the URL itself on the generated `Configuration`'s `fetchApi`.
 
 **Verifying activation:** saving a Route in Admin does not, by itself, prove
 it is live on the Core instance this BFF talks to — Admin's config export is

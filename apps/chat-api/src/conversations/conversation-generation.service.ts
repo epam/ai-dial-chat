@@ -90,6 +90,12 @@ export interface GenerationAttachment {
   /** The assistant message as assembled at the moment of attaching. */
   assembledMessage: ConversationMessageDto;
   /**
+   * The client-supplied id the generation was registered with — the id Stop
+   * accepts for this principal and path, so a client that only attached by
+   * path can still stop it.
+   */
+  generationId: string;
+  /**
    * Emits `'chunk'` with the raw parsed delta chunk for every chunk applied
    * after the snapshot was taken, and exactly one `'terminal'` event (see
    * `GenerationTerminalEvent`) when the generation ends.
@@ -478,7 +484,11 @@ export class ConversationGenerationService implements OnModuleDestroy {
   attach(ownerKey: string, path: string): GenerationAttachment | undefined {
     const entry = this.registry.get(this.buildKey(ownerKey, path));
     if (!entry) return undefined;
-    return { assembledMessage: entry.assembledMessage, emitter: entry.emitter };
+    return {
+      assembledMessage: entry.assembledMessage,
+      generationId: entry.generationId,
+      emitter: entry.emitter,
+    };
   }
 
   /**

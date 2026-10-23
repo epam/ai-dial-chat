@@ -52,18 +52,25 @@ export const normalizeDeploymentId = (id: string): string =>
 
 /**
  * Finds a deployment matching `idOrReference` by `id` first, falling back to
- * `reference` when no `id` matches. DIAL Core sometimes addresses a
- * deployment by `reference` in places that store a deployment id (e.g. a
- * conversation's or message's `model.id`), so lookups against the fetched
- * deployments list must accept either value.
+ * `reference` when no `id` matches, and finally to an `id` match that ignores
+ * percent-encoding. DIAL Core sometimes addresses a deployment by `reference`
+ * in places that store a deployment id (e.g. a conversation's or message's
+ * `model.id`), and a conversation created by a Custom Viewer (a DIAL Loop
+ * agent) may store the raw, human-readable application id while the listing
+ * returns it encoded ([#9275](https://github.com/epam/ai-dial-chat/issues/9275)), so lookups against the fetched deployments
+ * list must accept any of these forms.
  */
 export const findDeploymentByIdOrReference = (
   deployments: DeploymentItemDto[],
   idOrReference: string | null | undefined,
 ): DeploymentItemDto | undefined => {
   if (!idOrReference) return undefined;
-  return (
+  const exactMatch =
     deployments.find((deployment) => deployment.id === idOrReference) ??
-    deployments.find((deployment) => deployment.reference === idOrReference)
+    deployments.find((deployment) => deployment.reference === idOrReference);
+  if (exactMatch) return exactMatch;
+  const normalizedId = normalizeDeploymentId(idOrReference);
+  return deployments.find(
+    (deployment) => normalizeDeploymentId(deployment.id) === normalizedId,
   );
 };

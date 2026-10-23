@@ -67,10 +67,14 @@ feature libraries do not construct this client.
 
 `customApiApi.getCustomApiOperationRaw({ id })` and the normal
 `customApiApi.getCustomApiOperation({ id })` call the disabled-by-default
-`GET /api/v1/custom-api/:operationId` bridge (see
-`apps/chat-api/README.md#custom-core-api-operations`). The request contract is
-intentionally just the path ID — there is no query or body parameter, because
-v1 supports neither parameterized calls nor writes.
+`/api/v1/custom-api/:operationId` bridge (see
+`apps/chat-api/README.md#custom-core-api-operations`);
+`postCustomApiOperation`, `putCustomApiOperation` and
+`deleteCustomApiOperation` call an operation configured with that method, the
+first two with an optional opaque JSON body. No method takes query
+parameters: each deployment allowlists its own names per operation, which
+OpenAPI cannot declare, so a caller that passes them builds the request URL
+itself on the configured `fetchApi` — a documented generator gap.
 
 `CustomApiResponseDto.data` is documented as a free-form object
 (`{ [key: string]: unknown }`, since OpenAPI has no "any JSON value"

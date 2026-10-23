@@ -50,37 +50,70 @@ const buildDocument = async () => {
 };
 
 describe('custom API OpenAPI contract', () => {
-  it('documents exactly one GET operation at the versioned path, no query/body contract', async () => {
+  const METHODS = ['get', 'post', 'put', 'delete'] as const;
+
+  it('documents GET, POST, PUT and DELETE at the versioned path, never PATCH or HEAD', async () => {
     const document = await buildDocument();
     const pathItem = document.paths['/api/v1/custom-api/{id}'];
 
     expect(pathItem).toBeDefined();
-    expect(pathItem?.get).toBeDefined();
-    expect(pathItem?.post).toBeUndefined();
-    expect(pathItem?.put).toBeUndefined();
+    for (const method of METHODS) expect(pathItem?.[method]).toBeDefined();
     expect(pathItem?.patch).toBeUndefined();
-    expect(pathItem?.delete).toBeUndefined();
     expect(pathItem?.head).toBeUndefined();
   });
 
-  it('sets operationId to getCustomApiOperation (operationIdFactory uses the handler name)', async () => {
+  it.each([
+    ['get', 'getCustomApiOperation'],
+    ['post', 'postCustomApiOperation'],
+    ['put', 'putCustomApiOperation'],
+    ['delete', 'deleteCustomApiOperation'],
+  ] as const)(
+    'sets the %s operationId to %s (operationIdFactory uses the handler name)',
+    async (method, operationId) => {
+      const document = await buildDocument();
+      const operation = document.paths['/api/v1/custom-api/{id}']?.[method];
+      expect(operation?.operationId).toBe(operationId);
+    },
+  );
+
+  it.each(METHODS)(
+    'documents the path ID parameter and no query parameters on %s',
+    async (method) => {
+      const document = await buildDocument();
+      const operation = document.paths['/api/v1/custom-api/{id}']?.[method];
+
+      const pathParams =
+        operation?.parameters?.filter((p) => 'in' in p && p.in === 'path') ??
+        [];
+      const queryParams =
+        operation?.parameters?.filter((p) => 'in' in p && p.in === 'query') ??
+        [];
+
+      expect(pathParams).toHaveLength(1);
+      expect(pathParams[0]).toMatchObject({ name: 'id', required: true });
+      expect(queryParams).toHaveLength(0);
+    },
+  );
+
+  it('documents an optional free-form JSON body on POST and PUT only', async () => {
     const document = await buildDocument();
-    const operation = document.paths['/api/v1/custom-api/{id}']?.get;
-    expect(operation?.operationId).toBe('getCustomApiOperation');
-  });
+    const pathItem = document.paths['/api/v1/custom-api/{id}'];
 
-  it('documents the path ID parameter with no query parameters', async () => {
-    const document = await buildDocument();
-    const operation = document.paths['/api/v1/custom-api/{id}']?.get;
-
-    const pathParams =
-      operation?.parameters?.filter((p) => 'in' in p && p.in === 'path') ?? [];
-    const queryParams =
-      operation?.parameters?.filter((p) => 'in' in p && p.in === 'query') ?? [];
-
-    expect(pathParams).toHaveLength(1);
-    expect(pathParams[0]).toMatchObject({ name: 'id', required: true });
-    expect(queryParams).toHaveLength(0);
+    for (const method of ['post', 'put'] as const) {
+      const body = pathItem?.[method]?.requestBody as
+        | {
+            required?: boolean;
+            content?: Record<string, { schema?: unknown }>;
+          }
+        | undefined;
+      expect(body?.required).toBe(false);
+      expect(body?.content?.['application/json']?.schema).toMatchObject({
+        type: 'object',
+        additionalProperties: true,
+      });
+    }
+    expect(pathItem?.get?.requestBody).toBeUndefined();
+    expect(pathItem?.delete?.requestBody).toBeUndefined();
   });
 
   it('documents a 200 response with a schema (not description-only)', async () => {

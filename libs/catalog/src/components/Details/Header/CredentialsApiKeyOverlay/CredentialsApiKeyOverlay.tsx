@@ -1,5 +1,6 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
+  CaptionText,
   DIAL_KIT_ICON_STROKE,
   ErrorText,
   Input,
@@ -178,17 +179,14 @@ export const CredentialsApiKeyOverlay: FC<CredentialsApiKeyOverlayProps> = ({
            * The header hint and the error are rendered as siblings below the
            * input+button row, not through Input's own `caption`/`error` props,
            * so the button never shifts when they appear — only the space below
-           * the row grows. Input's `caption` also carries no id to describe the
-           * field by and is announced as an alert; this hint is static.
+           * the row grows. The hint keeps `headerHintId`, which the field's
+           * `aria-describedby` points at.
            */}
-          {headerHint && (
-            <span
-              id={headerHintId}
-              className={mergeClasses('dial-caption-text', styles.hint)}
-            >
-              {headerHint}
-            </span>
-          )}
+          <CaptionText
+            id={headerHintId}
+            text={headerHint}
+            className={mergeClasses('dial-caption-text', styles.hint)}
+          />
           {hasEmptyKeyError && (
             <ErrorText
               className="dial-caption-text"

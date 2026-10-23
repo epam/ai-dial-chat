@@ -134,9 +134,10 @@ describe('SkillSelectorField', () => {
     render(field({ error: 'Choose supported skills' }));
     const trigger = screen.getByRole('combobox', { name: 'Skills' });
     expect(trigger.getAttribute('aria-invalid')).toBe('true');
-    expect(screen.getByRole('alert').textContent).toBe(
-      'Choose supported skills',
+    // The kit links Select's own error, and only it, as the description.
+    expect(trigger.getAttribute('aria-describedby')).toBe(
+      screen.getByText('Choose supported skills').id,
     );
-    expect(trigger.getAttribute('aria-describedby')).toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 });

@@ -242,7 +242,7 @@ class ConversationListItemDto {
   publishedWithMe: boolean; // True when this conversation is from the public bucket (organisation content)
   isPinned: boolean;        // True when the user has pinned this conversation
   isReadonly: boolean;      // User-bucket items: true when the caller lacks WRITE permission; public and shared items: always true
-  isScheduledTask: boolean; // True when the resource path matches the .scheduler reserved-segment pattern
+  isScheduledTask: boolean; // True only for a user-bucket item whose resource path matches the .scheduler reserved-segment pattern; always false for public and shared items
   scheduleId?: string;      // Present only when isScheduledTask === true; the scheduler task id from the path
   runId?: string;           // Present only when isScheduledTask === true; the scheduler run id from the path
   isUnread?: boolean;       // Present only when isScheduledTask === true; true when the user has not yet opened this conversation
@@ -269,7 +269,9 @@ Items from all three data sources are merged and sorted by `updatedAt` descendin
 
 **No personal/public merging.** The service SHALL NOT attempt to match or merge a user-bucket item with a public-bucket item, even when a personal conversation has been published and both a personal copy and a public copy exist. Each is returned as its own independent list item with its own `id`: the personal copy keeps its user-bucket `id`, real `isReadonly` (from DIAL Core permissions), and `publishedWithMe: false` (unless DIAL Core itself reports otherwise); the public copy is a separate entry with its own `conversations/public/...` id, `isReadonly: true`, and `publishedWithMe: true`. This guarantees any link built from a returned `id` (conversation open/navigation links, and share links created via `POST /api/v1/share`) always resolves to the bucket that specific item actually represents, and that the personal copy's pin status, unread status, and permissions are never affected by publishing.
 
-**Scheduler metadata.** For every merged item (from any of the three data sources), the service SHALL call `parseScheduledTaskConversationPath(item.id)` (see the "Scheduler-created conversations are detected from their DIAL Core resource path" requirement above). When it returns a non-null result, the item SHALL have `isScheduledTask: true`, `scheduleId` and `runId` set from the result, and `isUnread` set to `true` unless the item's `id` is present in the viewed-ids set from `ScheduledTaskUnreadService.getViewedIds`, in which case `isUnread: false`. When `parseScheduledTaskConversationPath` returns `null`, the item SHALL have `isScheduledTask: false` with `scheduleId`/`runId`/`isUnread` all omitted. This detection is independent per item — a scheduler-created conversation that also happens to be shared or published is still tagged and marked unread/viewed using its own resource id, not any other copy's id.
+**Scheduler metadata.** Only an item from the user's own bucket (data source 1) can be a scheduled task. For each such item the service SHALL call `parseScheduledTaskConversationPath(item.id)` (see the "Scheduler-created conversations are detected from their DIAL Core resource path" requirement above). When it returns a non-null result, the item SHALL have `isScheduledTask: true`, `scheduleId` and `runId` set from the result, and `isUnread` set to `true` unless the item's `id` is present in the viewed-ids set from `ScheduledTaskUnreadService.getViewedIds`, in which case `isUnread: false`. When `parseScheduledTaskConversationPath` returns `null`, the item SHALL have `isScheduledTask: false` with `scheduleId`/`runId`/`isUnread` all omitted.
+
+**Published and shared runs are ordinary conversations.** Items from the `'public'` bucket (data source 2) and from `getSharedResources` (data source 3) SHALL always have `isScheduledTask: false` with `scheduleId`/`runId`/`isUnread` all omitted, even when their path has the `.scheduler/{scheduleId}/` shape. Publishing or sharing hands the recipient one conversation, not the task: the recipient cannot open that task, its run history or its settings, and the viewed-ids file in the recipient's bucket is keyed by the recipient's own bucket. The rule is decided by data source, not by the `sharedWithMe`/`publishedWithMe` flags DIAL Core reports on a user-bucket item. This matches the "Duplicating a scheduled-task run produces an ordinary conversation" requirement of the `duplicate-conversation` spec.
 
 **Scheduler conversation titles.** For filename-derived titles from any of the three data sources, the service SHALL recognize an application deployment path both at `applications/...` and beneath `.scheduler/{scheduleId}/applications/...`. The application version belongs to the deployment id, not the displayed conversation title: a filename `Daily%20plan__0.0.1__Todoist__{runId}` beneath `.scheduler/{scheduleId}/applications/{bucket}/` yields `title: "Todoist"` while its full `id` remains unchanged. This rule SHALL NOT treat a numeric title on a plain model deployment as an application version (for example, `model__18__{runId}` yields `title: "18"`). An authoritative stored display name remains governed by the display-name resolution requirement below.
 
@@ -396,7 +398,27 @@ Error codes:
 
 - **GIVEN** the viewed-ids bucket read fails (network error or error response)
 - **WHEN** `GET /api/v1/conversations/list` is called
-- **THEN** the response is still 200, a warning is logged, and every scheduler-created item has `isUnread: true`
+- **THEN** the response is still 200, a warning is logged, and every scheduler-created item from the user's own bucket has `isUnread: true`
+
+#### Scenario: A run shared with the user is an ordinary conversation
+
+- **GIVEN** `getSharedResources` returns `conversations/other-bucket/.scheduler/sched_shr/gpt-4o__title__a1b2c3d4-e5f6-4789-abcd-ef0123456789`
+- **WHEN** `GET /api/v1/conversations/list` is called
+- **THEN** that item has `sharedWithMe: true` and `isScheduledTask: false`
+- **AND** `scheduleId`, `runId` and `isUnread` are omitted
+
+#### Scenario: A published run is an ordinary conversation
+
+- **GIVEN** the `'public'` bucket returns `conversations/public/.scheduler/sched_pub/gpt-4o__title__d8bfff5d-d883-47e8-adc3-8a6afee46411`
+- **WHEN** `GET /api/v1/conversations/list` is called
+- **THEN** that item has `publishedWithMe: true` and `isScheduledTask: false`
+- **AND** `scheduleId`, `runId` and `isUnread` are omitted
+
+#### Scenario: A shared run never reappears as unread
+
+- **GIVEN** a run shared with the user from `other-bucket`, and the user's viewed-ids file holds no id for it, or holds the same path under the user's own bucket (written before this rule)
+- **WHEN** `GET /api/v1/conversations/list` is called
+- **THEN** that item has `isScheduledTask: false` and no `isUnread`, so the conversation panel shows no unread dot and opening it sends no mark-viewed request
 
 ---
 

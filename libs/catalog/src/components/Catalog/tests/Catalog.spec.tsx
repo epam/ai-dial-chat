@@ -78,13 +78,16 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   NoDataContent: ({
     title,
     description,
+    action,
   }: {
     title: React.ReactNode;
     description?: React.ReactNode;
+    action?: React.ReactNode;
   }) => (
     <div>
       <span>{title}</span>
       <span>{description}</span>
+      {action}
     </div>
   ),
 }));

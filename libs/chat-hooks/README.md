@@ -83,7 +83,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.22
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.33
 - `@epam/ai-dial-usage-dashboard` \*
 - `@mcp-ui/client` ^7.1.1
 - `@modelcontextprotocol/sdk` ^1.32.1
@@ -1303,6 +1303,8 @@ When the transport reports a `StreamInterruptedError` — the connection was los
 
 **Background generations.** A message whose `backgroundGeneration.status` (from `@epam/ai-dial-chat-shared`) is `BackgroundGenerationStatus.Pending` is still being produced by a server-side background job. `resumeIfAwaitingGeneration` resumes it wherever it sits in the conversation — even with a `responseId` already set or a status message after it — and applies the replayed chunks at that message's position. When a completion stream ends and the reload still shows such a message, the hook resumes through `transport.attachToGeneration` instead of settling. `canStopStreaming` is `true` while a pending background message is being resumed, and `handleStop` sends its stored `backgroundGeneration.generationId` to `transport.stopCompletion`. `handleStop` always passes the answer text shown so far as `content`; the backend saves it as the stopped answer of a background generation, whose text it does not hold, and ignores it otherwise. The hook only reads this message field; it makes no decision about which deployments run in the background.
 
+**Stopping a resumed non-background generation.** A resumed generation that is not a background job has no stored id, so the attach stream supplies one: when the `snapshot` event read from `transport.attachToGeneration` carries a `generationId`, `canStopStreaming` becomes `true` and `handleStop` sends that id to `transport.stopCompletion`, so a refreshed page can stop what it rejoined. The id is taken only for a resume started through `resumeIfAwaitingGeneration`: stream recovery keeps using its local id, and a conflict handover (`resumeOnConflict`) keeps `canStopStreaming` `false`. A local id and a stored background id take precedence over it. The id is dropped when the resume settles or when the attach ends without a terminal event and the watch fallback takes over, where Stop stays unavailable; a `snapshot` without the field keeps Stop hidden. The host passes the attach stream through unchanged and needs no extra wiring.
+
 Also exports the standalone `getConversationPath` (strips a conversation id's bucket segment and decodes it) and `isAwaitingGenerationResume` (the placeholder-detection predicate the hook is built on, which also returns `true` for a pending background message) for hosts that need the same checks outside the hook.
 
 `generationPersistenceErrorMessage?: string` supplies a host-translated warning
@@ -1334,21 +1336,30 @@ states are transient and are discarded on unmount.
 
 `createChatStreamApi` recognizes `error.type: "conversation_save_failed"` as
 `GenerationPersistenceError`, even after an upstream `[DONE]` frame. A numeric
-`error.status` on that chunk (the rejected write's status, sent only for a
-completed answer) is exposed as
-`GenerationPersistenceError.status`; it is `undefined` when absent. The error
-class (including its static `type`) and the default message are exported from
-`@epam/ai-dial-chat-hooks`. Custom transports can report this error through
-`onError`; the hook uses the host's warning rather than raw upstream error text.
+`error.status` on that chunk (the rejected write's status) is exposed as
+`GenerationPersistenceError.status`; it is `undefined` when absent. For an
+answer that did not complete, the chunk also carries the terminal markers the
+rejected write held — `streamErrorMessage` or `wasStoppedByUser: true` — exposed
+as `GenerationPersistenceError.terminalMarker`
+(`GenerationPersistenceTerminalMarker`); it is `undefined` for a completed
+answer. An in-band upstream error is held until the stream ends, so a
+persistence failure that follows it is the one reported. The error class
+(including its static `type`), the marker type, and the default message are
+exported from `@epam/ai-dial-chat-hooks`. Custom transports can report this
+error through `onError`; the hook uses the host's warning rather than raw
+upstream error text.
 
 When a stream started by `startStream` reports this error with `status: 401`
 and the transport implements `saveConversation`, the backend's terminal save
 was refused for its credentials, which can expire during a long generation.
 The hook then makes one recovery save instead of showing the warning: it reads
 the conversation through `getConversation`, restores the received answer at its
-index, and saves it once. The warning is shown only if that read or save fails.
-Any other status, a missing status, an attached generation, or a transport
-without `saveConversation` shows the warning immediately, as before.
+index with the error's `terminalMarker` applied, and saves it once. A stopped or
+failed answer is therefore stored as stopped or failed, not left as a
+placeholder that reads as a running generation after a reload. The warning is
+shown only if that read or save fails. Any other status, a missing status, an
+attached generation, or a transport without `saveConversation` shows the
+warning immediately, as before.
 
 #### applyChunkToMessages / mergeStages
 

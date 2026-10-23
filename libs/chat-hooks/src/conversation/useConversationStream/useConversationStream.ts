@@ -324,6 +324,11 @@ export const useConversationStream = ({
     () => new Set(),
   );
   const activeGenerationIdsRef = useRef<Map<string, string>>(new Map());
+  /*
+   * Id an attach `snapshot` announced for a resumed non-background generation,
+   * per path. Local and background ids keep precedence in `handleStop`.
+   */
+  const resumedGenerationIdsRef = useRef<Map<string, string>>(new Map());
   const resumingPathsRef = useRef<Set<string>>(new Set());
   const bufferedGenerationsRef = useRef<Map<string, BufferedGeneration>>(
     new Map(),
@@ -456,6 +461,31 @@ export const useConversationStream = ({
   );
 
   /*
+   * Stop for a resumed non-background generation. A path with a live local
+   * generation already has its own id and Stop, so neither is touched here.
+   */
+  const rememberResumedGenerationId = useCallback(
+    (path: string, generationId: string) => {
+      if (activeGenerationIdsRef.current.has(path)) return;
+      resumedGenerationIdsRef.current.set(path, generationId);
+      setPathStoppable(path, true);
+    },
+    [setPathStoppable],
+  );
+
+  /* Compare-and-clear: a late call from a resume that lost the path cannot erase a newer id. */
+  const forgetResumedGenerationId = useCallback(
+    (path: string, generationId: string) => {
+      if (resumedGenerationIdsRef.current.get(path) !== generationId) return;
+      resumedGenerationIdsRef.current.delete(path);
+      if (!activeGenerationIdsRef.current.has(path)) {
+        setPathStoppable(path, false);
+      }
+    },
+    [setPathStoppable],
+  );
+
+  /*
    * One resume instance shared by the public `resumeIfAwaitingGeneration` and
    * by `startStream`'s recovery of an interrupted stream, so both see the
    * same buffered generations and resuming paths.
@@ -474,6 +504,8 @@ export const useConversationStream = ({
         generationPersistenceErrorMessage,
         frameScheduler: batchChunksPerFrame ? frameScheduler : undefined,
         stoppedGenerationIdsRef,
+        rememberResumedGenerationId,
+        forgetResumedGenerationId,
         onReloadError: reportReloadError,
         onReloadSuccess: clearReloadError,
       }),
@@ -487,6 +519,8 @@ export const useConversationStream = ({
       generationPersistenceErrorMessage,
       batchChunksPerFrame,
       frameScheduler,
+      rememberResumedGenerationId,
+      forgetResumedGenerationId,
       reportReloadError,
       clearReloadError,
     ],
@@ -784,6 +818,9 @@ export const useConversationStream = ({
          * ([#9324](https://github.com/epam/ai-dial-chat/issues/9324)). A 401
          * means nothing was stored, so one save from here cannot duplicate a
          * committed write; the warning is shown only if that save fails too.
+         * A stopped or failed answer is saved the same way, with the terminal
+         * markers the error carries: left as the stored placeholder, it would
+         * read as a generation still running after a reload ([#9370](https://github.com/epam/ai-dial-chat/issues/9370)).
          */
         if (
           buffered &&
@@ -874,9 +911,16 @@ export const useConversationStream = ({
             showFailure(error, buffered);
             return;
           }
+          /* A stopped or failed answer keeps the outcome the rejected write carried. */
+          const answer = error.terminalMarker
+            ? {
+                ...buffered,
+                message: { ...buffered.message, ...error.terminalMarker },
+              }
+            : buffered;
           const saved = await saveConversation(
             conversationPath,
-            restoreBufferedMessage(stored, buffered),
+            restoreBufferedMessage(stored, answer),
           );
           if (!isSaveCurrent()) return;
           bufferedGenerationsRef.current.delete(conversationPath);
@@ -1120,10 +1164,13 @@ export const useConversationStream = ({
     const localGenId = activeGenerationIdsRef.current.get(conversationPath);
     /*
      * A generation resumed after a refresh has no local id; a background
-     * message carries its own, so Stop still reaches the backend for it.
+     * message carries its own, and a non-background one is announced by the
+     * attach snapshot, so Stop still reaches the backend for both.
      */
     const genId =
-      localGenId ?? findResumedBackgroundGenerationId(conversationRef.current);
+      localGenId ??
+      findResumedBackgroundGenerationId(conversationRef.current) ??
+      resumedGenerationIdsRef.current.get(conversationPath);
     if (!genId || stopRequestedIdsRef.current.has(genId)) return;
 
     stopRequestedIdsRef.current.add(genId);
@@ -1183,10 +1230,16 @@ export const useConversationStream = ({
     transport,
   ]);
 
-  /* The public entry point takes no options; those are reserved for stream recovery. */
+  /*
+   * The public entry point takes no caller options; the internal ones are reserved
+   * for stream recovery and the conflict handover. Only this entry point asks the
+   * resume to take an attach-announced generation id, so those two keep their Stop behavior.
+   */
   const resumeIfAwaitingGeneration = useCallback(
     (currentConversationId: string, conversation: Conversation) =>
-      resumeGeneration(currentConversationId, conversation),
+      resumeGeneration(currentConversationId, conversation, {
+        trackAttachGenerationId: true,
+      }),
     [resumeGeneration],
   );
 

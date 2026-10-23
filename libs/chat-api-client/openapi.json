@@ -3530,7 +3530,7 @@
     },
     "/api/v1/conversations/completions/attach": {
       "post": {
-        "description": "Opens an SSE stream for the active generation on this conversation path: one `snapshot` event carrying the assistant message as assembled so far, then a `chunk` event for every subsequent delta, then exactly one terminal event (`done`/`error`/`stopped`). Used by the frontend to show progressive content when reopening a conversation mid-generation instead of only a typing indicator. Principal-scoped — only the principal that could stop the generation can attach to it.",
+        "description": "Opens an SSE stream for the active generation on this conversation path: one `snapshot` event carrying the assistant message as assembled so far and, when the generation runs on this instance outside DIAL Core background mode, its `generationId` — the id `completions/stop` accepts for this path, so a client that attached after a refresh can stop it — then a `chunk` event for every subsequent delta, then exactly one terminal event (`done`/`error`/`stopped`). Used by the frontend to show progressive content when reopening a conversation mid-generation instead of only a typing indicator. Principal-scoped — only the principal that could stop the generation can attach to it.",
         "operationId": "attachToGeneration",
         "parameters": [],
         "requestBody": {
@@ -9360,7 +9360,7 @@
     },
     "/api/v1/custom-api/{id}": {
       "get": {
-        "description": "Dispatches an authenticated GET request to the exact Core path configured for this operation ID under CUSTOM_CORE_API_CONFIG, using the caller's own session access token. Accepts no query parameters and no request body. Core remains the authority for route role authorization and business rate limits; this endpoint adds no BFF business schema or field filtering, so the response is an opaque JSON value the calling application must validate for its own domain.",
+        "description": "Dispatches an authenticated request to the exact Core path configured for this operation ID under CUSTOM_CORE_API_CONFIG, using the caller's own session access token and the operation's configured method; a different method returns 405. Core remains the authority for route role authorization and business rate limits; this endpoint adds no BFF business schema or field filtering, so the response is an opaque JSON value the calling application must validate for its own domain. Query parameters are accepted only by the names the operation allowlists (each at most once); they are not declared here because each deployment configures its own. A caller passing them builds the request URL itself on the generated client's Configuration.fetchApi — a documented generator gap.",
         "operationId": "getCustomApiOperation",
         "parameters": [
           {
@@ -9377,7 +9377,7 @@
         ],
         "responses": {
           "200": {
-            "description": "The configured operation succeeded",
+            "description": "The configured operation succeeded (Core 200 or 201; Core 204 returns data null)",
             "content": {
               "application/json": {
                 "schema": {
@@ -9387,19 +9387,19 @@
             }
           },
           "400": {
-            "description": "Invalid operation ID, or a query/body value was supplied"
+            "description": "DIAL Core rejected the request as invalid\n\nInvalid operation ID, a query parameter the operation does not allow, or a body it does not accept"
           },
           "401": {
-            "description": "Not authenticated — valid session cookie required"
+            "description": "Not authenticated, or DIAL Core rejected the session token\n\nNot authenticated — valid session cookie required"
           },
           "403": {
             "description": "DIAL Core denied access to the resource"
           },
           "404": {
-            "description": "No operation is configured for this ID, or DIAL Core reported the resource as not found"
+            "description": "DIAL Core resource not found\n\nNo operation is configured for this ID, or DIAL Core reported the resource as not found"
           },
           "405": {
-            "description": "Only GET is supported for custom API operations"
+            "description": "The request method is not the operation's configured method"
           },
           "409": {
             "description": "DIAL Core reported a conflict with the current resource state"
@@ -9408,19 +9408,235 @@
             "description": "DIAL Core could not process the request"
           },
           "429": {
-            "description": "Local in-flight call capacity exhausted, or DIAL Core rate-limited the call"
+            "description": "DIAL Core rate-limited the request\n\nLocal in-flight call capacity exhausted, or DIAL Core rate-limited the call"
           },
           "502": {
-            "description": "DIAL Core returned an error, a redirect, or an invalid/oversized response"
+            "description": "DIAL Core returned a server error or an unexpected response\n\nDIAL Core returned an error, a redirect, or an invalid/oversized response"
           },
           "503": {
-            "description": "DIAL Core is unreachable"
+            "description": "DIAL Core is unreachable or timed out\n\nDIAL Core is unreachable"
           },
           "504": {
             "description": "DIAL Core request exceeded its configured deadline"
           }
         },
-        "summary": "Call a deployment-configured custom Core API operation",
+        "summary": "Call a deployment-configured custom Core API GET operation",
+        "tags": ["custom-api"]
+      },
+      "post": {
+        "description": "Dispatches an authenticated request to the exact Core path configured for this operation ID under CUSTOM_CORE_API_CONFIG, using the caller's own session access token and the operation's configured method; a different method returns 405. Core remains the authority for route role authorization and business rate limits; this endpoint adds no BFF business schema or field filtering, so the response is an opaque JSON value the calling application must validate for its own domain. Query parameters are accepted only by the names the operation allowlists (each at most once); they are not declared here because each deployment configures its own. A caller passing them builds the request URL itself on the generated client's Configuration.fetchApi — a documented generator gap.",
+        "operationId": "postCustomApiOperation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Operation ID from the deployment-configured CUSTOM_CORE_API_CONFIG registry.",
+            "schema": {
+              "pattern": "^[a-z][a-z0-9-]{0,63}$",
+              "example": "data-products",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "description": "JSON object or array for an operation configured with body \"json\" (at most 65,536 bytes, depth 32); omitted for every other operation.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The configured operation succeeded (Core 200 or 201; Core 204 returns data null)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomApiResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "DIAL Core rejected the request as invalid\n\nInvalid operation ID, a query parameter the operation does not allow, or a body it does not accept"
+          },
+          "401": {
+            "description": "Not authenticated, or DIAL Core rejected the session token\n\nNot authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "DIAL Core denied access to the resource"
+          },
+          "404": {
+            "description": "DIAL Core resource not found\n\nNo operation is configured for this ID, or DIAL Core reported the resource as not found"
+          },
+          "405": {
+            "description": "The request method is not the operation's configured method"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request\n\nLocal in-flight call capacity exhausted, or DIAL Core rate-limited the call"
+          },
+          "502": {
+            "description": "DIAL Core returned a server error or an unexpected response\n\nDIAL Core returned an error, a redirect, or an invalid/oversized response"
+          },
+          "503": {
+            "description": "DIAL Core is unreachable or timed out\n\nDIAL Core is unreachable"
+          },
+          "504": {
+            "description": "DIAL Core request exceeded its configured deadline"
+          }
+        },
+        "summary": "Call a deployment-configured custom Core API POST operation",
+        "tags": ["custom-api"]
+      },
+      "put": {
+        "description": "Dispatches an authenticated request to the exact Core path configured for this operation ID under CUSTOM_CORE_API_CONFIG, using the caller's own session access token and the operation's configured method; a different method returns 405. Core remains the authority for route role authorization and business rate limits; this endpoint adds no BFF business schema or field filtering, so the response is an opaque JSON value the calling application must validate for its own domain. Query parameters are accepted only by the names the operation allowlists (each at most once); they are not declared here because each deployment configures its own. A caller passing them builds the request URL itself on the generated client's Configuration.fetchApi — a documented generator gap.",
+        "operationId": "putCustomApiOperation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Operation ID from the deployment-configured CUSTOM_CORE_API_CONFIG registry.",
+            "schema": {
+              "pattern": "^[a-z][a-z0-9-]{0,63}$",
+              "example": "data-products",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "description": "JSON object or array for an operation configured with body \"json\" (at most 65,536 bytes, depth 32); omitted for every other operation.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The configured operation succeeded (Core 200 or 201; Core 204 returns data null)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomApiResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "DIAL Core rejected the request as invalid\n\nInvalid operation ID, a query parameter the operation does not allow, or a body it does not accept"
+          },
+          "401": {
+            "description": "Not authenticated, or DIAL Core rejected the session token\n\nNot authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "DIAL Core denied access to the resource"
+          },
+          "404": {
+            "description": "DIAL Core resource not found\n\nNo operation is configured for this ID, or DIAL Core reported the resource as not found"
+          },
+          "405": {
+            "description": "The request method is not the operation's configured method"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request\n\nLocal in-flight call capacity exhausted, or DIAL Core rate-limited the call"
+          },
+          "502": {
+            "description": "DIAL Core returned a server error or an unexpected response\n\nDIAL Core returned an error, a redirect, or an invalid/oversized response"
+          },
+          "503": {
+            "description": "DIAL Core is unreachable or timed out\n\nDIAL Core is unreachable"
+          },
+          "504": {
+            "description": "DIAL Core request exceeded its configured deadline"
+          }
+        },
+        "summary": "Call a deployment-configured custom Core API PUT operation",
+        "tags": ["custom-api"]
+      },
+      "delete": {
+        "description": "Dispatches an authenticated request to the exact Core path configured for this operation ID under CUSTOM_CORE_API_CONFIG, using the caller's own session access token and the operation's configured method; a different method returns 405. Core remains the authority for route role authorization and business rate limits; this endpoint adds no BFF business schema or field filtering, so the response is an opaque JSON value the calling application must validate for its own domain. Query parameters are accepted only by the names the operation allowlists (each at most once); they are not declared here because each deployment configures its own. A caller passing them builds the request URL itself on the generated client's Configuration.fetchApi — a documented generator gap.",
+        "operationId": "deleteCustomApiOperation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Operation ID from the deployment-configured CUSTOM_CORE_API_CONFIG registry.",
+            "schema": {
+              "pattern": "^[a-z][a-z0-9-]{0,63}$",
+              "example": "data-products",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The configured operation succeeded (Core 200 or 201; Core 204 returns data null)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomApiResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "DIAL Core rejected the request as invalid\n\nInvalid operation ID, a query parameter the operation does not allow, or a body it does not accept"
+          },
+          "401": {
+            "description": "Not authenticated, or DIAL Core rejected the session token\n\nNot authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "DIAL Core denied access to the resource"
+          },
+          "404": {
+            "description": "DIAL Core resource not found\n\nNo operation is configured for this ID, or DIAL Core reported the resource as not found"
+          },
+          "405": {
+            "description": "The request method is not the operation's configured method"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request\n\nLocal in-flight call capacity exhausted, or DIAL Core rate-limited the call"
+          },
+          "502": {
+            "description": "DIAL Core returned a server error or an unexpected response\n\nDIAL Core returned an error, a redirect, or an invalid/oversized response"
+          },
+          "503": {
+            "description": "DIAL Core is unreachable or timed out\n\nDIAL Core is unreachable"
+          },
+          "504": {
+            "description": "DIAL Core request exceeded its configured deadline"
+          }
+        },
+        "summary": "Call a deployment-configured custom Core API DELETE operation",
         "tags": ["custom-api"]
       }
     }
@@ -13198,7 +13414,7 @@
           },
           "isScheduledTask": {
             "type": "boolean",
-            "description": "True when this conversation was created by a DIAL Scheduler run (its resource path matches the `.scheduler/{scheduleId}/{filename}` reserved segment, with `{filename}` shaped `{deploymentId}__{title}__{runId}`).",
+            "description": "True when this conversation is a DIAL Scheduler run in the caller's own bucket (its resource path matches the `.scheduler/{scheduleId}/{filename}` reserved segment, with `{filename}` shaped `{deploymentId}__{title}__{runId}`). Always false for published and shared conversations, even when their path has that shape.",
             "example": false
           },
           "scheduleId": {
