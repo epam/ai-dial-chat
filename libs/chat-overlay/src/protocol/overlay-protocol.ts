@@ -160,6 +160,8 @@ export enum OverlayFeature {
   CustomApps = 'custom-apps',
   /** Hides the user menu in the sidebar and in the mobile drawer. */
   HideUserMenu = 'hide-user-menu',
+  /** Hides the identity row — avatar and name — at the top of the user menu's dropdown; Settings and Log out stay. */
+  HideUserMenuIdentity = 'hide-user-menu-identity',
   /**
    * Hides the user's preference controls — language, theme, keyboard
    * shortcuts and the default agent — in the user menu and the Settings

@@ -81,6 +81,9 @@ const SidebarNavigation: FC<Props> = ({
   const { hasUnsavedChanges, requestDiscard } = useUnsavedChanges();
   const { currentThemeFavicon, currentThemeLogo } = useTheme();
   const isUserMenuHidden = useUiFeature(OverlayFeature.HideUserMenu);
+  const isUserMenuIdentityHidden = useUiFeature(
+    OverlayFeature.HideUserMenuIdentity,
+  );
   const isSettingsPageHidden = useUiFeature(OverlayFeature.HideSettingsPage);
   const isUsagePageHidden = useUiFeature(OverlayFeature.HideUsagePage);
   const isToggleEnabled = useUiFeature(OverlayFeature.ConversationsPanelToggle);
@@ -180,6 +183,7 @@ const SidebarNavigation: FC<Props> = ({
             profile={profile}
             groups={userMenuGroups.length > 0 ? userMenuGroups : undefined}
             triggerVariant={getUserMenuTriggerVariant()}
+            isIdentityHidden={isUserMenuIdentityHidden}
             labels={{
               trigger: t(AuthI18nKeys.SignedInAs, { email: profile.email }),
               avatarAlt: t(AuthI18nKeys.UserAvatar),

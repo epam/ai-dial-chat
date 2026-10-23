@@ -247,6 +247,7 @@ const setDefaults = (
     (feature) =>
       feature !== OverlayFeature.HideNewConversation &&
       feature !== OverlayFeature.HideUserMenu &&
+      feature !== OverlayFeature.HideUserMenuIdentity &&
       feature !== OverlayFeature.HideUserSettings &&
       feature !== OverlayFeature.HideKeyboardShortcuts &&
       feature !== OverlayFeature.HideNavigationMenu &&
@@ -335,6 +336,7 @@ const enableSidebar = (
   mockUseUiFeature.mockImplementation(
     (feature) =>
       feature !== OverlayFeature.HideUserMenu &&
+      feature !== OverlayFeature.HideUserMenuIdentity &&
       feature !== OverlayFeature.HideUserSettings &&
       feature !== OverlayFeature.HideKeyboardShortcuts &&
       feature !== OverlayFeature.HideNavigationMenu &&
@@ -644,6 +646,17 @@ describe('SidebarNavigation', () => {
       renderMenu();
       expect(userMenuProps.current?.onSettings).toBeUndefined();
     });
+
+    it('keeps the identity row by default and hides it under hide-user-menu-identity', () => {
+      renderMenu();
+      expect(userMenuProps.current?.isIdentityHidden).toBe(false);
+
+      mockUseUiFeature.mockImplementation(
+        (feature) => feature === OverlayFeature.HideUserMenuIdentity,
+      );
+      renderMenu();
+      expect(userMenuProps.current?.isIdentityHidden).toBe(true);
+    });
   });
 });
 
@@ -680,6 +693,20 @@ describe('SidebarNavigation — mobile drawer', () => {
       'chat list',
     );
     expect(screen.getByRole('button', { name: 'user menu' })).toBeTruthy();
+  });
+
+  it('hides the identity row of the drawer menu under hide-user-menu-identity', () => {
+    const drawerPosture = mockUseUiFeature.getMockImplementation();
+    mockUseUiFeature.mockImplementation(
+      (feature) =>
+        feature === OverlayFeature.HideUserMenuIdentity ||
+        !!drawerPosture?.(feature),
+    );
+    renderDrawer();
+
+    expect(screen.getByRole('button', { name: 'user menu' })).toBeTruthy();
+
+    expect(userMenuProps.current?.isIdentityHidden).toBe(true);
   });
 
   it('closes through the close button', async () => {
