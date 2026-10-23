@@ -66,7 +66,7 @@ export interface ListViewProps {
   onToggleFavorite?: (id: string, isStarred: boolean) => void;
   /** Rule for whether the favorite star is shown on a row; `false` hides it and makes the item non-favoritable. Defaults to visible when omitted. */
   isFavoriteVisible?: (item: CatalogItem) => boolean;
-  /** Called when a table row is clicked (excluding the star column). */
+  /** Called when a table row is clicked (excluding the star column), or when Enter or Space is pressed on it in single selection mode. */
   onItemClick?: (item: CatalogItem) => void;
   /**
    * When set, the ag-grid column header becomes `position: sticky` at this
