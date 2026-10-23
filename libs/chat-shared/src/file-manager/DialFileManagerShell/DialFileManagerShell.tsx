@@ -632,10 +632,9 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
             className={mergeClasses(
               'min-h-0 w-full grow',
               styles.surface,
-              isAttachVariant ? 'p-0' : 'mobile:pt-2',
+              isAttachVariant && 'p-0',
             )}
-            /* On mobile the content column insets 8px instead of 20px (the page card adds no side padding), so the grid's shadow is not clipped by the manager's overflow. */
-            contentClassName={isAttachVariant ? 'px-0 pb-0' : 'mobile:px-2'}
+            contentClassName={isAttachVariant ? 'px-0 pb-0' : undefined}
             gridClassName={
               variant === DialFileManagerVariant.Attach
                 ? 'size-full gap-6 px-6 py-4'

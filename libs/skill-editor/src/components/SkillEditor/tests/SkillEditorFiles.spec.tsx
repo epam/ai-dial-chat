@@ -941,6 +941,41 @@ describe('SkillEditor — Add dropdown', () => {
     expect(stagedPaths(actions.commitBatch)).toEqual(['docs/a.md']);
   });
 
+  it('expands the target folder once its upload is committed', async () => {
+    const user = userEvent.setup({ delay: null });
+    const onExpandedPathsChange = vi.fn();
+    renderEditor(
+      { files: [docsFolder], selectedPath: 'docs', onExpandedPathsChange },
+      fullFileActions(),
+    );
+
+    await openUploadDialog(user);
+    stageFile(new File(['x'], 'a.md'));
+    await screen.findByText('docs/a.md');
+    expect(onExpandedPathsChange).not.toHaveBeenCalled();
+    await confirmDialog(user);
+
+    expect(onExpandedPathsChange).toHaveBeenCalledWith(['docs']);
+  });
+
+  it('leaves the target folder collapsed when the upload commit fails', async () => {
+    const user = userEvent.setup({ delay: null });
+    const onExpandedPathsChange = vi.fn();
+    renderEditor(
+      { files: [docsFolder], selectedPath: 'docs', onExpandedPathsChange },
+      fullFileActions({
+        commitBatch: vi.fn(async () => ({ error: 'Upload failed' })),
+      }),
+    );
+
+    await openUploadDialog(user);
+    stageFile(new File(['x'], 'a.md'));
+    await screen.findByText('docs/a.md');
+    await confirmDialog(user);
+
+    expect(onExpandedPathsChange).not.toHaveBeenCalled();
+  });
+
   it('stages header uploads at the root when a file is selected', async () => {
     const user = userEvent.setup({ delay: null });
     renderEditor(
