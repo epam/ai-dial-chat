@@ -6,8 +6,5 @@
  */
 .footer {
   background: var(--se-dialog-footer-bg, var(--bg-layer-raised, #fcfcfc));
-  border-color: var(
-    --se-dialog-footer-border,
-    var(--stroke-tertiary, #e0e6f0)
-  );
+  border-color: var(--se-dialog-footer-border, var(--stroke-tertiary, #e0e6f0));
 }
