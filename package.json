@@ -199,7 +199,8 @@
     "axios": "1.20.0",
     "basic-ftp": "6.2.1",
     "dompurify": "3.4.16",
-    "follow-redirects": "1.16.1"
+    "follow-redirects": "1.16.1",
+    "@vitest/mocker": "^4.1.12"
   },
   "workspaces": [
     "packages/*",
