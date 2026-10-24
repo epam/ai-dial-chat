@@ -138,3 +138,12 @@ Slice 2 then removes the catalog wrappers. Slice 3 moves the Usage table onto th
   - drop the `rounded-xl shadow-md` card and `wrapperBorder={false}` there;
   - update the README and the `usage-dashboard-lib` delta spec.
   - **Verification:** `npm run test:file -- libs/usage-dashboard/src/components/ModelLimitsSection/tests/ModelLimitsSection.spec.tsx`, then `npm run verify:changed`.
+- [x] 5.4 Render the catalog `ListView` as the "Chat table" too:
+  - pass `appearance={GridAppearance.Chat}` in `libs/catalog/src/components/ListView/ListView.tsx`;
+  - update the README and the `catalog-list-view-grid` delta spec.
+  - **Verification:** `npm run test:file -- libs/catalog/src/components/ListView/tests/ListView.spec.tsx`
+- [x] 5.5 Usage period headers: one timezone, reset time behind an info icon:
+  - `formatUsageResetTime` (`libs/chat-hooks/src/usage/usage-reset-time.ts`) states every reset time at the viewer's current UTC offset, so the headers never mix GMT+2 and GMT+1 across a daylight-saving switch;
+  - `PeriodHeader` renders a focusable `IconInfoCircle` (`PeriodResetInfo`) whose tooltip holds the `<time>` reset label instead of a second header line, and `resetLabelClassName` is removed from `ModelLimitsTypography`;
+  - update the README and the `usage-period-reset-times` and `usage-dashboard-lib` delta specs.
+  - **Verification:** `npm run test:file -- libs/chat-hooks/src/usage/tests/usage-reset-time.spec.ts`, then `npm run test:file -- libs/usage-dashboard/src/components/ModelLimitsSection/tests/ModelLimitsSection.spec.tsx`

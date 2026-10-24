@@ -68,7 +68,6 @@ export const ModelLimitsSection: FC<ModelLimitsSectionProps> = ({
     headingClassName = 'dial-body-semi-text',
     headingCountClassName = 'dial-tiny-semi-text',
     columnHeaderClassName = 'dial-caption-lead-semi-text',
-    resetLabelClassName = 'dial-tiny-text',
   } = typography;
 
   const cssVars = buildCssVars({
@@ -130,7 +129,6 @@ export const ModelLimitsSection: FC<ModelLimitsSectionProps> = ({
             label={periodLabels[period]}
             periodStatus={periodStatuses[period]}
             className={columnHeaderClassName}
-            resetLabelClassName={resetLabelClassName}
           />
         ),
         flex: 1,
@@ -163,13 +161,7 @@ export const ModelLimitsSection: FC<ModelLimitsSectionProps> = ({
           ) : null,
       },
     ];
-  }, [
-    labels,
-    periodStatuses,
-    typography,
-    columnHeaderClassName,
-    resetLabelClassName,
-  ]);
+  }, [labels, periodStatuses, typography, columnHeaderClassName]);
 
   return (
     <div className="flex flex-col gap-4" style={cssVars}>

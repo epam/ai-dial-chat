@@ -54,11 +54,11 @@ export interface ModelLimitPeriodStatus {
    * which case the header renders exactly as it did before reset times
    * existed.
    */
-  /** Visible reset line, e.g. `'Resets Sep 16, 2026, 2:00 AM GMT+2'`. */
+  /** Reset time shown in the header info icon's tooltip, e.g. `'Resets Sep 16, 2026, 2:00 AM GMT+2'`. */
   resetLabel?: string;
-  /** Machine-readable instant for the reset line's `<time dateTime>` attribute, e.g. `'2026-09-16T00:00:00Z'`. */
+  /** Machine-readable instant for the tooltip's `<time dateTime>` attribute, e.g. `'2026-09-16T00:00:00Z'`. */
   resetIsoValue?: string;
-  /** Accessible expansion of the reset line, applied as its `aria-label` when supplied. */
+  /** Accessible name of the header info icon; falls back to `resetLabel`. */
   resetAriaLabel?: string;
 }
 
@@ -192,8 +192,6 @@ export interface ModelLimitsTypography {
   headingCountClassName?: string;
   /** CSS class for column headers. Defaults to `'dial-caption-lead-semi-text'`. */
   columnHeaderClassName?: string;
-  /** CSS class for a period header's reset-time line. Defaults to `'dial-tiny-text'`. */
-  resetLabelClassName?: string;
   /** CSS class for the model name. Defaults to `'dial-small-semi-text'`. */
   nameClassName?: string;
   /** CSS class for the model entity type. Defaults to `'dial-caption-lead-semi-text'`. */

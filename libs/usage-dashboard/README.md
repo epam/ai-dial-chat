@@ -83,7 +83,9 @@ the rendered `<time dateTime>`), and `resetAriaLabel` (the spoken form, which sh
 timezone in full rather than as an offset). When `resetAriaLabel` is supplied the library renders it
 on a visually-hidden sibling and marks the visible `<time>` `aria-hidden`, because `aria-label` is
 not reliably supported on a bare `<time>`; with no `resetAriaLabel` the visible line is its own
-accessible name. The library renders every string verbatim: it imports no `Intl`, accepts no locale, timezone, or raw timestamp, and never parses
+accessible name. A Model-limits period header shows no reset line: it renders a focusable info
+icon whose tooltip holds the `<time>` with `resetLabel`, and whose accessible name is
+`resetAriaLabel` (or `resetLabel` when no spoken form is supplied). The library renders every string verbatim: it imports no `Intl`, accepts no locale, timezone, or raw timestamp, and never parses
 or reformats a value. All three are absent together when the host could not format a reset time, in
 which case the card or header renders exactly as it did before reset times existed. A card renders
 its reset line even when `isUnlimited` is `true` — an unconfigured limit still accumulates spend

@@ -95,7 +95,7 @@ In single mode with `onItemClick` set, pressing Enter on a focused cell SHALL ca
 
 ### Requirement: Table chrome comes from the `Grid` theme
 
-`ListView` SHALL style the table frame, header, row dividers, row background and selected-row tint only through the `Grid` theme and its documented props (`wrapperBorder`, `withoutHeaderBorders`, `alternateOddRowColors`). `libs/catalog/src/components/ListView/ListView.module.scss` SHALL NOT target ag-grid's internal `.ag-*` classes, except to right-align the Favorite column header.
+`ListView` SHALL style the table frame, header, row dividers, row background and selected-row tint only through the `Grid` theme and its documented props (`appearance`, `wrapperBorder`, `withoutHeaderBorders`, `alternateOddRowColors`). It SHALL pass `appearance={GridAppearance.Chat}`, so the kit draws the borderless 12px card with the MD shadow and the inset row dividers. `libs/catalog/src/components/ListView/ListView.module.scss` SHALL NOT target ag-grid's internal `.ag-*` classes, except to right-align the Favorite column header.
 
 `ListViewColors` SHALL contain only `starFilled`, `folderIcon` and `selectedRowCheckIcon`. It SHALL NOT contain `background`, `border`, `headerBackground`, `rowDivider`, `rowEvenBackground`, `selectedRowBorder` or `selectedRowBackground`.
 

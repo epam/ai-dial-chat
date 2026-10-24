@@ -1,6 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-ui-kit';
 import {
   Grid,
+  GridAppearance,
   GRID_SELECTION_COLUMN_ID,
   GridSelectionMode,
 } from '@epam/ai-dial-ui-kit/grid';
@@ -51,7 +52,6 @@ const DEFAULT_COL_DEF: ColDef<CatalogItem> = {
 const SINGLE_ROW_SELECTION: GridOptions<CatalogItem>['rowSelection'] = {
   mode: 'singleRow',
   checkboxes: false,
-  headerCheckbox: false,
   enableClickSelection: false,
 };
 const EMPTY_TYPOGRAPHY = {};
@@ -192,7 +192,9 @@ export const ListView: FC<ListViewProps> = ({
       style={cssVars}
       className={mergeClasses('size-full', CATALOG_CLASS.listView)}
     >
+      {/* The kit's "Chat table": borderless 12px card with the MD shadow, inset row dividers. */}
       <Grid<CatalogItem>
+        appearance={GridAppearance.Chat}
         columnDefs={columnDefs}
         rowData={items}
         getRowId={getRowId}

@@ -1,5 +1,5 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
-import { Grid } from '@epam/ai-dial-ui-kit/grid';
+import { Grid, GridAppearance } from '@epam/ai-dial-ui-kit/grid';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -16,6 +16,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 
 vi.mock('@epam/ai-dial-ui-kit/grid', () => ({
+  GridAppearance: { Default: 'default', Chat: 'chat' },
   Grid: vi.fn(
     ({
       rowData,
@@ -118,6 +119,21 @@ describe('ListView', () => {
       />,
     );
     expect(screen.getByText('No items')).toBeTruthy();
+  });
+
+  it('renders the kit Chat table appearance', () => {
+    render(
+      <ListView
+        items={[]}
+        query=""
+        type={CatalogEntityType.Model}
+        ariaLabel="Catalog"
+      />,
+    );
+    expect(vi.mocked(Grid)).toHaveBeenCalledWith(
+      expect.objectContaining({ appearance: GridAppearance.Chat }),
+      undefined,
+    );
   });
 
   it('calls onToggleFavorite with item id and new star state when star is toggled', async () => {

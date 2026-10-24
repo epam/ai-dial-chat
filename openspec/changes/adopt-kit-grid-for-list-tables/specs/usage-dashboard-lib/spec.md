@@ -14,7 +14,7 @@
 | `month` | header component, `labels.monthColumnLabel` | period cell for `row.month` |
 | `status` | `labels.statusColumnLabel` | status badge or neutral status text |
 
-Each period header component SHALL render the column label, the reset line when `resetLabel` is set, and the `PeriodStatusIndicator`. It receives that period's `ModelLimitPeriodStatus` through `headerComponentParams`.
+Each period header component SHALL render the column label, the reset-time info icon when `resetLabel` is set, and the `PeriodStatusIndicator`. It receives that period's `ModelLimitPeriodStatus` through `headerComponentParams`.
 
 **Grid options.**
 
@@ -37,10 +37,10 @@ Each period header component SHALL render the column label, the reset line when 
 - **AND** its column headers read Item, the day label, the week label, the month label and Status, in that order
 - **AND** it renders two data rows in `rows` order
 
-#### Scenario: Header carries reset line and indicator
+#### Scenario: Header carries reset info icon and indicator
 
 - **WHEN** `periodStatuses.day` has `status: LimitReached` and `resetLabel: 'Resets Sep 16, 2026, 2:00 AM GMT+2'`
-- **THEN** the day column header renders the day label, a `<time>` holding the reset label, and the error `PeriodStatusIndicator`
+- **THEN** the day column header renders the day label, a focusable info icon whose tooltip holds the reset label in a `<time>`, and the error `PeriodStatusIndicator`
 
 #### Scenario: Empty rows use the grid empty state
 

@@ -448,7 +448,8 @@ header staying in view. Give the parent a definite height (a flex child with
 `min-h-0` works). Rows are a fixed 60 px.
 
 The table frame, header, row dividers and selected-row tint come from the
-`Grid` theme. `styles.colors` (`ListViewColors`) covers cell content only:
+`Grid` theme: the list renders the kit's `GridAppearance.Chat`, a borderless
+12px card with the MD shadow and inset row dividers. `styles.colors` (`ListViewColors`) covers cell content only:
 `starFilled`, `folderIcon` and `selectedRowCheckIcon`. With no items, the grid
 shows its own empty state from `emptyStateTitle` (default `'No results'`) and
 `emptyStateDescription`.
@@ -1494,7 +1495,7 @@ either. Five elements carry a stable public class:
 | `toolbar`      | `dial-catalog-toolbar`       | The toolbar above the results: title row, search, sort, view toggle  |
 | `card`         | `dial-catalog-card`          | One grid card, in every state — featured and selected are additive   |
 | `favoriteCard` | `dial-catalog-favorite-card` | One favorites card                                                   |
-| `listView`     | `dial-catalog-list-view`     | The list view's root: the bordered row box, or its empty state       |
+| `listView`     | `dial-catalog-list-view`     | The list view's root: the grid card, or its empty state              |
 
 ```tsx
 import { CATALOG_CLASS } from '@epam/ai-dial-catalog';

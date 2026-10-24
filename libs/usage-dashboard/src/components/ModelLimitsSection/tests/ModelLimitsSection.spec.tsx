@@ -554,25 +554,25 @@ describe('ModelLimitsSection', () => {
       },
     };
 
-    it('renders the reset label beneath its column label in a <time>', async () => {
+    it('renders the reset time as a focusable info icon named by the spoken form, not as a header line', async () => {
       await renderSection({ periodStatuses: withDayReset });
 
       const header = screen.getByRole('columnheader', { name: /Today/ });
-      expect(header.textContent).toContain('Today');
-      expect(header.textContent).toContain(DAY_RESET_LABEL);
+      expect(header.textContent).not.toContain(DAY_RESET_LABEL);
 
-      const resetLine = within(header).getByText(DAY_RESET_LABEL);
-      expect(resetLine.tagName).toBe('TIME');
-      expect(resetLine.getAttribute('dateTime')).toBe(DAY_RESETS_AT);
+      const info = within(header).getByRole('img', { name: DAY_SPOKEN_LABEL });
+      expect(info.getAttribute('tabindex')).toBe('0');
     });
 
-    it('carries the spoken form on a visually-hidden sibling, not on the <time>', async () => {
-      await renderSection({ periodStatuses: withDayReset });
+    it('names the info icon by the visible label when no spoken form is supplied', async () => {
+      await renderSection({
+        periodStatuses: {
+          ...withDayReset,
+          day: { ...withDayReset.day, resetAriaLabel: undefined },
+        },
+      });
 
-      const resetLine = screen.getByText(DAY_RESET_LABEL);
-      expect(resetLine.hasAttribute('aria-label')).toBe(false);
-      expect(resetLine.getAttribute('aria-hidden')).toBe('true');
-      expect(screen.getByText(DAY_SPOKEN_LABEL).className).toContain('sr-only');
+      expect(screen.getByRole('img', { name: DAY_RESET_LABEL })).toBeTruthy();
     });
 
     it('renders no reset line for a period status without one', async () => {
@@ -590,7 +590,7 @@ describe('ModelLimitsSection', () => {
       expect(screen.queryByText(/^Resets /)).toBeNull();
     });
 
-    it('keeps the period status indicator in place alongside the reset line', async () => {
+    it('keeps the period status indicator in place alongside the reset info icon', async () => {
       const reachedTooltip = 'Overall cost limit for today is reached.';
       await renderSection({
         periodStatuses: {
@@ -607,15 +607,9 @@ describe('ModelLimitsSection', () => {
       expect(
         within(header).getByRole('img', { name: reachedTooltip }),
       ).toBeTruthy();
-      expect(within(header).getByText(DAY_RESET_LABEL)).toBeTruthy();
-    });
-
-    it('wraps the reset line rather than forcing horizontal overflow', async () => {
-      await renderSection({ periodStatuses: withDayReset });
-
-      const resetLine = screen.getByText(DAY_RESET_LABEL);
-      expect(resetLine.className).toContain('break-words');
-      expect(resetLine.className).not.toContain('whitespace-nowrap');
+      expect(
+        within(header).getByRole('img', { name: DAY_SPOKEN_LABEL }),
+      ).toBeTruthy();
     });
   });
 });
