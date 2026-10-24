@@ -133,7 +133,7 @@ Slice 2 then removes the catalog wrappers. Slice 3 moves the Usage table onto th
   - 12px hover and selected rows.
 
   Also remove the hover/selected top and bottom outline from every `Grid`, per the table-cell design; the hover and selected fills stay `--bg-control-accent-alpha-hover-subtle` / `--bg-control-accent-alpha-active-subtle`. Stories, spec and CHANGELOG are updated.
-- [ ] 5.3 Once a kit release ships `GridAppearance`, bump `@epam/ai-dial-ui-kit` here:
+- [x] 5.3 Once a kit release ships `GridAppearance`, bump `@epam/ai-dial-ui-kit` here:
   - pass `appearance={GridAppearance.Chat}` in `libs/usage-dashboard/src/components/ModelLimitsSection/ModelLimitsSection.tsx`;
   - drop the `rounded-xl shadow-md` card and `wrapperBorder={false}` there;
   - update the README and the `usage-dashboard-lib` delta spec.

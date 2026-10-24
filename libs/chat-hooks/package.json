@@ -167,7 +167,7 @@
     "@epam/ai-dial-share": "*",
     "@epam/ai-dial-skill-editor": "*",
     "@epam/ai-dial-source-panel": "*",
-    "@epam/ai-dial-ui-kit": "^0.16.0-dev.35",
+    "@epam/ai-dial-ui-kit": "^0.16.0-dev.44",
     "@epam/ai-dial-usage-dashboard": "*",
     "@modelcontextprotocol/sdk": "^1.32.1",
     "@epam/pdf-highlighter-kit": "^0.0.19",

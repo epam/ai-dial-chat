@@ -195,6 +195,14 @@ describe('ModelLimitsSection', () => {
     expect(cells[4].textContent).toContain('Within limits');
   });
 
+  it('renders the kit Chat table appearance', async () => {
+    await renderSection();
+
+    expect(
+      screen.getByRole('region', { name: 'Model tokens limits 1' }).classList,
+    ).toContain('dial-kit-grid-chat');
+  });
+
   it('gives each period cell a full-width progress track', async () => {
     await renderSection();
 

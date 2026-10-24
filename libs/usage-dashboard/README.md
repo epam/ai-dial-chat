@@ -217,10 +217,12 @@ followed by an attributed Cost amount supplied by the host. Cost has no visible 
 per-model limit, or progress bar; `costLabel` supplies screen-reader context. Overall Cost statuses
 can add warning/reached icons with accessible tooltips to the period headers.
 
-The table is the ui-kit 2.0 `Grid` (`@epam/ai-dial-ui-kit/grid`), sized to its rows. It renders
-the same five columns at every width: on a narrow screen it scrolls horizontally inside its own
-box, so the page never does. Its frame, header and row dividers come from the `Grid` theme;
-`styles.colors` covers cell content only:
+The table is the ui-kit 2.0 `Grid` (`@epam/ai-dial-ui-kit/grid`) in its "Chat table" appearance
+(`GridAppearance.Chat`: a borderless card with a 12px corner and the MD shadow, row dividers
+inset by the cell padding), sized to its rows at 84px each. It renders the same five columns at
+every width: on a narrow screen it scrolls horizontally inside its own box, so the page never
+does. Its frame, header and row dividers come from the `Grid` theme; `styles.colors` covers cell
+content only:
 
 ```tsx
 import {

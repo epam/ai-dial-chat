@@ -20,7 +20,8 @@ Each period header component SHALL render the column label, the reset line when 
 
 - Sorting, filtering, floating filters and column resizing SHALL be off.
 - The grid SHALL size its height to its rows (`domLayout: 'autoHeight'`).
-- It SHALL use `withoutHeaderBorders`.
+- It SHALL use `withoutHeaderBorders` and `appearance={GridAppearance.Chat}`. The kit draws the borderless 12px card with the MD shadow and the inset row dividers, so the section adds no card or border of its own.
+- Rows SHALL use the design's Relaxed density, 84px.
 
 **What SHALL NOT exist:**
 

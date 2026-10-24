@@ -1,5 +1,9 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { Grid, type GridProps } from '@epam/ai-dial-ui-kit/grid';
+import {
+  Grid,
+  GridAppearance,
+  type GridProps,
+} from '@epam/ai-dial-ui-kit/grid';
 import { FC, useMemo } from 'react';
 import {
   ModelLimitPeriodCell,
@@ -182,21 +186,19 @@ export const ModelLimitsSection: FC<ModelLimitsSectionProps> = ({
         </h3>
       </div>
 
-      {/* The design draws no table border: the card is a 12px radius and the MD shadow. */}
-      <div className="overflow-hidden rounded-xl shadow-md">
-        <Grid<ModelLimitRow>
-          columnDefs={columnDefs}
-          rowData={rows}
-          getRowId={getRowId}
-          wrapperBorder={false}
-          withoutHeaderBorders
-          wrapCustomCellRenderers={false}
-          emptyStateTitle={labels.emptyStateLabel}
-          emptyStateDescription=""
-          additionalGridOptions={GRID_OPTIONS}
-          ariaLabel={`${labels.headingLabel} ${rows.length}`}
-        />
-      </div>
+      {/* The kit's "Chat table": borderless 12px card with the MD shadow, inset row dividers. */}
+      <Grid<ModelLimitRow>
+        appearance={GridAppearance.Chat}
+        columnDefs={columnDefs}
+        rowData={rows}
+        getRowId={getRowId}
+        withoutHeaderBorders
+        wrapCustomCellRenderers={false}
+        emptyStateTitle={labels.emptyStateLabel}
+        emptyStateDescription=""
+        additionalGridOptions={GRID_OPTIONS}
+        ariaLabel={`${labels.headingLabel} ${rows.length}`}
+      />
     </div>
   );
 };
