@@ -923,6 +923,15 @@ describe('ToolsetEditor — public class names', () => {
         expect.any(AbortSignal),
       );
       expect(
+        screen.getByRole<HTMLTextAreaElement>('textbox', {
+          name: 'Description',
+        }).readOnly,
+      ).toBe(true);
+      expect(
+        screen.getByRole<HTMLButtonElement>('button', { name: 'Refining' })
+          .disabled,
+      ).toBe(true);
+      expect(
         screen.getByRole<HTMLButtonElement>('button', { name: 'Create' })
           .disabled,
       ).toBe(true);
@@ -940,7 +949,9 @@ describe('ToolsetEditor — public class names', () => {
         screen.getByRole<HTMLButtonElement>('button', { name: 'Create' })
           .disabled,
       ).toBe(false);
-      expect(screen.getByRole('button', { name: 'Undo' })).toBeTruthy();
+      expect(
+        screen.getByRole('button', { name: 'Restore original' }),
+      ).toBeTruthy();
     });
   });
 });

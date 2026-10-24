@@ -1,11 +1,7 @@
 import { PanelEmptyState } from '@epam/ai-dial-chat-shared';
 import { mergeClasses } from '@epam/ai-dial-ui-kit';
 import { Grid } from '@epam/ai-dial-ui-kit/grid';
-import type {
-  GridApi,
-  GridOptions,
-  GridSizeChangedEvent,
-} from 'ag-grid-community';
+import type { ColDef, GridApi, GridOptions } from 'ag-grid-community';
 import {
   type CSSProperties,
   type KeyboardEvent,
@@ -34,6 +30,21 @@ import {
 
 /** Height of every row, in pixels. Fixed, so the window's spacers are exact. */
 const ROW_HEIGHT = 60;
+/*
+ * Constant, so the grid options can change (a search, a selection) without the
+ * grid rebuilding its columns: a new `defaultColDef` makes ag-grid recreate
+ * them. `suppressSizeToFit` keeps the kit Grid's `sizeColumnsToFit` (on ready
+ * and on every size change) off the columns, which would reset each to its base
+ * width and spread the rest by it, ignoring `flex`. Without it the table first
+ * opened with that layout and moved to the flex one on the first search or
+ * selection, and a height change (the row window growing) undid a column the
+ * user had resized. `flex` alone keeps the columns fitted to the width.
+ */
+const DEFAULT_COL_DEF: ColDef<CatalogItem> = {
+  filter: false,
+  floatingFilter: false,
+  suppressSizeToFit: true,
+};
 const EMPTY_TYPOGRAPHY = {};
 const EMPTY_SELECTION: ReadonlySet<string> = new Set();
 const SELECT_ALL_ARIA_LABEL = 'Select all';
@@ -164,22 +175,6 @@ const WindowedListView: FC<ListViewProps> = ({
   toggleSelectionRef.current = toggleSelection;
 
   /*
-   * The kit's Grid refits columns on every size change. With `autoHeight` and
-   * a row window, scrolling changes the grid's height whenever the slice
-   * grows or shrinks, and each refit discarded a column the user had resized.
-   * Only a width change needs the columns refitted.
-   */
-  const gridWidthRef = useRef<number | null>(null);
-  const handleGridSizeChanged = useCallback(
-    (event: GridSizeChangedEvent<CatalogItem>) => {
-      if (event.clientWidth === gridWidthRef.current) return;
-      gridWidthRef.current = event.clientWidth;
-      event.api.sizeColumnsToFit();
-    },
-    [],
-  );
-
-  /*
    * Space on a row cell toggles that row. Handled on the grid's wrapper from
    * the `row-id` AG Grid stamps on every row (from `getRowId`), rather than
    * through `onCellKeyDown`, which only fires for the cell AG Grid's own focus
@@ -233,8 +228,7 @@ const WindowedListView: FC<ListViewProps> = ({
       animateRows: false,
       suppressAnimationFrame: true,
       suppressScrollOnNewData: true,
-      defaultColDef: { filter: false, floatingFilter: false },
-      onGridSizeChanged: handleGridSizeChanged,
+      defaultColDef: DEFAULT_COL_DEF,
       context: {
         searchQuery: query,
         typography,
@@ -270,7 +264,6 @@ const WindowedListView: FC<ListViewProps> = ({
       isReadonly,
       onItemClick,
       isMultiSelect,
-      handleGridSizeChanged,
     ],
   );
 

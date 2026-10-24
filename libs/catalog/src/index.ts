@@ -138,6 +138,7 @@ export { Filter } from './components/Filter/Filter';
 export type { FilterColors, FilterProps } from './components/Filter/Filter';
 export { CatalogPickerModal } from './components/CatalogPickerModal/CatalogPickerModal';
 export type {
+  CatalogPickerListProps,
   CatalogPickerModalLabels,
   CatalogPickerModalProps,
 } from './components/CatalogPickerModal/CatalogPickerModal';

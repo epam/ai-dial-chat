@@ -163,7 +163,7 @@ defaults.
 
 The optional `onRefineDescription` callback,
 `(value: string, signal: AbortSignal) => Promise<string>`, adds a Refine with
-AI action (and Undo) beside the Description label; omit it to hide the action.
+AI action (and, after a result, Restore original and Regenerate) beside the Description label; omit it to hide the action.
 The host owns transport, availability, and translations, passing the copy
 through `labels.refinement` (`TextRefinementLabels` from
 `@epam/ai-dial-chat-shared`). Save is disabled while a request is pending.

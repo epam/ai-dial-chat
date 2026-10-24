@@ -1127,6 +1127,8 @@ export enum PromptEditorI18nKeys {
 
 export enum TextRefinementI18nKeys {
   Action = 'textRefinement.action',
+  Refining = 'textRefinement.refining',
+  Regenerate = 'textRefinement.regenerate',
   Undo = 'textRefinement.undo',
   Error = 'textRefinement.error',
   Pending = 'textRefinement.pending',
