@@ -507,16 +507,14 @@ Favorite star) keeps its own keys.
 
 The shell of a picker dialog over catalog items (Add toolset, Change model):
 the header with sort, search and the From filter, and the loading, failure and
-empty states. The list and its selection are the host's, from `renderList`,
-which receives the searched, filtered and sorted items and the search query.
-Mount it only while open, so search, filter and sort start fresh each time.
+empty states. The list is a `ListView` of the searched, filtered and sorted
+items, given `listProps` (everything but `items` and `query`; `ariaLabel`
+defaults to `labels.catalog`). It scrolls in the dialog's body, with its column
+header stuck to the top. Mount it only while open, so search, filter and sort
+start fresh each time.
 
 ```tsx
-import {
-  CatalogLoadStatus,
-  CatalogPickerModal,
-  ListView,
-} from '@epam/ai-dial-catalog';
+import { CatalogLoadStatus, CatalogPickerModal } from '@epam/ai-dial-catalog';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 
 <CatalogPickerModal
@@ -526,17 +524,16 @@ import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
   isConfirmDisabled={selectedId == null}
   onConfirm={handleConfirm}
   onClose={handleClose}
-  renderList={(rows, query) => (
-    <ListView
-      type={CatalogEntityType.Model}
-      items={rows}
-      query={query}
-      selectedItemId={selectedId}
-      onItemClick={(item) => setSelectedId(item.id)}
-    />
-  )}
+  listProps={{
+    type: CatalogEntityType.Model,
+    selectedItemId: selectedId,
+    onItemClick: (item) => setSelectedId(item.id),
+  }}
 />;
 ```
+
+A list of the host's own goes in `renderList` instead of `listProps`: it
+receives the searched, filtered and sorted items and the search query.
 
 - `status={CatalogLoadStatus.Error}` shows `labels.failedToLoad` and `error`,
   with a Retry button only when `onRetry` is given.

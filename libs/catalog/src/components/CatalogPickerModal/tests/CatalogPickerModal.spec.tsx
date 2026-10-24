@@ -3,11 +3,28 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../models/catalog-item';
+import type { ListViewProps } from '../../../models/list-props';
 import { CatalogLoadStatus } from '../../../types/load-status';
+import { ListView } from '../../ListView/ListView';
 import {
   CatalogPickerModal,
   type CatalogPickerModalProps,
 } from '../CatalogPickerModal';
+
+// The default list as a plain one: ListView's own behaviour has its own spec.
+vi.mock('../../ListView/ListView', () => ({
+  ListView: vi.fn(({ items, query, ariaLabel, onItemClick }: ListViewProps) => (
+    <ul aria-label={`${ariaLabel} for "${query}"`}>
+      {items.map((item) => (
+        <li key={item.id}>
+          <button type="button" onClick={() => onItemClick?.(item)}>
+            {item.name}
+          </button>
+        </li>
+      ))}
+    </ul>
+  )),
+}));
 
 const makeItem = (id: string, name: string): CatalogItem => ({
   id,
@@ -22,7 +39,11 @@ const makeItem = (id: string, name: string): CatalogItem => ({
 
 const ITEMS = [makeItem('a', 'Alpha'), makeItem('b', 'Beta')];
 
-const renderPicker = (props: Partial<CatalogPickerModalProps> = {}) => {
+const renderPicker = (
+  props: Partial<
+    Omit<CatalogPickerModalProps, 'listProps' | 'renderList'>
+  > = {},
+) => {
   const handlers = {
     onConfirm: vi.fn(),
     onClose: vi.fn(),
@@ -131,6 +152,51 @@ describe('CatalogPickerModal', () => {
     await typeSearch('zz');
 
     expect(screen.getByText('No results found')).toBeTruthy();
+  });
+
+  it('lists the searched items in a ListView of its own when given listProps', async () => {
+    const onItemClick = vi.fn();
+    render(
+      <CatalogPickerModal
+        items={ITEMS}
+        labels={{ title: 'Change model', catalog: 'Models catalog' }}
+        status={CatalogLoadStatus.Ready}
+        listProps={{
+          type: CatalogEntityType.Model,
+          selectedItemId: 'b',
+          onItemClick,
+        }}
+        onConfirm={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+
+    await typeSearch('be');
+
+    const list = screen.getByRole('list', { name: 'Models catalog for "be"' });
+    expect(list.textContent).toBe('Beta');
+    expect(vi.mocked(ListView).mock.lastCall?.[0]).toMatchObject({
+      type: CatalogEntityType.Model,
+      selectedItemId: 'b',
+      stickyHeaderTop: 0,
+    });
+    await userEvent.click(screen.getByRole('button', { name: 'Beta' }));
+    expect(onItemClick).toHaveBeenCalledWith(ITEMS[1]);
+  });
+
+  it("lets listProps name the list instead of the catalog's heading", () => {
+    render(
+      <CatalogPickerModal
+        items={ITEMS}
+        labels={{ title: 'Change model', catalog: 'Models catalog' }}
+        status={CatalogLoadStatus.Ready}
+        listProps={{ type: CatalogEntityType.Model, ariaLabel: 'Models' }}
+        onConfirm={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('list', { name: 'Models for ""' })).toBeTruthy();
   });
 
   it('puts footerStart beside its own Cancel and Add', async () => {

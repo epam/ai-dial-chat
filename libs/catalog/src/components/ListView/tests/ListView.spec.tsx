@@ -293,32 +293,38 @@ describe('ListView', () => {
     expect(screen.queryByRole('button', { name: 'star item-180' })).toBeNull();
   });
 
-  it('keeps manually resized columns when only the grid height changes', () => {
-    render(
+  it('keeps the same columns through a search and a selection, sized by flex alone', () => {
+    const items = [
+      makeItem({ id: 'a', name: 'Alpha' }),
+      makeItem({ id: 'b', name: 'Beta' }),
+    ];
+    const { rerender } = render(
+      <ListView type={CatalogEntityType.Model} items={items} />,
+    );
+    const initialProps = vi.mocked(Grid).mock.lastCall?.[0];
+
+    rerender(
       <ListView
         type={CatalogEntityType.Model}
-        items={[makeItem({ id: 'x', name: 'x' })]}
+        items={items}
+        query="al"
+        selectedItemId="a"
       />,
     );
-    const onGridSizeChanged =
-      vi.mocked(Grid).mock.lastCall?.[0].additionalGridOptions
-        ?.onGridSizeChanged;
-    const sizeColumnsToFit = vi.fn();
-    const fireSizeChanged = (clientWidth: number, clientHeight: number) =>
-      onGridSizeChanged?.({
-        clientWidth,
-        clientHeight,
-        api: { sizeColumnsToFit },
-      } as unknown as Parameters<NonNullable<typeof onGridSizeChanged>>[0]);
 
-    fireSizeChanged(1100, 1800);
-    expect(sizeColumnsToFit).toHaveBeenCalledOnce();
-
-    fireSizeChanged(1100, 2400);
-    expect(sizeColumnsToFit).toHaveBeenCalledOnce();
-
-    fireSizeChanged(900, 2400);
-    expect(sizeColumnsToFit).toHaveBeenCalledTimes(2);
+    const nextProps = vi.mocked(Grid).mock.lastCall?.[0];
+    expect(nextProps?.additionalGridOptions).not.toBe(
+      initialProps?.additionalGridOptions,
+    );
+    expect(nextProps?.columnDefs).toBe(initialProps?.columnDefs);
+    // A new defaultColDef would make ag-grid rebuild the columns.
+    expect(nextProps?.additionalGridOptions?.defaultColDef).toBe(
+      initialProps?.additionalGridOptions?.defaultColDef,
+    );
+    expect(nextProps?.additionalGridOptions?.defaultColDef).toMatchObject({
+      suppressSizeToFit: true,
+    });
+    expect(nextProps?.additionalGridOptions?.onGridSizeChanged).toBeUndefined();
   });
 
   it('can clear and restore results after the table has been mounted', () => {
