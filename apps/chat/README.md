@@ -571,6 +571,11 @@ The Quick Apps iframe receives
 `{ type: 'REQUEST_APPLICATION_CREDENTIALS', appId: 'applications/public/my-agent' }`
 from that iframe opens the same host dialog; no credentials are sent through
 `postMessage`. See [the authentication flow](../../docs/auth/auth-bff-encrypted-cookie.md#proactive-application-credential-forms).
+An editor that already knows the one service to connect checks `externalServiceLogin=true`
+and sends
+`{ type: 'REQUEST_EXTERNAL_SERVICE_LOGIN', appId, serviceId, offlineUsageConsent }` instead:
+the host signs the user in to that service at `USER` level without the dialog, opening only
+the provider's consent popup, and answers with `EXTERNAL_SERVICE_LOGIN_RESULT`.
 
 ## AI text refinement
 

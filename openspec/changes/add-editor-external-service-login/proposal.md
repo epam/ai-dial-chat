@@ -83,6 +83,8 @@ Toolsets already solved the same problem with a relay: `REQUEST_TOOLSET_LOGIN { 
 - Frontend: `apps/chat/src/pages/ApplicationEditor/setup/AppEditorIframe.tsx`, `apps/chat/src/types/apps-editor.ts`,
   `apps/chat/src/hooks/externalServices/useExternalServiceLogin.ts`, `apps/chat/src/server-api/external-services.ts`
   (a thin `listExternalServices` wrapper over the existing generated method), and their tests.
+- Documentation: `apps/chat/README.md` and `docs/auth/auth-bff-encrypted-cookie.md`, next to the
+  `REQUEST_APPLICATION_CREDENTIALS` description.
 - Backend and generated client: none. i18n: no new keys. RTL: none (no new UI).
 - Cross-repo: editors that want the relay send the request when the host advertises it; the DIAL Loop editor is the
   first.

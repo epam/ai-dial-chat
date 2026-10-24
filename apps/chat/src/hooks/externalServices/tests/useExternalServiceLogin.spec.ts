@@ -275,6 +275,37 @@ describe('useExternalServiceLogin', () => {
       expect(getOfflineCredentials).not.toHaveBeenCalled();
     });
 
+    it('uses a popup the caller already reserved instead of opening another', async () => {
+      loginOfflineCredentialsMock.mockResolvedValue({ type: 'success' });
+      const reserved = { close: vi.fn() } as unknown as Window;
+      const { result } = renderHook(() => useExternalServiceLogin());
+
+      expect(
+        (await result.current.login({ ...params, popup: reserved })).type,
+      ).toBe(ExternalServiceLoginOutcomeType.Success);
+      expect(openToolsetOAuthPopup).not.toHaveBeenCalled();
+      expect(loginOfflineCredentialsMock).toHaveBeenCalledWith(
+        connect,
+        getOfflineCredentials,
+        reserved,
+      );
+    });
+
+    it('closes a caller-reserved popup on an early failure', async () => {
+      vi.mocked(getOfflineCredentials).mockResolvedValue({
+        available: false,
+        connected: false,
+      });
+      const reserved = { close: vi.fn() } as unknown as Window;
+      const { result } = renderHook(() => useExternalServiceLogin());
+
+      expect(
+        (await result.current.login({ ...params, popup: reserved })).type,
+      ).toBe(ExternalServiceLoginOutcomeType.OfflineUnavailable);
+      expect(reserved.close).toHaveBeenCalledOnce();
+      expect(openToolsetOAuthPopup).not.toHaveBeenCalled();
+    });
+
     it('closes the popup when fetching offline settings fails', async () => {
       vi.mocked(getOfflineCredentials).mockRejectedValueOnce(
         new Error('unavailable'),
@@ -327,6 +358,44 @@ describe('useExternalServiceLogin', () => {
         'external-service',
         // Offline usage consent — undefined here because the caller did not ask for it.
         undefined,
+      );
+      expect(outcome).toEqual({
+        type: ExternalServiceLoginOutcomeType.Success,
+      });
+    });
+
+    it('navigates a popup the caller already reserved and forwards the offline-use consent', async () => {
+      const reserved = {} as Window;
+      vi.mocked(navigateToolsetOAuthPopup).mockReturnValue({
+        type: ToolsetOAuthInitiationResultType.Started,
+        popup: reserved,
+        flowId: 'flow-2',
+      });
+      vi.mocked(waitForToolsetOAuthResult).mockResolvedValue({
+        type: ToolsetOAuthResultType.Success,
+        toolsetId: SCOPE_ID,
+        credentialsLevel: 'USER' as never,
+      });
+      const { result } = renderHook(() => useExternalServiceLogin());
+
+      const outcome = await result.current.login({
+        appId: APP_ID,
+        serviceId: SERVICE_ID,
+        credentialsLevel: ExternalServiceCredentialsLevel.User,
+        authenticationType: ExternalServiceAuthType.OAuth,
+        offlineUsageConsent: true,
+        popup: reserved,
+      });
+
+      expect(openToolsetOAuthPopup).not.toHaveBeenCalled();
+      expect(navigateToolsetOAuthPopup).toHaveBeenCalledWith(
+        reserved,
+        expect.any(Object),
+        SCOPE_ID,
+        ROUTES.ToolsetSignIn,
+        'USER',
+        'external-service',
+        true,
       );
       expect(outcome).toEqual({
         type: ExternalServiceLoginOutcomeType.Success,

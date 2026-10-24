@@ -70,6 +70,13 @@ export interface ExternalServiceLoginParams {
    * dialog always passes `true`, mirroring `useToolsetLogin`'s `forceStale`.
    */
   forceStale?: boolean;
+  /**
+   * For OAuth and DIAL-native logins, a popup the caller already opened during
+   * the user's gesture — used instead of opening one here. A caller that must
+   * look the service up first (the application editor's relay) opens the popup
+   * before awaiting anything, so the browser still treats it as user-triggered.
+   */
+  popup?: Window;
 }
 
 /*
@@ -103,9 +110,10 @@ export const useExternalServiceLogin = (): {
     async ({
       appId,
       serviceId,
+      popup: reservedPopup,
     }: ExternalServiceLoginParams): Promise<ExternalServiceLoginOutcome> => {
       /* Reserve the popup during the click, before fetching consent and OAuth settings. */
-      const popup = openToolsetOAuthPopup();
+      const popup = reservedPopup ?? openToolsetOAuthPopup();
       if (!popup) return { type: ExternalServiceLoginOutcomeType.PopupBlocked };
 
       try {
@@ -191,6 +199,7 @@ export const useExternalServiceLogin = (): {
         oauthSettings,
         forceStale,
         offlineUsageConsent,
+        popup: reservedPopup,
       } = params;
       /*
        * The shared OAuth popup/BroadcastChannel utilities (`utils/toolsets.ts`)
@@ -214,9 +223,10 @@ export const useExternalServiceLogin = (): {
       /*
        * The popup must be opened as the very first synchronous statement so
        * the browser still treats it as user-triggered — see
-       * `useToolsetLogin.loginWithOAuth`'s identical `forceStale` branch.
+       * `useToolsetLogin.loginWithOAuth`'s identical `forceStale` branch —
+       * unless the caller already reserved one during the gesture.
        */
-      const popup = openToolsetOAuthPopup();
+      const popup = reservedPopup ?? openToolsetOAuthPopup();
       if (!popup) {
         return { type: ExternalServiceLoginOutcomeType.PopupBlocked };
       }
