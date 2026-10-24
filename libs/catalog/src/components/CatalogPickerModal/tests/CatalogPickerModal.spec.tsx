@@ -178,7 +178,6 @@ describe('CatalogPickerModal', () => {
     expect(vi.mocked(ListView).mock.lastCall?.[0]).toMatchObject({
       type: CatalogEntityType.Model,
       selectedItemId: 'b',
-      stickyHeaderTop: 0,
     });
     await userEvent.click(screen.getByRole('button', { name: 'Beta' }));
     expect(onItemClick).toHaveBeenCalledWith(ITEMS[1]);

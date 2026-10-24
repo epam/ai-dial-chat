@@ -295,13 +295,12 @@ export const CatalogPickerModal: FC<CatalogPickerModalProps> = ({
       );
     }
     if (renderList) return renderList(rows, search);
-    /* The list windows its rows against the nearest scrolling ancestor, so
-       this box scrolls and the column header sticks to its top. */
+    /* The grid scrolls its own rows, so this box only gives it the height left
+       below the search and filters. */
     return (
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1">
         <ListView
           ariaLabel={labels.catalog}
-          stickyHeaderTop={0}
           {...listProps}
           items={rows}
           query={search}

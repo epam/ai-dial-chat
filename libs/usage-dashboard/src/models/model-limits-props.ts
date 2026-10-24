@@ -140,18 +140,12 @@ export interface ModelLimitsLabels {
   emptyStateLabel: string;
 }
 
-/** Color overrides for `ModelLimitsSection`, applied as CSS custom properties. */
+/** Color overrides for `ModelLimitsSection` content, applied as CSS custom properties; the table chrome is the ui-kit `Grid` theme. */
 export interface ModelLimitsColors {
-  /** Section container background. Fallback: `--bg-layer-raised`. */
-  containerBackground?: string;
   /** Heading text color. Fallback: `--text-primary`. */
   headingColor?: string;
   /** Heading count color. Fallback: `--text-tertiary`. */
   headingCountColor?: string;
-  /** Column header text color. Fallback: `--text-secondary`. */
-  columnHeaderColor?: string;
-  /** Row divider color. Fallback: `--stroke-secondary`. */
-  rowDividerColor?: string;
   /** Model name text color. Fallback: `--text-primary`. */
   nameColor?: string;
   /** Model entity-type text color. Fallback: `--text-accent`. */

@@ -215,8 +215,12 @@ Renders a "Model tokens limits" heading with the rendered row count and one fixe
 model: Item, Today, This week, This month, and Status. Every period cell contains Tokens
 followed by an attributed Cost amount supplied by the host. Cost has no visible sublabel,
 per-model limit, or progress bar; `costLabel` supplies screen-reader context. Overall Cost statuses
-can add warning/reached icons with accessible tooltips to the period headers. Desktop row content is
-vertically centered while preserving its existing horizontal alignment:
+can add warning/reached icons with accessible tooltips to the period headers.
+
+The table is the ui-kit 2.0 `Grid` (`@epam/ai-dial-ui-kit/grid`), sized to its rows. It renders
+the same five columns at every width: on a narrow screen it scrolls horizontally inside its own
+box, so the page never does. Its frame, header and row dividers come from the `Grid` theme;
+`styles.colors` covers cell content only:
 
 ```tsx
 import {
@@ -339,8 +343,8 @@ const agentRow: ModelLimitRow = {
 };
 ```
 
-The heading and row count remain visible when `rows` is empty; the table body switches to
-`labels.emptyStateLabel`.
+The heading and row count remain visible when `rows` is empty; the grid shows its empty state
+with `labels.emptyStateLabel`.
 
 ## Types
 
@@ -362,7 +366,7 @@ The heading and row count remain visible when `rows` is empty; the table body sw
 - `ModelLimitsLabels` — `{ headingLabel, itemColumnLabel, dayColumnLabel, weekColumnLabel, monthColumnLabel, statusColumnLabel, tokensLabel, costLabel, modelTypeLabel, noLimitLabel, unavailableLabel, withinLimitsBadgeLabel, runningLowBadgeLabel, limitReachedBadgeLabel, noLimitBadgeLabel, unavailableBadgeLabel, emptyStateLabel }`
 - `ModelLimitsSectionProps` — `{ rows, labels, periodStatuses, styles? }`
 - `ModelLimitsStyles` — `{ colors?, typography? }`
-- `ModelLimitsColors` — CSS-custom-property color overrides
+- `ModelLimitsColors` — CSS-custom-property color overrides for cell content: heading, heading count, name, model type, version, value, secondary value, progress, indicator, badge and neutral status colors
 - `ModelLimitsTypography` — typography class overrides
 
 ## Public class names

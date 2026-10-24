@@ -1,66 +1,56 @@
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import { Grid, type GridProps } from '@epam/ai-dial-ui-kit/grid';
+import { FC, useMemo } from 'react';
 import {
-  buildCssVars,
-  mergeClasses,
-  PanelEmptyState,
-} from '@epam/ai-dial-chat-shared';
-import { FC } from 'react';
-import {
-  ModelLimitPeriodStatus,
+  ModelLimitPeriodCell,
+  ModelLimitRow,
   ModelLimitsSectionProps,
 } from '../../models/model-limits-props';
-import { MODEL_LIMITS_GRID_COLUMNS, ModelLimitsRow } from './ModelLimitsRow';
+import { ItemCell } from './ItemCell';
 import styles from './ModelLimitsSection.module.scss';
-import { PeriodStatusIndicator } from './PeriodStatusIndicator';
+import { PeriodCell } from './PeriodCell';
+import { PeriodHeader } from './PeriodHeader';
+import { StatusCell } from './StatusCell';
 
-const AVATAR_SIZE = 40;
+/* Typed from the kit's own props, so the lib needs no ag-grid import. */
+type ModelLimitsColDef = NonNullable<
+  GridProps<ModelLimitRow>['columnDefs']
+>[number];
 
-interface PeriodHeaderProps {
-  label: string;
-  periodStatus: ModelLimitPeriodStatus;
-  className: string;
-  resetLabelClassName: string;
+/** Props every cell renderer reads: the row it renders. */
+interface RowCellProps {
+  data?: ModelLimitRow;
 }
 
-const PeriodHeader: FC<PeriodHeaderProps> = ({
-  label,
-  periodStatus,
-  className,
-  resetLabelClassName,
-}) => (
-  <span
-    role="columnheader"
-    className={mergeClasses(
-      'flex min-w-0 items-center justify-between gap-2',
-      className,
-      styles.columnHeader,
-    )}
-  >
-    <span className="flex min-w-0 flex-col">
-      <span className="min-w-0 truncate">{label}</span>
-      {periodStatus.resetLabel != null && (
-        <>
-          {/* See UsageLimitCard: the spoken form rides an sr-only sibling
-              because `aria-label` is not reliably supported on a `<time>`. */}
-          <time
-            dateTime={periodStatus.resetIsoValue}
-            aria-hidden={periodStatus.resetAriaLabel != null || undefined}
-            className={mergeClasses(
-              'block break-words',
-              resetLabelClassName,
-              styles.secondaryValue,
-            )}
-          >
-            {periodStatus.resetLabel}
-          </time>
-          {periodStatus.resetAriaLabel != null && (
-            <span className="sr-only">{periodStatus.resetAriaLabel}</span>
-          )}
-        </>
-      )}
-    </span>
-    <PeriodStatusIndicator periodStatus={periodStatus} />
-  </span>
-);
+/** Two-line header: the column label and a period's reset line. */
+const HEADER_HEIGHT = 56;
+/** The design's Relaxed row density: a period cell stacks the Tokens value, its progress track and the Cost line. */
+const ROW_HEIGHT = 84;
+/*
+ * Constant so ag-grid keeps its columns across renders. `suppressSizeToFit`
+ * keeps the kit Grid's `sizeColumnsToFit` from overriding `flex`, so the
+ * columns fill the width down to their `minWidth`, and below that the grid
+ * scrolls horizontally inside its own box.
+ */
+const DEFAULT_COL_DEF: ModelLimitsColDef = {
+  sortable: false,
+  filter: false,
+  floatingFilter: false,
+  resizable: false,
+  suppressSizeToFit: true,
+  suppressMovable: true,
+};
+const GRID_OPTIONS: GridProps<ModelLimitRow>['additionalGridOptions'] = {
+  domLayout: 'autoHeight',
+  /* Five columns: keeping all of them in the DOM keeps the reading order
+     complete when a narrow screen scrolls some of them out of view. */
+  suppressColumnVirtualisation: true,
+  headerHeight: HEADER_HEIGHT,
+  rowHeight: ROW_HEIGHT,
+  defaultColDef: DEFAULT_COL_DEF,
+};
+const PERIODS = ['day', 'week', 'month'] as const;
+const getRowId = (row: ModelLimitRow) => row.id;
 
 /** "Model limits" section: a fixed table comparing Cost and Tokens across the current UTC day, week, and month. */
 export const ModelLimitsSection: FC<ModelLimitsSectionProps> = ({
@@ -78,11 +68,8 @@ export const ModelLimitsSection: FC<ModelLimitsSectionProps> = ({
   } = typography;
 
   const cssVars = buildCssVars({
-    '--mls-container-bg': colors?.containerBackground,
     '--mls-heading': colors?.headingColor,
     '--mls-heading-count': colors?.headingCountColor,
-    '--mls-column-header': colors?.columnHeaderColor,
-    '--mls-row-divider': colors?.rowDividerColor,
     '--mls-name': colors?.nameColor,
     '--mls-model-type': colors?.modelTypeColor,
     '--mls-version': colors?.versionColor,
@@ -103,7 +90,82 @@ export const ModelLimitsSection: FC<ModelLimitsSectionProps> = ({
     '--mls-badge-neutral-text': colors?.neutralBadgeColor,
   });
 
-  const tableLabel = `${labels.headingLabel} ${rows.length}`;
+  const columnDefs = useMemo<ModelLimitsColDef[]>(() => {
+    const periodLabels: Record<(typeof PERIODS)[number], string> = {
+      day: labels.dayColumnLabel,
+      week: labels.weekColumnLabel,
+      month: labels.monthColumnLabel,
+    };
+    const renderPlainHeader = (label: string) => () => (
+      <span className={mergeClasses('min-w-0 truncate', columnHeaderClassName)}>
+        {label}
+      </span>
+    );
+
+    return [
+      {
+        colId: 'item',
+        headerName: labels.itemColumnLabel,
+        headerComponent: renderPlainHeader(labels.itemColumnLabel),
+        flex: 1.25,
+        minWidth: 192,
+        cellRenderer: ({ data }: RowCellProps) =>
+          data ? (
+            <ItemCell
+              row={data}
+              modelTypeLabel={labels.modelTypeLabel}
+              typography={typography}
+            />
+          ) : null,
+      },
+      ...PERIODS.map((period): ModelLimitsColDef => ({
+        colId: period,
+        headerName: periodLabels[period],
+        headerComponent: () => (
+          <PeriodHeader
+            label={periodLabels[period]}
+            periodStatus={periodStatuses[period]}
+            className={columnHeaderClassName}
+            resetLabelClassName={resetLabelClassName}
+          />
+        ),
+        flex: 1,
+        minWidth: 160,
+        cellRenderer: ({ data }: RowCellProps) => {
+          const cell: ModelLimitPeriodCell | undefined = data?.[period];
+          return cell ? (
+            <PeriodCell
+              cell={cell}
+              periodLabel={periodLabels[period]}
+              labels={labels}
+              typography={typography}
+            />
+          ) : null;
+        },
+      })),
+      {
+        colId: 'status',
+        headerName: labels.statusColumnLabel,
+        headerComponent: renderPlainHeader(labels.statusColumnLabel),
+        flex: 0.75,
+        minWidth: 128,
+        cellRenderer: ({ data }: RowCellProps) =>
+          data ? (
+            <StatusCell
+              status={data.status}
+              labels={labels}
+              typography={typography}
+            />
+          ) : null,
+      },
+    ];
+  }, [
+    labels,
+    periodStatuses,
+    typography,
+    columnHeaderClassName,
+    resetLabelClassName,
+  ]);
 
   return (
     <div className="flex flex-col gap-4" style={cssVars}>
@@ -120,80 +182,20 @@ export const ModelLimitsSection: FC<ModelLimitsSectionProps> = ({
         </h3>
       </div>
 
-      <div
-        role="table"
-        aria-label={tableLabel}
-        className={mergeClasses(
-          'overflow-hidden rounded-xl shadow-md',
-          styles.container,
-        )}
-      >
-        {rows.length === 0 ? (
-          <div className="flex items-center justify-center px-6 py-10">
-            <PanelEmptyState label={labels.emptyStateLabel} />
-          </div>
-        ) : (
-          <>
-            <div
-              role="row"
-              className={mergeClasses(
-                'hidden gap-4 px-6 py-3 desktop:grid desktop:items-center',
-                MODEL_LIMITS_GRID_COLUMNS,
-                styles.headerRow,
-              )}
-            >
-              <span
-                role="columnheader"
-                className={mergeClasses(
-                  columnHeaderClassName,
-                  styles.columnHeader,
-                )}
-              >
-                {labels.itemColumnLabel}
-              </span>
-              <PeriodHeader
-                label={labels.dayColumnLabel}
-                periodStatus={periodStatuses.day}
-                className={columnHeaderClassName}
-                resetLabelClassName={resetLabelClassName}
-              />
-              <PeriodHeader
-                label={labels.weekColumnLabel}
-                periodStatus={periodStatuses.week}
-                className={columnHeaderClassName}
-                resetLabelClassName={resetLabelClassName}
-              />
-              <PeriodHeader
-                label={labels.monthColumnLabel}
-                periodStatus={periodStatuses.month}
-                className={columnHeaderClassName}
-                resetLabelClassName={resetLabelClassName}
-              />
-              <span
-                role="columnheader"
-                className={mergeClasses(
-                  columnHeaderClassName,
-                  styles.columnHeader,
-                )}
-              >
-                {labels.statusColumnLabel}
-              </span>
-            </div>
-
-            <div role="rowgroup">
-              {rows.map((row) => (
-                <ModelLimitsRow
-                  key={row.id}
-                  row={row}
-                  labels={labels}
-                  periodStatuses={periodStatuses}
-                  typography={typography}
-                  avatarSize={AVATAR_SIZE}
-                />
-              ))}
-            </div>
-          </>
-        )}
+      {/* The design draws no table border: the card is a 12px radius and the MD shadow. */}
+      <div className="overflow-hidden rounded-xl shadow-md">
+        <Grid<ModelLimitRow>
+          columnDefs={columnDefs}
+          rowData={rows}
+          getRowId={getRowId}
+          wrapperBorder={false}
+          withoutHeaderBorders
+          wrapCustomCellRenderers={false}
+          emptyStateTitle={labels.emptyStateLabel}
+          emptyStateDescription=""
+          additionalGridOptions={GRID_OPTIONS}
+          ariaLabel={`${labels.headingLabel} ${rows.length}`}
+        />
       </div>
     </div>
   );

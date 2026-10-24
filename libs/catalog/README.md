@@ -4,7 +4,7 @@ Marketplace/catalog component for browsing models, tools, and assistants with se
 
 ## Overview
 
-`@epam/ai-dial-catalog` is a self-contained marketplace panel for browsing the AI DIAL entity catalog — models, tools, and assistants. It addresses the challenge of presenting potentially hundreds of items in a performant, filterable, and searchable UI without forcing each app to re-implement pagination, sorting, and details logic. The library supports two view modes (card grid and ag-grid list table), both windowed to the rows in view so a collection of any size keeps a bounded number of DOM nodes, sidebar filters by entity type and topic tags, a favorites section, and a per-item details panel with tabs for API documentation, tool definitions, pricing rows, and usage limits. Use it when an application needs to expose the full DIAL model/tool marketplace or any subset of it, or when building a picker for a specific entity type with consistent UX.
+`@epam/ai-dial-catalog` is a self-contained marketplace panel for browsing the AI DIAL entity catalog — models, tools, and assistants. It addresses the challenge of presenting potentially hundreds of items in a performant, filterable, and searchable UI without forcing each app to re-implement pagination, sorting, and details logic. The library supports two view modes (card grid and the ui-kit `Grid` list table), both virtualised to the rows in view so a collection of any size keeps a bounded number of DOM nodes, sidebar filters by entity type and topic tags, a favorites section, and a per-item details panel with tabs for API documentation, tool definitions, pricing rows, and usage limits. Use it when an application needs to expose the full DIAL model/tool marketplace or any subset of it, or when building a picker for a specific entity type with consistent UX.
 
 ## Installation
 
@@ -426,8 +426,8 @@ and the details-panel header.
 
 ### ListView
 
-Table view powered by ag-grid with column sorting and row selection. `type` and
-`items` are required.
+Table view rendered by the ui-kit 2.0 `Grid` (`@epam/ai-dial-ui-kit/grid`) with
+column sorting and row selection. `type` and `items` are required.
 
 ```tsx
 import { ListView } from '@epam/ai-dial-catalog';
@@ -439,25 +439,26 @@ import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
   query={searchQuery}
   onItemClick={handleItemClick}
   onToggleFavorite={handleToggleFavorite}
-  stickyHeaderTop={headingHeight}
 />;
 ```
 
-The table scrolls with the page, which switches ag-grid's own row
-virtualisation off, so `ListView` windows the rows itself: it hands the grid
-only the rows around the viewport and reserves the rest of the table's height
-with spacers. Rows are a fixed 60 px for that reason — a `styles.typography`
-override that changes a cell's line count would break the reserved height.
-Window changes render without row movement/fade animations or deferred cell
-drawing, and keep the column configuration stable while scrolling.
+The grid gets every item and virtualises the rows itself, so `ListView` fills
+the height of its parent and scrolls its rows inside that box, with the column
+header staying in view. Give the parent a definite height (a flex child with
+`min-h-0` works). Rows are a fixed 60 px.
+
+The table frame, header, row dividers and selected-row tint come from the
+`Grid` theme. `styles.colors` (`ListViewColors`) covers cell content only:
+`starFilled`, `folderIcon` and `selectedRowCheckIcon`. With no items, the grid
+shows its own empty state from `emptyStateTitle` (default `'No results'`) and
+`emptyStateDescription`.
 
 Name, Folder and Tags share the spare width (Name takes twice the share of the
 other two), so widening the table widens the columns that carry variable-length
 values rather than only the name.
 
-Edge padding follows AG Grid's first/last displayed-column markers, including
-when switching tabs restores hidden columns. The Favorite header and star
-button share the same end inset; the star renderer fills the cell width.
+The Favorite header is end-aligned with the star button below it; the star
+renderer fills the cell width.
 
 The Folder cell shows the deepest folder and keeps the full path in a tooltip
 and in the accessible name — a breadcrumb of the whole path collapses into
@@ -467,8 +468,8 @@ styles that tooltip path, `folderLastSegmentClassName` the folder on screen, and
 
 #### Multiple selection
 
-`selectionMode={CatalogSelectionMode.Multiple}` adds a leading checkbox column
-with a select-all checkbox in its header. The selection is controlled: pass the
+`selectionMode={CatalogSelectionMode.Multiple}` turns on the `Grid`'s own leading
+checkbox column, with a select-all checkbox in its header. The selection is controlled: pass the
 selected ids and update them from `onSelectionChange`.
 
 ```tsx
@@ -489,18 +490,19 @@ const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 ```
 
 - A row toggles from its checkbox, a click on any other cell except the
-  Favorite star, or Space on one of its cells. `onItemClick` still fires on a
-  row click.
+  Favorite star, or Space on one of its focused cells. `onItemClick` still
+  fires on a row click.
 - `onSelectionChange` receives a new `Set` with newly selected ids appended, so
   its iteration order is the order the user selected items in.
-- Select-all covers every entry of `items` — not only the rows windowed into
-  the grid — and keeps selected ids that are not in `items` (e.g. filtered out
-  by the host). Its checkbox is mixed while only some listed items are selected.
+- Select-all covers every entry of `items` and keeps selected ids that are not
+  in `items` (e.g. filtered out by the host). Its checkbox is mixed while only some listed items are selected.
 - `selectedItemId`'s single-row highlight is not drawn in this mode.
 - The label props default to `Select <item name>` and `'Select all'`.
 
-In the default single mode, Enter or Space on one of a row's cells calls
-`onItemClick` with that row, as a click does. A control inside the cell (the
+In the default single mode, `selectedItemId` marks its row through the grid's
+row selection and a check mark in the Name cell. The arrow keys move between
+cells, and Enter or Space on a focused cell calls `onItemClick` with that row,
+as a click does. A control inside the cell (the
 Favorite star) keeps its own keys.
 
 ### CatalogPickerModal
