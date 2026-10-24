@@ -27,6 +27,35 @@ describe('describeScheduledTaskTrigger', () => {
     });
   });
 
+  it('describes the editor week-step schedule as every-N-weeks', () => {
+    expect(
+      describeScheduledTaskTrigger(
+        {
+          cron: {
+            fields: { week: '*/2', hour: '2', minute: '0', day_of_week: '1' },
+          },
+        },
+        { timeZone: 'UTC' },
+      ),
+    ).toMatchObject({
+      kind: ScheduledTaskTriggerDescriptionKind.EveryNWeeks,
+      intervalWeeks: 2,
+      dayOfWeek: '1',
+      time: '02:00',
+    });
+  });
+
+  it.each(['2-40', '1,3', '*/12', '2'])(
+    'keeps week expression %s as a custom expression',
+    (week) => {
+      const fields = { week, hour: '9', minute: '0', day_of_week: '0' };
+      expect(describeScheduledTaskTrigger({ cron: { fields } })).toMatchObject({
+        kind: ScheduledTaskTriggerDescriptionKind.Custom,
+        expression: JSON.stringify(fields),
+      });
+    },
+  );
+
   it('converts fractional timezone offsets and weekday rollover deterministically', () => {
     const options = {
       timeZone: 'Asia/Kathmandu',

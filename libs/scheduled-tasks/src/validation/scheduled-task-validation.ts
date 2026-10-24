@@ -225,10 +225,12 @@ export const validateScheduledTaskFormValues = (
     errors.time = ScheduledTaskValidationErrorCode.TimeInvalid;
   }
 
-  if (
-    values.repeat === ScheduledTaskRepeat.Weekly &&
-    !WEEKDAY_PATTERN.test(values.dayOfWeek ?? '')
-  ) {
+  /* Weekly picks its day in the weekday Calendar; Custom in the segmented
+   * day row — both store the same APScheduler-convention string. */
+  const isDayOfWeekRepeat =
+    values.repeat === ScheduledTaskRepeat.Weekly ||
+    values.repeat === ScheduledTaskRepeat.Custom;
+  if (isDayOfWeekRepeat && !WEEKDAY_PATTERN.test(values.dayOfWeek ?? '')) {
     errors.dayOfWeek = ScheduledTaskValidationErrorCode.DayOfWeekInvalid;
   }
   if (

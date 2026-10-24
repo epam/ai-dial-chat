@@ -154,6 +154,8 @@ interface FormProps {
     repeat: string;
     time: string;
     minute?: string;
+    everyWeeks?: string;
+    dayOfWeek?: string;
     startDate?: string;
     endDate?: string;
   };
@@ -178,6 +180,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', async (importOriginal) => ({
     Daily: 'daily',
     Weekly: 'weekly',
     Monthly: 'monthly',
+    Custom: 'custom',
   },
   DESCRIPTION_MAX_LENGTH: 500,
   TIME_OF_DAY_PATTERN: /^([01]\d|2[0-3]):([0-5]\d)$/,
@@ -231,6 +234,8 @@ vi.mock('@epam/ai-dial-scheduled-tasks', async (importOriginal) => ({
       <span>modelId:{values.modelId}</span>
       <span>prompt:{values.prompt}</span>
       <span>minute:{values.minute ?? ''}</span>
+      <span>repeat:{values.repeat}</span>
+      <span>everyWeeks:{values.everyWeeks ?? ''}</span>
       <button onClick={onBack}>back</button>
       <input
         aria-label="displayName"
@@ -609,6 +614,30 @@ describe('ScheduledTaskEditPage', () => {
       await screen.findByText('scheduledTasks.edit.invalidScheduleLabel'),
     ).toBeTruthy();
     expect(screen.queryByText(/displayName:/)).not.toBeTruthy();
+  });
+
+  it('hydrates a custom week-step task into the form instead of the unsupported state', async () => {
+    getScheduledTaskMock.mockResolvedValue({
+      ...baseTask,
+      trigger: {
+        cron: {
+          fields: {
+            week: '*/2',
+            hour: '9',
+            minute: '0',
+            day_of_week: '0',
+          },
+        },
+      },
+    });
+    renderEditPage();
+
+    expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
+    expect(await screen.findByText('repeat:custom')).toBeTruthy();
+    expect(await screen.findByText('everyWeeks:2')).toBeTruthy();
+    expect(
+      screen.queryByText('scheduledTasks.edit.invalidScheduleLabel'),
+    ).not.toBeTruthy();
   });
 
   it('shows a non-destructive message when required fields are missing', async () => {

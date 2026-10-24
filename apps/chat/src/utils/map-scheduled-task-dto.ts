@@ -115,6 +115,20 @@ export const buildScheduleLabel = (
       }).format(date);
       return t(Keys.CardScheduleWeeklyAt, { day, time });
     }
+    case Kind.EveryNWeeks: {
+      const date = new Date(
+        Date.UTC(2023, 0, 2 + Number(description.dayOfWeek)),
+      );
+      const day = new Intl.DateTimeFormat(locale, {
+        weekday: 'long',
+        timeZone: 'UTC',
+      }).format(date);
+      return t(Keys.CardScheduleEveryNWeeks, {
+        count: description.intervalWeeks,
+        day,
+        time,
+      });
+    }
     case Kind.Monthly:
       return t(Keys.CardScheduleMonthlyAt, {
         day: description.dayOfMonth,
