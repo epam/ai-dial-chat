@@ -10,6 +10,7 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
   activeId,
   onSelect,
   sectionLabel,
+  ariaLabel,
   styles: settingsPanelStyles,
   className,
 }) => {
@@ -35,6 +36,7 @@ export const SettingsPanel: FC<SettingsPanelProps> = ({
       <Tabs
         orientation={TabOrientation.Vertical}
         sectionLabel={sectionLabel}
+        ariaLabel={ariaLabel}
         tabs={items}
         activeTabId={activeId}
         onTabChange={handleTabChange}
