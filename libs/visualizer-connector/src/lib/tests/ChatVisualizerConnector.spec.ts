@@ -341,6 +341,8 @@ describe('ChatVisualizerConnector — application-editor messages', () => {
       'REQUEST_TOOLSET_LOGOUT',
       'TOOLSET_LOGOUT_RESULT',
       'REQUEST_APPLICATION_CREDENTIALS',
+      'REQUEST_EXTERNAL_SERVICE_LOGIN',
+      'EXTERNAL_SERVICE_LOGIN_RESULT',
     ]);
   });
 
