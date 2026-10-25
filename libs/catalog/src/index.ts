@@ -137,6 +137,18 @@ export type { FavoriteCardProps } from './components/Favorites/FavoriteCard';
 export { Filter } from './components/Filter/Filter';
 export type { FilterColors, FilterProps } from './components/Filter/Filter';
 export { CatalogPickerModal } from './components/CatalogPickerModal/CatalogPickerModal';
+export { AddOnCatalogModal } from './components/AddOnCatalogModal/AddOnCatalogModal';
+export type {
+  AddOnCatalogListProps,
+  AddOnCatalogModalLabels,
+  AddOnCatalogModalProps,
+} from './components/AddOnCatalogModal/AddOnCatalogModal';
+export { AddOnListItem } from './components/AddOnListItem/AddOnListItem';
+export type {
+  AddOnListItemLabels,
+  AddOnListItemProps,
+} from './components/AddOnListItem/AddOnListItem';
+export { useListRemoveFocus } from './utils/use-list-remove-focus';
 export type {
   CatalogPickerListProps,
   CatalogPickerModalLabels,

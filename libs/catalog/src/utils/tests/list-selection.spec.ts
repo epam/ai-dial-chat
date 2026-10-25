@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mergeGridSelection } from '../list-selection';
+import { applyCatalogSelection, mergeGridSelection } from '../list-selection';
 
 const merge = (previous: string[], grid: string[], listed: string[]) => [
   ...mergeGridSelection(new Set(previous), new Set(grid), listed),
@@ -41,5 +41,33 @@ describe('mergeGridSelection', () => {
     const previous = new Set(['a']);
     mergeGridSelection(previous, new Set(['a', 'b']), ['a', 'b']);
     expect([...previous]).toEqual(['a']);
+  });
+});
+
+describe('applyCatalogSelection', () => {
+  it('keeps checked attached ids in order and appends newly checked ones', () => {
+    expect(
+      applyCatalogSelection(
+        ['a', 'b', 'c'],
+        new Set(['c', 'a', 'd']),
+        new Set(['a', 'b', 'c', 'd']),
+      ),
+    ).toEqual(['a', 'c', 'd']);
+  });
+
+  it('drops a listed attached id that is unchecked', () => {
+    expect(
+      applyCatalogSelection(
+        ['a', 'b'],
+        new Set(['b', 'c']),
+        new Set(['a', 'b', 'c']),
+      ),
+    ).toEqual(['b', 'c']);
+  });
+
+  it('keeps attached ids the picker does not list', () => {
+    expect(
+      applyCatalogSelection(['agent', 'a'], new Set(), new Set(['a'])),
+    ).toEqual(['agent']);
   });
 });

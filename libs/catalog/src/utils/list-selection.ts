@@ -22,3 +22,18 @@ export const mergeGridSelection = (
 
   return next;
 };
+
+/** Returns the ids a picker commits: attached ids still checked or not listed, in order, then newly checked ids. */
+export const applyCatalogSelection = (
+  attachedIds: readonly string[],
+  checkedIds: ReadonlySet<string>,
+  listedIds: ReadonlySet<string>,
+): string[] => {
+  const attached = new Set(attachedIds);
+  // An attached id the picker does not list had no row to uncheck, so it stays.
+  const kept = attachedIds.filter(
+    (id) => checkedIds.has(id) || !listedIds.has(id),
+  );
+  const added = [...checkedIds].filter((id) => !attached.has(id));
+  return [...kept, ...added];
+};

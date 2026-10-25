@@ -44,6 +44,7 @@ installing both is required rather than optional.
 `CredentialsUiState`, `ToolsetAuthenticationType`, `CatalogSortKey`,
 `CatalogItem`, `CatalogItemCredentials`, `filterCatalogItems`,
 `filterCatalogItemsByQuery`, `CatalogItemsQuery`, `getTopicOptions`, `sortCatalogItems`, `buildCatalogTabs`,
+`applyCatalogSelection`,
 `getCredentialsBadgeState`, `getCredentialsUiState`, and `getSignedInLevel` —
 the headless enums and pure item-mapping functions a host can use (e.g. to
 sort/filter/tab a catalog item list, or read a toolset's credential state)
@@ -548,6 +549,92 @@ receives the searched, filtered and sorted items and the search query.
   and is a centred dialog from there up. The footer rule drawn with
   `footerStart` reads `--cat-picker-footer-border`, falling back to
   `--stroke-tertiary`.
+
+### AddOnCatalogModal
+
+A picker over `CatalogPickerModal` for several items at once (Add skill, Add toolset, Add agent): the
+same header, search, From filter and states, with a `ListView` in `CatalogSelectionMode.Multiple`. It
+opens with the ids in `attachedIds` checked; Add calls `onConfirm` with the new full id list, Cancel
+calls only `onClose`. Mount it only while open.
+
+```tsx
+import { AddOnCatalogModal, CatalogLoadStatus } from '@epam/ai-dial-catalog';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+
+<AddOnCatalogModal
+  type={CatalogEntityType.Toolset}
+  items={toolsetItems}
+  attachedIds={attachedIds}
+  labels={{
+    title: t('Add toolset'),
+    catalog: t('Toolsets catalog'),
+    selectAll: t('Select all toolsets'),
+    selectRow: (name) => t('Select {{name}}', { name }),
+  }}
+  status={CatalogLoadStatus.Ready}
+  listProps={{ columnVisibility: { favorite: () => false } }}
+  onConfirm={(ids) => saveToolsets(ids)}
+  onClose={close}
+/>;
+```
+
+- The committed list follows `applyCatalogSelection`: attached ids that stay checked keep their order,
+  newly checked ones follow in the order they were checked, unchecked ones are dropped, and attached ids
+  that are not among `items` stay where they are — so two pickers can edit one shared list.
+- `renderFooterStart(checkedIds)` puts a note built from the checked set before Cancel and Add.
+- `listProps` passes further `ListView` props (`columnVisibility`, `isFavoriteVisible`,
+  `credentialsBadgeLoggedOutLabel`, …); the selection props are the picker's own.
+- `labels.selectAll` and `labels.selectRow` default to `'Select all'` and `Select <name>`.
+
+### AddOnListItem
+
+One attached add-on in a host's list, drawn the way the list view's Name cell draws it, so the row and
+the picker read alike. The whole row is the button that opens the item, named by its name and version and
+described by `description`; a trash beside it shows on hover or focus and stays in the tab order.
+
+```tsx
+import { AddOnListItem } from '@epam/ai-dial-catalog';
+
+<ul>
+  <li>
+    <AddOnListItem
+      name={toolset.name}
+      version={toolset.version}
+      iconUrl={toolset.iconUrl}
+      description={t('Logged out toolset.')}
+      credentials={toolset.credentials}
+      labels={{ remove: t('Remove {{name}}', { name: toolset.name }) }}
+      onOpen={() => openDetails(toolset.id)}
+      onRemove={() => remove(toolset.id)}
+    />
+  </li>
+</ul>;
+```
+
+- `fileType` draws a `FileIcon` instead of the avatar; `path` replaces the name with a plain-text
+  `Breadcrumbs` trail named `labels.location` (default `'Location'`), the button then covering the row.
+- `credentials` draws the `CredentialsBadge` over the icon while signed out.
+- `trailing` adds content after the text (status badges, say).
+- `titleClassName`, `versionClassName` and `descriptionClassName` default to
+  `'dial-small-semi-text text-primary'`, `'dial-tiny-text text-secondary'` and
+  `'dial-tiny-text text-secondary'`.
+
+### useListRemoveFocus
+
+Returns a ref for a list's container. When the list's `count` drops and focus has fallen to the body —
+the removed row took its buttons with it — it focuses the list's first button, or the container's first
+button once the list is empty. It reacts to the count, so a removal after a confirm or a save is covered too.
+
+```tsx
+import { AddOnListItem, useListRemoveFocus } from '@epam/ai-dial-catalog';
+
+const ref = useListRemoveFocus<HTMLElement>(items.length);
+
+<section ref={ref}>
+  <NeutralButton label={t('Add')} onClick={openPicker} />
+  <ul>{items.map(renderItem)}</ul>
+</section>;
+```
 
 ### Favorites
 
@@ -1429,6 +1516,7 @@ sentinel rather than a cap, so it renders its note instead of a progress bar.
 
 ```tsx
 import {
+  applyCatalogSelection,
   buildCatalogTabs,
   filterCatalogItems,
   filterCatalogItemsByQuery,
@@ -1454,6 +1542,12 @@ const rows = filterCatalogItemsByQuery(items, {
   isMyOnly: false,
   sortKey: CatalogSortKey.NameAZ,
 });
+
+/*
+ * The ids a picker commits — what `AddOnCatalogModal` hands `onConfirm`:
+ * attached ids still checked or not listed, then newly checked ones.
+ */
+const ids = applyCatalogSelection(attachedIds, checkedIds, listedIds);
 
 /*
  * Derives the entity-type tabs / Topics filter options that `Catalog` would
