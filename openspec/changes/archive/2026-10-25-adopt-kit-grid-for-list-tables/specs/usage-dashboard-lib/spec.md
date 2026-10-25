@@ -139,3 +139,124 @@ The section SHALL be accessible through the ui-kit `Grid`'s own semantics, as fo
 
 - **WHEN** assistive technology reads a row
 - **THEN** its cells are announced in the order Item, Today, This week, This month, Status
+
+### Requirement: ModelLimitsSection public API
+
+The library SHALL export `ModelLimitsSection`; the string enums `ModelLimitStatus`
+(`WithinLimits`, `RunningLow`, `LimitReached`, `NoLimit`, `Unavailable`) and
+`ModelLimitMetricKind` (`Finite`, `Unlimited`, `Unavailable`); and the types
+`ModelLimitMetricCell`, `ModelLimitPeriodCell`, `ModelLimitPeriodStatus`,
+`ModelLimitPeriodStatuses`, `ModelLimitRow`, `ModelLimitsLabels`, `ModelLimitsColors`,
+`ModelLimitsTypography`, `ModelLimitsStyles`, and `ModelLimitsSectionProps`. `ModelLimitsPeriod`
+SHALL no longer be exported.
+
+`ModelLimitMetricCell` SHALL retain its normalized `kind`, preformatted labels, optional uncapped
+finite `usedPercent`/`status`, and required `ariaLabel`. The library SHALL not recompute percentage,
+status, formatting, unlimited classification, or supporting-label selection. It MAY receive a
+host-provided `supportingLabel` for an unlimited metric, such as `Follows cost limit`.
+
+`ModelLimitPeriodCell` SHALL contain `tokens: ModelLimitMetricCell` and
+`cost: ModelLimitMetricCell`.
+
+**BREAKING — period property rename.** The three fixed periods SHALL be named for the calendar
+windows they represent, not for trailing durations. `ModelLimitRow` SHALL contain identity fields,
+`day: ModelLimitPeriodCell`, `week: ModelLimitPeriodCell`, `month: ModelLimitPeriodCell`, and
+host-derived `status: ModelLimitStatus`. `ModelLimitPeriodStatuses` SHALL contain `day`, `week`, and
+`month`. The former names `last24Hours`, `last7Days`, and `last30Days` SHALL NOT be exported or
+accepted.
+
+`ModelLimitPeriodStatus` SHALL contain the host-derived `status: ModelLimitStatus`, an optional
+`tooltipLabel`, and the optional preformatted reset trio `resetLabel?: string`,
+`resetIsoValue?: string`, `resetAriaLabel?: string`, carrying the same host-formatted-strings-only
+contract as `UsageLimitCardData`.
+
+`ModelLimitsLabels` SHALL contain heading, Item/day/week/month/Status column labels
+(`dayColumnLabel`, `weekColumnLabel`, `monthColumnLabel`), accessible Tokens/Cost context, model
+type, metric state, status badge, and empty-state strings. It SHALL NOT require period-selector or
+Requests labels.
+
+`ModelLimitsSectionProps` SHALL accept `rows`, `labels`, and optional `styles`,
+plus normalized overall Cost statuses/tooltips for the three fixed headers; it
+SHALL NOT accept `period` or `onPeriodChange`. The library SHALL not derive header status, tooltip
+copy, or reset text from row data.
+
+#### Scenario: Fixed comparison exports are available
+- **WHEN** a consumer imports from `@epam/ai-dial-usage-dashboard`
+- **THEN** the fixed comparison component/types are importable, including `ModelLimitPeriodCell`,
+  and `ModelLimitsPeriod` is absent from the supported public contract
+
+#### Scenario: Period properties use calendar names
+- **WHEN** a consumer constructs a `ModelLimitRow` or `ModelLimitPeriodStatuses`
+- **THEN** the compiler requires `day`, `week`, and `month`, and rejects `last24Hours`,
+  `last7Days`, and `last30Days`
+
+#### Scenario: Multiple rows render in supplied order
+- **WHEN** `ModelLimitsSection` receives multiple rows
+- **THEN** it renders one row per entry in array order with Item, three period cells, and Status
+
+#### Scenario: Empty rows preserve the section shell
+- **WHEN** `rows` is empty
+- **THEN** the heading and count `0` remain visible and the body shows `emptyStateLabel`, with no
+  selector or blank table body
+
+#### Scenario: Period header renders its reset time behind an info icon
+- **WHEN** a `ModelLimitPeriodStatus` carries `resetLabel`
+- **THEN** that period's column header renders the column label and a focusable info icon named by
+  `resetAriaLabel` (or `resetLabel`), whose tooltip holds `resetLabel` inside a `<time>` element
+  whose `dateTime` is `resetIsoValue`; no reset line renders in the header
+
+#### Scenario: Period header without a reset label is unchanged
+- **WHEN** a `ModelLimitPeriodStatus` carries no `resetLabel`
+- **THEN** the header renders the column label and its status indicator exactly as before
+
+### Requirement: Reset-time rendering is responsive, RTL-safe, and accessible
+
+Every reset time the library renders SHALL satisfy the library's existing responsive, RTL, and
+accessibility rules — as a reset line on a `UsageLimitCard`, and behind an info icon in a
+`ModelLimitsSection` period header.
+
+**Period header info icon.** A `ModelLimitsSection` period header SHALL NOT render a reset line.
+`PeriodResetInfo` (`libs/usage-dashboard/src/components/ModelLimitsSection/PeriodResetInfo.tsx`)
+SHALL render a focusable `IconInfoCircle` beside the column label. Its accessible name is
+`resetAriaLabel`, or `resetLabel` when no spoken form is supplied, because a tooltip never reaches a
+touch-only device. Its kit `Tooltip` holds the `<time dateTime={resetIsoValue}>` with `resetLabel`.
+It SHALL provide at least a 44×44 CSS-pixel touch target on mobile. The info icon is symmetric and
+SHALL NOT be mirrored in RTL.
+
+**Card reset line.** The rules below apply to the `UsageLimitCard` reset line:
+
+- It SHALL use only logical or direction-agnostic spacing utilities; no `ml-*`/`mr-*`, `pl-*`/`pr-*`,
+  `left-*`/`right-*`, or `text-left`/`text-right` class SHALL be introduced for it.
+- It SHALL contain no icon, and therefore no directional icon mirroring is required.
+- It SHALL wrap rather than force horizontal overflow at mobile width, and SHALL NOT introduce a new
+  breakpoint.
+- It SHALL render inside a `<time>` element carrying `dateTime={resetIsoValue}`.
+- When `resetAriaLabel` is supplied, that text SHALL render on a visually-hidden sibling and the
+  visible `<time>` SHALL be marked `aria-hidden`. It SHALL NOT be applied as `aria-label` on the
+  `<time>` itself, which has no implicit ARIA role and therefore does not reliably support one.
+  When the field is absent, the visible text is the line's accessible name.
+- It SHALL NOT alter the card's `progressAriaLabel` or the period header's existing status-indicator
+  `aria-label`.
+
+#### Scenario: No horizontal overflow on mobile with a long reset label
+- **WHEN** the group renders at mobile width with a long formatted reset label
+- **THEN** the label wraps within its container and no horizontal scrollbar appears
+
+#### Scenario: Period header reset time is reachable without a pointer
+- **WHEN** a period header carries a reset time
+- **THEN** its info icon is in the tab order and its accessible name states the reset time
+
+#### Scenario: Layout mirrors under RTL
+- **WHEN** an ancestor sets `dir="rtl"`
+- **THEN** the reset line mirrors with the rest of the card or header, with no element pinned to a
+  physical side by a class introduced for it
+
+#### Scenario: Reset time is machine-readable
+- **WHEN** a reset line renders
+- **THEN** its `<time>` element exposes the original UTC instant via `dateTime`, independent of the
+  localized visible text
+
+#### Scenario: Reset line does not displace existing accessible names
+- **WHEN** a card with a reset line renders
+- **THEN** the progress bar's `aria-valuetext` and the badge text are unchanged from a card without
+  one
