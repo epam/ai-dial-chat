@@ -438,6 +438,25 @@ describe('AuthSection', () => {
       ).toBe(false);
     });
 
+    it('marks the authorization and token endpoints as required', () => {
+      renderSection({ auth: oauthWithConfigAuth() });
+      for (const label of ['Authorization endpoint', 'Token endpoint']) {
+        expect(
+          (screen.getByLabelText(label) as HTMLInputElement).required,
+        ).toBe(true);
+      }
+    });
+
+    it('keeps Log in disabled while an OAuth endpoint is empty', () => {
+      renderSection({
+        auth: { ...oauthWithConfigAuth(), tokenEndpoint: '' },
+      });
+      expect(
+        (screen.getByRole('button', { name: 'Log in' }) as HTMLButtonElement)
+          .disabled,
+      ).toBe(true);
+    });
+
     it('renders OAuth endpoint URL validation errors', () => {
       const errors: ToolsetFormErrors = {
         authorizationEndpoint: 'Invalid authorization endpoint',

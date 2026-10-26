@@ -314,6 +314,7 @@ export const AuthSection: FC<AuthSectionProps> = ({
             labelProps={{
               label:
                 labels?.authorizationEndpointLabel ?? 'Authorization endpoint',
+              required: true,
             }}
             placeholder={
               labels?.authorizationEndpointPlaceholder ??
@@ -329,6 +330,7 @@ export const AuthSection: FC<AuthSectionProps> = ({
             onChange={(value) => onAuthChange({ tokenEndpoint: value ?? '' })}
             labelProps={{
               label: labels?.tokenEndpointLabel ?? 'Token endpoint',
+              required: true,
             }}
             placeholder={
               labels?.tokenEndpointPlaceholder ?? 'Enter token endpoint'

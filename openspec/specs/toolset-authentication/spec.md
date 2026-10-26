@@ -32,8 +32,9 @@ is enabled; the API key input is rendered only in the "with login" mode.
 
 ### Requirement: OAuth credential fields
 When OAuth auth is selected with config, the system SHALL allow entering client id, client
-secret, authorization endpoint, token endpoint, and scopes, and SHALL require client id and
-client secret before triggering the login, except that client secret is not required when the
+secret, authorization endpoint, token endpoint, and scopes, and SHALL require client id, client
+secret, authorization endpoint, and token endpoint before saving or triggering the login, except
+that client secret is not required when the
 editor was opened to edit a toolset that was already saved with OAuth-with-config credentials
 (i.e. the editor's route carries an existing toolset id) — Core never returns a stored client
 secret, so re-entering it is not required to log in again with the already-stored value. The
@@ -46,6 +47,13 @@ the current create flow (e.g. from an earlier "Log in" persist).
 - **WHEN** OAuth auth with config is selected and client id or client secret is empty
 - **THEN** the system shows required errors for the missing field(s) and blocks the login
 
+#### Scenario: Missing OAuth endpoints
+- **WHEN** OAuth auth with config is selected and the authorization endpoint or token endpoint is
+  empty
+- **THEN** both endpoint inputs are marked required, the system shows "Authorization endpoint is
+  required" / "Token endpoint is required" for the missing field(s), and blocks the save and the
+  login; a non-empty value that is not an `http(s)` URL shows "Enter a valid http(s) URL" instead
+
 #### Scenario: Client secret required while creating a new toolset
 - **WHEN** a user is creating a new toolset (the editor was not opened with an existing toolset
   id in its route) and selects OAuth with login & config, even after the in-progress draft has
@@ -57,8 +65,8 @@ the current create flow (e.g. from an earlier "Log in" persist).
 - **WHEN** a user opens the editor to edit a toolset that was already saved with OAuth
   with-login-&-config credentials (the editor's route carries that toolset's id)
 - **THEN** the Client Secret field is not marked required and the Log In button can become
-  enabled without a client secret value, provided the other required fields (client id, valid
-  endpoints) are filled in
+  enabled without a client secret value, provided the other required fields (client id,
+  authorization endpoint, token endpoint) are filled in with valid values
 
 ### Requirement: Login mode selection
 For API Key and OAuth, the system SHALL offer login-mode radios backed by the `WithLogin` enum

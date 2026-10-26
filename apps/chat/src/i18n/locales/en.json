@@ -1334,8 +1334,10 @@
       "hideClientSecretLabel": "Hide client secret",
       "authorizationEndpointLabel": "Authorization endpoint",
       "authorizationEndpointPlaceholder": "Enter authorization endpoint",
+      "authorizationEndpointRequired": "Authorization endpoint is required",
       "tokenEndpointLabel": "Token endpoint",
       "tokenEndpointPlaceholder": "Enter token endpoint",
+      "tokenEndpointRequired": "Token endpoint is required",
       "scopesLabel": "Scopes",
       "scopesPlaceholder": "Enter scopes",
       "logoutConfirmDescription": "Are you sure you want to log out? You will need to re-enter your credentials to use this toolset again."

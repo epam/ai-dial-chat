@@ -155,7 +155,7 @@ describe('isToolsetAuthValid', () => {
     ).toBe(true);
   });
 
-  it('rejects invalid OAuth endpoint URLs when configured OAuth is selected, but allows them to be omitted', () => {
+  it('requires valid authorization and token endpoint URLs when configured OAuth is selected', () => {
     expect(
       isToolsetAuthValid({
         authenticationType: ToolsetAuthTypes.OAuth,
@@ -164,7 +164,18 @@ describe('isToolsetAuthValid', () => {
         clientId: 'client-id',
         clientSecret: 'client-secret',
       }),
-    ).toBe(true);
+    ).toBe(false);
+    expect(
+      isToolsetAuthValid({
+        authenticationType: ToolsetAuthTypes.OAuth,
+        withLogin: WithLogin.WithConfig,
+        isLoggedIn: false,
+        clientId: 'client-id',
+        clientSecret: 'client-secret',
+        authorizationEndpoint: 'https://auth.example.com/authorize',
+        tokenEndpoint: '  ',
+      }),
+    ).toBe(false);
     expect(
       isToolsetAuthValid({
         authenticationType: ToolsetAuthTypes.OAuth,
@@ -286,7 +297,7 @@ describe('isToolsetFormValid', () => {
     expect(isToolsetFormValid(form)).toBe(true);
   });
 
-  it('requires a client id and secret when configured OAuth is selected, but not the endpoints', () => {
+  it('requires a client id, a secret and both endpoints when configured OAuth is selected', () => {
     const form = baseForm();
     form.auth = {
       authenticationType: ToolsetAuthTypes.OAuth,
@@ -299,9 +310,11 @@ describe('isToolsetFormValid', () => {
     expect(isToolsetFormValid(form)).toBe(false);
 
     form.auth.clientSecret = 'client-secret';
-    expect(isToolsetFormValid(form)).toBe(true);
+    expect(isToolsetFormValid(form)).toBe(false);
 
     form.auth.authorizationEndpoint = 'https://auth.example.com/authorize';
+    expect(isToolsetFormValid(form)).toBe(false);
+
     form.auth.tokenEndpoint = 'https://auth.example.com/token';
     expect(isToolsetFormValid(form)).toBe(true);
   });
