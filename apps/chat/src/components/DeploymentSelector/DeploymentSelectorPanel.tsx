@@ -1,4 +1,4 @@
-import { type CatalogItem } from '@epam/ai-dial-catalog';
+import { type CatalogItem, getCatalogItemTabs } from '@epam/ai-dial-catalog';
 import {
   CatalogEntityType,
   DeploymentIcon,
@@ -175,8 +175,10 @@ const DeploymentSelectorPanel: FC<Props> = ({
     return quickItems.filter(
       (f) =>
         !f.isHidden &&
-        (f.type === CatalogEntityType.Model ||
-          f.type === CatalogEntityType.Agent),
+        getCatalogItemTabs(f).some(
+          (tab) =>
+            tab === CatalogEntityType.Model || tab === CatalogEntityType.Agent,
+        ),
     );
   }, [favorites, pinnedItem]);
 

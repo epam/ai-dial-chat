@@ -15,6 +15,7 @@ import {
 import { useCallback, useEffect, useRef } from 'react';
 import { resolveDialUrl } from '../../utils/dial-file';
 import { useAttachmentCanvasResolvers } from '../attachment/useAttachmentCanvasResolvers';
+import { useLatestCanvasRequest } from '../attachment/useLatestCanvasRequest';
 
 const PREVIEWABLE_EXTENSIONS = [
   '.txt',
@@ -100,18 +101,7 @@ export const useDialFilePreview = (
     searchResultsRef.current = searchResults;
   }, [items, searchResults]);
 
-  /*
-   * Each preview takes a generation. One that a later preview supersedes, or
-   * that outlives the page, must not open the canvas when its content arrives.
-   */
-  const generationRef = useRef(0);
-  const isMountedRef = useRef(true);
-  useEffect(() => {
-    isMountedRef.current = true;
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
+  const startCanvasRequest = useLatestCanvasRequest();
 
   const onPreview = useCallback(
     (path?: string) => {
@@ -121,9 +111,7 @@ export const useDialFilePreview = (
         findDialFileByPath(searchResultsRef.current ?? [], path);
       if (file?.nodeType !== DialFileNodeType.ITEM) return;
 
-      const generation = (generationRef.current += 1);
-      const isCurrent = () =>
-        isMountedRef.current && generationRef.current === generation;
+      const isCurrent = startCanvasRequest();
 
       const attachment = dialFileToAttachment(file, bucket);
       if (attachment == null) {
@@ -143,7 +131,7 @@ export const useDialFilePreview = (
         },
       );
     },
-    [bucket, openAttachmentCanvas, openCanvas],
+    [bucket, openAttachmentCanvas, openCanvas, startCanvasRequest],
   );
 
   const onFileClick = useCallback(

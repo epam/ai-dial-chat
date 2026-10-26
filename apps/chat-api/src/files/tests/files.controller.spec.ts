@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import {
   BadGatewayException,
   ConflictException,
@@ -11,11 +12,9 @@ import {
   VersioningType,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { MulterModule } from '@nestjs/platform-express';
 import { Test, TestingModule } from '@nestjs/testing';
 import express from 'express';
 import helmet from 'helmet';
-import { memoryStorage } from 'multer';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -23,6 +22,7 @@ import {
   createHtmlPreviewCspHeader,
 } from '../../config/csp';
 import { ArchiveUploadInterceptor } from '../archive-upload.interceptor';
+import { FileUploadInterceptor } from '../file-upload.interceptor';
 import { FilesController } from '../files.controller';
 import { FilesService } from '../files.service';
 import {
@@ -66,22 +66,19 @@ async function buildApp(
     useHelmet = false,
   } = opts;
   const module: TestingModule = await Test.createTestingModule({
-    imports: [
-      MulterModule.register({
-        storage: memoryStorage(),
-        limits:
-          fileSizeLimit !== undefined ? { fileSize: fileSizeLimit } : undefined,
-      }),
-    ],
     controllers: [FilesController],
     providers: [
       ArchiveUploadInterceptor,
+      FileUploadInterceptor,
       { provide: FilesService, useValue: service },
       {
         provide: ConfigService,
         useValue: {
           get: vi.fn((key: string) => {
-            if (key === 'ARCHIVE_UPLOAD_MAX_BYTES') {
+            if (
+              key === 'ARCHIVE_UPLOAD_MAX_BYTES' ||
+              key === 'FILE_UPLOAD_MAX_BYTES'
+            ) {
               return fileSizeLimit;
             }
             if (key === 'ALLOWED_IFRAME_ORIGINS') {
@@ -188,7 +185,8 @@ describe('FilesController — upload', () => {
       'my-bucket',
       'folder/file.pdf',
       expect.objectContaining({
-        buffer: expect.any(Buffer),
+        path: expect.any(String),
+        size: 5,
         mimetype: expect.any(String),
       }),
       TEST_USER.at,
@@ -211,7 +209,8 @@ describe('FilesController — upload', () => {
       'user-bucket',
       path,
       expect.objectContaining({
-        buffer: expect.any(Buffer),
+        path: expect.any(String),
+        size: 5,
         mimetype: expect.any(String),
       }),
       TEST_USER.at,
@@ -272,12 +271,65 @@ describe('FilesController — upload', () => {
   it('returns 413 when multer rejects oversized file', async () => {
     await app.close();
     app = await buildApp(service, { fileSizeLimit: 1 });
-    await request(app.getHttpServer())
+    const res = await request(app.getHttpServer())
       .post('/api/v1/files')
       .field('bucket', 'my-bucket')
       .field('path', 'folder/file.pdf')
       .attach('file', Buffer.from('hello world'), 'file.pdf')
       .expect(413);
+    expect(res.body.message).toBe('File too large');
+    expect(service.uploadFile).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when the file field is missing', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files')
+      .field('bucket', 'my-bucket')
+      .field('path', 'folder/file.pdf')
+      .expect(400);
+    expect(service.uploadFile).not.toHaveBeenCalled();
+  });
+
+  it('hands the service a staged file that is removed after the response', async () => {
+    let stagedPath = '';
+    let existedDuringUpload = false;
+    service.uploadFile.mockImplementation(
+      async (_bucket: string, _path: string, file: { path: string }) => {
+        stagedPath = file.path;
+        existedDuringUpload = existsSync(file.path);
+        return { url: 'files/my-bucket/folder/file.pdf' };
+      },
+    );
+
+    await request(app.getHttpServer())
+      .post('/api/v1/files')
+      .field('bucket', 'my-bucket')
+      .field('path', 'folder/file.pdf')
+      .attach('file', Buffer.from('hello'), 'file.pdf')
+      .expect(201);
+
+    expect(existedDuringUpload).toBe(true);
+    await vi.waitFor(() => expect(existsSync(stagedPath)).toBe(false));
+  });
+
+  it('removes the staged file when the upload fails', async () => {
+    let stagedPath = '';
+    service.uploadFile.mockImplementation(
+      async (_bucket: string, _path: string, file: { path: string }) => {
+        stagedPath = file.path;
+        throw new BadGatewayException();
+      },
+    );
+
+    await request(app.getHttpServer())
+      .post('/api/v1/files')
+      .field('bucket', 'my-bucket')
+      .field('path', 'folder/file.pdf')
+      .attach('file', Buffer.from('hello'), 'file.pdf')
+      .expect(502);
+
+    expect(stagedPath).not.toBe('');
+    await vi.waitFor(() => expect(existsSync(stagedPath)).toBe(false));
   });
 
   it('returns 403 when service throws ForbiddenException', async () => {

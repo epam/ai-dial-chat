@@ -78,7 +78,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-mcp-apps` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.4.0-dev.11
+- `@epam/ai-dial-react-file-manager` ^0.4.0-dev.19
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
@@ -2328,7 +2328,7 @@ const { handleGridApiChange, reset } = useGridEditingScroll();
 ### Supporting types
 
 - **`DialFilesApi`** — the operation port every file-manager hook that performs network I/O accepts as a parameter, mirroring the host's own files-API transport (list/upload/download/create/rename/move/copy/delete/share methods) instead of a configured REST client.
-- **`FileManagerNotification`** — the structured toast event file-manager hooks emit through `onNotification`, carrying a `variant` (`NotificationVariant`), an optional `reason` (`FileManagerNotificationReason`), and optional interpolation data (`count`, `name`, `folder`, `names`, `restCount`).
+- **`FileManagerNotification`** — the structured toast event file-manager hooks emit through `onNotification`, carrying a `variant` (`NotificationVariant`), an optional `reason` (`FileManagerNotificationReason`), and optional interpolation data (`count`, `name`, `folder`, `names`, `restCount`), and, on `UploadFailed`, an optional `failureReason` (`FileUploadFailureReason` from `@epam/ai-dial-chat-shared`) set when every failed file of the batch failed for the same reason.
 - **`FileManagerNotificationReason`** — library-owned enum identifying why a hook is surfacing a notification (e.g. `FolderLoadFailed`, `FolderCreateFailed`, `FilesDeleted`, `UploadCompleted`, `UnshareFailed`) — see the exported enum for the full member list.
 - **`FileNameValidationErrorReason`** — library-owned enum identifying why a file/folder name failed validation: `Empty`, `ForbiddenSymbols`, `ReservedName`, `TooLong`, `DuplicateName`.
 - **`FileNameValidationError`** — discriminated union returned by `onCreateFolderValidate`/`onRenameValidate` instead of a translated message; members are `{ reason: FileNameValidationErrorReason.Empty }`, `{ reason: FileNameValidationErrorReason.ForbiddenSymbols; symbols: string }`, `{ reason: FileNameValidationErrorReason.ReservedName }`, `{ reason: FileNameValidationErrorReason.TooLong; maxLength: number }`, `{ reason: FileNameValidationErrorReason.DuplicateName; existingName: string }`.
@@ -3389,6 +3389,8 @@ Maps a deployment or toolset listing row into a catalog `CatalogItem`. Both take
 
 For application deployments, `resolveDeploymentFolder` gives ownership flags priority: owned applications use the Personal label, and shared applications use the Shared label. Other applications with no folder path use the Public label (displayed as **Organization** by the chat app). Public application paths retain their nested folders. Models do not receive this fallback.
 
+`mapDeploymentToCatalogItem` also sets `catalogTabs` from the deployment's DIAL Core `interfaces`, keeping `type: Agent` for every application: an application exposing `chat` or `custom_ui` is listed under Agents, one exposing `mcp` under Toolsets, one exposing both under both. Models, deployments without `interfaces`, and applications exposing none of these get no `catalogTabs` (their tab is their `type`). Pass `isToolsetTabEnabled: false` (default `true`) when the host shows no Toolsets tab; Toolsets is then dropped, and an MCP-only application stays under Agents.
+
 `mapToolsetToCatalogItem` applies the same label priority when `folderLabels` are supplied: Personal for owned toolsets, Shared for shared toolsets, and Public for configured toolsets with plain IDs. Toolset resource paths retain their nested folders. When labels are omitted, no root label is added.
 
 ```ts
@@ -3775,7 +3777,7 @@ import {
   reconcileFilterTopics,
 } from '@epam/ai-dial-chat-hooks';
 
-// Keep only items whose type is in visibleTypes and whose supportsChat is not false (for selector mode)
+// Keep only items listed under a tab in visibleTypes (getCatalogItemTabs) whose supportsChat is not false (for selector mode)
 const selected = filterCatalogItemsBySelector(
   items,
   new Set([CatalogEntityType.Model]),
@@ -3787,7 +3789,7 @@ const visible = filterHiddenOwnedItems(items, hideOwned);
 // Extract user-favorited items in original order
 const favorites = deriveFavoriteItems(items);
 
-// Derive available tab ids (in tabOrder sequence) from present entity types
+// Derive available tab ids (in tabOrder sequence) from the tabs items are listed under
 const tabs = deriveAvailableTabIds(items, tabOrder);
 
 // Intersect persisted filter topics with those that still exist in items
