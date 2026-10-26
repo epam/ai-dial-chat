@@ -32,4 +32,5 @@ jobs:
       docker-development-tag: 'development-0.x'
       maximize-build-space: true
       draft-stable-releases: true
+      ort-enabled: false
     secrets: inherit

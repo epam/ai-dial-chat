@@ -12,9 +12,10 @@ CVE-2026-102278 exp:2026-12-31
 
 # undici
 # Reported against the copy of undici bundled with npm in the node:24-alpine
-# base image; the project's own dependency is already pinned to 7.29.1.
+# base image; the project's own dependency is already pinned to 7.30.1.
 
 CVE-2026-19534 exp:2026-12-31
+CVE-2026-109869 exp:2026-12-31
 
 # ip-address
 
