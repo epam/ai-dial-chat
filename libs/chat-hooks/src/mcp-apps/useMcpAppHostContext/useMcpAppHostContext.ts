@@ -96,6 +96,39 @@ const readMcpStyleVariables = (): McpStyleVariables => {
   return vars as McpStyleVariables;
 };
 
+/*
+ * Style variables outside the MCP UI standard. `styles.variables` rejects
+ * unknown names, so they travel in the `styleExtensions` host-context field.
+ * Read from `--mcp-ext-<name>`, sent as `--<name>`.
+ */
+const MCP_APP_STYLE_EXTENSION_NAMES = [
+  'button-radius',
+  'button-radius-small',
+  'button-primary-gradient-start',
+  'button-primary-gradient-end',
+  'button-primary-gradient-hover-start',
+  'button-primary-gradient-hover-end',
+  'button-primary-gradient-active-start',
+  'button-primary-gradient-active-end',
+  'button-primary-text',
+] as const;
+
+/**
+ * Reads the style-extension variables from the document root.
+ * @returns the variables keyed by their wire name, skipping any that are unset
+ */
+const readMcpStyleExtensions = (): {
+  variables: Record<string, string>;
+} => {
+  const computed = getComputedStyle(document.documentElement);
+  const variables: Record<string, string> = {};
+  for (const name of MCP_APP_STYLE_EXTENSION_NAMES) {
+    const value = computed.getPropertyValue(`--mcp-ext-${name}`).trim();
+    if (value) variables[`--${name}`] = value;
+  }
+  return { variables };
+};
+
 /** Host values `useMcpAppHostContext` needs but cannot read itself — a lib must not import the app's theme/i18n/config context. */
 export interface McpAppHostContextParams {
   /** Host's current theme id (e.g. `'light'`/`'dark'`), used when `mcpAppTheme` is unset. */
@@ -142,6 +175,7 @@ export const useMcpAppHostContext = (
       displayMode,
       availableDisplayModes: availableDisplayModes ?? ['inline', 'fullscreen'],
       styles: { variables: readMcpStyleVariables() },
+      styleExtensions: readMcpStyleExtensions(),
     }),
     [
       mcpAppTheme,
