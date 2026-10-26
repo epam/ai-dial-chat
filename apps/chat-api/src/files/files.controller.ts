@@ -14,7 +14,6 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBody,
   ApiConsumes,
@@ -62,6 +61,7 @@ import {
 } from './dto/upload-archive.dto';
 import { FileUploadResponseDto } from './dto/upload-file-response.dto';
 import { UploadFileDto } from './dto/upload-file.dto';
+import { FileUploadInterceptor } from './file-upload.interceptor';
 import { FilesService } from './files.service';
 import { HTML_PREVIEW_FRAME_DOCUMENT } from './html-preview-frame';
 
@@ -75,7 +75,7 @@ export class FilesController {
 
   @Post()
   @HttpCode(201)
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileUploadInterceptor)
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -110,15 +110,23 @@ export class FilesController {
     description: 'DIAL Core unreachable or timed out',
   })
   uploadFile(
-    @UploadedFile() file: { buffer: Buffer; mimetype: string },
+    @UploadedFile() file: Express.Multer.File | undefined,
     @Body() body: UploadFileDto,
     @Req() req: Request,
   ): Promise<FileUploadResponseDto> {
+    if (file == null) {
+      throw new BadRequestException('file is required');
+    }
     const { at } = req.user as SessionUser;
     return this.filesService.uploadFile(
       body.bucket,
       body.path,
-      file,
+      {
+        path: file.path,
+        size: file.size,
+        mimetype: file.mimetype,
+        originalname: file.originalname,
+      },
       at,
       body.uploadMode,
     );

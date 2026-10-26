@@ -69,10 +69,24 @@ Pre-upload size rejection is handled entirely by the `@epam/ai-dial-react-file-m
 
 #### Scenario: Upload total failure
 
-- **GIVEN** the user uploads 3 files and every request fails
+- **GIVEN** the user uploads 3 files and every request fails with no response (network error)
 - **WHEN** the batch completes
 - **THEN** every file reaches `Failed`
 - **AND** an error toast is shown with `dialFileManager.uploadFailed` and `dialFileManager.checkInternetConnection`
+
+#### Scenario: Upload total failure with a server-side reason
+
+- **GIVEN** the user uploads 2 files and both requests are answered with `503`
+- **WHEN** the batch completes
+- **THEN** every file reaches `Failed`
+- **AND** the error toast reads `dialFileManager.uploadFailed` with `dialFileManager.uploadFailedUnavailable`, not `dialFileManager.checkInternetConnection`
+
+#### Scenario: Upload total failure with mixed reasons
+
+- **GIVEN** the user uploads 2 files; one is answered with `409`, the other with `503`
+- **WHEN** the batch completes
+- **THEN** the error toast reads `dialFileManager.uploadFailed` with `dialFileManager.uploadFailedSeeQueue`
+- **AND** each queue row shows its own reason
 
 #### Scenario: File exceeding the configured maximum never reaches onUploadFiles
 
@@ -84,10 +98,12 @@ Pre-upload size rejection is handled entirely by the `@epam/ai-dial-react-file-m
 
 #### Scenario: File size exceeded server-side (defense in depth)
 
-- **GIVEN** a file bypasses the client-side `maxFileSize` check (e.g. the host omitted the prop, or a caller invokes `onUploadFiles` directly) and is larger than `FILE_UPLOAD_MAX_BYTES` (default 512 MB)
+- **GIVEN** a file bypasses the client-side `maxFileSize` check (e.g. the host omitted the prop, or a caller invokes `onUploadFiles` directly) and is larger than `FILE_UPLOAD_MAX_BYTES` (default 512 MB), or DIAL Core rejects its size
 - **WHEN** `POST /api/v1/files` receives the request
-- **THEN** Multer rejects the request; the BFF returns `413 Payload Too Large`
-- **AND** the file entry transitions to `Failed`, and its queue row shows the failure
+- **THEN** the BFF returns `413 Payload Too Large`
+- **AND** the file entry transitions to `Failed` with `failureReason: FileUploadFailureReason.TooLarge`
+- **AND** its queue row reads `dialFileManager.uploadFileTooLarge` with `maxSize` formatted from `AppConfig.config.maxAttachmentFileSizeBytes` — "Max file size is 512 MB." by default
+- **AND** if that was the only file, the error toast body is the same message
 
 ### Requirement: Uploads go through the injected `DialFilesApi` port
 
@@ -196,7 +212,18 @@ The destination folder SHALL be invalidated and re-fetched whatever the outcome.
 
 The queue SHALL offer a close control (`onClose`) and a per-row cancel control (`onCancelItem={cancelUploadFile}`). Closing while a file is in progress or has failed first asks for confirmation. The kit closes the queue by itself 8 seconds after every row has succeeded. A canceled or failed row keeps it open.
 
-When a batch settles and not every file was cancelled, `useDialFileUploadBatch` SHALL emit one notification through `onNotification`. If at least one file completed, the reason is `UploadCompleted`, with `folder` set to the upload base path or the root label. If none completed and at least one failed, the reason is `UploadFailed`. The app adapter (`apps/chat/src/components/DialFileManagerShell/file-manager-notification-adapter.ts`) maps them to `dialFileManager.uploadSuccess` and to `dialFileManager.uploadFailed` + `dialFileManager.checkInternetConnection`.
+When a batch settles and not every file was cancelled, `useDialFileUploadBatch` SHALL emit one notification through `onNotification`. If at least one file completed, the reason is `UploadCompleted`, with `folder` set to the upload base path or the root label. If none completed and at least one failed, the reason is `UploadFailed`, with `failureReason` set to the `FileUploadFailureReason` every failed file shares, or left unset when the failed files have different reasons. The app adapter (`apps/chat/src/components/DialFileManagerShell/file-manager-notification-adapter.ts`, `buildFileManagerNotificationOptions`) maps `UploadCompleted` to `dialFileManager.uploadSuccess`, and `UploadFailed` to the title `dialFileManager.uploadFailed` with a body chosen by `failureReason`:
+
+| `failureReason` | Body key |
+|---|---|
+| `Network` | `dialFileManager.checkInternetConnection` |
+| `TooLarge` | `dialFileManager.uploadFileTooLarge` with `maxSize`; `dialFileManager.uploadFailedTooLarge` when no positive limit is configured |
+| `Conflict` | `dialFileManager.uploadConflict` |
+| `Forbidden` | `dialFileManager.noPermissionToCreate` |
+| `Unavailable` | `dialFileManager.uploadFailedUnavailable` |
+| `Unknown` or unset | `dialFileManager.uploadFailedSeeQueue` |
+
+`maxSize` is `AppConfig.config.maxAttachmentFileSizeBytes` (sourced from `FILE_UPLOAD_MAX_BYTES` through the `attachments.maxFileSizeBytes` config key) formatted with `formatFileSize`, resolved by `useDialFileManagerHostOptions` and passed to the adapter; the lib never sees the limit or the strings. `useUploadQueueLabels` uses the same `TooLarge` wording for the failed-row message.
 
 #### Scenario: Closing an unfinished queue asks first
 
@@ -207,7 +234,7 @@ When a batch settles and not every file was cancelled, `useDialFileUploadBatch` 
 
 - **GIVEN** a batch that was not entirely cancelled
 - **WHEN** every file has settled
-- **THEN** exactly one toast is emitted — success, or the failure pair
+- **THEN** exactly one toast is emitted — success, or the failure title with its reason-specific body
 
 #### Scenario: The title counts every row
 
@@ -230,6 +257,10 @@ The upload queue's strings SHALL come from these `apps/chat/src/i18n/locales/en.
 | `dialFileManager.uploadFailed` | `"Upload failed"` (also the failed-row fallback message) |
 | `dialFileManager.checkInternetConnection` | `"Please check your internet connection and try again."` |
 | `dialFileManager.uploadConflict` | `"A file with this name already exists"` |
+| `dialFileManager.uploadFailedTooLarge` | `"The file is too large to upload"` (fallback when no size limit is configured) |
+| `dialFileManager.uploadFileTooLarge` | `"Max file size is {{maxSize}}."` |
+| `dialFileManager.uploadFailedUnavailable` | `"The file service is unavailable. Please try again later."` |
+| `dialFileManager.uploadFailedSeeQueue` | `"Check the upload list for details."` (new) |
 | `dialFileManager.uploadArchiveError` | `"Failed to upload the archive"` |
 | `dialFileManager.uploadArchiveFilesError_one` / `_other` | `"Failed to upload this archive file: {{files}}"` / `"Failed to upload these archive files: {{files}}"` |
 | `dialFileManager.uploadArchivePartialError_one` / `_other` | `"{{count}} item in the archive could not be uploaded: {{files}}"` / `"{{count}} items in the archive could not be uploaded: {{files}}"` |

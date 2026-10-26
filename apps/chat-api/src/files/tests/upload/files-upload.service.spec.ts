@@ -9,6 +9,7 @@ import {
   BadRequestException,
   ForbiddenException,
   HttpException,
+  PayloadTooLargeException,
   ServiceUnavailableException,
   UnauthorizedException,
   UnprocessableEntityException,
@@ -67,6 +68,21 @@ const readBody = async (body: unknown, delayMs = 0): Promise<Buffer> => {
 };
 
 const mockFile = { buffer: Buffer.from('hello'), mimetype: 'application/pdf' };
+
+const withStagedFile = async <T>(
+  content: Buffer,
+  run: (staged: { path: string; size: number }) => Promise<T>,
+): Promise<T> => {
+  const directory = await mkdtemp(join(tmpdir(), 'files-upload-staged-'));
+  const stagedPath = join(directory, 'staged.bin');
+  await writeFile(stagedPath, content);
+
+  try {
+    return await run({ path: stagedPath, size: content.length });
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+};
 
 const buildZipBuffer = (
   entries: Array<{ name: string; content?: string }>,
@@ -277,6 +293,75 @@ describe('FilesUploadService', () => {
       expect(text.split('x').length - 1).toBe(payload.length);
     });
 
+    it('streams a file staged on disk byte for byte', async () => {
+      const { service, fetchCore } = makeService();
+      const payload = Buffer.from(
+        Array.from({ length: 200_000 }, (_, i) => i % 251),
+      );
+      let received: Buffer = Buffer.alloc(0);
+      fetchCore.mockImplementation(async (_: string, init: RequestInit) => {
+        received = await readBody(init.body);
+        return new Response(null, { status: 201 });
+      });
+
+      await withStagedFile(payload, (staged) =>
+        service.uploadFile(
+          'b',
+          'big.bin',
+          { ...staged, mimetype: 'application/octet-stream' },
+          't',
+        ),
+      );
+
+      expect(received.includes(payload)).toBe(true);
+    });
+
+    const captureBodyLength = (fetchCore: ReturnType<typeof vi.fn>) => {
+      const captured = { bytes: 0 };
+      fetchCore.mockImplementation(async (_: string, init: RequestInit) => {
+        captured.bytes = (await readBody(init.body)).length;
+        return new Response(null, { status: 201 });
+      });
+      return captured;
+    };
+
+    it('sends a Content-Length equal to the body bytes for an in-memory file', async () => {
+      const { service, fetchCore } = makeService();
+      const captured = captureBodyLength(fetchCore);
+
+      await service.uploadFile('b', 'p', mockFile, 't');
+
+      expect(putCall(fetchCore).headers['Content-Length']).toBe(
+        String(captured.bytes),
+      );
+    });
+
+    it('sends a Content-Length equal to the body bytes for a disk-staged file', async () => {
+      const { service, fetchCore } = makeService();
+      const captured = captureBodyLength(fetchCore);
+
+      await withStagedFile(Buffer.alloc(150_000, 'y'), (staged) =>
+        service.uploadFile(
+          'b',
+          'p',
+          { ...staged, mimetype: 'text/plain' },
+          't',
+        ),
+      );
+
+      expect(putCall(fetchCore).headers['Content-Length']).toBe(
+        String(captured.bytes),
+      );
+    });
+
+    it('maps a DIAL Core 413 to PayloadTooLargeException', async () => {
+      const { service, fetchCore } = makeService();
+      fetchCore.mockImplementation(respondWith(413));
+      await expect(service.uploadFile('b', 'p', mockFile, 't')).rejects.toThrow(
+        PayloadTooLargeException,
+      );
+    });
+
     it.each([
       [401, UnauthorizedException],
       [403, ForbiddenException],
@@ -403,6 +488,8 @@ describe('FilesUploadService', () => {
         );
         expect(received.bytes).toBeGreaterThan(payload.length);
         expect(received.bytes).toBeLessThan(payload.length + 1024);
+        expect(received.headers['content-length']).toBe(String(received.bytes));
+        expect(received.headers['transfer-encoding']).toBeUndefined();
       } finally {
         server.close();
       }
@@ -585,6 +672,32 @@ describe('FilesUploadService', () => {
       expect((init.headers as Record<string, string>)['Content-Type']).toMatch(
         /^multipart\/form-data; boundary=dial-upload-/,
       );
+    });
+
+    it('sends each archive entry with a Content-Length equal to its body bytes', async () => {
+      const { service, fetchCore } = makeService();
+      const sent: Array<{ header: string; bytes: number }> = [];
+      fetchCore.mockImplementation(async (_: string, init: RequestInit) => {
+        const bytes = (await readBody(init.body)).length;
+        sent.push({
+          header: (init.headers as Record<string, string>)['Content-Length'],
+          bytes,
+        });
+        return okFetchUpload();
+      });
+      const buffer = await buildZipBuffer([
+        { name: 'a.txt', content: 'short' },
+        { name: 'b.txt', content: 'a somewhat longer entry body' },
+      ]);
+
+      await withArchiveFixture(buffer, (archiveFile) =>
+        service.uploadArchive('bucket', 'reports', archiveFile, 'token'),
+      );
+
+      expect(sent).toHaveLength(2);
+      for (const { header, bytes } of sent) {
+        expect(header).toBe(String(bytes));
+      }
     });
 
     it('returns an empty results array for an empty archive', async () => {

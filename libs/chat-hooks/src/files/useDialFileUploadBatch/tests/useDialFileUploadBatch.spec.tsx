@@ -1,6 +1,9 @@
 import type { ListFilesItemDto } from '@epam/ai-dial-chat-api-client';
 import { ListFilesItemDtoNodeTypeEnum } from '@epam/ai-dial-chat-api-client';
-import { FileUploadStatus } from '@epam/ai-dial-chat-shared';
+import {
+  FileUploadFailureReason,
+  FileUploadStatus,
+} from '@epam/ai-dial-chat-shared';
 import { DialFileManagerTabs } from '@epam/ai-dial-react-file-manager';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { act, renderHook, waitFor } from '@testing-library/react';
@@ -389,6 +392,83 @@ describe('useDialFileUploadBatch', () => {
             reason: FileManagerNotificationReason.UploadFailed,
           }),
         ),
+      );
+    });
+
+    /* The shape `getApiErrorDetails` reads: an error carrying a response. */
+    const httpError = (status: number) =>
+      Object.assign(new Error(`status ${status}`), {
+        response: { status, json: async () => ({}) },
+      });
+
+    const uploadTwoFiles = (
+      result: ReturnType<typeof renderUploadBatch>['result'],
+    ) => {
+      act(() => {
+        result.current.onUploadFiles(
+          [
+            { name: 'a.pdf', fileContent: new File([], 'a.pdf') },
+            { name: 'b.pdf', fileContent: new File([], 'b.pdf') },
+          ],
+          '/My files',
+        );
+      });
+    };
+
+    it('reports the failure reason every failed file shares', async () => {
+      const filesApi = makeFilesApi();
+      vi.mocked(filesApi.uploadFile).mockRejectedValue(httpError(413));
+      const { result, onNotification } = renderUploadBatch({ filesApi });
+
+      uploadTwoFiles(result);
+
+      await waitFor(() =>
+        expect(onNotification).toHaveBeenCalledWith(
+          expect.objectContaining({
+            reason: FileManagerNotificationReason.UploadFailed,
+            failureReason: FileUploadFailureReason.TooLarge,
+          }),
+        ),
+      );
+    });
+
+    it('omits the failure reason when failed files have different reasons', async () => {
+      const filesApi = makeFilesApi();
+      vi.mocked(filesApi.uploadFile)
+        .mockRejectedValueOnce(httpError(409))
+        .mockRejectedValueOnce(httpError(503));
+      const { result, onNotification } = renderUploadBatch({ filesApi });
+
+      uploadTwoFiles(result);
+
+      await waitFor(() =>
+        expect(onNotification).toHaveBeenCalledWith(
+          expect.objectContaining({
+            reason: FileManagerNotificationReason.UploadFailed,
+          }),
+        ),
+      );
+      expect(onNotification.mock.calls[0][0]).not.toHaveProperty(
+        'failureReason',
+      );
+    });
+
+    it('reports UploadCompleted without a failure reason when some files succeed', async () => {
+      const filesApi = makeFilesApi();
+      vi.mocked(filesApi.uploadFile).mockRejectedValueOnce(httpError(503));
+      const { result, onNotification } = renderUploadBatch({ filesApi });
+
+      uploadTwoFiles(result);
+
+      await waitFor(() =>
+        expect(onNotification).toHaveBeenCalledWith(
+          expect.objectContaining({
+            reason: FileManagerNotificationReason.UploadCompleted,
+          }),
+        ),
+      );
+      expect(onNotification.mock.calls[0][0]).not.toHaveProperty(
+        'failureReason',
       );
     });
 
