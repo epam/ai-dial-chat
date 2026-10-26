@@ -1502,6 +1502,7 @@
     "nameLabel": "Name",
     "namePlaceholder": "good-morning-breakfast",
     "nameCaption": "Lowercase letters and hyphens only, no spaces. We'll reformat automatically if needed.",
+    "nameReadOnlyTooltip": "The skill name can't be changed after creation",
     "descriptionLabel": "Description",
     "descriptionPlaceholder": "What this skill does and when to use it",
     "instructionsLabel": "Instructions",

@@ -397,6 +397,7 @@ const SkillEditorPage: FC = () => {
       nameLabel: t(SkillEditorI18nKeys.NameLabel),
       namePlaceholder: t(SkillEditorI18nKeys.NamePlaceholder),
       nameCaption: t(SkillEditorI18nKeys.NameCaption),
+      nameReadOnlyTooltip: t(SkillEditorI18nKeys.NameReadOnlyTooltip),
       descriptionLabel: t(SkillEditorI18nKeys.DescriptionLabel),
       descriptionPlaceholder: t(SkillEditorI18nKeys.DescriptionPlaceholder),
       instructionsLabel: t(SkillEditorI18nKeys.InstructionsLabel),

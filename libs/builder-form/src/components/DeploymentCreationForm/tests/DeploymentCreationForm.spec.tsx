@@ -20,7 +20,8 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
     error,
     placeholder,
     inputRef,
-    readOnly,
+    disabled,
+    tooltipText,
     caption,
   }: {
     value?: string;
@@ -29,7 +30,8 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
     error?: string;
     placeholder?: string;
     inputRef?: Ref<HTMLInputElement>;
-    readOnly?: boolean;
+    disabled?: boolean;
+    tooltipText?: string;
     caption?: string;
   }) => (
     <>
@@ -39,7 +41,8 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
           ref={inputRef}
           value={value ?? ''}
           placeholder={placeholder}
-          readOnly={readOnly}
+          disabled={disabled}
+          title={tooltipText}
           onChange={(e) => onChange?.(e.target.value)}
         />
       </label>
@@ -217,16 +220,18 @@ describe('DeploymentCreationForm', () => {
     expect(screen.queryByText('Add locales')).toBeNull();
   });
 
-  it('marks Description required, renders a name caption and a read-only Name', () => {
+  it('marks Description required, renders a name caption and a disabled Name', () => {
     renderComponent(undefined, {}, vi.fn(), vi.fn(), {
       isDescriptionRequired: true,
       isNameReadOnly: true,
+      nameReadOnlyTooltip: 'Name cannot be changed',
       nameCaption: 'Lowercase letters and hyphens',
     });
     expect(screen.getByText('Lowercase letters and hyphens')).toBeTruthy();
-    expect((screen.getByLabelText('Name') as HTMLInputElement).readOnly).toBe(
+    expect((screen.getByLabelText('Name') as HTMLInputElement).disabled).toBe(
       true,
     );
+    expect(screen.getByLabelText('Name').title).toBe('Name cannot be changed');
     expect(screen.getByLabelText('Description *')).toBeTruthy();
   });
 
