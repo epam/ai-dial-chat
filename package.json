@@ -115,7 +115,7 @@
     "stringz": "^2.1.0",
     "tiktoken": "^1.0.22",
     "tslib": "^2.6.0",
-    "zod": "^4.0.15"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@mozilla/readability": "^0.6.0",
@@ -209,7 +209,7 @@
     "uuid": "14.0.0",
     "shell-quote": "1.9.0",
     "http-proxy-middleware": "3.0.7",
-    "undici": "7.29.1",
+    "undici": "7.30.1",
     "adm-zip": "0.6.0",
     "brace-expansion": "5.0.11",
     "axios": "1.18.0",
