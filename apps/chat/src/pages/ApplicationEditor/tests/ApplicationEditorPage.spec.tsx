@@ -24,7 +24,6 @@ import {
   NotifiableEntity,
 } from '../../../types/entity-notification';
 import { ROUTES } from '../../../types/routes';
-import { StorageKey } from '../../../types/storage-key';
 import {
   defineApplicationEditor,
   isApplicationEditorPageDefinition,
@@ -247,8 +246,6 @@ describe('ApplicationEditorPage', () => {
 });
 
 describe('ApplicationEditorPage Metadata column resizing', () => {
-  const storageKey = StorageKey.ApplicationEditorMetadataWidth;
-
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
@@ -266,22 +263,14 @@ describe('ApplicationEditorPage Metadata column resizing', () => {
       name: EditorI18nKeys.ResizeHandleAriaLabel,
     });
 
-  it('opens at the default width without a stored value', () => {
+  it('opens at the default width', () => {
     renderFakeKind();
 
     expect(getHandle().getAttribute('aria-valuenow')).toBe('400');
   });
 
-  it('restores the width stored by an earlier visit', () => {
-    localStorage.setItem(storageKey, JSON.stringify(520));
-
-    renderFakeKind();
-
-    expect(getHandle().getAttribute('aria-valuenow')).toBe('520');
-  });
-
-  it('falls back to the default width for a corrupt stored value', () => {
-    localStorage.setItem(storageKey, '"wide"');
+  it('does not restore a width stored by an earlier visit', () => {
+    localStorage.setItem('applicationEditorMetadataWidth', JSON.stringify(520));
 
     renderFakeKind();
 
@@ -311,12 +300,23 @@ describe('ApplicationEditorPage Metadata column resizing', () => {
     );
   });
 
-  it('stores the width chosen with the keyboard', () => {
+  it('applies the width chosen with the keyboard without persisting it', () => {
     renderFakeKind();
 
     fireEvent.keyDown(getHandle(), { key: 'ArrowRight' });
 
-    expect(localStorage.getItem(storageKey)).toBe('416');
+    expect(getHandle().getAttribute('aria-valuenow')).toBe('416');
+    expect(localStorage.length).toBe(0);
+  });
+
+  it('opens at the default width again after remounting the editor', () => {
+    const { unmount } = renderFakeKind();
+    fireEvent.keyDown(getHandle(), { key: 'End' });
+    unmount();
+
+    renderFakeKind();
+
+    expect(getHandle().getAttribute('aria-valuenow')).toBe('400');
   });
 });
 
