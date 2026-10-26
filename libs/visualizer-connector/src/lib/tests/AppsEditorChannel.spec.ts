@@ -135,6 +135,9 @@ describe('application editor channel', () => {
     client.requestToolsetLogin('toolset');
     client.requestToolsetLogout('toolset');
     client.requestApplicationCredentials('app');
+    client.requestExternalServiceLogin('app', 'service', {
+      offlineUsageConsent: true,
+    });
 
     expect(onHostMessage.mock.calls.map(([message]) => message)).toEqual([
       { type: AppsEditorEvents.ReadyToInteract },
@@ -150,6 +153,12 @@ describe('application editor channel', () => {
       { type: AppsEditorMessages.RequestToolsetLogin, toolsetId: 'toolset' },
       { type: AppsEditorMessages.RequestToolsetLogout, toolsetId: 'toolset' },
       { type: AppsEditorMessages.RequestApplicationCredentials, appId: 'app' },
+      {
+        type: AppsEditorMessages.RequestExternalServiceLogin,
+        appId: 'app',
+        serviceId: 'service',
+        offlineUsageConsent: true,
+      },
     ]);
   });
 
@@ -168,12 +177,21 @@ describe('application editor channel', () => {
       success: false,
       reason: 'logout-failed',
     } as const;
+    const serviceLogin = {
+      type: AppsEditorMessages.ExternalServiceLoginResult,
+      appId: 'app',
+      serviceId: 'service',
+      success: false,
+      reason: 'popup-blocked',
+    } as const;
     host.send(login);
     host.send(logout);
+    host.send(serviceLogin);
 
     expect(onClientMessage.mock.calls.map(([message]) => message)).toEqual([
       login,
       logout,
+      serviceLogin,
     ]);
   });
 
@@ -194,6 +212,11 @@ describe('application editor channel', () => {
       { type: AppsEditorMessages.RequestToolsetLogin, toolsetId: 42 },
       { type: AppsEditorMessages.RequestToolsetLogout, toolsetId: '' },
       { type: AppsEditorMessages.RequestApplicationCredentials, appId: null },
+      {
+        type: AppsEditorMessages.RequestExternalServiceLogin,
+        appId: 'app',
+        serviceId: 'service',
+      },
     ];
     invalidMessages.forEach((data) => {
       dispatchMessage(editorWindow, EDITOR_ORIGIN, data);
@@ -218,6 +241,11 @@ describe('application editor channel', () => {
         type: AppsEditorMessages.ToolsetLogoutResult,
         toolsetId: 5,
         success: true,
+      },
+      {
+        type: AppsEditorMessages.ExternalServiceLoginResult,
+        appId: 'app',
+        serviceId: 'service',
       },
     ].forEach((data) => {
       dispatchMessage(hostWindow, HOST_ORIGIN, data);

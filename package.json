@@ -133,7 +133,7 @@
   "dependencies": {
     "@epam/ai-dial-react-file-manager": "0.4.0-dev.11",
     "@epam/ai-dial-react-pdf-highlighter": "0.3.0-dev.6",
-    "@epam/ai-dial-ui-kit": "^0.16.0-dev.35",
+    "@epam/ai-dial-ui-kit": "^0.16.0-dev.45",
     "@epam/pdf-highlighter-kit": "^0.0.19",
     "@mcp-ui/client": "^7.1.1",
     "@monaco-editor/react": "^4.7.0",
@@ -200,7 +200,10 @@
     "basic-ftp": "6.2.1",
     "dompurify": "3.4.17",
     "follow-redirects": "1.16.1",
-    "multer": "2.5.0"
+    "multer": "2.5.0",
+    "@mcp-ui/client": {
+      "zod": "^4.6.6"
+    }
   },
   "workspaces": [
     "packages/*",

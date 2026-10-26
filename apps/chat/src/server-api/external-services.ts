@@ -1,4 +1,5 @@
 import type {
+  ApplicationExternalServiceDto,
   ExternalServiceAuthResultDto,
   ExternalServiceLogoutBodyDto,
   ExternalServiceSigninBodyDto,
@@ -26,6 +27,12 @@ export enum ExternalServiceCredentialsLevel {
   Application = 'APPLICATION',
   User = 'USER',
 }
+
+/** An application's public external-service listing, OAuth client settings included (never secrets). */
+export const listExternalServices = (
+  appId: string,
+): Promise<ApplicationExternalServiceDto[]> =>
+  externalServicesApi.listExternalServices({ appId });
 
 export const getExternalService = (
   appId: string,

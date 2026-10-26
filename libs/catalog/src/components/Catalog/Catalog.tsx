@@ -834,18 +834,19 @@ export const Catalog: FC<CatalogProps> = ({
 
               {listMountState !== ListMountState.Unmounted && (
                 /* The first preparation needs real width for ag-grid's
-                   layout, but must not add height to the card view. */
+                   layout, but must not add height to the card view. Shown,
+                   the box takes the height left in the scroll body, since the
+                   grid scrolls its own rows; the floor keeps a short viewport
+                   usable, the scroll body scrolling first. */
                 <div
                   inert={viewMode !== CatalogViewMode.Cards}
                   className={mergeClasses(
-                    'pb-8',
+                    viewMode === CatalogViewMode.Cards &&
+                      'h-full min-h-[360px] pb-8',
                     viewMode !== CatalogViewMode.Cards &&
                       (listMountState === ListMountState.Prepared
-                        ? 'invisible h-0 overflow-hidden p-0'
+                        ? 'invisible h-0 overflow-hidden'
                         : 'hidden'),
-                    tabFiltered.length === 0 &&
-                      viewMode === CatalogViewMode.Cards &&
-                      'h-full',
                   )}
                 >
                   <ListView
@@ -859,7 +860,6 @@ export const Catalog: FC<CatalogProps> = ({
                     isFavoriteVisible={isFavoriteVisible}
                     columnVisibility={columnVisibility}
                     onItemClick={onCardClick ?? handleOpenDetails}
-                    stickyHeaderTop={0}
                     selectedItemId={selectedItemId}
                     credentialsBadgeLoggedOutLabel={
                       detailsTexts?.credentialsBadgeLoggedOutLabel

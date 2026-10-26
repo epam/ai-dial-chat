@@ -312,17 +312,19 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
               validationLabels?.clientSecretRequired ??
               'Client secret is required';
           }
-          if (
-            data.auth.authorizationEndpoint?.trim() &&
-            !isValidEndpointUrl(data.auth.authorizationEndpoint)
-          ) {
+          if (!data.auth.authorizationEndpoint?.trim()) {
+            nextErrors.authorizationEndpoint =
+              validationLabels?.authorizationEndpointRequired ??
+              'Authorization endpoint is required';
+          } else if (!isValidEndpointUrl(data.auth.authorizationEndpoint)) {
             nextErrors.authorizationEndpoint =
               validationLabels?.endpointInvalid ?? 'Enter a valid http(s) URL';
           }
-          if (
-            data.auth.tokenEndpoint?.trim() &&
-            !isValidEndpointUrl(data.auth.tokenEndpoint)
-          ) {
+          if (!data.auth.tokenEndpoint?.trim()) {
+            nextErrors.tokenEndpoint =
+              validationLabels?.tokenEndpointRequired ??
+              'Token endpoint is required';
+          } else if (!isValidEndpointUrl(data.auth.tokenEndpoint)) {
             nextErrors.tokenEndpoint =
               validationLabels?.endpointInvalid ?? 'Enter a valid http(s) URL';
           }

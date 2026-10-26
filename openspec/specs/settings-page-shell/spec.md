@@ -17,7 +17,11 @@ and `labels.settings` props from `apps/chat/src/components/Navigation/SidebarNav
 it SHALL open the Settings dialog (`SettingsModal`, lazily loaded) over the current page without
 changing the route. The dialog lists the configured Settings tabs from `useSettingsTabConfig`,
 Preferences (edited as a draft, applied on Save) and, while `scheduledTasksEnabled` is on,
-Extensions (acting on its own, with a Close button). The item's accessible
+Extensions (acting on its own, with a Close button). The dialog's title (`BasicI18nKeys.Settings`)
+already names the section, so its `SettingsPanel` rail SHALL render no `sectionLabel` heading and
+SHALL be named through `ariaLabel` with the same key instead. On desktop the rail SHALL sit flush
+under the dialog header — no top gap and no rounded corners — while the active tab's content keeps
+its own vertical padding; on a phone the rail keeps its rounded, padded stacked layout. The item's accessible
 name SHALL come from an i18n key (not a hardcoded string): `BasicI18nKeys.Settings` (`basic.settings`).
 
 The item SHALL be included for every authenticated user unless the overlay host hides the Settings
@@ -39,6 +43,11 @@ by URL, but the app offers no link to it.
 - **WHEN** a keyboard-only user tabs to the "Settings" item inside the open `UserMenu` and presses
   Enter or Space
 - **THEN** the Settings dialog opens, identically to a mouse click
+
+#### Scenario: The dialog names Settings once
+- **WHEN** the Settings dialog is open
+- **THEN** "Settings" is shown only as the dialog title, and the rail's tablist is still announced
+  as "Settings"
 
 #### Scenario: Gear icon is present for an authenticated user unless the host hides Settings
 - **WHEN** a signed-in user opens the `UserMenu` dropdown in any deployment and
@@ -189,8 +198,8 @@ All layout in `SettingsPage` and its tab container SHALL use CSS logical propert
 utilities (e.g. `ps-*`, `pe-*`, `border-e`, `text-start`) instead of physical-direction utilities, and all
 user-visible strings SHALL go through `react-i18next` via keys declared in
 `apps/chat/src/constants/translation-keys.ts`. There is no dedicated `settingsPage` namespace: the
-shell reuses `BasicI18nKeys.Settings` (`basic.settings`) for its heading and `SettingsPanel`
-section label, and the tab label is `SettingsI18nKeys.Preferences` (`settings.preferences`).
+shell reuses `BasicI18nKeys.Settings` (`basic.settings`) for its heading, the `/settings` page's
+`SettingsPanel` section label and the dialog rail's `ariaLabel`, and the tab label is `SettingsI18nKeys.Preferences` (`settings.preferences`).
 
 #### Scenario: Rendering under an RTL locale
 - **WHEN** the active language is Arabic (`dir="rtl"` on `<html>`)

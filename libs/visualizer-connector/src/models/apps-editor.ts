@@ -29,10 +29,25 @@ export interface AppsEditorToolsetResultMessage<TCredentials = unknown> {
   credentials?: TCredentials;
 }
 
+/** Host response containing the outcome of an external-service login. */
+export interface AppsEditorExternalServiceLoginResultMessage {
+  /** Unprefixed result of the external-service login request. */
+  type: AppsEditorMessages.ExternalServiceLoginResult;
+  /** The application identifier from the request, as sent. */
+  appId: string;
+  /** The external-service identifier from the request, as sent. */
+  serviceId: string;
+  /** Whether the person is now signed in to the service. */
+  success: boolean;
+  /** Failure reason, when available; its vocabulary belongs to the host. */
+  reason?: string;
+}
+
 /** Messages the host may send to an application editor. Domain bodies remain application-owned. */
 export type AppsEditorHostMessage<TGeneral = unknown, TCredentials = unknown> =
   | AppsEditorTriggerSaveMessage<TGeneral>
-  | AppsEditorToolsetResultMessage<TCredentials>;
+  | AppsEditorToolsetResultMessage<TCredentials>
+  | AppsEditorExternalServiceLoginResultMessage;
 
 /** Editor lifecycle notification; the wire type is prefixed with the application name. */
 export interface AppsEditorLifecycleMessage {
@@ -110,6 +125,18 @@ export interface AppsEditorCredentialsRequestMessage {
   appId: string;
 }
 
+/** Editor request for the host to sign the person in to one external service of an application. */
+export interface AppsEditorExternalServiceLoginRequestMessage {
+  /** Unprefixed external-service login request. */
+  type: AppsEditorMessages.RequestExternalServiceLogin;
+  /** Nonempty application identifier; no credential material is sent. */
+  appId: string;
+  /** Nonempty external-service identifier within the application. */
+  serviceId: string;
+  /** The person's own choice, collected by the editor, to let the application use the sign-in while they are away. */
+  offlineUsageConsent: boolean;
+}
+
 /** Validated editor-to-host messages, with normalized lifecycle names and payload placement. */
 export type AppsEditorClientMessage =
   | AppsEditorLifecycleMessage
@@ -119,4 +146,5 @@ export type AppsEditorClientMessage =
   | AppsEditorValidityMessage
   | AppsEditorDirtyMessage
   | AppsEditorToolsetRequestMessage
-  | AppsEditorCredentialsRequestMessage;
+  | AppsEditorCredentialsRequestMessage
+  | AppsEditorExternalServiceLoginRequestMessage;

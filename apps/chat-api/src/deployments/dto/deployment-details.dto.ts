@@ -327,6 +327,13 @@ export class ToolsetAuthSettingsDto {
   })
   clientId?: string;
 
+  @ApiPropertyOptional({
+    description:
+      '(OAuth only) Last characters of the stored OAuth client secret, as returned by DIAL Core. Never the secret itself.',
+    example: 'd4c6',
+  })
+  clientSecretHint?: string;
+
   @ApiPropertyOptional({ description: '(OAuth only) OAuth redirect URI' })
   redirectUri?: string;
 

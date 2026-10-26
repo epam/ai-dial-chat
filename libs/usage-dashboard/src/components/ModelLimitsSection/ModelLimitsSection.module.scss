@@ -1,37 +1,9 @@
-.container {
-  background: var(--mls-container-bg, var(--bg-layer-raised, #fcfcfc));
-}
-
 .heading {
   color: var(--mls-heading, var(--text-primary, #161b2d));
 }
 
 .headingCount {
   color: var(--mls-heading-count, var(--text-tertiary, #848e9c));
-}
-
-.columnHeader {
-  color: var(--mls-column-header, var(--text-secondary, #57647a));
-}
-
-.headerRow {
-  /* Dividers inside the table sit on the thin stroke (0.5px), one step below
-     the 1px main stroke controls and standalone dividers use. */
-  border-block-end: 0.5px solid
-    var(--mls-row-divider, var(--stroke-tertiary, #e0e6f0));
-}
-
-.row {
-  border-block-start: 0.5px solid
-    var(--mls-row-divider, var(--stroke-tertiary, #e0e6f0));
-}
-
-.row:first-child {
-  border-block-start: none;
-}
-
-.mobileColumnLabel {
-  color: var(--mls-column-header, var(--text-secondary, #57647a));
 }
 
 .name {

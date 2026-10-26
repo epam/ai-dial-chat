@@ -56,7 +56,9 @@ describe('TextRefinementField', () => {
       group.getByRole('button', { name: 'Refine with AI' }),
     );
     expect(refinement.refine).toHaveBeenCalledOnce();
-    expect(group.queryByRole('button', { name: 'Undo' })).toBeNull();
+    expect(
+      group.queryByRole('button', { name: 'Restore original' }),
+    ).toBeNull();
   });
 
   it('disables the actions while the host blocks refinement', () => {
@@ -67,30 +69,151 @@ describe('TextRefinementField', () => {
     }
   });
 
-  it('announces success and returns focus to Refine on Undo', async () => {
+  it('offers Restore original and Regenerate instead of Refine with AI after a result', async () => {
     const refinement = makeRefinement({
       state: TextRefinementState.Success,
       canUndo: true,
     });
     renderField(refinement);
 
-    expect(screen.getByRole('status').textContent).toBe('Text refined');
-    await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
-    expect(refinement.undo).toHaveBeenCalledOnce();
-    /* Focus has no semantic query. */
-    // eslint-disable-next-line testing-library/no-node-access
-    expect(document.activeElement).toBe(
-      screen.getByRole('button', { name: 'Refine with AI' }),
-    );
+    expect(screen.queryByRole('button', { name: 'Refine with AI' })).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Regenerate' }));
+    expect(refinement.refine).toHaveBeenCalledOnce();
   });
 
-  it('announces the pending state without showing it visually', () => {
+  it('announces success without showing it visually', () => {
     renderField(
-      makeRefinement({ state: TextRefinementState.Pending, isPending: true }),
+      makeRefinement({ state: TextRefinementState.Success, canUndo: true }),
     );
 
     const status = within(screen.getByRole('status'));
+    expect(status.getByText('Text refined').className).toContain('sr-only');
+  });
+
+  it('restores the original and focuses the main action, which reads Refine with AI again', async () => {
+    const refinement = makeRefinement({
+      state: TextRefinementState.Success,
+      canUndo: true,
+    });
+    const { rerender } = renderField(refinement);
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Restore original' }),
+    );
+    expect(refinement.undo).toHaveBeenCalledOnce();
+    const main = screen.getByRole('button', { name: 'Regenerate' });
+    /* Focus has no semantic query. */
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(document.activeElement).toBe(main);
+
+    rerender(
+      <TextRefinementField
+        isEnabled
+        fieldId="description"
+        label="Description"
+        refinement={makeRefinement({ state: TextRefinementState.Restored })}
+        disabled={false}
+      >
+        <textarea id="description" />
+      </TextRefinementField>,
+    );
+    expect(screen.getByRole('button', { name: 'Refine with AI' })).toBe(main);
+    expect(
+      within(screen.getByRole('status')).getByText('Original text restored.')
+        .className,
+    ).toContain('sr-only');
+  });
+
+  it('shows Refining on a disabled action and announces it without showing it visually', () => {
+    renderField(
+      makeRefinement({
+        state: TextRefinementState.Pending,
+        isPending: true,
+        canRefine: false,
+        canUndo: true,
+      }),
+    );
+
+    expect(
+      screen.getByRole<HTMLButtonElement>('button', { name: 'Refining' })
+        .disabled,
+    ).toBe(true);
+    expect(
+      screen.queryByRole('button', { name: 'Restore original' }),
+    ).toBeNull();
+    const status = within(screen.getByRole('status'));
     expect(status.getByText('Refining text').className).toContain('sr-only');
+  });
+
+  it('makes the field read-only while pending and gives it back afterwards', () => {
+    const { rerender } = renderField(
+      makeRefinement({ state: TextRefinementState.Pending, isPending: true }),
+    );
+    const textbox = screen.getByRole<HTMLTextAreaElement>('textbox', {
+      name: 'Description',
+    });
+    expect(textbox.readOnly).toBe(true);
+
+    for (const state of [
+      TextRefinementState.Success,
+      TextRefinementState.Error,
+      TextRefinementState.Idle,
+    ]) {
+      rerender(
+        <TextRefinementField
+          isEnabled
+          fieldId="description"
+          label="Description"
+          refinement={makeRefinement({ state, isPending: true })}
+          disabled={false}
+        >
+          <textarea id="description" />
+        </TextRefinementField>,
+      );
+      expect(textbox.readOnly).toBe(true);
+      rerender(
+        <TextRefinementField
+          isEnabled
+          fieldId="description"
+          label="Description"
+          refinement={makeRefinement({ state })}
+          disabled={false}
+        >
+          <textarea id="description" />
+        </TextRefinementField>,
+      );
+      expect(textbox.readOnly).toBe(false);
+    }
+  });
+
+  it('leaves a field the host made read-only read-only after the request', () => {
+    const renderPending = (isPending: boolean) => (
+      <TextRefinementField
+        isEnabled
+        fieldId="description"
+        label="Description"
+        refinement={makeRefinement({ isPending })}
+        disabled={false}
+      >
+        <textarea id="description" readOnly />
+      </TextRefinementField>
+    );
+    const { rerender } = render(renderPending(true));
+    rerender(renderPending(false));
+
+    expect(
+      screen.getByRole<HTMLTextAreaElement>('textbox', { name: 'Description' })
+        .readOnly,
+    ).toBe(true);
+  });
+
+  it('keeps the no-change status visible', () => {
+    renderField(makeRefinement({ state: TextRefinementState.Unchanged }));
+
+    const status = within(screen.getByRole('status'));
+    expect(status.getByText('No changes were needed.').className).not.toContain(
+      'sr-only',
+    );
   });
 
   it('renders the caption outside the status region when refinement is enabled', () => {
