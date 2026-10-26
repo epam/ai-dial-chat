@@ -25,6 +25,7 @@ import { AppModule } from './app/app.module';
 import { createFrontendMiddleware } from './app/static-assets';
 import { clearLegacyCookies } from './auth/cookies/cookie-options';
 import { TraceparentErrorFilter } from './common/filters/traceparent-error.filter';
+import { configureHttpServerTimeouts } from './common/utils/http-server-timeouts';
 import { buildCorsOptionsDelegate } from './config/cors';
 import {
   buildPermissionsPolicyHeader,
@@ -89,6 +90,7 @@ async function bootstrap() {
    * for whatever gets registered ahead of it.
    */
   attachHttpLifecycleListener(app.getHttpServer());
+  configureHttpServerTimeouts(app.getHttpServer());
 
   app.enableShutdownHooks();
 

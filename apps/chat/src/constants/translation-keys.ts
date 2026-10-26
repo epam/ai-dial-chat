@@ -627,6 +627,7 @@ export enum DialFileManagerI18nKeys {
   UploadConflict = 'dialFileManager.uploadConflict',
   UploadFailedTooLarge = 'dialFileManager.uploadFailedTooLarge',
   UploadFailedUnavailable = 'dialFileManager.uploadFailedUnavailable',
+  UploadFailedSeeQueue = 'dialFileManager.uploadFailedSeeQueue',
   DownloadFileError = 'dialFileManager.downloadFileError',
   DownloadFilesError = 'dialFileManager.downloadFilesError',
   FolderCreateError = 'dialFileManager.folderCreateError',

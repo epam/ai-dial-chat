@@ -6,6 +6,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DialFileManagerI18nKeys } from '../../constants/translation-keys';
 import { useTransferQueueLabels } from '../useTransferQueueLabels';
+import { useMaxUploadFileSizeLabel } from './useMaxUploadFileSizeLabel';
 
 /** Returns the translated headings, strings and per-reason failure messages of the file manager's transfer queue (uploads and downloads). */
 export const useUploadQueueLabels = (): Pick<
@@ -19,6 +20,7 @@ export const useUploadQueueLabels = (): Pick<
 > => {
   const { t } = useTranslation();
   const sharedQueueLabels = useTransferQueueLabels();
+  const maxUploadSize = useMaxUploadFileSizeLabel();
 
   return useMemo(
     () => ({
@@ -75,9 +77,12 @@ export const useUploadQueueLabels = (): Pick<
         [FileUploadFailureReason.Conflict]: t(
           DialFileManagerI18nKeys.UploadConflict,
         ),
-        [FileUploadFailureReason.TooLarge]: t(
-          DialFileManagerI18nKeys.UploadFailedTooLarge,
-        ),
+        [FileUploadFailureReason.TooLarge]:
+          maxUploadSize != null
+            ? t(DialFileManagerI18nKeys.UploadFileTooLarge, {
+                maxSize: maxUploadSize,
+              })
+            : t(DialFileManagerI18nKeys.UploadFailedTooLarge),
         [FileUploadFailureReason.Forbidden]: t(
           DialFileManagerI18nKeys.NoPermissionToCreate,
         ),
@@ -89,6 +94,6 @@ export const useUploadQueueLabels = (): Pick<
         ),
       },
     }),
-    [sharedQueueLabels, t],
+    [maxUploadSize, sharedQueueLabels, t],
   );
 };
