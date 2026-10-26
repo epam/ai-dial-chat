@@ -135,7 +135,7 @@ When `centerContent` is omitted, `leftContent` expands to full width at all view
 
 #### Resizable left column
 
-Pass `resizableLeftColumn` to put a draggable `role="separator"` handle between the left and center columns on desktop (it is not rendered below the `desktop` breakpoint, where the columns stack). The host owns the width and any persistence; the lib only reports changes.
+Pass `resizableLeftColumn` to put a draggable `role="separator"` handle between the left and center columns on desktop (it is not rendered below the `desktop` breakpoint, where the columns stack). The host owns the width; the lib only reports changes. ai-dial-chat keeps it in component state and does not persist it, so each editor open starts at the default.
 
 | Field           | Type                      | Required | Default | Description                                                       |
 | --------------- | ------------------------- | -------- | ------- | ----------------------------------------------------------------- |

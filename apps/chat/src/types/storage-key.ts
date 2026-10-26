@@ -1,7 +1,6 @@
 export enum StorageKey {
   ConversationPanelWidth = 'conversationPanelWidth',
   ConversationSourcesWidth = 'conversationSourcesWidth',
-  ApplicationEditorMetadataWidth = 'applicationEditorMetadataWidth',
   Theme = 'theme',
   KeyboardShortcut = 'keyboardShortcut',
   CelebrationsEnabled = 'celebrationsEnabled',

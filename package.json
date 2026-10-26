@@ -200,7 +200,10 @@
     "basic-ftp": "6.2.1",
     "dompurify": "3.4.17",
     "follow-redirects": "1.16.1",
-    "multer": "2.5.0"
+    "multer": "2.5.0",
+    "@mcp-ui/client": {
+      "zod": "^4.6.6"
+    }
   },
   "workspaces": [
     "packages/*",

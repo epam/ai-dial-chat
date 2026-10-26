@@ -45,7 +45,7 @@ installing both is required rather than optional.
 `CatalogItem`, `CatalogItemCredentials`, `filterCatalogItems`,
 `filterCatalogItemsByQuery`, `CatalogItemsQuery`, `getTopicOptions`, `sortCatalogItems`, `buildCatalogTabs`,
 `applyCatalogSelection`,
-`getCredentialsBadgeState`, `getCredentialsUiState`, and `getSignedInLevel` —
+`getCredentialsBadgeState`, `getCredentialsUiState`, `getDirectCredentialsLevel`, and `getSignedInLevel` —
 the headless enums and pure item-mapping functions a host can use (e.g. to
 sort/filter/tab a catalog item list, or read a toolset's credential state)
 without resolving `@epam/ai-dial-publish-panel`, `@epam/ai-dial-react-file-manager`,
@@ -901,10 +901,10 @@ description (case-insensitive), and a count of the tools shown. Its `labels`
 
 The rest of the details view is public for the same hosts:
 
-- `DetailsHeader` is the panel's identity block and action row (`DetailsHeaderProps`). Every action is opt-in and hidden when its prop is absent; with `onLogin` / `onLogout` it renders the toolset credentials action exactly as the panel does, including the personal API-key popover.
+- `DetailsHeader` is the panel's identity block and action row (`DetailsHeaderProps`). Every action is opt-in and hidden when its prop is absent; with `onLogin` / `onLogout` it renders the toolset credentials action exactly as the panel does, including the API-key popover, which acts on the level `getDirectCredentialsLevel` resolves.
 - `ApiTab` is the Connect tab (`ApiTabProps`), rendering `details.api`.
 - `CredentialsBanner` is the note under the header about which credentials are active. `getCredentialsBannerState` (also on `@epam/ai-dial-catalog/mapping`) returns its `CredentialsBannerState`, or `undefined` when no banner applies.
-- `CredentialsApiKeyOverlay` is the personal API-key popover on its own, and `CredentialsManagementPanel` the admin view of personal and organization credentials.
+- `CredentialsApiKeyOverlay` is the API-key popover on its own (pass `level` from `getDirectCredentialsLevel`), and `CredentialsManagementPanel` the admin view of personal and organization credentials.
 
 `texts.entityTypeLabels` (shared with `DetailsPanel`) sets the visible type in the
 header per entity type, e.g. translated names; a type without an entry keeps the raw
@@ -1067,7 +1067,11 @@ The fifth argument is the credentials opt-in. The panel renders that checkbox
 only for a `Toolset` whose `credentials.authenticationType` is set and is not
 `ToolsetAuthenticationType.None`, and whose `credentials.globalStatus` is
 `CredentialStatus.SignedIn` — DIAL Core copies only the global credential to
-the published copy, so a user-level sign-in alone has nothing to pass on. No host prop controls this; the
+the published copy, so a user-level sign-in alone has nothing to pass on. The
+details header's own "Log in" and API-key popover sign a private toolset in at
+that global level (`getDirectCredentialsLevel`: `CredentialsLevel.User` when
+`credentials.isPublic`, otherwise `CredentialsLevel.Global`), so an owner who
+signs in there is offered the checkbox. No host prop controls this; the
 decision is derived from the item the panel already has, and there is no role
 gate. For every other item the argument is always `false`. It is cleared on
 every open, including immediately after a publication that carried it.
