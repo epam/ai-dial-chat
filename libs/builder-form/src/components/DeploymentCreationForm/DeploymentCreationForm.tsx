@@ -39,6 +39,7 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
   availableLocaleOptions = [],
   fields = ALL_METADATA_FIELDS,
   isNameReadOnly = false,
+  nameReadOnlyTooltip,
   nameCaption,
   isDescriptionRequired = false,
   descriptionCaption,
@@ -151,7 +152,8 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
               value={values.name}
               onChange={(value) => onChange({ name: value ?? '' })}
               onBlur={onNameBlur}
-              readOnly={isNameReadOnly}
+              disabled={isNameReadOnly}
+              tooltipText={isNameReadOnly ? nameReadOnlyTooltip : undefined}
               labelProps={{ label: labels.name.label, required: true }}
               placeholder={labels.name.placeholder}
               caption={nameCaption}

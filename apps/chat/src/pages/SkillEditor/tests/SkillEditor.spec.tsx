@@ -1025,14 +1025,14 @@ describe('SkillEditor page — edit mode', () => {
     expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
   });
 
-  it('renders the Name field as read-only', async () => {
+  it('renders the Name field as disabled', async () => {
     vi.mocked(downloadSkill).mockResolvedValue(buildSkillResponse(manifest));
 
     render(<SkillEditor />);
 
     await waitFor(() =>
       expect(
-        (screen.getByDisplayValue('docs-helper') as HTMLInputElement).readOnly,
+        (screen.getByDisplayValue('docs-helper') as HTMLInputElement).disabled,
       ).toBe(true),
     );
   });

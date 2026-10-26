@@ -995,6 +995,10 @@ export const SkillEditor: FC<SkillEditorProps> = ({
                 fields={METADATA_FIELDS}
                 isDescriptionRequired
                 isNameReadOnly={isNameReadOnly}
+                nameReadOnlyTooltip={
+                  t.nameReadOnlyTooltip ??
+                  "The skill name can't be changed after creation"
+                }
                 nameCaption={
                   errors?.name
                     ? undefined

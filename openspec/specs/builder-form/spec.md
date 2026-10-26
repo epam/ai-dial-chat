@@ -501,7 +501,8 @@ The avatar picker is configured by one optional `avatarPicker` prop (`MetadataFo
 It adds the following props:
 
 - `fields?: MetadataField[]`. The default is all six fields. The fields render in the fixed order Avatar, Name + Version (side by side), Description, Locales, Tags. A field absent from `fields` SHALL NOT render. When Version is absent, Name takes the full row.
-- `isNameReadOnly?: boolean`, which renders Name read-only.
+- `isNameReadOnly?: boolean`, which renders Name disabled.
+- `nameReadOnlyTooltip?: string`, the tooltip over Name while `isNameReadOnly` is set. When it is omitted, the tooltip shows the field value.
 - `nameCaption?: string`, helper text under Name.
 - `isDescriptionRequired?: boolean`, which marks Description required.
 - `errors.description?: string`.
@@ -509,7 +510,7 @@ It adds the following props:
 
 The Avatar field SHALL render only when `fields` includes `MetadataField.Avatar` and `avatarPicker` is provided. When `resolveAttachedIconUrl` returns `undefined`, the icon SHALL stay unchanged.
 
-`DeploymentCreationForm` SHALL accept the same `fields`, `isNameReadOnly`, `nameCaption`, `isDescriptionRequired` and `renderDescription` options, and SHALL extend `DeploymentCreationFormFieldErrors` with `description?`. On an error transition, focus-first-invalid SHALL consider Name, then Version, then Description.
+`DeploymentCreationForm` SHALL accept the same `fields`, `isNameReadOnly`, `nameReadOnlyTooltip`, `nameCaption`, `isDescriptionRequired` and `renderDescription` options, and SHALL extend `DeploymentCreationFormFieldErrors` with `description?`. On an error transition, focus-first-invalid SHALL consider Name, then Version, then Description.
 
 The default Tags placeholder SHALL be `'Add tags, comma separated'`.
 

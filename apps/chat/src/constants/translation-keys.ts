@@ -1153,6 +1153,7 @@ export enum SkillEditorI18nKeys {
   NameLabel = 'skillEditor.nameLabel',
   NamePlaceholder = 'skillEditor.namePlaceholder',
   NameCaption = 'skillEditor.nameCaption',
+  NameReadOnlyTooltip = 'skillEditor.nameReadOnlyTooltip',
   DescriptionLabel = 'skillEditor.descriptionLabel',
   DescriptionPlaceholder = 'skillEditor.descriptionPlaceholder',
   InstructionsLabel = 'skillEditor.instructionsLabel',
