@@ -218,6 +218,14 @@ vi.mock('../../SettingsForm/SettingsForm', () => ({
         </button>
         <button
           type="button"
+          onClick={() =>
+            onAuthChange({ authorizationEndpoint: '', tokenEndpoint: '' })
+          }
+        >
+          clear-oauth-endpoints
+        </button>
+        <button
+          type="button"
           onClick={() => {
             onChange({ endpoint: 'https://example.com/mcp' });
             onAuthChange({
@@ -460,7 +468,7 @@ describe('ToolsetEditor', () => {
     await waitFor(() => expect(saveButton.disabled).toBe(false));
   });
 
-  it('enables the create action for configured OAuth without authorization/token endpoints', async () => {
+  it('keeps the create action disabled for configured OAuth without authorization/token endpoints', async () => {
     renderEditor();
 
     const saveButton = (await screen.findByRole('button', {
@@ -473,7 +481,22 @@ describe('ToolsetEditor', () => {
       }),
     );
 
-    await waitFor(() => expect(saveButton.disabled).toBe(false));
+    await waitFor(() => expect(saveButton.disabled).toBe(true));
+  });
+
+  it('shows required errors once the OAuth endpoints are cleared', async () => {
+    renderEditor();
+
+    await user.click(
+      await screen.findByRole('button', { name: 'fill-oauth-toolset' }),
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'clear-oauth-endpoints' }),
+    );
+
+    const alerts = screen.getAllByRole('alert').map((el) => el.textContent);
+    expect(alerts).toContain('Authorization endpoint is required');
+    expect(alerts).toContain('Token endpoint is required');
   });
 
   it('runs the post-save login for a newly created API-key toolset using the returned id', async () => {

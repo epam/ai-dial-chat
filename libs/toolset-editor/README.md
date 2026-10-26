@@ -156,6 +156,18 @@ configured) and the section stays hidden in every mode. When `listToolNames`
 is omitted, the "Allowed tools" field falls back from the Select to a
 free-text tag input.
 
+For an OAuth "Custom login" toolset opened in edit mode, a host that knows the
+saved client secret's hint (the last characters the backend reports) passes it
+as `ToolsetAuthFormData.clientSecretHint`. While the Client secret field is
+empty, the field shows the hint masked as its placeholder (`******d4c6`) and is
+described by a "keep" caption; typing a new secret replaces both. The hint is
+display-only: it never becomes `clientSecret`, is not read by validation, and
+is shown neither in create mode nor without a hint. Its copy comes from
+`labels.settings.auth.clientSecretHintPlaceholder` (`(hint) => string`,
+default `` (hint) => `******${hint}` ``) and
+`labels.settings.auth.clientSecretKeepCaption` (default
+`'Leave empty to keep the saved secret.'`).
+
 `labels` is a nested `ToolsetEditorLabels` object whose `layout`, `general`,
 `settings`, `validation`, and `refinement` groups are each optional and
 replaced as a whole; an omitted group falls back to the library's English

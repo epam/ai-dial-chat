@@ -28,9 +28,9 @@ const SPINNER_SIZE = 16;
 export interface CredentialsApiKeyOverlayProps {
   /** Item the popover manages the API key for. */
   item: CatalogItem;
-  /** Credentials slot this popover manages. Always `User` — this is the personal, non-admin API-key popover. */
+  /** Credentials slot this popover manages: `User` for a public toolset, `Global` (the owner's own key) for a private one. */
   level: CredentialsLevel;
-  /** Current sign-in status of the personal API key. */
+  /** Current sign-in status of the API key at `level`. */
   status: CredentialStatus | undefined;
   /** Already-formatted relative time since the key was added (e.g. `'3 weeks ago'`), shown as support text once signed in. */
   apiKeyAddedWhen?: string;

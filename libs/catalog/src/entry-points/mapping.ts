@@ -37,5 +37,6 @@ export {
   getCredentialsBadgeState,
   getCredentialsBannerState,
   getCredentialsUiState,
+  getDirectCredentialsLevel,
   getSignedInLevel,
 } from '../utils/toolset-credentials';
