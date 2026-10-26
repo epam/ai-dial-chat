@@ -56,8 +56,10 @@ describe('additional Halloween scenes', () => {
     },
   );
 
-  it.each(scenes)('renders %s as decorative artwork', (burst) => {
+  it.each(scenes)('renders %s as decorative artwork', async (burst) => {
     const { container } = render(<HalloweenBurstOverlay burst={burst} />);
+    /* Ravens measure one microtask after commit. */
+    await act(async () => undefined);
     /* Decorative drawings deliberately have no accessible query. */
 
     expect(
@@ -67,17 +69,21 @@ describe('additional Halloween scenes', () => {
     ).toBe('true');
   });
 
-  it.each([true, false])('bounds particle counts on mobile=%s', (mobile) => {
-    envState.mobile = mobile;
-    const { container, rerender } = render(
-      <HalloweenBurstOverlay burst={HalloweenScene.Candy} />,
-    );
-    expect(container.querySelector('[data-candy-static]')).not.toBeNull();
-    rerender(<HalloweenBurstOverlay burst={HalloweenScene.Ravens} />);
-    expect(container.querySelectorAll('[data-raven-art]')).toHaveLength(
-      mobile ? 5 : 8,
-    );
-  });
+  it.each([true, false])(
+    'bounds particle counts on mobile=%s',
+    async (mobile) => {
+      envState.mobile = mobile;
+      const { container, rerender } = render(
+        <HalloweenBurstOverlay burst={HalloweenScene.Candy} />,
+      );
+      expect(container.querySelector('[data-candy-static]')).not.toBeNull();
+      rerender(<HalloweenBurstOverlay burst={HalloweenScene.Ravens} />);
+      await act(async () => undefined);
+      expect(container.querySelectorAll('[data-raven-art]')).toHaveLength(
+        mobile ? 5 : 8,
+      );
+    },
+  );
 });
 
 describe('portal motion preference and lifecycle', () => {
