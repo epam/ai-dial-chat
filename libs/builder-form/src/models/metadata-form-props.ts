@@ -57,8 +57,10 @@ export interface MetadataFormProps {
   availableLocaleOptions?: DeploymentCreationFormLocaleOption[];
   /** Fields to render, in fixed order. Defaults to every field. */
   fields?: readonly MetadataField[];
-  /** Renders the Name field read-only. Defaults to `false`. */
+  /** Renders the Name field disabled. Defaults to `false`. */
   isNameReadOnly?: boolean;
+  /** Tooltip shown over the Name field while `isNameReadOnly` is set. Defaults to the field value. */
+  nameReadOnlyTooltip?: string;
   /** Helper text rendered under the Name field. */
   nameCaption?: string;
   /** Marks the Description field as required. Defaults to `false`. */
