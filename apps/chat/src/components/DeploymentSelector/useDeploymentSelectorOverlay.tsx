@@ -1,4 +1,5 @@
 import { findDeploymentByIdOrReference } from '@epam/ai-dial-chat-hooks';
+import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   lazy,
   Suspense,
@@ -11,7 +12,6 @@ import { useTranslation } from 'react-i18next';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
-import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
