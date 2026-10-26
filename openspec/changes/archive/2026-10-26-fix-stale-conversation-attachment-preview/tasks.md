@@ -17,4 +17,4 @@
 ## 3. Verification
 
 - [x] 3.1 Library guard: confirm `git diff --stat` touches nothing under `libs/*`.
-- [ ] 3.2 Run `npm run verify:changed`, then once `npm run verify:full`, and `npm run validate:specs`.
+- [ ] 3.2 Run `npm run verify:changed`, then once `npm run verify:full`, and `npm run validate:specs`. Not completed: `@epam/ai-dial-chat-shared:typecheck` fails in `PanelEmptyState.tsx` on `development` independently of this change, so `verify:changed` and `verify:full` stay red; the touched test files, `tsc` on the touched files and `npm run validate:specs` pass.

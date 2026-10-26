@@ -4,8 +4,7 @@
 
 ### Requirement: The latest attachment click owns the canvas
 
-An attachment preview SHALL write to the canvas only while it is the latest preview requested from any caller (conversation messages, the input tray, the sources panel, the file manager)
-including a preview that opens synchronously, such as an image and its requester is still mounted. A preview that a later one supersedes, or that finishes after its requester is gone, SHALL write nothing to the canvas and SHALL NOT close it. Where a click's "could not preview" fallback is a download or a new browser tab, a superseded click SHALL NOT run that fallback and SHALL NOT close the sources sidebar. Underlying content loading is not required to be cancelled.
+An attachment preview SHALL write to the canvas only while it is the latest preview requested from any caller (conversation messages, the input tray, the sources panel, the file manager), including a preview that opens synchronously such as an image, and its requester is still mounted. A preview that a later one supersedes, or that finishes after its requester is gone, SHALL write nothing to the canvas and SHALL NOT close it. Where a click's "could not preview" fallback is a download or a new browser tab, a superseded click SHALL NOT run that fallback and SHALL NOT close the sources sidebar. Underlying content loading is not required to be cancelled.
 
 #### Scenario: Only the last of several quick attachment clicks opens
 
