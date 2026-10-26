@@ -1612,9 +1612,10 @@ invalid value, and the invalid value itself is never logged):
   checked before parsing.
   and be
   unique within the registry. `corePath` must be one leading slash followed by
-  nonempty, slash-separated ASCII letter/digit/underscore/hyphen segments —
-  dots, percent-encoding, backslashes, doubled/trailing slashes, a full URL,
-  or a query/fragment all fail startup.
+  nonempty, slash-separated ASCII letter/digit/underscore/hyphen/dot segments
+  (an application id such as `runner__1.0.0`) — a `.` or `..` segment,
+  percent-encoding, backslashes, doubled/trailing slashes, a full URL, or a
+  query/fragment all fail startup.
 - `query`, when set, lists at most 16 unique parameter names, each matching
   `^[a-z][a-z0-9_]{0,31}# Chat API
 
@@ -3230,9 +3231,10 @@ invalid value, and the invalid value itself is never logged):
   checked before parsing.
   and be
   unique within the registry. `corePath` must be one leading slash followed by
-  nonempty, slash-separated ASCII letter/digit/underscore/hyphen segments —
-  dots, percent-encoding, backslashes, doubled/trailing slashes, a full URL,
-  or a query/fragment all fail startup.
+  nonempty, slash-separated ASCII letter/digit/underscore/hyphen/dot segments
+  (an application id such as `runner__1.0.0`) — a `.` or `..` segment,
+  percent-encoding, backslashes, doubled/trailing slashes, a full URL, or a
+  query/fragment all fail startup.
   . Only these names are accepted from the caller and
   forwarded; without `query` the operation accepts no query at all.
 - `body`, when set, must be `"json"` and is only valid on `POST`/`PUT`.
