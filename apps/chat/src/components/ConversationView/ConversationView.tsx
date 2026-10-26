@@ -1191,6 +1191,7 @@ const ConversationView: FC<Props> = ({
                     onEditDraftChange={onEditDraftChange}
                     editCommandMenu={editCommandMenu}
                     editMenuOverlays={editMenuOverlays}
+                    editSendOnEnter={sendOnEnter}
                     renderHistorySkillSegments={renderHistorySkillSegments}
                     renderHistorySkills={renderHistorySkills}
                     onUploadAttachment={onUploadAttachment}

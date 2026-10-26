@@ -113,7 +113,7 @@ export const ApplicationCredentialRow: FC<ApplicationCredentialRowProps> = ({
       {service.hint && (
         <p
           className={mergeClasses(
-            'dial-small-text break-words',
+            'dial-small-text wrap-break-word',
             styles.description,
           )}
         >
