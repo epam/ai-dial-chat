@@ -39,7 +39,7 @@ import '@epam/ai-dial-prompt-editor/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.16.0-dev.35`
+- `@epam/ai-dial-ui-kit` `^0.16.0-dev.45`
 - `@epam/ai-dial-chat-shared` `*`
 
 Installed for you as dependencies: `@epam/ai-dial-builder-form`,
@@ -137,13 +137,13 @@ border.
 
 The optional `onRefineDescription` and `onRefineInstructions` callbacks,
 each `(value: string, signal: AbortSignal) => Promise<string>`, add a Refine
-with AI action (and Undo) beside the Description and Instructions labels
+with AI action (and, after a result, Restore original and Regenerate) beside the Description and Instructions labels
 respectively; omit a callback to hide its action. Only one field refines at a
 time — while either request is pending both actions and Save are disabled.
 `PromptEditorLabels` extends `TextRefinementLabels` from
 `@epam/ai-dial-chat-shared`, so the refinement copy (`refineWithAiLabel`,
 `refineUndoLabel`, …) is passed through `labels`. A new `initialValues`
-identity resets Undo.
+identity clears Restore original.
 
 ### `PromptFolderField`
 

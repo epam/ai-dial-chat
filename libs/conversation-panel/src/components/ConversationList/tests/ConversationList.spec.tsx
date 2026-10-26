@@ -445,6 +445,101 @@ describe('ConversationList', () => {
       ).toBeNull();
     });
 
+    describe('per-tab empty labels', () => {
+      const tabLabels = {
+        ...labels,
+        tabEmptyLabels: {
+          [FilterTab.Shared]: {
+            label: 'No shared chats yet',
+            description: 'Shared chats will show up here.',
+          },
+          [FilterTab.Organization]: { description: 'Org chats show up here.' },
+        },
+      };
+
+      it('uses the tab label and description when the tab alone matches nothing', () => {
+        render(
+          <ConversationList
+            {...BASE_PROPS}
+            labels={tabLabels}
+            conversations={personalOnly}
+            activeFilter={FilterTab.Shared}
+          />,
+        );
+
+        expect(screen.getByRole('status').textContent).toBe(
+          'No shared chats yet',
+        );
+        expect(
+          screen.getByText('Shared chats will show up here.'),
+        ).toBeTruthy();
+        expect(
+          screen.queryByText('Chats other people share with you show up here.'),
+        ).toBeNull();
+      });
+
+      it('falls back to the generic label for a field the tab leaves out', () => {
+        render(
+          <ConversationList
+            {...BASE_PROPS}
+            labels={tabLabels}
+            conversations={personalOnly}
+            activeFilter={FilterTab.Organization}
+          />,
+        );
+
+        expect(screen.getByRole('status').textContent).toBe('No results found');
+        expect(screen.getByText('Org chats show up here.')).toBeTruthy();
+      });
+
+      it('keeps the generic text for a search under the tab', () => {
+        render(
+          <ConversationList
+            {...BASE_PROPS}
+            labels={tabLabels}
+            conversations={personalOnly}
+            activeFilter={FilterTab.Shared}
+            searchQuery="zzz"
+          />,
+        );
+
+        expect(screen.getByRole('status').textContent).toBe('No results found');
+        expect(
+          screen.getByText(
+            'Try a different search term or check your filters.',
+          ),
+        ).toBeTruthy();
+      });
+
+      it('keeps the generic text when a type filter narrows the tab too', () => {
+        render(
+          <ConversationList
+            {...BASE_PROPS}
+            labels={tabLabels}
+            conversations={personalOnly}
+            activeFilter={FilterTab.Shared}
+            activeTypeFilter={ConversationTypeFilter.Task}
+          />,
+        );
+
+        expect(screen.getByRole('status').textContent).toBe('No results found');
+      });
+
+      it('ignores tab labels on the All tab', () => {
+        render(
+          <ConversationList
+            {...BASE_PROPS}
+            labels={tabLabels}
+            conversations={[]}
+          />,
+        );
+
+        expect(screen.getByRole('status').textContent).toBe(
+          'No conversations yet',
+        );
+      });
+    });
+
     it('reports no results when a filter is set and there are no conversations at all', () => {
       render(
         <ConversationList

@@ -785,7 +785,11 @@ export enum ConversationPanelI18nKeys {
   Empty = 'conversationPanel.empty',
   EmptyDescription = 'conversationPanel.emptyDescription',
   NoResults = 'conversationPanel.noResults',
+  MyChatsEmpty = 'conversationPanel.myChatsEmpty',
+  SharedEmpty = 'conversationPanel.sharedEmpty',
   SharedEmptyDescription = 'conversationPanel.sharedEmptyDescription',
+  OrganizationEmpty = 'conversationPanel.organizationEmpty',
+  OrganizationEmptyDescription = 'conversationPanel.organizationEmptyDescription',
   FilterApplied = 'conversationPanel.filter.applied',
   FilterAll = 'conversationPanel.filter.all',
   FilterGroupAriaLabel = 'conversationPanel.filter.groupAriaLabel',
@@ -1127,6 +1131,8 @@ export enum PromptEditorI18nKeys {
 
 export enum TextRefinementI18nKeys {
   Action = 'textRefinement.action',
+  Refining = 'textRefinement.refining',
+  Regenerate = 'textRefinement.regenerate',
   Undo = 'textRefinement.undo',
   Error = 'textRefinement.error',
   Pending = 'textRefinement.pending',

@@ -8,6 +8,8 @@ export const useTextRefinementLabels = () => {
   return useMemo(
     () => ({
       refineWithAiLabel: t(TextRefinementI18nKeys.Action),
+      refineRefiningLabel: t(TextRefinementI18nKeys.Refining),
+      refineRegenerateLabel: t(TextRefinementI18nKeys.Regenerate),
       refineUndoLabel: t(TextRefinementI18nKeys.Undo),
       refineErrorLabel: t(TextRefinementI18nKeys.Error),
       refinePendingAriaLabel: t(TextRefinementI18nKeys.Pending),

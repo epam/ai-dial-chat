@@ -1,4 +1,5 @@
 import { render, screen, within } from '@testing-library/react';
+import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import {
   ModelLimitMetricCell,
@@ -110,46 +111,69 @@ const baseRow: ModelLimitRow = {
   status: ModelLimitStatus.WithinLimits,
 };
 
-const renderSection = (
+/*
+ * Renders the real ui-kit Grid: ag-grid mounts its header and rows after the
+ * first paint, so the helper waits for them before a test queries the table.
+ */
+const renderSection = async (
   overrides: Partial<Parameters<typeof ModelLimitsSection>[0]> = {},
-) =>
+  wrap: (node: ReactElement) => ReactElement = (node) => node,
+) => {
   render(
-    <ModelLimitsSection
-      rows={[baseRow]}
-      labels={labels}
-      periodStatuses={periodStatuses}
-      {...overrides}
-    />,
+    wrap(
+      <ModelLimitsSection
+        rows={[baseRow]}
+        labels={labels}
+        periodStatuses={periodStatuses}
+        {...overrides}
+      />,
+    ),
   );
+  await screen.findAllByRole('columnheader');
+  if ((overrides.rows ?? [baseRow]).length > 0) {
+    await screen.findAllByRole('gridcell');
+  }
+};
+
+/** Body rows: the rows that hold grid cells, leaving out the header row. */
+const dataRows = () =>
+  screen
+    .getAllByRole('row')
+    .filter((row) => within(row).queryAllByRole('gridcell').length > 0);
+
+/** Cells of the first body row, in column order. */
+const firstRowCells = () => within(dataRows()[0]).getAllByRole('gridcell');
+
+const withRtl = (node: ReactElement) => <div dir="rtl">{node}</div>;
 
 describe('ModelLimitsSection', () => {
-  it('renders the row count separately in the section heading', () => {
-    renderSection({ rows: [baseRow, { ...baseRow, id: 'gpt-4o-mini' }] });
+  it('renders the row count separately in the section heading', async () => {
+    await renderSection({ rows: [baseRow, { ...baseRow, id: 'gpt-4o-mini' }] });
 
     expect(
       screen.getByRole('heading', { name: 'Model tokens limits 2' }),
     ).toBeTruthy();
     expect(
-      screen.getByRole('table', { name: 'Model tokens limits 2' }),
+      screen.getByRole('region', { name: 'Model tokens limits 2' }),
     ).toBeTruthy();
   });
 
-  it('renders the empty state while preserving the section shell', () => {
-    renderSection({ rows: [] });
+  it('renders the grid empty state while preserving the section shell', async () => {
+    await renderSection({ rows: [] });
 
     expect(
       screen.getByRole('heading', { name: 'Model tokens limits 0' }),
     ).toBeTruthy();
     expect(
-      screen.getByRole('table', { name: 'Model tokens limits 0' }),
+      screen.getByRole('region', { name: 'Model tokens limits 0' }),
     ).toBeTruthy();
-    expect(screen.queryAllByRole('cell')).toHaveLength(0);
-    expect(screen.getByText('No models to show yet.')).toBeTruthy();
-    expect(screen.queryByRole('button')).toBeNull();
+    expect(screen.queryAllByRole('gridcell')).toHaveLength(0);
+    expect(await screen.findByText('No models to show yet.')).toBeTruthy();
+    expect(screen.queryByText(/find any results/)).toBeNull();
   });
 
-  it('renders exactly the fixed comparison headers in order', () => {
-    renderSection();
+  it('renders exactly the fixed comparison headers in order', async () => {
+    await renderSection();
 
     expect(
       screen.getAllByRole('columnheader').map((header) => header.textContent),
@@ -159,33 +183,36 @@ describe('ModelLimitsSection', () => {
     expect(screen.queryByText('Last hour')).toBeNull();
   });
 
-  it('renders one semantic row with Item, three period cells, and Status', () => {
-    renderSection();
+  it('renders one row with Item, three period cells, and Status in reading order', async () => {
+    await renderSection();
 
-    const dataRow = screen.getAllByRole('row')[1];
-    const cells = within(dataRow).getAllByRole('cell');
+    const cells = firstRowCells();
     expect(cells).toHaveLength(5);
     expect(cells[0].textContent).toContain('GPT-4o');
-    expect(cells[1].textContent).toContain('Today');
-    expect(cells[2].textContent).toContain('This week');
-    expect(cells[3].textContent).toContain('This month');
-    expect(cells[4].textContent).toContain('Status');
+    expect(cells[1].textContent).toContain('4K');
+    expect(cells[2].textContent).toContain('21K');
+    expect(cells[3].textContent).toContain('65K');
+    expect(cells[4].textContent).toContain('Within limits');
   });
 
-  it('vertically centers desktop row content without changing horizontal alignment', () => {
-    renderSection();
+  it('renders the kit Chat table appearance', async () => {
+    await renderSection();
 
-    const dataRow = screen.getAllByRole('row')[1];
-    expect(dataRow.classList).toContain('desktop:items-center');
-    expect(dataRow.classList).not.toContain('desktop:items-start');
-    expect(dataRow.classList).not.toContain('text-center');
+    expect(
+      screen.getByRole('region', { name: 'Model tokens limits 1' }).classList,
+    ).toContain('dial-kit-grid-chat');
+  });
+
+  it('gives each period cell a full-width progress track', async () => {
+    await renderSection();
+
     expect(
       screen.getByRole('progressbar', { name: 'Today Tokens' }).classList,
     ).toContain('w-full');
   });
 
-  it('renders token progress followed by attributed Cost in every period cell', () => {
-    renderSection();
+  it('renders token progress followed by attributed Cost in every period cell', async () => {
+    await renderSection();
 
     const costAccessibilityLabels = screen.getAllByText(/Cost:/);
     expect(costAccessibilityLabels).toHaveLength(3);
@@ -195,23 +222,12 @@ describe('ModelLimitsSection', () => {
     screen.getAllByText(/Tokens:/).forEach((label) => {
       expect(label.classList).toContain('sr-only');
     });
-    expect(
-      screen.getByRole('progressbar', { name: 'Today Tokens' }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole('progressbar', { name: 'This week Tokens' }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole('progressbar', { name: 'This month Tokens' }),
-    ).toBeTruthy();
-    expect(screen.getByText('$3.20 spent')).toBeTruthy();
-    expect(screen.getByText('$18.60 spent')).toBeTruthy();
-    expect(screen.getByText('$55.10 spent')).toBeTruthy();
     [
       ['Today Tokens', '4K', '$3.20 spent'],
       ['This week Tokens', '21K', '$18.60 spent'],
       ['This month Tokens', '65K', '$55.10 spent'],
     ].forEach(([name, tokens, cost]) => {
+      expect(screen.getByRole('progressbar', { name })).toBeTruthy();
       const valueRow = screen.getByRole('group', { name });
       expect(within(valueRow).getByText(tokens)).toBeTruthy();
       expect(within(valueRow).queryByText(cost)).toBeNull();
@@ -221,8 +237,8 @@ describe('ModelLimitsSection', () => {
     expect(screen.queryByRole('progressbar', { name: /Cost/ })).toBeNull();
   });
 
-  it('renders unavailable Cost as a value without a visible Cost label', () => {
-    renderSection({
+  it('renders unavailable Cost as a value without a visible Cost label', async () => {
+    await renderSection({
       rows: [
         {
           ...baseRow,
@@ -237,7 +253,7 @@ describe('ModelLimitsSection', () => {
       ],
     });
 
-    const dayCell = screen.getAllByRole('cell')[1];
+    const dayCell = firstRowCells()[1];
     expect(within(dayCell).getByText('Not available')).toBeTruthy();
     expect(within(dayCell).getByText(/Cost:/).classList).toContain('sr-only');
     const valueRow = within(dayCell).getByRole('group', {
@@ -248,8 +264,8 @@ describe('ModelLimitsSection', () => {
     expect(dayCell.textContent).not.toContain('No limit');
   });
 
-  it('renders unlimited and unavailable token states without progress bars', () => {
-    renderSection({
+  it('renders unlimited and unavailable token states without progress bars', async () => {
+    await renderSection({
       rows: [
         {
           ...baseRow,
@@ -282,7 +298,7 @@ describe('ModelLimitsSection', () => {
     expect(screen.getAllByText('Not available')).toHaveLength(1);
     expect(screen.getAllByText('Follows cost limit')).toHaveLength(1);
 
-    const cells = within(screen.getAllByRole('row')[1]).getAllByRole('cell');
+    const cells = firstRowCells();
     const weekValueRow = within(cells[2]).getByRole('group', {
       name: 'This week Tokens',
     });
@@ -298,8 +314,8 @@ describe('ModelLimitsSection', () => {
     expect(within(cells[3]).getByText('$55.10 spent')).toBeTruthy();
   });
 
-  it('clamps progress visually while retaining the real accessible value', () => {
-    renderSection({
+  it('clamps progress visually while retaining the real accessible value', async () => {
+    await renderSection({
       rows: [
         {
           ...baseRow,
@@ -331,33 +347,33 @@ describe('ModelLimitsSection', () => {
     [ModelLimitStatus.WithinLimits, 'Within limits', true],
     [ModelLimitStatus.NoLimit, 'No limit configured', false],
     [ModelLimitStatus.Unavailable, 'Unavailable', false],
-  ])('renders the host-provided %s status', (status, label, isBadge) => {
-    renderSection({
+  ])('renders the host-provided %s status', async (status, label, isBadge) => {
+    await renderSection({
       rows: [{ ...baseRow, status }],
       labels: { ...labels, noLimitBadgeLabel: 'No limit configured' },
     });
 
-    const statusElement = screen.getByText(label);
+    const statusElement = within(firstRowCells()[4]).getByText(label);
     expect(statusElement.classList.contains('rounded-full')).toBe(isBadge);
   });
 
-  it('renders rows in supplied order with avatar fallback and accessible names', () => {
-    renderSection({
+  it('renders rows in supplied order with avatar fallback', async () => {
+    await renderSection({
       rows: [
         { ...baseRow, id: 'first', name: 'First model' },
         { ...baseRow, id: 'second', name: 'Second model' },
       ],
     });
 
-    const dataRows = screen.getAllByRole('row').slice(1);
-    expect(dataRows[0].textContent).toContain('First model');
-    expect(dataRows[1].textContent).toContain('Second model');
+    const rows = dataRows();
+    expect(rows[0].textContent).toContain('First model');
+    expect(rows[1].textContent).toContain('Second model');
     expect(screen.getByText('FM')).toBeTruthy();
     expect(screen.getByText('SM')).toBeTruthy();
   });
 
-  it('keeps long identity content constrained inside the Item cell', () => {
-    renderSection({
+  it('keeps long identity content constrained inside the Item cell', async () => {
+    await renderSection({
       rows: [
         {
           ...baseRow,
@@ -376,31 +392,22 @@ describe('ModelLimitsSection', () => {
     expect(screen.getByText('2025-12-11').classList).toContain('shrink-0');
   });
 
-  it('uses one responsive semantic subtree under an RTL ancestor', () => {
-    render(
-      <div dir="rtl">
-        <ModelLimitsSection
-          rows={[baseRow]}
-          labels={labels}
-          periodStatuses={periodStatuses}
-        />
-      </div>,
-    );
+  it('renders each period label once, in its column header, under an RTL ancestor', async () => {
+    await renderSection({}, withRtl);
 
-    expect(screen.getAllByRole('table')).toHaveLength(1);
-    expect(screen.getAllByRole('rowgroup')).toHaveLength(1);
-    expect(screen.getAllByRole('cell')).toHaveLength(5);
-    expect(screen.getAllByText('Today')).toHaveLength(2);
-    expect(screen.getAllByText('This week')).toHaveLength(2);
-    expect(screen.getAllByText('This month')).toHaveLength(2);
+    expect(screen.getAllByRole('region')).toHaveLength(1);
+    expect(screen.getAllByText('Today')).toHaveLength(1);
+    expect(screen.getAllByText('This week')).toHaveLength(1);
+    expect(screen.getAllByText('This month')).toHaveLength(1);
+    expect(firstRowCells()[0].textContent).toContain('GPT-4o');
   });
 
-  it('renders accessible overall Cost indicators for affected period headers', () => {
+  it('renders accessible overall Cost indicators in the affected period headers', async () => {
     const reachedTooltip =
-      "Overall last 24 hours cost limit is reached. Models can't be used until it resets, regardless of remaining token limits.";
-    const warningTooltip = 'Overall last 7 days cost limit is running low.';
+      'Overall today cost limit is reached. Models cannot be used until it resets.';
+    const warningTooltip = 'Overall this week cost limit is running low.';
 
-    renderSection({
+    await renderSection({
       periodStatuses: {
         day: {
           status: ModelLimitStatus.LimitReached,
@@ -414,18 +421,35 @@ describe('ModelLimitsSection', () => {
       },
     });
 
-    expect(screen.getAllByRole('img', { name: reachedTooltip })).toHaveLength(
-      2,
-    );
-    const warningIndicators = screen.getAllByRole('img', {
-      name: warningTooltip,
+    expect(
+      within(screen.getByRole('columnheader', { name: /Today/ })).getByRole(
+        'img',
+        { name: reachedTooltip },
+      ),
+    ).toBeTruthy();
+    const warningIndicator = within(
+      screen.getByRole('columnheader', { name: /This week/ }),
+    ).getByRole('img', { name: warningTooltip });
+    expect(warningIndicator.getAttribute('tabindex')).toBe('0');
+    expect(warningIndicator.classList).toContain('size-11');
+    expect(warningIndicator.classList).toContain('desktop:size-4');
+  });
+
+  it('accepts only content colors, leaving the table chrome to the grid theme', async () => {
+    await renderSection({
+      rows: [{ ...baseRow, status: ModelLimitStatus.LimitReached }],
+      styles: {
+        colors: {
+          // @ts-expect-error — the row divider is the grid theme's, not a prop.
+          rowDividerColor: '#000',
+          errorBadgeBackground: '#f00',
+        },
+      },
     });
-    expect(warningIndicators).toHaveLength(2);
-    warningIndicators.forEach((indicator) => {
-      expect(indicator.getAttribute('tabindex')).toBe('0');
-      expect(indicator.classList).toContain('size-11');
-      expect(indicator.classList).toContain('desktop:size-4');
-    });
+
+    expect(
+      within(firstRowCells()[4]).getByText('Limit reached').classList,
+    ).toContain('rounded-full');
   });
 
   describe('row type caption and cost supporting label', () => {
@@ -444,28 +468,26 @@ describe('ModelLimitsSection', () => {
       day: { tokens: baseRow.day.tokens, cost: agentCost },
     };
 
-    it('shows a row-supplied type caption while other rows keep the section label', () => {
-      renderSection({ rows: [baseRow, agentRow] });
+    it('shows a row-supplied type caption while other rows keep the section label', async () => {
+      await renderSection({ rows: [baseRow, agentRow] });
 
-      const [modelRow, routerRow] = screen
-        .getAllByRole('row')
-        .filter((row) => within(row).queryByText(/GPT-4o|LLM Router/));
+      const [modelRow, routerRow] = dataRows();
       expect(within(modelRow).getByText('Model')).toBeTruthy();
       expect(within(routerRow).getByText('Agent')).toBeTruthy();
       expect(within(routerRow).queryByText('Model')).toBeNull();
     });
 
-    it('falls back to the section label for an empty type caption', () => {
-      renderSection({ rows: [{ ...baseRow, typeLabel: '' }] });
+    it('falls back to the section label for an empty type caption', async () => {
+      await renderSection({ rows: [{ ...baseRow, typeLabel: '' }] });
 
       expect(screen.getByText('Model')).toBeTruthy();
     });
 
-    it('shows the cost supporting label beneath the spent value in the same cell', () => {
-      renderSection({ rows: [agentRow] });
+    it('shows the cost supporting label beneath the spent value in the same cell', async () => {
+      await renderSection({ rows: [agentRow] });
 
       // Cells in order: Item, Today, This week, This month, Status.
-      const dayCell = screen.getAllByRole('cell')[1];
+      const dayCell = firstRowCells()[1];
       expect(within(dayCell).getByText('$1.50 spent')).toBeTruthy();
       const supporting = within(dayCell).getByText(
         'Includes cost of models it called',
@@ -473,8 +495,8 @@ describe('ModelLimitsSection', () => {
       expect(supporting.classList).toContain('break-words');
     });
 
-    it('ignores a supporting label on an unavailable cost cell', () => {
-      renderSection({
+    it('ignores a supporting label on an unavailable cost cell', async () => {
+      await renderSection({
         rows: [
           {
             ...agentRow,
@@ -495,26 +517,18 @@ describe('ModelLimitsSection', () => {
       ).toBeNull();
     });
 
-    it('renders only the spent line when no supporting label is given', () => {
-      renderSection();
+    it('renders only the spent line when no supporting label is given', async () => {
+      await renderSection();
 
-      const dayCell = screen.getAllByRole('cell')[1];
+      const dayCell = firstRowCells()[1];
       expect(within(dayCell).getAllByText(/spent/)).toHaveLength(1);
       expect(
         within(dayCell).queryByText('Includes cost of models it called'),
       ).toBeNull();
     });
 
-    it('renders both additions under an RTL ancestor', () => {
-      render(
-        <div dir="rtl">
-          <ModelLimitsSection
-            rows={[agentRow]}
-            labels={labels}
-            periodStatuses={periodStatuses}
-          />
-        </div>,
-      );
+    it('renders both additions under an RTL ancestor', async () => {
+      await renderSection({ rows: [agentRow] }, withRtl);
 
       expect(screen.getByText('Agent')).toBeTruthy();
       expect(
@@ -540,34 +554,29 @@ describe('ModelLimitsSection', () => {
       },
     };
 
-    it('renders the reset label beneath its column label in a <time>', () => {
-      renderSection({ periodStatuses: withDayReset });
+    it('renders the reset time as a focusable info icon named by the spoken form, not as a header line', async () => {
+      await renderSection({ periodStatuses: withDayReset });
 
       const header = screen.getByRole('columnheader', { name: /Today/ });
-      expect(header.textContent).toContain('Today');
-      expect(header.textContent).toContain(DAY_RESET_LABEL);
+      expect(header.textContent).not.toContain(DAY_RESET_LABEL);
 
-      /* Desktop header plus the mobile per-period block both carry the line. */
-      const [resetLine] = screen.getAllByText(DAY_RESET_LABEL);
-      expect(resetLine.tagName).toBe('TIME');
-      expect(resetLine.getAttribute('dateTime')).toBe(DAY_RESETS_AT);
+      const info = within(header).getByRole('img', { name: DAY_SPOKEN_LABEL });
+      expect(info.getAttribute('tabindex')).toBe('0');
     });
 
-    it('carries the spoken form on a visually-hidden sibling, not on the <time>', () => {
-      renderSection({ periodStatuses: withDayReset });
+    it('names the info icon by the visible label when no spoken form is supplied', async () => {
+      await renderSection({
+        periodStatuses: {
+          ...withDayReset,
+          day: { ...withDayReset.day, resetAriaLabel: undefined },
+        },
+      });
 
-      for (const resetLine of screen.getAllByText(DAY_RESET_LABEL)) {
-        expect(resetLine.hasAttribute('aria-label')).toBe(false);
-        expect(resetLine.getAttribute('aria-hidden')).toBe('true');
-      }
-
-      for (const spoken of screen.getAllByText(DAY_SPOKEN_LABEL)) {
-        expect(spoken.className).toContain('sr-only');
-      }
+      expect(screen.getByRole('img', { name: DAY_RESET_LABEL })).toBeTruthy();
     });
 
-    it('renders no reset line for a period status without one', () => {
-      renderSection({ periodStatuses: withDayReset });
+    it('renders no reset line for a period status without one', async () => {
+      await renderSection({ periodStatuses: withDayReset });
 
       const weekHeader = screen.getByRole('columnheader', {
         name: /This week/,
@@ -575,15 +584,15 @@ describe('ModelLimitsSection', () => {
       expect(weekHeader.textContent).not.toContain('Resets');
     });
 
-    it('renders nothing when no period carries a reset label', () => {
-      renderSection();
+    it('renders nothing when no period carries a reset label', async () => {
+      await renderSection();
 
       expect(screen.queryByText(/^Resets /)).toBeNull();
     });
 
-    it('keeps the period status indicator in place alongside the reset line', () => {
+    it('keeps the period status indicator in place alongside the reset info icon', async () => {
       const reachedTooltip = 'Overall cost limit for today is reached.';
-      renderSection({
+      await renderSection({
         periodStatuses: {
           ...withDayReset,
           day: {
@@ -594,19 +603,13 @@ describe('ModelLimitsSection', () => {
         },
       });
 
-      expect(screen.getAllByRole('img', { name: reachedTooltip })).toHaveLength(
-        2,
-      );
-      expect(screen.getAllByText(DAY_RESET_LABEL).length).toBeGreaterThan(0);
-    });
-
-    it('wraps the reset line rather than forcing horizontal overflow', () => {
-      renderSection({ periodStatuses: withDayReset });
-
-      for (const resetLine of screen.getAllByText(DAY_RESET_LABEL)) {
-        expect(resetLine.className).toContain('break-words');
-        expect(resetLine.className).not.toContain('whitespace-nowrap');
-      }
+      const header = screen.getByRole('columnheader', { name: /Today/ });
+      expect(
+        within(header).getByRole('img', { name: reachedTooltip }),
+      ).toBeTruthy();
+      expect(
+        within(header).getByRole('img', { name: DAY_SPOKEN_LABEL }),
+      ).toBeTruthy();
     });
   });
 });

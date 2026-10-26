@@ -40,6 +40,7 @@ the mobile layout does — pass `isOverlay` so the panel slides in and out at fu
 width rather than collapsing in place.
 
 ```tsx
+import { FilterTab } from '@epam/ai-dial-chat-shared';
 import { ConversationPanel } from '@epam/ai-dial-conversation-panel';
 import type { ConversationPanelProps } from '@epam/ai-dial-conversation-panel';
 
@@ -59,6 +60,12 @@ import type { ConversationPanelProps } from '@epam/ai-dial-conversation-panel';
     noResultsDescription: 'Try a different search term or check your filters.',
     sharedEmptyDescription:
       'Chats other people share with you will show up here.',
+    tabEmptyLabels: {
+      [FilterTab.Shared]: {
+        label: 'No shared chats yet',
+        description: 'Chats other people share with you will show up here.',
+      },
+    },
     newChatLabel: 'New chat',
     searchPlaceholder: 'Search…',
     searchClearLabel: 'Clear search',
@@ -234,6 +241,10 @@ search and no filter applied, and `noResultsLabel` / `noResultsDescription`
 when a search or a filter (origin or type other than `All`) matches nothing.
 Under the `Shared` filter with no search, the description is
 `sharedEmptyDescription`, which falls back to `noResultsDescription`.
+`tabEmptyLabels` goes further: when one filter tab alone narrows the list to
+nothing (no search typed, type filter at `All`), its `label` and `description`
+replace `noResultsLabel` and the description above, each falling back to them
+when left out.
 
 `requestedFilter` makes the section adopt a filter whenever it changes (the user
 can still pick another afterwards), `onFilterChange` reports the user's choice,
@@ -490,7 +501,7 @@ Payload for a completed drag-and-drop move: the dragged `draggedId`, the
 
 The floating queue that shows export/import job progress is no longer part of
 this package: it is the UI kit's generic `TransferQueue`
-(`@epam/ai-dial-ui-kit` `^0.16.0-dev.35`). A host maps its
+(`@epam/ai-dial-ui-kit` `^0.16.0-dev.45`). A host maps its
 `ConversationTransferJob`s (from `@epam/ai-dial-chat-shared`) onto
 `TransferQueueItem`s — `id`, `fileName` as `name`, the status, `progress.percent`
 as `percent`, and the translated failure or warning reason as `message` — and

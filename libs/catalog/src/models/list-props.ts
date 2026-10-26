@@ -14,26 +14,12 @@ export interface ListViewTypography {
   folderLastSegmentClassName?: string;
 }
 
-/** Color overrides for `ListView` cells, applied via CSS custom properties. */
+/** Color overrides for `ListView` cell content, applied via CSS custom properties; the table chrome is the ui-kit `Grid` theme. */
 export interface ListViewColors {
-  /** Grid container background. Fallback: `--bg-layer-raised`. */
-  background?: string;
-  /** Grid container border color. Fallback: `--stroke-secondary`. */
-  border?: string;
-  /** Sticky header background. Fallback: `--bg-layer-raised`. */
-  headerBackground?: string;
-  /** Divider color between header and rows. Fallback: `--stroke-tertiary`. */
-  rowDivider?: string;
   /** Color of the filled star icon in the favorite column. Fallback: `--text-warning-icon`. */
   starFilled?: string;
   /** Color of the folder icon in the folder column. Fallback: `--text-secondary`. */
   folderIcon?: string;
-  /** Background color of even-indexed grid rows. Fallback: `--bg-layer-base`. */
-  rowEvenBackground?: string;
-  /** Border color of the selected row. Fallback: `--stroke-accent`. */
-  selectedRowBorder?: string;
-  /** Background color (tint) of the selected row. Fallback: `--bg-control-accent-alpha-active`. */
-  selectedRowBackground?: string;
   /** Color of the checkmark icon in the selected row's name cell. Fallback: `--text-accent`. */
   selectedRowCheckIcon?: string;
 }
@@ -56,7 +42,7 @@ export interface ListViewProps {
   query?: string;
   /** ARIA label for the grid element. Default: 'Catalog'. */
   ariaLabel?: string;
-  /** Grid empty-state title. */
+  /** Grid empty-state title. Default: `'No results'`. */
   emptyStateTitle?: string;
   /** Secondary line under the grid empty-state title. Omitted when not set. */
   emptyStateDescription?: string;
@@ -68,14 +54,7 @@ export interface ListViewProps {
   isFavoriteVisible?: (item: CatalogItem) => boolean;
   /** Called when a table row is clicked (excluding the star column), or when Enter or Space is pressed on it in single selection mode. */
   onItemClick?: (item: CatalogItem) => void;
-  /**
-   * When set, the ag-grid column header becomes `position: sticky` at this
-   * pixel offset from the scroll container's top edge. Pass the height of any
-   * sticky UI above the list (e.g. the catalog page heading) so the header
-   * sits flush below it while the page scrolls.
-   */
-  stickyHeaderTop?: number;
-  /** ID of an item to visually mark as selected (border, tint, and checkmark). Ignored in `CatalogSelectionMode.Multiple`. */
+  /** ID of an item to mark as selected (row selection state and checkmark). Ignored in `CatalogSelectionMode.Multiple`. */
   selectedItemId?: string;
   /** Row selection mode; `Multiple` adds a checkbox column with a select-all header. Default: `CatalogSelectionMode.Single`. */
   selectionMode?: CatalogSelectionMode;

@@ -52,7 +52,7 @@ import '@epam/ai-dial-toolset-editor/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.16.0-dev.35`
+- `@epam/ai-dial-ui-kit` `^0.16.0-dev.45`
 - `@epam/ai-dial-chat-shared` `*`
 - `@epam/ai-dial-chat-hooks` `*`
 
@@ -175,7 +175,7 @@ defaults.
 
 The optional `onRefineDescription` callback,
 `(value: string, signal: AbortSignal) => Promise<string>`, adds a Refine with
-AI action (and Undo) beside the Description label; omit it to hide the action.
+AI action (and, after a result, Restore original and Regenerate) beside the Description label; omit it to hide the action.
 The host owns transport, availability, and translations, passing the copy
 through `labels.refinement` (`TextRefinementLabels` from
 `@epam/ai-dial-chat-shared`). Save is disabled while a request is pending.
