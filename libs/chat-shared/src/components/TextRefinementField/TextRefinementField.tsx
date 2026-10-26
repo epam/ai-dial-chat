@@ -8,8 +8,8 @@ import {
   Label,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
-import { IconSparkles } from '@tabler/icons-react';
-import { useRef, type FC, type ReactNode } from 'react';
+import { IconRestore, IconSparkles } from '@tabler/icons-react';
+import { useLayoutEffect, useRef, type FC, type ReactNode } from 'react';
 import {
   TextRefinementState,
   type TextRefinementResult,
@@ -41,11 +41,11 @@ export interface TextRefinementFieldProps {
   errorClassName?: string;
   /** Caption shown at the end of the row below the control, beside the refinement status — e.g. a character counter. */
   caption?: string;
-  /** The refinable control, whose id must equal `fieldId`. */
+  /** The refinable control, whose id must equal `fieldId`; it is made read-only while a request is pending. */
   children: ReactNode;
 }
 
-/** Label row with Refine/Undo actions and live feedback around one refinable field. */
+/** Label row with Refine, Restore original and Regenerate actions and live feedback around one refinable field. */
 export const TextRefinementField: FC<TextRefinementFieldProps> = ({
   isEnabled,
   fieldId,
@@ -61,6 +61,28 @@ export const TextRefinementField: FC<TextRefinementFieldProps> = ({
   children,
 }) => {
   const controls = useRef<HTMLDivElement>(null);
+  const field = useRef<HTMLDivElement>(null);
+  const isPending = isEnabled && refinement.isPending;
+
+  /*
+   * The pending field keeps showing the text that was sent but takes no typing.
+   * The control's own read-only state comes back once the request settles.
+   */
+  useLayoutEffect(() => {
+    if (!isPending) return;
+    const control = Array.from(
+      field.current?.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>(
+        'input, textarea',
+      ) ?? [],
+    ).find((element) => element.id === fieldId);
+    if (!control) return;
+    const wasReadOnly = control.readOnly;
+    control.readOnly = true;
+    return () => {
+      control.readOnly = wasReadOnly;
+    };
+  }, [isPending, fieldId]);
+
   const captionText = caption && (
     <CaptionText text={caption} className="ms-auto shrink-0 text-end" />
   );
@@ -74,6 +96,16 @@ export const TextRefinementField: FC<TextRefinementFieldProps> = ({
     );
   }
   const error = refinement.state === TextRefinementState.Error;
+  const hasResult = refinement.canUndo;
+  let actionLabel = labels?.refineWithAiLabel ?? 'Refine with AI';
+  if (isPending) actionLabel = labels?.refineRefiningLabel ?? 'Refining';
+  else if (hasResult)
+    actionLabel = labels?.refineRegenerateLabel ?? 'Regenerate';
+  /* The action row already shows these states; only announce them. */
+  const isMessageHidden =
+    refinement.state === TextRefinementState.Pending ||
+    refinement.state === TextRefinementState.Success ||
+    refinement.state === TextRefinementState.Restored;
   const message = {
     [TextRefinementState.Idle]: '',
     [TextRefinementState.Pending]:
@@ -105,15 +137,42 @@ export const TextRefinementField: FC<TextRefinementFieldProps> = ({
           ref={controls}
           className="ms-auto flex min-w-0 flex-wrap items-center"
         >
+          {hasResult && !isPending && (
+            <GhostButton
+              size={ElementSize.Small}
+              label={labels?.refineUndoLabel ?? 'Restore original'}
+              disabled={disabled}
+              onClick={() => {
+                refinement.undo();
+                /*
+                 * This button unmounts; the main action is the same element in
+                 * every state and becomes Refine with AI. GhostButton forwards
+                 * no ref, so find it as the row's last button.
+                 */
+                const buttons =
+                  controls.current?.querySelectorAll<HTMLButtonElement>(
+                    'button',
+                  );
+                buttons?.[buttons.length - 1]?.focus();
+              }}
+              iconBefore={
+                <IconRestore
+                  size={DIAL_ICON_SIZE.SM}
+                  stroke={DIAL_KIT_ICON_STROKE}
+                  aria-hidden
+                />
+              }
+            />
+          )}
           <GhostButton
             size={ElementSize.Small}
-            label={labels?.refineWithAiLabel ?? 'Refine with AI'}
+            label={actionLabel}
             disabled={disabled || !refinement.canRefine}
             onClick={() => {
               void refinement.refine();
             }}
             iconBefore={
-              refinement.isPending ? (
+              isPending ? (
                 <span aria-hidden>
                   <Spinner size={DIAL_ICON_SIZE.SM} ariaLabel="" />
                 </span>
@@ -126,32 +185,19 @@ export const TextRefinementField: FC<TextRefinementFieldProps> = ({
               )
             }
           />
-          {refinement.canUndo && (
-            <GhostButton
-              size={ElementSize.Small}
-              label={labels?.refineUndoLabel ?? 'Undo'}
-              disabled={disabled}
-              onClick={() => {
-                refinement.undo();
-                /* GhostButton forwards no ref, so find the Refine action. */
-                controls.current
-                  ?.querySelector<HTMLButtonElement>('button')
-                  ?.focus();
-              }}
-            />
-          )}
         </div>
       </div>
-      <div aria-busy={refinement.isPending}>{children}</div>
+      <div ref={field} aria-busy={refinement.isPending}>
+        {children}
+      </div>
       <div className="flex min-w-0 items-start gap-3">
         {/* The live region stays mounted: CaptionText renders nothing for empty text. */}
         <div role="status" aria-live="polite" className="min-w-0 flex-1">
-          {/* The Refine spinner already shows pending; only announce it. */}
           <CaptionText
             text={message}
             className={mergeClasses(
               feedbackClassName,
-              refinement.isPending && 'sr-only',
+              isMessageHidden && 'sr-only',
             )}
           />
         </div>

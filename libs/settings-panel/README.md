@@ -66,7 +66,9 @@ import { SettingsPanel } from '@epam/ai-dial-settings-panel';
 />;
 ```
 
-Pass `styles={{ typography }}` to override the section-header typography class. The rows are
+When the panel sits under a heading of its own (a dialog title), omit `sectionLabel` and pass
+`ariaLabel` to name the list instead. Pass `styles={{ typography }}` to override the
+section-header typography class. The rows are
 drawn by the UI kit's `Tabs`, so their colors and typography (`dial-small-text` /
 `dial-small-semi-text`) come from the kit and are not overridable here.
 
@@ -107,7 +109,7 @@ name, and description typography classes.
 ## Types
 
 - `SettingsPanelItem` — `{ id, label, icon?, disabled? }`
-- `SettingsPanelProps` — `{ items, activeId, onSelect, sectionLabel?, styles?, className? }`
+- `SettingsPanelProps` — `{ items, activeId, onSelect, sectionLabel?, ariaLabel?, styles?, className? }`
 - `SettingsPanelStyles` — `{ typography? }`
 - `SettingsPanelTypography` — `{ sectionLabelClassName? }`
 - `ExtensionServiceItem` — `{ id, displayName, description, isWarningVisible, authorizeLabel, action }`

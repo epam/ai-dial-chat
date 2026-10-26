@@ -29,6 +29,7 @@ export type {
   ConversationListProps,
   ConversationListStyles,
   ConversationListTypography,
+  FilterEmptyLabels,
 } from './models/conversation-list';
 export type {
   ConversationMove,

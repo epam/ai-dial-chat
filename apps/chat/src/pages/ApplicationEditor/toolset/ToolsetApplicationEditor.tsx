@@ -313,6 +313,10 @@ const ToolsetApplicationEditor: FC = () => {
         apiKeyRequired: t(ToolsetEditorI18nKeys.ApiKeyRequired),
         clientIdRequired: t(ToolsetEditorI18nKeys.ClientIdRequired),
         clientSecretRequired: t(ToolsetEditorI18nKeys.ClientSecretRequired),
+        authorizationEndpointRequired: t(
+          ToolsetEditorI18nKeys.AuthorizationEndpointRequired,
+        ),
+        tokenEndpointRequired: t(ToolsetEditorI18nKeys.TokenEndpointRequired),
       },
       general: {
         form: metadataFormLabels,
@@ -357,6 +361,9 @@ const ToolsetApplicationEditor: FC = () => {
           clientSecretLabel: t(ToolsetEditorI18nKeys.ClientSecretLabel),
           clientSecretPlaceholder: t(
             ToolsetEditorI18nKeys.ClientSecretPlaceholder,
+          ),
+          clientSecretKeepCaption: t(
+            ToolsetEditorI18nKeys.ClientSecretKeepCaption,
           ),
           showClientSecretLabel: t(ToolsetEditorI18nKeys.ShowClientSecretLabel),
           hideClientSecretLabel: t(ToolsetEditorI18nKeys.HideClientSecretLabel),

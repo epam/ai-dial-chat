@@ -43,7 +43,6 @@ import { useApplicationAvatarPicker } from '../../hooks/application-editor/useAp
 import { useEditedApplication } from '../../hooks/application-editor/useEditedApplication';
 import { useMetadataLabels } from '../../hooks/application-editor/useMetadataLabels';
 import { useBuilderLeaveGuard } from '../../hooks/unsaved-changes/useBuilderLeaveGuard';
-import useLocalStorage from '../../hooks/useLocalStorage';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
 import { useTextRefinementLabels } from '../../hooks/useTextRefinementLabels';
@@ -57,7 +56,6 @@ import type {
 import { ApplicationCreateStrategy } from '../../types/application-editor';
 import { EntityOperation } from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
-import { StorageKey } from '../../types/storage-key';
 import {
   areSetupValuesEqual,
   deploymentToMetadata,
@@ -192,18 +190,13 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
   }, [appId, definition]);
 
   const { avatarPicker, avatarPickerLabels } = useApplicationAvatarPicker();
-  const [storedMetadataWidth, setStoredMetadataWidth] = useLocalStorage<number>(
-    StorageKey.ApplicationEditorMetadataWidth,
+  /* View preference only: it is not persisted, so every editor open starts at the default. */
+  const [metadataWidth, setMetadataWidth] = useState(
     DEFAULT_METADATA_COLUMN_WIDTH,
   );
   const resizableMetadata = useMemo(
-    () => ({
-      width: Number.isFinite(storedMetadataWidth)
-        ? storedMetadataWidth
-        : DEFAULT_METADATA_COLUMN_WIDTH,
-      onWidthChange: setStoredMetadataWidth,
-    }),
-    [storedMetadataWidth, setStoredMetadataWidth],
+    () => ({ width: metadataWidth, onWidthChange: setMetadataWidth }),
+    [metadataWidth],
   );
   const metadataFormLabels = useMetadataLabels(
     definition.getMetadataLabelOverrides,

@@ -4,21 +4,17 @@ import {
   ModelLimitMetricCell,
   ModelLimitMetricKind,
   ModelLimitPeriodCell,
-  ModelLimitPeriodStatus,
   ModelLimitsLabels,
   ModelLimitsTypography,
 } from '../../models/model-limits-props';
 import { MetricCell } from './MetricCell';
 import styles from './ModelLimitsSection.module.scss';
-import { PeriodStatusIndicator } from './PeriodStatusIndicator';
 
 interface PeriodCellProps {
   cell: ModelLimitPeriodCell;
   periodLabel: string;
-  periodStatus: ModelLimitPeriodStatus;
   labels: ModelLimitsLabels;
   typography: ModelLimitsTypography;
-  resetLabelClassName: string;
 }
 
 interface CostValueProps {
@@ -76,45 +72,10 @@ const CostValue: FC<CostValueProps> = ({
 export const PeriodCell: FC<PeriodCellProps> = ({
   cell,
   periodLabel,
-  periodStatus,
   labels,
   typography,
-  resetLabelClassName,
 }) => (
-  <div role="cell" className="flex min-w-0 flex-col gap-2 py-2 desktop:py-0">
-    {/* The mobile layout has no shared column header, so each period block
-        carries its own label and reset line. */}
-    <div
-      className={mergeClasses(
-        'dial-caption-lead-semi-text flex min-h-11 items-center justify-between gap-2 desktop:hidden',
-        styles.mobileColumnLabel,
-      )}
-    >
-      <span className="flex min-w-0 flex-col">
-        <span>{periodLabel}</span>
-        {periodStatus.resetLabel != null && (
-          <>
-            {/* See UsageLimitCard: the spoken form rides an sr-only sibling
-                because `aria-label` is not reliably supported on a `<time>`. */}
-            <time
-              dateTime={periodStatus.resetIsoValue}
-              aria-hidden={periodStatus.resetAriaLabel != null || undefined}
-              className={mergeClasses(
-                'block break-words',
-                resetLabelClassName,
-                styles.secondaryValue,
-              )}
-            >
-              {periodStatus.resetLabel}
-            </time>
-            {periodStatus.resetAriaLabel != null && (
-              <span className="sr-only">{periodStatus.resetAriaLabel}</span>
-            )}
-          </>
-        )}
-      </span>
-      <PeriodStatusIndicator periodStatus={periodStatus} />
-    </div>
+  <div className="flex size-full min-w-0 flex-col justify-center gap-2">
     <MetricCell
       cell={cell.tokens}
       label={labels.tokensLabel}

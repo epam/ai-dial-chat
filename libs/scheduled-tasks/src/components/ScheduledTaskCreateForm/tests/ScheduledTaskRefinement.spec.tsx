@@ -41,6 +41,12 @@ const action = (name = 'Description') =>
   group(name).getByRole<HTMLButtonElement>('button', {
     name: 'Refine with AI',
   });
+const regenerate = (name = 'Description') =>
+  group(name).getByRole<HTMLButtonElement>('button', { name: 'Regenerate' });
+const restore = (name = 'Description') =>
+  group(name).getByRole<HTMLButtonElement>('button', {
+    name: 'Restore original',
+  });
 const field = (name = 'Description') =>
   screen.getByRole<HTMLTextAreaElement>('textbox', {
     name: new RegExp('^' + name),
@@ -131,7 +137,7 @@ describe('text refinement authoring', () => {
     fireEvent.change(field(), { target: { value: '  ' } });
     expect(action().disabled).toBe(true);
   });
-  it('refines twice, preserves the first baseline, restores focus on Undo, and saves restored text', async () => {
+  it('regenerates from the original draft, restores it with focus on Refine with AI, and saves restored text', async () => {
     const refine = vi
       .fn()
       .mockResolvedValueOnce('Better')
@@ -140,12 +146,13 @@ describe('text refinement authoring', () => {
     render(<Harness onRefineDescription={refine} onSubmit={submit} />);
     await userEvent.click(action());
     expect(field().value).toBe('Better');
-    await userEvent.click(action());
+    expect(
+      group('Description').queryByRole('button', { name: 'Refine with AI' }),
+    ).toBeNull();
+    await userEvent.click(regenerate());
     expect(field().value).toBe('Best');
-    expect(refine.mock.calls[1][0]).toBe('Better');
-    await userEvent.click(
-      group('Description').getByRole('button', { name: 'Undo' }),
-    );
+    expect(refine.mock.calls[1][0]).toBe('Original');
+    await userEvent.click(restore());
     expect(field().value).toBe('Original');
     /* Focus and inherited ARIA/direction/layout hooks have no semantic query. */
     // eslint-disable-next-line testing-library/no-node-access
@@ -153,16 +160,12 @@ describe('text refinement authoring', () => {
     expect(group('Description').getByRole('status').textContent).toContain(
       'Original text restored.',
     );
-    /* The status keeps the kit input-caption styling by default. */
-    const caption = group('Description').getByText('Original text restored.');
-    expect(caption.className).toContain('dial-tiny-text');
-    expect(caption.className).toContain('text-secondary');
     await userEvent.click(screen.getAllByRole('button', { name: 'Save' })[0]);
     expect(submit).toHaveBeenCalledWith(
       expect.objectContaining({ description: 'Original' }),
     );
   });
-  it('coordinates both actions and Save, keeps fields editable, and preserves sibling edits', async () => {
+  it('coordinates both actions and Save, locks only the refining field, and preserves sibling edits', async () => {
     const pending = deferred();
     const refine = vi.fn<
       (value: string, signal: AbortSignal) => Promise<string>
@@ -178,8 +181,13 @@ describe('text refinement authoring', () => {
     );
     await screen.findByRole('textbox', { name: 'Instructions' });
     fireEvent.click(action());
-    fireEvent.click(action());
+    const pendingAction = group('Description').getByRole<HTMLButtonElement>(
+      'button',
+      { name: 'Refining' },
+    );
+    fireEvent.click(pendingAction);
     expect(refine).toHaveBeenCalledTimes(1);
+    expect(pendingAction.disabled).toBe(true);
     expect(action('Instructions').disabled).toBe(true);
     for (const save of screen.getAllByRole<HTMLButtonElement>('button', {
       name: 'Save',
@@ -188,7 +196,7 @@ describe('text refinement authoring', () => {
       fireEvent.click(save);
     }
     expect(submit).not.toHaveBeenCalled();
-    expect(field().readOnly).toBe(false);
+    expect(field().readOnly).toBe(true);
     expect(field('Instructions').readOnly).toBe(false);
     /* Focus and inherited ARIA/direction/layout hooks have no semantic query. */
     // eslint-disable-next-line testing-library/no-node-access
@@ -203,6 +211,7 @@ describe('text refinement authoring', () => {
     });
     await act(async () => pending.resolve('Refined'));
     expect(field().value).toBe('Refined');
+    expect(field().readOnly).toBe(false);
     expect(field('Instructions').value).toBe('Sibling edited');
     await userEvent.click(screen.getAllByRole('button', { name: 'Save' })[0]);
     expect(submit).toHaveBeenCalledWith(
@@ -225,10 +234,12 @@ describe('text refinement authoring', () => {
       expect(refine.mock.calls[0][1].aborted).toBe(true);
       await act(async () => pending.resolve('Late'));
       expect(field(name).value).toBe('Manual');
-      expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull();
+      expect(
+        screen.queryByRole('button', { name: 'Restore original' }),
+      ).toBeNull();
     },
   );
-  it('a toolbar edit cancels instructions, and each field keeps its own Undo', async () => {
+  it('a toolbar edit cancels instructions, and each field keeps its own Restore original', async () => {
     const pending = deferred();
     const refine = vi
       .fn()
@@ -243,17 +254,15 @@ describe('text refinement authoring', () => {
     await screen.findByRole('textbox', { name: 'Instructions' });
     await userEvent.click(action());
     await userEvent.click(action('Instructions'));
-    expect(screen.getAllByRole('button', { name: 'Undo' })).toHaveLength(2);
-    await userEvent.click(action('Instructions'));
+    expect(
+      screen.getAllByRole('button', { name: 'Restore original' }),
+    ).toHaveLength(2);
+    await userEvent.click(regenerate('Instructions'));
     await userEvent.click(screen.getByRole('button', { name: 'Bold' }));
     expect(refine.mock.calls[1][1].aborted).toBe(true);
     await act(async () => pending.resolve('Late'));
     expect(field('Instructions').value).toBe('Better instructions**bold**');
-    expect(
-      group('Description').getByRole<HTMLButtonElement>('button', {
-        name: 'Undo',
-      }).disabled,
-    ).toBe(false);
+    expect(restore().disabled).toBe(false);
   });
   it('shows inline retryable errors, retains text and baseline, and announces no-change', async () => {
     const refine = vi
@@ -263,7 +272,7 @@ describe('text refinement authoring', () => {
       .mockResolvedValueOnce('Better');
     render(<Harness onRefineDescription={refine} />);
     await userEvent.click(action());
-    await userEvent.click(action());
+    await userEvent.click(regenerate());
     expect(field().value).toBe('Better');
     expect(
       group('Description').getByText(
@@ -279,13 +288,15 @@ describe('text refinement authoring', () => {
         'Could not refine this text. Please try again.',
       ).id,
     );
-    await userEvent.click(action());
+    await userEvent.click(regenerate());
     expect(group('Description').getByRole('status').textContent).toContain(
       'No changes were needed.',
     );
-    await userEvent.click(
-      group('Description').getByRole('button', { name: 'Undo' }),
-    );
+    /* The visible status keeps the kit input-caption styling by default. */
+    const caption = group('Description').getByText('No changes were needed.');
+    expect(caption.className).toContain('dial-tiny-text');
+    expect(caption.className).toContain('text-secondary');
+    await userEvent.click(restore());
     expect(field().value).toBe('Original');
   });
   it.each(['Cancel', 'Back', 'unmount'])('cancels on %s', async (mode) => {
@@ -345,7 +356,7 @@ describe('text refinement authoring', () => {
 });
 
 describe('draft replacement', () => {
-  it('cancels an equal-text draft replacement and clears Undo', async () => {
+  it('cancels an equal-text draft replacement and clears Restore original', async () => {
     const pending = deferred();
     const refine = vi.fn<
       (value: string, signal: AbortSignal) => Promise<string>
@@ -358,9 +369,11 @@ describe('draft replacement', () => {
     expect(refine.mock.calls[0][1].aborted).toBe(true);
     await act(async () => pending.resolve('Late'));
     expect(field().value).toBe('Original');
-    expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'Restore original' }),
+    ).toBeNull();
   });
-  it('clears the baseline after manual edits and starts a new Undo session', async () => {
+  it('returns to Ready after a manual edit and starts a new baseline', async () => {
     const refine = vi
       .fn()
       .mockResolvedValueOnce('Better')
@@ -368,11 +381,12 @@ describe('draft replacement', () => {
     render(<Harness onRefineDescription={refine} />);
     await userEvent.click(action());
     fireEvent.change(field(), { target: { value: 'Manual baseline' } });
-    expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'Restore original' }),
+    ).toBeNull();
     await userEvent.click(action());
-    await userEvent.click(
-      group('Description').getByRole('button', { name: 'Undo' }),
-    );
+    expect(refine.mock.calls[1][0]).toBe('Manual baseline');
+    await userEvent.click(restore());
     expect(field().value).toBe('Manual baseline');
   });
 });

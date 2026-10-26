@@ -137,6 +137,22 @@ describe('ToolsetBodyDto — authSettings', () => {
     const errors = await validateDto({ ...BASE_BODY, authSettings: {} });
     expect(errors.some((e) => e.property === 'authSettings')).toBe(true);
   });
+
+  it('rejects a client secret hint, which is read-only', async () => {
+    const oauthSettings = {
+      authenticationType: ToolsetAuthType.OAuth,
+      clientId: 'client-id',
+    };
+    expect(
+      await validateDto({ ...BASE_BODY, authSettings: oauthSettings }),
+    ).toHaveLength(0);
+
+    const errors = await validateDto({
+      ...BASE_BODY,
+      authSettings: { ...oauthSettings, clientSecretHint: 'd4c6' },
+    });
+    expect(errors.some((e) => e.property === 'authSettings')).toBe(true);
+  });
 });
 
 describe('ToolsetBodyDto — name and description length', () => {

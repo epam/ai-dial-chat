@@ -33,7 +33,7 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 
 ## Peer Dependencies
 
-`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.16.0-dev.35`) are the mandatory peers,
+`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.16.0-dev.45`) are the mandatory peers,
 required by every entry point below. The markdown stack is **not** a peer any more: the root
 entry imports it unconditionally, so this package installs it itself and a consumer never
 names it.
@@ -48,8 +48,8 @@ entry's own imports.
 Peers:
 
 - `react` ^19.2.8
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.35
-- `@epam/ai-dial-react-file-manager` ^0.4.0-dev.11 \*
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.45
+- `@epam/ai-dial-react-file-manager` ^0.4.0-dev.19 \*
 - `ag-grid-community` ^35.3.0 \*
 
 Installed for you as dependencies: `@tabler/icons-react`, `react-markdown`,
@@ -90,7 +90,7 @@ that feature.
 
 The result exposes `state` (`TextRefinementState`), `isPending`, `canRefine`, `canUndo`, `refine()`, `undo()`, and `reset()`. Public types are `TextRefinementCallback`, `UseTextRefinementOptions`, and `TextRefinementResult`. The host must acknowledge changes through its controlled `value`, and coordinate multiple fields so only one request runs per form and submission is blocked while pending.
 
-Successful changes retain the original baseline across repeated refinements. Undo restores it exactly; manual/external value changes, reset, callback removal, disabling, and unmount invalidate the session state. Identical output does not write a value. Errors and blank output preserve text and any existing baseline; cancellation is silent. Late results cannot overwrite a replaced draft, even if the callback ignores cancellation. No baseline persists after leaving the editing session.
+Successful changes retain the original baseline across repeated refinements, and `refine()` while a baseline exists (Regenerate) sends that baseline to `onRefine`, so each result is a fresh variant of the author's draft. Undo restores it exactly; manual/external value changes, reset, callback removal, disabling, and unmount invalidate the session state. Identical output does not write a value. Errors and blank output preserve text and any existing baseline; cancellation is silent. Late results cannot overwrite a replaced draft, even if the callback ignores cancellation. No baseline persists after leaving the editing session.
 
 ```tsx
 import { useState } from 'react';
@@ -977,11 +977,18 @@ import { DeleteConfirmationDialog } from '@epam/ai-dial-chat-shared';
 
 ### TextRefinementField
 
-Label row with kit `GhostButton` "Refine with AI" / Undo actions, plus a polite
-status region and an error alert, around one field driven by
-[`useTextRefinement`](#text-refinement-lifecycle). The group is named by the
-label and described by the error while one is shown; Undo returns focus to the
-Refine action. With `isEnabled={false}` it renders `children` alone, so the
+Label row with kit `GhostButton` actions, plus a polite status region and an
+error alert, around one field driven by
+[`useTextRefinement`](#text-refinement-lifecycle). The main action reads
+"Refine with AI", then "Refining" with a spinner (disabled) while a request
+runs, then "Regenerate" once a result has replaced the text; "Restore original"
+appears before it while there is a draft to restore. While a request runs, the
+`input`/`textarea` whose `id` equals `fieldId` is read-only and keeps showing
+the text that was sent. The success and restore messages are announced but not
+shown (the actions already show those states); "No changes were needed." and
+errors are visible. The group is named by the label and described by the error
+while one is shown; Restore original returns focus to the main action. With
+`isEnabled={false}` it renders `children` alone, so the
 host keeps its own label. An optional `caption` (e.g. a `12/500` character
 counter) sits at the end of the row below the control, beside the status, so
 neither shifts the layout when the other appears; it is rendered in both modes.

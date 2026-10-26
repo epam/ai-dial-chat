@@ -83,7 +83,9 @@ the rendered `<time dateTime>`), and `resetAriaLabel` (the spoken form, which sh
 timezone in full rather than as an offset). When `resetAriaLabel` is supplied the library renders it
 on a visually-hidden sibling and marks the visible `<time>` `aria-hidden`, because `aria-label` is
 not reliably supported on a bare `<time>`; with no `resetAriaLabel` the visible line is its own
-accessible name. The library renders every string verbatim: it imports no `Intl`, accepts no locale, timezone, or raw timestamp, and never parses
+accessible name. A Model-limits period header shows no reset line: it renders a focusable info
+icon whose tooltip holds the `<time>` with `resetLabel`, and whose accessible name is
+`resetAriaLabel` (or `resetLabel` when no spoken form is supplied). The library renders every string verbatim: it imports no `Intl`, accepts no locale, timezone, or raw timestamp, and never parses
 or reformats a value. All three are absent together when the host could not format a reset time, in
 which case the card or header renders exactly as it did before reset times existed. A card renders
 its reset line even when `isUnlimited` is `true` — an unconfigured limit still accumulates spend
@@ -215,8 +217,14 @@ Renders a "Model tokens limits" heading with the rendered row count and one fixe
 model: Item, Today, This week, This month, and Status. Every period cell contains Tokens
 followed by an attributed Cost amount supplied by the host. Cost has no visible sublabel,
 per-model limit, or progress bar; `costLabel` supplies screen-reader context. Overall Cost statuses
-can add warning/reached icons with accessible tooltips to the period headers. Desktop row content is
-vertically centered while preserving its existing horizontal alignment:
+can add warning/reached icons with accessible tooltips to the period headers.
+
+The table is the ui-kit 2.0 `Grid` (`@epam/ai-dial-ui-kit/grid`) in its "Chat table" appearance
+(`GridAppearance.Chat`: a borderless card with a 12px corner and the MD shadow, row dividers
+inset by the cell padding), sized to its rows at 84px each. It renders the same five columns at
+every width: on a narrow screen it scrolls horizontally inside its own box, so the page never
+does. Its frame, header and row dividers come from the `Grid` theme; `styles.colors` covers cell
+content only:
 
 ```tsx
 import {
@@ -339,8 +347,8 @@ const agentRow: ModelLimitRow = {
 };
 ```
 
-The heading and row count remain visible when `rows` is empty; the table body switches to
-`labels.emptyStateLabel`.
+The heading and row count remain visible when `rows` is empty; the grid shows its empty state
+with `labels.emptyStateLabel`.
 
 ## Types
 
@@ -362,7 +370,7 @@ The heading and row count remain visible when `rows` is empty; the table body sw
 - `ModelLimitsLabels` — `{ headingLabel, itemColumnLabel, dayColumnLabel, weekColumnLabel, monthColumnLabel, statusColumnLabel, tokensLabel, costLabel, modelTypeLabel, noLimitLabel, unavailableLabel, withinLimitsBadgeLabel, runningLowBadgeLabel, limitReachedBadgeLabel, noLimitBadgeLabel, unavailableBadgeLabel, emptyStateLabel }`
 - `ModelLimitsSectionProps` — `{ rows, labels, periodStatuses, styles? }`
 - `ModelLimitsStyles` — `{ colors?, typography? }`
-- `ModelLimitsColors` — CSS-custom-property color overrides
+- `ModelLimitsColors` — CSS-custom-property color overrides for cell content: heading, heading count, name, model type, version, value, secondary value, progress, indicator, badge and neutral status colors
 - `ModelLimitsTypography` — typography class overrides
 
 ## Public class names
