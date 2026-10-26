@@ -92,6 +92,29 @@
   /* Border width — matches the bare `outline` utility (1px in Tailwind v4) */
   --border-width-regular: 1px;
 
+  /* Style extensions: sent to apps as `styleExtensions.variables`, named `--mcp-ext-<name>` here and `--<name>` on the wire. */
+  --mcp-ext-button-radius: var(--radius-control, 9999px);
+  --mcp-ext-button-radius-small: var(--radius-control-small, 9999px);
+  --mcp-ext-button-primary-gradient-start: var(--bg-gradient-1, #1d4ed8);
+  --mcp-ext-button-primary-gradient-end: var(--bg-gradient-2, #885df2);
+  --mcp-ext-button-primary-gradient-hover-start: var(
+    --bg-gradient-1-hover,
+    #6785fb
+  );
+  --mcp-ext-button-primary-gradient-hover-end: var(
+    --bg-gradient-2-hover,
+    #885df2
+  );
+  --mcp-ext-button-primary-gradient-active-start: var(
+    --bg-gradient-1-active,
+    #1d4ed8
+  );
+  --mcp-ext-button-primary-gradient-active-end: var(
+    --bg-gradient-2-active,
+    #7c3aed
+  );
+  --mcp-ext-button-primary-text: var(--text-control-permanent, #fcfcfc);
+
   /* Shadows — see `openspec/changes/archive/2026-09-30-mcp-apps-support/design.md` D18 for why colors are inlined here. */
   --shadow-hairline: 0 0 8px 1px #2764d933;
   --shadow-sm: 4px 9px 16px 1px #2764d90f, 0 -2px 4px 2px #2764d90a;
