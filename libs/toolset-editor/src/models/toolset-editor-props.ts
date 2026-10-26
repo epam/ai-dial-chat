@@ -40,6 +40,10 @@ export interface ToolsetEditorValidationLabels {
   clientIdRequired?: string;
   /** Message for a missing OAuth client secret in create mode. Defaults to `'Client secret is required'`. */
   clientSecretRequired?: string;
+  /** Message for a missing OAuth authorization endpoint. Defaults to `'Authorization endpoint is required'`. */
+  authorizationEndpointRequired?: string;
+  /** Message for a missing OAuth token endpoint. Defaults to `'Token endpoint is required'`. */
+  tokenEndpointRequired?: string;
 }
 
 /** Labels for the editor chrome (header, actions, section titles), all optional with English defaults. */

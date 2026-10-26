@@ -3724,6 +3724,12 @@ export interface DialToolsetAuthSettingsDto {
    */
   clientId?: string;
   /**
+   * Last characters of the stored OAuth client secret, as returned by DIAL Core. Never the secret itself.
+   * @type {string}
+   * @memberof DialToolsetAuthSettingsDto
+   */
+  clientSecretHint?: string;
+  /**
    *
    * @type {string}
    * @memberof DialToolsetAuthSettingsDto
@@ -7485,6 +7491,12 @@ export interface ToolsetAuthSettingsDto {
    * @memberof ToolsetAuthSettingsDto
    */
   clientId?: string;
+  /**
+   * (OAuth only) Last characters of the stored OAuth client secret, as returned by DIAL Core. Never the secret itself.
+   * @type {string}
+   * @memberof ToolsetAuthSettingsDto
+   */
+  clientSecretHint?: string;
   /**
    * (OAuth only) OAuth redirect URI
    * @type {string}

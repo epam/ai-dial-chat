@@ -517,18 +517,85 @@ The iframe's dirty state SHALL be treated as `false`:
 - **THEN** the reported dirty state is `false` until the new editor posts `DIRTY_STATE`
 
 ### Requirement: Application editor Metadata column is resizable
-`ApplicationFormEditor` (`apps/chat/src/pages/ApplicationEditor/ApplicationFormEditor.tsx`) SHALL enable the `EntityEditor` resizable left column (see `builder-form` "EditorLayout — resizable left column") so users can drag the boundary between Metadata and Setup on desktop. The page SHALL own the width with the existing `useLocalStorage` hook (`apps/chat/src/hooks/useLocalStorage.ts`), so the chosen width persists across editor opens; an absent, non-numeric or storage-unavailable value SHALL fall back to the 400 px default. The width is a view preference only: it SHALL NOT enter the form values, the create/update payloads or the preview flow, and no additional chat-api request SHALL be made.
+`ApplicationFormEditor` (`apps/chat/src/pages/ApplicationEditor/ApplicationFormEditor.tsx`) SHALL enable the `EntityEditor` resizable left column (see `builder-form` "EditorLayout — resizable left column") so users can drag the boundary between Metadata and Setup on desktop. The page SHALL own the width in component state and SHALL NOT persist it (no `localStorage`, `sessionStorage` or user preference), so every editor open starts at the 400 px default and one user's, or one app type's, chosen width never carries over to another. The width is a view preference only: it SHALL NOT enter the form values, the create/update payloads or the preview flow, and no additional chat-api request SHALL be made.
 
 The page SHALL pass localized strings through `EntityEditor` labels using new keys under `editor` in `apps/chat/src/i18n/locales/en.json` and `EditorI18nKeys` (`apps/chat/src/constants/translation-keys.ts`): `editor.resizeHandleTooltip` ("Drag to resize") and `editor.resizeHandleAriaLabel`. The setting applies to every definition rendered by `ApplicationFormEditor`; the Prompt, Skill and Toolset editors are unchanged. Direction is inherited from `<html dir>`, so the handle works in Arabic and other RTL locales.
 
-#### Scenario: Width persists
-- **WHEN** a user drags the handle to 520 px and reopens the editor
-- **THEN** the Metadata column opens at 520 px
+#### Scenario: Width resets on every open
+- **WHEN** a user drags the handle to 520 px and reopens the editor, or opens an editor of another app type
+- **THEN** the Metadata column opens at 400 px
 
-#### Scenario: Corrupt stored value
-- **WHEN** the stored width is not a number or `localStorage` throws
-- **THEN** the editor opens at 400 px and still resizes in memory
+#### Scenario: Width is not stored
+- **WHEN** a user resizes the column
+- **THEN** nothing is written to `localStorage` or `sessionStorage`
 
 #### Scenario: Save behaviour unchanged
 - **WHEN** a user resizes the column and then saves
 - **THEN** the create/update request payload is identical to one made without resizing
+
+### Requirement: Application editors can sign in to one external service through the Chat host
+
+`AppEditorIframe` SHALL add `externalServiceLogin` to the editor iframe URL with the same value it gives
+`applicationCredentials`: `true` only when both credential capability gates are enabled. An editor SHALL treat a
+missing or `false` value as "not supported" and may fall back to `REQUEST_APPLICATION_CREDENTIALS`.
+
+`AppEditorIframe` SHALL handle `{ type: 'REQUEST_EXTERNAL_SERVICE_LOGIN', appId: string, serviceId: string,
+offlineUsageConsent: boolean }` only when both gates are enabled, `event.origin` equals the configured editor URL's
+origin, `event.source` is the current iframe's `contentWindow`, `appId` and `serviceId` are nonempty strings and
+`offlineUsageConsent` is a boolean. Other messages SHALL be ignored.
+
+For a handled request the host SHALL, without opening any host dialog:
+
+1. open the shared OAuth popup before awaiting anything;
+2. read the application's public external-service listing for `normalizeDeploymentId(appId)` and select the entry
+   whose `id` equals `serviceId`;
+3. sign the person in through `useExternalServiceLogin` at `USER` level, passing the opened popup, the entry's OAuth
+   settings and the request's `offlineUsageConsent` unchanged — `OAUTH` and `DIAL_NATIVE` services only;
+4. post `{ type: 'EXTERNAL_SERVICE_LOGIN_RESULT', appId, serviceId, success, reason? }` to the iframe, echoing the
+   `appId` and `serviceId` exactly as received.
+
+`reason` SHALL be one of `popup-blocked`, `not-found`, `unsupported-auth-type`, `cancelled`,
+`admin-consent-required`, `offline-unavailable`, `failure`. The host SHALL close the popup on every failure it
+detects before navigating it. The host SHALL NOT set `offlineUsageConsent` on the person's behalf.
+
+The handler SHALL be memoized and included in `handleMessage`'s dependencies. No new feature flag, translated
+string, cache or visual surface is introduced; RTL and keyboard behavior are unchanged.
+
+#### Scenario: Host advertises the relay only with both gates
+
+- **WHEN** both credential gates are enabled
+- **THEN** the iframe URL carries `externalServiceLogin=true`
+- **AND** with either gate disabled it carries `externalServiceLogin=false` and requests are ignored
+
+#### Scenario: One OAuth service is signed in without the credentials dialog
+
+- **WHEN** the current editor sends a trusted request for service `gitlab-oauth` of `applications/public/runner app`
+  with `offlineUsageConsent: true`
+- **THEN** the host opens only the provider's consent popup, signs the person in at `USER` level with offline-use
+  consent for `applications/public/runner%20app`
+- **AND** posts `EXTERNAL_SERVICE_LOGIN_RESULT` with `success: true`, `appId: 'applications/public/runner app'` and
+  `serviceId: 'gitlab-oauth'`
+- **AND** no `ApplicationCredentials` dialog is mounted
+
+#### Scenario: The popup is reserved before the lookup
+
+- **WHEN** a trusted request arrives
+- **THEN** the OAuth popup is opened before the service listing is requested
+- **AND** a blocked popup answers `success: false, reason: 'popup-blocked'` without requesting the listing
+
+#### Scenario: Unknown or unsupported service
+
+- **WHEN** the listing has no entry with the requested `serviceId`, or the entry's authentication type is `API_KEY`
+  or `NONE`
+- **THEN** the host closes the popup and answers `success: false` with `not-found` or `unsupported-auth-type`
+
+#### Scenario: Consent is forwarded, never defaulted
+
+- **WHEN** a trusted request carries `offlineUsageConsent: false`
+- **THEN** the sign-in is made without offline-use consent
+
+#### Scenario: Other origins, windows or malformed payloads are ignored
+
+- **WHEN** the message origin or source is not the current editor, or `serviceId` is empty, or
+  `offlineUsageConsent` is missing
+- **THEN** no popup opens and no result is posted

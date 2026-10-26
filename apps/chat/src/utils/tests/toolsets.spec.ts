@@ -40,6 +40,40 @@ const baseForm = (): ToolsetFormData => ({
 });
 
 describe('formToToolsetBody', () => {
+  it('never sends the saved client secret hint, and sends no secret when none was typed', () => {
+    const form = baseForm();
+    form.auth = {
+      authenticationType: ToolsetAuthTypes.OAuth,
+      withLogin: WithLogin.WithConfig,
+      isLoggedIn: false,
+      clientId: 'client',
+      clientSecret: '',
+      clientSecretHint: 'd4c6',
+    };
+
+    const body = formToToolsetBody(form);
+
+    expect(body.authSettings.clientSecret).toBeUndefined();
+    expect(JSON.stringify(body)).not.toContain('d4c6');
+  });
+
+  it('sends exactly the typed client secret even when a hint is present', () => {
+    const form = baseForm();
+    form.auth = {
+      authenticationType: ToolsetAuthTypes.OAuth,
+      withLogin: WithLogin.WithConfig,
+      isLoggedIn: false,
+      clientId: 'client',
+      clientSecret: 'new-secret',
+      clientSecretHint: 'd4c6',
+    };
+
+    const body = formToToolsetBody(form);
+
+    expect(body.authSettings.clientSecret).toBe('new-secret');
+    expect(JSON.stringify(body)).not.toContain('d4c6');
+  });
+
   it('maps form fields and omits empty optionals', () => {
     const body = formToToolsetBody(baseForm());
     expect(body).toMatchObject({
@@ -180,6 +214,23 @@ describe('formToToolsetBody', () => {
 });
 
 describe('toolsetDtoToForm', () => {
+  it('carries the saved client secret hint into the auth form state', () => {
+    const form = toolsetDtoToForm({
+      id: 'toolsets/b/hinted__1.0.0',
+      toolset: 'toolsets/b/hinted__1.0.0',
+      endpoint: 'https://my-toolset.example.com/mcp',
+      authSettings: {
+        authenticationType: 'OAUTH',
+        dynamicallyRegistered: false,
+        clientId: 'client',
+        clientSecretHint: 'd4c6',
+      },
+    });
+
+    expect(form.auth.clientSecretHint).toBe('d4c6');
+    expect(form.auth.clientSecret).toBeUndefined();
+  });
+
   it('maps a loaded DTO into editor form state', () => {
     const dto: DialToolsetDto = {
       id: 'toolsets/b/My%20toolset__0.0.1',

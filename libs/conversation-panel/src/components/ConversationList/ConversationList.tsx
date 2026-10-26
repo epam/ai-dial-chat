@@ -74,6 +74,7 @@ export const ConversationList: FC<ConversationListProps> = memo(
       noResultsLabel,
       noResultsDescription,
       sharedEmptyDescription = noResultsDescription,
+      tabEmptyLabels,
       loadingLabel = 'Loading conversations',
       groupLabels,
       actionsLabel,
@@ -384,17 +385,28 @@ export const ConversationList: FC<ConversationListProps> = memo(
     const isListEmpty = filteredItems.length === 0;
     const isNoResults = isListEmpty && isNarrowed;
     const isEmpty = isListEmpty && !isNarrowed;
-    /* Under the Shared filter alone there is no query to rephrase: say where
-       shared chats come from instead. */
-    const currentNoResultsDescription =
+    /* A tab that alone narrows the list has no query to rephrase: the host can
+       say what belongs in that tab instead (Shared falls back to
+       `sharedEmptyDescription`). */
+    const isTabOnlyNarrowed =
+      isNoResults &&
+      searchQuery === '' &&
+      activeTypeFilter === ConversationTypeFilter.All;
+    const tabEmptyLabel = isTabOnlyNarrowed
+      ? tabEmptyLabels?.[activeFilter]
+      : undefined;
+    const currentNoResultsLabel = tabEmptyLabel?.label ?? noResultsLabel;
+    const fallbackNoResultsDescription =
       activeFilter === FilterTab.Shared && searchQuery === ''
         ? sharedEmptyDescription
         : noResultsDescription;
+    const currentNoResultsDescription =
+      tabEmptyLabel?.description ?? fallbackNoResultsDescription;
 
     const getStatusMessage = (): string => {
       if (isLoading) return loadingLabel;
       if (isEmpty) return emptyLabel;
-      if (isNoResults) return noResultsLabel;
+      if (isNoResults) return currentNoResultsLabel;
       return '';
     };
 
@@ -420,7 +432,7 @@ export const ConversationList: FC<ConversationListProps> = memo(
       if (isNoResults)
         return (
           <PanelNoResults
-            label={noResultsLabel}
+            label={currentNoResultsLabel}
             description={currentNoResultsDescription}
           />
         );

@@ -1,49 +1,3 @@
-.listContainer {
-  background: var(--cat-list-bg, var(--bg-layer-raised, #fcfcfc));
-  border-color: var(--cat-list-border, var(--stroke-secondary, #d1dbea));
-}
-
-.gridClip {
-  clip-path: inset(0 round 0.75rem);
-
-  :global(.ag-theme-balham-dark),
-  :global(.ag-root-wrapper),
-  :global(.ag-root) {
-    overflow: visible !important;
-  }
-
-  :global(.ag-root-wrapper) {
-    border: none !important;
-    border-radius: 0 !important;
-  }
-
-  :global(.ag-header) {
-    position: sticky;
-    top: var(--list-header-sticky-top, 0px);
-    z-index: 5;
-    border-top-left-radius: 0.75rem;
-    border-top-right-radius: 0.75rem;
-
-    background: var(--cat-list-header-bg, var(--bg-layer-raised, #fcfcfc));
-
-    border-bottom-color: var(
-      --cat-list-row-divider,
-      var(--stroke-tertiary, #e0e6f0)
-    ) !important;
-  }
-
-  :global(.ag-row) {
-    border-bottom-color: var(
-      --cat-list-row-divider,
-      var(--stroke-tertiary, #e0e6f0)
-    ) !important;
-  }
-
-  :global(.ag-row-even) {
-    background: var(--cat-list-row-even-bg, var(--bg-layer-base, #f5f7fa));
-  }
-}
-
 /* Right-align the "Favorite" column header to match the right-aligned star cells below it. */
 .favHeader {
   :global(.ag-header-cell-label) {
@@ -74,21 +28,6 @@
 .starToggleOff:hover,
 .starToggleOff:focus-visible {
   opacity: 1;
-}
-
-// An inset outline rather than a border: a border takes layout space, so it
-// shifted the row content and sat on the table edge (ag-grid rows have a fixed
-// width). z-index keeps the next row from painting over the bottom edge; it
-// stays below the sticky header (z-index 5).
-.selectedRow {
-  z-index: 1;
-  outline: 1px solid
-    var(--cat-list-selected-border, var(--stroke-accent, #1d4ed8)) !important;
-  outline-offset: -1px;
-  background-color: var(
-    --cat-list-selected-bg,
-    var(--bg-control-accent-alpha-active, #2764d933)
-  ) !important;
 }
 
 /* Name/version colors the list cell took from `ItemHeader` before it stopped using it. */

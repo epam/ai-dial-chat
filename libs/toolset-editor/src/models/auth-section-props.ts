@@ -45,6 +45,10 @@ export interface AuthSectionLabels {
   clientSecretLabel?: string;
   /** Placeholder for the OAuth client secret field. Defaults to `'Enter client secret'`. */
   clientSecretPlaceholder?: string;
+  /** Placeholder showing the saved client secret's hint while editing a saved toolset. Defaults to `` (hint) => `******${hint}` ``. */
+  clientSecretHintPlaceholder?: (hint: string) => string;
+  /** Description of the client secret field while the saved secret's hint is shown. Defaults to `'Leave empty to keep the saved secret.'`. */
+  clientSecretKeepCaption?: string;
   /** Accessible name of the client secret reveal toggle while the value is masked. Defaults to `'Show client secret'`. */
   showClientSecretLabel?: string;
   /** Accessible name of the client secret reveal toggle while the value is visible. Defaults to `'Hide client secret'`. */

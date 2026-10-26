@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UsagePeriod } from '../usage-period';
 import {
   USAGE_RESET_I18N_KEYS,
@@ -59,6 +59,32 @@ afterEach(() => {
 });
 
 describe('formatUsageResetTime', () => {
+  /* The label is stated at the viewer's offset as it is now, so pin now. */
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-09-15T12:00:00Z'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('states every boundary at the current offset across a daylight saving switch', () => {
+    mockResolvedZone('Europe/Warsaw');
+    vi.setSystemTime(new Date('2026-10-24T22:30:00Z'));
+
+    /* CEST (UTC+2) now; the week boundary falls after the switch to CET. */
+    const day = formatUsageResetTime('2026-10-25T00:00:00Z', 'en-US', t);
+    const week = formatUsageResetTime('2026-10-26T00:00:00Z', 'en-US', t);
+
+    expect(day?.label).toBe('Resets Oct 25, 2026, 2:00 AM GMT+2');
+    expect(week?.label).toBe('Resets Oct 26, 2026, 2:00 AM GMT+2');
+    expect(week?.ariaLabel).toBe(
+      'Usage resets Oct 26, 2026, 2:00 AM Central European Summer Time',
+    );
+    expect(week?.resetsAtMs).toBe(Date.parse('2026-10-26T00:00:00Z'));
+  });
+
   it('renders a UTC boundary at the local wall-clock time of the viewer zone', () => {
     mockResolvedZone('Europe/Warsaw');
 
