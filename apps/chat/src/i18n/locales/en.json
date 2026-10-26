@@ -1797,7 +1797,9 @@
   },
   "textRefinement": {
     "action": "Refine with AI",
-    "undo": "Undo",
+    "refining": "Refining",
+    "regenerate": "Regenerate",
+    "undo": "Restore original",
     "error": "Could not refine this text. Please try again.",
     "pending": "Refining text",
     "success": "Text refined",

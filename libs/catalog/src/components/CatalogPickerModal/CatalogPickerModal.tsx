@@ -17,6 +17,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { type FC, type ReactNode, useCallback, useMemo, useState } from 'react';
 import type { CatalogItem } from '../../models/catalog-item';
+import type { ListViewProps } from '../../models/list-props';
 import { CatalogLoadStatus } from '../../types/load-status';
 import { CatalogSortKey } from '../../types/sort';
 import {
@@ -24,6 +25,7 @@ import {
   getTopicOptions,
 } from '../../utils/catalog-filter';
 import { Filter } from '../Filter/Filter';
+import { ListView } from '../ListView/ListView';
 import styles from './CatalogPickerModal.module.scss';
 
 /** User-visible strings of `CatalogPickerModal`; pass translated ones in a localised host. */
@@ -72,8 +74,14 @@ export interface CatalogPickerModalLabels {
   apply?: string;
 }
 
-/** Props for `CatalogPickerModal`. */
-export interface CatalogPickerModalProps {
+/**
+ * The default list's `ListView` props: everything but the rows and the query,
+ * which the picker supplies. `ariaLabel` defaults to `labels.catalog`.
+ */
+export type CatalogPickerListProps = Omit<ListViewProps, 'items' | 'query'>;
+
+/** Props for `CatalogPickerModal` shared by the default and the custom list. */
+interface CatalogPickerModalBaseProps {
   /** The items the user can pick from, already mapped to catalog items. */
   items: CatalogItem[];
   /** User-visible strings. */
@@ -92,9 +100,26 @@ export interface CatalogPickerModalProps {
   onConfirm: () => void;
   /** Called when the user cancels or closes the dialog. */
   onClose: () => void;
-  /** Renders the list for the searched, filtered and sorted items, with the search query to highlight. */
-  renderList: (items: CatalogItem[], query: string) => ReactNode;
 }
+
+/**
+ * Props for `CatalogPickerModal`: either `listProps`, for the default list (a
+ * `ListView` of the searched, filtered and sorted items), or `renderList`, for
+ * a list of the host's own.
+ */
+export type CatalogPickerModalProps = CatalogPickerModalBaseProps &
+  (
+    | {
+        /** The default list's `ListView` props, e.g. `type`, `selectedItemId` and `onItemClick`. */
+        listProps: CatalogPickerListProps;
+        renderList?: never;
+      }
+    | {
+        listProps?: never;
+        /** Renders the list for the searched, filtered and sorted items, with the search query to highlight. */
+        renderList: (items: CatalogItem[], query: string) => ReactNode;
+      }
+  );
 
 /*
  * The kit means its Popup to fill the screen below its `md` breakpoint
@@ -115,8 +140,9 @@ const FULLSCREEN_BELOW_MD = {
 /**
  * Shell of a catalog picker dialog (Add toolset, Change model): the header with
  * sort, search and the From filter, and the loading, failure and empty states.
- * The list and its selection come from `renderList`. Mount it only while open,
- * so search, filter and sort start fresh each time it opens.
+ * The list is a `ListView` given `listProps`, or the host's own from
+ * `renderList`. Mount it only while open, so search, filter and sort start
+ * fresh each time it opens.
  */
 export const CatalogPickerModal: FC<CatalogPickerModalProps> = ({
   items,
@@ -128,6 +154,7 @@ export const CatalogPickerModal: FC<CatalogPickerModalProps> = ({
   footerStart,
   onConfirm,
   onClose,
+  listProps,
   renderList,
 }) => {
   const [search, setSearch] = useState('');
@@ -267,7 +294,19 @@ export const CatalogPickerModal: FC<CatalogPickerModalProps> = ({
         </div>
       );
     }
-    return renderList(rows, search);
+    if (renderList) return renderList(rows, search);
+    /* The grid scrolls its own rows, so this box only gives it the height left
+       below the search and filters. */
+    return (
+      <div className="min-h-0 flex-1">
+        <ListView
+          ariaLabel={labels.catalog}
+          {...listProps}
+          items={rows}
+          query={search}
+        />
+      </div>
+    );
   };
 
   const searchLabel = labels.search ?? 'Search';

@@ -1,6 +1,6 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
-import { Grid } from '@epam/ai-dial-ui-kit/grid';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { Grid, GridAppearance } from '@epam/ai-dial-ui-kit/grid';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CATALOG_CLASS } from '../../../constants/public-class-names';
@@ -16,6 +16,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 
 vi.mock('@epam/ai-dial-ui-kit/grid', () => ({
+  GridAppearance: { Default: 'default', Chat: 'chat' },
   Grid: vi.fn(
     ({
       rowData,
@@ -34,7 +35,6 @@ vi.mock('@epam/ai-dial-ui-kit/grid', () => ({
           onToggleFavorite?: (id: string, isStarred: boolean) => void;
           selectedItemId?: string;
         };
-        getRowClass?: (params: { data: CatalogItem }) => string | undefined;
       };
       ariaLabel?: string;
       withoutHeaderBorders?: boolean;
@@ -57,12 +57,7 @@ vi.mock('@epam/ai-dial-ui-kit/grid', () => ({
             <span>{emptyStateTitle}</span>
           )}
           {rowData?.map((item) => (
-            <div
-              key={item.id}
-              data-row-class={
-                additionalGridOptions?.getRowClass?.({ data: item }) ?? ''
-              }
-            >
+            <div key={item.id} data-row>
               <span>{item.id === ctx?.selectedItemId ? 'selected' : ''}</span>
               <button
                 aria-label={`star ${item.id}`}
@@ -126,6 +121,21 @@ describe('ListView', () => {
     expect(screen.getByText('No items')).toBeTruthy();
   });
 
+  it('renders the kit Chat table appearance', () => {
+    render(
+      <ListView
+        items={[]}
+        query=""
+        type={CatalogEntityType.Model}
+        ariaLabel="Catalog"
+      />,
+    );
+    expect(vi.mocked(Grid)).toHaveBeenCalledWith(
+      expect.objectContaining({ appearance: GridAppearance.Chat }),
+      undefined,
+    );
+  });
+
   it('calls onToggleFavorite with item id and new star state when star is toggled', async () => {
     const onToggleFavorite = vi.fn();
     const item = makeItem({ id: 'item-1', name: 'Test', isStarred: false });
@@ -142,25 +152,27 @@ describe('ListView', () => {
     expect(onToggleFavorite).toHaveBeenCalledWith('item-1', true);
   });
 
-  it('applies the selected-row class only to the row matching selectedItemId', () => {
-    const item1 = makeItem({ id: 'item-1', name: 'Claude' });
-    const item2 = makeItem({ id: 'item-2', name: 'Gemini' });
-    const { container } = render(
+  it('marks only the row matching selectedItemId through the grid row selection', () => {
+    render(
       <ListView
-        items={[item1, item2]}
-        query=""
+        items={[
+          makeItem({ id: 'item-1', name: 'Claude' }),
+          makeItem({ id: 'item-2', name: 'Gemini' }),
+        ]}
         type={CatalogEntityType.Model}
-        ariaLabel="Catalog"
         selectedItemId="item-2"
       />,
     );
 
-    // Mocked ag-grid row markup exposes the computed class only via this
-    // test-only data attribute; no semantic role identifies individual rows.
-    // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container
-    const rows = container.querySelectorAll('[data-row-class]');
-    expect(rows[0].getAttribute('data-row-class')).toBe('');
-    expect(rows[1].getAttribute('data-row-class')).toBeTruthy();
+    const props = vi.mocked(Grid).mock.lastCall?.[0];
+    expect([...(props?.selectedRowIds ?? [])]).toEqual(['item-2']);
+    expect(props?.selectionMode).toBeUndefined();
+    expect(props?.additionalGridOptions?.rowSelection).toMatchObject({
+      mode: 'singleRow',
+      checkboxes: false,
+      enableClickSelection: false,
+    });
+    expect(props?.additionalGridOptions?.getRowClass).toBeUndefined();
   });
 
   it('passes selectedItemId through to the grid context', () => {
@@ -192,133 +204,54 @@ describe('ListView', () => {
     ).toBe('60');
   });
 
-  it('hands the grid a window of rows instead of the whole list', () => {
+  it('hands the grid every item and renders no spacer rows', () => {
     const items = Array.from({ length: 200 }, (_, i) =>
       makeItem({ id: `item-${i}`, name: `Model ${i}` }),
     );
     const { container } = render(
-      <ListView
-        type={CatalogEntityType.Model}
-        items={items}
-        query=""
-        ariaLabel="Catalog"
-      />,
+      <ListView type={CatalogEntityType.Model} items={items} />,
     );
 
-    // Rows only exist as mocked ag-grid markup; no role identifies them.
+    const props = vi.mocked(Grid).mock.lastCall?.[0];
+    expect(props?.rowData).toBe(items);
+    expect(props?.additionalGridOptions?.domLayout).toBeUndefined();
+    // Spacers were aria-hidden boxes sized by an inline height.
     // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container
-    expect(container.querySelectorAll('[data-row-class]')).toHaveLength(30);
+    expect(container.querySelector('[aria-hidden][style]')).toBeNull();
   });
 
-  it('renders every row of a list shorter than the window', () => {
-    const items = Array.from({ length: 5 }, (_, i) =>
-      makeItem({ id: `item-${i}`, name: `Model ${i}` }),
-    );
-    const { container } = render(
-      <ListView
-        type={CatalogEntityType.Model}
-        items={items}
-        query=""
-        ariaLabel="Catalog"
-      />,
-    );
-
-    // Rows only exist as mocked ag-grid markup; no role identifies them.
-    // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container
-    expect(container.querySelectorAll('[data-row-class]')).toHaveLength(5);
-  });
-
-  it('scrolls between bounded row windows without reconfiguring columns or animating rows', () => {
-    const items = Array.from({ length: 200 }, (_, i) =>
-      makeItem({ id: `item-${i}`, name: `Model ${i}` }),
-    );
-    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(600);
-    const getWidth = vi
-      .spyOn(HTMLElement.prototype, 'clientWidth', 'get')
-      .mockReturnValue(1100);
-    let scrollTop = 0;
-    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(
-      function (this: HTMLElement) {
-        return {
-          top: this.getAttribute('aria-label') === 'Results' ? 0 : -scrollTop,
-        } as DOMRect;
-      },
-    );
-    render(
-      <div role="region" aria-label="Results" style={{ overflowY: 'auto' }}>
-        <ListView type={CatalogEntityType.Model} items={items} />
-      </div>,
+  it('keeps the same columns through a search and a selection, sized by flex alone', () => {
+    const items = [
+      makeItem({ id: 'a', name: 'Alpha' }),
+      makeItem({ id: 'b', name: 'Beta' }),
+    ];
+    const { rerender } = render(
+      <ListView type={CatalogEntityType.Model} items={items} />,
     );
     const initialProps = vi.mocked(Grid).mock.lastCall?.[0];
-    const retainedRow = screen.getByRole('button', { name: 'star item-15' });
-    const scroller = screen.getByRole('region', { name: 'Results' });
 
-    scrollTop = 1200;
-    fireEvent.scroll(scroller);
-
-    expect(screen.queryByRole('button', { name: 'star item-0' })).toBeNull();
-    expect(screen.getByRole('button', { name: 'star item-15' })).toBe(
-      retainedRow,
-    );
-    expect(screen.getByRole('button', { name: 'star item-39' })).toBeTruthy();
-    expect(screen.getAllByRole('button')).toHaveLength(30);
-    const scrolledProps = vi.mocked(Grid).mock.lastCall?.[0];
-    expect(scrolledProps?.columnDefs).toBe(initialProps?.columnDefs);
-    expect(scrolledProps?.additionalGridOptions).toBe(
-      initialProps?.additionalGridOptions,
-    );
-    expect(scrolledProps?.additionalGridOptions).toMatchObject({
-      domLayout: 'autoHeight',
-      animateRows: false,
-      suppressAnimationFrame: true,
-      suppressScrollOnNewData: true,
-    });
-
-    scrollTop = 10800;
-    getWidth.mockReturnValue(0);
-    fireEvent.scroll(scroller);
-    expect(screen.getByRole('button', { name: 'star item-15' })).toBe(
-      retainedRow,
-    );
-
-    getWidth.mockReturnValue(1100);
-    fireEvent.scroll(scroller);
-    expect(screen.getByRole('button', { name: 'star item-180' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'star item-199' })).toBeTruthy();
-    expect(screen.getAllByRole('button')).toHaveLength(30);
-
-    scrollTop = 0;
-    fireEvent.scroll(scroller);
-    expect(screen.getByRole('button', { name: 'star item-0' })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'star item-180' })).toBeNull();
-  });
-
-  it('keeps manually resized columns when only the grid height changes', () => {
-    render(
+    rerender(
       <ListView
         type={CatalogEntityType.Model}
-        items={[makeItem({ id: 'x', name: 'x' })]}
+        items={items}
+        query="al"
+        selectedItemId="a"
       />,
     );
-    const onGridSizeChanged =
-      vi.mocked(Grid).mock.lastCall?.[0].additionalGridOptions
-        ?.onGridSizeChanged;
-    const sizeColumnsToFit = vi.fn();
-    const fireSizeChanged = (clientWidth: number, clientHeight: number) =>
-      onGridSizeChanged?.({
-        clientWidth,
-        clientHeight,
-        api: { sizeColumnsToFit },
-      } as unknown as Parameters<NonNullable<typeof onGridSizeChanged>>[0]);
 
-    fireSizeChanged(1100, 1800);
-    expect(sizeColumnsToFit).toHaveBeenCalledOnce();
-
-    fireSizeChanged(1100, 2400);
-    expect(sizeColumnsToFit).toHaveBeenCalledOnce();
-
-    fireSizeChanged(900, 2400);
-    expect(sizeColumnsToFit).toHaveBeenCalledTimes(2);
+    const nextProps = vi.mocked(Grid).mock.lastCall?.[0];
+    expect(nextProps?.additionalGridOptions).not.toBe(
+      initialProps?.additionalGridOptions,
+    );
+    expect(nextProps?.columnDefs).toBe(initialProps?.columnDefs);
+    // A new defaultColDef would make ag-grid rebuild the columns.
+    expect(nextProps?.additionalGridOptions?.defaultColDef).toBe(
+      initialProps?.additionalGridOptions?.defaultColDef,
+    );
+    expect(nextProps?.additionalGridOptions?.defaultColDef).toMatchObject({
+      suppressSizeToFit: true,
+    });
+    expect(nextProps?.additionalGridOptions?.onGridSizeChanged).toBeUndefined();
   });
 
   it('can clear and restore results after the table has been mounted', () => {
@@ -338,26 +271,6 @@ describe('ListView', () => {
 
     rerender(<ListView type={CatalogEntityType.Model} items={items} />);
     expect(screen.getByRole('button', { name: 'star item-1' })).toBeTruthy();
-  });
-
-  it('reserves the height of the rows outside the window', () => {
-    const items = Array.from({ length: 200 }, (_, i) =>
-      makeItem({ id: `item-${i}`, name: `Model ${i}` }),
-    );
-    const { container } = render(
-      <ListView
-        type={CatalogEntityType.Model}
-        items={items}
-        query=""
-        ariaLabel="Catalog"
-      />,
-    );
-
-    /* 170 unrendered rows × the 60px row height, so the page keeps the
-       scroll height it would have with every row mounted. */
-    // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container
-    const spacer = container.querySelector('[aria-hidden][style]');
-    expect(spacer?.getAttribute('style')).toContain('10200px');
   });
 
   it('drops the row context-menu wrapper ag-grid puts around every cell', () => {
@@ -392,7 +305,7 @@ describe('ListView', () => {
     ).toBe('true');
   });
 
-  it("does not enable ag-grid's built-in alternating row colors (zebra striping is done via CSS override instead, to avoid stacking with it)", () => {
+  it('leaves row colors to the grid theme, with no zebra striping', () => {
     render(
       <ListView
         type={CatalogEntityType.Model}
@@ -406,6 +319,27 @@ describe('ListView', () => {
         .getByLabelText('Catalog')
         .getAttribute('data-alternate-odd-row-colors'),
     ).toBe('false');
+  });
+
+  it('emits only the cell-content color variables, leaving the chrome to the grid theme', () => {
+    const { container } = render(
+      <ListView
+        type={CatalogEntityType.Model}
+        items={[makeItem({ id: 'x', name: 'x' })]}
+        styles={{ colors: { folderIcon: '#7c3aed' } }}
+      />,
+    );
+
+    // The variables sit on the unlabeled root box; no query reaches its style.
+    // eslint-disable-next-line testing-library/no-node-access
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.style.getPropertyValue('--cat-list-folder-icon')).toBe(
+      '#7c3aed',
+    );
+    expect(root.getAttribute('style')).not.toContain('--cat-list-bg');
+    expect(root.getAttribute('style')).not.toContain(
+      '--list-header-sticky-top',
+    );
   });
 });
 

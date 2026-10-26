@@ -5,16 +5,8 @@ import styles from './ListView.module.scss';
 import { EntityTypeCellRenderer } from './Renders/EntityTypeCellRenderer';
 import { FolderCellRenderer } from './Renders/FolderCellRenderer';
 import { NameCellRenderer } from './Renders/NameCellRenderer';
-import { SelectionCellRenderer } from './Renders/SelectionCellRenderer';
-import { SelectionHeader } from './Renders/SelectionHeader';
 import { StarCellRenderer } from './Renders/StarCellRenderer';
 import { TagsCellRenderer } from './Renders/TagsCellRenderer';
-
-/** Column id of the multi-select checkbox column. */
-export const SELECTION_COLUMN_ID = 'selection';
-
-/** Width of the multi-select checkbox column, in pixels. */
-const SELECTION_COLUMN_WIDTH = 52;
 
 /** The optional built-in `ListView` columns a host can independently show or hide per entity type. */
 export type ListViewColumnKey = 'folder' | 'tags' | 'favorite';
@@ -69,36 +61,17 @@ const resolveColumnVisibility = (
  * unreadable stubs and tags were clipped mid-word. Name keeps twice the share
  * because it carries the icon, the name and the version.
  *
- * `isMultiSelect` prepends a checkbox column whose header and cells read the
- * selection from `ListSelectionContext`, so selecting never rebuilds columns.
+ * The multi-select checkbox column is the ui-kit `Grid`'s own, so it is not
+ * declared here.
  */
 export const CATALOG_COLUMNS = (
   type: CatalogEntityType,
   isReadonly = false,
   columnVisibility?: ListViewColumnVisibility,
-  isMultiSelect = false,
 ): ColDef<CatalogItem>[] => {
   const visibility = resolveColumnVisibility(type, columnVisibility);
-  const selectionColumns: ColDef<CatalogItem>[] = isMultiSelect
-    ? [
-        {
-          colId: SELECTION_COLUMN_ID,
-          headerName: '',
-          width: SELECTION_COLUMN_WIDTH,
-          minWidth: SELECTION_COLUMN_WIDTH,
-          maxWidth: SELECTION_COLUMN_WIDTH,
-          filter: false,
-          sortable: false,
-          resizable: false,
-          suppressMovable: true,
-          headerComponent: SelectionHeader,
-          cellRenderer: SelectionCellRenderer,
-        },
-      ]
-    : [];
 
   return [
-    ...selectionColumns,
     {
       headerName: 'Name',
       flex: 2,
