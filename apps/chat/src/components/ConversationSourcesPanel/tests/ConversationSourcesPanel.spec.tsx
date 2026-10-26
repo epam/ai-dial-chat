@@ -73,16 +73,29 @@ vi.mock('@epam/ai-dial-source-panel', () => ({
     additionalSections,
     sources,
     onSourceClick,
+    uploaded,
+    onAttachmentClick,
   }: {
     onDownloadAll?: () => void;
     title?: ReactNode;
     additionalSections?: ReactNode;
     sources?: QuotationSource[];
     onSourceClick?: (source: QuotationSource) => void;
+    uploaded?: DisplayAttachment[];
+    onAttachmentClick?: (attachment: DisplayAttachment) => void;
   }) => (
     <div>
       {title && <h1>{title}</h1>}
       {additionalSections}
+      {uploaded?.map((attachment) => (
+        <button
+          key={attachment.id}
+          type="button"
+          onClick={() => onAttachmentClick?.(attachment)}
+        >
+          {`Open ${attachment.name}`}
+        </button>
+      ))}
       {sources?.map((source) => (
         <button
           key={source.url}
@@ -962,14 +975,29 @@ describe('ConversationSourcesPanelContainer — source clicks', () => {
     );
   });
 
-  it('does not download, open a tab or close the sidebar for a click a later click supersedes', async () => {
-    const startLaterRequest = renderHook(() => useLatestCanvasRequest()).result
-      .current;
+  const supersedeNextOpen = () => {
+    const { result, unmount } = renderHook(() => useLatestCanvasRequest());
     mockOpenAttachmentCanvas.mockImplementationOnce(async () => {
-      startLaterRequest();
+      result.current();
+      unmount();
       return false;
     });
+  };
+
+  it('does not download, open a tab or close the sidebar for a click a later click supersedes', async () => {
+    supersedeNextOpen();
     mockSources = [makeSource('files/bucket/report.pdf', MIMEType.PDF)];
+
+    await clickSource();
+
+    expect(mockHandleAttachmentClick).not.toHaveBeenCalled();
+    expect(window.open).not.toHaveBeenCalled();
+    expect(mockHandleClose).not.toHaveBeenCalled();
+  });
+
+  it('does not download or open a tab for a page-reference click a later click supersedes', async () => {
+    supersedeNextOpen();
+    mockSources = [makeSource('files/bucket/report.pdf#page=81')];
 
     await clickSource();
 
@@ -1001,6 +1029,52 @@ describe('ConversationSourcesPanelContainer — source clicks', () => {
       'noopener,noreferrer',
     );
     expect(mockOpenAttachmentCanvas).not.toHaveBeenCalled();
+  });
+});
+
+describe('ConversationSourcesPanelContainer — attachment clicks', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUploaded = [
+      makeAttachment('upload.pdf', { url: 'files/bucket/u.pdf' }),
+    ];
+    mockGenerated = [];
+    mockSources = [];
+    mockConversations = [];
+    mockSidebarConversationModelId = undefined;
+    resetActiveScheduledTaskMock();
+    mockOpenAttachmentCanvas.mockResolvedValue(true);
+  });
+
+  const clickAttachment = async () => {
+    render(<ConversationSourcesPanelContainer />);
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Open upload.pdf' }),
+    );
+  };
+
+  it('downloads the attachment when the canvas cannot open it', async () => {
+    mockOpenAttachmentCanvas.mockResolvedValue(false);
+
+    await clickAttachment();
+
+    expect(mockHandleAttachmentClick).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'upload.pdf' }),
+    );
+  });
+
+  it('does not download the attachment when a later click supersedes it', async () => {
+    const { result, unmount } = renderHook(() => useLatestCanvasRequest());
+    mockOpenAttachmentCanvas.mockImplementationOnce(async () => {
+      result.current();
+      unmount();
+      return false;
+    });
+
+    await clickAttachment();
+
+    expect(mockHandleAttachmentClick).not.toHaveBeenCalled();
+    expect(mockHandleClose).not.toHaveBeenCalled();
   });
 });
 
