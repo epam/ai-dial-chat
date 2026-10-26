@@ -201,7 +201,9 @@ const SidebarNavigation: FC<Props> = ({
           />
         )
       }
-      footerActions={isUsageShown ? <UsageLink onClick={handleLinkClick} /> : undefined}
+      footerActions={
+        isUsageShown ? <UsageLink onClick={handleLinkClick} /> : undefined
+      }
     >
       {chats}
     </NavigationSidebar>
