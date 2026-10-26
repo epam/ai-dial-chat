@@ -119,7 +119,7 @@ When `item.iconTooltip` is provided and `item.isIconLoading` is `false` or `unde
 - **WHEN** `conversations` is an empty array
 - **THEN** the `labels.emptyLabel` text is rendered instead of sections
 
-`ConversationList` SHALL follow the Patterns 2.0 empty-state rules. It SHALL show `labels.emptyLabel` / `labels.emptyDescription` ("No [entities] yet") when the list is empty with no search typed and both filters at `All`, and `labels.noResultsLabel` / `labels.noResultsDescription` ("No [entities] found") when a search query or a filter — `activeFilter` other than `FilterTab.All`, or `activeTypeFilter` other than `ConversationTypeFilter.All` — matches nothing. Under `FilterTab.Shared` with no search typed, the description SHALL be `labels.sharedEmptyDescription`, falling back to `labels.noResultsDescription`. The same title is announced through the list's `role="status"` region. `ConversationPanelView` passes `conversationPanel.sharedEmptyDescription` as `sharedEmptyDescription` (Issue #9476).
+`ConversationList` SHALL follow the Patterns 2.0 empty-state rules. It SHALL show `labels.emptyLabel` / `labels.emptyDescription` ("No [entities] yet") when the list is empty with no search typed and both filters at `All`, and `labels.noResultsLabel` / `labels.noResultsDescription` ("No [entities] found") when a search query or a filter — `activeFilter` other than `FilterTab.All`, or `activeTypeFilter` other than `ConversationTypeFilter.All` — matches nothing. Under `FilterTab.Shared` with no search typed, the description SHALL be `labels.sharedEmptyDescription`, falling back to `labels.noResultsDescription`. When an entry for the active `FilterTab` exists in `labels.tabEmptyLabels` and that tab alone narrows the list (no search typed, `activeTypeFilter` at `ConversationTypeFilter.All`), its `label` and `description` SHALL replace the heading and description above, each falling back to them when omitted. The same title is announced through the list's `role="status"` region. `ConversationPanelView` passes `conversationPanel.sharedEmptyDescription` as `sharedEmptyDescription` (Issue #9476).
 
 #### Scenario: A filter that matches nothing reports no results
 
@@ -132,6 +132,18 @@ When `item.iconTooltip` is provided and `item.isIconLoading` is `false` or `unde
 - **GIVEN** no conversation is shared with the user and no search is typed
 - **WHEN** the Origin filter is set to Shared
 - **THEN** `labels.noResultsLabel` is rendered with `labels.sharedEmptyDescription` as its description
+
+#### Scenario: A tab entry in `tabEmptyLabels` replaces the no-results text
+
+- **GIVEN** `labels.tabEmptyLabels[FilterTab.Shared]` is set and no conversation is shared with the user
+- **WHEN** the Origin filter is Shared and no search is typed
+- **THEN** the entry's `label` and `description` are rendered, and its `label` is announced
+
+#### Scenario: A search or a type filter keeps the generic text
+
+- **GIVEN** `labels.tabEmptyLabels[FilterTab.Shared]` is set
+- **WHEN** the Origin filter is Shared and a search query is typed, or the Type filter is not `All`
+- **THEN** `labels.noResultsLabel` is rendered, not the tab entry
 
 #### Scenario: A search under the Shared filter keeps the search description
 

@@ -40,6 +40,7 @@ the mobile layout does — pass `isOverlay` so the panel slides in and out at fu
 width rather than collapsing in place.
 
 ```tsx
+import { FilterTab } from '@epam/ai-dial-chat-shared';
 import { ConversationPanel } from '@epam/ai-dial-conversation-panel';
 import type { ConversationPanelProps } from '@epam/ai-dial-conversation-panel';
 
@@ -59,6 +60,12 @@ import type { ConversationPanelProps } from '@epam/ai-dial-conversation-panel';
     noResultsDescription: 'Try a different search term or check your filters.',
     sharedEmptyDescription:
       'Chats other people share with you will show up here.',
+    tabEmptyLabels: {
+      [FilterTab.Shared]: {
+        label: 'No shared chats yet',
+        description: 'Chats other people share with you will show up here.',
+      },
+    },
     newChatLabel: 'New chat',
     searchPlaceholder: 'Search…',
     searchClearLabel: 'Clear search',
@@ -234,6 +241,10 @@ search and no filter applied, and `noResultsLabel` / `noResultsDescription`
 when a search or a filter (origin or type other than `All`) matches nothing.
 Under the `Shared` filter with no search, the description is
 `sharedEmptyDescription`, which falls back to `noResultsDescription`.
+`tabEmptyLabels` goes further: when one filter tab alone narrows the list to
+nothing (no search typed, type filter at `All`), its `label` and `description`
+replace `noResultsLabel` and the description above, each falling back to them
+when left out.
 
 `requestedFilter` makes the section adopt a filter whenever it changes (the user
 can still pick another afterwards), `onFilterChange` reports the user's choice,

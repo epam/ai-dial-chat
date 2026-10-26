@@ -310,6 +310,26 @@ describe('ConversationPanel', () => {
     expect(screen.getAllByText('No conversations yet')).toBeTruthy();
   });
 
+  it('forwards labels.tabEmptyLabels to the list for the active filter tab', () => {
+    render(
+      <ConversationPanel
+        {...BASE_PROPS}
+        conversations={[]}
+        activeFilter={FilterTab.Shared}
+        labels={{
+          ...BASE_PROPS.labels,
+          tabEmptyLabels: {
+            [FilterTab.Shared]: { label: 'No shared chats yet' },
+          },
+        }}
+      />,
+    );
+
+    expect(screen.getAllByText('No shared chats yet').length).toBeGreaterThan(
+      0,
+    );
+  });
+
   it('marks the active conversation with aria-current="page"', () => {
     render(
       <ConversationPanel
