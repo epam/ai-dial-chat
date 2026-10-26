@@ -214,6 +214,21 @@ describe('isToolsetAuthValid', () => {
     ).toBe(false);
   });
 
+  it('does not treat a saved client secret hint as a secret when creating a toolset', () => {
+    expect(
+      isToolsetAuthValid({
+        authenticationType: ToolsetAuthTypes.OAuth,
+        withLogin: WithLogin.WithConfig,
+        isLoggedIn: false,
+        clientId: 'client-id',
+        clientSecret: '',
+        clientSecretHint: 'd4c6',
+        authorizationEndpoint: 'https://auth.example.com/authorize',
+        tokenEndpoint: 'https://auth.example.com/token',
+      }),
+    ).toBe(false);
+  });
+
   it('does not require a client secret for configured OAuth when editing an existing toolset (the server redacts and preserves it)', () => {
     expect(
       isToolsetAuthValid(

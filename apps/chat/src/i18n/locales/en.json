@@ -1329,6 +1329,7 @@
       "clientIdRequired": "Client ID is required",
       "clientSecretLabel": "Client secret",
       "clientSecretPlaceholder": "Enter client secret",
+      "clientSecretKeepCaption": "Leave empty to keep the saved secret.",
       "clientSecretRequired": "Client secret is required",
       "showClientSecretLabel": "Show client secret",
       "hideClientSecretLabel": "Hide client secret",

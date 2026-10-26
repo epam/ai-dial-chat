@@ -362,6 +362,9 @@ const ToolsetApplicationEditor: FC = () => {
           clientSecretPlaceholder: t(
             ToolsetEditorI18nKeys.ClientSecretPlaceholder,
           ),
+          clientSecretKeepCaption: t(
+            ToolsetEditorI18nKeys.ClientSecretKeepCaption,
+          ),
           showClientSecretLabel: t(ToolsetEditorI18nKeys.ShowClientSecretLabel),
           hideClientSecretLabel: t(ToolsetEditorI18nKeys.HideClientSecretLabel),
           authorizationEndpointLabel: t(

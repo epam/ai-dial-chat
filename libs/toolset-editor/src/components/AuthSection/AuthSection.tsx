@@ -33,6 +33,11 @@ import type { ToolsetOAuthLoginResult } from '../../models/toolset-oauth-login';
 import { ToolsetOAuthLoginStatus } from '../../models/toolset-oauth-login';
 import { isToolsetAuthValid, isValidEndpointUrl } from '../../utils/toolsets';
 
+const CLIENT_SECRET_KEEP_CAPTION_ID = 'toolset-client-secret-keep-caption';
+
+const defaultClientSecretHintPlaceholder = (hint: string): string =>
+  `******${hint}`;
+
 // OAuth defaults to standard login (dynamic client registration); custom login is opt-in.
 const defaultWithLoginFor = (type: ToolsetAuthTypes): WithLogin =>
   type === ToolsetAuthTypes.None ? WithLogin.WithoutLogin : WithLogin.WithLogin;
@@ -70,6 +75,12 @@ export const AuthSection: FC<AuthSectionProps> = ({
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const isControlsDisabled = auth.isLoggedIn || isSaving || isAuthBusy;
+  /* The saved secret's hint stands in for the secret only while editing a
+   * saved toolset and before the user types a replacement. */
+  const savedClientSecretHint =
+    isEditMode && auth.clientSecretHint && !auth.clientSecret
+      ? auth.clientSecretHint
+      : undefined;
 
   const canLogIn =
     isValidEndpointUrl(endpoint) &&
@@ -284,27 +295,50 @@ export const AuthSection: FC<AuthSectionProps> = ({
             invalid={!!errors.clientId}
             disabled={isControlsDisabled}
           />
-          <PasswordInput
-            id="toolset-client-secret"
-            value={auth.clientSecret ?? ''}
-            onChange={(value) => onAuthChange({ clientSecret: value ?? '' })}
-            labelProps={{
-              label: labels?.clientSecretLabel ?? 'Client secret',
-              required: !isEditMode,
-            }}
-            placeholder={
-              labels?.clientSecretPlaceholder ?? 'Enter client secret'
-            }
-            showPasswordLabel={
-              labels?.showClientSecretLabel ?? 'Show client secret'
-            }
-            hidePasswordLabel={
-              labels?.hideClientSecretLabel ?? 'Hide client secret'
-            }
-            error={errors.clientSecret || undefined}
-            invalid={!!errors.clientSecret}
-            disabled={isControlsDisabled}
-          />
+          <div className="flex flex-col gap-1">
+            <PasswordInput
+              id="toolset-client-secret"
+              value={auth.clientSecret ?? ''}
+              onChange={(value) => onAuthChange({ clientSecret: value ?? '' })}
+              labelProps={{
+                label: labels?.clientSecretLabel ?? 'Client secret',
+                required: !isEditMode,
+              }}
+              placeholder={
+                savedClientSecretHint != null
+                  ? (
+                      labels?.clientSecretHintPlaceholder ??
+                      defaultClientSecretHintPlaceholder
+                    )(savedClientSecretHint)
+                  : (labels?.clientSecretPlaceholder ?? 'Enter client secret')
+              }
+              aria-describedby={
+                savedClientSecretHint != null
+                  ? CLIENT_SECRET_KEEP_CAPTION_ID
+                  : undefined
+              }
+              showPasswordLabel={
+                labels?.showClientSecretLabel ?? 'Show client secret'
+              }
+              hidePasswordLabel={
+                labels?.hideClientSecretLabel ?? 'Hide client secret'
+              }
+              error={errors.clientSecret || undefined}
+              invalid={!!errors.clientSecret}
+              disabled={isControlsDisabled}
+            />
+            {/* Not the kit's `caption`/`CaptionText`: both render `role="alert"`,
+             * which would announce this static hint as an alert. */}
+            {savedClientSecretHint != null && (
+              <p
+                id={CLIENT_SECRET_KEEP_CAPTION_ID}
+                className="dial-tiny-text text-secondary"
+              >
+                {labels?.clientSecretKeepCaption ??
+                  'Leave empty to keep the saved secret.'}
+              </p>
+            )}
+          </div>
           <Input
             id="toolset-authorization-endpoint"
             value={auth.authorizationEndpoint ?? ''}

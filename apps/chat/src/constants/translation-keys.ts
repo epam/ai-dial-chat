@@ -1300,6 +1300,7 @@ export enum ToolsetEditorI18nKeys {
   ClientIdRequired = 'toolsetEditor.auth.clientIdRequired',
   ClientSecretLabel = 'toolsetEditor.auth.clientSecretLabel',
   ClientSecretPlaceholder = 'toolsetEditor.auth.clientSecretPlaceholder',
+  ClientSecretKeepCaption = 'toolsetEditor.auth.clientSecretKeepCaption',
   ClientSecretRequired = 'toolsetEditor.auth.clientSecretRequired',
   ShowClientSecretLabel = 'toolsetEditor.auth.showClientSecretLabel',
   HideClientSecretLabel = 'toolsetEditor.auth.hideClientSecretLabel',
