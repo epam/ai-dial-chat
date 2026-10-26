@@ -4,6 +4,7 @@ import {
   DangerButton,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
+  ErrorText,
   NeutralButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconBuildingCommunity, IconUser } from '@tabler/icons-react';
@@ -139,9 +140,7 @@ export const ApplicationCredentialRow: FC<ApplicationCredentialRowProps> = ({
         <div className="flex flex-col gap-3 pt-3">
           <p>{removeMessage}</p>
           {error && (
-            <p role="alert" className={styles.errorText}>
-              {error}
-            </p>
+            <ErrorText role="alert" className={styles.errorText} text={error} />
           )}
           <div className="flex flex-wrap justify-end gap-2">
             <NeutralButton

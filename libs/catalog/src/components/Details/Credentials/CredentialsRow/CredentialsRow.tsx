@@ -5,6 +5,7 @@ import {
   DangerButton,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
+  ElementSize,
   ErrorText,
   Input,
   LinkButton,
@@ -185,9 +186,10 @@ export const CredentialsRow: FC<CredentialsRowProps> = ({
             (isSignedIn ? (
               onRequestLogout && (
                 <DangerButton
+                  size={ElementSize.Small}
                   appearance={ButtonAppearance.Ghost}
                   label={logoutLabel}
-                  className="min-h-11 min-w-28 shrink-0 justify-center whitespace-nowrap"
+                  className="min-w-28 shrink-0 justify-center whitespace-nowrap"
                   onClick={onRequestLogout}
                   disabled={isSaving || disabled}
                 />
@@ -201,8 +203,9 @@ export const CredentialsRow: FC<CredentialsRowProps> = ({
                     <Spinner size={DIAL_ICON_SIZE.SM} ariaLabel={loginLabel} />
                   ) : undefined
                 }
+                size={ElementSize.Small}
                 disabled={isSaving || disabled}
-                className="min-h-11 min-w-28 shrink-0 justify-center whitespace-nowrap"
+                className="min-w-28 shrink-0 justify-center whitespace-nowrap"
                 onClick={handleLogin}
               />
             ))}
@@ -298,12 +301,11 @@ export const CredentialsRow: FC<CredentialsRowProps> = ({
           )}
         {!isSignedIn && renderLoginOptions?.(isSaving || disabled)}
         {error && (
-          <p
+          <ErrorText
             role="alert"
             className={mergeClasses(errorClassName, styles.errorText)}
-          >
-            {error}
-          </p>
+            text={error}
+          />
         )}
         {children}
       </div>
