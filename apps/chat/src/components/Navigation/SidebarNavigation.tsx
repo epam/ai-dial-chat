@@ -119,6 +119,12 @@ const SidebarNavigation: FC<Props> = ({
     if (isMobile && isOpen) onClose?.();
   }, [pathname, isMobile, isOpen, onClose]);
 
+  /* A link to the page already on screen changes no route, so the effect
+     above never fires: the click itself ends the drawer. */
+  const handleLinkClick = useCallback(() => {
+    if (isMobile && isOpen) onClose?.();
+  }, [isMobile, isOpen, onClose]);
+
   const isNavigationShown = isMobile ? hasNavigation : !isIsolatedView;
   const isUserMenuShown =
     status === AuthStatus.Authenticated &&
@@ -173,7 +179,7 @@ const SidebarNavigation: FC<Props> = ({
       isOpen={isOpen}
       onClose={onClose}
       renderLink={(item, children, linkProps) => (
-        <Link to={item.id} {...linkProps}>
+        <Link to={item.id} {...linkProps} onClick={handleLinkClick}>
           {children}
         </Link>
       )}
@@ -195,7 +201,7 @@ const SidebarNavigation: FC<Props> = ({
           />
         )
       }
-      footerActions={isUsageShown ? <UsageLink /> : undefined}
+      footerActions={isUsageShown ? <UsageLink onClick={handleLinkClick} /> : undefined}
     >
       {chats}
     </NavigationSidebar>
