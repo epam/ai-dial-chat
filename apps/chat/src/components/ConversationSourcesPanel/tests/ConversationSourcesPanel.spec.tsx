@@ -9,10 +9,11 @@ import {
   RequestStatus,
 } from '@epam/ai-dial-chat-shared';
 import type { QuotationSource } from '@epam/ai-dial-source-panel';
-import { render, screen } from '@testing-library/react';
+import { render, renderHook, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createContext, useContext, type ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { useLatestCanvasRequest } from '../../../hooks/attachment/useLatestCanvasRequest';
 import ConversationSourcesPanelContainer from '../ConversationSourcesPanel';
 vi.mock('../../../context/SkillsContext', () => ({
   useSkills: () => ({ skills: [], publicSkills: [], sharedWithMe: [] }),
@@ -959,6 +960,22 @@ describe('ConversationSourcesPanelContainer — source clicks', () => {
       '_blank',
       'noopener,noreferrer',
     );
+  });
+
+  it('does not download, open a tab or close the sidebar for a click a later click supersedes', async () => {
+    const startLaterRequest = renderHook(() => useLatestCanvasRequest()).result
+      .current;
+    mockOpenAttachmentCanvas.mockImplementationOnce(async () => {
+      startLaterRequest();
+      return false;
+    });
+    mockSources = [makeSource('files/bucket/report.pdf', MIMEType.PDF)];
+
+    await clickSource();
+
+    expect(mockHandleAttachmentClick).not.toHaveBeenCalled();
+    expect(window.open).not.toHaveBeenCalled();
+    expect(mockHandleClose).not.toHaveBeenCalled();
   });
 
   it('opens a PDF without a page fragment through its regular URL', async () => {
