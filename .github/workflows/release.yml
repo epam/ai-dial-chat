@@ -30,4 +30,5 @@ jobs:
       release-branch-pattern: '^release-0\.[0-9]+$'
       maximize-build-space: true
       draft-stable-releases: true
+      ort-enabled: false
     secrets: inherit
