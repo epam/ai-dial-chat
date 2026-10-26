@@ -43,7 +43,7 @@ installing both is required rather than optional.
 (`.`) entry: `CredentialsLevel`, `CredentialsBadgeState`, `CredentialStatus`,
 `CredentialsUiState`, `ToolsetAuthenticationType`, `CatalogSortKey`,
 `CatalogItem`, `CatalogItemCredentials`, `filterCatalogItems`,
-`filterCatalogItemsByQuery`, `CatalogItemsQuery`, `getTopicOptions`, `sortCatalogItems`, `buildCatalogTabs`,
+`filterCatalogItemsByQuery`, `CatalogItemsQuery`, `getTopicOptions`, `sortCatalogItems`, `buildCatalogTabs`, `getCatalogItemTabs`,
 `applyCatalogSelection`,
 `getCredentialsBadgeState`, `getCredentialsUiState`, `getDirectCredentialsLevel`, and `getSignedInLevel` —
 the headless enums and pure item-mapping functions a host can use (e.g. to
@@ -204,7 +204,14 @@ also yields more card columns (4 instead of 3 once the grid area passes
 
 #### Controlling tabs and Topics options independently of `items`
 
-The entity-type tab row appears only when `items` span **two or more** types: a
+An item's tab is its `type` unless it sets `catalogTabs`. `type` is the entity
+kind and drives the item's actions and details; `catalogTabs` only says which
+Browse tabs list it. An item with `type: Agent` and
+`catalogTabs: [Agent, Toolset]` appears once in each of those tabs — the same
+item, so its favorite state and details panel are shared — and counts toward
+both tabs. An absent or empty `catalogTabs` means `[type]`.
+
+The entity-type tab row appears only when `items` span **two or more** tabs: a
 single tab is not a choice, so a catalog restricted to one entity type (an
 agent picker, a prompt picker) renders no tab row at all. The active tab still
 resolves to that one type, so the grid is unaffected.
@@ -1524,6 +1531,7 @@ import {
   buildCatalogTabs,
   filterCatalogItems,
   filterCatalogItemsByQuery,
+  getCatalogItemTabs,
   getTopicOptions,
   sortCatalogItems,
 } from '@epam/ai-dial-catalog';
@@ -1561,6 +1569,9 @@ const ids = applyCatalogSelection(attachedIds, checkedIds, listedIds);
  */
 const tabs = buildCatalogTabs(items);
 const topicOptions = getTopicOptions(items);
+
+// The tabs one item is listed under: its non-empty `catalogTabs`, else `[type]`.
+const itemTabs = getCatalogItemTabs(items[0]);
 ```
 
 ## Rollback

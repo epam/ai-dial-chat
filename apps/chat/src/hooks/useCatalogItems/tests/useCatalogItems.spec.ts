@@ -392,6 +392,51 @@ describe('useCatalogItems', () => {
     });
   });
 
+  describe('interface-based tab membership', () => {
+    const mcpApp = {
+      id: 'mcp-app',
+      displayName: 'MCP app',
+      type: 'application',
+      interfaces: ['mcp'],
+    } as DeploymentItemDto;
+
+    const findMcpApp = (
+      items: { id: string; catalogTabs?: readonly CatalogEntityType[] }[],
+    ) => requireItem(items.find((item) => item.id === 'mcp-app'));
+
+    it('lists an MCP-only application under Toolsets when toolsets are enabled', () => {
+      const { result } = renderHook(() =>
+        useCatalogItems(makeParams({ deployments: [mcpApp] })),
+      );
+
+      expect(findMcpApp(result.current.catalogItems).catalogTabs).toEqual([
+        CatalogEntityType.Toolset,
+      ]);
+    });
+
+    it('keeps an MCP-only application under Agents when toolsets are disabled', () => {
+      const { result } = renderHook(() =>
+        useCatalogItems(
+          makeParams({ deployments: [mcpApp], isToolsetsEnabled: false }),
+        ),
+      );
+
+      expect(findMcpApp(result.current.catalogItems).catalogTabs).toEqual([
+        CatalogEntityType.Agent,
+      ]);
+    });
+
+    it('offers the Toolsets tab for an MCP-only application even with no toolsets loaded', () => {
+      const { result } = renderHook(() =>
+        useCatalogItems(makeParams({ deployments: [mcpApp], toolsets: [] })),
+      );
+
+      expect(result.current.availableTabIds).toEqual([
+        CatalogEntityType.Toolset,
+      ]);
+    });
+  });
+
   describe('catalogItems memoization', () => {
     it('recomputes when a dependency changes but keeps its identity across an unrelated rerender', () => {
       const initialParams = makeParams({

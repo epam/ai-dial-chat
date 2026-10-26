@@ -6,8 +6,10 @@ import type { CatalogItemTabData } from './item-details-data';
 export interface CatalogItem {
   /** Unique identifier. */
   id: string;
-  /** Entity category. */
+  /** Entity kind; drives the item's actions and details. */
   type: CatalogEntityType;
+  /** Browse tabs the item is listed under. Defaults to `[type]`. */
+  catalogTabs?: readonly CatalogEntityType[];
   /** Display name. */
   name: string;
   /** Version string shown next to the name. */

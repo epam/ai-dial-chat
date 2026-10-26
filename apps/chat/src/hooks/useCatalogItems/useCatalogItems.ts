@@ -222,6 +222,7 @@ export const useCatalogItems = ({
           editableSchemaIds: runnerSchemaIds,
           isCustomAppsEditable: isCustomAppsEnabled,
           activeLocale: language,
+          isToolsetTabEnabled: isToolsetsEnabled,
         }),
       ),
       ...(isToolsetsEnabled

@@ -34,6 +34,7 @@ export interface MapDeploymentToCatalogItemOptions {
   editableSchemaIds?: string[];
   isCustomAppsEditable?: boolean;
   activeLocale?: string;
+  isToolsetTabEnabled?: boolean;
 }
 
 export const mapDeploymentToCatalogItem = (
@@ -45,6 +46,7 @@ export const mapDeploymentToCatalogItem = (
     editableSchemaIds,
     isCustomAppsEditable,
     activeLocale = PRIMARY_LOCALE,
+    isToolsetTabEnabled,
   }: MapDeploymentToCatalogItemOptions,
 ): CatalogItem => {
   const options: MapDeploymentToCatalogItemOptionsLib = {
@@ -56,6 +58,7 @@ export const mapDeploymentToCatalogItem = (
     primaryLocale: PRIMARY_LOCALE,
     resolveIconUrl: resolveCatalogIconUrl,
     folderLabels: buildDeploymentFolderLabels(t),
+    isToolsetTabEnabled,
   };
   return mapDeploymentToCatalogItemLib(deployment, options);
 };
