@@ -63,4 +63,5 @@ jobs:
         env:
           ANTHROPIC_BASE_URL: "${{ vars.DIAL_CORE_URL }}/${{ vars.DIAL_ROUTE_PATH || 'anthropic' }}"
           ANTHROPIC_AUTH_TOKEN: ${{ secrets.DIAL_API_KEY }}
+          ANTHROPIC_CUSTOM_HEADERS: "API-KEY: ${{ secrets.DIAL_API_KEY }}"
           CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: 1
