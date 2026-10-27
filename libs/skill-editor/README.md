@@ -229,7 +229,13 @@ label there.
 On mobile the column stacks the Files pane as a collapsed "Editing file"
 card — the caption, the selected file's type icon and name, and a down caret —
 which expands in place to show the Files heading, the Add menu and the tree,
-then the selected file. Its heading is `SKILL.md` for the manifest,
+then the selected file. The caret points down while collapsed and up while
+expanded. The caption stays aligned to the inline start when selection changes.
+The card uses Layer-sunken (`#EEF1F7` without a theme), an 8px radius and Shadow/XS;
+its expanded file list scrolls within the card. Supporting-file previews have a
+definite mobile height of `max(320px, 60dvh)` so document pages and spreadsheet
+sheets remain visible; on desktop they fill the available column height.
+Its heading is `SKILL.md` for the manifest,
 or `labels.selectedFileHeading(name)` for a supporting file; Name and
 Description show only while `SKILL.md` is selected. `submitError` and
 `conflict` (with its "Reload latest" action) render in a `role="alert"` region
@@ -281,7 +287,7 @@ colors the Add-menu icons (`'text-secondary'` by default);
 the Delete entry renders as a danger (red) item, and `removeIconClassName`
 overrides its icon color.
 
-`styles.colors` (`SkillEditorColors`) overrides the heading, Instructions-label, and border colors, plus the mobile "Editing file" card's `filesCardBackground` and `filesCardBorder` and the mobile upload and create-folder sheet footer's `dialogFooterBackground` and `dialogFooterBorder`, as CSS custom properties, falling back to this app's theme tokens (`--text-primary`, `--text-secondary`, `--stroke-tertiary`, `--bg-layer-base`, `--bg-layer-raised`) and then to a hard-coded hex when no theme is present. `styles.typography.editingFileLabelClassName` (`'dial-tiny-lead-text'`) and `editingFileNameClassName` (`'dial-small-text'`) set the card's caption and file-name type:
+`styles.colors` (`SkillEditorColors`) overrides the heading, Instructions-label, and border colors, plus the mobile "Editing file" card's `filesCardBackground` and `filesCardBorder` and the mobile upload and create-folder sheet footer's `dialogFooterBackground` and `dialogFooterBorder`, as CSS custom properties, falling back to this app's theme tokens (`--text-primary`, `--text-secondary`, `--stroke-tertiary`, `--bg-layer-sunken`, `--bg-layer-raised`) and then to a hard-coded hex when no theme is present. `styles.typography.editingFileLabelClassName` (`'dial-tiny-lead-text'`) and `editingFileNameClassName` (`'dial-small-text'`) set the card's caption and file-name type:
 
 ```tsx
 <SkillEditor
