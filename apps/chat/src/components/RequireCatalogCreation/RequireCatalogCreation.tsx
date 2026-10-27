@@ -1,9 +1,8 @@
 import {
   ButtonAppearance,
-  ButtonVariant,
-  Button,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
+  NeutralButton,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
 import { IconArrowLeft } from '@tabler/icons-react';
@@ -85,8 +84,7 @@ const RequireCatalogCreation: FC<Props> = ({
       <p role="alert" className="dial-body-text text-primary">
         {t(messageKey)}
       </p>
-      <Button
-        variant={ButtonVariant.Neutral}
+      <NeutralButton
         appearance={ButtonAppearance.Outlined}
         label={t(EditorI18nKeys.BackAriaLabel)}
         className="min-h-11"
