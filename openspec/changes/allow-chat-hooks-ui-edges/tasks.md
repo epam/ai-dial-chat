@@ -26,14 +26,10 @@ Verification: `npm run lint:boundaries:test`
 
 ## 3. Docs
 
-- [ ] 3.1 `AGENTS.md`: replace the "Known debt against that exception" paragraph with the two allowed edges, their limits and the guards. Add the ownership rule: `chat-hooks` owns functions, and new domain types and enums go to `chat-shared`.
+- [ ] 3.1 `AGENTS.md`: replace the "Known debt against that exception" paragraph with the two allowed edges, their limits and the guards. Add the ownership rule: `chat-hooks` holds hooks, functions, types and enums, never a component.
 - [ ] 3.2 `docs/architecture.md`:
   - "Module boundary rules": turn the ⚠️ markers into "allowed, guarded" with the limits;
   - add the ownership rule;
   - Decision Log row 17: drop "known debt".
 - [ ] 3.3 `.claude/rules/libs.md`: one sentence on the ownership rule under "Nx `type:*` tag".
 - [ ] 3.4 Run `npm run validate:docs`, `npm run validate:agent-docs` and `npm run validate:specs`, then `npm run verify:full` once.
-
-## 4. Follow-ups (out of scope)
-
-- [ ] 4.1 Propose an inventory change that applies the ownership rule to the roughly 227 existing non-hook types and enums in `libs/chat-hooks/src`, moving domain ones to `chat-shared` in batches.

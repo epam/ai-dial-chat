@@ -64,7 +64,7 @@ AGENTS.md "Library isolation", `docs/architecture.md` "Module boundary rules" an
 
 - `docs/architecture.md` SHALL no longer say feature libs import `chat-shared` only.
 - AGENTS.md and `docs/architecture.md` SHALL describe `type:hooks` → `type:ui` and `type:ui` → `type:hooks` as allowed edges with the limits and guards of "The hooks/UI edges are guarded", not as debt.
-- AGENTS.md, `docs/architecture.md` and `.claude/rules/libs.md` SHALL state the ownership rule: `libs/chat-hooks` owns functions (hooks and pure utilities), and new domain types and enums go in `libs/chat-shared`. Types that describe one hook's own parameters or result may stay next to that hook.
+- AGENTS.md, `docs/architecture.md` and `.claude/rules/libs.md` SHALL state the ownership rule: `libs/chat-hooks` holds non-rendering code only — hooks, functions, types and enums — and never a component.
 - `.claude/rules/libs.md` SHALL require a `type:*` tag on any new project.
 
 #### Scenario: The architecture doc matches the lint config
@@ -74,8 +74,8 @@ AGENTS.md "Library isolation", `docs/architecture.md` "Module boundary rules" an
 
 #### Scenario: The ownership rule is discoverable
 
-- **WHEN** a contributor reads AGENTS.md "Library isolation" before adding an enum used by both `chat-hooks` and a feature lib
-- **THEN** the text tells them to put it in `libs/chat-shared`
+- **WHEN** a contributor reads AGENTS.md "Library isolation" before adding a React component next to a hook in `libs/chat-hooks`
+- **THEN** the text tells them components do not belong in `chat-hooks`, and the no-`.tsx` guard fails if they add one
 
 ## ADDED Requirements
 

@@ -6,7 +6,7 @@ The host already owns that decision. `apps/chat/src/hooks/application-editor/use
 
 `builder-form`'s `MetadataForm` already takes the whole object (`libs/builder-form/src/models/metadata-form-props.ts:35`), and the Custom App editor passes it straight through.
 
-This is the second half of follow-up 4.2 of `enforce-nx-module-boundaries`. Once it lands, `toolset-editor` imports exactly one function from `chat-hooks`, `getApiErrorDetails`. The enums move in `move-toolset-auth-enums-to-chat-shared`.
+This closes the host-file part of follow-up 4.2 of `enforce-nx-module-boundaries`. Once it lands, `toolset-editor` takes from `chat-hooks` only `getApiErrorDetails` and the toolset-auth enums (`ToolsetAuthTypes`, `ToolsetCredentialsLevel`, `WithLogin`). Those stay in `chat-hooks`, which holds hooks, functions, types and enums but never a component; `allow-chat-hooks-ui-edges` records that rule and guards the edge.
 
 There is also doc drift. The `toolset-editor` README says nothing in this repo renders `GeneralForm`, but `ToolsetEditor.tsx:504` does.
 
@@ -24,17 +24,15 @@ Non-goals:
 
 - changing `MetadataForm` or `useApplicationAvatarPicker`;
 - changing picker behavior, labels or limits;
-- `getApiErrorDetails`, which stays in `chat-hooks` as a function.
+- `getApiErrorDetails` and the toolset-auth enums, which stay in `chat-hooks`.
 
 Acceptance criteria:
 
 - `libs/toolset-editor/src` contains no `dialFileToAttachment` and no `GeneralForm` component.
-- The only `@epam/ai-dial-chat-hooks` import in `libs/toolset-editor/src` is `getApiErrorDetails`.
+- The `@epam/ai-dial-chat-hooks` imports in `libs/toolset-editor/src` are only `getApiErrorDetails` and the toolset-auth enums.
 - Picking an avatar in the toolset editor still sets `iconUrl`. This is covered by the existing `ToolsetEditor` tests, adapted to the new prop.
 - `typecheck`, `lint` and `test` pass for `toolset-editor` and `chat`.
 - `validate:docs` and `validate:specs` pass.
-
-**Depends on:** `move-toolset-auth-enums-to-chat-shared`. Its delta changes the same "No host, REST, or i18n dependency" requirement, and this delta is written against that text. Archive that change first.
 
 Alternatives considered (user decision):
 

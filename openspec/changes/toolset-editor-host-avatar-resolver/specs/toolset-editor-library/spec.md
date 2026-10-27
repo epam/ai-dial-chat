@@ -28,7 +28,7 @@ The package `libs/toolset-editor/package.json` SHALL declare `name: "@epam/ai-di
 ### Requirement: No host, REST, or i18n dependency
 `libs/toolset-editor/src/**` SHALL NOT import `react-i18next`, `i18next`, any module under `apps/chat/src/server-api`, `@epam/ai-dial-chat-api-client`, any app-level React Context/provider, `react-router`/`react-router-dom`, or any environment/feature-flag/analytics module. All user-visible strings SHALL be supplied via nested `labels` props with English-language defaults applied at leaf read sites. Every backend call SHALL arrive through injected callbacks: persistence and post-save login through `onPersist`/`onPostSaveLogin`, API-key login/logout through the `authActions` prop (`login`, `logout`, `fetchAuthSettings`), the OAuth flow through `onOAuthLogin`, the Allowed-tools list through `listToolNames`, the Connect URL through `buildMcpUrl`, and notifications through `onNotifySuccess`/`onNotifyError`. Request bodies SHALL be typed by the lib-local `ToolsetLoginRequest`/`ToolsetLogoutRequest` structural interfaces; the host adapter maps them to its generated DTOs at the app edge.
 
-This is the first `libs/*` (besides the `chat-hooks` exception) dependency on `@epam/ai-dial-chat-hooks`. It is justified because the one function the lib needs, `getApiErrorDetails`, is host-agnostic in `libs/chat-hooks` (no routes or i18n); the `ToolsetAuthTypes`/`WithLogin`/`ToolsetCredentialsLevel` enums come from `@epam/ai-dial-chat-shared`; the OAuth popup helpers stay with the host adapter (`apps/chat/src/hooks/toolsets/useToolsetEditorOAuthLogin.ts`). The lib SHALL import only the chat-hooks root barrel, never a subpath.
+This is the first `libs/*` (besides the `chat-hooks` exception) dependency on `@epam/ai-dial-chat-hooks`. It is justified because the helpers the lib needs (`getApiErrorDetails` and the `ToolsetAuthTypes`/`WithLogin`/`ToolsetCredentialsLevel` enums) are host-agnostic in `libs/chat-hooks` (no routes or i18n); the OAuth popup helpers stay with the host adapter (`apps/chat/src/hooks/toolsets/useToolsetEditorOAuthLogin.ts`). The lib SHALL import only the chat-hooks root barrel, never a subpath.
 
 #### Scenario: No i18n import
 - **WHEN** `libs/toolset-editor/src/**` is searched for `react-i18next`/`i18next` imports
@@ -91,7 +91,7 @@ Memoisation: the host passes a memoised object (`useApplicationAvatarPicker` ret
 
 #### Scenario: The lib no longer resolves DIAL files
 - **WHEN** `libs/toolset-editor/src` is searched for `dialFileToAttachment`
-- **THEN** nothing is found, and its only `@epam/ai-dial-chat-hooks` import is `getApiErrorDetails`
+- **THEN** nothing is found; its `@epam/ai-dial-chat-hooks` imports are `getApiErrorDetails` and the toolset-auth enums only
 
 ## REMOVED Requirements
 

@@ -7,16 +7,16 @@
   - pure utilities such as `getCatalogItemTabs`, `isMimeTypeAllowed`, `validateScheduledTaskFormValues` and the publish-panel folder-path helpers.
 
   It imports no hook and no component. It has no non-test `.tsx` file, so it cannot render anything. AGENTS.md's fourth exception (`mapUsageDataToDashboard`) is this same pattern.
-- **`toolset-editor` → `chat-hooks` (`type:ui` → `type:hooks`).** `toolset-editor` is the only feature lib that imports `chat-hooks`, test files included. It takes two functions, `getApiErrorDetails` and `dialFileToAttachment`, and four toolset-auth enums. The enums move to `chat-shared` in `move-toolset-auth-enums-to-chat-shared`, and `dialFileToAttachment` is replaced by a host callback in `toolset-editor-host-avatar-resolver`.
+- **`toolset-editor` → `chat-hooks` (`type:ui` → `type:hooks`).** `toolset-editor` is the only feature lib that imports `chat-hooks`, test files included. It takes two functions, `getApiErrorDetails` and `dialFileToAttachment`, and four toolset-auth enums (`ToolsetAuthTypes`, `ToolsetAuthStatus`, `ToolsetCredentialsLevel`, `WithLogin`). `dialFileToAttachment` is replaced by a host callback in `toolset-editor-host-avatar-resolver`; the function and the enums stay.
 
-The user also set the ownership rule: **`chat-hooks` owns functions (hooks and utilities); domain types and enums belong in `chat-shared`**. Today's docs do not state this.
+The user also set the ownership rule: **`chat-hooks` holds non-rendering code — hooks, functions, types and enums — and never a component**. Today's docs do not state this. The no-`.tsx` guard below is what enforces it.
 
 ## What Changes
 
 - AGENTS.md "Library isolation":
   - replace the known-debt note with two allowed edges and their limits:
     - `chat-hooks` may import a feature lib's types, enums and pure functions, never a hook, a component, or anything that renders;
-    - among feature libs, only `toolset-editor` may import `chat-hooks`, and only its functions;
+    - among feature libs, only `toolset-editor` may import `chat-hooks`;
   - state the ownership rule for new code.
 - `docs/architecture.md` "Module boundary rules":
   - change the ⚠️ debt rows to "allowed, guarded";
@@ -33,8 +33,7 @@ The `depConstraints` table does not change.
 
 Non-goals:
 
-- moving any symbol (the two sibling changes do that);
-- applying the ownership rule to the roughly 227 existing non-hook types and enums in `chat-hooks` (follow-up);
+- moving any symbol (the enums stay in `chat-hooks`; `toolset-editor-host-avatar-resolver` removes the `dialFileToAttachment` use);
 - per-symbol allowlists.
 
 Acceptance criteria:

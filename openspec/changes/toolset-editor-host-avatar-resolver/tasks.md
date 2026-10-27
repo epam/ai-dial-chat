@@ -1,7 +1,5 @@
 Slicing: vertical. One slice carries the new prop from the host through `ToolsetEditor` to `MetadataForm`. The next removes the dead wrapper, the last fixes the docs. design.md is skipped: the target contract, `MetadataFormAvatarPicker`, already exists in `builder-form` and is used by the Custom App editor, so no design choice is left open.
 
-**Prerequisite:** `move-toolset-auth-enums-to-chat-shared` is applied and archived. This change's `toolset-editor-library` delta builds on its text.
-
 **Lib architecture guard:** after this change `libs/toolset-editor/src` must not:
 - build a `files/<bucket>/…` path;
 - call `dialFileToAttachment`;
@@ -32,7 +30,7 @@ Verification:
 - [ ] 2.1 Delete `libs/toolset-editor/src/components/GeneralForm/`, including its tests.
 - [ ] 2.2 In `libs/toolset-editor/src/models/general-form-props.ts`, remove `GeneralFormProps` and keep `GeneralFormLabels`. Rename the file only if nothing else lives in it besides `GeneralFormLabels`; otherwise leave the path.
 - [ ] 2.3 In `libs/toolset-editor/src/index.ts`, drop the `GeneralForm` and `GeneralFormProps` exports.
-- [ ] 2.4 Confirm `libs/toolset-editor/src` contains no `dialFileToAttachment`, and that its only `@epam/ai-dial-chat-hooks` import is `getApiErrorDetails`.
+- [ ] 2.4 Confirm `libs/toolset-editor/src` contains no `dialFileToAttachment`, and that its `@epam/ai-dial-chat-hooks` imports are only `getApiErrorDetails` and the toolset-auth enums.
 
 Verification: `npm exec nx run-many -t typecheck lint test -p @epam/ai-dial-toolset-editor @epam/chat`
 
