@@ -37,6 +37,7 @@ import { configureProxyAgents } from './net/proxy-agent.setup';
 import { createOpenApiDocument } from './openapi/openapi.config';
 import { attachHttpLifecycleListener } from './telemetry/http-lifecycle-listener';
 import { NestOtelLogger } from './telemetry/nestjs-otel-logger';
+import { createRequestTimingMiddleware } from './telemetry/request-timing';
 import { traceparentMiddleware } from './telemetry/traceparent.middleware';
 
 const validationLogger = new Logger('ValidationPipe');
@@ -105,6 +106,7 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService<EnvironmentVariables, true>);
 
+  app.use(createRequestTimingMiddleware(runtimeEnvironment));
   app.use(cookieParser());
   app.use((req: Request, res: Response, next: NextFunction) => {
     clearLegacyCookies(req, res, configService);

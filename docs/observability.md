@@ -54,6 +54,7 @@ Maintain the version-controlled JSON directly.
 | [05 — Auth and sessions](examples/dashboards/05-bff-auth-sessions.json)                   | Login, callback, refresh, authorization, and logout.                                |
 | [06 — Endpoint usage](examples/dashboards/06-bff-endpoint-traffic.json)                   | Calls per method and endpoint over a selected period.                               |
 | [07 — RED overview](examples/dashboards/07-bff-red-overview.json)                         | Completed-response rate, error share, and latency, with route rankings.             |
+| [08 — Request latency](examples/dashboards/08-bff-request-latency.json)                   | Whole-period slow endpoints, Core/outside-Core timing, and individual slow traces.  |
 
 Select one workload and ingestion path. The queries expect Prometheus exporter names and
 `otel_scope_name="dial-chat-api"`; adapt selectors if a collector renames them. Kubernetes labels
@@ -103,6 +104,48 @@ by default; open SSE connections do not count yet. Unmatched requests are exclud
 
 Automatic loads, polling, retries, and failed attempts also count. Request volume does not measure
 unique users or successful feature adoption; a missing series does not prove zero usage.
+
+### Investigate slow requests over a day
+
+Open **08 — Request latency**. The default is rolling **last 24 hours**, refreshing every five
+minutes; select an absolute range for a calendar day. The endpoint tables show count, mean,
+p95/p99, Core/outside-Core means, Core share, and counts/shares above duration thresholds.
+Rankings by mean duration identify slow endpoints; rankings by accumulated duration identify
+where requests spend the most time overall. Method and route template identify each endpoint.
+All period statistics use the selected interval, including historical ranges.
+
+The default transport is **ordinary**. Select **streaming** separately for the explicitly
+classified SSE routes; long-lived subscriptions measure connection lifetime, which is not
+equivalent to a slow REST response. As in the existing classifier, `/chat/completions` is
+ordinary even when its payload streams. Counts and durations enter the period when a request
+ends; still-open streams are absent. Counts are scrape-based estimates. Percentiles are
+histogram estimates and are omitted when they fall beyond the last finite bucket (one hour);
+means and slow-tail counts still cover those observations.
+
+**Core** is wall time with at least one outgoing Core request active, including connection,
+network, upload and response-body transfer. Parallel calls overlap only once. **Outside Core**
+is the remaining wall time: Chat work, other dependencies such as the identity provider,
+scheduling and delivery waits. It is not CPU time. Work done locally while Core is active is
+part of the Core-active interval; this split does not prove which component caused a delay.
+Requests awaiting another request's coalesced work have no separate Core call for that wait.
+Measuring processing inside Core itself requires Core-side traces.
+
+Expand the optional **individual slow requests** section and select a Tempo source, service and
+minimum duration. Its table shows individual timing spans and their three durations; the span
+link opens the corresponding trace. Trace filters are separate from the Prometheus workload,
+route and outcome filters. Results are sorted by duration **among returned matches**: sampling,
+retention and search limits mean they are not guaranteed to be the globally slowest calls of
+the day. Enable trace export and configure Tempo ingestion to populate this section.
+
+Deploy the backend instrumentation before importing 08. During rolling deployment it covers
+only upgraded instances, and data accumulates from deployment onward; old metrics cannot
+reconstruct the split. Use one ingestion path. Do not combine the new component metrics with
+old transport or handler totals, or subtract independently computed percentiles.
+
+The existing dashboards retain distinct purposes: 00/07 show recent operational latency,
+01 measures handlers including dependencies, 02 measures generation relays, 03 diagnoses
+routing/streaming, 04 shows runtime state, 05 covers auth, and 06 counts endpoint traffic.
+Selecting 24 hours in 00/07 does not turn their **recent** route rankings into daily rankings.
 
 ### If the scrape-health panel shows No samples
 
@@ -173,6 +216,37 @@ pipeline errors. It omits guard/static responses, and its timing and error statu
 from transport measurements. Do not merge the two populations.
 See [transport instruments](../apps/chat-api/src/telemetry/http-lifecycle-metrics.ts) and the
 [handler interceptor](../apps/chat-api/src/common/interceptors/metrics.interceptor.ts).
+
+### Request timing attribution
+
+| Prometheus family                                          | Measurement / labels                                                                                                                                                                |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dial_chat_http_request_phase_duration_{bucket,sum,count}` | Seconds per terminal request; `dial_chat_http_phase` = `total`, `core`, or `chat`, plus the transport duration's method, route, outcome, transport-kind and optional status labels. |
+
+The [timing middleware](../apps/chat-api/src/telemetry/request-timing.ts) starts before cookies,
+body parsing and guards and ends at the first finish, close, abort or error. It excludes the
+same exact probe URLs as other telemetry. It does not include work before that middleware,
+and its population/boundary differs from the raw HTTP listener. All three phases are recorded
+together, including zero Core time for requests without Core calls; `total = core + chat`.
+
+The [Core observer](../apps/chat-api/src/telemetry/core-request-timing.ts) tags the shared
+`DialClientService.fetchCore` transport, including SDK calls and direct Core escape hatches.
+Undici request creation starts an interval; body completion or error ends it. This includes
+client queueing/connection establishment and transfer, not just the wait for headers.
+Failures before request creation accrue no Core interval. Other upstream fetches are excluded.
+The request-local union is clipped at the incoming request's terminal event. Background
+generation/persistence after disconnect cannot extend the closed request's timing.
+
+Finite bucket boundaries in seconds are `0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5,
+0.75, 1, 2.5, 5, 10, 30, 60, 120, 300, 600, 1800, 3600`. This is a new family; the existing
+60-second transport histogram is unchanged. No URL, token, user, conversation or trace ID is
+a metric label. Metrics-only collection works without trace export.
+
+When traces are exported, an internal `request.timing METHOD route` span carries
+`dial.chat.http.request.timing=true` and `dial.chat.http.duration.total`, `.core`, and `.chat`
+attributes in seconds, together with the bounded request attributes. It ends at the same
+terminal boundary and parents the handler's downstream spans. Timing collection is inactive
+when telemetry is disabled, or when both metric and trace exporters are disabled.
 
 ### Conversation generation measurements
 
@@ -306,6 +380,8 @@ console logging and `LOG_LEVEL` filtering remain. Metrics-only setup exports nei
 nor logs.
 
 Dashboard 00's optional Tempo link searches **service and time range**, not an exact request.
+Dashboard 08 additionally searches the explicit request timing spans described above and
+links their individual results to traces.
 For service names containing quotes or backslashes, customize nested query/JSON escaping.
 Metric route and scrape labels are not guaranteed span attributes, and the exporter provides
 no exemplars. Log storage and indexed labels must be configured by the deployment.

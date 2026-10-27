@@ -474,6 +474,11 @@ Configured at startup:
   independent of the main application port). Metrics cover HTTP transport outcomes, Nest handler
   observations, generation relays, auth/session decisions (login starts, callback and refresh
   exchanges, authorization outcomes, logout), and process-local memory/SSE/registry gauges.
+  Earliest application middleware additionally records request-local total duration, the union
+  of overlapping Core request intervals (including body transfer), and time outside Core.
+  The shared Core fetch transport is tagged through AsyncLocalStorage and observed through
+  Undici diagnostics; HTTP settlement freezes the split even if background work continues.
+  A request timing span carries the same durations for individual slow-request investigation.
   HTTP lifecycle
   observation uses a raw server request listener; it does not guarantee timing before all
   synchronous Express work. See [Observability](observability.md) for signal boundaries,
