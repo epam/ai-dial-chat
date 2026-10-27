@@ -1,8 +1,12 @@
-import type { EntityEditorProps } from '@epam/ai-dial-builder-form';
+import type {
+  EntityEditorProps,
+  MetadataFormAvatarPicker,
+  MetadataFormProps,
+} from '@epam/ai-dial-builder-form';
 import { ToolsetAuthTypes, WithLogin } from '@epam/ai-dial-chat-hooks';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TOOLSET_EDITOR_CLASS } from '../../../constants/public-class-names';
 import { ToolsetTransportType } from '../../../constants/toolsets';
@@ -58,48 +62,55 @@ vi.mock('@epam/ai-dial-builder-form', async (importOriginal) => {
         </div>
       </div>
     ),
+    MetadataForm: ({
+      values,
+      errors,
+      onChange,
+      renderDescription,
+      avatarPicker,
+      labels,
+    }: MetadataFormProps) => (
+      <div>
+        {renderDescription?.(
+          <textarea
+            id="toolset-description"
+            value={values.description}
+            onChange={(event) => onChange({ description: event.target.value })}
+          />,
+          'toolset-description',
+        )}
+        <span>{`metadata-name-${values.name}`}</span>
+        <span>{`name-label-${labels?.form?.name.label}`}</span>
+        {errors.name && <p role="alert">{errors.name}</p>}
+        {errors.version && <p role="alert">{errors.version}</p>}
+        <button type="button" onClick={() => onChange({ name: '' })}>
+          clear-name
+        </button>
+        <button type="button" onClick={() => onChange({ name: 'Renamed' })}>
+          rename
+        </button>
+        <button type="button" onClick={() => onChange({ name: 'My toolset' })}>
+          restore-name
+        </button>
+        <button type="button" onClick={() => onChange({ version: 'v 1' })}>
+          type-invalid-version
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            const iconUrl = avatarPicker?.resolveAttachedIconUrl({
+              files: [],
+              folderPaths: [],
+            });
+            if (iconUrl) onChange({ iconUrl });
+          }}
+        >
+          pick-avatar
+        </button>
+      </div>
+    ),
   };
 });
-
-vi.mock('../../GeneralForm/GeneralForm', () => ({
-  GeneralForm: ({
-    form,
-    errors,
-    onChange,
-    renderDescription,
-  }: {
-    form: ToolsetFormData;
-    errors: { name?: string; version?: string };
-    onChange: (patch: Partial<ToolsetFormData>) => void;
-    renderDescription?: (textarea: ReactNode, fieldId: string) => ReactNode;
-  }) => (
-    <div>
-      {renderDescription?.(
-        <textarea
-          id="toolset-description"
-          value={form.description}
-          onChange={(event) => onChange({ description: event.target.value })}
-        />,
-        'toolset-description',
-      )}
-      <span>{`metadata-name-${form.name}`}</span>
-      {errors.name && <p role="alert">{errors.name}</p>}
-      {errors.version && <p role="alert">{errors.version}</p>}
-      <button type="button" onClick={() => onChange({ name: '' })}>
-        clear-name
-      </button>
-      <button type="button" onClick={() => onChange({ name: 'Renamed' })}>
-        rename
-      </button>
-      <button type="button" onClick={() => onChange({ name: 'My toolset' })}>
-        restore-name
-      </button>
-      <button type="button" onClick={() => onChange({ version: 'v 1' })}>
-        type-invalid-version
-      </button>
-    </div>
-  ),
-}));
 
 vi.mock('../../SettingsForm/SettingsForm', () => ({
   SettingsForm: ({
@@ -301,6 +312,18 @@ const onBack = vi.fn();
 const onNotifySuccess = vi.fn();
 const onNotifyError = vi.fn();
 
+const resolveAttachedIconUrl =
+  vi.fn<MetadataFormAvatarPicker['resolveAttachedIconUrl']>();
+
+const avatarPicker: MetadataFormAvatarPicker = {
+  bucket: 'bucket',
+  FileManagerModal: () => null,
+  resolveIconUrl: (url) => url,
+  resolveAttachedIconUrl,
+  allowedMimeTypes: ['image/png'],
+  maxFileSizeBytes: 1024,
+};
+
 const authActions: ToolsetAuthActions = {
   login: vi.fn(),
   logout: vi.fn(),
@@ -340,11 +363,7 @@ const makeProps = (
   onOAuthLogin: vi.fn(),
   onNotifySuccess,
   onNotifyError,
-  bucket: 'bucket',
-  FileManagerModal: () => null,
-  resolveIconUrl: (url) => url,
-  allowedMimeTypes: ['image/png'],
-  maxFileSizeBytes: 1024,
+  avatarPicker,
   availableLocaleOptions: [],
   ...props,
 });
@@ -420,6 +439,36 @@ describe('ToolsetEditor', () => {
     await waitFor(() =>
       expect(onPersist).toHaveBeenCalledWith(
         expect.objectContaining({ name: 'Renamed', version: '1.0.0' }),
+        '',
+      ),
+    );
+  });
+
+  it('renders the toolset default metadata labels when the host omits them', () => {
+    renderEditor();
+
+    expect(screen.getByText('name-label-Name')).toBeTruthy();
+  });
+
+  it('uses the host resolver for a picked avatar and persists the URL it returns', async () => {
+    resolveAttachedIconUrl.mockReturnValue('files/bucket/avatar.png');
+    renderEditor({ initialForm: getDefaultToolsetForm() });
+
+    await user.click(
+      screen.getByRole('button', { name: 'fill-api-key-toolset' }),
+    );
+    await user.click(screen.getByRole('button', { name: 'rename' }));
+    await user.click(screen.getByRole('button', { name: 'pick-avatar' }));
+    const createButton = screen.getByRole('button', {
+      name: 'Create',
+    }) as HTMLButtonElement;
+    await waitFor(() => expect(createButton.disabled).toBe(false));
+    await user.click(createButton);
+
+    expect(resolveAttachedIconUrl).toHaveBeenCalledOnce();
+    await waitFor(() =>
+      expect(onPersist).toHaveBeenCalledWith(
+        expect.objectContaining({ iconUrl: 'files/bucket/avatar.png' }),
         '',
       ),
     );

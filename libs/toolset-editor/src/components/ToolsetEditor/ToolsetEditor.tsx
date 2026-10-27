@@ -2,6 +2,7 @@ import {
   DeploymentCreationFieldErrorCode,
   EntityEditor,
   MetadataField,
+  MetadataForm,
   useMetadataForm,
   type DeploymentCreationFormValidationOptions,
 } from '@epam/ai-dial-builder-form';
@@ -19,6 +20,7 @@ import {
 import type { FC, ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TOOLSET_EDITOR_CLASS } from '../../constants/public-class-names';
+import { DEFAULT_TOOLSET_METADATA_LABELS } from '../../constants/toolsets';
 import type { ToolsetEditorProps } from '../../models/toolset-editor-props';
 import type {
   ToolsetAuthFormData,
@@ -31,7 +33,6 @@ import {
   pickToolsetMetadata,
   splitToolsetFormPatch,
 } from '../../utils/toolsets';
-import { GeneralForm } from '../GeneralForm/GeneralForm';
 import { SettingsForm } from '../SettingsForm/SettingsForm';
 
 const AUTH_ERROR_FIELDS: (keyof ToolsetFormErrors)[] = [
@@ -84,11 +85,7 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
   onOAuthLogin,
   onNotifySuccess,
   onNotifyError,
-  bucket,
-  FileManagerModal,
-  resolveIconUrl,
-  allowedMimeTypes,
-  maxFileSizeBytes,
+  avatarPicker,
   availableLocaleOptions,
   onRefineDescription,
   labels,
@@ -414,6 +411,14 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
       )
     : undefined;
 
+  const metadataLabels = useMemo(
+    () => ({
+      form: labels?.general?.form ?? DEFAULT_TOOLSET_METADATA_LABELS,
+      avatarPicker: labels?.general?.avatarPicker,
+    }),
+    [labels?.general?.form, labels?.general?.avatarPicker],
+  );
+
   const isSaveDisabled = useMemo(
     () => !isToolsetFormValid(form, isEditMode),
     [form, isEditMode],
@@ -501,18 +506,14 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
         cancelLabel: labels?.layout?.cancelLabel ?? 'Cancel',
       }}
       metadata={
-        <GeneralForm
-          form={form}
+        <MetadataForm
+          values={form}
           errors={visibleErrors}
-          bucket={bucket}
-          FileManagerModal={FileManagerModal}
-          resolveIconUrl={resolveIconUrl}
-          allowedMimeTypes={allowedMimeTypes}
-          maxFileSizeBytes={maxFileSizeBytes}
-          availableLocaleOptions={availableLocaleOptions}
           onChange={handleChange}
+          avatarPicker={avatarPicker}
+          availableLocaleOptions={availableLocaleOptions}
           renderDescription={renderRefinableDescription}
-          labels={labels?.general}
+          labels={metadataLabels}
         />
       }
       setup={
