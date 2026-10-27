@@ -77,6 +77,9 @@ const capturedContentFileProps: {
 } = { current: null };
 
 vi.mock('react-router', () => ({
+  Link: ({ to, children }: { to: string; children?: ReactNode }) => (
+    <a href={to}>{children}</a>
+  ),
   useNavigate: () => mockNavigate,
   useSearchParams: () => [mockSearchParams, mockSetSearchParams],
 }));
@@ -131,6 +134,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     isUnpublishVisible,
     publishLabels,
     detailsTexts,
+    detailsLimitsFooterNote,
     ruleSourceOptions,
     onFetchExistingRules,
     isShareVisible,
@@ -186,6 +190,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onUnpublish?: (item: CatalogItem, folderPath: string[]) => Promise<void>;
     isUnpublishVisible?: (item: CatalogItem) => boolean;
     detailsTexts?: { apiKeyHeaderHint?: (header: string) => string };
+    detailsLimitsFooterNote?: ReactNode;
     publishLabels?: {
       credentialsLabel?: string;
       credentialsHint?: string;
@@ -247,6 +252,9 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
         <output aria-label="Active tab">{activeTab ?? ''}</output>
         <output aria-label="API key header hint">
           {detailsTexts?.apiKeyHeaderHint?.('X-Api-Key') ?? ''}
+        </output>
+        <output aria-label="Limits footer note">
+          {detailsLimitsFooterNote}
         </output>
         <output aria-label="Publish credentials label">
           {publishLabels?.credentialsLabel ?? ''}
@@ -1248,6 +1256,23 @@ describe('CatalogView', () => {
       );
       render(<CatalogView isSelectorMode onClose={vi.fn()} />);
       expect(screen.getByLabelText('Catalog item ids')).toBeTruthy();
+    });
+
+    it('passes a Limits footer note pointing to the Usage page', () => {
+      render(<CatalogView />);
+      expect(screen.getByLabelText('Limits footer note').textContent).toBe(
+        CatalogI18nKeys.DetailsLimitsFooterNote,
+      );
+    });
+
+    it('omits the Limits footer note when the Usage page is hidden', () => {
+      vi.mocked(useUiFeature).mockImplementation(
+        (feature) =>
+          DEFAULT_ENABLED_UI_FEATURES.has(feature) ||
+          feature === OverlayFeature.HideUsagePage,
+      );
+      render(<CatalogView />);
+      expect(screen.getByLabelText('Limits footer note').textContent).toBe('');
     });
   });
 

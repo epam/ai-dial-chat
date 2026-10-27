@@ -153,7 +153,6 @@ const DEFAULT_LABELS: Pick<
     authorLabel: 'Author',
     updatedLabel: 'Updated',
     fileCountLabel: 'File count',
-    detailsSectionTitle: 'Details',
   },
   promptOverviewLabels: {
     authorLabel: 'Author',

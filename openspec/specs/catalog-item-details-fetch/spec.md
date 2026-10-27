@@ -184,6 +184,12 @@ limit" per row (e.g. "0 / Follows cost limit"), with zero `role="progressbar"`
 nodes and the word `Unlimited` nowhere on screen. That is the correct rendering, not a fixture in
 an unexpected shape.
 
+#### Scenario: Limits tab points to the full Usage page
+
+- **WHEN** a model's Limits tab renders and the `HideUsagePage` overlay feature is off
+- **THEN** `CatalogView` passes `detailsLimitsFooterNote` to `Catalog`: the `catalog.details.limits.footerNote` translation ("Model-specific limits only. To view your full usage limits, go to the Usage limits page."), whose `<link>` tag becomes a router link to `ROUTES.Usage`
+- **AND** when `HideUsagePage` is on, `CatalogView` passes no footer note, so the tab shows no footer at all
+
 #### Scenario: Limit stat with no usable total
 
 - **WHEN** a limit stat's `total` is zero, negative, or not finite
@@ -268,7 +274,7 @@ The `getDeploymentDetails` endpoint SHALL satisfy the following generated-client
 
 - **State ownership**: no new React Context or hook is introduced. The fetch is triggered by `libs/catalog`'s `Catalog` component (owns `isDetailsLoading`/fetched-details state) and resolved by the `onFetchDetails` callback of `useCatalogItemDetails` in `libs/chat-hooks` (owns the DTO→domain mapping), which `CatalogView` receives through `useCatalogItems`; no state is lifted into `DeploymentsContext` since detail data is panel-scoped and not shared across the app.
 - **Generated-client impact**: OpenAPI `operationId: 'getDeploymentDetails'` on the new controller method, exposed on the generated `DeploymentsApi` as `getDeploymentDetails({ deployment })`. Request: path param `deployment: string`. Response DTO: `DeploymentDetailsDto`. The frontend wrapper uses the normal (non-`Raw`) generated method, matching the existing `getDeploymentConfiguration`/`getDeploymentLimits` wrapper pattern. Model usage limits reuse the already-existing `getDeploymentLimits` generated method through `apps/chat/src/server-api/deployment-limits.ts`; no generated client changes are required for the UI tab.
-- **i18n**: the Limits tab's user-visible strings are `catalog.details.tabLimits` and `catalog.details.limits.*` — `tokenGroup`, `value`, `followsCostLimit`, `followsCostLimitAriaLabel`, and `progressAriaLabel` (there is no `unlimitedValue` or `spentLabel` key). These keys MUST live in `apps/chat/src/i18n/locales/en.json` and be referenced via `CatalogI18nKeys`. The day/week/month row labels (`DeploymentLimitsLabels.tokensPerDay`/`tokensPerWeek`/`tokensPerMonth`) reuse the Usage page's `UsageI18nKeys.TodayTitle`/`ThisWeekTitle`/`ThisMonthTitle`, resolved in `useCatalogItems`.
+- **i18n**: the Limits tab's user-visible strings are `catalog.details.tabLimits` and `catalog.details.limits.*` — `tokenGroup`, `value`, `followsCostLimit`, `followsCostLimitAriaLabel`, `progressAriaLabel`, and `footerNote` (there is no `unlimitedValue` or `spentLabel` key). These keys MUST live in `apps/chat/src/i18n/locales/en.json` and be referenced via `CatalogI18nKeys`. The day/week/month row labels (`DeploymentLimitsLabels.tokensPerDay`/`tokensPerWeek`/`tokensPerMonth`) reuse the Usage page's `UsageI18nKeys.TodayTitle`/`ThisWeekTitle`/`ThisMonthTitle`, resolved in `useCatalogItems`.
 - **RTL / direction impact**: the Limits tab UI MUST use logical/flexible layout utilities only; it MUST NOT introduce physical left/right classes or directional icons. Progress rows contain text and a progress bar, so no icon mirroring is required.
 - **Feature flag**: not gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES` — this is a data-completeness fix for an existing, already-shipped catalog details panel, not a new feature surface.
 - **Memoisation**: `onFetchDetails` in `useCatalogItemDetails` MUST be wrapped in `useCallback`, and the `CatalogDetailsApi` adapter and labels objects in `useCatalogItems` in `useMemo`; the DTO-to-`EntitySpecificDetails` mapping functions and deployment-limits mapper MUST remain pure functions (no new memoisation needed beyond the callback itself, consistent with `mapEntityDetailsToCatalogDetails` today).

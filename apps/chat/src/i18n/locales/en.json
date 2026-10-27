@@ -170,7 +170,8 @@
         "value": "{{used}} / {{total}}",
         "followsCostLimit": "Follows cost limit",
         "followsCostLimitAriaLabel": "{{label}}: {{used}} used. Follows cost limit.",
-        "progressAriaLabel": "{{label}}: {{used}} of {{total}} used"
+        "progressAriaLabel": "{{label}}: {{used}} of {{total}} used",
+        "footerNote": "Model-specific limits only. To view your full usage limits, go to the <link>Usage limits</link> page."
       },
       "credentials": {
         "signedInLabel": "Signed in",
@@ -266,17 +267,15 @@
         "toolsetTitle": "Connect toolset",
         "toolsetDescription": "Copy endpoint URL to easily integrate toolset into your workflows"
       },
+      "specificationSection": "Specification",
       "prompt": {
-        "section": "Prompt",
-        "author": "Author",
+        "author": "Created by",
         "updated": "Last updated"
       },
       "skill": {
-        "section": "Skill",
-        "author": "Author",
+        "author": "Created by",
         "updated": "Last updated",
         "fileCount": "Files",
-        "specificationSection": "Specification",
         "whenToUse": "When to use",
         "allowedTools": "Allowed tools",
         "bundledResources": "Bundled resources"

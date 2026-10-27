@@ -19,7 +19,7 @@ import { SkillContentFileTree } from '@epam/ai-dial-skills';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
-import { useNavigate, useSearchParams } from 'react-router';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import { CONFIRMATION_BOLD_COMPONENTS } from '../../constants/confirmation-copy';
 import { PAGE_HEADER_ROW_CLASS } from '../../constants/layout';
 import { ToolsetEditorQuery } from '../../constants/toolsets';
@@ -229,6 +229,7 @@ const CatalogView: FC<Props> = ({
   );
   const isPromptsEnabled = useUiFeature(OverlayFeature.Prompts);
   const isSkillsEnabled = useUiFeature(OverlayFeature.Skills);
+  const isUsagePageHidden = useUiFeature(OverlayFeature.HideUsagePage);
 
   const {
     prompts,
@@ -727,6 +728,23 @@ const CatalogView: FC<Props> = ({
             [CatalogEntityType.Skill]: t(CatalogI18nKeys.TabSkills),
           },
         }}
+        /* The Limits tab lists only the model's own limits, so it points to
+           the page with the user's full picture — unless a host hides it. */
+        detailsLimitsFooterNote={
+          isUsagePageHidden ? undefined : (
+            <Trans
+              i18nKey={CatalogI18nKeys.DetailsLimitsFooterNote}
+              components={{
+                link: (
+                  <Link
+                    to={ROUTES.Usage}
+                    className="text-accent underline hover:opacity-75 focus-visible:outline focus-visible:outline-focus"
+                  />
+                ),
+              }}
+            />
+          )
+        }
         detailsTexts={{
           tabToolsLabel: t(CatalogI18nKeys.DetailsTabTools),
           tabContentLabel: t(CatalogI18nKeys.DetailsTabContent),

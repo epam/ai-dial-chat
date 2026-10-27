@@ -46,7 +46,6 @@ const skillOverviewLabels: SkillOverviewLabels = {
   authorLabel: 'Author',
   updatedLabel: 'Updated',
   fileCountLabel: 'File count',
-  detailsSectionTitle: 'Details',
 };
 
 /** Empty, successful file listing — lets `buildSkillOverview` run so the metadata response's `author` is observable. */
