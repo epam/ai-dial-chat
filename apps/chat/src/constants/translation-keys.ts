@@ -151,6 +151,7 @@ export enum NavigationI18nKeys {
   Catalog = 'navigation.catalog',
   FileManager = 'dialFileManager.page.navLabel',
   ScheduledTasks = 'scheduledTasks.page.navLabel',
+  Projects = 'navigation.projects',
   Menu = 'navigation.menu',
   Back = 'navigation.back',
   Sidebar = 'navigation.sidebar',
@@ -401,6 +402,26 @@ export enum NotFoundI18nKeys {
   Title = 'notFound.title',
   Description = 'notFound.description',
   OpenCatalog = 'notFound.openCatalog',
+}
+
+export enum ProjectsI18nKeys {
+  PageTitle = 'projects.page.title',
+  PageSubtitle = 'projects.page.subtitle',
+  SearchPlaceholder = 'projects.toolbar.searchPlaceholder',
+  SearchAriaLabel = 'projects.toolbar.searchAriaLabel',
+  SortNewest = 'projects.toolbar.sortNewest',
+  SortOldest = 'projects.toolbar.sortOldest',
+  SortNameAsc = 'projects.toolbar.sortNameAsc',
+  EmptyStateLabel = 'projects.emptyState.label',
+  EmptyStateDescription = 'projects.emptyState.description',
+  NoResultsLabel = 'projects.noResults.label',
+  ErrorLabel = 'projects.error.label',
+  IncompleteLabel = 'projects.incomplete.label',
+  ResultCount = 'projects.status.resultCount',
+  SourcePersonal = 'projects.source.personal',
+  SourceShared = 'projects.source.shared',
+  SourceOrganization = 'projects.source.organization',
+  CardUpdatedAt = 'projects.card.updatedAt',
 }
 
 export enum ScheduledTasksI18nKeys {

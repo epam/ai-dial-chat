@@ -1013,6 +1013,27 @@ export class EnvironmentVariables {
     return !['false', '0', 'no'].includes(String(raw).toLowerCase());
   })
   @IsBoolean()
+  PROJECTS_ENABLED?: boolean = false;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null || value === '') return [];
+    return String(value)
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 0);
+  })
+  @IsString({ each: true })
+  PROJECTS_ENABLED_ROLES?: string[] = [];
+
+  @IsOptional()
+  @Transform(({ obj, key }) => {
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    return !['false', '0', 'no'].includes(String(raw).toLowerCase());
+  })
+  @IsBoolean()
   DEFAULT_DEPLOYMENT_PINNED?: boolean = false;
 
   @IsOptional()

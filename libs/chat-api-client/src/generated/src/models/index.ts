@@ -4915,6 +4915,25 @@ export interface ListMcpToolNamesResponseDto {
 /**
  *
  * @export
+ * @interface ListProjectsResponseDto
+ */
+export interface ListProjectsResponseDto {
+  /**
+   * Every project visible to the caller across the personal, organization and shared sources, de-duplicated by id. Order is unspecified.
+   * @type {Array<ProjectDto>}
+   * @memberof ListProjectsResponseDto
+   */
+  items: Array<ProjectDto>;
+  /**
+   * Sources that failed or were truncated at the page cap, so `items` may be missing projects from them. Empty when every source answered in full.
+   * @type {Array<ProjectSource>}
+   * @memberof ListProjectsResponseDto
+   */
+  incompleteSources: Array<ProjectSource>;
+}
+/**
+ *
+ * @export
  * @interface ListScheduledTaskRunsResponseDto
  */
 export interface ListScheduledTaskRunsResponseDto {
@@ -5610,6 +5629,79 @@ export interface OfflineCredentialsSigninBodyDto {
    */
   redirectUri: string;
 }
+/**
+ *
+ * @export
+ * @interface ProjectDto
+ */
+export interface ProjectDto {
+  /**
+   * DIAL Core resource id, `projects/{bucket}/{path}` without a trailing slash.
+   * @type {string}
+   * @memberof ProjectDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectDto
+   */
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectDto
+   */
+  bucket: string;
+  /**
+   * Path of the project within its bucket.
+   * @type {string}
+   * @memberof ProjectDto
+   */
+  path: string;
+  /**
+   * Grouping folder path the project sits in, when nested.
+   * @type {string}
+   * @memberof ProjectDto
+   */
+  parentPath?: string;
+  /**
+   *
+   * @type {ProjectSource}
+   * @memberof ProjectDto
+   */
+  source: ProjectSource;
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectDto
+   */
+  author?: string;
+  /**
+   * Creation time, epoch milliseconds.
+   * @type {number}
+   * @memberof ProjectDto
+   */
+  createdAt?: number;
+  /**
+   * Last update time, epoch milliseconds.
+   * @type {number}
+   * @memberof ProjectDto
+   */
+  updatedAt?: number;
+}
+
+/**
+ *
+ * @export
+ */
+export const ProjectSource = {
+  Personal: 'personal',
+  Shared: 'shared',
+  Organization: 'organization',
+} as const;
+export type ProjectSource = (typeof ProjectSource)[keyof typeof ProjectSource];
+
 /**
  *
  * @export

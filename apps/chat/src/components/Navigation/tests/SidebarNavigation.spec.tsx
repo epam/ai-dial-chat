@@ -570,6 +570,39 @@ describe('SidebarNavigation', () => {
       expect(getHrefs()).toContain('/catalog');
     });
 
+    it('shows Projects directly after New chat when projectsEnabled is on', () => {
+      useAppConfigMock.mockReturnValue({
+        status: UserConfigStatus.Ready,
+        features: { projectsEnabled: true, scheduledTasksEnabled: true },
+      });
+      renderItems();
+
+      expect(getHrefs().slice(0, 2)).toEqual(['/', '/projects']);
+    });
+
+    it('hides Projects while projectsEnabled is off', () => {
+      renderItems();
+
+      expect(getHrefs()).not.toContain('/projects');
+    });
+
+    it('marks Projects as the current page on /projects', () => {
+      useAppConfigMock.mockReturnValue({
+        status: UserConfigStatus.Ready,
+        features: { projectsEnabled: true },
+      });
+      render(
+        <MemoryRouter initialEntries={['/projects']}>
+          <SidebarNavigation />
+        </MemoryRouter>,
+      );
+
+      const projectsLink = screen
+        .getAllByRole('link')
+        .find((link) => link.getAttribute('href') === '/projects');
+      expect(projectsLink?.getAttribute('aria-current')).toBe('page');
+    });
+
     it('hides Catalog when catalog is disabled', () => {
       enableSidebar(mockUseUiFeature, [OverlayFeature.Catalog]);
       renderItems();

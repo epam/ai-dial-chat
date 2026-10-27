@@ -85,6 +85,7 @@
   "navigation": {
     "ariaLabel": "Main navigation",
     "catalog": "Catalog",
+    "projects": "Projects",
     "menu": "Navigation menu",
     "back": "Back",
     "sidebar": "Sidebar",
@@ -762,6 +763,44 @@
     "overlaySubtitle": "Drop files here to attach them to message",
     "overlayDeniedTitle": "No attachments allowed",
     "overlayDeniedSubtitle": "Attachments can't be added to message"
+  },
+  "projects": {
+    "page": {
+      "title": "Projects",
+      "subtitle": "Projects you own, projects shared with you, and your organization's projects"
+    },
+    "toolbar": {
+      "searchPlaceholder": "Search projects",
+      "searchAriaLabel": "Search projects",
+      "sortNewest": "Newest",
+      "sortOldest": "Oldest",
+      "sortNameAsc": "Name A–Z"
+    },
+    "emptyState": {
+      "label": "No projects yet",
+      "description": "Your projects will appear here once created."
+    },
+    "noResults": {
+      "label": "No projects match your search"
+    },
+    "error": {
+      "label": "Projects could not be loaded"
+    },
+    "incomplete": {
+      "label": "Some projects could not be loaded. The list may be incomplete."
+    },
+    "status": {
+      "resultCount_one": "{{count}} project",
+      "resultCount_other": "{{count}} projects"
+    },
+    "source": {
+      "personal": "Personal",
+      "shared": "Shared",
+      "organization": "Organization"
+    },
+    "card": {
+      "updatedAt": "Updated {{date}}"
+    }
   },
   "scheduledTasks": {
     "typeLabel": "Scheduled task",

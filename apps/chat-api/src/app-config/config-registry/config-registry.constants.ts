@@ -366,6 +366,21 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     allowedRolesEnvVar: 'SCHEDULED_TASKS_ENABLED_ROLES',
   },
   {
+    key: 'features.projectsEnabled',
+    type: 'feature',
+    valueType: 'boolean',
+    visibility: 'client',
+    defaultValue: false,
+    critical: false,
+    description:
+      'Whether the Projects feature is enabled, including the GET /api/v1/projects ' +
+      'listing endpoint, the Projects page, and its sidebar navigation entry. ' +
+      'Set PROJECTS_ENABLED_ROLES to restrict to specific roles.',
+    owner: 'chat-team',
+    envVar: 'PROJECTS_ENABLED',
+    allowedRolesEnvVar: 'PROJECTS_ENABLED_ROLES',
+  },
+  {
     key: 'features.defaultDeploymentPinned',
     type: 'feature',
     valueType: 'boolean',
