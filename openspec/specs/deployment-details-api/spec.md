@@ -145,7 +145,7 @@ This closes a race observed as an unstable toolset login/logout indicator: a det
   - `lifecycleStatus?: string`
   - `tokenizerModel?: string`
   - `limits?: { maxTotalTokens?: number; maxPromptTokens?: number; maxCompletionTokens?: number }`
-  - `pricing?: Record<string, string | ModelPricingRateDto>` — `unit` names the billing unit; scalar prices and recursive conditional pricing trees from DIAL Core are forwarded verbatim
+  - `pricing?: Record<string, string | ModelPricingRateDto>` — `unit` names the billing unit; scalar prices and recursive conditional pricing trees from DIAL Core are forwarded verbatim. `ModelPricingRateDto` is `{ rate?: string; test?: object; ifTrue?: string | ModelPricingRateDto; ifFalse?: string | ModelPricingRateDto }`: a branch is either a per-unit price string or a nested tree, and the OpenAPI schema SHALL declare both (`oneOf`), so the generated client types the branches as `ModelPricingRateDtoIfTrue` / `ModelPricingRateDtoIfFalse` (`ModelPricingRateDto | string`)
   - `features?: DeploymentFeaturesDetailsDto` (see below)
   - `catalogProperties?: ModelCatalogPropertiesDto`
   - `owner?: string`
@@ -262,3 +262,7 @@ No `any` types are allowed in the success response shape.
 - **THEN** the second read's `applicationDetails.applicationProperties` is identical to the
   first, including any `features` key it carries
 
+#### Scenario: A conditional price branch may be a plain price string
+
+- **WHEN** DIAL Core returns `pricing.prompt` as `{ test: { field: 'promptTokens', operator: '>', value: '200000' }, ifTrue: '0.000004', ifFalse: '0.000002' }`
+- **THEN** `modelDetails.pricing.prompt` carries the same object unchanged, and the OpenAPI schema for `ModelPricingRateDto.ifTrue`/`ifFalse` accepts the string branches

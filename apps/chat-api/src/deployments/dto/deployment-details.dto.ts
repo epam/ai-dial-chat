@@ -54,14 +54,23 @@ export class ModelLimitsDto {
  * and every other key (`prompt`, `completion`, `cache_read`, and
  * deployment-specific ones) holds either a per-unit price or a conditional
  * pricing tree, so the map is forwarded verbatim instead of whitelisting a
- * fixed set of keys.
+ * fixed set of keys. A branch (`ifTrue`/`ifFalse`) is itself either a
+ * per-unit price string or a nested pricing tree.
  */
 export class ModelPricingRateDto {
-  @ApiPropertyOptional({ type: () => ModelPricingRateDto })
-  ifFalse?: ModelPricingRateDto;
+  @ApiPropertyOptional({
+    description:
+      'Price applied when `test` fails: a per-unit price or a nested pricing branch',
+    oneOf: [{ type: 'string' }, { $ref: getSchemaPath('ModelPricingRateDto') }],
+  })
+  ifFalse?: string | ModelPricingRateDto;
 
-  @ApiPropertyOptional({ type: () => ModelPricingRateDto })
-  ifTrue?: ModelPricingRateDto;
+  @ApiPropertyOptional({
+    description:
+      'Price applied when `test` holds: a per-unit price or a nested pricing branch',
+    oneOf: [{ type: 'string' }, { $ref: getSchemaPath('ModelPricingRateDto') }],
+  })
+  ifTrue?: string | ModelPricingRateDto;
 
   @ApiPropertyOptional({
     description: 'Per-unit price for this pricing branch',

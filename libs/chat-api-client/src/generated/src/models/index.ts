@@ -5140,16 +5140,16 @@ export interface ModelLimitsDto {
 export interface ModelPricingRateDto {
   /**
    *
-   * @type {ModelPricingRateDto}
+   * @type {ModelPricingRateDtoIfFalse}
    * @memberof ModelPricingRateDto
    */
-  ifFalse?: ModelPricingRateDto;
+  ifFalse?: ModelPricingRateDtoIfFalse;
   /**
    *
-   * @type {ModelPricingRateDto}
+   * @type {ModelPricingRateDtoIfTrue}
    * @memberof ModelPricingRateDto
    */
-  ifTrue?: ModelPricingRateDto;
+  ifTrue?: ModelPricingRateDtoIfTrue;
   /**
    * Per-unit price for this pricing branch
    * @type {string}
@@ -5163,6 +5163,18 @@ export interface ModelPricingRateDto {
    */
   test?: { [key: string]: unknown };
 }
+/**
+ * @type ModelPricingRateDtoIfFalse
+ * Price applied when `test` fails: a per-unit price or a nested pricing branch
+ * @export
+ */
+export type ModelPricingRateDtoIfFalse = ModelPricingRateDto | string;
+/**
+ * @type ModelPricingRateDtoIfTrue
+ * Price applied when `test` holds: a per-unit price or a nested pricing branch
+ * @export
+ */
+export type ModelPricingRateDtoIfTrue = ModelPricingRateDto | string;
 /**
  *
  * @export
