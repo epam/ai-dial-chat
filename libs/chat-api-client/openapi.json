@@ -10907,10 +10907,26 @@
         "type": "object",
         "properties": {
           "ifFalse": {
-            "$ref": "#/components/schemas/ModelPricingRateDto"
+            "description": "Price applied when `test` fails: a per-unit price or a nested pricing branch",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/ModelPricingRateDto"
+              }
+            ]
           },
           "ifTrue": {
-            "$ref": "#/components/schemas/ModelPricingRateDto"
+            "description": "Price applied when `test` holds: a per-unit price or a nested pricing branch",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/ModelPricingRateDto"
+              }
+            ]
           },
           "rate": {
             "type": "string",
