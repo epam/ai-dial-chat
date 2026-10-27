@@ -302,7 +302,7 @@ export interface SkillEditorColors {
   title?: string;
   /** Color of the hand-rendered Instructions field label and of the mobile "Editing file" caption and caret. Defaults to `--text-secondary`. */
   helperText?: string;
-  /** Background of the mobile "Editing file" card. Defaults to `--bg-layer-base`. */
+  /** Background of the mobile "Editing file" card. Defaults to `--bg-layer-sunken`. */
   filesCardBackground?: string;
   /** Border color of the mobile "Editing file" card. Defaults to `--stroke-tertiary`. */
   filesCardBorder?: string;

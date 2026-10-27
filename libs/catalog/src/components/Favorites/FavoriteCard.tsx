@@ -99,7 +99,7 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
       tabIndex={handleClick != null ? 0 : undefined}
       aria-label={item.name}
       className={mergeClasses(
-        'box-border min-w-0 cursor-pointer flex-row items-start gap-1 p-3 text-start',
+        'box-border min-w-0 cursor-pointer flex-row items-center gap-3 p-5 text-start',
         isLeaving && styles.cardLeaving,
         isSelected && styles.selectedCard,
         CATALOG_CLASS.favoriteCard,
@@ -136,7 +136,7 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
         lastUsed={item.lastUsed}
         size={DeploymentSize.LG}
         query={query}
-        className="min-w-0 flex-1"
+        className="min-w-0 flex-1 items-center"
         styles={{
           colors,
           typography: {
