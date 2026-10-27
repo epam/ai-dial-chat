@@ -117,7 +117,7 @@ describe('ExtensionsSection', () => {
     expect(screen.queryByRole('button', { name: 'Log in' })).toBeNull();
   });
 
-  it('exposes the limited-access tooltip description to screen readers through aria-describedby', () => {
+  it('shows the limited-access explanation without hover and associates it with the badge', () => {
     renderSection([
       makeRow({
         isWarningVisible: true,
@@ -128,12 +128,12 @@ describe('ExtensionsSection', () => {
       }),
     ]);
 
-    /* The badge is not a control, so the hover tooltip's explanation must
-     * also live in an sr-only description the badge references. */
+    /* The badge is not a control. Its explanation must be visible without
+     * hover so sighted keyboard and touch users can read it too. */
     const description = screen.getByText(
       'Contact your administrator for more details.',
     );
-    expect(description.className).toContain('sr-only');
+    expect(description.className).not.toContain('sr-only');
     /* ARIA wiring has no semantic query — the badge is matched by walking up
      * from its label text to the element that carries the attribute. */
     /* eslint-disable testing-library/no-node-access */

@@ -368,11 +368,11 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
         )}
       </div>
 
-      {banner != null && (
+      {banner != null && typeof banner !== 'boolean' && (
         /* The banner shares the card grid's width cap and centering so the
          * two align horizontally — without this cap the banner renders wider
-         * than the cards below it. Guarded so an omitted banner adds no
-         * empty flex child (and no gap row) between toolbar and content. */
+         * than the cards below it. Nullish or boolean banners add no empty
+         * flex child (and no gap row) between toolbar and content. */
         <div
           className="mx-auto w-full min-w-0"
           style={{

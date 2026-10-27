@@ -67,7 +67,7 @@ describe('SchedulerConsentService', () => {
     );
   });
 
-  it('reports signed_in for an explicit SIGNED_IN status', async () => {
+  it('reports signed_in for an explicit SIGNED_IN status on a DIAL_NATIVE service', async () => {
     const { service } = makeService(
       makeExternalServices({
         authenticationType: ExternalServiceAuthType.DialNative,
@@ -94,10 +94,26 @@ describe('SchedulerConsentService', () => {
   });
 
   it.each([
-    [
-      'an OAuth scheduler service',
-      { authenticationType: 'OAUTH', appLevelAuthStatus: 'SIGNED_OUT' },
-    ],
+    [ExternalServiceAuthType.OAuth, 'SIGNED_IN'],
+    [ExternalServiceAuthType.OAuth, 'SIGNED_OUT'],
+    [ExternalServiceAuthType.ApiKey, 'SIGNED_IN'],
+    [ExternalServiceAuthType.ApiKey, 'SIGNED_OUT'],
+    [ExternalServiceAuthType.None, 'SIGNED_IN'],
+    [ExternalServiceAuthType.None, 'SIGNED_OUT'],
+  ])(
+    'reports unknown for a %s scheduler service with %s application credentials',
+    async (authenticationType, appLevelAuthStatus) => {
+      const { service } = makeService(
+        makeExternalServices({ authenticationType, appLevelAuthStatus }),
+      );
+
+      await expect(service.getSchedulerServiceConsent('token')).resolves.toBe(
+        SchedulerServiceConsentStatus.Unknown,
+      );
+    },
+  );
+
+  it.each([
     [
       'an unreported consent status',
       {

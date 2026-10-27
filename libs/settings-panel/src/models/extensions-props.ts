@@ -17,7 +17,7 @@ export interface ExtensionServiceItem {
   limitedAccessLabel?: string;
   /** Bold title line of the limited-access badge's tooltip. */
   limitedAccessTooltipTitle?: string;
-  /** Normal-weight description line of the limited-access badge's tooltip. */
+  /** Explanation shown below the limited-access badge and repeated in its tooltip; also referenced by the badge's aria-describedby. */
   limitedAccessTooltipDescription?: string;
   /** The row's trailing action (e.g. a Log in / Log out button), owned by the host; ignored while `limitedAccessLabel` is set. */
   action: ReactNode;
@@ -45,7 +45,7 @@ export interface ExtensionsColors {
   rowDividerColor?: string;
   /** Service name text color. Fallback: `--text-primary`. */
   nameColor?: string;
-  /** Service description text color. Fallback: `--text-secondary`. */
+  /** Service and limited-access description text color. Fallback: `--text-secondary` for the service description, `--text-primary` for the limited-access explanation. */
   descriptionColor?: string;
   /** Warning badge color. Fallback: `--text-warning-icon`. */
   warningBadgeColor?: string;
@@ -57,7 +57,7 @@ export interface ExtensionsTypography {
   columnHeaderClassName?: string;
   /** CSS class for the service name. Defaults to `'dial-small-semi-text'`. */
   nameClassName?: string;
-  /** CSS class for the service description. Defaults to `'dial-small-text'`. */
+  /** CSS class for the service description and limited-access explanation. Defaults to `'dial-small-text'`. */
   descriptionClassName?: string;
 }
 

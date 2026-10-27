@@ -62,9 +62,9 @@ export class SchedulerConsentService {
   }
 
   /**
-   * Resolves the scheduler service's consent state: `signed_out` only for an
-   * explicit `SIGNED_OUT` on a `DIAL_NATIVE` service, `signed_in` for
-   * `SIGNED_IN`, `unknown` for anything else (a failed lookup is logged at
+   * Resolves the DIAL_NATIVE scheduler service's consent state: `signed_out`
+   * for an explicit `SIGNED_OUT`, `signed_in` for `SIGNED_IN`, and `unknown`
+   * for any other authentication type or status (a failed lookup is logged at
    * warn and defers rather than failing the caller's operation). An optional
    * `signal` cancels the upstream reads, which the caller maps to `unknown`.
    */
@@ -91,13 +91,13 @@ export class SchedulerConsentService {
       return SchedulerServiceConsentStatus.Unknown;
     }
 
+    if (service.authenticationType !== ExternalServiceAuthType.DialNative) {
+      return SchedulerServiceConsentStatus.Unknown;
+    }
     if (service.appLevelAuthStatus === 'SIGNED_IN') {
       return SchedulerServiceConsentStatus.SignedIn;
     }
-    if (
-      service.authenticationType === ExternalServiceAuthType.DialNative &&
-      service.appLevelAuthStatus === 'SIGNED_OUT'
-    ) {
+    if (service.appLevelAuthStatus === 'SIGNED_OUT') {
       return SchedulerServiceConsentStatus.SignedOut;
     }
     return SchedulerServiceConsentStatus.Unknown;

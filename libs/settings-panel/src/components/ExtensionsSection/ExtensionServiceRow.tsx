@@ -55,8 +55,7 @@ export const ExtensionServiceRow: FC<ExtensionServiceRowProps> = ({
   } = row;
 
   const isLimitedAccess = limitedAccessLabel != null;
-  /* Identifies the sr-only limited-access explanation so the badge can
-   * point at it through aria-describedby. */
+  /* Connects the badge to its visible explanation for assistive technology. */
   const limitedAccessDescriptionId = useId();
 
   return (
@@ -112,21 +111,9 @@ export const ExtensionServiceRow: FC<ExtensionServiceRowProps> = ({
           {description}
         </span>
       </div>
-      <div role="cell" className="flex items-center justify-end">
+      <div role="cell" className="flex min-w-0 items-center justify-end">
         {isLimitedAccess ? (
-          <>
-            {/* The tooltip is a hover enhancement, so its explanation would
-             * never reach keyboard and screen-reader users on its own: the
-             * same text is mirrored into this sr-only description, which the
-             * badge references through aria-describedby. */}
-            <span id={limitedAccessDescriptionId} className="sr-only">
-              {limitedAccessTooltipDescription}
-            </span>
-            {/* The position sits on the tooltip's own trigger so the hover
-             * reference has the badge's real size — positioning a child
-             * instead leaves the reference zero-sized and the tooltip
-             * flickers. The tooltip renders nothing on touch-only devices,
-             * where the sr-only description above carries the explanation. */}
+          <div className="flex min-w-0 flex-col items-end gap-1">
             <Tooltip
               tooltip={
                 <span className="flex flex-col gap-1 text-start">
@@ -146,7 +133,19 @@ export const ExtensionServiceRow: FC<ExtensionServiceRowProps> = ({
                 aria-describedby={limitedAccessDescriptionId}
               />
             </Tooltip>
-          </>
+            {/* Keep the explanation visible without hover for keyboard and
+             * touch users; the tooltip only repeats this information. */}
+            <span
+              id={limitedAccessDescriptionId}
+              className={mergeClasses(
+                descriptionClassName,
+                'min-w-0 text-end wrap-break-word',
+                styles.limitedAccessDescription,
+              )}
+            >
+              {limitedAccessTooltipDescription}
+            </span>
+          </div>
         ) : (
           action
         )}

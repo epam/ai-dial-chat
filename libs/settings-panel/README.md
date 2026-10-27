@@ -101,7 +101,9 @@ entirely by the host — an empty `null` renders an empty cell with no layout sh
 
 Pass `styles={{ colors, typography }}` to override the container background, column-header,
 name, description, and warning-badge colors (as CSS custom properties) and the column-header,
-name, and description typography classes.
+name, and description typography classes. `descriptionColor` and `descriptionClassName`
+apply to both the service description and the visible limited-access explanation. Without
+a color override, the explanation uses `--text-primary` with a `#161b2d` fallback.
 
 ## Types
 
@@ -109,7 +111,7 @@ name, and description typography classes.
 - `SettingsPanelProps` — `{ items, activeId, onSelect, sectionLabel?, styles?, className? }`
 - `SettingsPanelStyles` — `{ typography? }`
 - `SettingsPanelTypography` — `{ sectionLabelClassName? }`
-- `ExtensionServiceItem` — `{ id, displayName, avatarColor?, description, isWarningVisible, limitedAccessLabel?, limitedAccessTooltipTitle?, limitedAccessTooltipDescription?, action }` — `avatarColor` is an `AVATAR_PALETTE` entry (`@epam/ai-dial-ui-kit`) pinned by the host; omitted keeps the name-derived colour — while `limitedAccessLabel` is set the row renders the red limited-access `Badge` with a two-line hover tooltip (bold `limitedAccessTooltipTitle`, normal `limitedAccessTooltipDescription`) instead of the `action`; because the tooltip is hover-only, `limitedAccessTooltipDescription` is also rendered as an `sr-only` span that the `Badge` references through `aria-describedby`
+- `ExtensionServiceItem` — `{ id, displayName, avatarColor?, description, isWarningVisible, limitedAccessLabel?, limitedAccessTooltipTitle?, limitedAccessTooltipDescription?, action }` — `avatarColor` is an `AVATAR_PALETTE` entry (`@epam/ai-dial-ui-kit`) pinned by the host; omitted keeps the name-derived colour — while `limitedAccessLabel` is set the row renders the red limited-access `Badge` with a two-line hover tooltip (bold `limitedAccessTooltipTitle`, normal `limitedAccessTooltipDescription`) instead of the `action`; `limitedAccessTooltipDescription` also remains visible below the badge at every breakpoint, wrapping within the action cell so keyboard and touch users can read it without hovering. The `Badge` references this visible explanation through `aria-describedby` for screen readers
 - `ExtensionsLabels` — `{ tableAriaLabel, nameColumnLabel, descriptionColumnLabel, actionsColumnLabel }`
 - `ExtensionsSectionProps` — `{ rows, labels, styles? }`
 - `ExtensionsStyles` — `{ colors?, typography? }`

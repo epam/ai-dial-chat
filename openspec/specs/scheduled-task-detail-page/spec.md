@@ -117,7 +117,14 @@ When `task.isDeleted` is `true`, the header SHALL render none of the Active swit
 
 #### Scenario: Start now follows Edit
 
-- **WHEN** the loaded task is not deleted and the host supplies the start action
+- **WHEN** the loaded task is not deleted, `schedulerServiceConsent` is `signed_in` or `unknown`, and the host supplies the start action
+- **THEN** the header displays Start now after Edit, with eligibility and pending behavior defined by the manual-run requirements
+
+#### Scenario: Start now is absent during task load failure or deletion
+
+- **WHEN** task details are loading, failed, or soft-deleted
+- **THEN** Start now is absent along with the other unavailable task actions
+
 ### Requirement: Details and Configuration sections render read-only task metadata
 
 The detail page SHALL render a Details section showing the task's description, a "Model or Agent" value (resolved to a display name via the deployments context when possible, falling back to the raw model id), and a "Repeats" schedule label produced by the same formatter logic already used by the list page's `map-scheduled-task-dto.ts` (not duplicated inside `libs/scheduled-tasks`). The detail page SHALL render a Configuration section whose "Instructions" content is the task's `prompt` field, rendered through the same markdown stack chat assistant messages use (`MarkdownRenderer`/`MDMessageViewer` from `@epam/ai-dial-chat-shared`), as static content with no streaming/typewriter effect, and with the same default markdown class names so headings, lists, code blocks, and GFM match chat rendering.

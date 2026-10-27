@@ -638,10 +638,29 @@ describe('ScheduledTasks', () => {
       ).toBeTruthy();
     });
 
-    it('renders nothing extra when banner is omitted', () => {
-      renderScheduledTasks({ items: [buildItem()] });
+    it.each([undefined, null, false, true])(
+      'reserves no banner gap when banner is %s',
+      (banner) => {
+        renderScheduledTasks({ items: [buildItem()], banner });
 
-      expect(screen.queryByText('Example banner')).toBeNull();
+        /* A visually empty flex child still adds a gap; inspect the sibling
+         * before the status/content region because a text query cannot detect it. */
+        // eslint-disable-next-line testing-library/no-node-access -- Verifies the absence of an empty layout wrapper.
+        const beforeStatus = screen.getByRole('status').previousElementSibling;
+        expect(
+          beforeStatus?.contains(
+            screen.getByRole('textbox', {
+              name: 'Search scheduled tasks by name',
+            }),
+          ),
+        ).toBe(true);
+      },
+    );
+
+    it.each([0, 'Example banner'])('renders a %s banner', (banner) => {
+      renderScheduledTasks({ items: [buildItem()], banner });
+
+      expect(screen.getByText(String(banner))).toBeTruthy();
     });
 
     it('caps the banner to the card grid width so the two align horizontally', () => {
