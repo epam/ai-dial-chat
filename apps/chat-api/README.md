@@ -3727,6 +3727,8 @@ processors, no additional listening port, and no outbound network calls for tele
   traces/logs without reading response headers; it never alters `statusCode`/`message`/`error`,
   and adds nothing when no valid trace is active or the response isn't a fresh JSON error body
   (streaming/file/redirect responses, or one whose headers were already sent).
+  An internal request timing span additionally carries total, Core-active and outside-Core
+  durations for [individual slow-request investigation](../../docs/observability.md#investigate-slow-requests-over-a-day).
 - **Logs**: `apps/chat-api/src/telemetry/nestjs-otel-logger.ts`'s `NestOtelLogger` subclasses the
   standard NestJS `ConsoleLogger`. Console output and `LOG_LEVEL` gating are unchanged; when
   enabled, the same call is additionally exported through the OpenTelemetry Logs API with a
@@ -3742,6 +3744,9 @@ processors, no additional listening port, and no outbound network calls for tele
   authorization decisions with bounded rejection reasons, and logout results — none of them is
   an active-session count, since the BFF holds no session state. Runtime gauges report the
   serving Node.js process's memory, outstanding SSE operations, and generation registry size.
+  Request timing middleware records total duration and the union of overlapping Core calls,
+  including body transfer, with the remaining time reported as outside-Core (not CPU time).
+  See [request timing attribution](../../docs/observability.md#request-timing-attribution).
   See the
   [metric contracts](../../docs/observability.md#metric-contracts) and
   [Runtime memory diagnostics](#runtime-memory-diagnostics).
