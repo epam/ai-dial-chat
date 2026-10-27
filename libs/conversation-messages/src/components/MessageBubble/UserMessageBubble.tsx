@@ -222,8 +222,14 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
                   ref={textRef}
                   className={mergeClasses(
                     textClass,
-                    'max-w-full min-w-0 text-start',
+                    /*
+                     * `overflow-wrap` inherits: one class here breaks an
+                     * unbreakable token in every markdown element, including
+                     * ones whose per-element class carries none.
+                     */
+                    'max-w-full min-w-0 text-start [overflow-wrap:anywhere]',
                     MARKDOWN_EDGE_MARGIN_CLASS_NAME,
+                    CONVERSATION_MESSAGES_CLASS.userContent,
                   )}
                 >
                   {/*

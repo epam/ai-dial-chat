@@ -14,6 +14,7 @@ import {
   within,
 } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { CONVERSATION_MESSAGES_CLASS } from '../../../constants/public-class-names';
 import { BubblePosition } from '../../../types/bubble-position';
 import { AssistantMessageBubble } from '../AssistantMessageBubble';
 import { MessageBubble } from '../MessageBubble';
@@ -29,6 +30,8 @@ const ATTACHMENT: DisplayAttachment = {
 };
 
 const TABLE_MARKDOWN = '| A | B |\n| - | - |\n| 1 | 2 |';
+
+const LONG_TOKEN = `sha512-${'f2'.repeat(120)}`;
 
 const ASSISTANT_TABLE_LABELS = {
   tableCopyLabel: 'Copy',
@@ -582,7 +585,10 @@ describe('UserMessageBubble — textSegments', () => {
 
     expect(paragraph.textContent).toBe('/Summarizer please summarize');
     // eslint-disable-next-line testing-library/no-node-access -- see comment above
-    expect(paragraph.closest('.text-start')).toBeTruthy();
+    const textContainer = paragraph.closest(
+      `.${CONVERSATION_MESSAGES_CLASS.userContent}`,
+    ) as HTMLElement;
+    expect(textContainer).toBeTruthy();
   });
 });
 
@@ -850,6 +856,59 @@ describe('AssistantMessageBubble — attachments', () => {
     expect(screen.getByRole('button', { name: 'Open in canvas' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Download file' }));
     expect(onDownloadAll).toHaveBeenCalledWith([ATTACHMENT]);
+  });
+});
+
+describe('MessageBubble — long unbreakable text', () => {
+  it('breaks a long token in an assistant heading that carries no break class of its own', () => {
+    render(<AssistantMessageBubble text={`# ${LONG_TOKEN}`} />);
+
+    const heading = screen.getByRole('heading', { level: 1, name: LONG_TOKEN });
+    expect(heading.className).not.toContain('overflow-wrap');
+    /*
+     * The `.cm-bubble-markdown` wrapper carries no role — a CSS-level check
+     * with no semantic query available.
+     */
+    // eslint-disable-next-line testing-library/no-node-access -- see comment above
+    const wrapper = heading.closest('.cm-bubble-markdown') as HTMLElement;
+    expect(wrapper.className).toContain('[overflow-wrap:anywhere]');
+  });
+
+  it('keeps a long token breakable when a host override drops the paragraph break classes', () => {
+    render(
+      <AssistantMessageBubble
+        text={LONG_TOKEN}
+        markdownClassNames={{ p: 'dial-body-paragraph-text' }}
+      />,
+    );
+
+    const paragraph = findMessageParagraph(LONG_TOKEN);
+    expect(paragraph.className).not.toContain('[overflow-wrap:anywhere]');
+    // eslint-disable-next-line testing-library/no-node-access -- same wrapper check as above
+    const wrapper = paragraph.closest('.cm-bubble-markdown') as HTMLElement;
+    expect(wrapper.className).toContain('[overflow-wrap:anywhere]');
+  });
+
+  it('caps the user bubble at its parent width and breaks tokens with no per-element class', () => {
+    render(<UserMessageBubble text={`# ${LONG_TOKEN}`} />);
+
+    const heading = screen.getByRole('heading', { level: 1, name: LONG_TOKEN });
+    expect(heading.className).not.toContain('overflow-wrap');
+    /*
+     * The bubble and the text container carry no role; their width/wrap
+     * classes are a CSS-level check with no semantic query available.
+     */
+    // eslint-disable-next-line testing-library/no-node-access -- see comment above
+    const textContainer = heading.closest(
+      `.${CONVERSATION_MESSAGES_CLASS.userContent}`,
+    ) as HTMLElement;
+    expect(textContainer.className).toContain('[overflow-wrap:anywhere]');
+    // eslint-disable-next-line testing-library/no-node-access -- see comment above
+    const bubble = heading.closest(
+      `.${CONVERSATION_MESSAGES_CLASS.userBubble}`,
+    ) as HTMLElement;
+    expect(bubble.className).toContain('max-w-full');
+    expect(bubble.className).toContain('w-fit');
   });
 });
 
