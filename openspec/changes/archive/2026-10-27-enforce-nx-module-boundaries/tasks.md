@@ -50,5 +50,5 @@ Verification: 3.5 passes. Then run `npm run verify:full` once to close the chang
 
 ## 4. Follow-ups (out of scope, file as separate changes)
 
-- [ ] 4.1 Propose `narrow-chat-hooks-dependencies`: move the shared types `chat-hooks` takes from UI libs into `chat-shared` and narrow `type:hooks` → `type:ui`.
-- [ ] 4.2 Propose a change deciding `toolset-editor` → `chat-hooks`: either take the hook as a prop, or accept the edge in AGENTS.md.
+- [x] 4.1 Propose the `chat-hooks` → UI-lib follow-up. Decided: keep the edge as an allowed, guarded one (types, enums and pure functions only, no hooks, no `.tsx`) — proposed as `allow-chat-hooks-ui-edges`.
+- [x] 4.2 Propose the `toolset-editor` → `chat-hooks` follow-up. Decided: `chat-hooks` owns functions only, so the toolset-auth enums move to `chat-shared` (`move-toolset-auth-enums-to-chat-shared`), `toolset-editor` takes a host `avatarPicker` and drops `GeneralForm` (`toolset-editor-host-avatar-resolver`), and the remaining `getApiErrorDetails` import is allowed and guarded (`allow-chat-hooks-ui-edges`).
