@@ -300,6 +300,11 @@
       "skillUpload": "Upload",
       "runners": "Runners"
     },
+    "creation": {
+      "loading": "Checking whether you can create this item…",
+      "unavailable": "Creation is unavailable right now. Please try again later.",
+      "denied": "You don't have permission to create this item."
+    },
     "publishFolderSearchPlaceholder": "Search folders",
     "publishFolderEmptyState": "No folders match \"{{query}}\".",
     "publish": {

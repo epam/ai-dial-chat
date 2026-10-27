@@ -1,5 +1,8 @@
 import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
-import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
+import {
+  CatalogCreationType,
+  TextRefinementPurpose,
+} from '@epam/ai-dial-chat-api-client';
 import {
   isValidSkillRelativePath,
   parseSkillResourceUrl,
@@ -19,6 +22,7 @@ import { formatFileSize, PUBLIC_BUCKET } from '@epam/ai-dial-chat-shared';
 import {
   SkillEditor as SkillEditorForm,
   type SkillEditorLabels,
+  type SkillEditorValues,
 } from '@epam/ai-dial-skill-editor';
 import {
   ConfirmationPopup,
@@ -32,10 +36,12 @@ import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
+import RequireCatalogCreation from '../../components/RequireCatalogCreation/RequireCatalogCreation';
 import { SkillFilePreview } from '../../components/SkillFilePreview/SkillFilePreview';
 import SkillFileSystemModal from '../../components/SkillFileSystemModal/SkillFileSystemModal';
 import {
   ButtonsI18nKeys,
+  CatalogI18nKeys,
   DialFileManagerI18nKeys,
   EditorI18nKeys,
   SkillEditorI18nKeys,
@@ -45,6 +51,7 @@ import { useNotification } from '../../context/NotificationContext';
 import { useSkills } from '../../context/SkillsContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useSkillFilePreviewSync } from '../../hooks/attachment/useSkillFilePreviewSync';
+import { useCatalogCreationDecision } from '../../hooks/catalog/useCatalogCreationDecision';
 import { useSkillFileSystemPicker } from '../../hooks/skills/useSkillFileSystemPicker';
 import { useBuilderLeaveGuard } from '../../hooks/unsaved-changes/useBuilderLeaveGuard';
 import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
@@ -56,6 +63,7 @@ import {
   listSkillFiles,
   updateSkill,
 } from '../../server-api/skills.api';
+import { CatalogCreationDecision } from '../../types/catalog-creation';
 import { EditorQuery } from '../../types/editor-query';
 import {
   EntityOperation,
@@ -71,10 +79,10 @@ const skillEditorLoadClient: SkillEditorLoadClient = {
   listSkillFiles,
 };
 
-const skillEditorSubmitClient: SkillEditorSubmitClient = {
-  createSkill,
-  updateSkill,
-};
+/* Used while creation is not allowed: the reusable submit workflow (its
+ * retry included) then has no way to create, without knowing why. */
+const blockedCreateSkill: SkillEditorSubmitClient['createSkill'] = () =>
+  Promise.reject(new Error('Skill creation is not allowed'));
 
 /* Stands in for the skill path while creating a skill that has none yet, so a
  * create-mode preview is still scoped to its own resource. */
@@ -119,6 +127,18 @@ const SkillEditorPage: FC = () => {
 
   const rawId = searchParams.get(EditorQuery.Id);
   const isEditMode = rawId != null && rawId !== '';
+  const creationDecision = useCatalogCreationDecision({
+    type: CatalogCreationType.Skill,
+  });
+  const isCreationAllowed =
+    creationDecision === CatalogCreationDecision.Allowed;
+  const skillEditorSubmitClient = useMemo<SkillEditorSubmitClient>(
+    () => ({
+      createSkill: isCreationAllowed ? createSkill : blockedCreateSkill,
+      updateSkill,
+    }),
+    [isCreationAllowed],
+  );
   const skillResource = useMemo(() => {
     if (!isEditMode) {
       return personalBucket
@@ -343,6 +363,32 @@ const SkillEditorPage: FC = () => {
     navigate(returnUrl);
   }, [navigate, returnUrl]);
 
+  /* The form may have opened under a permission the current config no
+   * longer grants; nothing is created then. */
+  const handleFormSubmit = useCallback(
+    (values: SkillEditorValues) => {
+      if (!isEditMode && !isCreationAllowed) {
+        showErrorNotification({
+          message: t(
+            creationDecision === CatalogCreationDecision.Denied
+              ? CatalogI18nKeys.CreationDenied
+              : CatalogI18nKeys.CreationUnavailable,
+          ),
+        });
+        return;
+      }
+      return handleSubmit(values);
+    },
+    [
+      creationDecision,
+      handleSubmit,
+      isCreationAllowed,
+      isEditMode,
+      showErrorNotification,
+      t,
+    ],
+  );
+
   /*
    * Back is preview-aware: while a supporting file is selected it is a return
    * to the `SKILL.md` view inside the editor, not a navigation, so it neither
@@ -479,93 +525,100 @@ const SkillEditorPage: FC = () => {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      {/* Announces the return to the manifest view; the Back control keeps
+    <RequireCatalogCreation
+      isCreateMode={!isEditMode}
+      type={CatalogCreationType.Skill}
+    >
+      <div className="flex h-full min-h-0 flex-col">
+        {/* Announces the return to the manifest view; the Back control keeps
           focus across the transition, so nothing else signals the change. */}
-      <span role="status" aria-live="polite" className="sr-only">
-        {hasReturnedToManifest && isManifestSelected
-          ? t(SkillEditorI18nKeys.ReturnedToManifestStatus)
-          : ''}
-      </span>
+        <span role="status" aria-live="polite" className="sr-only">
+          {hasReturnedToManifest && isManifestSelected
+            ? t(SkillEditorI18nKeys.ReturnedToManifestStatus)
+            : ''}
+        </span>
 
-      <SkillEditorForm
-        key={`${bucket}/${skillPath ?? NEW_SKILL_CANVAS_SCOPE}`}
-        onRefineDescription={onRefineDescription}
-        onRefineInstructions={onRefineInstructions}
-        initialValues={loadedValues}
-        files={files}
-        selectedPath={selectedPath}
-        onSelectedPathChange={handleSelectedPathChange}
-        isLoading={loadState === SkillEditorLoadState.Loading}
-        hasLoadError={
-          loadState === SkillEditorLoadState.Error ||
-          loadState === SkillEditorLoadState.Forbidden ||
-          loadState === SkillEditorLoadState.NotFound
-        }
-        isSubmitting={phase === 'submitting'}
-        errors={errors}
-        submitError={submitError}
-        onRetrySubmit={isSubmitErrorRetryable ? retrySubmit : undefined}
-        conflict={conflict}
-        onReloadLatest={handleReloadLatestClick}
-        isNameReadOnly={isEditMode}
-        onDirtyChange={setIsDirty}
-        onValuesChange={handleValuesChange}
-        fileActions={fileActions}
-        supportingFileContent={
-          <SkillFilePreview state={previewState} onRetry={retryPreview} />
-        }
-        labels={labels}
-        onSubmit={handleSubmit}
-        onCancel={navigateAway}
-        onBack={handleBack}
-        onRetry={retryLoad}
-        backAriaLabel={
-          isManifestSelected
-            ? t(SkillEditorI18nKeys.BackAriaLabel)
-            : t(SkillEditorI18nKeys.BackToManifestAriaLabel)
-        }
-        title={
-          isEditMode
-            ? t(SkillEditorI18nKeys.EditTitle)
-            : t(SkillEditorI18nKeys.Title)
-        }
-        instructionsEditorTheme={
-          currentTheme === ThemeId.Dark ? EditorThemes.dark : EditorThemes.light
-        }
-      />
+        <SkillEditorForm
+          key={`${bucket}/${skillPath ?? NEW_SKILL_CANVAS_SCOPE}`}
+          onRefineDescription={onRefineDescription}
+          onRefineInstructions={onRefineInstructions}
+          initialValues={loadedValues}
+          files={files}
+          selectedPath={selectedPath}
+          onSelectedPathChange={handleSelectedPathChange}
+          isLoading={loadState === SkillEditorLoadState.Loading}
+          hasLoadError={
+            loadState === SkillEditorLoadState.Error ||
+            loadState === SkillEditorLoadState.Forbidden ||
+            loadState === SkillEditorLoadState.NotFound
+          }
+          isSubmitting={phase === 'submitting'}
+          errors={errors}
+          submitError={submitError}
+          onRetrySubmit={isSubmitErrorRetryable ? retrySubmit : undefined}
+          conflict={conflict}
+          onReloadLatest={handleReloadLatestClick}
+          isNameReadOnly={isEditMode}
+          onDirtyChange={setIsDirty}
+          onValuesChange={handleValuesChange}
+          fileActions={fileActions}
+          supportingFileContent={
+            <SkillFilePreview state={previewState} onRetry={retryPreview} />
+          }
+          labels={labels}
+          onSubmit={handleFormSubmit}
+          onCancel={navigateAway}
+          onBack={handleBack}
+          onRetry={retryLoad}
+          backAriaLabel={
+            isManifestSelected
+              ? t(SkillEditorI18nKeys.BackAriaLabel)
+              : t(SkillEditorI18nKeys.BackToManifestAriaLabel)
+          }
+          title={
+            isEditMode
+              ? t(SkillEditorI18nKeys.EditTitle)
+              : t(SkillEditorI18nKeys.Title)
+          }
+          instructionsEditorTheme={
+            currentTheme === ThemeId.Dark
+              ? EditorThemes.dark
+              : EditorThemes.light
+          }
+        />
 
-      <ConfirmationPopup
-        open={pendingReload}
-        header={t(SkillEditorI18nKeys.ReloadConfirmTitle)}
-        description={t(SkillEditorI18nKeys.ReloadConfirmMessage)}
-        confirmLabel={t(SkillEditorI18nKeys.ReloadConfirmLabel)}
-        cancelLabel={t(SkillEditorI18nKeys.ReloadCancelLabel)}
-        variant={ConfirmationPopupVariant.Danger}
-        onConfirm={confirmReloadLatest}
-        onCancel={() => setPendingReload(false)}
-        onClose={() => setPendingReload(false)}
-      />
+        <ConfirmationPopup
+          open={pendingReload}
+          header={t(SkillEditorI18nKeys.ReloadConfirmTitle)}
+          description={t(SkillEditorI18nKeys.ReloadConfirmMessage)}
+          confirmLabel={t(SkillEditorI18nKeys.ReloadConfirmLabel)}
+          cancelLabel={t(SkillEditorI18nKeys.ReloadCancelLabel)}
+          variant={ConfirmationPopupVariant.Danger}
+          onConfirm={confirmReloadLatest}
+          onCancel={() => setPendingReload(false)}
+          onClose={() => setPendingReload(false)}
+        />
 
-      <SkillFileSystemModal
-        isOpen={fileSystemPicker.isOpen}
-        bucket={bucket}
-        onAttach={fileSystemPicker.handleAttach}
-        onClose={fileSystemPicker.handleClose}
-      />
+        <SkillFileSystemModal
+          isOpen={fileSystemPicker.isOpen}
+          bucket={bucket}
+          onAttach={fileSystemPicker.handleAttach}
+          onClose={fileSystemPicker.handleClose}
+        />
 
-      <ConfirmationPopup
-        open={pendingManifestImport}
-        header={t(SkillEditorI18nKeys.ManifestImportConfirmTitle)}
-        description={t(SkillEditorI18nKeys.ManifestImportConfirmMessage)}
-        confirmLabel={t(ButtonsI18nKeys.Replace)}
-        cancelLabel={t(ButtonsI18nKeys.Cancel)}
-        variant={ConfirmationPopupVariant.Danger}
-        onConfirm={() => resolveManifestImport(true)}
-        onCancel={() => resolveManifestImport(false)}
-        onClose={() => resolveManifestImport(false)}
-      />
-    </div>
+        <ConfirmationPopup
+          open={pendingManifestImport}
+          header={t(SkillEditorI18nKeys.ManifestImportConfirmTitle)}
+          description={t(SkillEditorI18nKeys.ManifestImportConfirmMessage)}
+          confirmLabel={t(ButtonsI18nKeys.Replace)}
+          cancelLabel={t(ButtonsI18nKeys.Cancel)}
+          variant={ConfirmationPopupVariant.Danger}
+          onConfirm={() => resolveManifestImport(true)}
+          onCancel={() => resolveManifestImport(false)}
+          onClose={() => resolveManifestImport(false)}
+        />
+      </div>
+    </RequireCatalogCreation>
   );
 };
 

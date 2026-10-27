@@ -1,3 +1,4 @@
+import { CatalogCreationType } from '@epam/ai-dial-chat-api-client';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -9,11 +10,16 @@ import {
   AppsEditorI18nKeys,
   BasicI18nKeys,
   ButtonsI18nKeys,
+  CatalogI18nKeys,
   EditorI18nKeys,
   UnsavedChangesI18nKeys,
 } from '../../../constants/translation-keys';
 import * as DeploymentsContextModule from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
+import {
+  resetCatalogCreationState,
+  setCatalogCreationState,
+} from '../../../context/tests/catalog-creation-state';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { renderWithLeaveGuard } from '../../../hooks/unsaved-changes/tests/render-with-leave-guard';
 import {
@@ -27,6 +33,7 @@ import {
   NotifiableEntity,
 } from '../../../types/entity-notification';
 import { ROUTES } from '../../../types/routes';
+import { UserConfigStatus } from '../../../types/user-config-status';
 import ApplicationEditorPage from '../ApplicationEditorPage';
 
 interface IframeStubProps {
@@ -42,9 +49,17 @@ const captureIframeProps = vi.fn<(props: IframeStubProps) => void>();
 const getIframeProps = () => captureIframeProps.mock.lastCall?.[0];
 const mockTriggerSave = vi.fn<(general?: TriggerSaveGeneralPayload) => void>();
 
-vi.mock('../../../context/AppConfigContext', () => ({
-  useAppConfig: () => ({ status: 'ready', config: {} }),
-}));
+vi.mock('../../../context/AppConfigContext', async () => {
+  const { useCatalogCreationState } =
+    await import('../../../context/tests/catalog-creation-state');
+  return {
+    useAppConfig: () => ({
+      status: 'ready',
+      config: {},
+      ...useCatalogCreationState(),
+    }),
+  };
+});
 vi.mock('../setup/AppEditorIframe', () => ({
   default: forwardRef(function AppEditorIframeStub(
     props: IframeStubProps,
@@ -129,6 +144,7 @@ describe('ApplicationEditorPage — quick app', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    resetCatalogCreationState();
     mockRefetchDeployments.mockResolvedValue(undefined);
     vi.mocked(createApplication).mockResolvedValue({ id: APP_ID } as never);
     vi.mocked(updateApplication).mockResolvedValue({ id: APP_ID } as never);
@@ -313,6 +329,105 @@ describe('ApplicationEditorPage — quick app', () => {
       expect(
         screen.queryByText(AppsEditorI18nKeys.ErrorNameConflict),
       ).toBeNull();
+    });
+  });
+
+  describe('creation permissions', () => {
+    const ALL_TYPES = Object.values(CatalogCreationType);
+    const denySchema = () =>
+      setCatalogCreationState({
+        allowedTypes: ALL_TYPES,
+        restrictedSchemaIds: [SCHEMA.id],
+      });
+
+    it('shows the denied state for a restricted schema and sends no create request', () => {
+      denySchema();
+      renderPage(createSearch);
+
+      expect(screen.getByRole('alert').textContent).toBe(
+        CatalogI18nKeys.CreationDenied,
+      );
+      expect(screen.queryByLabelText(EditorI18nKeys.NameLabel)).toBeNull();
+      expect(createApplication).not.toHaveBeenCalled();
+    });
+
+    it('shows the denied state when the schema-app type is denied', () => {
+      setCatalogCreationState({
+        allowedTypes: [CatalogCreationType.CustomApp],
+        restrictedSchemaIds: [],
+      });
+      renderPage(createSearch);
+
+      expect(screen.getByRole('alert').textContent).toBe(
+        CatalogI18nKeys.CreationDenied,
+      );
+    });
+
+    it('shows the pending state while permissions load', () => {
+      setCatalogCreationState(null, UserConfigStatus.Loading);
+      renderPage(createSearch);
+
+      expect(
+        screen.getByRole('img', { name: CatalogI18nKeys.CreationLoading }),
+      ).toBeTruthy();
+      expect(screen.queryByLabelText(EditorI18nKeys.NameLabel)).toBeNull();
+    });
+
+    it.each([
+      ['no schema parameter', ''],
+      ['an unknown schema id', 'schema=https%3A%2F%2Fexample.com%2Funknown'],
+      ['the custom-app schema id', 'schema=custom_app'],
+    ])('shows the unavailable state for %s', (_label, search) => {
+      renderPage(search);
+
+      expect(screen.getByRole('alert').textContent).toBe(
+        CatalogI18nKeys.CreationUnavailable,
+      );
+      expect(createApplication).not.toHaveBeenCalled();
+    });
+
+    it('does not resolve the schema by its display name', () => {
+      renderPage(`schema=${SCHEMA.displayName}`);
+
+      expect(screen.getByRole('alert').textContent).toBe(
+        CatalogI18nKeys.CreationUnavailable,
+      );
+    });
+
+    it('blocks the create request when permission is lost while the form is open', async () => {
+      renderPage(createSearch);
+      await user.type(getNameInput(), 'My App');
+
+      act(() => denySchema());
+      await user.click(getAction(ButtonsI18nKeys.Create));
+
+      expect(createApplication).not.toHaveBeenCalled();
+      expect(mockShowNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ message: CatalogI18nKeys.CreationDenied }),
+      );
+      expect((getNameInput() as HTMLInputElement).value).toBe('My App');
+    });
+
+    it('continues in edit mode after a metadata-first create even if creation is then denied', async () => {
+      renderPage(createSearch);
+      await user.type(getNameInput(), 'My App');
+      await user.click(getAction(ButtonsI18nKeys.Create));
+      await screen.findByText(`embedded-editor-${APP_ID}`);
+
+      act(() => denySchema());
+
+      expect(screen.queryByRole('alert')).toBeNull();
+      expect(getAction(ButtonsI18nKeys.Save)).toBeTruthy();
+      expect(createApplication).toHaveBeenCalledOnce();
+    });
+
+    it('opens an existing app of a restricted schema for editing', () => {
+      denySchema();
+      renderPage(editSearch);
+
+      expect(screen.queryByRole('alert')).toBeNull();
+      expect(getAction(ButtonsI18nKeys.Save)).toBeTruthy();
+      expect(screen.getByText(`embedded-editor-${APP_ID}`)).toBeTruthy();
     });
   });
 

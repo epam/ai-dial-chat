@@ -1720,6 +1720,61 @@ describe('Catalog', () => {
   });
 });
 
+describe('Catalog — creation gating', () => {
+  const toolset: CatalogItem = {
+    id: 't1',
+    type: CatalogEntityType.Toolset,
+    name: 'Tools',
+    version: '1',
+    lastUsed: 'now',
+    description: '',
+    folder: [],
+    topics: [],
+  };
+
+  it('renders no focusable Create control anywhere when hideCreateButton is set', () => {
+    render(
+      <Catalog
+        items={[toolset]}
+        favorites={[]}
+        isMyAppsActive
+        hideCreateButton
+        createOptions={[{ key: 'toolset', label: 'Toolset', onClick: vi.fn() }]}
+        createMenuByTab={{
+          [CatalogEntityType.Toolset]: {
+            options: [{ key: 'toolset', label: 'Toolset', onClick: vi.fn() }],
+          },
+        }}
+      />,
+    );
+
+    expect(screen.queryAllByRole('button', { name: 'Create' })).toEqual([]);
+    expect(screen.getByText('No personal items yet')).toBeTruthy();
+  });
+
+  it("drops the empty-state Create of a tab whose type cannot be created, keeping the header's", () => {
+    render(
+      <Catalog
+        items={[{ ...toolset, type: CatalogEntityType.Skill }]}
+        favorites={[]}
+        isMyAppsActive
+        hidePageTitle
+        createOptions={[{ key: 'prompt', label: 'Prompt', onClick: vi.fn() }]}
+        createMenuByTab={{
+          [CatalogEntityType.Skill]: { options: [] },
+          [CatalogEntityType.Prompt]: {
+            options: [{ key: 'prompt', label: 'Prompt', onClick: vi.fn() }],
+          },
+        }}
+      />,
+    );
+
+    expect(screen.getByText('No personal items yet')).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: 'Create' })).toHaveLength(1);
+    expect(screen.queryByText('Skill')).toBeNull();
+  });
+});
+
 describe('Catalog — read-only', () => {
   const favorite: CatalogItem = {
     id: 'f1',

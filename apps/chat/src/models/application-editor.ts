@@ -5,6 +5,7 @@ import type {
 } from '@epam/ai-dial-builder-form';
 import type {
   ApplicationSchemaSummaryDto,
+  CatalogCreationType,
   DeploymentItemDto,
 } from '@epam/ai-dial-chat-api-client';
 import type { ParseKeys, TFunction } from 'i18next';
@@ -132,6 +133,8 @@ export interface ApplicationEditorMessageKeys {
 /** An application kind rendered through the shared Metadata | Setup page. */
 export interface ApplicationEditorFormDefinition<TSetup> {
   kind: ApplicationEditorKind;
+  /** The creation-policy type a new application of this kind is checked against. */
+  creationType: CatalogCreationType;
   notifiableEntity: ApplicationNotifiableEntity;
   /** Resolves what the notifications name from the page context when it depends on it, e.g. on the schema; overrides `notifiableEntity`. */
   getNotificationTarget?: (
@@ -191,6 +194,10 @@ export interface ApplicationEditorFormDefinition<TSetup> {
 /** An application kind that renders its own page body (the toolset's auth flow). */
 export interface ApplicationEditorPageDefinition {
   kind: ApplicationEditorKind;
+  /** The creation-policy type a new entity of this kind is checked against. */
+  creationType: CatalogCreationType;
+  /** Query param holding the edited entity's id; its absence means create mode. */
+  idQueryParam: string;
   renderPage: () => ReactNode;
 }
 
