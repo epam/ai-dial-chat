@@ -187,6 +187,15 @@ const Fixture = () => {
             dayOfWeekLabel: 'Day of week',
             dayOfMonthLabel: 'Day of month',
             minuteLabel: 'Minute',
+            everyLabel: 'Every',
+            everyWeekOptions: [
+              { value: '1', label: '1 week' },
+              { value: '2', label: '2 weeks' },
+            ],
+            customDayOptions: [
+              { value: '0', shortLabel: 'M', fullName: 'Monday' },
+              { value: '1', shortLabel: 'T', fullName: 'Tuesday' },
+            ],
             startDateLabel: 'Start date',
             startDateAndTimeLabel: 'Start date and time',
             startDatePlaceholder: 'Choose a start date',
