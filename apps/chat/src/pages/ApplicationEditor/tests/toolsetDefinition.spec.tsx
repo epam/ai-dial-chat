@@ -2,7 +2,10 @@ import {
   ResponseError,
   TextRefinementPurpose,
 } from '@epam/ai-dial-chat-api-client';
-import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
+import {
+  CatalogCreationType,
+  type DialToolsetDto,
+} from '@epam/ai-dial-chat-api-client';
 import {
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
@@ -13,10 +16,15 @@ import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ButtonsI18nKeys,
+  CatalogI18nKeys,
   ToolsetEditorI18nKeys,
   UnsavedChangesI18nKeys,
 } from '../../../constants/translation-keys';
 import { useNotification } from '../../../context/NotificationContext';
+import {
+  resetCatalogCreationState,
+  setCatalogCreationState,
+} from '../../../context/tests/catalog-creation-state';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { renderWithLeaveGuard } from '../../../hooks/unsaved-changes/tests/render-with-leave-guard';
 import { mcpAppsApiClient } from '../../../server-api/mcp-apps';
@@ -49,9 +57,17 @@ vi.mock('../../../context/DeploymentsContext', () => ({
 vi.mock('../../../context/auth/UserContext', () => ({
   useUser: () => ({ user: { bucket: 'b' } }),
 }));
-vi.mock('../../../context/AppConfigContext', () => ({
-  useAppConfig: () => ({ status: 'ready', config: mockAppConfig }),
-}));
+vi.mock('../../../context/AppConfigContext', async () => {
+  const { useCatalogCreationState } =
+    await import('../../../context/tests/catalog-creation-state');
+  return {
+    useAppConfig: () => ({
+      status: 'ready',
+      config: mockAppConfig,
+      ...useCatalogCreationState(),
+    }),
+  };
+});
 vi.mock('../../../server-api/text-refinement.api', () => ({
   refineText: (...args: unknown[]) => mockRefineText(...args),
 }));
@@ -269,6 +285,7 @@ describe('ApplicationEditorPage — toolset', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    resetCatalogCreationState();
     sessionStorage.clear();
     vi.mocked(toolsetsApi.createToolset).mockResolvedValue({
       id: NEW_TOOLSET_ID,
@@ -375,6 +392,72 @@ describe('ApplicationEditorPage — toolset', () => {
     expect(toolsetsApi.createToolset).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'Typed toolset', version: '1.0.0' }),
     );
+  });
+
+  describe('creation permissions', () => {
+    const denyToolsets = () =>
+      setCatalogCreationState({
+        allowedTypes: Object.values(CatalogCreationType).filter(
+          (type) => type !== CatalogCreationType.Toolset,
+        ),
+        restrictedSchemaIds: [],
+      });
+
+    it('shows the denied state instead of the create form', () => {
+      denyToolsets();
+      renderPage();
+
+      expect(screen.getByRole('alert').textContent).toBe(
+        CatalogI18nKeys.CreationDenied,
+      );
+      expect(
+        screen.queryByRole('button', { name: 'adapter-persist' }),
+      ).toBeNull();
+    });
+
+    it('blocks the create request when permission is lost while the form is open', async () => {
+      renderPage();
+      const persist = await screen.findByRole('button', {
+        name: 'adapter-persist',
+      });
+
+      act(() => denyToolsets());
+      await user.click(persist);
+
+      expect(toolsetsApi.createToolset).not.toHaveBeenCalled();
+      expect(mockShowNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ message: CatalogI18nKeys.CreationDenied }),
+      );
+    });
+
+    it('still edits and saves an existing toolset', async () => {
+      denyToolsets();
+      vi.mocked(toolsetsApi.getToolset).mockResolvedValue(editDto());
+      renderPage(
+        `${ROUTES.ToolsetEditor}?id=${encodeURIComponent(EDIT_TOOLSET_ID)}`,
+      );
+
+      await user.click(
+        await screen.findByRole('button', { name: 'adapter-persist' }),
+      );
+
+      await waitFor(() =>
+        expect(toolsetsApi.updateToolset).toHaveBeenCalledWith(
+          EDIT_TOOLSET_ID,
+          expect.objectContaining({ name: 'My toolset' }),
+        ),
+      );
+    });
+
+    it('keeps the post-save OAuth login of an existing toolset working', async () => {
+      denyToolsets();
+      vi.mocked(toolsetsApi.getToolset).mockResolvedValue(editDto());
+      renderPage(
+        `${ROUTES.ToolsetEditor}?id=${encodeURIComponent(EDIT_TOOLSET_ID)}`,
+      );
+
+      expect(await screen.findByText('oauth-handler')).toBeTruthy();
+    });
   });
 
   it('persists an existing toolset through updateToolset', async () => {

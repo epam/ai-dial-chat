@@ -2,6 +2,7 @@ import {
   SEMVER_VERSION_PATTERN,
   type DeploymentCreationFormValues,
 } from '@epam/ai-dial-builder-form';
+import { CatalogCreationType } from '@epam/ai-dial-chat-api-client';
 import type {
   CreateApplicationBodyDto,
   DeploymentItemDto,
@@ -150,6 +151,7 @@ const update = (
 /** Schema-less custom application: Metadata plus completion URL, features, and attachment limits. */
 export const customAppDefinition = defineApplicationEditor<CustomAppFormData>({
   kind: ApplicationEditorKind.CustomApp,
+  creationType: CatalogCreationType.CustomApp,
   notifiableEntity: NotifiableEntity.CustomApp,
   createStrategy: ApplicationCreateStrategy.AllAtOnce,
   idQueryParam: ToolsetEditorQuery.Id,

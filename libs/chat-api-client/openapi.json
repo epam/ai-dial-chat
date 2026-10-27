@@ -9915,6 +9915,33 @@
         },
         "required": ["title", "contentType", "url"]
       },
+      "CatalogCreationType": {
+        "type": "string",
+        "enum": ["custom-app", "schema-app", "toolset", "prompt", "skill"],
+        "description": "Creation types the caller may create, in the fixed order custom-app, schema-app, toolset, prompt, skill. Evaluated from CATALOG_CREATION_ROLES; a type without a rule is always present. Controls client creation workflows only."
+      },
+      "CatalogCreationPermissionsDto": {
+        "type": "object",
+        "properties": {
+          "allowedTypes": {
+            "type": "array",
+            "description": "Creation types the caller may create, in the fixed order custom-app, schema-app, toolset, prompt, skill. Evaluated from CATALOG_CREATION_ROLES; a type without a rule is always present. Controls client creation workflows only.",
+            "example": ["schema-app", "toolset", "prompt", "skill"],
+            "items": {
+              "$ref": "#/components/schemas/CatalogCreationType"
+            }
+          },
+          "restrictedSchemaIds": {
+            "description": "Exact application schema ids whose CATALOG_CREATION_ROLES rule the caller fails, in configuration order. Reported independently of the schema-app type; creating a schema app requires both.",
+            "example": ["schema-A"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["allowedTypes", "restrictedSchemaIds"]
+      },
       "ClientConfigDto": {
         "type": "object",
         "properties": {
@@ -10101,6 +10128,14 @@
             "type": "boolean",
             "description": "Operator default for the seasonal-celebrations switch, applied to users who have not saved a choice of their own; a saved choice overrides it. Sourced from UI_EVENT_ENABLED_BY_DEFAULT; true unless it is false, 0 or no. Has no visible effect while activeEventId is null.",
             "example": true
+          },
+          "catalogCreationPermissions": {
+            "description": "The caller's resolved catalog creation permissions, evaluated from the server-only CATALOG_CREATION_ROLES and the session roles. Independent of enabledUiFeatures, which it never filters. Never carries role names or the raw policy.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CatalogCreationPermissionsDto"
+              }
+            ]
           }
         },
         "required": [
@@ -10120,7 +10155,8 @@
           "publicationFilterSources",
           "maxAttachmentFileSizeBytes",
           "usageLimitsWarningThresholdPercent",
-          "celebrationsEnabledByDefault"
+          "celebrationsEnabledByDefault",
+          "catalogCreationPermissions"
         ]
       },
       "ClientConfigMetadataDto": {

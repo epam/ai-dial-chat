@@ -14,6 +14,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FeatureFlagsService } from '../../app-config/feature-flags/feature-flags.service';
 import { FeatureKey } from '../../app-config/feature-flags/feature-key.enum';
 import { FeatureGuard } from '../../app-config/feature-flags/feature.guard';
+import { UserRolesService } from '../../auth/user-roles.service';
 import { IsAllowedRedirectUriConstraint } from '../dto/offline-credentials.dto';
 import { OfflineCredentialsController } from '../offline-credentials.controller';
 import { OfflineCredentialsService } from '../offline-credentials.service';
@@ -40,6 +41,7 @@ async function buildApp(
       { provide: OfflineCredentialsService, useValue: service },
       IsAllowedRedirectUriConstraint,
       FeatureGuard,
+      { provide: UserRolesService, useValue: { getRoles: () => [] } },
       {
         provide: FeatureFlagsService,
         useValue: {

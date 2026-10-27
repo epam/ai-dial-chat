@@ -11,7 +11,6 @@ Slicing strategy: **contract-first**.
 - [x] 1.1 Remove the `TEMP(#9361)` code from `apps/chat-api/src/deployments/details/deployments-details.service.ts`:
   - delete `logRawDialBody`;
   - drop the `parseAs: 'text'` option from `getDeploymentLimits`, `getDeploymentUsage`, and `getUserUsage`;
-  - restore `getUserUsage`'s original `this.logger.debug(\`DIAL Core user usage raw response: …\`)` line, and return `result.data as unknown as …` in all three methods;
   - give `getDeploymentUsage` no body log, matching `getDeploymentLimits`.
 
   Verification: `npm run test:file -- apps/chat-api/src/deployments/details/tests/deployments-details.service.spec.ts`.

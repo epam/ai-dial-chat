@@ -71,6 +71,17 @@ describe('Catalog — mobile', () => {
     expect(scrollBody?.className).toContain('pb-16');
   });
 
+  it('renders no floating Create button and no padding for it when creation controls are hidden', () => {
+    renderCatalog({
+      hideCreateButton: true,
+      createOptions: [{ key: 'prompt', label: 'Prompt', onClick: vi.fn() }],
+    });
+
+    expect(screen.queryByRole('button', { name: 'Create' })).toBeNull();
+    // eslint-disable-next-line testing-library/no-node-access -- the padding class has no accessible counterpart
+    expect(document.querySelector('.pb-16')).toBeNull();
+  });
+
   it('renders no Create button when the catalog is read-only', () => {
     renderCatalog({ isReadonly: true });
 

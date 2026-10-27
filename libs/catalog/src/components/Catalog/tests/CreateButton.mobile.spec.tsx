@@ -2,7 +2,7 @@ import { DropdownItemType } from '@epam/ai-dial-ui-kit';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CreateButton } from '../CreateButton';
 
 vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
@@ -15,10 +15,13 @@ const MobileCreateButton = ({
   onWrite,
   onUpload,
   onChange = vi.fn(),
+  isSkillCreatable = true,
 }: {
   onWrite: () => void;
   onUpload: () => void;
   onChange?: (value: string) => void;
+  /* Mirrors a host whose creation policy denies skills: no Skill group at all. */
+  isSkillCreatable?: boolean;
 }) => {
   const [value, setValue] = useState('');
   const options = [
@@ -35,9 +38,11 @@ const MobileCreateButton = ({
         { key: 'skill-upload', label: 'Upload', onClick: onUpload },
       ],
     },
-  ].filter((option) =>
-    option.label.toLowerCase().includes(value.toLowerCase()),
-  );
+  ]
+    .filter((option) => isSkillCreatable || option.key !== 'skill')
+    .filter((option) =>
+      option.label.toLowerCase().includes(value.toLowerCase()),
+    );
   return (
     <CreateButton
       label="Create"
@@ -92,6 +97,52 @@ describe('CreateButton — mobile', () => {
 
     expect(onUpload).toHaveBeenCalledOnce();
     expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('offers no Skill entry or Skill page, but keeps the search, when skill creation is denied', async () => {
+    render(
+      <MobileCreateButton
+        onWrite={vi.fn()}
+        onUpload={vi.fn()}
+        isSkillCreatable={false}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Create' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Create' });
+
+    expect(
+      within(sheet)
+        .getAllByRole('menuitem')
+        .map((item) => item.textContent),
+    ).toEqual(['Prompt']);
+    expect(within(sheet).queryByRole('menuitem', { name: 'Skill' })).toBeNull();
+    expect(within(sheet).getByLabelText('Find')).toBeTruthy();
+  });
+
+  describe('right-to-left', () => {
+    beforeEach(() => {
+      document.documentElement.dir = 'rtl';
+    });
+    afterEach(() => {
+      document.documentElement.dir = '';
+    });
+
+    it('mirrors the Skill drill-in chevron and uses no physical spacing', async () => {
+      render(<MobileCreateButton onWrite={vi.fn()} onUpload={vi.fn()} />);
+
+      await userEvent.click(screen.getByRole('button', { name: 'Create' }));
+      const sheet = await screen.findByRole('dialog', { name: 'Create' });
+      const skill = within(sheet).getByRole('menuitem', { name: 'Skill' });
+
+      // eslint-disable-next-line testing-library/no-node-access -- the chevron has no role; its mirroring class is what is under test
+      expect(skill.querySelector('svg')?.getAttribute('class')).toContain(
+        'rtl:scale-x-[-1]',
+      );
+      for (const item of within(sheet).getAllByRole('menuitem')) {
+        expect(item.className).not.toMatch(/(^|\s)(ml|mr|pl|pr)-/);
+      }
+    });
   });
 
   it('returns from the Skill page to the root page with the back button', async () => {

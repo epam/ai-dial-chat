@@ -1,3 +1,4 @@
+import { CatalogCreationType } from '@epam/ai-dial-chat-api-client';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { act, renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
@@ -15,6 +16,8 @@ const mockAppConfig = (enabledUiFeatures: string[] | null = null) =>
   mockUseAppConfig.mockReturnValue({
     status: UserConfigStatus.Ready,
     features: {},
+    catalogCreationStatus: UserConfigStatus.Loading,
+    catalogCreationPermissions: null,
     config: {
       activeEventId: null,
       appVersion: '0.0.1',
@@ -203,6 +206,59 @@ describe('UiFeaturesContext', () => {
       expect([...result.current.enabledFeatures].sort()).toEqual(
         ['header', 'likes'].sort(),
       );
+    });
+  });
+
+  describe('catalog creation permissions', () => {
+    /* Same global configuration, different creation permissions. */
+    const renderWithPermissions = (
+      enabledUiFeatures: string[] | null,
+      catalogCreationPermissions: AppConfigState['catalogCreationPermissions'],
+    ) => {
+      mockAppConfig(enabledUiFeatures);
+      mockUseAppConfig.mockReturnValue({
+        ...mockUseAppConfig(),
+        catalogCreationStatus: UserConfigStatus.Ready,
+        catalogCreationPermissions,
+      });
+      return renderHook(() => useUiFeatures(), { wrapper });
+    };
+
+    it.each([
+      ['the null default baseline', null],
+      ['an explicit baseline', ['header', 'custom-apps']],
+    ])(
+      'yields the same features for allowed and denied creation with %s',
+      (_label, enabledUiFeatures) => {
+        const { result: allowed } = renderWithPermissions(enabledUiFeatures, {
+          allowedTypes: Object.values(CatalogCreationType),
+          restrictedSchemaIds: [],
+        });
+        const { result: denied } = renderWithPermissions(enabledUiFeatures, {
+          allowedTypes: [],
+          restrictedSchemaIds: ['schema-A'],
+        });
+
+        expect([...denied.current.enabledFeatures].sort()).toEqual(
+          [...allowed.current.enabledFeatures].sort(),
+        );
+        expect(denied.current.isEnabled(OverlayFeature.CustomApps)).toBe(true);
+      },
+    );
+
+    it('keeps an overlay override that enables custom apps when creation is denied', () => {
+      const { result } = renderWithPermissions(['header'], {
+        allowedTypes: [],
+        restrictedSchemaIds: [],
+      });
+
+      act(() => {
+        result.current.applyOverlayOverride(['custom-apps']);
+      });
+
+      expect([...result.current.enabledFeatures]).toEqual([
+        OverlayFeature.CustomApps,
+      ]);
     });
   });
 

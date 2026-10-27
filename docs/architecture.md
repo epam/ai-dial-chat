@@ -351,7 +351,7 @@ Current implementation uses **React Context** with no external state library. Th
 | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `UserContext`                 | Auth status (`loading \| authenticated \| unauthenticated`), `UserProfile`, `refresh()`, `reset()`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `ThemeContext`                | Active and selected theme id, theme list, `setTheme()`, logo and favicon URLs, loading flag                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| `AppConfigContext`            | Client configuration from `GET /api/v1/client-config` — overlay mode, announcements, feature defaults                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `AppConfigContext`            | Client configuration from `GET /api/v1/client-config` — overlay mode, announcements, feature defaults, and the current identity's catalog creation permissions with their own `catalogCreationStatus` (see [Catalog creation permissions](#catalog-creation-permissions))                                                                                                                                                                                                                                                                                                                                                                                      |
 | `UiFeaturesContext`           | Effective UI-feature set: server baseline, defaults, and the overlay host's replacement set                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `IsolatedModelViewContext`    | TODO: remove in next release. Temporary `?isolated-model-id` embed mode — resolves the deployment and forces a fixed UI-feature set                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `OverlayContext`              | Embedded-mode handshake, request routing to page-level bridges, event emission to the host                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
@@ -784,6 +784,46 @@ refresh token exists, can shorten it. Upgrading to payload v2 requires a new log
 for existing sessions. Provider metadata and rotation details live in the
 [auth lifetime policy](auth/auth-bff-encrypted-cookie.md#35-session-lifetime-policy).
 
+### Roles
+
+`UserRolesService` (`apps/chat-api/src/auth/user-roles.service.ts`) is the
+only place that turns a session user into role names. It reads the provider's
+`rolesClaim` (default `dial_roles`) as a flat key — how a cookie session stores
+it — and otherwise as a dotted path into a header-token session's verified
+payload. `AdminRoleService`, `FeatureGuard` and the client-config controller
+all use it, so admin detection, role-gated features and per-user config agree
+on a user's roles. `AppConfigModule` re-exports `AuthModule`, because Nest
+resolves `@UseGuards(FeatureGuard)` in each consuming module.
+
+### Catalog creation permissions
+
+Who may create catalog entities is decided apart from the UI-feature set:
+
+```
+CATALOG_CREATION_ROLES ──▶ AppConfigService (normalized at startup)
+                              │  evaluated per request with UserRolesService roles
+                              ▼
+            client-config: config.catalogCreationPermissions
+                              │  { allowedTypes, restrictedSchemaIds }
+                              ▼
+   AppConfigContext (bound to providerId + sub, own catalogCreationStatus)
+                              ▼
+   useCatalogCreationPermissions ─┬─▶ CatalogView ──▶ useCatalogEditNavigation
+                                  │     (resolved booleans + schema predicate)
+                                  └─▶ useCatalogCreationDecision
+                                        ├─ RequireCatalogCreation (create routes)
+                                        ├─ create submit guards in the editors
+                                        └─ useSkillArchiveImport
+```
+
+`enabledUiFeatures`, `UiFeaturesContext` and overlay/isolated-view overrides
+are untouched: a creation decision is an extra condition on an existing create
+affordance and never enables a disabled feature. `@epam/ai-dial-chat-hooks`
+receives plain booleans and a predicate, with permissive defaults for hosts
+that omit them. The policy controls UI workflows only; DIAL Core remains
+authoritative for direct API calls. Configuration:
+[`apps/chat-api/README.md` § Catalog creation roles](../apps/chat-api/README.md#catalog-creation-roles).
+
 ### CSRF protection
 
 `CsrfGuard` (applied globally after `SessionGuard`):
@@ -951,6 +991,7 @@ The intended direction, enforced in review:
 | 19  | `DEFAULT_DEPLOYMENT_PINNED` both **offers** the "Default agent for new chats" control and is **outranked** by it                     | ✅ Accepted — the row renders only while an agent is pinned (the pin is what makes its "Default agent" option mean anything), and every choice stored through it then beats the pin, "Last used agent" included. The pin still beats the _implicit_ last-used selection — an unstored preference — which is what its description refers to. Both halves live in `resolveInitialSelection` + `PreferencesTab`'s visibility rule |
 | 20  | Host styling hooks: stable public `dial-{lib-prefix}-{element}` classes, emitted unconditionally and carrying no declarations        | ✅ Accepted — hashed CSS-module locals, DOM order and ARIA attributes were the only handles a host had, and all three change without notice ([#8707](https://github.com/epam/ai-dial-chat/issues/8707)). Rejected a `styles.classNames` prop API: `styles` already means theming tokens, and portalled or deeply nested elements are unreachable by a prop                                                                     |
 | 21  | Repository-owned `typecheck` PR job (`.github/workflows/pr.yml`) covers what the pinned `epam/ai-dial-ci` reusable workflow does not | ❓ Open — the job runs on every PR; marking it a _required_ status check is branch-protection configuration administered outside this repository, not something this job can set itself                                                                                                                                                                                                                                        |
+| 22  | Catalog creation is restricted by a separate, server-evaluated `CATALOG_CREATION_ROLES` policy, not by filtering UI features         | ✅ Accepted — UI flags also gate listing and editing, so reusing them as creation permissions would hide or lock existing entities; the policy is enforced in UI workflows only and DIAL Core stays the API authority                                                                                                                                                                                                          |
 
 ---
 

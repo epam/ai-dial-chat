@@ -16,6 +16,8 @@ function setOrigins(origins: string[]) {
   vi.mocked(useAppConfig).mockReturnValue({
     status: UserConfigStatus.Ready,
     features: {},
+    catalogCreationStatus: UserConfigStatus.Loading,
+    catalogCreationPermissions: null,
     config: { allowedConnectOrigins: origins } as never,
   });
 }

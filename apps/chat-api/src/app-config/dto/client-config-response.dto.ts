@@ -7,6 +7,7 @@ import {
 import { IsOptional, IsString } from 'class-validator';
 import { AnnouncementItemDto } from './announcement-item.dto';
 import { ApplicationVisualizerDto } from './application-visualizer.dto';
+import { CatalogCreationPermissionsDto } from './catalog-creation-permissions.dto';
 import { CustomVisualizerDto } from './custom-visualizer.dto';
 
 /* ApplicationVisualizerDto is reachable only through an additionalProperties
@@ -278,6 +279,13 @@ export class ClientConfigDto {
     example: true,
   })
   celebrationsEnabledByDefault!: boolean;
+
+  @ApiProperty({
+    description:
+      "The caller's resolved catalog creation permissions, evaluated from the server-only CATALOG_CREATION_ROLES and the session roles. Independent of enabledUiFeatures, which it never filters. Never carries role names or the raw policy.",
+    type: CatalogCreationPermissionsDto,
+  })
+  catalogCreationPermissions!: CatalogCreationPermissionsDto;
 }
 
 export class ClientConfigMetadataDto {
