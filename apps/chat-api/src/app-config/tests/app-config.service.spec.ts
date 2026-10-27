@@ -1440,6 +1440,7 @@ describe('AppConfigService', () => {
         'asrEnabled',
         'liveChatInteraction',
         'scheduledTasksEnabled',
+        'projectsEnabled',
         'defaultDeploymentPinned',
         'visualizerSendMessages',
         'usageLimitsControl',

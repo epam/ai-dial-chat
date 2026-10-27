@@ -326,6 +326,47 @@ describe('EnvConfigProvider', () => {
     });
   });
 
+  describe('features.projectsEnabled', () => {
+    it('returns true when PROJECTS_ENABLED is true', async () => {
+      const { provider } = makeProvider({ PROJECTS_ENABLED: true });
+      expect(await provider.resolve('features.projectsEnabled', ctx)).toBe(
+        true,
+      );
+    });
+
+    it('returns undefined when PROJECTS_ENABLED is absent', async () => {
+      const { provider } = makeProvider({ PROJECTS_ENABLED: undefined });
+      expect(
+        await provider.resolve('features.projectsEnabled', ctx),
+      ).toBeUndefined();
+    });
+
+    it('returns false when user roles do not intersect with PROJECTS_ENABLED_ROLES', async () => {
+      const { provider } = makeProvider({
+        PROJECTS_ENABLED: true,
+        PROJECTS_ENABLED_ROLES: ['projects-beta'],
+      });
+      const ctxWithRole: AppConfigEvalContext = { ...ctx, roles: ['viewer'] };
+      expect(
+        await provider.resolve('features.projectsEnabled', ctxWithRole),
+      ).toBe(false);
+    });
+
+    it('returns true when user holds a role listed in PROJECTS_ENABLED_ROLES', async () => {
+      const { provider } = makeProvider({
+        PROJECTS_ENABLED: true,
+        PROJECTS_ENABLED_ROLES: ['projects-beta'],
+      });
+      const ctxWithRole: AppConfigEvalContext = {
+        ...ctx,
+        roles: ['projects-beta'],
+      };
+      expect(
+        await provider.resolve('features.projectsEnabled', ctxWithRole),
+      ).toBe(true);
+    });
+  });
+
   describe('features.responsesApiEnabled', () => {
     it('returns true when RESPONSES_API_ENABLED is true', async () => {
       const { provider } = makeProvider({ RESPONSES_API_ENABLED: true });
