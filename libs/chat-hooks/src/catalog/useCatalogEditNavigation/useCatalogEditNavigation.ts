@@ -19,7 +19,10 @@ import {
 import { parseSkillResourceUrl } from '../../skill/skill-types';
 import { findDeploymentByIdOrReference } from '../deployment-id';
 
-// Every label this hook builds is a string, so runners and the static options sort together.
+/* The default creation predicate for hosts that apply no creation policy. */
+const ALLOW_ANY_SCHEMA = (): boolean => true;
+
+// Every label this hook builds is a string, so options within a section sort by it.
 const sortByLabel = (options: DropdownItem[]): DropdownItem[] =>
   [...options].sort((a, b) =>
     String(a.label ?? '').localeCompare(String(b.label ?? ''), undefined, {
@@ -106,6 +109,18 @@ export interface UseCatalogEditNavigationParams {
   onNotify: (notification: CatalogEditNavigationNotification) => void;
   /** Called when the Create menu's Skill → Upload option is picked. */
   onSkillUploadClick: () => void;
+  /* The creation decisions below gate only the Create menu, on top of the
+   * feature flags above; edit, delete and edit-schema routing ignore them. */
+  /** Whether the host lets the user create a custom app. Defaults to `true`. */
+  canCreateCustomApp?: boolean;
+  /** Whether the host lets the user create a toolset. Defaults to `true`. */
+  canCreateToolset?: boolean;
+  /** Whether the host lets the user create a prompt. Defaults to `true`. */
+  canCreatePrompt?: boolean;
+  /** Whether the host lets the user create a skill, by either Skill child. Defaults to `true`. */
+  canCreateSkill?: boolean;
+  /** Whether a runner option is offered for this exact schema id. Defaults to allowing every schema. */
+  canCreateSchema?: (schemaId: string) => boolean;
 }
 
 /** Return value of {@link useCatalogEditNavigation}. */
@@ -118,6 +133,8 @@ export interface UseCatalogEditNavigationResult {
   createSearch: CatalogCreateSearch | undefined;
   /** The Create menu narrowed to each entity type; models have no entry since they cannot be created. */
   createMenuByType: Partial<Record<CatalogEntityType, CatalogTabCreateMenu>>;
+  /** Whether any Create option passes the feature flags and creation decisions, ignoring the search query. */
+  hasCreateOptions: boolean;
 }
 
 /**
@@ -148,16 +165,39 @@ export const useCatalogEditNavigation = ({
   labels,
   onNotify,
   onSkillUploadClick,
+  canCreateCustomApp = true,
+  canCreateToolset = true,
+  canCreatePrompt = true,
+  canCreateSkill = true,
+  canCreateSchema = ALLOW_ANY_SCHEMA,
 }: UseCatalogEditNavigationParams): UseCatalogEditNavigationResult => {
+  // Edit routing resolves against every runner schema, creatable or not.
   const runnerSchemas = useMemo(() => getRunnerSchemas(schemas), [schemas]);
-  // Mind Map apps are not created from the catalog, but existing ones stay editable.
-  const creatableRunnerSchemas = useMemo(
-    () => runnerSchemas.filter((schema) => !isMindMapSchema(schema)),
-    [runnerSchemas],
-  );
   const [createSearchQuery, setCreateSearchQuery] = useState('');
   const isRunnerCreationEnabled =
     isSchemaAppsEnabled && !isHideCustomAppCreationEnabled;
+  // Mind Map apps are not created from the catalog, but existing ones stay editable.
+  const creatableRunnerSchemas = useMemo(
+    () =>
+      isRunnerCreationEnabled
+        ? runnerSchemas.filter(
+            (schema) => !isMindMapSchema(schema) && canCreateSchema(schema.id),
+          )
+        : [],
+    [isRunnerCreationEnabled, runnerSchemas, canCreateSchema],
+  );
+  const isToolsetCreatable = isToolsetsEnabled && canCreateToolset;
+  const isCustomAppCreatable =
+    isCustomAppsEnabled &&
+    !isHideCustomAppCreationEnabled &&
+    canCreateCustomApp;
+  const isPromptCreatable = isPromptsEnabled && canCreatePrompt;
+  const hasCreateOptions =
+    creatableRunnerSchemas.length > 0 ||
+    isToolsetCreatable ||
+    isCustomAppCreatable ||
+    canCreateSkill ||
+    isPromptCreatable;
 
   const handleEdit = useCallback(
     (item: CatalogItem) => {
@@ -246,22 +286,20 @@ export const useCatalogEditNavigation = ({
     const query = createSearchQuery.trim().toLocaleLowerCase();
     const isMatch = (label: string) =>
       !query || label.toLocaleLowerCase().includes(query);
-    const runnerOptions: DropdownItem[] = isRunnerCreationEnabled
-      ? creatableRunnerSchemas
-          .map((schema) => ({
-            id: schema.id,
-            label: schema.displayName || schema.id,
-          }))
-          .filter((runner) => isMatch(runner.label))
-          .map((runner) => ({
-            key: `runner:${runner.id}`,
-            label: runner.label,
-            onClick: () => onNavigate(urls.buildQuickAppCreateUrl(runner.id)),
-          }))
-      : [];
+    const runnerOptions: DropdownItem[] = creatableRunnerSchemas
+      .map((schema) => ({
+        id: schema.id,
+        label: schema.displayName || schema.id,
+      }))
+      .filter((runner) => isMatch(runner.label))
+      .map((runner) => ({
+        key: `runner:${runner.id}`,
+        label: runner.label,
+        onClick: () => onNavigate(urls.buildQuickAppCreateUrl(runner.id)),
+      }));
 
     const toolsetOption: DropdownItem | undefined =
-      isToolsetsEnabled && isMatch(labels.createToolset)
+      isToolsetCreatable && isMatch(labels.createToolset)
         ? {
             key: 'toolset',
             label: labels.createToolset,
@@ -270,9 +308,7 @@ export const useCatalogEditNavigation = ({
         : undefined;
 
     const customAppOption: DropdownItem | undefined =
-      isCustomAppsEnabled &&
-      !isHideCustomAppCreationEnabled &&
-      isMatch(labels.createCustomApp)
+      isCustomAppCreatable && isMatch(labels.createCustomApp)
         ? {
             key: 'custom-app',
             label: labels.createCustomApp,
@@ -280,25 +316,27 @@ export const useCatalogEditNavigation = ({
           }
         : undefined;
 
-    const skillChildren: DropdownItem[] = [
-      {
-        key: 'skill-write-instructions',
-        label: labels.createSkillWriteInstructions,
-        onClick: () => onNavigate(urls.buildSkillCreateUrl()),
-      },
-      {
-        key: 'skill-upload',
-        label: labels.createSkillUpload,
-        onClick: onSkillUploadClick,
-      },
-    ];
+    const skillChildren: DropdownItem[] = canCreateSkill
+      ? [
+          {
+            key: 'skill-write-instructions',
+            label: labels.createSkillWriteInstructions,
+            onClick: () => onNavigate(urls.buildSkillCreateUrl()),
+          },
+          {
+            key: 'skill-upload',
+            label: labels.createSkillUpload,
+            onClick: onSkillUploadClick,
+          },
+        ]
+      : [];
     // A query naming the Skill group keeps both children; otherwise only the matching ones.
     const visibleSkillChildren = isMatch(labels.createSkill)
       ? skillChildren
       : skillChildren.filter((child) => isMatch(String(child.label)));
 
     const promptOption: DropdownItem | undefined =
-      isPromptsEnabled && isMatch(labels.createPrompt)
+      isPromptCreatable && isMatch(labels.createPrompt)
         ? {
             key: 'prompt',
             label: labels.createPrompt,
@@ -315,15 +353,14 @@ export const useCatalogEditNavigation = ({
     };
   }, [
     createSearchQuery,
-    isRunnerCreationEnabled,
     creatableRunnerSchemas,
     onNavigate,
     urls,
-    isPromptsEnabled,
+    isPromptCreatable,
     labels,
-    isHideCustomAppCreationEnabled,
-    isToolsetsEnabled,
-    isCustomAppsEnabled,
+    isToolsetCreatable,
+    isCustomAppCreatable,
+    canCreateSkill,
     onSkillUploadClick,
   ]);
 
@@ -351,10 +388,10 @@ export const useCatalogEditNavigation = ({
 
   const createSearch = useMemo<CatalogCreateSearch | undefined>(
     () =>
-      isRunnerCreationEnabled && creatableRunnerSchemas.length > 0
+      creatableRunnerSchemas.length > 0
         ? { value: createSearchQuery, onChange: setCreateSearchQuery }
         : undefined,
-    [isRunnerCreationEnabled, creatableRunnerSchemas.length, createSearchQuery],
+    [creatableRunnerSchemas.length, createSearchQuery],
   );
 
   const createMenuByType = useMemo<
@@ -391,5 +428,6 @@ export const useCatalogEditNavigation = ({
     createOptions,
     createSearch,
     createMenuByType,
+    hasCreateOptions,
   };
 };

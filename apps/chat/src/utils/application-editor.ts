@@ -1,11 +1,13 @@
 import type { DeploymentCreationFormValues } from '@epam/ai-dial-builder-form';
-import type {
-  ApplicationSchemaSummaryDto,
-  DeploymentItemDto,
+import {
+  CatalogCreationType,
+  type ApplicationSchemaSummaryDto,
+  type DeploymentItemDto,
 } from '@epam/ai-dial-chat-api-client';
 import {
   composeLocalePayload,
   decomposeLocalizedFields,
+  getRunnerSchemas,
   isQuickAppSchema,
 } from '@epam/ai-dial-chat-hooks';
 import type { JsonSchema } from '@epam/ai-dial-ui-kit';
@@ -17,6 +19,7 @@ import type {
   ApplicationEditorPageDefinition,
   ApplicationSetupValues,
 } from '../models/application-editor';
+import type { CatalogCreationCheck } from '../models/catalog-creation';
 import { ApplicationEditorKind } from '../types/application-editor';
 import { AppsEditorQuery } from '../types/apps-editor';
 import type { TriggerSaveGeneralPayload } from '../types/apps-editor';
@@ -38,6 +41,34 @@ export const resolveSchemaEditorKind = (
   return schema && !schema.editorUrl
     ? ApplicationEditorKind.SchemaApp
     : ApplicationEditorKind.QuickApp;
+};
+
+/**
+ * Returns the creation check for an application editor route. A schema app
+ * is checked against the exact `schema` query value, resolved against the
+ * runner schemas: pending while they load, unavailable when the id is not a
+ * runner — never another schema in its place.
+ */
+export const resolveApplicationCreationCheck = (
+  creationType: CatalogCreationType,
+  searchParams: URLSearchParams,
+  schemas: ApplicationSchemaSummaryDto[],
+  isSchemasLoading: boolean,
+): CatalogCreationCheck => {
+  if (creationType !== CatalogCreationType.SchemaApp) {
+    return { type: creationType };
+  }
+  const schemaId = searchParams.get(AppsEditorQuery.Schema);
+  const isPending = isSchemasLoading && schemas.length === 0;
+  const isRunner = getRunnerSchemas(schemas).some(
+    (schema) => schema.id === schemaId,
+  );
+  return {
+    type: creationType,
+    schemaId,
+    isPending,
+    isUnavailable: !isPending && !isRunner,
+  };
 };
 
 /** Returns what a schema app's notifications name: quick app for the QuickApp schema, the schema's display name for any other known schema, else the generic application (agent). */

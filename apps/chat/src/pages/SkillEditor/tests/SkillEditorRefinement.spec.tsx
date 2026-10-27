@@ -32,12 +32,17 @@ vi.mock('react-router', () => ({
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-vi.mock('../../../context/AppConfigContext', () => ({
-  useAppConfig: () => ({
-    status: 'ready',
-    config: { aiTextRefinementAvailable: available },
-  }),
-}));
+vi.mock('../../../context/AppConfigContext', async () => {
+  const { useCatalogCreationState } =
+    await import('../../../context/tests/catalog-creation-state');
+  return {
+    useAppConfig: () => ({
+      status: 'ready',
+      config: { aiTextRefinementAvailable: available },
+      ...useCatalogCreationState(),
+    }),
+  };
+});
 vi.mock('../../../context/auth/UserContext', () => ({
   useUser: () => ({ user: { bucket: 'my-bucket' } }),
 }));

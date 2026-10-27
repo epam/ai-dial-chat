@@ -12,6 +12,7 @@ import { SessionService } from './session/session.service';
 import { AUTH_STRATEGIES } from './strategies/auth-strategies.token';
 import { CookieSessionStrategy } from './strategies/cookie-session.strategy';
 import { HeaderTokenStrategy } from './strategies/header-token.strategy';
+import { UserRolesService } from './user-roles.service';
 
 @Module({
   controllers: [AuthController],
@@ -21,6 +22,7 @@ import { HeaderTokenStrategy } from './strategies/header-token.strategy';
     SessionService,
     RefreshService,
     ProviderRegistryService,
+    UserRolesService,
     BucketService,
     HeaderTokenStrategy,
     CookieSessionStrategy,
@@ -41,6 +43,12 @@ import { HeaderTokenStrategy } from './strategies/header-token.strategy';
       useClass: CsrfGuard,
     },
   ],
-  exports: [OptionalSessionGuard, SessionService, KeysService, AUTH_STRATEGIES],
+  exports: [
+    OptionalSessionGuard,
+    SessionService,
+    KeysService,
+    AUTH_STRATEGIES,
+    UserRolesService,
+  ],
 })
 export class AuthModule {}

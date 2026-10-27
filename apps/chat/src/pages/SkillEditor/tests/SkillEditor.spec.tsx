@@ -1,4 +1,6 @@
+import { CatalogCreationType } from '@epam/ai-dial-chat-api-client';
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -13,6 +15,10 @@ import { EntityNotificationsI18nKeys } from '../../../constants/translation-keys
 import { useUser } from '../../../context/auth/UserContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { useSkills } from '../../../context/SkillsContext';
+import {
+  resetCatalogCreationState,
+  setCatalogCreationState,
+} from '../../../context/tests/catalog-creation-state';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import {
   createSkill,
@@ -60,9 +66,17 @@ vi.mock('../../../context/ThemeContext', () => ({
   useTheme: () => ({ currentTheme: 'light' }),
 }));
 
-vi.mock('../../../context/AppConfigContext', () => ({
-  useAppConfig: () => ({ config: { allowedConnectOrigins: [] } }),
-}));
+vi.mock('../../../context/AppConfigContext', async () => {
+  const { useCatalogCreationState } =
+    await import('../../../context/tests/catalog-creation-state');
+  return {
+    useAppConfig: () => ({
+      status: 'ready',
+      config: { allowedConnectOrigins: [] },
+      ...useCatalogCreationState(),
+    }),
+  };
+});
 
 vi.mock('../../../context/NotificationContext', () => ({
   useNotification: vi.fn(),
@@ -1489,5 +1503,90 @@ describe('SkillEditor page — Back control and preview round trip', () => {
 
     expect(mockNavigate).toHaveBeenCalledWith('/catalog');
     expect(screen.queryByText('skillEditor.unsavedChangesMessage')).toBeNull();
+  });
+});
+
+describe('SkillEditor page — creation permissions', { timeout: 15000 }, () => {
+  const user = userEvent.setup({ delay: null });
+  const manifest =
+    '---\nname: docs-helper\ndescription: Explains docs\n---\n\ninstr';
+  const denySkills = () =>
+    setCatalogCreationState({
+      allowedTypes: Object.values(CatalogCreationType).filter(
+        (type) => type !== CatalogCreationType.Skill,
+      ),
+      restrictedSchemaIds: [],
+    });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    resetCatalogCreationState();
+    mockSearchParams = new URLSearchParams();
+    vi.mocked(useUser).mockReturnValue({
+      user: { bucket: 'my-bucket' },
+    } as unknown as ReturnType<typeof useUser>);
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(showNotification),
+    );
+    refetchSkills.mockResolvedValue(undefined);
+    vi.mocked(useSkills).mockReturnValue({
+      skills: [],
+      publicSkills: [],
+      sharedWithMe: [],
+      isLoading: false,
+      error: null,
+      refetchSkills,
+      mergeSharedSkill: vi.fn(),
+    });
+    vi.mocked(createSkill).mockResolvedValue({
+      etag: 'etag-1',
+    } as unknown as Awaited<ReturnType<typeof createSkill>>);
+  });
+
+  it.each([
+    ['no id parameter', ''],
+    ['an empty id parameter', 'id='],
+  ])('shows the denied state for %s and mounts no form', (_label, search) => {
+    denySkills();
+    mockSearchParams = new URLSearchParams(search);
+    render(<SkillEditor />);
+
+    expect(screen.getByRole('alert').textContent).toBe(
+      'catalog.creation.denied',
+    );
+    expect(
+      screen.queryByPlaceholderText('skillEditor.namePlaceholder'),
+    ).toBeNull();
+    expect(createSkill).not.toHaveBeenCalled();
+  });
+
+  it('blocks the create request when permission is lost while the form is open', async () => {
+    render(<SkillEditor />);
+    await fillRequiredFields(user, 'Helper', 'Helps');
+
+    act(() => denySkills());
+    await user.click(getCreateButton());
+
+    expect(createSkill).not.toHaveBeenCalled();
+    expect(showNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'catalog.creation.denied' }),
+    );
+  });
+
+  it('loads and saves an existing skill when creation is denied', async () => {
+    denySkills();
+    mockSearchParams = new URLSearchParams({ id: 'team-a/docs-helper' });
+    vi.mocked(downloadSkill).mockResolvedValue(buildSkillResponse(manifest));
+    vi.mocked(updateSkill).mockResolvedValue({
+      etag: 'etag-2',
+    } as unknown as Awaited<ReturnType<typeof updateSkill>>);
+    render(<SkillEditor />);
+
+    expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
+    await user.click(getSaveButton());
+
+    await waitFor(() => expect(updateSkill).toHaveBeenCalled());
+    expect(createSkill).not.toHaveBeenCalled();
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 });

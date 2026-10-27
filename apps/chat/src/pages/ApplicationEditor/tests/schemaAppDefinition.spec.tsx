@@ -1,3 +1,4 @@
+import { CatalogCreationType } from '@epam/ai-dial-chat-api-client';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
@@ -5,10 +6,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   AppsEditorI18nKeys,
   ButtonsI18nKeys,
+  CatalogI18nKeys,
   EditorI18nKeys,
 } from '../../../constants/translation-keys';
 import * as DeploymentsContextModule from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
+import {
+  resetCatalogCreationState,
+  setCatalogCreationState,
+} from '../../../context/tests/catalog-creation-state';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { getApplicationSchema } from '../../../server-api/application-schemas';
 import {
@@ -28,9 +34,17 @@ const { mockNotifyOperationSuccess } = vi.hoisted(() => ({
   mockNotifyOperationSuccess: vi.fn(),
 }));
 
-vi.mock('../../../context/AppConfigContext', () => ({
-  useAppConfig: () => ({ status: 'ready', config: {} }),
-}));
+vi.mock('../../../context/AppConfigContext', async () => {
+  const { useCatalogCreationState } =
+    await import('../../../context/tests/catalog-creation-state');
+  return {
+    useAppConfig: () => ({
+      status: 'ready',
+      config: {},
+      ...useCatalogCreationState(),
+    }),
+  };
+});
 vi.mock('../../../server-api/applications', () => ({
   createApplication: vi.fn(),
   updateApplication: vi.fn(),
@@ -106,6 +120,7 @@ describe('ApplicationEditorPage — schema app', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    resetCatalogCreationState();
     vi.mocked(getApplicationSchema).mockResolvedValue(FULL_SCHEMA);
     vi.mocked(createApplication).mockResolvedValue({ id: APP_ID } as never);
     vi.mocked(updateApplication).mockResolvedValue({ id: APP_ID } as never);
@@ -200,6 +215,56 @@ describe('ApplicationEditorPage — schema app', () => {
       EntityOperation.Created,
       { name: 'Classifier', type: SUMMARY.displayName },
     );
+  });
+
+  describe('creation permissions', () => {
+    const denySchema = () =>
+      setCatalogCreationState({
+        allowedTypes: Object.values(CatalogCreationType),
+        restrictedSchemaIds: [SCHEMA_ID],
+      });
+
+    it('shows the denied state for a restricted schema-form schema and never loads its form', () => {
+      denySchema();
+      renderPage(createSearch);
+
+      expect(screen.getByRole('alert').textContent).toBe(
+        CatalogI18nKeys.CreationDenied,
+      );
+      expect(getApplicationSchema).not.toHaveBeenCalled();
+      expect(createApplication).not.toHaveBeenCalled();
+    });
+
+    it('creates from a schema-form schema another rule restricts nothing about', async () => {
+      setCatalogCreationState({
+        allowedTypes: Object.values(CatalogCreationType),
+        restrictedSchemaIds: ['https://example.com/schemas/other'],
+      });
+      renderPage(createSearch);
+
+      expect(await findLabelsInput()).toBeTruthy();
+      expect(screen.queryByRole('alert')).toBeNull();
+    });
+
+    it('opens an existing app of a restricted schema for editing', async () => {
+      denySchema();
+      vi.mocked(getDeploymentDetails).mockResolvedValue({
+        applicationDetails: { applicationProperties: { labels: 'a,b' } },
+      } as never);
+      renderPage(editSearch);
+
+      expect((await findLabelsInput()).value).toBe('a,b');
+      expect(screen.queryByRole('alert')).toBeNull();
+    });
+
+    it('does not turn a failed edit load into creation when creation is denied', async () => {
+      denySchema();
+      vi.mocked(getDeploymentDetails).mockRejectedValue(new Error('404'));
+      renderPage(editSearch);
+
+      await screen.findByText('Catalog');
+      expect(createApplication).not.toHaveBeenCalled();
+    });
   });
 
   describe('editing', () => {

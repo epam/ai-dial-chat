@@ -848,6 +848,40 @@ export type BackgroundGenerationStatus =
 /**
  *
  * @export
+ * @interface CatalogCreationPermissionsDto
+ */
+export interface CatalogCreationPermissionsDto {
+  /**
+   * Creation types the caller may create, in the fixed order custom-app, schema-app, toolset, prompt, skill. Evaluated from CATALOG_CREATION_ROLES; a type without a rule is always present. Controls client creation workflows only.
+   * @type {Array<CatalogCreationType>}
+   * @memberof CatalogCreationPermissionsDto
+   */
+  allowedTypes: Array<CatalogCreationType>;
+  /**
+   * Exact application schema ids whose CATALOG_CREATION_ROLES rule the caller fails, in configuration order. Reported independently of the schema-app type; creating a schema app requires both.
+   * @type {Array<string>}
+   * @memberof CatalogCreationPermissionsDto
+   */
+  restrictedSchemaIds: Array<string>;
+}
+
+/**
+ * Creation types the caller may create, in the fixed order custom-app, schema-app, toolset, prompt, skill. Evaluated from CATALOG_CREATION_ROLES; a type without a rule is always present. Controls client creation workflows only.
+ * @export
+ */
+export const CatalogCreationType = {
+  CustomApp: 'custom-app',
+  SchemaApp: 'schema-app',
+  Toolset: 'toolset',
+  Prompt: 'prompt',
+  Skill: 'skill',
+} as const;
+export type CatalogCreationType =
+  (typeof CatalogCreationType)[keyof typeof CatalogCreationType];
+
+/**
+ *
+ * @export
  * @interface CellAddressDto
  */
 export interface CellAddressDto {
@@ -1169,6 +1203,12 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   celebrationsEnabledByDefault: boolean;
+  /**
+   * The caller's resolved catalog creation permissions, evaluated from the server-only CATALOG_CREATION_ROLES and the session roles. Independent of enabledUiFeatures, which it never filters. Never carries role names or the raw policy.
+   * @type {CatalogCreationPermissionsDto}
+   * @memberof ClientConfigDto
+   */
+  catalogCreationPermissions: CatalogCreationPermissionsDto;
 }
 
 /**

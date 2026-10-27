@@ -1,4 +1,5 @@
 import {
+  CatalogCreationType,
   TextRefinementPurpose,
   type DeploymentDetailsDto,
 } from '@epam/ai-dial-chat-api-client';
@@ -9,11 +10,16 @@ import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ButtonsI18nKeys,
+  CatalogI18nKeys,
   CustomAppI18nKeys,
   EditorI18nKeys,
   TextRefinementI18nKeys,
 } from '../../../constants/translation-keys';
 import { useNotification } from '../../../context/NotificationContext';
+import {
+  resetCatalogCreationState,
+  setCatalogCreationState,
+} from '../../../context/tests/catalog-creation-state';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import {
   createApplication,
@@ -32,9 +38,17 @@ const { refinementConfig, mockRefineText } = vi.hoisted(() => ({
   refinementConfig: { aiTextRefinementAvailable: false },
   mockRefineText: vi.fn(),
 }));
-vi.mock('../../../context/AppConfigContext', () => ({
-  useAppConfig: () => ({ status: 'ready', config: refinementConfig }),
-}));
+vi.mock('../../../context/AppConfigContext', async () => {
+  const { useCatalogCreationState } =
+    await import('../../../context/tests/catalog-creation-state');
+  return {
+    useAppConfig: () => ({
+      status: 'ready',
+      config: refinementConfig,
+      ...useCatalogCreationState(),
+    }),
+  };
+});
 vi.mock('../../../server-api/text-refinement.api', () => ({
   refineText: mockRefineText,
 }));
@@ -101,6 +115,7 @@ describe('ApplicationEditorPage — custom app', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    resetCatalogCreationState();
     vi.mocked(useNotification).mockReturnValue(
       createNotificationContextValue(mockShowNotification),
     );
@@ -277,6 +292,49 @@ describe('ApplicationEditorPage — custom app', () => {
       ),
     );
     expect(screen.queryByText('Catalog')).toBeNull();
+  });
+
+  describe('creation permissions', () => {
+    const denyCustomApps = () =>
+      setCatalogCreationState({
+        allowedTypes: Object.values(CatalogCreationType).filter(
+          (type) => type !== CatalogCreationType.CustomApp,
+        ),
+        restrictedSchemaIds: [],
+      });
+
+    it('shows the denied state instead of the create form', () => {
+      denyCustomApps();
+      renderPage();
+
+      expect(screen.getByRole('alert').textContent).toBe(
+        CatalogI18nKeys.CreationDenied,
+      );
+      expect(
+        screen.queryByLabelText(EditorI18nKeys.NameLabel, { exact: false }),
+      ).toBeNull();
+    });
+
+    it('still saves an existing custom app', async () => {
+      denyCustomApps();
+      vi.mocked(getDeploymentDetails).mockResolvedValue({
+        id: APP_ID,
+        type: 'application',
+        applicationDetails: { endpoint: 'https://api.example.com/chat' },
+      } as DeploymentDetailsDto);
+      renderPage(`${ROUTES.CustomAppEditor}?id=${encodeURIComponent(APP_ID)}`);
+      await waitFor(() =>
+        expect((getCompletionUrlInput() as HTMLInputElement).value).toBe(
+          'https://api.example.com/chat',
+        ),
+      );
+      await user.type(getNameInput(), 'My app');
+
+      await user.click(getAction(ButtonsI18nKeys.Save));
+
+      await waitFor(() => expect(updateApplication).toHaveBeenCalled());
+      expect(createApplication).not.toHaveBeenCalled();
+    });
   });
 
   describe('edit mode', () => {

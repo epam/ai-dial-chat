@@ -34,6 +34,7 @@ import { useNavigate, useSearchParams } from 'react-router';
 import {
   AppsEditorI18nKeys,
   ButtonsI18nKeys,
+  CatalogI18nKeys,
   EditorI18nKeys,
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
@@ -41,6 +42,7 @@ import { useNotification } from '../../context/NotificationContext';
 import { useApplicationAvatarPicker } from '../../hooks/application-editor/useApplicationAvatarPicker';
 import { useEditedApplication } from '../../hooks/application-editor/useEditedApplication';
 import { useMetadataLabels } from '../../hooks/application-editor/useMetadataLabels';
+import { useCatalogCreationDecision } from '../../hooks/catalog/useCatalogCreationDecision';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
 import { useTextRefinementLabels } from '../../hooks/useTextRefinementLabels';
@@ -51,7 +53,9 @@ import type {
   ApplicationSetupHandle,
   ApplicationSetupValues,
 } from '../../models/application-editor';
+import type { CatalogCreationCheck } from '../../models/catalog-creation';
 import { ApplicationCreateStrategy } from '../../types/application-editor';
+import { CatalogCreationDecision } from '../../types/catalog-creation';
 import { EntityOperation } from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
 import { deploymentToMetadata } from '../../utils/application-editor';
@@ -60,11 +64,13 @@ import { buildAdditionalLocaleOptions } from '../../utils/locale';
 
 interface Props {
   definition: ApplicationEditorFormDefinition<ApplicationSetupValues>;
+  /** What creating a new application is checked against, re-read right before each create. */
+  creationCheck: CatalogCreationCheck;
 }
 
 type SetupErrors = ApplicationSetupErrors<Record<string, unknown>>;
 
-const ApplicationFormEditor: FC<Props> = ({ definition }) => {
+const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -76,6 +82,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
   const isEditMode = Boolean(appId);
   const isMetadataFirst =
     definition.createStrategy === ApplicationCreateStrategy.MetadataFirst;
+  const creationDecision = useCatalogCreationDecision(creationCheck);
   const returnUrl = ROUTES.Catalog;
   const context = useMemo<ApplicationEditorContext>(
     () => ({ searchParams, schemas, t }),
@@ -294,6 +301,18 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
   );
 
   const persist = useCallback(async () => {
+    /* The form may have opened under a permission the current config no
+     * longer grants; nothing is created then. */
+    if (!isEditMode && creationDecision !== CatalogCreationDecision.Allowed) {
+      showErrorNotification({
+        message: t(
+          creationDecision === CatalogCreationDecision.Denied
+            ? CatalogI18nKeys.CreationDenied
+            : CatalogI18nKeys.CreationUnavailable,
+        ),
+      });
+      return;
+    }
     setIsSaving(true);
     try {
       if (!isEditMode) {
@@ -356,6 +375,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
   }, [
     appId,
     context,
+    creationDecision,
     definition,
     isEditMode,
     isMetadataFirst,
@@ -578,10 +598,10 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
       </span>
       {isBusy && (
         <div
-          className="absolute inset-0 flex items-center justify-center bg-backdrop"
+          className="bg-backdrop absolute inset-0 flex items-center justify-center"
           aria-hidden="true"
         >
-          <div className="flex items-center gap-3 rounded-lg bg-layer-sunken px-4 py-3 shadow-lg">
+          <div className="bg-layer-sunken flex items-center gap-3 rounded-lg px-4 py-3 shadow-lg">
             <Spinner />
             <span className="dial-small-text text-primary">{overlayLabel}</span>
           </div>

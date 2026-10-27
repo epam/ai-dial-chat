@@ -8,17 +8,17 @@ Defines the catalog's create menu: which options it offers, what gates each one,
 
 ### Requirement: The catalog create menu offers one option per authorable entity, each behind its own gate
 
-`useCatalogEditNavigation` (`libs/chat-hooks`) SHALL build the `createOptions` array of `DropdownItem` entries that `apps/chat/src/components/CatalogView/CatalogView.tsx` passes to `Catalog`. The hook owns the menu's state (the search query) and its ordering; `CatalogView` supplies the schemas, the feature flags, the translated labels and the editor-URL builders.
+`useCatalogEditNavigation` (`libs/chat-hooks`) SHALL build the `createOptions` array of `DropdownItem` entries that `apps/chat/src/components/CatalogView/CatalogView.tsx` passes to `Catalog`. The hook owns the menu's state (the search query) and its ordering; `CatalogView` supplies the schemas, the feature flags, the translated labels, the editor-URL builders, and resolved creation-permission inputs (see `catalog-creation-role-restrictions`). All positive visibility scenarios below assume the additional creation gate passes unless stated otherwise.
 
 The menu SHALL contain:
 
 | Key | Label | Gate | Destination |
 |---|---|---|---|
-| `runner:<schemaId>` — one per runner schema | the schema's `displayName`, else its id | `OverlayFeature.SchemaApps` on **and** `OverlayFeature.HideCustomAppCreation` off | `/apps-editor`, via `buildQuickAppCreateUrl(schemaId)` |
-| `toolset` | `CatalogI18nKeys.CreateToolset` | `OverlayFeature.Toolsets` on | `ROUTES.ToolsetEditor` |
-| `custom-app` | `CatalogI18nKeys.CreateCustomApp` | `OverlayFeature.CustomApps` on **and** `OverlayFeature.HideCustomAppCreation` off | `ROUTES.CustomAppEditor` |
-| `skill` | `CatalogI18nKeys.CreateSkill` | always | submenu, see below |
-| `prompt` | `CatalogI18nKeys.CreatePrompt` | `OverlayFeature.Prompts` on | `ROUTES.PromptEditor` |
+| `runner:<schemaId>` — one per runner schema | the schema's `displayName`, else its id | `OverlayFeature.SchemaApps` on **and** `OverlayFeature.HideCustomAppCreation` off, plus `canCreateSchema(schemaId)` | `/apps-editor`, via `buildQuickAppCreateUrl(schemaId)` |
+| `toolset` | `CatalogI18nKeys.CreateToolset` | `OverlayFeature.Toolsets` on and `canCreateToolset` | `ROUTES.ToolsetEditor` |
+| `custom-app` | `CatalogI18nKeys.CreateCustomApp` | `OverlayFeature.CustomApps` on **and** `OverlayFeature.HideCustomAppCreation` off, plus `canCreateCustomApp` | `ROUTES.CustomAppEditor` |
+| `skill` | `CatalogI18nKeys.CreateSkill` | `canCreateSkill` (no global UI flag) | submenu, see below |
+| `prompt` | `CatalogI18nKeys.CreatePrompt` | `OverlayFeature.Prompts` on and `canCreatePrompt` | `ROUTES.PromptEditor` |
 
 All entries SHALL be sorted together by label with `localeCompare(…, { sensitivity: 'base' })`, so runners and static options interleave alphabetically and case does not affect the order. There is no fixed order and no cap on the number of runner options.
 
@@ -34,7 +34,7 @@ Every navigating option other than the runners SHALL navigate to its bare editor
 
 **RTL / UI impact**: none beyond `CreateButton` (see the searchable-menu requirement).
 
-**Memoisation**: `createOptions` SHALL be wrapped in `useMemo` over the search query, the resolved runner schemas, the navigate function, the URL builders, the labels, the archive-picker trigger and every gating flag it reads. The runner schemas SHALL be memoised on `schemas`.
+**Memoisation**: `createOptions` SHALL be wrapped in `useMemo` over the search query, the resolved runner schemas, the navigate function, the URL builders, the labels, the archive-picker trigger, every gating flag, and every creation-permission input it reads. The runner schemas SHALL be memoised on `schemas`.
 
 **Accessibility**: `CreateButton` from `@epam/ai-dial-catalog` handles its own ARIA. No additional attributes are required in `CatalogView`.
 
@@ -48,9 +48,9 @@ Every navigating option other than the runners SHALL navigate to its bare editor
 - **WHEN** `OverlayFeature.HideCustomAppCreation` is on
 - **THEN** no `runner:*` entry and no `custom-app` entry is present, regardless of the `SchemaApps` and `CustomApps` flags
 
-#### Scenario: The skill option is always offered
+#### Scenario: The skill option is offered when creation is permitted
 
-- **WHEN** the create menu is built with every other gate off
+- **WHEN** the create menu is built with every other gate off and `canCreateSkill` true
 - **THEN** the `skill` entry is still present, with its two children
 
 #### Scenario: Uploading a skill archive does not navigate
@@ -68,11 +68,33 @@ Every navigating option other than the runners SHALL navigate to its bare editor
 - **WHEN** the runners are "Mind Map", "Quick app" and "Quick app 2.0", and Toolset, Custom App, Skill and Prompt are enabled with labels "Create toolset", "Create custom app", "Skill", "Create prompt"
 - **THEN** the options are ordered "Create custom app", "Create prompt", "Create toolset", "Mind Map", "Quick app", "Quick app 2.0", "Skill"
 
----
+The optional library inputs `canCreateCustomApp`, `canCreateToolset`, `canCreatePrompt`, `canCreateSkill`, and `canCreateSchema(schemaId)` SHALL default to allowing creation when omitted by a host. The app SHALL always supply resolved decisions. The library SHALL NOT read role/config/app-context information. These inputs MUST NOT change `handleEdit`, `handleDelete`, or the unfiltered schema collection.
+
+The hook SHALL also return `hasCreateOptions`, computed after feature and permission checks but before text search. `CatalogView` SHALL hide all catalog Create controls using the existing `hideCreateButton` prop when selector mode is active or this value is false. An empty text-search result SHALL NOT remove the control or its search UI. Desktop header, mobile floating action/bottom sheet, and personal-empty-state menus SHALL use the same decisions.
+
+#### Scenario: A denied type removes only its creation options
+- **WHEN** `canCreateCustomApp` is false and all other permissions/features pass
+- **THEN** the custom-app create entry is absent, other permitted entries remain, and existing custom-app edit actions are unchanged
+
+#### Scenario: Skill denial removes both creation paths
+- **WHEN** `canCreateSkill` is false
+- **THEN** neither Write instructions nor Upload is present in any catalog create menu
+
+#### Scenario: No permitted actions hides every Create control
+- **WHEN** all creation options are denied before search
+- **THEN** `hasCreateOptions` is false and the desktop, mobile, and empty-state Create buttons are absent
+
+#### Scenario: A search miss does not hide the Create control
+- **WHEN** at least one creation action is permitted but the search matches none
+- **THEN** `hasCreateOptions` stays true and the existing searchable no-results state remains usable
+
+#### Scenario: Existing library consumers retain their behavior
+- **WHEN** a host omits all new optional creation inputs
+- **THEN** the menu follows its existing feature gates and `hasCreateOptions` reflects those options
 
 ### Requirement: The Quick App option resolves its schema and navigates through a shared editor-URL builder
 
-`getRunnerSchemas(schemas)` (`libs/chat-hooks/src/shared/application-schema.ts`) SHALL return the runner schemas from `useDeployments().schemas`: one entry per distinct `id`, keeping the first occurrence, with entries that have no `id` and the `custom_app` schema (`isCustomAppSchema`) removed. It applies no other filter — a runner is offered whether or not it has an `editorUrl`, a `schemaEndpoint`, or declared properties. `useCatalogEditNavigation` SHALL build one `runner:<id>` option per returned schema.
+`getRunnerSchemas(schemas)` (`libs/chat-hooks/src/shared/application-schema.ts`) SHALL return the runner schemas from `useDeployments().schemas`: one entry per distinct `id`, keeping the first occurrence, with entries that have no `id` and the `custom_app` schema (`isCustomAppSchema`) removed. This shared helper applies no policy filter. After obtaining its full result, `useCatalogEditNavigation` SHALL build one `runner:<id>` option for each schema allowed by `canCreateSchema(id)` and the existing feature gates. Whether a schema has an `editorUrl`, `schemaEndpoint`, or declared properties SHALL NOT affect creation eligibility. Existing schema/edit resolution SHALL retain the unfiltered list. Positive menu scenarios below assume all referenced schemas are permitted.
 
 "Quick app" and "Quick app 2.0" are distinct schemas and SHALL appear as two options, each labelled with its own `displayName`. No option label is substituted from a translation key.
 
@@ -116,9 +138,13 @@ While schemas are still loading, `schemas` is empty and no runner option is offe
 - **WHEN** the catalog opens an existing runner app for editing
 - **THEN** it calls `buildQuickAppEditUrl` with the app's schema id and its id
 
+#### Scenario: Restricting one schema preserves another with the same label
+- **WHEN** schemas A and B share a display name, `canCreateSchema(A)` is false, and `canCreateSchema(B)` is true
+- **THEN** only `runner:B` is offered, and both schemas remain available to existing edit flows
+
 ### Requirement: The Create menu is also offered narrowed to each entity type
 
-Alongside `createOptions`, `useCatalogEditNavigation` SHALL return `createMenuByType: Partial<Record<CatalogEntityType, CatalogTabCreateMenu>>`, where `CatalogTabCreateMenu` (`{ options: DropdownItem[]; search?: CatalogCreateSearch }`, exported from `@epam/ai-dial-catalog`) is the Create menu restricted to one entity type. It is built from the same gated, search-filtered options as `createOptions`, so every gate and the search query apply identically:
+Alongside `createOptions`, `useCatalogEditNavigation` SHALL return `createMenuByType: Partial<Record<CatalogEntityType, CatalogTabCreateMenu>>`, where `CatalogTabCreateMenu` (`{ options: DropdownItem[]; search?: CatalogCreateSearch }`, exported from `@epam/ai-dial-catalog`) is the Create menu restricted to one entity type. It is built from the same gated, search-filtered options as `createOptions`, so every feature gate, creation permission, and search query apply identically. Positive scenarios below assume permission is granted:
 
 | Type | `options` | `search` |
 |---|---|---|
@@ -146,13 +172,15 @@ Alongside `createOptions`, `useCatalogEditNavigation` SHALL return `createMenuBy
 - **WHEN** `OverlayFeature.Toolsets` is off
 - **THEN** the Toolset entry is present with an empty `options` array
 
----
+#### Scenario: A type denied for creation has no empty-state action
+- **WHEN** skill creation is denied
+- **THEN** the Skill entry retains an empty options array, its personal empty state has no Create button, and existing skill items are not filtered
 
 ### Requirement: The Create menu is searchable while it offers runners
 
-`useCatalogEditNavigation` SHALL own the Create menu's search query and return `createSearch: CatalogCreateSearch | undefined` (`{ value: string; onChange: (value: string) => void }`, exported from `@epam/ai-dial-catalog`). It SHALL be defined only while runner options are enabled (`SchemaApps` on, `HideCustomAppCreation` off) and at least one runner schema exists; otherwise it is `undefined` and `CreateButton` renders the plain split-chevron dropdown.
+`useCatalogEditNavigation` SHALL own the Create menu's search query and return `createSearch: CatalogCreateSearch | undefined` (`{ value: string; onChange: (value: string) => void }`, exported from `@epam/ai-dial-catalog`). It SHALL be defined only while runner options are enabled (`SchemaApps` on, `HideCustomAppCreation` off) and at least one runner schema passes `canCreateSchema(id)` before text-search filtering; otherwise it is `undefined` and `CreateButton` renders the plain split-chevron dropdown.
 
-The query SHALL be trimmed and matched case-insensitively as a substring of each option's label:
+Positive search scenarios assume the relevant creation permissions pass. The query SHALL be trimmed and matched case-insensitively as a substring of each option's label:
 
 - runner, toolset, custom-app and prompt options are kept only when their label matches;
 - the `skill` group is kept with both children when "Skill" matches, otherwise with only its matching children, and is dropped when neither the group nor a child matches.
@@ -195,6 +223,10 @@ The query SHALL be trimmed and matched case-insensitively as a substring of each
 
 - **WHEN** no runner schema exists, or `OverlayFeature.SchemaApps` is off
 - **THEN** `createSearch` is `undefined` and the menu has no search field
+
+#### Scenario: Denied runners do not enable or appear in search
+- **WHEN** runner schemas exist but none passes creation permission
+- **THEN** `createSearch` is undefined and searching cannot reveal a denied runner
 
 ### Requirement: The searchable Create menu keeps a fixed size and scrolls
 

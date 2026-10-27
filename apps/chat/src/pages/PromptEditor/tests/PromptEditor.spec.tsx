@@ -1,10 +1,15 @@
 import type { EntityEditorProps } from '@epam/ai-dial-builder-form';
+import { CatalogCreationType } from '@epam/ai-dial-chat-api-client';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useNotification } from '../../../context/NotificationContext';
 import { usePrompts } from '../../../context/PromptsContext';
+import {
+  resetCatalogCreationState,
+  setCatalogCreationState,
+} from '../../../context/tests/catalog-creation-state';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { useUiFeature } from '../../../hooks/useUiFeature';
 import {
@@ -14,9 +19,17 @@ import {
 } from '../../../server-api/prompts.api';
 import PromptEditor from '../PromptEditor';
 
-vi.mock('../../../context/AppConfigContext', () => ({
-  useAppConfig: () => ({ status: 'ready', config: {} }),
-}));
+vi.mock('../../../context/AppConfigContext', async () => {
+  const { useCatalogCreationState } =
+    await import('../../../context/tests/catalog-creation-state');
+  return {
+    useAppConfig: () => ({
+      status: 'ready',
+      config: {},
+      ...useCatalogCreationState(),
+    }),
+  };
+});
 vi.mock('@epam/ai-dial-builder-form', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@epam/ai-dial-builder-form')>();
@@ -127,6 +140,7 @@ describe('PromptEditor', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    resetCatalogCreationState();
     mockSearchParams = new URLSearchParams();
     vi.mocked(useUiFeature).mockImplementation(
       (feature) => feature === OverlayFeature.Prompts,
@@ -426,5 +440,83 @@ describe('PromptEditor', () => {
 
     expect(mockNavigate).toHaveBeenCalledWith('/catalog');
     expect(createPrompt).not.toHaveBeenCalled();
+  });
+
+  describe('creation permissions', () => {
+    const denyPrompts = () =>
+      setCatalogCreationState({
+        allowedTypes: Object.values(CatalogCreationType).filter(
+          (type) => type !== CatalogCreationType.Prompt,
+        ),
+        restrictedSchemaIds: [],
+      });
+
+    it('shows the denied state on a direct create route and mounts no form', () => {
+      denyPrompts();
+      render(<PromptEditor />);
+
+      expect(screen.getByRole('alert').textContent).toBe(
+        'catalog.creation.denied',
+      );
+      expect(screen.queryByText('promptEditor.createTitle')).toBeNull();
+      expect(createPrompt).not.toHaveBeenCalled();
+    });
+
+    it('creates a prompt when prompt creation is allowed', async () => {
+      setCatalogCreationState({
+        allowedTypes: [CatalogCreationType.Prompt],
+        restrictedSchemaIds: [],
+      });
+      render(<PromptEditor />);
+
+      await fillRequiredFields('summarize', 'Summarize:');
+      await user.click(screen.getByRole('button', { name: 'buttons.create' }));
+
+      await waitFor(() => expect(createPrompt).toHaveBeenCalled());
+    });
+
+    it('blocks the create request when permission is lost while the form is open', async () => {
+      render(<PromptEditor />);
+      await fillRequiredFields('summarize', 'Summarize:');
+
+      act(() => denyPrompts());
+      await user.click(screen.getByRole('button', { name: 'buttons.create' }));
+
+      expect(createPrompt).not.toHaveBeenCalled();
+      expect(showNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'catalog.creation.denied' }),
+      );
+    });
+
+    it('still loads and saves an existing prompt when creation is denied', async () => {
+      denyPrompts();
+      mockSearchParams = new URLSearchParams({ id: promptDto.id });
+      render(<PromptEditor />);
+
+      expect(await screen.findByDisplayValue('summarize')).toBeTruthy();
+      await user.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+      await waitFor(() => expect(updatePrompt).toHaveBeenCalled());
+      expect(createPrompt).not.toHaveBeenCalled();
+    });
+
+    it('treats an empty id parameter as edit mode, as before', async () => {
+      denyPrompts();
+      mockSearchParams = new URLSearchParams({ id: '' });
+      render(<PromptEditor />);
+
+      expect(screen.queryByText('catalog.creation.denied')).toBeNull();
+      await waitFor(() => expect(getPrompt).toHaveBeenCalledWith(''));
+    });
+
+    it('keeps the failed-load error state rather than offering creation', async () => {
+      denyPrompts();
+      mockSearchParams = new URLSearchParams({ id: promptDto.id });
+      vi.mocked(getPrompt).mockRejectedValue(new Error('404'));
+      render(<PromptEditor />);
+
+      expect(await screen.findByText('promptEditor.loadError')).toBeTruthy();
+      expect(screen.queryByText('promptEditor.createTitle')).toBeNull();
+    });
   });
 });

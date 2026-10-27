@@ -1,4 +1,7 @@
-import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
+import {
+  CatalogCreationType,
+  TextRefinementPurpose,
+} from '@epam/ai-dial-chat-api-client';
 import type {
   ToolsetLoginBodyDto,
   ToolsetLogoutBodyDto,
@@ -45,6 +48,7 @@ import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { useApplicationAvatarPicker } from '../../../hooks/application-editor/useApplicationAvatarPicker';
 import { useMetadataLabels } from '../../../hooks/application-editor/useMetadataLabels';
+import { useCatalogCreationDecision } from '../../../hooks/catalog/useCatalogCreationDecision';
 import { useToolsetEditorOAuthLogin } from '../../../hooks/toolsets/useToolsetEditorOAuthLogin';
 import { useOperationNotification } from '../../../hooks/useOperationNotification';
 import { useTextRefinementCallback } from '../../../hooks/useTextRefinementCallback';
@@ -58,6 +62,7 @@ import {
   logoutToolset,
   updateToolset,
 } from '../../../server-api/toolsets';
+import { CatalogCreationDecision } from '../../../types/catalog-creation';
 import {
   EntityOperation,
   NotifiableEntity,
@@ -103,6 +108,11 @@ const ToolsetApplicationEditor: FC = () => {
 
   const routeToolsetId = searchParams.get(ToolsetEditorQuery.Id) ?? '';
   const isEditMode = Boolean(routeToolsetId);
+  /* The page boundary gates opening the create form; this re-check blocks a
+   * create whose permission was lost while the form was open. */
+  const creationDecision = useCatalogCreationDecision({
+    type: CatalogCreationType.Toolset,
+  });
   const returnUrl = ROUTES.Catalog;
 
   const [initialForm, setInitialForm] = useState<ToolsetFormData | undefined>(
@@ -158,6 +168,16 @@ const ToolsetApplicationEditor: FC = () => {
       form: ToolsetFormData,
       toolsetId: string,
     ): Promise<string | null> => {
+      if (!toolsetId && creationDecision !== CatalogCreationDecision.Allowed) {
+        showErrorNotification({
+          message: t(
+            creationDecision === CatalogCreationDecision.Denied
+              ? CatalogI18nKeys.CreationDenied
+              : CatalogI18nKeys.CreationUnavailable,
+          ),
+        });
+        return null;
+      }
       try {
         const body = formToToolsetBody(form, getToolsetRedirectUri());
         if (toolsetId) {
@@ -182,7 +202,7 @@ const ToolsetApplicationEditor: FC = () => {
         return null;
       }
     },
-    [t, showErrorNotification],
+    [creationDecision, t, showErrorNotification],
   );
 
   const handlePostSaveLogin = useCallback(

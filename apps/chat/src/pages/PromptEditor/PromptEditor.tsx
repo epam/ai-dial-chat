@@ -1,4 +1,7 @@
-import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
+import {
+  CatalogCreationType,
+  TextRefinementPurpose,
+} from '@epam/ai-dial-chat-api-client';
 import {
   getApiErrorDetails,
   PROMPT_CONTENT_MAX_LENGTH,
@@ -20,14 +23,17 @@ import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router';
+import RequireCatalogCreation from '../../components/RequireCatalogCreation/RequireCatalogCreation';
 import {
   ButtonsI18nKeys,
+  CatalogI18nKeys,
   PromptEditorI18nKeys,
   SkillEditorI18nKeys,
 } from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
 import { usePrompts } from '../../context/PromptsContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useCatalogCreationDecision } from '../../hooks/catalog/useCatalogCreationDecision';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
 import { useTextRefinementLabels } from '../../hooks/useTextRefinementLabels';
@@ -37,6 +43,7 @@ import {
   getPrompt,
   updatePrompt,
 } from '../../server-api/prompts.api';
+import { CatalogCreationDecision } from '../../types/catalog-creation';
 import { EditorQuery } from '../../types/editor-query';
 import {
   EntityOperation,
@@ -73,6 +80,9 @@ const PromptEditorPage: FC = () => {
   const promptId = searchParams.get(EditorQuery.Id) ?? undefined;
   const returnUrl = ROUTES.Catalog;
   const isEditMode = promptId != null;
+  const creationDecision = useCatalogCreationDecision({
+    type: CatalogCreationType.Prompt,
+  });
 
   const [loadedValues, setLoadedValues] = useState<PromptEditorValues>();
   const [errors, setErrors] = useState<FormErrors>({});
@@ -209,6 +219,18 @@ const PromptEditorPage: FC = () => {
         setErrors(nextErrors);
         return;
       }
+      /* The form may have opened under a permission the current config no
+       * longer grants; nothing is created then. */
+      if (!isEditMode && creationDecision !== CatalogCreationDecision.Allowed) {
+        showErrorNotification({
+          message: t(
+            creationDecision === CatalogCreationDecision.Denied
+              ? CatalogI18nKeys.CreationDenied
+              : CatalogI18nKeys.CreationUnavailable,
+          ),
+        });
+        return;
+      }
       setErrors({});
       setIsSaving(true);
 
@@ -252,6 +274,7 @@ const PromptEditorPage: FC = () => {
       }
     },
     [
+      creationDecision,
       isSaving,
       isEditMode,
       promptId,
@@ -304,27 +327,32 @@ const PromptEditorPage: FC = () => {
   if (!isPromptsEnabled) return null;
 
   return (
-    <PromptEditorForm
-      isEditMode={isEditMode}
-      initialValues={loadedValues}
-      isLoading={isLoading}
-      hasLoadError={loadError != null}
-      isSaving={isSaving}
-      errors={formErrors}
-      descriptionMaxLength={PROMPT_DESCRIPTION_MAX_LENGTH}
-      contentMaxLength={PROMPT_CONTENT_MAX_LENGTH}
-      labels={labels}
-      markdownEditorTheme={
-        currentTheme === ThemeId.Dark ? EditorThemes.dark : EditorThemes.light
-      }
-      onSubmit={handleSubmit}
-      onFieldChange={handleFieldChange}
-      onBack={handleBack}
-      onCancel={handleCancel}
-      onRetry={handleRetry}
-      onRefineDescription={onRefineDescription}
-      onRefineInstructions={onRefineInstructions}
-    />
+    <RequireCatalogCreation
+      isCreateMode={!isEditMode}
+      type={CatalogCreationType.Prompt}
+    >
+      <PromptEditorForm
+        isEditMode={isEditMode}
+        initialValues={loadedValues}
+        isLoading={isLoading}
+        hasLoadError={loadError != null}
+        isSaving={isSaving}
+        errors={formErrors}
+        descriptionMaxLength={PROMPT_DESCRIPTION_MAX_LENGTH}
+        contentMaxLength={PROMPT_CONTENT_MAX_LENGTH}
+        labels={labels}
+        markdownEditorTheme={
+          currentTheme === ThemeId.Dark ? EditorThemes.dark : EditorThemes.light
+        }
+        onSubmit={handleSubmit}
+        onFieldChange={handleFieldChange}
+        onBack={handleBack}
+        onCancel={handleCancel}
+        onRetry={handleRetry}
+        onRefineDescription={onRefineDescription}
+        onRefineInstructions={onRefineInstructions}
+      />
+    </RequireCatalogCreation>
   );
 };
 

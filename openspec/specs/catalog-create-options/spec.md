@@ -6,10 +6,10 @@ Specifies the Custom App, Skill, and Prompt entries in `CatalogView`'s Create dr
 ## Requirements
 
 ### Requirement: Custom App create option in catalog
-The system SHALL add a "Custom App" option to the `CatalogView` create button when `OverlayFeature.CustomApps` is enabled. The option SHALL be absent when the feature flag is disabled. The option is additionally suppressed by `OverlayFeature.HideCustomAppCreation`.
+The system SHALL add a "Custom App" option to the `CatalogView` create button when `OverlayFeature.CustomApps` is enabled and the host-resolved `canCreateCustomApp` is true. The option SHALL be absent when the feature flag is disabled or creation permission is denied. This creation condition SHALL NOT change custom-app editability. The option is additionally suppressed by `OverlayFeature.HideCustomAppCreation`.
 
 #### Scenario: Option visible when feature enabled
-- **WHEN** `OverlayFeature.CustomApps` is enabled
+- **WHEN** `OverlayFeature.CustomApps` is enabled and creation permission passes
 - **THEN** the Create dropdown includes a "Custom App" entry
 
 #### Scenario: Option hidden when feature disabled
@@ -19,6 +19,10 @@ The system SHALL add a "Custom App" option to the `CatalogView` create button wh
 #### Scenario: Clicking option navigates to editor
 - **WHEN** user clicks "Custom App"
 - **THEN** the app navigates to the Custom App Editor in creation mode
+
+#### Scenario: Creation denial preserves editing
+- **WHEN** the user lacks custom-app creation permission but can edit an existing custom app under the prior rules
+- **THEN** the create option is absent and the existing Edit action remains available
 
 ### Requirement: Edit button for schema-less custom apps
 When `OverlayFeature.CustomApps` is enabled, `CatalogView` SHALL show the Edit button on catalog items that are owned by the user (`isMy` or `canEdit`), have `type = 'application'`, and have **no** `applicationTypeSchemaId`. Clicking Edit navigates to `CustomAppEditor` with the item's `id`.
@@ -43,12 +47,14 @@ The `HideCustomAppCreation = 'hide-custom-app-creation'` modifier flag SHALL sup
 - **AND** the Edit button still renders on schema-less custom apps the user can edit
 
 ### Requirement: Skill create option in catalog
-The system SHALL add a "Skill" option to the `CatalogView` create button, unconditionally (no `OverlayFeature` gate), alongside the runner, Prompt, Toolset and Custom App entries. The "Skill" option SHALL be a nested submenu with two children: "Write instructions", which navigates to `ROUTES.SkillEditor` with no query parameters (the Skill Editor returns to `ROUTES.Catalog` on its own), and "Upload", which calls the host's `onSkillUploadClick` to open the "Upload skill" dialog (`SkillArchiveUploadDialog`, a ui-kit `FileDropzone` accepting `.zip,.md`) that imports a ZIP archive or a standalone `SKILL.md` as a new Skill (see `skill-archive-import`). The menu is built by `useCatalogEditNavigation` (`libs/chat-hooks/src/catalog/useCatalogEditNavigation/useCatalogEditNavigation.ts`); when the create-menu search query is non-empty, a query matching the "Skill" label keeps both children, otherwise only the matching children are kept and the "Skill" entry is dropped when none match.
+The system SHALL add a "Skill" option to the `CatalogView` create button, when host-resolved `canCreateSkill` is true (no `OverlayFeature` gate), alongside the runner, Prompt, Toolset and Custom App entries. The "Skill" option SHALL be a nested submenu with two children: "Write instructions", which navigates to `ROUTES.SkillEditor` with no query parameters (the Skill Editor returns to `ROUTES.Catalog` on its own), and "Upload", which calls the host's `onSkillUploadClick` to open the "Upload skill" dialog (`SkillArchiveUploadDialog`, a ui-kit `FileDropzone` accepting `.zip,.md`) that imports a ZIP archive or a standalone `SKILL.md` as a new Skill (see `skill-archive-import`). The menu is built by `useCatalogEditNavigation` (`libs/chat-hooks/src/catalog/useCatalogEditNavigation/useCatalogEditNavigation.ts`); when the create-menu search query is non-empty, a query matching the "Skill" label keeps both children, otherwise only the matching children are kept and the "Skill" entry is dropped when none match.
+
+The creation permission SHALL gate both children together, including the tab-specific flattened menu. It SHALL NOT gate existing skill listing, use, or editing. All activation scenarios below assume creation is permitted.
 
 The submenu SHALL be operable by keyboard (arrow-key navigation into and within the submenu, `Enter`/`Space` to activate a child, `Escape` to close) and SHALL NOT require hover to open or navigate on touch/mobile viewports. The parent item and both children SHALL meet the touch-target size the shared `Dropdown` applies to every menu row — the menu is rendered by the ui-kit component, so this capability inherits that sizing rather than setting its own. Below the desktop breakpoint (`useIsMobile`) the Create menu SHALL NOT open as a floating dropdown, whose side flyout falls off a phone screen: `CreateButton` SHALL open the ui-kit `BottomSheet` instead (`CreateMenuSheet`), with the search field and the options on its root page; tapping "Skill" SHALL drill into a page of its own titled "Skill" listing "Write instructions" and "Upload", with a header back button returning to the root page. Choosing an option SHALL run it and close the sheet, and closing the sheet SHALL clear the search query. The back and close buttons are named by `titles.createMenuBackLabel` and `titles.createMenuCloseLabel`.
 
-#### Scenario: Skill option is always present
-- **WHEN** `CatalogView`'s Create dropdown is opened
+#### Scenario: Skill option is present when creation is permitted
+- **WHEN** `CatalogView`'s Create dropdown is opened and `canCreateSkill` is true
 - **THEN** the dropdown includes a "Skill" entry regardless of any `OverlayFeature` flag state
 
 #### Scenario: Skill option opens a submenu with two actions
@@ -75,15 +81,17 @@ The submenu SHALL be operable by keyboard (arrow-key navigation into and within 
 - **WHEN** a user taps Create at a viewport below the desktop breakpoint (e.g. 375px wide) and then taps "Skill"
 - **THEN** the menu is a bottom sheet spanning the screen width, the Skill page replaces the root page inside it with both "Write instructions" and "Upload" fully on screen, and the page does not widen beyond the viewport
 
----
+#### Scenario: Skill creation is denied on desktop and mobile
+- **WHEN** `canCreateSkill` is false
+- **THEN** the Skill submenu and both children are absent from the desktop dropdown, mobile sheet, and empty-state menu
 
 ### Requirement: Prompt create option in catalog
 
-The system SHALL add a "Prompt" option to the `CatalogView` create button when `OverlayFeature.Prompts` is enabled. The option SHALL be absent when the feature is disabled. Its label comes from `CatalogI18nKeys.CreatePrompt` (`catalog.create.prompt`), which shares the `catalog.create.*` prefix with every other create-menu label.
+The system SHALL add a "Prompt" option to the `CatalogView` create button when `OverlayFeature.Prompts` is enabled and host-resolved `canCreatePrompt` is true. The option SHALL be absent when the feature is disabled or creation permission is denied. This permission SHALL NOT filter existing prompts or block their existing edit/use paths. Its label comes from `CatalogI18nKeys.CreatePrompt` (`catalog.create.prompt`), which shares the `catalog.create.*` prefix with every other create-menu label.
 
 Clicking it SHALL navigate to `ROUTES.PromptEditor` in create mode with no query parameters — the Prompt Editor returns to `ROUTES.Catalog` on cancel or save. It carries no `id` param — an `id` is what distinguishes edit mode.
 
-The entry SHALL take its place in the alphabetical order the whole menu is sorted in (see `catalog-create-app`), not a fixed last position. No existing create option's visibility rule changes.
+The entry SHALL take its place in the alphabetical order the whole menu is sorted in (see `catalog-create-app`), not a fixed last position. Other create options retain their own independent feature and creation gates. Positive visibility/navigation scenarios below assume prompt creation permission passes.
 
 #### Scenario: Option visible when feature enabled
 
@@ -111,7 +119,9 @@ The entry SHALL take its place in the alphabetical order the whole menu is sorte
 - **WHEN** `CatalogView` renders with `isSelectorMode` true and `OverlayFeature.Prompts` enabled
 - **THEN** no Create button is rendered at all, so no Prompt entry is reachable
 
----
+#### Scenario: Prompt creation denial does not hide prompts
+- **WHEN** prompt creation is denied while the global Prompts flag is enabled
+- **THEN** the create entry is absent and existing prompt listing, use, and editing retain their prior behavior
 
 ### Requirement: Edit action for owned prompts opens the prompt editor
 

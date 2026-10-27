@@ -5,6 +5,7 @@ import {
   CredentialsLevel,
   ToolsetAuthenticationType,
 } from '@epam/ai-dial-catalog';
+import { CatalogCreationType } from '@epam/ai-dial-chat-api-client';
 import {
   type CatalogEditNavigationLabels,
   type CatalogEditNavigationUrls,
@@ -41,6 +42,7 @@ import { useFavoriteApplications } from '../../context/FavoriteApplicationsConte
 import { useNotification } from '../../context/NotificationContext';
 import { usePrompts } from '../../context/PromptsContext';
 import { useSkills } from '../../context/SkillsContext';
+import { useCatalogCreationPermissions } from '../../hooks/catalog/useCatalogCreationPermissions';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
@@ -539,12 +541,17 @@ const CatalogView: FC<Props> = ({
     [deployments, favoriteIds, notifyOperationSuccess, schemas, toggleFavorite],
   );
 
+  /* Creation decisions narrow only the Create menu; the feature flags above
+   * still govern listing and editing on their own. */
+  const { canCreateType, canCreateSchema } = useCatalogCreationPermissions();
+
   const {
     handleEdit,
     handleDelete,
     createOptions,
     createSearch,
     createMenuByType,
+    hasCreateOptions,
   } = useCatalogEditNavigation({
     deployments,
     isCustomAppsEnabled,
@@ -567,6 +574,11 @@ const CatalogView: FC<Props> = ({
     labels: catalogEditNavigationLabels,
     onNotify: showErrorNotification,
     onSkillUploadClick: openSkillArchiveDialog,
+    canCreateCustomApp: canCreateType(CatalogCreationType.CustomApp),
+    canCreateToolset: canCreateType(CatalogCreationType.Toolset),
+    canCreatePrompt: canCreateType(CatalogCreationType.Prompt),
+    canCreateSkill: canCreateType(CatalogCreationType.Skill),
+    canCreateSchema,
   });
 
   if (!isCatalogEnabled && !isSelectorMode) {
@@ -593,7 +605,7 @@ const CatalogView: FC<Props> = ({
         createOptions={createOptions}
         createSearch={createSearch}
         createMenuByTab={createMenuByType}
-        hideCreateButton={isSelectorMode}
+        hideCreateButton={isSelectorMode || !hasCreateOptions}
         hidePageTitle={isSelectorMode}
         isFullWidth={isFullWidth}
         selectedItemId={
