@@ -195,7 +195,9 @@ describe('ApplicationEditorPage — quick app', () => {
       expect(
         screen.getByText(AppsEditorI18nKeys.GeneralFormNameInvalid),
       ).toBeTruthy();
-      expect(screen.getByText(EditorI18nKeys.VersionInvalid)).toBeTruthy();
+      expect(
+        screen.getByText(AppsEditorI18nKeys.GeneralFormVersionInvalid),
+      ).toBeTruthy();
       expect(createApplication).not.toHaveBeenCalled();
     });
 
@@ -365,7 +367,7 @@ describe('ApplicationEditorPage — quick app', () => {
       await user.clear(screen.getByLabelText(EditorI18nKeys.VersionLabel));
       await user.type(
         screen.getByLabelText(EditorI18nKeys.VersionLabel),
-        '2.0.0',
+        '2.0',
       );
       act(() => getIframeProps()?.onReadyChange?.(true));
 
@@ -374,7 +376,7 @@ describe('ApplicationEditorPage — quick app', () => {
       await waitFor(() => expect(mockTriggerSave).toHaveBeenCalledOnce());
       const general = mockTriggerSave.mock.calls[0][0];
       expect(general).toEqual(
-        expect.objectContaining({ name: 'My App', display_version: '2.0.0' }),
+        expect.objectContaining({ name: 'My App', display_version: '2.0' }),
       );
       expect(general).not.toHaveProperty('version');
 

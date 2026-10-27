@@ -395,7 +395,7 @@ describe('PublishService', () => {
       );
     });
 
-    it('keeps the source name in targetUrl when the supplied version is not valid SemVer', async () => {
+    it('keeps the source name in targetUrl when the supplied version has characters outside the version charset', async () => {
       const { service, dialClient } = makeService();
       vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
         okResponse({ createdAt: 1_700_000_000_000 }),

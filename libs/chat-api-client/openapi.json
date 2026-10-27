@@ -10308,7 +10308,7 @@
           },
           "version": {
             "type": "string",
-            "example": "1.0.0"
+            "example": "1.0"
           },
           "topics": {
             "example": ["nlp", "assistant"],

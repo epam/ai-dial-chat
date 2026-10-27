@@ -771,9 +771,7 @@ describe('ToolsetEditor — shared editor shell', () => {
 
     const alerts = screen.getAllByRole('alert');
     expect(alerts).toHaveLength(1);
-    expect(alerts[0].textContent).toContain(
-      'Version must follow semantic versioning',
-    );
+    expect(alerts[0].textContent).toContain('Version may only contain');
   });
 
   it('clears the metadata error once the field becomes valid again', async () => {

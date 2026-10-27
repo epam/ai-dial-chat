@@ -3,6 +3,7 @@ import {
   EntityEditor,
   MetadataField,
   useMetadataForm,
+  type DeploymentCreationFormValidationOptions,
 } from '@epam/ai-dial-builder-form';
 import {
   getApiErrorDetails,
@@ -18,7 +19,6 @@ import {
 import type { FC, ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TOOLSET_EDITOR_CLASS } from '../../constants/public-class-names';
-import { TOOLSET_METADATA_VALIDATION_OPTIONS } from '../../constants/toolsets';
 import type { ToolsetEditorProps } from '../../models/toolset-editor-props';
 import type {
   ToolsetAuthFormData,
@@ -50,6 +50,10 @@ const SETUP_ERROR_FIELDS: (keyof ToolsetFormErrors)[] = [
 ];
 
 const SETUP_ERROR_FIELD_SET = new Set<string>(SETUP_ERROR_FIELDS);
+
+const METADATA_VALIDATION_OPTIONS: DeploymentCreationFormValidationOptions = {
+  validateVersionPattern: true,
+};
 
 type ToolsetDirtyFields = Partial<Record<keyof ToolsetFormErrors, true>>;
 
@@ -116,7 +120,7 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
   );
   const metadata = useMetadataForm({
     initialValues: metadataInitialValues,
-    validationOptions: TOOLSET_METADATA_VALIDATION_OPTIONS,
+    validationOptions: METADATA_VALIDATION_OPTIONS,
     reseedKey: seed.key,
   });
   const {
@@ -460,7 +464,7 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
     ) {
       nextErrors.version =
         validationLabels?.versionInvalid ??
-        'Version must follow semantic versioning (e.g., 1.0.0)';
+        'Version may only contain letters, digits, dots, underscores, and dashes';
     }
     return nextErrors;
   }, [dirtyFields, errors, form, labels, metadataErrorCodes, validateSetup]);

@@ -1,8 +1,4 @@
-import {
-  DEFAULT_DEPLOYMENT_VERSION,
-  SEMVER_VERSION_PATTERN,
-  type DeploymentCreationFormValidationOptions,
-} from '@epam/ai-dial-builder-form';
+import { DEFAULT_DEPLOYMENT_VERSION } from '@epam/ai-dial-builder-form';
 import { ToolsetAuthTypes } from '@epam/ai-dial-chat-hooks';
 import { IconBrandOauth, IconKey, IconLockOff } from '@tabler/icons-react';
 import type { TablerIcon } from '@tabler/icons-react';
@@ -16,10 +12,6 @@ export enum ToolsetTransportType {
 
 /** Default display version seeded into a new toolset form; the shared deployment default. */
 export const DEFAULT_TOOLSET_VERSION = DEFAULT_DEPLOYMENT_VERSION;
-
-/** Metadata checks for a toolset: the version must be SemVer 2.0.0, as DIAL Admin requires. */
-export const TOOLSET_METADATA_VALIDATION_OPTIONS: DeploymentCreationFormValidationOptions =
-  { validateVersionPattern: SEMVER_VERSION_PATTERN };
 
 /** Icon shown for each toolset authentication-type segment; labels arrive via the auth labels. */
 export const AUTH_TYPE_ICONS: Record<ToolsetAuthTypes, TablerIcon> = {
