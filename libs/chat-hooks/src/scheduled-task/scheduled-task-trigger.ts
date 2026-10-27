@@ -294,6 +294,7 @@ const parseCronFields = (
     const weekMatch = fields.week?.match(CUSTOM_WEEK_PATTERN);
     if (
       weekMatch &&
+      extraKeys.every((key) => key === 'week') &&
       hasDayOfWeek &&
       !hasDayOfMonth &&
       /^\d+$/.test(String(fields.day_of_week)) &&

@@ -821,6 +821,85 @@ describe('mapScheduledTaskDtoToFormValues', () => {
     }
   });
 
+  it('round-trips a custom Monday shortly after midnight through UTC Sunday', () => {
+    vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer
+    const values: ScheduledTaskCreateFormValues = {
+      ...baseValues,
+      repeat: ScheduledTaskRepeat.Custom,
+      everyWeeks: '2',
+      dayOfWeek: '0',
+      time: '00:30',
+    };
+    const body = mapFormValuesToCreateBody(values);
+
+    expect(body.trigger.cron?.fields).toEqual({
+      week: '*/2',
+      day_of_week: '6',
+      hour: '22',
+      minute: '30',
+    });
+    expect(
+      mapScheduledTaskDtoToFormValues({ ...baseDto, trigger: body.trigger }),
+    ).toMatchObject({
+      ok: true,
+      values: {
+        repeat: ScheduledTaskRepeat.Custom,
+        everyWeeks: '2',
+        dayOfWeek: '0',
+        time: '00:30',
+      },
+    });
+  });
+
+  it.each<Record<string, string>>([
+    { month: '1' },
+    { year: '2027' },
+    { second: '30' },
+  ])('fails closed on additional Custom cron constraints: %j', (constraint) => {
+    expect(
+      mapScheduledTaskDtoToFormValues({
+        ...baseDto,
+        trigger: {
+          cron: {
+            fields: {
+              week: '*/2',
+              day_of_week: '0',
+              hour: '9',
+              minute: '0',
+              ...constraint,
+            },
+          },
+        },
+      }),
+    ).toEqual({
+      ok: false,
+      reason: UnsupportedTriggerReason.UnsupportedCronShape,
+    });
+  });
+
+  it('ignores null-valued extra fields when hydrating a custom schedule', () => {
+    const fields = {
+      week: '*/2',
+      day_of_week: '0',
+      hour: '9',
+      minute: '0',
+      year: null,
+      month: null,
+      day: null,
+      second: null,
+    } as unknown as Record<string, string>;
+
+    expect(
+      mapScheduledTaskDtoToFormValues({
+        ...baseDto,
+        trigger: { cron: { fields } },
+      }),
+    ).toMatchObject({
+      ok: true,
+      values: { repeat: ScheduledTaskRepeat.Custom, everyWeeks: '2' },
+    });
+  });
+
   it('hydrates a weekly schedule with a null week value as Weekly, not Custom', () => {
     const fields = {
       hour: '9',

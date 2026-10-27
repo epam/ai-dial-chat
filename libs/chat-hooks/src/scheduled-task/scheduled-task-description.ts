@@ -139,6 +139,8 @@ export const describeScheduledTaskTrigger = (
   )
     return custom();
   const everyHour = hour == null || hour === '*';
+  /* A week constraint must not disappear into a simpler cadence label. */
+  if (weekStep && (everyHour || !weekday || day)) return custom();
   const interval = minute?.match(/^\*\/(\d+)$/);
   if (everyHour && interval && !day && !weekday) {
     const count = Number(interval[1]);
@@ -187,13 +189,12 @@ export const describeScheduledTaskTrigger = (
   );
   const dayShift = Math.round((localDate.getTime() - utcDay) / 86400000);
   const time = part('hour') + ':' + part('minute');
-  if (fields.week != null) {
+  if (weekStep) {
     /* The Custom repeat's shape: a fixed time-of-day on one weekday, every
      * N weeks. The week step is a count and needs no conversion; the
      * weekday shifts across the UTC day boundary exactly like Weekly's. */
-    if (everyHour || !weekday || day) return custom();
     return result(ScheduledTaskTriggerDescriptionKind.EveryNWeeks, {
-      intervalWeeks: weekStep ? Number(weekStep[1]) : undefined,
+      intervalWeeks: Number(weekStep[1]),
       time,
       dayOfWeek: String((Number(weekday) + dayShift + 7) % 7),
     });

@@ -294,8 +294,8 @@ This mapping, including the local→UTC conversion for the `'hourly'`/`'daily'`/
 
 #### Scenario: Custom repeat shifts day_of_week when the UTC conversion crosses midnight
 
-- **WHEN** the user selects Repeat = Custom with local time `23:30` on Monday in a timezone at UTC+2, so the UTC equivalent falls on Tuesday `21:30`
-- **THEN** the POST body's `trigger.cron.fields.day_of_week` reflects Tuesday (the UTC calendar day), and `week` is unaffected by the conversion
+- **WHEN** the user selects Repeat = Custom with local time `00:30` on Monday in a timezone at UTC+2, so the UTC equivalent falls on Sunday `22:30`
+- **THEN** the POST body's `trigger.cron.fields.day_of_week` is `'6'` (Sunday), `hour` is `'22'`, `minute` is `'30'`, and `week` is unaffected by the conversion
 
 #### Scenario: Custom every-1-week still emits the week field
 
@@ -625,6 +625,8 @@ Any new i18n keys this wiring requires (e.g. the placeholder, if not already cov
 
 ### Requirement: Reverse trigger mapping is fail-closed for unsupported or incomplete tasks
 
+Custom editability requires that every non-null cron field belongs to the supported `week`/`day_of_week`/`hour`/`minute` shape. Additional non-null fields, including `month`, `year`, and `second`, SHALL fail closed rather than being discarded on save. Null-valued extra fields remain absent for this check.
+
 `libs/chat-hooks/src/scheduled-task/scheduled-task-trigger.ts` SHALL export a reverse mapping function that converts a `ScheduledTaskDto` into `ScheduledTaskCreateFormValues`, inverting `buildCronFields`/`buildCronWindowBoundary`'s UTC→local conversion using the same reference-`Date`-plus-getters technique (browser timezone/DST handling, not manual offset arithmetic). The function SHALL return a discriminated result — success with mapped `values`, or failure with a reason — rather than a value that may itself be invalid. `trigger.cron.fields` MUST be evaluated by presence of a non-`null` value per key, not by key presence alone — DIAL Scheduler always returns every cron field key, using `null` for ones that are not set.
 
 Before applying the existing numeric-hour parsing, the mapper SHALL check for the Hourly shape: when `fields.hour === '*'`, `fields.minute` is present with a purely-numeric value, and neither `day` nor `day_of_week` is present, the mapper SHALL succeed with `values.repeat = 'hourly'` and `values.minute` set to the local minute-of-hour equivalent of the stored UTC minute (via a reference `Date` set with `setUTCHours(0, utcMinute)`, reading back `getMinutes()` — the inverse of the forward `setHours(0, minute)` → `getUTCMinutes()` conversion), with no `time`/`dayOfWeek`/`dayOfMonth` field set. Any other non-numeric `hour` value (cron range/list/step expressions, or `*` combined with a `day`/`day_of_week`) continues to fail closed, same as today.
@@ -660,8 +662,8 @@ For the remaining (non-Hourly, non-Custom) shapes, mapping SHALL fail when: the 
 
 #### Scenario: Custom task round-trips through reverse mapping
 
-- **WHEN** a task's `trigger.cron.fields` is `{ week: '*/2', day_of_week: '1', hour: '21', minute: '30' }` (UTC Tuesday) and the local UTC+2 equivalent falls back onto Monday `23:30`
-- **THEN** the reverse mapper succeeds with `values.repeat = 'custom'`, `values.everyWeeks = '2'`, `values.dayOfWeek` corresponding to Monday, and `values.time = '23:30'` — the week step passes through unconverted
+- **WHEN** a task's `trigger.cron.fields` is `{ week: '*/2', day_of_week: '6', hour: '22', minute: '30' }` (UTC Sunday) and the local UTC+2 equivalent falls on Monday `00:30`
+- **THEN** the reverse mapper succeeds with `values.repeat = 'custom'`, `values.everyWeeks = '2'`, `values.dayOfWeek = '0'` (Monday), and `values.time = '00:30'` — the week step passes through unconverted
 
 #### Scenario: A weekly task without a week value still hydrates as Weekly
 
@@ -677,6 +679,16 @@ For the remaining (non-Hourly, non-Custom) shapes, mapping SHALL fail when: the 
 
 - **WHEN** a task's `trigger.cron` carries the Custom field shape and also a `startDate` or `endDate`
 - **THEN** the reverse mapper returns a failure result with the unsupported-cron-shape reason — the Custom editor has no boundary fields, so the window is never silently dropped and re-submitted
+
+#### Scenario: A custom schedule with extra cron constraints fails closed
+
+- **WHEN** a task has `{ week: '*/2', day_of_week: '0', hour: '9', minute: '0' }` plus a non-null `month`, `year`, or `second` field
+- **THEN** the reverse mapper returns the unsupported-cron-shape failure, so editing an unrelated field cannot remove the extra constraint
+
+#### Scenario: Null-valued extra fields do not prevent Custom editing
+
+- **WHEN** the Custom field shape is accompanied only by null-valued `month`, `year`, `day`, and `second` fields
+- **THEN** the reverse mapper succeeds with `values.repeat = 'custom'` and preserves the week count, local weekday, and local time
 
 #### Scenario: Activity-window boundaries round-trip to local date-only values
 

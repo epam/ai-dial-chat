@@ -604,3 +604,8 @@ Below 768px (a phone-width cutoff inside the `mobile` band — tablets keep both
 
 - **WHEN** a task's `trigger.cron.fields` includes `week: '2-40'` or `week: '*/12'`
 - **THEN** the schedule pill shows the existing "Recurring schedule" fallback label, unchanged by this requirement
+
+#### Scenario: Week constraints are not lost in minute-step descriptions
+
+- **WHEN** a task's `trigger.cron.fields` is `{ week: '*/2', hour: '*', minute: '*/5' }`, or the same shape with `hour` omitted
+- **THEN** the descriptor keeps the full expression as `Custom` and the schedule pill shows "Recurring schedule", not "Every 5 minutes", because the schedule does not run in every week

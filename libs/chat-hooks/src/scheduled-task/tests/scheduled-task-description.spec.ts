@@ -56,6 +56,34 @@ describe('describeScheduledTaskTrigger', () => {
     },
   );
 
+  it.each<Record<string, string>>([
+    { week: '*/2', hour: '*', minute: '*/5' },
+    { week: '*/2', minute: '*/5' },
+    { week: '*/2', hour: '*', minute: '0' },
+    { week: '*/2', hour: '9', minute: '0' },
+  ])('preserves week-constrained non-weekly shapes as custom: %j', (fields) => {
+    expect(describeScheduledTaskTrigger({ cron: { fields } })).toMatchObject({
+      kind: ScheduledTaskTriggerDescriptionKind.Custom,
+      expression: JSON.stringify(fields),
+    });
+  });
+
+  it.each([undefined, null])(
+    'describes minute-step schedules with an unset week (%s)',
+    (week) => {
+      const fields = {
+        week,
+        hour: '*',
+        minute: '*/5',
+      } as unknown as Record<string, string>;
+
+      expect(describeScheduledTaskTrigger({ cron: { fields } })).toMatchObject({
+        kind: ScheduledTaskTriggerDescriptionKind.EveryNMinutes,
+        intervalMinutes: 5,
+      });
+    },
+  );
+
   it('converts fractional timezone offsets and weekday rollover deterministically', () => {
     const options = {
       timeZone: 'Asia/Kathmandu',
