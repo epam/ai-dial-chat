@@ -79,7 +79,10 @@
           }
         }
       }
-    }
+    },
+    "tags": [
+      "type:fixture"
+    ]
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",

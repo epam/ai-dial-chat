@@ -895,17 +895,26 @@ The configuration format, the full list of tokens the application reads, logo an
 
 ## Module boundary rules
 
-Import direction is a convention today, not a lint constraint: `@nx/enforce-module-boundaries` is enabled in `eslint.config.mjs` but configured with a single wildcard constraint (`sourceTag: '*'` → `onlyDependOnLibsWithTags: ['*']`), so no dependency is currently rejected. Tagging projects and tightening the constraints is open work.
+Import direction is enforced by lint. Every Nx project carries exactly one `type:*` tag, in `package.json` `nx.tags` or, for the consumer fixtures, `project.json` `tags`. `@nx/enforce-module-boundaries` in `eslint.config.mjs` has one `depConstraints` entry per tag, and `tools/module-boundaries.spec.mjs` (`npm run lint:boundaries:test`, run on every PR) proves the forbidden edges fail.
 
-The intended direction, enforced in review:
+| Tag               | Projects                                                                        | May import                                                |
+| ----------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `type:app`        | `apps/chat`                                                                     | `type:shared`, `type:ui`, `type:hooks`, `type:api-client` |
+| `type:hooks`      | `libs/chat-hooks`                                                               | `type:shared`, `type:ui` ⚠️, `type:api-client`            |
+| `type:ui`         | every other feature lib                                                         | `type:shared`, `type:ui`, `type:hooks` ⚠️                 |
+| `type:shared`     | `libs/chat-shared`, `libs/chat-overlay`, `libs/visualizer-connector`            | `type:shared` only                                        |
+| `type:api-client` | `libs/chat-api-client`                                                          | nothing in the workspace                                  |
+| `type:backend`    | `apps/chat-api`                                                                 | nothing in the workspace                                  |
+| `type:fixture`    | `apps/chat-overlay-sandbox`, `apps/mcp-app-sandbox`, `tools/*-consumer-fixture` | `type:shared`, `type:ui`, `type:hooks`                    |
 
-| Consumer      | May import from                                                    |
-| ------------- | ------------------------------------------------------------------ |
-| `apps/*`      | any `libs/*`                                                       |
-| Feature libs  | `chat-shared` only                                                 |
-| `chat-shared` | nothing in the workspace                                           |
-| Any lib       | not `chat-api-client`; `chat-hooks` has the narrow exception above |
-| `apps/*`      | not another `apps/*`                                               |
+- Nx itself forbids importing an app and relative imports that cross a project boundary.
+- A kind that may import nothing lists only its own tag, because Nx reads an empty `onlyDependOnLibsWithTags` as "anything".
+- `tools/*-consumer-fixture` install packed tarballs into their own `node_modules`, which the Nx rule cannot see. A separate `no-restricted-imports` block bans `@epam/ai-dial-chat-api-client` there.
+- ⚠️ **Known debt, allowed by lint today:**
+  - beyond the five packages its AGENTS.md exception names, `chat-hooks` imports eight feature libs (`catalog`, `skill-editor`, `scheduled-tasks`, `conversation-input`, `attachment-input`, `mcp-apps`, `publish-panel`, `usage-dashboard`) and `chat-overlay`;
+  - `libs/toolset-editor` imports `chat-hooks`.
+
+  Narrowing these rules needs its own change. Feature libs also import each other (for example `catalog` → `publish-panel`, `skills` → `catalog`); that is allowed, not debt.
 
 ---
 
@@ -946,7 +955,7 @@ The intended direction, enforced in review:
 | 14  | i18n: **react-i18next** with `i18next-browser-languagedetector`                                                                      | ✅ Accepted                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | 15  | CSRF: per-session token, validated via `X-CSRF-Token` header + origin check                                                          | ✅ Accepted                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | 16  | Embedding: iframe + `postMessage` via `@epam/ai-dial-chat-overlay`                                                                   | ✅ Accepted                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| 17  | Module boundaries enforced by lint tags                                                                                              | ❓ Open — wildcard constraint today                                                                                                                                                                                                                                                                                                                                                                                            |
+| 17  | Module boundaries enforced by lint tags                                                                                              | ✅ Accepted — one `type:*` tag per project and one `depConstraints` entry per tag (see [Module boundary rules](#module-boundary-rules)); `chat-hooks` → feature-lib and `toolset-editor` → `chat-hooks` remain known debt that lint allows                                                                                                                                                                                     |
 | 18  | User preferences persist in `localStorage`, not the server user-config file                                                          | ✅ Accepted — theme, language, keyboard shortcut, "Default agent for new chats" and the seasonal-celebrations opt-in are all per-browser; they do not follow the user across devices                                                                                                                                                                                                                                           |
 | 19  | `DEFAULT_DEPLOYMENT_PINNED` both **offers** the "Default agent for new chats" control and is **outranked** by it                     | ✅ Accepted — the row renders only while an agent is pinned (the pin is what makes its "Default agent" option mean anything), and every choice stored through it then beats the pin, "Last used agent" included. The pin still beats the _implicit_ last-used selection — an unstored preference — which is what its description refers to. Both halves live in `resolveInitialSelection` + `PreferencesTab`'s visibility rule |
 | 20  | Host styling hooks: stable public `dial-{lib-prefix}-{element}` classes, emitted unconditionally and carrying no declarations        | ✅ Accepted — hashed CSS-module locals, DOM order and ARIA attributes were the only handles a host had, and all three change without notice ([#8707](https://github.com/epam/ai-dial-chat/issues/8707)). Rejected a `styles.classNames` prop API: `styles` already means theming tokens, and portalled or deeply nested elements are unreachable by a prop                                                                     |
