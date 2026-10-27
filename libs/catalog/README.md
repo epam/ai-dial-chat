@@ -383,6 +383,41 @@ built-in default empty state and gain no new prop, so a host composing its
 own layout from those exported components directly does not get the custom
 empty state for free.
 
+#### Scroll to top
+
+Once the user has scrolled the catalog down by at least one screen — the page
+plus, in list view, the table's own rows — a floating `FabButton` appears in the
+bottom inline-end corner (above the floating Create button on mobile).
+Activating it scrolls the page and the list rows back to the top and moves focus
+to the search field. The scroll is instant under
+`prefers-reduced-motion: reduce`. Pass a translated accessible name through
+`titles.scrollToTopLabel` (default `'Scroll to top'`):
+
+```tsx
+<Catalog
+  items={catalogItems}
+  favorites={favoriteItems}
+  titles={{ scrollToTopLabel: t('catalog.scrollToTop') }}
+/>
+```
+
+A host that composes `Toolbar` itself can reach its search `<input>` the same
+way `Catalog` does, through `searchInputRef`:
+
+```tsx
+import { Toolbar } from '@epam/ai-dial-catalog';
+
+const searchInputRef = useRef<HTMLInputElement>(null);
+
+<Toolbar
+  viewMode={viewMode}
+  onViewModeChange={setViewMode}
+  query={query}
+  onQueryChange={setQuery}
+  searchInputRef={searchInputRef}
+/>;
+```
+
 ### CardGrid
 
 Virtualized grid view of catalog cards. Switching views preserves the hidden
@@ -474,6 +509,29 @@ and in the accessible name — a breadcrumb of the whole path collapses into
 unreadable per-segment stubs at this width. `styles.typography.folderClassName`
 styles that tooltip path, `folderLastSegmentClassName` the folder on screen, and
 `styles.colors.folderIcon` the leading folder icon.
+
+#### Scrolling the rows from outside
+
+The rows scroll inside the list's own box, so a caller that needs to reset or
+track them uses the `ref` handle (`ListViewHandle`) and `onRowsScroll`, which
+reports the rows' vertical offset in pixels:
+
+```tsx
+import { ListView, type ListViewHandle } from '@epam/ai-dial-catalog';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+
+const listRef = useRef<ListViewHandle>(null);
+
+<ListView
+  ref={listRef}
+  type={CatalogEntityType.Skill}
+  items={skills}
+  onRowsScroll={(top) => setRowsTop(top)}
+/>;
+
+// Later, e.g. from a "Scroll to top" button:
+listRef.current?.scrollToTop();
+```
 
 #### Multiple selection
 

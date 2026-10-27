@@ -6,6 +6,7 @@ import {
   GridSelectionMode,
 } from '@epam/ai-dial-ui-kit/grid';
 import type {
+  BodyScrollEvent,
   CellClickedEvent,
   CellKeyDownEvent,
   ColDef,
@@ -17,6 +18,7 @@ import {
   FC,
   useCallback,
   useEffect,
+  useImperativeHandle,
   useMemo,
   useRef,
 } from 'react';
@@ -66,6 +68,8 @@ const isFavoriteColumn = (event: { colDef: ColDef<CatalogItem> }) =>
 
 /** ui-kit `Grid` table view of catalog items. */
 export const ListView: FC<ListViewProps> = ({
+  ref,
+  onRowsScroll,
   items,
   type,
   query = '',
@@ -98,9 +102,43 @@ export const ListView: FC<ListViewProps> = ({
   } as CSSProperties;
 
   const gridApiRef = useRef<GridApi<CatalogItem> | null>(null);
-  const handleGridApiChange = useCallback((api: GridApi<CatalogItem>) => {
-    gridApiRef.current = api;
-  }, []);
+  /* Read through a ref so a new callback identity does not resubscribe. */
+  const onRowsScrollRef = useRef(onRowsScroll);
+  onRowsScrollRef.current = onRowsScroll;
+  const handleBodyScroll = useCallback(
+    (event: BodyScrollEvent<CatalogItem>) => {
+      if (event.direction !== 'vertical') return;
+      onRowsScrollRef.current?.(event.top);
+    },
+    [],
+  );
+  const unsubscribeBodyScroll = useCallback(() => {
+    const api = gridApiRef.current;
+    if (api != null && !api.isDestroyed()) {
+      api.removeEventListener('bodyScroll', handleBodyScroll);
+    }
+  }, [handleBodyScroll]);
+  const handleGridApiChange = useCallback(
+    (api: GridApi<CatalogItem>) => {
+      unsubscribeBodyScroll();
+      gridApiRef.current = api;
+      api.addEventListener('bodyScroll', handleBodyScroll);
+    },
+    [unsubscribeBodyScroll, handleBodyScroll],
+  );
+  useEffect(() => unsubscribeBodyScroll, [unsubscribeBodyScroll]);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      scrollToTop: () => {
+        const api = gridApiRef.current;
+        if (api == null || api.getDisplayedRowCount() === 0) return;
+        api.ensureIndexVisible(0, 'top');
+      },
+    }),
+    [],
+  );
   const columnDefs = useMemo(
     () => CATALOG_COLUMNS(type, isReadonly, columnVisibility),
     [type, isReadonly, columnVisibility],

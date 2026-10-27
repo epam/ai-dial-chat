@@ -313,6 +313,7 @@
       "versionAlreadyPublishedWarning": "Version {version} is already published in {folder}. Change the version to publish it again."
     },
     "skillsLoadError": "Failed to load skills",
+    "scrollToTop": "Scroll to top",
     "tab": {
       "models": "Models",
       "applications": "Agents",

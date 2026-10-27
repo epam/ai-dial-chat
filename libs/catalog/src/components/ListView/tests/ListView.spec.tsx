@@ -1,10 +1,12 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { Grid, GridAppearance } from '@epam/ai-dial-ui-kit/grid';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { createRef } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CATALOG_CLASS } from '../../../constants/public-class-names';
 import type { CatalogItem } from '../../../models/catalog-item';
+import type { ListViewHandle } from '../../../models/list-props';
 import { ListView } from '../ListView';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
@@ -387,5 +389,121 @@ describe('ListView — public class names', () => {
     expect(
       closestWithClass(screen.getByText('No items'), CATALOG_CLASS.listView),
     ).toBeTruthy();
+  });
+});
+
+describe('ListView — scroll handle', () => {
+  type BodyScrollListener = (event: {
+    direction: 'vertical' | 'horizontal';
+    top: number;
+  }) => void;
+
+  /* The kit Grid is stubbed, so the grid API it would report is faked here. */
+  const makeGridApi = (rowCount = 500) => {
+    let bodyScrollListener: BodyScrollListener | undefined;
+    const api = {
+      ensureIndexVisible: vi.fn(),
+      getDisplayedRowCount: vi.fn(() => rowCount),
+      isDestroyed: vi.fn(() => false),
+      addEventListener: vi.fn((_type: string, listener: BodyScrollListener) => {
+        bodyScrollListener = listener;
+      }),
+      removeEventListener: vi.fn(),
+      refreshCells: vi.fn(),
+    };
+    const emitBodyScroll: BodyScrollListener = (event) =>
+      bodyScrollListener?.(event);
+    return { api, emitBodyScroll };
+  };
+
+  const reportGridApi = (api: unknown) => {
+    const props = vi.mocked(Grid).mock.lastCall?.[0] as {
+      onGridApiChange: (api: unknown) => void;
+    };
+    act(() => props.onGridApiChange(api));
+  };
+
+  const items = [makeItem({ id: '1', name: 'Claude' })];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('scrolls the rows back to the first row through its handle', () => {
+    const ref = createRef<ListViewHandle>();
+    render(<ListView ref={ref} items={items} type={CatalogEntityType.Model} />);
+    const { api } = makeGridApi();
+    reportGridApi(api);
+
+    ref.current?.scrollToTop();
+
+    expect(api.ensureIndexVisible).toHaveBeenCalledWith(0, 'top');
+  });
+
+  it('does nothing when the handle is used before the grid is ready', () => {
+    const ref = createRef<ListViewHandle>();
+    render(<ListView ref={ref} items={items} type={CatalogEntityType.Model} />);
+
+    expect(() => ref.current?.scrollToTop()).not.toThrow();
+  });
+
+  it('does not scroll an empty grid', () => {
+    const ref = createRef<ListViewHandle>();
+    render(<ListView ref={ref} items={[]} type={CatalogEntityType.Model} />);
+    const { api } = makeGridApi(0);
+    reportGridApi(api);
+
+    ref.current?.scrollToTop();
+
+    expect(api.ensureIndexVisible).not.toHaveBeenCalled();
+  });
+
+  it('reports the vertical rows offset', () => {
+    const onRowsScroll = vi.fn();
+    render(
+      <ListView
+        items={items}
+        type={CatalogEntityType.Model}
+        onRowsScroll={onRowsScroll}
+      />,
+    );
+    const { api, emitBodyScroll } = makeGridApi();
+    reportGridApi(api);
+
+    emitBodyScroll({ direction: 'vertical', top: 480 });
+
+    expect(onRowsScroll).toHaveBeenCalledWith(480);
+  });
+
+  it('does not report horizontal scrolling', () => {
+    const onRowsScroll = vi.fn();
+    render(
+      <ListView
+        items={items}
+        type={CatalogEntityType.Model}
+        onRowsScroll={onRowsScroll}
+      />,
+    );
+    const { api, emitBodyScroll } = makeGridApi();
+    reportGridApi(api);
+
+    emitBodyScroll({ direction: 'horizontal', top: 0 });
+
+    expect(onRowsScroll).not.toHaveBeenCalled();
+  });
+
+  it('stops listening to row scrolling on unmount', () => {
+    const { unmount } = render(
+      <ListView items={items} type={CatalogEntityType.Model} />,
+    );
+    const { api } = makeGridApi();
+    reportGridApi(api);
+
+    unmount();
+
+    expect(api.removeEventListener).toHaveBeenCalledWith(
+      'bodyScroll',
+      expect.any(Function),
+    );
   });
 });
