@@ -99,6 +99,34 @@ describe('validateScheduledTaskFormValues', () => {
     ).toBe(ScheduledTaskValidationErrorCode.DayOfMonthInvalid);
   });
 
+  it('requires a valid day of week and time for a custom repeat', () => {
+    expect(
+      validateScheduledTaskFormValues(
+        {
+          ...values,
+          repeat: ScheduledTaskRepeat.Custom,
+          everyWeeks: '2',
+          time: '',
+        },
+        { now },
+      ),
+    ).toEqual({
+      dayOfWeek: ScheduledTaskValidationErrorCode.DayOfWeekInvalid,
+      time: ScheduledTaskValidationErrorCode.TimeInvalid,
+    });
+    expect(
+      validateScheduledTaskFormValues(
+        {
+          ...values,
+          repeat: ScheduledTaskRepeat.Custom,
+          everyWeeks: '2',
+          dayOfWeek: '0',
+        },
+        { now },
+      ),
+    ).toEqual({});
+  });
+
   it('uses the injected clock and validates only active fields', () => {
     expect(
       validateScheduledTaskFormValues(

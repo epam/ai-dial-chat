@@ -94,6 +94,52 @@ describe('mapScheduledTaskDtoToItem', () => {
     );
   });
 
+  it('formats an every-N-weeks cron trigger via the every-N-weeks translation key', () => {
+    const result = mapScheduledTaskDtoToItem(
+      buildDto({
+        trigger: {
+          cron: {
+            fields: {
+              week: '*/2',
+              hour: '9',
+              minute: '0',
+              day_of_week: 'Tuesday',
+            },
+          },
+        },
+      }),
+      fakeT,
+      'en',
+    );
+
+    expect(result.scheduleLabel).toBe(
+      `${ScheduledTasksI18nKeys.CardScheduleEveryNWeeks}:${JSON.stringify({ count: 2, day: 'Tuesday', time: '09:00' })}`,
+    );
+  });
+
+  it('falls back to the generic recurring label for a week expression outside the editor range', () => {
+    const result = mapScheduledTaskDtoToItem(
+      buildDto({
+        trigger: {
+          cron: {
+            fields: {
+              week: '2-40',
+              hour: '9',
+              minute: '0',
+              day_of_week: 'Tuesday',
+            },
+          },
+        },
+      }),
+      fakeT,
+      'en',
+    );
+
+    expect(result.scheduleLabel).toBe(
+      ScheduledTasksI18nKeys.CardScheduleRecurringFallback,
+    );
+  });
+
   it('formats a monthly cron trigger via the monthly translation key', () => {
     const result = mapScheduledTaskDtoToItem(
       buildDto({

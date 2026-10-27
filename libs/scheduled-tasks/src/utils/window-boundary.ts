@@ -10,16 +10,22 @@ import { ScheduledTaskRepeat } from '../types/scheduled-task-schedule';
  * that day cuts the window's last day short, a date-only value under
  * hourly stops being an instant — and the switch clears both boundaries
  * instead of reinterpreting them. A switch within the day-based group
- * keeps them: same shape, same meaning.
+ * keeps them: same shape, same meaning. A switch into or out of custom
+ * also clears them: custom renders no boundary pickers, so a carried-over
+ * value would be invisible yet remain live in form state.
  */
-/** Returns the boundary value to keep after a repeat switch: the value itself when both cadences pick whole days (day-based repeats, and one-time whose boundary fields stay hidden), `undefined` when the switch crosses into or out of hourly. */
+/** Returns the boundary value to keep after a repeat switch: the value itself when both cadences pick whole days (day-based repeats, and one-time whose boundary fields stay hidden), `undefined` when the switch crosses into or out of hourly, or when either cadence is custom (no boundary fields). */
 export const keepWindowBoundaryOnRepeatSwitch = (
   value: string | undefined,
   currentRepeat: ScheduledTaskRepeat,
   nextRepeat: ScheduledTaskRepeat,
 ): string | undefined => {
+  const isCustom = (repeat: ScheduledTaskRepeat): boolean =>
+    repeat === ScheduledTaskRepeat.Custom;
   const sharesBoundaryShape =
+    !isCustom(currentRepeat) &&
+    !isCustom(nextRepeat) &&
     (currentRepeat === ScheduledTaskRepeat.Hourly) ===
-    (nextRepeat === ScheduledTaskRepeat.Hourly);
+      (nextRepeat === ScheduledTaskRepeat.Hourly);
   return sharesBoundaryShape ? value : undefined;
 };
