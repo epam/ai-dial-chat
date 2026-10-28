@@ -75,6 +75,10 @@ const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
 const DialFileManagerPage = lazy(
   () => import('../pages/DialFileManagerPage/DialFileManagerPage'),
 );
+const ProjectsPage = lazy(() => import('../pages/ProjectsPage/ProjectsPage'));
+const ProjectCreatePage = lazy(
+  () => import('../pages/ProjectCreatePage/ProjectCreatePage'),
+);
 const ScheduledTasksPage = lazy(
   () => import('../pages/ScheduledTasksPage/ScheduledTasksPage'),
 );
@@ -369,6 +373,26 @@ const App: FC = () => {
                 }
               />
               {renderUsageRoute(isUsagePageHidden)}
+              <Route
+                path={ROUTES.Projects}
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <ProjectsPage />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
+              <Route
+                path={ROUTES.ProjectCreate}
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <ProjectCreatePage />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
               <Route
                 path={ROUTES.ScheduledTasks}
                 element={

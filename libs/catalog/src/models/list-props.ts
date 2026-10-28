@@ -1,4 +1,5 @@
 import type { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+import type { Ref } from 'react';
 import type { ListViewColumnVisibility } from '../components/ListView/columns';
 import type { CatalogSelectionMode } from '../types/selection-mode';
 import { CatalogItem } from './catalog-item';
@@ -32,9 +33,19 @@ export interface ListViewStyles {
   colors?: ListViewColors;
 }
 
+/** Imperative handle exposed by `ListView` through its `ref`. */
+export interface ListViewHandle {
+  /** Scrolls the grid rows back to the first row. */
+  scrollToTop: () => void;
+}
+
 /** Props for ListView. */
 export interface ListViewProps {
-  /** Type of catalog items being displayed. */
+  /** Receives the handle that scrolls the grid rows back to the first row. */
+  ref?: Ref<ListViewHandle>;
+  /** Called with the rows' vertical scroll offset in pixels whenever they scroll. */
+  onRowsScroll?: (top: number) => void;
+  /** Active Browse tab; drives column visibility and the Type label of items listed under it. */
   type: CatalogEntityType;
   /** Items to display in the table. */
   items: CatalogItem[];

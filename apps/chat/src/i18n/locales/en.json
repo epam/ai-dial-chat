@@ -85,6 +85,7 @@
   "navigation": {
     "ariaLabel": "Main navigation",
     "catalog": "Catalog",
+    "projects": "Projects",
     "menu": "Navigation menu",
     "back": "Back",
     "sidebar": "Sidebar",
@@ -299,6 +300,11 @@
       "skillUpload": "Upload",
       "runners": "Runners"
     },
+    "creation": {
+      "loading": "Checking whether you can create this item…",
+      "unavailable": "Creation is unavailable right now. Please try again later.",
+      "denied": "You don't have permission to create this item."
+    },
     "publishFolderSearchPlaceholder": "Search folders",
     "publishFolderEmptyState": "No folders match \"{{query}}\".",
     "publish": {
@@ -307,6 +313,7 @@
       "versionAlreadyPublishedWarning": "Version {version} is already published in {folder}. Change the version to publish it again."
     },
     "skillsLoadError": "Failed to load skills",
+    "scrollToTop": "Scroll to top",
     "tab": {
       "models": "Models",
       "applications": "Agents",
@@ -697,7 +704,9 @@
     "service": {
       "defaultName": "Dial native",
       "description": "Provides access to built-in apps within the platform.",
-      "authorizeTooltip": "Authorize to use this extension"
+      "limitedAccessLabel": "Limited access",
+      "limitedAccessTooltipTitle": "Limited access.",
+      "limitedAccessTooltipDescription": "Contact your administrator for more details."
     }
   },
   "attachments": {
@@ -757,6 +766,98 @@
     "overlaySubtitle": "Drop files here to attach them to message",
     "overlayDeniedTitle": "No attachments allowed",
     "overlayDeniedSubtitle": "Attachments can't be added to message"
+  },
+  "projects": {
+    "page": {
+      "title": "Projects",
+      "subtitle": "Projects you own, projects shared with you, and your organization's projects",
+      "newProject": "New project"
+    },
+    "toolbar": {
+      "searchPlaceholder": "Search projects",
+      "searchAriaLabel": "Search projects",
+      "sortNewest": "Newest",
+      "sortOldest": "Oldest",
+      "sortNameAsc": "Name A–Z"
+    },
+    "emptyState": {
+      "label": "No projects yet",
+      "description": "Your projects will appear here once created."
+    },
+    "noResults": {
+      "label": "No projects match your search"
+    },
+    "error": {
+      "label": "Projects could not be loaded"
+    },
+    "incomplete": {
+      "label": "Some projects could not be loaded. The list may be incomplete."
+    },
+    "status": {
+      "resultCount_one": "{{count}} project",
+      "resultCount_other": "{{count}} projects"
+    },
+    "source": {
+      "personal": "Personal",
+      "shared": "Shared",
+      "organization": "Organization"
+    },
+    "card": {
+      "folderPath": "Project location"
+    },
+    "create": {
+      "title": "New project",
+      "name": {
+        "label": "Name",
+        "placeholder": "Enter project name"
+      },
+      "description": {
+        "label": "Description",
+        "placeholder": "Describe what the project is about"
+      },
+      "instructions": {
+        "label": "Instructions",
+        "placeholder": "Explain your reasoning step by step for complex problems. Use specific examples."
+      },
+      "context": {
+        "label": "Context",
+        "dropZone": "Drag&drop context, upload from device or file manager",
+        "hint": "File formats {{extensions}} (max {{maxSize}})",
+        "fromDevice": "Upload from device",
+        "fromFileManager": "File manager",
+        "fileManagerTitle": "Add context from file manager",
+        "dropOverlayTitle": "Upload files",
+        "dropOverlaySubtitle": "Drop files here to add them to this project",
+        "capacityMeter": "Context capacity",
+        "capacity": "{{percent}}% of capacity used",
+        "remove": "Remove {{name}}"
+      },
+      "status": {
+        "added_one": "{{count}} file added",
+        "added_other": "{{count}} files added",
+        "removed": "{{name}} removed",
+        "creating": "Creating project…"
+      },
+      "errors": {
+        "nameRequired": "Enter a project name",
+        "nameInvalid": "The name can’t contain : ; , = / \\ { } % & \" or control characters",
+        "nameReserved": "This name is reserved. Choose another one",
+        "nameTooLong": "The name is too long",
+        "nameTaken": "A project with this name already exists",
+        "unsupportedType": "{{name}}: this file format isn’t supported",
+        "tooLarge": "{{name}}: the file is larger than {{maxSize}}",
+        "capacityExceeded": "{{name}}: not enough capacity left for this file",
+        "duplicate": "{{name}}: a file with this name is already added",
+        "invalidFileName": "{{name}}: the file name isn’t valid",
+        "tooManyFiles": "A project can’t have this many context files",
+        "filesRejected": "Some files were rejected. Remove them and try again"
+      },
+      "toast": {
+        "success": "Project “{{name}}” created",
+        "error": "The project couldn’t be created. Try again",
+        "fileManagerError": "Couldn’t copy files from the file manager"
+      }
+    }
   },
   "scheduledTasks": {
     "typeLabel": "Scheduled task",
@@ -864,7 +965,10 @@
       "historyLoadingMoreLabel": "Loading more runs…",
       "historyTodayAt": "today at {{time}}",
       "historyDateAt": "{{date}} at {{time}}",
-      "historyDurationSuffix": "({{seconds}}s)",
+      "historyDurationSuffix": "({{duration}})",
+      "historyDurationHours": "{{count}}h",
+      "historyDurationMinutes": "{{count}}m",
+      "historyDurationSeconds": "{{count}}s",
       "statusSuccess": "Succeeded",
       "statusError": "Failed",
       "statusInProgress": "Running",
@@ -927,6 +1031,10 @@
       "failedMessage": "Login failed. Please try again.",
       "successAnnouncement": "You're logged in. Scheduled tasks can now run automatically.",
       "loggingInLabel": "Logging in…"
+    },
+    "limitedAccessBanner": {
+      "title": "Limited access.",
+      "body": "You can't create or edit tasks. Contact your administrator for more details."
     },
     "disconnect": {
       "confirmTitle": "Log out from Dial native",

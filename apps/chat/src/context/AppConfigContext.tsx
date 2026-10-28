@@ -1,3 +1,4 @@
+import type { CatalogCreationPermissionsDto } from '@epam/ai-dial-chat-api-client';
 import type { AnnouncementListItem } from '@epam/ai-dial-chat-hooks';
 import type {
   ApplicationVisualizerRegistry,
@@ -17,6 +18,17 @@ import {
 import { getClientConfig } from '../server-api/app-config.api';
 import { AuthStatus } from '../types/auth-status';
 import { UserConfigStatus } from '../types/user-config-status';
+import {
+  getCatalogCreationIdentity,
+  parseCatalogCreationPermissions,
+} from '../utils/catalog-creation';
+import {
+  DEFAULT_PROJECT_CONTEXT_ALLOWED_EXTENSIONS,
+  DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES,
+  DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES,
+  resolveByteLimit,
+  resolveExtensionList,
+} from '../utils/project-limits';
 import { useUser } from './auth/UserContext';
 
 const DEFAULT_TRANSCRIBE_SIZE_LIMIT = 5 * 1024 * 1024;
@@ -59,12 +71,38 @@ export interface AppConfigState {
     usageLimitsWarningThresholdPercent: number;
     /** Operator default for the celebrations switch, used while the user has saved no choice. */
     celebrationsEnabledByDefault: boolean;
+    /** Maximum size in bytes of one project context file. */
+    projectContextFileMaxBytes: number;
+    /** Maximum combined size in bytes of a project's context files (its capacity). */
+    projectContextTotalMaxBytes: number;
+    /** Lower-case extensions, without a dot, accepted as project context files. */
+    projectContextAllowedExtensions: string[];
   };
   metadata?: { resolvedAt: string; cacheTtlSeconds: number };
+  /**
+   * Readiness of `catalogCreationPermissions`, tracked apart from `status` so a
+   * refetch or identity change makes creation unavailable without changing
+   * what other config consumers see. Client-only; not part of the response.
+   */
+  catalogCreationStatus: UserConfigStatus;
+  /**
+   * The current identity's resolved creation permissions. `null` until a
+   * response for that identity is accepted, and after a failed or malformed
+   * one — `null` never means unrestricted.
+   */
+  catalogCreationPermissions: CatalogCreationPermissionsDto | null;
 }
 
-const INITIAL_STATE: AppConfigState = {
+/* The identity whose response produced the accepted permissions. */
+interface ProviderState extends AppConfigState {
+  catalogCreationOwner: string | null;
+}
+
+const INITIAL_STATE: ProviderState = {
   status: UserConfigStatus.Loading,
+  catalogCreationStatus: UserConfigStatus.Loading,
+  catalogCreationPermissions: null,
+  catalogCreationOwner: null,
   features: {},
   config: {
     activeEventId: null,
@@ -96,6 +134,9 @@ const INITIAL_STATE: AppConfigState = {
     usageLimitsWarningThresholdPercent:
       DEFAULT_USAGE_LIMITS_WARNING_THRESHOLD_PERCENT,
     celebrationsEnabledByDefault: true,
+    projectContextFileMaxBytes: DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES,
+    projectContextTotalMaxBytes: DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES,
+    projectContextAllowedExtensions: DEFAULT_PROJECT_CONTEXT_ALLOWED_EXTENSIONS,
   },
 };
 
@@ -106,16 +147,29 @@ interface Props {
 }
 
 const AppConfigProvider: FC<Props> = ({ children }) => {
-  const [state, setState] = useState<AppConfigState>(INITIAL_STATE);
-  const { status: authStatus } = useUser();
+  const [state, setState] = useState<ProviderState>(INITIAL_STATE);
+  const { status: authStatus, user } = useUser();
+  const identity = getCatalogCreationIdentity(user);
 
   const loadConfig = useCallback(
-    async (signal: AbortSignal, isCancelled: () => boolean) => {
+    async (
+      signal: AbortSignal,
+      isCancelled: () => boolean,
+      requestIdentity: string,
+    ) => {
       try {
         const response = await getClientConfig(signal);
         if (isCancelled()) return;
+        const catalogCreationPermissions = parseCatalogCreationPermissions(
+          response.config?.catalogCreationPermissions,
+        );
         setState({
           status: UserConfigStatus.Ready,
+          catalogCreationStatus: catalogCreationPermissions
+            ? UserConfigStatus.Ready
+            : UserConfigStatus.Error,
+          catalogCreationPermissions,
+          catalogCreationOwner: requestIdentity,
           features: (response.features ?? {}) as Record<string, boolean>,
           config: {
             activeEventId: response.config?.activeEventId ?? null,
@@ -162,12 +216,30 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
               DEFAULT_USAGE_LIMITS_WARNING_THRESHOLD_PERCENT,
             celebrationsEnabledByDefault:
               response.config?.celebrationsEnabledByDefault ?? true,
+            projectContextFileMaxBytes: resolveByteLimit(
+              response.config?.projectContextFileMaxBytes,
+              DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES,
+            ),
+            projectContextTotalMaxBytes: resolveByteLimit(
+              response.config?.projectContextTotalMaxBytes,
+              DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES,
+            ),
+            projectContextAllowedExtensions: resolveExtensionList(
+              response.config?.projectContextAllowedExtensions,
+              DEFAULT_PROJECT_CONTEXT_ALLOWED_EXTENSIONS,
+            ),
           },
           metadata: response.metadata,
         });
       } catch {
         if (isCancelled()) return;
-        setState((prev) => ({ ...prev, status: UserConfigStatus.Error }));
+        setState((prev) => ({
+          ...prev,
+          status: UserConfigStatus.Error,
+          catalogCreationStatus: UserConfigStatus.Error,
+          catalogCreationPermissions: null,
+          catalogCreationOwner: requestIdentity,
+        }));
       }
     },
     [],
@@ -175,16 +247,40 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
 
   useEffect(() => {
     if (authStatus === AuthStatus.Loading) return;
+    /* A reload makes the previous permissions unusable until its own
+     * response is accepted; unrelated config keeps its current values. */
+    setState((prev) => ({
+      ...prev,
+      catalogCreationStatus: UserConfigStatus.Loading,
+      catalogCreationPermissions: null,
+      catalogCreationOwner: null,
+    }));
     const controller = new AbortController();
     let cancelled = false;
-    void loadConfig(controller.signal, () => cancelled);
+    void loadConfig(controller.signal, () => cancelled, identity);
     return () => {
       cancelled = true;
       controller.abort();
     };
-  }, [loadConfig, authStatus]);
+  }, [loadConfig, authStatus, identity]);
 
-  const value = useMemo(() => state, [state]);
+  /* Rejects permissions owned by another identity during render, so a
+   * switched user never sees them — not even before the reload effect runs —
+   * and withholds them while authentication itself is being resolved. */
+  const value = useMemo<AppConfigState>(() => {
+    const { catalogCreationOwner, ...appConfig } = state;
+    if (
+      catalogCreationOwner === identity &&
+      authStatus !== AuthStatus.Loading
+    ) {
+      return appConfig;
+    }
+    return {
+      ...appConfig,
+      catalogCreationStatus: UserConfigStatus.Loading,
+      catalogCreationPermissions: null,
+    };
+  }, [state, identity, authStatus]);
 
   return (
     <AppConfigContext.Provider value={value}>

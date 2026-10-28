@@ -31,6 +31,8 @@ export enum ROUTES {
   SettingsTab = '/settings/:tab',
   /** Standalone Usage page; the former Settings Usage tab (`/settings/usage`) redirects here. */
   Usage = '/usage',
+  Projects = '/projects',
+  ProjectCreate = '/projects/new',
   ScheduledTasks = '/scheduled-tasks',
   ScheduledTaskCreate = '/scheduled-tasks/new',
   ScheduledTaskDetail = '/scheduled-tasks/:scheduleId',

@@ -11,6 +11,11 @@ import { resolveAppVersion } from '../common/utils/app-version';
 import { EnvironmentVariables } from '../config/environment.config';
 import type { AppConfigEvalContext } from './app-config.types';
 import {
+  evaluateCatalogCreationPolicy,
+  normalizeCatalogCreationPolicy,
+  type CatalogCreationPolicy,
+} from './catalog-creation-policy';
+import {
   applyClientConfigValue,
   createDefaultClientConfig,
 } from './client-config.mapper';
@@ -25,12 +30,19 @@ const CACHE_TTL_MS = CACHE_TTL_SECONDS * 1000;
 @Injectable()
 export class AppConfigService {
   private readonly logger = new Logger(AppConfigService.name);
+  /* Normalized once, so an empty-rule warning is logged at startup only. */
+  private readonly catalogCreationPolicy: CatalogCreationPolicy;
 
   constructor(
     private readonly compositeProvider: CompositeConfigProvider,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly configService: ConfigService<EnvironmentVariables>,
-  ) {}
+  ) {
+    this.catalogCreationPolicy = normalizeCatalogCreationPolicy(
+      this.configService.get('CATALOG_CREATION_ROLES', { infer: true }),
+      (message) => this.logger.warn(message),
+    );
+  }
 
   async resolveValue(
     key: string,
@@ -83,6 +95,11 @@ export class AppConfigService {
       }
     }
 
+    const catalogCreationPermissions = evaluateCatalogCreationPolicy(
+      this.catalogCreationPolicy,
+      context.roles,
+    );
+
     const response: ClientConfigResponseDto = {
       appId: context.appId,
       features,
@@ -92,6 +109,7 @@ export class AppConfigService {
         ),
         appVersion,
         ...config,
+        catalogCreationPermissions,
       },
       metadata: {
         resolvedAt: new Date().toISOString(),

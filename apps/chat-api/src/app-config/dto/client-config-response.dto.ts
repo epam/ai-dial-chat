@@ -7,6 +7,7 @@ import {
 import { IsOptional, IsString } from 'class-validator';
 import { AnnouncementItemDto } from './announcement-item.dto';
 import { ApplicationVisualizerDto } from './application-visualizer.dto';
+import { CatalogCreationPermissionsDto } from './catalog-creation-permissions.dto';
 import { CustomVisualizerDto } from './custom-visualizer.dto';
 
 /* ApplicationVisualizerDto is reachable only through an additionalProperties
@@ -278,6 +279,35 @@ export class ClientConfigDto {
     example: true,
   })
   celebrationsEnabledByDefault!: boolean;
+
+  @ApiProperty({
+    description:
+      'Maximum size in bytes of one project context file. Sourced from PROJECT_CONTEXT_FILE_MAX_BYTES, which POST /api/v1/projects enforces.',
+    example: 1048576,
+  })
+  projectContextFileMaxBytes!: number;
+
+  @ApiProperty({
+    description:
+      "Maximum combined size in bytes of a project's context files. Sourced from PROJECT_CONTEXT_TOTAL_MAX_BYTES, which POST /api/v1/projects enforces.",
+    example: 10485760,
+  })
+  projectContextTotalMaxBytes!: number;
+
+  @ApiProperty({
+    description:
+      'Lower-case file extensions, without a dot, accepted as project context files. Sourced from PROJECT_CONTEXT_ALLOWED_EXTENSIONS, which POST /api/v1/projects enforces.',
+    type: [String],
+    example: ['csv', 'pdf', 'xlsx'],
+  })
+  projectContextAllowedExtensions!: string[];
+
+  @ApiProperty({
+    description:
+      "The caller's resolved catalog creation permissions, evaluated from the server-only CATALOG_CREATION_ROLES and the session roles. Independent of enabledUiFeatures, which it never filters. Never carries role names or the raw policy.",
+    type: CatalogCreationPermissionsDto,
+  })
+  catalogCreationPermissions!: CatalogCreationPermissionsDto;
 }
 
 export class ClientConfigMetadataDto {

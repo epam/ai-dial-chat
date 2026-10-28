@@ -401,6 +401,7 @@ describe('validate', () => {
 
   describe.each([
     'SCHEDULED_TASKS_ENABLED',
+    'PROJECTS_ENABLED',
     'LIVE_CHAT_INTERACTION_ENABLED',
     'LLM_CONVERSATION_NAMING_ENABLED',
   ] as const)('%s', (key) => {
@@ -495,6 +496,75 @@ describe('validate', () => {
           AUTH_HEADER_TOKEN_CLOCK_TOLERANCE_SECONDS: 'not-a-number',
         }),
       ).toThrow(/Environment validation failed/);
+    });
+  });
+  describe('project context limits', () => {
+    it('defaults to 1 MiB per file, 10 MiB in total and csv, pdf, xlsx', () => {
+      const config = validate({ ...baseConfig });
+
+      expect(config.PROJECT_CONTEXT_FILE_MAX_BYTES).toBe(1_048_576);
+      expect(config.PROJECT_CONTEXT_TOTAL_MAX_BYTES).toBe(10_485_760);
+      expect(config.PROJECT_CONTEXT_ALLOWED_EXTENSIONS).toEqual([
+        'csv',
+        'pdf',
+        'xlsx',
+      ]);
+    });
+
+    it('normalizes a custom extension list', () => {
+      const config = validate({
+        ...baseConfig,
+        PROJECT_CONTEXT_ALLOWED_EXTENSIONS: ' csv, PDF ,.md,, ',
+      });
+
+      expect(config.PROJECT_CONTEXT_ALLOWED_EXTENSIONS).toEqual([
+        'csv',
+        'pdf',
+        'md',
+      ]);
+    });
+
+    it('falls back to the default extensions for an empty value', () => {
+      expect(
+        validate({ ...baseConfig, PROJECT_CONTEXT_ALLOWED_EXTENSIONS: '' })
+          .PROJECT_CONTEXT_ALLOWED_EXTENSIONS,
+      ).toEqual(['csv', 'pdf', 'xlsx']);
+    });
+
+    it('fails fast at boot when an extension entry is unsafe', () => {
+      expect(() =>
+        validate({
+          ...baseConfig,
+          PROJECT_CONTEXT_ALLOWED_EXTENSIONS: 'csv,../exe',
+        }),
+      ).toThrow(/PROJECT_CONTEXT_ALLOWED_EXTENSIONS/);
+    });
+
+    it('accepts custom byte limits', () => {
+      const config = validate({
+        ...baseConfig,
+        PROJECT_CONTEXT_FILE_MAX_BYTES: '2097152',
+        PROJECT_CONTEXT_TOTAL_MAX_BYTES: '4194304',
+      });
+
+      expect(config.PROJECT_CONTEXT_FILE_MAX_BYTES).toBe(2_097_152);
+      expect(config.PROJECT_CONTEXT_TOTAL_MAX_BYTES).toBe(4_194_304);
+    });
+
+    it('fails fast at boot when the total limit is below the per-file limit', () => {
+      expect(() =>
+        validate({
+          ...baseConfig,
+          PROJECT_CONTEXT_FILE_MAX_BYTES: '2097152',
+          PROJECT_CONTEXT_TOTAL_MAX_BYTES: '1048576',
+        }),
+      ).toThrow(/PROJECT_CONTEXT_TOTAL_MAX_BYTES/);
+    });
+
+    it('fails fast at boot when a byte limit is not positive', () => {
+      expect(() =>
+        validate({ ...baseConfig, PROJECT_CONTEXT_FILE_MAX_BYTES: '0' }),
+      ).toThrow();
     });
   });
 });

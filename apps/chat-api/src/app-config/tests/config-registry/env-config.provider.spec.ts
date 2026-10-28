@@ -326,6 +326,78 @@ describe('EnvConfigProvider', () => {
     });
   });
 
+  describe('features.projectsEnabled', () => {
+    it('returns true when PROJECTS_ENABLED is true', async () => {
+      const { provider } = makeProvider({ PROJECTS_ENABLED: true });
+      expect(await provider.resolve('features.projectsEnabled', ctx)).toBe(
+        true,
+      );
+    });
+
+    it('returns undefined when PROJECTS_ENABLED is absent', async () => {
+      const { provider } = makeProvider({ PROJECTS_ENABLED: undefined });
+      expect(
+        await provider.resolve('features.projectsEnabled', ctx),
+      ).toBeUndefined();
+    });
+
+    it('returns false when user roles do not intersect with PROJECTS_ENABLED_ROLES', async () => {
+      const { provider } = makeProvider({
+        PROJECTS_ENABLED: true,
+        PROJECTS_ENABLED_ROLES: ['projects-beta'],
+      });
+      const ctxWithRole: AppConfigEvalContext = { ...ctx, roles: ['viewer'] };
+      expect(
+        await provider.resolve('features.projectsEnabled', ctxWithRole),
+      ).toBe(false);
+    });
+
+    it('returns true when user holds a role listed in PROJECTS_ENABLED_ROLES', async () => {
+      const { provider } = makeProvider({
+        PROJECTS_ENABLED: true,
+        PROJECTS_ENABLED_ROLES: ['projects-beta'],
+      });
+      const ctxWithRole: AppConfigEvalContext = {
+        ...ctx,
+        roles: ['projects-beta'],
+      };
+      expect(
+        await provider.resolve('features.projectsEnabled', ctxWithRole),
+      ).toBe(true);
+    });
+  });
+
+  describe('projects context limits', () => {
+    it('resolves the configured byte limits and extension list', async () => {
+      const { provider } = makeProvider({
+        PROJECT_CONTEXT_FILE_MAX_BYTES: 2_097_152,
+        PROJECT_CONTEXT_TOTAL_MAX_BYTES: 4_194_304,
+        PROJECT_CONTEXT_ALLOWED_EXTENSIONS: ['csv', 'pdf', 'md'],
+      });
+
+      expect(await provider.resolve('projects.contextFileMaxBytes', ctx)).toBe(
+        2_097_152,
+      );
+      expect(await provider.resolve('projects.contextTotalMaxBytes', ctx)).toBe(
+        4_194_304,
+      );
+      expect(
+        await provider.resolve('projects.contextAllowedExtensions', ctx),
+      ).toEqual(['csv', 'pdf', 'md']);
+    });
+
+    it('returns undefined when the variables are absent, so the registry default applies', async () => {
+      const { provider } = makeProvider({});
+
+      expect(
+        await provider.resolve('projects.contextFileMaxBytes', ctx),
+      ).toBeUndefined();
+      expect(
+        await provider.resolve('projects.contextAllowedExtensions', ctx),
+      ).toBeUndefined();
+    });
+  });
+
   describe('features.responsesApiEnabled', () => {
     it('returns true when RESPONSES_API_ENABLED is true', async () => {
       const { provider } = makeProvider({ RESPONSES_API_ENABLED: true });

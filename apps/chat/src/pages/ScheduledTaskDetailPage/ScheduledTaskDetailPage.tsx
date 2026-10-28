@@ -70,6 +70,7 @@ import {
   resolveScheduledTaskErrorMessage,
 } from '../../utils/map-scheduled-task-dto';
 import { mapScheduledTaskRunDtosToItems } from '../../utils/map-scheduled-task-run-dto';
+import { isSchedulerConsentMissing } from '../../utils/scheduler-consent';
 import NotFoundPage from '../NotFound/NotFound';
 
 const resolveCredentialsBannerState = ({
@@ -174,6 +175,7 @@ const ScheduledTaskDetailPage: FC = () => {
   const {
     status: credentialsStatus,
     connect: offlineCredentialsConnect,
+    schedulerServiceConsent,
     refetch: refetchOfflineCredentials,
   } = useOfflineCredentialsGate();
   const { login: loginOfflineCredentials } = useOfflineCredentialsLogin();
@@ -349,6 +351,20 @@ const ScheduledTaskDetailPage: FC = () => {
     /* A run can discover revoked credentials after the route's initial check. */
     void refetchOfflineCredentials();
   }, [credentialsRunId, isEnabled, refetchOfflineCredentials, scheduleId]);
+  /*
+   * Consent is evaluated before the login state: with the scheduler service
+   * consent missing, editing, starting, and resuming cannot succeed (the BFF
+   * rejects each with `scheduledTaskAdminConsentRequired`), so the Edit and
+   * Start now actions hide, and the Active switch disables while the task is
+   * paused — turning it on would always fail, while pausing and deleting
+   * still work (the BFF checks consent on neither). No limited-access banner
+   * renders on the detail route — it is a list-page surface only. An
+   * unresolved check fails open (the gate defaults to `unknown`).
+   */
+  const isLimitedAccess = isSchedulerConsentMissing(schedulerServiceConsent);
+  /* Edit needs a loaded, non-deleted task AND a present scheduler service
+   * consent — an unloaded or deleted task renders no header actions at all. */
+  const isTaskEditable = Boolean(task) && !isTaskDeleted && !isLimitedAccess;
   const credentialsBannerState = resolveCredentialsBannerState({
     isCredentialsRequired,
     isLoggingIn,
@@ -501,22 +517,33 @@ const ScheduledTaskDetailPage: FC = () => {
     (task?.triggerType === 'date' && task?.nextRunTime == null) ||
     (task?.triggerType === 'cron' &&
       cronWindowEndDate != null &&
-      new Date(cronWindowEndDate).getTime() <= Date.now());
+      new Date(cronWindowEndDate).getTime() <= Date.now()) ||
+    /* Turning the task on runs the consent-checked resume; while the consent
+     * is missing the switch renders disabled with no reason label — just the
+     * disabled control (product decision). Pausing still works, so an active
+     * task keeps an enabled switch. */
+    (isLimitedAccess && task?.isActive !== true);
 
   /*
    * The disabled switch's explanatory text differs per case: a fired one-time
-   * schedule already ran, while a recurring schedule's activity window has
+   * schedule already ran, and a recurring schedule's activity window has
    * closed — the user sees why the toggle is dead rather than a bare disabled
    * control. Only computed while the switch renders; a completed task hides
-   * the switch, so it gets no reason.
+   * the switch, so it gets no reason. Limited access disables the switch
+   * without a reason of its own.
    */
-  let activeDisabledReason: string | undefined;
-  if (isActiveDisabled && !isTaskCompleted) {
-    activeDisabledReason =
-      task?.triggerType === 'date'
-        ? t(ScheduledTasksI18nKeys.DetailActiveDisabledReasonCompleted)
-        : t(ScheduledTasksI18nKeys.DetailActiveDisabledReasonExpired);
-  }
+  const getActiveDisabledReason = (): string | undefined => {
+    if (!isActiveDisabled || isTaskCompleted) return undefined;
+    if (task?.triggerType === 'date' && task?.nextRunTime == null)
+      return t(ScheduledTasksI18nKeys.DetailActiveDisabledReasonCompleted);
+    if (
+      task?.triggerType === 'cron' &&
+      cronWindowEndDate != null &&
+      new Date(cronWindowEndDate).getTime() <= Date.now()
+    )
+      return t(ScheduledTasksI18nKeys.DetailActiveDisabledReasonExpired);
+    return undefined;
+  };
 
   const completedLabel = isTaskCompleted
     ? t(ScheduledTasksI18nKeys.CardCompletedBadgeLabel)
@@ -671,6 +698,16 @@ const ScheduledTaskDetailPage: FC = () => {
     t,
   ]);
 
+  /*
+   * Start now needs a loaded, non-deleted task AND a present scheduler
+   * service consent — the BFF asserts the consent on the start mutation, so
+   * an absent consent resolves to no handler and the view renders no Start
+   * now button. Pause and Delete check no consent, so their handlers resolve
+   * independently of the limited-access state.
+   */
+  const resolveStartNowHandler = () =>
+    task && !isTaskDeleted && !isLimitedAccess ? handleStartNow : undefined;
+
   const handleOfflineCredentialsLogin = useCallback(() => {
     if (!offlineCredentialsConnect) return;
     setIsLoggingIn(true);
@@ -737,8 +774,8 @@ const ScheduledTaskDetailPage: FC = () => {
       <ScheduledTaskDetailView
         labels={labels}
         onBack={handleBack}
-        onEdit={task && !isTaskDeleted ? handleEdit : undefined}
-        onStartNow={task && !isTaskDeleted ? handleStartNow : undefined}
+        onEdit={isTaskEditable ? handleEdit : undefined}
+        onStartNow={resolveStartNowHandler()}
         onDelete={task && !isTaskDeleted ? handleDeleteClick : undefined}
         isDeleting={isDeleting}
         isStarting={isStarting}
@@ -754,7 +791,7 @@ const ScheduledTaskDetailPage: FC = () => {
         isActive={isTaskDeleted ? undefined : task?.isActive}
         isActiveUpdating={isActiveUpdating}
         isActiveDisabled={isActiveDisabled}
-        activeDisabledReason={activeDisabledReason}
+        activeDisabledReason={getActiveDisabledReason()}
         onActiveChange={isTaskDeleted ? undefined : handleActiveChange}
         displayName={task?.displayName ?? ''}
         isLoading={isTaskLoading}

@@ -209,7 +209,11 @@ kind and drives the item's actions and details; `catalogTabs` only says which
 Browse tabs list it. An item with `type: Agent` and
 `catalogTabs: [Agent, Toolset]` appears once in each of those tabs — the same
 item, so its favorite state and details panel are shared — and counts toward
-both tabs. An absent or empty `catalogTabs` means `[type]`.
+both tabs. An absent or empty `catalogTabs` means `[type]`. In the Browse grid
+and list, the type label (and the Featured chip) shows the active tab when the
+item is listed under it, so an MCP agent reads "Toolset" in the Toolsets tab;
+the details panel and the Favorites strip keep showing `type`. `CardGrid` and
+`Card` take this as an optional `activeTab` prop; `ListView` reads its `type`.
 
 The entity-type tab row appears only when `items` span **two or more** tabs: a
 single tab is not a choice, so a catalog restricted to one entity type (an
@@ -383,6 +387,41 @@ built-in default empty state and gain no new prop, so a host composing its
 own layout from those exported components directly does not get the custom
 empty state for free.
 
+#### Scroll to top
+
+Once the user has scrolled the catalog down by at least one screen — the page
+plus, in list view, the table's own rows — a floating `FabButton` appears in the
+bottom inline-end corner (above the floating Create button on mobile).
+Activating it scrolls the page and the list rows back to the top and moves focus
+to the search field. The scroll is instant under
+`prefers-reduced-motion: reduce`. Pass a translated accessible name through
+`titles.scrollToTopLabel` (default `'Scroll to top'`):
+
+```tsx
+<Catalog
+  items={catalogItems}
+  favorites={favoriteItems}
+  titles={{ scrollToTopLabel: t('catalog.scrollToTop') }}
+/>
+```
+
+A host that composes `Toolbar` itself can reach its search `<input>` the same
+way `Catalog` does, through `searchInputRef`:
+
+```tsx
+import { Toolbar } from '@epam/ai-dial-catalog';
+
+const searchInputRef = useRef<HTMLInputElement>(null);
+
+<Toolbar
+  viewMode={viewMode}
+  onViewModeChange={setViewMode}
+  query={query}
+  onQueryChange={setQuery}
+  searchInputRef={searchInputRef}
+/>;
+```
+
 ### CardGrid
 
 Virtualized grid view of catalog cards. Switching views preserves the hidden
@@ -474,6 +513,29 @@ and in the accessible name — a breadcrumb of the whole path collapses into
 unreadable per-segment stubs at this width. `styles.typography.folderClassName`
 styles that tooltip path, `folderLastSegmentClassName` the folder on screen, and
 `styles.colors.folderIcon` the leading folder icon.
+
+#### Scrolling the rows from outside
+
+The rows scroll inside the list's own box, so a caller that needs to reset or
+track them uses the `ref` handle (`ListViewHandle`) and `onRowsScroll`, which
+reports the rows' vertical offset in pixels:
+
+```tsx
+import { ListView, type ListViewHandle } from '@epam/ai-dial-catalog';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+
+const listRef = useRef<ListViewHandle>(null);
+
+<ListView
+  ref={listRef}
+  type={CatalogEntityType.Skill}
+  items={skills}
+  onRowsScroll={(top) => setRowsTop(top)}
+/>;
+
+// Later, e.g. from a "Scroll to top" button:
+listRef.current?.scrollToTop();
+```
 
 #### Multiple selection
 

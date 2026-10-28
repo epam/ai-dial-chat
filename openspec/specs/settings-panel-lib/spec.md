@@ -130,7 +130,9 @@ interface ExtensionServiceItem {
   displayName: string;
   description: string;
   isWarningVisible: boolean;
-  authorizeLabel: string;
+  limitedAccessLabel?: string;
+  limitedAccessTooltipTitle?: string;
+  limitedAccessTooltipDescription?: string;
   action: ReactNode;
 }
 interface ExtensionsLabels {
@@ -154,8 +156,10 @@ interface ExtensionsSectionProps {
 #### Scenario: Warning badge and action stay host-driven
 - **WHEN** a row renders with `isWarningVisible: false` and a host-supplied `action`
 - **THEN** the avatar carries no warning badge, the action renders in the trailing cell, and an
-  `isWarningVisible: true` row renders the badge with the row's `authorizeLabel` as its tooltip
-  and accessible name
+  `isWarningVisible: true` row renders the decorative warning glyph on the avatar's corner while
+  a row with `limitedAccessLabel` set renders the red limited-access `Badge` in the trailing cell
+  instead of the `action`, with the tooltip title/description strings and the `Badge`'s
+  `aria-describedby`-linked screen-reader description all host-supplied
 
 #### Scenario: The consuming tab stays the host of state and strings
 - **WHEN** `apps/chat` renders the Extensions tab

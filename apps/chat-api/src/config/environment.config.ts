@@ -18,6 +18,18 @@ import {
   DeploymentType,
   normalizeDeploymentTypesInput,
 } from '../deployments/dto/deployment-type';
+import {
+  DEFAULT_PROJECT_CONTEXT_ALLOWED_EXTENSIONS,
+  DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES,
+  DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES,
+  parseProjectContextExtensions,
+  PROJECT_CONTEXT_EXTENSION_PATTERN,
+} from '../projects/constants/project-context.constants';
+import {
+  IsCatalogCreationRoles,
+  parseCatalogCreationRoles,
+  type CatalogCreationRolesConfig,
+} from './catalog-creation.types';
 import { CspMode } from './csp';
 
 export enum ApplicationLogLevel {
@@ -760,6 +772,14 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
+  TEXT_REFINEMENT_PROJECT_DESCRIPTION_PROMPT?: string;
+
+  @IsOptional()
+  @IsString()
+  TEXT_REFINEMENT_PROJECT_INSTRUCTIONS_PROMPT?: string;
+
+  @IsOptional()
+  @IsString()
   CONVERSATION_NAMING_SYSTEM_PROMPT?: string;
 
   @IsOptional()
@@ -893,6 +913,23 @@ export class EnvironmentVariables {
   @IsString({ each: true })
   ENABLED_UI_FEATURES?: string[] | null = null;
 
+  /*
+   * Server-only creation policy, independent of ENABLED_UI_FEATURES: role
+   * lists by creation type and by exact application schema id, e.g.
+   * `{"types":{"skill":["authors"]},"schemas":{"<schema id>":["team-A"]}}`.
+   * Absent or blank means no restriction. Only the shape is checked here;
+   * AppConfigService normalizes the role lists once at startup. Never sent to
+   * the browser — client-config carries only the evaluated permissions.
+   */
+  @Transform(({ obj, key }) =>
+    parseCatalogCreationRoles((obj as Record<string, unknown>)[key]),
+  )
+  @IsCatalogCreationRoles()
+  CATALOG_CREATION_ROLES: CatalogCreationRolesConfig = {
+    types: {},
+    schemas: {},
+  };
+
   @IsOptional()
   @Transform(({ obj, key }) => {
     const raw = (obj as Record<string, unknown>)[key];
@@ -982,6 +1019,60 @@ export class EnvironmentVariables {
   })
   @IsString({ each: true })
   SCHEDULED_TASKS_ENABLED_ROLES?: string[] = [];
+
+  @IsOptional()
+  @Transform(({ obj, key }) => {
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    return !['false', '0', 'no'].includes(String(raw).toLowerCase());
+  })
+  @IsBoolean()
+  PROJECTS_ENABLED?: boolean = false;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null || value === '') return [];
+    return String(value)
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 0);
+  })
+  @IsString({ each: true })
+  PROJECTS_ENABLED_ROLES?: string[] = [];
+
+  /*
+   * Project context limits, enforced by `POST /api/v1/projects` and
+   * published to the browser as `projects.*` client config. Keep them at or
+   * below DIAL Core's `complexResource.types.projects` limits (built-in:
+   * 5 MiB per file, 64 MiB total). `validate` also requires
+   * TOTAL >= FILE.
+   */
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  PROJECT_CONTEXT_FILE_MAX_BYTES?: number =
+    DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  PROJECT_CONTEXT_TOTAL_MAX_BYTES?: number =
+    DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES;
+
+  @IsOptional()
+  @Transform(({ value }) => parseProjectContextExtensions(value))
+  @IsArray()
+  @Matches(PROJECT_CONTEXT_EXTENSION_PATTERN, {
+    each: true,
+    message:
+      'PROJECT_CONTEXT_ALLOWED_EXTENSIONS entries must be 1-16 lower-case letters or digits',
+  })
+  PROJECT_CONTEXT_ALLOWED_EXTENSIONS?: string[] = [
+    ...DEFAULT_PROJECT_CONTEXT_ALLOWED_EXTENSIONS,
+  ];
 
   @IsOptional()
   @Transform(({ obj, key }) => {

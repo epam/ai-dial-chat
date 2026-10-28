@@ -117,7 +117,7 @@ const messageTextSegments: TextSegment[] = [
 />;
 ```
 
-Both bubbles forward their attachment labels to `AttachmentGroup`: `labels.attachmentClickLabel` names an interactive tile (rendered when `onAttachmentClick` is given) and `labels.attachmentDownloadLabel` names each file tile's own download button (rendered when `onDownloadAll` is given; default `'Download attachment'`). Pass two distinct, translated strings when the tile does something other than download, so the two buttons stay distinguishable to assistive technology.
+Both bubbles forward their attachment labels to `AttachmentGroup`: `labels.attachmentClickLabel` names an interactive tile (rendered when `onAttachmentClick` is given) and `labels.attachmentDownloadLabel` names each file tile's own download button (rendered when `onDownloadAll` is given; default `'Download attachment'`). Pass two distinct, translated strings when the tile does something other than download, so the two buttons stay distinguishable to assistive technology. `isAttachmentDownloadable` is forwarded too: an attachment it rejects (e.g. a folder) gets no download button and is left out of "download all".
 
 ### AssistantMessageBubble
 

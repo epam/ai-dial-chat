@@ -1,4 +1,7 @@
-import type { SkillImportResponseDto } from '@epam/ai-dial-chat-api-client';
+import {
+  CatalogCreationType,
+  type SkillImportResponseDto,
+} from '@epam/ai-dial-chat-api-client';
 import {
   getApiErrorDetails,
   SkillArchiveImportErrorKind,
@@ -6,16 +9,18 @@ import {
   SkillArchiveSelectionRejectionReason,
   useSkillArchiveImport as useSkillArchiveImportController,
 } from '@epam/ai-dial-chat-hooks';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SkillArchiveImportI18nKeys } from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
 import { useSkills } from '../../context/SkillsContext';
 import { importSkillArchive as requestSkillArchiveImport } from '../../server-api/skills.api';
+import { CatalogCreationDecision } from '../../types/catalog-creation';
 import {
   EntityOperation,
   NotifiableEntity,
 } from '../../types/entity-notification';
+import { useCatalogCreationDecision } from '../catalog/useCatalogCreationDecision';
 import { useOperationNotification } from '../useOperationNotification';
 
 export { SkillArchiveImportStatus };
@@ -55,11 +60,11 @@ interface UseSkillArchiveImportResult {
   errorText: string | undefined;
   /** Whether an import request is in flight; the dialog stays open meanwhile. */
   isUploading: boolean;
-  /** Opens the upload dialog, unless an import is already in flight. */
+  /** Opens the upload dialog, unless an import is already in flight or skill creation is not allowed. */
   openDialog: () => void;
   /** Closes the upload dialog, aborting an in-flight import, and clears any error. */
   closeDialog: () => void;
-  /** Wire to the dialog drop zone's `onChange`. */
+  /** Wire to the dialog drop zone's `onChange`; ignored while skill creation is not allowed. */
   handleFilesSelected: (files: File[]) => void;
   /** Wire to the dialog drop zone's `onReject`. */
   handleFilesRejected: () => void;
@@ -76,6 +81,15 @@ export const useSkillArchiveImport = (): UseSkillArchiveImportResult => {
   const { refetchSkills } = useSkills();
   const { notifyOperationSuccess } = useOperationNotification();
   const { showErrorNotification } = useNotification();
+  const isCreationAllowed =
+    useCatalogCreationDecision({ type: CatalogCreationType.Skill }) ===
+    CatalogCreationDecision.Allowed;
+  /* Read by callbacks a picker or drop zone may still hold from an earlier
+   * render, so they act on the current permission, not the one they saw. */
+  const isCreationAllowedRef = useRef(isCreationAllowed);
+  useEffect(() => {
+    isCreationAllowedRef.current = isCreationAllowed;
+  }, [isCreationAllowed]);
 
   const onImported = useCallback(
     async (response: SkillImportResponseDto) => {
@@ -109,7 +123,9 @@ export const useSkillArchiveImport = (): UseSkillArchiveImportResult => {
 
   const importArchive = useCallback(
     (file: File, signal: AbortSignal) =>
-      requestSkillArchiveImport(file, signal),
+      isCreationAllowedRef.current
+        ? requestSkillArchiveImport(file, signal)
+        : Promise.reject(new Error('Skill creation is not allowed')),
     [],
   );
 
@@ -118,6 +134,34 @@ export const useSkillArchiveImport = (): UseSkillArchiveImportResult => {
     onImported,
     onError,
   });
+  const {
+    isDialogOpen,
+    isUploading,
+    openDialog: openControllerDialog,
+    closeDialog,
+    handleFilesSelected: handleControllerFilesSelected,
+  } = controller;
+
+  /* Losing permission closes an idle dialog; a request already sent keeps
+   * its existing in-flight behaviour, since a client policy cannot recall it. */
+  useEffect(() => {
+    if (!isCreationAllowed && isDialogOpen && !isUploading) {
+      closeDialog();
+    }
+  }, [isCreationAllowed, isDialogOpen, isUploading, closeDialog]);
+
+  const openDialog = useCallback(() => {
+    if (!isCreationAllowedRef.current) return;
+    openControllerDialog();
+  }, [openControllerDialog]);
+
+  const handleFilesSelected = useCallback(
+    (files: File[]) => {
+      if (!isCreationAllowedRef.current) return;
+      handleControllerFilesSelected(files);
+    },
+    [handleControllerFilesSelected],
+  );
 
   const statusMessage = useMemo(() => {
     if (
@@ -158,15 +202,15 @@ export const useSkillArchiveImport = (): UseSkillArchiveImportResult => {
       : undefined;
 
   return {
-    isDialogOpen: controller.isDialogOpen,
+    isDialogOpen,
     status: controller.status,
     statusMessage,
     selectionError,
     errorText: selectionError ?? importError,
-    isUploading: controller.isUploading,
-    openDialog: controller.openDialog,
-    closeDialog: controller.closeDialog,
-    handleFilesSelected: controller.handleFilesSelected,
+    isUploading,
+    openDialog,
+    closeDialog,
+    handleFilesSelected,
     handleFilesRejected: controller.handleFilesRejected,
   };
 };

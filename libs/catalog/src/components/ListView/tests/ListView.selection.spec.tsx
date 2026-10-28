@@ -75,6 +75,9 @@ const checkbox = (name: string) =>
   screen.getByRole('checkbox', { name }) as HTMLInputElement;
 const findCheckbox = async (name: string) =>
   (await screen.findByRole('checkbox', { name })) as HTMLInputElement;
+/* Cold Grid initialization can exceed the default 1 s wait on concurrent CI workers. */
+const findCheckedCheckbox = (name: string) =>
+  screen.findByRole('checkbox', { name, checked: true }, { timeout: 3000 });
 const findCellOf = async (name: string) => {
   await screen.findByText(name);
   const cell = screen
@@ -101,7 +104,7 @@ describe('ListView multiple selection', () => {
   it('renders a checkbox per row and a select-all header from the selected set', async () => {
     render(<Harness initial={['b']} />);
 
-    await waitFor(() => expect(checkbox('Pick Beta').checked).toBe(true));
+    await findCheckedCheckbox('Pick Beta');
     expect((await findCheckbox('Pick Alpha')).checked).toBe(false);
     expect(checkbox('Pick all').getAttribute('aria-checked')).toBe('mixed');
   });
@@ -109,7 +112,7 @@ describe('ListView multiple selection', () => {
   it('appends a newly checked row and keeps the existing order', async () => {
     const onChange = vi.fn();
     render(<Harness initial={['a', 'b']} onChange={onChange} />);
-    await waitFor(() => expect(checkbox('Pick Beta').checked).toBe(true));
+    await findCheckedCheckbox('Pick Beta');
 
     await userEvent.click(checkbox('Pick Gamma'));
     await waitFor(() =>
@@ -124,7 +127,7 @@ describe('ListView multiple selection', () => {
   it('appends an earlier row checked after a later one', async () => {
     const onChange = vi.fn();
     render(<Harness initial={['c']} onChange={onChange} />);
-    await waitFor(() => expect(checkbox('Pick Gamma').checked).toBe(true));
+    await findCheckedCheckbox('Pick Gamma');
 
     await userEvent.click(checkbox('Pick Alpha'));
 
@@ -187,7 +190,7 @@ describe('ListView multiple selection', () => {
         onChange={onChange}
       />,
     );
-    await waitFor(() => expect(checkbox('Pick Alpha').checked).toBe(true));
+    await findCheckedCheckbox('Pick Alpha');
 
     await userEvent.click(checkbox('Pick all'));
 
@@ -206,7 +209,7 @@ describe('ListView multiple selection', () => {
         onChange={onChange}
       />,
     );
-    await waitFor(() => expect(checkbox('Pick all').checked).toBe(true));
+    await findCheckedCheckbox('Pick all');
 
     await userEvent.click(checkbox('Pick all'));
 

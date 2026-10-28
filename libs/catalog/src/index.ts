@@ -122,6 +122,7 @@ export type {
 export { ListView } from './components/ListView/ListView';
 export type {
   ListViewColors,
+  ListViewHandle,
   ListViewProps,
   ListViewStyles,
   ListViewTypography,

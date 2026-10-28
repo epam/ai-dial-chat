@@ -22,6 +22,7 @@ The other authenticated pages MUST likewise be lazy-loaded inside the `RouteErro
 - `ROUTES.SharedInvitation` and `ROUTES.ConversationSharedInvitation`;
 - `ROUTES.FileManager`;
 - `ROUTES.Settings` and `ROUTES.SettingsTab`;
+- `ROUTES.Projects` (`/projects`), registered unconditionally, with the `projectsEnabled` guard applied inside `ProjectsPage`;
 - the `ROUTES.ScheduledTasks*` routes;
 - the `AppsEditor`, `ToolsetEditor`, `CustomAppEditor`, `PromptEditor` and `SkillEditor` editors;
 - `ToolsetEditorCallback` and `ToolsetSignIn`.
@@ -37,6 +38,11 @@ Any unregistered path MUST fall through to the explicit `*` catch-all route.
 
 - **WHEN** the browser navigates to `/catalog`
 - **THEN** the lazy-loaded `<CatalogView>` is mounted
+
+#### Scenario: Projects path renders the projects page
+
+- **WHEN** the browser navigates to `/projects`
+- **THEN** the lazy-loaded `ProjectsPage` is mounted inside `RouteErrorBoundary`/`Suspense`, and it renders either the projects UI or `NotFound`, depending on `projectsEnabled`
 
 #### Scenario: Conversation path renders the conversation page
 
@@ -192,9 +198,30 @@ Each item MUST be wrapped by the `renderLink` callback `SidebarNavigation` passe
 
 ### Requirement: The sidebar is driven by NAVIGATION_CONFIG
 
-`SidebarNavigation` (`apps/chat/src/components/Navigation/SidebarNavigation.tsx`) SHALL NOT hard-code route paths or icon components. It MUST render the items from `useNavigationItems`, which maps the exported `NAVIGATION_CONFIG` constant from `apps/chat/src/constants/navigation.ts` (today: New chat `ROUTES.Root`, Scheduled tasks `ROUTES.ScheduledTasks`, Catalog `ROUTES.Catalog`, File manager `ROUTES.FileManager`) after filtering it through `useVisibleNavItems`. Adding a new entry to `NAVIGATION_CONFIG` MUST automatically render a new item with no change to `SidebarNavigation.tsx`, subject to the entry's gates.
+`SidebarNavigation` (`apps/chat/src/components/Navigation/SidebarNavigation.tsx`) SHALL NOT hard-code route paths or icon components. It MUST render the items from `useNavigationItems`, which maps the exported `NAVIGATION_CONFIG` constant from `apps/chat/src/constants/navigation.ts` after filtering it through `useVisibleNavItems`. In order, the constant holds:
 
-Each `NavigationItem` MAY declare an optional `featureFlag: string` field. `useVisibleNavItems` (`apps/chat/src/hooks/useVisibleNavItems.ts`) SHALL apply two gates on every render: the overlay UI feature owning the entry's route (`OverlayFeature.Catalog` for `ROUTES.Catalog`, `OverlayFeature.FileManager` for `ROUTES.FileManager`; routes absent from that map are ungated), and the entry's `featureFlag`, which passes only when `useAppConfig().status` is `UserConfigStatus.Ready` and `features[featureFlag] === true`. Filtering MUST react to a flag value becoming available/changing after initial mount.
+1. New chat, `ROUTES.Root`;
+2. Projects, `ROUTES.Projects`;
+3. Scheduled tasks, `ROUTES.ScheduledTasks`;
+4. Catalog, `ROUTES.Catalog`;
+5. File manager, `ROUTES.FileManager`.
+
+Adding a new entry to `NAVIGATION_CONFIG` MUST automatically render a new item with no change to `SidebarNavigation.tsx`, subject to the entry's gates.
+
+The Projects entry SHALL declare:
+
+- `featureFlag: 'projectsEnabled'`;
+- `icon: IconBriefcase` and `activeIcon: IconBriefcaseFilled` from `@tabler/icons-react`;
+- `labelKey: NavigationI18nKeys.Projects`, which resolves to the `navigation.projects` key ("Projects") in `apps/chat/src/i18n/locales/en.json`.
+
+The icon is symmetric and is not mirrored in RTL.
+
+Each `NavigationItem` MAY declare an optional `featureFlag: string` field. `useVisibleNavItems` (`apps/chat/src/hooks/useVisibleNavItems.ts`) SHALL apply two gates on every render:
+
+- the overlay UI feature owning the entry's route: `OverlayFeature.Catalog` for `ROUTES.Catalog`, `OverlayFeature.FileManager` for `ROUTES.FileManager`. Routes absent from that map are ungated;
+- the entry's `featureFlag`, which passes only when `useAppConfig().status` is `UserConfigStatus.Ready` and `features[featureFlag] === true`.
+
+Filtering MUST react to a flag value becoming available/changing after initial mount.
 
 #### Scenario: Config drives rendered items
 
@@ -210,6 +237,13 @@ Each `NavigationItem` MAY declare an optional `featureFlag: string` field. `useV
 
 - **WHEN** `NAVIGATION_CONFIG` contains an entry with `featureFlag: 'scheduledTasksEnabled'` and that flag is `true` in the ready app config
 - **THEN** an item for that entry is rendered, with the same label/tooltip/active-state behavior as ungated entries
+
+#### Scenario: Projects item follows projectsEnabled
+
+- **WHEN** `features.projectsEnabled` is `true` in the ready app config
+- **THEN** a Projects item labelled "Projects" is rendered directly after New chat, and it is marked `aria-current="page"` on `/projects`
+- **AND WHEN** `features.projectsEnabled` is not `true`
+- **THEN** no Projects item is rendered
 
 #### Scenario: Ungated entries are unaffected
 
@@ -282,3 +316,24 @@ The navigation surface SHALL have a co-located Vitest spec, `apps/chat/src/compo
 
 - **WHEN** `isEnabled('hide-new-conversation')` is `true`
 - **THEN** no New chat item renders
+
+### Requirement: Project create route
+
+The `ROUTES` enum in `apps/chat/src/types/routes.ts` SHALL declare `ProjectCreate = '/projects/new'`. It is registered in `apps/chat/src/app/app.tsx` as a lazy-loaded `ProjectCreatePage`, next to the existing `ROUTES.Projects` registration, using the same `RouteErrorBoundary` + `Suspense`/`RouteFallback` wrapper. Like `ROUTES.Projects`, it is registered unconditionally, and the `projectsEnabled` guard is applied inside the page through `useFeatureFlag('projectsEnabled')`.
+
+`NAVIGATION_CONFIG` is unchanged: `/projects/new` has no sidebar item of its own. The Projects item in `apps/chat/src/constants/navigation.ts` declares no `isExactMatch`, so its `path` already matches as a prefix, and it SHALL remain marked `aria-current="page"` on `/projects/new` with no config change.
+
+#### Scenario: Create path renders the create page
+
+- **WHEN** `projectsEnabled` is `true` and the browser navigates to `/projects/new`
+- **THEN** the lazy-loaded `ProjectCreatePage` mounts inside the standard route wrapper
+
+#### Scenario: Static segment wins over future dynamic segments
+
+- **WHEN** the router resolves `/projects/new`
+- **THEN** it renders `ProjectCreatePage`, not the list page or NotFound
+
+#### Scenario: Sidebar keeps Projects active
+
+- **WHEN** the user is on `/projects/new`
+- **THEN** the Projects sidebar item has `aria-current="page"`

@@ -26,6 +26,7 @@ import { CATALOG_CLASS } from '../../constants/public-class-names';
 import { useIsVerticallyClamped } from '../../hooks/useIsVerticallyClamped/useIsVerticallyClamped';
 import type { CardProps } from '../../models/card-props';
 import { DeploymentSize } from '../../types/deployment-icon-size';
+import { getCatalogItemDisplayType } from '../../utils/catalog-tabs';
 import { AppIdentity } from '../AppIdentity/AppIdentity';
 import { CredentialsBadge } from '../CredentialsBadge/CredentialsBadge';
 import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
@@ -83,8 +84,10 @@ export const Card: FC<CardProps> = ({
   noFolderLabel = 'No folder',
   isReadonly = false,
   markdownLabels,
+  activeTab,
 }) => {
   const [isStarred, setIsStarred] = useState(initialIsStarred);
+  const displayType = getCatalogItemDisplayType(item, activeTab);
 
   /*
    * Resyncs local optimistic state when the caller's `favoriteIds` reverts
@@ -173,7 +176,7 @@ export const Card: FC<CardProps> = ({
         <div className="absolute inset-e-[22px] top-0 -translate-y-1/2">
           <FeaturedChip
             label={featuredLabel}
-            type={item.type}
+            type={displayType}
             className={featuredChipClassName}
             style={cardStyles?.colors?.featuredChipStyle}
           />
@@ -194,7 +197,7 @@ export const Card: FC<CardProps> = ({
 
       <AppIdentity
         icon={item.iconUrl}
-        type={item.type}
+        type={displayType}
         name={item.name}
         version={item.version}
         size={DeploymentSize.SM}

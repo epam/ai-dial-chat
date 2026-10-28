@@ -459,6 +459,7 @@ published to npm today. Each library has its own README with its public API.
 | `@epam/ai-dial-skill-editor`          | [`libs/skill-editor`](libs/skill-editor)                   | Skill authoring form with a file tree and conflict handling                                                   |
 | `@epam/ai-dial-builder-form`          | [`libs/builder-form`](libs/builder-form)                   | Builder/editor form shells, editor layout, and shared deployment-creation field set                           |
 | `@epam/ai-dial-scheduled-tasks`       | [`libs/scheduled-tasks`](libs/scheduled-tasks)             | Scheduled Tasks surfaces — cards, create form, detail view, run history                                       |
+| `@epam/ai-dial-projects`              | [`libs/projects`](libs/projects)                           | Projects page — search, sort and the card grid of available projects                                          |
 
 > `libs/ai-dial-kit/` is a leftover build-output directory from a removed
 > library — it has no `package.json`, no sources, and no importers. Do not add

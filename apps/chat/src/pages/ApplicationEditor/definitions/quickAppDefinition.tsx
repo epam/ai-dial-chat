@@ -2,6 +2,7 @@ import {
   SEMVER_VERSION_PATTERN,
   type DeploymentCreationFormValues,
 } from '@epam/ai-dial-builder-form';
+import { CatalogCreationType } from '@epam/ai-dial-chat-api-client';
 import { isQuickAppSchema } from '@epam/ai-dial-chat-hooks';
 import {
   AppsEditorI18nKeys,
@@ -85,6 +86,7 @@ const create = async (
 export const quickAppDefinition =
   defineApplicationEditor<EmptyApplicationSetup>({
     kind: ApplicationEditorKind.QuickApp,
+    creationType: CatalogCreationType.SchemaApp,
     notifiableEntity: NotifiableEntity.QuickApp,
     getNotificationTarget: resolveSchemaNotificationTarget,
     createStrategy: ApplicationCreateStrategy.MetadataFirst,

@@ -166,6 +166,62 @@ describe('CONFIG_DEFINITIONS', () => {
     });
   });
 
+  it('contains the client-visible, role-gated features.projectsEnabled entry, off by default', () => {
+    const entry = CONFIG_DEFINITIONS.find(
+      (definition) => definition.key === 'features.projectsEnabled',
+    );
+
+    expect(entry).toMatchObject({
+      key: 'features.projectsEnabled',
+      type: 'feature',
+      valueType: 'boolean',
+      visibility: 'client',
+      defaultValue: false,
+      critical: false,
+      envVar: 'PROJECTS_ENABLED',
+      allowedRolesEnvVar: 'PROJECTS_ENABLED_ROLES',
+    });
+  });
+
+  it.each([
+    [
+      'projects.contextFileMaxBytes',
+      'number',
+      1_048_576,
+      'PROJECT_CONTEXT_FILE_MAX_BYTES',
+    ],
+    [
+      'projects.contextTotalMaxBytes',
+      'number',
+      10_485_760,
+      'PROJECT_CONTEXT_TOTAL_MAX_BYTES',
+    ],
+    [
+      'projects.contextAllowedExtensions',
+      'json',
+      ['csv', 'pdf', 'xlsx'],
+      'PROJECT_CONTEXT_ALLOWED_EXTENSIONS',
+    ],
+  ])(
+    'contains the client-visible %s entry backed by the variable POST /api/v1/projects enforces',
+    (key, valueType, defaultValue, envVar) => {
+      const entry = CONFIG_DEFINITIONS.find(
+        (definition) => definition.key === key,
+      );
+
+      expect(entry).toMatchObject({
+        key,
+        type: 'config',
+        valueType,
+        visibility: 'client',
+        defaultValue,
+        critical: false,
+        owner: 'chat-team',
+        envVar,
+      });
+    },
+  );
+
   it('contains the client-visible usageLimits.warningThresholdPercent entry, 75 by default', () => {
     const entry = CONFIG_DEFINITIONS.find(
       (definition) => definition.key === 'usageLimits.warningThresholdPercent',
