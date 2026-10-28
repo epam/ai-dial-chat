@@ -4,7 +4,6 @@ import {
   Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { extractDialErrorMessage } from '../../common/dial/dial-error.mapper';
 import { ConversationResponseDto } from '../../openapi/openapi-response.dto';
 import {
   ConversationGenerationService,
@@ -22,10 +21,7 @@ import {
   BackgroundGenerationStatus,
   type BackgroundGenerationDto,
 } from '../dto/background-generation.dto';
-import {
-  ConversationMessageRole,
-  type ConversationMessageDto,
-} from '../dto/conversation-message.dto';
+import type { ConversationMessageDto } from '../dto/conversation-message.dto';
 import type { MessageCustomContentDto } from '../dto/message-custom-content.dto';
 import type { CompletionMode } from '../dto/send-completion.dto';
 import {
@@ -33,23 +29,25 @@ import {
   withStoredLlmDisplayName,
 } from '../persistence/conversation-persistence.service';
 import { buildConversationHistory } from '../utils/conversation-history-builder';
+import { parseChunkFrame, readChunkResponseId } from './background-chunk';
 import {
   BackgroundWriteResult,
   findPendingBackgroundMessage,
-  neutralizeForeignPendingMessages,
-  pickServerOwnedFields,
+  mergeClientMessages,
   updateConversationUnlessPending,
   updatePendingBackgroundMessage,
-  withServerOwnedFields,
   type BackgroundWriteOutcome,
   type ServerOwnedMessageFields,
   type StoredMessage,
 } from './background-message';
 import {
+  isRunningStatus,
+  toStoredTerminalEvent,
+  toTerminalFields,
+} from './background-terminal';
+import {
   CoreResponseResultKind,
   CoreResponsesClient,
-  CoreResponseStatus,
-  type CoreResponse,
   type CoreResponseResult,
 } from './core-responses.client';
 import {
@@ -57,11 +55,7 @@ import {
   backgroundGenerationOutcomesTotal,
 } from './generation-metrics';
 import { GENERATION_PERSISTENCE_ERROR } from './persistence-error';
-import {
-  RESPONSES_FAILED_MESSAGE,
-  RESPONSES_INCOMPLETE_MESSAGE,
-  ResponsesAdapter,
-} from './responses.adapter';
+import { ResponsesAdapter } from './responses.adapter';
 
 /** Returned when a new generation is started while another one holds the conversation. */
 export const GENERATION_ACTIVE_MESSAGE =
@@ -101,127 +95,6 @@ export type BackgroundAttachPlan =
   | { kind: 'not_found' }
   | { kind: 'stream'; events: AsyncGenerator<object, void, void> };
 
-/**
- * The attach terminal event matching a message's stored background status.
- * @param message - the message as stored after finalization
- */
-export const toStoredTerminalEvent = (
-  message: StoredMessage | undefined,
-): GenerationTerminalEvent => {
-  switch (message?.backgroundGeneration?.status) {
-    case BackgroundGenerationStatus.Completed:
-      return { type: 'done' };
-    case BackgroundGenerationStatus.Stopped:
-      return { type: 'stopped' };
-    default:
-      return {
-        type: 'error',
-        ...(message?.streamErrorMessage
-          ? { message: message.streamErrorMessage }
-          : {}),
-      };
-  }
-};
-
-/**
- * The messages to store for a client save. Storage stays authoritative for background
- * messages, because a client never receives the marker during a live stream and a
- * stale tab may still show an old state:
- * - the body's copy of a stored background message (pending or finished) takes that
- *   message's server-owned fields, so a client never changes a background answer. The
- *   copy is the body message carrying the same generation id or, when none does, an
- *   unmarked assistant message at the stored position. For a finished message the
- *   position counts only while the body still lines up with storage (same length, same
- *   preceding message), because deleting earlier messages shifts every position; a
- *   pending message cannot move, since messages are not deleted while it streams;
- * - when the body still has no copy of the stored pending message, the stored message
- *   replaces another generation's answer at its position (a tab that has not seen a
- *   regenerate), and a body too short to reach it gets the stored messages up to and
- *   including it;
- * - every other pending marker in the body is neutralized.
- * @param messages - messages sent by the client
- * @param storedMessages - messages currently in storage
- */
-export const mergeClientMessages = (
-  messages: StoredMessage[],
-  storedMessages: StoredMessage[],
-): StoredMessage[] => {
-  const storedByGeneration = new Map(
-    storedMessages
-      .filter((message) => message.backgroundGeneration != null)
-      .map((message) => [
-        message.backgroundGeneration?.generationId as string,
-        message,
-      ]),
-  );
-  const merged = messages.map((message) => {
-    const generationId = message.backgroundGeneration?.generationId;
-    const stored = generationId
-      ? storedByGeneration.get(generationId)
-      : undefined;
-    return stored
-      ? withServerOwnedFields(message, pickServerOwnedFields(stored))
-      : message;
-  });
-  const hasCopy = (generationId: string | undefined): boolean =>
-    merged.some(
-      (message) => message.backgroundGeneration?.generationId === generationId,
-    );
-  const isAligned = (index: number): boolean =>
-    merged.length === storedMessages.length &&
-    merged[index - 1]?.content === storedMessages[index - 1]?.content;
-  storedMessages.forEach((stored, index) => {
-    const generationId = stored.backgroundGeneration?.generationId;
-    const atPosition = merged[index];
-    const isPending =
-      stored.backgroundGeneration?.status ===
-      BackgroundGenerationStatus.Pending;
-    if (
-      generationId != null &&
-      !hasCopy(generationId) &&
-      (isPending || isAligned(index)) &&
-      atPosition?.role === ConversationMessageRole.Assistant &&
-      atPosition.backgroundGeneration == null
-    ) {
-      merged[index] = withServerOwnedFields(
-        atPosition,
-        pickServerOwnedFields(stored),
-      );
-    }
-  });
-
-  const pending = findPendingBackgroundMessage({ messages: storedMessages });
-  const pendingGenerationId =
-    pending?.message.backgroundGeneration?.generationId;
-  if (pending && !hasCopy(pendingGenerationId)) {
-    if (merged[pending.index]?.role === ConversationMessageRole.Assistant) {
-      merged[pending.index] = pending.message;
-    } else {
-      const insertAt = Math.min(pending.index, merged.length);
-      merged.splice(
-        insertAt,
-        0,
-        ...storedMessages.slice(insertAt, pending.index + 1),
-      );
-    }
-  }
-  return neutralizeForeignPendingMessages(merged, pendingGenerationId);
-};
-
-/**
- * Parses one normalized `data: {...}` frame produced by the Responses adapter.
- * @param frame - SSE frame text
- */
-const parseChunkFrame = (frame: string): object | undefined => {
-  const payload = frame.startsWith('data: ') ? frame.slice(6).trim() : '';
-  if (!payload.startsWith('{')) return undefined;
-  try {
-    return JSON.parse(payload) as object;
-  } catch {
-    return undefined;
-  }
-};
-
 /** Result of trying to start a generation on the background path. */
 export enum BackgroundStartResult {
   /** The background job ran (or was detached); the request is finished. */
@@ -251,110 +124,6 @@ export interface BackgroundStartParams {
   /** The conversation version read at request start; reused for the placeholder write. */
   storedConversation?: VersionedConversation;
 }
-
-/**
- * Joins the answer text of a stored Responses object's output: only `message` items and
- * their `output_text` parts, so reasoning text is never saved (the live stream drops it
- * too).
- * @param response - stored response retrieved from DIAL Core
- */
-export const extractOutputText = (response: CoreResponse): string =>
-  (response.output ?? [])
-    .filter((item) => item.type === undefined || item.type === 'message')
-    .flatMap((item) => item.content ?? [])
-    .filter((part) => part.type === undefined || part.type === 'output_text')
-    .map((part) => part.text ?? '')
-    .join('');
-
-/**
- * Whether a stored response's job is still running.
- * @param status - status reported by DIAL Core
- */
-const isRunningStatus = (status: string): boolean =>
-  status === CoreResponseStatus.Queued ||
-  status === CoreResponseStatus.InProgress;
-
-/**
- * Maps a stored DIAL Core response to the message's new server-owned fields, or `null`
- * while the job is still running. `response === null` means Core no longer knows the
- * job (expired or deleted).
- * @param stored - the pending message as stored
- * @param response - retrieved Core response, or `null` for "not found"
- * @param responseId - the job's id as the caller knows it; kept when storing it failed
- */
-export const toTerminalFields = (
-  stored: StoredMessage,
-  response: CoreResponse | null,
-  responseId?: string,
-): ServerOwnedMessageFields | null => {
-  const base = {
-    custom_content: stored.custom_content,
-    responseId: stored.responseId ?? responseId,
-  };
-  const withStatus = (
-    status: BackgroundGenerationStatus,
-  ): BackgroundGenerationDto => ({
-    ...(stored.backgroundGeneration as BackgroundGenerationDto),
-    status,
-  });
-  if (response === null) {
-    return {
-      ...base,
-      content: stored.content ?? '',
-      backgroundGeneration: withStatus(BackgroundGenerationStatus.Failed),
-      streamErrorMessage: '',
-    };
-  }
-  if (isRunningStatus(response.status)) return null;
-  switch (response.status) {
-    case CoreResponseStatus.Completed:
-      return {
-        ...base,
-        content: extractOutputText(response),
-        backgroundGeneration: withStatus(BackgroundGenerationStatus.Completed),
-      };
-    case CoreResponseStatus.Cancelled:
-      return {
-        ...base,
-        content: extractOutputText(response),
-        backgroundGeneration: withStatus(BackgroundGenerationStatus.Stopped),
-        wasStoppedByUser: true,
-      };
-    case CoreResponseStatus.Incomplete:
-      return {
-        ...base,
-        content: extractOutputText(response),
-        backgroundGeneration: withStatus(BackgroundGenerationStatus.Failed),
-        streamErrorMessage: RESPONSES_INCOMPLETE_MESSAGE,
-      };
-    default:
-      return {
-        ...base,
-        content: extractOutputText(response),
-        backgroundGeneration: withStatus(BackgroundGenerationStatus.Failed),
-        streamErrorMessage:
-          extractDialErrorMessage(response.error) ?? RESPONSES_FAILED_MESSAGE,
-      };
-  }
-};
-
-/**
- * Reads the `responseId` a normalized chunk carries, if any.
- * @param chunk - one relayed `data: {...}` SSE frame
- */
-const readChunkResponseId = (chunk: string): string | undefined => {
-  if (!chunk.startsWith('data: {') || !chunk.includes('"responseId"')) {
-    return undefined;
-  }
-  try {
-    const parsed = JSON.parse(chunk.slice(6)) as {
-      choices?: Array<{ delta?: { responseId?: string } }>;
-    };
-    return parsed.choices?.[0]?.delta?.responseId;
-  } catch {
-    return undefined;
-  }
-};
 
 /**
  * Runs generations that DIAL Core executes as background Responses jobs. The backend
