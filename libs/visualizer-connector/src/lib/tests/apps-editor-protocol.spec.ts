@@ -105,11 +105,51 @@ describe('application editor wire compatibility', () => {
     { type: 'REQUEST_TOOLSET_LOGIN', toolsetId: '' },
     { type: 'REQUEST_TOOLSET_LOGOUT', toolsetId: 1 },
     { type: 'REQUEST_APPLICATION_CREDENTIALS' },
+    { type: 'REQUEST_EXTERNAL_SERVICE_LOGIN', appId: 'app', serviceId: 'svc' },
+    {
+      type: 'REQUEST_EXTERNAL_SERVICE_LOGIN',
+      appId: 'app',
+      serviceId: 'svc',
+      offlineUsageConsent: 'true',
+    },
+    {
+      type: 'REQUEST_EXTERNAL_SERVICE_LOGIN',
+      appId: 'app',
+      serviceId: '',
+      offlineUsageConsent: true,
+    },
+    {
+      type: 'REQUEST_EXTERNAL_SERVICE_LOGIN',
+      serviceId: 'svc',
+      offlineUsageConsent: true,
+    },
     { type: 'TRIGGER_SAVE' },
     { type: 'TOOLSET_LOGIN_RESULT', toolsetId: 'id', success: true },
+    {
+      type: 'EXTERNAL_SERVICE_LOGIN_RESULT',
+      appId: 'app',
+      serviceId: 'svc',
+      success: true,
+    },
   ])('rejects malformed or wrong-direction editor message %j', (message) => {
     expect(parse(message)).toBeNull();
   });
+
+  it.each([true, false])(
+    'accepts an external-service login request with offlineUsageConsent %j',
+    (offlineUsageConsent) => {
+      const message = {
+        type: 'REQUEST_EXTERNAL_SERVICE_LOGIN',
+        appId: 'applications/public/runner app',
+        serviceId: 'gitlab-oauth',
+        offlineUsageConsent,
+      };
+      expect(parse({ ...message, ignored: true })).toEqual({
+        ...message,
+        type: AppsEditorMessages.RequestExternalServiceLogin,
+      });
+    },
+  );
 
   it('accepts save requests without General data and leaves domain bodies opaque', () => {
     expect(parseAppsEditorHostMessage({ type: 'TRIGGER_SAVE' })).toEqual({
@@ -144,10 +184,50 @@ describe('application editor wire compatibility', () => {
   );
 
   it.each([
+    { success: true, reason: undefined },
+    { success: false, reason: 'cancelled' },
+  ])('preserves external-service login result fields %j', (fields) => {
+    const message = {
+      type: 'EXTERNAL_SERVICE_LOGIN_RESULT',
+      appId: 'applications/public/runner app',
+      serviceId: 'gitlab-oauth',
+      ...fields,
+    };
+    expect(parseAppsEditorHostMessage({ ...message, extra: 1 })).toEqual(
+      message,
+    );
+  });
+
+  it.each([
     null,
     [],
     { type: 'SAVE_SUCCESS' },
     { type: `${NAME}/readyToSave` },
+    {
+      type: 'REQUEST_EXTERNAL_SERVICE_LOGIN',
+      appId: 'app',
+      serviceId: 'svc',
+      offlineUsageConsent: true,
+    },
+    {
+      type: 'EXTERNAL_SERVICE_LOGIN_RESULT',
+      appId: 'app',
+      serviceId: 'svc',
+      success: 'yes',
+    },
+    {
+      type: 'EXTERNAL_SERVICE_LOGIN_RESULT',
+      appId: 'app',
+      serviceId: '',
+      success: true,
+    },
+    {
+      type: 'EXTERNAL_SERVICE_LOGIN_RESULT',
+      appId: 'app',
+      serviceId: 'svc',
+      success: false,
+      reason: 42,
+    },
     { type: 'TOOLSET_LOGIN_RESULT', toolsetId: 'id', success: 'true' },
     { type: 'TOOLSET_LOGOUT_RESULT', toolsetId: '', success: true },
     {
@@ -184,5 +264,22 @@ describe('application editor wire compatibility', () => {
     expectTypeOf<{
       type: AppsEditorMessages.SaveError;
     }>().not.toExtend<AppsEditorClientMessage>();
+    expectTypeOf<{
+      type: AppsEditorMessages.RequestExternalServiceLogin;
+      appId: string;
+      serviceId: string;
+      offlineUsageConsent: boolean;
+    }>().toExtend<AppsEditorClientMessage>();
+    expectTypeOf<{
+      type: AppsEditorMessages.RequestExternalServiceLogin;
+      appId: string;
+      serviceId: string;
+    }>().not.toExtend<AppsEditorClientMessage>();
+    expectTypeOf<{
+      type: AppsEditorMessages.ExternalServiceLoginResult;
+      appId: string;
+      serviceId: string;
+      success: boolean;
+    }>().toExtend<AppsEditorHostMessage>();
   });
 });

@@ -190,6 +190,56 @@ describe('mapFormValuesToCreateBody', () => {
     expect(body.trigger).not.toHaveProperty('endDate');
   });
 
+  it('maps a custom repeat with the week step alongside the UTC-converted day and time', () => {
+    const body = mapFormValuesToCreateBody({
+      ...baseValues,
+      repeat: ScheduledTaskRepeat.Custom,
+      everyWeeks: '2',
+      dayOfWeek: '0', // Monday, APScheduler convention
+      time: '09:00',
+    });
+
+    expect(body.trigger.cron?.fields).toEqual({
+      week: '*/2',
+      day_of_week: '0',
+      hour: '9',
+      minute: '0',
+    });
+  });
+
+  it('emits the week field for every-1-week custom repeats', () => {
+    const body = mapFormValuesToCreateBody({
+      ...baseValues,
+      repeat: ScheduledTaskRepeat.Custom,
+      everyWeeks: '1',
+      dayOfWeek: '0',
+      time: '09:00',
+    });
+
+    expect(body.trigger.cron?.fields?.week).toBe('*/1');
+  });
+
+  it('never includes startDate/endDate for a custom repeat even if present in values', () => {
+    const body = mapFormValuesToCreateBody({
+      ...baseValues,
+      repeat: ScheduledTaskRepeat.Custom,
+      everyWeeks: '2',
+      dayOfWeek: '0',
+      time: '09:00',
+      startDate: '2026-08-01',
+      endDate: '2026-08-31',
+    });
+
+    expect(body.trigger.cron?.fields).toEqual({
+      week: '*/2',
+      day_of_week: '0',
+      hour: '9',
+      minute: '0',
+    });
+    expect(body.trigger.cron).not.toHaveProperty('startDate');
+    expect(body.trigger.cron).not.toHaveProperty('endDate');
+  });
+
   it('maps hourly datetime-local boundaries to the picked instants', () => {
     const body = mapFormValuesToCreateBody({
       ...baseValues,
@@ -232,6 +282,25 @@ describe('mapFormValuesToCreateBody — recurring schedule timezone conversion',
     });
 
     expect(body.trigger.cron?.fields).toEqual({
+      hour: '2',
+      minute: '0',
+      day_of_week: '1', // Tuesday
+    });
+  });
+
+  it('shifts a custom day_of_week across midnight while the week step stays unconverted', () => {
+    vi.stubEnv('TZ', 'America/New_York'); // UTC-4 in summer: UTC = local + 4h
+
+    const body = mapFormValuesToCreateBody({
+      ...baseValues,
+      repeat: ScheduledTaskRepeat.Custom,
+      everyWeeks: '3',
+      time: '22:00',
+      dayOfWeek: '0', // Monday, APScheduler convention
+    });
+
+    expect(body.trigger.cron?.fields).toEqual({
+      week: '*/3',
       hour: '2',
       minute: '0',
       day_of_week: '1', // Tuesday
@@ -722,6 +791,167 @@ describe('mapScheduledTaskDtoToFormValues', () => {
       expect(result.values.time).toBe('22:00');
       expect(result.values.dayOfWeek).toBe('0'); // Monday, APScheduler convention
     }
+  });
+
+  it('round-trips a custom schedule, passing the week step through unconverted', () => {
+    vi.stubEnv('TZ', 'America/New_York'); // UTC-4 in summer
+
+    const result = mapScheduledTaskDtoToFormValues({
+      ...baseDto,
+      trigger: {
+        cron: {
+          fields: {
+            week: '*/2',
+            hour: '2',
+            minute: '0',
+            day_of_week: '1',
+          }, // Tuesday UTC
+        },
+      },
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.values.repeat).toBe(ScheduledTaskRepeat.Custom);
+      expect(result.values.everyWeeks).toBe('2');
+      expect(result.values.time).toBe('22:00');
+      expect(result.values.dayOfWeek).toBe('0'); // Monday, APScheduler convention
+      expect(result.values.startDate).toBeUndefined();
+      expect(result.values.endDate).toBeUndefined();
+    }
+  });
+
+  it('round-trips a custom Monday shortly after midnight through UTC Sunday', () => {
+    vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer
+    const values: ScheduledTaskCreateFormValues = {
+      ...baseValues,
+      repeat: ScheduledTaskRepeat.Custom,
+      everyWeeks: '2',
+      dayOfWeek: '0',
+      time: '00:30',
+    };
+    const body = mapFormValuesToCreateBody(values);
+
+    expect(body.trigger.cron?.fields).toEqual({
+      week: '*/2',
+      day_of_week: '6',
+      hour: '22',
+      minute: '30',
+    });
+    expect(
+      mapScheduledTaskDtoToFormValues({ ...baseDto, trigger: body.trigger }),
+    ).toMatchObject({
+      ok: true,
+      values: {
+        repeat: ScheduledTaskRepeat.Custom,
+        everyWeeks: '2',
+        dayOfWeek: '0',
+        time: '00:30',
+      },
+    });
+  });
+
+  it.each<Record<string, string>>([
+    { month: '1' },
+    { year: '2027' },
+    { second: '30' },
+  ])('fails closed on additional Custom cron constraints: %j', (constraint) => {
+    expect(
+      mapScheduledTaskDtoToFormValues({
+        ...baseDto,
+        trigger: {
+          cron: {
+            fields: {
+              week: '*/2',
+              day_of_week: '0',
+              hour: '9',
+              minute: '0',
+              ...constraint,
+            },
+          },
+        },
+      }),
+    ).toEqual({
+      ok: false,
+      reason: UnsupportedTriggerReason.UnsupportedCronShape,
+    });
+  });
+
+  it('ignores null-valued extra fields when hydrating a custom schedule', () => {
+    const fields = {
+      week: '*/2',
+      day_of_week: '0',
+      hour: '9',
+      minute: '0',
+      year: null,
+      month: null,
+      day: null,
+      second: null,
+    } as unknown as Record<string, string>;
+
+    expect(
+      mapScheduledTaskDtoToFormValues({
+        ...baseDto,
+        trigger: { cron: { fields } },
+      }),
+    ).toMatchObject({
+      ok: true,
+      values: { repeat: ScheduledTaskRepeat.Custom, everyWeeks: '2' },
+    });
+  });
+
+  it('hydrates a weekly schedule with a null week value as Weekly, not Custom', () => {
+    const fields = {
+      hour: '9',
+      minute: '0',
+      day_of_week: '0',
+      week: null,
+    } as unknown as Record<string, string>;
+
+    const result = mapScheduledTaskDtoToFormValues({
+      ...baseDto,
+      trigger: { cron: { fields } },
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.values.repeat).toBe(ScheduledTaskRepeat.Weekly);
+      expect(result.values.everyWeeks).toBeUndefined();
+    }
+  });
+
+  it.each(['2-40', '1,3', '*/12', '2'])(
+    "fails closed on a week expression outside the editor's step range (%s)",
+    (week) => {
+      const result = mapScheduledTaskDtoToFormValues({
+        ...baseDto,
+        trigger: {
+          cron: { fields: { week, hour: '9', minute: '0', day_of_week: '0' } },
+        },
+      });
+
+      expect(result).toEqual({
+        ok: false,
+        reason: UnsupportedTriggerReason.UnsupportedCronShape,
+      });
+    },
+  );
+
+  it('fails closed on a custom schedule that also carries an activity window', () => {
+    const result = mapScheduledTaskDtoToFormValues({
+      ...baseDto,
+      trigger: {
+        cron: {
+          fields: { week: '*/2', hour: '9', minute: '0', day_of_week: '0' },
+          startDate: '2026-08-01T00:00:00.000Z',
+        },
+      },
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      reason: UnsupportedTriggerReason.UnsupportedCronShape,
+    });
   });
 
   it('round-trips activity-window startDate/endDate to local date-only values', () => {

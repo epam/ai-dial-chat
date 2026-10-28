@@ -1,4 +1,10 @@
-import { NeutralButton } from '@epam/ai-dial-ui-kit';
+import {
+  CaptionText,
+  DIAL_ICON_SIZE,
+  ErrorText,
+  NeutralButton,
+  Spinner,
+} from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import type { ApplicationCredentialsProps } from '../../models/application-credentials';
 import { ApplicationCredentialRow } from './ApplicationCredentialRow/ApplicationCredentialRow';
@@ -16,15 +22,20 @@ export const ApplicationCredentials: FC<ApplicationCredentialsProps> = ({
 }) => {
   if (isLoading && !services.length) {
     return (
-      <p role="status" className="px-6 py-3">
-        {texts?.loading ?? 'Loading…'}
-      </p>
+      <Spinner
+        className="justify-start px-6 py-3"
+        size={DIAL_ICON_SIZE.MD}
+        ariaLabel={texts?.loading ?? 'Loading…'}
+      />
     );
   }
   if (hasError) {
     return (
       <div className="flex flex-col gap-2 px-6 py-3">
-        <p role="alert">{texts?.loadError ?? 'Unable to load credentials'}</p>
+        <ErrorText
+          role="alert"
+          text={texts?.loadError ?? 'Unable to load credentials'}
+        />
         <NeutralButton
           className="min-h-11 self-start"
           label={texts?.retry ?? 'Retry'}
@@ -35,9 +46,11 @@ export const ApplicationCredentials: FC<ApplicationCredentialsProps> = ({
   }
   if (!services.length) {
     return showEmptyState ? (
-      <p role="status" className="px-6 py-3">
-        {texts?.empty ?? 'No credentials required'}
-      </p>
+      <CaptionText
+        role="status"
+        className="block px-6 py-3"
+        text={texts?.empty ?? 'No credentials required'}
+      />
     ) : null;
   }
   return (

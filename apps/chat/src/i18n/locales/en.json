@@ -85,6 +85,7 @@
   "navigation": {
     "ariaLabel": "Main navigation",
     "catalog": "Catalog",
+    "projects": "Projects",
     "menu": "Navigation menu",
     "back": "Back",
     "sidebar": "Sidebar",
@@ -170,7 +171,8 @@
         "value": "{{used}} / {{total}}",
         "followsCostLimit": "Follows cost limit",
         "followsCostLimitAriaLabel": "{{label}}: {{used}} used. Follows cost limit.",
-        "progressAriaLabel": "{{label}}: {{used}} of {{total}} used"
+        "progressAriaLabel": "{{label}}: {{used}} of {{total}} used",
+        "footerNote": "Model-specific limits only. To view your full usage limits, go to the <link>Usage limits</link> page."
       },
       "credentials": {
         "signedInLabel": "Signed in",
@@ -266,17 +268,15 @@
         "toolsetTitle": "Connect toolset",
         "toolsetDescription": "Copy endpoint URL to easily integrate toolset into your workflows"
       },
+      "specificationSection": "Specification",
       "prompt": {
-        "section": "Prompt",
-        "author": "Author",
+        "author": "Created by",
         "updated": "Last updated"
       },
       "skill": {
-        "section": "Skill",
-        "author": "Author",
+        "author": "Created by",
         "updated": "Last updated",
         "fileCount": "Files",
-        "specificationSection": "Specification",
         "whenToUse": "When to use",
         "allowedTools": "Allowed tools",
         "bundledResources": "Bundled resources"
@@ -299,6 +299,11 @@
       "skillWriteInstructions": "Write instructions",
       "skillUpload": "Upload",
       "runners": "Runners"
+    },
+    "creation": {
+      "loading": "Checking whether you can create this item…",
+      "unavailable": "Creation is unavailable right now. Please try again later.",
+      "denied": "You don't have permission to create this item."
     },
     "publishFolderSearchPlaceholder": "Search folders",
     "publishFolderEmptyState": "No folders match \"{{query}}\".",
@@ -477,7 +482,11 @@
     "empty": "No chats yet",
     "emptyDescription": "Chats will appear here once you start one.",
     "noResults": "No chats found",
+    "myChatsEmpty": "No personal chats yet",
+    "sharedEmpty": "No shared chats yet",
     "sharedEmptyDescription": "Chats other people share with you will show up here.",
+    "organizationEmpty": "No organization chats yet",
+    "organizationEmptyDescription": "Chats published in your organization will show up here.",
     "filter": {
       "all": "All",
       "groupAriaLabel": "Filter chats",
@@ -757,6 +766,44 @@
     "overlayDeniedTitle": "No attachments allowed",
     "overlayDeniedSubtitle": "Attachments can't be added to message"
   },
+  "projects": {
+    "page": {
+      "title": "Projects",
+      "subtitle": "Projects you own, projects shared with you, and your organization's projects"
+    },
+    "toolbar": {
+      "searchPlaceholder": "Search projects",
+      "searchAriaLabel": "Search projects",
+      "sortNewest": "Newest",
+      "sortOldest": "Oldest",
+      "sortNameAsc": "Name A–Z"
+    },
+    "emptyState": {
+      "label": "No projects yet",
+      "description": "Your projects will appear here once created."
+    },
+    "noResults": {
+      "label": "No projects match your search"
+    },
+    "error": {
+      "label": "Projects could not be loaded"
+    },
+    "incomplete": {
+      "label": "Some projects could not be loaded. The list may be incomplete."
+    },
+    "status": {
+      "resultCount_one": "{{count}} project",
+      "resultCount_other": "{{count}} projects"
+    },
+    "source": {
+      "personal": "Personal",
+      "shared": "Shared",
+      "organization": "Organization"
+    },
+    "card": {
+      "updatedAt": "Updated {{date}}"
+    }
+  },
   "scheduledTasks": {
     "typeLabel": "Scheduled task",
     "page": {
@@ -796,6 +843,8 @@
       "scheduleHourlyAt": "Hourly, {{minute}} min past the hour",
       "scheduleEveryNMinutes_one": "Every minute",
       "scheduleEveryNMinutes_other": "Every {{count}} minutes",
+      "scheduleEveryNWeeks_one": "Every week on {{day}} at {{time}}",
+      "scheduleEveryNWeeks_other": "Every {{count}} weeks on {{day}} at {{time}}",
       "scheduleOnceAt": "Once on {{date}}",
       "scheduleRecurringFallback": "Recurring schedule"
     },
@@ -814,6 +863,10 @@
       "repeatDaily": "Daily",
       "repeatWeekly": "Weekly",
       "repeatMonthly": "Monthly",
+      "repeatCustom": "Custom",
+      "everyLabel": "Every",
+      "everyWeeksOption_one": "{{count}} week",
+      "everyWeeksOption_other": "{{count}} weeks",
       "timeLabel": "Time",
       "timeInvalid": "Enter a valid time",
       "dayOfWeekLabel": "Day",
@@ -955,6 +1008,7 @@
     "uploadConflict": "A file with this name already exists",
     "uploadFailedTooLarge": "The file is too large to upload",
     "uploadFailedUnavailable": "The file service is unavailable. Please try again later.",
+    "uploadFailedSeeQueue": "Check the upload list for details.",
     "forbiddenSymbolsTooltip": "File name should not contain special symbols {{notAllowedSymbols}}",
     "conflictSingleTitle": "Replace or Duplicate Item",
     "conflictMultipleTitle": "Replace or Duplicate Items",
@@ -1232,7 +1286,6 @@
     "nameRequired": "Name is required",
     "fieldTooLong": "Use {{count}} characters or fewer.",
     "nameControlCharacters": "Remove line breaks, tabs and other control characters.",
-    "versionInvalid": "Version must follow semantic versioning (e.g., 1.0.0)",
     "descriptionLabel": "Description",
     "avatarLabel": "Avatar",
     "addAvatarButtonLabel": "Add avatar",
@@ -1276,7 +1329,8 @@
     "generalForm": {
       "namePlaceholder": "Enter application name",
       "descriptionPlaceholder": "Describe your application",
-      "nameInvalid": "Name may only contain letters, digits, spaces, underscores, dots, and dashes"
+      "nameInvalid": "Name may only contain letters, digits, spaces, underscores, dots, and dashes",
+      "versionInvalid": "Version format is invalid (example: 0.0.1)"
     },
     "settingsStep": {
       "loadingLabel": "Loading editor…",
@@ -1302,7 +1356,8 @@
     "editTitle": "Edit toolset",
     "general": {
       "namePlaceholder": "Enter name",
-      "descriptionPlaceholder": "Describe what this toolset does"
+      "descriptionPlaceholder": "Describe what this toolset does",
+      "versionInvalid": "Version may only contain letters, digits, dots, underscores, and dashes"
     },
     "settings": {
       "endpointCaption": "The HTTPS address where the server accepts MCP requests. Choose the transport under Protocol below.",
@@ -1335,13 +1390,16 @@
       "clientIdRequired": "Client ID is required",
       "clientSecretLabel": "Client secret",
       "clientSecretPlaceholder": "Enter client secret",
+      "clientSecretKeepCaption": "Leave empty to keep the saved secret.",
       "clientSecretRequired": "Client secret is required",
       "showClientSecretLabel": "Show client secret",
       "hideClientSecretLabel": "Hide client secret",
       "authorizationEndpointLabel": "Authorization endpoint",
       "authorizationEndpointPlaceholder": "Enter authorization endpoint",
+      "authorizationEndpointRequired": "Authorization endpoint is required",
       "tokenEndpointLabel": "Token endpoint",
       "tokenEndpointPlaceholder": "Enter token endpoint",
+      "tokenEndpointRequired": "Token endpoint is required",
       "scopesLabel": "Scopes",
       "scopesPlaceholder": "Enter scopes",
       "logoutConfirmDescription": "Are you sure you want to log out? You will need to re-enter your credentials to use this toolset again."
@@ -1501,6 +1559,7 @@
     "nameLabel": "Name",
     "namePlaceholder": "good-morning-breakfast",
     "nameCaption": "Lowercase letters and hyphens only, no spaces. We'll reformat automatically if needed.",
+    "nameReadOnlyTooltip": "The skill name can't be changed after creation",
     "descriptionLabel": "Description",
     "descriptionPlaceholder": "What this skill does and when to use it",
     "instructionsLabel": "Instructions",
@@ -1800,7 +1859,9 @@
   },
   "textRefinement": {
     "action": "Refine with AI",
-    "undo": "Undo",
+    "refining": "Refining",
+    "regenerate": "Regenerate",
+    "undo": "Restore original",
     "error": "Could not refine this text. Please try again.",
     "pending": "Refining text",
     "success": "Text refined",

@@ -351,6 +351,17 @@ authorization codes and tokens never cross this message boundary. Both repositor
 must include this contract for the action to appear. No client-channel subscription or
 chat request is needed, and closing the dialog preserves unsaved Quick app settings.
 
+An editor that already shows one service with its own Connect action can skip the dialog.
+When the iframe URL carries `externalServiceLogin=true` (the same gates), it sends
+`{ type: 'REQUEST_EXTERNAL_SERVICE_LOGIN', appId, serviceId, offlineUsageConsent }`. After the
+same origin and source checks, the host reserves the OAuth popup during the message event,
+reads the service's public metadata from `GET /api/v1/external-services/{appId}`, and signs
+in through `useExternalServiceLogin` at `USER` level with the editor's offline-use choice,
+which the host forwards and never sets itself. OAuth and DIAL-native services are supported;
+API-key and `NONE` services are refused. The result,
+`{ type: 'EXTERNAL_SERVICE_LOGIN_RESULT', appId, serviceId, success, reason? }`, echoes the
+identifiers as sent; no credential crosses the frame in either direction.
+
 ### 5.6 Proactive Offline-Credentials Consent (Scheduled Tasks)
 
 ![Offline-credentials consent](./auth-diagrams/10-offline-credentials-consent.svg)

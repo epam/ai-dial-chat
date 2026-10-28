@@ -6,10 +6,26 @@ import {
   createDefaultClientConfig,
 } from '../client-config.mapper';
 import { CONFIG_DEFINITIONS } from '../config-registry/config-registry.constants';
+import { ClientConfigDto } from '../dto/client-config-response.dto';
 
 /* `app.version` is resolved by AppConfigService ahead of the loop and is the
  * only client config key the table deliberately leaves out. */
 const SPECIAL_CLIENT_KEYS = new Set(['app.version']);
+
+/* Response fields AppConfigService assembles itself rather than mapping. */
+const SERVICE_ASSEMBLED_FIELDS = [
+  'aiTextRefinementAvailable',
+  'appVersion',
+  'catalogCreationPermissions',
+];
+
+/* The DTO's Swagger-declared fields, stored by @ApiProperty as `:<name>`. */
+const clientConfigDtoFields = (
+  Reflect.getMetadata(
+    'swagger/apiModelPropertiesArray',
+    ClientConfigDto.prototype,
+  ) as string[]
+).map((entry) => entry.replace(/^:/, ''));
 
 const clientConfigKeys = CONFIG_DEFINITIONS.filter(
   (def) => def.visibility === 'client' && def.type === 'config',
@@ -77,6 +93,36 @@ describe('CLIENT_CONFIG_MAPPINGS', () => {
       expect([...fields].sort()).toEqual(
         Object.keys(createDefaultClientConfig()).sort(),
       );
+    });
+  });
+
+  describe('service-assembled fields', () => {
+    it('covers every ClientConfigDto field together with the mapped fields', () => {
+      expect(
+        [
+          ...Object.keys(createDefaultClientConfig()),
+          ...SERVICE_ASSEMBLED_FIELDS,
+        ].sort(),
+      ).toEqual([...clientConfigDtoFields].sort());
+    });
+
+    it('keeps catalogCreationPermissions out of the mapping table and registry', () => {
+      const mappedFields = [...CLIENT_CONFIG_MAPPINGS.values()].map(
+        (mapping) => mapping.field as string,
+      );
+      const registryKeys = CONFIG_DEFINITIONS.map((def) => def.key);
+
+      expect(mappedFields).not.toContain('catalogCreationPermissions');
+      expect(
+        registryKeys.filter((key) =>
+          /catalogCreation|CATALOG_CREATION_ROLES/i.test(key),
+        ),
+      ).toEqual([]);
+      expect(
+        CONFIG_DEFINITIONS.filter(
+          (def) => def.envVar === 'CATALOG_CREATION_ROLES',
+        ),
+      ).toEqual([]);
     });
   });
 

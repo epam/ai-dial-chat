@@ -1,4 +1,7 @@
-import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
+import {
+  CatalogCreationType,
+  TextRefinementPurpose,
+} from '@epam/ai-dial-chat-api-client';
 import type {
   ToolsetLoginBodyDto,
   ToolsetLogoutBodyDto,
@@ -45,6 +48,7 @@ import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { useApplicationAvatarPicker } from '../../../hooks/application-editor/useApplicationAvatarPicker';
 import { useMetadataLabels } from '../../../hooks/application-editor/useMetadataLabels';
+import { useCatalogCreationDecision } from '../../../hooks/catalog/useCatalogCreationDecision';
 import { useToolsetEditorOAuthLogin } from '../../../hooks/toolsets/useToolsetEditorOAuthLogin';
 import { useBuilderLeaveGuard } from '../../../hooks/unsaved-changes/useBuilderLeaveGuard';
 import { useOperationNotification } from '../../../hooks/useOperationNotification';
@@ -58,6 +62,7 @@ import {
   logoutToolset,
   updateToolset,
 } from '../../../server-api/toolsets';
+import { CatalogCreationDecision } from '../../../types/catalog-creation';
 import {
   EntityOperation,
   NotifiableEntity,
@@ -99,6 +104,11 @@ const ToolsetApplicationEditor: FC = () => {
 
   const routeToolsetId = searchParams.get(ToolsetEditorQuery.Id) ?? '';
   const isEditMode = Boolean(routeToolsetId);
+  /* The page boundary gates opening the create form; this re-check blocks a
+   * create whose permission was lost while the form was open. */
+  const creationDecision = useCatalogCreationDecision({
+    type: CatalogCreationType.Toolset,
+  });
   const returnUrl = ROUTES.Catalog;
 
   const [initialForm, setInitialForm] = useState<ToolsetFormData | undefined>(
@@ -141,6 +151,16 @@ const ToolsetApplicationEditor: FC = () => {
       form: ToolsetFormData,
       toolsetId: string,
     ): Promise<string | null> => {
+      if (!toolsetId && creationDecision !== CatalogCreationDecision.Allowed) {
+        showErrorNotification({
+          message: t(
+            creationDecision === CatalogCreationDecision.Denied
+              ? CatalogI18nKeys.CreationDenied
+              : CatalogI18nKeys.CreationUnavailable,
+          ),
+        });
+        return null;
+      }
       try {
         const body = formToToolsetBody(form, getToolsetRedirectUri());
         if (toolsetId) {
@@ -165,7 +185,7 @@ const ToolsetApplicationEditor: FC = () => {
         return null;
       }
     },
-    [t, showErrorNotification],
+    [creationDecision, t, showErrorNotification],
   );
 
   const handlePostSaveLogin = useCallback(
@@ -306,13 +326,17 @@ const ToolsetApplicationEditor: FC = () => {
         descriptionTooLong: t(EditorI18nKeys.FieldTooLong, {
           count: ENTITY_DESCRIPTION_MAX_LENGTH,
         }),
-        versionInvalid: t(EditorI18nKeys.VersionInvalid),
+        versionInvalid: t(ToolsetEditorI18nKeys.VersionInvalid),
         endpointRequired: t(ToolsetEditorI18nKeys.EndpointRequired),
         endpointInvalid: t(ToolsetEditorI18nKeys.EndpointInvalid),
         keyHeaderRequired: t(ToolsetEditorI18nKeys.KeyHeaderRequired),
         apiKeyRequired: t(ToolsetEditorI18nKeys.ApiKeyRequired),
         clientIdRequired: t(ToolsetEditorI18nKeys.ClientIdRequired),
         clientSecretRequired: t(ToolsetEditorI18nKeys.ClientSecretRequired),
+        authorizationEndpointRequired: t(
+          ToolsetEditorI18nKeys.AuthorizationEndpointRequired,
+        ),
+        tokenEndpointRequired: t(ToolsetEditorI18nKeys.TokenEndpointRequired),
       },
       general: {
         form: metadataFormLabels,
@@ -357,6 +381,9 @@ const ToolsetApplicationEditor: FC = () => {
           clientSecretLabel: t(ToolsetEditorI18nKeys.ClientSecretLabel),
           clientSecretPlaceholder: t(
             ToolsetEditorI18nKeys.ClientSecretPlaceholder,
+          ),
+          clientSecretKeepCaption: t(
+            ToolsetEditorI18nKeys.ClientSecretKeepCaption,
           ),
           showClientSecretLabel: t(ToolsetEditorI18nKeys.ShowClientSecretLabel),
           hideClientSecretLabel: t(ToolsetEditorI18nKeys.HideClientSecretLabel),

@@ -145,7 +145,7 @@ export const useCatalogItems = ({
     () => ({
       authorLabel: t(CatalogI18nKeys.DetailsPromptAuthor),
       updatedLabel: t(CatalogI18nKeys.DetailsPromptUpdated),
-      sectionTitle: t(CatalogI18nKeys.DetailsPromptSection),
+      sectionTitle: t(CatalogI18nKeys.DetailsSpecificationSection),
     }),
     [t],
   );
@@ -222,6 +222,7 @@ export const useCatalogItems = ({
           editableSchemaIds: runnerSchemaIds,
           isCustomAppsEditable: isCustomAppsEnabled,
           activeLocale: language,
+          isToolsetTabEnabled: isToolsetsEnabled,
         }),
       ),
       ...(isToolsetsEnabled

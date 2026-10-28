@@ -943,7 +943,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     <div
       dir={dir}
       className={mergeClasses(
-        'relative flex min-h-0 flex-1 flex-col',
+        'relative flex min-h-0 min-w-0 flex-1 flex-col',
         SKILL_EDITOR_CLASS.root,
       )}
       style={cssVars}
@@ -995,6 +995,10 @@ export const SkillEditor: FC<SkillEditorProps> = ({
                 fields={METADATA_FIELDS}
                 isDescriptionRequired
                 isNameReadOnly={isNameReadOnly}
+                nameReadOnlyTooltip={
+                  t.nameReadOnlyTooltip ??
+                  "The skill name can't be changed after creation"
+                }
                 nameCaption={
                   errors?.name
                     ? undefined
@@ -1009,7 +1013,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
           ) : (
             <>
               {selectedNode?.kind === SkillFileNodeKind.File && (
-                <div className="flex min-h-0 flex-1 flex-col">
+                <div className="flex h-[max(320px,60dvh)] min-h-0 min-w-0 flex-none flex-col desktop:h-auto desktop:flex-1">
                   {supportingFileContent ?? (
                     <CaptionText
                       text={

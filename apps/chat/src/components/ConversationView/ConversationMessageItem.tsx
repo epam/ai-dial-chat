@@ -43,6 +43,7 @@ import type {
   CommandMenuConfig,
   HighlightedTextRange,
   MenuOverlayConfig,
+  SendOnEnter,
 } from '@epam/ai-dial-conversation-input';
 import {
   MessageBubble,
@@ -306,6 +307,8 @@ interface Props {
   editCommandMenu?: CommandMenuConfig;
   /** Host-injected `+`-menu entries for adding a skill mid-edit. Forwarded to `EditMessageInput`'s `menuOverlays`. */
   editMenuOverlays?: MenuOverlayConfig[];
+  /** The user's send-key preference. Forwarded to `EditMessageInput`'s `sendOnEnter`. */
+  editSendOnEnter?: SendOnEnter;
   /**
    * Renders a user message's `content` and `custom_content.skills` as an
    * ordered array interleaving plain-text runs and `ChatSkill` elements at
@@ -403,6 +406,7 @@ const ConversationMessageItem: FC<Props> = ({
   onEditDraftChange,
   editCommandMenu,
   editMenuOverlays,
+  editSendOnEnter,
   renderHistorySkillSegments,
   renderHistorySkills,
   fallbackCitationGroups = EMPTY_FALLBACK_CITATION_GROUPS,
@@ -863,6 +867,7 @@ const ConversationMessageItem: FC<Props> = ({
             onChange={onEditDraftChange}
             commandMenu={editCommandMenu}
             menuOverlays={editMenuOverlays}
+            sendOnEnter={editSendOnEnter}
           />
         </Suspense>
       </div>

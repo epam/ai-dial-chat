@@ -1220,6 +1220,62 @@ describe('Catalog', () => {
     ).toContain('1 items');
   });
 
+  describe('tab membership', () => {
+    const membershipItems = [
+      makeItem('model', 'GPT', { type: CatalogEntityType.Model }),
+      makeItem('dual', 'Dual app', {
+        type: CatalogEntityType.Agent,
+        catalogTabs: [CatalogEntityType.Agent, CatalogEntityType.Toolset],
+      }),
+      makeItem('mcp', 'MCP app', {
+        type: CatalogEntityType.Agent,
+        catalogTabs: [CatalogEntityType.Toolset],
+      }),
+    ];
+
+    it('lists a membership-only Toolsets item outside the Agents tab', () => {
+      render(
+        <Catalog
+          items={membershipItems}
+          favorites={[]}
+          activeTab={CatalogEntityType.Agent}
+        />,
+      );
+
+      expect(screen.getByRole('button', { name: 'Dual app' })).toBeTruthy();
+      expect(screen.queryByRole('button', { name: 'MCP app' })).toBeNull();
+      expect(screen.getByRole('tab', { name: /Toolsets/i })).toBeTruthy();
+    });
+
+    it('shows Toolsets members, including applications, under the Toolsets tab', () => {
+      render(
+        <Catalog
+          items={membershipItems}
+          favorites={[]}
+          activeTab={CatalogEntityType.Toolset}
+        />,
+      );
+
+      expect(screen.getByRole('button', { name: 'Dual app' })).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'MCP app' })).toBeTruthy();
+      expect(screen.queryByRole('button', { name: 'GPT' })).toBeNull();
+    });
+
+    it('opens the same item details from the Toolsets tab', async () => {
+      render(
+        <Catalog
+          items={membershipItems}
+          favorites={[]}
+          activeTab={CatalogEntityType.Toolset}
+        />,
+      );
+
+      await userEvent.click(screen.getByRole('button', { name: 'Dual app' }));
+
+      expect(screen.getByText('Dual app', { selector: 'span' })).toBeTruthy();
+    });
+  });
+
   it('renders the controlled topicOptions prop instead of options derived from items', () => {
     const wideTopicOptions = getTopicOptions([
       makeItem('1', 'Claude', { topics: ['Free'] }),
@@ -1661,6 +1717,61 @@ describe('Catalog', () => {
     await userEvent.click(screen.getByRole('tab', { name: /Prompts/i }));
 
     expect(onActiveTabChange).toHaveBeenCalledWith(CatalogEntityType.Prompt);
+  });
+});
+
+describe('Catalog — creation gating', () => {
+  const toolset: CatalogItem = {
+    id: 't1',
+    type: CatalogEntityType.Toolset,
+    name: 'Tools',
+    version: '1',
+    lastUsed: 'now',
+    description: '',
+    folder: [],
+    topics: [],
+  };
+
+  it('renders no focusable Create control anywhere when hideCreateButton is set', () => {
+    render(
+      <Catalog
+        items={[toolset]}
+        favorites={[]}
+        isMyAppsActive
+        hideCreateButton
+        createOptions={[{ key: 'toolset', label: 'Toolset', onClick: vi.fn() }]}
+        createMenuByTab={{
+          [CatalogEntityType.Toolset]: {
+            options: [{ key: 'toolset', label: 'Toolset', onClick: vi.fn() }],
+          },
+        }}
+      />,
+    );
+
+    expect(screen.queryAllByRole('button', { name: 'Create' })).toEqual([]);
+    expect(screen.getByText('No personal items yet')).toBeTruthy();
+  });
+
+  it("drops the empty-state Create of a tab whose type cannot be created, keeping the header's", () => {
+    render(
+      <Catalog
+        items={[{ ...toolset, type: CatalogEntityType.Skill }]}
+        favorites={[]}
+        isMyAppsActive
+        hidePageTitle
+        createOptions={[{ key: 'prompt', label: 'Prompt', onClick: vi.fn() }]}
+        createMenuByTab={{
+          [CatalogEntityType.Skill]: { options: [] },
+          [CatalogEntityType.Prompt]: {
+            options: [{ key: 'prompt', label: 'Prompt', onClick: vi.fn() }],
+          },
+        }}
+      />,
+    );
+
+    expect(screen.getByText('No personal items yet')).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: 'Create' })).toHaveLength(1);
+    expect(screen.queryByText('Skill')).toBeNull();
   });
 });
 

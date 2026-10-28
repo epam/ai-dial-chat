@@ -9,7 +9,9 @@ Uploading a file to DIAL Core through the BFF, with DTO validation and environme
 ### Requirement: Upload file to DIAL Core via BFF
 The system SHALL expose `POST /api/v1/files` accepting a `multipart/form-data` request with a `file` field (binary), `bucket` and `path` form fields, and an optional `uploadMode` field. The endpoint SHALL validate all inputs, apply conditional DIAL Core headers based on `uploadMode`, and proxy the upload to DIAL Core `PUT /v1/files/{bucket}/{path}` (a streamed multipart request issued by `FilesUploadService` in `apps/chat-api/src/files/upload/files-upload.service.ts`, using the same raw-`fetch` upload helper as archive entries because the DIAL SDK upload helper requires a whole `FormData`/`Blob`) under the authenticated user's session. The endpoint SHALL return `201 Created` with a `FileUploadResponseDto` on success.
 
-The handler MUST NOT store the file on disk; it SHALL stream the in-memory buffer to DIAL Core immediately, in bounded chunks (not as one `Blob`), so the transfer can be observed for progress. The multer `memoryStorage` engine MUST be used (registered in `apps/chat-api/src/files/files.module.ts`) with `limits.fileSize` drawn from the `FILE_UPLOAD_MAX_BYTES` environment variable (default 512 MB).
+The handler MUST NOT hold the file in memory. The `file` part SHALL be staged to a temporary file under `os.tmpdir()` by `FileUploadInterceptor`, which shares its implementation with `ArchiveUploadInterceptor` through `DiskFileUploadInterceptor` (`apps/chat-api/src/files/disk-file-upload.interceptor.ts`), with multer `limits.fileSize` drawn from the `FILE_UPLOAD_MAX_BYTES` environment variable (default 512 MB) and `limits.files` of 1. The staged file SHALL be streamed from disk to DIAL Core in bounded chunks so the transfer can be observed for progress, and SHALL be deleted when the request finishes — on success, on any error, and when multer rejects the request. A partially written file from an aborted request SHALL NOT remain on disk.
+
+Every streamed PUT to DIAL Core (single files and archive entries) SHALL carry a `Content-Length` header equal to the exact byte length of the multipart body sent (envelope plus file bytes), so DIAL Core applies its own `storage.maxUploadedFileSize` check. A DIAL Core `413` SHALL be returned to the browser as `413 Payload Too Large`.
 
 - **Swagger**: `@ApiConsumes('multipart/form-data')` and `@ApiBody` with schema describing `file`, `bucket`, `path`, and optional `uploadMode` fields.
 - **operationId**: `uploadFile` → generated SDK method `filesApi.uploadFile(...)`.
@@ -50,7 +52,7 @@ raw backslashes, leading slashes, and traversal segments remain invalid.
 
 **Error codes:** 400, 401, 403, 409, 413, 429, 502, 503, 500.
 
-**Generated-client impact:** OpenAPI regeneration adds `uploadMode` to the `uploadFile` request body schema. Generated method `filesApi.uploadFile({ file, bucket, path, uploadMode? })`. Frontend callers in `apps/chat/src/server-api/files.api.ts` (via `createFilesApiClient` from `@epam/ai-dial-chat-hooks`) and `upload-file-with-progress.ts` (via `createUploadFileWithProgress`) pass `uploadMode` through.
+**Generated-client impact:** none from this change — request and response shapes, status codes and `operationId` are unchanged. Generated method `filesApi.uploadFile({ file, bucket, path, uploadMode? })`. Frontend callers in `apps/chat/src/server-api/files.api.ts` (via `createFilesApiClient` from `@epam/ai-dial-chat-hooks`) and `upload-file-with-progress.ts` (via `createUploadFileWithProgress`) pass `uploadMode` through.
 
 **XHR progress path:** `uploadFileWithProgress` in `apps/chat/src/server-api/upload-file-with-progress.ts` is built by `createUploadFileWithProgress` (`libs/chat-hooks/src/files/create-upload-file-with-progress.ts`), which SHALL add `uploadMode` to the `FormData` when provided via `UploadFileWithProgressOptions`. The `UploadFileWithProgressOptions` type (`libs/chat-hooks/src/files/create-files-api.ts`) carries `uploadMode?: UploadMode` (`'overwrite' | 'create-only'`).
 
@@ -91,7 +93,21 @@ raw backslashes, leading slashes, and traversal segments remain invalid.
 
 #### Scenario: File exceeds size limit
 - **WHEN** the uploaded file exceeds `FILE_UPLOAD_MAX_BYTES`
-- **THEN** multer rejects the request and the system returns `413 Payload Too Large`
+- **THEN** multer rejects the request and the system returns `413 Payload Too Large` with the message `File too large`
+- **AND** no temporary file remains on disk
+
+#### Scenario: Staged file is removed after the request
+- **WHEN** a `POST /api/v1/files` request finishes — with `201`, with an error mapped from DIAL Core, or with a transfer abort
+- **THEN** the temporary file the request was staged to no longer exists
+
+#### Scenario: Exact Content-Length is sent to DIAL Core
+- **WHEN** a file of N bytes is uploaded
+- **THEN** the PUT to DIAL Core carries `Content-Length` equal to the multipart preamble length + N + the multipart epilogue length
+- **AND** the request is not sent with `Transfer-Encoding: chunked`
+
+#### Scenario: DIAL Core rejects the size
+- **WHEN** DIAL Core answers the PUT with `413` because the body exceeds its `storage.maxUploadedFileSize`
+- **THEN** the system returns `413 Payload Too Large`
 
 #### Scenario: DIAL Core returns 403
 - **WHEN** DIAL Core responds with `403 Forbidden` (user lacks permission for the bucket)
@@ -169,3 +185,17 @@ Both variables SHALL be documented in `apps/chat-api/README.md` and added as com
 #### Scenario: Invalid value rejected at startup
 - **WHEN** `FILE_UPLOAD_MAX_BYTES` is set to a non-numeric string
 - **THEN** the application fails to start with a descriptive validation error
+
+---
+
+### Requirement: The BFF accepts slow request bodies up to the upload ceiling
+The NestJS HTTP server SHALL set Node's `requestTimeout` to `UPLOAD_MAX_DURATION_MS` (30 minutes, exported from `apps/chat-api/src/files/upload/upload-watchdog.ts`) through `configureHttpServerTimeouts` (`apps/chat-api/src/common/utils/http-server-timeouts.ts`), called from `apps/chat-api/src/main.ts`, so that a request body which keeps arriving is not cut at Node's 5-minute default. `headersTimeout` SHALL keep Node's default.
+
+#### Scenario: Slow upload longer than five minutes
+- **WHEN** a browser sends a `POST /api/v1/files` body that keeps arriving for longer than 5 minutes and finishes within 30 minutes
+- **THEN** the BFF receives the whole body and processes the upload instead of answering `408 Request Timeout`
+
+#### Scenario: Server timeouts are configured
+- **WHEN** `configureHttpServerTimeouts` is applied to an HTTP server
+- **THEN** its `requestTimeout` equals `UPLOAD_MAX_DURATION_MS`
+- **AND** its `headersTimeout` is unchanged

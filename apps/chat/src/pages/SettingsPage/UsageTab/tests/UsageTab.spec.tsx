@@ -692,6 +692,16 @@ describe('UsageTab', () => {
     const DAY_RESETS_AT = '2026-09-16T00:00:00Z';
     const OriginalDateTimeFormat = Intl.DateTimeFormat;
 
+    /* Reset times are stated in the viewer's offset at `now`, so pin it to summer time. */
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2026-09-15T12:00:00Z'));
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
     /*
      * Only the zero-argument zone-resolution call is stubbed; the real
      * formatter still does the formatting, in the zone under test.

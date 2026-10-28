@@ -209,6 +209,8 @@ export interface SkillEditorLabels extends TextRefinementLabels {
   nameLabel?: string;
   /** Name field placeholder. Defaults to `'good-morning-breakfast'`. */
   namePlaceholder?: string;
+  /** Tooltip over the Name field while it is read-only. Defaults to `"The skill name can't be changed after creation"`. */
+  nameReadOnlyTooltip?: string;
   /** Name field helper text. Defaults to `"Lowercase letters and hyphens only, no spaces. We'll reformat automatically if needed."`. */
   nameCaption?: string;
   /** Description field label. Defaults to `'Description'`. */
@@ -300,7 +302,7 @@ export interface SkillEditorColors {
   title?: string;
   /** Color of the hand-rendered Instructions field label and of the mobile "Editing file" caption and caret. Defaults to `--text-secondary`. */
   helperText?: string;
-  /** Background of the mobile "Editing file" card. Defaults to `--bg-layer-base`. */
+  /** Background of the mobile "Editing file" card. Defaults to `--bg-layer-sunken`. */
   filesCardBackground?: string;
   /** Border color of the mobile "Editing file" card. Defaults to `--stroke-tertiary`. */
   filesCardBorder?: string;
@@ -386,11 +388,11 @@ export interface SkillEditorProps {
   /** Called when the conflict state's "Reload latest" control is activated. Required when `conflict` can be set. */
   onReloadLatest?: () => void;
   /**
-   * When `true`, the Name field renders read-only — its value is still
+   * When `true`, the Name field renders disabled — its value is still
    * included in submitted values unchanged. The host sets this in edit mode,
    * since DIAL Core has no rename/move operation for a skill; the library
    * itself has no notion of "edit mode" and infers no policy from this flag
-   * beyond rendering the field read-only.
+   * beyond rendering the field disabled.
    */
   isNameReadOnly?: boolean;
   /**

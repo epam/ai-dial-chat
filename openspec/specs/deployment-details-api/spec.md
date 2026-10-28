@@ -145,7 +145,7 @@ This closes a race observed as an unstable toolset login/logout indicator: a det
   - `lifecycleStatus?: string`
   - `tokenizerModel?: string`
   - `limits?: { maxTotalTokens?: number; maxPromptTokens?: number; maxCompletionTokens?: number }`
-  - `pricing?: Record<string, string | ModelPricingRateDto>` — `unit` names the billing unit; scalar prices and recursive conditional pricing trees from DIAL Core are forwarded verbatim
+  - `pricing?: Record<string, string | ModelPricingRateDto>` — `unit` names the billing unit; scalar prices and recursive conditional pricing trees from DIAL Core are forwarded verbatim. `ModelPricingRateDto` is `{ rate?: string; test?: object; ifTrue?: string | ModelPricingRateDto; ifFalse?: string | ModelPricingRateDto }`: a branch is either a per-unit price string or a nested tree, and the OpenAPI schema SHALL declare both (`oneOf`), so the generated client types the branches as `ModelPricingRateDtoIfTrue` / `ModelPricingRateDtoIfFalse` (`ModelPricingRateDto | string`)
   - `features?: DeploymentFeaturesDetailsDto` (see below)
   - `catalogProperties?: ModelCatalogPropertiesDto`
   - `owner?: string`
@@ -262,3 +262,22 @@ No `any` types are allowed in the success response shape.
 - **THEN** the second read's `applicationDetails.applicationProperties` is identical to the
   first, including any `features` key it carries
 
+#### Scenario: A conditional price branch may be a plain price string
+
+- **WHEN** DIAL Core returns `pricing.prompt` as `{ test: { field: 'promptTokens', operator: '>', value: '200000' }, ifTrue: '0.000004', ifFalse: '0.000002' }`
+- **THEN** `modelDetails.pricing.prompt` carries the same object unchanged, and the OpenAPI schema for `ModelPricingRateDto.ifTrue`/`ifFalse` accepts the string branches
+
+### Requirement: Toolset details expose the stored client secret hint
+
+`ToolsetAuthSettingsDto` (`apps/chat-api/src/deployments/dto/deployment-details.dto.ts`) SHALL gain an optional `clientSecretHint?: string`, mapped by `mapToolsetAuthSettings` (`apps/chat-api/src/deployments/utils/deployment-mapper.util.ts`) from DIAL Core's `auth_settings.client_secret_hint` without modification, so `GET /api/v1/deployments/{deployment}/details` for a toolset carries it in `toolsetDetails.authSettings`. `client_secret` and `code_verifier` SHALL remain unread and unforwarded, and the debug log of the raw Core toolset response SHALL keep redacting them through `redactToolsetAuthSettings`; the hint is not a secret and needs no redaction.
+
+Generated-client impact: operationId `getDeploymentDetails` is unchanged; the generated `ToolsetAuthSettingsDto` gains optional `clientSecretHint`. No frontend surface reading `toolsetDetails.authSettings` (catalog details, `AppEditorIframe`) is required to render it.
+
+Caching is unchanged: the field rides in the existing `deployments:details:<user.sub>:<deployment>` entry (60 s), which `ToolsetsListingService.invalidateCaches` clears after every toolset write.
+
+#### Scenario: Toolset details carry the hint
+
+- **GIVEN** DIAL Core's `getToolset` response for `toolsets/<bucket>/github_valery__1.0.0` has `auth_settings.client_secret_hint: "d4c6"`
+- **WHEN** the user calls `GET /api/v1/deployments/toolsets%2F<bucket>%2Fgithub_valery__1.0.0/details`
+- **THEN** `toolsetDetails.authSettings.clientSecretHint` is `"d4c6"`
+- **AND** `toolsetDetails.authSettings` has no `clientSecret` or `codeVerifier`

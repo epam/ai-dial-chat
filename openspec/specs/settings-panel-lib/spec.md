@@ -31,6 +31,7 @@ interface SettingsPanelProps {
   activeId: string;
   onSelect: (id: string) => void;
   sectionLabel?: string;
+  ariaLabel?: string;
   styles?: SettingsPanelStyles; // { typography?: SettingsPanelTypography }
   className?: string;
 }
@@ -39,6 +40,10 @@ interface SettingsPanelProps {
 Row colors (inactive, hover, active, focus ring) come from the UI kit's vertical `Tabs` and are
 not overridable through `SettingsPanel` props. The section header typography defaults to
 `dial-h1-text`, overridable via `styles.typography.sectionLabelClassName`.
+
+`sectionLabel` both renders the visible header and names the tablist. A host that places the panel
+under a heading of its own (a dialog title) SHALL omit `sectionLabel` and pass `ariaLabel`, which
+the panel forwards to the kit `Tabs` as the tablist's accessible name without rendering a header.
 
 #### Scenario: Rendering the item list
 - **WHEN** the panel is given `items` with one active id and one or more disabled items
@@ -52,6 +57,10 @@ not overridable through `SettingsPanel` props. The section header typography def
 #### Scenario: Disabled rows do not fire onSelect
 - **WHEN** a user clicks a `disabled: true` row
 - **THEN** `onSelect` is not called and the active row does not change
+
+#### Scenario: Naming the list without a visible header
+- **WHEN** the panel is given `ariaLabel` and no `sectionLabel`
+- **THEN** the `role="tablist"` is named by `ariaLabel` and no header text is rendered
 
 ---
 

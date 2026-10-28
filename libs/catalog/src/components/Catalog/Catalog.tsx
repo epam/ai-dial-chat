@@ -29,6 +29,7 @@ import {
 import { sortCatalogItems } from '../../utils/catalog-sort';
 import {
   buildCatalogTabs,
+  getCatalogItemTabs,
   resolveTabText,
   scrollSelectedTabIntoView,
 } from '../../utils/catalog-tabs';
@@ -481,7 +482,9 @@ export const Catalog: FC<CatalogProps> = ({
   const tabFiltered = useMemo(
     () =>
       activeTab
-        ? myAppsFiltered.filter((item) => item.type === activeTab)
+        ? myAppsFiltered.filter((item) =>
+            getCatalogItemTabs(item).includes(activeTab as CatalogEntityType),
+          )
         : myAppsFiltered,
     [myAppsFiltered, activeTab],
   );
@@ -768,8 +771,11 @@ export const Catalog: FC<CatalogProps> = ({
                 id: tab.id,
                 label:
                   typeof tab.label === 'string' ? tab.label : String(tab.label),
-                count: myAppsFiltered.filter((item) => item.type === tab.id)
-                  .length,
+                count: myAppsFiltered.filter((item) =>
+                  getCatalogItemTabs(item).includes(
+                    tab.id as CatalogEntityType,
+                  ),
+                ).length,
               }))}
               activeTabId={activeTab}
               onTabChange={handleActiveTabChange}
@@ -828,18 +834,19 @@ export const Catalog: FC<CatalogProps> = ({
 
               {listMountState !== ListMountState.Unmounted && (
                 /* The first preparation needs real width for ag-grid's
-                   layout, but must not add height to the card view. */
+                   layout, but must not add height to the card view. Shown,
+                   the box takes the height left in the scroll body, since the
+                   grid scrolls its own rows; the floor keeps a short viewport
+                   usable, the scroll body scrolling first. */
                 <div
                   inert={viewMode !== CatalogViewMode.Cards}
                   className={mergeClasses(
-                    'pb-8',
+                    viewMode === CatalogViewMode.Cards &&
+                      'h-full min-h-[360px] pb-8',
                     viewMode !== CatalogViewMode.Cards &&
                       (listMountState === ListMountState.Prepared
-                        ? 'invisible h-0 overflow-hidden p-0'
+                        ? 'invisible h-0 overflow-hidden'
                         : 'hidden'),
-                    tabFiltered.length === 0 &&
-                      viewMode === CatalogViewMode.Cards &&
-                      'h-full',
                   )}
                 >
                   <ListView
@@ -853,7 +860,6 @@ export const Catalog: FC<CatalogProps> = ({
                     isFavoriteVisible={isFavoriteVisible}
                     columnVisibility={columnVisibility}
                     onItemClick={onCardClick ?? handleOpenDetails}
-                    stickyHeaderTop={0}
                     selectedItemId={selectedItemId}
                     credentialsBadgeLoggedOutLabel={
                       detailsTexts?.credentialsBadgeLoggedOutLabel

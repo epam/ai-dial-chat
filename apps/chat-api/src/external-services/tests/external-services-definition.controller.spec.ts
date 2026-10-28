@@ -8,6 +8,7 @@ import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FeatureFlagsService } from '../../app-config/feature-flags/feature-flags.service';
 import { FeatureGuard } from '../../app-config/feature-flags/feature.guard';
+import { UserRolesService } from '../../auth/user-roles.service';
 import { ExternalServiceAuthType } from '../dto/external-service.dto';
 import { ExternalServicesController } from '../external-services.controller';
 import { ExternalServicesService } from '../external-services.service';
@@ -26,6 +27,7 @@ const buildApp = async (
     providers: [
       { provide: ExternalServicesService, useValue: service },
       FeatureGuard,
+      { provide: UserRolesService, useValue: { getRoles: () => [] } },
       {
         provide: FeatureFlagsService,
         useValue: { isEnabled: vi.fn().mockResolvedValue(featureEnabled) },

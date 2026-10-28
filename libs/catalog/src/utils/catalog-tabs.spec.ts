@@ -1,7 +1,11 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import type { CatalogItem } from '../models/catalog-item';
-import { buildCatalogTabs, scrollSelectedTabIntoView } from './catalog-tabs';
+import {
+  buildCatalogTabs,
+  getCatalogItemTabs,
+  scrollSelectedTabIntoView,
+} from './catalog-tabs';
 
 const makeItem = (
   overrides: Partial<CatalogItem> & Pick<CatalogItem, 'id' | 'name'>,
@@ -15,7 +19,51 @@ const makeItem = (
   ...overrides,
 });
 
+describe('getCatalogItemTabs', () => {
+  it('falls back to the entity kind when no membership is set', () => {
+    expect(
+      getCatalogItemTabs(
+        makeItem({ id: 'a', name: 'A', type: CatalogEntityType.Agent }),
+      ),
+    ).toEqual([CatalogEntityType.Agent]);
+  });
+
+  it('falls back to the entity kind when the membership is empty', () => {
+    expect(
+      getCatalogItemTabs(makeItem({ id: 'm', name: 'M', catalogTabs: [] })),
+    ).toEqual([CatalogEntityType.Model]);
+  });
+
+  it('returns the supplied membership as given', () => {
+    expect(
+      getCatalogItemTabs(
+        makeItem({
+          id: 'a',
+          name: 'A',
+          type: CatalogEntityType.Agent,
+          catalogTabs: [CatalogEntityType.Agent, CatalogEntityType.Toolset],
+        }),
+      ),
+    ).toEqual([CatalogEntityType.Agent, CatalogEntityType.Toolset]);
+  });
+});
+
 describe('buildCatalogTabs', () => {
+  it('derives tabs from membership rather than the entity kind', () => {
+    const tabs = buildCatalogTabs([
+      makeItem({
+        id: 'mcp-app',
+        name: 'MCP app',
+        type: CatalogEntityType.Agent,
+        catalogTabs: [CatalogEntityType.Toolset],
+      }),
+    ]);
+
+    expect(tabs).toEqual([
+      { id: CatalogEntityType.Toolset, label: 'Toolsets' },
+    ]);
+  });
+
   it('includes a Prompts tab when at least one prompt item is present', () => {
     const tabs = buildCatalogTabs([
       makeItem({ id: '1', name: 'GPT-4' }),

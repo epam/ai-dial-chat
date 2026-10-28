@@ -28,7 +28,9 @@ import {
 import * as AppConfigContextModule from '../../../../context/AppConfigContext';
 import * as UserContextModule from '../../../../context/auth/UserContext';
 import * as ThemeContextModule from '../../../../context/ThemeContext';
+import { ExternalServiceLoginOutcomeType } from '../../../../hooks/externalServices/useExternalServiceLogin';
 import * as deploymentsApi from '../../../../server-api/deployments';
+import * as externalServicesApi from '../../../../server-api/external-services';
 import * as toolsetsApi from '../../../../server-api/toolsets';
 import { AppsEditorEvent } from '../../../../types/apps-editor';
 import { AuthStatus } from '../../../../types/auth-status';
@@ -60,6 +62,24 @@ vi.mock('../../../../server-api/toolsets', () => ({
 vi.mock('../../../../server-api/deployments', () => ({
   getDeploymentDetails: vi.fn(),
 }));
+vi.mock('../../../../server-api/external-services', async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import('../../../../server-api/external-services')
+  >()),
+  listExternalServices: vi.fn(),
+}));
+const { mockLoginExternalService } = vi.hoisted(() => ({
+  mockLoginExternalService: vi.fn(),
+}));
+vi.mock(
+  '../../../../hooks/externalServices/useExternalServiceLogin',
+  async (importOriginal) => ({
+    ...(await importOriginal<
+      typeof import('../../../../hooks/externalServices/useExternalServiceLogin')
+    >()),
+    useExternalServiceLogin: () => ({ login: mockLoginExternalService }),
+  }),
+);
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   Popup: ({
@@ -1752,6 +1772,271 @@ describe('application credential requests from Quick apps', () => {
     ).toBeTruthy();
     fireEvent.click(screen.getByText('Close credentials'));
     expect(screen.queryByRole('dialog')).toBeNull();
+  });
+});
+
+describe('AppEditorIframe — external-service login request', () => {
+  const RAW_APP_ID = 'applications/public/runner app';
+  const ENCODED_APP_ID = 'applications/public/runner%20app';
+  const OAUTH_SERVICE: externalServicesApi.ApplicationExternalServiceDto = {
+    id: 'gitlab-oauth',
+    displayName: 'GitLab',
+    authenticationType: 'OAUTH',
+    userLevelAuthStatus: 'SIGNED_OUT',
+    clientId: 'client',
+    authorizationEndpoint: 'https://gitlab.example.com/oauth/authorize',
+    scopesSupported: ['read_repository'],
+    codeChallenge: 'challenge',
+    codeChallengeMethod: 'S256',
+  };
+
+  let popup: { close: ReturnType<typeof vi.fn> } | undefined;
+
+  const sendRequest = (
+    fields: Record<string, unknown> = {},
+    source: MessageEventSource | null = getEditorWindow(),
+  ) =>
+    postEditorMessage(
+      {
+        type: AppsEditorEvent.RequestExternalServiceLogin,
+        appId: RAW_APP_ID,
+        serviceId: 'gitlab-oauth',
+        offlineUsageConsent: true,
+        ...fields,
+      },
+      source,
+    );
+
+  const mountAndSpy = () => {
+    renderIframe();
+    const iframe = screen.getByTitle('QuickApp') as HTMLIFrameElement;
+    return vi.spyOn(iframe.contentWindow as Window, 'postMessage');
+  };
+
+  const expectResult = async (
+    postMessageSpy: ReturnType<typeof mountAndSpy>,
+    fields: Record<string, unknown>,
+  ) =>
+    waitFor(() =>
+      expect(postMessageSpy).toHaveBeenCalledWith(
+        {
+          type: AppsEditorEvent.ExternalServiceLoginResult,
+          appId: RAW_APP_ID,
+          serviceId: 'gitlab-oauth',
+          reason: undefined,
+          ...fields,
+        },
+        'https://editor.example.com',
+      ),
+    );
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(AppConfigContextModule.useFeatureFlag).mockReturnValue(true);
+    mockUseUser.mockReturnValue({
+      status: AuthStatus.Authenticated,
+      user: { sub: 'u1', providerId: 'local', claims: {}, isAdmin: false },
+      refresh: vi.fn(),
+      reset: vi.fn(),
+    });
+    mockUseTheme.mockReturnValue({
+      currentTheme: 'dark',
+      selectedTheme: 'dark',
+      setTheme: vi.fn(),
+      isLoading: false,
+    });
+    popup = undefined;
+    Object.defineProperty(window, 'open', {
+      configurable: true,
+      value: vi.fn(() => {
+        popup = { close: vi.fn() };
+        return popup;
+      }),
+    });
+    vi.mocked(externalServicesApi.listExternalServices).mockResolvedValue([
+      OAUTH_SERVICE,
+    ]);
+    mockLoginExternalService.mockResolvedValue({
+      type: ExternalServiceLoginOutcomeType.Success,
+    });
+  });
+
+  it('advertises the relay with the credential gates and ignores requests when they are off', () => {
+    vi.mocked(AppConfigContextModule.useFeatureFlag).mockReturnValue(false);
+    renderIframe();
+    const iframe = screen.getByTitle('QuickApp') as HTMLIFrameElement;
+    expect(new URL(iframe.src).searchParams.get('externalServiceLogin')).toBe(
+      'false',
+    );
+
+    sendRequest();
+
+    expect(window.open).not.toHaveBeenCalled();
+    expect(externalServicesApi.listExternalServices).not.toHaveBeenCalled();
+  });
+
+  it('advertises the relay when both credential gates are on', () => {
+    renderIframe();
+    const iframe = screen.getByTitle('QuickApp') as HTMLIFrameElement;
+    expect(new URL(iframe.src).searchParams.get('externalServiceLogin')).toBe(
+      'true',
+    );
+  });
+
+  it('ignores a request from another window or without an explicit consent choice', () => {
+    renderIframe();
+
+    sendRequest({}, window);
+    sendRequest({ offlineUsageConsent: undefined });
+    sendRequest({ serviceId: '' });
+
+    expect(window.open).not.toHaveBeenCalled();
+    expect(externalServicesApi.listExternalServices).not.toHaveBeenCalled();
+  });
+
+  it('signs in at user level with the forwarded consent and posts success without the credentials dialog', async () => {
+    const postMessageSpy = mountAndSpy();
+
+    sendRequest();
+
+    await expectResult(postMessageSpy, { success: true });
+    expect(externalServicesApi.listExternalServices).toHaveBeenCalledWith(
+      ENCODED_APP_ID,
+    );
+    expect(mockLoginExternalService).toHaveBeenCalledWith({
+      appId: ENCODED_APP_ID,
+      serviceId: 'gitlab-oauth',
+      credentialsLevel: 'USER',
+      authenticationType: 'OAUTH',
+      oauthSettings: {
+        clientId: 'client',
+        authorizationEndpoint: 'https://gitlab.example.com/oauth/authorize',
+        scopes: ['read_repository'],
+        codeChallenge: 'challenge',
+        codeChallengeMethod: 'S256',
+      },
+      offlineUsageConsent: true,
+      forceStale: false,
+      popup,
+    });
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('reserves the popup before requesting the service listing', async () => {
+    const postMessageSpy = mountAndSpy();
+
+    sendRequest();
+
+    await expectResult(postMessageSpy, { success: true });
+    expect(vi.mocked(window.open).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(externalServicesApi.listExternalServices).mock
+        .invocationCallOrder[0],
+    );
+  });
+
+  it('forwards a declined consent instead of defaulting it', async () => {
+    const postMessageSpy = mountAndSpy();
+
+    sendRequest({ offlineUsageConsent: false });
+
+    await expectResult(postMessageSpy, { success: true });
+    expect(mockLoginExternalService).toHaveBeenCalledWith(
+      expect.objectContaining({ offlineUsageConsent: false }),
+    );
+  });
+
+  it('posts popup-blocked without requesting the listing', async () => {
+    Object.defineProperty(window, 'open', {
+      configurable: true,
+      value: vi.fn(() => null),
+    });
+    const postMessageSpy = mountAndSpy();
+
+    sendRequest();
+
+    await expectResult(postMessageSpy, {
+      success: false,
+      reason: 'popup-blocked',
+    });
+    expect(externalServicesApi.listExternalServices).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [[], 'not-found'],
+    [
+      [{ ...OAUTH_SERVICE, authenticationType: 'API_KEY' }],
+      'unsupported-auth-type',
+    ],
+    [
+      [{ ...OAUTH_SERVICE, authenticationType: 'NONE' }],
+      'unsupported-auth-type',
+    ],
+  ])(
+    'closes the popup and posts %s → %s without signing in',
+    async (services, reason) => {
+      vi.mocked(externalServicesApi.listExternalServices).mockResolvedValue(
+        services as never,
+      );
+      const postMessageSpy = mountAndSpy();
+
+      sendRequest();
+
+      await expectResult(postMessageSpy, { success: false, reason });
+      expect(popup?.close).toHaveBeenCalledOnce();
+      expect(mockLoginExternalService).not.toHaveBeenCalled();
+    },
+  );
+
+  it('closes the popup and posts failure when the listing fails', async () => {
+    vi.mocked(externalServicesApi.listExternalServices).mockRejectedValue(
+      new Error('boom'),
+    );
+    const postMessageSpy = mountAndSpy();
+
+    sendRequest();
+
+    await expectResult(postMessageSpy, { success: false, reason: 'failure' });
+    expect(popup?.close).toHaveBeenCalledOnce();
+  });
+
+  it.each([
+    [ExternalServiceLoginOutcomeType.Cancelled, 'cancelled'],
+    [
+      ExternalServiceLoginOutcomeType.AdminConsentRequired,
+      'admin-consent-required',
+    ],
+    [ExternalServiceLoginOutcomeType.OfflineUnavailable, 'offline-unavailable'],
+    [ExternalServiceLoginOutcomeType.Failure, 'failure'],
+  ])('maps the %s outcome to the %s reason', async (outcome, reason) => {
+    mockLoginExternalService.mockResolvedValue({ type: outcome });
+    const postMessageSpy = mountAndSpy();
+
+    sendRequest();
+
+    await expectResult(postMessageSpy, { success: false, reason });
+  });
+
+  it('signs a DIAL-native service in through the same login and refreshes stale credentials', async () => {
+    vi.mocked(externalServicesApi.listExternalServices).mockResolvedValue([
+      {
+        ...OAUTH_SERVICE,
+        authenticationType: 'DIAL_NATIVE',
+        userLevelAuthStatus: 'FAILED',
+      },
+    ]);
+    const postMessageSpy = mountAndSpy();
+
+    sendRequest();
+
+    await expectResult(postMessageSpy, { success: true });
+    expect(mockLoginExternalService).toHaveBeenCalledWith(
+      expect.objectContaining({
+        authenticationType: 'DIAL_NATIVE',
+        credentialsLevel: 'USER',
+        forceStale: true,
+        popup,
+      }),
+    );
   });
 });
 

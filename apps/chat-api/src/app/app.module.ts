@@ -19,6 +19,7 @@ import { FilesModule } from '../files/files.module';
 import { HealthController } from '../health/health.controller';
 import { ModelsModule } from '../models/models.module';
 import { OfflineCredentialsModule } from '../offline-credentials/offline-credentials.module';
+import { ProjectsModule } from '../projects/projects.module';
 import { PromptModule } from '../prompts/prompt.module';
 import { PublishModule } from '../publish/publish.module';
 import { RateModule } from '../rate/rate.module';
@@ -66,6 +67,7 @@ import { createAppCacheOptions } from './cache.config';
     ShareModule,
     PublishModule,
     ScheduledTasksModule,
+    ProjectsModule,
     OfflineCredentialsModule,
     SkillsModule,
     TextRefinementModule,

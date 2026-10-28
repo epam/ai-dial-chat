@@ -35,12 +35,17 @@ vi.mock('../../../hooks/unsaved-changes/useBuilderLeaveGuard', () => ({
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
-vi.mock('../../../context/AppConfigContext', () => ({
-  useAppConfig: () => ({
-    status: 'ready',
-    config: { aiTextRefinementAvailable: available },
-  }),
-}));
+vi.mock('../../../context/AppConfigContext', async () => {
+  const { useCatalogCreationState } =
+    await import('../../../context/tests/catalog-creation-state');
+  return {
+    useAppConfig: () => ({
+      status: 'ready',
+      config: { aiTextRefinementAvailable: available },
+      ...useCatalogCreationState(),
+    }),
+  };
+});
 vi.mock('../../../context/auth/UserContext', () => ({
   useUser: () => ({ user: { bucket: 'my-bucket' } }),
 }));
@@ -110,6 +115,10 @@ describe('skill refinement host integration', () => {
       );
       expect(form.labels?.refineWithAiLabel).toBe('textRefinement.action');
       expect(form.labels?.refineUndoLabel).toBe('textRefinement.undo');
+      expect(form.labels?.refineRefiningLabel).toBe('textRefinement.refining');
+      expect(form.labels?.refineRegenerateLabel).toBe(
+        'textRefinement.regenerate',
+      );
     },
   );
   it.each([false, undefined])(

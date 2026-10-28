@@ -23,13 +23,21 @@ const TAB_ORDER: CatalogEntityType[] = [
   CatalogEntityType.Prompt,
 ];
 
-/** Derives entity-type tabs from items present in the catalog, sorted by canonical order. */
+/** Returns the Browse tabs `item` is listed under: its non-empty `catalogTabs`, otherwise `[item.type]`. */
+export const getCatalogItemTabs = (
+  item: CatalogItem,
+): readonly CatalogEntityType[] =>
+  item.catalogTabs != null && item.catalogTabs.length > 0
+    ? item.catalogTabs
+    : [item.type];
+
+/** Derives entity-type tabs from the tabs the catalog's items are listed under, sorted by canonical order. */
 export const buildCatalogTabs = (
   items: CatalogItem[],
   tabLabels?: Partial<Record<CatalogEntityType, string>>,
 ): TabModel[] => {
   const labels = { ...DEFAULT_TAB_LABELS, ...tabLabels };
-  const presentTypes = new Set(items.map((item) => item.type));
+  const presentTypes = new Set(items.flatMap(getCatalogItemTabs));
   return TAB_ORDER.filter((type) => presentTypes.has(type)).map((type) => ({
     id: type,
     label: labels[type] ?? type,

@@ -5,6 +5,10 @@ import {
   getCredentialsBadgeState,
   getCredentialsUiState,
 } from '@epam/ai-dial-catalog';
+import {
+  CatalogCreationType,
+  type CatalogCreationPermissionsDto,
+} from '@epam/ai-dial-chat-api-client';
 import { FavoriteEntityType } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
@@ -77,6 +81,9 @@ const capturedContentFileProps: {
 } = { current: null };
 
 vi.mock('react-router', () => ({
+  Link: ({ to, children }: { to: string; children?: ReactNode }) => (
+    <a href={to}>{children}</a>
+  ),
   useNavigate: () => mockNavigate,
   useSearchParams: () => [mockSearchParams, mockSetSearchParams],
 }));
@@ -97,6 +104,8 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
   ...(await importOriginal<object>()),
   Catalog: ({
     createOptions,
+    createMenuByTab,
+    hideCreateButton,
     items,
     favorites,
     onToggleFavorite,
@@ -131,6 +140,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     isUnpublishVisible,
     publishLabels,
     detailsTexts,
+    detailsLimitsFooterNote,
     ruleSourceOptions,
     onFetchExistingRules,
     isShareVisible,
@@ -146,6 +156,10 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
   }: {
     isFullWidth?: boolean;
     createOptions?: DropdownItem[];
+    createMenuByTab?: Partial<
+      Record<string, { options: DropdownItem[]; search?: unknown }>
+    >;
+    hideCreateButton?: boolean;
     items?: CatalogItem[];
     favorites?: CatalogItem[];
     onToggleFavorite?: (id: string, isFavorite: boolean) => void;
@@ -186,6 +200,7 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
     onUnpublish?: (item: CatalogItem, folderPath: string[]) => Promise<void>;
     isUnpublishVisible?: (item: CatalogItem) => boolean;
     detailsTexts?: { apiKeyHeaderHint?: (header: string) => string };
+    detailsLimitsFooterNote?: ReactNode;
     publishLabels?: {
       credentialsLabel?: string;
       credentialsHint?: string;
@@ -236,12 +251,31 @@ vi.mock('@epam/ai-dial-catalog', async (importOriginal) => ({
         <output aria-label="Catalog item ids">
           {(items ?? []).map((item) => `${item.id}:${item.type}`).join(',')}
         </output>
+        <output aria-label="Catalog item tabs">
+          {(items ?? [])
+            .map((item) => `${item.id}:${(item.catalogTabs ?? []).join('+')}`)
+            .join(',')}
+        </output>
         <output aria-label="Is full width">
           {String(Boolean(isFullWidth))}
         </output>
         <output aria-label="Active tab">{activeTab ?? ''}</output>
+        <output aria-label="Create button hidden">
+          {String(Boolean(hideCreateButton))}
+        </output>
+        <output aria-label="Create menu by tab">
+          {Object.entries(createMenuByTab ?? {})
+            .map(
+              ([tab, menu]) =>
+                `${tab}=${(menu?.options ?? []).map((option) => option.key).join('+')}`,
+            )
+            .join(',')}
+        </output>
         <output aria-label="API key header hint">
           {detailsTexts?.apiKeyHeaderHint?.('X-Api-Key') ?? ''}
+        </output>
+        <output aria-label="Limits footer note">
+          {detailsLimitsFooterNote}
         </output>
         <output aria-label="Publish credentials label">
           {publishLabels?.credentialsLabel ?? ''}
@@ -692,6 +726,11 @@ describe('CatalogView', () => {
     vi.mocked(useAppConfig).mockReturnValue({
       status: UserConfigStatus.Ready,
       features: {},
+      catalogCreationStatus: UserConfigStatus.Ready,
+      catalogCreationPermissions: {
+        allowedTypes: Object.values(CatalogCreationType),
+        restrictedSchemaIds: [],
+      },
       config: {
         activeEventId: null,
         appVersion: '0.0.1',
@@ -803,6 +842,72 @@ describe('CatalogView', () => {
     expect(screen.getByLabelText('API key header hint').textContent).toBe(
       CatalogI18nKeys.CredentialsApiKeyHeaderHint,
     );
+  });
+
+  describe('MCP applications under Toolsets', () => {
+    const mcpAppId = 'applications/bucket/openapi-mcp';
+
+    const mockMcpApplication = () =>
+      vi.mocked(useDeployments).mockReturnValue({
+        items: [
+          {
+            id: mcpAppId,
+            displayName: 'OpenAPI MCP',
+            type: 'application',
+            interfaces: ['mcp'],
+          },
+        ],
+        selectedItemId: null,
+        setSelectedItemId: vi.fn(),
+        restoreSelectedItemId: vi.fn(),
+        restoreDefaultSelection: vi.fn(),
+        selectedDeploymentConfiguration: null,
+        isLoading: false,
+        error: null,
+        schemas: [],
+        toolsets: [],
+        refetchToolsets: vi.fn(),
+        refetchDeployments: vi.fn(),
+        selectedDeploymentDetails: null,
+        isDeploymentDetailsLoading: false,
+        mergeSharedItem: vi.fn(),
+      });
+
+    it('lists an MCP-only application under Toolsets while keeping it an agent', () => {
+      mockMcpApplication();
+
+      render(<CatalogView />);
+
+      expect(screen.getByLabelText('Catalog item ids').textContent).toBe(
+        `${mcpAppId}:${CatalogEntityType.Agent}`,
+      );
+      expect(screen.getByLabelText('Catalog item tabs').textContent).toBe(
+        `${mcpAppId}:${CatalogEntityType.Toolset}`,
+      );
+    });
+
+    it('favorites an MCP application as a deployment, not a toolset', async () => {
+      mockMcpApplication();
+      const toggleFavorite = vi.fn().mockResolvedValue(undefined);
+      vi.mocked(useFavoriteApplications).mockReturnValue({
+        favoriteIds: new Set([mcpAppId]),
+        isLoading: false,
+        toggleFavorite,
+      });
+
+      render(<CatalogView />);
+      await user.click(
+        screen.getByRole('button', { name: `favorite ${mcpAppId}` }),
+      );
+
+      await waitFor(() =>
+        expect(toggleFavorite).toHaveBeenCalledWith(
+          mcpAppId,
+          true,
+          FavoriteEntityType.Deployment,
+        ),
+      );
+    });
   });
 
   describe('publish wiring', () => {
@@ -1177,6 +1282,23 @@ describe('CatalogView', () => {
       );
       render(<CatalogView isSelectorMode onClose={vi.fn()} />);
       expect(screen.getByLabelText('Catalog item ids')).toBeTruthy();
+    });
+
+    it('passes a Limits footer note pointing to the Usage page', () => {
+      render(<CatalogView />);
+      expect(screen.getByLabelText('Limits footer note').textContent).toBe(
+        CatalogI18nKeys.DetailsLimitsFooterNote,
+      );
+    });
+
+    it('omits the Limits footer note when the Usage page is hidden', () => {
+      vi.mocked(useUiFeature).mockImplementation(
+        (feature) =>
+          DEFAULT_ENABLED_UI_FEATURES.has(feature) ||
+          feature === OverlayFeature.HideUsagePage,
+      );
+      render(<CatalogView />);
+      expect(screen.getByLabelText('Limits footer note').textContent).toBe('');
     });
   });
 
@@ -1594,6 +1716,222 @@ describe('CatalogView', () => {
       );
       expect(showNotification).toHaveBeenCalledOnce();
       expect(screen.getByLabelText('Catalog item ids')).toBeTruthy();
+    });
+  });
+
+  describe('catalog creation permissions', () => {
+    const ALL_TYPES = Object.values(CatalogCreationType);
+    const sharedEditablePrompt = {
+      id: 'prompts/owner-bucket/Work/summarize',
+      name: 'summarize',
+      description: '',
+      content: 'Summarize',
+      folderId: 'Work',
+      createdAt: 1,
+      updatedAt: 2,
+      isMy: false,
+      canEdit: true,
+      sharedWithMe: true,
+    };
+
+    const mockCreation = (
+      catalogCreationStatus: UserConfigStatus,
+      catalogCreationPermissions: CatalogCreationPermissionsDto | null,
+    ) =>
+      vi.mocked(useAppConfig).mockReturnValue({
+        ...vi.mocked(useAppConfig)(),
+        catalogCreationStatus,
+        catalogCreationPermissions,
+      });
+
+    const allowOnly = (...allowedTypes: CatalogCreationType[]) =>
+      mockCreation(UserConfigStatus.Ready, {
+        allowedTypes,
+        restrictedSchemaIds: [],
+      });
+
+    const mockSchemas = () =>
+      vi.mocked(useDeployments).mockReturnValue({
+        ...vi.mocked(useDeployments)(),
+        schemas: [
+          { id: 'schema-A', displayName: 'Runner' },
+          { id: 'schema-B', displayName: 'Runner' },
+        ],
+      } as ReturnType<typeof useDeployments>);
+
+    const menuByTab = () =>
+      screen.getByLabelText('Create menu by tab').textContent ?? '';
+    const isCreateHidden = () =>
+      screen.getByLabelText('Create button hidden').textContent === 'true';
+
+    beforeEach(() => {
+      vi.mocked(useUiFeature).mockReset();
+      vi.mocked(useUiFeature).mockImplementation((feature) =>
+        DEFAULT_ENABLED_UI_FEATURES.has(feature),
+      );
+    });
+
+    it('offers every create option when every type is allowed', () => {
+      mockSchemas();
+      render(<CatalogView />);
+
+      expect(isCreateHidden()).toBe(false);
+      expect(menuByTab()).toBe(
+        [
+          `${CatalogEntityType.Agent}=custom-app+runner:schema-A+runner:schema-B`,
+          `${CatalogEntityType.Toolset}=toolset`,
+          `${CatalogEntityType.Skill}=skill-write-instructions+skill-upload`,
+          `${CatalogEntityType.Prompt}=prompt`,
+        ].join(','),
+      );
+    });
+
+    it.each([UserConfigStatus.Loading, UserConfigStatus.Error])(
+      'offers no create control while permissions are %s but keeps browsing',
+      (status) => {
+        vi.mocked(usePrompts).mockReturnValue({
+          ...vi.mocked(usePrompts)(),
+          sharedWithMe: [sharedEditablePrompt],
+        });
+        mockSchemas();
+        mockCreation(status, null);
+        render(<CatalogView />);
+
+        expect(isCreateHidden()).toBe(true);
+        expect(
+          screen.queryByRole('button', { name: CatalogI18nKeys.CreatePrompt }),
+        ).toBeNull();
+        expect(screen.getByLabelText('Catalog item ids').textContent).toContain(
+          sharedEditablePrompt.id,
+        );
+      },
+    );
+
+    it('hides every Create control when no type is allowed', () => {
+      mockSchemas();
+      allowOnly();
+      render(<CatalogView />);
+
+      expect(isCreateHidden()).toBe(true);
+      expect(menuByTab()).toBe(
+        [
+          `${CatalogEntityType.Agent}=`,
+          `${CatalogEntityType.Toolset}=`,
+          `${CatalogEntityType.Skill}=`,
+          `${CatalogEntityType.Prompt}=`,
+        ].join(','),
+      );
+    });
+
+    it('removes both Skill actions, and only them, when skill creation is denied', () => {
+      allowOnly(
+        ...ALL_TYPES.filter((type) => type !== CatalogCreationType.Skill),
+      );
+      render(<CatalogView />);
+
+      expect(isCreateHidden()).toBe(false);
+      expect(
+        screen.queryByRole('button', {
+          name: CatalogI18nKeys.CreateSkillWriteInstructions,
+        }),
+      ).toBeNull();
+      expect(
+        screen.queryByRole('button', {
+          name: CatalogI18nKeys.CreateSkillUpload,
+        }),
+      ).toBeNull();
+      expect(menuByTab()).toContain(`${CatalogEntityType.Skill}=,`);
+      expect(
+        screen.getByRole('button', { name: CatalogI18nKeys.CreatePrompt }),
+      ).toBeTruthy();
+    });
+
+    it('removes only the restricted schema among runners sharing a label', () => {
+      mockSchemas();
+      mockCreation(UserConfigStatus.Ready, {
+        allowedTypes: ALL_TYPES,
+        restrictedSchemaIds: ['schema-A'],
+      });
+      render(<CatalogView />);
+
+      expect(menuByTab()).toContain(
+        `${CatalogEntityType.Agent}=custom-app+runner:schema-B`,
+      );
+    });
+
+    it('removes every runner when the schema-app type is denied', () => {
+      mockSchemas();
+      allowOnly(
+        ...ALL_TYPES.filter((type) => type !== CatalogCreationType.SchemaApp),
+      );
+      render(<CatalogView />);
+
+      expect(menuByTab()).toContain(`${CatalogEntityType.Agent}=custom-app,`);
+    });
+
+    it('keeps an existing prompt editable when prompt creation is denied', async () => {
+      vi.mocked(usePrompts).mockReturnValue({
+        ...vi.mocked(usePrompts)(),
+        sharedWithMe: [sharedEditablePrompt],
+      });
+      allowOnly(
+        ...ALL_TYPES.filter((type) => type !== CatalogCreationType.Prompt),
+      );
+      render(<CatalogView />);
+
+      expect(
+        screen.queryByRole('button', { name: CatalogI18nKeys.CreatePrompt }),
+      ).toBeNull();
+      await user.click(
+        screen.getByRole('button', {
+          name: `edit ${sharedEditablePrompt.id}`,
+        }),
+      );
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/prompt-editor?id=prompts%2Fowner-bucket%2FWork%2Fsummarize',
+      );
+    });
+
+    it('does not let an allowed type re-enable a feature an override disabled', () => {
+      vi.mocked(useUiFeature).mockImplementation(
+        (feature) =>
+          DEFAULT_ENABLED_UI_FEATURES.has(feature) &&
+          feature !== OverlayFeature.CustomApps,
+      );
+      render(<CatalogView />);
+
+      expect(menuByTab()).toContain(`${CatalogEntityType.Agent}=,`);
+    });
+
+    it('reads the same global features whatever the creation permissions', () => {
+      render(<CatalogView />);
+      const allowedCalls = vi
+        .mocked(useUiFeature)
+        .mock.calls.map(([feature]) => feature);
+      vi.mocked(useUiFeature).mockClear();
+
+      allowOnly();
+      render(<CatalogView />);
+      const deniedCalls = vi
+        .mocked(useUiFeature)
+        .mock.calls.map(([feature]) => feature);
+
+      expect(new Set(deniedCalls)).toEqual(new Set(allowedCalls));
+      expect(
+        vi
+          .mocked(useUiFeature)
+          .mock.results.every(
+            (result, index) =>
+              result.value ===
+              DEFAULT_ENABLED_UI_FEATURES.has(deniedCalls[index]),
+          ),
+      ).toBe(true);
+    });
+
+    it('keeps the Create control hidden in selector mode even when creation is allowed', () => {
+      render(<CatalogView isSelectorMode onClose={vi.fn()} />);
+
+      expect(isCreateHidden()).toBe(true);
     });
   });
 });

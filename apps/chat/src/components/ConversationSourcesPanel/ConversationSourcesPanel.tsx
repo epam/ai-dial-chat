@@ -43,6 +43,7 @@ import {
   useSourcesSidebarData,
 } from '../../context/SourcesSidebarContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
+import { useLatestCanvasRequest } from '../../hooks/attachment/useLatestCanvasRequest';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useCloseSourcesSidebarOnSubjectChange } from '../../hooks/sources-sidebar/useCloseSourcesSidebarOnSubjectChange';
 import useLocalStorage from '../../hooks/useLocalStorage';
@@ -104,6 +105,7 @@ const ConversationSourcesPanelContainer: FC = () => {
   });
   const { resolvers, options } = useAttachmentCanvasResolvers();
   const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
+  const startCanvasRequest = useLatestCanvasRequest();
   const activeScheduledTask = useActiveScheduledTask();
   const isTaskConversation =
     activeScheduledTask.status === ActiveScheduledTaskStatus.TaskConversation;
@@ -118,15 +120,18 @@ const ConversationSourcesPanelContainer: FC = () => {
 
   const handleAttachmentClick = useCallback(
     (attachment: DisplayAttachment) => {
-      void openAttachmentCanvas(attachment).then((opened) => {
-        if (opened) {
-          handleClose();
-        } else {
-          downloadAttachment(attachment);
-        }
-      });
+      const shouldCommit = startCanvasRequest();
+      void openAttachmentCanvas(attachment, undefined, shouldCommit).then(
+        (opened) => {
+          if (opened) {
+            handleClose();
+          } else if (shouldCommit()) {
+            downloadAttachment(attachment);
+          }
+        },
+      );
     },
-    [openAttachmentCanvas, downloadAttachment, handleClose],
+    [openAttachmentCanvas, startCanvasRequest, downloadAttachment, handleClose],
   );
 
   /*
@@ -167,6 +172,7 @@ const ConversationSourcesPanelContainer: FC = () => {
       /* A `…pdf#page=N` source goes through the canvas's reference-PDF
        * resolver (it only runs for `referenceUrl` with no `url`), which keeps the
        * page; the generic PDF path strips the fragment and opens page 1. */
+      const shouldCommit = startCanvasRequest();
       const pageReference = parsePdfPageReference(url);
       if (pageReference?.page != null) {
         const pageAttachment: DisplayAttachment = {
@@ -177,10 +183,13 @@ const ConversationSourcesPanelContainer: FC = () => {
           status: RequestStatus.Idle,
           referenceUrl: url,
         };
-        if (await openAttachmentCanvas(pageAttachment)) {
+        if (
+          await openAttachmentCanvas(pageAttachment, undefined, shouldCommit)
+        ) {
           handleClose();
           return;
         }
+        if (!shouldCommit()) return;
         if (isDialFileId(pageReference.baseUrl)) {
           downloadAttachment({
             ...pageAttachment,
@@ -206,18 +215,23 @@ const ConversationSourcesPanelContainer: FC = () => {
         status: RequestStatus.Idle,
         url,
       };
-      const opened = await openAttachmentCanvas(attachment);
+      const opened = await openAttachmentCanvas(
+        attachment,
+        undefined,
+        shouldCommit,
+      );
       if (opened) {
         handleClose();
         return;
       }
+      if (!shouldCommit()) return;
       if (!isDialFileId(url)) {
         window.open(url, '_blank', 'noopener,noreferrer');
       } else {
         downloadAttachment(attachment);
       }
     },
-    [openAttachmentCanvas, downloadAttachment, handleClose],
+    [openAttachmentCanvas, startCanvasRequest, downloadAttachment, handleClose],
   );
 
   const downloadableAttachments = useMemo(

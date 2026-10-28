@@ -52,7 +52,7 @@ The hook receives the three calls through its injected `SkillDetailsApi` port; t
 
 A manifest that reads successfully SHALL then be passed through `parseSkillManifestDocument` (`libs/chat-hooks/src/skill/skill-manifest.ts`), whose output feeds three parts of the result: `promptContent.content` from the body, `promptContent.description` from the frontmatter `description`, and the Overview's Specification section from `about`.
 
-A file listing that resolves SHALL feed two parts of the result: the Overview's Details section (the file count) and the Content tab's picker options.
+A file listing that resolves SHALL feed two parts of the result: the Overview's Specification section (the file count) and the Content tab's picker options.
 
 A metadata response that resolves SHALL be the authoritative source for the Overview's Author and Last updated rows. The catalog listing entry (`skills.find((candidate) => candidate.url === item.id)`) MAY still seed the panel's first paint and SHALL remain the fallback when the metadata request rejects, but SHALL NOT be the sole source of provenance. Ownership and editability SHALL continue to come from the listing entry and its namespace — the metadata response carries no ownership fields and SHALL NOT be consulted for them.
 
@@ -69,7 +69,7 @@ An unparseable `item.id` SHALL resolve `undefined` without issuing any request.
 #### Scenario: All three requests succeed
 
 - **WHEN** a user opens a skill's details panel, the manifest read resolves text with frontmatter, the file listing resolves three files, and the metadata request resolves with an author and an update timestamp
-- **THEN** `onFetchDetails` resolves `promptContent` carrying the body, the frontmatter description, and three picker options, plus an `overview` with a Specification section and a Details section whose Author and Last updated rows come from the metadata response
+- **THEN** `onFetchDetails` resolves `promptContent` carrying the body, the frontmatter description, and three picker options, plus an `overview` with one Specification section whose Created by and Last updated rows come from the metadata response
 
 #### Scenario: Shared skill opened after a full page reload
 
@@ -161,7 +161,7 @@ A manifest that downloads but fails to parse is **not** a failure of any of the 
 #### Scenario: Malformed frontmatter
 
 - **WHEN** the manifest downloads but its frontmatter fails to parse
-- **THEN** the Content tab renders the whole file as its body, no summary line is shown, the Overview has no Specification section, and no notification appears
+- **THEN** the Content tab renders the whole file as its body, no summary line is shown, the Overview has no frontmatter rows, and no notification appears
 
 #### Scenario: All three fail
 
@@ -172,21 +172,16 @@ A manifest that downloads but fails to parse is **not** a failure of any of the 
 
 ### Requirement: The Overview section describes the skill's provenance and files
 
-The `overview` returned for a skill SHALL be up to two `CatalogItemOverview` sections, in order.
-
-**Specification** — title `catalog.details.skill.specificationSection`. Built from the parsed manifest's `about`, with each row omitted when its field is absent:
+The `overview` returned for a skill SHALL be exactly one `CatalogItemOverview` section, titled `catalog.details.specificationSection` (`'Specification'`, the same key the prompt Overview uses). The section title SHALL NOT repeat the entity type. Its specs, in order:
 
 1. `catalog.details.skill.whenToUse` → `about.whenToUse`.
 2. `catalog.details.skill.allowedTools` → `about.allowedTools` joined with ` · `, matching the existing deployment mappers.
 3. `catalog.details.skill.bundledResources` → `about.bundledResources` joined with ` · `.
+4. `catalog.details.skill.author` (`'Created by'`) → the skill's `author`, included only when the resolved metadata carries one.
+5. `catalog.details.skill.updated` → `formatCalendarDate(updatedAt)` (an absolute calendar date, e.g. `'22/7/2026'` — not the relative `formatLastUsed` phrasing used for catalog list rows). The row is always present; its value is an empty string when no timestamp resolved.
+6. `catalog.details.skill.fileCount` → the number of `nodeType: 'item'` entries returned by the file listing.
 
-`about.skillPrompt` SHALL NOT be rendered: it duplicates the manifest body already shown on the Content tab. The whole section SHALL be omitted when no row resolved.
-
-**Details** — title `catalog.details.skill.section`, with specs in order:
-
-1. `catalog.details.skill.author` → the skill's `author`, included only when the resolved metadata carries one.
-2. `catalog.details.skill.updated` → `formatCalendarDate(updatedAt)` (an absolute calendar date, e.g. `'22/7/2026'` — not the relative `formatLastUsed` phrasing used for catalog list rows). The row is always present; its value is an empty string when no timestamp resolved.
-3. `catalog.details.skill.fileCount` → the number of `nodeType: 'item'` entries returned by the file listing.
+Rows 1–3 come from the parsed manifest's `about` and are each omitted when their field is absent (or when no frontmatter parsed). `about.skillPrompt` SHALL NOT be rendered: it duplicates the manifest body already shown on the Content tab.
 
 `author` and `updatedAt` SHALL come from the `getSkillMetadata` response when that request fulfilled, and from the catalog listing entry only when it rejected. Neither value SHALL be invented or derived from any other source: not from `SKILL.md` or another supporting file's own file-level `author`/`updatedAt`, not from the current user, not from the share sender, and not from the current time. No placeholder text is rendered in place of a missing value.
 
@@ -194,17 +189,17 @@ Per-file rows SHALL NOT appear in the Overview. The files are enumerated by the 
 
 File-listing entries with `nodeType: 'folder'` SHALL be excluded from the count. Sizes are not shown: `SkillMetadataItemDto` exposes no content-length field.
 
-No new i18n keys are introduced: `catalog.details.skill.author` and `catalog.details.skill.updated` already exist. RTL/direction impact: none — the Overview rows already use logical properties and their layout, ordering, and icons are unchanged. Accessibility impact: none — the rows keep their existing markup and labelling; no new interactive control, ARIA role, or keyboard affordance is added.
+`catalog.details.specificationSection` replaces the former per-entity section titles `catalog.details.prompt.section`, `catalog.details.skill.section` and `catalog.details.skill.specificationSection`, which no longer exist. RTL/direction impact: none — the Overview rows already use logical properties and their layout, ordering, and icons are unchanged. Accessibility impact: none — the rows keep their existing markup and labelling; no new interactive control, ARIA role, or keyboard affordance is added.
 
 #### Scenario: Skill with frontmatter and two files
 
 - **WHEN** the frontmatter carries `when_to_use` and `allowed_tools`, the metadata response carries an author, and the file listing returns two files and one folder
-- **THEN** the Overview shows a Specification section with a when-to-use row and an allowed-tools row, followed by a Details section with the author row, the updated row, and a file count of `2`
+- **THEN** the Overview shows a single Specification section with a when-to-use row and an allowed-tools row, followed by the author row, the updated row, and a file count of `2`
 
 #### Scenario: Provenance comes from the metadata response, not the listing
 
 - **WHEN** the catalog listing entry for a shared skill carries no `author` or `updatedAt`, and `getSkillMetadata` resolves with both
-- **THEN** the Details section renders both values from the metadata response
+- **THEN** the Specification section renders both values from the metadata response
 
 #### Scenario: Overview carries no file rows
 
@@ -214,7 +209,7 @@ No new i18n keys are introduced: `catalog.details.skill.author` and `catalog.det
 #### Scenario: Skill with no frontmatter
 
 - **WHEN** the manifest has no frontmatter
-- **THEN** no Specification section is rendered and the Details section renders unchanged
+- **THEN** the Specification section renders only the author, updated, and file-count rows
 
 #### Scenario: Skill with no author
 
@@ -224,7 +219,7 @@ No new i18n keys are introduced: `catalog.details.skill.author` and `catalog.det
 #### Scenario: `SKILL.md`'s own file metadata is never substituted
 
 - **WHEN** the file listing's `SKILL.md` entry carries its own `author` and `updatedAt`
-- **THEN** neither value reaches the Details section
+- **THEN** neither value reaches the Specification section
 
 #### Scenario: Skill prompt is not duplicated
 
@@ -235,8 +230,8 @@ No new i18n keys are introduced: `catalog.details.skill.author` and `catalog.det
 
 ### Requirement: i18n, RTL, accessibility, and caching contract for the skill details panel
 
-- **i18n keys**: the existing `catalog.details.skill.section` (`'Skill'`, now the Details section title), `catalog.details.skill.author` (`'Author'`), `catalog.details.skill.updated` (`'Last updated'`), `catalog.details.skill.fileCount` (`'Files'`); `catalog.details.skill.specificationSection` (`'Specification'`), `catalog.details.skill.whenToUse` (`'When to use'`), `catalog.details.skill.allowedTools` (`'Allowed tools'`), `catalog.details.skill.bundledResources` (`'Bundled resources'`), `catalog.details.contentFileSelectorAriaLabel` (`'Select file'`), `catalog.details.contentFileCount` (`'{{count}} files'`), `catalog.details.contentFileLoading` (`'Loading file'`), and `catalog.details.contentFileError` (`'Failed to load this file.'`); plus, from this revision, `catalog.details.contentFileUnsupported`, whose English value SHALL be the existing `attachmentCanvas.unsupportedLabel` string (`'Preview is not supported for this file'`) rather than a newly-authored duplicate. All declared in `apps/chat/src/constants/translation-keys.ts` and `en.json`. Before adding any key, its English value SHALL be checked against `en.json` for an existing equivalent, per the duplicate-value rule. The lib receives resolved strings only — `libs/catalog` SHALL NOT call `useTranslation`.
-- **App-level adapter contract**: `libs/catalog` receives the manifest body as an already-resolved `string` on `CatalogItemTabData.promptContent.content`, its summary on `promptContent.description`, the selector's options as a resolved hierarchy of `{ type, id, name }` (folders additionally carrying nested `items`) on `promptContent.files`, and the Specification and Details rows as resolved label/value pairs on `overview`. For supporting files it receives a host-rendered `ReactNode` through `renderContentFilePreview(fileId, fileName)`. Bucket names, the `SKILL.md` filename, the distinction between an opaque Core listing id and the endpoint's file-relative `filePath`, the skills endpoint, raw bytes, MIME handling, attachment creation, app contexts, preview lifecycle coordination, and `AttachmentCanvasBody` all stay outside `libs/catalog`: the DIAL-Core-shaped details pipeline (`useSkillItemDetails`, `SKILL_MANIFEST_FILE`, path normalisation, manifest parsing, MIME handling, `skillFileToAttachment`) lives in `libs/chat-hooks`, behind an injected `SkillDetailsApi` port, while the configured API wrappers, app contexts, attachment-canvas resolvers and `AttachmentCanvasBody` rendering stay in `apps/chat`. The lib SHALL NOT gain a skill branch or an attachment-canvas dependency: it knows only that `files` is a tree and that the host can render a picked opaque id/basename pair.
+- **i18n keys**: `catalog.details.specificationSection` (`'Specification'`, shared with the prompt Overview), `catalog.details.skill.author` (`'Created by'`), `catalog.details.skill.updated` (`'Last updated'`), `catalog.details.skill.fileCount` (`'Files'`); `catalog.details.skill.whenToUse` (`'When to use'`), `catalog.details.skill.allowedTools` (`'Allowed tools'`), `catalog.details.skill.bundledResources` (`'Bundled resources'`), `catalog.details.contentFileSelectorAriaLabel` (`'Select file'`), `catalog.details.contentFileCount` (`'{{count}} files'`), `catalog.details.contentFileLoading` (`'Loading file'`), and `catalog.details.contentFileError` (`'Failed to load this file.'`); plus, from this revision, `catalog.details.contentFileUnsupported`, whose English value SHALL be the existing `attachmentCanvas.unsupportedLabel` string (`'Preview is not supported for this file'`) rather than a newly-authored duplicate. All declared in `apps/chat/src/constants/translation-keys.ts` and `en.json`. Before adding any key, its English value SHALL be checked against `en.json` for an existing equivalent, per the duplicate-value rule. The lib receives resolved strings only — `libs/catalog` SHALL NOT call `useTranslation`.
+- **App-level adapter contract**: `libs/catalog` receives the manifest body as an already-resolved `string` on `CatalogItemTabData.promptContent.content`, its summary on `promptContent.description`, the selector's options as a resolved hierarchy of `{ type, id, name }` (folders additionally carrying nested `items`) on `promptContent.files`, and the Specification rows as resolved label/value pairs on `overview`. For supporting files it receives a host-rendered `ReactNode` through `renderContentFilePreview(fileId, fileName)`. Bucket names, the `SKILL.md` filename, the distinction between an opaque Core listing id and the endpoint's file-relative `filePath`, the skills endpoint, raw bytes, MIME handling, attachment creation, app contexts, preview lifecycle coordination, and `AttachmentCanvasBody` all stay outside `libs/catalog`: the DIAL-Core-shaped details pipeline (`useSkillItemDetails`, `SKILL_MANIFEST_FILE`, path normalisation, manifest parsing, MIME handling, `skillFileToAttachment`) lives in `libs/chat-hooks`, behind an injected `SkillDetailsApi` port, while the configured API wrappers, app contexts, attachment-canvas resolvers and `AttachmentCanvasBody` rendering stay in `apps/chat`. The lib SHALL NOT gain a skill branch or an attachment-canvas dependency: it knows only that `files` is a tree and that the host can render a picked opaque id/basename pair.
 - **RTL / direction impact**: the picker row SHALL use logical Tailwind utilities only. The Overview tab gains no new directional layout. The preview area introduces no new directional layout beyond what `catalog-content-file-preview` already specifies.
 - **Accessibility**: the panel's existing `role="status"` loading indicator covers the fetch and, from this revision, a picked file's preview load. Folder headings SHALL be exposed as headings for their row groups rather than as styled text alone. The preview area's own accessibility contract (accessible file name, no focusable editing control, image `alt` text) is specified by `catalog-content-file-preview`.
 - **Caching**: no new cache. Details are re-fetched each time the panel opens for a skill, and the manifest is re-parsed on each fetch; the parse is synchronous and bounded by `SKILL_MANIFEST_MAX_BYTES`. A picked file's preview is likewise re-requested each time it is picked — reselecting the base file is the one path that costs no request, unchanged from before this revision.

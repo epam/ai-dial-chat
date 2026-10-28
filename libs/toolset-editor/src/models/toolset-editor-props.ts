@@ -26,7 +26,7 @@ export interface ToolsetEditorValidationLabels {
   nameControlCharacters?: string;
   /** Message for a description over the shared length limit. Defaults to `'Use 2000 characters or fewer.'`. */
   descriptionTooLong?: string;
-  /** Message for a malformed version. Defaults to `'Version must follow semantic versioning (e.g., 1.0.0)'`. */
+  /** Message for a malformed version. Defaults to `'Version may only contain letters, digits, dots, underscores, and dashes'`. */
   versionInvalid?: string;
   /** Message for a missing endpoint. Defaults to `'Endpoint is required'`. */
   endpointRequired?: string;
@@ -40,6 +40,10 @@ export interface ToolsetEditorValidationLabels {
   clientIdRequired?: string;
   /** Message for a missing OAuth client secret in create mode. Defaults to `'Client secret is required'`. */
   clientSecretRequired?: string;
+  /** Message for a missing OAuth authorization endpoint. Defaults to `'Authorization endpoint is required'`. */
+  authorizationEndpointRequired?: string;
+  /** Message for a missing OAuth token endpoint. Defaults to `'Token endpoint is required'`. */
+  tokenEndpointRequired?: string;
 }
 
 /** Labels for the editor chrome (header, actions, section titles), all optional with English defaults. */

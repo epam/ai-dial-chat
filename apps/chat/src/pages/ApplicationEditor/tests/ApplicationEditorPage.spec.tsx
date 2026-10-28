@@ -1,3 +1,4 @@
+import { CatalogCreationType } from '@epam/ai-dial-chat-api-client';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -5,10 +6,15 @@ import { Route, Routes } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ButtonsI18nKeys,
+  CatalogI18nKeys,
   CustomAppI18nKeys,
   EditorI18nKeys,
 } from '../../../constants/translation-keys';
 import { useNotification } from '../../../context/NotificationContext';
+import {
+  resetCatalogCreationState,
+  setCatalogCreationState,
+} from '../../../context/tests/catalog-creation-state';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { renderWithLeaveGuard } from '../../../hooks/unsaved-changes/tests/render-with-leave-guard';
 import type {
@@ -24,7 +30,6 @@ import {
   NotifiableEntity,
 } from '../../../types/entity-notification';
 import { ROUTES } from '../../../types/routes';
-import { StorageKey } from '../../../types/storage-key';
 import {
   defineApplicationEditor,
   isApplicationEditorPageDefinition,
@@ -63,6 +68,7 @@ const FakeSetupForm = ({
 
 const fakeDefinition = defineApplicationEditor<FakeSetup>({
   kind: FAKE_KIND,
+  creationType: CatalogCreationType.CustomApp,
   notifiableEntity: NotifiableEntity.CustomApp,
   createStrategy: ApplicationCreateStrategy.AllAtOnce,
   idQueryParam: 'id',
@@ -92,9 +98,17 @@ const fakeDefinition = defineApplicationEditor<FakeSetup>({
   update: mockUpdate,
 });
 
-vi.mock('../../../context/AppConfigContext', () => ({
-  useAppConfig: () => ({ status: 'ready', config: {} }),
-}));
+vi.mock('../../../context/AppConfigContext', async () => {
+  const { useCatalogCreationState } =
+    await import('../../../context/tests/catalog-creation-state');
+  return {
+    useAppConfig: () => ({
+      status: 'ready',
+      config: {},
+      ...useCatalogCreationState(),
+    }),
+  };
+});
 vi.mock('../definitions', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../definitions')>();
   return {
@@ -148,6 +162,7 @@ describe('ApplicationEditorPage', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    resetCatalogCreationState();
     vi.mocked(useNotification).mockReturnValue(
       createNotificationContextValue(mockShowNotification),
     );
@@ -168,6 +183,22 @@ describe('ApplicationEditorPage', () => {
       screen.getByLabelText(EditorI18nKeys.NameLabel, { exact: false }),
     ).toBeTruthy();
     expect(screen.getByLabelText('fake-endpoint')).toBeTruthy();
+  });
+
+  it("checks a new application against its kind's creation type", () => {
+    setCatalogCreationState({
+      allowedTypes: Object.values(CatalogCreationType).filter(
+        (type) => type !== CatalogCreationType.CustomApp,
+      ),
+      restrictedSchemaIds: [],
+    });
+    renderFakeKind();
+
+    expect(screen.getByRole('alert').textContent).toBe(
+      CatalogI18nKeys.CreationDenied,
+    );
+    expect(screen.queryByLabelText('fake-endpoint')).toBeNull();
+    expect(mockCreate).not.toHaveBeenCalled();
   });
 
   it('creates the fake kind with its metadata and setup, confirms it and returns', async () => {
@@ -247,8 +278,6 @@ describe('ApplicationEditorPage', () => {
 });
 
 describe('ApplicationEditorPage Metadata column resizing', () => {
-  const storageKey = StorageKey.ApplicationEditorMetadataWidth;
-
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
@@ -266,22 +295,14 @@ describe('ApplicationEditorPage Metadata column resizing', () => {
       name: EditorI18nKeys.ResizeHandleAriaLabel,
     });
 
-  it('opens at the default width without a stored value', () => {
+  it('opens at the default width', () => {
     renderFakeKind();
 
     expect(getHandle().getAttribute('aria-valuenow')).toBe('400');
   });
 
-  it('restores the width stored by an earlier visit', () => {
-    localStorage.setItem(storageKey, JSON.stringify(520));
-
-    renderFakeKind();
-
-    expect(getHandle().getAttribute('aria-valuenow')).toBe('520');
-  });
-
-  it('falls back to the default width for a corrupt stored value', () => {
-    localStorage.setItem(storageKey, '"wide"');
+  it('does not restore a width stored by an earlier visit', () => {
+    localStorage.setItem('applicationEditorMetadataWidth', JSON.stringify(520));
 
     renderFakeKind();
 
@@ -311,12 +332,23 @@ describe('ApplicationEditorPage Metadata column resizing', () => {
     );
   });
 
-  it('stores the width chosen with the keyboard', () => {
+  it('applies the width chosen with the keyboard without persisting it', () => {
     renderFakeKind();
 
     fireEvent.keyDown(getHandle(), { key: 'ArrowRight' });
 
-    expect(localStorage.getItem(storageKey)).toBe('416');
+    expect(getHandle().getAttribute('aria-valuenow')).toBe('416');
+    expect(localStorage.length).toBe(0);
+  });
+
+  it('opens at the default width again after remounting the editor', () => {
+    const { unmount } = renderFakeKind();
+    fireEvent.keyDown(getHandle(), { key: 'End' });
+    unmount();
+
+    renderFakeKind();
+
+    expect(getHandle().getAttribute('aria-valuenow')).toBe('400');
   });
 });
 
@@ -337,6 +369,24 @@ describe('APPLICATION_EDITOR_DEFINITIONS', () => {
       false,
     );
     expect(quickApp && isApplicationEditorPageDefinition(quickApp)).toBe(false);
+  });
+
+  it('checks each kind against its own creation type', async () => {
+    const { APPLICATION_EDITOR_DEFINITIONS } =
+      await vi.importActual<typeof import('../definitions')>('../definitions');
+
+    expect(
+      Object.fromEntries(
+        Object.entries(APPLICATION_EDITOR_DEFINITIONS).map(
+          ([kind, definition]) => [kind, definition.creationType],
+        ),
+      ),
+    ).toEqual({
+      [ApplicationEditorKind.Toolset]: CatalogCreationType.Toolset,
+      [ApplicationEditorKind.CustomApp]: CatalogCreationType.CustomApp,
+      [ApplicationEditorKind.QuickApp]: CatalogCreationType.SchemaApp,
+      [ApplicationEditorKind.SchemaApp]: CatalogCreationType.SchemaApp,
+    });
   });
 
   it('opens every form-based kind with an empty name and version 1.0.0', async () => {

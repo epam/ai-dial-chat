@@ -556,12 +556,11 @@ export const Favorites: FC<FavoritesProps> = ({
           ref={gridRef}
           className={mergeClasses(
             'grid content-start',
-            /* In a row each card keeps most of the width so the next one
-               peeks in; the scrollbar is hidden, as on the tabs row, and
-               swipes still scroll. The 4px padding, cancelled by the negative
-               margin, keeps focus rings and shadows clear of the scroll box. */
+            /* Let the next card peek through the host's 16px mobile gutter.
+               Compensated padding preserves alignment; the vertical mask fades
+               only the shadow in that padding, avoiding a hard scroll-box edge. */
             isRow
-              ? '-m-1 snap-x snap-mandatory scroll-p-1 scrollbar-none auto-cols-[min(85%,320px)] grid-flow-col gap-3 overflow-x-auto p-1 [&>*]:snap-start'
+              ? '-m-4 snap-x snap-mandatory scroll-p-4 scrollbar-none auto-cols-[328px] grid-flow-col gap-2 overflow-x-auto mask-[linear-gradient(to_bottom,transparent,black_16px,black_calc(100%_-_16px),transparent)] p-4 [&>*]:snap-start'
               : 'gap-5',
             styles.gridPage,
           )}

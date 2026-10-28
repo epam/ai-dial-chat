@@ -36,7 +36,7 @@ import '@epam/ai-dial-builder-form/styles.css';
 
 - `react` `^19.2.8`
 - `@epam/ai-dial-chat-shared` `*`
-- `@epam/ai-dial-ui-kit` `^0.16.0-dev.35`
+- `@epam/ai-dial-ui-kit` `^0.16.0-dev.45`
 
 ## Components
 
@@ -135,7 +135,7 @@ When `centerContent` is omitted, `leftContent` expands to full width at all view
 
 #### Resizable left column
 
-Pass `resizableLeftColumn` to put a draggable `role="separator"` handle between the left and center columns on desktop (it is not rendered below the `desktop` breakpoint, where the columns stack). The host owns the width and any persistence; the lib only reports changes.
+Pass `resizableLeftColumn` to put a draggable `role="separator"` handle between the left and center columns on desktop (it is not rendered below the `desktop` breakpoint, where the columns stack). The host owns the width; the lib only reports changes. ai-dial-chat keeps it in component state and does not persist it, so each editor open starts at the default.
 
 | Field           | Type                      | Required | Default | Description                                                       |
 | --------------- | ------------------------- | -------- | ------- | ----------------------------------------------------------------- |
@@ -379,7 +379,7 @@ import {
 
 Renders the whole shared General-step field set. `values`, `errors`, `onChange`, `onAddAvatarClick`, and `labels` are required. The avatar field never opens a file picker itself — `onAddAvatarClick` is the host's hook to open its own file manager/upload flow, and the host reports the result back through `onChange({ iconUrl })`. `iconPreviewUrl` is the URL to actually render in the preview box; the host resolves it from `values.iconUrl` (which may be a DIAL file id rather than a directly displayable URL). Supplying `labels.ariaLabel` wraps the root in a named `role="group"`, so the field set is discoverable as one region inside a larger host form.
 
-`fields` renders a subset (Avatar, Name + Version, Description, Locales, Tags, in that fixed order); Name takes the full row when Version is hidden. `isNameReadOnly`, `nameCaption`, `isDescriptionRequired`, and `errors.description` cover editors whose name is fixed after creation or whose description is required. `descriptionCaption` renders helper text under the Description textarea (for example a `120/2000` counter); the textarea never caps its length, so an over-limit value stays in the field for the host to flag through `errors.description`. When errors first appear, focus moves to the first invalid field — Name, then Version, then Description. `labels.topics.placeholder` falls back to `'Add tags, comma separated'`.
+`fields` renders a subset (Avatar, Name + Version, Description, Locales, Tags, in that fixed order); Name takes the full row when Version is hidden. `isNameReadOnly` (renders the Name field disabled; `nameReadOnlyTooltip` replaces its hover tooltip, which otherwise shows the value), `nameCaption`, `isDescriptionRequired`, and `errors.description` cover editors whose name is fixed after creation or whose description is required. `descriptionCaption` renders helper text under the Description textarea (for example a `120/2000` counter); the textarea never caps its length, so an over-limit value stays in the field for the host to flag through `errors.description`. When errors first appear, focus moves to the first invalid field — Name, then Version, then Description. `labels.topics.placeholder` falls back to `'Add tags, comma separated'`.
 
 ```tsx
 import { DeploymentCreationForm } from '@epam/ai-dial-builder-form';
@@ -453,7 +453,7 @@ import {
 
 const codes = validateDeploymentCreationFields(values, {
   validateNamePattern: true,
-  validateVersionPattern: true, // or: SEMVER_VERSION_PATTERN for a SemVer 2.0.0 check
+  validateVersionPattern: true, // or: SEMVER_VERSION_PATTERN for a stricter check
 });
 
 const errors = {
@@ -467,10 +467,9 @@ const errors = {
 `NAME_PATTERN` allows letters, digits, spaces, underscores, dots, and dashes;
 `VERSION_PATTERN` (the default when `validateVersionPattern: true`) allows
 letters, digits, dots, underscores, and dashes. Pass a `RegExp` instead of
-`true` — e.g. `SEMVER_VERSION_PATTERN`, which requires a SemVer 2.0.0
-version (`1.0.0`, `1.0.0-beta.1`, `1.0.0+build.5`; not `1.2`, `1.0.0.0` or
-`01.0.0`), the rule DIAL Admin applies — for a host that needs a stricter
-version format. All three are exported so a host can pre-filter
+`true` — e.g. `SEMVER_VERSION_PATTERN`, which requires one or more
+dot-separated numeric segments (`0.0.1`, `2.0`) — for a host that needs a
+stricter version format. All three are exported so a host can pre-filter
 input with the same rule the validator applies.
 
 `DEFAULT_DEPLOYMENT_VERSION` (`'1.0.0'`) is the version a deployment create

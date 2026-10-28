@@ -5,6 +5,7 @@ import {
   CredentialsLevel,
   ToolsetAuthenticationType,
 } from '@epam/ai-dial-catalog';
+import { CatalogCreationType } from '@epam/ai-dial-chat-api-client';
 import {
   type CatalogEditNavigationLabels,
   type CatalogEditNavigationUrls,
@@ -19,7 +20,7 @@ import { SkillContentFileTree } from '@epam/ai-dial-skills';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
-import { useNavigate, useSearchParams } from 'react-router';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import { CONFIRMATION_BOLD_COMPONENTS } from '../../constants/confirmation-copy';
 import { PAGE_HEADER_ROW_CLASS } from '../../constants/layout';
 import { ToolsetEditorQuery } from '../../constants/toolsets';
@@ -42,6 +43,7 @@ import { useFavoriteApplications } from '../../context/FavoriteApplicationsConte
 import { useNotification } from '../../context/NotificationContext';
 import { usePrompts } from '../../context/PromptsContext';
 import { useSkills } from '../../context/SkillsContext';
+import { useCatalogCreationPermissions } from '../../hooks/catalog/useCatalogCreationPermissions';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
@@ -229,6 +231,7 @@ const CatalogView: FC<Props> = ({
   );
   const isPromptsEnabled = useUiFeature(OverlayFeature.Prompts);
   const isSkillsEnabled = useUiFeature(OverlayFeature.Skills);
+  const isUsagePageHidden = useUiFeature(OverlayFeature.HideUsagePage);
 
   const {
     prompts,
@@ -543,12 +546,17 @@ const CatalogView: FC<Props> = ({
     [deployments, favoriteIds, notifyOperationSuccess, schemas, toggleFavorite],
   );
 
+  /* Creation decisions narrow only the Create menu; the feature flags above
+   * still govern listing and editing on their own. */
+  const { canCreateType, canCreateSchema } = useCatalogCreationPermissions();
+
   const {
     handleEdit,
     handleDelete,
     createOptions,
     createSearch,
     createMenuByType,
+    hasCreateOptions,
   } = useCatalogEditNavigation({
     deployments,
     isCustomAppsEnabled,
@@ -571,6 +579,11 @@ const CatalogView: FC<Props> = ({
     labels: catalogEditNavigationLabels,
     onNotify: showErrorNotification,
     onSkillUploadClick: openSkillArchiveDialog,
+    canCreateCustomApp: canCreateType(CatalogCreationType.CustomApp),
+    canCreateToolset: canCreateType(CatalogCreationType.Toolset),
+    canCreatePrompt: canCreateType(CatalogCreationType.Prompt),
+    canCreateSkill: canCreateType(CatalogCreationType.Skill),
+    canCreateSchema,
   });
 
   if (!isCatalogEnabled && !isSelectorMode) {
@@ -597,7 +610,7 @@ const CatalogView: FC<Props> = ({
         createOptions={createOptions}
         createSearch={createSearch}
         createMenuByTab={createMenuByType}
-        hideCreateButton={isSelectorMode}
+        hideCreateButton={isSelectorMode || !hasCreateOptions}
         hidePageTitle={isSelectorMode}
         isFullWidth={isFullWidth}
         selectedItemId={
@@ -727,6 +740,23 @@ const CatalogView: FC<Props> = ({
             [CatalogEntityType.Skill]: t(CatalogI18nKeys.TabSkills),
           },
         }}
+        /* The Limits tab lists only the model's own limits, so it points to
+           the page with the user's full picture — unless a host hides it. */
+        detailsLimitsFooterNote={
+          isUsagePageHidden ? undefined : (
+            <Trans
+              i18nKey={CatalogI18nKeys.DetailsLimitsFooterNote}
+              components={{
+                link: (
+                  <Link
+                    to={ROUTES.Usage}
+                    className="text-accent underline hover:opacity-75 focus-visible:outline focus-visible:outline-focus"
+                  />
+                ),
+              }}
+            />
+          )
+        }
         detailsTexts={{
           tabToolsLabel: t(CatalogI18nKeys.DetailsTabTools),
           tabContentLabel: t(CatalogI18nKeys.DetailsTabContent),

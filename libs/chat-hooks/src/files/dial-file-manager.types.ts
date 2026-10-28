@@ -4,6 +4,7 @@ import type {
   FileUploadValidationResult,
   FileDownloadBatchState,
   FileUploadBatchState,
+  FileUploadFailureReason,
 } from '@epam/ai-dial-chat-shared';
 import type {
   DialCopiedItem,
@@ -94,6 +95,8 @@ export interface FileManagerNotification {
   names?: string[];
   /** Count of additional affected items beyond `names`' limit. */
   restCount?: number;
+  /** Reason shared by every failed file of an `UploadFailed` batch; unset when the failed files have different reasons. */
+  failureReason?: FileUploadFailureReason;
 }
 
 /**

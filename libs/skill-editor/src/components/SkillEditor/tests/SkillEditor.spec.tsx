@@ -163,6 +163,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     caption,
     disabled,
     readOnly,
+    tooltipText,
   }: {
     id?: string;
     labelProps?: { label: ReactNode; required?: boolean };
@@ -172,6 +173,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     caption?: string;
     disabled?: boolean;
     readOnly?: boolean;
+    tooltipText?: string;
   }) => (
     <label>
       {labelProps?.label}
@@ -182,6 +184,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
         value={value ?? ''}
         disabled={disabled}
         readOnly={readOnly}
+        title={tooltipText}
         onChange={(e) => onChange?.(e.target.value)}
       />
       {error && <span>{error}</span>}
@@ -461,16 +464,19 @@ describe('SkillEditor', () => {
     expect(screen.getByRole('textbox', { name: /Name/ })).toBeTruthy();
   });
 
-  it('renders the Name field read-only when isNameReadOnly is set', () => {
+  it('renders the Name field disabled when isNameReadOnly is set', () => {
     renderEditor({
       isNameReadOnly: true,
       initialValues: { name: 'good-morning-breakfast' },
     });
 
-    expect(
-      (screen.getByDisplayValue('good-morning-breakfast') as HTMLInputElement)
-        .readOnly,
-    ).toBe(true);
+    const nameField = screen.getByDisplayValue(
+      'good-morning-breakfast',
+    ) as HTMLInputElement;
+    expect(nameField.disabled).toBe(true);
+    expect(nameField.title).toBe(
+      "The skill name can't be changed after creation",
+    );
   });
 
   it('calls onDirtyChange(true) on the first edit and onDirtyChange(false) when reverted', async () => {

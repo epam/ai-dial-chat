@@ -5,7 +5,6 @@ import {
 import { ToolsetAuthTypes, WithLogin } from '@epam/ai-dial-chat-hooks';
 import {
   DEFAULT_TOOLSET_VERSION,
-  TOOLSET_METADATA_VALIDATION_OPTIONS,
   ToolsetTransportType,
 } from '../constants/toolsets';
 import type {
@@ -82,9 +81,6 @@ export const normalizeReturnedEndpointUrl = (value?: string): string => {
   return trimmed;
 };
 
-const isOptionalValidEndpointUrl = (value?: string): boolean =>
-  !value?.trim() || isValidEndpointUrl(value);
-
 /**
  * Returns whether the auth form state can be saved without surfacing
  * validation errors. `isEditMode` relaxes the OAuth `clientSecret`
@@ -110,8 +106,8 @@ export const isToolsetAuthValid = (
     return (
       Boolean(auth.clientId?.trim()) &&
       (isEditMode || Boolean(auth.clientSecret?.trim())) &&
-      isOptionalValidEndpointUrl(auth.authorizationEndpoint) &&
-      isOptionalValidEndpointUrl(auth.tokenEndpoint)
+      isValidEndpointUrl(auth.authorizationEndpoint ?? '') &&
+      isValidEndpointUrl(auth.tokenEndpoint ?? '')
     );
   }
   return true;
@@ -123,7 +119,7 @@ export const isToolsetFormValid = (
   isEditMode = false,
 ): boolean =>
   Object.keys(
-    validateDeploymentCreationFields(form, TOOLSET_METADATA_VALIDATION_OPTIONS),
+    validateDeploymentCreationFields(form, { validateVersionPattern: true }),
   ).length === 0 &&
   isValidEndpointUrl(form.endpoint) &&
   isToolsetAuthValid(form.auth, isEditMode);

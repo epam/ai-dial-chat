@@ -51,6 +51,7 @@ import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
+import { useLatestCanvasRequest } from '../../hooks/attachment/useLatestCanvasRequest';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useAudioTranscription } from '../../hooks/conversation/useAudioTranscription';
 import { useChatSettingsFormLabels } from '../../hooks/conversation/useChatSettingsFormLabels';
@@ -428,12 +429,13 @@ const NewConversationComposer: FC<Props> = ({
   const firstName = displayName.split(' ')[0];
   const { resolvers, options } = useAttachmentCanvasResolvers();
   const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
+  const startCanvasRequest = useLatestCanvasRequest();
 
   const handleAttachmentClick = useCallback(
     (attachment: DisplayAttachment) => {
-      void openAttachmentCanvas(attachment);
+      void openAttachmentCanvas(attachment, undefined, startCanvasRequest());
     },
-    [openAttachmentCanvas],
+    [openAttachmentCanvas, startCanvasRequest],
   );
 
   const handleAttachmentsChange = useCallback((attachments: Attachment[]) => {

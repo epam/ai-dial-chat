@@ -1334,6 +1334,31 @@ describe('ScheduledTaskDetailPage', () => {
     ).toBeTruthy();
   });
 
+  it('renders the every-N-weeks repeats label for a custom schedule', async () => {
+    useFeatureFlagMock.mockReturnValue(true);
+    getScheduledTaskMock.mockResolvedValue({
+      id: 'sched_123',
+      displayName: 'Biweekly report',
+      trigger: {
+        cron: {
+          fields: {
+            week: '*/2',
+            hour: '9',
+            minute: '0',
+            day_of_week: 'Tuesday',
+          },
+        },
+      },
+    });
+    renderDetailPage();
+
+    expect(
+      await screen.findByText(
+        'repeatsLabel:scheduledTasks.card.scheduleEveryNWeeks',
+      ),
+    ).toBeTruthy();
+  });
+
   it('renders the activity-window label from the next run time when only the end date is set', async () => {
     useFeatureFlagMock.mockReturnValue(true);
     getScheduledTaskMock.mockResolvedValue({

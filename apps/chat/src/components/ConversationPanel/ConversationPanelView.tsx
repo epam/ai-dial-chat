@@ -1350,9 +1350,22 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       emptyDescription: t(ConversationPanelI18nKeys.EmptyDescription),
       noResultsLabel: t(ConversationPanelI18nKeys.NoResults),
       noResultsDescription: t(BasicI18nKeys.NoResultsDescription),
-      sharedEmptyDescription: t(
-        ConversationPanelI18nKeys.SharedEmptyDescription,
-      ),
+      tabEmptyLabels: {
+        [FilterTab.MyChats]: {
+          label: t(ConversationPanelI18nKeys.MyChatsEmpty),
+          description: t(ConversationPanelI18nKeys.EmptyDescription),
+        },
+        [FilterTab.Shared]: {
+          label: t(ConversationPanelI18nKeys.SharedEmpty),
+          description: t(ConversationPanelI18nKeys.SharedEmptyDescription),
+        },
+        [FilterTab.Organization]: {
+          label: t(ConversationPanelI18nKeys.OrganizationEmpty),
+          description: t(
+            ConversationPanelI18nKeys.OrganizationEmptyDescription,
+          ),
+        },
+      },
       groupLabels,
       actionsLabel: t(ConversationPanelI18nKeys.ActionsLabel),
       unreadIndicatorLabel,

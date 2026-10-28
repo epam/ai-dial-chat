@@ -49,10 +49,21 @@ import {
 import { useFeatureFlag } from '../../../context/AppConfigContext';
 import { useUser } from '../../../context/auth/UserContext';
 import { useTheme } from '../../../context/ThemeContext';
+import {
+  ExternalServiceLoginOutcomeType,
+  useExternalServiceLogin,
+} from '../../../hooks/externalServices/useExternalServiceLogin';
 import { useUiFeature } from '../../../hooks/useUiFeature';
 import { getDeploymentDetails } from '../../../server-api/deployments';
+import {
+  type ApplicationExternalServiceDto,
+  ExternalServiceAuthType,
+  ExternalServiceCredentialsLevel,
+  listExternalServices,
+} from '../../../server-api/external-services';
 import { getToolset, logoutToolset } from '../../../server-api/toolsets';
 import type {
+  ExternalServiceLoginResultPayload,
   ToolsetLoginResultPayload,
   ToolsetLogoutResultPayload,
   TriggerSaveGeneralPayload,
@@ -60,6 +71,7 @@ import type {
 import {
   AppsEditorEvent,
   AppsEditorIframeQuery,
+  ExternalServiceLoginFailureReason,
 } from '../../../types/apps-editor';
 import { ROUTES } from '../../../types/routes';
 import { toolsetDtoToForm } from '../../../utils/toolsets';
@@ -70,6 +82,33 @@ import { toolsetDtoToForm } from '../../../utils/toolsets';
  * fires it for its own error page when the editor host is unreachable.
  */
 export const EDITOR_RESPONSE_TIMEOUT_MS = 15000;
+
+/* Every non-success outcome of `useExternalServiceLogin`, as the reason the embedded editor receives. */
+const EXTERNAL_SERVICE_LOGIN_FAILURE_REASONS: Record<
+  Exclude<
+    ExternalServiceLoginOutcomeType,
+    ExternalServiceLoginOutcomeType.Success
+  >,
+  ExternalServiceLoginFailureReason
+> = {
+  [ExternalServiceLoginOutcomeType.PopupBlocked]:
+    ExternalServiceLoginFailureReason.PopupBlocked,
+  [ExternalServiceLoginOutcomeType.Cancelled]:
+    ExternalServiceLoginFailureReason.Cancelled,
+  [ExternalServiceLoginOutcomeType.AdminConsentRequired]:
+    ExternalServiceLoginFailureReason.AdminConsentRequired,
+  [ExternalServiceLoginOutcomeType.OfflineUnavailable]:
+    ExternalServiceLoginFailureReason.OfflineUnavailable,
+  [ExternalServiceLoginOutcomeType.Failure]:
+    ExternalServiceLoginFailureReason.Failure,
+};
+
+/* The authentication types the relay signs in to; API keys stay with the editor or the dialog. */
+const isRelayedAuthType = (
+  type: ApplicationExternalServiceDto['authenticationType'],
+): boolean =>
+  type === ExternalServiceAuthType.OAuth ||
+  type === ExternalServiceAuthType.DialNative;
 
 export interface AppEditorIframeHandle {
   triggerSave: (general?: TriggerSaveGeneralPayload) => void;
@@ -155,6 +194,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
     const [credentialsAppId, setCredentialsAppId] = useState<string | null>(
       null,
     );
+    const { login: loginExternalService } = useExternalServiceLogin();
 
     const [isUiLoading, setIsUiLoading] = useState(true);
     const [isReadyToSave, setIsReadyToSave] = useState(false);
@@ -185,6 +225,9 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
         [AppsEditorIframeQuery.Id]: appId,
         [AppsEditorIframeQuery.Theme]: currentTheme,
         [AppsEditorIframeQuery.ApplicationCredentials]: String(
+          isApplicationAuthCapable && isApplicationAuthEnabled,
+        ),
+        [AppsEditorIframeQuery.ExternalServiceLogin]: String(
           isApplicationAuthCapable && isApplicationAuthEnabled,
         ),
       });
@@ -450,12 +493,119 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
       [fetchToolsetCredentials],
     );
 
+    const postExternalServiceLoginResult = (
+      host: EditorHost,
+      payload: Omit<ExternalServiceLoginResultPayload, 'type'>,
+    ) => {
+      host.send({
+        type: AppsEditorEvent.ExternalServiceLoginResult,
+        ...payload,
+      });
+    };
+
+    /**
+     * Handles a sign-in to one external service requested from inside the
+     * embedded editor, without the application-credentials dialog. The editor
+     * names the application and the service and passes the person's own
+     * offline-use choice; the OAuth settings, the popup and the sign-in call
+     * stay here and in `useExternalServiceLogin`, always at USER level.
+     *
+     * As in `handleToolsetLoginRequest`, the popup is reserved as the very
+     * first statement, before any `await`: the click happened inside a
+     * cross-origin iframe and only reaches here through `postMessage`.
+     */
+    const handleExternalServiceLoginRequest = useCallback(
+      async (
+        appId: string,
+        serviceId: string,
+        offlineUsageConsent: boolean,
+        host: EditorHost,
+      ) => {
+        const reply = (
+          success: boolean,
+          reason?: ExternalServiceLoginFailureReason,
+        ) => {
+          postExternalServiceLoginResult(host, {
+            appId,
+            serviceId,
+            success,
+            reason,
+          });
+        };
+
+        const popup = openToolsetOAuthPopup();
+        if (!popup) {
+          reply(false, ExternalServiceLoginFailureReason.PopupBlocked);
+          return;
+        }
+
+        const normalizedAppId = normalizeDeploymentId(appId);
+        let service: ApplicationExternalServiceDto | undefined;
+        try {
+          const services = await listExternalServices(normalizedAppId);
+          service = services.find((candidate) => candidate.id === serviceId);
+        } catch {
+          popup.close();
+          reply(false, ExternalServiceLoginFailureReason.Failure);
+          return;
+        }
+        if (!service) {
+          popup.close();
+          reply(false, ExternalServiceLoginFailureReason.NotFound);
+          return;
+        }
+        if (!isRelayedAuthType(service.authenticationType)) {
+          popup.close();
+          reply(false, ExternalServiceLoginFailureReason.UnsupportedAuthType);
+          return;
+        }
+
+        try {
+          const outcome = await loginExternalService({
+            appId: normalizedAppId,
+            serviceId,
+            credentialsLevel: ExternalServiceCredentialsLevel.User,
+            authenticationType:
+              service.authenticationType as ExternalServiceAuthType,
+            oauthSettings: {
+              clientId: service.clientId,
+              authorizationEndpoint: service.authorizationEndpoint,
+              scopes: service.scopesSupported,
+              codeChallenge: service.codeChallenge,
+              codeChallengeMethod: service.codeChallengeMethod,
+            },
+            offlineUsageConsent,
+            forceStale: service.userLevelAuthStatus === 'FAILED',
+            popup,
+          });
+          if (outcome.type === ExternalServiceLoginOutcomeType.Success) {
+            reply(true);
+          } else {
+            reply(false, EXTERNAL_SERVICE_LOGIN_FAILURE_REASONS[outcome.type]);
+          }
+        } catch {
+          reply(false, ExternalServiceLoginFailureReason.Failure);
+        }
+      },
+      [loginExternalService],
+    );
+
     const handleMessage = useCallback(
       (message: AppsEditorClientMessage, host: EditorHost) => {
         switch (message.type) {
           case AppsEditorEvent.RequestApplicationCredentials:
             if (isApplicationAuthCapable && isApplicationAuthEnabled) {
               setCredentialsAppId(normalizeDeploymentId(message.appId));
+            }
+            break;
+          case AppsEditorEvent.RequestExternalServiceLogin:
+            if (isApplicationAuthCapable && isApplicationAuthEnabled) {
+              void handleExternalServiceLoginRequest(
+                message.appId,
+                message.serviceId,
+                message.offlineUsageConsent,
+                host,
+              );
             }
             break;
           case AppsEditorEvent.ReadyToInteract:
@@ -501,6 +651,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
         onSaveError,
         handleToolsetLoginRequest,
         handleToolsetLogoutRequest,
+        handleExternalServiceLoginRequest,
         isApplicationAuthCapable,
         isApplicationAuthEnabled,
       ],

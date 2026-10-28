@@ -46,8 +46,8 @@ import '@epam/ai-dial-skill-editor/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.16.0-dev.35`
-- `@epam/ai-dial-react-file-manager` `^0.4.0-dev.11`
+- `@epam/ai-dial-ui-kit` `^0.16.0-dev.45`
+- `@epam/ai-dial-react-file-manager` `^0.4.0-dev.19`
 - `@epam/ai-dial-chat-shared` `*`
 
 ## Components
@@ -229,7 +229,13 @@ label there.
 On mobile the column stacks the Files pane as a collapsed "Editing file"
 card — the caption, the selected file's type icon and name, and a down caret —
 which expands in place to show the Files heading, the Add menu and the tree,
-then the selected file. Its heading is `SKILL.md` for the manifest,
+then the selected file. The caret points down while collapsed and up while
+expanded. The caption stays aligned to the inline start when selection changes.
+The card uses Layer-sunken (`#EEF1F7` without a theme), an 8px radius and Shadow/XS;
+its expanded file list scrolls within the card. Supporting-file previews have a
+definite mobile height of `max(320px, 60dvh)` so document pages and spreadsheet
+sheets remain visible; on desktop they fill the available column height.
+Its heading is `SKILL.md` for the manifest,
 or `labels.selectedFileHeading(name)` for a supporting file; Name and
 Description show only while `SKILL.md` is selected. `submitError` and
 `conflict` (with its "Reload latest" action) render in a `role="alert"` region
@@ -281,7 +287,7 @@ colors the Add-menu icons (`'text-secondary'` by default);
 the Delete entry renders as a danger (red) item, and `removeIconClassName`
 overrides its icon color.
 
-`styles.colors` (`SkillEditorColors`) overrides the heading, Instructions-label, and border colors, plus the mobile "Editing file" card's `filesCardBackground` and `filesCardBorder` and the mobile upload and create-folder sheet footer's `dialogFooterBackground` and `dialogFooterBorder`, as CSS custom properties, falling back to this app's theme tokens (`--text-primary`, `--text-secondary`, `--stroke-tertiary`, `--bg-layer-base`, `--bg-layer-raised`) and then to a hard-coded hex when no theme is present. `styles.typography.editingFileLabelClassName` (`'dial-tiny-lead-text'`) and `editingFileNameClassName` (`'dial-small-text'`) set the card's caption and file-name type:
+`styles.colors` (`SkillEditorColors`) overrides the heading, Instructions-label, and border colors, plus the mobile "Editing file" card's `filesCardBackground` and `filesCardBorder` and the mobile upload and create-folder sheet footer's `dialogFooterBackground` and `dialogFooterBorder`, as CSS custom properties, falling back to this app's theme tokens (`--text-primary`, `--text-secondary`, `--stroke-tertiary`, `--bg-layer-sunken`, `--bg-layer-raised`) and then to a hard-coded hex when no theme is present. `styles.typography.editingFileLabelClassName` (`'dial-tiny-lead-text'`) and `editingFileNameClassName` (`'dial-small-text'`) set the card's caption and file-name type:
 
 ```tsx
 <SkillEditor
@@ -327,23 +333,25 @@ Write host overrides with CSS logical properties (`margin-inline-start`,
 
 ## AI text refinement
 
-The form accepts optional `onRefineDescription` and `onRefineInstructions` callbacks, each `(value: string, signal: AbortSignal) => Promise<string>`. Each callback independently opts its field into refinement; omit it to hide the action. The host owns transport, availability, purpose selection, and translations. Success and Undo call `onValuesChange` and participate in dirty tracking. Changing `initialValues` identity cancels requests and resets Undo, even for equal text.
+The form accepts optional `onRefineDescription` and `onRefineInstructions` callbacks, each `(value: string, signal: AbortSignal) => Promise<string>`. Each callback independently opts its field into refinement; omit it to hide the action. The host owns transport, availability, purpose selection, and translations. Success and Restore original call `onValuesChange` and participate in dirty tracking. Changing `initialValues` identity cancels requests and resets Undo, even for equal text.
 
-Both fields stay editable while pending. Editing the active field (including Markdown toolbar edits) aborts and invalidates its request. Both Refine actions and Save are disabled during a request; Cancel/Back abort before invoking the host. Late responses are ignored even if the callback ignores its signal. Repeated refinement retains the original baseline; Undo restores it exactly. Manual/external edits, callback removal, submission, and leaving the editor clear the baseline. Errors preserve text and allow retry. Identical output announces no change without writing the value.
+While a field refines, its control is read-only and keeps showing the text that was sent, and its action reads "Refining" with a spinner; the other field stays editable. An edit that still reaches the refining field (a Markdown toolbar action) aborts and invalidates its request. Both Refine actions and Save are disabled during a request; Cancel/Back abort before invoking the host. Late responses are ignored even if the callback ignores its signal. After a result the field offers "Restore original" and "Regenerate" instead of "Refine with AI"; Regenerate refines the original draft again for a fresh variant, and Restore original restores that draft exactly. Manual/external edits, callback removal, submission, and leaving the editor clear the baseline. Errors preserve text and allow retry. Identical output announces no change without writing the value.
 
 Optional label overrides (English defaults):
 
 | Label                      | Default                                       |
 | -------------------------- | --------------------------------------------- |
 | `refineWithAiLabel`        | Refine with AI                                |
-| `refineUndoLabel`          | Undo                                          |
+| `refineRefiningLabel`      | Refining                                      |
+| `refineRegenerateLabel`    | Regenerate                                    |
+| `refineUndoLabel`          | Restore original                              |
 | `refineErrorLabel`         | Could not refine this text. Please try again. |
 | `refinePendingAriaLabel`   | Refining text                                 |
 | `refineSuccessAriaLabel`   | Text refined                                  |
 | `refineUndoAriaLabel`      | Original text restored.                       |
 | `refineUnchangedAriaLabel` | No changes were needed.                       |
 
-`styles.colors.refineActionText` and `refineErrorText` set `--se-refine-action-text` and `--se-refine-error-text`; `refineErrorText` defaults to `--text-error` with standalone fallback `#ae2f2f`. `refineActionText` colors the status feedback; unset, the status keeps the kit `CaptionText` styling (`dial-tiny-text`, `--text-secondary`), the same as input captions. The Refine and Undo buttons are kit `GhostButton`s and keep the kit's styling. `styles.typography.refineFeedbackClassName` has no default; the kit caption class applies when it is unset. Direction is inherited; label rows wrap, and feedback uses live regions.
+`styles.colors.refineActionText` and `refineErrorText` set `--se-refine-action-text` and `--se-refine-error-text`; `refineErrorText` defaults to `--text-error` with standalone fallback `#ae2f2f`. `refineActionText` colors the visible status feedback (the no-change message; success and restore are announced only); unset, the status keeps the kit `CaptionText` styling (`dial-tiny-text`, `--text-secondary`), the same as input captions. The Refine with AI, Restore original, and Regenerate buttons are kit `GhostButton`s and keep the kit's styling. `styles.typography.refineFeedbackClassName` has no default; the kit caption class applies when it is unset. Direction is inherited; label rows wrap, and feedback uses live regions.
 
 | Public class key | Class                               | Element        |
 | ---------------- | ----------------------------------- | -------------- |

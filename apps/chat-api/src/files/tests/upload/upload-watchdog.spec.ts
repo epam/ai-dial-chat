@@ -66,6 +66,24 @@ describe('UploadWatchdog', () => {
     watchdog.dispose();
   });
 
+  it('keeps the idle timer alive while chunks of an async source are requested', async () => {
+    const watchdog = new UploadWatchdog(LIMITS);
+    async function* source(): AsyncGenerator<Buffer> {
+      yield Buffer.from('a');
+      yield Buffer.from('b');
+    }
+    const iterator = watchdog.watch(source());
+
+    vi.advanceTimersByTime(LIMITS.idleMs - 1);
+    expect((await iterator.next()).value).toEqual(Buffer.from('a'));
+    vi.advanceTimersByTime(LIMITS.idleMs - 1);
+    expect((await iterator.next()).value).toEqual(Buffer.from('b'));
+    vi.advanceTimersByTime(LIMITS.idleMs - 1);
+
+    expect(watchdog.signal.aborted).toBe(false);
+    watchdog.dispose();
+  });
+
   it('aborts as stalled when the next chunk is not requested in time', async () => {
     const watchdog = new UploadWatchdog(LIMITS);
     const iterator = watchdog.watch([Buffer.from('a'), Buffer.from('b')]);

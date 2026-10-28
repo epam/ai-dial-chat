@@ -401,6 +401,7 @@ describe('validate', () => {
 
   describe.each([
     'SCHEDULED_TASKS_ENABLED',
+    'PROJECTS_ENABLED',
     'LIVE_CHAT_INTERACTION_ENABLED',
     'LLM_CONVERSATION_NAMING_ENABLED',
   ] as const)('%s', (key) => {

@@ -165,6 +165,7 @@ All libraries live in `libs/*`, resolve through `tsconfig.base.json` paths plus 
 | `@epam/ai-dial-skill-editor`          | `skill-editor`          | Skill authoring form with a file tree and conflict handling                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `@epam/ai-dial-builder-form`          | `builder-form`          | Presentational builder form shells, editor layouts and shared deployment field sets for composing and editing DIAL entities; owns the entity editor shell every editor uses (`EntityEditor`, `MetadataForm`, `useMetadataForm`)                                                                                                                                                                                                                                                    |
 | `@epam/ai-dial-scheduled-tasks`       | `scheduled-tasks`       | Host-agnostic Scheduled Tasks list, form, detail/history and delete-confirmation presentation; `styles.css` composes required builder-form structural CSS                                                                                                                                                                                                                                                                                                                          |
+| `@epam/ai-dial-projects`              | `projects`              | Host-agnostic Projects page shell — search, client-side sort (Newest / Oldest / Name A–Z), card grid and loading/error/empty/no-results states                                                                                                                                                                                                                                                                                                                                     |
 | `@epam/ai-dial-usage-dashboard`       | `usage-dashboard`       | Aggregate calendar-period (UTC day/week/month) cost-limit cards and the per-model limits table for the Usage page, rendering normalized display models only — DTO interpretation lives in `libs/chat-hooks/src/usage`                                                                                                                                                                                                                                                              |
 
 Conversation-history reuse is split across three acyclic layers. `chat-shared` owns the canonical `FilterTab`, the transfer-job contracts (job, status, subject, determinate progress, and the `ConversationTransferErrorCode` taxonomy), and conversation-name utilities. `chat-hooks` owns headless resource-state and conversation-panel controller hooks, with host-specific routing, labels, feature policy, and configured clients injected by `apps/chat`. `conversation-panel` owns the virtualized panel and the `RenameConversationPopup` presentation component, and consumes `FilterTab` and the transfer-job contracts from `chat-shared` directly rather than re-exporting them. The export/import queue is the UI kit's generic `TransferQueue`; `apps/chat` maps transfer jobs onto its items (`toTransferQueueItems` in `apps/chat/src/utils/conversation-transfer.ts`), and the file manager renders the same component for uploads.
@@ -249,7 +250,7 @@ apps/chat/src/
 └── i18n/                  # i18next config + locale JSON files
 ```
 
-Routes under `pages/`: `Conversation`, `ConversationRoute`, `ConversationSharedInvitation`, `SharedInvitation`, `ApplicationEditor`, `ToolsetAuthCallback`, `PromptEditor`, `SkillEditor`, `DialFileManagerPage`, `ScheduledTasksPage`, `ScheduledTaskCreatePage`, `ScheduledTaskEditPage`, `ScheduledTaskDetailPage`, `SettingsPage`, `NotFound`, and `auth/`.
+Routes under `pages/`: `Conversation`, `ConversationRoute`, `ConversationSharedInvitation`, `SharedInvitation`, `ApplicationEditor`, `ToolsetAuthCallback`, `PromptEditor`, `SkillEditor`, `DialFileManagerPage`, `ProjectsPage`, `ScheduledTasksPage`, `ScheduledTaskCreatePage`, `ScheduledTaskEditPage`, `ScheduledTaskDetailPage`, `SettingsPage`, `NotFound`, and `auth/`.
 
 `ApplicationEditor` holds one lazy route element, `ApplicationEditorPage`, which `ROUTES.AppsEditor`, `ROUTES.CustomAppEditor` and `ROUTES.ToolsetEditor` all render with a `kind`. The page resolves an `ApplicationEditorDefinition` from `APPLICATION_EDITOR_DEFINITIONS` and owns the shared lifecycle (mode from the query params, loading, metadata state, avatar picker, saving overlay, notifications, return navigation); a new application kind needs only a definition and a Setup component. The toolset definition delegates its whole body to the lib `ToolsetEditor` through `renderPage`, because its post-save OAuth sequencing stays inside that lib. Every entity editor — toolset, custom app, quick app, prompt and skill — renders through `EntityEditor` and `MetadataForm` from `@epam/ai-dial-builder-form`, which own the header, the Metadata | Setup columns and the shared metadata fields (prompt and skill keep their own arrangement on that shell: the prompt is one column without section headings, the skill shows Files on the left and the selected file on the right); the former stepper `EditorHeader` is gone.
 
@@ -351,7 +352,7 @@ Current implementation uses **React Context** with no external state library. Th
 | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `UserContext`                 | Auth status (`loading \| authenticated \| unauthenticated`), `UserProfile`, `refresh()`, `reset()`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `ThemeContext`                | Active and selected theme id, theme list, `setTheme()`, logo and favicon URLs, loading flag                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| `AppConfigContext`            | Client configuration from `GET /api/v1/client-config` — overlay mode, announcements, feature defaults                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `AppConfigContext`            | Client configuration from `GET /api/v1/client-config` — overlay mode, announcements, feature defaults, and the current identity's catalog creation permissions with their own `catalogCreationStatus` (see [Catalog creation permissions](#catalog-creation-permissions))                                                                                                                                                                                                                                                                                                                                                                                      |
 | `UiFeaturesContext`           | Effective UI-feature set: server baseline, defaults, and the overlay host's replacement set                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `IsolatedModelViewContext`    | TODO: remove in next release. Temporary `?isolated-model-id` embed mode — resolves the deployment and forces a fixed UI-feature set                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `OverlayContext`              | Embedded-mode handshake, request routing to page-level bridges, event emission to the host                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
@@ -474,6 +475,11 @@ Configured at startup:
   independent of the main application port). Metrics cover HTTP transport outcomes, Nest handler
   observations, generation relays, auth/session decisions (login starts, callback and refresh
   exchanges, authorization outcomes, logout), and process-local memory/SSE/registry gauges.
+  Earliest application middleware additionally records request-local total duration, the union
+  of overlapping Core request intervals (including body transfer), and time outside Core.
+  The shared Core fetch transport is tagged through AsyncLocalStorage and observed through
+  Undici diagnostics; HTTP settlement freezes the split even if background work continues.
+  A request timing span carries the same durations for individual slow-request investigation.
   HTTP lifecycle
   observation uses a raw server request listener; it does not guarantee timing before all
   synchronous Express work. See [Observability](observability.md) for signal boundaries,
@@ -501,6 +507,7 @@ apps/chat-api/src/
 ├── files/  assets/                       # File storage and static assets
 ├── share/  publish/                      # Sharing and publication flows
 ├── scheduled-tasks/  scheduled-task-unread/
+├── projects/               # Projects listing: personal, organization and shared (flag-gated)
 ├── client-channel/         # DIAL Core client-channel proxy (SSE relay)
 ├── external-services/      # Application external-service metadata + signin/signout proxy
 ├── offline-credentials/    # Long-lived credentials for background runs
@@ -539,6 +546,7 @@ Business controllers are versioned; three infrastructure controllers are deliber
 | `/api/v1/share`                     | Share links and recipients                                                                                                                                |
 | `/api/v1/publish` `/api/v1/catalog` | Publication rules and published-entity access                                                                                                             |
 | `/api/v1/scheduled-tasks`           | Scheduled task CRUD, manual-run acceptance, and run status                                                                                                |
+| `/api/v1/projects`                  | Projects visible to the user, merged from personal, organization and shared sources (`features.projectsEnabled`)                                          |
 | `/api/v1/client-channel`            | Client-channel SSE relay                                                                                                                                  |
 | `/api/v1/external-services`         | External-service metadata and credentials                                                                                                                 |
 | `/api/v1/offline-credentials`       | Long-lived credentials for background runs                                                                                                                |
@@ -779,6 +787,46 @@ refresh token exists, can shorten it. Upgrading to payload v2 requires a new log
 for existing sessions. Provider metadata and rotation details live in the
 [auth lifetime policy](auth/auth-bff-encrypted-cookie.md#35-session-lifetime-policy).
 
+### Roles
+
+`UserRolesService` (`apps/chat-api/src/auth/user-roles.service.ts`) is the
+only place that turns a session user into role names. It reads the provider's
+`rolesClaim` (default `dial_roles`) as a flat key — how a cookie session stores
+it — and otherwise as a dotted path into a header-token session's verified
+payload. `AdminRoleService`, `FeatureGuard` and the client-config controller
+all use it, so admin detection, role-gated features and per-user config agree
+on a user's roles. `AppConfigModule` re-exports `AuthModule`, because Nest
+resolves `@UseGuards(FeatureGuard)` in each consuming module.
+
+### Catalog creation permissions
+
+Who may create catalog entities is decided apart from the UI-feature set:
+
+```
+CATALOG_CREATION_ROLES ──▶ AppConfigService (normalized at startup)
+                              │  evaluated per request with UserRolesService roles
+                              ▼
+            client-config: config.catalogCreationPermissions
+                              │  { allowedTypes, restrictedSchemaIds }
+                              ▼
+   AppConfigContext (bound to providerId + sub, own catalogCreationStatus)
+                              ▼
+   useCatalogCreationPermissions ─┬─▶ CatalogView ──▶ useCatalogEditNavigation
+                                  │     (resolved booleans + schema predicate)
+                                  └─▶ useCatalogCreationDecision
+                                        ├─ RequireCatalogCreation (create routes)
+                                        ├─ create submit guards in the editors
+                                        └─ useSkillArchiveImport
+```
+
+`enabledUiFeatures`, `UiFeaturesContext` and overlay/isolated-view overrides
+are untouched: a creation decision is an extra condition on an existing create
+affordance and never enables a disabled feature. `@epam/ai-dial-chat-hooks`
+receives plain booleans and a predicate, with permissive defaults for hosts
+that omit them. The policy controls UI workflows only; DIAL Core remains
+authoritative for direct API calls. Configuration:
+[`apps/chat-api/README.md` § Catalog creation roles](../apps/chat-api/README.md#catalog-creation-roles).
+
 ### CSRF protection
 
 `CsrfGuard` (applied globally after `SessionGuard`):
@@ -946,6 +994,7 @@ The intended direction, enforced in review:
 | 19  | `DEFAULT_DEPLOYMENT_PINNED` both **offers** the "Default agent for new chats" control and is **outranked** by it                     | ✅ Accepted — the row renders only while an agent is pinned (the pin is what makes its "Default agent" option mean anything), and every choice stored through it then beats the pin, "Last used agent" included. The pin still beats the _implicit_ last-used selection — an unstored preference — which is what its description refers to. Both halves live in `resolveInitialSelection` + `PreferencesTab`'s visibility rule |
 | 20  | Host styling hooks: stable public `dial-{lib-prefix}-{element}` classes, emitted unconditionally and carrying no declarations        | ✅ Accepted — hashed CSS-module locals, DOM order and ARIA attributes were the only handles a host had, and all three change without notice ([#8707](https://github.com/epam/ai-dial-chat/issues/8707)). Rejected a `styles.classNames` prop API: `styles` already means theming tokens, and portalled or deeply nested elements are unreachable by a prop                                                                     |
 | 21  | Repository-owned `typecheck` PR job (`.github/workflows/pr.yml`) covers what the pinned `epam/ai-dial-ci` reusable workflow does not | ❓ Open — the job runs on every PR; marking it a _required_ status check is branch-protection configuration administered outside this repository, not something this job can set itself                                                                                                                                                                                                                                        |
+| 22  | Catalog creation is restricted by a separate, server-evaluated `CATALOG_CREATION_ROLES` policy, not by filtering UI features         | ✅ Accepted — UI flags also gate listing and editing, so reusing them as creation permissions would hide or lock existing entities; the policy is enforced in UI workflows only and DIAL Core stays the API authority                                                                                                                                                                                                          |
 
 ---
 

@@ -89,23 +89,19 @@ On save in creation mode, `CustomAppEditor` SHALL NOT send `type` in the create 
 - **THEN** the create request body carries no `type` field and no `application_type_schema_id`
 
 ### Requirement: General step validation — name and version
-`CustomAppEditor` SHALL validate metadata through `useMetadataForm` with `validateVersionPattern: SEMVER_VERSION_PATTERN`. `name` is required. A non-empty version must be a SemVer 2.0.0 version (e.g. `1.0.0`, `1.0.0-beta`, `1.0.0+build`), the rule DIAL Admin applies.
+`CustomAppEditor` SHALL validate metadata through `useMetadataForm` with `validateVersionPattern: SEMVER_VERSION_PATTERN`. `name` is required. A non-empty version must be one or more dot-separated numeric segments (e.g. `0.0.1`, `2.0`).
 
 Each field's error SHALL appear once that field has been touched (on blur), independently of the other field. All errors SHALL appear on a submit attempt. The primary button SHALL NOT be disabled for validation reasons. Instead, a submit attempt with invalid metadata SHALL show the errors, focus the first invalid field and send no request.
 
-The version-invalid error message SHALL be `"Version must follow semantic versioning (e.g., 1.0.0)"` (`editor.versionInvalid`).
+The version-invalid error message SHALL be `"Version format is invalid (example: 0.0.1)"` (`appsEditor.generalForm.versionInvalid`).
 
 #### Scenario: Name required error on blur
 - **WHEN** the Name field is blank and loses focus
 - **THEN** a name-required error is shown under the Name field
 
 #### Scenario: Version format error on blur
-- **WHEN** the Version field contains a value that is not SemVer 2.0.0 (e.g. `1.2` or `abc`) and loses focus
-- **THEN** a version-invalid error ("Version must follow semantic versioning (e.g., 1.0.0)") is shown under the Version field
-
-#### Scenario: Pre-release and build metadata are accepted
-- **WHEN** the Version field contains `1.0.0-beta` or `1.0.0+build` and loses focus
-- **THEN** no version error is shown
+- **WHEN** the Version field contains a value that is not entirely dot-separated numeric segments (e.g. contains letters) and loses focus
+- **THEN** a version-invalid error ("Version format is invalid (example: 0.0.1)") is shown under the Version field
 
 #### Scenario: Submit attempt with invalid metadata
 - **WHEN** the Name or Version field holds an invalid value and the user clicks Create
@@ -162,7 +158,7 @@ On save in edit mode, `CustomAppEditor` SHALL call `PATCH /api/v1/applications/:
 
 ### Requirement: `UpdateApplicationBodyDto` — settings fields
 `UpdateApplicationBodyDto` (`apps/chat-api/src/applications/dto/update-application.dto.ts`) SHALL accept the following optional settings fields:
-- `version` — a SemVer 2.0.0 string matching `SEMVER_VERSION_PATTERN` (`apps/chat-api/src/common/validators/semver-version.pattern.ts`)
+- `version` — string matching `/^[a-zA-Z0-9._-]+$/`
 - `endpoint` — URL string (protocol required, TLD not required, trailing dot allowed)
 - `features` — `Record<string, unknown>` object
 - `inputAttachmentTypes` — `string[]`, each entry matching a MIME-type pattern such as `image/png`

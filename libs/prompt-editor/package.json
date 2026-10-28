@@ -26,12 +26,18 @@
   },
   "peerDependencies": {
     "@epam/ai-dial-chat-shared": "*",
-    "@epam/ai-dial-ui-kit": "^0.16.0-dev.35",
+    "@epam/ai-dial-ui-kit": "^0.16.0-dev.45",
     "react": "^19.2.8"
   },
   "nx": {
     "tags": [
+      "publishable",
       "type:ui"
-    ]
+    ],
+    "targets": {
+      "publish": {
+        "command": "node tools/publish-lib.mjs {projectName} --version={args.ver} --dry={args.dry} --tag={args.tag} --development={args.development}"
+      }
+    }
   }
 }

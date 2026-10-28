@@ -29,6 +29,8 @@ export type {
   AppsEditorDirtyMessage,
   AppsEditorToolsetRequestMessage,
   AppsEditorCredentialsRequestMessage,
+  AppsEditorExternalServiceLoginRequestMessage,
+  AppsEditorExternalServiceLoginResultMessage,
 } from './models/apps-editor';
 export type {
   AppsEditorMessage,

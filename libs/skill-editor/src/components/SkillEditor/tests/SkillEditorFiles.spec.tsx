@@ -531,12 +531,20 @@ describe('SkillEditor — files pane', () => {
     await openUploadDialog(user);
     stageFile(file);
     expect(await screen.findByText('analyzer.md')).toBeTruthy();
+    // Staging renders the row before the async validation settles; Add stays disabled until it does.
+    await waitFor(() =>
+      expect(
+        within(screen.getByRole('dialog')).getByRole('button', { name: 'Add' }),
+      ).toHaveProperty('disabled', false),
+    );
 
     await confirmDialog(user);
 
-    expect(commitBatch).toHaveBeenCalledWith([
-      expect.objectContaining({ file, path: 'analyzer.md' }),
-    ]);
+    await waitFor(() =>
+      expect(commitBatch).toHaveBeenCalledWith([
+        expect.objectContaining({ file, path: 'analyzer.md' }),
+      ]),
+    );
   });
 
   it('shows the validation error and disables confirm for a rejected staged file', async () => {

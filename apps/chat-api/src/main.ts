@@ -25,6 +25,7 @@ import { AppModule } from './app/app.module';
 import { createFrontendMiddleware } from './app/static-assets';
 import { clearLegacyCookies } from './auth/cookies/cookie-options';
 import { TraceparentErrorFilter } from './common/filters/traceparent-error.filter';
+import { configureHttpServerTimeouts } from './common/utils/http-server-timeouts';
 import { buildCorsOptionsDelegate } from './config/cors';
 import {
   buildPermissionsPolicyHeader,
@@ -36,6 +37,7 @@ import { configureProxyAgents } from './net/proxy-agent.setup';
 import { createOpenApiDocument } from './openapi/openapi.config';
 import { attachHttpLifecycleListener } from './telemetry/http-lifecycle-listener';
 import { NestOtelLogger } from './telemetry/nestjs-otel-logger';
+import { createRequestTimingMiddleware } from './telemetry/request-timing';
 import { traceparentMiddleware } from './telemetry/traceparent.middleware';
 
 const validationLogger = new Logger('ValidationPipe');
@@ -89,6 +91,7 @@ async function bootstrap() {
    * for whatever gets registered ahead of it.
    */
   attachHttpLifecycleListener(app.getHttpServer());
+  configureHttpServerTimeouts(app.getHttpServer());
 
   app.enableShutdownHooks();
 
@@ -103,6 +106,7 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService<EnvironmentVariables, true>);
 
+  app.use(createRequestTimingMiddleware(runtimeEnvironment));
   app.use(cookieParser());
   app.use((req: Request, res: Response, next: NextFunction) => {
     clearLegacyCookies(req, res, configService);

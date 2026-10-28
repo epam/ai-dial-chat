@@ -2,10 +2,17 @@ import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   NavigationSidebarVariant,
   UserMenuTriggerVariant,
+  type NavigationPanelItem,
+  type NavigationSidebarLinkRenderer,
 } from '@epam/ai-dial-navigation-panel';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { AriaAttributes, ComponentProps, ReactNode } from 'react';
+import {
+  Fragment,
+  type AriaAttributes,
+  type ComponentProps,
+  type ReactNode,
+} from 'react';
 import { MemoryRouter, useNavigate } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MOBILE_SIDEBAR_ID } from '../../../constants/layout';
@@ -275,7 +282,8 @@ vi.mock('@epam/ai-dial-navigation-panel', async (importOriginal) => {
   return {
     ...actual,
     NavigationSidebar: (props: {
-      items: { id: string; label: string; isActive?: boolean }[];
+      items: NavigationPanelItem[];
+      renderLink: NavigationSidebarLinkRenderer;
       labels: {
         ariaLabel: string;
         collapse: string;
@@ -296,13 +304,12 @@ vi.mock('@epam/ai-dial-navigation-panel', async (importOriginal) => {
       return (
         <nav aria-label={props.labels.ariaLabel}>
           {props.items.map((item) => (
-            <a
-              key={item.id}
-              href={item.id}
-              aria-current={item.isActive ? 'page' : undefined}
-            >
-              {item.label}
-            </a>
+            <Fragment key={item.id}>
+              {props.renderLink(item, item.label, {
+                className: '',
+                'aria-current': item.isActive ? 'page' : undefined,
+              })}
+            </Fragment>
           ))}
           {props.onClose && (
             <button onClick={props.onClose}>{props.labels.close}</button>
@@ -563,6 +570,39 @@ describe('SidebarNavigation', () => {
       expect(getHrefs()).toContain('/catalog');
     });
 
+    it('shows Projects directly after New chat when projectsEnabled is on', () => {
+      useAppConfigMock.mockReturnValue({
+        status: UserConfigStatus.Ready,
+        features: { projectsEnabled: true, scheduledTasksEnabled: true },
+      });
+      renderItems();
+
+      expect(getHrefs().slice(0, 2)).toEqual(['/', '/projects']);
+    });
+
+    it('hides Projects while projectsEnabled is off', () => {
+      renderItems();
+
+      expect(getHrefs()).not.toContain('/projects');
+    });
+
+    it('marks Projects as the current page on /projects', () => {
+      useAppConfigMock.mockReturnValue({
+        status: UserConfigStatus.Ready,
+        features: { projectsEnabled: true },
+      });
+      render(
+        <MemoryRouter initialEntries={['/projects']}>
+          <SidebarNavigation />
+        </MemoryRouter>,
+      );
+
+      const projectsLink = screen
+        .getAllByRole('link')
+        .find((link) => link.getAttribute('href') === '/projects');
+      expect(projectsLink?.getAttribute('aria-current')).toBe('page');
+    });
+
     it('hides Catalog when catalog is disabled', () => {
       enableSidebar(mockUseUiFeature, [OverlayFeature.Catalog]);
       renderItems();
@@ -750,6 +790,28 @@ describe('SidebarNavigation — mobile drawer', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'go to catalog' }));
+
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('closes when the Usage link to the page on screen is clicked', async () => {
+    const onClose = vi.fn();
+    renderDrawer({ onClose, isOpen: true }, ROUTES.Usage);
+
+    await userEvent.click(
+      screen.getByRole('link', { name: BasicI18nKeys.Usage }),
+    );
+
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('closes when the New chat item is clicked on the new chat screen', async () => {
+    const onClose = vi.fn();
+    renderDrawer({ onClose, isOpen: true }, ROUTES.Root);
+
+    await userEvent.click(
+      screen.getByRole('link', { name: ButtonsI18nKeys.NewChat }),
+    );
 
     expect(onClose).toHaveBeenCalledOnce();
   });

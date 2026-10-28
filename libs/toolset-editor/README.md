@@ -52,7 +52,7 @@ import '@epam/ai-dial-toolset-editor/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.16.0-dev.35`
+- `@epam/ai-dial-ui-kit` `^0.16.0-dev.45`
 - `@epam/ai-dial-chat-shared` `*`
 - `@epam/ai-dial-chat-hooks` `*`
 
@@ -156,6 +156,18 @@ configured) and the section stays hidden in every mode. When `listToolNames`
 is omitted, the "Allowed tools" field falls back from the Select to a
 free-text tag input.
 
+For an OAuth "Custom login" toolset opened in edit mode, a host that knows the
+saved client secret's hint (the last characters the backend reports) passes it
+as `ToolsetAuthFormData.clientSecretHint`. While the Client secret field is
+empty, the field shows the hint masked as its placeholder (`******d4c6`) and is
+described by a "keep" caption; typing a new secret replaces both. The hint is
+display-only: it never becomes `clientSecret`, is not read by validation, and
+is shown neither in create mode nor without a hint. Its copy comes from
+`labels.settings.auth.clientSecretHintPlaceholder` (`(hint) => string`,
+default `` (hint) => `******${hint}` ``) and
+`labels.settings.auth.clientSecretKeepCaption` (default
+`'Leave empty to keep the saved secret.'`).
+
 `labels` is a nested `ToolsetEditorLabels` object whose `layout`, `general`,
 `settings`, `validation`, and `refinement` groups are each optional and
 replaced as a whole; an omitted group falls back to the library's English
@@ -163,7 +175,7 @@ defaults.
 
 The optional `onRefineDescription` callback,
 `(value: string, signal: AbortSignal) => Promise<string>`, adds a Refine with
-AI action (and Undo) beside the Description label; omit it to hide the action.
+AI action (and, after a result, Restore original and Regenerate) beside the Description label; omit it to hide the action.
 The host owns transport, availability, and translations, passing the copy
 through `labels.refinement` (`TextRefinementLabels` from
 `@epam/ai-dial-chat-shared`). Save is disabled while a request is pending.
@@ -280,9 +292,7 @@ isToolsetFormValid(form, isEditMode);
 ```
 
 Returns whether the whole editor form can be saved (name/version via
-`builder-form`'s shared validation — the version must be SemVer 2.0.0
-(`SEMVER_VERSION_PATTERN`), as DIAL Admin requires — endpoint URL, and auth
-block).
+`builder-form`'s shared validation, endpoint URL, and auth block).
 
 ## Constants
 

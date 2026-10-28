@@ -11,7 +11,7 @@ export interface GridContext {
   onToggleFavorite?: (id: string, isStarred: boolean) => void;
   /** Rule for whether the favorite star is shown on a row; `false` hides it. Defaults to visible when omitted. */
   isFavoriteVisible?: (item: CatalogItem) => boolean;
-  /** ID of an item to visually mark as selected (border, tint, and checkmark). */
+  /** ID of the item whose name cell shows the selection checkmark. */
   selectedItemId?: string;
   /** Accessible label for the logged-out warning icon on the entity avatar, and the text shown in its hover tooltip. */
   credentialsBadgeLoggedOutLabel?: string;

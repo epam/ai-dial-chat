@@ -31,6 +31,7 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
   caretPositionOverride,
   commandMenu,
   menuOverlays,
+  sendOnEnter,
   initialAttachments = [],
   onCancel,
   onSave,
@@ -168,6 +169,7 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
         commandMenu={commandMenu}
         ariaLabel={ariaLabel}
         hideActionBar
+        sendOnEnter={sendOnEnter}
         pendingDropFiles={pendingDropFiles}
         onDropFilesConsumed={handleDropFilesConsumed}
         onSend={handleSend}

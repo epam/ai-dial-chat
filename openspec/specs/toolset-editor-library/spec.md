@@ -61,7 +61,7 @@ This is the first `libs/*` (besides the `chat-hooks` exception) dependency on `@
 - **THEN** the editor resets its form values, errors, dirty fields, and draft toolset id to a fresh-edit state
 
 ### Requirement: Validation and dirty-field error surfacing
-`ToolsetEditor` SHALL validate the form through the lib's own `isToolsetFormValid`/`isValidEndpointUrl` utils (which delegate the name/version/description checks to `builder-form`'s `validateDeploymentCreationFields` with `TOOLSET_METADATA_VALIDATION_OPTIONS`, i.e. `validateVersionPattern: SEMVER_VERSION_PATTERN`), building error messages from the `labels.validation` group. That group SHALL include `nameTooLong`, `nameControlCharacters` and `descriptionTooLong`, which default to `Use 256 characters or fewer.`, `Remove line breaks, tabs and other control characters.` and `Use 2000 characters or fewer.` respectively. Field errors SHALL surface only for fields the user has touched — Metadata fields through `useMetadataForm`'s touched state (`name`/`version` are marked touched on edit, and too-long or control-character codes show at once), Setup fields (`endpoint` and the auth fields) through the editor's own dirty-field set — and SHALL be recomputed on every change, so an over-limit name or description is flagged while the user types. Patches that change `authenticationType`, `withLogin`, or `isLoggedIn` SHALL clear all auth-field errors at once. The Save action SHALL stay disabled until `isToolsetFormValid` passes.
+`ToolsetEditor` SHALL validate the form through the lib's own `isToolsetFormValid`/`isValidEndpointUrl` utils (which delegate the name/version/description checks to `builder-form`'s `validateDeploymentCreationFields` with `validateVersionPattern: true`, i.e. the default character-set `VERSION_PATTERN`), building error messages from the `labels.validation` group. That group SHALL include `nameTooLong`, `nameControlCharacters` and `descriptionTooLong`, which default to `Use 256 characters or fewer.`, `Remove line breaks, tabs and other control characters.` and `Use 2000 characters or fewer.` respectively. Field errors SHALL surface only for fields the user has touched — Metadata fields through `useMetadataForm`'s touched state (`name`/`version` are marked touched on edit, and too-long or control-character codes show at once), Setup fields (`endpoint` and the auth fields) through the editor's own dirty-field set — and SHALL be recomputed on every change, so an over-limit name or description is flagged while the user types. Patches that change `authenticationType`, `withLogin`, or `isLoggedIn` SHALL clear all auth-field errors at once. The Save action SHALL stay disabled until `isToolsetFormValid` passes.
 
 #### Scenario: Untouched invalid fields show no error
 - **WHEN** the editor opens with an empty endpoint and the user edits only the name
@@ -140,7 +140,7 @@ The Connect toolset section SHALL render inside the Setup section only when the 
 - `title` and `submitLabel`: the resolved create/edit title and Create or Save label.
 - `onSubmit`, `onCancel`, `onBack`, `isSubmitting` and `isSubmitDisabled`.
 
-The metadata values, touched state and validation codes SHALL come from `useMetadataForm` (with `TOOLSET_METADATA_VALIDATION_OPTIONS`, i.e. `validateVersionPattern: SEMVER_VERSION_PATTERN`). The endpoint and auth validation stays in `ToolsetEditor`.
+The metadata values, touched state and validation codes SHALL come from `useMetadataForm` (with `validateVersionPattern: true`, i.e. the default character-set `VERSION_PATTERN`). The endpoint and auth validation stays in `ToolsetEditor`.
 
 On mobile the two sections SHALL stack vertically (Metadata first). The lib SHALL NOT render a footer button bar, a wizard indicator or a preview pane.
 
@@ -194,3 +194,33 @@ The lib SHALL keep the existing accessible patterns: the Connect section's copy 
 #### Scenario: Renders correctly under an RTL ancestor
 - **WHEN** the editor is mounted under an ancestor with `dir="rtl"`
 - **THEN** its layout flips via inherited CSS logical properties with no prop or i18n call telling it to do so
+
+### Requirement: Display-only client secret hint in AuthSection
+
+`ToolsetAuthFormData` (`libs/toolset-editor/src/models/toolset-form.ts`) SHALL gain an optional, display-only `clientSecretHint?: string` — the already-resolved hint supplied by the host. `AuthSectionLabels` (`libs/toolset-editor/src/models/auth-section-props.ts`) SHALL gain `clientSecretHintPlaceholder?: (hint: string) => string` (default `` (hint) => `******${hint}` ``) and `clientSecretKeepCaption?: string` (default `'Leave empty to keep the saved secret.'`).
+
+`AuthSection` SHALL render the masked placeholder and the caption only when OAuth "Custom login" is selected, `isEditMode` is true, `auth.clientSecretHint` is non-empty, and `auth.clientSecret` is empty; otherwise it SHALL render the Client secret `PasswordInput` exactly as before. The caption SHALL be exposed as the input's accessible description (`aria-describedby`). `isToolsetAuthValid`, `isToolsetFormValid`, and `ToolsetEditor`'s setup validation SHALL NOT read `clientSecretHint`, and the lib SHALL NOT copy it into `clientSecret` or any request shape it hands the host (`ToolsetLoginRequest`, the `onPersist` form).
+
+The lib keeps its isolation: it never sees the DTO, the endpoint, or DIAL Core; it receives the hint as a resolved value in form state and its copy through `labels`, with English defaults and no i18n import. No memoisation is required beyond the existing component structure. The new label fields are documented in `libs/toolset-editor/README.md`.
+
+#### Scenario: Hint shown only for an untouched secret in edit mode
+
+- **GIVEN** `AuthSection` renders with `isEditMode`, OAuth `with-config`, `auth.clientSecretHint: "d4c6"` and an empty `auth.clientSecret`
+- **THEN** the Client secret input has placeholder `******d4c6` and is described by `Leave empty to keep the saved secret.`
+
+#### Scenario: Host overrides the copy
+
+- **GIVEN** `labels.clientSecretHintPlaceholder` is `(hint) => '•••• ' + hint` and `labels.clientSecretKeepCaption` is a translated string
+- **WHEN** `AuthSection` shows the hint
+- **THEN** it uses the host-supplied placeholder and caption
+
+#### Scenario: Hint ignored outside edit mode
+
+- **GIVEN** `isEditMode` is false and `auth.clientSecretHint` is set
+- **THEN** the Client secret input shows the regular placeholder, no "keep" caption, and stays required
+
+#### Scenario: Hint never becomes the secret
+
+- **GIVEN** `auth.clientSecretHint: "d4c6"` and an empty `auth.clientSecret`
+- **WHEN** the user clicks "Log in" or saves
+- **THEN** the request handed to the host carries no client secret derived from the hint

@@ -166,6 +166,23 @@ describe('CONFIG_DEFINITIONS', () => {
     });
   });
 
+  it('contains the client-visible, role-gated features.projectsEnabled entry, off by default', () => {
+    const entry = CONFIG_DEFINITIONS.find(
+      (definition) => definition.key === 'features.projectsEnabled',
+    );
+
+    expect(entry).toMatchObject({
+      key: 'features.projectsEnabled',
+      type: 'feature',
+      valueType: 'boolean',
+      visibility: 'client',
+      defaultValue: false,
+      critical: false,
+      envVar: 'PROJECTS_ENABLED',
+      allowedRolesEnvVar: 'PROJECTS_ENABLED_ROLES',
+    });
+  });
+
   it('contains the client-visible usageLimits.warningThresholdPercent entry, 75 by default', () => {
     const entry = CONFIG_DEFINITIONS.find(
       (definition) => definition.key === 'usageLimits.warningThresholdPercent',

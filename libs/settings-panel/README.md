@@ -66,7 +66,9 @@ import { SettingsPanel } from '@epam/ai-dial-settings-panel';
 />;
 ```
 
-Pass `styles={{ typography }}` to override the section-header typography class. The rows are
+When the panel sits under a heading of its own (a dialog title), omit `sectionLabel` and pass
+`ariaLabel` to name the list instead. Pass `styles={{ typography }}` to override the
+section-header typography class. The rows are
 drawn by the UI kit's `Tabs`, so their colors and typography (`dial-small-text` /
 `dial-small-semi-text`) come from the kit and are not overridable here.
 
@@ -108,7 +110,7 @@ a color override, the explanation uses `--text-primary` with a `#161b2d` fallbac
 ## Types
 
 - `SettingsPanelItem` — `{ id, label, icon?, disabled? }`
-- `SettingsPanelProps` — `{ items, activeId, onSelect, sectionLabel?, styles?, className? }`
+- `SettingsPanelProps` — `{ items, activeId, onSelect, sectionLabel?, ariaLabel?, styles?, className? }`
 - `SettingsPanelStyles` — `{ typography? }`
 - `SettingsPanelTypography` — `{ sectionLabelClassName? }`
 - `ExtensionServiceItem` — `{ id, displayName, avatarColor?, description, isWarningVisible, limitedAccessLabel?, limitedAccessTooltipTitle?, limitedAccessTooltipDescription?, action }` — `avatarColor` is an `AVATAR_PALETTE` entry (`@epam/ai-dial-ui-kit`) pinned by the host; omitted keeps the name-derived colour — while `limitedAccessLabel` is set the row renders the red limited-access `Badge` with a two-line hover tooltip (bold `limitedAccessTooltipTitle`, normal `limitedAccessTooltipDescription`) instead of the `action`; `limitedAccessTooltipDescription` also remains visible below the badge at every breakpoint, wrapping within the action cell so keyboard and touch users can read it without hovering. The `Badge` references this visible explanation through `aria-describedby` for screen readers

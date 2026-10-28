@@ -220,6 +220,10 @@ export default defineConfig(() => ({
         import.meta.dirname,
         '../../libs/scheduled-tasks/src/index.ts',
       ),
+      '@epam/ai-dial-projects': path.resolve(
+        import.meta.dirname,
+        '../../libs/projects/src/index.ts',
+      ),
       '@epam/ai-dial-quotations': path.resolve(
         import.meta.dirname,
         '../../libs/quotations/src/index.ts',

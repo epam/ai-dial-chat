@@ -18,6 +18,11 @@ import {
   DeploymentType,
   normalizeDeploymentTypesInput,
 } from '../deployments/dto/deployment-type';
+import {
+  IsCatalogCreationRoles,
+  parseCatalogCreationRoles,
+  type CatalogCreationRolesConfig,
+} from './catalog-creation.types';
 import { CspMode } from './csp';
 
 export enum ApplicationLogLevel {
@@ -893,6 +898,23 @@ export class EnvironmentVariables {
   @IsString({ each: true })
   ENABLED_UI_FEATURES?: string[] | null = null;
 
+  /*
+   * Server-only creation policy, independent of ENABLED_UI_FEATURES: role
+   * lists by creation type and by exact application schema id, e.g.
+   * `{"types":{"skill":["authors"]},"schemas":{"<schema id>":["team-A"]}}`.
+   * Absent or blank means no restriction. Only the shape is checked here;
+   * AppConfigService normalizes the role lists once at startup. Never sent to
+   * the browser — client-config carries only the evaluated permissions.
+   */
+  @Transform(({ obj, key }) =>
+    parseCatalogCreationRoles((obj as Record<string, unknown>)[key]),
+  )
+  @IsCatalogCreationRoles()
+  CATALOG_CREATION_ROLES: CatalogCreationRolesConfig = {
+    types: {},
+    schemas: {},
+  };
+
   @IsOptional()
   @Transform(({ obj, key }) => {
     const raw = (obj as Record<string, unknown>)[key];
@@ -982,6 +1004,27 @@ export class EnvironmentVariables {
   })
   @IsString({ each: true })
   SCHEDULED_TASKS_ENABLED_ROLES?: string[] = [];
+
+  @IsOptional()
+  @Transform(({ obj, key }) => {
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    return !['false', '0', 'no'].includes(String(raw).toLowerCase());
+  })
+  @IsBoolean()
+  PROJECTS_ENABLED?: boolean = false;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null || value === '') return [];
+    return String(value)
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 0);
+  })
+  @IsString({ each: true })
+  PROJECTS_ENABLED_ROLES?: string[] = [];
 
   @IsOptional()
   @Transform(({ obj, key }) => {

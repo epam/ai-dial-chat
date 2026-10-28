@@ -118,6 +118,13 @@ export interface EditMessageInputProps {
    * during edit.
    */
   menuOverlays?: MenuOverlayConfig[];
+  /**
+   * Controls which key combination submits the edited message. Forwarded to
+   * the inner `Input`.
+   * - `SendOnEnter.Enter` (default): Enter submits; Shift+Enter inserts a newline.
+   * - `SendOnEnter.MetaEnter`: ⌘+Enter (macOS) / Ctrl+Enter (Windows/Linux) submits; bare Enter inserts a newline.
+   */
+  sendOnEnter?: SendOnEnter;
   /** Pre-existing attachments from the original message, shown in the attachment tray. */
   initialAttachments?: DisplayAttachment[];
   /** Called when the user clicks the Cancel button. */

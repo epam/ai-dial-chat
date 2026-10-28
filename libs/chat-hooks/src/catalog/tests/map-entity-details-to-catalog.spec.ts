@@ -1,4 +1,5 @@
 import { CatalogPricingUnit, CredentialStatus } from '@epam/ai-dial-catalog';
+import type { ModelPricingRateDto } from '@epam/ai-dial-chat-api-client';
 import { describe, expect, it } from 'vitest';
 import {
   AuthenticationType,
@@ -212,12 +213,9 @@ describe('mapEntityDetailsToCatalogDetails', () => {
   });
 
   describe('MODEL pricing', () => {
-    const mapPricing = (pricing: {
-      unit?: string;
-      prompt?: string;
-      completion?: string;
-      cache_read?: string | { rate?: string };
-    }) => {
+    const mapPricing = (
+      pricing: Record<string, string | ModelPricingRateDto>,
+    ) => {
       const dto: Parameters<typeof mapDeploymentDetailsDtoToEntityDetails>[0] =
         {
           id: 'gpt-4o',
@@ -292,12 +290,120 @@ describe('mapEntityDetailsToCatalogDetails', () => {
       ]);
     });
 
-    it('ignores structured conditional prices in the flat pricing view', () => {
+    it('reads a structured `{ rate }` price', () => {
       expect(
         mapPricingRows({
           unit: 'token',
           prompt: '0.000003',
           cache_read: { rate: '0.000001' },
+        }),
+      ).toEqual([
+        { label: 'Input tokens', price: '$3/M tokens' },
+        { label: 'Cached input', price: '$1/M tokens' },
+      ]);
+    });
+
+    it('lists one row per tier of a conditional price, lower tier first', () => {
+      const overLongPrompt = {
+        field: 'promptTokens',
+        operator: '>',
+        value: '200000',
+      };
+
+      expect(
+        mapPricingRows({
+          unit: 'token',
+          prompt: {
+            test: overLongPrompt,
+            ifTrue: '0.000004',
+            ifFalse: '0.000002',
+          },
+          completion: {
+            test: overLongPrompt,
+            ifTrue: '0.000018',
+            ifFalse: '0.000012',
+          },
+          cache_read: {
+            test: overLongPrompt,
+            ifTrue: '4.000000000000003e-7',
+            ifFalse: '2.0000000000000002e-7',
+          },
+        }),
+      ).toEqual([
+        {
+          label: 'Input tokens (prompt tokens ≤ 200K)',
+          price: '$2/M tokens',
+        },
+        {
+          label: 'Input tokens (prompt tokens > 200K)',
+          price: '$4/M tokens',
+        },
+        {
+          label: 'Output tokens (prompt tokens ≤ 200K)',
+          price: '$12/M tokens',
+        },
+        {
+          label: 'Output tokens (prompt tokens > 200K)',
+          price: '$18/M tokens',
+        },
+        {
+          label: 'Cached input (prompt tokens ≤ 200K)',
+          price: '$0.2/M tokens',
+        },
+        {
+          label: 'Cached input (prompt tokens > 200K)',
+          price: '$0.4/M tokens',
+        },
+      ]);
+    });
+
+    it('joins the conditions along a nested conditional price', () => {
+      expect(
+        mapPricingRows({
+          prompt: {
+            test: { field: 'promptTokens', operator: '<=', value: 128000 },
+            ifTrue: '0.000001',
+            ifFalse: {
+              test: { field: 'completionTokens', operator: '==', value: 0 },
+              ifTrue: { rate: '0.000002' },
+              ifFalse: '0.000003',
+            },
+          },
+        }),
+      ).toEqual([
+        { label: 'Input tokens (prompt tokens ≤ 128K)', price: '$1/M tokens' },
+        {
+          label: 'Input tokens (prompt tokens > 128K, completion tokens = 0)',
+          price: '$2/M tokens',
+        },
+        {
+          label: 'Input tokens (prompt tokens > 128K, completion tokens ≠ 0)',
+          price: '$3/M tokens',
+        },
+      ]);
+    });
+
+    it('shows the rows of a deployment priced only conditionally', () => {
+      expect(
+        mapPricingRows({
+          prompt: {
+            test: { field: 'promptTokens', operator: '>', value: '200000' },
+            ifTrue: '0.000004',
+          },
+        }),
+      ).toEqual([
+        { label: 'Input tokens (prompt tokens > 200K)', price: '$4/M tokens' },
+      ]);
+    });
+
+    it('drops a conditional price whose test it cannot read', () => {
+      expect(
+        mapPricingRows({
+          prompt: '0.000003',
+          completion: {
+            test: { field: 'promptTokens', operator: '~' },
+            ifTrue: '0.000004',
+          },
         }),
       ).toEqual([{ label: 'Input tokens', price: '$3/M tokens' }]);
     });

@@ -218,6 +218,14 @@ vi.mock('../../SettingsForm/SettingsForm', () => ({
         </button>
         <button
           type="button"
+          onClick={() =>
+            onAuthChange({ authorizationEndpoint: '', tokenEndpoint: '' })
+          }
+        >
+          clear-oauth-endpoints
+        </button>
+        <button
+          type="button"
           onClick={() => {
             onChange({ endpoint: 'https://example.com/mcp' });
             onAuthChange({
@@ -460,7 +468,7 @@ describe('ToolsetEditor', () => {
     await waitFor(() => expect(saveButton.disabled).toBe(false));
   });
 
-  it('enables the create action for configured OAuth without authorization/token endpoints', async () => {
+  it('keeps the create action disabled for configured OAuth without authorization/token endpoints', async () => {
     renderEditor();
 
     const saveButton = (await screen.findByRole('button', {
@@ -473,7 +481,22 @@ describe('ToolsetEditor', () => {
       }),
     );
 
-    await waitFor(() => expect(saveButton.disabled).toBe(false));
+    await waitFor(() => expect(saveButton.disabled).toBe(true));
+  });
+
+  it('shows required errors once the OAuth endpoints are cleared', async () => {
+    renderEditor();
+
+    await user.click(
+      await screen.findByRole('button', { name: 'fill-oauth-toolset' }),
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'clear-oauth-endpoints' }),
+    );
+
+    const alerts = screen.getAllByRole('alert').map((el) => el.textContent);
+    expect(alerts).toContain('Authorization endpoint is required');
+    expect(alerts).toContain('Token endpoint is required');
   });
 
   it('runs the post-save login for a newly created API-key toolset using the returned id', async () => {
@@ -748,9 +771,7 @@ describe('ToolsetEditor — shared editor shell', () => {
 
     const alerts = screen.getAllByRole('alert');
     expect(alerts).toHaveLength(1);
-    expect(alerts[0].textContent).toContain(
-      'Version must follow semantic versioning',
-    );
+    expect(alerts[0].textContent).toContain('Version may only contain');
   });
 
   it('clears the metadata error once the field becomes valid again', async () => {
@@ -923,6 +944,15 @@ describe('ToolsetEditor — public class names', () => {
         expect.any(AbortSignal),
       );
       expect(
+        screen.getByRole<HTMLTextAreaElement>('textbox', {
+          name: 'Description',
+        }).readOnly,
+      ).toBe(true);
+      expect(
+        screen.getByRole<HTMLButtonElement>('button', { name: 'Refining' })
+          .disabled,
+      ).toBe(true);
+      expect(
         screen.getByRole<HTMLButtonElement>('button', { name: 'Create' })
           .disabled,
       ).toBe(true);
@@ -940,7 +970,9 @@ describe('ToolsetEditor — public class names', () => {
         screen.getByRole<HTMLButtonElement>('button', { name: 'Create' })
           .disabled,
       ).toBe(false);
-      expect(screen.getByRole('button', { name: 'Undo' })).toBeTruthy();
+      expect(
+        screen.getByRole('button', { name: 'Restore original' }),
+      ).toBeTruthy();
     });
   });
 });

@@ -1,4 +1,6 @@
 import {
+  IconBriefcase,
+  IconBriefcaseFilled,
   IconCirclePlusFilled,
   IconClockHour3,
   IconFolderOpen,
@@ -35,6 +37,13 @@ export const NAVIGATION_CONFIG: NavigationItem[] = [
     icon: IconPlusCircle,
     activeIcon: IconCirclePlusFilled,
     labelKey: ButtonsI18nKeys.NewChat,
+  },
+  {
+    path: ROUTES.Projects,
+    icon: IconBriefcase,
+    activeIcon: IconBriefcaseFilled,
+    labelKey: NavigationI18nKeys.Projects,
+    featureFlag: 'projectsEnabled',
   },
   {
     path: ROUTES.ScheduledTasks,

@@ -9161,6 +9161,57 @@
         "tags": ["scheduled-tasks"]
       }
     },
+    "/api/v1/projects": {
+      "get": {
+        "description": "Returns every DIAL project visible to the session user: the user's own bucket, the public (organization) bucket, and projects shared with the user, merged and de-duplicated by id. The BFF follows DIAL Core paging itself, so the list is complete up to a per-source page cap. A failing source is omitted; the request fails only when both bucket listings fail.",
+        "operationId": "listProjects",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved the project list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListProjectsResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "DIAL Core rejected the request as invalid"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The projectsEnabled feature is not enabled for this user, or DIAL Core denied access"
+          },
+          "404": {
+            "description": "DIAL Core resource not found"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned a server error or an unexpected response"
+          },
+          "503": {
+            "description": "DIAL Core is unreachable or timed out"
+          }
+        },
+        "summary": "List projects",
+        "tags": ["projects"]
+      }
+    },
     "/api/v1/offline-credentials": {
       "get": {
         "description": "Returns the session user's offline-credentials consent status by proxying DIAL Core (GET /v1/user/offline-credentials). Never cached.",
@@ -9915,6 +9966,33 @@
         },
         "required": ["title", "contentType", "url"]
       },
+      "CatalogCreationType": {
+        "type": "string",
+        "enum": ["custom-app", "schema-app", "toolset", "prompt", "skill"],
+        "description": "Creation types the caller may create, in the fixed order custom-app, schema-app, toolset, prompt, skill. Evaluated from CATALOG_CREATION_ROLES; a type without a rule is always present. Controls client creation workflows only."
+      },
+      "CatalogCreationPermissionsDto": {
+        "type": "object",
+        "properties": {
+          "allowedTypes": {
+            "type": "array",
+            "description": "Creation types the caller may create, in the fixed order custom-app, schema-app, toolset, prompt, skill. Evaluated from CATALOG_CREATION_ROLES; a type without a rule is always present. Controls client creation workflows only.",
+            "example": ["schema-app", "toolset", "prompt", "skill"],
+            "items": {
+              "$ref": "#/components/schemas/CatalogCreationType"
+            }
+          },
+          "restrictedSchemaIds": {
+            "description": "Exact application schema ids whose CATALOG_CREATION_ROLES rule the caller fails, in configuration order. Reported independently of the schema-app type; creating a schema app requires both.",
+            "example": ["schema-A"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["allowedTypes", "restrictedSchemaIds"]
+      },
       "ClientConfigDto": {
         "type": "object",
         "properties": {
@@ -10101,6 +10179,14 @@
             "type": "boolean",
             "description": "Operator default for the seasonal-celebrations switch, applied to users who have not saved a choice of their own; a saved choice overrides it. Sourced from UI_EVENT_ENABLED_BY_DEFAULT; true unless it is false, 0 or no. Has no visible effect while activeEventId is null.",
             "example": true
+          },
+          "catalogCreationPermissions": {
+            "description": "The caller's resolved catalog creation permissions, evaluated from the server-only CATALOG_CREATION_ROLES and the session roles. Independent of enabledUiFeatures, which it never filters. Never carries role names or the raw policy.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CatalogCreationPermissionsDto"
+              }
+            ]
           }
         },
         "required": [
@@ -10120,7 +10206,8 @@
           "publicationFilterSources",
           "maxAttachmentFileSizeBytes",
           "usageLimitsWarningThresholdPercent",
-          "celebrationsEnabledByDefault"
+          "celebrationsEnabledByDefault",
+          "catalogCreationPermissions"
         ]
       },
       "ClientConfigMetadataDto": {
@@ -10308,7 +10395,7 @@
           },
           "version": {
             "type": "string",
-            "example": "1.0.0"
+            "example": "1.0"
           },
           "topics": {
             "example": ["nlp", "assistant"],
@@ -10820,10 +10907,26 @@
         "type": "object",
         "properties": {
           "ifFalse": {
-            "$ref": "#/components/schemas/ModelPricingRateDto"
+            "description": "Price applied when `test` fails: a per-unit price or a nested pricing branch",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/ModelPricingRateDto"
+              }
+            ]
           },
           "ifTrue": {
-            "$ref": "#/components/schemas/ModelPricingRateDto"
+            "description": "Price applied when `test` holds: a per-unit price or a nested pricing branch",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/ModelPricingRateDto"
+              }
+            ]
           },
           "rate": {
             "type": "string",
@@ -11208,6 +11311,11 @@
           "clientId": {
             "type": "string",
             "description": "(OAuth only) Public OAuth client id — not a secret"
+          },
+          "clientSecretHint": {
+            "type": "string",
+            "description": "(OAuth only) Last characters of the stored OAuth client secret, as returned by DIAL Core. Never the secret itself.",
+            "example": "d4c6"
           },
           "redirectUri": {
             "type": "string",
@@ -11950,6 +12058,11 @@
           "clientId": {
             "type": "string",
             "example": "my-client-id"
+          },
+          "clientSecretHint": {
+            "type": "string",
+            "description": "Last characters of the stored OAuth client secret, as returned by DIAL Core. Never the secret itself.",
+            "example": "d4c6"
           },
           "redirectUri": {
             "type": "string",
@@ -16063,6 +16176,82 @@
           }
         },
         "required": ["id", "displayName", "trigger"]
+      },
+      "ProjectSource": {
+        "type": "string",
+        "enum": ["personal", "shared", "organization"]
+      },
+      "ProjectDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "projects/a1b2c3/marketing/q4-launch",
+            "description": "DIAL Core resource id, `projects/{bucket}/{path}` without a trailing slash."
+          },
+          "name": {
+            "type": "string",
+            "example": "q4-launch"
+          },
+          "bucket": {
+            "type": "string",
+            "example": "a1b2c3"
+          },
+          "path": {
+            "type": "string",
+            "example": "marketing/q4-launch",
+            "description": "Path of the project within its bucket."
+          },
+          "parentPath": {
+            "type": "string",
+            "example": "marketing",
+            "description": "Grouping folder path the project sits in, when nested."
+          },
+          "source": {
+            "example": "personal",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProjectSource"
+              }
+            ]
+          },
+          "author": {
+            "type": "string",
+            "example": "jane.doe"
+          },
+          "createdAt": {
+            "type": "number",
+            "example": 1790000000000,
+            "description": "Creation time, epoch milliseconds."
+          },
+          "updatedAt": {
+            "type": "number",
+            "example": 1791234567000,
+            "description": "Last update time, epoch milliseconds."
+          }
+        },
+        "required": ["id", "name", "bucket", "path", "source"]
+      },
+      "ListProjectsResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "Every project visible to the caller across the personal, organization and shared sources, de-duplicated by id. Order is unspecified.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectDto"
+            }
+          },
+          "incompleteSources": {
+            "type": "array",
+            "example": [],
+            "description": "Sources that failed or were truncated at the page cap, so `items` may be missing projects from them. Empty when every source answered in full.",
+            "items": {
+              "$ref": "#/components/schemas/ProjectSource"
+            }
+          }
+        },
+        "required": ["items", "incompleteSources"]
       },
       "OfflineCredentialsConnectDto": {
         "type": "object",

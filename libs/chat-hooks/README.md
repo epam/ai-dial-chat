@@ -78,12 +78,12 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-mcp-apps` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.4.0-dev.11
+- `@epam/ai-dial-react-file-manager` ^0.4.0-dev.19
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.35
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.45
 - `@epam/ai-dial-usage-dashboard` \*
 - `@mcp-ui/client` ^7.1.1
 - `@modelcontextprotocol/sdk` ^1.32.1
@@ -2327,7 +2327,7 @@ const { handleGridApiChange, reset } = useGridEditingScroll();
 ### Supporting types
 
 - **`DialFilesApi`** — the operation port every file-manager hook that performs network I/O accepts as a parameter, mirroring the host's own files-API transport (list/upload/download/create/rename/move/copy/delete/share methods) instead of a configured REST client.
-- **`FileManagerNotification`** — the structured toast event file-manager hooks emit through `onNotification`, carrying a `variant` (`NotificationVariant`), an optional `reason` (`FileManagerNotificationReason`), and optional interpolation data (`count`, `name`, `folder`, `names`, `restCount`).
+- **`FileManagerNotification`** — the structured toast event file-manager hooks emit through `onNotification`, carrying a `variant` (`NotificationVariant`), an optional `reason` (`FileManagerNotificationReason`), and optional interpolation data (`count`, `name`, `folder`, `names`, `restCount`), and, on `UploadFailed`, an optional `failureReason` (`FileUploadFailureReason` from `@epam/ai-dial-chat-shared`) set when every failed file of the batch failed for the same reason.
 - **`FileManagerNotificationReason`** — library-owned enum identifying why a hook is surfacing a notification (e.g. `FolderLoadFailed`, `FolderCreateFailed`, `FilesDeleted`, `UploadCompleted`, `UnshareFailed`) — see the exported enum for the full member list.
 - **`FileNameValidationErrorReason`** — library-owned enum identifying why a file/folder name failed validation: `Empty`, `ForbiddenSymbols`, `ReservedName`, `TooLong`, `DuplicateName`.
 - **`FileNameValidationError`** — discriminated union returned by `onCreateFolderValidate`/`onRenameValidate` instead of a translated message; members are `{ reason: FileNameValidationErrorReason.Empty }`, `{ reason: FileNameValidationErrorReason.ForbiddenSymbols; symbols: string }`, `{ reason: FileNameValidationErrorReason.ReservedName }`, `{ reason: FileNameValidationErrorReason.TooLong; maxLength: number }`, `{ reason: FileNameValidationErrorReason.DuplicateName; existingName: string }`.
@@ -2701,7 +2701,7 @@ isCustomAppSchema({ id: 'custom_app' }); // true
 
 ### getRunnerSchemas
 
-Returns the application schemas (runners) that create schema-based apps: unique by `id`, with id-less entries and the custom-app schema removed. It accepts any schema shape with an optional `id` and `displayName` and returns the same objects. `useCatalogEditNavigation` builds one Create option per returned schema.
+Returns the application schemas (runners) that create schema-based apps: unique by `id`, with id-less entries and the custom-app schema removed. It accepts any schema shape with an optional `id` and `displayName` and returns the same objects. `useCatalogEditNavigation` builds one Create option per returned schema that its `canCreateSchema` allows.
 
 ```ts
 import { getRunnerSchemas } from '@epam/ai-dial-chat-hooks';
@@ -3388,6 +3388,8 @@ Maps a deployment or toolset listing row into a catalog `CatalogItem`. Both take
 
 For application deployments, `resolveDeploymentFolder` gives ownership flags priority: owned applications use the Personal label, and shared applications use the Shared label. Other applications with no folder path use the Public label (displayed as **Organization** by the chat app). Public application paths retain their nested folders. Models do not receive this fallback.
 
+`mapDeploymentToCatalogItem` also sets `catalogTabs` from the deployment's DIAL Core `interfaces`, keeping `type: Agent` for every application: an application exposing `chat` or `custom_ui` is listed under Agents, one exposing `mcp` under Toolsets, one exposing both under both. Models, deployments without `interfaces`, and applications exposing none of these get no `catalogTabs` (their tab is their `type`). Pass `isToolsetTabEnabled: false` (default `true`) when the host shows no Toolsets tab; Toolsets is then dropped, and an MCP-only application stays under Agents.
+
 `mapToolsetToCatalogItem` applies the same label priority when `folderLabels` are supplied: Personal for owned toolsets, Shared for shared toolsets, and Public for configured toolsets with plain IDs. Toolset resource paths retain their nested folders. When labels are omitted, no root label is added.
 
 ```ts
@@ -3437,7 +3439,7 @@ const item = mapPromptToCatalogItem(promptDto, {
 
 ### mapSkillToCatalogItem / buildSkillOverview / buildSkillContentTree / resolveSkillManifestFileId / resolveSkillFileDownloadPath / readSkillFileBytes / readSkillFilePreviewBytes / readSkillManifest
 
-Maps a skill's DIAL Core metadata into a catalog `CatalogItem` — the item's `description` carries the listing entry's `description` (an empty string when the listing has none), so the catalog card and details header show it before any manifest fetch; the remaining functions build the Overview tab's specification/details sections, the Content tab's hierarchical file tree, resolve the manifest file's opaque listing id, resolve a file-listing id to its download path, and read a skill file/manifest response's bytes/text bounded by `SKILL_MANIFEST_MAX_BYTES`. `readSkillFilePreviewBytes` is the unbounded counterpart used for the supporting-file preview path, where a realistic binary (a PDF, an image) routinely exceeds that manifest-sized cap; it never returns `null`, so file size is not a failure class there.
+Maps a skill's DIAL Core metadata into a catalog `CatalogItem` — the item's `description` carries the listing entry's `description` (an empty string when the listing has none), so the catalog card and details header show it before any manifest fetch; the remaining functions build the Overview tab's Specification section, the Content tab's hierarchical file tree, resolve the manifest file's opaque listing id, resolve a file-listing id to its download path, and read a skill file/manifest response's bytes/text bounded by `SKILL_MANIFEST_MAX_BYTES`. `readSkillFilePreviewBytes` is the unbounded counterpart used for the supporting-file preview path, where a realistic binary (a PDF, an image) routinely exceeds that manifest-sized cap; it never returns `null`, so file size is not a failure class there.
 
 ```ts
 import {
@@ -3458,10 +3460,9 @@ const overviewLabels: SkillOverviewLabels = {
   allowedToolsLabel: 'Allowed tools',
   bundledResourcesLabel: 'Bundled resources',
   specificationSectionTitle: 'Specification',
-  authorLabel: 'Author',
-  updatedLabel: 'Updated',
+  authorLabel: 'Created by',
+  updatedLabel: 'Last updated',
   fileCountLabel: 'Files',
-  detailsSectionTitle: 'Details',
 };
 
 const overview = buildSkillOverview(
@@ -3774,7 +3775,7 @@ import {
   reconcileFilterTopics,
 } from '@epam/ai-dial-chat-hooks';
 
-// Keep only items whose type is in visibleTypes and whose supportsChat is not false (for selector mode)
+// Keep only items listed under a tab in visibleTypes (getCatalogItemTabs) whose supportsChat is not false (for selector mode)
 const selected = filterCatalogItemsBySelector(
   items,
   new Set([CatalogEntityType.Model]),
@@ -3786,7 +3787,7 @@ const visible = filterHiddenOwnedItems(items, hideOwned);
 // Extract user-favorited items in original order
 const favorites = deriveFavoriteItems(items);
 
-// Derive available tab ids (in tabOrder sequence) from present entity types
+// Derive available tab ids (in tabOrder sequence) from the tabs items are listed under
 const tabs = deriveAvailableTabIds(items, tabOrder);
 
 // Intersect persisted filter topics with those that still exist in items
@@ -3799,26 +3800,31 @@ Owns the catalog's edit/delete/create-menu navigation: routing the details panel
 
 **Parameters** (`UseCatalogEditNavigationParams`):
 
-| Name                                                                          | Type                                                        | Description                                                                                         |
-| ----------------------------------------------------------------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `deployments`                                                                 | `DeploymentItemDto[]`                                       | Used to tell a custom app apart from a schema-based app, and to find its schema, when routing Edit. |
-| `isCustomAppsEnabled`                                                         | `boolean`                                                   | Gates the custom-app editor route and Create option.                                                |
-| `isSchemaAppsEnabled`                                                         | `boolean`                                                   | Gates the runner (schema-based app) Create options.                                                 |
-| `isHideCustomAppCreationEnabled`                                              | `boolean`                                                   | Hides the runner and custom-app Create options.                                                     |
-| `isToolsetsEnabled`                                                           | `boolean`                                                   | Gates the toolset Create option.                                                                    |
-| `isPromptsEnabled`                                                            | `boolean`                                                   | Gates the prompt Create option.                                                                     |
-| `schemas`                                                                     | `ApplicationSchemaSummaryDto[]`                             | Application schemas (runners); each one except the custom-app schema gets its own Create option.    |
-| `urls`                                                                        | `CatalogEditNavigationUrls`                                 | Injected editor-route URL builders.                                                                 |
-| `onNavigate`                                                                  | `(url: string) => void`                                     | Navigates the host to a URL built by `urls`.                                                        |
-| `deletePrompt`                                                                | `(id: string) => Promise<unknown>`                          | Deletes a personal or shared prompt.                                                                |
-| `deleteToolset`                                                               | `(id: string) => Promise<unknown>`                          | Deletes a toolset.                                                                                  |
-| `deleteSkill`                                                                 | `(bucket: string, path: string) => Promise<unknown>`        | Deletes a skill package.                                                                            |
-| `deleteApplication`                                                           | `(id: string) => Promise<unknown>`                          | Deletes a deployment/application.                                                                   |
-| `refetchPrompts` / `refetchToolsets` / `refetchSkills` / `refetchDeployments` | `() => Promise<void>`                                       | Refreshes the deleted item's list.                                                                  |
-| `onDeleteSuccess`                                                             | `(item: CatalogItem) => void`                               | Called after a successful delete, so the host can notify with its own entity/operation vocabulary.  |
-| `labels`                                                                      | `CatalogEditNavigationLabels`                               | Localized notification and Create-menu copy, resolved by the host.                                  |
-| `onNotify`                                                                    | `(notification: CatalogEditNavigationNotification) => void` | Called to surface a host notification when a delete fails.                                          |
-| `onSkillUploadClick`                                                          | `() => void`                                                | Called when the Create menu's Skill → Upload option is picked.                                      |
+| Name                                                                          | Type                                                        | Description                                                                                          |
+| ----------------------------------------------------------------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `deployments`                                                                 | `DeploymentItemDto[]`                                       | Used to tell a custom app apart from a schema-based app, and to find its schema, when routing Edit.  |
+| `isCustomAppsEnabled`                                                         | `boolean`                                                   | Gates the custom-app editor route and Create option.                                                 |
+| `isSchemaAppsEnabled`                                                         | `boolean`                                                   | Gates the runner (schema-based app) Create options.                                                  |
+| `isHideCustomAppCreationEnabled`                                              | `boolean`                                                   | Hides the runner and custom-app Create options.                                                      |
+| `isToolsetsEnabled`                                                           | `boolean`                                                   | Gates the toolset Create option.                                                                     |
+| `isPromptsEnabled`                                                            | `boolean`                                                   | Gates the prompt Create option.                                                                      |
+| `schemas`                                                                     | `ApplicationSchemaSummaryDto[]`                             | Application schemas (runners); each one except the custom-app schema gets its own Create option.     |
+| `urls`                                                                        | `CatalogEditNavigationUrls`                                 | Injected editor-route URL builders.                                                                  |
+| `onNavigate`                                                                  | `(url: string) => void`                                     | Navigates the host to a URL built by `urls`.                                                         |
+| `deletePrompt`                                                                | `(id: string) => Promise<unknown>`                          | Deletes a personal or shared prompt.                                                                 |
+| `deleteToolset`                                                               | `(id: string) => Promise<unknown>`                          | Deletes a toolset.                                                                                   |
+| `deleteSkill`                                                                 | `(bucket: string, path: string) => Promise<unknown>`        | Deletes a skill package.                                                                             |
+| `deleteApplication`                                                           | `(id: string) => Promise<unknown>`                          | Deletes a deployment/application.                                                                    |
+| `refetchPrompts` / `refetchToolsets` / `refetchSkills` / `refetchDeployments` | `() => Promise<void>`                                       | Refreshes the deleted item's list.                                                                   |
+| `onDeleteSuccess`                                                             | `(item: CatalogItem) => void`                               | Called after a successful delete, so the host can notify with its own entity/operation vocabulary.   |
+| `labels`                                                                      | `CatalogEditNavigationLabels`                               | Localized notification and Create-menu copy, resolved by the host.                                   |
+| `onNotify`                                                                    | `(notification: CatalogEditNavigationNotification) => void` | Called to surface a host notification when a delete fails.                                           |
+| `onSkillUploadClick`                                                          | `() => void`                                                | Called when the Create menu's Skill → Upload option is picked.                                       |
+| `canCreateCustomApp?` / `canCreateToolset?` / `canCreatePrompt?`              | `boolean`                                                   | Host-resolved creation decisions for that Create option, on top of its feature flag. Default `true`. |
+| `canCreateSkill?`                                                             | `boolean`                                                   | Gates the Skill group and both its children (no feature flag). Default `true`.                       |
+| `canCreateSchema?`                                                            | `(schemaId: string) => boolean`                             | Whether a runner Create option is offered for this exact schema id. Defaults to every schema.        |
+
+The creation inputs narrow only the Create menu — `createOptions`, `createMenuByType`, `createSearch`, and `hasCreateOptions`. They never change `handleEdit`, `handleDelete`, or the schemas edit routing resolves against, and they cannot offer an option whose feature flag is off. A host without a creation policy omits them and keeps the flag-only menu. The hook takes plain decisions: it reads no roles, configuration, or app state.
 
 `CatalogEditNavigationUrls` has one URL-builder pair per item kind — `buildPromptEditUrl(promptId)` / `buildPromptCreateUrl()`, and the same edit/create pair for `Skill`, `Toolset`, and `CustomApp` — plus `buildQuickAppEditUrl(schemaId, appId)` / `buildQuickAppCreateUrl(schemaId)`, which every runner schema (the quick app included) uses.
 
@@ -3829,8 +3835,9 @@ Owns the catalog's edit/delete/create-menu navigation: routing the details panel
 | `handleEdit`       | `(item: CatalogItem) => void`                              | Navigates to the right editor URL for the item's type.                                                                                                                                                                                                                                                                   |
 | `handleDelete`     | `(item: CatalogItem) => Promise<void>`                     | Deletes the item and notifies the outcome.                                                                                                                                                                                                                                                                               |
 | `createOptions`    | `DropdownItem[]`                                           | The Create dropdown's items, gated by the enabled feature flags and filtered by the search query: Toolset, Skill and Prompt sorted by label, then a divider and a `labels.createRunners` header, then Custom App and the runners sorted by label. The divider and header appear only while both sections hold an option. |
-| `createSearch`     | `CatalogCreateSearch \| undefined`                         | The Create menu's search state for `Catalog`'s `createSearch` prop; `undefined` when no runner option is offered.                                                                                                                                                                                                        |
+| `createSearch`     | `CatalogCreateSearch \| undefined`                         | The Create menu's search state for `Catalog`'s `createSearch` prop; `undefined` when no runner option is creatable.                                                                                                                                                                                                      |
 | `createMenuByType` | `Partial<Record<CatalogEntityType, CatalogTabCreateMenu>>` | The same menu narrowed per entity type, for `Catalog`'s `createMenuByTab` prop: agents get the runners and custom app (with `createSearch`), toolsets, skills and prompts their own options; models have no entry.                                                                                                       |
+| `hasCreateOptions` | `boolean`                                                  | Whether any Create option passes the feature flags and creation decisions, before the search query is applied. Hide the host's Create controls when it is `false`; a search that matches nothing leaves it `true`.                                                                                                       |
 
 ```tsx
 import {
@@ -3857,30 +3864,38 @@ const labels: CatalogEditNavigationLabels = {
   deleteError: t('catalog.details.deleteError'),
 };
 
-const { handleEdit, handleDelete, createOptions, createSearch } =
-  useCatalogEditNavigation({
-    deployments,
-    isCustomAppsEnabled,
-    isSchemaAppsEnabled,
-    isHideCustomAppCreationEnabled,
-    isToolsetsEnabled,
-    isPromptsEnabled,
-    schemas,
-    urls,
-    onNavigate: navigate,
-    deletePrompt,
-    deleteToolset,
-    deleteSkill,
-    deleteApplication,
-    refetchPrompts,
-    refetchToolsets,
-    refetchSkills,
-    refetchDeployments,
-    onDeleteSuccess: (item) => notifyOperationSuccess(item),
-    labels,
-    onNotify: showErrorNotification,
-    onSkillUploadClick: openSkillUploadDialog,
-  });
+const {
+  handleEdit,
+  handleDelete,
+  createOptions,
+  createSearch,
+  hasCreateOptions,
+} = useCatalogEditNavigation({
+  deployments,
+  isCustomAppsEnabled,
+  isSchemaAppsEnabled,
+  isHideCustomAppCreationEnabled,
+  isToolsetsEnabled,
+  isPromptsEnabled,
+  schemas,
+  urls,
+  onNavigate: navigate,
+  deletePrompt,
+  deleteToolset,
+  deleteSkill,
+  deleteApplication,
+  refetchPrompts,
+  refetchToolsets,
+  refetchSkills,
+  refetchDeployments,
+  onDeleteSuccess: (item) => notifyOperationSuccess(item),
+  labels,
+  onNotify: showErrorNotification,
+  onSkillUploadClick: openSkillUploadDialog,
+  // Optional host creation decisions; omitted ones allow creation.
+  canCreateSkill,
+  canCreateSchema,
+});
 ```
 
 ### useCatalogToolsetCredentials

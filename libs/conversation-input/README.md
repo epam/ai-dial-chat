@@ -307,6 +307,8 @@ import { EditMessageInput } from '@epam/ai-dial-conversation-input';
 />;
 ```
 
+`sendOnEnter` (a `SendOnEnter` member, default `SendOnEnter.Enter`) picks the key combination that saves the edit, with the same rules as on `Input` and `ConversationInput`. Pass the host's send-key preference so editing behaves like the main composer.
+
 ### Input
 
 `Input` and `ConversationInput` accept `onTranscribeAudio?: TranscribeAudio`, where the exported type is `(file: File, signal: AbortSignal) => Promise<string>`. The microphone button (label and tooltip `Dictate`, overridden with `micLabel`) uses this callback with the complete recording after Stop. The library carries no HTTP or provider details; the host owns upload, provider selection, and size validation of the complete file.

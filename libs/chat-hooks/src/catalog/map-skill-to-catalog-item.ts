@@ -4,7 +4,6 @@ import {
   type CatalogContentTreeNode,
   type CatalogItem,
   type CatalogItemOverview,
-  type OverviewSection,
   type OverviewSpec,
 } from '@epam/ai-dial-catalog';
 import {
@@ -115,7 +114,7 @@ export const mapSkillToCatalogItem = (
 /** Joins a frontmatter list into one spec value, matching the deployment mappers. */
 const joinSpecList = (values: string[]): string => values.join(' · ');
 
-/** Translated labels for the skill Overview tab's Specification/Details sections. */
+/** Translated labels for the skill Overview tab's Specification section. */
 export interface SkillOverviewLabels {
   whenToUseLabel: string;
   allowedToolsLabel: string;
@@ -124,14 +123,13 @@ export interface SkillOverviewLabels {
   authorLabel: string;
   updatedLabel: string;
   fileCountLabel: string;
-  detailsSectionTitle: string;
 }
 
-const buildSpecificationSection = (
+const buildFrontmatterSpecs = (
   about: SkillAboutDetails | undefined,
   labels: SkillOverviewLabels,
-): OverviewSection | null => {
-  if (about == null) return null;
+): OverviewSpec[] => {
+  if (about == null) return [];
 
   const specs: OverviewSpec[] = [];
 
@@ -155,9 +153,7 @@ const buildSpecificationSection = (
    * `about.skillPrompt` is deliberately not rendered: it repeats the manifest
    * body the Content tab already shows in full.
    */
-  if (specs.length === 0) return null;
-
-  return { title: labels.specificationSectionTitle, specs };
+  return specs;
 };
 
 /** Keeps only real files — grouping folders are not part of a skill's inventory. */
@@ -243,9 +239,9 @@ export const resolveSkillFileDownloadPath = (
 ): string | null => stripSkillPathPrefix(fileId, skillPath);
 
 /**
- * Builds the Overview tab data for a skill: a Specification section from its
- * parsed manifest frontmatter, followed by a Details section covering who
- * authored it, when it last changed, and its file inventory. Grouping folders
+ * Builds the Overview tab data for a skill: a single Specification section
+ * listing its parsed manifest frontmatter, followed by who authored it, when
+ * it last changed, and its file inventory. Grouping folders
  * in the file listing are excluded from both the count and the rows. Sizes are
  * not shown — the skill metadata carries no content-length field.
  *
@@ -262,12 +258,7 @@ export const buildSkillOverview = (
   about: SkillAboutDetails | undefined,
   labels: SkillOverviewLabels,
 ): CatalogItemOverview => {
-  const sections: OverviewSection[] = [];
-
-  const specification = buildSpecificationSection(about, labels);
-  if (specification != null) sections.push(specification);
-
-  const specs: OverviewSpec[] = [];
+  const specs = buildFrontmatterSpecs(about, labels);
 
   /* DIAL Core omits the author on resources written before it tracked one. */
   if (skill?.author) {
@@ -283,9 +274,7 @@ export const buildSkillOverview = (
     value: String(selectFileItems(files).length),
   });
 
-  sections.push({ title: labels.detailsSectionTitle, specs });
-
-  return { sections };
+  return { sections: [{ title: labels.specificationSectionTitle, specs }] };
 };
 
 /**

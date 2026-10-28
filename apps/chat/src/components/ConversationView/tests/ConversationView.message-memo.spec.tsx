@@ -1,6 +1,7 @@
 import {
   MessageRole,
   type Conversation,
+  type DisplayAttachment,
   type Message,
 } from '@epam/ai-dial-chat-shared';
 import { render } from '@testing-library/react';
@@ -15,6 +16,11 @@ const mocks = vi.hoisted(() => {
   const noop = () => undefined;
   return {
     renderCountByIndex: new Map<number, number>(),
+    attachmentClickByIndex: new Map<
+      number,
+      (attachment: DisplayAttachment, messageIndex: number) => void
+    >(),
+    openAttachmentCanvas: vi.fn(),
     deployments: {
       items: [{ id: 'model', displayName: 'Model', inputAttachmentTypes: [] }],
       selectedItemId: 'model',
@@ -35,7 +41,9 @@ const mocks = vi.hoisted(() => {
     mcpTools: [],
     mcpCanvas: { openMcpAppCanvas: noop },
     canvas: { openCanvas: noop },
-    openCanvas: { openAttachmentCanvas: noop },
+    get openCanvas() {
+      return { openAttachmentCanvas: this.openAttachmentCanvas };
+    },
     scroll: { setMessageRef: noop, armAnchor: noop },
     empty: {},
     skills: {
@@ -115,13 +123,25 @@ vi.mock('../../UsageLimitBanner/UsageLimitBanner', () => ({
 vi.mock('../ConversationMessageItem', async () => {
   const { memo } = await import('react');
   return {
-    default: memo(({ index }: { index: number }) => {
-      mocks.renderCountByIndex.set(
+    default: memo(
+      ({
         index,
-        (mocks.renderCountByIndex.get(index) ?? 0) + 1,
-      );
-      return null;
-    }),
+        onAttachmentClick,
+      }: {
+        index: number;
+        onAttachmentClick: (
+          attachment: DisplayAttachment,
+          messageIndex: number,
+        ) => void;
+      }) => {
+        mocks.attachmentClickByIndex.set(index, onAttachmentClick);
+        mocks.renderCountByIndex.set(
+          index,
+          (mocks.renderCountByIndex.get(index) ?? 0) + 1,
+        );
+        return null;
+      },
+    ),
   };
 });
 
@@ -155,6 +175,8 @@ const props = {
 
 beforeEach(() => {
   mocks.renderCountByIndex.clear();
+  mocks.attachmentClickByIndex.clear();
+  mocks.openAttachmentCanvas.mockClear();
 });
 
 describe('ConversationView — message item memoisation', () => {
@@ -184,5 +206,35 @@ describe('ConversationView — message item memoisation', () => {
     );
 
     expect([...mocks.renderCountByIndex.keys()]).toEqual([3]);
+  });
+});
+
+describe('ConversationView — attachment clicks', () => {
+  const attachment = (id: string) => ({ id }) as DisplayAttachment;
+
+  it('lets only the latest of two quick attachment clicks commit to the canvas', () => {
+    render(
+      <ConversationView
+        {...props}
+        isAssistantTyping={false}
+        messages={[
+          message(MessageRole.User, 'first'),
+          message(MessageRole.User, 'second'),
+        ]}
+      />,
+    );
+
+    mocks.attachmentClickByIndex.get(0)?.(attachment('a'), 0);
+    mocks.attachmentClickByIndex.get(1)?.(attachment('b'), 1);
+
+    const [
+      [firstAttachment, firstKey, firstGuard],
+      [, secondKey, secondGuard],
+    ] = mocks.openAttachmentCanvas.mock.calls;
+    expect(firstAttachment).toEqual(attachment('a'));
+    expect(firstKey).toBe('0:a');
+    expect(secondKey).toBe('1:b');
+    expect(firstGuard()).toBe(false);
+    expect(secondGuard()).toBe(true);
   });
 });

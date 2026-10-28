@@ -101,6 +101,7 @@ import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
+import { useLatestCanvasRequest } from '../../hooks/attachment/useLatestCanvasRequest';
 import { useMcpAppHostAdapter } from '../../hooks/attachment/useMcpAppHostAdapter';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useChatSettingsFormLabels } from '../../hooks/conversation/useChatSettingsFormLabels';
@@ -560,6 +561,7 @@ const ConversationView: FC<Props> = ({
   const [attachmentsAmount, setAttachmentsAmount] = useState(0);
   const { resolvers, options } = useAttachmentCanvasResolvers();
   const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
+  const startCanvasRequest = useLatestCanvasRequest();
   /* Applies to existing messages as well as new ones, which is what the
      chat-settings hint promises — the format is a property of the
      conversation, not of the message it was chosen before. */
@@ -1081,9 +1083,9 @@ const ConversationView: FC<Props> = ({
 
   const handleInputAttachmentClick = useCallback(
     (attachment: DisplayAttachment) => {
-      void openAttachmentCanvas(attachment);
+      void openAttachmentCanvas(attachment, undefined, startCanvasRequest());
     },
-    [openAttachmentCanvas],
+    [openAttachmentCanvas, startCanvasRequest],
   );
 
   const clearPendingDialAttachments = useCallback(
@@ -1099,9 +1101,13 @@ const ConversationView: FC<Props> = ({
        * attached twice) — prefix with the message index so the "selected"
        * tile highlight can't spuriously match a different message's tile.
        */
-      void openAttachmentCanvas(attachment, `${messageIndex}:${attachment.id}`);
+      void openAttachmentCanvas(
+        attachment,
+        `${messageIndex}:${attachment.id}`,
+        startCanvasRequest(),
+      );
     },
-    [openAttachmentCanvas],
+    [openAttachmentCanvas, startCanvasRequest],
   );
 
   return (
@@ -1191,6 +1197,7 @@ const ConversationView: FC<Props> = ({
                     onEditDraftChange={onEditDraftChange}
                     editCommandMenu={editCommandMenu}
                     editMenuOverlays={editMenuOverlays}
+                    editSendOnEnter={sendOnEnter}
                     renderHistorySkillSegments={renderHistorySkillSegments}
                     renderHistorySkills={renderHistorySkills}
                     onUploadAttachment={onUploadAttachment}

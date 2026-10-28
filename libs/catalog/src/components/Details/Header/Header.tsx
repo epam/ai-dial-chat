@@ -53,7 +53,10 @@ import {
   CredentialsUiState,
   ToolsetAuthenticationType,
 } from '../../../types/toolset-auth';
-import { getCredentialsUiState } from '../../../utils/toolset-credentials';
+import {
+  getCredentialsUiState,
+  getDirectCredentialsLevel,
+} from '../../../utils/toolset-credentials';
 import { CredentialsApiKeyOverlay } from './CredentialsApiKeyOverlay/CredentialsApiKeyOverlay';
 import styles from './Header.module.scss';
 import { ShareButton } from './ShareButton/ShareButton';
@@ -817,6 +820,10 @@ export const Header: FC<HeaderProps> = ({
   const isApiKeyOverlayTrigger =
     authenticationType === ToolsetAuthenticationType.ApiKey &&
     credentialsUiState !== CredentialsUiState.ManageCredentials;
+  const apiKeyOverlayLevel =
+    item.credentials != null
+      ? getDirectCredentialsLevel(item.credentials)
+      : CredentialsLevel.User;
   /* Once a personal API key is on file, the trigger drops from the
    * call-to-action (primary) look to the same low-emphasis style as Share —
    * matching the design's "Change API key" state. */
@@ -843,11 +850,12 @@ export const Header: FC<HeaderProps> = ({
       onRequestLogout?.();
       return;
     }
-    /* OAuth "Log in" always applies to the current user's own credentials —
-     * there is no admin/global concept here since this branch only runs for
-     * the non-admin states. The org-fallback nudge is conveyed by the banner
-     * below the header, not by the button's wording. */
-    onLogin?.(item, { level: CredentialsLevel.User });
+    /* OAuth "Log in" outside the admin states has no level chooser: a public
+     * toolset signs in personally (`USER`), a private one at the owner's own
+     * `GLOBAL` level. The org-fallback nudge is conveyed by the banner below
+     * the header, not by the button's wording. */
+    if (item.credentials == null) return;
+    onLogin?.(item, { level: getDirectCredentialsLevel(item.credentials) });
   }, [
     credentialsUiState,
     isApiKeyOverlayTrigger,
@@ -926,9 +934,17 @@ export const Header: FC<HeaderProps> = ({
         renderOverlay={() => (
           <CredentialsApiKeyOverlay
             item={item}
-            level={CredentialsLevel.User}
-            status={item.credentials?.userStatus}
-            apiKeyAddedWhen={item.credentials?.userApiKeyAddedWhen}
+            level={apiKeyOverlayLevel}
+            status={
+              apiKeyOverlayLevel === CredentialsLevel.User
+                ? item.credentials?.userStatus
+                : item.credentials?.globalStatus
+            }
+            apiKeyAddedWhen={
+              apiKeyOverlayLevel === CredentialsLevel.User
+                ? item.credentials?.userApiKeyAddedWhen
+                : item.credentials?.globalApiKeyAddedWhen
+            }
             apiKeyHeader={item.credentials?.apiKeyHeader}
             onLogin={onLogin}
             onLogout={onLogout}

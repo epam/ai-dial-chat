@@ -4,7 +4,7 @@ Marketplace/catalog component for browsing models, tools, and assistants with se
 
 ## Overview
 
-`@epam/ai-dial-catalog` is a self-contained marketplace panel for browsing the AI DIAL entity catalog — models, tools, and assistants. It addresses the challenge of presenting potentially hundreds of items in a performant, filterable, and searchable UI without forcing each app to re-implement pagination, sorting, and details logic. The library supports two view modes (card grid and ag-grid list table), both windowed to the rows in view so a collection of any size keeps a bounded number of DOM nodes, sidebar filters by entity type and topic tags, a favorites section, and a per-item details panel with tabs for API documentation, tool definitions, pricing rows, and usage limits. Use it when an application needs to expose the full DIAL model/tool marketplace or any subset of it, or when building a picker for a specific entity type with consistent UX.
+`@epam/ai-dial-catalog` is a self-contained marketplace panel for browsing the AI DIAL entity catalog — models, tools, and assistants. It addresses the challenge of presenting potentially hundreds of items in a performant, filterable, and searchable UI without forcing each app to re-implement pagination, sorting, and details logic. The library supports two view modes (card grid and the ui-kit `Grid` list table), both virtualised to the rows in view so a collection of any size keeps a bounded number of DOM nodes, sidebar filters by entity type and topic tags, a favorites section, and a per-item details panel with tabs for API documentation, tool definitions, pricing rows, and usage limits. Use it when an application needs to expose the full DIAL model/tool marketplace or any subset of it, or when building a picker for a specific entity type with consistent UX.
 
 ## Installation
 
@@ -27,7 +27,7 @@ It already includes the styles of the publish flow from `@epam/ai-dial-publish-p
 ## Peer Dependencies
 
 - `react`
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.35 (requires the public `/grid` entry)
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.45 (requires the public `/grid` entry)
 - `@epam/ai-dial-chat-shared`
 
 `ag-grid-community` and `@epam/ai-dial-publish-panel` are normal package
@@ -43,8 +43,9 @@ installing both is required rather than optional.
 (`.`) entry: `CredentialsLevel`, `CredentialsBadgeState`, `CredentialStatus`,
 `CredentialsUiState`, `ToolsetAuthenticationType`, `CatalogSortKey`,
 `CatalogItem`, `CatalogItemCredentials`, `filterCatalogItems`,
-`filterCatalogItemsByQuery`, `CatalogItemsQuery`, `getTopicOptions`, `sortCatalogItems`, `buildCatalogTabs`,
-`getCredentialsBadgeState`, `getCredentialsUiState`, and `getSignedInLevel` —
+`filterCatalogItemsByQuery`, `CatalogItemsQuery`, `getTopicOptions`, `sortCatalogItems`, `buildCatalogTabs`, `getCatalogItemTabs`,
+`applyCatalogSelection`,
+`getCredentialsBadgeState`, `getCredentialsUiState`, `getDirectCredentialsLevel`, and `getSignedInLevel` —
 the headless enums and pure item-mapping functions a host can use (e.g. to
 sort/filter/tab a catalog item list, or read a toolset's credential state)
 without resolving `@epam/ai-dial-publish-panel`, `@epam/ai-dial-react-file-manager`,
@@ -203,7 +204,14 @@ also yields more card columns (4 instead of 3 once the grid area passes
 
 #### Controlling tabs and Topics options independently of `items`
 
-The entity-type tab row appears only when `items` span **two or more** types: a
+An item's tab is its `type` unless it sets `catalogTabs`. `type` is the entity
+kind and drives the item's actions and details; `catalogTabs` only says which
+Browse tabs list it. An item with `type: Agent` and
+`catalogTabs: [Agent, Toolset]` appears once in each of those tabs — the same
+item, so its favorite state and details panel are shared — and counts toward
+both tabs. An absent or empty `catalogTabs` means `[type]`.
+
+The entity-type tab row appears only when `items` span **two or more** tabs: a
 single tab is not a choice, so a catalog restricted to one entity type (an
 agent picker, a prompt picker) renders no tab row at all. The active tab still
 resolves to that one type, so the grid is unaffected.
@@ -426,8 +434,8 @@ and the details-panel header.
 
 ### ListView
 
-Table view powered by ag-grid with column sorting and row selection. `type` and
-`items` are required.
+Table view rendered by the ui-kit 2.0 `Grid` (`@epam/ai-dial-ui-kit/grid`) with
+column sorting and row selection. `type` and `items` are required.
 
 ```tsx
 import { ListView } from '@epam/ai-dial-catalog';
@@ -439,25 +447,27 @@ import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
   query={searchQuery}
   onItemClick={handleItemClick}
   onToggleFavorite={handleToggleFavorite}
-  stickyHeaderTop={headingHeight}
 />;
 ```
 
-The table scrolls with the page, which switches ag-grid's own row
-virtualisation off, so `ListView` windows the rows itself: it hands the grid
-only the rows around the viewport and reserves the rest of the table's height
-with spacers. Rows are a fixed 60 px for that reason — a `styles.typography`
-override that changes a cell's line count would break the reserved height.
-Window changes render without row movement/fade animations or deferred cell
-drawing, and keep the column configuration stable while scrolling.
+The grid gets every item and virtualises the rows itself, so `ListView` fills
+the height of its parent and scrolls its rows inside that box, with the column
+header staying in view. Give the parent a definite height (a flex child with
+`min-h-0` works). Rows are a fixed 60 px.
+
+The table frame, header, row dividers and selected-row tint come from the
+`Grid` theme: the list renders the kit's `GridAppearance.Chat`, a borderless
+12px card with the MD shadow and inset row dividers. `styles.colors` (`ListViewColors`) covers cell content only:
+`starFilled`, `folderIcon` and `selectedRowCheckIcon`. With no items, the grid
+shows its own empty state from `emptyStateTitle` (default `'No results'`) and
+`emptyStateDescription`.
 
 Name, Folder and Tags share the spare width (Name takes twice the share of the
 other two), so widening the table widens the columns that carry variable-length
 values rather than only the name.
 
-Edge padding follows AG Grid's first/last displayed-column markers, including
-when switching tabs restores hidden columns. The Favorite header and star
-button share the same end inset; the star renderer fills the cell width.
+The Favorite header is end-aligned with the star button below it; the star
+renderer fills the cell width.
 
 The Folder cell shows the deepest folder and keeps the full path in a tooltip
 and in the accessible name — a breadcrumb of the whole path collapses into
@@ -467,8 +477,8 @@ styles that tooltip path, `folderLastSegmentClassName` the folder on screen, and
 
 #### Multiple selection
 
-`selectionMode={CatalogSelectionMode.Multiple}` adds a leading checkbox column
-with a select-all checkbox in its header. The selection is controlled: pass the
+`selectionMode={CatalogSelectionMode.Multiple}` turns on the `Grid`'s own leading
+checkbox column, with a select-all checkbox in its header. The selection is controlled: pass the
 selected ids and update them from `onSelectionChange`.
 
 ```tsx
@@ -489,34 +499,33 @@ const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 ```
 
 - A row toggles from its checkbox, a click on any other cell except the
-  Favorite star, or Space on one of its cells. `onItemClick` still fires on a
-  row click.
+  Favorite star, or Space on one of its focused cells. `onItemClick` still
+  fires on a row click.
 - `onSelectionChange` receives a new `Set` with newly selected ids appended, so
   its iteration order is the order the user selected items in.
-- Select-all covers every entry of `items` — not only the rows windowed into
-  the grid — and keeps selected ids that are not in `items` (e.g. filtered out
-  by the host). Its checkbox is mixed while only some listed items are selected.
+- Select-all covers every entry of `items` and keeps selected ids that are not
+  in `items` (e.g. filtered out by the host). Its checkbox is mixed while only some listed items are selected.
 - `selectedItemId`'s single-row highlight is not drawn in this mode.
 - The label props default to `Select <item name>` and `'Select all'`.
 
-In the default single mode, Enter or Space on one of a row's cells calls
-`onItemClick` with that row, as a click does. A control inside the cell (the
+In the default single mode, `selectedItemId` marks its row through the grid's
+row selection and a check mark in the Name cell. The arrow keys move between
+cells, and Enter or Space on a focused cell calls `onItemClick` with that row,
+as a click does. A control inside the cell (the
 Favorite star) keeps its own keys.
 
 ### CatalogPickerModal
 
 The shell of a picker dialog over catalog items (Add toolset, Change model):
 the header with sort, search and the From filter, and the loading, failure and
-empty states. The list and its selection are the host's, from `renderList`,
-which receives the searched, filtered and sorted items and the search query.
-Mount it only while open, so search, filter and sort start fresh each time.
+empty states. The list is a `ListView` of the searched, filtered and sorted
+items, given `listProps` (everything but `items` and `query`; `ariaLabel`
+defaults to `labels.catalog`). It scrolls in the dialog's body, with its column
+header stuck to the top. Mount it only while open, so search, filter and sort
+start fresh each time.
 
 ```tsx
-import {
-  CatalogLoadStatus,
-  CatalogPickerModal,
-  ListView,
-} from '@epam/ai-dial-catalog';
+import { CatalogLoadStatus, CatalogPickerModal } from '@epam/ai-dial-catalog';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 
 <CatalogPickerModal
@@ -526,17 +535,16 @@ import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
   isConfirmDisabled={selectedId == null}
   onConfirm={handleConfirm}
   onClose={handleClose}
-  renderList={(rows, query) => (
-    <ListView
-      type={CatalogEntityType.Model}
-      items={rows}
-      query={query}
-      selectedItemId={selectedId}
-      onItemClick={(item) => setSelectedId(item.id)}
-    />
-  )}
+  listProps={{
+    type: CatalogEntityType.Model,
+    selectedItemId: selectedId,
+    onItemClick: (item) => setSelectedId(item.id),
+  }}
 />;
 ```
+
+A list of the host's own goes in `renderList` instead of `listProps`: it
+receives the searched, filtered and sorted items and the search query.
 
 - `status={CatalogLoadStatus.Error}` shows `labels.failedToLoad` and `error`,
   with a Retry button only when `onRetry` is given.
@@ -548,6 +556,92 @@ import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
   and is a centred dialog from there up. The footer rule drawn with
   `footerStart` reads `--cat-picker-footer-border`, falling back to
   `--stroke-tertiary`.
+
+### AddOnCatalogModal
+
+A picker over `CatalogPickerModal` for several items at once (Add skill, Add toolset, Add agent): the
+same header, search, From filter and states, with a `ListView` in `CatalogSelectionMode.Multiple`. It
+opens with the ids in `attachedIds` checked; Add calls `onConfirm` with the new full id list, Cancel
+calls only `onClose`. Mount it only while open.
+
+```tsx
+import { AddOnCatalogModal, CatalogLoadStatus } from '@epam/ai-dial-catalog';
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+
+<AddOnCatalogModal
+  type={CatalogEntityType.Toolset}
+  items={toolsetItems}
+  attachedIds={attachedIds}
+  labels={{
+    title: t('Add toolset'),
+    catalog: t('Toolsets catalog'),
+    selectAll: t('Select all toolsets'),
+    selectRow: (name) => t('Select {{name}}', { name }),
+  }}
+  status={CatalogLoadStatus.Ready}
+  listProps={{ columnVisibility: { favorite: () => false } }}
+  onConfirm={(ids) => saveToolsets(ids)}
+  onClose={close}
+/>;
+```
+
+- The committed list follows `applyCatalogSelection`: attached ids that stay checked keep their order,
+  newly checked ones follow in the order they were checked, unchecked ones are dropped, and attached ids
+  that are not among `items` stay where they are — so two pickers can edit one shared list.
+- `renderFooterStart(checkedIds)` puts a note built from the checked set before Cancel and Add.
+- `listProps` passes further `ListView` props (`columnVisibility`, `isFavoriteVisible`,
+  `credentialsBadgeLoggedOutLabel`, …); the selection props are the picker's own.
+- `labels.selectAll` and `labels.selectRow` default to `'Select all'` and `Select <name>`.
+
+### AddOnListItem
+
+One attached add-on in a host's list, drawn the way the list view's Name cell draws it, so the row and
+the picker read alike. The whole row is the button that opens the item, named by its name and version and
+described by `description`; a trash beside it shows on hover or focus and stays in the tab order.
+
+```tsx
+import { AddOnListItem } from '@epam/ai-dial-catalog';
+
+<ul>
+  <li>
+    <AddOnListItem
+      name={toolset.name}
+      version={toolset.version}
+      iconUrl={toolset.iconUrl}
+      description={t('Logged out toolset.')}
+      credentials={toolset.credentials}
+      labels={{ remove: t('Remove {{name}}', { name: toolset.name }) }}
+      onOpen={() => openDetails(toolset.id)}
+      onRemove={() => remove(toolset.id)}
+    />
+  </li>
+</ul>;
+```
+
+- `fileType` draws a `FileIcon` instead of the avatar; `path` replaces the name with a plain-text
+  `Breadcrumbs` trail named `labels.location` (default `'Location'`), the button then covering the row.
+- `credentials` draws the `CredentialsBadge` over the icon while signed out.
+- `trailing` adds content after the text (status badges, say).
+- `titleClassName`, `versionClassName` and `descriptionClassName` default to
+  `'dial-small-semi-text text-primary'`, `'dial-tiny-text text-secondary'` and
+  `'dial-tiny-text text-secondary'`.
+
+### useListRemoveFocus
+
+Returns a ref for a list's container. When the list's `count` drops and focus has fallen to the body —
+the removed row took its buttons with it — it focuses the list's first button, or the container's first
+button once the list is empty. It reacts to the count, so a removal after a confirm or a save is covered too.
+
+```tsx
+import { AddOnListItem, useListRemoveFocus } from '@epam/ai-dial-catalog';
+
+const ref = useListRemoveFocus<HTMLElement>(items.length);
+
+<section ref={ref}>
+  <NeutralButton label={t('Add')} onClick={openPicker} />
+  <ul>{items.map(renderItem)}</ul>
+</section>;
+```
 
 ### Favorites
 
@@ -814,10 +908,10 @@ description (case-insensitive), and a count of the tools shown. Its `labels`
 
 The rest of the details view is public for the same hosts:
 
-- `DetailsHeader` is the panel's identity block and action row (`DetailsHeaderProps`). Every action is opt-in and hidden when its prop is absent; with `onLogin` / `onLogout` it renders the toolset credentials action exactly as the panel does, including the personal API-key popover.
+- `DetailsHeader` is the panel's identity block and action row (`DetailsHeaderProps`). Every action is opt-in and hidden when its prop is absent; with `onLogin` / `onLogout` it renders the toolset credentials action exactly as the panel does, including the API-key popover, which acts on the level `getDirectCredentialsLevel` resolves.
 - `ApiTab` is the Connect tab (`ApiTabProps`), rendering `details.api`.
 - `CredentialsBanner` is the note under the header about which credentials are active. `getCredentialsBannerState` (also on `@epam/ai-dial-catalog/mapping`) returns its `CredentialsBannerState`, or `undefined` when no banner applies.
-- `CredentialsApiKeyOverlay` is the personal API-key popover on its own, and `CredentialsManagementPanel` the admin view of personal and organization credentials.
+- `CredentialsApiKeyOverlay` is the API-key popover on its own (pass `level` from `getDirectCredentialsLevel`), and `CredentialsManagementPanel` the admin view of personal and organization credentials.
 
 `texts.entityTypeLabels` (shared with `DetailsPanel`) sets the visible type in the
 header per entity type, e.g. translated names; a type without an entry keeps the raw
@@ -980,7 +1074,11 @@ The fifth argument is the credentials opt-in. The panel renders that checkbox
 only for a `Toolset` whose `credentials.authenticationType` is set and is not
 `ToolsetAuthenticationType.None`, and whose `credentials.globalStatus` is
 `CredentialStatus.SignedIn` — DIAL Core copies only the global credential to
-the published copy, so a user-level sign-in alone has nothing to pass on. No host prop controls this; the
+the published copy, so a user-level sign-in alone has nothing to pass on. The
+details header's own "Log in" and API-key popover sign a private toolset in at
+that global level (`getDirectCredentialsLevel`: `CredentialsLevel.User` when
+`credentials.isPublic`, otherwise `CredentialsLevel.Global`), so an owner who
+signs in there is offered the checkbox. No host prop controls this; the
 decision is derived from the item the panel already has, and there is no role
 gate. For every other item the argument is always `false`. It is cleared on
 every open, including immediately after a publication that carried it.
@@ -1429,9 +1527,11 @@ sentinel rather than a cap, so it renders its note instead of a progress bar.
 
 ```tsx
 import {
+  applyCatalogSelection,
   buildCatalogTabs,
   filterCatalogItems,
   filterCatalogItemsByQuery,
+  getCatalogItemTabs,
   getTopicOptions,
   sortCatalogItems,
 } from '@epam/ai-dial-catalog';
@@ -1456,6 +1556,12 @@ const rows = filterCatalogItemsByQuery(items, {
 });
 
 /*
+ * The ids a picker commits — what `AddOnCatalogModal` hands `onConfirm`:
+ * attached ids still checked or not listed, then newly checked ones.
+ */
+const ids = applyCatalogSelection(attachedIds, checkedIds, listedIds);
+
+/*
  * Derives the entity-type tabs / Topics filter options that `Catalog` would
  * compute internally from `items`. Use these to feed `Catalog`'s `tabs` /
  * `topicOptions` props from a wider item set — see "Controlling tabs and
@@ -1463,6 +1569,9 @@ const rows = filterCatalogItemsByQuery(items, {
  */
 const tabs = buildCatalogTabs(items);
 const topicOptions = getTopicOptions(items);
+
+// The tabs one item is listed under: its non-empty `catalogTabs`, else `[type]`.
+const itemTabs = getCatalogItemTabs(items[0]);
 ```
 
 ## Rollback
@@ -1495,7 +1604,7 @@ either. Five elements carry a stable public class:
 | `toolbar`      | `dial-catalog-toolbar`       | The toolbar above the results: title row, search, sort, view toggle  |
 | `card`         | `dial-catalog-card`          | One grid card, in every state — featured and selected are additive   |
 | `favoriteCard` | `dial-catalog-favorite-card` | One favorites card                                                   |
-| `listView`     | `dial-catalog-list-view`     | The list view's root: the bordered row box, or its empty state       |
+| `listView`     | `dial-catalog-list-view`     | The list view's root: the grid card, or its empty state              |
 
 ```tsx
 import { CATALOG_CLASS } from '@epam/ai-dial-catalog';

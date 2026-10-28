@@ -33,7 +33,6 @@ const overviewLabels: SkillOverviewLabels = {
   authorLabel: 'Author',
   updatedLabel: 'Updated',
   fileCountLabel: 'File count',
-  detailsSectionTitle: 'Details',
 };
 
 const makeSkill = (
@@ -226,16 +225,21 @@ const makeFile = (
     url: `skills/my-bucket/${path}`,
   });
 
-const readSection = (
-  overview: ReturnType<typeof buildSkillOverview>,
-  title: string,
-) => overview.sections.find((section) => section.title === title);
-
 const specificationOf = (overview: ReturnType<typeof buildSkillOverview>) =>
-  readSection(overview, overviewLabels.specificationSectionTitle);
+  overview.sections.find(
+    (section) => section.title === overviewLabels.specificationSectionTitle,
+  );
 
-const detailsOf = (overview: ReturnType<typeof buildSkillOverview>) =>
-  readSection(overview, overviewLabels.detailsSectionTitle);
+const FRONTMATTER_LABELS = new Set([
+  overviewLabels.whenToUseLabel,
+  overviewLabels.allowedToolsLabel,
+  overviewLabels.bundledResourcesLabel,
+]);
+
+const frontmatterSpecsOf = (overview: ReturnType<typeof buildSkillOverview>) =>
+  specificationOf(overview)?.specs.filter((spec) =>
+    FRONTMATTER_LABELS.has(spec.label),
+  );
 
 describe('buildSkillOverview', () => {
   it('builds a Specification section from the parsed frontmatter', () => {
@@ -250,16 +254,16 @@ describe('buildSkillOverview', () => {
       overviewLabels,
     );
 
-    expect(specificationOf(overview)?.specs).toEqual([
+    expect(frontmatterSpecsOf(overview)).toEqual([
       { label: 'When to use', value: 'For research tasks' },
       { label: 'Allowed tools', value: 'search · fetch' },
       { label: 'Bundled resources', value: 'scripts/run.py' },
     ]);
   });
 
-  it('places Specification before Details', () => {
+  it('renders one Specification section with frontmatter rows before the provenance rows', () => {
     const overview = buildSkillOverview(
-      makeSkill(),
+      makeSkill({ author: 'ada' }),
       [],
       { whenToUse: 'For research' },
       overviewLabels,
@@ -267,7 +271,12 @@ describe('buildSkillOverview', () => {
 
     expect(overview.sections.map((section) => section.title)).toEqual([
       'Specification',
-      'Details',
+    ]);
+    expect(specificationOf(overview)?.specs.map((spec) => spec.label)).toEqual([
+      'When to use',
+      'Author',
+      'Updated',
+      'File count',
     ]);
   });
 
@@ -279,10 +288,10 @@ describe('buildSkillOverview', () => {
       overviewLabels,
     );
 
-    expect(specificationOf(overview)?.specs).toHaveLength(1);
+    expect(frontmatterSpecsOf(overview)).toHaveLength(1);
   });
 
-  it('omits the Specification section when no frontmatter resolved', () => {
+  it('renders only the provenance rows when no frontmatter resolved', () => {
     const overview = buildSkillOverview(
       makeSkill(),
       [],
@@ -290,11 +299,11 @@ describe('buildSkillOverview', () => {
       overviewLabels,
     );
 
-    expect(specificationOf(overview)).toBeUndefined();
     expect(overview.sections).toHaveLength(1);
+    expect(frontmatterSpecsOf(overview)).toEqual([]);
   });
 
-  it('omits the Specification section when every about field is empty', () => {
+  it('renders no frontmatter rows when every about field is empty', () => {
     const overview = buildSkillOverview(
       makeSkill(),
       [],
@@ -302,7 +311,7 @@ describe('buildSkillOverview', () => {
       overviewLabels,
     );
 
-    expect(specificationOf(overview)).toBeUndefined();
+    expect(frontmatterSpecsOf(overview)).toEqual([]);
   });
 
   /* The skill prompt repeats the manifest body the Content tab already shows. */
@@ -314,7 +323,7 @@ describe('buildSkillOverview', () => {
       overviewLabels,
     );
 
-    expect(specificationOf(overview)).toBeUndefined();
+    expect(frontmatterSpecsOf(overview)).toEqual([]);
   });
 
   it('omits the author row when the metadata carries none', () => {
@@ -326,7 +335,7 @@ describe('buildSkillOverview', () => {
     );
 
     expect(
-      detailsOf(overview)?.specs.some((spec) => spec.label === 'Author'),
+      specificationOf(overview)?.specs.some((spec) => spec.label === 'Author'),
     ).toBe(false);
   });
 
@@ -338,7 +347,7 @@ describe('buildSkillOverview', () => {
       overviewLabels,
     );
 
-    expect(detailsOf(overview)?.specs[0]).toEqual({
+    expect(specificationOf(overview)?.specs[0]).toEqual({
       label: 'Author',
       value: 'ada',
     });
@@ -353,7 +362,7 @@ describe('buildSkillOverview', () => {
     );
 
     expect(
-      detailsOf(overview)?.specs.find((spec) => spec.label === 'Updated'),
+      specificationOf(overview)?.specs.find((spec) => spec.label === 'Updated'),
     ).toEqual({ label: 'Updated', value: '' });
   });
 
@@ -365,7 +374,7 @@ describe('buildSkillOverview', () => {
       overviewLabels,
     );
 
-    const updated = detailsOf(overview)?.specs.find(
+    const updated = specificationOf(overview)?.specs.find(
       (spec) => spec.label === 'Updated',
     )?.value;
     expect(updated).toBeTruthy();
@@ -385,8 +394,9 @@ describe('buildSkillOverview', () => {
     );
 
     expect(
-      detailsOf(overview)?.specs.find((spec) => spec.label === 'File count')
-        ?.value,
+      specificationOf(overview)?.specs.find(
+        (spec) => spec.label === 'File count',
+      )?.value,
     ).toBe('2');
   });
 
@@ -398,7 +408,7 @@ describe('buildSkillOverview', () => {
       overviewLabels,
     );
 
-    const labels = detailsOf(overview)?.specs.map((spec) => spec.label);
+    const labels = specificationOf(overview)?.specs.map((spec) => spec.label);
     expect(labels).toEqual(['Updated', 'File count']);
   });
 });

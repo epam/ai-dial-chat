@@ -497,7 +497,7 @@ describe('PromptEditor', () => {
       ).toBeNull();
     });
 
-    it('replaces the description with the refined text and offers Undo', async () => {
+    it('replaces the description with the refined text and offers Restore original', async () => {
       const onRefineDescription = vi.fn().mockResolvedValue('Refined draft');
       renderEditor({ initialValues, onRefineDescription });
 
@@ -514,7 +514,9 @@ describe('PromptEditor', () => {
       });
       await waitFor(() => expect(description.value).toBe('Refined draft'));
 
-      await user.click(screen.getByRole('button', { name: 'Undo' }));
+      await user.click(
+        screen.getByRole('button', { name: 'Restore original' }),
+      );
 
       expect(description.value).toBe('Draft');
     });
@@ -527,7 +529,7 @@ describe('PromptEditor', () => {
       content: 'Summarize:',
     };
 
-    it('replaces the instructions with the refined text and offers Undo', async () => {
+    it('replaces the instructions with the refined text and offers Restore original', async () => {
       const refined = '## Summarize\n- Key points';
       const onRefineInstructions = vi.fn().mockResolvedValue(refined);
       const onFieldChange = vi.fn();
@@ -547,7 +549,9 @@ describe('PromptEditor', () => {
       await waitFor(() => expect(content.value).toBe(refined));
       expect(onFieldChange).toHaveBeenCalledWith('content', refined);
 
-      await user.click(screen.getByRole('button', { name: 'Undo' }));
+      await user.click(
+        screen.getByRole('button', { name: 'Restore original' }),
+      );
 
       expect(content.value).toBe('Summarize:');
     });

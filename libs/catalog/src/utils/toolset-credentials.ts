@@ -81,6 +81,24 @@ export const canPublishCredentials = (
   return isSignedIn(credentials.globalStatus);
 };
 
+/**
+ * Resolves which level the direct (non-admin) "Log in" and API-key actions
+ * apply to, per DIAL Core's public/private toolset convention: a public
+ * toolset is signed in to at `USER` level, a private one at `GLOBAL` level —
+ * the owner's own credential, which is also the one DIAL Core copies onto a
+ * copy published with shared credentials.
+ *
+ * A private toolset already signed in at `USER` level keeps resolving to
+ * `USER`, so a key added there before this rule can still be changed or
+ * deleted from the same action.
+ */
+export const getDirectCredentialsLevel = (
+  credentials: CatalogItemCredentials,
+): CredentialsLevel =>
+  credentials.isPublic || isSignedIn(credentials.userStatus)
+    ? CredentialsLevel.User
+    : CredentialsLevel.Global;
+
 /** Resolves which level a direct (non-accordion) "Log out" action applies to. */
 export const getSignedInLevel = (
   credentials: CatalogItemCredentials,
