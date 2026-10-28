@@ -30,6 +30,12 @@ describe('ProjectCapacityMeter', () => {
     expect(screen.getByText('10% of capacity used')).toBeTruthy();
   });
 
+  it('reports a small but non-zero use as 1%, never 0%', () => {
+    renderMeter(35_722);
+
+    expect(screen.getByText('1% of capacity used')).toBeTruthy();
+  });
+
   it('clamps the percentage at 100', () => {
     renderMeter(30, 20);
 

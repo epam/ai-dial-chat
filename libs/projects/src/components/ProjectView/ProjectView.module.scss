@@ -1,0 +1,23 @@
+.container {
+  background: var(--pv-bg, var(--bg-layer-base, #f5f7fa));
+}
+
+.header {
+  border-block-end: 1px solid var(--pv-border, var(--stroke-tertiary, #dde1e6));
+}
+
+.title {
+  color: var(--pv-heading-text, var(--text-primary, #161b2d));
+}
+
+.body {
+  color: var(--pv-body-text, var(--text-primary, #161b2d));
+}
+
+.secondary {
+  color: var(--pv-secondary-text, var(--text-secondary, #57647a));
+}
+
+.panel {
+  border-color: var(--pv-border, var(--stroke-tertiary, #dde1e6));
+}

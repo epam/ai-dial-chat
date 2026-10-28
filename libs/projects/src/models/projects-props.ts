@@ -39,6 +39,8 @@ export interface ProjectsLabels {
   resultCountLabel: (count: number) => string;
   /** Label of the header and empty-state New project buttons; required whenever `onCreateProject` is supplied. */
   createProjectLabel?: string;
+  /** Visually hidden text of a pinned card's marker. Defaults to `'Pinned'`. */
+  pinnedLabel?: string;
 }
 
 /**
@@ -54,6 +56,8 @@ export interface ProjectsColors {
   sortButtonText?: string;
   /** Card background. Fallback: `--bg-layer-raised`. */
   cardBackground?: string;
+  /** Background of an interactive card on hover and keyboard focus. Fallback: `--bg-layer-hover`. */
+  cardHoverBackground?: string;
   /** Project name color on a card. Fallback: `--text-primary`. */
   cardTitleText?: string;
   /** Divider above a card's folder path. Fallback: `--stroke-tertiary`. */
@@ -98,6 +102,10 @@ export interface ProjectsProps {
   onRetry: () => void;
   /** Called from the New project buttons; the buttons are not rendered when omitted. */
   onCreateProject?: () => void;
+  /** Called with a project id on a plain primary click of a card link, in place of the browser's navigation; ignored without `getProjectHref`. */
+  onOpenProject?: (id: string) => void;
+  /** URL of a project's page, used as each card link's `href`; cards are not interactive when omitted. */
+  getProjectHref?: (id: string) => string;
   /** Current search query (controlled). */
   searchQuery: string;
   /** Called with the new query when the user types or clears the search. */

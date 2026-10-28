@@ -9,3 +9,7 @@
 .helper {
   color: var(--pcf-helper-text, var(--text-secondary, #57647a));
 }
+
+.label {
+  color: var(--pcf-label-text, var(--text-secondary, #57647a));
+}

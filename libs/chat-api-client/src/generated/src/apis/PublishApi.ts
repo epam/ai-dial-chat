@@ -437,6 +437,7 @@ export const GetCatalogPublishHistoryEntityTypeEnum = {
   Application: 'application',
   Prompt: 'prompt',
   Skill: 'skill',
+  Project: 'project',
 } as const;
 export type GetCatalogPublishHistoryEntityTypeEnum =
   (typeof GetCatalogPublishHistoryEntityTypeEnum)[keyof typeof GetCatalogPublishHistoryEntityTypeEnum];
@@ -449,6 +450,7 @@ export const GetCatalogUnpublishAccessEntityTypeEnum = {
   Application: 'application',
   Prompt: 'prompt',
   Skill: 'skill',
+  Project: 'project',
 } as const;
 export type GetCatalogUnpublishAccessEntityTypeEnum =
   (typeof GetCatalogUnpublishAccessEntityTypeEnum)[keyof typeof GetCatalogUnpublishAccessEntityTypeEnum];
@@ -461,6 +463,7 @@ export const PublishCatalogEntityEntityTypeEnum = {
   Application: 'application',
   Prompt: 'prompt',
   Skill: 'skill',
+  Project: 'project',
 } as const;
 export type PublishCatalogEntityEntityTypeEnum =
   (typeof PublishCatalogEntityEntityTypeEnum)[keyof typeof PublishCatalogEntityEntityTypeEnum];
@@ -473,6 +476,7 @@ export const UnpublishCatalogEntityEntityTypeEnum = {
   Application: 'application',
   Prompt: 'prompt',
   Skill: 'skill',
+  Project: 'project',
 } as const;
 export type UnpublishCatalogEntityEntityTypeEnum =
   (typeof UnpublishCatalogEntityEntityTypeEnum)[keyof typeof UnpublishCatalogEntityEntityTypeEnum];

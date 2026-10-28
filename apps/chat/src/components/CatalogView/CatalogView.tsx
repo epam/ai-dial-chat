@@ -87,6 +87,7 @@ import {
   getAccessRulesLabels,
   getPublishAuthorLabels,
 } from '../../utils/publish';
+import { canEditShareAccess } from '../../utils/share';
 import { ApplicationCredentials } from '../ApplicationCredentials/ApplicationCredentials';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
 import SkillArchiveUploadDialog from '../SkillArchiveUploadDialog/SkillArchiveUploadDialog';
@@ -679,7 +680,8 @@ const CatalogView: FC<Props> = ({
         }}
         shareOverlay={(item, onClose) => (
           <SharePopoverContainer
-            item={item}
+            itemId={item.id}
+            canEditAccess={canEditShareAccess(item.type)}
             isQuickApp={quickAppDeploymentIds.has(item.id)}
             onClose={onClose}
           />

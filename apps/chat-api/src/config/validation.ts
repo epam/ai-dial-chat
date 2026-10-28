@@ -1,6 +1,19 @@
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
+import {
+  PROJECT_ARCHIVE_READ_MAX_BYTES,
+  PROJECT_MANIFEST_MAX_BYTES,
+} from '../projects/constants/project-context.constants';
 import { EnvironmentVariables } from './environment.config';
+
+/*
+ * The largest PROJECT_CONTEXT_TOTAL_MAX_BYTES a project can be edited at:
+ * the BFF reads a project as one archive capped at
+ * PROJECT_ARCHIVE_READ_MAX_BYTES, which must still hold a full context plus
+ * the largest PROJECT.md it reads.
+ */
+const PROJECT_CONTEXT_TOTAL_UPPER_BOUND =
+  PROJECT_ARCHIVE_READ_MAX_BYTES - PROJECT_MANIFEST_MAX_BYTES;
 
 /*
  * Falls back a config key to AUTH_CALLBACK_BASE_URL when it is unset or
@@ -51,6 +64,14 @@ export const validate = (rawConfig: Record<string, unknown>) => {
   ) {
     throw new Error(
       'Environment validation failed:\nPROJECT_CONTEXT_TOTAL_MAX_BYTES must be at least PROJECT_CONTEXT_FILE_MAX_BYTES',
+    );
+  }
+  if (
+    projectTotalMaxBytes != null &&
+    projectTotalMaxBytes > PROJECT_CONTEXT_TOTAL_UPPER_BOUND
+  ) {
+    throw new Error(
+      `Environment validation failed:\nPROJECT_CONTEXT_TOTAL_MAX_BYTES must be at most ${PROJECT_CONTEXT_TOTAL_UPPER_BOUND} (the ${PROJECT_ARCHIVE_READ_MAX_BYTES}-byte project read limit minus the ${PROJECT_MANIFEST_MAX_BYTES}-byte PROJECT.md limit)`,
     );
   }
 

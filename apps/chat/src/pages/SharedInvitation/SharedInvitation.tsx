@@ -21,6 +21,8 @@ interface Props {
   getTargetRoute?: (itemId: string) => string;
   /** Route to fall back to when accepting the invitation fails. */
   errorFallbackRoute?: string;
+  /** Refreshes the catalog lists after accepting, so the catalog can open the shared item. Defaults to `true`. */
+  shouldRefreshCatalog?: boolean;
 }
 
 const getDefaultTargetRoute = (itemId: string): string => {
@@ -38,6 +40,7 @@ const getDefaultTargetRoute = (itemId: string): string => {
 const SharedInvitationPage: FC<Props> = ({
   getTargetRoute = getDefaultTargetRoute,
   errorFallbackRoute = ROUTES.Catalog,
+  shouldRefreshCatalog = true,
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -74,12 +77,14 @@ const SharedInvitationPage: FC<Props> = ({
          * always wins over a stale refetch instead of being overwritten by
          * it.
          */
-        await Promise.all([
-          refetchDeployments(),
-          refetchToolsets(),
-          refetchSkills(),
-          refetchPrompts(),
-        ]);
+        if (shouldRefreshCatalog) {
+          await Promise.all([
+            refetchDeployments(),
+            refetchToolsets(),
+            refetchSkills(),
+            refetchPrompts(),
+          ]);
+        }
         const sharedItem = sharedDeployment ?? sharedToolset;
         if (sharedItem) mergeSharedItem(sharedItem);
         if (sharedSkill) mergeSharedSkill(sharedSkill);
@@ -128,6 +133,7 @@ const SharedInvitationPage: FC<Props> = ({
     t,
     getTargetRoute,
     errorFallbackRoute,
+    shouldRefreshCatalog,
     refetchDeployments,
     refetchToolsets,
     mergeSharedItem,

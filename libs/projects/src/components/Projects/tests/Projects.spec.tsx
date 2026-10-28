@@ -335,4 +335,79 @@ describe('Projects', () => {
       1,
     );
   });
+
+  describe('Projects — pins and navigation', () => {
+    it('marks a pinned card for assistive technology and lists it first', () => {
+      render(
+        <Harness
+          projects={[
+            ...projects,
+            { ...projects[2], id: 'p4', name: 'Pinned one', isPinned: true },
+          ]}
+          labels={{ ...labels, pinnedLabel: 'Pinned' }}
+        />,
+      );
+
+      expect(cardNames()[0]).toBe('Pinned one');
+      expect(within(getCard('Pinned one')).getByText('Pinned')).toBeTruthy();
+      expect(within(getCard('Handbook')).queryByText('Pinned')).toBeNull();
+    });
+
+    it('renders no link when the cards are not interactive', () => {
+      render(<Harness />);
+
+      expect(screen.queryByRole('link')).toBeNull();
+    });
+
+    it('opens a project on a plain click of its card link', async () => {
+      const onOpenProject = vi.fn();
+      render(
+        <Harness
+          onOpenProject={onOpenProject}
+          getProjectHref={(id) => `/projects/view/${id}`}
+        />,
+      );
+
+      const link = within(getCard('Handbook')).getByRole('link', {
+        name: 'Handbook',
+      });
+      expect(link.getAttribute('href')).toBe('/projects/view/p2');
+      await userEvent.click(link);
+
+      expect(onOpenProject).toHaveBeenCalledWith('p2');
+    });
+
+    it('leaves a modified click to the browser', () => {
+      const onOpenProject = vi.fn();
+      render(
+        <Harness
+          onOpenProject={onOpenProject}
+          getProjectHref={(id) => `/projects/view/${id}`}
+        />,
+      );
+
+      const link = within(getCard('Handbook')).getByRole('link', {
+        name: 'Handbook',
+      });
+      /* Records whether the card prevented the default, then stops jsdom,
+       * which cannot navigate, from trying to follow the link. */
+      let wasPrevented: boolean | undefined;
+      const recordAndStop = (event: Event) => {
+        wasPrevented = event.defaultPrevented;
+        event.preventDefault();
+      };
+      document.addEventListener('click', recordAndStop);
+      link.dispatchEvent(
+        new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+          ctrlKey: true,
+        }),
+      );
+      document.removeEventListener('click', recordAndStop);
+
+      expect(onOpenProject).not.toHaveBeenCalled();
+      expect(wasPrevented).toBe(false);
+    });
+  });
 });

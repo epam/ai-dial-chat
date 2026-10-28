@@ -23,6 +23,11 @@ vi.mock('../../../server-api/projects.api', () => ({
   listProjects: vi.fn(),
 }));
 
+const userConfig = vi.hoisted(() => ({ pinnedProjectIds: [] as string[] }));
+vi.mock('../../../context/UserConfigContext', () => ({
+  useUserConfig: () => userConfig,
+}));
+
 const listing = {
   items: [
     {
@@ -50,6 +55,7 @@ const renderPage = () =>
       <Routes>
         <Route path="/projects" element={<ProjectsPage />} />
         <Route path="/projects/new" element={<p>New project form</p>} />
+        <Route path="/projects/view/:bucket/*" element={<p>Project view</p>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -57,6 +63,7 @@ const renderPage = () =>
 describe('ProjectsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    userConfig.pinnedProjectIds = [];
     useAppConfigMock.mockReturnValue({ status: 'ready' });
     vi.mocked(listProjects).mockResolvedValue(listing);
   });
@@ -183,5 +190,30 @@ describe('ProjectsPage', () => {
     await userEvent.click(buttons[1]);
 
     expect(await screen.findByText('New project form')).toBeTruthy();
+  });
+
+  it('lists pinned projects first and marks them', async () => {
+    userConfig.pinnedProjectIds = ['projects/public/handbook'];
+    vi.mocked(listProjects).mockResolvedValue(listing);
+    useFeatureFlagMock.mockReturnValue(true);
+    renderPage();
+
+    const cards = await screen.findAllByRole('article');
+    expect(cards[0].getAttribute('aria-label')).toBe('Handbook');
+    expect(
+      within(cards[0]).getByText(ProjectsI18nKeys.CardPinned),
+    ).toBeTruthy();
+  });
+
+  it('opens a project from its card', async () => {
+    vi.mocked(listProjects).mockResolvedValue(listing);
+    useFeatureFlagMock.mockReturnValue(true);
+    renderPage();
+
+    const link = await screen.findByRole('link', { name: 'Handbook' });
+    expect(link.getAttribute('href')).toBe('/projects/view/public/handbook');
+    await userEvent.click(link);
+
+    expect(await screen.findByText('Project view')).toBeTruthy();
   });
 });
