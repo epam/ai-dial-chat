@@ -3,22 +3,38 @@
  * `type:*` depConstraints of `@nx/enforce-module-boundaries` and the
  * `no-restricted-imports` guards on the fixture and hooks/UI edges. Each case
  * lints an in-memory import as if it lived in the source project's src/
- * folder; nothing is written to disk.
+ * folder; no source file is written to disk.
  * Run: node --test tools/module-boundaries.spec.mjs
  */
 
-import { test } from 'node:test';
+import { before, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { createProjectGraphAsync, readCachedProjectGraph } from '@nx/devkit';
 import { ESLint } from 'eslint';
 
 const RULE = '@nx/enforce-module-boundaries';
 const RESTRICTED_RULE = 'no-restricted-imports';
 const workspaceRoot = fileURLToPath(new URL('..', import.meta.url));
 const eslint = new ESLint({ cwd: workspaceRoot });
+
+/*
+ * `@nx/enforce-module-boundaries` reads only the cached project graph and
+ * silently skips itself when there is none — as on a fresh CI checkout where
+ * no `nx` command ran first — which would turn every "cannot import" case
+ * into a 0-error failure and every "may import" case into a vacuous pass.
+ * Build (and cache) the graph up front, and fail loudly if it is still missing.
+ */
+before(async () => {
+  await createProjectGraphAsync({ exitOnError: false });
+  assert.ok(
+    readCachedProjectGraph(),
+    'no cached Nx project graph, so the boundary rule would be skipped',
+  );
+});
 
 const boundaryErrors = async (
   projectRoot,
