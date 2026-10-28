@@ -1,3 +1,4 @@
+import type { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type { CSSProperties } from 'react';
 import type { CatalogItem } from './catalog-item';
 import type { CatalogMarkdownLabels } from './item-details-props';
@@ -34,4 +35,6 @@ export interface CardRowData {
   featuredChipStyle?: CSSProperties;
   /** Code-block, table and formula labels forwarded to each card's description markdown. Defaults to the renderer's English labels. */
   markdownLabels?: CatalogMarkdownLabels;
+  /** Active Browse tab; an item listed under it is labeled with that type instead of `item.type`. */
+  activeTab?: CatalogEntityType;
 }

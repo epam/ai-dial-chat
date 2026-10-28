@@ -45,7 +45,7 @@ export interface ListViewProps {
   ref?: Ref<ListViewHandle>;
   /** Called with the rows' vertical scroll offset in pixels whenever they scroll. */
   onRowsScroll?: (top: number) => void;
-  /** Type of catalog items being displayed. */
+  /** Active Browse tab; drives column visibility and the Type label of items listed under it. */
   type: CatalogEntityType;
   /** Items to display in the table. */
   items: CatalogItem[];

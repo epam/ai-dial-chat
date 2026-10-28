@@ -1,6 +1,7 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type { ColDef } from 'ag-grid-community';
 import { CatalogItem } from '../../models/catalog-item';
+import { getCatalogItemDisplayType } from '../../utils/catalog-tabs';
 import styles from './ListView.module.scss';
 import { EntityTypeCellRenderer } from './Renders/EntityTypeCellRenderer';
 import { FolderCellRenderer } from './Renders/FolderCellRenderer';
@@ -89,7 +90,7 @@ export const CATALOG_COLUMNS = (
       filter: false,
       sortable: false,
       cellRenderer: EntityTypeCellRenderer,
-      valueGetter: (p) => p.data?.type,
+      valueGetter: (p) => p.data && getCatalogItemDisplayType(p.data, type),
     },
     {
       headerName: 'Folder',
