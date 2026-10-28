@@ -4,9 +4,27 @@ import {
   createConversation,
   generateConversationTitle,
   getConversation,
+  getConversationTitles,
   listConversations,
   saveConversation,
 } from '../conversations.api';
+
+describe('getConversationTitles', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('forwards exact resource IDs and cancellation through the generated client', async () => {
+    const spy = vi
+      .spyOn(conversationsApi, 'getConversationTitles')
+      .mockResolvedValue({ items: [] });
+    const controller = new AbortController();
+    const ids = ['conversations/bucket/app%255F__title'];
+    await getConversationTitles(ids, controller.signal);
+    expect(spy).toHaveBeenCalledWith(
+      { conversationTitlesBodyDto: { ids } },
+      { signal: controller.signal },
+    );
+  });
+});
 
 describe('createConversation', () => {
   afterEach(() => {

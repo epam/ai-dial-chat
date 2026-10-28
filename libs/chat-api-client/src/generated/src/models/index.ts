@@ -1454,11 +1454,17 @@ export interface ConversationListItemDto {
    */
   id: string;
   /**
-   * Human-readable conversation title (the resource `name` from DIAL Core).
+   * Cached display title, or the filename-derived title while background title resolution is pending.
    * @type {string}
    * @memberof ConversationListItemDto
    */
   title: string;
+  /**
+   * True when the title has not been resolved from the stored conversation yet, or its cached value expired. Resolve it with POST /conversations/titles.
+   * @type {boolean}
+   * @memberof ConversationListItemDto
+   */
+  isTitlePending?: boolean;
   /**
    * Unix epoch milliseconds of the resource creation, as reported by DIAL Core metadata. Absent when DIAL Core does not report it, and always absent for conversations shared with the current user.
    * @type {number}
@@ -1970,6 +1976,51 @@ export interface ConversationStartersDto {
    * @memberof ConversationStartersDto
    */
   starters: Array<ConversationStarterDto>;
+}
+/**
+ *
+ * @export
+ * @interface ConversationTitleDto
+ */
+export interface ConversationTitleDto {
+  /**
+   * The exact conversation resource URL supplied in the request.
+   * @type {string}
+   * @memberof ConversationTitleDto
+   */
+  id: string;
+  /**
+   * Current display title without conversation messages.
+   * @type {string}
+   * @memberof ConversationTitleDto
+   */
+  title: string;
+}
+/**
+ *
+ * @export
+ * @interface ConversationTitlesBodyDto
+ */
+export interface ConversationTitlesBodyDto {
+  /**
+   * Full DIAL Core conversation resource URLs. Duplicate IDs are read once. Missing or inaccessible conversations are omitted.
+   * @type {Array<string>}
+   * @memberof ConversationTitlesBodyDto
+   */
+  ids: Array<string>;
+}
+/**
+ *
+ * @export
+ * @interface ConversationTitlesResponseDto
+ */
+export interface ConversationTitlesResponseDto {
+  /**
+   *
+   * @type {Array<ConversationTitleDto>}
+   * @memberof ConversationTitlesResponseDto
+   */
+  items: Array<ConversationTitleDto>;
 }
 /**
  *

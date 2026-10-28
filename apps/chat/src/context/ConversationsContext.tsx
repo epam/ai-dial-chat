@@ -23,6 +23,7 @@ import {
 import { normalizeConversationId } from '../constants/routes';
 import { useConversationDiscovery } from '../hooks/conversation/useConversationDiscovery';
 import { useConversationDraftStore } from '../hooks/conversation/useConversationDraftStore';
+import { useConversationTitleEnrichment } from '../hooks/conversation/useConversationTitleEnrichment';
 import {
   deleteAllConversations as apiDeleteAllConversations,
   deleteConversation as apiDeleteConversation,
@@ -73,6 +74,8 @@ interface ConversationsContextType {
   conversations: ConversationListItemDto[];
   /** True while the initial fetch is in flight. */
   isLoading: boolean;
+  /** True while missing list titles are being resolved in the background. */
+  isUpdatingTitles: boolean;
   /** Non-null if the fetch failed. */
   error: Error | null;
   /** Toggle the pinned state of a conversation and persist it to the backend. Reverts on failure. */
@@ -166,6 +169,14 @@ export const ConversationsProvider = ({
   }, [userSub]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const {
+    applyConversationList,
+    getTitleRevision,
+    rememberTitle,
+    forgetTitle,
+    restoreTitle,
+    isUpdatingTitles,
+  } = useConversationTitleEnrichment(userSub, setConversations);
   const overlay = useOptionalOverlay();
 
   useEffect(() => {
@@ -181,6 +192,7 @@ export const ConversationsProvider = ({
     const currentViewedIds = viewedIdsRef.current;
     if (!currentViewedIds) return;
     const requestId = ++listRequestIdRef.current;
+    const titleRevision = getTitleRevision();
     setError(null);
     try {
       const response = await listConversations();
@@ -191,7 +203,10 @@ export const ConversationsProvider = ({
         return;
       appliedListRequestIdRef.current = requestId;
       setError(null);
-      setConversations(applyViewedState(response.items, currentViewedIds));
+      applyConversationList(
+        applyViewedState(response.items, currentViewedIds),
+        titleRevision,
+      );
     } catch (err) {
       if (
         viewedIdsRef.current !== currentViewedIds ||
@@ -200,7 +215,7 @@ export const ConversationsProvider = ({
         return;
       setError(err instanceof Error ? err : new Error(String(err)));
     }
-  }, []);
+  }, [applyConversationList, getTitleRevision]);
 
   const refreshConversations = useConversationDiscovery(
     conversations,
@@ -212,6 +227,7 @@ export const ConversationsProvider = ({
     const currentViewedIds = viewedIdsRef.current;
     if (!currentViewedIds) return;
     const requestId = ++listRequestIdRef.current;
+    const titleRevision = getTitleRevision();
     try {
       const response = await listConversations();
       if (
@@ -221,23 +237,39 @@ export const ConversationsProvider = ({
         return;
       appliedListRequestIdRef.current = requestId;
       setError(null);
-      setConversations(applyViewedState(response.items, currentViewedIds));
+      applyConversationList(
+        applyViewedState(response.items, currentViewedIds),
+        titleRevision,
+      );
     } catch {
       // Background refresh must not disturb the panel loading state.
     }
-  }, []);
+  }, [applyConversationList, getTitleRevision]);
 
-  const updateConversationTitle = useCallback((id: string, title: string) => {
-    /* Returning `prev` on a no-op lets React bail out — every conversation
+  const updateConversationTitle = useCallback(
+    (id: string, title: string) => {
+      const target = conversationsRef.current.find((item) =>
+        conversationIdsMatch(item.id, id),
+      );
+      if (target) rememberTitle(target.id, title);
+      /* Returning `prev` on a no-op lets React bail out — every conversation
        load calls this, usually with the title the list already has. */
-    setConversations((prev) => {
-      const index = prev.findIndex((item) => conversationIdsMatch(item.id, id));
-      if (index === -1 || prev[index].title === title) return prev;
-      const next = prev.slice();
-      next[index] = { ...prev[index], title };
-      return next;
-    });
-  }, []);
+      setConversations((prev) => {
+        const index = prev.findIndex((item) =>
+          conversationIdsMatch(item.id, id),
+        );
+        if (
+          index === -1 ||
+          (prev[index].title === title && !prev[index].isTitlePending)
+        )
+          return prev;
+        const next = prev.slice();
+        next[index] = { ...prev[index], title, isTitlePending: false };
+        return next;
+      });
+    },
+    [rememberTitle],
+  );
 
   const bumpConversationActivity = useCallback((id: string) => {
     /* Read the clock outside the updater so it stays a pure reducer — React
@@ -384,6 +416,7 @@ export const ConversationsProvider = ({
 
     const load = async () => {
       const requestId = ++listRequestIdRef.current;
+      const titleRevision = getTitleRevision();
       setIsLoading(true);
       setError(null);
       setConversations([]);
@@ -392,7 +425,10 @@ export const ConversationsProvider = ({
         if (!cancelled && requestId >= appliedListRequestIdRef.current) {
           appliedListRequestIdRef.current = requestId;
           setError(null);
-          setConversations(applyViewedState(response.items, viewedIds));
+          applyConversationList(
+            applyViewedState(response.items, viewedIds),
+            titleRevision,
+          );
         }
       } catch (err) {
         if (!cancelled && requestId === listRequestIdRef.current)
@@ -407,7 +443,7 @@ export const ConversationsProvider = ({
     return () => {
       cancelled = true;
     };
-  }, [userSub]);
+  }, [userSub, applyConversationList, getTitleRevision]);
 
   const pinConversation = useCallback(
     async (id: string, isPinned: boolean) => {
@@ -465,9 +501,13 @@ export const ConversationsProvider = ({
 
   const deleteConversation = useCallback(
     async (id: string) => {
-      let snapshot: ConversationListItemDto[] | undefined;
+      const scope = viewedIdsRef.current;
+      const priorItems = conversationsRef.current;
+      const deletedItems = priorItems.filter((item) =>
+        conversationIdsMatch(item.id, id),
+      );
+      deletedItems.forEach((item) => forgetTitle(item.id, true));
       setConversations((prev) => {
-        snapshot = prev;
         /*
          * Matched the same way as removeConversationFromList: a caller passing a
          * differently-encoded id would otherwise keep its stale row on a 404 —
@@ -485,13 +525,43 @@ export const ConversationsProvider = ({
          * that neither opens nor deletes.
          */
         if (!isConversationNotFoundError(err)) {
-          if (snapshot) setConversations(snapshot);
+          if (scope === viewedIdsRef.current) {
+            deletedItems.forEach((item) => restoreTitle(item.id, item.title));
+            setConversations((current) => {
+              /* Restore only the removed rows. Other rows may have been
+                 renamed, pinned or enriched while the request was pending. */
+              const restored = [...current];
+              for (const item of deletedItems) {
+                if (restored.some(({ id: currentId }) => currentId === item.id))
+                  continue;
+                const originalIndex = priorItems.indexOf(item);
+                const nextSurvivor = priorItems
+                  .slice(originalIndex + 1)
+                  .find((candidate) =>
+                    restored.some(
+                      ({ id: currentId }) => currentId === candidate.id,
+                    ),
+                  );
+                const index = nextSurvivor
+                  ? restored.findIndex(
+                      ({ id: currentId }) => currentId === nextSurvivor.id,
+                    )
+                  : restored.length;
+                restored.splice(index, 0, item);
+              }
+              return restored;
+            });
+          }
           throw err;
         }
       }
-      draftStore?.remove(id);
+      if (scope === viewedIdsRef.current) {
+        /* A list started during the delete also predates its confirmed result. */
+        deletedItems.forEach((item) => forgetTitle(item.id));
+        draftStore?.remove(id);
+      }
     },
-    [draftStore],
+    [draftStore, forgetTitle, restoreTitle],
   );
 
   /**
@@ -499,21 +569,30 @@ export const ConversationsProvider = ({
    * API. Use when the conversation was already deleted server-side by
    * another flow (e.g. deleting its last message empties it out).
    */
-  const removeConversationFromList = useCallback((id: string) => {
-    setConversations((prev) => {
-      const next = prev.filter((c) => !conversationIdsMatch(c.id, id));
-      return next.length === prev.length ? prev : next;
-    });
-  }, []);
+  const removeConversationFromList = useCallback(
+    (id: string) => {
+      const target = conversationsRef.current.find((item) =>
+        conversationIdsMatch(item.id, id),
+      );
+      if (target) forgetTitle(target.id);
+      setConversations((prev) => {
+        const next = prev.filter((c) => !conversationIdsMatch(c.id, id));
+        return next.length === prev.length ? prev : next;
+      });
+    },
+    [forgetTitle],
+  );
 
   const renameConversation = useCallback(
     async (id: string, newTitle: string) => {
+      const scope = viewedIdsRef.current;
+      rememberTitle(id, newTitle, { isWriting: true });
       let originalTitle: string | undefined;
       setConversations((prev) =>
         prev.map((c) => {
           if (c.id !== id) return c;
           originalTitle = c.title;
-          return { ...c, title: newTitle };
+          return { ...c, title: newTitle, isTitlePending: false };
         }),
       );
 
@@ -523,11 +602,14 @@ export const ConversationsProvider = ({
           conversationPath,
           newTitle,
         );
+        if (scope !== viewedIdsRef.current) return;
+        rememberTitle(id, name);
         setConversations((prev) =>
           prev.map((c) => (c.id === id ? { ...c, title: name } : c)),
         );
       } catch (err) {
-        if (originalTitle != null) {
+        if (originalTitle != null && scope === viewedIdsRef.current) {
+          rememberTitle(id, originalTitle, { protect: false });
           setConversations((prev) =>
             prev.map((c) =>
               c.id === id ? { ...c, title: originalTitle as string } : c,
@@ -537,7 +619,7 @@ export const ConversationsProvider = ({
         throw err;
       }
     },
-    [],
+    [rememberTitle],
   );
 
   const generateConversationTitle = useCallback(async (id: string) => {
@@ -607,6 +689,7 @@ export const ConversationsProvider = ({
     () => ({
       conversations,
       isLoading,
+      isUpdatingTitles,
       error,
       pinConversation,
       markConversationViewed,
@@ -624,6 +707,7 @@ export const ConversationsProvider = ({
     [
       conversations,
       isLoading,
+      isUpdatingTitles,
       error,
       pinConversation,
       markConversationViewed,

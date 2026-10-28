@@ -94,7 +94,7 @@ The `Conversation` and `Message` interfaces SHALL be declared in `libs/chat-shar
 
 ### Requirement: ConversationModule is registered in the root AppModule
 
-`ConversationModule` (`apps/chat-api/src/conversations/conversation.module.ts`) SHALL be listed in the `imports` array of `apps/chat-api/src/app/app.module.ts`. It MUST import `UserConfigModule`, `ScheduledTaskUnreadModule`, `AppConfigModule`, and `DeploymentsModule`; declare `ConversationController` and `ConversationPublishController` in its `controllers` array; and provide the `ConversationService` facade plus `ConversationPersistenceService` (also bound to the `CONVERSATION_PERSISTENCE` token), `ConversationListingService`, `ConversationLifecycleService`, `ConversationStreamingService`, `ConversationNamingService`, `ConversationGenerationService`, `ConversationPublishService`, `ChatCompletionsAdapter`, `ResponsesAdapter`, `CoreResponsesClient`, and `BackgroundGenerationService`.
+`ConversationModule` (`apps/chat-api/src/conversations/conversation.module.ts`) SHALL be listed in the `imports` array of `apps/chat-api/src/app/app.module.ts`. It MUST import `UserConfigModule`, `ScheduledTaskUnreadModule`, `AppConfigModule`, and `DeploymentsModule`; declare `ConversationController` and `ConversationPublishController` in its `controllers` array; and provide the `ConversationService` facade plus `ConversationPersistenceService` (also bound to the `CONVERSATION_PERSISTENCE` token), `ConversationListingService`, `ConversationTitleCacheService`, `ConversationTitlesService`, `ConversationLifecycleService`, `ConversationStreamingService`, `ConversationNamingService`, `ConversationGenerationService`, `ConversationPublishService`, `ChatCompletionsAdapter`, `ResponsesAdapter`, `CoreResponsesClient`, and `BackgroundGenerationService`.
 
 #### Scenario: Module is wired into the app
 
@@ -236,7 +236,9 @@ On success the endpoint returns HTTP 200 with `ConversationListResponseDto`:
 ```ts
 class ConversationListItemDto {
   id: string;               // Full DIAL Core resource URL (e.g. "conversations/bucket/model__title__uuid")
-  title: string;            // Human-readable conversation title extracted from the resource name
+  title: string;            // Cached display title, or the resource-name fallback while pending
+  isTitlePending?: boolean; // True when the stored title needs background resolution
+  createdAt?: number;       // Core creation time in Unix epoch milliseconds; absent for shared items
   updatedAt: number;        // Unix epoch milliseconds of the last update
   sharedWithMe: boolean;    // True when the conversation was shared with the current user
   publishedWithMe: boolean; // True when this conversation is from the public bucket (organisation content)
@@ -592,8 +594,8 @@ No new HTTP endpoint is added for LLM naming.
 #### Scenario: Client discovers renamed title on subsequent fetch
 
 - **GIVEN** LLM naming succeeds asynchronously after the first save
-- **WHEN** the client later calls `GET /api/v1/conversations/list` or `GET /api/v1/conversations?path=...`
-- **THEN** the response reflects the updated `name` and `llmNamingDone: true`
+- **WHEN** the client fetches the conversation or resolves its pending list title through `POST /api/v1/conversations/titles`
+- **THEN** the conversation response reflects the updated `name` and `llmNamingDone: true`, and the title projection reflects the updated name
 
 ---
 
@@ -611,33 +613,32 @@ Before persisting, `ConversationPersistenceService.saveConversation` SHALL call 
 
 ### Requirement: Conversation list uses stored display name for writable items
 
-`ConversationListingService.listConversations` (invoked via the `ConversationService` facade) SHALL enrich writable user-owned list items with `conversation.name` from `getConversation` when available, so list `title` reflects the stored display name (including LLM-renamed and manually-renamed titles), not only the filename-derived title.
+`ConversationListingService.listConversations` SHALL return metadata without reading conversation bodies. It SHALL substitute a recently cached stored display name when available and SHALL mark an uncached or expired title with `isTitlePending: true`. Clients SHALL resolve pending titles through the bounded title endpoint after rendering the list.
 
-The display-name resolution (`resolveListDisplayTitle`, also used by `getConversation`) SHALL treat a non-empty stored `name` as authoritative for the display title whenever the conversation is finally named (`llmNamingDone === true`), even when the filename-derived title diverges from `name`. A manual rename sets `llmNamingDone: true`, so a manually renamed conversation whose filename still encodes the old title SHALL display the new `name`. The prior heuristic that fell back to the filename-derived title when the stored `name` differed from the message-derived title MUST NOT override an authoritative stored `name`.
+The display-name resolution (`resolveListDisplayTitle`, also used by `getConversation`) SHALL treat a non-empty stored `name` as authoritative whenever `llmNamingDone === true`. A manual rename sets this marker. Otherwise the filename-derived title remains the fallback. The rule SHALL apply consistently to owned, published and shared entries without changing resource IDs.
 
-#### Scenario: List title reflects LLM-renamed display name
+#### Scenario: Cold listing completes independently of body latency
 
-- **GIVEN** a conversation is stored at `gpt-4o__Hello__<uuid>` with `name: "Docker networking basics"` and `llmNamingDone: true`
-- **WHEN** `GET /api/v1/conversations` is called
-- **THEN** the matching list item `title` is `"Docker networking basics"`
+- **WHEN** metadata listing succeeds but individual conversation reads would remain unresolved
+- **THEN** `GET /api/v1/conversations/list` returns metadata-derived titles and pending markers without starting or waiting for those reads
 
-#### Scenario: List title reflects manually-renamed display name when filename diverges
+#### Scenario: Cached manually or LLM renamed title
 
-- **GIVEN** a conversation is stored at `gpt-4o__Old Title__<uuid>` with `name: "New Title"` and `llmNamingDone: true` after a manual rename
-- **WHEN** `GET /api/v1/conversations` is called
-- **THEN** the matching list item `title` is `"New Title"` (not the filename-derived `"Old Title"`)
+- **GIVEN** an entry has a valid cached stored name and `llmNamingDone: true`
+- **WHEN** its metadata is listed
+- **THEN** its title uses the stored name and does not require another body read
 
-#### Scenario: An older renamed conversation is listed under the title opening it returns
+#### Scenario: Older title converges with opening the conversation
 
-- **GIVEN** an application conversation stored at `Untitled app 1__0.0.1__Say hello in exactly three words` with `name: "Three-Word Greeting"` and `llmNamingDone: true`, and at least twenty more recently updated conversations
-- **WHEN** `GET /api/v1/conversations` is called, and the conversation is then opened through `GET /api/v1/conversations?path=...`
-- **THEN** the list item `title` and the opened conversation's display title are both `"Three-Word Greeting"`, so opening it does not change the title the panel search matched against
+- **GIVEN** an older conversation has an uncached renamed title
+- **WHEN** the list is displayed and its background title batch succeeds
+- **THEN** the list title equals the title returned by opening the conversation, even beyond the former twenty-item limit
 
 #### Scenario: GET reflects manually-renamed display name when filename diverges
 
-- **GIVEN** the same manually-renamed conversation
-- **WHEN** `GET /api/v1/conversations?path=...` is called for it
-- **THEN** the returned display title is `"New Title"`
+- **GIVEN** a manually renamed conversation whose filename still has its old title
+- **WHEN** `GET /api/v1/conversations?path=...` is called
+- **THEN** the returned display title is the authoritative stored name
 
 ### Requirement: Conversation list items carry the DIAL Core creation time
 
@@ -701,3 +702,41 @@ Authorization and error codes are unchanged (401 without a bearer token; 400 on 
 - **WHEN** the list is fetched
 - **THEN** items are still ordered by `updatedAt` descending
 
+
+### Requirement: Bounded conversation title projection endpoint
+
+`POST /api/v1/conversations/titles` SHALL require the standard authenticated BFF session and accept a validated JSON body with 1–25 full conversation resource IDs. Its generated operation SHALL be `getConversationTitles`. It SHALL return HTTP 200 with `{ items: [{ id, title }] }` containing only successful projections and no conversation messages. Missing or inaccessible individual resources SHALL be omitted. Invalid IDs or batch sizes SHALL return 400; missing authentication SHALL return 401; upstream authentication failures SHALL not be hidden as successful titles. Batch-level upstream failures SHALL follow the existing 502/503 mapping.
+
+#### Scenario: Exact encoded identity
+
+- **WHEN** a permitted resource ID contains a literal percent escape represented as `%25` in its URL
+- **THEN** the body request preserves that resource identity and does not decode it twice
+
+#### Scenario: Partial missing resources
+
+- **WHEN** one resource in a valid batch no longer exists
+- **THEN** successful titles remain in the response and no title is invented for the missing item
+
+#### Scenario: Invalid or oversized batch
+
+- **WHEN** the request has more than 25 IDs, an empty array, a non-conversation resource, traversal, or control characters
+- **THEN** validation rejects the request before any upstream reads
+
+### Requirement: Bounded isolated title cache
+
+Title caching SHALL store only title-resolution fields, use a finite size and five-minute expiry, and scope keys to a non-reversible digest of the caller's token plus exact resource identity. It SHALL coalesce concurrent equivalent reads. Successful saves, renames and LLM naming SHALL refresh or invalidate affected projections; deletion SHALL invalidate them. A prior in-flight read SHALL not overwrite a later successful write or delete.
+
+#### Scenario: Identity isolation
+
+- **WHEN** two different bearer tokens request the same resource ID
+- **THEN** one token's cached title is not served from the other token's cache namespace
+
+#### Scenario: Rename wins over earlier refresh
+
+- **WHEN** a body read starts before a successful rename and completes after it
+- **THEN** the cache retains the renamed title rather than the earlier fetched name
+
+#### Scenario: Expiry or eviction
+
+- **WHEN** a title's cache lifetime expires or capacity evicts it
+- **THEN** metadata listing remains fast and marks it pending for a later bounded request

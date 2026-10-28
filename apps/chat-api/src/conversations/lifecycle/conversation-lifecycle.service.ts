@@ -35,6 +35,7 @@ import {
   neutralizeForeignPendingMessages,
   updateConversationUnlessPending,
 } from '../generation/background-message';
+import { ConversationTitleCacheService } from '../listing/conversation-title-cache.service';
 import { ConversationPersistenceService } from '../persistence/conversation-persistence.service';
 import { PublishedFolderAttachmentsService } from '../published-folder-attachments.service';
 import { ConversationErrorCode } from '../types/conversation-error-code.enum';
@@ -64,6 +65,7 @@ export class ConversationLifecycleService {
     private readonly persistenceService: ConversationPersistenceService,
     private readonly deploymentsService: DeploymentsService,
     private readonly publishedFolderAttachments: PublishedFolderAttachmentsService,
+    private readonly titleCache: ConversationTitleCacheService,
   ) {}
 
   async createConversation(
@@ -123,6 +125,11 @@ export class ConversationLifecycleService {
         );
       }
 
+      this.titleCache.set(
+        token,
+        `conversations/${bucket}/${encodedConversationPath}`,
+        conversation,
+      );
       return { ...data, ...conversation } as ConversationResponseDto;
     } catch (error) {
       this.logger.error('DIAL Core rejected saveConversation', error);
@@ -177,6 +184,11 @@ export class ConversationLifecycleService {
         this.logger,
       );
     }
+
+    this.titleCache.invalidate(
+      token,
+      `conversations/${bucket}/${encodeDialResourcePath(conversationPath)}`,
+    );
 
     // Remove from pins if present — fire-and-forget, non-fatal
     void this.pinConversation(
@@ -414,6 +426,10 @@ export class ConversationLifecycleService {
       );
     }
 
+    this.titleCache.set(token, destinationUrl, {
+      name: uniqueTitle,
+      llmNamingDone: resolvedSource.llmNamingDone,
+    });
     return { newPath: destinationUrl };
   }
 
@@ -439,15 +455,7 @@ export class ConversationLifecycleService {
       `deleteConversations: bucket=${bucket} total=${uniqueIds.length} owned=${ownedIds.length}`,
     );
 
-    /*
-     * IDs from the metadata listing are already URL-encoded (e.g. %20 for spaces).
-     * Decode each segment before passing to encodeDialResourcePath to avoid
-     * double-encoding (%20 → %2520).
-     */
-    const pathsForDelete = ownedIds.map((id) => {
-      const rawPath = id.slice(prefix.length);
-      return rawPath.split('/').map(safeDecodeURIComponent).join('/');
-    });
+    const pathsForDelete = ownedIds.map((id) => id.slice(prefix.length));
 
     const results = await Promise.allSettled(
       pathsForDelete.map((path, i) => {
@@ -482,11 +490,13 @@ export class ConversationLifecycleService {
           (isHttpLikeError(error) ? error.status : undefined);
         if (error == null && (response?.ok ?? true)) {
           deleted++;
+          this.titleCache.invalidate(token, id);
           void this.pinConversation(id, false, token, bucket).catch((err) =>
             this.logger.error('Failed to clean up pin on bulk delete', err),
           );
         } else if (status === 404) {
           alreadyAbsent++;
+          this.titleCache.invalidate(token, id);
         } else if (status === 403) {
           failed.push({ id, code: 'FORBIDDEN' });
         } else {

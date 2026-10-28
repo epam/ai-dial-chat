@@ -3279,7 +3279,7 @@
     },
     "/api/v1/conversations/list": {
       "get": {
-        "description": "Returns a flat conversation list for the authenticated user. Without limit or nextToken, follows all personal and public DIAL Core metadata pages with recursive=true, merges shared conversations, and sorts the complete result by latest activity. Explicit pagination parameters request one page per bucket.",
+        "description": "Returns a flat conversation list for the authenticated user. Without limit or nextToken, follows all personal and public DIAL Core metadata pages with recursive=true, merges shared conversations, and sorts the complete result by latest activity. Explicit pagination parameters request one page per bucket. Never reads conversation bodies; unresolved display titles are marked isTitlePending for background resolution.",
         "operationId": "listConversations",
         "parameters": [
           {
@@ -3348,6 +3348,52 @@
           }
         },
         "summary": "List conversations",
+        "tags": ["conversations"]
+      }
+    },
+    "/api/v1/conversations/titles": {
+      "post": {
+        "description": "Returns cached or freshly read display titles for up to 25 full conversation resource URLs. Uses the current session permissions. Individual missing, forbidden, or unavailable resources are omitted; conversation messages are never returned.",
+        "operationId": "getConversationTitles",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConversationTitlesBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved conversation titles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationTitlesResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid IDs or batch size; expected 1–25 full conversation resource URLs"
+          },
+          "401": {
+            "description": "Not authenticated or DIAL Core rejected the session token"
+          },
+          "403": {
+            "description": "Invalid CSRF token"
+          },
+          "502": {
+            "description": "No titles resolved because DIAL Core returned upstream errors"
+          },
+          "503": {
+            "description": "No titles resolved because DIAL Core is unavailable or the bounded read queue is full"
+          }
+        },
+        "summary": "Resolve conversation display titles",
         "tags": ["conversations"]
       }
     },
@@ -13619,8 +13665,13 @@
           },
           "title": {
             "type": "string",
-            "description": "Human-readable conversation title (the resource `name` from DIAL Core).",
+            "description": "Cached display title, or the filename-derived title while background title resolution is pending.",
             "example": "My chat"
+          },
+          "isTitlePending": {
+            "type": "boolean",
+            "description": "True when the title has not been resolved from the stored conversation yet, or its cached value expired. Resolve it with POST /conversations/titles.",
+            "example": true
           },
           "createdAt": {
             "type": "number",
@@ -13697,6 +13748,50 @@
             "type": "string",
             "description": "Cursor for the next page. Present only when more results exist. Pass as `nextToken` in the next request.",
             "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9"
+          }
+        },
+        "required": ["items"]
+      },
+      "ConversationTitlesBodyDto": {
+        "type": "object",
+        "properties": {
+          "ids": {
+            "description": "Full DIAL Core conversation resource URLs. Duplicate IDs are read once. Missing or inaccessible conversations are omitted.",
+            "minItems": 1,
+            "maxItems": 25,
+            "example": ["conversations/default-bucket/gpt-4o__My%20chat"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["ids"]
+      },
+      "ConversationTitleDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The exact conversation resource URL supplied in the request.",
+            "example": "conversations/default-bucket/gpt-4o__My%20chat"
+          },
+          "title": {
+            "type": "string",
+            "description": "Current display title without conversation messages.",
+            "example": "My renamed chat"
+          }
+        },
+        "required": ["id", "title"]
+      },
+      "ConversationTitlesResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConversationTitleDto"
+            }
           }
         },
         "required": ["items"]
