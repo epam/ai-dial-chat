@@ -13,12 +13,120 @@
  */
 
 import * as runtime from '../runtime';
-import type { ListProjectsResponseDto } from '../models/index';
+import type {
+  CreateProjectResponseDto,
+  ListProjectsResponseDto,
+  ProjectCreateErrorDto,
+} from '../models/index';
+
+export interface CreateProjectRequest {
+  name: string;
+  description?: string;
+  instructions?: string;
+  fileNames?: string;
+  files?: Array<Blob>;
+}
 
 /**
  *
  */
 export class ProjectsApi extends runtime.BaseAPI {
+  /**
+   * Creates a project at the root of the session user\'s bucket in one atomic, create-only DIAL Core call. The BFF writes PROJECT.md (YAML frontmatter with name and description, instructions as the body) and each context file under context/. Name, file names, types, per-file size, total size and file count are validated first; every domain rejection carries a ProjectCreateErrorCode.
+   * Create a project
+   */
+  async createProjectRaw(
+    requestParameters: CreateProjectRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<CreateProjectResponseDto>> {
+    if (requestParameters['name'] == null) {
+      throw new runtime.RequiredError(
+        'name',
+        'Required parameter "name" was null or undefined when calling createProject().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const consumes: runtime.Consume[] = [
+      { contentType: 'multipart/form-data' },
+    ];
+    // @ts-ignore: canConsumeForm may be unused
+    const canConsumeForm = runtime.canConsumeForm(consumes);
+
+    let formParams: { append(name: string, value: string | Blob): void };
+    let useForm = false;
+    // use FormData to transmit files using content-type "multipart/form-data"
+    useForm = canConsumeForm;
+    if (useForm) {
+      formParams = new FormData();
+    } else {
+      formParams = new URLSearchParams();
+    }
+
+    if (requestParameters['name'] != null) {
+      formParams.append('name', requestParameters['name']);
+    }
+
+    if (requestParameters['description'] != null) {
+      formParams.append('description', requestParameters['description']);
+    }
+
+    if (requestParameters['instructions'] != null) {
+      formParams.append('instructions', requestParameters['instructions']);
+    }
+
+    if (requestParameters['fileNames'] != null) {
+      formParams.append('fileNames', requestParameters['fileNames']);
+    }
+
+    if (requestParameters['files'] != null) {
+      requestParameters['files'].forEach((element) => {
+        formParams.append('files', element);
+      });
+    }
+
+    let urlPath = `/api/v1/projects`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: formParams,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<CreateProjectResponseDto>(response);
+  }
+
+  /**
+   * Creates a project at the root of the session user\'s bucket in one atomic, create-only DIAL Core call. The BFF writes PROJECT.md (YAML frontmatter with name and description, instructions as the body) and each context file under context/. Name, file names, types, per-file size, total size and file count are validated first; every domain rejection carries a ProjectCreateErrorCode.
+   * Create a project
+   */
+  async createProject(
+    requestParameters: CreateProjectRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<CreateProjectResponseDto> {
+    const response = await this.createProjectRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
   /**
    * Returns every DIAL project visible to the session user: the user\'s own bucket, the public (organization) bucket, and projects shared with the user, merged and de-duplicated by id. The BFF follows DIAL Core paging itself, so the list is complete up to a per-source page cap. A failing source is omitted; the request fails only when both bucket listings fail.
    * List projects

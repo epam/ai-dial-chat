@@ -1242,6 +1242,24 @@ export interface ClientConfigDto {
    */
   celebrationsEnabledByDefault: boolean;
   /**
+   * Maximum size in bytes of one project context file. Sourced from PROJECT_CONTEXT_FILE_MAX_BYTES, which POST /api/v1/projects enforces.
+   * @type {number}
+   * @memberof ClientConfigDto
+   */
+  projectContextFileMaxBytes: number;
+  /**
+   * Maximum combined size in bytes of a project's context files. Sourced from PROJECT_CONTEXT_TOTAL_MAX_BYTES, which POST /api/v1/projects enforces.
+   * @type {number}
+   * @memberof ClientConfigDto
+   */
+  projectContextTotalMaxBytes: number;
+  /**
+   * Lower-case file extensions, without a dot, accepted as project context files. Sourced from PROJECT_CONTEXT_ALLOWED_EXTENSIONS, which POST /api/v1/projects enforces.
+   * @type {Array<string>}
+   * @memberof ClientConfigDto
+   */
+  projectContextAllowedExtensions: Array<string>;
+  /**
    * The caller's resolved catalog creation permissions, evaluated from the server-only CATALOG_CREATION_ROLES and the session roles. Independent of enabledUiFeatures, which it never filters. Never carries role names or the raw policy.
    * @type {CatalogCreationPermissionsDto}
    * @memberof ClientConfigDto
@@ -2260,6 +2278,43 @@ export interface CreateFolderResponseDto {
    * @memberof CreateFolderResponseDto
    */
   folderId: string;
+}
+/**
+ *
+ * @export
+ * @interface CreateProjectResponseDto
+ */
+export interface CreateProjectResponseDto {
+  /**
+   * DIAL Core resource id, `projects/{bucket}/{path}` without a trailing slash.
+   * @type {string}
+   * @memberof CreateProjectResponseDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateProjectResponseDto
+   */
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateProjectResponseDto
+   */
+  bucket: string;
+  /**
+   * Path of the project within its bucket.
+   * @type {string}
+   * @memberof CreateProjectResponseDto
+   */
+  path: string;
+  /**
+   * Aggregate ETag of the created project, when DIAL Core returns one.
+   * @type {string}
+   * @memberof CreateProjectResponseDto
+   */
+  etag?: string;
 }
 /**
  *
@@ -5648,6 +5703,62 @@ export interface OfflineCredentialsSigninBodyDto {
    */
   redirectUri: string;
 }
+
+/**
+ *
+ * @export
+ */
+export const ProjectCreateErrorCode = {
+  InvalidName: 'invalid-name',
+  NameTaken: 'name-taken',
+  InvalidFileName: 'invalid-file-name',
+  DuplicateFileName: 'duplicate-file-name',
+  UnsupportedFileType: 'unsupported-file-type',
+  FileTooLarge: 'file-too-large',
+  CapacityExceeded: 'capacity-exceeded',
+  TooManyFiles: 'too-many-files',
+} as const;
+export type ProjectCreateErrorCode =
+  (typeof ProjectCreateErrorCode)[keyof typeof ProjectCreateErrorCode];
+
+/**
+ *
+ * @export
+ * @interface ProjectCreateErrorDto
+ */
+export interface ProjectCreateErrorDto {
+  /**
+   *
+   * @type {number}
+   * @memberof ProjectCreateErrorDto
+   */
+  statusCode: number;
+  /**
+   *
+   * @type {ScheduledTaskValidationErrorDtoMessage}
+   * @memberof ProjectCreateErrorDto
+   */
+  message: ScheduledTaskValidationErrorDtoMessage;
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectCreateErrorDto
+   */
+  error: string;
+  /**
+   *
+   * @type {ProjectCreateErrorCode}
+   * @memberof ProjectCreateErrorDto
+   */
+  code?: ProjectCreateErrorCode;
+  /**
+   * `name`, or the name of the rejected context file.
+   * @type {string}
+   * @memberof ProjectCreateErrorDto
+   */
+  field?: string;
+}
+
 /**
  *
  * @export
@@ -6231,7 +6342,7 @@ export interface RefineTextRequestDto {
    */
   purpose: TextRefinementPurpose;
   /**
-   * Exact nonblank draft. Unicode code point limits: skill Description 4000, task Description 500, application/toolset/prompt Description 2000, skill/task/prompt Instructions 32000.
+   * Exact nonblank draft. Unicode code point limits: skill/project Description 4000, task Description 500, application/toolset/prompt Description 2000, skill/task/prompt/project Instructions 32000.
    * @type {string}
    * @memberof RefineTextRequestDto
    */
@@ -7400,6 +7511,8 @@ export const TextRefinementPurpose = {
   ToolsetDescription: 'toolset-description',
   PromptDescription: 'prompt-description',
   PromptInstructions: 'prompt-instructions',
+  ProjectDescription: 'project-description',
+  ProjectInstructions: 'project-instructions',
 } as const;
 export type TextRefinementPurpose =
   (typeof TextRefinementPurpose)[keyof typeof TextRefinementPurpose];

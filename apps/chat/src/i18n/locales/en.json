@@ -770,7 +770,8 @@
   "projects": {
     "page": {
       "title": "Projects",
-      "subtitle": "Projects you own, projects shared with you, and your organization's projects"
+      "subtitle": "Projects you own, projects shared with you, and your organization's projects",
+      "newProject": "New project"
     },
     "toolbar": {
       "searchPlaceholder": "Search projects",
@@ -802,7 +803,60 @@
       "organization": "Organization"
     },
     "card": {
-      "updatedAt": "Updated {{date}}"
+      "folderPath": "Project location"
+    },
+    "create": {
+      "title": "New project",
+      "name": {
+        "label": "Name",
+        "placeholder": "Enter project name"
+      },
+      "description": {
+        "label": "Description",
+        "placeholder": "Describe what the project is about"
+      },
+      "instructions": {
+        "label": "Instructions",
+        "placeholder": "Explain your reasoning step by step for complex problems. Use specific examples."
+      },
+      "context": {
+        "label": "Context",
+        "dropZone": "Drag&drop context, upload from device or file manager",
+        "hint": "File formats {{extensions}} (max {{maxSize}})",
+        "fromDevice": "Upload from device",
+        "fromFileManager": "File manager",
+        "fileManagerTitle": "Add context from file manager",
+        "dropOverlayTitle": "Upload files",
+        "dropOverlaySubtitle": "Drop files here to add them to this project",
+        "capacityMeter": "Context capacity",
+        "capacity": "{{percent}}% of capacity used",
+        "remove": "Remove {{name}}"
+      },
+      "status": {
+        "added_one": "{{count}} file added",
+        "added_other": "{{count}} files added",
+        "removed": "{{name}} removed",
+        "creating": "Creating project…"
+      },
+      "errors": {
+        "nameRequired": "Enter a project name",
+        "nameInvalid": "The name can’t contain : ; , = / \\ { } % & \" or control characters",
+        "nameReserved": "This name is reserved. Choose another one",
+        "nameTooLong": "The name is too long",
+        "nameTaken": "A project with this name already exists",
+        "unsupportedType": "{{name}}: this file format isn’t supported",
+        "tooLarge": "{{name}}: the file is larger than {{maxSize}}",
+        "capacityExceeded": "{{name}}: not enough capacity left for this file",
+        "duplicate": "{{name}}: a file with this name is already added",
+        "invalidFileName": "{{name}}: the file name isn’t valid",
+        "tooManyFiles": "A project can’t have this many context files",
+        "filesRejected": "Some files were rejected. Remove them and try again"
+      },
+      "toast": {
+        "success": "Project “{{name}}” created",
+        "error": "The project couldn’t be created. Try again",
+        "fileManagerError": "Couldn’t copy files from the file manager"
+      }
     }
   },
   "scheduledTasks": {

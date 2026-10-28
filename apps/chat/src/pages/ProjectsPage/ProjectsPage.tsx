@@ -4,8 +4,9 @@ import {
   ProjectsSortKey,
   type ProjectsLabels,
 } from '@epam/ai-dial-projects';
-import { memo, useMemo, useState, type FC } from 'react';
+import { memo, useCallback, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import {
   BasicI18nKeys,
@@ -15,6 +16,7 @@ import {
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useProjects } from '../../hooks/projects/useProjects';
+import { ROUTES } from '../../types/routes';
 import { UserConfigStatus } from '../../types/user-config-status';
 import NotFoundPage from '../NotFound/NotFound';
 
@@ -26,18 +28,14 @@ const ProjectsPage: FC = () => {
   const { projects, incompleteSources, isLoading, hasError, retry } =
     useProjects(isEnabled);
 
+  const navigate = useNavigate();
+  const handleCreateProject = useCallback(
+    () => navigate(ROUTES.ProjectCreate),
+    [navigate],
+  );
+
   const [searchQuery, setSearchQuery] = useState('');
   const [sortKey, setSortKey] = useState(ProjectsSortKey.Newest);
-
-  const formatUpdatedAt = useMemo(() => {
-    const dateFormat = new Intl.DateTimeFormat(language, {
-      dateStyle: 'medium',
-    });
-    return (timestamp: number) =>
-      t(ProjectsI18nKeys.CardUpdatedAt, {
-        date: dateFormat.format(timestamp),
-      });
-  }, [language, t]);
 
   const labels = useMemo<ProjectsLabels>(
     () => ({
@@ -74,6 +72,8 @@ const ProjectsPage: FC = () => {
       },
       resultCountLabel: (count: number) =>
         t(ProjectsI18nKeys.ResultCount, { count }),
+      folderPathLabel: t(ProjectsI18nKeys.CardFolderPath),
+      createProjectLabel: t(ProjectsI18nKeys.PageNewProject),
     }),
     [t],
   );
@@ -93,11 +93,11 @@ const ProjectsPage: FC = () => {
       hasError={hasError}
       incompleteSources={incompleteSources}
       onRetry={retry}
+      onCreateProject={handleCreateProject}
       searchQuery={searchQuery}
       onSearchQueryChange={setSearchQuery}
       sortKey={sortKey}
       onSortKeyChange={setSortKey}
-      formatUpdatedAt={formatUpdatedAt}
       labels={labels}
       locale={language}
     />

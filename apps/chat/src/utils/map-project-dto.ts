@@ -14,10 +14,11 @@ const PROJECT_SOURCES: Record<ProjectSourceDto, ProjectSource> = {
 export const mapProjectSource = (source: ProjectSourceDto): ProjectSource =>
   PROJECT_SOURCES[source];
 
-/** Maps a BFF project to the card item the Projects lib renders; the date falls back to the creation time. */
+/** Maps a BFF project to the card item the Projects lib renders; the sort date falls back to the creation time. */
 export const mapProjectDtoToItem = (project: ProjectDto): ProjectItem => ({
   id: project.id,
   name: project.name,
   source: mapProjectSource(project.source),
+  parentPath: project.parentPath,
   updatedAt: project.updatedAt ?? project.createdAt,
 });
