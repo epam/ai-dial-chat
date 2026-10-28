@@ -8,12 +8,26 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ScheduledTasksI18nKeys } from '../../constants/translation-keys';
 import {
   findMatchingConversation,
+  formatRunDuration,
   mapScheduledTaskRunDtoToItem,
   mapScheduledTaskRunDtosToItems,
 } from '../map-scheduled-task-run-dto';
 
 const fakeT = ((key: string, options?: Record<string, unknown>): string =>
   options ? `${key}:${JSON.stringify(options)}` : key) as TFunction;
+
+const DURATION_TEMPLATES: Record<string, string> = {
+  [ScheduledTasksI18nKeys.DetailHistoryDurationSuffix]: '({{duration}})',
+  [ScheduledTasksI18nKeys.DetailHistoryDurationHours]: '{{count}}h',
+  [ScheduledTasksI18nKeys.DetailHistoryDurationMinutes]: '{{count}}m',
+  [ScheduledTasksI18nKeys.DetailHistoryDurationSeconds]: '{{count}}s',
+};
+
+// Resolves duration keys to their English templates so assertions read as display text.
+const durationT = ((key: string, options?: Record<string, unknown>): string =>
+  (DURATION_TEMPLATES[key] ?? key).replace(/{{(\w+)}}/g, (_, name: string) =>
+    String(options?.[name]),
+  )) as TFunction;
 
 const buildRunDto = (
   overrides?: Partial<ScheduledTaskRunDto>,
@@ -108,7 +122,7 @@ describe('mapScheduledTaskRunDtoToItem', () => {
     );
 
     expect(result.timestampLabel).toContain(
-      `${ScheduledTasksI18nKeys.DetailHistoryDurationSuffix}:${JSON.stringify({ seconds: 99 })}`,
+      `${ScheduledTasksI18nKeys.DetailHistoryDurationSuffix}:`,
     );
   });
 
@@ -190,6 +204,50 @@ describe('mapScheduledTaskRunDtoToItem', () => {
     ]);
 
     expect(result.isUnread).toBe(false);
+  });
+});
+
+describe('formatRunDuration', () => {
+  it.each([
+    [45, '(45s)'],
+    [0, '(0s)'],
+  ])(
+    'keeps durations under one minute in seconds (%i → %s)',
+    (seconds, label) => {
+      expect(formatRunDuration(seconds, durationT)).toBe(label);
+    },
+  );
+
+  it.each([
+    [61, '(1m 1s)'],
+    [99, '(1m 39s)'],
+  ])(
+    'shows durations of 60 seconds or more in minutes and seconds (%i → %s)',
+    (seconds, label) => {
+      expect(formatRunDuration(seconds, durationT)).toBe(label);
+    },
+  );
+
+  it.each([
+    [60, '(1m)'],
+    [3600, '(1h)'],
+    [3605, '(1h 5s)'],
+  ])('omits zero-valued units (%i → %s)', (seconds, label) => {
+    expect(formatRunDuration(seconds, durationT)).toBe(label);
+  });
+
+  it.each([
+    [3723, '(1h 2m 3s)'],
+    [90180, '(25h 3m)'],
+  ])(
+    'includes hours for durations of an hour or more, without a days unit (%i → %s)',
+    (seconds, label) => {
+      expect(formatRunDuration(seconds, durationT)).toBe(label);
+    },
+  );
+
+  it('returns undefined when the duration is absent', () => {
+    expect(formatRunDuration(undefined, durationT)).toBeUndefined();
   });
 });
 
