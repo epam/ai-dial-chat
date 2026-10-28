@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { CatalogItem } from '../models/catalog-item';
 import {
   buildCatalogTabs,
+  getCatalogItemDisplayType,
   getCatalogItemTabs,
   scrollSelectedTabIntoView,
 } from './catalog-tabs';
@@ -45,6 +46,34 @@ describe('getCatalogItemTabs', () => {
         }),
       ),
     ).toEqual([CatalogEntityType.Agent, CatalogEntityType.Toolset]);
+  });
+});
+
+describe('getCatalogItemDisplayType', () => {
+  const mcpAgent = makeItem({
+    id: 'a',
+    name: 'A',
+    type: CatalogEntityType.Agent,
+    catalogTabs: [CatalogEntityType.Agent, CatalogEntityType.Toolset],
+  });
+
+  it('returns the active tab when the item is listed under it', () => {
+    expect(getCatalogItemDisplayType(mcpAgent, CatalogEntityType.Toolset)).toBe(
+      CatalogEntityType.Toolset,
+    );
+    expect(getCatalogItemDisplayType(mcpAgent, CatalogEntityType.Agent)).toBe(
+      CatalogEntityType.Agent,
+    );
+  });
+
+  it('returns the entity kind when the item is not listed under the active tab', () => {
+    expect(getCatalogItemDisplayType(mcpAgent, CatalogEntityType.Model)).toBe(
+      CatalogEntityType.Agent,
+    );
+  });
+
+  it('returns the entity kind when no tab is active', () => {
+    expect(getCatalogItemDisplayType(mcpAgent)).toBe(CatalogEntityType.Agent);
   });
 });
 

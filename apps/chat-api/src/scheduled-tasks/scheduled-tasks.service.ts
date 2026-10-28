@@ -22,8 +22,8 @@ import { EnvironmentVariables } from '../config/environment.config';
 import { DeploymentsService } from '../deployments/deployments.service';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
-import { ExternalServiceAuthType } from '../external-services/dto/external-service.dto';
-import { ExternalServicesService } from '../external-services/external-services.service';
+import { SchedulerConsentService } from '../external-services/scheduler-consent.service';
+import { SchedulerServiceConsentStatus } from '../external-services/types/scheduler-service-consent-status.enum';
 import type { CreateScheduledTaskBodyDto } from './dto/create-scheduled-task.dto';
 import type { ListScheduledTaskRunsQueryDto } from './dto/list-scheduled-task-runs-query.dto';
 import type { ListScheduledTaskRunsResponseDto } from './dto/list-scheduled-task-runs.dto';
@@ -119,7 +119,7 @@ export class ScheduledTasksService {
     configService: ConfigService<EnvironmentVariables>,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly deploymentsService: DeploymentsService,
-    private readonly externalServicesService: ExternalServicesService,
+    private readonly schedulerConsentService: SchedulerConsentService,
   ) {
     this.schedulerAppId = configService.get('SCHEDULER_APP_ID', {
       infer: true,
@@ -808,28 +808,13 @@ export class ScheduledTasksService {
    * status Core does not report leaves the decision to DIAL Scheduler itself.
    */
   private async assertSchedulerConsent(accessToken: string): Promise<void> {
-    const appId = this.getSchedulerAppId();
-    const serviceId = this.getSchedulerServiceId();
-    let service;
-    try {
-      service = await this.externalServicesService.getExternalService(
+    const consent =
+      await this.schedulerConsentService.getSchedulerServiceConsent(
         accessToken,
-        appId,
-        serviceId,
       );
-    } catch (err) {
+    if (consent === SchedulerServiceConsentStatus.SignedOut) {
       this.logger.warn(
-        `Could not read consent status of scheduler service "${serviceId}"; deferring to DIAL Scheduler`,
-        err instanceof Error ? err.message : undefined,
-      );
-      return;
-    }
-    if (
-      service.authenticationType === ExternalServiceAuthType.DialNative &&
-      service.appLevelAuthStatus === 'SIGNED_OUT'
-    ) {
-      this.logger.warn(
-        `Scheduler service "${serviceId}" has no application consent; rejecting the operation`,
+        `Scheduler service "${this.getSchedulerServiceId()}" has no application consent; rejecting the operation`,
       );
       throw new ForbiddenException({
         statusCode: 403,

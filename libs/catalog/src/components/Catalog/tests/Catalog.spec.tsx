@@ -1,5 +1,11 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import {
@@ -23,10 +29,25 @@ import { getTopicOptions } from '../../../utils/catalog-filter';
 import { buildCatalogTabs } from '../../../utils/catalog-tabs';
 import { Catalog } from '../Catalog';
 
+const listViewScrollToTop = vi.hoisted(() => vi.fn());
+
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   Spinner: () => <div role="status" aria-label="Loading" />,
+  FabButton: ({
+    icon,
+    onClick,
+    'aria-label': ariaLabel,
+  }: {
+    icon?: React.ReactNode;
+    onClick?: () => void;
+    'aria-label'?: string;
+  }) => (
+    <button aria-label={ariaLabel} onClick={onClick}>
+      {icon}
+    </button>
+  ),
   EllipsisTooltip: ({
     text,
     className,
@@ -94,6 +115,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 vi.mock('@tabler/icons-react', () => ({
   IconPlus: () => <svg />,
   IconChevronDown: () => <svg />,
+  IconArrowNarrowUp: () => <svg />,
 }));
 vi.mock('../../Toolbar/Toolbar', () => ({
   Toolbar: ({
@@ -109,7 +131,9 @@ vi.mock('../../Toolbar/Toolbar', () => ({
     sortKey,
     sortOptions = [],
     onSortChange,
+    searchInputRef,
   }: {
+    searchInputRef?: React.Ref<HTMLInputElement>;
     title?: string;
     query: string;
     onQueryChange: (q: string) => void;
@@ -127,6 +151,7 @@ vi.mock('../../Toolbar/Toolbar', () => ({
       <span>{title ?? 'Browse'}</span>
       <span>{`sortKey:${sortKey}`}</span>
       <input
+        ref={searchInputRef}
         value={query}
         onChange={(e) => onQueryChange(e.target.value)}
         placeholder="search"
@@ -221,20 +246,30 @@ vi.mock('../../Favorites/Favorites', () => ({
 }));
 vi.mock('../../ListView/ListView', () => ({
   ListView: ({
+    ref,
     items,
     onItemClick,
+    onRowsScroll,
   }: {
+    ref?: React.Ref<{ scrollToTop: () => void }>;
     items: CatalogItem[];
     onItemClick?: (item: CatalogItem) => void;
-  }) => (
-    <div role="grid" aria-label="catalog list">
-      {items.map((item) => (
-        <button key={item.id} onClick={() => onItemClick?.(item)}>
-          row-{item.name}
-        </button>
-      ))}
-    </div>
-  ),
+    onRowsScroll?: (top: number) => void;
+  }) => {
+    React.useImperativeHandle(ref, () => ({
+      scrollToTop: listViewScrollToTop,
+    }));
+    return (
+      <div role="grid" aria-label="catalog list">
+        {items.map((item) => (
+          <button key={item.id} onClick={() => onItemClick?.(item)}>
+            row-{item.name}
+          </button>
+        ))}
+        <button onClick={() => onRowsScroll?.(400)}>Scroll rows</button>
+      </div>
+    );
+  },
 }));
 vi.mock('../../Details/DetailsPanel', () => ({
   DetailsPanel: ({
@@ -1819,5 +1854,164 @@ describe('Catalog — public class names', () => {
     expect(screen.getByRole('region', { name: 'Catalog' }).classList).toContain(
       CATALOG_CLASS.root,
     );
+  });
+});
+
+describe('Catalog — scroll to top', () => {
+  const CLIENT_HEIGHT = 600;
+  let pendingFrames: FrameRequestCallback[] = [];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    pendingFrames = [];
+    vi.stubGlobal(
+      'requestIdleCallback',
+      vi.fn(() => 1),
+    );
+    vi.stubGlobal('cancelIdleCallback', vi.fn());
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+      pendingFrames.push(callback);
+      return pendingFrames.length;
+    });
+    vi.stubGlobal('cancelAnimationFrame', vi.fn());
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockReturnValue({
+        matches: false,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      } as unknown as MediaQueryList),
+    );
+  });
+
+  /* Not afterEach: the unmount that follows each test still cancels idle work. */
+  afterAll(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const flushFrames = () => {
+    act(() => {
+      const frames = pendingFrames;
+      pendingFrames = [];
+      frames.forEach((frame) => frame(0));
+    });
+  };
+
+  /*
+   * The scroll body has no role of its own, so it is reached from the search
+   * field it contains; jsdom has no layout, so its geometry is stubbed here.
+   */
+  const getScrollBody = () => {
+    const search = screen.getByPlaceholderText('search');
+    // eslint-disable-next-line testing-library/no-node-access -- see above
+    const scrollBody = search.closest('.overflow-y-auto') as HTMLElement;
+    Object.defineProperty(scrollBody, 'clientHeight', {
+      configurable: true,
+      value: CLIENT_HEIGHT,
+    });
+    const scrollTo = vi.fn();
+    scrollBody.scrollTo = scrollTo as unknown as typeof scrollBody.scrollTo;
+    return { scrollBody, scrollTo };
+  };
+
+  const scrollBodyTo = (scrollBody: HTMLElement, top: number) => {
+    scrollBody.scrollTop = top;
+    fireEvent.scroll(scrollBody);
+    flushFrames();
+  };
+
+  const items = [makeItem('1', 'Claude'), makeItem('2', 'GPT')];
+
+  it('does not offer the button at the top of the catalog', () => {
+    render(<Catalog items={items} favorites={[]} />);
+    const { scrollBody } = getScrollBody();
+
+    scrollBodyTo(scrollBody, 0);
+
+    expect(screen.queryByRole('button', { name: 'Scroll to top' })).toBeNull();
+  });
+
+  it('offers the button once scrolled down by one screen', () => {
+    render(<Catalog items={items} favorites={[]} />);
+    const { scrollBody } = getScrollBody();
+
+    scrollBodyTo(scrollBody, CLIENT_HEIGHT);
+
+    expect(screen.getByRole('button', { name: 'Scroll to top' })).toBeTruthy();
+  });
+
+  it('scrolls back to the top and focuses search when clicked', async () => {
+    render(<Catalog items={items} favorites={[]} />);
+    const { scrollBody, scrollTo } = getScrollBody();
+    scrollBodyTo(scrollBody, CLIENT_HEIGHT);
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Scroll to top' }),
+    );
+
+    expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
+    // Focus is a document-level fact; no Testing Library query reports it.
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(document.activeElement).toBe(screen.getByPlaceholderText('search'));
+    expect(listViewScrollToTop).not.toHaveBeenCalled();
+  });
+
+  it('names the button with the host label', () => {
+    render(
+      <Catalog
+        items={items}
+        favorites={[]}
+        titles={{ scrollToTopLabel: 'Nach oben' }}
+      />,
+    );
+    const { scrollBody } = getScrollBody();
+
+    scrollBodyTo(scrollBody, CLIENT_HEIGHT);
+
+    expect(screen.getByRole('button', { name: 'Nach oben' })).toBeTruthy();
+  });
+
+  it('counts the list rows offset in list view', async () => {
+    render(
+      <Catalog
+        items={items}
+        favorites={[]}
+        initialViewMode={CatalogViewMode.Cards}
+      />,
+    );
+    const { scrollBody } = getScrollBody();
+    scrollBodyTo(scrollBody, 200);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Scroll rows' }));
+    flushFrames();
+
+    expect(screen.getByRole('button', { name: 'Scroll to top' })).toBeTruthy();
+  });
+
+  it('resets the page and the list rows and focuses search with Enter', async () => {
+    render(
+      <Catalog
+        items={items}
+        favorites={[]}
+        initialViewMode={CatalogViewMode.Cards}
+      />,
+    );
+    const { scrollBody, scrollTo } = getScrollBody();
+    scrollBodyTo(scrollBody, CLIENT_HEIGHT);
+
+    screen.getByRole('button', { name: 'Scroll to top' }).focus();
+    await userEvent.keyboard('{Enter}');
+
+    expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
+    expect(listViewScrollToTop).toHaveBeenCalledOnce();
+    // Focus is a document-level fact; no Testing Library query reports it.
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(document.activeElement).toBe(screen.getByPlaceholderText('search'));
+  });
+
+  it('does not offer the button while loading', () => {
+    render(<Catalog items={items} favorites={[]} isLoading />);
+
+    expect(screen.queryByRole('button', { name: 'Scroll to top' })).toBeNull();
   });
 });

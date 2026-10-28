@@ -139,6 +139,8 @@ interface BaseMessageBubbleProps {
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
   /** Fires with all downloadable attachments when "download all" is triggered. */
   onDownloadAll?: (attachments: DisplayAttachment[]) => void;
+  /** Whether an attachment can be downloaded; `false` hides its tile's download button and leaves it out of "download all". Defaults to every attachment being downloadable. */
+  isAttachmentDownloadable?: (attachment: DisplayAttachment) => boolean;
   /** Fires when a failed attachment upload is retried. */
   onAttachmentRetry?: (id: string) => void;
   /** ID of the attachment currently open in the canvas panel, if any. Renders that tile's selected visual state. */

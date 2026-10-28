@@ -50,6 +50,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   textSegments,
   onAttachmentClick,
   onDownloadAll,
+  isAttachmentDownloadable,
   onAttachmentRetry,
   selectedAttachmentId,
   markdownClassNames,
@@ -179,6 +180,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
               : undefined
           }
           onDownloadAll={onDownloadAll}
+          isAttachmentDownloadable={isAttachmentDownloadable}
           onRetry={onAttachmentRetry}
           labels={{
             clickLabel: attachmentClickLabel,

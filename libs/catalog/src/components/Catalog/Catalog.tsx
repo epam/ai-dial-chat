@@ -14,9 +14,11 @@ import {
   useState,
 } from 'react';
 import { CATALOG_CLASS } from '../../constants/public-class-names';
+import { useCatalogScrollToTop } from '../../hooks/useCatalogScrollToTop/useCatalogScrollToTop';
 import { CatalogItem } from '../../models/catalog-item';
 import type { CatalogProps } from '../../models/catalog-props';
 import type { CatalogItemDetailsFetchResult } from '../../models/item-details-data';
+import type { ListViewHandle } from '../../models/list-props';
 import { CatalogSortKey } from '../../types/sort';
 import type { CredentialsLevel } from '../../types/toolset-auth';
 import { CatalogViewMode } from '../../types/view-mode';
@@ -42,6 +44,7 @@ import { DetailsPanel } from '../Details/DetailsPanel';
 import { Favorites } from '../Favorites/Favorites';
 import { ListView } from '../ListView/ListView';
 import { PersonalEmptyState } from '../PersonalEmptyState/PersonalEmptyState';
+import { ScrollToTopButton } from '../ScrollToTopButton/ScrollToTopButton';
 import { Toolbar } from '../Toolbar/Toolbar';
 import styles from './Catalog.module.scss';
 import { CreateButton, type CreateButtonProps } from './CreateButton';
@@ -167,6 +170,7 @@ export const Catalog: FC<CatalogProps> = ({
   const listViewLabel = titles?.listViewLabel ?? 'List view';
   const viewToggleLabel = titles?.viewToggleLabel ?? 'View mode';
   const resolvedAriaLabel = titles?.ariaLabel ?? 'Catalog';
+  const scrollToTopLabel = titles?.scrollToTopLabel ?? 'Scroll to top';
 
   const sortLabel = titles?.sortLabel ?? 'Sort';
 
@@ -540,6 +544,22 @@ export const Catalog: FC<CatalogProps> = ({
    * "+" pinned to the bottom of the catalog, as on other mobile screens. */
   const isFloatingCreateVisible = isCreateButtonVisible && isMobile;
   const isHeaderCreateVisible = isCreateButtonVisible && !isMobile;
+
+  /* State, not a ref: the scroll body mounts only after loading, and the
+     scroll-to-top hook must subscribe to it once it exists. */
+  const [scrollBody, setScrollBody] = useState<HTMLDivElement | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const listViewRef = useRef<ListViewHandle>(null);
+  const {
+    isVisible: isScrollToTopVisible,
+    handleRowsScroll,
+    scrollToTop,
+  } = useCatalogScrollToTop({
+    scrollBody,
+    searchInputRef,
+    listViewRef,
+    isListView: viewMode === CatalogViewMode.Cards,
+  });
   /* A read-only catalog cannot favorite anything, so the strip has no way to
    * gain or lose entries and is dropped rather than shown frozen. */
   const isFavoritesVisible = isFavoritesRendered && !isReadonly;
@@ -692,9 +712,23 @@ export const Catalog: FC<CatalogProps> = ({
         </div>
       )}
 
+      {isScrollToTopVisible && (
+        /* Stacked above the floating Create button (16px inset + 48px FAB +
+           16px gap) so neither covers the other. */
+        <div
+          className={mergeClasses(
+            'absolute inset-e-4 z-10',
+            isFloatingCreateVisible ? 'bottom-20' : 'bottom-4',
+          )}
+        >
+          <ScrollToTopButton label={scrollToTopLabel} onClick={scrollToTop} />
+        </div>
+      )}
+
       {/* With the floating Create button, extra bottom space keeps it from
           covering the last row of cards once scrolled to the end. */}
       <div
+        ref={setScrollBody}
         className={mergeClasses(
           'flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto',
           isFloatingCreateVisible && 'pb-16',
@@ -728,6 +762,7 @@ export const Catalog: FC<CatalogProps> = ({
             sortKey={sortKey}
             query={query}
             onQueryChange={setQuery}
+            searchInputRef={searchInputRef}
             title={browseTitle}
             browseHeaderRenderer={browseHeaderRenderer}
             searchPlaceholder={searchPlaceholder}
@@ -829,6 +864,7 @@ export const Catalog: FC<CatalogProps> = ({
                   isFullWidth={isFullWidth}
                   featuredChipStyle={catalogStyles?.colors?.featuredChipStyle}
                   markdownLabels={cardMarkdownLabels}
+                  activeTab={activeTab as CatalogEntityType}
                 />
               </div>
 
@@ -850,6 +886,8 @@ export const Catalog: FC<CatalogProps> = ({
                   )}
                 >
                   <ListView
+                    ref={listViewRef}
+                    onRowsScroll={handleRowsScroll}
                     type={activeTab as CatalogEntityType}
                     items={tabFiltered}
                     query={query}

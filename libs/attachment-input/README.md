@@ -103,7 +103,7 @@ tiles through the tray it already renders instead of a descendant selector on
 
 ### AttachmentGroup
 
-Renders a sent message's attachments — image tiles plus file rows — with a header action that downloads everything downloadable at once. Collapses beyond `ATTACHMENT_COLLAPSE_THRESHOLD` items. Tiles are buttons only when `onAttachmentClick` is given, and each file tile's own download button renders only when `onDownloadAll` is given — pass `undefined`, not a no-op wrapper, to keep the group inert. `labels.clickLabel` names the tiles and `labels.downloadLabel` names their download buttons (both default to `'Download attachment'`); when the tile opens a preview instead of downloading, pass a different `clickLabel` so the two controls do not share a name.
+Renders a sent message's attachments — image tiles plus file rows — with a header action that downloads everything downloadable at once. Collapses beyond `ATTACHMENT_COLLAPSE_THRESHOLD` items. Tiles are buttons only when `onAttachmentClick` is given, and each file tile's own download button renders only when `onDownloadAll` is given — pass `undefined`, not a no-op wrapper, to keep the group inert. `labels.clickLabel` names the tiles and `labels.downloadLabel` names their download buttons (both default to `'Download attachment'`); when the tile opens a preview instead of downloading, pass a different `clickLabel` so the two controls do not share a name. `isAttachmentDownloadable` lets the host rule an attachment out (e.g. a folder, which has no download): returning `false` drops that tile's download button and leaves it out of "download all", which itself hides when nothing is left to download.
 
 ```tsx
 import {
@@ -115,6 +115,7 @@ import {
   attachments={message.attachments}
   onAttachmentClick={handleOpenInCanvas}
   onDownloadAll={handleDownloadAll}
+  isAttachmentDownloadable={(attachment) => !attachment.url?.endsWith('/')}
   selectedAttachmentId={selectedAttachmentId}
   labels={{ clickLabel: 'Open in canvas', downloadLabel: 'Download file' }}
 />;

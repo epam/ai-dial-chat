@@ -31,10 +31,14 @@ export interface ProjectsLabels {
   incompleteLabel: string;
   /** Label of the retry action shown when loading failed. */
   retryLabel: string;
-  /** Text of the source badge for each project source. */
+  /** Label of each project source, the first segment of a card's folder path. */
   sourceLabels: Record<ProjectSource, string>;
+  /** Accessible name of a card's folder path, e.g. "Project location". */
+  folderPathLabel: string;
   /** Announced through the status region when projects are listed, e.g. "3 projects". */
   resultCountLabel: (count: number) => string;
+  /** Label of the header and empty-state New project buttons; required whenever `onCreateProject` is supplied. */
+  createProjectLabel?: string;
 }
 
 /**
@@ -50,16 +54,12 @@ export interface ProjectsColors {
   sortButtonText?: string;
   /** Card background. Fallback: `--bg-layer-raised`. */
   cardBackground?: string;
-  /** Card border color. Fallback: `--stroke-tertiary`. */
-  cardBorder?: string;
   /** Project name color on a card. Fallback: `--text-primary`. */
   cardTitleText?: string;
-  /** Source badge background. Fallback: `--bg-layer-sunken`. */
-  badgeBackground?: string;
-  /** Source badge text color. Fallback: `--text-primary`. */
-  badgeText?: string;
-  /** Last-updated date text color on a card. Fallback: `--text-secondary`. */
-  metaText?: string;
+  /** Divider above a card's folder path. Fallback: `--stroke-tertiary`. */
+  cardDivider?: string;
+  /** Folder path text color on a card. Fallback: `--text-secondary`. */
+  pathText?: string;
 }
 
 /** Typography overrides for the {@link Projects} component. */
@@ -70,10 +70,10 @@ export interface ProjectsTypography {
   subtitleClassName?: string;
   /** CSS class applied to each card's project name. Defaults to `'dial-body-semi-text'`. */
   cardTitleClassName?: string;
-  /** CSS class applied to each card's source badge. Defaults to `'dial-tiny-semi-text'`. */
-  badgeClassName?: string;
-  /** CSS class applied to each card's last-updated date. Defaults to `'dial-small-text'`. */
-  metaClassName?: string;
+  /** CSS class applied to the non-leaf folder path segments. Defaults to `'dial-tiny-text'`. */
+  pathLabelClassName?: string;
+  /** CSS class applied to the last folder path segment. Defaults to `'dial-tiny-semi-text'`. */
+  pathLeafClassName?: string;
 }
 
 /** Style overrides for the {@link Projects} component. */
@@ -96,6 +96,8 @@ export interface ProjectsProps {
   incompleteSources?: ProjectSource[];
   /** Called when the user activates the retry action. */
   onRetry: () => void;
+  /** Called from the New project buttons; the buttons are not rendered when omitted. */
+  onCreateProject?: () => void;
   /** Current search query (controlled). */
   searchQuery: string;
   /** Called with the new query when the user types or clears the search. */
@@ -104,8 +106,6 @@ export interface ProjectsProps {
   sortKey: ProjectsSortKey;
   /** Called when the user picks another sort order. */
   onSortKeyChange: (sortKey: ProjectsSortKey) => void;
-  /** Formats a card's last-updated time (epoch milliseconds) as display text. */
-  formatUpdatedAt: (timestamp: number) => string;
   /** Localized labels. */
   labels: ProjectsLabels;
   /** BCP 47 locale used to collate names for the Name A–Z order. Defaults to the runtime locale. */

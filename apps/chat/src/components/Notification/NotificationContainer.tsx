@@ -5,7 +5,15 @@ import {
   Notification,
 } from '@epam/ai-dial-ui-kit';
 import { IconCopy } from '@tabler/icons-react';
-import { memo, useEffect, useMemo, useState, type FC } from 'react';
+import {
+  memo,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FC,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { NotificationI18nKeys } from '../../constants/translation-keys';
@@ -125,7 +133,7 @@ const NotificationEntry: FC<NotificationEntryProps> = memo(
 
     return (
       <Notification
-        className="pointer-events-auto max-w-[min(600px,100%)]"
+        className="pointer-events-auto w-full max-w-[min(600px,100%)] desktop:w-auto"
         variant={item.variant}
         title={item.title}
         message={composedMessage}
@@ -139,18 +147,42 @@ const NotificationEntry: FC<NotificationEntryProps> = memo(
 
 const NotificationContainer: FC = () => {
   const { notifications, dismissNotification } = useNotification();
+  const stackRef = useRef<HTMLDivElement>(null);
+  const prevIdsRef = useRef<ReadonlySet<string>>(new Set());
+
+  /*
+   * A scroll box opens at its top, so once the bottom-anchored stack overflows
+   * the newest toast (last in DOM) would sit below the fold. Scroll to the end
+   * whenever a toast is added; a dismissal leaves the scroll position alone.
+   * Ids are compared rather than counts, so an add batched with a dismissal
+   * still scrolls.
+   */
+  useLayoutEffect(() => {
+    const stack = stackRef.current;
+    const prevIds = prevIdsRef.current;
+    if (stack && notifications.some(({ id }) => !prevIds.has(id))) {
+      stack.scrollTop = stack.scrollHeight;
+    }
+    prevIdsRef.current = new Set(notifications.map(({ id }) => id));
+  }, [notifications]);
 
   if (!notifications.length) return null;
 
   /*
-   * The stack spans the viewport minus a side gutter and centers each toast,
-   * so a toast can never be wider than the screen (the kit only caps it at
-   * 600px, which clipped both edges on phones). The empty band between toasts
-   * stays click-through. The stack scrolls once enough toasts pile up to reach
-   * the bottom of the viewport, so the last one is never pushed off-screen.
+   * Phones: the stack spans the bottom edge minus a side gutter and each toast
+   * takes the full width, so a toast can never be wider than the screen (the
+   * kit only caps it at 600px). Desktop: the stack releases its inline-start
+   * inset and pins to the bottom-end corner with a definite width — bottom-right
+   * in LTR, bottom-left in RTL. Toasts keep arrival order, so the newest sits
+   * nearest the bottom edge; the empty band between toasts stays click-through.
+   * At z-70 the stack draws over the bottom-end TransferQueue panels (z-51);
+   * the overlap is accepted because toasts are transient and closable.
    */
   return createPortal(
-    <div className="pointer-events-none fixed inset-x-0 top-6 z-70 flex max-h-[calc(100dvh-3rem)] flex-col items-center gap-2 overflow-y-auto px-4">
+    <div
+      ref={stackRef}
+      className="pointer-events-none fixed inset-x-0 bottom-[calc(1.5rem+env(safe-area-inset-bottom))] z-70 flex max-h-[calc(100dvh-3rem)] flex-col items-center gap-2 overflow-y-auto px-4 desktop:inset-s-auto desktop:me-6 desktop:w-[min(600px,calc(100vw-3rem))] desktop:items-end desktop:px-0"
+    >
       {notifications.map((item) => (
         <NotificationEntry
           key={item.id}

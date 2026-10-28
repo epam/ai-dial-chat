@@ -367,6 +367,37 @@ describe('EnvConfigProvider', () => {
     });
   });
 
+  describe('projects context limits', () => {
+    it('resolves the configured byte limits and extension list', async () => {
+      const { provider } = makeProvider({
+        PROJECT_CONTEXT_FILE_MAX_BYTES: 2_097_152,
+        PROJECT_CONTEXT_TOTAL_MAX_BYTES: 4_194_304,
+        PROJECT_CONTEXT_ALLOWED_EXTENSIONS: ['csv', 'pdf', 'md'],
+      });
+
+      expect(await provider.resolve('projects.contextFileMaxBytes', ctx)).toBe(
+        2_097_152,
+      );
+      expect(await provider.resolve('projects.contextTotalMaxBytes', ctx)).toBe(
+        4_194_304,
+      );
+      expect(
+        await provider.resolve('projects.contextAllowedExtensions', ctx),
+      ).toEqual(['csv', 'pdf', 'md']);
+    });
+
+    it('returns undefined when the variables are absent, so the registry default applies', async () => {
+      const { provider } = makeProvider({});
+
+      expect(
+        await provider.resolve('projects.contextFileMaxBytes', ctx),
+      ).toBeUndefined();
+      expect(
+        await provider.resolve('projects.contextAllowedExtensions', ctx),
+      ).toBeUndefined();
+    });
+  });
+
   describe('features.responsesApiEnabled', () => {
     it('returns true when RESPONSES_API_ENABLED is true', async () => {
       const { provider } = makeProvider({ RESPONSES_API_ENABLED: true });

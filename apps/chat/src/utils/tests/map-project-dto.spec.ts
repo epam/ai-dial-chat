@@ -23,6 +23,12 @@ describe('mapProjectDtoToItem', () => {
     );
   });
 
+  it('keeps the grouping folder path for the card folder path', () => {
+    expect(
+      mapProjectDtoToItem({ ...dto, parentPath: 'marketing/2026' }).parentPath,
+    ).toBe('marketing/2026');
+  });
+
   it('falls back to the creation time when the update time is missing', () => {
     expect(mapProjectDtoToItem({ ...dto, createdAt: 1 }).updatedAt).toBe(1);
   });

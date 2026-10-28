@@ -1,3 +1,8 @@
+import {
+  DEFAULT_PROJECT_CONTEXT_ALLOWED_EXTENSIONS,
+  DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES,
+  DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES,
+} from '../../projects/constants/project-context.constants';
 import type { ConfigDefinition } from '../app-config.types';
 
 export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
@@ -480,6 +485,42 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Maximum attachment/upload file size in bytes, surfaced to the client so it can reject an oversized file before attempting to upload it. Sourced from FILE_UPLOAD_MAX_BYTES — the same variable that already bounds the POST /api/v1/files Multer limit — so the frontend pre-check and the backend enforcement can never diverge.',
     owner: 'chat-team',
     envVar: 'FILE_UPLOAD_MAX_BYTES',
+  },
+  {
+    key: 'projects.contextFileMaxBytes',
+    type: 'config',
+    valueType: 'number',
+    visibility: 'client',
+    defaultValue: DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES,
+    critical: false,
+    description:
+      'Maximum size in bytes of one project context file. Sourced from PROJECT_CONTEXT_FILE_MAX_BYTES, the same variable POST /api/v1/projects enforces, so the New project form rejects an oversized file before uploading it.',
+    owner: 'chat-team',
+    envVar: 'PROJECT_CONTEXT_FILE_MAX_BYTES',
+  },
+  {
+    key: 'projects.contextTotalMaxBytes',
+    type: 'config',
+    valueType: 'number',
+    visibility: 'client',
+    defaultValue: DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES,
+    critical: false,
+    description:
+      "Maximum combined size in bytes of a project's context files — the New project form's capacity. Sourced from PROJECT_CONTEXT_TOTAL_MAX_BYTES, which POST /api/v1/projects enforces.",
+    owner: 'chat-team',
+    envVar: 'PROJECT_CONTEXT_TOTAL_MAX_BYTES',
+  },
+  {
+    key: 'projects.contextAllowedExtensions',
+    type: 'config',
+    valueType: 'json',
+    visibility: 'client',
+    defaultValue: [...DEFAULT_PROJECT_CONTEXT_ALLOWED_EXTENSIONS],
+    critical: false,
+    description:
+      'Lower-case file extensions, without a dot, accepted as project context files. Sourced from PROJECT_CONTEXT_ALLOWED_EXTENSIONS, which POST /api/v1/projects enforces.',
+    owner: 'chat-team',
+    envVar: 'PROJECT_CONTEXT_ALLOWED_EXTENSIONS',
   },
   {
     key: 'usageLimits.warningThresholdPercent',

@@ -3,6 +3,10 @@ import { safeDecodeURI } from '../shared/string-utils';
 /** True when `url` looks like a DIAL Core file id (`files/{bucket}/{path}`). */
 export const isDialFileId = (url: string): boolean => url.startsWith('files/');
 
+/** True when `url` is a DIAL Core folder id: a file id ending with `/`, ignoring any `#...` fragment. */
+export const isDialFolderId = (url: string): boolean =>
+  isDialFileId(url) && url.split('#')[0].endsWith('/');
+
 /**
  * Converts a DIAL file ID or full resource path to the relative bucket path
  * expected by the files download API.

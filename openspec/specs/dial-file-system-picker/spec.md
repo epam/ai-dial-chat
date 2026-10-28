@@ -71,7 +71,7 @@ The edit-message attach (+) menu (`EditMessageInput`, rendered while a message i
 
 The system SHALL open a modal (title `"Attach files"`, i18n key `basic.attachFiles`) when the user selects "DIAL file system" from the attachment menu. The app's `DialFileManagerModal` (`apps/chat/src/components/DialFileManagerModal/DialFileManagerModal.tsx`) builds the translated labels and the picker state (`useFileAttachmentPicker` from `@epam/ai-dial-chat-hooks`) and renders `FileManagerAttachModal` from `@epam/ai-dial-chat-shared/file-manager`, which renders the ui-kit 2.0 `Popup` with `DialFileManagerShell` (and through it `DialFileManager` from `@epam/ai-dial-react-file-manager`) as its body.
 
-- Modal state (`isDialFileManagerOpen`) is owned by `ConversationView` for an existing conversation and by `NewConversationComposer` (through `useDialFileManagerState`) for a new chat; both lazy-load `DialFileManagerModal` via `React.lazy` + `Suspense`.
+- Modal state (`isOpen`) and pending DIAL attachments are owned by the app-level hook `useDialFileManagerState` (`apps/chat/src/hooks/files/useDialFileManagerState.ts`). Both call sites use it: `ConversationView` for an existing conversation and `NewConversationComposer` for a new chat. Neither call site SHALL keep its own `useState` for the modal's open state or pending DIAL attachments. Both lazy-load `DialFileManagerModal` via `React.lazy` + `Suspense`.
 - `Popup` is used with `size={PopupSize.Lg}` and `className="flex !h-[min(800px,100dvh)] w-full flex-col !bg-layer-sunken"`, matching the legacy file-manager modal's 800px cap and overriding the ui-kit's desktop auto-height. No `closeOnOutsideClick` prop is passed.
 - The Attach button is the popup's single `mainButtons` entry (`ButtonVariant.Primary`).
 - Closing the modal does NOT modify `message` text or the local `attachments` list in `Input`.
@@ -89,6 +89,12 @@ The system SHALL open a modal (title `"Attach files"`, i18n key `basic.attachFil
 - **GIVEN** the DIAL file system modal is open
 - **WHEN** the user clicks the close button
 - **THEN** the modal closes; the message draft and any existing attachments are unchanged
+
+#### Scenario: Existing conversation uses the shared state hook
+
+- **GIVEN** an existing conversation is open in `ConversationView`
+- **WHEN** the user opens the DIAL file system modal, selects files and folders, and clicks Attach
+- **THEN** `useDialFileManagerState.handleAttach` converts the result to attachments, stores them as pending, and closes the modal, exactly as it does for `NewConversationComposer`
 
 ---
 

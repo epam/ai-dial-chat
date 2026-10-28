@@ -1,6 +1,7 @@
 import {
   AttachmentType,
   buildCssVars,
+  type DisplayAttachment,
   mergeClasses,
   RequestStatus,
 } from '@epam/ai-dial-chat-shared';
@@ -30,6 +31,7 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
   attachments,
   onAttachmentClick,
   onDownloadAll,
+  isAttachmentDownloadable,
   onRetry,
   labels,
   styles: groupStyles,
@@ -62,16 +64,20 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
   const HeaderIcon = isMixed ? IconPaperclip : hasImages ? IconPhoto : IconFile;
   const headerLabel = getHeaderLabel(attachments.length);
 
-  const handleDownloadAll = () => {
-    /*
-     * Skip attachments that individual tiles themselves wouldn't allow
-     * downloading (still uploading, or failed) — "download all" must not
-     * fire on a broken/incomplete attachment just because it's in the list.
-     */
-    const downloadableAttachments = attachments.filter(
-      (attachment) => attachment.status === RequestStatus.Idle,
-    );
+  const isDownloadable = (attachment: DisplayAttachment): boolean =>
+    isAttachmentDownloadable?.(attachment) !== false;
+  /*
+   * Skip attachments that individual tiles themselves wouldn't allow
+   * downloading (still uploading, failed, or rejected by the host, e.g. a
+   * folder) — "download all" must not fire on them just because they are in
+   * the list.
+   */
+  const downloadableAttachments = attachments.filter(
+    (attachment) =>
+      attachment.status === RequestStatus.Idle && isDownloadable(attachment),
+  );
 
+  const handleDownloadAll = () => {
     if (onDownloadAll) {
       onDownloadAll(downloadableAttachments);
     } else {
@@ -118,20 +124,22 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
             {headerLabel}
           </span>
         </div>
-        {attachments.length >= 2 && (onDownloadAll || onAttachmentClick) && (
-          <GhostIconButton
-            icon={
-              <IconDownload
-                size={DIAL_ICON_SIZE.SM}
-                aria-hidden
-                stroke={DIAL_KIT_ICON_STROKE}
-              />
-            }
-            size={ElementSize.Small}
-            aria-label={downloadAllLabel}
-            onClick={handleDownloadAll}
-          />
-        )}
+        {attachments.length >= 2 &&
+          downloadableAttachments.length > 0 &&
+          (onDownloadAll || onAttachmentClick) && (
+            <GhostIconButton
+              icon={
+                <IconDownload
+                  size={DIAL_ICON_SIZE.SM}
+                  aria-hidden
+                  stroke={DIAL_KIT_ICON_STROKE}
+                />
+              }
+              size={ElementSize.Small}
+              aria-label={downloadAllLabel}
+              onClick={handleDownloadAll}
+            />
+          )}
       </div>
 
       <div
@@ -147,7 +155,11 @@ export const AttachmentGroup: FC<AttachmentGroupProps> = ({
             <AttachmentCard
               attachment={attachment}
               onClick={onAttachmentClick}
-              onDownload={onDownloadAll ? handleDownload : undefined}
+              onDownload={
+                onDownloadAll && isDownloadable(attachment)
+                  ? handleDownload
+                  : undefined
+              }
               onRetry={onRetry}
               labels={{
                 clickLabel,

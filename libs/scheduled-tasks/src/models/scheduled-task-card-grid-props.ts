@@ -30,9 +30,12 @@ export interface ScheduledTaskCardGridProps {
 export interface ScheduledTaskCardGridLayout {
   /** Maximum column count. Defaults to 3; fewer columns fit narrower containers. */
   maxColumns?: 1 | 2 | 3;
-  /** Maximum grid width. Defaults to '1180px'. */
+  /** Maximum grid width. Defaults to `SCHEDULED_TASKS_GRID_DEFAULT_MAX_WIDTH`. */
   maxWidth?: string;
   minCardWidth?: string;
   gap?: string;
   cardHeight?: string;
 }
+
+/** Default `layout.maxWidth` of the card grid; the banner slot falls back to the same width so the banner stays aligned with the cards. */
+export const SCHEDULED_TASKS_GRID_DEFAULT_MAX_WIDTH = '1180px';

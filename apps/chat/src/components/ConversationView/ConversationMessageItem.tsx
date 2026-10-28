@@ -114,6 +114,7 @@ import {
   attachmentDisplayResolvers,
 } from '../../utils/attachment-display-resolvers';
 import {
+  isAttachmentDownloadable,
   resolveAbsoluteDialUrl,
   resolveDialFileDownloadUrl,
   resolveMarkdownUrl,
@@ -825,6 +826,7 @@ const ConversationMessageItem: FC<Props> = ({
               }}
               onAttachmentClick={handleAttachmentClick}
               onDownloadAll={handleDownloadAll}
+              isAttachmentDownloadable={isAttachmentDownloadable}
             />
           }
         >
@@ -1196,6 +1198,7 @@ const ConversationMessageItem: FC<Props> = ({
         tableOnOpenInCanvas={handleTableOpenInCanvas}
         onAttachmentClick={handleAttachmentClick}
         onDownloadAll={handleDownloadAll}
+        isAttachmentDownloadable={isAttachmentDownloadable}
         selectedAttachmentId={selectedAttachmentId}
       />
     </CitationCardProvider>

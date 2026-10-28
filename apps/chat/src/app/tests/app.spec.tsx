@@ -139,6 +139,12 @@ vi.mock('../../pages/DialFileManagerPage/DialFileManagerPage', () => ({
 vi.mock('../../components/CatalogView/CatalogView', () => ({
   default: () => null,
 }));
+vi.mock('../../pages/ProjectsPage/ProjectsPage', () => ({
+  default: () => <p>Projects list page</p>,
+}));
+vi.mock('../../pages/ProjectCreatePage/ProjectCreatePage', () => ({
+  default: () => <p>New project page</p>,
+}));
 
 const SidebarValueHost: FC = () => {
   const [value, setValue] = useState({ revision: 0 });
@@ -223,5 +229,28 @@ describe('App — attachment canvas container mounting', () => {
     await renderAt('/catalog', [OverlayFeature.AttachmentsManager]);
 
     expect(queryCanvas()).toBeNull();
+  });
+});
+
+describe('App — projects routes', () => {
+  it('renders the New project page on /projects/new', async () => {
+    render(
+      <MemoryRouter initialEntries={['/projects/new']}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('New project page')).toBeTruthy();
+    expect(screen.queryByText('Projects list page')).toBeNull();
+  });
+
+  it('keeps the list page on /projects', async () => {
+    render(
+      <MemoryRouter initialEntries={['/projects']}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('Projects list page')).toBeTruthy();
   });
 });

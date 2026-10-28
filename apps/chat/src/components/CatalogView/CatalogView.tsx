@@ -732,6 +732,7 @@ const CatalogView: FC<Props> = ({
               t(CatalogI18nKeys.BrowseSettingsFilterCount, { selected, total }),
           },
           ariaLabel: t(NavigationI18nKeys.Catalog),
+          scrollToTopLabel: t(CatalogI18nKeys.ScrollToTop),
           tabLabels: {
             [CatalogEntityType.Model]: t(CatalogI18nKeys.TabModels),
             [CatalogEntityType.Agent]: t(CatalogI18nKeys.TabApplications),

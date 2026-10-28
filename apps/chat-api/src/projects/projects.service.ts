@@ -1,9 +1,24 @@
-import { BadGatewayException, Injectable, Logger } from '@nestjs/common';
-import { handleDialSdkError } from '../common/dial/dial-error.mapper';
+import {
+  BadGatewayException,
+  HttpException,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
+import {
+  extractDialErrorMessage,
+  handleDialSdkError,
+  mapDialHttpStatus,
+} from '../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { PUBLIC_BUCKET } from '../constants/dial.constants';
 import { DialClientService } from '../dial/dial-client.service';
+import {
+  type ProjectCreateInput,
+  ProjectsCreateService,
+  type UploadedContextFile,
+} from './create/projects-create.service';
+import type { CreateProjectResponseDto } from './dto/create-project-response.dto';
 import type { ListProjectsResponseDto } from './dto/list-projects-response.dto';
 import { ProjectSource } from './dto/project-source.enum';
 import type { ProjectDto } from './dto/project.dto';
@@ -12,6 +27,8 @@ import {
   mapProjectMetadata,
   mapSharedProject,
 } from './projects.mapper';
+import { ProjectCreateErrorCode } from './types/project-create-error-code.enum';
+import { projectConflict } from './utils/project-create-error.util';
 
 type DialProjectListing = DialProjectMetadata & {
   items?: DialProjectMetadata[];
@@ -25,6 +42,10 @@ interface SourceListing {
 }
 
 const LISTING_CONTEXT = 'projects.listProjects';
+const CREATE_CONTEXT = 'projects.createProject';
+/* Longer than the listing deadline: a create can carry 10 MiB of context. */
+const PROJECT_CREATE_TIMEOUT_MS = 60_000;
+const PROJECTS_URL_PREFIX = 'projects';
 /** Deadline shared by every Core call of one listing request. */
 const PROJECTS_LISTING_TIMEOUT_MS = 30_000;
 const PROJECTS_PAGE_SIZE = 1000;
@@ -43,7 +64,88 @@ const isProject = (item: ProjectDto | null): item is ProjectDto => item != null;
 export class ProjectsService {
   private readonly logger = new Logger(ProjectsService.name);
 
-  constructor(private readonly dialClient: DialClientService) {}
+  constructor(
+    private readonly dialClient: DialClientService,
+    private readonly createService: ProjectsCreateService,
+  ) {}
+
+  /**
+   * Creates a project at the root of the caller's own bucket in one atomic,
+   * create-only Core call. `ProjectsCreateService` validates every field and
+   * part first, so a rejection never reaches Core. `If-None-Match: '*'` is
+   * Core's create-only mechanism (verified for complex resources in
+   * `openspec/changes/archive/2026-08-13-fix-skill-editor-core-contract/design.md`):
+   * sending neither header is an unconditional upsert, despite the SDK's
+   * comment. Core's `412` therefore means the name is taken. Logs carry only
+   * the outcome, file count and byte total — never a name or any content.
+   */
+  async createProject(
+    bucket: string,
+    input: ProjectCreateInput,
+    files: UploadedContextFile[],
+    accessToken: string,
+    signal?: AbortSignal,
+  ): Promise<CreateProjectResponseDto> {
+    const { formData, fileCount, totalBytes } =
+      this.createService.validateAndBuild(input, files);
+    const timeoutSignal = AbortSignal.timeout(PROJECT_CREATE_TIMEOUT_MS);
+
+    try {
+      const { error, response } =
+        await this.dialClient.client.uploadProjectFolder(
+          bucket,
+          encodeDialResourcePath(input.name),
+          {
+            headers: {
+              ...getBearerAuthHeaders(accessToken),
+              // Undeclared in the pinned SDK's operation type — the same
+              // verified schema gap `SkillsUploadService.createSkill` casts.
+              'If-None-Match': '*',
+            } as Record<string, string>,
+            body: formData as unknown as { file: string },
+            signal: signal
+              ? AbortSignal.any([signal, timeoutSignal])
+              : timeoutSignal,
+          },
+        );
+
+      if (error != null) {
+        if (response.status === 412) {
+          throw projectConflict(
+            ProjectCreateErrorCode.NameTaken,
+            'A project with this name already exists',
+            'name',
+          );
+        }
+        return mapDialHttpStatus(
+          response.status,
+          CREATE_CONTEXT,
+          this.logger,
+          undefined,
+          extractDialErrorMessage(error),
+        );
+      }
+
+      this.logger.log(
+        `Project created (files=${fileCount}, bytes=${totalBytes})`,
+      );
+      return {
+        id: `${PROJECTS_URL_PREFIX}/${bucket}/${input.name}`,
+        name: input.name,
+        bucket,
+        path: input.name,
+        etag: response.headers.get('etag') ?? undefined,
+      };
+    } catch (err) {
+      if (err instanceof HttpException) {
+        this.logger.warn(
+          `Project create rejected (status=${err.getStatus()}, files=${fileCount}, bytes=${totalBytes})`,
+        );
+        throw err;
+      }
+      return handleDialSdkError(err, CREATE_CONTEXT, this.logger);
+    }
+  }
 
   /**
    * Lists every project the caller can see: their own bucket, the public

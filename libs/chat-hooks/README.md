@@ -319,9 +319,8 @@ const { isAuthSessionError, connect } =
 // ./offline-credentials — no peer beyond react
 import { useOfflineCredentialsGate } from '@epam/ai-dial-chat-hooks/offline-credentials';
 
-const { status, connect, connected, refetch } = useOfflineCredentialsGate({
-  offlineCredentialsClient,
-});
+const { status, connect, connected, schedulerServiceConsent, refetch } =
+  useOfflineCredentialsGate({ offlineCredentialsClient });
 ```
 
 ```tsx
@@ -1683,7 +1682,7 @@ const AttachmentTile = ({ attachment }: { attachment: DisplayAttachment }) => {
 
 **Returns** (`UseAttachmentActionResult`): `{ handleAttachmentClick: (attachment: DisplayAttachment) => void }`.
 
-Also exports `isDialFileId`, `isDownloadableAttachment`, and `downloadAttachment` (the standalone functions the hook is built on) for callers that need the download decision outside the click handler.
+Also exports `isDialFileId`, `isDownloadableAttachment`, and `downloadAttachment` (the standalone functions the hook is built on) for callers that need the download decision outside the click handler. A DIAL folder attachment (`url` ending with `/`) is not downloadable: `isDownloadableAttachment` returns `false` and `downloadAttachment` does nothing for it.
 
 ### usePromptsState
 
@@ -4368,15 +4367,19 @@ import { sanitizeFileName } from '@epam/ai-dial-chat-hooks';
 sanitizeFileName('report:final?.pdf'); // 'report_final_.pdf'
 ```
 
-### isDialFileId / resolveRelativeDialFilePath / resolveDialFileBucketAndPath
+### isDialFileId / isDialFolderId / resolveRelativeDialFilePath / resolveDialFileBucketAndPath
 
-Recognizes a DIAL Core file id (`files/{bucket}/{path}`) and resolves it to a bucket-relative path or its `{ bucket, path }` parts.
+Recognizes a DIAL Core file id (`files/{bucket}/{path}`) or folder id (a file id ending with `/`) and resolves it to a bucket-relative path or its `{ bucket, path }` parts.
 
 ```ts
-import { resolveDialFileBucketAndPath } from '@epam/ai-dial-chat-hooks';
+import {
+  isDialFolderId,
+  resolveDialFileBucketAndPath,
+} from '@epam/ai-dial-chat-hooks';
 
 resolveDialFileBucketAndPath('files/my-bucket/reports/q1.pdf');
 // { bucket: 'my-bucket', path: 'reports/q1.pdf' }
+isDialFolderId('files/my-bucket/reports/'); // true
 ```
 
 ### openAnnotationAttachment
@@ -4859,16 +4862,19 @@ login-required surface.
 ```tsx
 import { useOfflineCredentialsGate } from '@epam/ai-dial-chat-hooks';
 
-const { status, connect, connected, refetch } = useOfflineCredentialsGate({
-  offlineCredentialsClient,
-});
+const { status, connect, connected, schedulerServiceConsent, refetch } =
+  useOfflineCredentialsGate({ offlineCredentialsClient });
 ```
 
 `UseOfflineCredentialsGateOptions` is exported. The host-configured client is
 required (only `getOfflineCredentials`); the hook owns no client configuration.
 `status` is the `OfflineCredentialsGateStatus` enum (`Checking`/`Hidden`/
 `Available`/`Unavailable`/`Error`); `connect` carries usable OAuth client
-settings only while `status` is `Available`.
+settings only while `status` is `Available`. `schedulerServiceConsent` is the
+generated `SchedulerServiceConsentStatus` (`signed_in`/`signed_out`/`unknown`,
+defaulting to `unknown` before the first check resolves or while it failed) —
+the hook parses and exposes the field only; which banner, badge, or button each
+surface renders from it stays with the consuming surface.
 
 ### useOfflineCredentialsLogin
 

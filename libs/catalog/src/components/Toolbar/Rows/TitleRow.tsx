@@ -23,7 +23,7 @@ import {
   IconLayoutGrid,
   IconLayoutList,
 } from '@tabler/icons-react';
-import { FC, ReactNode, useMemo, useState } from 'react';
+import { FC, ReactNode, Ref, useMemo, useState } from 'react';
 import { DEFAULT_BROWSE_SETTINGS_LABELS } from '../../../constants/browse-settings';
 import {
   BrowseSettingsSheetLabels,
@@ -44,6 +44,7 @@ interface TitleRowProps {
   query: string;
   onQueryChange: (q: string) => void;
   searchPlaceholder?: string;
+  searchInputRef?: Ref<HTMLInputElement>;
   gridViewLabel?: string;
   listViewLabel?: string;
   viewToggleLabel?: string;
@@ -76,6 +77,7 @@ export const TitleRow: FC<TitleRowProps> = ({
   query,
   onQueryChange,
   searchPlaceholder,
+  searchInputRef,
   gridViewLabel = 'Grid view',
   listViewLabel = 'List view',
   viewToggleLabel = 'View mode',
@@ -222,6 +224,7 @@ export const TitleRow: FC<TitleRowProps> = ({
             wrapperClassName={styles.searchField}
             placeholder={searchPlaceholder}
             aria-label={searchPlaceholder}
+            inputRef={searchInputRef}
           />
         </div>
         {isMobile ? (

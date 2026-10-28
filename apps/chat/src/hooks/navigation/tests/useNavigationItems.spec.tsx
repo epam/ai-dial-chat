@@ -73,4 +73,10 @@ describe('useNavigationItems', () => {
     expect(items.find(({ id }) => id === ROUTES.Catalog)?.isActive).toBe(true);
     expect(items.length).toBe(NAVIGATION_CONFIG.length);
   });
+
+  it('keeps Projects active on the New project page', () => {
+    const items = getNavItems(ROUTES.ProjectCreate);
+
+    expect(items.find(({ id }) => id === ROUTES.Projects)?.isActive).toBe(true);
+  });
 });
