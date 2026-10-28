@@ -157,7 +157,11 @@ interface GenerationEntry {
    * release, never ownership. See `requestFinalizationBound`.
    */
   finalizeTimer?: NodeJS.Timeout;
-  /** Guards `releaseResources` so it runs at most once per entry. */
+  /**
+   * Guards `releaseResources` so it runs at most once per entry, and gates
+   * `attach`: once set, no later terminal notification will run for this
+   * emitter, so a retained entry must not hand it to a new subscriber.
+   */
   resourcesReleased: boolean;
   /**
    * The generation runs as a DIAL Core background job, so its state lives in the
@@ -475,15 +479,17 @@ export class ConversationGenerationService implements OnModuleDestroy {
 
   /**
    * Synchronously returns the current assembled-message snapshot and the
-   * emitter to subscribe to, or `undefined` when no entry exists for this
-   * ownerKey+path — including one that already finalized. Callers MUST
-   * attach their listener in the same synchronous step as reading
-   * `assembledMessage` (no `await` in between), so no chunk emitted
-   * concurrently can land in the gap between the two.
+   * emitter to subscribe to, or `undefined` when there is no entry for this
+   * ownerKey+path — including one that already finalized — or one whose
+   * subscribers were already released while its key is retained
+   * (`generation-registry`). Callers MUST attach their listener in the same
+   * synchronous step as reading `assembledMessage` (no `await` in between),
+   * so no chunk emitted concurrently can land in the gap between the two and
+   * no release can run between this check and the subscription.
    */
   attach(ownerKey: string, path: string): GenerationAttachment | undefined {
     const entry = this.registry.get(this.buildKey(ownerKey, path));
-    if (!entry) return undefined;
+    if (!entry || entry.resourcesReleased) return undefined;
     return {
       assembledMessage: entry.assembledMessage,
       generationId: entry.generationId,
