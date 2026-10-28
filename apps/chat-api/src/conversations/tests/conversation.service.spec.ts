@@ -17,6 +17,7 @@ describe('ConversationService facade', () => {
     };
     const listingService = {
       listConversations: vi.fn().mockResolvedValue('listing-list'),
+      getConversationTitles: vi.fn().mockResolvedValue({ items: [] }),
       getConversationMetadata: vi.fn().mockResolvedValue('listing-metadata'),
     };
     const lifecycleService = {

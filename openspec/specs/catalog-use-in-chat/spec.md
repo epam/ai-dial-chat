@@ -8,7 +8,7 @@ The "Use in chat" action that selects a deployment and starts a new conversation
 
 When the user clicks "Use in chat" in the catalog details panel header for a catalog item of type Model or Application (`CatalogEntityType.Agent`), the handler (`handleUseInChat` in `apps/chat/src/hooks/useCatalogItemActions/useCatalogItemActions.tsx`, which `CatalogView` consumes) SHALL set that item's `id` as the selected deployment via `DeploymentsContext.setSelectedItemId` and navigate to `ROUTES.Root` (`/`). The navigation SHALL also carry the chosen id as router state (`{ deploymentId: string }`), so `ConversationRoute` treats the arrival as an explicit selection via `restoreSelectedItemId` instead of calling `restoreDefaultSelection`. Without it the new-chat route resets the selection to the operator default on mount (and the persisted preference has not yet propagated), discarding the pick.
 
-The `deploymentId` state SHALL be one-shot: `ConversationRoute` consumes it on mount and clears it with `navigate(pathname, { replace: true, state: null })`, remembering for the lifetime of that mount that it was consumed so the clearing navigation does not re-trigger default restoration. `history.state` survives a page reload, so state left in place would make every refresh re-apply a stale pick instead of resolving the configured default.
+The `deploymentId` state SHALL be one-shot: `ConversationRoute` consumes it on mount and clears it with a `replace` navigation that sets `state: null` and keeps the URL's query string and hash, remembering for the lifetime of that mount that it was consumed so the clearing navigation does not re-trigger default restoration. `history.state` survives a page reload, so state left in place would make every refresh re-apply a stale pick instead of resolving the configured default.
 
 The selection SHALL be persisted to user config as part of `setSelectedItemId`'s existing behavior (no additional persistence call is required by the handler).
 
@@ -21,7 +21,7 @@ When the item's type is `CatalogEntityType.Prompt`, "Use in chat" SHALL NOT chan
 
 The prompt body SHALL travel as router state, never as a query parameter — a prompt body may be up to 50 000 characters, which would exceed URL length limits and leak content into browser history.
 
-The state SHALL be one-shot: `ConversationRoute` consumes it on mount and clears it with `navigate(…, { replace: true })`, so a later back-navigation to `/` does not silently re-inject stale text. This mirrors how `CatalogView` already clears the one-shot `itemId` search param.
+The state SHALL be one-shot: `ConversationRoute` consumes it on mount and clears it with a `replace` navigation that keeps the URL's query string and hash, so a later back-navigation to `/` does not silently re-inject stale text. This mirrors how `CatalogView` already clears the one-shot `itemId` search param.
 
 When the prompt's body has not yet been resolved at click time (`item.details.promptContent.content` is absent), the handler SHALL resolve a public prompt through `getPublicPrompt` (with its bucket-relative sub-path), and a personal or shared prompt through `getPrompt(item.id)` — the full `prompts/{bucket}/{path}` id passed unmodified, whether the prompt is the caller's own or shared with them. On failure it SHALL surface an error notification and stay on the catalog rather than navigating with empty text.
 
@@ -82,6 +82,11 @@ When the prompt's body has not yet been resolved at click time (`item.details.pr
 - **WHEN** the prompt's body must be fetched at click time and that request rejects
 - **THEN** an error notification with the request id is shown
 - **AND** the app stays on the catalog rather than opening an empty composer
+
+#### Scenario: Clearing the one-shot state keeps the query string and hash
+
+- **WHEN** `ConversationRoute` consumes a one-shot router state while the URL carries other query parameters and a hash
+- **THEN** the state is cleared and the query string and hash are unchanged
 
 ---
 

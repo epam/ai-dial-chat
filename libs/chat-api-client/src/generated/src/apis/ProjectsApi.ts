@@ -17,6 +17,8 @@ import type {
   CreateProjectResponseDto,
   ListProjectsResponseDto,
   ProjectCreateErrorDto,
+  ProjectDetailsDto,
+  UpdateProjectResponseDto,
 } from '../models/index';
 
 export interface CreateProjectRequest {
@@ -24,6 +26,35 @@ export interface CreateProjectRequest {
   description?: string;
   instructions?: string;
   fileNames?: string;
+  files?: Array<Blob>;
+}
+
+export interface DeleteProjectRequest {
+  id: string;
+  ifMatch: string;
+}
+
+export interface DownloadProjectRequest {
+  id: string;
+}
+
+export interface DownloadProjectFileRequest {
+  id: string;
+  fileName: string;
+}
+
+export interface GetProjectRequest {
+  id: string;
+}
+
+export interface UpdateProjectRequest {
+  id: string;
+  ifMatch: string;
+  name: string;
+  description?: string;
+  instructions?: string;
+  fileNames?: string;
+  removedFileNames?: string;
   files?: Array<Blob>;
 }
 
@@ -128,6 +159,269 @@ export class ProjectsApi extends runtime.BaseAPI {
   }
 
   /**
+   * Deletes the project only if it is still the version named by `If-Match`, then removes it from the caller\'s pins. Only a project in the caller\'s own bucket can be deleted.
+   * Delete a project
+   */
+  async deleteProjectRaw(
+    requestParameters: DeleteProjectRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling deleteProject().',
+      );
+    }
+
+    if (requestParameters['ifMatch'] == null) {
+      throw new runtime.RequiredError(
+        'ifMatch',
+        'Required parameter "ifMatch" was null or undefined when calling deleteProject().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (requestParameters['ifMatch'] != null) {
+      headerParameters['If-Match'] = String(requestParameters['ifMatch']);
+    }
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/projects/{id}`;
+    urlPath = urlPath.replace(
+      `{${'id'}}`,
+      encodeURIComponent(String(requestParameters['id'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Deletes the project only if it is still the version named by `If-Match`, then removes it from the caller\'s pins. Only a project in the caller\'s own bucket can be deleted.
+   * Delete a project
+   */
+  async deleteProject(
+    requestParameters: DeleteProjectRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.deleteProjectRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * Streams DIAL Core\'s archive of the whole project (`PROJECT.md` and `context/`) as an attachment.
+   * Download a project as a ZIP archive
+   */
+  async downloadProjectRaw(
+    requestParameters: DownloadProjectRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<Blob>> {
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling downloadProject().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/projects/{id}/archive`;
+    urlPath = urlPath.replace(
+      `{${'id'}}`,
+      encodeURIComponent(String(requestParameters['id'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.BlobApiResponse(response);
+  }
+
+  /**
+   * Streams DIAL Core\'s archive of the whole project (`PROJECT.md` and `context/`) as an attachment.
+   * Download a project as a ZIP archive
+   */
+  async downloadProject(
+    requestParameters: DownloadProjectRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<Blob> {
+    const response = await this.downloadProjectRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Streams one file directly under the project `context/` folder as an attachment with `X-Content-Type-Options: nosniff`.
+   * Download one context file of a project
+   */
+  async downloadProjectFileRaw(
+    requestParameters: DownloadProjectFileRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<Blob>> {
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling downloadProjectFile().',
+      );
+    }
+
+    if (requestParameters['fileName'] == null) {
+      throw new runtime.RequiredError(
+        'fileName',
+        'Required parameter "fileName" was null or undefined when calling downloadProjectFile().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/projects/{id}/files/{fileName}`;
+    urlPath = urlPath.replace(
+      `{${'id'}}`,
+      encodeURIComponent(String(requestParameters['id'])),
+    );
+    urlPath = urlPath.replace(
+      `{${'fileName'}}`,
+      encodeURIComponent(String(requestParameters['fileName'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.BlobApiResponse(response);
+  }
+
+  /**
+   * Streams one file directly under the project `context/` folder as an attachment with `X-Content-Type-Options: nosniff`.
+   * Download one context file of a project
+   */
+  async downloadProjectFile(
+    requestParameters: DownloadProjectFileRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<Blob> {
+    const response = await this.downloadProjectFileRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Returns one project\'s name, description, instructions, context files with their sizes, and the ETag of the version they were read from. The BFF reads the project archive from DIAL Core, because project metadata carries no file sizes; `canEdit` is true only for a project in the caller\'s own bucket.
+   * Get a project
+   */
+  async getProjectRaw(
+    requestParameters: GetProjectRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ProjectDetailsDto>> {
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling getProject().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/projects/{id}`;
+    urlPath = urlPath.replace(
+      `{${'id'}}`,
+      encodeURIComponent(String(requestParameters['id'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ProjectDetailsDto>(response);
+  }
+
+  /**
+   * Returns one project\'s name, description, instructions, context files with their sizes, and the ETag of the version they were read from. The BFF reads the project archive from DIAL Core, because project metadata carries no file sizes; `canEdit` is true only for a project in the caller\'s own bucket.
+   * Get a project
+   */
+  async getProject(
+    requestParameters: GetProjectRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ProjectDetailsDto> {
+    const response = await this.getProjectRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
    * Returns every DIAL project visible to the session user: the user\'s own bucket, the public (organization) bucket, and projects shared with the user, merged and de-duplicated by id. The BFF follows DIAL Core paging itself, so the list is complete up to a per-source page cap. A failing source is omitted; the request fails only when both bucket listings fail.
    * List projects
    */
@@ -170,6 +464,131 @@ export class ProjectsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<ListProjectsResponseDto> {
     const response = await this.listProjectsRaw(initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * Saves the name, description, instructions and context of a project in one conditional DIAL Core write: the BFF rebuilds PROJECT.md, keeps every stored context file not listed in `removedFileNames`, adds the `files` parts and writes the whole project with `If-Match`. A different name then moves the project in its folder and keeps the caller\'s pin. Only a project in the caller\'s own bucket can be saved. Every domain rejection carries a ProjectCreateErrorCode.
+   * Save a project edit
+   */
+  async updateProjectRaw(
+    requestParameters: UpdateProjectRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<UpdateProjectResponseDto>> {
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling updateProject().',
+      );
+    }
+
+    if (requestParameters['ifMatch'] == null) {
+      throw new runtime.RequiredError(
+        'ifMatch',
+        'Required parameter "ifMatch" was null or undefined when calling updateProject().',
+      );
+    }
+
+    if (requestParameters['name'] == null) {
+      throw new runtime.RequiredError(
+        'name',
+        'Required parameter "name" was null or undefined when calling updateProject().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (requestParameters['ifMatch'] != null) {
+      headerParameters['If-Match'] = String(requestParameters['ifMatch']);
+    }
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const consumes: runtime.Consume[] = [
+      { contentType: 'multipart/form-data' },
+    ];
+    // @ts-ignore: canConsumeForm may be unused
+    const canConsumeForm = runtime.canConsumeForm(consumes);
+
+    let formParams: { append(name: string, value: string | Blob): void };
+    let useForm = false;
+    // use FormData to transmit files using content-type "multipart/form-data"
+    useForm = canConsumeForm;
+    if (useForm) {
+      formParams = new FormData();
+    } else {
+      formParams = new URLSearchParams();
+    }
+
+    if (requestParameters['name'] != null) {
+      formParams.append('name', requestParameters['name']);
+    }
+
+    if (requestParameters['description'] != null) {
+      formParams.append('description', requestParameters['description']);
+    }
+
+    if (requestParameters['instructions'] != null) {
+      formParams.append('instructions', requestParameters['instructions']);
+    }
+
+    if (requestParameters['fileNames'] != null) {
+      formParams.append('fileNames', requestParameters['fileNames']);
+    }
+
+    if (requestParameters['removedFileNames'] != null) {
+      formParams.append(
+        'removedFileNames',
+        requestParameters['removedFileNames'],
+      );
+    }
+
+    if (requestParameters['files'] != null) {
+      requestParameters['files'].forEach((element) => {
+        formParams.append('files', element);
+      });
+    }
+
+    let urlPath = `/api/v1/projects/{id}`;
+    urlPath = urlPath.replace(
+      `{${'id'}}`,
+      encodeURIComponent(String(requestParameters['id'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'PUT',
+        headers: headerParameters,
+        query: queryParameters,
+        body: formParams,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<UpdateProjectResponseDto>(response);
+  }
+
+  /**
+   * Saves the name, description, instructions and context of a project in one conditional DIAL Core write: the BFF rebuilds PROJECT.md, keeps every stored context file not listed in `removedFileNames`, adds the `files` parts and writes the whole project with `If-Match`. A different name then moves the project in its folder and keeps the caller\'s pin. Only a project in the caller\'s own bucket can be saved. Every domain rejection carries a ProjectCreateErrorCode.
+   * Save a project edit
+   */
+  async updateProject(
+    requestParameters: UpdateProjectRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<UpdateProjectResponseDto> {
+    const response = await this.updateProjectRaw(
+      requestParameters,
+      initOverrides,
+    );
     return await response.value();
   }
 }

@@ -340,7 +340,9 @@ export const qualifySessionConversationPath = (
  */
 export const resolveListDisplayTitle = (
   pathTitle: string,
-  conversation: ConversationResponseDto,
+  conversation: Partial<
+    Pick<ConversationResponseDto, 'name' | 'llmNamingDone'>
+  >,
 ): string => {
   const storedName = conversation.name?.trim();
   if (!storedName) {

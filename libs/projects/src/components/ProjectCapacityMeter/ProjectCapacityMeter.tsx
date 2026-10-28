@@ -31,7 +31,7 @@ export const ProjectCapacityMeter: FC<ProjectCapacityMeterProps> = ({
   const label = formatLabel(percent);
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex min-w-0 items-center gap-2">
       <div
         role="meter"
         aria-label={ariaLabel}
@@ -40,7 +40,7 @@ export const ProjectCapacityMeter: FC<ProjectCapacityMeterProps> = ({
         aria-valuenow={Math.min(usedBytes, maxBytes)}
         aria-valuetext={label}
         className={mergeClasses(
-          'h-1 w-full overflow-hidden rounded-full',
+          'h-1 w-[60px] shrink-0 overflow-hidden rounded-full',
           styles.track,
         )}
       >
@@ -49,7 +49,14 @@ export const ProjectCapacityMeter: FC<ProjectCapacityMeterProps> = ({
           style={{ width: `${percent}%` }}
         />
       </div>
-      <span aria-hidden className={mergeClasses(textClassName, styles.text)}>
+      <span
+        aria-hidden
+        className={mergeClasses(
+          'whitespace-nowrap',
+          textClassName,
+          styles.text,
+        )}
+      >
         {label}
       </span>
     </div>

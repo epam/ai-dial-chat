@@ -15,6 +15,7 @@ import {
   type ConversationPersistencePort,
   type VersionedConversation,
 } from '../conversation-persistence.port';
+import { ConversationTitleCacheService } from '../listing/conversation-title-cache.service';
 import {
   getConversationTitleFromName,
   isApplicationDeploymentPath,
@@ -109,6 +110,7 @@ export class ConversationPersistenceService implements ConversationPersistencePo
     private readonly dialClient: DialClientService,
     @Inject(forwardRef(() => ConversationNamingService))
     private readonly conversationNamingService: ConversationNamingService,
+    private readonly titleCache: ConversationTitleCacheService,
   ) {}
 
   async getConversation(
@@ -191,17 +193,21 @@ export class ConversationPersistenceService implements ConversationPersistencePo
       sessionBucket,
     );
 
+    const encodedPath = encodeDialResourcePath(subPath);
+    const cacheRead = this.titleCache.reader(
+      token,
+      `conversations/${bucket}/${encodedPath}`,
+    );
     const { data, error, response } =
-      (await this.dialClient.client.getConversation(
-        bucket,
-        encodeDialResourcePath(subPath),
-        { headers: getBearerAuthHeaders(token) },
-      )) as {
+      (await this.dialClient.client.getConversation(bucket, encodedPath, {
+        headers: getBearerAuthHeaders(token),
+      })) as {
         data?: unknown;
         error?: unknown;
         response: globalThis.Response;
       };
     if (error != null || !data) {
+      if (response.status === 404) cacheRead();
       this.logger.debug(
         `getStoredConversation rejected — bucket: ${bucket}, subPath: ${subPath}, status: ${response.status}, error: ${JSON.stringify(error)}`,
       );
@@ -213,6 +219,7 @@ export class ConversationPersistenceService implements ConversationPersistencePo
       );
     }
 
+    cacheRead(data as ConversationResponseDto);
     return {
       conversation: data as ConversationResponseDto,
       subPath,
@@ -253,6 +260,11 @@ export class ConversationPersistenceService implements ConversationPersistencePo
         );
       }
       const saved = { ...data, ...bodyToSave } as ConversationResponseDto;
+      this.titleCache.set(
+        token,
+        `conversations/${bucket}/${encodeDialResourcePath(conversationPath)}`,
+        saved,
+      );
       if (saved.llmNamingDone !== true) {
         this.conversationNamingService.maybeRenameAfterFirstReply(
           conversationPath,
@@ -288,17 +300,23 @@ export class ConversationPersistenceService implements ConversationPersistencePo
       qualifySessionConversationPath(conversationPath, bucket),
       bucket,
     );
+    const encodedPath = encodeDialResourcePath(subPath);
+    const resourceId = `conversations/${resolvedBucket}/${encodedPath}`;
+    const cacheRead = this.titleCache.reader(token, resourceId);
     const { data, error, response } =
       (await this.dialClient.client.getConversation(
         resolvedBucket,
-        encodeDialResourcePath(subPath),
+        encodedPath,
         { headers: getBearerAuthHeaders(token) },
       )) as {
         data?: unknown;
         error?: unknown;
         response: globalThis.Response;
       };
-    if (response.status === 404) return null;
+    if (response.status === 404) {
+      cacheRead();
+      return null;
+    }
     if (error != null || !data) {
       return handleDialSdkError(
         error,
@@ -307,6 +325,7 @@ export class ConversationPersistenceService implements ConversationPersistencePo
         response,
       );
     }
+    cacheRead(data as ConversationResponseDto);
     return {
       conversation: data as ConversationResponseDto,
       etag: response.headers.get('etag'),
@@ -355,6 +374,11 @@ export class ConversationPersistenceService implements ConversationPersistencePo
       );
     }
     const saved = { ...data, ...conversation } as ConversationResponseDto;
+    this.titleCache.set(
+      token,
+      `conversations/${resolvedBucket}/${encodeDialResourcePath(subPath)}`,
+      saved,
+    );
     if (saved.llmNamingDone !== true) {
       this.conversationNamingService.maybeRenameAfterFirstReply(
         conversationPath,

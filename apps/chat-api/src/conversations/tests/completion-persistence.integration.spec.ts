@@ -21,6 +21,7 @@ import { ConversationService } from '../conversation.service';
 import { BackgroundGenerationService } from '../generation/background-generation.service';
 import { CoreResponsesClient } from '../generation/core-responses.client';
 import { ResponsesAdapter } from '../generation/responses.adapter';
+import { ConversationTitleCacheService } from '../listing/conversation-title-cache.service';
 import { ConversationPersistenceService } from '../persistence/conversation-persistence.service';
 import { ConversationStreamingService } from '../streaming/conversation-streaming.service';
 
@@ -148,9 +149,13 @@ describe('completion persistence over HTTP', () => {
     });
     const dial = new DialClientService(config);
     registry = new ConversationGenerationService(config);
-    const persistence = new ConversationPersistenceService(dial, {
-      maybeRenameAfterFirstReply: vi.fn(),
-    } as never);
+    const persistence = new ConversationPersistenceService(
+      dial,
+      {
+        maybeRenameAfterFirstReply: vi.fn(),
+      } as never,
+      new ConversationTitleCacheService(),
+    );
     const streaming = new ConversationStreamingService(
       dial,
       registry,

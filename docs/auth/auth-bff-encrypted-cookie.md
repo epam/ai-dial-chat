@@ -266,6 +266,8 @@ This flow is not auth-specific plumbing — every non-public route goes through 
 
 _Source: [`auth-diagrams/05-logout-flow.mmd`](./auth-diagrams/05-logout-flow.mmd)_
 
+Outside an overlay, a completed `POST /auth/logout` is followed by a full document load of `/login`. Before navigating, `useLogout` writes a short-lived marker to `sessionStorage` (`apps/chat/src/utils/signed-out-marker.ts`); the `UserContext` of the load that follows consumes it and starts `Unauthenticated` without its usual `GET /api/v1/auth/me` probe, which could only return a 401 there. A failed logout request writes no marker, so a session that may still be alive is probed as usual.
+
 ### 5.4 Cross-Pod Stateless Decryption
 
 ![Cross-pod stateless decryption](./auth-diagrams/06-cross-pod-stateless.svg)

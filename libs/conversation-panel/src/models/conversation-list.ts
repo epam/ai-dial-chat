@@ -80,6 +80,8 @@ export interface ConversationListLabels {
   tabEmptyLabels?: Partial<Record<FilterTab, FilterEmptyLabels>>;
   /** Status message announced to assistive tech while conversations are loading. Defaults to `'Loading conversations'`. */
   loadingLabel?: string;
+  /** Status while the host resolves titles. Defaults to `'Updating conversation names'`. */
+  updatingTitlesLabel?: string;
   /** Labels for collapsible group section headings. */
   groupLabels?: {
     /** Heading for the Pinned section. Defaults to `"Pinned"`. */
@@ -103,6 +105,10 @@ export interface ConversationListProps {
   conversations: ConversationItem[];
   /** When true, renders skeleton rows instead of the conversation list. */
   isLoading?: boolean;
+  /** Keeps rows visible while the host resolves titles; suppresses a final empty-search result. Defaults to `false`. */
+  isUpdatingTitles?: boolean;
+  /** Keeps an opened search result visible after its title changes, until the query changes. Defaults to `false`. */
+  preserveActiveSearchResult?: boolean;
   /** Called with the conversation `id` when a row is clicked. */
   onSelectConversation: (id: string) => void;
   /** `id` of the currently viewed conversation; that row gets `aria-current="page"`. */

@@ -135,7 +135,9 @@ describe('NotificationContainer', () => {
   });
 
   describe('scrolling the stack', () => {
-    /* jsdom has no layout, so stub an overflowing stack's scroll metrics. */
+    /* jsdom has no layout, so stub an overflowing stack's scroll metrics.
+       Call it after render(), so the mount effect runs on unstubbed metrics
+       and a test can only pass on the change it makes. */
     const stubScrollMetrics = (stack: HTMLElement) => {
       let scrollTop = 0;
       Object.defineProperty(stack, 'scrollHeight', {
@@ -173,6 +175,21 @@ describe('NotificationContainer', () => {
           second,
           makeItem({ id: 'c', message: 'Third' }),
         ]),
+      );
+
+      expect(stack.scrollTop).toBe(500);
+    });
+
+    it('scrolls when a toast is added in the same update as a dismissal', () => {
+      const first = makeItem({ id: 'a', message: 'First' });
+      const second = makeItem({ id: 'b', message: 'Second' });
+      notifications = [first, second];
+      render(<NotificationContainer />);
+      const stack = getStack();
+      stubScrollMetrics(stack);
+
+      act(() =>
+        setNotifications([second, makeItem({ id: 'c', message: 'Third' })]),
       );
 
       expect(stack.scrollTop).toBe(500);

@@ -515,7 +515,10 @@ describe('Halloween event through the celebration runtime', () => {
     await userEvent.click(gift);
     expect(showSuccessNotification).toHaveBeenLastCalledWith({
       title: NEW_YEAR_LABELS.toastTitle,
-      message: expect.stringContaining('"happy new year"'),
+      message: NEW_YEAR_LABELS.penguinStarToastMessage.replace(
+        '{{phrase}}',
+        'happy new year',
+      ),
     });
     await userEvent.click(
       screen.getByRole('button', { name: 'new year phrase' }),
@@ -523,7 +526,7 @@ describe('Halloween event through the celebration runtime', () => {
     expect(lastConsumeResult).toBe(true);
     expect(showSuccessNotification).toHaveBeenLastCalledWith({
       title: NEW_YEAR_LABELS.toastTitle,
-      message: NEW_YEAR_LABELS.confettiToastMessage.replace(
+      message: NEW_YEAR_LABELS.giftWrappingToastMessage.replace(
         '{{phrase}}',
         'happy new year',
       ),

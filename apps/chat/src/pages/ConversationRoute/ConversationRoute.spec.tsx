@@ -115,6 +115,10 @@ vi.mock('../../context/IsolatedModelViewContext', async (importOriginal) => {
     >();
   return { ...actual, useIsolatedModelView: vi.fn() };
 });
+vi.mock(
+  '../../context/SkillsContext',
+  async () => import('../../context/tests/skills-context-mock'),
+);
 vi.mock('../../context/ConversationsContext', () => ({
   useConversations: () => ({ refreshConversations: vi.fn() }),
 }));

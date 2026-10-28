@@ -42,3 +42,24 @@ export const parseProjectContextExtensions = (value: unknown): string[] => {
     ? parts
     : [...DEFAULT_PROJECT_CONTEXT_ALLOWED_EXTENSIONS];
 };
+
+/*
+ * Upper bound of a project archive the BFF buffers to read sizes and the
+ * manifest: DIAL Core's own default per-project total
+ * (`complexResource.types.projects`). Chat-created projects stay far below it
+ * (10 MiB of context by default).
+ */
+export const PROJECT_ARCHIVE_READ_MAX_BYTES = 64 * 1_048_576;
+
+/* `PROJECT.md` larger than this is treated as absent rather than inflated;
+ * the instructions purpose caps the body at 32,000 characters. */
+export const PROJECT_MANIFEST_MAX_BYTES = 1_048_576;
+
+/*
+ * Archive snapshot reads one BFF process runs at once; a further read waits
+ * for a slot (or for its own abort). It bounds the archive bytes being
+ * buffered at a time to this many × PROJECT_ARCHIVE_READ_MAX_BYTES (256 MiB
+ * at the defaults), so a burst of project views cannot exhaust memory.
+ * Downloads stream through and are not counted.
+ */
+export const PROJECT_ARCHIVE_READ_CONCURRENCY = 4;

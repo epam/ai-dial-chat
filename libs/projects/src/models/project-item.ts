@@ -12,4 +12,6 @@ export interface ProjectItem {
   parentPath?: string;
   /** Last-updated time in epoch milliseconds, used by the date sort orders. */
   updatedAt?: number;
+  /** Whether the user pinned the project; pinned projects sort first and show a pinned marker. Defaults to `false`. */
+  isPinned?: boolean;
 }

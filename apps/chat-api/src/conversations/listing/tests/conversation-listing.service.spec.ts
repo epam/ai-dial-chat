@@ -1,10 +1,10 @@
 import { BadGatewayException, NotFoundException } from '@nestjs/common';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { handleDialSdkError } from '../../../common/dial/dial-error.mapper';
-import { safeDecodeURIComponent } from '../../../common/utils/uri';
 import type { DialClientService } from '../../../dial/dial-client.service';
-import { ConversationPersistenceService } from '../../persistence/conversation-persistence.service';
 import { ConversationListingService } from '../conversation-listing.service';
+import { ConversationTitleCacheService } from '../conversation-title-cache.service';
+import { ConversationTitlesService } from '../conversation-titles.service';
 
 vi.mock('../../../common/dial/dial-error.mapper', () => ({
   handleDialSdkError: vi.fn(),
@@ -21,10 +21,7 @@ describe('ConversationListingService', () => {
     getViewedIds: ReturnType<typeof vi.fn>;
     markViewed: ReturnType<typeof vi.fn>;
   };
-  let mockConversationNamingService: {
-    maybeRenameAfterFirstReply: ReturnType<typeof vi.fn>;
-  };
-  let persistenceService: ConversationPersistenceService;
+  let titleCache: ConversationTitleCacheService;
 
   beforeEach(() => {
     mockDialClient = {
@@ -49,18 +46,13 @@ describe('ConversationListingService', () => {
       getViewedIds: vi.fn().mockResolvedValue([]),
       markViewed: vi.fn().mockResolvedValue(undefined),
     };
-    mockConversationNamingService = {
-      maybeRenameAfterFirstReply: vi.fn(),
-    };
-    persistenceService = new ConversationPersistenceService(
-      mockDialClient,
-      mockConversationNamingService as never,
-    );
+    titleCache = new ConversationTitleCacheService();
     service = new ConversationListingService(
       mockDialClient,
       mockUserConfigService as never,
       mockScheduledTaskUnreadService as never,
-      persistenceService,
+      titleCache,
+      new ConversationTitlesService(mockDialClient, titleCache),
     );
     vi.mocked(handleDialSdkError).mockReset();
     vi.spyOn(mockDialClient.client, 'saveConversation').mockResolvedValue({
@@ -193,7 +185,7 @@ describe('ConversationListingService', () => {
         mockScheduledTaskUnreadService.getViewedIds,
       ).toHaveBeenCalledOnce();
       expect(mockDialClient.client.getSharedResources).toHaveBeenCalledOnce();
-      expect(mockDialClient.client.getConversation).toHaveBeenCalledTimes(1001);
+      expect(mockDialClient.client.getConversation).not.toHaveBeenCalled();
     });
 
     it('follows public cursors independently and continues through empty pages', async () => {
@@ -318,189 +310,83 @@ describe('ConversationListingService', () => {
       ).toHaveLength(2);
     });
 
-    it('enriches the display name of every owned item, however old', async () => {
-      const items = Array.from({ length: 60 }, (_, index) => ({
-        url: `conversations/bucket/conv-${index}`,
-        nodeType: 'FILE' as const,
-        updatedAt: index,
-        permissions: ['READ', 'WRITE'],
-      }));
-      mockMetadata(items);
-      const getConversationSpy = vi
-        .spyOn(mockDialClient.client, 'getConversation')
-        .mockResolvedValue({
-          data: { name: 'Stored display title' },
-        } as never);
-
-      await service.listConversations('test-token', 'test-bucket');
-
-      expect(getConversationSpy).toHaveBeenCalledTimes(60);
-      expect(getConversationSpy).toHaveBeenCalledWith(
-        'bucket',
-        'conv-0',
-        expect.anything(),
-      );
-    });
-
-    it('lists an older renamed application conversation under the title opening it returns (Issue #9336)', async () => {
-      const filename =
-        'Untitled app 1__0.0.1__Say hello in exactly three words';
-      mockMetadata([
-        {
-          url: `conversations/test-bucket/applications/catalog/${encodeURIComponent(filename)}`,
+    it('returns metadata immediately without starting or awaiting conversation body reads', async () => {
+      mockMetadata(
+        Array.from({ length: 60 }, (_, index) => ({
+          url: `conversations/test-bucket/gpt-4o__Chat ${index}`,
+          name: `gpt-4o__Chat ${index}`,
           nodeType: 'FILE',
-          name: filename,
-          parentPath: 'applications/catalog',
-          updatedAt: 0,
-        },
-        ...Array.from({ length: 20 }, (_, index) => ({
-          url: `conversations/test-bucket/gpt-4o__recent ${index}`,
-          nodeType: 'FILE',
-          name: `gpt-4o__recent ${index}`,
-          updatedAt: 100 + index,
-        })),
-      ]);
-      vi.spyOn(mockDialClient.client, 'getConversation').mockImplementation(
-        (_bucket: string, path: string) =>
-          Promise.resolve({
-            data: safeDecodeURIComponent(path).includes('Say hello')
-              ? { name: 'Three-Word Greeting', llmNamingDone: true }
-              : { name: 'Stored display title' },
-            response: new Response(null, { status: 200 }),
-          }) as never,
-      );
-
-      const list = await service.listConversations('test-token', 'test-bucket');
-      const opened = await persistenceService.getConversation(
-        `test-bucket/applications/catalog/${filename}`,
-        'test-token',
-        'test-bucket',
-      );
-
-      const listTitle = list.items.find((item) =>
-        item.id.includes('applications'),
-      )?.title;
-      expect(listTitle).toBe('Three-Word Greeting');
-      expect(listTitle).toBe(opened.name);
-    });
-
-    it('enriches display names of owned items and published copies alike', async () => {
-      const buildItems = (bucket: string, count: number) =>
-        Array.from({ length: count }, (_, index) => ({
-          url: `conversations/${bucket}/conv-${index}`,
-          nodeType: 'FILE' as const,
           updatedAt: index,
-          permissions: ['READ', 'WRITE'],
-        }));
-      mockMetadata(buildItems('test-bucket', 25), buildItems('public', 25));
-      const getConversationSpy = vi
-        .spyOn(mockDialClient.client, 'getConversation')
-        .mockResolvedValue({
-          data: { name: 'Stored display title' },
-        } as never);
-
-      await service.listConversations('test-token', 'test-bucket');
-
-      expect(getConversationSpy).toHaveBeenCalledTimes(50);
-      expect(getConversationSpy).toHaveBeenCalledWith(
-        'test-bucket',
-        'conv-24',
-        expect.anything(),
+        })),
       );
-      expect(getConversationSpy).toHaveBeenCalledWith(
-        'public',
-        'conv-24',
-        expect.anything(),
+      const bodyRead = new Promise<never>(() => undefined);
+      vi.mocked(mockDialClient.client.getConversation).mockReturnValue(
+        bodyRead,
       );
-    });
-
-    it("shows a published copy's renamed title, not the filename it was published under", async () => {
-      mockMetadata(
-        [],
-        [
-          {
-            url: 'conversations/public/folder/gpt-4o__Original name',
-            nodeType: 'FILE',
-            name: 'gpt-4o__Original name',
-            parentPath: 'folder',
-            updatedAt: 1000,
-          },
-        ],
-      );
-      const getConversationSpy = vi
-        .spyOn(mockDialClient.client, 'getConversation')
-        .mockResolvedValue({
-          data: { name: 'Renamed by the author', llmNamingDone: true },
-        } as never);
 
       const result = await service.listConversations(
         'test-token',
         'test-bucket',
       );
 
-      expect(result.items[0].title).toBe('Renamed by the author');
-      /* Read from the public bucket the copy lives in, not the session bucket. */
-      expect(getConversationSpy).toHaveBeenCalledWith(
-        'public',
-        'folder/gpt-4o__Original%20name',
-        expect.anything(),
-      );
+      expect(result.items).toHaveLength(60);
+      expect(result.items[0]).toMatchObject({
+        title: 'Chat 59',
+        isTitlePending: true,
+      });
+      expect(mockDialClient.client.getConversation).not.toHaveBeenCalled();
     });
 
-    it("reads a shared conversation's stored display name from the owner's bucket", async () => {
-      mockMetadata([]);
-      vi.spyOn(mockDialClient.client, 'getSharedResources').mockResolvedValue({
-        data: {
-          resources: [
-            {
-              url: 'conversations/other-bucket/gpt-4o__Original name',
-              nodeType: 'FILE',
-              name: 'gpt-4o__Original name',
-            },
-          ],
+    it('uses a cached authoritative name and marks only uncached titles pending', async () => {
+      const id = 'conversations/test-bucket/gpt-4o__Original name';
+      mockMetadata([
+        { url: id, name: 'gpt-4o__Original name', nodeType: 'FILE' },
+        {
+          url: 'conversations/test-bucket/gpt-4o__Other',
+          name: 'gpt-4o__Other',
+          nodeType: 'FILE',
         },
-      } as never);
-      const getConversationSpy = vi
-        .spyOn(mockDialClient.client, 'getConversation')
-        .mockResolvedValue({
-          data: { name: 'Renamed by the owner', llmNamingDone: true },
-        } as never);
+      ]);
+      titleCache.set('test-token', id, {
+        name: 'Renamed',
+        llmNamingDone: true,
+      });
 
       const result = await service.listConversations(
         'test-token',
         'test-bucket',
       );
 
-      expect(result.items[0].title).toBe('Renamed by the owner');
-      expect(getConversationSpy).toHaveBeenCalledWith(
-        'other-bucket',
-        'gpt-4o__Original%20name',
-        expect.anything(),
-      );
+      expect(result.items[0].title).toBe('Renamed');
+      expect(result.items[0].isTitlePending).toBeUndefined();
+      expect(result.items[1]).toMatchObject({
+        title: 'Other',
+        isTitlePending: true,
+      });
+      expect(mockDialClient.client.getConversation).not.toHaveBeenCalled();
     });
 
-    it('keeps the filename-derived title of a published copy whose body cannot be read', async () => {
-      mockMetadata(
-        [],
-        [
-          {
-            url: 'conversations/public/gpt-4o__Original name',
-            nodeType: 'FILE',
-            name: 'gpt-4o__Original name',
-            updatedAt: 1000,
-          },
-        ],
-      );
-      vi.spyOn(mockDialClient.client, 'getConversation').mockRejectedValue({
-        error: { status: 403 },
-      } as never);
+    it('does not reuse another token or bucket display name', async () => {
+      const id = 'conversations/test-bucket/gpt-4o__Original';
+      mockMetadata([{ url: id, name: 'gpt-4o__Original', nodeType: 'FILE' }]);
+      titleCache.set('another-token', id, {
+        name: 'Secret',
+        llmNamingDone: true,
+      });
+      titleCache.set('test-token', 'conversations/public/gpt-4o__Original', {
+        name: 'Public',
+        llmNamingDone: true,
+      });
 
       const result = await service.listConversations(
         'test-token',
         'test-bucket',
       );
 
-      expect(result.items[0].title).toBe('Original name');
+      expect(result.items[0]).toMatchObject({
+        title: 'Original',
+        isTitlePending: true,
+      });
     });
 
     it('does not mistake a bare-numeric title for a version suffix on a plain model deployment', async () => {

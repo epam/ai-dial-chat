@@ -82,18 +82,10 @@ export class ProjectsCreateService {
     input: ProjectCreateInput,
     files: UploadedContextFile[],
   ): ProjectCreatePackage {
-    if (!isValidDialEntityName(input.name)) {
-      throw projectBadRequest(
-        ProjectCreateErrorCode.InvalidName,
-        'Project name is not a valid DIAL resource name',
-        'name',
-      );
-    }
-
-    const fileNames = this.parseFileNames(input.fileNames, files.length);
-    this.validateFileNames(fileNames);
-    this.validateFileTypes(fileNames, files);
-    const totalBytes = this.validateSizes(fileNames, files);
+    this.validateName(input.name);
+    const fileNames = this.validateIncomingFiles(input.fileNames, files);
+    const totalBytes = this.sumSizes(files);
+    this.assertWithinCapacity(totalBytes);
 
     const manifest = buildProjectManifest({
       name: input.name,
@@ -106,6 +98,78 @@ export class ProjectsCreateService {
       fileCount: files.length,
       totalBytes,
     };
+  }
+
+  /** Rejects a project name that is not a valid DIAL resource name (`400 invalid-name`). */
+  validateName(name: string): void {
+    if (!isValidDialEntityName(name)) {
+      throw projectBadRequest(
+        ProjectCreateErrorCode.InvalidName,
+        'Project name is not a valid DIAL resource name',
+        'name',
+      );
+    }
+  }
+
+  /**
+   * Pairs the JSON `fileNames` with the received parts and checks every
+   * incoming file's name, type, signature and per-file size — the checks
+   * create and update share. Returns the authoritative names.
+   */
+  validateIncomingFiles(
+    rawFileNames: string | undefined,
+    files: UploadedContextFile[],
+  ): string[] {
+    const fileNames = this.parseFileNames(rawFileNames, files.length);
+    this.validateFileNames(fileNames);
+    this.validateFileTypes(fileNames, files);
+    this.validateFileSizes(fileNames, files);
+    return fileNames;
+  }
+
+  /** Rejects a context set whose total exceeds the capacity (`413 capacity-exceeded`). */
+  assertWithinCapacity(totalBytes: number): void {
+    const maxTotalBytes =
+      this.configService.get<number>('PROJECT_CONTEXT_TOTAL_MAX_BYTES') ??
+      DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES;
+    if (totalBytes > maxTotalBytes) {
+      throw projectPayloadTooLarge(
+        ProjectCreateErrorCode.CapacityExceeded,
+        `Context files total ${totalBytes} bytes, over the limit of ${maxTotalBytes}`,
+      );
+    }
+  }
+
+  /** Rejects a context set with more than `PROJECT_CONTEXT_MAX_FILES` files (`400 too-many-files`). */
+  assertWithinFileCount(count: number): void {
+    if (count > PROJECT_CONTEXT_MAX_FILES) {
+      throw projectBadRequest(
+        ProjectCreateErrorCode.TooManyFiles,
+        `A project may have at most ${PROJECT_CONTEXT_MAX_FILES} context files`,
+      );
+    }
+  }
+
+  /** Appends one context file part under `context/`, typed by its extension rather than the client's part type. */
+  appendContextFile(
+    formData: FormData,
+    fileName: string,
+    buffer: Buffer,
+  ): void {
+    formData.append(
+      'file',
+      new Blob([buffer], {
+        /* The part's own Content-Type is client-controlled, so an
+         * operator-added extension is stored as opaque bytes. */
+        type:
+          CONTENT_TYPES[getExtension(fileName)] ?? 'application/octet-stream',
+      }),
+      `${PROJECT_CONTEXT_FOLDER}/${fileName}`,
+    );
+  }
+
+  private sumSizes(files: UploadedContextFile[]): number {
+    return files.reduce((total, file) => total + file.buffer.length, 0);
   }
 
   private parseFileNames(raw: string | undefined, partCount: number): string[] {
@@ -132,12 +196,7 @@ export class ProjectsCreateService {
   }
 
   private validateFileNames(fileNames: string[]): void {
-    if (fileNames.length > PROJECT_CONTEXT_MAX_FILES) {
-      throw projectBadRequest(
-        ProjectCreateErrorCode.TooManyFiles,
-        `A project may have at most ${PROJECT_CONTEXT_MAX_FILES} context files`,
-      );
-    }
+    this.assertWithinFileCount(fileNames.length);
     const seen = new Set<string>();
     for (const fileName of fileNames) {
       if (!isValidDialEntityName(fileName)) {
@@ -176,36 +235,23 @@ export class ProjectsCreateService {
     });
   }
 
-  private validateSizes(
+  private validateFileSizes(
     fileNames: string[],
     files: UploadedContextFile[],
-  ): number {
+  ): void {
     const maxFileBytes =
       this.configService.get<number>('PROJECT_CONTEXT_FILE_MAX_BYTES') ??
       DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES;
-    const maxTotalBytes =
-      this.configService.get<number>('PROJECT_CONTEXT_TOTAL_MAX_BYTES') ??
-      DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES;
 
-    let totalBytes = 0;
     files.forEach((file, index) => {
-      const size = file.buffer.length;
-      if (size > maxFileBytes) {
+      if (file.buffer.length > maxFileBytes) {
         throw projectPayloadTooLarge(
           ProjectCreateErrorCode.FileTooLarge,
           `Context file '${fileNames[index]}' exceeds the per-file limit of ${maxFileBytes} bytes`,
           fileNames[index],
         );
       }
-      totalBytes += size;
     });
-    if (totalBytes > maxTotalBytes) {
-      throw projectPayloadTooLarge(
-        ProjectCreateErrorCode.CapacityExceeded,
-        `Context files total ${totalBytes} bytes, over the limit of ${maxTotalBytes}`,
-      );
-    }
-    return totalBytes;
   }
 
   private getAllowedExtensions(): string[] {
@@ -227,16 +273,7 @@ export class ProjectsCreateService {
       PROJECT_MANIFEST_FILE,
     );
     fileNames.forEach((fileName, index) => {
-      formData.append(
-        'file',
-        new Blob([files[index].buffer], {
-          /* The part's own Content-Type is client-controlled, so an
-           * operator-added extension is stored as opaque bytes. */
-          type:
-            CONTENT_TYPES[getExtension(fileName)] ?? 'application/octet-stream',
-        }),
-        `${PROJECT_CONTEXT_FOLDER}/${fileName}`,
-      );
+      this.appendContextFile(formData, fileName, files[index].buffer);
     });
     return formData;
   }

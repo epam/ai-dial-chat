@@ -7,6 +7,7 @@ import {
   ConditionalUpdateStatus,
 } from '../../conversation-persistence.port';
 import { ConversationMessageRole } from '../../dto/conversation-message.dto';
+import { ConversationTitleCacheService } from '../../listing/conversation-title-cache.service';
 import {
   ConversationPersistenceService,
   runConditionalUpdate,
@@ -58,6 +59,7 @@ describe('ConversationPersistenceService', () => {
     service = new ConversationPersistenceService(
       mockDialClient,
       mockConversationNamingService as never,
+      new ConversationTitleCacheService(),
     );
     vi.mocked(handleDialSdkError).mockReset();
     vi.spyOn(

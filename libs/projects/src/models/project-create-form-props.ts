@@ -1,11 +1,11 @@
 import type {
-  Attachment,
   TextRefinementCallback,
   TextRefinementLabels,
 } from '@epam/ai-dial-chat-shared';
 import type { EditorThemes } from '@epam/ai-dial-ui-kit';
 import type { ContextFileRejection } from '../types/context-file-rejection';
 import type { ProjectNameError } from '../types/project-name-error';
+import type { ProjectContextFile } from './project-context-file';
 
 /** Text fields of the {@link ProjectCreateForm}, owned by the host. */
 export interface ProjectCreateFormValues {
@@ -94,6 +94,8 @@ export interface ProjectCreateFormColors {
   background?: string;
   /** Header border. Fallback: `--stroke-tertiary`. */
   headerBorder?: string;
+  /** Instructions and Context field labels, and the Description label when Refine with AI is wired. Fallback: `--text-secondary`. */
+  labelText?: string;
   /** Hint, rejection and capacity text. Fallback: `--text-secondary`. */
   helperText?: string;
   /** Capacity meter track. Fallback: `--bg-layer-sunken`. */
@@ -106,7 +108,7 @@ export interface ProjectCreateFormColors {
 export interface ProjectCreateFormTypography {
   /** CSS class applied to the page title. Defaults to `'dial-h1-text'`. */
   titleClassName?: string;
-  /** CSS class applied to field labels. Defaults to `'dial-body-semi-text'`. */
+  /** CSS class applied to field labels. Defaults to `'dial-tiny-semi-text'`. */
   labelClassName?: string;
   /** CSS class applied to hints, rejections and capacity text. Defaults to `'dial-tiny-text'`. */
   helperClassName?: string;
@@ -131,10 +133,10 @@ export interface ProjectCreateFormProps {
     field: K,
     value: ProjectCreateFormValues[K],
   ) => void;
-  /** Context files added so far (controlled). */
-  contextFiles: Attachment[];
+  /** Context files, stored or newly added (controlled). */
+  contextFiles: ProjectContextFile[];
   /** Called with the next context file list after an add or a remove. */
-  onContextFilesChange: (files: Attachment[]) => void;
+  onContextFilesChange: (files: ProjectContextFile[]) => void;
   /** Lower-case extensions, without a dot, accepted as context files. */
   allowedExtensions: string[];
   /** Maximum size of one context file, in bytes. */

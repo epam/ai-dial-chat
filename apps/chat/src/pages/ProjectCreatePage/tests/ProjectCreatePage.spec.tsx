@@ -139,6 +139,7 @@ const renderAtRoute = () =>
     <Routes>
       <Route path="/projects/new" element={<ProjectCreatePage />} />
       <Route path="/projects" element={<p>projects list</p>} />
+      <Route path="/projects/view/:bucket/*" element={<p>project view</p>} />
       <Route path="/catalog" element={<p>catalog page</p>} />
     </Routes>,
     ['/projects/new'],
@@ -216,7 +217,7 @@ describe('ProjectCreatePage', () => {
     expect(formProps.current?.onRefineInstructions).toBeUndefined();
   });
 
-  it('creates a name-only project with a trimmed name and returns to the list', async () => {
+  it('creates a name-only project with a trimmed name and opens it', async () => {
     vi.mocked(createProject).mockResolvedValue({
       id: 'projects/my-bucket/Handbook',
       name: 'Handbook',
@@ -228,8 +229,10 @@ describe('ProjectCreatePage', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'create' }));
 
-    expect(await screen.findByText('projects list')).toBeTruthy();
-    expect(router.state.location.pathname).toBe('/projects');
+    expect(await screen.findByText('project view')).toBeTruthy();
+    expect(router.state.location.pathname).toBe(
+      '/projects/view/my-bucket/Handbook',
+    );
     expect(createProject).toHaveBeenCalledWith(
       { name: 'Handbook', description: '', instructions: '' },
       [],

@@ -268,6 +268,105 @@ const getRow = (name: string): HTMLElement => {
 };
 
 describe('ConversationList', () => {
+  it('retains an opened search match when its title changes, until the query changes', () => {
+    const props = {
+      ...BASE_PROPS,
+      activeConversationId: 'c1',
+      preserveActiveSearchResult: true,
+      searchQuery: 'First',
+    };
+    const { rerender } = render(
+      <ConversationList {...props} conversations={items} />,
+    );
+    const renamed = items.map((item) =>
+      item.id === 'c1' ? { ...item, title: 'Current name' } : item,
+    );
+    rerender(<ConversationList {...props} conversations={renamed} />);
+    expect(screen.getByRole('button', { name: 'Current name' })).toBeTruthy();
+    rerender(
+      <ConversationList
+        {...props}
+        conversations={renamed}
+        searchQuery="First c"
+      />,
+    );
+    expect(screen.queryByRole('button', { name: 'Current name' })).toBeNull();
+    expect(screen.getAllByText('No results found').length).toBeGreaterThan(0);
+  });
+
+  it('does not retain a deleted result or bypass source filters after a title update', () => {
+    const props = {
+      ...BASE_PROPS,
+      activeConversationId: 'c1',
+      preserveActiveSearchResult: true,
+      searchQuery: 'First',
+    };
+    const { rerender } = render(
+      <ConversationList {...props} conversations={items} />,
+    );
+    const renamed = items.map((item) =>
+      item.id === 'c1' ? { ...item, title: 'Current name' } : item,
+    );
+    rerender(
+      <ConversationList
+        {...props}
+        conversations={renamed}
+        activeFilter={FilterTab.Shared}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: 'Current name' })).toBeNull();
+    rerender(
+      <ConversationList
+        {...props}
+        conversations={renamed.filter(({ id }) => id !== 'c1')}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: 'Current name' })).toBeNull();
+  });
+
+  it('keeps the existing search behavior unless retention is enabled', () => {
+    const props = {
+      ...BASE_PROPS,
+      activeConversationId: 'c1',
+      searchQuery: 'First',
+    };
+    const { rerender } = render(
+      <ConversationList {...props} conversations={items} />,
+    );
+    rerender(
+      <ConversationList
+        {...props}
+        conversations={items.map((item) => ({ ...item, title: 'Renamed' }))}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: 'Renamed' })).toBeNull();
+  });
+
+  it('shows a pending search state without hiding already matching rows', () => {
+    const props = {
+      ...BASE_PROPS,
+      conversations: items,
+      isUpdatingTitles: true,
+      labels: { ...LABELS, updatingTitlesLabel: 'Updating names' },
+    };
+    const { rerender } = render(
+      <ConversationList {...props} searchQuery="First" />,
+    );
+    expect(screen.getByRole('button', { name: 'First chat' })).toBeTruthy();
+    expect(screen.getByRole('status').textContent).toBe('Updating names');
+    rerender(<ConversationList {...props} searchQuery="New title" />);
+    expect(screen.queryByText('No results found')).toBeNull();
+    expect(screen.getAllByText('Updating names').length).toBeGreaterThan(0);
+    rerender(
+      <ConversationList
+        {...props}
+        searchQuery="New title"
+        isUpdatingTitles={false}
+      />,
+    );
+    expect(screen.getAllByText('No results found').length).toBeGreaterThan(0);
+  });
+
   it('keeps the list valid by making each group header a list item', () => {
     render(<ConversationList {...BASE_PROPS} conversations={items} />);
 

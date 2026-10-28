@@ -54,6 +54,58 @@ export const getScheduledTaskDetailRoute = (scheduleId: string): string =>
 export const getScheduledTaskEditRoute = (scheduleId: string): string =>
   `${getScheduledTaskDetailRoute(scheduleId)}/edit`;
 
+const PROJECT_ID_PREFIX = 'projects/';
+const PROJECT_VIEW_ROUTE_BASE = `${ROUTES.Projects}/view`;
+const PROJECT_EDIT_ROUTE_BASE = `${ROUTES.Projects}/edit`;
+
+/*
+ * A project id is `projects/{bucket}/{path…}`. Its segments come from the
+ * backend (or a shared link), so an id that is not that shape, or that has
+ * an empty/`.`/`..` segment, falls back to the Projects list rather than
+ * navigating somewhere unintended. Segments are decoded before re-encoding,
+ * as in `getConversationRoute`.
+ */
+const buildProjectRoute = (base: string, id: string): string => {
+  if (!id.startsWith(PROJECT_ID_PREFIX)) return ROUTES.Projects;
+  /* DIAL Core may return a project url with a folder-shaped trailing `/`. */
+  const segments = id
+    .slice(PROJECT_ID_PREFIX.length)
+    .replace(/\/$/, '')
+    .split('/');
+  if (segments.length < 2 || segments.some((s) => !isSafePathSegment(s))) {
+    return ROUTES.Projects;
+  }
+  const encoded = segments
+    .map((segment) => encodeURIComponent(safeDecodeURIComponent(segment)))
+    .join('/');
+  return `${base}/${encoded}`;
+};
+
+/** URL of a project's view page, or `/projects` for a malformed id. */
+export const getProjectViewRoute = (id: string): string =>
+  buildProjectRoute(PROJECT_VIEW_ROUTE_BASE, id);
+
+/** URL of a project's edit page, or `/projects` for a malformed id. */
+export const getProjectEditRoute = (id: string): string =>
+  buildProjectRoute(PROJECT_EDIT_ROUTE_BASE, id);
+
+/**
+ * Rebuilds a project id from the `ProjectView` / `ProjectEdit` route params
+ * (`:bucket` and the splat, which React Router has already decoded), or
+ * `null` when a part is missing or a segment is unsafe.
+ */
+export const parseProjectRouteParams = (params: {
+  bucket?: string;
+  '*'?: string;
+}): string | null => {
+  const { bucket } = params;
+  const path = params['*'];
+  if (!bucket || !path || !isSafePathSegment(bucket)) return null;
+  const segments = path.split('/');
+  if (segments.some((segment) => !isSafePathSegment(segment))) return null;
+  return `${PROJECT_ID_PREFIX}${bucket}/${path}`;
+};
+
 /** Canonical path of one Settings tab, e.g. `/settings/usage`. */
 export const getSettingsTabRoute = (tab: SettingsTabs): string =>
   `${ROUTES.Settings}/${tab}`;
