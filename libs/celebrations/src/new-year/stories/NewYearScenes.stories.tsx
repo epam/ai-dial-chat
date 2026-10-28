@@ -49,21 +49,6 @@ export const Decor: Story = {
   parameters: { celebrationDecor: 'new-year' },
 };
 
-export const Snow: Story = {
-  args: { sceneId: NewYearScene.Snow },
-  parameters: { celebrationScene: NewYearScene.Snow },
-};
-
-export const Confetti: Story = {
-  args: { sceneId: NewYearScene.Confetti },
-  parameters: { celebrationScene: NewYearScene.Confetti },
-};
-
-export const Sleigh: Story = {
-  args: { sceneId: NewYearScene.Sleigh },
-  parameters: { celebrationScene: NewYearScene.Sleigh },
-};
-
 export const GiftWrapping: Story = {
   args: { sceneId: NewYearScene.GiftWrapping },
   parameters: { celebrationScene: NewYearScene.GiftWrapping },
