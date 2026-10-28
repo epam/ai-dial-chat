@@ -229,7 +229,7 @@ Use the repository skills and rules as the source of truth before applying gener
 | HTTP API contract or generated client  | `.agents/skills/api-design/SKILL.md`                                                                                               |
 | `apps/chat-api/**`                     | `apps/chat-api/AGENTS.md`                                                                                                          |
 | `libs/*` React components              | `openspec/config.yaml`, library isolation rules from `AGENTS.md`, `openspec/lib-styling-guide.md` plus exported-symbol JSDoc rules |
-| UI kit components                      | Use the `@epam/ai-dial-ui-kit` MCP tools before recommending raw HTML primitives                                                   |
+| UI kit components                      | `.claude/skills/ui-kit-review/SKILL.md`; use the `@epam/ai-dial-ui-kit` MCP tools before recommending raw HTML primitives          |
 | Responsive / mobile parity             | `.claude/skills/responsive-design/SKILL.md`                                                                                        |
 | READMEs, `docs/**`, lib public API     | `.claude/rules/docs.md` plus `npm run validate:docs`; use the `dial-docs` skill to find the authoritative doc                      |
 | CI status or self-healing fixes        | `.agents/skills/monitor-ci/SKILL.md`; do not replace it with ad hoc polling                                                        |

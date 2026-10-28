@@ -51,6 +51,7 @@ Use these local skills directly:
 - `./.claude/skills/celebration-scene-ideas/SKILL.md` for celebration scene ideas, animation improvements, and SVG character quality. Include scene-specific performance budgets and use OpenSpec propose/apply when implementation is requested.
 - `./.agents/skills/address-current-branch-review/SKILL.md` for processing unresolved GitHub review threads on the current branch. Fix requests do not authorize inline replies; reply only after the user explicitly asks and the pushed fix is visible in the PR.
 - `./.claude/skills/code-review-and-quality/SKILL.md` for review before merge or any quality pass
+- `./.claude/skills/ui-kit-review/SKILL.md` for reviewing a diff or PR for `@epam/ai-dial-ui-kit` adoption (hand-rolled markup the kit ships, legacy `Dial*`, `ErrorText`/`CaptionText` a11y wiring)
 - `./.claude/skills/refactoring-audit/SKILL.md` for deep refactoring/tech-debt audits and local planning docs (`refactoring-backend.md`, `refactoring-frontend.md`)
 - `./.claude/skills/figma/SKILL.md` for translating Figma designs into React components
 - `./.claude/skills/responsive-design/SKILL.md` for any UI work that must support both mobile and desktop, or any review of mobile parity
