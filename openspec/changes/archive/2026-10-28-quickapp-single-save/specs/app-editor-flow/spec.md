@@ -39,7 +39,7 @@ A create failure raises an error notification with the API detail, falling back 
 
 **Preview** (edit mode only):
 
-- Preview triggers a save with no `general` payload. On `SaveSuccess`, `isPreviewing` becomes true.
+- Preview triggers a save carrying the same `general` payload as Save, and the host makes no follow-up `updateApplication` call. On `SaveSuccess`, `isPreviewing` becomes true.
 - When `hasChanges` is true, the page first awaits `refetchDeployments()`, with the saving overlay kept visible. A rejected refetch is logged and does not block preview.
 - While previewing, the whole `EntityEditor` is hidden (still mounted, `inert`) and the definition's `Preview` component (`QuickAppPreview`) fills the page. Its "Back to setup" button returns to the editor (see `app-preview-chat` "Preview is a full-page mode").
 
@@ -87,7 +87,7 @@ A create failure raises an error notification with the API detail, falling back 
 
 ### Requirement: Quick-app Setup section
 
-`QuickAppSetup` (`apps/chat/src/pages/ApplicationEditor/setup/QuickAppSetup.tsx`, which replaces `SettingsStep.tsx`) SHALL be a function component that receives `ref` as a prop (React 19, no `forwardRef`) and exposes `ApplicationSetupHandle` through `useImperativeHandle`. Its `save(metadata)` forwards to the inner `AppEditorIframe`'s `triggerSave(general)`, and its `startPreview(metadata)` forwards to `triggerSave()` with no payload.
+`QuickAppSetup` (`apps/chat/src/pages/ApplicationEditor/setup/QuickAppSetup.tsx`, which replaces `SettingsStep.tsx`) SHALL be a function component that receives `ref` as a prop (React 19, no `forwardRef`) and exposes `ApplicationSetupHandle` through `useImperativeHandle`. Its `save(metadata)` forwards to the inner `AppEditorIframe`'s `triggerSave(general)`, and its `startPreview(metadata)` forwards to `triggerSave(general)`, carrying the same metadata `general` payload as `save`.
 
 It SHALL render the following:
 
