@@ -432,7 +432,11 @@
     "removeFromMyList": "Remove from My List",
     "revokeAccess": "Revoke access",
     "revokeAccessWithCount": "Revoke access ({{count}})",
-    "replace": "Replace"
+    "replace": "Replace",
+    "share": "Share",
+    "pin": "Pin",
+    "unpin": "Unpin",
+    "moreActions": "More actions"
   },
   "sidebar": {
     "base": {
@@ -804,7 +808,8 @@
       "organization": "Organization"
     },
     "card": {
-      "folderPath": "Project location"
+      "folderPath": "Project location",
+      "pinned": "Pinned"
     },
     "create": {
       "title": "New project",
@@ -858,6 +863,52 @@
         "error": "The project couldn’t be created. Try again",
         "fileManagerError": "Couldn’t copy files from the file manager"
       }
+    },
+    "view": {
+      "details": "Details",
+      "description": "Description",
+      "instructions": "Instructions",
+      "context": "Context",
+      "contextSearchPlaceholder": "Search files",
+      "contextSearchAriaLabel": "Search context files",
+      "contextResultCount_one": "{{count}} file found",
+      "contextResultCount_other": "{{count}} files found",
+      "emptyContext": "No context files",
+      "noContextMatches": "No files match your search",
+      "openFile": "Download {{name}}",
+      "error": "Could not load the project",
+      "notFound": "Project not found",
+      "browseProjects": "Back to projects"
+    },
+    "actions": {
+      "deleteConfirmTitle": "Delete \"{{name}}\"?",
+      "deleteConfirmDescription": "The project and its context files will be deleted. This cannot be undone.",
+      "deleteError": "Could not delete the project",
+      "downloadError": "Could not download",
+      "pinError": "Could not update the pin"
+    },
+    "edit": {
+      "title": "Edit project",
+      "saving": "Saving…",
+      "savingStatus": "Saving project…",
+      "toast": {
+        "success": "Project \"{{name}}\" saved",
+        "error": "Could not save the project",
+        "tooLarge": "This project is too large to edit here"
+      },
+      "errors": {
+        "unknownFile": "A removed file no longer exists. Reload and try again."
+      }
+    },
+    "errors": {
+      "changedElsewhere": "This project was changed by someone else. Reload to see the latest version."
+    },
+    "publish": {
+      "panelAriaLabel": "Publish project",
+      "alreadyPublishedWarning": "This project is already published in {folder}.",
+      "emptyFolderNameError": "Folder name cannot be empty.",
+      "invalidFolderNameError": "Folder name contains invalid characters.",
+      "duplicateFolderNameError": "A folder with this name already exists."
     }
   },
   "scheduledTasks": {
@@ -1837,6 +1888,14 @@
       "renamed": "Folder \"{{name}}\" is renamed.",
       "downloadedTitle": "Folder downloaded successfully",
       "downloaded": "Folder \"{{name}}\" is saved on your device."
+    },
+    "project": {
+      "deletedTitle": "Project deleted successfully",
+      "deleted": "Project \"{{name}}\" is not available anymore.",
+      "downloadedTitle": "Project downloaded successfully",
+      "downloaded": "Project \"{{name}}\" is saved on your device.",
+      "publishRequestedTitle": "Project publish requested",
+      "publishRequested": "Publish request for project \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
     }
   },
   "usage": {

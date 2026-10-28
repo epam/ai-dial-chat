@@ -10,9 +10,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { PUBLIC_BUCKET } from '../../constants/dial.constants';
 import type { DialClientService } from '../../dial/dial-client.service';
+import type { UserConfigService } from '../../user-config/user-config.service';
 import { ProjectsCreateService } from '../create/projects-create.service';
 import { ProjectSource } from '../dto/project-source.enum';
 import { ProjectsService } from '../projects.service';
+import { ProjectsSnapshotService } from '../snapshot/projects-snapshot.service';
 
 const USER_BUCKET = 'a1b2c3';
 const config = {
@@ -80,7 +82,12 @@ const makeService = ({
   };
   const dialClient = { client } as unknown as DialClientService;
   return {
-    service: new ProjectsService(dialClient, new ProjectsCreateService(config)),
+    service: new ProjectsService(
+      dialClient,
+      new ProjectsCreateService(config),
+      new ProjectsSnapshotService(dialClient),
+      {} as UserConfigService,
+    ),
     client,
   };
 };
@@ -432,6 +439,8 @@ describe('ProjectsService', () => {
         service: new ProjectsService(
           dialClient,
           new ProjectsCreateService(config),
+          new ProjectsSnapshotService(dialClient),
+          {} as UserConfigService,
         ),
         upload,
       };

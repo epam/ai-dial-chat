@@ -5754,6 +5754,25 @@ export interface OfflineCredentialsSigninBodyDto {
    */
   redirectUri: string;
 }
+/**
+ *
+ * @export
+ * @interface ProjectContextFileDto
+ */
+export interface ProjectContextFileDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectContextFileDto
+   */
+  name: string;
+  /**
+   * Size in bytes.
+   * @type {number}
+   * @memberof ProjectContextFileDto
+   */
+  size: number;
+}
 
 /**
  *
@@ -5768,6 +5787,10 @@ export const ProjectCreateErrorCode = {
   FileTooLarge: 'file-too-large',
   CapacityExceeded: 'capacity-exceeded',
   TooManyFiles: 'too-many-files',
+  ProjectChanged: 'project-changed',
+  IfMatchRequired: 'if-match-required',
+  ProjectTooLarge: 'project-too-large',
+  UnknownFile: 'unknown-file',
 } as const;
 export type ProjectCreateErrorCode =
   (typeof ProjectCreateErrorCode)[keyof typeof ProjectCreateErrorCode];
@@ -5808,6 +5831,98 @@ export interface ProjectCreateErrorDto {
    * @memberof ProjectCreateErrorDto
    */
   field?: string;
+}
+
+/**
+ *
+ * @export
+ * @interface ProjectDetailsDto
+ */
+export interface ProjectDetailsDto {
+  /**
+   * DIAL Core resource id, `projects/{bucket}/{path}` without a trailing slash.
+   * @type {string}
+   * @memberof ProjectDetailsDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectDetailsDto
+   */
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectDetailsDto
+   */
+  bucket: string;
+  /**
+   * Path of the project within its bucket.
+   * @type {string}
+   * @memberof ProjectDetailsDto
+   */
+  path: string;
+  /**
+   * Grouping folder path the project sits in, when nested.
+   * @type {string}
+   * @memberof ProjectDetailsDto
+   */
+  parentPath?: string;
+  /**
+   *
+   * @type {ProjectSource}
+   * @memberof ProjectDetailsDto
+   */
+  source: ProjectSource;
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectDetailsDto
+   */
+  author?: string;
+  /**
+   * Creation time, epoch milliseconds.
+   * @type {number}
+   * @memberof ProjectDetailsDto
+   */
+  createdAt?: number;
+  /**
+   * Last update time, epoch milliseconds.
+   * @type {number}
+   * @memberof ProjectDetailsDto
+   */
+  updatedAt?: number;
+  /**
+   * Plain-text description from `PROJECT.md`; empty when absent.
+   * @type {string}
+   * @memberof ProjectDetailsDto
+   */
+  description: string;
+  /**
+   * Markdown instructions from `PROJECT.md`; empty when absent.
+   * @type {string}
+   * @memberof ProjectDetailsDto
+   */
+  instructions: string;
+  /**
+   * Files directly under `context/`, sorted by name.
+   * @type {Array<ProjectContextFileDto>}
+   * @memberof ProjectDetailsDto
+   */
+  contextFiles: Array<ProjectContextFileDto>;
+  /**
+   * Aggregate ETag of the version these details were read from; send it as `If-Match` on update and delete.
+   * @type {string}
+   * @memberof ProjectDetailsDto
+   */
+  etag: string;
+  /**
+   * Whether the caller may edit, delete, share and publish the project — `true` only in the caller's own bucket.
+   * @type {boolean}
+   * @memberof ProjectDetailsDto
+   */
+  canEdit: boolean;
 }
 
 /**
@@ -5883,6 +5998,19 @@ export const ProjectSource = {
 } as const;
 export type ProjectSource = (typeof ProjectSource)[keyof typeof ProjectSource];
 
+/**
+ *
+ * @export
+ * @interface ProjectsConfigDto
+ */
+export interface ProjectsConfigDto {
+  /**
+   * Pinned project identifiers (`projects/{bucket}/{path}`).
+   * @type {Array<string>}
+   * @memberof ProjectsConfigDto
+   */
+  pinnedIds: Array<string>;
+}
 /**
  *
  * @export
@@ -6221,6 +6349,7 @@ export const PublishHistoryEntryDtoEntityTypeEnum = {
   Application: 'application',
   Prompt: 'prompt',
   Skill: 'skill',
+  Project: 'project',
 } as const;
 export type PublishHistoryEntryDtoEntityTypeEnum =
   (typeof PublishHistoryEntryDtoEntityTypeEnum)[keyof typeof PublishHistoryEntryDtoEntityTypeEnum];
@@ -6278,6 +6407,7 @@ export const PublishResultDtoEntityTypeEnum = {
   Application: 'application',
   Prompt: 'prompt',
   Skill: 'skill',
+  Project: 'project',
 } as const;
 export type PublishResultDtoEntityTypeEnum =
   (typeof PublishResultDtoEntityTypeEnum)[keyof typeof PublishResultDtoEntityTypeEnum];
@@ -8331,6 +8461,7 @@ export const UnpublishResultDtoEntityTypeEnum = {
   Application: 'application',
   Prompt: 'prompt',
   Skill: 'skill',
+  Project: 'project',
 } as const;
 export type UnpublishResultDtoEntityTypeEnum =
   (typeof UnpublishResultDtoEntityTypeEnum)[keyof typeof UnpublishResultDtoEntityTypeEnum];
@@ -8478,15 +8609,58 @@ export interface UpdateInstalledSkillDto {
  */
 export interface UpdatePinsDto {
   /**
-   * Full DIAL Core resource URL of the conversation to pin or unpin (matches `id` in `ConversationListItemDto`).
+   * Full DIAL Core resource URL of the conversation or project to pin or unpin (matches `id` in `ConversationListItemDto` or `ProjectDto`). A `projects/` id is stored under `projects.pinnedIds`.
    * @type {string}
    * @memberof UpdatePinsDto
    */
   path: string;
   /**
-   * Pass `true` to pin the conversation, `false` to unpin.
+   * Pass `true` to pin the conversation or project, `false` to unpin.
    * @type {boolean}
    * @memberof UpdatePinsDto
+   */
+  isPinned: boolean;
+}
+/**
+ *
+ * @export
+ * @interface UpdateProjectResponseDto
+ */
+export interface UpdateProjectResponseDto {
+  /**
+   * The project id after the save — a new id when it was renamed.
+   * @type {string}
+   * @memberof UpdateProjectResponseDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateProjectResponseDto
+   */
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateProjectResponseDto
+   */
+  bucket: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateProjectResponseDto
+   */
+  path: string;
+  /**
+   * Aggregate ETag of the saved version. Absent when the project was renamed and its new ETag could not be read back; the save itself committed, so reload the project for a fresh one.
+   * @type {string}
+   * @memberof UpdateProjectResponseDto
+   */
+  etag?: string;
+  /**
+   * Whether the project is in the caller's pins after the save.
+   * @type {boolean}
+   * @memberof UpdateProjectResponseDto
    */
   isPinned: boolean;
 }
@@ -8766,6 +8940,12 @@ export interface UserConfigDto {
    * @memberof UserConfigDto
    */
   conversations: ConversationsConfigDto;
+  /**
+   *
+   * @type {ProjectsConfigDto}
+   * @memberof UserConfigDto
+   */
+  projects: ProjectsConfigDto;
   /**
    *
    * @type {ToolsetsConfigDto}

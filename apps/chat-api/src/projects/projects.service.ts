@@ -1,8 +1,10 @@
 import {
   BadGatewayException,
+  ForbiddenException,
   HttpException,
   Injectable,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import {
   extractDialErrorMessage,
@@ -13,6 +15,7 @@ import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { PUBLIC_BUCKET } from '../constants/dial.constants';
 import { DialClientService } from '../dial/dial-client.service';
+import { UserConfigService } from '../user-config/user-config.service';
 import {
   type ProjectCreateInput,
   ProjectsCreateService,
@@ -20,6 +23,7 @@ import {
 } from './create/projects-create.service';
 import type { CreateProjectResponseDto } from './dto/create-project-response.dto';
 import type { ListProjectsResponseDto } from './dto/list-projects-response.dto';
+import type { ProjectDetailsDto } from './dto/project-details.dto';
 import { ProjectSource } from './dto/project-source.enum';
 import type { ProjectDto } from './dto/project.dto';
 import {
@@ -27,13 +31,27 @@ import {
   mapProjectMetadata,
   mapSharedProject,
 } from './projects.mapper';
+import {
+  type ProjectSnapshot,
+  ProjectsSnapshotService,
+} from './snapshot/projects-snapshot.service';
 import { ProjectCreateErrorCode } from './types/project-create-error-code.enum';
-import { projectConflict } from './utils/project-create-error.util';
+import {
+  projectChanged,
+  projectConflict,
+  requireSingleIfMatch,
+} from './utils/project-create-error.util';
+import { type ParsedProjectId, parseProjectId } from './utils/project-id.util';
 
 type DialProjectListing = DialProjectMetadata & {
   items?: DialProjectMetadata[];
 };
 type BucketSource = ProjectSource.Personal | ProjectSource.Organization;
+type DialProjectItemMetadata = DialProjectMetadata & {
+  author?: string;
+  createdAt?: number;
+  updatedAt?: number;
+};
 
 /** One source's projects, and whether the source answered in full. */
 interface SourceListing {
@@ -42,6 +60,11 @@ interface SourceListing {
 }
 
 const LISTING_CONTEXT = 'projects.listProjects';
+const READ_CONTEXT = 'projects.getProject';
+const DELETE_CONTEXT = 'projects.deleteProject';
+const DELETE_TIMEOUT_MS = 30_000;
+/** Deadline shared by the metadata and archive reads of one project. */
+const PROJECT_READ_TIMEOUT_MS = 30_000;
 const CREATE_CONTEXT = 'projects.createProject';
 /* Longer than the listing deadline: a create can carry 10 MiB of context. */
 const PROJECT_CREATE_TIMEOUT_MS = 60_000;
@@ -60,6 +83,23 @@ const SOURCE_PRECEDENCE = [
 
 const isProject = (item: ProjectDto | null): item is ProjectDto => item != null;
 
+/** The listing's source rule, applied to one project's bucket. */
+export const resolveProjectSource = (
+  bucket: string,
+  sessionBucket: string,
+): ProjectSource => {
+  if (bucket === sessionBucket) return ProjectSource.Personal;
+  if (bucket === PUBLIC_BUCKET) return ProjectSource.Organization;
+  return ProjectSource.Shared;
+};
+
+/** Parses an id the param DTO already validated; a miss is still a `404`. */
+export const requireProjectId = (id: string): ParsedProjectId => {
+  const parsed = parseProjectId(id);
+  if (parsed == null) throw new NotFoundException('Project not found');
+  return parsed;
+};
+
 @Injectable()
 export class ProjectsService {
   private readonly logger = new Logger(ProjectsService.name);
@@ -67,7 +107,210 @@ export class ProjectsService {
   constructor(
     private readonly dialClient: DialClientService,
     private readonly createService: ProjectsCreateService,
+    private readonly snapshotService: ProjectsSnapshotService,
+    private readonly userConfigService: UserConfigService,
   ) {}
+
+  /**
+   * Deletes a project only if it is still the version the caller read: Core
+   * checks `If-Match` against the aggregate ETag, and its `412` becomes
+   * `409 project-changed`. A missing `If-Match`, `*` or a list of tags is
+   * refused before any Core call, so this API never deletes
+   * unconditionally, and so is a project outside the caller's own bucket
+   * (`403`), matching `canEdit`. The caller's pin is then removed as a best
+   * effort — the delete has already committed.
+   */
+  async deleteProject(
+    id: string,
+    ifMatch: string | undefined,
+    sessionBucket: string,
+    accessToken: string,
+  ): Promise<void> {
+    const parsed = requireProjectId(id);
+    if (parsed.bucket !== sessionBucket) {
+      throw new ForbiddenException('Only the owner can delete a project');
+    }
+    const etag = requireSingleIfMatch(ifMatch);
+
+    try {
+      const { error, response } =
+        await this.dialClient.client.deleteProjectFolder(
+          parsed.bucket,
+          encodeDialResourcePath(parsed.path),
+          {
+            headers: {
+              ...getBearerAuthHeaders(accessToken),
+              'If-Match': etag,
+            },
+            signal: AbortSignal.timeout(DELETE_TIMEOUT_MS),
+          },
+        );
+
+      if (error != null || response.status >= 400) {
+        if (response.status === 412) throw projectChanged();
+        if (
+          response.status === 404 ||
+          (response.status === 403 && parsed.bucket === sessionBucket)
+        ) {
+          throw new NotFoundException('Project not found');
+        }
+        return handleDialSdkError(error, DELETE_CONTEXT, this.logger, response);
+      }
+    } catch (err) {
+      return handleDialSdkError(err, DELETE_CONTEXT, this.logger);
+    }
+
+    this.logger.log('Project deleted');
+    await this.removePinQuietly(parsed.id, accessToken, sessionBucket);
+  }
+
+  /** Best-effort pin cleanup after a committed delete; a failure is logged, not thrown. */
+  private async removePinQuietly(
+    id: string,
+    accessToken: string,
+    sessionBucket: string,
+  ): Promise<void> {
+    try {
+      await this.userConfigService.removeProjectPin(
+        id,
+        accessToken,
+        sessionBucket,
+      );
+    } catch (err) {
+      this.logger.warn(
+        `Pin cleanup after a project delete failed (${err instanceof Error ? err.name : 'unknown error'})`,
+      );
+    }
+  }
+
+  /**
+   * Reads one project: its item metadata (author, timestamps) and its
+   * archive snapshot (manifest, context sizes, ETag), concurrently under
+   * one deadline that a client disconnect (`signal`) also ends. When either
+   * read fails the other is aborted, so a failed metadata read does not
+   * leave the archive buffering. The name is the last path segment, as in
+   * the listing; `canEdit` holds only in the caller's own bucket, because
+   * project share links are view-only and public projects change only
+   * through publication.
+   */
+  async getProject(
+    id: string,
+    sessionBucket: string,
+    accessToken: string,
+    signal?: AbortSignal,
+  ): Promise<ProjectDetailsDto> {
+    const parsed = requireProjectId(id);
+    const siblingFailure = new AbortController();
+    const readSignal = AbortSignal.any([
+      AbortSignal.timeout(PROJECT_READ_TIMEOUT_MS),
+      siblingFailure.signal,
+      ...(signal ? [signal] : []),
+    ]);
+    const abortSiblingOnFailure = async <T>(read: Promise<T>): Promise<T> => {
+      try {
+        return await read;
+      } catch (err) {
+        /* The failure itself is the abort reason: the sibling then rejects
+         * with this already-mapped exception, which the error mapper
+         * rethrows as-is instead of logging a spurious upstream failure. */
+        siblingFailure.abort(err);
+        throw err;
+      }
+    };
+    const [metadata, snapshot] = await Promise.all([
+      abortSiblingOnFailure(
+        this.readProjectMetadata(
+          parsed,
+          sessionBucket,
+          accessToken,
+          readSignal,
+        ),
+      ),
+      abortSiblingOnFailure(
+        this.snapshotService.read(
+          parsed.bucket,
+          parsed.path,
+          accessToken,
+          sessionBucket,
+          readSignal,
+        ),
+      ),
+    ]);
+    /* Debug only (LOG_LEVEL=debug): the item metadata exactly as Core sent it. */
+    this.logger.debug(
+      `DIAL Core project metadata: ${JSON.stringify(metadata)}`,
+    );
+    const source = resolveProjectSource(parsed.bucket, sessionBucket);
+
+    return {
+      id: parsed.id,
+      name: parsed.name,
+      bucket: parsed.bucket,
+      path: parsed.path,
+      parentPath: parsed.parentPath,
+      source,
+      author: metadata.author,
+      createdAt: metadata.createdAt,
+      updatedAt: metadata.updatedAt,
+      ...this.describeSnapshot(snapshot),
+      canEdit: source === ProjectSource.Personal,
+    };
+  }
+
+  /** The manifest, context and ETag fields of a project's details. */
+  private describeSnapshot(
+    snapshot: ProjectSnapshot,
+  ): Pick<
+    ProjectDetailsDto,
+    'description' | 'instructions' | 'contextFiles' | 'etag'
+  > {
+    return {
+      description: snapshot.manifest?.description ?? '',
+      instructions: snapshot.manifest?.instructions ?? '',
+      contextFiles: snapshot.contextFiles.map(({ name, size }) => ({
+        name,
+        size,
+      })),
+      etag: snapshot.etag,
+    };
+  }
+
+  /**
+   * One project's item metadata. A grouping folder is not a project, so a
+   * `FOLDER` answer is a `404`, as is Core's `404` and its `403` mask of a
+   * missing resource in the caller's own bucket.
+   */
+  private async readProjectMetadata(
+    parsed: ParsedProjectId,
+    sessionBucket: string,
+    accessToken: string,
+    signal: AbortSignal,
+  ): Promise<DialProjectItemMetadata> {
+    try {
+      const { data, error, response } =
+        await this.dialClient.client.listProjectMetadata(
+          parsed.bucket,
+          encodeDialResourcePath(parsed.path),
+          { headers: getBearerAuthHeaders(accessToken), signal },
+        );
+
+      if (error != null || data == null) {
+        if (
+          response?.status === 404 ||
+          (response?.status === 403 && parsed.bucket === sessionBucket)
+        ) {
+          throw new NotFoundException('Project not found');
+        }
+        return handleDialSdkError(error, READ_CONTEXT, this.logger, response);
+      }
+      if (data.nodeType !== 'ITEM') {
+        throw new NotFoundException('Project not found');
+      }
+      return data as DialProjectItemMetadata;
+    } catch (err) {
+      return handleDialSdkError(err, READ_CONTEXT, this.logger);
+    }
+  }
 
   /**
    * Creates a project at the root of the caller's own bucket in one atomic,

@@ -1,7 +1,9 @@
 import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
-import { MIME_TYPE_EXT_MAP, type Attachment } from '@epam/ai-dial-chat-shared';
+import { MIME_TYPE_EXT_MAP } from '@epam/ai-dial-chat-shared';
 import {
+  isStoredContextFile,
   ProjectCreateForm,
+  type ProjectContextFile,
   type ProjectCreateFormErrors,
   type ProjectCreateFormValues,
 } from '@epam/ai-dial-projects';
@@ -11,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import ProjectFileManagerModal from '../../components/ProjectFileManagerModal/ProjectFileManagerModal';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
+import { getProjectViewRoute } from '../../constants/routes';
 import { ProjectsI18nKeys } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
@@ -56,7 +59,7 @@ const ProjectCreatePage: FC = () => {
   } = config;
 
   const [values, setValues] = useState<ProjectCreateFormValues>(DEFAULT_VALUES);
-  const [contextFiles, setContextFiles] = useState<Attachment[]>([]);
+  const [contextFiles, setContextFiles] = useState<ProjectContextFile[]>([]);
   const [errors, setErrors] = useState<ProjectCreateFormErrors>({});
 
   /* The page owns the unsaved-changes guard, as `ScheduledTaskCreatePage`
@@ -96,12 +99,15 @@ const ProjectCreatePage: FC = () => {
     [],
   );
 
-  const handleContextFilesChange = useCallback((files: Attachment[]) => {
-    setContextFiles(files);
-    setErrors((prev) =>
-      prev.context ? { ...prev, context: undefined } : prev,
-    );
-  }, []);
+  const handleContextFilesChange = useCallback(
+    (files: ProjectContextFile[]) => {
+      setContextFiles(files);
+      setErrors((prev) =>
+        prev.context ? { ...prev, context: undefined } : prev,
+      );
+    },
+    [],
+  );
 
   const handleLeave = useCallback(() => {
     navigate(ROUTES.Projects);
@@ -111,7 +117,10 @@ const ProjectCreatePage: FC = () => {
     const name = values.name.trim();
     const outcome = await create(
       { ...values, name },
-      contextFiles.map((attachment) => attachment.file),
+      /* A new project has no stored files; the guard narrows the union. */
+      contextFiles.flatMap((file) =>
+        isStoredContextFile(file) ? [] : [file.file],
+      ),
     );
 
     if (outcome.isCreated) {
@@ -119,7 +128,7 @@ const ProjectCreatePage: FC = () => {
         message: t(ProjectsI18nKeys.CreateToastSuccess, { name }),
       });
       allowNextNavigation();
-      navigate(ROUTES.Projects);
+      navigate(getProjectViewRoute(outcome.project.id));
       return;
     }
     if (outcome.isAborted) return;

@@ -41,6 +41,7 @@ vi.mock('../NotificationContext', () => ({
 
 const mockGetUserConfig = vi.mocked(userConfigApi.getUserConfig);
 const mockPinConversation = vi.mocked(userConfigApi.pinConversation);
+const mockPinProject = vi.mocked(userConfigApi.pinProject);
 const mockUpdateInstalledToolset = vi.mocked(
   userConfigApi.updateInstalledToolset,
 );
@@ -52,8 +53,9 @@ const mockUpdateSelectedDeployment = vi.mocked(
 );
 
 const fullConfig = {
-  version: 5,
+  version: 7,
   conversations: { pinnedIds: ['conv-1'] },
+  projects: { pinnedIds: [] },
   toolsets: { installed: ['ts-a'] },
   deployments: { installed: ['dep-1'] },
   prompts: { installed: ['Work/AI/summarize'] },
@@ -69,6 +71,7 @@ beforeEach(() => {
   contextMocks.userSub = 'user-1';
   mockGetUserConfig.mockResolvedValue(fullConfig as never);
   mockPinConversation.mockResolvedValue(undefined);
+  mockPinProject.mockResolvedValue(undefined);
   mockUpdateInstalledToolset.mockResolvedValue(undefined);
   mockUpdateInstalledDeployment.mockResolvedValue(undefined);
   mockUpdateSelectedDeployment.mockResolvedValue(undefined);
@@ -208,8 +211,9 @@ describe('UserConfigContext', () => {
 
       await act(async () => {
         resolveRefetch({
-          version: 5,
+          version: 7,
           conversations: { pinnedIds: ['conv-2'] },
+          projects: { pinnedIds: [] },
           toolsets: { installed: [] },
           deployments: { installed: [] },
           prompts: { installed: [] },
@@ -273,6 +277,107 @@ describe('UserConfigContext', () => {
         </UserConfigProvider>,
       );
       expect(await screen.findByTestId('child')).toBeTruthy();
+    });
+  });
+
+  describe('project pins', () => {
+    const configWithProjects = (pinnedIds: string[]) =>
+      ({
+        version: 7,
+        conversations: { pinnedIds: [] },
+        projects: { pinnedIds },
+        toolsets: { installed: [] },
+        deployments: { installed: [] },
+      }) as never;
+
+    const renderReady = async () => {
+      const view = renderHook(() => useUserConfig(), { wrapper });
+      await waitFor(() =>
+        expect(view.result.current.status).toBe(UserConfigStatus.Ready),
+      );
+      return view;
+    };
+
+    it('loads the pinned project ids', async () => {
+      mockGetUserConfig.mockResolvedValue(
+        configWithProjects(['projects/b/q4']),
+      );
+
+      const { result } = await renderReady();
+
+      expect(result.current.pinnedProjectIds).toEqual(['projects/b/q4']);
+    });
+
+    it('defaults to no pinned projects for a config without the section', async () => {
+      mockGetUserConfig.mockResolvedValue({
+        version: 6,
+        conversations: { pinnedIds: [] },
+        toolsets: { installed: [] },
+        deployments: { installed: [] },
+      } as never);
+      const { result } = await renderReady();
+
+      expect(result.current.pinnedProjectIds).toEqual([]);
+    });
+
+    it('pins a project through the pins endpoint', async () => {
+      mockGetUserConfig.mockResolvedValue(configWithProjects([]));
+      const { result } = await renderReady();
+
+      await act(async () => {
+        await result.current.setPinnedProject('projects/b/q4', true);
+      });
+
+      expect(result.current.pinnedProjectIds).toEqual(['projects/b/q4']);
+      expect(mockPinProject).toHaveBeenCalledWith('projects/b/q4', true);
+    });
+
+    it('reverts an optimistic pin and rethrows when the request fails', async () => {
+      mockGetUserConfig.mockResolvedValue(configWithProjects([]));
+      mockPinProject.mockRejectedValue(new Error('offline'));
+      const { result } = await renderReady();
+
+      await act(async () => {
+        await expect(
+          result.current.setPinnedProject('projects/b/q4', true),
+        ).rejects.toThrow('offline');
+      });
+
+      expect(result.current.pinnedProjectIds).toEqual([]);
+    });
+
+    it('swaps a pinned id in place after a rename without a request', async () => {
+      mockGetUserConfig.mockResolvedValue(
+        configWithProjects(['projects/b/a', 'projects/b/q4']),
+      );
+      const { result } = await renderReady();
+
+      act(() => {
+        result.current.replacePinnedProjectId(
+          'projects/b/q4',
+          'projects/b/Q4 launch',
+        );
+      });
+
+      expect(result.current.pinnedProjectIds).toEqual([
+        'projects/b/a',
+        'projects/b/Q4 launch',
+      ]);
+      expect(mockPinProject).not.toHaveBeenCalled();
+    });
+
+    it('drops a pinned id without a request when the replacement is null', async () => {
+      mockGetUserConfig.mockResolvedValue(
+        configWithProjects(['projects/b/a', 'projects/b/q4']),
+      );
+      const { result } = await renderReady();
+
+      act(() => {
+        result.current.replacePinnedProjectId('projects/b/q4', null);
+      });
+
+      expect(result.current.pinnedProjectIds).toEqual(['projects/b/a']);
+      expect(mockPinProject).not.toHaveBeenCalled();
     });
   });
 

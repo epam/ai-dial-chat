@@ -1,6 +1,6 @@
 {
   "name": "@epam/ai-dial-projects",
-  "description": "Presentational Projects page shell and New project form — searchable, sortable grid of the projects available to a user",
+  "description": "Presentational Projects page shell, New and Edit project form, and project view — searchable, sortable grid of the projects available to a user",
   "version": "0.0.1",
   "private": true,
   "license": "Apache-2.0",

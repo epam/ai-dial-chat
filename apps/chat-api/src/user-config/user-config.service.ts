@@ -20,6 +20,8 @@ const LEGACY_DEPLOYMENTS_PATH = 'clientdata/installed_deployments.json';
  * and writing it back would overwrite the user's real config.
  */
 const MISSING_FILE_STATUS = 404;
+/** Pins of ids with this prefix live in `projects.pinnedIds`. */
+const PROJECT_ID_PREFIX = 'projects/';
 
 @Injectable()
 export class UserConfigService {
@@ -299,22 +301,75 @@ export class UserConfigService {
     return config.conversations.pinnedIds;
   }
 
+  /**
+   * Pins or unpins one resource. A `projects/` id goes to `projects.pinnedIds`,
+   * any other id to `conversations.pinnedIds`. Idempotent.
+   */
   async updatePin(
-    conversationId: string,
+    resourceId: string,
     isPinned: boolean,
     token: string,
     bucket: string,
   ): Promise<void> {
     const config = await this.readConfig(token, bucket);
-    const ids = config.conversations.pinnedIds;
+    const ids = resourceId.startsWith(PROJECT_ID_PREFIX)
+      ? config.projects.pinnedIds
+      : config.conversations.pinnedIds;
 
     if (isPinned) {
-      if (!ids.includes(conversationId)) ids.push(conversationId);
+      if (!ids.includes(resourceId)) ids.push(resourceId);
     } else {
-      const index = ids.indexOf(conversationId);
+      const index = ids.indexOf(resourceId);
       if (index !== -1) ids.splice(index, 1);
     }
 
+    await this.writeConfig(
+      { ...config, version: CURRENT_CONFIG_VERSION },
+      token,
+      bucket,
+    );
+  }
+
+  /** The caller's pinned project ids. */
+  async getPinnedProjectIds(token: string, bucket: string): Promise<string[]> {
+    const config = await this.readConfig(token, bucket);
+    return config.projects.pinnedIds;
+  }
+
+  /** Replaces a pinned project id in place after a rename; no write when `oldId` is not pinned. */
+  async replaceProjectPin(
+    oldId: string,
+    newId: string,
+    token: string,
+    bucket: string,
+  ): Promise<void> {
+    const config = await this.readConfig(token, bucket);
+    const ids = config.projects.pinnedIds;
+    const index = ids.indexOf(oldId);
+    if (index === -1) return;
+
+    ids[index] = newId;
+    config.projects.pinnedIds = ids.filter(
+      (id, position) => ids.indexOf(id) === position,
+    );
+    await this.writeConfig(
+      { ...config, version: CURRENT_CONFIG_VERSION },
+      token,
+      bucket,
+    );
+  }
+
+  /** Removes a pinned project id after a delete; no write when it is not pinned. */
+  async removeProjectPin(
+    id: string,
+    token: string,
+    bucket: string,
+  ): Promise<void> {
+    const config = await this.readConfig(token, bucket);
+    const ids = config.projects.pinnedIds;
+    if (!ids.includes(id)) return;
+
+    config.projects.pinnedIds = ids.filter((pinned) => pinned !== id);
     await this.writeConfig(
       { ...config, version: CURRENT_CONFIG_VERSION },
       token,

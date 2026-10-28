@@ -1,7 +1,13 @@
-import { RequestStatus } from '@epam/ai-dial-chat-shared';
+import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
+import type { StoredProjectContextFile } from '../../models/project-context-file';
 import { ContextFileRejection } from '../../types/context-file-rejection';
-import { checkContextFiles, getContextFilesSize } from '../context-files';
+import {
+  checkContextFiles,
+  filterContextFileItems,
+  getContextFilesSize,
+  isStoredContextFile,
+} from '../context-files';
 
 const limits = {
   allowedExtensions: ['csv', 'pdf', 'xlsx'],
@@ -139,5 +145,74 @@ describe('checkContextFiles', () => {
     );
 
     expect(accepted[0].id).not.toBe(accepted[1].id);
+  });
+});
+
+const stored = (name: string, size: number): StoredProjectContextFile => ({
+  id: `stored:${name}`,
+  name,
+  size,
+  contentType: 'text/csv',
+  type: AttachmentType.File,
+  status: RequestStatus.Idle,
+  isStored: true,
+});
+
+describe('stored context files', () => {
+  it('counts a stored file by its stored size', () => {
+    const added = checkContextFiles(
+      [makeFile('a.csv', 3)],
+      [],
+      limits,
+    ).accepted;
+
+    expect(getContextFilesSize([stored('s.csv', 15), ...added])).toBe(18);
+  });
+
+  it('rejects an incoming file that would exceed the capacity with stored files', () => {
+    const { rejected } = checkContextFiles(
+      [makeFile('more.csv', 6)],
+      [stored('s.csv', 15)],
+      limits,
+    );
+
+    expect(rejected).toEqual([
+      { name: 'more.csv', reason: ContextFileRejection.CapacityExceeded },
+    ]);
+  });
+
+  it('rejects an incoming file named like a stored one', () => {
+    const { rejected } = checkContextFiles(
+      [makeFile('s.csv', 1)],
+      [stored('s.csv', 1)],
+      limits,
+    );
+
+    expect(rejected[0].reason).toBe(ContextFileRejection.Duplicate);
+  });
+
+  it('tells stored files from newly added ones', () => {
+    const [added] = checkContextFiles(
+      [makeFile('a.csv', 1)],
+      [],
+      limits,
+    ).accepted;
+
+    expect(isStoredContextFile(stored('s.csv', 1))).toBe(true);
+    expect(isStoredContextFile(added)).toBe(false);
+  });
+});
+
+describe('filterContextFileItems', () => {
+  const files = [{ name: 'tickets.csv' }, { name: 'Survey.xlsx' }];
+
+  it('keeps names containing the trimmed query, ignoring case', () => {
+    expect(filterContextFileItems(files, '  survey ')).toEqual([
+      { name: 'Survey.xlsx' },
+    ]);
+  });
+
+  it('returns every file for a blank query', () => {
+    expect(filterContextFileItems(files, '  ')).toBe(files);
   });
 });
