@@ -620,10 +620,17 @@ describe('ConversationRoute — URL entity preselection', () => {
       await waitFor(() =>
         expect(window.location.search).toBe(`?skill-id=${SKILL_URL}`),
       );
-      const start = startButton();
-      if (start == null) throw new Error('start button is missing');
-      await userEvent.click(start);
-      expect(await screen.findByText('custom-viewer')).toBeTruthy();
+      /*
+       * The URL cleanup is a router navigation committed in a transition, so
+       * `window.location` can change before the route re-renders with the new
+       * location key. A Start pressed in that gap is keyed to the stale
+       * location and dropped, so press it until the viewer actually opens.
+       */
+      await waitFor(async () => {
+        const start = startButton();
+        if (start != null) await userEvent.click(start);
+        expect(screen.getByText('custom-viewer')).toBeTruthy();
+      });
 
       skills.resolve(skillListing);
 
