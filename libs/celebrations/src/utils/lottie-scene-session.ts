@@ -50,6 +50,7 @@ export const createLottieSceneSession = <P>({
   let prepared: { preparation: P } | undefined;
   let host: HTMLElement | undefined;
   let animation: AnimationItem | undefined;
+  let context: LottieAnimationContext<P> | undefined;
   let loadDeadline: ReturnType<typeof setTimeout> | undefined;
   let readyDeadline: ReturnType<typeof setTimeout> | undefined;
   let playbackDeadline: ReturnType<typeof setTimeout> | undefined;
@@ -70,6 +71,7 @@ export const createLottieSceneSession = <P>({
     const item = animation;
     if (item) {
       attempt(() => item.removeEventListener('DOMLoaded', ready));
+      attempt(() => item.removeEventListener('enterFrame', started));
       attempt(() => item.removeEventListener('complete', complete));
       attempt(() => item.removeEventListener('data_failed', fail));
       attempt(() => item.removeEventListener('error', fail));
@@ -85,6 +87,27 @@ export const createLottieSceneSession = <P>({
   const fail = () => finish(LottieSceneOutcome.Failed);
   const cancel = () => finish(LottieSceneOutcome.Cancelled);
 
+  /* The first rendered frame ties companions to the composition's clock:
+     both advance from animation-frame timestamps, so they cannot drift. */
+  const started = () => {
+    const item = animation;
+    const onStarted = playback.onPlaybackStarted;
+    if (state !== LottieSceneSessionState.Playing || !item || !context) return;
+    item.removeEventListener('enterFrame', started);
+    if (!onStarted) return;
+    const now = document.timeline?.currentTime;
+    const timelineNowMs = typeof now === 'number' ? now : performance.now();
+    try {
+      onStarted({
+        ...context,
+        timelineZeroMs:
+          timelineNowMs - (item.currentFrame / item.frameRate) * 1000,
+      });
+    } catch {
+      fail();
+    }
+  };
+
   /* isLoaded is set before the renderer initializes its items; only DOMLoaded
      on a loaded renderer proves that rendering succeeded. */
   const ready = () => {
@@ -97,6 +120,8 @@ export const createLottieSceneSession = <P>({
     clearTimeout(readyDeadline);
     animation.removeEventListener('DOMLoaded', ready);
     playbackDeadline = setTimeout(complete, playback.timings.playbackMs);
+    if (playback.onPlaybackStarted)
+      animation.addEventListener('enterFrame', started);
     try {
       animation.play();
     } catch {
@@ -160,7 +185,7 @@ export const createLottieSceneSession = <P>({
       animation.addEventListener('complete', complete);
       animation.addEventListener('data_failed', fail);
       animation.addEventListener('error', fail);
-      const context: LottieAnimationContext<P> = {
+      context = {
         preparation,
         host: element,
         addDisposer,

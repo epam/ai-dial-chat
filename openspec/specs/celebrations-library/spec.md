@@ -50,9 +50,33 @@ The context value, resolved labels and the enabled scene pools SHALL be memoized
 
 ### Requirement: Hosts choose which scenes and decor behaviours are shown
 
-`selection` SHALL accept, per event id, `enabledScenes` (when set, only these scenes may play), `disabledScenes` (never play), `disabledDecorBehaviors` and `isSecretEnabled` (default `true`). The Halloween entry SHALL export `HalloweenScene` (16 members) and `HalloweenDecorBehavior` (`SpiderFlee`, `SpiderDrop`, `SpiderDrum`, `PumpkinWrap`); the New Year entry SHALL export `NewYearScene` (5 members: `PenguinStar`, `GiftWrapping`, `Snow`, `Confetti`, `Sleigh`). Besides these enums and its labels, the Halloween entry SHALL also export `halloweenEvent` (its default export), `createHalloweenEvent` and `HalloweenEventOptions` (an optional `trainSoundtrackUrl`; the train scene is silent without it), and the New Year entry SHALL export `newYearEvent` as its default export. Defaults SHALL enable everything, reproducing today's behaviour.
+**Selection.** `selection` SHALL accept, per event id:
 
-Disabled scenes SHALL be removed from both the click pool and the secret pool before random selection, and `celebrate(id)` SHALL ignore a disabled id. A click with an empty click pool SHALL do nothing. A secret phrase SHALL be consumed only when `isSecretEnabled` is true and at least one of its scenes is enabled; otherwise the text SHALL be sent normally. A disabled decor behaviour SHALL never start (its timers and listeners are not installed) while the rest of the decor keeps working. Unknown ids in a selection SHALL be ignored.
+- `enabledScenes`: when set, only these scenes may play;
+- `disabledScenes`: never play;
+- `disabledDecorBehaviors`;
+- `isSecretEnabled`: defaults to `true`.
+
+Defaults SHALL enable everything, reproducing today's behaviour.
+
+**Halloween entry exports:**
+
+- `HalloweenScene` (16 members);
+- `HalloweenDecorBehavior` (`SpiderFlee`, `SpiderDrop`, `SpiderDrum`, `PumpkinWrap`);
+- `halloweenEvent` (its default export), `createHalloweenEvent` and `HalloweenEventOptions` (an optional `trainSoundtrackUrl`; the train scene is silent without it).
+
+**New Year entry exports:**
+
+- `NewYearScene` (3 members: `PenguinStar`, `GiftWrapping`, `SnowmanDelivery`);
+- `newYearEvent` as its default export.
+
+**Pools and triggers.**
+
+- Disabled scenes SHALL be removed from both the click pool and the secret pool before random selection, and `celebrate(id)` SHALL ignore a disabled id.
+- A click with an empty click pool SHALL do nothing.
+- A secret phrase SHALL be consumed only when `isSecretEnabled` is true and at least one of its scenes is enabled; otherwise the text SHALL be sent normally.
+- A disabled decor behaviour SHALL never start (its timers and listeners are not installed), while the rest of the decor keeps working.
+- Unknown ids in a selection SHALL be ignored.
 
 #### Scenario: A host switches off one scene
 
@@ -73,6 +97,11 @@ Disabled scenes SHALL be removed from both the click pool and the secret pool be
 
 - **WHEN** `isSecretEnabled` is `false` and the user sends `trick or treat`
 - **THEN** `consumeSecretPhrase` returns `false` and the message is sent normally
+
+#### Scenario: A host disables the snowman
+
+- **WHEN** `disabledScenes` for New Year contains `NewYearScene.SnowmanDelivery` and the user clicks the gift repeatedly
+- **THEN** every click plays PenguinStar and the snowman never appears
 
 ### Requirement: Visible text comes from labels with English defaults
 
