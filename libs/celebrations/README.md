@@ -196,7 +196,8 @@ export const halloweenLabels: Partial<HalloweenLabels> = {
 
 ### NewYearScene
 
-`Snow`, `Confetti`, `Sleigh`, `GiftWrapping`, `PenguinStar`. `Confetti` is also the secret-phrase scene.
+`PenguinStar` plays on a gift click. `GiftWrapping` plays only for the secret
+phrase `happy new year`. Snow, confetti and sleigh scenes are no longer included.
 
 ## Types
 
@@ -230,7 +231,7 @@ its reversible visual transform is cancelled when playback stops.
 Typing, pointer/focus interaction, scrolling, viewport or target changes,
 hidden tabs, navigation, scene replacement and motion-preference changes stop
 the scene and release its player, listeners, observers and timers. The gift
-selects it from the random click pool; the secret phrase still plays confetti.
+plays the penguin scene; the secret phrase plays the elves.
 Hosts can override `penguinStarToastMessage` through existing labels. The scene
 budgets 140 generated SVG artwork nodes, 32 animated properties, 80 keyframes
 per property and 120 KB of composition data. It uses no external assets,
@@ -263,8 +264,8 @@ host.
 
 Interaction, focus changes, scrolling, viewport or target changes, hidden tabs,
 navigation and motion-preference changes cancel playback and release the player.
-The gift selects the scene from the existing random click pool; the secret
-phrase still plays confetti. Hosts can override `giftWrappingToastMessage`
+Only the secret phrase `happy new year` selects the elves; the gift
+click plays the penguin scene. Hosts can override `giftWrappingToastMessage`
 through the existing New Year labels.
 
 The Halloween portal briefly pulls visual copies of up to two adjacent, visible

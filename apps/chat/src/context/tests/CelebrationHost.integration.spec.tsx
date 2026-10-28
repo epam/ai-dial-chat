@@ -187,9 +187,7 @@ describe('CelebrationHost with the celebrations library', () => {
     await userEvent.click(gift);
     expect(showSuccessNotification).toHaveBeenLastCalledWith({
       title: 'newYear.toastTitle',
-      message: expect.stringMatching(
-        /^newYear\.(snow|confetti|sleigh|giftWrapping|penguinStar)ToastMessage happy new year$/,
-      ),
+      message: 'newYear.penguinStarToastMessage happy new year',
     });
   });
 });

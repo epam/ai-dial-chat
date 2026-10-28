@@ -1767,9 +1767,6 @@ export enum NewYearI18nKeys {
   PenguinStarToastMessage = 'newYear.penguinStarToastMessage',
   GiftWrappingToastMessage = 'newYear.giftWrappingToastMessage',
   ToastTitle = 'newYear.toastTitle',
-  SnowToastMessage = 'newYear.snowToastMessage',
-  ConfettiToastMessage = 'newYear.confettiToastMessage',
-  SleighToastMessage = 'newYear.sleighToastMessage',
   GiftLabel = 'newYear.giftLabel',
 }
 
