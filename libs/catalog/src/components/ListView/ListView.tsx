@@ -133,7 +133,13 @@ export const ListView: FC<ListViewProps> = ({
     () => ({
       scrollToTop: () => {
         const api = gridApiRef.current;
-        if (api == null || api.getDisplayedRowCount() === 0) return;
+        if (
+          api == null ||
+          api.isDestroyed() ||
+          api.getDisplayedRowCount() === 0
+        ) {
+          return;
+        }
         api.ensureIndexVisible(0, 'top');
       },
     }),

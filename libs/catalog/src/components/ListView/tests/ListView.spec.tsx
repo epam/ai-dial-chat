@@ -447,6 +447,19 @@ describe('ListView — scroll handle', () => {
     expect(() => ref.current?.scrollToTop()).not.toThrow();
   });
 
+  it('does not scroll a destroyed grid', () => {
+    const ref = createRef<ListViewHandle>();
+    render(<ListView ref={ref} items={items} type={CatalogEntityType.Model} />);
+    const { api } = makeGridApi();
+    reportGridApi(api);
+    api.isDestroyed.mockReturnValue(true);
+
+    ref.current?.scrollToTop();
+
+    expect(api.getDisplayedRowCount).not.toHaveBeenCalled();
+    expect(api.ensureIndexVisible).not.toHaveBeenCalled();
+  });
+
   it('does not scroll an empty grid', () => {
     const ref = createRef<ListViewHandle>();
     render(<ListView ref={ref} items={[]} type={CatalogEntityType.Model} />);

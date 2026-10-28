@@ -48,6 +48,9 @@ export const useCatalogScrollToTop = ({
   }, [recompute]);
 
   useEffect(() => {
+    /* The hidden grid reports no scroll when shown again, so an offset kept
+       from before would surface the control with nothing scrolled. */
+    if (!isListView) rowsTopRef.current = 0;
     isListViewRef.current = isListView;
     recompute();
   }, [isListView, recompute]);
@@ -67,6 +70,7 @@ export const useCatalogScrollToTop = ({
 
   const handleRowsScroll = useCallback(
     (top: number) => {
+      if (!isListViewRef.current) return;
       rowsTopRef.current = top;
       scheduleRecompute();
     },

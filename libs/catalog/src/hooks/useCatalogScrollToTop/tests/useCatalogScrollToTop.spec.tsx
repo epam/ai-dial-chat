@@ -165,6 +165,43 @@ describe('useCatalogScrollToTop', () => {
     expect(screen.queryByRole('button', { name: 'Scroll to top' })).toBeNull();
   });
 
+  it('drops the list rows offset kept from before leaving list view', () => {
+    let handleRowsScroll: (top: number) => void = () => undefined;
+    const onRowsScrollReady = (handler: (top: number) => void) => {
+      handleRowsScroll = handler;
+    };
+    const { rerender } = render(
+      <Probe isListView onRowsScrollReady={onRowsScrollReady} />,
+    );
+    const { scrollBody } = stubScrollBody();
+    scrollBodyTo(scrollBody, 200);
+    act(() => handleRowsScroll(400));
+    flushFrames();
+    rerender(<Probe isListView={false} onRowsScrollReady={onRowsScrollReady} />);
+
+    rerender(<Probe isListView onRowsScrollReady={onRowsScrollReady} />);
+
+    expect(screen.queryByRole('button', { name: 'Scroll to top' })).toBeNull();
+  });
+
+  it('does not take a list rows offset reported outside list view', () => {
+    let handleRowsScroll: (top: number) => void = () => undefined;
+    const onRowsScrollReady = (handler: (top: number) => void) => {
+      handleRowsScroll = handler;
+    };
+    const { rerender } = render(
+      <Probe onRowsScrollReady={onRowsScrollReady} />,
+    );
+    const { scrollBody } = stubScrollBody();
+    scrollBodyTo(scrollBody, 200);
+    act(() => handleRowsScroll(400));
+    flushFrames();
+
+    rerender(<Probe isListView onRowsScrollReady={onRowsScrollReady} />);
+
+    expect(screen.queryByRole('button', { name: 'Scroll to top' })).toBeNull();
+  });
+
   it('scrolls smoothly to the top and focuses search', () => {
     render(<Probe />);
     const { scrollBody, scrollTo } = stubScrollBody();
