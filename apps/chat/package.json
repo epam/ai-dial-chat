@@ -12,6 +12,13 @@
           "command": "node --test browser-tests/text-refinement.browser.spec.mjs"
         }
       },
+      "test-prompt-caret-browser": {
+        "executor": "nx:run-commands",
+        "options": {
+          "cwd": "apps/chat",
+          "command": "node --test browser-tests/prompt-caret.browser.spec.mjs"
+        }
+      },
       "test-csp-browser": {
         "executor": "nx:run-commands",
         "options": {

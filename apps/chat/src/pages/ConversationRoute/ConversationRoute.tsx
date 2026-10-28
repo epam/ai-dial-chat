@@ -67,6 +67,7 @@ import { useNotification } from '../../context/NotificationContext';
 import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
 import { useCustomViewer } from '../../hooks/custom-viewer/useCustomViewer';
 import { useLanguage } from '../../hooks/language/useLanguage';
+import { useUrlEntityPreselection } from '../../hooks/useUrlEntityPreselection/useUrlEntityPreselection';
 import {
   createConversation as apiCreateConversation,
   renameConversation,
@@ -75,6 +76,7 @@ import {
 import { ROUTES } from '../../types/routes';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
+import { getCleanedLocationTarget } from '../../utils/url-cleanup';
 
 /*
  * TODO: rename page and component
@@ -84,7 +86,7 @@ const ConversationRoute: FC = () => {
   const { t } = useTranslation();
   const { language } = useLanguage();
   const navigate = useNavigate();
-  const { pathname, state, key: locationKey } = useLocation();
+  const { state, key: locationKey } = useLocation();
   const routeDeploymentId = (state as { deploymentId?: string } | null)
     ?.deploymentId;
   const routePromptContent = (state as { promptContent?: string } | null)
@@ -246,6 +248,29 @@ const ConversationRoute: FC = () => {
     resolvedDeploymentId: isolatedModelId,
   } = useIsolatedModelView();
 
+  /*
+   * Clears one-shot router state while keeping the URL's query string and hash
+   * as they are right now (see `getCleanedLocationTarget`), so it can neither
+   * wipe a URL parameter that is still pending nor bring back one just removed.
+   */
+  const clearRouteState = useCallback(() => {
+    navigate(getCleanedLocationTarget([]), { replace: true, state: null });
+  }, [navigate]);
+
+  const { isDeploymentOverrideActive } = useUrlEntityPreselection({
+    restoreSelectedItemId,
+    selectSkillByUrl,
+    seedSkillMentions,
+    seedComposerText,
+    openParametersPopup,
+    routeState: {
+      hasDeploymentId: routeDeploymentId != null,
+      hasSkillId: routeSkillId != null,
+      hasPrompt: routePromptContent != null || routePendingPrompt != null,
+    },
+    isDisabled: isIsolatedView || overlay != null,
+  });
+
   const hasConsumedRouteDeploymentRef = useRef(false);
   // TODO: remove in next release
   const hasConsumedIsolatedModelIdRef = useRef(false);
@@ -270,7 +295,7 @@ const ConversationRoute: FC = () => {
     if (routeDeploymentId) {
       hasConsumedRouteDeploymentRef.current = true;
       restoreSelectedItemId(routeDeploymentId);
-      navigate(pathname, { replace: true, state: null });
+      clearRouteState();
       return;
     }
     /*
@@ -281,6 +306,12 @@ const ConversationRoute: FC = () => {
      * route, resetting the flag, and the default resolves normally again.
      */
     if (hasConsumedRouteDeploymentRef.current) return;
+    /*
+     * A `deployment-id` URL parameter owns the selection while it is pending
+     * and after a known id was applied; the default must neither flash first
+     * nor undo it. An unknown id settles with the flag off and falls through.
+     */
+    if (isDeploymentOverrideActive) return;
     /*
      * TODO: remove in next release. Isolated view pins the deployment once it
      * resolves, and must never fall through to the default selection even
@@ -302,8 +333,8 @@ const ConversationRoute: FC = () => {
     restoreDefaultSelection,
     routeDeploymentId,
     overlay?.pendingModelId,
-    navigate,
-    pathname,
+    clearRouteState,
+    isDeploymentOverrideActive,
     isIsolatedView,
     isolatedModelId,
   ]);
@@ -317,8 +348,8 @@ const ConversationRoute: FC = () => {
   useEffect(() => {
     if (routePromptContent == null) return;
     seedComposerText(routePromptContent);
-    navigate(pathname, { replace: true, state: null });
-  }, [routePromptContent, navigate, pathname, seedComposerText]);
+    clearRouteState();
+  }, [routePromptContent, clearRouteState, seedComposerText]);
 
   /*
    * Seeds the "Prompt parameters" popup from a parameterized prompt the user
@@ -328,8 +359,8 @@ const ConversationRoute: FC = () => {
   useEffect(() => {
     if (routePendingPrompt == null) return;
     openParametersPopup(routePendingPrompt);
-    navigate(pathname, { replace: true, state: null });
-  }, [routePendingPrompt, openParametersPopup, navigate, pathname]);
+    clearRouteState();
+  }, [routePendingPrompt, openParametersPopup, clearRouteState]);
 
   /*
    * Seeds the composer's selected skill from a skill the user picked via the
@@ -351,8 +382,8 @@ const ConversationRoute: FC = () => {
     if (routeSkillId == null || hasConsumedRouteSkillIdRef.current) return;
     hasConsumedRouteSkillIdRef.current = true;
     selectSkillByUrl(routeSkillId);
-    navigate(pathname, { replace: true, state: null });
-  }, [routeSkillId, selectSkillByUrl, navigate, pathname]);
+    clearRouteState();
+  }, [routeSkillId, selectSkillByUrl, clearRouteState]);
 
   /*
    * This is the "no conversation selected" empty state. Overlay mode must

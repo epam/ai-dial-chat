@@ -1873,5 +1873,15 @@
     "message": "You have unsaved changes. Leaving now will discard them.",
     "confirmLabel": "Discard changes",
     "cancelLabel": "Keep editing"
+  },
+  "urlPreselection": {
+    "deploymentNotFoundTitle": "Deployment not found",
+    "deploymentNotFoundMessage": "The requested deployment \"{{id}}\" is unavailable, so the default one is selected.",
+    "deploymentsLoadFailedTitle": "Could not load deployments",
+    "deploymentsLoadFailedMessage": "The requested deployment could not be selected, so the default one is used.",
+    "skillUnavailableTitle": "Skill unavailable",
+    "skillUnavailableMessage": "The requested skill does not exist or you do not have access to it.",
+    "promptUnavailableTitle": "Prompt unavailable",
+    "promptUnavailableMessage": "The requested prompt could not be loaded."
   }
 }

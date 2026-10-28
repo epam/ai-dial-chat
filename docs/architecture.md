@@ -342,6 +342,20 @@ singletons — so unused feature UI can still be removed from root-barrel
 consumers. See the
 [frontend feature-loading overview](../apps/chat/README.md#feature-loading).
 
+### Preselecting an entity from a link
+
+External applications can open the new-conversation route (`/`) with an entity preselected through query parameters. `useUrlEntityPreselection` (`apps/chat/src/hooks/useUrlEntityPreselection`) applies them once on arrival through the sinks `ConversationRoute` already owns, the same ones the catalog's "Use in chat" feeds through router state.
+
+| Parameter       | Value                          | Effect                                                                                                                                    |
+| --------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `deployment-id` | a deployment id or `reference` | Selects a Model, Agent or Application for the new chat without saving it as the user's preference                                         |
+| `skill-id`      | `skills/{bucket}/{path}`       | Adds the skill to the message input as a mention; it must be in the user's own, shared-with-me or public skills                           |
+| `prompt-id`     | `prompts/{bucket}/{path}`      | Seeds the message input with the prompt, or opens the "Prompt parameters" popup when the body has `{{parameters}}`; never sent in the URL |
+
+Values containing reserved characters are percent-encoded. The parameters combine; with both `skill-id` and a plain `prompt-id` the message reads `/{skill} {prompt body}`, and with a parameterized prompt the popup's text is inserted after the mention. Each parameter is removed from the URL (a `replace`, other parameters and the hash kept) as soon as it is applied or fails.
+
+An unknown `deployment-id` — no match, hidden by the operator, without the `chat` interface (this includes custom-UI-only applications) or a toolset id — falls back to the default deployment with a warning; an unavailable `skill-id` or `prompt-id` shows an error and leaves the input unchanged. The parameters are ignored in overlay mode and while the temporary `isolated-model-id` view is active (which wins), and apply only on `/`. `deployment-id` is the non-isolating replacement for `isolated-model-id`.
+
 ### State management
 
 > ❓ Open — decision pending. Currently implemented with React Context; may be replaced or augmented.

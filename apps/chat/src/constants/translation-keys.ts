@@ -1707,3 +1707,14 @@ export enum UnsavedChangesI18nKeys {
   ConfirmLabel = 'unsavedChanges.confirmLabel',
   CancelLabel = 'unsavedChanges.cancelLabel',
 }
+
+export enum UrlPreselectionI18nKeys {
+  DeploymentNotFoundTitle = 'urlPreselection.deploymentNotFoundTitle',
+  DeploymentNotFoundMessage = 'urlPreselection.deploymentNotFoundMessage',
+  DeploymentsLoadFailedTitle = 'urlPreselection.deploymentsLoadFailedTitle',
+  DeploymentsLoadFailedMessage = 'urlPreselection.deploymentsLoadFailedMessage',
+  SkillUnavailableTitle = 'urlPreselection.skillUnavailableTitle',
+  SkillUnavailableMessage = 'urlPreselection.skillUnavailableMessage',
+  PromptUnavailableTitle = 'urlPreselection.promptUnavailableTitle',
+  PromptUnavailableMessage = 'urlPreselection.promptUnavailableMessage',
+}

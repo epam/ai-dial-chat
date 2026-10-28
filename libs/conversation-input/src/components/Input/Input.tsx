@@ -214,6 +214,25 @@ export const Input = forwardRef<InputHandle, InputProps>(
       messageRevision,
     });
 
+    /*
+     * An autofocused textarea created already holding text keeps its caret at the
+     * start, so typing would land in front of a seeded `/skill` mention. Only a
+     * focused textarea is touched: `setSelectionRange` on an unfocused one moves
+     * focus in some WebKit versions, and `useTextInsertion` already inserts at
+     * the end of a composer nobody has focused.
+     */
+    useEffect(() => {
+      const textarea = textareaRef.current;
+      if (
+        textarea == null ||
+        textarea.value.length === 0 ||
+        document.activeElement !== textarea
+      ) {
+        return;
+      }
+      textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+    }, [textareaRef]);
+
     useEffect(() => {
       if (focusRequestId !== undefined) textareaRef.current?.focus();
     }, [focusRequestId, textareaRef]);
