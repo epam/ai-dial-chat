@@ -319,9 +319,8 @@ const { isAuthSessionError, connect } =
 // ./offline-credentials — no peer beyond react
 import { useOfflineCredentialsGate } from '@epam/ai-dial-chat-hooks/offline-credentials';
 
-const { status, connect, connected, refetch } = useOfflineCredentialsGate({
-  offlineCredentialsClient,
-});
+const { status, connect, connected, schedulerServiceConsent, refetch } =
+  useOfflineCredentialsGate({ offlineCredentialsClient });
 ```
 
 ```tsx
@@ -4859,16 +4858,19 @@ login-required surface.
 ```tsx
 import { useOfflineCredentialsGate } from '@epam/ai-dial-chat-hooks';
 
-const { status, connect, connected, refetch } = useOfflineCredentialsGate({
-  offlineCredentialsClient,
-});
+const { status, connect, connected, schedulerServiceConsent, refetch } =
+  useOfflineCredentialsGate({ offlineCredentialsClient });
 ```
 
 `UseOfflineCredentialsGateOptions` is exported. The host-configured client is
 required (only `getOfflineCredentials`); the hook owns no client configuration.
 `status` is the `OfflineCredentialsGateStatus` enum (`Checking`/`Hidden`/
 `Available`/`Unavailable`/`Error`); `connect` carries usable OAuth client
-settings only while `status` is `Available`.
+settings only while `status` is `Available`. `schedulerServiceConsent` is the
+generated `SchedulerServiceConsentStatus` (`signed_in`/`signed_out`/`unknown`,
+defaulting to `unknown` before the first check resolves or while it failed) —
+the hook parses and exposes the field only; which banner, badge, or button each
+surface renders from it stays with the consuming surface.
 
 ### useOfflineCredentialsLogin
 

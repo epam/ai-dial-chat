@@ -16278,6 +16278,11 @@
         },
         "required": ["authorizationEndpoint", "clientId", "scopes"]
       },
+      "SchedulerServiceConsentStatus": {
+        "type": "string",
+        "enum": ["signed_in", "signed_out", "unknown"],
+        "description": "Consent state of the DIAL_NATIVE scheduler external service: 'signed_out' when the administrator's application consent is missing or revoked, 'signed_in' when it is in place, and 'unknown' when the consent read itself failed (the offline-credentials status is still valid)."
+      },
       "GetOfflineCredentialsResponseDto": {
         "type": "object",
         "properties": {
@@ -16291,9 +16296,18 @@
           },
           "connect": {
             "$ref": "#/components/schemas/OfflineCredentialsConnectDto"
+          },
+          "schedulerServiceConsent": {
+            "example": "signed_in",
+            "description": "Consent state of the DIAL_NATIVE scheduler external service: 'signed_out' when the administrator's application consent is missing or revoked, 'signed_in' when it is in place, and 'unknown' when the consent read itself failed (the offline-credentials status is still valid).",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SchedulerServiceConsentStatus"
+              }
+            ]
           }
         },
-        "required": ["available", "connected"]
+        "required": ["available", "connected", "schedulerServiceConsent"]
       },
       "OfflineCredentialsSigninBodyDto": {
         "type": "object",

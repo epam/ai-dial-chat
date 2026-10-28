@@ -36,15 +36,19 @@ export class ExternalServicesService {
 
   constructor(private readonly dialClient: DialClientService) {}
 
-  /** Reads public application metadata; the management listing excludes inline services for ordinary users. */
+  /** Reads public application metadata; the management listing excludes inline services for ordinary users. An optional `signal` cancels the upstream read. */
   async listExternalServices(
     accessToken: string,
     appId: string,
+    signal?: AbortSignal,
   ): Promise<ApplicationExternalServiceDto[]> {
     try {
       const response = await this.dialClient.client.getApplication(
         encodeDialResourcePath(appId),
-        { headers: getBearerAuthHeaders(accessToken) },
+        {
+          headers: getBearerAuthHeaders(accessToken),
+          ...(signal != null && { signal }),
+        },
       );
       if (response.error) {
         return mapDialHttpStatus(
@@ -71,10 +75,12 @@ export class ExternalServicesService {
     }
   }
 
+  /** Reads one external service's metadata; an optional `signal` cancels the upstream read and its fallbacks. */
   async getExternalService(
     accessToken: string,
     appId: string,
     serviceId: string,
+    signal?: AbortSignal,
   ): Promise<GetExternalServiceResponseDto> {
     const authHeaders = getBearerAuthHeaders(accessToken);
     this.logger.debug(
@@ -85,7 +91,7 @@ export class ExternalServicesService {
       const response = await this.dialClient.client.getExternalService(
         toDialExternalServiceAppId(appId),
         serviceId,
-        { headers: authHeaders },
+        { headers: authHeaders, ...(signal != null && { signal }) },
       );
       this.logger.debug(
         `DIAL Core external service "${serviceId}" (app "${appId}"): display_name="${response.data?.display_name}" auth_type="${response.data?.auth_settings?.authentication_type}"`,
@@ -110,6 +116,7 @@ export class ExternalServicesService {
             const services = await this.listExternalServices(
               accessToken,
               appId,
+              signal,
             );
             const service = services.find(
               (candidate) => candidate.id === serviceId,
@@ -124,6 +131,7 @@ export class ExternalServicesService {
             authHeaders,
             appId,
             serviceId,
+            signal,
           );
           if (fallback) {
             return fallback;
@@ -163,6 +171,7 @@ export class ExternalServicesService {
     authHeaders: ReturnType<typeof getBearerAuthHeaders>,
     appId: string,
     serviceId: string,
+    signal?: AbortSignal,
   ): Promise<GetExternalServiceResponseDto | undefined> {
     const resource = parseDialApplicationResource(
       appId.startsWith('applications/') ? appId : `applications/${appId}`,
@@ -175,7 +184,7 @@ export class ExternalServicesService {
       const response = await this.dialClient.client.getCustomApplication(
         resource.bucket,
         resource.path,
-        { headers: authHeaders },
+        { headers: authHeaders, ...(signal != null && { signal }) },
       );
       if (response.error) {
         return undefined;

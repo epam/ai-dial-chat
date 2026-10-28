@@ -559,6 +559,8 @@ export enum ScheduledTasksI18nKeys {
   ConversationPanelModelLabel = 'scheduledTasks.conversationPanel.modelLabel',
   ConversationPanelCurrentRunLabel = 'scheduledTasks.conversationPanel.currentRunLabel',
   ConversationPanelHistoryUnavailableLabel = 'scheduledTasks.conversationPanel.historyUnavailableLabel',
+  LimitedAccessBannerTitle = 'scheduledTasks.limitedAccessBanner.title',
+  LimitedAccessBannerBody = 'scheduledTasks.limitedAccessBanner.body',
   OfflineCredentialsBannerTitle = 'scheduledTasks.offlineCredentialsBanner.title',
   OfflineCredentialsBannerBody = 'scheduledTasks.offlineCredentialsBanner.body',
   OfflineCredentialsBannerPopupBlockedMessage = 'scheduledTasks.offlineCredentialsBanner.popupBlockedMessage',
@@ -803,7 +805,9 @@ export enum ExtensionsI18nKeys {
   ActionsColumnLabel = 'extensions.actionsColumnLabel',
   ServiceDefaultName = 'extensions.service.defaultName',
   ServiceDescription = 'extensions.service.description',
-  ServiceAuthorizeTooltip = 'extensions.service.authorizeTooltip',
+  ServiceLimitedAccessLabel = 'extensions.service.limitedAccessLabel',
+  ServiceLimitedAccessTooltipTitle = 'extensions.service.limitedAccessTooltipTitle',
+  ServiceLimitedAccessTooltipDescription = 'extensions.service.limitedAccessTooltipDescription',
 }
 
 export enum ConversationPanelI18nKeys {

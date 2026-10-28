@@ -257,6 +257,7 @@ describe('ApplicationCredentials', () => {
     vi.mocked(getOfflineCredentials).mockResolvedValue({
       connected: true,
       available: true,
+      schedulerServiceConsent: 'signed_in',
     });
     render(<ApplicationCredentials appId="agent" />);
     const row = within(await screen.findByRole('group', { name: 'DIAL' }));
