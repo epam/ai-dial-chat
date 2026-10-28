@@ -310,6 +310,7 @@ describe('ConversationRoute — URL entity preselection', () => {
       deployments: { installed: [], selectedId: null },
       prompts: { installed: [] },
       skills: { installed: [] },
+      projects: { pinnedIds: [] },
     });
     mockUseUser.mockReturnValue({
       user: {
