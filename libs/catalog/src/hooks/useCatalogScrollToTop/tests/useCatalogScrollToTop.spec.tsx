@@ -177,7 +177,9 @@ describe('useCatalogScrollToTop', () => {
     scrollBodyTo(scrollBody, 200);
     act(() => handleRowsScroll(400));
     flushFrames();
-    rerender(<Probe isListView={false} onRowsScrollReady={onRowsScrollReady} />);
+    rerender(
+      <Probe isListView={false} onRowsScrollReady={onRowsScrollReady} />,
+    );
 
     rerender(<Probe isListView onRowsScrollReady={onRowsScrollReady} />);
 
