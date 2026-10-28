@@ -88,7 +88,7 @@ When both params are present the hook waits for both the skills decision and the
 
 If one fails, the other is applied alone and the failing one notifies. Waiting for both makes the result independent of completion order. If a viewer start gate or disabled input is shown for the chosen deployment, the text is still seeded into the (disabled) input — observed behavior, same as router-state seeding today — and the parameter is still consumed and removed (covered by a test).
 
-Real-browser finding (Chromium via the repository's Playwright fixtures): a textarea that mounts already holding text has its caret at 0 even when autofocused, so the popup's caret insertion would land in front of the mention whenever the lazily loaded composer renders after the seed. The fix is in `libs/conversation-input` — `Input` puts the caret at the end when it mounts autofocused with text, and `useTextInsertion` inserts at the end of a composer the user has never focused whose caret is still at the default start — approved as an extension of scope; it carries no host knowledge, never touches the selection of an unfocused textarea (some WebKit versions move focus on `setSelectionRange`, which the code review flagged), and is covered by lib unit tests and a browser test.
+Real-browser finding (Chromium via the repository's Playwright fixtures): a textarea that mounts already holding text has its caret at 0 even when autofocused, so the popup's caret insertion would land in front of the mention whenever the lazily loaded composer renders after the seed. The fix is in `libs/conversation-input` — `Input` puts the caret at the end when it mounts autofocused with text, and `useTextInsertion` inserts at the end of a composer the user has never focused whose caret is still at the default start — approved as an extension of scope; it carries no host knowledge, never touches the selection of an unfocused textarea (some WebKit versions move focus on `setSelectionRange`, which the code review flagged), and is covered by lib unit tests (a throwaway Chromium fixture confirmed the behavior; it was not committed).
 
 *Alternatives:* two independent effects (rejected — the second replace-seed erases the first); route the plain prompt through the caret-insertion channel (rejected — lost before the textarea mounts).
 
@@ -110,7 +110,7 @@ The params are an external integration surface (issue motivation), so the URL co
 - [Changing the four existing `navigate(pathname, …)` calls] → behavior-preserving for pathname-only URLs; covered by the existing `ConversationRoute` specs plus new query/hash-preservation and "route-state clear cannot resurrect a removed param" tests.
 - [Every cleanup changes `location.key`, which keys the Custom Viewer start gate] → cleanup is early and per source; a late reset of the gate is accepted and pinned by a test (gate code unchanged).
 - [Late cleanup after leaving `/`] → guarded by mounted/not-aborted so it cannot rewrite another route.
-- [Caret/selection on an unfocused controlled textarea in a real browser] → the plain-prompt path avoids the caret entirely; only the parameterized path relies on it and gets a real-browser check.
+- [Caret/selection on an unfocused controlled textarea in a real browser] → the plain-prompt path avoids the caret entirely; only the parameterized path relies on it and was checked in a real browser during implementation (not committed).
 - [Client navigation to `/` with a changed query only does not remount the route] → out of scope; links are meant for cold arrival.
 
 ## Migration Plan

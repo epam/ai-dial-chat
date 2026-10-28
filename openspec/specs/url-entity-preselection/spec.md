@@ -116,6 +116,8 @@ Whether the id is known SHALL be decided only after `DeploymentsContext` has fin
 
 While `deployment-id` is pending or once a known id has been applied, `ConversationRoute` SHALL NOT replace the selection with the default (see the `conversation-deployment-selection` capability). When isolated view is active, `deployment-id` SHALL be ignored (see the `isolated-model-view` capability).
 
+The warning echoes the unresolved id, truncated to its first 64 characters followed by `…` so a crafted link cannot place arbitrary long text in the notification; resolution always uses the full value.
+
 **i18n:** `urlPreselection.deploymentNotFoundTitle`, `urlPreselection.deploymentNotFoundMessage` (unresolved id interpolated), `urlPreselection.deploymentsLoadFailedTitle`, `urlPreselection.deploymentsLoadFailedMessage`.
 
 #### Scenario: Selection is not persisted
@@ -128,6 +130,11 @@ While `deployment-id` is pending or once a known id has been applied, `Conversat
 
 - **WHEN** the user opens `/?deployment-id=does-not-exist` and deployments have finished loading without a match
 - **THEN** the default deployment is selected and a warning notification states that the requested deployment was not found
+
+#### Scenario: A long unknown id is truncated in the warning
+
+- **WHEN** `deployment-id` is an unknown id longer than 64 characters
+- **THEN** the warning shows only its first 64 characters followed by `…`
 
 #### Scenario: A hidden deployment is treated as unknown
 

@@ -29,6 +29,9 @@ import { useUiFeature } from '../useUiFeature';
 /** Organisation prompts live in this bucket and are read through their own endpoint. */
 const PUBLIC_PROMPT_BUCKET = 'public';
 
+/** Longest part of a link-supplied id echoed into a notification, so a crafted link cannot show arbitrary long text. */
+const MAX_ECHOED_ID_LENGTH = 64;
+
 /** Sinks of the new-conversation route that the URL parameters are applied through. */
 export interface UrlPreselectionSinks {
   /** Selects a deployment without saving it as the user's preference. */
@@ -259,7 +262,12 @@ export const useUrlEntityPreselection = ({
       } else {
         showWarningNotification({
           title: t(UrlPreselectionI18nKeys.DeploymentNotFoundTitle),
-          message: t(UrlPreselectionI18nKeys.DeploymentNotFoundMessage, { id }),
+          message: t(UrlPreselectionI18nKeys.DeploymentNotFoundMessage, {
+            id:
+              id.length > MAX_ECHOED_ID_LENGTH
+                ? `${id.slice(0, MAX_ECHOED_ID_LENGTH)}…`
+                : id,
+          }),
         });
         setDeploymentOutcome(DeploymentOutcome.Settled);
       }

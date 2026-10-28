@@ -140,6 +140,34 @@ describe('useUrlEntityPreselection — deployment-id', () => {
     expect(window.location.search).toBe('');
   });
 
+  it('echoes at most 64 characters of an unknown id into the warning', () => {
+    const longId = `applications/bucket/${'x'.repeat(100)}`;
+    setUrl(`/?deployment-id=${longId}`);
+
+    renderPreselection();
+
+    expect(showNotification).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({
+        message: `urlPreselection.deploymentNotFoundMessage|${JSON.stringify({
+          id: `${longId.slice(0, 64)}…`,
+        })}`,
+      }),
+    );
+  });
+
+  it('still resolves a known id longer than 64 characters from the full value', () => {
+    const longId = `applications/bucket/${'x'.repeat(100)}`;
+    setUrl(`/?deployment-id=${longId}`);
+    mockDeployments({ items: [deployment({ id: longId })] });
+
+    const { params } = renderPreselection();
+
+    expect(params.restoreSelectedItemId).toHaveBeenCalledExactlyOnceWith(
+      longId,
+    );
+    expect(showNotification).not.toHaveBeenCalled();
+  });
+
   it.each([
     ['hidden', { isHidden: true }],
     ['a custom-UI-only application', { interfaces: ['custom_ui'] }],
