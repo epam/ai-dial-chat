@@ -1,12 +1,14 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  mergeClasses,
+  useControlErrorAssociation,
+} from '@epam/ai-dial-chat-shared';
 import {
   Calendar,
   CalendarMode,
   type CalendarValue,
   ErrorText,
 } from '@epam/ai-dial-ui-kit';
-import type { FC } from 'react';
-import { usePickerErrorAssociation } from '../../hooks/usePickerErrorAssociation/usePickerErrorAssociation';
+import { useId, type FC } from 'react';
 import {
   calendarValueToDateValue,
   calendarValueToRunAt,
@@ -61,7 +63,12 @@ export const ScheduledTaskBoundaryField: FC<
         : calendarValueToDateValue(next),
     );
 
-  const errorId = usePickerErrorAssociation(id, error);
+  const errorId = useId();
+  useControlErrorAssociation(
+    () => document.getElementById(id),
+    errorId,
+    Boolean(error),
+  );
 
   return (
     <div className="flex flex-1 flex-col gap-1">

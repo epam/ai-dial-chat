@@ -273,7 +273,7 @@ export interface SkillEditorLabels extends TextRefinementLabels {
   uploadConfirmLabel?: string;
   /** Cancel button label in the upload dialog. Defaults to `'Cancel'`. */
   uploadCancelLabel?: string;
-  /** Prefix announced in the `aria-live` region when a batch-level error appears. Defaults to `'Upload error: '`. */
+  /** Prefix announced in the `aria-live` region before each batch-level or staged-row error. Defaults to `'Upload error: '`. */
   uploadBatchErrorAriaPrefix?: string;
   /** Title shown in the full-surface overlay while a file-bearing drag is over the editor and the upload dialog isn't open yet. Defaults to `'Upload files'`. */
   dropOverlayTitle?: string;
@@ -332,7 +332,7 @@ export interface SkillEditorTypography {
   editingFileNameClassName?: string;
   /** Typography class applied to the upload dialog's Replace-or-duplicate message. Defaults to `'dial-small-text'`. */
   uploadMessageClassName?: string;
-  /** Typography and color classes applied to a staged upload row's size and notes. Defaults to `'dial-tiny-text text-secondary'`. */
+  /** Typography and color classes merged over a staged upload row's size and notes, which render `'dial-tiny-text text-secondary'` when unset. */
   uploadRowCaptionClassName?: string;
 }
 

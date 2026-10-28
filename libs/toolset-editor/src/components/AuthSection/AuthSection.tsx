@@ -6,6 +6,7 @@ import {
 } from '@epam/ai-dial-chat-hooks';
 import { TAG_INPUT_TAG_CLASS_NAME } from '@epam/ai-dial-chat-shared';
 import {
+  CaptionText,
   ConfirmationPopup,
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
@@ -327,16 +328,14 @@ export const AuthSection: FC<AuthSectionProps> = ({
               invalid={!!errors.clientSecret}
               disabled={isControlsDisabled}
             />
-            {/* Not the kit's `caption`/`CaptionText`: both render `role="alert"`,
-             * which would announce this static hint as an alert. */}
             {savedClientSecretHint != null && (
-              <p
+              <CaptionText
                 id={CLIENT_SECRET_KEEP_CAPTION_ID}
-                className="dial-tiny-text text-secondary"
-              >
-                {labels?.clientSecretKeepCaption ??
-                  'Leave empty to keep the saved secret.'}
-              </p>
+                text={
+                  labels?.clientSecretKeepCaption ??
+                  'Leave empty to keep the saved secret.'
+                }
+              />
             )}
           </div>
           <Input

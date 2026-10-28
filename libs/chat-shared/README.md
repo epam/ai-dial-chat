@@ -1064,6 +1064,32 @@ Options: `bottomGap` (pixels kept below the element, default `16`),
 fold stays usable) and `cssVariable` (default
 `RESIZABLE_FIELD_MAX_HEIGHT_CSS_VARIABLE`).
 
+### useControlErrorAssociation
+
+`useControlErrorAssociation(getControl, errorId, hasError)` links a field
+error to a control that takes no `aria-describedby` / `aria-invalid` prop —
+the kit `MarkdownEditor` and `Calendar`, or a host-composed selector. While
+`hasError` is `true` it adds `errorId` to the control's `aria-describedby`
+(keeping any other ids) and sets `aria-invalid`; otherwise it removes both.
+It runs after every render, so a lazily mounted control is picked up once it
+appears. Render the error with the same id — the kit `ErrorText` has no
+live-region role, so the link is what tells a screen reader about it.
+
+```tsx
+import { useControlErrorAssociation } from '@epam/ai-dial-chat-shared';
+import { ErrorText } from '@epam/ai-dial-ui-kit';
+import { useId } from 'react';
+
+const errorId = useId();
+useControlErrorAssociation(
+  () => document.getElementById(editorId),
+  errorId,
+  Boolean(error),
+);
+
+<ErrorText id={errorId} text={error} />;
+```
+
 ### useIsMobile
 
 Returns `true` when the viewport matches the mobile breakpoint.

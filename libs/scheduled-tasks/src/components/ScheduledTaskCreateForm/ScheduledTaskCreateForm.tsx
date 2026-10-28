@@ -10,6 +10,7 @@ import {
   useTextRefinement,
   useUnsavedChangesGuard,
   type TextRefinementCallback,
+  useControlErrorAssociation,
 } from '@epam/ai-dial-chat-shared';
 import {
   Button,
@@ -53,6 +54,7 @@ import { SCHEDULED_TASKS_CLASS } from '../../constants/public-class-names';
 import { DESCRIPTION_MAX_LENGTH } from '../../constants/scheduled-task-create-form';
 import { ScheduledTaskCreateFormProps } from '../../models/scheduled-task-create-form-props';
 import { ScheduledTaskRepeat } from '../../types/scheduled-task-schedule';
+import { findElementLabelledBy } from '../../utils/aria';
 import {
   calendarValueToDayOfWeek,
   dayOfWeekToCalendarValue,
@@ -103,6 +105,10 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
   const descriptionId = useId();
   const instructionsEditorId = useId();
   const dayOfWeekLabelId = useId();
+  const modelErrorId = useId();
+  const dayOfWeekErrorId = useId();
+  const timeErrorId = useId();
+  const promptErrorId = useId();
   const refinementLock = useRef<AbortSignal | undefined>(undefined);
   const guardRefinement = (
     callback?: TextRefinementCallback,
@@ -275,6 +281,28 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
     ? (timeBlurError ?? errors.time)
     : undefined;
 
+  /* The model selector is host-composed; its contract is to carry `modelLabelId` in `aria-labelledby`. */
+  useControlErrorAssociation(
+    () => findElementLabelledBy(modelLabelId),
+    modelErrorId,
+    Boolean(errors.modelId),
+  );
+  useControlErrorAssociation(
+    () => document.getElementById('scheduled-task-day-of-week'),
+    dayOfWeekErrorId,
+    Boolean(errors.dayOfWeek),
+  );
+  useControlErrorAssociation(
+    () => document.getElementById('scheduled-task-time'),
+    timeErrorId,
+    Boolean(timeError),
+  );
+  useControlErrorAssociation(
+    () => document.getElementById(instructionsEditorId),
+    promptErrorId,
+    Boolean(errors.prompt),
+  );
+
   const handleRunAtChange = (value: string) => onFieldChange('runAt', value);
 
   const handleEveryWeeksChange = (next: string | string[]) => {
@@ -428,6 +456,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
               {modelSelector}
               {errors.modelId && (
                 <ErrorText
+                  id={modelErrorId}
                   className={mergeClasses(
                     instructionsErrorClassName,
                     styles.instructionsError,
@@ -493,6 +522,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                       />
                       {errors.dayOfWeek && (
                         <ErrorText
+                          id={dayOfWeekErrorId}
                           className={mergeClasses(
                             instructionsErrorClassName,
                             styles.instructionsError,
@@ -518,6 +548,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                       />
                       {timeError && (
                         <ErrorText
+                          id={timeErrorId}
                           className={mergeClasses(
                             instructionsErrorClassName,
                             styles.instructionsError,
@@ -552,6 +583,9 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                               key={day.value}
                               aria-label={day.fullName}
                               aria-pressed={isSelected}
+                              aria-describedby={
+                                errors.dayOfWeek ? dayOfWeekErrorId : undefined
+                              }
                               variant={
                                 isSelected
                                   ? ButtonVariant.Primary
@@ -571,6 +605,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                       </div>
                       {errors.dayOfWeek && (
                         <ErrorText
+                          id={dayOfWeekErrorId}
                           className={mergeClasses(
                             instructionsErrorClassName,
                             styles.instructionsError,
@@ -756,6 +791,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                 </div>
                 {errors.prompt && (
                   <ErrorText
+                    id={promptErrorId}
                     className={mergeClasses(
                       instructionsErrorClassName,
                       styles.instructionsError,
