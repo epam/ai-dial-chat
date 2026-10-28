@@ -127,16 +127,16 @@ In edit mode the button SHALL render but SHALL be disabled until the Setup repor
 - **THEN** the preview button is rendered in a disabled state rather than omitted
 
 ### Requirement: Save-then-preview orchestration
-Clicking the Preview button SHALL call the Setup handle's `startPreview(metadata.values)` (`QuickAppSetup`'s imperative handle). `startPreview` SHALL trigger the embedded editor's save (`AppEditorIframe.triggerSave()` posts `AppsEditorEvent.TriggerSave` to the iframe) and wait for the resulting `SaveSuccess`/`SaveError` postMessage, then run a follow-up `updateApplication` with the current metadata (`reassertSkillsSupport`, so the backend force-sets `features.skills_supported`) before the save counts as successful. `ApplicationFormEditor` SHALL set `isPreviewing` to `true` only after `startPreview` resolves. A save that receives neither message within `SETUP_SAVE_TIMEOUT_MS` (20 s) SHALL be treated as failed with `appsEditor.error.saveTimeout`.
+Clicking the Preview button SHALL call the Setup handle's `startPreview(metadata.values)` (`QuickAppSetup`'s imperative handle). `startPreview` SHALL trigger the embedded editor's save (`AppEditorIframe.triggerSave()` posts `AppsEditorEvent.TriggerSave` to the iframe, carrying the `general` payload built from the current metadata, as Save does) and wait for the resulting `SaveSuccess`/`SaveError` postMessage. The host makes no follow-up `updateApplication` call: the embedded editor is the single writer. `ApplicationFormEditor` SHALL set `isPreviewing` to `true` only after `startPreview` resolves. A save that receives neither message within `SETUP_SAVE_TIMEOUT_MS` (20 s) SHALL be treated as failed with `appsEditor.error.saveTimeout`.
 
 #### Scenario: Preview save succeeds
-- **WHEN** the user clicks Preview, the iframe posts `AppsEditorEvent.SaveSuccess`, and the follow-up `updateApplication` succeeds
+- **WHEN** the user clicks Preview, the iframe posts `AppsEditorEvent.SaveSuccess`
 - **THEN** the editor does NOT navigate away (unlike a normal Save)
 - **AND** the editor is hidden and the full-page preview (Back to setup header, banner, preview chat) is shown
 - **AND** keyboard focus moves to the "Back to setup" button
 
 #### Scenario: Preview save fails
-- **WHEN** the user clicks Preview and the iframe posts `AppsEditorEvent.SaveError` (or the follow-up update fails, or the save times out)
+- **WHEN** the user clicks Preview and the iframe posts `AppsEditorEvent.SaveError` (or the save times out)
 - **THEN** the editor stays visible on the iframe (does not enter preview)
 - **AND** `QuickAppSetup` shows the error inline as an `ErrorMessageNotification` above the iframe
 - **AND** the Preview button is still shown and enabled once the overlay clears
@@ -150,7 +150,7 @@ Clicking the Preview button SHALL call the Setup handle's `startPreview(metadata
 - **THEN** `QuickAppSetup` ignores it (no navigation, no error, no state change), because its handlers act only on a pending save
 
 ### Requirement: Saving overlay while a save (or preview-save) is in flight
-`ApplicationFormEditor` SHALL set `isSaving` for both a normal Save and the preview toggle's `startPreview`, and SHALL render a blocking overlay whenever it is busy — `isSaving`, or while the edited application or its setup is still loading. While busy, the whole `EntityEditor` (header included) SHALL be made `inert`. For a preview save whose `SaveSuccess` reports `hasChanges: false`, `startPreview` SHALL resolve without awaiting the follow-up `refetchDeployments()`, which remains fire-and-forget. For `hasChanges: true`, `startPreview` SHALL await `refetchDeployments()` before resolving, so the overlay stays up and the preview pane is never revealed with a deployment list that predates the save; a rejected refetch is logged and still lets preview start. For a normal Save, `ApplicationFormEditor` SHALL await `refetchDeployments()` before navigating, regardless of `hasChanges`.
+`ApplicationFormEditor` SHALL set `isSaving` for both a normal Save and the preview toggle's `startPreview`, and SHALL render a blocking overlay whenever it is busy — `isSaving`, or while the edited application or its setup is still loading. While busy, the whole `EntityEditor` (header included) SHALL be made `inert`. For a preview save whose `SaveSuccess` reports `hasChanges: false`, `startPreview` SHALL resolve without awaiting `refetchDeployments()`, which remains fire-and-forget. For `hasChanges: true`, `startPreview` SHALL await `refetchDeployments()` before resolving, so the overlay stays up and the preview pane is never revealed with a deployment list that predates the save; a rejected refetch is logged and still lets preview start. For a normal Save, `ApplicationFormEditor` SHALL await `refetchDeployments()` before navigating, regardless of `hasChanges`.
 
 The overlay SHALL be an `absolute inset-0` `bg-backdrop` layer marked `aria-hidden="true"`, with a `Spinner` and the label inside a centered opaque card (`bg-layer-sunken`, rounded, `shadow-lg`). The label is the definition's `savingOverlay` key while saving (`AppsEditorI18nKeys.SavingOverlayLabel`, `appsEditor.savingOverlay`, "Saving in progress…") and its `loadingOverlay` key while loading (`appsEditor.settingsStep.loadingLabel`). The label SHALL be announced through a separate, always-mounted `sr-only` `<span role="status" aria-live="polite">` that holds the text only while busy.
 
@@ -162,7 +162,7 @@ The overlay SHALL be an `absolute inset-0` `bg-backdrop` layer marked `aria-hidd
 
 #### Scenario: Overlay hidden as soon as SaveSuccess arrives when nothing changed
 - **WHEN** the iframe posts `AppsEditorEvent.SaveSuccess` for a preview request that reports `hasChanges: false`
-- **THEN** once the follow-up `updateApplication` settles the editor switches to the preview pane and hides the overlay
+- **THEN** the editor switches to the preview pane and hides the overlay
 - **AND** this happens whether or not the background `refetchDeployments()` call has resolved yet
 
 #### Scenario: Overlay stays up until the refetch settles when settings changed
@@ -305,7 +305,7 @@ The current preview session SHALL be discarded whenever a setup save reports tha
 
 A setup save (triggered either by Save or by Preview) completes with a `SaveSuccess` postMessage from the embedded Quick Apps editor. That message MAY carry a `hasChanges: boolean` field. See the `quick-app-authoring` spec's "SaveSuccess reports whether persisted data changed" requirement for what the embedded editor SHALL compute and send. `AppEditorIframe` SHALL normalize the field to a strict boolean (`event.data?.hasChanges === true`), so an absent or non-boolean field is treated as `false`.
 
-Whenever a `SaveSuccess` arrives with `hasChanges === true` (and the follow-up `updateApplication` succeeds), the following SHALL happen:
+Whenever a `SaveSuccess` arrives with `hasChanges === true`, the following SHALL happen:
 
 - `QuickAppSetup` SHALL call its `onPreviewReset` prop (part of `ApplicationSetupProps`), at the same point in `save` / `startPreview` where it previously bumped its own counter. In `startPreview` this happens before `refetchDeployments()` is awaited.
 - `ApplicationFormEditor` SHALL respond by bumping the `previewResetKey` it owns and passes as `key` to the definition's `Preview` component.
