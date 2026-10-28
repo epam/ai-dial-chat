@@ -1,5 +1,5 @@
 /*
- * S0 browser baseline (#9219) for the sleigh, gift-wrapping and cat scenes.
+ * S0 browser baseline (#9219) for the penguin-star, gift-wrapping and cat scenes.
  *
  * Runs the real CelebrationProvider through the static Storybook build
  * (`build-storybook`, a dependency of the Nx target) and records what the
@@ -61,13 +61,13 @@ const CYCLES = 20;
 /* Lifetimes and story clocks, from new-year/constants/new-year.ts,
    halloween/constants/halloween.ts and the scenes' own composition files. */
 const SCENES = {
-  sleigh: {
-    story: 'new-year-scenes--sleigh',
-    durationMs: 12000,
-    /* No renderer: the CSS flights start when the layer mounts. */
-    ready: null,
-    playbackMs: { desktop: 10100, mobile: 9250 },
-    readsAnchors: false,
+  'penguin-star': {
+    story: 'new-year-scenes--penguin-star',
+    durationMs: 22500,
+    /* The Lottie renderer or the static penguin fallback. */
+    ready: '[data-new-year-scene="penguin-star"] svg, [data-penguin-static]',
+    playbackMs: { desktop: 20000, mobile: 20000 },
+    readsAnchors: true,
   },
   'gift-wrapping': {
     story: 'new-year-scenes--gift-wrapping',
@@ -667,12 +667,12 @@ test('the static Storybook exposes the three baseline stories', async () => {
 });
 
 test(
-  'the same seed reproduces the sleigh element counts at every capture point',
+  'the same seed reproduces the penguin-star element counts at every capture point',
   { timeout: 120_000 },
   async () => {
     await withBrowser(async (browser, base) => {
       const cell = {
-        scene: 'sleigh',
+        scene: 'penguin-star',
         id: 'determinism',
         viewport: 'desktop',
         dir: 'ltr',

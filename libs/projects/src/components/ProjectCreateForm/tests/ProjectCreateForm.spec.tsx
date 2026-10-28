@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
-import { render, screen, waitFor } from '@testing-library/react';
+import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { ProjectCreateFormProps } from '../../../models/project-create-form-props';
@@ -336,6 +337,31 @@ describe('ProjectCreateForm', () => {
       expect(getFormStatus().textContent).toBe('tickets.csv removed');
     });
 
+    it('renders a stored file as a removable card that feeds the meter', async () => {
+      const storedFile = {
+        id: 'stored:tickets.csv',
+        name: 'tickets.csv',
+        size: 2_097_152,
+        contentType: 'text/csv',
+        type: AttachmentType.File,
+        status: RequestStatus.Idle,
+        isStored: true as const,
+      };
+      const { props } = renderForm({
+        contextFiles: [storedFile],
+        maxTotalBytes: 10_485_760,
+      });
+
+      expect(screen.getByRole('meter').getAttribute('aria-valuenow')).toBe(
+        '2097152',
+      );
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Remove tickets.csv' }),
+      );
+
+      expect(props.onContextFilesChange).toHaveBeenCalledWith([]);
+    });
+
     it('shows the capacity meter only once a file is added', () => {
       const { rerender, props } = renderForm();
       expect(screen.queryByRole('meter')).toBeNull();
@@ -451,6 +477,16 @@ describe('ProjectCreateForm — layout', () => {
       /\b(ml|mr|pl|pr|left|right)-\d|text-(left|right)\b|border-[lr]-/,
     );
     expect(source).not.toMatch(/\b(sm|md|lg|xl):/);
+  });
+
+  it('shows the capacity meter in the Context header with the design label type', () => {
+    renderForm({ contextFiles: stageFiles([makeFile('a.csv', 4)]) });
+
+    const context = screen.getByRole('region', { name: 'Context' });
+    expect(within(context).getByRole('meter')).toBeTruthy();
+    expect(
+      within(context).getByRole('heading', { name: 'Context' }).className,
+    ).toContain('dial-tiny-semi-text');
   });
 
   it('renders every file card as an item of one list', () => {

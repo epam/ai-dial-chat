@@ -41,6 +41,10 @@ const FIELD_ERRORS: Partial<Record<string, ProjectCreateFieldError>> = {
     field: 'context',
     key: ProjectsI18nKeys.CreateErrorFilesRejected,
   },
+  [ProjectCreateErrorCode.UnknownFile]: {
+    field: 'context',
+    key: ProjectsI18nKeys.EditErrorUnknownFile,
+  },
 };
 
 /**

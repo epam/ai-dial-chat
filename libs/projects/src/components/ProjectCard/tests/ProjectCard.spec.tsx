@@ -16,6 +16,7 @@ const renderCard = (overrides: Partial<ProjectCardProps> = {}) =>
         searchQuery=""
         sourceLabel="Organization"
         folderPathLabel="Project location"
+        pinnedLabel="Pinned"
         titleClassName="dial-body-semi-text"
         pathLabelClassName="dial-tiny-text"
         pathLeafClassName="dial-tiny-semi-text"

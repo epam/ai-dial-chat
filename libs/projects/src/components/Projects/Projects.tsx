@@ -33,6 +33,8 @@ export const Projects: FC<ProjectsProps> = ({
   incompleteSources = [],
   onRetry,
   onCreateProject,
+  onOpenProject,
+  getProjectHref,
   searchQuery,
   onSearchQueryChange,
   sortKey,
@@ -54,6 +56,7 @@ export const Projects: FC<ProjectsProps> = ({
     '--pr-subtitle-text': colors?.subtitleText,
     '--pr-sort-text': colors?.sortButtonText,
     '--pr-card-bg': colors?.cardBackground,
+    '--pr-card-hover-bg': colors?.cardHoverBackground,
     '--pr-card-title-text': colors?.cardTitleText,
     '--pr-card-divider': colors?.cardDivider,
     '--pr-path-text': colors?.pathText,
@@ -155,6 +158,9 @@ export const Projects: FC<ProjectsProps> = ({
             searchQuery={trimmedQuery}
             sourceLabel={labels.sourceLabels[project.source]}
             folderPathLabel={labels.folderPathLabel}
+            pinnedLabel={labels.pinnedLabel ?? 'Pinned'}
+            href={getProjectHref?.(project.id)}
+            onOpen={onOpenProject}
             titleClassName={cardTitleClassName}
             pathLabelClassName={pathLabelClassName}
             pathLeafClassName={pathLeafClassName}

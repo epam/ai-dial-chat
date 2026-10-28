@@ -57,7 +57,7 @@ const Bat: FC = () => {
   );
 };
 
-/** Decorative bat fallback, also sharing trajectories with New Year sleighs. */
+/** Decorative bat fallback using the shared flying-character trajectories. */
 const HalloweenNightFlight: FC = () => {
   const flights = useMemo(() => buildHalloweenBatFlight(), []);
   return <FlyingCharacters flights={flights} Character={Bat} />;

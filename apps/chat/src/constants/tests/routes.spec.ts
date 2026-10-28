@@ -3,10 +3,13 @@ import { ROUTES } from '../../types/routes';
 import { SettingsTabs } from '../../types/settings-tabs';
 import {
   getConversationRoute,
+  getProjectEditRoute,
+  getProjectViewRoute,
   getScheduledTaskDetailRoute,
   getScheduledTaskEditRoute,
   getSettingsTabRoute,
   normalizeConversationId,
+  parseProjectRouteParams,
 } from '../routes';
 
 describe('normalizeConversationId', () => {
@@ -141,5 +144,77 @@ describe('getSettingsTabRoute', () => {
     ).pathname.split('/');
 
     expect(decodeURIComponent(segments[segments.length - 1])).toBe(tab);
+  });
+});
+
+describe('getProjectViewRoute', () => {
+  it('encodes each segment of a nested project id', () => {
+    expect(getProjectViewRoute('projects/a1b2c3/marketing/Q4 launch')).toBe(
+      '/projects/view/a1b2c3/marketing/Q4%20launch',
+    );
+  });
+
+  it('does not double-encode an already encoded segment', () => {
+    expect(getProjectViewRoute('projects/a1b2c3/Q4%20launch')).toBe(
+      '/projects/view/a1b2c3/Q4%20launch',
+    );
+  });
+
+  it('ignores the folder-shaped trailing slash DIAL Core may return', () => {
+    expect(getProjectViewRoute('projects/a1b2c3/Q4%20launch/')).toBe(
+      '/projects/view/a1b2c3/Q4%20launch',
+    );
+  });
+
+  it.each([
+    'projects/a1b2c3/../x',
+    'projects/a1b2c3',
+    'projects/a1b2c3/',
+    'skills/a1b2c3/q4',
+    'projects/a1b2c3//q4',
+  ])('falls back to the Projects list for %s', (id) => {
+    expect(getProjectViewRoute(id)).toBe(ROUTES.Projects);
+  });
+});
+
+describe('getProjectEditRoute', () => {
+  it('builds the edit URL of a project', () => {
+    expect(getProjectEditRoute('projects/a1b2c3/q4')).toBe(
+      '/projects/edit/a1b2c3/q4',
+    );
+  });
+
+  it('falls back to the Projects list for an unsafe id', () => {
+    expect(getProjectEditRoute('projects/a1b2c3/../x')).toBe(ROUTES.Projects);
+  });
+});
+
+describe('parseProjectRouteParams', () => {
+  it('rebuilds the project id from the bucket and the decoded splat', () => {
+    expect(
+      parseProjectRouteParams({ bucket: 'a1b2c3', '*': 'marketing/Q4 launch' }),
+    ).toBe('projects/a1b2c3/marketing/Q4 launch');
+  });
+
+  it.each([
+    [{ bucket: 'a1b2c3' }],
+    [{ '*': 'q4' }],
+    [{ bucket: 'a1b2c3', '*': '../x' }],
+    [{ bucket: '..', '*': 'q4' }],
+    [{ bucket: 'a1b2c3', '*': 'q4/' }],
+  ])('returns null for %j', (params) => {
+    expect(parseProjectRouteParams(params)).toBeNull();
+  });
+
+  it('round-trips with getProjectViewRoute', () => {
+    const id = 'projects/a1b2c3/marketing/Q4 launch';
+    const [, , , bucket, ...rest] = getProjectViewRoute(id).split('/');
+
+    expect(
+      parseProjectRouteParams({
+        bucket: decodeURIComponent(bucket),
+        '*': rest.map(decodeURIComponent).join('/'),
+      }),
+    ).toBe(id);
   });
 });

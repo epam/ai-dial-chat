@@ -11,11 +11,11 @@ import {
   type TextRefinementCallback,
 } from '@epam/ai-dial-chat-shared';
 import {
-  ButtonAppearance,
   ButtonDropdown,
   ButtonVariant,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
+  ElementSize,
   ErrorText,
   FileDropzone,
   Input,
@@ -25,7 +25,7 @@ import {
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
 import { LazyMarkdownEditor } from '@epam/ai-dial-ui-kit/editors';
-import { IconArrowNarrowLeft, IconPlus } from '@tabler/icons-react';
+import { IconArrowNarrowLeft } from '@tabler/icons-react';
 /*
  * Only needed once `LazyMarkdownEditor` renders. Importing it here, rather
  * than from the host's entry point, keeps this vendor CSS out of the initial
@@ -64,7 +64,7 @@ const MarkdownEditor = lazy(async () => {
 const ADD_FROM_DEVICE_KEY = 'device';
 const ADD_FROM_FILE_MANAGER_KEY = 'file-manager';
 
-/** Presentational New project form: name, description, instructions and context files. */
+/** Presentational New and Edit project form: name, description, instructions and context files, including stored ones when editing. */
 export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
   values,
   errors,
@@ -238,10 +238,14 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
 
   const { colors, typography } = formStyles ?? {};
   const titleClassName = typography?.titleClassName ?? 'dial-h1-text';
-  const labelClassName = typography?.labelClassName ?? 'dial-body-semi-text';
+  const labelClassName = mergeClasses(
+    typography?.labelClassName ?? 'dial-tiny-semi-text',
+    styles.label,
+  );
   const helperClassName = typography?.helperClassName ?? 'dial-tiny-text';
   const cssVars = buildCssVars({
     '--pcf-helper-text': colors?.helperText,
+    '--pcf-label-text': colors?.labelText,
     '--pcf-meter-track': colors?.meterTrack,
     '--pcf-meter-fill': colors?.meterFill,
   });
@@ -294,7 +298,7 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
       >
         <div
           className={mergeClasses(
-            'mx-auto flex w-full max-w-[996px] min-w-0 flex-col gap-5 py-6',
+            'mx-auto flex w-full max-w-[1040px] min-w-0 flex-col gap-5 py-6',
             styles.formColumn,
           )}
         >
@@ -357,7 +361,7 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
             refinement={instructionsRefinement}
             disabled={isSubmitting || isRefining}
           >
-            <div className="flex flex-1 flex-col gap-1">
+            <div className="flex flex-1 flex-col gap-2">
               {!onRefineInstructions && (
                 <Label
                   htmlFor={instructionsId}
@@ -381,7 +385,7 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
                       instructionsRefinement.reset();
                       onFieldChange('instructions', value);
                     }}
-                    height={360}
+                    height={176}
                     theme={markdownEditorTheme}
                     placeholder={labels.instructionsPlaceholder}
                   />
@@ -392,26 +396,28 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
 
           <section
             aria-labelledby={contextLabelId}
-            className="flex flex-col gap-3"
+            className="flex flex-col gap-2"
           >
-            <div className="flex min-w-0 items-center justify-between gap-2">
+            <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
               <h2 id={contextLabelId} className={labelClassName}>
                 {labels.contextLabel}
               </h2>
-              <ButtonDropdown
-                items={addItems}
-                label={labels.addLabel}
-                variant={ButtonVariant.Primary}
-                appearance={ButtonAppearance.Ghost}
-                disabled={isSubmitting}
-                iconBefore={
-                  <IconPlus
-                    size={DIAL_ICON_SIZE.SM}
-                    stroke={DIAL_KIT_ICON_STROKE}
-                    aria-hidden
-                  />
-                }
-              />
+              <div className="flex min-w-0 items-center gap-4">
+                <ProjectCapacityMeter
+                  usedBytes={usedBytes}
+                  maxBytes={maxTotalBytes}
+                  ariaLabel={labels.capacityMeterLabel}
+                  formatLabel={labels.capacityLabel}
+                  textClassName={helperClassName}
+                />
+                <ButtonDropdown
+                  items={addItems}
+                  label={labels.addLabel}
+                  variant={ButtonVariant.Neutral}
+                  size={ElementSize.Small}
+                  disabled={isSubmitting}
+                />
+              </div>
             </div>
             <input
               ref={deviceInputRef}
@@ -449,7 +455,7 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
               </ul>
             )}
             {contextFiles.length > 0 && (
-              <ul className="flex min-w-0 flex-wrap gap-2">
+              <ul className="flex min-w-0 flex-wrap gap-2 pt-1">
                 {contextFiles.map((file) => (
                   <li key={file.id} className="min-w-0">
                     <AttachmentCard
@@ -463,13 +469,6 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
                 ))}
               </ul>
             )}
-            <ProjectCapacityMeter
-              usedBytes={usedBytes}
-              maxBytes={maxTotalBytes}
-              ariaLabel={labels.capacityMeterLabel}
-              formatLabel={labels.capacityLabel}
-              textClassName={helperClassName}
-            />
           </section>
         </div>
       </BuilderFormContainer>

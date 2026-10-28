@@ -227,6 +227,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   const {
     conversations: items,
     isLoading,
+    isUpdatingTitles,
     pinConversation,
     markConversationViewed,
     deleteConversation,
@@ -1349,6 +1350,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       emptyLabel: t(ConversationPanelI18nKeys.Empty),
       emptyDescription: t(ConversationPanelI18nKeys.EmptyDescription),
       noResultsLabel: t(ConversationPanelI18nKeys.NoResults),
+      updatingTitlesLabel: t(ConversationPanelI18nKeys.UpdatingTitles),
       noResultsDescription: t(BasicI18nKeys.NoResultsDescription),
       tabEmptyLabels: {
         [FilterTab.MyChats]: {
@@ -1377,6 +1379,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     <ConversationListSection
       conversations={conversations}
       isLoading={isLoading}
+      isUpdatingTitles={isUpdatingTitles}
+      preserveActiveSearchResult
       activeConversationId={panelActiveConversationId}
       requestedFilter={requestedFilter}
       isFilterHidden={isConversationsFilterHidden}

@@ -13,3 +13,46 @@
 .path {
   color: var(--pr-path-text, var(--text-secondary, #57647a));
 }
+
+.pin {
+  color: var(--pr-path-text, var(--text-secondary, #57647a));
+}
+
+/* Stretched link: the name's `::after` covers the card, so the whole card is
+ * the click target while the link stays its single tab stop. */
+.link {
+  color: inherit;
+  text-decoration: none;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+  }
+
+  &:focus-visible {
+    outline: none;
+  }
+}
+
+/* Painted above the link's `::after`, so the truncation tooltips of the name
+ * and the folder path still receive the pointer. */
+.aboveLink {
+  position: relative;
+  z-index: 1;
+}
+
+.interactive {
+  cursor: pointer;
+
+  &:hover,
+  &:has(.link:focus-visible) {
+    background: var(--pr-card-hover-bg, var(--bg-layer-hover, #eef1f7));
+  }
+
+  &:has(.link:focus-visible) {
+    outline: 2px solid var(--stroke-focus, #1d4ed8);
+    outline-offset: 2px;
+  }
+}

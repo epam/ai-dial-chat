@@ -4,9 +4,24 @@ import {
 } from '@epam/ai-dial-chat-hooks';
 import { triggerBlobDownload } from '@epam/ai-dial-chat-shared';
 
+/* RFC 5987 `filename*=UTF-8''…` carries the exact name; it wins over the
+ * plain `filename`, which may be an ASCII-only fallback. */
+const EXTENDED_FILENAME_RE = /filename\*\s*=\s*UTF-8''([^;\n]+)/i;
+
 const extractFilename = (contentDisposition: string | null): string | null => {
   if (!contentDisposition) return null;
-  const match = /filename[^;=\n]*=(?:(\\?['"])(.*?)\1|([^;\n]*))/i.exec(
+  const extended = EXTENDED_FILENAME_RE.exec(contentDisposition)?.[1];
+  if (extended) {
+    try {
+      const decoded = decodeURIComponent(extended.trim())
+        .replace(/[/\\]/g, '')
+        .trim();
+      if (decoded) return decoded;
+    } catch {
+      /* A malformed escape falls through to the plain `filename`. */
+    }
+  }
+  const match = /filename(?!\*)[^;=\n]*=(?:(\\?['"])(.*?)\1|([^;\n]*))/i.exec(
     contentDisposition,
   );
   const raw = match?.[2] ?? match?.[3];

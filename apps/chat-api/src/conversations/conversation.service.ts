@@ -61,6 +61,9 @@ export class ConversationService {
   listConversations = this.listingService.listConversations.bind(
     this.listingService,
   );
+  getConversationTitles = this.listingService.getConversationTitles.bind(
+    this.listingService,
+  );
   getConversationMetadata = this.listingService.getConversationMetadata.bind(
     this.listingService,
   );

@@ -3279,7 +3279,7 @@
     },
     "/api/v1/conversations/list": {
       "get": {
-        "description": "Returns a flat conversation list for the authenticated user. Without limit or nextToken, follows all personal and public DIAL Core metadata pages with recursive=true, merges shared conversations, and sorts the complete result by latest activity. Explicit pagination parameters request one page per bucket.",
+        "description": "Returns a flat conversation list for the authenticated user. Without limit or nextToken, follows all personal and public DIAL Core metadata pages with recursive=true, merges shared conversations, and sorts the complete result by latest activity. Explicit pagination parameters request one page per bucket. Never reads conversation bodies; unresolved display titles are marked isTitlePending for background resolution.",
         "operationId": "listConversations",
         "parameters": [
           {
@@ -3348,6 +3348,52 @@
           }
         },
         "summary": "List conversations",
+        "tags": ["conversations"]
+      }
+    },
+    "/api/v1/conversations/titles": {
+      "post": {
+        "description": "Returns cached or freshly read display titles for up to 25 full conversation resource URLs. Uses the current session permissions. Individual missing, forbidden, or unavailable resources are omitted; conversation messages are never returned.",
+        "operationId": "getConversationTitles",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConversationTitlesBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved conversation titles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationTitlesResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid IDs or batch size; expected 1–25 full conversation resource URLs"
+          },
+          "401": {
+            "description": "Not authenticated or DIAL Core rejected the session token"
+          },
+          "403": {
+            "description": "Invalid CSRF token"
+          },
+          "502": {
+            "description": "No titles resolved because DIAL Core returned upstream errors"
+          },
+          "503": {
+            "description": "No titles resolved because DIAL Core is unavailable or the bounded read queue is full"
+          }
+        },
+        "summary": "Resolve conversation display titles",
         "tags": ["conversations"]
       }
     },
@@ -7619,7 +7665,14 @@
             "schema": {
               "example": "toolset",
               "type": "string",
-              "enum": ["model", "toolset", "application", "prompt", "skill"]
+              "enum": [
+                "model",
+                "toolset",
+                "application",
+                "prompt",
+                "skill",
+                "project"
+              ]
             }
           },
           {
@@ -7702,7 +7755,14 @@
             "schema": {
               "example": "toolset",
               "type": "string",
-              "enum": ["model", "toolset", "application", "prompt", "skill"]
+              "enum": [
+                "model",
+                "toolset",
+                "application",
+                "prompt",
+                "skill",
+                "project"
+              ]
             }
           },
           {
@@ -7785,7 +7845,14 @@
             "schema": {
               "example": "toolset",
               "type": "string",
-              "enum": ["model", "toolset", "application", "prompt", "skill"]
+              "enum": [
+                "model",
+                "toolset",
+                "application",
+                "prompt",
+                "skill",
+                "project"
+              ]
             }
           },
           {
@@ -7858,7 +7925,14 @@
             "schema": {
               "example": "toolset",
               "type": "string",
-              "enum": ["model", "toolset", "application", "prompt", "skill"]
+              "enum": [
+                "model",
+                "toolset",
+                "application",
+                "prompt",
+                "skill",
+                "project"
+              ]
             }
           },
           {
@@ -9315,6 +9389,430 @@
           }
         },
         "summary": "Create a project",
+        "tags": ["projects"]
+      }
+    },
+    "/api/v1/projects/{id}": {
+      "get": {
+        "description": "Returns one project's name, description, instructions, context files with their sizes, and the ETag of the version they were read from. The BFF reads the project archive from DIAL Core, because project metadata carries no file sizes; `canEdit` is true only for a project in the caller's own bucket.",
+        "operationId": "getProject",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The DIAL project id `projects/{bucket}/{path}`, URL-encoded into one path segment.",
+            "schema": {
+              "example": "projects%2Fa1b2c3%2Fmarketing%2Fq4-launch",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved the project",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectDetailsDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The project id is invalid"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The projectsEnabled feature is not enabled for this user, or DIAL Core denied access"
+          },
+          "404": {
+            "description": "The project does not exist"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "The project archive exceeds the read limit (project-too-large)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectCreateErrorDto"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error or an invalid archive"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Get a project",
+        "tags": ["projects"]
+      },
+      "put": {
+        "description": "Saves the name, description, instructions and context of a project in one conditional DIAL Core write: the BFF rebuilds PROJECT.md, keeps every stored context file not listed in `removedFileNames`, adds the `files` parts and writes the whole project with `If-Match`. A different name then moves the project in its folder and keeps the caller's pin. Only a project in the caller's own bucket can be saved. Every domain rejection carries a ProjectCreateErrorCode.",
+        "operationId": "updateProject",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The DIAL project id `projects/{bucket}/{path}`, URL-encoded into one path segment.",
+            "schema": {
+              "example": "projects%2Fa1b2c3%2Fmarketing%2Fq4-launch",
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "The single `etag` of the project version the caller read. A stale value yields 409 project-changed; a missing one, `*` or a comma-separated list, 428.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "Q4 launch"
+                  },
+                  "description": {
+                    "type": "string",
+                    "example": "Bundles the Q4 support tickets and survey results."
+                  },
+                  "instructions": {
+                    "type": "string",
+                    "example": "## Approach\nExplain your reasoning step by step."
+                  },
+                  "fileNames": {
+                    "type": "string",
+                    "example": "[\"retro.pdf\"]"
+                  },
+                  "removedFileNames": {
+                    "type": "string",
+                    "example": "[\"survey.xlsx\"]"
+                  },
+                  "files": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The project was saved, and moved when renamed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateProjectResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid id, name, file names, file type or file count, or unknown-file / duplicate-file-name",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectCreateErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The projectsEnabled feature is not enabled for this user, the project is not in the caller's own bucket, or DIAL Core denied access"
+          },
+          "404": {
+            "description": "The project does not exist"
+          },
+          "409": {
+            "description": "The project changed since it was read, or a rename could not complete after the content was saved under the old name (project-changed); or the new name is taken (name-taken)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectCreateErrorDto"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "A file or the context in total is too large (file-too-large, capacity-exceeded), or the project or its stored PROJECT.md exceeds the read limit (project-too-large)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectCreateErrorDto"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "428": {
+            "description": "If-Match is missing, `*` or a list of tags (if-match-required)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectCreateErrorDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Save a project edit",
+        "tags": ["projects"]
+      },
+      "delete": {
+        "description": "Deletes the project only if it is still the version named by `If-Match`, then removes it from the caller's pins. Only a project in the caller's own bucket can be deleted.",
+        "operationId": "deleteProject",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The DIAL project id `projects/{bucket}/{path}`, URL-encoded into one path segment.",
+            "schema": {
+              "example": "projects%2Fa1b2c3%2Fmarketing%2Fq4-launch",
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "description": "The single `etag` of the project version the caller read. A stale value yields 409 project-changed; a missing one, `*` or a comma-separated list, 428.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The project was deleted"
+          },
+          "400": {
+            "description": "The project id is invalid"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The projectsEnabled feature is not enabled for this user, the project is not in the caller's own bucket, or DIAL Core denied access"
+          },
+          "404": {
+            "description": "The project does not exist"
+          },
+          "409": {
+            "description": "The project changed since it was read (project-changed)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectCreateErrorDto"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "428": {
+            "description": "If-Match is missing, `*` or a list of tags (if-match-required)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectCreateErrorDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Delete a project",
+        "tags": ["projects"]
+      }
+    },
+    "/api/v1/projects/{id}/archive": {
+      "get": {
+        "description": "Streams DIAL Core's archive of the whole project (`PROJECT.md` and `context/`) as an attachment.",
+        "operationId": "downloadProject",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The DIAL project id `projects/{bucket}/{path}`, URL-encoded into one path segment.",
+            "schema": {
+              "example": "projects%2Fa1b2c3%2Fmarketing%2Fq4-launch",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Streamed application/zip archive",
+            "content": {
+              "application/zip": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The project id is invalid"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The projectsEnabled feature is not enabled for this user, or DIAL Core denied access"
+          },
+          "404": {
+            "description": "The project does not exist"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Download a project as a ZIP archive",
+        "tags": ["projects"]
+      }
+    },
+    "/api/v1/projects/{id}/files/{fileName}": {
+      "get": {
+        "description": "Streams one file directly under the project `context/` folder as an attachment with `X-Content-Type-Options: nosniff`.",
+        "operationId": "downloadProjectFile",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The DIAL project id `projects/{bucket}/{path}`, URL-encoded into one path segment.",
+            "schema": {
+              "example": "projects%2Fa1b2c3%2Fmarketing%2Fq4-launch",
+              "type": "string"
+            }
+          },
+          {
+            "name": "fileName",
+            "required": true,
+            "in": "path",
+            "description": "Name of a file directly under the project `context/` folder.",
+            "schema": {
+              "example": "tickets.csv",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Streamed file content",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The project id or the file name is invalid"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The projectsEnabled feature is not enabled for this user, or DIAL Core denied access"
+          },
+          "404": {
+            "description": "The project or the file does not exist"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Download one context file of a project",
         "tags": ["projects"]
       }
     },
@@ -11583,6 +12081,20 @@
         },
         "required": ["pinnedIds"]
       },
+      "ProjectsConfigDto": {
+        "type": "object",
+        "properties": {
+          "pinnedIds": {
+            "description": "Pinned project identifiers (`projects/{bucket}/{path}`).",
+            "example": ["projects/default-bucket/q4-launch"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["pinnedIds"]
+      },
       "ToolsetsConfigDto": {
         "type": "object",
         "properties": {
@@ -11654,6 +12166,9 @@
           "conversations": {
             "$ref": "#/components/schemas/ConversationsConfigDto"
           },
+          "projects": {
+            "$ref": "#/components/schemas/ProjectsConfigDto"
+          },
           "toolsets": {
             "$ref": "#/components/schemas/ToolsetsConfigDto"
           },
@@ -11670,6 +12185,7 @@
         "required": [
           "version",
           "conversations",
+          "projects",
           "toolsets",
           "deployments",
           "prompts",
@@ -11681,12 +12197,12 @@
         "properties": {
           "path": {
             "type": "string",
-            "description": "Full DIAL Core resource URL of the conversation to pin or unpin (matches `id` in `ConversationListItemDto`).",
+            "description": "Full DIAL Core resource URL of the conversation or project to pin or unpin (matches `id` in `ConversationListItemDto` or `ProjectDto`). A `projects/` id is stored under `projects.pinnedIds`.",
             "example": "conversations/default-bucket/gpt-4__My chat__cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8"
           },
           "isPinned": {
             "type": "boolean",
-            "description": "Pass `true` to pin the conversation, `false` to unpin.",
+            "description": "Pass `true` to pin the conversation or project, `false` to unpin.",
             "example": true
           }
         },
@@ -13619,8 +14135,13 @@
           },
           "title": {
             "type": "string",
-            "description": "Human-readable conversation title (the resource `name` from DIAL Core).",
+            "description": "Cached display title, or the filename-derived title while background title resolution is pending.",
             "example": "My chat"
+          },
+          "isTitlePending": {
+            "type": "boolean",
+            "description": "True when the title has not been resolved from the stored conversation yet, or its cached value expired. Resolve it with POST /conversations/titles.",
+            "example": true
           },
           "createdAt": {
             "type": "number",
@@ -13697,6 +14218,50 @@
             "type": "string",
             "description": "Cursor for the next page. Present only when more results exist. Pass as `nextToken` in the next request.",
             "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9"
+          }
+        },
+        "required": ["items"]
+      },
+      "ConversationTitlesBodyDto": {
+        "type": "object",
+        "properties": {
+          "ids": {
+            "description": "Full DIAL Core conversation resource URLs. Duplicate IDs are read once. Missing or inaccessible conversations are omitted.",
+            "minItems": 1,
+            "maxItems": 25,
+            "example": ["conversations/default-bucket/gpt-4o__My%20chat"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["ids"]
+      },
+      "ConversationTitleDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The exact conversation resource URL supplied in the request.",
+            "example": "conversations/default-bucket/gpt-4o__My%20chat"
+          },
+          "title": {
+            "type": "string",
+            "description": "Current display title without conversation messages.",
+            "example": "My renamed chat"
+          }
+        },
+        "required": ["id", "title"]
+      },
+      "ConversationTitlesResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConversationTitleDto"
+            }
           }
         },
         "required": ["items"]
@@ -15642,7 +16207,14 @@
           },
           "entityType": {
             "type": "string",
-            "enum": ["model", "toolset", "application", "prompt", "skill"],
+            "enum": [
+              "model",
+              "toolset",
+              "application",
+              "prompt",
+              "skill",
+              "project"
+            ],
             "example": "toolset"
           },
           "folderPath": {
@@ -15696,7 +16268,14 @@
           },
           "entityType": {
             "type": "string",
-            "enum": ["model", "toolset", "application", "prompt", "skill"],
+            "enum": [
+              "model",
+              "toolset",
+              "application",
+              "prompt",
+              "skill",
+              "project"
+            ],
             "example": "toolset"
           },
           "folderPath": {
@@ -15746,7 +16325,14 @@
           },
           "entityType": {
             "type": "string",
-            "enum": ["model", "toolset", "application", "prompt", "skill"],
+            "enum": [
+              "model",
+              "toolset",
+              "application",
+              "prompt",
+              "skill",
+              "project"
+            ],
             "example": "toolset"
           },
           "folderPath": {
@@ -16380,17 +16966,32 @@
         },
         "required": ["items", "incompleteSources"]
       },
-      "CreateProjectResponseDto": {
+      "ProjectContextFileDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "tickets.csv"
+          },
+          "size": {
+            "type": "number",
+            "example": 2048,
+            "description": "Size in bytes."
+          }
+        },
+        "required": ["name", "size"]
+      },
+      "ProjectDetailsDto": {
         "type": "object",
         "properties": {
           "id": {
             "type": "string",
-            "example": "projects/a1b2c3/Q4 launch",
+            "example": "projects/a1b2c3/marketing/q4-launch",
             "description": "DIAL Core resource id, `projects/{bucket}/{path}` without a trailing slash."
           },
           "name": {
             "type": "string",
-            "example": "Q4 launch"
+            "example": "q4-launch"
           },
           "bucket": {
             "type": "string",
@@ -16398,16 +16999,76 @@
           },
           "path": {
             "type": "string",
-            "example": "Q4 launch",
+            "example": "marketing/q4-launch",
             "description": "Path of the project within its bucket."
+          },
+          "parentPath": {
+            "type": "string",
+            "example": "marketing",
+            "description": "Grouping folder path the project sits in, when nested."
+          },
+          "source": {
+            "example": "personal",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProjectSource"
+              }
+            ]
+          },
+          "author": {
+            "type": "string",
+            "example": "jane.doe"
+          },
+          "createdAt": {
+            "type": "number",
+            "example": 1790000000000,
+            "description": "Creation time, epoch milliseconds."
+          },
+          "updatedAt": {
+            "type": "number",
+            "example": 1791234567000,
+            "description": "Last update time, epoch milliseconds."
+          },
+          "description": {
+            "type": "string",
+            "example": "Bundles the Q4 support tickets and survey results.",
+            "description": "Plain-text description from `PROJECT.md`; empty when absent."
+          },
+          "instructions": {
+            "type": "string",
+            "example": "## Approach\nExplain your reasoning step by step.",
+            "description": "Markdown instructions from `PROJECT.md`; empty when absent."
+          },
+          "contextFiles": {
+            "description": "Files directly under `context/`, sorted by name.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectContextFileDto"
+            }
           },
           "etag": {
             "type": "string",
-            "description": "Aggregate ETag of the created project, when DIAL Core returns one.",
-            "example": "\"9f2c0e1d\""
+            "example": "\"9f2c\"",
+            "description": "Aggregate ETag of the version these details were read from; send it as `If-Match` on update and delete."
+          },
+          "canEdit": {
+            "type": "boolean",
+            "example": true,
+            "description": "Whether the caller may edit, delete, share and publish the project — `true` only in the caller's own bucket."
           }
         },
-        "required": ["id", "name", "bucket", "path"]
+        "required": [
+          "id",
+          "name",
+          "bucket",
+          "path",
+          "source",
+          "description",
+          "instructions",
+          "contextFiles",
+          "etag",
+          "canEdit"
+        ]
       },
       "ProjectCreateErrorCode": {
         "type": "string",
@@ -16419,7 +17080,11 @@
           "unsupported-file-type",
           "file-too-large",
           "capacity-exceeded",
-          "too-many-files"
+          "too-many-files",
+          "project-changed",
+          "if-match-required",
+          "project-too-large",
+          "unknown-file"
         ]
       },
       "ProjectCreateErrorDto": {
@@ -16460,6 +17125,68 @@
           }
         },
         "required": ["statusCode", "message", "error"]
+      },
+      "UpdateProjectResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "projects/a1b2c3/Q4 launch",
+            "description": "The project id after the save — a new id when it was renamed."
+          },
+          "name": {
+            "type": "string",
+            "example": "Q4 launch"
+          },
+          "bucket": {
+            "type": "string",
+            "example": "a1b2c3"
+          },
+          "path": {
+            "type": "string",
+            "example": "Q4 launch"
+          },
+          "etag": {
+            "type": "string",
+            "example": "\"b71e\"",
+            "description": "Aggregate ETag of the saved version. Absent when the project was renamed and its new ETag could not be read back; the save itself committed, so reload the project for a fresh one."
+          },
+          "isPinned": {
+            "type": "boolean",
+            "example": true,
+            "description": "Whether the project is in the caller's pins after the save."
+          }
+        },
+        "required": ["id", "name", "bucket", "path", "isPinned"]
+      },
+      "CreateProjectResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "projects/a1b2c3/Q4 launch",
+            "description": "DIAL Core resource id, `projects/{bucket}/{path}` without a trailing slash."
+          },
+          "name": {
+            "type": "string",
+            "example": "Q4 launch"
+          },
+          "bucket": {
+            "type": "string",
+            "example": "a1b2c3"
+          },
+          "path": {
+            "type": "string",
+            "example": "Q4 launch",
+            "description": "Path of the project within its bucket."
+          },
+          "etag": {
+            "type": "string",
+            "description": "Aggregate ETag of the created project, when DIAL Core returns one.",
+            "example": "\"9f2c0e1d\""
+          }
+        },
+        "required": ["id", "name", "bucket", "path"]
       },
       "OfflineCredentialsConnectDto": {
         "type": "object",

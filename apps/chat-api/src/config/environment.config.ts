@@ -1046,7 +1046,8 @@ export class EnvironmentVariables {
    * published to the browser as `projects.*` client config. Keep them at or
    * below DIAL Core's `complexResource.types.projects` limits (built-in:
    * 5 MiB per file, 64 MiB total). `validate` also requires
-   * TOTAL >= FILE.
+   * TOTAL >= FILE, and TOTAL <= the 64 MiB project read limit minus the
+   * 1 MiB PROJECT.md limit (63 MiB), so every project stays editable.
    */
   @IsOptional()
   @Transform(({ value }) => parseInt(value, 10))

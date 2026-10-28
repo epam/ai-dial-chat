@@ -8,11 +8,11 @@ import {
  * Every resource kind this validator recognises already carries its owning
  * bucket as part of the DIAL Core resource path itself
  * (`applications/{bucket}/{path}`, `conversations/{bucket}/{path}`,
- * `prompts/{bucket}/{path}`, ...), so this is how the discard, revoke, and
+ * `prompts/{bucket}/{path}`, `projects/{bucket}/{path}`, ...), so this is how the discard, revoke, and
  * recipients-count endpoints recognise a well-formed itemId for those kinds.
  */
 const CATALOG_RESOURCE_PATH_PATTERN =
-  /^(?:applications|toolsets|conversations|skills|prompts)\/[^/\s]+\/[^/\r\n][^\r\n]*(?![\s\S])/;
+  /^(?:applications|toolsets|conversations|skills|prompts|projects)\/[^/\s]+\/[^/\r\n][^\r\n]*(?![\s\S])/;
 
 /** Validates `itemId` against `CATALOG_RESOURCE_PATH_PATTERN`. */
 export const IsCatalogResourcePath = (
@@ -32,7 +32,7 @@ export const IsCatalogResourcePath = (
           );
         },
         defaultMessage() {
-          return 'itemId must identify an application, toolset, skill, conversation, or prompt resource with a bucket and item path';
+          return 'itemId must identify an application, toolset, skill, conversation, prompt, or project resource with a bucket and item path';
         },
       },
     });

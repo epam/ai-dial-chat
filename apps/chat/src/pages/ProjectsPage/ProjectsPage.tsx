@@ -8,12 +8,14 @@ import { memo, useCallback, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
+import { getProjectViewRoute } from '../../constants/routes';
 import {
   BasicI18nKeys,
   ButtonsI18nKeys,
   ProjectsI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
+import { useUserConfig } from '../../context/UserConfigContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useProjects } from '../../hooks/projects/useProjects';
 import { ROUTES } from '../../types/routes';
@@ -27,10 +29,21 @@ const ProjectsPage: FC = () => {
   const isEnabled = useFeatureFlag('projectsEnabled');
   const { projects, incompleteSources, isLoading, hasError, retry } =
     useProjects(isEnabled);
+  const { pinnedProjectIds } = useUserConfig();
+  const projectItems = useMemo(() => {
+    const pinned = new Set(pinnedProjectIds);
+    return projects.map((project) =>
+      pinned.has(project.id) ? { ...project, isPinned: true } : project,
+    );
+  }, [projects, pinnedProjectIds]);
 
   const navigate = useNavigate();
   const handleCreateProject = useCallback(
     () => navigate(ROUTES.ProjectCreate),
+    [navigate],
+  );
+  const handleOpenProject = useCallback(
+    (id: string) => navigate(getProjectViewRoute(id)),
     [navigate],
   );
 
@@ -74,6 +87,7 @@ const ProjectsPage: FC = () => {
         t(ProjectsI18nKeys.ResultCount, { count }),
       folderPathLabel: t(ProjectsI18nKeys.CardFolderPath),
       createProjectLabel: t(ProjectsI18nKeys.PageNewProject),
+      pinnedLabel: t(ProjectsI18nKeys.CardPinned),
     }),
     [t],
   );
@@ -88,12 +102,14 @@ const ProjectsPage: FC = () => {
 
   return (
     <Projects
-      projects={projects}
+      projects={projectItems}
       isLoading={isLoading}
       hasError={hasError}
       incompleteSources={incompleteSources}
       onRetry={retry}
       onCreateProject={handleCreateProject}
+      onOpenProject={handleOpenProject}
+      getProjectHref={getProjectViewRoute}
       searchQuery={searchQuery}
       onSearchQueryChange={setSearchQuery}
       sortKey={sortKey}

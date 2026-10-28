@@ -19,6 +19,7 @@ import { useUser } from '../../context/auth/UserContext';
 import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
 import { useSkills } from '../../context/SkillsContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
+import { findSkillByUrl } from '../../utils/skills';
 
 const CatalogView = lazy(async () => {
   const module = await import('../CatalogView/CatalogView');
@@ -140,19 +141,14 @@ export const useSkillSelectorOverlay = ({
   const { seedSkillMentions } = overlay;
 
   /*
-   * `allSkills`/name resolution mirrors the lib hook's own internal
-   * `skillByUrl` lookup — duplicated here (not exported by the lib) because
-   * this is the one call site with a URL but no `SkillListingEntry` in hand.
+   * Name resolution mirrors the lib hook's own internal `skillByUrl` lookup —
+   * the lib does not export it, so URL-only call sites (this one and the URL
+   * preselection) share the app's `findSkillByUrl` instead.
    */
   const selectSkillByUrl = useCallback(
     (url: string) => {
-      const allSkills = [
-        ...skills,
-        ...(sharedWithMe ?? []),
-        ...(publicSkills ?? []),
-      ];
       const name =
-        allSkills.find((skill) => skill.url === url)?.name ??
+        findSkillByUrl({ skills, sharedWithMe, publicSkills }, url)?.name ??
         getSkillFallbackName(url);
       seedSkillMentions(`/${name} `, [{ url }]);
     },

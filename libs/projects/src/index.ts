@@ -14,6 +14,16 @@ export type {
 export { ProjectSource } from './types/project-source';
 export { ProjectsSortKey } from './types/projects-sort-key';
 export { ProjectCreateForm } from './components/ProjectCreateForm/ProjectCreateForm';
+export { ProjectView } from './components/ProjectView/ProjectView';
+export type {
+  ProjectContextFileItem,
+  ProjectViewColors,
+  ProjectViewLabels,
+  ProjectViewModel,
+  ProjectViewProps,
+  ProjectViewStyles,
+  ProjectViewTypography,
+} from './models/project-view-props';
 export type {
   ProjectCreateFormColors,
   ProjectCreateFormErrors,
@@ -23,11 +33,17 @@ export type {
   ProjectCreateFormTypography,
   ProjectCreateFormValues,
 } from './models/project-create-form-props';
+export type {
+  ProjectContextFile,
+  StoredProjectContextFile,
+} from './models/project-context-file';
 export { ContextFileRejection } from './types/context-file-rejection';
 export { ProjectNameError } from './types/project-name-error';
 export {
   checkContextFiles,
+  filterContextFileItems,
   getContextFilesSize,
+  isStoredContextFile,
   type ContextFileCheck,
   type ContextFileLimits,
   type RejectedContextFile,

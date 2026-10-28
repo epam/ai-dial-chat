@@ -561,6 +561,24 @@ describe('validate', () => {
       ).toThrow(/PROJECT_CONTEXT_TOTAL_MAX_BYTES/);
     });
 
+    it('accepts a total limit at the project read limit minus the manifest limit', () => {
+      expect(
+        validate({
+          ...baseConfig,
+          PROJECT_CONTEXT_TOTAL_MAX_BYTES: '66060288',
+        }).PROJECT_CONTEXT_TOTAL_MAX_BYTES,
+      ).toBe(66_060_288);
+    });
+
+    it('fails fast at boot when the total limit leaves no room in the project read limit', () => {
+      expect(() =>
+        validate({
+          ...baseConfig,
+          PROJECT_CONTEXT_TOTAL_MAX_BYTES: '66060289',
+        }),
+      ).toThrow(/PROJECT_CONTEXT_TOTAL_MAX_BYTES must be at most 66060288/);
+    });
+
     it('fails fast at boot when a byte limit is not positive', () => {
       expect(() =>
         validate({ ...baseConfig, PROJECT_CONTEXT_FILE_MAX_BYTES: '0' }),

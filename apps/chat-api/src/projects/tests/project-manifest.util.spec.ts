@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { parse as parseYaml } from 'yaml';
 import {
   buildProjectManifest,
+  parseProjectManifest,
   PROJECT_CONTEXT_FOLDER,
   PROJECT_MANIFEST_FILE,
 } from '../utils/project-manifest.util';
@@ -63,5 +64,119 @@ describe('buildProjectManifest', () => {
     );
 
     expect(frontmatter).toEqual({ name: 'p', description });
+  });
+});
+
+describe('parseProjectManifest', () => {
+  it('round-trips the description and instructions buildProjectManifest wrote', () => {
+    const description = 'a: b\n---\n# not a comment';
+    const instructions = '## Steps\n\n---\n1. Go\n';
+
+    expect(
+      parseProjectManifest(
+        buildProjectManifest({ name: 'Q4', description, instructions }),
+      ),
+    ).toEqual({ description, instructions, isMalformed: false });
+  });
+
+  it('reads an empty description and empty instructions for a name-only manifest', () => {
+    expect(
+      parseProjectManifest(
+        buildProjectManifest({ name: 'p', description: '', instructions: '' }),
+      ),
+    ).toEqual({ description: '', instructions: '', isMalformed: false });
+  });
+
+  it('keeps the whole text as instructions when there is no frontmatter', () => {
+    const text = '# Written by another client\nNo fence here.';
+
+    expect(parseProjectManifest(text)).toEqual({
+      description: '',
+      instructions: text,
+      isMalformed: true,
+    });
+  });
+
+  it('keeps the whole text as instructions when the frontmatter is invalid YAML', () => {
+    const text = '---\ndescription: [unclosed\n---\n\nBody';
+
+    expect(parseProjectManifest(text)).toEqual({
+      description: '',
+      instructions: text,
+      isMalformed: true,
+    });
+  });
+
+  it('treats a non-object frontmatter as malformed', () => {
+    const text = '---\n- a\n- b\n---\n\nBody';
+
+    expect(parseProjectManifest(text).isMalformed).toBe(true);
+    expect(parseProjectManifest(text).instructions).toBe(text);
+  });
+
+  it('ignores a non-string description', () => {
+    expect(
+      parseProjectManifest('---\ndescription: 42\n---\n\nBody').description,
+    ).toBe('');
+  });
+
+  it('accepts CRLF line endings', () => {
+    expect(
+      parseProjectManifest('---\r\ndescription: d\r\n---\r\n\r\nBody'),
+    ).toEqual({ description: 'd', instructions: 'Body', isMalformed: false });
+  });
+
+  it('returns frontmatter keys other than name and description as extras', () => {
+    expect(
+      parseProjectManifest(
+        '---\nname: q4\ndescription: d\nowner: research\ntags:\n  - a\n---\n\nBody',
+      ),
+    ).toEqual({
+      description: 'd',
+      instructions: 'Body',
+      isMalformed: false,
+      extraFrontmatter: { owner: 'research', tags: ['a'] },
+    });
+  });
+});
+
+describe('buildProjectManifest with extra frontmatter', () => {
+  it('re-emits extra keys after name and description', () => {
+    expect(
+      buildProjectManifest({
+        name: 'q4',
+        description: 'd',
+        instructions: 'Body',
+        extraFrontmatter: { owner: 'research' },
+      }),
+    ).toBe('---\nname: q4\ndescription: d\nowner: research\n---\n\nBody');
+  });
+
+  it('never lets an extra key override name or description', () => {
+    const { frontmatter } = splitManifest(
+      buildProjectManifest({
+        name: 'q4',
+        description: 'd',
+        instructions: '',
+        extraFrontmatter: { name: 'other', description: 'other' },
+      }),
+    );
+
+    expect(frontmatter).toEqual({ name: 'q4', description: 'd' });
+  });
+
+  it('round-trips a stored manifest without losing unknown keys', () => {
+    const stored =
+      '---\nname: q4\ndescription: old\nowner: research\n---\n\nSteps';
+    const parsed = parseProjectManifest(stored);
+
+    expect(
+      buildProjectManifest({
+        name: 'q4',
+        description: 'new',
+        instructions: parsed.instructions,
+        extraFrontmatter: parsed.extraFrontmatter,
+      }),
+    ).toBe('---\nname: q4\ndescription: new\nowner: research\n---\n\nSteps');
   });
 });
