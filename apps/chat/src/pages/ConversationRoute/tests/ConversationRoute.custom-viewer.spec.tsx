@@ -94,6 +94,13 @@ vi.mock('../../../components/SkillSelector/useSkillSelectorOverlay', () => ({
     recognizeMentionsInInsertion: vi.fn(),
   }),
 }));
+vi.mock(
+  '../../../context/SkillsContext',
+  async () => import('../../../context/tests/skills-context-mock'),
+);
+vi.mock('../../../hooks/useUiFeature', () => ({
+  useUiFeature: () => true,
+}));
 vi.mock('../../../context/ConversationsContext');
 vi.mock('../../../context/DeploymentsContext');
 vi.mock('../../../context/IsolatedModelViewContext', () => ({
