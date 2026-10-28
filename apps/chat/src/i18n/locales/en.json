@@ -475,6 +475,7 @@
     "startedYesterday": "Yesterday {{time}}"
   },
   "conversationPanel": {
+    "updatingTitles": "Updating conversation names…",
     "chatsAndTasks": "Chats and tasks",
     "search": {
       "open": "Search chats",

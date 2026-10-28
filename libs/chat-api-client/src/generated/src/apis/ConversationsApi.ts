@@ -21,6 +21,8 @@ import type {
   ConversationMetadataDto,
   ConversationModelHiddenErrorDto,
   ConversationResponseDto,
+  ConversationTitlesBodyDto,
+  ConversationTitlesResponseDto,
   CreateConversationDto,
   DeleteAllConversationsBodyDto,
   DeleteConversationsBodyDto,
@@ -78,6 +80,10 @@ export interface GetConversationMetadataRequest {
 
 export interface GetConversationPublishHistoryRequest {
   path: string;
+}
+
+export interface GetConversationTitlesRequest {
+  conversationTitlesBodyDto: ConversationTitlesBodyDto;
 }
 
 export interface ListConversationsRequest {
@@ -735,7 +741,68 @@ export class ConversationsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Returns a flat conversation list for the authenticated user. Without limit or nextToken, follows all personal and public DIAL Core metadata pages with recursive=true, merges shared conversations, and sorts the complete result by latest activity. Explicit pagination parameters request one page per bucket.
+   * Returns cached or freshly read display titles for up to 25 full conversation resource URLs. Uses the current session permissions. Individual missing, forbidden, or unavailable resources are omitted; conversation messages are never returned.
+   * Resolve conversation display titles
+   */
+  async getConversationTitlesRaw(
+    requestParameters: GetConversationTitlesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ConversationTitlesResponseDto>> {
+    if (requestParameters['conversationTitlesBodyDto'] == null) {
+      throw new runtime.RequiredError(
+        'conversationTitlesBodyDto',
+        'Required parameter "conversationTitlesBodyDto" was null or undefined when calling getConversationTitles().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/conversations/titles`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['conversationTitlesBodyDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ConversationTitlesResponseDto>(response);
+  }
+
+  /**
+   * Returns cached or freshly read display titles for up to 25 full conversation resource URLs. Uses the current session permissions. Individual missing, forbidden, or unavailable resources are omitted; conversation messages are never returned.
+   * Resolve conversation display titles
+   */
+  async getConversationTitles(
+    requestParameters: GetConversationTitlesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ConversationTitlesResponseDto> {
+    const response = await this.getConversationTitlesRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Returns a flat conversation list for the authenticated user. Without limit or nextToken, follows all personal and public DIAL Core metadata pages with recursive=true, merges shared conversations, and sorts the complete result by latest activity. Explicit pagination parameters request one page per bucket. Never reads conversation bodies; unresolved display titles are marked isTitlePending for background resolution.
    * List conversations
    */
   async listConversationsRaw(
@@ -779,7 +846,7 @@ export class ConversationsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Returns a flat conversation list for the authenticated user. Without limit or nextToken, follows all personal and public DIAL Core metadata pages with recursive=true, merges shared conversations, and sorts the complete result by latest activity. Explicit pagination parameters request one page per bucket.
+   * Returns a flat conversation list for the authenticated user. Without limit or nextToken, follows all personal and public DIAL Core metadata pages with recursive=true, merges shared conversations, and sorts the complete result by latest activity. Explicit pagination parameters request one page per bucket. Never reads conversation bodies; unresolved display titles are marked isTitlePending for background resolution.
    * List conversations
    */
   async listConversations(

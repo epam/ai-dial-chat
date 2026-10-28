@@ -8,12 +8,10 @@ import { DialClientService } from '../../dial/dial-client.service';
 import { ConversationMetadataDto } from '../../openapi/openapi-response.dto';
 import { ScheduledTaskUnreadService } from '../../scheduled-task-unread/scheduled-task-unread.service';
 import { UserConfigService } from '../../user-config/user-config.service';
-import { LIST_DISPLAY_NAME_READ_BATCH_SIZE } from '../constants/conversation.constants';
 import {
   ConversationListItemDto,
   ConversationListResponseDto,
 } from '../dto/conversation-list.dto';
-import { ConversationPersistenceService } from '../persistence/conversation-persistence.service';
 import type {
   MetadataItem,
   MetadataResult,
@@ -28,9 +26,9 @@ import {
   resolveListDisplayTitle,
 } from '../utils/conversation.utils';
 import { parseScheduledTaskConversationPath } from '../utils/parse-scheduled-task-conversation-path';
+import { ConversationTitleCacheService } from './conversation-title-cache.service';
+import { ConversationTitlesService } from './conversation-titles.service';
 
-/** Leading segment of every DIAL Core conversation resource id. */
-const CONVERSATION_RESOURCE_TYPE = 'conversations';
 const FULL_CONVERSATION_LIST_PAGE_LIMIT = 1000;
 
 /** Latest time the current user accepted a share of this resource, or 0. */
@@ -51,7 +49,8 @@ export class ConversationListingService {
     private readonly dialClient: DialClientService,
     private readonly userConfigService: UserConfigService,
     private readonly scheduledTaskUnreadService: ScheduledTaskUnreadService,
-    private readonly persistenceService: ConversationPersistenceService,
+    private readonly titleCache: ConversationTitleCacheService,
+    private readonly titlesService: ConversationTitlesService,
   ) {}
 
   private async listBucketMetadata(
@@ -317,14 +316,13 @@ export class ConversationListingService {
               })
           : [];
 
-      const items = await this.enrichListItemsWithStoredDisplayNames(
+      const items = this.withCachedDisplayNames(
         [...userItems, ...publicItems, ...sharedItems]
           .sort((a, b) => b.updatedAt - a.updatedAt)
           .filter(
             (item) => item.id !== HIDDEN_FILE && !item.id.includes(HIDDEN_FILE),
           ),
         token,
-        bucket,
       );
 
       return {
@@ -383,81 +381,19 @@ export class ConversationListingService {
     }
   }
 
-  /*
-   * Resolves the `{bucket}/{subPath}` storage path of a list item so its body
-   * is read from the bucket the item actually lives in: the caller's own
-   * bucket for owned items, `public` for published copies, another user's
-   * bucket for shared ones. DIAL Core returns ids as
-   * `conversations/{bucket}/{subPath}`; dropping only the resource-type
-   * segment keeps the bucket, which `resolveConversationLocation` (inside
-   * `getStoredConversation`) reads back off the path. An id that carries no
-   * bucket falls back to the session bucket there.
-   */
-  private getListItemStoragePath(itemId: string): string {
-    const segments = safeDecodeURIComponent(itemId).split('/').filter(Boolean);
-    if (segments[0] === CONVERSATION_RESOURCE_TYPE) {
-      segments.shift();
-    }
-    return segments.join('/');
+  getConversationTitles(ids: string[], token: string) {
+    return this.titlesService.getConversationTitles(ids, token);
   }
 
-  /*
-   * A manual rename (and LLM naming) writes the new title into the
-   * conversation body's `name` at the unchanged storage path, so a
-   * filename-derived title can be stale for any item — including a published
-   * copy, whose public-bucket filename is taken from the source filename at
-   * publish time and never follows a later rename. Reading the body back is
-   * the only way to recover the authoritative name. Every item is read, in
-   * bounded batches: an item left with its filename title would be renamed by
-   * the client the moment it is opened (`getConversation` resolves the same
-   * way), dropping it out of a search that matched the old title (#9336).
-   */
-  private async enrichListItemsWithStoredDisplayNames(
+  private withCachedDisplayNames(
     items: ConversationListItemDto[],
     token: string,
-    bucket: string,
-  ): Promise<ConversationListItemDto[]> {
-    if (items.length === 0) {
-      return items;
-    }
-
-    const displayNameById = new Map<string, string>();
-
-    for (
-      let index = 0;
-      index < items.length;
-      index += LIST_DISPLAY_NAME_READ_BATCH_SIZE
-    ) {
-      const batch = items.slice(
-        index,
-        index + LIST_DISPLAY_NAME_READ_BATCH_SIZE,
-      );
-      await Promise.all(
-        batch.map(async (item) => {
-          try {
-            const conversation =
-              await this.persistenceService.getStoredConversation(
-                this.getListItemStoragePath(item.id),
-                token,
-                bucket,
-              );
-            const displayName = resolveListDisplayTitle(
-              item.title,
-              conversation.conversation,
-            );
-            if (displayName) {
-              displayNameById.set(item.id, displayName);
-            }
-          } catch {
-            // Keep the filename-derived title when the body cannot be read.
-          }
-        }),
-      );
-    }
-
+  ): ConversationListItemDto[] {
     return items.map((item) => {
-      const displayName = displayNameById.get(item.id);
-      return displayName ? { ...item, title: displayName } : item;
+      const summary = this.titleCache.get(token, item.id, item.updatedAt);
+      return summary
+        ? { ...item, title: resolveListDisplayTitle(item.title, summary) }
+        : { ...item, isTitlePending: true };
     });
   }
 }
