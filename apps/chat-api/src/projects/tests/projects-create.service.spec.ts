@@ -13,8 +13,7 @@ const PDF = Buffer.from('%PDF-1.7 body');
 const XLSX = Buffer.from([0x50, 0x4b, 0x03, 0x04, 0x01]);
 const CSV = Buffer.from('a,b\n1,2\n');
 
-const file = (buffer: Buffer, mimetype = 'application/octet-stream') =>
-  ({ buffer, mimetype }) satisfies UploadedContextFile;
+const file = (buffer: Buffer) => ({ buffer }) satisfies UploadedContextFile;
 
 const makeService = (config: Record<string, unknown> = {}) =>
   new ProjectsCreateService({
@@ -133,6 +132,21 @@ describe('ProjectsCreateService', () => {
         ]),
       ).not.toThrow();
     });
+
+    it('ignores the client-supplied MIME type of an operator-configured extension', async () => {
+      const multerPart = {
+        buffer: Buffer.from('<p>hi</p>'),
+        mimetype: 'text/html',
+      };
+      const result = makeService({
+        PROJECT_CONTEXT_ALLOWED_EXTENSIONS: ['md'],
+      }).validateAndBuild({ name: 'p', fileNames: '["notes.md"]' }, [
+        multerPart,
+      ]);
+      const parts = await readParts(result.formData);
+
+      expect(parts[1].type).toBe('application/octet-stream');
+    });
   });
 
   describe('name', () => {
@@ -194,6 +208,19 @@ describe('ProjectsCreateService', () => {
 
     it('rejects more than the maximum number of context files', () => {
       const names = Array.from({ length: 101 }, (_, i) => `f${i}.csv`);
+      expectRejection(
+        () =>
+          makeService().validateAndBuild(
+            { name: 'p', fileNames: JSON.stringify(names) },
+            names.map(() => file(CSV)),
+          ),
+        400,
+        ProjectCreateErrorCode.TooManyFiles,
+      );
+    });
+
+    it('rejects an oversized batch before checking any file name', () => {
+      const names = Array.from({ length: 101 }, () => '../a.csv');
       expectRejection(
         () =>
           makeService().validateAndBuild(

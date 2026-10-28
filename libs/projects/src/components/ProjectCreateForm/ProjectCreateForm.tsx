@@ -36,6 +36,7 @@ import '@uiw/react-md-editor/markdown-editor.css';
 import {
   lazy,
   Suspense,
+  useCallback,
   useEffect,
   useId,
   useMemo,
@@ -100,32 +101,41 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
   /* At most one refinement may be pending per form, as in the scheduled-task
    * form: a second Refine is rejected as an abort while the first runs. */
   const refinementLock = useRef<AbortSignal | undefined>(undefined);
-  const guardRefinement = (
-    callback?: TextRefinementCallback,
-  ): TextRefinementCallback | undefined =>
-    callback
-      ? async (value, signal) => {
-          if (refinementLock.current && !refinementLock.current.aborted)
-            throw new DOMException('Busy', 'AbortError');
-          refinementLock.current = signal;
-          try {
-            return await callback(value, signal);
-          } finally {
-            if (refinementLock.current === signal)
-              refinementLock.current = undefined;
+  const guardRefinement = useCallback(
+    (callback?: TextRefinementCallback): TextRefinementCallback | undefined =>
+      callback
+        ? async (value, signal) => {
+            if (refinementLock.current && !refinementLock.current.aborted)
+              throw new DOMException('Busy', 'AbortError');
+            refinementLock.current = signal;
+            try {
+              return await callback(value, signal);
+            } finally {
+              if (refinementLock.current === signal)
+                refinementLock.current = undefined;
+            }
           }
-        }
-      : undefined;
+        : undefined,
+    [],
+  );
+  const guardedRefineDescription = useMemo(
+    () => guardRefinement(onRefineDescription),
+    [guardRefinement, onRefineDescription],
+  );
+  const guardedRefineInstructions = useMemo(
+    () => guardRefinement(onRefineInstructions),
+    [guardRefinement, onRefineInstructions],
+  );
   const descriptionRefinement = useTextRefinement({
     value: values.description,
     onChange: (value) => onFieldChange('description', value),
-    onRefine: guardRefinement(onRefineDescription),
+    onRefine: guardedRefineDescription,
     disabled: isSubmitting,
   });
   const instructionsRefinement = useTextRefinement({
     value: values.instructions,
     onChange: (value) => onFieldChange('instructions', value),
-    onRefine: guardRefinement(onRefineInstructions),
+    onRefine: guardedRefineInstructions,
     disabled: isSubmitting,
   });
   const isRefining =

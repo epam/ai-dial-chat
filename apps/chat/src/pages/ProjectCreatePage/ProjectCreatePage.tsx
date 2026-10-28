@@ -141,6 +141,10 @@ const ProjectCreatePage: FC = () => {
     t,
   ]);
 
+  const handleFormSubmit = useCallback(() => {
+    void handleSubmit();
+  }, [handleSubmit]);
+
   if (appConfigStatus !== UserConfigStatus.Ready) {
     return <RouteFallback />;
   }
@@ -167,7 +171,7 @@ const ProjectCreatePage: FC = () => {
         onRefineInstructions={onRefineInstructions}
         onBack={handleLeave}
         onCancel={handleLeave}
-        onSubmit={() => void handleSubmit()}
+        onSubmit={handleFormSubmit}
         isSubmitting={isSubmitting}
         labels={labels}
         markdownEditorTheme={markdownEditorTheme}

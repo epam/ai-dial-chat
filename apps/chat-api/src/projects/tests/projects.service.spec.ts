@@ -474,7 +474,7 @@ describe('ProjectsService', () => {
       await service.createProject(
         USER_BUCKET,
         { name: 'Q4', fileNames: '["tickets.csv"]' },
-        [{ buffer: Buffer.from('a,b'), mimetype: 'text/csv' }],
+        [{ buffer: Buffer.from('a,b') }],
         ACCESS_TOKEN,
       );
 
@@ -604,7 +604,7 @@ describe('ProjectsService', () => {
           description: 'private description',
           fileNames: '["clients.csv"]',
         },
-        [{ buffer: Buffer.from('x,y'), mimetype: 'text/csv' }],
+        [{ buffer: Buffer.from('x,y') }],
         ACCESS_TOKEN,
       );
       await service

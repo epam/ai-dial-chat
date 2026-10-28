@@ -21,7 +21,6 @@ import {
 
 export interface UploadedContextFile {
   buffer: Buffer;
-  mimetype: string;
 }
 
 export interface ProjectCreateInput {
@@ -40,7 +39,9 @@ export interface ProjectCreatePackage {
 const CSV_SNIFF_BYTES = 8192;
 
 /* Content signatures for the built-in types. Any other operator-configured
- * extension is checked by extension only. */
+ * extension is checked by extension only. CSV has no magic number, so its
+ * check only rejects binary content (a NUL byte in the first 8 KiB); any
+ * text-like buffer passes. */
 const SIGNATURE_CHECKS: Record<string, (buffer: Buffer) => boolean> = {
   pdf: (buffer) => buffer.subarray(0, 5).toString('latin1') === '%PDF-',
   xlsx: (buffer) =>
@@ -131,6 +132,12 @@ export class ProjectsCreateService {
   }
 
   private validateFileNames(fileNames: string[]): void {
+    if (fileNames.length > PROJECT_CONTEXT_MAX_FILES) {
+      throw projectBadRequest(
+        ProjectCreateErrorCode.TooManyFiles,
+        `A project may have at most ${PROJECT_CONTEXT_MAX_FILES} context files`,
+      );
+    }
     const seen = new Set<string>();
     for (const fileName of fileNames) {
       if (!isValidDialEntityName(fileName)) {
@@ -148,12 +155,6 @@ export class ProjectsCreateService {
         );
       }
       seen.add(fileName);
-    }
-    if (fileNames.length > PROJECT_CONTEXT_MAX_FILES) {
-      throw projectBadRequest(
-        ProjectCreateErrorCode.TooManyFiles,
-        `A project may have at most ${PROJECT_CONTEXT_MAX_FILES} context files`,
-      );
     }
   }
 
@@ -229,9 +230,10 @@ export class ProjectsCreateService {
       formData.append(
         'file',
         new Blob([files[index].buffer], {
+          /* The part's own Content-Type is client-controlled, so an
+           * operator-added extension is stored as opaque bytes. */
           type:
-            CONTENT_TYPES[getExtension(fileName)] ??
-            (files[index].mimetype || 'application/octet-stream'),
+            CONTENT_TYPES[getExtension(fileName)] ?? 'application/octet-stream',
         }),
         `${PROJECT_CONTEXT_FOLDER}/${fileName}`,
       );
