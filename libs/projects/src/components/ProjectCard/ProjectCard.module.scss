@@ -1,17 +1,15 @@
 .card {
   background: var(--pr-card-bg, var(--bg-layer-raised, #fcfcfc));
-  border-color: var(--pr-card-border, var(--stroke-tertiary, #e0e6f0));
 }
 
 .title {
   color: var(--pr-card-title-text, var(--text-primary, #161b2d));
 }
 
-.badge {
-  background: var(--pr-badge-bg, var(--bg-layer-sunken, #eef1f7));
-  color: var(--pr-badge-text, var(--text-primary, #161b2d));
+.footer {
+  border-top: 1px solid var(--pr-card-divider, var(--stroke-tertiary, #e0e6f0));
 }
 
-.meta {
-  color: var(--pr-meta-text, var(--text-secondary, #57647a));
+.path {
+  color: var(--pr-path-text, var(--text-secondary, #57647a));
 }

@@ -9210,6 +9210,112 @@
         },
         "summary": "List projects",
         "tags": ["projects"]
+      },
+      "post": {
+        "description": "Creates a project at the root of the session user's bucket in one atomic, create-only DIAL Core call. The BFF writes PROJECT.md (YAML frontmatter with name and description, instructions as the body) and each context file under context/. Name, file names, types, per-file size, total size and file count are validated first; every domain rejection carries a ProjectCreateErrorCode.",
+        "operationId": "createProject",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "Q4 launch"
+                  },
+                  "description": {
+                    "type": "string",
+                    "example": "Bundles the Q4 support tickets and survey results."
+                  },
+                  "instructions": {
+                    "type": "string",
+                    "example": "## Approach\nExplain your reasoning step by step."
+                  },
+                  "fileNames": {
+                    "type": "string",
+                    "example": "[\"tickets.csv\",\"survey.xlsx\"]"
+                  },
+                  "files": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The project was created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateProjectResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid name, file names, file type or file count, or an invalid or unknown field",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectCreateErrorDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The projectsEnabled feature is not enabled for this user, or DIAL Core denied access"
+          },
+          "404": {
+            "description": "DIAL Core resource not found"
+          },
+          "409": {
+            "description": "A project with this name already exists (code name-taken)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectCreateErrorDto"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "A context file or the context files in total are too large (file-too-large, capacity-exceeded)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectCreateErrorDto"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Create a project",
+        "tags": ["projects"]
       }
     },
     "/api/v1/offline-credentials": {
@@ -10180,6 +10286,24 @@
             "description": "Operator default for the seasonal-celebrations switch, applied to users who have not saved a choice of their own; a saved choice overrides it. Sourced from UI_EVENT_ENABLED_BY_DEFAULT; true unless it is false, 0 or no. Has no visible effect while activeEventId is null.",
             "example": true
           },
+          "projectContextFileMaxBytes": {
+            "type": "number",
+            "description": "Maximum size in bytes of one project context file. Sourced from PROJECT_CONTEXT_FILE_MAX_BYTES, which POST /api/v1/projects enforces.",
+            "example": 1048576
+          },
+          "projectContextTotalMaxBytes": {
+            "type": "number",
+            "description": "Maximum combined size in bytes of a project's context files. Sourced from PROJECT_CONTEXT_TOTAL_MAX_BYTES, which POST /api/v1/projects enforces.",
+            "example": 10485760
+          },
+          "projectContextAllowedExtensions": {
+            "description": "Lower-case file extensions, without a dot, accepted as project context files. Sourced from PROJECT_CONTEXT_ALLOWED_EXTENSIONS, which POST /api/v1/projects enforces.",
+            "example": ["csv", "pdf", "xlsx"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "catalogCreationPermissions": {
             "description": "The caller's resolved catalog creation permissions, evaluated from the server-only CATALOG_CREATION_ROLES and the session roles. Independent of enabledUiFeatures, which it never filters. Never carries role names or the raw policy.",
             "allOf": [
@@ -10207,6 +10331,9 @@
           "maxAttachmentFileSizeBytes",
           "usageLimitsWarningThresholdPercent",
           "celebrationsEnabledByDefault",
+          "projectContextFileMaxBytes",
+          "projectContextTotalMaxBytes",
+          "projectContextAllowedExtensions",
           "catalogCreationPermissions"
         ]
       },
@@ -16253,6 +16380,87 @@
         },
         "required": ["items", "incompleteSources"]
       },
+      "CreateProjectResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "projects/a1b2c3/Q4 launch",
+            "description": "DIAL Core resource id, `projects/{bucket}/{path}` without a trailing slash."
+          },
+          "name": {
+            "type": "string",
+            "example": "Q4 launch"
+          },
+          "bucket": {
+            "type": "string",
+            "example": "a1b2c3"
+          },
+          "path": {
+            "type": "string",
+            "example": "Q4 launch",
+            "description": "Path of the project within its bucket."
+          },
+          "etag": {
+            "type": "string",
+            "description": "Aggregate ETag of the created project, when DIAL Core returns one.",
+            "example": "\"9f2c0e1d\""
+          }
+        },
+        "required": ["id", "name", "bucket", "path"]
+      },
+      "ProjectCreateErrorCode": {
+        "type": "string",
+        "enum": [
+          "invalid-name",
+          "name-taken",
+          "invalid-file-name",
+          "duplicate-file-name",
+          "unsupported-file-type",
+          "file-too-large",
+          "capacity-exceeded",
+          "too-many-files"
+        ]
+      },
+      "ProjectCreateErrorDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 409
+          },
+          "message": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          "error": {
+            "type": "string",
+            "example": "Conflict"
+          },
+          "code": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProjectCreateErrorCode"
+              }
+            ]
+          },
+          "field": {
+            "type": "string",
+            "example": "name",
+            "description": "`name`, or the name of the rejected context file."
+          }
+        },
+        "required": ["statusCode", "message", "error"]
+      },
       "OfflineCredentialsConnectDto": {
         "type": "object",
         "properties": {
@@ -16330,7 +16538,9 @@
           "application-description",
           "toolset-description",
           "prompt-description",
-          "prompt-instructions"
+          "prompt-instructions",
+          "project-description",
+          "project-instructions"
         ],
         "description": "Server-owned rewriting purpose"
       },
@@ -16350,7 +16560,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 32000,
-            "description": "Exact nonblank draft. Unicode code point limits: skill Description 4000, task Description 500, application/toolset/prompt Description 2000, skill/task/prompt Instructions 32000.",
+            "description": "Exact nonblank draft. Unicode code point limits: skill/project Description 4000, task Description 500, application/toolset/prompt Description 2000, skill/task/prompt/project Instructions 32000.",
             "example": "Use this skill to explain project documentation."
           }
         },

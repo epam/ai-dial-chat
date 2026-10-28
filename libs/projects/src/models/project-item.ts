@@ -6,8 +6,10 @@ export interface ProjectItem {
   id: string;
   /** Display name, matched by search and highlighted. */
   name: string;
-  /** Where the project comes from; selects the source badge label. */
+  /** Where the project comes from; its label is the first segment of the card's folder path. */
   source: ProjectSource;
-  /** Last-updated time in epoch milliseconds; the card omits its date line when unset. */
+  /** `/`-separated grouping folders the project sits in, shown after the source in the folder path. */
+  parentPath?: string;
+  /** Last-updated time in epoch milliseconds, used by the date sort orders. */
   updatedAt?: number;
 }

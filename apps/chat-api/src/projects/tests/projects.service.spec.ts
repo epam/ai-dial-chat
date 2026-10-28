@@ -5,13 +5,19 @@ import {
   Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import type { ConfigService } from '@nestjs/config';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { EnvironmentVariables } from '../../config/environment.config';
 import { PUBLIC_BUCKET } from '../../constants/dial.constants';
 import type { DialClientService } from '../../dial/dial-client.service';
+import { ProjectsCreateService } from '../create/projects-create.service';
 import { ProjectSource } from '../dto/project-source.enum';
 import { ProjectsService } from '../projects.service';
 
 const USER_BUCKET = 'a1b2c3';
+const config = {
+  get: () => undefined,
+} as unknown as ConfigService<EnvironmentVariables>;
 const ACCESS_TOKEN = 'access-token';
 
 const project = (bucket: string, name: string, extra = {}) => ({
@@ -73,7 +79,10 @@ const makeService = ({
     }),
   };
   const dialClient = { client } as unknown as DialClientService;
-  return { service: new ProjectsService(dialClient), client };
+  return {
+    service: new ProjectsService(dialClient, new ProjectsCreateService(config)),
+    client,
+  };
 };
 
 const callsFor = (
@@ -395,5 +404,219 @@ describe('ProjectsService', () => {
     expect(warn).toHaveBeenCalledWith(
       'getSharedResources (PROJECT) failed (TimeoutError)',
     );
+  });
+
+  describe('createProject', () => {
+    const created = (etag?: string) => ({
+      error: undefined,
+      response: {
+        status: 200,
+        headers: new Headers(etag ? { etag } : {}),
+      },
+    });
+
+    const makeCreateService = (
+      result: unknown = created('"e1"'),
+    ): {
+      service: ProjectsService;
+      upload: ReturnType<typeof vi.fn>;
+    } => {
+      const upload = vi.fn(async () => {
+        if (result instanceof Error) throw result;
+        return result;
+      });
+      const dialClient = {
+        client: { uploadProjectFolder: upload },
+      } as unknown as DialClientService;
+      return {
+        service: new ProjectsService(
+          dialClient,
+          new ProjectsCreateService(config),
+        ),
+        upload,
+      };
+    };
+
+    const uploadInit = (upload: ReturnType<typeof vi.fn>) =>
+      upload.mock.calls[0][2] as {
+        headers: Record<string, string>;
+        body: FormData;
+        signal: AbortSignal;
+      };
+
+    it('creates a name-only project with one PROJECT.md part', async () => {
+      const { service, upload } = makeCreateService();
+
+      const result = await service.createProject(
+        USER_BUCKET,
+        { name: 'Handbook' },
+        [],
+        ACCESS_TOKEN,
+      );
+
+      expect(result).toEqual({
+        id: `projects/${USER_BUCKET}/Handbook`,
+        name: 'Handbook',
+        bucket: USER_BUCKET,
+        path: 'Handbook',
+        etag: '"e1"',
+      });
+      expect(upload).toHaveBeenCalledOnce();
+      expect(upload.mock.calls[0][0]).toBe(USER_BUCKET);
+      expect(upload.mock.calls[0][1]).toBe('Handbook');
+      const parts = uploadInit(upload).body.getAll('file') as File[];
+      expect(parts.map((part) => part.name)).toEqual(['PROJECT.md']);
+    });
+
+    it('sends every context file in the same single call', async () => {
+      const { service, upload } = makeCreateService();
+
+      await service.createProject(
+        USER_BUCKET,
+        { name: 'Q4', fileNames: '["tickets.csv"]' },
+        [{ buffer: Buffer.from('a,b'), mimetype: 'text/csv' }],
+        ACCESS_TOKEN,
+      );
+
+      expect(upload).toHaveBeenCalledOnce();
+      const parts = uploadInit(upload).body.getAll('file') as File[];
+      expect(parts.map((part) => part.name)).toEqual([
+        'PROJECT.md',
+        'context/tickets.csv',
+      ]);
+      expect(await parts[1].text()).toBe('a,b');
+    });
+
+    it('sends the create-only header and no If-Match', async () => {
+      const { service, upload } = makeCreateService();
+
+      await service.createProject(
+        USER_BUCKET,
+        { name: 'Handbook' },
+        [],
+        ACCESS_TOKEN,
+      );
+
+      const { headers } = uploadInit(upload);
+      expect(headers['If-None-Match']).toBe('*');
+      expect(headers['If-Match']).toBeUndefined();
+      expect(headers.Authorization).toBe(`Bearer ${ACCESS_TOKEN}`);
+    });
+
+    it('percent-encodes a Unicode name for the Core path', async () => {
+      const { service, upload } = makeCreateService();
+
+      const result = await service.createProject(
+        USER_BUCKET,
+        { name: 'Отчёт Q4' },
+        [],
+        ACCESS_TOKEN,
+      );
+
+      expect(upload.mock.calls[0][1]).toBe(encodeURIComponent('Отчёт Q4'));
+      expect(result.name).toBe('Отчёт Q4');
+    });
+
+    it('aborts the upstream call when the client disconnects', async () => {
+      const { service, upload } = makeCreateService();
+      const disconnect = new AbortController();
+
+      await service.createProject(
+        USER_BUCKET,
+        { name: 'Handbook' },
+        [],
+        ACCESS_TOKEN,
+        disconnect.signal,
+      );
+      disconnect.abort();
+
+      expect(uploadInit(upload).signal.aborted).toBe(true);
+    });
+
+    it('maps Core 412 to a typed 409 name-taken conflict', async () => {
+      const { service } = makeCreateService({
+        error: {},
+        response: { status: 412, headers: new Headers() },
+      });
+
+      const error = await service
+        .createProject(USER_BUCKET, { name: 'Handbook' }, [], ACCESS_TOKEN)
+        .catch((err: HttpException) => err);
+
+      expect((error as HttpException).getStatus()).toBe(409);
+      expect((error as HttpException).getResponse()).toEqual({
+        statusCode: 409,
+        error: 'Conflict',
+        code: 'name-taken',
+        field: 'name',
+        message: 'A project with this name already exists',
+      });
+    });
+
+    it('maps a Core server error to 502', async () => {
+      const { service } = makeCreateService({
+        error: { message: 'boom' },
+        response: { status: 500, headers: new Headers() },
+      });
+
+      await expect(
+        service.createProject(
+          USER_BUCKET,
+          { name: 'Handbook' },
+          [],
+          ACCESS_TOKEN,
+        ),
+      ).rejects.toBeInstanceOf(BadGatewayException);
+    });
+
+    it('maps a network failure to 503', async () => {
+      const { service } = makeCreateService(new TypeError('fetch failed'));
+
+      await expect(
+        service.createProject(
+          USER_BUCKET,
+          { name: 'Handbook' },
+          [],
+          ACCESS_TOKEN,
+        ),
+      ).rejects.toBeInstanceOf(ServiceUnavailableException);
+    });
+
+    it('rejects an invalid name before calling Core', async () => {
+      const { service, upload } = makeCreateService();
+
+      await expect(
+        service.createProject(USER_BUCKET, { name: '../x' }, [], ACCESS_TOKEN),
+      ).rejects.toMatchObject({ response: { code: 'invalid-name' } });
+      expect(upload).not.toHaveBeenCalled();
+    });
+
+    it('never logs the project name or content', async () => {
+      const log = vi
+        .spyOn(Logger.prototype, 'log')
+        .mockImplementation(() => undefined);
+      const { service } = makeCreateService();
+
+      await service.createProject(
+        USER_BUCKET,
+        {
+          name: 'Secret plan',
+          description: 'private description',
+          fileNames: '["clients.csv"]',
+        },
+        [{ buffer: Buffer.from('x,y'), mimetype: 'text/csv' }],
+        ACCESS_TOKEN,
+      );
+      await service
+        .createProject(USER_BUCKET, { name: '../Secret' }, [], ACCESS_TOKEN)
+        .catch(() => undefined);
+
+      const logged = [...log.mock.calls, ...warn.mock.calls]
+        .flat()
+        .map(String)
+        .join('\n');
+      expect(logged).toContain('files=1, bytes=3');
+      expect(logged).not.toMatch(/Secret|private|clients|access-token/);
+    });
   });
 });

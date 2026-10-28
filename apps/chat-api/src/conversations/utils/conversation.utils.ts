@@ -1,4 +1,8 @@
 import { StringUtils } from '../../common/utils/string-utils';
+import {
+  DIAL_ENTITY_NAME_FORBIDDEN_CHARS_RE,
+  DIAL_ENTITY_NAME_MAX_BYTES,
+} from '../../common/validators/dial-entity-name.validator';
 import { PUBLIC_BUCKET } from '../../constants/dial.constants';
 import type { ConversationResponseDto } from '../../openapi/openapi-response.dto';
 import {
@@ -7,29 +11,6 @@ import {
 } from '../constants/conversation.constants';
 import type { CompoundNextToken } from '../types/conversation.types';
 
-/*
- * Strips characters unsafe in DIAL Core resource names. Three groups:
- *
- *   1. DIAL Core's own reject list for a resource name -- `:;,=/{}%&\"` plus
- *      the backslash. It must stay in sync with `NOT_ALLOWED_SYMBOLS` in
- *      `@epam/ai-dial-ui-kit` and with
- *      `PROHIBITED_CONVERSATION_NAME_CHARS_RE` in `libs/chat-shared`, which is
- *      what the rename input applies on the client. Leaving the backslash out
- *      let a LaTeX-style first prompt (`\frac{1}{1+x}`) produce a title Core
- *      rejects with 400 on every later read, delete and export, stranding the
- *      conversation.
- *   2. Tab, which the client-side list also strips.
- *   3. The null byte and the Unicode bidi codepoints that can spoof
- *      filenames (CWE-116). Backend-only hardening -- the client list does
- *      not carry these, so the two lists are equal only on groups 1 and 2.
- *
- * This backend copy is duplicated rather than imported because `chat-shared`
- * is a browser/React library that a Nest process must not pull in; the tests
- * in `tests/conversation-naming.spec.ts` pin the two lists together.
- */
-const notAllowedSymbolsRegex =
-  /[:;,=/\\{}%&"\t\0\u200E\u200F\u202A-\u202E\u2066-\u2069]/gu;
-const MAX_ENTITY_BYTES = 255;
 const CONVERSATION_NAME_SEPARATOR = '__';
 const UUID_PART_LENGTHS = [8, 4, 4, 4, 12] as const;
 const VERSION_METADATA_SEPARATOR_REGEX = /[-+]/;
@@ -135,11 +116,11 @@ export const prepareEntityName = (prompt?: string): string => {
     prompt
       ?.replace(/\r\n|\r/gm, '\n')
       .split('\n')
-      .map((s) => s.replace(notAllowedSymbolsRegex, ' ').trim())
+      .map((s) => s.replace(DIAL_ENTITY_NAME_FORBIDDEN_CHARS_RE, ' ').trim())
       .filter(Boolean)[0] ?? '';
 
   return StringUtils.stripTrailingChar(
-    StringUtils.truncateToUtf8Bytes(clearName, MAX_ENTITY_BYTES),
+    StringUtils.truncateToUtf8Bytes(clearName, DIAL_ENTITY_NAME_MAX_BYTES),
     '.',
   ).trimEnd();
 };

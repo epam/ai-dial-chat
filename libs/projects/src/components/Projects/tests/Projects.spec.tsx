@@ -71,6 +71,8 @@ const labels: ProjectsLabels = {
     [ProjectSource.Organization]: 'Organization',
   },
   resultCountLabel: (count) => `${count} projects`,
+  folderPathLabel: 'Project location',
+  createProjectLabel: 'New project',
 };
 
 const projects: ProjectItem[] = [
@@ -89,9 +91,6 @@ const projects: ProjectItem[] = [
   { id: 'p3', name: 'Launch retro', source: ProjectSource.Shared },
 ];
 
-const formatUpdatedAt = (timestamp: number) =>
-  `Updated ${new Date(timestamp).toISOString().slice(0, 10)}`;
-
 const Harness = (props: Partial<ProjectsProps>) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortKey, setSortKey] = useState(ProjectsSortKey.Newest);
@@ -103,7 +102,6 @@ const Harness = (props: Partial<ProjectsProps>) => {
       onSearchQueryChange={setSearchQuery}
       sortKey={sortKey}
       onSortKeyChange={setSortKey}
-      formatUpdatedAt={formatUpdatedAt}
       labels={labels}
       locale="en"
       {...props}
@@ -111,26 +109,12 @@ const Harness = (props: Partial<ProjectsProps>) => {
   );
 };
 
-/* A highlighted name is split by <mark>, so match the element's full text. */
-const byFullText = (text: string) => (_: string, element: Element | null) =>
-  element?.textContent === text;
-
+/* Each card is an `<article>` named by its project; the folder path renders
+ * a list of its own, so cards are found by role, not by list item. */
 const cardNames = () =>
-  within(screen.getByRole('list'))
-    .getAllByRole('listitem')
-    .map(
-      (item) =>
-        projects.find(
-          ({ name }) => within(item).queryByText(byFullText(name)) != null,
-        )?.name,
-    );
+  screen.getAllByRole('article').map((card) => card.getAttribute('aria-label'));
 
-const getCard = (name: string) =>
-  screen
-    .getAllByRole('listitem')
-    .find(
-      (item) => within(item).queryByText(byFullText(name)) != null,
-    ) as HTMLElement;
+const getCard = (name: string) => screen.getByRole('article', { name });
 
 const status = () => screen.getByRole('status');
 
@@ -143,21 +127,16 @@ describe('Projects', () => {
     ).toBeTruthy();
   });
 
-  it('lists every project with its source label and formatted date', () => {
+  it('lists every project with its source as the folder path', () => {
     render(<Harness />);
 
     const card = getCard('Handbook');
-    expect(within(card).getByText('Organization')).toBeTruthy();
-    const date = within(card).getByText('Updated 2026-03-01');
-    expect(date.tagName).toBe('TIME');
-    expect(date.getAttribute('dateTime')).toBe('2026-03-01T00:00:00.000Z');
-  });
-
-  it('omits the date line for an undated project', () => {
-    render(<Harness />);
-
-    const card = getCard('Launch retro');
-    expect(within(card).queryByText(/^Updated/)).toBeNull();
+    expect(
+      within(
+        within(card).getByRole('navigation', { name: 'Project location' }),
+      ).getByText('Organization'),
+    ).toBeTruthy();
+    expect(within(card).queryByRole('time')).toBeNull();
   });
 
   it('orders projects by Newest by default with undated projects last', () => {
@@ -310,9 +289,50 @@ describe('Projects', () => {
     expect(status().textContent).toBe('Some projects could not be loaded');
   });
 
-  it('renders no New project action', () => {
+  it('renders no New project button without onCreateProject', () => {
     render(<Harness />);
 
-    expect(screen.queryByRole('button', { name: /new project/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'New project' })).toBeNull();
+  });
+
+  it('calls onCreateProject from the header New project button', async () => {
+    const onCreateProject = vi.fn();
+    render(<Harness onCreateProject={onCreateProject} />);
+
+    const buttons = screen.getAllByRole('button', { name: 'New project' });
+    expect(buttons).toHaveLength(1);
+    await userEvent.click(buttons[0]);
+
+    expect(onCreateProject).toHaveBeenCalledOnce();
+  });
+
+  it('adds a second New project button to the empty state', async () => {
+    const onCreateProject = vi.fn();
+    render(<Harness projects={[]} onCreateProject={onCreateProject} />);
+
+    const buttons = screen.getAllByRole('button', { name: 'New project' });
+    expect(buttons).toHaveLength(2);
+    await userEvent.click(buttons[1]);
+
+    expect(onCreateProject).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the empty-state button out of the no-results and error states', async () => {
+    const { rerender } = render(
+      <Harness hasError projects={[]} onCreateProject={vi.fn()} />,
+    );
+    expect(screen.getAllByRole('button', { name: 'New project' })).toHaveLength(
+      1,
+    );
+
+    rerender(<Harness onCreateProject={vi.fn()} />);
+    await userEvent.type(
+      screen.getByRole('textbox', { name: 'Search projects' }),
+      'zzz',
+    );
+
+    expect(screen.getAllByRole('button', { name: 'New project' })).toHaveLength(
+      1,
+    );
   });
 });

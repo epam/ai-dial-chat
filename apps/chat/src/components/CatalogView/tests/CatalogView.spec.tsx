@@ -759,6 +759,9 @@ describe('CatalogView', () => {
         maxAttachmentFileSizeBytes: 536_870_912,
         usageLimitsWarningThresholdPercent: 75,
         celebrationsEnabledByDefault: true,
+        projectContextFileMaxBytes: 1_048_576,
+        projectContextTotalMaxBytes: 10_485_760,
+        projectContextAllowedExtensions: ['csv', 'pdf', 'xlsx'],
       },
     });
   });

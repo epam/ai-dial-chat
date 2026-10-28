@@ -38,9 +38,13 @@ export default defineConfig(({ command }) => ({
         'react-dom',
         'react/jsx-runtime',
         'react/jsx-dev-runtime',
+        '@epam/ai-dial-attachment-input',
+        '@epam/ai-dial-builder-form',
         '@epam/ai-dial-chat-shared',
         /^@epam\/ai-dial-ui-kit(?:\/|$)/,
         '@tabler/icons-react',
+        '@uiw/react-markdown-preview',
+        '@uiw/react-md-editor',
       ],
     },
   },
@@ -56,6 +60,27 @@ export default defineConfig(({ command }) => ({
      * affects this lib's own production build.
      */
     alias: [
+      {
+        find: '@epam/ai-dial-builder-form/styles.css',
+        replacement: path.resolve(
+          import.meta.dirname,
+          '../builder-form/src/styles.css',
+        ),
+      },
+      {
+        find: /^@epam\/ai-dial-builder-form$/,
+        replacement: path.resolve(
+          import.meta.dirname,
+          '../builder-form/src/index.ts',
+        ),
+      },
+      {
+        find: /^@epam\/ai-dial-attachment-input$/,
+        replacement: path.resolve(
+          import.meta.dirname,
+          '../attachment-input/src/index.ts',
+        ),
+      },
       {
         find: /^@epam\/ai-dial-chat-shared$/,
         replacement: path.resolve(

@@ -42,6 +42,18 @@ export const validate = (rawConfig: Record<string, unknown>) => {
     );
   }
 
+  const projectFileMaxBytes = validatedConfig.PROJECT_CONTEXT_FILE_MAX_BYTES;
+  const projectTotalMaxBytes = validatedConfig.PROJECT_CONTEXT_TOTAL_MAX_BYTES;
+  if (
+    projectFileMaxBytes != null &&
+    projectTotalMaxBytes != null &&
+    projectTotalMaxBytes < projectFileMaxBytes
+  ) {
+    throw new Error(
+      'Environment validation failed:\nPROJECT_CONTEXT_TOTAL_MAX_BYTES must be at least PROJECT_CONTEXT_FILE_MAX_BYTES',
+    );
+  }
+
   console.info(
     '[Config] Environment validated. DIAL_CORE_URL=%s',
     validatedConfig.DIAL_CORE_URL,

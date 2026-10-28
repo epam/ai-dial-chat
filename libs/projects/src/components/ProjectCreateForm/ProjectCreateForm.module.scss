@@ -1,0 +1,11 @@
+.formColumn.formColumn {
+  padding-inline: 16px;
+
+  @media (min-width: 1280px) {
+    padding-inline: 32px;
+  }
+}
+
+.helper {
+  color: var(--pcf-helper-text, var(--text-secondary, #57647a));
+}
