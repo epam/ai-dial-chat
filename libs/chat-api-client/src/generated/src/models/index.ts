@@ -886,6 +886,40 @@ export type BackgroundGenerationStatus =
 /**
  *
  * @export
+ * @interface CatalogCreationPermissionsDto
+ */
+export interface CatalogCreationPermissionsDto {
+  /**
+   * Creation types the caller may create, in the fixed order custom-app, schema-app, toolset, prompt, skill. Evaluated from CATALOG_CREATION_ROLES; a type without a rule is always present. Controls client creation workflows only.
+   * @type {Array<CatalogCreationType>}
+   * @memberof CatalogCreationPermissionsDto
+   */
+  allowedTypes: Array<CatalogCreationType>;
+  /**
+   * Exact application schema ids whose CATALOG_CREATION_ROLES rule the caller fails, in configuration order. Reported independently of the schema-app type; creating a schema app requires both.
+   * @type {Array<string>}
+   * @memberof CatalogCreationPermissionsDto
+   */
+  restrictedSchemaIds: Array<string>;
+}
+
+/**
+ * Creation types the caller may create, in the fixed order custom-app, schema-app, toolset, prompt, skill. Evaluated from CATALOG_CREATION_ROLES; a type without a rule is always present. Controls client creation workflows only.
+ * @export
+ */
+export const CatalogCreationType = {
+  CustomApp: 'custom-app',
+  SchemaApp: 'schema-app',
+  Toolset: 'toolset',
+  Prompt: 'prompt',
+  Skill: 'skill',
+} as const;
+export type CatalogCreationType =
+  (typeof CatalogCreationType)[keyof typeof CatalogCreationType];
+
+/**
+ *
+ * @export
  * @interface CellAddressDto
  */
 export interface CellAddressDto {
@@ -1207,6 +1241,12 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   celebrationsEnabledByDefault: boolean;
+  /**
+   * The caller's resolved catalog creation permissions, evaluated from the server-only CATALOG_CREATION_ROLES and the session roles. Independent of enabledUiFeatures, which it never filters. Never carries role names or the raw policy.
+   * @type {CatalogCreationPermissionsDto}
+   * @memberof ClientConfigDto
+   */
+  catalogCreationPermissions: CatalogCreationPermissionsDto;
 }
 
 /**
@@ -4687,7 +4727,14 @@ export interface GetOfflineCredentialsResponseDto {
    * @memberof GetOfflineCredentialsResponseDto
    */
   connect?: OfflineCredentialsConnectDto;
+  /**
+   * Consent state of the DIAL_NATIVE scheduler external service: 'signed_out' when the administrator's application consent is missing or revoked, 'signed_in' when it is in place, and 'unknown' when the consent read itself failed (the offline-credentials status is still valid).
+   * @type {SchedulerServiceConsentStatus}
+   * @memberof GetOfflineCredentialsResponseDto
+   */
+  schedulerServiceConsent: SchedulerServiceConsentStatus;
 }
+
 /**
  *
  * @export
@@ -4871,6 +4918,25 @@ export interface ListMcpToolNamesResponseDto {
    * @memberof ListMcpToolNamesResponseDto
    */
   toolNames: Array<string>;
+}
+/**
+ *
+ * @export
+ * @interface ListProjectsResponseDto
+ */
+export interface ListProjectsResponseDto {
+  /**
+   * Every project visible to the caller across the personal, organization and shared sources, de-duplicated by id. Order is unspecified.
+   * @type {Array<ProjectDto>}
+   * @memberof ListProjectsResponseDto
+   */
+  items: Array<ProjectDto>;
+  /**
+   * Sources that failed or were truncated at the page cap, so `items` may be missing projects from them. Empty when every source answered in full.
+   * @type {Array<ProjectSource>}
+   * @memberof ListProjectsResponseDto
+   */
+  incompleteSources: Array<ProjectSource>;
 }
 /**
  *
@@ -5347,16 +5413,16 @@ export interface ModelLimitsDto {
 export interface ModelPricingRateDto {
   /**
    *
-   * @type {ModelPricingRateDto}
+   * @type {ModelPricingRateDtoIfFalse}
    * @memberof ModelPricingRateDto
    */
-  ifFalse?: ModelPricingRateDto;
+  ifFalse?: ModelPricingRateDtoIfFalse;
   /**
    *
-   * @type {ModelPricingRateDto}
+   * @type {ModelPricingRateDtoIfTrue}
    * @memberof ModelPricingRateDto
    */
-  ifTrue?: ModelPricingRateDto;
+  ifTrue?: ModelPricingRateDtoIfTrue;
   /**
    * Per-unit price for this pricing branch
    * @type {string}
@@ -5370,6 +5436,18 @@ export interface ModelPricingRateDto {
    */
   test?: { [key: string]: unknown };
 }
+/**
+ * @type ModelPricingRateDtoIfFalse
+ * Price applied when `test` fails: a per-unit price or a nested pricing branch
+ * @export
+ */
+export type ModelPricingRateDtoIfFalse = ModelPricingRateDto | string;
+/**
+ * @type ModelPricingRateDtoIfTrue
+ * Price applied when `test` holds: a per-unit price or a nested pricing branch
+ * @export
+ */
+export type ModelPricingRateDtoIfTrue = ModelPricingRateDto | string;
 /**
  *
  * @export
@@ -5570,6 +5648,79 @@ export interface OfflineCredentialsSigninBodyDto {
    */
   redirectUri: string;
 }
+/**
+ *
+ * @export
+ * @interface ProjectDto
+ */
+export interface ProjectDto {
+  /**
+   * DIAL Core resource id, `projects/{bucket}/{path}` without a trailing slash.
+   * @type {string}
+   * @memberof ProjectDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectDto
+   */
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectDto
+   */
+  bucket: string;
+  /**
+   * Path of the project within its bucket.
+   * @type {string}
+   * @memberof ProjectDto
+   */
+  path: string;
+  /**
+   * Grouping folder path the project sits in, when nested.
+   * @type {string}
+   * @memberof ProjectDto
+   */
+  parentPath?: string;
+  /**
+   *
+   * @type {ProjectSource}
+   * @memberof ProjectDto
+   */
+  source: ProjectSource;
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectDto
+   */
+  author?: string;
+  /**
+   * Creation time, epoch milliseconds.
+   * @type {number}
+   * @memberof ProjectDto
+   */
+  createdAt?: number;
+  /**
+   * Last update time, epoch milliseconds.
+   * @type {number}
+   * @memberof ProjectDto
+   */
+  updatedAt?: number;
+}
+
+/**
+ *
+ * @export
+ */
+export const ProjectSource = {
+  Personal: 'personal',
+  Shared: 'shared',
+  Organization: 'organization',
+} as const;
+export type ProjectSource = (typeof ProjectSource)[keyof typeof ProjectSource];
+
 /**
  *
  * @export
@@ -6667,6 +6818,19 @@ export interface ScheduledTaskValidationErrorDto {
  * @export
  */
 export type ScheduledTaskValidationErrorDtoMessage = Array<string> | string;
+
+/**
+ * Consent state of the DIAL_NATIVE scheduler external service: 'signed_out' when the administrator's application consent is missing or revoked, 'signed_in' when it is in place, and 'unknown' when the consent read itself failed (the offline-credentials status is still valid).
+ * @export
+ */
+export const SchedulerServiceConsentStatus = {
+  SignedIn: 'signed_in',
+  SignedOut: 'signed_out',
+  Unknown: 'unknown',
+} as const;
+export type SchedulerServiceConsentStatus =
+  (typeof SchedulerServiceConsentStatus)[keyof typeof SchedulerServiceConsentStatus];
+
 /**
  *
  * @export

@@ -31,6 +31,7 @@ import type { SessionPayload } from './session/session.types';
 import { AUTH_STRATEGIES } from './strategies/auth-strategies.token';
 import { CookieSessionStrategy } from './strategies/cookie-session.strategy';
 import { HeaderTokenStrategy } from './strategies/header-token.strategy';
+import { UserRolesService } from './user-roles.service';
 
 const headerJwksRegistry = new Map<string, JWTVerifyGetKey>();
 
@@ -189,6 +190,7 @@ async function buildApp(): Promise<INestApplication> {
       { provide: KeysService, useValue: keysServiceMock },
       { provide: SessionService, useValue: sessionService },
       { provide: ProviderRegistryService, useValue: registryMock },
+      UserRolesService,
       AdminRoleService,
       { provide: ConfigService, useValue: configMock },
       { provide: RefreshService, useValue: MOCK_REFRESH_SERVICE },

@@ -39,13 +39,13 @@ it while preserving the control's accessible name and keyboard behaviour.
 
 ### ScheduledTasks
 
-Page shell: header with title/subtitle/create action, a search + sort toolbar, an optional `banner` slot, and a content region that shows a loading spinner, an error with retry, the empty state, a no-results state, or a section-grouped card grid, depending on `isLoading`/`error`/`items`.
+Page shell: header with title/subtitle and an optional create action (the header renders the create button only while `onCreateClick` is provided — omit the callback to withdraw the affordance entirely), a search + sort toolbar, an optional `banner` slot, and a content region that shows a loading spinner, an error with retry, the empty state, a no-results state, or a section-grouped card grid, depending on `isLoading`/`error`/`items`.
 
 The sort control's trigger shows the active option's label, falling back to `labels.sortLabel` when `sortKey` matches no option. Inside the menu each option is a `menuitemcheckbox` whose `aria-checked` marks the sort currently in effect, with a check icon carrying the same meaning visually; picking one reports through `onSortChange` and closes the menu. The lib never sorts `items` — it renders them in the order it receives them.
 
-`banner` renders between the toolbar and the content region, in every content-region state (loading, error, empty, populated). It is opaque `ReactNode` content — the host app decides what it contains (e.g. a status notice); the lib attaches no behavior or styling to it beyond layout placement.
+`banner` renders between the toolbar and the content region, in every content-region state (loading, error, empty, populated), inside a wrapper capped to the card grid's `maxWidth` (`gridLayout?.maxWidth`, default `SCHEDULED_TASKS_GRID_DEFAULT_MAX_WIDTH` = `'1180px'`) so the banner stays aligned with the cards; pass no `banner` while it would render nothing visible, so the hidden slot adds no gap between the toolbar and the content. It is opaque `ReactNode` content — the host app decides what it contains (e.g. a status notice); the lib attaches no behavior or styling to it beyond layout placement.
 
-The create button collapses to an icon-only 40px circle below 1280px.
+The create button collapses to an icon-only 40px circle below 1280px. With no `onCreateClick` callback the header renders no create button at all.
 
 ```tsx
 import {
@@ -560,7 +560,8 @@ Do not import builder source styles: compiling a module as plain CSS loses
 the class names used by the published JavaScript.
 
 - `gridLayout` (or CardGrid's `layout`) supports `maxColumns` (3),
-  `minCardWidth` (320px), `maxWidth` (1180px), `gap` (20px) and
+  `minCardWidth` (320px), `maxWidth` (`SCHEDULED_TASKS_GRID_DEFAULT_MAX_WIDTH`,
+  1180px), `gap` (20px) and
   `cardHeight` (232px). Columns respond to the available container width;
   skeletons inherit the same height. `cardHeight` applies from the desktop
   breakpoint (1280px) up; below it cards and skeletons size to their content,

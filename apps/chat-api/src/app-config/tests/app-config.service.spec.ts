@@ -1,7 +1,12 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PACKAGE_VERSION } from '../../common/utils/app-version';
+import {
+  CATALOG_CREATION_TYPES,
+  CatalogCreationType,
+  type CatalogCreationRolesConfig,
+} from '../../config/catalog-creation.types';
 import { AppConfigService } from '../app-config.service';
 import type { AppConfigEvalContext } from '../app-config.types';
 import type { CompositeConfigProvider } from '../config-registry/composite-config.provider';
@@ -21,6 +26,7 @@ function makeService(
     context?: AppConfigEvalContext,
   ) => Promise<unknown | undefined>,
   model?: string,
+  catalogCreationRoles?: CatalogCreationRolesConfig,
 ) {
   const compositeProvider = {
     resolve: vi.fn(resolveImpl),
@@ -36,7 +42,10 @@ function makeService(
     service: new AppConfigService(
       compositeProvider,
       cacheManager as never,
-      new ConfigService({ UTILITY_MODEL: model }),
+      new ConfigService({
+        UTILITY_MODEL: model,
+        CATALOG_CREATION_ROLES: catalogCreationRoles,
+      }),
     ),
     cacheManager,
     compositeProvider,
@@ -1424,12 +1433,14 @@ describe('AppConfigService', () => {
         'maxAttachmentFileSizeBytes',
         'usageLimitsWarningThresholdPercent',
         'celebrationsEnabledByDefault',
+        'catalogCreationPermissions',
       ]);
       expect(Object.keys(result.features)).toEqual([
         'footer',
         'asrEnabled',
         'liveChatInteraction',
         'scheduledTasksEnabled',
+        'projectsEnabled',
         'defaultDeploymentPinned',
         'visualizerSendMessages',
         'usageLimitsControl',
@@ -1465,6 +1476,188 @@ describe('AppConfigService', () => {
       ]);
       expect(viewer.config.overlayAllowedOrigins).toEqual([]);
       expect(viewer.config).not.toBe(admin.config);
+    });
+
+    describe('catalogCreationPermissions', () => {
+      const POLICY: CatalogCreationRolesConfig = {
+        types: { 'custom-app': ['developers'], skill: [' trainers '] },
+        schemas: { 'schema-B': ['team-B'], 'schema-A': ['team-A', 'admins'] },
+      };
+      const WITHOUT_RESTRICTED = (...denied: CatalogCreationType[]) =>
+        CATALOG_CREATION_TYPES.filter((type) => !denied.includes(type));
+
+      it('allows every type with no restricted schemas when no policy is configured', async () => {
+        const { service } = makeService(async () => undefined);
+
+        expect(
+          (await service.getClientConfig(ctx)).config
+            .catalogCreationPermissions,
+        ).toEqual({
+          allowedTypes: [...CATALOG_CREATION_TYPES],
+          restrictedSchemaIds: [],
+        });
+      });
+
+      it('reports allowed types in fixed order and restricted schemas in policy order', async () => {
+        const { service } = makeService(
+          async () => undefined,
+          undefined,
+          POLICY,
+        );
+
+        const result = await service.getClientConfig({
+          appId: 'chat-ui',
+          userId: 'user-1',
+          roles: ['trainers'],
+        });
+
+        expect(result.config.catalogCreationPermissions).toEqual({
+          allowedTypes: WITHOUT_RESTRICTED(CatalogCreationType.CustomApp),
+          restrictedSchemaIds: ['schema-B', 'schema-A'],
+        });
+      });
+
+      it('evaluates an anonymous caller with no roles', async () => {
+        const { service } = makeService(
+          async () => undefined,
+          undefined,
+          POLICY,
+        );
+
+        expect(
+          (await service.getClientConfig(ctx)).config
+            .catalogCreationPermissions,
+        ).toEqual({
+          allowedTypes: WITHOUT_RESTRICTED(
+            CatalogCreationType.CustomApp,
+            CatalogCreationType.Skill,
+          ),
+          restrictedSchemaIds: ['schema-B', 'schema-A'],
+        });
+      });
+
+      it('normalizes the policy once at construction, not per request', async () => {
+        const warnSpy = vi
+          .spyOn(Logger.prototype, 'warn')
+          .mockImplementation(() => undefined);
+        const { service } = makeService(async () => undefined, undefined, {
+          types: { prompt: ['  '] },
+        });
+        expect(warnSpy).toHaveBeenCalledOnce();
+        expect(warnSpy).toHaveBeenCalledWith(
+          expect.stringContaining('CATALOG_CREATION_ROLES'),
+        );
+
+        await service.getClientConfig({ appId: 'chat-ui', userId: 'a' });
+        await service.getClientConfig({ appId: 'chat-ui', userId: 'b' });
+
+        expect(
+          warnSpy.mock.calls.filter(([message]) =>
+            String(message).includes('CATALOG_CREATION_ROLES'),
+          ),
+        ).toHaveLength(1);
+        warnSpy.mockRestore();
+      });
+
+      it('keeps permissions evaluated for one user or role set out of another', async () => {
+        const { service } = makeService(
+          async () => undefined,
+          undefined,
+          POLICY,
+        );
+
+        const developer = await service.getClientConfig({
+          appId: 'chat-ui',
+          userId: 'user-1',
+          roles: ['developers', 'team-A'],
+        });
+        const sameUserOtherRoles = await service.getClientConfig({
+          appId: 'chat-ui',
+          userId: 'user-1',
+          roles: ['team-B'],
+        });
+        const otherUser = await service.getClientConfig({
+          appId: 'chat-ui',
+          userId: 'user-2',
+          roles: ['developers', 'team-A'],
+        });
+
+        expect(developer.config.catalogCreationPermissions).toEqual({
+          allowedTypes: WITHOUT_RESTRICTED(CatalogCreationType.Skill),
+          restrictedSchemaIds: ['schema-B'],
+        });
+        expect(sameUserOtherRoles.config.catalogCreationPermissions).toEqual({
+          allowedTypes: WITHOUT_RESTRICTED(
+            CatalogCreationType.CustomApp,
+            CatalogCreationType.Skill,
+          ),
+          restrictedSchemaIds: ['schema-A'],
+        });
+        expect(otherUser.config.catalogCreationPermissions).toEqual(
+          developer.config.catalogCreationPermissions,
+        );
+        expect(otherUser).not.toBe(developer);
+      });
+
+      it.each([
+        ['the null default baseline', undefined, null],
+        [
+          'an explicit baseline',
+          ['header', 'custom-apps'],
+          ['header', 'custom-apps'],
+        ],
+      ])(
+        'leaves enabledUiFeatures identical across roles for %s',
+        async (_label, configured, expected) => {
+          const { service } = makeService(
+            async (key) =>
+              key === 'uiFeatures.enabledUiFeatures' ? configured : undefined,
+            undefined,
+            POLICY,
+          );
+
+          const [allowed, denied] = await Promise.all([
+            service.getClientConfig({
+              appId: 'chat-ui',
+              userId: 'user-1',
+              roles: ['developers'],
+            }),
+            service.getClientConfig({
+              appId: 'chat-ui',
+              userId: 'user-2',
+              roles: [],
+            }),
+          ]);
+
+          expect(allowed.config.enabledUiFeatures).toEqual(expected);
+          expect(denied.config.enabledUiFeatures).toEqual(expected);
+          expect(allowed.config.catalogCreationPermissions).not.toEqual(
+            denied.config.catalogCreationPermissions,
+          );
+        },
+      );
+
+      it('never serializes role names or the raw policy', async () => {
+        const { service } = makeService(
+          async () => undefined,
+          undefined,
+          POLICY,
+        );
+
+        const serialized = JSON.stringify(
+          await service.getClientConfig({
+            appId: 'chat-ui',
+            userId: 'user-1',
+            roles: ['trainers'],
+          }),
+        );
+
+        for (const role of ['developers', 'trainers', 'team-A', 'admins']) {
+          expect(serialized).not.toContain(role);
+        }
+        expect(serialized).not.toContain('"types"');
+        expect(serialized).not.toContain('"schemas"');
+      });
     });
 
     it('serves a cache hit with the original metadata and no provider calls', async () => {

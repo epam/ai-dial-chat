@@ -1,3 +1,4 @@
+import { SchedulerServiceConsentStatus } from '@epam/ai-dial-chat-api-client';
 import {
   OfflineCredentialsConnectSettings,
   OfflineCredentialsGateStatus,
@@ -54,6 +55,7 @@ const makeGateResult = (
     status: OfflineCredentialsGateStatus;
     connect: OfflineCredentialsConnectSettings | undefined;
     connected: boolean;
+    schedulerServiceConsent: SchedulerServiceConsentStatus;
   }>,
 ) => ({
   status: OfflineCredentialsGateStatus.Available,
@@ -63,6 +65,7 @@ const makeGateResult = (
     scopes: ['openid', 'offline_access'],
   } satisfies OfflineCredentialsConnectSettings,
   connected: false,
+  schedulerServiceConsent: SchedulerServiceConsentStatus.SignedIn,
   refetch: vi.fn(),
   ...overrides,
 });
@@ -172,14 +175,12 @@ describe('ExtensionsTab', () => {
     ).toBeTruthy();
   });
 
-  it('renders the warning badge with its localized accessible name while disconnected', () => {
+  it('renders the decorative warning glyph without a tooltip or accessible image while disconnected', () => {
     renderTab();
 
-    expect(
-      screen.getByRole('img', {
-        name: ExtensionsI18nKeys.ServiceAuthorizeTooltip,
-      }),
-    ).toBeTruthy();
+    /* The glyph is decoration: the Log in action carries the disconnected
+     * state, so the glyph exposes no accessible image role. */
+    expect(screen.queryByRole('img')).toBeNull();
   });
 
   it('renders no warning badge while connected', () => {
@@ -190,11 +191,59 @@ describe('ExtensionsTab', () => {
       }),
     );
 
-    expect(
-      screen.queryByRole('img', {
-        name: ExtensionsI18nKeys.ServiceAuthorizeTooltip,
-      }),
-    ).toBeNull();
+    expect(screen.queryByRole('img')).toBeNull();
+  });
+
+  it('pins the service avatar to the violet palette entry', () => {
+    /* CSS-level assertion: the pinned pair (`AVATAR_PALETTE[AvatarColor.Violet1]`)
+     * lands on the aria-hidden avatar badge's classes — no semantic query
+     * reaches a colour class. */
+
+    const { container } = renderTab();
+
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
+    expect(container.querySelector('.bg-violet-1')).toBeTruthy();
+  });
+
+  describe('limited-access state', () => {
+    it('replaces the action with the red limited-access badge while the consent is signed out and the user is connected', () => {
+      renderTab(
+        makeGateResult({
+          status: OfflineCredentialsGateStatus.Hidden,
+          connected: true,
+          schedulerServiceConsent: 'signed_out',
+        }),
+      );
+
+      expect(
+        screen.getByText(ExtensionsI18nKeys.ServiceLimitedAccessLabel),
+      ).toBeTruthy();
+      expect(
+        screen.queryByRole('button', { name: ButtonsI18nKeys.LogOut }),
+      ).toBeNull();
+      expect(
+        screen.queryByRole('button', { name: ButtonsI18nKeys.LogIn }),
+      ).toBeNull();
+    });
+
+    it('replaces the Log in action with the limited-access badge while the consent is signed out and the user is disconnected', () => {
+      renderTab(makeGateResult({ schedulerServiceConsent: 'signed_out' }));
+
+      expect(
+        screen.getByText(ExtensionsI18nKeys.ServiceLimitedAccessLabel),
+      ).toBeTruthy();
+      expect(
+        screen.queryByRole('button', { name: ButtonsI18nKeys.LogIn }),
+      ).toBeNull();
+    });
+
+    it('keeps the Log in action while the consent read failed (unknown)', () => {
+      renderTab(makeGateResult({ schedulerServiceConsent: 'unknown' }));
+
+      expect(
+        screen.getByRole('button', { name: ButtonsI18nKeys.LogIn }),
+      ).toBeTruthy();
+    });
   });
 
   it('renders the Log out action while connected', () => {

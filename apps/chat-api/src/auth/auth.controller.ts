@@ -73,6 +73,7 @@ import {
   type SessionUser,
 } from './session/session.types';
 import { resolveCallbackUrl } from './utils/callback-url.util';
+import { resolveClaimPath } from './utils/claims.util';
 
 @ApiTags('auth')
 @Controller({ path: 'auth', version: '1' })
@@ -624,22 +625,3 @@ export class AuthController {
     };
   }
 }
-
-/**
- * Resolves a dot-notation claim path (e.g. "realm_access.roles") against a
- * claims object. Falls back to a flat key lookup when the path has no dots.
- */
-const resolveClaimPath = (
-  claims: Record<string, unknown>,
-  path: string,
-): unknown => {
-  return path
-    .split('.')
-    .reduce<unknown>(
-      (value, segment) =>
-        value != null && typeof value === 'object'
-          ? (value as Record<string, unknown>)[segment]
-          : undefined,
-      claims,
-    );
-};

@@ -640,12 +640,19 @@ import { DeploymentIcon } from '@epam/ai-dial-chat-shared';
 
 ### InitialsAvatar
 
-A square initials badge for an entity without an icon, drawn by the UI kit's `Avatar`: the initials come from `name`, and the same name always gets the same colour from the theme's visual tokens. `textClassName` replaces the default semibold initials sized at 40% of `size`.
+A square initials badge for an entity without an icon, drawn by the UI kit's `Avatar`: the initials come from `name`, and the same name always gets the same colour from the theme's visual tokens. `color` pins an `AVATAR_PALETTE` entry (`@epam/ai-dial-ui-kit`) instead of the name-derived colour, so every avatar of a kind shares one colour. `textClassName` replaces the default semibold initials sized at 40% of `size`.
 
 ```tsx
+import { AVATAR_PALETTE, AvatarColor } from '@epam/ai-dial-ui-kit';
 import { InitialsAvatar } from '@epam/ai-dial-chat-shared';
 
 <InitialsAvatar name="Jane Doe" size={32} />;
+
+<InitialsAvatar
+  name="Dial native"
+  size={40}
+  color={AVATAR_PALETTE[AvatarColor.Violet1]}
+/>;
 ```
 
 ### PanelEmptyState

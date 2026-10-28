@@ -1,4 +1,7 @@
-import type { SkillImportResponseDto } from '@epam/ai-dial-chat-api-client';
+import {
+  CatalogCreationType,
+  type SkillImportResponseDto,
+} from '@epam/ai-dial-chat-api-client';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -8,8 +11,13 @@ import {
 } from '../../../constants/translation-keys';
 import { useNotification } from '../../../context/NotificationContext';
 import { useSkills } from '../../../context/SkillsContext';
+import {
+  resetCatalogCreationState,
+  setCatalogCreationState,
+} from '../../../context/tests/catalog-creation-state';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import * as skillsApi from '../../../server-api/skills.api';
+import { UserConfigStatus } from '../../../types/user-config-status';
 import {
   SkillArchiveImportStatus,
   useSkillArchiveImport,
@@ -18,6 +26,17 @@ import {
 vi.mock('../../../server-api/skills.api');
 vi.mock('../../../context/NotificationContext');
 vi.mock('../../../context/SkillsContext');
+vi.mock('../../../context/AppConfigContext', async () => {
+  const { useCatalogCreationState } =
+    await import('../../../context/tests/catalog-creation-state');
+  return {
+    useAppConfig: () => ({
+      status: 'ready',
+      config: {},
+      ...useCatalogCreationState(),
+    }),
+  };
+});
 
 const mockShowNotification = vi.fn();
 const mockRefetchSkills = vi.fn().mockResolvedValue(undefined);
@@ -33,6 +52,7 @@ const IMPORT_RESPONSE: SkillImportResponseDto = {
 describe('useSkillArchiveImport (host adapter)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetCatalogCreationState();
     vi.mocked(useNotification).mockReturnValue(
       createNotificationContextValue(mockShowNotification),
     );
@@ -359,5 +379,102 @@ describe('useSkillArchiveImport (host adapter)', () => {
     });
 
     expect(result.current.selectionError).toBeUndefined();
+  });
+
+  describe('skill creation permission', () => {
+    const denySkills = () =>
+      setCatalogCreationState({
+        allowedTypes: Object.values(CatalogCreationType).filter(
+          (type) => type !== CatalogCreationType.Skill,
+        ),
+        restrictedSchemaIds: [],
+      });
+    const zip = () => new File(['zip bytes'], 'skill.zip');
+    const manifest = () =>
+      new File(['---\nname: docs-helper\n---\n'], 'SKILL.md');
+
+    it.each([
+      ['denied', denySkills],
+      [
+        'loading',
+        () => setCatalogCreationState(null, UserConfigStatus.Loading),
+      ],
+      [
+        'unavailable',
+        () => setCatalogCreationState(null, UserConfigStatus.Error),
+      ],
+    ])('does not open the dialog while permission is %s', (_label, apply) => {
+      apply();
+      const { result } = renderHook(() => useSkillArchiveImport());
+
+      act(() => {
+        result.current.openDialog();
+      });
+
+      expect(result.current.isDialogOpen).toBe(false);
+    });
+
+    it.each([
+      ['a ZIP archive', zip],
+      ['a standalone SKILL.md', manifest],
+    ])('never sends %s while skill creation is denied', (_label, makeFile) => {
+      denySkills();
+      const { result } = renderHook(() => useSkillArchiveImport());
+
+      act(() => {
+        result.current.handleFilesSelected([makeFile()]);
+      });
+
+      expect(mockImportSkillArchive).not.toHaveBeenCalled();
+      expect(result.current.status).toBe(SkillArchiveImportStatus.Idle);
+    });
+
+    it('closes an idle dialog when permission is lost', () => {
+      const { result } = renderHook(() => useSkillArchiveImport());
+      act(() => {
+        result.current.openDialog();
+      });
+      expect(result.current.isDialogOpen).toBe(true);
+
+      act(() => denySkills());
+
+      expect(result.current.isDialogOpen).toBe(false);
+    });
+
+    it('ignores a file chosen through a picker opened before permission was lost', () => {
+      const { result } = renderHook(() => useSkillArchiveImport());
+      act(() => {
+        result.current.openDialog();
+      });
+      /* What the still-open native picker holds on to. */
+      const staleHandleFilesSelected = result.current.handleFilesSelected;
+
+      act(() => denySkills());
+      act(() => {
+        staleHandleFilesSelected([zip()]);
+      });
+
+      expect(mockImportSkillArchive).not.toHaveBeenCalled();
+    });
+
+    it('keeps an import already in flight when permission is lost', () => {
+      mockImportSkillArchive.mockImplementation(
+        () => new Promise(() => undefined),
+      );
+      const { result } = renderHook(() => useSkillArchiveImport());
+      act(() => {
+        result.current.openDialog();
+      });
+      act(() => {
+        result.current.handleFilesSelected([zip()]);
+      });
+      const signal = mockImportSkillArchive.mock.calls[0][1];
+
+      act(() => denySkills());
+
+      expect(result.current.isDialogOpen).toBe(true);
+      expect(result.current.isUploading).toBe(true);
+      expect(signal?.aborted).toBe(false);
+    });
   });
 });

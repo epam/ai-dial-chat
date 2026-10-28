@@ -84,8 +84,8 @@ export interface ScheduledTasksStyles {
 export interface ScheduledTasksProps {
   /** Localized labels. */
   labels: ScheduledTasksLabels;
-  /** Called when the user activates the primary "create task" action. */
-  onCreateClick: () => void;
+  /** Called when the user activates the primary "create task" action. Omit it to render no create button (the host withdraws the affordance without the lib knowing why). */
+  onCreateClick?: () => void;
   /** Current value of the toolbar search input. */
   searchQuery: string;
   /** Called when the toolbar search input value changes. */

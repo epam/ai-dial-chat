@@ -1,5 +1,5 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../models/catalog-item';
 import type { CatalogProps } from '../../../models/catalog-props';
@@ -71,6 +71,17 @@ describe('Catalog — mobile', () => {
     expect(scrollBody?.className).toContain('pb-16');
   });
 
+  it('renders no floating Create button and no padding for it when creation controls are hidden', () => {
+    renderCatalog({
+      hideCreateButton: true,
+      createOptions: [{ key: 'prompt', label: 'Prompt', onClick: vi.fn() }],
+    });
+
+    expect(screen.queryByRole('button', { name: 'Create' })).toBeNull();
+    // eslint-disable-next-line testing-library/no-node-access -- the padding class has no accessible counterpart
+    expect(document.querySelector('.pb-16')).toBeNull();
+  });
+
   it('renders no Create button when the catalog is read-only', () => {
     renderCatalog({ isReadonly: true });
 
@@ -88,5 +99,72 @@ describe('Catalog — mobile', () => {
         .getByRole('region', { name: 'favorites' })
         .getAttribute('data-pagination-hidden'),
     ).toBe('true');
+  });
+});
+
+describe('Catalog — mobile scroll to top', () => {
+  /* jsdom has no layout: give the scroll body one screen of height, then
+     scroll it by that much so the button is offered. */
+  const scrollDownOneScreen = (scrollBody: Element) => {
+    Object.defineProperty(scrollBody, 'clientHeight', {
+      configurable: true,
+      value: 600,
+    });
+    scrollBody.scrollTop = 600;
+    fireEvent.scroll(scrollBody);
+  };
+
+  /*
+   * The button's positioned wrapper (outside the kit's tooltip wrapper)
+   * carries the placement, and has no role or text of its own; the scroll body is reached the same way as in the padding test.
+   */
+  const getPlacement = (button: HTMLElement) =>
+    // eslint-disable-next-line testing-library/no-node-access
+    button.closest('.absolute')?.className ?? '';
+
+  it('stacks the button above the floating Create button', async () => {
+    render(<Catalog items={[]} favorites={[]} />);
+    const create = screen.getByRole('button', { name: 'Create' });
+    // eslint-disable-next-line testing-library/no-node-access
+    scrollDownOneScreen(create.parentElement?.nextElementSibling as Element);
+
+    const scrollToTop = await screen.findByRole('button', {
+      name: 'Scroll to top',
+    });
+
+    expect(getPlacement(scrollToTop)).toContain('bottom-20');
+    expect(getPlacement(scrollToTop)).toContain('inset-e-4');
+    expect(screen.getByRole('button', { name: 'Create' })).toBeTruthy();
+  });
+
+  it('takes the Create button spot when there is no Create button', async () => {
+    const { container } = render(
+      <Catalog items={[]} favorites={[]} isReadonly />,
+    );
+    // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container
+    scrollDownOneScreen(container.querySelector('.overflow-y-auto') as Element);
+
+    const scrollToTop = await screen.findByRole('button', {
+      name: 'Scroll to top',
+    });
+
+    expect(getPlacement(scrollToTop)).toContain('bottom-4');
+  });
+
+  it('keeps the up arrow unmirrored in right-to-left layouts', async () => {
+    document.documentElement.dir = 'rtl';
+    render(<Catalog items={[]} favorites={[]} />);
+    const create = screen.getByRole('button', { name: 'Create' });
+    // eslint-disable-next-line testing-library/no-node-access
+    scrollDownOneScreen(create.parentElement?.nextElementSibling as Element);
+
+    const scrollToTop = await screen.findByRole('button', {
+      name: 'Scroll to top',
+    });
+
+    // eslint-disable-next-line testing-library/no-node-access
+    const icon = scrollToTop.querySelector('svg');
+    expect(icon?.getAttribute('class') ?? '').not.toContain('rtl:scale-x');
+    document.documentElement.dir = '';
   });
 });

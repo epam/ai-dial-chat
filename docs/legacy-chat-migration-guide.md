@@ -261,6 +261,46 @@ complete list of the 41 supported flags and which are on by default — are in t
 [Chat Overlay Migration Guide § Migrate UI feature flags](chat-overlay-migration-guide.md#6-migrate-ui-feature-flags).
 They apply to a plain deployment too, not only to embedded ones.
 
+### Role-restricted creation
+
+Legacy `ENABLED_FEATURES_ROLES` mapped UI flags to the roles allowed to see
+them. It has no rename in 1.0, and neither it nor `ENABLED_UI_FEATURES_ROLES`
+is read: `ENABLED_UI_FEATURES` is the same for every user. Do not copy a legacy
+role map into a new variable as-is.
+
+Where a legacy rule only meant "these roles may create such entities", it
+moves to `CATALOG_CREATION_ROLES`, a creation-only policy that leaves browsing,
+using and editing existing entities alone (see
+[Catalog creation roles](../apps/chat-api/README.md#catalog-creation-roles)).
+Translate each rule by what it restricted, for example:
+
+```json
+// Legacy ENABLED_FEATURES_ROLES (simplified)
+{ "custom-applications": ["app-authors"] }
+```
+
+```json
+// CATALOG_CREATION_ROLES
+{
+  "types": {
+    "schema-app": ["app-authors"],
+    "custom-app": ["app-authors"]
+  },
+  "schemas": {
+    "https://example.test/schemas/runner-A": ["team-A"]
+  }
+}
+```
+
+- `custom-applications` → `types.schema-app`: runner-based applications.
+- Add `types.custom-app` only when schema-less custom applications should be
+  restricted as well.
+- Restrict individual runners under `schemas`, keyed by their **exact** schema
+  id; a display name does not match.
+- Legacy flags for other UI surfaces (sharing, publishing, settings, …) have no
+  mapping in this policy. They stay global through `ENABLED_UI_FEATURES` or an
+  overlay host's `enabledFeatures`.
+
 ## Themes
 
 The themes service and the `config.json` shape are unchanged, but the CSS

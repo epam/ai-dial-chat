@@ -3,6 +3,7 @@ import { AdminRoleService } from '../admin-role.service';
 import type { ProviderRegistryService } from '../providers/provider-registry.service';
 import type { ProviderConfig } from '../providers/provider.types';
 import type { SessionUser } from '../session/session.types';
+import { UserRolesService } from '../user-roles.service';
 
 const makeService = (config: Partial<ProviderConfig> | null) => {
   const registry = {
@@ -13,7 +14,7 @@ const makeService = (config: Partial<ProviderConfig> | null) => {
       return { client: {}, config };
     },
   } as unknown as ProviderRegistryService;
-  return new AdminRoleService(registry);
+  return new AdminRoleService(new UserRolesService(registry));
 };
 
 const makeUser = (claims: Record<string, unknown>): SessionUser =>
@@ -45,6 +46,23 @@ describe('AdminRoleService', () => {
     expect(service.isAdmin(makeUser({ 'realm_access.roles': ['admin'] }))).toBe(
       true,
     );
+  });
+
+  it('reads a dotted roles claim nested in a header-token payload', () => {
+    const service = makeService({
+      adminRoles: ['admin'],
+      rolesClaim: 'realm_access.roles',
+    });
+
+    expect(
+      service.isAdmin(makeUser({ realm_access: { roles: ['admin'] } })),
+    ).toBe(true);
+  });
+
+  it('keeps coercing non-string role entries before matching', () => {
+    const service = makeService({ adminRoles: ['7'] });
+
+    expect(service.isAdmin(makeUser({ roles: ['user', 7] }))).toBe(true);
   });
 
   it('reports a non-administrator when no role matches', () => {

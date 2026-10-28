@@ -27,6 +27,10 @@
   color: var(--ext-description, var(--text-secondary, #57647a));
 }
 
+.limitedAccessDescription {
+  color: var(--ext-description, var(--text-primary, #161b2d));
+}
+
 .warningBadge {
   color: var(--ext-warning-badge, var(--text-warning-icon, #eec840));
 }
