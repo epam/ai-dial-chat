@@ -80,6 +80,12 @@ export interface UseTextInsertionResult {
     altKey: boolean;
     preventDefault: () => void;
   }) => boolean;
+  /**
+   * Call after placing the caret programmatically (e.g. applying a host's
+   * `caretPositionOverride`), so the next insertion goes at that caret even
+   * when the textarea was never focused and the caret is at the start.
+   */
+  markCaretPlaced: () => void;
 }
 
 /**
@@ -221,5 +227,9 @@ export const useTextInsertion = ({
     return true;
   };
 
-  return { handleUndoKeyDown };
+  const markCaretPlaced = () => {
+    hasBeenFocusedRef.current = true;
+  };
+
+  return { handleUndoKeyDown, markCaretPlaced };
 };

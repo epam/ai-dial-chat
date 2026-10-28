@@ -95,6 +95,21 @@ describe('useUrlEntityPreselection — skill-id with prompt-id', () => {
     expect(window.location.search).toBe('?foo=bar');
   });
 
+  it('falls back to the url name and still applies the prompt for a skill listed without a name', async () => {
+    setUrl(URL_WITH_BOTH);
+    mockSkills({ skills: [skillItem(SKILL_URL, '')] });
+
+    const { params } = renderPreselection();
+
+    await waitFor(() =>
+      expect(params.seedSkillMentions).toHaveBeenCalledExactlyOnceWith(
+        '/code-review Summarize the text.',
+        [{ url: SKILL_URL }],
+      ),
+    );
+    expect(window.location.search).toBe('?foo=bar');
+  });
+
   it('seeds only the mention and opens the popup for a body with parameters', async () => {
     setUrl(URL_WITH_BOTH);
     vi.mocked(getPrompt).mockResolvedValue(promptDto('Summarize {{text}}.'));

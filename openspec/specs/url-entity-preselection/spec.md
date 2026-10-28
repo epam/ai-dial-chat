@@ -156,6 +156,16 @@ The warning echoes the unresolved id, truncated to its first 64 characters follo
 - **WHEN** the user opens `/?deployment-id=<id>` and loading deployments fails
 - **THEN** the default selection path proceeds and an error notification (not the "not found" warning) is shown
 
+#### Scenario: A failed refetch keeps a usable earlier listing
+
+- **WHEN** a deployments refetch fails while the listing loaded earlier still holds the `deployment-id`
+- **THEN** that deployment is selected and no notification is shown
+
+#### Scenario: The provisional default is not shown while the id is pending
+
+- **WHEN** the deployments listing settles and the provider resolves its default one commit before the `deployment-id` is applied
+- **THEN** the model selector stays in its loading state and no viewer or tool data is read for that default until the `deployment-id` resolves
+
 #### Scenario: Reference and encoded ids resolve
 
 - **WHEN** `deployment-id` is the `reference` of a deployment, or a percent-encoding variant of its id
@@ -163,13 +173,18 @@ The warning echoes the unresolved id, truncated to its first 64 characters follo
 
 ### Requirement: skill-id is validated against the user's skill listings
 
-A `skill-id` SHALL be applied only after the skills listing has settled, only when the `skills` UI feature is enabled, and only when the value is a well-formed `skills/{bucket}/{path}` resource id that exactly matches the `url` of a skill in the user's own, shared-with-me or public skills. The mention SHALL then be seeded exactly as the catalog's "Use in chat" does (`/{name} ` with the listed name and the skill's url as the mention anchor) without changing the selected deployment. A match in the listings always wins; a listing `error` counts as a failure only when there is no match.
+A `skill-id` SHALL be applied only after the skills listing has settled, only when the `skills` UI feature is enabled, and only when the value is a well-formed `skills/{bucket}/{path}` resource id that matches the `url` of a skill (compared per `/`-separated segment after percent-decoding, so a query value that arrived decoded still matches the encoded listing `url`, which is the url the mention then anchors to) in the user's own, shared-with-me or public skills. The mention SHALL then be seeded exactly as the catalog's "Use in chat" does (`/{name} ` with the listed name and the skill's url as the mention anchor) without changing the selected deployment. A match in the listings always wins; a listing `error` counts as a failure only when there is no match.
 
-When the value is malformed, absent from all three listings after they settle, the listing failed without a match, or the `skills` feature is disabled, Chat SHALL show an error notification, SHALL leave the message input unchanged, and SHALL remove `skill-id` from the URL.
+When the value is malformed, absent from all three listings after they settle, the listing failed without a match, or the `skills` feature is disabled, Chat SHALL show an error notification, SHALL leave the message input unchanged, and SHALL remove `skill-id` from the URL. A listing that failed without a match SHALL be reported as a load failure, not as an unavailable skill.
 
 When the selected deployment does not have `features.skillsSupported === true`, the mention SHALL render in its `isUnsupported` error state and sending SHALL be blocked, as for the catalog's "Use in chat" on a skill (see the `skill-input-attachment` capability).
 
-**i18n:** `urlPreselection.skillUnavailableTitle`, `urlPreselection.skillUnavailableMessage`.
+**i18n:** `urlPreselection.skillUnavailableTitle`, `urlPreselection.skillUnavailableMessage`, `urlPreselection.skillsLoadFailedTitle`, `urlPreselection.skillsLoadFailedMessage`.
+
+#### Scenario: Skills listing failed
+
+- **WHEN** the user opens `/?skill-id=<skills/...>` and loading skills fails without a match
+- **THEN** a "could not load skills" error notification (not "skill unavailable") is shown, the message input is unchanged and `skill-id` is removed from the URL
 
 #### Scenario: Unknown skill
 

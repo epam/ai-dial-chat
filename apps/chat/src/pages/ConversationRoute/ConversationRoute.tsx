@@ -138,20 +138,6 @@ const ConversationRoute: FC = () => {
   );
 
   const { refreshConversations } = useConversations();
-  const { viewer: customViewer } = useCustomViewer(selectedItemId);
-  /*
-   * Keyed by the deployment and the navigation the user started it in, so
-   * selecting another deployment — or pressing New chat again on this same
-   * route — drops back to the gate or composer without an effect.
-   */
-  const customViewerStartKey = `${locationKey}:${selectedItemId}`;
-  const [startedViewerKey, setStartedViewerKey] = useState<string | null>(null);
-  const isCustomViewerStarted =
-    !!customViewer && startedViewerKey === customViewerStartKey;
-
-  const handleStartCustomViewer = useCallback(() => {
-    setStartedViewerKey(customViewerStartKey);
-  }, [customViewerStartKey]);
 
   const handleCustomViewerConversationCreated = useCallback(
     (createdId: string) => {
@@ -257,19 +243,42 @@ const ConversationRoute: FC = () => {
     navigate(getCleanedLocationTarget([]), { replace: true, state: null });
   }, [navigate]);
 
-  const { isDeploymentOverrideActive } = useUrlEntityPreselection({
-    restoreSelectedItemId,
-    selectSkillByUrl,
-    seedSkillMentions,
-    seedComposerText,
-    openParametersPopup,
-    routeState: {
-      hasDeploymentId: routeDeploymentId != null,
-      hasSkillId: routeSkillId != null,
-      hasPrompt: routePromptContent != null || routePendingPrompt != null,
-    },
-    isDisabled: isIsolatedView || overlay != null,
-  });
+  const { isDeploymentOverrideActive, isDeploymentPending } =
+    useUrlEntityPreselection({
+      restoreSelectedItemId,
+      selectSkillByUrl,
+      seedSkillMentions,
+      seedComposerText,
+      openParametersPopup,
+      routeState: {
+        hasDeploymentId: routeDeploymentId != null,
+        hasSkillId: routeSkillId != null,
+        hasPrompt: routePromptContent != null || routePendingPrompt != null,
+      },
+      isDisabled: isIsolatedView || overlay != null,
+    });
+  /*
+   * The provider resolves its default in the same commit the listing loads,
+   * one commit before a pending `deployment-id` is applied. Until then the
+   * selection counts as unknown, so that default neither flashes in the model
+   * selector nor fetches viewer or tool data.
+   */
+  const visibleSelectedItemId = isDeploymentPending ? null : selectedItemId;
+
+  const { viewer: customViewer } = useCustomViewer(visibleSelectedItemId);
+  /*
+   * Keyed by the deployment and the navigation the user started it in, so
+   * selecting another deployment — or pressing New chat again on this same
+   * route — drops back to the gate or composer without an effect.
+   */
+  const customViewerStartKey = `${locationKey}:${visibleSelectedItemId}`;
+  const [startedViewerKey, setStartedViewerKey] = useState<string | null>(null);
+  const isCustomViewerStarted =
+    !!customViewer && startedViewerKey === customViewerStartKey;
+
+  const handleStartCustomViewer = useCallback(() => {
+    setStartedViewerKey(customViewerStartKey);
+  }, [customViewerStartKey]);
 
   const hasConsumedRouteDeploymentRef = useRef(false);
   // TODO: remove in next release
@@ -398,7 +407,7 @@ const ConversationRoute: FC = () => {
 
   const { toolsMenuItems, onToolToggle, toolConfigurationValue } = useToolsMenu(
     {
-      selectedItemId,
+      selectedItemId: visibleSelectedItemId,
       selectedDeploymentConfiguration,
       toolIcon: (
         <IconTelescope
@@ -645,9 +654,9 @@ const ConversationRoute: FC = () => {
     <Suspense fallback={<RouteFallback />}>
       <NewConversationComposer
         deployments={deploymentItems}
-        selectedDeploymentId={selectedItemId}
+        selectedDeploymentId={visibleSelectedItemId}
         onDeploymentChange={setSelectedItemId}
-        isModelSelectorLoading={isLoading}
+        isModelSelectorLoading={isLoading || isDeploymentPending}
         modelSelectorError={error}
         selectedDeployment={selectedDeployment}
         isInputDisabled={isInputDisabled}

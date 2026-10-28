@@ -246,7 +246,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
       [message, textareaRef],
     );
 
-    const { handleUndoKeyDown } = useTextInsertion({
+    const { handleUndoKeyDown, markCaretPlaced } = useTextInsertion({
       insertion: textInsertion,
       textareaRef,
     });
@@ -491,6 +491,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
         caretPositionOverride,
         caretPositionOverride,
       );
+      markCaretPlaced();
       /* Re-evaluates the command menu for this new caret position — a programmatic restore can land the caret back in a matching `/word`. */
       handleCommandMenuCaretMove(caretPositionOverride);
       // eslint-disable-next-line react-hooks/exhaustive-deps

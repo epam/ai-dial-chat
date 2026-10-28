@@ -3390,6 +3390,8 @@ For application deployments, `resolveDeploymentFolder` gives ownership flags pri
 
 `mapDeploymentToCatalogItem` also sets `catalogTabs` from the deployment's DIAL Core `interfaces`, keeping `type: Agent` for every application: an application exposing `chat` or `custom_ui` is listed under Agents, one exposing `mcp` under Toolsets, one exposing both under both. Models, deployments without `interfaces`, and applications exposing none of these get no `catalogTabs` (their tab is their `type`). Pass `isToolsetTabEnabled: false` (default `true`) when the host shows no Toolsets tab; Toolsets is then dropped, and an MCP-only application stays under Agents.
 
+`mapDeploymentToCatalogItem` sets `supportsChat` through `supportsChatInterface(deployment)`, which is `true` when the deployment offers the `chat` interface or declares no `interfaces`. A host that must apply the same rule outside the catalog (e.g. validating a deep-linked deployment) calls `supportsChatInterface` directly.
+
 `mapToolsetToCatalogItem` applies the same label priority when `folderLabels` are supplied: Personal for owned toolsets, Shared for shared toolsets, and Public for configured toolsets with plain IDs. Toolset resource paths retain their nested folders. When labels are omitted, no root label is added.
 
 ```ts

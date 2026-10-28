@@ -1,14 +1,17 @@
 import {
   findDeploymentByIdOrReference,
   getApiErrorDetails,
+  normalizeDeploymentId,
   parsePromptResourceUrl,
   parseSkillResourceUrl,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
   extractPromptParams,
+  PUBLIC_BUCKET,
   type RequestSkill,
 } from '@epam/ai-dial-chat-shared';
+import { getSkillFallbackName } from '@epam/ai-dial-skills';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
@@ -20,14 +23,12 @@ import { useSkills } from '../../context/SkillsContext';
 import { getPrompt, getPublicPrompt } from '../../server-api/prompts.api';
 import { UrlPreselectionQuery } from '../../types/url-preselection';
 import { isDeepLinkableDeployment } from '../../utils/deployments';
+import { findSkillByUrl } from '../../utils/skills';
 import {
   getCleanedLocationTarget,
   getCurrentRouterState,
 } from '../../utils/url-cleanup';
 import { useUiFeature } from '../useUiFeature';
-
-/** Organisation prompts live in this bucket and are read through their own endpoint. */
-const PUBLIC_PROMPT_BUCKET = 'public';
 
 /** Longest part of a link-supplied id echoed into a notification, so a crafted link cannot show arbitrary long text. */
 const MAX_ECHOED_ID_LENGTH = 64;
@@ -71,6 +72,12 @@ export interface UseUrlEntityPreselectionParams extends UrlPreselectionSinks {
 export interface UseUrlEntityPreselectionResult {
   /** A `deployment-id` is pending or has been applied, so the default selection must not run. */
   isDeploymentOverrideActive: boolean;
+  /**
+   * A `deployment-id` is still being resolved. The route treats the selection
+   * as not yet known while it is set, so the provider's provisional default is
+   * neither shown nor used to fetch viewer or tool data.
+   */
+  isDeploymentPending: boolean;
 }
 
 enum DeploymentOutcome {
@@ -133,6 +140,7 @@ export const useUrlEntityPreselection = ({
     sharedWithMe,
     publicSkills,
     isLoading: isSkillsLoading,
+    error: skillsError,
   } = useSkills();
   const isSkillsEnabled = useUiFeature(OverlayFeature.Skills);
   const isPromptsEnabled = useUiFeature(OverlayFeature.Prompts);
@@ -248,29 +256,28 @@ export const useUrlEntityPreselection = ({
     const { sinks, showWarningNotification, showErrorNotification, t } =
       latestRef.current;
 
-    if (deploymentsError != null) {
+    /* A failed refetch can leave an earlier, still usable listing in `items`, so the id is looked up before the error is reported. */
+    const deployment = findDeploymentByIdOrReference(items, id);
+    if (deployment && isDeepLinkableDeployment(deployment)) {
+      sinks.restoreSelectedItemId(deployment.id);
+      setDeploymentOutcome(DeploymentOutcome.Applied);
+    } else if (deploymentsError != null) {
       showErrorNotification({
         title: t(UrlPreselectionI18nKeys.DeploymentsLoadFailedTitle),
         message: t(UrlPreselectionI18nKeys.DeploymentsLoadFailedMessage),
       });
       setDeploymentOutcome(DeploymentOutcome.Settled);
     } else {
-      const deployment = findDeploymentByIdOrReference(items, id);
-      if (deployment && isDeepLinkableDeployment(deployment)) {
-        sinks.restoreSelectedItemId(deployment.id);
-        setDeploymentOutcome(DeploymentOutcome.Applied);
-      } else {
-        showWarningNotification({
-          title: t(UrlPreselectionI18nKeys.DeploymentNotFoundTitle),
-          message: t(UrlPreselectionI18nKeys.DeploymentNotFoundMessage, {
-            id:
-              id.length > MAX_ECHOED_ID_LENGTH
-                ? `${id.slice(0, MAX_ECHOED_ID_LENGTH)}…`
-                : id,
-          }),
-        });
-        setDeploymentOutcome(DeploymentOutcome.Settled);
-      }
+      showWarningNotification({
+        title: t(UrlPreselectionI18nKeys.DeploymentNotFoundTitle),
+        message: t(UrlPreselectionI18nKeys.DeploymentNotFoundMessage, {
+          id:
+            id.length > MAX_ECHOED_ID_LENGTH
+              ? `${id.slice(0, MAX_ECHOED_ID_LENGTH)}…`
+              : id,
+        }),
+      });
+      setDeploymentOutcome(DeploymentOutcome.Settled);
     }
     removeFromUrl([UrlPreselectionQuery.DeploymentId]);
   }, [
@@ -294,25 +301,38 @@ export const useUrlEntityPreselection = ({
     const url = snapshot.skillId ?? '';
     const match =
       isSkillsEnabled && parseSkillResourceUrl(url)
-        ? [...skills, ...(sharedWithMe ?? []), ...publicSkills].find(
-            (item) => item.url === url,
-          )
+        ? findSkillByUrl({ skills, sharedWithMe, publicSkills }, url)
         : undefined;
 
     if (match) {
-      setSkill({ status: SourceStatus.Resolved, url, name: match.name });
+      /* The listing's own `url` is canonical; the query value may have arrived decoded. */
+      setSkill({
+        status: SourceStatus.Resolved,
+        url: match.url,
+        name: match.name || getSkillFallbackName(match.url),
+      });
       return;
     }
     const { showErrorNotification, t } = latestRef.current;
+    const isLoadFailure = isSkillsEnabled && skillsError != null;
     showErrorNotification({
-      title: t(UrlPreselectionI18nKeys.SkillUnavailableTitle),
-      message: t(UrlPreselectionI18nKeys.SkillUnavailableMessage),
+      title: t(
+        isLoadFailure
+          ? UrlPreselectionI18nKeys.SkillsLoadFailedTitle
+          : UrlPreselectionI18nKeys.SkillUnavailableTitle,
+      ),
+      message: t(
+        isLoadFailure
+          ? UrlPreselectionI18nKeys.SkillsLoadFailedMessage
+          : UrlPreselectionI18nKeys.SkillUnavailableMessage,
+      ),
     });
     setSkill({ status: SourceStatus.Failed });
     removeFromUrl([UrlPreselectionQuery.SkillId]);
   }, [
     skill.status,
     isSkillsLoading,
+    skillsError,
     isSkillsEnabled,
     skills,
     sharedWithMe,
@@ -328,7 +348,8 @@ export const useUrlEntityPreselection = ({
     ) {
       return;
     }
-    const id = snapshot.promptId ?? '';
+    /* Re-encoded per segment: the query value arrives decoded, while prompt ids are percent-encoded resource paths. */
+    const id = normalizeDeploymentId(snapshot.promptId ?? '');
     const parsed = isPromptsEnabled ? parsePromptResourceUrl(id) : null;
     let isCancelled = false;
 
@@ -356,7 +377,7 @@ export const useUrlEntityPreselection = ({
       }
       try {
         const dto =
-          parsed.bucket === PUBLIC_PROMPT_BUCKET
+          parsed.bucket === PUBLIC_BUCKET
             ? await getPublicPrompt(parsed.path)
             : await getPrompt(id);
         if (isCancelled) return;
@@ -399,7 +420,7 @@ export const useUrlEntityPreselection = ({
         : undefined;
     const appliedKeys: UrlPreselectionQuery[] = [];
 
-    if (resolvedSkill?.url && resolvedSkill.name && resolvedPrompt) {
+    if (resolvedSkill?.url && resolvedPrompt) {
       if (prompt.hasParameters) {
         sinks.selectSkillByUrl(resolvedSkill.url);
         sinks.openParametersPopup(resolvedPrompt);
@@ -431,5 +452,6 @@ export const useUrlEntityPreselection = ({
     isDeploymentOverrideActive:
       deploymentOutcome === DeploymentOutcome.Pending ||
       deploymentOutcome === DeploymentOutcome.Applied,
+    isDeploymentPending: deploymentOutcome === DeploymentOutcome.Pending,
   };
 };

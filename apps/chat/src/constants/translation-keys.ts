@@ -1760,6 +1760,8 @@ export enum UrlPreselectionI18nKeys {
   DeploymentsLoadFailedMessage = 'urlPreselection.deploymentsLoadFailedMessage',
   SkillUnavailableTitle = 'urlPreselection.skillUnavailableTitle',
   SkillUnavailableMessage = 'urlPreselection.skillUnavailableMessage',
+  SkillsLoadFailedTitle = 'urlPreselection.skillsLoadFailedTitle',
+  SkillsLoadFailedMessage = 'urlPreselection.skillsLoadFailedMessage',
   PromptUnavailableTitle = 'urlPreselection.promptUnavailableTitle',
   PromptUnavailableMessage = 'urlPreselection.promptUnavailableMessage',
 }

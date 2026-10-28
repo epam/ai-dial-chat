@@ -196,6 +196,32 @@ describe('useUrlEntityPreselection — deployment-id', () => {
     expect(result.current.isDeploymentOverrideActive).toBe(false);
   });
 
+  it('still applies the id when a refetch failed but the earlier listing holds it', () => {
+    setUrl('/?deployment-id=gpt-4o');
+    mockDeployments({ items: [deployment()], error: new Error('boom') });
+
+    const { result, params } = renderPreselection();
+
+    expect(params.restoreSelectedItemId).toHaveBeenCalledExactlyOnceWith(
+      'gpt-4o',
+    );
+    expect(result.current.isDeploymentOverrideActive).toBe(true);
+    expect(showNotification).not.toHaveBeenCalled();
+  });
+
+  it('reports the deployment as pending only until it is resolved', () => {
+    setUrl('/?deployment-id=gpt-4o');
+    mockDeployments({ items: [], isLoading: true });
+    const { result, rerender } = renderPreselection();
+
+    expect(result.current.isDeploymentPending).toBe(true);
+
+    mockDeployments({ items: [deployment()] });
+    rerender();
+
+    expect(result.current.isDeploymentPending).toBe(false);
+  });
+
   it('shows an error instead of "not found" when deployments failed to load', () => {
     setUrl('/?deployment-id=gpt-4o');
     mockDeployments({ items: [], error: new Error('boom') });

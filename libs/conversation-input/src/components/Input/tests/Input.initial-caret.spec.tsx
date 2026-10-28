@@ -69,4 +69,26 @@ describe('Input — inserting text into a composer the user never focused', () =
 
     expect(getTextarea().value).toBe('/my|-skill ');
   });
+
+  it('inserts at a start-of-text caret the host placed through caretPositionOverride', async () => {
+    const { rerender } = render(
+      <Input
+        message="/my-skill "
+        messageRevision={1}
+        caretPositionOverride={0}
+      />,
+    );
+
+    rerender(
+      <Input
+        message="/my-skill "
+        messageRevision={1}
+        caretPositionOverride={0}
+        textInsertion={{ text: '|', revision: 1 }}
+      />,
+    );
+    await flushMicrotasks();
+
+    expect(getTextarea().value).toBe('|/my-skill ');
+  });
 });

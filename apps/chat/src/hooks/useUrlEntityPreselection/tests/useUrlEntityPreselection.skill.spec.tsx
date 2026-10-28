@@ -125,14 +125,30 @@ describe('useUrlEntityPreselection — skill-id', () => {
     expectSkillUnavailable();
   });
 
-  it('shows an error when the listing failed and holds no match', () => {
+  it('reports a load failure, not "no access", when the listing failed and holds no match', () => {
     setUrl(`/?skill-id=${SKILL_URL}`);
     mockSkills({ skills: [], error: new Error('boom') });
 
     const { params } = renderPreselection();
 
     expect(params.selectSkillByUrl).not.toHaveBeenCalled();
-    expectSkillUnavailable();
+    expect(showNotification).toHaveBeenCalledExactlyOnceWith({
+      variant: NotificationVariant.Error,
+      title: 'urlPreselection.skillsLoadFailedTitle',
+      message: 'urlPreselection.skillsLoadFailedMessage',
+    });
+    expect(window.location.search).toBe('');
+  });
+
+  it('matches a decoded query value against the percent-encoded listing url', () => {
+    const encodedUrl = 'skills/bucket/My%20Skill';
+    setUrl(`/?skill-id=${encodeURIComponent(encodedUrl)}`);
+    mockSkills({ skills: [skillItem(encodedUrl, 'My Skill')] });
+
+    const { params } = renderPreselection();
+
+    expect(params.selectSkillByUrl).toHaveBeenCalledExactlyOnceWith(encodedUrl);
+    expect(showNotification).not.toHaveBeenCalled();
   });
 
   it('still adds the skill when a refetch failed but the stale listing holds a match', () => {

@@ -167,7 +167,8 @@ When `Input` mounts already holding a `message` and is autofocused, it places th
 caret at the end of that text. A `textInsertion` into a composer the user has never
 focused, whose caret is still at the browser's default start position, lands at the
 end of the text rather than in front of it; once the user has focused the composer,
-or a host has set a selection, the insertion goes at that caret.
+or a host has placed the caret through `caretPositionOverride`, the insertion goes
+at that caret.
 
 ```tsx
 import type { TextInsertion } from '@epam/ai-dial-conversation-input';

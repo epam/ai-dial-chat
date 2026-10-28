@@ -134,6 +134,16 @@ describe('useUrlEntityPreselection — prompt-id', () => {
     expect(getPublicPrompt).not.toHaveBeenCalled();
   });
 
+  it('re-encodes a decoded query value into the percent-encoded prompt id', async () => {
+    const encodedId = 'prompts/bucket/Work/My%20Prompt';
+    setUrl(`/?prompt-id=${encodeURIComponent(encodedId)}`);
+
+    const { params } = renderPreselection();
+
+    await waitFor(() => expect(params.seedComposerText).toHaveBeenCalled());
+    expect(getPrompt).toHaveBeenCalledWith(encodedId);
+  });
+
   it('reads an organisation prompt through the public read with its bucket-relative path', async () => {
     setUrl(`/?prompt-id=${PUBLIC_PROMPT_ID}`);
 
