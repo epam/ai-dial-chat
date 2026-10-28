@@ -30,7 +30,7 @@ Every lib under `libs/` must have these three fields in its `package.json`:
 
 ### Nx `type:*` tag
 
-Every lib must carry exactly one `type:*` tag in `nx.tags`. New feature libs take `type:ui`, and the tag sits alongside `publishable`, which `scripts/validate-docs.mjs` reads. `@nx/enforce-module-boundaries` rejects any import from a lib with no matching constraint. The tag decides what the lib may import: a `type:ui` lib may not import `@epam/ai-dial-chat-api-client`, and `type:shared` libs import only each other. The full table is in `docs/architecture.md` "Module boundary rules". Never widen a constraint or add an `eslint-disable` to land an import; propose the boundary change instead.
+Every lib must carry exactly one `type:*` tag in `nx.tags`. New feature libs take `type:ui`, and the tag sits alongside `publishable`, which `scripts/validate-docs.mjs` reads. `@nx/enforce-module-boundaries` rejects any import from a lib with no matching constraint. The tag decides what the lib may import: a `type:ui` lib may not import `@epam/ai-dial-chat-api-client`, and `type:shared` libs import only each other. The full table is in `docs/architecture.md` "Module boundary rules". Never widen a constraint or add an `eslint-disable` to land an import; propose the boundary change instead. `libs/chat-hooks` holds hooks, functions, types and enums but never a component, and among feature libs only `toolset-editor` may import it.
 
 ```json
 {

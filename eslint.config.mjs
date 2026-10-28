@@ -6,7 +6,16 @@ import jsxA11y from 'eslint-plugin-jsx-a11y';
 import reactHooks from 'eslint-plugin-react-hooks';
 import tailwindcss from 'eslint-plugin-tailwindcss';
 import testingLibrary from 'eslint-plugin-testing-library';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+
+// Every `type:ui` lib's package name, read from the Nx tags so new feature libs are covered.
+const uiLibPackageNames = readdirSync(new URL('./libs', import.meta.url))
+  .map((dir) => new URL(`./libs/${dir}/package.json`, import.meta.url))
+  .filter((manifestUrl) => existsSync(manifestUrl))
+  .map((manifestUrl) => JSON.parse(readFileSync(manifestUrl, 'utf8')))
+  .filter((manifest) => manifest.nx?.tags?.includes('type:ui'))
+  .map((manifest) => manifest.name);
 
 const relativeImportExtensionPattern = {
   regex: '^\\.{1,2}/.+\\.(?:js|jsx|ts|tsx)$',
@@ -200,6 +209,55 @@ export default [
               ],
               message:
                 'Consumer fixtures are external hosts: use the published lib APIs, not the generated DIAL Chat API client.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    /*
+     * `chat-hooks` may take a feature lib's types, enums and pure functions to
+     * build that lib's props, but never its hooks: it holds non-rendering
+     * code only. Like the fixture block, this must follow the general block.
+     */
+    files: ['libs/chat-hooks/src/**/*.{ts,tsx}'],
+    ignores: ['**/*.spec.*', '**/tests/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            relativeImportExtensionPattern,
+            {
+              group: uiLibPackageNames.flatMap((name) => [name, `${name}/*`]),
+              importNamePattern: '^use[A-Z]',
+              message:
+                "chat-hooks may import a feature lib's types, enums and pure functions, not its hooks.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    /*
+     * Among feature libs only `toolset-editor` imports `chat-hooks` (see
+     * AGENTS.md "Library isolation"); any other feature lib takes behaviour
+     * through props and callbacks instead.
+     */
+    files: ['libs/*/src/**/*.{ts,tsx}'],
+    ignores: ['libs/chat-hooks/**', 'libs/toolset-editor/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            relativeImportExtensionPattern,
+            {
+              group: ['@epam/ai-dial-chat-hooks', '@epam/ai-dial-chat-hooks/*'],
+              message:
+                'Only toolset-editor among feature libs may import chat-hooks; take the behaviour through props or callbacks.',
             },
           ],
         },
