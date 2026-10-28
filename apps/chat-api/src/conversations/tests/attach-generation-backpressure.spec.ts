@@ -1,10 +1,20 @@
 import { EventEmitter } from 'node:events';
+import { NotFoundException } from '@nestjs/common';
 import type { ConfigService } from '@nestjs/config';
+import {
+  DataPointType,
+  MeterProvider,
+  MetricReader,
+} from '@opentelemetry/sdk-metrics';
 import type { Request, Response } from 'express';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthSource } from '../../auth/auth-source.enum';
 import { SSE_RELEASE_TIMEOUT_MS } from '../../common/utils/sse';
 import type { EnvironmentVariables } from '../../config/environment.config';
+import {
+  initializeRuntimeMetrics,
+  SseSubscriptionKind,
+} from '../../telemetry/runtime-metrics';
 import { ConversationGenerationService } from '../conversation-generation.service';
 import { ConversationController } from '../conversation.controller';
 import { ConversationService } from '../conversation.service';
@@ -78,12 +88,14 @@ const makeMessage = (content: string): ConversationMessageDto => ({
   timestamp: '2026-01-01T00:00:00.000Z',
 });
 
-const makeController = (): {
+const makeController = (
+  config: Partial<EnvironmentVariables> = {},
+): {
   controller: ConversationController;
   generationService: ConversationGenerationService;
 } => {
   const generationService = new ConversationGenerationService({
-    get: () => undefined,
+    get: (key: keyof EnvironmentVariables) => config[key],
   } as unknown as ConfigService<EnvironmentVariables>);
   const controller = new ConversationController(
     {
@@ -244,6 +256,164 @@ describe('attachToGeneration — per-subscriber backpressure', () => {
 
     expect(slowRes.end).toHaveBeenCalledOnce();
     expect(slowRes.destroy).not.toHaveBeenCalled();
+  });
+});
+
+class TestMetricReader extends MetricReader {
+  protected async onForceFlush(): Promise<void> {
+    /* Metrics are collected directly in assertions. */
+  }
+
+  protected async onShutdown(): Promise<void> {
+    /* This reader owns no resources. */
+  }
+}
+
+describe('attachToGeneration — retained entry after the finalization bound', () => {
+  const FINALIZE_TIMEOUT_MS = 5000;
+  const req = {
+    user: { sid: SID },
+    authSource: AuthSource.Cookie,
+  } as unknown as Request;
+  let reader: TestMetricReader;
+  let meterProvider: MeterProvider;
+  let stopMetrics: () => void;
+
+  beforeEach(() => {
+    vi.useFakeTimers({
+      toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'],
+    });
+    reader = new TestMetricReader();
+    meterProvider = new MeterProvider({ readers: [reader] });
+    stopMetrics = initializeRuntimeMetrics(meterProvider.getMeter('test'));
+  });
+
+  afterEach(async () => {
+    stopMetrics();
+    await meterProvider.shutdown();
+  });
+
+  const collectAttachSubscriptions = async () => {
+    const { resourceMetrics } = await reader.collect();
+    const point = resourceMetrics.scopeMetrics
+      .flatMap((scope) => scope.metrics)
+      .filter((metric) => metric.descriptor.name === 'dial.chat.sse.active')
+      .filter((metric) => metric.dataPointType === DataPointType.GAUGE)
+      .flatMap((metric) => metric.dataPoints)
+      .find(
+        (dataPoint) =>
+          dataPoint.attributes.kind === SseSubscriptionKind.GenerationAttach,
+      );
+    return point?.value;
+  };
+
+  const writtenTerminalTypes = (res: FakeAttachResponse): string[] =>
+    res.write.mock.calls
+      .map(([chunk]) => String(chunk))
+      .filter((chunk) => chunk.startsWith('data: '))
+      .map((chunk) => JSON.parse(chunk.slice('data: '.length)).type as string)
+      .filter((type) => type !== 'snapshot' && type !== 'chunk');
+
+  /* Lets `releaseSseResponse` observe the fake response's `'finish'`. */
+  const flushRelease = () => new Promise((resolve) => setImmediate(resolve));
+
+  it.each([
+    ['error', false],
+    ['stopped', true],
+  ])(
+    'ends an earlier subscriber with one %s terminal event and releases its keepalive and subscription when the bound elapses',
+    async (terminalType, isStoppedByUser) => {
+      const { controller, generationService } = makeController({
+        GENERATION_FINALIZE_TIMEOUT_MS: FINALIZE_TIMEOUT_MS,
+      });
+      const baseline = await collectAttachSubscriptions();
+      const lease = generationService.register(OWNER_KEY, PATH, GEN_ID);
+      generationService.seedAssembledMessage(lease, makeMessage('partial'));
+      const res = new FakeAttachResponse(true);
+      await controller.attachToGeneration(req, res as unknown as Response, {
+        path: PATH,
+      });
+      expect(await collectAttachSubscriptions()).toBe((baseline ?? 0) + 1);
+
+      if (isStoppedByUser) {
+        generationService.abort(OWNER_KEY, PATH, GEN_ID);
+      }
+      generationService.beginFinalizing(lease);
+      vi.advanceTimersByTime(FINALIZE_TIMEOUT_MS);
+      await flushRelease();
+
+      expect(writtenTerminalTypes(res)).toEqual([terminalType]);
+      expect(res.end).toHaveBeenCalledOnce();
+      expect(res.destroy).not.toHaveBeenCalled();
+      expect(vi.getTimerCount()).toBe(0);
+      expect(await collectAttachSubscriptions()).toBe(baseline);
+
+      const writesBeforeSettlement = res.write.mock.calls.length;
+      generationService.complete(lease);
+      expect(res.write.mock.calls.length).toBe(writesBeforeSettlement);
+    },
+  );
+
+  it('leaves a subscriber that disconnected before the bound untouched when the bound elapses', async () => {
+    const { controller, generationService } = makeController({
+      GENERATION_FINALIZE_TIMEOUT_MS: FINALIZE_TIMEOUT_MS,
+    });
+    const baseline = await collectAttachSubscriptions();
+    const lease = generationService.register(OWNER_KEY, PATH, GEN_ID);
+    const res = new FakeAttachResponse(true);
+    await controller.attachToGeneration(req, res as unknown as Response, {
+      path: PATH,
+    });
+    generationService.beginFinalizing(lease);
+
+    res.emit('close');
+    await flushRelease();
+    expect(await collectAttachSubscriptions()).toBe(baseline);
+    vi.advanceTimersByTime(FINALIZE_TIMEOUT_MS);
+    await flushRelease();
+
+    expect(writtenTerminalTypes(res)).toEqual([]);
+    expect(res.end).toHaveBeenCalledOnce();
+    expect(res.destroy).not.toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(0);
+    expect(await collectAttachSubscriptions()).toBe(baseline);
+  });
+
+  it('rejects a later attach with 404 before opening a stream, arming nothing and leaving earlier responses alone', async () => {
+    const { controller, generationService } = makeController({
+      GENERATION_FINALIZE_TIMEOUT_MS: FINALIZE_TIMEOUT_MS,
+    });
+    const baseline = await collectAttachSubscriptions();
+    const lease = generationService.register(OWNER_KEY, PATH, GEN_ID);
+    const earlyRes = new FakeAttachResponse(true);
+    await controller.attachToGeneration(req, earlyRes as unknown as Response, {
+      path: PATH,
+    });
+    generationService.beginFinalizing(lease);
+    vi.advanceTimersByTime(FINALIZE_TIMEOUT_MS);
+    await flushRelease();
+    const earlyWrites = earlyRes.write.mock.calls.length;
+    expect(vi.getTimerCount()).toBe(0);
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const lateRes = new FakeAttachResponse(true);
+      await expect(
+        controller.attachToGeneration(req, lateRes as unknown as Response, {
+          path: PATH,
+        }),
+      ).rejects.toThrow(NotFoundException);
+      expect(lateRes.setHeader).not.toHaveBeenCalled();
+      expect(lateRes.flushHeaders).not.toHaveBeenCalled();
+      expect(lateRes.write).not.toHaveBeenCalled();
+      expect(lateRes.listenerCount('close')).toBe(0);
+    }
+
+    expect(vi.getTimerCount()).toBe(0);
+    expect(await collectAttachSubscriptions()).toBe(baseline);
+
+    generationService.complete(lease);
+    expect(earlyRes.write.mock.calls.length).toBe(earlyWrites);
+    expect(earlyRes.end).toHaveBeenCalledOnce();
   });
 });
 

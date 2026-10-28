@@ -579,6 +579,7 @@ export class ConversationController {
     }
 
     const attachment = this.generationService.attach(ownerKey, dto.path);
+    /* Also covers a retained entry whose subscribers were already released. */
     if (!attachment) {
       throw new NotFoundException(
         'No active generation found for the given path',
