@@ -8,8 +8,6 @@ import {
 } from '@epam/ai-dial-attachment-input';
 import {
   AttachmentValidationErrorReason,
-  dialFilesToAttachments,
-  dialFolderPathToAttachment,
   findDeploymentByIdOrReference,
   getQuickAppConversationStarters,
   isQuickAppSchema,
@@ -37,7 +35,6 @@ import {
   isStatusMessage,
   StatusEvent,
   type Annotation,
-  type AttachResult,
   type Attachment,
   type Conversation,
   type MessageRating,
@@ -108,6 +105,7 @@ import { useChatSettingsFormLabels } from '../../hooks/conversation/useChatSetti
 import { useConversationAnnotationPool } from '../../hooks/conversation/useConversationAnnotationPool';
 import { useConversationDraftStore } from '../../hooks/conversation/useConversationDraftStore';
 import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';
+import { useDialFileManagerState } from '../../hooks/files/useDialFileManagerState';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useUiFeature } from '../../hooks/useUiFeature';
@@ -554,10 +552,14 @@ const ConversationView: FC<Props> = ({
   );
   // bucket is the authenticated user's DIAL Core storage bucket from their profile
   const bucket = user?.bucket ?? '';
-  const [isDialFileManagerOpen, setIsDialFileManagerOpen] = useState(false);
-  const [pendingDialAttachments, setPendingDialAttachments] = useState<
-    Attachment[]
-  >([]);
+  const {
+    isOpen: isDialFileManagerOpen,
+    openModal: handleOpenDialFileManager,
+    closeModal: closeDialFileManager,
+    pendingAttachments: pendingDialAttachments,
+    clearPendingAttachments: clearPendingDialAttachments,
+    handleAttach: handleAttachDialFiles,
+  } = useDialFileManagerState(bucket);
   const [attachmentsAmount, setAttachmentsAmount] = useState(0);
   const { resolvers, options } = useAttachmentCanvasResolvers();
   const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
@@ -925,10 +927,6 @@ const ConversationView: FC<Props> = ({
     latestRef.current = { messages, isAssistantTyping };
   }, [messages, isAssistantTyping]);
 
-  const handleOpenDialFileManager = useCallback(
-    () => setIsDialFileManagerOpen(true),
-    [],
-  );
   const editMenuOverlays = useMemo(
     () => (editSkillMenuOverlay ? [editSkillMenuOverlay] : undefined),
     [editSkillMenuOverlay],
@@ -1035,20 +1033,6 @@ const ConversationView: FC<Props> = ({
       }),
   });
 
-  const handleAttachDialFiles = useCallback(
-    (result: AttachResult) => {
-      const fileAttachments = dialFilesToAttachments(result.files, bucket, {
-        resolvePreviewUrl: resolveCatalogIconUrl,
-      });
-      const folderAttachments = result.folderPaths.map(
-        dialFolderPathToAttachment,
-      );
-      setPendingDialAttachments([...fileAttachments, ...folderAttachments]);
-      setIsDialFileManagerOpen(false);
-    },
-    [bucket],
-  );
-
   const handleReplyAttachmentsChange = reply.onAttachmentsChange;
   const handleAttachmentsChange = useCallback(
     (attachments: Attachment[]) => {
@@ -1086,11 +1070,6 @@ const ConversationView: FC<Props> = ({
       void openAttachmentCanvas(attachment, undefined, startCanvasRequest());
     },
     [openAttachmentCanvas, startCanvasRequest],
-  );
-
-  const clearPendingDialAttachments = useCallback(
-    () => setPendingDialAttachments([]),
-    [],
   );
 
   const handleMessageAttachmentClick = useCallback(
@@ -1425,9 +1404,7 @@ const ConversationView: FC<Props> = ({
                   !isEditActive ? reply.onFilesConsumed : undefined
                 }
                 onPendingAttachmentsConsumed={
-                  !isEditActive
-                    ? () => setPendingDialAttachments([])
-                    : undefined
+                  !isEditActive ? clearPendingDialAttachments : undefined
                 }
                 autoFocus={!isMobile && !isSkipFocusChatInputOnloadEnabled}
                 onDialFileSystemClick={
@@ -1483,7 +1460,7 @@ const ConversationView: FC<Props> = ({
               {isDialFileManagerOpen && (
                 <DialFileManagerModal
                   isOpen={isDialFileManagerOpen}
-                  onClose={() => setIsDialFileManagerOpen(false)}
+                  onClose={closeDialFileManager}
                   onAttach={handleAttachDialFiles}
                   bucket={bucket}
                   allowedTypes={inputAttachmentTypes}
