@@ -15,6 +15,7 @@ import { ConversationService } from './conversation.service';
 import { BackgroundGenerationService } from './generation/background-generation.service';
 import { ChatCompletionsAdapter } from './generation/chat-completions.adapter';
 import { CoreResponsesClient } from './generation/core-responses.client';
+import { GenerationApiSelector } from './generation/generation-api-selector.service';
 import { ResponsesAdapter } from './generation/responses.adapter';
 import { ConversationLifecycleService } from './lifecycle/conversation-lifecycle.service';
 import { ConversationListingService } from './listing/conversation-listing.service';
@@ -47,6 +48,7 @@ import { ConversationStreamingService } from './streaming/conversation-streaming
     ConversationPublishAttachmentsService,
     PublishedFolderAttachmentsService,
     ChatCompletionsAdapter,
+    GenerationApiSelector,
     ResponsesAdapter,
     CoreResponsesClient,
     BackgroundGenerationService,

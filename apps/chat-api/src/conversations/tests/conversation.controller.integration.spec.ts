@@ -33,6 +33,7 @@ import { ConversationService } from '../conversation.service';
 import { BackgroundGenerationService } from '../generation/background-generation.service';
 import { ChatCompletionsAdapter } from '../generation/chat-completions.adapter';
 import { CoreResponsesClient } from '../generation/core-responses.client';
+import { GenerationApiSelector } from '../generation/generation-api-selector.service';
 import { ResponsesAdapter } from '../generation/responses.adapter';
 import { ConversationLifecycleService } from '../lifecycle/conversation-lifecycle.service';
 import { ConversationListingService } from '../listing/conversation-listing.service';
@@ -281,6 +282,7 @@ describe('ConversationController (integration)', () => {
           ScheduledTaskUnreadService,
           ConversationGenerationService,
           ChatCompletionsAdapter,
+          GenerationApiSelector,
           ResponsesAdapter,
           CoreResponsesClient,
           BackgroundGenerationService,
@@ -992,7 +994,7 @@ describe('ConversationController (integration)', () => {
     it('carries no @RequireFeature/FeatureGuard metadata tied to ResponsesApiEnabled', () => {
       /*
        * The Responses-vs-Chat-Completions selection is an internal routing
-       * decision (ConversationStreamingService.resolveGenerationApiForDeployment),
+       * decision (GenerationApiSelector.select),
        * not a per-route feature gate — a disabled flag must select Chat
        * Completions, never 403 the whole endpoint. Asserted via reflection
        * rather than an HTTP call so it fails fast on either an accidental
