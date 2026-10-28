@@ -50,6 +50,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   markdownUrlTransform,
   onAttachmentClick,
   onDownloadAll,
+  isAttachmentDownloadable,
   onAttachmentRetry,
   codeBlockTheme,
   tableOnOpenInCanvas,
@@ -235,6 +236,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
                 : undefined
             }
             onDownloadAll={onDownloadAll}
+            isAttachmentDownloadable={isAttachmentDownloadable}
             onRetry={onAttachmentRetry}
             labels={{
               clickLabel: attachmentClickLabel,

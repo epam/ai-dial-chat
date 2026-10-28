@@ -1682,7 +1682,7 @@ const AttachmentTile = ({ attachment }: { attachment: DisplayAttachment }) => {
 
 **Returns** (`UseAttachmentActionResult`): `{ handleAttachmentClick: (attachment: DisplayAttachment) => void }`.
 
-Also exports `isDialFileId`, `isDownloadableAttachment`, and `downloadAttachment` (the standalone functions the hook is built on) for callers that need the download decision outside the click handler.
+Also exports `isDialFileId`, `isDownloadableAttachment`, and `downloadAttachment` (the standalone functions the hook is built on) for callers that need the download decision outside the click handler. A DIAL folder attachment (`url` ending with `/`) is not downloadable: `isDownloadableAttachment` returns `false` and `downloadAttachment` does nothing for it.
 
 ### usePromptsState
 
@@ -4367,15 +4367,19 @@ import { sanitizeFileName } from '@epam/ai-dial-chat-hooks';
 sanitizeFileName('report:final?.pdf'); // 'report_final_.pdf'
 ```
 
-### isDialFileId / resolveRelativeDialFilePath / resolveDialFileBucketAndPath
+### isDialFileId / isDialFolderId / resolveRelativeDialFilePath / resolveDialFileBucketAndPath
 
-Recognizes a DIAL Core file id (`files/{bucket}/{path}`) and resolves it to a bucket-relative path or its `{ bucket, path }` parts.
+Recognizes a DIAL Core file id (`files/{bucket}/{path}`) or folder id (a file id ending with `/`) and resolves it to a bucket-relative path or its `{ bucket, path }` parts.
 
 ```ts
-import { resolveDialFileBucketAndPath } from '@epam/ai-dial-chat-hooks';
+import {
+  isDialFolderId,
+  resolveDialFileBucketAndPath,
+} from '@epam/ai-dial-chat-hooks';
 
 resolveDialFileBucketAndPath('files/my-bucket/reports/q1.pdf');
 // { bucket: 'my-bucket', path: 'reports/q1.pdf' }
+isDialFolderId('files/my-bucket/reports/'); // true
 ```
 
 ### openAnnotationAttachment
