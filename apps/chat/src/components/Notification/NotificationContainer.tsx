@@ -3,6 +3,8 @@ import {
   DIAL_KIT_ICON_STROKE,
   GhostIconButton,
   Notification,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import { IconCopy } from '@tabler/icons-react';
 import {
@@ -86,9 +88,9 @@ const RequestIdRow: FC<RequestIdRowProps> = ({ requestId }) => {
         aria-label={t(NotificationI18nKeys.RequestIdCopyAriaLabel)}
         onClick={() => void handleCopy()}
       />
-      <span role="status" aria-live="polite" className="sr-only">
+      <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
         {statusText}
-      </span>
+      </LiveRegion>
     </div>
   );
 };

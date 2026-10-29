@@ -64,6 +64,8 @@ import {
   ErrorMessageNotification,
   FabButton,
   NeutralButton,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import { IconCopy, IconPrompt } from '@tabler/icons-react';
 import {
@@ -1294,11 +1296,11 @@ const ConversationView: FC<Props> = ({
 
         {/* The reload notification mounts inside the log on demand; this
             always-mounted region carries its announcement instead. */}
-        <span role="status" aria-live="polite" className="sr-only">
+        <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
           {retryConversationReload != null
             ? `${t(ChatI18nKeys.ConversationReloadErrorTitle)} ${t(ChatI18nKeys.ConversationReloadError)}`
             : ''}
-        </span>
+        </LiveRegion>
 
         {isScrollButtonVisible && (
           <FabButton
@@ -1340,20 +1342,17 @@ const ConversationView: FC<Props> = ({
           </div>
         ) : (
           <>
-            {/* Always mounted: a live region that mounts in the same render
-                as its text is announced unreliably, so only its text toggles
-                (sr-only while empty, so it adds no padding). */}
-            <p
-              role="status"
+            {/* Empty while the model is available, so it takes no space. */}
+            <LiveRegion
+              as={LiveRegionElement.P}
               className={mergeClasses(
                 'dial-small-text text-center text-secondary',
-                isSelectedModelHidden ? 'pb-2' : 'sr-only',
+                isSelectedModelHidden && 'pb-2',
               )}
             >
-              {isSelectedModelHidden
-                ? t(ConversationI18nKeys.ModelUnavailableNotice)
-                : ''}
-            </p>
+              {isSelectedModelHidden &&
+                t(ConversationI18nKeys.ModelUnavailableNotice)}
+            </LiveRegion>
             <Suspense fallback={null}>
               <ConversationInput
                 key={conversation.id}

@@ -10,11 +10,57 @@ import { ScheduledTaskRepeat } from '../../../types/scheduled-task-schedule';
 import { ScheduledTaskCreateForm } from '../ScheduledTaskCreateForm';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  LiveRegionPoliteness: { Polite: 'polite', Assertive: 'assertive' },
+  LiveRegionElement: { Div: 'div', Span: 'span', P: 'p' },
+  LiveRegion: ({
+    politeness = 'polite',
+    visuallyHidden,
+    as: Tag = 'div',
+    atomic,
+    className,
+    children,
+    ...rest
+  }: {
+    politeness?: string;
+    visuallyHidden?: boolean;
+    as?: 'div' | 'span' | 'p';
+    atomic?: boolean;
+  } & React.HTMLAttributes<HTMLElement>) => (
+    <Tag
+      {...rest}
+      role={politeness === 'assertive' ? 'alert' : 'status'}
+      aria-live={politeness as 'polite' | 'assertive'}
+      aria-atomic={atomic}
+      className={visuallyHidden ? 'sr-only' : className}
+    >
+      {children}
+    </Tag>
+  ),
   DIAL_KIT_ICON_STROKE: 1.5,
   ButtonVariant: { Primary: 'primary', Neutral: 'neutral' },
   ButtonAppearance: { Solid: 'solid' },
-  ErrorText: ({ text, id }: { text?: string; id?: string }) =>
-    text ? <span id={id}>{text}</span> : null,
+  ErrorText: ({
+    text,
+    id,
+    announce,
+  }: {
+    text?: string;
+    id?: string;
+    announce?: string;
+  }) => {
+    const node = text ? <span id={id}>{text}</span> : null;
+    return announce ? (
+      <span
+        role={announce === 'assertive' ? 'alert' : 'status'}
+        aria-live={announce as 'polite' | 'assertive'}
+        aria-atomic
+      >
+        {node}
+      </span>
+    ) : (
+      node
+    );
+  },
   CaptionText: ({ text }: { text?: string }) => (text ? <p>{text}</p> : null),
   Input: ({
     labelProps,
@@ -404,7 +450,7 @@ describe('ScheduledTaskCreateForm', () => {
     const { rerender } = await renderForm({
       errors: { skillUrls: 'Unsupported' },
     });
-    /* The live region has no role of its own; walk up from the error text. */
+    /* Walk up from the error text to the kit live region that wraps it. */
     // eslint-disable-next-line testing-library/no-node-access -- see above
     const region = screen.getByText('Unsupported').closest('[aria-live]');
     expect(region?.getAttribute('aria-live')).toBe('polite');

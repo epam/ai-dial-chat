@@ -3,7 +3,11 @@ import {
   useAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
 import { CodeBlockTheme, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { ErrorText, NeutralButton } from '@epam/ai-dial-ui-kit';
+import {
+  ErrorText,
+  NeutralButton,
+  LiveRegionPoliteness,
+} from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -54,14 +58,11 @@ export const SkillFilePreview: FC<Props> = ({ state, onRetry }) => {
           : 'contents',
       )}
     >
-      {/* A failed load with a retry is not a field error: announce it. The
-          alert stays mounted across states, because one that mounts together
-          with its message is announced unreliably; only its text toggles. */}
-      <div role="alert" className={mergeClasses(!isError && 'sr-only')}>
-        <ErrorText
-          text={isError ? t(AttachmentCanvasI18nKeys.LoadErrorLabel) : ''}
-        />
-      </div>
+      {/* A failed load with a retry is not a field error: announce it. */}
+      <ErrorText
+        announce={LiveRegionPoliteness.Assertive}
+        text={isError ? t(AttachmentCanvasI18nKeys.LoadErrorLabel) : ''}
+      />
       {isError && onRetry != null && (
         <NeutralButton label={t(ButtonsI18nKeys.Retry)} onClick={onRetry} />
       )}

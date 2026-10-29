@@ -8,6 +8,9 @@ import {
   SkeletonVariant,
   Spinner,
   Tooltip,
+  LiveRegion,
+  LiveRegionElement,
+  LiveRegionPoliteness,
 } from '@epam/ai-dial-ui-kit';
 import { IconAlertTriangle, IconCheck, IconCircleX } from '@tabler/icons-react';
 import { type CSSProperties, type FC, type KeyboardEvent } from 'react';
@@ -310,9 +313,13 @@ export const ScheduledTaskRunHistoryList: FC<
         )}
       </ul>
       {/* The error row mounts with the failure; this region is mounted with the list so the failure is announced. */}
-      <span role="alert" className="sr-only">
+      <LiveRegion
+        politeness={LiveRegionPoliteness.Assertive}
+        visuallyHidden
+        as={LiveRegionElement.Span}
+      >
         {error ? labels.errorLabel : ''}
-      </span>
+      </LiveRegion>
     </>
   );
 };

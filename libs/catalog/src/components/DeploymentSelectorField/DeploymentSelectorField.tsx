@@ -6,6 +6,9 @@ import {
   Input,
   MenuItem,
   Search,
+  LiveRegion,
+  LiveRegionElement,
+  LiveRegionPoliteness,
 } from '@epam/ai-dial-ui-kit';
 import {
   type AriaAttributes,
@@ -140,15 +143,16 @@ export const DeploymentSelectorField: FC<DeploymentSelectorFieldProps> = ({
         placeholder={labels.searchPlaceholder}
         aria-label={labels.searchAriaLabel}
       />
-      <span
-        role="status"
-        className={statusText === '' ? 'sr-only' : 'mt-2 block'}
+      <LiveRegion as={LiveRegionElement.Span} className="mt-2 block">
+        {statusText === '' ? null : statusText}
+      </LiveRegion>
+      <LiveRegion
+        politeness={LiveRegionPoliteness.Assertive}
+        as={LiveRegionElement.Span}
+        className="mt-2 block"
       >
-        {statusText}
-      </span>
-      <span role="alert" className={hasError ? 'mt-2 block' : 'sr-only'}>
-        {hasError ? labels.errorLabel : ''}
-      </span>
+        {hasError ? labels.errorLabel : null}
+      </LiveRegion>
       <div
         role="listbox"
         className="mt-2 max-h-[min(50dvh,320px)] min-w-0 overflow-y-auto"

@@ -9,6 +9,8 @@ import {
   NoDataContent,
   Search,
   mergeClasses,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import { IconDownload } from '@tabler/icons-react';
 import {
@@ -206,9 +208,9 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
           />
         </div>
       )}
-      <span role="status" aria-live="polite" className="sr-only">
+      <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
         {isNoResults ? labels.noResultsLabel : ''}
-      </span>
+      </LiveRegion>
       <div className="flex-1 overflow-y-auto p-4 pt-0">{bodyContent}</div>
     </SidebarPanel>
   );

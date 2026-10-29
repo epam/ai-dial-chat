@@ -1,4 +1,9 @@
-import { NeutralButton, PrimaryButton } from '@epam/ai-dial-ui-kit';
+import {
+  NeutralButton,
+  PrimaryButton,
+  LiveRegion,
+  LiveRegionElement,
+} from '@epam/ai-dial-ui-kit';
 import {
   FC,
   memo,
@@ -149,9 +154,9 @@ const EventLog: FC<EventLogProps> = ({
           )}
         </div>
 
-        <span className="sr-only" role="status" aria-live="polite">
+        <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
           {copyStatus}
-        </span>
+        </LiveRegion>
       </aside>
     </>
   );

@@ -3,7 +3,13 @@ import {
   OverlayEventType,
   OverlayFeature,
 } from '@epam/ai-dial-chat-overlay';
-import { Input, NeutralButton, PrimaryButton } from '@epam/ai-dial-ui-kit';
+import {
+  Input,
+  NeutralButton,
+  PrimaryButton,
+  LiveRegion,
+  LiveRegionElement,
+} from '@epam/ai-dial-ui-kit';
 import { FC, memo, useCallback, useEffect, useRef, useState } from 'react';
 import EventLog from '../../components/EventLog/EventLog';
 import MissingEnvNotice from '../../components/MissingEnvNotice/MissingEnvNotice';
@@ -105,9 +111,9 @@ const EnabledFeaturesCase: FC = () => {
     <div>
       <h1 className="dial-display2-text">enabledFeatures case</h1>
 
-      <p aria-live="polite">
+      <LiveRegion as={LiveRegionElement.P}>
         Ready: {isReady ? 'yes' : 'waiting for handshake...'}
-      </p>
+      </LiveRegion>
       <div className="my-3 flex flex-wrap gap-2">
         {Object.entries(PRESETS).map(([label, features]) => (
           <NeutralButton

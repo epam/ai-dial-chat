@@ -35,7 +35,15 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
   };
 });
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
+vi.mock('@epam/ai-dial-ui-kit', async () => ({
+  /* The real live region: a hand-rolled stub would hide its always-mounted markup. */
+  ...(await vi
+    .importActual<typeof import('@epam/ai-dial-ui-kit')>('@epam/ai-dial-ui-kit')
+    .then(({ LiveRegion, LiveRegionElement, LiveRegionPoliteness }) => ({
+      LiveRegion,
+      LiveRegionElement,
+      LiveRegionPoliteness,
+    }))),
   ButtonDropdown: ({ label }: { label: ReactNode }) => (
     <button aria-haspopup="menu">{label}</button>
   ),

@@ -1,8 +1,4 @@
-import {
-  ErrorMessageNotification,
-  NotificationType,
-  Spinner,
-} from '@epam/ai-dial-ui-kit';
+import { ErrorMessageNotification, Spinner } from '@epam/ai-dial-ui-kit';
 import {
   VisualizerConnector,
   VisualizerConnectorEvents,
@@ -192,7 +188,6 @@ const CustomViewerFrame: FC<Props> = ({
             notification is demoted from its default `alert` to `status`. */}
         <ErrorMessageNotification
           role="status"
-          type={NotificationType.SectionMessage}
           message={t(CustomViewerI18nKeys.InvalidUrl)}
         />
       </div>

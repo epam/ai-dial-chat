@@ -1,5 +1,10 @@
 import { mergeClasses, PanelEmptyState } from '@epam/ai-dial-chat-shared';
-import { Highlight, Search } from '@epam/ai-dial-ui-kit';
+import {
+  Highlight,
+  Search,
+  LiveRegion,
+  LiveRegionElement,
+} from '@epam/ai-dial-ui-kit';
 import { FC, useMemo, useState } from 'react';
 import type {
   CatalogItemTools,
@@ -88,13 +93,12 @@ export const Tools: FC<ToolsProps> = ({
           onChange={(value) => setQuery(value ?? '')}
         />
         {/* Polite, so the count is announced as the search narrows the list. */}
-        <span
-          role="status"
-          aria-live="polite"
+        <LiveRegion
+          as={LiveRegionElement.Span}
           className={mergeClasses(countClassName, styles.count)}
         >
           {columnLabels.toolCount(shownTools.length)}
-        </span>
+        </LiveRegion>
       </div>
 
       {shownTools.length === 0 && query.trim() !== '' && (

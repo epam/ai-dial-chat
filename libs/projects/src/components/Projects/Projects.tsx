@@ -16,6 +16,8 @@ import {
   MenuItemMark,
   Search,
   Spinner,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import { IconArrowsSort } from '@tabler/icons-react';
 import { FC, useMemo, useState } from 'react';
@@ -241,9 +243,9 @@ export const Projects: FC<ProjectsProps> = ({
         )}
       </div>
 
-      <span role="status" aria-live="polite" className="sr-only">
+      <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
         {getStatusMessage()}
-      </span>
+      </LiveRegion>
 
       <div className="flex w-full min-w-0 flex-1 flex-col items-center gap-5 px-4 pt-6 pb-8 desktop:px-8">
         {isIncomplete && !isLoading && !hasError && !isFailedEmpty && (

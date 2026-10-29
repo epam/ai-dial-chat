@@ -8,6 +8,9 @@ import {
   GhostIconButton,
   RadioGroup,
   Spinner,
+  LiveRegion,
+  LiveRegionElement,
+  LiveRegionPoliteness,
 } from '@epam/ai-dial-ui-kit';
 import { IconTrashX } from '@tabler/icons-react';
 import type { FC } from 'react';
@@ -470,14 +473,14 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
             ariaLabel={t.uploadArchiveExtractingAriaLabel ?? 'Reading archive'}
           />
         )}
-        <div role="alert">
-          {sourceError && <ErrorText text={sourceError} />}
-        </div>
+        <ErrorText
+          text={sourceError}
+          announce={LiveRegionPoliteness.Assertive}
+        />
 
-        <span
-          role="status"
-          aria-live="polite"
-          className="sr-only"
+        <LiveRegion
+          visuallyHidden
+          as={LiveRegionElement.Span}
           id={liveRegionId}
         >
           {announcedErrors
@@ -486,7 +489,7 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
                 `${t.uploadBatchErrorAriaPrefix ?? 'Upload error: '}${message}`,
             )
             .join(' ')}
-        </span>
+        </LiveRegion>
         {batchErrors.map((message) => (
           <ErrorText key={message} text={message} />
         ))}
@@ -558,9 +561,10 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
           </ul>
         )}
 
-        <div role="alert">
-          {commitError && <ErrorText text={commitError} />}
-        </div>
+        <ErrorText
+          text={commitError}
+          announce={LiveRegionPoliteness.Assertive}
+        />
       </div>
     </SkillEditorDialog>
   );

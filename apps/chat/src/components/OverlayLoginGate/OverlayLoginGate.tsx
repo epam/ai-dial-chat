@@ -1,5 +1,11 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { NeutralButton, PrimaryButton } from '@epam/ai-dial-ui-kit';
+import {
+  NeutralButton,
+  PrimaryButton,
+  LiveRegion,
+  LiveRegionElement,
+  LiveRegionPoliteness,
+} from '@epam/ai-dial-ui-kit';
 import { memo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -71,9 +77,13 @@ const OverlayLoginGate: FC = () => {
               : 'sr-only',
           )}
         >
-          <p role="alert" className="dial-small-text text-error">
-            {isProvidersErrorShown ? t(AuthI18nKeys.OverlayProvidersError) : ''}
-          </p>
+          <LiveRegion
+            politeness={LiveRegionPoliteness.Assertive}
+            as={LiveRegionElement.P}
+            className="dial-small-text text-error"
+          >
+            {isProvidersErrorShown && t(AuthI18nKeys.OverlayProvidersError)}
+          </LiveRegion>
           {isProvidersErrorShown && (
             <NeutralButton
               className="min-h-11"
@@ -106,28 +116,20 @@ const OverlayLoginGate: FC = () => {
             </div>
           )}
 
-        {/* Always mounted: a live region that mounts in the same render as its
-            text is announced unreliably, so only its text toggles. */}
-        <p
-          role="alert"
-          className={mergeClasses(
-            'dial-small-text text-error',
-            !isBlocked && 'sr-only',
-          )}
+        <LiveRegion
+          politeness={LiveRegionPoliteness.Assertive}
+          as={LiveRegionElement.P}
+          className="dial-small-text text-error"
         >
-          {isBlocked ? t(AuthI18nKeys.OverlayExternalLoginBlocked) : ''}
-        </p>
+          {isBlocked && t(AuthI18nKeys.OverlayExternalLoginBlocked)}
+        </LiveRegion>
 
-        <p
-          role="status"
-          aria-live="polite"
-          className={mergeClasses(
-            'dial-small-text text-error',
-            !isTakingLonger && 'sr-only',
-          )}
+        <LiveRegion
+          as={LiveRegionElement.P}
+          className="dial-small-text text-error"
         >
-          {isTakingLonger ? t(AuthI18nKeys.OverlayLoginTakingLonger) : ''}
-        </p>
+          {isTakingLonger && t(AuthI18nKeys.OverlayLoginTakingLonger)}
+        </LiveRegion>
 
         {showSingleLogin && (
           <PrimaryButton

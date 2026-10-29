@@ -1,7 +1,4 @@
-import {
-  ErrorMessageNotification,
-  NotificationType,
-} from '@epam/ai-dial-ui-kit';
+import { ErrorMessageNotification } from '@epam/ai-dial-ui-kit';
 import { FC, memo } from 'react';
 import { VITE_CHAT_OVERLAY_HOST_ENV_VAR } from '../../env';
 
@@ -12,7 +9,6 @@ import { VITE_CHAT_OVERLAY_HOST_ENV_VAR } from '../../env';
 const MissingEnvNotice: FC = () => (
   <ErrorMessageNotification
     role="status"
-    type={NotificationType.SectionMessage}
     title="Unable to resolve the chat overlay host."
     message={
       <>

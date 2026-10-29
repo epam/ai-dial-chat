@@ -3,12 +3,29 @@ import { describe, expect, it, vi } from 'vitest';
 import { ScheduledTaskRunAtField } from '../ScheduledTaskRunAtField';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  LiveRegionPoliteness: { Polite: 'polite', Assertive: 'assertive' },
   DIAL_KIT_ICON_STROKE: 1.5,
   ErrorText: ({
     text,
+    announce,
     ...rest
-  }: { text?: string } & React.HTMLAttributes<HTMLSpanElement>) =>
-    text ? <span {...rest}>{text}</span> : null,
+  }: {
+    text?: string;
+    announce?: string;
+  } & React.HTMLAttributes<HTMLSpanElement>) => {
+    const node = text ? <span {...rest}>{text}</span> : null;
+    return announce ? (
+      <span
+        role={announce === 'assertive' ? 'alert' : 'status'}
+        aria-live={announce as 'polite' | 'assertive'}
+        aria-atomic
+      >
+        {node}
+      </span>
+    ) : (
+      node
+    );
+  },
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   CalendarMode: {
     Date: 'date',

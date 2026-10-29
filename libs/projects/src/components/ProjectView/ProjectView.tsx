@@ -22,6 +22,8 @@ import {
   NeutralButton,
   Search,
   Spinner,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconArrowNarrowLeft,
@@ -250,11 +252,11 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
             ))}
           </ul>
         )}
-        <span role="status" aria-live="polite" className="sr-only">
+        <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
           {trimmedQuery === ''
             ? ''
             : labels.contextResultCountLabel(visibleFiles.length)}
-        </span>
+        </LiveRegion>
       </>
     );
   };

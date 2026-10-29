@@ -1,5 +1,10 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { GhostButton } from '@epam/ai-dial-ui-kit';
+import {
+  GhostButton,
+  LiveRegion,
+  LiveRegionElement,
+  LiveRegionPoliteness,
+} from '@epam/ai-dial-ui-kit';
 import { type CSSProperties, type FC } from 'react';
 import type { ScheduledTaskHistorySectionProps } from '../../models/scheduled-task-history-section-props';
 import { ScheduledTaskHistorySectionVariant } from '../../types/scheduled-task-history-section-variant';
@@ -78,15 +83,19 @@ export const ScheduledTaskHistorySection: FC<
 
   /* The failed page is reported in the list footer, which mounts with the error; this region is mounted first so the failure is announced. */
   const loadMoreErrorAnnouncement = (
-    <span role="alert" className="sr-only">
+    <LiveRegion
+      politeness={LiveRegionPoliteness.Assertive}
+      visuallyHidden
+      as={LiveRegionElement.Span}
+    >
       {loadMoreError ? loadMoreErrorText : ''}
-    </span>
+    </LiveRegion>
   );
 
   const loadingMoreAnnouncement = labels.historyLoadingMoreLabel ? (
-    <span role="status" aria-live="polite" className="sr-only">
+    <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
       {isLoadingMore ? labels.historyLoadingMoreLabel : ''}
-    </span>
+    </LiveRegion>
   ) : undefined;
 
   const runList = (

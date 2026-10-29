@@ -7,6 +7,7 @@ import {
   LinkButton,
   NeutralButton,
   Spinner,
+  LiveRegion,
 } from '@epam/ai-dial-ui-kit';
 import { IconKey } from '@tabler/icons-react';
 import { FC, useCallback, useState } from 'react';
@@ -206,7 +207,7 @@ export const CredentialsApiKeyOverlay: FC<CredentialsApiKeyOverlayProps> = ({
       )}
 
       {/* Mounted before the key card appears, so the card is announced once the key is added. */}
-      <div role="status" aria-live="polite">
+      <LiveRegion>
         {isSignedIn && (
           <div className="animate-fadeIn px-4 py-3.5">
             <CredentialsInfoCard
@@ -235,7 +236,7 @@ export const CredentialsApiKeyOverlay: FC<CredentialsApiKeyOverlayProps> = ({
             />
           </div>
         )}
-      </div>
+      </LiveRegion>
     </div>
   );
 };

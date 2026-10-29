@@ -9,6 +9,8 @@ import {
   GhostIconButton,
   Spinner,
   mergeClasses,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import type { Implementation } from '@modelcontextprotocol/sdk/types.js';
 import {
@@ -197,9 +199,9 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
       </div>
       <div className="relative min-h-[100px] w-full">
         {/* Always mounted so the polite region exists before the canvas opens. */}
-        <span role="status" aria-live="polite" className="sr-only">
+        <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
           {isOpenedInCanvas ? openedInCanvasLabel : ''}
-        </span>
+        </LiveRegion>
         {isOpenedInCanvas ? (
           <div
             aria-hidden

@@ -14,6 +14,9 @@ import {
   Dropdown,
   ErrorText,
   GhostIconButton,
+  LiveRegion,
+  LiveRegionElement,
+  LiveRegionPoliteness,
 } from '@epam/ai-dial-ui-kit';
 import { IconFile, IconMicrophone } from '@tabler/icons-react';
 import {
@@ -1266,12 +1269,12 @@ export const Input = forwardRef<InputHandle, InputProps>(
           />
         )}
         {/* A failed dictation is not a field error: announce it. Mounted before the failure so it is announced; out of the column gap while empty. */}
-        <div
-          role="alert"
-          className="min-w-0 px-1 wrap-break-word empty:absolute"
+        <LiveRegion
+          politeness={LiveRegionPoliteness.Assertive}
+          className="min-w-0 px-1 wrap-break-word"
         >
           {voiceError && <ErrorText text={voiceError} />}
-        </div>
+        </LiveRegion>
         {isVoiceActive && (
           <VoiceBar
             embedded
@@ -1382,14 +1385,9 @@ export const Input = forwardRef<InputHandle, InputProps>(
             </div>
           </div>
         )}
-        <span
-          className="sr-only"
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-        >
+        <LiveRegion visuallyHidden atomic as={LiveRegionElement.Span}>
           <span key={latestTranscript.revision}>{latestTranscript.text}</span>
-        </span>
+        </LiveRegion>
       </div>
     );
   },

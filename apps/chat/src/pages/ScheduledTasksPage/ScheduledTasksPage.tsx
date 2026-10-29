@@ -7,6 +7,7 @@ import {
   ScheduledTasksSortKey,
   type ScheduledTasksStyles,
 } from '@epam/ai-dial-scheduled-tasks';
+import { LiveRegion, LiveRegionElement } from '@epam/ai-dial-ui-kit';
 import {
   memo,
   useCallback,
@@ -248,9 +249,9 @@ const ScheduledTasksPage: FC = () => {
 
   return (
     <>
-      <span role="status" aria-live="polite" className="sr-only">
+      <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
         {isBannerSlotEmpty ? liveAnnouncement : ''}
-      </span>
+      </LiveRegion>
       <ScheduledTasks
         labels={labels}
         styles={PAGE_STYLES}

@@ -19,6 +19,7 @@ import {
   Dropdown,
   ElementSize,
   ErrorText,
+  LiveRegionPoliteness,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronRight } from '@tabler/icons-react';
 import {
@@ -189,16 +190,10 @@ const UsageLimitsControl: FC<Props> = ({
         {deploymentName ?? t(ConversationInputI18nKeys.PopoverTitle)}
       </p>
 
-      {/* Always mounted so a failed refresh is announced: a live region that
-          mounts together with its text is not read reliably. `sr-only` also
-          takes the empty region out of the flex flow, so it adds no gap. */}
-      <div
-        role="status"
-        aria-live="polite"
-        className={hasError ? undefined : 'sr-only'}
-      >
-        {hasError && <ErrorText text={t(ConversationInputI18nKeys.Error)} />}
-      </div>
+      <ErrorText
+        announce={LiveRegionPoliteness.Polite}
+        text={hasError ? t(ConversationInputI18nKeys.Error) : ''}
+      />
 
       <LimitsTab
         limits={limits}

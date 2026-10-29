@@ -2,6 +2,8 @@ import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   LinkButton,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import { IconAlertTriangleFilled, IconArrowRight } from '@tabler/icons-react';
 import { memo, type FC } from 'react';
@@ -169,9 +171,9 @@ const ScheduledTasksLoginBanner: FC<Props> = ({
           )}
         </div>
       )}
-      <span role="status" aria-live="polite" className="sr-only">
+      <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
         {isRetry ? retryMessage : liveAnnouncement}
-      </span>
+      </LiveRegion>
     </>
   );
 };

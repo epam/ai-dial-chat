@@ -23,6 +23,9 @@ import {
   Spinner,
   Textarea,
   type DropdownItem,
+  LiveRegion,
+  LiveRegionElement,
+  LiveRegionPoliteness,
 } from '@epam/ai-dial-ui-kit';
 import { LazyMarkdownEditor } from '@epam/ai-dial-ui-kit/editors';
 import { IconArrowNarrowLeft } from '@tabler/icons-react';
@@ -318,15 +321,12 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
               aria-describedby={nameError ? nameErrorId : undefined}
             />
             {/* Mounted before a host error (a taken name) arrives, so it is announced; out of the column gap while empty. Inline validation stays outside it. */}
-            <div role="alert" className="empty:absolute">
-              {errors.name && (
-                <ErrorText
-                  id={nameErrorId}
-                  className={helperClassName}
-                  text={errors.name}
-                />
-              )}
-            </div>
+            <ErrorText
+              announce={LiveRegionPoliteness.Assertive}
+              id={nameErrorId}
+              className={helperClassName}
+              text={errors.name ?? ''}
+            />
             {nameError && !errors.name && (
               <ErrorText
                 id={nameErrorId}
@@ -463,13 +463,13 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
               </ul>
             )}
             {/* Mounted before a host context error arrives, so it is announced; out of the section gap while empty. */}
-            <div role="alert" className="empty:absolute">
+            <LiveRegion politeness={LiveRegionPoliteness.Assertive}>
               {isContextInvalid && (
                 <p className={mergeClasses(helperClassName, styles.helper)}>
                   {contextError}
                 </p>
               )}
-            </div>
+            </LiveRegion>
             {contextFiles.length > 0 && (
               <ul className="flex min-w-0 flex-wrap gap-2 pt-1">
                 {contextFiles.map((file) => (
@@ -488,9 +488,9 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
           </section>
         </div>
       </BuilderFormContainer>
-      <span role="status" aria-live="polite" className="sr-only">
+      <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
         {isSubmitting ? labels.creatingStatus : statusMessage}
-      </span>
+      </LiveRegion>
     </div>
   );
 };

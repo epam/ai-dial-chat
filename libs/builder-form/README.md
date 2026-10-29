@@ -36,7 +36,7 @@ import '@epam/ai-dial-builder-form/styles.css';
 
 - `react` `^19.2.8`
 - `@epam/ai-dial-chat-shared` `*`
-- `@epam/ai-dial-ui-kit` `^0.16.0-dev.45`
+- `@epam/ai-dial-ui-kit` `^0.16.0-dev.55`
 
 ## Components
 

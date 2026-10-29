@@ -1,5 +1,9 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_KIT_ICON_STROKE, Spinner } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_KIT_ICON_STROKE,
+  Spinner,
+  LiveRegion,
+} from '@epam/ai-dial-ui-kit';
 import type { XlsxSelectionContext } from '@silurus/ooxml/xlsx';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { type FC, useEffect, useRef, useState } from 'react';
@@ -603,9 +607,9 @@ export const OoxmlContent: FC<OoxmlContentProps> = ({
           </div>
         )}
       </div>
-      <div role="status" aria-live="polite" className="sr-only">
+      <LiveRegion visuallyHidden>
         {hasNavigated ? highlightNavigatedLabel : ''}
-      </div>
+      </LiveRegion>
       {(isLoading || hasError) && (
         <div
           role={hasError ? 'alert' : undefined}

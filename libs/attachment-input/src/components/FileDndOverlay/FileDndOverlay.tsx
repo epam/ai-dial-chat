@@ -1,4 +1,5 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import { LiveRegion, LiveRegionElement } from '@epam/ai-dial-ui-kit';
 import { IconFileDescription, IconFileX } from '@tabler/icons-react';
 import type { DragEvent, FC } from 'react';
 import type { FileDndOverlayProps } from '../../models/file-dnd-overlay';
@@ -25,9 +26,9 @@ export const FileDndOverlay: FC<FileDndOverlayProps> = ({
   /* The status region stays mounted while the overlay is hidden, so its text
      change is announced reliably when a drag starts. */
   const statusRegion = (
-    <span role="status" aria-live="polite" className="sr-only">
+    <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
       {isVisible ? `${resolvedTitle}. ${resolvedSubtitle}` : ''}
-    </span>
+    </LiveRegion>
   );
 
   if (!isVisible) return statusRegion;

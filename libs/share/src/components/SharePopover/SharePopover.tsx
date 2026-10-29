@@ -3,6 +3,7 @@ import {
   mergeClasses,
   useCodeCopy,
 } from '@epam/ai-dial-chat-shared';
+import { LiveRegion, LiveRegionPoliteness } from '@epam/ai-dial-ui-kit';
 import {
   type FC,
   type KeyboardEvent,
@@ -221,7 +222,7 @@ const SharePopover: FC<SharePopoverProps> = ({
       )}
 
       {/* Mounted with the popover, before the link request fails, so the failure is announced; out of the column gap while empty. */}
-      <div role="alert" className="empty:absolute">
+      <LiveRegion politeness={LiveRegionPoliteness.Assertive}>
         {!isLoading && error != null && (
           <p
             className={mergeClasses(
@@ -233,7 +234,7 @@ const SharePopover: FC<SharePopoverProps> = ({
             {errorTitle}
           </p>
         )}
-      </div>
+      </LiveRegion>
 
       {!isLoading && error == null && url != null && (
         <>

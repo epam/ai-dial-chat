@@ -14,6 +14,8 @@ import {
   PrimaryButton,
   Spinner,
   type DropdownItem,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconArrowRight,
@@ -1125,11 +1127,11 @@ export const Header: FC<HeaderProps> = ({
                 aria-busy={isDownloading}
               />
               {/* Always mounted so the polite region exists before the download starts. */}
-              <span role="status" aria-live="polite" className="sr-only">
+              <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
                 {isDownloading
                   ? (texts?.downloadingStatusLabel ?? 'Downloading')
                   : ''}
-              </span>
+              </LiveRegion>
             </>
           )}
           {isShareInActionRow && shouldShowShareAction && (

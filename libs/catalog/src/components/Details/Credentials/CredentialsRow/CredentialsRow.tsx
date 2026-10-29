@@ -11,6 +11,8 @@ import {
   LinkButton,
   NeutralButton,
   Spinner,
+  LiveRegion,
+  LiveRegionPoliteness,
 } from '@epam/ai-dial-ui-kit';
 import { IconKey } from '@tabler/icons-react';
 import { type FC, type ReactNode, useCallback, useId, useState } from 'react';
@@ -279,7 +281,7 @@ export const CredentialsRow: FC<CredentialsRowProps> = ({
 
         {/* Mounted before the key card appears, so the card is announced once the key is added; taken out of the column gap while empty. */}
         {authenticationType === ToolsetAuthenticationType.ApiKey && (
-          <div role="status" aria-live="polite" className="empty:absolute">
+          <LiveRegion>
             {isSignedIn && (
               <div className="animate-fadeIn pt-1">
                 <CredentialsInfoCard
@@ -310,18 +312,15 @@ export const CredentialsRow: FC<CredentialsRowProps> = ({
                 />
               </div>
             )}
-          </div>
+          </LiveRegion>
         )}
         {!isSignedIn && renderLoginOptions?.(isSaving || disabled)}
         {/* Mounted before the login failure appears, so the message is announced; taken out of the column gap while empty. */}
-        <div role="alert" className="empty:absolute">
-          {error && (
-            <ErrorText
-              className={mergeClasses(errorClassName, styles.errorText)}
-              text={error}
-            />
-          )}
-        </div>
+        <ErrorText
+          announce={LiveRegionPoliteness.Assertive}
+          className={mergeClasses(errorClassName, styles.errorText)}
+          text={error ?? ''}
+        />
         {children}
       </div>
     </div>

@@ -4,6 +4,8 @@ import {
   DIAL_KIT_ICON_STROKE,
   GhostIconButton,
   ResizeHandle,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import { IconArrowNarrowLeft } from '@tabler/icons-react';
 import { CSSProperties, FC, useEffect, useId, useRef, useState } from 'react';
@@ -84,14 +86,13 @@ export const EditorLayout: FC<EditorLayoutProps> = ({
       )}
       style={cssVars}
     >
-      <span
-        role="status"
-        aria-live="polite"
-        className="sr-only"
+      <LiveRegion
+        visuallyHidden
+        as={LiveRegionElement.Span}
         id={savingStatusId}
       >
         {savingStatusText}
-      </span>
+      </LiveRegion>
 
       {/* Header row */}
       <div

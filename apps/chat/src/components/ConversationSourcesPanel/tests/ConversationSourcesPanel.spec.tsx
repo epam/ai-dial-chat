@@ -615,7 +615,11 @@ describe('ConversationSourcesPanelContainer — scheduled-task sections', () => 
       }),
     );
 
-    expect(screen.getByRole('alert')).toBeTruthy();
+    expect(
+      screen
+        .getByText('scheduledTasks.conversationBanner.unavailableLabel')
+        .getAttribute('role'),
+    ).toBe('status');
   });
 
   it('a run-history error does not hide the Details section', async () => {

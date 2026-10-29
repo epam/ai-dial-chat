@@ -10,6 +10,8 @@ import {
   FileIcon,
   Highlight,
   Spinner,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import {
   type FC,
@@ -300,14 +302,9 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
       </div>
 
       {/* Always mounted so the polite region exists before the error text arrives. */}
-      <span
-        id={errorDescId}
-        role="status"
-        aria-live="polite"
-        className="sr-only"
-      >
+      <LiveRegion id={errorDescId} visuallyHidden as={LiveRegionElement.Span}>
         {isError ? errorTitle : ''}
-      </span>
+      </LiveRegion>
     </>
   );
 

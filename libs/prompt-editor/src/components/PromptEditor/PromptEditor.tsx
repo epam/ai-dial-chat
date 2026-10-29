@@ -27,6 +27,8 @@ import {
   Label,
   NeutralButton,
   Spinner,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import { LazyMarkdownEditor } from '@epam/ai-dial-ui-kit/editors';
 /*
@@ -498,12 +500,12 @@ export const PromptEditor: FC<PromptEditorProps> = ({
                 {contentError}
               </div>
             )}
-            <span role="status" aria-live="polite" className="sr-only">
+            <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
               {descriptionRemaining != null &&
                 buildCounterMessage(descriptionRemaining)}
               {contentRemaining != null &&
                 buildCounterMessage(contentRemaining)}
-            </span>
+            </LiveRegion>
           </>
         }
       />

@@ -119,6 +119,7 @@ const defaults = {
   placeholder: 'Draft',
   initialModelId: 'model',
   stoppedGeneratingText: 'Stopped',
+  onSend: vi.fn(),
 };
 
 const renderView = (props: Partial<ViewProps> = {}) => {

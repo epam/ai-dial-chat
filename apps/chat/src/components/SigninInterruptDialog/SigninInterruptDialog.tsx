@@ -6,7 +6,6 @@ import {
   ToolsetLoginOutcomeType,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   Checkbox,
   DIAL_ICON_SIZE,
@@ -18,6 +17,9 @@ import {
   PrimaryButton,
   Input,
   LinkButton,
+  LiveRegion,
+  LiveRegionElement,
+  LiveRegionPoliteness,
 } from '@epam/ai-dial-ui-kit';
 import { IconAlertCircleFilled } from '@tabler/icons-react';
 import {
@@ -125,16 +127,9 @@ const SigninRow: FC<SigninRowProps> = ({
         />
       )}
 
-      {/* Always mounted: an alert that mounts together with its message is
-          announced unreliably, so only its content toggles. While empty it is
-          taken out of the flow and adds no gap. */}
-      <div
-        role="alert"
-        className={mergeClasses(
-          rowState.error
-            ? 'dial-small-text flex flex-wrap items-center gap-2 wrap-break-word text-error'
-            : 'sr-only',
-        )}
+      <LiveRegion
+        politeness={LiveRegionPoliteness.Assertive}
+        className="dial-small-text flex flex-wrap items-center gap-2 wrap-break-word text-error"
       >
         {rowState.error && (
           <>
@@ -147,7 +142,7 @@ const SigninRow: FC<SigninRowProps> = ({
             />
           </>
         )}
-      </div>
+      </LiveRegion>
 
       {info.authenticationType === RowAuthType.DialNative && (
         <p className="dial-small-text wrap-break-word text-secondary">
@@ -625,9 +620,9 @@ const SigninInterruptDialog: FC = () => {
         <p className="dial-small-text text-secondary">
           {t(ToolsetSigninI18nKeys.DialogDescription)}
         </p>
-        <span role="status" aria-live="polite" className="sr-only">
+        <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
           {statusMessage}
-        </span>
+        </LiveRegion>
         <div className="flex flex-col">
           {pendingEvents.map((event) => {
             const key = getResourceKey(event);

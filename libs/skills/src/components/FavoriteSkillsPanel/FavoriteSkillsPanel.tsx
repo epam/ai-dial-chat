@@ -9,6 +9,8 @@ import {
   Highlight,
   InteractiveTooltip,
   ToggleIconButton,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import { IconStarFilled } from '@tabler/icons-react';
 import {
@@ -326,22 +328,17 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
       >
         <div ref={listContentRef}>
           {renderListBody()}
-          {/* Always mounted so the no-match text is announced when it appears; visually hidden while empty. */}
-          <p
-            role="status"
-            aria-live="polite"
-            className={
-              hasNoMatches
-                ? mergeClasses(
-                    emptyHintClassName,
-                    'px-4 py-4 text-start',
-                    styles.emptyHint,
-                  )
-                : 'sr-only'
-            }
+          {/* Always mounted so the no-match text is announced when it appears; with no child it takes no space. */}
+          <LiveRegion
+            as={LiveRegionElement.P}
+            className={mergeClasses(
+              emptyHintClassName,
+              'px-4 py-4 text-start',
+              styles.emptyHint,
+            )}
           >
-            {hasNoMatches ? noMatchingSkillsLabel : ''}
-          </p>
+            {hasNoMatches && noMatchingSkillsLabel}
+          </LiveRegion>
         </div>
       </div>
 

@@ -7,6 +7,7 @@ import {
   CalendarMode,
   type CalendarValue,
   ErrorText,
+  LiveRegionPoliteness,
 } from '@epam/ai-dial-ui-kit';
 import { useId, useRef, type FC } from 'react';
 import {
@@ -26,7 +27,7 @@ export interface ScheduledTaskRunAtFieldProps {
   onChange: (value: string) => void;
   /** Disables the picker, e.g. while the form is submitting. */
   disabled?: boolean;
-  /** Submit-time validation error rendered under the picker, associated with it via `aria-describedby` and announced through an always-mounted `role="alert"` region. */
+  /** Submit-time validation error rendered under the picker, associated with it via `aria-describedby` and announced through the kit `ErrorText` `announce` live region, mounted before the error arrives. */
   error?: string;
   /** CSS class applied to the error text. Defaults to `'dial-tiny-text'`. */
   errorClassName?: string;
@@ -71,15 +72,12 @@ export const ScheduledTaskRunAtField: FC<ScheduledTaskRunAtFieldProps> = ({
         disabled={disabled}
       />
       {/* Mounted before the error arrives, so it is announced; out of the column gap while empty. */}
-      <div role="alert" className="empty:absolute">
-        {error && (
-          <ErrorText
-            id={errorId}
-            className={mergeClasses(errorClassName, styles.error)}
-            text={error}
-          />
-        )}
-      </div>
+      <ErrorText
+        announce={LiveRegionPoliteness.Assertive}
+        id={errorId}
+        className={mergeClasses(errorClassName, styles.error)}
+        text={error ?? ''}
+      />
     </div>
   );
 };

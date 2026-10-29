@@ -11,6 +11,32 @@ import {
 import { CredentialsApiKeyOverlay } from '../CredentialsApiKeyOverlay';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  LiveRegionPoliteness: { Polite: 'polite', Assertive: 'assertive' },
+  LiveRegionElement: { Div: 'div', Span: 'span', P: 'p' },
+  LiveRegion: ({
+    politeness = 'polite',
+    visuallyHidden,
+    as: Tag = 'div',
+    atomic,
+    className,
+    children,
+    ...rest
+  }: {
+    politeness?: string;
+    visuallyHidden?: boolean;
+    as?: 'div' | 'span' | 'p';
+    atomic?: boolean;
+  } & React.HTMLAttributes<HTMLElement>) => (
+    <Tag
+      {...rest}
+      role={politeness === 'assertive' ? 'alert' : 'status'}
+      aria-live={politeness as 'polite' | 'assertive'}
+      aria-atomic={atomic}
+      className={visuallyHidden ? 'sr-only' : className}
+    >
+      {children}
+    </Tag>
+  ),
   DIAL_KIT_ICON_STROKE: 1.5,
   CaptionText: ({ id, text }: { id?: string; text?: string }) =>
     text ? <span id={id}>{text}</span> : null,

@@ -1,5 +1,9 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_KIT_ICON_STROKE,
+  LiveRegion,
+  LiveRegionElement,
+} from '@epam/ai-dial-ui-kit';
 import { IconUpload } from '@tabler/icons-react';
 import type { FC } from 'react';
 import type { SkillEditorLabels } from '../../models/skill-editor-props';
@@ -29,9 +33,9 @@ export const SkillFileDropOverlay: FC<SkillFileDropOverlayProps> = ({
   /* The status region stays mounted while the overlay is hidden, so its text
      change is announced reliably when a drag starts. */
   const statusRegion = (
-    <span role="status" aria-live="polite" className="sr-only">
+    <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
       {isVisible ? `${title}. ${subtitle}` : ''}
-    </span>
+    </LiveRegion>
   );
 
   if (!isVisible) return statusRegion;

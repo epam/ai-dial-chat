@@ -6,6 +6,7 @@ import {
   DIAL_KIT_ICON_STROKE,
   ErrorText,
   NeutralButton,
+  LiveRegionPoliteness,
 } from '@epam/ai-dial-ui-kit';
 import { IconBuildingCommunity, IconUser } from '@tabler/icons-react';
 import { useState, type FC } from 'react';
@@ -140,9 +141,11 @@ export const ApplicationCredentialRow: FC<ApplicationCredentialRowProps> = ({
         <div className="flex flex-col gap-3 pt-3">
           <p>{removeMessage}</p>
           {/* Mounted with the confirmation, before a failed logout, so the failure is announced; out of the column gap while empty. */}
-          <div role="alert" className="empty:absolute">
-            {error && <ErrorText className={styles.errorText} text={error} />}
-          </div>
+          <ErrorText
+            announce={LiveRegionPoliteness.Assertive}
+            className={styles.errorText}
+            text={error ?? ''}
+          />
           <div className="flex flex-wrap justify-end gap-2">
             <NeutralButton
               className="min-h-11"

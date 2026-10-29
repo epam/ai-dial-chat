@@ -9,6 +9,8 @@ import {
   NeutralButton,
   PrimaryButton,
   Select,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import { FC, memo, useCallback, useEffect, useRef, useState } from 'react';
 import EventLog from '../../components/EventLog/EventLog';
@@ -145,10 +147,13 @@ const AuthUiModeCase: FC = () => {
         <legend className="dial-small-semi-text px-1">
           auth.providerUiModes
         </legend>
-        <p className="mt-1 mb-3 text-secondary" aria-live="polite">
+        <LiveRegion
+          as={LiveRegionElement.P}
+          className="mt-1 mb-3 text-secondary"
+        >
           {providerModes.length}{' '}
           {providerModes.length === 1 ? 'provider' : 'providers'} configured
-        </p>
+        </LiveRegion>
         <div className="mb-3 grid grid-cols-1 gap-3">
           {providerModes.map((provider, index) => (
             <div
