@@ -11,10 +11,17 @@ export class ConversationListItemDto {
 
   @ApiProperty({
     description:
-      'Human-readable conversation title (the resource `name` from DIAL Core).',
+      'Cached display title, or the filename-derived title while background title resolution is pending.',
     example: 'My chat',
   })
   title!: string;
+
+  @ApiPropertyOptional({
+    description:
+      'True when the title has not been resolved from the stored conversation yet, or its cached value expired. Resolve it with POST /conversations/titles.',
+    example: true,
+  })
+  isTitlePending?: boolean;
 
   @ApiPropertyOptional({
     description:

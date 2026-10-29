@@ -14,7 +14,7 @@ export const filterProjects = (
   );
 };
 
-/** Returns a sorted copy of the projects in the given order, with undated projects last in both date orders. */
+/** Returns a sorted copy of the projects in the given order: pinned first, then undated projects last in both date orders. */
 export const sortProjects = (
   projects: ProjectItem[],
   sortKey: ProjectsSortKey,
@@ -26,13 +26,19 @@ export const sortProjects = (
   });
   const compareNames = (a: ProjectItem, b: ProjectItem) =>
     collator.compare(a.name, b.name);
+  const comparePinned = (a: ProjectItem, b: ProjectItem) =>
+    Number(b.isPinned ?? false) - Number(a.isPinned ?? false);
 
   if (sortKey === ProjectsSortKey.NameAsc) {
-    return [...projects].sort(compareNames);
+    return [...projects].sort(
+      (a, b) => comparePinned(a, b) || compareNames(a, b),
+    );
   }
 
   const direction = sortKey === ProjectsSortKey.Oldest ? 1 : -1;
   return [...projects].sort((a, b) => {
+    const pinnedOrder = comparePinned(a, b);
+    if (pinnedOrder !== 0) return pinnedOrder;
     if (a.updatedAt == null && b.updatedAt == null) return compareNames(a, b);
     if (a.updatedAt == null) return 1;
     if (b.updatedAt == null) return -1;

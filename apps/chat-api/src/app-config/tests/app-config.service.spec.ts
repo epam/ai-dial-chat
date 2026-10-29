@@ -163,6 +163,30 @@ describe('AppConfigService', () => {
       ]);
       expect(result.config.maxAttachmentFileSizeBytes).toBe(536_870_912);
       expect(result.config.usageLimitsWarningThresholdPercent).toBe(75);
+      expect(result.config.projectContextFileMaxBytes).toBe(1_048_576);
+      expect(result.config.projectContextTotalMaxBytes).toBe(10_485_760);
+      expect(result.config.projectContextAllowedExtensions).toEqual([
+        'csv',
+        'pdf',
+        'xlsx',
+      ]);
+    });
+
+    it('surfaces operator-configured project context limits', async () => {
+      const values: Record<string, unknown> = {
+        'projects.contextFileMaxBytes': 2_097_152,
+        'projects.contextTotalMaxBytes': 4_194_304,
+        'projects.contextAllowedExtensions': ['csv', 'md'],
+      };
+      const { service } = makeService(async (key: string) => values[key]);
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.projectContextFileMaxBytes).toBe(2_097_152);
+      expect(result.config.projectContextTotalMaxBytes).toBe(4_194_304);
+      expect(result.config.projectContextAllowedExtensions).toEqual([
+        'csv',
+        'md',
+      ]);
     });
 
     it('surfaces an operator-configured maxAttachmentFileSizeBytes value', async () => {
@@ -1308,6 +1332,30 @@ describe('AppConfigService', () => {
       ],
       ['attachments.maxFileSizeBytes', 'maxAttachmentFileSizeBytes', 0, 0],
       [
+        'projects.contextFileMaxBytes',
+        'projectContextFileMaxBytes',
+        0,
+        1_048_576,
+      ],
+      [
+        'projects.contextTotalMaxBytes',
+        'projectContextTotalMaxBytes',
+        '5',
+        10_485_760,
+      ],
+      [
+        'projects.contextAllowedExtensions',
+        'projectContextAllowedExtensions',
+        [],
+        ['csv', 'pdf', 'xlsx'],
+      ],
+      [
+        'projects.contextAllowedExtensions',
+        'projectContextAllowedExtensions',
+        [42],
+        ['csv', 'pdf', 'xlsx'],
+      ],
+      [
         'attachments.maxFileSizeBytes',
         'maxAttachmentFileSizeBytes',
         '5',
@@ -1433,6 +1481,9 @@ describe('AppConfigService', () => {
         'maxAttachmentFileSizeBytes',
         'usageLimitsWarningThresholdPercent',
         'celebrationsEnabledByDefault',
+        'projectContextFileMaxBytes',
+        'projectContextTotalMaxBytes',
+        'projectContextAllowedExtensions',
         'catalogCreationPermissions',
       ]);
       expect(Object.keys(result.features)).toEqual([

@@ -432,7 +432,11 @@
     "removeFromMyList": "Remove from My List",
     "revokeAccess": "Revoke access",
     "revokeAccessWithCount": "Revoke access ({{count}})",
-    "replace": "Replace"
+    "replace": "Replace",
+    "share": "Share",
+    "pin": "Pin",
+    "unpin": "Unpin",
+    "moreActions": "More actions"
   },
   "sidebar": {
     "base": {
@@ -475,6 +479,7 @@
     "startedYesterday": "Yesterday {{time}}"
   },
   "conversationPanel": {
+    "updatingTitles": "Updating conversation names…",
     "chatsAndTasks": "Chats and tasks",
     "search": {
       "open": "Search chats",
@@ -770,7 +775,8 @@
   "projects": {
     "page": {
       "title": "Projects",
-      "subtitle": "Projects you own, projects shared with you, and your organization's projects"
+      "subtitle": "Projects you own, projects shared with you, and your organization's projects",
+      "newProject": "New project"
     },
     "toolbar": {
       "searchPlaceholder": "Search projects",
@@ -802,7 +808,107 @@
       "organization": "Organization"
     },
     "card": {
-      "updatedAt": "Updated {{date}}"
+      "folderPath": "Project location",
+      "pinned": "Pinned"
+    },
+    "create": {
+      "title": "New project",
+      "name": {
+        "label": "Name",
+        "placeholder": "Enter project name"
+      },
+      "description": {
+        "label": "Description",
+        "placeholder": "Describe what the project is about"
+      },
+      "instructions": {
+        "label": "Instructions",
+        "placeholder": "Explain your reasoning step by step for complex problems. Use specific examples."
+      },
+      "context": {
+        "label": "Context",
+        "dropZone": "Drag&drop context, upload from device or file manager",
+        "hint": "File formats {{extensions}} (max {{maxSize}})",
+        "fromDevice": "Upload from device",
+        "fromFileManager": "File manager",
+        "fileManagerTitle": "Add context from file manager",
+        "dropOverlayTitle": "Upload files",
+        "dropOverlaySubtitle": "Drop files here to add them to this project",
+        "capacityMeter": "Context capacity",
+        "capacity": "{{percent}}% of capacity used",
+        "remove": "Remove {{name}}"
+      },
+      "status": {
+        "added_one": "{{count}} file added",
+        "added_other": "{{count}} files added",
+        "removed": "{{name}} removed",
+        "creating": "Creating project…"
+      },
+      "errors": {
+        "nameRequired": "Enter a project name",
+        "nameInvalid": "The name can’t contain : ; , = / \\ { } % & \" or control characters",
+        "nameReserved": "This name is reserved. Choose another one",
+        "nameTooLong": "The name is too long",
+        "nameTaken": "A project with this name already exists",
+        "unsupportedType": "{{name}}: this file format isn’t supported",
+        "tooLarge": "{{name}}: the file is larger than {{maxSize}}",
+        "capacityExceeded": "{{name}}: not enough capacity left for this file",
+        "duplicate": "{{name}}: a file with this name is already added",
+        "invalidFileName": "{{name}}: the file name isn’t valid",
+        "tooManyFiles": "A project can’t have this many context files",
+        "filesRejected": "Some files were rejected. Remove them and try again"
+      },
+      "toast": {
+        "success": "Project “{{name}}” created",
+        "error": "The project couldn’t be created. Try again",
+        "fileManagerError": "Couldn’t copy files from the file manager"
+      }
+    },
+    "view": {
+      "details": "Details",
+      "description": "Description",
+      "instructions": "Instructions",
+      "context": "Context",
+      "contextSearchPlaceholder": "Search files",
+      "contextSearchAriaLabel": "Search context files",
+      "contextResultCount_one": "{{count}} file found",
+      "contextResultCount_other": "{{count}} files found",
+      "emptyContext": "No context files",
+      "noContextMatches": "No files match your search",
+      "openFile": "Download {{name}}",
+      "error": "Could not load the project",
+      "notFound": "Project not found",
+      "browseProjects": "Back to projects"
+    },
+    "actions": {
+      "deleteConfirmTitle": "Delete \"{{name}}\"?",
+      "deleteConfirmDescription": "The project and its context files will be deleted. This cannot be undone.",
+      "deleteError": "Could not delete the project",
+      "downloadError": "Could not download",
+      "pinError": "Could not update the pin"
+    },
+    "edit": {
+      "title": "Edit project",
+      "saving": "Saving…",
+      "savingStatus": "Saving project…",
+      "toast": {
+        "success": "Project \"{{name}}\" saved",
+        "error": "Could not save the project",
+        "tooLarge": "This project is too large to edit here"
+      },
+      "errors": {
+        "unknownFile": "A removed file no longer exists. Reload and try again."
+      }
+    },
+    "errors": {
+      "changedElsewhere": "This project was changed by someone else. Reload to see the latest version."
+    },
+    "publish": {
+      "panelAriaLabel": "Publish project",
+      "alreadyPublishedWarning": "This project is already published in {folder}.",
+      "emptyFolderNameError": "Folder name cannot be empty.",
+      "invalidFolderNameError": "Folder name contains invalid characters.",
+      "duplicateFolderNameError": "A folder with this name already exists."
     }
   },
   "scheduledTasks": {
@@ -1782,6 +1888,14 @@
       "renamed": "Folder \"{{name}}\" is renamed.",
       "downloadedTitle": "Folder downloaded successfully",
       "downloaded": "Folder \"{{name}}\" is saved on your device."
+    },
+    "project": {
+      "deletedTitle": "Project deleted successfully",
+      "deleted": "Project \"{{name}}\" is not available anymore.",
+      "downloadedTitle": "Project downloaded successfully",
+      "downloaded": "Project \"{{name}}\" is saved on your device.",
+      "publishRequestedTitle": "Project publish requested",
+      "publishRequested": "Publish request for project \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
     }
   },
   "usage": {
@@ -1848,9 +1962,6 @@
     "penguinStarToastMessage": "Every tree deserves a star. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
     "giftWrappingToastMessage": "Some gifts have a mind of their own. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
     "toastTitle": "Happy New Year!",
-    "snowToastMessage": "A little winter magic. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
-    "confettiToastMessage": "Here's to a bright new year! Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
-    "sleighToastMessage": "Special delivery from the night sky. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
     "giftLabel": "New Year gift"
   },
   "applicationCredentials": {
@@ -1883,5 +1994,17 @@
     "message": "You have unsaved changes. Leaving now will discard them.",
     "confirmLabel": "Discard changes",
     "cancelLabel": "Keep editing"
+  },
+  "urlPreselection": {
+    "deploymentNotFoundTitle": "Deployment not found",
+    "deploymentNotFoundMessage": "The requested deployment \"{{id}}\" is unavailable, so the default one is selected.",
+    "deploymentsLoadFailedTitle": "Could not load deployments",
+    "deploymentsLoadFailedMessage": "The requested deployment could not be selected, so the default one is used.",
+    "skillUnavailableTitle": "Skill unavailable",
+    "skillUnavailableMessage": "The requested skill does not exist or you do not have access to it.",
+    "skillsLoadFailedTitle": "Could not load skills",
+    "skillsLoadFailedMessage": "The skill list could not be loaded, so the requested skill was not added.",
+    "promptUnavailableTitle": "Prompt unavailable",
+    "promptUnavailableMessage": "The requested prompt could not be loaded."
   }
 }

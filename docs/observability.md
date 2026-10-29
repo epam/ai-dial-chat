@@ -326,9 +326,10 @@ contribution; a falling count does not prove persistence.
 `GENERATION_FINALIZE_TIMEOUT_MS` starts immediately before terminal save. Expiry releases
 existing attachment listeners and timers but **does not cancel the write**. The retained key
 still rejects another start on the same process with `409` until settlement or restart.
-The timeout does not bound preflight, total generation lifetime, or attachments created after
-its terminal notification. Maximum duration and stale handling request cancellation rather
-than releasing ownership; stale sweeping runs on registration.
+The timeout does not bound preflight or total generation lifetime. Once it has released
+subscribers, a later attach to the `settling` entry receives `404` and adds no
+`generation_attach` SSE subscription. Maximum duration and stale handling request cancellation
+rather than releasing ownership; stale sweeping runs on registration.
 
 There is no distributed lock or cross-pod ownership transfer. Restart clears local ownership
 without confirming remote writes. To investigate retained work, inspect states and memory per

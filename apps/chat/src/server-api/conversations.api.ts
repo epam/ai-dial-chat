@@ -78,6 +78,12 @@ export const listConversations = (
     ...(signal ? [{ signal }] : []),
   );
 
+export const getConversationTitles = (ids: string[], signal?: AbortSignal) =>
+  conversationsApi.getConversationTitles(
+    { conversationTitlesBodyDto: { ids } },
+    ...(signal ? [{ signal }] : []),
+  );
+
 export const renameConversation = (path: string, newTitle: string) =>
   conversationsApi.renameConversation({
     path,

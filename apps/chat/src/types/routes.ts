@@ -32,6 +32,16 @@ export enum ROUTES {
   /** Standalone Usage page; the former Settings Usage tab (`/settings/usage`) redirects here. */
   Usage = '/usage',
   Projects = '/projects',
+  ProjectCreate = '/projects/new',
+  /**
+   * Route pattern for one project's view page; the splat is the project's
+   * path inside `:bucket`. Build a URL with `getProjectViewRoute`.
+   */
+  ProjectView = '/projects/view/:bucket/*',
+  /** Route pattern for one project's edit page; build with `getProjectEditRoute`. */
+  ProjectEdit = '/projects/edit/:bucket/*',
+  /** Landing route of a project share link; must match the BFF's `getInvitationRoutePath`. */
+  ProjectSharedInvitation = '/projects/shared/:invitationId',
   ScheduledTasks = '/scheduled-tasks',
   ScheduledTaskCreate = '/scheduled-tasks/new',
   ScheduledTaskDetail = '/scheduled-tasks/:scheduleId',

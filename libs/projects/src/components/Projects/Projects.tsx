@@ -4,6 +4,7 @@ import {
   PanelEmptyState,
 } from '@epam/ai-dial-chat-shared';
 import {
+  Button,
   ButtonAppearance,
   ButtonDropdown,
   ButtonVariant,
@@ -16,7 +17,7 @@ import {
   Search,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
-import { IconArrowsSort } from '@tabler/icons-react';
+import { IconArrowsSort, IconPlus } from '@tabler/icons-react';
 import { FC, useMemo } from 'react';
 import type { ProjectsProps } from '../../models/projects-props';
 import type { ProjectsSortKey } from '../../types/projects-sort-key';
@@ -31,11 +32,13 @@ export const Projects: FC<ProjectsProps> = ({
   hasError = false,
   incompleteSources = [],
   onRetry,
+  onCreateProject,
+  onOpenProject,
+  getProjectHref,
   searchQuery,
   onSearchQueryChange,
   sortKey,
   onSortKeyChange,
-  formatUpdatedAt,
   labels,
   locale,
   styles: projectsStyles,
@@ -45,18 +48,18 @@ export const Projects: FC<ProjectsProps> = ({
   const subtitleClassName = typography?.subtitleClassName ?? 'dial-body-text';
   const cardTitleClassName =
     typography?.cardTitleClassName ?? 'dial-body-semi-text';
-  const badgeClassName = typography?.badgeClassName ?? 'dial-tiny-semi-text';
-  const metaClassName = typography?.metaClassName ?? 'dial-small-text';
+  const pathLabelClassName = typography?.pathLabelClassName ?? 'dial-tiny-text';
+  const pathLeafClassName =
+    typography?.pathLeafClassName ?? 'dial-tiny-semi-text';
   const cssVars = buildCssVars({
     '--pr-bg': colors?.background,
     '--pr-subtitle-text': colors?.subtitleText,
     '--pr-sort-text': colors?.sortButtonText,
     '--pr-card-bg': colors?.cardBackground,
-    '--pr-card-border': colors?.cardBorder,
+    '--pr-card-hover-bg': colors?.cardHoverBackground,
     '--pr-card-title-text': colors?.cardTitleText,
-    '--pr-badge-bg': colors?.badgeBackground,
-    '--pr-badge-text': colors?.badgeText,
-    '--pr-meta-text': colors?.metaText,
+    '--pr-card-divider': colors?.cardDivider,
+    '--pr-path-text': colors?.pathText,
   });
 
   const trimmedQuery = searchQuery.trim();
@@ -99,6 +102,23 @@ export const Projects: FC<ProjectsProps> = ({
     return labels.resultCountLabel(visibleProjects.length);
   };
 
+  const renderCreateButton = () =>
+    onCreateProject ? (
+      <Button
+        label={labels.createProjectLabel}
+        variant={ButtonVariant.Primary}
+        iconBefore={
+          <IconPlus
+            size={DIAL_ICON_SIZE.SM}
+            stroke={DIAL_KIT_ICON_STROKE}
+            aria-hidden
+          />
+        }
+        onClick={onCreateProject}
+        className="shrink-0"
+      />
+    ) : undefined;
+
   const renderContent = () => {
     if (isLoading) {
       return <Spinner />;
@@ -120,6 +140,7 @@ export const Projects: FC<ProjectsProps> = ({
         <PanelEmptyState
           label={labels.emptyStateLabel}
           description={labels.emptyStateDescription}
+          action={renderCreateButton()}
         />
       );
     }
@@ -129,17 +150,20 @@ export const Projects: FC<ProjectsProps> = ({
     }
 
     return (
-      <ul className="m-0 grid w-full min-w-0 list-none grid-cols-1 gap-4 p-0 desktop:grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
+      <ul className="m-0 grid w-full max-w-[1116px] min-w-0 list-none grid-cols-1 gap-5 p-0 desktop:grid-cols-3">
         {visibleProjects.map((project) => (
           <ProjectCard
             key={project.id}
             project={project}
             searchQuery={trimmedQuery}
             sourceLabel={labels.sourceLabels[project.source]}
-            formatUpdatedAt={formatUpdatedAt}
+            folderPathLabel={labels.folderPathLabel}
+            pinnedLabel={labels.pinnedLabel ?? 'Pinned'}
+            href={getProjectHref?.(project.id)}
+            onOpen={onOpenProject}
             titleClassName={cardTitleClassName}
-            badgeClassName={badgeClassName}
-            metaClassName={metaClassName}
+            pathLabelClassName={pathLabelClassName}
+            pathLeafClassName={pathLeafClassName}
           />
         ))}
       </ul>
@@ -156,13 +180,18 @@ export const Projects: FC<ProjectsProps> = ({
         styles.container,
       )}
     >
-      <div className="min-w-0">
-        <h1 className={mergeClasses('break-words', titleClassName)}>
-          {labels.title}
-        </h1>
-        <p className={mergeClasses('mt-1', subtitleClassName, styles.subtitle)}>
-          {labels.subtitle}
-        </p>
+      <div className="flex min-w-0 items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className={mergeClasses('break-words', titleClassName)}>
+            {labels.title}
+          </h1>
+          <p
+            className={mergeClasses('mt-1', subtitleClassName, styles.subtitle)}
+          >
+            {labels.subtitle}
+          </p>
+        </div>
+        {renderCreateButton()}
       </div>
 
       <div className="flex flex-col gap-3 desktop:flex-row desktop:items-center">

@@ -25,6 +25,7 @@ const RESOURCE_KIND_BY_PREFIX: [prefix: string, kind: ResourceKind][] = [
   ['conversations/', 'CONVERSATION'],
   ['skills/', 'SKILL'],
   ['prompts/', 'PROMPT'],
+  ['projects/', 'PROJECT'],
 ];
 
 export const resolveResourceKind = (itemId: string): ResourceKind => {
@@ -37,8 +38,21 @@ export const resolveResourceKind = (itemId: string): ResourceKind => {
 };
 
 /*
- * Prompts are the one resource kind whose public `itemId` is deliberately
- * decoded back to a raw, human-readable DIAL Core resource path
+ * DIAL Core project ids the chat hands out are decoded: the projects module
+ * rebuilds them from Core's decoded `name`/`parentPath` (`projects.mapper.ts`)
+ * and encodes them itself at every Core call (`encodeDialResourcePath`). The
+ * share module must do the same, or a project named `Q4 launch` reaches
+ * Core's share API with a raw space, which Core's URI check rejects.
+ */
+const PROJECT_RESOURCE_PREFIX = 'projects/';
+
+/** Kinds whose public `itemId` is the decoded path and must be re-encoded for Core. */
+const hasDecodedItemId = (itemId: string): boolean =>
+  isPromptResourceUrl(itemId) || itemId.startsWith(PROJECT_RESOURCE_PREFIX);
+
+/*
+ * Prompts and projects are the resource kinds whose public `itemId` is
+ * deliberately decoded back to a raw, human-readable DIAL Core resource path
  * (`buildPromptId` rebuilds it from a `safeDecodeURIComponent`d metadata
  * url — see `urlToPromptPath` — so folder/prompt names with spaces stay
  * literal wherever the id is displayed). Every other kind's listing passes
@@ -46,8 +60,10 @@ export const resolveResourceKind = (itemId: string): ResourceKind => {
  * `conversation-listing.service.ts`; applications/toolsets: `raw.id` in
  * their mapper utils), so their `itemId` already matches whatever encoded
  * or unencoded form DIAL Core itself uses — re-encoding it here would risk
- * disagreeing with that native form. Only prompts need re-encoding back to
- * DIAL Core's canonical form before this direct SDK call boundary.
+ * disagreeing with that native form. Only prompts and projects need
+ * re-encoding back to DIAL Core's canonical form before this direct SDK call
+ * boundary. A project name cannot contain `%` (`isValidDialEntityName`), so
+ * `encodeDialResourcePath`'s decode-first step cannot alter one.
  *
  * TODO: once prompts stop decoding at listing time (aligning them with the
  * conversations pattern — using metadata's native `name`/`parentPath`
@@ -55,7 +71,7 @@ export const resolveResourceKind = (itemId: string): ResourceKind => {
  * away entirely and `itemId` can be used as-is for every kind.
  */
 export const toShareResourceUrl = (itemId: string): string =>
-  isPromptResourceUrl(itemId) ? encodeDialResourcePath(itemId) : itemId;
+  hasDecodedItemId(itemId) ? encodeDialResourcePath(itemId) : itemId;
 
 /*
  * The inverse of `toShareResourceUrl`, applied to an itemId read back out of
@@ -64,11 +80,12 @@ export const toShareResourceUrl = (itemId: string): string =>
  * catalog item ids for prompts are the decoded, human-readable form
  * (`buildPromptId`) — so an accepted prompt invitation that redirected with
  * the encoded form matched nothing in the catalog and silently left the
- * details panel closed. Every other kind's id is passed through unchanged,
- * for the same reason `toShareResourceUrl` leaves it alone.
+ * details panel closed. A project invitation lands on the project view the
+ * same way, so its id is decoded too. Every other kind's id is passed through
+ * unchanged, for the same reason `toShareResourceUrl` leaves it alone.
  */
 export const toPublicItemId = (itemId: string): string =>
-  isPromptResourceUrl(itemId)
+  hasDecodedItemId(itemId)
     ? itemId.split('/').map(safeDecodeURIComponent).join('/')
     : itemId;
 
@@ -91,15 +108,22 @@ export const toPublicItemId = (itemId: string): string =>
  */
 const CATALOG_SHARE_INVITATION_ROUTE_PATH = '/catalog/shared';
 const CONVERSATION_SHARE_INVITATION_ROUTE_PATH = '/conversations/shared';
+/** Must match the frontend's `ROUTES.ProjectSharedInvitation`. */
+const PROJECT_SHARE_INVITATION_ROUTE_PATH = '/projects/shared';
 
 /** DIAL Core conversation resource paths always start with this prefix. */
 export const CONVERSATION_RESOURCE_PREFIX = 'conversations/';
 export const FILE_RESOURCE_PREFIX = 'files/';
 
-export const getInvitationRoutePath = (itemId: string): string =>
-  itemId.startsWith(CONVERSATION_RESOURCE_PREFIX)
-    ? CONVERSATION_SHARE_INVITATION_ROUTE_PATH
-    : CATALOG_SHARE_INVITATION_ROUTE_PATH;
+export const getInvitationRoutePath = (itemId: string): string => {
+  if (itemId.startsWith(CONVERSATION_RESOURCE_PREFIX)) {
+    return CONVERSATION_SHARE_INVITATION_ROUTE_PATH;
+  }
+  if (itemId.startsWith(PROJECT_RESOURCE_PREFIX)) {
+    return PROJECT_SHARE_INVITATION_ROUTE_PATH;
+  }
+  return CATALOG_SHARE_INVITATION_ROUTE_PATH;
+};
 
 /*
  * DIAL Core rejects `?accept=true` with 400 and a body like

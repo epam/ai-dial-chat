@@ -222,6 +222,16 @@ const resolveDeploymentCatalogTabs = (
   return hasMcp ? [CatalogEntityType.Agent] : undefined;
 };
 
+/**
+ * Whether a deployment can be chatted with: it offers the `chat` interface or
+ * declares no interfaces at all. Backs `CatalogItem.supportsChat`.
+ * @param deployment - deployment to check
+ */
+export const supportsChatInterface = (
+  deployment: Pick<DeploymentItemDto, 'interfaces'>,
+): boolean =>
+  deployment.interfaces == null || deployment.interfaces.includes('chat');
+
 /** Maps a deployment listing row into the catalog UI's `CatalogItem` shape. */
 export const mapDeploymentToCatalogItem = (
   deployment: DeploymentItemDto,
@@ -282,8 +292,7 @@ export const mapDeploymentToCatalogItem = (
         ? mapEntityDetailsToCatalogDetails(entityDetails)
         : undefined,
     supportsMcp: deployment.features?.mcp === true,
-    supportsChat:
-      deployment.interfaces == null || deployment.interfaces.includes('chat'),
+    supportsChat: supportsChatInterface(deployment),
   };
 };
 

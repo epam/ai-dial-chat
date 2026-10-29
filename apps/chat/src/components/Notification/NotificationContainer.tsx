@@ -148,20 +148,23 @@ const NotificationEntry: FC<NotificationEntryProps> = memo(
 const NotificationContainer: FC = () => {
   const { notifications, dismissNotification } = useNotification();
   const stackRef = useRef<HTMLDivElement>(null);
-  const prevCountRef = useRef(0);
+  const prevIdsRef = useRef<ReadonlySet<string>>(new Set());
 
   /*
    * A scroll box opens at its top, so once the bottom-anchored stack overflows
    * the newest toast (last in DOM) would sit below the fold. Scroll to the end
    * whenever a toast is added; a dismissal leaves the scroll position alone.
+   * Ids are compared rather than counts, so an add batched with a dismissal
+   * still scrolls.
    */
   useLayoutEffect(() => {
     const stack = stackRef.current;
-    if (stack && notifications.length > prevCountRef.current) {
+    const prevIds = prevIdsRef.current;
+    if (stack && notifications.some(({ id }) => !prevIds.has(id))) {
       stack.scrollTop = stack.scrollHeight;
     }
-    prevCountRef.current = notifications.length;
-  }, [notifications.length]);
+    prevIdsRef.current = new Set(notifications.map(({ id }) => id));
+  }, [notifications]);
 
   if (!notifications.length) return null;
 

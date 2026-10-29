@@ -209,7 +209,11 @@ kind and drives the item's actions and details; `catalogTabs` only says which
 Browse tabs list it. An item with `type: Agent` and
 `catalogTabs: [Agent, Toolset]` appears once in each of those tabs — the same
 item, so its favorite state and details panel are shared — and counts toward
-both tabs. An absent or empty `catalogTabs` means `[type]`.
+both tabs. An absent or empty `catalogTabs` means `[type]`. In the Browse grid
+and list, the type label (and the Featured chip) shows the active tab when the
+item is listed under it, so an MCP agent reads "Toolset" in the Toolsets tab;
+the details panel and the Favorites strip keep showing `type`. `CardGrid` and
+`Card` take this as an optional `activeTab` prop; `ListView` reads its `type`.
 
 The entity-type tab row appears only when `items` span **two or more** tabs: a
 single tab is not a choice, so a catalog restricted to one entity type (an

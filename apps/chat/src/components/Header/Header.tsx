@@ -55,10 +55,13 @@ const Header: FC<Props> = ({ onMenuToggle, isMenuOpen = false, onNewChat }) => {
     return null;
   }
 
+  /* Opaque on the page background: on the root route the header overlays the
+     welcome screen, which scrolls beneath it when its content is tall
+     ([#9036](https://github.com/epam/ai-dial-chat/issues/9036)). */
   return (
     <header
       className={mergeClasses(
-        'z-30 grid min-h-[48px] w-full grid-cols-[1fr_auto_1fr] items-center border-b border-b-tertiary bg-transparent desktop:hidden',
+        'z-30 grid min-h-[48px] w-full grid-cols-[1fr_auto_1fr] items-center border-b border-b-tertiary bg-layer-base desktop:hidden',
         isRootRoute ? 'absolute inset-x-0 top-0' : 'relative',
       )}
     >

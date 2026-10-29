@@ -20,6 +20,7 @@ import { CoreResponsesClient } from '../../generation/core-responses.client';
 import { generationRequestsTotal } from '../../generation/generation-metrics';
 import { GENERATION_PERSISTENCE_ERROR } from '../../generation/persistence-error';
 import { ResponsesAdapter } from '../../generation/responses.adapter';
+import { ConversationTitleCacheService } from '../../listing/conversation-title-cache.service';
 import { ConversationPersistenceService } from '../../persistence/conversation-persistence.service';
 import { ConversationErrorCode } from '../../types/conversation-error-code.enum';
 import { mergeHtmlTagAnnotationsIntoViewState } from '../../utils/conversation-view-state.server';
@@ -214,6 +215,7 @@ describe('ConversationStreamingService', () => {
     persistenceService = new ConversationPersistenceService(
       mockDialClient,
       mockConversationNamingService as never,
+      new ConversationTitleCacheService(),
     );
     service = new ConversationStreamingService(
       mockDialClient,

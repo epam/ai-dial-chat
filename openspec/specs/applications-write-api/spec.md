@@ -260,7 +260,7 @@ additional role restriction.
 - **THEN** each omitted field keeps the value already stored on the application, regardless of
   whether `applicationProperties` was supplied (nothing is ever extracted from it)
 - **EXCEPT** `features.skills_supported` on a Quick App: see "Quick Apps always get
-  `features.skills_supported: true`" below — that one sub-field is actively re-asserted on every
+  `features.skills_supported: true`" below — that one sub-field is forced on every
   Quick App update rather than merely carried through.
 
 ### Requirement: Quick Apps always get features.skills_supported: true
@@ -285,16 +285,14 @@ SHALL force the DIAL Core save body's top-level `features.skills_supported` to `
 with any other `features` keys already present on the body (caller-supplied or hoisted on
 create; carried-through or caller-supplied on update). This override is unconditional: on
 update, it is applied even when the request body supplies no `features` at all, since the intent
-is a standing guarantee re-asserted on every save, not a one-time default applied only at
+is a standing guarantee applied on every save, not a one-time default applied only at
 creation. It overrides any `skills_supported` value the caller may have supplied.
 
 For a Quick App, the Settings-step save that actually matters most (setting orchestrator/
 contexts/tool_sets) is persisted entirely by the embedded Settings-step editor (loaded from
-`schema.editorUrl`), not by a direct call to this endpoint — see the `app-editor-flow` spec's
-"A Settings-step save reasserts features.skills_supported via a follow-up updateApplication
-call" requirement for how the frontend closes that gap by calling this endpoint again,
-specifically to re-trigger the force-merge described here, after the embedded editor's own save
-completes.
+`schema.editorUrl`) through this endpoint. Because `updateApplication` forces the flag on every
+Quick App update, that single save already sets `features.skills_supported`, and nothing in chat
+depends on a second call to this endpoint.
 
 `createApplication` (and only create) SHALL also default the Quick App's top-level
 `features.system_prompt_supported` to `false`, because DIAL Core treats an unset flag as

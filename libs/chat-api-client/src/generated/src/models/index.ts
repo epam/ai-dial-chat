@@ -1242,6 +1242,24 @@ export interface ClientConfigDto {
    */
   celebrationsEnabledByDefault: boolean;
   /**
+   * Maximum size in bytes of one project context file. Sourced from PROJECT_CONTEXT_FILE_MAX_BYTES, which POST /api/v1/projects enforces.
+   * @type {number}
+   * @memberof ClientConfigDto
+   */
+  projectContextFileMaxBytes: number;
+  /**
+   * Maximum combined size in bytes of a project's context files. Sourced from PROJECT_CONTEXT_TOTAL_MAX_BYTES, which POST /api/v1/projects enforces.
+   * @type {number}
+   * @memberof ClientConfigDto
+   */
+  projectContextTotalMaxBytes: number;
+  /**
+   * Lower-case file extensions, without a dot, accepted as project context files. Sourced from PROJECT_CONTEXT_ALLOWED_EXTENSIONS, which POST /api/v1/projects enforces.
+   * @type {Array<string>}
+   * @memberof ClientConfigDto
+   */
+  projectContextAllowedExtensions: Array<string>;
+  /**
    * The caller's resolved catalog creation permissions, evaluated from the server-only CATALOG_CREATION_ROLES and the session roles. Independent of enabledUiFeatures, which it never filters. Never carries role names or the raw policy.
    * @type {CatalogCreationPermissionsDto}
    * @memberof ClientConfigDto
@@ -1436,11 +1454,17 @@ export interface ConversationListItemDto {
    */
   id: string;
   /**
-   * Human-readable conversation title (the resource `name` from DIAL Core).
+   * Cached display title, or the filename-derived title while background title resolution is pending.
    * @type {string}
    * @memberof ConversationListItemDto
    */
   title: string;
+  /**
+   * True when the title has not been resolved from the stored conversation yet, or its cached value expired. Resolve it with POST /conversations/titles.
+   * @type {boolean}
+   * @memberof ConversationListItemDto
+   */
+  isTitlePending?: boolean;
   /**
    * Unix epoch milliseconds of the resource creation, as reported by DIAL Core metadata. Absent when DIAL Core does not report it, and always absent for conversations shared with the current user.
    * @type {number}
@@ -1956,6 +1980,51 @@ export interface ConversationStartersDto {
 /**
  *
  * @export
+ * @interface ConversationTitleDto
+ */
+export interface ConversationTitleDto {
+  /**
+   * The exact conversation resource URL supplied in the request.
+   * @type {string}
+   * @memberof ConversationTitleDto
+   */
+  id: string;
+  /**
+   * Current display title without conversation messages.
+   * @type {string}
+   * @memberof ConversationTitleDto
+   */
+  title: string;
+}
+/**
+ *
+ * @export
+ * @interface ConversationTitlesBodyDto
+ */
+export interface ConversationTitlesBodyDto {
+  /**
+   * Full DIAL Core conversation resource URLs. Duplicate IDs are read once. Missing or inaccessible conversations are omitted.
+   * @type {Array<string>}
+   * @memberof ConversationTitlesBodyDto
+   */
+  ids: Array<string>;
+}
+/**
+ *
+ * @export
+ * @interface ConversationTitlesResponseDto
+ */
+export interface ConversationTitlesResponseDto {
+  /**
+   *
+   * @type {Array<ConversationTitleDto>}
+   * @memberof ConversationTitlesResponseDto
+   */
+  items: Array<ConversationTitleDto>;
+}
+/**
+ *
+ * @export
  * @interface ConversationsConfigDto
  */
 export interface ConversationsConfigDto {
@@ -2260,6 +2329,43 @@ export interface CreateFolderResponseDto {
    * @memberof CreateFolderResponseDto
    */
   folderId: string;
+}
+/**
+ *
+ * @export
+ * @interface CreateProjectResponseDto
+ */
+export interface CreateProjectResponseDto {
+  /**
+   * DIAL Core resource id, `projects/{bucket}/{path}` without a trailing slash.
+   * @type {string}
+   * @memberof CreateProjectResponseDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateProjectResponseDto
+   */
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateProjectResponseDto
+   */
+  bucket: string;
+  /**
+   * Path of the project within its bucket.
+   * @type {string}
+   * @memberof CreateProjectResponseDto
+   */
+  path: string;
+  /**
+   * Aggregate ETag of the created project, when DIAL Core returns one.
+   * @type {string}
+   * @memberof CreateProjectResponseDto
+   */
+  etag?: string;
 }
 /**
  *
@@ -5651,6 +5757,177 @@ export interface OfflineCredentialsSigninBodyDto {
 /**
  *
  * @export
+ * @interface ProjectContextFileDto
+ */
+export interface ProjectContextFileDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectContextFileDto
+   */
+  name: string;
+  /**
+   * Size in bytes.
+   * @type {number}
+   * @memberof ProjectContextFileDto
+   */
+  size: number;
+}
+
+/**
+ *
+ * @export
+ */
+export const ProjectCreateErrorCode = {
+  InvalidName: 'invalid-name',
+  NameTaken: 'name-taken',
+  InvalidFileName: 'invalid-file-name',
+  DuplicateFileName: 'duplicate-file-name',
+  UnsupportedFileType: 'unsupported-file-type',
+  FileTooLarge: 'file-too-large',
+  CapacityExceeded: 'capacity-exceeded',
+  TooManyFiles: 'too-many-files',
+  ProjectChanged: 'project-changed',
+  IfMatchRequired: 'if-match-required',
+  ProjectTooLarge: 'project-too-large',
+  UnknownFile: 'unknown-file',
+} as const;
+export type ProjectCreateErrorCode =
+  (typeof ProjectCreateErrorCode)[keyof typeof ProjectCreateErrorCode];
+
+/**
+ *
+ * @export
+ * @interface ProjectCreateErrorDto
+ */
+export interface ProjectCreateErrorDto {
+  /**
+   *
+   * @type {number}
+   * @memberof ProjectCreateErrorDto
+   */
+  statusCode: number;
+  /**
+   *
+   * @type {ScheduledTaskValidationErrorDtoMessage}
+   * @memberof ProjectCreateErrorDto
+   */
+  message: ScheduledTaskValidationErrorDtoMessage;
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectCreateErrorDto
+   */
+  error: string;
+  /**
+   *
+   * @type {ProjectCreateErrorCode}
+   * @memberof ProjectCreateErrorDto
+   */
+  code?: ProjectCreateErrorCode;
+  /**
+   * `name`, or the name of the rejected context file.
+   * @type {string}
+   * @memberof ProjectCreateErrorDto
+   */
+  field?: string;
+}
+
+/**
+ *
+ * @export
+ * @interface ProjectDetailsDto
+ */
+export interface ProjectDetailsDto {
+  /**
+   * DIAL Core resource id, `projects/{bucket}/{path}` without a trailing slash.
+   * @type {string}
+   * @memberof ProjectDetailsDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectDetailsDto
+   */
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectDetailsDto
+   */
+  bucket: string;
+  /**
+   * Path of the project within its bucket.
+   * @type {string}
+   * @memberof ProjectDetailsDto
+   */
+  path: string;
+  /**
+   * Grouping folder path the project sits in, when nested.
+   * @type {string}
+   * @memberof ProjectDetailsDto
+   */
+  parentPath?: string;
+  /**
+   *
+   * @type {ProjectSource}
+   * @memberof ProjectDetailsDto
+   */
+  source: ProjectSource;
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectDetailsDto
+   */
+  author?: string;
+  /**
+   * Creation time, epoch milliseconds.
+   * @type {number}
+   * @memberof ProjectDetailsDto
+   */
+  createdAt?: number;
+  /**
+   * Last update time, epoch milliseconds.
+   * @type {number}
+   * @memberof ProjectDetailsDto
+   */
+  updatedAt?: number;
+  /**
+   * Plain-text description from `PROJECT.md`; empty when absent.
+   * @type {string}
+   * @memberof ProjectDetailsDto
+   */
+  description: string;
+  /**
+   * Markdown instructions from `PROJECT.md`; empty when absent.
+   * @type {string}
+   * @memberof ProjectDetailsDto
+   */
+  instructions: string;
+  /**
+   * Files directly under `context/`, sorted by name.
+   * @type {Array<ProjectContextFileDto>}
+   * @memberof ProjectDetailsDto
+   */
+  contextFiles: Array<ProjectContextFileDto>;
+  /**
+   * Aggregate ETag of the version these details were read from; send it as `If-Match` on update and delete.
+   * @type {string}
+   * @memberof ProjectDetailsDto
+   */
+  etag: string;
+  /**
+   * Whether the caller may edit, delete, share and publish the project — `true` only in the caller's own bucket.
+   * @type {boolean}
+   * @memberof ProjectDetailsDto
+   */
+  canEdit: boolean;
+}
+
+/**
+ *
+ * @export
  * @interface ProjectDto
  */
 export interface ProjectDto {
@@ -5721,6 +5998,19 @@ export const ProjectSource = {
 } as const;
 export type ProjectSource = (typeof ProjectSource)[keyof typeof ProjectSource];
 
+/**
+ *
+ * @export
+ * @interface ProjectsConfigDto
+ */
+export interface ProjectsConfigDto {
+  /**
+   * Pinned project identifiers (`projects/{bucket}/{path}`).
+   * @type {Array<string>}
+   * @memberof ProjectsConfigDto
+   */
+  pinnedIds: Array<string>;
+}
 /**
  *
  * @export
@@ -6059,6 +6349,7 @@ export const PublishHistoryEntryDtoEntityTypeEnum = {
   Application: 'application',
   Prompt: 'prompt',
   Skill: 'skill',
+  Project: 'project',
 } as const;
 export type PublishHistoryEntryDtoEntityTypeEnum =
   (typeof PublishHistoryEntryDtoEntityTypeEnum)[keyof typeof PublishHistoryEntryDtoEntityTypeEnum];
@@ -6116,6 +6407,7 @@ export const PublishResultDtoEntityTypeEnum = {
   Application: 'application',
   Prompt: 'prompt',
   Skill: 'skill',
+  Project: 'project',
 } as const;
 export type PublishResultDtoEntityTypeEnum =
   (typeof PublishResultDtoEntityTypeEnum)[keyof typeof PublishResultDtoEntityTypeEnum];
@@ -6231,7 +6523,7 @@ export interface RefineTextRequestDto {
    */
   purpose: TextRefinementPurpose;
   /**
-   * Exact nonblank draft. Unicode code point limits: skill Description 4000, task Description 500, application/toolset/prompt Description 2000, skill/task/prompt Instructions 32000.
+   * Exact nonblank draft. Unicode code point limits: skill/project Description 4000, task Description 500, application/toolset/prompt Description 2000, skill/task/prompt/project Instructions 32000.
    * @type {string}
    * @memberof RefineTextRequestDto
    */
@@ -7400,6 +7692,8 @@ export const TextRefinementPurpose = {
   ToolsetDescription: 'toolset-description',
   PromptDescription: 'prompt-description',
   PromptInstructions: 'prompt-instructions',
+  ProjectDescription: 'project-description',
+  ProjectInstructions: 'project-instructions',
 } as const;
 export type TextRefinementPurpose =
   (typeof TextRefinementPurpose)[keyof typeof TextRefinementPurpose];
@@ -8167,6 +8461,7 @@ export const UnpublishResultDtoEntityTypeEnum = {
   Application: 'application',
   Prompt: 'prompt',
   Skill: 'skill',
+  Project: 'project',
 } as const;
 export type UnpublishResultDtoEntityTypeEnum =
   (typeof UnpublishResultDtoEntityTypeEnum)[keyof typeof UnpublishResultDtoEntityTypeEnum];
@@ -8314,15 +8609,58 @@ export interface UpdateInstalledSkillDto {
  */
 export interface UpdatePinsDto {
   /**
-   * Full DIAL Core resource URL of the conversation to pin or unpin (matches `id` in `ConversationListItemDto`).
+   * Full DIAL Core resource URL of the conversation or project to pin or unpin (matches `id` in `ConversationListItemDto` or `ProjectDto`). A `projects/` id is stored under `projects.pinnedIds`.
    * @type {string}
    * @memberof UpdatePinsDto
    */
   path: string;
   /**
-   * Pass `true` to pin the conversation, `false` to unpin.
+   * Pass `true` to pin the conversation or project, `false` to unpin.
    * @type {boolean}
    * @memberof UpdatePinsDto
+   */
+  isPinned: boolean;
+}
+/**
+ *
+ * @export
+ * @interface UpdateProjectResponseDto
+ */
+export interface UpdateProjectResponseDto {
+  /**
+   * The project id after the save — a new id when it was renamed.
+   * @type {string}
+   * @memberof UpdateProjectResponseDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateProjectResponseDto
+   */
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateProjectResponseDto
+   */
+  bucket: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateProjectResponseDto
+   */
+  path: string;
+  /**
+   * Aggregate ETag of the saved version. Absent when the project was renamed and its new ETag could not be read back; the save itself committed, so reload the project for a fresh one.
+   * @type {string}
+   * @memberof UpdateProjectResponseDto
+   */
+  etag?: string;
+  /**
+   * Whether the project is in the caller's pins after the save.
+   * @type {boolean}
+   * @memberof UpdateProjectResponseDto
    */
   isPinned: boolean;
 }
@@ -8602,6 +8940,12 @@ export interface UserConfigDto {
    * @memberof UserConfigDto
    */
   conversations: ConversationsConfigDto;
+  /**
+   *
+   * @type {ProjectsConfigDto}
+   * @memberof UserConfigDto
+   */
+  projects: ProjectsConfigDto;
   /**
    *
    * @type {ToolsetsConfigDto}

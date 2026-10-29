@@ -12,7 +12,13 @@ Deriving catalog tab membership from DIAL Core deployment interfaces, separately
 `catalogTabs?: readonly CatalogEntityType[]` field: the Browse tabs the item is
 listed under. `type` SHALL keep meaning the entity kind and SHALL continue to
 drive every entity-specific behavior (actions, details dispatch, edit/delete
-routing, publish entity type, favorite section, MCP URL kind, type badge).
+routing, publish entity type, favorite section, MCP URL kind, and the type
+badge in the details panel and the Favorites strip).
+
+In the Browse grid and list, the type label and the Featured chip SHALL show the
+active tab when `getCatalogItemTabs(item)` includes it, and `type` otherwise
+(`getCatalogItemDisplayType` in `libs/catalog/src/utils/catalog-tabs.ts`), so an
+agent listed under Toolsets is labeled "Toolset" there (issue #9615).
 
 `@epam/ai-dial-catalog` SHALL export
 `getCatalogItemTabs(item: CatalogItem): readonly CatalogEntityType[]`, which
@@ -38,6 +44,12 @@ Telemetry: none. Cache: none.
 
 - **WHEN** `getCatalogItemTabs` receives an item with `type: Model` and `catalogTabs: []`
 - **THEN** it returns `[Model]`
+
+#### Scenario: Browse label follows the active tab
+
+- **WHEN** `Catalog` renders an item with `type: Agent` and `catalogTabs: [Agent, Toolset]` and the Toolsets tab is active
+- **THEN** its card and list row are labeled Toolset
+- **AND** with the Agents tab active they are labeled Agent
 
 #### Scenario: Supplied membership is returned as given
 

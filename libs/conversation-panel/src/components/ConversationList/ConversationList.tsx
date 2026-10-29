@@ -52,6 +52,8 @@ export const ConversationList: FC<ConversationListProps> = memo(
   ({
     conversations,
     isLoading,
+    isUpdatingTitles = false,
+    preserveActiveSearchResult = false,
     onSelectConversation,
     activeConversationId,
     labels,
@@ -76,6 +78,7 @@ export const ConversationList: FC<ConversationListProps> = memo(
       sharedEmptyDescription = noResultsDescription,
       tabEmptyLabels,
       loadingLabel = 'Loading conversations',
+      updatingTitlesLabel = 'Updating conversation names',
       groupLabels,
       actionsLabel,
       unreadIndicatorLabel,
@@ -203,15 +206,73 @@ export const ConversationList: FC<ConversationListProps> = memo(
       '--cp-list-font-family': typography?.fontFamily,
     });
 
+    const [retainedSearchResult, setRetainedSearchResult] = useState<{
+      id: string;
+      query: string;
+    } | null>(null);
+
+    useEffect(() => {
+      if (
+        !preserveActiveSearchResult ||
+        !searchQuery ||
+        !activeConversationId
+      ) {
+        setRetainedSearchResult(null);
+        return;
+      }
+      const active = visibleConversations.find(
+        (item) => item.id === activeConversationId,
+      );
+      setRetainedSearchResult((previous) => {
+        if (active && matchesSearch(active, searchQuery)) {
+          return previous?.id === active.id && previous.query === searchQuery
+            ? previous
+            : { id: active.id, query: searchQuery };
+        }
+        return previous?.id === activeConversationId &&
+          previous.query === searchQuery
+          ? previous
+          : null;
+      });
+    }, [
+      preserveActiveSearchResult,
+      searchQuery,
+      activeConversationId,
+      visibleConversations,
+    ]);
+
+    const handleSelectConversation = useCallback(
+      (selectedId: string) => {
+        if (preserveActiveSearchResult && searchQuery) {
+          setRetainedSearchResult({ id: selectedId, query: searchQuery });
+        }
+        onSelectConversation(selectedId);
+      },
+      [preserveActiveSearchResult, searchQuery, onSelectConversation],
+    );
+
+    const retainedId =
+      preserveActiveSearchResult &&
+      searchQuery !== '' &&
+      retainedSearchResult?.query === searchQuery &&
+      retainedSearchResult.id === activeConversationId
+        ? retainedSearchResult.id
+        : undefined;
     const filteredItems = useMemo(
       () =>
         visibleConversations.filter(
           (item) =>
             matchesTab(item, activeFilter) &&
             matchesKind(item, activeTypeFilter) &&
-            matchesSearch(item, searchQuery),
+            (matchesSearch(item, searchQuery) || item.id === retainedId),
         ),
-      [visibleConversations, activeFilter, activeTypeFilter, searchQuery],
+      [
+        visibleConversations,
+        activeFilter,
+        activeTypeFilter,
+        searchQuery,
+        retainedId,
+      ],
     );
 
     const pinnedItems = useMemo(
@@ -329,7 +390,7 @@ export const ConversationList: FC<ConversationListProps> = memo(
         listId,
         activeConversationId,
         searchQuery,
-        onSelectConversation,
+        onSelectConversation: handleSelectConversation,
         getActions,
         onActionMenuOpen,
         actionsLabel,
@@ -356,7 +417,7 @@ export const ConversationList: FC<ConversationListProps> = memo(
         listId,
         activeConversationId,
         searchQuery,
-        onSelectConversation,
+        handleSelectConversation,
         getActions,
         onActionMenuOpen,
         actionsLabel,
@@ -405,6 +466,7 @@ export const ConversationList: FC<ConversationListProps> = memo(
 
     const getStatusMessage = (): string => {
       if (isLoading) return loadingLabel;
+      if (isUpdatingTitles) return updatingTitlesLabel;
       if (isEmpty) return emptyLabel;
       if (isNoResults) return currentNoResultsLabel;
       return '';
@@ -429,6 +491,8 @@ export const ConversationList: FC<ConversationListProps> = memo(
       }
       if (isEmpty)
         return <PanelEmpty label={emptyLabel} description={emptyDescription} />;
+      if (isNoResults && searchQuery !== '' && isUpdatingTitles)
+        return <PanelEmpty label={updatingTitlesLabel} />;
       if (isNoResults)
         return (
           <PanelNoResults

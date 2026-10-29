@@ -30,6 +30,10 @@ export interface ConversationListSectionProps {
   conversations: ConversationItem[];
   /** When true, renders skeleton rows instead of the conversation list. */
   isLoading?: boolean;
+  /** True while the host resolves titles in the background; existing rows remain usable. */
+  isUpdatingTitles?: boolean;
+  /** Keeps an opened search result visible after its title changes, until the query changes. Defaults to `false`. */
+  preserveActiveSearchResult?: boolean;
   /** Called with the conversation `id` when a row is clicked. */
   onSelectConversation: (id: string) => void;
   /** `id` of the currently viewed conversation; that row gets `aria-current="page"`. */

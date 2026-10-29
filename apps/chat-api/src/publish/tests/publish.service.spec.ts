@@ -223,6 +223,46 @@ describe('PublishService', () => {
       });
     });
 
+    it('publishes a whole project without a version under its leaf name', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+        okResponse({
+          createdAt: 1_700_000_000_000,
+          author: 'user@example.com',
+        }),
+      );
+
+      const result = await service.publish(
+        'token-abc',
+        TEST_BUCKET,
+        CatalogEntityType.Project,
+        'projects/bucket-123/q4-launch',
+        'Marketing',
+        undefined,
+        'Test User',
+      );
+
+      expect(dialClient.client.createPublication).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({
+            name: 'q4-launch',
+            resources: [
+              {
+                action: 'ADD',
+                sourceUrl: 'projects/bucket-123/q4-launch',
+                targetUrl: 'projects/public/Marketing/q4-launch',
+              },
+            ],
+          }),
+        }),
+      );
+      expect(result).toMatchObject({
+        entityId: 'projects/bucket-123/q4-launch',
+        entityType: CatalogEntityType.Project,
+        version: '',
+      });
+    });
+
     it('passes the caller-supplied rules through to createPublication unchanged', async () => {
       const { service, dialClient } = makeService();
       vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(

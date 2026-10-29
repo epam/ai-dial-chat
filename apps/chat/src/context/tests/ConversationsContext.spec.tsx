@@ -163,6 +163,80 @@ describe('ConversationsContext — identity-keyed refetch', () => {
 });
 
 describe('ConversationsContext — background refresh', () => {
+  it('finishes initial loading before title enrichment and preserves a manual rename against its late response', async () => {
+    let resolveTitles!: (
+      value: Awaited<ReturnType<typeof conversationsApi.getConversationTitles>>,
+    ) => void;
+    const titleResponse = new Promise<
+      Awaited<ReturnType<typeof conversationsApi.getConversationTitles>>
+    >((resolve) => {
+      resolveTitles = resolve;
+    });
+    vi.mocked(conversationsApi.getConversationTitles).mockReturnValueOnce(
+      titleResponse,
+    );
+    mockListConversations.mockResolvedValueOnce({
+      items: seedConversations.map((item) => ({
+        ...item,
+        isTitlePending: true,
+      })),
+    });
+    vi.mocked(conversationsApi.renameConversation).mockResolvedValueOnce({
+      name: 'Manual title',
+    });
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.conversations).toHaveLength(3);
+    expect(result.current.isUpdatingTitles).toBe(true);
+    await act(async () =>
+      result.current.renameConversation('conv1', 'Manual title'),
+    );
+    await act(async () =>
+      resolveTitles({
+        items: [
+          { id: 'conv1', title: 'Stale title' },
+          { id: 'conv2', title: 'Updated second title' },
+        ],
+      }),
+    );
+    expect(result.current.conversations[0].title).toBe('Manual title');
+    expect(result.current.conversations[1].title).toBe('Updated second title');
+    expect(result.current.isUpdatingTitles).toBe(false);
+  });
+
+  it('keeps an opened title authoritative when a pending title request returns later', async () => {
+    let resolveTitles!: (
+      value: Awaited<ReturnType<typeof conversationsApi.getConversationTitles>>,
+    ) => void;
+    vi.mocked(conversationsApi.getConversationTitles).mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveTitles = resolve;
+      }),
+    );
+    mockListConversations.mockResolvedValueOnce({
+      items: [{ ...seedConversations[0], isTitlePending: true }],
+    });
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    act(() =>
+      result.current.updateConversationTitle(
+        'conv1',
+        'Title from opened conversation',
+      ),
+    );
+    await act(async () =>
+      resolveTitles({ items: [{ id: 'conv1', title: 'Older body' }] }),
+    );
+    expect(result.current.conversations[0].title).toBe(
+      'Title from opened conversation',
+    );
+  });
+
   it('keeps the loaded list visible while conversations are refreshed', async () => {
     const { result } = renderHook(() => useConversations(), {
       wrapper: ConversationsProvider,
@@ -536,6 +610,87 @@ describe('ConversationsContext — renameConversation', () => {
 });
 
 describe('ConversationsContext — deleteConversation', () => {
+  it('does not resurrect a successfully deleted row when an older list request finishes', async () => {
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    let resolveList!: (value: { items: typeof seedConversations }) => void;
+    mockListConversations.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveList = resolve;
+      }),
+    );
+    let refresh!: Promise<void>;
+    act(() => {
+      refresh = result.current.refreshConversations();
+    });
+    mockDeleteConversation.mockResolvedValueOnce(undefined);
+    await act(async () => result.current.deleteConversation('conv1'));
+    await act(async () => {
+      resolveList({ items: seedConversations });
+      await refresh;
+    });
+    expect(result.current.conversations.map(({ id }) => id)).toEqual([
+      'conv2',
+      'conv3',
+    ]);
+  });
+
+  it('restores only a failed deletion while preserving other background title and pin updates', async () => {
+    let resolveTitles!: (
+      value: Awaited<ReturnType<typeof conversationsApi.getConversationTitles>>,
+    ) => void;
+    vi.mocked(conversationsApi.getConversationTitles).mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveTitles = resolve;
+      }),
+    );
+    mockListConversations.mockResolvedValueOnce({
+      items: seedConversations.map((item) => ({
+        ...item,
+        isTitlePending: true,
+      })),
+    });
+    let rejectDelete!: (error: Error) => void;
+    mockDeleteConversation.mockReturnValueOnce(
+      new Promise((_resolve, reject) => {
+        rejectDelete = reject;
+      }),
+    );
+    const { result } = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    let deletion!: Promise<unknown>;
+    act(() => {
+      deletion = result.current
+        .deleteConversation('conv1')
+        .catch((error: unknown) => error);
+    });
+    await act(async () => result.current.pinConversation('conv2', true));
+    await act(async () =>
+      resolveTitles({
+        items: [{ id: 'conv2', title: 'Current second title' }],
+      }),
+    );
+    const failure = new Error('Delete failed');
+    await act(async () => {
+      rejectDelete(failure);
+      expect(await deletion).toBe(failure);
+    });
+    expect(result.current.conversations.map(({ id }) => id)).toEqual([
+      'conv1',
+      'conv2',
+      'conv3',
+    ]);
+    expect(result.current.conversations[1]).toMatchObject({
+      title: 'Current second title',
+      isPinned: true,
+    });
+    expect(result.current.isUpdatingTitles).toBe(false);
+  });
+
   it('keeps the conversation removed when it is already absent upstream', async () => {
     mockDeleteConversation.mockRejectedValueOnce({
       response: { status: 404, json: vi.fn() },

@@ -29,6 +29,7 @@ export const CardGrid: FC<CardGridProps> = memo(
     isFullWidth = false,
     featuredChipStyle,
     markdownLabels,
+    activeTab,
   }) => {
     const noResultsTitle = titles?.noResultsTitle ?? 'No results';
     const featuredLabel = titles?.featuredLabel ?? 'Featured';
@@ -61,6 +62,7 @@ export const CardGrid: FC<CardGridProps> = memo(
         isReadonly,
         featuredChipStyle,
         markdownLabels,
+        activeTab,
       }),
       [
         items,
@@ -78,6 +80,7 @@ export const CardGrid: FC<CardGridProps> = memo(
         isReadonly,
         featuredChipStyle,
         markdownLabels,
+        activeTab,
       ],
     );
 

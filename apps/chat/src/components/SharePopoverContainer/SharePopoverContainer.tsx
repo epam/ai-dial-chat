@@ -1,6 +1,4 @@
-import { type CatalogItem } from '@epam/ai-dial-catalog';
 import { useShareLink } from '@epam/ai-dial-chat-hooks';
-import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { ShareLinkAccess, SharePopover } from '@epam/ai-dial-share';
 import type { FC } from 'react';
 import { memo } from 'react';
@@ -13,23 +11,12 @@ import {
 import { shareApi } from '../../server-api/api-client';
 import { formatShareExpiryNote } from '../../utils/share';
 
-/*
- * Agent-tab entities (Agent + Application, both shown under the "Agents"
- * catalog tab — see libs/catalog/src/utils/catalog-tabs.ts), Skill, Toolset,
- * and Prompt support edit access. Model can only ever be shared view-only, so
- * its access control is a static label, not a dropdown.
- */
-const EDITABLE_ACCESS_TYPES = new Set<CatalogEntityType>([
-  CatalogEntityType.Agent,
-  CatalogEntityType.Prompt,
-  CatalogEntityType.Skill,
-  CatalogEntityType.Toolset,
-]);
-
 /** Props for `SharePopoverContainer`. */
 interface Props {
-  /** The catalog item being shared. */
-  item: CatalogItem;
+  /** DIAL Core id of the resource being shared. */
+  itemId: string;
+  /** Whether the link may grant edit access; otherwise it is view-only and the access control is a static label. */
+  canEditAccess: boolean;
   /** Whether the item being shared is a QuickApp; shows the nested-items warning note when true. */
   isQuickApp?: boolean;
   /** Called when the popover should close. */
@@ -42,13 +29,13 @@ interface Props {
  * receives as flat props.
  */
 const SharePopoverContainer: FC<Props> = ({
-  item,
+  itemId,
+  canEditAccess,
   isQuickApp = false,
   onClose,
 }) => {
   const { t } = useTranslation();
-  const { data, isLoading, error, setAccess } = useShareLink(shareApi, item.id);
-  const canEditAccess = EDITABLE_ACCESS_TYPES.has(item.type);
+  const { data, isLoading, error, setAccess } = useShareLink(shareApi, itemId);
 
   return (
     <SharePopover

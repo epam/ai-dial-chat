@@ -4,11 +4,16 @@ import { ProjectSource } from '../../types/project-source';
 import { ProjectsSortKey } from '../../types/projects-sort-key';
 import { filterProjects, sortProjects } from '../projects';
 
-const project = (name: string, updatedAt?: number): ProjectItem => ({
+const project = (
+  name: string,
+  updatedAt?: number,
+  isPinned?: boolean,
+): ProjectItem => ({
   id: name,
   name,
   source: ProjectSource.Personal,
   updatedAt,
+  isPinned,
 });
 
 const names = (projects: ProjectItem[]) => projects.map((item) => item.name);
@@ -91,5 +96,25 @@ describe('sortProjects', () => {
     const projects = [project('b', 1), project('a', 2)];
     sortProjects(projects, ProjectsSortKey.NameAsc);
     expect(names(projects)).toEqual(['b', 'a']);
+  });
+
+  it('puts pinned projects first in a date order', () => {
+    const projects = [
+      project('a', 3),
+      project('b', 1, true),
+      project('c', 2, true),
+    ];
+    expect(names(sortProjects(projects, ProjectsSortKey.Newest))).toEqual([
+      'c',
+      'b',
+      'a',
+    ]);
+  });
+
+  it('puts pinned projects first in Name A–Z', () => {
+    const projects = [project('alpha'), project('zeta', undefined, true)];
+    expect(
+      names(sortProjects(projects, ProjectsSortKey.NameAsc, 'en')),
+    ).toEqual(['zeta', 'alpha']);
   });
 });

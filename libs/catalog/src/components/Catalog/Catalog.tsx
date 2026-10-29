@@ -864,6 +864,7 @@ export const Catalog: FC<CatalogProps> = ({
                   isFullWidth={isFullWidth}
                   featuredChipStyle={catalogStyles?.colors?.featuredChipStyle}
                   markdownLabels={cardMarkdownLabels}
+                  activeTab={activeTab as CatalogEntityType}
                 />
               </div>
 

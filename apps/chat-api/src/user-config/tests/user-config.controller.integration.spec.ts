@@ -56,6 +56,7 @@ const getUploadedConfigAt = async (
 
 const v3Config = (overrides?: Partial<UserConfig>): UserConfig => ({
   version: 3,
+  projects: { pinnedIds: [] },
   prompts: { installed: [] },
   skills: { installed: [] },
   conversations: { pinnedIds: [] },

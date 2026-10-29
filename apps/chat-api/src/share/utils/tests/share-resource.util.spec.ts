@@ -9,6 +9,7 @@ import {
   isAcceptedUsersLimitError,
   isAlreadyOwnedError,
   resolveResourceKind,
+  toPublicItemId,
   toShareResourceUrl,
 } from '../share-resource.util';
 
@@ -49,9 +50,35 @@ describe('toShareResourceUrl', () => {
     );
   });
 
+  it('percent-encodes a project id with a space and URI-reserved characters', () => {
+    expect(toShareResourceUrl('projects/a1b2c3/marketing/Q4 launch #1?')).toBe(
+      'projects/a1b2c3/marketing/Q4%20launch%20%231%3F',
+    );
+  });
+
+  it('does not double-encode an already-encoded project id', () => {
+    expect(toShareResourceUrl('projects/a1b2c3/Q4%20launch')).toBe(
+      'projects/a1b2c3/Q4%20launch',
+    );
+  });
+
   it('leaves a skill itemId with a space unmodified', () => {
     expect(toShareResourceUrl('skills/owner-bucket/team a/docs helper')).toBe(
       'skills/owner-bucket/team a/docs helper',
+    );
+  });
+});
+
+describe('toPublicItemId', () => {
+  it('decodes a project url read back from DIAL Core to the id the projects module uses', () => {
+    expect(toPublicItemId('projects/a1b2c3/marketing/Q4%20launch')).toBe(
+      'projects/a1b2c3/marketing/Q4 launch',
+    );
+  });
+
+  it('leaves a conversation url untouched', () => {
+    expect(toPublicItemId('conversations/a1b2c3/My%20chat')).toBe(
+      'conversations/a1b2c3/My%20chat',
     );
   });
 });

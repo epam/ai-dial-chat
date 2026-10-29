@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   isDialFileId,
+  isDialFolderId,
   resolveDialFileBucketAndPath,
   resolveRelativeDialFilePath,
 } from '../dial-file';
@@ -12,6 +13,18 @@ describe('isDialFileId', () => {
 
   it('rejects a non-DIAL URL', () => {
     expect(isDialFileId('https://external.com/file.pdf')).toBe(false);
+  });
+});
+
+describe('isDialFolderId', () => {
+  it('recognizes a DIAL folder id, ignoring a fragment', () => {
+    expect(isDialFolderId('files/bucket/New%20folder/')).toBe(true);
+    expect(isDialFolderId('files/bucket/New%20folder/#x')).toBe(true);
+  });
+
+  it('rejects a DIAL file id and a non-DIAL URL ending with a slash', () => {
+    expect(isDialFolderId('files/bucket/report.pdf')).toBe(false);
+    expect(isDialFolderId('https://external.com/docs/')).toBe(false);
   });
 });
 

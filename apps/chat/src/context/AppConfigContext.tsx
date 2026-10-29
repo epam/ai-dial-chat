@@ -22,6 +22,13 @@ import {
   getCatalogCreationIdentity,
   parseCatalogCreationPermissions,
 } from '../utils/catalog-creation';
+import {
+  DEFAULT_PROJECT_CONTEXT_ALLOWED_EXTENSIONS,
+  DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES,
+  DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES,
+  resolveByteLimit,
+  resolveExtensionList,
+} from '../utils/project-limits';
 import { useUser } from './auth/UserContext';
 
 const DEFAULT_TRANSCRIBE_SIZE_LIMIT = 5 * 1024 * 1024;
@@ -64,6 +71,12 @@ export interface AppConfigState {
     usageLimitsWarningThresholdPercent: number;
     /** Operator default for the celebrations switch, used while the user has saved no choice. */
     celebrationsEnabledByDefault: boolean;
+    /** Maximum size in bytes of one project context file. */
+    projectContextFileMaxBytes: number;
+    /** Maximum combined size in bytes of a project's context files (its capacity). */
+    projectContextTotalMaxBytes: number;
+    /** Lower-case extensions, without a dot, accepted as project context files. */
+    projectContextAllowedExtensions: string[];
   };
   metadata?: { resolvedAt: string; cacheTtlSeconds: number };
   /**
@@ -121,6 +134,9 @@ const INITIAL_STATE: ProviderState = {
     usageLimitsWarningThresholdPercent:
       DEFAULT_USAGE_LIMITS_WARNING_THRESHOLD_PERCENT,
     celebrationsEnabledByDefault: true,
+    projectContextFileMaxBytes: DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES,
+    projectContextTotalMaxBytes: DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES,
+    projectContextAllowedExtensions: DEFAULT_PROJECT_CONTEXT_ALLOWED_EXTENSIONS,
   },
 };
 
@@ -200,6 +216,18 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
               DEFAULT_USAGE_LIMITS_WARNING_THRESHOLD_PERCENT,
             celebrationsEnabledByDefault:
               response.config?.celebrationsEnabledByDefault ?? true,
+            projectContextFileMaxBytes: resolveByteLimit(
+              response.config?.projectContextFileMaxBytes,
+              DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES,
+            ),
+            projectContextTotalMaxBytes: resolveByteLimit(
+              response.config?.projectContextTotalMaxBytes,
+              DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES,
+            ),
+            projectContextAllowedExtensions: resolveExtensionList(
+              response.config?.projectContextAllowedExtensions,
+              DEFAULT_PROJECT_CONTEXT_ALLOWED_EXTENSIONS,
+            ),
           },
           metadata: response.metadata,
         });
