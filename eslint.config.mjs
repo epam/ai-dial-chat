@@ -127,6 +127,21 @@ export default [
         cssConfigPath: fileURLToPath(
           new URL('./tools/tailwind/index.css', import.meta.url),
         ),
+        // Replaces the plugin's default list, so the defaults are repeated;
+        // `mergeClasses` (ui-kit) is how most class strings here are built.
+        functions: [
+          'mergeClasses',
+          'classnames',
+          'classNames',
+          'clsx',
+          'cn',
+          'ctl',
+          'cva',
+          'tv',
+          'tw',
+          'twMerge',
+          'twJoin',
+        ],
       },
     },
     rules: {

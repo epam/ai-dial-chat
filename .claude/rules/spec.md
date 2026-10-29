@@ -140,3 +140,4 @@ const renderHeader = (props?: Partial<Props>) =>
 - Use `expect(element).toBeTruthy()` / `.toBeNull()` for element presence; avoid redundant `.not.toBeNull()` when `.toBeTruthy()` reads more clearly.
 - Use `toHaveBeenCalledOnce()` instead of `toHaveBeenCalledTimes(1)`.
 - Use `toHaveBeenCalledWith(...)` to assert call arguments rather than inspecting `.mock.calls` directly.
+- Assert a `.module.scss` class by its local name, not the hashed output or the Tailwind utility it replaced: `expect(label.className).toMatch(/fieldLabel/)`, not `.toContain('text-secondary')`. CSS modules hash the name (`_fieldLabel_5d7705`), and a lib color now lives in a module class, not a utility.

@@ -15,12 +15,14 @@ export type {
   EditorSectionColors,
   EditorSectionProps,
   EditorSectionStyles,
+  EditorSectionTypography,
 } from './models/editor-section-props';
 export type {
   EditorLayoutColors,
   EditorLayoutProps,
   EditorLayoutLabels,
   EditorLayoutStyles,
+  EditorLayoutTypography,
   ResizableLeftColumn,
 } from './models/editor-layout-props';
 export type {

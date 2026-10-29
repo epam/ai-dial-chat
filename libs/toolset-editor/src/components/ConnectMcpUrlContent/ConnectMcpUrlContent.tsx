@@ -37,13 +37,7 @@ const ConnectMcpUrlContent: FC<ConnectMcpUrlContentProps> = ({
   return (
     <div className={mergeClasses('flex flex-col gap-3', className)}>
       <div className="flex flex-col gap-1">
-        <p
-          className={mergeClasses(
-            'text-start',
-            titleClassName,
-            styles.title,
-          )}
-        >
+        <p className={mergeClasses('text-start', titleClassName, styles.title)}>
           {labels?.title ?? 'Connect toolset'}
         </p>
         <p

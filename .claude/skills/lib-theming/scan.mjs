@@ -172,7 +172,7 @@ const stripComments = (text) =>
 
 /* Line by line rather than by string literal: an apostrophe in JSX text would
    otherwise shift the quote pairing and misplace or hide hits. */
-const SCALE_CLASS_RE = /^dial-[a-z-]+-text$/;
+const SCALE_CLASS_RE = /^dial-[a-z0-9-]+-text$/;
 const RAW_FONT_RE =
   /^(text-(xs|sm|base|lg|xl|[2-9]xl|\[[\d.]+(px|rem|em)\])|font-(thin|extralight|light|normal|medium|semibold|bold|extrabold|black)|leading-\S+|tracking-\S+)$/;
 /* A camelCase `*className` prop default (`titleClassName = '…'`, Prettier puts
@@ -302,7 +302,7 @@ for (const lib of libs) {
     const text = readFileSync(file, 'utf8');
     if (/\.(tsx|ts)$/.test(file)) {
       for (const name of collectSetVars(text)) setVars.add(name);
-      if (file.endsWith('.tsx')) scanTsx(file, text, findings);
+      scanTsx(file, text, findings);
     } else {
       scanStyles(file, text, findings, readVars);
     }

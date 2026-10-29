@@ -301,7 +301,11 @@ export const FileManagerAttachModal: FC<FileManagerAttachModalProps> = memo(
           ) : (
             <div className="flex min-w-0 flex-1 flex-col gap-1">
               <h3
-                className={mergeClasses('truncate', titleClassName, styles.title)}
+                className={mergeClasses(
+                  'truncate',
+                  titleClassName,
+                  styles.title,
+                )}
               >
                 {title}
               </h3>

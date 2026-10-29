@@ -46,9 +46,7 @@ export const OperationLoaderModal: FC<OperationLoaderModalProps> = ({
       <Spinner size={32} fullWidth={false} ariaLabel={title} />
       <div className="flex flex-col gap-1">
         <div>{title}</div>
-        <div className={mergeClasses(textClassName, styles.text)}>
-          {text}
-        </div>
+        <div className={mergeClasses(textClassName, styles.text)}>{text}</div>
       </div>
     </div>
   </Popup>

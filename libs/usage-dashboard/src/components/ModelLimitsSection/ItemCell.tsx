@@ -30,6 +30,7 @@ export const ItemCell: FC<ItemCellProps> = ({
     nameClassName = 'dial-small-semi-text',
     modelTypeClassName = 'dial-caption-lead-semi-text',
     versionClassName = 'dial-small-text',
+    avatarInitialsClassName = 'dial-h2-text',
   } = typography;
 
   return (
@@ -44,7 +45,7 @@ export const ItemCell: FC<ItemCellProps> = ({
               name={row.name}
               size={AVATAR_SIZE}
               className="rounded-xl!"
-              textClassName="dial-h2-text"
+              textClassName={avatarInitialsClassName}
             />
           }
           styles={{ badgeClassName: '!rounded-xl' }}

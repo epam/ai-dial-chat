@@ -530,7 +530,7 @@ const buildMarkdownComponents = (
       target="_blank"
       rel="noopener noreferrer"
       className={mergeClasses(
-        'break-words underline decoration-current/60 underline-offset-2 hover:decoration-current focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2',
+        'wrap-break-word underline decoration-current/60 underline-offset-2 hover:decoration-current focus-visible:outline-1 focus-visible:outline-offset-2',
         styles.link,
         cn.link,
       )}

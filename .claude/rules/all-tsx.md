@@ -24,6 +24,8 @@ className={[nameClassName, styles.nameText].join(' ')}
 className={mergeClasses(nameClassName, styles.nameText)}
 ```
 
+Call `mergeClasses` during render, never at module scope. A module-level `const ROW_CLASS = mergeClasses(…)` runs on import, so every test file that mocks the package exporting it fails to load before a single assertion runs — three `apps/chat` suites broke this way. Keep module constants as plain strings and merge them in JSX.
+
 ## Component-First Development
 
 **Always prefer UI kit components over raw HTML elements.** Before reaching for native `<button>`, `<input>`, `<select>`, or other HTML elements:

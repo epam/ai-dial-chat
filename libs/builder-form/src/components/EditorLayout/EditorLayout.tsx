@@ -114,7 +114,14 @@ export const EditorLayout: FC<EditorLayoutProps> = ({
             aria-label={backAriaLabel}
             onClick={onBack}
           />
-          <h1 className="dial-h2-text min-w-0 truncate">{title}</h1>
+          <h1
+            className={mergeClasses(
+              stylesProp?.typography?.titleClassName ?? 'dial-h2-text',
+              'min-w-0 truncate',
+            )}
+          >
+            {title}
+          </h1>
         </div>
         {actions != null && (
           <div className="hidden shrink-0 items-center gap-2 desktop:flex">

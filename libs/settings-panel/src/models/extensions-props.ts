@@ -63,6 +63,8 @@ export interface ExtensionsTypography {
   tooltipTitleClassName?: string;
   /** CSS class for the limited-access tooltip description. Defaults to `'dial-small-text'`. */
   tooltipDescriptionClassName?: string;
+  /** CSS class for the initials in a service avatar without an icon. Defaults to `'dial-h2-text'`. */
+  avatarInitialsClassName?: string;
 }
 
 /** Style overrides accepted by `ExtensionsSection`. */

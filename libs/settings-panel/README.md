@@ -105,7 +105,7 @@ entirely by the host — an empty `null` renders an empty cell with no layout sh
 Pass `styles={{ colors, typography }}` to override the container background, column-header,
 name, description, and warning-badge colors (as CSS custom properties) and the column-header,
 name, description, and limited-access tooltip (`tooltipTitleClassName`,
-`tooltipDescriptionClassName`) typography classes. `descriptionColor` and `descriptionClassName`
+`tooltipDescriptionClassName`) and avatar-initials (`avatarInitialsClassName`) typography classes. `descriptionColor` and `descriptionClassName`
 apply to both the service description and the visible limited-access explanation. Without
 a color override, the explanation uses `--text-primary` with a `#161b2d` fallback.
 
@@ -121,7 +121,7 @@ a color override, the explanation uses `--text-primary` with a `#161b2d` fallbac
 - `ExtensionsSectionProps` — `{ rows, labels, styles? }`
 - `ExtensionsStyles` — `{ colors?, typography? }`
 - `ExtensionsColors` — `{ containerBackground?, columnHeaderColor?, rowDividerColor?, nameColor?, descriptionColor?, warningBadgeColor? }`
-- `ExtensionsTypography` — `{ columnHeaderClassName?, nameClassName?, descriptionClassName?, tooltipTitleClassName?, tooltipDescriptionClassName? }`
+- `ExtensionsTypography` — `{ columnHeaderClassName?, nameClassName?, descriptionClassName?, tooltipTitleClassName?, tooltipDescriptionClassName?, avatarInitialsClassName? }`
 
 ## Public class names
 
