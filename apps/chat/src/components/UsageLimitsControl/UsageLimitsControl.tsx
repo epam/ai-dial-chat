@@ -259,7 +259,7 @@ const UsageLimitsControl: FC<Props> = ({
         type="button"
         className={mergeClasses(
           'group flex min-h-8 min-w-8 items-center justify-center gap-1 rounded-full border border-transparent px-1.5 transition-colors',
-          'hover:border-primary hover:bg-layer-sunken focus-visible:bg-layer-sunken focus-visible:outline-primary focus-visible:outline focus-visible:-outline-offset-1',
+          'hover:border-primary hover:bg-layer-sunken focus-visible:bg-layer-sunken focus-visible:outline focus-visible:-outline-offset-1 focus-visible:outline-primary',
           'mobile:min-h-11 mobile:min-w-11',
           isOpen && 'border-primary bg-layer-sunken',
           getStatusTextClass(),
@@ -301,7 +301,7 @@ const UsageLimitsControl: FC<Props> = ({
           role="dialog"
           aria-labelledby={titleId}
           tabIndex={-1}
-          className="bg-layer-raised absolute end-0 bottom-full z-50 mb-2 flex w-[22.5rem] max-w-[calc(100vw-2rem)] flex-col gap-3 rounded-lg p-4 shadow-lg focus:outline-none"
+          className="absolute bottom-full end-0 z-50 mb-2 flex w-[22.5rem] max-w-[calc(100vw-2rem)] flex-col gap-3 rounded-lg bg-layer-raised p-4 shadow-lg focus:outline-none"
           /* Measured in physical viewport pixels, so the shift is physical too
              and stays correct under RTL. */
           style={
@@ -333,7 +333,7 @@ const UsageLimitsControl: FC<Props> = ({
                   onClick={() => setIsOpen(false)}
                   /* The negative inline-start margin cancels the pill's own
                      padding so the label still lines up with the rows above. */
-                  className="dial-tiny-semi-text text-accent hover:bg-control-accent-alpha-hover focus-visible:outline-focus -ms-2 inline-flex h-6 items-center gap-1 rounded-full px-2 focus-visible:outline focus-visible:-outline-offset-1"
+                  className="dial-tiny-semi-text -ms-2 inline-flex h-6 items-center gap-1 rounded-full px-2 text-accent hover:bg-control-accent-alpha-hover focus-visible:outline focus-visible:-outline-offset-1 focus-visible:outline-focus"
                 >
                   {t(ConversationInputI18nKeys.FullUsageLink)}
                   <IconChevronRight
