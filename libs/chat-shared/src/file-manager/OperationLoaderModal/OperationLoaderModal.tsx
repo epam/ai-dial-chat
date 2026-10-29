@@ -1,5 +1,9 @@
 import { Popup, Spinner } from '@epam/ai-dial-ui-kit';
 import { memo, type FC } from 'react';
+import { buildCssVars } from '../../utils/build-css-vars';
+import { mergeClasses } from '../../utils/merge-class';
+import type { OperationLoaderModalColors } from '../shell-styles';
+import styles from './OperationLoaderModal.module.scss';
 
 /** Props for the operation-in-progress overlay modal (copy/move spinner). */
 export interface OperationLoaderModalProps {
@@ -11,6 +15,8 @@ export interface OperationLoaderModalProps {
   cancelLabel: string;
   /** Called when the user clicks Cancel. */
   onCancel: () => void;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: OperationLoaderModalColors;
 }
 
 /** Modal overlay with a spinner and cancel button for long-running file operations. */
@@ -19,6 +25,7 @@ export const OperationLoaderModal: FC<OperationLoaderModalProps> = ({
   text,
   cancelLabel,
   onCancel,
+  colors,
 }) => (
   <Popup
     className="h-fit! max-h-full! w-[400px]!"
@@ -26,6 +33,7 @@ export const OperationLoaderModal: FC<OperationLoaderModalProps> = ({
     closeOnOutsideClick={false}
     hideClose
     onClose={onCancel}
+    overlayStyle={buildCssVars({ '--olm-text': colors?.text })}
     mainButtons={[{ label: cancelLabel, onClick: onCancel }]}
   >
     <div
@@ -35,7 +43,9 @@ export const OperationLoaderModal: FC<OperationLoaderModalProps> = ({
       <Spinner size={32} fullWidth={false} ariaLabel={title} />
       <div className="flex flex-col gap-1">
         <div>{title}</div>
-        <div className="dial-small-text text-secondary">{text}</div>
+        <div className={mergeClasses('dial-small-text', styles.text)}>
+          {text}
+        </div>
       </div>
     </div>
   </Popup>

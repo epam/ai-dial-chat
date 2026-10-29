@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ScheduledTaskDetailsSummary } from '../ScheduledTaskDetailsSummary';
+import styles from '../ScheduledTaskDetailsSummary.module.scss';
 
 /* Captures every mock-rendered MDMessageViewer's props so label forwarding is assertable. */
 const viewerCalls = vi.hoisted(() => [] as Array<Record<string, unknown>>);
@@ -155,10 +156,10 @@ describe('ScheduledTaskDetailsSummary', () => {
     );
 
     expect(screen.getByText('Model').className).toContain('dial-tiny-text');
-    expect(screen.getByText('Model').className).toContain('text-secondary');
+    expect(screen.getByText('Model').className).toContain(styles.fieldLabel);
     expect(screen.getByText('GPT-5.1').className).toContain('dial-small-text');
     expect(screen.getByText('Skill').className).toContain('dial-tiny-text');
-    expect(screen.getByText('Skill').className).toContain('text-secondary');
+    expect(screen.getByText('Skill').className).toContain(styles.fieldLabel);
   });
 
   it('forwards the supplied markdown labels to the default renderer, omitting them otherwise', () => {

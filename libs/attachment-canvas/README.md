@@ -692,6 +692,14 @@ Style overrides go through `AttachmentCanvasStyles` (`AttachmentCanvasColors`,
 `AttachmentCanvasLabels`. `AttachmentCanvasProps`,
 `AttachmentCanvasContainerProps`, `CodeContentProps`, `CodeContentLabels`, and
 `AttachmentCanvasContextValue` are exported for hosts building those objects.
+Every color the canvas paints has an `AttachmentCanvasColors` field, falling
+back to the app theme token: besides the content-body fields, `headerBorder`
+(`--stroke-tertiary`) colors the panel header's bottom border, `focusOutline`
+(`--stroke-focus`) the XLSX formula field's focus ring, `codeBackground`
+(`--bg-layer-raised`, or `--bg-layer-base` on a light syntax theme) the code
+viewer, and `mcpAppLoadingBackground` (`--bg-layer-1`) and `mcpAppStatusText`
+(`--text-primary`) the MCP App loading/error overlay, whose error icon and
+detail line follow `errorIcon` and `statusText`.
 Use `xlsxFormulaLabel` to localize the persistent XLSX `fx` bar's accessible
 label; it defaults to `Formula`. The visual `fx` mark is direction-neutral and
 does not replace that label for assistive technology. Its typography defaults

@@ -497,7 +497,7 @@ header staying in view. Give the parent a definite height (a flex child with
 The table frame, header, row dividers and selected-row tint come from the
 `Grid` theme: the list renders the kit's `GridAppearance.Chat`, a borderless
 12px card with the MD shadow and inset row dividers. `styles.colors` (`ListViewColors`) covers cell content only:
-`starFilled`, `folderIcon` and `selectedRowCheckIcon`. With no items, the grid
+`starFilled`, `folderIcon`, `selectedRowCheckIcon`, `nameText` and `versionText`. With no items, the grid
 shows its own empty state from `emptyStateTitle` (default `'No results'`) and
 `emptyStateDescription`.
 
@@ -616,8 +616,8 @@ receives the searched, filtered and sorted items and the search query.
   i18n.
 - The dialog fills the screen below 768px, the kit `Popup`'s own breakpoint,
   and is a centred dialog from there up. The footer rule drawn with
-  `footerStart` reads `--cat-picker-footer-border`, falling back to
-  `--stroke-tertiary`.
+  `footerStart` takes its color from `colors.footerBorder`
+  (`CatalogPickerModalColors`), falling back to `--stroke-tertiary`.
 
 ### AddOnCatalogModal
 
@@ -685,8 +685,10 @@ import { AddOnListItem } from '@epam/ai-dial-catalog';
 - `credentials` draws the `CredentialsBadge` over the icon while signed out.
 - `trailing` adds content after the text (status badges, say).
 - `titleClassName`, `versionClassName` and `descriptionClassName` default to
-  `'dial-small-semi-text text-primary'`, `'dial-tiny-text text-secondary'` and
-  `'dial-tiny-text text-secondary'`.
+  `'dial-small-semi-text'`, `'dial-tiny-text'` and `'dial-tiny-text'`.
+- `colors` (`AddOnListItemColors`) overrides `rowHoverBackground`, `focusOutline`, `title`, `version` and
+  `description`, falling back to `--bg-control-accent-alpha`, `--stroke-accent-focus`, `--text-primary` and
+  `--text-secondary`.
 
 ### useListRemoveFocus
 

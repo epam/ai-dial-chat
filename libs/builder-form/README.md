@@ -263,6 +263,8 @@ import { AvatarPickerModal } from '@epam/ai-dial-builder-form';
 />;
 ```
 
+`styles.colors` (`AvatarPickerModalColors`) recolors the delete-confirmation body: `confirmText` (defaults to `--text-secondary`) and `confirmItemText` for the item name or count (defaults to `--text-primary`).
+
 ### EntityEditor
 
 The standard entity editor page: `EditorLayout` with a back arrow and `<h1>` title, Cancel and a primary button in the header, a "Metadata" `EditorSection` in the 360px left column and a "Setup" `EditorSection` in the center column. `title`, `onBack`, `onCancel`, `onSubmit`, `submitLabel`, and `metadata` are required.
@@ -436,6 +438,8 @@ import { DeploymentLocalesField } from '@epam/ai-dial-builder-form';
 />;
 ```
 
+`summaryClassName` (`'dial-body-text'`) and `rowLabelClassName` (`'dial-tiny-lead-text'`) set typography only. Colors come from `colors` (`DeploymentLocalesFieldColors`): `summaryText` and `rowLabelText`, both defaulting to `--text-secondary`. `DeploymentCreationForm` forwards `styles.localesColors` to it.
+
 ## Utilities
 
 ### validateDeploymentCreationFields
@@ -557,6 +561,8 @@ MetadataField.Tags;
 import type {
   AvatarPickerModalProps,
   AvatarPickerModalLabels,
+  AvatarPickerModalStyles,
+  AvatarPickerModalColors,
   AvatarPickerFileManagerModalProps,
   DeploymentCreationFormProps,
   DeploymentCreationFormValues,
@@ -571,6 +577,7 @@ import type {
   DeploymentCreationFormErrorCodes,
   DeploymentCreationFormValidationOptions,
   DeploymentLocalesFieldProps,
+  DeploymentLocalesFieldColors,
   BuilderFormContainerProps,
   BuilderFormContainerStyles,
   BuilderFormContainerColors,
@@ -601,8 +608,9 @@ import type {
 } from '@epam/ai-dial-builder-form';
 ```
 
-`DeploymentCreationFormStyles` carries only per-slot class names (`root`,
-`field`) — the field set composes into a host layout rather than owning one.
+`DeploymentCreationFormStyles` carries per-slot class names (`root`,
+`field`) — the field set composes into a host layout rather than owning one —
+plus `localesColors`, forwarded to `DeploymentLocalesField`.
 
 `BuilderFormContainer`'s header is configured through `labels` (typed
 `BuilderFormHeaderLabels`, which extends `BuilderFormActionsLabels` — the

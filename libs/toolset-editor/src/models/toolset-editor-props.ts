@@ -7,7 +7,10 @@ import type {
   TextRefinementLabels,
 } from '@epam/ai-dial-chat-shared';
 import type { GeneralFormLabels } from './general-form-labels';
-import type { SettingsFormLabels } from './settings-form-props';
+import type {
+  SettingsFormColors,
+  SettingsFormLabels,
+} from './settings-form-props';
 import type {
   ToolsetAuthActions,
   ToolsetAuthFormData,
@@ -85,6 +88,12 @@ export interface ToolsetEditorLabels {
   validation?: ToolsetEditorValidationLabels;
 }
 
+/** Color overrides for the composed Toolset editor, grouped like its labels. */
+export interface ToolsetEditorColors {
+  /** Colors of the Setup section form. */
+  settings?: SettingsFormColors;
+}
+
 /** Props of the composed Toolset editor. */
 export interface ToolsetEditorProps {
   /**
@@ -158,4 +167,6 @@ export interface ToolsetEditorProps {
   onRefineDescription?: TextRefinementCallback;
   /** Pre-translated labels; each group falls back to English defaults. */
   labels?: ToolsetEditorLabels;
+  /** Color overrides, applied as CSS custom properties. */
+  colors?: ToolsetEditorColors;
 }

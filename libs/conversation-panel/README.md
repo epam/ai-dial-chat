@@ -218,7 +218,9 @@ While `activeFilter` or `activeTypeFilter` is not `All`, the filter trigger
 carries a dot and is described by `labels.filterActiveLabel` (default
 `'Filters applied'`) for assistive tech; `styles.colors.filterIndicator`
 recolors the dot (`--cp-list-header-filter-indicator`, defaults to
-`--text-accent`).
+`--text-accent`), and `styles.colors.filterValue` recolors each filter row's
+current value in the menu (`--cp-list-header-filter-value`, defaults to
+`--text-secondary`).
 
 ### ConversationListSection
 

@@ -64,6 +64,8 @@ export interface InputColors {
   mentionHighlightUnsupportedBg?: string;
   /** Text color of a tracked skill mention's highlighted run while unsupported. Defaults to `--text-error`. */
   mentionHighlightUnsupportedText?: string;
+  /** Background of the text-selection rectangles drawn over the highlight mirror while mentions are tracked. Defaults to `--bg-control-accent-alpha-active`. */
+  selectionHighlightBg?: string;
 }
 
 /** Typography overrides for the `Input` component. */
@@ -108,6 +110,8 @@ export interface ModelMenuColors {
   selectedItemText?: string;
   /** Color of the check mark on the selected row. Defaults to the row's text color on desktop and `--text-accent` in the sheet. */
   checkIcon?: string;
+  /** Background of the desktop dropdown panel when `modelPickerOverlay` supplies the content. Defaults to `--bg-layer-raised`. */
+  overlayBackground?: string;
 }
 
 /**
@@ -652,6 +656,12 @@ export interface ChatSettingsValues {
   temperature?: number;
 }
 
+/** Color overrides for `ChatSettingsModal`, applied as CSS custom properties. */
+export interface ChatSettingsModalColors {
+  /** Background of the modal surface. Defaults to `--bg-layer-raised`. */
+  background?: string;
+}
+
 /** Configuration for the built-in chat-settings menu entry and modal. */
 export interface ChatSettingsConfig {
   /** Feature flags controlling which fields appear in the modal. */
@@ -692,4 +702,6 @@ export interface ChatSettingsConfig {
   saveDisabledTooltip?: string;
   /** Accessible label for the back arrow in the mobile bottom-sheet stack. Defaults to `'Back'`. */
   backLabel?: string;
+  /** Color overrides for the desktop modal. */
+  modalColors?: ChatSettingsModalColors;
 }

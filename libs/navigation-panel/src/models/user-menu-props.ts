@@ -15,6 +15,8 @@ export interface UserMenuColors {
   triggerHoverBackground?: string;
   /** Background of the `Profile` and `Compact` triggers while the menu is open. Defaults to `--bg-control-accent-alpha-active-subtle`. */
   triggerOpenBackground?: string;
+  /** Focus outline color of the trigger. Defaults to `--stroke-focus`. */
+  focusOutline?: string;
 }
 
 /** Typography overrides for `UserMenu`. */

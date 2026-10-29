@@ -1,4 +1,5 @@
 import {
+  buildCssVars,
   CatalogEntityType,
   EntityHeader,
   mergeClasses,
@@ -71,8 +72,8 @@ const defaultManageCredentialsActionLabel = (
     : 'Manage credentials';
 
 const LIMIT_STATUS_CLASSES: Record<CatalogLimitStatus, string> = {
-  [CatalogLimitStatus.LimitReached]: 'bg-error text-error',
-  [CatalogLimitStatus.RunningLow]: 'bg-warning text-warning',
+  [CatalogLimitStatus.LimitReached]: styles.limitReached,
+  [CatalogLimitStatus.RunningLow]: styles.limitRunningLow,
 };
 
 interface LimitStatusBadgeProps {
@@ -645,7 +646,7 @@ export const Header: FC<HeaderProps> = ({
         key: 'share',
         label: texts?.shareLabel ?? 'Share',
         Icon: IconShare,
-        iconClassName: 'text-secondary',
+        iconClassName: styles.manageMenuIcon,
         onClick: handleShare,
       });
     }
@@ -654,7 +655,7 @@ export const Header: FC<HeaderProps> = ({
         key: 'edit',
         label: texts?.editActionLabel ?? 'Edit',
         Icon: IconPencil,
-        iconClassName: 'text-secondary',
+        iconClassName: styles.manageMenuIcon,
         onClick: handleEdit,
       });
     }
@@ -663,7 +664,7 @@ export const Header: FC<HeaderProps> = ({
         key: 'download',
         label: texts?.downloadActionLabel ?? 'Download',
         Icon: IconDownload,
-        iconClassName: 'text-secondary',
+        iconClassName: styles.manageMenuIcon,
         onClick: handleDownload,
       });
     }
@@ -672,7 +673,7 @@ export const Header: FC<HeaderProps> = ({
         key: 'publish',
         label: texts?.publishLabel ?? 'Publish',
         Icon: IconWorldShare,
-        iconClassName: 'text-secondary',
+        iconClassName: styles.manageMenuIcon,
         onClick: handleOpenPublish,
       });
     }
@@ -684,7 +685,7 @@ export const Header: FC<HeaderProps> = ({
         key: 'unpublish',
         label: texts?.unpublishLabel ?? 'Unpublish',
         Icon: IconWorldOff,
-        iconClassName: 'text-secondary',
+        iconClassName: styles.manageMenuIcon,
         onClick: handleOpenUnpublish,
       });
     }
@@ -747,6 +748,11 @@ export const Header: FC<HeaderProps> = ({
     handleUnshare,
   ]);
 
+  const manageMenuIcon = detailsStyles?.colors?.manageMenuIcon;
+  const manageMenuIconVars = useMemo(
+    () => buildCssVars({ '--cat-details-manage-menu-icon': manageMenuIcon }),
+    [manageMenuIcon],
+  );
   const manageItems = useMemo<DropdownItem[]>(
     () =>
       manageActions.map(
@@ -758,6 +764,7 @@ export const Header: FC<HeaderProps> = ({
               size={DIAL_ICON_SIZE.SM}
               aria-hidden
               className={iconClassName}
+              style={manageMenuIconVars}
               stroke={DIAL_KIT_ICON_STROKE}
             />
           ),
@@ -765,7 +772,7 @@ export const Header: FC<HeaderProps> = ({
           onClick,
         }),
       ),
-    [manageActions],
+    [manageActions, manageMenuIconVars],
   );
 
   /*

@@ -72,8 +72,11 @@ describe('publish-ready package artifact size', () => {
      * Raised from 242_000: provider-scoped useLatestCanvasRequest, its declaration
      * and README add ~1.35 KB; measured at 242,426.
      * Raised from 243_000: the `xlsxFormulaValueClassName` typography field, its README row and the kit
-     * `dial-code-text`/`LiveRegion` adoption; measured at 243,014. */
-    expect(artifact.unpackedSize).toBeLessThanOrEqual(244_000);
+     * `dial-code-text`/`LiveRegion` adoption; measured at 243,014.
+     * Raised from 244_000: every hardcoded canvas color moved onto an `AttachmentCanvasColors` field
+     * (`headerBorder`, `focusOutline`, `codeBackground`, `mcpAppLoadingBackground`, `mcpAppStatusText`)
+     * plus their README paragraph; measured at 244,617. */
+    expect(artifact.unpackedSize).toBeLessThanOrEqual(245_500);
   });
 
   it('contains no private OOXML renderer or worker chunks', () => {

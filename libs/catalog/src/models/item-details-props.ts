@@ -476,6 +476,22 @@ export interface ItemDetailsColors {
   credentialsRowDescriptionText?: string;
   /** Text color of the empty-API-key validation message. Fallback: `--text-error`. */
   credentialsErrorText?: string;
+  /** Text color of the "Delete" action on a configured API key. Fallback: `--text-error`. */
+  credentialsDeleteActionText?: string;
+  /** Background of the header's "Limit reached" badge. Fallback: `--bg-error`. */
+  limitReachedBackground?: string;
+  /** Text color of the header's "Limit reached" badge. Fallback: `--text-error`. */
+  limitReachedText?: string;
+  /** Background of the header's "Running low" badge. Fallback: `--bg-warning`. */
+  limitRunningLowBackground?: string;
+  /** Text color of the header's "Running low" badge. Fallback: `--text-warning`. */
+  limitRunningLowText?: string;
+  /** Icon color of the non-destructive entries in the header's manage menu. Fallback: `--text-secondary`. */
+  manageMenuIcon?: string;
+  /** Background of a hovered or focused row in the Content tab's file tree. Fallback: `--bg-control-accent-alpha-hover`. */
+  contentFileTreeRowHoverBackground?: string;
+  /** Background of the displayed file's row in the Content tab's file tree. Fallback: `--bg-control-accent-alpha-active`. */
+  contentFileTreeRowSelectedBackground?: string;
   /** Text color of the header-name hint under the personal API-key popover's input. Fallback: `--text-secondary`. */
   credentialsHintText?: string;
   /** Surface color of the credentials status card used by the banner, the configured-key card, and the personal API-key popover. Fallback: `--bg-layer-base`. */

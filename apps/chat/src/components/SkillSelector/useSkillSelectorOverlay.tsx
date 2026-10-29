@@ -117,8 +117,8 @@ export const useSkillSelectorOverlay = ({
    * 24px line height, keeping the chip's height matched to the line.
    */
   const historyChipLabelClassName = isMobile
-    ? 'dial-small-paragraph-text text-accent'
-    : 'dial-body-text text-accent';
+    ? 'dial-small-paragraph-text'
+    : 'dial-body-text';
 
   const overlay = useHostAgnosticSkillSelectorOverlay({
     isSkillsSupported,

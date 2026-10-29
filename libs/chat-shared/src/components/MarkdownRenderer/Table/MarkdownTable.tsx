@@ -60,6 +60,10 @@ export interface MarkdownTableColors {
   rowDivider?: string;
   /** Background of a body row on hover. Defaults to `--bg-control-accent-alpha-hover`. */
   rowHoverBackground?: string;
+  /** Border color of the copy/download actions toolbar. Defaults to `--stroke-tertiary`. */
+  actionsBorder?: string;
+  /** Background of the copy/download actions toolbar. Defaults to `--bg-layer-raised`. */
+  actionsBackground?: string;
 }
 
 /** Props for {@link MarkdownTable}. */
@@ -110,6 +114,8 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
       '--cm-table-fade': colors?.fade,
       '--cm-table-row-divider': colors?.rowDivider,
       '--cm-table-row-hover-bg': colors?.rowHoverBackground,
+      '--cm-table-actions-border': colors?.actionsBorder,
+      '--cm-table-actions-bg': colors?.actionsBackground,
     });
     const isScrollable = hasContentBeyondStart || hasContentBeyondEnd;
 
@@ -188,7 +194,12 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
       >
         {showActions && (
           <div className="sticky top-0 z-10 h-0">
-            <div className="absolute inset-e-2 top-2 flex items-center gap-1 rounded-lg border border-tertiary bg-layer-raised px-2 py-1 opacity-0 shadow-xs transition-opacity group-hover/table:opacity-100 focus-within:opacity-100">
+            <div
+              className={mergeClasses(
+                'absolute inset-e-2 top-2 flex items-center gap-1 rounded-lg border px-2 py-1 opacity-0 shadow-xs transition-opacity group-hover/table:opacity-100 focus-within:opacity-100',
+                styles.actions,
+              )}
+            >
               {tableActions.map((action) => (
                 <GhostIconButton
                   key={action.label}

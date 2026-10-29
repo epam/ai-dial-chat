@@ -1,9 +1,11 @@
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { Accordion, ButtonVariant, GhostButton } from '@epam/ai-dial-ui-kit';
 import { useEffect, useState, type FC } from 'react';
 import type { ScheduledTaskRunItem } from '../../models/scheduled-task-run-item';
 import type { ScheduledTaskRunStatus } from '../../types/scheduled-task-run-status';
 import { ScheduledTaskRunHistoryList } from '../ScheduledTaskRunHistoryList/ScheduledTaskRunHistoryList';
 import { SectionAccordionTitle } from '../SectionAccordionTitle/SectionAccordionTitle';
+import styles from './ScheduledTaskConversationHistorySection.module.scss';
 
 /**
  * Localized labels used by the
@@ -28,6 +30,12 @@ export interface ScheduledTaskConversationHistorySectionLabels {
   currentRunLabel?: string;
   /** `sr-only` label announced alongside the unread-dot indicator on a run row whose `isUnread` is `true`. Defaults to `'Unread'`. */
   unreadIndicatorLabel?: string;
+}
+
+/** Color overrides for {@link ScheduledTaskConversationHistorySection}. */
+export interface ScheduledTaskConversationHistorySectionColors {
+  /** Text color of the unavailable message. Defaults to `--text-secondary`. */
+  unavailableText?: string;
 }
 
 /** Props for the {@link ScheduledTaskConversationHistorySection} component. */
@@ -62,8 +70,10 @@ export interface ScheduledTaskConversationHistorySectionProps {
   titleClassName?: string;
   /** CSS class applied to the accordion's content region. Defaults to `'ps-3'`. */
   contentClassName?: string;
-  /** CSS class applied to the unavailable message. Defaults to `'dial-body-text text-secondary'`. */
+  /** Typography class applied to the unavailable message. Defaults to `'dial-body-text'`. */
   unavailableTextClassName?: string;
+  /** Color overrides, applied as CSS custom properties. */
+  colors?: ScheduledTaskConversationHistorySectionColors;
 }
 
 /**
@@ -91,7 +101,8 @@ export const ScheduledTaskConversationHistorySection: FC<
   labels,
   titleClassName = 'dial-tiny-semi-text',
   contentClassName = 'ps-3',
-  unavailableTextClassName = 'dial-body-text text-secondary',
+  unavailableTextClassName = 'dial-body-text',
+  colors,
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
 
@@ -124,7 +135,16 @@ export const ScheduledTaskConversationHistorySection: FC<
       contentClassName={contentClassName}
     >
       {isUnavailable ? (
-        <p role="status" className={unavailableTextClassName}>
+        <p
+          role="status"
+          className={mergeClasses(
+            unavailableTextClassName,
+            styles.unavailableText,
+          )}
+          style={buildCssVars({
+            '--stch-unavailable-text': colors?.unavailableText,
+          })}
+        >
           {labels.unavailableLabel}
         </p>
       ) : (

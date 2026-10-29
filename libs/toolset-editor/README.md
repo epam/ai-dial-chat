@@ -170,6 +170,13 @@ default `` (hint) => `******${hint}` ``) and
 replaced as a whole; an omitted group falls back to the library's English
 defaults.
 
+`colors` (`ToolsetEditorColors`) is grouped the same way. `colors.settings`
+(`SettingsFormColors`) sets, as CSS custom properties on the Setup section,
+`connectTitle` (default `--text-primary`), `connectDescription` (default
+`--text-secondary`), `connectDivider` (the line above the Connect toolset block,
+default `--stroke-tertiary`) and `openAccessDescription` (the "None" auth
+text, default `--text-secondary`).
+
 The optional `onRefineDescription` callback,
 `(value: string, signal: AbortSignal) => Promise<string>`, adds a Refine with
 AI action (and, after a result, Restore original and Regenerate) beside the Description label; omit it to hide the action.
@@ -284,7 +291,8 @@ imported from there — this lib never re-declares them.
 ## Types
 
 All types reachable through the public props are exported from the barrel:
-`ToolsetEditorProps`, `ToolsetEditorLabels` (with its `layout`, `general`,
+`ToolsetEditorProps`, `ToolsetEditorColors`, `SettingsFormColors`,
+`ToolsetEditorLabels` (with its `layout`, `general`,
 `settings`, `validation` groups), `GeneralFormLabels`,
 `SettingsFormLabels`, `AuthSectionLabels`, `ConnectMcpUrlContentLabels`,
 `ToolsetFormData`, `ToolsetAuthFormData`, `DeploymentGeneralFormData`,

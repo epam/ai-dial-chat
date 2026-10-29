@@ -47,7 +47,8 @@
   cursor: pointer;
 
   &:has(.link:focus-visible) {
-    outline: 2px solid var(--stroke-focus, #161b2d);
+    outline: 2px solid
+      var(--pr-card-focus-outline, var(--stroke-focus, #161b2d));
     outline-offset: 2px;
   }
 }

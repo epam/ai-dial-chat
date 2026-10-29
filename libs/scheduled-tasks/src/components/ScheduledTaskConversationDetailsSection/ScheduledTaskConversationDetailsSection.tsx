@@ -1,10 +1,15 @@
-import type { MarkdownRendererClassNames } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  mergeClasses,
+  type MarkdownRendererClassNames,
+} from '@epam/ai-dial-chat-shared';
 import { Accordion, GhostButton } from '@epam/ai-dial-ui-kit';
 import { ReactNode, useEffect, useState, type FC } from 'react';
 import type { ScheduledTaskDetailsSummaryStyles } from '../../models/scheduled-task-details-summary-props';
 import type { ScheduledTaskInstructionsMarkdownLabels } from '../../models/scheduled-task-instructions';
 import { ScheduledTaskDetailsSummary } from '../ScheduledTaskDetailsSummary/ScheduledTaskDetailsSummary';
 import { SectionAccordionTitle } from '../SectionAccordionTitle/SectionAccordionTitle';
+import styles from './ScheduledTaskConversationDetailsSection.module.scss';
 
 /**
  * Display state of a task conversation's own details, mapped from the host's
@@ -38,6 +43,12 @@ export interface ScheduledTaskConversationDetailsSectionLabels {
   retryLabel: string;
 }
 
+/** Color overrides for {@link ScheduledTaskConversationDetailsSection}. */
+export interface ScheduledTaskConversationDetailsSectionColors {
+  /** Text color of the unavailable/error message. Defaults to `--text-secondary`. */
+  unavailableText?: string;
+}
+
 /** Props for the {@link ScheduledTaskConversationDetailsSection} component. */
 export interface ScheduledTaskConversationDetailsSectionProps {
   /** Active schedule id — the expanded state resets whenever it changes. Omit when no schedule is active. */
@@ -64,8 +75,10 @@ export interface ScheduledTaskConversationDetailsSectionProps {
   labels: ScheduledTaskConversationDetailsSectionLabels;
   /** CSS class applied to the accordion title. Defaults to `'dial-tiny-semi-text'`. */
   titleClassName?: string;
-  /** CSS class applied to the unavailable/error message. Defaults to `'dial-body-text text-secondary'`. */
+  /** Typography class applied to the unavailable/error message. Defaults to `'dial-body-text'`. */
   unavailableTextClassName?: string;
+  /** Color overrides, applied as CSS custom properties. */
+  colors?: ScheduledTaskConversationDetailsSectionColors;
 }
 
 /**
@@ -89,7 +102,8 @@ export const ScheduledTaskConversationDetailsSection: FC<
   summaryStyles,
   labels,
   titleClassName = 'dial-tiny-semi-text',
-  unavailableTextClassName = 'dial-body-text text-secondary',
+  unavailableTextClassName = 'dial-body-text',
+  colors,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -103,7 +117,16 @@ export const ScheduledTaskConversationDetailsSection: FC<
 
   const content = isUnavailable ? (
     <div className="flex flex-col items-start gap-2">
-      <p role="status" className={unavailableTextClassName}>
+      <p
+        role="status"
+        className={mergeClasses(
+          unavailableTextClassName,
+          styles.unavailableText,
+        )}
+        style={buildCssVars({
+          '--stcd-unavailable-text': colors?.unavailableText,
+        })}
+      >
         {labels.unavailableLabel}
       </p>
       {state === ScheduledTaskConversationDetailsState.Error && onRetry && (

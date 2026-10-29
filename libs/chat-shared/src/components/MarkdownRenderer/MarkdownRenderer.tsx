@@ -168,6 +168,10 @@ export interface MarkdownRendererColors {
   inlineCodeBackground?: string;
   /** Text color for inline `<code>` spans. Defaults to `--text-primary`. */
   inlineCodeText?: string;
+  /** Scrollbar thumb color of a horizontally scrolling display formula. Defaults to `--stroke-primary`. */
+  mathScrollbar?: string;
+  /** Focus-visible outline color of a scrollable display formula. Defaults to `--stroke-focus`. */
+  mathFocus?: string;
 }
 
 /**
@@ -720,6 +724,8 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
       '--cm-h6-text': colors?.headingSixText,
       '--cm-code-inline-bg': colors?.inlineCodeBackground,
       '--cm-code-inline-text': colors?.inlineCodeText,
+      '--cm-math-scrollbar': colors?.mathScrollbar,
+      '--cm-math-focus': colors?.mathFocus,
     });
 
     const effectiveUrlTransform = useMemo(

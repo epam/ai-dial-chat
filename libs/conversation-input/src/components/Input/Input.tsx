@@ -187,6 +187,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
             colors?.mentionHighlightUnsupportedBg,
           '--ci-mention-highlight-unsupported-text':
             colors?.mentionHighlightUnsupportedText,
+          '--ci-selection-highlight-bg': colors?.selectionHighlightBg,
         }),
       [colors],
     );
@@ -1098,7 +1099,10 @@ export const Input = forwardRef<InputHandle, InputProps>(
               <div
                 key={`selection-${index}`}
                 aria-hidden
-                className="pointer-events-none absolute rounded-sm bg-control-accent-alpha-active"
+                className={mergeClasses(
+                  'pointer-events-none absolute rounded-sm',
+                  styles.selectionHighlight,
+                )}
                 /*
                  * A measured pixel rect from `Range.getClientRects()` — see
                  * the `left`/`top` exception noted on `caretAnchor` above.

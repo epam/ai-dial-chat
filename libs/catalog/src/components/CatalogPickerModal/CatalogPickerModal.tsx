@@ -1,4 +1,4 @@
-import { ItemHeader } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, ItemHeader } from '@epam/ai-dial-chat-shared';
 import {
   ButtonAppearance,
   ButtonDropdown,
@@ -80,6 +80,12 @@ export interface CatalogPickerModalLabels {
  */
 export type CatalogPickerListProps = Omit<ListViewProps, 'items' | 'query'>;
 
+/** Color overrides for `CatalogPickerModal`. */
+export interface CatalogPickerModalColors {
+  /** Color of the rule above the footer drawn with `footerStart`. Defaults to `--stroke-tertiary`. */
+  footerBorder?: string;
+}
+
 /** Props for `CatalogPickerModal` shared by the default and the custom list. */
 interface CatalogPickerModalBaseProps {
   /** The items the user can pick from, already mapped to catalog items. */
@@ -96,6 +102,8 @@ interface CatalogPickerModalBaseProps {
   isConfirmDisabled?: boolean;
   /** The choice's own options (a model's effort, say), at the footer's start. */
   footerStart?: ReactNode;
+  /** Color overrides, applied as CSS custom properties. */
+  colors?: CatalogPickerModalColors;
   /** Called when the user confirms. */
   onConfirm: () => void;
   /** Called when the user cancels or closes the dialog. */
@@ -152,6 +160,7 @@ export const CatalogPickerModal: FC<CatalogPickerModalProps> = ({
   onRetry,
   isConfirmDisabled = false,
   footerStart,
+  colors,
   onConfirm,
   onClose,
   listProps,
@@ -238,6 +247,9 @@ export const CatalogPickerModal: FC<CatalogPickerModalProps> = ({
           styles.footer,
           FULLSCREEN_BELOW_MD.footerClassName,
         )}
+        style={buildCssVars({
+          '--cat-picker-footer-border': colors?.footerBorder,
+        })}
       >
         <div className="flex flex-wrap items-center gap-4">{footerStart}</div>
         <div className="ms-auto flex items-center gap-2">

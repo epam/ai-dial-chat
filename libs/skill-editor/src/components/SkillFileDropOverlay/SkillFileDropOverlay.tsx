@@ -7,6 +7,7 @@ import {
 import { IconUpload } from '@tabler/icons-react';
 import type { FC } from 'react';
 import type { SkillEditorLabels } from '../../models/skill-editor-props';
+import styles from './SkillFileDropOverlay.module.scss';
 
 /** Props for `SkillFileDropOverlay`. */
 export interface SkillFileDropOverlayProps {
@@ -52,7 +53,7 @@ export const SkillFileDropOverlay: FC<SkillFileDropOverlayProps> = ({
         <div aria-hidden className="flex flex-col items-center text-center">
           <IconUpload
             size={100}
-            className="text-accent-primary"
+            className={styles.icon}
             aria-hidden
             stroke={DIAL_KIT_ICON_STROKE}
           />

@@ -1,4 +1,5 @@
 import {
+  buildCssVars,
   DeploymentItem,
   mergeClasses,
   SELECT_LIST_MAX_HEIGHT_PX,
@@ -197,10 +198,14 @@ export const ModelSelectorControl: FC<Props> = ({
           modelPickerOverlay(() => onPickerOpenChange?.(false))
         }
         listClassName={mergeClasses(
-          '!w-[368px] !bg-layer-raised',
+          '!w-[368px]',
+          styles.modelOverlayPanel,
           menuStyles?.className,
           CONVERSATION_INPUT_CLASS.modelMenu,
         )}
+        listStyle={buildCssVars({
+          '--ci-model-overlay-bg': menuStyles?.colors?.overlayBackground,
+        })}
       >
         {/* No `variant`: the `--ci-model-selector-*` properties keep the
             colours. The geometry classes replace the kit's 40px height and

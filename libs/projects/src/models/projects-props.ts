@@ -62,6 +62,8 @@ export interface ProjectsColors {
   updatedAtText?: string;
   /** Folder path text color on a card. Fallback: `--text-secondary`. */
   pathText?: string;
+  /** Focus outline color around a card whose link has keyboard focus. Fallback: `--stroke-focus`. */
+  cardFocusOutline?: string;
 }
 
 /** Typography overrides for the {@link Projects} component. */

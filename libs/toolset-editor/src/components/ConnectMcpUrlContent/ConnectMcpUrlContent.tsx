@@ -7,6 +7,7 @@ import { LiveRegion, LiveRegionElement } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo } from 'react';
 import type { ConnectMcpUrlContentLabels } from '../../models/settings-form-props';
+import styles from './ConnectMcpUrlContent.module.scss';
 
 interface ConnectMcpUrlContentProps {
   /** MCP endpoint URL shown and copied. */
@@ -30,10 +31,20 @@ const ConnectMcpUrlContent: FC<ConnectMcpUrlContentProps> = ({
   return (
     <div className={mergeClasses('flex flex-col gap-3', className)}>
       <div className="flex flex-col gap-1">
-        <p className="dial-body-semi-text text-start text-primary">
+        <p
+          className={mergeClasses(
+            'dial-body-semi-text text-start',
+            styles.title,
+          )}
+        >
           {labels?.title ?? 'Connect toolset'}
         </p>
-        <p className="dial-small-text text-start text-secondary">
+        <p
+          className={mergeClasses(
+            'dial-small-text text-start',
+            styles.description,
+          )}
+        >
           {labels?.description ??
             'Copy endpoint URL to easily integrate toolset into your workflows'}
         </p>

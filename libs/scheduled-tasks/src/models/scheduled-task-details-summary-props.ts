@@ -4,14 +4,22 @@ import type { ScheduledTaskInstructionsMarkdownLabels } from './scheduled-task-i
 
 /** Typography overrides for the {@link ScheduledTaskDetailsSummary} component. */
 export interface ScheduledTaskDetailsSummaryTypography {
-  /** CSS class applied to the "Model"/"Instructions" field labels. Defaults to `'dial-tiny-text text-secondary'`. */
+  /** CSS class applied to the "Model"/"Instructions" field labels. Defaults to `'dial-tiny-text'`. */
   fieldLabelClassName?: string;
   /** CSS class applied to the resolved field values. Defaults to `'dial-small-text'`. */
   fieldValueClassName?: string;
 }
 
+/** Color overrides for the {@link ScheduledTaskDetailsSummary} component. */
+export interface ScheduledTaskDetailsSummaryColors {
+  /** Text color of the "Model"/"Skill"/"Instructions" field labels. Defaults to `--text-secondary`. */
+  fieldLabel?: string;
+}
+
 /** Style overrides for the {@link ScheduledTaskDetailsSummary} component. */
 export interface ScheduledTaskDetailsSummaryStyles {
+  /** Color overrides, applied as CSS custom properties. */
+  colors?: ScheduledTaskDetailsSummaryColors;
   /** Typography class overrides. */
   typography?: ScheduledTaskDetailsSummaryTypography;
 }

@@ -212,7 +212,7 @@ Pass `timestamp` (the message's ISO send time) to show a relative time (`3 hours
 - appears while the bubble is hovered or holds keyboard focus, and is always shown on devices without hover;
 - refreshes every minute.
 
-`locale` sets the BCP 47 locale for the wording and the date; it defaults to the runtime default. `styles.timestampClassName` replaces the default `'dial-small-text text-secondary'` classes. Formatting uses `Intl`, so no labels are needed.
+`locale` sets the BCP 47 locale for the wording and the date; it defaults to the runtime default. `styles.timestampClassName` replaces the default `'dial-small-text'` typography; `styles.colors.timestampText` sets its color (defaults to `--text-secondary`). Formatting uses `Intl`, so no labels are needed.
 
 ```tsx
 import { MessageBubble } from '@epam/ai-dial-conversation-messages';
@@ -232,7 +232,7 @@ Centered label for when a conversation started:
 - `Today 11:51 AM` or `Yesterday 3:24 PM`, by local calendar day;
 - otherwise the full date and time (`Sep 20, 2026, 10:15 AM`).
 
-It renders nothing for a missing or unparsable `timestamp`. Time and date come from `Intl` in `locale`. The `labels.today` and `labels.yesterday` templates receive the localized time and default to English. The host decides _when_ to show the label (for example, not for a conversation the user has just created).
+It renders nothing for a missing or unparsable `timestamp`. Time and date come from `Intl` in `locale`. The `labels.today` and `labels.yesterday` templates receive the localized time and default to English. The host decides _when_ to show the label (for example, not for a conversation the user has just created). `className` sets typography (defaults to `'dial-small-text'`); `colors.text` (`ConversationStartTimestampColors`) sets the color, defaulting to `--text-secondary`.
 
 ```tsx
 import { ConversationStartTimestamp } from '@epam/ai-dial-conversation-messages';
@@ -390,6 +390,7 @@ import type {
   MessageActionAriaLabels,
   ConversationStartTimestampProps,
   ConversationStartTimestampLabels,
+  ConversationStartTimestampColors,
 } from '@epam/ai-dial-conversation-messages';
 ```
 

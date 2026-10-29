@@ -146,12 +146,14 @@ export type {
 } from './components/AddOnCatalogModal/AddOnCatalogModal';
 export { AddOnListItem } from './components/AddOnListItem/AddOnListItem';
 export type {
+  AddOnListItemColors,
   AddOnListItemLabels,
   AddOnListItemProps,
 } from './components/AddOnListItem/AddOnListItem';
 export { useListRemoveFocus } from './utils/use-list-remove-focus';
 export type {
   CatalogPickerListProps,
+  CatalogPickerModalColors,
   CatalogPickerModalLabels,
   CatalogPickerModalProps,
 } from './components/CatalogPickerModal/CatalogPickerModal';

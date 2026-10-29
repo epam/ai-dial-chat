@@ -199,7 +199,16 @@ export const ContentTab: FC<ContentTabProps> = ({
               renderFileTree ? (
                 renderFileTree(fileTreeProps)
               ) : (
-                <ContentFileTree {...fileTreeProps} />
+                <ContentFileTree
+                  {...fileTreeProps}
+                  colors={{
+                    rowHoverBackground:
+                      detailsStyles?.colors?.contentFileTreeRowHoverBackground,
+                    rowSelectedBackground:
+                      detailsStyles?.colors
+                        ?.contentFileTreeRowSelectedBackground,
+                  }}
+                />
               )
             }
           >

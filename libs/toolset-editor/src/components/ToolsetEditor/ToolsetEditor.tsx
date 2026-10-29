@@ -89,6 +89,7 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
   availableLocaleOptions,
   onRefineDescription,
   labels,
+  colors,
 }) => {
   const isEditMode = Boolean(toolsetId);
   const [draftToolsetId, setDraftToolsetId] = useState('');
@@ -533,6 +534,7 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
           onAuthChange={handleAuthChange}
           onEnsureSaved={handleEnsureSaved}
           labels={labels?.settings}
+          colors={colors?.settings}
         />
       }
     />

@@ -95,7 +95,7 @@ export const ApplicationCredentialRow: FC<ApplicationCredentialRowProps> = ({
       errorClassName="dial-caption-text"
       keyCardTitleClassName="dial-tiny-semi-text"
       keyCardDescriptionClassName="dial-tiny-text"
-      deleteActionClassName={styles.errorText}
+      deleteActionClassName={styles.deleteAction}
       renderLoginOptions={
         service.canConsentToOfflineUsage
           ? (disabled) => (

@@ -4,7 +4,10 @@ import {
   ToolsetCredentialsLevel,
   WithLogin,
 } from '@epam/ai-dial-chat-hooks';
-import { TAG_INPUT_TAG_CLASS_NAME } from '@epam/ai-dial-chat-shared';
+import {
+  mergeClasses,
+  TAG_INPUT_TAG_CLASS_NAME,
+} from '@epam/ai-dial-chat-shared';
 import {
   CaptionText,
   ConfirmationPopup,
@@ -33,6 +36,7 @@ import type {
 import type { ToolsetOAuthLoginResult } from '../../models/toolset-oauth-login';
 import { ToolsetOAuthLoginStatus } from '../../models/toolset-oauth-login';
 import { isToolsetAuthValid, isValidEndpointUrl } from '../../utils/toolsets';
+import styles from './AuthSection.module.scss';
 
 const CLIENT_SECRET_KEEP_CAPTION_ID = 'toolset-client-secret-keep-caption';
 
@@ -391,7 +395,12 @@ export const AuthSection: FC<AuthSectionProps> = ({
   );
 
   const renderNoneContent = () => (
-    <p className="dial-small-text pt-2 text-secondary">
+    <p
+      className={mergeClasses(
+        'dial-small-text pt-2',
+        styles.openAccessDescription,
+      )}
+    >
       {labels?.openAccessDescription ?? 'Open endpoint, no credentials'}
     </p>
   );

@@ -724,10 +724,10 @@ describe('ConversationSourcesPanelContainer — scheduled-task sections', () => 
     );
     expect(
       screen.getByText('scheduledTasks.conversationPanel.modelLabel').className,
-    ).toContain('text-secondary');
+    ).toMatch(/fieldLabel/);
     expect(
       screen.getByText('scheduledTasks.create.instructionsLabel').className,
-    ).toContain('text-secondary');
+    ).toMatch(/fieldLabel/);
   });
 
   it('a task-detail error does not hide the History section', () => {

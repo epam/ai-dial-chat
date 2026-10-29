@@ -312,6 +312,14 @@ export interface SkillEditorColors {
   dialogFooterBorder?: string;
   /** Border color of the layout header row and Files sidebar divider. Defaults to `--stroke-tertiary`. */
   border?: string;
+  /** Color of the upload icon on the file-drop overlay. Defaults to `--text-accent-primary`. */
+  dropOverlayIcon?: string;
+  /** Color of the file tree Add-menu entry icons. Defaults to `--text-secondary`. */
+  menuIcon?: string;
+  /** Border color of the upload dialog's drop zone while every staged file is invalid. Defaults to `--stroke-error`. */
+  uploadInvalidDropZoneBorder?: string;
+  /** Border color of each staged row in the upload dialog. Defaults to `--stroke-tertiary`. */
+  uploadRowBorder?: string;
 }
 
 /** Typography class overrides for `SkillEditor`. */
@@ -324,8 +332,6 @@ export interface SkillEditorTypography {
   helperTextClassName?: string;
   /** Color class applied to the file tree "Delete" context-menu icon. Unset by default, so the icon takes the item's danger color. */
   removeIconClassName?: string;
-  /** Color class applied to the file tree Add-menu entry icons. Defaults to `'text-secondary'`. */
-  menuIconClassName?: string;
   /** Typography class applied to the mobile "Editing file" caption. Defaults to `'dial-tiny-lead-text'`. */
   editingFileLabelClassName?: string;
   /** Typography class applied to the mobile "Editing file" file name. Defaults to `'dial-small-text'`. */

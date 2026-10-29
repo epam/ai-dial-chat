@@ -104,6 +104,10 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
     '--mcpapp-preview-bg': colors?.previewBackground,
     '--mcpapp-preview-border': colors?.previewBorder,
     '--mcpapp-preview-header-border': colors?.previewHeaderBorder,
+    '--mcpapp-header-text': colors?.headerText,
+    '--mcpapp-placeholder-text': colors?.placeholderText,
+    '--mcpapp-error-icon': colors?.errorIcon,
+    '--mcpapp-error-text': colors?.errorText,
   });
 
   const { status, content, reload, attemptId } = useMcpAppInlinePreview(
@@ -164,7 +168,7 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
               </span>
             )
           }
-          className="text-secondary"
+          className={styles.headerText}
         />
         <div
           role="toolbar"
@@ -207,7 +211,12 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
             aria-hidden
             className="absolute inset-0 flex items-center justify-center p-4"
           >
-            <span className="dial-body-text text-center text-secondary">
+            <span
+              className={mergeClasses(
+                'dial-body-text text-center',
+                styles.placeholderText,
+              )}
+            >
               {openedInCanvasLabel}
             </span>
           </div>
@@ -224,11 +233,14 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
                   size={40}
                   stroke={DIAL_KIT_ICON_STROKE}
                   aria-hidden
-                  className="text-error"
+                  className={styles.errorIcon}
                 />
                 <p
                   role="status"
-                  className="dial-body-text text-center text-primary"
+                  className={mergeClasses(
+                    'dial-body-text text-center',
+                    styles.errorText,
+                  )}
                 >
                   {loadErrorLabel}
                 </p>

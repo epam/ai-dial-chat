@@ -56,7 +56,7 @@ export interface CredentialsApiKeyOverlayProps {
    * panel, so it sets the vars it reads on its own root.
    */
   colors?: ItemDetailsColors;
-  /** CSS class applied to the "Delete" action. Defaults to `'text-error'`. */
+  /** CSS class merged onto the "Delete" action; its color comes from `colors.credentialsDeleteActionText`. */
   deleteActionClassName?: string;
 }
 
@@ -72,7 +72,7 @@ export const CredentialsApiKeyOverlay: FC<CredentialsApiKeyOverlayProps> = ({
   onClose,
   texts,
   colors,
-  deleteActionClassName = 'text-error',
+  deleteActionClassName,
 }) => {
   const [apiKey, setApiKey] = useState('');
   const [hasEmptyKeyError, setHasEmptyKeyError] = useState(false);
@@ -141,6 +141,7 @@ export const CredentialsApiKeyOverlay: FC<CredentialsApiKeyOverlayProps> = ({
     '--cat-cred-card-icon': colors?.credentialsCardIcon,
     '--cat-cred-card-title-text': colors?.credentialsCardTitleText,
     '--cat-cred-card-description-text': colors?.credentialsCardDescriptionText,
+    '--cat-cred-delete-action-text': colors?.credentialsDeleteActionText,
   });
 
   return (
@@ -228,7 +229,10 @@ export const CredentialsApiKeyOverlay: FC<CredentialsApiKeyOverlayProps> = ({
                       />
                     ) : undefined
                   }
-                  className={deleteActionClassName}
+                  className={mergeClasses(
+                    styles.deleteAction,
+                    deleteActionClassName,
+                  )}
                   onClick={handleDelete}
                   disabled={isDeleting}
                 />

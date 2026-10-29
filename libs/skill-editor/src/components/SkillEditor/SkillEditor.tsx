@@ -371,7 +371,11 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   const helperTextClassName =
     typography.helperTextClassName ?? 'dial-tiny-semi-text';
   const removeIconClassName = typography.removeIconClassName;
-  const menuIconClassName = typography.menuIconClassName ?? 'text-secondary';
+  /* The Add menu renders in a portal outside the editor root, so its icons carry their own var. */
+  const menuIconCssVars = useMemo(
+    () => buildCssVars({ '--se-menu-icon': colors?.menuIcon }),
+    [colors?.menuIcon],
+  );
 
   const cssVars = buildCssVars({
     '--se-title-color': colors?.title,
@@ -380,6 +384,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     '--se-refine-error-text': colors?.refineErrorText,
     '--se-files-card-bg': colors?.filesCardBackground,
     '--se-files-card-border': colors?.filesCardBorder,
+    '--se-drop-overlay-icon': colors?.dropOverlayIcon,
   });
   const dialogColors = {
     footerBackground: colors?.dialogFooterBackground,
@@ -555,7 +560,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   const buildAddMenuItems = useCallback(
     (targetFolderPath: string, pane: SkillFilesPane): DropdownItem[] => {
       const menuIcon = (Icon: TablerIcon) =>
-        renderIcon(Icon, menuIconClassName);
+        renderIcon(Icon, styles.menuIcon, undefined, menuIconCssVars);
       const items: DropdownItem[] = [];
       if (onCreateFolder) {
         items.push({
@@ -598,7 +603,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
       return items;
     },
     [
-      menuIconClassName,
+      menuIconCssVars,
       onCreateFolder,
       extractArchive,
       pickFromFileSystem,
@@ -1057,6 +1062,10 @@ export const SkillEditor: FC<SkillEditorProps> = ({
         rowCaptionClassName={typography.uploadRowCaptionClassName}
         labels={labels}
         dialogColors={dialogColors}
+        colors={{
+          invalidDropZoneBorder: colors?.uploadInvalidDropZoneBorder,
+          rowBorder: colors?.uploadRowBorder,
+        }}
       />
 
       <SkillCreateFolderDialog

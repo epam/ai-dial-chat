@@ -355,7 +355,10 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
       containerClassName:
         treeContainerClassName ??
         (variant === DialFileManagerVariant.Attach
-          ? 'min-h-0 h-full w-[360px] shrink-0 border-e border-tertiary bg-layer-raised'
+          ? mergeClasses(
+              'min-h-0 h-full w-[360px] shrink-0 border-e',
+              styles.tree,
+            )
           : undefined),
       tabsAriaLabel: labels.treeHeaderByTab[activeTab],
       tabs,
@@ -615,6 +618,9 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
 
   const surfaceCssVars = buildCssVars({
     '--dfms-surface': shellStyles?.colors?.surface,
+    '--dfms-tree-bg': shellStyles?.colors?.treeBackground,
+    '--dfms-tree-border': shellStyles?.colors?.treeBorder,
+    '--dfms-overlay-backdrop': shellStyles?.colors?.overlayBackdrop,
   });
 
   return (
@@ -727,7 +733,12 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
             {overlayLabel ?? ''}
           </LiveRegion>
           {overlayLabel != null && (
-            <div className="absolute inset-0 z-52 flex items-center justify-center bg-backdrop desktop:p-4">
+            <div
+              className={mergeClasses(
+                'absolute inset-0 z-52 flex items-center justify-center desktop:p-4',
+                styles.overlay,
+              )}
+            >
               <Spinner size={32} fullWidth={false} ariaLabel={overlayLabel} />
             </div>
           )}
@@ -759,6 +770,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
           text={isMoving ? labels.movingLabel : labels.copyingLabel}
           cancelLabel={labels.operationLoaderCancelLabel}
           onCancel={cancelCopyMove}
+          colors={shellStyles?.operationLoader}
         />
       )}
     </>

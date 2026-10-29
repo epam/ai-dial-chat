@@ -1,6 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { Button, Spinner } from '@epam/ai-dial-ui-kit';
 import { Component, Suspense, type FC, type ReactNode } from 'react';
+import styles from './LazyContentBoundary.module.scss';
 
 /** User-visible strings for {@link LazyContentBoundary}. All fields have English defaults. */
 interface LazyContentBoundaryLabels {
@@ -90,7 +91,7 @@ export const LazyContentError: FC<LazyContentErrorProps> = ({
     <div className="flex flex-col items-center gap-3 text-center">
       <p
         role="status"
-        className={mergeClasses('dial-body-text', 'text-secondary')}
+        className={mergeClasses('dial-body-text', styles.errorLabel)}
       >
         {errorLabel}
       </p>

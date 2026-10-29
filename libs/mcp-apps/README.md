@@ -85,7 +85,7 @@ import { McpAppInlinePreview } from '@epam/ai-dial-mcp-apps';
 
 #### Colors
 
-The preview's surface and its two borders are themable through
+The preview's surface, its two borders, the header text, the "opened in canvas" placeholder and the load-error icon and message are themable through
 `McpAppInlinePreviewColors`, applied as CSS custom properties on the preview's
 root. Each falls back to this design system's token, and then to the light
 literal, so passing nothing keeps the stock look:
@@ -97,6 +97,10 @@ const colors: McpAppInlinePreviewColors = {
   previewBackground: 'var(--my-surface)', // --bg-layer-raised
   previewBorder: 'var(--my-border)', // --stroke-tertiary
   previewHeaderBorder: 'var(--my-border-soft)', // --stroke-tertiary
+  headerText: 'var(--my-muted)', // --text-secondary
+  placeholderText: 'var(--my-muted)', // --text-secondary
+  errorIcon: 'var(--my-danger)', // --text-error
+  errorText: 'var(--my-text)', // --text-primary
 };
 
 <McpAppInlinePreview {...props} colors={colors} />;

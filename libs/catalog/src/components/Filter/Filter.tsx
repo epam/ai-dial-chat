@@ -52,6 +52,8 @@ export interface FilterColors {
   overlayBackground?: string;
   /** Dropdown overlay border color. Fallback: `--stroke-tertiary`. */
   overlayBorder?: string;
+  /** Dropdown overlay shadow color. Fallback: `--shadow-lg`. */
+  overlayShadow?: string;
   /** Row label text color. Fallback: `--text-primary`. */
   rowLabel?: string;
   /** Section heading ("Topics") text color. Fallback: `--text-tertiary`. */
@@ -135,6 +137,7 @@ export const Filter: FC<FilterProps> = ({
     '--cat-filter-btn-chevron': colors?.buttonChevron,
     '--cat-filter-overlay-bg': colors?.overlayBackground,
     '--cat-filter-overlay-border': colors?.overlayBorder,
+    '--cat-filter-overlay-shadow': colors?.overlayShadow,
     '--cat-filter-row-label': colors?.rowLabel,
     '--cat-filter-section-label': colors?.sectionLabel,
     '--cat-filter-divider': colors?.divider,

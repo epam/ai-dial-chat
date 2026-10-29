@@ -64,6 +64,7 @@ export const Projects: FC<ProjectsProps> = ({
     '--pr-card-title-text': colors?.cardTitleText,
     '--pr-updated-at-text': colors?.updatedAtText,
     '--pr-path-text': colors?.pathText,
+    '--pr-card-focus-outline': colors?.cardFocusOutline,
   });
 
   /* Fixed at mount: the relative times are a snapshot of the page visit. */

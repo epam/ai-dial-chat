@@ -1,3 +1,12 @@
 .surface {
   background: var(--dfms-surface, var(--bg-layer-base, #f5f7fa));
 }
+
+.tree {
+  border-color: var(--dfms-tree-border, var(--stroke-tertiary, #e0e6f0));
+  background: var(--dfms-tree-bg, var(--bg-layer-raised, #fcfcfc));
+}
+
+.overlay {
+  background: var(--dfms-overlay-backdrop, var(--bg-backdrop, #161b2d4d));
+}

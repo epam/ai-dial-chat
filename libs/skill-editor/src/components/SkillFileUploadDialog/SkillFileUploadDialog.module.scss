@@ -1,0 +1,13 @@
+.invalidDropZone {
+  &,
+  &:hover {
+    border-color: var(
+      --se-upload-invalid-dropzone-border,
+      var(--stroke-error, #ae2f2f)
+    );
+  }
+}
+
+.row {
+  border-color: var(--se-upload-row-border, var(--stroke-tertiary, #e0e6f0));
+}

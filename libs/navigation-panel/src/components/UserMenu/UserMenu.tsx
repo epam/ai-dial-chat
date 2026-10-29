@@ -53,6 +53,7 @@ export const UserMenu: FC<UserMenuProps> = memo(
           '--np-menu-text': colors?.text,
           '--np-trigger-hover-bg': colors?.triggerHoverBackground,
           '--np-trigger-open-bg': colors?.triggerOpenBackground,
+          '--np-focus-outline': colors?.focusOutline,
           '--np-font-family': typography?.fontFamily,
         }),
       [colors, typography?.fontFamily],

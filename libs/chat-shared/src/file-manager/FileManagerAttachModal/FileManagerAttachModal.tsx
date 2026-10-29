@@ -9,6 +9,8 @@ import {
 import { ButtonVariant, Popup, PopupSize } from '@epam/ai-dial-ui-kit';
 import { memo, useCallback, useMemo, type FC } from 'react';
 import type { FileManagerSelectableNode } from '../../types/file-manager-node';
+import { buildCssVars } from '../../utils/build-css-vars';
+import { mergeClasses } from '../../utils/merge-class';
 import type { AttachResult } from '../attach-result';
 import { DialFileManagerShell } from '../DialFileManagerShell/DialFileManagerShell';
 import type { FileManagerController } from '../file-manager-controller';
@@ -18,6 +20,8 @@ import {
 } from '../file-manager-variant';
 import type { FileManagerAttachModalLabels } from '../labels';
 import { isHiddenPath } from '../path';
+import type { FileManagerAttachModalColors } from '../shell-styles';
+import styles from './FileManagerAttachModal.module.scss';
 
 /** Props accepted by `FileManagerAttachModal`. */
 export interface FileManagerAttachModalProps {
@@ -105,6 +109,8 @@ export interface FileManagerAttachModalProps {
   autoSelectUploadedItems?: boolean;
   /** Pre-translated message shown by the ui-kit when a newly-selected file exceeds `maxSelectableFileSize`. Omit to leave upload-size validation unrestricted regardless of `maxSelectableFileSize`. */
   oversizedUploadMessage?: string;
+  /** Color overrides applied as CSS custom properties. */
+  colors?: FileManagerAttachModalColors;
 }
 
 /** File-manager modal with Popup chrome and an Attach footer. Selection and tab state are controlled by the host. */
@@ -136,6 +142,7 @@ export const FileManagerAttachModal: FC<FileManagerAttachModalProps> = memo(
     allowedFileTypes,
     autoSelectUploadedItems = false,
     oversizedUploadMessage,
+    colors,
   }) => {
     const { items, isLoading, searchResults } = controller;
 
@@ -287,15 +294,26 @@ export const FileManagerAttachModal: FC<FileManagerAttachModalProps> = memo(
             title
           ) : (
             <div className="flex min-w-0 flex-1 flex-col gap-1">
-              <h3 className="dial-h1-text truncate text-primary">{title}</h3>
+              <h3
+                className={mergeClasses('dial-h1-text truncate', styles.title)}
+              >
+                {title}
+              </h3>
               <p className="dial-small-text text-start">{headerDescription}</p>
             </div>
           )
         }
         ariaLabel={title}
         size={PopupSize.Lg}
-        className="flex h-[min(900px,100dvh)]! w-full max-w-[1600px]! flex-col bg-layer-raised! mobile:h-full! mobile:max-w-full! mobile:rounded-none"
+        className={mergeClasses(
+          'flex h-[min(900px,100dvh)]! w-full max-w-[1600px]! flex-col mobile:h-full! mobile:max-w-full! mobile:rounded-none',
+          styles.popup,
+        )}
         overlayClassName="mobile:p-0"
+        overlayStyle={buildCssVars({
+          '--fmam-bg': colors?.background,
+          '--fmam-title': colors?.title,
+        })}
         headerClassName="pb-0"
         footerClassName="pt-0"
         onClose={onClose}
@@ -322,7 +340,11 @@ export const FileManagerAttachModal: FC<FileManagerAttachModalProps> = memo(
             onSelectedPathsChange={handleSelectedPathsChange}
             variant={variant}
             /* The modal is a raised layer; the picker sits on it, not on the base layer. */
-            styles={{ colors: { surface: 'var(--bg-layer-raised)' } }}
+            styles={{
+              colors: {
+                surface: 'var(--fmam-bg, var(--bg-layer-raised, #fcfcfc))',
+              },
+            }}
             actionProfile={actionProfile}
             autoSelectUploadedItems={autoSelectUploadedItems}
             allowedFileTypes={allowedFileTypes}

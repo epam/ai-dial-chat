@@ -1,10 +1,12 @@
 import {
+  buildCssVars,
   MDMessageViewer,
   mergeClasses,
   type MarkdownRendererClassNames,
 } from '@epam/ai-dial-chat-shared';
 import { type FC } from 'react';
 import type { ScheduledTaskDetailsSummaryProps } from '../../models/scheduled-task-details-summary-props';
+import styles from './ScheduledTaskDetailsSummary.module.scss';
 
 /*
  * The Instructions value is short task prose inside the narrow summary, so
@@ -47,12 +49,17 @@ export const ScheduledTaskDetailsSummary: FC<
   renderInstructions,
   instructionsClassNames = INSTRUCTIONS_CLASS_NAMES,
   markdownLabels,
-  styles,
+  styles: styleOverrides,
 }) => {
-  const fieldLabelClassName =
-    styles?.typography?.fieldLabelClassName ?? 'dial-tiny-text text-secondary';
+  const fieldLabelClassName = mergeClasses(
+    styleOverrides?.typography?.fieldLabelClassName ?? 'dial-tiny-text',
+    styles.fieldLabel,
+  );
   const fieldValueClassName =
-    styles?.typography?.fieldValueClassName ?? 'dial-small-text';
+    styleOverrides?.typography?.fieldValueClassName ?? 'dial-small-text';
+  const cssVars = buildCssVars({
+    '--stds-field-label': styleOverrides?.colors?.fieldLabel,
+  });
 
   const renderInstructionsContent = (markdown: string) =>
     renderInstructions ? (
@@ -66,7 +73,7 @@ export const ScheduledTaskDetailsSummary: FC<
     );
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3" style={cssVars}>
       {modelDisplayName && (
         <div className="flex flex-col gap-2">
           <span className={fieldLabelClassName}>{modelLabel}</span>

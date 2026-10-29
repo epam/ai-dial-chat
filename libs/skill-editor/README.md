@@ -282,12 +282,12 @@ Replace-or-duplicate step reads `uploadConflictTitle`,
 `uploadReplaceRowNote`; the mobile Create folder dialog reads
 `createFolderNameLabel`, `createFolderNamePlaceholder`,
 `createFolderConfirmLabel` and `createFolderCloseAriaLabel`.
-`styles.typography.menuIconClassName`
-colors the Add-menu icons (`'text-secondary'` by default);
+`styles.colors.menuIcon`
+colors the Add-menu icons (`--text-secondary` by default);
 the Delete entry renders as a danger (red) item, and `removeIconClassName`
 overrides its icon color.
 
-`styles.colors` (`SkillEditorColors`) overrides the heading, Instructions-label, and border colors, plus the mobile "Editing file" card's `filesCardBackground` and `filesCardBorder` and the mobile upload and create-folder sheet footer's `dialogFooterBackground` and `dialogFooterBorder`, as CSS custom properties, falling back to this app's theme tokens (`--text-primary`, `--text-secondary`, `--stroke-tertiary`, `--bg-layer-sunken`, `--bg-layer-raised`) and then to a hard-coded hex when no theme is present. `styles.typography.editingFileLabelClassName` (`'dial-tiny-lead-text'`) and `editingFileNameClassName` (`'dial-small-text'`) set the card's caption and file-name type:
+`styles.colors` (`SkillEditorColors`) overrides the heading, Instructions-label, and border colors, plus the mobile "Editing file" card's `filesCardBackground` and `filesCardBorder` the mobile upload and create-folder sheet footer's `dialogFooterBackground` and `dialogFooterBorder`, the file-drop overlay's `dropOverlayIcon`, the Add-menu `menuIcon`, and the upload dialog's `uploadInvalidDropZoneBorder` and `uploadRowBorder`, as CSS custom properties, falling back to this app's theme tokens (`--text-primary`, `--text-secondary`, `--text-accent-primary`, `--stroke-tertiary`, `--stroke-error`, `--bg-layer-sunken`, `--bg-layer-raised`) and then to a hard-coded hex when no theme is present. `styles.typography.editingFileLabelClassName` (`'dial-tiny-lead-text'`) and `editingFileNameClassName` (`'dial-small-text'`) set the card's caption and file-name type:
 
 ```tsx
 <SkillEditor

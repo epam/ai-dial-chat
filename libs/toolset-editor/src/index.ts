@@ -1,5 +1,6 @@
 export { ToolsetEditor } from './components/ToolsetEditor/ToolsetEditor';
 export type {
+  ToolsetEditorColors,
   ToolsetEditorLabels,
   ToolsetEditorLayoutLabels,
   ToolsetEditorProps,
@@ -8,6 +9,7 @@ export type {
 export type { GeneralFormLabels } from './models/general-form-labels';
 export type {
   ConnectMcpUrlContentLabels,
+  SettingsFormColors,
   SettingsFormLabels,
 } from './models/settings-form-props';
 export type { AuthSectionLabels } from './models/auth-section-props';

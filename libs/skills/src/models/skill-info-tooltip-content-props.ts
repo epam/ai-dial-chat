@@ -1,5 +1,13 @@
 import type { SkillUnresolvedReason } from '../types/skill-unresolved-reason';
 
+/** Color overrides for `SkillInfoTooltipContent`. */
+export interface SkillInfoTooltipContentColors {
+  /** Color of the trash-can / lock icon shown for an unresolved skill. Defaults to `--text-secondary`. */
+  unresolvedIcon?: string;
+  /** Text color of the unresolved-skill message. Defaults to `--text-primary`. */
+  unresolvedMessage?: string;
+}
+
 /** Props for the shared skill info tooltip content component. */
 export interface SkillInfoTooltipContentProps {
   /** The skill's listing-sourced description paragraph. Omitted entirely when empty. */
@@ -33,4 +41,6 @@ export interface SkillInfoTooltipContentProps {
   viewDetailsTabIndex?: number;
   /** CSS class applied to the description and message paragraphs. Defaults to `'dial-tiny-text'`. */
   textClassName?: string;
+  /** Color overrides, applied as CSS custom properties. */
+  colors?: SkillInfoTooltipContentColors;
 }

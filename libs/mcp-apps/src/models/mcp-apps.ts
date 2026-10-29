@@ -147,4 +147,12 @@ export interface McpAppInlinePreviewColors {
   previewBorder?: string;
   /** Divider under the header strip. Fallback: `--stroke-tertiary`. */
   previewHeaderBorder?: string;
+  /** Text color of the header strip's app or tool name. Fallback: `--text-secondary`. */
+  headerText?: string;
+  /** Text color of the "opened in canvas" placeholder. Fallback: `--text-secondary`. */
+  placeholderText?: string;
+  /** Color of the load-error icon. Fallback: `--text-error`. */
+  errorIcon?: string;
+  /** Text color of the load-error message. Fallback: `--text-primary`. */
+  errorText?: string;
 }
