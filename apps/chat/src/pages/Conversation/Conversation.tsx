@@ -82,6 +82,7 @@ import {
 import { ActiveScheduledTaskStatus } from '../../types/active-scheduled-task';
 import { ROUTES } from '../../types/routes';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
+import { conversationIdsMatch } from '../../utils/conversation-id-match';
 import {
   conversationStreamTransport,
   logConversationStreamError,
@@ -102,6 +103,15 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   );
   const [isFetching, setIsFetching] = useState(
     !prefetchedConversation && !!conversationId,
+  );
+  /*
+   * The route id the shown conversation was applied for. `isFetching` only turns
+   * true inside the load effect, so in the first commit after the route changes
+   * the previous conversation is still shown with `isFetching` false: this id
+   * tells that commit apart from a conversation that belongs to the route.
+   */
+  const [loadedConversationId, setLoadedConversationId] = useState(
+    prefetchedConversation ? conversationId : undefined,
   );
   /*
    * Id of the conversation this page instance just created (it arrived with
@@ -185,6 +195,8 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     duplicateConversation,
     updateConversationTitle,
     bumpConversationActivity,
+    markConversationUnread,
+    markConversationViewed,
     watchForDisplayNameUpdate,
     removeConversationFromList,
     refreshConversations,
@@ -446,15 +458,48 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
    * Every generation this page can launch — send, regenerate, edit and the
    * auto-continue on load — funnels through startStream, so bumping the
    * sidebar entry here reorders the list by latest activity right away
-   * instead of leaving it stale until the next full re-fetch.
+   * instead of leaving it stale until the next full re-fetch. The chat is also
+   * unseen from here on: the answer is still to come, so leaving mid-stream
+   * must show the unread dot without waiting for a list refresh.
    */
   const startStream = useCallback<typeof startConversationStream>(
     (streamedConversationId, ...rest) => {
       bumpConversationActivity(streamedConversationId);
+      markConversationUnread(streamedConversationId);
       startConversationStream(streamedConversationId, ...rest);
     },
-    [bumpConversationActivity, startConversationStream],
+    [bumpConversationActivity, markConversationUnread, startConversationStream],
   );
+
+  /*
+   * An open regular chat is read once nothing is generating for it. The panel's
+   * active-conversation sync cannot own this: it fires on every re-entry into a
+   * chat and cannot tell that the answer is still being produced, so a mark
+   * written then would hide the dot for good. `isStreaming` is the right
+   * signal once the conversation has loaded: coming back to a generating chat
+   * resumes it in the same batch that applies the loaded conversation, so
+   * there is no loaded render with the stream still unflagged. The effect
+   * re-runs when the stream ends, so watching it to the end marks the chat
+   * read; leaving first never marks it, and the chat stays unread.
+   */
+  const isOpenChatUnread = useMemo(() => {
+    const openRow = conversationId
+      ? conversations.find((c) => conversationIdsMatch(c.id, conversationId))
+      : undefined;
+    return !!openRow && !openRow.isScheduledTask && !!openRow.isUnread;
+  }, [conversations, conversationId]);
+  const isOpenChatLoaded =
+    !isFetching && !!conversation && loadedConversationId === conversationId;
+  useEffect(() => {
+    if (conversationId && isOpenChatLoaded && isOpenChatUnread && !isStreaming)
+      void markConversationViewed(conversationId);
+  }, [
+    conversationId,
+    isOpenChatLoaded,
+    isOpenChatUnread,
+    isStreaming,
+    markConversationViewed,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -632,6 +677,8 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
             resumeIfAwaitingGeneration(id, result);
           }
         }
+        /* After any resume above, so a generating chat is already streaming when it counts as loaded. */
+        setLoadedConversationId(id);
       } catch (error) {
         if (signal.aborted) return;
         if (notificationShownForRef.current !== id) {

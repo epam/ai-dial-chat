@@ -14,6 +14,7 @@ import { safeDecodeURIComponent } from '../../common/utils/uri';
 import { DeploymentsService } from '../../deployments/deployments.service';
 import { DialClientService } from '../../dial/dial-client.service';
 import { ConversationResponseDto } from '../../openapi/openapi-response.dto';
+import { ConversationReadStateService } from '../../scheduled-task-unread/conversation-read-state.service';
 import { UserConfigService } from '../../user-config/user-config.service';
 import { SCHEDULER_SEGMENT } from '../constants/conversation.constants';
 import {
@@ -48,6 +49,7 @@ import {
   isApplicationDeploymentPath,
   prepareEntityName,
 } from '../utils/conversation.utils';
+import { parseScheduledTaskConversationPath } from '../utils/parse-scheduled-task-conversation-path';
 
 const isHttpLikeError = (e: unknown): e is { status: number } =>
   typeof e === 'object' &&
@@ -66,6 +68,7 @@ export class ConversationLifecycleService {
     private readonly deploymentsService: DeploymentsService,
     private readonly publishedFolderAttachments: PublishedFolderAttachmentsService,
     private readonly titleCache: ConversationTitleCacheService,
+    private readonly conversationReadStateService: ConversationReadStateService,
   ) {}
 
   async createConversation(
@@ -208,6 +211,11 @@ export class ConversationLifecycleService {
     bucket: string,
   ): Promise<RenameConversationResponseDto> {
     const sanitisedTitle = prepareEntityName(newTitle);
+    const shouldKeepRead = await this.isOldChatToKeepRead(
+      conversationPath,
+      token,
+      bucket,
+    );
 
     /* Conditional, so a rename never restores a pending background message over a final
        answer saved between its read and its write. Without a pending message, persistent
@@ -238,6 +246,9 @@ export class ConversationLifecycleService {
     }
     switch (result.status) {
       case ConditionalUpdateStatus.Saved:
+        if (shouldKeepRead) {
+          await this.keepChatRead(conversationPath, token, bucket);
+        }
         return { name: sanitisedTitle };
       case ConditionalUpdateStatus.Skipped:
         throw new NotFoundException('Conversation not found');
@@ -245,6 +256,60 @@ export class ConversationLifecycleService {
         throw new ServiceUnavailableException(
           'The conversation changed concurrently; retry shortly.',
         );
+    }
+  }
+
+  /*
+   * Saving a rename moves the chat's DIAL Core `updatedAt` past the read-before
+   * baseline, which alone would turn a chat the user has long read into an
+   * unread one. True only for a regular chat last updated at or before the
+   * baseline; a chat already in the viewed ids or already unread needs nothing.
+   * Best effort: any failure answers false, so a rename is never blocked.
+   */
+  private async isOldChatToKeepRead(
+    conversationPath: string,
+    token: string,
+    bucket: string,
+  ): Promise<boolean> {
+    if (
+      parseScheduledTaskConversationPath(
+        buildConversationUrl(bucket, conversationPath),
+      )
+    ) {
+      return false;
+    }
+    try {
+      const state = await this.conversationReadStateService.getReadState(
+        token,
+        bucket,
+      );
+      if (!state) return false;
+      const { data } = await this.dialClient.client.getConversationMetadata(
+        bucket,
+        encodeDialResourcePath(conversationPath),
+        { headers: getBearerAuthHeaders(token) },
+      );
+      const updatedAt = (data as { updatedAt?: unknown } | null)?.updatedAt;
+      return typeof updatedAt === 'number' && updatedAt <= state.readBefore;
+    } catch (error) {
+      this.logger.warn('Failed to read the read state before rename', error);
+      return false;
+    }
+  }
+
+  private async keepChatRead(
+    conversationPath: string,
+    token: string,
+    bucket: string,
+  ): Promise<void> {
+    try {
+      await this.conversationReadStateService.addViewed(
+        buildConversationUrl(bucket, conversationPath),
+        token,
+        bucket,
+      );
+    } catch (error) {
+      this.logger.warn('Failed to keep the renamed chat read', error);
     }
   }
 

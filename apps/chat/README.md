@@ -57,6 +57,29 @@ Rapidly opening several run chats queues their viewed writes within the current
 app instance; older list responses cannot replace a newer successfully loaded
 conversation snapshot. A newer failed request does not discard an older success.
 
+### Unread dot for regular chats
+
+A regular chat shows the unread dot when its answer arrived while the user was
+not looking at it. The backend reports `isUnread: true` for a chat in the user's
+own bucket that was updated after a one-time read-before baseline
+(`.client_data/.conversations-read-baseline.json`, created by the first list
+request) and is not in the viewed ids (`.client_data/.viewed-conversations.json`).
+Older chats are read by condition, nothing is migrated; scheduled runs keep their
+own viewed file.
+
+- Starting a generation (send, regenerate, edit) marks the chat unread in the
+  local list at once, and the server removes it from the viewed ids when the
+  completion starts.
+- The open conversation never shows the dot, so watching a chat generate shows no
+  dot, and leaving it mid-stream shows the dot immediately.
+- The conversation page marks an open unread chat viewed once it has loaded and
+  its stream is not running; returning to a chat that is still generating writes
+  nothing, and the chat is marked when the stream ends while it is open. Leaving
+  mid-stream never marks it. The panel's active-conversation sync only marks
+  scheduled runs.
+- Renaming a read chat keeps it read. A failed viewed write leaves a regular chat
+  read locally; the next list that still reports it unread retries once.
+
 History and Start now pass expected chat ids to
 `ConversationsContext.refreshConversations(expectedIds?)`. Missing chats get up to
 five additional list requests, two seconds apart after each request settles.

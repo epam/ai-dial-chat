@@ -1149,6 +1149,27 @@ describe('ConversationPanelView — mark conversation viewed on open', () => {
     expect(mockMarkConversationViewed).toHaveBeenCalledWith('task2');
   });
 
+  it('leaves marking an active regular chat to the conversation page', () => {
+    const mockMarkConversationViewed = vi.fn();
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [
+        {
+          ...unreadTaskConversation,
+          id: 'chat9',
+          isScheduledTask: false,
+        },
+      ],
+      markConversationViewed: mockMarkConversationViewed,
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(
+      <ConversationPanelView {...defaultProps} activeConversationId="chat9" />,
+    );
+
+    expect(mockMarkConversationViewed).not.toHaveBeenCalled();
+  });
+
   it('does not call markConversationViewed when no conversation is active', () => {
     const mockMarkConversationViewed = vi.fn();
     vi.mocked(useConversations).mockReturnValue({
@@ -1198,6 +1219,81 @@ describe('ConversationPanelView — mark conversation viewed on open', () => {
     );
 
     expect(screen.queryByLabelText('unread indicator task1')).toBeNull();
+  });
+});
+
+describe('ConversationPanelView — unread dot for regular chats', () => {
+  const unreadChat = {
+    id: 'chat9',
+    title: 'Chat 9',
+    isPinned: false,
+    updatedAt: 0,
+    sharedWithMe: false,
+    publishedWithMe: false,
+    isScheduledTask: false,
+    isUnread: true,
+  };
+
+  const mockContext = () =>
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [unreadChat],
+      markConversationViewed: vi.fn(),
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  it('shows the dot for an unread regular chat that is not open', () => {
+    mockContext();
+
+    render(
+      <ConversationPanelView
+        {...defaultProps}
+        activeConversationId={undefined}
+      />,
+    );
+
+    expect(screen.getByLabelText('unread indicator chat9')).toBeTruthy();
+  });
+
+  it('hides the dot while that chat is the open conversation', () => {
+    mockContext();
+
+    render(
+      <ConversationPanelView {...defaultProps} activeConversationId="chat9" />,
+    );
+
+    expect(screen.queryByLabelText('unread indicator chat9')).toBeNull();
+  });
+
+  it('shows the dot as soon as the user navigates away from the chat', () => {
+    mockContext();
+    const { rerender } = render(
+      <ConversationPanelView {...defaultProps} activeConversationId="chat9" />,
+    );
+    expect(screen.queryByLabelText('unread indicator chat9')).toBeNull();
+
+    rerender(
+      <ConversationPanelView
+        {...defaultProps}
+        activeConversationId={undefined}
+      />,
+    );
+
+    expect(screen.getByLabelText('unread indicator chat9')).toBeTruthy();
+  });
+
+  it('keeps showing the dot of another chat while a different one is open', () => {
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [unreadChat, { ...unreadChat, id: 'chat10' }],
+      markConversationViewed: vi.fn(),
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(
+      <ConversationPanelView {...defaultProps} activeConversationId="chat9" />,
+    );
+
+    expect(screen.queryByLabelText('unread indicator chat9')).toBeNull();
+    expect(screen.getByLabelText('unread indicator chat10')).toBeTruthy();
   });
 });
 

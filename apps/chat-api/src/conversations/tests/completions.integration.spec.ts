@@ -66,6 +66,7 @@ describe('POST /conversations/completions (integration)', () => {
     streamCompletion: ReturnType<typeof vi.fn>;
     resolveBackgroundAttach?: ReturnType<typeof vi.fn>;
     stopBackgroundGeneration?: ReturnType<typeof vi.fn>;
+    markConversationUnviewed: ReturnType<typeof vi.fn>;
   };
   let mockGenerationService: {
     register: ReturnType<typeof vi.fn>;
@@ -79,6 +80,7 @@ describe('POST /conversations/completions (integration)', () => {
 
   beforeEach(async () => {
     mockService = {
+      markConversationUnviewed: vi.fn().mockResolvedValue(undefined),
       resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
       stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
       streamCompletion: vi.fn().mockImplementation(async function* (
@@ -238,6 +240,50 @@ describe('POST /conversations/completions (integration)', () => {
    * browser tab submitting into the same conversation saw an empty LLM answer
    * instead of a conflict.
    */
+  it('removes the conversation from the viewed ids once the generation is accepted', async () => {
+    await request(app.getHttpServer())
+      .post('/conversations/completions')
+      .send(VALID_COMPLETION_BODY)
+      .expect(200);
+
+    expect(
+      mockService.markConversationUnviewed,
+    ).toHaveBeenCalledExactlyOnceWith(
+      VALID_COMPLETION_BODY.path,
+      TEST_USER.at,
+      TEST_USER.bucket,
+    );
+  });
+
+  it('leaves the viewed ids alone when the generation is rejected with 409', async () => {
+    mockService.streamCompletion.mockImplementation(
+      // eslint-disable-next-line require-yield
+      async function* () {
+        throw new ConflictException('Another generation is already active');
+      },
+    );
+
+    await request(app.getHttpServer())
+      .post('/conversations/completions')
+      .send(VALID_COMPLETION_BODY)
+      .expect(409);
+
+    expect(mockService.markConversationUnviewed).not.toHaveBeenCalled();
+  });
+
+  it('still streams the answer when removing the viewed id fails', async () => {
+    mockService.markConversationUnviewed.mockRejectedValue(
+      new Error('DIAL Core 503'),
+    );
+
+    const res = await request(app.getHttpServer())
+      .post('/conversations/completions')
+      .send(VALID_COMPLETION_BODY)
+      .expect(200);
+
+    expect(res.text).toContain('"content":"Hi"');
+  });
+
   it('returns 409 when the generator rejects before the stream opens', async () => {
     mockService.streamCompletion.mockImplementation(
       // eslint-disable-next-line require-yield

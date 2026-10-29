@@ -1695,3 +1695,98 @@ describe('ConversationsContext — overlay mode', () => {
     expect(eventTypes).toContain(OverlayEventType.ConversationsUpdated);
   });
 });
+
+describe('ConversationsContext — regular chat read state', () => {
+  const unreadChat = { ...seedConversations[0], isUnread: true };
+
+  const renderLoaded = async (items: unknown[]) => {
+    mockListConversations.mockResolvedValue({ items } as never);
+    const utils = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(utils.result.current.isLoading).toBe(false));
+    return utils;
+  };
+
+  beforeEach(() => {
+    mockMarkConversationViewed.mockReset();
+    mockMarkConversationViewed.mockResolvedValue(undefined);
+  });
+
+  it('marks an unread regular chat viewed once and clears its flag', async () => {
+    const { result } = await renderLoaded([unreadChat]);
+
+    await act(async () => result.current.markConversationViewed('conv1'));
+
+    expect(result.current.conversations[0].isUnread).toBe(false);
+    expect(mockMarkConversationViewed).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not call the API for a regular chat that is already read', async () => {
+    const { result } = await renderLoaded([seedConversations[0]]);
+
+    await act(async () => result.current.markConversationViewed('conv1'));
+
+    expect(mockMarkConversationViewed).not.toHaveBeenCalled();
+  });
+
+  it('shows a regular chat as unread again when a later list reports a new answer', async () => {
+    const { result } = await renderLoaded([unreadChat]);
+    await act(async () => result.current.markConversationViewed('conv1'));
+
+    mockListConversations.mockResolvedValue({ items: [unreadChat] } as never);
+    await act(async () => result.current.refreshConversations());
+    expect(result.current.conversations[0].isUnread).toBe(true);
+
+    await act(async () => result.current.markConversationViewed('conv1'));
+    expect(mockMarkConversationViewed).toHaveBeenCalledTimes(2);
+    expect(result.current.conversations[0].isUnread).toBe(false);
+  });
+
+  it('keeps a regular chat read locally when the viewed write fails and retries on the next unread list', async () => {
+    mockMarkConversationViewed
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce(undefined);
+    const { result } = await renderLoaded([unreadChat]);
+
+    await act(async () => result.current.markConversationViewed('conv1'));
+    expect(result.current.conversations[0].isUnread).toBe(false);
+    expect(mockMarkConversationViewed).toHaveBeenCalledTimes(1);
+
+    await act(async () => result.current.refreshConversations());
+    await act(async () => result.current.markConversationViewed('conv1'));
+    expect(mockMarkConversationViewed).toHaveBeenCalledTimes(2);
+  });
+
+  it('marks a regular chat unread locally without calling the API', async () => {
+    const { result } = await renderLoaded([seedConversations[0]]);
+
+    act(() => result.current.markConversationUnread('conv1'));
+
+    expect(result.current.conversations[0].isUnread).toBe(true);
+    expect(mockMarkConversationViewed).not.toHaveBeenCalled();
+  });
+
+  it('keeps the list reference when the chat is already unread or unknown', async () => {
+    const { result } = await renderLoaded([unreadChat]);
+    const before = result.current.conversations;
+
+    act(() => result.current.markConversationUnread('conv1'));
+    act(() => result.current.markConversationUnread('unknown'));
+
+    expect(result.current.conversations).toBe(before);
+  });
+
+  it('leaves a scheduled run alone when marked unread locally', async () => {
+    const run = {
+      ...seedConversations[0],
+      isScheduledTask: true,
+      isUnread: false,
+    };
+    const { result } = await renderLoaded([run]);
+
+    act(() => result.current.markConversationUnread('conv1'));
+
+    expect(result.current.conversations[0].isUnread).toBe(false);
+  });
+});

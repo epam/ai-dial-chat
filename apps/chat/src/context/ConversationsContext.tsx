@@ -69,6 +69,19 @@ const setPinnedState = (
   return next;
 };
 
+/* Same no-op contract as `setPinnedState`: `prev` is returned untouched when the flag already matches. */
+const setUnreadState = (
+  prev: ConversationListItemDto[],
+  id: string,
+  isUnread: boolean,
+): ConversationListItemDto[] => {
+  const index = prev.findIndex((c) => conversationIdsMatch(c.id, id));
+  if (index === -1 || !!prev[index].isUnread === isUnread) return prev;
+  const next = prev.slice();
+  next[index] = { ...prev[index], isUnread };
+  return next;
+};
+
 interface ConversationsContextType {
   /** Flat list of all loaded conversations. */
   conversations: ConversationListItemDto[];
@@ -81,12 +94,20 @@ interface ConversationsContextType {
   /** Toggle the pinned state of a conversation and persist it to the backend. Reverts on failure. */
   pinConversation: (id: string, isPinned: boolean) => Promise<void>;
   /**
-   * Marks a scheduler-created conversation as viewed, clearing its unread
-   * indicator optimistically and persisting to the backend. Reverts on
-   * failure. No-op for conversations that are not scheduler-created or
-   * already read.
+   * Marks a conversation as viewed, clearing its unread indicator
+   * optimistically and persisting to the backend. No-op for conversations that
+   * are already read or not in the list. A scheduler-created conversation
+   * reverts to unread on a failed write; a regular chat stays read locally and
+   * is retried by the next list that still reports it unread.
    */
   markConversationViewed: (id: string) => Promise<void>;
+  /**
+   * Marks a regular chat unread in the local list only, no API call. Used when
+   * a generation starts so that leaving the chat mid-stream shows the dot at
+   * once; the server persists the same state when the completion starts.
+   * No-op for scheduler-created and unknown conversations.
+   */
+  markConversationUnread: (id: string) => void;
   /** Delete a conversation by id, removing it from the local list on success. */
   deleteConversation: (id: string) => Promise<void>;
   /**
@@ -462,13 +483,24 @@ export const ConversationsProvider = ({
     const target = conversationsRef.current.find((c) =>
       conversationIdsMatch(c.id, id),
     );
-    if (!target?.isScheduledTask || !target.isUnread) return;
+    if (!target) return;
+    const isScheduled = !!target.isScheduledTask;
+    if (!target.isUnread) return;
     const currentViewedIds = viewedIdsRef.current;
     const key = toPanelConversationId(target.id);
-    if (!currentViewedIds || currentViewedIds.has(key)) return;
-    currentViewedIds.add(key);
-
-    setConversations((prev) => applyViewedState(prev, currentViewedIds));
+    if (!currentViewedIds) return;
+    /* Viewed state is monotonic only for scheduled runs. A regular chat turns
+       unread again after its next answer, so a local view must not be
+       remembered across list snapshots. */
+    if (isScheduled) {
+      if (currentViewedIds.has(key)) return;
+      currentViewedIds.add(key);
+      setConversations((prev) => applyViewedState(prev, currentViewedIds));
+    } else {
+      setConversations((prev) =>
+        setUnreadState(prev, target.id, /* isUnread */ false),
+      );
+    }
     const previousWrite = viewedWriteQueueRef.current;
     /* The backend updates one viewed-ids file. Serialize rapid navigation
        within this provider so two read/modify/write requests cannot lose ids. */
@@ -482,13 +514,12 @@ export const ConversationsProvider = ({
         await apiMarkConversationViewed(conversationPath);
       } catch {
         if (viewedIdsRef.current !== currentViewedIds) return;
+        /* A regular chat stays read locally: the server still lists it as
+           unread, so the next list refresh retries once, with no retry loop. */
+        if (!isScheduled) return;
         currentViewedIds.delete(key);
         setConversations((prev) =>
-          prev.map((c) =>
-            conversationIdsMatch(c.id, target.id)
-              ? { ...c, isUnread: true }
-              : c,
-          ),
+          setUnreadState(prev, target.id, /* isUnread */ true),
         );
       }
     };
@@ -497,6 +528,15 @@ export const ConversationsProvider = ({
     await write;
     if (viewedWriteQueueRef.current === write)
       viewedWriteQueueRef.current = null;
+  }, []);
+
+  const markConversationUnread = useCallback((id: string) => {
+    setConversations((prev) => {
+      const target = prev.find((c) => conversationIdsMatch(c.id, id));
+      return target && !target.isScheduledTask
+        ? setUnreadState(prev, target.id, /* isUnread */ true)
+        : prev;
+    });
   }, []);
 
   const deleteConversation = useCallback(
@@ -693,6 +733,7 @@ export const ConversationsProvider = ({
       error,
       pinConversation,
       markConversationViewed,
+      markConversationUnread,
       deleteConversation,
       removeConversationFromList,
       renameConversation,
@@ -711,6 +752,7 @@ export const ConversationsProvider = ({
       error,
       pinConversation,
       markConversationViewed,
+      markConversationUnread,
       deleteConversation,
       removeConversationFromList,
       renameConversation,

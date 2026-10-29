@@ -21,6 +21,7 @@ import { AuthSource } from '../../auth/auth-source.enum';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { DeploymentsService } from '../../deployments/deployments.service';
 import { DialClientService } from '../../dial/dial-client.service';
+import { ConversationReadStateService } from '../../scheduled-task-unread/conversation-read-state.service';
 import { ScheduledTaskUnreadService } from '../../scheduled-task-unread/scheduled-task-unread.service';
 import { UserConfigService } from '../../user-config/user-config.service';
 import {
@@ -348,6 +349,7 @@ describe('ConversationController (integration)', () => {
           ConversationStreamingService,
           UserConfigService,
           ScheduledTaskUnreadService,
+          ConversationReadStateService,
           ConversationGenerationService,
           ChatCompletionsAdapter,
           ResponsesAdapter,

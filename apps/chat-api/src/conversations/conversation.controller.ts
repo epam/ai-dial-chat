@@ -344,6 +344,14 @@ export class ConversationController {
     const { at, bucket, claims, sub } = user;
     const ownerKey = resolvePrincipalKey(user, req.authSource);
     const timezone = assertValidOptionalTimezone(timezoneHeader);
+    /*
+     * Set when the generation is accepted (`onReadyToStream`), so a request
+     * rejected before it starts (409, validation) leaves the viewed ids alone.
+     * Awaited before the first chunk is relayed: the client marks the chat
+     * viewed when the stream ends, and that write must not be overtaken by this
+     * one.
+     */
+    let pendingUnview = undefined as Promise<void> | undefined;
     const stream = this.conversationService.streamCompletion(
       dto.path,
       at,
@@ -358,6 +366,7 @@ export class ConversationController {
       () => {
         startSseResponse(res);
         startKeepalive();
+        pendingUnview = this.unviewConversation(dto.path, at, bucket);
       },
       sub,
       dto.clientChannelId,
@@ -451,6 +460,10 @@ export class ConversationController {
     };
     try {
       for await (const chunk of stream) {
+        if (pendingUnview) {
+          await pendingUnview;
+          pendingUnview = undefined;
+        }
         /*
          * `continue`, never `break`: abandoning this loop injects `.return()`
          * into the generator, whose own cleanup aborts the generation's
@@ -491,6 +504,29 @@ export class ConversationController {
           reason: CompletionResponseTermination.Completed,
         });
       }
+    }
+  }
+
+  /*
+   * A new generation makes the chat unseen until the user watches it finish or
+   * opens it. Best effort: a failed read-state write never fails a generation,
+   * so it is logged and swallowed. A slow one only delays the first chunk
+   * relayed to the client (see `pendingUnview`): it runs alongside the model's
+   * own start, and a hung DIAL Core client-data call is an accepted edge case.
+   */
+  private async unviewConversation(
+    path: string,
+    token: string,
+    bucket: string,
+  ): Promise<void> {
+    try {
+      await this.conversationService.markConversationUnviewed(
+        path,
+        token,
+        bucket,
+      );
+    } catch (err) {
+      this.logger.warn('Failed to mark conversation as unviewed', err);
     }
   }
 
@@ -1053,7 +1089,7 @@ export class ConversationController {
     operationId: 'markConversationViewed',
     summary: 'Mark a conversation as viewed',
     description:
-      'Idempotently records that the authenticated user has opened this conversation. Used to clear the unread indicator for scheduler-created conversations.',
+      'Idempotently records that the authenticated user has seen this conversation. Clears the unread indicator of scheduler-created conversations and of regular conversations whose answer arrived while the user was elsewhere.',
   })
   @ApiDialCoreErrors()
   @ApiResponse({ status: 204, description: 'Conversation marked as viewed' })

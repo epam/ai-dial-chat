@@ -83,6 +83,7 @@ const makeStreamingService = (
   chunkCount: number,
   onFirstChunk?: () => void,
 ) => ({
+  markConversationUnviewed: vi.fn().mockResolvedValue(undefined),
   streamCompletion: vi.fn().mockImplementation(async function* (
     ...args: unknown[]
   ) {
@@ -309,6 +310,37 @@ describe('streamCompletion — downstream response lifecycle under backpressure'
     expect(writeSpy.mock.calls.length).toBeLessThan(CHUNKS_PAST_LIMIT + 1);
     expect(termination.end).not.toHaveBeenCalled();
     expect(termination.destroy).not.toHaveBeenCalled();
+  });
+});
+
+describe('streamCompletion — viewed-id removal ordering', () => {
+  it('finishes removing the viewed id before the first chunk reaches the client', async () => {
+    const order: string[] = [];
+    const writable = new Writable({
+      write(chunk, _encoding, callback) {
+        order.push(String(chunk).startsWith(':') ? 'init' : 'chunk');
+        callback();
+      },
+    });
+    Object.assign(writable, { setHeader: vi.fn(), flushHeaders: vi.fn() });
+    const streamingService = makeStreamingService([], 2);
+    streamingService.markConversationUnviewed.mockImplementation(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      order.push('unviewed');
+    });
+
+    await makeController(
+      streamingService,
+      makeGenerationService(),
+    ).streamCompletion(
+      TEST_REQUEST,
+      writable as unknown as ExpressResponse,
+      VALID_COMPLETION_BODY,
+      undefined,
+    );
+
+    expect(order.indexOf('unviewed')).toBeGreaterThan(-1);
+    expect(order.indexOf('unviewed')).toBeLessThan(order.indexOf('chunk'));
   });
 });
 

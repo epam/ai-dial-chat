@@ -73,6 +73,7 @@ import {
   Suspense,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -382,11 +383,32 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     selectedItemId,
   } = useDeployments();
 
+  /*
+   * Only scheduled runs are marked viewed from here. The sync fires on every
+   * re-entry into a chat, and the panel cannot tell whether the chat is still
+   * generating: writing the id to the viewed ids mid-stream would hide the dot
+   * for good. The conversation page marks regular chats once no generation is
+   * running.
+   */
+  const itemsRef = useRef(items);
+  useLayoutEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
+  const markScheduledRunViewed = useCallback(
+    (id: string) => {
+      const item = itemsRef.current.find((c) => conversationIdsMatch(c.id, id));
+      return item?.isScheduledTask
+        ? markConversationViewed(id)
+        : Promise.resolve();
+    },
+    [markConversationViewed],
+  );
+
   const panelActiveConversationId = useActiveConversationSync({
     activeConversationId,
     items,
     refreshConversations,
-    markConversationViewed,
+    markConversationViewed: markScheduledRunViewed,
     conversationIdsMatch,
     toPanelConversationId,
   });
@@ -633,6 +655,26 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     resolveHref,
     resolveTaskPresentation,
   });
+
+  /*
+   * The open chat is never shown as unread: watching a chat that is generating
+   * must not flash a dot, and the dot appears the moment the user navigates
+   * away. A display rule only — the list keeps the chat unread, so leaving
+   * mid-stream needs no extra state. Keeps the mapped array while the open row
+   * carries no dot, so most navigations leave every row untouched.
+   */
+  const displayedConversations = useMemo(
+    () =>
+      panelActiveConversationId &&
+      conversations.some(
+        (c) => c.id === panelActiveConversationId && c.isUnread,
+      )
+        ? conversations.map((c) =>
+            c.id === panelActiveConversationId ? { ...c, isUnread: false } : c,
+          )
+        : conversations,
+    [conversations, panelActiveConversationId],
+  );
 
   const filterLabels = useMemo(
     () => ({
@@ -1377,7 +1419,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
 
   const sidebarBlock = (
     <ConversationListSection
-      conversations={conversations}
+      conversations={displayedConversations}
       isLoading={isLoading}
       isUpdatingTitles={isUpdatingTitles}
       preserveActiveSearchResult
