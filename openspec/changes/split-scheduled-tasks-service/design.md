@@ -48,10 +48,11 @@ constructor(
   private readonly completion: ScheduledTaskCompletionService,
   private readonly runs: ScheduledTaskRunsService,
   private readonly preconditions: ScheduledTaskPreconditionsService,
+  @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
 )
 ```
 
-`dialClient` stays because `toUpstreamSchedulePayload` needs `baseUrl` and `dialApiVersion`. `ConfigService`, `CACHE_MANAGER`, `DeploymentsService` and `SchedulerConsentService` leave the facade and move to the collaborators that use them. `ScheduledTasksModule.providers` lists all six classes. `exports` stays `[ScheduledTasksService]`, because no other module needs a collaborator. `AppConfigModule`, `DeploymentsModule` and `ExternalServicesModule` remain imported. Nest resolves `CACHE_MANAGER` and `ConfigService` globally, as it does today.
+`dialClient` stays because `toUpstreamSchedulePayload` needs `baseUrl` and `dialApiVersion`. `CACHE_MANAGER` stays because `listScheduledTasks` passes it to `withCachedDialRequest` (D6). An earlier draft of this design removed it from the facade, which contradicted D6. `ConfigService`, `DeploymentsService` and `SchedulerConsentService` leave the facade and move to the collaborators that use them. `ScheduledTasksModule.providers` lists all six classes. `exports` stays `[ScheduledTasksService]`, because no other module needs a collaborator. `AppConfigModule`, `DeploymentsModule` and `ExternalServicesModule` remain imported. Nest resolves `CACHE_MANAGER` and `ConfigService` globally, as it does today.
 
 The audit's alternative, "pure helpers only", keeps about 700 lines in the class and was rejected, as the proposal records.
 

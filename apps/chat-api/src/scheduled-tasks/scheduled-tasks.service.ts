@@ -1,524 +1,53 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import {
-  BadRequestException,
-  ForbiddenException,
-  HttpException,
-  Inject,
-  Injectable,
-  Logger,
-  NotFoundException,
-  ServiceUnavailableException,
-} from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import type { Cache } from 'cache-manager';
-import {
-  extractDialErrorMessage,
-  handleDialFetchError,
-  isUpstreamTextExposable,
-  mapDialHttpStatus,
-} from '../common/dial/dial-error.mapper';
-import { getBearerAuthHeaders } from '../common/utils/auth-header';
-import { EnvironmentVariables } from '../config/environment.config';
-import { DeploymentsService } from '../deployments/deployments.service';
 import { withCachedDialRequest } from '../dial/cached-dial-request.helper';
 import { DialClientService } from '../dial/dial-client.service';
-import { SchedulerConsentService } from '../external-services/scheduler-consent.service';
-import { SchedulerServiceConsentStatus } from '../external-services/types/scheduler-service-consent-status.enum';
 import type { CreateScheduledTaskBodyDto } from './dto/create-scheduled-task.dto';
 import type { ListScheduledTaskRunsQueryDto } from './dto/list-scheduled-task-runs-query.dto';
 import type { ListScheduledTaskRunsResponseDto } from './dto/list-scheduled-task-runs.dto';
 import type { ListScheduledTasksQueryDto } from './dto/list-scheduled-tasks-query.dto';
-import { ScheduledTasksSortKey } from './dto/list-scheduled-tasks-query.dto';
 import type { ListScheduledTasksResponseDto } from './dto/list-scheduled-tasks.dto';
-import {
-  type ScheduledTaskRunDto,
-  ScheduledTaskRunStatus,
-} from './dto/scheduled-task-run.dto';
-import {
-  ScheduleTriggerType,
-  type ScheduledTaskDto,
-} from './dto/scheduled-task.dto';
+import type { ScheduledTaskRunDto } from './dto/scheduled-task-run.dto';
+import type { ScheduledTaskDto } from './dto/scheduled-task.dto';
 import type { UpdateScheduledTaskBodyDto } from './dto/update-scheduled-task.dto';
-import { ScheduledTaskRateLimitException } from './scheduled-task-rate-limit.exception';
+import { ScheduledTaskCompletionService } from './scheduled-task-completion.service';
+import { ScheduledTaskPreconditionsService } from './scheduled-task-preconditions.service';
+import { ScheduledTaskRunsService } from './scheduled-task-runs.service';
 import {
+  LIST_CACHE_TTL_MS,
+  ScheduledTasksListCacheService,
+} from './scheduled-tasks-list-cache.service';
+import {
+  extractScheduleListItems,
+  extractScheduleListPagination,
   fromUpstreamRun,
   fromUpstreamSchedule,
   toUpstreamSchedulePayload,
-  type UpstreamScheduleResponse,
   type UpstreamScheduleRun,
 } from './scheduled-tasks.mapper';
+import { SchedulerUpstreamClient } from './scheduler-upstream.client';
 import { ScheduleAction } from './types/schedule-action.enum';
-import { ScheduledTaskErrorCode } from './types/scheduled-task-error-code.enum';
 
-const LIST_CACHE_TTL_MS = 30 * 1000;
-/* Upper bound on per-run detail reads a single run-list call may fan out to. */
-const RUN_ERROR_DETAIL_MAX_READS = 10;
-/* A terminal run's error text is immutable; the TTL only bounds cache growth. */
-const RUN_ERROR_TEXT_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
-const UPSTREAM_MESSAGE_MAX_LENGTH = 1000;
-const UPSTREAM_CODE_PATTERN = /^[A-Za-z0-9_.:-]{1,128}$/;
-
-interface UpstreamErrorFields {
-  upstreamMessage?: string;
-  upstreamCode?: string;
-}
-
-/*
- * The reason and code DIAL Scheduler returned, sanitized for the client: the
- * message is trimmed and capped, the code must be a safe token. The raw body
- * itself is never forwarded.
+/**
+ * Scheduled-tasks operations proxied to DIAL Scheduler. Owns the order of
+ * each operation (consent, configuration check, upstream call, list cache
+ * invalidation) and delegates transport, caching, completion and run reads
+ * to its collaborators.
  */
-const extractUpstreamErrorFields = (body: unknown): UpstreamErrorFields => {
-  const fields: UpstreamErrorFields = {};
-  const message = extractDialErrorMessage(body)?.trim();
-  if (message) {
-    fields.upstreamMessage = message.slice(0, UPSTREAM_MESSAGE_MAX_LENGTH);
-  }
-  if (body !== null && typeof body === 'object') {
-    const record = body as { code?: unknown; error?: { code?: unknown } };
-    const code = record.error?.code ?? record.code;
-    if (typeof code === 'string' && UPSTREAM_CODE_PATTERN.test(code)) {
-      fields.upstreamCode = code;
-    }
-  }
-  return fields;
-};
-const LIST_CACHE_EPOCH_TTL_MS = 24 * 60 * 60 * 1000;
-
-/*
- * The BFF always sends an explicit order_by/order_dir pair upstream — even
- * when the client omits `sort` — so the endpoint's documented default
- * (firstToRun) is the one actually observed, instead of silently inheriting
- * upstream's own default (created_at desc).
- */
-const SORT_ORDER_MAP: Record<
-  ScheduledTasksSortKey,
-  { orderBy: string; orderDir: 'asc' | 'desc' }
-> = {
-  [ScheduledTasksSortKey.FirstToRun]: {
-    orderBy: 'next_run_time',
-    orderDir: 'asc',
-  },
-  [ScheduledTasksSortKey.LastToRun]: {
-    orderBy: 'next_run_time',
-    orderDir: 'desc',
-  },
-  [ScheduledTasksSortKey.Newest]: { orderBy: 'created_at', orderDir: 'desc' },
-  [ScheduledTasksSortKey.NameAZ]: { orderBy: 'name', orderDir: 'asc' },
-};
-
 @Injectable()
 export class ScheduledTasksService {
   private readonly logger = new Logger(ScheduledTasksService.name);
-  private readonly schedulerAppId: string | undefined;
-  private readonly schedulerServiceId: string | undefined;
-  private readonly timeoutMs: number;
 
   constructor(
     private readonly dialClient: DialClientService,
-    configService: ConfigService<EnvironmentVariables>,
+    private readonly upstream: SchedulerUpstreamClient,
+    private readonly listCache: ScheduledTasksListCacheService,
+    private readonly completion: ScheduledTaskCompletionService,
+    private readonly runs: ScheduledTaskRunsService,
+    private readonly preconditions: ScheduledTaskPreconditionsService,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
-    private readonly deploymentsService: DeploymentsService,
-    private readonly schedulerConsentService: SchedulerConsentService,
-  ) {
-    this.schedulerAppId = configService.get('SCHEDULER_APP_ID', {
-      infer: true,
-    });
-    this.schedulerServiceId = configService.get('SCHEDULER_SERVICE_ID', {
-      infer: true,
-    });
-    this.timeoutMs =
-      configService.get('SCHEDULER_SERVICE_TIMEOUT_MS', { infer: true }) ??
-      10_000;
-  }
-
-  private getSchedulerAppId(): string {
-    if (!this.schedulerAppId) {
-      this.logger.error(
-        'SCHEDULER_APP_ID is not configured — cannot proxy DIAL Scheduler requests',
-      );
-      throw new ServiceUnavailableException(
-        'Scheduled tasks are not configured (SCHEDULER_APP_ID is missing)',
-      );
-    }
-    return this.schedulerAppId;
-  }
-
-  private getSchedulerServiceId(): string {
-    if (!this.schedulerServiceId) {
-      this.logger.error(
-        'SCHEDULER_SERVICE_ID is not configured — cannot build DIAL Scheduler upstream payload',
-      );
-      throw new ServiceUnavailableException(
-        'Scheduled tasks are not configured (SCHEDULER_SERVICE_ID is missing)',
-      );
-    }
-    return this.schedulerServiceId;
-  }
-
-  private buildSchedulesUrl(scheduleId?: string): string {
-    const base = `${this.dialClient.baseUrl}/v1/deployments/applications/${encodeURIComponent(this.getSchedulerAppId())}/route/v1/schedules`;
-    return scheduleId
-      ? `${base}/${encodeURIComponent(scheduleId)}`
-      : `${base}/`;
-  }
-
-  private buildScheduleActionUrl(
-    scheduleId: string,
-    action: ScheduleAction,
-  ): string {
-    return `${this.buildSchedulesUrl(scheduleId)}/${action}`;
-  }
-
-  private buildSchedulesListUrl(query: ListScheduledTasksQueryDto): string {
-    const searchParams = new URLSearchParams();
-    if (query.limit != null) {
-      searchParams.set('limit', String(query.limit));
-    }
-    if (query.offset != null) {
-      searchParams.set('offset', String(query.offset));
-    }
-    if (query.search) {
-      searchParams.set('name', query.search);
-    }
-    if (query.model) {
-      searchParams.set('model', query.model);
-    }
-    const { orderBy, orderDir } =
-      SORT_ORDER_MAP[query.sort ?? ScheduledTasksSortKey.FirstToRun];
-    searchParams.set('order_by', orderBy);
-    searchParams.set('order_dir', orderDir);
-    const queryString = searchParams.toString();
-    const url = this.buildSchedulesUrl();
-    return queryString ? `${url}?${queryString}` : url;
-  }
-
-  /*
-   * The BFF always sends an explicit order_by=created_at&order_dir=desc pair
-   * upstream — mirroring the same "always-explicit-default" decision made for
-   * listScheduledTasks — so the endpoint's documented newest-first order is
-   * the one actually observed, instead of relying on upstream's own default.
-   */
-  private buildRunsUrl(
-    scheduleId: string,
-    query: ListScheduledTaskRunsQueryDto,
-  ): string {
-    const searchParams = new URLSearchParams();
-    searchParams.set('limit', String(query.limit ?? 20));
-    searchParams.set('offset', String(query.offset ?? 0));
-    searchParams.set('order_by', 'created_at');
-    searchParams.set('order_dir', 'desc');
-    return `${this.buildSchedulesUrl(scheduleId)}/runs?${searchParams.toString()}`;
-  }
-
-  private buildRunUrl(scheduleId: string, runId: string): string {
-    return `${this.buildSchedulesUrl(scheduleId)}/runs/${encodeURIComponent(runId)}`;
-  }
-
-  /*
-   * Shared parse-and-compare tail of the two terminal-state predicates below:
-   * whether an optional ISO date string resolves to a moment that is not in
-   * the future. An absent or unparseable date never counts as passed — the
-   * list shape that omits the nested `trigger` degrades to not-terminal.
-   * Uses this server's clock, keeping skew/timezone handling in one place.
-   */
-  private isPastDate(date?: string): boolean {
-    const dateMs = date ? new Date(date).getTime() : NaN;
-    return !Number.isNaN(dateMs) && dateMs <= Date.now();
-  }
-
-  /*
-   * Completion candidate gate, first two clauses of the derivation for
-   * one-time (date-trigger) schedules: nothing left to run. The gate is an OR
-   * so it is path-independent — list responses that omit the nested `trigger`
-   * rely on `nextRunTime` alone; responses that carry `trigger` have both arms
-   * and they agree wherever both are computable.
-   */
-  private isCompletionCandidate(task: ScheduledTaskDto): boolean {
-    if (task.triggerType !== ScheduleTriggerType.Date) {
-      return false;
-    }
-    if (task.nextRunTime == null) {
-      return true;
-    }
-    return this.isPastDate(task.trigger?.date);
-  }
-
-  /*
-   * Recurring-schedule terminal state: the activity window has closed with no
-   * upcoming run, so resuming can never produce another run — the same
-   * condition that disables the detail view's Active switch. Unlike a one-time
-   * schedule, this is unambiguous from the schedule fields alone, so no
-   * run-history call is needed. A cron schedule without an `endDate`, or with
-   * one still in the future, is merely paused — not terminal. Degrades to
-   * `false` when the response carries no `trigger.cron.endDate` (a list shape
-   * without the nested trigger), leaving such cards on today's Paused display.
-   */
-  private isExpiredRecurring(task: ScheduledTaskDto): boolean {
-    if (task.triggerType !== ScheduleTriggerType.Cron) {
-      return false;
-    }
-    if (task.nextRunTime != null) {
-      return false;
-    }
-    return this.isPastDate(task.trigger?.cron?.endDate);
-  }
-
-  /** Newest run of a schedule (the runs endpoint's documented order is newest-first). */
-  private async fetchNewestRun(
-    scheduleId: string,
-    accessToken: string,
-  ): Promise<UpstreamScheduleRun | undefined> {
-    const result = await this.fetchUpstream<
-      UpstreamScheduleResponse & { results?: UpstreamScheduleRun[] }
-    >(
-      this.buildRunsUrl(scheduleId, { limit: 1, offset: 0 }),
-      'GET',
-      accessToken,
-      `resolve scheduled task completion "${scheduleId}"`,
-    );
-    return result.results?.[0];
-  }
-
-  /*
-   * Terminal-state resolution: an expired-window recurring schedule is
-   * completed from its fields alone (no runs call); a one-time candidate
-   * additionally needs its newest run to be terminal (Success or Error) —
-   * "completed" means the task has finished, regardless of outcome.
-   * InProgress, Missed, and an empty run list all mean not completed, and a
-   * non-terminal schedule is never completed. A failed runs call degrades to
-   * `undefined` (rendered identically to false) instead of failing the parent
-   * list/get.
-   */
-  private async resolveIsCompleted(
-    task: ScheduledTaskDto,
-    accessToken: string,
-  ): Promise<boolean | undefined> {
-    if (this.isExpiredRecurring(task)) {
-      return true;
-    }
-    if (!this.isCompletionCandidate(task)) {
-      return false;
-    }
-    try {
-      const newestRun = await this.fetchNewestRun(task.id, accessToken);
-      if (newestRun == null) {
-        return false;
-      }
-      const status = fromUpstreamRun(newestRun).status;
-      return (
-        status === ScheduledTaskRunStatus.Success ||
-        status === ScheduledTaskRunStatus.Error
-      );
-    } catch (err) {
-      this.logger.warn(
-        `Failed to resolve completion for scheduled task "${task.id}"; returning isCompleted as unknown`,
-        err instanceof Error ? err.stack : undefined,
-      );
-      return undefined;
-    }
-  }
-
-  /*
-   * cache-manager's `Cache` type has no key-enumeration/prefix-delete API, so
-   * invalidating "every cached list variant for a user" (one per limit/offset/
-   * search combination) can't be done by scanning keys. Instead, each user has
-   * an "epoch" counter baked into their list cache keys; bumping the epoch on
-   * create/update makes every previously cached variant unreachable without
-   * needing to know or delete each key individually.
-   */
-  private listCacheEpochKey(userSub: string): string {
-    return `scheduled-tasks:list-epoch:${userSub}`;
-  }
-
-  private async getListCacheEpoch(userSub: string): Promise<number> {
-    return (
-      (await this.cacheManager.get<number>(this.listCacheEpochKey(userSub))) ??
-      0
-    );
-  }
-
-  /*
-   * `limit`/`offset` are always validated, delimiter-free digit sequences
-   * (or the empty string), and `sort` is always one of the fixed enum
-   * values, so none of the leading `:`-separated fields can ever be
-   * ambiguous with each other or with `search`. `search` is still
-   * percent-encoded before being embedded, purely so a colon in a search
-   * term doesn't make the raw cache key/log line harder for a human to read.
-   */
-  private normalizeListQuery(query: ListScheduledTasksQueryDto): string {
-    const limit = query.limit ?? '';
-    const offset = query.offset ?? 0;
-    const search = encodeURIComponent(query.search ?? '');
-    const sort = query.sort ?? ScheduledTasksSortKey.FirstToRun;
-    /*
-     * Appended only when a model filter is present so the keys of unfiltered
-     * lists stay exactly as before. Percent-encoded for the same reason as
-     * `search`: a model id never carries a raw `:` into the key.
-     */
-    const model = query.model ? `:${encodeURIComponent(query.model)}` : '';
-    return `${limit}:${offset}:${search}:${sort}${model}`;
-  }
-
-  private async buildListCacheKey(
-    userSub: string,
-    query: ListScheduledTasksQueryDto,
-  ): Promise<string> {
-    const epoch = await this.getListCacheEpoch(userSub);
-    return `scheduled-tasks:list:${userSub}:${epoch}:${this.normalizeListQuery(query)}`;
-  }
-
-  private async fetchUpstream<T = UpstreamScheduleResponse>(
-    url: string,
-    method: 'GET' | 'POST' | 'PUT' | 'DELETE',
-    accessToken: string,
-    context: string,
-    body?: unknown,
-    parseJson = true,
-  ): Promise<T> {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
-
-    this.logger.debug(`Calling DIAL Scheduler: ${method} ${url} (${context})`);
-
-    try {
-      const response = await this.dialClient.fetchCore(url, {
-        method,
-        headers: {
-          ...getBearerAuthHeaders(accessToken),
-          ...(body ? { 'Content-Type': 'application/json' } : {}),
-        },
-        body: body ? JSON.stringify(body) : undefined,
-        signal: controller.signal,
-      });
-
-      this.logger.debug(
-        `DIAL Scheduler responded ${response.status} for ${context}`,
-      );
-
-      if (!response.ok) {
-        let errorBody: unknown;
-        try {
-          errorBody = await response.json();
-        } catch {
-          errorBody = undefined;
-        }
-        try {
-          return this.throwUpstreamError(response.status, context, errorBody);
-        } catch (error) {
-          if (error instanceof HttpException && error.getStatus() === 429) {
-            throw new ScheduledTaskRateLimitException(
-              error.getResponse(),
-              response.headers?.get('retry-after') ?? null,
-            );
-          }
-          throw error;
-        }
-      }
-
-      if (!parseJson) {
-        return undefined as T;
-      }
-
-      const json = (await response.json()) as T;
-      this.logger.debug(
-        `DIAL Scheduler body for ${context}: keys=${JSON.stringify(
-          Array.isArray(json)
-            ? `array(${json.length})`
-            : Object.keys(json as object),
-        )}`,
-      );
-      return json;
-    } catch (err) {
-      return handleDialFetchError(err, context, this.logger, this.timeoutMs);
-    } finally {
-      clearTimeout(timeoutId);
-    }
-  }
-
-  /*
-   * Maps a non-2xx Scheduler response exactly as `mapDialHttpStatus` does —
-   * same status, exception type and generic `message` — and, where the shared
-   * exposure rule allows, adds Scheduler's own reason and code as
-   * `upstreamMessage`/`upstreamCode` so the client can show them.
-   */
-  private throwUpstreamError(
-    status: number,
-    context: string,
-    errorBody: unknown,
-  ): never {
-    try {
-      return mapDialHttpStatus(status, context, this.logger, errorBody);
-    } catch (err) {
-      if (!(err instanceof HttpException) || !isUpstreamTextExposable(status)) {
-        throw err;
-      }
-      const fields = extractUpstreamErrorFields(errorBody);
-      if (!fields.upstreamMessage && !fields.upstreamCode) throw err;
-      const mapped = err.getResponse();
-      /* Extend the freshly built body in place so the exception subtype survives. */
-      if (typeof mapped === 'object' && mapped !== null) {
-        Object.assign(mapped, fields);
-        throw err;
-      }
-      throw new HttpException(
-        { statusCode: err.getStatus(), message: mapped, ...fields },
-        err.getStatus(),
-      );
-    }
-  }
-
-  /*
-   * The DIAL Scheduler list endpoint returns a paginated envelope
-   * (`{ count, limit, offset, results, next, previous }`), not a bare array
-   * or an `{ items }` wrapper — `results` is checked first since it's the
-   * shape confirmed against a live instance; `items`/array are kept as
-   * fallbacks in case a future Scheduler version changes the envelope.
-   */
-  private extractListItems(
-    result: UpstreamScheduleResponse,
-  ): UpstreamScheduleResponse[] {
-    if (Array.isArray(result)) {
-      return result as unknown as UpstreamScheduleResponse[];
-    }
-    const envelope = result as unknown as {
-      results?: UpstreamScheduleResponse[];
-      items?: UpstreamScheduleResponse[];
-    };
-    return envelope.results ?? envelope.items ?? [];
-  }
-
-  /*
-   * Only present when the upstream response is the paginated envelope
-   * (`{ count, limit, offset, results, next, previous }`); a bare array or
-   * an `{ items }` fallback shape has none of these, so every field stays
-   * `undefined` in that case.
-   */
-  private extractListPagination(result: UpstreamScheduleResponse): {
-    count?: number;
-    limit?: number;
-    offset?: number;
-    next?: string | null;
-    previous?: string | null;
-  } {
-    if (Array.isArray(result)) {
-      return {};
-    }
-    const envelope = result as unknown as {
-      count?: number;
-      limit?: number;
-      offset?: number;
-      next?: string | null;
-      previous?: string | null;
-    };
-    return {
-      count: envelope.count,
-      limit: envelope.limit,
-      offset: envelope.offset,
-      next: envelope.next,
-      previous: envelope.previous,
-    };
-  }
+  ) {}
 
   async listScheduledTasks(
     userSub: string,
@@ -527,19 +56,19 @@ export class ScheduledTasksService {
   ): Promise<ListScheduledTasksResponseDto> {
     return withCachedDialRequest({
       cacheManager: this.cacheManager,
-      cacheKey: await this.buildListCacheKey(userSub, query),
+      cacheKey: await this.listCache.buildKey(userSub, query),
       ttlMs: LIST_CACHE_TTL_MS,
       context: 'list scheduled tasks',
       logger: this.logger,
       fetch: async () => {
-        const result = await this.fetchUpstream(
-          this.buildSchedulesListUrl(query),
+        const result = await this.upstream.request(
+          this.upstream.schedulesListUrl(query),
           'GET',
           accessToken,
           'list scheduled tasks',
         );
-        const items = this.extractListItems(result);
-        const pagination = this.extractListPagination(result);
+        const items = extractScheduleListItems(result);
+        const pagination = extractScheduleListPagination(result);
         this.logger.debug(
           `list scheduled tasks: resolved ${items.length} item(s) (upstream shape was ${
             Array.isArray(result)
@@ -562,7 +91,9 @@ export class ScheduledTasksService {
          */
         const mappedTasks = items.map(fromUpstreamSchedule);
         const completions = await Promise.all(
-          mappedTasks.map((task) => this.resolveIsCompleted(task, accessToken)),
+          mappedTasks.map((task) =>
+            this.completion.resolveIsCompleted(task, accessToken),
+          ),
         );
         const enrichedItems = mappedTasks.map((task, index) => ({
           ...task,
@@ -579,24 +110,24 @@ export class ScheduledTasksService {
     body: CreateScheduledTaskBodyDto,
     bucket = '',
   ): Promise<ScheduledTaskDto> {
-    await this.assertSchedulerConsent(accessToken);
-    await this.validateConfiguration(body, accessToken, bucket);
+    await this.preconditions.assertSchedulerConsent(accessToken);
+    await this.preconditions.validateConfiguration(body, accessToken, bucket);
     const payload = toUpstreamSchedulePayload(
       body,
       this.dialClient.baseUrl,
       this.dialClient.dialApiVersion,
-      this.getSchedulerServiceId(),
+      this.upstream.getSchedulerServiceId(),
     );
 
-    const result = await this.fetchUpstream(
-      this.buildSchedulesUrl(),
+    const result = await this.upstream.request(
+      this.upstream.schedulesUrl(),
       'POST',
       accessToken,
       'create scheduled task',
       payload,
     );
 
-    await this.invalidateListCache(userSub);
+    await this.listCache.invalidate(userSub);
     return fromUpstreamSchedule(result);
   }
 
@@ -604,8 +135,8 @@ export class ScheduledTasksService {
     accessToken: string,
     scheduleId: string,
   ): Promise<ScheduledTaskDto> {
-    const result = await this.fetchUpstream(
-      this.buildSchedulesUrl(scheduleId),
+    const result = await this.upstream.request(
+      this.upstream.schedulesUrl(scheduleId),
       'GET',
       accessToken,
       `get scheduled task "${scheduleId}"`,
@@ -613,7 +144,7 @@ export class ScheduledTasksService {
     const task = fromUpstreamSchedule(result);
     return {
       ...task,
-      isCompleted: await this.resolveIsCompleted(task, accessToken),
+      isCompleted: await this.completion.resolveIsCompleted(task, accessToken),
     };
   }
 
@@ -622,116 +153,7 @@ export class ScheduledTasksService {
     scheduleId: string,
     query: ListScheduledTaskRunsQueryDto = {},
   ): Promise<ListScheduledTaskRunsResponseDto> {
-    const result = await this.fetchUpstream<
-      UpstreamScheduleResponse & {
-        results?: UpstreamScheduleRun[];
-        count?: number;
-        limit?: number;
-        offset?: number;
-        next?: string | null;
-        previous?: string | null;
-      }
-    >(
-      this.buildRunsUrl(scheduleId, query),
-      'GET',
-      accessToken,
-      `list scheduled task runs "${scheduleId}"`,
-    );
-    const runs = result.results ?? [];
-    return {
-      items: await this.withRunErrorDetails(
-        accessToken,
-        scheduleId,
-        runs.map(fromUpstreamRun),
-      ),
-      count: result.count,
-      limit: result.limit,
-      offset: result.offset,
-      next: result.next,
-      previous: result.previous,
-    };
-  }
-
-  /*
-   * Keyed by schedule + run only: a cached value is served solely for a run
-   * the caller's own upstream list call just returned, so the owner check
-   * has already happened for this caller.
-   */
-  private runErrorTextCacheKey(scheduleId: string, runId: string): string {
-    return `scheduled-tasks:run-error-text:${scheduleId}:${runId}`;
-  }
-
-  /*
-   * DIAL Scheduler's run list (`RunListItem`) omits `result`, so a failed
-   * run's `error_text` is only available from the per-run detail route. To
-   * keep that fan-out bounded:
-   * - a terminal run's error text never changes, so each resolved value
-   *   (including "none", stored as '') is cached and History's background
-   *   refreshes do not re-read the same runs;
-   * - at most RUN_ERROR_DETAIL_MAX_READS uncached runs are re-read per list
-   *   call (newest first, matching the list order); the rest stay without
-   *   `errorText` until a later call picks them up.
-   * A failed detail read is logged, not cached, and leaves that run without
-   * `errorText` rather than failing the whole list.
-   */
-  private async withRunErrorDetails(
-    accessToken: string,
-    scheduleId: string,
-    runs: ScheduledTaskRunDto[],
-  ): Promise<ScheduledTaskRunDto[]> {
-    const resolved = new Map<string, string>();
-    const uncachedIds: string[] = [];
-    await Promise.all(
-      runs
-        .filter(
-          (run) =>
-            run.status === ScheduledTaskRunStatus.Error &&
-            run.errorText == null,
-        )
-        .map(async (run) => {
-          const cached = await this.cacheManager.get<string>(
-            this.runErrorTextCacheKey(scheduleId, run.id),
-          );
-          if (cached == null) {
-            uncachedIds.push(run.id);
-          } else {
-            resolved.set(run.id, cached);
-          }
-        }),
-    );
-
-    const runOrder = new Map(runs.map((run, index) => [run.id, index]));
-    const idsToRead = uncachedIds
-      .sort((a, b) => (runOrder.get(a) ?? 0) - (runOrder.get(b) ?? 0))
-      .slice(0, RUN_ERROR_DETAIL_MAX_READS);
-    await Promise.all(
-      idsToRead.map(async (runId) => {
-        try {
-          const detail = await this.getScheduledTaskRun(
-            accessToken,
-            scheduleId,
-            runId,
-          );
-          const errorText = detail.errorText ?? '';
-          resolved.set(runId, errorText);
-          await this.cacheManager.set(
-            this.runErrorTextCacheKey(scheduleId, runId),
-            errorText,
-            RUN_ERROR_TEXT_CACHE_TTL_MS,
-          );
-        } catch (err) {
-          this.logger.warn(
-            `Failed to read error details for scheduled task run "${runId}" of "${scheduleId}"`,
-            err instanceof Error ? err.stack : undefined,
-          );
-        }
-      }),
-    );
-
-    return runs.map((run) => {
-      const errorText = resolved.get(run.id);
-      return errorText ? { ...run, errorText } : run;
-    });
+    return this.runs.listRuns(accessToken, scheduleId, query);
   }
 
   /** Reads one run through the caller-scoped Scheduler route without caching it. */
@@ -740,13 +162,7 @@ export class ScheduledTasksService {
     scheduleId: string,
     runId: string,
   ): Promise<ScheduledTaskRunDto> {
-    const result = await this.fetchUpstream<UpstreamScheduleRun>(
-      this.buildRunUrl(scheduleId, runId),
-      'GET',
-      accessToken,
-      `get scheduled task run "${runId}" for "${scheduleId}"`,
-    );
-    return fromUpstreamRun(result);
+    return this.runs.getRun(accessToken, scheduleId, runId);
   }
 
   /** Starts a saved schedule without changing its trigger or cached list entries. */
@@ -754,9 +170,9 @@ export class ScheduledTasksService {
     accessToken: string,
     scheduleId: string,
   ): Promise<ScheduledTaskRunDto> {
-    await this.assertSchedulerConsent(accessToken);
-    const result = await this.fetchUpstream<UpstreamScheduleRun>(
-      this.buildScheduleActionUrl(scheduleId, ScheduleAction.Run),
+    await this.preconditions.assertSchedulerConsent(accessToken);
+    const result = await this.upstream.request<UpstreamScheduleRun>(
+      this.upstream.scheduleActionUrl(scheduleId, ScheduleAction.Run),
       'POST',
       accessToken,
       `start scheduled task "${scheduleId}"`,
@@ -771,15 +187,19 @@ export class ScheduledTasksService {
     body: UpdateScheduledTaskBodyDto,
     bucket = '',
   ): Promise<ScheduledTaskDto> {
-    const serviceId = this.getSchedulerServiceId();
-    await this.assertSchedulerConsent(accessToken);
+    const serviceId = this.upstream.getSchedulerServiceId();
+    await this.preconditions.assertSchedulerConsent(accessToken);
     const saved = await this.getScheduledTask(accessToken, scheduleId);
     const effectiveBody = {
       ...body,
       skillUrls:
         body.skillUrls === undefined ? saved.skillUrls : body.skillUrls,
     };
-    await this.validateConfiguration(effectiveBody, accessToken, bucket);
+    await this.preconditions.validateConfiguration(
+      effectiveBody,
+      accessToken,
+      bucket,
+    );
     const payload = toUpstreamSchedulePayload(
       effectiveBody,
       this.dialClient.baseUrl,
@@ -787,100 +207,16 @@ export class ScheduledTasksService {
       serviceId,
     );
 
-    const result = await this.fetchUpstream(
-      this.buildSchedulesUrl(scheduleId),
+    const result = await this.upstream.request(
+      this.upstream.schedulesUrl(scheduleId),
       'PUT',
       accessToken,
       `update scheduled task "${scheduleId}"`,
       payload,
     );
 
-    await this.invalidateListCache(userSub);
+    await this.listCache.invalidate(userSub);
     return fromUpstreamSchedule(result);
-  }
-
-  /*
-   * A DIAL_NATIVE scheduler service runs every schedule on the user's behalf
-   * under an application consent an administrator can revoke at any time.
-   * Once revoked, DIAL Scheduler only fails later with an opaque 5xx, so the
-   * consent is read fresh (never cached) before every operation that makes a
-   * schedule run. Only an explicit SIGNED_OUT blocks: a failed lookup or a
-   * status Core does not report leaves the decision to DIAL Scheduler itself.
-   */
-  private async assertSchedulerConsent(accessToken: string): Promise<void> {
-    const consent =
-      await this.schedulerConsentService.getSchedulerServiceConsent(
-        accessToken,
-      );
-    if (consent === SchedulerServiceConsentStatus.SignedOut) {
-      this.logger.warn(
-        `Scheduler service "${this.getSchedulerServiceId()}" has no application consent; rejecting the operation`,
-      );
-      throw new ForbiddenException({
-        statusCode: 403,
-        error: 'Forbidden',
-        code: ScheduledTaskErrorCode.AdminConsentRequired,
-        message:
-          "A DIAL administrator must approve this application's access before you can continue.",
-      });
-    }
-  }
-
-  private async validateConfiguration(
-    body: CreateScheduledTaskBodyDto,
-    accessToken: string,
-    bucket: string,
-  ): Promise<void> {
-    if (!body.prompt.trim() && !body.skillUrls?.length) {
-      throw new BadRequestException({
-        statusCode: 400,
-        error: 'Bad Request',
-        code: ScheduledTaskErrorCode.InstructionsOrSkillRequired,
-        field: 'prompt',
-        message: 'Choose a skill or write instructions.',
-      });
-    }
-    if (!body.skillUrls?.length) return;
-
-    const unavailable = {
-      code: ScheduledTaskErrorCode.DeploymentUnavailable,
-      field: 'model',
-      message: 'Selected model is unavailable.',
-    };
-    let deployment;
-    try {
-      deployment = await this.deploymentsService.resolveDeploymentItem(
-        body.model,
-        accessToken,
-        bucket,
-      );
-    } catch (error) {
-      if (error instanceof ForbiddenException) {
-        throw new ForbiddenException({
-          ...unavailable,
-          statusCode: 403,
-          error: 'Forbidden',
-        });
-      }
-      if (!(error instanceof NotFoundException)) throw error;
-    }
-    if (!deployment) {
-      throw new NotFoundException({
-        ...unavailable,
-        statusCode: 404,
-        error: 'Not Found',
-      });
-    }
-    if (deployment.features?.skillsSupported !== true) {
-      throw new BadRequestException({
-        statusCode: 400,
-        error: 'Bad Request',
-        code: ScheduledTaskErrorCode.SkillUnsupported,
-        field: 'skillUrls',
-        message:
-          'Selected model does not support skills. Remove the skill or select different model to proceed.',
-      });
-    }
   }
 
   /*
@@ -899,8 +235,8 @@ export class ScheduledTasksService {
     scheduleId: string,
     action: ScheduleAction,
   ): Promise<ScheduledTaskDto> {
-    await this.fetchUpstream(
-      this.buildScheduleActionUrl(scheduleId, action),
+    await this.upstream.request(
+      this.upstream.scheduleActionUrl(scheduleId, action),
       'POST',
       accessToken,
       `${action} scheduled task "${scheduleId}"`,
@@ -919,7 +255,7 @@ export class ScheduledTasksService {
       refreshed = { id: scheduleId } as ScheduledTaskDto;
     }
 
-    await this.invalidateListCache(userSub);
+    await this.listCache.invalidate(userSub);
     return { ...refreshed, isActive: requestedIsActive };
   }
 
@@ -941,7 +277,7 @@ export class ScheduledTasksService {
     accessToken: string,
     scheduleId: string,
   ): Promise<ScheduledTaskDto> {
-    await this.assertSchedulerConsent(accessToken);
+    await this.preconditions.assertSchedulerConsent(accessToken);
     return this.performScheduleAction(
       userSub,
       accessToken,
@@ -955,8 +291,8 @@ export class ScheduledTasksService {
     accessToken: string,
     scheduleId: string,
   ): Promise<void> {
-    await this.fetchUpstream(
-      this.buildSchedulesUrl(scheduleId),
+    await this.upstream.request(
+      this.upstream.schedulesUrl(scheduleId),
       'DELETE',
       accessToken,
       `delete scheduled task "${scheduleId}"`,
@@ -964,25 +300,6 @@ export class ScheduledTasksService {
       false,
     );
 
-    await this.invalidateListCache(userSub);
-  }
-
-  private async invalidateListCache(userSub: string): Promise<void> {
-    try {
-      const epoch = await this.getListCacheEpoch(userSub);
-      await this.cacheManager.set(
-        this.listCacheEpochKey(userSub),
-        epoch + 1,
-        LIST_CACHE_EPOCH_TTL_MS,
-      );
-    } catch (err) {
-      handleDialFetchError(
-        err,
-        `invalidate scheduled tasks list cache (sub: ${userSub})`,
-        this.logger,
-        0,
-        { swallow: true },
-      );
-    }
+    await this.listCache.invalidate(userSub);
   }
 }
