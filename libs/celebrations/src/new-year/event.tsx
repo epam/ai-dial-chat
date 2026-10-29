@@ -14,6 +14,7 @@ import { NewYearScene } from './types/new-year';
 const MESSAGES: Record<NewYearScene, keyof NewYearLabels> = {
   [NewYearScene.PenguinStar]: 'penguinStarToastMessage',
   [NewYearScene.GiftWrapping]: 'giftWrappingToastMessage',
+  [NewYearScene.SnowmanDelivery]: 'snowmanDeliveryToastMessage',
 };
 
 /** The New Year celebration event. */

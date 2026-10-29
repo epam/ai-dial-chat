@@ -18,6 +18,7 @@ import {
   ConversationMessageDto,
   ConversationMessageRole,
 } from '../dto/conversation-message.dto';
+import { GenerationPreparationStep } from '../generation/generation.types';
 
 /*
  * Opaque principal keys, as `resolvePrincipalKey` produces them — the service
@@ -608,6 +609,189 @@ describe('ConversationGenerationService', () => {
 
       expect(firstLease.abortController.signal.aborted).toBe(false);
       expect(secondLease.abortController.signal.aborted).toBe(true);
+    });
+  });
+
+  describe('preparation-phase entries', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('keeps an entry owned and attachable after the maximum duration cancels it before it finalizes', () => {
+      vi.useFakeTimers();
+      service = new ConversationGenerationService(
+        makeConfigService({ MAX_GENERATION_DURATION_MS: 1000 }),
+      );
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+
+      vi.advanceTimersByTime(1000);
+      /* A later registration runs the stale sweep, which only acts on active entries. */
+      service.register(OTHER_OWNER_KEY, PATH, 'gen-other');
+
+      expect(service.getCancellation(lease)).toEqual({
+        requested: true,
+        reason: GenerationCancelReason.MaxDuration,
+      });
+      expect(() => service.register(OWNER_KEY, PATH, 'gen-2')).toThrow(
+        ConflictException,
+      );
+      expect(service.attach(OWNER_KEY, PATH)?.generationId).toBe(GENERATION_ID);
+    });
+
+    it('accepts a Stop once while the entry has not started streaming', () => {
+      service.register(OWNER_KEY, PATH, GENERATION_ID);
+
+      expect(service.abort(OWNER_KEY, PATH, GENERATION_ID)).toBe(true);
+      expect(service.abort(OWNER_KEY, PATH, GENERATION_ID)).toBe(false);
+      expect(service.getStatus(OWNER_KEY, PATH)).toBe(GenerationStatus.Stopped);
+    });
+  });
+
+  describe('abandoned preparation — subscriber release without ownership release', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+      vi.restoreAllMocks();
+    });
+
+    it('releases subscribers and keeps the key', () => {
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      const attachment = service.attach(OWNER_KEY, PATH)!;
+      const onTerminal = vi.fn();
+      attachment.emitter.on('terminal', onTerminal);
+
+      service.abandonPreparation(
+        lease,
+        GenerationPreparationStep.ConversationRead,
+      );
+
+      expect(onTerminal).toHaveBeenCalledOnce();
+      expect(onTerminal).toHaveBeenCalledWith({ type: 'error' });
+      expect(attachment.emitter.eventNames()).toEqual([]);
+      expect(() => service.register(OWNER_KEY, PATH, 'gen-2')).toThrow(
+        ConflictException,
+      );
+      expect(service.attach(OWNER_KEY, PATH)).toBeUndefined();
+      expect(service.abort(OWNER_KEY, PATH, GENERATION_ID)).toBe(false);
+      expect(service.hasLocalForegroundGeneration(OWNER_KEY, PATH)).toBe(true);
+    });
+
+    it('delivers stopped after a user Stop', () => {
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      const onTerminal = vi.fn();
+      service.attach(OWNER_KEY, PATH)!.emitter.on('terminal', onTerminal);
+      service.abort(OWNER_KEY, PATH, GENERATION_ID);
+
+      service.abandonPreparation(
+        lease,
+        GenerationPreparationStep.StartStateSave,
+      );
+
+      expect(onTerminal).toHaveBeenCalledWith({ type: 'stopped' });
+    });
+
+    it('releases the key and gauge contribution exactly once when the worker later settles', async () => {
+      const reader = new TestMetricReader();
+      const meterProvider = new MeterProvider({ readers: [reader] });
+      const stopMetrics = initializeRuntimeMetrics(
+        meterProvider.getMeter('test'),
+      );
+      const readState = async (state: string) => {
+        const { resourceMetrics } = await reader.collect();
+        return resourceMetrics.scopeMetrics
+          .flatMap((scope) => scope.metrics)
+          .find(
+            (metric) =>
+              metric.descriptor.name === 'dial.chat.generations.active',
+          )
+          ?.dataPoints.find((point) => point.attributes.state === state)?.value;
+      };
+      const tracked = new ConversationGenerationService(makeConfigService());
+      const lease = tracked.register(OWNER_KEY, PATH, GENERATION_ID);
+
+      tracked.abandonPreparation(
+        lease,
+        GenerationPreparationStep.CapabilityResolution,
+      );
+      expect(await readState('settling')).toBe(1);
+
+      tracked.error(lease);
+      tracked.error(lease);
+
+      expect(await readState('settling')).toBe(0);
+      expect(() => tracked.register(OWNER_KEY, PATH, 'gen-2')).not.toThrow();
+
+      tracked.onModuleDestroy();
+      stopMetrics();
+      await meterProvider.shutdown();
+    });
+
+    it('is a no-op for a released or replaced lease', () => {
+      const oldLease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      service.error(oldLease);
+      const newLease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      const onTerminal = vi.fn();
+      service.attach(OWNER_KEY, PATH)!.emitter.on('terminal', onTerminal);
+
+      service.abandonPreparation(
+        oldLease,
+        GenerationPreparationStep.ConversationRead,
+      );
+      service.error(oldLease);
+
+      expect(onTerminal).not.toHaveBeenCalled();
+      expect(service.attach(OWNER_KEY, PATH)).toBeDefined();
+      expect(service.getCancellation(newLease)).toEqual({ requested: false });
+    });
+
+    it('is a no-op once the entry already released its resources', () => {
+      const lease = service.register(OWNER_KEY, PATH, GENERATION_ID);
+      const onTerminal = vi.fn();
+      service.attach(OWNER_KEY, PATH)!.emitter.on('terminal', onTerminal);
+
+      service.abandonPreparation(
+        lease,
+        GenerationPreparationStep.ConversationRead,
+      );
+      service.abandonPreparation(
+        lease,
+        GenerationPreparationStep.ConversationRead,
+      );
+
+      expect(onTerminal).toHaveBeenCalledOnce();
+    });
+
+    it('logs the pending step without the owner key', () => {
+      const warn = vi
+        .spyOn(Logger.prototype, 'warn')
+        .mockImplementation(() => undefined);
+      const subject = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
+      const lease = service.register(`h:keycloak:${subject}`, PATH, 'gen-x');
+
+      service.abandonPreparation(
+        lease,
+        GenerationPreparationStep.StartStateSave,
+      );
+
+      expect(warn).toHaveBeenCalledOnce();
+      const line = String(warn.mock.calls[0][0]);
+      expect(line).toContain('start_state_save');
+      expect(line).toContain(PATH);
+      expect(line).not.toContain(subject);
+    });
+
+    it('leaves no timer armed', () => {
+      vi.useFakeTimers();
+      const timed = new ConversationGenerationService(makeConfigService());
+      const lease = timed.register(OWNER_KEY, PATH, GENERATION_ID);
+
+      timed.abandonPreparation(
+        lease,
+        GenerationPreparationStep.ConversationRead,
+      );
+      expect(vi.getTimerCount()).toBe(0);
+
+      timed.error(lease);
+      expect(vi.getTimerCount()).toBe(0);
     });
   });
 

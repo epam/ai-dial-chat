@@ -25,6 +25,7 @@
     "lint:check:quiet": "node scripts/run-quiet.mjs lint:check -- nx run-many --target=lint --all && npm run format:check:quiet",
     "lint:fix": "nx run-many --target=lint --all --fix",
     "lint:affected": "node scripts/run-quiet.mjs lint:affected -- nx affected --target=lint --base=origin/development",
+    "lint:boundaries:test": "node --test tools/module-boundaries.spec.mjs",
     "openapi": "nx run chat-api:openapi",
     "openapi:check": "node tools/openapi/check-client.mjs",
     "openapi:sdk": "nx run chat-api:openapi-sdk",

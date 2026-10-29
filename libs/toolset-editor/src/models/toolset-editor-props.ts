@@ -1,13 +1,12 @@
 import type {
-  AvatarPickerFileManagerModalProps,
   DeploymentCreationFormLocaleOption,
+  MetadataFormAvatarPicker,
 } from '@epam/ai-dial-builder-form';
 import type {
   TextRefinementCallback,
   TextRefinementLabels,
 } from '@epam/ai-dial-chat-shared';
-import type { ComponentType } from 'react';
-import type { GeneralFormLabels } from './general-form-props';
+import type { GeneralFormLabels } from './general-form-labels';
 import type { SettingsFormLabels } from './settings-form-props';
 import type {
   ToolsetAuthActions,
@@ -151,16 +150,8 @@ export interface ToolsetEditorProps {
   onNotifySuccess: (message: string) => void;
   /** Shows an error notification with the given message and optional trace id. */
   onNotifyError: (message: string, requestId?: string) => void;
-  /** Storage bucket whose files the avatar picker browses. */
-  bucket: string;
-  /** Host file-manager modal rendered inside the avatar picker. */
-  FileManagerModal: ComponentType<AvatarPickerFileManagerModalProps>;
-  /** Resolves an icon URL into the previewable URL the form renders. */
-  resolveIconUrl: (url: string) => string;
-  /** MIME types the avatar picker accepts. */
-  allowedMimeTypes: string[];
-  /** Maximum avatar file size in bytes. */
-  maxFileSizeBytes: number;
+  /** Host wiring for the avatar picker: bucket, file manager, icon URL resolution, picked-file resolution and file limits. */
+  avatarPicker: MetadataFormAvatarPicker;
   /** Locale options offered by the "Add locale" popup. */
   availableLocaleOptions: DeploymentCreationFormLocaleOption[];
   /** Optional Description rewrite callback; omission hides the Refine with AI action. */

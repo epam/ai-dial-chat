@@ -411,7 +411,6 @@ export enum NotFoundI18nKeys {
 
 export enum ProjectsI18nKeys {
   PageTitle = 'projects.page.title',
-  PageSubtitle = 'projects.page.subtitle',
   SearchPlaceholder = 'projects.toolbar.searchPlaceholder',
   SearchAriaLabel = 'projects.toolbar.searchAriaLabel',
   SortNewest = 'projects.toolbar.sortNewest',
@@ -1766,6 +1765,7 @@ export enum HalloweenI18nKeys {
 export enum NewYearI18nKeys {
   PenguinStarToastMessage = 'newYear.penguinStarToastMessage',
   GiftWrappingToastMessage = 'newYear.giftWrappingToastMessage',
+  SnowmanDeliveryToastMessage = 'newYear.snowmanDeliveryToastMessage',
   ToastTitle = 'newYear.toastTitle',
   GiftLabel = 'newYear.giftLabel',
 }
