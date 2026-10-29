@@ -797,7 +797,7 @@ Browser                apps/chat-api                OIDC Provider
   │◀────────────────────────│ Set-Cookie: session=<enc>  │
 ```
 
-For Keycloak, a missing ID-token `job_title` can be read from UserInfo after
+For Keycloak, a missing ID-token `job_title` or `picture` (avatar URL) can be read from UserInfo after
 checking the subject. The [auth design](auth/auth-bff-encrypted-cookie.md#51-login-flow-authorization-code--pkce)
 describes claim capture and failure handling; other providers keep their
 existing ID-token path.
