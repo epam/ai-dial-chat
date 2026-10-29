@@ -25,7 +25,7 @@ The spec (`tests/batch/files-batch-operations.service.spec.ts`, 51 tests) drives
 
 - One implementation of the rename/copy/move pipeline, with every per-operation difference in one typed record.
 - Byte-identical behavior: the same calls, bodies, error strings, log text and ordering.
-- The service file under 450 lines, and the existing spec unchanged.
+- The service file at about 500 lines (from 803), and the existing spec unchanged. The original target of under 450 assumed the delete path and the shared fan-out and conflict probe were smaller; going lower means extracting delete, which is out of scope.
 
 **Non-Goals:**
 

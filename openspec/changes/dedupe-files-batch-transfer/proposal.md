@@ -27,7 +27,7 @@ Every fix to transfer behavior therefore has to be made three times; the 400-con
 - **`FilesBatchOperationsService`** replaces the nine rename/copy/move private methods and the three bodies of the public methods with one private generic pipeline: `transferFiles`, `transferItem`, `transferFileItem`, `transferFolderItem`.
   - `renameFiles`, `copyFiles` and `moveFiles` keep their signatures and become one-line delegations.
   - `resolveTransferErrorMessage`, `runFolderFanOut`, `resourceExists` and the whole delete path stay as they are. The spec cites `resolveTransferErrorMessage` by name.
-  - The file shrinks to about 430 lines.
+  - The file shrinks to about 500 lines. The transfer types move into `file-transfer-strategy.ts`.
 
 No behavior changes:
 
@@ -47,7 +47,7 @@ No behavior changes:
 ### Acceptance criteria
 
 - `files-batch-operations.service.ts` contains no method whose name starts with `rename`, `copy` or `move` other than the three public batch methods. It calls `copyResource`/`moveResource` in exactly one place, and the error strings live only in `file-transfer-strategy.ts`.
-- The file is under 450 lines.
+- The file is about 500 lines, about 300 fewer. Getting under the `files-service-decomposition` limit of about 400 needs delete extracted, which is a follow-up.
 - `tests/batch/files-batch-operations.service.spec.ts` passes unchanged: all 51 tests, the same assertions and the same mocks.
 - New unit tests in `tests/batch/file-transfer-strategy.spec.ts` pin each strategy's labels, SDK operation and flags, and the error-message mapping.
 - `npm exec nx test chat-api`, `lint` and `build` pass, and `npm run openapi:check` reports no diff.
