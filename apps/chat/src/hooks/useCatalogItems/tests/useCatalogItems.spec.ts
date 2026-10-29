@@ -599,19 +599,30 @@ describe('useCatalogItems', () => {
 
       expect(details?.overview?.sections).toEqual([
         {
-          title: 'Specification',
+          title: CatalogI18nKeys.EntityDetailsSpecificationTitle,
           specs: [
-            { label: 'Hosted by', value: 'Yauheniya Hladkaya' },
-            { label: 'Routes', value: 'default · health' },
+            {
+              label: CatalogI18nKeys.EntityDetailsHostedBy,
+              value: 'Yauheniya Hladkaya',
+            },
+            {
+              label: CatalogI18nKeys.EntityDetailsRoutes,
+              value: 'default · health',
+            },
           ],
         },
         {
-          title: 'Capabilities',
-          specs: [{ label: 'Tools', value: false }],
+          title: CatalogI18nKeys.EntityDetailsCapabilitiesTitle,
+          specs: [{ label: CatalogI18nKeys.EntityDetailsTools, value: false }],
         },
         {
-          title: 'Configuration',
-          specs: [{ label: 'Input attachments', value: 'Text files' }],
+          title: CatalogI18nKeys.EntityDetailsConfigurationTitle,
+          specs: [
+            {
+              label: CatalogI18nKeys.EntityDetailsInputAttachments,
+              value: 'Text files',
+            },
+          ],
         },
       ]);
     });
@@ -651,17 +662,26 @@ describe('useCatalogItems', () => {
 
       expect(details?.overview?.sections).toEqual([
         {
-          title: 'Specification',
+          title: CatalogI18nKeys.EntityDetailsSpecificationTitle,
           specs: [
-            { label: 'Authentication', value: 'OAUTH' },
-            { label: 'Hosted by', value: 'Anastasiia Harkot' },
-            { label: 'OAuth scopes', value: 'read · write' },
             {
-              label: 'Authorization endpoint',
+              label: CatalogI18nKeys.EntityDetailsAuthentication,
+              value: 'OAUTH',
+            },
+            {
+              label: CatalogI18nKeys.EntityDetailsHostedBy,
+              value: 'Anastasiia Harkot',
+            },
+            {
+              label: CatalogI18nKeys.EntityDetailsOauthScopes,
+              value: 'read · write',
+            },
+            {
+              label: CatalogI18nKeys.EntityDetailsAuthorizationEndpoint,
               value: 'https://mcp.example.com/oauth/authorize',
             },
             {
-              label: 'Token endpoint',
+              label: CatalogI18nKeys.EntityDetailsTokenEndpoint,
               value: 'https://mcp.example.com/oauth/token',
             },
           ],

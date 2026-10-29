@@ -29,7 +29,9 @@ export const buildDeploymentFolderLabels = (
 });
 
 /** Builds the translated catalog Overview labels the lib's entity-details mapper needs. */
-export const buildEntityDetailsLabels = (t: TFunction): EntityDetailsLabels => ({
+export const buildEntityDetailsLabels = (
+  t: TFunction,
+): EntityDetailsLabels => ({
   capabilitiesTitle: t(CatalogI18nKeys.EntityDetailsCapabilitiesTitle),
   specificationTitle: t(CatalogI18nKeys.EntityDetailsSpecificationTitle),
   configurationTitle: t(CatalogI18nKeys.EntityDetailsConfigurationTitle),

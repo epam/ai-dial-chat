@@ -233,11 +233,11 @@ describe('FooterMessage', () => {
       mockState.appVersion = '0.45.0';
       renderFooter();
 
-      /* `end-*` is a logical inset resolved against this element's own
+      /* `inset-e-*` is a logical inset resolved against this element's own
        * direction — a `dir` here would defeat the RTL corner flip. */
       const label = screen.getByRole('paragraph');
       expect(label?.hasAttribute('dir')).toBe(false);
-      expect(label?.className).toContain('end-4');
+      expect(label?.className).toContain('inset-e-4');
     });
 
     it('keeps the label in flow when there is no footer message to centre', () => {
