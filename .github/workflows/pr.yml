@@ -137,8 +137,8 @@ jobs:
       # ORT analyzes the dependency tree only, so its result cannot change
       # unless a manifest did; `!= 'false'` keeps it on if `changes` failed.
       ort-enabled: ${{ needs.changes.outputs.deps != 'false' }}
-      trivy-severity: "CRITICAL,HIGH,MEDIUM,LOW"
-      trivy-severity-for-sarif: "CRITICAL,HIGH,MEDIUM,LOW"
+      trivy-severity: 'CRITICAL,HIGH,MEDIUM,LOW'
+      trivy-severity-for-sarif: 'CRITICAL,HIGH,MEDIUM,LOW'
     secrets: inherit
 
   # Repository-owned: run_tests delegates to epam/ai-dial-ci/.github/workflows/node_pr.yml@4.12.0,
@@ -238,6 +238,11 @@ jobs:
       - name: Lib Tailwind utilities unit tests
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: npm run lib:tailwind-utilities:test
+      # The type:* module-boundary constraints in eslint.config.mjs reject the
+      # imports they are meant to reject; no build needed.
+      - name: Module boundary rule tests
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run lint:boundaries:test
       # The four libraries the coherent-release test installs together;
       # chat-hooks is one of them, so its checks below reuse this build.
       - name: Build the packed libraries and their workspace dependencies

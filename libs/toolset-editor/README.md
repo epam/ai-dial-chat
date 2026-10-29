@@ -3,8 +3,7 @@
 Host-agnostic form for authoring and editing a DIAL MCP toolset: the composed
 `ToolsetEditor` (the shared `EntityEditor` Metadata + Setup layout from
 `@epam/ai-dial-builder-form`, validation, save/persist orchestration, and the
-API-key login flow) plus a deprecated `GeneralForm` wrapper kept for existing
-callers.
+API-key login flow).
 
 The lib is deliberately passive about everything a host owns. It holds the form
 state, the dirty-field/error state, and the draft toolset id created by the
@@ -115,17 +114,15 @@ const ToolsetEditorPage = () => {
       onOAuthLogin={runOAuthLogin}
       onNotifySuccess={(message) => toast(message)}
       onNotifyError={(message, requestId) => showError(message, requestId)}
-      bucket={user.bucket}
-      FileManagerModal={FileManagerModal}
-      resolveIconUrl={(url) => resolveIconUrl(url)}
-      allowedMimeTypes={['image/png', 'image/jpeg', 'image/svg+xml']}
-      maxFileSizeBytes={1024 * 1024}
+      avatarPicker={avatarPicker}
       availableLocaleOptions={localeOptions}
       labels={labels}
     />
   );
 };
 ```
+
+`avatarPicker` is a `MetadataFormAvatarPicker` from `@epam/ai-dial-builder-form` — the same object `MetadataForm` takes: the user's `bucket`, the host `FileManagerModal`, `resolveIconUrl`, `allowedMimeTypes`, `maxFileSizeBytes`, and `resolveAttachedIconUrl`, which turns the picked file into the stored icon URL. The editor passes it to `MetadataForm` unchanged and never builds a DIAL file path itself.
 
 `initialForm` re-seeds the editor whenever its object identity changes, so a
 host that loads asynchronously should memoize it and produce a new object only
@@ -180,52 +177,9 @@ The host owns transport, availability, and translations, passing the copy
 through `labels.refinement` (`TextRefinementLabels` from
 `@epam/ai-dial-chat-shared`). Save is disabled while a request is pending.
 
-### `GeneralForm`
+### Migrating from `GeneralForm`
 
-**Deprecated** — render `MetadataForm` from `@epam/ai-dial-builder-form`
-instead. `GeneralForm` keeps its props for existing callers (nothing in this
-repository renders it any more) and is now a thin wrapper over `MetadataForm`: it adds
-the toolset-flavoured default labels and resolves the picked avatar through
-`dialFileToAttachment` from `@epam/ai-dial-chat-hooks`.
-
-```tsx
-import { GeneralForm } from '@epam/ai-dial-toolset-editor';
-import type {
-  DeploymentGeneralFormData,
-  ToolsetFormErrors,
-} from '@epam/ai-dial-toolset-editor';
-
-const GeneralStep = ({
-  form,
-  errors,
-  onChange,
-}: {
-  form: DeploymentGeneralFormData;
-  errors: ToolsetFormErrors;
-  onChange: (patch: Partial<DeploymentGeneralFormData>) => void;
-}) => (
-  <GeneralForm
-    form={form}
-    errors={errors}
-    bucket={user.bucket}
-    FileManagerModal={FileManagerModal}
-    resolveIconUrl={(url) => resolveIconUrl(url)}
-    allowedMimeTypes={['image/png', 'image/jpeg', 'image/svg+xml']}
-    maxFileSizeBytes={1024 * 1024}
-    availableLocaleOptions={localeOptions}
-    onChange={onChange}
-    onNameBlur={() => setErrors(validateName(form))}
-    labels={labels}
-  />
-);
-```
-
-State is fully controlled: every edit reports a `Partial<DeploymentGeneralFormData>`
-patch through `onChange`, and the avatar picker reports
-`onChange({ iconUrl })` after resolving the picked file through the host's
-`FileManagerModal` and `bucket`. `onNameBlur`/`onVersionBlur` let the host
-surface errors at blur time. `GeneralFormLabels.form` and
-`GeneralFormLabels.avatarPicker` are each optional and replaced as a whole.
+The deprecated `GeneralForm` wrapper and `GeneralFormProps` were removed. Render `MetadataForm` from `@epam/ai-dial-builder-form` and pass it an `avatarPicker` (including `resolveAttachedIconUrl`) and `labels`. `GeneralFormLabels` stays exported as the type of `ToolsetEditorLabels.general`; `ToolsetEditor` falls back to toolset-flavoured English field labels when `labels.general.form` is omitted.
 
 ## Utilities
 
@@ -331,7 +285,7 @@ imported from there — this lib never re-declares them.
 
 All types reachable through the public props are exported from the barrel:
 `ToolsetEditorProps`, `ToolsetEditorLabels` (with its `layout`, `general`,
-`settings`, `validation` groups), `GeneralFormProps`, `GeneralFormLabels`,
+`settings`, `validation` groups), `GeneralFormLabels`,
 `SettingsFormLabels`, `AuthSectionLabels`, `ConnectMcpUrlContentLabels`,
 `ToolsetFormData`, `ToolsetAuthFormData`, `DeploymentGeneralFormData`,
 `ToolsetFormErrors`, `ToolsetLoginRequest`, `ToolsetLogoutRequest`,
@@ -390,9 +344,6 @@ import { TOOLSET_EDITOR_CLASS } from '@epam/ai-dial-toolset-editor';
 
 TOOLSET_EDITOR_CLASS.setupSection; // 'dial-toolset-editor-setup-section'
 ```
-
-`GeneralForm` renders a fragment rather than an element of its own, so it
-carries no class — style the column it sits in.
 
 The classes carry no declarations of their own: nothing in `styles.css`
 selects on them, so they change nothing until a host writes a rule. Renaming

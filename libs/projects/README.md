@@ -40,7 +40,7 @@ The form also renders `@epam/ai-dial-attachment-input` cards and lazy-loads the 
 
 Page shell with:
 
-- an `<h1>` title and a subtitle;
+- an `<h1>` title, and a subtitle when `labels.subtitle` is set;
 - a search input inside a `role="search"` landmark;
 - a sort control inside a `role="group"` named by `labels.sortLabel`. Its trigger shows the applied option's label, or `labels.sortLabel` when `sortKey` matches no option;
 - the content region.
@@ -53,9 +53,9 @@ A visually hidden `role="status"` region announces:
 - `labels.noResultsLabel`, `labels.emptyStateLabel`, `labels.errorLabel` or `labels.incompleteLabel` in the matching state;
 - nothing while loading.
 
-Each card is an `<article>` named by the project; the folder path is the kit `FolderPath`, named by `labels.folderPathLabel`. When `getProjectHref` is supplied, the name is a link to `getProjectHref(id)` stretched over the whole card; the name and the folder path stay above the link, so their truncation tooltips still open. A plain primary click calls `onOpenProject(id)` when it is supplied, and otherwise follows the `href`, as does a modified or middle click, so the project opens in a new tab. Without `getProjectHref`, cards are not interactive.
+Each card is an `<article>` named by the project. It shows the last-updated time relative to the page visit (`Intl.RelativeTimeFormat(locale)`, e.g. `3 days ago`) in a `<time>` element when `updatedAt` is set, then the name, then the folder path. The folder path is the kit `FolderPath`, named by `labels.folderPathLabel`. When `getProjectHref` is supplied, the name is a link to `getProjectHref(id)` stretched over the whole card; the name and the folder path stay above the link, so their truncation tooltips still open. A plain primary click calls `onOpenProject(id)` when it is supplied, and otherwise follows the `href`, as does a modified or middle click, so the project opens in a new tab. Without `getProjectHref`, cards are not interactive.
 
-When `onCreateProject` is supplied, a primary **New project** button labelled `labels.createProjectLabel` sits at the inline end of the title row, and a second one is the empty state's action. Neither renders without the callback.
+When `onCreateProject` is supplied, a primary **New project** button labelled `labels.createProjectLabel` sits at the inline end of the title row, and a secondary one is the empty state's action. Neither renders without the callback.
 
 ```tsx
 import {
@@ -86,9 +86,7 @@ import {
   getProjectHref={(id) => `/projects/view/${id.slice('projects/'.length)}`}
   locale="en"
   labels={{
-    title: 'Projects',
-    subtitle:
-      'Projects you own, projects shared with you, and your organization’s projects',
+    title: 'All projects',
     searchPlaceholder: 'Search projects',
     searchAriaLabel: 'Search projects',
     clearSearchLabel: 'Clear search',
@@ -121,32 +119,34 @@ import {
 The layout is mobile-first:
 
 - On mobile, the toolbar stacks the search above the sort control, and cards use a single column.
-- From the `desktop` breakpoint, the toolbar is one row and the grid has three columns with a 20px gap, at most 1116px wide.
+- From the `desktop` breakpoint, the toolbar is one row and the grid has three columns with a 20px gap, at most 1116px wide and centred.
+- The empty and no-results states sit at the top of the content area; loading and error states are centred in it.
 
 Only logical properties are used, so the layout follows the inherited `dir`.
 
 `styles.colors` overrides the CSS custom properties. Each one falls back to the matching app theme token:
 
-| Field                 | Fallback            |
-| --------------------- | ------------------- |
-| `background`          | `--bg-layer-base`   |
-| `subtitleText`        | `--text-secondary`  |
-| `sortButtonText`      | `--text-accent`     |
-| `cardBackground`      | `--bg-layer-raised` |
-| `cardHoverBackground` | `--bg-layer-hover`  |
-| `cardTitleText`       | `--text-primary`    |
-| `cardDivider`         | `--stroke-tertiary` |
-| `pathText`            | `--text-secondary`  |
+| Field            | Fallback            |
+| ---------------- | ------------------- |
+| `background`     | `--bg-layer-base`   |
+| `subtitleText`   | `--text-secondary`  |
+| `sortButtonText` | `--text-primary`    |
+| `cardBackground` | `--bg-layer-raised` |
+| `cardTitleText`  | `--text-primary`    |
+| `updatedAtText`  | `--text-secondary`  |
+| `pathText`       | `--text-secondary`  |
 
 `styles.typography` overrides the type-scale classes:
 
-| Field                | Default                 |
-| -------------------- | ----------------------- |
-| `titleClassName`     | `'dial-h1-text'`        |
-| `subtitleClassName`  | `'dial-body-text'`      |
-| `cardTitleClassName` | `'dial-body-semi-text'` |
-| `pathLabelClassName` | `'dial-tiny-text'`      |
-| `pathLeafClassName`  | `'dial-tiny-semi-text'` |
+| Field                            | Default                       |
+| -------------------------------- | ----------------------------- |
+| `titleClassName`                 | `'dial-h2-text'`              |
+| `subtitleClassName`              | `'dial-body-text'`            |
+| `cardTitleClassName`             | `'dial-body-semi-text'`       |
+| `pathLabelClassName`             | `'dial-tiny-text'`            |
+| `pathLeafClassName`              | `'dial-tiny-semi-text'`       |
+| `updatedAtClassName`             | `'dial-tiny-text'`            |
+| `emptyStateDescriptionClassName` | `'dial-small-paragraph-text'` |
 
 ### ProjectCreateForm
 
@@ -346,7 +346,7 @@ Why a context file was not added: `UnsupportedType` (`'unsupported-type'`), `Too
 
 ## Types
 
-- `ProjectItem` — `{ id, name, source, parentPath?, updatedAt?, isPinned? }`, one card; `updatedAt` only drives the date sort orders, and pinned items sort first.
+- `ProjectItem` — `{ id, name, source, parentPath?, updatedAt?, isPinned? }`, one card; `updatedAt` is shown relative to now and drives the date sort orders, and pinned items sort first.
 - `ProjectsLabels` — every user-visible string, including `sourceLabels`, `folderPathLabel` and the `resultCountLabel` callback.
 - `ProjectsProps` — the props of `Projects`.
 - `ProjectsStyles`, `ProjectsColors`, `ProjectsTypography` — style overrides.

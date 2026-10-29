@@ -95,7 +95,7 @@ Every host-owned decision arrives as a prop:
 
 `ProjectItem` is `{ id: string; name: string; source: ProjectSource; parentPath?: string; updatedAt?: number; isPinned?: boolean }`.
 
-- The app mapper copies `parentPath` from `ProjectDto.parentPath`, and sets `updatedAt` from `updatedAt ?? createdAt`. `updatedAt` only drives the date sort orders and is not displayed.
+- The app mapper copies `parentPath` from `ProjectDto.parentPath`, and sets `updatedAt` from `updatedAt ?? createdAt`. `updatedAt` drives the date sort orders and is shown on the card as a relative time.
 - `ProjectsPage` sets `isPinned` in a `useMemo`, from the `pinnedProjectIds` of `useUserConfig()`.
 - `ProjectsPage` passes `onOpenProject={(id) => navigate(getProjectViewRoute(id))}` and `getProjectHref={getProjectViewRoute}`, both memoised.
 
@@ -169,15 +169,16 @@ Sorting applies after filtering. Pinned projects (`isPinned: true`) come before 
 
 ### Requirement: Each project card shows its name and folder path
 
-The lib SHALL render the visible projects as a list (`<ul>` with one `<li>` per project), keyed by `id`. Each card is the kit `CardShell` (an `<article>` with the design's radius, padding and shadow), named by the project name through `aria-label`. It shows:
+The lib SHALL render the visible projects as a list (`<ul>` with one `<li>` per project), keyed by `id`. Each card is the kit `CardShell` (an `<article>` with the design's radius, padding and shadow), named by the project name through `aria-label`. It shows, top to bottom with an 8px gap:
 
+- when `updatedAt` is set, the last-updated time relative to the page visit, in a `<time>` element whose `dateTime` is the ISO timestamp, formatted with `Intl.RelativeTimeFormat(locale)` in the largest whole unit (e.g. `49 minutes ago`, `1 week ago`; under a minute reads `now`);
 - the name, through `Highlight` with `maxLines={1}`;
 - when `isPinned`, an `IconPinFilled` marker (`aria-hidden`) followed by visually hidden `labels.pinnedLabel` text, on the inline end of the name row;
-- under a divider, the kit `FolderPath`, named by `labels.folderPathLabel`, whose segments are `labels.sourceLabels[source]` followed by the `/`-separated `parentPath` folders.
+- the kit `FolderPath`, with no divider above it, named by `labels.folderPathLabel`, whose segments are `labels.sourceLabels[source]` followed by the `/`-separated `parentPath` folders.
 
-No description, source badge or last-updated date is rendered: the listing carries no description, and the design shows the source only in the folder path.
+No description or source badge is rendered: the listing carries no description, and the design shows the source only in the folder path.
 
-**Interactive cards.** When `onOpenProject` and `getProjectHref` are supplied, the name SHALL be an `<a href={getProjectHref(id)}>`. Its `::after` is stretched over the card, so the whole card is the click target, while the link remains the single tab stop. A primary click without modifier keys calls `event.preventDefault()` and then `onOpenProject(id)`. A modified or middle click follows the `href`, so the project opens in a new tab. Hover and `:focus-visible` apply the same card highlight.
+**Interactive cards.** When `onOpenProject` and `getProjectHref` are supplied, the name SHALL be an `<a href={getProjectHref(id)}>`. Its `::after` is stretched over the card, so the whole card is the click target, while the link remains the single tab stop. A primary click without modifier keys calls `event.preventDefault()` and then `onOpenProject(id)`. A modified or middle click follows the `href`, so the project opens in a new tab. Hover and `:focus-visible` apply the same card highlight: the kit `CardShell` lift with `shadow-lg` (none under `prefers-reduced-motion`), plus a focus outline in `--stroke-focus` on `:focus-visible`. The card background does not change.
 
 Without those props, cards are not interactive: no link, button or `tabIndex`.
 
@@ -188,7 +189,12 @@ The **New project** buttons are specified separately, in "Projects page offers N
 #### Scenario: Card content
 
 - **WHEN** a project `{ name: 'Handbook', source: ProjectSource.Organization, updatedAt: 1789000000000 }` is rendered
-- **THEN** its card is an `<article>` named `Handbook` that shows the name and a folder path containing only the organization source label, and renders no `<time>` element
+- **THEN** its card is an `<article>` named `Handbook` that shows a `<time>` element with the relative last-updated time, the name, and a folder path containing only the organization source label
+
+#### Scenario: Undated card has no time
+
+- **WHEN** a project has no `updatedAt`
+- **THEN** its card renders no `<time>` element
 
 #### Scenario: Nested project shows its folders
 
@@ -217,11 +223,11 @@ The lib SHALL render exactly one content state at a time:
 - **Loading** (`isLoading`): the kit `Spinner`.
 - **Error** (`hasError && !isLoading`): `labels.errorLabel` with a retry button labelled `labels.retryLabel` that calls `onRetry`.
 - **Incomplete and empty** (`incompleteSources` non-empty and no projects): `labels.incompleteLabel` with the same retry button, instead of the empty state, so a degraded answer never claims there are no projects.
-- **Empty** (no projects, every source complete): `PanelEmptyState` from `@epam/ai-dial-chat-shared` with `labels.emptyStateLabel` ("No projects yet") and `labels.emptyStateDescription` ("Your projects will appear here once created.").
-- **No results** (projects exist but the search matches none): a separate `PanelEmptyState` with `labels.noResultsLabel`.
+- **Empty** (no projects, every source complete): `PanelEmptyState` from `@epam/ai-dial-chat-shared` with `labels.emptyStateLabel` ("No projects yet") and `labels.emptyStateDescription` ("Your projects will appear here once created."), at the top of the content area.
+- **No results** (projects exist but the search matches none): a separate `PanelEmptyState` with `labels.noResultsLabel`, at the top of the content area.
 - **List**: otherwise.
 
-The title, the subtitle and the toolbar (search + sort) stay rendered in every state. When `incompleteSources` is non-empty and projects are listed, a notice with `labels.incompleteLabel` and the retry button renders above the list or the no-results state.
+The title, the subtitle (when `labels.subtitle` is set) and the toolbar (search + sort) stay rendered in every state. Loading, error and incomplete-and-empty states are centred in the content area. When `incompleteSources` is non-empty and projects are listed, a notice with `labels.incompleteLabel` and the retry button renders above the list or the no-results state.
 
 #### Scenario: Loading state
 
@@ -257,8 +263,7 @@ The title, the subtitle and the toolbar (search + sort) stay rendered in every s
 
 Every user-visible string SHALL be resolved in `ProjectsPage` with `useTranslation().t()` and passed to the lib as a plain string. The keys live in a new `projects` namespace in `apps/chat/src/i18n/locales/en.json` and are referenced through a `ProjectsI18nKeys` enum in `apps/chat/src/constants/translation-keys.ts`:
 
-- `projects.page.title`
-- `projects.page.subtitle`
+- `projects.page.title` ("All projects")
 - `projects.toolbar.searchPlaceholder`
 - `projects.toolbar.searchAriaLabel`
 - `projects.toolbar.sortNewest`
@@ -275,13 +280,13 @@ Every user-visible string SHALL be resolved in `ProjectsPage` with `useTranslati
 - `projects.source.organization`
 - `projects.card.folderPath` ("Project location", the folder path's accessible name)
 
-The sort control label reuses `ButtonsI18nKeys.Sort`, the retry label reuses `ButtonsI18nKeys.Retry`, and the clear-search label reuses `BasicI18nKeys.ClearSearch`, instead of new `projects.*` keys. The nav label key `navigation.projects` is specified in `navigation-routing`. The former `projects.card.updatedAt` key is removed together with the card's date line.
+The sort control label reuses `ButtonsI18nKeys.Sort`, the retry label reuses `ButtonsI18nKeys.Retry`, and the clear-search label reuses `BasicI18nKeys.ClearSearch`, instead of new `projects.*` keys. The nav label key `navigation.projects` is specified in `navigation-routing`. The former `projects.card.updatedAt` key stays removed: the card's relative time comes from `Intl.RelativeTimeFormat`, not a translation. The former `projects.page.subtitle` key is removed; the design shows no page description, so `ProjectsPage` passes no `labels.subtitle`.
 
 #### Scenario: Keys exist in en.json
 
 - **WHEN** the change is applied
 - **THEN** every `projects.*` key listed above exists in `en.json` and in `ProjectsI18nKeys`
-- **AND** the keys `projects.toolbar.sortLabel`, `projects.toolbar.clearSearchLabel`, `projects.error.retry` and `projects.card.updatedAt` SHALL NOT exist
+- **AND** the keys `projects.page.subtitle`, `projects.toolbar.sortLabel`, `projects.toolbar.clearSearchLabel`, `projects.error.retry` and `projects.card.updatedAt` SHALL NOT exist
 
 ### Requirement: Projects page is mobile-first, RTL-safe and meets WCAG 2.1 AAA
 
@@ -289,7 +294,8 @@ The Projects lib and page SHALL meet the layout, RTL, accessibility and memoisat
 
 **Layout:**
 
-- The lib layout SHALL be mobile-first. Cards use one column by default and, under the `desktop:` variant from `tools/tailwind/theme.css`, three columns with a 20px gap in a grid at most 1116px wide.
+- The lib layout SHALL be mobile-first. Cards use one column by default and, under the `desktop:` variant from `tools/tailwind/theme.css`, three columns with a 20px gap in a centred grid at most 1116px wide.
+- The header, the toolbar and the content area have 16px inline padding on mobile and 32px under `desktop:`; the header has 16px block padding, the toolbar 16px above and 20px below, and the content area 24px above.
 - No `sm:`/`md:`/`lg:`/`xl:` prefixes are used.
 - Long names truncate to one line with a tooltip, and the folder path collapses or truncates inside the card, so the page never scrolls horizontally at a 320 px viewport.
 - On `mobile`, the toolbar stacks the search above the sort control.
@@ -297,7 +303,7 @@ The Projects lib and page SHALL meet the layout, RTL, accessibility and memoisat
 **RTL:**
 
 - Only logical properties are used (`ms-*`/`me-*`, `ps-*`/`pe-*`, `start-*`/`end-*`, `text-start`, `border-s-*`).
-- The folder path's separators come from the kit `FolderPath`; the page adds no directional icon of its own (`IconArrowsSort` and `IconPlus` are symmetric).
+- The folder path's separators come from the kit `FolderPath`; the page adds no directional icon of its own (`IconArrowsSort` is symmetric).
 - Direction is inherited from `<html dir>`. The lib does not read the language.
 
 **Accessibility:**
@@ -345,14 +351,14 @@ The Projects lib and page SHALL meet the layout, RTL, accessibility and memoisat
 
 When `onCreateProject` is supplied, the `Projects` lib component SHALL render two **New project** buttons, both labelled `labels.createProjectLabel` and both calling `onCreateProject`:
 
-- **Header button:** a primary kit `Button` with a leading `IconPlus` (`aria-hidden`, `stroke={DIAL_KIT_ICON_STROKE}`), on the inline end of the title row. It is rendered in every content state.
-- **Empty-state button:** passed as the `action` of the empty-state `PanelEmptyState`, so it renders only in the Empty state. It does not render in the no-results, error or incomplete states.
+- **Header button:** a primary kit `Button` without an icon, on the inline end of the title row. It is rendered in every content state.
+- **Empty-state button:** a secondary kit `Button` without an icon, passed as the `action` of the empty-state `PanelEmptyState`, so it renders only in the Empty state. It does not render in the no-results, error or incomplete states.
 
 When `onCreateProject` is omitted, neither button renders.
 
 `ProjectsPage` passes `onCreateProject={() => navigate(ROUTES.ProjectCreate)}` (memoised with `useCallback`), and resolves `labels.createProjectLabel` from `projects.page.newProject` ("New project"). On `mobile`, the header button stays visible next to the title. The title wraps before the button is pushed out, and the page never scrolls horizontally at 320 px.
 
-**Feature flag:** inherits `projectsEnabled` from the page. **RTL impact:** the button sits at the inline end through logical properties, and `IconPlus` is symmetric, so it is not mirrored. **i18n impact:** `projects.page.newProject`.
+**Feature flag:** inherits `projectsEnabled` from the page. **RTL impact:** the button sits at the inline end through logical properties. **i18n impact:** `projects.page.newProject`.
 
 #### Scenario: Header button navigates to the create page
 

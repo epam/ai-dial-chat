@@ -6,8 +6,8 @@
   color: var(--pr-card-title-text, var(--text-primary, #161b2d));
 }
 
-.footer {
-  border-top: 1px solid var(--pr-card-divider, var(--stroke-tertiary, #e0e6f0));
+.updatedAt {
+  color: var(--pr-updated-at-text, var(--text-secondary, #57647a));
 }
 
 .path {
@@ -46,13 +46,8 @@
 .interactive {
   cursor: pointer;
 
-  &:hover,
   &:has(.link:focus-visible) {
-    background: var(--pr-card-hover-bg, var(--bg-layer-hover, #eef1f7));
-  }
-
-  &:has(.link:focus-visible) {
-    outline: 2px solid var(--stroke-focus, #1d4ed8);
+    outline: 2px solid var(--stroke-focus, #161b2d);
     outline-offset: 2px;
   }
 }

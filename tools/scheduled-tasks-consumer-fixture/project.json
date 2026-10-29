@@ -46,5 +46,6 @@
       },
       "dependsOn": ["pack-lib"]
     }
-  }
+  },
+  "tags": ["type:fixture"]
 }

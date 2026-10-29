@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { resolveCelebrationPools } from '../../../../utils/celebration';
 import { NEW_YEAR_LABELS } from '../../../constants/labels';
 import { newYearEvent as newYear } from '../../../event';
 import { NewYearScene } from '../../../types/new-year';
@@ -39,16 +40,34 @@ describe('NewYearDecor', () => {
 });
 
 describe('New Year event contract', () => {
-  it('offers only the penguin on gift clicks and only the elves for the phrase', () => {
+  it('offers the penguin and the snowman on gift clicks and only the elves for the phrase', () => {
     expect(newYear.scenes.map(({ id }) => id)).toEqual([
       NewYearScene.PenguinStar,
       NewYearScene.GiftWrapping,
+      NewYearScene.SnowmanDelivery,
     ]);
-    expect(newYear.clickSceneIds).toEqual([NewYearScene.PenguinStar]);
+    expect(newYear.clickSceneIds).toEqual([
+      NewYearScene.PenguinStar,
+      NewYearScene.SnowmanDelivery,
+    ]);
     expect(newYear.secretTrigger?.sceneIds).toEqual([
       NewYearScene.GiftWrapping,
     ]);
   });
+
+  it.each([
+    [NewYearScene.SnowmanDelivery, [NewYearScene.PenguinStar]],
+    [NewYearScene.PenguinStar, [NewYearScene.SnowmanDelivery]],
+  ])(
+    'keeps the other click scene when the host disables %s',
+    (disabled, expected) => {
+      const pools = resolveCelebrationPools(newYear, {
+        disabledScenes: [disabled],
+      });
+      expect(pools.clickSceneIds).toEqual(expected);
+      expect(pools.secretSceneIds).toEqual([NewYearScene.GiftWrapping]);
+    },
+  );
 
   it('has a runnable scene for every trigger and a secret hint in every notification', () => {
     const sceneIds = newYear.scenes.map((scene) => scene.id);

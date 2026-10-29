@@ -20,7 +20,8 @@
   "nx": {
     "name": "chat-api-client",
     "tags": [
-      "publishable"
+      "publishable",
+      "type:api-client"
     ],
     "targets": {
       "publish": {
