@@ -1,7 +1,9 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   ExternalServiceAuthType,
   ExternalServiceCredentialsLevel,
+} from '@epam/ai-dial-chat-hooks';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
   getExternalService,
   listExternalServices,
   signInExternalService,

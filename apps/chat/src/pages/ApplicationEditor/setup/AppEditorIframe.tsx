@@ -1,5 +1,8 @@
 import type { CatalogItemCredentials } from '@epam/ai-dial-catalog';
-import type { ApplicationSchemaSummaryDto } from '@epam/ai-dial-chat-api-client';
+import type {
+  ApplicationSchemaSummaryDto,
+  ApplicationExternalServiceDto,
+} from '@epam/ai-dial-chat-api-client';
 import {
   decodeToolsetId,
   mapDeploymentDetailsDtoToEntityDetails,
@@ -17,6 +20,8 @@ import {
   ToolsetOAuthResultType,
   waitForToolsetOAuthResult,
   ExternalServiceLoginOutcomeType,
+  ExternalServiceAuthType,
+  ExternalServiceCredentialsLevel,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
@@ -53,12 +58,7 @@ import { useTheme } from '../../../context/ThemeContext';
 import { useExternalServiceLogin } from '../../../hooks/externalServices/useExternalServiceLogin';
 import { useUiFeature } from '../../../hooks/useUiFeature';
 import { getDeploymentDetails } from '../../../server-api/deployments';
-import {
-  type ApplicationExternalServiceDto,
-  ExternalServiceAuthType,
-  ExternalServiceCredentialsLevel,
-  listExternalServices,
-} from '../../../server-api/external-services';
+import { listExternalServices } from '../../../server-api/external-services';
 import { getToolset, logoutToolset } from '../../../server-api/toolsets';
 import type {
   ExternalServiceLoginResultPayload,

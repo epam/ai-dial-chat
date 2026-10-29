@@ -7,19 +7,6 @@ import type {
 } from '@epam/ai-dial-chat-api-client';
 import { externalServicesApi } from './api-client';
 
-export type {
-  ApplicationExternalServiceDto,
-  ExternalServiceAuthResultDto,
-  ExternalServiceLogoutBodyDto,
-  ExternalServiceSigninBodyDto,
-  GetExternalServiceResponseDto,
-} from '@epam/ai-dial-chat-api-client';
-
-export {
-  ExternalServiceAuthType,
-  ExternalServiceCredentialsLevel,
-} from '@epam/ai-dial-chat-hooks';
-
 /** An application's public external-service listing, OAuth client settings included (never secrets). */
 export const listExternalServices = (
   appId: string,

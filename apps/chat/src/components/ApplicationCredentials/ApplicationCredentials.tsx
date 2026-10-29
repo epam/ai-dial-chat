@@ -7,6 +7,8 @@ import {
 import {
   useApplicationCredentials,
   ExternalServiceLoginOutcomeType,
+  ExternalServiceAuthType,
+  ExternalServiceCredentialsLevel,
 } from '@epam/ai-dial-chat-hooks';
 import { useCallback, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -23,11 +25,7 @@ import {
   externalServicesApi,
   offlineCredentialsApi,
 } from '../../server-api/api-client';
-import {
-  ExternalServiceAuthType,
-  ExternalServiceCredentialsLevel,
-  signOutExternalService,
-} from '../../server-api/external-services';
+import { signOutExternalService } from '../../server-api/external-services';
 
 interface ApplicationCredentialsProps {
   appId: string;

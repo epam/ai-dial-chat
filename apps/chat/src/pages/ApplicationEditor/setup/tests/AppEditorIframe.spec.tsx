@@ -1,4 +1,7 @@
-import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
+import type {
+  DialToolsetDto,
+  ApplicationExternalServiceDto,
+} from '@epam/ai-dial-chat-api-client';
 import {
   emitToolsetLoginSuccess,
   getToolsetOAuthChannelName,
@@ -1780,7 +1783,7 @@ describe('application credential requests from Quick apps', () => {
 describe('AppEditorIframe — external-service login request', () => {
   const RAW_APP_ID = 'applications/public/runner app';
   const ENCODED_APP_ID = 'applications/public/runner%20app';
-  const OAUTH_SERVICE: externalServicesApi.ApplicationExternalServiceDto = {
+  const OAUTH_SERVICE: ApplicationExternalServiceDto = {
     id: 'gitlab-oauth',
     displayName: 'GitLab',
     authenticationType: 'OAUTH',
