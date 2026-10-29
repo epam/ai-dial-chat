@@ -1,3 +1,4 @@
+import { AttachmentCanvasProvider } from '@epam/ai-dial-attachment-canvas';
 import {
   SkillMetadataItemDtoNodeTypeEnum,
   type SkillCatalogListResponseDto,
@@ -158,6 +159,7 @@ const renderHarness = (skillId?: string) =>
         </SkillsProvider>
       </DeploymentsProvider>
     </MemoryRouter>,
+    { wrapper: AttachmentCanvasProvider },
   );
 
 describe('ConversationRoute — route-driven skill selection (issue #9109)', () => {

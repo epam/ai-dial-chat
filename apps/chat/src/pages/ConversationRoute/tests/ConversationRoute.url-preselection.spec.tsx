@@ -1,3 +1,4 @@
+import { AttachmentCanvasProvider } from '@epam/ai-dial-attachment-canvas';
 import {
   SkillMetadataItemDtoNodeTypeEnum,
   type SkillCatalogListResponseDto,
@@ -235,7 +236,9 @@ const renderAt = (url: string, routerState?: unknown) => {
     },
   ]);
   routers.push(router);
-  const view = render(<RouterProvider router={router} />);
+  const view = render(<RouterProvider router={router} />, {
+    wrapper: AttachmentCanvasProvider,
+  });
   views.push(view);
   return view;
 };

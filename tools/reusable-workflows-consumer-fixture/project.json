@@ -13,6 +13,8 @@
           "projects": [
             "@epam/ai-dial-skills",
             "@epam/ai-dial-prompts",
+            "@epam/ai-dial-chat-hooks",
+            "@epam/ai-dial-attachment-canvas",
             "chat-api-client"
           ],
           "target": "build"

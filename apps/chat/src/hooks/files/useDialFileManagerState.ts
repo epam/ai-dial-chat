@@ -1,55 +1,15 @@
 import {
-  dialFilesToAttachments,
-  dialFolderPathToAttachment,
-} from '@epam/ai-dial-chat-hooks';
-import type { AttachResult, Attachment } from '@epam/ai-dial-chat-shared';
-import { useCallback, useState } from 'react';
+  useFileAttachmentModalState,
+  type UseFileAttachmentModalStateResult,
+} from '@epam/ai-dial-chat-hooks/file-manager';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
-
-export interface UseDialFileManagerStateResult {
-  isOpen: boolean;
-  openModal: () => void;
-  closeModal: () => void;
-  pendingAttachments: Attachment[];
-  clearPendingAttachments: () => void;
-  handleAttach: (result: AttachResult) => void;
-}
-
+/** Parent attachment modal result. */
+export type UseDialFileManagerStateResult = UseFileAttachmentModalStateResult;
+/** Supplies the host bucket and image preview resolver to pending attachment state. */
 export const useDialFileManagerState = (
   bucket: string,
-): UseDialFileManagerStateResult => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [pendingAttachments, setPendingAttachments] = useState<Attachment[]>(
-    [],
-  );
-
-  const openModal = useCallback(() => setIsOpen(true), []);
-  const closeModal = useCallback(() => setIsOpen(false), []);
-  const clearPendingAttachments = useCallback(
-    () => setPendingAttachments([]),
-    [],
-  );
-
-  const handleAttach = useCallback(
-    (result: AttachResult) => {
-      const fileAttachments = dialFilesToAttachments(result.files, bucket, {
-        resolvePreviewUrl: resolveCatalogIconUrl,
-      });
-      const folderAttachments = result.folderPaths.map(
-        dialFolderPathToAttachment,
-      );
-      setPendingAttachments([...fileAttachments, ...folderAttachments]);
-      setIsOpen(false);
-    },
-    [bucket],
-  );
-
-  return {
-    isOpen,
-    openModal,
-    closeModal,
-    pendingAttachments,
-    clearPendingAttachments,
-    handleAttach,
-  };
-};
+): UseDialFileManagerStateResult =>
+  useFileAttachmentModalState({
+    bucket,
+    resolvePreviewUrl: resolveCatalogIconUrl,
+  });

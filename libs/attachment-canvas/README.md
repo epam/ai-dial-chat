@@ -25,7 +25,7 @@ Canvas/viewer component for rendering attachment content inline — images, audi
 Everything else this package needs it installs itself, as a `dependency`: the
 PDF stack (`@epam/ai-dial-react-pdf-highlighter`, `@epam/pdf-highlighter-kit`,
 `pdfjs-dist`), the MCP stack (`@mcp-ui/client`, `@modelcontextprotocol/sdk`,
-`@modelcontextprotocol/ext-apps`), the visualizer connector
+`@modelcontextprotocol/ext-apps`, `zod`), the visualizer connector
 (`@epam/ai-dial-visualizer-connector`, a sibling workspace package),
 `@tabler/icons-react`, `react-json-view-lite` and
 `react-syntax-highlighter`. A host rendering the
@@ -46,6 +46,12 @@ Although this library does not import `pdfjs-dist` directly,
 `@epam/pdf-highlighter-kit` exposes it as part of the shared PDF runtime, so it
 is declared here as well — as a dependency pinning the tested `^5.4.149` line,
 rather than relying on whatever a transitive resolution happens to produce.
+
+The public MCP host-context type comes directly from ext-apps. Zod 4 is an
+explicit dependency because ext-apps' public schemas require its compatible
+type API; consumers do not need the workspace's MCP client override to check
+canvas declarations. Other feature packages derive that context type from
+`McpAppCanvasContent['hostContext']`.
 
 The library installs `@silurus/ooxml` as a runtime dependency and leaves its
 format entry points external in the published artifact. A consuming bundler
@@ -268,6 +274,22 @@ openCanvas(
 ```
 
 ## Hooks
+
+### useLatestCanvasRequest
+
+Call this hook inside `AttachmentCanvasProvider` and call its returned function
+at preview-click time. It returns a `ShouldCommitCanvas` guard suitable for
+`useOpenAttachmentCanvas`: the guard stays true only while the caller remains
+mounted and no newer request has started under the same provider. File,
+message and source previews share ordering when they share a provider;
+independently embedded providers do not invalidate one another. A later
+synchronous preview also invalidates earlier pending requests.
+
+```ts
+import { useLatestCanvasRequest } from '@epam/ai-dial-attachment-canvas';
+
+const usePreviewRequest = () => useLatestCanvasRequest();
+```
 
 ### useOpenAttachmentCanvas
 

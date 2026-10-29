@@ -1,6 +1,10 @@
-import type { McpAppDisplayMode } from '@epam/ai-dial-attachment-canvas';
-import type { McpUiHostContext } from '@mcp-ui/client';
+import type {
+  McpAppCanvasContent,
+  McpAppDisplayMode,
+} from '@epam/ai-dial-attachment-canvas';
 import { useMemo } from 'react';
+
+type McpUiHostContext = NonNullable<McpAppCanvasContent['hostContext']>;
 
 /* All CSS variable names defined by the MCP UI standard (McpUiStyleVariableKey union). */
 const MCP_UI_CSS_VAR_KEYS = [

@@ -1,6 +1,10 @@
-import { renderHook } from '@testing-library/react';
+import { AttachmentCanvasProvider } from '@epam/ai-dial-attachment-canvas';
+import { renderHook as render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { useLatestCanvasRequest } from '../useLatestCanvasRequest';
+
+const renderHook = <T>(callback: () => T) =>
+  render(callback, { wrapper: AttachmentCanvasProvider });
 
 describe('useLatestCanvasRequest', () => {
   it('lets the latest request commit', () => {
@@ -31,8 +35,12 @@ describe('useLatestCanvasRequest', () => {
   });
 
   it('supersedes requests started by another component instance', () => {
-    const { result: resultA } = renderHook(() => useLatestCanvasRequest());
-    const { result: resultB } = renderHook(() => useLatestCanvasRequest());
+    const { result } = renderHook(() => ({
+      a: useLatestCanvasRequest(),
+      b: useLatestCanvasRequest(),
+    }));
+    const resultA = { current: result.current.a };
+    const resultB = { current: result.current.b };
 
     const fromA = resultA.current();
     const fromB = resultB.current();
@@ -58,4 +66,16 @@ describe('useLatestCanvasRequest', () => {
 
     expect(result.current).toBe(first);
   });
+});
+
+it('keeps independent canvas providers independent', () => {
+  const view = renderHook(() => useLatestCanvasRequest());
+  const utils = renderHook(() => useLatestCanvasRequest());
+  const a = view.result.current();
+  const b = utils.result.current();
+  expect(a()).toBe(true);
+  expect(b()).toBe(true);
+  utils.unmount();
+  expect(a()).toBe(true);
+  expect(b()).toBe(false);
 });

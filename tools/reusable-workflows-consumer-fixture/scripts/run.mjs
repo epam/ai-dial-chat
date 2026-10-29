@@ -61,12 +61,21 @@ import {
   npmInstallFixture,
   typecheckFixture,
 } from '../../../libs/chat-hooks/e2e-fixtures/harness.mjs';
-import { UI_KIT_EDITOR_PEERS } from '../../../libs/chat-hooks/e2e-fixtures/fixtures.mjs';
+import {
+  UI_KIT_EDITOR_PEERS,
+  REUSABLE_CONTROLLER_EXPORTS,
+  ALL_OPTIONAL_PEERS,
+} from '../../../libs/chat-hooks/e2e-fixtures/fixtures.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const fixtureRoot = path.resolve(here, '..');
 const workspaceRoot = path.resolve(fixtureRoot, '..', '..');
-const ROOT_PACKAGES = ['@epam/ai-dial-skills', '@epam/ai-dial-prompts'];
+const ROOT_PACKAGES = [
+  '@epam/ai-dial-skills',
+  '@epam/ai-dial-prompts',
+  '@epam/ai-dial-chat-hooks',
+  '@epam/ai-dial-attachment-canvas',
+];
 /*
  * `@epam/ai-dial-ui-kit`'s published root entry reaches its optional editor
  * stack by name even for a consumer that never touches an editor component —
@@ -75,8 +84,13 @@ const ROOT_PACKAGES = ['@epam/ai-dial-skills', '@epam/ai-dial-prompts'];
  * around by naming these three explicitly; reusing that same constant here
  * keeps the two suites from silently drifting on the workaround.
  */
-const EXTRA_DIRECT_PEERS = [...UI_KIT_EDITOR_PEERS];
-const ROOT_PROJECT_ROOTS = ['libs/skills', 'libs/prompts'];
+const EXTRA_DIRECT_PEERS = [...UI_KIT_EDITOR_PEERS, ...ALL_OPTIONAL_PEERS];
+const ROOT_PROJECT_ROOTS = [
+  'libs/skills',
+  'libs/prompts',
+  'libs/chat-hooks',
+  'libs/attachment-canvas',
+];
 const keepFixtures = process.env.KEEP_FIXTURES === '1';
 
 for (const projectRoot of ROOT_PROJECT_ROOTS) {
@@ -162,6 +176,16 @@ try {
       `export * from '@epam/ai-dial-prompts';`,
       // Explicitly guard the existing root API against accidental removal.
       `export { PromptParametersPopup } from '@epam/ai-dial-prompts';`,
+      `export { useLatestCanvasRequest } from '@epam/ai-dial-attachment-canvas';`,
+      ...Object.entries(REUSABLE_CONTROLLER_EXPORTS).map(
+        ([entry, names]) =>
+          `export { ${names.join(', ')} } from '@epam/ai-dial-chat-hooks/${entry}';`,
+      ),
+      `export { ${[
+        ...new Set(Object.values(REUSABLE_CONTROLLER_EXPORTS).flat()),
+      ]
+        .map((name) => `${name} as Root${name.replace(/^type /, '')}`)
+        .join(', ')} } from '@epam/ai-dial-chat-hooks';`,
       '',
     ].join('\n'),
   );

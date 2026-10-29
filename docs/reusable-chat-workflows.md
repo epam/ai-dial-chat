@@ -1,6 +1,6 @@
 # Reusable chat workflows
 
-Three stateful chat workflows ship as public package APIs so that every
+The original reusable chat workflows ship as public package APIs so that every
 DIAL-Core-backed chat application can run the same state machine instead of
 keeping its own copy:
 
@@ -19,7 +19,8 @@ This guide covers two hosts:
 - **The parent** — `apps/chat` in this repository. It already runs all four
   workflows through the public APIs (see [Parent adoption](#parent-adoption-appschat)).
 - **The client application** — a second chat host maintained in its own
-  repository, which is not checked out here. It has **not** been migrated.
+  repository. The original migration status below describes the September audit;
+  the October controller audit and its separate adoption work are recorded below.
   The change that extracted these workflows
   ([`extract-reusable-chat-workflows`](../openspec/changes/archive/2026-09-21-extract-reusable-chat-workflows/design.md))
   deliberately made no client application edits and published no packages.
@@ -53,8 +54,14 @@ status, selection set, tab state or pending-prompt state.
 The client application paths below are relative to the client application's
 own repository. They come from the 2026-09-21 audit recorded in the archived
 [design](../openspec/changes/archive/2026-09-21-extract-reusable-chat-workflows/design.md).
-This repository cannot re-check them, so confirm each one against current
-client application source before you start.
+These September observations are historical. The 2026-10-29 audit in
+`extract-reusable-chat-controllers` identifies the remaining controller copies
+against client baseline `ab1c1c5845b19dbcba0d2444bd56fd894a58d8a9`, installed
+packages `1.3.0-dev.234`, and parent baseline
+`a52f11011e0201345e0ff9fa4e0c3f5b7a41c655`. It treats skill import, prompt
+selection, attachment browsing and conversation drafts as already shared;
+do not repeat those extractions. Confirm client paths against its checkout
+before starting a downstream migration.
 
 Audit observations: the client application's skill hook and dialog bodies
 matched the parent's pre-extraction copies. Its prompt orchestration differed
@@ -82,7 +89,8 @@ application row for them. To adopt: build a store with
 `restoreDraft` that seeds its own composer and mention state, wire
 `handleTextChange` to `onChange` and `sendWithDraft` around the send, and call
 `store.remove` / `store.clear` from its delete, delete-all and logout flows. No
-workflow logic needs deleting — the client application has none today.
+workflow logic was identified for deletion in the September baseline; the
+October audit treats the draft engine as already shared.
 
 Styles: `@epam/ai-dial-skills/styles.css` and `@epam/ai-dial-prompts/styles.css`
 are each imported once at the host root. `@epam/ai-dial-chat-hooks` is
@@ -346,3 +354,93 @@ them is deliberate:
   packages. It does not show that the client application has migrated or that
   its own test suite passes against the aligned release. Both remain
   follow-up work in the client application's repository.
+
+## October controller extraction and downstream adoption
+
+The parent now delegates the ten audited algorithms through these public APIs.
+All `chat-hooks` names are also root exports. Existing app signatures remain
+compatibility adapters; no provider's complete conversation list is filtered.
+The client paths below use the audit's `apps/chat/src/` prefix.
+
+| Client copy                                                                       | Owning public import                                                                                                                                | Retained host integration                                                                                             |
+| --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `utils/file-download.ts`                                                          | `triggerBrowserDownload` from `@epam/ai-dial-chat-hooks/utils`                                                                                      | Response acquisition, fallback name and prepared save destination                                                     |
+| `utils/collapse-scheduled-task-conversations.ts`                                  | `groupScheduledTaskConversations`, `applyActiveScheduledTaskRun`, `collapseScheduledTaskConversations` from `@epam/ai-dial-chat-hooks/conversation` | Owner-qualified `getGroupKey`, `isCollapsible` and `conversationIdsMatch`                                             |
+| `hooks/conversation/useConversationDiscovery.ts`                                  | `useConversationDiscovery` from `@epam/ai-dial-chat-hooks/conversation`                                                                             | Complete listing, refresh, opaque session key, ID normalization and retry error handling                              |
+| `hooks/scheduled-tasks/useScheduledTaskSkillDisplayNames.ts`                      | `useScheduledTaskSkillDisplayNames` from `@epam/ai-dial-chat-hooks/scheduled-tasks`                                                                 | Listed metadata and `getMetadata(url, signal)` with configured API calls                                              |
+| `hooks/skill-editor/useSkillFileSystemPicker.ts`                                  | `useSkillFileSystemPicker` from `@epam/ai-dial-chat-hooks/skill-editor`                                                                             | `materializeFile(file, signal)`, path/root-label resolution, File construction and notifications                      |
+| `hooks/files/useDialFileManagerState.ts`                                          | `useFileAttachmentModalState` from `@epam/ai-dial-chat-hooks/file-manager`                                                                          | Bucket and preview URL resolver; consuming/clearing composer results                                                  |
+| `hooks/files/useDialFilePreview.ts`, `hooks/attachment/useLatestCanvasRequest.ts` | `useDialFilePreview` from `@epam/ai-dial-chat-hooks/file-manager-canvas`; `useLatestCanvasRequest` from `@epam/ai-dial-attachment-canvas`           | Canvas hooks, supported extensions, download URL resolution; one existing provider per independent canvas             |
+| `hooks/useUrlEntityPreselection/useUrlEntityPreselection.ts`                      | `useEntityPreselection` from `@epam/ai-dial-chat-hooks/conversation`                                                                                | Parsed arrival snapshot, listings/loaders, feature booleans, sinks, URL cleanup, router state and translated outcomes |
+| `utils/canvas-width.ts`                                                           | `resolveCanvasWidth`, `CanvasWidthMode` from `@epam/ai-dial-chat-hooks/viewport-layout`                                                             | Route/breakpoint selection, sidebar width and numeric layout policy                                                   |
+| `hooks/useLocalStorage.ts`                                                        | `usePersistedState` from `@epam/ai-dial-chat-hooks/utils`                                                                                           | Storage selection, keys, read/write functions and codec; preserve the host export signature                           |
+
+Grouping must adapt the client's bucket-first IDs; do not copy the parent's
+resource-prefixed `conversations/{bucket}/...` parser. The key includes the
+owner as well as schedule ID. The parent excludes pinned/shared/published runs
+through its callback. An older active run replaces the representative at its
+own input position; unchanged selections reuse the collapsed array.
+
+Discovery defaults to five additional retries with a two-second delay after
+settlement. Duplicate pending IDs share one timer. Session changes and unmount
+retire old work. Initial refresh failures reject to the caller; retry failures
+are reported through `onError`. Skill metadata preserves selection order and
+listed-name precedence, falls back to URLs, and aborts stale requests.
+
+A new file pick, close or unmount cancels the old promise and aborts its
+materializations. Attachment result state remains separate from browsing:
+attach closes the modal, explicit clear consumes results, and reopen does not
+restore consumed attachments. Preview guards coordinate all callers of one
+canvas while remaining independent between providers. Preview callbacks keep
+their identity across listing updates.
+
+Preselection snapshots are mount-scoped. Superseded sources are consumed
+without application, disabled mode has no side effects, and prompt completion
+cannot commit after unmount. The host preserves unrelated query/hash/router
+state. Persisted state also initializes only at mount: changing key/codec
+changes later writes, not current in-memory state; remount to read again.
+
+### Three existing APIs to adopt separately
+
+- Offline credentials: use `useOfflineCredentialsLogin` from
+  `@epam/ai-dial-chat-hooks/offline-credentials`. Adapt the client's enum-only
+  result to the library's `{ type }` result and `{ callbackPath }` options,
+  including `TimedOut`. Preserve synchronous popup reservation and authoritative
+  status refetch. This is an existing API, not another extraction.
+- Usage reset: `formatUsageResetTime` is an existing **root** export of
+  `@epam/ai-dial-chat-hooks`; availability from the client's installed `/usage`
+  entry is not established by that fact. The parent formats using the current
+  offset; the client uses the timestamp's timezone offset. The downstream DST
+  policy remains unresolved. Characterize both sides and decide explicitly
+  before replacing the formatter; this change alters neither policy.
+- Conversation source: use the existing `getConversationSource` from
+  `@epam/ai-dial-chat-hooks/conversation`; no new duplicate classifier is needed.
+
+### Readiness, verification and release status
+
+Source implementation and parent adoption are distinct from packed readiness,
+registry release and actual client adoption. The fixture version is
+`0.0.0-packed.0`, synthesized locally from source packages at `0.0.1`; it is
+not a registry release. The controller checks exercise `./utils`,
+`./conversation`, `./scheduled-tasks`, `./skill-editor`, `./file-manager`,
+`./file-manager-canvas` and `./viewport-layout`, plus the canvas guard.
+`libs/chat-hooks/e2e-fixtures/fixtures.mjs` names every new public contract
+explicitly; `tools/reusable-workflows-consumer-fixture` checks their combined
+consumption with the existing workflow components and lazy engine assertions.
+
+Run the controller suites under `libs/chat-hooks/src` and the corresponding app adapter suites, then:
+
+```sh
+npm exec nx run @epam/ai-dial-chat-hooks:test-packed --only=minimal,conversation,scheduled-tasks,skill-editor,file-manager,file-manager-canvas,utils
+npm exec nx run reusable-workflows-consumer-fixture:verify
+node --test tools/module-boundaries.spec.mjs
+npm run build:quiet
+npm run validate:docs
+npm run validate:specs
+```
+
+Packed-consumer checks verify declarations and production bundling outside workspace aliases, including feature-engine loading boundaries. They establish local package compatibility, not registry publication or application adoption.
+
+No registry publication or client-checkout changes were made. A later release
+must align all required sibling artifacts; client adoption then updates its
+manifest/lockfile, replaces these copies, and runs its own integration tests.

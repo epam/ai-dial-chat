@@ -1,3 +1,4 @@
+import { AttachmentCanvasProvider } from '@epam/ai-dial-attachment-canvas';
 import * as chatHooksModule from '@epam/ai-dial-chat-hooks';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -292,6 +293,7 @@ const renderOverlayHarness = (modelId: string) =>
         </DeploymentsProvider>
       </OverlayStub>
     </MemoryRouter>,
+    { wrapper: AttachmentCanvasProvider },
   );
 
 const renderHarness = () =>
@@ -301,6 +303,7 @@ const renderHarness = () =>
         <Harness />
       </DeploymentsProvider>
     </MemoryRouter>,
+    { wrapper: AttachmentCanvasProvider },
   );
 
 describe('ConversationRoute — new chat model inheritance (issue #8150 Case 3)', () => {

@@ -20,6 +20,7 @@ export const EXTERNAL_PACKAGE_NAMES = [
   '@mcp-ui/client',
   '@modelcontextprotocol/sdk',
   '@modelcontextprotocol/ext-apps',
+  'zod',
   'pdfjs-dist',
 ] as const;
 

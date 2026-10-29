@@ -319,6 +319,22 @@ offers no theme or "Default agent for new chats" submenu. The mobile drawer's
 menu adds the keyboard-shortcut group, which the desktop menu leaves to the
 Settings dialog.
 
+Reusable non-rendering controllers in `chat-hooks` now own browser downloads,
+scheduled-run grouping, conversation discovery, selected skill names, skill
+file selection, pending attachment results, file preview, entity preselection,
+canvas width calculation and injected persisted state. Their existing
+`apps/chat` entry points retain host policies and delegate through public
+package exports. Canvas preview ordering belongs to each existing
+`AttachmentCanvasProvider`, with per-caller unmount guards; independent
+providers do not share a generation counter. See
+[reusable chat workflows](reusable-chat-workflows.md) for the owning entries,
+retained adapters and downstream migration status.
+
+The chat-shared root preserves its public File Manager types and grid event
+hook, so File Manager is a required peer and AG Grid a dependency even for
+declaration-only consumers. Grid rendering remains behind the file-manager
+entry. See [the package contract](../libs/chat-shared/README.md#peer-dependencies).
+
 The frontend uses automatic chunk splitting. Catalog Grid imports the UI Kit's
 `/grid` entry; Markdown editor loaders use `/editors`. File-manager UI has a
 dedicated `@epam/ai-dial-chat-shared/file-manager` entry consumed inside lazy
