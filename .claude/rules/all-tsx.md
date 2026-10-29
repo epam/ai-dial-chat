@@ -12,6 +12,31 @@ alwaysApply: false
 
 Always prefer Tailwind utility classes over inline `style` props. Use the `style` prop only for dynamic computed values (e.g., pixel values from JS measurements, CSS custom properties set by user overrides) that cannot be expressed as static Tailwind classes.
 
+## Canonical Tailwind v4 classes
+
+The workspace runs Tailwind v4. v3 spellings still compile, but
+`tailwindcss/enforces-canonical-classname` is an `error`, so lint fails on
+them. Write the v4 form from the start:
+
+| v3 spelling (lint error)                                          | v4 canonical                                           |
+| ----------------------------------------------------------------- | ------------------------------------------------------ |
+| `flex-shrink-0` / `flex-grow`                                     | `shrink-0` / `grow`                                    |
+| `break-words`                                                     | `wrap-break-word`                                      |
+| `[overflow-wrap:anywhere]`                                        | `wrap-anywhere`                                        |
+| `start-*` / `end-*` / `-end-*`                                    | `inset-s-*` / `inset-e-*` / `-inset-e-*`               |
+| `!h-1` (leading `!`)                                              | `h-1!` (trailing `!`)                                  |
+| `z-[70]`, `max-w-[22rem]`                                         | `z-70`, `max-w-88` (scale value)                       |
+| `w-[var(--x)]`, `h-[var(--x,232px)]`                              | `w-(--x)`, `h-(--x,232px)`                             |
+| `[&>*]:flex-1`                                                    | `*:flex-1`                                             |
+| `group-has-[:focus-visible]/x:`                                   | `group-has-focus-visible/x:`                           |
+| `-translate-y-[3px]`                                              | `translate-y-[-3px]`                                   |
+| `[container-type:inline-size]`                                    | `@container`                                           |
+| `[overflow:clip]`, `[text-wrap:pretty]`, `[field-sizing:content]` | `overflow-clip`, `text-pretty`, `field-sizing-content` |
+| `[gap:0.04em]` (arbitrary property)                               | `gap-[0.04em]` (arbitrary value)                       |
+
+The rule's message names the replacement for anything not listed, and
+`npm exec nx lint <project> -- --fix` rewrites it.
+
 ## Conditional class composition
 
 Compose conditional classes with `mergeClasses` — not template-literal concatenation, string interpolation, or array `.join(' ')`.

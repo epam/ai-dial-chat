@@ -122,15 +122,16 @@ The `<html>` element's `dir` attribute must be set dynamically at runtime. When 
 
 Replace every physical-direction Tailwind class with its logical equivalent so that layout flips automatically when `dir="rtl"` is on an ancestor:
 
-| Physical (forbidden for directional use) | Logical (required)                            |
-| ---------------------------------------- | --------------------------------------------- |
-| `ml-*` / `mr-*`                          | `ms-*` / `me-*`                               |
-| `pl-*` / `pr-*`                          | `ps-*` / `pe-*`                               |
-| `text-left` / `text-right`               | `text-start` / `text-end`                     |
-| `left-*` / `right-*`                     | `start-*` / `end-*`                           |
-| `border-l-*` / `border-r-*`              | `border-s-*` / `border-e-*`                   |
-| `rounded-l-*` / `rounded-r-*`            | `rounded-s-*` / `rounded-e-*`                 |
-| `inset-x-*` one-sided                    | `inset-inline-start-*` / `inset-inline-end-*` |
+| Physical (forbidden for directional use) | Logical (required)            |
+| ---------------------------------------- | ----------------------------- |
+| `ml-*` / `mr-*`                          | `ms-*` / `me-*`               |
+| `pl-*` / `pr-*`                          | `ps-*` / `pe-*`               |
+| `text-left` / `text-right`               | `text-start` / `text-end`     |
+| `left-*` / `right-*`                     | `inset-s-*` / `inset-e-*`     |
+| `border-l-*` / `border-r-*`              | `border-s-*` / `border-e-*`   |
+| `rounded-l-*` / `rounded-r-*`            | `rounded-s-*` / `rounded-e-*` |
+
+`start-*` / `end-*` still compile but are not canonical in Tailwind v4 — lint rejects them (see `.claude/rules/all-tsx.md` "Canonical Tailwind v4 classes").
 
 In CSS/SCSS files use CSS logical properties: `margin-inline-start/end`, `padding-inline-start/end`, `inset-inline-start/end`, `border-inline-start/end`.
 
