@@ -476,6 +476,8 @@ describe('Halloween event through the celebration runtime', () => {
   });
 
   it('loads New Year through the same decor slot and consumes only its own phrase', async () => {
+    // The gift click picks a scene at random; 0 selects PenguinStar.
+    vi.spyOn(Math, 'random').mockReturnValue(0);
     configuredEventId = 'new-year';
     const NewYearTriggers: FC = () => {
       const { consumeSecretPhrase } = useCelebration();
