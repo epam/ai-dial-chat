@@ -68,8 +68,10 @@ describe('publish-ready package artifact size', () => {
      * `@property` registrations, the `@layer properties` fallback and Tailwind's license
      * banner (+1 KB over the v3 output); measured at 239,292.
      * Raised from 240_000: `@epam/ai-dial-react-pdf-highlighter` 0.3.0-dev.3 ships a larger
-     * stylesheet, inlined into dist/PdfContent.css via pdf-vendor.css; measured at 241,076. */
-    expect(artifact.unpackedSize).toBeLessThanOrEqual(242_000);
+     * stylesheet, inlined into dist/PdfContent.css via pdf-vendor.css; measured at 241,076.
+     * Raised from 242_000: the `xlsxFormulaValueClassName` typography field, its README row and
+     * the kit `dial-code-text`/`LiveRegion` adoption; measured at 242,022. */
+    expect(artifact.unpackedSize).toBeLessThanOrEqual(243_000);
   });
 
   it('contains no private OOXML renderer or worker chunks', () => {

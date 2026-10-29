@@ -113,7 +113,9 @@ describe('VisualizerCanvasRenderer', () => {
     renderComponent({ errorLabel: 'Failed to load visualizer' });
 
     expect(
-      (await screen.findByText('Failed to load visualizer')).getAttribute('role'),
+      (await screen.findByText('Failed to load visualizer')).getAttribute(
+        'role',
+      ),
     ).toBe('status');
   });
 
@@ -123,7 +125,9 @@ describe('VisualizerCanvasRenderer', () => {
     renderComponent({ errorLabel: 'Failed to load visualizer' });
 
     expect(
-      (await screen.findByText('Failed to load visualizer')).getAttribute('role'),
+      (await screen.findByText('Failed to load visualizer')).getAttribute(
+        'role',
+      ),
     ).toBe('status');
     expect(sendMock).not.toHaveBeenCalled();
   });
@@ -338,7 +342,9 @@ describe('VisualizerCanvasRenderer — grouped content', () => {
     renderGrouped({ errorLabel: 'Failed to load visualizer' });
 
     expect(
-      (await screen.findByText('Failed to load visualizer')).getAttribute('role'),
+      (await screen.findByText('Failed to load visualizer')).getAttribute(
+        'role',
+      ),
     ).toBe('status');
   });
 });

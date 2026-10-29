@@ -228,9 +228,9 @@ describe('ScheduledTaskConversationDetailsSection', () => {
       />,
     );
 
-    expect(
-      screen.getByText(labels.unavailableLabel).getAttribute('role'),
-    ).toBe('status');
+    expect(screen.getByText(labels.unavailableLabel).getAttribute('role')).toBe(
+      'status',
+    );
     expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull();
   });
 });

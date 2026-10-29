@@ -1016,7 +1016,10 @@ describe('ScheduledTaskCreateForm', () => {
     getSaveButtons().forEach((button) =>
       expect(button.getAttribute('aria-busy')).toBe('true'),
     );
-    expect(screen.getByRole('status').textContent).toBe('Saving');
+    /* The skill-error live region is a status region too; it stays empty here. */
+    expect(
+      screen.getAllByRole('status').map((region) => region.textContent),
+    ).toContain('Saving');
   });
 
   it('leaves Save disabled but not busy when the form is merely incomplete', async () => {
@@ -1026,7 +1029,9 @@ describe('ScheduledTaskCreateForm', () => {
       expect(button.disabled).toBe(true);
       expect(button.getAttribute('aria-busy')).toBe('false');
     });
-    expect(screen.getByRole('status').textContent).toBe('');
+    expect(
+      screen.getAllByRole('status').map((region) => region.textContent),
+    ).not.toContain('Saving');
   });
 
   it('names the Instructions editor through a real label association', async () => {
