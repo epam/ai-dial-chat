@@ -13,7 +13,7 @@ const REQUEST = {
   fields: { name: 'Q4 launch', description: 'd', instructions: 'i' },
   newFiles: [new File(['%PDF-'], 'retro.pdf')],
   removedFileNames: ['survey.xlsx'],
-  etag: '"e1"',
+  contentVersion: '"cv1"',
 };
 
 const responseError = (status: number, body: unknown) =>
@@ -29,7 +29,7 @@ describe('useSaveProject', () => {
     vi.clearAllMocks();
   });
 
-  it('sends one update with the loaded ETag and resolves the saved project', async () => {
+  it('sends one update with the loaded contentVersion and resolves the saved project', async () => {
     const saved = {
       id: 'projects/b/Q4 launch',
       name: 'Q4 launch',
@@ -52,7 +52,7 @@ describe('useSaveProject', () => {
       REQUEST.fields,
       REQUEST.newFiles,
       ['survey.xlsx'],
-      '"e1"',
+      '"cv1"',
       expect.any(AbortSignal),
     );
     expect(result.current.isSubmitting).toBe(false);

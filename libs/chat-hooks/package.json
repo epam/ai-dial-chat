@@ -106,6 +106,12 @@
       "import": "./dist/scheduled-tasks.js",
       "default": "./dist/scheduled-tasks.js"
     },
+    "./project": {
+      "@epam/source": "./src/entry-points/project.ts",
+      "types": "./dist/project.d.ts",
+      "import": "./dist/project.js",
+      "default": "./dist/project.js"
+    },
     "./sharing": {
       "@epam/source": "./src/entry-points/sharing.ts",
       "types": "./dist/sharing.d.ts",
@@ -160,6 +166,7 @@
     "@epam/ai-dial-chat-shared": "*",
     "@epam/ai-dial-conversation-input": "*",
     "@epam/ai-dial-mcp-apps": "*",
+    "@epam/ai-dial-projects": "*",
     "@epam/ai-dial-publish-panel": "*",
     "@epam/ai-dial-quotations": "*",
     "@epam/ai-dial-react-file-manager": "^0.4.0-dev.19",
@@ -193,6 +200,9 @@
       "optional": true
     },
     "@epam/ai-dial-mcp-apps": {
+      "optional": true
+    },
+    "@epam/ai-dial-projects": {
       "optional": true
     },
     "@epam/ai-dial-publish-panel": {

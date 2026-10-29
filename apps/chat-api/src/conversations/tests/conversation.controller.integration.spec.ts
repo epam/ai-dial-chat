@@ -41,7 +41,9 @@ import { ConversationTitleCacheService } from '../listing/conversation-title-cac
 import { ConversationTitleStreamService } from '../listing/conversation-title-stream.service';
 import { ConversationTitlesService } from '../listing/conversation-titles.service';
 import { ConversationPersistenceService } from '../persistence/conversation-persistence.service';
+import { ProjectConversationStore } from '../persistence/project-conversation.store';
 import { PublishedFolderAttachmentsService } from '../published-folder-attachments.service';
+import { ConversationCompletionsResponder } from '../streaming/conversation-completions.responder';
 import { ConversationStreamingService } from '../streaming/conversation-streaming.service';
 
 const TEST_USER = {
@@ -100,6 +102,7 @@ describe('ConversationController (integration)', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ConversationController],
       providers: [
+        ConversationCompletionsResponder,
         { provide: ConversationService, useValue: service },
         {
           provide: ConversationGenerationService,
@@ -339,10 +342,12 @@ describe('ConversationController (integration)', () => {
       const realModule: TestingModule = await Test.createTestingModule({
         controllers: [ConversationController],
         providers: [
+          ConversationCompletionsResponder,
           { provide: ConfigService, useValue: configService },
           DialClientService,
           ConversationService,
           ConversationPersistenceService,
+          ProjectConversationStore,
           ConversationListingService,
           ConversationTitleCacheService,
           ConversationTitlesService,
@@ -1121,6 +1126,7 @@ describe('ConversationController (integration)', () => {
       const module: TestingModule = await Test.createTestingModule({
         controllers: [ConversationController],
         providers: [
+          ConversationCompletionsResponder,
           { provide: ConversationService, useValue: streamingStub },
           {
             provide: ConversationGenerationService,

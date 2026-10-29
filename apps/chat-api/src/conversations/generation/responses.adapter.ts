@@ -211,6 +211,8 @@ export class ResponsesAdapter {
        * instead of issuing `createResponse`.
        */
       replayBody?: ReadableStream<Uint8Array>;
+      /** Added to the model call, e.g. `x-project-id` for a project conversation. */
+      extraHeaders?: Record<string, string>;
     },
   ): AsyncGenerator<string, GenerationRelayOutcome, void> {
     let assembledMessage = initialAssembledMessage;
@@ -238,6 +240,7 @@ export class ResponsesAdapter {
             ...(timezone ? { [TIMEZONE_HEADER]: timezone } : {}),
             ...buildConversationIdHeaders(conversationId),
             ...buildJobTitleHeaders(jobTitle),
+            ...options?.extraHeaders,
           },
           parseAs: 'stream',
           signal,

@@ -23,7 +23,9 @@ import { ConversationTitleCacheService } from './listing/conversation-title-cach
 import { ConversationTitleStreamService } from './listing/conversation-title-stream.service';
 import { ConversationTitlesService } from './listing/conversation-titles.service';
 import { ConversationPersistenceService } from './persistence/conversation-persistence.service';
+import { ProjectConversationStore } from './persistence/project-conversation.store';
 import { PublishedFolderAttachmentsService } from './published-folder-attachments.service';
+import { ConversationCompletionsResponder } from './streaming/conversation-completions.responder';
 import { ConversationStreamingService } from './streaming/conversation-streaming.service';
 
 @Module({
@@ -38,12 +40,14 @@ import { ConversationStreamingService } from './streaming/conversation-streaming
   providers: [
     ConversationService,
     ConversationPersistenceService,
+    ProjectConversationStore,
     ConversationListingService,
     ConversationTitleCacheService,
     ConversationTitlesService,
     ConversationTitleStreamService,
     ConversationLifecycleService,
     ConversationStreamingService,
+    ConversationCompletionsResponder,
     ConversationNamingService,
     {
       provide: CONVERSATION_PERSISTENCE,
@@ -58,6 +62,12 @@ import { ConversationStreamingService } from './streaming/conversation-streaming
     ResponsesAdapter,
     CoreResponsesClient,
     BackgroundGenerationService,
+  ],
+  /* For the project conversation endpoints; `ConversationModule` never imports `ProjectsModule`. */
+  exports: [
+    ConversationService,
+    ProjectConversationStore,
+    ConversationCompletionsResponder,
   ],
 })
 export class ConversationModule {}

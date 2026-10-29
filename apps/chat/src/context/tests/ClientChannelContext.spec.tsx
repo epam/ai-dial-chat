@@ -157,6 +157,19 @@ describe('ClientChannelProvider', () => {
     await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
   });
 
+  it('connects on demand on a project chat route too', async () => {
+    mockUseFeatureFlag.mockReturnValue(true);
+    const { stream } = makeControllableStream();
+    mockSubscribe.mockResolvedValue({ body: stream, channelId: 'channel-1' });
+
+    const { result } = renderHook(() => useClientChannel(), {
+      wrapper: makeWrapper('/projects/chat/a1b2c3/q4/conversations/x'),
+    });
+    createDemand(result.current);
+
+    await waitFor(() => expect(result.current.channelId).toBe('channel-1'));
+  });
+
   it('parses a toolset/signin event split across multiple network chunks', async () => {
     mockUseFeatureFlag.mockReturnValue(true);
     const { stream, push } = makeControllableStream();

@@ -16,6 +16,7 @@ import { encodeDialResourcePath } from '../common/utils/encode-dial-path';
 import { PUBLIC_BUCKET } from '../constants/dial.constants';
 import { DialClientService } from '../dial/dial-client.service';
 import { UserConfigService } from '../user-config/user-config.service';
+import { PROJECT_WRITE_ATTEMPTS } from './constants/project-context.constants';
 import {
   type ProjectCreateInput,
   ProjectsCreateService,
@@ -112,13 +113,17 @@ export class ProjectsService {
   ) {}
 
   /**
-   * Deletes a project only if it is still the version the caller read: Core
-   * checks `If-Match` against the aggregate ETag, and its `412` becomes
-   * `409 project-changed`. A missing `If-Match`, `*` or a list of tags is
-   * refused before any Core call, so this API never deletes
-   * unconditionally, and so is a project outside the caller's own bucket
-   * (`403`), matching `canEdit`. The caller's pin is then removed as a best
-   * effort — the delete has already committed.
+   * Deletes a project only if its content is still the version the caller
+   * read: `If-Match` carries the `contentVersion` from `GET`, compared with a
+   * fresh snapshot, so a project conversation written meanwhile does not
+   * block the delete. The Core delete is conditioned on the snapshot's
+   * aggregate ETag; its `412` (a write in between) re-reads and tries again,
+   * up to `PROJECT_WRITE_ATTEMPTS` deletes, then `409 project-changed`. A
+   * missing `If-Match`, `*` or a list of tags is refused before any Core
+   * call, so this API never deletes unconditionally, and so is a project
+   * outside the caller's own bucket (`403`), matching `canEdit`. The
+   * project's conversations go with it. The caller's pin is then removed as
+   * a best effort — the delete has already committed.
    */
   async deleteProject(
     id: string,
@@ -130,8 +135,45 @@ export class ProjectsService {
     if (parsed.bucket !== sessionBucket) {
       throw new ForbiddenException('Only the owner can delete a project');
     }
-    const etag = requireSingleIfMatch(ifMatch);
+    const expectedVersion = requireSingleIfMatch(ifMatch);
+    const signal = AbortSignal.timeout(DELETE_TIMEOUT_MS);
 
+    let isDeleted = false;
+    for (
+      let attempt = 0;
+      attempt < PROJECT_WRITE_ATTEMPTS && !isDeleted;
+      attempt++
+    ) {
+      const snapshot = await this.snapshotService.read(
+        parsed.bucket,
+        parsed.path,
+        accessToken,
+        sessionBucket,
+        signal,
+      );
+      if (snapshot.contentVersion !== expectedVersion) throw projectChanged();
+      isDeleted = await this.deleteFolder(
+        parsed,
+        snapshot.etag,
+        sessionBucket,
+        accessToken,
+        signal,
+      );
+    }
+    if (!isDeleted) throw projectChanged();
+
+    this.logger.log('Project deleted');
+    await this.removePinQuietly(parsed.id, accessToken, sessionBucket);
+  }
+
+  /** One conditional Core delete; resolves `false` on Core's `412`. */
+  private async deleteFolder(
+    parsed: ParsedProjectId,
+    etag: string,
+    sessionBucket: string,
+    accessToken: string,
+    signal: AbortSignal,
+  ): Promise<boolean> {
     try {
       const { error, response } =
         await this.dialClient.client.deleteProjectFolder(
@@ -142,12 +184,12 @@ export class ProjectsService {
               ...getBearerAuthHeaders(accessToken),
               'If-Match': etag,
             },
-            signal: AbortSignal.timeout(DELETE_TIMEOUT_MS),
+            signal,
           },
         );
 
       if (error != null || response.status >= 400) {
-        if (response.status === 412) throw projectChanged();
+        if (response.status === 412) return false;
         if (
           response.status === 404 ||
           (response.status === 403 && parsed.bucket === sessionBucket)
@@ -156,12 +198,10 @@ export class ProjectsService {
         }
         return handleDialSdkError(error, DELETE_CONTEXT, this.logger, response);
       }
+      return true;
     } catch (err) {
       return handleDialSdkError(err, DELETE_CONTEXT, this.logger);
     }
-
-    this.logger.log('Project deleted');
-    await this.removePinQuietly(parsed.id, accessToken, sessionBucket);
   }
 
   /** Best-effort pin cleanup after a committed delete; a failure is logged, not thrown. */
@@ -257,12 +297,17 @@ export class ProjectsService {
     };
   }
 
-  /** The manifest, context and ETag fields of a project's details. */
+  /** The manifest, context, version and conversation-count fields of a project's details. */
   private describeSnapshot(
     snapshot: ProjectSnapshot,
   ): Pick<
     ProjectDetailsDto,
-    'description' | 'instructions' | 'contextFiles' | 'etag'
+    | 'description'
+    | 'instructions'
+    | 'contextFiles'
+    | 'etag'
+    | 'contentVersion'
+    | 'conversationCount'
   > {
     return {
       description: snapshot.manifest?.description ?? '',
@@ -272,6 +317,8 @@ export class ProjectsService {
         size,
       })),
       etag: snapshot.etag,
+      contentVersion: snapshot.contentVersion,
+      conversationCount: snapshot.conversationEntries.length,
     };
   }
 

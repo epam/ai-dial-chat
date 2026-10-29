@@ -2,6 +2,10 @@ import {
   ProjectCreateErrorCode,
   TextRefinementPurpose,
 } from '@epam/ai-dial-chat-api-client';
+import {
+  mapStoredContextFiles,
+  getMimeTypesForExtensions,
+} from '@epam/ai-dial-chat-hooks/project';
 import { generateUUID, MIME_TYPE_EXT_MAP } from '@epam/ai-dial-chat-shared';
 import {
   isStoredContextFile,
@@ -48,9 +52,7 @@ import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback
 import { ROUTES } from '../../types/routes';
 import { ThemeId } from '../../types/theme-id';
 import { UserConfigStatus } from '../../types/user-config-status';
-import { mapStoredContextFiles } from '../../utils/map-project-dto';
 import { mapProjectCreateError } from '../../utils/project-create-errors';
-import { getMimeTypesForExtensions } from '../../utils/project-limits';
 import NotFoundPage from '../NotFound/NotFound';
 
 const EMPTY_VALUES: ProjectCreateFormValues = {
@@ -96,12 +98,15 @@ const ProjectEditPage: FC = () => {
   const [values, setValues] = useState<ProjectCreateFormValues>(EMPTY_VALUES);
   const [contextFiles, setContextFiles] = useState<ProjectContextFile[]>([]);
   const [errors, setErrors] = useState<ProjectCreateFormErrors>({});
-  const [seededEtag, setSeededEtag] = useState<string | null>(null);
+  const [seededContentVersion, setSeededContentVersion] = useState<
+    string | null
+  >(null);
 
   /* The draft is seeded once per loaded version, so a reload after a
    * conflict replaces it and a re-render never does. */
   useEffect(() => {
-    if (project == null || project.etag === seededEtag) return;
+    if (project == null || project.contentVersion === seededContentVersion)
+      return;
     setValues({
       name: project.name,
       description: project.description,
@@ -109,8 +114,8 @@ const ProjectEditPage: FC = () => {
     });
     setContextFiles(mapStoredContextFiles(project));
     setErrors({});
-    setSeededEtag(project.etag);
-  }, [project, seededEtag]);
+    setSeededContentVersion(project.contentVersion);
+  }, [project, seededContentVersion]);
 
   const removedFileNames = useMemo(() => {
     if (project == null) return [];
@@ -129,7 +134,8 @@ const ProjectEditPage: FC = () => {
     [contextFiles],
   );
 
-  const isSeeded = project != null && seededEtag === project.etag;
+  const isSeeded =
+    project != null && seededContentVersion === project.contentVersion;
   const isDirty =
     isSeeded &&
     (values.name !== project.name ||
@@ -226,7 +232,7 @@ const ProjectEditPage: FC = () => {
       fields: { ...values, name },
       newFiles,
       removedFileNames,
-      etag: project.etag,
+      contentVersion: project.contentVersion,
     });
 
     if (outcome.isSaved) {

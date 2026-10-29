@@ -4,6 +4,7 @@ import type { ConversationResponseDto } from '../../../openapi/openapi-response.
 import { ConversationLifecycleService } from '../../lifecycle/conversation-lifecycle.service';
 import { ConversationTitleCacheService } from '../../listing/conversation-title-cache.service';
 import { ConversationPersistenceService } from '../conversation-persistence.service';
+import { ProjectConversationStore } from '../project-conversation.store';
 
 const path = 'gpt-4o__Original';
 const id = `conversations/bucket/${path}`;
@@ -57,6 +58,7 @@ describe('conversation persistence title cache', () => {
       dial,
       { maybeRenameAfterFirstReply: vi.fn() } as never,
       cache,
+      new ProjectConversationStore(dial),
     );
     lifecycle = new ConversationLifecycleService(
       dial,

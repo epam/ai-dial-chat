@@ -68,6 +68,8 @@ const project: ProjectDetailsDto = {
   instructions: '',
   contextFiles: [],
   etag: '"e1"',
+  contentVersion: '"cv1"',
+  conversationCount: 0,
   canEdit: true,
 };
 
@@ -160,7 +162,7 @@ describe('useProjectActions', () => {
     expect(result.current.isDeleteOpen).toBe(true);
     await act(() => result.current.confirmDelete());
 
-    expect(deleteProject).toHaveBeenCalledWith('projects/b/q4', '"e1"');
+    expect(deleteProject).toHaveBeenCalledWith('projects/b/q4', '"cv1"');
     expect(mocks.notifyOperationSuccess).toHaveBeenCalledWith(
       NotifiableEntity.Project,
       EntityOperation.Deleted,

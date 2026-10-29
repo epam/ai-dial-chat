@@ -21,4 +21,6 @@ export enum ProjectCreateErrorCode {
   ProjectTooLarge = 'project-too-large',
   /** `removedFileNames` names a context file the project does not have. */
   UnknownFile = 'unknown-file',
+  /** A project conversation write hit Core's file-size or total-size limit for the project. */
+  ProjectStorageFull = 'project-storage-full',
 }

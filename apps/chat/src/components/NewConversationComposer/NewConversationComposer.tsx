@@ -421,8 +421,11 @@ const NewConversationComposer: FC<Props> = ({
     OverlayFeature.ShowAgentDescription,
   );
   const isInlineLayout = layout === ComposerLayout.Inline;
+  const isEmbeddedLayout = layout === ComposerLayout.Embedded;
+  /* Only the welcome screen greets, describes the agent and celebrates. */
+  const isWelcomeLayout = layout === ComposerLayout.Welcome;
   const agentDescription =
-    isAgentDescriptionEnabled && !isInlineLayout
+    isAgentDescriptionEnabled && isWelcomeLayout
       ? resolvedSelectedDeployment?.description?.trim()
       : undefined;
   const { displayName } = useUserProfile();
@@ -513,7 +516,13 @@ const NewConversationComposer: FC<Props> = ({
     ) : null;
 
   return (
-    <div className="flex flex-1 flex-col overflow-y-auto">
+    <div
+      className={
+        isEmbeddedLayout
+          ? 'flex flex-col'
+          : 'flex flex-1 flex-col overflow-y-auto'
+      }
+    >
       <FileDndOverlay
         isVisible={isDragging}
         isAttachmentsAllowed={isPageDropAllowed}
@@ -541,14 +550,14 @@ const NewConversationComposer: FC<Props> = ({
       <div
         className={mergeClasses(
           '[container-type:inline-size] relative flex flex-auto shrink-0 flex-col items-center overflow-hidden',
-          isInlineLayout
-            ? 'justify-end px-6'
-            : 'justify-center px-4 py-14 desktop:px-8 desktop:py-16',
+          isInlineLayout && 'justify-end px-6',
+          isWelcomeLayout &&
+            'justify-center px-4 py-14 desktop:px-8 desktop:py-16',
         )}
         role="region"
         aria-label={t(ChatI18nKeys.WelcomeScreen)}
       >
-        {isCelebrationEnabled && !isInlineLayout && <CelebrationDecor />}
+        {isCelebrationEnabled && isWelcomeLayout && <CelebrationDecor />}
         {agentDescription && (
           <Suspense fallback={null}>
             <AgentDescription content={agentDescription} />
@@ -564,7 +573,7 @@ const NewConversationComposer: FC<Props> = ({
           /* `ConversationInput` renders the description only under a
              greeting, so `hide-greeting` removes both. */
           welcomeText={
-            isGreetingHidden || isInlineLayout
+            isGreetingHidden || !isWelcomeLayout
               ? undefined
               : getTimeOfDayGreeting(
                   new Date().getHours(),
@@ -590,7 +599,9 @@ const NewConversationComposer: FC<Props> = ({
                 )
           }
           descriptionText={
-            isInlineLayout ? undefined : (welcomeScreenDescription ?? undefined)
+            isWelcomeLayout
+              ? (welcomeScreenDescription ?? undefined)
+              : undefined
           }
           belowWelcomeSlot={isStartersBelowGreeting ? startersBlock : undefined}
           placeholder={placeholder}
@@ -677,7 +688,8 @@ const NewConversationComposer: FC<Props> = ({
         />
         {!isStartersBelowGreeting && startersBlock}
       </div>
-      <FooterMessage />
+      {/* The page footer (operator message, app version) belongs to a full-page chat, not a composer embedded in another page. */}
+      {!isEmbeddedLayout && <FooterMessage />}
       {isDialFileManagerOpen && (
         <DialFileManagerModal
           isOpen={isDialFileManagerOpen}

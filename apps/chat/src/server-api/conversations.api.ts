@@ -2,6 +2,7 @@ import type {
   AttachmentDto,
   ConversationResponseDto,
   ConversationTitleStreamEventDto,
+  CreateConversationDto,
 } from '@epam/ai-dial-chat-api-client';
 import type { RequestSkill } from '@epam/ai-dial-chat-shared';
 import { conversationsApi } from './api-client';
@@ -9,6 +10,34 @@ import {
   ConversationTitleStreamProtocolError,
   readConversationTitleStream,
 } from './conversation-title-stream';
+
+/**
+ * The body of a create-conversation request, shared by top-level and
+ * project conversations so both send the same first-message fields.
+ */
+export const buildCreateConversationDto = (
+  firstMessage: string,
+  deploymentId: string,
+  attachments?: AttachmentDto[],
+  configurationValue?: Record<string, unknown>,
+  formValue?: Record<string, unknown>,
+  skills?: RequestSkill[],
+): CreateConversationDto => ({
+  firstMessage,
+  deploymentId,
+  ...(attachments?.length || configurationValue || formValue || skills?.length
+    ? {
+        custom_content: {
+          ...(attachments?.length ? { attachments } : {}),
+          ...(configurationValue
+            ? { configuration_value: configurationValue }
+            : {}),
+          ...(formValue ? { form_value: formValue } : {}),
+          ...(skills?.length ? { skills } : {}),
+        },
+      }
+    : {}),
+});
 
 export const createConversation = (
   firstMessage: string,
@@ -19,25 +48,14 @@ export const createConversation = (
   skills?: RequestSkill[],
 ) =>
   conversationsApi.createConversation({
-    createConversationDto: {
+    createConversationDto: buildCreateConversationDto(
       firstMessage,
       deploymentId,
-      ...(attachments?.length ||
-      configurationValue ||
-      formValue ||
-      skills?.length
-        ? {
-            custom_content: {
-              ...(attachments?.length ? { attachments } : {}),
-              ...(configurationValue
-                ? { configuration_value: configurationValue }
-                : {}),
-              ...(formValue ? { form_value: formValue } : {}),
-              ...(skills?.length ? { skills } : {}),
-            },
-          }
-        : {}),
-    },
+      attachments,
+      configurationValue,
+      formValue,
+      skills,
+    ),
   });
 
 export const getConversation = (

@@ -2,8 +2,25 @@ import { describe, expect, it } from 'vitest';
 import {
   CONVERSATION_ID_HEADER,
   buildConversationIdHeaders,
+  buildProjectIdHeaders,
   encodeHeaderValue,
+  PROJECT_ID_HEADER,
 } from './header-value';
+
+describe('buildProjectIdHeaders', () => {
+  it('omits the header outside a project', () => {
+    expect(buildProjectIdHeaders(undefined)).toEqual({});
+  });
+
+  it('sends the project id as x-project-id, percent-encoding non-Latin-1 text', () => {
+    expect(buildProjectIdHeaders('projects/a1b2c3/support-quality')).toEqual({
+      [PROJECT_ID_HEADER]: 'projects/a1b2c3/support-quality',
+    });
+    expect(
+      buildProjectIdHeaders('projects/a1b2c3/Отчёт')[PROJECT_ID_HEADER],
+    ).toBe('projects/a1b2c3/%D0%9E%D1%82%D1%87%D1%91%D1%82');
+  });
+});
 
 describe('encodeHeaderValue', () => {
   it('returns an empty string unchanged', () => {

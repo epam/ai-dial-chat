@@ -5,6 +5,7 @@ import type { ConversationResponseDto } from '../../../openapi/openapi-response.
 import { ConversationMessageRole } from '../../dto/conversation-message.dto';
 import { ConversationTitleCacheService } from '../../listing/conversation-title-cache.service';
 import { ConversationPersistenceService } from '../../persistence/conversation-persistence.service';
+import { ProjectConversationStore } from '../../persistence/project-conversation.store';
 import { PublishedFolderAttachmentsService } from '../../published-folder-attachments.service';
 import { ConversationLifecycleService } from '../conversation-lifecycle.service';
 
@@ -72,6 +73,7 @@ const makeService = () => {
       dialClient,
       {} as never,
       new ConversationTitleCacheService(),
+      new ProjectConversationStore(dialClient),
     ),
     { resolveDeploymentItem: vi.fn().mockResolvedValue(null) } as never,
     new PublishedFolderAttachmentsService(dialClient, cacheManager as never),

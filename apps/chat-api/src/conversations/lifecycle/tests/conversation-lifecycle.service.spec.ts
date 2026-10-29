@@ -11,6 +11,7 @@ import type { ConversationResponseDto } from '../../../openapi/openapi-response.
 import { BackgroundGenerationStatus } from '../../dto/background-generation.dto';
 import { ConversationTitleCacheService } from '../../listing/conversation-title-cache.service';
 import { ConversationPersistenceService } from '../../persistence/conversation-persistence.service';
+import { ProjectConversationStore } from '../../persistence/project-conversation.store';
 import { ConversationErrorCode } from '../../types/conversation-error-code.enum';
 import { ConversationLifecycleService } from '../conversation-lifecycle.service';
 
@@ -79,6 +80,7 @@ describe('ConversationLifecycleService', () => {
       mockDialClient,
       mockConversationNamingService as never,
       new ConversationTitleCacheService(),
+      new ProjectConversationStore(mockDialClient),
     );
     mockDeploymentsService = {
       resolveDeploymentItem: vi.fn().mockResolvedValue(null),

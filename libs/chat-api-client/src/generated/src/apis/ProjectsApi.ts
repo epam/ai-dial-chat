@@ -14,12 +14,26 @@
 
 import * as runtime from '../runtime';
 import type {
+  AttachGenerationDto,
+  ConversationResponseDto,
+  CreateConversationDto,
   CreateProjectResponseDto,
   ListProjectsResponseDto,
+  ProjectConversationListResponseDto,
   ProjectCreateErrorDto,
   ProjectDetailsDto,
+  RenameConversationBodyDto,
+  RenameConversationResponseDto,
+  SaveConversationBodyDto,
+  SendCompletionDto,
+  StopCompletionDto,
   UpdateProjectResponseDto,
 } from '../models/index';
+
+export interface AttachToProjectGenerationRequest {
+  id: string;
+  attachGenerationDto: AttachGenerationDto;
+}
 
 export interface CreateProjectRequest {
   name: string;
@@ -29,9 +43,19 @@ export interface CreateProjectRequest {
   files?: Array<Blob>;
 }
 
+export interface CreateProjectConversationRequest {
+  id: string;
+  createConversationDto: CreateConversationDto;
+}
+
 export interface DeleteProjectRequest {
   id: string;
   ifMatch: string;
+}
+
+export interface DeleteProjectConversationRequest {
+  id: string;
+  conversationName: string;
 }
 
 export interface DownloadProjectRequest {
@@ -45,6 +69,38 @@ export interface DownloadProjectFileRequest {
 
 export interface GetProjectRequest {
   id: string;
+}
+
+export interface GetProjectConversationRequest {
+  id: string;
+  conversationName: string;
+}
+
+export interface ListProjectConversationsRequest {
+  id: string;
+  limit?: number;
+}
+
+export interface RenameProjectConversationRequest {
+  id: string;
+  conversationName: string;
+  renameConversationBodyDto: RenameConversationBodyDto;
+}
+
+export interface SaveProjectConversationRequest {
+  id: string;
+  conversationName: string;
+  saveConversationBodyDto: SaveConversationBodyDto;
+}
+
+export interface StopProjectCompletionRequest {
+  id: string;
+  stopCompletionDto: StopCompletionDto;
+}
+
+export interface StreamProjectCompletionRequest {
+  id: string;
+  sendCompletionDto: SendCompletionDto;
 }
 
 export interface UpdateProjectRequest {
@@ -62,6 +118,82 @@ export interface UpdateProjectRequest {
  *
  */
 export class ProjectsApi extends runtime.BaseAPI {
+  /**
+   * Replays the active generation of a project conversation as SSE, exactly as `POST /api/v1/conversations/completions/attach` does.
+   * Attach to a generation of a project conversation
+   */
+  async attachToProjectGenerationRaw(
+    requestParameters: AttachToProjectGenerationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<string>> {
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling attachToProjectGeneration().',
+      );
+    }
+
+    if (requestParameters['attachGenerationDto'] == null) {
+      throw new runtime.RequiredError(
+        'attachGenerationDto',
+        'Required parameter "attachGenerationDto" was null or undefined when calling attachToProjectGeneration().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/projects/{id}/conversations/completions/attach`;
+    urlPath = urlPath.replace(
+      `{${'id'}}`,
+      encodeURIComponent(String(requestParameters['id'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['attachGenerationDto'],
+      },
+      initOverrides,
+    );
+
+    if (this.isJsonMime(response.headers.get('content-type'))) {
+      return new runtime.JSONApiResponse<string>(response);
+    } else {
+      return new runtime.TextApiResponse(response);
+    }
+  }
+
+  /**
+   * Replays the active generation of a project conversation as SSE, exactly as `POST /api/v1/conversations/completions/attach` does.
+   * Attach to a generation of a project conversation
+   */
+  async attachToProjectGeneration(
+    requestParameters: AttachToProjectGenerationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<string> {
+    const response = await this.attachToProjectGenerationRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
   /**
    * Creates a project at the root of the session user\'s bucket in one atomic, create-only DIAL Core call. The BFF writes PROJECT.md (YAML frontmatter with name and description, instructions as the body) and each context file under context/. Name, file names, types, per-file size, total size and file count are validated first; every domain rejection carries a ProjectCreateErrorCode.
    * Create a project
@@ -159,7 +291,79 @@ export class ProjectsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Deletes the project only if it is still the version named by `If-Match`, then removes it from the caller\'s pins. Only a project in the caller\'s own bucket can be deleted.
+   * Creates a conversation inside the project from its first message, as `POST /api/v1/conversations` does at the top level.
+   * Create a project conversation
+   */
+  async createProjectConversationRaw(
+    requestParameters: CreateProjectConversationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ConversationResponseDto>> {
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling createProjectConversation().',
+      );
+    }
+
+    if (requestParameters['createConversationDto'] == null) {
+      throw new runtime.RequiredError(
+        'createConversationDto',
+        'Required parameter "createConversationDto" was null or undefined when calling createProjectConversation().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/projects/{id}/conversations`;
+    urlPath = urlPath.replace(
+      `{${'id'}}`,
+      encodeURIComponent(String(requestParameters['id'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['createConversationDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ConversationResponseDto>(response);
+  }
+
+  /**
+   * Creates a conversation inside the project from its first message, as `POST /api/v1/conversations` does at the top level.
+   * Create a project conversation
+   */
+  async createProjectConversation(
+    requestParameters: CreateProjectConversationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ConversationResponseDto> {
+    const response = await this.createProjectConversationRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Deletes the project, its conversations included, only if its content is still the `contentVersion` named by `If-Match`, then removes it from the caller\'s pins. Only a project in the caller\'s own bucket can be deleted.
    * Delete a project
    */
   async deleteProjectRaw(
@@ -217,7 +421,7 @@ export class ProjectsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Deletes the project only if it is still the version named by `If-Match`, then removes it from the caller\'s pins. Only a project in the caller\'s own bucket can be deleted.
+   * Deletes the project, its conversations included, only if its content is still the `contentVersion` named by `If-Match`, then removes it from the caller\'s pins. Only a project in the caller\'s own bucket can be deleted.
    * Delete a project
    */
   async deleteProject(
@@ -225,6 +429,73 @@ export class ProjectsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<void> {
     await this.deleteProjectRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * Delete a project conversation
+   */
+  async deleteProjectConversationRaw(
+    requestParameters: DeleteProjectConversationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling deleteProjectConversation().',
+      );
+    }
+
+    if (requestParameters['conversationName'] == null) {
+      throw new runtime.RequiredError(
+        'conversationName',
+        'Required parameter "conversationName" was null or undefined when calling deleteProjectConversation().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/projects/{id}/conversations/{conversationName}`;
+    urlPath = urlPath.replace(
+      `{${'id'}}`,
+      encodeURIComponent(String(requestParameters['id'])),
+    );
+    urlPath = urlPath.replace(
+      `{${'conversationName'}}`,
+      encodeURIComponent(String(requestParameters['conversationName'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Delete a project conversation
+   */
+  async deleteProjectConversation(
+    requestParameters: DeleteProjectConversationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.deleteProjectConversationRaw(requestParameters, initOverrides);
   }
 
   /**
@@ -422,6 +693,145 @@ export class ProjectsApi extends runtime.BaseAPI {
   }
 
   /**
+   * Get a project conversation
+   */
+  async getProjectConversationRaw(
+    requestParameters: GetProjectConversationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ConversationResponseDto>> {
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling getProjectConversation().',
+      );
+    }
+
+    if (requestParameters['conversationName'] == null) {
+      throw new runtime.RequiredError(
+        'conversationName',
+        'Required parameter "conversationName" was null or undefined when calling getProjectConversation().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/projects/{id}/conversations/{conversationName}`;
+    urlPath = urlPath.replace(
+      `{${'id'}}`,
+      encodeURIComponent(String(requestParameters['id'])),
+    );
+    urlPath = urlPath.replace(
+      `{${'conversationName'}}`,
+      encodeURIComponent(String(requestParameters['conversationName'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ConversationResponseDto>(response);
+  }
+
+  /**
+   * Get a project conversation
+   */
+  async getProjectConversation(
+    requestParameters: GetProjectConversationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ConversationResponseDto> {
+    const response = await this.getProjectConversationRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Lists the conversations stored in the project\'s `conversations/` folder, newest first, with their titles and authors.
+   * List a project\'s conversations
+   */
+  async listProjectConversationsRaw(
+    requestParameters: ListProjectConversationsRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ProjectConversationListResponseDto>> {
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling listProjectConversations().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['limit'] != null) {
+      queryParameters['limit'] = requestParameters['limit'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/projects/{id}/conversations`;
+    urlPath = urlPath.replace(
+      `{${'id'}}`,
+      encodeURIComponent(String(requestParameters['id'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ProjectConversationListResponseDto>(
+      response,
+    );
+  }
+
+  /**
+   * Lists the conversations stored in the project\'s `conversations/` folder, newest first, with their titles and authors.
+   * List a project\'s conversations
+   */
+  async listProjectConversations(
+    requestParameters: ListProjectConversationsRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ProjectConversationListResponseDto> {
+    const response = await this.listProjectConversationsRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
    * Returns every DIAL project visible to the session user: the user\'s own bucket, the public (organization) bucket, and projects shared with the user, merged and de-duplicated by id. The BFF follows DIAL Core paging itself, so the list is complete up to a per-source page cap. A failing source is omitted; the request fails only when both bucket listings fail.
    * List projects
    */
@@ -468,7 +878,315 @@ export class ProjectsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Saves the name, description, instructions and context of a project in one conditional DIAL Core write: the BFF rebuilds PROJECT.md, keeps every stored context file not listed in `removedFileNames`, adds the `files` parts and writes the whole project with `If-Match`. A different name then moves the project in its folder and keeps the caller\'s pin. Only a project in the caller\'s own bucket can be saved. Every domain rejection carries a ProjectCreateErrorCode.
+   * Rewrites the conversation\'s display name; its file name does not change.
+   * Rename a project conversation
+   */
+  async renameProjectConversationRaw(
+    requestParameters: RenameProjectConversationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<RenameConversationResponseDto>> {
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling renameProjectConversation().',
+      );
+    }
+
+    if (requestParameters['conversationName'] == null) {
+      throw new runtime.RequiredError(
+        'conversationName',
+        'Required parameter "conversationName" was null or undefined when calling renameProjectConversation().',
+      );
+    }
+
+    if (requestParameters['renameConversationBodyDto'] == null) {
+      throw new runtime.RequiredError(
+        'renameConversationBodyDto',
+        'Required parameter "renameConversationBodyDto" was null or undefined when calling renameProjectConversation().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/projects/{id}/conversations/{conversationName}`;
+    urlPath = urlPath.replace(
+      `{${'id'}}`,
+      encodeURIComponent(String(requestParameters['id'])),
+    );
+    urlPath = urlPath.replace(
+      `{${'conversationName'}}`,
+      encodeURIComponent(String(requestParameters['conversationName'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'PATCH',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['renameConversationBodyDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<RenameConversationResponseDto>(response);
+  }
+
+  /**
+   * Rewrites the conversation\'s display name; its file name does not change.
+   * Rename a project conversation
+   */
+  async renameProjectConversation(
+    requestParameters: RenameProjectConversationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<RenameConversationResponseDto> {
+    const response = await this.renameProjectConversationRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Overwrites the conversation body, never over a pending background answer, as `PUT /api/v1/conversations` does.
+   * Save a project conversation
+   */
+  async saveProjectConversationRaw(
+    requestParameters: SaveProjectConversationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ConversationResponseDto>> {
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling saveProjectConversation().',
+      );
+    }
+
+    if (requestParameters['conversationName'] == null) {
+      throw new runtime.RequiredError(
+        'conversationName',
+        'Required parameter "conversationName" was null or undefined when calling saveProjectConversation().',
+      );
+    }
+
+    if (requestParameters['saveConversationBodyDto'] == null) {
+      throw new runtime.RequiredError(
+        'saveConversationBodyDto',
+        'Required parameter "saveConversationBodyDto" was null or undefined when calling saveProjectConversation().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/projects/{id}/conversations/{conversationName}`;
+    urlPath = urlPath.replace(
+      `{${'id'}}`,
+      encodeURIComponent(String(requestParameters['id'])),
+    );
+    urlPath = urlPath.replace(
+      `{${'conversationName'}}`,
+      encodeURIComponent(String(requestParameters['conversationName'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'PUT',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['saveConversationBodyDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ConversationResponseDto>(response);
+  }
+
+  /**
+   * Overwrites the conversation body, never over a pending background answer, as `PUT /api/v1/conversations` does.
+   * Save a project conversation
+   */
+  async saveProjectConversation(
+    requestParameters: SaveProjectConversationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ConversationResponseDto> {
+    const response = await this.saveProjectConversationRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Stop a generation of a project conversation
+   */
+  async stopProjectCompletionRaw(
+    requestParameters: StopProjectCompletionRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling stopProjectCompletion().',
+      );
+    }
+
+    if (requestParameters['stopCompletionDto'] == null) {
+      throw new runtime.RequiredError(
+        'stopCompletionDto',
+        'Required parameter "stopCompletionDto" was null or undefined when calling stopProjectCompletion().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/projects/{id}/conversations/completions/stop`;
+    urlPath = urlPath.replace(
+      `{${'id'}}`,
+      encodeURIComponent(String(requestParameters['id'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['stopCompletionDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Stop a generation of a project conversation
+   */
+  async stopProjectCompletion(
+    requestParameters: StopProjectCompletionRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.stopProjectCompletionRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * Streams a completion as SSE exactly as `POST /api/v1/conversations/completions` does, with the `x-project-id` header on the model call and nothing else added to the request.
+   * Stream a completion of a project conversation
+   */
+  async streamProjectCompletionRaw(
+    requestParameters: StreamProjectCompletionRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<string>> {
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling streamProjectCompletion().',
+      );
+    }
+
+    if (requestParameters['sendCompletionDto'] == null) {
+      throw new runtime.RequiredError(
+        'sendCompletionDto',
+        'Required parameter "sendCompletionDto" was null or undefined when calling streamProjectCompletion().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/projects/{id}/conversations/completions`;
+    urlPath = urlPath.replace(
+      `{${'id'}}`,
+      encodeURIComponent(String(requestParameters['id'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['sendCompletionDto'],
+      },
+      initOverrides,
+    );
+
+    if (this.isJsonMime(response.headers.get('content-type'))) {
+      return new runtime.JSONApiResponse<string>(response);
+    } else {
+      return new runtime.TextApiResponse(response);
+    }
+  }
+
+  /**
+   * Streams a completion as SSE exactly as `POST /api/v1/conversations/completions` does, with the `x-project-id` header on the model call and nothing else added to the request.
+   * Stream a completion of a project conversation
+   */
+  async streamProjectCompletion(
+    requestParameters: StreamProjectCompletionRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<string> {
+    const response = await this.streamProjectCompletionRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Saves the name, description, instructions and context of a project in one conditional DIAL Core write: the BFF rebuilds PROJECT.md, keeps every stored context file not listed in `removedFileNames`, adds the `files` parts, carries the stored conversations over, and writes the whole project conditioned on the fresh snapshot\'s ETag, retrying a concurrent conversation write while `If-Match` still names the `contentVersion`. A different name then moves the project in its folder and keeps the caller\'s pin. Only a project in the caller\'s own bucket can be saved. Every domain rejection carries a ProjectCreateErrorCode.
    * Save a project edit
    */
   async updateProjectRaw(
@@ -578,7 +1296,7 @@ export class ProjectsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Saves the name, description, instructions and context of a project in one conditional DIAL Core write: the BFF rebuilds PROJECT.md, keeps every stored context file not listed in `removedFileNames`, adds the `files` parts and writes the whole project with `If-Match`. A different name then moves the project in its folder and keeps the caller\'s pin. Only a project in the caller\'s own bucket can be saved. Every domain rejection carries a ProjectCreateErrorCode.
+   * Saves the name, description, instructions and context of a project in one conditional DIAL Core write: the BFF rebuilds PROJECT.md, keeps every stored context file not listed in `removedFileNames`, adds the `files` parts, carries the stored conversations over, and writes the whole project conditioned on the fresh snapshot\'s ETag, retrying a concurrent conversation write while `If-Match` still names the `contentVersion`. A different name then moves the project in its folder and keeps the caller\'s pin. Only a project in the caller\'s own bucket can be saved. Every domain rejection carries a ProjectCreateErrorCode.
    * Save a project edit
    */
   async updateProject(
