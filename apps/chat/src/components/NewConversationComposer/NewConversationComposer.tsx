@@ -248,7 +248,9 @@ const NewConversationComposer: FC<Props> = ({
     () => ({
       ...inputStyles,
       typography: {
-        welcomeClassName: 'dial-display1-text',
+        /* The greeting is light 36px by design; every kit `dial-display*-text`
+           step is semibold, so no scale class matches it. */
+        welcomeClassName: 'font-light text-4xl',
         ...inputStyles?.typography,
       },
     }),
