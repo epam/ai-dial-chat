@@ -1,5 +1,12 @@
 import { createHash } from 'node:crypto';
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
+import {
+  ConversationTitleQueueOutcome,
+  ConversationTitleReadOutcome,
+  recordConversationTitleQueue,
+  recordConversationTitleRead,
+  secondsSince,
+} from '../../telemetry/conversation-title-metrics';
 import { parseConversationResourceId } from '../utils/conversation-resource-id';
 
 export const CONVERSATION_TITLE_CACHE_TTL_MS = 5 * 60_000;
@@ -14,12 +21,31 @@ export interface ConversationTitleSummary {
   llmNamingDone?: boolean;
 }
 
+/**
+ * One coalesced read. It owns its abort controller, so a consumer leaving
+ * cannot abort work another consumer still needs; the last one leaving does.
+ */
+interface TitleReadOperation {
+  promise: Promise<ConversationTitleSummary | undefined>;
+  controller: AbortController;
+  consumers: number;
+}
+
 interface TitleCacheEntry {
   summary?: ConversationTitleSummary;
   expiresAt: number;
   metadataUpdatedAt?: number;
-  pending?: Promise<ConversationTitleSummary | undefined>;
+  pending?: TitleReadOperation;
 }
+
+/**
+ * The process-wide read gate refused or timed out this read. Distinct from an
+ * upstream 503 because it is local overload, not a per-item Core failure.
+ */
+export class ConversationTitleQueueUnavailableException extends ServiceUnavailableException {}
+
+const abortError = (): DOMException =>
+  new DOMException('Conversation title read was cancelled', 'AbortError');
 
 /**
  * Process-local, bounded title summaries. Tokens are hashed; bodies are never
@@ -84,29 +110,72 @@ export class ConversationTitleCacheService {
     if (key) this.entries.delete(key);
   }
 
+  /**
+   * Resolves a title through the cache, coalescing equivalent reads. `signal`
+   * is this consumer's ownership: aborting it rejects only this call, and
+   * cancels the shared read (queued or active) once no consumer remains.
+   */
   async load(
     token: string,
     id: string,
-    read: () => Promise<ConversationTitleSummary>,
+    read: (signal: AbortSignal) => Promise<ConversationTitleSummary>,
+    signal?: AbortSignal,
   ): Promise<ConversationTitleSummary | undefined> {
+    if (signal?.aborted) throw abortError();
     const cached = this.get(token, id);
     if (cached) return cached;
     const key = this.key(token, id);
     if (!key) return undefined;
     const entry = this.entries.get(key) ?? { expiresAt: 0 };
-    if (entry.pending) return entry.pending;
-    this.put(key, entry);
-    const pending = this.withReadSlot(read).then((summary) => {
-      if (this.entries.get(key) !== entry) return this.get(token, id);
-      this.storeSummary(entry, summary);
-      return entry.summary;
-    });
-    entry.pending = pending;
-    try {
-      return await pending;
-    } finally {
-      if (entry.pending === pending) entry.pending = undefined;
+    if (entry.pending && !entry.pending.controller.signal.aborted) {
+      return this.consume(entry.pending, signal);
     }
+    this.put(key, entry);
+    const controller = new AbortController();
+    const operation: TitleReadOperation = {
+      controller,
+      consumers: 0,
+      promise: this.withReadSlot(read, controller.signal)
+        .then((summary) => {
+          if (controller.signal.aborted) throw abortError();
+          if (this.entries.get(key) !== entry) return this.get(token, id);
+          this.storeSummary(entry, summary);
+          return entry.summary;
+        })
+        .finally(() => {
+          if (entry.pending !== operation) return;
+          entry.pending = undefined;
+          if (!entry.summary && this.entries.get(key) === entry) {
+            this.entries.delete(key);
+          }
+        }),
+    };
+    entry.pending = operation;
+    return this.consume(operation, signal);
+  }
+
+  private consume(
+    operation: TitleReadOperation,
+    signal?: AbortSignal,
+  ): Promise<ConversationTitleSummary | undefined> {
+    operation.consumers++;
+    return new Promise((resolve, reject) => {
+      const onAbort = () => {
+        reject(abortError());
+        if (--operation.consumers === 0) operation.controller.abort();
+      };
+      signal?.addEventListener('abort', onAbort, { once: true });
+      operation.promise.then(
+        (summary) => {
+          signal?.removeEventListener('abort', onAbort);
+          resolve(summary);
+        },
+        (error: unknown) => {
+          signal?.removeEventListener('abort', onAbort);
+          reject(error);
+        },
+      );
+    });
   }
 
   private key(token: string, id: string): string | undefined {
@@ -144,38 +213,89 @@ export class ConversationTitleCacheService {
     }
   }
 
-  private async withReadSlot<T>(read: () => Promise<T>): Promise<T> {
+  /**
+   * Admits `read` through the process-wide gate. A cancelled queued read
+   * leaves the queue; a cancelled active read keeps its slot until the
+   * underlying call settles, so cancellation never exceeds the cap.
+   */
+  private async withReadSlot<T>(
+    read: (signal: AbortSignal) => Promise<T>,
+    signal: AbortSignal,
+  ): Promise<T> {
+    const queuedAt = performance.now();
     if (this.activeReads >= MAX_CONCURRENT_READS) {
       if (this.waiting.length >= MAX_PENDING_READS) {
-        throw new ServiceUnavailableException(
+        recordConversationTitleQueue(0, ConversationTitleQueueOutcome.Rejected);
+        throw new ConversationTitleQueueUnavailableException(
           'Conversation title reads are busy',
         );
       }
-      await new Promise<void>((resolve, reject) => {
-        const enter = () => {
-          clearTimeout(timer);
-          resolve();
-        };
-        const timer = setTimeout(() => {
-          const index = this.waiting.indexOf(enter);
-          if (index !== -1) this.waiting.splice(index, 1);
-          reject(
-            new ServiceUnavailableException(
-              'Conversation title read queue timed out',
-            ),
-          );
-        }, CONVERSATION_TITLE_QUEUE_WAIT_MS);
-        this.waiting.push(enter);
-      });
+      try {
+        await this.waitForReadSlot(signal);
+      } catch (error) {
+        recordConversationTitleQueue(
+          secondsSince(queuedAt),
+          signal.aborted
+            ? ConversationTitleQueueOutcome.Cancelled
+            : ConversationTitleQueueOutcome.Rejected,
+        );
+        throw error;
+      }
     } else {
       this.activeReads++;
     }
+    recordConversationTitleQueue(
+      secondsSince(queuedAt),
+      ConversationTitleQueueOutcome.Admitted,
+    );
     try {
-      return await read();
+      if (signal.aborted) throw abortError();
+      const readStartedAt = performance.now();
+      let outcome = ConversationTitleReadOutcome.Failed;
+      try {
+        const result = await read(signal);
+        outcome = ConversationTitleReadOutcome.Success;
+        return result;
+      } catch (error) {
+        if (signal.aborted) outcome = ConversationTitleReadOutcome.Cancelled;
+        throw error;
+      } finally {
+        recordConversationTitleRead(secondsSince(readStartedAt), outcome);
+      }
     } finally {
       const next = this.waiting.shift();
       if (next) next();
       else this.activeReads--;
     }
+  }
+
+  /** Resolves once a slot is handed over; rejects on cancellation or timeout. */
+  private waitForReadSlot(signal: AbortSignal): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      const leave = () => {
+        clearTimeout(timer);
+        signal.removeEventListener('abort', onAbort);
+        const index = this.waiting.indexOf(enter);
+        if (index !== -1) this.waiting.splice(index, 1);
+      };
+      const enter = () => {
+        leave();
+        resolve();
+      };
+      const onAbort = () => {
+        leave();
+        reject(abortError());
+      };
+      const timer = setTimeout(() => {
+        leave();
+        reject(
+          new ConversationTitleQueueUnavailableException(
+            'Conversation title read queue timed out',
+          ),
+        );
+      }, CONVERSATION_TITLE_QUEUE_WAIT_MS);
+      signal.addEventListener('abort', onAbort, { once: true });
+      this.waiting.push(enter);
+    });
   }
 }

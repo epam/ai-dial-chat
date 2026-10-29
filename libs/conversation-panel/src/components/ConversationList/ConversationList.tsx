@@ -28,9 +28,11 @@ import {
   matchesTab,
 } from '../../utils/conversation-filter';
 import {
+  getConversationIdsInRange,
   getOverscanCount,
   getRowHeight,
   getSkeletonWidth,
+  isSameIdSequence,
   SKELETON_ROW_COUNT,
 } from '../../utils/conversation-row';
 import {
@@ -65,6 +67,7 @@ export const ConversationList: FC<ConversationListProps> = memo(
     getActions,
     onActionMenuOpen,
     onMoveConversation,
+    onVisibleConversationIdsChange,
     styles,
     id,
     className,
@@ -464,6 +467,49 @@ export const ConversationList: FC<ConversationListProps> = memo(
     const currentNoResultsDescription =
       tabEmptyLabel?.description ?? fallbackNoResultsDescription;
 
+    /*
+     * Visible-row reporting. The last rendered range is kept so a change of
+     * rows under an unchanged range (filtering, collapsing, new titles) is
+     * reported too; the callback ref keeps `handleRowsRendered` stable.
+     */
+    const isListShown = !isLoading && !isListEmpty;
+    const visibleRangeRef = useRef<{
+      startIndex: number;
+      stopIndex: number;
+    } | null>(null);
+    const reportedIdsRef = useRef<string[] | null>(null);
+    const onVisibleIdsChangeRef = useRef(onVisibleConversationIdsChange);
+    useEffect(() => {
+      onVisibleIdsChangeRef.current = onVisibleConversationIdsChange;
+    }, [onVisibleConversationIdsChange]);
+    const reportVisibleIds = useCallback((ids: string[]) => {
+      if (
+        reportedIdsRef.current &&
+        isSameIdSequence(reportedIdsRef.current, ids)
+      ) {
+        return;
+      }
+      reportedIdsRef.current = ids;
+      onVisibleIdsChangeRef.current?.(ids);
+    }, []);
+    const handleRowsRendered = useCallback(
+      (visibleRows: { startIndex: number; stopIndex: number }) => {
+        visibleRangeRef.current = visibleRows;
+        reportVisibleIds(getConversationIdsInRange(virtualRows, visibleRows));
+      },
+      [virtualRows, reportVisibleIds],
+    );
+    useEffect(() => {
+      if (!isListShown) {
+        visibleRangeRef.current = null;
+        reportVisibleIds([]);
+      } else if (visibleRangeRef.current) {
+        reportVisibleIds(
+          getConversationIdsInRange(virtualRows, visibleRangeRef.current),
+        );
+      }
+    }, [isListShown, virtualRows, reportVisibleIds]);
+
     const getStatusMessage = (): string => {
       if (isLoading) return loadingLabel;
       if (isUpdatingTitles) return updatingTitlesLabel;
@@ -511,6 +557,7 @@ export const ConversationList: FC<ConversationListProps> = memo(
           rowHeight={getRowHeight}
           overscanCount={overscanCount}
           onResize={handleListResize}
+          onRowsRendered={handleRowsRendered}
           rowProps={rowProps}
         />
       );

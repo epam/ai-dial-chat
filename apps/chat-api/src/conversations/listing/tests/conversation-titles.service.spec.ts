@@ -148,6 +148,22 @@ describe('ConversationTitlesService', () => {
     ).rejects.toBeInstanceOf(ServiceUnavailableException);
   });
 
+  it('aborts the SDK read when the only caller disconnects, without reporting a failure', async () => {
+    let sdkSignal: AbortSignal | undefined;
+    getConversation.mockImplementation(
+      (_bucket: string, _path: string, init: { signal: AbortSignal }) => {
+        sdkSignal = init.signal;
+        return new Promise(() => undefined);
+      },
+    );
+    const caller = new AbortController();
+    const result = service.getConversationTitles([id], 'token', caller.signal);
+    await vi.waitFor(() => expect(sdkSignal).toBeDefined());
+    caller.abort();
+    expect(await result).toEqual({ items: [] });
+    expect(sdkSignal?.aborted).toBe(true);
+  });
+
   it.each([
     { ids: [] },
     { ids: Array<string>(26).fill(id) },

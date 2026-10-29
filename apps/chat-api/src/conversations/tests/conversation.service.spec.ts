@@ -50,6 +50,11 @@ describe('ConversationService facade', () => {
       resolve: vi.fn(async (conversation: unknown) => conversation),
     };
 
+    const titleStreamService = {
+      admit: vi.fn().mockReturnValue('title-stream-admission'),
+      streamTitles: vi.fn().mockResolvedValue(undefined),
+    };
+
     const service = new ConversationService(
       persistenceService as never,
       listingService as never,
@@ -58,6 +63,7 @@ describe('ConversationService facade', () => {
       conversationNamingService as never,
       scheduledTaskUnreadService as never,
       publishedFolderAttachments as never,
+      titleStreamService as never,
     );
 
     return {
@@ -69,8 +75,24 @@ describe('ConversationService facade', () => {
       streamingService,
       conversationNamingService,
       scheduledTaskUnreadService,
+      titleStreamService,
     };
   };
+
+  it('delegates title stream admission and streaming to ConversationTitleStreamService', async () => {
+    const { service, titleStreamService } = makeService();
+    const res = {} as never;
+
+    const admission = service.admitConversationTitleStream(['id']);
+    await service.streamConversationTitles(admission as never, 'token', res);
+
+    expect(titleStreamService.admit).toHaveBeenCalledWith(['id']);
+    expect(titleStreamService.streamTitles).toHaveBeenCalledWith(
+      'title-stream-admission',
+      'token',
+      res,
+    );
+  });
 
   it('reads getConversation from ConversationPersistenceService', async () => {
     const { service, persistenceService } = makeService();

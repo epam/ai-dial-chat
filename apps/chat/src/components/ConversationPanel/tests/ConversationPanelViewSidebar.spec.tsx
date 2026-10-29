@@ -454,6 +454,7 @@ const baseContextValue = {
   generateConversationTitle: mockGenerateConversationTitle,
   duplicateConversation: vi.fn(),
   refreshConversations: vi.fn(),
+  setVisibleConversationIds: vi.fn(),
   deleteAllConversations: mockDeleteAllConversations,
 };
 

@@ -14,7 +14,13 @@ import {
   Req,
   Res,
 } from '@nestjs/common';
-import { ApiHeader, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiExtraModels,
+  ApiHeader,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import { resolvePrincipalKey } from '../auth/session/principal-key';
 import {
@@ -76,6 +82,14 @@ import {
 } from './dto/save-conversation.dto';
 import { SendCompletionDto } from './dto/send-completion.dto';
 import { StopCompletionDto } from './dto/stop-completion.dto';
+import {
+  CONVERSATION_TITLE_STREAM_ERROR_EXAMPLE,
+  CONVERSATION_TITLE_STREAM_EVENT_MODELS,
+  CONVERSATION_TITLE_STREAM_EXAMPLE,
+  CONVERSATION_TITLE_STREAM_MAX_ID_BYTES,
+  CONVERSATION_TITLE_STREAM_MAX_IDS,
+  StreamConversationTitlesBodyDto,
+} from './dto/stream-conversation-titles.dto';
 import { WatchConversationBodyDto } from './dto/watch-conversation.dto';
 import { BackgroundStopResult } from './generation/background-generation.service';
 import {
@@ -211,12 +225,81 @@ export class ConversationController {
     description:
       'No titles resolved because DIAL Core is unavailable or the bounded read queue is full',
   })
-  getConversationTitles(
+  async getConversationTitles(
     @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
     @Body() dto: ConversationTitlesBodyDto,
-  ) {
+  ): Promise<ConversationTitlesResponseDto> {
     const { at } = req.user as SessionUser;
-    return this.conversationService.getConversationTitles(dto.ids, at);
+    /* A disconnect detaches this request from the shared title reads. */
+    const clientAbort = new AbortController();
+    const handleClose = () => {
+      if (!res.writableEnded) clientAbort.abort();
+    };
+    res.on('close', handleClose);
+    try {
+      return await this.conversationService.getConversationTitles(
+        dto.ids,
+        at,
+        clientAbort.signal,
+      );
+    } finally {
+      res.off('close', handleClose);
+    }
+  }
+
+  @Post('titles/stream')
+  @HttpCode(200)
+  @ApiOperation({
+    operationId: 'streamConversationTitles',
+    summary: 'Stream conversation display titles via SSE',
+    description: `Opens a finite SSE stream that emits one \`data:\` JSON event per distinct requested ID as soon as its title read settles — \`title\`, \`unavailable\` (missing or forbidden), or \`item_error\` — then exactly one terminal \`done\` or \`error\` event. Each event payload is a \`ConversationTitleStreamEventDto\`. Reads share the process-wide title cache and read limit with \`getConversationTitles\`; up to ${CONVERSATION_TITLE_STREAM_MAX_IDS} IDs (${CONVERSATION_TITLE_STREAM_MAX_ID_BYTES} bytes serialized) are admitted in request order. \`done\` with \`reason: budget\` means the 45-second admission window ended; IDs without an outcome may be requested again. A response that ends without a terminal event was interrupted. Conversation messages are never returned.`,
+  })
+  @ApiExtraModels(...CONVERSATION_TITLE_STREAM_EVENT_MODELS)
+  @ApiResponse({
+    status: 200,
+    description:
+      'SSE stream of ConversationTitleStreamEventDto payloads. Failures after headers are sent are reported by a terminal `error` event, never by the HTTP status.',
+    content: {
+      'text/event-stream': {
+        schema: { type: 'string' },
+        examples: {
+          complete: {
+            summary: 'A later ID resolves first; the stream completes',
+            value: CONVERSATION_TITLE_STREAM_EXAMPLE,
+          },
+          fatal: {
+            summary: 'DIAL Core becomes unavailable after an item outcome',
+            value: CONVERSATION_TITLE_STREAM_ERROR_EXAMPLE,
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: `Invalid IDs or count; expected 1–${CONVERSATION_TITLE_STREAM_MAX_IDS} full conversation resource URLs`,
+  })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 403, description: 'Invalid CSRF token' })
+  @ApiResponse({
+    status: 413,
+    description: `Serialized IDs exceed ${CONVERSATION_TITLE_STREAM_MAX_ID_BYTES} bytes`,
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'Too many concurrent title streams on this instance',
+  })
+  async streamConversationTitles(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Body() dto: StreamConversationTitlesBodyDto,
+  ): Promise<void> {
+    const { at } = req.user as SessionUser;
+    const admission = this.conversationService.admitConversationTitleStream(
+      dto.ids,
+    );
+    await this.conversationService.streamConversationTitles(admission, at, res);
   }
 
   @Get('metadata')
