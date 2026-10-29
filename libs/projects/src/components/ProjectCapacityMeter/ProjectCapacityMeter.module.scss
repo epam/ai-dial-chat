@@ -1,9 +1,12 @@
 .track {
   background: var(--pcf-meter-track, var(--bg-layer-sunken, #eef1f7));
-}
 
-.fill {
-  background: var(--pcf-meter-fill, var(--stroke-accent, #1d4ed8));
+  /* The kit `ProgressBar` renders its fill as the track's only child and
+     exposes no class for it, so the `meterFill` colour reaches it through
+     the track. */
+  > * {
+    background: var(--pcf-meter-fill, var(--stroke-accent, #1d4ed8));
+  }
 }
 
 .text {

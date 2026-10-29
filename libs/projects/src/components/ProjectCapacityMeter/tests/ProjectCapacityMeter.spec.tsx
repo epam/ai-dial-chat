@@ -36,6 +36,22 @@ describe('ProjectCapacityMeter', () => {
     expect(screen.getByText('1% of capacity used')).toBeTruthy();
   });
 
+  it('renders the meter as the kit ProgressBar', () => {
+    renderMeter(1_048_576);
+
+    expect(
+      screen
+        .getByRole('meter', { name: 'Context capacity' })
+        .classList.contains('dial-kit-progress-bar'),
+    ).toBe(true);
+  });
+
+  it('clamps aria-valuenow at the capacity when the files exceed it', () => {
+    renderMeter(30, 20);
+
+    expect(screen.getByRole('meter').getAttribute('aria-valuenow')).toBe('20');
+  });
+
   it('clamps the percentage at 100', () => {
     renderMeter(30, 20);
 

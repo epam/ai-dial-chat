@@ -4,8 +4,10 @@ import {
   LinkButton,
   LiveRegion,
   LiveRegionElement,
+  NotificationSurface,
+  WarningMessageNotification,
 } from '@epam/ai-dial-ui-kit';
-import { IconAlertTriangleFilled, IconArrowRight } from '@tabler/icons-react';
+import { IconArrowRight } from '@tabler/icons-react';
 import { memo, type FC } from 'react';
 
 export enum ScheduledTasksLoginBannerState {
@@ -121,55 +123,40 @@ const ScheduledTasksLoginBanner: FC<Props> = ({
    * region that mounts in the same render as its text is announced
    * unreliably.
    *
-   * The banner is hand-rolled rather than the ui-kit `Notification`
-   * component: the design reference pairs a neutral `bg-layer-sunken`
-   * surface with a warning triangle icon, a combination `Notification`'s
-   * variant system does not expose (each variant ties one fixed icon to one
-   * fixed background).
+   * The banner keeps the warning variant's own `role="alert"`: it appears
+   * when scheduled tasks newly need a login to keep running, which the user
+   * should hear at once rather than after the queue drains.
    */
   return (
     <>
       {state !== undefined && (
-        <div
-          role="alert"
-          className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-layer-sunken p-3"
-        >
-          <div className="flex min-w-0 flex-1 items-center gap-2">
-            <IconAlertTriangleFilled
-              aria-hidden
-              size={DIAL_ICON_SIZE.LG}
-              className="shrink-0 text-warning-icon"
-            />
-            <div className="flex min-w-0 flex-wrap items-baseline gap-x-1 text-primary">
-              <span className="dial-small-paragraph-semi-text min-w-0 wrap-break-word">
-                {title}
-              </span>
-              <span className="dial-small-paragraph-text min-w-0 wrap-break-word">
-                {body}
-              </span>
-            </div>
-          </div>
-          {onLogIn && (
-            <LinkButton
-              label={resolvePrimaryLabel(state, {
-                loginButtonLabel,
-                retryButtonLabel,
-                loggingInLabel,
-              })}
-              disabled={isLoggingIn}
-              iconAfter={
-                <IconArrowRight
-                  size={DIAL_ICON_SIZE.SM}
-                  stroke={DIAL_KIT_ICON_STROKE}
-                  aria-hidden
-                  className="rtl:scale-x-[-1]"
-                />
-              }
-              onClick={handleLogIn}
-              className="min-h-11 min-w-11 shrink-0"
-            />
-          )}
-        </div>
+        <WarningMessageNotification
+          surface={NotificationSurface.Neutral}
+          title={title}
+          message={body}
+          action={
+            onLogIn && (
+              <LinkButton
+                label={resolvePrimaryLabel(state, {
+                  loginButtonLabel,
+                  retryButtonLabel,
+                  loggingInLabel,
+                })}
+                disabled={isLoggingIn}
+                iconAfter={
+                  <IconArrowRight
+                    size={DIAL_ICON_SIZE.SM}
+                    stroke={DIAL_KIT_ICON_STROKE}
+                    aria-hidden
+                    className="rtl:scale-x-[-1]"
+                  />
+                }
+                onClick={handleLogIn}
+                className="min-h-11 min-w-11"
+              />
+            )
+          }
+        />
       )}
       <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
         {isRetry ? retryMessage : liveAnnouncement}

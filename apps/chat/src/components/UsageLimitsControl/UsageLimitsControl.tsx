@@ -17,6 +17,7 @@ import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   Dropdown,
+  DropdownOverlayRole,
   ElementSize,
   ErrorText,
   LiveRegionPoliteness,
@@ -178,11 +179,12 @@ const UsageLimitsControl: FC<Props> = ({
     }
   };
 
+  /* The Dropdown renders the overlay as the dialog and names it by the title;
+     this panel only takes the opening focus, so it is focusable but not
+     tabbable. */
   const renderOverlay = () => (
     <div
       ref={dialogRef}
-      role="dialog"
-      aria-labelledby={titleId}
       tabIndex={-1}
       className="flex flex-col gap-3 p-4 focus:outline-hidden"
     >
@@ -233,6 +235,8 @@ const UsageLimitsControl: FC<Props> = ({
          inside a narrow viewport. */
       placement="top-end"
       matchReferenceWidth={false}
+      overlayRole={DropdownOverlayRole.Dialog}
+      overlayAriaLabelledBy={titleId}
       initialFocus={dialogRef}
       listClassName="w-90 rounded-lg p-0 shadow-lg"
       renderOverlay={renderOverlay}
@@ -247,8 +251,6 @@ const UsageLimitsControl: FC<Props> = ({
           getStatusTextClass(),
         )}
         textClassName="flex items-center gap-1"
-        aria-expanded={isOpen}
-        aria-haspopup="dialog"
         aria-label={t(ConversationInputI18nKeys.TriggerAriaLabel, {
           label: worstRow?.label ?? labels.tokenGroup,
           value: triggerValue,

@@ -151,5 +151,17 @@ describe('DeploymentSelectorField — search status', () => {
 
     expect(screen.getByRole('status')).toBe(status);
     expect(status.textContent).toBe('Nothing here');
+    expect(screen.queryByRole('listbox')).toBeNull();
+  });
+
+  it('renders no listbox when there are no records, keeping the status and alert regions mounted', async () => {
+    const user = userEvent.setup();
+    renderField({ records: [] });
+    await user.click(screen.getByRole('combobox'));
+    expect((await screen.findByRole('status')).textContent).toBe(
+      'Nothing here',
+    );
+    expect(screen.getByRole('alert').textContent).toBe('');
+    expect(screen.queryByRole('listbox')).toBeNull();
   });
 });

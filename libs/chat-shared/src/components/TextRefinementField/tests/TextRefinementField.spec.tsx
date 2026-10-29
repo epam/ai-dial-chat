@@ -263,6 +263,13 @@ describe('TextRefinementField', () => {
     );
   });
 
+  it('mounts an empty status region before any refinement starts', () => {
+    renderField(makeRefinement());
+    const status = screen.getByRole('status');
+    expect(status.textContent).toBe('');
+    expect(status.getAttribute('aria-live')).toBe('polite');
+  });
+
   it('announces the error through an alert region mounted before the failure', () => {
     const { rerender } = renderField(makeRefinement());
     const alert = screen.getByRole('alert');

@@ -48,6 +48,8 @@ export interface ToolsProps {
   tableCellClassName?: string;
   /** CSS class for the tool count above the list. Defaults to `'dial-tiny-text'`. */
   countClassName?: string;
+  /** CSS class for parameter names, types and annotation keys inside the grids. Defaults to `'dial-tiny-code-text'`. */
+  codeClassName?: string;
   /** Grid column headings, search, count and no-results strings, merged over English defaults. */
   labels?: Partial<ToolsLabels>;
 }
@@ -63,6 +65,7 @@ export const Tools: FC<ToolsProps> = ({
   tableHeadingClassName = 'dial-caption-text',
   tableCellClassName = 'dial-tiny-text',
   countClassName = 'dial-tiny-text',
+  codeClassName = 'dial-tiny-code-text',
   labels,
 }) => {
   const columnLabels = { ...DEFAULT_TOOLS_LABELS, ...labels };
@@ -147,7 +150,7 @@ export const Tools: FC<ToolsProps> = ({
                   key="name"
                   className={mergeClasses(
                     'border-none bg-transparent p-0 text-inherit',
-                    styles.code,
+                    codeClassName,
                   )}
                 >
                   {p.name}
@@ -156,7 +159,7 @@ export const Tools: FC<ToolsProps> = ({
                   key="type"
                   className={mergeClasses(
                     'border-none bg-transparent p-0 text-inherit',
-                    styles.code,
+                    codeClassName,
                   )}
                 >
                   {p.type}
@@ -179,7 +182,7 @@ export const Tools: FC<ToolsProps> = ({
                   key="key"
                   className={mergeClasses(
                     'border-none bg-transparent p-0 text-inherit',
-                    styles.code,
+                    codeClassName,
                   )}
                 >
                   {ann.key}

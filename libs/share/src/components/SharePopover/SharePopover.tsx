@@ -214,12 +214,10 @@ const SharePopover: FC<SharePopoverProps> = ({
 
       <div className={mergeClasses('-mt-1.5 h-px w-full', styles.divider)} />
 
-      {isLoading && (
-        <LoadingSkeleton
-          ariaLabel={loadingLabel}
-          skeletonColor={colors?.skeletonColor}
-        />
-      )}
+      {/* Mounted with the popover rather than with the skeleton, so the loading text lands in a region that already exists and is announced. */}
+      <LiveRegion visuallyHidden>{isLoading ? loadingLabel : null}</LiveRegion>
+
+      {isLoading && <LoadingSkeleton skeletonColor={colors?.skeletonColor} />}
 
       {/* Mounted with the popover, before the link request fails, so the failure is announced; out of the column gap while empty. */}
       <LiveRegion politeness={LiveRegionPoliteness.Assertive}>

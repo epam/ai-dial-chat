@@ -153,12 +153,13 @@ export const DeploymentSelectorField: FC<DeploymentSelectorFieldProps> = ({
       >
         {hasError ? labels.errorLabel : null}
       </LiveRegion>
-      <div
-        role="listbox"
-        className="mt-2 max-h-[min(50dvh,320px)] min-w-0 overflow-y-auto"
-      >
-        {hasOptions &&
-          options.map((option) => (
+      {/* Rendered only with options, so an empty list leaves no blank listbox or margin. */}
+      {hasOptions && (
+        <div
+          role="listbox"
+          className="mt-2 max-h-[min(50dvh,320px)] min-w-0 overflow-y-auto"
+        >
+          {options.map((option) => (
             <MenuItem
               key={option.id}
               role="option"
@@ -177,7 +178,8 @@ export const DeploymentSelectorField: FC<DeploymentSelectorFieldProps> = ({
               className="h-auto max-w-full py-2"
             />
           ))}
-      </div>
+        </div>
+      )}
       {onBrowse && (
         <GhostButton
           className="mt-2 min-h-11 max-w-full"

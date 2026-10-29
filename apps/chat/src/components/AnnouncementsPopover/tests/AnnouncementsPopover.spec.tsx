@@ -1,5 +1,5 @@
 import type { AnnouncementListItem } from '@epam/ai-dial-chat-hooks';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import AnnouncementsPopover from '../AnnouncementsPopover';
@@ -134,13 +134,20 @@ describe('AnnouncementsPopover — accessibility', () => {
     vi.clearAllMocks();
   });
 
-  it('exposes the collapsed state and popup semantics on the pill', () => {
+  it('exposes the collapsed state on the pill without claiming a menu popup', () => {
     render(<AnnouncementsPopover announcements={[makeAnnouncement()]} />);
 
     const pill = screen.getByRole('button', { name: PILL_NAME });
     expect(pill.getAttribute('aria-expanded')).toBe('false');
-    expect(pill.getAttribute('aria-haspopup')).toBe('true');
+    expect(pill.getAttribute('aria-haspopup')).toBeNull();
     expect(pill.getAttribute('aria-controls')).toBeTruthy();
+  });
+
+  it('renders the overlay without a menu or dialog role', async () => {
+    await openPopover([makeAnnouncement()]);
+
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('flips aria-expanded when the popover opens', async () => {
@@ -153,7 +160,7 @@ describe('AnnouncementsPopover — accessibility', () => {
     ).toBe('true');
   });
 
-  it('points aria-controls at the rendered overlay', async () => {
+  it('points aria-controls at the overlay that holds the region', async () => {
     await openPopover([makeAnnouncement()]);
 
     const controlledId = screen
@@ -162,7 +169,11 @@ describe('AnnouncementsPopover — accessibility', () => {
     const region = screen.getByRole('region', {
       name: 'announcementsPopover.listAriaLabel',
     });
-    expect(controlledId).toBe(region.id);
+    /* The Dropdown points aria-controls at its own floating wrapper, which
+       has no role of its own to query by. */
+    // eslint-disable-next-line testing-library/no-node-access
+    const overlay = controlledId ? document.getElementById(controlledId) : null;
+    expect(overlay?.contains(region)).toBe(true);
   });
 
   it('announces the overlay as a labeled region containing a list', async () => {
@@ -240,7 +251,9 @@ describe('AnnouncementsPopover — height and scrolling', () => {
     const region = screen.getByRole('region', {
       name: 'announcementsPopover.listAriaLabel',
     });
-    expect(region.matches(':focus')).toBe(true);
+    /* The Dropdown moves focus to the first tabbable element of the overlay
+       asynchronously, after the portal mounts. */
+    await waitFor(() => expect(region.matches(':focus')).toBe(true));
   });
 });
 

@@ -1,3 +1,4 @@
+import { AttachmentCanvasProvider } from '@epam/ai-dial-attachment-canvas';
 import { type Conversation } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import { type ComponentProps } from 'react';
@@ -123,7 +124,9 @@ const defaults = {
 };
 
 const renderView = (props: Partial<ViewProps> = {}) => {
-  const view = render(<ConversationView {...defaults} {...props} />);
+  const view = render(<ConversationView {...defaults} {...props} />, {
+    wrapper: AttachmentCanvasProvider,
+  });
   const rerenderWith = (next: Partial<ViewProps>) =>
     view.rerender(<ConversationView {...defaults} {...next} />);
   return { ...view, rerenderWith };

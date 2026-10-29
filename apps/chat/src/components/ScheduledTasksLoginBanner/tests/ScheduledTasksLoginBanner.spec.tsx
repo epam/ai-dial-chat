@@ -194,4 +194,22 @@ describe('ScheduledTasksLoginBanner', () => {
 
     expect(screen.getByRole('alert')).toBeTruthy();
   });
+
+  it('renders the kit warning notification on the neutral surface with the login action inside it', () => {
+    render(
+      <ScheduledTasksLoginBanner
+        {...BASE_PROPS}
+        state={ScheduledTasksLoginBannerState.Shown}
+      />,
+    );
+
+    const alert = screen.getByRole('alert');
+    expect(alert.className).toContain('bg-layer-sunken');
+    expect(alert.className).not.toContain('bg-warning');
+    expect(
+      alert.contains(
+        screen.getByRole('button', { name: BASE_PROPS.loginButtonLabel }),
+      ),
+    ).toBe(true);
+  });
 });

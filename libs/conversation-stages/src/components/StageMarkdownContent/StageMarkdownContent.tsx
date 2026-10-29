@@ -69,7 +69,7 @@ export const StageMarkdownContent: FC<Props> = memo(
                   /* Inline (not inline-block) so the padding never grows the
                    line box past the surrounding text's line-height. */
                   'px-1 py-0.5',
-                  typography?.codeClassName ?? 'dial-tiny-text rounded-md',
+                  typography?.codeClassName ?? 'dial-tiny-code-text rounded-md',
                   styles.codeInline,
                 )}
               >

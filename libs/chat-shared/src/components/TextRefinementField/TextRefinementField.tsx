@@ -6,6 +6,7 @@ import {
   ErrorText,
   GhostButton,
   Label,
+  LiveRegionPoliteness,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
 import { IconRestore, IconSparkles } from '@tabler/icons-react';
@@ -191,10 +192,11 @@ export const TextRefinementField: FC<TextRefinementFieldProps> = ({
         {children}
       </div>
       <div className="flex min-w-0 items-start gap-3">
-        {/* The live region stays mounted: CaptionText renders nothing for empty text. */}
-        <div role="status" aria-live="polite" className="min-w-0 flex-1">
+        {/* A plain flex slot, so the caption stays at the row end while the announced region inside it is empty. */}
+        <div className="min-w-0 flex-1">
           <CaptionText
             text={message}
+            announce={LiveRegionPoliteness.Polite}
             className={mergeClasses(
               feedbackClassName,
               isMessageHidden && 'sr-only',
@@ -203,19 +205,17 @@ export const TextRefinementField: FC<TextRefinementFieldProps> = ({
         </div>
         {captionText}
       </div>
-      {/* Always-mounted alert region: only its child appears on failure, so the error is announced. */}
-      <div role="alert">
-        {error && (
-          <ErrorText
-            id={fieldId + '-refinement-error'}
-            className={mergeClasses(feedbackClassName, errorClassName)}
-            text={
-              labels?.refineErrorLabel ??
-              'Could not refine this text. Please try again.'
-            }
-          />
-        )}
-      </div>
+      <ErrorText
+        id={fieldId + '-refinement-error'}
+        announce={LiveRegionPoliteness.Assertive}
+        className={mergeClasses(feedbackClassName, errorClassName)}
+        text={
+          error
+            ? (labels?.refineErrorLabel ??
+              'Could not refine this text. Please try again.')
+            : ''
+        }
+      />
     </div>
   );
 };

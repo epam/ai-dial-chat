@@ -287,12 +287,15 @@ describe('SharePopover', () => {
   it('announces Copied via an aria-live region after clicking Copy', async () => {
     render(<SharePopover {...makeProps({ onClose })} />);
 
-    const liveRegion = screen.getByRole('status');
-    expect(liveRegion.textContent).toBe('');
+    /* The popover also keeps its (empty) loading status region mounted. */
+    const regions = screen.getAllByRole('status');
+    expect(regions.every((region) => region.textContent === '')).toBe(true);
 
     await user.click(screen.getByRole('button', { name: 'Copy' }));
 
-    expect(liveRegion.textContent).toBe('Copied');
+    expect(
+      regions.filter((region) => region.textContent === 'Copied'),
+    ).toHaveLength(1);
   });
 
   it('swaps to the QR view and back, moving focus each time', async () => {
@@ -424,17 +427,28 @@ describe('SharePopover', () => {
       />,
     );
 
-    expect(
-      screen
-        .getAllByRole('status')
-        .some((status) => status.textContent === 'Creating share link…'),
-    ).toBe(true);
+    expect(screen.getByRole('status').textContent).toBe('Creating share link…');
     expect(
       // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- checking for decorative aria-hidden skeleton placeholders, which by definition carry no accessible role/name
       container.querySelectorAll('[aria-hidden]').length,
     ).toBeGreaterThan(0);
     expect(screen.queryByDisplayValue(ITEM_URL)).toBeNull();
     expect(screen.queryByRole('button', { name: 'Copy' })).toBeNull();
+  });
+
+  it('keeps the loading status region mounted and empties it once the link is ready', () => {
+    const { rerender } = render(
+      <SharePopover
+        {...makeProps({ onClose, url: undefined, isLoading: true })}
+      />,
+    );
+    const region = screen.getByRole('status');
+    expect(region.textContent).toBe('Creating share link…');
+
+    rerender(<SharePopover {...makeProps({ onClose })} />);
+
+    expect(screen.getAllByRole('status')).toContain(region);
+    expect(region.textContent).toBe('');
   });
 
   it('shows an error state when the link could not be created', () => {

@@ -10,15 +10,3 @@
 .description {
   color: var(--cat-tools-description-text, var(--text-secondary, #57647a));
 }
-
-/* Sized by the cell's `dial-tiny-text` class (the kit has no 12px code step;
-   `dial-code-text` is 14px), so only the family is set here — the kit's own
-   mono stack. */
-.code {
-  font-family: var(
-    --theme-font-mono,
-    var(--font-fira-code, 'Fira Code'),
-    ui-monospace,
-    monospace
-  );
-}
