@@ -74,4 +74,4 @@ Verification: `npm run test:file -- apps/chat-api/src/scheduled-tasks/tests/sche
 ## 8. Follow-up (out of scope)
 
 - [x] 8.1 Add direct unit specs for `isCompletionCandidate`/`isExpiredRecurring` and `ScheduledTasksListCacheService.buildKey` once a change touches them. Done in `tests/scheduled-task-completion.predicates.spec.ts` and `tests/scheduled-tasks-list-cache.service.spec.ts`.
-- [ ] 8.2 Propose `dedupe-files-batch-transfer` (refactoring plan B4, next backend item).
+- [x] 8.2 Propose `dedupe-files-batch-transfer` (refactoring plan B4, next backend item).
