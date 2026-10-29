@@ -24,6 +24,10 @@ const LEGACY_ALLOWLIST = new Set([
   'DialInputPopup',
 ]);
 
+/* Files whose custom typography is an accepted exception: the 404 hero numeral
+   is larger than the kit's biggest step (`dial-display1-text`, 32/48). */
+const TYPOGRAPHY_EXEMPT_PATHS = [/^apps\/chat\/src\/pages\/NotFound\//];
+
 const SOURCE = 'source';
 const SPEC = 'spec';
 
@@ -258,7 +262,12 @@ const scan = (diff, typography) => {
 
     if (isSpec) continue;
 
-    for (const signal of CUSTOM_TYPOGRAPHY_SIGNALS) {
+    const typographySignals = TYPOGRAPHY_EXEMPT_PATHS.some((re) =>
+      re.test(path),
+    )
+      ? []
+      : CUSTOM_TYPOGRAPHY_SIGNALS;
+    for (const signal of typographySignals) {
       const match = signal.test(path) && text.match(signal.re);
       if (match) {
         add(

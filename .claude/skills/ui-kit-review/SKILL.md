@@ -37,6 +37,10 @@ the user explicitly asks; otherwise the report goes to the chat.
    `package.json`, and skim the matching section of
    `node_modules/@epam/ai-dial-ui-kit/dist/CHANGELOG.md` for behaviour the
    diff relies on (a dev version `x.y.z-dev.N` maps to release `x.y.z`).
+   The `ai-dial-ui-kit` MCP server reads `dist/components-manifest.json` once,
+   when it starts: after a kit bump in the same session, reconnect it (`/mcp`)
+   before trusting a "not found" — a stale process still answers for the old
+   version.
 
 3. **Verify every candidate.** Read the surrounding code, then confirm the
    replacement with the `ai-dial-ui-kit` MCP tools (`getEntityDetails`,
@@ -102,12 +106,16 @@ Also look, without a scanner signal, for:
 
 Confirm each still holds in the installed version before repeating it.
 
-- The kit type scale has no display step above `dial-display1-text` (32/48),
-  so a hero heading (the 404 page) keeps host-side sizing until design adds one.
 - `Notification`'s own close button has a fixed English name — pass a
   lib-owned `CloseButton` instead of `closable`.
 - `MarkdownEditor` and `Calendar` take no `aria-describedby`/`aria-invalid` —
   bridge with `useControlErrorAssociation` from `@epam/ai-dial-chat-shared`.
+
+## Accepted exceptions — do not report
+
+- `apps/chat/src/pages/NotFound/` — the 404 hero numeral is sized above the
+  kit's biggest step (`dial-display1-text`, 32/48) on purpose. The scanner
+  skips its typography signals (`TYPOGRAPHY_EXEMPT_PATHS`).
 
 ## Report format
 
