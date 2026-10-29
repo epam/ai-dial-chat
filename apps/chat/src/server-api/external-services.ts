@@ -15,18 +15,10 @@ export type {
   GetExternalServiceResponseDto,
 } from '@epam/ai-dial-chat-api-client';
 
-export enum ExternalServiceAuthType {
-  None = 'NONE',
-  ApiKey = 'API_KEY',
-  OAuth = 'OAUTH',
-  DialNative = 'DIAL_NATIVE',
-}
-
-export enum ExternalServiceCredentialsLevel {
-  Global = 'GLOBAL',
-  Application = 'APPLICATION',
-  User = 'USER',
-}
+export {
+  ExternalServiceAuthType,
+  ExternalServiceCredentialsLevel,
+} from '@epam/ai-dial-chat-hooks';
 
 /** An application's public external-service listing, OAuth client settings included (never secrets). */
 export const listExternalServices = (

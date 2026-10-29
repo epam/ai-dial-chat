@@ -4,6 +4,7 @@ import {
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
   ToolsetLoginOutcomeType,
+  ExternalServiceLoginOutcomeType,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
@@ -39,10 +40,7 @@ import {
 import { useFeatureFlag } from '../../context/AppConfigContext';
 import { useClientChannel } from '../../context/ClientChannelContext';
 import { useDeployments } from '../../context/DeploymentsContext';
-import {
-  ExternalServiceLoginOutcomeType,
-  useExternalServiceLogin,
-} from '../../hooks/externalServices/useExternalServiceLogin';
+import { useExternalServiceLogin } from '../../hooks/externalServices/useExternalServiceLogin';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useToolsetLogin } from '../../hooks/toolsets/useToolsetLogin';
 import { useUiFeature } from '../../hooks/useUiFeature';

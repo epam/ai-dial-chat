@@ -16,6 +16,7 @@ import {
   ToolsetOAuthInitiationResultType,
   ToolsetOAuthResultType,
   waitForToolsetOAuthResult,
+  ExternalServiceLoginOutcomeType,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
@@ -49,10 +50,7 @@ import {
 import { useFeatureFlag } from '../../../context/AppConfigContext';
 import { useUser } from '../../../context/auth/UserContext';
 import { useTheme } from '../../../context/ThemeContext';
-import {
-  ExternalServiceLoginOutcomeType,
-  useExternalServiceLogin,
-} from '../../../hooks/externalServices/useExternalServiceLogin';
+import { useExternalServiceLogin } from '../../../hooks/externalServices/useExternalServiceLogin';
 import { useUiFeature } from '../../../hooks/useUiFeature';
 import { getDeploymentDetails } from '../../../server-api/deployments';
 import {

@@ -1074,3 +1074,19 @@ Import direction is enforced by lint. Every Nx project carries exactly one `type
 - [DIAL API documentation](https://github.com/epam/ai-dial)
 - [openspec/config.yaml](../openspec/config.yaml) — tech stack, commands, AI agent rules
 - [openspec/lib-styling-guide.md](../openspec/lib-styling-guide.md) — CSS variable / SCSS module conventions
+
+## Remaining reusable chat controllers
+
+The chat-hooks conversation entry owns generation registries, title reconciliation and
+deployment-change tracking. Scheduled-tasks owns active-task classification/details;
+skill-editor owns preview synchronization over host canvas operations; external-services
+owns login orchestration over the existing OAuth protocol. App providers/adapters retain
+routing, flags, client setup, code exchange, persistence and translated status messages.
+Quotations owns defensive annotation grouping; chat-shared owns conversation transfer row
+mapping with host message resolvers. No module-boundary exception was added.
+
+Audio upload MIME normalization and reset-instant offset formatting are explicit opt-ins;
+parent defaults remain preserve/current-offset. See the chat-hooks README for contracts.
+The reusable-workflows consumer fixture packs the dependency closure outside the workspace;
+publication and downstream migration remain separate actions. Downstream must implement
+ExternalService callback dispatch with consent forwarding before adopting login orchestration.

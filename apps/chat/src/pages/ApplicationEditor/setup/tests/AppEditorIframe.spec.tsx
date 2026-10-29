@@ -6,6 +6,7 @@ import {
   ToolsetCredentialsLevel,
   type ToolsetRedirectState,
 } from '@epam/ai-dial-chat-hooks';
+import { ExternalServiceLoginOutcomeType } from '@epam/ai-dial-chat-hooks';
 import {
   decodeJsonFromBase64,
   encodeJsonToBase64,
@@ -28,7 +29,6 @@ import {
 import * as AppConfigContextModule from '../../../../context/AppConfigContext';
 import * as UserContextModule from '../../../../context/auth/UserContext';
 import * as ThemeContextModule from '../../../../context/ThemeContext';
-import { ExternalServiceLoginOutcomeType } from '../../../../hooks/externalServices/useExternalServiceLogin';
 import * as deploymentsApi from '../../../../server-api/deployments';
 import * as externalServicesApi from '../../../../server-api/external-services';
 import * as toolsetsApi from '../../../../server-api/toolsets';

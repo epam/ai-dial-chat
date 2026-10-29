@@ -5159,3 +5159,120 @@ Additional cron constraints and supported scheduler expressions outside the
 simple categories stay `Custom` with their complete expression. Invalid
 numeric ranges/dates are `Invalid`. Monthly schedules crossing midnight stay Custom when the shifted day is not
 equivalent around short months; shifts wholly within days 1–28 remain Monthly. The host owns all localized text.
+
+## Remaining controller extraction contracts
+
+The following adoption matrix tracks extract-remaining-chat-reuse-controllers.
+B1?B8 and compatibility options A2/D are implemented; Packed-artifact verification and downstream adoption are tracked separately. Existing app exports and defaults are preserved.
+
+| Audit | Contract                                                                | Public entry                     | Host responsibility                                           |
+| ----- | ----------------------------------------------------------------------- | -------------------------------- | ------------------------------------------------------------- |
+| B1    | createGenerationRegistry (implemented)                                  | chat-hooks root and conversation | Provider lifetime and opaque paths                            |
+| B2    | resolveActiveScheduledTask, useActiveScheduledTaskDetails (implemented) | chat-hooks/scheduled-tasks       | Routes, matcher, flags, loading callback                      |
+| B3    | useConversationTitleEnrichmentController (implemented)                  | chat-hooks/conversation          | Identity, JSON/stream adapters, bounds, protection duration   |
+| B4    | useSkillFilePreviewSyncController (implemented)                         | chat-hooks/skill-editor          | Selection, resource key, canvas operations and request guards |
+| B5    | useExternalServiceLogin (implemented)                                   | chat-hooks/external-services     | Auth callbacks, callback path and reserved popup              |
+| B6    | useDeploymentChangeTracking (implemented)                               | chat-hooks/conversation          | Conversation identity, selected deployment and change sink    |
+| B7    | useHtmlTagAnnotationGroups (implemented)                                | quotations root                  | Extract persisted annotations                                 |
+| B8    | toConversationTransferQueueItems (implemented)                          | chat-shared root                 | Translated error/warning resolvers                            |
+| A2    | uploadMimeTypePolicy (implemented)                                      | Existing transcription API       | Preserve default; normalize opt-in                            |
+| D     | offsetPolicy (implemented)                                              | Existing reset-time formatter    | Current-offset default; reset-instant opt-in                  |
+
+Only B5 adds a subpath. B8 uses the existing shared root and leaves the
+file-manager mapper unchanged. A1 is already complete and outside this work.
+Downstream ExternalService callback dispatch must be adopted in the downstream
+repository; parent implementation does not prove downstream adoption or publish
+packages.
+
+### Generation registry
+
+Import createGenerationRegistry, ClientGenerationStatus and the GenerationRegistry
+and GenerationEntry types from the root or conversation entry. Each factory call
+owns independent entries. startGeneration aborts only an active predecessor on
+the same exact path; completeGeneration ignores stale identities. getGeneration
+returns the current entry and hasActiveGeneration queries the instance. Operations
+are stable and non-reactive. There is no automatic teardown or persistence; the
+host retains one registry for its provider lifetime.
+
+### Active scheduled task
+
+The root and scheduled-tasks entry export resolveActiveScheduledTask and
+useActiveScheduledTaskDetails, their input types, and ActiveScheduledTaskStatus
+and ActiveScheduledTaskDetailState. The resolver accepts guarded route identity,
+list loading state, feature eligibility, candidate metadata and a matching callback.
+The details hook accepts scheduleId and a stable loader taking (id, AbortSignal).
+It returns taskState, task, taskError and retryTask. Missing identity is idle;
+404 is unavailable; other failures expose an error. Identity change and unmount
+abort requests and discard late completions. Run identity is not a fetch input.
+Hosts retain route validation, client configuration and run-history composition;
+the parent provider shares one details instance across its consumers.
+
+### Title enrichment controller
+
+The root and conversation entry export useConversationTitleEnrichmentController.
+Pass an identity scope, a React list setter and stable ConversationTitleEnrichmentOptions.
+The controller owns revisions, tombstones, local-title protection, visible-ID priority
+and bounded scheduling. Hosts supply getTitles, optional streamTitles, batch/count/byte/
+flush limits, protectionMs and optionally now. Omitting streamTitles uses sequential
+JSON batches; set batchSize to 25 to match the parent. The incremental adapter reports
+ConversationTitleRequestEnd plus settledIds and emits titles through its callback.
+Wire parsing and unsupported-endpoint detection remain in the parent adapter.
+Parent policy remains 315000 ms local protection. No package publication or downstream
+migration is implied. Packed-consumer proof remains pending.
+
+### Skill preview synchronization
+
+useSkillFilePreviewSyncController is exported from the root and skill-editor entry.
+Pass SkillFilePreviewSyncOptions containing a resolved node and content, an opaque
+resource key, content revision, canvas snapshot, open/close callbacks and a
+provider-scoped beginRequest predicate. Hosts invoke feature hooks themselves.
+The controller reuses skillFileToAttachment and returns state plus retry. Empty
+selection is Idle; the parent retains its existing Loading presentation for the
+manifest. Failures remain stable until retry or changed resource/revision.
+A newer canvas owner invalidates old commits and prevents cleanup closing its
+content. Cleanup runs in the layout phase before the host request hook retires
+its passive-effect lifetime. No file fetching or resource-key construction lives
+in the controller.
+
+### External-service login
+
+useExternalServiceLogin and its params/outcome/auth enums are available from the
+root and external-services entry. ExternalServiceLoginOptions supplies callbackPath,
+service get/sign-in/sign-out operations, offline status and offline login callbacks.
+The controller uses the existing OAuth popup/handshake implementation; hosts retain
+client configuration and callback code exchange. A reserved popup is reused, stale
+logout is best-effort, API keys are trimmed, ambiguous cancellation is checked against
+fresh service status and DIAL-native login verifies administrator consent again after
+successful offline login. Offline timeout maps explicitly to failure.
+
+The parent callback already dispatches ExternalService, OfflineCredentials and Toolset
+separately. Downstream adoption must add the missing ExternalService callback exchange
+branch and forward consent before switching its adapter. This change does not edit or
+verify that repository and does not publish packages.
+
+### Deployment change tracking
+
+useDeploymentChangeTracking and DeploymentChangeTrackingOptions are exported from
+root and conversation. Supply conversationId, selectedDeploymentId, isLoaded and a
+stable onChange(previous, next) callback. Initial restoration, direct loaded-to-loaded
+conversation switches, unloaded changes and null selections emit no notification.
+The next non-null user selection reports its baseline and new ID. The host retains
+createDeploymentChangedMessage, persistence and deployment-context lookup.
+
+Skill preview hosts backed by a mutable byte cache may supply getContent instead
+of content. It synchronously reads already-loaded bytes during the controller effect;
+it must not fetch. This keeps mutable refs out of render.
+
+### Compatibility policies
+
+useTranscribeAudio defaults to UploadMimeTypePolicy.Preserve (original File upload).
+Opt into UploadMimeTypePolicy.Normalize with uploadMimeTypePolicy to strip codec
+parameters from the uploaded File while preserving its bytes, name and lastModified.
+Already-normalized files retain identity. Both policies normalize transcription metadata,
+validate before upload and reuse the uploaded URL during recognition retries.
+
+formatUsageResetTime accepts a fourth UsageResetTimeOptions argument. The default
+UsageResetOffsetPolicy.CurrentOffset retains the viewer's formatting-time offset;
+UsageResetOffsetPolicy.ResetInstant uses the offset at the reset boundary. Both preserve
+isoValue and resetsAtMs. The shortened formatter and parent defaults are unchanged.
+Downstream can select the explicit policies instead of copying these algorithms.

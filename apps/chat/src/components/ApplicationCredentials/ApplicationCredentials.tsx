@@ -4,7 +4,10 @@ import {
   ToolsetAuthenticationType,
   type ApplicationCredentialLoginParams,
 } from '@epam/ai-dial-catalog';
-import { useApplicationCredentials } from '@epam/ai-dial-chat-hooks';
+import {
+  useApplicationCredentials,
+  ExternalServiceLoginOutcomeType,
+} from '@epam/ai-dial-chat-hooks';
 import { useCallback, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -15,10 +18,7 @@ import {
   ToolsetEditorI18nKeys,
   ToolsetSigninI18nKeys,
 } from '../../constants/translation-keys';
-import {
-  ExternalServiceLoginOutcomeType,
-  useExternalServiceLogin,
-} from '../../hooks/externalServices/useExternalServiceLogin';
+import { useExternalServiceLogin } from '../../hooks/externalServices/useExternalServiceLogin';
 import {
   externalServicesApi,
   offlineCredentialsApi,

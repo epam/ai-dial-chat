@@ -11,10 +11,10 @@ import {
   skillFileToAttachment,
   useSkillFilePreview,
 } from '@epam/ai-dial-chat-hooks';
+import { SkillFilePreviewState } from '@epam/ai-dial-chat-hooks/skill-editor';
 import { SkillFileNodeKind } from '@epam/ai-dial-skill-editor';
 import { type FC, useEffect } from 'react';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
-import { SkillFilePreviewState } from '../../types/skill-file-preview';
 import { SkillFilePreview } from '../SkillFilePreview/SkillFilePreview';
 
 interface Props {

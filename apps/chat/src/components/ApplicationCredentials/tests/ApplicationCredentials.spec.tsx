@@ -1,3 +1,4 @@
+import { ExternalServiceLoginOutcomeType } from '@epam/ai-dial-chat-hooks';
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -6,7 +7,6 @@ import {
   ButtonsI18nKeys,
   ToolsetSigninI18nKeys,
 } from '../../../constants/translation-keys';
-import { ExternalServiceLoginOutcomeType } from '../../../hooks/externalServices/useExternalServiceLogin';
 import {
   externalServicesApi,
   offlineCredentialsApi,
