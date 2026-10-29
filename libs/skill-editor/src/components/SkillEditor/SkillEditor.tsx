@@ -17,6 +17,7 @@ import {
   TextRefinementField,
   useTextRefinement,
   type TextRefinementCallback,
+  useControlErrorAssociation,
 } from '@epam/ai-dial-chat-shared';
 import type { DialFile } from '@epam/ai-dial-react-file-manager';
 import {
@@ -29,8 +30,10 @@ import {
   ButtonVariant,
   CaptionText,
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   EditorThemes,
   ElementSize,
+  ErrorMessageNotification,
   ErrorText,
   GhostButton,
   GhostIconButton,
@@ -177,6 +180,12 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     instructions: initialValues?.instructions ?? '',
   });
   const instructionsId = useId();
+  const instructionsErrorId = useId();
+  useControlErrorAssociation(
+    () => document.getElementById(instructionsId),
+    instructionsErrorId,
+    Boolean(errors?.instructions),
+  );
   const refinementLock = useRef<AbortSignal | undefined>(undefined);
   const instructionsCapRef = useAvailableHeightCap<HTMLDivElement>({
     bottomGap: INSTRUCTIONS_EDITOR_BOTTOM_GAP,
@@ -828,16 +837,20 @@ export const SkillEditor: FC<SkillEditorProps> = ({
         <EntityEditor
           {...editorProps}
           metadata={
-            <div role="alert" className="flex flex-col items-center gap-4 p-8">
-              <ErrorText
-                text={
+            /* The kit error section message is an assertive `alert` live region, with Retry in its `action` slot. */
+            <div className="p-8">
+              <ErrorMessageNotification
+                message={
                   t.loadErrorMessage ??
                   "Couldn't load this skill. Please try again."
                 }
-              />
-              <PrimaryButton
-                label={t.retryLabel ?? 'Retry'}
-                onClick={onRetry}
+                iconStroke={DIAL_KIT_ICON_STROKE}
+                action={
+                  <PrimaryButton
+                    label={t.retryLabel ?? 'Retry'}
+                    onClick={onRetry}
+                  />
+                }
               />
             </div>
           }
@@ -933,7 +946,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
           </Suspense>
         </div>
         {errors?.instructions != null && (
-          <ErrorText text={errors.instructions} />
+          <ErrorText id={instructionsErrorId} text={errors.instructions} />
         )}
       </div>
     </TextRefinementField>

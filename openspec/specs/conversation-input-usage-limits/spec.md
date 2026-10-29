@@ -386,9 +386,11 @@ horizontally.
 The popover SHALL refresh both usage sources on open without displaying a loading indicator. The
 control SHALL refresh both once when an active generation ends, so the trigger reflects the latest
 usage without being opened. It SHALL support Escape, outside activation, trigger reactivation, and
-predictable focus return to the trigger. A failed refresh of either source SHALL be announced
-through an `aria-live="polite"` region using `conversationInput.usageLimits.error`, while the
-previously rendered rows remain visible.
+predictable focus return to the trigger; these, placement and viewport collision come from the
+ui-kit 2.0 `Dropdown` (`renderOverlay`), and the trigger is the ui-kit `Button`. A failed refresh of
+either source SHALL be announced through an always-mounted `aria-live="polite"` region wrapping the
+ui-kit `ErrorText` with `conversationInput.usageLimits.error`, while the previously rendered rows
+remain visible.
 
 All visible and accessible text SHALL come from app-owned i18n. `UsageLimitsControl` SHALL resolve
 its own strings through `useTranslation` and its own locale through the app's language hook, and
@@ -486,9 +488,10 @@ The `UsageLimitsApi` object passed to the hook SHALL be a module-level constant 
 - **WHEN** the popover opens at mobile width with long period labels and reset lines
 - **THEN** its content wraps within the viewport-relative maximum width and the page does not scroll
   horizontally
-- **AND** when the end-anchored panel would extend past either viewport edge, it is shifted
-  horizontally so the whole panel, title and "See all usage" link included, sits inside a 16px
-  viewport gutter; the shift is re-measured on window resize
+- **AND** when the end-anchored panel would extend past either viewport edge, the ui-kit
+  `Dropdown` hosting it shifts and caps it through its Floating UI collision middleware, so the
+  whole panel, title and "See all usage" link included, stays inside the viewport and is
+  re-positioned on resize and scroll; the control does not measure or shift the panel itself
 
 #### Scenario: RTL layout mirrors through the cascade
 

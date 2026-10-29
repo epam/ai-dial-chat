@@ -202,6 +202,13 @@ const confirmUpload = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.click(button());
 };
 
+/* The editor keeps its alert region mounted, so "no alert" means every region is empty. */
+const alertText = () =>
+  screen
+    .queryAllByRole('alert')
+    .map((region) => region.textContent)
+    .join('');
+
 /*
  * The library renders the Cancel/Create pair twice (once in the desktop
  * header row, once in the mobile sticky footer) and toggles visibility with
@@ -1585,6 +1592,6 @@ describe('SkillEditor page — creation permissions', { timeout: 15000 }, () => 
 
     await waitFor(() => expect(updateSkill).toHaveBeenCalled());
     expect(createSkill).not.toHaveBeenCalled();
-    expect(screen.queryByRole('alert')).toBeNull();
+    expect(alertText()).toBe('');
   });
 });

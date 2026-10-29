@@ -1,5 +1,6 @@
 import { formatFileSize, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
+  CaptionText,
   DIAL_KIT_ICON_STROKE,
   ErrorText,
   FileDropzone,
@@ -58,7 +59,7 @@ export interface SkillFileUploadDialogProps {
   onCommitted?: (candidates: SkillFileUploadCandidate[]) => void;
   /** Typography class of the Replace-or-duplicate message. Defaults to `'dial-small-text'`. */
   messageClassName?: string;
-  /** Typography and color classes of a staged row's size and notes. Defaults to `'dial-tiny-text text-secondary'`. */
+  /** Typography and color classes merged over a staged row's size and notes, which render `'dial-tiny-text text-secondary'` when unset. */
   rowCaptionClassName?: string;
   /** Text overrides. */
   labels?: SkillEditorLabels;
@@ -97,7 +98,7 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
   existingFilePaths = NO_EXISTING_FILE_PATHS,
   onCommitted,
   messageClassName = 'dial-small-text',
-  rowCaptionClassName = 'dial-tiny-text text-secondary',
+  rowCaptionClassName,
   labels,
   dialogColors,
 }) => {
@@ -131,6 +132,7 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
 
   const liveRegionId = useId();
   const dropzoneInputId = useId();
+  const rowErrorIdPrefix = useId();
   const conflictMessageRef = useRef<HTMLParagraphElement>(null);
   const hasShownConflictRef = useRef(false);
   const activeConflictId = pendingConflicts[0]?.id;
@@ -303,6 +305,17 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
       (candidate) =>
         results.get(candidate.id)?.status === SkillFileValidationStatus.Invalid,
     );
+  /* Row errors arrive after async validation, so the live region reads them out too. */
+  const announcedErrors = [
+    ...batchErrors,
+    ...candidates.flatMap((candidate) => {
+      const result = results.get(candidate.id);
+      return result?.status === SkillFileValidationStatus.Invalid &&
+        result.error
+        ? [`${candidate.path}: ${result.error}`]
+        : [];
+    }),
+  ];
   const canConfirm =
     candidates.length > 0 &&
     !hasInvalidCandidate &&
@@ -467,7 +480,7 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
           className="sr-only"
           id={liveRegionId}
         >
-          {batchErrors
+          {announcedErrors
             .map(
               (message) =>
                 `${t.uploadBatchErrorAriaPrefix ?? 'Upload error: '}${message}`,
@@ -486,6 +499,8 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
                 result?.kind === SkillFileCandidateKind.Manifest;
               const isInvalid =
                 result?.status === SkillFileValidationStatus.Invalid;
+              const rowError = isInvalid ? result?.error : undefined;
+              const rowErrorId = `${rowErrorIdPrefix}${candidate.id}`;
               return (
                 <li
                   key={candidate.id}
@@ -496,23 +511,28 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
                     className="min-w-0 flex-1"
                     details={
                       <>
-                        <span className={rowCaptionClassName}>
-                          {formatFileSize(candidate.file.size)}
-                        </span>
-                        {isInvalid && result?.error && (
-                          <ErrorText text={result.error} />
-                        )}
+                        <CaptionText
+                          className={rowCaptionClassName}
+                          text={formatFileSize(candidate.file.size)}
+                        />
+                        <ErrorText id={rowErrorId} text={rowError} />
                         {isManifest && !isInvalid && (
-                          <span className={rowCaptionClassName}>
-                            {t.uploadManifestRowNote ??
-                              "Will replace this Skill's name, description, and instructions"}
-                          </span>
+                          <CaptionText
+                            className={rowCaptionClassName}
+                            text={
+                              t.uploadManifestRowNote ??
+                              "Will replace this Skill's name, description, and instructions"
+                            }
+                          />
                         )}
                         {candidate.replacesExisting && !isInvalid && (
-                          <span className={rowCaptionClassName}>
-                            {t.uploadReplaceRowNote ??
-                              'Will replace the existing file'}
-                          </span>
+                          <CaptionText
+                            className={rowCaptionClassName}
+                            text={
+                              t.uploadReplaceRowNote ??
+                              'Will replace the existing file'
+                            }
+                          />
                         )}
                       </>
                     }
@@ -529,6 +549,7 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
                       t.uploadRemoveCandidateLabel?.(candidate.path) ??
                       `Remove ${candidate.path}`
                     }
+                    aria-describedby={rowError ? rowErrorId : undefined}
                     onClick={() => removeCandidate(candidate.id)}
                   />
                 </li>
@@ -537,7 +558,9 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
           </ul>
         )}
 
-        {commitError && <ErrorText text={commitError} />}
+        <div role="alert">
+          {commitError && <ErrorText text={commitError} />}
+        </div>
       </div>
     </SkillEditorDialog>
   );

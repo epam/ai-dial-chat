@@ -119,6 +119,7 @@ export const CredentialsApiKeyOverlay: FC<CredentialsApiKeyOverlayProps> = ({
     texts?.personalApiKeyAddedMessage ?? 'Personal key has been added';
   const inputId = `catalog-item-${item.id}-${level}-api-key`;
   const headerHintId = `${inputId}-header-hint`;
+  const emptyKeyErrorId = `${inputId}-empty-key-error`;
   const headerHint = apiKeyHeader
     ? (
         texts?.apiKeyHeaderHint ??
@@ -153,7 +154,14 @@ export const CredentialsApiKeyOverlay: FC<CredentialsApiKeyOverlayProps> = ({
           <div className="flex items-end gap-2">
             <Input
               id={inputId}
-              aria-describedby={headerHint ? headerHintId : undefined}
+              aria-describedby={
+                [
+                  headerHint ? headerHintId : undefined,
+                  hasEmptyKeyError ? emptyKeyErrorId : undefined,
+                ]
+                  .filter(Boolean)
+                  .join(' ') || undefined
+              }
               type="password"
               autoComplete="current-password"
               value={apiKey}
@@ -189,6 +197,7 @@ export const CredentialsApiKeyOverlay: FC<CredentialsApiKeyOverlayProps> = ({
           />
           {hasEmptyKeyError && (
             <ErrorText
+              id={emptyKeyErrorId}
               className="dial-caption-text"
               text={emptyKeyErrorMessage}
             />

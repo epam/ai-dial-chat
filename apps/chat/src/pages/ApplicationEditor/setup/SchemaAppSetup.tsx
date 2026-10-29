@@ -8,7 +8,7 @@ import {
   Spinner,
 } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
 import { AppsEditorI18nKeys } from '../../../constants/translation-keys';
@@ -36,6 +36,7 @@ const SchemaAppSetup: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
+  const propertiesErrorId = useId();
   const schemaId = searchParams.get(AppsEditorQuery.Schema) ?? '';
   const [schema, setSchema] = useState<JsonSchema>();
   const [hasLoadError, setHasLoadError] = useState(false);
@@ -136,8 +137,16 @@ const SchemaAppSetup: FC<Props> = ({
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      {errors.properties && <ErrorText text={errors.properties} />}
+    <div className="flex flex-col">
+      {/* Always mounted so the blocked-save error is announced when it appears:
+          ErrorText itself carries no live-region role. */}
+      <div role="alert">
+        <ErrorText
+          id={propertiesErrorId}
+          text={errors.properties}
+          className="mb-2 block"
+        />
+      </div>
       <SchemaRenderer
         schema={schema}
         variant={SchemaRendererVariant.Flat}

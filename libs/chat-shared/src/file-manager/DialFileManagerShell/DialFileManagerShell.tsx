@@ -8,9 +8,12 @@ import {
   type FileTreeOptions,
 } from '@epam/ai-dial-react-file-manager';
 import {
+  Button,
+  ButtonAppearance,
   ButtonVariant,
+  ElementSize,
+  ErrorMessageNotification,
   NOT_ALLOWED_SYMBOLS_REGEXP,
-  PrimaryButton,
   Spinner,
   TransferQueue,
 } from '@epam/ai-dial-ui-kit';
@@ -615,9 +618,21 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
   return (
     <>
       {error != null ? (
-        <div role="alert" className="flex flex-col items-center gap-4 p-6">
-          <p>{labels.errorMessage}</p>
-          <PrimaryButton label={labels.retryLabel} onClick={retry} />
+        /* The kit error section message is an assertive `alert` live region,
+           with Retry in its `action` slot. */
+        <div className="p-6">
+          <ErrorMessageNotification
+            message={labels.errorMessage}
+            action={
+              <Button
+                variant={ButtonVariant.Neutral}
+                appearance={ButtonAppearance.Outlined}
+                size={ElementSize.Small}
+                label={labels.retryLabel}
+                onClick={retry}
+              />
+            }
+          />
         </div>
       ) : (
         <div

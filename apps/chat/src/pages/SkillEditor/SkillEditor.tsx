@@ -27,11 +27,14 @@ import {
 import {
   ConfirmationPopup,
   ConfirmationPopupVariant,
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   EditorThemes,
-  ErrorText,
   NotificationVariant,
   PrimaryButton,
+  StateScreen,
 } from '@epam/ai-dial-ui-kit';
+import { IconAlertTriangle } from '@tabler/icons-react';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -508,17 +511,23 @@ const SkillEditorPage: FC = () => {
 
   if (!bucket) {
     return (
-      <div
-        role="alert"
-        className="flex h-full flex-col items-center justify-center gap-4 p-8 text-center"
-      >
-        <h1 className="dial-h1-text">
-          {t(SkillEditorI18nKeys.BucketMissingTitle)}
-        </h1>
-        <ErrorText text={t(SkillEditorI18nKeys.BucketMissingMessage)} />
-        <PrimaryButton
-          label={t(ButtonsI18nKeys.Cancel)}
-          onClick={navigateAway}
+      <div role="alert" className="h-full">
+        <StateScreen
+          icon={
+            <IconAlertTriangle
+              aria-hidden
+              size={DIAL_ICON_SIZE.LG}
+              stroke={DIAL_KIT_ICON_STROKE}
+            />
+          }
+          title={t(SkillEditorI18nKeys.BucketMissingTitle)}
+          description={t(SkillEditorI18nKeys.BucketMissingMessage)}
+          action={
+            <PrimaryButton
+              label={t(ButtonsI18nKeys.Cancel)}
+              onClick={navigateAway}
+            />
+          }
         />
       </div>
     );

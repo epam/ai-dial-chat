@@ -23,9 +23,11 @@ describe('NewVersionFallback', () => {
     expect(screen.getByRole('alert')).toBeTruthy();
   });
 
-  it('renders the heading', () => {
+  it('renders the heading as the screen h1', () => {
     render(<NewVersionFallback />);
-    expect(screen.getByText('appUpdate.heading')).toBeTruthy();
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'appUpdate.heading' }),
+    ).toBeTruthy();
   });
 
   it('renders the message', () => {

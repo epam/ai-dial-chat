@@ -143,6 +143,7 @@ export const CredentialsRow: FC<CredentialsRowProps> = ({
   const configuredMessage =
     texts?.apiKeyConfiguredMessage ?? 'Key has been configured';
   const headerHintId = `${inputId}-header-hint`;
+  const emptyKeyErrorId = `${inputId}-empty-key-error`;
   const headerHint = apiKeyHeader
     ? (
         texts?.apiKeyHeaderHint ??
@@ -217,7 +218,14 @@ export const CredentialsRow: FC<CredentialsRowProps> = ({
               <div className="flex items-end gap-2">
                 <Input
                   id={inputId}
-                  aria-describedby={headerHint ? headerHintId : undefined}
+                  aria-describedby={
+                    [
+                      headerHint ? headerHintId : undefined,
+                      hasEmptyKeyError ? emptyKeyErrorId : undefined,
+                    ]
+                      .filter(Boolean)
+                      .join(' ') || undefined
+                  }
                   type="password"
                   autoComplete="off"
                   value={apiKey}
@@ -259,6 +267,7 @@ export const CredentialsRow: FC<CredentialsRowProps> = ({
               />
               {hasEmptyKeyError && (
                 <ErrorText
+                  id={emptyKeyErrorId}
                   className={mergeClasses(errorClassName, styles.errorText)}
                   text={
                     texts?.apiKeyRequiredErrorMessage ?? 'API key is required.'
@@ -300,13 +309,15 @@ export const CredentialsRow: FC<CredentialsRowProps> = ({
             </div>
           )}
         {!isSignedIn && renderLoginOptions?.(isSaving || disabled)}
-        {error && (
-          <ErrorText
-            role="alert"
-            className={mergeClasses(errorClassName, styles.errorText)}
-            text={error}
-          />
-        )}
+        {/* Mounted before the login failure appears, so the message is announced; taken out of the column gap while empty. */}
+        <div role="alert" className="empty:absolute">
+          {error && (
+            <ErrorText
+              className={mergeClasses(errorClassName, styles.errorText)}
+              text={error}
+            />
+          )}
+        </div>
         {children}
       </div>
     </div>

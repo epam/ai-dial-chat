@@ -366,6 +366,20 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   Notification: ({ message }: { message?: ReactNode }) => (
     <div role="alert">{message}</div>
   ),
+  ButtonAppearance: { Outlined: 'outlined' },
+  ElementSize: { Small: 'small' },
+  ErrorMessageNotification: ({
+    message,
+    action,
+  }: {
+    message?: ReactNode;
+    action?: ReactNode;
+  }) => (
+    <div role="alert">
+      {message}
+      {action}
+    </div>
+  ),
   PrimaryButton: ({
     label,
     onClick,

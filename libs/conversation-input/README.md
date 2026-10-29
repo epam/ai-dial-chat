@@ -249,8 +249,8 @@ For a usage-limit notice, pass a [`UsageLimitBannerView`](#usagelimitbannerview)
 ### UsageLimitBannerView
 
 A presentational usage-limit notice built for `aboveInputSlot`: a section
-message whose markup mirrors the kit `Notification` (general variant — neutral
-`bg-layer-sunken` surface), with a limit sentence in semibold and an optional
+message rendered with the kit `Notification` (warning / error variant, kept on
+the neutral `bg-layer-sunken` surface), with a limit sentence in semibold and an optional
 reset sentence after it. `UsageLimitBannerSeverity.Warning` renders the kit's
 filled warning icon and `UsageLimitBannerSeverity.Reached` its filled error icon.
 Both announce politely through `role="status"`, because the banner reports

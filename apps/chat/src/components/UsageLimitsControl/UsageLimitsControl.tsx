@@ -12,16 +12,21 @@ import {
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
+import {
+  Button,
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
+  Dropdown,
+  ElementSize,
+  ErrorText,
+} from '@epam/ai-dial-ui-kit';
 import { IconChevronRight } from '@tabler/icons-react';
 import {
   type CSSProperties,
   type FC,
   memo,
   useCallback,
-  useEffect,
   useId,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -39,7 +44,6 @@ import { resolveLocalizedText } from '../../utils/locale';
 import {
   findWorstCappedRow,
   getGaugeNeedleAngle,
-  getViewportClampShift,
 } from '../../utils/usage-limits';
 import styles from './UsageLimitsControl.module.scss';
 
@@ -74,11 +78,8 @@ const UsageLimitsControl: FC<Props> = ({
     USAGE_LIMITS_API,
   );
   const [isOpen, setIsOpen] = useState(false);
-  const [popoverShiftPx, setPopoverShiftPx] = useState(0);
   const titleId = useId();
-  const triggerRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
-  const wrapperRef = useRef<HTMLDivElement>(null);
 
   const labels = useMemo(
     () => ({
@@ -135,77 +136,6 @@ const UsageLimitsControl: FC<Props> = ({
     refresh,
   });
 
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsOpen(false);
-        triggerRef.current?.focus();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handlePointerDown = (event: PointerEvent) => {
-      if (
-        wrapperRef.current &&
-        !wrapperRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-        /* Restore focus after the pointer event's default focus handling completes. */
-        requestAnimationFrame(() => {
-          triggerRef.current?.focus();
-        });
-      }
-    };
-
-    document.addEventListener('pointerdown', handlePointerDown);
-    return () => {
-      document.removeEventListener('pointerdown', handlePointerDown);
-    };
-  }, [isOpen]);
-
-  /*
-   * The popover is anchored to the trigger's end edge, but the trigger sits
-   * mid-row, so on a narrow viewport the panel would run past the opposite
-   * edge. `max-w-[calc(100vw-2rem)]` caps its width, not its position — this
-   * nudges it back inside the viewport before paint and on every resize.
-   */
-  useLayoutEffect(() => {
-    const dialog = dialogRef.current;
-    if (!isOpen || dialog == null) return;
-
-    const updateShift = () => {
-      const rect = dialog.getBoundingClientRect();
-      /* Nothing laid out (e.g. jsdom) — no position to correct. */
-      if (rect.width === 0) return;
-
-      /* The rect already includes the shift applied so far, so it is removed
-         to clamp from the panel's natural, anchored position. */
-      setPopoverShiftPx((appliedShift) =>
-        getViewportClampShift(
-          rect.left - appliedShift,
-          rect.right - appliedShift,
-          document.documentElement.clientWidth,
-        ),
-      );
-    };
-
-    updateShift();
-    window.addEventListener('resize', updateShift);
-    return () => {
-      window.removeEventListener('resize', updateShift);
-    };
-  }, [isOpen]);
-
   if (!deploymentId || limits == null) {
     return null;
   }
@@ -238,116 +168,123 @@ const UsageLimitsControl: FC<Props> = ({
     return 'bg-info';
   };
 
-  const handleTriggerClick = () => {
-    if (isOpen) {
-      setIsOpen(false);
-      return;
+  /* The kit's Dropdown owns placement, collision, outside-press, Escape and
+     focus return; opening is the one moment the figures are re-fetched. */
+  const handleOpenChange = (isNextOpen: boolean) => {
+    setIsOpen(isNextOpen);
+    if (isNextOpen) {
+      refresh();
     }
-
-    setIsOpen(true);
-    refresh();
-    requestAnimationFrame(() => {
-      dialogRef.current?.focus();
-    });
   };
 
+  const renderOverlay = () => (
+    <div
+      ref={dialogRef}
+      role="dialog"
+      aria-labelledby={titleId}
+      tabIndex={-1}
+      className="flex flex-col gap-3 p-4 focus:outline-hidden"
+    >
+      <p id={titleId} className="dial-small-semi-text text-primary">
+        {deploymentName ?? t(ConversationInputI18nKeys.PopoverTitle)}
+      </p>
+
+      {/* Always mounted so a failed refresh is announced: a live region that
+          mounts together with its text is not read reliably. `sr-only` also
+          takes the empty region out of the flex flow, so it adds no gap. */}
+      <div
+        role="status"
+        aria-live="polite"
+        className={hasError ? undefined : 'sr-only'}
+      >
+        {hasError && <ErrorText text={t(ConversationInputI18nKeys.Error)} />}
+      </div>
+
+      <LimitsTab
+        limits={limits}
+        layout={LimitRowLayout.Stacked}
+        /* The popover lists only what needs attention, so this is the one
+           way to the whole picture from the conversation. */
+        footerClassName="dial-caption-text pt-3"
+        footerNote={
+          isUsagePageHidden ? undefined : (
+            <Link
+              to={ROUTES.Usage}
+              onClick={() => setIsOpen(false)}
+              /* The negative inline-start margin cancels the pill's own
+                 padding so the label still lines up with the rows above. */
+              className="dial-tiny-semi-text -ms-2 inline-flex h-6 items-center gap-1 rounded-full px-2 text-accent hover:bg-control-accent-alpha-hover focus-visible:outline focus-visible:-outline-offset-1 focus-visible:outline-focus"
+            >
+              {t(ConversationInputI18nKeys.FullUsageLink)}
+              <IconChevronRight
+                size={DIAL_ICON_SIZE.SM}
+                stroke={DIAL_KIT_ICON_STROKE}
+                aria-hidden
+                className="rtl:scale-x-[-1]"
+              />
+            </Link>
+          )
+        }
+      />
+    </div>
+  );
+
   return (
-    <div ref={wrapperRef} className="relative">
-      <button
-        ref={triggerRef}
-        type="button"
+    <Dropdown
+      open={isOpen}
+      onOpenChange={handleOpenChange}
+      /* Floating UI mirrors the `-end` alignment under RTL, so the panel
+         stays anchored to the trigger's logical end edge; `shift` keeps it
+         inside a narrow viewport. */
+      placement="top-end"
+      matchReferenceWidth={false}
+      initialFocus={dialogRef}
+      listClassName="w-90 rounded-lg p-0 shadow-lg"
+      renderOverlay={renderOverlay}
+    >
+      <Button
+        size={ElementSize.Small}
         className={mergeClasses(
-          'group flex min-h-8 min-w-8 items-center justify-center gap-1 rounded-full border border-transparent px-1.5 transition-colors',
-          'hover:border-primary hover:bg-layer-sunken focus-visible:bg-layer-sunken focus-visible:outline focus-visible:-outline-offset-1 focus-visible:outline-primary',
+          'group min-h-8 min-w-8 px-1.5 transition-colors',
+          'hover:border-primary hover:bg-layer-sunken focus-visible:bg-layer-sunken',
           'mobile:min-h-11 mobile:min-w-11',
           isOpen && 'border-primary bg-layer-sunken',
           getStatusTextClass(),
         )}
+        textClassName="flex items-center gap-1"
         aria-expanded={isOpen}
         aria-haspopup="dialog"
         aria-label={t(ConversationInputI18nKeys.TriggerAriaLabel, {
           label: worstRow?.label ?? labels.tokenGroup,
           value: triggerValue,
         })}
-        onClick={handleTriggerClick}
-      >
-        <span
-          className={mergeClasses(
-            'dial-tiny-text overflow-hidden whitespace-nowrap transition-all',
-            isOpen
-              ? 'max-w-20 opacity-100'
-              : 'max-w-0 opacity-0 group-hover:max-w-20 group-hover:opacity-100 group-focus-visible:max-w-20 group-focus-visible:opacity-100',
-          )}
-        >
-          {triggerValue}
-        </span>
-        <span
-          aria-hidden
-          className={mergeClasses(
-            'relative inline-block size-3.5 shrink-0 rounded-full',
-            getStatusFaceClass(),
-            styles.gauge,
-          )}
-          style={gaugeStyle}
-        >
-          <span className={styles.gaugeNeedle} />
-        </span>
-      </button>
-
-      {isOpen && (
-        <div
-          ref={dialogRef}
-          role="dialog"
-          aria-labelledby={titleId}
-          tabIndex={-1}
-          className="absolute inset-e-0 bottom-full z-50 mb-2 flex w-90 max-w-[calc(100vw-2rem)] flex-col gap-3 rounded-lg bg-layer-raised p-4 shadow-lg focus:outline-hidden"
-          /* Measured in physical viewport pixels, so the shift is physical too
-             and stays correct under RTL. */
-          style={
-            popoverShiftPx !== 0
-              ? { transform: `translateX(${popoverShiftPx}px)` }
-              : undefined
-          }
-        >
-          <p id={titleId} className="dial-small-semi-text text-primary">
-            {deploymentName ?? t(ConversationInputI18nKeys.PopoverTitle)}
-          </p>
-
-          {hasError && (
-            <p className="dial-tiny-text text-error" aria-live="polite">
-              {t(ConversationInputI18nKeys.Error)}
-            </p>
-          )}
-
-          <LimitsTab
-            limits={limits}
-            layout={LimitRowLayout.Stacked}
-            /* The popover lists only what needs attention, so this is the one
-               way to the whole picture from the conversation. */
-            footerClassName="dial-caption-text pt-3"
-            footerNote={
-              isUsagePageHidden ? undefined : (
-                <Link
-                  to={ROUTES.Usage}
-                  onClick={() => setIsOpen(false)}
-                  /* The negative inline-start margin cancels the pill's own
-                     padding so the label still lines up with the rows above. */
-                  className="dial-tiny-semi-text -ms-2 inline-flex h-6 items-center gap-1 rounded-full px-2 text-accent hover:bg-control-accent-alpha-hover focus-visible:outline focus-visible:-outline-offset-1 focus-visible:outline-focus"
-                >
-                  {t(ConversationInputI18nKeys.FullUsageLink)}
-                  <IconChevronRight
-                    size={DIAL_ICON_SIZE.SM}
-                    stroke={DIAL_KIT_ICON_STROKE}
-                    aria-hidden
-                    className="rtl:scale-x-[-1]"
-                  />
-                </Link>
-              )
-            }
-          />
-        </div>
-      )}
-    </div>
+        label={
+          <>
+            <span
+              className={mergeClasses(
+                'dial-tiny-text overflow-hidden whitespace-nowrap transition-all',
+                isOpen
+                  ? 'max-w-20 opacity-100'
+                  : 'max-w-0 opacity-0 group-hover:max-w-20 group-hover:opacity-100 group-focus-visible:max-w-20 group-focus-visible:opacity-100',
+              )}
+            >
+              {triggerValue}
+            </span>
+            <span
+              aria-hidden
+              className={mergeClasses(
+                'relative inline-block size-3.5 shrink-0 rounded-full',
+                getStatusFaceClass(),
+                styles.gauge,
+              )}
+              style={gaugeStyle}
+            >
+              <span className={styles.gaugeNeedle} />
+            </span>
+          </>
+        }
+      />
+    </Dropdown>
   );
 };
 

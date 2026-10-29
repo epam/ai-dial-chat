@@ -45,13 +45,13 @@ interface Props extends FallbackProps {
 ---
 
 ### Requirement: Accessible fallback UI
-The default `ErrorFallback` component SHALL render an accessible, user-friendly error UI instead of a blank screen, through the shared full-screen `AlertShell` layout (`apps/chat/src/components/AlertShell/AlertShell.tsx`).
+The default `ErrorFallback` component SHALL render an accessible, user-friendly error UI instead of a blank screen, through the shared full-screen `AlertShell` layout (`apps/chat/src/components/AlertShell/AlertShell.tsx`), which wraps the kit `StateScreen` in a `role="alert"` container.
 
 **Accessibility requirements:**
 - The root element SHALL have `role="alert"` so screen readers announce it on mount.
 - The first interactive element (recovery button) SHALL receive `autoFocus` so keyboard users can act immediately.
 - The warning icon SHALL have `aria-hidden="true"` as it is decorative.
-- The heading SHALL use an `<h2>` element.
+- The heading SHALL render as the screen's `<h1>` (drawn by the kit `StateScreen` that `AlertShell` wraps).
 - The recovery button SHALL be keyboard-accessible and focusable.
 
 **RTL requirements:**

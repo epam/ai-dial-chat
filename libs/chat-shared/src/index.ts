@@ -71,6 +71,7 @@ export * from './components/MarkdownRenderer/Table/TableHeader';
 export * from './components/TextRefinementField/TextRefinementField';
 export * from './entry-points/markdown';
 export * from './hooks/useAvailableHeightCap';
+export * from './hooks/useControlErrorAssociation';
 export * from './hooks/useIsMobile';
 export * from './hooks/useTextRefinement';
 export * from './hooks/useUnsavedChangesGuard';

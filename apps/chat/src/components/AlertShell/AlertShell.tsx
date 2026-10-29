@@ -1,4 +1,4 @@
-import { PrimaryButton } from '@epam/ai-dial-ui-kit';
+import { PrimaryButton, StateScreen } from '@epam/ai-dial-ui-kit';
 import { memo, type FC, type ReactNode } from 'react';
 
 interface Props {
@@ -9,7 +9,11 @@ interface Props {
   onAction: () => void;
 }
 
-/** Full-screen alert layout shared by ErrorFallback and NewVersionFallback. */
+/**
+ * Full-screen alert layout shared by ErrorFallback and NewVersionFallback.
+ * The kit `StateScreen` draws the icon badge, `h1`, description and action;
+ * the `role="alert"` wrapper keeps the replacement screen announced.
+ */
 const AlertShell: FC<Props> = ({
   icon,
   heading,
@@ -17,14 +21,15 @@ const AlertShell: FC<Props> = ({
   actionLabel,
   onAction,
 }) => (
-  <div
-    role="alert"
-    className="flex size-full flex-col items-center justify-center gap-4 p-6 text-center"
-  >
-    {icon}
-    <h2>{heading}</h2>
-    <p className="text-secondary">{message}</p>
-    <PrimaryButton autoFocus label={actionLabel} onClick={onAction} />
+  <div role="alert" className="size-full">
+    <StateScreen
+      icon={icon}
+      title={heading}
+      description={message}
+      action={
+        <PrimaryButton autoFocus label={actionLabel} onClick={onAction} />
+      }
+    />
   </div>
 );
 

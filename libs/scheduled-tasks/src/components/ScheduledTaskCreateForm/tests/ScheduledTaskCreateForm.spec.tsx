@@ -13,8 +13,8 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_KIT_ICON_STROKE: 1.5,
   ButtonVariant: { Primary: 'primary', Neutral: 'neutral' },
   ButtonAppearance: { Solid: 'solid' },
-  ErrorText: ({ text }: { text?: string }) =>
-    text ? <span role="alert">{text}</span> : null,
+  ErrorText: ({ text, id }: { text?: string; id?: string }) =>
+    text ? <span id={id}>{text}</span> : null,
   CaptionText: ({ text }: { text?: string }) => (text ? <p>{text}</p> : null),
   Input: ({
     labelProps,
@@ -796,7 +796,12 @@ describe('ScheduledTaskCreateForm', () => {
         errors: { dayOfWeek: 'Day of week is required' },
       });
 
-      expect(screen.getByText('Day of week is required')).toBeTruthy();
+      const error = screen.getByText('Day of week is required');
+      expect(
+        screen
+          .getByRole('button', { name: 'Monday' })
+          .getAttribute('aria-describedby'),
+      ).toBe(error.id);
     });
   });
 
