@@ -9,6 +9,8 @@ import styles from './ToolsChips.module.scss';
 interface ToolsChipsTypography {
   /** Typography utility class applied to the chip text. Defaults to `'dial-small-paragraph-text'`. */
   fontClassName?: string;
+  /** Typography utility class applied to the on/off state text. Defaults to `'dial-tiny-lead-text'`. */
+  stateClassName?: string;
 }
 
 /** Color overrides for the `ToolsChips` component, applied as CSS custom properties. */
@@ -142,8 +144,8 @@ export const ToolsChips: FC<ToolsChipsProps> = ({
               <span
                 className={mergeClasses(
                   styles.chipState,
-                  typography?.fontClassName || 'dial-small-paragraph-text',
-                  'ms-1 shrink-0 tracking-wider uppercase',
+                  typography?.stateClassName || 'dial-tiny-lead-text',
+                  'ms-1 shrink-0',
                 )}
                 aria-hidden
               >

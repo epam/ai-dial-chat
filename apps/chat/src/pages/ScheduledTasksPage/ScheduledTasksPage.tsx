@@ -240,16 +240,17 @@ const ScheduledTasksPage: FC = () => {
    * child that adds a gap between the toolbar and the content, so the
    * hidden banner's live region renders at page level instead, outside the
    * lib's layout entirely — while a visible banner renders, its own
-   * aria-live region carries the announcements. */
+   * aria-live region carries the announcements. The page-level span stays
+   * mounted (empty while the banner owns announcements) because a live
+   * region that mounts in the same render as its text is announced
+   * unreliably. */
   const isBannerSlotEmpty = !isLimitedAccess && bannerState == null;
 
   return (
     <>
-      {isBannerSlotEmpty && (
-        <span role="status" aria-live="polite" className="sr-only">
-          {liveAnnouncement}
-        </span>
-      )}
+      <span role="status" aria-live="polite" className="sr-only">
+        {isBannerSlotEmpty ? liveAnnouncement : ''}
+      </span>
       <ScheduledTasks
         labels={labels}
         styles={PAGE_STYLES}

@@ -205,7 +205,7 @@ const ManagerOverlayCase: FC = () => {
 
   return (
     <div className="max-w-[960px] pb-6">
-      <h1 className="text-3xl font-bold">ChatOverlayManager case</h1>
+      <h1 className="dial-display2-text">ChatOverlayManager case</h1>
       <p aria-live="polite">
         Ready: {isReady ? 'yes' : 'waiting for handshake...'}
       </p>

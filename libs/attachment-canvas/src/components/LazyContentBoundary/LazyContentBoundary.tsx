@@ -61,7 +61,12 @@ export const LazyContentPending: FC<LazyContentPendingProps> = ({
     aria-live="polite"
     className="flex h-full items-center justify-center"
   >
-    {pendingContent ?? <Spinner />}
+    {/* The kit Spinner is a status region of its own; hidden so regions don't nest. */}
+    {pendingContent ?? (
+      <span aria-hidden>
+        <Spinner />
+      </span>
+    )}
     <span className="sr-only">{loadingLabel}</span>
   </div>
 );

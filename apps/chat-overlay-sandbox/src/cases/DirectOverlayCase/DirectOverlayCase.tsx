@@ -174,7 +174,7 @@ const DirectOverlayCase: FC = () => {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold">Direct ChatOverlay case</h1>
+      <h1 className="dial-display2-text">Direct ChatOverlay case</h1>
       <p aria-live="polite">
         Ready: {isReady ? 'yes' : 'waiting for handshake...'}
       </p>

@@ -1124,11 +1124,12 @@ export const Header: FC<HeaderProps> = ({
                 disabled={isDownloading}
                 aria-busy={isDownloading}
               />
-              {isDownloading && (
-                <span role="status" aria-live="polite" className="sr-only">
-                  {texts?.downloadingStatusLabel ?? 'Downloading'}
-                </span>
-              )}
+              {/* Always mounted so the polite region exists before the download starts. */}
+              <span role="status" aria-live="polite" className="sr-only">
+                {isDownloading
+                  ? (texts?.downloadingStatusLabel ?? 'Downloading')
+                  : ''}
+              </span>
             </>
           )}
           {isShareInActionRow && shouldShowShareAction && (

@@ -103,7 +103,7 @@ const EnabledFeaturesCase: FC = () => {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold">enabledFeatures case</h1>
+      <h1 className="dial-display2-text">enabledFeatures case</h1>
 
       <p aria-live="polite">
         Ready: {isReady ? 'yes' : 'waiting for handshake...'}

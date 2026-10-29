@@ -104,74 +104,75 @@ const ScheduledTasksLoginBanner: FC<Props> = ({
 }) => {
   const handleLogIn = () => onLogIn?.();
 
-  if (state === undefined) {
-    return (
-      <span role="status" aria-live="polite" className="sr-only">
-        {liveAnnouncement}
-      </span>
-    );
-  }
-
   const isLoggingIn = state === ScheduledTasksLoginBannerState.LoginInProgress;
-  const isRetry = RETRY_STATES.has(state);
+  const isRetry = state !== undefined && RETRY_STATES.has(state);
   const retryMessage = retryMessageFor(state, {
     popupBlockedMessage,
     cancelledMessage,
     timeoutMessage,
     failedMessage,
   });
-  const primaryLabel = resolvePrimaryLabel(state, {
-    loginButtonLabel,
-    retryButtonLabel,
-    loggingInLabel,
-  });
 
   /*
-   * Hand-rolled rather than the ui-kit `Notification` component: the design
-   * reference pairs a neutral `bg-layer-sunken` surface with a warning
-   * triangle icon, a combination `Notification`'s variant system does not
-   * expose (each variant ties one fixed icon to one fixed background).
+   * The polite status span sits outside the conditional banner so it stays
+   * mounted across every state change (including `undefined`) — a live
+   * region that mounts in the same render as its text is announced
+   * unreliably.
+   *
+   * The banner is hand-rolled rather than the ui-kit `Notification`
+   * component: the design reference pairs a neutral `bg-layer-sunken`
+   * surface with a warning triangle icon, a combination `Notification`'s
+   * variant system does not expose (each variant ties one fixed icon to one
+   * fixed background).
    */
   return (
-    <div
-      role="alert"
-      className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-layer-sunken p-3"
-    >
-      <div className="flex min-w-0 flex-1 items-center gap-2">
-        <IconAlertTriangleFilled
-          aria-hidden
-          size={DIAL_ICON_SIZE.LG}
-          className="shrink-0 text-warning-icon"
-        />
-        <div className="flex min-w-0 flex-wrap items-baseline gap-x-1 text-primary">
-          <span className="dial-small-paragraph-semi-text min-w-0 wrap-break-word">
-            {title}
-          </span>
-          <span className="dial-small-paragraph-text min-w-0 wrap-break-word">
-            {body}
-          </span>
-        </div>
-      </div>
-      {onLogIn && (
-        <LinkButton
-          label={primaryLabel}
-          disabled={isLoggingIn}
-          iconAfter={
-            <IconArrowRight
-              size={DIAL_ICON_SIZE.SM}
-              stroke={DIAL_KIT_ICON_STROKE}
+    <>
+      {state !== undefined && (
+        <div
+          role="alert"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-layer-sunken p-3"
+        >
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <IconAlertTriangleFilled
               aria-hidden
-              className="rtl:scale-x-[-1]"
+              size={DIAL_ICON_SIZE.LG}
+              className="shrink-0 text-warning-icon"
             />
-          }
-          onClick={handleLogIn}
-          className="min-h-11 min-w-11 shrink-0"
-        />
+            <div className="flex min-w-0 flex-wrap items-baseline gap-x-1 text-primary">
+              <span className="dial-small-paragraph-semi-text min-w-0 wrap-break-word">
+                {title}
+              </span>
+              <span className="dial-small-paragraph-text min-w-0 wrap-break-word">
+                {body}
+              </span>
+            </div>
+          </div>
+          {onLogIn && (
+            <LinkButton
+              label={resolvePrimaryLabel(state, {
+                loginButtonLabel,
+                retryButtonLabel,
+                loggingInLabel,
+              })}
+              disabled={isLoggingIn}
+              iconAfter={
+                <IconArrowRight
+                  size={DIAL_ICON_SIZE.SM}
+                  stroke={DIAL_KIT_ICON_STROKE}
+                  aria-hidden
+                  className="rtl:scale-x-[-1]"
+                />
+              }
+              onClick={handleLogIn}
+              className="min-h-11 min-w-11 shrink-0"
+            />
+          )}
+        </div>
       )}
       <span role="status" aria-live="polite" className="sr-only">
         {isRetry ? retryMessage : liveAnnouncement}
       </span>
-    </div>
+    </>
   );
 };
 

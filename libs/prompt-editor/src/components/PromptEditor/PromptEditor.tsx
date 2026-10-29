@@ -340,12 +340,9 @@ export const PromptEditor: FC<PromptEditorProps> = ({
         {...editorProps}
         isSubmitting={isSaving}
         metadata={
-          <div
-            role="status"
-            aria-label={labels?.loadingAriaLabel ?? 'Loading prompt'}
-            className="flex flex-1 items-center justify-center p-8"
-          >
-            <Spinner />
+          /* The kit Spinner is the status region; a labelled wrapper would nest a second one. */
+          <div className="flex flex-1 items-center justify-center p-8">
+            <Spinner ariaLabel={labels?.loadingAriaLabel ?? 'Loading prompt'} />
           </div>
         }
       />

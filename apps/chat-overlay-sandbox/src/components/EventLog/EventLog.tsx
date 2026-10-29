@@ -80,7 +80,7 @@ const EventLog: FC<EventLogProps> = ({
         label={<span aria-hidden>Event log</span>}
         iconAfter={
           <span
-            className="grid h-7 min-w-7 place-items-center rounded-full bg-layer-raised px-1.5 text-xs font-bold text-primary"
+            className="dial-tiny-semi-text grid h-7 min-w-7 place-items-center rounded-full bg-layer-raised px-1.5 text-primary"
             aria-label={`${entries.length} events`}
           >
             {entries.length}
@@ -99,7 +99,7 @@ const EventLog: FC<EventLogProps> = ({
         inert={!isOpen}
       >
         <header className="mb-3 flex items-center justify-between gap-4">
-          <h2 className="m-0 text-xl" id={headingId}>
+          <h2 className="dial-h1-text m-0" id={headingId}>
             Event log
           </h2>
           <NeutralButton
@@ -130,7 +130,7 @@ const EventLog: FC<EventLogProps> = ({
 
         <div
           ref={scrollRef}
-          className="min-h-[120px] flex-1 overflow-auto overscroll-contain rounded-lg border border-secondary bg-layer-base px-3 py-2.5 font-mono text-[0.8125rem] leading-6 text-primary focus-visible:outline-2 focus-visible:outline-offset-3"
+          className="dial-code-text min-h-[120px] flex-1 overflow-auto overscroll-contain rounded-lg border border-secondary bg-layer-base px-3 py-2.5 text-primary focus-visible:outline-2 focus-visible:outline-offset-3"
           role="log"
           aria-live="polite"
           aria-relevant="additions"

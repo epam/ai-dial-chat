@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import { useSyncExternalStore } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   AuthI18nKeys,
@@ -173,5 +174,35 @@ describe('OverlayLoginGate', () => {
 
     const message = screen.getByText(AuthI18nKeys.OverlayLoginTakingLonger);
     expect(message.getAttribute('aria-live')).toBe('polite');
+  });
+
+  it('keeps the polite status region mounted before the attempt runs long and fills it afterwards', () => {
+    /* The gate is memoized and prop-less, so drive the hook through a tiny
+     * external store to re-render it the way the real hook state would. */
+    let loginStatus = OverlayExternalLoginStatus.Waiting;
+    const listeners = new Set<() => void>();
+    const subscribe = (listener: () => void) => {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    };
+    mockHook();
+    const baseResult = mockUseOverlayProviderLogin();
+    mockUseOverlayProviderLogin.mockImplementation(() => ({
+      ...baseResult,
+      externalLoginStatus: useSyncExternalStore(subscribe, () => loginStatus),
+    }));
+    render(<OverlayLoginGate />);
+    const status = screen.getByRole('status');
+    expect(status.textContent).toBe('');
+
+    act(() => {
+      loginStatus = OverlayExternalLoginStatus.TakingLonger;
+      listeners.forEach((listener) => listener());
+    });
+
+    expect(screen.getByRole('status')).toBe(status);
+    expect(status.textContent).toBe(AuthI18nKeys.OverlayLoginTakingLonger);
   });
 });

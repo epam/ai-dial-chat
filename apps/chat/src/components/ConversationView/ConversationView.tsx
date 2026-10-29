@@ -33,6 +33,7 @@ import {
   DisplayAttachment,
   formatFileSize,
   isStatusMessage,
+  mergeClasses,
   StatusEvent,
   type Annotation,
   type Attachment,
@@ -313,6 +314,10 @@ const ConversationView: FC<Props> = ({
    * enabled: switching to a visible model is how the conversation continues.
    */
   const isSelectedModelHidden = !!selectedDeployment?.isHidden;
+  /* Set only while the reload notification is shown. */
+  const retryConversationReload = hasConversationReloadError
+    ? onRetryConversationReload
+    : undefined;
   /* Exactly one usage surface is composed: the dial when the flag is on,
      otherwise the banner above the input. */
   const usageDeploymentId =
@@ -1271,11 +1276,11 @@ const ConversationView: FC<Props> = ({
                 </div>
               );
             })}
-            {hasConversationReloadError && onRetryConversationReload && (
+            {retryConversationReload != null && (
               <ConversationReloadNotification
                 isReloading={isReloadingConversation}
                 isStreaming={isAssistantTyping}
-                onRetry={onRetryConversationReload}
+                onRetry={retryConversationReload}
               />
             )}
           </div>
@@ -1286,6 +1291,14 @@ const ConversationView: FC<Props> = ({
             style={{ height: 0 }}
           />
         </div>
+
+        {/* The reload notification mounts inside the log on demand; this
+            always-mounted region carries its announcement instead. */}
+        <span role="status" aria-live="polite" className="sr-only">
+          {retryConversationReload != null
+            ? `${t(ChatI18nKeys.ConversationReloadErrorTitle)} ${t(ChatI18nKeys.ConversationReloadError)}`
+            : ''}
+        </span>
 
         {isScrollButtonVisible && (
           <FabButton
@@ -1327,14 +1340,20 @@ const ConversationView: FC<Props> = ({
           </div>
         ) : (
           <>
-            {isSelectedModelHidden && (
-              <p
-                role="status"
-                className="dial-small-text pb-2 text-center text-secondary"
-              >
-                {t(ConversationI18nKeys.ModelUnavailableNotice)}
-              </p>
-            )}
+            {/* Always mounted: a live region that mounts in the same render
+                as its text is announced unreliably, so only its text toggles
+                (sr-only while empty, so it adds no padding). */}
+            <p
+              role="status"
+              className={mergeClasses(
+                'dial-small-text text-center text-secondary',
+                isSelectedModelHidden ? 'pb-2' : 'sr-only',
+              )}
+            >
+              {isSelectedModelHidden
+                ? t(ConversationI18nKeys.ModelUnavailableNotice)
+                : ''}
+            </p>
             <Suspense fallback={null}>
               <ConversationInput
                 key={conversation.id}

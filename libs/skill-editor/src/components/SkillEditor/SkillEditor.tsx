@@ -818,12 +818,9 @@ export const SkillEditor: FC<SkillEditorProps> = ({
         <EntityEditor
           {...editorProps}
           metadata={
-            <div
-              role="status"
-              aria-label={t.loadingAriaLabel ?? 'Loading skill'}
-              className="flex flex-1 items-center justify-center p-8"
-            >
-              <Spinner />
+            /* The kit Spinner is the status region; a labelled wrapper would nest a second one. */
+            <div className="flex flex-1 items-center justify-center p-8">
+              <Spinner ariaLabel={t.loadingAriaLabel ?? 'Loading skill'} />
             </div>
           }
         />

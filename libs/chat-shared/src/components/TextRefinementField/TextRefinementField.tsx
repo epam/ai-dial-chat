@@ -203,16 +203,19 @@ export const TextRefinementField: FC<TextRefinementFieldProps> = ({
         </div>
         {captionText}
       </div>
-      {error && (
-        <ErrorText
-          id={fieldId + '-refinement-error'}
-          className={mergeClasses(feedbackClassName, errorClassName)}
-          text={
-            labels?.refineErrorLabel ??
-            'Could not refine this text. Please try again.'
-          }
-        />
-      )}
+      {/* Always-mounted alert region: only its child appears on failure, so the error is announced. */}
+      <div role="alert">
+        {error && (
+          <ErrorText
+            id={fieldId + '-refinement-error'}
+            className={mergeClasses(feedbackClassName, errorClassName)}
+            text={
+              labels?.refineErrorLabel ??
+              'Could not refine this text. Please try again.'
+            }
+          />
+        )}
+      </div>
     </div>
   );
 };

@@ -78,14 +78,13 @@ describe('CredentialsBanner', () => {
   });
 
   it('renders the description below the title, in that DOM order', () => {
-    render(
+    const { container } = render(
       <CredentialsBanner
         state={CredentialsBannerState.UsingOrgCredentials}
         authenticationType={ToolsetAuthenticationType.OAuth}
       />,
     );
-    const status = screen.getByRole('status');
-    const text = status.textContent ?? '';
+    const text = container.textContent ?? '';
     expect(
       text.indexOf('You are currently using organization credentials'),
     ).toBeLessThan(text.indexOf('Login using personal account'));

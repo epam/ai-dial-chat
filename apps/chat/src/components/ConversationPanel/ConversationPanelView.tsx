@@ -1600,7 +1600,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
                 header={t(ButtonsI18nKeys.Publish)}
                 onClose={handleClosePublishPanel}
               >
-                <p role="status">{t(BasicI18nKeys.Loading)}</p>
+                {/* Not a live region: the dialog mounts with this text, so
+                    opening it already reads it; mark the content busy. */}
+                <p aria-busy="true">{t(BasicI18nKeys.Loading)}</p>
               </Popup>
             }
           >

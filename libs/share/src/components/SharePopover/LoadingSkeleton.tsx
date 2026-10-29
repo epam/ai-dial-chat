@@ -4,7 +4,7 @@ import styles from './SharePopover.module.scss';
 
 /** Props for {@link LoadingSkeleton}. */
 interface LoadingSkeletonProps {
-  /** Accessible label for the loading status region. */
+  /** Visually hidden text the loading status region carries. */
   ariaLabel: string;
   /** Skeleton bar/shape color. Defaults to `--shp-skeleton-color`. */
   skeletonColor?: string;
@@ -15,7 +15,9 @@ export const LoadingSkeleton: FC<LoadingSkeletonProps> = ({
   ariaLabel,
   skeletonColor = styles.skeletonColor,
 }) => (
-  <div role="status" aria-label={ariaLabel} className="flex flex-col gap-3">
+  <div role="status" className="flex flex-col gap-3">
+    {/* Rendered as text so the status region carries content, not just a name. */}
+    <span className="sr-only">{ariaLabel}</span>
     <div aria-hidden className="flex items-center gap-2.5">
       <Skeleton
         variant={SkeletonVariant.Circular}

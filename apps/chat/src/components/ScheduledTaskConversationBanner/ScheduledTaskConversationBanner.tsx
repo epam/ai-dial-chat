@@ -71,12 +71,13 @@ const ScheduledTaskConversationBanner: FC = () => {
     taskState === ActiveScheduledTaskDetailState.Idle
   ) {
     return (
-      <div className={CARD_CLASS_NAME}>
-        <div
-          role="status"
-          aria-label={t(ScheduledTasksI18nKeys.ConversationBannerLoadingLabel)}
-          className="flex h-5 items-center"
-        >
+      /* A transient placeholder, not a live region: it mounts already
+       * loading, so it marks itself busy and names itself in text instead. */
+      <div aria-busy="true" className={CARD_CLASS_NAME}>
+        <div className="flex h-5 items-center">
+          <span className="sr-only">
+            {t(ScheduledTasksI18nKeys.ConversationBannerLoadingLabel)}
+          </span>
           <Skeleton
             variant={SkeletonVariant.Rectangular}
             width="220px"

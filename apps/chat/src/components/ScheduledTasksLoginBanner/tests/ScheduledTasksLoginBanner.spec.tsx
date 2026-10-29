@@ -161,6 +161,29 @@ describe('ScheduledTasksLoginBanner', () => {
     expect(onLogIn).toHaveBeenCalledOnce();
   });
 
+  it('keeps the same status region mounted when the banner hides and fills it with the announcement', () => {
+    const { rerender } = render(
+      <ScheduledTasksLoginBanner
+        {...BASE_PROPS}
+        state={ScheduledTasksLoginBannerState.LoginInProgress}
+      />,
+    );
+    const status = screen.getByRole('status');
+    expect(status.textContent).toBe('');
+
+    rerender(
+      <ScheduledTasksLoginBanner
+        {...BASE_PROPS}
+        state={undefined}
+        liveAnnouncement="You're logged in."
+      />,
+    );
+
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('status')).toBe(status);
+    expect(status.textContent).toBe("You're logged in.");
+  });
+
   it('renders the container as an assertive alert region when shown', () => {
     render(
       <ScheduledTasksLoginBanner

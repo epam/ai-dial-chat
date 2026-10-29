@@ -299,16 +299,15 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
         )}
       </div>
 
-      {isError && (
-        <span
-          id={errorDescId}
-          role="status"
-          aria-live="polite"
-          className="sr-only"
-        >
-          {errorTitle}
-        </span>
-      )}
+      {/* Always mounted so the polite region exists before the error text arrives. */}
+      <span
+        id={errorDescId}
+        role="status"
+        aria-live="polite"
+        className="sr-only"
+      >
+        {isError ? errorTitle : ''}
+      </span>
     </>
   );
 

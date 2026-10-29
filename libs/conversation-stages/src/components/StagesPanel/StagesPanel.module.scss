@@ -41,8 +41,15 @@
   color: var(--cs-failed-text, var(--text-warning, #7f6300));
 }
 
+/* Sized by the stage name's own typography class, so only the family is set
+   here — the kit's mono stack, same as `.codeInline` below. */
 .monoName {
-  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-family: var(
+    --theme-font-mono,
+    var(--font-fira-code, 'Fira Code'),
+    ui-monospace,
+    monospace
+  );
 }
 
 .tag {

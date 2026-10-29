@@ -1,3 +1,4 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { NeutralButton, PrimaryButton } from '@epam/ai-dial-ui-kit';
 import { memo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -21,10 +22,12 @@ const OverlayLoginGate: FC = () => {
     openLogin,
     externalLoginStatus,
   } = useOverlayProviderLogin();
+  const isTakingLonger =
+    externalLoginStatus === OverlayExternalLoginStatus.TakingLonger;
   const isInFlight =
     externalLoginStatus === OverlayExternalLoginStatus.Opening ||
     externalLoginStatus === OverlayExternalLoginStatus.Waiting ||
-    externalLoginStatus === OverlayExternalLoginStatus.TakingLonger;
+    isTakingLonger;
   const isLoginDisabled =
     externalLoginStatus === OverlayExternalLoginStatus.Opening;
   const showSingleLogin =
@@ -99,11 +102,18 @@ const OverlayLoginGate: FC = () => {
           </p>
         )}
 
-        {externalLoginStatus === OverlayExternalLoginStatus.TakingLonger && (
-          <p aria-live="polite" className="dial-small-text text-error">
-            {t(AuthI18nKeys.OverlayLoginTakingLonger)}
-          </p>
-        )}
+        {/* Always mounted: a live region that mounts in the same render as its
+            text is announced unreliably, so only its text toggles. */}
+        <p
+          role="status"
+          aria-live="polite"
+          className={mergeClasses(
+            'dial-small-text text-error',
+            !isTakingLonger && 'sr-only',
+          )}
+        >
+          {isTakingLonger ? t(AuthI18nKeys.OverlayLoginTakingLonger) : ''}
+        </p>
 
         {showSingleLogin && (
           <PrimaryButton

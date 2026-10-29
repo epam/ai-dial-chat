@@ -388,6 +388,8 @@ export interface AttachmentCanvasTypography {
   jsonClassName?: string;
   /** CSS utility class applied to the decorative XLSX `fx` label. Defaults to `'dial-italic-text'`. */
   xlsxFormulaLabelClassName?: string;
+  /** CSS utility class applied to the active XLSX cell content in the formula bar. Defaults to `'dial-code-text'`. */
+  xlsxFormulaValueClassName?: string;
   /** CSS utility class applied to the MCP App version text in the panel title. Defaults to `'dial-caption-text'`. */
   mcpAppVersionClassName?: string;
 }

@@ -245,11 +245,10 @@ export const ContentTab: FC<ContentTabProps> = ({
           filePreviewContent == null && bodyClassName,
         )}
       >
-        {isFileLoading && (
-          <span role="status" className="sr-only">
-            {fileLoadingLabel}
-          </span>
-        )}
+        {/* Always mounted so the region exists before the file starts loading. */}
+        <span role="status" className="sr-only">
+          {isFileLoading ? fileLoadingLabel : ''}
+        </span>
         {renderPreview()}
       </div>
     </div>

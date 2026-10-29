@@ -105,6 +105,8 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
         item.name.toLowerCase().includes(normalizedQuery),
       )
     : favorites;
+  const hasNoMatches =
+    visibleFavorites.length === 0 && isSearchMode && normalizedQuery !== '';
 
   /*
    * Animates the scrollable list's own height as rows leave instead of
@@ -277,20 +279,9 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
       );
     }
 
-    if (isSearchMode && normalizedQuery !== '') {
-      return (
-        <p
-          role="status"
-          aria-live="polite"
-          className={mergeClasses(
-            emptyHintClassName,
-            'px-4 py-4 text-start',
-            styles.emptyHint,
-          )}
-        >
-          {noMatchingSkillsLabel}
-        </p>
-      );
+    /* The no-match text renders in the always-mounted status region below. */
+    if (hasNoMatches) {
+      return null;
     }
 
     return (
@@ -333,7 +324,25 @@ export const FavoriteSkillsPanel: FC<FavoriteSkillsPanelProps> = ({
         )}
         style={{ maxHeight: listHeight }}
       >
-        <div ref={listContentRef}>{renderListBody()}</div>
+        <div ref={listContentRef}>
+          {renderListBody()}
+          {/* Always mounted so the no-match text is announced when it appears; visually hidden while empty. */}
+          <p
+            role="status"
+            aria-live="polite"
+            className={
+              hasNoMatches
+                ? mergeClasses(
+                    emptyHintClassName,
+                    'px-4 py-4 text-start',
+                    styles.emptyHint,
+                  )
+                : 'sr-only'
+            }
+          >
+            {hasNoMatches ? noMatchingSkillsLabel : ''}
+          </p>
+        </div>
       </div>
 
       <div className={mergeClasses('border-t px-2 py-3', styles.footer)}>

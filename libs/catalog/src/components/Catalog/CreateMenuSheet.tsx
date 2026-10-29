@@ -114,7 +114,7 @@ export const CreateMenuSheet: FC<CreateMenuSheetProps> = ({
           />
         </div>
       )}
-      {items.length ? (
+      {items.length > 0 && (
         <div
           role="menu"
           aria-label={parent ? undefined : title}
@@ -174,11 +174,11 @@ export const CreateMenuSheet: FC<CreateMenuSheetProps> = ({
             );
           })}
         </div>
-      ) : (
-        <p role="status" className="px-3 py-2">
-          {noResultsLabel}
-        </p>
       )}
+      {/* Always mounted so the no-results text is announced when it appears; visually hidden while empty. */}
+      <p role="status" className={items.length > 0 ? 'sr-only' : 'px-3 py-2'}>
+        {items.length > 0 ? '' : noResultsLabel}
+      </p>
     </BottomSheet>
   );
 };

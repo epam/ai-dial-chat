@@ -246,7 +246,7 @@ const NewConversationComposer: FC<Props> = ({
     () => ({
       ...inputStyles,
       typography: {
-        welcomeClassName: 'font-light text-4xl',
+        welcomeClassName: 'dial-display1-text',
         ...inputStyles?.typography,
       },
     }),

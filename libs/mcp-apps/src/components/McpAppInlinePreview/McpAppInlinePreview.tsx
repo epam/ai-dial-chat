@@ -196,10 +196,13 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
         </div>
       </div>
       <div className="relative min-h-[100px] w-full">
+        {/* Always mounted so the polite region exists before the canvas opens. */}
+        <span role="status" aria-live="polite" className="sr-only">
+          {isOpenedInCanvas ? openedInCanvasLabel : ''}
+        </span>
         {isOpenedInCanvas ? (
           <div
-            role="status"
-            aria-live="polite"
+            aria-hidden
             className="absolute inset-0 flex items-center justify-center p-4"
           >
             <span className="dial-body-text text-center text-secondary">

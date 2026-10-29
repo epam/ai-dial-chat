@@ -119,6 +119,15 @@ export const DeploymentSelectorField: FC<DeploymentSelectorFieldProps> = ({
     onSelect(id);
     close();
   };
+  /* Loading and no-results text share one always-mounted status region, kept outside the listbox. */
+  let statusText = '';
+  if (isLoading) {
+    statusText = labels.searchPlaceholder;
+  } else if (!error && options.length === 0) {
+    statusText = labels.emptyLabel;
+  }
+  const hasError = !isLoading && Boolean(error);
+  const hasOptions = !isLoading && !error && options.length > 0;
   const panel = renderPanel ? (
     renderPanel(close)
   ) : (
@@ -131,17 +140,20 @@ export const DeploymentSelectorField: FC<DeploymentSelectorFieldProps> = ({
         placeholder={labels.searchPlaceholder}
         aria-label={labels.searchAriaLabel}
       />
+      <span
+        role="status"
+        className={statusText === '' ? 'sr-only' : 'mt-2 block'}
+      >
+        {statusText}
+      </span>
+      <span role="alert" className={hasError ? 'mt-2 block' : 'sr-only'}>
+        {hasError ? labels.errorLabel : ''}
+      </span>
       <div
         role="listbox"
         className="mt-2 max-h-[min(50dvh,320px)] min-w-0 overflow-y-auto"
       >
-        {isLoading ? (
-          <span role="status">{labels.searchPlaceholder}</span>
-        ) : error ? (
-          <span role="alert">{labels.errorLabel}</span>
-        ) : options.length === 0 ? (
-          <span role="status">{labels.emptyLabel}</span>
-        ) : (
+        {hasOptions &&
           options.map((option) => (
             <MenuItem
               key={option.id}
@@ -160,8 +172,7 @@ export const DeploymentSelectorField: FC<DeploymentSelectorFieldProps> = ({
               onClick={() => select(option.id)}
               className="h-auto max-w-full py-2"
             />
-          ))
-        )}
+          ))}
       </div>
       {onBrowse && (
         <GhostButton

@@ -110,9 +110,10 @@ export const ConfirmationFooter: FC<ConfirmationFooterProps> = ({
         iconBefore={iconBefore}
         onClick={onConfirm}
       />
-      {isLoading && loadingStatusLabel != null && (
+      {/* Mounted whenever a label is supplied, so the region exists before loading starts. */}
+      {loadingStatusLabel != null && (
         <span role="status" aria-live="polite" className="sr-only">
-          {loadingStatusLabel}
+          {isLoading ? loadingStatusLabel : ''}
         </span>
       )}
     </div>

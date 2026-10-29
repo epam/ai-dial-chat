@@ -734,6 +734,8 @@ describe('Header — Download as primary action', () => {
         onDownload={onDownload}
       />,
     );
+    const status = screen.getByRole('status');
+    expect(status.textContent).toBe('');
 
     await userEvent.click(screen.getByRole('button', { name: 'Download' }));
 
@@ -742,7 +744,8 @@ describe('Header — Download as primary action', () => {
     }) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
     expect(button.getAttribute('aria-busy')).toBe('true');
-    expect(screen.getByRole('status').textContent).toBe('Downloading');
+    expect(screen.getByRole('status')).toBe(status);
+    expect(status.textContent).toBe('Downloading');
 
     resolveDownload();
     await waitFor(() =>

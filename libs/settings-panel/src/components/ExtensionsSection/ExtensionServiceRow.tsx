@@ -73,7 +73,7 @@ export const ExtensionServiceRow: FC<ExtensionServiceRowProps> = ({
             name={displayName}
             size={AVATAR_SIZE}
             color={avatarColor}
-            textClassName="text-lg"
+            textClassName="dial-h2-text"
           />
           {isWarningVisible && (
             /* The glyph is informational decoration: the connected state is

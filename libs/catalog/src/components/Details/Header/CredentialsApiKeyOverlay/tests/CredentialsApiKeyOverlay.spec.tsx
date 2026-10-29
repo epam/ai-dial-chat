@@ -232,6 +232,31 @@ describe('CredentialsApiKeyOverlay', () => {
     expect(screen.queryByLabelText('API key')).toBeNull();
   });
 
+  it('announces the added confirmation through a status region mounted before the key is added', () => {
+    const { rerender } = render(
+      <CredentialsApiKeyOverlay
+        item={item}
+        level={CredentialsLevel.User}
+        status={CredentialStatus.SignedOut}
+        onClose={vi.fn()}
+      />,
+    );
+    const status = screen.getByRole('status');
+    expect(status.textContent).toBe('');
+
+    rerender(
+      <CredentialsApiKeyOverlay
+        item={item}
+        level={CredentialsLevel.User}
+        status={CredentialStatus.SignedIn}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('status')).toBe(status);
+    expect(status.textContent).toContain('Personal key has been added');
+  });
+
   it('shows when the key was added as support text below the confirmation', () => {
     render(
       <CredentialsApiKeyOverlay

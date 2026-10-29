@@ -131,3 +131,25 @@ describe('DeploymentSelectorField', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 });
+
+describe('DeploymentSelectorField — search status', () => {
+  it('keeps the status region outside the listbox and fills it when the search matches nothing', async () => {
+    const user = userEvent.setup();
+    renderField();
+    await user.click(screen.getByRole('combobox'));
+    await screen.findByRole('option', { name: 'Model A' });
+    const status = screen.getByRole('status');
+    expect(status.textContent).toBe('');
+    expect(
+      within(screen.getByRole('listbox')).queryByRole('status'),
+    ).toBeNull();
+
+    await user.type(
+      screen.getByRole('textbox', { name: 'Search models' }),
+      'zzz',
+    );
+
+    expect(screen.getByRole('status')).toBe(status);
+    expect(status.textContent).toBe('Nothing here');
+  });
+});

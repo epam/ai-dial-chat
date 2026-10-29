@@ -262,4 +262,27 @@ describe('TextRefinementField', () => {
       error.id,
     );
   });
+
+  it('announces the error through an alert region mounted before the failure', () => {
+    const { rerender } = renderField(makeRefinement());
+    const alert = screen.getByRole('alert');
+    expect(alert.textContent).toBe('');
+
+    rerender(
+      <TextRefinementField
+        isEnabled
+        fieldId="description"
+        label="Description"
+        refinement={makeRefinement({ state: TextRefinementState.Error })}
+        disabled={false}
+      >
+        <textarea id="description" />
+      </TextRefinementField>,
+    );
+
+    expect(screen.getByRole('alert')).toBe(alert);
+    expect(alert.textContent).toBe(
+      'Could not refine this text. Please try again.',
+    );
+  });
 });

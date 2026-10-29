@@ -424,10 +424,11 @@ describe('SharePopover', () => {
       />,
     );
 
-    const status = screen.getByRole('status', {
-      name: 'Creating share link…',
-    });
-    expect(status).toBeTruthy();
+    expect(
+      screen
+        .getAllByRole('status')
+        .some((status) => status.textContent === 'Creating share link…'),
+    ).toBe(true);
     expect(
       // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- checking for decorative aria-hidden skeleton placeholders, which by definition carry no accessible role/name
       container.querySelectorAll('[aria-hidden]').length,

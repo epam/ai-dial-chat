@@ -42,7 +42,9 @@ interface ModelSelectorSkeletonRowsProps {
 export const ModelSelectorSkeletonRows: FC<ModelSelectorSkeletonRowsProps> = ({
   loadingLabel,
 }) => (
-  <div role="status" aria-label={loadingLabel}>
+  <div role="status">
+    {/* Rendered as text so the status region carries content, not just a name. */}
+    {loadingLabel && <span className="sr-only">{loadingLabel}</span>}
     {Array.from({ length: MODEL_SELECTOR_SKELETON_ROW_COUNT }).map(
       (_, index) => (
         <div

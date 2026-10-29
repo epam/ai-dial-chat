@@ -312,6 +312,35 @@ describe('CredentialsManagementPanel', () => {
     expect(screen.getByText('Added 1 week ago')).toBeTruthy();
   });
 
+  it('announces the configured key through a status region mounted before the key is added', () => {
+    const { rerender } = render(
+      <CredentialsManagementPanel
+        item={makeItem({
+          authenticationType: ToolsetAuthenticationType.ApiKey,
+          globalStatus: CredentialStatus.SignedOut,
+        })}
+      />,
+    );
+    const regionsBefore = screen.getAllByRole('status');
+
+    rerender(
+      <CredentialsManagementPanel
+        item={makeItem({
+          authenticationType: ToolsetAuthenticationType.ApiKey,
+          globalStatus: CredentialStatus.SignedIn,
+        })}
+      />,
+    );
+
+    const region = screen
+      .getAllByRole('status')
+      .find((element) =>
+        element.textContent?.includes('Key has been configured'),
+      );
+    expect(region).toBeTruthy();
+    expect(regionsBefore).toContain(region);
+  });
+
   it('requests the host to show a delete-confirmation sub-view instead of deleting directly', async () => {
     const onRequestDeleteApiKey = vi.fn();
     const item = makeItem({

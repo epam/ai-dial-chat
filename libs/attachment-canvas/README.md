@@ -674,7 +674,9 @@ Use `xlsxFormulaLabel` to localize the persistent XLSX `fx` bar's accessible
 label; it defaults to `Formula`. The visual `fx` mark is direction-neutral and
 does not replace that label for assistive technology. Its typography defaults
 to the UI Kit's `dial-italic-text` and can be overridden through
-`styles.typography.xlsxFormulaLabelClassName`.
+`styles.typography.xlsxFormulaLabelClassName`. The active cell content beside
+it defaults to `dial-code-text` and can be overridden through
+`styles.typography.xlsxFormulaValueClassName`.
 
 `McpAppDisplayMode` is the display-mode union of the MCP UI protocol
 (`'inline'` | `'fullscreen'` | `'pip'`) — the accepted values for

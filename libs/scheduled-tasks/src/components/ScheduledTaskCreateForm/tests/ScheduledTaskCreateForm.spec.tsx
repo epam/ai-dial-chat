@@ -400,6 +400,27 @@ describe('ScheduledTaskCreateForm', () => {
         .disabled,
     ).toBe(true);
   });
+  it('keeps the skill error live region mounted while the error clears and returns', async () => {
+    const { rerender } = await renderForm({
+      errors: { skillUrls: 'Unsupported' },
+    });
+    /* The live region has no role of its own; walk up from the error text. */
+    // eslint-disable-next-line testing-library/no-node-access -- see above
+    const region = screen.getByText('Unsupported').closest('[aria-live]');
+    expect(region?.getAttribute('aria-live')).toBe('polite');
+
+    rerender(<ScheduledTaskCreateForm {...buildFormProps({ errors: {} })} />);
+    expect(region?.isConnected).toBe(true);
+    expect(region?.textContent).toBe('');
+
+    rerender(
+      <ScheduledTaskCreateForm
+        {...buildFormProps({ errors: { skillUrls: 'Unsupported' } })}
+      />,
+    );
+    expect(region?.textContent).toBe('Unsupported');
+  });
+
   it('renders the action pair in both the header and the mobile sticky footer', async () => {
     await renderForm();
 

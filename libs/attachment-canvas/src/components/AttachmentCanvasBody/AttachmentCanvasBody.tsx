@@ -383,7 +383,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
                     styles.jsonExpandIcon,
                   ),
                   collapsedContent: mergeClasses(
-                    'me-1 cursor-pointer rounded px-1',
+                    'dial-caption-text me-1 cursor-pointer rounded px-1',
                     styles.jsonCollapsedContent,
                   ),
                 }}
@@ -460,6 +460,9 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
             formulaLabelClassName={
               typography?.xlsxFormulaLabelClassName ?? 'dial-italic-text'
             }
+            formulaValueClassName={
+              typography?.xlsxFormulaValueClassName ?? 'dial-code-text'
+            }
             highlightsLabel={ooxmlHighlightsLabel}
             highlightNavigatedLabel={ooxmlHighlightNavigatedLabel}
           />
@@ -510,6 +513,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     typography?.fontClassName,
     typography?.jsonClassName,
     typography?.xlsxFormulaLabelClassName,
+    typography?.xlsxFormulaValueClassName,
     fileName,
     codeBlockTheme,
     unsupportedLabel,

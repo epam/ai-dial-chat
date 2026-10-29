@@ -1294,14 +1294,14 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 )}
                 tabClassName="shrink-0"
               />
+              {/* Always mounted, so the loading text is announced when fetching starts. */}
+              <span role="status" className="sr-only">
+                {isDetailsLoading
+                  ? (texts?.detailsLoadingAriaLabel ?? 'Loading details')
+                  : ''}
+              </span>
               {isDetailsLoading && (
-                <div
-                  role="status"
-                  aria-label={
-                    texts?.detailsLoadingAriaLabel ?? 'Loading details'
-                  }
-                  className="shrink-0"
-                >
+                <div aria-hidden className="shrink-0">
                   <Skeleton
                     showTitle={false}
                     paragraph={{ rows: 1, width: '72px' }}

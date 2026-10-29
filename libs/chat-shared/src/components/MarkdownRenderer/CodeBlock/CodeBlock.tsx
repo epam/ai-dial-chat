@@ -57,7 +57,7 @@ export interface MarkdownCodeBlockProps {
   containerClassName?: string;
   /** Extra classes applied to the sticky header bar. */
   headerClassName?: string;
-  /** Typography class for the `<code>` element (used when no language is detected). Defaults to `'dial-code-text'`. */
+  /** Typography class for the code text — the `<code>` element, plus the highlighted `<pre>` when a language is detected. Defaults to `'dial-code-text'`. */
   codeClassName?: string;
   /** Whether the code keeps its own top padding below the header; `false` starts it right under the header. Defaults to `true`. */
   hasContentTopPadding?: boolean;
@@ -218,11 +218,9 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
                   margin: 0,
                   borderRadius: 0,
                   background: 'transparent',
-                  fontSize: 14,
-                  lineHeight: 1.5,
                   padding: hasContentTopPadding ? '14px 16px' : '0 16px 14px',
-                  letterSpacing: 0,
                 }}
+                className={codeClassName}
                 codeTagProps={{ className: codeClassName }}
               >
                 {value}

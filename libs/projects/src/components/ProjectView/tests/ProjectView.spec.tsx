@@ -185,7 +185,10 @@ describe('ProjectView', () => {
     expect(
       screen.queryByRole('button', { name: 'Download survey.xlsx' }),
     ).toBeNull();
-    expect(screen.getByRole('status').textContent).toBe('2 files found');
+    /* Each attachment card keeps its own (empty) error status region mounted. */
+    expect(
+      screen.getAllByRole('status').map((status) => status.textContent),
+    ).toContain('2 files found');
   });
 
   it('shows the no-matches message when the query matches no file', async () => {

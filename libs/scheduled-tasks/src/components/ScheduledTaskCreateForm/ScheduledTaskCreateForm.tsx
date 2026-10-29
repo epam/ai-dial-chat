@@ -724,8 +724,13 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
           {skillSelector != null ? (
             <div className="w-full max-w-[996px] min-w-0">{skillSelector}</div>
           ) : (
-            errors.skillUrls && (
-              <div aria-live="polite">
+            /* Always mounted so the polite region exists before the error
+               arrives; `sr-only` while empty keeps it out of the flex gap. */
+            <div
+              aria-live="polite"
+              className={errors.skillUrls ? undefined : 'sr-only'}
+            >
+              {errors.skillUrls && (
                 <ErrorText
                   className={mergeClasses(
                     instructionsErrorClassName,
@@ -733,8 +738,8 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                   )}
                   text={errors.skillUrls}
                 />
-              </div>
-            )
+              )}
+            </div>
           )}
           {/*
            * Cap the whole group, not just the editor: the Refine action sits at the
