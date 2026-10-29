@@ -156,7 +156,7 @@ Libs (`libs/*`) must NOT import i18n or read the current language to determine d
 
 ## Accessibility (a11y)
 
-All apps and libs target WCAG 2.1 **AAA**. Apply this by default on any interactive UI work, not only when explicitly asked for an accessibility pass — decorative icons inside already-labeled controls need `aria-hidden`; toggle buttons (like/dislike, expand/collapse) need `aria-pressed`/`aria-expanded`; closed/hidden panels with focusable descendants use `inert`, not `aria-hidden`, to avoid a keyboard focus trap; dynamic feedback (copy confirmation, no-results, streaming text) needs an `aria-live` status region; text-color fallbacks in `var(--token, #hex)` chains must resolve to at least 7:1 contrast. See `.claude/rules/a11y.md` for the full pattern list and code examples.
+All apps and libs target WCAG 2.1 **AAA**. Apply this by default on any interactive UI work, not only when explicitly asked for an accessibility pass — decorative icons inside already-labeled controls need `aria-hidden`; toggle buttons (like/dislike, expand/collapse) need `aria-pressed`/`aria-expanded`; closed/hidden panels with focusable descendants use `inert`, not `aria-hidden`, to avoid a keyboard focus trap; dynamic feedback (copy confirmation, no-results, streaming text) needs an `aria-live` status region — the kit `LiveRegion`, mounted before its text, never inside the conditional that produces the message; text-color fallbacks in `var(--token, #hex)` chains must resolve to at least 7:1 contrast. See `.claude/rules/a11y.md` for the full pattern list and code examples.
 
 ## Search result highlighting
 
@@ -186,3 +186,5 @@ When you encounter errors after a ui kit package upgrade, or when a prop no long
 2. Read `node_modules/@epam/ai-dial-ui-kit/dist/CHANGELOG.md` for `### Breaking Changes` entries at or between the previous release and the target release.
 3. Follow the linked migration guides found at `node_modules/@epam/ai-dial-ui-kit/dist/migration-guides/<version>/`.
 4. Use `getEntityDetails("component", "DialXxx")` to confirm the current prop signature before applying the fix.
+
+The MCP server (`node_modules/@epam/ai-dial-ui-kit/dist/mcp-server.cjs`) reads the kit manifest once, at startup. After bumping the kit in a running session, reconnect it (`/mcp` → `ai-dial-ui-kit`) before trusting a "not found" — a stale process still answers for the previous version.

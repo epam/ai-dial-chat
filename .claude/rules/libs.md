@@ -499,30 +499,39 @@ return (
 
 ## Typography and color utility classes as props
 
-**Never hardcode typography or color utility classes** directly in lib component JSX. The consuming app decides which type scale step and color tokens to use. Instead, accept an optional `<element>ClassName` prop (e.g. `titleClassName`, `labelClassName`, `placeholderIconClassName`) and give it a sensible default:
+**Never hardcode typography or color utility classes** directly in lib component JSX. The consuming app decides which type scale step and color tokens to use. The two travel through different props:
+
+- **Typography** — an optional `<element>ClassName` prop (e.g. `titleClassName`, `labelClassName`) whose default is a kit `dial-*-text` class. A `*ClassName` default carries typography only, never a color.
+- **Color** — a `*Colors` field read as `var(--<prefix>-x, fallback)` in the component's `.module.scss` and set with `buildCssVars` (see the section above). Not a Tailwind color class (`text-secondary`, `bg-layer-*`, `border-tertiary`, `hover:bg-*`, `[#hex]`) in JSX or in a `*ClassName` default.
 
 ```tsx
-// Correct — configurable with a sensible default
+// Correct — type step from a prop, color from a *Colors field through a CSS var
 interface MyProps {
   /** CSS class applied to the title. Defaults to `'dial-body-semi-text'`. */
   titleClassName?: string;
-  /** Color class applied to the placeholder icon. Defaults to `'text-secondary'`. */
-  placeholderIconClassName?: string;
+  /** Color overrides, applied as CSS custom properties. */
+  colors?: MyColors;
 }
 export const MyComponent: FC<MyProps> = ({
   titleClassName = 'dial-body-semi-text',
-  placeholderIconClassName = 'text-secondary',
+  colors,
 }) => (
-  <>
+  <div style={buildCssVars({ '--my-placeholder-icon': colors?.placeholderIcon })}>
     <span className={mergeClasses(styles.title, titleClassName)}>…</span>
-    <Icon className={placeholderIconClassName} />
-  </>
+    <Icon className={styles.placeholderIcon} />
+  </div>
 );
+// .placeholderIcon { color: var(--my-placeholder-icon, var(--text-secondary, #57647a)); }
 
 // Wrong — hardcoded in JSX
 <span className={mergeClasses(styles.title, 'dial-body-semi-text')}>…</span>
 <Icon className="text-secondary" />
+
+// Wrong — a color smuggled into a typography default
+unavailableTextClassName = 'dial-body-text text-secondary',
 ```
+
+Audit a lib or the branch with the `lib-theming` skill. `libs/celebrations` is exempt (decorative artwork).
 
 Layout helpers (`truncate`, `min-w-0`, `flex-1`) and structural color-independent utilities that do not vary by theme may remain hardcoded.
 

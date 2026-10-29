@@ -185,6 +185,13 @@ const DEFAULT_CONTEXT_RE =
 const DEFAULT_OPENER_RE =
   /(\b(?:[a-z]\w*)?[cC]lassName\??\s+=|\?\?|\|\||\b(?:[a-z]\w*)?[cC]lassName\??:)\s*(mergeClasses\()?\s*$/;
 
+/* A JSX `className="…dial-x-text…"` (no spaces around `=`) is hardcoded even
+   when a `?? '…'` fallback elsewhere on the line makes it look like a default. */
+const isInJsxClassAttribute = (lineText, className) =>
+  new RegExp(
+    `\\b(?:[a-z]\\w*)?[cC]lassName=(?:"[^"]*|\\{\\s*['"\`][^'"\`]*)\\b${className}\\b`,
+  ).test(lineText);
+
 const scanTsx = (file, text, findings) => {
   const lines = stripComments(text).split('\n');
   lines.forEach((lineText, index) => {
@@ -198,7 +205,10 @@ const scanTsx = (file, text, findings) => {
       let signal = null;
       if (isColorUtility(token)) signal = 'tailwind-color-class';
       else if (RAW_FONT_RE.test(bare)) signal = 'raw-font-utility';
-      else if (SCALE_CLASS_RE.test(bare) && !isDefault)
+      else if (
+        SCALE_CLASS_RE.test(bare) &&
+        (!isDefault || isInJsxClassAttribute(lineText, bare))
+      )
         signal = 'hardcoded-typography';
       if (signal) {
         findings.push({ file, line: index + 1, signal, detail: token });

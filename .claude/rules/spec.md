@@ -85,6 +85,35 @@ it('adds the currently-selected item to favorites when its star is clicked', asy
 - Prefer `vi.mocked(fn)` for typed access to mocked imports.
 - Call `vi.clearAllMocks()` in `beforeEach` whenever shared mock state could leak between tests.
 - An object-literal mock of `@epam/ai-dial-ui-kit` must include `DIAL_KIT_ICON_STROKE: 1.5` — every icon in the component under test reads it, and a missing export fails the whole file at import time, not at an assertion.
+- When the component renders a kit `LiveRegion`, the mock spreads the real one instead of stubbing it — a stub hides the always-mounted markup the test is meant to prove:
+
+  ```ts
+  vi.mock('@epam/ai-dial-ui-kit', async () => ({
+    ...(await vi
+      .importActual<typeof import('@epam/ai-dial-ui-kit')>(
+        '@epam/ai-dial-ui-kit',
+      )
+      .then(({ LiveRegion, LiveRegionElement }) => ({
+        LiveRegion,
+        LiveRegionElement,
+      }))),
+    DIAL_KIT_ICON_STROKE: 1.5,
+  }));
+  ```
+
+- A mocked `ErrorText`/`CaptionText` must not render `role="alert"`: the real components have no live-region role, so `getByRole('alert')` against them passes only through the mock.
+
+## Live regions
+
+Assert that a live region is the **same node** before and after the state change — that is what makes it announce. Checking only the final text passes even when the region remounts:
+
+```ts
+const region = screen.getByRole('status');
+expect(region.textContent).toBe('');
+rerender(<Section isUnavailable labels={labels} />);
+expect(screen.getByRole('status')).toBe(region);
+expect(region.textContent).toBe(labels.unavailableLabel);
+```
 
 ## Describe / it naming
 
