@@ -192,12 +192,24 @@ const isInJsxClassAttribute = (lineText, className) =>
     `\\b(?:[a-z]\\w*)?[cC]lassName=(?:"[^"]*|\\{\\s*['"\`][^'"\`]*)\\b${className}\\b`,
   ).test(lineText);
 
+/* A constant typed as a `*ClassNames` map (`DEFAULT_MARKDOWN_CLASS_NAMES:
+   MarkdownRendererClassNames = {…}`) is the default or a preset of that map
+   prop, which the host replaces — so its body counts as a default. */
+const CLASS_NAMES_MAP_OPEN_RE =
+  /\bconst\s+\w+\s*:\s*\w*ClassNames\b[^=]*=\s*\{/;
+
 const scanTsx = (file, text, findings) => {
   const lines = stripComments(text).split('\n');
+  let isInClassNamesMap = false;
   lines.forEach((lineText, index) => {
+    if (CLASS_NAMES_MAP_OPEN_RE.test(lineText)) isInClassNamesMap = true;
     const isDefault =
+      isInClassNamesMap ||
       DEFAULT_CONTEXT_RE.test(lineText) ||
       DEFAULT_OPENER_RE.test(lines[index - 1] ?? '');
+    if (isInClassNamesMap && /^\};?\s*$/.test(lineText)) {
+      isInClassNamesMap = false;
+    }
     for (const raw of lineText.split(/[\s'"`{},;]+/)) {
       const token = raw.replace(/[)>]+$/, '');
       if (!token) continue;
