@@ -8,6 +8,7 @@ import {
 import { IconPinFilled } from '@tabler/icons-react';
 import type { FC, MouseEvent } from 'react';
 import type { ProjectItem } from '../../models/project-item';
+import { formatRelativeTime } from '../../utils/relative-time';
 import styles from './ProjectCard.module.scss';
 
 /** Props for the {@link ProjectCard} component. */
@@ -26,6 +27,12 @@ export interface ProjectCardProps {
   href?: string;
   /** Called with the project id on a plain primary click of the card link. */
   onOpen?: (id: string) => void;
+  /** Reference time in epoch milliseconds that `updatedAt` is shown relative to. */
+  now: number;
+  /** BCP 47 locale of the relative last-updated time. Defaults to the runtime locale. */
+  locale?: string;
+  /** CSS class applied to the last-updated time. */
+  updatedAtClassName: string;
   /** CSS class applied to the project name. */
   titleClassName: string;
   /** CSS class applied to the non-leaf folder path segments. */
@@ -48,7 +55,7 @@ const isPlainPrimaryClick = (event: MouseEvent<HTMLAnchorElement>): boolean =>
   !event.shiftKey &&
   !event.altKey;
 
-/** List item showing a project's name, pin marker and folder path on the shared card shell; a link when `href` is given. */
+/** List item showing a project's last-updated time, name, pin marker and folder path on the shared card shell; a link when `href` is given. */
 export const ProjectCard: FC<ProjectCardProps> = ({
   project,
   searchQuery,
@@ -57,6 +64,9 @@ export const ProjectCard: FC<ProjectCardProps> = ({
   pinnedLabel,
   href,
   onOpen,
+  now,
+  locale,
+  updatedAtClassName,
   titleClassName,
   pathLabelClassName,
   pathLeafClassName,
@@ -86,11 +96,22 @@ export const ProjectCard: FC<ProjectCardProps> = ({
       <CardShell
         aria-label={project.name}
         className={mergeClasses(
-          'relative flex w-full min-w-0 flex-col gap-3',
+          'relative flex w-full min-w-0 flex-col gap-2',
           styles.card,
+          /* Keyboard focus gets the kit card's own hover lift and shadow. */
+          href != null &&
+            'has-focus-visible:-translate-y-[3px] has-focus-visible:shadow-lg motion-reduce:has-focus-visible:translate-y-0',
           href != null && styles.interactive,
         )}
       >
+        {project.updatedAt != null && (
+          <time
+            dateTime={new Date(project.updatedAt).toISOString()}
+            className={mergeClasses(updatedAtClassName, styles.updatedAt)}
+          >
+            {formatRelativeTime(project.updatedAt, now, locale)}
+          </time>
+        )}
         <div className="flex min-w-0 items-center gap-2">
           {href != null ? (
             <a
@@ -115,11 +136,7 @@ export const ProjectCard: FC<ProjectCardProps> = ({
           ariaLabel={folderPathLabel}
           labelClassName={mergeClasses(pathLabelClassName, styles.path)}
           leafClassName={mergeClasses(pathLeafClassName, styles.path)}
-          className={mergeClasses(
-            'mt-auto pt-3',
-            styles.footer,
-            href != null && styles.aboveLink,
-          )}
+          className={mergeClasses(href != null && styles.aboveLink)}
         />
       </CardShell>
     </li>

@@ -53,7 +53,6 @@ const ProjectsPage: FC = () => {
   const labels = useMemo<ProjectsLabels>(
     () => ({
       title: t(ProjectsI18nKeys.PageTitle),
-      subtitle: t(ProjectsI18nKeys.PageSubtitle),
       searchPlaceholder: t(ProjectsI18nKeys.SearchPlaceholder),
       searchAriaLabel: t(ProjectsI18nKeys.SearchAriaLabel),
       clearSearchLabel: t(BasicI18nKeys.ClearSearch),

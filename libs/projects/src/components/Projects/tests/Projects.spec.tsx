@@ -136,7 +136,7 @@ describe('Projects', () => {
         within(card).getByRole('navigation', { name: 'Project location' }),
       ).getByText('Organization'),
     ).toBeTruthy();
-    expect(within(card).queryByRole('time')).toBeNull();
+    expect(within(card).getByRole('time')).toBeTruthy();
   });
 
   it('orders projects by Newest by default with undated projects last', () => {

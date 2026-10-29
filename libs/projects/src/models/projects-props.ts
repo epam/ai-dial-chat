@@ -5,10 +5,10 @@ import type { ProjectItem } from './project-item';
 
 /** Localized labels used by the {@link Projects} component. */
 export interface ProjectsLabels {
-  /** Page title, e.g. "Projects". */
+  /** Page title, e.g. "All projects". */
   title: string;
-  /** One-line description shown beneath the title. */
-  subtitle: string;
+  /** One-line description shown beneath the title. Omitted when not set. */
+  subtitle?: string;
   /** Placeholder text for the toolbar search input. */
   searchPlaceholder: string;
   /** Accessible label for the toolbar search input. */
@@ -52,23 +52,21 @@ export interface ProjectsColors {
   background?: string;
   /** Subtitle and status-message text color. Fallback: `--text-secondary`. */
   subtitleText?: string;
-  /** Sort control label/icon color. Fallback: `--text-accent`. */
+  /** Sort control label/icon color. Fallback: `--text-primary`. */
   sortButtonText?: string;
   /** Card background. Fallback: `--bg-layer-raised`. */
   cardBackground?: string;
-  /** Background of an interactive card on hover and keyboard focus. Fallback: `--bg-layer-hover`. */
-  cardHoverBackground?: string;
   /** Project name color on a card. Fallback: `--text-primary`. */
   cardTitleText?: string;
-  /** Divider above a card's folder path. Fallback: `--stroke-tertiary`. */
-  cardDivider?: string;
+  /** Relative last-updated time color on a card. Fallback: `--text-secondary`. */
+  updatedAtText?: string;
   /** Folder path text color on a card. Fallback: `--text-secondary`. */
   pathText?: string;
 }
 
 /** Typography overrides for the {@link Projects} component. */
 export interface ProjectsTypography {
-  /** CSS class applied to the page title. Defaults to `'dial-h1-text'`. */
+  /** CSS class applied to the page title. Defaults to `'dial-h2-text'`. */
   titleClassName?: string;
   /** CSS class applied to the subtitle and status messages. Defaults to `'dial-body-text'`. */
   subtitleClassName?: string;
@@ -78,6 +76,10 @@ export interface ProjectsTypography {
   pathLabelClassName?: string;
   /** CSS class applied to the last folder path segment. Defaults to `'dial-tiny-semi-text'`. */
   pathLeafClassName?: string;
+  /** CSS class applied to each card's relative last-updated time. Defaults to `'dial-tiny-text'`. */
+  updatedAtClassName?: string;
+  /** CSS class applied to the empty state's description. Defaults to `'dial-small-paragraph-text'`. */
+  emptyStateDescriptionClassName?: string;
 }
 
 /** Style overrides for the {@link Projects} component. */

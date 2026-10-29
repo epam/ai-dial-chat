@@ -411,7 +411,6 @@ export enum NotFoundI18nKeys {
 
 export enum ProjectsI18nKeys {
   PageTitle = 'projects.page.title',
-  PageSubtitle = 'projects.page.subtitle',
   SearchPlaceholder = 'projects.toolbar.searchPlaceholder',
   SearchAriaLabel = 'projects.toolbar.searchAriaLabel',
   SortNewest = 'projects.toolbar.sortNewest',
