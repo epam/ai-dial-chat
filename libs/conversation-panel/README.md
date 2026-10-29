@@ -158,7 +158,8 @@ always renders `Avatar` rows.
 
 `styles.typography.fontClassName` puts one typography class on the list root, which rows
 and group headers inherit unless they set their own (`groupHeaderClassName`,
-`itemTitleClassName`), and `styles.typography.fontFamily` sets its `font-family`
+`itemTitleClassName`, `unreadItemTitleClassName` — `'dial-small-semi-text'` by
+default for an unread title), and `styles.typography.fontFamily` sets its `font-family`
 (`--cp-list-font-family`). `ConversationPanel` forwards `fontFamily` but not
 `fontClassName`, which there names the title.
 

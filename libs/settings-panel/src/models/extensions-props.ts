@@ -59,6 +59,10 @@ export interface ExtensionsTypography {
   nameClassName?: string;
   /** CSS class for the service description and limited-access explanation. Defaults to `'dial-small-text'`. */
   descriptionClassName?: string;
+  /** CSS class for the limited-access tooltip title. Defaults to `'dial-small-semi-text'`. */
+  tooltipTitleClassName?: string;
+  /** CSS class for the limited-access tooltip description. Defaults to `'dial-small-text'`. */
+  tooltipDescriptionClassName?: string;
 }
 
 /** Style overrides accepted by `ExtensionsSection`. */

@@ -33,6 +33,8 @@ interface RowStyles {
   groupHeaderClassName?: string;
   /** Typography class applied to conversation title text. */
   itemTitleClassName?: string;
+  /** Typography class applied to the title of an unread conversation. */
+  unreadItemTitleClassName?: string;
   /** CSS class applied to the icon badge in each conversation row. */
   itemIconBadgeClassName?: string;
 }

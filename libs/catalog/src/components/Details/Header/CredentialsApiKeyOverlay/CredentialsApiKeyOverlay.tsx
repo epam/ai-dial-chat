@@ -15,6 +15,7 @@ import type { CatalogItem } from '../../../../models/catalog-item';
 import type {
   ItemDetailsColors,
   ItemDetailsTexts,
+  ItemDetailsTypography,
 } from '../../../../models/item-details-props';
 import {
   CredentialsLevel,
@@ -56,6 +57,8 @@ export interface CredentialsApiKeyOverlayProps {
    * panel, so it sets the vars it reads on its own root.
    */
   colors?: ItemDetailsColors;
+  /** Typography class overrides; reads `credentialsOverlayTitleClassName`, `credentialsHintClassName` and `credentialsErrorClassName`. */
+  typography?: ItemDetailsTypography;
   /** CSS class merged onto the "Delete" action; its color comes from `colors.credentialsDeleteActionText`. */
   deleteActionClassName?: string;
 }
@@ -72,8 +75,14 @@ export const CredentialsApiKeyOverlay: FC<CredentialsApiKeyOverlayProps> = ({
   onClose,
   texts,
   colors,
+  typography,
   deleteActionClassName,
 }) => {
+  const {
+    credentialsOverlayTitleClassName = 'dial-small-semi-text',
+    credentialsHintClassName = 'dial-caption-text',
+    credentialsErrorClassName = 'dial-caption-text',
+  } = typography ?? {};
   const [apiKey, setApiKey] = useState('');
   const [hasEmptyKeyError, setHasEmptyKeyError] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -147,7 +156,7 @@ export const CredentialsApiKeyOverlay: FC<CredentialsApiKeyOverlayProps> = ({
   return (
     <div className="flex w-[418px] flex-col" style={cssVars}>
       <div className="flex items-center gap-2 px-4 py-3">
-        <span className="dial-small-semi-text">{title}</span>
+        <span className={credentialsOverlayTitleClassName}>{title}</span>
       </div>
       <div className={mergeClasses('mx-4 h-px', styles.divider)} />
 
@@ -195,12 +204,12 @@ export const CredentialsApiKeyOverlay: FC<CredentialsApiKeyOverlayProps> = ({
           <CaptionText
             id={headerHintId}
             text={headerHint}
-            className={mergeClasses('dial-caption-text', styles.hint)}
+            className={mergeClasses(credentialsHintClassName, styles.hint)}
           />
           {hasEmptyKeyError && (
             <ErrorText
               id={emptyKeyErrorId}
-              className="dial-caption-text"
+              className={credentialsErrorClassName}
               text={emptyKeyErrorMessage}
             />
           )}

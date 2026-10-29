@@ -618,6 +618,8 @@ receives the searched, filtered and sorted items and the search query.
   and is a centred dialog from there up. The footer rule drawn with
   `footerStart` takes its color from `colors.footerBorder`
   (`CatalogPickerModalColors`), falling back to `--stroke-tertiary`.
+- `headingClassName` sets the type of the heading above the list, defaulting to
+  `'dial-body-semi-text'`.
 
 ### AddOnCatalogModal
 
@@ -654,6 +656,7 @@ import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 - `listProps` passes further `ListView` props (`columnVisibility`, `isFavoriteVisible`,
   `credentialsBadgeLoggedOutLabel`, …); the selection props are the picker's own.
 - `labels.selectAll` and `labels.selectRow` default to `'Select all'` and `Select <name>`.
+- `headingClassName` is forwarded to `CatalogPickerModal` (default `'dial-body-semi-text'`).
 
 ### AddOnListItem
 
@@ -1765,6 +1768,12 @@ the default is no content; `showEmptyState` enables an explicit empty message.
 `ApplicationCredentialLoginParams` and `ApplicationCredentialsProps` are exported
 alongside the service and text models. Text overrides use English defaults and the
 same credentials CSS variables as the toolset rows.
+
+`typography` (`ApplicationCredentialsTypography`) sets the type classes:
+`titleClassName` (`'dial-h3-text'`), `rowLabelClassName` (`'dial-small-semi-text'`),
+`rowDescriptionClassName` (`'dial-small-text'`, also the hint line), `errorClassName`
+(`'dial-caption-text'`), `keyCardTitleClassName` (`'dial-tiny-semi-text'`) and
+`keyCardDescriptionClassName` (`'dial-tiny-text'`).
 
 `Catalog` and `DetailsPanel` accept `renderCredentials?: (item: CatalogItem) => ReactNode`.
 The slot appears below the item header in the open, editable, normal details view.

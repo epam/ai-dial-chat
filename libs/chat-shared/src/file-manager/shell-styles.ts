@@ -22,6 +22,8 @@ export interface DialFileManagerShellStyles {
   colors?: DialFileManagerShellColors;
   /** Color overrides forwarded to the copy/move `OperationLoaderModal`. */
   operationLoader?: OperationLoaderModalColors;
+  /** Typography class of the copy/move `OperationLoaderModal` secondary text. Defaults to `'dial-small-text'`. */
+  operationLoaderTextClassName?: string;
 }
 
 /** CSS custom-property overrides for `FileManagerAttachModal`. */

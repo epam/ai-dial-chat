@@ -173,6 +173,7 @@ export const UserMenu: FC<UserMenuProps> = memo(
                 profile={profile}
                 alt={labels.avatarAlt}
                 size={isCompactTrigger ? 24 : undefined}
+                initialsClassName={typography?.avatarInitialsClassName}
               />
             }
             className={mergeClasses(
@@ -197,7 +198,14 @@ export const UserMenu: FC<UserMenuProps> = memo(
             tooltip: profile.email,
             hideTooltip: isTooltipHidden,
           }}
-          iconBefore={<UserAvatar profile={profile} alt="" size={24} />}
+          iconBefore={
+            <UserAvatar
+              profile={profile}
+              alt=""
+              size={24}
+              initialsClassName={typography?.avatarInitialsClassName}
+            />
+          }
           label={
             <>
               <EllipsisTooltip

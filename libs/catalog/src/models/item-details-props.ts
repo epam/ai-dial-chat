@@ -398,6 +398,12 @@ export interface ItemDetailsTypography {
   credentialsKeyCardTitleClassName?: string;
   /** Typography class for the configured-API-key card's description. Default: `'dial-tiny-text'`. */
   credentialsKeyCardDescriptionClassName?: string;
+  /** Typography class for the API-key popover's title. Default: `'dial-small-semi-text'`. */
+  credentialsOverlayTitleClassName?: string;
+  /** Typography class for the API-key popover's header-name hint under the input. Default: `'dial-caption-text'`. */
+  credentialsHintClassName?: string;
+  /** Typography class for the header's "Limit reached"/"Running low" badge. Default: `'dial-caption-lead-semi-text'`. */
+  limitStatusBadgeClassName?: string;
 }
 
 /**

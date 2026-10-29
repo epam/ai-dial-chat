@@ -386,7 +386,8 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
                     styles.jsonExpandIcon,
                   ),
                   collapsedContent: mergeClasses(
-                    'dial-caption-text me-1 cursor-pointer rounded px-1',
+                    typography?.jsonCollapsedClassName ?? 'dial-caption-text',
+                    'me-1 cursor-pointer rounded px-1',
                     styles.jsonCollapsedContent,
                   ),
                 }}
@@ -400,6 +401,8 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
           <CodeContent
             content={content}
             codeBlockTheme={codeBlockTheme}
+            codeClassName={typography?.codeClassName}
+            errorLabelClassName={typography?.errorMessageClassName}
             labels={{
               loadingLabel: codeContentLoadingLabel,
               errorLabel: codeContentErrorLabel,
@@ -418,6 +421,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
             isSourceView={isHtmlSourceView}
             title={fileName}
             codeBlockTheme={codeBlockTheme}
+            codeClassName={typography?.codeClassName}
           />
         );
       case AttachmentContentType.Pdf:
@@ -426,6 +430,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
             key={`${content.url}#${pdfReloadKey}`}
             retryKey={pdfRetryKey}
             onRetry={handleRetryPdf}
+            errorLabelClassName={typography?.errorMessageClassName}
             labels={{
               loadingLabel: pdfContentLoadingLabel,
               errorLabel: pdfContentErrorLabel,
@@ -442,6 +447,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
               onLoadError={handlePdfLoadError}
               hideHeader={hidePdfToolbar}
               configurePdfWorker={configurePdfWorker}
+              errorLabelClassName={typography?.errorMessageClassName}
               labels={{
                 thumbnailsLabel: pdfThumbnailsLabel,
                 showThumbnailsLabel: pdfShowThumbnailsLabel,
@@ -519,6 +525,9 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     typography?.jsonLabelClassName,
     typography?.xlsxFormulaLabelClassName,
     typography?.xlsxFormulaValueClassName,
+    typography?.codeClassName,
+    typography?.jsonCollapsedClassName,
+    typography?.errorMessageClassName,
     fileName,
     codeBlockTheme,
     unsupportedLabel,

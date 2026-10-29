@@ -771,6 +771,7 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
           cancelLabel={labels.operationLoaderCancelLabel}
           onCancel={cancelCopyMove}
           colors={shellStyles?.operationLoader}
+          textClassName={shellStyles?.operationLoaderTextClassName}
         />
       )}
     </>

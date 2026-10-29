@@ -151,6 +151,8 @@ export interface AvatarPickerModalProps {
   maxFileSizeBytes: number;
   /** Pre-translated labels for the modal. */
   labels: AvatarPickerModalLabels;
+  /** Typography class of the delete-confirmation body. Defaults to `'dial-small-text'`. */
+  confirmBodyClassName?: string;
   /** Style overrides. */
   styles?: AvatarPickerModalStyles;
 }

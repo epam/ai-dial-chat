@@ -1,5 +1,11 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { Accordion, ButtonVariant, GhostButton } from '@epam/ai-dial-ui-kit';
+import {
+  Accordion,
+  ButtonVariant,
+  GhostButton,
+  LiveRegion,
+  LiveRegionElement,
+} from '@epam/ai-dial-ui-kit';
 import { useEffect, useState, type FC } from 'react';
 import type { ScheduledTaskRunItem } from '../../models/scheduled-task-run-item';
 import type { ScheduledTaskRunStatus } from '../../types/scheduled-task-run-status';
@@ -134,20 +140,21 @@ export const ScheduledTaskConversationHistorySection: FC<
       /* The kit's content region pads px-4 (16px); the design narrows the History rows' start inset to 12px. */
       contentClassName={contentClassName}
     >
-      {isUnavailable ? (
-        <p
-          role="status"
-          className={mergeClasses(
-            unavailableTextClassName,
-            styles.unavailableText,
-          )}
-          style={buildCssVars({
-            '--stch-unavailable-text': colors?.unavailableText,
-          })}
-        >
-          {labels.unavailableLabel}
-        </p>
-      ) : (
+      {/* The status region stays mounted in every state, so history turning
+          unavailable while the section is open is announced. */}
+      <LiveRegion
+        as={LiveRegionElement.P}
+        className={mergeClasses(
+          unavailableTextClassName,
+          styles.unavailableText,
+        )}
+        style={buildCssVars({
+          '--stch-unavailable-text': colors?.unavailableText,
+        })}
+      >
+        {isUnavailable && labels.unavailableLabel}
+      </LiveRegion>
+      {!isUnavailable && (
         <ScheduledTaskRunHistoryList
           items={items}
           isLoading={isLoading}

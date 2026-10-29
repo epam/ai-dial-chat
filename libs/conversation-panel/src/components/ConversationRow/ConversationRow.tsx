@@ -53,6 +53,8 @@ export interface ConversationRowProps {
   actionsLabel?: string;
   /** Typography class for the conversation title text. Defaults to `'dial-small-text'`. */
   itemTitleClassName?: string;
+  /** Typography class for the title of an unread conversation. Defaults to `'dial-small-semi-text'`. */
+  unreadItemTitleClassName?: string;
   /** CSS class applied to the icon badge. Defaults to `'rounded-full'`. */
   itemIconBadgeClassName?: string;
   /** Accessible (visually hidden) label announced for the unread indicator dot. Defaults to `"Unread"`. */
@@ -94,6 +96,7 @@ const ConversationRowComponent: FC<ConversationRowProps> = ({
   onActionMenuOpen,
   actionsLabel = 'More actions',
   itemTitleClassName = 'dial-small-text',
+  unreadItemTitleClassName = 'dial-small-semi-text',
   itemIconBadgeClassName,
   unreadIndicatorLabel = 'Unread',
   variant = ConversationRowVariant.Avatar,
@@ -268,7 +271,7 @@ const ConversationRowComponent: FC<ConversationRowProps> = ({
               text={item.title}
               query={searchQuery}
               className={
-                item.isUnread ? 'dial-small-semi-text' : itemTitleClassName
+                item.isUnread ? unreadItemTitleClassName : itemTitleClassName
               }
               maxLines={1}
             />

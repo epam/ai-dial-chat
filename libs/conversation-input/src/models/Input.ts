@@ -72,6 +72,10 @@ export interface InputColors {
 export interface InputTypography {
   /** Typography utility class applied to the textarea (e.g. `'dial-body-paragraph-text'`). */
   fontClassName?: string;
+  /** Typography class of the selected model name on the model selector trigger. Defaults to `'dial-small-text'`. */
+  modelSelectorNameClassName?: string;
+  /** Typography class of the selected model version on the model selector trigger. Defaults to `'dial-tiny-text'`. */
+  modelSelectorVersionClassName?: string;
 }
 
 /** Status labels displayed inside the model selector dropdown and mobile bottom-sheet. */

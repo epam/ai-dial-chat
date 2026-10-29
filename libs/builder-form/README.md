@@ -207,6 +207,7 @@ import { AddAvatar } from '@epam/ai-dial-builder-form';
 | `addAvatarLabel`   | `string`          |          | `'Add avatar'`                 | Label for the "Add avatar" button.                                                                                                              |
 | `captionText`      | `string`          |          | `'PNG, JPG or SVG (max 1 MB)'` | Caption describing the accepted formats and max size.                                                                                           |
 | `onAddAvatarClick` | `() => void`      | ✓        | —                              | Called when the "Add avatar" button is clicked. The host opens its own file picker/manager and passes the resulting URL back in as `avatarUrl`. |
+| `captionClassName` | `string`          |          | `'dial-tiny-text'`             | Typography class of the format/size caption.                                                                                                    |
 | `styles`           | `AddAvatarStyles` |          | —                              | CSS custom property overrides.                                                                                                                  |
 | `className`        | `string`          |          | —                              | Additional CSS class applied to the root element.                                                                                               |
 
@@ -263,7 +264,7 @@ import { AvatarPickerModal } from '@epam/ai-dial-builder-form';
 />;
 ```
 
-`styles.colors` (`AvatarPickerModalColors`) recolors the delete-confirmation body: `confirmText` (defaults to `--text-secondary`) and `confirmItemText` for the item name or count (defaults to `--text-primary`).
+`confirmBodyClassName` (`'dial-small-text'`) sets the delete-confirmation body's typography. `styles.colors` (`AvatarPickerModalColors`) recolors the delete-confirmation body: `confirmText` (defaults to `--text-secondary`) and `confirmItemText` for the item name or count (defaults to `--text-primary`).
 
 ### EntityEditor
 

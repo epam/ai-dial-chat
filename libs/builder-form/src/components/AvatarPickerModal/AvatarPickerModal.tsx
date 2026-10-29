@@ -14,6 +14,7 @@ export const AvatarPickerModal: FC<AvatarPickerModalProps> = ({
   allowedMimeTypes,
   maxFileSizeBytes,
   labels,
+  confirmBodyClassName = 'dial-small-text',
   styles: stylesProp,
 }) => {
   const confirmTextColor = stylesProp?.colors?.confirmText;
@@ -30,7 +31,7 @@ export const AvatarPickerModal: FC<AvatarPickerModalProps> = ({
   const deleteConfirmBody = useCallback(
     (names: string[]) => (
       <div
-        className="dial-small-text px-6 py-3"
+        className={mergeClasses(confirmBodyClassName, 'px-6 py-3')}
         style={buildCssVars({
           '--apm-confirm-text': confirmTextColor,
           '--apm-confirm-item-text': confirmItemTextColor,
@@ -63,6 +64,7 @@ export const AvatarPickerModal: FC<AvatarPickerModalProps> = ({
       labels.deleteConfirmItemsLabel,
       confirmTextColor,
       confirmItemTextColor,
+      confirmBodyClassName,
     ],
   );
 

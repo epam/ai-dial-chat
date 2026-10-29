@@ -25,6 +25,8 @@ export interface UserMenuTypography {
   fontClassName?: string;
   /** `font-family` applied to the menu trigger and overlay content. */
   fontFamily?: string;
+  /** Typography class of the avatar's initials fallback. Defaults to `'dial-tiny-text'`. */
+  avatarInitialsClassName?: string;
 }
 
 /** Combined style overrides for `UserMenu`. */

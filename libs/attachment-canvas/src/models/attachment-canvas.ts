@@ -404,6 +404,12 @@ export interface AttachmentCanvasTypography {
   xlsxFormulaValueClassName?: string;
   /** CSS utility class applied to the MCP App version text in the panel title. Defaults to `'dial-caption-text'`. */
   mcpAppVersionClassName?: string;
+  /** CSS utility class applied to source code (code files and HTML source view). Defaults to `'dial-code-text'`. */
+  codeClassName?: string;
+  /** CSS utility class applied to a collapsed JSON node's summary. Defaults to `'dial-caption-text'`. */
+  jsonCollapsedClassName?: string;
+  /** CSS utility class applied to the code/PDF load-error message above Retry. Defaults to `'dial-body-text'`. */
+  errorMessageClassName?: string;
 }
 
 /** Style override prop for `AttachmentCanvasBody`'s content-rendering area. */

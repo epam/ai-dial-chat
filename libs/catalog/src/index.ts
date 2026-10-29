@@ -227,4 +227,5 @@ export type {
   ApplicationCredentialLoginParams,
   ApplicationCredentialsProps,
   ApplicationCredentialsTexts,
+  ApplicationCredentialsTypography,
 } from './models/application-credentials';

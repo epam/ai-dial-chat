@@ -67,6 +67,7 @@ export const NavigationSheet: FC<NavigationSheetProps> = memo(
           groups={groups}
           footer={footer}
           textClassName={typography?.fontClassName}
+          avatarInitialsClassName={typography?.avatarInitialsClassName}
         />
       </NavigableBottomSheet>
     );

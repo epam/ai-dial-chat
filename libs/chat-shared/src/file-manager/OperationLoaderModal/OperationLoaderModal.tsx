@@ -17,6 +17,8 @@ export interface OperationLoaderModalProps {
   onCancel: () => void;
   /** Color overrides applied as CSS custom properties. */
   colors?: OperationLoaderModalColors;
+  /** Typography class of the secondary text. Defaults to `'dial-small-text'`. */
+  textClassName?: string;
 }
 
 /** Modal overlay with a spinner and cancel button for long-running file operations. */
@@ -26,6 +28,7 @@ export const OperationLoaderModal: FC<OperationLoaderModalProps> = ({
   cancelLabel,
   onCancel,
   colors,
+  textClassName = 'dial-small-text',
 }) => (
   <Popup
     className="h-fit! max-h-full! w-[400px]!"
@@ -43,7 +46,7 @@ export const OperationLoaderModal: FC<OperationLoaderModalProps> = ({
       <Spinner size={32} fullWidth={false} ariaLabel={title} />
       <div className="flex flex-col gap-1">
         <div>{title}</div>
-        <div className={mergeClasses('dial-small-text', styles.text)}>
+        <div className={mergeClasses(textClassName, styles.text)}>
           {text}
         </div>
       </div>

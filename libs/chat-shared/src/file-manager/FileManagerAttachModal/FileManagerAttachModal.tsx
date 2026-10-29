@@ -111,6 +111,10 @@ export interface FileManagerAttachModalProps {
   oversizedUploadMessage?: string;
   /** Color overrides applied as CSS custom properties. */
   colors?: FileManagerAttachModalColors;
+  /** Typography class of the modal title. Defaults to `'dial-h1-text'`. */
+  titleClassName?: string;
+  /** Typography class of the header description. Defaults to `'dial-small-text'`. */
+  descriptionClassName?: string;
 }
 
 /** File-manager modal with Popup chrome and an Attach footer. Selection and tab state are controlled by the host. */
@@ -143,6 +147,8 @@ export const FileManagerAttachModal: FC<FileManagerAttachModalProps> = memo(
     autoSelectUploadedItems = false,
     oversizedUploadMessage,
     colors,
+    titleClassName = 'dial-h1-text',
+    descriptionClassName = 'dial-small-text',
   }) => {
     const { items, isLoading, searchResults } = controller;
 
@@ -295,11 +301,13 @@ export const FileManagerAttachModal: FC<FileManagerAttachModalProps> = memo(
           ) : (
             <div className="flex min-w-0 flex-1 flex-col gap-1">
               <h3
-                className={mergeClasses('dial-h1-text truncate', styles.title)}
+                className={mergeClasses('truncate', titleClassName, styles.title)}
               >
                 {title}
               </h3>
-              <p className="dial-small-text text-start">{headerDescription}</p>
+              <p className={mergeClasses('text-start', descriptionClassName)}>
+                {headerDescription}
+              </p>
             </div>
           )
         }

@@ -40,6 +40,8 @@ export interface ConversationListTypography {
   groupHeaderClassName?: string;
   /** Typography class applied to conversation title text in each row. Defaults to `'dial-small-text'`. */
   itemTitleClassName?: string;
+  /** Typography class applied to the title of an unread conversation. Defaults to `'dial-small-semi-text'`. */
+  unreadItemTitleClassName?: string;
 }
 
 /** Style overrides for `ConversationList`. */

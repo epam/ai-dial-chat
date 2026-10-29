@@ -340,6 +340,10 @@ export interface SkillEditorTypography {
   uploadMessageClassName?: string;
   /** Typography and color classes merged over a staged upload row's size and notes, which render `'dial-tiny-text text-secondary'` when unset. */
   uploadRowCaptionClassName?: string;
+  /** Typography class applied to the file-drop overlay title. Defaults to `'dial-h3-text'`. */
+  dropOverlayTitleClassName?: string;
+  /** Typography class applied to the file-drop overlay subtitle. Defaults to `'dial-small-text'`. */
+  dropOverlaySubtitleClassName?: string;
 }
 
 /** Grouped style overrides for `SkillEditor`. */

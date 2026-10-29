@@ -79,14 +79,19 @@ const LIMIT_STATUS_CLASSES: Record<CatalogLimitStatus, string> = {
 interface LimitStatusBadgeProps {
   status: CatalogLimitStatus;
   label: string;
+  className: string;
 }
 
 /** Small status pill matching `FeaturedChip`'s shape, shown in the same header corner. */
-const LimitStatusBadge: FC<LimitStatusBadgeProps> = ({ status, label }) => (
+const LimitStatusBadge: FC<LimitStatusBadgeProps> = ({
+  status,
+  label,
+  className,
+}) => (
   <div
     className={mergeClasses(
       'flex h-[24px] items-center justify-center gap-1 rounded-2xl px-2 whitespace-nowrap',
-      'dial-caption-lead-semi-text',
+      className,
       LIMIT_STATUS_CLASSES[status],
     )}
   >
@@ -300,6 +305,7 @@ export const Header: FC<HeaderProps> = ({
     nameClassName = 'dial-body-semi-text',
     folderLabelClassName = 'dial-tiny-text',
     folderLeafClassName = 'dial-tiny-semi-text',
+    limitStatusBadgeClassName = 'dial-caption-lead-semi-text',
   } = detailsStyles?.typography ?? {};
 
   const limitStatus = item.details?.limits?.status;
@@ -307,6 +313,7 @@ export const Header: FC<HeaderProps> = ({
     limitStatus != null ? (
       <LimitStatusBadge
         status={limitStatus}
+        className={limitStatusBadgeClassName}
         label={
           limitStatus === CatalogLimitStatus.LimitReached
             ? (texts?.limitReachedLabel ?? 'Limit reached')
@@ -960,6 +967,7 @@ export const Header: FC<HeaderProps> = ({
             onClose={() => setIsApiKeyOverlayOpen(false)}
             texts={texts}
             colors={detailsStyles?.colors}
+            typography={detailsStyles?.typography}
           />
         )}
       >

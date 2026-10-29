@@ -27,6 +27,8 @@ interface Props {
   modelSelectorLabels?: ModelSelectorLabels;
   /** Host styling hooks for the menu panel, search row and deployment rows. */
   menuStyles?: ModelMenuStyles;
+  nameClassName?: string;
+  versionClassName?: string;
   isStreaming: boolean;
   isMobile: boolean;
   /**
@@ -53,6 +55,8 @@ export const ModelSelectorControl: FC<Props> = ({
   onDeploymentChange,
   modelSelectorLabels,
   menuStyles,
+  nameClassName = 'dial-small-text',
+  versionClassName = 'dial-tiny-text',
   isStreaming,
   isMobile,
   isDisabled = false,
@@ -234,7 +238,8 @@ export const ModelSelectorControl: FC<Props> = ({
             <span className="flex max-w-[180px] min-w-0 items-baseline gap-1">
               <span
                 className={mergeClasses(
-                  'dial-small-text max-w-[180px] shrink-0 truncate',
+                  'max-w-[180px] shrink-0 truncate',
+                  nameClassName,
                   styles.modelSelectorName,
                 )}
               >
@@ -243,7 +248,8 @@ export const ModelSelectorControl: FC<Props> = ({
               {selectedVersion && (
                 <span
                   className={mergeClasses(
-                    'dial-tiny-text min-w-0 truncate',
+                    'min-w-0 truncate',
+                    versionClassName,
                     styles.modelSelectorVersion,
                   )}
                 >

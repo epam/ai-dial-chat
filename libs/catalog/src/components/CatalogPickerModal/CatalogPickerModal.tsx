@@ -104,6 +104,8 @@ interface CatalogPickerModalBaseProps {
   footerStart?: ReactNode;
   /** Color overrides, applied as CSS custom properties. */
   colors?: CatalogPickerModalColors;
+  /** Typography class of the heading above the list. Defaults to `'dial-body-semi-text'`. */
+  headingClassName?: string;
   /** Called when the user confirms. */
   onConfirm: () => void;
   /** Called when the user cancels or closes the dialog. */
@@ -161,6 +163,7 @@ export const CatalogPickerModal: FC<CatalogPickerModalProps> = ({
   isConfirmDisabled = false,
   footerStart,
   colors,
+  headingClassName = 'dial-body-semi-text',
   onConfirm,
   onClose,
   listProps,
@@ -343,7 +346,7 @@ export const CatalogPickerModal: FC<CatalogPickerModalProps> = ({
           <ItemHeader
             title={labels.catalog}
             postfix={isReady ? rows.length : undefined}
-            titleClassName="dial-body-semi-text"
+            titleClassName={headingClassName}
             shouldTruncateTitle={false}
           />
           <div className="ms-auto shrink-0">

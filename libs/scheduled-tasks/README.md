@@ -217,9 +217,10 @@ import {
 When the host omits `renderInstructions`, `instructionsMarkdown` is rendered by
 the built-in `MDMessageViewer` from `@epam/ai-dial-chat-shared` at the
 summary's small 14/20 scale (paragraphs and lists at `dial-small-text`,
-headings at `dial-small-semi-text`) — pass `instructionsClassNames` (a
-`MarkdownRendererClassNames` map, replacing the default wholesale) to change
-it. Name the viewer's controls through the optional
+headings at `dial-small-semi-text`). Change the type step through
+`styles.typography.instructionsTextClassName` /
+`instructionsHeadingClassName`, or pass `instructionsClassNames` (a
+`MarkdownRendererClassNames` map merged key by key over the defaults). Name the viewer's controls through the optional
 `labels.codeBlockCopyLabel`, `labels.codeBlockCopiedLabel`,
 `labels.codeBlockDownloadLabel`, `labels.tableScrollRegionAriaLabel` and
 `labels.mathScrollRegionAriaLabel` (the `ScheduledTaskInstructionsMarkdownLabels`

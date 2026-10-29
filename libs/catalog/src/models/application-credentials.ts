@@ -54,6 +54,22 @@ export interface ApplicationCredentialsTexts extends ItemDetailsTexts {
   offlineUsageConsentHint?: string;
 }
 
+/** Typography class overrides for `ApplicationCredentials`. */
+export interface ApplicationCredentialsTypography {
+  /** Typography class of the section heading. Default: `'dial-h3-text'`. */
+  titleClassName?: string;
+  /** Typography class of each service name. Default: `'dial-small-semi-text'`. */
+  rowLabelClassName?: string;
+  /** Typography class of each service description and hint. Default: `'dial-small-text'`. */
+  rowDescriptionClassName?: string;
+  /** Typography class of the empty-API-key validation message. Default: `'dial-caption-text'`. */
+  errorClassName?: string;
+  /** Typography class of the configured-API-key card's title. Default: `'dial-tiny-semi-text'`. */
+  keyCardTitleClassName?: string;
+  /** Typography class of the configured-API-key card's description. Default: `'dial-tiny-text'`. */
+  keyCardDescriptionClassName?: string;
+}
+
 /** Props for the reusable application credentials forms. */
 export interface ApplicationCredentialsProps {
   /** Host-resolved service presentations in display order. */
@@ -75,4 +91,6 @@ export interface ApplicationCredentialsProps {
   onLogout: (serviceId: string) => Promise<void>;
   /** Text overrides; omitted values use English defaults. */
   texts?: ApplicationCredentialsTexts;
+  /** Typography class overrides. */
+  typography?: ApplicationCredentialsTypography;
 }

@@ -15,6 +15,10 @@ export interface SkillFileDropOverlayProps {
   isVisible: boolean;
   /** Text overrides. */
   labels?: Pick<SkillEditorLabels, 'dropOverlayTitle' | 'dropOverlaySubtitle'>;
+  /** Typography class of the title. Defaults to `'dial-h3-text'`. */
+  titleClassName?: string;
+  /** Typography class of the subtitle. Defaults to `'dial-small-text'`. */
+  subtitleClassName?: string;
 }
 
 /**
@@ -25,6 +29,8 @@ export interface SkillFileDropOverlayProps {
 export const SkillFileDropOverlay: FC<SkillFileDropOverlayProps> = ({
   isVisible,
   labels,
+  titleClassName = 'dial-h3-text',
+  subtitleClassName = 'dial-small-text',
 }) => {
   const t = labels ?? {};
   const title = t.dropOverlayTitle ?? 'Upload files';
@@ -57,8 +63,10 @@ export const SkillFileDropOverlay: FC<SkillFileDropOverlayProps> = ({
             aria-hidden
             stroke={DIAL_KIT_ICON_STROKE}
           />
-          <span className="dial-h3-text mt-5">{title}</span>
-          <span className="dial-small-text mt-4">{subtitle}</span>
+          <span className={mergeClasses('mt-5', titleClassName)}>{title}</span>
+          <span className={mergeClasses('mt-4', subtitleClassName)}>
+            {subtitle}
+          </span>
         </div>
       </div>
     </>

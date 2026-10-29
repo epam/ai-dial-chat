@@ -189,7 +189,7 @@ shown in full as plain text without loading or invoking the syntax highlighter.
 The limits use the shared `isSyntaxHighlightingAllowed` guard from
 `@epam/ai-dial-chat-shared` and apply to every highlighting language.
 
-Standalone syntax-highlighted code view used by the canvas for `CodeCanvasContent`. Exported for hosts that need the same rendering outside the panel. `labels` customizes the loading/error/retry strings shown while the syntax-highlighter engine's dynamic import is pending or fails — see [Styling](#styling) above.
+Standalone syntax-highlighted code view used by the canvas for `CodeCanvasContent`. Exported for hosts that need the same rendering outside the panel. `labels` customizes the loading/error/retry strings shown while the syntax-highlighter engine's dynamic import is pending or fails — see [Styling](#styling) above. `codeClassName` (default `'dial-code-text'`) and `errorLabelClassName` (default `'dial-body-text'`) set the code and error-message type.
 
 ```tsx
 import {
@@ -706,7 +706,10 @@ does not replace that label for assistive technology. Its typography defaults
 to the UI Kit's `dial-italic-text` and can be overridden through
 `styles.typography.xlsxFormulaLabelClassName`. The active cell content beside
 it defaults to `dial-code-text` and can be overridden through
-`styles.typography.xlsxFormulaValueClassName`.
+`styles.typography.xlsxFormulaValueClassName`. Source code takes
+`codeClassName` (`dial-code-text`), a collapsed JSON node
+`jsonCollapsedClassName` (`dial-caption-text`), and the code/PDF load-error
+message `errorMessageClassName` (`dial-body-text`).
 
 `McpAppDisplayMode` is the display-mode union of the MCP UI protocol
 (`'inline'` | `'fullscreen'` | `'pip'`) — the accepted values for

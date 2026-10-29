@@ -967,6 +967,8 @@ export const SkillEditor: FC<SkillEditorProps> = ({
       <SkillFileDropOverlay
         isVisible={isSurfaceDragActive && !isUploadDialogOpen}
         labels={labels}
+        titleClassName={typography.dropOverlayTitleClassName}
+        subtitleClassName={typography.dropOverlaySubtitleClassName}
       />
 
       <EntityEditor
