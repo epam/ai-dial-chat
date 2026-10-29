@@ -108,7 +108,8 @@ interface PreparationDeadline {
    * Starts `operation` and awaits it unless the deadline elapses first, in
    * which case the preparation is abandoned and
    * `GenerationPreparationInterruptedException` is thrown. Also throws it when
-   * shutdown released the entry while the step ran, so nothing further runs.
+   * the step resolved after shutdown released the entry, so nothing further
+   * runs. A step that rejects rethrows its own error.
    */
   run<T>(
     step: GenerationPreparationStep,
@@ -236,8 +237,12 @@ export class ConversationStreamingService {
         try {
           result = await Promise.race([pending, expired]);
         } catch (err) {
+          /*
+           * A rejected step keeps its own error even when shutdown released
+           * the entry meanwhile; callers that continue after a rejection
+           * check ownership themselves.
+           */
           end();
-          assertStillOwned();
           throw err;
         }
         if (result === PREPARATION_EXPIRED) return abandon(step, pending);
@@ -775,18 +780,27 @@ export class ConversationStreamingService {
           `stream a completion for "${conversationPath}"`,
         ),
       );
-      ({ generationApi, isBackground, temperatureSupported, reasoningEfforts } =
-        await preparation.run(
+      try {
+        ({
+          generationApi,
+          isBackground,
+          temperatureSupported,
+          reasoningEfforts,
+        } = await preparation.run(
           GenerationPreparationStep.CapabilityResolution,
           () => this.resolveGenerationApiForDeployment(sub, model, token),
         ));
+      } catch (err) {
+        /* Counted here only, so a hidden-model failure is not a resolution failure. */
+        generationCapabilityResolutionTotal.add(1, { outcome: 'failed' });
+        throw err;
+      }
       generationCapabilityResolutionTotal.add(1, {
         outcome: 'resolved',
         'generation.api': generationApi,
       });
     } catch (err) {
       preparation.end();
-      generationCapabilityResolutionTotal.add(1, { outcome: 'failed' });
       if (!(err instanceof GenerationPreparationInterruptedException)) {
         this.generationService.error(
           lease,
@@ -894,6 +908,8 @@ export class ConversationStreamingService {
     } catch (err) {
       /* Abandoned, not failed: the write may still land, so nothing else may run. */
       if (err instanceof GenerationPreparationInterruptedException) throw err;
+      /* Shutdown released the entry while the save ran: stop rather than stream. */
+      if (!this.generationService.getCancellation(lease)) throw err;
       this.logger.warn(
         'Failed to save start-state conversation, continuing stream',
         err,

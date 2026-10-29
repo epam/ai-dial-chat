@@ -1,4 +1,5 @@
 import {
+  BadGatewayException,
   ConflictException,
   ForbiddenException,
   Logger,
@@ -3459,6 +3460,50 @@ describe('ConversationStreamingService', () => {
         expect(sendSpy).not.toHaveBeenCalled();
         expect(res.flushHeaders).not.toHaveBeenCalled();
       });
+
+      it('rethrows the step error when the conversation read rejects after shutdown releases the entry', async () => {
+        const read = deferConversationRead();
+        const saveSpy = mockSaves();
+        const sendSpy = mockCompletedRelay();
+        const res = makeMockRes();
+
+        const run = startPreparingStream(res);
+        await vi.waitFor(() =>
+          expect(mockDialClient.client.getConversation).toHaveBeenCalled(),
+        );
+        realGenerationService.onModuleDestroy();
+        read.reject({ error: { status: 400 } });
+
+        await expect(run).rejects.toBeInstanceOf(BadGatewayException);
+        expect(saveSpy).not.toHaveBeenCalled();
+        expect(sendSpy).not.toHaveBeenCalled();
+        expect(res.flushHeaders).not.toHaveBeenCalled();
+      });
+
+      it('makes no upstream request when the start-state save rejects after shutdown releases the entry', async () => {
+        vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
+          data: TEST_CONVERSATION,
+        } as never);
+        const save = createDeferred<unknown>();
+        const saveSpy = vi
+          .spyOn(mockDialClient.client, 'saveConversation')
+          .mockResolvedValue({ data: {} } as never)
+          .mockImplementationOnce(() => save.promise as never);
+        const sendSpy = mockCompletedRelay();
+        const res = makeMockRes();
+
+        const run = startPreparingStream(res);
+        await vi.waitFor(() => expect(saveSpy).toHaveBeenCalled());
+        realGenerationService.onModuleDestroy();
+        save.reject(new Error('Core down'));
+
+        await expect(run).rejects.not.toBeInstanceOf(
+          ServiceUnavailableException,
+        );
+        expect(saveSpy).toHaveBeenCalledOnce();
+        expect(sendSpy).not.toHaveBeenCalled();
+        expect(res.flushHeaders).not.toHaveBeenCalled();
+      });
     });
 
     describe('bounded preparation', () => {
@@ -3659,7 +3704,8 @@ describe('ConversationStreamingService', () => {
         expect(addEventListener).not.toHaveBeenCalled();
       });
 
-      it('abandons a stalled hidden-model check before the deployment is resolved', async () => {
+      it('abandons a stalled hidden-model check before the deployment is resolved, without counting a capability resolution', async () => {
+        const addSpy = vi.spyOn(generationCapabilityResolutionTotal, 'add');
         vi.mocked(mockDeploymentsService.resolveDeploymentItem).mockReturnValue(
           new Promise(() => undefined),
         );
@@ -3670,6 +3716,7 @@ describe('ConversationStreamingService', () => {
         await vi.advanceTimersByTimeAsync(PREPARATION_TIMEOUT_MS);
 
         expect(await outcome).toBeInstanceOf(ServiceUnavailableException);
+        expect(addSpy).not.toHaveBeenCalled();
         expect(
           mockDeploymentsService.getDeploymentDetails,
         ).not.toHaveBeenCalled();
