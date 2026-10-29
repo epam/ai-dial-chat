@@ -5,7 +5,7 @@ import type {
 } from '@epam/ai-dial-chat-shared';
 import type { SidebarPanelStyles } from '@epam/ai-dial-sidebar';
 import type { InputHighlightData } from '@epam/pdf-highlighter-kit';
-import type { McpUiHostContext } from '@mcp-ui/client';
+import type { McpUiHostContext } from '@modelcontextprotocol/ext-apps/app-bridge';
 import type {
   CallToolResult,
   Implementation,

@@ -19,8 +19,9 @@ panel lib's `ConversationItem` type. The hook SHALL NOT import `react-i18next`, 
 Context, an app routing module, or any UI-kit/icon component — every app-specific resolution (icon URL, localized
 tooltip text, route construction, task-row presentation including the rendered icon node) SHALL be supplied through
 the resolver parameters. When `resolveTaskPresentation` returns a value, the hook SHALL copy `leadingIcon` and
-`isUnread` onto the resulting `ConversationItem` unchanged; when it returns `undefined` or is omitted, both fields
-SHALL be absent. The hook maps exactly the `items` it is given — it does not group, collapse, or filter scheduled-task
+`isUnread` onto the resulting `ConversationItem` unchanged. When it returns `undefined` or is omitted, `leadingIcon` SHALL be
+absent and `isUnread` SHALL be `true` exactly when the DTO's own `isUnread` is `true` (otherwise absent); such an item stays an
+ordinary chat row, never a task row. The hook maps exactly the `items` it is given — it does not group, collapse, or filter scheduled-task
 runs (that display rule belongs to the host; see `scheduled-task-conversation-grouping`).
 
 #### Scenario: Mapping produces one panel item per conversation
@@ -42,6 +43,11 @@ runs (that display rule belongs to the host; see `scheduled-task-conversation-gr
 - **GIVEN** `resolveTaskPresentation` returns `{ leadingIcon: <span data-testid="task-icon" />, isUnread: true }` for one item
 - **WHEN** the hook maps that item
 - **THEN** the resulting `ConversationItem` has that same `leadingIcon` node and `isUnread: true`, and no `showTaskBadge`/`taskBadgeLabel` property
+
+#### Scenario: A regular unread chat carries the flag without becoming a task row
+- **GIVEN** an item with `isUnread: true` and `isScheduledTask` not set, and no `resolveTaskPresentation`
+- **WHEN** the hook maps it
+- **THEN** the resulting `ConversationItem` has `isUnread: true`, no `leadingIcon`, and the chat kind
 
 #### Scenario: Several runs of one task are all mapped
 - **GIVEN** `items` contains three runs with the same `scheduleId`
@@ -201,7 +207,7 @@ input.
 
 #### Scenario: Mapping hook works with no scheduled-task capability
 - **WHEN** `resolveTaskPresentation` is omitted from `useConversationPanelItems`'s params
-- **THEN** every returned `ConversationItem` has `leadingIcon`/`isUnread` both `undefined`, with no error thrown
+- **THEN** every returned `ConversationItem` has `leadingIcon` `undefined`, and `isUnread` `undefined` unless its own DTO reports `isUnread: true`, with no error thrown
 
 ### Requirement: `useConversationPanelItems` keeps item identity for unchanged DTOs and resolves deployments in constant time
 

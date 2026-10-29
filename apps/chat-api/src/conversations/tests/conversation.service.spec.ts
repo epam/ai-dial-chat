@@ -42,12 +42,18 @@ describe('ConversationService facade', () => {
     const conversationNamingService = {
       generateTitle: vi.fn().mockResolvedValue('naming-generate-title'),
     };
-    const scheduledTaskUnreadService = {
+    const conversationReadStateService = {
       markViewed: vi.fn().mockResolvedValue(undefined),
+      markUnviewed: vi.fn().mockResolvedValue(undefined),
     };
 
     const publishedFolderAttachments = {
       resolve: vi.fn(async (conversation: unknown) => conversation),
+    };
+
+    const titleStreamService = {
+      admit: vi.fn().mockReturnValue('title-stream-admission'),
+      streamTitles: vi.fn().mockResolvedValue(undefined),
     };
 
     const service = new ConversationService(
@@ -56,8 +62,9 @@ describe('ConversationService facade', () => {
       lifecycleService as never,
       streamingService as never,
       conversationNamingService as never,
-      scheduledTaskUnreadService as never,
+      conversationReadStateService as never,
       publishedFolderAttachments as never,
+      titleStreamService as never,
     );
 
     return {
@@ -68,9 +75,25 @@ describe('ConversationService facade', () => {
       lifecycleService,
       streamingService,
       conversationNamingService,
-      scheduledTaskUnreadService,
+      conversationReadStateService,
+      titleStreamService,
     };
   };
+
+  it('delegates title stream admission and streaming to ConversationTitleStreamService', async () => {
+    const { service, titleStreamService } = makeService();
+    const res = {} as never;
+
+    const admission = service.admitConversationTitleStream(['id']);
+    await service.streamConversationTitles(admission as never, 'token', res);
+
+    expect(titleStreamService.admit).toHaveBeenCalledWith(['id']);
+    expect(titleStreamService.streamTitles).toHaveBeenCalledWith(
+      'title-stream-admission',
+      'token',
+      res,
+    );
+  });
 
   it('reads getConversation from ConversationPersistenceService', async () => {
     const { service, persistenceService } = makeService();
@@ -329,8 +352,8 @@ describe('ConversationService facade', () => {
     expect(result).toBe('naming-generate-title');
   });
 
-  it('delegates markConversationViewed to ScheduledTaskUnreadService with the conversation resource URL', async () => {
-    const { service, scheduledTaskUnreadService } = makeService();
+  it('delegates markConversationViewed to ConversationReadStateService with the conversation resource URL', async () => {
+    const { service, conversationReadStateService } = makeService();
 
     await service.markConversationViewed(
       'gpt-4o__Chat',
@@ -338,7 +361,23 @@ describe('ConversationService facade', () => {
       'test-bucket',
     );
 
-    expect(scheduledTaskUnreadService.markViewed).toHaveBeenCalledWith(
+    expect(conversationReadStateService.markViewed).toHaveBeenCalledWith(
+      'conversations/test-bucket/gpt-4o__Chat',
+      'token',
+      'test-bucket',
+    );
+  });
+
+  it('delegates markConversationUnviewed to ConversationReadStateService with the conversation resource URL', async () => {
+    const { service, conversationReadStateService } = makeService();
+
+    await service.markConversationUnviewed(
+      'gpt-4o__Chat',
+      'token',
+      'test-bucket',
+    );
+
+    expect(conversationReadStateService.markUnviewed).toHaveBeenCalledWith(
       'conversations/test-bucket/gpt-4o__Chat',
       'token',
       'test-bucket',

@@ -1,5 +1,6 @@
 import type { ConversationMessageDto } from '../dto/conversation-message.dto';
 import type { StageDto } from '../dto/stage.dto';
+import type { GenerationApi } from './generation-api';
 
 /**
  * One item of the Responses API `input` array — a flattened role/text pair
@@ -178,6 +179,33 @@ export interface NormalizedStreamChunk {
       custom_content?: { stages?: StageDto[] };
     };
   }>;
+}
+
+/** Generation API and request capabilities resolved for one completion by `GenerationApiSelector.select`. */
+export interface GenerationApiSelection {
+  /** Upstream API the completion is sent to. */
+  generationApi: GenerationApi;
+  /** Whether the completion runs as a DIAL Core background Responses job. */
+  isBackground: boolean;
+  /** Whether the deployment explicitly supports the `temperature` parameter. */
+  temperatureSupported: boolean;
+  /** Reasoning-effort values the deployment reports, if any. */
+  reasoningEfforts?: string[];
+}
+
+/** Chat Completions request body built by `ChatCompletionsAdapter.buildRequest`; always `stream: true`. */
+export interface ChatCompletionsRequestBody {
+  /** Optional system prompt followed by the conversation messages, `status` messages dropped. */
+  messages: {
+    role: string;
+    content?: string;
+    custom_content?: Record<string, unknown>;
+  }[];
+  stream: true;
+  /** Sent only when the resolved deployment supports `temperature` and the conversation sets one. */
+  temperature?: number;
+  /** DIAL app `configuration_value` passthrough. */
+  custom_fields?: { configuration: Record<string, unknown> };
 }
 
 /**

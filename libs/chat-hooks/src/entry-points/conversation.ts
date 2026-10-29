@@ -51,3 +51,6 @@ export { isAwaitingGenerationResume } from '../conversation/useConversationStrea
 export * from '../conversation/useConversationStream/useConversationStream';
 export * from '../useChatSettingsFormConfig/useChatSettingsFormConfig';
 export * from '../useToolsMenu/useToolsMenu';
+export * from '../conversation/scheduled-task-grouping';
+export * from '../conversation/useConversationDiscovery/useConversationDiscovery';
+export * from '../conversation/useEntityPreselection/useEntityPreselection';

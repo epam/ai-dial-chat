@@ -65,6 +65,7 @@ describe('conversation persistence title cache', () => {
       {} as never,
       {} as never,
       cache,
+      { getReadBefore: vi.fn().mockResolvedValue(null) } as never,
     );
   });
 

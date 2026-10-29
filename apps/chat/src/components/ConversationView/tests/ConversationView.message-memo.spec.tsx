@@ -1,3 +1,4 @@
+import { AttachmentCanvasProvider } from '@epam/ai-dial-attachment-canvas';
 import {
   MessageRole,
   type Conversation,
@@ -190,6 +191,7 @@ describe('ConversationView — message item memoisation', () => {
         {...props}
         messages={[question, earlier, followUp, streaming]}
       />,
+      { wrapper: AttachmentCanvasProvider },
     );
     mocks.renderCountByIndex.clear();
 
@@ -222,6 +224,7 @@ describe('ConversationView — attachment clicks', () => {
           message(MessageRole.User, 'second'),
         ]}
       />,
+      { wrapper: AttachmentCanvasProvider },
     );
 
     mocks.attachmentClickByIndex.get(0)?.(attachment('a'), 0);

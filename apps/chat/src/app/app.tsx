@@ -287,6 +287,7 @@ const App: FC = () => {
       onRequestedFilterChange={handlePanelRequestedFilterChange}
       onActiveFilterChange={handlePanelActiveFilterChange}
       onDuplicateReadonly={handleDuplicateReadonly}
+      isVisible={isMobile ? isNavOpen : isPanelOpen}
     />
   );
 

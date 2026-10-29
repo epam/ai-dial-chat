@@ -101,6 +101,34 @@ const seedConversations = [
   },
 ];
 
+/* Mocks one title stream whose per-ID titles the test releases later. IDs
+   without a released title get an `unavailable` outcome. */
+const deferTitleStream = () => {
+  let release!: (titles: Record<string, string>) => void;
+  const titles = new Promise<Record<string, string>>((resolve) => {
+    release = resolve;
+  });
+  vi.mocked(conversationsApi.streamConversationTitles).mockImplementationOnce(
+    async (ids: string[]) => ({
+      async *[Symbol.asyncIterator]() {
+        const resolved = await titles;
+        for (const id of ids) {
+          yield id in resolved
+            ? { type: 'title' as const, id, title: resolved[id] }
+            : { type: 'unavailable' as const, id };
+        }
+        yield {
+          type: 'done' as const,
+          reason: 'complete' as const,
+          processed: ids.length,
+          total: ids.length,
+        };
+      },
+    }),
+  );
+  return release;
+};
+
 beforeEach(() => {
   vi.clearAllMocks();
   contextMocks.userSub = 'user-1';
@@ -164,17 +192,7 @@ describe('ConversationsContext — identity-keyed refetch', () => {
 
 describe('ConversationsContext — background refresh', () => {
   it('finishes initial loading before title enrichment and preserves a manual rename against its late response', async () => {
-    let resolveTitles!: (
-      value: Awaited<ReturnType<typeof conversationsApi.getConversationTitles>>,
-    ) => void;
-    const titleResponse = new Promise<
-      Awaited<ReturnType<typeof conversationsApi.getConversationTitles>>
-    >((resolve) => {
-      resolveTitles = resolve;
-    });
-    vi.mocked(conversationsApi.getConversationTitles).mockReturnValueOnce(
-      titleResponse,
-    );
+    const resolveTitles = deferTitleStream();
     mockListConversations.mockResolvedValueOnce({
       items: seedConversations.map((item) => ({
         ...item,
@@ -195,27 +213,15 @@ describe('ConversationsContext — background refresh', () => {
       result.current.renameConversation('conv1', 'Manual title'),
     );
     await act(async () =>
-      resolveTitles({
-        items: [
-          { id: 'conv1', title: 'Stale title' },
-          { id: 'conv2', title: 'Updated second title' },
-        ],
-      }),
+      resolveTitles({ conv1: 'Stale title', conv2: 'Updated second title' }),
     );
+    await waitFor(() => expect(result.current.isUpdatingTitles).toBe(false));
     expect(result.current.conversations[0].title).toBe('Manual title');
     expect(result.current.conversations[1].title).toBe('Updated second title');
-    expect(result.current.isUpdatingTitles).toBe(false);
   });
 
   it('keeps an opened title authoritative when a pending title request returns later', async () => {
-    let resolveTitles!: (
-      value: Awaited<ReturnType<typeof conversationsApi.getConversationTitles>>,
-    ) => void;
-    vi.mocked(conversationsApi.getConversationTitles).mockReturnValueOnce(
-      new Promise((resolve) => {
-        resolveTitles = resolve;
-      }),
-    );
+    const resolveTitles = deferTitleStream();
     mockListConversations.mockResolvedValueOnce({
       items: [{ ...seedConversations[0], isTitlePending: true }],
     });
@@ -229,9 +235,8 @@ describe('ConversationsContext — background refresh', () => {
         'Title from opened conversation',
       ),
     );
-    await act(async () =>
-      resolveTitles({ items: [{ id: 'conv1', title: 'Older body' }] }),
-    );
+    await act(async () => resolveTitles({ conv1: 'Older body' }));
+    await waitFor(() => expect(result.current.isUpdatingTitles).toBe(false));
     expect(result.current.conversations[0].title).toBe(
       'Title from opened conversation',
     );
@@ -638,14 +643,7 @@ describe('ConversationsContext — deleteConversation', () => {
   });
 
   it('restores only a failed deletion while preserving other background title and pin updates', async () => {
-    let resolveTitles!: (
-      value: Awaited<ReturnType<typeof conversationsApi.getConversationTitles>>,
-    ) => void;
-    vi.mocked(conversationsApi.getConversationTitles).mockReturnValueOnce(
-      new Promise((resolve) => {
-        resolveTitles = resolve;
-      }),
-    );
+    const resolveTitles = deferTitleStream();
     mockListConversations.mockResolvedValueOnce({
       items: seedConversations.map((item) => ({
         ...item,
@@ -669,11 +667,8 @@ describe('ConversationsContext — deleteConversation', () => {
         .catch((error: unknown) => error);
     });
     await act(async () => result.current.pinConversation('conv2', true));
-    await act(async () =>
-      resolveTitles({
-        items: [{ id: 'conv2', title: 'Current second title' }],
-      }),
-    );
+    await act(async () => resolveTitles({ conv2: 'Current second title' }));
+    await waitFor(() => expect(result.current.isUpdatingTitles).toBe(false));
     const failure = new Error('Delete failed');
     await act(async () => {
       rejectDelete(failure);
@@ -1693,5 +1688,158 @@ describe('ConversationsContext — overlay mode', () => {
       ([message]) => (message as { type?: string }).type,
     );
     expect(eventTypes).toContain(OverlayEventType.ConversationsUpdated);
+  });
+});
+
+describe('ConversationsContext — regular chat read state', () => {
+  const unreadChat = { ...seedConversations[0], isUnread: true };
+
+  const renderLoaded = async (items: unknown[]) => {
+    mockListConversations.mockResolvedValue({ items } as never);
+    const utils = renderHook(() => useConversations(), {
+      wrapper: ConversationsProvider,
+    });
+    await waitFor(() => expect(utils.result.current.isLoading).toBe(false));
+    return utils;
+  };
+
+  beforeEach(() => {
+    mockMarkConversationViewed.mockReset();
+    mockMarkConversationViewed.mockResolvedValue(undefined);
+  });
+
+  it('marks an unread regular chat viewed once and clears its flag', async () => {
+    const { result } = await renderLoaded([unreadChat]);
+
+    await act(async () => result.current.markConversationViewed('conv1'));
+
+    expect(result.current.conversations[0].isUnread).toBe(false);
+    expect(mockMarkConversationViewed).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not call the API for a regular chat that is already read', async () => {
+    const { result } = await renderLoaded([seedConversations[0]]);
+
+    await act(async () => result.current.markConversationViewed('conv1'));
+
+    expect(mockMarkConversationViewed).not.toHaveBeenCalled();
+  });
+
+  it('shows a regular chat as unread again when a later list reports a new answer', async () => {
+    const { result } = await renderLoaded([unreadChat]);
+    await act(async () => result.current.markConversationViewed('conv1'));
+
+    mockListConversations.mockResolvedValue({ items: [unreadChat] } as never);
+    await act(async () => result.current.refreshConversations());
+    expect(result.current.conversations[0].isUnread).toBe(true);
+
+    await act(async () => result.current.markConversationViewed('conv1'));
+    expect(mockMarkConversationViewed).toHaveBeenCalledTimes(2);
+    expect(result.current.conversations[0].isUnread).toBe(false);
+  });
+
+  it('keeps a regular chat read locally when the viewed write fails and retries on the next unread list', async () => {
+    mockMarkConversationViewed
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce(undefined);
+    const { result } = await renderLoaded([unreadChat]);
+
+    await act(async () => result.current.markConversationViewed('conv1'));
+    expect(result.current.conversations[0].isUnread).toBe(false);
+    expect(mockMarkConversationViewed).toHaveBeenCalledTimes(1);
+
+    await act(async () => result.current.refreshConversations());
+    await act(async () => result.current.markConversationViewed('conv1'));
+    expect(mockMarkConversationViewed).toHaveBeenCalledTimes(2);
+  });
+
+  it('drops a queued viewed write once a generation starts in that chat', async () => {
+    const chatA = { ...seedConversations[0], id: 'chatA', isUnread: true };
+    const chatB = { ...seedConversations[0], id: 'chatB', isUnread: true };
+    let finishA!: () => void;
+    mockMarkConversationViewed.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        finishA = resolve;
+      }),
+    );
+    const { result } = await renderLoaded([chatA, chatB]);
+
+    let viewingA!: Promise<void>;
+    let viewingB!: Promise<void>;
+    act(() => {
+      viewingA = result.current.markConversationViewed('chatA');
+      viewingB = result.current.markConversationViewed('chatB');
+    });
+    /* B's write is queued behind A's slow one; the user now sends a message in B. */
+    act(() => result.current.markConversationUnread('chatB'));
+    await act(async () => {
+      finishA();
+      await Promise.all([viewingA, viewingB]);
+    });
+
+    expect(mockMarkConversationViewed).toHaveBeenCalledTimes(1);
+    expect(result.current.conversations.map((c) => c.isUnread)).toEqual([
+      false,
+      true,
+    ]);
+  });
+
+  it('still sends a queued viewed write of a chat that did not start a generation', async () => {
+    const chatA = { ...seedConversations[0], id: 'chatA', isUnread: true };
+    const chatB = { ...seedConversations[0], id: 'chatB', isUnread: true };
+    const chatC = { ...seedConversations[0], id: 'chatC', isUnread: false };
+    let finishA!: () => void;
+    mockMarkConversationViewed.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        finishA = resolve;
+      }),
+    );
+    const { result } = await renderLoaded([chatA, chatB, chatC]);
+
+    let viewingA!: Promise<void>;
+    let viewingB!: Promise<void>;
+    act(() => {
+      viewingA = result.current.markConversationViewed('chatA');
+      viewingB = result.current.markConversationViewed('chatB');
+    });
+    act(() => result.current.markConversationUnread('chatC'));
+    await act(async () => {
+      finishA();
+      await Promise.all([viewingA, viewingB]);
+    });
+
+    expect(mockMarkConversationViewed).toHaveBeenCalledTimes(2);
+  });
+
+  it('marks a regular chat unread locally without calling the API', async () => {
+    const { result } = await renderLoaded([seedConversations[0]]);
+
+    act(() => result.current.markConversationUnread('conv1'));
+
+    expect(result.current.conversations[0].isUnread).toBe(true);
+    expect(mockMarkConversationViewed).not.toHaveBeenCalled();
+  });
+
+  it('keeps the list reference when the chat is already unread or unknown', async () => {
+    const { result } = await renderLoaded([unreadChat]);
+    const before = result.current.conversations;
+
+    act(() => result.current.markConversationUnread('conv1'));
+    act(() => result.current.markConversationUnread('unknown'));
+
+    expect(result.current.conversations).toBe(before);
+  });
+
+  it('leaves a scheduled run alone when marked unread locally', async () => {
+    const run = {
+      ...seedConversations[0],
+      isScheduledTask: true,
+      isUnread: false,
+    };
+    const { result } = await renderLoaded([run]);
+
+    act(() => result.current.markConversationUnread('conv1'));
+
+    expect(result.current.conversations[0].isUnread).toBe(false);
   });
 });

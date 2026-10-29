@@ -22,6 +22,9 @@ describe('ConversationListingService', () => {
     markViewed: ReturnType<typeof vi.fn>;
   };
   let titleCache: ConversationTitleCacheService;
+  let mockConversationReadStateService: {
+    getReadState: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
     mockDialClient = {
@@ -47,12 +50,16 @@ describe('ConversationListingService', () => {
       markViewed: vi.fn().mockResolvedValue(undefined),
     };
     titleCache = new ConversationTitleCacheService();
+    mockConversationReadStateService = {
+      getReadState: vi.fn().mockResolvedValue(null),
+    };
     service = new ConversationListingService(
       mockDialClient,
       mockUserConfigService as never,
       mockScheduledTaskUnreadService as never,
       titleCache,
       new ConversationTitlesService(mockDialClient, titleCache),
+      mockConversationReadStateService as never,
     );
     vi.mocked(handleDialSdkError).mockReset();
     vi.spyOn(mockDialClient.client, 'saveConversation').mockResolvedValue({
@@ -960,6 +967,112 @@ describe('ConversationListingService', () => {
       );
 
       expect(result.items[0].isUnread).toBeUndefined();
+    });
+
+    describe('regular-chat unread (read-before baseline + viewed ids)', () => {
+      const oldChat = 'conversations/test-bucket/gpt-4o__Old__uuid-1';
+      const newChat = 'conversations/test-bucket/gpt-4o__New__uuid-2';
+      const seenChat = 'conversations/test-bucket/gpt-4o__Seen%20chat__uuid-3';
+
+      const listWithState = async (
+        state: { readBefore: number; viewedIds: string[] } | null,
+      ) => {
+        mockMetadata([
+          { url: oldChat, nodeType: 'FILE', updatedAt: 1000 },
+          { url: newChat, nodeType: 'FILE', updatedAt: 3000 },
+          { url: seenChat, nodeType: 'FILE', updatedAt: 3000 },
+        ]);
+        mockConversationReadStateService.getReadState.mockResolvedValue(
+          state && { ...state, viewedIds: new Set(state.viewedIds) },
+        );
+        const result = await service.listConversations(
+          'test-token',
+          'test-bucket',
+        );
+        return new Map(result.items.map((item) => [item.id, item]));
+      };
+
+      it('omits isUnread for a chat last updated at or before the baseline', async () => {
+        const items = await listWithState({ readBefore: 1000, viewedIds: [] });
+
+        expect(items.get(oldChat)?.isUnread).toBeUndefined();
+      });
+
+      it('marks a chat updated after the baseline and not viewed as unread', async () => {
+        const items = await listWithState({ readBefore: 1000, viewedIds: [] });
+
+        expect(items.get(newChat)).toMatchObject({
+          isScheduledTask: false,
+          isUnread: true,
+        });
+      });
+
+      it('omits isUnread for a chat updated after the baseline that was viewed, matching ids URI-decoded', async () => {
+        const items = await listWithState({
+          readBefore: 1000,
+          viewedIds: ['conversations/test-bucket/gpt-4o__Seen chat__uuid-3'],
+        });
+
+        expect(items.get(seenChat)?.isUnread).toBeUndefined();
+        expect(items.get(newChat)?.isUnread).toBe(true);
+      });
+
+      it('flags no regular chat when the read state is unavailable', async () => {
+        const items = await listWithState(null);
+
+        expect([...items.values()].map((item) => item.isUnread)).toEqual([
+          undefined,
+          undefined,
+          undefined,
+        ]);
+      });
+
+      it('requests the read state for the caller bucket once per list', async () => {
+        await listWithState({ readBefore: 1000, viewedIds: [] });
+
+        expect(
+          mockConversationReadStateService.getReadState,
+        ).toHaveBeenCalledExactlyOnceWith('test-token', 'test-bucket');
+      });
+
+      it('never flags published or shared chats, whatever their updatedAt', async () => {
+        const publicId = 'conversations/public/gpt-4o__Pub__uuid-4';
+        mockMetadata(
+          [],
+          [{ url: publicId, nodeType: 'FILE', updatedAt: 9000 }],
+        );
+        mockConversationReadStateService.getReadState.mockResolvedValue({
+          readBefore: 1000,
+          viewedIds: new Set<string>(),
+        });
+
+        const result = await service.listConversations(
+          'test-token',
+          'test-bucket',
+        );
+
+        expect(result.items[0].isUnread).toBeUndefined();
+      });
+
+      it('keeps scheduler runs on the scheduler viewed ids, ignoring the baseline', async () => {
+        const run =
+          'conversations/test-bucket/.scheduler/sched_abc/gpt-4o__Run__c7aeee4c-c01f-41f2-b0db-b8a1a39943f5';
+        mockMetadata([{ url: run, nodeType: 'FILE', updatedAt: 10 }]);
+        mockConversationReadStateService.getReadState.mockResolvedValue({
+          readBefore: 1000,
+          viewedIds: new Set<string>(),
+        });
+
+        const result = await service.listConversations(
+          'test-token',
+          'test-bucket',
+        );
+
+        expect(result.items[0]).toMatchObject({
+          isScheduledTask: true,
+          isUnread: true,
+        });
+      });
     });
 
     it('falls back to isUnread: true for scheduler items when the viewed-ids fetch fails open', async () => {

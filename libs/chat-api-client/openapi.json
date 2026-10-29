@@ -3397,6 +3397,62 @@
         "tags": ["conversations"]
       }
     },
+    "/api/v1/conversations/titles/stream": {
+      "post": {
+        "description": "Opens a finite SSE stream that emits one `data:` JSON event per distinct requested ID as soon as its title read settles — `title`, `unavailable` (missing or forbidden), or `item_error` — then exactly one terminal `done` or `error` event. Each event payload is a `ConversationTitleStreamEventDto`. Reads share the process-wide title cache and read limit with `getConversationTitles`; up to 500 IDs (262144 bytes serialized) are admitted in request order. `done` with `reason: budget` means the 45-second admission window ended; IDs without an outcome may be requested again. A response that ends without a terminal event was interrupted. Conversation messages are never returned.",
+        "operationId": "streamConversationTitles",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StreamConversationTitlesBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SSE stream of ConversationTitleStreamEventDto payloads. Failures after headers are sent are reported by a terminal `error` event, never by the HTTP status.",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                },
+                "examples": {
+                  "complete": {
+                    "summary": "A later ID resolves first; the stream completes",
+                    "value": ": init\n\ndata: {\"type\":\"title\",\"id\":\"conversations/default-bucket/gpt-4o__Second\",\"title\":\"Second renamed title\"}\n\ndata: {\"type\":\"title\",\"id\":\"conversations/default-bucket/gpt-4o__First\",\"title\":\"First renamed title\"}\n\ndata: {\"type\":\"done\",\"reason\":\"complete\",\"processed\":2,\"total\":2}\n\n"
+                  },
+                  "fatal": {
+                    "summary": "DIAL Core becomes unavailable after an item outcome",
+                    "value": ": init\n\ndata: {\"type\":\"unavailable\",\"id\":\"conversations/default-bucket/gpt-4o__First\"}\n\ndata: {\"type\":\"error\",\"status\":503,\"code\":\"unavailable\"}\n\n"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid IDs or count; expected 1–500 full conversation resource URLs"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Invalid CSRF token"
+          },
+          "413": {
+            "description": "Serialized IDs exceed 262144 bytes"
+          },
+          "503": {
+            "description": "Too many concurrent title streams on this instance"
+          }
+        },
+        "summary": "Stream conversation display titles via SSE",
+        "tags": ["conversations"]
+      }
+    },
     "/api/v1/conversations/metadata": {
       "get": {
         "operationId": "getConversationMetadata",
@@ -3879,7 +3935,7 @@
     },
     "/api/v1/conversations/viewed": {
       "patch": {
-        "description": "Idempotently records that the authenticated user has opened this conversation. Used to clear the unread indicator for scheduler-created conversations.",
+        "description": "Idempotently records that the authenticated user has seen this conversation. Clears the unread indicator of scheduler-created conversations and of regular conversations whose answer arrived while the user was elsewhere.",
         "operationId": "markConversationViewed",
         "parameters": [
           {
@@ -14190,7 +14246,7 @@
           },
           "isUnread": {
             "type": "boolean",
-            "description": "True when this scheduler-created conversation has not yet been opened by the user. Present only when `isScheduledTask` is true.",
+            "description": "True when the conversation holds an answer the user has not seen. A scheduler-created conversation always carries it (true until first opened); a regular conversation in the caller's own bucket carries it, as true, only when it was updated after the user's read-before baseline and has not been viewed since. Omitted otherwise, including for published and shared conversations.",
             "example": true
           }
         },
@@ -14265,6 +14321,150 @@
           }
         },
         "required": ["items"]
+      },
+      "ConversationTitleStreamTitleEventDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["title"]
+          },
+          "id": {
+            "type": "string",
+            "description": "The exact conversation resource URL supplied in the request.",
+            "example": "conversations/default-bucket/gpt-4o__First"
+          },
+          "title": {
+            "type": "string",
+            "description": "Current display title without conversation messages.",
+            "example": "First renamed title"
+          }
+        },
+        "required": ["type", "id", "title"]
+      },
+      "ConversationTitleStreamUnavailableEventDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["unavailable"]
+          },
+          "id": {
+            "type": "string",
+            "description": "The exact conversation resource URL supplied in the request. The conversation is missing or inaccessible; which one is not disclosed.",
+            "example": "conversations/default-bucket/gpt-4o__First"
+          }
+        },
+        "required": ["type", "id"]
+      },
+      "ConversationTitleStreamItemErrorCode": {
+        "type": "string",
+        "enum": ["upstream_error", "timeout"],
+        "description": "Why this attempted item failed. It is not retried by the stream."
+      },
+      "ConversationTitleStreamItemErrorEventDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["item_error"]
+          },
+          "id": {
+            "type": "string",
+            "description": "The exact conversation resource URL supplied in the request.",
+            "example": "conversations/default-bucket/gpt-4o__First"
+          },
+          "code": {
+            "description": "Why this attempted item failed. It is not retried by the stream.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConversationTitleStreamItemErrorCode"
+              }
+            ]
+          }
+        },
+        "required": ["type", "id", "code"]
+      },
+      "ConversationTitleStreamDoneReason": {
+        "type": "string",
+        "enum": ["complete", "budget"],
+        "description": "`complete` when every distinct ID has an outcome; `budget` when the request lifetime ended and IDs without an outcome may be requested again."
+      },
+      "ConversationTitleStreamDoneEventDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["done"]
+          },
+          "reason": {
+            "description": "`complete` when every distinct ID has an outcome; `budget` when the request lifetime ended and IDs without an outcome may be requested again.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConversationTitleStreamDoneReason"
+              }
+            ]
+          },
+          "processed": {
+            "type": "number",
+            "description": "Item outcome events emitted (title, unavailable, item_error).",
+            "example": 2
+          },
+          "total": {
+            "type": "number",
+            "description": "Distinct requested IDs.",
+            "example": 2
+          }
+        },
+        "required": ["type", "reason", "processed", "total"]
+      },
+      "ConversationTitleStreamErrorCode": {
+        "type": "string",
+        "enum": ["unauthenticated", "upstream_error", "unavailable"],
+        "description": "Paired with `status`: 401/unauthenticated, 502/upstream_error, 503/unavailable."
+      },
+      "ConversationTitleStreamErrorEventDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["error"]
+          },
+          "status": {
+            "type": "number",
+            "enum": [401, 502, 503],
+            "description": "HTTP-equivalent status of the stream-fatal failure; the response status was already 200.",
+            "example": 503
+          },
+          "code": {
+            "description": "Paired with `status`: 401/unauthenticated, 502/upstream_error, 503/unavailable.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConversationTitleStreamErrorCode"
+              }
+            ]
+          }
+        },
+        "required": ["type", "status", "code"]
+      },
+      "StreamConversationTitlesBodyDto": {
+        "type": "object",
+        "properties": {
+          "ids": {
+            "description": "Full DIAL Core conversation resource URLs, at most 500 and 262144 bytes as a serialized JSON array. Duplicate IDs produce one outcome; visible conversations should come first, because IDs are admitted in order.",
+            "minItems": 1,
+            "maxItems": 500,
+            "example": [
+              "conversations/default-bucket/gpt-4o__First",
+              "conversations/default-bucket/gpt-4o__Second"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["ids"]
       },
       "ConversationMetadataDto": {
         "type": "object",
@@ -17337,6 +17537,36 @@
           }
         },
         "required": ["data"]
+      },
+      "ConversationTitleStreamEventDto": {
+        "description": "One `data:` JSON payload of the conversation title stream, discriminated by `type`.",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ConversationTitleStreamTitleEventDto"
+          },
+          {
+            "$ref": "#/components/schemas/ConversationTitleStreamUnavailableEventDto"
+          },
+          {
+            "$ref": "#/components/schemas/ConversationTitleStreamItemErrorEventDto"
+          },
+          {
+            "$ref": "#/components/schemas/ConversationTitleStreamDoneEventDto"
+          },
+          {
+            "$ref": "#/components/schemas/ConversationTitleStreamErrorEventDto"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "type",
+          "mapping": {
+            "title": "#/components/schemas/ConversationTitleStreamTitleEventDto",
+            "unavailable": "#/components/schemas/ConversationTitleStreamUnavailableEventDto",
+            "item_error": "#/components/schemas/ConversationTitleStreamItemErrorEventDto",
+            "done": "#/components/schemas/ConversationTitleStreamDoneEventDto",
+            "error": "#/components/schemas/ConversationTitleStreamErrorEventDto"
+          }
+        }
       }
     }
   },

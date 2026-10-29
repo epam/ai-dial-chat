@@ -17,6 +17,7 @@ import {
   useConversationPanelItems,
   useImportFilePicker,
 } from '@epam/ai-dial-chat-hooks';
+import { applyActiveScheduledTaskRun } from '@epam/ai-dial-chat-hooks/conversation';
 import {
   ConversationExportMode,
   ConversationTransferWarningCode,
@@ -75,6 +76,8 @@ import {
   Suspense,
   useCallback,
   useEffect,
+  useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -128,10 +131,7 @@ import {
 } from '../../types/entity-notification';
 import { PublishHistoryStatus } from '../../types/publish-history';
 import { ROUTES } from '../../types/routes';
-import {
-  applyActiveScheduledTaskRun,
-  groupScheduledTaskConversations,
-} from '../../utils/collapse-scheduled-task-conversations';
+import { groupScheduledTaskConversations } from '../../utils/collapse-scheduled-task-conversations';
 import {
   conversationIdsMatch,
   toPanelConversationId,
@@ -185,6 +185,8 @@ interface ConversationPanelViewProps {
   onRequestedFilterChange?: () => void;
   onActiveFilterChange?: (tab: FilterTab) => void;
   onDuplicateReadonly?: () => void;
+  /* False while the desktop sidebar is collapsed or the mobile drawer is closed. */
+  isVisible?: boolean;
 }
 
 const ConversationPanelView: FC<ConversationPanelViewProps> = ({
@@ -194,6 +196,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   onRequestedFilterChange,
   onActiveFilterChange,
   onDuplicateReadonly,
+  isVisible = true,
 }) => {
   const { t } = useTranslation();
   const deleteConfirmationLabels = useDeleteConfirmationLabels();
@@ -237,6 +240,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     generateConversationTitle,
     duplicateConversation,
     refreshConversations,
+    setVisibleConversationIds,
   } = useConversations();
   const classifyTransferError = useCallback((error: unknown) => {
     if (error instanceof UnauthorizedError) return { isUnauthorized: true };
@@ -384,11 +388,32 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     selectedItemId,
   } = useDeployments();
 
+  /*
+   * Only scheduled runs are marked viewed from here. The sync fires on every
+   * re-entry into a chat, and the panel cannot tell whether the chat is still
+   * generating: writing the id to the viewed ids mid-stream would hide the dot
+   * for good. The conversation page marks regular chats once no generation is
+   * running.
+   */
+  const itemsRef = useRef(items);
+  useLayoutEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
+  const markScheduledRunViewed = useCallback(
+    (id: string) => {
+      const item = itemsRef.current.find((c) => conversationIdsMatch(c.id, id));
+      return item?.isScheduledTask
+        ? markConversationViewed(id)
+        : Promise.resolve();
+    },
+    [markConversationViewed],
+  );
+
   const panelActiveConversationId = useActiveConversationSync({
     activeConversationId,
     items,
     refreshConversations,
-    markConversationViewed,
+    markConversationViewed: markScheduledRunViewed,
     conversationIdsMatch,
     toPanelConversationId,
   });
@@ -625,6 +650,45 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     [scheduledTaskGrouping, activeConversationId],
   );
 
+  /*
+   * Viewport priority for title enrichment. The list reports panel ids; the
+   * context schedules by list resource ids. A hidden view keeps its last
+   * report so reopening restores priority without waiting for a scroll.
+   */
+  const visibilityKey = useId();
+  const panelIdToConversationIdRef = useRef(new Map<string, string>());
+  useEffect(() => {
+    panelIdToConversationIdRef.current = new Map(
+      panelItems.map((item) => [toPanelConversationId(item.id), item.id]),
+    );
+  }, [panelItems]);
+  const lastVisibleIdsRef = useRef<string[]>([]);
+  const isVisibleRef = useRef(isVisible);
+  const registerVisibleIds = useCallback(() => {
+    setVisibleConversationIds(
+      visibilityKey,
+      isVisibleRef.current ? lastVisibleIdsRef.current : null,
+    );
+  }, [setVisibleConversationIds, visibilityKey]);
+  const handleVisibleConversationIdsChange = useCallback(
+    (panelIds: string[]) => {
+      lastVisibleIdsRef.current = panelIds.flatMap((panelId) => {
+        const id = panelIdToConversationIdRef.current.get(panelId);
+        return id ? [id] : [];
+      });
+      registerVisibleIds();
+    },
+    [registerVisibleIds],
+  );
+  useEffect(() => {
+    isVisibleRef.current = isVisible;
+    registerVisibleIds();
+  }, [isVisible, registerVisibleIds]);
+  useEffect(
+    () => () => setVisibleConversationIds(visibilityKey, null),
+    [setVisibleConversationIds, visibilityKey],
+  );
+
   const conversations = useConversationPanelItems({
     items: panelItems,
     deployments,
@@ -635,6 +699,25 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     resolveHref,
     resolveTaskPresentation,
   });
+
+  /*
+   * The open chat is never shown as unread: watching a chat that is generating
+   * must not flash a dot, and the dot appears the moment the user navigates
+   * away. A display rule only — the list keeps the chat unread, so leaving
+   * mid-stream needs no extra state. Keeps the mapped array while the open row
+   * carries no dot, so most navigations leave every row untouched.
+   */
+  const displayedConversations = useMemo(() => {
+    const unreadActiveIndex = panelActiveConversationId
+      ? conversations.findIndex(
+          (c) => c.id === panelActiveConversationId && c.isUnread,
+        )
+      : -1;
+    if (unreadActiveIndex === -1) return conversations;
+    const next = conversations.slice();
+    next[unreadActiveIndex] = { ...next[unreadActiveIndex], isUnread: false };
+    return next;
+  }, [conversations, panelActiveConversationId]);
 
   const filterLabels = useMemo(
     () => ({
@@ -1379,7 +1462,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
 
   const sidebarBlock = (
     <ConversationListSection
-      conversations={conversations}
+      conversations={displayedConversations}
       isLoading={isLoading}
       isUpdatingTitles={isUpdatingTitles}
       preserveActiveSearchResult
@@ -1394,6 +1477,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       getActions={getActions}
       onActionMenuOpen={handleActionMenuOpen}
       onMoveConversation={handleMoveConversation}
+      onVisibleConversationIdsChange={handleVisibleConversationIdsChange}
       listClassName={CELEBRATION_HISTORY_CLASS}
     />
   );

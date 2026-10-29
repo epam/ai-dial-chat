@@ -1,8 +1,8 @@
+import { triggerBlobDownload } from '@epam/ai-dial-chat-shared';
 import {
   DownloadDestinationType,
   type DownloadDestination,
-} from '@epam/ai-dial-chat-hooks';
-import { triggerBlobDownload } from '@epam/ai-dial-chat-shared';
+} from './download-destination';
 
 /* RFC 5987 `filename*=UTF-8''…` carries the exact name; it wins over the
  * plain `filename`, which may be an ASCII-only fallback. */

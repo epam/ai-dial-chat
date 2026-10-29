@@ -21,6 +21,7 @@ import { AuthSource } from '../../auth/auth-source.enum';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { DeploymentsService } from '../../deployments/deployments.service';
 import { DialClientService } from '../../dial/dial-client.service';
+import { ConversationReadStateService } from '../../scheduled-task-unread/conversation-read-state.service';
 import { ScheduledTaskUnreadService } from '../../scheduled-task-unread/scheduled-task-unread.service';
 import { UserConfigService } from '../../user-config/user-config.service';
 import {
@@ -33,10 +34,12 @@ import { ConversationService } from '../conversation.service';
 import { BackgroundGenerationService } from '../generation/background-generation.service';
 import { ChatCompletionsAdapter } from '../generation/chat-completions.adapter';
 import { CoreResponsesClient } from '../generation/core-responses.client';
+import { GenerationApiSelector } from '../generation/generation-api-selector.service';
 import { ResponsesAdapter } from '../generation/responses.adapter';
 import { ConversationLifecycleService } from '../lifecycle/conversation-lifecycle.service';
 import { ConversationListingService } from '../listing/conversation-listing.service';
 import { ConversationTitleCacheService } from '../listing/conversation-title-cache.service';
+import { ConversationTitleStreamService } from '../listing/conversation-title-stream.service';
 import { ConversationTitlesService } from '../listing/conversation-titles.service';
 import { ConversationPersistenceService } from '../persistence/conversation-persistence.service';
 import { PublishedFolderAttachmentsService } from '../published-folder-attachments.service';
@@ -144,6 +147,7 @@ describe('ConversationController (integration)', () => {
       expect(service.getConversationTitles).toHaveBeenCalledWith(
         [id],
         TEST_USER.at,
+        expect.any(AbortSignal),
       );
     });
 
@@ -179,6 +183,7 @@ describe('ConversationController (integration)', () => {
       expect(service.getConversationTitles).toHaveBeenCalledWith(
         ids,
         TEST_USER.at,
+        expect.any(AbortSignal),
       );
     });
 
@@ -342,14 +347,17 @@ describe('ConversationController (integration)', () => {
           ConversationListingService,
           ConversationTitleCacheService,
           ConversationTitlesService,
+          ConversationTitleStreamService,
           ConversationLifecycleService,
           PublishedFolderAttachmentsService,
           { provide: CACHE_MANAGER, useValue: { get: vi.fn(), set: vi.fn() } },
           ConversationStreamingService,
           UserConfigService,
           ScheduledTaskUnreadService,
+          ConversationReadStateService,
           ConversationGenerationService,
           ChatCompletionsAdapter,
+          GenerationApiSelector,
           ResponsesAdapter,
           CoreResponsesClient,
           BackgroundGenerationService,
@@ -1061,7 +1069,7 @@ describe('ConversationController (integration)', () => {
     it('carries no @RequireFeature/FeatureGuard metadata tied to ResponsesApiEnabled', () => {
       /*
        * The Responses-vs-Chat-Completions selection is an internal routing
-       * decision (ConversationStreamingService.resolveGenerationApiForDeployment),
+       * decision (GenerationApiSelector.select),
        * not a per-route feature gate — a disabled flag must select Chat
        * Completions, never 403 the whole endpoint. Asserted via reflection
        * rather than an HTTP call so it fails fast on either an accidental

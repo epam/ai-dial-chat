@@ -42,7 +42,10 @@ vi.mock('@epam/ai-dial-attachment-canvas', () => ({
 vi.mock('@epam/ai-dial-chat-hooks/file-manager-canvas', () => ({
   clearAttachmentCache: vi.fn(),
 }));
-vi.mock('@epam/ai-dial-chat-hooks/viewport-layout', () => ({
+vi.mock('@epam/ai-dial-chat-hooks/viewport-layout', async (original) => ({
+  ...(await original<
+    typeof import('@epam/ai-dial-chat-hooks/viewport-layout')
+  >()),
   usePanelMaxWidth: () => 1200,
   useViewportWidth: () => 1440,
 }));

@@ -1,8 +1,10 @@
-import type { McpUiHostContext } from '@mcp-ui/client';
+import type { McpAppCanvasContent } from '@epam/ai-dial-attachment-canvas';
 import type {
   CallToolResult,
   Implementation,
 } from '@modelcontextprotocol/sdk/types.js';
+
+type McpUiHostContext = NonNullable<McpAppCanvasContent['hostContext']>;
 
 /** Which of the host's two MCP proxy routes a deployment id resolves through — a plain toolset, or an application that is itself an MCP server. */
 export type McpDeploymentKind = 'toolset' | 'application';

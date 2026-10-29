@@ -76,6 +76,7 @@ const makeService = () => {
     { resolveDeploymentItem: vi.fn().mockResolvedValue(null) } as never,
     new PublishedFolderAttachmentsService(dialClient, cacheManager as never),
     new ConversationTitleCacheService(),
+    { getReadBefore: vi.fn().mockResolvedValue(null) } as never,
   );
   return { service, client };
 };

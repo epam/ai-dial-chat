@@ -22,6 +22,112 @@ Framework-level React hooks extracted from AI DIAL Chat, published so teams buil
 
 ## Overview
 
+### Browser downloads
+
+`triggerBrowserDownload` is available from the root and `./utils`.
+`DownloadDestination` and `DownloadDestinationType` retain their existing root
+and `./file-manager` exports. The host acquires
+the response and opens any save picker before passing its prepared destination.
+
+```ts
+import { triggerBrowserDownload } from '@epam/ai-dial-chat-hooks/utils';
+
+const saveResponse = (response: Response) =>
+  triggerBrowserDownload(response, 'download.zip');
+```
+
+Blob downloads prefer a valid UTF-8 `filename*` header, then the plain filename,
+then the supplied fallback; header names have path separators removed. Stream
+destinations use the prepared fallback name and propagate stream failures. A
+missing response body aborts the writable and rejects. Cancelled destinations
+return the fallback without consuming the response.
+
+### Scheduled conversation controllers
+
+The root and `./conversation` export `groupScheduledTaskConversations`,
+`applyActiveScheduledTaskRun`, `collapseScheduledTaskConversations` and their
+generic option/result types. Supply `getGroupKey`, `isCollapsible` and
+`conversationIdsMatch`: the library assumes no resource prefix or owner format.
+The complete input list remains host-owned. Grouping picks the newest eligible
+run by creation time, update time and descending ID; applying an older active
+run preserves its original relative position. Unchanged active selections
+reuse the collapsed array.
+
+`useConversationDiscovery` accepts `UseConversationDiscoveryOptions`: `items`,
+`refresh`, `sessionKey`, `normalizeId`, optional `onError`, `retryCount` and
+`retryDelayMs`. Defaults are five additional retries, two seconds after each
+request settles. One timer serves pending IDs; changing session or unmounting
+retires old work. Initial refresh errors reject the returned promise; retry
+errors go to `onError`.
+
+### Selected skill names and file selection
+
+`useScheduledTaskSkillDisplayNames` (root and `./scheduled-tasks`) takes selected
+`skillUrls`, a `listed` name map and `getMetadata(url, signal)`. Listed names win;
+unavailable metadata retains the URL. Selection/listing changes and unmount
+abort obsolete requests. `UseScheduledTaskSkillDisplayNamesOptions` and
+`ScheduledTaskSkillName` describe the inputs.
+
+`useSkillFileSystemPicker<T>` (root and `./skill-editor`) accepts
+`materializeFile(file, signal)` and `onError`. Its
+`UseSkillFileSystemPickerResult<T>` exposes `isOpen`, `pickFromFileSystem`,
+`handleAttach` and `handleClose`. Only files are materialized, in selection
+order. Replacement, close and unmount cancel the old promise with `undefined`;
+late completions cannot settle a new attempt. The host owns downloads, paths,
+File construction and translated errors.
+
+### Pending attachment results
+
+`useFileAttachmentModalState` (root and `./file-manager`) accepts `bucket` and
+optional `resolvePreviewUrl`. It exposes modal open/close actions,
+`pendingAttachments`, `handleAttach` and `clearPendingAttachments`. Attach maps
+files and folders and closes the modal; clear consumes the result, and reopening
+does not restore it. This lifetime is separate from `useFileAttachmentPicker`.
+The exported contracts are `UseFileAttachmentModalStateOptions` and
+`UseFileAttachmentModalStateResult`.
+
+### Canvas preview and entity preselection
+
+`useDialFilePreview` (root and `./file-manager-canvas`) accepts current `items`,
+optional `searchResults`, `bucket`, `previewExtensions`, `startRequest`,
+`openAttachment`, `openUnsupported` and `resolveUrl`. Its callbacks keep their
+identity across listing refreshes and ignore obsolete/unmounted results. The
+host calls canvas hooks and supplies their adapted callbacks; this controller
+never calls a feature hook. `UseDialFilePreviewOptions` and
+`UseDialFilePreviewResult` are public.
+
+`useEntityPreselection` (root and `./conversation`) captures an
+`EntityPreselectionSnapshot` once per mount and applies deployment, skill and
+prompt sources through `EntityPreselectionSinks`. Supply listing/loading/error
+inputs, `resolveDeployment`, `resolveSkill`, `loadPrompt`, feature booleans,
+`onConsume` and `onOutcome` via `UseEntityPreselectionOptions`. The source and
+failure enums are `EntityPreselectionSource` and `EntityPreselectionOutcome`.
+`EntityPreselectionSkill`, `EntityPreselectionPrompt` and
+`EntityPreselectionPromptResult` are structural loader results. Superseded
+sources are consumed without application; disabled snapshots perform no side
+effects. Remount for a new arrival. In-flight prompt loads receive an abort
+signal and cannot commit after unmount. `UseEntityPreselectionResult` exposes
+deployment pending/override flags; URL parsing, cleanup and notifications are
+host-owned.
+
+### Canvas widths and persisted state
+
+`resolveCanvasWidth` (root and `./viewport-layout`) takes
+`ResolveCanvasWidthParams`: `CanvasWidthMode`, viewport/mobile/available widths
+and a numeric `CanvasWidthPolicy`. It returns `CanvasWidth`. Bounded-panel mode
+rounds and clamps the viewport share; conversation mode rounds half the sum of
+available width and the content budget. Mobile fills the viewport. Routes,
+breakpoints and sidebar dimensions stay in the host.
+
+`usePersistedState<T, TStored>` (root and `./utils`) takes
+`UsePersistedStateOptions<T, TStored>` with `key`, `initialValue`, a
+`PersistedStateStorage<TStored>` read/write port and
+`PersistedStateCodec<T, TStored>` decode/encode callbacks. Read/decode failures
+use the initial value; write/encode failures preserve in-memory updates.
+Changing key or codec does not reload state: subsequent writes use the new
+inputs, while remounting performs a new read. No storage medium, namespace or
+cross-tab synchronization is chosen by the library.
+
 `@epam/ai-dial-chat-hooks` is a headless hooks library: every hook here solves a piece of chat-interface UI mechanics (scrolling, streaming, anchoring, attachment upload/validation — more hooks will be added over time) using only React, standard browser APIs, and a narrow set of already-published, host-agnostic DIAL packages (the generated `@epam/ai-dial-chat-api-client` and its DTOs, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-attachment-input`, and others listed under Peer Dependencies below). It never depends on AI DIAL Chat's React contexts, a _configured_ REST client instance, i18n, or routing, and never renders a UI-kit component — every hook that needs to call DIAL Core accepts an already-configured generated-client instance as a parameter instead of importing or constructing one itself. A few hooks do import non-component symbols from `@epam/ai-dial-ui-kit` (enums such as `NotificationVariant`, constants such as `NOT_ALLOWED_SYMBOLS`, types such as `FilterChipItem`) to describe values the host renders — that is a data/type dependency, not a rendering one. This means a consumer can drop a hook from this package into a completely different chat UI, wire its returned refs/callbacks and injected client instances onto their own app, and get the same tuned, edge-case-tested behavior AI DIAL Chat ships with, without adopting anything else from this repository.
 
 ## Installation
@@ -85,7 +191,6 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-source-panel` \*
 - `@epam/ai-dial-ui-kit` ^0.16.0-dev.56
 - `@epam/ai-dial-usage-dashboard` \*
-- `@mcp-ui/client` ^7.1.1
 - `@modelcontextprotocol/sdk` ^1.32.1
 - `@epam/pdf-highlighter-kit` ^0.0.19
 
@@ -123,36 +228,41 @@ compiled output rather than externalized, so it is not a peer either — nothing
 
 ### Entry-point-to-peer matrix
 
+Entries that use chat-shared also resolve its required File Manager peer and
+its AG Grid dependency for public declarations. npm installs that transitive
+closure; utility bundles still exclude grid-rendering engines. See
+[chat-shared's package contract](../chat-shared/README.md#peer-dependencies).
+
 One row per subpath, its peers, and (right column) which peers are required only to resolve a
 type at build time — a name imported with `import type`, erased before the code runs. Both
 kinds still need the package installed for `tsc`/the bundler to resolve the specifier while
 building that entry; the distinction is about what the code does with the import, not about
 whether you need to `npm install` it.
 
-| Entry point               | Runtime peers beyond `react`                                                                                                                        | Type-only peers                                           |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| `.` (root, unchanged)     | every runtime peer appearing in the rows below                                                                                                      | `@epam/ai-dial-source-panel`, `@epam/pdf-highlighter-kit` |
-| `./viewport-layout`       | —                                                                                                                                                   | —                                                         |
-| `./scroll-anchoring`      | —                                                                                                                                                   | —                                                         |
-| `./conversation`          | `@epam/ai-dial-chat-shared`                                                                                                                         | `@epam/ai-dial-publish-panel`                             |
-| `./conversation-overlay`  | `@epam/ai-dial-chat-shared`, `@epam/ai-dial-chat-overlay`                                                                                           | —                                                         |
-| `./conversation-transfer` | `@epam/ai-dial-chat-shared`                                                                                                                         | —                                                         |
-| `./conversation-sources`  | `@epam/ai-dial-chat-shared`, `@epam/ai-dial-quotations`                                                                                             | `@epam/ai-dial-source-panel`                              |
-| `./file-manager`          | `@epam/ai-dial-react-file-manager`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-chat-shared`                                                             | —                                                         |
-| `./file-manager-canvas`   | `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-quotations`, `@epam/ai-dial-chat-shared`                                                          | `@epam/pdf-highlighter-kit`                               |
-| `./source-content`        | —                                                                                                                                                   | —                                                         |
-| `./catalog`               | `@epam/ai-dial-catalog`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-publish-panel`, `@epam/ai-dial-skill-editor` | —                                                         |
-| `./skills-state`          | —                                                                                                                                                   | —                                                         |
-| `./skill-editor`          | `@epam/ai-dial-skill-editor`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-ui-kit`                                                                   | —                                                         |
-| `./oauth`                 | `@epam/ai-dial-chat-shared`                                                                                                                         | —                                                         |
-| `./offline-credentials`   | —                                                                                                                                                   | —                                                         |
-| `./scheduled-tasks`       | `@epam/ai-dial-scheduled-tasks`                                                                                                                     | —                                                         |
-| `./sharing`               | `@epam/ai-dial-share`                                                                                                                               | —                                                         |
-| `./attachments`           | `@epam/ai-dial-quotations`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`                        | —                                                         |
-| `./utils`                 | —                                                                                                                                                   | `@epam/ai-dial-chat-shared`                               |
-| `./usage`                 | `@epam/ai-dial-usage-dashboard`, `@epam/ai-dial-chat-shared`                                                                                        | —                                                         |
-| `./usage-limits`          | `@epam/ai-dial-conversation-input`, `@epam/ai-dial-chat-shared`                                                                                     | —                                                         |
-| `./mcp-apps`              | `@epam/ai-dial-mcp-apps`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`, `@mcp-ui/client`, `@modelcontextprotocol/sdk`             | —                                                         |
+| Entry point               | Runtime peers beyond `react`                                                                                                                        | Type-only peers                                                 |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| `.` (root, unchanged)     | every runtime peer appearing in the rows below                                                                                                      | `@epam/ai-dial-source-panel`, `@epam/pdf-highlighter-kit`       |
+| `./viewport-layout`       | —                                                                                                                                                   | —                                                               |
+| `./scroll-anchoring`      | —                                                                                                                                                   | —                                                               |
+| `./conversation`          | `@epam/ai-dial-chat-shared`                                                                                                                         | `@epam/ai-dial-publish-panel`                                   |
+| `./conversation-overlay`  | `@epam/ai-dial-chat-shared`, `@epam/ai-dial-chat-overlay`                                                                                           | —                                                               |
+| `./conversation-transfer` | `@epam/ai-dial-chat-shared`                                                                                                                         | —                                                               |
+| `./conversation-sources`  | `@epam/ai-dial-chat-shared`, `@epam/ai-dial-quotations`                                                                                             | `@epam/ai-dial-source-panel`                                    |
+| `./file-manager`          | `@epam/ai-dial-react-file-manager`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-chat-shared`                                                             | —                                                               |
+| `./file-manager-canvas`   | `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-quotations`, `@epam/ai-dial-chat-shared`                                                          | `@epam/pdf-highlighter-kit`, `@epam/ai-dial-react-file-manager` |
+| `./source-content`        | —                                                                                                                                                   | —                                                               |
+| `./catalog`               | `@epam/ai-dial-catalog`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-publish-panel`, `@epam/ai-dial-skill-editor` | —                                                               |
+| `./skills-state`          | —                                                                                                                                                   | —                                                               |
+| `./skill-editor`          | `@epam/ai-dial-skill-editor`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-ui-kit`                                                                   | `@epam/ai-dial-react-file-manager`                              |
+| `./oauth`                 | `@epam/ai-dial-chat-shared`                                                                                                                         | —                                                               |
+| `./offline-credentials`   | —                                                                                                                                                   | —                                                               |
+| `./scheduled-tasks`       | `@epam/ai-dial-scheduled-tasks`                                                                                                                     | —                                                               |
+| `./sharing`               | `@epam/ai-dial-share`                                                                                                                               | —                                                               |
+| `./attachments`           | `@epam/ai-dial-quotations`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`                        | —                                                               |
+| `./utils`                 | —                                                                                                                                                   | `@epam/ai-dial-chat-shared`                                     |
+| `./usage`                 | `@epam/ai-dial-usage-dashboard`, `@epam/ai-dial-chat-shared`                                                                                        | —                                                               |
+| `./usage-limits`          | `@epam/ai-dial-conversation-input`, `@epam/ai-dial-chat-shared`                                                                                     | —                                                               |
+| `./mcp-apps`              | `@epam/ai-dial-mcp-apps`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`, `@modelcontextprotocol/sdk`                               | —                                                               |
 
 Five of the peers above (`@epam/ai-dial-catalog`,
 `@epam/ai-dial-chat-overlay`, `@epam/ai-dial-publish-panel`,
@@ -4538,6 +4648,8 @@ const conversations = useConversationPanelItems({
 **Returns**: `ConversationItem[]` — the mapped panel items, memoized by reference-stable inputs. The hook maps every item it is given; collapsing a scheduled task's runs into one row is left to the host. While every input except `items` keeps its reference, a DTO that is the same object as in the previous render maps to the same `ConversationItem` object, so a list change only produces new items for the DTOs that changed. Keep the resolvers referentially stable (`useCallback`) to benefit; a new resolver or `deployments` array rebuilds every item. Deployments are resolved by `id` first, then by `reference`.
 
 `resolveTaskPresentation` replaced `resolveTaskBadge` (`{ label, isUnread }`) when the conversation panel dropped its TASK pill.
+
+A regular chat (no task presentation) keeps the chat kind and carries `isUnread: true` onto its item when its DTO reports `isUnread: true`; otherwise `isUnread` stays absent. Hiding the dot for the open conversation is a host display rule, not part of this hook.
 
 ### getConversationSource
 

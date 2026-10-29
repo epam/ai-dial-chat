@@ -192,6 +192,8 @@ export interface ConversationPanelProps {
    * See `ConversationMove` for the payload shape.
    */
   onMoveConversation?: (move: ConversationMove) => void;
+  /** Called with the distinct IDs of conversation rows in the visible viewport, in row order, whenever that sequence changes; excludes group headers and overscan rows, and is empty when no rows are visible. */
+  onVisibleConversationIdsChange?: (ids: string[]) => void;
   /** Programmatically sets the active filter tab. Pass `undefined` to leave the tab unchanged. */
   activeFilter?: FilterTab;
   /** Called when the active filter tab changes. */

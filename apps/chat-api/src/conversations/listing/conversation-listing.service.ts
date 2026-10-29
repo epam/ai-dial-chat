@@ -6,6 +6,10 @@ import { safeDecodeURIComponent } from '../../common/utils/uri';
 import { PUBLIC_BUCKET, HIDDEN_FILE } from '../../constants/dial.constants';
 import { DialClientService } from '../../dial/dial-client.service';
 import { ConversationMetadataDto } from '../../openapi/openapi-response.dto';
+import {
+  ConversationReadStateService,
+  isRegularConversationUnread,
+} from '../../scheduled-task-unread/conversation-read-state.service';
 import { ScheduledTaskUnreadService } from '../../scheduled-task-unread/scheduled-task-unread.service';
 import { UserConfigService } from '../../user-config/user-config.service';
 import {
@@ -51,6 +55,7 @@ export class ConversationListingService {
     private readonly scheduledTaskUnreadService: ScheduledTaskUnreadService,
     private readonly titleCache: ConversationTitleCacheService,
     private readonly titlesService: ConversationTitlesService,
+    private readonly conversationReadStateService: ConversationReadStateService,
   ) {}
 
   private async listBucketMetadata(
@@ -114,47 +119,54 @@ export class ConversationListingService {
       : (limit ?? 100);
 
     try {
-      const [userResult, publicResult, sharedResult, pinnedIds, viewedIds] =
-        await Promise.all([
-          this.listBucketMetadata(
-            token,
-            bucket,
-            pageLimit,
-            userNextToken,
-            aggregateAllPages,
-            true,
-          ),
-          this.listBucketMetadata(
-            token,
-            PUBLIC_BUCKET,
-            pageLimit,
-            publicNextToken,
-            aggregateAllPages,
-          ).catch((err: unknown) => {
-            this.logger.warn(
-              'DIAL Core listConversations (public bucket) failed',
-              err,
-            );
-            return { data: undefined, error: err } satisfies MetadataResult;
-          }),
-          (
-            this.dialClient.client.getSharedResources({
-              headers: getBearerAuthHeaders(token),
-              body: { resourceTypes: ['CONVERSATION'], with: 'me' },
-            }) as Promise<SharedResourcesResult>
-          ).catch((err: unknown) => {
-            this.logger.warn(
-              'DIAL Core listConversations (shared resources) failed',
-              err,
-            );
-            return {
-              data: undefined,
-              error: err,
-            } satisfies SharedResourcesResult;
-          }),
-          this.userConfigService.getPinnedIds(token, bucket),
-          this.scheduledTaskUnreadService.getViewedIds(token, bucket),
-        ]);
+      const [
+        userResult,
+        publicResult,
+        sharedResult,
+        pinnedIds,
+        viewedIds,
+        readState,
+      ] = await Promise.all([
+        this.listBucketMetadata(
+          token,
+          bucket,
+          pageLimit,
+          userNextToken,
+          aggregateAllPages,
+          true,
+        ),
+        this.listBucketMetadata(
+          token,
+          PUBLIC_BUCKET,
+          pageLimit,
+          publicNextToken,
+          aggregateAllPages,
+        ).catch((err: unknown) => {
+          this.logger.warn(
+            'DIAL Core listConversations (public bucket) failed',
+            err,
+          );
+          return { data: undefined, error: err } satisfies MetadataResult;
+        }),
+        (
+          this.dialClient.client.getSharedResources({
+            headers: getBearerAuthHeaders(token),
+            body: { resourceTypes: ['CONVERSATION'], with: 'me' },
+          }) as Promise<SharedResourcesResult>
+        ).catch((err: unknown) => {
+          this.logger.warn(
+            'DIAL Core listConversations (shared resources) failed',
+            err,
+          );
+          return {
+            data: undefined,
+            error: err,
+          } satisfies SharedResourcesResult;
+        }),
+        this.userConfigService.getPinnedIds(token, bucket),
+        this.scheduledTaskUnreadService.getViewedIds(token, bucket),
+        this.conversationReadStateService.getReadState(token, bucket),
+      ]);
 
       const {
         data: userData,
@@ -242,7 +254,15 @@ export class ConversationListingService {
                     runId: scheduledTask.runId,
                     isUnread: !viewedSet.has(decodedId),
                   }
-                : {}),
+                : overrides.isOwnBucket &&
+                    readState &&
+                    isRegularConversationUnread(
+                      readState,
+                      id,
+                      item.updatedAt ?? 0,
+                    )
+                  ? { isUnread: true }
+                  : {}),
             };
           });
 
@@ -381,8 +401,8 @@ export class ConversationListingService {
     }
   }
 
-  getConversationTitles(ids: string[], token: string) {
-    return this.titlesService.getConversationTitles(ids, token);
+  getConversationTitles(ids: string[], token: string, signal?: AbortSignal) {
+    return this.titlesService.getConversationTitles(ids, token, signal);
   }
 
   private withCachedDisplayNames(

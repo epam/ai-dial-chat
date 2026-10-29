@@ -1,4 +1,7 @@
-import { useOpenAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
+import {
+  useLatestCanvasRequest,
+  useOpenAttachmentCanvas,
+} from '@epam/ai-dial-attachment-canvas';
 import {
   useAttachmentAction,
   isDownloadableAttachment,
@@ -43,7 +46,6 @@ import {
   useSourcesSidebarData,
 } from '../../context/SourcesSidebarContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
-import { useLatestCanvasRequest } from '../../hooks/attachment/useLatestCanvasRequest';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useCloseSourcesSidebarOnSubjectChange } from '../../hooks/sources-sidebar/useCloseSourcesSidebarOnSubjectChange';
 import useLocalStorage from '../../hooks/useLocalStorage';

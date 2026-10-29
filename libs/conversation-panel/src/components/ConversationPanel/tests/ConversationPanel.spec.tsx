@@ -207,25 +207,36 @@ vi.mock('react-window', () => ({
     rowCount,
     rowProps,
     role,
+    onRowsRendered,
   }: {
     rowComponent: React.ComponentType<Record<string, unknown>>;
     rowCount: number;
     rowProps: Record<string, unknown>;
     role?: string;
+    onRowsRendered?: (visibleRows: {
+      startIndex: number;
+      stopIndex: number;
+    }) => void;
     [key: string]: unknown;
-  }) => (
-    <div role={role}>
-      {Array.from({ length: rowCount }, (_, index) => (
-        <RowComponent
-          key={index}
-          index={index}
-          style={{}}
-          ariaAttributes={{}}
-          {...rowProps}
-        />
-      ))}
-    </div>
-  ),
+  }) => {
+    /* The whole list fits the test viewport. */
+    React.useEffect(() => {
+      onRowsRendered?.({ startIndex: 0, stopIndex: rowCount - 1 });
+    });
+    return (
+      <div role={role}>
+        {Array.from({ length: rowCount }, (_, index) => (
+          <RowComponent
+            key={index}
+            index={index}
+            style={{}}
+            ariaAttributes={{}}
+            {...rowProps}
+          />
+        ))}
+      </div>
+    );
+  },
 }));
 
 vi.mock('@tabler/icons-react', () => ({
@@ -304,6 +315,20 @@ const items: ConversationItem[] = [
 ];
 
 describe('ConversationPanel', () => {
+  it('forwards visible conversation IDs from its list', () => {
+    const onVisibleConversationIdsChange = vi.fn();
+    render(
+      <ConversationPanel
+        {...BASE_PROPS}
+        conversations={items}
+        onVisibleConversationIdsChange={onVisibleConversationIdsChange}
+      />,
+    );
+    expect(onVisibleConversationIdsChange).toHaveBeenLastCalledWith(
+      expect.arrayContaining(items.map(({ id }) => id)),
+    );
+  });
+
   it('renders all conversation rows when open', () => {
     render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
     /* Every conversation row, plus one list item per group header. */

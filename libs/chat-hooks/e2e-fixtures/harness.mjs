@@ -661,8 +661,16 @@ export const writeFixturePackageJson = (
   dependencies['@epam/ai-dial-chat-hooks'] = pathToFileURL(tarballPath).href;
 
   const manifest = { name, private: true, type: 'module', dependencies };
-  if (externalPeerOverrides && Object.keys(externalPeerOverrides).length > 0) {
-    manifest.overrides = externalPeerOverrides;
+  /* Explicit dependencies already pin the peer closure. Redundant overrides
+   * on those same nodes can make npm reject an otherwise compatible tree;
+   * retain overrides only for optional peers absent from the fixture. */
+  const absentPeerOverrides = Object.fromEntries(
+    Object.entries(externalPeerOverrides ?? {}).filter(
+      ([name]) => !(name in dependencies),
+    ),
+  );
+  if (Object.keys(absentPeerOverrides).length > 0) {
+    manifest.overrides = absentPeerOverrides;
   }
 
   writeFileSync(

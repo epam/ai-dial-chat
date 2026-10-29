@@ -52,6 +52,10 @@ describe('ConversationLifecycleService', () => {
   let mockPublishedFolderAttachments: {
     resolve: ReturnType<typeof vi.fn>;
   };
+  let mockReadStateService: {
+    getReadBefore: ReturnType<typeof vi.fn>;
+    addViewed: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
     mockDialClient = {
@@ -86,6 +90,10 @@ describe('ConversationLifecycleService', () => {
     mockPublishedFolderAttachments = {
       resolve: vi.fn(async (conversation: unknown) => conversation),
     };
+    mockReadStateService = {
+      getReadBefore: vi.fn().mockResolvedValue(null),
+      addViewed: vi.fn().mockResolvedValue(undefined),
+    };
     service = new ConversationLifecycleService(
       mockDialClient,
       mockUserConfigService as never,
@@ -93,6 +101,7 @@ describe('ConversationLifecycleService', () => {
       mockDeploymentsService as never,
       mockPublishedFolderAttachments as never,
       new ConversationTitleCacheService(),
+      mockReadStateService as never,
     );
     vi.mocked(handleDialSdkError).mockReset();
     vi.spyOn(mockDialClient.client, 'saveConversation').mockResolvedValue({
@@ -1452,6 +1461,119 @@ describe('ConversationLifecycleService', () => {
           'gpt-4o',
         ),
       ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('renameConversation keeps the read state of a read chat', () => {
+    const chatPath = 'gpt-4o__Chat__11111111-1111-1111-1111-111111111111';
+    const chatUrl = `conversations/test-bucket/${chatPath}`;
+    const BASELINE = 1000;
+
+    const arrange = (opts: {
+      path?: string;
+      updatedAt?: number;
+      readState?: 'ok' | 'unavailable';
+    }) => {
+      const path = opts.path ?? chatPath;
+      vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
+        data: { ...TEST_CONVERSATION, name: 'Old' },
+        response: new Response(null, { headers: { etag: '"v1"' } }),
+      } as never);
+      vi.spyOn(mockDialClient.client, 'saveConversation').mockResolvedValue({
+        data: {},
+      } as never);
+      vi.spyOn(
+        mockDialClient.client,
+        'getConversationMetadata',
+      ).mockResolvedValue({
+        data: { updatedAt: opts.updatedAt ?? 500 },
+      } as never);
+      mockReadStateService.getReadBefore.mockResolvedValue(
+        opts.readState === 'unavailable' ? null : BASELINE,
+      );
+      return () =>
+        service.renameConversation(
+          path,
+          'renamed',
+          'test-token',
+          'test-bucket',
+        );
+    };
+
+    it('adds a chat last updated before the baseline to the viewed ids', async () => {
+      const rename = arrange({ updatedAt: 500 });
+
+      await expect(rename()).resolves.toEqual({ name: 'renamed' });
+
+      expect(mockReadStateService.addViewed).toHaveBeenCalledExactlyOnceWith(
+        chatUrl,
+        'test-token',
+        'test-bucket',
+      );
+    });
+
+    it('leaves an unread chat unread', async () => {
+      const rename = arrange({ updatedAt: 2000 });
+
+      await rename();
+
+      expect(mockReadStateService.addViewed).not.toHaveBeenCalled();
+    });
+
+    it('renames without touching read state when it is unavailable', async () => {
+      const rename = arrange({ readState: 'unavailable' });
+
+      await expect(rename()).resolves.toEqual({ name: 'renamed' });
+
+      expect(mockReadStateService.addViewed).not.toHaveBeenCalled();
+    });
+
+    it('still renames when the viewed ids cannot be updated', async () => {
+      const rename = arrange({ updatedAt: 500 });
+      mockReadStateService.addViewed.mockRejectedValue(
+        new Error('DIAL Core 503'),
+      );
+
+      await expect(rename()).resolves.toEqual({ name: 'renamed' });
+    });
+
+    it('leaves read state alone when the chat metadata cannot be read', async () => {
+      const rename = arrange({});
+      vi.spyOn(
+        mockDialClient.client,
+        'getConversationMetadata',
+      ).mockResolvedValue({
+        data: null,
+        error: { status: 500 },
+        response: new Response(null, { status: 500 }),
+      } as never);
+
+      await expect(rename()).resolves.toEqual({ name: 'renamed' });
+
+      expect(mockReadStateService.addViewed).not.toHaveBeenCalled();
+    });
+
+    it('does not touch the regular read state when a scheduler run is renamed', async () => {
+      const rename = arrange({
+        path: '.scheduler/sched_abc/gpt-4o__Run__c7aeee4c-c01f-41f2-b0db-b8a1a39943f5',
+        updatedAt: 500,
+      });
+
+      await rename();
+
+      expect(mockReadStateService.getReadBefore).not.toHaveBeenCalled();
+      expect(mockReadStateService.addViewed).not.toHaveBeenCalled();
+    });
+
+    it('does not mark anything viewed when the rename fails', async () => {
+      const rename = arrange({ updatedAt: 500 });
+      vi.spyOn(mockDialClient.client, 'getConversation').mockRejectedValue({
+        error: { status: 404 },
+      } as never);
+
+      await expect(rename()).rejects.toBeInstanceOf(NotFoundException);
+
+      expect(mockReadStateService.addViewed).not.toHaveBeenCalled();
     });
   });
 });

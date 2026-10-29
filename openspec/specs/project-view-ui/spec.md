@@ -219,7 +219,7 @@ The error and not-found titles are announced through `role="alert"`.
 
 `useProjectActions` (`apps/chat/src/hooks/projects/useProjectActions.ts`) SHALL own the side effects for one loaded project.
 
-**Download.** `downloadProjectArchive(id)` calls `projectsApi.downloadProjectRaw` and passes the raw `Response` to `triggerBrowserDownload` (`apps/chat/src/utils/file-download.ts`) with the fallback name `{name}.zip`.
+**Download.** `downloadProjectArchive(id)` calls `projectsApi.downloadProjectRaw` and passes the raw `Response` to `triggerBrowserDownload` (`libs/chat-hooks/src/files/browser-download.ts`) with the fallback name `{name}.zip`.
 
 - Success calls `notifyOperationSuccess(NotifiableEntity.Project, EntityOperation.Downloaded, { name })`.
 - Failure calls `showErrorNotification` with `projects.actions.downloadError`.

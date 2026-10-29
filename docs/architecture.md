@@ -319,6 +319,24 @@ offers no theme or "Default agent for new chats" submenu. The mobile drawer's
 menu adds the keyboard-shortcut group, which the desktop menu leaves to the
 Settings dialog.
 
+Reusable non-rendering controllers in `chat-hooks` now own browser downloads,
+scheduled-run grouping, conversation discovery, selected skill names, skill
+file selection, pending attachment results, file preview, entity preselection,
+canvas width calculation and injected persisted state. Their existing
+`apps/chat` adapters retain host policies and delegate through public
+package exports. Downloads, canvas request guards and active-run substitution
+are imported directly from their libraries without app re-export modules.
+Canvas preview ordering belongs to each existing
+`AttachmentCanvasProvider`, with per-caller unmount guards; independent
+providers do not share a generation counter. See
+[reusable chat workflows](reusable-chat-workflows.md) for the owning entries,
+retained adapters and downstream migration status.
+
+The chat-shared root preserves its public File Manager types and grid event
+hook, so File Manager is a required peer and AG Grid a dependency even for
+declaration-only consumers. Grid rendering remains behind the file-manager
+entry. See [the package contract](../libs/chat-shared/README.md#peer-dependencies).
+
 The frontend uses automatic chunk splitting. Catalog Grid imports the UI Kit's
 `/grid` entry; Markdown editor loaders use `/editors`. File-manager UI has a
 dedicated `@epam/ai-dial-chat-shared/file-manager` entry consumed inside lazy
@@ -604,6 +622,18 @@ completion, while applied list snapshots are ordered by successful request
 sequence. See the [chat behavior contract](../apps/chat/README.md#manual-scheduled-task-runs)
 for retry limits and viewed-state synchronization.
 
+Regular chats use the same viewed-ids idea with a one-time baseline: a chat in the
+user's own bucket is unread when `updatedAt` is after the read-before baseline
+(`.client_data/.conversations-read-baseline.json`, written by the first list
+request) and its id is not in `.client_data/.viewed-conversations.json`.
+`ConversationReadStateService` (in `apps/chat-api/src/scheduled-task-unread/`)
+owns both files, `PATCH /api/v1/conversations/viewed` routes by conversation kind,
+and `POST /api/v1/conversations/completions` removes the chat from the viewed ids
+when a generation is accepted. The client marks the row unread when a generation
+starts, hides the dot on the open conversation, and the conversation page marks the
+open chat viewed once its stream is not running. See the
+[chat behavior contract](../apps/chat/README.md#unread-dot-for-regular-chats).
+
 Reusable selection lives in `skills` (`SkillSelectorField`), validation and
 presentation in `scheduled-tasks`, and checked request mapping in `chat-hooks`.
 Both chat and scheduled-task validation use the pure `chat-shared` skill-support
@@ -634,12 +664,13 @@ No endpoint in this domain carries a per-route rate limit — repo-wide rate lim
 
 `GET /api/v1/conversations/list` returns the complete history when both `limit` and `nextToken` are omitted. The BFF follows personal and public bucket cursors independently in batches of 1000, adds shared conversations once — ordered by when the user accepted the share (`sharedBy[].acceptedAt`, newest first, then by name), since DIAL Core reports no activity time for them — and sorts the combined list by latest activity (a stable sort, so the shared order is kept) and returns metadata plus recently cached display names without reading conversation bodies. Items whose names need resolving carry `isTitlePending: true`. The conversation panel uses this full-history mode. An explicit `limit` or `nextToken` requests one page per bucket and returns a compound continuation cursor; with only `nextToken`, the page size is 100. A failed personal page fails the request rather than returning a truncated history; public and shared sources remain best-effort. Items carry DIAL Core's `createdAt` when it reports one (never for shared items). The panel shows one row per scheduled task: `ConversationPanelView` collapses a task's run conversations (`bucket` + `scheduleId`) to the newest by `createdAt` — or to the run currently open — while `ConversationsContext` keeps the full list, which the task banner, History unread marks, and mark-as-viewed depend on.
 
-`ConversationsContext` renders that metadata immediately, then resolves pending names through `POST /api/v1/conversations/titles` in sequential batches of at most 25 IDs. The endpoint returns only `{ id, title }` projections. A bounded process-local cache holds at most 5000 summaries for five minutes, scoped by a token digest and exact resource ID; writes/deletes fence older in-flight refreshes. The app cancels obsolete batches and patches titles without reordering rows or overwriting newer local edits. An opened search result remains visible through a title correction until the query changes, and an empty search is provisional while title updates are running. Cold histories still require body reads in the background; this is not a durable Core index.
+`ConversationsContext` renders that metadata immediately, then resolves pending names through the finite SSE endpoint `POST /api/v1/conversations/titles/stream` (operation `streamConversationTitles`, consumed through `ConversationsApi.streamConversationTitlesRaw` and the typed frame decoder in `apps/chat/src/server-api/conversation-title-stream.ts`). Each request carries at most 500 IDs and 256 KiB of serialized IDs; the BFF admits the next ID whenever an outcome is written, so a fast `title` frame never waits for a slower read, and ends with `done` (`complete` or `budget`) or a terminal `error`. One stream is open per list snapshot; a `budget` terminal continues with the IDs that received no outcome, and missing/failed items are not retried until a later list refresh. Bounds per BFF process: 16 title streams, 25 Core title reads shared with the JSON endpoint, a 250-read/5-second queue, 25 in-flight-or-buffered items per stream, 64 KiB per frame, admission for 45 seconds and closure by 60. Only when the stream route answers 404/405 before SSE (an older backend) does the app switch to `POST /api/v1/conversations/titles`, sequential batches of at most 25 IDs, for that identity session. Both endpoints return only `{ id, title }` projections. A bounded process-local cache holds at most 5000 summaries for five minutes, scoped by a token digest and exact resource ID; writes/deletes fence older in-flight refreshes, and each coalesced read is owned by its consumers — the last one to disconnect removes the queued read or aborts the Core call, whose slot stays occupied until the call settles. Visible rows go first: the shared panel reports its actual visible conversation IDs through `onVisibleConversationIdsChange`, `ConversationPanelView` registers them per mounted view (cleared while the sidebar is collapsed or the mobile drawer is closed), and the app orders each new request visible-first after allowing at most one frame (100 ms) for the initial report. Priority is sampled per request; scrolling never restarts an accepted stream, so a newly visible row may wait for the current request. The app patches titles once per animation frame without reordering rows or overwriting newer local edits. An opened search result remains visible through a title correction until the query changes, and an empty search is provisional while title updates are running. Cold histories still require Core body reads in the background; this is not a durable Core index.
 
 | Method   | Path                                       | Description                                                                                      |
 | -------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------ |
 | `GET`    | `/api/v1/conversations/list`               | Metadata and cached titles; pending titles resolve after first render                            |
 | `POST`   | `/api/v1/conversations/titles`             | Resolve up to 25 conversation titles without returning message bodies                            |
+| `POST`   | `/api/v1/conversations/titles/stream`      | Stream up to 500 conversation titles (finite SSE) as each read settles                           |
 | `POST`   | `/api/v1/conversations`                    | Create conversation                                                                              |
 | `GET`    | `/api/v1/conversations?path=`              | Get conversation by path                                                                         |
 | `GET`    | `/api/v1/conversations/metadata?path=`     | Get metadata + permissions                                                                       |
