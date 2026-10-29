@@ -148,6 +148,20 @@ describe('POST /conversations/completions/attach (integration)', () => {
       .expect(400);
   });
 
+  it('returns 400 when path contains a backslash', async () => {
+    await request(app.getHttpServer())
+      .post('/conversations/completions/attach')
+      .send({ path: String.raw`bucket\secret` })
+      .expect(400);
+  });
+
+  it('accepts a path whose title contains an ellipsis (#9600)', async () => {
+    await request(app.getHttpServer())
+      .post('/conversations/completions/attach')
+      .send({ path: 'test-bucket/gpt-4o__Hi... there__uuid' })
+      .expect(404);
+  });
+
   it('delivers a snapshot, then live chunks, then a terminal event, in order', async () => {
     const lease = generationService.register(COOKIE_OWNER_KEY, PATH, GEN_ID);
     generationService.seedAssembledMessage(lease, makeMessage(''));

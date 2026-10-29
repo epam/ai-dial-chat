@@ -343,6 +343,25 @@ describe('POST /conversations/completions (integration)', () => {
       .expect(400);
   });
 
+  it('returns 400 when a path segment is a percent-encoded traversal (%2e%2e)', async () => {
+    await request(app.getHttpServer())
+      .post('/conversations/completions')
+      .send({ ...VALID_COMPLETION_BODY, path: 'bucket/%2e%2e/secret' })
+      .expect(400);
+  });
+
+  it('accepts a path whose title contains an ellipsis (#9600)', async () => {
+    await request(app.getHttpServer())
+      .post('/conversations/completions')
+      .send({
+        ...VALID_COMPLETION_BODY,
+        path: 'test-bucket/gpt-4o__Hi... there__uuid',
+      })
+      .expect(200);
+
+    expect(mockService.streamCompletion).toHaveBeenCalledOnce();
+  });
+
   it('accepts a valid regenerate request with messageIndex', async () => {
     await request(app.getHttpServer())
       .post('/conversations/completions')

@@ -1,5 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, Matches, MinLength } from 'class-validator';
+import {
+  CONVERSATION_PATH_VALIDATION_MESSAGE,
+  IsConversationPath,
+} from '../../common/validators/conversation-path.validator';
 
 export class AttachGenerationDto {
   @ApiProperty({
@@ -9,8 +13,7 @@ export class AttachGenerationDto {
   })
   @IsString()
   @MinLength(1)
-  @Matches(/^(?!.*\.\.)(?!.*\\)[\s\S]+$/, {
-    message: 'path contains invalid characters',
-  })
+  @IsConversationPath()
+  @Matches(/^[^\\]*$/, { message: CONVERSATION_PATH_VALIDATION_MESSAGE })
   path!: string;
 }
