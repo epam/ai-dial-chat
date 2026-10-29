@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { ScheduledTaskRunHistoryListLabels } from '../../../models/scheduled-task-run-history-list-props';
 import type { ScheduledTaskRunItem } from '../../../models/scheduled-task-run-item';
@@ -22,22 +21,12 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     label: string;
     onClick?: () => void;
   }) => <button onClick={onClick}>{label}</button>,
-  Tooltip: ({
-    tooltip,
-    children,
-  }: {
-    tooltip: string;
-    children: ReactNode;
-  }) => (
-    <>
-      {children}
-      <span role="tooltip">{tooltip}</span>
-    </>
-  ),
 }));
 
 vi.mock('@tabler/icons-react', () => ({
-  IconCircleCheck: () => <svg data-icon="success" />,
+  IconChevronDown: () => <svg />,
+  IconChevronUp: () => <svg />,
+  IconCheck: () => <svg data-icon="success" />,
   IconCircleX: () => <svg data-icon="error" />,
   IconAlertTriangle: () => <svg data-icon="missed" />,
   IconClipboardX: () => <svg data-icon="empty" />,
@@ -242,55 +231,85 @@ describe('ScheduledTaskRunHistoryList', () => {
   describe('ScheduledTaskRunHistoryList — error details', () => {
     const errorText = 'target request failed with status 502';
 
-    it('shows errorText in a tooltip and the accessible name of an Error row', () => {
+    it('expands and collapses the error with keyboard without navigating', async () => {
+      const user = userEvent.setup();
+      const onRunClick = vi.fn();
       render(
-        <ScheduledTaskRunHistoryList
-          items={[
-            buildRun({ status: ScheduledTaskRunStatus.Error, errorText }),
-          ]}
-          labels={labels}
-        />,
-      );
-
-      expect(screen.getByRole('tooltip').textContent).toBe(errorText);
-      expect(
-        screen.getByRole('listitem', {
-          name: `Failed today at 9:01 AM (99s) — ${errorText}`,
-        }),
-      ).toBeTruthy();
-    });
-
-    it('makes the tooltip trigger focusable only when the row is static', () => {
-      const { rerender } = render(
-        <ScheduledTaskRunHistoryList
-          items={[
-            buildRun({ status: ScheduledTaskRunStatus.Error, errorText }),
-          ]}
-          labels={labels}
-        />,
-      );
-      const row = screen.getByRole('listitem');
-      // eslint-disable-next-line testing-library/no-node-access -- the trigger wrapper has no role; its tabIndex is the assertion
-      expect(row.querySelector('[tabindex="0"]')).toBeTruthy();
-
-      rerender(
         <ScheduledTaskRunHistoryList
           items={[
             buildRun({
               status: ScheduledTaskRunStatus.Error,
               errorText,
-              conversationId: 'conversations/bucket/run_1',
+              conversationId: 'chat',
             }),
           ]}
           labels={labels}
-          onRunClick={vi.fn()}
+          onRunClick={onRunClick}
         />,
       );
-      const clickableRow = screen.getByRole('button');
-      // eslint-disable-next-line testing-library/no-node-access -- see above
-      expect(clickableRow.querySelector('[tabindex="0"]')).toBeNull();
-      expect(screen.getByRole('tooltip').textContent).toBe(errorText);
+      const toggle = screen.getByRole('button', { expanded: false });
+      expect(screen.queryByRole('tooltip')).toBeNull();
+      expect(screen.getByText(errorText).hidden).toBe(true);
+      await user.tab();
+      await user.keyboard('{Enter}');
+      expect(toggle.getAttribute('aria-expanded')).toBe('true');
+      expect(screen.getByText(errorText).hidden).toBe(false);
+      expect(toggle.getAttribute('aria-controls')).toBe(
+        screen.getByText(errorText).id,
+      );
+      expect(onRunClick).not.toHaveBeenCalled();
+      await user.keyboard(' ');
+      expect(screen.getByText(errorText).hidden).toBe(true);
+      expect(onRunClick).not.toHaveBeenCalled();
+      await user.click(screen.getByText('today at 9:01 AM (99s)'));
+      expect(screen.getByText(errorText).hidden).toBe(false);
+      await user.click(screen.getByText(errorText));
+      expect(screen.getByText(errorText).hidden).toBe(false);
+      expect(onRunClick).not.toHaveBeenCalled();
     });
+
+    it('supports errors without conversations and keeps expansion independent by run id', async () => {
+      const user = userEvent.setup();
+      const first = buildRun({
+        id: 'first',
+        status: ScheduledTaskRunStatus.Error,
+        errorText,
+      });
+      const second = buildRun({
+        id: 'second',
+        status: ScheduledTaskRunStatus.Error,
+        errorText: 'second error',
+      });
+      const { rerender } = render(
+        <ScheduledTaskRunHistoryList items={[first, second]} labels={labels} />,
+      );
+      await user.click(screen.getAllByRole('button', { expanded: false })[0]);
+      expect(screen.getByText(errorText).hidden).toBe(false);
+      expect(screen.getByText('second error').hidden).toBe(true);
+      rerender(
+        <ScheduledTaskRunHistoryList items={[second, first]} labels={labels} />,
+      );
+      expect(screen.getByText(errorText).hidden).toBe(false);
+      expect(screen.getByText('second error').hidden).toBe(true);
+    });
+
+    it.each([undefined, '', '   '])(
+      'does not add a disclosure without failure details (%s)',
+      (text) => {
+        render(
+          <ScheduledTaskRunHistoryList
+            items={[
+              buildRun({
+                status: ScheduledTaskRunStatus.Error,
+                errorText: text,
+              }),
+            ]}
+            labels={labels}
+          />,
+        );
+        expect(screen.queryByRole('button')).toBeNull();
+      },
+    );
 
     it('ignores errorText on a non-Error row', () => {
       render(

@@ -79,7 +79,7 @@ export interface ScheduledTaskRunHistoryListProps {
   onRetry?: () => void;
   /** The `id` of the run to render with the current-run visual and accessible treatment. Omit to mark no row as current. */
   currentRunId?: string;
-  /** Called with the run when the user clicks a row whose `conversationId` is set. Rows without a `conversationId` never invoke this, regardless of whether it is supplied. */
+  /** Called with the run when the user clicks a row whose `conversationId` is set. Rows without a `conversationId` never invoke this, regardless of whether it is supplied. Error rows with non-blank `errorText` toggle their details instead and never invoke this callback. */
   onRunClick?: (run: ScheduledTaskRunItem) => void;
   /** Localized labels. */
   labels: ScheduledTaskRunHistoryListLabels;

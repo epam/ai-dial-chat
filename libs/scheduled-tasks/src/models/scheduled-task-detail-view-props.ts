@@ -203,7 +203,7 @@ export interface ScheduledTaskDetailViewProps {
   runsHasMore?: boolean;
   /** Called when the user activates the "Show more" button, rendered below the loaded runs while `runsHasMore` is `true`. Omit to hide the button entirely. */
   onRunsLoadMore?: () => void;
-  /** Called with the run when the user clicks a row whose `conversationId` is set. Rows without a `conversationId` never invoke this, regardless of whether it is supplied. */
+  /** Called with the run when the user clicks a row whose `conversationId` is set. Rows without a `conversationId` never invoke this, regardless of whether it is supplied. Error rows with non-blank `errorText` toggle their details instead and never invoke this callback. */
   onRunClick?: (run: ScheduledTaskRunItem) => void;
   /** Style overrides. */
   styles?: ScheduledTaskDetailViewStyles;

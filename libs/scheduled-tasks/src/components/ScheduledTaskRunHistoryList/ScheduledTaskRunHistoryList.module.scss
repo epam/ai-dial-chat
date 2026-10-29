@@ -3,7 +3,7 @@
 }
 
 .successIcon {
-  color: var(--strhl-success-icon, var(--text-success, #007274));
+  color: var(--strhl-success-icon, var(--text-secondary, #57647a));
 }
 
 .errorIcon {
@@ -39,14 +39,21 @@
   outline-offset: -2px;
 }
 
+.rowEnd {
+  color: var(--strhl-subtitle-text, var(--text-secondary, #57647a));
+}
+
 .unreadDot {
   background: var(--strhl-unread-dot, var(--text-accent, #1d4ed8));
 }
 
-.rowLayout.rowLayout {
-  padding-inline-start: 0;
+.expandedRow {
+  background: var(
+    --strhl-row-hover-bg,
+    var(--bg-control-accent-alpha, #2764d914)
+  );
+}
 
-  @media (min-width: 1280px) {
-    padding-inline-start: 20px;
-  }
+.errorDetails {
+  color: var(--strhl-subtitle-text, var(--text-secondary, #57647a));
 }

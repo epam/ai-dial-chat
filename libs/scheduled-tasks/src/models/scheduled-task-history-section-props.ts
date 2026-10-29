@@ -78,7 +78,7 @@ export interface ScheduledTaskHistorySectionProps {
   hasMore?: boolean;
   /** Called when the user activates the "Show more" button, rendered while `hasMore` is `true`. Omit to hide the button entirely. */
   onLoadMore?: () => void;
-  /** Called with the run when the user clicks a row whose `conversationId` is set. Rows without a `conversationId` never invoke this, regardless of whether it is supplied. */
+  /** Called with the run when the user clicks a row whose `conversationId` is set. Rows without a `conversationId` never invoke this, regardless of whether it is supplied. Error rows with non-blank `errorText` toggle their details instead and never invoke this callback. */
   onRunClick?: (run: ScheduledTaskRunItem) => void;
   /** CSS class applied to the "Next run" label. Defaults to `'dial-small-text'`. */
   runTimestampClassName?: string;

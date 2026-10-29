@@ -166,7 +166,9 @@ vi.mock('@tabler/icons-react', () => ({
       aria-hidden={ariaHidden}
     />
   ),
-  IconCircleCheck: () => <svg data-icon="success" />,
+  IconCheck: () => <svg data-icon="success" />,
+  IconChevronDown: () => <svg />,
+  IconChevronUp: () => <svg />,
   IconCircleX: () => <svg data-icon="error" />,
   IconAlertTriangle: () => <svg data-icon="missed" />,
   IconClipboardX: () => <svg data-icon="empty" />,
@@ -242,6 +244,32 @@ describe('ScheduledTaskDetailView — library isolation', () => {
 });
 
 describe('ScheduledTaskDetailView', () => {
+  it('expands a failed run by clicking its timestamp without opening its conversation', async () => {
+    const user = userEvent.setup();
+    const onRunClick = vi.fn();
+    render(
+      <ScheduledTaskDetailView
+        labels={labels}
+        onBack={vi.fn()}
+        displayName="Task"
+        runs={[
+          buildRun({
+            status: ScheduledTaskRunStatus.Error,
+            errorText: 'Scheduler timeout',
+            conversationId: 'chat',
+          }),
+        ]}
+        onRunClick={onRunClick}
+      />,
+    );
+    expect(screen.getByText('Scheduler timeout').hidden).toBe(true);
+    await user.click(screen.getByText('today at 9:01 AM (99s)'));
+    expect(screen.getByText('Scheduler timeout').hidden).toBe(false);
+    await user.click(screen.getByText('Scheduler timeout'));
+    expect(screen.getByText('Scheduler timeout').hidden).toBe(false);
+    expect(onRunClick).not.toHaveBeenCalled();
+  });
+
   it('passes the optional skill to Configuration and omits empty Instructions', () => {
     render(
       <ScheduledTaskDetailView
