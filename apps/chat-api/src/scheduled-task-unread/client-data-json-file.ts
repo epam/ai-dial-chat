@@ -6,6 +6,9 @@ import type { DialClientService } from '../dial/dial-client.service';
 /* Only a missing file means "nothing stored yet"; any other failed read must not be written back as empty. */
 const MISSING_FILE_STATUS = 404;
 
+/* Enough to diagnose a failed write; upstream error bodies are implementation-defined, so they are not logged whole. */
+const MAX_LOGGED_ERROR_BODY_LENGTH = 200;
+
 export enum ClientDataReadKind {
   Missing = 'missing',
   Malformed = 'malformed',
@@ -93,7 +96,7 @@ export class ClientDataJsonFile {
       if (error != null) {
         const body = await response.text().catch(() => '(unreadable)');
         this.logger.error(
-          `Failed to write ${this.label} — DIAL Core ${response.status}: ${body}`,
+          `Failed to write ${this.label} — DIAL Core ${response.status}: ${body.slice(0, MAX_LOGGED_ERROR_BODY_LENGTH)}`,
           error,
         );
         return handleDialSdkError(

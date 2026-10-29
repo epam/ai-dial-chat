@@ -184,11 +184,21 @@ export const ConversationsProvider = ({
   const conversationsRef = useRef<ConversationListItemDto[]>([]);
   const viewedIdsRef = useRef<Set<string> | null>(null);
   const viewedWriteQueueRef = useRef<Promise<void> | null>(null);
+  /*
+   * Bumped for a regular chat each time a generation starts in it. A viewed write
+   * queued before that is obsolete: sent later, it would land after the server
+   * un-viewed the chat and hide the dot of the answer the user has not seen.
+   * Only writes still queued are dropped. One already sent but not yet applied
+   * can still overtake the server's un-view; that needs the chat to have been
+   * read milliseconds before the next message, and the cost is one missing dot.
+   */
+  const unreadEpochRef = useRef(new Map<string, number>());
   const listRequestIdRef = useRef(0);
   const appliedListRequestIdRef = useRef(0);
   useLayoutEffect(() => {
     viewedIdsRef.current = new Set<string>();
     viewedWriteQueueRef.current = null;
+    unreadEpochRef.current = new Map();
     conversationsRef.current = [];
     return () => {
       viewedIdsRef.current = null;
@@ -509,11 +519,15 @@ export const ConversationsProvider = ({
       );
     }
     const previousWrite = viewedWriteQueueRef.current;
+    const unreadEpoch = unreadEpochRef.current;
+    const epochAtCall = unreadEpoch.get(key) ?? 0;
     /* The backend updates one viewed-ids file. Serialize rapid navigation
        within this provider so two read/modify/write requests cannot lose ids. */
     const persist = async () => {
       if (previousWrite) await previousWrite;
       if (viewedIdsRef.current !== currentViewedIds) return;
+      /* A generation started in this chat while the write was queued. */
+      if (!isScheduled && (unreadEpoch.get(key) ?? 0) !== epochAtCall) return;
       try {
         const conversationPath = getConversationPath(
           normalizeConversationId(target.id),
@@ -538,12 +552,15 @@ export const ConversationsProvider = ({
   }, []);
 
   const markConversationUnread = useCallback((id: string) => {
-    setConversations((prev) => {
-      const target = prev.find((c) => conversationIdsMatch(c.id, id));
-      return target && !target.isScheduledTask
-        ? setUnreadState(prev, target.id, /* isUnread */ true)
-        : prev;
-    });
+    const target = conversationsRef.current.find((c) =>
+      conversationIdsMatch(c.id, id),
+    );
+    if (!target || target.isScheduledTask) return;
+    const key = toPanelConversationId(target.id);
+    unreadEpochRef.current.set(key, (unreadEpochRef.current.get(key) ?? 0) + 1);
+    setConversations((prev) =>
+      setUnreadState(prev, target.id, /* isUnread */ true),
+    );
   }, []);
 
   const deleteConversation = useCallback(

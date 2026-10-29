@@ -53,7 +53,7 @@ describe('ConversationLifecycleService', () => {
     resolve: ReturnType<typeof vi.fn>;
   };
   let mockReadStateService: {
-    getReadState: ReturnType<typeof vi.fn>;
+    getReadBefore: ReturnType<typeof vi.fn>;
     addViewed: ReturnType<typeof vi.fn>;
   };
 
@@ -91,7 +91,7 @@ describe('ConversationLifecycleService', () => {
       resolve: vi.fn(async (conversation: unknown) => conversation),
     };
     mockReadStateService = {
-      getReadState: vi.fn().mockResolvedValue(null),
+      getReadBefore: vi.fn().mockResolvedValue(null),
       addViewed: vi.fn().mockResolvedValue(undefined),
     };
     service = new ConversationLifecycleService(
@@ -1472,7 +1472,6 @@ describe('ConversationLifecycleService', () => {
     const arrange = (opts: {
       path?: string;
       updatedAt?: number;
-      viewed?: string[];
       readState?: 'ok' | 'unavailable';
     }) => {
       const path = opts.path ?? chatPath;
@@ -1489,10 +1488,8 @@ describe('ConversationLifecycleService', () => {
       ).mockResolvedValue({
         data: { updatedAt: opts.updatedAt ?? 500 },
       } as never);
-      mockReadStateService.getReadState.mockResolvedValue(
-        opts.readState === 'unavailable'
-          ? null
-          : { readBefore: BASELINE, viewedIds: new Set(opts.viewed ?? []) },
+      mockReadStateService.getReadBefore.mockResolvedValue(
+        opts.readState === 'unavailable' ? null : BASELINE,
       );
       return () =>
         service.renameConversation(
@@ -1517,14 +1514,6 @@ describe('ConversationLifecycleService', () => {
 
     it('leaves an unread chat unread', async () => {
       const rename = arrange({ updatedAt: 2000 });
-
-      await rename();
-
-      expect(mockReadStateService.addViewed).not.toHaveBeenCalled();
-    });
-
-    it('does not rewrite the viewed ids of a chat that is already viewed', async () => {
-      const rename = arrange({ updatedAt: 2000, viewed: [chatUrl] });
 
       await rename();
 
@@ -1572,7 +1561,7 @@ describe('ConversationLifecycleService', () => {
 
       await rename();
 
-      expect(mockReadStateService.getReadState).not.toHaveBeenCalled();
+      expect(mockReadStateService.getReadBefore).not.toHaveBeenCalled();
       expect(mockReadStateService.addViewed).not.toHaveBeenCalled();
     });
 

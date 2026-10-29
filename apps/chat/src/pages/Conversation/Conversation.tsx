@@ -490,14 +490,32 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   }, [conversations, conversationId]);
   const isOpenChatLoaded =
     !isFetching && !!conversation && loadedConversationId === conversationId;
+  /*
+   * A recovery that failed (attach, watch and the final reload) also ends with
+   * `isStreaming` false, but only the placeholder is shown: the answer was not
+   * seen, so the chat stays unread until a retry succeeds and clears the error.
+   *
+   * A failed viewed write is not retried by this effect on its own: the context
+   * keeps the chat read locally, so the effect runs again only when a later list
+   * reports it unread. That is at most one request per list refresh, and a
+   * backend that keeps failing this write fails the list itself as well.
+   */
+  const isRecoveryFailed = hasConversationReloadError;
   useEffect(() => {
-    if (conversationId && isOpenChatLoaded && isOpenChatUnread && !isStreaming)
+    if (
+      conversationId &&
+      isOpenChatLoaded &&
+      isOpenChatUnread &&
+      !isStreaming &&
+      !isRecoveryFailed
+    )
       void markConversationViewed(conversationId);
   }, [
     conversationId,
     isOpenChatLoaded,
     isOpenChatUnread,
     isStreaming,
+    isRecoveryFailed,
     markConversationViewed,
   ]);
 
@@ -605,6 +623,8 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         if (isViewerConversation) {
           setConversation(result);
           conversationRef.current = result;
+          /* This branch returns before the end of the load, so it must count the chat as loaded too. */
+          setLoadedConversationId(id);
           return;
         }
 

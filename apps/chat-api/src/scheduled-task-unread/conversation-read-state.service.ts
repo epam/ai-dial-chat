@@ -111,9 +111,10 @@ export class ConversationReadStateService {
   }
 
   /**
-   * Makes a regular chat unseen again (a new generation is starting). Scheduler
-   * runs are never un-viewed.
-   * @throws HttpException when DIAL Core fails the read or the write.
+   * Makes a regular chat unseen again because a new generation is starting.
+   * Scheduler runs are never un-viewed. Best effort and never throws: a failed
+   * read-state write must not fail the generation it accompanies, so it is
+   * logged and swallowed.
    */
   async markUnviewed(
     conversationId: string,
@@ -121,7 +122,28 @@ export class ConversationReadStateService {
     bucket: string,
   ): Promise<void> {
     if (parseScheduledTaskConversationPath(conversationId)) return;
-    await this.removeViewed(conversationId, token, bucket);
+    try {
+      await this.removeViewed(conversationId, token, bucket);
+    } catch (error) {
+      this.logger.warn('Failed to mark conversation as unviewed', error);
+    }
+  }
+
+  /**
+   * The stored baseline only, for callers that need nothing else (a rename).
+   * Never creates the baseline and never throws: `null` when the file is
+   * missing, malformed or cannot be read.
+   */
+  async getReadBefore(token: string, bucket: string): Promise<number | null> {
+    try {
+      const result = await this.file.read(READ_BASELINE_PATH, token, bucket);
+      return result.kind === ClientDataReadKind.Ok
+        ? parseConversationsReadBaseline(result.value)
+        : null;
+    } catch {
+      this.logger.warn('Failed to read the conversation read baseline');
+      return null;
+    }
   }
 
   /** @throws HttpException when DIAL Core fails the read or the write. */

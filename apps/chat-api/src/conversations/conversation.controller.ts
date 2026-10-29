@@ -432,7 +432,9 @@ export class ConversationController {
      * rejected before it starts (409, validation) leaves the viewed ids alone.
      * Awaited before the first chunk is relayed: the client marks the chat
      * viewed when the stream ends, and that write must not be overtaken by this
-     * one.
+     * one. It runs alongside the model's own start, so it normally costs nothing;
+     * a hung DIAL Core client-data call would hold the first chunk back, an
+     * accepted edge case. The service call is best effort and never rejects.
      */
     let pendingUnview = undefined as Promise<void> | undefined;
     const stream = this.conversationService.streamCompletion(
@@ -449,7 +451,11 @@ export class ConversationController {
       () => {
         startSseResponse(res);
         startKeepalive();
-        pendingUnview = this.unviewConversation(dto.path, at, bucket);
+        pendingUnview = this.conversationService.markConversationUnviewed(
+          dto.path,
+          at,
+          bucket,
+        );
       },
       sub,
       dto.clientChannelId,
@@ -563,6 +569,13 @@ export class ConversationController {
       if (keepaliveTimer) clearInterval(keepaliveTimer);
       res.off('close', handleClose);
       /*
+       * On every exit path, not only after a first chunk: a generation that fails
+       * before it yields anything must still finish this write before the
+       * client can send its own viewed mark. `markConversationUnviewed` never
+       * rejects, so draining here cannot change how the request ends.
+       */
+      await pendingUnview;
+      /*
        * Reached only after the generator has returned, which it does only
        * after awaiting its own terminal save and registry release. So
        * nothing below can alter what was persisted or how the generation
@@ -587,29 +600,6 @@ export class ConversationController {
           reason: CompletionResponseTermination.Completed,
         });
       }
-    }
-  }
-
-  /*
-   * A new generation makes the chat unseen until the user watches it finish or
-   * opens it. Best effort: a failed read-state write never fails a generation,
-   * so it is logged and swallowed. A slow one only delays the first chunk
-   * relayed to the client (see `pendingUnview`): it runs alongside the model's
-   * own start, and a hung DIAL Core client-data call is an accepted edge case.
-   */
-  private async unviewConversation(
-    path: string,
-    token: string,
-    bucket: string,
-  ): Promise<void> {
-    try {
-      await this.conversationService.markConversationUnviewed(
-        path,
-        token,
-        bucket,
-      );
-    } catch (err) {
-      this.logger.warn('Failed to mark conversation as unviewed', err);
     }
   }
 

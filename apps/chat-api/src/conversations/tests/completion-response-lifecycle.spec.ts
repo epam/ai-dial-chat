@@ -344,6 +344,47 @@ describe('streamCompletion — viewed-id removal ordering', () => {
   });
 });
 
+describe('streamCompletion — viewed-id removal on a failed start', () => {
+  it('finishes removing the viewed id even when the generation fails before its first chunk', async () => {
+    const events: string[] = [];
+    const writable = new Writable({
+      write(_chunk, _encoding, callback) {
+        callback();
+      },
+    });
+    Object.assign(writable, { setHeader: vi.fn(), flushHeaders: vi.fn() });
+    const streamingService = {
+      markConversationUnviewed: vi.fn().mockImplementation(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        events.push('unviewed');
+      }),
+      streamCompletion: vi.fn().mockImplementation(async function* (
+        ...args: unknown[]
+      ) {
+        (args[ON_READY_TO_STREAM_ARG] as () => void)();
+        throw new Error('upstream failed before the first chunk');
+        // eslint-disable-next-line no-unreachable
+        yield Buffer.alloc(1);
+      }),
+    };
+
+    await expect(
+      makeController(
+        streamingService as never,
+        makeGenerationService(),
+      ).streamCompletion(
+        TEST_REQUEST,
+        writable as unknown as ExpressResponse,
+        VALID_COMPLETION_BODY,
+        undefined,
+      ),
+    ).rejects.toThrow('upstream failed');
+
+    /* The client may mark the chat viewed right after the failure; the un-view must already have landed. */
+    expect(events).toEqual(['unviewed']);
+  });
+});
+
 describe('streamCompletion — SSE keepalive', () => {
   const KEEPALIVE = ': keepalive\n\n';
   const KEEPALIVE_INTERVAL_MS = 15_000;
@@ -372,6 +413,7 @@ describe('streamCompletion — SSE keepalive', () => {
   const makeControlledStreamingService = (chunks: string[]) => {
     const releases: Array<() => void> = [];
     const service = {
+      markConversationUnviewed: vi.fn().mockResolvedValue(undefined),
       streamCompletion: vi.fn().mockImplementation(async function* (
         ...args: unknown[]
       ) {
@@ -465,6 +507,7 @@ describe('streamCompletion — SSE keepalive', () => {
     const conflict = new Error('Generation is already active');
     const service = {
       /* Rejects on the first `next()`, before `onReadyToStream` is ever called. */
+      markConversationUnviewed: vi.fn().mockResolvedValue(undefined),
       streamCompletion: vi.fn().mockImplementation(() => ({
         [Symbol.asyncIterator]: () => ({
           next: () => Promise.reject(conflict),

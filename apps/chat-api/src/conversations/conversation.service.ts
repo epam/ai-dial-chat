@@ -135,7 +135,7 @@ export class ConversationService {
     );
   }
 
-  /** Makes a regular chat unseen again because a new generation is starting. */
+  /** Makes a regular chat unseen again because a new generation is starting. Best effort: never rejects. */
   markConversationUnviewed(
     conversationPath: string,
     token: string,

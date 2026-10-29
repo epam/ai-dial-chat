@@ -237,6 +237,42 @@ describe('ConversationReadStateService', () => {
   });
 });
 
+describe('ConversationReadStateService.getReadBefore', () => {
+  it('returns the stored baseline without touching the viewed ids', async () => {
+    const bucket = makeBucket({
+      [BASELINE_PATH]: json({ version: 1, readBefore: 1000 }),
+    });
+
+    await expect(
+      makeService(bucket.dialClient).getReadBefore('token', 'b'),
+    ).resolves.toBe(1000);
+
+    expect(bucket.dialClient.client.downloadFile).toHaveBeenCalledTimes(1);
+    expect(bucket.uploads).toEqual([]);
+  });
+
+  it('does not create the baseline when it is missing', async () => {
+    const bucket = makeBucket();
+
+    await expect(
+      makeService(bucket.dialClient).getReadBefore('token', 'b'),
+    ).resolves.toBeNull();
+
+    expect(bucket.uploads).toEqual([]);
+  });
+
+  it.each([
+    ['a failed read', { [BASELINE_PATH]: 503 }, {}],
+    ['a malformed file', {}, { [BASELINE_PATH]: '{nope' }],
+  ])('reports no baseline for %s', async (_label, failing, files) => {
+    const bucket = makeBucket(files as Stored, failing);
+
+    await expect(
+      makeService(bucket.dialClient).getReadBefore('token', 'b'),
+    ).resolves.toBeNull();
+  });
+});
+
 describe('ConversationReadStateService routing by conversation kind', () => {
   const RUN =
     'conversations/b/.scheduler/sched_abc/gpt-4o__Run__c7aeee4c-c01f-41f2-b0db-b8a1a39943f5';
@@ -286,6 +322,22 @@ describe('ConversationReadStateService routing by conversation kind', () => {
     expect(JSON.parse(bucket.files[VIEWED_PATH]).conversationIds).toEqual([
       'keep',
     ]);
+  });
+
+  it('swallows and logs a failure when un-viewing, so a generation never fails on it', async () => {
+    const bucket = makeBucket({}, { [VIEWED_PATH]: 503 });
+    const service = makeService(bucket.dialClient);
+    const warn = vi.spyOn(service['logger'], 'warn');
+
+    await expect(
+      service.markUnviewed(CHAT, 'token', 'b'),
+    ).resolves.toBeUndefined();
+
+    expect(warn).toHaveBeenCalledWith(
+      'Failed to mark conversation as unviewed',
+      expect.anything(),
+    );
+    expect(bucket.uploads).toEqual([]);
   });
 
   it('does not touch any file when a scheduler run is un-viewed', async () => {

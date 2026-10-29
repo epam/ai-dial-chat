@@ -64,9 +64,9 @@ describe('POST /conversations/completions (integration)', () => {
   let app: INestApplication;
   let mockService: {
     streamCompletion: ReturnType<typeof vi.fn>;
+    markConversationUnviewed: ReturnType<typeof vi.fn>;
     resolveBackgroundAttach?: ReturnType<typeof vi.fn>;
     stopBackgroundGeneration?: ReturnType<typeof vi.fn>;
-    markConversationUnviewed: ReturnType<typeof vi.fn>;
   };
   let mockGenerationService: {
     register: ReturnType<typeof vi.fn>;
@@ -269,19 +269,6 @@ describe('POST /conversations/completions (integration)', () => {
       .expect(409);
 
     expect(mockService.markConversationUnviewed).not.toHaveBeenCalled();
-  });
-
-  it('still streams the answer when removing the viewed id fails', async () => {
-    mockService.markConversationUnviewed.mockRejectedValue(
-      new Error('DIAL Core 503'),
-    );
-
-    const res = await request(app.getHttpServer())
-      .post('/conversations/completions')
-      .send(VALID_COMPLETION_BODY)
-      .expect(200);
-
-    expect(res.text).toContain('"content":"Hi"');
   });
 
   it('returns 409 when the generator rejects before the stream opens', async () => {
@@ -509,6 +496,7 @@ describe('POST /conversations/completions — backpressure-driven detachment (di
     const mockService = {
       resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
       stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
+      markConversationUnviewed: vi.fn().mockResolvedValue(undefined),
       streamCompletion: vi.fn().mockImplementation(async function* (
         ...args: unknown[]
       ) {
@@ -590,6 +578,7 @@ describe('POST /conversations/completions/stop (integration)', () => {
     const mockService = {
       resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
       stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
+      markConversationUnviewed: vi.fn().mockResolvedValue(undefined),
       streamCompletion: vi.fn(),
     };
     mockGenerationService = {
@@ -706,6 +695,7 @@ describe('completions endpoints — header-authenticated (bearer) caller', () =>
   let app: INestApplication;
   let mockService: {
     streamCompletion: ReturnType<typeof vi.fn>;
+    markConversationUnviewed: ReturnType<typeof vi.fn>;
     resolveBackgroundAttach?: ReturnType<typeof vi.fn>;
     stopBackgroundGeneration?: ReturnType<typeof vi.fn>;
   };
@@ -723,6 +713,7 @@ describe('completions endpoints — header-authenticated (bearer) caller', () =>
     mockService = {
       resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
       stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
+      markConversationUnviewed: vi.fn().mockResolvedValue(undefined),
       streamCompletion: vi.fn().mockImplementation(async function* (
         ...args: unknown[]
       ) {
@@ -867,6 +858,7 @@ describe('generation ownership isolation (real registry)', () => {
     const mockService = {
       resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
       stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
+      markConversationUnviewed: vi.fn().mockResolvedValue(undefined),
       streamCompletion: vi.fn().mockImplementation(async function* (
         ...args: unknown[]
       ) {

@@ -1753,6 +1753,64 @@ describe('ConversationsContext — regular chat read state', () => {
     expect(mockMarkConversationViewed).toHaveBeenCalledTimes(2);
   });
 
+  it('drops a queued viewed write once a generation starts in that chat', async () => {
+    const chatA = { ...seedConversations[0], id: 'chatA', isUnread: true };
+    const chatB = { ...seedConversations[0], id: 'chatB', isUnread: true };
+    let finishA!: () => void;
+    mockMarkConversationViewed.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        finishA = resolve;
+      }),
+    );
+    const { result } = await renderLoaded([chatA, chatB]);
+
+    let viewingA!: Promise<void>;
+    let viewingB!: Promise<void>;
+    act(() => {
+      viewingA = result.current.markConversationViewed('chatA');
+      viewingB = result.current.markConversationViewed('chatB');
+    });
+    /* B's write is queued behind A's slow one; the user now sends a message in B. */
+    act(() => result.current.markConversationUnread('chatB'));
+    await act(async () => {
+      finishA();
+      await Promise.all([viewingA, viewingB]);
+    });
+
+    expect(mockMarkConversationViewed).toHaveBeenCalledTimes(1);
+    expect(result.current.conversations.map((c) => c.isUnread)).toEqual([
+      false,
+      true,
+    ]);
+  });
+
+  it('still sends a queued viewed write of a chat that did not start a generation', async () => {
+    const chatA = { ...seedConversations[0], id: 'chatA', isUnread: true };
+    const chatB = { ...seedConversations[0], id: 'chatB', isUnread: true };
+    const chatC = { ...seedConversations[0], id: 'chatC', isUnread: false };
+    let finishA!: () => void;
+    mockMarkConversationViewed.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        finishA = resolve;
+      }),
+    );
+    const { result } = await renderLoaded([chatA, chatB, chatC]);
+
+    let viewingA!: Promise<void>;
+    let viewingB!: Promise<void>;
+    act(() => {
+      viewingA = result.current.markConversationViewed('chatA');
+      viewingB = result.current.markConversationViewed('chatB');
+    });
+    act(() => result.current.markConversationUnread('chatC'));
+    await act(async () => {
+      finishA();
+      await Promise.all([viewingA, viewingB]);
+    });
+
+    expect(mockMarkConversationViewed).toHaveBeenCalledTimes(2);
+  });
+
   it('marks a regular chat unread locally without calling the API', async () => {
     const { result } = await renderLoaded([seedConversations[0]]);
 

@@ -279,24 +279,32 @@ export class ConversationLifecycleService {
       return false;
     }
     try {
-      const state = await this.conversationReadStateService.getReadState(
+      const readBefore = await this.conversationReadStateService.getReadBefore(
         token,
         bucket,
       );
-      if (!state) return false;
+      if (readBefore === null) return false;
       const { data } = await this.dialClient.client.getConversationMetadata(
         bucket,
         encodeDialResourcePath(conversationPath),
         { headers: getBearerAuthHeaders(token) },
       );
       const updatedAt = (data as { updatedAt?: unknown } | null)?.updatedAt;
-      return typeof updatedAt === 'number' && updatedAt <= state.readBefore;
+      return typeof updatedAt === 'number' && updatedAt <= readBefore;
     } catch (error) {
       this.logger.warn('Failed to read the read state before rename', error);
       return false;
     }
   }
 
+  /*
+   * Runs after the rename saved. If a new generation started on this chat since
+   * `isOldChatToKeepRead` looked at it, this write adds the chat back to the
+   * viewed ids and hides the dot of that answer. The window is the rename's own
+   * duration, the cost is one missing dot, and read state is last-writer-wins
+   * everywhere else too, so it is accepted instead of paying for a second
+   * metadata read on every rename.
+   */
   private async keepChatRead(
     conversationPath: string,
     token: string,

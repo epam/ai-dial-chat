@@ -77,6 +77,8 @@ own viewed file.
   nothing, and the chat is marked when the stream ends while it is open. Leaving
   mid-stream never marks it. The panel's active-conversation sync only marks
   scheduled runs.
+  A failed recovery of a generating chat keeps it unread, and a viewed write
+  queued when a generation starts in that chat is dropped.
 - Renaming a read chat keeps it read. A failed viewed write leaves a regular chat
   read locally; the next list that still reports it unread retries once.
 

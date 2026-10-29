@@ -707,18 +707,17 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
    * mid-stream needs no extra state. Keeps the mapped array while the open row
    * carries no dot, so most navigations leave every row untouched.
    */
-  const displayedConversations = useMemo(
-    () =>
-      panelActiveConversationId &&
-      conversations.some(
-        (c) => c.id === panelActiveConversationId && c.isUnread,
-      )
-        ? conversations.map((c) =>
-            c.id === panelActiveConversationId ? { ...c, isUnread: false } : c,
-          )
-        : conversations,
-    [conversations, panelActiveConversationId],
-  );
+  const displayedConversations = useMemo(() => {
+    const unreadActiveIndex = panelActiveConversationId
+      ? conversations.findIndex(
+          (c) => c.id === panelActiveConversationId && c.isUnread,
+        )
+      : -1;
+    if (unreadActiveIndex === -1) return conversations;
+    const next = conversations.slice();
+    next[unreadActiveIndex] = { ...next[unreadActiveIndex], isUnread: false };
+    return next;
+  }, [conversations, panelActiveConversationId]);
 
   const filterLabels = useMemo(
     () => ({
