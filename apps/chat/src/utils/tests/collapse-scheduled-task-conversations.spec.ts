@@ -1,7 +1,7 @@
 import type { ConversationListItemDto } from '@epam/ai-dial-chat-api-client';
+import { applyActiveScheduledTaskRun } from '@epam/ai-dial-chat-hooks/conversation';
 import { describe, expect, it } from 'vitest';
 import {
-  applyActiveScheduledTaskRun,
   collapseScheduledTaskConversations,
   groupScheduledTaskConversations,
 } from '../collapse-scheduled-task-conversations';

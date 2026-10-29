@@ -1,7 +1,9 @@
-import { AttachmentCanvasProvider } from '@epam/ai-dial-attachment-canvas';
 import { renderHook as render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { useLatestCanvasRequest } from '../useLatestCanvasRequest';
+import {
+  useLatestCanvasRequest,
+  AttachmentCanvasProvider,
+} from '../AttachmentCanvasContext';
 
 const renderHook = <T>(callback: () => T) =>
   render(callback, { wrapper: AttachmentCanvasProvider });

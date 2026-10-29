@@ -323,8 +323,10 @@ Reusable non-rendering controllers in `chat-hooks` now own browser downloads,
 scheduled-run grouping, conversation discovery, selected skill names, skill
 file selection, pending attachment results, file preview, entity preselection,
 canvas width calculation and injected persisted state. Their existing
-`apps/chat` entry points retain host policies and delegate through public
-package exports. Canvas preview ordering belongs to each existing
+`apps/chat` adapters retain host policies and delegate through public
+package exports. Downloads, canvas request guards and active-run substitution
+are imported directly from their libraries without app re-export modules.
+Canvas preview ordering belongs to each existing
 `AttachmentCanvasProvider`, with per-caller unmount guards; independent
 providers do not share a generation counter. See
 [reusable chat workflows](reusable-chat-workflows.md) for the owning entries,

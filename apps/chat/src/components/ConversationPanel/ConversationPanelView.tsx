@@ -17,6 +17,7 @@ import {
   useConversationPanelItems,
   useImportFilePicker,
 } from '@epam/ai-dial-chat-hooks';
+import { applyActiveScheduledTaskRun } from '@epam/ai-dial-chat-hooks/conversation';
 import {
   ConversationExportMode,
   ConversationTransferWarningCode,
@@ -128,10 +129,7 @@ import {
 } from '../../types/entity-notification';
 import { PublishHistoryStatus } from '../../types/publish-history';
 import { ROUTES } from '../../types/routes';
-import {
-  applyActiveScheduledTaskRun,
-  groupScheduledTaskConversations,
-} from '../../utils/collapse-scheduled-task-conversations';
+import { groupScheduledTaskConversations } from '../../utils/collapse-scheduled-task-conversations';
 import {
   conversationIdsMatch,
   toPanelConversationId,

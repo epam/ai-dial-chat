@@ -3,6 +3,7 @@ import {
   ResponseError,
   type ProjectDetailsDto,
 } from '@epam/ai-dial-chat-api-client';
+import { triggerBrowserDownload } from '@epam/ai-dial-chat-hooks/utils';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -15,7 +16,6 @@ import {
   NotifiableEntity,
 } from '../../../types/entity-notification';
 import { ROUTES } from '../../../types/routes';
-import { triggerBrowserDownload } from '../../../utils/file-download';
 import { useProjectActions } from '../useProjectActions';
 
 const mocks = vi.hoisted(() => ({
@@ -54,7 +54,8 @@ vi.mock('../../../server-api/projects.api', () => ({
   downloadProjectArchive: vi.fn(),
   downloadProjectContextFile: vi.fn(),
 }));
-vi.mock('../../../utils/file-download', () => ({
+vi.mock('@epam/ai-dial-chat-hooks/utils', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-hooks/utils')>()),
   triggerBrowserDownload: vi.fn(),
 }));
 

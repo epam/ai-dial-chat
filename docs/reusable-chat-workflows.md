@@ -358,8 +358,10 @@ them is deliberate:
 ## October controller extraction and downstream adoption
 
 The parent now delegates the ten audited algorithms through these public APIs.
-All `chat-hooks` names are also root exports. Existing app signatures remain
-compatibility adapters; no provider's complete conversation list is filtered.
+All `chat-hooks` names are also root exports. App adapters retain host policy;
+callers import `triggerBrowserDownload`, `useLatestCanvasRequest` and
+`applyActiveScheduledTaskRun` directly from their owning packages. No provider's
+complete conversation list is filtered.
 The client paths below use the audit's `apps/chat/src/` prefix.
 
 | Client copy                                                                       | Owning public import                                                                                                                                | Retained host integration                                                                                             |

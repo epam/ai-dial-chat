@@ -112,9 +112,9 @@ Every file among `announcement-message.ts`, `application-schema.ts`, `browser-ti
 - **WHEN** `apps/chat` calls `emitToolsetLoginSuccess<ToolsetCredentialsLevel>(detail)` and a subscriber calls `subscribeToolsetLoginSuccess<ToolsetCredentialsLevel>(listener)`
 - **THEN** the listener receives the exact `detail` object that was emitted, typed as `ToolsetCredentialsLevel`
 
-### Requirement: `file-download.ts` splits into a pure destination resolver and an app-owned DOM trigger
+### Requirement: Download destination resolution and browser download execution are public library operations
 
-`@epam/ai-dial-chat-hooks` SHALL export `prepareDownloadDestination` and the `DownloadDestinationType` it resolves to, reproducing `apps/chat/src/utils/file-download.ts`'s current decision logic exactly. `triggerBrowserDownload` (which creates and clicks a DOM `<a>` element) SHALL remain in `apps/chat/src/utils/file-download.ts`, which exports only `triggerBrowserDownload` and does not re-export `prepareDownloadDestination`.
+`@epam/ai-dial-chat-hooks` SHALL export `prepareDownloadDestination` and `DownloadDestinationType` with the existing destination-selection behavior. `triggerBrowserDownload` SHALL be exported by `@epam/ai-dial-chat-hooks/utils` from `libs/chat-hooks/src/files/browser-download.ts`; app consumers SHALL import it directly rather than through an app re-export.
 
 #### Scenario: Consumers import the resolver from the package
 - **WHEN** `apps/chat/src/components/DialFileManagerShell/useDialFileManagerHostOptions.ts` wires the file manager's download destination

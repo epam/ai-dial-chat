@@ -19,7 +19,7 @@ No backend endpoint, generated-client change, new feature flag, telemetry event 
 
 ### Requirement: Browser download operation
 
-`chat-hooks/utils` SHALL export `triggerBrowserDownload(response, fallbackName, destination)`, preserving the operation currently exposed by `apps/chat/src/utils/file-download.ts`. The operation SHALL own no persistent state and SHALL return the saved filename. Response acquisition and picker opening SHALL remain host-owned.
+`chat-hooks/utils` SHALL export `triggerBrowserDownload(response, fallbackName, destination)`, used directly by app consumers without a local re-export module. The operation SHALL own no persistent state and SHALL return the saved filename. Response acquisition and picker opening SHALL remain host-owned.
 
 #### Scenario: UTF-8 header filename
 
@@ -91,7 +91,7 @@ No backend endpoint, generated-client change, new feature flag, telemetry event 
 
 ### Requirement: Canvas request coordination is scoped to the canvas
 
-`attachment-canvas` SHALL provide `useLatestCanvasRequest` backed by its existing canvas-provider lifetime. All callers for one canvas SHALL share request ordering; independent canvas providers SHALL NOT invalidate each other. The app adapter in `apps/chat/src/hooks/attachment/useLatestCanvasRequest.ts` SHALL delegate to that implementation. A request guard SHALL be false after caller unmount or any newer request within its canvas.
+`attachment-canvas` SHALL provide `useLatestCanvasRequest` backed by its existing canvas-provider lifetime. All callers for one canvas SHALL share request ordering; independent canvas providers SHALL NOT invalidate each other. App consumers SHALL import the hook directly from `@epam/ai-dial-attachment-canvas`. A request guard SHALL be false after caller unmount or any newer request within its canvas.
 
 #### Scenario: Cross-source ordering
 
@@ -169,7 +169,7 @@ No backend endpoint, generated-client change, new feature flag, telemetry event 
 
 ### Requirement: Parent adoption and packed artifacts prove the extraction
 
-Each extracted item SHALL be called through a public export by the parent; adapters SHALL retain integration only. Existing named app paths SHALL remain valid where existing specs require them. Behavioral tests SHALL use injected callbacks, and independent packed-consumer fixtures SHALL separately verify JavaScript, declarations and dependency closure without workspace aliases. Utility entries SHALL preserve lazy feature-engine boundaries.
+Each extracted item SHALL be called through a public export by the parent; adapters SHALL retain integration only. App modules SHALL retain only host integration; consumers SHALL import library-only operations directly from their public package entries. Behavioral tests SHALL use injected callbacks, and independent packed-consumer fixtures SHALL separately verify JavaScript, declarations and dependency closure without workspace aliases. Utility entries SHALL preserve lazy feature-engine boundaries.
 
 #### Scenario: Complete parent implementation
 

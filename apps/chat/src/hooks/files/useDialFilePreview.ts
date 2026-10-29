@@ -1,4 +1,5 @@
 import {
+  useLatestCanvasRequest,
   createUnsupportedCanvasContent,
   useAttachmentCanvas,
   useOpenAttachmentCanvas,
@@ -8,7 +9,7 @@ import type { DialFile } from '@epam/ai-dial-react-file-manager';
 import { useCallback } from 'react';
 import { resolveDialUrl } from '../../utils/dial-file';
 import { useAttachmentCanvasResolvers } from '../attachment/useAttachmentCanvasResolvers';
-import { useLatestCanvasRequest } from '../attachment/useLatestCanvasRequest';
+
 const PREVIEWABLE_EXTENSIONS = [
   '.txt',
   '.md',

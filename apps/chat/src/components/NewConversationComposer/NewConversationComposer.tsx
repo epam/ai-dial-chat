@@ -1,4 +1,7 @@
-import { useOpenAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
+import {
+  useLatestCanvasRequest,
+  useOpenAttachmentCanvas,
+} from '@epam/ai-dial-attachment-canvas';
 import {
   FileDndOverlay,
   isMimeTypeAllowed,
@@ -51,7 +54,6 @@ import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
-import { useLatestCanvasRequest } from '../../hooks/attachment/useLatestCanvasRequest';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useAudioTranscription } from '../../hooks/conversation/useAudioTranscription';
 import { useChatSettingsFormLabels } from '../../hooks/conversation/useChatSettingsFormLabels';

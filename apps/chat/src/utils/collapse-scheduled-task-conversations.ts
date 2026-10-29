@@ -3,9 +3,8 @@ import { safeDecodeURIComponent } from '@epam/ai-dial-chat-hooks';
 import {
   groupScheduledTaskConversations as groupRuns,
   applyActiveScheduledTaskRun,
-  type ScheduledTaskGrouping as Grouping,
+  type ScheduledTaskGrouping,
 } from '@epam/ai-dial-chat-hooks/conversation';
-export { applyActiveScheduledTaskRun };
 
 const CONVERSATION_RESOURCE_TYPE = 'conversations';
 
@@ -41,8 +40,6 @@ const getGroupKey = (item: ConversationListItemDto): string | undefined => {
 const isCollapsible = (item: ConversationListItemDto): boolean =>
   !item.isPinned && !item.sharedWithMe && !item.publishedWithMe;
 
-/** Parent conversation grouping with the full source list retained. */
-export type ScheduledTaskGrouping = Grouping<ConversationListItemDto>;
 /** Parent ID comparison policy. */
 export interface GroupScheduledTaskConversationsOptions {
   /** Compares resource and route IDs. */
@@ -52,7 +49,7 @@ export interface GroupScheduledTaskConversationsOptions {
 export const groupScheduledTaskConversations = (
   items: readonly ConversationListItemDto[],
   options: GroupScheduledTaskConversationsOptions,
-): ScheduledTaskGrouping =>
+): ScheduledTaskGrouping<ConversationListItemDto> =>
   groupRuns(items, { ...options, getGroupKey, isCollapsible });
 /** Derives visible rows without filtering provider state. */
 export const collapseScheduledTaskConversations = (

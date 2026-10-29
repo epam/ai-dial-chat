@@ -1,4 +1,7 @@
-import { AttachmentCanvasProvider } from '@epam/ai-dial-attachment-canvas';
+import {
+  useLatestCanvasRequest,
+  AttachmentCanvasProvider,
+} from '@epam/ai-dial-attachment-canvas';
 import type {
   ScheduledTaskDto,
   ScheduledTaskRunDto,
@@ -14,7 +17,6 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createContext, useContext, useEffect, type ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useLatestCanvasRequest } from '../../../hooks/attachment/useLatestCanvasRequest';
 import ConversationSourcesPanelContainer from '../ConversationSourcesPanel';
 
 let startCanvasRequest: () => () => boolean;
