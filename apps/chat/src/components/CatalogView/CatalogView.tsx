@@ -87,6 +87,7 @@ import { resolveFavoriteEntityType } from '../../utils/favorites';
 import {
   getAccessRulesLabels,
   getPublishAuthorLabels,
+  getPublishPanelCommonLabels,
 } from '../../utils/publish';
 import { canEditShareAccess } from '../../utils/share';
 import { ApplicationCredentials } from '../ApplicationCredentials/ApplicationCredentials';
@@ -678,6 +679,7 @@ const CatalogView: FC<Props> = ({
           rootFolderLabel: t(BasicI18nKeys.Organization),
           accessRulesLabels: getAccessRulesLabels(t),
           ...getPublishAuthorLabels(t),
+          ...getPublishPanelCommonLabels(t),
         }}
         shareOverlay={(item, onClose) => (
           <SharePopoverContainer

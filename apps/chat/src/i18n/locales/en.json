@@ -23,6 +23,7 @@
     "apiKey": "API key"
   },
   "chat": {
+    "userMessageAriaLabel": "User message",
     "reply": "Reply",
     "replySelectionAvailable": "Reply to selected text is available",
     "replyAttachmentAdded": "Text attached",
@@ -326,6 +327,32 @@
       "personal": "Personal",
       "public": "Organization",
       "shared": "Shared with me"
+    },
+    "entityDetails": {
+      "capabilitiesTitle": "Capabilities",
+      "specificationTitle": "Specification",
+      "configurationTitle": "Configuration",
+      "tools": "Tools",
+      "parallelToolCalls": "Parallel tool calls",
+      "reasoningEfforts": "Reasoning efforts",
+      "skills": "Skills",
+      "provider": "Provider",
+      "vendor": "Vendor",
+      "license": "License",
+      "knowledgeCutoffDate": "Knowledge cutoff date",
+      "parameters": "Parameters",
+      "hostedBy": "Hosted by",
+      "releaseDate": "Release date",
+      "contextWindow": "Context window",
+      "maxOutputTokens": "Max output tokens",
+      "inputModalities": "Input modalities",
+      "inputAttachments": "Input attachments",
+      "routes": "Routes",
+      "configurationSchema": "Configuration schema",
+      "authentication": "Authentication",
+      "authorizationEndpoint": "Authorization endpoint",
+      "tokenEndpoint": "Token endpoint",
+      "oauthScopes": "OAuth scopes"
     }
   },
   "deploymentSelector": {
@@ -414,6 +441,9 @@
     "copyText": "Copy text",
     "copyMessage": "Copy message",
     "messageCopiedStatus": "Message copied to clipboard",
+    "responseCopiedStatus": "Copied to clipboard",
+    "markdownCopiedStatus": "Copied as Markdown to clipboard",
+    "messageActionsGroup": "Message actions",
     "likeResponse": "Like response",
     "dislikeResponse": "Dislike response",
     "useInChat": "Use in chat",
@@ -579,7 +609,14 @@
     "submitErrorCallout": "Publishing failed. Please try again.",
     "authorLabel": "Author",
     "authorPlaceholder": "Author name",
-    "authorHint": "Shown as the publication's author. Defaults to you — replace it to credit a team instead."
+    "authorHint": "Shown as the publication's author. Defaults to you — replace it to credit a team instead.",
+    "folderLabel": "Publish to folder",
+    "noAccessError": "You don't have permission to publish to {folder}. Pick another, or ask an owner for access.",
+    "addSiblingFolder": "Add sibling",
+    "addChildFolder": "Add child",
+    "summaryVersion": "Version {version} · current",
+    "updateVersion": "Update version {version}",
+    "publishingInProgress": "Publishing…"
   },
   "publishAccessRules": {
     "heading": "Allow access if all match",
@@ -1015,6 +1052,7 @@
       "historyEmptyLabel": "No runs yet",
       "historyEmptyDescription": "Runs will appear here once the task starts.",
       "historyErrorLabel": "Failed to load history",
+      "tabsAriaLabel": "Scheduled task sections",
       "historyLoadingMoreLabel": "Loading more runs…",
       "historyTodayAt": "today at {{time}}",
       "historyDateAt": "{{date}} at {{time}}",

@@ -462,6 +462,7 @@ const ScheduledTaskDetailPage: FC = () => {
         ScheduledTasksI18nKeys.DetailHistoryEmptyDescription,
       ),
       historyErrorLabel: t(ScheduledTasksI18nKeys.DetailHistoryErrorLabel),
+      tabsAriaLabel: t(ScheduledTasksI18nKeys.DetailTabsAriaLabel),
       historyRetryLabel: t(ScheduledTasksI18nKeys.ListRetryLabel),
       historyLoadingMoreLabel: t(
         ScheduledTasksI18nKeys.DetailHistoryLoadingMoreLabel,

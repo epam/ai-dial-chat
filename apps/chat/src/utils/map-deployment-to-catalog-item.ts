@@ -5,6 +5,7 @@ import type {
 } from '@epam/ai-dial-chat-api-client';
 import type {
   DeploymentFolderLabels,
+  EntityDetailsLabels,
   EntitySpecificDetails,
   MapDeploymentToCatalogItemOptions as MapDeploymentToCatalogItemOptionsLib,
   MapToolsetToCatalogItemOptions as MapToolsetToCatalogItemOptionsLib,
@@ -25,6 +26,34 @@ export const buildDeploymentFolderLabels = (
   personal: t(CatalogI18nKeys.FolderPersonal),
   shared: t(CatalogI18nKeys.FolderShared),
   public: t(CatalogI18nKeys.FolderPublic),
+});
+
+/** Builds the translated catalog Overview labels the lib's entity-details mapper needs. */
+export const buildEntityDetailsLabels = (t: TFunction): EntityDetailsLabels => ({
+  capabilitiesTitle: t(CatalogI18nKeys.EntityDetailsCapabilitiesTitle),
+  specificationTitle: t(CatalogI18nKeys.EntityDetailsSpecificationTitle),
+  configurationTitle: t(CatalogI18nKeys.EntityDetailsConfigurationTitle),
+  tools: t(CatalogI18nKeys.EntityDetailsTools),
+  parallelToolCalls: t(CatalogI18nKeys.EntityDetailsParallelToolCalls),
+  reasoningEfforts: t(CatalogI18nKeys.EntityDetailsReasoningEfforts),
+  skills: t(CatalogI18nKeys.EntityDetailsSkills),
+  provider: t(CatalogI18nKeys.EntityDetailsProvider),
+  vendor: t(CatalogI18nKeys.EntityDetailsVendor),
+  license: t(CatalogI18nKeys.EntityDetailsLicense),
+  knowledgeCutoffDate: t(CatalogI18nKeys.EntityDetailsKnowledgeCutoffDate),
+  parameters: t(CatalogI18nKeys.EntityDetailsParameters),
+  hostedBy: t(CatalogI18nKeys.EntityDetailsHostedBy),
+  releaseDate: t(CatalogI18nKeys.EntityDetailsReleaseDate),
+  contextWindow: t(CatalogI18nKeys.EntityDetailsContextWindow),
+  maxOutputTokens: t(CatalogI18nKeys.EntityDetailsMaxOutputTokens),
+  inputModalities: t(CatalogI18nKeys.EntityDetailsInputModalities),
+  inputAttachments: t(CatalogI18nKeys.EntityDetailsInputAttachments),
+  routes: t(CatalogI18nKeys.EntityDetailsRoutes),
+  configurationSchema: t(CatalogI18nKeys.EntityDetailsConfigurationSchema),
+  authentication: t(CatalogI18nKeys.EntityDetailsAuthentication),
+  authorizationEndpoint: t(CatalogI18nKeys.EntityDetailsAuthorizationEndpoint),
+  tokenEndpoint: t(CatalogI18nKeys.EntityDetailsTokenEndpoint),
+  oauthScopes: t(CatalogI18nKeys.EntityDetailsOauthScopes),
 });
 
 export interface MapDeploymentToCatalogItemOptions {
@@ -58,6 +87,7 @@ export const mapDeploymentToCatalogItem = (
     primaryLocale: PRIMARY_LOCALE,
     resolveIconUrl: resolveCatalogIconUrl,
     folderLabels: buildDeploymentFolderLabels(t),
+    entityDetailsLabels: buildEntityDetailsLabels(t),
     isToolsetTabEnabled,
   };
   return mapDeploymentToCatalogItemLib(deployment, options);

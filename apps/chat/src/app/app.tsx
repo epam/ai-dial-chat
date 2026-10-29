@@ -48,6 +48,7 @@ import {
   AttachmentCanvasI18nKeys,
   ButtonsI18nKeys,
   ChatI18nKeys,
+  SidebarI18nKeys,
 } from '../constants/translation-keys';
 import { ActiveScheduledTaskProvider } from '../context/ActiveScheduledTaskContext';
 import { useSourcesSidebar } from '../context/SourcesSidebarContext';
