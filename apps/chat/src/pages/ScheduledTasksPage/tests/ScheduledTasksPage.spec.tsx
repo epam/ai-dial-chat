@@ -294,7 +294,7 @@ describe('ScheduledTasksPage', () => {
 
     await userEvent.click(
       screen.getByRole('button', {
-        name: 'scheduledTasks.list.retryLabel',
+        name: 'buttons.retry',
       }),
     );
 

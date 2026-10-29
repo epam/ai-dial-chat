@@ -11,7 +11,6 @@ import { useTranslation } from 'react-i18next';
 import {
   ButtonsI18nKeys,
   FavoritesI18nKeys,
-  NavigationI18nKeys,
   PromptSelectorI18nKeys,
   SkillSelectorI18nKeys,
 } from '../../constants/translation-keys';
@@ -93,7 +92,7 @@ export const useSkillSelectorOverlay = ({
   const labels = useMemo<SkillSelectorOverlayLabels>(
     () => ({
       addMenuLabel: t(SkillSelectorI18nKeys.AddMenuLabel),
-      backLabel: t(NavigationI18nKeys.Back),
+      backLabel: t(ButtonsI18nKeys.Back),
       catalogModalTitleLabel: t(SkillSelectorI18nKeys.ModalTitle),
       emptyQueryHintLabel: t(SkillSelectorI18nKeys.EmptyQueryHint),
       deletedTooltipLabel: t(SkillSelectorI18nKeys.DeletedTooltipLabel),

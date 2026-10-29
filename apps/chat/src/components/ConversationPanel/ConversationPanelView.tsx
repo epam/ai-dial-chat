@@ -99,7 +99,6 @@ import {
   ConversationImportI18nKeys,
   ConversationPanelI18nKeys,
   ConversationUnpublishI18nKeys,
-  ShareI18nKeys,
 } from '../../constants/translation-keys';
 import { useFeatureFlag } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
@@ -858,8 +857,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       const pinAction: DropdownItem = {
         key: 'pin',
         label: panelItem.isPinned
-          ? t(ConversationPanelI18nKeys.UnpinLabel)
-          : t(ConversationPanelI18nKeys.PinLabel),
+          ? t(ButtonsI18nKeys.Unpin)
+          : t(ButtonsI18nKeys.Pin),
         icon: panelItem.isPinned ? (
           <IconPinnedFilled
             size={DIAL_ICON_SIZE.MD}
@@ -998,7 +997,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           ? [
               {
                 key: 'share',
-                label: t(ShareI18nKeys.Title),
+                label: t(ButtonsI18nKeys.Share),
                 icon: (
                   <IconShare
                     size={DIAL_ICON_SIZE.MD}
@@ -1454,7 +1453,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         },
       },
       groupLabels,
-      actionsLabel: t(ConversationPanelI18nKeys.ActionsLabel),
+      actionsLabel: t(ButtonsI18nKeys.MoreActions),
       unreadIndicatorLabel,
     }),
     [t, filterLabels, groupLabels, unreadIndicatorLabel],

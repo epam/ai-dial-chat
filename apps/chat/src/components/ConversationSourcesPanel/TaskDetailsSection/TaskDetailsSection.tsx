@@ -92,7 +92,7 @@ const TaskDetailsSection: FC<Props> = ({
       unavailableLabel: t(
         ScheduledTasksI18nKeys.ConversationBannerUnavailableLabel,
       ),
-      retryLabel: t(ScheduledTasksI18nKeys.ListRetryLabel),
+      retryLabel: t(ButtonsI18nKeys.Retry),
     }),
     [t],
   );

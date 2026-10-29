@@ -16,7 +16,6 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import {
   ButtonsI18nKeys,
-  NavigationI18nKeys,
   NotFoundI18nKeys,
 } from '../../constants/translation-keys';
 import { ROUTES } from '../../types/routes';
@@ -91,7 +90,7 @@ const NotFoundPage: FC = () => {
           </div>
 
           <GhostButton
-            label={t(NavigationI18nKeys.Back)}
+            label={t(ButtonsI18nKeys.Back)}
             className="mt-6"
             iconBefore={
               <IconArrowLeft

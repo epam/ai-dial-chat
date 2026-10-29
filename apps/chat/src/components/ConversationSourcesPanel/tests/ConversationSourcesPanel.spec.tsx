@@ -488,9 +488,7 @@ describe('ConversationSourcesPanelContainer — scheduled-task sections', () => 
     expect(
       screen.queryByText('scheduledTasks.detail.historyErrorLabel'),
     ).toBeNull();
-    expect(
-      screen.queryByRole('button', { name: 'scheduledTasks.list.retryLabel' }),
-    ).toBeNull();
+    expect(screen.queryByRole('button', { name: 'buttons.retry' })).toBeNull();
   });
 
   it('shows the task display name as the panel title once loaded', () => {
@@ -768,7 +766,7 @@ describe('ConversationSourcesPanelContainer — scheduled-task sections', () => 
       wrapper: CanvasTestWrapper,
     });
     const historyRetryButtons = screen.getAllByRole('button', {
-      name: 'scheduledTasks.list.retryLabel',
+      name: 'buttons.retry',
     });
     await userEvent.click(historyRetryButtons[0]);
 

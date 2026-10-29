@@ -270,12 +270,76 @@ for (const lib of libs) {
   collect(lib, findings);
 }
 
+const EN_JSON = join(APP_DIR, 'i18n/locales/en.json');
+
+const flattenMessages = (obj, prefix = '', out = {}) => {
+  for (const [key, value] of Object.entries(obj)) {
+    const path = prefix ? `${prefix}.${key}` : key;
+    if (value !== null && typeof value === 'object') {
+      flattenMessages(value, path, out);
+    } else {
+      out[path] = value;
+    }
+  }
+  return out;
+};
+
+/* i18next plural forms of one key (`x_one` / `x_other`) share text by design. */
+const pluralBase = (key) => key.replace(/_(zero|one|two|few|many|other)$/, '');
+
+/* The same English text under two keys of en.json. With --base, only groups
+   with a key the branch added — old duplicates do not block a review. */
+const scanDuplicateMessages = (findings) => {
+  const text = readFileSync(EN_JSON, 'utf8');
+  const messages = flattenMessages(JSON.parse(text));
+  let baseKeys = null;
+  if (base) {
+    try {
+      const baseText = execFileSync(
+        'git',
+        ['show', `${base}:apps/chat/src/i18n/locales/en.json`],
+        { encoding: 'utf8' },
+      );
+      baseKeys = new Set(Object.keys(flattenMessages(JSON.parse(baseText))));
+    } catch {
+      baseKeys = new Set();
+    }
+  }
+  const byText = new Map();
+  for (const [key, value] of Object.entries(messages)) {
+    byText.set(value, [...(byText.get(value) ?? []), key]);
+  }
+  for (const [value, keys] of byText) {
+    const distinct = [...new Set(keys.map(pluralBase))];
+    if (distinct.length < 2) continue;
+    if (baseKeys && keys.every((key) => baseKeys.has(key))) continue;
+    const line =
+      text.split('\n').findIndex((l) => l.includes(JSON.stringify(value))) + 1;
+    findings.push({
+      file: EN_JSON,
+      line,
+      signal: 'duplicate-translation-value',
+      detail: `${JSON.stringify(value)}: ${distinct.join(', ')}`,
+    });
+  }
+};
+
 if (isAppInScope) {
   const findings = [];
   for (const file of appFiles) {
     scanFile(file, readFileSync(file, 'utf8'), true, findings);
   }
   collect(`apps/${APP}`, findings);
+  /* Collected outside `collect`'s changed-file filter: en.json is one file. */
+  const duplicates = [];
+  scanDuplicateMessages(duplicates);
+  for (const finding of duplicates) {
+    report.push({
+      scope: `apps/${APP}`,
+      ...finding,
+      file: relative(ROOT, finding.file).split(sep).join('/'),
+    });
+  }
 }
 
 if (isJson) {

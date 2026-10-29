@@ -1390,7 +1390,7 @@ const ConversationView: FC<Props> = ({
                 }
                 isInputDisabled={isInputDisabled}
                 modelSelectorLabels={modelSelectorLabels}
-                addMenuTitle={t(ConversationI18nKeys.AddMenuTitle)}
+                addMenuTitle={t(ButtonsI18nKeys.Add)}
                 sendLabel={t(ChatI18nKeys.SendMessage)}
                 sendTooltip={t(ChatI18nKeys.SendMessage)}
                 stopLabel={t(ChatI18nKeys.StopStreaming)}
@@ -1498,7 +1498,7 @@ const ConversationView: FC<Props> = ({
                   emptyTitle={t(DialFileManagerI18nKeys.Empty)}
                   emptyDescription=""
                   errorMessage={t(DialFileManagerI18nKeys.Error)}
-                  retryLabel={t(DialFileManagerI18nKeys.Retry)}
+                  retryLabel={t(ButtonsI18nKeys.Retry)}
                   hiddenFilesLabel={t(DialFileManagerI18nKeys.HiddenFiles)}
                   showHiddenFilesLabel={t(
                     DialFileManagerI18nKeys.ShowHiddenFiles,

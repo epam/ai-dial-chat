@@ -15,7 +15,10 @@ import {
   mapToolsetToCatalogItem as mapToolsetToCatalogItemLib,
 } from '@epam/ai-dial-chat-hooks';
 import type { TFunction } from 'i18next';
-import { CatalogI18nKeys } from '../constants/translation-keys';
+import {
+  CatalogI18nKeys,
+  ToolsetEditorI18nKeys,
+} from '../constants/translation-keys';
 import { resolveCatalogIconUrl } from './icon-path';
 import { PRIMARY_LOCALE } from './locale';
 
@@ -33,12 +36,12 @@ export const buildEntityDetailsLabels = (
   t: TFunction,
 ): EntityDetailsLabels => ({
   capabilitiesTitle: t(CatalogI18nKeys.EntityDetailsCapabilitiesTitle),
-  specificationTitle: t(CatalogI18nKeys.EntityDetailsSpecificationTitle),
+  specificationTitle: t(CatalogI18nKeys.DetailsSpecificationSection),
   configurationTitle: t(CatalogI18nKeys.EntityDetailsConfigurationTitle),
-  tools: t(CatalogI18nKeys.EntityDetailsTools),
+  tools: t(CatalogI18nKeys.DetailsTabTools),
   parallelToolCalls: t(CatalogI18nKeys.EntityDetailsParallelToolCalls),
   reasoningEfforts: t(CatalogI18nKeys.EntityDetailsReasoningEfforts),
-  skills: t(CatalogI18nKeys.EntityDetailsSkills),
+  skills: t(CatalogI18nKeys.TabSkills),
   provider: t(CatalogI18nKeys.EntityDetailsProvider),
   vendor: t(CatalogI18nKeys.EntityDetailsVendor),
   license: t(CatalogI18nKeys.EntityDetailsLicense),
@@ -52,9 +55,9 @@ export const buildEntityDetailsLabels = (
   inputAttachments: t(CatalogI18nKeys.EntityDetailsInputAttachments),
   routes: t(CatalogI18nKeys.EntityDetailsRoutes),
   configurationSchema: t(CatalogI18nKeys.EntityDetailsConfigurationSchema),
-  authentication: t(CatalogI18nKeys.EntityDetailsAuthentication),
-  authorizationEndpoint: t(CatalogI18nKeys.EntityDetailsAuthorizationEndpoint),
-  tokenEndpoint: t(CatalogI18nKeys.EntityDetailsTokenEndpoint),
+  authentication: t(ToolsetEditorI18nKeys.AuthSectionTitle),
+  authorizationEndpoint: t(ToolsetEditorI18nKeys.AuthorizationEndpointLabel),
+  tokenEndpoint: t(ToolsetEditorI18nKeys.TokenEndpointLabel),
   oauthScopes: t(CatalogI18nKeys.EntityDetailsOauthScopes),
 });
 

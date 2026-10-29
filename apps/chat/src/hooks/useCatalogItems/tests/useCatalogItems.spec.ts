@@ -9,7 +9,10 @@ import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { renderHook } from '@testing-library/react';
 import type { TFunction } from 'i18next';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { CatalogI18nKeys } from '../../../constants/translation-keys';
+import {
+  CatalogI18nKeys,
+  ToolsetEditorI18nKeys,
+} from '../../../constants/translation-keys';
 import { getDeploymentLimits } from '../../../server-api/deployment-limits';
 import { getDeploymentDetails } from '../../../server-api/deployments';
 import { getPrompt, getPublicPrompt } from '../../../server-api/prompts.api';
@@ -599,7 +602,7 @@ describe('useCatalogItems', () => {
 
       expect(details?.overview?.sections).toEqual([
         {
-          title: CatalogI18nKeys.EntityDetailsSpecificationTitle,
+          title: CatalogI18nKeys.DetailsSpecificationSection,
           specs: [
             {
               label: CatalogI18nKeys.EntityDetailsHostedBy,
@@ -613,7 +616,7 @@ describe('useCatalogItems', () => {
         },
         {
           title: CatalogI18nKeys.EntityDetailsCapabilitiesTitle,
-          specs: [{ label: CatalogI18nKeys.EntityDetailsTools, value: false }],
+          specs: [{ label: CatalogI18nKeys.DetailsTabTools, value: false }],
         },
         {
           title: CatalogI18nKeys.EntityDetailsConfigurationTitle,
@@ -662,10 +665,10 @@ describe('useCatalogItems', () => {
 
       expect(details?.overview?.sections).toEqual([
         {
-          title: CatalogI18nKeys.EntityDetailsSpecificationTitle,
+          title: CatalogI18nKeys.DetailsSpecificationSection,
           specs: [
             {
-              label: CatalogI18nKeys.EntityDetailsAuthentication,
+              label: ToolsetEditorI18nKeys.AuthSectionTitle,
               value: 'OAUTH',
             },
             {
@@ -677,11 +680,11 @@ describe('useCatalogItems', () => {
               value: 'read · write',
             },
             {
-              label: CatalogI18nKeys.EntityDetailsAuthorizationEndpoint,
+              label: ToolsetEditorI18nKeys.AuthorizationEndpointLabel,
               value: 'https://mcp.example.com/oauth/authorize',
             },
             {
-              label: CatalogI18nKeys.EntityDetailsTokenEndpoint,
+              label: ToolsetEditorI18nKeys.TokenEndpointLabel,
               value: 'https://mcp.example.com/oauth/token',
             },
           ],

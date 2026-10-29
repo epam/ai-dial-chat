@@ -65,14 +65,15 @@ The scanner skips tests, stories and `chat-api-client`.
 
 ## Signals
 
-| Signal                 | Means                                                                                                                                                                                                                        |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `jsx-literal-text`     | prose written straight into JSX: `>Save<`, `{'Save'}`, or a line of text between JSX lines                                                                                                                                   |
-| `literal-text-attr`    | a text prop or attribute (`title`, `aria-label`, `placeholder`, `alt`, `label`, `tooltip`, `description`, `message`, `heading`, …) set to a literal string; a template built only from props (`${labels.x} ${n}`) is skipped |
-| `raw-translation-key`  | `apps/chat` calls `t('…')` with a string instead of an enum member                                                                                                                                                           |
-| `literal-text-field`   | `apps/chat` sets a text field of an object (`message`, `title`, `label`, `*Label`, `*Message`, …) to an English literal — a label map, an error or a notification built without `t()`                                        |
-| `i18n-in-lib`          | a lib imports `react-i18next` or `i18next`                                                                                                                                                                                   |
-| `label-not-translated` | a text field (`string` or `=> string`) of a lib `*Labels` / `*Texts` / `*AriaLabels` interface whose name appears nowhere in `apps/chat/src`, for a lib the app imports — the user always sees the English default           |
+| Signal                        | Means                                                                                                                                                                                                                        |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `jsx-literal-text`            | prose written straight into JSX: `>Save<`, `{'Save'}`, or a line of text between JSX lines                                                                                                                                   |
+| `literal-text-attr`           | a text prop or attribute (`title`, `aria-label`, `placeholder`, `alt`, `label`, `tooltip`, `description`, `message`, `heading`, …) set to a literal string; a template built only from props (`${labels.x} ${n}`) is skipped |
+| `raw-translation-key`         | `apps/chat` calls `t('…')` with a string instead of an enum member                                                                                                                                                           |
+| `literal-text-field`          | `apps/chat` sets a text field of an object (`message`, `title`, `label`, `*Label`, `*Message`, …) to an English literal — a label map, an error or a notification built without `t()`                                        |
+| `i18n-in-lib`                 | a lib imports `react-i18next` or `i18next`                                                                                                                                                                                   |
+| `label-not-translated`        | a text field (`string` or `=> string`) of a lib `*Labels` / `*Texts` / `*AriaLabels` interface whose name appears nowhere in `apps/chat/src`, for a lib the app imports — the user always sees the English default           |
+| `duplicate-translation-value` | the same English text under two keys of `apps/chat/src/i18n/locales/en.json` (plural forms `_one`/`_other` of one key are ignored). With `--base`, only groups with a key the branch added                                   |
 
 ## Workflow
 
@@ -90,6 +91,15 @@ The scanner skips tests, stories and `chat-api-client`.
      component before reporting it.
    - a `label-not-translated` field belongs to a component the app does not
      render at all.
+   - a `literal-text-field` is a machine-facing message: an error object with a
+     `code` returned through the overlay protocol or an API, read by an
+     integrator, never rendered.
+   - a `duplicate-translation-value` is a context-specific word whose
+     translation can differ by place (a filter "Shared" vs a folder "Shared",
+     a section "Configuration" in two features). Keep it, and say why.
+     A generic button or action label ("Save", "Retry", "Back", "Open in new
+     tab") or the same full message in two features is never such a case:
+     reuse the `ButtonsI18nKeys` member or one shared key.
 
 3. **Report.** Group by scope, then file: `path:line`, the text, and the fix —
    which `*Labels` field it becomes in the lib, or which enum key and

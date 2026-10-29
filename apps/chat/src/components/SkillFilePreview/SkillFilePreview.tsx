@@ -14,6 +14,7 @@ import {
   AttachmentCanvasI18nKeys,
   ButtonsI18nKeys,
   ChatI18nKeys,
+  AttachmentsI18nKeys,
 } from '../../constants/translation-keys';
 import { useTheme } from '../../context/ThemeContext';
 import { usePdfPreviewLoader } from '../../hooks/attachment/usePdfPreviewLoader';
@@ -85,9 +86,7 @@ export const SkillFilePreview: FC<Props> = ({ state, onRetry }) => {
               htmlFrameBlockedLabel: t(
                 AttachmentCanvasI18nKeys.HtmlFrameBlocked,
               ),
-              htmlOpenInNewTabLabel: t(
-                AttachmentCanvasI18nKeys.HtmlOpenInNewTab,
-              ),
+              htmlOpenInNewTabLabel: t(AttachmentsI18nKeys.OpenInNewTab),
               pdfThumbnailsLabel: t(
                 AttachmentCanvasI18nKeys.PdfThumbnailsLabel,
               ),
