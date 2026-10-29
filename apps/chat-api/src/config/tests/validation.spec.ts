@@ -585,4 +585,25 @@ describe('validate', () => {
       ).toThrow();
     });
   });
+
+  describe('GENERATION_PREPARATION_TIMEOUT_MS', () => {
+    it('defaults to 30 seconds when unset', () => {
+      expect(
+        validate({ ...baseConfig }).GENERATION_PREPARATION_TIMEOUT_MS,
+      ).toBe(30_000);
+    });
+
+    it('parses a configured value', () => {
+      expect(
+        validate({ ...baseConfig, GENERATION_PREPARATION_TIMEOUT_MS: '45000' })
+          .GENERATION_PREPARATION_TIMEOUT_MS,
+      ).toBe(45_000);
+    });
+
+    it('fails fast at boot when the value is below 1000', () => {
+      expect(() =>
+        validate({ ...baseConfig, GENERATION_PREPARATION_TIMEOUT_MS: '999' }),
+      ).toThrow(/GENERATION_PREPARATION_TIMEOUT_MS/);
+    });
+  });
 });
