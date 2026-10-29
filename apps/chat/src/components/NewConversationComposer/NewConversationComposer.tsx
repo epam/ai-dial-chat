@@ -244,15 +244,20 @@ const NewConversationComposer: FC<Props> = ({
     [selectedDeployment, language],
   );
 
+  const isMobile = useIsMobile();
+  /* One display step down on a phone, where Display 1 leaves a short name
+     taking the whole width. */
   const composerStyles: ConversationInputStyles = useMemo(
     () => ({
       ...inputStyles,
       typography: {
-        welcomeClassName: 'dial-display1-text',
+        welcomeClassName: isMobile
+          ? 'dial-display2-text'
+          : 'dial-display1-text',
         ...inputStyles?.typography,
       },
     }),
-    [inputStyles],
+    [inputStyles, isMobile],
   );
 
   const [isSending, setIsSending] = useState(false);
@@ -396,7 +401,6 @@ const NewConversationComposer: FC<Props> = ({
     itemCount: deployments.length,
   });
 
-  const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
   const isChatSettingsEnabled = useUiFeature(OverlayFeature.ChatSettings);
   const isEmptyChatSettingsEnabled = useUiFeature(
