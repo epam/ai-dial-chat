@@ -486,7 +486,7 @@ export const Favorites: FC<FavoritesProps> = ({
       <section
         ref={sectionRef}
         className={mergeClasses(
-          'flex flex-shrink-0 flex-col gap-4 pt-2 pb-2',
+          'flex shrink-0 flex-col gap-4 pt-2 pb-2',
           styles.section,
           isLeaving && styles.sectionLeaving,
         )}
@@ -560,7 +560,7 @@ export const Favorites: FC<FavoritesProps> = ({
                Compensated padding preserves alignment; the vertical mask fades
                only the shadow in that padding, avoiding a hard scroll-box edge. */
             isRow
-              ? '-m-4 snap-x snap-mandatory scroll-p-4 scrollbar-none auto-cols-[328px] grid-flow-col gap-2 overflow-x-auto mask-[linear-gradient(to_bottom,transparent,black_16px,black_calc(100%_-_16px),transparent)] p-4 [&>*]:snap-start'
+              ? '-m-4 snap-x snap-mandatory scroll-p-4 scrollbar-none auto-cols-[328px] grid-flow-col gap-2 overflow-x-auto mask-[linear-gradient(to_bottom,transparent,black_16px,black_calc(100%-16px),transparent)] p-4 *:snap-start'
               : 'gap-5',
             styles.gridPage,
           )}

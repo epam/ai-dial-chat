@@ -57,7 +57,7 @@ const FooterMessage: FC = () => {
         <p
           className={mergeClasses(
             'pointer-events-none text-end',
-            isMessageVisible && 'absolute end-4 bottom-4 desktop:end-8',
+            isMessageVisible && 'absolute inset-e-4 bottom-4 desktop:inset-e-8',
           )}
         >
           <span className="sr-only">

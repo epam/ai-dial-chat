@@ -52,7 +52,7 @@ export const SkillFileDropOverlay: FC<SkillFileDropOverlayProps> = ({
       {statusRegion}
       <div
         className={mergeClasses(
-          'pointer-events-none absolute inset-0 z-[100] flex items-center justify-center backdrop-blur-sm',
+          'pointer-events-none absolute inset-0 z-100 flex items-center justify-center backdrop-blur-sm',
         )}
       >
         {/* The status region above already speaks this text. */}

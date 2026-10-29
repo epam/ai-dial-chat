@@ -266,7 +266,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
         return (
           <pre
             className={mergeClasses(
-              'break-words whitespace-pre-wrap',
+              'wrap-break-word whitespace-pre-wrap',
               styles.body,
               typography?.fontClassName,
             )}
@@ -355,7 +355,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
                 data={content.value as object}
                 style={{
                   container: mergeClasses(
-                    'whitespace-pre-wrap break-words p-2',
+                    'whitespace-pre-wrap wrap-break-word p-2',
                     typography?.jsonClassName ?? 'dial-code-text',
                   ),
                   basicChildStyle: defaultStyles.basicChildStyle,

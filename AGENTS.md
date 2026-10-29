@@ -59,6 +59,7 @@ Use these local skills directly:
 - `./.agents/skills/address-current-branch-review/SKILL.md` for processing unresolved GitHub review threads on the current branch. Fix requests do not authorize inline replies; reply only after the user explicitly asks and the pushed fix is visible in the PR.
 - `./.claude/skills/code-review-and-quality/SKILL.md` for review before merge or any quality pass
 - `./.claude/skills/ui-kit-review/SKILL.md` for reviewing a diff or PR for `@epam/ai-dial-ui-kit` adoption (hand-rolled markup the kit ships, legacy `Dial*`, `ErrorText`/`CaptionText` a11y wiring)
+- `./.claude/skills/i18n-strings/SKILL.md` for auditing or fixing untranslated text: in `libs/*` every user-visible string (titles, labels, aria-label, placeholders, errors) comes from a `*Labels` prop with an English default, and `apps/chat` fills every one of them with `t()` and an enum key
 - `./.claude/skills/lib-theming/SKILL.md` for auditing or fixing colors and typography in `libs/*`: every color comes from a `*Colors` prop as `var(--<prefix>-x, fallback)` in the component's `.module.scss`, and every `dial-*-text` class from a `*ClassName` prop default — never hardcoded in lib JSX
 - `./.claude/skills/refactoring-audit/SKILL.md` for deep refactoring/tech-debt audits and local planning docs (`refactoring-backend.md`, `refactoring-frontend.md`)
 - `./.claude/skills/figma/SKILL.md` for translating Figma designs into React components

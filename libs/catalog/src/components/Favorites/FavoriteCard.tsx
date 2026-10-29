@@ -118,7 +118,7 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
         <IconCheck
           size={DIAL_ICON_SIZE.SM}
           className={mergeClasses(
-            'absolute end-3 top-3 shrink-0',
+            'absolute inset-e-3 top-3 shrink-0',
             styles.selectedCheck,
           )}
           aria-hidden

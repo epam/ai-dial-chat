@@ -571,6 +571,10 @@ const App: FC = () => {
             labels={{
               ariaLabel: t(AttachmentCanvasI18nKeys.AriaLabel),
               closeLabel: t(AttachmentCanvasI18nKeys.CloseLabel),
+              resizeLabel: t(SidebarI18nKeys.ResizePanel),
+              visualizerErrorLabel: t(
+                AttachmentCanvasI18nKeys.VisualizerLoadErrorLabel,
+              ),
               downloadLabel: t(AttachmentCanvasI18nKeys.DownloadLabel),
               unsupportedLabel: t(AttachmentCanvasI18nKeys.UnsupportedLabel),
               loadErrorLabel: t(AttachmentCanvasI18nKeys.LoadErrorLabel),

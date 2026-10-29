@@ -100,7 +100,7 @@ export const ProjectCard: FC<ProjectCardProps> = ({
           styles.card,
           /* Keyboard focus gets the kit card's own hover lift and shadow. */
           href != null &&
-            'has-focus-visible:-translate-y-[3px] has-focus-visible:shadow-lg motion-reduce:has-focus-visible:translate-y-0',
+            'has-focus-visible:translate-y-[-3px] has-focus-visible:shadow-lg motion-reduce:has-focus-visible:translate-y-0',
           href != null && styles.interactive,
         )}
       >

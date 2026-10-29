@@ -41,6 +41,7 @@ export enum ChatI18nKeys {
   Thinking = 'chat.thinking',
   ScrollableTable = 'chat.scrollableTable',
   ScrollableFormula = 'chat.scrollableFormula',
+  ScrollableCode = 'chat.scrollableCode',
   MarkdownTableTitle = 'chat.markdownTableTitle',
   ShowMoreUserMessage = 'chat.showMoreUserMessage',
   ShowLessUserMessage = 'chat.showLessUserMessage',
@@ -1065,6 +1066,7 @@ export enum ConversationImportI18nKeys {
 
 export enum SidebarI18nKeys {
   ToggleOpen = 'sidebar.base.toggleOpen',
+  ResizePanel = 'sidebar.base.resizePanel',
   AriaLabel = 'sidebar.sources.ariaLabel',
   SourcesEmptyTitle = 'sidebar.sources.emptyTitle',
   SourcesEmptyDescription = 'sidebar.sources.emptyDescription',

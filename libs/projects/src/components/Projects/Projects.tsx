@@ -195,7 +195,7 @@ export const Projects: FC<ProjectsProps> = ({
     >
       <div className="flex min-w-0 items-center gap-2 px-4 py-4 desktop:px-8">
         <div className="min-w-0 flex-1">
-          <h1 className={mergeClasses('break-words', titleClassName)}>
+          <h1 className={mergeClasses('wrap-break-word', titleClassName)}>
             {labels.title}
           </h1>
           {labels.subtitle && (

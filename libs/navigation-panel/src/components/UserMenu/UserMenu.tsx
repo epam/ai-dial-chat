@@ -178,8 +178,8 @@ export const UserMenu: FC<UserMenuProps> = memo(
             }
             className={mergeClasses(
               isCompactTrigger
-                ? '!size-10 !min-h-0 !min-w-0 gap-0 !rounded-full !border-0 !p-2'
-                : 'size-[44px] gap-0 !rounded-full p-0',
+                ? 'size-10! min-h-0! min-w-0! gap-0 rounded-full! border-0! p-2!'
+                : 'size-[44px] gap-0 rounded-full! p-0',
               styles.trigger,
               isCompactTrigger && isOpen && styles.triggerOpen,
             )}
@@ -228,7 +228,7 @@ export const UserMenu: FC<UserMenuProps> = memo(
           }
           textClassName="min-w-0"
           className={mergeClasses(
-            '!h-10 !min-h-0 max-w-full !min-w-0 gap-2 !rounded-full !border-0 !p-2',
+            'h-10! min-h-0! max-w-full min-w-0! gap-2 rounded-full! border-0! p-2!',
             styles.trigger,
             isOpen && styles.triggerOpen,
           )}

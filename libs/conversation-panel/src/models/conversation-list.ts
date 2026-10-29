@@ -12,7 +12,7 @@ export interface ConversationListColors {
   itemActive?: string;
   /** Primary text color. */
   text?: string;
-  /** Secondary text color (dates, metadata). */
+  /** Text color of the group headers (Pinned, My chats, …). Defaults to `--text-secondary`. */
   textSecondary?: string;
   /** Ring color shown around a group header acting as a drag-and-drop target. */
   dropZoneRing?: string;

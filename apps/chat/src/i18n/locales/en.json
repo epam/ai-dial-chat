@@ -63,6 +63,7 @@
     "thinking": "Thinking",
     "scrollableTable": "Scrollable table",
     "scrollableFormula": "Scrollable formula",
+    "scrollableCode": "Scrollable code",
     "markdownTableTitle": "Table",
     "showMoreUserMessage": "Show full user message",
     "showLessUserMessage": "Collapse user message"
@@ -440,7 +441,8 @@
   },
   "sidebar": {
     "base": {
-      "toggleOpen": "Open panel"
+      "toggleOpen": "Open panel",
+      "resizePanel": "Resize panel"
     },
     "sources": {
       "ariaLabel": "Conversation sources",

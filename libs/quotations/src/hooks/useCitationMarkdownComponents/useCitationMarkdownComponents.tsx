@@ -166,7 +166,7 @@ export const useCitationMarkdownComponents = (
             isCompactTypography
               ? compactParagraphClassName
               : paragraphClassName,
-            'mb-3 [text-wrap:pretty] [overflow-wrap:anywhere] last:mb-0',
+            'mb-3 text-pretty wrap-anywhere last:mb-0',
           )}
         >
           {replaceSentinelsInChildren(children, renderMarker)}

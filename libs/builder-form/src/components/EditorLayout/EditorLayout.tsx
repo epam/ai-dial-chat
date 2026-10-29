@@ -141,7 +141,7 @@ export const EditorLayout: FC<EditorLayoutProps> = ({
               ? 'desktop:shrink-0 desktop:overflow-y-auto desktop:border-e'
               : 'desktop:flex-1',
             centerContent != null && !isResizable && 'desktop:w-[400px]',
-            isResizable && 'desktop:relative desktop:w-[var(--el-left-width)]',
+            isResizable && 'desktop:relative desktop:w-(--el-left-width)',
             'desktop:overflow-y-auto',
             centerContent != null ? styles.columnBorder : undefined,
           )}
@@ -189,7 +189,7 @@ export const EditorLayout: FC<EditorLayoutProps> = ({
       {actions != null && (
         <div
           className={mergeClasses(
-            'flex shrink-0 flex-row-reverse items-center gap-2 border-t px-4 py-2 desktop:hidden [&>*]:flex-1',
+            'flex shrink-0 flex-row-reverse items-center gap-2 border-t px-4 py-2 *:flex-1 desktop:hidden',
             styles.footerBorder,
           )}
         >

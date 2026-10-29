@@ -175,7 +175,7 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
          * tile's `overflow-hidden` instead of wrapping and clamping with an
          * ellipsis.
          */
-        'line-clamp-2 w-full min-w-0 break-words',
+        'line-clamp-2 w-full min-w-0 wrap-break-word',
         styles.nameText,
         ATTACHMENT_INPUT_CLASS.tileName,
       )}

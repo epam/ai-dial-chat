@@ -202,7 +202,7 @@ export const ModelSelectorControl: FC<Props> = ({
           modelPickerOverlay(() => onPickerOpenChange?.(false))
         }
         listClassName={mergeClasses(
-          '!w-[368px]',
+          'w-[368px]!',
           styles.modelOverlayPanel,
           menuStyles?.className,
           CONVERSATION_INPUT_CLASS.modelMenu,
@@ -220,7 +220,7 @@ export const ModelSelectorControl: FC<Props> = ({
           aria-disabled={isBlocked || undefined}
           tooltipProps={{ tooltip: chipTooltip }}
           className={mergeClasses(
-            'h-auto min-w-0 gap-1.5 !rounded-full !border-0 px-0 py-1.5 ps-1.5 pe-2',
+            'h-auto min-w-0 gap-1.5 rounded-full! border-0! px-0 py-1.5 ps-1.5 pe-2',
             styles.modelSelectorButton,
             disabledIconClassName,
             isBlocked && styles.modelSelectorButtonDisabled,
@@ -279,7 +279,7 @@ export const ModelSelectorControl: FC<Props> = ({
            inside a header that stays put. */
         maxDropdownHeight={SELECT_LIST_MAX_HEIGHT_PX}
         listClassName={mergeClasses(
-          '!w-[240px]',
+          'w-[240px]!',
           menuStyles?.className,
           CONVERSATION_INPUT_CLASS.modelMenu,
         )}
@@ -294,7 +294,7 @@ export const ModelSelectorControl: FC<Props> = ({
           iconBefore={iconNode}
           iconAfter={caretIcon}
           className={mergeClasses(
-            'h-auto gap-1 !rounded-full !border-0 p-1.5',
+            'h-auto gap-1 rounded-full! border-0! p-1.5',
             styles.modelSelectorButton,
             isBlocked && styles.modelSelectorButtonDisabled,
             CONVERSATION_INPUT_CLASS.modelSelectorButton,

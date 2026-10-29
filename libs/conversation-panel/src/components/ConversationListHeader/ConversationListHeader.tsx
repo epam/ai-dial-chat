@@ -260,7 +260,7 @@ export const ConversationListHeader: FC<ConversationListHeaderProps> = memo(
           <Search
             containerClassName="min-w-0 flex-1"
             wrapperClassName={mergeClasses(
-              '!h-6 !min-h-0 !py-1 !pe-2 [&_svg]:!size-4',
+              'h-6! min-h-0! py-1! pe-2! [&_svg]:size-4!',
               searchTextClassName,
             )}
             inputRef={searchInputRef}
@@ -361,7 +361,7 @@ export const ConversationListHeader: FC<ConversationListHeaderProps> = memo(
                         aria-hidden
                         className={mergeClasses(
                           styles.filterIndicator,
-                          'absolute -end-0.5 -top-0.5 size-1.5 rounded-full',
+                          'absolute -inset-e-0.5 -top-0.5 size-1.5 rounded-full',
                         )}
                       />
                     )}

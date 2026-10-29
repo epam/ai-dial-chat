@@ -142,6 +142,8 @@ export interface MarkdownRendererProps {
   tableScrollRegionAriaLabel?: string;
   /** Accessible label for a block formula's horizontally scrollable region. Defaults to `'Scrollable formula'`. */
   mathScrollRegionAriaLabel?: string;
+  /** Accessible label for a code block's scrollable region. Defaults to `'Scrollable code'`. */
+  codeBlockScrollRegionAriaLabel?: string;
 }
 
 /** CSS custom-property overrides for the `MarkdownRenderer` component. */
@@ -429,6 +431,7 @@ interface MarkdownComponentOptions {
   tableOnOpenInCanvas?: (markdown: string) => void;
   tableScrollRegionAriaLabel?: string;
   mathScrollRegionAriaLabel?: string;
+  codeBlockScrollRegionAriaLabel?: string;
 }
 
 const buildMarkdownComponents = (
@@ -444,6 +447,7 @@ const buildMarkdownComponents = (
     tableOnOpenInCanvas,
     tableScrollRegionAriaLabel,
     mathScrollRegionAriaLabel,
+    codeBlockScrollRegionAriaLabel,
   }: MarkdownComponentOptions,
 ): Components => ({
   h1: ({ children }) => <h1 className={cn.h1}>{children}</h1>,
@@ -458,7 +462,7 @@ const buildMarkdownComponents = (
    * (typically a long URL) would otherwise overflow its container and get
    * clipped by any ancestor that hides overflow, e.g. a line-clamped quote. */
   p: ({ children }) => (
-    <p className={mergeClasses('break-words', cn.p)}>{children}</p>
+    <p className={mergeClasses('wrap-break-word', cn.p)}>{children}</p>
   ),
   /* An `outside` marker is painted in the list's start padding, so that padding
      has to be wide enough for the widest marker or the marker overflows and is
@@ -493,6 +497,7 @@ const buildMarkdownComponents = (
           copyLabel={codeBlockCopyLabel}
           copiedLabel={codeBlockCopiedLabel}
           downloadLabel={codeBlockDownloadLabel}
+          scrollRegionAriaLabel={codeBlockScrollRegionAriaLabel}
           containerClassName={cn.codeBlockContainer}
           headerClassName={cn.codeBlockHeader}
           codeClassName={cn.codeFont}
@@ -598,7 +603,7 @@ const buildMarkdownComponents = (
     <th
       scope="col"
       className={mergeClasses(
-        'sticky top-0 z-[2] max-w-96 px-3 py-2.5 text-start break-words whitespace-normal',
+        'sticky top-0 z-2 max-w-96 px-3 py-2.5 text-start wrap-break-word whitespace-normal',
         getTableCellAlignClass(node),
         tableStyles.rowDivider,
         tableStyles.tableHeaderCell,
@@ -613,7 +618,7 @@ const buildMarkdownComponents = (
   td: ({ children, node }) => (
     <td
       className={mergeClasses(
-        'max-w-96 px-3 py-[7px] align-top [overflow-wrap:anywhere] whitespace-normal',
+        'max-w-96 px-3 py-[7px] align-top wrap-anywhere whitespace-normal',
         getTableCellAlignClass(node),
         tableStyles.rowDivider,
         cn.tableBodyCell,
@@ -648,6 +653,7 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
     tableOnOpenInCanvas,
     tableScrollRegionAriaLabel,
     mathScrollRegionAriaLabel,
+    codeBlockScrollRegionAriaLabel,
   }) => {
     const displayedContent = useStreamedMarkdownContent(
       content,
@@ -746,6 +752,7 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
           tableOnOpenInCanvas,
           tableScrollRegionAriaLabel,
           mathScrollRegionAriaLabel,
+          codeBlockScrollRegionAriaLabel,
         }),
         ...defaultMarkdownComponents,
         ...components,
@@ -762,6 +769,7 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
         tableOnOpenInCanvas,
         tableScrollRegionAriaLabel,
         mathScrollRegionAriaLabel,
+        codeBlockScrollRegionAriaLabel,
         components,
       ],
     );
@@ -775,7 +783,7 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
     return (
       <div
         style={cssVars}
-        className={mergeClasses('[overflow-wrap:anywhere]', containerClassName)}
+        className={mergeClasses('wrap-anywhere', containerClassName)}
       >
         <ReactMarkdown
           remarkPlugins={remarkPlugins}

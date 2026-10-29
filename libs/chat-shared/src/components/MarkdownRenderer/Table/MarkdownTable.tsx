@@ -186,7 +186,7 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
       <div
         style={cssVars}
         className={mergeClasses(
-          'group/table relative w-full max-w-full min-w-0 [overflow:clip] rounded-xl border',
+          'group/table relative w-full max-w-full min-w-0 overflow-clip rounded-xl border',
           styles.tableContainer,
           classNames.tableWrapper,
           CHAT_SHARED_CLASS.table,

@@ -360,7 +360,7 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
               </h3>
               <p
                 className={mergeClasses(
-                  'break-words whitespace-pre-line',
+                  'wrap-break-word whitespace-pre-line',
                   bodyClassName,
                   styles.body,
                 )}
@@ -381,7 +381,7 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
               </h3>
               <div
                 className={mergeClasses(
-                  'min-w-0 break-words',
+                  'min-w-0 wrap-break-word',
                   bodyClassName,
                   styles.body,
                 )}

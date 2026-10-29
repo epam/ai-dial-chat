@@ -403,7 +403,7 @@ export const Filter: FC<FilterProps> = ({
           />
         }
         className={mergeClasses(
-          'h-12 shrink-0 gap-[7px] !rounded-lg px-[18px] whitespace-nowrap',
+          'h-12 shrink-0 gap-[7px] rounded-lg! px-[18px] whitespace-nowrap',
           styles.filterBtn,
           isActive && styles.filterBtnActive,
           isOpen && styles.filterBtnOpen,

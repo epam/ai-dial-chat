@@ -193,7 +193,7 @@ export const Card: FC<CardProps> = ({
         <IconCheck
           size={DIAL_ICON_SIZE.SM}
           className={mergeClasses(
-            'absolute end-3 top-3 shrink-0',
+            'absolute inset-e-3 top-3 shrink-0',
             styles.checkIcon,
           )}
           aria-hidden
@@ -251,7 +251,7 @@ export const Card: FC<CardProps> = ({
             item.topics.length > 0
               ? 'line-clamp-2 min-h-[2lh]'
               : 'line-clamp-3 min-h-[3lh]',
-            'break-words',
+            'wrap-break-word',
             styles.description,
           )}
         >
