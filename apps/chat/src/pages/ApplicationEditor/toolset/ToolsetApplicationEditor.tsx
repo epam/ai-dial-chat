@@ -285,16 +285,7 @@ const ToolsetApplicationEditor: FC = () => {
     [showErrorNotification],
   );
 
-  const {
-    avatarPicker: {
-      bucket,
-      FileManagerModal,
-      resolveIconUrl,
-      allowedMimeTypes,
-      maxFileSizeBytes,
-    },
-    avatarPickerLabels,
-  } = useApplicationAvatarPicker();
+  const { avatarPicker, avatarPickerLabels } = useApplicationAvatarPicker();
   const metadataFormLabels = useMetadataLabels(getMetadataLabelOverrides);
 
   const localeOptions = useMemo(() => buildAdditionalLocaleOptions(), []);
@@ -441,11 +432,7 @@ const ToolsetApplicationEditor: FC = () => {
       onOAuthLogin={handleOAuthLogin}
       onNotifySuccess={notifySuccess}
       onNotifyError={notifyError}
-      bucket={bucket}
-      FileManagerModal={FileManagerModal}
-      resolveIconUrl={resolveIconUrl}
-      allowedMimeTypes={allowedMimeTypes}
-      maxFileSizeBytes={maxFileSizeBytes}
+      avatarPicker={avatarPicker}
       availableLocaleOptions={localeOptions}
       onRefineDescription={onRefineDescription}
       labels={labels}

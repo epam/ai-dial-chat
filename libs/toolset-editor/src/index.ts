@@ -1,15 +1,11 @@
 export { ToolsetEditor } from './components/ToolsetEditor/ToolsetEditor';
-export { GeneralForm } from './components/GeneralForm/GeneralForm';
 export type {
   ToolsetEditorLabels,
   ToolsetEditorLayoutLabels,
   ToolsetEditorProps,
   ToolsetEditorValidationLabels,
 } from './models/toolset-editor-props';
-export type {
-  GeneralFormLabels,
-  GeneralFormProps,
-} from './models/general-form-props';
+export type { GeneralFormLabels } from './models/general-form-labels';
 export type {
   ConnectMcpUrlContentLabels,
   SettingsFormLabels,
