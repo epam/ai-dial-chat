@@ -196,7 +196,9 @@ export const halloweenLabels: Partial<HalloweenLabels> = {
 
 ### NewYearScene
 
-`Snow`, `Confetti`, `Sleigh`, `GiftWrapping`, `PenguinStar`. `Confetti` is also the secret-phrase scene.
+`PenguinStar` and `SnowmanDelivery` play on a gift click, picked at random.
+`GiftWrapping` plays only for the secret phrase `happy new year`. Snow, confetti
+and sleigh scenes are no longer included.
 
 ## Types
 
@@ -230,7 +232,7 @@ its reversible visual transform is cancelled when playback stops.
 Typing, pointer/focus interaction, scrolling, viewport or target changes,
 hidden tabs, navigation, scene replacement and motion-preference changes stop
 the scene and release its player, listeners, observers and timers. The gift
-selects it from the random click pool; the secret phrase still plays confetti.
+picks the penguin or the snowman; the secret phrase plays the elves.
 Hosts can override `penguinStarToastMessage` through existing labels. The scene
 budgets 140 generated SVG artwork nodes, 32 animated properties, 80 keyframes
 per property and 120 KB of composition data. It uses no external assets,
@@ -263,9 +265,58 @@ host.
 
 Interaction, focus changes, scrolling, viewport or target changes, hidden tabs,
 navigation and motion-preference changes cancel playback and release the player.
-The gift selects the scene from the existing random click pool; the secret
-phrase still plays confetti. Hosts can override `giftWrappingToastMessage`
+Only the secret phrase `happy new year` selects the elves; a gift
+click picks the penguin or the snowman. Hosts can override `giftWrappingToastMessage`
 through the existing New Year labels.
+
+New Year's snowman delivery, "Delivery Without Losing Your Head", stars a
+slightly pompous snowman with a carrot nose, burgundy scarf and mittens. He
+walks in with a present, eyes a small fir at the far end of his stage, then
+the distance, then a starter-prompt card, and has an idea. He balances the
+present on his head, jumps to grip the card (or reaches it, when it is low
+enough), hangs on it until his weight tears an inert visual copy free, lowers
+it in front of him and drops it onto the snow. He tests it with one foot, sits
+on it hugging the present, scoots twice and glides, turning from cautious to
+smug. The sled stops in a snowbank; his body squashes and his head flies on
+into the fir's bough at the sled's own speed. After an indignant pause the
+headless body delivers the present with a deep bow, gropes for its head and
+spreads its mittens; the head sneezes, the bough flexes and drops it into the
+waiting mittens — backwards. He pauses, turns it the right way round,
+straightens the present, carries the card back, jumps it back into its exact
+slot and leaves holding his head with both mittens.
+
+Staging follows the measured page: with starters below the composer (the
+chat's default) he works on a drawn snow ledge under the starter row, low
+enough that his seated head clears the row; with starters above the composer
+and a clear band, he rides the composer's snowy upper edge; without an
+eligible card he uses a drawn sled, and when the rim is crowded he plays on a
+snowy platform below the page content. When no band fits, the scene shows a
+static snowman holding his head beside the delivered present. The scene is
+clipped to the welcome region, and he walks in from at most 200 units before
+his pickup spot. Travel shortens on mobile, where the story is otherwise
+complete; RTL mirrors travel and staging but never the copied card's text.
+
+One 25-second native Lottie SVG composition carries the cast and props, with
+the snowman in one precomposition so a single opacity fades him in and out;
+the provider allows 27.5 seconds. The card copy is an inert, `aria-hidden`
+snapshot driven by WAAPI keyframes generated from the same plan and started on
+the Lottie clock through the session's `onPlaybackStarted` callback, which
+reports the document-timeline time of frame 0. Only the original card's
+opacity is animated, from the grip until the copy is back in its rect; the
+card is never clicked, focused or reparented, and its original returns at once
+on completion or any interruption. An eligible card is idle, visible,
+unfocused, at most 240 × 96 px with at most 40 nodes, in the starter row next
+to the chosen stage.
+
+Typing, pointer/focus interaction, scrolling, viewport or target changes,
+hidden tabs, navigation and motion-preference changes stop the scene and
+release its player, card copy, listeners, observers and timers. Hosts can
+override `snowmanDeliveryToastMessage` through the New Year labels. The scene
+budgets one player, one card copy, at most 16 top-level layers, 56 animated
+properties (48 on mobile), 128 keyframes per property, 1,300 keyframes in
+total, 170 KB of composition data and 10 snow puffs (4 on mobile). It uses no
+external assets, filters, masks, gradients or per-frame host measurements;
+these limits are not a frame-rate guarantee.
 
 The Halloween portal briefly pulls visual copies of up to two adjacent, visible
 conversation-history rows into its claw, then restores the rows. It never changes

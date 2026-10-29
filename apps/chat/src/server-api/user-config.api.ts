@@ -7,6 +7,12 @@ export const pinConversation = (conversationId: string, isPinned: boolean) =>
     updatePinsDto: { path: conversationId, isPinned },
   });
 
+/** Pins or unpins a project; the BFF stores `projects/` ids under `projects.pinnedIds`. */
+export const pinProject = (projectId: string, isPinned: boolean) =>
+  userConfigApi.updatePin({
+    updatePinsDto: { path: projectId, isPinned },
+  });
+
 export const updateInstalledToolset = (id: string, isInstalled: boolean) =>
   userConfigApi.updateInstalledToolset({
     updateInstalledDto: { id, isInstalled },

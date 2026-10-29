@@ -128,6 +128,29 @@ describe('SharedInvitationPage', () => {
     expect(showNotification).not.toHaveBeenCalled();
   });
 
+  it('skips the catalog refresh when the host opts out', async () => {
+    vi.mocked(acceptInvitation).mockResolvedValue({
+      itemId: 'projects/b/q4',
+    });
+
+    render(
+      <SharedInvitationPage
+        getTargetRoute={(itemId) => `/view/${itemId}`}
+        shouldRefreshCatalog={false}
+      />,
+    );
+
+    await waitFor(() =>
+      expect(mockNavigate).toHaveBeenCalledWith('/view/projects/b/q4', {
+        replace: true,
+      }),
+    );
+    expect(refetchDeployments).not.toHaveBeenCalled();
+    expect(refetchToolsets).not.toHaveBeenCalled();
+    expect(refetchSkills).not.toHaveBeenCalled();
+    expect(refetchPrompts).not.toHaveBeenCalled();
+  });
+
   it('shows an error notification and redirects to the catalog when the invitation is invalid', async () => {
     vi.mocked(acceptInvitation).mockRejectedValue(new Error('not found'));
 

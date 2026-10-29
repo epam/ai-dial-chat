@@ -76,6 +76,18 @@ const DialFileManagerPage = lazy(
   () => import('../pages/DialFileManagerPage/DialFileManagerPage'),
 );
 const ProjectsPage = lazy(() => import('../pages/ProjectsPage/ProjectsPage'));
+const ProjectCreatePage = lazy(
+  () => import('../pages/ProjectCreatePage/ProjectCreatePage'),
+);
+const ProjectViewPage = lazy(
+  () => import('../pages/ProjectViewPage/ProjectViewPage'),
+);
+const ProjectEditPage = lazy(
+  () => import('../pages/ProjectEditPage/ProjectEditPage'),
+);
+const ProjectSharedInvitationPage = lazy(
+  () => import('../pages/ProjectSharedInvitation/ProjectSharedInvitation'),
+);
 const ScheduledTasksPage = lazy(
   () => import('../pages/ScheduledTasksPage/ScheduledTasksPage'),
 );
@@ -376,6 +388,46 @@ const App: FC = () => {
                   <RouteErrorBoundary>
                     <Suspense fallback={<RouteFallback />}>
                       <ProjectsPage />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
+              <Route
+                path={ROUTES.ProjectCreate}
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <ProjectCreatePage />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
+              <Route
+                path={ROUTES.ProjectView}
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <ProjectViewPage />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
+              <Route
+                path={ROUTES.ProjectEdit}
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <ProjectEditPage />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
+              <Route
+                path={ROUTES.ProjectSharedInvitation}
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <ProjectSharedInvitationPage />
                     </Suspense>
                   </RouteErrorBoundary>
                 }

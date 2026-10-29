@@ -65,6 +65,19 @@ describe('file download streaming', () => {
     );
   });
 
+  it('prefers the RFC 5987 UTF-8 filename over the ASCII fallback', async () => {
+    vi.mocked(triggerBlobDownload).mockClear();
+    const response = new Response('bytes', {
+      headers: {
+        'Content-Disposition': `attachment; filename="_____.csv"; filename*=UTF-8''${encodeURIComponent('отчёт.csv')}`,
+      },
+    });
+
+    const savedName = await triggerBrowserDownload(response, 'fallback.csv');
+
+    expect(savedName).toBe('отчёт.csv');
+  });
+
   it('resolves the fallback filename when the response carries no Content-Disposition', async () => {
     vi.mocked(triggerBlobDownload).mockClear();
     const response = new Response('');

@@ -238,3 +238,15 @@ export type GenerationRelayOutcome =
       displayMessage?: string;
       assembledMessage: ConversationMessageDto;
     };
+
+/**
+ * Pre-stream step a completion awaits between registration and opening its
+ * SSE response; bounded by `GENERATION_PREPARATION_TIMEOUT_MS` and named in
+ * the abandonment log line (`generation-registry`).
+ */
+export enum GenerationPreparationStep {
+  HiddenModelCheck = 'hidden_model_check',
+  CapabilityResolution = 'capability_resolution',
+  ConversationRead = 'conversation_read',
+  StartStateSave = 'start_state_save',
+}

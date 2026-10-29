@@ -204,6 +204,7 @@ describe('ConversationRoute — route-driven skill selection (issue #9109)', () 
     mockGetUserConfig.mockResolvedValue({
       version: 1,
       conversations: { pinnedIds: [] },
+      projects: { pinnedIds: [] },
       toolsets: { installed: [] },
       deployments: { installed: [], selectedId: null },
       prompts: { installed: [] },

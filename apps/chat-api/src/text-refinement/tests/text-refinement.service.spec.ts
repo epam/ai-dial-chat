@@ -3,12 +3,15 @@ import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FeatureFlagsService } from '../../app-config/feature-flags/feature-flags.service';
+import { FeatureKey } from '../../app-config/feature-flags/feature-key.enum';
 import { DialClientService } from '../../dial/dial-client.service';
 import {
   TEXT_REFINEMENT_LIMITS,
   TextRefinementPurpose,
 } from '../dto/refine-text.dto';
 import { APPLICATION_DESCRIPTION_PROMPT } from '../prompts/application-description.prompt';
+import { PROJECT_DESCRIPTION_PROMPT } from '../prompts/project-description.prompt';
+import { PROJECT_INSTRUCTIONS_PROMPT } from '../prompts/project-instructions.prompt';
 import { PROMPT_DESCRIPTION_PROMPT } from '../prompts/prompt-description.prompt';
 import { PROMPT_INSTRUCTIONS_PROMPT } from '../prompts/prompt-instructions.prompt';
 import { wrapRefinementDraft } from '../prompts/refinement-draft.prompt';
@@ -118,6 +121,16 @@ describe('TextRefinementService', () => {
       TextRefinementPurpose.PromptInstructions,
       'TEXT_REFINEMENT_PROMPT_INSTRUCTIONS_PROMPT',
       PROMPT_INSTRUCTIONS_PROMPT,
+    ],
+    [
+      TextRefinementPurpose.ProjectDescription,
+      'TEXT_REFINEMENT_PROJECT_DESCRIPTION_PROMPT',
+      PROJECT_DESCRIPTION_PROMPT,
+    ],
+    [
+      TextRefinementPurpose.ProjectInstructions,
+      'TEXT_REFINEMENT_PROJECT_INSTRUCTIONS_PROMPT',
+      PROJECT_INSTRUCTIONS_PROMPT,
     ],
   ] as const)('%s prompt configuration', (purpose, key, defaultPrompt) => {
     it.each([
@@ -233,6 +246,42 @@ describe('TextRefinementService', () => {
       ).rejects.toMatchObject({ status: 502 });
     },
   );
+
+  it.each([
+    [
+      TextRefinementPurpose.ScheduledTaskDescription,
+      FeatureKey.ScheduledTasksEnabled,
+    ],
+    [
+      TextRefinementPurpose.ScheduledTaskInstructions,
+      FeatureKey.ScheduledTasksEnabled,
+    ],
+    [TextRefinementPurpose.ProjectDescription, FeatureKey.ProjectsEnabled],
+    [TextRefinementPurpose.ProjectInstructions, FeatureKey.ProjectsEnabled],
+  ])(
+    'returns 403 for %s before invoking the model when its feature is off',
+    async (purpose, feature) => {
+      enabled.mockResolvedValue(false);
+      await expect(
+        service.refineText(
+          { ...dto, purpose },
+          user,
+          new AbortController().signal,
+        ),
+      ).rejects.toMatchObject({ status: 403 });
+      expect(enabled).toHaveBeenCalledWith(feature, {
+        appId: 'chat-ui',
+        userId: user.sub,
+        roles: ['author'],
+      });
+      expect(send).not.toHaveBeenCalled();
+    },
+  );
+
+  it('checks no feature for purposes outside a gated domain', async () => {
+    await refine();
+    expect(enabled).not.toHaveBeenCalled();
+  });
 
   it('fences a request-shaped draft so the model rewrites it instead of answering it', async () => {
     const text = 'Return me 5 phrases from lorem ipsum';

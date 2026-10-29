@@ -168,28 +168,33 @@ describe('CelebrationHost with the celebrations library', () => {
     expect(querySceneLayer()).toBeNull();
   });
 
-  it('loads New Year through the same decor slot with its translated trigger', async () => {
-    setActiveEvent('new-year');
-    render(
-      <MemoryRouter>
-        <CelebrationHost>
-          <CelebrationDecor />
-        </CelebrationHost>
-      </MemoryRouter>,
-    );
-    /* The New Year scene is a lazy chunk; its cold import can outlast the
+  it.each([
+    [0, 'newYear.penguinStarToastMessage happy new year'],
+    [0.99, 'newYear.snowmanDeliveryToastMessage happy new year'],
+  ])(
+    'loads New Year through the same decor slot with its translated trigger (random %s)',
+    async (roll, message) => {
+      vi.spyOn(Math, 'random').mockReturnValue(roll);
+      setActiveEvent('new-year');
+      render(
+        <MemoryRouter>
+          <CelebrationHost>
+            <CelebrationDecor />
+          </CelebrationHost>
+        </MemoryRouter>,
+      );
+      /* The New Year scene is a lazy chunk; its cold import can outlast the
        default 1s findBy window when the whole suite runs in parallel. */
-    const gift = await screen.findByRole(
-      'button',
-      { name: 'newYear.giftLabel' },
-      { timeout: 5000 },
-    );
-    await userEvent.click(gift);
-    expect(showSuccessNotification).toHaveBeenLastCalledWith({
-      title: 'newYear.toastTitle',
-      message: expect.stringMatching(
-        /^newYear\.(snow|confetti|sleigh|giftWrapping|penguinStar)ToastMessage happy new year$/,
-      ),
-    });
-  });
+      const gift = await screen.findByRole(
+        'button',
+        { name: 'newYear.giftLabel' },
+        { timeout: 5000 },
+      );
+      await userEvent.click(gift);
+      expect(showSuccessNotification).toHaveBeenLastCalledWith({
+        title: 'newYear.toastTitle',
+        message,
+      });
+    },
+  );
 });

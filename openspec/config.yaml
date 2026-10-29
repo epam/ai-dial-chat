@@ -96,13 +96,14 @@ context: |
   ### Module boundary rules
   - apps may import from libs; apps may not import from each other
   - Library dependencies must follow the isolation policy and declared package contracts;
-    consult AGENTS.md and each library's package.json rather than inferring a tag hierarchy
+    consult AGENTS.md and each library's package.json
   - libs may not import from apps, server-api wrappers, generated API clients, backend DTOs,
     app providers/contexts, config/env, storage, analytics, routing, or SDK singletons; the
     generated-client exceptions are limited to libs/chat-api-client/ and the narrow
     libs/chat-hooks/ contract documented in AGENTS.md
-  - @nx/enforce-module-boundaries in eslint.config.mjs enforces buildable-library constraints,
-    but its current wildcard tag constraint does not enforce the full isolation policy above
+  - @nx/enforce-module-boundaries in eslint.config.mjs enforces one depConstraints entry per
+    `type:*` project tag (app, backend, fixture, api-client, hooks, shared, ui); every new
+    project needs exactly one. Table and known debt: docs/architecture.md "Module boundary rules"
 
 rules:
   # Coding conventions (arrow functions, component folder structure, etc.) are defined in

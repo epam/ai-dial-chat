@@ -29,6 +29,8 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
   ({
     conversations,
     isLoading,
+    isUpdatingTitles,
+    preserveActiveSearchResult,
     isOpen,
     onSelectConversation,
     activeConversationId,
@@ -66,6 +68,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       sharedEmptyDescription,
       tabEmptyLabels,
       loadingLabel,
+      updatingTitlesLabel,
       newChatLabel,
       searchPlaceholder,
       searchClearLabel,
@@ -107,6 +110,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         sharedEmptyDescription,
         tabEmptyLabels,
         loadingLabel,
+        updatingTitlesLabel,
         groupLabels,
         actionsLabel,
         unreadIndicatorLabel,
@@ -119,6 +123,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         sharedEmptyDescription,
         tabEmptyLabels,
         loadingLabel,
+        updatingTitlesLabel,
         groupLabels,
         actionsLabel,
         unreadIndicatorLabel,
@@ -213,6 +218,8 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         <ConversationList
           conversations={conversations}
           isLoading={isLoading}
+          isUpdatingTitles={isUpdatingTitles}
+          preserveActiveSearchResult={preserveActiveSearchResult}
           onSelectConversation={onSelectConversation}
           activeConversationId={activeConversationId}
           labels={listLabels}

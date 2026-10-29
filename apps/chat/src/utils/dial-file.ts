@@ -1,5 +1,6 @@
 import {
   isDialFileId,
+  isDialFolderId,
   resolveDialFileBucketAndPath,
 } from '@epam/ai-dial-chat-hooks';
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
@@ -54,7 +55,16 @@ export const resolveMarkdownUrl = (url: string): string =>
 
 /* A folder id ends with `/`; DIAL Core has no download for a folder. */
 const isDownloadableDialFileId = (url: string | undefined): url is string =>
-  url != null && isDialFileId(url) && !stripFragment(url).endsWith('/');
+  url != null && isDialFileId(url) && !isDialFolderId(url);
+
+/**
+ * Whether an attachment tile may offer a download. Only a DIAL folder
+ * attachment is ruled out; reference-only and inline attachments keep the
+ * download action their click handler already supports.
+ */
+export const isAttachmentDownloadable = (
+  attachment: DisplayAttachment,
+): boolean => attachment.url == null || !isDialFolderId(attachment.url);
 
 /**
  * Returns the best downloadable DIAL-file URL from an attachment's `url` or

@@ -19,6 +19,13 @@ import {
   normalizeDeploymentTypesInput,
 } from '../deployments/dto/deployment-type';
 import {
+  DEFAULT_PROJECT_CONTEXT_ALLOWED_EXTENSIONS,
+  DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES,
+  DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES,
+  parseProjectContextExtensions,
+  PROJECT_CONTEXT_EXTENSION_PATTERN,
+} from '../projects/constants/project-context.constants';
+import {
   IsCatalogCreationRoles,
   parseCatalogCreationRoles,
   type CatalogCreationRolesConfig,
@@ -765,6 +772,14 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
+  TEXT_REFINEMENT_PROJECT_DESCRIPTION_PROMPT?: string;
+
+  @IsOptional()
+  @IsString()
+  TEXT_REFINEMENT_PROJECT_INSTRUCTIONS_PROMPT?: string;
+
+  @IsOptional()
+  @IsString()
   CONVERSATION_NAMING_SYSTEM_PROMPT?: string;
 
   @IsOptional()
@@ -1026,6 +1041,40 @@ export class EnvironmentVariables {
   @IsString({ each: true })
   PROJECTS_ENABLED_ROLES?: string[] = [];
 
+  /*
+   * Project context limits, enforced by `POST /api/v1/projects` and
+   * published to the browser as `projects.*` client config. Keep them at or
+   * below DIAL Core's `complexResource.types.projects` limits (built-in:
+   * 5 MiB per file, 64 MiB total). `validate` also requires
+   * TOTAL >= FILE, and TOTAL <= the 64 MiB project read limit minus the
+   * 1 MiB PROJECT.md limit (63 MiB), so every project stays editable.
+   */
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  PROJECT_CONTEXT_FILE_MAX_BYTES?: number =
+    DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  PROJECT_CONTEXT_TOTAL_MAX_BYTES?: number =
+    DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES;
+
+  @IsOptional()
+  @Transform(({ value }) => parseProjectContextExtensions(value))
+  @IsArray()
+  @Matches(PROJECT_CONTEXT_EXTENSION_PATTERN, {
+    each: true,
+    message:
+      'PROJECT_CONTEXT_ALLOWED_EXTENSIONS entries must be 1-16 lower-case letters or digits',
+  })
+  PROJECT_CONTEXT_ALLOWED_EXTENSIONS?: string[] = [
+    ...DEFAULT_PROJECT_CONTEXT_ALLOWED_EXTENSIONS,
+  ];
+
   @IsOptional()
   @Transform(({ obj, key }) => {
     const raw = (obj as Record<string, unknown>)[key];
@@ -1181,4 +1230,19 @@ export class EnvironmentVariables {
   @IsInt()
   @Min(1000)
   GENERATION_FINALIZE_TIMEOUT_MS?: number = 60_000;
+
+  /*
+   * Bounds how long a completion may wait in preparation — the hidden-model
+   * check, capability resolution, the stored-conversation read and the
+   * start-state save — before SSE headers are sent (see
+   * openspec/specs/generation-registry/spec.md). On expiry the request fails
+   * with 503 and attach subscribers are released, but the entry keeps its
+   * registry key (`settling`) until the abandoned DIAL Core call settles: the
+   * bound stops the wait, never the remote work.
+   */
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1000)
+  GENERATION_PREPARATION_TIMEOUT_MS?: number = 30_000;
 }

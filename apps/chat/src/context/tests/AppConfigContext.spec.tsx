@@ -632,6 +632,114 @@ describe('AppConfigContext', () => {
     });
   });
 
+  describe('project context limits', () => {
+    const withConfig = (config: Record<string, unknown>) =>
+      ({
+        ...READY_RESPONSE,
+        config: {
+          ...(READY_RESPONSE as unknown as { config: object }).config,
+          ...config,
+        },
+      }) as unknown as ClientConfigResponseDto;
+
+    it('defaults to 1 MiB, 10 MiB and csv, pdf, xlsx before the config loads', () => {
+      mockGetClientConfig.mockReturnValue(new Promise(() => undefined));
+      const { result } = renderHook(() => useAppConfig(), { wrapper });
+
+      expect(result.current.config.projectContextFileMaxBytes).toBe(1_048_576);
+      expect(result.current.config.projectContextTotalMaxBytes).toBe(
+        10_485_760,
+      );
+      expect(result.current.config.projectContextAllowedExtensions).toEqual([
+        'csv',
+        'pdf',
+        'xlsx',
+      ]);
+    });
+
+    it('surfaces operator-configured values from a successful API call', async () => {
+      mockGetClientConfig.mockResolvedValue(
+        withConfig({
+          projectContextFileMaxBytes: 2_097_152,
+          projectContextTotalMaxBytes: 4_194_304,
+          projectContextAllowedExtensions: ['CSV', 'md'],
+        }),
+      );
+
+      const { result } = renderHook(() => useAppConfig(), { wrapper });
+      await waitFor(() =>
+        expect(result.current.status).toBe(UserConfigStatus.Ready),
+      );
+
+      expect(result.current.config.projectContextFileMaxBytes).toBe(2_097_152);
+      expect(result.current.config.projectContextTotalMaxBytes).toBe(4_194_304);
+      expect(result.current.config.projectContextAllowedExtensions).toEqual([
+        'csv',
+        'md',
+      ]);
+    });
+
+    it('falls back to the defaults for an older BFF or invalid values', async () => {
+      mockGetClientConfig.mockResolvedValue(
+        withConfig({
+          projectContextTotalMaxBytes: 0,
+          projectContextAllowedExtensions: [],
+        }),
+      );
+
+      const { result } = renderHook(() => useAppConfig(), { wrapper });
+      await waitFor(() =>
+        expect(result.current.status).toBe(UserConfigStatus.Ready),
+      );
+
+      expect(result.current.config.projectContextFileMaxBytes).toBe(1_048_576);
+      expect(result.current.config.projectContextTotalMaxBytes).toBe(
+        10_485_760,
+      );
+      expect(result.current.config.projectContextAllowedExtensions).toEqual([
+        'csv',
+        'pdf',
+        'xlsx',
+      ]);
+    });
+
+    it('keeps the last loaded values when a refetch fails', async () => {
+      mockSession.current = { user: null, status: AuthStatus.Unauthenticated };
+      mockGetClientConfig.mockResolvedValueOnce(
+        withConfig({ projectContextFileMaxBytes: 2_097_152 }),
+      );
+      mockGetClientConfig.mockRejectedValueOnce(new Error('network error'));
+      const { result, rerender } = renderHook(() => useAppConfig(), {
+        wrapper,
+      });
+      await waitFor(() =>
+        expect(result.current.status).toBe(UserConfigStatus.Ready),
+      );
+
+      mockSession.current = {
+        user: { sub: 'user-1', providerId: 'keycloak', claims: {} },
+        status: AuthStatus.Authenticated,
+      } as typeof mockSession.current;
+      rerender();
+
+      await waitFor(() =>
+        expect(result.current.status).toBe(UserConfigStatus.Error),
+      );
+      expect(result.current.config.projectContextFileMaxBytes).toBe(2_097_152);
+    });
+
+    it('keeps the defaults when the first load fails', async () => {
+      mockGetClientConfig.mockRejectedValue(new Error('network error'));
+      const { result } = renderHook(() => useAppConfig(), { wrapper });
+
+      await waitFor(() =>
+        expect(result.current.status).toBe(UserConfigStatus.Error),
+      );
+
+      expect(result.current.config.projectContextFileMaxBytes).toBe(1_048_576);
+    });
+  });
+
   describe('usageLimitsWarningThresholdPercent', () => {
     it('defaults to 75 before the config loads', () => {
       mockGetClientConfig.mockReturnValue(new Promise(() => undefined));

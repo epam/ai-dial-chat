@@ -80,6 +80,12 @@ export interface UseTextInsertionResult {
     altKey: boolean;
     preventDefault: () => void;
   }) => boolean;
+  /**
+   * Call after placing the caret programmatically (e.g. applying a host's
+   * `caretPositionOverride`), so the next insertion goes at that caret even
+   * when the textarea was never focused and the caret is at the start.
+   */
+  markCaretPlaced: () => void;
 }
 
 /**
@@ -103,6 +109,27 @@ export const useTextInsertion = ({
      already, and replaying it would duplicate the text. */
   const lastRevisionRef = useRef(revision);
   const undoSnapshotRef = useRef<UndoSnapshot | null>(null);
+  const hasBeenFocusedRef = useRef(false);
+
+  /*
+   * A textarea nobody has focused and nobody has set a selection on has no caret
+   * of its own — a browser leaves it at the start of whatever text it was
+   * created holding — so an insertion into it goes to the end instead. Focus is
+   * tracked on the document because the element can be replaced (the voice
+   * recorder unmounts it), which would drop a listener on the old one.
+   */
+  useEffect(() => {
+    if (document.activeElement === textareaRef.current) {
+      hasBeenFocusedRef.current = true;
+    }
+    const markFocused = (event: FocusEvent) => {
+      if (event.target === textareaRef.current) {
+        hasBeenFocusedRef.current = true;
+      }
+    };
+    document.addEventListener('focusin', markFocused);
+    return () => document.removeEventListener('focusin', markFocused);
+  }, [textareaRef]);
 
   useEffect(() => {
     if (revision === lastRevisionRef.current) return;
@@ -135,10 +162,18 @@ export const useTextInsertion = ({
       if (!textarea) return;
 
       const { value, selectionStart, selectionEnd } = textarea;
-      const start = selectionStart ?? value.length;
-      const end = selectionEnd ?? start;
+      const hasUntouchedCaret =
+        !hasBeenFocusedRef.current &&
+        value.length > 0 &&
+        selectionStart === 0 &&
+        selectionEnd === 0;
+      const start = hasUntouchedCaret
+        ? value.length
+        : (selectionStart ?? value.length);
+      const end = hasUntouchedCaret ? start : (selectionEnd ?? start);
 
       textarea.focus();
+      if (hasUntouchedCaret) textarea.setSelectionRange(start, end);
 
       /* A fresh insertion supersedes any snapshot the previous one left behind. */
       undoSnapshotRef.current = null;
@@ -192,5 +227,9 @@ export const useTextInsertion = ({
     return true;
   };
 
-  return { handleUndoKeyDown };
+  const markCaretPlaced = () => {
+    hasBeenFocusedRef.current = true;
+  };
+
+  return { handleUndoKeyDown, markCaretPlaced };
 };

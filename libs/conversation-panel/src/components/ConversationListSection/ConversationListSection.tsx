@@ -12,6 +12,8 @@ export const ConversationListSection: FC<ConversationListSectionProps> = memo(
   ({
     conversations,
     isLoading,
+    isUpdatingTitles,
+    preserveActiveSearchResult,
     onSelectConversation,
     activeConversationId,
     labels,
@@ -119,6 +121,8 @@ export const ConversationListSection: FC<ConversationListSectionProps> = memo(
             id={listId}
             conversations={conversations}
             isLoading={isLoading}
+            isUpdatingTitles={isUpdatingTitles}
+            preserveActiveSearchResult={preserveActiveSearchResult}
             onSelectConversation={onSelectConversation}
             activeConversationId={activeConversationId}
             labels={labels}

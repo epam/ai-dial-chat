@@ -3,6 +3,7 @@ import { useUser } from '../../context/auth/UserContext';
 import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
 import { logout } from '../../server-api/auth.api';
 import { ROUTES } from '../../types/routes';
+import { rememberSignedOut } from '../../utils/signed-out-marker';
 import { useConversationDraftStore } from '../conversation/useConversationDraftStore';
 
 export const useLogout = () => {
@@ -20,14 +21,23 @@ export const useLogout = () => {
   const performLogout = useCallback(async () => {
     /* Drafts are per user; none may outlive the session that wrote them. */
     draftStore?.clear();
+    let isSignedOut = false;
     try {
       await logout();
+      isSignedOut = true;
     } catch (err) {
       console.error('Logout request failed', err);
     }
     if (overlay) {
       reset();
       return;
+    }
+    /*
+     * Only a completed logout is recorded: if the request failed the session
+     * may still be alive, and the next load must probe it.
+     */
+    if (isSignedOut) {
+      rememberSignedOut();
     }
     /*
      * Full document load, not a client-side navigate: the SPA route would

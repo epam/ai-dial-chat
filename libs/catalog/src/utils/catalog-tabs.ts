@@ -31,6 +31,15 @@ export const getCatalogItemTabs = (
     ? item.catalogTabs
     : [item.type];
 
+/** Returns the entity type `item` is labeled with under `activeTab`: the tab itself when the item is listed there, otherwise `item.type`. */
+export const getCatalogItemDisplayType = (
+  item: CatalogItem,
+  activeTab?: CatalogEntityType,
+): CatalogEntityType =>
+  activeTab != null && getCatalogItemTabs(item).includes(activeTab)
+    ? activeTab
+    : item.type;
+
 /** Derives entity-type tabs from the tabs the catalog's items are listed under, sorted by canonical order. */
 export const buildCatalogTabs = (
   items: CatalogItem[],

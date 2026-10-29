@@ -324,16 +324,22 @@ On mount, the route's effect SHALL:
 1. If router state carries an explicit `deploymentId` (`routeDeploymentId`, e.g. the overlay
    conversation-list bridge opening the composer with a preselected deployment), call
    `restoreSelectedItemId(routeDeploymentId)` — this explicit preselection takes priority. The
-   state is one-shot: the effect then clears it with `navigate(pathname, { replace: true, state: null })`
-   and remembers the consumption in a ref for the lifetime of the mount, so the re-run triggered by
-   that clearing navigation does not fall through to `restoreDefaultSelection()`. A temporary
-   isolated-view branch (marked `TODO: remove in next release`) likewise pins the isolated model
-   via `restoreSelectedItemId` and never falls through to the default.
-2. Otherwise, if the optional overlay context has a pending `overlay.pendingModelId` awaiting
+   state is one-shot: the effect then clears it with a `replace` navigation that keeps the URL's
+   query string and hash and sets `state: null`, and remembers the consumption in a ref for the
+   lifetime of the mount, so the re-run triggered by that clearing navigation does not fall through
+   to `restoreDefaultSelection()`. A temporary isolated-view branch (marked
+   `TODO: remove in next release`) likewise pins the isolated model via `restoreSelectedItemId` and
+   never falls through to the default.
+2. Otherwise, if a URL `deployment-id` is pending or has been applied (see the
+   `url-entity-preselection` capability), do nothing: the URL preselection owns the selection, so
+   the default is neither shown and then replaced nor allowed to undo the pick. When the URL
+   `deployment-id` settles as unknown, this condition ends and the effect falls through to branch 4
+   exactly once.
+3. Otherwise, if the optional overlay context has a pending `overlay.pendingModelId` awaiting
    resolution, do nothing and let the overlay-pending-model hook
    (`apps/chat/src/hooks/overlay/useOverlayPendingModel.ts`, mounted in `apps/chat/src/app/app.tsx`)
    apply its own selection once deployments finish loading.
-3. Otherwise, call `useDeployments().restoreDefaultSelection()` so `selectedItemId` reflects the
+4. Otherwise, call `useDeployments().restoreDefaultSelection()` so `selectedItemId` reflects the
    user's preference rather than whatever a previously viewed conversation left in memory.
 
 `restoreDefaultSelection` resolves through `resolveInitialSelection`, whose precedence gains the
@@ -357,7 +363,7 @@ and remains unaware of the preference and of the overlay host's `modelId`.
 
 Step 0 is what keeps the host's agent once `pendingModelId` is cleared. Clearing it changes
 `overlay?.pendingModelId`, which is in the mount effect's dependency array, so the effect re-runs
-and reaches branch 3. Before step 0 existed, that call replaced the host's agent with the user's
+and reaches branch 4. Before step 0 existed, that call replaced the host's agent with the user's
 persisted or first-catalog deployment, so a first-time overlay user never saw the host's agent. Putting the resolution in `DeploymentsContext` rather than in
 the route is what makes the preference apply on first load (through the post-fetch resolution
 effect) as well as on navigation.
@@ -371,9 +377,9 @@ existing precedence for `CreateConversationDto.deploymentId`.
 **RTL / UI impact:** None (state resolution only; no new UI).
 
 **Memoisation:** The mount effect's dependency array SHALL include `restoreSelectedItemId`,
-`restoreDefaultSelection`, `routeDeploymentId`, and `overlay?.pendingModelId`, plus `navigate`,
-`pathname`, `isIsolatedView`, and `isolatedModelId` for the one-shot state clearing and the
-isolated-view branch.
+`restoreDefaultSelection`, `routeDeploymentId`, `overlay?.pendingModelId`, and the URL
+deployment-override flag, plus `navigate`, `pathname`, `isIsolatedView`, and `isolatedModelId` for
+the one-shot state clearing and the isolated-view branch.
 `restoreDefaultSelection`'s own `useCallback` dependency array SHALL remain `[]`; the preference
 reaches it through a ref, so this effect does not re-fire when the preference changes.
 
@@ -408,6 +414,21 @@ reaches it through a ref, so this effect does not re-fire when the preference ch
 - **WHEN** `ConversationRoute` mounts with router state `{ deploymentId: "dep-x" }`
 - **THEN** `restoreSelectedItemId("dep-x")` is called and `restoreDefaultSelection()` is NOT called,
   regardless of the `Default agent for new chats` preference
+
+#### Scenario: Clearing router state keeps the query string and hash
+
+- **WHEN** `ConversationRoute` mounts at `/?foo=bar#h` with router state `{ deploymentId: "dep-x" }`
+- **THEN** after the state is cleared the URL is still `/?foo=bar#h`
+
+#### Scenario: A known URL deployment-id is not undone by default restoration
+
+- **WHEN** `ConversationRoute` mounts with `?deployment-id=<known id>` and the parameter is then removed from the URL
+- **THEN** the selected deployment stays `<known id>` and `restoreDefaultSelection()` is NOT called
+
+#### Scenario: An unknown URL deployment-id restores the default once
+
+- **WHEN** `ConversationRoute` mounts with `?deployment-id=<unknown id>` and deployments have loaded
+- **THEN** `restoreDefaultSelection()` is called exactly once
 
 #### Scenario: The overlay host's model survives clearing the pending model id
 

@@ -2,15 +2,12 @@ import { memo, type FC } from 'react';
 import { NewYearScene } from '../../types/new-year';
 import NewYearGiftWrapping from '../NewYearGiftWrapping/NewYearGiftWrapping';
 import NewYearPenguinStar from '../NewYearPenguinStar/NewYearPenguinStar';
-import { NewYearConfetti, NewYearSnow } from './NewYearParticles';
-import NewYearSleigh from './NewYearSleigh';
+import NewYearSnowmanDelivery from '../NewYearSnowmanDelivery/NewYearSnowmanDelivery';
 
 const scenes: Record<NewYearScene, FC> = {
   [NewYearScene.PenguinStar]: NewYearPenguinStar,
   [NewYearScene.GiftWrapping]: NewYearGiftWrapping,
-  [NewYearScene.Snow]: NewYearSnow,
-  [NewYearScene.Confetti]: NewYearConfetti,
-  [NewYearScene.Sleigh]: NewYearSleigh,
+  [NewYearScene.SnowmanDelivery]: NewYearSnowmanDelivery,
 };
 
 interface Props {

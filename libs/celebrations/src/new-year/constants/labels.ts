@@ -6,12 +6,8 @@ export const NEW_YEAR_LABELS = {
     'Every tree deserves a star. Send "{{phrase}}" in the start-page chat for a secret surprise.',
   giftWrappingToastMessage:
     'Some gifts have a mind of their own. Send "{{phrase}}" in the start-page chat for a secret surprise.',
+  snowmanDeliveryToastMessage:
+    'Delivered in one piece, almost. Send "{{phrase}}" in the start-page chat for a secret surprise.',
   toastTitle: 'Happy New Year!',
-  snowToastMessage:
-    'A little winter magic. Send "{{phrase}}" in the start-page chat for a secret surprise.',
-  confettiToastMessage:
-    'Here\'s to a bright new year! Send "{{phrase}}" in the start-page chat for a secret surprise.',
-  sleighToastMessage:
-    'Special delivery from the night sky. Send "{{phrase}}" in the start-page chat for a secret surprise.',
   giftLabel: 'New Year gift',
 } satisfies NewYearLabels;

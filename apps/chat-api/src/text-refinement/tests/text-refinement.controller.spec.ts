@@ -165,16 +165,24 @@ describe('Text refinement HTTP contract', () => {
     },
   );
   it.each([
-    TextRefinementPurpose.ScheduledTaskDescription,
-    TextRefinementPurpose.ScheduledTaskInstructions,
+    [
+      TextRefinementPurpose.ScheduledTaskDescription,
+      FeatureKey.ScheduledTasksEnabled,
+    ],
+    [
+      TextRefinementPurpose.ScheduledTaskInstructions,
+      FeatureKey.ScheduledTasksEnabled,
+    ],
+    [TextRefinementPurpose.ProjectDescription, FeatureKey.ProjectsEnabled],
+    [TextRefinementPurpose.ProjectInstructions, FeatureKey.ProjectsEnabled],
   ])(
     'denies %s for skill-only authors before invoking DIAL',
-    async (purpose) => {
+    async (purpose, feature) => {
       enabled.mockResolvedValue(false);
       await post()
         .send({ ...body, purpose })
         .expect(403);
-      expect(enabled).toHaveBeenCalledWith(FeatureKey.ScheduledTasksEnabled, {
+      expect(enabled).toHaveBeenCalledWith(feature, {
         appId: 'chat-ui',
         userId: user.sub,
         roles: ['skill-author'],

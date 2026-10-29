@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { ProjectSource } from '../../../types/project-source';
 import { ProjectCard, type ProjectCardProps } from '../ProjectCard';
@@ -15,39 +15,70 @@ const renderCard = (overrides: Partial<ProjectCardProps> = {}) =>
         }}
         searchQuery=""
         sourceLabel="Organization"
-        formatUpdatedAt={() => 'Updated Mar 1, 2026'}
+        folderPathLabel="Project location"
+        pinnedLabel="Pinned"
+        now={Date.UTC(2026, 2, 4)}
+        locale="en"
+        updatedAtClassName="dial-tiny-text"
         titleClassName="dial-body-semi-text"
-        badgeClassName="dial-tiny-semi-text"
-        metaClassName="dial-small-text"
+        pathLabelClassName="dial-tiny-text"
+        pathLeafClassName="dial-tiny-semi-text"
         {...overrides}
       />
     </ul>,
   );
 
 describe('ProjectCard', () => {
-  it('renders the name, the source label and the formatted date', () => {
+  it('renders the name on a card named by the project', () => {
     renderCard();
 
-    expect(screen.getByRole('listitem')).toBeTruthy();
-    expect(screen.getAllByText('Handbook').length).toBeGreaterThan(0);
-    expect(screen.getByText('Organization')).toBeTruthy();
-    expect(screen.getByText('Updated Mar 1, 2026').tagName).toBe('TIME');
+    const card = screen.getByRole('article', { name: 'Handbook' });
+    expect(within(card).getAllByText('Handbook').length).toBeGreaterThan(0);
   });
 
-  it('exposes the machine-readable timestamp on the time element', () => {
+  it('shows the source as the folder path of a root project', () => {
     renderCard();
 
-    expect(
-      screen.getByText('Updated Mar 1, 2026').getAttribute('dateTime'),
-    ).toBe('2026-03-01T00:00:00.000Z');
+    const path = screen.getByRole('navigation', { name: 'Project location' });
+    expect(within(path).getByText('Organization')).toBeTruthy();
   });
 
-  it('renders no date when the project has no update time', () => {
+  it('appends the grouping folders after the source for a nested project', () => {
     renderCard({
-      project: { id: 'p2', name: 'Draft', source: ProjectSource.Personal },
+      project: {
+        id: 'p2',
+        name: 'Q4 launch',
+        source: ProjectSource.Personal,
+        parentPath: 'marketing/2026',
+      },
+      sourceLabel: 'Personal',
     });
 
-    expect(screen.queryByText('Updated Mar 1, 2026')).toBeNull();
+    const path = screen.getByRole('navigation', { name: 'Project location' });
+    expect(path.textContent).toContain('Personal');
+    expect(path.textContent).toContain('marketing');
+    expect(path.textContent).toContain('2026');
+  });
+
+  it('shows the last-updated time relative to now and no source badge', () => {
+    renderCard();
+
+    const time = screen.getByRole('time');
+    expect(time.textContent).toBe('3 days ago');
+    expect(time.getAttribute('datetime')).toBe('2026-03-01T00:00:00.000Z');
+    expect(screen.getAllByText('Organization')).toHaveLength(1);
+  });
+
+  it('shows no time for an undated project', () => {
+    renderCard({
+      project: {
+        id: 'p3',
+        name: 'Draft',
+        source: ProjectSource.Personal,
+      },
+    });
+
+    expect(screen.queryByRole('time')).toBeNull();
   });
 
   it('is not interactive', () => {

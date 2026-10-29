@@ -106,6 +106,16 @@ actions and the active-row scroll behave identically. Search text and the
 filter arrive as controlled props, so the host decides where those controls
 live.
 
+`isUpdatingTitles` keeps the loaded rows interactive while the host fills in
+missing names. An empty text search shows `labels.updatingTitlesLabel` (default:
+"Updating conversation names") until this flag clears, instead of reporting
+that no conversation exists. It also announces the update through the list's
+live region. `preserveActiveSearchResult` keeps a matching opened row visible
+if its title changes, until the search query changes; source and type filters
+still apply. Both options default to `false` and are also available on
+`ConversationListSection` and `ConversationPanel`. The host owns requests,
+cancellation, failures and when to finish the update state.
+
 ```tsx
 import {
   ConversationList,

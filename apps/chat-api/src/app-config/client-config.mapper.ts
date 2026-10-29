@@ -1,3 +1,8 @@
+import {
+  DEFAULT_PROJECT_CONTEXT_ALLOWED_EXTENSIONS,
+  DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES,
+  DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES,
+} from '../projects/constants/project-context.constants';
 import { normalizeAnnouncements } from './announcements.normalizer';
 import type { ApplicationVisualizerDto } from './dto/application-visualizer.dto';
 import type { ClientConfigDto } from './dto/client-config-response.dto';
@@ -79,6 +84,9 @@ const isApplicationVisualizerRegistry = (
 ): value is Record<string, ApplicationVisualizerDto> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
+const isPositiveNumber = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value) && value > 0;
+
 const isCustomVariables = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
@@ -117,6 +125,11 @@ export const createDefaultClientConfig = (): MappedClientConfig => ({
   usageLimitsWarningThresholdPercent:
     DEFAULT_USAGE_LIMITS_WARNING_THRESHOLD_PERCENT,
   celebrationsEnabledByDefault: true,
+  projectContextFileMaxBytes: DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES,
+  projectContextTotalMaxBytes: DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES,
+  projectContextAllowedExtensions: [
+    ...DEFAULT_PROJECT_CONTEXT_ALLOWED_EXTENSIONS,
+  ],
 });
 
 /**
@@ -300,6 +313,32 @@ export const CLIENT_CONFIG_MAPPINGS: ReadonlyMap<string, ClientConfigMapping> =
       defineMapping(
         'celebrationsEnabledByDefault',
         ({ resolved }) => resolved !== false,
+      ),
+    ],
+    [
+      'projects.contextFileMaxBytes',
+      defineMapping('projectContextFileMaxBytes', ({ resolved }) =>
+        isPositiveNumber(resolved)
+          ? resolved
+          : DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES,
+      ),
+    ],
+    [
+      'projects.contextTotalMaxBytes',
+      defineMapping('projectContextTotalMaxBytes', ({ resolved }) =>
+        isPositiveNumber(resolved)
+          ? resolved
+          : DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES,
+      ),
+    ],
+    [
+      'projects.contextAllowedExtensions',
+      defineMapping('projectContextAllowedExtensions', ({ resolved }) =>
+        Array.isArray(resolved) &&
+        resolved.length > 0 &&
+        resolved.every((entry) => typeof entry === 'string')
+          ? [...resolved]
+          : [...DEFAULT_PROJECT_CONTEXT_ALLOWED_EXTENSIONS],
       ),
     ],
   ]);

@@ -51,6 +51,10 @@ import { AttachGenerationDto } from './dto/attach-generation.dto';
 import { ConversationListResponseDto } from './dto/conversation-list.dto';
 import { ConversationModelHiddenErrorDto } from './dto/conversation-model-hidden-error.dto';
 import { ConversationPathDto } from './dto/conversation-path.dto';
+import {
+  ConversationTitlesBodyDto,
+  ConversationTitlesResponseDto,
+} from './dto/conversation-titles.dto';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 import { DeleteAllConversationsBodyDto } from './dto/delete-all-conversations-body.dto';
 import { DeleteConversationsBodyDto } from './dto/delete-conversations-body.dto';
@@ -150,7 +154,7 @@ export class ConversationController {
   @ApiOperation({
     summary: 'List conversations',
     description:
-      'Returns a flat conversation list for the authenticated user. Without limit or nextToken, follows all personal and public DIAL Core metadata pages with recursive=true, merges shared conversations, and sorts the complete result by latest activity. Explicit pagination parameters request one page per bucket.',
+      'Returns a flat conversation list for the authenticated user. Without limit or nextToken, follows all personal and public DIAL Core metadata pages with recursive=true, merges shared conversations, and sorts the complete result by latest activity. Explicit pagination parameters request one page per bucket. Never reads conversation bodies; unresolved display titles are marked isTitlePending for background resolution.',
   })
   @ApiDialCoreErrors()
   @ApiResponse({
@@ -173,6 +177,46 @@ export class ConversationController {
       query.limit,
       query.nextToken,
     );
+  }
+
+  @Post('titles')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Resolve conversation display titles',
+    description:
+      'Returns cached or freshly read display titles for up to 25 full conversation resource URLs. Uses the current session permissions. Individual missing, forbidden, or unavailable resources are omitted; conversation messages are never returned.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Resolved conversation titles',
+    type: ConversationTitlesResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Invalid IDs or batch size; expected 1–25 full conversation resource URLs',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authenticated or DIAL Core rejected the session token',
+  })
+  @ApiResponse({ status: 403, description: 'Invalid CSRF token' })
+  @ApiResponse({
+    status: 502,
+    description:
+      'No titles resolved because DIAL Core returned upstream errors',
+  })
+  @ApiResponse({
+    status: 503,
+    description:
+      'No titles resolved because DIAL Core is unavailable or the bounded read queue is full',
+  })
+  getConversationTitles(
+    @Req() req: Request,
+    @Body() dto: ConversationTitlesBodyDto,
+  ) {
+    const { at } = req.user as SessionUser;
+    return this.conversationService.getConversationTitles(dto.ids, at);
   }
 
   @Get('metadata')
@@ -579,6 +623,7 @@ export class ConversationController {
     }
 
     const attachment = this.generationService.attach(ownerKey, dto.path);
+    /* Also covers a retained entry whose subscribers were already released. */
     if (!attachment) {
       throw new NotFoundException(
         'No active generation found for the given path',

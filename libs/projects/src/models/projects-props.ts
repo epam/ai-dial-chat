@@ -5,10 +5,10 @@ import type { ProjectItem } from './project-item';
 
 /** Localized labels used by the {@link Projects} component. */
 export interface ProjectsLabels {
-  /** Page title, e.g. "Projects". */
+  /** Page title, e.g. "All projects". */
   title: string;
-  /** One-line description shown beneath the title. */
-  subtitle: string;
+  /** One-line description shown beneath the title. Omitted when not set. */
+  subtitle?: string;
   /** Placeholder text for the toolbar search input. */
   searchPlaceholder: string;
   /** Accessible label for the toolbar search input. */
@@ -31,10 +31,16 @@ export interface ProjectsLabels {
   incompleteLabel: string;
   /** Label of the retry action shown when loading failed. */
   retryLabel: string;
-  /** Text of the source badge for each project source. */
+  /** Label of each project source, the first segment of a card's folder path. */
   sourceLabels: Record<ProjectSource, string>;
+  /** Accessible name of a card's folder path, e.g. "Project location". */
+  folderPathLabel: string;
   /** Announced through the status region when projects are listed, e.g. "3 projects". */
   resultCountLabel: (count: number) => string;
+  /** Label of the header and empty-state New project buttons; required whenever `onCreateProject` is supplied. */
+  createProjectLabel?: string;
+  /** Visually hidden text of a pinned card's marker. Defaults to `'Pinned'`. */
+  pinnedLabel?: string;
 }
 
 /**
@@ -46,34 +52,34 @@ export interface ProjectsColors {
   background?: string;
   /** Subtitle and status-message text color. Fallback: `--text-secondary`. */
   subtitleText?: string;
-  /** Sort control label/icon color. Fallback: `--text-accent`. */
+  /** Sort control label/icon color. Fallback: `--text-primary`. */
   sortButtonText?: string;
   /** Card background. Fallback: `--bg-layer-raised`. */
   cardBackground?: string;
-  /** Card border color. Fallback: `--stroke-tertiary`. */
-  cardBorder?: string;
   /** Project name color on a card. Fallback: `--text-primary`. */
   cardTitleText?: string;
-  /** Source badge background. Fallback: `--bg-layer-sunken`. */
-  badgeBackground?: string;
-  /** Source badge text color. Fallback: `--text-primary`. */
-  badgeText?: string;
-  /** Last-updated date text color on a card. Fallback: `--text-secondary`. */
-  metaText?: string;
+  /** Relative last-updated time color on a card. Fallback: `--text-secondary`. */
+  updatedAtText?: string;
+  /** Folder path text color on a card. Fallback: `--text-secondary`. */
+  pathText?: string;
 }
 
 /** Typography overrides for the {@link Projects} component. */
 export interface ProjectsTypography {
-  /** CSS class applied to the page title. Defaults to `'dial-h1-text'`. */
+  /** CSS class applied to the page title. Defaults to `'dial-h2-text'`. */
   titleClassName?: string;
   /** CSS class applied to the subtitle and status messages. Defaults to `'dial-body-text'`. */
   subtitleClassName?: string;
   /** CSS class applied to each card's project name. Defaults to `'dial-body-semi-text'`. */
   cardTitleClassName?: string;
-  /** CSS class applied to each card's source badge. Defaults to `'dial-tiny-semi-text'`. */
-  badgeClassName?: string;
-  /** CSS class applied to each card's last-updated date. Defaults to `'dial-small-text'`. */
-  metaClassName?: string;
+  /** CSS class applied to the non-leaf folder path segments. Defaults to `'dial-tiny-text'`. */
+  pathLabelClassName?: string;
+  /** CSS class applied to the last folder path segment. Defaults to `'dial-tiny-semi-text'`. */
+  pathLeafClassName?: string;
+  /** CSS class applied to each card's relative last-updated time. Defaults to `'dial-tiny-text'`. */
+  updatedAtClassName?: string;
+  /** CSS class applied to the empty state's description. Defaults to `'dial-small-paragraph-text'`. */
+  emptyStateDescriptionClassName?: string;
 }
 
 /** Style overrides for the {@link Projects} component. */
@@ -96,6 +102,12 @@ export interface ProjectsProps {
   incompleteSources?: ProjectSource[];
   /** Called when the user activates the retry action. */
   onRetry: () => void;
+  /** Called from the New project buttons; the buttons are not rendered when omitted. */
+  onCreateProject?: () => void;
+  /** Called with a project id on a plain primary click of a card link, in place of the browser's navigation; ignored without `getProjectHref`. */
+  onOpenProject?: (id: string) => void;
+  /** URL of a project's page, used as each card link's `href`; cards are not interactive when omitted. */
+  getProjectHref?: (id: string) => string;
   /** Current search query (controlled). */
   searchQuery: string;
   /** Called with the new query when the user types or clears the search. */
@@ -104,8 +116,6 @@ export interface ProjectsProps {
   sortKey: ProjectsSortKey;
   /** Called when the user picks another sort order. */
   onSortKeyChange: (sortKey: ProjectsSortKey) => void;
-  /** Formats a card's last-updated time (epoch milliseconds) as display text. */
-  formatUpdatedAt: (timestamp: number) => string;
   /** Localized labels. */
   labels: ProjectsLabels;
   /** BCP 47 locale used to collate names for the Name A–Z order. Defaults to the runtime locale. */

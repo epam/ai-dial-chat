@@ -313,12 +313,12 @@ SSE counts include asynchronous setup/cleanup, not just connected browsers; ordi
 delivery is excluded. Generation counts are process-local registry entries, including preflight,
 with all four states emitted even at zero:
 
-| State              | Meaning                                                              |
-| ------------------ | -------------------------------------------------------------------- |
-| `active`           | Admitted work before cancellation or terminal finalization.          |
-| `cancel_requested` | Cancellation requested; the worker still owns the entry.             |
-| `finalizing`       | Waiting for the single terminal-save attempt.                        |
-| `settling`         | Finalization timeout expired; the write, entry, and snapshot remain. |
+| State              | Meaning                                                                                   |
+| ------------------ | ----------------------------------------------------------------------------------------- |
+| `active`           | Admitted work before cancellation or terminal finalization.                               |
+| `cancel_requested` | Cancellation requested; the worker still owns the entry.                                  |
+| `finalizing`       | Waiting for the single terminal-save attempt.                                             |
+| `settling`         | Finalization or preparation timeout expired; the entry, snapshot and pending call remain. |
 
 State counts are disjoint and can be summed per process. Removing an entry removes its gauge
 contribution; a falling count does not prove persistence.
@@ -326,9 +326,17 @@ contribution; a falling count does not prove persistence.
 `GENERATION_FINALIZE_TIMEOUT_MS` starts immediately before terminal save. Expiry releases
 existing attachment listeners and timers but **does not cancel the write**. The retained key
 still rejects another start on the same process with `409` until settlement or restart.
-The timeout does not bound preflight, total generation lifetime, or attachments created after
-its terminal notification. Maximum duration and stale handling request cancellation rather
-than releasing ownership; stale sweeping runs on registration.
+The timeout does not bound total generation lifetime. Preflight is bounded separately by
+`GENERATION_PREPARATION_TIMEOUT_MS`, counted from registration until the SSE response opens.
+On expiry the request fails with `503`, attachment listeners are released, and the entry stays
+`settling` until the abandoned DIAL Core call settles. That call is not cancelled, so a
+never-settling call keeps the key until restart. Each abandonment logs one `warn`,
+`Abandoning generation preparation past GENERATION_PREPARATION_TIMEOUT_MS at <step>`, where
+`<step>` is `hidden_model_check`, `capability_resolution`, `conversation_read` or
+`start_state_save`. A late failure of that call logs `Abandoned preparation step failed`.
+Once either timeout has released subscribers, a later attach to the `settling` entry
+receives `404` and adds no `generation_attach` SSE subscription. Maximum duration and stale handling request cancellation
+rather than releasing ownership; stale sweeping runs on registration.
 
 There is no distributed lock or cross-pod ownership transfer. Restart clears local ownership
 without confirming remote writes. To investigate retained work, inspect states and memory per

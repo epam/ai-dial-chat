@@ -603,6 +603,8 @@ export class ShareInvitationService {
        * frontend picks it up from its own prompts refetch instead.
        */
       if (isPromptResourceUrl(itemId)) return {};
+      /* Nor does a project: its landing page loads it by id. */
+      if (itemId.startsWith('projects/')) return {};
 
       if (itemId.startsWith('toolsets/')) {
         const sharedToolset = await this.toolsetsService.resolveToolsetItem(

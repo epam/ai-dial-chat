@@ -1,5 +1,11 @@
-import { ConflictException, ForbiddenException } from '@nestjs/common';
-import { describe, expect, it, beforeEach, vi } from 'vitest';
+import {
+  BadGatewayException,
+  ConflictException,
+  ForbiddenException,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
+import { afterEach, describe, expect, it, beforeEach, vi } from 'vitest';
 import type { FeatureFlagsService } from '../../../app-config/feature-flags/feature-flags.service';
 import { FeatureKey } from '../../../app-config/feature-flags/feature-key.enum';
 import type { DeploymentsService } from '../../../deployments/deployments.service';
@@ -19,9 +25,13 @@ import { BackgroundGenerationService } from '../../generation/background-generat
 import { ChatCompletionsAdapter } from '../../generation/chat-completions.adapter';
 import { CoreResponsesClient } from '../../generation/core-responses.client';
 import { GenerationApiSelector } from '../../generation/generation-api-selector.service';
-import { generationRequestsTotal } from '../../generation/generation-metrics';
+import {
+  generationCapabilityResolutionTotal,
+  generationRequestsTotal,
+} from '../../generation/generation-metrics';
 import { GENERATION_PERSISTENCE_ERROR } from '../../generation/persistence-error';
 import { ResponsesAdapter } from '../../generation/responses.adapter';
+import { ConversationTitleCacheService } from '../../listing/conversation-title-cache.service';
 import { ConversationPersistenceService } from '../../persistence/conversation-persistence.service';
 import { ConversationErrorCode } from '../../types/conversation-error-code.enum';
 import { mergeHtmlTagAnnotationsIntoViewState } from '../../utils/conversation-view-state.server';
@@ -195,6 +205,7 @@ describe('ConversationStreamingService', () => {
       seedAssembledMessage: vi.fn(),
       applyChunk: vi.fn(),
       attach: vi.fn(),
+      abandonPreparation: vi.fn(),
     } as unknown as ConversationGenerationService;
     mockDeploymentsService = {
       getDeploymentDetails: vi.fn().mockResolvedValue({
@@ -217,6 +228,7 @@ describe('ConversationStreamingService', () => {
     persistenceService = new ConversationPersistenceService(
       mockDialClient,
       mockConversationNamingService as never,
+      new ConversationTitleCacheService(),
     );
     chatCompletionsAdapter = new ChatCompletionsAdapter(mockDialClient);
     service = new ConversationStreamingService(
@@ -236,6 +248,7 @@ describe('ConversationStreamingService', () => {
         new CoreResponsesClient(mockDialClient),
         mockGenerationService,
       ),
+      { get: () => undefined } as never,
     );
     vi.spyOn(mockDialClient.client, 'saveConversation').mockResolvedValue({
       data: {},
@@ -1105,6 +1118,84 @@ describe('ConversationStreamingService', () => {
             status: 'pending',
           },
         });
+      });
+    });
+
+    describe('background start — preparation bound', () => {
+      it('clears the preparation timer before the background placeholder save', async () => {
+        vi.mocked(mockFeatureFlagsService.isEnabled).mockResolvedValue(true);
+        vi.mocked(
+          mockDeploymentsService.getDeploymentDetails,
+        ).mockResolvedValue({
+          id: 'gpt-4o',
+          type: DeploymentItemType.Model,
+          modelDetails: { features: { responsesApi: true } },
+        });
+        vi.mocked(
+          mockDeploymentsService.getDeploymentInterfaces,
+        ).mockResolvedValue(['chat', 'openaiResponses']);
+        vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
+          data: { ...baseConversation, messages: [] },
+          response: new Response(null, {
+            status: 200,
+            headers: { ETag: '"v1"' },
+          }),
+        } as never);
+        let resolvePlaceholder: (value: unknown) => void = () => undefined;
+        const saveSpy = vi
+          .spyOn(mockDialClient.client, 'saveConversation')
+          .mockResolvedValue({
+            data: {},
+            response: new Response(null, { status: 200 }),
+          } as never)
+          .mockImplementationOnce(
+            () =>
+              new Promise((resolve) => {
+                resolvePlaceholder = resolve;
+              }) as never,
+          );
+        vi.spyOn(mockDialClient.client, 'createResponse').mockResolvedValue({
+          response: new Response(
+            new ReadableStream<Uint8Array>({
+              start(controller) {
+                controller.close();
+              },
+            }),
+            { status: 200 },
+          ),
+        } as never);
+
+        vi.useFakeTimers();
+        try {
+          const run = runStreamCompletion(
+            'test-path',
+            'test-token',
+            'test-bucket',
+            'test-gen-id',
+            CompletionMode.Append,
+            'Next message',
+            undefined,
+            'gpt-4o',
+            undefined,
+            'test-session-id',
+            makeMockRes() as never,
+          );
+          await vi.advanceTimersByTimeAsync(30_000);
+
+          expect(saveSpy).toHaveBeenCalledOnce();
+          expect(vi.getTimerCount()).toBe(0);
+          expect(
+            mockGenerationService.abandonPreparation,
+          ).not.toHaveBeenCalled();
+
+          resolvePlaceholder({
+            data: {},
+            response: new Response(null, { status: 200 }),
+          });
+          await run;
+        } finally {
+          vi.useRealTimers();
+        }
       });
     });
 
@@ -2378,10 +2469,6 @@ describe('ConversationStreamingService', () => {
         .mockResolvedValue({ data: {} } as never);
       const lease = makeLease();
       vi.mocked(mockGenerationService.register).mockReturnValue(lease);
-      /* Simulates a replacement: this lease's entry no longer resolves. */
-      vi.mocked(mockGenerationService.getCancellation).mockReturnValue(
-        undefined,
-      );
       vi.mocked(mockGenerationService.getAssembledMessage).mockReturnValue(
         undefined,
       );
@@ -2419,6 +2506,14 @@ describe('ConversationStreamingService', () => {
       );
 
       for await (const _chunk of stream) {
+        /*
+         * Simulates a replacement once streaming has started: this lease's
+         * entry no longer resolves. (Released during preparation, the worker
+         * would stop before streaming.)
+         */
+        vi.mocked(mockGenerationService.getCancellation).mockReturnValue(
+          undefined,
+        );
         break;
       }
 
@@ -3023,11 +3118,15 @@ describe('ConversationStreamingService', () => {
   describe('streamCompletion — cross-layer races against the real registry', () => {
     let realGenerationService: ConversationGenerationService;
 
-    beforeEach(() => {
-      realGenerationService = new ConversationGenerationService({
+    const useRealRegistry = (
+      config: Record<string, number> = {},
+    ): ConversationGenerationService => {
+      const configService = {
         get: (key: string) =>
-          key === 'GENERATION_FINALIZE_TIMEOUT_MS' ? 5000 : undefined,
-      } as never);
+          config[key] ??
+          (key === 'GENERATION_FINALIZE_TIMEOUT_MS' ? 5000 : undefined),
+      } as never;
+      realGenerationService = new ConversationGenerationService(configService);
       service = new ConversationStreamingService(
         mockDialClient,
         realGenerationService,
@@ -3045,7 +3144,13 @@ describe('ConversationStreamingService', () => {
           new CoreResponsesClient(mockDialClient),
           realGenerationService,
         ),
+        configService,
       );
+      return realGenerationService;
+    };
+
+    beforeEach(() => {
+      useRealRegistry();
     });
 
     afterEach(() => {
@@ -3160,6 +3265,601 @@ describe('ConversationStreamingService', () => {
           'another-gen-id',
         ),
       ).toThrow();
+    });
+
+    const PREPARING_PATH = 'gpt-4o__Test__11111111-1111-1111-1111-111111111111';
+
+    const createDeferred = <T>() => {
+      let resolve!: (value: T) => void;
+      let reject!: (reason: unknown) => void;
+      const promise = new Promise<T>((onResolve, onReject) => {
+        resolve = onResolve;
+        reject = onReject;
+      });
+      return { promise, resolve, reject };
+    };
+
+    /* Only the preparation read is held; the reads behind each save resolve at once. */
+    const deferConversationRead = () => {
+      const read = createDeferred<unknown>();
+      vi.spyOn(mockDialClient.client, 'getConversation')
+        .mockResolvedValue({ data: TEST_CONVERSATION } as never)
+        .mockImplementationOnce(() => read.promise as never);
+      return read;
+    };
+
+    const mockCompletedRelay = () =>
+      vi
+        .spyOn(mockDialClient.client, 'sendChatCompletionRequest')
+        .mockResolvedValue({
+          response: new Response(
+            textToStream([
+              'data: {"choices":[{"delta":{"content":"Hello"}}]}\n\n',
+              'data: [DONE]\n\n',
+            ]),
+            {
+              status: 200,
+              headers: { 'Content-Type': 'text/event-stream' },
+            },
+          ),
+        } as never);
+
+    const mockSaves = () =>
+      vi
+        .spyOn(mockDialClient.client, 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
+
+    const savedMessages = (
+      saveSpy: ReturnType<typeof mockSaves>,
+      callIndex: number,
+    ) =>
+      (
+        saveSpy.mock.calls[callIndex]?.[2] as unknown as {
+          body: { messages: Record<string, unknown>[] };
+        }
+      ).body.messages;
+
+    const startPreparingStream = (res: ReturnType<typeof makeMockRes>) =>
+      runStreamCompletion(
+        PREPARING_PATH,
+        'test-token',
+        'test-bucket',
+        'test-gen-id',
+        CompletionMode.Append,
+        'Hello',
+        undefined,
+        'gpt-4o',
+        undefined,
+        'test-session-id',
+        res as never,
+      );
+
+    describe('while preparation is pending', () => {
+      it('persists a stopped partial without calling the model when a user Stop arrives before the conversation read resolves', async () => {
+        const read = deferConversationRead();
+        const saveSpy = mockSaves();
+        const sendSpy = mockCompletedRelay();
+        const res = makeMockRes();
+
+        const run = startPreparingStream(res);
+        await vi.waitFor(() =>
+          expect(mockDialClient.client.getConversation).toHaveBeenCalled(),
+        );
+        expect(
+          realGenerationService.abort(
+            'test-session-id',
+            PREPARING_PATH,
+            'test-gen-id',
+          ),
+        ).toBe(true);
+        read.resolve({ data: TEST_CONVERSATION });
+        await run;
+
+        expect(saveSpy).toHaveBeenCalledTimes(2);
+        const terminalMessage = savedMessages(saveSpy, 1).at(-1);
+        expect(terminalMessage?.wasStoppedByUser).toBe(true);
+        expect(terminalMessage?.streamErrorMessage).toBeUndefined();
+        expect(res.flushHeaders).toHaveBeenCalledOnce();
+        expect(sendSpy).not.toHaveBeenCalled();
+        expect(() =>
+          realGenerationService.register(
+            'test-session-id',
+            PREPARING_PATH,
+            'another-gen-id',
+          ),
+        ).not.toThrow();
+      });
+
+      it('persists a non-user abort without calling the model when the maximum duration elapses before the conversation read resolves', async () => {
+        realGenerationService.onModuleDestroy();
+        useRealRegistry({ MAX_GENERATION_DURATION_MS: 1000 });
+        const read = deferConversationRead();
+        const saveSpy = mockSaves();
+        const sendSpy = mockCompletedRelay();
+        const res = makeMockRes();
+
+        vi.useFakeTimers();
+        try {
+          const run = startPreparingStream(res);
+          await vi.advanceTimersByTimeAsync(1000);
+          expect(mockDialClient.client.getConversation).toHaveBeenCalled();
+          read.resolve({ data: TEST_CONVERSATION });
+          await run;
+        } finally {
+          vi.useRealTimers();
+        }
+
+        expect(saveSpy).toHaveBeenCalledTimes(2);
+        const terminalMessage = savedMessages(saveSpy, 1).at(-1);
+        expect(terminalMessage?.streamErrorMessage).toBe('');
+        expect(terminalMessage?.wasStoppedByUser).toBeUndefined();
+        expect(sendSpy).not.toHaveBeenCalled();
+      });
+
+      it('makes no Responses request for a Responses-API generation stopped during preparation', async () => {
+        vi.mocked(mockFeatureFlagsService.isEnabled).mockImplementation(
+          async (key) => key === FeatureKey.ResponsesApiEnabled,
+        );
+        vi.mocked(
+          mockDeploymentsService.getDeploymentDetails,
+        ).mockResolvedValue({
+          id: 'gpt-4o',
+          type: DeploymentItemType.Model,
+          modelDetails: { features: { responsesApi: true } },
+        });
+        const read = deferConversationRead();
+        const saveSpy = mockSaves();
+        const createResponseSpy = vi.spyOn(
+          mockDialClient.client,
+          'createResponse',
+        );
+        const res = makeMockRes();
+
+        const run = startPreparingStream(res);
+        await vi.waitFor(() =>
+          expect(mockDialClient.client.getConversation).toHaveBeenCalled(),
+        );
+        realGenerationService.abort(
+          'test-session-id',
+          PREPARING_PATH,
+          'test-gen-id',
+        );
+        read.resolve({ data: TEST_CONVERSATION });
+        await run;
+
+        expect(createResponseSpy).not.toHaveBeenCalled();
+        expect(savedMessages(saveSpy, 1).at(-1)?.wasStoppedByUser).toBe(true);
+      });
+
+      it('keeps the entry owned and attachable with the placeholder snapshot', async () => {
+        const read = deferConversationRead();
+        mockSaves();
+        mockCompletedRelay();
+        const res = makeMockRes();
+
+        const run = startPreparingStream(res);
+        await vi.waitFor(() =>
+          expect(mockDialClient.client.getConversation).toHaveBeenCalled(),
+        );
+
+        expect(() =>
+          realGenerationService.register(
+            'test-session-id',
+            PREPARING_PATH,
+            'another-gen-id',
+          ),
+        ).toThrow(ConflictException);
+        const attachment = realGenerationService.attach(
+          'test-session-id',
+          PREPARING_PATH,
+        );
+        expect(attachment?.generationId).toBe('test-gen-id');
+        expect(attachment?.assembledMessage).toMatchObject({
+          role: ConversationMessageRole.Assistant,
+          content: '',
+        });
+
+        read.resolve({ data: TEST_CONVERSATION });
+        await run;
+      });
+
+      it('makes no further write or request after shutdown releases the entry during the conversation read', async () => {
+        const read = deferConversationRead();
+        const saveSpy = mockSaves();
+        const sendSpy = mockCompletedRelay();
+        const res = makeMockRes();
+
+        const run = startPreparingStream(res);
+        await vi.waitFor(() =>
+          expect(mockDialClient.client.getConversation).toHaveBeenCalled(),
+        );
+        realGenerationService.onModuleDestroy();
+        read.resolve({ data: TEST_CONVERSATION });
+
+        await expect(run).rejects.toBeInstanceOf(ServiceUnavailableException);
+        expect(saveSpy).not.toHaveBeenCalled();
+        expect(sendSpy).not.toHaveBeenCalled();
+        expect(res.flushHeaders).not.toHaveBeenCalled();
+      });
+
+      it('rethrows the step error when the conversation read rejects after shutdown releases the entry', async () => {
+        const read = deferConversationRead();
+        const saveSpy = mockSaves();
+        const sendSpy = mockCompletedRelay();
+        const res = makeMockRes();
+
+        const run = startPreparingStream(res);
+        await vi.waitFor(() =>
+          expect(mockDialClient.client.getConversation).toHaveBeenCalled(),
+        );
+        realGenerationService.onModuleDestroy();
+        read.reject({ error: { status: 400 } });
+
+        await expect(run).rejects.toBeInstanceOf(BadGatewayException);
+        expect(saveSpy).not.toHaveBeenCalled();
+        expect(sendSpy).not.toHaveBeenCalled();
+        expect(res.flushHeaders).not.toHaveBeenCalled();
+      });
+
+      it('makes no upstream request when the start-state save rejects after shutdown releases the entry', async () => {
+        vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
+          data: TEST_CONVERSATION,
+        } as never);
+        const save = createDeferred<unknown>();
+        const saveSpy = vi
+          .spyOn(mockDialClient.client, 'saveConversation')
+          .mockResolvedValue({ data: {} } as never)
+          .mockImplementationOnce(() => save.promise as never);
+        const sendSpy = mockCompletedRelay();
+        const res = makeMockRes();
+
+        const run = startPreparingStream(res);
+        await vi.waitFor(() => expect(saveSpy).toHaveBeenCalled());
+        realGenerationService.onModuleDestroy();
+        save.reject(new Error('Core down'));
+
+        await expect(run).rejects.not.toBeInstanceOf(
+          ServiceUnavailableException,
+        );
+        expect(saveSpy).toHaveBeenCalledOnce();
+        expect(sendSpy).not.toHaveBeenCalled();
+        expect(res.flushHeaders).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('bounded preparation', () => {
+      const PREPARATION_TIMEOUT_MS = 1000;
+
+      beforeEach(() => {
+        realGenerationService.onModuleDestroy();
+        useRealRegistry({
+          GENERATION_PREPARATION_TIMEOUT_MS: PREPARATION_TIMEOUT_MS,
+        });
+        vi.useFakeTimers();
+      });
+
+      afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+      });
+
+      /* Starts a completion whose rejection is captured rather than thrown. */
+      const startCapturing = (res: ReturnType<typeof makeMockRes>) =>
+        startPreparingStream(res).then(
+          () => undefined,
+          (err: unknown) => err,
+        );
+
+      it('abandons a stalled conversation read with a 503 before the stream opens', async () => {
+        deferConversationRead();
+        const saveSpy = mockSaves();
+        const sendSpy = mockCompletedRelay();
+        const res = makeMockRes();
+
+        const outcome = startCapturing(res);
+        await vi.advanceTimersByTimeAsync(PREPARATION_TIMEOUT_MS);
+        const err = await outcome;
+
+        expect(err).toBeInstanceOf(ServiceUnavailableException);
+        expect((err as ServiceUnavailableException).message).toBe(
+          'Generation preparation timed out',
+        );
+        expect(res.flushHeaders).not.toHaveBeenCalled();
+        expect(saveSpy).not.toHaveBeenCalled();
+        expect(sendSpy).not.toHaveBeenCalled();
+      });
+
+      it('releases an attach subscriber with an error terminal event at the deadline', async () => {
+        deferConversationRead();
+        mockSaves();
+        mockCompletedRelay();
+        const res = makeMockRes();
+
+        const outcome = startCapturing(res);
+        await vi.advanceTimersByTimeAsync(PREPARATION_TIMEOUT_MS / 2);
+        const attachment = realGenerationService.attach(
+          'test-session-id',
+          PREPARING_PATH,
+        )!;
+        const onTerminal = vi.fn();
+        attachment.emitter.on('terminal', onTerminal);
+        await vi.advanceTimersByTimeAsync(PREPARATION_TIMEOUT_MS / 2);
+        await outcome;
+
+        expect(onTerminal).toHaveBeenCalledOnce();
+        expect(onTerminal).toHaveBeenCalledWith({ type: 'error' });
+        expect(attachment.emitter.eventNames()).toEqual([]);
+        expect(
+          realGenerationService.attach('test-session-id', PREPARING_PATH),
+        ).toBeUndefined();
+      });
+
+      it('makes no start-state save and no upstream request when the abandoned read later resolves', async () => {
+        const read = deferConversationRead();
+        const saveSpy = mockSaves();
+        const sendSpy = mockCompletedRelay();
+        const res = makeMockRes();
+
+        const outcome = startCapturing(res);
+        await vi.advanceTimersByTimeAsync(PREPARATION_TIMEOUT_MS);
+        await outcome;
+        read.resolve({ data: TEST_CONVERSATION });
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(saveSpy).not.toHaveBeenCalled();
+        expect(sendSpy).not.toHaveBeenCalled();
+        expect(res.flushHeaders).not.toHaveBeenCalled();
+      });
+
+      it('keeps the key until the abandoned read settles, then admits a new generation', async () => {
+        const read = deferConversationRead();
+        mockSaves();
+        mockCompletedRelay();
+        const res = makeMockRes();
+
+        const outcome = startCapturing(res);
+        await vi.advanceTimersByTimeAsync(PREPARATION_TIMEOUT_MS);
+        await outcome;
+
+        expect(() =>
+          realGenerationService.register(
+            'test-session-id',
+            PREPARING_PATH,
+            'another-gen-id',
+          ),
+        ).toThrow(ConflictException);
+        expect(
+          realGenerationService.abort(
+            'test-session-id',
+            PREPARING_PATH,
+            'test-gen-id',
+          ),
+        ).toBe(false);
+
+        read.resolve({ data: TEST_CONVERSATION });
+        await vi.advanceTimersByTimeAsync(0);
+
+        const lease = realGenerationService.register(
+          'test-session-id',
+          PREPARING_PATH,
+          'another-gen-id',
+        );
+        await vi.advanceTimersByTimeAsync(0);
+        /* The old lease's single settlement already ran and cannot reach the new entry. */
+        expect(realGenerationService.getCancellation(lease)).toEqual({
+          requested: false,
+        });
+        expect(
+          realGenerationService.attach('test-session-id', PREPARING_PATH)
+            ?.generationId,
+        ).toBe('another-gen-id');
+      });
+
+      it('observes a late read rejection and releases the key once', async () => {
+        const warn = vi
+          .spyOn(Logger.prototype, 'warn')
+          .mockImplementation(() => undefined);
+        const read = deferConversationRead();
+        mockSaves();
+        mockCompletedRelay();
+        const res = makeMockRes();
+
+        const outcome = startCapturing(res);
+        await vi.advanceTimersByTimeAsync(PREPARATION_TIMEOUT_MS);
+        await outcome;
+        read.reject(new Error('late Core failure'));
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(
+          warn.mock.calls.some(([line]) =>
+            String(line).includes(
+              'Abandoned preparation step failed: conversation_read',
+            ),
+          ),
+        ).toBe(true);
+        expect(() =>
+          realGenerationService.register(
+            'test-session-id',
+            PREPARING_PATH,
+            'another-gen-id',
+          ),
+        ).not.toThrow();
+      });
+
+      it('proceeds unchanged and clears its timer when the read resolves before the deadline', async () => {
+        const read = deferConversationRead();
+        const saveSpy = mockSaves();
+        mockCompletedRelay();
+        const res = makeMockRes();
+
+        const run = startPreparingStream(res);
+        await vi.advanceTimersByTimeAsync(PREPARATION_TIMEOUT_MS / 2);
+        read.resolve({ data: TEST_CONVERSATION });
+        await run;
+
+        expect(saveSpy).toHaveBeenCalledTimes(2);
+        expect(res.flushHeaders).toHaveBeenCalledOnce();
+        expect(vi.getTimerCount()).toBe(0);
+      });
+
+      it('arms one preparation timer, adds no abort-signal listener, and leaves no timer after settlement', async () => {
+        const addEventListener = vi.spyOn(
+          AbortSignal.prototype,
+          'addEventListener',
+        );
+        const read = deferConversationRead();
+        mockSaves();
+        mockCompletedRelay();
+        const res = makeMockRes();
+
+        const outcome = startCapturing(res);
+        await vi.advanceTimersByTimeAsync(PREPARATION_TIMEOUT_MS / 2);
+        /* The max-duration timer and the preparation timer. */
+        expect(vi.getTimerCount()).toBe(2);
+        await vi.advanceTimersByTimeAsync(PREPARATION_TIMEOUT_MS / 2);
+        await outcome;
+        read.resolve({ data: TEST_CONVERSATION });
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(vi.getTimerCount()).toBe(0);
+        expect(addEventListener).not.toHaveBeenCalled();
+      });
+
+      it('abandons a stalled hidden-model check before the deployment is resolved, without counting a capability resolution', async () => {
+        const addSpy = vi.spyOn(generationCapabilityResolutionTotal, 'add');
+        vi.mocked(mockDeploymentsService.resolveDeploymentItem).mockReturnValue(
+          new Promise(() => undefined),
+        );
+        const saveSpy = mockSaves();
+        const res = makeMockRes();
+
+        const outcome = startCapturing(res);
+        await vi.advanceTimersByTimeAsync(PREPARATION_TIMEOUT_MS);
+
+        expect(await outcome).toBeInstanceOf(ServiceUnavailableException);
+        expect(addSpy).not.toHaveBeenCalled();
+        expect(
+          mockDeploymentsService.getDeploymentDetails,
+        ).not.toHaveBeenCalled();
+        expect(saveSpy).not.toHaveBeenCalled();
+        expect(() =>
+          realGenerationService.register(
+            'test-session-id',
+            PREPARING_PATH,
+            'another-gen-id',
+          ),
+        ).toThrow(ConflictException);
+      });
+
+      it('abandons a stalled capability resolution, still counts it as failed, and releases the key once it settles', async () => {
+        const addSpy = vi.spyOn(generationCapabilityResolutionTotal, 'add');
+        let resolveDetails: (value: unknown) => void = () => undefined;
+        vi.mocked(mockDeploymentsService.getDeploymentDetails).mockReturnValue(
+          new Promise((resolve) => {
+            resolveDetails = resolve;
+          }) as never,
+        );
+        const saveSpy = mockSaves();
+        const res = makeMockRes();
+
+        const outcome = startCapturing(res);
+        await vi.advanceTimersByTimeAsync(PREPARATION_TIMEOUT_MS);
+
+        expect(await outcome).toBeInstanceOf(ServiceUnavailableException);
+        expect(addSpy).toHaveBeenCalledWith(1, { outcome: 'failed' });
+        expect(mockDialClient.client.getConversation).not.toHaveBeenCalled();
+
+        resolveDetails({
+          id: 'gpt-4o',
+          type: DeploymentItemType.Model,
+          modelDetails: { features: { chatCompletion: true } },
+        });
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(saveSpy).not.toHaveBeenCalled();
+        expect(() =>
+          realGenerationService.register(
+            'test-session-id',
+            PREPARING_PATH,
+            'another-gen-id',
+          ),
+        ).not.toThrow();
+      });
+
+      describe('start-state save', () => {
+        const deferStartStateSave = () => {
+          const save = createDeferred<unknown>();
+          const saveSpy = vi
+            .spyOn(mockDialClient.client, 'saveConversation')
+            .mockResolvedValue({ data: {} } as never)
+            .mockImplementationOnce(() => save.promise as never);
+          return { save, saveSpy };
+        };
+
+        beforeEach(() => {
+          vi.spyOn(mockDialClient.client, 'getConversation').mockResolvedValue({
+            data: TEST_CONVERSATION,
+          } as never);
+        });
+
+        it('abandons a stalled start-state save, keeps the key while the write is pending, and makes no terminal save', async () => {
+          const { saveSpy } = deferStartStateSave();
+          const sendSpy = mockCompletedRelay();
+          const res = makeMockRes();
+
+          const outcome = startCapturing(res);
+          await vi.advanceTimersByTimeAsync(PREPARATION_TIMEOUT_MS);
+
+          expect(await outcome).toBeInstanceOf(ServiceUnavailableException);
+          expect(saveSpy).toHaveBeenCalledOnce();
+          expect(sendSpy).not.toHaveBeenCalled();
+          expect(res.flushHeaders).not.toHaveBeenCalled();
+          expect(() =>
+            realGenerationService.register(
+              'test-session-id',
+              PREPARING_PATH,
+              'another-gen-id',
+            ),
+          ).toThrow(ConflictException);
+        });
+
+        it('releases the key once a late start-state save succeeds, with no further write from the worker', async () => {
+          const { save, saveSpy } = deferStartStateSave();
+          const sendSpy = mockCompletedRelay();
+          const res = makeMockRes();
+
+          const outcome = startCapturing(res);
+          await vi.advanceTimersByTimeAsync(PREPARATION_TIMEOUT_MS);
+          await outcome;
+          save.resolve({ data: {} });
+          await vi.advanceTimersByTimeAsync(0);
+
+          expect(saveSpy).toHaveBeenCalledOnce();
+          expect(sendSpy).not.toHaveBeenCalled();
+          expect(() =>
+            realGenerationService.register(
+              'test-session-id',
+              PREPARING_PATH,
+              'another-gen-id',
+            ),
+          ).not.toThrow();
+        });
+
+        it('still streams when the start-state save rejects before the deadline', async () => {
+          const saveSpy = vi
+            .spyOn(mockDialClient.client, 'saveConversation')
+            .mockResolvedValue({ data: {} } as never)
+            .mockRejectedValueOnce(new Error('Core down'));
+          mockCompletedRelay();
+          const res = makeMockRes();
+
+          await startPreparingStream(res);
+
+          expect(res.flushHeaders).toHaveBeenCalledOnce();
+          expect(saveSpy).toHaveBeenCalledTimes(2);
+          expect(vi.getTimerCount()).toBe(0);
+        });
+      });
     });
   });
 });

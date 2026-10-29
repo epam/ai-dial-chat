@@ -246,6 +246,20 @@ export const ENTITY_OPERATION_NOTIFICATIONS = {
       messageKey: EntityNotificationsI18nKeys.FolderDownloaded,
     },
   },
+  [NotifiableEntity.Project]: {
+    [EntityOperation.Deleted]: {
+      titleKey: EntityNotificationsI18nKeys.ProjectDeletedTitle,
+      messageKey: EntityNotificationsI18nKeys.ProjectDeleted,
+    },
+    [EntityOperation.Downloaded]: {
+      titleKey: EntityNotificationsI18nKeys.ProjectDownloadedTitle,
+      messageKey: EntityNotificationsI18nKeys.ProjectDownloaded,
+    },
+    [EntityOperation.PublishRequested]: {
+      titleKey: EntityNotificationsI18nKeys.ProjectPublishRequestedTitle,
+      messageKey: EntityNotificationsI18nKeys.ProjectPublishRequested,
+    },
+  },
 } as const satisfies Record<
   NotifiableEntity,
   Partial<Record<EntityOperation, OperationNotificationKeys>>

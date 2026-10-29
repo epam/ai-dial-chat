@@ -115,7 +115,10 @@
           }
         }
       }
-    }
+    },
+    "tags": [
+      "type:backend"
+    ]
   },
   "dependencies": {
     "@cacheable/memory": "^2.2.0",

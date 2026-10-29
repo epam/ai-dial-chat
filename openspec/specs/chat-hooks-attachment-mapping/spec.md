@@ -37,7 +37,7 @@ resolution injected by the host.
 
 ### Requirement: `apps/chat` supplies its bucket/icon-URL resolver as an injected callback
 
-`apps/chat/src/components/ConversationView/ConversationView.tsx` and `apps/chat/src/hooks/files/useDialFileManagerState.ts` SHALL call the `@epam/ai-dial-chat-hooks` exports with `{ resolvePreviewUrl: resolveCatalogIconUrl }` (other callers — `apps/chat/src/hooks/application-editor/useApplicationAvatarPicker.ts` and `libs/toolset-editor`'s `GeneralForm` — pass their own injected `resolveIconUrl`), where `resolveCatalogIconUrl` remains defined in `apps/chat/src/utils/icon-path.ts` and continues to construct the app's `/api/v1/files/download` and `/api/themes/icon` paths. `apps/chat/src/utils/dial-file-to-attachment.ts` and its test SHALL be removed once the migration is verified.
+`apps/chat/src/components/ConversationView/ConversationView.tsx` and `apps/chat/src/hooks/files/useDialFileManagerState.ts` SHALL call the `@epam/ai-dial-chat-hooks` exports with `{ resolvePreviewUrl: resolveCatalogIconUrl }` (the other caller, `apps/chat/src/hooks/application-editor/useApplicationAvatarPicker.ts`, passes its own injected `resolveIconUrl`), where `resolveCatalogIconUrl` remains defined in `apps/chat/src/utils/icon-path.ts` and continues to construct the app's `/api/v1/files/download` and `/api/themes/icon` paths. `apps/chat/src/utils/dial-file-to-attachment.ts` and its test SHALL be removed once the migration is verified.
 
 #### Scenario: App-owned URL construction never enters the library
 - **WHEN** the repository is inspected
@@ -70,3 +70,4 @@ resolution injected by the host.
 #### Scenario: No private duplicate remains inside `useAttachmentValidation`
 - **WHEN** `libs/chat-hooks/src/attachment/useAttachmentValidation/useAttachmentValidation.ts` is inspected
 - **THEN** it contains no locally-defined `mimeTypesToFileAccept`/`isDialFileAcceptType`/`mimeTypesToDialFileAcceptTypes` implementation
+

@@ -1,6 +1,6 @@
 {
   "name": "@epam/ai-dial-projects",
-  "description": "Presentational Projects page shell — searchable, sortable grid of the projects available to a user",
+  "description": "Presentational Projects page shell, New and Edit project form, and project view — searchable, sortable grid of the projects available to a user",
   "version": "0.0.1",
   "private": true,
   "license": "Apache-2.0",
@@ -19,7 +19,11 @@
     }
   },
   "dependencies": {
-    "@tabler/icons-react": "^3.44.0"
+    "@epam/ai-dial-attachment-input": "*",
+    "@epam/ai-dial-builder-form": "*",
+    "@tabler/icons-react": "^3.44.0",
+    "@uiw/react-markdown-preview": "^5.2.1",
+    "@uiw/react-md-editor": "^4.1.1"
   },
   "peerDependencies": {
     "@epam/ai-dial-chat-shared": "*",
@@ -28,7 +32,8 @@
   },
   "nx": {
     "tags": [
-      "publishable"
+      "publishable",
+      "type:ui"
     ],
     "targets": {
       "publish": {

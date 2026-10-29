@@ -1,10 +1,10 @@
 import { ProjectSource } from '@epam/ai-dial-chat-api-client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { projectsApi } from '../api-client';
-import { listProjects } from '../projects.api';
+import { createProject, listProjects } from '../projects.api';
 
 vi.mock('../api-client', () => ({
-  projectsApi: { listProjects: vi.fn() },
+  projectsApi: { listProjects: vi.fn(), createProject: vi.fn() },
 }));
 
 describe('Projects adapter', () => {
@@ -35,5 +35,58 @@ describe('Projects adapter', () => {
     vi.mocked(projectsApi.listProjects).mockRejectedValue(error);
 
     await expect(listProjects()).rejects.toBe(error);
+  });
+
+  it('creates a project with JSON file names paired to the files and the caller signal', async () => {
+    const signal = new AbortController().signal;
+    const created = {
+      id: 'projects/b/Q4',
+      name: 'Q4',
+      bucket: 'b',
+      path: 'Q4',
+    };
+    const tickets = new File(['a,b'], 'tickets.csv', { type: 'text/csv' });
+    const survey = new File(['x'], 'survey.xlsx');
+    vi.mocked(projectsApi.createProject).mockResolvedValue(created);
+
+    await expect(
+      createProject(
+        { name: 'Q4', description: 'About Q4', instructions: '## Steps' },
+        [tickets, survey],
+        signal,
+      ),
+    ).resolves.toBe(created);
+    expect(projectsApi.createProject).toHaveBeenCalledWith(
+      {
+        name: 'Q4',
+        description: 'About Q4',
+        instructions: '## Steps',
+        fileNames: '["tickets.csv","survey.xlsx"]',
+        files: [tickets, survey],
+      },
+      { signal },
+    );
+  });
+
+  it('sends an empty file list for a name-only project', async () => {
+    vi.mocked(projectsApi.createProject).mockResolvedValue({
+      id: 'projects/b/p',
+      name: 'p',
+      bucket: 'b',
+      path: 'p',
+    });
+
+    await createProject({ name: 'p', description: '', instructions: '' }, []);
+
+    expect(projectsApi.createProject).toHaveBeenCalledWith(
+      {
+        name: 'p',
+        description: '',
+        instructions: '',
+        fileNames: '[]',
+        files: [],
+      },
+      undefined,
+    );
   });
 });

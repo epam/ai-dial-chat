@@ -12,6 +12,8 @@ import { createLottieSceneSession } from '../lottie-scene-session';
 interface FakeAnimation {
   callbacks: Map<string, () => void>;
   isLoaded: boolean;
+  currentFrame: number;
+  frameRate: number;
   animationData: Record<string, unknown>;
   play: ReturnType<typeof vi.fn>;
   setSubframe: ReturnType<typeof vi.fn>;
@@ -53,6 +55,8 @@ beforeEach(() => {
       const animation: FakeAnimation = {
         callbacks,
         isLoaded: isLoadedOnCreate,
+        currentFrame: 0,
+        frameRate: 60,
         animationData: data,
         play: vi.fn(),
         setSubframe: vi.fn(),
@@ -64,6 +68,12 @@ beforeEach(() => {
         ...animation,
         get isLoaded() {
           return animation.isLoaded;
+        },
+        get currentFrame() {
+          return animation.currentFrame;
+        },
+        get frameRate() {
+          return animation.frameRate;
         },
         addEventListener: (name: string, callback: () => void) =>
           callbacks.set(name, callback),
@@ -87,11 +97,13 @@ const createSession = ({
   prepare = vi.fn((): Preparation => ({ data: original() })),
   ownership = LottieDataOwnership.Transferred,
   onAnimationCreated,
+  onPlaybackStarted,
 }: {
   loadPlayer?: () => Promise<LottiePlayer>;
   prepare?: () => Preparation;
   ownership?: LottieDataOwnership;
   onAnimationCreated?: LottieScenePlayback<Preparation>['onAnimationCreated'];
+  onPlaybackStarted?: LottieScenePlayback<Preparation>['onPlaybackStarted'];
 } = {}) => {
   const onPrepared = vi.fn();
   const onTerminal = vi.fn();
@@ -100,6 +112,7 @@ const createSession = ({
     ownership,
     getAnimationData: ({ data }) => data,
     onAnimationCreated,
+    onPlaybackStarted,
   };
   const session = createLottieSceneSession({
     playback,
@@ -471,5 +484,64 @@ describe('createLottieSceneSession', () => {
     expect(loadPlayer).toHaveBeenCalledTimes(2);
     expect(animations[0].play).toHaveBeenCalledOnce();
     second.session.dispose();
+  });
+  describe('onPlaybackStarted', () => {
+    it('reports the timeline time of frame 0 once, on the first rendered frame', async () => {
+      const onPlaybackStarted = vi.fn();
+      vi.spyOn(performance, 'now').mockReturnValue(5000);
+      await startInitializing({ onPlaybackStarted });
+      const [animation] = animations;
+      animation.emit('DOMLoaded');
+      expect(onPlaybackStarted).not.toHaveBeenCalled();
+
+      animation.currentFrame = 3;
+      animation.emit('enterFrame');
+      animation.emit('enterFrame');
+
+      expect(onPlaybackStarted).toHaveBeenCalledOnce();
+      expect(onPlaybackStarted.mock.calls[0][0]).toMatchObject({
+        host,
+        timelineZeroMs: 4950,
+      });
+      expect(animation.callbacks.has('enterFrame')).toBe(false);
+    });
+
+    it('never reports a playback cancelled before its first frame', async () => {
+      const onPlaybackStarted = vi.fn();
+      const { session } = await startInitializing({ onPlaybackStarted });
+      const [animation] = animations;
+      animation.emit('DOMLoaded');
+      const firstFrame = animation.callbacks.get('enterFrame');
+
+      session.cancel();
+      firstFrame?.();
+
+      expect(onPlaybackStarted).not.toHaveBeenCalled();
+      expectReleased();
+    });
+
+    it('fails and runs every disposer when the callback throws', async () => {
+      const dispose = vi.fn();
+      const { onTerminal } = await startInitializing({
+        onAnimationCreated: ({ addDisposer }) => addDisposer(dispose),
+        onPlaybackStarted: () => {
+          throw new Error('companion');
+        },
+      });
+      const [animation] = animations;
+      animation.emit('DOMLoaded');
+      animation.emit('enterFrame');
+
+      expect(onTerminal).toHaveBeenCalledWith(LottieSceneOutcome.Failed);
+      expect(dispose).toHaveBeenCalledOnce();
+      expectReleased();
+    });
+
+    it('adds no frame listener for an adapter without the callback', async () => {
+      await startInitializing();
+      animations[0].emit('DOMLoaded');
+
+      expect(animations[0].callbacks.has('enterFrame')).toBe(false);
+    });
   });
 });
