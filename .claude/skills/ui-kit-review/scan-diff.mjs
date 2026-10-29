@@ -25,8 +25,13 @@ const LEGACY_ALLOWLIST = new Set([
 ]);
 
 /* Files whose custom typography is an accepted exception: the 404 hero numeral
-   is larger than the kit's biggest step (`dial-display1-text`, 32/48). */
-const TYPOGRAPHY_EXEMPT_PATHS = [/^apps\/chat\/src\/pages\/NotFound\//];
+   is larger than the kit's biggest step (`dial-display1-text`, 32/48), and the
+   welcome greeting is light 36px (`font-light text-4xl`) while every kit
+   display step is semibold. */
+const TYPOGRAPHY_EXEMPT_PATHS = [
+  /^apps\/chat\/src\/pages\/NotFound\//,
+  /^apps\/chat\/src\/components\/NewConversationComposer\/NewConversationComposer\.tsx$/,
+];
 
 const SOURCE = 'source';
 const SPEC = 'spec';

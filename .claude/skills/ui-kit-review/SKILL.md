@@ -116,6 +116,11 @@ Confirm each still holds in the installed version before repeating it.
 - `apps/chat/src/pages/NotFound/` — the 404 hero numeral is sized above the
   kit's biggest step (`dial-display1-text`, 32/48) on purpose. The scanner
   skips its typography signals (`TYPOGRAPHY_EXEMPT_PATHS`).
+- `apps/chat/src/components/NewConversationComposer/NewConversationComposer.tsx`
+  — the welcome greeting (`welcomeClassName`) is `font-light text-4xl`, light
+  36px/40px by design. Every kit `dial-display*-text` step is semibold, so no
+  scale class matches; `dial-display1-text` made it bold and 32px. Keep the
+  raw classes until the kit ships a light display step.
 
 ## Report format
 
