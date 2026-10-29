@@ -1,4 +1,5 @@
 import {
+  useLatestCanvasRequest,
   useAttachmentCanvas,
   useOpenAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
@@ -98,7 +99,6 @@ import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
-import { useLatestCanvasRequest } from '../../hooks/attachment/useLatestCanvasRequest';
 import { useMcpAppHostAdapter } from '../../hooks/attachment/useMcpAppHostAdapter';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useChatSettingsFormLabels } from '../../hooks/conversation/useChatSettingsFormLabels';

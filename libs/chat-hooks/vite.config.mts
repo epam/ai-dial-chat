@@ -44,6 +44,7 @@ export default defineConfig(({ command }) => ({
       aliasesExclude: [
         '@epam/ai-dial-attachment-canvas',
         '@epam/ai-dial-mcp-apps',
+        '@epam/ai-dial-scheduled-tasks/validation',
       ],
     }),
   ],

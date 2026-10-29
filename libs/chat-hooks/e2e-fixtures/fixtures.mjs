@@ -17,6 +17,68 @@ export const MINIMAL_FIXTURE = {
   peers: [],
 };
 
+/** Explicit reusable-controller imports checked against packed public entries. */
+export const REUSABLE_CONTROLLER_EXPORTS = {
+  utils: [
+    'triggerBrowserDownload',
+    'usePersistedState',
+    'type UsePersistedStateOptions',
+    'type PersistedStateStorage',
+    'type PersistedStateCodec',
+  ],
+  conversation: [
+    'groupScheduledTaskConversations',
+    'applyActiveScheduledTaskRun',
+    'collapseScheduledTaskConversations',
+    'useConversationDiscovery',
+    'useEntityPreselection',
+    'EntityPreselectionSource',
+    'EntityPreselectionOutcome',
+    'type ScheduledTaskConversation',
+    'type ScheduledTaskRun',
+    'type ScheduledTaskGrouping',
+    'type GroupScheduledTaskConversationsOptions',
+    'type CollapseScheduledTaskConversationsOptions',
+    'type UseConversationDiscoveryOptions',
+    'type EntityPreselectionSnapshot',
+    'type EntityPreselectionSinks',
+    'type EntityPreselectionPrompt',
+    'type EntityPreselectionPromptResult',
+    'type EntityPreselectionSkill',
+    'type UseEntityPreselectionOptions',
+    'type UseEntityPreselectionResult',
+  ],
+  'scheduled-tasks': [
+    'useScheduledTaskSkillDisplayNames',
+    'type UseScheduledTaskSkillDisplayNamesOptions',
+    'type ScheduledTaskSkillName',
+  ],
+  'skill-editor': [
+    'useSkillFileSystemPicker',
+    'type UseSkillFileSystemPickerOptions',
+    'type UseSkillFileSystemPickerResult',
+  ],
+  'file-manager': [
+    'DownloadDestinationType',
+    'type DownloadDestination',
+    'useFileAttachmentModalState',
+    'type UseFileAttachmentModalStateOptions',
+    'type UseFileAttachmentModalStateResult',
+  ],
+  'file-manager-canvas': [
+    'useDialFilePreview',
+    'type UseDialFilePreviewOptions',
+    'type UseDialFilePreviewResult',
+  ],
+  'viewport-layout': [
+    'resolveCanvasWidth',
+    'CanvasWidthMode',
+    'type CanvasWidth',
+    'type CanvasWidthPolicy',
+    'type ResolveCanvasWidthParams',
+  ],
+};
+
 /*
  * `@epam/ai-dial-ui-kit@0.14.0-dev.51` moved its editor stack from required
  * peers to optional ones, but its published root entry still reaches all
@@ -48,19 +110,10 @@ export const UI_KIT_EDITOR_PEERS = [
  * re-export, and a re-export has to *resolve* before unused features are
  * tree-shaken.
  *
- * Two families are deliberately absent, and their absence is the assertion —
- * a fixture that installed them anyway could not tell a working contract from
- * a broken one:
- *
- *  - the markdown stack (`react-markdown`, `remark-*`, `rehype-*`, `katex`,
- *    `react-syntax-highlighter`, `@tabler/icons-react`), which
- *    `@epam/ai-dial-chat-shared` ships as dependencies;
- *  - `@epam/ai-dial-react-file-manager` and `ag-grid-community`, which used to
- *    be here because the root entry re-exported the two grid-rendering
- *    components. They now live behind that package's `./file-manager` entry
- *    ([issue #8719](https://github.com/epam/ai-dial-chat/issues/8719)), so the
- *    root closure no longer reaches the grid and only the `file-manager`
- *    fixture below names the pair.
+ * The markdown stack is installed through chat-shared dependencies. Its
+ * File Manager peer and AG Grid dependency are resolved transitively from
+ * metadata: root declarations reach their types even though root runtime
+ * modules do not render a grid. Bundle checks still enforce lazy loading.
  */
 export const CHAT_SHARED_ROOT_PEERS = [
   '@epam/ai-dial-ui-kit',
@@ -115,10 +168,9 @@ export const SUBPATH_FIXTURES = [
     name: 'file-manager',
     subpath: 'file-manager',
     /*
-     * The one fixture that names the grid pair: this entry is where
-     * `@epam/ai-dial-chat-shared/file-manager` — and so
-     * `@epam/ai-dial-react-file-manager` with its `ag-grid-community` peer —
-     * enters the closure.
+     * This entry uses the grid directly; other entries can also install its
+     * packages through chat-shared's declaration dependencies without loading
+     * grid rendering at runtime.
      *
      * The canvas trio (`@epam/ai-dial-attachment-canvas`,
      * `@epam/ai-dial-quotations` and the `@epam/pdf-highlighter-kit` its
@@ -143,6 +195,7 @@ export const SUBPATH_FIXTURES = [
     name: 'file-manager-canvas',
     subpath: 'file-manager-canvas',
     peers: [
+      '@epam/ai-dial-react-file-manager',
       '@epam/ai-dial-attachment-canvas',
       '@epam/ai-dial-quotations',
       '@epam/pdf-highlighter-kit',
@@ -175,6 +228,7 @@ export const SUBPATH_FIXTURES = [
     name: 'skill-editor',
     subpath: 'skill-editor',
     peers: [
+      '@epam/ai-dial-react-file-manager',
       '@epam/ai-dial-skill-editor',
       '@epam/ai-dial-chat-shared',
       '@epam/ai-dial-ui-kit',

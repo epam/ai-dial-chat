@@ -6,6 +6,16 @@ A single script (`scripts/run.mjs`) that proves `@epam/ai-dial-skills`'s and
 Decision 5. The client application adoption map built on it is
 [`docs/reusable-chat-workflows.md`](../../docs/reusable-chat-workflows.md).
 
+## Reusable controller coverage
+
+The fixture also packs `chat-hooks` and `attachment-canvas`, explicitly
+re-exporting all new controller functions and reachable option/result types
+from their documented subpaths and package root, plus `useLatestCanvasRequest`. The existing
+real typecheck, production bundle, stylesheet and lazy engine checks remain.
+`REUSABLE_CONTROLLER_EXPORTS` in `libs/chat-hooks/e2e-fixtures/fixtures.mjs`
+is shared with the per-entry fixture runner. This proves artifact readiness
+only when installation and all checks pass; it never proves client adoption.
+
 ## Why this exists
 
 Every in-repo consumer of `@epam/ai-dial-skills`/`@epam/ai-dial-prompts`

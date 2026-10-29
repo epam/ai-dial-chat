@@ -2,6 +2,7 @@ import {
   prepareDownloadDestination,
   type UseDialFileManagerOptions,
 } from '@epam/ai-dial-chat-hooks';
+import { triggerBrowserDownload } from '@epam/ai-dial-chat-hooks/utils';
 import { DialFileManagerActions } from '@epam/ai-dial-react-file-manager';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -13,7 +14,6 @@ import { useNotification } from '../../context/NotificationContext';
 import { useMaxUploadFileSizeLabel } from '../../hooks/files/useMaxUploadFileSizeLabel';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { dialFilesApiAdapter } from '../../server-api/dial-files-api.adapter';
-import { triggerBrowserDownload } from '../../utils/file-download';
 import {
   buildFileManagerNotificationOptions,
   buildValidationErrorMessage,

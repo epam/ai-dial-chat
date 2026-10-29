@@ -12,7 +12,11 @@ import {
   formatExecError,
   npmInstallFixture,
 } from './harness.mjs';
-import { ALL_OPTIONAL_PEERS, CHAT_SHARED_ROOT_PEERS } from './fixtures.mjs';
+import {
+  ALL_OPTIONAL_PEERS,
+  CHAT_SHARED_ROOT_PEERS,
+  SUBPATH_FIXTURES,
+} from './fixtures.mjs';
 export const PROBE_DEFINITIONS = [
   {
     name: 'chat-shared-root-filtertab',
@@ -66,7 +70,8 @@ export const PROBE_DEFINITIONS = [
     projectRoot: 'libs/chat-hooks',
     specifier: '@epam/ai-dial-chat-hooks/utils',
     sourceEntryFile: 'entry-points/utils.ts',
-    featurePeers: [],
+    featurePeers: SUBPATH_FIXTURES.find(({ subpath }) => subpath === 'utils')
+      .peers,
   },
   {
     name: 'chat-hooks-source-content-resolveexternalsourcecontenttype',
