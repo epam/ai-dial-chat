@@ -16,6 +16,10 @@ interface ConnectMcpUrlContentProps {
   className?: string;
   /** Pre-translated labels, all optional with English defaults. */
   labels?: ConnectMcpUrlContentLabels;
+  /** Typography class of the title. Defaults to `'dial-body-semi-text'`. */
+  titleClassName?: string;
+  /** Typography class of the description. Defaults to `'dial-small-text'`. */
+  descriptionClassName?: string;
 }
 
 /** "Connect toolset" block: title, description, and a Copy URL button with `aria-live` copied feedback. */
@@ -23,6 +27,8 @@ const ConnectMcpUrlContent: FC<ConnectMcpUrlContentProps> = ({
   url,
   className,
   labels,
+  titleClassName = 'dial-body-semi-text',
+  descriptionClassName = 'dial-small-text',
 }) => {
   const { isCopied, copy } = useCodeCopy(url);
 
@@ -33,7 +39,8 @@ const ConnectMcpUrlContent: FC<ConnectMcpUrlContentProps> = ({
       <div className="flex flex-col gap-1">
         <p
           className={mergeClasses(
-            'dial-body-semi-text text-start',
+            'text-start',
+            titleClassName,
             styles.title,
           )}
         >
@@ -41,7 +48,8 @@ const ConnectMcpUrlContent: FC<ConnectMcpUrlContentProps> = ({
         </p>
         <p
           className={mergeClasses(
-            'dial-small-text text-start',
+            'text-start',
+            descriptionClassName,
             styles.description,
           )}
         >

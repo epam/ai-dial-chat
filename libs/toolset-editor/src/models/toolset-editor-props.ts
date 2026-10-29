@@ -10,6 +10,7 @@ import type { GeneralFormLabels } from './general-form-labels';
 import type {
   SettingsFormColors,
   SettingsFormLabels,
+  SettingsFormTypography,
 } from './settings-form-props';
 import type {
   ToolsetAuthActions,
@@ -94,6 +95,12 @@ export interface ToolsetEditorColors {
   settings?: SettingsFormColors;
 }
 
+/** Typography class overrides for the composed Toolset editor, grouped like its labels. */
+export interface ToolsetEditorTypography {
+  /** Typography of the Setup section form. */
+  settings?: SettingsFormTypography;
+}
+
 /** Props of the composed Toolset editor. */
 export interface ToolsetEditorProps {
   /**
@@ -169,4 +176,6 @@ export interface ToolsetEditorProps {
   labels?: ToolsetEditorLabels;
   /** Color overrides, applied as CSS custom properties. */
   colors?: ToolsetEditorColors;
+  /** Typography class overrides. */
+  typography?: ToolsetEditorTypography;
 }

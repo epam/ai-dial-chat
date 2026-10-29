@@ -53,6 +53,18 @@ export interface SettingsFormColors {
   openAccessDescription?: string;
 }
 
+/** Typography class overrides for the Setup section form. */
+export interface SettingsFormTypography {
+  /** Typography class of the "Authentication" heading. Defaults to `'dial-h3-text'`. */
+  authTitleClassName?: string;
+  /** Typography class of the open-access ("None" auth) description. Defaults to `'dial-small-text'`. */
+  openAccessDescriptionClassName?: string;
+  /** Typography class of the "Connect toolset" title. Defaults to `'dial-body-semi-text'`. */
+  connectTitleClassName?: string;
+  /** Typography class of the "Connect toolset" description. Defaults to `'dial-small-text'`. */
+  connectDescriptionClassName?: string;
+}
+
 /** Props of the internal Setup section form. */
 export interface SettingsFormProps {
   /** Current toolset form state. */
@@ -97,4 +109,6 @@ export interface SettingsFormProps {
   labels?: SettingsFormLabels;
   /** Color overrides. */
   colors?: SettingsFormColors;
+  /** Typography class overrides. */
+  typography?: SettingsFormTypography;
 }

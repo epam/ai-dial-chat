@@ -75,6 +75,8 @@ export const AuthSection: FC<AuthSectionProps> = ({
   onAuthChange,
   onEnsureSaved,
   labels,
+  titleClassName = 'dial-h3-text',
+  openAccessDescriptionClassName = 'dial-small-text',
 }) => {
   const [isAuthBusy, setIsAuthBusy] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -397,7 +399,8 @@ export const AuthSection: FC<AuthSectionProps> = ({
   const renderNoneContent = () => (
     <p
       className={mergeClasses(
-        'dial-small-text pt-2',
+        'pt-2',
+        openAccessDescriptionClassName,
         styles.openAccessDescription,
       )}
     >
@@ -470,7 +473,7 @@ export const AuthSection: FC<AuthSectionProps> = ({
 
   return (
     <section className="flex flex-col gap-2">
-      <h3 className="dial-h3-text">
+      <h3 className={titleClassName}>
         {labels?.sectionTitle ?? 'Authentication'}
       </h3>
 

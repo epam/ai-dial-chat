@@ -177,6 +177,13 @@ defaults.
 default `--stroke-tertiary`) and `openAccessDescription` (the "None" auth
 text, default `--text-secondary`).
 
+`typography` (`ToolsetEditorTypography`) follows the same grouping.
+`typography.settings` (`SettingsFormTypography`) sets the type classes of the
+Setup section: `authTitleClassName` (default `'dial-h3-text'`),
+`openAccessDescriptionClassName` (default `'dial-small-text'`),
+`connectTitleClassName` (default `'dial-body-semi-text'`) and
+`connectDescriptionClassName` (default `'dial-small-text'`).
+
 The optional `onRefineDescription` callback,
 `(value: string, signal: AbortSignal) => Promise<string>`, adds a Refine with
 AI action (and, after a result, Restore original and Regenerate) beside the Description label; omit it to hide the action.
@@ -292,6 +299,7 @@ imported from there — this lib never re-declares them.
 
 All types reachable through the public props are exported from the barrel:
 `ToolsetEditorProps`, `ToolsetEditorColors`, `SettingsFormColors`,
+`ToolsetEditorTypography`, `SettingsFormTypography`,
 `ToolsetEditorLabels` (with its `layout`, `general`,
 `settings`, `validation` groups), `GeneralFormLabels`,
 `SettingsFormLabels`, `AuthSectionLabels`, `ConnectMcpUrlContentLabels`,

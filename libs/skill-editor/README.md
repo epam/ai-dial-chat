@@ -299,6 +299,10 @@ overrides its icon color.
 />
 ```
 
+`styles.typography.dropOverlayTitleClassName` (`'dial-h3-text'`) and
+`dropOverlaySubtitleClassName` (`'dial-small-text'`) set the file-drop
+overlay's title and subtitle type.
+
 ## Public class names
 
 A host embedding this package cannot style it through its CSS-module locals —

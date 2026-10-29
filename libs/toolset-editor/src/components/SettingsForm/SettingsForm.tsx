@@ -31,6 +31,7 @@ export const SettingsForm: FC<SettingsFormProps> = ({
   onEnsureSaved,
   labels,
   colors,
+  typography,
 }) => {
   /**
    * Discovered tool names for the "Allowed tools" picker, fetched from the
@@ -173,12 +174,18 @@ export const SettingsForm: FC<SettingsFormProps> = ({
         onAuthChange={onAuthChange}
         onEnsureSaved={onEnsureSaved}
         labels={labels?.auth}
+        titleClassName={typography?.authTitleClassName}
+        openAccessDescriptionClassName={
+          typography?.openAccessDescriptionClassName
+        }
       />
 
       {isConnectVisible && (
         <ConnectMcpUrlContent
           url={connectUrl ?? ''}
           labels={labels?.connect}
+          titleClassName={typography?.connectTitleClassName}
+          descriptionClassName={typography?.connectDescriptionClassName}
           className={mergeClasses('border-t pt-4', styles.connectDivider)}
         />
       )}

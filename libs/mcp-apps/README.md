@@ -106,6 +106,11 @@ const colors: McpAppInlinePreviewColors = {
 <McpAppInlinePreview {...props} colors={colors} />;
 ```
 
+`typography` (`McpAppInlinePreviewTypography`) sets the type steps:
+`headerNameClassName` (default `'dial-tiny-lead-semi-text'`),
+`versionClassName` (`'dial-caption-text'`) and `messageClassName`
+(`'dial-body-text'`, the "opened in canvas" and load-error messages).
+
 ## Utilities
 
 - `findMcpAppForMessage(message, mcpAppTools)` — matches a message to the MCP App tool it called, or the deployment's first discovered tool.

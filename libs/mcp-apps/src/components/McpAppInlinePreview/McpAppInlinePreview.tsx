@@ -25,6 +25,7 @@ import {
   McpAppInlinePreviewStatus,
   type McpAppHostAdapter,
   type McpAppInlinePreviewColors,
+  type McpAppInlinePreviewTypography,
   type McpAppResponseCache,
   type McpAppToolCallSeed,
   type McpAppToolRef,
@@ -64,6 +65,8 @@ export interface McpAppInlinePreviewProps {
   openedInCanvasLabel: string;
   /** Color overrides applied as CSS custom properties on the preview's root. */
   colors?: McpAppInlinePreviewColors;
+  /** Typography class overrides; each field has a kit scale default. */
+  typography?: McpAppInlinePreviewTypography;
 }
 
 /** Compact, always-visible header+frame preview of a message's matched MCP App — see `McpAppInlinePreviewProps` and the mcp-app-trigger openspec. */
@@ -81,7 +84,13 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
   isOpenedInCanvas = false,
   openedInCanvasLabel,
   colors,
+  typography,
 }) => {
+  const {
+    headerNameClassName = 'dial-tiny-lead-semi-text',
+    versionClassName = 'dial-caption-text',
+    messageClassName = 'dial-body-text',
+  } = typography ?? {};
   /* Populated once `ui/initialize` completes; reset per `cacheKey` — see mcp-app-trigger spec.md. */
   const [appInfo, setAppInfo] = useState<Implementation | undefined>(undefined);
   useEffect(() => {
@@ -148,24 +157,20 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
           text={
             appInfo != null ? (
               <>
-                <span className="dial-tiny-lead-semi-text">
-                  {match.mcpToolName}
-                </span>
+                <span className={headerNameClassName}>{match.mcpToolName}</span>
                 <span
                   aria-hidden
                   className="mx-1.5 inline-block h-3 w-0 border-s border-current align-middle"
                 />
-                <span className="dial-tiny-lead-semi-text">{appInfo.name}</span>
+                <span className={headerNameClassName}>{appInfo.name}</span>
                 {appInfo.version && (
-                  <span className="dial-caption-text ms-2">
+                  <span className={mergeClasses(versionClassName, 'ms-2')}>
                     {appInfo.version}
                   </span>
                 )}
               </>
             ) : (
-              <span className="dial-tiny-lead-semi-text">
-                {match.mcpToolName}
-              </span>
+              <span className={headerNameClassName}>{match.mcpToolName}</span>
             )
           }
           className={styles.headerText}
@@ -213,7 +218,8 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
           >
             <span
               className={mergeClasses(
-                'dial-body-text text-center',
+                messageClassName,
+                'text-center',
                 styles.placeholderText,
               )}
             >
@@ -238,7 +244,8 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
                 <p
                   role="status"
                   className={mergeClasses(
-                    'dial-body-text text-center',
+                    messageClassName,
+                    'text-center',
                     styles.errorText,
                   )}
                 >

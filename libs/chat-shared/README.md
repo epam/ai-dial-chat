@@ -1359,7 +1359,7 @@ import type { DialFileManagerShellLabels } from '@epam/ai-dial-chat-shared';
 
 ### DialFileManagerShellStyles
 
-Color overrides for the shell, passed as `styles`. `colors.surface` sets the background of the shell's surface and of the grid area (`--dfms-surface`, default `--bg-layer-base`). A host can instead set `--dfms-surface` on any ancestor, which is how a responsive value is applied. In the attach variant, `colors.treeBackground` and `colors.treeBorder` color the folder tree and its divider (`--dfms-tree-bg` / `--dfms-tree-border`, default `--bg-layer-raised` / `--stroke-tertiary`), and `colors.overlayBackdrop` colors the scrim behind the operation spinner (`--dfms-overlay-backdrop`, default `--bg-backdrop`). `operationLoader` (`OperationLoaderModalColors`) is forwarded to the copy/move `OperationLoaderModal`.
+Color overrides for the shell, passed as `styles`. `colors.surface` sets the background of the shell's surface and of the grid area (`--dfms-surface`, default `--bg-layer-base`). A host can instead set `--dfms-surface` on any ancestor, which is how a responsive value is applied. In the attach variant, `colors.treeBackground` and `colors.treeBorder` color the folder tree and its divider (`--dfms-tree-bg` / `--dfms-tree-border`, default `--bg-layer-raised` / `--stroke-tertiary`), and `colors.overlayBackdrop` colors the scrim behind the operation spinner (`--dfms-overlay-backdrop`, default `--bg-backdrop`). `operationLoader` (`OperationLoaderModalColors`) is forwarded to the copy/move `OperationLoaderModal`, and `operationLoaderTextClassName` sets its progress-line type (default `'dial-small-text'`).
 
 ```ts
 import type { DialFileManagerShellStyles } from '@epam/ai-dial-chat-shared';
@@ -1423,7 +1423,7 @@ import type { FileManagerAttachModalLabels } from '@epam/ai-dial-chat-shared';
 // … plus every DialFileManagerShellLabels field
 ```
 
-`colors` (`FileManagerAttachModalColors`) sets the dialog background — also used as the file-manager surface inside it — and the title color shown with a header description (`background` / `title`, default `--bg-layer-raised` / `--text-primary`).
+`colors` (`FileManagerAttachModalColors`) sets the dialog background — also used as the file-manager surface inside it — and the title color shown with a header description (`background` / `title`, default `--bg-layer-raised` / `--text-primary`). `titleClassName` and `descriptionClassName` set the type of that title and description (default `'dial-h1-text'` / `'dial-small-text'`).
 
 ### FileManagerSelectableNode
 
@@ -1494,7 +1494,7 @@ const { handleGridApiChange, reset } = useGridEditingScroll();
 
 ### OperationLoaderModal
 
-Internal modal already rendered by `DialFileManagerShell`. Exported for hosts that need to compose it independently outside the shell. `colors.text` (`OperationLoaderModalColors`) sets the progress-line color (`--olm-text`, default `--text-secondary`).
+Internal modal already rendered by `DialFileManagerShell`. Exported for hosts that need to compose it independently outside the shell. `colors.text` (`OperationLoaderModalColors`) sets the progress-line color (`--olm-text`, default `--text-secondary`), and `textClassName` its type (default `'dial-small-text'`).
 
 ```tsx
 import { OperationLoaderModal } from '@epam/ai-dial-chat-shared';

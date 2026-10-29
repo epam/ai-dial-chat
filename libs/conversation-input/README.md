@@ -105,6 +105,12 @@ import type { AttachmentTrayStyles } from '@epam/ai-dial-attachment-input';
 
 `Input` takes the same object as a top-level `attachmentTray` prop.
 
+`styles.typography.input` (`InputTypography`) sets the composer's type:
+`fontClassName` on the textarea (default `'dial-body-paragraph-text'`), and
+`modelSelectorNameClassName` / `modelSelectorVersionClassName` on the selected
+model's name and version on the selector trigger (default `'dial-small-text'` /
+`'dial-tiny-text'`).
+
 `styles.modelMenu` themes the model menu in both presentations — the desktop
 dropdown and the mobile bottom sheet — with one `ModelMenuStyles` object.
 `className` lands on the menu panel (also when `modelPickerOverlay` supplies

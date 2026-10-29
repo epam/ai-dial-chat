@@ -163,7 +163,9 @@ export const useCitationMarkdownComponents = (
         <p
           {...rest}
           className={mergeClasses(
-            isCompactTypography ? compactParagraphClassName : paragraphClassName,
+            isCompactTypography
+              ? compactParagraphClassName
+              : paragraphClassName,
             'mb-3 [text-wrap:pretty] [overflow-wrap:anywhere] last:mb-0',
           )}
         >

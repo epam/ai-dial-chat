@@ -238,8 +238,7 @@ describe('ScheduledTaskDetailsSummary', () => {
       />,
     );
     const classNames = viewerCalls.at(-1)?.classNames as
-      | Record<string, string>
-      | undefined;
+      Record<string, string> | undefined;
     expect(classNames?.h2).toContain('custom-heading');
     expect(classNames?.h2).not.toContain('dial-small-semi-text');
     expect(classNames?.ul).toContain('custom-text');
