@@ -221,6 +221,7 @@ describe('completion persistence over HTTP', () => {
               streaming.resolveBackgroundAttach.bind(streaming),
             stopBackgroundGeneration:
               streaming.stopBackgroundGeneration.bind(streaming),
+            markConversationUnviewed: vi.fn().mockResolvedValue(undefined),
           },
         },
         { provide: ConversationGenerationService, useValue: registry },

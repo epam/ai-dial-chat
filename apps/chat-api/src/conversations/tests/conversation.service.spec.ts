@@ -42,8 +42,9 @@ describe('ConversationService facade', () => {
     const conversationNamingService = {
       generateTitle: vi.fn().mockResolvedValue('naming-generate-title'),
     };
-    const scheduledTaskUnreadService = {
+    const conversationReadStateService = {
       markViewed: vi.fn().mockResolvedValue(undefined),
+      markUnviewed: vi.fn().mockResolvedValue(undefined),
     };
 
     const publishedFolderAttachments = {
@@ -61,7 +62,7 @@ describe('ConversationService facade', () => {
       lifecycleService as never,
       streamingService as never,
       conversationNamingService as never,
-      scheduledTaskUnreadService as never,
+      conversationReadStateService as never,
       publishedFolderAttachments as never,
       titleStreamService as never,
     );
@@ -74,7 +75,7 @@ describe('ConversationService facade', () => {
       lifecycleService,
       streamingService,
       conversationNamingService,
-      scheduledTaskUnreadService,
+      conversationReadStateService,
       titleStreamService,
     };
   };
@@ -351,8 +352,8 @@ describe('ConversationService facade', () => {
     expect(result).toBe('naming-generate-title');
   });
 
-  it('delegates markConversationViewed to ScheduledTaskUnreadService with the conversation resource URL', async () => {
-    const { service, scheduledTaskUnreadService } = makeService();
+  it('delegates markConversationViewed to ConversationReadStateService with the conversation resource URL', async () => {
+    const { service, conversationReadStateService } = makeService();
 
     await service.markConversationViewed(
       'gpt-4o__Chat',
@@ -360,7 +361,23 @@ describe('ConversationService facade', () => {
       'test-bucket',
     );
 
-    expect(scheduledTaskUnreadService.markViewed).toHaveBeenCalledWith(
+    expect(conversationReadStateService.markViewed).toHaveBeenCalledWith(
+      'conversations/test-bucket/gpt-4o__Chat',
+      'token',
+      'test-bucket',
+    );
+  });
+
+  it('delegates markConversationUnviewed to ConversationReadStateService with the conversation resource URL', async () => {
+    const { service, conversationReadStateService } = makeService();
+
+    await service.markConversationUnviewed(
+      'gpt-4o__Chat',
+      'token',
+      'test-bucket',
+    );
+
+    expect(conversationReadStateService.markUnviewed).toHaveBeenCalledWith(
       'conversations/test-bucket/gpt-4o__Chat',
       'token',
       'test-bucket',

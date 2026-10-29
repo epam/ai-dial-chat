@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ScheduledTaskUnreadService } from '../scheduled-task-unread/scheduled-task-unread.service';
+import { ConversationReadStateService } from '../scheduled-task-unread/conversation-read-state.service';
 import { ConversationNamingService } from './conversation-naming.service';
 import { ConversationLifecycleService } from './lifecycle/conversation-lifecycle.service';
 import { ConversationListingService } from './listing/conversation-listing.service';
@@ -28,7 +28,7 @@ export class ConversationService {
     private readonly lifecycleService: ConversationLifecycleService,
     private readonly streamingService: ConversationStreamingService,
     private readonly conversationNamingService: ConversationNamingService,
-    private readonly scheduledTaskUnreadService: ScheduledTaskUnreadService,
+    private readonly conversationReadStateService: ConversationReadStateService,
     private readonly publishedFolderAttachments: PublishedFolderAttachmentsService,
     private readonly titleStreamService: ConversationTitleStreamService,
   ) {}
@@ -135,12 +135,25 @@ export class ConversationService {
     );
   }
 
+  /** Makes a regular chat unseen again because a new generation is starting. Best effort: never rejects. */
+  markConversationUnviewed(
+    conversationPath: string,
+    token: string,
+    bucket: string,
+  ): Promise<void> {
+    return this.conversationReadStateService.markUnviewed(
+      buildConversationUrl(bucket, conversationPath),
+      token,
+      bucket,
+    );
+  }
+
   markConversationViewed(
     conversationPath: string,
     token: string,
     bucket: string,
   ): Promise<void> {
-    return this.scheduledTaskUnreadService.markViewed(
+    return this.conversationReadStateService.markViewed(
       buildConversationUrl(bucket, conversationPath),
       token,
       bucket,

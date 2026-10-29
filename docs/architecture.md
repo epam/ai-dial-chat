@@ -604,6 +604,18 @@ completion, while applied list snapshots are ordered by successful request
 sequence. See the [chat behavior contract](../apps/chat/README.md#manual-scheduled-task-runs)
 for retry limits and viewed-state synchronization.
 
+Regular chats use the same viewed-ids idea with a one-time baseline: a chat in the
+user's own bucket is unread when `updatedAt` is after the read-before baseline
+(`.client_data/.conversations-read-baseline.json`, written by the first list
+request) and its id is not in `.client_data/.viewed-conversations.json`.
+`ConversationReadStateService` (in `apps/chat-api/src/scheduled-task-unread/`)
+owns both files, `PATCH /api/v1/conversations/viewed` routes by conversation kind,
+and `POST /api/v1/conversations/completions` removes the chat from the viewed ids
+when a generation is accepted. The client marks the row unread when a generation
+starts, hides the dot on the open conversation, and the conversation page marks the
+open chat viewed once its stream is not running. See the
+[chat behavior contract](../apps/chat/README.md#unread-dot-for-regular-chats).
+
 Reusable selection lives in `skills` (`SkillSelectorField`), validation and
 presentation in `scheduled-tasks`, and checked request mapping in `chat-hooks`.
 Both chat and scheduled-task validation use the pure `chat-shared` skill-support

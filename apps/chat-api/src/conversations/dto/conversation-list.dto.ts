@@ -86,7 +86,7 @@ export class ConversationListItemDto {
 
   @ApiPropertyOptional({
     description:
-      'True when this scheduler-created conversation has not yet been opened by the user. Present only when `isScheduledTask` is true.',
+      "True when the conversation holds an answer the user has not seen. A scheduler-created conversation always carries it (true until first opened); a regular conversation in the caller's own bucket carries it, as true, only when it was updated after the user's read-before baseline and has not been viewed since. Omitted otherwise, including for published and shared conversations.",
     example: true,
   })
   isUnread?: boolean;
