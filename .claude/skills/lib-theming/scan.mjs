@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 /*
  * Lists every place in libs/* where a color does not come from a `*Colors`
- * prop through a CSS custom property. It only finds candidates — every hit
+ * prop through a CSS custom property, or a typography class does not come
+ * from a `*ClassName` prop. It only finds candidates — every hit
  * still has to be read in context (see SKILL.md).
  *
- *   node .claude/skills/lib-colors/scan-colors.mjs                    # all libs
- *   node .claude/skills/lib-colors/scan-colors.mjs skill-editor chat-shared
- *   node .claude/skills/lib-colors/scan-colors.mjs --base origin/development
- *   node .claude/skills/lib-colors/scan-colors.mjs --json
+ *   node .claude/skills/lib-theming/scan.mjs                    # all libs
+ *   node .claude/skills/lib-theming/scan.mjs skill-editor chat-shared
+ *   node .claude/skills/lib-theming/scan.mjs --base origin/development
+ *   node .claude/skills/lib-theming/scan.mjs --json
  */
 import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
@@ -17,8 +18,9 @@ const ROOT = process.cwd();
 const LIBS_DIR = join(ROOT, 'libs');
 const KIT_CSS = join(ROOT, 'node_modules/@epam/ai-dial-ui-kit/dist/index.css');
 
-/* Generated client and pure-data libs render nothing. */
-const SKIPPED_LIBS = new Set(['chat-api-client']);
+/* `chat-api-client` renders nothing. `celebrations` is decorative scene
+   artwork whose colors are part of the drawing, not themable UI. */
+const SKIPPED_LIBS = new Set(['chat-api-client', 'celebrations']);
 
 const args = process.argv.slice(2);
 const isJson = args.includes('--json');
@@ -103,7 +105,11 @@ const loadThemeColorClasses = (classes) => {
 const KIT_COLOR_CLASSES = loadThemeColorClasses(loadKitColorClasses());
 
 const isColorUtility = (rawToken) => {
-  const token = rawToken.replace(/^!/, '').split(':').pop().replace(/^!|!$/g, '');
+  const token = rawToken
+    .replace(/^!/, '')
+    .split(':')
+    .pop()
+    .replace(/^!|!$/g, '');
   const match = COLOR_UTILITY_PREFIX_RE.exec(token);
   if (!match) return false;
   const value = match[2].replace(/\/\d+$/, '');
@@ -166,23 +172,43 @@ const stripComments = (text) =>
 
 /* Line by line rather than by string literal: an apostrophe in JSX text would
    otherwise shift the quote pairing and misplace or hide hits. */
+const SCALE_CLASS_RE = /^dial-[a-z-]+-text$/;
+const RAW_FONT_RE =
+  /^(text-(xs|sm|base|lg|xl|[2-9]xl|\[[\d.]+(px|rem|em)\])|font-(thin|extralight|light|normal|medium|semibold|bold|extrabold|black)|leading-\S+|tracking-\S+)$/;
+/* A camelCase `*className` prop default (`titleClassName = '…'`, Prettier puts
+   spaces around a default's `=` but none in a JSX attribute), a `*ClassName:`
+   key in a styles object, or a `??`/`||` fallback after a prop is the allowed
+   place for a scale class: the host can replace it. A SCREAMING_CASE constant
+   or a JSX `className="…"` is not. */
+const DEFAULT_CONTEXT_RE =
+  /\b(?:[a-z]\w*)?[cC]lassName\??\s+=\s|\b(?:[a-z]\w*)?[cC]lassName\??:\s|(\?\?|\|\|)\s*['"`]/;
+const DEFAULT_OPENER_RE =
+  /(\b(?:[a-z]\w*)?[cC]lassName\??\s+=|\?\?|\|\||\b(?:[a-z]\w*)?[cC]lassName\??:)\s*(mergeClasses\()?\s*$/;
+
 const scanTsx = (file, text, findings) => {
-  stripComments(text)
-    .split('\n')
-    .forEach((lineText, index) => {
-      for (const raw of lineText.split(/[\s'"`{},;]+/)) {
-        const token = raw.replace(/[)>]+$/, '');
-        if (token && isColorUtility(token)) {
-          findings.push({
-            file,
-            line: index + 1,
-            signal: 'tailwind-color-class',
-            detail: token,
-          });
-        }
+  const lines = stripComments(text).split('\n');
+  lines.forEach((lineText, index) => {
+    const isDefault =
+      DEFAULT_CONTEXT_RE.test(lineText) ||
+      DEFAULT_OPENER_RE.test(lines[index - 1] ?? '');
+    for (const raw of lineText.split(/[\s'"`{},;]+/)) {
+      const token = raw.replace(/[)>]+$/, '');
+      if (!token) continue;
+      const bare = token.split(':').pop().replace(/^!|!$/g, '');
+      let signal = null;
+      if (isColorUtility(token)) signal = 'tailwind-color-class';
+      else if (RAW_FONT_RE.test(bare)) signal = 'raw-font-utility';
+      else if (SCALE_CLASS_RE.test(bare) && !isDefault)
+        signal = 'hardcoded-typography';
+      if (signal) {
+        findings.push({ file, line: index + 1, signal, detail: token });
       }
-    });
+    }
+  });
 };
+
+const FONT_PROPERTY_RE =
+  /^(font|font-size|font-weight|font-family|line-height|letter-spacing)$/;
 
 /* The first `var()` is the outermost one, also inside a shorthand like `1px solid var(--x, …)`. */
 const firstVarName = (value) => /var\(\s*(--[\w-]+)/.exec(value)?.[1];
@@ -194,6 +220,24 @@ const scanStyles = (file, text, findings, readVars) => {
   for (const match of clean.matchAll(/(^|[;{\s])([a-z-]+)\s*:\s*([^;{}]+);/g)) {
     const property = match[2];
     const value = match[3].trim();
+    if (FONT_PROPERTY_RE.test(property)) {
+      /* Allowed by libs.md: a caller-driven var with no fallback or an
+         `inherit` fallback, plain `inherit`, and `em`-relative sizing (the
+         pseudo-element glyph case, which needs its own comment). */
+      const isAllowed =
+        /^var\(--[\w-]+(,\s*inherit)?\)$/.test(value) ||
+        value === 'inherit' ||
+        /^[\d.]+em$/.test(value);
+      if (!isAllowed) {
+        findings.push({
+          file,
+          line: lineOf(clean, match.index + match[1].length),
+          signal: 'font-css',
+          detail: `${property}: ${value}`,
+        });
+      }
+      continue;
+    }
     if (!COLOR_PROPERTY_RE.test(property)) continue;
     const line = lineOf(clean, match.index + match[1].length);
     const outerVar = firstVarName(value);
