@@ -210,14 +210,15 @@ describe('CustomViewerFrame', () => {
     expect(onConversationUpdated).toHaveBeenCalledOnce();
   });
 
-  it('renders an alert instead of an iframe for an invalid viewer URL', () => {
+  it('renders a status notification instead of an iframe for an invalid viewer URL', () => {
     render(
       <CustomViewerFrame viewer={{ ...viewer, url: 'javascript:alert(1)' }} />,
     );
 
-    expect(screen.getByRole('alert').textContent).toBe(
+    expect(screen.getByRole('status').textContent).toContain(
       CustomViewerI18nKeys.InvalidUrl,
     );
+    expect(screen.queryByRole('alert')).toBeNull();
     expect(lastOptions).toBeUndefined();
   });
 

@@ -208,7 +208,7 @@ export const VisualizerCanvasRenderer: FC<VisualizerCanvasRendererProps> = ({
             className={styles.errorIcon}
           />
           <p
-            role="alert"
+            role="status"
             className={mergeClasses('text-center', styles.statusLabel)}
           >
             {errorLabel}

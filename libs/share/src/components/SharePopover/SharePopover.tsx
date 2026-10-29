@@ -220,18 +220,20 @@ const SharePopover: FC<SharePopoverProps> = ({
         />
       )}
 
-      {!isLoading && error != null && (
-        <p
-          role="alert"
-          className={mergeClasses(
-            typography?.errorClassName ?? 'dial-tiny-text',
-            'py-6 text-center',
-            styles.errorText,
-          )}
-        >
-          {errorTitle}
-        </p>
-      )}
+      {/* Mounted with the popover, before the link request fails, so the failure is announced; out of the column gap while empty. */}
+      <div role="alert" className="empty:absolute">
+        {!isLoading && error != null && (
+          <p
+            className={mergeClasses(
+              typography?.errorClassName ?? 'dial-tiny-text',
+              'py-6 text-center',
+              styles.errorText,
+            )}
+          >
+            {errorTitle}
+          </p>
+        )}
+      </div>
 
       {!isLoading && error == null && url != null && (
         <>

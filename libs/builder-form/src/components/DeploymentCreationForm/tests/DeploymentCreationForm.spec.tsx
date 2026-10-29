@@ -13,7 +13,10 @@ import { DeploymentCreationForm } from '../DeploymentCreationForm';
 
 vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@epam/ai-dial-ui-kit')>()),
+  /* Mirrors the kit: the error renders with no role, is linked to the
+   * field through `aria-describedby`, and marks the field `aria-invalid`. */
   Input: ({
+    id,
     value,
     onChange,
     labelProps,
@@ -24,6 +27,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
     tooltipText,
     caption,
   }: {
+    id?: string;
     value?: string;
     onChange?: (v?: string) => void;
     labelProps?: { label?: string };
@@ -39,18 +43,22 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
         {labelProps?.label}
         <input
           ref={inputRef}
+          id={id}
           value={value ?? ''}
           placeholder={placeholder}
           disabled={disabled}
           title={tooltipText}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${id}-error` : undefined}
           onChange={(e) => onChange?.(e.target.value)}
         />
       </label>
       {caption && <p>{caption}</p>}
-      {error && <p role="alert">{error}</p>}
+      {error && <span id={`${id}-error`}>{error}</span>}
     </>
   ),
   Textarea: ({
+    id,
     value,
     onChange,
     labelProps,
@@ -58,6 +66,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
     error,
     ref,
   }: {
+    id?: string;
     value?: string;
     onChange?: (v: string) => void;
     labelProps?: { label?: string; required?: boolean };
@@ -71,12 +80,15 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
         {labelProps?.required && ' *'}
         <textarea
           ref={ref}
+          id={id}
           value={value ?? ''}
           placeholder={placeholder}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${id}-error` : undefined}
           onChange={(e) => onChange?.(e.target.value)}
         />
       </label>
-      {error && <p role="alert">{error}</p>}
+      {error && <span id={`${id}-error`}>{error}</span>}
     </>
   ),
   TagInput: ({
@@ -198,13 +210,18 @@ describe('DeploymentCreationForm', () => {
 
   it('surfaces a passed-in name error without validating itself', () => {
     renderComponent(undefined, { name: 'Name is required' });
-    const alert = screen.getByRole('alert');
-    expect(alert.textContent).toBe('Name is required');
+    const field = screen.getByRole('textbox', {
+      name: 'Name',
+      description: 'Name is required',
+    });
+    expect(field.getAttribute('aria-invalid')).toBe('true');
   });
 
   it('renders no error when none is passed', () => {
     renderComponent();
-    expect(screen.queryByRole('alert')).toBeNull();
+    const field = screen.getByLabelText('Name');
+    expect(field.getAttribute('aria-invalid')).toBeNull();
+    expect(field.getAttribute('aria-describedby')).toBeNull();
   });
 
   it('renders only the requested fields, with Name alone on its row', () => {
@@ -237,9 +254,11 @@ describe('DeploymentCreationForm', () => {
 
   it('surfaces a description error', () => {
     renderComponent(undefined, { description: 'Description is required' });
-    expect(screen.getByRole('alert').textContent).toBe(
-      'Description is required',
-    );
+    const field = screen.getByRole('textbox', {
+      name: 'Description',
+      description: 'Description is required',
+    });
+    expect(field.getAttribute('aria-invalid')).toBe('true');
   });
 
   it('moves focus to Description when it is the only field that becomes invalid', () => {

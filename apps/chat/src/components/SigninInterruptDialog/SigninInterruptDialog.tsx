@@ -6,6 +6,7 @@ import {
   ToolsetLoginOutcomeType,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   Checkbox,
   DIAL_ICON_SIZE,
@@ -124,20 +125,29 @@ const SigninRow: FC<SigninRowProps> = ({
         />
       )}
 
-      {rowState.error && (
-        <div
-          role="alert"
-          className="dial-small-text flex flex-wrap items-center gap-2 wrap-break-word text-error"
-        >
-          <IconAlertCircleFilled size={DIAL_ICON_SIZE.SM} aria-hidden />
-          <span>{rowState.error}</span>
-          <LinkButton
-            className="h-auto"
-            label={t(ToolsetSigninI18nKeys.ErrorRetry)}
-            onClick={() => onLogin(event, info)}
-          />
-        </div>
-      )}
+      {/* Always mounted: an alert that mounts together with its message is
+          announced unreliably, so only its content toggles. While empty it is
+          taken out of the flow and adds no gap. */}
+      <div
+        role="alert"
+        className={mergeClasses(
+          rowState.error
+            ? 'dial-small-text flex flex-wrap items-center gap-2 wrap-break-word text-error'
+            : 'sr-only',
+        )}
+      >
+        {rowState.error && (
+          <>
+            <IconAlertCircleFilled size={DIAL_ICON_SIZE.SM} aria-hidden />
+            <span>{rowState.error}</span>
+            <LinkButton
+              className="h-auto"
+              label={t(ToolsetSigninI18nKeys.ErrorRetry)}
+              onClick={() => onLogin(event, info)}
+            />
+          </>
+        )}
+      </div>
 
       {info.authenticationType === RowAuthType.DialNative && (
         <p className="dial-small-text wrap-break-word text-secondary">

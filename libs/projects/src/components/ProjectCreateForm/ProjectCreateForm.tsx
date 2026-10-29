@@ -317,10 +317,19 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
               aria-invalid={Boolean(nameError)}
               aria-describedby={nameError ? nameErrorId : undefined}
             />
-            {nameError && (
+            {/* Mounted before a host error (a taken name) arrives, so it is announced; out of the column gap while empty. Inline validation stays outside it. */}
+            <div role="alert" className="empty:absolute">
+              {errors.name && (
+                <ErrorText
+                  id={nameErrorId}
+                  className={helperClassName}
+                  text={errors.name}
+                />
+              )}
+            </div>
+            {nameError && !errors.name && (
               <ErrorText
                 id={nameErrorId}
-                role={errors.name ? 'alert' : undefined}
                 className={helperClassName}
                 text={nameError}
               />
@@ -438,7 +447,7 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
               onChange={addFiles}
               onReject={addFiles}
             />
-            {(rejections.length > 0 || isContextInvalid) && (
+            {rejections.length > 0 && (
               <ul
                 className={mergeClasses(
                   'flex flex-col gap-1',
@@ -451,9 +460,16 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
                     {labels.fileRejections[reason](name)}
                   </li>
                 ))}
-                {isContextInvalid && <li role="alert">{contextError}</li>}
               </ul>
             )}
+            {/* Mounted before a host context error arrives, so it is announced; out of the section gap while empty. */}
+            <div role="alert" className="empty:absolute">
+              {isContextInvalid && (
+                <p className={mergeClasses(helperClassName, styles.helper)}>
+                  {contextError}
+                </p>
+              )}
+            </div>
             {contextFiles.length > 0 && (
               <ul className="flex min-w-0 flex-wrap gap-2 pt-1">
                 {contextFiles.map((file) => (

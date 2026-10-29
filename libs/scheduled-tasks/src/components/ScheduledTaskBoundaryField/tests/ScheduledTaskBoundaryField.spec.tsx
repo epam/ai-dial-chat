@@ -138,7 +138,7 @@ describe('ScheduledTaskBoundaryField', () => {
     expect(screen.getByRole('alert').textContent).toBe(
       'Enter a valid start date',
     );
-    expect(screen.getByRole('alert').id).toBe(errorId);
+    expect(screen.getByText('Enter a valid start date').id).toBe(errorId);
     expect(screen.getByText('isInvalid')).toBeTruthy();
   });
 
@@ -146,6 +146,28 @@ describe('ScheduledTaskBoundaryField', () => {
     renderField();
 
     expect(screen.queryByText('isInvalid')).toBeNull();
+  });
+
+  it('mounts the alert region empty before the error, then fills the same region', () => {
+    const { rerender } = renderField();
+    const region = screen.getByRole('alert');
+    expect(region.textContent).toBe('');
+
+    rerender(
+      <ScheduledTaskBoundaryField
+        id="scheduled-task-start-date"
+        mode={CalendarMode.Date}
+        label="Start date"
+        placeholder="Pick start date"
+        value=""
+        onChange={vi.fn()}
+        minDate={new Date()}
+        error="Enter a valid start date"
+      />,
+    );
+
+    expect(screen.getByRole('alert')).toBe(region);
+    expect(region.textContent).toBe('Enter a valid start date');
   });
 
   it('disables the picker', () => {

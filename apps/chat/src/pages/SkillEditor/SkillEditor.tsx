@@ -511,7 +511,7 @@ const SkillEditorPage: FC = () => {
 
   if (!bucket) {
     return (
-      <div role="alert" className="h-full">
+      <div className="h-full">
         <StateScreen
           icon={
             <IconAlertTriangle

@@ -452,6 +452,30 @@ describe('SharePopover', () => {
     expect(screen.getByRole('alert')).toBeTruthy();
     expect(screen.queryByDisplayValue(ITEM_URL)).toBeNull();
   });
+
+  it('mounts the alert region while the link loads and fills it when the request fails', () => {
+    const { rerender } = render(
+      <SharePopover
+        {...makeProps({ onClose, url: undefined, isLoading: true })}
+      />,
+    );
+    const region = screen.getByRole('alert');
+    expect(region.textContent).toBe('');
+
+    rerender(
+      <SharePopover
+        {...makeProps({
+          onClose,
+          url: undefined,
+          isLoading: false,
+          error: new Error('network down'),
+        })}
+      />,
+    );
+
+    expect(screen.getByRole('alert')).toBe(region);
+    expect(region.textContent).not.toBe('');
+  });
 });
 
 describe('SharePopover — public class names', () => {

@@ -4,8 +4,9 @@ import {
   DIAL_KIT_ICON_STROKE,
   NeutralButton,
   Spinner,
+  StateScreen,
 } from '@epam/ai-dial-ui-kit';
-import { IconArrowLeft } from '@tabler/icons-react';
+import { IconArrowLeft, IconLock } from '@tabler/icons-react';
 import { memo, useState, type FC, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
@@ -79,26 +80,36 @@ const RequireCatalogCreation: FC<Props> = ({
       ? CatalogI18nKeys.CreationDenied
       : CatalogI18nKeys.CreationUnavailable;
 
+  /* The denied/unavailable state replaces the whole route and is static page
+   * content, so it is a `StateScreen` (a section named by its h1) rather than
+   * a live region. */
   return (
-    <div className="flex size-full flex-col items-center justify-center gap-4 p-4 text-center">
-      <p role="alert" className="dial-body-text text-primary">
-        {t(messageKey)}
-      </p>
-      <NeutralButton
-        appearance={ButtonAppearance.Outlined}
-        label={t(EditorI18nKeys.BackAriaLabel)}
-        className="min-h-11"
-        iconBefore={
-          <IconArrowLeft
-            size={DIAL_ICON_SIZE.SM}
-            className="rtl:scale-x-[-1]"
-            aria-hidden="true"
-            stroke={DIAL_KIT_ICON_STROKE}
-          />
-        }
-        onClick={() => navigate(ROUTES.Catalog)}
-      />
-    </div>
+    <StateScreen
+      icon={
+        <IconLock
+          size={DIAL_ICON_SIZE.LG}
+          stroke={DIAL_KIT_ICON_STROKE}
+          aria-hidden="true"
+        />
+      }
+      title={t(messageKey)}
+      action={
+        <NeutralButton
+          appearance={ButtonAppearance.Outlined}
+          label={t(EditorI18nKeys.BackAriaLabel)}
+          className="min-h-11"
+          iconBefore={
+            <IconArrowLeft
+              size={DIAL_ICON_SIZE.SM}
+              className="rtl:scale-x-[-1]"
+              aria-hidden="true"
+              stroke={DIAL_KIT_ICON_STROKE}
+            />
+          }
+          onClick={() => navigate(ROUTES.Catalog)}
+        />
+      }
+    />
   );
 };
 

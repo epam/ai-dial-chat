@@ -496,9 +496,12 @@ describe('PromptEditor', () => {
       denyPrompts();
       render(<PromptEditor />);
 
-      expect(screen.getByRole('alert').textContent).toBe(
-        'catalog.creation.denied',
-      );
+      expect(
+        screen.getByRole('heading', {
+          level: 1,
+          name: 'catalog.creation.denied',
+        }),
+      ).toBeTruthy();
       expect(screen.queryByText('promptEditor.createTitle')).toBeNull();
       expect(createPrompt).not.toHaveBeenCalled();
     });

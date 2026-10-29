@@ -407,9 +407,12 @@ describe('ApplicationEditorPage — toolset', () => {
       denyToolsets();
       renderPage();
 
-      expect(screen.getByRole('alert').textContent).toBe(
-        CatalogI18nKeys.CreationDenied,
-      );
+      expect(
+        screen.getByRole('heading', {
+          level: 1,
+          name: CatalogI18nKeys.CreationDenied,
+        }),
+      ).toBeTruthy();
       expect(
         screen.queryByRole('button', { name: 'adapter-persist' }),
       ).toBeNull();

@@ -181,7 +181,7 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
     if (hasError) {
       return (
         <div className="flex flex-col items-center gap-3">
-          <p role="alert" className={mergeClasses(bodyClassName, styles.body)}>
+          <p role="status" className={mergeClasses(bodyClassName, styles.body)}>
             {labels.errorLabel}
           </p>
           <GhostButton label={labels.retryLabel} onClick={onRetry} />
@@ -190,7 +190,7 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
     }
     return (
       <div className="flex flex-col items-center gap-3">
-        <p role="alert" className={mergeClasses(bodyClassName, styles.body)}>
+        <p className={mergeClasses(bodyClassName, styles.body)}>
           {labels.notFoundLabel}
         </p>
         <GhostButton

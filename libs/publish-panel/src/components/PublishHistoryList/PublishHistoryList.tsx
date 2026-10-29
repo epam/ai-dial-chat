@@ -109,7 +109,7 @@ export const PublishHistoryList: FC<PublishHistoryListProps> = ({
 
   if (hasError) {
     return (
-      <p style={cssVars} className={emptyStateClasses} role="alert">
+      <p style={cssVars} className={emptyStateClasses} role="status">
         {errorLabel}
       </p>
     );

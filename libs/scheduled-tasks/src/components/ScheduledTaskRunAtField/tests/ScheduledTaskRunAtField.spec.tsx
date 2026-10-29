@@ -132,8 +132,27 @@ describe('ScheduledTaskRunAtField', () => {
     expect(screen.getByRole('alert').textContent).toBe(
       'Pick a date in the future',
     );
-    expect(screen.getByRole('alert').id).toBe(errorId);
+    expect(screen.getByText('Pick a date in the future').id).toBe(errorId);
     expect(screen.getByText('isInvalid')).toBeTruthy();
+  });
+
+  it('mounts the alert region empty before the error, then fills the same region', () => {
+    const { rerender } = renderField();
+    const region = screen.getByRole('alert');
+    expect(region.textContent).toBe('');
+
+    rerender(
+      <ScheduledTaskRunAtField
+        label="Date and time"
+        placeholder="Pick date and time"
+        value=""
+        onChange={vi.fn()}
+        error="Pick a date in the future"
+      />,
+    );
+
+    expect(screen.getByRole('alert')).toBe(region);
+    expect(region.textContent).toBe('Pick a date in the future');
   });
 
   it('renders no error and no invalid flag without an error', () => {

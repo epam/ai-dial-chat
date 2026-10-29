@@ -2,7 +2,7 @@ import {
   AttachmentCanvasBody,
   useAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
-import { CodeBlockTheme } from '@epam/ai-dial-chat-shared';
+import { CodeBlockTheme, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { ErrorText, NeutralButton } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -42,61 +42,81 @@ export const SkillFilePreview: FC<Props> = ({ state, onRetry }) => {
   const loadPdf = usePdfPreviewLoader();
   const { currentTheme } = useTheme();
   const { content, fileName } = useAttachmentCanvas();
-
-  if (state === SkillFilePreviewState.Error) {
-    return (
-      <div className="flex h-full min-h-0 min-w-0 flex-col items-center justify-center gap-3">
-        {/* A failed load with a retry is not a field error: announce it. */}
-        <div role="alert">
-          <ErrorText text={t(AttachmentCanvasI18nKeys.LoadErrorLabel)} />
-        </div>
-        {onRetry != null && (
-          <NeutralButton label={t(ButtonsI18nKeys.Retry)} onClick={onRetry} />
-        )}
-      </div>
-    );
-  }
+  const isError = state === SkillFilePreviewState.Error;
 
   return (
+    /* Outside the error state this wrapper has no box of its own, so the
+     * canvas group lays out as a direct child of the host. */
     <div
-      role="group"
-      aria-label={fileName ?? t(AttachmentCanvasI18nKeys.AriaLabel)}
-      className="h-full min-h-0 min-w-0 overflow-hidden"
+      className={mergeClasses(
+        isError
+          ? 'flex h-full min-h-0 min-w-0 flex-col items-center justify-center gap-3'
+          : 'contents',
+      )}
     >
-      <AttachmentCanvasBody
-        content={content}
-        isLoading={state === SkillFilePreviewState.Loading}
-        fileName={fileName}
-        labels={{
-          unsupportedLabel: t(AttachmentCanvasI18nKeys.UnsupportedLabel),
-          loadErrorLabel: t(AttachmentCanvasI18nKeys.LoadErrorLabel),
-          forbiddenErrorLabel: t(AttachmentCanvasI18nKeys.ForbiddenErrorLabel),
-          htmlFrameBlockedLabel: t(AttachmentCanvasI18nKeys.HtmlFrameBlocked),
-          htmlOpenInNewTabLabel: t(AttachmentCanvasI18nKeys.HtmlOpenInNewTab),
-          pdfThumbnailsLabel: t(AttachmentCanvasI18nKeys.PdfThumbnailsLabel),
-          pdfShowThumbnailsLabel: t(
-            AttachmentCanvasI18nKeys.PdfShowThumbnailsLabel,
-          ),
-          pdfHideThumbnailsLabel: t(
-            AttachmentCanvasI18nKeys.PdfHideThumbnailsLabel,
-          ),
-          pdfPageNumberLabel: t(AttachmentCanvasI18nKeys.PdfPageNumberLabel),
-          xlsxFormulaLabel: t(AttachmentCanvasI18nKeys.XlsxFormulaLabel),
-          codeBlockCopyLabel: t(ButtonsI18nKeys.Copy),
-          codeBlockCopiedLabel: t(ButtonsI18nKeys.Copied),
-          codeBlockDownloadLabel: t(ButtonsI18nKeys.Download),
-          tableScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableTable),
-          mathScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableFormula),
-        }}
-        codeBlockTheme={
-          currentTheme === ThemeId.Dark
-            ? CodeBlockTheme.Dark
-            : CodeBlockTheme.Light
-        }
-        configurePdfWorker={configurePdfWorker}
-        loadPdf={loadPdf}
-        hidePdfToolbar
-      />
+      {/* A failed load with a retry is not a field error: announce it. The
+          alert stays mounted across states, because one that mounts together
+          with its message is announced unreliably; only its text toggles. */}
+      <div role="alert" className={mergeClasses(!isError && 'sr-only')}>
+        <ErrorText
+          text={isError ? t(AttachmentCanvasI18nKeys.LoadErrorLabel) : ''}
+        />
+      </div>
+      {isError && onRetry != null && (
+        <NeutralButton label={t(ButtonsI18nKeys.Retry)} onClick={onRetry} />
+      )}
+      {!isError && (
+        <div
+          role="group"
+          aria-label={fileName ?? t(AttachmentCanvasI18nKeys.AriaLabel)}
+          className="h-full min-h-0 min-w-0 overflow-hidden"
+        >
+          <AttachmentCanvasBody
+            content={content}
+            isLoading={state === SkillFilePreviewState.Loading}
+            fileName={fileName}
+            labels={{
+              unsupportedLabel: t(AttachmentCanvasI18nKeys.UnsupportedLabel),
+              loadErrorLabel: t(AttachmentCanvasI18nKeys.LoadErrorLabel),
+              forbiddenErrorLabel: t(
+                AttachmentCanvasI18nKeys.ForbiddenErrorLabel,
+              ),
+              htmlFrameBlockedLabel: t(
+                AttachmentCanvasI18nKeys.HtmlFrameBlocked,
+              ),
+              htmlOpenInNewTabLabel: t(
+                AttachmentCanvasI18nKeys.HtmlOpenInNewTab,
+              ),
+              pdfThumbnailsLabel: t(
+                AttachmentCanvasI18nKeys.PdfThumbnailsLabel,
+              ),
+              pdfShowThumbnailsLabel: t(
+                AttachmentCanvasI18nKeys.PdfShowThumbnailsLabel,
+              ),
+              pdfHideThumbnailsLabel: t(
+                AttachmentCanvasI18nKeys.PdfHideThumbnailsLabel,
+              ),
+              pdfPageNumberLabel: t(
+                AttachmentCanvasI18nKeys.PdfPageNumberLabel,
+              ),
+              xlsxFormulaLabel: t(AttachmentCanvasI18nKeys.XlsxFormulaLabel),
+              codeBlockCopyLabel: t(ButtonsI18nKeys.Copy),
+              codeBlockCopiedLabel: t(ButtonsI18nKeys.Copied),
+              codeBlockDownloadLabel: t(ButtonsI18nKeys.Download),
+              tableScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableTable),
+              mathScrollRegionAriaLabel: t(ChatI18nKeys.ScrollableFormula),
+            }}
+            codeBlockTheme={
+              currentTheme === ThemeId.Dark
+                ? CodeBlockTheme.Dark
+                : CodeBlockTheme.Light
+            }
+            configurePdfWorker={configurePdfWorker}
+            loadPdf={loadPdf}
+            hidePdfToolbar
+          />
+        </div>
+      )}
     </div>
   );
 };

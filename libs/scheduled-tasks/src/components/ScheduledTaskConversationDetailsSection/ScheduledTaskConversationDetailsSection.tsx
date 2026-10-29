@@ -103,7 +103,7 @@ export const ScheduledTaskConversationDetailsSection: FC<
 
   const content = isUnavailable ? (
     <div className="flex flex-col items-start gap-2">
-      <p role="alert" className={unavailableTextClassName}>
+      <p role="status" className={unavailableTextClassName}>
         {labels.unavailableLabel}
       </p>
       {state === ScheduledTaskConversationDetailsState.Error && onRetry && (

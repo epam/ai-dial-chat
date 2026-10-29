@@ -199,6 +199,8 @@ const ManagerOverlayCase: FC = () => {
     );
   };
 
+  const isHandshakeHintShown = isHandshakeSlow && !isReady;
+
   if (!host) {
     return <MissingEnvNotice />;
   }
@@ -209,7 +211,11 @@ const ManagerOverlayCase: FC = () => {
       <p aria-live="polite">
         Ready: {isReady ? 'yes' : 'waiting for handshake...'}
       </p>
-      {isHandshakeSlow && !isReady && <p role="alert">{handshakeHint}</p>}
+      {/* Always mounted: an alert that mounts together with its message is
+          announced unreliably, so only its text toggles. */}
+      <p role="alert" className={isHandshakeHintShown ? undefined : 'sr-only'}>
+        {isHandshakeHintShown ? handshakeHint : ''}
+      </p>
       <div className="my-3 flex flex-wrap gap-2">
         <NeutralButton
           className="min-h-11"

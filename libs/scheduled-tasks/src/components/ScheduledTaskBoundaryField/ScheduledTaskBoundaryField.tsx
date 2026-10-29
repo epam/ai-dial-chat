@@ -31,7 +31,7 @@ export interface ScheduledTaskBoundaryFieldProps {
   onChange: (value: string) => void;
   /** Earliest selectable day, pinned by the owning form. */
   minDate: Date;
-  /** Submit-time validation error rendered under the picker, associated with it via `aria-describedby` and announced via `role="alert"` when it appears. */
+  /** Submit-time validation error rendered under the picker, associated with it via `aria-describedby` and announced through an always-mounted `role="alert"` region. */
   error?: string;
   /** CSS class applied to the error text. */
   errorClassName?: string;
@@ -83,14 +83,16 @@ export const ScheduledTaskBoundaryField: FC<
         invalid={Boolean(error)}
         disabled={disabled}
       />
-      {error && (
-        <ErrorText
-          id={errorId}
-          role="alert"
-          className={mergeClasses(errorClassName, styles.error)}
-          text={error}
-        />
-      )}
+      {/* Mounted before the error arrives, so it is announced; out of the column gap while empty. */}
+      <div role="alert" className="empty:absolute">
+        {error && (
+          <ErrorText
+            id={errorId}
+            className={mergeClasses(errorClassName, styles.error)}
+            text={error}
+          />
+        )}
+      </div>
     </div>
   );
 };

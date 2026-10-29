@@ -609,8 +609,9 @@ describe('PdfContent', () => {
       await act(async () => {
         await Promise.resolve();
       });
-      expect(screen.getByRole('alert')).toBeTruthy();
-      expect(screen.getByText('Worker setup failed')).toBeTruthy();
+      expect(
+        screen.getByText('Worker setup failed').getAttribute('role'),
+      ).toBe('status');
       expect(configurePdfWorker).toHaveBeenCalledOnce();
       expect(documentPreviewState.props).toBeUndefined();
 

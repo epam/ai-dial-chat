@@ -112,7 +112,9 @@ describe('VisualizerCanvasRenderer', () => {
 
     renderComponent({ errorLabel: 'Failed to load visualizer' });
 
-    expect(await screen.findByRole('alert')).toBeTruthy();
+    expect(
+      (await screen.findByText('Failed to load visualizer')).getAttribute('role'),
+    ).toBe('status');
   });
 
   it('shows an error state when ready rejects', async () => {
@@ -120,7 +122,9 @@ describe('VisualizerCanvasRenderer', () => {
 
     renderComponent({ errorLabel: 'Failed to load visualizer' });
 
-    expect(await screen.findByRole('alert')).toBeTruthy();
+    expect(
+      (await screen.findByText('Failed to load visualizer')).getAttribute('role'),
+    ).toBe('status');
     expect(sendMock).not.toHaveBeenCalled();
   });
 
@@ -129,7 +133,7 @@ describe('VisualizerCanvasRenderer', () => {
 
     renderComponent({ errorLabel: 'Failed to load visualizer' });
 
-    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.queryByText('Failed to load visualizer')).toBeNull();
     expect(sendMock).not.toHaveBeenCalled();
   });
 });
@@ -179,7 +183,7 @@ describe('VisualizerCanvasRenderer — SEND_MESSAGE', () => {
     postFromIframe(payload);
 
     expect(onSendMessage).not.toHaveBeenCalled();
-    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.queryByText('Failed to load visualizer')).toBeNull();
   });
 
   it('ignores a valid message when no onSendMessage is given', () => {
@@ -333,6 +337,8 @@ describe('VisualizerCanvasRenderer — grouped content', () => {
 
     renderGrouped({ errorLabel: 'Failed to load visualizer' });
 
-    expect(await screen.findByRole('alert')).toBeTruthy();
+    expect(
+      (await screen.findByText('Failed to load visualizer')).getAttribute('role'),
+    ).toBe('status');
   });
 });

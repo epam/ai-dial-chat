@@ -322,9 +322,12 @@ describe('ApplicationEditorPage — custom app', () => {
       denyCustomApps();
       renderPage();
 
-      expect(screen.getByRole('alert').textContent).toBe(
-        CatalogI18nKeys.CreationDenied,
-      );
+      expect(
+        screen.getByRole('heading', {
+          level: 1,
+          name: CatalogI18nKeys.CreationDenied,
+        }),
+      ).toBeTruthy();
       expect(
         screen.queryByLabelText(EditorI18nKeys.NameLabel, { exact: false }),
       ).toBeNull();

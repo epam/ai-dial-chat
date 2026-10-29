@@ -358,9 +358,10 @@ describe('ProjectView', () => {
   it('shows the error state with a retry action', async () => {
     const { onRetry } = renderView({ project: null, hasError: true });
 
-    expect(screen.getByRole('alert').textContent).toBe(
-      'Could not load the project',
-    );
+    expect(
+      screen.getByText('Could not load the project').getAttribute('role'),
+    ).toBe('status');
+    expect(screen.queryByRole('alert')).toBeNull();
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(onRetry).toHaveBeenCalledOnce();
   });
@@ -371,7 +372,10 @@ describe('ProjectView', () => {
       isNotFound: true,
     });
 
-    expect(screen.getByRole('alert').textContent).toBe('Project not found');
+    expect(screen.getByText('Project not found').hasAttribute('role')).toBe(
+      false,
+    );
+    expect(screen.queryByRole('alert')).toBeNull();
     await userEvent.click(
       screen.getByRole('button', { name: 'Back to projects' }),
     );

@@ -41,9 +41,12 @@ describe('ErrorFallback', () => {
     vi.clearAllMocks();
   });
 
-  it('renders role="alert" container', () => {
+  it('renders a region named by the heading, not a live region', () => {
     renderFallback();
-    expect(screen.getByRole('alert')).toBeTruthy();
+    expect(
+      screen.getByRole('region', { name: 'errorBoundary.heading' }),
+    ).toBeTruthy();
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 
   it('renders the heading as the screen h1', () => {
@@ -191,7 +194,9 @@ describe('RouteErrorBoundary', () => {
         </RouteErrorBoundary>
       </MemoryRouter>,
     );
-    expect(screen.getByRole('alert')).toBeTruthy();
+    expect(
+      screen.getByRole('region', { name: 'errorBoundary.heading' }),
+    ).toBeTruthy();
   });
 
   it('resets error state when the route key changes', () => {
@@ -202,13 +207,17 @@ describe('RouteErrorBoundary', () => {
     const { rerender } = render(
       <ErrorBoundaryWithKey routeKey="/catalog" shouldThrow={true} />,
     );
-    expect(screen.getByRole('alert')).toBeTruthy();
+    expect(
+      screen.getByRole('region', { name: 'errorBoundary.heading' }),
+    ).toBeTruthy();
 
     rerender(
       <ErrorBoundaryWithKey routeKey="/conversations" shouldThrow={false} />,
     );
     expect(screen.getByText('Normal content')).toBeTruthy();
-    expect(screen.queryByRole('alert')).toBeNull();
+    expect(
+      screen.queryByRole('region', { name: 'errorBoundary.heading' }),
+    ).toBeNull();
   });
 });
 

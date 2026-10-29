@@ -30,6 +30,9 @@ const OverlayLoginGate: FC = () => {
     isTakingLonger;
   const isLoginDisabled =
     externalLoginStatus === OverlayExternalLoginStatus.Opening;
+  const isBlocked = externalLoginStatus === OverlayExternalLoginStatus.Blocked;
+  const isProvidersErrorShown =
+    hasProviderConfiguration && !isLoadingProviders && hasProviderError;
   const showSingleLogin =
     !hasProviderConfiguration ||
     (!isLoadingProviders &&
@@ -58,20 +61,27 @@ const OverlayLoginGate: FC = () => {
           </p>
         )}
 
-        {hasProviderConfiguration &&
-          !isLoadingProviders &&
-          hasProviderError && (
-            <div className="flex flex-col items-center gap-3">
-              <p role="alert" className="dial-small-text text-error">
-                {t(AuthI18nKeys.OverlayProvidersError)}
-              </p>
-              <NeutralButton
-                className="min-h-11"
-                label={t(ButtonsI18nKeys.Retry)}
-                onClick={retryLoadProviders}
-              />
-            </div>
+        {/* Always mounted: an alert that mounts together with its message is
+            announced unreliably, so only its text and the retry button
+            toggle. While hidden it is taken out of the flow. */}
+        <div
+          className={mergeClasses(
+            isProvidersErrorShown
+              ? 'flex flex-col items-center gap-3'
+              : 'sr-only',
           )}
+        >
+          <p role="alert" className="dial-small-text text-error">
+            {isProvidersErrorShown ? t(AuthI18nKeys.OverlayProvidersError) : ''}
+          </p>
+          {isProvidersErrorShown && (
+            <NeutralButton
+              className="min-h-11"
+              label={t(ButtonsI18nKeys.Retry)}
+              onClick={retryLoadProviders}
+            />
+          )}
+        </div>
 
         {hasProviderConfiguration &&
           !isLoadingProviders &&
@@ -96,14 +106,18 @@ const OverlayLoginGate: FC = () => {
             </div>
           )}
 
-        {externalLoginStatus === OverlayExternalLoginStatus.Blocked && (
-          <p role="alert" className="dial-small-text text-error">
-            {t(AuthI18nKeys.OverlayExternalLoginBlocked)}
-          </p>
-        )}
-
         {/* Always mounted: a live region that mounts in the same render as its
             text is announced unreliably, so only its text toggles. */}
+        <p
+          role="alert"
+          className={mergeClasses(
+            'dial-small-text text-error',
+            !isBlocked && 'sr-only',
+          )}
+        >
+          {isBlocked ? t(AuthI18nKeys.OverlayExternalLoginBlocked) : ''}
+        </p>
+
         <p
           role="status"
           aria-live="polite"

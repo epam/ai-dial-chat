@@ -88,9 +88,10 @@ describe('OverlayLoginGate', () => {
     });
 
     render(<OverlayLoginGate />);
-    expect(screen.getByRole('alert').textContent).toBe(
-      AuthI18nKeys.OverlayProvidersError,
-    );
+    /* Both alerts stay mounted; only the providers one carries text. */
+    expect(
+      screen.getAllByRole('alert').map((alert) => alert.textContent),
+    ).toEqual([AuthI18nKeys.OverlayProvidersError, '']);
 
     fireEvent.click(
       screen.getByRole('button', { name: ButtonsI18nKeys.Retry }),
@@ -160,9 +161,9 @@ describe('OverlayLoginGate', () => {
 
     render(<OverlayLoginGate />);
 
-    expect(screen.getByRole('alert').textContent).toBe(
-      AuthI18nKeys.OverlayExternalLoginBlocked,
-    );
+    expect(
+      screen.getAllByRole('alert').map((alert) => alert.textContent),
+    ).toEqual(['', AuthI18nKeys.OverlayExternalLoginBlocked]);
   });
 
   it('announces a long-running attempt politely', () => {

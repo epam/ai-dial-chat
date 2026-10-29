@@ -64,7 +64,7 @@ a user opens a PDF or a syntax-highlighted code file. While that import is
 pending, `AttachmentCanvasBody`/`CodeContent` render an accessible
 `role="status"` loading state (a `Spinner` for PDF; the plain-text fallback
 for code, which stays visible instead of being replaced by a spinner). If the
-import fails, a `role="alert"` message and a retry control are shown instead;
+import fails, a `role="status"` message and a retry control are shown instead;
 activating retry genuinely re-attempts the import (recreating the underlying
 `lazy()` reference), not just re-rendering the cached failure — see
 `pdfContentLoadingLabel`/`pdfContentErrorLabel`/`pdfContentRetryLabel` and

@@ -94,7 +94,9 @@ const ScheduledTaskConversationBanner: FC = () => {
   ) {
     return (
       <div className={CARD_CLASS_NAME}>
-        <p role="alert" className="dial-small-text text-primary">
+        {/* Page state of the banner, not a failure of the user's own action:
+            a polite status, not an interrupting alert. */}
+        <p role="status" className="dial-small-text text-primary">
           {t(ScheduledTasksI18nKeys.ConversationBannerUnavailableLabel)}
         </p>
         {taskState === ActiveScheduledTaskDetailState.Error && (

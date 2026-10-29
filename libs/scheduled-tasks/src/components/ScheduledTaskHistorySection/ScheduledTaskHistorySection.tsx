@@ -47,11 +47,11 @@ export const ScheduledTaskHistorySection: FC<
         styles.historyCard,
       )
     : 'pt-2';
+  const loadMoreErrorText =
+    labels.historyLoadMoreErrorLabel ?? labels.historyErrorLabel;
   const footer = loadMoreError ? (
     <li className={footerClassName}>
-      <p role="alert">
-        {labels.historyLoadMoreErrorLabel ?? labels.historyErrorLabel}
-      </p>
+      <p>{loadMoreErrorText}</p>
       {onRetryLoadMore && (
         <GhostButton
           label={labels.historyRetryLabel}
@@ -75,6 +75,13 @@ export const ScheduledTaskHistorySection: FC<
       {nextRunLabel}
     </p>
   ) : undefined;
+
+  /* The failed page is reported in the list footer, which mounts with the error; this region is mounted first so the failure is announced. */
+  const loadMoreErrorAnnouncement = (
+    <span role="alert" className="sr-only">
+      {loadMoreError ? loadMoreErrorText : ''}
+    </span>
+  );
 
   const loadingMoreAnnouncement = labels.historyLoadingMoreLabel ? (
     <span role="status" aria-live="polite" className="sr-only">
@@ -135,6 +142,7 @@ export const ScheduledTaskHistorySection: FC<
           <h2 className={sectionTitleClassName}>{labels.historyTitle}</h2>
           {nextRun}
           {loadingMoreAnnouncement}
+          {loadMoreErrorAnnouncement}
         </div>
         {/*
          * Rows bleed 12px (their pill padding) into the card's 24px padding,
@@ -155,6 +163,7 @@ export const ScheduledTaskHistorySection: FC<
     <div className="flex flex-col gap-4">
       {nextRun}
       {loadingMoreAnnouncement}
+      {loadMoreErrorAnnouncement}
       {runList}
     </div>
   );

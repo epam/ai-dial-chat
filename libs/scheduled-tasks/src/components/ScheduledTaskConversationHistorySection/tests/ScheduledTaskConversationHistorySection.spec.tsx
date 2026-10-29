@@ -194,9 +194,9 @@ describe('ScheduledTaskConversationHistorySection', () => {
       />,
     );
 
-    expect(screen.getByRole('alert').textContent).toBe(
-      'History is unavailable',
-    );
+    expect(
+      screen.getByText('History is unavailable').getAttribute('role'),
+    ).toBe('status');
     expect(screen.queryByText('today at 9:01 AM (99s)')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Show more' })).toBeNull();

@@ -111,7 +111,10 @@ describe('ScheduledTaskConversationBanner', () => {
 
     renderBanner();
 
-    expect(screen.getByRole('alert')).toBeTruthy();
+    expect(screen.getByRole('status').textContent).toBe(
+      'scheduledTasks.conversationBanner.unavailableLabel',
+    );
+    expect(screen.queryByRole('alert')).toBeNull();
     expect(screen.getByRole('button', { name: /retry/i })).toBeTruthy();
   });
 

@@ -150,7 +150,7 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
             className={styles.errorIcon}
           />
           <p
-            role="alert"
+            role="status"
             className={mergeClasses('text-center', styles.statusLabel)}
           >
             {errorLabel}

@@ -225,7 +225,7 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
                   className="text-error"
                 />
                 <p
-                  role="alert"
+                  role="status"
                   className="dial-body-text text-center text-primary"
                 >
                   {loadErrorLabel}

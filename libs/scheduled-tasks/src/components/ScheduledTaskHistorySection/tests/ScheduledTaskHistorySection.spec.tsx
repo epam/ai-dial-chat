@@ -99,6 +99,26 @@ describe('ScheduledTaskHistorySection', () => {
     expect(retry).toHaveBeenCalledOnce();
   });
 
+  it('mounts the load-more alert region before the failed page, then fills it', () => {
+    const { rerender } = renderSection();
+    const region = screen.getByRole('alert');
+    expect(region.textContent).toBe('');
+
+    rerender(
+      <ScheduledTaskHistorySection
+        variant={ScheduledTaskHistorySectionVariant.Card}
+        labels={labels}
+        items={runs}
+        hasMore
+        onLoadMore={vi.fn()}
+        loadMoreError={new Error('failed')}
+      />,
+    );
+
+    expect(screen.getByRole('alert')).toBe(region);
+    expect(region.textContent).toBe(labels.historyErrorLabel);
+  });
+
   describe('ScheduledTaskHistorySection — card variant', () => {
     it('renders the section title, next-run label, and run rows', () => {
       renderSection({ nextRunLabel: 'Next run: Jul 31 at 9:00 AM' });
