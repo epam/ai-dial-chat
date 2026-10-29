@@ -28,7 +28,9 @@ import {
 import { ConversationController } from '../conversation.controller';
 import { ConversationService } from '../conversation.service';
 import { BackgroundGenerationService } from '../generation/background-generation.service';
+import { ChatCompletionsAdapter } from '../generation/chat-completions.adapter';
 import { CoreResponsesClient } from '../generation/core-responses.client';
+import { GenerationApiSelector } from '../generation/generation-api-selector.service';
 import { ResponsesAdapter } from '../generation/responses.adapter';
 import { ConversationTitleCacheService } from '../listing/conversation-title-cache.service';
 import { ConversationPersistenceService } from '../persistence/conversation-persistence.service';
@@ -184,20 +186,22 @@ describe('completion persistence over HTTP', () => {
       } as never,
       new ConversationTitleCacheService(),
     );
+    const deployments = {
+      resolveDeploymentItem: vi.fn().mockResolvedValue(null),
+      getDeploymentDetails: vi.fn().mockResolvedValue({
+        modelDetails: { features: { chatCompletion: true } },
+      }),
+    } as unknown as DeploymentsService;
     const streaming = new ConversationStreamingService(
       dial,
       registry,
       persistence,
-      {
-        resolveDeploymentItem: vi.fn().mockResolvedValue(null),
-        getDeploymentDetails: vi.fn().mockResolvedValue({
-          modelDetails: { features: { chatCompletion: true } },
-        }),
-      } as unknown as DeploymentsService,
+      deployments,
       new ResponsesAdapter(dial),
-      {
+      new ChatCompletionsAdapter(dial),
+      new GenerationApiSelector(deployments, {
         isEnabled: vi.fn().mockResolvedValue(false),
-      } as unknown as FeatureFlagsService,
+      } as unknown as FeatureFlagsService),
       new BackgroundGenerationService(
         persistence,
         new ResponsesAdapter(dial),

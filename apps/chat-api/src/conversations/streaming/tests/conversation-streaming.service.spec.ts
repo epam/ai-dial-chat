@@ -22,7 +22,9 @@ import {
 } from '../../dto/conversation-message.dto';
 import { CompletionMode } from '../../dto/send-completion.dto';
 import { BackgroundGenerationService } from '../../generation/background-generation.service';
+import { ChatCompletionsAdapter } from '../../generation/chat-completions.adapter';
 import { CoreResponsesClient } from '../../generation/core-responses.client';
+import { GenerationApiSelector } from '../../generation/generation-api-selector.service';
 import {
   generationCapabilityResolutionTotal,
   generationRequestsTotal,
@@ -111,6 +113,7 @@ const textToStream = (chunks: string[]): ReadableStream<Uint8Array> => {
 
 describe('ConversationStreamingService', () => {
   let service: ConversationStreamingService;
+  let chatCompletionsAdapter: ChatCompletionsAdapter;
   let mockDialClient: DialClientService;
   let mockGenerationService: ConversationGenerationService;
   let mockDeploymentsService: DeploymentsService;
@@ -227,13 +230,18 @@ describe('ConversationStreamingService', () => {
       mockConversationNamingService as never,
       new ConversationTitleCacheService(),
     );
+    chatCompletionsAdapter = new ChatCompletionsAdapter(mockDialClient);
     service = new ConversationStreamingService(
       mockDialClient,
       mockGenerationService,
       persistenceService,
       mockDeploymentsService,
       new ResponsesAdapter(mockDialClient),
-      mockFeatureFlagsService,
+      chatCompletionsAdapter,
+      new GenerationApiSelector(
+        mockDeploymentsService,
+        mockFeatureFlagsService,
+      ),
       new BackgroundGenerationService(
         persistenceService,
         new ResponsesAdapter(mockDialClient),
@@ -781,6 +789,9 @@ describe('ConversationStreamingService', () => {
       const logSpy = vi.spyOn(service['logger'], 'log');
       const warnSpy = vi.spyOn(service['logger'], 'warn');
       const errorSpy = vi.spyOn(service['logger'], 'error');
+      const adapterSpies = (['debug', 'log', 'warn', 'error'] as const).map(
+        (level) => vi.spyOn(chatCompletionsAdapter['logger'], level),
+      );
 
       await callStream(
         conversation,
@@ -793,7 +804,13 @@ describe('ConversationStreamingService', () => {
         'Pacific/Auckland',
       );
 
-      const loggedValues = [debugSpy, logSpy, warnSpy, errorSpy]
+      const loggedValues = [
+        debugSpy,
+        logSpy,
+        warnSpy,
+        errorSpy,
+        ...adapterSpies,
+      ]
         .flatMap((spy) => spy.mock.calls)
         .flat()
         .join(' ');
@@ -1868,7 +1885,7 @@ describe('ConversationStreamingService', () => {
           'sendChatCompletionRequest',
         ).mockResolvedValue(dialResult as never);
         const errorSpy = vi
-          .spyOn(service['logger'], 'error')
+          .spyOn(chatCompletionsAdapter['logger'], 'error')
           .mockImplementation(() => undefined);
 
         await runStreamCompletion(
@@ -3116,7 +3133,11 @@ describe('ConversationStreamingService', () => {
         persistenceService,
         mockDeploymentsService,
         new ResponsesAdapter(mockDialClient),
-        mockFeatureFlagsService,
+        new ChatCompletionsAdapter(mockDialClient),
+        new GenerationApiSelector(
+          mockDeploymentsService,
+          mockFeatureFlagsService,
+        ),
         new BackgroundGenerationService(
           persistenceService,
           new ResponsesAdapter(mockDialClient),
