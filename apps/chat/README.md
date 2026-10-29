@@ -28,7 +28,7 @@ In any case, in your Helm chart values.yaml file, it is necessary to provide app
 
 This project is managed by [NX](https://nextjs.org/).
 
-Before diving into the development environment, install Node.js (version >=18.18.2) and npm (version >=9.8.1) on your system. If you don't already have them, follow the [instruction](https://nodejs.org/en/download/).
+Before diving into the development environment, install Node.js (version >=24.11.1) and npm (version >=11.6.2) on your system. If you don't already have them, follow the [instruction](https://nodejs.org/en/download/).
 
 Once you have Node.js and npm installed, follow these steps to set up your developer environment:
 
