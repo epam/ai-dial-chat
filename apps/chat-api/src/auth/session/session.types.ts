@@ -44,6 +44,29 @@ export const getJobTitleClaim = (
   return typeof value === 'string' && value.trim() !== '' ? value : undefined;
 };
 
+/** Claim key the OIDC `picture` (profile avatar URL) claim is stored under. */
+export const PICTURE_CLAIM = 'picture';
+
+/**
+ * Reads the `picture` claim out of a claims record, if it is an absolute
+ * `http(s)` URL. Anything else yields `undefined` so the UI falls back to
+ * initials instead of rendering an unusable image source.
+ */
+export const getPictureClaim = (
+  claims: Record<string, unknown> | undefined,
+): string | undefined => {
+  const value = claims?.[PICTURE_CLAIM];
+  if (typeof value !== 'string') return undefined;
+  try {
+    const { protocol } = new URL(value.trim());
+    return protocol === 'https:' || protocol === 'http:'
+      ? value.trim()
+      : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 export interface SessionUser {
   /** Present only for cookie-authenticated callers — no session is created for header auth. */
   sid?: string;

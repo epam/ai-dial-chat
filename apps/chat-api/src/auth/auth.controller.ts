@@ -68,7 +68,9 @@ import {
 import { SessionService } from './session/session.service';
 import {
   getJobTitleClaim,
+  getPictureClaim,
   JOB_TITLE_CLAIM,
+  PICTURE_CLAIM,
   type SessionPayload,
   type SessionUser,
 } from './session/session.types';
@@ -380,6 +382,12 @@ export class AuthController {
     if (idTokenJobTitle === undefined) {
       delete filteredClaims[JOB_TITLE_CLAIM];
     }
+    const idTokenPicture = getPictureClaim(filteredClaims);
+    if (idTokenPicture === undefined) {
+      delete filteredClaims[PICTURE_CLAIM];
+    } else {
+      filteredClaims[PICTURE_CLAIM] = idTokenPicture;
+    }
     /*
      * Roles are typically issued on the access token, not the ID token —
      * decode it (unverified; it came directly from the IdP over TLS, same
@@ -403,33 +411,36 @@ export class AuthController {
     }
 
     /*
-     * The legacy Keycloak provider read job_title from UserInfo. Some realms
-     * expose it there without including it in either token. Copy only this
-     * optional claim, and only when the profile belongs to the ID-token user.
+     * The legacy Keycloak provider read the profile (job_title, picture) from
+     * UserInfo. Some realms expose these there without including them in
+     * either token. Copy only these optional claims, only when the ID token
+     * lacks them, and only when the profile belongs to the ID-token user.
      */
     if (
       providerConfig.id === AuthProviderId.Keycloak &&
-      idTokenJobTitle === undefined &&
+      (idTokenJobTitle === undefined || idTokenPicture === undefined) &&
       tokenSet.access_token &&
       client.issuer.metadata.userinfo_endpoint
     ) {
       try {
         const userInfo = await client.userinfo(tokenSet.access_token);
-        const subjectMatches = userInfo.sub === claims.sub;
-        const jobTitle = subjectMatches
-          ? getJobTitleClaim(userInfo)
-          : undefined;
-        if (jobTitle) {
-          filteredClaims[JOB_TITLE_CLAIM] = jobTitle;
-        }
-        if (!subjectMatches) {
+        if (userInfo.sub === claims.sub) {
+          const jobTitle = idTokenJobTitle ?? getJobTitleClaim(userInfo);
+          if (jobTitle) {
+            filteredClaims[JOB_TITLE_CLAIM] = jobTitle;
+          }
+          const picture = idTokenPicture ?? getPictureClaim(userInfo);
+          if (picture) {
+            filteredClaims[PICTURE_CLAIM] = picture;
+          }
+        } else {
           this.logger.warn(
-            'job-title: userinfo subject mismatch; ignoring job title',
+            'userinfo: subject mismatch; ignoring job title and picture',
           );
         }
       } catch {
         this.logger.warn(
-          'job-title: userinfo lookup failed; continuing without job title',
+          'userinfo: lookup failed; continuing without job title and picture',
         );
       }
     }
