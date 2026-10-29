@@ -802,13 +802,11 @@ describe('useCatalogEditNavigation', () => {
       });
 
       expect(keysOf(result.current.createOptions)).toEqual([
+        'custom-app',
         'prompt',
         'toolset',
-        'skill',
-        'create-sections-divider',
-        'runners-header',
-        'custom-app',
         'runner:foo-quickapps2',
+        'skill',
       ]);
       expect(result.current.hasCreateOptions).toBe(true);
       expect(result.current.createSearch).toBeDefined();

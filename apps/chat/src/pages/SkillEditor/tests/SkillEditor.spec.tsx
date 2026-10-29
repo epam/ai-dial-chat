@@ -1587,6 +1587,6 @@ describe('SkillEditor page — creation permissions', { timeout: 15000 }, () => 
 
     await waitFor(() => expect(updateSkill).toHaveBeenCalled());
     expect(createSkill).not.toHaveBeenCalled();
-    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.queryByText('catalog.creation.denied')).toBeNull();
   });
 });

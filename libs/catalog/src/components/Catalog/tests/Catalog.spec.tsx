@@ -70,18 +70,24 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   Button: ({ label, onClick }: { label: string; onClick?: () => void }) => (
     <button onClick={onClick}>{label}</button>
   ),
+  ButtonDropdown: ({ label }: { label: string }) => (
+    <button aria-haspopup="menu">{label}</button>
+  ),
   ButtonVariant: { Primary: 'primary', Secondary: 'secondary' },
   ButtonAppearance: { Solid: 'solid' },
   NoDataContent: ({
     title,
     description,
+    action,
   }: {
     title: React.ReactNode;
     description?: React.ReactNode;
+    action?: React.ReactNode;
   }) => (
     <div>
       <span>{title}</span>
       <span>{description}</span>
+      {action}
     </div>
   ),
 }));
