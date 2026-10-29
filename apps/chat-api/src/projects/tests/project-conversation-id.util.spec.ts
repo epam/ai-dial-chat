@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildNewConversation,
+  getConversationTitleFromName,
+} from '../../conversations/utils/conversation.utils';
+import {
   buildProjectConversationLocator,
+  toProjectConversationDeploymentKey,
   fromStrippedProjectConversationPath,
   isProjectConversationLocator,
   parseProjectConversationLocator,
@@ -81,6 +86,58 @@ describe('parseProjectConversationLocator', () => {
   it('rejects a non-string', () => {
     expect(parseProjectConversationLocator(undefined)).toBeNull();
   });
+
+  it.each([
+    [
+      'a long message',
+      'Расскажи подробно, что ты знаешь про файлы проекта. '.repeat(10),
+    ],
+    ['a multi-line message', 'first line\nsecond line\r\nthird'],
+    ['a tab and surrounding spaces', '  a\tb  '],
+    ['path characters', 'a/b\\c%d:e;f,g=h{i}j&k"l'],
+    ['bidi and zero-width characters', 'a‮b​c﻿'],
+    ['an emoji', 'Привет 👋🏽 мир'],
+    ['only dots', '..'],
+    ['only spaces', '   '],
+    ['a reserved word', 'files'],
+  ])('parses the locator built for %s', (_label, firstMessage) => {
+    const project = parseProjectId('projects/a1b2c3/hey')!;
+    const { conversation } = buildNewConversation({
+      firstMessage,
+      deploymentId: 'dial-chathub-v2-anthropic.claude-haiku-4-5-20251001-v1:0',
+      folderId: project.id,
+      toId: (fileName) => buildProjectConversationLocator(project, fileName),
+    });
+
+    expect(parseProjectConversationLocator(conversation.id)?.locator).toBe(
+      conversation.id,
+    );
+  });
+
+  it.each([
+    'applications/a1b2c3/support-bot__1.0.0',
+    'applications/a1b2c3/folder/app',
+    'a\\b%c',
+  ])(
+    'keeps a project chat of deployment %s one file with its title and model',
+    (deploymentId) => {
+      const project = parseProjectId('projects/a1b2c3/hey')!;
+      const { conversation } = buildNewConversation({
+        firstMessage: 'Weekly summary',
+        deploymentId,
+        fileDeploymentKey: toProjectConversationDeploymentKey(deploymentId),
+        folderId: project.id,
+        toId: (fileName) => buildProjectConversationLocator(project, fileName),
+      });
+      const parsed = parseProjectConversationLocator(conversation.id);
+
+      expect(parsed?.locator).toBe(conversation.id);
+      expect(getConversationTitleFromName(parsed!.name, false)).toBe(
+        'Weekly summary',
+      );
+      expect(conversation.model.id).toBe(deploymentId);
+    },
+  );
 });
 
 describe('stripped completion paths', () => {

@@ -900,8 +900,9 @@ resulting context set.
 ### Project conversations
 
 A project conversation is the file `conversations/{name}` inside the project,
-with the body and the `{deploymentId}__{title}__{uuid}` name of a top-level
-conversation; its id is `projects/{bucket}/{projectPath}/conversations/{name}`.
+with the body and the `{deploymentKey}__{title}__{uuid}` name of a top-level
+conversation (`deploymentKey` is the deployment id with `/`, `\` and `%` made
+`_`, so a custom application's id stays one file name); its id is `projects/{bucket}/{projectPath}/conversations/{name}`.
 All routes are gated by `features.projectsEnabled`; writes and completions are
 refused with `403` before any Core call outside the caller's own bucket.
 
@@ -1847,8 +1848,9 @@ resulting context set.
 ### Project conversations
 
 A project conversation is the file `conversations/{name}` inside the project,
-with the body and the `{deploymentId}__{title}__{uuid}` name of a top-level
-conversation; its id is `projects/{bucket}/{projectPath}/conversations/{name}`.
+with the body and the `{deploymentKey}__{title}__{uuid}` name of a top-level
+conversation (`deploymentKey` is the deployment id with `/`, `\` and `%` made
+`_`, so a custom application's id stays one file name); its id is `projects/{bucket}/{projectPath}/conversations/{name}`.
 All routes are gated by `features.projectsEnabled`; writes and completions are
 refused with `403` before any Core call outside the caller's own bucket.
 
@@ -2795,8 +2797,9 @@ resulting context set.
 ### Project conversations
 
 A project conversation is the file `conversations/{name}` inside the project,
-with the body and the `{deploymentId}__{title}__{uuid}` name of a top-level
-conversation; its id is `projects/{bucket}/{projectPath}/conversations/{name}`.
+with the body and the `{deploymentKey}__{title}__{uuid}` name of a top-level
+conversation (`deploymentKey` is the deployment id with `/`, `\` and `%` made
+`_`, so a custom application's id stays one file name); its id is `projects/{bucket}/{projectPath}/conversations/{name}`.
 All routes are gated by `features.projectsEnabled`; writes and completions are
 refused with `403` before any Core call outside the caller's own bucket.
 
@@ -3742,8 +3745,9 @@ resulting context set.
 ### Project conversations
 
 A project conversation is the file `conversations/{name}` inside the project,
-with the body and the `{deploymentId}__{title}__{uuid}` name of a top-level
-conversation; its id is `projects/{bucket}/{projectPath}/conversations/{name}`.
+with the body and the `{deploymentKey}__{title}__{uuid}` name of a top-level
+conversation (`deploymentKey` is the deployment id with `/`, `\` and `%` made
+`_`, so a custom application's id stays one file name); its id is `projects/{bucket}/{projectPath}/conversations/{name}`.
 All routes are gated by `features.projectsEnabled`; writes and completions are
 refused with `403` before any Core call outside the caller's own bucket.
 

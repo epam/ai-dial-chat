@@ -15,6 +15,7 @@ import {
   type FC,
   type MouseEvent,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useParams } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
@@ -24,7 +25,9 @@ import {
 } from '../../constants/routes';
 import { ProjectsI18nKeys } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
+import { useChatLayoutHeaderSlot } from '../../context/ChatLayoutHeaderSlotContext';
 import { ConversationDataSourceContext } from '../../context/ConversationDataSourceContext';
+import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useProject } from '../../hooks/projects/useProject';
 import type {
   ProjectChatNavigationState,
@@ -41,6 +44,8 @@ const ProjectChatPage: FC = () => {
   const navigate = useNavigate();
   const { bucket, '*': splat } = useParams();
   const { state } = useLocation();
+  const headerSlot = useChatLayoutHeaderSlot();
+  const isMobile = useIsMobile();
   /* Captured once: the conversation page clears the router state right after mount. */
   const [navigationProject] = useState(
     () => (state as ProjectChatNavigationState | null)?.project ?? null,
@@ -127,18 +132,28 @@ const ProjectChatPage: FC = () => {
     );
   }
 
+  /* On desktop the breadcrumb takes the layout's top bar, beside the sources toggle, instead of a second bar. */
+  const isHeaderInLayout = headerSlot != null && !isMobile;
+  const header = (
+    <ProjectChatHeader
+      projectName={summary.name}
+      projectHref={getProjectViewRoute(summary.id)}
+      onBack={handleBack}
+      onProjectLinkClick={handleProjectLinkClick}
+      backLabel={t(ProjectsI18nKeys.ChatBackToProject, {
+        name: summary.name,
+      })}
+      className={
+        isHeaderInLayout
+          ? 'border-0 p-0 text-primary'
+          : 'border-tertiary text-primary'
+      }
+    />
+  );
+
   return (
     <div className="flex size-full min-h-0 flex-col">
-      <ProjectChatHeader
-        projectName={summary.name}
-        projectHref={getProjectViewRoute(summary.id)}
-        onBack={handleBack}
-        onProjectLinkClick={handleProjectLinkClick}
-        backLabel={t(ProjectsI18nKeys.ChatBackToProject, {
-          name: summary.name,
-        })}
-        className="border-tertiary text-primary"
-      />
+      {isHeaderInLayout ? createPortal(header, headerSlot) : header}
       <div className="min-h-0 flex-1">
         <ConversationDataSourceContext.Provider value={dataSource}>
           <ConversationPage conversationId={route.conversationId} />

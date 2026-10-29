@@ -13,6 +13,7 @@ import type { ConversationResponseDto } from '../../openapi/openapi-response.dto
 import {
   buildProjectConversationLocator,
   fromStrippedProjectConversationPath,
+  toProjectConversationDeploymentKey,
 } from '../utils/project-conversation-id.util';
 import type { ParsedProjectId } from '../utils/project-id.util';
 import type { ProjectConversationListResponseDto } from './dto/project-conversation-list-response.dto';
@@ -82,6 +83,7 @@ export class ProjectConversationsService {
     const { conversation } = buildNewConversation({
       firstMessage: dto.firstMessage,
       deploymentId: dto.deploymentId,
+      fileDeploymentKey: toProjectConversationDeploymentKey(dto.deploymentId),
       customContent: dto.custom_content,
       folderId: project.id,
       toId: (fileName) => buildProjectConversationLocator(project, fileName),

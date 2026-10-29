@@ -162,12 +162,15 @@ export interface NewConversation {
 export const buildNewConversation = ({
   firstMessage,
   deploymentId,
+  fileDeploymentKey = deploymentId,
   customContent,
   folderId,
   toId,
 }: {
   firstMessage: string;
   deploymentId: string;
+  /** Deployment part of the file name; defaults to `deploymentId`. */
+  fileDeploymentKey?: string;
   customContent?: MessageCustomContentDto;
   folderId: string;
   toId: (fileName: string) => string;
@@ -175,7 +178,7 @@ export const buildNewConversation = ({
   const now = Date.now();
   const uuid = generateUUID();
   const name = getConversationName('New chat', firstMessage);
-  const fileName = `${deploymentId}__${name}__${uuid}`;
+  const fileName = `${fileDeploymentKey}__${name}__${uuid}`;
   const userMessage: ConversationMessageDto = {
     id: uuid,
     role: ConversationMessageRole.User,

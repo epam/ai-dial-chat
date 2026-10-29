@@ -11,7 +11,7 @@ The BFF side of chats stored inside a project: the `projects/{bucket}/{path}/con
 A project conversation SHALL be stored as the file `conversations/{name}` inside the DIAL Core complex resource `projects/{bucket}/{projectPath}`, next to `PROJECT.md` and `context/`:
 
 - **Body:** the same JSON body as a top-level conversation (`ConversationResponseDto`).
-- **Name:** the same file-name convention as a top-level conversation, `{deploymentId}__{title}__{uuid}` (`CONVERSATION_NAME_SEPARATOR`, `getConversationName`, `prepareEntityName` in `apps/chat-api/src/conversations/utils/conversation.utils.ts`). A title can therefore be derived from the name with `getConversationTitleFromName`, as for the sidebar.
+- **Name:** the file-name convention of a top-level conversation, `{deploymentKey}__{title}__{uuid}` (`CONVERSATION_NAME_SEPARATOR`, `getConversationName`, `prepareEntityName` in `apps/chat-api/src/conversations/utils/conversation.utils.ts`), where `deploymentKey` is `toProjectConversationDeploymentKey(deploymentId)` (`apps/chat-api/src/projects/utils/project-conversation-id.util.ts`): `/`, `\` and `%` become `_` and runs of `_` collapse. A custom application's id is a versioned path (`applications/{bucket}/{name}__{version}`), and the file must stay one segment directly in `conversations/` with no `__` inside the key; the body's `model.id` keeps the real deployment id. A title can therefore be derived from the name with `getConversationTitleFromName`, as for the sidebar.
 - **Folder:** `conversations/` is flat. A nested path under it is not a project conversation (the snapshot keeps it in `otherEntries`).
 - **Ids:**
   - The **locator** `projects/{bucket}/{projectPath}/conversations/{name}` is the conversation's id. It is stored in the body's `id`, and the body's `folderId` is the project id.
@@ -94,7 +94,7 @@ A project conversation SHALL be stored as the file `conversations/{name}` inside
 - **Gating.** The controller is `@Controller({ path: 'projects', version: '1' })` with `@UseGuards(FeatureGuard)` and `@RequireFeature(FeatureKey.ProjectsEnabled)` (`PROJECTS_ENABLED`). With the flag off, every route is `403`.
 - **Path params.**
   - `:id` is validated by `ProjectIdParamDto`.
-  - `:conversationName` is validated by `ProjectConversationParamDto` (`apps/chat-api/src/projects/conversations/dto/project-conversation-param.dto.ts`), which uses `IsDialEntityName` and a 255-byte UTF-8 cap.
+  - `:conversationName` is validated by `ProjectConversationParamDto` (`apps/chat-api/src/projects/conversations/dto/project-conversation-param.dto.ts`), which uses `IsSafeDialPathSegment` and a `DIAL_PATH_SEGMENT_MAX_BYTES` (1024-byte) UTF-8 cap. The entity-name rule does not fit a stored file name: it wraps a title of up to 255 bytes in the deployment id, which may contain `:`, and a UUID, so a chat started with a long message has a longer name.
   - The BFF builds the locator from both.
 - **Completion bodies.** The `path` in completion, stop and attach bodies SHALL equal the locator without its leading `projects/`, i.e. `{bucket}/{projectPath}/conversations/{name}`, which is the path the app's stream hook derives from the conversation id. The BFF re-prefixes it and requires the result to parse as a locator under `:id`, otherwise `400`. The path is also the generation-registry key, so stop and attach find the generation.
 - **Writes.** Create, save, rename, delete and completions SHALL be refused with `403` before any Core call when the project's bucket is not the session bucket, matching `canEdit` in `GET /api/v1/projects/:id`.

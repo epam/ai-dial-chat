@@ -1,17 +1,20 @@
 import { ProjectSource } from '@epam/ai-dial-chat-api-client';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   NotFoundI18nKeys,
   ProjectsI18nKeys,
 } from '../../../constants/translation-keys';
+import { ChatLayoutHeaderSlotContext } from '../../../context/ChatLayoutHeaderSlotContext';
 import { useConversationDataSource } from '../../../context/ConversationDataSourceContext';
 import {
   useAppConfig as useAppConfigMock,
   useFeatureFlag as useFeatureFlagMock,
 } from '../../../context/tests/app-config-context-mock';
+import { useIsMobile } from '../../../hooks/breakpoint/useBreakpoint';
 import { getProject } from '../../../server-api/projects.api';
 import ProjectChatPage from '../ProjectChatPage';
 
@@ -20,6 +23,9 @@ vi.mock(
   async () => import('../../../context/tests/app-config-context-mock'),
 );
 vi.mock('../../../server-api/projects.api', () => ({ getProject: vi.fn() }));
+vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
+  useIsMobile: vi.fn(() => false),
+}));
 vi.mock('../../../context/ConversationsContext', () => ({
   useConversations: () => ({}),
 }));
@@ -53,13 +59,30 @@ const project = (canEdit: boolean, bucket = 'a1b2c3') => ({
   canEdit,
 });
 
+/* Stands in for `ChatLayout`: a top bar whose start cell is offered to the page. */
+const LayoutWithHeaderSlot = () => {
+  const [slot, setSlot] = useState<HTMLElement | null>(null);
+  return (
+    <>
+      <header aria-label="layout bar" ref={setSlot} />
+      <ChatLayoutHeaderSlotContext.Provider value={slot}>
+        <ProjectChatPage />
+      </ChatLayoutHeaderSlotContext.Provider>
+    </>
+  );
+};
+
 const renderAt = (
   path = '/projects/chat/a1b2c3/q4/conversations/x',
   state?: unknown,
+  { inLayout = false }: { inLayout?: boolean } = {},
 ) => {
   const router = createMemoryRouter(
     [
-      { path: '/projects/chat/:bucket/*', element: <ProjectChatPage /> },
+      {
+        path: '/projects/chat/:bucket/*',
+        element: inLayout ? <LayoutWithHeaderSlot /> : <ProjectChatPage />,
+      },
       { path: '/projects/view/:bucket/*', element: <p>project view</p> },
       { path: '/projects', element: <p>projects list</p> },
     ],
@@ -72,6 +95,7 @@ const renderAt = (
 describe('ProjectChatPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(useIsMobile).mockReturnValue(false);
     document.documentElement.dir = 'ltr';
     useAppConfigMock.mockReturnValue({ status: 'ready', config: {} });
     useFeatureFlagMock.mockReturnValue(true);
@@ -133,6 +157,28 @@ describe('ProjectChatPage', () => {
     });
 
     expect(screen.queryByText(/^conversation /)).toBeNull();
+  });
+
+  it('renders the breadcrumb in the layout top bar on desktop', async () => {
+    renderAt(undefined, undefined, { inLayout: true });
+
+    const bar = screen.getByRole('banner', { name: 'layout bar' });
+    expect(
+      await within(bar).findByRole('link', { name: 'Q4 launch' }),
+    ).toBeTruthy();
+  });
+
+  it('keeps the breadcrumb on the page on mobile', async () => {
+    vi.mocked(useIsMobile).mockReturnValue(true);
+
+    renderAt(undefined, undefined, { inLayout: true });
+
+    expect(await screen.findByRole('link', { name: 'Q4 launch' })).toBeTruthy();
+    expect(
+      within(screen.getByRole('banner', { name: 'layout bar' })).queryByRole(
+        'link',
+      ),
+    ).toBeNull();
   });
 
   it('opens a shared project conversation read-only', async () => {

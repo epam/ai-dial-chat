@@ -18,6 +18,7 @@ describe('ProjectConversationParamDto', () => {
     'gpt-4o__Weekly summary__7c1d',
     'gpt-4o__Справка__1',
     'dial-chathub-v2-anthropic.claude-haiku-4-5-20251001-v1:0__hey__243cbd90',
+    `dial-chathub-v2-anthropic.claude-haiku-4-5-20251001-v1:0__${'я'.repeat(127)}__243cbd90-00e0-424c-8400-b01b41786e82`,
   ])('accepts %s', (name) => {
     expect(validate(name)).toHaveLength(0);
   });
@@ -29,7 +30,7 @@ describe('ProjectConversationParamDto', () => {
     ['a control character', 'a\u0001b'],
     ['a backslash', 'a\\b'],
     ['an empty name', ''],
-    ['an over-long name', 'я'.repeat(128)],
+    ['an over-long name', 'я'.repeat(513)],
     ['a non-string', 42],
   ])('rejects %s', (_label, name) => {
     expect(validate(name)).not.toHaveLength(0);

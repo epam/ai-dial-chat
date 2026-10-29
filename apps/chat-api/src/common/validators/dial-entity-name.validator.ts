@@ -73,18 +73,26 @@ export const isValidDialEntityName = (value: unknown): value is string => {
  * checked only for what could escape or corrupt the path: separators, `%`
  * (the path is decoded before it is re-encoded), control and bidi characters.
  */
+/**
+ * Upper bound of one stored path segment, in UTF-8 bytes. A conversation
+ * file name wraps a title of up to `DIAL_ENTITY_NAME_MAX_BYTES` in its
+ * deployment id and a UUID, so the entity-name bound would reject the name
+ * of any chat started with a long message.
+ */
+export const DIAL_PATH_SEGMENT_MAX_BYTES = 1024;
+
 const PATH_SEGMENT_FORBIDDEN_CHAR_RE = /[/\\%\0‎‏‪-‮⁦-⁩]/u;
 
 /**
  * Returns `true` when `value` is safe as one segment of a DIAL resource path:
- * non-empty, no surrounding whitespace, at most `DIAL_ENTITY_NAME_MAX_BYTES`
+ * non-empty, no surrounding whitespace, at most `DIAL_PATH_SEGMENT_MAX_BYTES`
  * UTF-8 bytes, no separator, `%`, control or bidi character, and not a
  * Core-reserved name (so no traversal).
  */
 export const isSafeDialPathSegment = (value: unknown): value is string => {
   if (typeof value !== 'string' || value.length === 0) return false;
   if (value.trim() !== value) return false;
-  if (Buffer.byteLength(value, 'utf8') > DIAL_ENTITY_NAME_MAX_BYTES) {
+  if (Buffer.byteLength(value, 'utf8') > DIAL_PATH_SEGMENT_MAX_BYTES) {
     return false;
   }
   if (
@@ -109,7 +117,7 @@ export const IsSafeDialPathSegment = (
       validator: {
         validate: isSafeDialPathSegment,
         defaultMessage(args?: ValidationArguments) {
-          return `${args?.property ?? propertyName} must be 1-${DIAL_ENTITY_NAME_MAX_BYTES} UTF-8 bytes with no surrounding whitespace, path separator, %, control character, and must not be a reserved name`;
+          return `${args?.property ?? propertyName} must be 1-${DIAL_PATH_SEGMENT_MAX_BYTES} UTF-8 bytes with no surrounding whitespace, path separator, %, control character, and must not be a reserved name`;
         },
       },
     });

@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import {
-  DIAL_ENTITY_NAME_MAX_BYTES,
+  DIAL_PATH_SEGMENT_MAX_BYTES,
   IsSafeDialPathSegment,
 } from '../../../common/validators/dial-entity-name.validator';
 import { MaxUtf8ByteLength } from '../../../conversations/dto/max-utf8-byte-length.validator';
@@ -16,6 +16,6 @@ export class ProjectConversationParamDto extends ProjectIdParamDto {
   })
   @IsString()
   @IsSafeDialPathSegment()
-  @MaxUtf8ByteLength(DIAL_ENTITY_NAME_MAX_BYTES)
+  @MaxUtf8ByteLength(DIAL_PATH_SEGMENT_MAX_BYTES)
   conversationName!: string;
 }

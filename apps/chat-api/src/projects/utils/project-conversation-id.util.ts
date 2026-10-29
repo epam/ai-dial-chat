@@ -54,6 +54,24 @@ export const parseProjectConversationLocator = (
   };
 };
 
+/*
+ * A project chat is one file directly in `conversations/`, so the deployment
+ * part of its name must be a single segment. A custom application's id is a
+ * path with a version (`applications/{bucket}/{name}__{version}`): separators
+ * and `%` become `_`, and runs of `_` collapse so the key never holds the
+ * `__` that delimits the title. The body's `model.id` keeps the real id.
+ */
+const DEPLOYMENT_KEY_UNSAFE_CHARS_RE = /[/\\%]/g;
+const UNDERSCORE_RUN_RE = /_{2,}/g;
+
+/** The deployment part of a project conversation file name: the deployment id made one path segment with no `__`. */
+export const toProjectConversationDeploymentKey = (
+  deploymentId: string,
+): string =>
+  deploymentId
+    .replace(DEPLOYMENT_KEY_UNSAFE_CHARS_RE, '_')
+    .replace(UNDERSCORE_RUN_RE, '_');
+
 /** `true` when `value` is a valid project conversation locator. */
 export const isProjectConversationLocator = (value: unknown): boolean =>
   parseProjectConversationLocator(value) != null;
