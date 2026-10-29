@@ -40,6 +40,13 @@ Every lib must carry exactly one `type:*` tag in `nx.tags`. New feature libs tak
 }
 ```
 
+### Narrow isolation exceptions
+
+`AGENTS.md` "Library isolation" carries the base rule and the `chat-api-client` / `chat-hooks` exceptions. Two narrower ones apply only to the libs named here:
+
+- **Leaked third-party grid types.** `libs/chat-shared` and `libs/chat-hooks` may depend on a raw third-party UI/grid library's types (e.g. `ag-grid-community`) only when a declared peer's own component (`@epam/ai-dial-react-file-manager`) leaks that engine through its public props (e.g. `onGridApiChange` exposing a raw `GridApi`) without forwarding the callback a hook needs. `useGridEditingScroll` (`cellEditingStarted`/`rowDataUpdated` binding) is the reference case; it lives in `libs/chat-shared` next to `DialFileManagerShell`, and `libs/chat-hooks` re-exports it for backward compatibility. The dependency is limited to binding events/APIs the peer's types expose — never rendering, theming, or column/row-model construction — and the hook's public contract must not expose the third-party type. It does not license adopting AG Grid (or any other engine) as a general dependency, nor apply to another lib without its own justification in that change's design doc.
+- **DIAL-Core response-to-display adapters in `chat-hooks`.** Allowed when the adaptation (a) is driven entirely by the generated response's own shape (a sentinel, a status threshold, a field-presence rule), not a product decision; (b) is characterized by an existing test suite proven behavior-preserving across a prior relocation; and (c) is consumed identically by every DIAL-Core-backed host, with every per-host variance (icon URLs, locale, date/time formatting, translated strings) arriving as a callback or parameter. `mapUsageDataToDashboard` and `mapUserUsageToModelLimits` (with `mapOverallCostLimitsToPeriodStatuses`) are the reference case. It does not license moving an app-specific rule, an uncharacterized transformation, or a per-host decision into `chat-hooks`, nor apply to another adapter without its own justification in that change's design doc.
+
 ## `dependencies` vs `peerDependencies`
 
 A lib is a normal npm package: if it imports something at runtime, it declares
@@ -546,7 +553,7 @@ Two narrow exceptions, both requiring a comment that states the reason:
 
 This is not pedantry: a misspelled or removed class **compiles to nothing at all**. `typecheck` and `test` never see Tailwind class strings, so the build stays green and the text silently falls back to whatever size it inherits. `dial-body-semi-bold-text` does not exist and never did; `dial-caption-semi-text` was removed in kit 0.13.0. Both read as plausible and both render as unstyled text.
 
-The same applies to renames and rescales in a kit upgrade — the heading scale shifted one step in 0.13.0 with no TypeScript signal. After bumping `@epam/ai-dial-ui-kit`, sweep `libs/*` for `dial-*-text` and check the classes still mean what the component intended (see the migration-guide workflow in `AGENTS.md`).
+The same applies to renames and rescales in a kit upgrade — the heading scale shifted one step in 0.13.0 with no TypeScript signal. After bumping `@epam/ai-dial-ui-kit`, sweep `libs/*` for `dial-*-text` and check the classes still mean what the component intended (see "UI kit upgrades and breaking changes" in [`all-tsx.md`](all-tsx.md)).
 
 ### `*-lead-*` classes uppercase themselves
 
