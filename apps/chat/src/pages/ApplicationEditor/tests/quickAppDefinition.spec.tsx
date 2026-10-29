@@ -136,6 +136,13 @@ const queryAction = (name: string) =>
 const getNameInput = () =>
   screen.getByLabelText(EditorI18nKeys.NameLabel, { exact: false });
 
+/* The editor keeps its alert region mounted, so "no alert" means every region is empty. */
+const alertText = () =>
+  screen
+    .queryAllByRole('alert')
+    .map((region) => region.textContent)
+    .join('');
+
 const createSearch = `schema=${SCHEMA.id}`;
 const editSearch = `${createSearch}&appId=${encodeURIComponent(APP_ID)}`;
 
@@ -418,7 +425,7 @@ describe('ApplicationEditorPage — quick app', () => {
 
       act(() => denySchema());
 
-      expect(screen.queryByRole('alert')).toBeNull();
+      expect(alertText()).toBe('');
       expect(getAction(ButtonsI18nKeys.Save)).toBeTruthy();
       expect(createApplication).toHaveBeenCalledOnce();
     });
@@ -427,7 +434,7 @@ describe('ApplicationEditorPage — quick app', () => {
       denySchema();
       renderPage(editSearch);
 
-      expect(screen.queryByRole('alert')).toBeNull();
+      expect(alertText()).toBe('');
       expect(getAction(ButtonsI18nKeys.Save)).toBeTruthy();
       expect(screen.getByText(`embedded-editor-${APP_ID}`)).toBeTruthy();
     });

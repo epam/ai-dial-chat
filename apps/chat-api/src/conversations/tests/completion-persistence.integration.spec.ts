@@ -5,7 +5,16 @@ import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import type { NextFunction, Request, Response } from 'express';
 import request from 'supertest';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest';
 import type { FeatureFlagsService } from '../../app-config/feature-flags/feature-flags.service';
 import { AuthSource } from '../../auth/auth-source.enum';
 import type { EnvironmentVariables } from '../../config/environment.config';
@@ -19,7 +28,9 @@ import {
 import { ConversationController } from '../conversation.controller';
 import { ConversationService } from '../conversation.service';
 import { BackgroundGenerationService } from '../generation/background-generation.service';
+import { ChatCompletionsAdapter } from '../generation/chat-completions.adapter';
 import { CoreResponsesClient } from '../generation/core-responses.client';
+import { GenerationApiSelector } from '../generation/generation-api-selector.service';
 import { ResponsesAdapter } from '../generation/responses.adapter';
 import { ConversationTitleCacheService } from '../listing/conversation-title-cache.service';
 import { ConversationPersistenceService } from '../persistence/conversation-persistence.service';
@@ -41,6 +52,12 @@ describe('completion persistence over HTTP', () => {
   let writes: { body: ConversationResponseDto; authorization?: string }[];
   let terminalEvents: GenerationTerminalEvent[];
   let coreChunks: unknown[];
+  let modelCalls: number;
+  let holdConversationReads: boolean;
+  let holdConversationWrites: boolean;
+  let heldRequests: (() => void)[];
+  /* Lowered only by the bounded-preparation tests, before the app is built. */
+  let preparationTimeoutMs = 30_000;
   const tokenExpiresAt = 120;
   const payload = {
     id: 'response-1',
@@ -70,6 +87,10 @@ describe('completion persistence over HTTP', () => {
     writes = [];
     terminalEvents = [];
     coreChunks = [payload];
+    modelCalls = 0;
+    holdConversationReads = false;
+    holdConversationWrites = false;
+    heldRequests = [];
     stored = {
       id: 'bucket/test-path',
       folderId: 'bucket',
@@ -95,6 +116,13 @@ describe('completion persistence over HTTP', () => {
           authorization: req.headers.authorization,
         });
       }
+      if (
+        url.pathname.includes('/conversations/') &&
+        ((req.method === 'GET' && holdConversationReads) ||
+          (req.method === 'PUT' && holdConversationWrites))
+      ) {
+        await new Promise<void>((release) => heldRequests.push(release));
+      }
       res.setHeader('Content-Type', 'application/json');
       if (
         req.headers.authorization === 'Bearer expiring-token' &&
@@ -106,6 +134,7 @@ describe('completion persistence over HTTP', () => {
         return;
       }
       if (url.pathname.includes('/chat/completions')) {
+        modelCalls += 1;
         const attachment = registry.attach('c:test-session', 'test-path');
         attachment?.emitter.on('terminal', (event: GenerationTerminalEvent) =>
           terminalEvents.push(event),
@@ -146,6 +175,7 @@ describe('completion persistence over HTTP', () => {
     await new Promise<void>((resolve) => core.listen(0, '127.0.0.1', resolve));
     const config = new ConfigService<EnvironmentVariables>({
       DIAL_CORE_URL: `http://127.0.0.1:${(core.address() as AddressInfo).port}`,
+      GENERATION_PREPARATION_TIMEOUT_MS: preparationTimeoutMs,
     });
     const dial = new DialClientService(config);
     registry = new ConversationGenerationService(config);
@@ -156,26 +186,29 @@ describe('completion persistence over HTTP', () => {
       } as never,
       new ConversationTitleCacheService(),
     );
+    const deployments = {
+      resolveDeploymentItem: vi.fn().mockResolvedValue(null),
+      getDeploymentDetails: vi.fn().mockResolvedValue({
+        modelDetails: { features: { chatCompletion: true } },
+      }),
+    } as unknown as DeploymentsService;
     const streaming = new ConversationStreamingService(
       dial,
       registry,
       persistence,
-      {
-        resolveDeploymentItem: vi.fn().mockResolvedValue(null),
-        getDeploymentDetails: vi.fn().mockResolvedValue({
-          modelDetails: { features: { chatCompletion: true } },
-        }),
-      } as unknown as DeploymentsService,
+      deployments,
       new ResponsesAdapter(dial),
-      {
+      new ChatCompletionsAdapter(dial),
+      new GenerationApiSelector(deployments, {
         isEnabled: vi.fn().mockResolvedValue(false),
-      } as unknown as FeatureFlagsService,
+      } as unknown as FeatureFlagsService),
       new BackgroundGenerationService(
         persistence,
         new ResponsesAdapter(dial),
         new CoreResponsesClient(dial),
         registry,
       ),
+      config,
     );
     const module = await Test.createTestingModule({
       controllers: [ConversationController],
@@ -312,5 +345,135 @@ describe('completion persistence over HTTP', () => {
       },
       { index: 9, name: 'Read', parent_stage_index: 4, status: 'failed' },
     ]);
+  });
+
+  describe('bounded preparation', () => {
+    const PREPARATION_TIMEOUT_MS = 300;
+    const COMPLETION_BODY = {
+      path: 'test-path',
+      model: 'model',
+      message: 'question',
+      mode: 'append',
+      generationId: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',
+    };
+
+    beforeAll(() => {
+      preparationTimeoutMs = PREPARATION_TIMEOUT_MS;
+    });
+
+    afterAll(() => {
+      preparationTimeoutMs = 30_000;
+    });
+
+    const postCompletion = () =>
+      request(app.getHttpServer())
+        .post('/conversations/completions')
+        .send(COMPLETION_BODY);
+    /* Supertest sends lazily; awaiting inside an async helper starts the request now. */
+    const startCompletion = async () => postCompletion();
+    const postStop = () =>
+      request(app.getHttpServer())
+        .post('/conversations/completions/stop')
+        .send({
+          generationId: COMPLETION_BODY.generationId,
+          path: 'test-path',
+        });
+    const postAttach = () =>
+      request(app.getHttpServer())
+        .post('/conversations/completions/attach')
+        .send({ path: 'test-path' });
+    const waitForHeldRequest = () =>
+      vi.waitFor(() => expect(heldRequests).toHaveLength(1));
+    const waitForKeyRelease = () =>
+      vi.waitFor(() =>
+        expect(
+          registry.getStatus('c:test-session', 'test-path'),
+        ).toBeUndefined(),
+      );
+
+    it('responds 503 with no SSE headers when the conversation read stalls', async () => {
+      holdConversationReads = true;
+
+      const response = await postCompletion();
+
+      expect(response.status).toBe(503);
+      expect(response.headers['content-type']).not.toContain(
+        'text/event-stream',
+      );
+      expect(response.body.message).toBe('Generation preparation timed out');
+      expect(writes).toHaveLength(0);
+      expect(modelCalls).toBe(0);
+    });
+
+    it('ends an attach made during a stalled preparation with an error event and refuses a later attach with 404', async () => {
+      holdConversationReads = true;
+
+      const completion = startCompletion();
+      await waitForHeldRequest();
+      const attach = await postAttach();
+
+      expect(attach.status).toBe(200);
+      expect(attach.text).toContain('"type":"snapshot"');
+      expect(attach.text).toContain('"type":"error"');
+      expect((await completion).status).toBe(503);
+      await postAttach().expect(404);
+    });
+
+    it('rejects a new completion with 409 until the abandoned read settles, then accepts it', async () => {
+      holdConversationReads = true;
+
+      await postCompletion().expect(503);
+      await postCompletion().expect(409);
+
+      holdConversationReads = false;
+      heldRequests.forEach((release) => release());
+      await waitForKeyRelease();
+
+      const response = await postCompletion().expect(200);
+      expect(response.text).toContain('Visible answer');
+    });
+
+    it('refuses Stop with 404 after preparation was abandoned', async () => {
+      holdConversationReads = true;
+
+      await postCompletion().expect(503);
+
+      await postStop().expect(404);
+    });
+
+    it('accepts a Stop during preparation, then streams and persists a stopped answer without calling the model', async () => {
+      holdConversationReads = true;
+
+      const completion = startCompletion();
+      await waitForHeldRequest();
+      await postStop().expect(204);
+      holdConversationReads = false;
+      heldRequests.forEach((release) => release());
+      const response = await completion;
+
+      expect(response.status).toBe(200);
+      expect(response.headers['content-type']).toContain('text/event-stream');
+      expect(modelCalls).toBe(0);
+      expect(writes).toHaveLength(2);
+      /* The stop marker is a stored-message field the response DTO does not declare. */
+      const stoppedMessage = writes[1].body.messages.at(-1) as
+        Record<string, unknown> | undefined;
+      expect(stoppedMessage?.wasStoppedByUser).toBe(true);
+      expect(stoppedMessage?.streamErrorMessage).toBeUndefined();
+    });
+
+    it('makes the abandoned start-state save the only write, with no terminal save after it settles', async () => {
+      holdConversationWrites = true;
+
+      await postCompletion().expect(503);
+      expect(writes).toHaveLength(1);
+
+      heldRequests.forEach((release) => release());
+      await waitForKeyRelease();
+
+      expect(writes).toHaveLength(1);
+      expect(writes[0].body.messages.at(-1)?.content).toBe('');
+      expect(modelCalls).toBe(0);
+    });
   });
 });

@@ -401,8 +401,8 @@ export class ConversationListingService {
     }
   }
 
-  getConversationTitles(ids: string[], token: string) {
-    return this.titlesService.getConversationTitles(ids, token);
+  getConversationTitles(ids: string[], token: string, signal?: AbortSignal) {
+    return this.titlesService.getConversationTitles(ids, token, signal);
   }
 
   private withCachedDisplayNames(

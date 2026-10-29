@@ -29,6 +29,14 @@ export interface LottieAnimationContext<P> {
   cancel: () => void;
 }
 
+/** What a scene adapter receives once the first frame of playback renders. */
+export interface LottiePlaybackStartContext<
+  P,
+> extends LottieAnimationContext<P> {
+  /** The `document.timeline` time, in milliseconds, of the composition's frame 0. */
+  timelineZeroMs: number;
+}
+
 /** A scene's fixed contribution to its Lottie session. */
 export interface LottieScenePlayback<P> {
   /** Deadlines of the session. */
@@ -39,6 +47,8 @@ export interface LottieScenePlayback<P> {
   getAnimationData: (preparation: P) => object;
   /** Installs scene observers once the renderer exists. */
   onAnimationCreated?: (context: LottieAnimationContext<P>) => void;
+  /** Starts companion animations on the Lottie clock; called once, on the first rendered frame. */
+  onPlaybackStarted?: (context: LottiePlaybackStartContext<P>) => void;
 }
 
 /** Inputs of one Lottie scene session. */

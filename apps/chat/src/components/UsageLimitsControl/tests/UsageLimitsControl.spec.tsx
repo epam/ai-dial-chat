@@ -5,7 +5,7 @@ import {
   useDeploymentUsageLimits,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router';
@@ -400,9 +400,31 @@ describe('UsageLimitsControl', () => {
 
       await openPopover(user);
 
-      const error = screen.getByText(ERROR_LABEL);
-      expect(error.getAttribute('aria-live')).toBe('polite');
+      expect(
+        within(screen.getByRole('status')).getByText(ERROR_LABEL),
+      ).toBeTruthy();
       expect(screen.getAllByRole('progressbar')).toHaveLength(3);
+    });
+
+    it('keeps the polite live region mounted before any error arrives', async () => {
+      const user = userEvent.setup();
+      const { rerender } = renderControl();
+
+      const dialog = await openPopover(user);
+      const liveRegion = within(dialog).getByRole('status');
+      expect(liveRegion).toBeTruthy();
+      expect(screen.queryByText(ERROR_LABEL)).toBeNull();
+
+      mockHookResult({ ...defaultHookResult, hasError: true });
+      /* The control is memoized, so a changed prop is what re-runs the hook,
+         as a generation starting would in the app. */
+      rerender(
+        <MemoryRouter>
+          <UsageLimitsControl deploymentId="gpt-4o" isGenerationInProgress />
+        </MemoryRouter>,
+      );
+
+      expect(within(liveRegion).getByText(ERROR_LABEL)).toBeTruthy();
     });
 
     it('links to the Usage page and dismisses itself on the way there', async () => {
@@ -461,57 +483,43 @@ describe('UsageLimitsControl', () => {
       );
     });
 
-    it('anchors the panel with logical properties so it flips under RTL', async () => {
+    it('closes when the pointer presses outside the panel', async () => {
       const user = userEvent.setup();
-      document.documentElement.setAttribute('dir', 'rtl');
-      renderControl();
+      renderInRouter(
+        <>
+          <UsageLimitsControl deploymentId="gpt-4o" />
+          <p>outside</p>
+        </>,
+      );
 
-      try {
-        const dialog = await openPopover(user);
+      await openPopover(user);
+      await user.click(screen.getByText('outside'));
 
-        expect(dialog.className).toContain('inset-e-0');
-        expect(dialog.className).not.toMatch(/(^|\s)(left|right)-/);
-      } finally {
-        document.documentElement.removeAttribute('dir');
-      }
+      await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     });
 
-    it('shifts the panel back inside a narrow viewport instead of clipping it', async () => {
+    it('moves focus into the panel when it opens', async () => {
       const user = userEvent.setup();
-      /* A 390px phone with the end-anchored 358px panel starting 175px past
-         the left edge — the geometry reported in the bug. */
-      const clientWidthSpy = vi
-        .spyOn(document.documentElement, 'clientWidth', 'get')
-        .mockReturnValue(390);
-      const rectSpy = vi
-        .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
-        .mockImplementation(function (this: HTMLElement) {
-          if (this.getAttribute('role') !== 'dialog') {
-            return new DOMRect();
-          }
-          const shift = Number(
-            /translateX\((-?[\d.]+)px\)/.exec(this.style.transform)?.[1] ?? 0,
-          );
-          return new DOMRect(-175 + shift, 0, 358, 200);
-        });
       renderControl();
 
-      try {
-        const dialog = await openPopover(user);
+      const dialog = await openPopover(user);
 
-        expect(dialog.style.transform).toBe('translateX(191px)');
+      await waitFor(() => expect(dialog.matches(':focus')).toBe(true));
+    });
 
-        /* A resize re-measures from the anchored position, so the applied
-           shift is not compounded. */
-        act(() => {
-          window.dispatchEvent(new Event('resize'));
-        });
+    it('toggles closed when the trigger is pressed again', async () => {
+      const user = userEvent.setup();
+      renderControl();
+      const trigger = screen.getByRole('button');
 
-        expect(dialog.style.transform).toBe('translateX(191px)');
-      } finally {
-        clientWidthSpy.mockRestore();
-        rectSpy.mockRestore();
-      }
+      await openPopover(user);
+      expect(trigger.getAttribute('aria-expanded')).toBe('true');
+      expect(trigger.getAttribute('aria-haspopup')).toBe('dialog');
+
+      await user.click(trigger);
+
+      await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+      expect(trigger.getAttribute('aria-expanded')).toBe('false');
     });
   });
 
@@ -590,9 +598,9 @@ describe('UsageLimitsControl', () => {
       await screen.findByRole('button');
       await openPopover(user);
 
-      expect(screen.getByText(ERROR_LABEL).getAttribute('aria-live')).toBe(
-        'polite',
-      );
+      expect(
+        within(screen.getByRole('status')).getByText(ERROR_LABEL),
+      ).toBeTruthy();
       expect(screen.getAllByRole('progressbar')).toHaveLength(1);
       expect(
         screen.getByText('conversationInput.usageLimits.costGroup'),

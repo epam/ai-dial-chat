@@ -1,24 +1,15 @@
 import {
-  BadRequestException,
   ConflictException,
   HttpException,
   Injectable,
   Logger,
+  ServiceUnavailableException,
 } from '@nestjs/common';
-import type { AppConfigEvalContext } from '../../app-config/app-config.types';
-import { FeatureFlagsService } from '../../app-config/feature-flags/feature-flags.service';
-import { FeatureKey } from '../../app-config/feature-flags/feature-key.enum';
-import {
-  extractDialErrorMessage,
-  handleDialSdkError,
-} from '../../common/dial/dial-error.mapper';
+import { ConfigService } from '@nestjs/config';
+import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
-import {
-  buildConversationIdHeaders,
-  buildJobTitleHeaders,
-} from '../../common/utils/header-value';
-import { StringUtils } from '../../common/utils/string-utils';
+import type { EnvironmentVariables } from '../../config/environment.config';
 import { DeploymentsService } from '../../deployments/deployments.service';
 import { DialClientService } from '../../dial/dial-client.service';
 import type { ConversationResponseDto } from '../../openapi/openapi-response.dto';
@@ -47,28 +38,26 @@ import {
   neutralizeForeignPendingMessages,
   type StoredMessage,
 } from '../generation/background-message';
-import {
-  GenerationApi,
-  resolveGenerationApi,
-} from '../generation/generation-api';
+import { ChatCompletionsAdapter } from '../generation/chat-completions.adapter';
+import { GenerationApi } from '../generation/generation-api';
+import { GenerationApiSelector } from '../generation/generation-api-selector.service';
 import {
   generationCapabilityResolutionTotal,
   generationRequestsTotal,
   generationStreamDuration,
   generationTimeToFirstDelta,
 } from '../generation/generation-metrics';
-import type { GenerationRelayTiming } from '../generation/generation.types';
+import {
+  GenerationPreparationStep,
+  type GenerationRelayOutcome,
+  type GenerationRelayTiming,
+} from '../generation/generation.types';
 import {
   buildGenerationPersistenceError,
   type GenerationPersistenceTerminalMarker,
 } from '../generation/persistence-error';
 import { ResponsesAdapter } from '../generation/responses.adapter';
 import { ConversationPersistenceService } from '../persistence/conversation-persistence.service';
-import {
-  applyChunkToMessage,
-  extractDialStreamError,
-  type DialStreamErrorPayload,
-} from '../utils/apply-chunk.server';
 import { buildConversationHistory } from '../utils/conversation-history-builder';
 import { mergeHtmlTagAnnotationsIntoViewState } from '../utils/conversation-view-state.server';
 import {
@@ -78,54 +67,40 @@ import {
 } from '../utils/conversation.utils';
 import { assertModelNotHidden } from '../utils/hidden-model';
 
-const SERVER_APP_CONFIG_CONTEXT: AppConfigEvalContext = { appId: 'chat-api' };
-
-/** DIAL Core interface name advertising full Responses support, including background jobs. */
-const OPENAI_RESPONSES_INTERFACE = 'openaiResponses';
-
-const getValidAttachments = (
-  customContent?: ConversationMessageDto['custom_content'],
-) =>
-  (customContent?.attachments ?? []).filter((attachment) =>
-    Boolean(attachment.data || attachment.url),
-  );
+const DEFAULT_GENERATION_PREPARATION_TIMEOUT_MS = 30_000;
+const PREPARATION_EXPIRED = Symbol('preparation-expired');
 
 /*
- * `custom_content.skills[].url` is persisted verbatim from the frontend
- * (e.g. `skills/public/my chats/123`), unlike every other DIAL resource path
- * in this codebase, which is percent-encoded right at the DIAL Core call
- * boundary via `encodeDialResourcePath`. Left unencoded, a path segment with
- * a space or other reserved character makes DIAL Core reject the whole
- * completion request with a 400 — encode here, at the same boundary.
+ * Raised when preparation stops without its step having failed: it outlived
+ * `GENERATION_PREPARATION_TIMEOUT_MS`, or shutdown released the entry. Its own
+ * type lets the pre-stream `catch` blocks tell it apart from a step that
+ * rejected: a rejected step is finished and releases the key at once, while
+ * an abandoned one may still write, so its key is released only when it
+ * settles (`generation-registry`).
  */
-const getEncodedSkills = (
-  customContent?: ConversationMessageDto['custom_content'],
-) =>
-  customContent?.skills?.map((skill) => ({
-    ...skill,
-    url: encodeDialResourcePath(skill.url),
-  }));
+class GenerationPreparationInterruptedException extends ServiceUnavailableException {}
 
-type RelayOutcome =
-  | {
-      outcome: 'rejected';
-      status: number;
-      errorMessage: string;
-      assembledMessage: ConversationMessageDto;
-    }
-  | { outcome: 'completed'; assembledMessage: ConversationMessageDto }
-  | { outcome: 'aborted'; assembledMessage: ConversationMessageDto }
-  | {
-      outcome: 'error';
-      error: unknown;
-      /** User-facing upstream text; unset for transport/runtime failures. */
-      displayMessage?: string;
-      assembledMessage: ConversationMessageDto;
-    };
+/** One generation's preparation bound: a single timer raced by each step. */
+interface PreparationDeadline {
+  /**
+   * Starts `operation` and awaits it unless the deadline elapses first, in
+   * which case the preparation is abandoned and
+   * `GenerationPreparationInterruptedException` is thrown. Also throws it when
+   * the step resolved after shutdown released the entry, so nothing further
+   * runs. A step that rejects rethrows its own error.
+   */
+  run<T>(
+    step: GenerationPreparationStep,
+    operation: () => Promise<T>,
+  ): Promise<T>;
+  /** Clears the timer; idempotent. */
+  end(): void;
+}
 
 @Injectable()
 export class ConversationStreamingService {
   private readonly logger = new Logger(ConversationStreamingService.name);
+  private readonly preparationTimeoutMs: number;
 
   constructor(
     private readonly dialClient: DialClientService,
@@ -133,105 +108,109 @@ export class ConversationStreamingService {
     private readonly persistenceService: ConversationPersistenceService,
     private readonly deploymentsService: DeploymentsService,
     private readonly responsesAdapter: ResponsesAdapter,
-    private readonly featureFlagsService: FeatureFlagsService,
+    private readonly chatCompletionsAdapter: ChatCompletionsAdapter,
+    private readonly generationApiSelector: GenerationApiSelector,
     private readonly backgroundGeneration: BackgroundGenerationService,
-  ) {}
+    configService: ConfigService<EnvironmentVariables>,
+  ) {
+    this.preparationTimeoutMs =
+      configService.get('GENERATION_PREPARATION_TIMEOUT_MS', { infer: true }) ??
+      DEFAULT_GENERATION_PREPARATION_TIMEOUT_MS;
+  }
 
-  private async resolveGenerationApiForDeployment(
-    sub: string,
-    model: string,
-    token: string,
-  ): Promise<{
-    generationApi: GenerationApi;
-    isBackground: boolean;
-    temperatureSupported: boolean;
-    reasoningEfforts?: string[];
-  }> {
-    /*
-     * getDeploymentDetails is not skipped when features.responsesApiEnabled is
-     * disabled — it also performs the toolset rejection and temperature-
-     * capability derivation below, neither of which is specific to the
-     * Responses API. Resolved concurrently with the feature flag so a
-     * disabled (default) flag adds no sequential latency.
-     */
-    const [details, responsesApiEnabled, responsesBackgroundEnabled] =
-      await Promise.all([
-        this.deploymentsService.getDeploymentDetails(sub, model, token),
-        this.featureFlagsService.isEnabled(
-          FeatureKey.ResponsesApiEnabled,
-          SERVER_APP_CONFIG_CONTEXT,
-        ),
-        this.featureFlagsService.isEnabled(
-          FeatureKey.ResponsesBackgroundEnabled,
-          SERVER_APP_CONFIG_CONTEXT,
-        ),
-      ]);
+  /**
+   * Arms the preparation bound for `lease`. When it elapses while a step is
+   * pending, the worker stops waiting and runs nothing further; the registry
+   * releases the entry's subscribers but keeps its key until that step
+   * settles, because a `Promise.race` does not stop a remote write
+   * (`generation-registry`).
+   * @param lease - the preparing generation's lease
+   */
+  private startPreparationDeadline(
+    lease: GenerationLease,
+  ): PreparationDeadline {
+    let isExpired = false;
+    let timer: NodeJS.Timeout | undefined;
+    const expired = new Promise<typeof PREPARATION_EXPIRED>((resolve) => {
+      timer = setTimeout(() => {
+        isExpired = true;
+        resolve(PREPARATION_EXPIRED);
+      }, this.preparationTimeoutMs);
+    });
+    const end = (): void => clearTimeout(timer);
 
-    if (details.type === 'toolset') {
-      const safeModel = StringUtils.sanitizeForLog(model);
-      throw new BadRequestException(
-        `Deployment "${safeModel}" is a toolset and cannot be used for generation`,
+    const abandon = (
+      step: GenerationPreparationStep,
+      pending?: Promise<unknown>,
+    ): never => {
+      end();
+      this.generationService.abandonPreparation(lease, step);
+      if (pending) {
+        void this.releaseAfterAbandonedStep(lease, step, pending);
+      } else {
+        /* Nothing was dispatched, so nothing can still write. */
+        this.generationService.error(lease);
+      }
+      throw new GenerationPreparationInterruptedException(
+        'Generation preparation timed out',
       );
-    }
-
-    const features =
-      details.type === 'application'
-        ? details.applicationDetails?.features
-        : details.modelDetails?.features;
-
-    const generationApi = responsesApiEnabled
-      ? resolveGenerationApi(features)
-      : GenerationApi.ChatCompletions;
-
-    /*
-     * Background mode is a sub-mode of Responses: `interfaces` is read only when
-     * Responses is already selected and the background flag is on, so a disabled
-     * flag adds no Core call.
-     */
-    const isBackground =
-      generationApi === GenerationApi.Responses &&
-      responsesBackgroundEnabled &&
-      (await this.readDeploymentInterfaces(sub, model, token)).includes(
-        OPENAI_RESPONSES_INTERFACE,
+    };
+    /* Only shutdown releases a preparing entry underneath its worker. */
+    const assertStillOwned = (): void => {
+      if (this.generationService.getCancellation(lease)) return;
+      end();
+      throw new GenerationPreparationInterruptedException(
+        'Generation preparation was interrupted by shutdown',
       );
-
-    const safeModel = StringUtils.sanitizeForLog(model);
-    this.logger.debug(
-      `Generation API resolved for "${safeModel}" — api: ${generationApi}, background: ${isBackground}, responsesApiEnabled: ${responsesApiEnabled}, responsesBackgroundEnabled: ${responsesBackgroundEnabled}, deployment.responsesApi: ${features?.responsesApi ?? false}`,
-    );
+    };
 
     return {
-      generationApi,
-      isBackground,
-      temperatureSupported: features?.temperature === true,
-      reasoningEfforts: features?.reasoningEfforts,
+      end,
+      run: async <T>(
+        step: GenerationPreparationStep,
+        operation: () => Promise<T>,
+      ): Promise<T> => {
+        if (isExpired) return abandon(step);
+        const pending = operation();
+        let result: T | typeof PREPARATION_EXPIRED;
+        try {
+          result = await Promise.race([pending, expired]);
+        } catch (err) {
+          /*
+           * A rejected step keeps its own error even when shutdown released
+           * the entry meanwhile; callers that continue after a rejection
+           * check ownership themselves.
+           */
+          end();
+          throw err;
+        }
+        if (result === PREPARATION_EXPIRED) return abandon(step, pending);
+        assertStillOwned();
+        return result;
+      },
     };
   }
 
   /**
-   * Reads the deployment's DIAL Core `interfaces`; any failure means "not eligible for
-   * the background path" and never fails the completion request.
-   * @param sub - caller's subject
-   * @param model - deployment id
-   * @param token - caller's bearer token
+   * Frees an abandoned preparation's key once its pending step resolves or
+   * rejects — the only point at which it can no longer write. The step's
+   * result is discarded; a rejection is logged rather than left unhandled.
+   * @param lease - the abandoned generation's lease
+   * @param step - the step that was pending at the deadline
+   * @param pending - that step's promise
    */
-  private async readDeploymentInterfaces(
-    sub: string,
-    model: string,
-    token: string,
-  ): Promise<string[]> {
+  private async releaseAfterAbandonedStep(
+    lease: GenerationLease,
+    step: GenerationPreparationStep,
+    pending: Promise<unknown>,
+  ): Promise<void> {
     try {
-      return await this.deploymentsService.getDeploymentInterfaces(
-        sub,
-        model,
-        token,
-      );
+      await pending;
+      this.logger.debug(`Abandoned preparation step settled: ${step}`);
     } catch (err) {
-      this.logger.warn(
-        `Deployment interfaces lookup failed for "${StringUtils.sanitizeForLog(model)}"; using the stateless path`,
-        err,
-      );
-      return [];
+      this.logger.warn(`Abandoned preparation step failed: ${step}`, err);
+    } finally {
+      this.generationService.error(lease);
     }
   }
 
@@ -364,231 +343,6 @@ export class ConversationStreamingService {
   }
 
   /**
-   * Calls the model, yielding the raw SSE response bytes as they arrive, and
-   * builds up `assembledMessage` from the parsed chunks. The generator's
-   * return value (available once iteration completes) carries the outcome.
-   * Used by `streamCompletion`.
-   */
-  private async *relayModelCompletion(
-    model: string,
-    requestBody: unknown,
-    token: string,
-    signal: AbortSignal,
-    initialAssembledMessage: ConversationMessageDto,
-    clientChannelId?: string,
-    timezone?: string,
-    timing?: GenerationRelayTiming,
-    conversationId?: string,
-    onChunkApplied?: (
-      rawChunk: unknown,
-      message: ConversationMessageDto,
-    ) => void,
-    jobTitle?: string,
-  ): AsyncGenerator<Uint8Array, RelayOutcome, void> {
-    let assembledMessage = initialAssembledMessage;
-    let upstreamReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
-    const cancelUpstreamOnAbort = (): void => {
-      void upstreamReader?.cancel().catch(() => undefined);
-    };
-
-    try {
-      const dialResult =
-        (await this.dialClient.client.sendChatCompletionRequest(model, {
-          body: requestBody as never,
-          headers: {
-            ...getBearerAuthHeaders(token),
-            Accept: 'text/event-stream',
-            ...(clientChannelId
-              ? { 'X-DIAL-CLIENT-CHANNEL-ID': clientChannelId }
-              : {}),
-            ...(timezone ? { 'X-Timezone': timezone } : {}),
-            ...buildConversationIdHeaders(conversationId),
-            ...buildJobTitleHeaders(jobTitle),
-          },
-          params: { query: { 'api-version': this.dialClient.dialApiVersion } },
-          parseAs: 'stream',
-          signal,
-        })) as { response: globalThis.Response; error?: unknown };
-
-      if (!dialResult.response.ok || !dialResult.response.body) {
-        let errorMessage = '';
-
-        /* 1. SDK-parsed error — most reliable, SDK reads body before us */
-        if (dialResult.error != null) {
-          errorMessage = extractDialErrorMessage(dialResult.error) ?? '';
-        }
-
-        /* 2. Raw body — for cases where SDK didn't parse it */
-        if (!errorMessage) {
-          try {
-            const rawBody = await dialResult.response.text();
-            errorMessage = extractDialErrorMessage(JSON.parse(rawBody)) ?? '';
-          } catch {
-            /* non-JSON or empty body */
-          }
-        }
-
-        /*
-         * When DIAL Core provides no error text (empty body, non-JSON), leave
-         * errorMessage as '' — the frontend localizes a generic fallback via
-         * i18n. A non-null streamErrorMessage (even '') still signals the
-         * terminal error state for resume detection.
-         */
-        /*
-         * Every upstream-derived message — SDK-parsed, JSON-extracted, or raw
-         * text — is sanitized before it reaches the log line; the returned
-         * `errorMessage` itself stays unmodified for the client.
-         */
-        const safeErrorMessage = StringUtils.sanitizeForLog(errorMessage, 500);
-        this.logger.error(
-          `DIAL Core rejected completion request — model: ${StringUtils.sanitizeForLog(model)}, status: ${dialResult.response.status}${safeErrorMessage ? `: ${safeErrorMessage}` : ''}`,
-        );
-        return {
-          outcome: 'rejected',
-          status: dialResult.response.status,
-          errorMessage,
-          assembledMessage,
-        };
-      }
-
-      upstreamReader = dialResult.response.body.getReader();
-      signal.addEventListener('abort', cancelUpstreamOnAbort, { once: true });
-      if (signal.aborted) cancelUpstreamOnAbort();
-      const decoder = new TextDecoder();
-      let sseBuffer = '';
-      let receivedDone = false;
-      let streamError: DialStreamErrorPayload | null = null;
-
-      while (true) {
-        const { done, value } = await upstreamReader.read();
-        if (signal.aborted) {
-          return { outcome: 'aborted', assembledMessage };
-        }
-        if (done) {
-          this.logger.debug(
-            `relayModelCompletion upstream socket closed without [DONE] — model: ${model}`,
-          );
-          break;
-        }
-
-        yield value;
-
-        sseBuffer += decoder.decode(value, { stream: true });
-        const lines = sseBuffer.split('\n');
-        sseBuffer = lines.pop() ?? '';
-
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed || trimmed.startsWith(':')) continue;
-          if (trimmed.startsWith('data:')) {
-            const payload = trimmed.slice(5).trim();
-            if (payload === '[DONE]') {
-              receivedDone = true;
-              continue;
-            }
-            try {
-              const parsed: unknown = JSON.parse(payload);
-              const errorPayload = extractDialStreamError(parsed);
-              if (errorPayload) {
-                /*
-                 * DIAL Core signals a mid-stream failure (e.g. a QuickApp's
-                 * downstream tool call couldn't reach its upstream server)
-                 * with a `{ error: {...} }` chunk instead of the usual
-                 * `choices`-shaped delta, immediately followed by `[DONE]`.
-                 * Treat it the same as a genuine stream error rather than
-                 * letting it fall through `applyChunkToMessage` (which
-                 * silently ignores it) and persisting an empty, non-error
-                 * "completed" message.
-                 */
-                streamError = errorPayload;
-                break;
-              }
-              const hasContent = Boolean(
-                (parsed as { choices?: { delta?: { content?: string } }[] })
-                  ?.choices?.[0]?.delta?.content,
-              );
-              if (hasContent && timing && timing.firstDeltaAt == null) {
-                timing.firstDeltaAt = Date.now();
-              }
-              assembledMessage = applyChunkToMessage(assembledMessage, parsed);
-              onChunkApplied?.(parsed, assembledMessage);
-            } catch {
-              /*
-               * Never log the payload itself here — chunk content is
-               * conversation text, and this fires once per malformed chunk
-               * rather than once per stream, so it must not become a
-               * per-token content log at debug level.
-               */
-              this.logger.debug(
-                `relayModelCompletion malformed chunk — model: ${model}, length: ${payload.length}`,
-              );
-            }
-          }
-        }
-
-        if (streamError) break;
-
-        /*
-         * `[DONE]` is the SSE completion signal. Stop here rather than waiting
-         * for the upstream socket to close — some providers keep the connection
-         * open after `[DONE]`, which would otherwise leave this generation
-         * registered as active and reject the next request (e.g. regenerate)
-         * with a 409 conflict.
-         */
-        if (receivedDone) {
-          this.logger.debug(
-            `relayModelCompletion received [DONE] — model: ${model}`,
-          );
-          break;
-        }
-      }
-
-      if (streamError) {
-        this.logger.debug(
-          `relayModelCompletion outcome: error (in-band stream error chunk) — model: ${model}: ${streamError.message}`,
-        );
-        const displayMessage =
-          streamError.displayMessage ?? streamError.message;
-        return {
-          outcome: 'error',
-          error: new Error(displayMessage),
-          displayMessage,
-          assembledMessage,
-        };
-      }
-
-      this.logger.debug(
-        `relayModelCompletion outcome: completed — model: ${model}, assembledContentLength: ${assembledMessage.content?.length ?? 0}`,
-      );
-      return { outcome: 'completed', assembledMessage };
-    } catch (err) {
-      const isAbort =
-        signal.aborted ||
-        (err instanceof Error &&
-          (err.name === 'AbortError' || err.name === 'DOMException'));
-      this.logger.debug(
-        `relayModelCompletion outcome: ${isAbort ? 'aborted' : 'error'} — model: ${model}: ${err instanceof Error ? err.message : String(err)}`,
-      );
-      return isAbort
-        ? { outcome: 'aborted', assembledMessage }
-        : { outcome: 'error', error: err, assembledMessage };
-    } finally {
-      signal.removeEventListener('abort', cancelUpstreamOnAbort);
-      if (upstreamReader) {
-        try {
-          /*
-           * cancel() (not releaseLock) so the upstream connection is closed
-           * when we stop early on `[DONE]`, instead of being left dangling.
-           */
-          await upstreamReader.cancel();
-        } catch {
-          /* already closed */
-        }
-      }
-    }
-  }
-
-  /**
    * Streams a chat completion as raw SSE bytes. The caller (controller) is
    * responsible for the HTTP transport: this service invokes
    * `onReadyToStream` when the SSE response headers should be sent
@@ -621,6 +375,7 @@ export class ConversationStreamingService {
       conversationPath,
       generationId,
     );
+    let preparation = this.startPreparationDeadline(lease);
 
     let generationApi: GenerationApi;
     let isBackground: boolean;
@@ -631,26 +386,43 @@ export class ConversationStreamingService {
        * `model` is the one the user has selected now, so switching a
        * conversation off a hidden model is what lets it continue.
        */
-      await assertModelNotHidden(
-        this.deploymentsService,
-        model,
-        token,
-        bucket,
-        this.logger,
-        `stream a completion for "${conversationPath}"`,
+      await preparation.run(GenerationPreparationStep.HiddenModelCheck, () =>
+        assertModelNotHidden(
+          this.deploymentsService,
+          model,
+          token,
+          bucket,
+          this.logger,
+          `stream a completion for "${conversationPath}"`,
+        ),
       );
-      ({ generationApi, isBackground, temperatureSupported, reasoningEfforts } =
-        await this.resolveGenerationApiForDeployment(sub, model, token));
+      try {
+        ({
+          generationApi,
+          isBackground,
+          temperatureSupported,
+          reasoningEfforts,
+        } = await preparation.run(
+          GenerationPreparationStep.CapabilityResolution,
+          () => this.generationApiSelector.select(sub, model, token),
+        ));
+      } catch (err) {
+        /* Counted here only, so a hidden-model failure is not a resolution failure. */
+        generationCapabilityResolutionTotal.add(1, { outcome: 'failed' });
+        throw err;
+      }
       generationCapabilityResolutionTotal.add(1, {
         outcome: 'resolved',
         'generation.api': generationApi,
       });
     } catch (err) {
-      generationCapabilityResolutionTotal.add(1, { outcome: 'failed' });
-      this.generationService.error(
-        lease,
-        err instanceof Error ? err.message : undefined,
-      );
+      preparation.end();
+      if (!(err instanceof GenerationPreparationInterruptedException)) {
+        this.generationService.error(
+          lease,
+          err instanceof Error ? err.message : undefined,
+        );
+      }
       throw err;
     }
 
@@ -658,10 +430,12 @@ export class ConversationStreamingService {
     let storedConversation: VersionedConversation | undefined;
     try {
       const { conversation: fetchedConversation, stored } =
-        await this.persistenceService.getConversationWithStoredVersion(
-          qualifySessionConversationPath(conversationPath, bucket),
-          token,
-          bucket,
+        await preparation.run(GenerationPreparationStep.ConversationRead, () =>
+          this.persistenceService.getConversationWithStoredVersion(
+            qualifySessionConversationPath(conversationPath, bucket),
+            token,
+            bucket,
+          ),
         );
       storedConversation = stored;
       /*
@@ -684,15 +458,22 @@ export class ConversationStreamingService {
        * Release the just-registered entry so a failure before streaming starts
        * doesn't leave the conversation "locked" — otherwise the next request
        * (e.g. regenerate) would be rejected with a 409 until stale eviction.
+       * An abandoned step is the exception: it may still settle later, and
+       * releases the key only then.
        */
-      this.generationService.error(
-        lease,
-        err instanceof Error ? err.message : undefined,
-      );
+      preparation.end();
+      if (!(err instanceof GenerationPreparationInterruptedException)) {
+        this.generationService.error(
+          lease,
+          err instanceof Error ? err.message : undefined,
+        );
+      }
       throw err;
     }
 
     if (isBackground) {
+      /* The background path owns its placeholder save and its own bounds. */
+      preparation.end();
       this.generationService.setBackground(lease, true);
       let backgroundResult: BackgroundStartResult;
       try {
@@ -724,19 +505,27 @@ export class ConversationStreamingService {
       }
       if (backgroundResult === BackgroundStartResult.Handled) return;
       this.generationService.setBackground(lease, false);
+      /* The stateless fallback's start-state save gets its own bound. */
+      preparation = this.startPreparationDeadline(lease);
     }
 
     const { conversation: startConversation, assistantMessageIndex } =
       startState;
 
     try {
-      await this.persistenceService.saveConversation(
-        conversationPath,
-        token,
-        bucket,
-        startConversation,
+      await preparation.run(GenerationPreparationStep.StartStateSave, () =>
+        this.persistenceService.saveConversation(
+          conversationPath,
+          token,
+          bucket,
+          startConversation,
+        ),
       );
     } catch (err) {
+      /* Abandoned, not failed: the write may still land, so nothing else may run. */
+      if (err instanceof GenerationPreparationInterruptedException) throw err;
+      /* Shutdown released the entry while the save ran: stop rather than stream. */
+      if (!this.generationService.getCancellation(lease)) throw err;
       this.logger.warn(
         'Failed to save start-state conversation, continuing stream',
         err,
@@ -754,47 +543,14 @@ export class ConversationStreamingService {
         .filter((m) => m.custom_content?.configuration_value)
         .at(-1)?.custom_content?.configuration_value;
 
-    const dialMessages = messagesForCompletion
-      .filter((m) => m.role !== ConversationMessageRole.Status)
-      .map((m) => {
-        const validAttachments = getValidAttachments(m.custom_content);
-        const encodedSkills = getEncodedSkills(m.custom_content);
-        const content = Object.fromEntries(
-          Object.entries({
-            ...m.custom_content,
-            attachments: validAttachments.length ? validAttachments : undefined,
-            skills: encodedSkills?.length ? encodedSkills : undefined,
-            configuration_value: undefined,
-            stages: undefined,
-          }).filter(([, value]) => value != null),
-        );
-        return {
-          role: m.role,
-          content: m.content,
-          ...(Object.keys(content).length > 0
-            ? { custom_content: content }
-            : {}),
-        };
-      });
-
-    const systemMessages = startConversation.prompt
-      ? [{ role: 'system', content: startConversation.prompt }]
-      : [];
-
-    const requestBody = {
-      messages: [...systemMessages, ...dialMessages],
-      stream: true,
-      ...(temperatureSupported &&
-        startConversation.temperature != null && {
-          temperature: startConversation.temperature,
-        }),
-      ...(configuration ? { custom_fields: { configuration } } : {}),
-    };
-
+    const sentMessageCount = messagesForCompletion.filter(
+      (m) => m.role !== ConversationMessageRole.Status,
+    ).length;
     this.logger.debug(
-      `streamCompletion sending ${dialMessages.length} message(s) to model: ${model}`,
+      `streamCompletion sending ${sentMessageCount} message(s) to model: ${model}`,
     );
 
+    preparation.end();
     onReadyToStream();
 
     const assembledMessage = {
@@ -881,49 +637,71 @@ export class ConversationStreamingService {
 
     const streamStartedAt = Date.now();
     const timing: GenerationRelayTiming = {};
-    const relayIterator =
-      generationApi === GenerationApi.Responses
-        ? this.responsesAdapter.stream(
-            this.responsesAdapter.buildRequest({
+    /*
+     * A Stop, maximum-duration or stale cancellation that landed during
+     * preparation is finalized through the `aborted` outcome without
+     * dispatching any upstream request (`backend-owned-generation-persistence`).
+     */
+    const isCancelledBeforeRelay = lease.abortController.signal.aborted;
+    let relayIterator:
+      | AsyncGenerator<Uint8Array | string, GenerationRelayOutcome, void>
+      | undefined;
+    if (!isCancelledBeforeRelay) {
+      relayIterator =
+        generationApi === GenerationApi.Responses
+          ? this.responsesAdapter.stream(
+              this.responsesAdapter.buildRequest({
+                model,
+                startConversation,
+                messagesForCompletion,
+                temperatureSupported,
+                reasoningEfforts,
+                configuration,
+              }),
+              token,
+              lease.abortController.signal,
+              assembledMessage,
+              clientChannelId,
+              timezone,
+              timing,
+              startConversation.id,
+              publishChunk,
+              jobTitle,
+            )
+          : this.chatCompletionsAdapter.stream(
               model,
-              startConversation,
-              messagesForCompletion,
-              temperatureSupported,
-              reasoningEfforts,
-              configuration,
-            }),
-            token,
-            lease.abortController.signal,
-            assembledMessage,
-            clientChannelId,
-            timezone,
-            timing,
-            startConversation.id,
-            publishChunk,
-            jobTitle,
-          )
-        : this.relayModelCompletion(
-            model,
-            requestBody,
-            token,
-            lease.abortController.signal,
-            assembledMessage,
-            clientChannelId,
-            timezone,
-            timing,
-            startConversation.id,
-            publishChunk,
-            jobTitle,
-          );
+              this.chatCompletionsAdapter.buildRequest({
+                startConversation,
+                messagesForCompletion,
+                temperatureSupported,
+                configuration,
+              }),
+              token,
+              lease.abortController.signal,
+              assembledMessage,
+              clientChannelId,
+              timezone,
+              timing,
+              startConversation.id,
+              publishChunk,
+              jobTitle,
+            );
+    }
     let relayCompletedNormally = false;
     try {
-      let next = await relayIterator.next();
-      while (!next.done) {
-        yield next.value;
-        next = await relayIterator.next();
+      let relayResult: GenerationRelayOutcome = {
+        outcome: 'aborted',
+        assembledMessage,
+      };
+      if (relayIterator) {
+        let next = await relayIterator.next();
+        while (!next.done) {
+          yield next.value;
+          next = await relayIterator.next();
+        }
+        relayResult = next.value;
       }
       relayCompletedNormally = true;
-      const relayResult = next.value;
 
       generationRequestsTotal.add(1, {
         'generation.api': generationApi,

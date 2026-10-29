@@ -38,11 +38,16 @@ import {
   discardSharedCatalogItem,
   revokeSharedAccess,
 } from '../../../server-api/share.api';
+import { toPanelConversationId } from '../../../utils/conversation-id-match';
 import ConversationPanelView from '../ConversationPanelView';
 
 /* Counts renders of the mocked lib panel, which stays `memo`-wrapped like the real one. */
 const panelRenderCount = vi.hoisted(() => ({ current: 0 }));
 /* Props of every render of the mocked lib panel, to compare identities across renders. */
+/* The visible-ID callback each mounted mock panel received, in mount order. */
+const visibleIdsCallbacks = vi.hoisted(
+  (): Array<(ids: string[]) => void> => [],
+);
 const panelPropsLog = vi.hoisted(
   (): Array<{ conversations?: unknown; getActions?: unknown }> => [],
 );
@@ -60,7 +65,9 @@ vi.mock('@epam/ai-dial-conversation-panel', async (importOriginal) => {
         onActionMenuOpen,
         listClassName: className,
         headerActions,
+        onVisibleConversationIdsChange,
       }: {
+        onVisibleConversationIdsChange?: (ids: string[]) => void;
         headerActions?: ReactNode;
         listClassName?: string;
         conversations?: Array<{
@@ -85,6 +92,12 @@ vi.mock('@epam/ai-dial-conversation-panel', async (importOriginal) => {
       }) => {
         panelRenderCount.current += 1;
         panelPropsLog.push({ conversations: panelConversations, getActions });
+        if (
+          onVisibleConversationIdsChange &&
+          !visibleIdsCallbacks.includes(onVisibleConversationIdsChange)
+        ) {
+          visibleIdsCallbacks.push(onVisibleConversationIdsChange);
+        }
         return (
           <div
             role="region"
@@ -572,6 +585,7 @@ const baseContextValue = {
   duplicateConversation: vi.fn(),
   refreshConversations: vi.fn(),
   deleteAllConversations: mockDeleteAllConversations,
+  setVisibleConversationIds: vi.fn(),
 };
 
 const defaultProps = {
@@ -3100,5 +3114,67 @@ describe('ConversationPanelView — unpublish confirmation', () => {
     );
 
     expect(unpublishConversation).not.toHaveBeenCalled();
+  });
+});
+
+describe('ConversationPanelView — visible-ID priority', () => {
+  const encodedId = 'conversations/bucket-123/gpt-4o__My%20chat';
+  const conversation = {
+    id: encodedId,
+    title: 'My chat',
+    isPinned: false,
+    updatedAt: 0,
+    sharedWithMe: false,
+    publishedWithMe: false,
+  };
+
+  beforeEach(() => {
+    visibleIdsCallbacks.length = 0;
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [conversation],
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+  });
+
+  const registrations = () =>
+    vi.mocked(baseContextValue.setVisibleConversationIds).mock.calls;
+
+  it('registers the list resource IDs behind the visible panel rows', () => {
+    render(<ConversationPanelView {...defaultProps} />);
+    act(() =>
+      visibleIdsCallbacks[0]([toPanelConversationId(encodedId), 'unknown']),
+    );
+    expect(registrations().at(-1)).toEqual([expect.any(String), [encodedId]]);
+  });
+
+  it('clears its registration while hidden and restores it when shown again', () => {
+    const { rerender } = render(<ConversationPanelView {...defaultProps} />);
+    act(() => visibleIdsCallbacks[0]([toPanelConversationId(encodedId)]));
+    const [viewKey] = registrations().at(-1) ?? [];
+
+    rerender(<ConversationPanelView {...defaultProps} isVisible={false} />);
+    expect(registrations().at(-1)).toEqual([viewKey, null]);
+    act(() => visibleIdsCallbacks[0]([]));
+    expect(registrations().at(-1)).toEqual([viewKey, null]);
+    act(() => visibleIdsCallbacks[0]([toPanelConversationId(encodedId)]));
+
+    rerender(<ConversationPanelView {...defaultProps} isVisible />);
+    expect(registrations().at(-1)).toEqual([viewKey, [encodedId]]);
+  });
+
+  it('clears only the unmounted view when two views are registered', () => {
+    const { unmount: unmountFirst } = render(
+      <ConversationPanelView {...defaultProps} />,
+    );
+    render(<ConversationPanelView {...defaultProps} />);
+    act(() => visibleIdsCallbacks[0]([toPanelConversationId(encodedId)]));
+    act(() => visibleIdsCallbacks[1]([toPanelConversationId(encodedId)]));
+    const firstKey = registrations().at(-2)?.[0];
+    const secondKey = registrations().at(-1)?.[0];
+    expect(firstKey).not.toBe(secondKey);
+
+    vi.mocked(baseContextValue.setVisibleConversationIds).mockClear();
+    unmountFirst();
+    expect(registrations()).toEqual([[firstKey, null]]);
   });
 });

@@ -11,6 +11,7 @@ import {
   DIAL_KIT_ICON_STROKE,
   DropdownItem,
   ElementSize,
+  ErrorMessageNotification,
   GhostButton,
   MenuItemMark,
   PrimaryButton,
@@ -259,12 +260,18 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
           layout={gridLayout}
         />
         {loadMoreError && (
-          <div role="alert" className="flex items-center gap-3">
-            <span className={mergeClasses(subtitleClassName, styles.subtitle)}>
-              {labels.loadMoreErrorLabel ?? labels.errorLabel}
-            </span>
-            <GhostButton label={labels.retryLabel} onClick={onRetryLoadMore} />
-          </div>
+          /* The kit error section message is an assertive `alert` live region, with Retry in its `action` slot. */
+          <ErrorMessageNotification
+            message={labels.loadMoreErrorLabel ?? labels.errorLabel}
+            textClassName={subtitleClassName}
+            iconStroke={DIAL_KIT_ICON_STROKE}
+            action={
+              <GhostButton
+                label={labels.retryLabel}
+                onClick={onRetryLoadMore}
+              />
+            }
+          />
         )}
 
         <div ref={sentinelRef} aria-hidden className="h-px w-full" />

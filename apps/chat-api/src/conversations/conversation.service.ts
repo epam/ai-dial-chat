@@ -3,6 +3,7 @@ import { ConversationReadStateService } from '../scheduled-task-unread/conversat
 import { ConversationNamingService } from './conversation-naming.service';
 import { ConversationLifecycleService } from './lifecycle/conversation-lifecycle.service';
 import { ConversationListingService } from './listing/conversation-listing.service';
+import { ConversationTitleStreamService } from './listing/conversation-title-stream.service';
 import { ConversationPersistenceService } from './persistence/conversation-persistence.service';
 import { PublishedFolderAttachmentsService } from './published-folder-attachments.service';
 import { ConversationStreamingService } from './streaming/conversation-streaming.service';
@@ -29,6 +30,7 @@ export class ConversationService {
     private readonly conversationNamingService: ConversationNamingService,
     private readonly conversationReadStateService: ConversationReadStateService,
     private readonly publishedFolderAttachments: PublishedFolderAttachmentsService,
+    private readonly titleStreamService: ConversationTitleStreamService,
   ) {}
 
   // Persistence
@@ -66,6 +68,12 @@ export class ConversationService {
   );
   getConversationMetadata = this.listingService.getConversationMetadata.bind(
     this.listingService,
+  );
+  admitConversationTitleStream = this.titleStreamService.admit.bind(
+    this.titleStreamService,
+  );
+  streamConversationTitles = this.titleStreamService.streamTitles.bind(
+    this.titleStreamService,
   );
 
   // Lifecycle

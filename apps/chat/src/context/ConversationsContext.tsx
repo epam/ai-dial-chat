@@ -89,6 +89,12 @@ interface ConversationsContextType {
   isLoading: boolean;
   /** True while missing list titles are being resolved in the background. */
   isUpdatingTitles: boolean;
+  /**
+   * Registers the conversation IDs a history view currently shows, keyed by a
+   * view-unique key, so their pending titles are requested first. `null`
+   * clears only that view's registration (hidden or unmounted).
+   */
+  setVisibleConversationIds: (viewKey: string, ids: string[] | null) => void;
   /** Non-null if the fetch failed. */
   error: Error | null;
   /** Toggle the pinned state of a conversation and persist it to the backend. Reverts on failure. */
@@ -196,6 +202,7 @@ export const ConversationsProvider = ({
     rememberTitle,
     forgetTitle,
     restoreTitle,
+    setVisibleConversationIds,
     isUpdatingTitles,
   } = useConversationTitleEnrichment(userSub, setConversations);
   const overlay = useOptionalOverlay();
@@ -730,6 +737,7 @@ export const ConversationsProvider = ({
       conversations,
       isLoading,
       isUpdatingTitles,
+      setVisibleConversationIds,
       error,
       pinConversation,
       markConversationViewed,
@@ -749,6 +757,7 @@ export const ConversationsProvider = ({
       conversations,
       isLoading,
       isUpdatingTitles,
+      setVisibleConversationIds,
       error,
       pinConversation,
       markConversationViewed,

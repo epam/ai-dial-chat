@@ -1,12 +1,14 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  mergeClasses,
+  useControlErrorAssociation,
+} from '@epam/ai-dial-chat-shared';
 import {
   Calendar,
   CalendarMode,
   type CalendarValue,
   ErrorText,
 } from '@epam/ai-dial-ui-kit';
-import { useRef, type FC } from 'react';
-import { usePickerErrorAssociation } from '../../hooks/usePickerErrorAssociation/usePickerErrorAssociation';
+import { useId, useRef, type FC } from 'react';
 import {
   calendarValueToRunAt,
   runAtToCalendarValue,
@@ -48,7 +50,12 @@ export const ScheduledTaskRunAtField: FC<ScheduledTaskRunAtFieldProps> = ({
   const handleCalendarChange = (next: CalendarValue) =>
     onChange(calendarValueToRunAt(next));
 
-  const errorId = usePickerErrorAssociation('scheduled-task-run-at', error);
+  const errorId = useId();
+  useControlErrorAssociation(
+    () => document.getElementById('scheduled-task-run-at'),
+    errorId,
+    Boolean(error),
+  );
 
   return (
     <div className="flex flex-col gap-1">

@@ -203,6 +203,10 @@ describe('PromptEditor', () => {
     );
 
     await waitFor(() => expect(instructions.matches(':focus')).toBe(true));
+    expect(instructions.getAttribute('aria-invalid')).toBe('true');
+    expect(instructions.getAttribute('aria-describedby')).toBe(
+      screen.getByText('Prompt is required').id,
+    );
   });
 
   it('leaves focus to the metadata form when Name is invalid too', async () => {

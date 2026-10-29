@@ -41,11 +41,16 @@ describe('UsageLimitBannerView', () => {
     (severity, iconClass, colorClass) => {
       renderView({ severity });
 
-      // eslint-disable-next-line testing-library/no-node-access -- the icon is aria-hidden; its glyph and color classes are the assertion
-      const icon = screen.getByRole('status').querySelector('svg');
+      const banner = screen.getByRole('status');
+      // eslint-disable-next-line testing-library/no-node-access -- the icon is aria-hidden; its glyph class is the assertion
+      const icon = banner.querySelector('svg');
       expect(icon?.classList.contains(iconClass)).toBe(true);
 
-      expect(icon?.parentElement?.classList.contains(colorClass)).toBe(true);
+      /* The kit variant tints the root, which the glyph inherits; the fill
+         stays on the neutral sunken layer. */
+      expect(banner.classList.contains(colorClass)).toBe(true);
+      expect(banner.classList.contains('bg-layer-sunken')).toBe(true);
+      expect(banner.className).not.toMatch(/(^|\s)bg-(warning|error)(\s|$)/);
     },
   );
 

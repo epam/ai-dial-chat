@@ -49,7 +49,7 @@ Maintain the version-controlled JSON directly.
 | [00 — HTTP overview](examples/dashboards/00-bff-overview-http.json)                       | Arrivals, in-flight requests, outcomes, latency, route rankings, and scrape health. |
 | [01 — HTTP handlers](examples/dashboards/01-bff-http-handlers.json)                       | Nest handler counts, recorded errors, and mean latency.                             |
 | [02 — Conversation generations](examples/dashboards/02-bff-conversation-generations.json) | Relay outcomes, duration, and time to first text delta.                             |
-| [03 — Routing and streaming](examples/dashboards/03-bff-routing-streaming.json)           | API selection, capability failures, and unknown Responses events.                   |
+| [03 — Routing and streaming](examples/dashboards/03-bff-routing-streaming.json)           | API selection, capability failures, unknown Responses events, and title delivery.   |
 | [04 — Runtime diagnostics](examples/dashboards/04-runtime-diagnostics.json)               | Memory by kind, SSE operations, and retained generations.                           |
 | [05 — Auth and sessions](examples/dashboards/05-bff-auth-sessions.json)                   | Login, callback, refresh, authorization, and logout.                                |
 | [06 — Endpoint usage](examples/dashboards/06-bff-endpoint-traffic.json)                   | Calls per method and endpoint over a selected period.                               |
@@ -206,8 +206,9 @@ are labels.
 Only the first terminal event counts. Status is present only after headers; HTTP 200 can
 accompany an in-band generation error. Completion does not confirm browser delivery.
 
-`streaming` identifies four fixed `/api/v1/` routes: `conversations/completions`,
-`conversations/completions/attach`, `conversations/watch`, and `client-channel/subscribe`.
+`streaming` identifies five fixed `/api/v1/` routes: `conversations/completions`,
+`conversations/completions/attach`, `conversations/watch`, `conversations/titles/stream`
+(finite — it closes once its titles are delivered), and `client-channel/subscribe`.
 Other matched routes, including `chat/completions`, are `ordinary`. A custom API prefix needs
 classifier changes.
 
@@ -299,26 +300,27 @@ For bounded outcomes and reasons, see [auth metrics](../apps/chat-api/src/auth/a
 
 ### Process memory and outstanding work
 
-| Series                         | Unit / labels                                                                     |
-| ------------------------------ | --------------------------------------------------------------------------------- |
-| `dial_chat_process_memory`     | Bytes; `kind` = `rss`, `heap_used`, `heap_total`, `external`, `array_buffers`.    |
-| `dial_chat_sse_active`         | Operations; `kind` = `client_channel`, `conversation_watch`, `generation_attach`. |
-| `dial_chat_generations_active` | Retained entries; `state` as below.                                               |
+| Series                         | Unit / labels                                                                                            |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| `dial_chat_process_memory`     | Bytes; `kind` = `rss`, `heap_used`, `heap_total`, `external`, `array_buffers`.                           |
+| `dial_chat_sse_active`         | Operations; `kind` = `client_channel`, `conversation_watch`, `generation_attach`, `conversation_titles`. |
+| `dial_chat_generations_active` | Retained entries; `state` as below.                                                                      |
 
 Memory kinds overlap: array buffers are part of external memory, and heap total includes heap
 used. **Do not sum or stack memory kinds.** Dashboard 04 separates them; its summary sums only
 RSS across selected processes. Process RSS is not total pod memory.
 
 SSE counts include asynchronous setup/cleanup, not just connected browsers; ordinary completion
-delivery is excluded. Generation counts are process-local registry entries, including preflight,
+delivery is excluded. A `conversation_titles` stream counts from admission until its owned
+reads have detached, so a closed connection can remain counted briefly. Generation counts are process-local registry entries, including preflight,
 with all four states emitted even at zero:
 
-| State              | Meaning                                                              |
-| ------------------ | -------------------------------------------------------------------- |
-| `active`           | Admitted work before cancellation or terminal finalization.          |
-| `cancel_requested` | Cancellation requested; the worker still owns the entry.             |
-| `finalizing`       | Waiting for the single terminal-save attempt.                        |
-| `settling`         | Finalization timeout expired; the write, entry, and snapshot remain. |
+| State              | Meaning                                                                                   |
+| ------------------ | ----------------------------------------------------------------------------------------- |
+| `active`           | Admitted work before cancellation or terminal finalization.                               |
+| `cancel_requested` | Cancellation requested; the worker still owns the entry.                                  |
+| `finalizing`       | Waiting for the single terminal-save attempt.                                             |
+| `settling`         | Finalization or preparation timeout expired; the entry, snapshot and pending call remain. |
 
 State counts are disjoint and can be summed per process. Removing an entry removes its gauge
 contribution; a falling count does not prove persistence.
@@ -326,9 +328,16 @@ contribution; a falling count does not prove persistence.
 `GENERATION_FINALIZE_TIMEOUT_MS` starts immediately before terminal save. Expiry releases
 existing attachment listeners and timers but **does not cancel the write**. The retained key
 still rejects another start on the same process with `409` until settlement or restart.
-The timeout does not bound preflight or total generation lifetime. Once it has released
-subscribers, a later attach to the `settling` entry receives `404` and adds no
-`generation_attach` SSE subscription. Maximum duration and stale handling request cancellation
+The timeout does not bound total generation lifetime. Preflight is bounded separately by
+`GENERATION_PREPARATION_TIMEOUT_MS`, counted from registration until the SSE response opens.
+On expiry the request fails with `503`, attachment listeners are released, and the entry stays
+`settling` until the abandoned DIAL Core call settles. That call is not cancelled, so a
+never-settling call keeps the key until restart. Each abandonment logs one `warn`,
+`Abandoning generation preparation past GENERATION_PREPARATION_TIMEOUT_MS at <step>`, where
+`<step>` is `hidden_model_check`, `capability_resolution`, `conversation_read` or
+`start_state_save`. A late failure of that call logs `Abandoned preparation step failed`.
+Once either timeout has released subscribers, a later attach to the `settling` entry
+receives `404` and adds no `generation_attach` SSE subscription. Maximum duration and stale handling request cancellation
 rather than releasing ownership; stale sweeping runs on registration.
 
 There is no distributed lock or cross-pod ownership transfer. Restart clears local ownership
@@ -356,6 +365,36 @@ preflight disconnect can count as `client_closed`. This is not a successful-stre
 The supplied dashboards have no panel for it yet.
 See [instrument](../apps/chat-api/src/conversations/streaming/completion-response-metrics.ts)
 and [release helper](../apps/chat-api/src/common/utils/sse.ts).
+
+### Conversation title delivery
+
+`POST /api/v1/conversations/titles/stream` emits each display title as its read settles.
+Three latencies are separate on purpose:
+
+| Prometheus family                                                        | Measurement                                                                                                    |
+| ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| `dial_chat_conversation_titles_first_result_duration_{bucket,sum,count}` | Seconds from stream admission to the first title frame accepted by the response writer.                        |
+| `dial_chat_conversation_titles_read_duration_{bucket,sum,count}`         | Seconds per actual DIAL Core body read, once per coalesced read; `outcome` = `success`, `failed`, `cancelled`. |
+| `dial_chat_conversation_titles_queue_duration_{bucket,sum,count}`        | Seconds waiting for the process-wide 25-read gate; `outcome` = `admitted`, `rejected`, `cancelled`.            |
+| `dial_chat_conversation_titles_results_total`                            | Item outcome frames accepted by the writer; `outcome` = `resolved`, `unavailable`, `failed`.                   |
+
+- **Time to first title is not response duration.** `dial_chat_http_response_duration` for the
+  route measures the whole finite stream, up to its 60-second lifetime.
+- A stream that delivers only unavailable or failed outcomes records no first-result sample.
+- Read duration counts Core work, shared by the JSON `conversations/titles` endpoint; two
+  streams sharing one read record it once. Cache hits record no read.
+- The three histograms use explicit boundaries from 5 ms to 60 s, so p95 is meaningful below
+  one second. Do not edit the boundaries in place; a change needs a new metric name.
+- Labels never carry IDs, titles, tokens, users, or URLs. Local mocks cannot predict live Core
+  latency or cache hit rate; the body reads behind cold titles still happen.
+
+Dashboard 03 shows them in its **Conversation titles** row: first-title mean/p95, Core read
+duration by outcome, the rejected/cancelled share of the read gate, and outcomes per second.
+p95 is hidden when more than 5% of samples exceed the last finite (60 s) bucket. In dashboards
+03 and 04, `conversation_titles` SSE operations last seconds (at most 60 s); a spike is a
+history title load, not a growth in long-lived subscriptions.
+
+See [instruments](../apps/chat-api/src/telemetry/conversation-title-metrics.ts).
 
 ## Read rates, latency, and missing data correctly
 

@@ -228,7 +228,20 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     </div>
   ),
   CaptionText: ({ text }: { text?: string }) => <span>{text}</span>,
-  ErrorText: ({ text }: { text?: string }) => <span>{text}</span>,
+  ErrorText: ({ text, id }: { text?: string; id?: string }) =>
+    text ? <span id={id}>{text}</span> : null,
+  ErrorMessageNotification: ({
+    message,
+    action,
+  }: {
+    message: ReactNode;
+    action?: ReactNode;
+  }) => (
+    <div role="alert">
+      {message}
+      {action}
+    </div>
+  ),
   FileDropzone: ({
     label,
     ariaLabel,
@@ -1375,10 +1388,10 @@ describe('SkillEditor — Upload archive', () => {
     await openArchiveDialogFor(user);
     stageFile(new File(['zip'], 'bundle.zip'));
 
-    const alert = await screen.findByRole('alert');
+    await screen.findByText("Couldn't read this archive");
     expect(
-      await within(alert).findByText("Couldn't read this archive"),
-    ).toBeTruthy();
+      screen.getAllByRole('alert').map((alert) => alert.textContent),
+    ).toContain("Couldn't read this archive");
     expect(
       within(screen.getByRole('dialog')).queryByRole('listitem'),
     ).toBeNull();

@@ -38,12 +38,13 @@ const EntityEditorComponent: FC<EntityEditorProps> = ({
   styles,
   dir,
 }) => {
-  const alertRegion =
-    alert != null ? (
-      <div role="alert" className={ALERT_CLASS_NAME}>
-        {alert}
-      </div>
-    ) : null;
+  /* Always mounted so a message arriving later is announced: a live region
+     rendered together with its text is not read reliably. Empty, it takes no space. */
+  const alertRegion = (
+    <div role="alert" className={alert != null ? ALERT_CLASS_NAME : undefined}>
+      {alert}
+    </div>
+  );
   const hasSetup = setup != null;
 
   return (

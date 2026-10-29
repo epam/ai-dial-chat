@@ -46,9 +46,11 @@ describe('ErrorFallback', () => {
     expect(screen.getByRole('alert')).toBeTruthy();
   });
 
-  it('renders the heading', () => {
+  it('renders the heading as the screen h1', () => {
     renderFallback();
-    expect(screen.getByText('errorBoundary.heading')).toBeTruthy();
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'errorBoundary.heading' }),
+    ).toBeTruthy();
   });
 
   it('renders the description', () => {

@@ -101,6 +101,34 @@ const seedConversations = [
   },
 ];
 
+/* Mocks one title stream whose per-ID titles the test releases later. IDs
+   without a released title get an `unavailable` outcome. */
+const deferTitleStream = () => {
+  let release!: (titles: Record<string, string>) => void;
+  const titles = new Promise<Record<string, string>>((resolve) => {
+    release = resolve;
+  });
+  vi.mocked(conversationsApi.streamConversationTitles).mockImplementationOnce(
+    async (ids: string[]) => ({
+      async *[Symbol.asyncIterator]() {
+        const resolved = await titles;
+        for (const id of ids) {
+          yield id in resolved
+            ? { type: 'title' as const, id, title: resolved[id] }
+            : { type: 'unavailable' as const, id };
+        }
+        yield {
+          type: 'done' as const,
+          reason: 'complete' as const,
+          processed: ids.length,
+          total: ids.length,
+        };
+      },
+    }),
+  );
+  return release;
+};
+
 beforeEach(() => {
   vi.clearAllMocks();
   contextMocks.userSub = 'user-1';
@@ -164,17 +192,7 @@ describe('ConversationsContext — identity-keyed refetch', () => {
 
 describe('ConversationsContext — background refresh', () => {
   it('finishes initial loading before title enrichment and preserves a manual rename against its late response', async () => {
-    let resolveTitles!: (
-      value: Awaited<ReturnType<typeof conversationsApi.getConversationTitles>>,
-    ) => void;
-    const titleResponse = new Promise<
-      Awaited<ReturnType<typeof conversationsApi.getConversationTitles>>
-    >((resolve) => {
-      resolveTitles = resolve;
-    });
-    vi.mocked(conversationsApi.getConversationTitles).mockReturnValueOnce(
-      titleResponse,
-    );
+    const resolveTitles = deferTitleStream();
     mockListConversations.mockResolvedValueOnce({
       items: seedConversations.map((item) => ({
         ...item,
@@ -195,27 +213,15 @@ describe('ConversationsContext — background refresh', () => {
       result.current.renameConversation('conv1', 'Manual title'),
     );
     await act(async () =>
-      resolveTitles({
-        items: [
-          { id: 'conv1', title: 'Stale title' },
-          { id: 'conv2', title: 'Updated second title' },
-        ],
-      }),
+      resolveTitles({ conv1: 'Stale title', conv2: 'Updated second title' }),
     );
+    await waitFor(() => expect(result.current.isUpdatingTitles).toBe(false));
     expect(result.current.conversations[0].title).toBe('Manual title');
     expect(result.current.conversations[1].title).toBe('Updated second title');
-    expect(result.current.isUpdatingTitles).toBe(false);
   });
 
   it('keeps an opened title authoritative when a pending title request returns later', async () => {
-    let resolveTitles!: (
-      value: Awaited<ReturnType<typeof conversationsApi.getConversationTitles>>,
-    ) => void;
-    vi.mocked(conversationsApi.getConversationTitles).mockReturnValueOnce(
-      new Promise((resolve) => {
-        resolveTitles = resolve;
-      }),
-    );
+    const resolveTitles = deferTitleStream();
     mockListConversations.mockResolvedValueOnce({
       items: [{ ...seedConversations[0], isTitlePending: true }],
     });
@@ -229,9 +235,8 @@ describe('ConversationsContext — background refresh', () => {
         'Title from opened conversation',
       ),
     );
-    await act(async () =>
-      resolveTitles({ items: [{ id: 'conv1', title: 'Older body' }] }),
-    );
+    await act(async () => resolveTitles({ conv1: 'Older body' }));
+    await waitFor(() => expect(result.current.isUpdatingTitles).toBe(false));
     expect(result.current.conversations[0].title).toBe(
       'Title from opened conversation',
     );
@@ -638,14 +643,7 @@ describe('ConversationsContext — deleteConversation', () => {
   });
 
   it('restores only a failed deletion while preserving other background title and pin updates', async () => {
-    let resolveTitles!: (
-      value: Awaited<ReturnType<typeof conversationsApi.getConversationTitles>>,
-    ) => void;
-    vi.mocked(conversationsApi.getConversationTitles).mockReturnValueOnce(
-      new Promise((resolve) => {
-        resolveTitles = resolve;
-      }),
-    );
+    const resolveTitles = deferTitleStream();
     mockListConversations.mockResolvedValueOnce({
       items: seedConversations.map((item) => ({
         ...item,
@@ -669,11 +667,8 @@ describe('ConversationsContext — deleteConversation', () => {
         .catch((error: unknown) => error);
     });
     await act(async () => result.current.pinConversation('conv2', true));
-    await act(async () =>
-      resolveTitles({
-        items: [{ id: 'conv2', title: 'Current second title' }],
-      }),
-    );
+    await act(async () => resolveTitles({ conv2: 'Current second title' }));
+    await waitFor(() => expect(result.current.isUpdatingTitles).toBe(false));
     const failure = new Error('Delete failed');
     await act(async () => {
       rejectDelete(failure);

@@ -118,6 +118,13 @@ const getVersionInput = () =>
     exact: false,
   }) as HTMLInputElement;
 
+/* The editor keeps its alert region mounted, so "no alert" means every region is empty. */
+const alertText = () =>
+  screen
+    .queryAllByRole('alert')
+    .map((region) => region.textContent)
+    .join('');
+
 const createSearch = `schema=${SCHEMA_ID}`;
 const editSearch = `${createSearch}&appId=${encodeURIComponent(APP_ID)}`;
 
@@ -285,7 +292,7 @@ describe('ApplicationEditorPage — schema app', () => {
       renderPage(createSearch);
 
       expect(await findLabelsInput()).toBeTruthy();
-      expect(screen.queryByRole('alert')).toBeNull();
+      expect(alertText()).toBe('');
     });
 
     it('opens an existing app of a restricted schema for editing', async () => {
@@ -296,7 +303,7 @@ describe('ApplicationEditorPage — schema app', () => {
       renderPage(editSearch);
 
       expect((await findLabelsInput()).value).toBe('a,b');
-      expect(screen.queryByRole('alert')).toBeNull();
+      expect(alertText()).toBe('');
     });
 
     it('does not turn a failed edit load into creation when creation is denied', async () => {

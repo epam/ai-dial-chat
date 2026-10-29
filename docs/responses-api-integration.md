@@ -43,16 +43,19 @@ Browser
 ConversationController
   |
   v
-ConversationService
+ConversationStreamingService
   |
-  | retrieves current deployment details from DIAL Core
-  | and reads features.responsesApi
+  v
+GenerationApiSelector
+  |
+  | retrieves current deployment details from DIAL Core,
+  | reads features.responsesApi and the feature flags
   v
 resolveGenerationApi()
   |                              |
   | true                         | false / absent
   v                              v
-ResponsesAdapter             ConversationStreamingService
+ResponsesAdapter             ChatCompletionsAdapter
   |                              |
   | POST /openai/v1/responses    | Chat Completions request
   v                              v
@@ -65,9 +68,10 @@ DIAL Core                    DIAL Core
        status, and generation stop handling
 ```
 
-The Responses mode is isolated in `ResponsesAdapter`. The active Chat Completions
-relay remains in `ConversationStreamingService.relayModelCompletion`; the dormant
-`ChatCompletionsAdapter` refactor is not used for runtime dispatch. Both modes
+`GenerationApiSelector.select` chooses the generation API for each completion.
+The Responses mode is isolated in `ResponsesAdapter` and the Chat Completions
+mode in `ChatCompletionsAdapter`; `ConversationStreamingService.streamCompletion`
+calls `buildRequest` and `stream` on whichever one was selected. Both modes
 preserve the existing external Chat contract and shared conversation-history
 logic.
 
@@ -177,8 +181,7 @@ compatibility.
 The validated value stays request-local. The BFF forwards it unchanged as
 `X-Timezone` through both active upstream paths:
 
-- Chat Completions via
-  `ConversationStreamingService.relayModelCompletion` and
+- Chat Completions via `ChatCompletionsAdapter.stream` and
   `sendChatCompletionRequest`;
 - Responses via `ResponsesAdapter` and `createResponse`.
 

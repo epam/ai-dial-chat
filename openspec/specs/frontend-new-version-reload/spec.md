@@ -39,7 +39,7 @@ A `useAppVersionCheck` hook in `apps/chat/src/hooks/` SHALL own the "is a new ve
 
 ### Requirement: Full-screen reload prompt
 
-A `NewVersionFallback` component in `apps/chat/src/components/NewVersionFallback/` SHALL render in place of the entire app (sharing `ErrorFallback`'s layout through the common `AlertShell` component in `apps/chat/src/components/AlertShell/` — an icon, heading, message, and `PrimaryButton` action, in a `role="alert"` container) when `useAppVersionCheck` reports `isNewVersionAvailable === true`. `App` (`apps/chat/src/app/app.tsx`) SHALL call `useAppVersionCheck` and return `<NewVersionFallback />` instead of its normal layout whenever `isNewVersionAvailable` is `true`, blocking further interaction with the stale build until the user reloads.
+A `NewVersionFallback` component in `apps/chat/src/components/NewVersionFallback/` SHALL render in place of the entire app (sharing `ErrorFallback`'s layout through the common `AlertShell` component in `apps/chat/src/components/AlertShell/` — the kit `StateScreen` icon badge, `h1` heading, message, and `PrimaryButton` action, in a `role="alert"` container) when `useAppVersionCheck` reports `isNewVersionAvailable === true`. `App` (`apps/chat/src/app/app.tsx`) SHALL call `useAppVersionCheck` and return `<NewVersionFallback />` instead of its normal layout whenever `isNewVersionAvailable` is `true`, blocking further interaction with the stale build until the user reloads.
 
 The fallback is always active and is NOT gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES` — it is a reliability affordance, not a product feature toggle.
 

@@ -16,6 +16,7 @@ import {
   PopupSize,
   PrimaryButton,
   Input,
+  LinkButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconAlertCircleFilled } from '@tabler/icons-react';
 import {
@@ -130,13 +131,11 @@ const SigninRow: FC<SigninRowProps> = ({
         >
           <IconAlertCircleFilled size={DIAL_ICON_SIZE.SM} aria-hidden />
           <span>{rowState.error}</span>
-          <button
-            type="button"
-            className="dial-small-text underline"
+          <LinkButton
+            className="h-auto"
+            label={t(ToolsetSigninI18nKeys.ErrorRetry)}
             onClick={() => onLogin(event, info)}
-          >
-            {t(ToolsetSigninI18nKeys.ErrorRetry)}
-          </button>
+          />
         </div>
       )}
 

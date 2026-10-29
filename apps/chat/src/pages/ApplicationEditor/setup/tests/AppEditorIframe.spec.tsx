@@ -102,6 +102,8 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     onClick: () => void;
   }) => <button onClick={onClick}>{label}</button>,
   ElementSize: { Small: 'small' },
+  /* Read at import time by conversation-input's UsageLimitBannerView. */
+  NotificationVariant: { Warning: 'warning', Error: 'error' },
   WarningMessageNotification: ({
     title,
     message,

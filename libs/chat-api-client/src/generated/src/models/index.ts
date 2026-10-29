@@ -1999,6 +1999,238 @@ export interface ConversationTitleDto {
 /**
  *
  * @export
+ * @interface ConversationTitleStreamDoneEventDto
+ */
+export interface ConversationTitleStreamDoneEventDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationTitleStreamDoneEventDto
+   */
+  type: ConversationTitleStreamDoneEventDtoTypeEnum;
+  /**
+   * `complete` when every distinct ID has an outcome; `budget` when the request lifetime ended and IDs without an outcome may be requested again.
+   * @type {ConversationTitleStreamDoneReason}
+   * @memberof ConversationTitleStreamDoneEventDto
+   */
+  reason: ConversationTitleStreamDoneReason;
+  /**
+   * Item outcome events emitted (title, unavailable, item_error).
+   * @type {number}
+   * @memberof ConversationTitleStreamDoneEventDto
+   */
+  processed: number;
+  /**
+   * Distinct requested IDs.
+   * @type {number}
+   * @memberof ConversationTitleStreamDoneEventDto
+   */
+  total: number;
+}
+
+/**
+ * @export
+ */
+export const ConversationTitleStreamDoneEventDtoTypeEnum = {
+  Done: 'done',
+} as const;
+export type ConversationTitleStreamDoneEventDtoTypeEnum =
+  (typeof ConversationTitleStreamDoneEventDtoTypeEnum)[keyof typeof ConversationTitleStreamDoneEventDtoTypeEnum];
+
+/**
+ * `complete` when every distinct ID has an outcome; `budget` when the request lifetime ended and IDs without an outcome may be requested again.
+ * @export
+ */
+export const ConversationTitleStreamDoneReason = {
+  Complete: 'complete',
+  Budget: 'budget',
+} as const;
+export type ConversationTitleStreamDoneReason =
+  (typeof ConversationTitleStreamDoneReason)[keyof typeof ConversationTitleStreamDoneReason];
+
+/**
+ * Paired with `status`: 401/unauthenticated, 502/upstream_error, 503/unavailable.
+ * @export
+ */
+export const ConversationTitleStreamErrorCode = {
+  Unauthenticated: 'unauthenticated',
+  UpstreamError: 'upstream_error',
+  Unavailable: 'unavailable',
+} as const;
+export type ConversationTitleStreamErrorCode =
+  (typeof ConversationTitleStreamErrorCode)[keyof typeof ConversationTitleStreamErrorCode];
+
+/**
+ *
+ * @export
+ * @interface ConversationTitleStreamErrorEventDto
+ */
+export interface ConversationTitleStreamErrorEventDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationTitleStreamErrorEventDto
+   */
+  type: ConversationTitleStreamErrorEventDtoTypeEnum;
+  /**
+   * HTTP-equivalent status of the stream-fatal failure; the response status was already 200.
+   * @type {number}
+   * @memberof ConversationTitleStreamErrorEventDto
+   */
+  status: ConversationTitleStreamErrorEventDtoStatusEnum;
+  /**
+   * Paired with `status`: 401/unauthenticated, 502/upstream_error, 503/unavailable.
+   * @type {ConversationTitleStreamErrorCode}
+   * @memberof ConversationTitleStreamErrorEventDto
+   */
+  code: ConversationTitleStreamErrorCode;
+}
+
+/**
+ * @export
+ */
+export const ConversationTitleStreamErrorEventDtoTypeEnum = {
+  Error: 'error',
+} as const;
+export type ConversationTitleStreamErrorEventDtoTypeEnum =
+  (typeof ConversationTitleStreamErrorEventDtoTypeEnum)[keyof typeof ConversationTitleStreamErrorEventDtoTypeEnum];
+
+/**
+ * @export
+ */
+export const ConversationTitleStreamErrorEventDtoStatusEnum = {
+  NUMBER_401: 401,
+  NUMBER_502: 502,
+  NUMBER_503: 503,
+} as const;
+export type ConversationTitleStreamErrorEventDtoStatusEnum =
+  (typeof ConversationTitleStreamErrorEventDtoStatusEnum)[keyof typeof ConversationTitleStreamErrorEventDtoStatusEnum];
+
+/**
+ * @type ConversationTitleStreamEventDto
+ * One `data:` JSON payload of the conversation title stream, discriminated by `type`.
+ * @export
+ */
+export type ConversationTitleStreamEventDto =
+  | ({ type: 'done' } & ConversationTitleStreamDoneEventDto)
+  | ({ type: 'error' } & ConversationTitleStreamErrorEventDto)
+  | ({ type: 'item_error' } & ConversationTitleStreamItemErrorEventDto)
+  | ({ type: 'title' } & ConversationTitleStreamTitleEventDto)
+  | ({ type: 'unavailable' } & ConversationTitleStreamUnavailableEventDto);
+
+/**
+ * Why this attempted item failed. It is not retried by the stream.
+ * @export
+ */
+export const ConversationTitleStreamItemErrorCode = {
+  UpstreamError: 'upstream_error',
+  Timeout: 'timeout',
+} as const;
+export type ConversationTitleStreamItemErrorCode =
+  (typeof ConversationTitleStreamItemErrorCode)[keyof typeof ConversationTitleStreamItemErrorCode];
+
+/**
+ *
+ * @export
+ * @interface ConversationTitleStreamItemErrorEventDto
+ */
+export interface ConversationTitleStreamItemErrorEventDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationTitleStreamItemErrorEventDto
+   */
+  type: ConversationTitleStreamItemErrorEventDtoTypeEnum;
+  /**
+   * The exact conversation resource URL supplied in the request.
+   * @type {string}
+   * @memberof ConversationTitleStreamItemErrorEventDto
+   */
+  id: string;
+  /**
+   * Why this attempted item failed. It is not retried by the stream.
+   * @type {ConversationTitleStreamItemErrorCode}
+   * @memberof ConversationTitleStreamItemErrorEventDto
+   */
+  code: ConversationTitleStreamItemErrorCode;
+}
+
+/**
+ * @export
+ */
+export const ConversationTitleStreamItemErrorEventDtoTypeEnum = {
+  ItemError: 'item_error',
+} as const;
+export type ConversationTitleStreamItemErrorEventDtoTypeEnum =
+  (typeof ConversationTitleStreamItemErrorEventDtoTypeEnum)[keyof typeof ConversationTitleStreamItemErrorEventDtoTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface ConversationTitleStreamTitleEventDto
+ */
+export interface ConversationTitleStreamTitleEventDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationTitleStreamTitleEventDto
+   */
+  type: ConversationTitleStreamTitleEventDtoTypeEnum;
+  /**
+   * The exact conversation resource URL supplied in the request.
+   * @type {string}
+   * @memberof ConversationTitleStreamTitleEventDto
+   */
+  id: string;
+  /**
+   * Current display title without conversation messages.
+   * @type {string}
+   * @memberof ConversationTitleStreamTitleEventDto
+   */
+  title: string;
+}
+
+/**
+ * @export
+ */
+export const ConversationTitleStreamTitleEventDtoTypeEnum = {
+  Title: 'title',
+} as const;
+export type ConversationTitleStreamTitleEventDtoTypeEnum =
+  (typeof ConversationTitleStreamTitleEventDtoTypeEnum)[keyof typeof ConversationTitleStreamTitleEventDtoTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface ConversationTitleStreamUnavailableEventDto
+ */
+export interface ConversationTitleStreamUnavailableEventDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationTitleStreamUnavailableEventDto
+   */
+  type: ConversationTitleStreamUnavailableEventDtoTypeEnum;
+  /**
+   * The exact conversation resource URL supplied in the request. The conversation is missing or inaccessible; which one is not disclosed.
+   * @type {string}
+   * @memberof ConversationTitleStreamUnavailableEventDto
+   */
+  id: string;
+}
+
+/**
+ * @export
+ */
+export const ConversationTitleStreamUnavailableEventDtoTypeEnum = {
+  Unavailable: 'unavailable',
+} as const;
+export type ConversationTitleStreamUnavailableEventDtoTypeEnum =
+  (typeof ConversationTitleStreamUnavailableEventDtoTypeEnum)[keyof typeof ConversationTitleStreamUnavailableEventDtoTypeEnum];
+
+/**
+ *
+ * @export
  * @interface ConversationTitlesBodyDto
  */
 export interface ConversationTitlesBodyDto {
@@ -7677,6 +7909,19 @@ export interface StopCompletionDto {
    * @memberof StopCompletionDto
    */
   content?: string;
+}
+/**
+ *
+ * @export
+ * @interface StreamConversationTitlesBodyDto
+ */
+export interface StreamConversationTitlesBodyDto {
+  /**
+   * Full DIAL Core conversation resource URLs, at most 500 and 262144 bytes as a serialized JSON array. Duplicate IDs produce one outcome; visible conversations should come first, because IDs are admitted in order.
+   * @type {Array<string>}
+   * @memberof StreamConversationTitlesBodyDto
+   */
+  ids: Array<string>;
 }
 
 /**

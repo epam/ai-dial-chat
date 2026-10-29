@@ -73,6 +73,7 @@ import {
   Suspense,
   useCallback,
   useEffect,
+  useId,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -184,6 +185,8 @@ interface ConversationPanelViewProps {
   onRequestedFilterChange?: () => void;
   onActiveFilterChange?: (tab: FilterTab) => void;
   onDuplicateReadonly?: () => void;
+  /* False while the desktop sidebar is collapsed or the mobile drawer is closed. */
+  isVisible?: boolean;
 }
 
 const ConversationPanelView: FC<ConversationPanelViewProps> = ({
@@ -193,6 +196,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   onRequestedFilterChange,
   onActiveFilterChange,
   onDuplicateReadonly,
+  isVisible = true,
 }) => {
   const { t } = useTranslation();
   const deleteConfirmationLabels = useDeleteConfirmationLabels();
@@ -236,6 +240,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     generateConversationTitle,
     duplicateConversation,
     refreshConversations,
+    setVisibleConversationIds,
   } = useConversations();
   const classifyTransferError = useCallback((error: unknown) => {
     if (error instanceof UnauthorizedError) return { isUnauthorized: true };
@@ -643,6 +648,45 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     () =>
       applyActiveScheduledTaskRun(scheduledTaskGrouping, activeConversationId),
     [scheduledTaskGrouping, activeConversationId],
+  );
+
+  /*
+   * Viewport priority for title enrichment. The list reports panel ids; the
+   * context schedules by list resource ids. A hidden view keeps its last
+   * report so reopening restores priority without waiting for a scroll.
+   */
+  const visibilityKey = useId();
+  const panelIdToConversationIdRef = useRef(new Map<string, string>());
+  useEffect(() => {
+    panelIdToConversationIdRef.current = new Map(
+      panelItems.map((item) => [toPanelConversationId(item.id), item.id]),
+    );
+  }, [panelItems]);
+  const lastVisibleIdsRef = useRef<string[]>([]);
+  const isVisibleRef = useRef(isVisible);
+  const registerVisibleIds = useCallback(() => {
+    setVisibleConversationIds(
+      visibilityKey,
+      isVisibleRef.current ? lastVisibleIdsRef.current : null,
+    );
+  }, [setVisibleConversationIds, visibilityKey]);
+  const handleVisibleConversationIdsChange = useCallback(
+    (panelIds: string[]) => {
+      lastVisibleIdsRef.current = panelIds.flatMap((panelId) => {
+        const id = panelIdToConversationIdRef.current.get(panelId);
+        return id ? [id] : [];
+      });
+      registerVisibleIds();
+    },
+    [registerVisibleIds],
+  );
+  useEffect(() => {
+    isVisibleRef.current = isVisible;
+    registerVisibleIds();
+  }, [isVisible, registerVisibleIds]);
+  useEffect(
+    () => () => setVisibleConversationIds(visibilityKey, null),
+    [setVisibleConversationIds, visibilityKey],
   );
 
   const conversations = useConversationPanelItems({
@@ -1434,6 +1478,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       getActions={getActions}
       onActionMenuOpen={handleActionMenuOpen}
       onMoveConversation={handleMoveConversation}
+      onVisibleConversationIdsChange={handleVisibleConversationIdsChange}
       listClassName={CELEBRATION_HISTORY_CLASS}
     />
   );

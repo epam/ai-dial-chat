@@ -150,6 +150,29 @@ describe('EntityEditor', () => {
     );
   });
 
+  it('keeps an empty alert region mounted before any alert arrives', () => {
+    const { rerender } = renderEditor();
+
+    const region = screen.getByRole('alert');
+    expect(region.textContent).toBe('');
+
+    rerender(
+      <EntityEditor
+        title="Create toolset"
+        onBack={vi.fn()}
+        onCancel={vi.fn()}
+        onSubmit={vi.fn()}
+        submitLabel="Create"
+        metadata={<p>metadata fields</p>}
+        setup={<p>setup fields</p>}
+        alert="Failed to create application"
+      />,
+    );
+
+    expect(screen.getByRole('alert')).toBe(region);
+    expect(region.textContent).toBe('Failed to create application');
+  });
+
   it('uses setupTitle and custom labels over the defaults', () => {
     renderEditor({
       setupTitle: 'SKILL.md',

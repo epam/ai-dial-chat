@@ -1,25 +1,25 @@
 import { Injectable, Logger } from '@nestjs/common';
-import type { Response } from 'express';
 import { extractDialErrorMessage } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
+import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import {
   buildConversationIdHeaders,
   buildJobTitleHeaders,
 } from '../../common/utils/header-value';
 import { StringUtils } from '../../common/utils/string-utils';
 import { DialClientService } from '../../dial/dial-client.service';
-import { ConversationResponseDto } from '../../openapi/openapi-response.dto';
+import type { ConversationResponseDto } from '../../openapi/openapi-response.dto';
 import {
   ConversationMessageDto,
   ConversationMessageRole,
 } from '../dto/conversation-message.dto';
-import { MessageCustomContentDto } from '../dto/message-custom-content.dto';
 import {
   applyChunkToMessage,
   extractDialStreamError,
   type DialStreamErrorPayload,
 } from '../utils/apply-chunk.server';
 import type {
+  ChatCompletionsRequestBody,
   GenerationRelayOutcome,
   GenerationRelayTiming,
 } from './generation.types';
@@ -31,13 +31,28 @@ const getValidAttachments = (
     Boolean(attachment.data || attachment.url),
   );
 
+/*
+ * `custom_content.skills[].url` is persisted verbatim from the frontend
+ * (e.g. `skills/public/my chats/123`), unlike every other DIAL resource path
+ * in this codebase, which is percent-encoded right at the DIAL Core call
+ * boundary via `encodeDialResourcePath`. Left unencoded, a path segment with
+ * a space or other reserved character makes DIAL Core reject the whole
+ * completion request with a 400 — encode here, at the same boundary.
+ */
+const getEncodedSkills = (
+  customContent?: ConversationMessageDto['custom_content'],
+) =>
+  customContent?.skills?.map((skill) => ({
+    ...skill,
+    url: encodeDialResourcePath(skill.url),
+  }));
+
 /**
- * Today's Chat Completions request/response handling, extracted verbatim
- * behind the generation adapter seam — same request built from
- * `buildConversationHistory`'s messages, same SSE chunk parsing, same
- * `sendChatCompletionRequest` call. `ConversationService` calls this
- * unchanged for any deployment that doesn't resolve to
- * `GenerationApi.Responses`.
+ * Chat Completions request/response handling behind the generation adapter
+ * seam: builds the request from `buildConversationHistory`'s messages, calls
+ * `sendChatCompletionRequest` and parses the SSE chunks.
+ * `ConversationStreamingService` uses it for every deployment that doesn't
+ * resolve to `GenerationApi.Responses`.
  */
 @Injectable()
 export class ChatCompletionsAdapter {
@@ -48,30 +63,26 @@ export class ChatCompletionsAdapter {
   buildRequest(params: {
     startConversation: ConversationResponseDto;
     messagesForCompletion: ConversationMessageDto[];
-    customContent: MessageCustomContentDto | undefined;
     temperatureSupported: boolean;
-  }): unknown {
+    configuration?: Record<string, unknown>;
+  }): ChatCompletionsRequestBody {
     const {
       startConversation,
       messagesForCompletion,
-      customContent,
       temperatureSupported,
+      configuration,
     } = params;
-
-    const configuration =
-      customContent?.configuration_value ??
-      messagesForCompletion
-        .filter((m) => m.custom_content?.configuration_value)
-        .at(-1)?.custom_content?.configuration_value;
 
     const dialMessages = messagesForCompletion
       .filter((m) => m.role !== ConversationMessageRole.Status)
       .map((m) => {
         const validAttachments = getValidAttachments(m.custom_content);
+        const encodedSkills = getEncodedSkills(m.custom_content);
         const content = Object.fromEntries(
           Object.entries({
             ...m.custom_content,
             attachments: validAttachments.length ? validAttachments : undefined,
+            skills: encodedSkills?.length ? encodedSkills : undefined,
             configuration_value: undefined,
             stages: undefined,
           }).filter(([, value]) => value != null),
@@ -101,8 +112,11 @@ export class ChatCompletionsAdapter {
   }
 
   /**
-   * Calls the model and relays the SSE response chunks to `res`, writing raw
-   * bytes through and building up `assembledMessage` from the parsed chunks.
+   * Calls the model, yielding the raw SSE response bytes as they arrive, and
+   * builds up `assembledMessage` from the parsed chunks. The generator's
+   * return value (available once iteration completes) carries the outcome.
+   * Log lines keep the `relayModelCompletion` prefix this relay had inside
+   * `ConversationStreamingService`, so existing log searches still match.
    */
   async *stream(
     model: string,
@@ -111,8 +125,13 @@ export class ChatCompletionsAdapter {
     signal: AbortSignal,
     initialAssembledMessage: ConversationMessageDto,
     clientChannelId?: string,
+    timezone?: string,
     timing?: GenerationRelayTiming,
     conversationId?: string,
+    onChunkApplied?: (
+      rawChunk: unknown,
+      message: ConversationMessageDto,
+    ) => void,
     jobTitle?: string,
   ): AsyncGenerator<Uint8Array, GenerationRelayOutcome, void> {
     let assembledMessage = initialAssembledMessage;
@@ -131,6 +150,7 @@ export class ChatCompletionsAdapter {
             ...(clientChannelId
               ? { 'X-DIAL-CLIENT-CHANNEL-ID': clientChannelId }
               : {}),
+            ...(timezone ? { 'X-Timezone': timezone } : {}),
             ...buildConversationIdHeaders(conversationId),
             ...buildJobTitleHeaders(jobTitle),
           },
@@ -240,6 +260,7 @@ export class ChatCompletionsAdapter {
                 timing.firstDeltaAt = Date.now();
               }
               assembledMessage = applyChunkToMessage(assembledMessage, parsed);
+              onChunkApplied?.(parsed, assembledMessage);
             } catch {
               /*
                * Never log the payload itself here — chunk content is
@@ -314,36 +335,5 @@ export class ChatCompletionsAdapter {
         }
       }
     }
-  }
-
-  async relay(
-    model: string,
-    requestBody: unknown,
-    token: string,
-    signal: AbortSignal,
-    res: Response,
-    initialAssembledMessage: ConversationMessageDto,
-    clientChannelId?: string,
-    timing?: GenerationRelayTiming,
-    conversationId?: string,
-    jobTitle?: string,
-  ): Promise<GenerationRelayOutcome> {
-    const iterator = this.stream(
-      model,
-      requestBody,
-      token,
-      signal,
-      initialAssembledMessage,
-      clientChannelId,
-      timing,
-      conversationId,
-      jobTitle,
-    );
-    let next = await iterator.next();
-    while (!next.done) {
-      res.write(next.value);
-      next = await iterator.next();
-    }
-    return next.value;
   }
 }

@@ -113,7 +113,11 @@ describe('ProjectsPage', () => {
         ProjectsI18nKeys.SourceOrganization,
       ),
     ).toBeTruthy();
-    expect(screen.queryByRole('time')).toBeNull();
+    expect(
+      within(screen.getByRole('article', { name: 'Q4 Launch' })).getByRole(
+        'time',
+      ),
+    ).toBeTruthy();
   });
 
   it('filters the list as the user types in the search', async () => {

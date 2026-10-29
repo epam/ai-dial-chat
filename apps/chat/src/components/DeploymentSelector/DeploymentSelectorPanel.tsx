@@ -7,6 +7,7 @@ import {
   SELECT_LIST_MAX_HEIGHT_PX,
 } from '@epam/ai-dial-chat-shared';
 import {
+  CaptionText,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   EllipsisTooltip,
@@ -377,9 +378,10 @@ const DeploymentSelectorPanel: FC<Props> = ({
                 />
               )}
               {item.version && (
-                <span className="dial-tiny-text min-w-0 wrap-break-word text-secondary">
-                  {item.version}
-                </span>
+                <CaptionText
+                  text={item.version}
+                  className="min-w-0 wrap-break-word"
+                />
               )}
             </span>
           }

@@ -12,7 +12,13 @@ import {
   ScheduledTaskDetailView,
   type ScheduledTaskRunItem,
 } from '@epam/ai-dial-scheduled-tasks';
-import { GhostButton } from '@epam/ai-dial-ui-kit';
+import {
+  ButtonAppearance,
+  ElementSize,
+  ErrorMessageNotification,
+  GhostButton,
+  NeutralButton,
+} from '@epam/ai-dial-ui-kit';
 import {
   memo,
   useCallback,
@@ -817,15 +823,17 @@ const ScheduledTaskDetailPage: FC = () => {
         onRunClick={handleRunClick}
       />
       {runsError && mergedRunDtos.length > 0 && (
-        <div
-          role="alert"
-          className="flex flex-wrap items-center gap-2 px-4 py-2"
-        >
-          <span>{labels.historyErrorLabel}</span>
-          <GhostButton
-            label={labels.historyRetryLabel}
-            onClick={refetchRuns}
-            className="min-h-11"
+        <div className="px-4 py-2">
+          <ErrorMessageNotification
+            message={labels.historyErrorLabel}
+            action={
+              <NeutralButton
+                appearance={ButtonAppearance.Outlined}
+                size={ElementSize.Small}
+                label={labels.historyRetryLabel}
+                onClick={refetchRuns}
+              />
+            }
           />
         </div>
       )}

@@ -1230,4 +1230,19 @@ export class EnvironmentVariables {
   @IsInt()
   @Min(1000)
   GENERATION_FINALIZE_TIMEOUT_MS?: number = 60_000;
+
+  /*
+   * Bounds how long a completion may wait in preparation — the hidden-model
+   * check, capability resolution, the stored-conversation read and the
+   * start-state save — before SSE headers are sent (see
+   * openspec/specs/generation-registry/spec.md). On expiry the request fails
+   * with 503 and attach subscribers are released, but the entry keeps its
+   * registry key (`settling`) until the abandoned DIAL Core call settles: the
+   * bound stops the wait, never the remote work.
+   */
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1000)
+  GENERATION_PREPARATION_TIMEOUT_MS?: number = 30_000;
 }
