@@ -44,7 +44,7 @@ export const ItemCell: FC<ItemCellProps> = ({
               name={row.name}
               size={AVATAR_SIZE}
               className="rounded-xl!"
-              textClassName="text-lg"
+              textClassName="dial-h2-text"
             />
           }
           styles={{ badgeClassName: '!rounded-xl' }}

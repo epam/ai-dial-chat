@@ -277,9 +277,12 @@ describe('ApplicationEditorPage — schema app', () => {
       denySchema();
       renderPage(createSearch);
 
-      expect(screen.getByRole('alert').textContent).toBe(
-        CatalogI18nKeys.CreationDenied,
-      );
+      expect(
+        screen.getByRole('heading', {
+          level: 1,
+          name: CatalogI18nKeys.CreationDenied,
+        }),
+      ).toBeTruthy();
       expect(getApplicationSchema).not.toHaveBeenCalled();
       expect(createApplication).not.toHaveBeenCalled();
     });

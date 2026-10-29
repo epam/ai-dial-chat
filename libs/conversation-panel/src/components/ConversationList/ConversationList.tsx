@@ -4,7 +4,7 @@ import {
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import { PanelEmpty, PanelNoResults } from '@epam/ai-dial-sidebar';
-import { Skeleton } from '@epam/ai-dial-ui-kit';
+import { Skeleton, LiveRegion, LiveRegionElement } from '@epam/ai-dial-ui-kit';
 import {
   type FC,
   memo,
@@ -578,9 +578,9 @@ export const ConversationList: FC<ConversationListProps> = memo(
           CONVERSATION_PANEL_CLASS.list,
         )}
       >
-        <span role="status" aria-live="polite" className="sr-only">
+        <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
           {getStatusMessage()}
-        </span>
+        </LiveRegion>
         {renderBody()}
       </div>
     );

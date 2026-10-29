@@ -70,7 +70,7 @@ a user opens a PDF or a syntax-highlighted code file. While that import is
 pending, `AttachmentCanvasBody`/`CodeContent` render an accessible
 `role="status"` loading state (a `Spinner` for PDF; the plain-text fallback
 for code, which stays visible instead of being replaced by a spinner). If the
-import fails, a `role="alert"` message and a retry control are shown instead;
+import fails, a `role="status"` message and a retry control are shown instead;
 activating retry genuinely re-attempts the import (recreating the underlying
 `lazy()` reference), not just re-rendering the cached failure — see
 `pdfContentLoadingLabel`/`pdfContentErrorLabel`/`pdfContentRetryLabel` and
@@ -696,7 +696,9 @@ Use `xlsxFormulaLabel` to localize the persistent XLSX `fx` bar's accessible
 label; it defaults to `Formula`. The visual `fx` mark is direction-neutral and
 does not replace that label for assistive technology. Its typography defaults
 to the UI Kit's `dial-italic-text` and can be overridden through
-`styles.typography.xlsxFormulaLabelClassName`.
+`styles.typography.xlsxFormulaLabelClassName`. The active cell content beside
+it defaults to `dial-code-text` and can be overridden through
+`styles.typography.xlsxFormulaValueClassName`.
 
 `McpAppDisplayMode` is the display-mode union of the MCP UI protocol
 (`'inline'` | `'fullscreen'` | `'pip'`) — the accepted values for

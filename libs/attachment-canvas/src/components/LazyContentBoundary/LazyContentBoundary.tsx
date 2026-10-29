@@ -37,7 +37,7 @@ export interface LazyContentBoundaryProps {
    */
   pendingContent?: ReactNode;
   /**
-   * Rendered above the `role="alert"` retry message when the lazy import
+   * Rendered above the `role="status"` retry message when the lazy import
    * fails — e.g. a plain-text fallback that stays usable while retry is
    * offered. Omitted by default.
    */
@@ -61,7 +61,12 @@ export const LazyContentPending: FC<LazyContentPendingProps> = ({
     aria-live="polite"
     className="flex h-full items-center justify-center"
   >
-    {pendingContent ?? <Spinner />}
+    {/* The kit Spinner is a status region of its own; hidden so regions don't nest. */}
+    {pendingContent ?? (
+      <span aria-hidden>
+        <Spinner />
+      </span>
+    )}
     <span className="sr-only">{loadingLabel}</span>
   </div>
 );
@@ -82,8 +87,11 @@ export const LazyContentError: FC<LazyContentErrorProps> = ({
 }) => (
   <div className="flex h-full flex-col items-center justify-center gap-3 p-4">
     {errorContent}
-    <div role="alert" className="flex flex-col items-center gap-3 text-center">
-      <p className={mergeClasses('dial-body-text', 'text-secondary')}>
+    <div className="flex flex-col items-center gap-3 text-center">
+      <p
+        role="status"
+        className={mergeClasses('dial-body-text', 'text-secondary')}
+      >
         {errorLabel}
       </p>
       <Button label={retryLabel} aria-label={retryLabel} onClick={onRetry} />
@@ -98,7 +106,7 @@ interface LazyContentBoundaryState {
 
 /**
  * Wraps a `lazy()`-loaded component with an accessible pending state
- * (`role="status"`) and a retryable failure state (`role="alert"`).
+ * (`role="status"`) and a retryable failure state (`role="status"`).
  */
 export class LazyContentBoundary extends Component<
   LazyContentBoundaryProps,

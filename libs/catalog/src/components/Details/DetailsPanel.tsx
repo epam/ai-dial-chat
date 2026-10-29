@@ -22,6 +22,8 @@ import {
   SideDrawer,
   Skeleton,
   Tabs,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import {
   FC,
@@ -1294,14 +1296,14 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 )}
                 tabClassName="shrink-0"
               />
+              {/* Always mounted, so the loading text is announced when fetching starts. */}
+              <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
+                {isDetailsLoading
+                  ? (texts?.detailsLoadingAriaLabel ?? 'Loading details')
+                  : ''}
+              </LiveRegion>
               {isDetailsLoading && (
-                <div
-                  role="status"
-                  aria-label={
-                    texts?.detailsLoadingAriaLabel ?? 'Loading details'
-                  }
-                  className="shrink-0"
-                >
+                <div aria-hidden className="shrink-0">
                   <Skeleton
                     showTitle={false}
                     paragraph={{ rows: 1, width: '72px' }}

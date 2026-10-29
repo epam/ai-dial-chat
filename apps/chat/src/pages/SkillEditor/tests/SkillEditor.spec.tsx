@@ -287,7 +287,9 @@ describe('SkillEditor page', { timeout: 15000 }, () => {
 
     render(<SkillEditor />);
 
-    expect(screen.getAllByRole('alert').length).toBeGreaterThan(0);
+    expect(
+      screen.getByRole('region', { name: 'skillEditor.bucketMissingTitle' }),
+    ).toBeTruthy();
     expect(screen.getByText('skillEditor.bucketMissingMessage')).toBeTruthy();
     expect(createSkill).not.toHaveBeenCalled();
   });
@@ -1556,9 +1558,12 @@ describe('SkillEditor page — creation permissions', { timeout: 15000 }, () => 
     mockSearchParams = new URLSearchParams(search);
     render(<SkillEditor />);
 
-    expect(screen.getByRole('alert').textContent).toBe(
-      'catalog.creation.denied',
-    );
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: 'catalog.creation.denied',
+      }),
+    ).toBeTruthy();
     expect(
       screen.queryByPlaceholderText('skillEditor.namePlaceholder'),
     ).toBeNull();

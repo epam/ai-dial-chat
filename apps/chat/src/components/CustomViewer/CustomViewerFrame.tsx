@@ -1,4 +1,4 @@
-import { Spinner } from '@epam/ai-dial-ui-kit';
+import { ErrorMessageNotification, Spinner } from '@epam/ai-dial-ui-kit';
 import {
   VisualizerConnector,
   VisualizerConnectorEvents,
@@ -184,9 +184,12 @@ const CustomViewerFrame: FC<Props> = ({
   if (!iframeUrl) {
     return (
       <div className="flex size-full items-center justify-center p-4">
-        <p role="alert" className="text-start text-error">
-          {t(CustomViewerI18nKeys.InvalidUrl)}
-        </p>
+        {/* A static state of the viewer, not an update, so the kit error
+            notification is demoted from its default `alert` to `status`. */}
+        <ErrorMessageNotification
+          role="status"
+          message={t(CustomViewerI18nKeys.InvalidUrl)}
+        />
       </div>
     );
   }

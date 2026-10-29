@@ -8,6 +8,8 @@ import {
   ElementSize,
   MenuItem,
   Search,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronRight } from '@tabler/icons-react';
 import type { FC, MouseEvent } from 'react';
@@ -114,7 +116,7 @@ export const CreateMenuSheet: FC<CreateMenuSheetProps> = ({
           />
         </div>
       )}
-      {items.length ? (
+      {items.length > 0 && (
         <div
           role="menu"
           aria-label={parent ? undefined : title}
@@ -174,11 +176,11 @@ export const CreateMenuSheet: FC<CreateMenuSheetProps> = ({
             );
           })}
         </div>
-      ) : (
-        <p role="status" className="px-3 py-2">
-          {noResultsLabel}
-        </p>
       )}
+      {/* Always mounted so the no-results text is announced when it appears; takes no space while empty. */}
+      <LiveRegion as={LiveRegionElement.P} className="px-3 py-2">
+        {items.length > 0 ? null : noResultsLabel}
+      </LiveRegion>
     </BottomSheet>
   );
 };

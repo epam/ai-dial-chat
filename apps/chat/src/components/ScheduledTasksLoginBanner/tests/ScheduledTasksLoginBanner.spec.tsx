@@ -161,6 +161,29 @@ describe('ScheduledTasksLoginBanner', () => {
     expect(onLogIn).toHaveBeenCalledOnce();
   });
 
+  it('keeps the same status region mounted when the banner hides and fills it with the announcement', () => {
+    const { rerender } = render(
+      <ScheduledTasksLoginBanner
+        {...BASE_PROPS}
+        state={ScheduledTasksLoginBannerState.LoginInProgress}
+      />,
+    );
+    const status = screen.getByRole('status');
+    expect(status.textContent).toBe('');
+
+    rerender(
+      <ScheduledTasksLoginBanner
+        {...BASE_PROPS}
+        state={undefined}
+        liveAnnouncement="You're logged in."
+      />,
+    );
+
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('status')).toBe(status);
+    expect(status.textContent).toBe("You're logged in.");
+  });
+
   it('renders the container as an assertive alert region when shown', () => {
     render(
       <ScheduledTasksLoginBanner
@@ -170,5 +193,23 @@ describe('ScheduledTasksLoginBanner', () => {
     );
 
     expect(screen.getByRole('alert')).toBeTruthy();
+  });
+
+  it('renders the kit warning notification on the neutral surface with the login action inside it', () => {
+    render(
+      <ScheduledTasksLoginBanner
+        {...BASE_PROPS}
+        state={ScheduledTasksLoginBannerState.Shown}
+      />,
+    );
+
+    const alert = screen.getByRole('alert');
+    expect(alert.className).toContain('bg-layer-sunken');
+    expect(alert.className).not.toContain('bg-warning');
+    expect(
+      alert.contains(
+        screen.getByRole('button', { name: BASE_PROPS.loginButtonLabel }),
+      ),
+    ).toBe(true);
   });
 });

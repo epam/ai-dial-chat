@@ -5,7 +5,7 @@ import { ChatI18nKeys } from '../../../constants/translation-keys';
 import { ConversationReloadNotification } from '../ConversationReloadNotification';
 
 describe('ConversationReloadNotification', () => {
-  it('announces a read failure and offers a keyboard-accessible read retry', async () => {
+  it('shows a read failure and offers a keyboard-accessible read retry', async () => {
     const user = userEvent.setup();
     const onRetry = vi.fn().mockResolvedValue(undefined);
     render(
@@ -15,9 +15,9 @@ describe('ConversationReloadNotification', () => {
         onRetry={onRetry}
       />,
     );
-    expect(screen.getByRole('status').textContent).toContain(
-      ChatI18nKeys.ConversationReloadError,
-    );
+    expect(screen.getByText(ChatI18nKeys.ConversationReloadError)).toBeTruthy();
+    /* The host view owns the always-mounted live region for this message. */
+    expect(screen.queryByRole('status')).toBeNull();
     expect(screen.queryByText(ChatI18nKeys.StreamErrorTitle)).toBeNull();
     await user.tab();
     await user.keyboard('{Enter}');
@@ -43,7 +43,9 @@ describe('ConversationReloadNotification', () => {
       expect((button as HTMLButtonElement).disabled).toBe(true);
       await user.click(button);
       expect(onRetry).not.toHaveBeenCalled();
-      expect(screen.getByRole('status')).toBeTruthy();
+      expect(
+        screen.getByText(ChatI18nKeys.ConversationReloadErrorTitle),
+      ).toBeTruthy();
     },
   );
 });

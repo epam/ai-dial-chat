@@ -9,7 +9,11 @@ interface ConversationReloadNotificationProps {
   onRetry: () => Promise<void>;
 }
 
-/** Transient read failure with a read-only recovery action. */
+/**
+ * Transient read failure with a read-only recovery action. Carries no live
+ * region of its own: it mounts on demand, so `ConversationView` announces it
+ * through an always-mounted polite status region instead.
+ */
 export const ConversationReloadNotification: FC<
   ConversationReloadNotificationProps
 > = ({ isReloading, isStreaming, onRetry }) => {
@@ -20,7 +24,7 @@ export const ConversationReloadNotification: FC<
 
   return (
     <div className="flex min-w-0 flex-wrap items-center justify-between gap-2 rounded border border-primary p-4 text-start">
-      <div role="status" aria-live="polite" className="min-w-0 wrap-break-word">
+      <div className="min-w-0 wrap-break-word">
         <p>{t(ChatI18nKeys.ConversationReloadErrorTitle)}</p>
         <p>{t(ChatI18nKeys.ConversationReloadError)}</p>
       </div>

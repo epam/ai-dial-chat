@@ -194,9 +194,12 @@ describe('ApplicationEditorPage', () => {
     });
     renderFakeKind();
 
-    expect(screen.getByRole('alert').textContent).toBe(
-      CatalogI18nKeys.CreationDenied,
-    );
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: CatalogI18nKeys.CreationDenied,
+      }),
+    ).toBeTruthy();
     expect(screen.queryByLabelText('fake-endpoint')).toBeNull();
     expect(mockCreate).not.toHaveBeenCalled();
   });

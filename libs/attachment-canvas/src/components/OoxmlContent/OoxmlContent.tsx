@@ -1,5 +1,9 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_KIT_ICON_STROKE, Spinner } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_KIT_ICON_STROKE,
+  Spinner,
+  LiveRegion,
+} from '@epam/ai-dial-ui-kit';
 import type { XlsxSelectionContext } from '@silurus/ooxml/xlsx';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { type FC, useEffect, useRef, useState } from 'react';
@@ -275,6 +279,8 @@ interface OoxmlContentProps {
   formulaLabel: string;
   /** CSS class applied to the decorative `fx` label. */
   formulaLabelClassName: string;
+  /** CSS class applied to the active cell content shown in the formula bar. */
+  formulaValueClassName: string;
   /** Accessible label for the cited-locations overlay region. Defaults to `'Cited locations'`. */
   highlightsLabel?: string;
   /** Status announced once the cited location has been brought into view. Defaults to `'Scrolled to the cited location'`. */
@@ -288,6 +294,7 @@ export const OoxmlContent: FC<OoxmlContentProps> = ({
   loadErrorLabel,
   formulaLabel,
   formulaLabelClassName,
+  formulaValueClassName,
   highlightsLabel = 'Cited locations',
   highlightNavigatedLabel = 'Scrolled to the cited location',
 }) => {
@@ -549,8 +556,9 @@ export const OoxmlContent: FC<OoxmlContentProps> = ({
             tabIndex={0}
             aria-live="polite"
             className={mergeClasses(
-              'h-8 min-w-0 flex-1 overflow-x-auto rounded border px-2 py-1 text-sm whitespace-nowrap focus-visible:outline focus-visible:outline-focus',
+              'h-8 min-w-0 flex-1 overflow-x-auto rounded border px-2 py-1 whitespace-nowrap focus-visible:outline focus-visible:outline-focus',
               styles.formulaValue,
+              formulaValueClassName,
             )}
           >
             {activeCellContent}
@@ -599,9 +607,9 @@ export const OoxmlContent: FC<OoxmlContentProps> = ({
           </div>
         )}
       </div>
-      <div role="status" aria-live="polite" className="sr-only">
+      <LiveRegion visuallyHidden>
         {hasNavigated ? highlightNavigatedLabel : ''}
-      </div>
+      </LiveRegion>
       {(isLoading || hasError) && (
         <div
           role={hasError ? 'alert' : undefined}

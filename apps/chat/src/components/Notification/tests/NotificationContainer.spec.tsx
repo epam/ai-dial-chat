@@ -27,58 +27,67 @@ vi.mock('../../../context/NotificationContext', () => ({
   },
 }));
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
-  DIAL_KIT_ICON_STROKE: 1.5,
-  mergeClasses: (...args: (string | undefined)[]) =>
-    args.filter(Boolean).join(' '),
-  DIAL_ICON_SIZE: { SM: 16, LG: 24 },
-  NotificationVariant: {
-    Error: 'error',
-    Warning: 'warning',
-    Info: 'info',
-    Success: 'success',
-    Loading: 'loading',
-  },
-  Notification: ({
-    variant,
-    title,
-    message,
-    action,
-    closable,
-    onClose,
-  }: {
-    variant: string;
-    title?: string;
-    message: ReactNode;
-    action?: ReactNode;
-    closable?: boolean;
-    onClose?: () => void;
-  }) => (
-    /* The kit reserves the assertive `alert` role for error/warning; the rest are polite. */
-    <div
-      role={variant === 'error' || variant === 'warning' ? 'alert' : 'status'}
-      data-variant={variant}
-    >
-      {title && <div>{title}</div>}
-      <div>{message}</div>
-      {action}
-      {closable && <button aria-label="Close notification" onClick={onClose} />}
-    </div>
-  ),
-  GhostIconButton: ({
-    icon,
-    onClick,
-    ...rest
-  }: {
-    icon?: ReactNode;
-    onClick?: () => void;
-    'aria-label'?: string;
-  }) => (
-    <button onClick={onClick} {...rest}>
-      {icon}
-    </button>
-  ),
-}));
+vi.mock('@epam/ai-dial-ui-kit', async () => {
+  const actual = await vi.importActual<typeof import('@epam/ai-dial-ui-kit')>(
+    '@epam/ai-dial-ui-kit',
+  );
+  return {
+    LiveRegion: actual.LiveRegion,
+    LiveRegionElement: actual.LiveRegionElement,
+    DIAL_KIT_ICON_STROKE: 1.5,
+    mergeClasses: (...args: (string | undefined)[]) =>
+      args.filter(Boolean).join(' '),
+    DIAL_ICON_SIZE: { SM: 16, LG: 24 },
+    NotificationVariant: {
+      Error: 'error',
+      Warning: 'warning',
+      Info: 'info',
+      Success: 'success',
+      Loading: 'loading',
+    },
+    Notification: ({
+      variant,
+      title,
+      message,
+      action,
+      closable,
+      onClose,
+    }: {
+      variant: string;
+      title?: string;
+      message: ReactNode;
+      action?: ReactNode;
+      closable?: boolean;
+      onClose?: () => void;
+    }) => (
+      /* The kit reserves the assertive `alert` role for error/warning; the rest are polite. */
+      <div
+        role={variant === 'error' || variant === 'warning' ? 'alert' : 'status'}
+        data-variant={variant}
+      >
+        {title && <div>{title}</div>}
+        <div>{message}</div>
+        {action}
+        {closable && (
+          <button aria-label="Close notification" onClick={onClose} />
+        )}
+      </div>
+    ),
+    GhostIconButton: ({
+      icon,
+      onClick,
+      ...rest
+    }: {
+      icon?: ReactNode;
+      onClick?: () => void;
+      'aria-label'?: string;
+    }) => (
+      <button onClick={onClick} {...rest}>
+        {icon}
+      </button>
+    ),
+  };
+});
 
 const makeItem = (overrides: Partial<NotificationItem>): NotificationItem => ({
   id: '1',

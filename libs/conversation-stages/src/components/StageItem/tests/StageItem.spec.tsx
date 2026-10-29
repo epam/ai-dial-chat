@@ -324,7 +324,8 @@ describe('StageItem — name cleanup', () => {
       />,
     );
     const nameEl = screen.getByText('My_OMDB_Agent__0_0_1_tool');
-    expect(nameEl.className).toMatch(/monoName|mono/i);
+    expect(nameEl.className).toContain('dial-code-text');
+    expect(nameEl.className).not.toContain('dial-small-text');
   });
 });
 
@@ -379,7 +380,7 @@ describe('StageItem — nameOverride (used for ×N attempts)', () => {
       />,
     );
     const nameEl = screen.getByText('Attempt_1');
-    expect(nameEl.className).not.toMatch(/monoName/);
+    expect(nameEl.className).not.toContain('dial-code-text');
   });
 });
 

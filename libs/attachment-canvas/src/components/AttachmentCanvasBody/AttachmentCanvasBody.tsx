@@ -344,7 +344,11 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
             tableDownloadFilename={tableDownloadFilename}
           />
         );
-      case AttachmentContentType.Json:
+      case AttachmentContentType.Json: {
+        // A host `jsonClassName` alone also reaches the keys, which then inherit it.
+        const jsonLabelTypography =
+          typography?.jsonLabelClassName ??
+          (typography?.jsonClassName ? undefined : 'dial-code-semi-text');
         return (
           <div dir="ltr" className="h-full overflow-auto">
             <div
@@ -362,9 +366,14 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
                   ),
                   basicChildStyle: defaultStyles.basicChildStyle,
                   childFieldsContainer: 'm-0 ps-3',
-                  label: mergeClasses('me-1 font-semibold', styles.jsonLabel),
+                  label: mergeClasses(
+                    'me-1',
+                    jsonLabelTypography,
+                    styles.jsonLabel,
+                  ),
                   clickableLabel: mergeClasses(
-                    'me-1 cursor-pointer font-semibold hover:underline',
+                    'me-1 cursor-pointer hover:underline',
+                    jsonLabelTypography,
                     styles.jsonClickableLabel,
                   ),
                   nullValue: mergeClasses('italic', styles.jsonNullValue),
@@ -383,7 +392,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
                     styles.jsonExpandIcon,
                   ),
                   collapsedContent: mergeClasses(
-                    'me-1 cursor-pointer rounded px-1',
+                    'dial-caption-text me-1 cursor-pointer rounded px-1',
                     styles.jsonCollapsedContent,
                   ),
                 }}
@@ -391,6 +400,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
             </div>
           </div>
         );
+      }
       case AttachmentContentType.Code:
         return (
           <CodeContent
@@ -460,6 +470,9 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
             formulaLabelClassName={
               typography?.xlsxFormulaLabelClassName ?? 'dial-italic-text'
             }
+            formulaValueClassName={
+              typography?.xlsxFormulaValueClassName ?? 'dial-code-text'
+            }
             highlightsLabel={ooxmlHighlightsLabel}
             highlightNavigatedLabel={ooxmlHighlightNavigatedLabel}
           />
@@ -509,7 +522,9 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     content,
     typography?.fontClassName,
     typography?.jsonClassName,
+    typography?.jsonLabelClassName,
     typography?.xlsxFormulaLabelClassName,
+    typography?.xlsxFormulaValueClassName,
     fileName,
     codeBlockTheme,
     unsupportedLabel,

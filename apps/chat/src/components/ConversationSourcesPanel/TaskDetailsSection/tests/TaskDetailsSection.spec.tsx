@@ -128,7 +128,11 @@ describe('TaskDetailsSection', () => {
       }),
     );
 
-    expect(screen.getByRole('alert')).toBeTruthy();
+    expect(
+      screen
+        .getByText('scheduledTasks.conversationBanner.unavailableLabel')
+        .getAttribute('role'),
+    ).toBe('status');
     await user.click(
       screen.getByRole('button', { name: 'scheduledTasks.list.retryLabel' }),
     );

@@ -17,6 +17,9 @@ import {
   PrimaryButton,
   Input,
   LinkButton,
+  LiveRegion,
+  LiveRegionElement,
+  LiveRegionPoliteness,
 } from '@epam/ai-dial-ui-kit';
 import { IconAlertCircleFilled } from '@tabler/icons-react';
 import {
@@ -124,20 +127,22 @@ const SigninRow: FC<SigninRowProps> = ({
         />
       )}
 
-      {rowState.error && (
-        <div
-          role="alert"
-          className="dial-small-text flex flex-wrap items-center gap-2 wrap-break-word text-error"
-        >
-          <IconAlertCircleFilled size={DIAL_ICON_SIZE.SM} aria-hidden />
-          <span>{rowState.error}</span>
-          <LinkButton
-            className="h-auto"
-            label={t(ToolsetSigninI18nKeys.ErrorRetry)}
-            onClick={() => onLogin(event, info)}
-          />
-        </div>
-      )}
+      <LiveRegion
+        politeness={LiveRegionPoliteness.Assertive}
+        className="dial-small-text flex flex-wrap items-center gap-2 wrap-break-word text-error"
+      >
+        {rowState.error && (
+          <>
+            <IconAlertCircleFilled size={DIAL_ICON_SIZE.SM} aria-hidden />
+            <span>{rowState.error}</span>
+            <LinkButton
+              className="h-auto"
+              label={t(ToolsetSigninI18nKeys.ErrorRetry)}
+              onClick={() => onLogin(event, info)}
+            />
+          </>
+        )}
+      </LiveRegion>
 
       {info.authenticationType === RowAuthType.DialNative && (
         <p className="dial-small-text wrap-break-word text-secondary">
@@ -615,9 +620,9 @@ const SigninInterruptDialog: FC = () => {
         <p className="dial-small-text text-secondary">
           {t(ToolsetSigninI18nKeys.DialogDescription)}
         </p>
-        <span role="status" aria-live="polite" className="sr-only">
+        <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
           {statusMessage}
-        </span>
+        </LiveRegion>
         <div className="flex flex-col">
           {pendingEvents.map((event) => {
             const key = getResourceKey(event);

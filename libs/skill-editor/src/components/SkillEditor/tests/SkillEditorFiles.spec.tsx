@@ -126,7 +126,18 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
   };
 });
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
+vi.mock('@epam/ai-dial-ui-kit', async () => ({
+  /* The real live region and ErrorText: a hand-rolled stub would hide the always-mounted region `announce` renders. */
+  ...(await vi
+    .importActual<typeof import('@epam/ai-dial-ui-kit')>('@epam/ai-dial-ui-kit')
+    .then(
+      ({ ErrorText, LiveRegion, LiveRegionElement, LiveRegionPoliteness }) => ({
+        ErrorText,
+        LiveRegion,
+        LiveRegionElement,
+        LiveRegionPoliteness,
+      }),
+    )),
   ButtonDropdown: ({
     label,
     items,
@@ -228,8 +239,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     </div>
   ),
   CaptionText: ({ text }: { text?: string }) => <span>{text}</span>,
-  ErrorText: ({ text, id }: { text?: string; id?: string }) =>
-    text ? <span id={id}>{text}</span> : null,
   ErrorMessageNotification: ({
     message,
     action,

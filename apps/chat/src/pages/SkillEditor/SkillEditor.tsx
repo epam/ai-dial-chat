@@ -33,6 +33,8 @@ import {
   NotificationVariant,
   PrimaryButton,
   StateScreen,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import type { FC } from 'react';
@@ -511,7 +513,7 @@ const SkillEditorPage: FC = () => {
 
   if (!bucket) {
     return (
-      <div role="alert" className="h-full">
+      <div className="h-full">
         <StateScreen
           icon={
             <IconAlertTriangle
@@ -541,11 +543,11 @@ const SkillEditorPage: FC = () => {
       <div className="flex h-full min-h-0 flex-col">
         {/* Announces the return to the manifest view; the Back control keeps
           focus across the transition, so nothing else signals the change. */}
-        <span role="status" aria-live="polite" className="sr-only">
+        <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
           {hasReturnedToManifest && isManifestSelected
             ? t(SkillEditorI18nKeys.ReturnedToManifestStatus)
             : ''}
-        </span>
+        </LiveRegion>
 
         <SkillEditorForm
           key={`${bucket}/${skillPath ?? NEW_SKILL_CANVAS_SCOPE}`}

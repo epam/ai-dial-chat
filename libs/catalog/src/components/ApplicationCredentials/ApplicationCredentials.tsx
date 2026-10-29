@@ -33,7 +33,7 @@ export const ApplicationCredentials: FC<ApplicationCredentialsProps> = ({
     return (
       <div className="flex flex-col gap-2 px-6 py-3">
         <ErrorText
-          role="alert"
+          role="status"
           text={texts?.loadError ?? 'Unable to load credentials'}
         />
         <NeutralButton

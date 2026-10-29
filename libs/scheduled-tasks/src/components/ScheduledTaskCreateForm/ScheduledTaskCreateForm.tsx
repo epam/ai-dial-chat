@@ -29,6 +29,7 @@ import {
   NumberInput,
   Spinner,
   Select,
+  LiveRegionPoliteness,
 } from '@epam/ai-dial-ui-kit';
 import { LazyMarkdownEditor } from '@epam/ai-dial-ui-kit/editors';
 import { IconArrowNarrowLeft } from '@tabler/icons-react';
@@ -724,17 +725,16 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
           {skillSelector != null ? (
             <div className="w-full max-w-[996px] min-w-0">{skillSelector}</div>
           ) : (
-            errors.skillUrls && (
-              <div aria-live="polite">
-                <ErrorText
-                  className={mergeClasses(
-                    instructionsErrorClassName,
-                    styles.instructionsError,
-                  )}
-                  text={errors.skillUrls}
-                />
-              </div>
-            )
+            /* Always mounted so the polite region exists before the error
+               arrives; the kit region takes no space while empty. */
+            <ErrorText
+              announce={LiveRegionPoliteness.Polite}
+              className={mergeClasses(
+                instructionsErrorClassName,
+                styles.instructionsError,
+              )}
+              text={errors.skillUrls ?? ''}
+            />
           )}
           {/*
            * Cap the whole group, not just the editor: the Refine action sits at the

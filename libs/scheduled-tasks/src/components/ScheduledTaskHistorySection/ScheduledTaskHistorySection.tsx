@@ -1,5 +1,10 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { GhostButton } from '@epam/ai-dial-ui-kit';
+import {
+  GhostButton,
+  LiveRegion,
+  LiveRegionElement,
+  LiveRegionPoliteness,
+} from '@epam/ai-dial-ui-kit';
 import { type CSSProperties, type FC } from 'react';
 import type { ScheduledTaskHistorySectionProps } from '../../models/scheduled-task-history-section-props';
 import { ScheduledTaskHistorySectionVariant } from '../../types/scheduled-task-history-section-variant';
@@ -47,11 +52,11 @@ export const ScheduledTaskHistorySection: FC<
         styles.historyCard,
       )
     : 'pt-2';
+  const loadMoreErrorText =
+    labels.historyLoadMoreErrorLabel ?? labels.historyErrorLabel;
   const footer = loadMoreError ? (
     <li className={footerClassName}>
-      <p role="alert">
-        {labels.historyLoadMoreErrorLabel ?? labels.historyErrorLabel}
-      </p>
+      <p>{loadMoreErrorText}</p>
       {onRetryLoadMore && (
         <GhostButton
           label={labels.historyRetryLabel}
@@ -76,10 +81,21 @@ export const ScheduledTaskHistorySection: FC<
     </p>
   ) : undefined;
 
+  /* The failed page is reported in the list footer, which mounts with the error; this region is mounted first so the failure is announced. */
+  const loadMoreErrorAnnouncement = (
+    <LiveRegion
+      politeness={LiveRegionPoliteness.Assertive}
+      visuallyHidden
+      as={LiveRegionElement.Span}
+    >
+      {loadMoreError ? loadMoreErrorText : ''}
+    </LiveRegion>
+  );
+
   const loadingMoreAnnouncement = labels.historyLoadingMoreLabel ? (
-    <span role="status" aria-live="polite" className="sr-only">
+    <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
       {isLoadingMore ? labels.historyLoadingMoreLabel : ''}
-    </span>
+    </LiveRegion>
   ) : undefined;
 
   const runList = (
@@ -135,6 +151,7 @@ export const ScheduledTaskHistorySection: FC<
           <h2 className={sectionTitleClassName}>{labels.historyTitle}</h2>
           {nextRun}
           {loadingMoreAnnouncement}
+          {loadMoreErrorAnnouncement}
         </div>
         {/*
          * Rows bleed 12px (their pill padding) into the card's 24px padding,
@@ -155,6 +172,7 @@ export const ScheduledTaskHistorySection: FC<
     <div className="flex flex-col gap-4">
       {nextRun}
       {loadingMoreAnnouncement}
+      {loadMoreErrorAnnouncement}
       {runList}
     </div>
   );

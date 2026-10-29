@@ -145,10 +145,11 @@ export const StageItem: FC<StageItemProps> = ({
       <span
         className={mergeClasses(
           'max-w-[22rem] min-w-0 truncate',
-          typography?.fontClassName ?? 'dial-small-text',
+          isMono
+            ? (typography?.monoFontClassName ?? 'dial-code-text')
+            : (typography?.fontClassName ?? 'dial-small-text'),
           styles.stageName,
           isFailed && styles.stageNameFailed,
-          isMono && styles.monoName,
         )}
       >
         <EllipsisTooltip text={displayName || stage.status || ''} />

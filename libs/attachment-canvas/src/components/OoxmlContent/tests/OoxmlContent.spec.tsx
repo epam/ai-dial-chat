@@ -251,6 +251,7 @@ const renderContent = (format: OoxmlFileType) =>
       loadErrorLabel="Failed to load file"
       formulaLabel="Formula"
       formulaLabelClassName="dial-italic-text"
+      formulaValueClassName="dial-code-text"
     />,
   );
 
@@ -521,6 +522,7 @@ describe('OoxmlContent', () => {
         loadErrorLabel="Failed to load file"
         formulaLabel="Formula"
         formulaLabelClassName="dial-italic-text"
+        formulaValueClassName="dial-code-text"
       />,
     );
     await waitFor(() => expect(mockLoad).toHaveBeenCalledWith('blob:first'));
@@ -531,6 +533,7 @@ describe('OoxmlContent', () => {
         loadErrorLabel="Failed to load file"
         formulaLabel="Formula"
         formulaLabelClassName="dial-italic-text"
+        formulaValueClassName="dial-code-text"
       />,
     );
 
@@ -546,6 +549,7 @@ describe('OoxmlContent', () => {
         loadErrorLabel="Failed to load file"
         formulaLabel="Formula"
         formulaLabelClassName="dial-italic-text"
+        formulaValueClassName="dial-code-text"
       />,
     );
     await waitFor(() => expect(mockDocxConstructor).toHaveBeenCalledOnce());
@@ -556,6 +560,7 @@ describe('OoxmlContent', () => {
         loadErrorLabel="Failed to load file"
         formulaLabel="Formula"
         formulaLabelClassName="dial-italic-text"
+        formulaValueClassName="dial-code-text"
       />,
     );
 
@@ -570,6 +575,7 @@ describe('OoxmlContent', () => {
         loadErrorLabel="Failed to load file"
         formulaLabel="Formula"
         formulaLabelClassName="dial-italic-text"
+        formulaValueClassName="dial-code-text"
       />,
     );
     await waitFor(() => expect(mockDocxConstructor).toHaveBeenCalledOnce());
@@ -580,6 +586,7 @@ describe('OoxmlContent', () => {
         loadErrorLabel="Failed to load file"
         formulaLabel="Formula"
         formulaLabelClassName="dial-italic-text"
+        formulaValueClassName="dial-code-text"
       />,
     );
 
@@ -650,6 +657,7 @@ describe('OoxmlContent highlights', () => {
         loadErrorLabel="Failed to load file"
         formulaLabel="Formula"
         formulaLabelClassName="dial-italic-text"
+        formulaValueClassName="dial-code-text"
         highlightsLabel="Cited locations"
         highlightNavigatedLabel="Scrolled to the cited location"
       />,
@@ -1084,6 +1092,7 @@ describe('OoxmlContent highlights', () => {
         loadErrorLabel="Failed to load file"
         formulaLabel="Formula"
         formulaLabelClassName="dial-italic-text"
+        formulaValueClassName="dial-code-text"
         highlightsLabel="Cited locations"
         highlightNavigatedLabel="Scrolled to the cited location"
       />,
@@ -1108,6 +1117,7 @@ describe('OoxmlContent highlights', () => {
         loadErrorLabel="Failed to load file"
         formulaLabel="Formula"
         formulaLabelClassName="dial-italic-text"
+        formulaValueClassName="dial-code-text"
         highlightsLabel="Cited locations"
         highlightNavigatedLabel="Scrolled to the cited location"
       />,
@@ -1157,6 +1167,7 @@ describe('OoxmlContent highlights', () => {
         loadErrorLabel="Failed to load file"
         formulaLabel="Formula"
         formulaLabelClassName="dial-italic-text"
+        formulaValueClassName="dial-code-text"
         highlightsLabel="Cited locations"
         highlightNavigatedLabel="Scrolled to the cited location"
       />,
@@ -1265,6 +1276,7 @@ describe('OoxmlContent highlights', () => {
         loadErrorLabel="Failed to load file"
         formulaLabel="Formula"
         formulaLabelClassName="dial-italic-text"
+        formulaValueClassName="dial-code-text"
         highlightsLabel="Cited locations"
         highlightNavigatedLabel="Scrolled to the cited location"
       />,
@@ -1324,6 +1336,7 @@ describe('OoxmlContent highlights', () => {
         loadErrorLabel="Failed to load file"
         formulaLabel="Formula"
         formulaLabelClassName="dial-italic-text"
+        formulaValueClassName="dial-code-text"
         highlightsLabel="Cited locations"
         highlightNavigatedLabel="Scrolled to the cited location"
       />,
@@ -1361,6 +1374,7 @@ describe('OoxmlContent highlights', () => {
         loadErrorLabel="Failed to load file"
         formulaLabel="Formula"
         formulaLabelClassName="dial-italic-text"
+        formulaValueClassName="dial-code-text"
         highlightsLabel="Cited locations"
         highlightNavigatedLabel="Scrolled to the cited location"
       />,
@@ -1430,6 +1444,7 @@ describe('OoxmlContent highlights', () => {
         loadErrorLabel="Failed to load file"
         formulaLabel="Formula"
         formulaLabelClassName="dial-italic-text"
+        formulaValueClassName="dial-code-text"
         highlightsLabel="Cited locations"
         highlightNavigatedLabel="Scrolled to the cited location"
       />,
@@ -1641,6 +1656,7 @@ describe('OoxmlContent PPTX highlights', () => {
         loadErrorLabel="Failed to load file"
         formulaLabel="Formula"
         formulaLabelClassName="dial-italic-text"
+        formulaValueClassName="dial-code-text"
         highlightsLabel="Cited locations"
         highlightNavigatedLabel="Scrolled to the cited location"
       />,
@@ -1817,6 +1833,7 @@ describe('OoxmlContent XLSX highlights', () => {
         loadErrorLabel="Failed to load file"
         formulaLabel="Formula"
         formulaLabelClassName="dial-italic-text"
+        formulaValueClassName="dial-code-text"
         highlightsLabel="Cited locations"
         highlightNavigatedLabel="Scrolled to the cited location"
       />,

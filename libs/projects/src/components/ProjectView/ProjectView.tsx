@@ -22,6 +22,8 @@ import {
   NeutralButton,
   Search,
   Spinner,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconArrowNarrowLeft,
@@ -181,7 +183,7 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
     if (hasError) {
       return (
         <div className="flex flex-col items-center gap-3">
-          <p role="alert" className={mergeClasses(bodyClassName, styles.body)}>
+          <p role="status" className={mergeClasses(bodyClassName, styles.body)}>
             {labels.errorLabel}
           </p>
           <GhostButton label={labels.retryLabel} onClick={onRetry} />
@@ -190,7 +192,7 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
     }
     return (
       <div className="flex flex-col items-center gap-3">
-        <p role="alert" className={mergeClasses(bodyClassName, styles.body)}>
+        <p className={mergeClasses(bodyClassName, styles.body)}>
           {labels.notFoundLabel}
         </p>
         <GhostButton
@@ -250,11 +252,11 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
             ))}
           </ul>
         )}
-        <span role="status" aria-live="polite" className="sr-only">
+        <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
           {trimmedQuery === ''
             ? ''
             : labels.contextResultCountLabel(visibleFiles.length)}
-        </span>
+        </LiveRegion>
       </>
     );
   };

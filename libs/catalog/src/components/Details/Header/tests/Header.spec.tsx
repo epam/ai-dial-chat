@@ -19,6 +19,32 @@ import {
 import { Header } from '../Header';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  LiveRegionPoliteness: { Polite: 'polite', Assertive: 'assertive' },
+  LiveRegionElement: { Div: 'div', Span: 'span', P: 'p' },
+  LiveRegion: ({
+    politeness = 'polite',
+    visuallyHidden,
+    as: Tag = 'div',
+    atomic,
+    className,
+    children,
+    ...rest
+  }: {
+    politeness?: string;
+    visuallyHidden?: boolean;
+    as?: 'div' | 'span' | 'p';
+    atomic?: boolean;
+  } & React.HTMLAttributes<HTMLElement>) => (
+    <Tag
+      {...rest}
+      role={politeness === 'assertive' ? 'alert' : 'status'}
+      aria-live={politeness as 'polite' | 'assertive'}
+      aria-atomic={atomic}
+      className={visuallyHidden ? 'sr-only' : className}
+    >
+      {children}
+    </Tag>
+  ),
   DIAL_KIT_ICON_STROKE: 1.5,
   CaptionText: ({ id, text }: { id?: string; text?: string }) =>
     text ? <span id={id}>{text}</span> : null,
@@ -734,6 +760,8 @@ describe('Header — Download as primary action', () => {
         onDownload={onDownload}
       />,
     );
+    const status = screen.getByRole('status');
+    expect(status.textContent).toBe('');
 
     await userEvent.click(screen.getByRole('button', { name: 'Download' }));
 
@@ -742,7 +770,8 @@ describe('Header — Download as primary action', () => {
     }) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
     expect(button.getAttribute('aria-busy')).toBe('true');
-    expect(screen.getByRole('status').textContent).toBe('Downloading');
+    expect(screen.getByRole('status')).toBe(status);
+    expect(status.textContent).toBe('Downloading');
 
     resolveDownload();
     await waitFor(() =>

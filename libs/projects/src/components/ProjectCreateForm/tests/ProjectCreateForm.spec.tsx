@@ -209,9 +209,50 @@ describe('ProjectCreateForm', () => {
       });
 
       const input = screen.getByRole('textbox', { name: /Name/ });
-      const alert = screen.getByRole('alert');
-      expect(alert.textContent).toBe('A project with this name already exists');
-      expect(input.getAttribute('aria-describedby')).toBe(alert.id);
+      const alert = screen
+        .getAllByRole('alert')
+        .find(
+          (region) =>
+            region.textContent === 'A project with this name already exists',
+        );
+      const error = within(alert as HTMLElement).getByText(
+        'A project with this name already exists',
+      );
+      expect(input.getAttribute('aria-describedby')).toBe(error.id);
+    });
+
+    it('mounts the name and context alert regions empty before any host error', () => {
+      const { rerender, props } = renderForm();
+
+      const regions = screen.getAllByRole('alert');
+      expect(regions.length).toBeGreaterThanOrEqual(2);
+      regions.forEach((region) => expect(region.textContent).toBe(''));
+
+      rerender(
+        <ProjectCreateForm
+          {...props}
+          errors={{ name: 'A project with this name already exists' }}
+        />,
+      );
+
+      expect(
+        regions.some(
+          (region) =>
+            region.textContent === 'A project with this name already exists',
+        ),
+      ).toBe(true);
+    });
+
+    it('keeps inline name validation out of the alert region', async () => {
+      renderForm();
+      const input = screen.getByRole('textbox', { name: /Name/ });
+
+      await userEvent.click(input);
+      await userEvent.tab();
+
+      screen
+        .getAllByRole('alert')
+        .forEach((region) => expect(region.textContent).toBe(''));
     });
 
     it('moves focus to Name when the host reports a name error', async () => {
@@ -383,9 +424,11 @@ describe('ProjectCreateForm', () => {
     it('shows a host context error as an alert', () => {
       renderForm({ errors: { context: 'Some files were rejected' } });
 
-      expect(screen.getByRole('alert').textContent).toBe(
-        'Some files were rejected',
-      );
+      expect(
+        screen
+          .getAllByRole('alert')
+          .some((region) => region.textContent === 'Some files were rejected'),
+      ).toBe(true);
     });
   });
 

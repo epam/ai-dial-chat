@@ -119,34 +119,53 @@ describe('RequireCatalogCreation', () => {
     expect(screen.queryByRole('form')).toBeNull();
   });
 
-  it('shows the unavailable alert when permissions failed to load', () => {
+  it('shows the unavailable screen when permissions failed to load', () => {
     mockCreation(UserConfigStatus.Error);
     renderBoundary();
 
-    expect(screen.getByRole('alert').textContent).toBe(
-      CatalogI18nKeys.CreationUnavailable,
-    );
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: CatalogI18nKeys.CreationUnavailable,
+      }),
+    ).toBeTruthy();
     expect(onFormMount).not.toHaveBeenCalled();
   });
 
-  it('shows the unavailable alert when the host cannot resolve the request', () => {
+  it('shows the unavailable screen when the host cannot resolve the request', () => {
     allow();
     renderBoundary({ isUnavailable: true });
 
-    expect(screen.getByRole('alert').textContent).toBe(
-      CatalogI18nKeys.CreationUnavailable,
-    );
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: CatalogI18nKeys.CreationUnavailable,
+      }),
+    ).toBeTruthy();
   });
 
-  it('shows the denied alert for a denied type', () => {
+  it('shows the denied screen for a denied type', () => {
     allow(ALL_TYPES.filter((type) => type !== CatalogCreationType.Prompt));
     renderBoundary();
 
-    expect(screen.getByRole('alert').textContent).toBe(
-      CatalogI18nKeys.CreationDenied,
-    );
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: CatalogI18nKeys.CreationDenied,
+      }),
+    ).toBeTruthy();
     expect(screen.queryByRole('form')).toBeNull();
     expect(onFormMount).not.toHaveBeenCalled();
+  });
+
+  it('renders the denied state as a region named by its message, not as an alert', () => {
+    allow([]);
+    renderBoundary();
+
+    expect(
+      screen.getByRole('region', { name: CatalogI18nKeys.CreationDenied }),
+    ).toBeTruthy();
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 
   it('keeps a mounted create form when permissions later reload or are lost', () => {
@@ -190,18 +209,24 @@ describe('RequireCatalogCreation', () => {
       allow(ALL_TYPES, ['schema-A']);
       renderBoundary({ ...schemaApp, schemaId: 'schema-A' });
 
-      expect(screen.getByRole('alert').textContent).toBe(
-        CatalogI18nKeys.CreationDenied,
-      );
+      expect(
+        screen.getByRole('heading', {
+          level: 1,
+          name: CatalogI18nKeys.CreationDenied,
+        }),
+      ).toBeTruthy();
     });
 
     it('denies every schema when the schema-app type is denied', () => {
       allow([CatalogCreationType.CustomApp]);
       renderBoundary({ ...schemaApp, schemaId: 'schema-B' });
 
-      expect(screen.getByRole('alert').textContent).toBe(
-        CatalogI18nKeys.CreationDenied,
-      );
+      expect(
+        screen.getByRole('heading', {
+          level: 1,
+          name: CatalogI18nKeys.CreationDenied,
+        }),
+      ).toBeTruthy();
     });
 
     it.each([undefined, null, ''])(
@@ -210,9 +235,12 @@ describe('RequireCatalogCreation', () => {
         allow();
         renderBoundary({ ...schemaApp, schemaId });
 
-        expect(screen.getByRole('alert').textContent).toBe(
-          CatalogI18nKeys.CreationUnavailable,
-        );
+        expect(
+          screen.getByRole('heading', {
+            level: 1,
+            name: CatalogI18nKeys.CreationUnavailable,
+          }),
+        ).toBeTruthy();
         expect(screen.queryByRole('form')).toBeNull();
       },
     );

@@ -53,6 +53,8 @@ import {
   TransferQueue,
   type DropdownItem,
   type TransferQueueLabels,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconClockHour3,
@@ -1588,11 +1590,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       />
 
       {pendingUnpublish != null && (
-        <span role="status" aria-live="polite" className="sr-only">
+        <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
           {isUnpublishing
             ? t(ConversationUnpublishI18nKeys.RequestingStatus)
             : ''}
-        </span>
+        </LiveRegion>
       )}
 
       <ConfirmationPopup
@@ -1684,7 +1686,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
                 header={t(ButtonsI18nKeys.Publish)}
                 onClose={handleClosePublishPanel}
               >
-                <p role="status">{t(BasicI18nKeys.Loading)}</p>
+                {/* Not a live region: the dialog mounts with this text, so
+                    opening it already reads it; mark the content busy. */}
+                <p aria-busy="true">{t(BasicI18nKeys.Loading)}</p>
               </Popup>
             }
           >

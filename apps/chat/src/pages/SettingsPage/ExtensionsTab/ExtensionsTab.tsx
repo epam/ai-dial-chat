@@ -16,6 +16,8 @@ import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   Spinner,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import { IconLogin, IconLogout } from '@tabler/icons-react';
 import {
@@ -305,9 +307,9 @@ const ExtensionsTab: FC = () => {
         onClose={handleLogoutDialogClose}
       />
 
-      <span role="status" aria-live="polite" className="sr-only">
+      <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
         {liveAnnouncement}
-      </span>
+      </LiveRegion>
     </div>
   );
 };

@@ -18,6 +18,8 @@ import {
   DIAL_KIT_ICON_STROKE,
   GhostButton,
   Spinner,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import { IconEye } from '@tabler/icons-react';
 import type { FC, ReactNode } from 'react';
@@ -655,9 +657,9 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
         </div>
       )}
       {/* Always mounted so screen readers announce the label when it is filled in. */}
-      <span role="status" aria-live="polite" className="sr-only">
+      <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
         {isBusy ? overlayLabel : ''}
-      </span>
+      </LiveRegion>
       {isBusy && (
         <div
           className="absolute inset-0 flex items-center justify-center bg-backdrop"

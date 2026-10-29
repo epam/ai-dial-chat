@@ -6,6 +6,7 @@ import {
   SchemaRenderer,
   SchemaRendererVariant,
   Spinner,
+  LiveRegionPoliteness,
 } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useId, useMemo, useState } from 'react';
@@ -138,15 +139,12 @@ const SchemaAppSetup: FC<Props> = ({
 
   return (
     <div className="flex flex-col">
-      {/* Always mounted so the blocked-save error is announced when it appears:
-          ErrorText itself carries no live-region role. */}
-      <div role="alert">
-        <ErrorText
-          id={propertiesErrorId}
-          text={errors.properties}
-          className="mb-2 block"
-        />
-      </div>
+      <ErrorText
+        announce={LiveRegionPoliteness.Assertive}
+        id={propertiesErrorId}
+        text={errors.properties}
+        className="mb-2 block"
+      />
       <SchemaRenderer
         schema={schema}
         variant={SchemaRendererVariant.Flat}

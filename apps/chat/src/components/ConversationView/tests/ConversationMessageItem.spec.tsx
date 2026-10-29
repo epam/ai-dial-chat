@@ -1894,8 +1894,35 @@ describe('ConversationMessageItem — application visualizers', () => {
 
     renderItem({ selectedAttachmentKey: '1:grouped-visualizer' });
 
-    expect(screen.getByText('Opened in Canvas')).toBeTruthy();
+    expect(screen.getAllByText('Opened in Canvas')).toHaveLength(2);
     expect(screen.queryByTitle('my-viz')).toBeNull();
+  });
+
+  it('keeps the opened-in-canvas status region mounted and fills it once the visualizer opens in the canvas', () => {
+    applicationVisualizersMock = registryWith();
+
+    const { rerender } = renderItem();
+    const statusesBefore = screen.getAllByRole('status');
+    expect(
+      statusesBefore.some((node) => node.textContent === 'Opened in Canvas'),
+    ).toBe(false);
+
+    rerender(
+      <ConversationMessageItem
+        {...defaultProps}
+        msg={ASSISTANT_WITH_ATTACHMENTS}
+        index={1}
+        effectiveDeploymentId="app-1"
+        openedInCanvasLabel="Opened in Canvas"
+        selectedAttachmentKey="1:grouped-visualizer"
+      />,
+    );
+
+    const announcement = screen
+      .getAllByRole('status')
+      .find((node) => node.textContent === 'Opened in Canvas');
+    expect(announcement).toBeTruthy();
+    expect(statusesBefore).toContain(announcement);
   });
 });
 

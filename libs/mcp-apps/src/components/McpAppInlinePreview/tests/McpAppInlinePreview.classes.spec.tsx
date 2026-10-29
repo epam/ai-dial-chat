@@ -139,3 +139,30 @@ describe('McpAppInlinePreview — public class names', () => {
     );
   });
 });
+
+describe('McpAppInlinePreview — opened in canvas announcement', () => {
+  it('keeps the status region mounted and fills it once the app opens in the canvas', async () => {
+    const { rerender } = renderPreview();
+    await screen.findByRole('toolbar', { name: 'MCP app actions' });
+    const status = screen.getByRole('status');
+    expect(status.textContent).toBe('');
+
+    rerender(
+      <McpAppInlinePreview
+        match={match}
+        cache={cache}
+        cacheKey="message-0"
+        hostAdapter={hostAdapter}
+        onExpand={vi.fn()}
+        expandAriaLabel="Expand"
+        reloadAriaLabel="Reload"
+        loadErrorLabel="Could not load the app"
+        openedInCanvasLabel="Opened in canvas"
+        isOpenedInCanvas
+      />,
+    );
+
+    expect(screen.getByRole('status')).toBe(status);
+    expect(status.textContent).toBe('Opened in canvas');
+  });
+});

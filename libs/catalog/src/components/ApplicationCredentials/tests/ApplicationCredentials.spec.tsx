@@ -148,4 +148,38 @@ describe('ApplicationCredentials', () => {
     expect(native.queryByRole('button')).toBeNull();
     expect(native.getByRole('status').textContent).toBe('Signed in');
   });
+
+  it('reports a load failure as page state, not an alert', () => {
+    render(<ApplicationCredentials {...props()} hasError />);
+    expect(
+      screen.getByText('Unable to load credentials').getAttribute('role'),
+    ).toBe('status');
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeTruthy();
+  });
+
+  it('announces a failed removal through an alert region mounted with the confirmation', async () => {
+    const user = userEvent.setup();
+    const options = props();
+    vi.mocked(options.onLogout).mockRejectedValueOnce(
+      new Error('Removal failed'),
+    );
+    render(
+      <ApplicationCredentials
+        {...options}
+        services={[{ ...service, status: CredentialStatus.SignedIn }]}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    const regions = screen.getAllByRole('alert');
+    regions.forEach((region) => expect(region.textContent).toBe(''));
+    const confirm = screen
+      .getAllByRole('button', { name: 'Delete' })
+      .find((button) => !button.hasAttribute('disabled'));
+    if (!confirm) throw new Error('Missing delete confirmation');
+    await user.click(confirm);
+    expect(
+      regions.some((region) => region.textContent === 'Removal failed'),
+    ).toBe(true);
+  });
 });

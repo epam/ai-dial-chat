@@ -1,5 +1,10 @@
 import { mergeClasses, PanelEmptyState } from '@epam/ai-dial-chat-shared';
-import { Highlight, Search } from '@epam/ai-dial-ui-kit';
+import {
+  Highlight,
+  Search,
+  LiveRegion,
+  LiveRegionElement,
+} from '@epam/ai-dial-ui-kit';
 import { FC, useMemo, useState } from 'react';
 import type {
   CatalogItemTools,
@@ -43,6 +48,8 @@ export interface ToolsProps {
   tableCellClassName?: string;
   /** CSS class for the tool count above the list. Defaults to `'dial-tiny-text'`. */
   countClassName?: string;
+  /** CSS class for parameter names, types and annotation keys inside the grids. Defaults to `'dial-tiny-code-text'`. */
+  codeClassName?: string;
   /** Grid column headings, search, count and no-results strings, merged over English defaults. */
   labels?: Partial<ToolsLabels>;
 }
@@ -58,6 +65,7 @@ export const Tools: FC<ToolsProps> = ({
   tableHeadingClassName = 'dial-caption-text',
   tableCellClassName = 'dial-tiny-text',
   countClassName = 'dial-tiny-text',
+  codeClassName = 'dial-tiny-code-text',
   labels,
 }) => {
   const columnLabels = { ...DEFAULT_TOOLS_LABELS, ...labels };
@@ -88,13 +96,12 @@ export const Tools: FC<ToolsProps> = ({
           onChange={(value) => setQuery(value ?? '')}
         />
         {/* Polite, so the count is announced as the search narrows the list. */}
-        <span
-          role="status"
-          aria-live="polite"
+        <LiveRegion
+          as={LiveRegionElement.Span}
           className={mergeClasses(countClassName, styles.count)}
         >
           {columnLabels.toolCount(shownTools.length)}
-        </span>
+        </LiveRegion>
       </div>
 
       {shownTools.length === 0 && query.trim() !== '' && (
@@ -143,7 +150,7 @@ export const Tools: FC<ToolsProps> = ({
                   key="name"
                   className={mergeClasses(
                     'border-none bg-transparent p-0 text-inherit',
-                    styles.code,
+                    codeClassName,
                   )}
                 >
                   {p.name}
@@ -152,7 +159,7 @@ export const Tools: FC<ToolsProps> = ({
                   key="type"
                   className={mergeClasses(
                     'border-none bg-transparent p-0 text-inherit',
-                    styles.code,
+                    codeClassName,
                   )}
                 >
                   {p.type}
@@ -175,7 +182,7 @@ export const Tools: FC<ToolsProps> = ({
                   key="key"
                   className={mergeClasses(
                     'border-none bg-transparent p-0 text-inherit',
-                    styles.code,
+                    codeClassName,
                   )}
                 >
                   {ann.key}

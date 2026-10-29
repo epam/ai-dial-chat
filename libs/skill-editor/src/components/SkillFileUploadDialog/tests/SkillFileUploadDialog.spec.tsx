@@ -12,7 +12,18 @@ import {
 import { SkillFileUploadMode } from '../../../types/skill-file-upload-mode';
 import { SkillFileUploadDialog } from '../SkillFileUploadDialog';
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
+vi.mock('@epam/ai-dial-ui-kit', async () => ({
+  /* The real live region and ErrorText: a hand-rolled stub would hide the always-mounted region `announce` renders. */
+  ...(await vi
+    .importActual<typeof import('@epam/ai-dial-ui-kit')>('@epam/ai-dial-ui-kit')
+    .then(
+      ({ ErrorText, LiveRegion, LiveRegionElement, LiveRegionPoliteness }) => ({
+        ErrorText,
+        LiveRegion,
+        LiveRegionElement,
+        LiveRegionPoliteness,
+      }),
+    )),
   DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { LG: 24, MD: 20, SM: 16 },
   ButtonVariant: { Primary: 'primary', Neutral: 'neutral', Danger: 'danger' },
@@ -58,8 +69,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     ) : null,
   CaptionText: ({ text, className }: { text?: string; className?: string }) =>
     text ? <span className={className}>{text}</span> : null,
-  ErrorText: ({ text, id }: { text?: string; id?: string }) =>
-    text ? <span id={id}>{text}</span> : null,
   FileDropzone: ({
     id,
     label,

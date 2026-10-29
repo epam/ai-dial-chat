@@ -218,10 +218,9 @@ describe('ApplicationCredentials', () => {
     vi.mocked(listExternalServices).mockRejectedValueOnce(new Error('offline'));
     const user = userEvent.setup();
     render(<ApplicationCredentials appId="agent" />);
-    expect(await screen.findByRole('alert')).toHaveProperty(
-      'textContent',
-      Labels.LoadError,
-    );
+    expect(
+      (await screen.findByText(Labels.LoadError)).getAttribute('role'),
+    ).toBe('status');
     await user.click(
       screen.getByRole('button', { name: ButtonsI18nKeys.Retry }),
     );

@@ -72,7 +72,9 @@ export const CodeContent: FC<CodeContentProps> = memo(
     }, []);
 
     const plainTextFallback = (
-      <pre className="p-4 wrap-break-word whitespace-pre-wrap">{text}</pre>
+      <pre className="dial-code-text p-4 wrap-break-word whitespace-pre-wrap">
+        {text}
+      </pre>
     );
 
     return (
@@ -101,11 +103,10 @@ export const CodeContent: FC<CodeContentProps> = memo(
                 margin: 0,
                 borderRadius: 0,
                 background: 'transparent',
-                fontSize: 14,
-                lineHeight: 1.5,
                 padding: '16px',
-                letterSpacing: 0,
               }}
+              className="dial-code-text"
+              codeTagProps={{ className: 'dial-code-text' }}
               wrapLongLines
             >
               {text}

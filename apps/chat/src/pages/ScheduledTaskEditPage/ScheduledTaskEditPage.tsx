@@ -349,7 +349,7 @@ const ScheduledTaskEditPage: FC = () => {
 
   if (taskError) {
     return (
-      <div role="alert" className="size-full">
+      <div className="size-full">
         <StateScreen
           icon={
             <IconAlertTriangle
@@ -372,7 +372,7 @@ const ScheduledTaskEditPage: FC = () => {
 
   if (isUnsupported || !values || !task) {
     return (
-      <div role="alert" className="size-full">
+      <div className="size-full">
         <StateScreen
           icon={
             <IconAlertTriangle

@@ -449,7 +449,7 @@ const withBoldFolderName = (
   return (
     <>
       {before}
-      <strong className="font-semibold">{folderName}</strong>
+      <strong className="dial-small-paragraph-semi-text">{folderName}</strong>
       {after}
     </>
   );

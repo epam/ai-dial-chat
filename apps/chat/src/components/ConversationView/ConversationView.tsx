@@ -34,6 +34,7 @@ import {
   DisplayAttachment,
   formatFileSize,
   isStatusMessage,
+  mergeClasses,
   StatusEvent,
   type Annotation,
   type Attachment,
@@ -64,6 +65,8 @@ import {
   ErrorMessageNotification,
   FabButton,
   NeutralButton,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import { IconCopy, IconPrompt } from '@tabler/icons-react';
 import {
@@ -313,6 +316,10 @@ const ConversationView: FC<Props> = ({
    * enabled: switching to a visible model is how the conversation continues.
    */
   const isSelectedModelHidden = !!selectedDeployment?.isHidden;
+  /* Set only while the reload notification is shown. */
+  const retryConversationReload = hasConversationReloadError
+    ? onRetryConversationReload
+    : undefined;
   /* Exactly one usage surface is composed: the dial when the flag is on,
      otherwise the banner above the input. */
   const usageDeploymentId =
@@ -1271,11 +1278,11 @@ const ConversationView: FC<Props> = ({
                 </div>
               );
             })}
-            {hasConversationReloadError && onRetryConversationReload && (
+            {retryConversationReload != null && (
               <ConversationReloadNotification
                 isReloading={isReloadingConversation}
                 isStreaming={isAssistantTyping}
-                onRetry={onRetryConversationReload}
+                onRetry={retryConversationReload}
               />
             )}
           </div>
@@ -1286,6 +1293,14 @@ const ConversationView: FC<Props> = ({
             style={{ height: 0 }}
           />
         </div>
+
+        {/* The reload notification mounts inside the log on demand; this
+            always-mounted region carries its announcement instead. */}
+        <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
+          {retryConversationReload != null
+            ? `${t(ChatI18nKeys.ConversationReloadErrorTitle)} ${t(ChatI18nKeys.ConversationReloadError)}`
+            : ''}
+        </LiveRegion>
 
         {isScrollButtonVisible && (
           <FabButton
@@ -1327,14 +1342,17 @@ const ConversationView: FC<Props> = ({
           </div>
         ) : (
           <>
-            {isSelectedModelHidden && (
-              <p
-                role="status"
-                className="dial-small-text pb-2 text-center text-secondary"
-              >
-                {t(ConversationI18nKeys.ModelUnavailableNotice)}
-              </p>
-            )}
+            {/* Empty while the model is available, so it takes no space. */}
+            <LiveRegion
+              as={LiveRegionElement.P}
+              className={mergeClasses(
+                'dial-small-text text-center text-secondary',
+                isSelectedModelHidden && 'pb-2',
+              )}
+            >
+              {isSelectedModelHidden &&
+                t(ConversationI18nKeys.ModelUnavailableNotice)}
+            </LiveRegion>
             <Suspense fallback={null}>
               <ConversationInput
                 key={conversation.id}

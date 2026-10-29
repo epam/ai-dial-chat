@@ -1,5 +1,5 @@
 import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -9,6 +9,32 @@ import { ScheduledTaskRunStatus } from '../../../types/scheduled-task-run-status
 import { ScheduledTaskRunHistoryList } from '../ScheduledTaskRunHistoryList';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  LiveRegionPoliteness: { Polite: 'polite', Assertive: 'assertive' },
+  LiveRegionElement: { Div: 'div', Span: 'span', P: 'p' },
+  LiveRegion: ({
+    politeness = 'polite',
+    visuallyHidden,
+    as: Tag = 'div',
+    atomic,
+    className,
+    children,
+    ...rest
+  }: {
+    politeness?: string;
+    visuallyHidden?: boolean;
+    as?: 'div' | 'span' | 'p';
+    atomic?: boolean;
+  } & React.HTMLAttributes<HTMLElement>) => (
+    <Tag
+      {...rest}
+      role={politeness === 'assertive' ? 'alert' : 'status'}
+      aria-live={politeness as 'polite' | 'assertive'}
+      aria-atomic={atomic}
+      className={visuallyHidden ? 'sr-only' : className}
+    >
+      {children}
+    </Tag>
+  ),
   DIAL_KIT_ICON_STROKE: 1.5,
   NoDataContent: ({
     title,
@@ -157,9 +183,33 @@ describe('ScheduledTaskRunHistoryList', () => {
       />,
     );
 
-    expect(screen.getByText('Failed to load history')).toBeTruthy();
+    expect(
+      screen.getByText('Failed to load history').getAttribute('role'),
+    ).toBe('status');
+    expect(screen.queryByRole('alert')).toBeNull();
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(onRetry).toHaveBeenCalledOnce();
+  });
+
+  it('announces a failure below loaded rows through an alert region mounted with the list', () => {
+    const items = [buildRun({ id: 'run_1' })];
+    const { rerender } = render(
+      <ScheduledTaskRunHistoryList items={items} labels={labels} />,
+    );
+    const region = screen.getByRole('alert');
+    expect(region.textContent).toBe('');
+
+    rerender(
+      <ScheduledTaskRunHistoryList
+        items={items}
+        error={new Error('failed')}
+        onRetry={vi.fn()}
+        labels={labels}
+      />,
+    );
+
+    expect(screen.getByRole('alert')).toBe(region);
+    expect(region.textContent).toBe('Failed to load history');
   });
 
   it('marks the row matching currentRunId as current, visually and accessibly', () => {
@@ -498,7 +548,9 @@ describe('ScheduledTaskRunHistoryList', () => {
     );
 
     expect(screen.getByText('today at 9:01 AM (99s)')).toBeTruthy();
-    expect(screen.getByText('Failed to load history')).toBeTruthy();
+    expect(
+      within(screen.getByRole('list')).getByText('Failed to load history'),
+    ).toBeTruthy();
     expect(screen.queryByText('Show more')).toBeNull();
 
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));

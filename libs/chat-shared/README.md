@@ -43,7 +43,7 @@ is installed as dependencies.
 Peers:
 
 - `react` ^19.2.8
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.45
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.56
 - `@epam/ai-dial-react-file-manager` ^0.4.0-dev.19
 
 Installed for you as dependencies: `ag-grid-community`, `@tabler/icons-react`, `react-markdown`,
