@@ -3,7 +3,7 @@
 # ─────────────────────────────────────────────
 # Stage 0: install the patched package manager used by all stages
 # ─────────────────────────────────────────────
-FROM node:24.17-alpine AS node-base
+FROM node:24.22.2-alpine AS node-base
 
 # npm@12.1.0 bundles patched brace-expansion@5.0.9, ip-address@10.5.0, and tar@7.5.22.
 RUN apk upgrade --no-cache libcrypto3 libssl3 \
