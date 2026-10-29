@@ -70,57 +70,6 @@ The editor SHALL read all params exclusively via `useSearchParams` from `react-r
 
 ---
 
-### Requirement: A Settings-step save reasserts features.skills_supported via a follow-up updateApplication call
-
-The embedded Setup editor (loaded from `schema.editorUrl`) SHALL persist a Setup save entirely
-on its own — the chat host never calls the backend `updateApplication` endpoint for the
-configuration itself, it only posts `TriggerSave` to the iframe and reacts to the `SAVE_SUCCESS`/
-`SAVE_ERROR` postMessage the iframe posts back. That embedded editor is a separate application,
-not owned by this repository, and has no reason to know about the chat-side `skills_supported`
-hack described in the `applications-write-api` spec's "Quick Apps always get
-features.skills_supported: true" requirement — its own save may leave the flag unset or
-overwrite it back to its prior value.
-
-To close that gap without changing the embedded editor's protocol, `QuickAppSetup`
-(`apps/chat/src/pages/ApplicationEditor/setup/QuickAppSetup.tsx`) SHALL, in both its `save(values)`
-and `startPreview(values)` handles and immediately after the iframe save resolves with
-`SAVE_SUCCESS`, call `reassertSkillsSupport(values)`: the frontend `updateApplication(appId, …)` API
-with the current Metadata values (`name`, `description`, `iconUrl`, `topics`, `locales`,
-`primaryLocale`, derived through `toTriggerSaveGeneral(values)`), and **await** it. This call's only
-purpose is to re-trigger the backend's unconditional `skills_supported` force-merge on every
-update — the Metadata values are sent unchanged (a no-op for those fields), so for a non-Quick-App
-schema, where the backend's `isQuickAppSchema` check makes the force-merge a no-op too, the call
-has no visible effect.
-
-The save only counts as successful once this call settles. On success, `save`/`startPreview`
-resolve and the page's success path runs (`ApplicationFormEditor`'s `persist`: `refetchDeployments()`,
-`notifyOperationSuccess`, navigation to `ROUTES.Catalog`; or, for Preview, `isPreviewing` becoming
-true). On failure, `QuickAppSetup` SHALL set its inline `saveError` to `appsEditor.error.saveFailed`
-(rendered through `ErrorMessageNotification` above the iframe) and rethrow, so the page stops
-before any of those side effects — no `refetchDeployments`, no `notifyOperationSuccess`, no
-navigation, no entering preview — and the page clears `isSaving` and stays open.
-
-#### Scenario: Reassertion call runs before Save's side effects
-
-- **WHEN** the iframe posts `SAVE_SUCCESS` for a Save trigger
-- **THEN** `updateApplication(appId, { name, description, iconUrl, topics, locales, primaryLocale })` is called and awaited before `refetchDeployments()`, `notifyOperationSuccess`, and navigation to `ROUTES.Catalog`
-
-#### Scenario: Reassertion call runs before Preview's side effects
-
-- **WHEN** the iframe posts `SAVE_SUCCESS` for a Preview trigger
-- **THEN** the reassertion `updateApplication` call is awaited before `refetchDeployments()` and before `isPreviewing` becomes true
-- **AND** `refetchDeployments()` itself is awaited too when the save reported `hasChanges: true`; it remains fire-and-forget when the save reported `hasChanges: false`
-
-#### Scenario: A failed reassertion call blocks the rest of the success path
-
-- **WHEN** the reassertion `updateApplication` call rejects
-- **THEN** `isSaving` becomes false, the Setup section's inline `saveError` is set to the generic save-failed message, and no `refetchDeployments`, `notifyOperationSuccess`, navigation, or `isPreviewing` transition occurs
-
-#### Scenario: A successful reassertion call does not alter General-step data
-
-- **WHEN** the reassertion call succeeds
-- **THEN** the `name`/`description`/`iconUrl`/`topics`/`locales`/`primaryLocale` values it sent are identical to the Metadata values already passed to `save`/`startPreview`, so the update is a no-op for every field except the backend's forced `features.skills_supported`
-
 ---
 
 ### Requirement: App editor iframe component
@@ -386,15 +335,14 @@ A create failure raises an error notification with the API detail, falling back 
 
 - Save arms the save timeout and calls `QuickAppSetup`'s `save(metadata)` handle, which posts `TriggerSave` with the `general` payload.
 - On `SaveSuccess`, the page does the following, in order:
-  1. Awaits the `features.skills_supported` `updateApplication` reassertion (see "A Settings-step save reasserts features.skills_supported via a follow-up updateApplication call").
-  2. Awaits `refetchDeployments()`.
-  3. Raises `EntityOperation.Edited`.
-  4. Navigates to `returnUrl`, which is always `ROUTES.Catalog`.
+  1. Awaits `refetchDeployments()`.
+  2. Raises `EntityOperation.Edited`.
+  3. Navigates to `returnUrl`, which is always `ROUTES.Catalog`.
 - On `SaveError`, the page clears `isSaving`, the Setup section shows the error or `appsEditor.error.saveFailed` inline above the embedded editor, and the page stays open.
 
 **Preview** (edit mode only):
 
-- Preview triggers a save with no `general` payload. On `SaveSuccess`, `isPreviewing` becomes true.
+- Preview triggers a save carrying the same `general` payload as Save, and the host makes no follow-up `updateApplication` call. On `SaveSuccess`, `isPreviewing` becomes true.
 - When `hasChanges` is true, the page first awaits `refetchDeployments()`, with the saving overlay kept visible. A rejected refetch is logged and does not block preview.
 - While previewing, the whole `EntityEditor` is hidden (still mounted, `inert`) and the definition's `Preview` component (`QuickAppPreview`) fills the page. Its "Back to setup" button returns to the editor (see `app-preview-chat` "Preview is a full-page mode").
 
@@ -422,7 +370,7 @@ A create failure raises an error notification with the API detail, falling back 
 
 #### Scenario: Save triggers iframe save and navigates on success
 - **WHEN** in edit mode the user clicks Save and the iframe posts `SAVE_SUCCESS`
-- **THEN** the page awaits the `updateApplication` reassertion and `refetchDeployments()`, shows the edited notification, and navigates to `ROUTES.Catalog`
+- **THEN** the page awaits `refetchDeployments()` (and makes no further `updateApplication` call), shows the edited notification, and navigates to `ROUTES.Catalog`
 
 #### Scenario: Save failure shows inline error and stays on the page
 - **WHEN** the iframe posts `SAVE_ERROR`
@@ -442,7 +390,7 @@ A create failure raises an error notification with the API detail, falling back 
 
 ### Requirement: Quick-app Setup section
 
-`QuickAppSetup` (`apps/chat/src/pages/ApplicationEditor/setup/QuickAppSetup.tsx`, which replaces `SettingsStep.tsx`) SHALL be a function component that receives `ref` as a prop (React 19, no `forwardRef`) and exposes `ApplicationSetupHandle` through `useImperativeHandle`. Its `save(metadata)` forwards to the inner `AppEditorIframe`'s `triggerSave(general)`, and its `startPreview(metadata)` forwards to `triggerSave()` with no payload.
+`QuickAppSetup` (`apps/chat/src/pages/ApplicationEditor/setup/QuickAppSetup.tsx`, which replaces `SettingsStep.tsx`) SHALL be a function component that receives `ref` as a prop (React 19, no `forwardRef`) and exposes `ApplicationSetupHandle` through `useImperativeHandle`. Its `save(metadata)` forwards to the inner `AppEditorIframe`'s `triggerSave(general)`, and its `startPreview(metadata)` forwards to `triggerSave(general)`, carrying the same metadata `general` payload as `save`.
 
 It SHALL render the following:
 
@@ -467,7 +415,7 @@ The Setup section SHALL give the iframe container a minimum height of 640 px (`m
 - **THEN** the pending-create placeholder renders and no iframe is mounted
 
 #### Scenario: A real change requests a preview reset
-- **WHEN** `startPreview` or `save` receives `SaveSuccess` with `hasChanges: true` and the reassertion succeeds
+- **WHEN** `startPreview` or `save` receives `SaveSuccess` with `hasChanges: true`
 - **THEN** `onPreviewReset` is called exactly once
 - **AND** with `hasChanges: false` it is not called
 

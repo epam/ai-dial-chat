@@ -1,4 +1,3 @@
-import type { DeploymentCreationFormValues } from '@epam/ai-dial-builder-form';
 import { ErrorMessageNotification, NeutralButton } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import {
@@ -22,7 +21,6 @@ import type {
   ApplicationSetupProps,
   EmptyApplicationSetup,
 } from '../../../models/application-editor';
-import { updateApplication } from '../../../server-api/applications';
 import {
   AppsEditorQuery,
   type TriggerSaveGeneralPayload,
@@ -176,45 +174,15 @@ const QuickAppSetup: FC<Props> = ({
     [t],
   );
 
-  /*
-   * Quick apps have no chat-side control for `features.skills_supported`, and
-   * the embedded editor's own save has no reason to know about it. A
-   * follow-up update carrying the Metadata already on record triggers the
-   * backend to force-set the flag (see the `applications-write-api` spec),
-   * and must finish before the save counts as successful.
-   */
-  const reassertSkillsSupport = useCallback(
-    async (values: DeploymentCreationFormValues) => {
-      if (!appId) return;
-      const general = toTriggerSaveGeneral(values);
-      try {
-        await updateApplication(appId, {
-          name: general.name,
-          description: general.description,
-          iconUrl: general.iconUrl,
-          topics: general.topics,
-          locales: general.locales,
-          primaryLocale: general.primaryLocale,
-        });
-      } catch (error) {
-        setSaveError(t(AppsEditorI18nKeys.ErrorSaveFailed));
-        throw error;
-      }
-    },
-    [appId, t],
-  );
-
   useImperativeHandle(
     ref,
     () => ({
       save: async (values) => {
         const hasChanges = await runSave(toTriggerSaveGeneral(values));
-        await reassertSkillsSupport(values);
         if (hasChanges) onPreviewReset();
       },
       startPreview: async (values) => {
-        const hasChanges = await runSave();
-        await reassertSkillsSupport(values);
+        const hasChanges = await runSave(toTriggerSaveGeneral(values));
         if (hasChanges) {
           onPreviewReset();
           /*
@@ -235,7 +203,7 @@ const QuickAppSetup: FC<Props> = ({
         }
       },
     }),
-    [onPreviewReset, refetchDeployments, reassertSkillsSupport, runSave],
+    [onPreviewReset, refetchDeployments, runSave],
   );
 
   const handleUpdated = useCallback(() => {

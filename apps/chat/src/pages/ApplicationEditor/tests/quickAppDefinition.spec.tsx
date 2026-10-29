@@ -476,7 +476,7 @@ describe('ApplicationEditorPage — quick app', () => {
       expect(getAction(BasicI18nKeys.Preview).disabled).toBe(false);
     });
 
-    it('forwards the Metadata to the embedded editor on Save, reasserts, confirms and exits', async () => {
+    it('forwards the Metadata to the embedded editor on Save, confirms and exits', async () => {
       renderPage(editSearch);
       await typeName();
       await user.clear(screen.getByLabelText(EditorI18nKeys.VersionLabel));
@@ -498,10 +498,7 @@ describe('ApplicationEditorPage — quick app', () => {
       act(() => getIframeProps()?.onSaveSuccess?.(false));
 
       await screen.findByText('Catalog');
-      expect(updateApplication).toHaveBeenCalledWith(
-        APP_ID,
-        expect.objectContaining({ name: 'My App' }),
-      );
+      expect(updateApplication).not.toHaveBeenCalled();
       expect(mockRefetchDeployments).toHaveBeenCalled();
       expect(mockNotifyOperationSuccess).toHaveBeenCalledWith(
         NotifiableEntity.QuickApp,
@@ -566,14 +563,17 @@ describe('ApplicationEditorPage — quick app', () => {
       ).toBe(false);
     });
 
-    it('opens a full-page preview after a save without Metadata and hides the editor', async () => {
+    it('opens a full-page preview after a save with Metadata and hides the editor', async () => {
       renderPage(editSearch);
       await typeName();
       act(() => getIframeProps()?.onReadyChange?.(true));
 
       const backToSetup = await enterPreview();
 
-      expect(mockTriggerSave).toHaveBeenCalledWith(undefined);
+      expect(mockTriggerSave).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'My App' }),
+      );
+      expect(updateApplication).not.toHaveBeenCalled();
       expect(mockRefetchDeployments).toHaveBeenCalled();
       expect(mockNotifyOperationSuccess).not.toHaveBeenCalled();
       expect(screen.getByText('preview-chat')).toBeTruthy();
