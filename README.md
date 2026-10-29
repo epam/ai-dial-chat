@@ -142,7 +142,7 @@ For the production CSP browser check, run
 
 ## Prerequisites
 
-- **Node.js**: 24 or higher (production images build on `node:24.21-alpine3.24`)
+- **Node.js**: 24 or higher (production images build on `node:24.22.2-alpine3.24`)
 - **npm**: 11 or higher (bundled with Node 24)
 - **Git**: Latest version
 
