@@ -17,6 +17,9 @@ const renderCard = (overrides: Partial<ProjectCardProps> = {}) =>
         sourceLabel="Organization"
         folderPathLabel="Project location"
         pinnedLabel="Pinned"
+        now={Date.UTC(2026, 2, 4)}
+        locale="en"
+        updatedAtClassName="dial-tiny-text"
         titleClassName="dial-body-semi-text"
         pathLabelClassName="dial-tiny-text"
         pathLeafClassName="dial-tiny-semi-text"
@@ -57,11 +60,25 @@ describe('ProjectCard', () => {
     expect(path.textContent).toContain('2026');
   });
 
-  it('shows no date or source badge', () => {
+  it('shows the last-updated time relative to now and no source badge', () => {
     renderCard();
 
-    expect(screen.queryByRole('time')).toBeNull();
+    const time = screen.getByRole('time');
+    expect(time.textContent).toBe('3 days ago');
+    expect(time.getAttribute('datetime')).toBe('2026-03-01T00:00:00.000Z');
     expect(screen.getAllByText('Organization')).toHaveLength(1);
+  });
+
+  it('shows no time for an undated project', () => {
+    renderCard({
+      project: {
+        id: 'p3',
+        name: 'Draft',
+        source: ProjectSource.Personal,
+      },
+    });
+
+    expect(screen.queryByRole('time')).toBeNull();
   });
 
   it('is not interactive', () => {

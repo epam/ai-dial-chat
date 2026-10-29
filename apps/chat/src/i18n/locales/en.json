@@ -774,8 +774,7 @@
   },
   "projects": {
     "page": {
-      "title": "Projects",
-      "subtitle": "Projects you own, projects shared with you, and your organization's projects",
+      "title": "All projects",
       "newProject": "New project"
     },
     "toolbar": {

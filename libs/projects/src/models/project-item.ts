@@ -10,7 +10,7 @@ export interface ProjectItem {
   source: ProjectSource;
   /** `/`-separated grouping folders the project sits in, shown after the source in the folder path. */
   parentPath?: string;
-  /** Last-updated time in epoch milliseconds, used by the date sort orders. */
+  /** Last-updated time in epoch milliseconds, shown on the card relative to now and used by the date sort orders. */
   updatedAt?: number;
   /** Whether the user pinned the project; pinned projects sort first and show a pinned marker. Defaults to `false`. */
   isPinned?: boolean;
