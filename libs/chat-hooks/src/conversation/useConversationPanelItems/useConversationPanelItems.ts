@@ -154,7 +154,9 @@ export const useConversationPanelItems = ({
               leadingIcon: taskPresentation.leadingIcon,
               isUnread: taskPresentation.isUnread,
             }
-          : {}),
+          : item.isUnread
+            ? { leadingIcon: undefined, isUnread: true }
+            : {}),
       };
     },
     [

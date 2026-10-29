@@ -4649,6 +4649,8 @@ const conversations = useConversationPanelItems({
 
 `resolveTaskPresentation` replaced `resolveTaskBadge` (`{ label, isUnread }`) when the conversation panel dropped its TASK pill.
 
+A regular chat (no task presentation) keeps the chat kind and carries `isUnread: true` onto its item when its DTO reports `isUnread: true`; otherwise `isUnread` stays absent. Hiding the dot for the open conversation is a host display rule, not part of this hook.
+
 ### getConversationSource
 
 Classifies a conversation using the canonical `FilterTab` values without depending on the conversation-panel package.

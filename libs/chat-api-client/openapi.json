@@ -3935,7 +3935,7 @@
     },
     "/api/v1/conversations/viewed": {
       "patch": {
-        "description": "Idempotently records that the authenticated user has opened this conversation. Used to clear the unread indicator for scheduler-created conversations.",
+        "description": "Idempotently records that the authenticated user has seen this conversation. Clears the unread indicator of scheduler-created conversations and of regular conversations whose answer arrived while the user was elsewhere.",
         "operationId": "markConversationViewed",
         "parameters": [
           {
@@ -14246,7 +14246,7 @@
           },
           "isUnread": {
             "type": "boolean",
-            "description": "True when this scheduler-created conversation has not yet been opened by the user. Present only when `isScheduledTask` is true.",
+            "description": "True when the conversation holds an answer the user has not seen. A scheduler-created conversation always carries it (true until first opened); a regular conversation in the caller's own bucket carries it, as true, only when it was updated after the user's read-before baseline and has not been viewed since. Omitted otherwise, including for published and shared conversations.",
             "example": true
           }
         },
