@@ -12,7 +12,7 @@
   "id": null,
   "uid": null,
   "title": "DIAL BFF - Routing and Streaming",
-  "description": "Select one environment/namespace and one scrape job to avoid mixing environments or double scraping. Missing cluster labels are supported by Cluster=All. No samples is not a health signal. Capability resolution failures have no generation_api label, so this dashboard intentionally has no API filter. Unknown-event series appear only after events occur. SSE gauges count outstanding subscription operations including setup/cleanup, not users, tabs, or ordinary completion responses.",
+  "description": "Select one environment/namespace and one scrape job to avoid mixing environments or double scraping. Missing cluster labels are supported by Cluster=All. No samples is not a health signal. Capability resolution failures have no generation_api label, so this dashboard intentionally has no API filter. Unknown-event series appear only after events occur. SSE gauges count outstanding subscription operations including setup/cleanup, not users, tabs, or ordinary completion responses. Conversation title panels separate time to the first title from Core read and queue time; none of them is the HTTP response duration of the stream.",
   "tags": ["dial-chat", "bff", "observability"],
   "schemaVersion": 39,
   "version": 2,
@@ -178,7 +178,7 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "**Routing and SSE subscriptions.** Resolution does not prove generation started. Subscription operations are not users."
+        "content": "**Routing, SSE subscriptions and conversation title delivery.** Resolution does not prove generation started. Subscription operations are not users. Time to first title is not stream duration."
       },
       "description": "Select one environment/namespace and one scrape job to avoid mixing environments or double scraping. Missing cluster labels are supported by Cluster=All. No samples is not a health signal. Capability resolution failures have no generation_api label, so this dashboard intentionally has no API filter. Unknown-event series appear only after events occur. SSE gauges count outstanding subscription operations including setup/cleanup, not users, tabs, or ordinary completion responses."
     },
@@ -299,7 +299,7 @@
       "id": 32,
       "title": "SSE operations at range end",
       "type": "stat",
-      "description": "Instant observation at the selected range end, summed across the selected processes. Missing series remain missing. Includes setup and cleanup, not users.",
+      "description": "Instant observation at the selected range end, summed across the selected processes. Missing series remain missing. Includes setup and cleanup, not users. Includes short-lived conversation_titles streams.",
       "datasource": {
         "type": "prometheus",
         "uid": "$datasource"
@@ -692,7 +692,7 @@
     },
     {
       "title": "SSE subscription operations by process and kind",
-      "description": "client_channel, conversation_watch, generation_attach. Includes asynchronous setup/cleanup, excludes ordinary completion-response delivery. Not a count of concurrent users.",
+      "description": "client_channel, conversation_watch, generation_attach, conversation_titles. Includes asynchronous setup/cleanup, excludes ordinary completion-response delivery. Not a count of concurrent users. conversation_titles streams are short-lived (seconds, at most 60s): spikes there are history title loads, not long-lived subscriptions.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -767,6 +767,360 @@
         }
       },
       "id": 6
+    },
+    {
+      "id": 102,
+      "type": "row",
+      "title": "Conversation titles — first title is not stream duration",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 36,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "title": "Time to first title",
+      "description": "From title stream admission until the response writer accepted its first title frame. Streams that delivered only unavailable/failed outcomes, or closed first, record nothing. Not the HTTP duration of the stream, which runs until every title is delivered (at most 60s). p95 is hidden when more than 5% exceed the last finite 60s bucket.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 37,
+        "w": 12,
+        "h": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "s",
+          "min": 0,
+          "noValue": "No samples",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "(sum(rate(dial_chat_conversation_titles_first_result_duration_sum{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\"}[$__rate_interval]))) / (sum(rate(dial_chat_conversation_titles_first_result_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\"}[$__rate_interval])) > 0)",
+          "legendFormat": "mean",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "B",
+          "editorMode": "code",
+          "expr": "(histogram_quantile(0.95, sum by (le) (rate(dial_chat_conversation_titles_first_result_duration_bucket{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\"}[$__rate_interval])))) and ((sum(rate(dial_chat_conversation_titles_first_result_duration_bucket{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",le=~\"60([.]0+)?\"}[$__rate_interval]))) / (sum(rate(dial_chat_conversation_titles_first_result_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\"}[$__rate_interval])) > 0) >= 0.95)",
+          "legendFormat": "p95",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": ["lastNotNull", "max"]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 7
+    },
+    {
+      "title": "Core title reads — duration by outcome",
+      "description": "One sample per actual DIAL Core body read, shared by the stream and the JSON titles endpoint; coalesced reads count once and cache hits not at all. cancelled = every consumer left. Reads time out after 10s.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 37,
+        "w": 12,
+        "h": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "s",
+          "min": 0,
+          "noValue": "No samples",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "(sum by (outcome)(rate(dial_chat_conversation_titles_read_duration_sum{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\"}[$__rate_interval]))) / (sum by (outcome)(rate(dial_chat_conversation_titles_read_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\"}[$__rate_interval])) > 0)",
+          "legendFormat": "mean {{outcome}}",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "B",
+          "editorMode": "code",
+          "expr": "(histogram_quantile(0.95, sum by (le) (rate(dial_chat_conversation_titles_read_duration_bucket{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",outcome=\"success\"}[$__rate_interval])))) and ((sum(rate(dial_chat_conversation_titles_read_duration_bucket{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",outcome=\"success\",le=~\"60([.]0+)?\"}[$__rate_interval]))) / (sum(rate(dial_chat_conversation_titles_read_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",outcome=\"success\"}[$__rate_interval])) > 0) >= 0.95)",
+          "legendFormat": "p95 success",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": ["lastNotNull", "max"]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 8
+    },
+    {
+      "title": "Title read gate — rejected or cancelled share",
+      "description": "Share of reads that left the process-wide 25-read gate without running: rejected = the 250-read queue was full or the 5s wait expired (the stream then ends with error 503); cancelled = every consumer left while queued. No title reads gives no value.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 46,
+        "w": 12,
+        "h": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "percentunit",
+          "min": 0,
+          "noValue": "No samples",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "(sum by (outcome)(rate(dial_chat_conversation_titles_queue_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",outcome!=\"admitted\"}[$__rate_interval]))) / ignoring(outcome) group_left() (sum(rate(dial_chat_conversation_titles_queue_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\"}[$__rate_interval])) > 0)",
+          "legendFormat": "{{outcome}}",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": ["lastNotNull", "max"]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 9
+    },
+    {
+      "title": "Title stream outcomes / second",
+      "description": "Item outcome frames accepted by the response writer, by outcome: resolved title, unavailable (missing or forbidden), failed (upstream error or timeout). Outcomes dropped by a disconnect are not counted.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 46,
+        "w": 12,
+        "h": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "ops",
+          "min": 0,
+          "noValue": "No samples",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "sum by (outcome)(rate(dial_chat_conversation_titles_results_total{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\"}[$__rate_interval]))",
+          "legendFormat": "{{outcome}}",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": ["lastNotNull", "max"]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 10
     }
   ]
 }

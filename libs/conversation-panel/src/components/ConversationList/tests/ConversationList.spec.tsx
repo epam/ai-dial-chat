@@ -1,11 +1,16 @@
 import { ConversationKind, FilterTab } from '@epam/ai-dial-chat-shared';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CONVERSATION_PANEL_CLASS } from '../../../constants/public-class-names';
 import { ConversationItem } from '../../../models/panel-props';
 import { ConversationTypeFilter } from '../../../types/conversation-kind';
 import { ConversationList } from '../ConversationList';
+
+/* The visible row range the mocked virtual list reports; `null` reports nothing. */
+const renderedRange = vi.hoisted(() => ({
+  current: null as { startIndex: number; stopIndex: number } | null,
+}));
 
 /* Records one entry per ConversationRow body render (its title renders once). */
 const rowRenderLog = vi.hoisted((): string[] => []);
@@ -199,25 +204,40 @@ vi.mock('react-window', () => ({
     rowCount,
     rowProps,
     role,
+    onRowsRendered,
   }: {
     rowComponent: React.ComponentType<Record<string, unknown>>;
     rowCount: number;
     rowProps: Record<string, unknown>;
     role?: string;
+    onRowsRendered?: (
+      visibleRows: { startIndex: number; stopIndex: number },
+      allRows: { startIndex: number; stopIndex: number },
+    ) => void;
     [key: string]: unknown;
-  }) => (
-    <div role={role}>
-      {Array.from({ length: rowCount }, (_, index) => (
-        <RowComponent
-          key={index}
-          index={index}
-          style={{}}
-          ariaAttributes={{}}
-          {...rowProps}
-        />
-      ))}
-    </div>
-  ),
+  }) => {
+    /* Reports the test's viewport, plus every row as overscan. */
+    React.useEffect(() => {
+      if (!renderedRange.current) return;
+      onRowsRendered?.(renderedRange.current, {
+        startIndex: 0,
+        stopIndex: rowCount - 1,
+      });
+    });
+    return (
+      <div role={role}>
+        {Array.from({ length: rowCount }, (_, index) => (
+          <RowComponent
+            key={index}
+            index={index}
+            style={{}}
+            ariaAttributes={{}}
+            {...rowProps}
+          />
+        ))}
+      </div>
+    );
+  },
 }));
 
 vi.mock('@tabler/icons-react', () => ({
@@ -778,5 +798,160 @@ describe('ConversationList', () => {
 
     expect([...rowRenderLog].sort()).toEqual(['First chat', 'Second chat']);
     expect(getActions).not.toHaveBeenCalled();
+  });
+});
+
+/*
+ * Virtual rows for `items`: 0 Pinned header, 1 c4, 2 My chats header, 3 c1,
+ * 4 c2, 5 Shared header, 6 c3, 7 c5, 8 Organization header, 9 c6.
+ */
+describe('ConversationList — visible conversation IDs', () => {
+  afterEach(() => {
+    renderedRange.current = null;
+  });
+
+  it('reports only conversations in the visible range, without headers or overscan rows', () => {
+    renderedRange.current = { startIndex: 0, stopIndex: 4 };
+    const onVisibleConversationIdsChange = vi.fn();
+    render(
+      <ConversationList
+        {...BASE_PROPS}
+        conversations={items}
+        onVisibleConversationIdsChange={onVisibleConversationIdsChange}
+      />,
+    );
+    expect(onVisibleConversationIdsChange).toHaveBeenLastCalledWith([
+      'c4',
+      'c1',
+      'c2',
+    ]);
+  });
+
+  it('does not notify again while the visible sequence is unchanged', () => {
+    renderedRange.current = { startIndex: 0, stopIndex: 4 };
+    const onVisibleConversationIdsChange = vi.fn();
+    const props = {
+      ...BASE_PROPS,
+      conversations: items,
+      onVisibleConversationIdsChange,
+    };
+    const { rerender } = render(<ConversationList {...props} />);
+    /* A fresh array re-renders the memoized list, as a scroll re-renders the virtualizer. */
+    renderedRange.current = { startIndex: 1, stopIndex: 5 };
+    rerender(<ConversationList {...props} conversations={[...items]} />);
+    rerender(<ConversationList {...props} conversations={[...items]} />);
+    expect(onVisibleConversationIdsChange).toHaveBeenCalledOnce();
+  });
+
+  it('reports a new sequence when the viewport scrolls', () => {
+    renderedRange.current = { startIndex: 0, stopIndex: 4 };
+    const onVisibleConversationIdsChange = vi.fn();
+    const props = {
+      ...BASE_PROPS,
+      conversations: items,
+      onVisibleConversationIdsChange,
+    };
+    const { rerender } = render(<ConversationList {...props} />);
+    renderedRange.current = { startIndex: 5, stopIndex: 9 };
+    rerender(<ConversationList {...props} conversations={[...items]} />);
+    expect(onVisibleConversationIdsChange).toHaveBeenLastCalledWith([
+      'c3',
+      'c5',
+      'c6',
+    ]);
+  });
+
+  it('reports the rows that move into an unchanged range when a group collapses', () => {
+    renderedRange.current = { startIndex: 0, stopIndex: 4 };
+    const onVisibleConversationIdsChange = vi.fn();
+    render(
+      <ConversationList
+        {...BASE_PROPS}
+        conversations={items}
+        onVisibleConversationIdsChange={onVisibleConversationIdsChange}
+      />,
+    );
+    fireEvent.click(screen.getByText('My chats'));
+    expect(onVisibleConversationIdsChange).toHaveBeenLastCalledWith([
+      'c4',
+      'c3',
+    ]);
+  });
+
+  it('reports a duplicated conversation ID once', () => {
+    renderedRange.current = { startIndex: 0, stopIndex: 3 };
+    const onVisibleConversationIdsChange = vi.fn();
+    render(
+      <ConversationList
+        {...BASE_PROPS}
+        conversations={[items[0], items[0], items[1]]}
+        onVisibleConversationIdsChange={onVisibleConversationIdsChange}
+      />,
+    );
+    expect(onVisibleConversationIdsChange).toHaveBeenLastCalledWith([
+      'c1',
+      'c2',
+    ]);
+  });
+
+  it.each([
+    { name: 'the list is empty', props: { conversations: [] } },
+    { name: 'the list is loading', props: { isLoading: true } },
+    { name: 'a search has no visible match', props: { searchQuery: 'zzz' } },
+  ])('reports no visible conversations when $name', ({ props }) => {
+    renderedRange.current = { startIndex: 0, stopIndex: 4 };
+    const onVisibleConversationIdsChange = vi.fn();
+    render(
+      <ConversationList
+        {...BASE_PROPS}
+        conversations={items}
+        onVisibleConversationIdsChange={onVisibleConversationIdsChange}
+        {...props}
+      />,
+    );
+    expect(onVisibleConversationIdsChange).toHaveBeenLastCalledWith([]);
+  });
+
+  it('clears the report when a search hides every visible row, then restores it', () => {
+    renderedRange.current = { startIndex: 0, stopIndex: 4 };
+    const onVisibleConversationIdsChange = vi.fn();
+    const props = {
+      ...BASE_PROPS,
+      conversations: items,
+      onVisibleConversationIdsChange,
+    };
+    const { rerender } = render(<ConversationList {...props} />);
+    rerender(<ConversationList {...props} searchQuery="zzz" />);
+    expect(onVisibleConversationIdsChange).toHaveBeenLastCalledWith([]);
+    rerender(<ConversationList {...props} searchQuery="" />);
+    expect(onVisibleConversationIdsChange).toHaveBeenLastCalledWith([
+      'c4',
+      'c1',
+      'c2',
+    ]);
+  });
+
+  it('reports the same IDs inside a right-to-left document', () => {
+    renderedRange.current = { startIndex: 0, stopIndex: 4 };
+    const onVisibleConversationIdsChange = vi.fn();
+    render(
+      <div dir="rtl">
+        <ConversationList
+          {...BASE_PROPS}
+          conversations={items}
+          isUpdatingTitles
+          onVisibleConversationIdsChange={onVisibleConversationIdsChange}
+        />
+      </div>,
+    );
+    expect(onVisibleConversationIdsChange).toHaveBeenLastCalledWith([
+      'c4',
+      'c1',
+      'c2',
+    ]);
+    expect(screen.getByRole('status').getAttribute('aria-live')).toBe('polite');
+    expect(screen.getByRole('status').textContent).toBe(
+      'Updating conversation names',
+    );
   });
 });

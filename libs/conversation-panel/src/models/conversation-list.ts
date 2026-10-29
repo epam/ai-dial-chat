@@ -134,6 +134,8 @@ export interface ConversationListProps {
   ) => void;
   /** Called when the user completes a drag-and-drop move. */
   onMoveConversation?: (move: ConversationMove) => void;
+  /** Called with the distinct IDs of conversation rows in the visible viewport, in row order, whenever that sequence changes; excludes group headers and overscan rows, and is empty when no rows are visible. */
+  onVisibleConversationIdsChange?: (ids: string[]) => void;
   /** Style overrides for colors, typography and the row icon badge. */
   styles?: ConversationListStyles;
   /** `id` of the list root, for a header's `aria-controls` to reference. */

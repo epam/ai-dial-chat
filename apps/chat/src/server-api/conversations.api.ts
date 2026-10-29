@@ -1,9 +1,14 @@
 import type {
   AttachmentDto,
   ConversationResponseDto,
+  ConversationTitleStreamEventDto,
 } from '@epam/ai-dial-chat-api-client';
 import type { RequestSkill } from '@epam/ai-dial-chat-shared';
 import { conversationsApi } from './api-client';
+import {
+  ConversationTitleStreamProtocolError,
+  readConversationTitleStream,
+} from './conversation-title-stream';
 
 export const createConversation = (
   firstMessage: string,
@@ -83,6 +88,27 @@ export const getConversationTitles = (ids: string[], signal?: AbortSignal) =>
     { conversationTitlesBodyDto: { ids } },
     ...(signal ? [{ signal }] : []),
   );
+
+/**
+ * Opens the finite title stream. Rejects (via the generated client's
+ * `ResponseError`) before any event when the backend answers non-2xx; the
+ * returned iterable yields validated events and owns the response reader.
+ */
+export const streamConversationTitles = async (
+  ids: string[],
+  signal?: AbortSignal,
+): Promise<AsyncIterable<ConversationTitleStreamEventDto>> => {
+  const apiResponse = await conversationsApi.streamConversationTitlesRaw(
+    { streamConversationTitlesBodyDto: { ids } },
+    signal ? { signal } : undefined,
+  );
+  if (!apiResponse.raw.body) {
+    throw new ConversationTitleStreamProtocolError(
+      'Title stream returned no response body',
+    );
+  }
+  return readConversationTitleStream(apiResponse.raw.body);
+};
 
 export const renameConversation = (path: string, newTitle: string) =>
   conversationsApi.renameConversation({

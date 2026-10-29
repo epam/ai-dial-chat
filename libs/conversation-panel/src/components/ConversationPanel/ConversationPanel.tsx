@@ -44,6 +44,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     onToggle,
     headerActions,
     onMoveConversation,
+    onVisibleConversationIdsChange,
     activeFilter,
     onActiveFilterChange,
     isFilterTabsHidden = false,
@@ -229,6 +230,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           getActions={getActions}
           onActionMenuOpen={onActionMenuOpen}
           onMoveConversation={onMoveConversation}
+          onVisibleConversationIdsChange={onVisibleConversationIdsChange}
           styles={listStyles}
         />
       </SidebarPanel>

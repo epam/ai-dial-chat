@@ -1,4 +1,11 @@
-import type { ConversationListItemDto } from '@epam/ai-dial-chat-api-client';
+import {
+  type ConversationListItemDto,
+  ConversationTitleStreamDoneEventDtoTypeEnum,
+  ConversationTitleStreamDoneReason,
+  ConversationTitleStreamErrorEventDtoTypeEnum,
+  type ConversationTitleStreamEventDto,
+  ConversationTitleStreamTitleEventDtoTypeEnum,
+} from '@epam/ai-dial-chat-api-client';
 import {
   type Dispatch,
   type SetStateAction,
@@ -7,12 +14,73 @@ import {
   useRef,
   useState,
 } from 'react';
-import { getConversationTitles } from '../../server-api/conversations.api';
+import {
+  CONVERSATION_TITLE_STREAM_MAX_ID_BYTES,
+  CONVERSATION_TITLE_STREAM_MAX_IDS,
+  isConversationTitleStreamUnsupported,
+} from '../../server-api/conversation-title-stream';
+import {
+  getConversationTitles,
+  streamConversationTitles,
+} from '../../server-api/conversations.api';
+import {
+  ConversationTitleRequestEnd,
+  ConversationTitleTransport,
+} from '../../types/conversation-titles';
 
+/* The JSON fallback endpoint's batch bound. */
 const TITLE_BATCH_SIZE = 25;
+const TITLE_FLUSH_FALLBACK_MS = 100;
+const MAX_PENDING_TITLE_UPDATES = 100;
 /* Another BFF pod can retain its prior title for five minutes, plus one
    in-flight title read. Local saves/opens take precedence during that window. */
 const LOCAL_TITLE_PROTECTION_MS = 315_000;
+
+const encoder = new TextEncoder();
+
+/** The leading IDs that fit one stream request's count and byte bounds. */
+const takeTitleStreamRequest = (ids: string[]): string[] => {
+  let bytes = 2;
+  const request: string[] = [];
+  for (const id of ids) {
+    if (request.length >= CONVERSATION_TITLE_STREAM_MAX_IDS) break;
+    const idBytes =
+      encoder.encode(JSON.stringify(id)).length + (request.length ? 1 : 0);
+    if (bytes + idBytes > CONVERSATION_TITLE_STREAM_MAX_ID_BYTES) break;
+    bytes += idBytes;
+    request.push(id);
+  }
+  return request;
+};
+
+/* Resolves after one animation frame, at most 100 ms, or on abort: the
+   window a freshly rendered list gets to report its viewport. */
+const waitForViewportReport = (signal: AbortSignal) =>
+  new Promise<void>((resolve) => {
+    const done = () => {
+      cancelAnimationFrame(frameId);
+      clearTimeout(timerId);
+      signal.removeEventListener('abort', done);
+      resolve();
+    };
+    const frameId = requestAnimationFrame(done);
+    const timerId = setTimeout(done, TITLE_FLUSH_FALLBACK_MS);
+    signal.addEventListener('abort', done, { once: true });
+  });
+
+/** `ids` with the currently visible ones first, in viewport order. */
+const prioritizeVisible = (
+  ids: string[],
+  registrations: Map<string, string[]>,
+): string[] => {
+  const pending = new Set(ids);
+  const visible = new Set<string>();
+  for (const viewIds of registrations.values()) {
+    for (const id of viewIds) if (pending.has(id)) visible.add(id);
+  }
+  if (visible.size === 0) return ids;
+  return [...visible, ...ids.filter((id) => !visible.has(id))];
+};
 
 interface KnownTitle {
   title: string;
@@ -32,6 +100,9 @@ export const useConversationTitleEnrichment = (
   const deletedAtRevisions = useRef(new Map<string, number>());
   const pendingDeletions = useRef(new Set<string>());
   const revision = useRef(0);
+  const titleTransport = useRef(ConversationTitleTransport.Stream);
+  /* Visible IDs per mounted history view; sampled when a request is formed. */
+  const visibleIdRegistrations = useRef(new Map<string, string[]>());
   const [isUpdatingTitles, setIsUpdatingTitles] = useState(false);
 
   useLayoutEffect(() => {
@@ -40,6 +111,7 @@ export const useConversationTitleEnrichment = (
     deletedAtRevisions.current.clear();
     pendingDeletions.current.clear();
     revision.current = 0;
+    titleTransport.current = ConversationTitleTransport.Stream;
     setIsUpdatingTitles(false);
     return () => {
       activeRequest.current?.abort();
@@ -48,6 +120,15 @@ export const useConversationTitleEnrichment = (
   }, [userSub]);
 
   const getTitleRevision = useCallback(() => revision.current, []);
+
+  /** Registers the IDs a history view shows; `null` clears that view only. */
+  const setVisibleConversationIds = useCallback(
+    (viewKey: string, ids: string[] | null) => {
+      if (ids) visibleIdRegistrations.current.set(viewKey, ids);
+      else visibleIdRegistrations.current.delete(viewKey);
+    },
+    [],
+  );
 
   const rememberTitle = useCallback(
     (
@@ -164,68 +245,182 @@ export const useConversationTitleEnrichment = (
       const revisions = new Map(
         pendingIds.map((id) => [id, titleRevisions.current.get(id) ?? 0]),
       );
+      const isCurrent = (id: string) =>
+        revisions.get(id) === (titleRevisions.current.get(id) ?? 0);
+      const isActive = () =>
+        activeRequest.current === controller && !controller.signal.aborted;
       setIsUpdatingTitles(pendingIds.length > 0);
 
-      const enrich = async () => {
-        for (
-          let offset = 0;
-          offset < pendingIds.length;
-          offset += TITLE_BATCH_SIZE
-        ) {
-          if (controller.signal.aborted) return;
-          const ids = pendingIds
+      /* Titles wait here for at most one frame, so a burst of stream events
+         renders once instead of once per network fragment. */
+      const pendingTitles = new Map<string, string>();
+      let frameId: number | undefined;
+      let timerId: ReturnType<typeof setTimeout> | undefined;
+      const flushTitles = () => {
+        if (frameId !== undefined) cancelAnimationFrame(frameId);
+        clearTimeout(timerId);
+        frameId = undefined;
+        timerId = undefined;
+        if (pendingTitles.size === 0) return;
+        const titles = new Map(
+          [...pendingTitles].filter(([id]) => isCurrent(id)),
+        );
+        pendingTitles.clear();
+        if (activeRequest.current !== controller || titles.size === 0) return;
+        titles.forEach((title, id) => {
+          knownTitles.current.set(id, {
+            title,
+            revision: titleRevisions.current.get(id) ?? 0,
+          });
+        });
+        setConversations((current) => {
+          if (activeRequest.current !== controller) return current;
+          let changed = false;
+          const next = current.map((item) => {
+            const title = titles.get(item.id);
+            if (
+              title !== undefined &&
+              isCurrent(item.id) &&
+              (item.title !== title || item.isTitlePending)
+            ) {
+              changed = true;
+              return { ...item, title, isTitlePending: false };
+            }
+            return item;
+          });
+          return changed ? next : current;
+        });
+      };
+      const acceptTitle = (id: string, title: string) => {
+        if (!isCurrent(id)) return;
+        pendingTitles.set(id, title);
+        if (pendingTitles.size >= MAX_PENDING_TITLE_UPDATES) {
+          flushTitles();
+          return;
+        }
+        if (timerId !== undefined) return;
+        frameId = requestAnimationFrame(flushTitles);
+        timerId = setTimeout(flushTitles, TITLE_FLUSH_FALLBACK_MS);
+      };
+
+      const enrichWithJson = async (ids: string[]) => {
+        for (let offset = 0; offset < ids.length; offset += TITLE_BATCH_SIZE) {
+          if (!isActive()) return;
+          const batch = ids
             .slice(offset, offset + TITLE_BATCH_SIZE)
-            .filter(
-              (id) =>
-                revisions.get(id) === (titleRevisions.current.get(id) ?? 0),
-            );
-          if (ids.length === 0) continue;
+            .filter(isCurrent);
+          if (batch.length === 0) continue;
           try {
-            const result = await getConversationTitles(ids, controller.signal);
-            if (activeRequest.current !== controller) return;
-            const titles = new Map(
-              result.items
-                .filter(
-                  ({ id }) =>
-                    ids.includes(id) &&
-                    revisions.get(id) === (titleRevisions.current.get(id) ?? 0),
-                )
-                .map(({ id, title }) => [id, title]),
+            const result = await getConversationTitles(
+              batch,
+              controller.signal,
             );
-            if (titles.size === 0) continue;
-            titles.forEach((title, id) => {
-              knownTitles.current.set(id, {
-                title,
-                revision: titleRevisions.current.get(id) ?? 0,
-              });
-            });
-            setConversations((current) => {
-              if (activeRequest.current !== controller) return current;
-              let changed = false;
-              const next = current.map((item) => {
-                const title = titles.get(item.id);
-                if (
-                  title !== undefined &&
-                  revisions.get(item.id) ===
-                    (titleRevisions.current.get(item.id) ?? 0) &&
-                  (item.title !== title || item.isTitlePending)
-                ) {
-                  changed = true;
-                  return { ...item, title, isTitlePending: false };
-                }
-                return item;
-              });
-              return changed ? next : current;
-            });
+            if (!isActive()) return;
+            for (const { id, title } of result.items) {
+              if (batch.includes(id)) acceptTitle(id, title);
+            }
+            flushTitles();
           } catch {
             /* Keep usable filename/cached titles. A later list refresh can
                retry failures. Stop this attempt, including on authentication
                errors, instead of sending every remaining batch into an outage. */
-            break;
+            return;
           }
         }
-        if (activeRequest.current === controller) {
-          setIsUpdatingTitles(false);
+      };
+
+      /* One finite request. Settled IDs got an outcome and are not retried
+         in this attempt; the rest stay eligible for a continuation. */
+      const streamRequest = async (
+        ids: string[],
+        settled: Set<string>,
+      ): Promise<ConversationTitleRequestEnd> => {
+        const requested = new Set(ids);
+        let events: AsyncIterable<ConversationTitleStreamEventDto>;
+        try {
+          events = await streamConversationTitles(ids, controller.signal);
+        } catch (error) {
+          return isConversationTitleStreamUnsupported(error)
+            ? ConversationTitleRequestEnd.Unsupported
+            : ConversationTitleRequestEnd.Stopped;
+        }
+        try {
+          for await (const event of events) {
+            if (!isActive()) return ConversationTitleRequestEnd.Stopped;
+            if (
+              event.type === ConversationTitleStreamErrorEventDtoTypeEnum.Error
+            ) {
+              return ConversationTitleRequestEnd.Stopped;
+            }
+            if (
+              event.type === ConversationTitleStreamDoneEventDtoTypeEnum.Done
+            ) {
+              const isTruthful =
+                event.total === requested.size &&
+                event.processed === settled.size &&
+                (event.reason === ConversationTitleStreamDoneReason.Budget ||
+                  settled.size === requested.size);
+              if (!isTruthful) return ConversationTitleRequestEnd.Stopped;
+              return event.reason === ConversationTitleStreamDoneReason.Complete
+                ? ConversationTitleRequestEnd.Complete
+                : ConversationTitleRequestEnd.Budget;
+            }
+            /* Unknown or repeated IDs never mutate state. */
+            if (!requested.has(event.id) || settled.has(event.id)) continue;
+            settled.add(event.id);
+            if (
+              event.type === ConversationTitleStreamTitleEventDtoTypeEnum.Title
+            )
+              acceptTitle(event.id, event.title);
+          }
+        } catch {
+          return ConversationTitleRequestEnd.Stopped;
+        }
+        /* EOF without a terminal event is an interruption, not completion. */
+        return ConversationTitleRequestEnd.Stopped;
+      };
+
+      const enrich = async () => {
+        let unattempted = pendingIds;
+        try {
+          if (unattempted.length > 0) {
+            await waitForViewportReport(controller.signal);
+          }
+          while (unattempted.length > 0 && isActive()) {
+            /* Priority is sampled per request; scrolling never restarts one. */
+            unattempted = prioritizeVisible(
+              unattempted.filter(isCurrent),
+              visibleIdRegistrations.current,
+            );
+            if (titleTransport.current === ConversationTitleTransport.Json) {
+              await enrichWithJson(unattempted);
+              return;
+            }
+            const ids = takeTitleStreamRequest(unattempted);
+            if (ids.length === 0) return;
+            const settled = new Set<string>();
+            const end = await streamRequest(ids, settled);
+            if (end === ConversationTitleRequestEnd.Unsupported) {
+              if (activeRequest.current === controller) {
+                titleTransport.current = ConversationTitleTransport.Json;
+              }
+              continue;
+            }
+            unattempted = unattempted.filter((id) => !settled.has(id));
+            if (end === ConversationTitleRequestEnd.Stopped) return;
+            /* A budget that settled nothing would only loop. */
+            if (
+              end === ConversationTitleRequestEnd.Budget &&
+              settled.size === 0
+            ) {
+              return;
+            }
+          }
+        } finally {
+          flushTitles();
+          if (activeRequest.current === controller) {
+            setIsUpdatingTitles(false);
+          }
         }
       };
       void enrich();
@@ -239,6 +434,7 @@ export const useConversationTitleEnrichment = (
     rememberTitle,
     forgetTitle,
     restoreTitle,
+    setVisibleConversationIds,
     isUpdatingTitles,
   };
 };

@@ -116,6 +116,13 @@ still apply. Both options default to `false` and are also available on
 `ConversationListSection` and `ConversationPanel`. The host owns requests,
 cancellation, failures and when to finish the update state.
 
+`onVisibleConversationIdsChange(ids)` reports the distinct conversation IDs of
+the rows actually inside the virtual viewport, in row order — group headers and
+overscan rows excluded — whenever that sequence changes. It reports `[]` while
+the list is loading, empty or showing no search results. The list only reports
+IDs; a host uses them, for example, to resolve visible titles first. It is also
+available on `ConversationListSection` and `ConversationPanel`.
+
 ```tsx
 import {
   ConversationList,
@@ -132,6 +139,7 @@ import { FilterTab } from '@epam/ai-dial-chat-shared';
   rowVariant={ConversationRowVariant.Indicator}
   getActions={buildRowActions}
   onMoveConversation={handleMove}
+  onVisibleConversationIdsChange={handleVisibleIdsChange}
   labels={{
     emptyLabel: 'No conversations yet',
     noResultsLabel: 'No results found',
@@ -263,8 +271,8 @@ can still pick another afterwards), `onFilterChange` reports the user's choice,
 the chosen type, and `hiddenSources` removes sources from the list altogether.
 A conversation is a task when its `ConversationItem.kind` is
 `ConversationKind.Task` (from `@epam/ai-dial-chat-shared`); without a kind it is
-a chat. Row actions, `onActionMenuOpen` and
-`onMoveConversation` go to the list unchanged, `headerActions` to the header,
+a chat. Row actions, `onActionMenuOpen`, `onMoveConversation` and
+`onVisibleConversationIdsChange` go to the list unchanged, `headerActions` to the header,
 and `styles.header` / `styles.list` to the matching component. `listClassName`
 is merged onto the list root, for a host anchor. The section fills the height
 its parent gives it, with the list scrolling inside.

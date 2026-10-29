@@ -19,6 +19,7 @@ import { ResponsesAdapter } from './generation/responses.adapter';
 import { ConversationLifecycleService } from './lifecycle/conversation-lifecycle.service';
 import { ConversationListingService } from './listing/conversation-listing.service';
 import { ConversationTitleCacheService } from './listing/conversation-title-cache.service';
+import { ConversationTitleStreamService } from './listing/conversation-title-stream.service';
 import { ConversationTitlesService } from './listing/conversation-titles.service';
 import { ConversationPersistenceService } from './persistence/conversation-persistence.service';
 import { PublishedFolderAttachmentsService } from './published-folder-attachments.service';
@@ -39,6 +40,7 @@ import { ConversationStreamingService } from './streaming/conversation-streaming
     ConversationListingService,
     ConversationTitleCacheService,
     ConversationTitlesService,
+    ConversationTitleStreamService,
     ConversationLifecycleService,
     ConversationStreamingService,
     ConversationNamingService,
