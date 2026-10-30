@@ -30,6 +30,7 @@ import {
 import { useShareRecipientsCount } from '@epam/ai-dial-chat-hooks/sharing';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
+  ConfirmationDialog,
   ConversationTransferErrorCode,
   DeleteConfirmationDialog,
   FilterTab,
@@ -54,8 +55,6 @@ import {
   TransferQueue,
   type DropdownItem,
   type TransferQueueLabels,
-  LiveRegion,
-  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconClockHour3,
@@ -1557,58 +1556,49 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         {deleteError && <ErrorMessageNotification message={deleteError} />}
       </DeleteConfirmationDialog>
 
-      <ConfirmationPopup
+      {/* Keeps Cancel/Unpublish rendered and disabled while the request runs,
+          announcing progress through the footer's live region. */}
+      <ConfirmationDialog
         open={isUnpublishPending}
-        header={t(ConversationUnpublishI18nKeys.ConfirmTitle)}
+        title={t(ConversationUnpublishI18nKeys.ConfirmTitle)}
         confirmLabel={t(ButtonsI18nKeys.Unpublish)}
         cancelLabel={t(ButtonsI18nKeys.Cancel)}
         variant={ConfirmationPopupVariant.Danger}
         isLoading={isUnpublishing}
-        disableConfirmButton={
+        isConfirmDisabled={
           hasUnpublishFolderChoice && selectedUnpublishFolder == null
         }
-        description={
-          <>
-            <span className="wrap-break-word">
-              {hasUnpublishFolderChoice
-                ? t(ConversationUnpublishI18nKeys.SelectFolderMessage, {
-                    name: pendingUnpublish?.title ?? '',
-                  })
-                : t(ConversationUnpublishI18nKeys.ConfirmMessage, {
-                    name: pendingUnpublish?.title ?? '',
-                    folder: getPublishFolderLabel(unpublishFolders[0] ?? '', t),
-                  })}
-            </span>
-            {hasUnpublishFolderChoice && (
-              <RadioGroup
-                className="mt-3"
-                ariaLabel={t(
-                  ConversationUnpublishI18nKeys.FolderGroupAriaLabel,
-                )}
-                value={selectedUnpublishFolder ?? undefined}
-                onChange={setSelectedUnpublishFolder}
-                disabled={isUnpublishing}
-                items={unpublishFolders.map((folder) => ({
-                  value: folder,
-                  label: getPublishFolderLabel(folder, t),
-                }))}
-                radioClassName="dial-small-text text-primary"
-              />
-            )}
-          </>
+        loadingStatusLabel={t(ConversationUnpublishI18nKeys.RequestingStatus)}
+        message={
+          <span className="wrap-break-word">
+            {hasUnpublishFolderChoice
+              ? t(ConversationUnpublishI18nKeys.SelectFolderMessage, {
+                  name: pendingUnpublish?.title ?? '',
+                })
+              : t(ConversationUnpublishI18nKeys.ConfirmMessage, {
+                  name: pendingUnpublish?.title ?? '',
+                  folder: getPublishFolderLabel(unpublishFolders[0] ?? '', t),
+                })}
+          </span>
         }
         onConfirm={handleConfirmUnpublish}
-        onCancel={handleCloseUnpublishDialog}
         onClose={handleCloseUnpublishDialog}
-      />
-
-      {pendingUnpublish != null && (
-        <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
-          {isUnpublishing
-            ? t(ConversationUnpublishI18nKeys.RequestingStatus)
-            : ''}
-        </LiveRegion>
-      )}
+      >
+        {hasUnpublishFolderChoice && (
+          <RadioGroup
+            className="mt-3"
+            ariaLabel={t(ConversationUnpublishI18nKeys.FolderGroupAriaLabel)}
+            value={selectedUnpublishFolder ?? undefined}
+            onChange={setSelectedUnpublishFolder}
+            disabled={isUnpublishing}
+            items={unpublishFolders.map((folder) => ({
+              value: folder,
+              label: getPublishFolderLabel(folder, t),
+            }))}
+            radioClassName="dial-small-text text-primary"
+          />
+        )}
+      </ConfirmationDialog>
 
       <ConfirmationPopup
         open={isUnsharePending}

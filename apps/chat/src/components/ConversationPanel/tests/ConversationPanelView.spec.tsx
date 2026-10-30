@@ -3187,6 +3187,27 @@ describe('ConversationPanelView', () => {
       ).toBe(false);
     });
 
+    it('keeps both actions rendered and disabled while the request is in flight', async () => {
+      vi.mocked(unpublishConversation).mockReturnValue(
+        new Promise(() => undefined),
+      );
+      await openUnpublishPopup(['Organization/Shared chats']);
+      const status = dialog().getByRole('status');
+      expect(status.textContent).toBe('');
+
+      await userEvent.click(confirmButton());
+
+      expect(confirmButton().hasAttribute('disabled')).toBe(true);
+      expect(
+        dialog()
+          .getByRole('button', { name: 'buttons.cancel' })
+          .hasAttribute('disabled'),
+      ).toBe(true);
+      // The confirm button's spinner is a second status node; the region itself must not remount.
+      expect(dialog().getAllByRole('status')).toContain(status);
+      expect(status.textContent).toBe('conversationUnpublish.requestingStatus');
+    });
+
     it('dismisses without a request when Cancel is clicked', async () => {
       await openUnpublishPopup(['Organization/Shared chats']);
 

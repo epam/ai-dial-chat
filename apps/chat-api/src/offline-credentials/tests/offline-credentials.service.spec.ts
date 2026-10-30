@@ -360,6 +360,26 @@ describe('OfflineCredentialsService', () => {
       await expect(service.signOut('token')).resolves.toBeUndefined();
     });
 
+    it('treats a bodiless 404 from Core as idempotent success', async () => {
+      const { service, dialClient } = makeService();
+      vi.mocked(dialClient.client.offlineCredentialsSignOut).mockResolvedValue(
+        errResponse(404, undefined),
+      );
+
+      await expect(service.signOut('token')).resolves.toBeUndefined();
+    });
+
+    it('maps a bodiless 5xx from Core to a 502', async () => {
+      const { service, dialClient } = makeService();
+      vi.mocked(dialClient.client.offlineCredentialsSignOut).mockResolvedValue(
+        errResponse(500, undefined),
+      );
+
+      await expect(service.signOut('token')).rejects.toBeInstanceOf(
+        BadGatewayException,
+      );
+    });
+
     it('maps a falsy Core response to a 502, never a success', async () => {
       const { service, dialClient } = makeService();
       vi.mocked(dialClient.client.offlineCredentialsSignOut).mockResolvedValue(
