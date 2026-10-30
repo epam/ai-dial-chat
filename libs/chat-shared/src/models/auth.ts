@@ -15,6 +15,8 @@ export interface UserProfile {
   bucket?: string;
   /** Whether the user's roles claim intersects the provider's configured adminRoles. */
   isAdmin: boolean;
+  /** URL of the user's profile picture, when the identity provider supplies one. */
+  pictureUrl?: string;
 }
 
 /** Describes an available identity provider. */

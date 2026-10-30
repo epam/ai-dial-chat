@@ -9289,6 +9289,12 @@ export interface UserProfileDto {
    * @memberof UserProfileDto
    */
   isAdmin: boolean;
+  /**
+   * URL of the user's profile picture: the IdP's absolute http(s) `picture` claim, or the same-origin `GET /auth/me/picture` path when the IdP supplied the image inline. Omitted when there is no picture.
+   * @type {string}
+   * @memberof UserProfileDto
+   */
+  pictureUrl?: string;
 }
 /**
  *

@@ -9,8 +9,16 @@ vi.mock('../../../context/auth/UserContext', () => ({
 
 const AVATAR_URL = 'https://keycloak.example.com/avatars/user-1.png';
 
-const withClaims = (claims: Record<string, unknown> | null) => ({
-  user: claims && { sub: 'user-1', providerId: 'keycloak', claims },
+const withProfile = (
+  profile: { pictureUrl?: string; claims?: Record<string, unknown> } | null,
+) => ({
+  user: profile && {
+    sub: 'user-1',
+    providerId: 'keycloak',
+    isAdmin: false,
+    claims: {},
+    ...profile,
+  },
 });
 
 describe('useUserProfile', () => {
@@ -18,9 +26,9 @@ describe('useUserProfile', () => {
     vi.clearAllMocks();
   });
 
-  it('exposes the OIDC picture claim as the avatar image', () => {
+  it('exposes the profile pictureUrl as the avatar image', () => {
     useUserMock.mockReturnValue(
-      withClaims({ name: 'Jane Doe', picture: AVATAR_URL }),
+      withProfile({ pictureUrl: AVATAR_URL, claims: { name: 'Jane Doe' } }),
     );
 
     const { result } = renderHook(() => useUserProfile());
@@ -30,8 +38,19 @@ describe('useUserProfile', () => {
     expect(result.current.shortName).toBe('JD');
   });
 
+  it('uses the same-origin picture endpoint for an inline IdP picture', () => {
+    useUserMock.mockReturnValue(
+      withProfile({ pictureUrl: '/api/v1/auth/me/picture' }),
+    );
+
+    const { result } = renderHook(() => useUserProfile());
+
+    expect(result.current.image).toBe('/api/v1/auth/me/picture');
+    expect(result.current.isFallbackIconShown).toBe(false);
+  });
+
   it('shows the initials fallback when the user has no picture', () => {
-    useUserMock.mockReturnValue(withClaims({ name: 'Jane Doe' }));
+    useUserMock.mockReturnValue(withProfile({ claims: { name: 'Jane Doe' } }));
 
     const { result } = renderHook(() => useUserProfile());
 
@@ -39,25 +58,27 @@ describe('useUserProfile', () => {
   });
 
   it('shows the avatar once the profile loads after the first render', () => {
-    useUserMock.mockReturnValue(withClaims(null));
+    useUserMock.mockReturnValue(withProfile(null));
     const { result, rerender } = renderHook(() => useUserProfile());
     expect(result.current.isFallbackIconShown).toBe(true);
 
-    useUserMock.mockReturnValue(withClaims({ picture: AVATAR_URL }));
+    useUserMock.mockReturnValue(withProfile({ pictureUrl: AVATAR_URL }));
     rerender();
 
     expect(result.current.isFallbackIconShown).toBe(false);
   });
 
   it('falls back to initials after the avatar fails to load and retries a new URL', () => {
-    useUserMock.mockReturnValue(withClaims({ picture: AVATAR_URL }));
+    useUserMock.mockReturnValue(withProfile({ pictureUrl: AVATAR_URL }));
     const { result, rerender } = renderHook(() => useUserProfile());
 
     act(() => result.current.setIsFallbackIconShown(true));
     expect(result.current.isFallbackIconShown).toBe(true);
 
     useUserMock.mockReturnValue(
-      withClaims({ picture: 'https://keycloak.example.com/avatars/new.png' }),
+      withProfile({
+        pictureUrl: 'https://keycloak.example.com/avatars/new.png',
+      }),
     );
     rerender();
 
