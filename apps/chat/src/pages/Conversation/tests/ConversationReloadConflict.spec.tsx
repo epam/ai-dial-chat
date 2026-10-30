@@ -248,6 +248,7 @@ describe('ConversationPage — reload before the first answer saved its start', 
       <StrictMode>
         <ConversationPage />
       </StrictMode>,
+      { wrapper: ConversationDataSourceProvider },
     );
     await screen.findByText('DIAL is a platform.');
     unmount();
@@ -311,6 +312,7 @@ describe('ConversationPage — reload before the first answer saved its start', 
       <StrictMode>
         <ConversationPage />
       </StrictMode>,
+      { wrapper: ConversationDataSourceProvider },
     );
     await waitFor(() =>
       expect(chatStreamApi.streamCompletion).toHaveBeenCalledOnce(),
