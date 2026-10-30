@@ -391,6 +391,7 @@ export class ConversationController {
       dto,
       timezoneHeader,
       dto.path,
+      { isUnreadTracked: true },
     );
   }
 
@@ -755,7 +756,7 @@ export class ConversationController {
     operationId: 'markConversationViewed',
     summary: 'Mark a conversation as viewed',
     description:
-      'Idempotently records that the authenticated user has opened this conversation. Used to clear the unread indicator for scheduler-created conversations.',
+      'Idempotently records that the authenticated user has seen this conversation. Clears the unread indicator of scheduler-created conversations and of regular conversations whose answer arrived while the user was elsewhere.',
   })
   @ApiDialCoreErrors()
   @ApiResponse({ status: 204, description: 'Conversation marked as viewed' })

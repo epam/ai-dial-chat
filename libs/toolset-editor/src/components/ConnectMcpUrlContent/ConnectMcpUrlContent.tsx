@@ -3,6 +3,7 @@ import {
   mergeClasses,
   useCodeCopy,
 } from '@epam/ai-dial-chat-shared';
+import { LiveRegion, LiveRegionElement } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo } from 'react';
 import type { ConnectMcpUrlContentLabels } from '../../models/settings-form-props';
@@ -45,9 +46,9 @@ const ConnectMcpUrlContent: FC<ConnectMcpUrlContentProps> = ({
           onClick={copy}
         />
       </div>
-      <span role="status" aria-live="polite" className="sr-only">
+      <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
         {isCopied ? copiedLabel : ''}
-      </span>
+      </LiveRegion>
     </div>
   );
 };

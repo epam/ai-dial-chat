@@ -41,6 +41,8 @@ const handlersMocks = vi.hoisted(() => ({
  */
 const streamMocks = vi.hoisted(() => ({
   startStream: vi.fn(),
+  isStreaming: false,
+  hasConversationReloadError: false,
   batchChunksPerFrame: undefined as boolean | undefined,
   setConversation: undefined as
     | undefined
@@ -233,7 +235,8 @@ vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
         ) => ({
           ...conversation,
         }),
-        isStreaming: false,
+        isStreaming: streamMocks.isStreaming,
+        hasConversationReloadError: streamMocks.hasConversationReloadError,
         canStopStreaming: false,
       };
     },
@@ -271,6 +274,8 @@ const makeConversation = (): Conversation =>
 
 const removeConversationFromList = vi.fn();
 const bumpConversationActivity = vi.fn();
+const markConversationUnread = vi.fn();
+const markConversationViewed = vi.fn();
 const showNotification = vi.fn();
 
 const notFoundError = { response: { status: 404, json: vi.fn() } };
@@ -279,6 +284,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   routerMocks.conversationId = CONVERSATION_ID;
   routerMocks.state = null;
+  streamMocks.isStreaming = false;
+  streamMocks.hasConversationReloadError = false;
   handlersMocks.lastParams = undefined;
   overlayContentMocks.setOverlayInputContent = undefined;
   overlayContentMocks.mountedRevisions = [];
@@ -298,6 +305,8 @@ beforeEach(() => {
     removeConversationFromList,
     updateConversationTitle: vi.fn(),
     bumpConversationActivity,
+    markConversationUnread,
+    markConversationViewed,
     watchForDisplayNameUpdate: vi.fn(() => () => undefined),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any);
@@ -611,6 +620,201 @@ describe('ConversationPage — sidebar ordering on new activity', () => {
   });
 });
 
+describe('ConversationPage — read state around a generation', () => {
+  const OTHER_ID = 'conversations/bucket/claude__Small';
+
+  const row = (overrides: Record<string, unknown> = {}) => ({
+    id: CONVERSATION_ID,
+    title: 'Hello',
+    isPinned: false,
+    updatedAt: 0,
+    sharedWithMe: false,
+    publishedWithMe: false,
+    isReadonly: false,
+    isScheduledTask: false,
+    isUnread: true,
+    ...overrides,
+  });
+
+  const withRows = (rows: unknown[]) =>
+    mockUseConversations.mockReturnValue({
+      conversations: rows,
+      duplicateConversation: vi.fn(),
+      removeConversationFromList,
+      updateConversationTitle: vi.fn(),
+      bumpConversationActivity,
+      markConversationUnread,
+      markConversationViewed,
+      watchForDisplayNameUpdate: vi.fn(() => () => undefined),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+
+  const answered = () =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    makeConversation() as any;
+
+  it('marks the chat unread locally next to the activity bump when a generation starts', async () => {
+    mockGetConversation.mockResolvedValueOnce(answered());
+
+    render(<ConversationPage />, { wrapper: ConversationDataSourceProvider });
+    await waitFor(() => expect(handlersMocks.lastParams).toBeDefined());
+
+    getHandlerParams().startStream(CONVERSATION_ID, 'hello', 1, 'gpt-4o');
+
+    expect(markConversationUnread).toHaveBeenCalledWith(CONVERSATION_ID);
+  });
+
+  it('marks an unread regular chat viewed once it has loaded and nothing is generating', async () => {
+    withRows([row()]);
+    mockGetConversation.mockResolvedValue(answered());
+
+    render(<ConversationPage />, { wrapper: ConversationDataSourceProvider });
+
+    await waitFor(() =>
+      expect(markConversationViewed).toHaveBeenCalledExactlyOnceWith(
+        CONVERSATION_ID,
+      ),
+    );
+  });
+
+  it('waits for the conversation to load before marking it viewed', async () => {
+    withRows([row()]);
+    let finishLoad!: (conversation: Conversation) => void;
+    mockGetConversation.mockReturnValue(
+      new Promise((resolve) => {
+        finishLoad = resolve as typeof finishLoad;
+      }) as never,
+    );
+
+    render(<ConversationPage />, { wrapper: ConversationDataSourceProvider });
+    await act(async () => undefined);
+    expect(markConversationViewed).not.toHaveBeenCalled();
+
+    await act(async () => finishLoad(makeConversation()));
+
+    await waitFor(() => expect(markConversationViewed).toHaveBeenCalledOnce());
+  });
+
+  it('does not mark a chat that is already read or a scheduled run', async () => {
+    withRows([row({ isUnread: false })]);
+    mockGetConversation.mockResolvedValue(answered());
+    const { unmount } = render(<ConversationPage />, {
+      wrapper: ConversationDataSourceProvider,
+    });
+    await waitFor(() => expect(mockGetConversation).toHaveBeenCalled());
+    await act(async () => undefined);
+    expect(markConversationViewed).not.toHaveBeenCalled();
+    unmount();
+
+    withRows([row({ isScheduledTask: true })]);
+    render(<ConversationPage />, { wrapper: ConversationDataSourceProvider });
+    await waitFor(() => expect(mockGetConversation).toHaveBeenCalledTimes(2));
+    await act(async () => undefined);
+    expect(markConversationViewed).not.toHaveBeenCalled();
+  });
+
+  it('writes nothing while the chat is streaming, then marks it viewed when the stream ends', async () => {
+    withRows([row()]);
+    mockGetConversation.mockResolvedValue(answered());
+    streamMocks.isStreaming = true;
+    const { rerender } = render(<ConversationPage />, {
+      wrapper: ConversationDataSourceProvider,
+    });
+    await waitFor(() => expect(mockGetConversation).toHaveBeenCalled());
+    await act(async () => undefined);
+    expect(markConversationViewed).not.toHaveBeenCalled();
+
+    streamMocks.isStreaming = false;
+    rerender(<ConversationPage />);
+
+    await waitFor(() =>
+      expect(markConversationViewed).toHaveBeenCalledExactlyOnceWith(
+        CONVERSATION_ID,
+      ),
+    );
+  });
+
+  it('keeps an unseen answer unread while its recovery has failed, and marks it viewed after a successful retry', async () => {
+    withRows([row()]);
+    mockGetConversation.mockResolvedValue(answered());
+    streamMocks.hasConversationReloadError = true;
+    const { rerender } = render(<ConversationPage />, {
+      wrapper: ConversationDataSourceProvider,
+    });
+    await waitFor(() => expect(mockGetConversation).toHaveBeenCalled());
+    await act(async () => undefined);
+    expect(markConversationViewed).not.toHaveBeenCalled();
+
+    streamMocks.hasConversationReloadError = false;
+    rerender(<ConversationPage />);
+
+    await waitFor(() =>
+      expect(markConversationViewed).toHaveBeenCalledExactlyOnceWith(
+        CONVERSATION_ID,
+      ),
+    );
+  });
+
+  it('does not mark the next chat viewed before its own conversation has loaded', async () => {
+    withRows([row({ id: OTHER_ID })]);
+    mockGetConversation.mockResolvedValueOnce(answered());
+    const { rerender } = render(<ConversationPage />, {
+      wrapper: ConversationDataSourceProvider,
+    });
+    await waitFor(() => expect(mockGetConversation).toHaveBeenCalledTimes(1));
+    await act(async () => undefined);
+
+    /* The route changed, the previous chat is still shown and its fetch is pending. */
+    let finishLoad!: (conversation: Conversation) => void;
+    mockGetConversation.mockReturnValueOnce(
+      new Promise((resolve) => {
+        finishLoad = resolve as typeof finishLoad;
+      }) as never,
+    );
+    routerMocks.conversationId = OTHER_ID;
+    rerender(<ConversationPage />);
+    await act(async () => undefined);
+    expect(markConversationViewed).not.toHaveBeenCalled();
+
+    await act(async () => finishLoad(makeConversation()));
+
+    await waitFor(() =>
+      expect(markConversationViewed).toHaveBeenCalledExactlyOnceWith(OTHER_ID),
+    );
+  });
+
+  it('does not mark the chat viewed when the user switches to another conversation mid-stream', async () => {
+    withRows([row()]);
+    mockGetConversation.mockResolvedValue(answered());
+    streamMocks.isStreaming = true;
+    const { rerender } = render(<ConversationPage />, {
+      wrapper: ConversationDataSourceProvider,
+    });
+    await waitFor(() => expect(mockGetConversation).toHaveBeenCalled());
+
+    routerMocks.conversationId = OTHER_ID;
+    streamMocks.isStreaming = false;
+    rerender(<ConversationPage />);
+    await act(async () => undefined);
+
+    expect(markConversationViewed).not.toHaveBeenCalledWith(CONVERSATION_ID);
+  });
+
+  it('does not mark the chat viewed when the page is left before the stream ends', async () => {
+    withRows([row()]);
+    mockGetConversation.mockResolvedValue(answered());
+    streamMocks.isStreaming = true;
+    const { unmount } = render(<ConversationPage />, {
+      wrapper: ConversationDataSourceProvider,
+    });
+    await waitFor(() => expect(mockGetConversation).toHaveBeenCalled());
+
+    unmount();
+
+    expect(markConversationViewed).not.toHaveBeenCalled();
+  });
+});
+
 describe('ConversationPage — leaving the conversations routes', () => {
   it('closes the sources sidebar when the page unmounts', () => {
     const { unmount } = render(<ConversationPage />, {
@@ -902,6 +1106,40 @@ describe('ConversationPage — Custom Viewer', () => {
       await screen.findByText(`custom-viewer:${CONVERSATION_ID}`),
     ).toBeTruthy();
     expect(screen.queryByText('conversation-view')).toBeNull();
+  });
+
+  it('marks an unread viewer chat viewed once it has loaded', async () => {
+    mockGetConversation.mockResolvedValueOnce(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      makeConversation() as any,
+    );
+    mockUseConversations.mockReturnValue({
+      ...mockUseConversations(),
+      conversations: [
+        {
+          id: CONVERSATION_ID,
+          title: 'Hello',
+          isPinned: false,
+          updatedAt: 0,
+          sharedWithMe: false,
+          publishedWithMe: false,
+          isReadonly: false,
+          isScheduledTask: false,
+          isUnread: true,
+        },
+      ],
+      markConversationViewed,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+
+    render(<ConversationPage />, { wrapper: ConversationDataSourceProvider });
+
+    await screen.findByText(`custom-viewer:${CONVERSATION_ID}`);
+    await waitFor(() =>
+      expect(markConversationViewed).toHaveBeenCalledExactlyOnceWith(
+        CONVERSATION_ID,
+      ),
+    );
   });
 
   it('never auto-starts a generation for a viewer conversation', async () => {

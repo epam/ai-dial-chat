@@ -1,4 +1,7 @@
-import { useOpenAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
+import {
+  useLatestCanvasRequest,
+  useOpenAttachmentCanvas,
+} from '@epam/ai-dial-attachment-canvas';
 import {
   useAttachmentAction,
   isDownloadableAttachment,
@@ -10,6 +13,10 @@ import {
   isExternalSourcePreviewable,
   resolveExternalSourceContentType,
 } from '@epam/ai-dial-chat-hooks/file-manager';
+import {
+  ActiveScheduledTaskDetailState,
+  ActiveScheduledTaskStatus,
+} from '@epam/ai-dial-chat-hooks/scheduled-tasks';
 import { usePanelMaxWidth } from '@epam/ai-dial-chat-hooks/viewport-layout';
 import type {
   AttachmentDisplayResolvers,
@@ -43,14 +50,9 @@ import {
   useSourcesSidebarData,
 } from '../../context/SourcesSidebarContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
-import { useLatestCanvasRequest } from '../../hooks/attachment/useLatestCanvasRequest';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useCloseSourcesSidebarOnSubjectChange } from '../../hooks/sources-sidebar/useCloseSourcesSidebarOnSubjectChange';
 import useLocalStorage from '../../hooks/useLocalStorage';
-import {
-  ActiveScheduledTaskDetailState,
-  ActiveScheduledTaskStatus,
-} from '../../types/active-scheduled-task';
 import { StorageKey } from '../../types/storage-key';
 import { resolveDialFileDownloadUrl } from '../../utils/dial-file';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';

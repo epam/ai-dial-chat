@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UsagePeriod } from '../usage-period';
 import {
+  UsageResetOffsetPolicy,
   USAGE_RESET_I18N_KEYS,
   formatUsageResetShort,
   formatUsageResetTime,
@@ -226,4 +227,43 @@ describe('formatUsageResetShort', () => {
       formatUsageResetShort(MONTH_BOUNDARY, UsagePeriod.Month, 'en', t),
     ).toBeUndefined();
   });
+});
+
+describe('reset offset policy', () => {
+  afterEach(() => vi.useRealTimers());
+  it.each([
+    ['2026-10-24T22:30:00Z', '2026-10-26T00:00:00Z', 'GMT+2', 'GMT+1'],
+    ['2026-03-28T12:00:00Z', '2026-03-30T00:00:00Z', 'GMT+1', 'GMT+2'],
+  ])(
+    'keeps the same boundary across DST from %s',
+    (now, boundary, current, reset) => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date(now));
+      mockResolvedZone('Europe/Warsaw');
+      const legacy = formatUsageResetTime(boundary, 'en-US', t);
+      const explicit = formatUsageResetTime(boundary, 'en-US', t, {
+        offsetPolicy: UsageResetOffsetPolicy.CurrentOffset,
+      });
+      const actual = formatUsageResetTime(boundary, 'en-US', t, {
+        offsetPolicy: UsageResetOffsetPolicy.ResetInstant,
+      });
+      expect(explicit).toEqual(legacy);
+      expect(legacy?.label).toContain(current);
+      expect(actual?.label).toContain(reset);
+      expect(actual?.isoValue).toBe(boundary);
+      expect(actual?.resetsAtMs).toBe(Date.parse(boundary));
+    },
+  );
+  it.each(Object.values(UsageResetOffsetPolicy))(
+    'returns undefined on invalid inputs and Intl failures with %s',
+    (offsetPolicy) => {
+      expect(
+        formatUsageResetTime('bad', 'en-US', t, { offsetPolicy }),
+      ).toBeUndefined();
+      mockResolvedZone('not-a-zone');
+      expect(
+        formatUsageResetTime(DAY_BOUNDARY, 'en-US', t, { offsetPolicy }),
+      ).toBeUndefined();
+    },
+  );
 });

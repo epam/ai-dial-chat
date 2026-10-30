@@ -247,7 +247,7 @@ class ConversationListItemDto {
   isScheduledTask: boolean; // True only for a user-bucket item whose resource path matches the .scheduler reserved-segment pattern; always false for public and shared items
   scheduleId?: string;      // Present only when isScheduledTask === true; the scheduler task id from the path
   runId?: string;           // Present only when isScheduledTask === true; the scheduler run id from the path
-  isUnread?: boolean;       // Present only when isScheduledTask === true; true when the user has not yet opened this conversation
+  isUnread?: boolean;       // Scheduled-task run: always present (true until opened). Regular user-bucket chat: present, as true, only while the chat is unread (see "Regular-chat unread" below); omitted otherwise
 }
 
 class ConversationListResponseDto {
@@ -256,12 +256,13 @@ class ConversationListResponseDto {
 }
 ```
 
-**Five-way parallel fetch.** The service issues all of the following in a single `Promise.all`, always against the bucket root (recursive, no folder scoping):
+**Six-way parallel fetch.** The service issues all of the following in a single `Promise.all`, always against the bucket root (recursive, no folder scoping):
 1. `getConversationMetadata(bucket, '', { recursive: true, limit, permissions: true, token: userCursor })` — user's own conversations
 2. `getConversationMetadata('public', '', { recursive: true, limit, token: publicCursor })` — organisation-published conversations
 3. `getSharedResources({ body: { resourceTypes: ['CONVERSATION'], with: 'me' } })` — conversations shared directly with the user
 4. `UserConfigService.getPinnedIds(token, bucket)` — pinned conversation IDs
 5. `ScheduledTaskUnreadService.getViewedIds(token, bucket)` — viewed scheduler-created conversation IDs
+6. The regular-chat read state of the user's bucket: the read-before baseline and the viewed regular-chat ids (see the `regular-conversation-read-state` spec)
 
 **Cursor following in complete-history mode.** The personal and public bucket walks are independent — each follows its own `nextToken` chain to exhaustion, so an empty intermediate page that still carries a cursor does not end that bucket's walk. Each bucket's walk keeps the set of cursors it has already requested; if DIAL Core returns a cursor that bucket has already followed, the service throws `BadGatewayException` rather than looping forever. In paged mode no cursor following happens: exactly one request per bucket is issued.
 
@@ -273,15 +274,17 @@ Items from all three data sources are merged and sorted by `updatedAt` descendin
 
 **Scheduler metadata.** Only an item from the user's own bucket (data source 1) can be a scheduled task. For each such item the service SHALL call `parseScheduledTaskConversationPath(item.id)` (see the "Scheduler-created conversations are detected from their DIAL Core resource path" requirement above). When it returns a non-null result, the item SHALL have `isScheduledTask: true`, `scheduleId` and `runId` set from the result, and `isUnread` set to `true` unless the item's `id` is present in the viewed-ids set from `ScheduledTaskUnreadService.getViewedIds`, in which case `isUnread: false`. When `parseScheduledTaskConversationPath` returns `null`, the item SHALL have `isScheduledTask: false` with `scheduleId`/`runId`/`isUnread` all omitted.
 
+**Regular-chat unread.** An item from the user's own bucket (data source 1) that is not a scheduled task SHALL have `isUnread: true` when its `updatedAt` is greater than the read-before baseline and its `id` is absent from the viewed regular-chat ids; otherwise `isUnread` SHALL be omitted. Ids are compared after the same URI-decoding the scheduler viewed set uses. When the baseline file is missing, the first list request SHALL create it with the current time and treat every chat as read; when the baseline file is malformed, or either file cannot be read (a failed download other than a missing file), the service SHALL omit `isUnread` for every regular chat, write no read-state file (so a missing baseline is not created while the viewed ids cannot be read) and log a warning. A malformed viewed-ids file is treated as an empty set, as for scheduled runs.
+
 **Published and shared runs are ordinary conversations.** Items from the `'public'` bucket (data source 2) and from `getSharedResources` (data source 3) SHALL always have `isScheduledTask: false` with `scheduleId`/`runId`/`isUnread` all omitted, even when their path has the `.scheduler/{scheduleId}/` shape. Publishing or sharing hands the recipient one conversation, not the task: the recipient cannot open that task, its run history or its settings, and the viewed-ids file in the recipient's bucket is keyed by the recipient's own bucket. The rule is decided by data source, not by the `sharedWithMe`/`publishedWithMe` flags DIAL Core reports on a user-bucket item. This matches the "Duplicating a scheduled-task run produces an ordinary conversation" requirement of the `duplicate-conversation` spec.
 
 **Scheduler conversation titles.** For filename-derived titles from any of the three data sources, the service SHALL recognize an application deployment path both at `applications/...` and beneath `.scheduler/{scheduleId}/applications/...`. The application version belongs to the deployment id, not the displayed conversation title: a filename `Daily%20plan__0.0.1__Todoist__{runId}` beneath `.scheduler/{scheduleId}/applications/{bucket}/` yields `title: "Todoist"` while its full `id` remains unchanged. This rule SHALL NOT treat a numeric title on a plain model deployment as an application version (for example, `model__18__{runId}` yields `title: "18"`). An authoritative stored display name remains governed by the display-name resolution requirement below.
 
 **Compound `nextToken`.** Pagination state is tracked independently for the user bucket and public bucket (the `getSharedResources` endpoint returns all results at once and has no cursor). The response `nextToken` format is `ct1.<base64url(JSON)>` where the JSON object has optional fields `u` (user-bucket cursor) and `p` (public-bucket cursor). An incoming token without the `ct1.` prefix is treated as a legacy user-only cursor. The response `nextToken` is omitted when neither paginated source has more results.
 
-**Resilience.** If the public bucket, shared resources, or viewed-ids call fails (throws or returns an error response), the endpoint logs a warning and continues — it still returns results from the other sources, with affected items falling back to `isUnread: true` for scheduler-created items when the viewed-ids fetch failed (fail open, so a transient error never silently hides a genuinely unread task). If the user bucket call fails, the endpoint returns the error to the client. In complete-history mode this applies to **every** page of the walk, not just the first: a failure on any personal-bucket page fails the whole request rather than returning a silently truncated history, and a failure on any public-bucket page drops the public contribution (including the pages already collected) while the request still succeeds.
+**Resilience.** If the public bucket, shared resources, or viewed-ids call fails (throws or returns an error response), the endpoint logs a warning and continues — it still returns results from the other sources, with affected items falling back to `isUnread: true` for scheduler-created items when the viewed-ids fetch failed (fail open, so a transient error never silently hides a genuinely unread task). A failed regular-chat read-state fetch fails closed instead: no regular chat is flagged unread, so a transient error never turns the whole history unread. If the user bucket call fails, the endpoint returns the error to the client. In complete-history mode this applies to **every** page of the walk, not just the first: a failure on any personal-bucket page fails the whole request rather than returning a silently truncated history, and a failure on any public-bucket page drops the public contribution (including the pages already collected) while the request still succeeds.
 
-`isPinned` is populated by `UserConfigService.getPinnedIds` against the user's DIAL Core bucket. See the [user-config-api spec](../user-config-api/spec.md). `isUnread` is populated by `ScheduledTaskUnreadService.getViewedIds` against the user's DIAL Core bucket. See the `scheduled-task-unread-tracking` spec. Both fall back to `[]`/`isUnread: true` on error.
+`isPinned` is populated by `UserConfigService.getPinnedIds` against the user's DIAL Core bucket. See the [user-config-api spec](../user-config-api/spec.md). `isUnread` for scheduler-created items is populated by `ScheduledTaskUnreadService.getViewedIds` against the user's DIAL Core bucket (see the `scheduled-task-unread-tracking` spec) and for regular chats from the read state described above (see the `regular-conversation-read-state` spec). Pins and scheduler viewed ids fall back to `[]`/`isUnread: true` on error; the regular-chat read state falls back to no `isUnread`.
 
 Generated-client impact:
 - OpenAPI operationId: `listConversations`
@@ -392,9 +395,39 @@ Error codes:
 
 #### Scenario: Non-scheduler conversation omits isUnread
 
-- **GIVEN** a conversation whose id does not match the `.scheduler/{scheduleId}/{runId}` path pattern
+- **GIVEN** a conversation whose id does not match the `.scheduler/{scheduleId}/{runId}` path pattern, with `updatedAt` less than or equal to the read-before baseline (or any non-scheduler conversation from the public bucket or shared resources)
 - **WHEN** `GET /api/v1/conversations/list` is called
 - **THEN** that item has `isScheduledTask: false` and `isUnread` omitted
+
+#### Scenario: Regular chat updated after the baseline and not viewed is unread
+
+- **GIVEN** a user-bucket regular chat with `updatedAt` greater than the baseline and an id absent from the viewed regular-chat ids
+- **WHEN** `GET /api/v1/conversations/list` is called
+- **THEN** that item has `isScheduledTask: false` and `isUnread: true`
+
+#### Scenario: Regular chat updated after the baseline but viewed omits isUnread
+
+- **GIVEN** a user-bucket regular chat with `updatedAt` greater than the baseline and an id present in the viewed regular-chat ids
+- **WHEN** `GET /api/v1/conversations/list` is called
+- **THEN** that item has `isUnread` omitted
+
+#### Scenario: First list request creates the baseline
+
+- **GIVEN** the user's bucket has no read-before baseline file
+- **WHEN** `GET /api/v1/conversations/list` is called
+- **THEN** the file is written with the current time, and no regular chat has `isUnread`
+
+#### Scenario: Read-state failure fails closed for regular chats
+
+- **GIVEN** reading the baseline or the viewed regular-chat ids fails with anything other than a missing file, or the baseline file is malformed
+- **WHEN** `GET /api/v1/conversations/list` is called
+- **THEN** the response is still 200, a warning is logged, no regular chat has `isUnread`, and no read-state file is written
+
+#### Scenario: Shared and published chats never carry isUnread
+
+- **GIVEN** a chat from `getSharedResources` or the `'public'` bucket
+- **WHEN** `GET /api/v1/conversations/list` is called
+- **THEN** that item has `isUnread` omitted regardless of the read state
 
 #### Scenario: Viewed-ids fetch failure falls back to unread for scheduler items
 
@@ -845,3 +878,45 @@ An outcome-buffer permit SHALL be reserved before item admission and held throug
 - **WHEN** a request reaches its admission/lifetime budget with some IDs untouched
 - **THEN** it emits item outcomes for admitted work and a budget terminal with truthful processed/total counts
 - **AND** untouched IDs can be submitted in a later request without replaying completed outcomes
+
+### Requirement: POST /api/v1/conversations/completions removes the conversation from the viewed regular-chat ids
+
+When a generation is accepted on `POST /api/v1/conversations/completions` for a conversation that is not a scheduled-task run (every mode: append, regenerate and edit), the backend SHALL remove that conversation's id from the viewed regular-chat ids before the stream starts, so the chat becomes unread once its `updatedAt` passes the baseline. The removal SHALL be best effort: a failed read or write is logged as a warning and SHALL NOT fail, delay beyond the write itself, or alter the completion stream. A request rejected before generation starts (validation, authorization, an active generation conflict) SHALL NOT change the viewed ids. The write SHALL have finished before the request ends on every exit path, including a generation that fails before its first chunk, so the client's own viewed mark can never be overtaken by it. The id is built the same way as for `PATCH /api/v1/conversations/viewed`.
+
+#### Scenario: Sending a message un-views the chat
+
+- **GIVEN** a chat whose id is in the viewed regular-chat ids
+- **WHEN** a completion is started for it
+- **THEN** its id is no longer in the viewed ids and a later `GET /api/v1/conversations/list` returns `isUnread: true` for it once `updatedAt` exceeds the baseline
+
+#### Scenario: A rejected completion leaves the viewed ids unchanged
+
+- **GIVEN** a completion request that fails with 409 because another generation is active
+- **WHEN** the request is rejected
+- **THEN** the viewed regular-chat ids are not modified
+
+#### Scenario: Un-view failure does not fail the completion
+
+- **WHEN** removing the id from the viewed file fails
+- **THEN** the completion stream still starts, and a warning is logged
+
+### Requirement: Renaming a conversation preserves its read state
+
+When `PATCH /api/v1/conversations` renames a regular chat that was read immediately before the rename (its `updatedAt` was less than or equal to the baseline, or its id was in the viewed regular-chat ids), the backend SHALL add its id to the viewed regular-chat ids so the rename's `updatedAt` bump does not make it unread. A chat that was unread before the rename SHALL stay unread. The read-state update SHALL be best effort and SHALL NOT fail the rename. Renaming a scheduled-task run does not touch the regular-chat read state.
+
+#### Scenario: Renaming a read chat keeps it read
+
+- **GIVEN** a chat updated before the baseline
+- **WHEN** it is renamed
+- **THEN** its id is added to the viewed regular-chat ids and the next list does not mark it unread
+
+#### Scenario: Renaming an unread chat keeps it unread
+
+- **GIVEN** a chat updated after the baseline whose id is not viewed
+- **WHEN** it is renamed
+- **THEN** its id is not added to the viewed ids and the next list still marks it unread
+
+#### Scenario: Read-state failure does not fail the rename
+
+- **WHEN** updating the read state fails during a rename
+- **THEN** the rename still succeeds and a warning is logged

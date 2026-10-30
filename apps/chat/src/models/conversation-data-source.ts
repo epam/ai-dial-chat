@@ -9,6 +9,10 @@ import type { ProjectsI18nKeys } from '../constants/translation-keys';
 export interface ConversationListSync {
   updateTitle: (id: string, title: string) => void;
   bumpActivity: (id: string) => void;
+  /** Shows the unread indicator until the conversation is viewed. */
+  markUnread: (id: string) => void;
+  /** Records that the conversation was seen and clears its unread indicator. */
+  markViewed: (id: string) => Promise<void>;
   remove: (id: string) => void;
   refresh: (expectedIds?: readonly string[]) => Promise<void>;
 }

@@ -462,11 +462,21 @@ describe('UsageLimitsControl', () => {
       const user = userEvent.setup();
       renderControl();
 
-      const dialog = await openPopover(user);
+      await openPopover(user);
 
-      expect(screen.getByText(DEPLOYMENT_NAME).id).toBe(
-        dialog.getAttribute('aria-labelledby'),
-      );
+      expect(
+        screen.getByRole('dialog', { name: DEPLOYMENT_NAME }),
+      ).toBeTruthy();
+    });
+
+    it('renders a single dialog rather than a dialog nested in a menu', async () => {
+      const user = userEvent.setup();
+      renderControl();
+
+      await openPopover(user);
+
+      expect(screen.getAllByRole('dialog')).toHaveLength(1);
+      expect(screen.queryByRole('menu')).toBeNull();
     });
 
     it('falls back to the generic title when the deployment is not in the list', async () => {
@@ -476,11 +486,9 @@ describe('UsageLimitsControl', () => {
       const user = userEvent.setup();
       renderControl();
 
-      const dialog = await openPopover(user);
+      await openPopover(user);
 
-      expect(screen.getByText(TITLE_LABEL).id).toBe(
-        dialog.getAttribute('aria-labelledby'),
-      );
+      expect(screen.getByRole('dialog', { name: TITLE_LABEL })).toBeTruthy();
     });
 
     it('closes when the pointer presses outside the panel', async () => {
@@ -504,7 +512,11 @@ describe('UsageLimitsControl', () => {
 
       const dialog = await openPopover(user);
 
-      await waitFor(() => expect(dialog.matches(':focus')).toBe(true));
+      /* Focus lands on the panel inside the kit's dialog wrapper. */
+      await waitFor(() =>
+        // eslint-disable-next-line testing-library/no-node-access
+        expect(dialog.contains(document.activeElement)).toBe(true),
+      );
     });
 
     it('toggles closed when the trigger is pressed again', async () => {

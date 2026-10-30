@@ -98,7 +98,10 @@ describe('ScheduledTaskConversationBanner', () => {
 
     renderBanner();
 
-    expect(screen.getByRole('status')).toBeTruthy();
+    expect(
+      screen.getByText('scheduledTasks.conversationBanner.loadingLabel'),
+    ).toBeTruthy();
+    expect(screen.queryByRole('status')).toBeNull();
     expect(screen.queryByText('Weekly digest')).toBeNull();
   });
 
@@ -108,7 +111,10 @@ describe('ScheduledTaskConversationBanner', () => {
 
     renderBanner();
 
-    expect(screen.getByRole('alert')).toBeTruthy();
+    expect(screen.getByRole('status').textContent).toBe(
+      'scheduledTasks.conversationBanner.unavailableLabel',
+    );
+    expect(screen.queryByRole('alert')).toBeNull();
     expect(screen.getByRole('button', { name: /retry/i })).toBeTruthy();
   });
 

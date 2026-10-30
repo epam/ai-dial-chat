@@ -4,19 +4,16 @@ import styles from './SharePopover.module.scss';
 
 /** Props for {@link LoadingSkeleton}. */
 interface LoadingSkeletonProps {
-  /** Accessible label for the loading status region. */
-  ariaLabel: string;
   /** Skeleton bar/shape color. Defaults to `--shp-skeleton-color`. */
   skeletonColor?: string;
 }
 
-/** Skeleton placeholder shown while the share link is being created. */
+/** Decorative, `aria-hidden` skeleton shown while the share link is being created; `SharePopover` announces the loading text. */
 export const LoadingSkeleton: FC<LoadingSkeletonProps> = ({
-  ariaLabel,
   skeletonColor = styles.skeletonColor,
 }) => (
-  <div role="status" aria-label={ariaLabel} className="flex flex-col gap-3">
-    <div aria-hidden className="flex items-center gap-2.5">
+  <div aria-hidden className="flex flex-col gap-3">
+    <div className="flex items-center gap-2.5">
       <Skeleton
         variant={SkeletonVariant.Circular}
         width={32}
@@ -44,7 +41,7 @@ export const LoadingSkeleton: FC<LoadingSkeletonProps> = ({
         color={skeletonColor}
       />
     </div>
-    <div aria-hidden className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-1.5">
       <Skeleton
         variant={SkeletonVariant.Text}
         width="100%"
@@ -59,14 +56,12 @@ export const LoadingSkeleton: FC<LoadingSkeletonProps> = ({
       />
     </div>
     <Skeleton
-      aria-hidden
       variant={SkeletonVariant.Rectangular}
       width="100%"
       height={40}
       color={skeletonColor}
     />
     <Skeleton
-      aria-hidden
       variant={SkeletonVariant.Text}
       width="50%"
       height={12}

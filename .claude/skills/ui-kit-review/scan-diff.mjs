@@ -56,6 +56,9 @@ const SIGNALS = [
     scope: SOURCE,
     re: /<(ErrorText|CaptionText)\b/,
     hint: 'no live-region role since kit 0.16 — needs id + aria-describedby, or a pre-mounted alert/status region',
+    /* `announce` renders the kit's always-mounted LiveRegion around the text,
+       and usually sits on a later line of the tag. */
+    skip: (line, match, tag) => /\bannounce=/.test(tag),
   },
   {
     id: 'alert-role-assumption',
@@ -219,6 +222,19 @@ const addedLines = function* (diff) {
   }
 };
 
+/** Joins an added line with the consecutive added lines after it, up to the end of its JSX tag. */
+const jsxTagText = (lines, index) => {
+  const { path, line } = lines[index];
+  let text = '';
+  for (let i = index; i < lines.length && i < index + 12; i += 1) {
+    const next = lines[i];
+    if (next.path !== path || next.line !== line + (i - index)) break;
+    text += `${next.text}\n`;
+    if (/\/?>\s*$/.test(next.text)) break;
+  }
+  return text;
+};
+
 const scan = (diff, typography) => {
   const hits = new Map();
   const add = (id, hint, entry) => {
@@ -226,7 +242,8 @@ const scan = (diff, typography) => {
     hits.get(id).entries.push(entry);
   };
 
-  for (const { path, line, text } of addedLines(diff)) {
+  const lines = [...addedLines(diff)];
+  for (const [index, { path, line, text }] of lines.entries()) {
     if (isCommentLine(text)) continue;
     const isSpec = isSpecFile(path);
     const entry = `${path}:${line}  ${text.trim().slice(0, 140)}`;
@@ -234,7 +251,7 @@ const scan = (diff, typography) => {
     for (const signal of SIGNALS) {
       if ((signal.scope === SPEC) !== isSpec) continue;
       const match = text.match(signal.re);
-      if (match && !signal.skip?.(text, match)) {
+      if (match && !signal.skip?.(text, match, jsxTagText(lines, index))) {
         add(signal.id, signal.hint, entry);
       }
     }

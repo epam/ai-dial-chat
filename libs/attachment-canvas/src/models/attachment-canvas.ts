@@ -5,7 +5,7 @@ import type {
 } from '@epam/ai-dial-chat-shared';
 import type { SidebarPanelStyles } from '@epam/ai-dial-sidebar';
 import type { InputHighlightData } from '@epam/pdf-highlighter-kit';
-import type { McpUiHostContext } from '@mcp-ui/client';
+import type { McpUiHostContext } from '@modelcontextprotocol/ext-apps/app-bridge';
 import type {
   CallToolResult,
   Implementation,
@@ -386,8 +386,12 @@ export interface AttachmentCanvasTypography {
   fontClassName?: string;
   /** CSS utility class applied to the JSON tree viewer. Defaults to `'dial-code-text'`. */
   jsonClassName?: string;
+  /** CSS utility class applied to JSON object keys. Defaults to `'dial-code-semi-text'`; while only `jsonClassName` is set, keys inherit that class instead. */
+  jsonLabelClassName?: string;
   /** CSS utility class applied to the decorative XLSX `fx` label. Defaults to `'dial-italic-text'`. */
   xlsxFormulaLabelClassName?: string;
+  /** CSS utility class applied to the active XLSX cell content in the formula bar. Defaults to `'dial-code-text'`. */
+  xlsxFormulaValueClassName?: string;
   /** CSS utility class applied to the MCP App version text in the panel title. Defaults to `'dial-caption-text'`. */
   mcpAppVersionClassName?: string;
 }

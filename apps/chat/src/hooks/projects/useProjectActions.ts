@@ -3,6 +3,7 @@ import {
   ProjectActionError,
   useProjectActions as useSharedProjectActions,
 } from '@epam/ai-dial-chat-hooks/project';
+import { triggerBrowserDownload } from '@epam/ai-dial-chat-hooks/utils';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
@@ -14,7 +15,6 @@ import {
   NotifiableEntity,
 } from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
-import { triggerBrowserDownload } from '../../utils/file-download';
 import { useOperationNotification } from '../useOperationNotification';
 import { projectsClient } from './projects-client';
 

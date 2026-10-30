@@ -7,6 +7,7 @@ import {
   LinkButton,
   NeutralButton,
   Spinner,
+  LiveRegion,
 } from '@epam/ai-dial-ui-kit';
 import { IconKey } from '@tabler/icons-react';
 import { FC, useCallback, useState } from 'react';
@@ -205,34 +206,37 @@ export const CredentialsApiKeyOverlay: FC<CredentialsApiKeyOverlayProps> = ({
         </div>
       )}
 
-      {isSignedIn && (
-        <div className="animate-fadeIn px-4 py-3.5">
-          <CredentialsInfoCard
-            icon={
-              <IconKey size={20} aria-hidden stroke={DIAL_KIT_ICON_STROKE} />
-            }
-            title={addedMessage}
-            description={addedWhenLabel}
-            action={
-              <LinkButton
-                label={isDeleting ? undefined : deleteLabel}
-                aria-label={isDeleting ? deletingStatusLabel : undefined}
-                iconBefore={
-                  isDeleting ? (
-                    <Spinner
-                      size={SPINNER_SIZE}
-                      ariaLabel={deletingStatusLabel}
-                    />
-                  ) : undefined
-                }
-                className={deleteActionClassName}
-                onClick={handleDelete}
-                disabled={isDeleting}
-              />
-            }
-          />
-        </div>
-      )}
+      {/* Mounted before the key card appears, so the card is announced once the key is added. */}
+      <LiveRegion>
+        {isSignedIn && (
+          <div className="animate-fadeIn px-4 py-3.5">
+            <CredentialsInfoCard
+              icon={
+                <IconKey size={20} aria-hidden stroke={DIAL_KIT_ICON_STROKE} />
+              }
+              title={addedMessage}
+              description={addedWhenLabel}
+              action={
+                <LinkButton
+                  label={isDeleting ? undefined : deleteLabel}
+                  aria-label={isDeleting ? deletingStatusLabel : undefined}
+                  iconBefore={
+                    isDeleting ? (
+                      <Spinner
+                        size={SPINNER_SIZE}
+                        ariaLabel={deletingStatusLabel}
+                      />
+                    ) : undefined
+                  }
+                  className={deleteActionClassName}
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                />
+              }
+            />
+          </div>
+        )}
+      </LiveRegion>
     </div>
   );
 };

@@ -13,6 +13,32 @@ import {
 import { CredentialsManagementPanel } from '../CredentialsManagementPanel';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  LiveRegionPoliteness: { Polite: 'polite', Assertive: 'assertive' },
+  LiveRegionElement: { Div: 'div', Span: 'span', P: 'p' },
+  LiveRegion: ({
+    politeness = 'polite',
+    visuallyHidden,
+    as: Tag = 'div',
+    atomic,
+    className,
+    children,
+    ...rest
+  }: {
+    politeness?: string;
+    visuallyHidden?: boolean;
+    as?: 'div' | 'span' | 'p';
+    atomic?: boolean;
+  } & React.HTMLAttributes<HTMLElement>) => (
+    <Tag
+      {...rest}
+      role={politeness === 'assertive' ? 'alert' : 'status'}
+      aria-live={politeness as 'polite' | 'assertive'}
+      aria-atomic={atomic}
+      className={visuallyHidden ? 'sr-only' : className}
+    >
+      {children}
+    </Tag>
+  ),
   DIAL_KIT_ICON_STROKE: 1.5,
   CaptionText: ({ id, text }: { id?: string; text?: string }) =>
     text ? <span id={id}>{text}</span> : null,
@@ -310,6 +336,35 @@ describe('CredentialsManagementPanel', () => {
 
     expect(screen.getByText('Key has been configured')).toBeTruthy();
     expect(screen.getByText('Added 1 week ago')).toBeTruthy();
+  });
+
+  it('announces the configured key through a status region mounted before the key is added', () => {
+    const { rerender } = render(
+      <CredentialsManagementPanel
+        item={makeItem({
+          authenticationType: ToolsetAuthenticationType.ApiKey,
+          globalStatus: CredentialStatus.SignedOut,
+        })}
+      />,
+    );
+    const regionsBefore = screen.getAllByRole('status');
+
+    rerender(
+      <CredentialsManagementPanel
+        item={makeItem({
+          authenticationType: ToolsetAuthenticationType.ApiKey,
+          globalStatus: CredentialStatus.SignedIn,
+        })}
+      />,
+    );
+
+    const region = screen
+      .getAllByRole('status')
+      .find((element) =>
+        element.textContent?.includes('Key has been configured'),
+      );
+    expect(region).toBeTruthy();
+    expect(regionsBefore).toContain(region);
   });
 
   it('requests the host to show a delete-confirmation sub-view instead of deleting directly', async () => {

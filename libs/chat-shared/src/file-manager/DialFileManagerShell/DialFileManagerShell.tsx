@@ -16,6 +16,8 @@ import {
   NOT_ALLOWED_SYMBOLS_REGEXP,
   Spinner,
   TransferQueue,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import {
   memo,
@@ -720,11 +722,12 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
             getDisabledTooltip={getDisabledTooltip}
             unsupportedFileTypeTooltip={unsupportedFileTypeTooltip}
           />
+          {/* Always mounted so the polite region exists before the overlay appears. */}
+          <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
+            {overlayLabel ?? ''}
+          </LiveRegion>
           {overlayLabel != null && (
-            <div
-              aria-live="polite"
-              className="absolute inset-0 z-52 flex items-center justify-center bg-backdrop desktop:p-4"
-            >
+            <div className="absolute inset-0 z-52 flex items-center justify-center bg-backdrop desktop:p-4">
               <Spinner size={32} fullWidth={false} ariaLabel={overlayLabel} />
             </div>
           )}

@@ -33,26 +33,20 @@ Shared domain models, utilities, and UI components used across all AI DIAL Chat 
 
 ## Peer Dependencies
 
-`react` (`^19.2.8`) and `@epam/ai-dial-ui-kit` (`^0.16.0-dev.45`) are the mandatory peers,
-required by every entry point below. The markdown stack is **not** a peer any more: the root
-entry imports it unconditionally, so this package installs it itself and a consumer never
-names it.
-
-Only the file-manager pair stays **optional** (`package.json#peerDependenciesMeta` marks it
-`optional: true`) — `npm install` succeeds without it, and only the `./file-manager` entry
-needs it: no other entry, the root included, imports either package anywhere but in type
-position. Importing an entry without its documented optional peer installed does not fail at
-`npm install`; it fails later, at build time, when a bundler or `tsc` tries to resolve that
-entry's own imports.
+The public root declarations include File Manager contracts and the narrow AG Grid
+event-binding hook. Their types must resolve even when a consumer never renders
+a grid, so the peers below are required and AG Grid is a dependency. npm installs
+this closure automatically. Grid rendering remains behind `./file-manager`; installing a
+peer does not load its runtime into a utility-only bundle. The markdown stack
+is installed as dependencies.
 
 Peers:
 
 - `react` ^19.2.8
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.45
-- `@epam/ai-dial-react-file-manager` ^0.4.0-dev.19 \*
-- `ag-grid-community` ^35.3.0 \*
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.56
+- `@epam/ai-dial-react-file-manager` ^0.4.0-dev.19
 
-Installed for you as dependencies: `@tabler/icons-react`, `react-markdown`,
+Installed for you as dependencies: `ag-grid-community`, `@tabler/icons-react`, `react-markdown`,
 `react-syntax-highlighter`, `remark-breaks`, `remark-gfm`, `remark-math`, `rehype-katex`,
 `rehype-raw`, `rehype-sanitize`, `katex`, plus the `unified` pipeline (`remark-parse`,
 `remark-rehype`, `rehype-stringify`), `classnames`, `dompurify` and `tailwind-merge`.
@@ -64,11 +58,8 @@ of this package already has its own test tooling, not this library's).
 
 ### Entry-point-to-peer matrix
 
-| Entry point      | Peers you install beyond `react`                                                |
-| ---------------- | ------------------------------------------------------------------------------- |
-| `.` (root)       | `@epam/ai-dial-ui-kit`                                                          |
-| `./markdown`     | `@epam/ai-dial-ui-kit` — the markdown stack itself ships as dependencies        |
-| `./file-manager` | `@epam/ai-dial-ui-kit`, `@epam/ai-dial-react-file-manager`, `ag-grid-community` |
+All entries share the package's required peer set: `@epam/ai-dial-ui-kit` and
+`@epam/ai-dial-react-file-manager`, in addition to React.
 
 The build preserves source-module boundaries so consumers can remove unused features.
 The FilterTab and CodeBlockTheme packed probes verify small root-import bundles without
@@ -77,12 +68,10 @@ markdown or file-manager implementation.
 A root re-export still has to **resolve** before tree-shaking can drop it, which is why
 the markdown stack is a dependency rather than an optional peer: the root entry imports
 it unconditionally, and an optional peer there would let `npm install` succeed and the
-consumer's bundler fail. The same rule is why the root entry stops short of the two
-grid-rendering components: they live behind `./file-manager` so that the optional pair
-above is genuinely optional for a host that imports anything else from this package
-([issue #8719](https://github.com/epam/ai-dial-chat/issues/8719)). Scoped feature
-entries limit resolution to their own peer sets; they do not remove peers required by
-that feature.
+consumer's bundler fail. The two grid-rendering components stay behind `./file-manager` to preserve
+runtime loading boundaries. The root still exposes their reusable types and
+event-binding hook for compatibility; this is why the grid peers are required
+for declaration checking as well as the file-manager entry.
 
 ## Text refinement lifecycle
 
@@ -1612,3 +1601,34 @@ is in [`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
 
 Write host overrides with CSS logical properties (`margin-inline-start`,
 `inset-inline-end`) so they keep working under `dir="rtl"`.
+
+## Remaining controller extraction contracts
+
+The following adoption matrix tracks extract-remaining-chat-reuse-controllers.
+B1?B8 and compatibility options A2/D are implemented; Packed-artifact verification and downstream adoption are tracked separately. Existing app exports and defaults are preserved.
+
+| Audit | Contract                                                                | Public entry                     | Host responsibility                                           |
+| ----- | ----------------------------------------------------------------------- | -------------------------------- | ------------------------------------------------------------- |
+| B1    | createGenerationRegistry (implemented)                                  | chat-hooks root and conversation | Provider lifetime and opaque paths                            |
+| B2    | resolveActiveScheduledTask, useActiveScheduledTaskDetails (implemented) | chat-hooks/scheduled-tasks       | Routes, matcher, flags, loading callback                      |
+| B3    | useConversationTitleEnrichmentController (implemented)                  | chat-hooks/conversation          | Identity, JSON/stream adapters, bounds, protection duration   |
+| B4    | useSkillFilePreviewSyncController (implemented)                         | chat-hooks/skill-editor          | Selection, resource key, canvas operations and request guards |
+| B5    | useExternalServiceLogin (implemented)                                   | chat-hooks/external-services     | Auth callbacks, callback path and reserved popup              |
+| B6    | useDeploymentChangeTracking (implemented)                               | chat-hooks/conversation          | Conversation identity, selected deployment and change sink    |
+| B7    | useHtmlTagAnnotationGroups (implemented)                                | quotations root                  | Extract persisted annotations                                 |
+| B8    | toConversationTransferQueueItems (implemented)                          | chat-shared root                 | Translated error/warning resolvers                            |
+| A2    | uploadMimeTypePolicy (implemented)                                      | Existing transcription API       | Preserve default; normalize opt-in                            |
+| D     | offsetPolicy (implemented)                                              | Existing reset-time formatter    | Current-offset default; reset-instant opt-in                  |
+
+Only B5 adds a subpath. B8 uses the existing shared root and leaves the
+file-manager mapper unchanged. A1 is already complete and outside this work.
+Downstream ExternalService callback dispatch must be adopted in the downstream
+repository; parent implementation does not prove downstream adoption or publish
+packages.
+
+### Conversation transfer queue
+
+toConversationTransferQueueItems accepts readonly ConversationTransferJob entries and
+TransferQueueMessageResolvers. Only failed rows resolve errors; only warning rows resolve
+warnings with warningNames. IDs, file names and progress are preserved without mutation.
+This root export is separate from the file-manager toTransferQueueItems helper.

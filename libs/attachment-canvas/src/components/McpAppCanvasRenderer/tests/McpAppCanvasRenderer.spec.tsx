@@ -276,9 +276,15 @@ describe('McpAppCanvasRenderer — AppFrame onError', () => {
       new Error('Timed out waiting for sandbox proxy iframe to be ready'),
     );
 
-    const alert = await screen.findByRole('alert');
-    expect(alert.textContent).toContain('Failed to load MCP App');
-    expect(alert.textContent).toContain(
+    await screen.findByText(/Failed to load MCP App/);
+    const status = screen
+      .getAllByRole('status')
+      .find((region) =>
+        region.textContent?.includes('Failed to load MCP App'),
+      ) as HTMLElement;
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(status.textContent).toContain('Failed to load MCP App');
+    expect(status.textContent).toContain(
       'Timed out waiting for sandbox proxy iframe to be ready',
     );
     expect(screen.queryByTitle('mcp-app')).toBeNull();
@@ -290,12 +296,12 @@ describe('McpAppCanvasRenderer — AppFrame onError', () => {
     );
     await waitFor(() => expect(appFrames).toHaveLength(1));
     appFrames[0].onError?.(new Error('boom'));
-    expect(await screen.findByRole('alert')).toBeTruthy();
+    expect(await screen.findByText(/Failed to load/)).toBeTruthy();
 
     rerender(<McpAppCanvasRenderer key="attempt-2" content={baseContent} />);
 
     await waitFor(() => expect(bridges).toHaveLength(2));
-    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.queryByText(/Failed to load/)).toBeNull();
     expect(screen.getByTitle('mcp-app')).toBeTruthy();
   });
 });

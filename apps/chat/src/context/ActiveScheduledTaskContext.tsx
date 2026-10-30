@@ -1,14 +1,11 @@
 import type { ScheduledTaskDto } from '@epam/ai-dial-chat-api-client';
-import { getApiErrorStatus } from '@epam/ai-dial-chat-hooks';
 import {
-  createContext,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+  resolveActiveScheduledTask,
+  useActiveScheduledTaskDetails,
+  ActiveScheduledTaskDetailState,
+  ActiveScheduledTaskStatus,
+} from '@epam/ai-dial-chat-hooks/scheduled-tasks';
+import { createContext, type ReactNode, useContext, useMemo } from 'react';
 import { useLocation } from 'react-router';
 import { isSafePathSegment } from '../constants/routes';
 import {
@@ -16,10 +13,6 @@ import {
   type UseScheduledTaskRunsResult,
 } from '../hooks/scheduled-tasks/useScheduledTaskRuns';
 import { getScheduledTask } from '../server-api/scheduled-tasks.api';
-import {
-  ActiveScheduledTaskDetailState,
-  ActiveScheduledTaskStatus,
-} from '../types/active-scheduled-task';
 import { ROUTES } from '../types/routes';
 import { conversationIdsMatch } from '../utils/conversation-id-match';
 import { useFeatureFlag } from './AppConfigContext';
@@ -70,6 +63,8 @@ interface ActiveScheduledTaskContextType {
   history: UseScheduledTaskRunsResult;
 }
 
+const loadTaskDetails = (id: string) => getScheduledTask(id);
+
 const ActiveScheduledTaskContext = createContext<
   ActiveScheduledTaskContextType | undefined
 >(undefined);
@@ -111,98 +106,30 @@ export const ActiveScheduledTaskProvider = ({
     useConversations();
   const isFeatureEnabled = useFeatureFlag('scheduledTasksEnabled');
 
-  const matchedItem = useMemo(() => {
-    if (!routeConversationId) return undefined;
-    return conversations.find((item) =>
-      conversationIdsMatch(item.id, routeConversationId),
-    );
-  }, [conversations, routeConversationId]);
-
-  const status: ActiveScheduledTaskStatus = useMemo(() => {
-    if (!routeConversationId || !isFeatureEnabled) {
-      return ActiveScheduledTaskStatus.NotATaskConversation;
-    }
-    if (!matchedItem) {
-      return isConversationsLoading
-        ? ActiveScheduledTaskStatus.Resolving
-        : ActiveScheduledTaskStatus.NotATaskConversation;
-    }
-    if (
-      matchedItem.isScheduledTask &&
-      matchedItem.scheduleId &&
-      matchedItem.runId
-    ) {
-      return ActiveScheduledTaskStatus.TaskConversation;
-    }
-    return ActiveScheduledTaskStatus.NotATaskConversation;
-  }, [
-    routeConversationId,
-    isFeatureEnabled,
-    matchedItem,
-    isConversationsLoading,
-  ]);
-
-  const isTaskConversation =
-    status === ActiveScheduledTaskStatus.TaskConversation;
-  const scheduleId = isTaskConversation ? matchedItem?.scheduleId : undefined;
-  const runId = isTaskConversation ? matchedItem?.runId : undefined;
-  const conversationUpdatedAt = isTaskConversation
-    ? matchedItem?.updatedAt
-    : undefined;
-  const conversationTitle = isTaskConversation ? matchedItem?.title : undefined;
-
-  const [taskState, setTaskState] = useState<ActiveScheduledTaskDetailState>(
-    ActiveScheduledTaskDetailState.Idle,
+  const {
+    status,
+    scheduleId,
+    runId,
+    conversationUpdatedAt,
+    conversationTitle,
+  } = useMemo(
+    () =>
+      resolveActiveScheduledTask({
+        routeConversationId,
+        enabled: isFeatureEnabled,
+        isLoading: isConversationsLoading,
+        items: conversations,
+        matches: conversationIdsMatch,
+      }),
+    [
+      routeConversationId,
+      isFeatureEnabled,
+      isConversationsLoading,
+      conversations,
+    ],
   );
-  const [task, setTask] = useState<ScheduledTaskDto | null>(null);
-  const [taskError, setTaskError] = useState<Error | null>(null);
-  const [taskRetryToken, setTaskRetryToken] = useState(0);
-
-  useEffect(() => {
-    if (!scheduleId) {
-      setTaskState(ActiveScheduledTaskDetailState.Idle);
-      setTask(null);
-      setTaskError(null);
-      return;
-    }
-
-    setTaskState(ActiveScheduledTaskDetailState.Loading);
-    setTask(null);
-    setTaskError(null);
-    const cancelled = { value: false };
-
-    const load = async () => {
-      try {
-        const result = await getScheduledTask(scheduleId);
-        if (cancelled.value) return;
-        setTask(result);
-        setTaskState(ActiveScheduledTaskDetailState.Success);
-      } catch (err) {
-        if (cancelled.value) return;
-        if (getApiErrorStatus(err) === 404) {
-          setTaskState(ActiveScheduledTaskDetailState.Unavailable);
-        } else {
-          setTaskError(
-            err instanceof Error
-              ? err
-              : new Error('Failed to load the scheduled task'),
-          );
-          setTaskState(ActiveScheduledTaskDetailState.Error);
-        }
-      }
-    };
-
-    load();
-
-    return () => {
-      cancelled.value = true;
-    };
-    // scheduleId alone drives the fetch; runId changes are handled without refetching.
-  }, [scheduleId, taskRetryToken]);
-
-  const retryTask = useCallback(() => {
-    setTaskRetryToken((token) => token + 1);
-  }, []);
+  const { taskState, task, taskError, retryTask } =
+    useActiveScheduledTaskDetails(scheduleId, loadTaskDetails);
 
   const history = useScheduledTaskRuns(
     scheduleId ?? '',

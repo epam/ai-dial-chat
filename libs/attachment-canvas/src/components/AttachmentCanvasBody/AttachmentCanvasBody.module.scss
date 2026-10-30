@@ -93,7 +93,6 @@
     --ac-json-collapsed-bg,
     var(--bg-layer-raised, #fcfcfc)
   );
-  font-size: 0.75em; // em-based — cannot be a static Tailwind class
 
   &::after {
     content: '\2026';

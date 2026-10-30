@@ -90,7 +90,9 @@ vi.mock('@epam/ai-dial-toolset-editor', async (importOriginal) => {
     await importOriginal<typeof import('@epam/ai-dial-toolset-editor')>();
   const { useState } = await import('react');
   const { ToolsetAuthTypes, ToolsetCredentialsLevel, WithLogin } =
-    await import('@epam/ai-dial-chat-hooks');
+    await vi.importActual<typeof import('@epam/ai-dial-chat-hooks')>(
+      '@epam/ai-dial-chat-hooks',
+    );
 
   interface StubProps {
     initialForm: { name: string; version: string };
@@ -407,9 +409,12 @@ describe('ApplicationEditorPage — toolset', () => {
       denyToolsets();
       renderPage();
 
-      expect(screen.getByRole('alert').textContent).toBe(
-        CatalogI18nKeys.CreationDenied,
-      );
+      expect(
+        screen.getByRole('heading', {
+          level: 1,
+          name: CatalogI18nKeys.CreationDenied,
+        }),
+      ).toBeTruthy();
       expect(
         screen.queryByRole('button', { name: 'adapter-persist' }),
       ).toBeNull();

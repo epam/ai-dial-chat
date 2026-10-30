@@ -1,9 +1,15 @@
-import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
+import type {
+  DialToolsetDto,
+  GetExternalServiceResponseDto,
+} from '@epam/ai-dial-chat-api-client';
 import {
   buildExternalServiceScopeId,
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
   ToolsetLoginOutcomeType,
+  ExternalServiceLoginOutcomeType,
+  ExternalServiceAuthType,
+  ExternalServiceCredentialsLevel,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
@@ -17,6 +23,9 @@ import {
   PrimaryButton,
   Input,
   LinkButton,
+  LiveRegion,
+  LiveRegionElement,
+  LiveRegionPoliteness,
 } from '@epam/ai-dial-ui-kit';
 import { IconAlertCircleFilled } from '@tabler/icons-react';
 import {
@@ -36,21 +45,13 @@ import {
 import { useFeatureFlag } from '../../context/AppConfigContext';
 import { useClientChannel } from '../../context/ClientChannelContext';
 import { useDeployments } from '../../context/DeploymentsContext';
-import {
-  ExternalServiceLoginOutcomeType,
-  useExternalServiceLogin,
-} from '../../hooks/externalServices/useExternalServiceLogin';
+import { useExternalServiceLogin } from '../../hooks/externalServices/useExternalServiceLogin';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useToolsetLogin } from '../../hooks/toolsets/useToolsetLogin';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import type { ResolvedRowInfo } from '../../models/signin-interrupt';
 import { ClientChannelReportResult } from '../../server-api/client-channel';
-import {
-  ExternalServiceAuthType,
-  ExternalServiceCredentialsLevel,
-  getExternalService,
-  type GetExternalServiceResponseDto,
-} from '../../server-api/external-services';
+import { getExternalService } from '../../server-api/external-services';
 import { getToolset } from '../../server-api/toolsets';
 import {
   PendingSigninEventKind,
@@ -124,20 +125,22 @@ const SigninRow: FC<SigninRowProps> = ({
         />
       )}
 
-      {rowState.error && (
-        <div
-          role="alert"
-          className="dial-small-text flex flex-wrap items-center gap-2 wrap-break-word text-error"
-        >
-          <IconAlertCircleFilled size={DIAL_ICON_SIZE.SM} aria-hidden />
-          <span>{rowState.error}</span>
-          <LinkButton
-            className="h-auto"
-            label={t(ToolsetSigninI18nKeys.ErrorRetry)}
-            onClick={() => onLogin(event, info)}
-          />
-        </div>
-      )}
+      <LiveRegion
+        politeness={LiveRegionPoliteness.Assertive}
+        className="dial-small-text flex flex-wrap items-center gap-2 wrap-break-word text-error"
+      >
+        {rowState.error && (
+          <>
+            <IconAlertCircleFilled size={DIAL_ICON_SIZE.SM} aria-hidden />
+            <span>{rowState.error}</span>
+            <LinkButton
+              className="h-auto"
+              label={t(ToolsetSigninI18nKeys.ErrorRetry)}
+              onClick={() => onLogin(event, info)}
+            />
+          </>
+        )}
+      </LiveRegion>
 
       {info.authenticationType === RowAuthType.DialNative && (
         <p className="dial-small-text wrap-break-word text-secondary">
@@ -615,9 +618,9 @@ const SigninInterruptDialog: FC = () => {
         <p className="dial-small-text text-secondary">
           {t(ToolsetSigninI18nKeys.DialogDescription)}
         </p>
-        <span role="status" aria-live="polite" className="sr-only">
+        <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
           {statusMessage}
-        </span>
+        </LiveRegion>
         <div className="flex flex-col">
           {pendingEvents.map((event) => {
             const key = getResourceKey(event);

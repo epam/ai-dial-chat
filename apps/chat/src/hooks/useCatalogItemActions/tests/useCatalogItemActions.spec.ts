@@ -1,6 +1,7 @@
 import type { CatalogItem } from '@epam/ai-dial-catalog';
 import type { PromptResponseDto } from '@epam/ai-dial-chat-api-client';
 import { FavoriteEntityType } from '@epam/ai-dial-chat-hooks';
+import { triggerBrowserDownload } from '@epam/ai-dial-chat-hooks/utils';
 import {
   CatalogEntityType,
   triggerBlobDownload,
@@ -14,7 +15,6 @@ import { CatalogI18nKeys } from '../../../constants/translation-keys';
 import { getPrompt, getPublicPrompt } from '../../../server-api/prompts.api';
 import { downloadSkill } from '../../../server-api/skills.api';
 import { ROUTES } from '../../../types/routes';
-import { triggerBrowserDownload } from '../../../utils/file-download';
 import { useCatalogItemActions } from '../useCatalogItemActions';
 
 vi.mock('../../../server-api/prompts.api', () => ({
@@ -26,7 +26,8 @@ vi.mock('../../../server-api/skills.api', () => ({
   downloadSkill: vi.fn(),
 }));
 
-vi.mock('../../../utils/file-download', () => ({
+vi.mock('@epam/ai-dial-chat-hooks/utils', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-hooks/utils')>()),
   triggerBrowserDownload: vi.fn(),
 }));
 

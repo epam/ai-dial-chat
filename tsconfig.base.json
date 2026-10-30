@@ -48,6 +48,7 @@
       "@epam/ai-dial-visualizer-connector/*": ["./libs/visualizer-connector/*"],
       "@epam/ai-dial-scheduled-tasks/*": ["./libs/scheduled-tasks/*"],
       "@epam/ai-dial-projects/*": ["./libs/projects/*"],
+      "@epam/ai-dial-projects": ["./libs/projects/src/index.ts"],
       "@epam/ai-dial-quotations/*": ["./libs/quotations/*"],
       "@epam/ai-dial-builder-form/*": ["./libs/builder-form/*"],
       "@epam/ai-dial-skill-editor/*": ["./libs/skill-editor/*"],

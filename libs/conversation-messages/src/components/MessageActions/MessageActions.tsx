@@ -10,6 +10,8 @@ import {
   DIAL_KIT_ICON_STROKE,
   ElementSize,
   GhostIconButton,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconMarkdown,
@@ -129,9 +131,9 @@ export const MessageActions: FC<MessageActionsProps> = ({
       )}
     >
       {leadingContent}
-      <span role="status" aria-live="polite" className="sr-only">
+      <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
         {copyStatus}
-      </span>
+      </LiveRegion>
       {role === MessageRole.User ? (
         <>
           {onCopy && (

@@ -124,7 +124,7 @@ export const ScheduledTaskConversationHistorySection: FC<
       contentClassName={contentClassName}
     >
       {isUnavailable ? (
-        <p role="alert" className={unavailableTextClassName}>
+        <p role="status" className={unavailableTextClassName}>
           {labels.unavailableLabel}
         </p>
       ) : (

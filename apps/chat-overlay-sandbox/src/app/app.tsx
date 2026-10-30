@@ -95,10 +95,10 @@ const App: FC = () => {
         <span className="dial-tiny-lead-semi-text dial-tiny-lead-semi-text inline-flex min-h-[30px] items-center rounded-full border border-accent-alpha bg-info px-[11px] py-1 text-info">
           Developer playground
         </span>
-        <h1 className="mt-[18px] mb-3 text-[clamp(2rem,7vw,3.5rem)] leading-[1.05] tracking-[-0.04em]">
+        <h1 className="dial-display1-text mt-[18px] mb-3">
           Chat Overlay Sandbox
         </h1>
-        <p className="m-0 max-w-[620px] text-[clamp(1rem,3vw,1.125rem)] leading-[1.65] text-secondary">
+        <p className="dial-body-paragraph-text m-0 max-w-[620px] text-secondary">
           Choose a focused scenario to explore and verify the overlay API in
           isolation.
         </p>
@@ -106,10 +106,10 @@ const App: FC = () => {
 
       <section aria-labelledby="sandbox-cases-heading">
         <div className="mb-4 flex items-baseline justify-between gap-4">
-          <h2 className="m-0 text-lg" id="sandbox-cases-heading">
+          <h2 className="dial-h2-text m-0" id="sandbox-cases-heading">
             Available cases
           </h2>
-          <span className="text-sm text-secondary">
+          <span className="dial-small-text text-secondary">
             {SANDBOX_CASES.length} scenarios
           </span>
         </div>
@@ -129,23 +129,20 @@ const App: FC = () => {
                   label={
                     <span className="grid w-full grid-cols-[auto_minmax(0,1fr)] gap-4">
                       <span
-                        className="grid size-9 place-items-center rounded-[10px] bg-info text-xs font-extrabold text-info"
+                        className="dial-tiny-semi-text grid size-9 place-items-center rounded-[10px] bg-info text-info"
                         aria-hidden
                       >
                         {String(index + 1).padStart(2, '0')}
                       </span>
                       <span className="flex min-w-0 flex-col">
-                        <span
-                          className="text-[1.05rem] leading-[1.35] font-bold"
-                          id={titleId}
-                        >
+                        <span className="dial-body-semi-text" id={titleId}>
                           {title}
                         </span>
-                        <span className="mt-2 leading-[1.55] whitespace-normal text-secondary">
+                        <span className="dial-small-paragraph-text mt-2 whitespace-normal text-secondary">
                           {description}
                         </span>
                         <span
-                          className="mt-auto pt-[18px] text-sm font-bold text-accent"
+                          className="dial-small-semi-text mt-auto pt-[18px] text-accent"
                           aria-hidden
                         >
                           Open case

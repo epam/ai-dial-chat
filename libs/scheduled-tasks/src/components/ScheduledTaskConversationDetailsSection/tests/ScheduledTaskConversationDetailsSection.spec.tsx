@@ -211,9 +211,10 @@ describe('ScheduledTaskConversationDetailsSection', () => {
       />,
     );
 
-    expect(screen.getByRole('alert').textContent).toBe(
-      'Task details are unavailable',
-    );
+    expect(
+      screen.getByText('Task details are unavailable').getAttribute('role'),
+    ).toBe('status');
+    expect(screen.queryByRole('alert')).toBeNull();
     await user.click(screen.getByRole('button', { name: 'Retry' }));
     expect(onRetry).toHaveBeenCalledOnce();
   });
@@ -227,7 +228,9 @@ describe('ScheduledTaskConversationDetailsSection', () => {
       />,
     );
 
-    expect(screen.getByRole('alert')).toBeTruthy();
+    expect(screen.getByText(labels.unavailableLabel).getAttribute('role')).toBe(
+      'status',
+    );
     expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull();
   });
 });

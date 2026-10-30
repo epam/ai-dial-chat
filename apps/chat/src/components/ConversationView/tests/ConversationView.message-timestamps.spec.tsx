@@ -1,3 +1,4 @@
+import { AttachmentCanvasProvider } from '@epam/ai-dial-attachment-canvas';
 import {
   MessageRole,
   type Conversation,
@@ -161,6 +162,7 @@ describe('ConversationView — message timestamps', () => {
   it('asks every message item for its send time when hasMessageTimestamps is set', () => {
     render(
       <ConversationView {...props} messages={messages} hasMessageTimestamps />,
+      { wrapper: AttachmentCanvasProvider },
     );
 
     expect([...mocks.hasTimestampByIndex.entries()]).toEqual([
@@ -171,7 +173,9 @@ describe('ConversationView — message timestamps', () => {
   });
 
   it('leaves send times off by default', () => {
-    render(<ConversationView {...props} messages={messages} />);
+    render(<ConversationView {...props} messages={messages} />, {
+      wrapper: AttachmentCanvasProvider,
+    });
 
     expect([...mocks.hasTimestampByIndex.values()]).toEqual([
       false,

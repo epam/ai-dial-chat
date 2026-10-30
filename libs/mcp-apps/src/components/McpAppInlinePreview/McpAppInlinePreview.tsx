@@ -9,6 +9,8 @@ import {
   GhostIconButton,
   Spinner,
   mergeClasses,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import type { Implementation } from '@modelcontextprotocol/sdk/types.js';
 import {
@@ -196,10 +198,13 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
         </div>
       </div>
       <div className="relative min-h-[100px] w-full">
+        {/* Always mounted so the polite region exists before the canvas opens. */}
+        <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
+          {isOpenedInCanvas ? openedInCanvasLabel : ''}
+        </LiveRegion>
         {isOpenedInCanvas ? (
           <div
-            role="status"
-            aria-live="polite"
+            aria-hidden
             className="absolute inset-0 flex items-center justify-center p-4"
           >
             <span className="dial-body-text text-center text-secondary">
@@ -222,7 +227,7 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
                   className="text-error"
                 />
                 <p
-                  role="alert"
+                  role="status"
                   className="dial-body-text text-center text-primary"
                 >
                   {loadErrorLabel}

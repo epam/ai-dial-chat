@@ -8,6 +8,9 @@ import {
   SkeletonVariant,
   Spinner,
   Tooltip,
+  LiveRegion,
+  LiveRegionElement,
+  LiveRegionPoliteness,
 } from '@epam/ai-dial-ui-kit';
 import { IconAlertTriangle, IconCheck, IconCircleX } from '@tabler/icons-react';
 import { type CSSProperties, type FC, type KeyboardEvent } from 'react';
@@ -262,7 +265,7 @@ export const ScheduledTaskRunHistoryList: FC<
     return (
       <div style={cssVars} className="flex flex-col items-start gap-3">
         <p
-          role="alert"
+          role="status"
           className={mergeClasses(subtitleClassName, styles.subtitleText)}
         >
           {labels.errorLabel}
@@ -285,31 +288,38 @@ export const ScheduledTaskRunHistoryList: FC<
   }
 
   return (
-    <ul
-      style={
-        {
-          ...cssVars,
-          '--strhl-row-min-height': listStyles?.rowMinHeight,
-        } as CSSProperties
-      }
-      aria-label={labels.historyTitle}
-      className="flex flex-col gap-0.5"
-    >
-      {items.map(renderRow)}
-      {isLoadingMore && renderSkeletons(skeletonCount)}
-      {error ? (
-        <li className="flex flex-col items-start gap-3 px-5 py-2">
-          <p
-            role="alert"
-            className={mergeClasses(subtitleClassName, styles.subtitleText)}
-          >
-            {labels.errorLabel}
-          </p>
-          <GhostButton label={labels.retryLabel} onClick={onRetry} />
-        </li>
-      ) : (
-        footer
-      )}
-    </ul>
+    <>
+      <ul
+        style={
+          {
+            ...cssVars,
+            '--strhl-row-min-height': listStyles?.rowMinHeight,
+          } as CSSProperties
+        }
+        aria-label={labels.historyTitle}
+        className="flex flex-col gap-0.5"
+      >
+        {items.map(renderRow)}
+        {isLoadingMore && renderSkeletons(skeletonCount)}
+        {error ? (
+          <li className="flex flex-col items-start gap-3 px-5 py-2">
+            <p className={mergeClasses(subtitleClassName, styles.subtitleText)}>
+              {labels.errorLabel}
+            </p>
+            <GhostButton label={labels.retryLabel} onClick={onRetry} />
+          </li>
+        ) : (
+          footer
+        )}
+      </ul>
+      {/* The error row mounts with the failure; this region is mounted with the list so the failure is announced. */}
+      <LiveRegion
+        politeness={LiveRegionPoliteness.Assertive}
+        visuallyHidden
+        as={LiveRegionElement.Span}
+      >
+        {error ? labels.errorLabel : ''}
+      </LiveRegion>
+    </>
   );
 };

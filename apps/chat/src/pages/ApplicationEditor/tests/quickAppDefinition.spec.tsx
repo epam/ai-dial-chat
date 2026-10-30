@@ -353,9 +353,12 @@ describe('ApplicationEditorPage — quick app', () => {
       denySchema();
       renderPage(createSearch);
 
-      expect(screen.getByRole('alert').textContent).toBe(
-        CatalogI18nKeys.CreationDenied,
-      );
+      expect(
+        screen.getByRole('heading', {
+          level: 1,
+          name: CatalogI18nKeys.CreationDenied,
+        }),
+      ).toBeTruthy();
       expect(screen.queryByLabelText(EditorI18nKeys.NameLabel)).toBeNull();
       expect(createApplication).not.toHaveBeenCalled();
     });
@@ -367,9 +370,12 @@ describe('ApplicationEditorPage — quick app', () => {
       });
       renderPage(createSearch);
 
-      expect(screen.getByRole('alert').textContent).toBe(
-        CatalogI18nKeys.CreationDenied,
-      );
+      expect(
+        screen.getByRole('heading', {
+          level: 1,
+          name: CatalogI18nKeys.CreationDenied,
+        }),
+      ).toBeTruthy();
     });
 
     it('shows the pending state while permissions load', () => {
@@ -389,18 +395,24 @@ describe('ApplicationEditorPage — quick app', () => {
     ])('shows the unavailable state for %s', (_label, search) => {
       renderPage(search);
 
-      expect(screen.getByRole('alert').textContent).toBe(
-        CatalogI18nKeys.CreationUnavailable,
-      );
+      expect(
+        screen.getByRole('heading', {
+          level: 1,
+          name: CatalogI18nKeys.CreationUnavailable,
+        }),
+      ).toBeTruthy();
       expect(createApplication).not.toHaveBeenCalled();
     });
 
     it('does not resolve the schema by its display name', () => {
       renderPage(`schema=${SCHEMA.displayName}`);
 
-      expect(screen.getByRole('alert').textContent).toBe(
-        CatalogI18nKeys.CreationUnavailable,
-      );
+      expect(
+        screen.getByRole('heading', {
+          level: 1,
+          name: CatalogI18nKeys.CreationUnavailable,
+        }),
+      ).toBeTruthy();
     });
 
     it('blocks the create request when permission is lost while the form is open', async () => {

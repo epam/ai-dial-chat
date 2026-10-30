@@ -1,8 +1,8 @@
 import type { ScheduledTaskDto } from '@epam/ai-dial-chat-api-client';
+import { ActiveScheduledTaskDetailState } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { ActiveScheduledTaskDetailState } from '../../../../types/active-scheduled-task';
 import TaskDetailsSection from '../TaskDetailsSection';
 
 let mockSidebarConversationModelId: string | undefined;
@@ -128,7 +128,11 @@ describe('TaskDetailsSection', () => {
       }),
     );
 
-    expect(screen.getByRole('alert')).toBeTruthy();
+    expect(
+      screen
+        .getByText('scheduledTasks.conversationBanner.unavailableLabel')
+        .getAttribute('role'),
+    ).toBe('status');
     await user.click(
       screen.getByRole('button', { name: 'scheduledTasks.list.retryLabel' }),
     );

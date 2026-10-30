@@ -241,7 +241,7 @@ describe('PromptEditor', () => {
   it('renders a labelled spinner instead of the form while loading', () => {
     renderEditor({ isEditMode: true, isLoading: true });
 
-    expect(screen.getByRole('status', { name: 'Loading prompt' })).toBeTruthy();
+    expect(screen.getByRole('img', { name: 'Loading prompt' })).toBeTruthy();
     expect(screen.queryByRole('textbox', { name: /Name/ })).toBeNull();
   });
 

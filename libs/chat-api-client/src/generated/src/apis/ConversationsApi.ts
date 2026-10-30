@@ -866,7 +866,7 @@ export class ConversationsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Idempotently records that the authenticated user has opened this conversation. Used to clear the unread indicator for scheduler-created conversations.
+   * Idempotently records that the authenticated user has seen this conversation. Clears the unread indicator of scheduler-created conversations and of regular conversations whose answer arrived while the user was elsewhere.
    * Mark a conversation as viewed
    */
   async markConversationViewedRaw(
@@ -913,7 +913,7 @@ export class ConversationsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Idempotently records that the authenticated user has opened this conversation. Used to clear the unread indicator for scheduler-created conversations.
+   * Idempotently records that the authenticated user has seen this conversation. Clears the unread indicator of scheduler-created conversations and of regular conversations whose answer arrived while the user was elsewhere.
    * Mark a conversation as viewed
    */
   async markConversationViewed(

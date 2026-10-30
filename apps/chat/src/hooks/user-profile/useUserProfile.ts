@@ -1,11 +1,22 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useUser } from '../../context/auth/UserContext';
 
 export const useUserProfile = () => {
   const { user } = useUser();
 
-  const image = user?.claims?.['image'] as string | undefined;
-  const [isFallbackIconShown, setIsFallbackIconShown] = useState(!image);
+  /* The BFF stores the standard OIDC `picture` claim (avatar URL). */
+  const image = user?.claims?.['picture'] as string | undefined;
+  /*
+   * Track the URL that failed rather than a boolean: the profile loads after
+   * the first render, and a new avatar URL must get its own chance to load.
+   */
+  const [failedImage, setFailedImage] = useState<string>();
+  const isFallbackIconShown = !image || failedImage === image;
+
+  const setIsFallbackIconShown = useCallback(
+    (isShown: boolean) => setFailedImage(isShown ? image : undefined),
+    [image],
+  );
 
   const email = (user?.claims?.['email'] as string) ?? user?.sub ?? '';
   const displayName = (user?.claims?.['name'] as string) || email;

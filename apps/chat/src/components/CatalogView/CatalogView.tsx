@@ -17,6 +17,7 @@ import {
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { SkillContentFileTree } from '@epam/ai-dial-skills';
+import { LiveRegion, LiveRegionElement } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
@@ -601,9 +602,9 @@ const CatalogView: FC<Props> = ({
         onFilesSelected={handleSkillArchiveFilesSelected}
         onFilesRejected={handleSkillArchiveFilesRejected}
       />
-      <span role="status" aria-live="polite" className="sr-only">
+      <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
         {skillArchiveStatusMessage}
-      </span>
+      </LiveRegion>
       <Catalog
         items={visibleCatalogItems}
         isLoading={isLoading}

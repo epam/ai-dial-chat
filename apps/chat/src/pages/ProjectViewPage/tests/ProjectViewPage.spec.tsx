@@ -46,7 +46,8 @@ vi.mock('../../../server-api/projects.api', () => ({
   downloadProjectArchive: vi.fn(),
   downloadProjectContextFile: vi.fn(),
 }));
-vi.mock('../../../utils/file-download', () => ({
+vi.mock('@epam/ai-dial-chat-hooks/utils', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-hooks/utils')>()),
   triggerBrowserDownload: vi.fn(
     async (_response: Response, name: string) => name,
   ),

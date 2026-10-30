@@ -319,6 +319,24 @@ offers no theme or "Default agent for new chats" submenu. The mobile drawer's
 menu adds the keyboard-shortcut group, which the desktop menu leaves to the
 Settings dialog.
 
+Reusable non-rendering controllers in `chat-hooks` now own browser downloads,
+scheduled-run grouping, conversation discovery, selected skill names, skill
+file selection, pending attachment results, file preview, entity preselection,
+canvas width calculation and injected persisted state. Their existing
+`apps/chat` adapters retain host policies and delegate through public
+package exports. Downloads, canvas request guards and active-run substitution
+are imported directly from their libraries without app re-export modules.
+Canvas preview ordering belongs to each existing
+`AttachmentCanvasProvider`, with per-caller unmount guards; independent
+providers do not share a generation counter. See
+[reusable chat workflows](reusable-chat-workflows.md) for the owning entries,
+retained adapters and downstream migration status.
+
+The chat-shared root preserves its public File Manager types and grid event
+hook, so File Manager is a required peer and AG Grid a dependency even for
+declaration-only consumers. Grid rendering remains behind the file-manager
+entry. See [the package contract](../libs/chat-shared/README.md#peer-dependencies).
+
 The frontend uses automatic chunk splitting. Catalog Grid imports the UI Kit's
 `/grid` entry; Markdown editor loaders use `/editors`. File-manager UI has a
 dedicated `@epam/ai-dial-chat-shared/file-manager` entry consumed inside lazy
@@ -617,6 +635,18 @@ completion, while applied list snapshots are ordered by successful request
 sequence. See the [chat behavior contract](../apps/chat/README.md#manual-scheduled-task-runs)
 for retry limits and viewed-state synchronization.
 
+Regular chats use the same viewed-ids idea with a one-time baseline: a chat in the
+user's own bucket is unread when `updatedAt` is after the read-before baseline
+(`.client_data/.conversations-read-baseline.json`, written by the first list
+request) and its id is not in `.client_data/.viewed-conversations.json`.
+`ConversationReadStateService` (in `apps/chat-api/src/scheduled-task-unread/`)
+owns both files, `PATCH /api/v1/conversations/viewed` routes by conversation kind,
+and `POST /api/v1/conversations/completions` removes the chat from the viewed ids
+when a generation is accepted. The client marks the row unread when a generation
+starts, hides the dot on the open conversation, and the conversation page marks the
+open chat viewed once its stream is not running. See the
+[chat behavior contract](../apps/chat/README.md#unread-dot-for-regular-chats).
+
 Reusable selection lives in `skills` (`SkillSelectorField`), validation and
 presentation in `scheduled-tasks`, and checked request mapping in `chat-hooks`.
 Both chat and scheduled-task validation use the pure `chat-shared` skill-support
@@ -780,7 +810,7 @@ Browser                apps/chat-api                OIDC Provider
   │◀────────────────────────│ Set-Cookie: session=<enc>  │
 ```
 
-For Keycloak, a missing ID-token `job_title` can be read from UserInfo after
+For Keycloak, a missing ID-token `job_title` or `picture` (avatar URL) can be read from UserInfo after
 checking the subject. The [auth design](auth/auth-bff-encrypted-cookie.md#51-login-flow-authorization-code--pkce)
 describes claim capture and failure handling; other providers keep their
 existing ID-token path.
@@ -1057,3 +1087,19 @@ Import direction is enforced by lint. Every Nx project carries exactly one `type
 - [DIAL API documentation](https://github.com/epam/ai-dial)
 - [openspec/config.yaml](../openspec/config.yaml) — tech stack, commands, AI agent rules
 - [openspec/lib-styling-guide.md](../openspec/lib-styling-guide.md) — CSS variable / SCSS module conventions
+
+## Remaining reusable chat controllers
+
+The chat-hooks conversation entry owns generation registries, title reconciliation and
+deployment-change tracking. Scheduled-tasks owns active-task classification/details;
+skill-editor owns preview synchronization over host canvas operations; external-services
+owns login orchestration over the existing OAuth protocol. App providers/adapters retain
+routing, flags, client setup, code exchange, persistence and translated status messages.
+Quotations owns defensive annotation grouping; chat-shared owns conversation transfer row
+mapping with host message resolvers. No module-boundary exception was added.
+
+Audio upload MIME normalization and reset-instant offset formatting are explicit opt-ins;
+parent defaults remain preserve/current-offset. See the chat-hooks README for contracts.
+The reusable-workflows consumer fixture packs the dependency closure outside the workspace;
+publication and downstream migration remain separate actions. Downstream must implement
+ExternalService callback dispatch with consent forwarding before adopting login orchestration.

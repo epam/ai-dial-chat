@@ -17,7 +17,7 @@ Exposed in `UseDialFileManagerResult`:
 - `onDownloadFiles(dialFiles: DialFile[])` — dispatched by `DialFileManager` when user clicks Download
 - `isDownloading` — also folded into the hook's `isAnyOperationInProgress` so conflicting actions are disabled while a download is preparing
 
-The hook never touches browser download APIs directly. The host injects `downloadDestination: DownloadDestinationHandlers` (`libs/chat-hooks/src/files/download-destination.ts`) with `resolveDestination(filename, mimeType)` and `triggerDownload(response, fallbackName, destination)`; `apps/chat` wires them in `useDialFileManagerHostOptions` to `prepareDownloadDestination` (`libs/chat-hooks/src/files/prepare-download-destination.ts`) and `triggerBrowserDownload` (`apps/chat/src/utils/file-download.ts`). The HTTP calls go through the injected `filesApi: DialFilesApi` (`downloadFile`, `downloadArchive`), built by `createFilesApiClient` (`libs/chat-hooks/src/files/create-files-api.ts`).
+The hook never touches browser download APIs directly. The host injects `downloadDestination: DownloadDestinationHandlers` (`libs/chat-hooks/src/files/download-destination.ts`) with `resolveDestination(filename, mimeType)` and `triggerDownload(response, fallbackName, destination)`; `apps/chat` wires them in `useDialFileManagerHostOptions` to `prepareDownloadDestination` (`libs/chat-hooks/src/files/prepare-download-destination.ts`) and `triggerBrowserDownload` (`libs/chat-hooks/src/files/browser-download.ts`). The HTTP calls go through the injected `filesApi: DialFilesApi` (`downloadFile`, `downloadArchive`), built by `createFilesApiClient` (`libs/chat-hooks/src/files/create-files-api.ts`).
 
 ---
 

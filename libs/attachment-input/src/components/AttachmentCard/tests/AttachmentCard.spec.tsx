@@ -33,6 +33,34 @@ describe('AttachmentCard — corner actions in the error state', () => {
     expect(screen.getAllByLabelText('Retry upload')).toHaveLength(1);
   });
 
+  it('keeps the error status region mounted and fills it when the upload fails', () => {
+    const { rerender } = render(
+      <AttachmentCard
+        attachment={{ ...failedAttachment, status: RequestStatus.Idle }}
+        onRemove={vi.fn()}
+      />,
+    );
+    const status = screen.getByRole('status');
+    expect(status.textContent).toBe('');
+    expect(
+      screen
+        .getByLabelText('Remove attachment')
+        .hasAttribute('aria-describedby'),
+    ).toBe(false);
+
+    rerender(
+      <AttachmentCard attachment={failedAttachment} onRemove={vi.fn()} />,
+    );
+
+    expect(screen.getByRole('status')).toBe(status);
+    expect(status.textContent).not.toBe('');
+    expect(
+      screen
+        .getByLabelText('Remove attachment')
+        .getAttribute('aria-describedby'),
+    ).toBe(status.id);
+  });
+
   it('hides retry for a file-too-large error, keeping remove', () => {
     render(
       <AttachmentCard

@@ -1,6 +1,6 @@
 import type { ToolMenuItem } from '@epam/ai-dial-chat-shared';
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
+import { DIAL_KIT_ICON_STROKE, ToggleChip } from '@epam/ai-dial-ui-kit';
 import { IconX } from '@tabler/icons-react';
 import type { FC } from 'react';
 import styles from './ToolsChips.module.scss';
@@ -9,6 +9,8 @@ import styles from './ToolsChips.module.scss';
 interface ToolsChipsTypography {
   /** Typography utility class applied to the chip text. Defaults to `'dial-small-paragraph-text'`. */
   fontClassName?: string;
+  /** Typography utility class applied to the on/off state text. Defaults to `'dial-tiny-lead-text'`. */
+  stateClassName?: string;
 }
 
 /** Color overrides for the `ToolsChips` component, applied as CSS custom properties. */
@@ -33,9 +35,9 @@ interface ToolsChipsColors {
   chipSelectedText?: string;
   /** Color of the chip's ON/OFF state text while the tool is off. Defaults to `--text-secondary`; while on it follows `chipSelectedText`. */
   chipStateText?: string;
-  /** Icon color of the chip's × button. Defaults to `--text-secondary`, or `--text-accent` while the tool is on. */
+  /** Icon color of the chip's × button. Defaults to `--text-secondary`, or `--text-accent` while the tool is on. Applies only while `canRemove` is `true`. */
   chipClose?: string;
-  /** Icon color of the chip's × button on hover/focus. Defaults to `--text-primary`. */
+  /** Icon color of the chip's × button on hover/focus. Defaults to `--text-primary`. Applies only while `canRemove` is `true`. */
   chipCloseHover?: string;
 }
 
@@ -49,7 +51,7 @@ export interface ToolsChipsProps {
   onToolToggle: (toolId: string) => void;
   /** Called with the tool id when the chip's × is clicked, to drop it from the row. Ignored while `canRemove` is `false`. */
   onToolDismiss: (toolId: string) => void;
-  /** When `false`, chips render without a × and cannot be dropped from the row. Defaults to `true`. */
+  /** When `false`, chips render as the kit `ToggleChip` without a × and cannot be dropped from the row. Defaults to `true`. */
   canRemove?: boolean;
   /** Returns the accessible label for a chip's × button. Defaults to `"Remove {toolLabel}"`. */
   removeLabel?: (toolLabel: string) => string;
@@ -104,54 +106,84 @@ export const ToolsChips: FC<ToolsChipsProps> = ({
     '--ci-chip-close-hover': colors?.chipCloseHover,
   });
 
+  const renderIcon = (item: ToolMenuItem) => (
+    <span className={mergeClasses(styles.chipIcon, 'flex shrink-0')}>
+      {item.icon}
+    </span>
+  );
+
+  const renderLabel = (item: ToolMenuItem) => (
+    <span className="flex min-w-0 items-center">
+      <span
+        className={mergeClasses(
+          styles.chipText,
+          typography?.fontClassName || 'dial-small-paragraph-text',
+          'truncate',
+        )}
+      >
+        {item.label}
+        {showState && <span aria-hidden>:</span>}
+      </span>
+      {showState && (
+        <span
+          className={mergeClasses(
+            styles.chipState,
+            typography?.stateClassName || 'dial-tiny-lead-text',
+            'ms-1 shrink-0',
+          )}
+          aria-hidden
+        >
+          {item.isSelected ? stateOnLabel : stateOffLabel}
+        </span>
+      )}
+    </span>
+  );
+
   return (
     <div className="flex flex-wrap items-center gap-2" style={cssVars}>
-      {items.map((item) => (
-        <div
-          key={item.id}
-          className={mergeClasses(
-            styles.chip,
-            item.isSelected && styles.chipSelected,
-            'flex min-w-0 items-center gap-1.5 rounded-full border py-1 transition-colors',
-            canRemove ? 'ps-2 pe-1' : 'px-2',
-          )}
-        >
-          <button
-            type="button"
-            onClick={() => onToolToggle(item.id)}
-            aria-pressed={item.isSelected}
-            className="flex min-w-0 items-center gap-1.5"
-          >
-            <span
-              className={mergeClasses(styles.chipIcon, 'shrink-0')}
-              aria-hidden
-            >
-              {item.icon}
-            </span>
-            <span
+      {items.map((item) => {
+        if (!canRemove) {
+          /* The kit chip owns the toggle semantics. The module classes keep the
+             `colors` contract, and the geometry overrides match the removable
+             chip below, so the row looks the same in either mode. */
+          return (
+            <ToggleChip
+              key={item.id}
+              icon={renderIcon(item)}
+              label={renderLabel(item)}
+              isSelected={item.isSelected}
+              onToggle={() => onToolToggle(item.id)}
               className={mergeClasses(
-                styles.chipText,
-                typography?.fontClassName || 'dial-small-paragraph-text',
-                'truncate',
+                styles.chip,
+                item.isSelected && styles.chipSelected,
+                'h-auto min-w-0 gap-1.5 border px-2 py-1 transition-colors',
               )}
-            >
-              {item.label}
-              {showState && <span aria-hidden>:</span>}
-            </span>
-            {showState && (
-              <span
-                className={mergeClasses(
-                  styles.chipState,
-                  typography?.fontClassName || 'dial-small-paragraph-text',
-                  'ms-1 shrink-0 tracking-wider uppercase',
-                )}
-                aria-hidden
-              >
-                {item.isSelected ? stateOnLabel : stateOffLabel}
-              </span>
+            />
+          );
+        }
+
+        /* `ToggleChip` has no remove control, so a removable chip stays
+           hand-rolled: the toggle and the × are two sibling buttons. */
+        return (
+          <div
+            key={item.id}
+            className={mergeClasses(
+              styles.chip,
+              item.isSelected && styles.chipSelected,
+              'flex min-w-0 items-center gap-1.5 rounded-full border py-1 ps-2 pe-1 transition-colors',
             )}
-          </button>
-          {canRemove && (
+          >
+            <button
+              type="button"
+              onClick={() => onToolToggle(item.id)}
+              aria-pressed={item.isSelected}
+              className="flex min-w-0 items-center gap-1.5"
+            >
+              <span className="flex shrink-0" aria-hidden>
+                {renderIcon(item)}
+              </span>
+              {renderLabel(item)}
+            </button>
             <button
               type="button"
               onClick={() => onToolDismiss(item.id)}
@@ -163,9 +195,9 @@ export const ToolsChips: FC<ToolsChipsProps> = ({
             >
               <IconX size={12} aria-hidden stroke={DIAL_KIT_ICON_STROKE} />
             </button>
-          )}
-        </div>
-      ))}
+          </div>
+        );
+      })}
     </div>
   );
 };

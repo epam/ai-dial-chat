@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -45,12 +46,27 @@ const AttachmentCanvasContext = createContext<
 >(undefined);
 AttachmentCanvasContext.displayName = 'AttachmentCanvasContext';
 
+const CanvasRequestContext = createContext<(() => () => boolean) | undefined>(
+  undefined,
+);
+
 /** Provides attachment canvas state to all descendants. */
 export const AttachmentCanvasProvider = ({
   children,
 }: {
   children: ReactNode;
 }) => {
+  const generation = useRef(0);
+  const startRequest = useCallback(() => {
+    const request = ++generation.current;
+    return () => request === generation.current;
+  }, []);
+  useEffect(
+    () => () => {
+      generation.current += 1;
+    },
+    [],
+  );
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [content, setContent] =
@@ -127,7 +143,9 @@ export const AttachmentCanvasProvider = ({
         ],
       )}
     >
-      {children}
+      <CanvasRequestContext.Provider value={startRequest}>
+        {children}
+      </CanvasRequestContext.Provider>
     </AttachmentCanvasContext.Provider>
   );
 };
@@ -141,4 +159,28 @@ export const useAttachmentCanvas = (): AttachmentCanvasContextValue => {
     );
   }
   return value;
+};
+
+/** Starts a provider-scoped preview request, valid until superseded or the caller unmounts. */
+export const useLatestCanvasRequest = (): (() => () => boolean) => {
+  const startRequest = useContext(CanvasRequestContext);
+  if (!startRequest)
+    throw new Error(
+      'useLatestCanvasRequest must be used within an AttachmentCanvasProvider',
+    );
+  const lifetime = useRef<object | undefined>(undefined);
+  useEffect(() => {
+    lifetime.current = {};
+    return () => {
+      lifetime.current = undefined;
+    };
+  }, []);
+  return useCallback(() => {
+    const currentLifetime = lifetime.current;
+    const isLatest = startRequest();
+    return () =>
+      currentLifetime !== undefined &&
+      lifetime.current === currentLifetime &&
+      isLatest();
+  }, [startRequest]);
 };

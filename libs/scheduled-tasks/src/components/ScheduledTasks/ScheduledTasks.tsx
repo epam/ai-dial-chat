@@ -17,6 +17,8 @@ import {
   PrimaryButton,
   Search,
   Spinner,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import { IconArrowsSort, IconPlus } from '@tabler/icons-react';
 import {
@@ -391,9 +393,9 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
         </div>
       )}
 
-      <span role="status" aria-live="polite" className="sr-only">
+      <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
         {statusMessage}
-      </span>
+      </LiveRegion>
 
       <div
         className={mergeClasses(

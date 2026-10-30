@@ -1,4 +1,9 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  ElementSize,
+  ProgressBar,
+  ProgressBarRole,
+} from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { getCapacityPercent } from '../../utils/context-files';
 import styles from './ProjectCapacityMeter.module.scss';
@@ -17,7 +22,7 @@ export interface ProjectCapacityMeterProps {
   textClassName?: string;
 }
 
-/** `role="meter"` bar showing how much of the project context capacity is used. */
+/** Kit `ProgressBar` in its `meter` role showing how much of the project context capacity is used. */
 export const ProjectCapacityMeter: FC<ProjectCapacityMeterProps> = ({
   usedBytes,
   maxBytes,
@@ -32,23 +37,15 @@ export const ProjectCapacityMeter: FC<ProjectCapacityMeterProps> = ({
 
   return (
     <div className="flex min-w-0 items-center gap-2">
-      <div
-        role="meter"
+      <ProgressBar
+        role={ProgressBarRole.Meter}
+        value={usedBytes}
+        max={maxBytes}
+        size={ElementSize.Small}
         aria-label={ariaLabel}
-        aria-valuemin={0}
-        aria-valuemax={maxBytes}
-        aria-valuenow={Math.min(usedBytes, maxBytes)}
         aria-valuetext={label}
-        className={mergeClasses(
-          'h-1 w-[60px] shrink-0 overflow-hidden rounded-full',
-          styles.track,
-        )}
-      >
-        <div
-          className={mergeClasses('h-full rounded-full', styles.fill)}
-          style={{ width: `${percent}%` }}
-        />
-      </div>
+        className={mergeClasses('w-[60px] shrink-0', styles.track)}
+      />
       <span
         aria-hidden
         className={mergeClasses(

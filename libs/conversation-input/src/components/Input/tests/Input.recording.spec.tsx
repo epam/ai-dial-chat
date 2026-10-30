@@ -134,12 +134,15 @@ describe('Input while dictating', () => {
           onTranscribeAudio={onTranscribeAudio}
         />,
       );
+      const alertRegion = screen.getByRole('alert');
+      expect(alertRegion.textContent).toBe('');
       fireEvent.click(screen.getByLabelText('Dictate'));
       await act(async () => vi.advanceTimersByTimeAsync(1000));
       fireEvent.click(screen.getByLabelText('Stop recording'));
       await act(async () => vi.advanceTimersByTimeAsync(0));
 
-      expect(screen.getByRole('alert').textContent).toBe(
+      expect(screen.getByRole('alert')).toBe(alertRegion);
+      expect(alertRegion.textContent).toBe(
         'Speech recognition is temporarily unavailable.',
       );
       expect(screen.queryByLabelText('Discard recording')).toBeNull();
@@ -152,7 +155,7 @@ describe('Input while dictating', () => {
 
       fireEvent.click(screen.getByLabelText('Dictate'));
       await act(async () => vi.advanceTimersByTimeAsync(1000));
-      expect(screen.queryByRole('alert')).toBeNull();
+      expect(screen.getByRole('alert').textContent).toBe('');
       fireEvent.click(screen.getByLabelText('Stop recording'));
       await act(async () => vi.advanceTimersByTimeAsync(0));
       expect(screen.getByRole('textbox')).toHaveProperty(

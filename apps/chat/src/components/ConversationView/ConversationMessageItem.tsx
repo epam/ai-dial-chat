@@ -80,6 +80,8 @@ import {
   DIAL_KIT_ICON_STROKE,
   ElementSize,
   ErrorMessageNotification,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import { IconLink } from '@tabler/icons-react';
 import {
@@ -1089,11 +1091,16 @@ const ConversationMessageItem: FC<Props> = ({
                   renderCitation={renderStageCitation}
                 />
               )}
+              {/* Always mounted: a live region that mounts in the same render as
+                  its text is announced unreliably, so only its text toggles
+                  when the visualizer moves into the canvas. */}
+              <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
+                {isGroupedVisualizerOpenedInCanvas ? openedInCanvasLabel : ''}
+              </LiveRegion>
               {groupedVisualizer != null &&
                 (isGroupedVisualizerOpenedInCanvas ? (
                   <div
-                    role="status"
-                    aria-live="polite"
+                    aria-hidden
                     className="bg-layer-2 flex h-[120px] w-[280px] items-center justify-center rounded"
                   >
                     <span className="dial-body-text text-primary">

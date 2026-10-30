@@ -785,7 +785,8 @@ describe('AuthController (integration)', () => {
     });
   });
 
-  describe('job title from Keycloak UserInfo', () => {
+  describe('job title and picture from Keycloak UserInfo', () => {
+    const AVATAR_URL = 'https://keycloak.example.com/avatars/user-1.png';
     const loginAndGetClaims = async (
       idTokenClaims: Record<string, unknown> = {},
     ): Promise<Record<string, unknown>> => {
@@ -835,10 +836,58 @@ describe('AuthController (integration)', () => {
       expect(MOCK_CLIENT.userinfo).toHaveBeenCalledWith('at');
     });
 
-    it('keeps the ID-token job title without requesting UserInfo', async () => {
-      const claims = await loginAndGetClaims({ job_title: 'Engineer' });
+    it('keeps the ID-token job title and picture without requesting UserInfo', async () => {
+      const claims = await loginAndGetClaims({
+        job_title: 'Engineer',
+        picture: AVATAR_URL,
+      });
 
       expect(claims['job_title']).toBe('Engineer');
+      expect(claims['picture']).toBe(AVATAR_URL);
+      expect(MOCK_CLIENT.userinfo).not.toHaveBeenCalled();
+    });
+
+    it('persists a UserInfo-only picture next to the ID-token job title', async () => {
+      MOCK_CLIENT.userinfo.mockResolvedValue({
+        sub: 'user-1',
+        job_title: 'Ignored Title',
+        picture: AVATAR_URL,
+      });
+
+      const claims = await loginAndGetClaims({ job_title: 'Engineer' });
+
+      expect(claims).toEqual({
+        sub: 'user-1',
+        job_title: 'Engineer',
+        picture: AVATAR_URL,
+      });
+    });
+
+    it.each(['', '   ', 'javascript:alert(1)', 'not a url', 42, null])(
+      'stores no picture key for an unusable picture value (%j)',
+      async (picture) => {
+        MOCK_CLIENT.userinfo.mockResolvedValue({ sub: 'user-1', picture });
+
+        expect(await loginAndGetClaims({ picture })).toEqual({ sub: 'user-1' });
+      },
+    );
+
+    it('ignores a UserInfo picture when its subject does not match', async () => {
+      MOCK_CLIENT.userinfo.mockResolvedValue({
+        sub: 'another-user',
+        picture: AVATAR_URL,
+      });
+
+      expect(await loginAndGetClaims()).toEqual({ sub: 'user-1' });
+    });
+
+    it('stores a valid ID-token picture for non-Keycloak providers', async () => {
+      providerConfigOverride = { id: 'auth0' };
+
+      expect(await loginAndGetClaims({ picture: AVATAR_URL })).toEqual({
+        sub: 'user-1',
+        picture: AVATAR_URL,
+      });
       expect(MOCK_CLIENT.userinfo).not.toHaveBeenCalled();
     });
 

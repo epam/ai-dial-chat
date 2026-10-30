@@ -3,6 +3,7 @@ import {
   mergeClasses,
   useCodeCopy,
 } from '@epam/ai-dial-chat-shared';
+import { LiveRegion, LiveRegionPoliteness } from '@epam/ai-dial-ui-kit';
 import {
   type FC,
   type KeyboardEvent,
@@ -213,25 +214,25 @@ const SharePopover: FC<SharePopoverProps> = ({
 
       <div className={mergeClasses('-mt-1.5 h-px w-full', styles.divider)} />
 
-      {isLoading && (
-        <LoadingSkeleton
-          ariaLabel={loadingLabel}
-          skeletonColor={colors?.skeletonColor}
-        />
-      )}
+      {/* Mounted with the popover rather than with the skeleton, so the loading text lands in a region that already exists and is announced. */}
+      <LiveRegion visuallyHidden>{isLoading ? loadingLabel : null}</LiveRegion>
 
-      {!isLoading && error != null && (
-        <p
-          role="alert"
-          className={mergeClasses(
-            typography?.errorClassName ?? 'dial-tiny-text',
-            'py-6 text-center',
-            styles.errorText,
-          )}
-        >
-          {errorTitle}
-        </p>
-      )}
+      {isLoading && <LoadingSkeleton skeletonColor={colors?.skeletonColor} />}
+
+      {/* Mounted with the popover, before the link request fails, so the failure is announced; out of the column gap while empty. */}
+      <LiveRegion politeness={LiveRegionPoliteness.Assertive}>
+        {!isLoading && error != null && (
+          <p
+            className={mergeClasses(
+              typography?.errorClassName ?? 'dial-tiny-text',
+              'py-6 text-center',
+              styles.errorText,
+            )}
+          >
+            {errorTitle}
+          </p>
+        )}
+      </LiveRegion>
 
       {!isLoading && error == null && url != null && (
         <>

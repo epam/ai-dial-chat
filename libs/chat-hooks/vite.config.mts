@@ -44,6 +44,7 @@ export default defineConfig(({ command }) => ({
       aliasesExclude: [
         '@epam/ai-dial-attachment-canvas',
         '@epam/ai-dial-mcp-apps',
+        '@epam/ai-dial-scheduled-tasks/validation',
       ],
     }),
   ],
@@ -70,6 +71,7 @@ export default defineConfig(({ command }) => ({
         'skills-state': 'src/entry-points/skills-state.ts',
         'skill-editor': 'src/entry-points/skill-editor.ts',
         oauth: 'src/entry-points/oauth.ts',
+        'external-services': 'src/entry-points/external-services.ts',
         'offline-credentials': 'src/entry-points/offline-credentials.ts',
         'scheduled-tasks': 'src/entry-points/scheduled-tasks.ts',
         project: 'src/entry-points/project.ts',

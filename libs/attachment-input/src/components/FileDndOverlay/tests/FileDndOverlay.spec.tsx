@@ -2,10 +2,26 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { FileDndOverlay } from '../FileDndOverlay';
 
+/* The visual overlay has no role of its own; walk up from its title text. */
+const getOverlay = (): HTMLElement => {
+  const title = screen.getByText(/^(Attach files|No attachments allowed)$/);
+  // eslint-disable-next-line testing-library/no-node-access -- see above
+  return title.closest('.fixed') as HTMLElement;
+};
+
 describe('FileDndOverlay', () => {
-  it('renders nothing when isVisible is false', () => {
-    render(<FileDndOverlay isVisible={false} />);
-    expect(screen.queryByRole('status')).toBeNull();
+  it('keeps an empty status region mounted while hidden and fills it when shown', () => {
+    const { rerender } = render(<FileDndOverlay isVisible={false} />);
+    const status = screen.getByRole('status');
+    expect(status.textContent).toBe('');
+    expect(screen.queryByText('Attach files')).toBeNull();
+
+    rerender(<FileDndOverlay isVisible={true} />);
+
+    expect(screen.getByRole('status')).toBe(status);
+    expect(status.textContent).toBe(
+      'Attach files. Drop files here to attach them to message',
+    );
   });
 
   it('renders default title and subtitle when isVisible is true', () => {
@@ -26,7 +42,7 @@ describe('FileDndOverlay', () => {
         />,
       );
       // eslint-disable-next-line testing-library/no-node-access -- stroke width on an aria-hidden glyph has no accessible role or text to query
-      const icon = screen.getByRole('status').querySelector('svg');
+      const icon = getOverlay().querySelector('svg');
       expect(icon?.getAttribute('stroke-width')).toBe('1');
       expect(icon?.getAttribute('aria-hidden')).toBe('true');
     },
@@ -53,13 +69,13 @@ describe('FileDndOverlay', () => {
 
   it('applies cursor-not-allowed when isAttachmentsAllowed is false', () => {
     render(<FileDndOverlay isVisible={true} isAttachmentsAllowed={false} />);
-    const overlay = screen.getByRole('status');
+    const overlay = getOverlay();
     expect(overlay.className).toContain('cursor-not-allowed');
   });
 
   it('calls preventDefault on drop when isAttachmentsAllowed is false', () => {
     render(<FileDndOverlay isVisible={true} isAttachmentsAllowed={false} />);
-    const overlay = screen.getByRole('status');
+    const overlay = getOverlay();
     const dropEvent = new MouseEvent('drop', {
       bubbles: true,
       cancelable: true,

@@ -1,3 +1,4 @@
+import { AttachmentCanvasProvider } from '@epam/ai-dial-attachment-canvas';
 import {
   type Conversation,
   type RequestSkill,
@@ -174,6 +175,7 @@ describe('ConversationView drafts', () => {
   const renderView = (props: Partial<ViewProps> = {}) => {
     const view = render(
       <ConversationView {...defaults} onSend={onSend} {...props} />,
+      { wrapper: AttachmentCanvasProvider },
     );
     const rerenderWith = (next: Partial<ViewProps>) =>
       view.rerender(

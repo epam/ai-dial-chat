@@ -40,7 +40,10 @@ vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
 vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@epam/ai-dial-ui-kit')>()),
   DIAL_KIT_ICON_STROKE: 1.5,
+  /* Mirrors the kit: the error renders with no role, is linked to the
+   * field through `aria-describedby`, and marks the field `aria-invalid`. */
   Input: ({
+    id,
     value,
     onChange,
     labelProps,
@@ -48,6 +51,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
     placeholder,
     caption,
   }: {
+    id?: string;
     value?: string;
     onChange?: (v?: string) => void;
     labelProps?: { label?: string; required?: boolean };
@@ -59,13 +63,16 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
       <label>
         {labelProps?.label}
         <input
+          id={id}
           value={value ?? ''}
           placeholder={placeholder}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${id}-error` : undefined}
           onChange={(e) => onChange?.(e.target.value)}
         />
       </label>
       {caption && <p>{caption}</p>}
-      {error && <p role="alert">{error}</p>}
+      {error && <span id={`${id}-error`}>{error}</span>}
     </>
   ),
   RadioGroup: ({
@@ -192,9 +199,11 @@ beforeEach(() => {
 describe('SettingsForm — endpoint field', () => {
   it('renders the endpoint error message when errors.endpoint is provided', () => {
     renderSettings({ errors: { endpoint: 'Endpoint is required' } });
-    expect(screen.getByRole('alert').textContent).toContain(
-      'Endpoint is required',
-    );
+    const field = screen.getByRole('textbox', {
+      name: 'Endpoint',
+      description: 'Endpoint is required',
+    });
+    expect(field.getAttribute('aria-invalid')).toBe('true');
   });
 
   it('renders HTTP and SSE as protocol radio options', () => {

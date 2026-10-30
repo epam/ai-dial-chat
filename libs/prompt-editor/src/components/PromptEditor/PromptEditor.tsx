@@ -27,6 +27,8 @@ import {
   Label,
   NeutralButton,
   Spinner,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import { LazyMarkdownEditor } from '@epam/ai-dial-ui-kit/editors';
 /*
@@ -340,12 +342,9 @@ export const PromptEditor: FC<PromptEditorProps> = ({
         {...editorProps}
         isSubmitting={isSaving}
         metadata={
-          <div
-            role="status"
-            aria-label={labels?.loadingAriaLabel ?? 'Loading prompt'}
-            className="flex flex-1 items-center justify-center p-8"
-          >
-            <Spinner />
+          /* The kit Spinner is the status region; a labelled wrapper would nest a second one. */
+          <div className="flex flex-1 items-center justify-center p-8">
+            <Spinner ariaLabel={labels?.loadingAriaLabel ?? 'Loading prompt'} />
           </div>
         }
       />
@@ -501,12 +500,12 @@ export const PromptEditor: FC<PromptEditorProps> = ({
                 {contentError}
               </div>
             )}
-            <span role="status" aria-live="polite" className="sr-only">
+            <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
               {descriptionRemaining != null &&
                 buildCounterMessage(descriptionRemaining)}
               {contentRemaining != null &&
                 buildCounterMessage(contentRemaining)}
-            </span>
+            </LiveRegion>
           </>
         }
       />

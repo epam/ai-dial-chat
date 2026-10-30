@@ -16,6 +16,8 @@ import { conversationStreamTransport } from './conversation-stream-transport';
 export const NO_CONVERSATION_LIST_SYNC: ConversationListSync = {
   updateTitle: () => undefined,
   bumpActivity: () => undefined,
+  markUnread: () => undefined,
+  markViewed: async () => undefined,
   remove: () => undefined,
   refresh: async () => undefined,
 };

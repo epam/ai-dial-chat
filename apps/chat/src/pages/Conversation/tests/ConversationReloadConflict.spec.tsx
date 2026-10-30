@@ -190,6 +190,8 @@ beforeEach(() => {
     removeConversationFromList: vi.fn(),
     updateConversationTitle: vi.fn(),
     bumpConversationActivity: vi.fn(),
+    markConversationUnread: vi.fn(),
+    markConversationViewed: vi.fn(),
     watchForDisplayNameUpdate: vi.fn(() => () => undefined),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any);

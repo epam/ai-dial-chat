@@ -17,8 +17,10 @@ import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   Dropdown,
+  DropdownOverlayRole,
   ElementSize,
   ErrorText,
+  LiveRegionPoliteness,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronRight } from '@tabler/icons-react';
 import {
@@ -177,11 +179,12 @@ const UsageLimitsControl: FC<Props> = ({
     }
   };
 
+  /* The Dropdown renders the overlay as the dialog and names it by the title;
+     this panel only takes the opening focus, so it is focusable but not
+     tabbable. */
   const renderOverlay = () => (
     <div
       ref={dialogRef}
-      role="dialog"
-      aria-labelledby={titleId}
       tabIndex={-1}
       className="flex flex-col gap-3 p-4 focus:outline-hidden"
     >
@@ -189,16 +192,10 @@ const UsageLimitsControl: FC<Props> = ({
         {deploymentName ?? t(ConversationInputI18nKeys.PopoverTitle)}
       </p>
 
-      {/* Always mounted so a failed refresh is announced: a live region that
-          mounts together with its text is not read reliably. `sr-only` also
-          takes the empty region out of the flex flow, so it adds no gap. */}
-      <div
-        role="status"
-        aria-live="polite"
-        className={hasError ? undefined : 'sr-only'}
-      >
-        {hasError && <ErrorText text={t(ConversationInputI18nKeys.Error)} />}
-      </div>
+      <ErrorText
+        announce={LiveRegionPoliteness.Polite}
+        text={hasError ? t(ConversationInputI18nKeys.Error) : ''}
+      />
 
       <LimitsTab
         limits={limits}
@@ -238,6 +235,8 @@ const UsageLimitsControl: FC<Props> = ({
          inside a narrow viewport. */
       placement="top-end"
       matchReferenceWidth={false}
+      overlayRole={DropdownOverlayRole.Dialog}
+      overlayAriaLabelledBy={titleId}
       initialFocus={dialogRef}
       listClassName="w-90 rounded-lg p-0 shadow-lg"
       renderOverlay={renderOverlay}
@@ -252,8 +251,6 @@ const UsageLimitsControl: FC<Props> = ({
           getStatusTextClass(),
         )}
         textClassName="flex items-center gap-1"
-        aria-expanded={isOpen}
-        aria-haspopup="dialog"
         aria-label={t(ConversationInputI18nKeys.TriggerAriaLabel, {
           label: worstRow?.label ?? labels.tokenGroup,
           value: triggerValue,

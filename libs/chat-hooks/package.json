@@ -147,6 +147,12 @@
       "types": "./dist/mcp-apps.d.ts",
       "import": "./dist/mcp-apps.js",
       "default": "./dist/mcp-apps.js"
+    },
+    "./external-services": {
+      "@epam/source": "./src/entry-points/external-services.ts",
+      "types": "./dist/external-services.d.ts",
+      "import": "./dist/external-services.js",
+      "default": "./dist/external-services.js"
     }
   },
   "dependencies": {
@@ -174,11 +180,10 @@
     "@epam/ai-dial-share": "*",
     "@epam/ai-dial-skill-editor": "*",
     "@epam/ai-dial-source-panel": "*",
-    "@epam/ai-dial-ui-kit": "^0.16.0-dev.45",
+    "@epam/ai-dial-ui-kit": "^0.16.0-dev.56",
     "@epam/ai-dial-usage-dashboard": "*",
     "@modelcontextprotocol/sdk": "^1.32.1",
-    "@epam/pdf-highlighter-kit": "^0.0.19",
-    "@mcp-ui/client": "^7.1.1"
+    "@epam/pdf-highlighter-kit": "^0.0.19"
   },
   "peerDependenciesMeta": {
     "@epam/ai-dial-attachment-canvas": {
@@ -230,9 +235,6 @@
       "optional": true
     },
     "@epam/ai-dial-usage-dashboard": {
-      "optional": true
-    },
-    "@mcp-ui/client": {
       "optional": true
     },
     "@modelcontextprotocol/sdk": {

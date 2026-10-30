@@ -17,6 +17,7 @@ import {
   useConversationPanelItems,
   useImportFilePicker,
 } from '@epam/ai-dial-chat-hooks';
+import { applyActiveScheduledTaskRun } from '@epam/ai-dial-chat-hooks/conversation';
 import {
   ConversationExportMode,
   ConversationTransferWarningCode,
@@ -32,6 +33,7 @@ import {
   ConversationTransferErrorCode,
   DeleteConfirmationDialog,
   FilterTab,
+  toConversationTransferQueueItems as toTransferQueueItems,
 } from '@epam/ai-dial-chat-shared';
 import {
   ConversationListSection,
@@ -52,6 +54,8 @@ import {
   TransferQueue,
   type DropdownItem,
   type TransferQueueLabels,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconClockHour3,
@@ -74,6 +78,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -127,10 +132,7 @@ import {
 } from '../../types/entity-notification';
 import { PublishHistoryStatus } from '../../types/publish-history';
 import { ROUTES } from '../../types/routes';
-import {
-  applyActiveScheduledTaskRun,
-  groupScheduledTaskConversations,
-} from '../../utils/collapse-scheduled-task-conversations';
+import { groupScheduledTaskConversations } from '../../utils/collapse-scheduled-task-conversations';
 import {
   conversationIdsMatch,
   toPanelConversationId,
@@ -140,7 +142,6 @@ import {
   getExportErrorKey,
   getExportFailureToastKey,
   getImportErrorKey,
-  toTransferQueueItems,
 } from '../../utils/conversation-transfer';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
@@ -387,11 +388,32 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     selectedItemId,
   } = useDeployments();
 
+  /*
+   * Only scheduled runs are marked viewed from here. The sync fires on every
+   * re-entry into a chat, and the panel cannot tell whether the chat is still
+   * generating: writing the id to the viewed ids mid-stream would hide the dot
+   * for good. The conversation page marks regular chats once no generation is
+   * running.
+   */
+  const itemsRef = useRef(items);
+  useLayoutEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
+  const markScheduledRunViewed = useCallback(
+    (id: string) => {
+      const item = itemsRef.current.find((c) => conversationIdsMatch(c.id, id));
+      return item?.isScheduledTask
+        ? markConversationViewed(id)
+        : Promise.resolve();
+    },
+    [markConversationViewed],
+  );
+
   const panelActiveConversationId = useActiveConversationSync({
     activeConversationId,
     items,
     refreshConversations,
-    markConversationViewed,
+    markConversationViewed: markScheduledRunViewed,
     conversationIdsMatch,
     toPanelConversationId,
   });
@@ -677,6 +699,25 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     resolveHref,
     resolveTaskPresentation,
   });
+
+  /*
+   * The open chat is never shown as unread: watching a chat that is generating
+   * must not flash a dot, and the dot appears the moment the user navigates
+   * away. A display rule only — the list keeps the chat unread, so leaving
+   * mid-stream needs no extra state. Keeps the mapped array while the open row
+   * carries no dot, so most navigations leave every row untouched.
+   */
+  const displayedConversations = useMemo(() => {
+    const unreadActiveIndex = panelActiveConversationId
+      ? conversations.findIndex(
+          (c) => c.id === panelActiveConversationId && c.isUnread,
+        )
+      : -1;
+    if (unreadActiveIndex === -1) return conversations;
+    const next = conversations.slice();
+    next[unreadActiveIndex] = { ...next[unreadActiveIndex], isUnread: false };
+    return next;
+  }, [conversations, panelActiveConversationId]);
 
   const filterLabels = useMemo(
     () => ({
@@ -1421,7 +1462,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
 
   const sidebarBlock = (
     <ConversationListSection
-      conversations={conversations}
+      conversations={displayedConversations}
       isLoading={isLoading}
       isUpdatingTitles={isUpdatingTitles}
       preserveActiveSearchResult
@@ -1549,11 +1590,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       />
 
       {pendingUnpublish != null && (
-        <span role="status" aria-live="polite" className="sr-only">
+        <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
           {isUnpublishing
             ? t(ConversationUnpublishI18nKeys.RequestingStatus)
             : ''}
-        </span>
+        </LiveRegion>
       )}
 
       <ConfirmationPopup
@@ -1645,7 +1686,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
                 header={t(ButtonsI18nKeys.Publish)}
                 onClose={handleClosePublishPanel}
               >
-                <p role="status">{t(BasicI18nKeys.Loading)}</p>
+                {/* Not a live region: the dialog mounts with this text, so
+                    opening it already reads it; mark the content busy. */}
+                <p aria-busy="true">{t(BasicI18nKeys.Loading)}</p>
               </Popup>
             }
           >

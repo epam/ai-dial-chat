@@ -14,6 +14,9 @@ import {
   Dropdown,
   ErrorText,
   GhostIconButton,
+  LiveRegion,
+  LiveRegionElement,
+  LiveRegionPoliteness,
 } from '@epam/ai-dial-ui-kit';
 import { IconFile, IconMicrophone } from '@tabler/icons-react';
 import {
@@ -1177,10 +1180,17 @@ export const Input = forwardRef<InputHandle, InputProps>(
       </div>
     );
 
+    /*
+     * In the wrapping row the chips never shrink below their own width, so on
+     * a phone the trailing actions wrap to the next line instead of crushing
+     * a chip down to its icon. `max-w-full` still lets one over-long chip
+     * truncate its label.
+     */
     const chipsNode = visibleTools.length > 0 && onToolToggle != null && (
       <div
         className={mergeClasses(
-          'min-w-0 flex-1',
+          'min-w-0',
+          isInlineActionRow ? 'flex-1' : 'max-w-full flex-[1_0_auto]',
           CONVERSATION_INPUT_CLASS.toolsChips,
         )}
       >
@@ -1265,12 +1275,13 @@ export const Input = forwardRef<InputHandle, InputProps>(
             onChange={handleFileChange}
           />
         )}
-        {/* A failed dictation is not a field error: announce it. */}
-        {voiceError && (
-          <div role="alert" className="min-w-0 px-1 wrap-break-word">
-            <ErrorText text={voiceError} />
-          </div>
-        )}
+        {/* A failed dictation is not a field error: announce it. Mounted before the failure so it is announced; out of the column gap while empty. */}
+        <LiveRegion
+          politeness={LiveRegionPoliteness.Assertive}
+          className="min-w-0 px-1 wrap-break-word"
+        >
+          {voiceError && <ErrorText text={voiceError} />}
+        </LiveRegion>
         {isVoiceActive && (
           <VoiceBar
             embedded
@@ -1353,7 +1364,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
                       }
                       aria-label={micLabel}
                       tooltipProps={{ tooltip: micLabel }}
-                      className="size-[40px] shrink-0 mobile:min-h-11 mobile:min-w-11"
+                      className="shrink-0"
                       onClick={() =>
                         startRecording(VoiceRecordingMode.Dictation)
                       }
@@ -1381,14 +1392,9 @@ export const Input = forwardRef<InputHandle, InputProps>(
             </div>
           </div>
         )}
-        <span
-          className="sr-only"
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-        >
+        <LiveRegion visuallyHidden atomic as={LiveRegionElement.Span}>
           <span key={latestTranscript.revision}>{latestTranscript.text}</span>
-        </span>
+        </LiveRegion>
       </div>
     );
   },

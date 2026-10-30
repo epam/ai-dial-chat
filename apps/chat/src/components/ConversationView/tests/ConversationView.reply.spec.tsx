@@ -1,3 +1,4 @@
+import { AttachmentCanvasProvider } from '@epam/ai-dial-attachment-canvas';
 /* eslint-disable testing-library/no-node-access -- Native selection requires a DOM Range over rendered text. */
 import { attachmentsToDtos } from '@epam/ai-dial-chat-hooks';
 import {
@@ -194,6 +195,7 @@ describe('ConversationView Reply attachment flow', () => {
         onSend={vi.fn()}
         onUploadAttachment={upload}
       />,
+      { wrapper: AttachmentCanvasProvider },
     );
     await screen.findByRole('textbox');
     fireEvent.click(await selectPassage());
@@ -221,6 +223,7 @@ describe('ConversationView Reply attachment flow', () => {
         onSend={send}
         onUploadAttachment={upload}
       />,
+      { wrapper: AttachmentCanvasProvider },
     );
     await screen.findByRole('textbox');
     fireEvent.click(await selectPassage());
@@ -252,6 +255,7 @@ describe('ConversationView Reply attachment flow', () => {
         onSend={send}
         onUploadAttachment={upload}
       />,
+      { wrapper: AttachmentCanvasProvider },
     );
     await screen.findByRole('textbox');
     const reply = await selectPassage();
@@ -298,6 +302,7 @@ describe('ConversationView Reply attachment flow', () => {
           onSend={vi.fn()}
           onUploadAttachment={upload}
         />,
+        { wrapper: AttachmentCanvasProvider },
       );
       await screen.findByRole('textbox');
       const dragEvent = (type: string, files: File[] = []) => {
@@ -348,6 +353,7 @@ describe('ConversationView Reply attachment flow', () => {
         onSend={send}
         onUploadAttachment={upload}
       />,
+      { wrapper: AttachmentCanvasProvider },
     );
     const textarea = await screen.findByRole('textbox');
     fireEvent.change(textarea, { target: { value: 'Keep draft' } });
@@ -378,6 +384,7 @@ describe('ConversationView Reply attachment flow', () => {
         onSend={vi.fn()}
         onUploadAttachment={upload}
       />,
+      { wrapper: AttachmentCanvasProvider },
     );
     await screen.findByRole('textbox');
     fireEvent.click(await selectPassage());
@@ -398,6 +405,7 @@ describe('ConversationView Reply attachment flow', () => {
         onSend={vi.fn()}
         onUploadAttachment={upload}
       />,
+      { wrapper: AttachmentCanvasProvider },
     );
     await screen.findByRole('textbox');
     const range = document.createRange();
@@ -424,6 +432,7 @@ describe('ConversationView Reply attachment flow', () => {
           onUploadAttachment={upload}
         />
       </StrictMode>,
+      { wrapper: AttachmentCanvasProvider },
     );
     const textarea = await screen.findByRole('textbox');
     fireEvent.change(textarea, { target: { value: 'My draft' } });
@@ -471,6 +480,7 @@ describe('ConversationView Reply attachment flow', () => {
         onSend={send}
         onUploadAttachment={upload}
       />,
+      { wrapper: AttachmentCanvasProvider },
     );
     await screen.findByRole('textbox');
     fireEvent.click(await selectPassage());
@@ -500,6 +510,7 @@ describe('ConversationView Reply attachment flow', () => {
         onSend={vi.fn()}
         onUploadAttachment={vi.fn()}
       />,
+      { wrapper: AttachmentCanvasProvider },
     );
     const range = document.createRange();
     range.selectNodeContents(screen.getByText('Selected passage'));
@@ -522,6 +533,7 @@ describe('ConversationView read-only duplicate action', () => {
         onSend={vi.fn()}
         onDuplicateConversation={onDuplicateConversation}
       />,
+      { wrapper: AttachmentCanvasProvider },
     );
 
     fireEvent.click(
@@ -541,6 +553,7 @@ describe('ConversationView read-only duplicate action', () => {
         onSend={vi.fn()}
         onDuplicateConversation={vi.fn()}
       />,
+      { wrapper: AttachmentCanvasProvider },
     );
 
     expect(
@@ -564,7 +577,9 @@ describe('ConversationView — hidden model', () => {
 
   it('blocks sending and explains why while the selected model is hidden', async () => {
     mocks.items[0].isHidden = true;
-    render(<ConversationView {...defaults} onSend={vi.fn()} />);
+    render(<ConversationView {...defaults} onSend={vi.fn()} />, {
+      wrapper: AttachmentCanvasProvider,
+    });
     await typeDraft();
 
     expect(sendButton().getAttribute('aria-disabled')).toBe('true');
@@ -576,7 +591,9 @@ describe('ConversationView — hidden model', () => {
   });
 
   it('allows sending on a visible model, with no notice', async () => {
-    render(<ConversationView {...defaults} onSend={vi.fn()} />);
+    render(<ConversationView {...defaults} onSend={vi.fn()} />, {
+      wrapper: AttachmentCanvasProvider,
+    });
     await typeDraft();
 
     expect(sendButton().getAttribute('aria-disabled')).not.toBe('true');

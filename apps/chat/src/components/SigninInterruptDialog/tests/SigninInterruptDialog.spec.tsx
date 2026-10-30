@@ -1,6 +1,7 @@
 import {
   ToolsetAuthTypes,
   ToolsetLoginOutcomeType,
+  ExternalServiceLoginOutcomeType,
 } from '@epam/ai-dial-chat-hooks';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
@@ -12,10 +13,7 @@ import {
 import { useFeatureFlag } from '../../../context/AppConfigContext';
 import { useClientChannel } from '../../../context/ClientChannelContext';
 import { useDeployments } from '../../../context/DeploymentsContext';
-import {
-  ExternalServiceLoginOutcomeType,
-  useExternalServiceLogin,
-} from '../../../hooks/externalServices/useExternalServiceLogin';
+import { useExternalServiceLogin } from '../../../hooks/externalServices/useExternalServiceLogin';
 import { useToolsetLogin } from '../../../hooks/toolsets/useToolsetLogin';
 import { useUiFeature } from '../../../hooks/useUiFeature';
 import { getExternalService } from '../../../server-api/external-services';

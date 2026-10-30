@@ -25,7 +25,7 @@ Canvas/viewer component for rendering attachment content inline — images, audi
 Everything else this package needs it installs itself, as a `dependency`: the
 PDF stack (`@epam/ai-dial-react-pdf-highlighter`, `@epam/pdf-highlighter-kit`,
 `pdfjs-dist`), the MCP stack (`@mcp-ui/client`, `@modelcontextprotocol/sdk`,
-`@modelcontextprotocol/ext-apps`), the visualizer connector
+`@modelcontextprotocol/ext-apps`, `zod`), the visualizer connector
 (`@epam/ai-dial-visualizer-connector`, a sibling workspace package),
 `@tabler/icons-react`, `react-json-view-lite` and
 `react-syntax-highlighter`. A host rendering the
@@ -47,6 +47,12 @@ Although this library does not import `pdfjs-dist` directly,
 is declared here as well — as a dependency pinning the tested `^5.4.149` line,
 rather than relying on whatever a transitive resolution happens to produce.
 
+The public MCP host-context type comes directly from ext-apps. Zod 4 is an
+explicit dependency because ext-apps' public schemas require its compatible
+type API; consumers do not need the workspace's MCP client override to check
+canvas declarations. Other feature packages derive that context type from
+`McpAppCanvasContent['hostContext']`.
+
 The library installs `@silurus/ooxml` as a runtime dependency and leaves its
 format entry points external in the published artifact. A consuming bundler
 loads the DOCX, XLSX/CSV, and PPTX entry points independently on demand, so
@@ -64,7 +70,7 @@ a user opens a PDF or a syntax-highlighted code file. While that import is
 pending, `AttachmentCanvasBody`/`CodeContent` render an accessible
 `role="status"` loading state (a `Spinner` for PDF; the plain-text fallback
 for code, which stays visible instead of being replaced by a spinner). If the
-import fails, a `role="alert"` message and a retry control are shown instead;
+import fails, a `role="status"` message and a retry control are shown instead;
 activating retry genuinely re-attempts the import (recreating the underlying
 `lazy()` reference), not just re-rendering the cached failure — see
 `pdfContentLoadingLabel`/`pdfContentErrorLabel`/`pdfContentRetryLabel` and
@@ -268,6 +274,22 @@ openCanvas(
 ```
 
 ## Hooks
+
+### useLatestCanvasRequest
+
+Call this hook inside `AttachmentCanvasProvider` and call its returned function
+at preview-click time. It returns a `ShouldCommitCanvas` guard suitable for
+`useOpenAttachmentCanvas`: the guard stays true only while the caller remains
+mounted and no newer request has started under the same provider. File,
+message and source previews share ordering when they share a provider;
+independently embedded providers do not invalidate one another. A later
+synchronous preview also invalidates earlier pending requests.
+
+```ts
+import { useLatestCanvasRequest } from '@epam/ai-dial-attachment-canvas';
+
+const usePreviewRequest = () => useLatestCanvasRequest();
+```
 
 ### useOpenAttachmentCanvas
 
@@ -674,7 +696,9 @@ Use `xlsxFormulaLabel` to localize the persistent XLSX `fx` bar's accessible
 label; it defaults to `Formula`. The visual `fx` mark is direction-neutral and
 does not replace that label for assistive technology. Its typography defaults
 to the UI Kit's `dial-italic-text` and can be overridden through
-`styles.typography.xlsxFormulaLabelClassName`.
+`styles.typography.xlsxFormulaLabelClassName`. The active cell content beside
+it defaults to `dial-code-text` and can be overridden through
+`styles.typography.xlsxFormulaValueClassName`.
 
 `McpAppDisplayMode` is the display-mode union of the MCP UI protocol
 (`'inline'` | `'fullscreen'` | `'pip'`) — the accepted values for

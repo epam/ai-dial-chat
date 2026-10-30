@@ -165,23 +165,21 @@ const CreatePageStub = () => {
 const DetailPageStub = () => <div>detail page</div>;
 const EditPageStub = () => <div>edit page</div>;
 
-const renderScheduledTasksPage = () =>
-  render(
-    <MemoryRouter initialEntries={['/scheduled-tasks']}>
-      <Routes>
-        <Route path="/scheduled-tasks" element={<ScheduledTasksPage />} />
-        <Route path="/scheduled-tasks/new" element={<CreatePageStub />} />
-        <Route
-          path="/scheduled-tasks/:scheduleId/edit"
-          element={<EditPageStub />}
-        />
-        <Route
-          path="/scheduled-tasks/:scheduleId"
-          element={<DetailPageStub />}
-        />
-      </Routes>
-    </MemoryRouter>,
-  );
+const scheduledTasksPageTree = () => (
+  <MemoryRouter initialEntries={['/scheduled-tasks']}>
+    <Routes>
+      <Route path="/scheduled-tasks" element={<ScheduledTasksPage />} />
+      <Route path="/scheduled-tasks/new" element={<CreatePageStub />} />
+      <Route
+        path="/scheduled-tasks/:scheduleId/edit"
+        element={<EditPageStub />}
+      />
+      <Route path="/scheduled-tasks/:scheduleId" element={<DetailPageStub />} />
+    </Routes>
+  </MemoryRouter>
+);
+
+const renderScheduledTasksPage = () => render(scheduledTasksPageTree());
 
 const CONNECT_SETTINGS = {
   clientId: 'dial-chat',
@@ -656,6 +654,36 @@ describe('ScheduledTasksPage', () => {
         ),
       ).toBeTruthy();
       expect(screen.queryByRole('alert')).toBeNull();
+    });
+
+    it('keeps the page-level status region mounted and empty while the banner shows, then fills it once the banner hides', () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      useOfflineCredentialsGateMock.mockReturnValue({
+        status: 'available',
+        connect: CONNECT_SETTINGS,
+        refetch: refetchCredentialsMock,
+      });
+      const view = renderScheduledTasksPage();
+
+      /* The page-level region renders first, before the lib's banner slot. */
+      const [pageStatus] = screen.getAllByRole('status');
+      expect(pageStatus.textContent).toBe('');
+
+      useOfflineCredentialsGateMock.mockReturnValue({
+        status: 'hidden',
+        connect: undefined,
+        refetch: refetchCredentialsMock,
+      });
+      useOfflineCredentialsAuthMock.mockReturnValue(
+        makeAuthResult({ loginOutcome: 'success' }),
+      );
+      view.rerender(scheduledTasksPageTree());
+
+      expect(screen.queryByRole('alert')).toBeNull();
+      expect(screen.getByRole('status')).toBe(pageStatus);
+      expect(pageStatus.textContent).toBe(
+        'scheduledTasks.offlineCredentialsBanner.successAnnouncement',
+      );
     });
   });
 

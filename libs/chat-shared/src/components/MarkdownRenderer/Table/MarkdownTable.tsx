@@ -1,4 +1,9 @@
-import { ElementSize, GhostIconButton } from '@epam/ai-dial-ui-kit';
+import {
+  ElementSize,
+  GhostIconButton,
+  LiveRegion,
+  LiveRegionElement,
+} from '@epam/ai-dial-ui-kit';
 import {
   type FC,
   type ReactNode,
@@ -229,9 +234,9 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
           </table>
         </div>
         {actionLabels?.copyLabel && (
-          <span aria-live="polite" className="sr-only" role="status">
+          <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
             {isCopied ? (actionLabels.copiedLabel ?? '') : ''}
-          </span>
+          </LiveRegion>
         )}
       </div>
     );
