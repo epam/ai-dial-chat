@@ -23,7 +23,7 @@ Generating assistant responses through DIAL's Responses API behind an adapter se
 
 ### Requirement: ConversationService resolves generation API before opening the upstream stream
 
-`ConversationStreamingService.streamCompletion` (`apps/chat-api/src/conversations/streaming/conversation-streaming.service.ts`) SHALL call `DeploymentsService.getDeploymentDetails(sub, model, token)` (the existing cached, user-token-scoped lookup already used by the deployment details endpoint) before issuing any upstream generation call, read `features` off the returned `modelDetails`/`applicationDetails` per the resolved `type`, and pass the result through `resolveGenerationApi` to compute a candidate generation API. `ConversationModule` SHALL import `DeploymentsModule` and `AppConfigModule` to obtain `DeploymentsService` and `FeatureFlagsService` respectively. `getDeploymentDetails` and the `FeatureKey.ResponsesApiEnabled`/`FeatureKey.ResponsesBackgroundEnabled` flag lookups SHALL be resolved concurrently (one `Promise.all` in the private `resolveGenerationApiForDeployment` helper). When `getDeploymentDetails` resolves the target id to `type: 'toolset'`, `streamCompletion` SHALL reject the request with HTTP 400 (`BadRequestException`) before any generation call, regardless of the resolved flag values, since a toolset is not a generation deployment. `getDeploymentDetails` SHALL be called unconditionally for every completion request, regardless of the state of the feature flag introduced below — it is not skipped, short-circuited, or bypassed based on that flag, because it also performs the toolset rejection above and the `temperature`-capability derivation below, neither of which is specific to the Responses API.
+`ConversationStreamingService.streamCompletion` (`apps/chat-api/src/conversations/streaming/conversation-streaming.service.ts`) SHALL obtain the generation API from `GenerationApiSelector.select(sub, model, token)` (`apps/chat-api/src/conversations/generation/generation-api-selector.service.ts`) before issuing any upstream generation call. `GenerationApiSelector` SHALL call `DeploymentsService.getDeploymentDetails(sub, model, token)` (the existing cached, user-token-scoped lookup already used by the deployment details endpoint), read `features` off the returned `modelDetails`/`applicationDetails` per the resolved `type`, and pass the result through `resolveGenerationApi` to compute a candidate generation API. `ConversationModule` SHALL import `DeploymentsModule` and `AppConfigModule` to obtain `DeploymentsService` and `FeatureFlagsService` respectively. `getDeploymentDetails` and the `FeatureKey.ResponsesApiEnabled`/`FeatureKey.ResponsesBackgroundEnabled` flag lookups SHALL be resolved concurrently (one `Promise.all` in `GenerationApiSelector.select`). When `getDeploymentDetails` resolves the target id to `type: 'toolset'`, `GenerationApiSelector.select` SHALL reject the request with HTTP 400 (`BadRequestException`) before any generation call, regardless of the resolved flag values, since a toolset is not a generation deployment. `getDeploymentDetails` SHALL be called unconditionally for every completion request, regardless of the state of the feature flag introduced below — it is not skipped, short-circuited, or bypassed based on that flag, because it also performs the toolset rejection above and the `temperature`-capability derivation below, neither of which is specific to the Responses API.
 
 The same `features` lookup used to resolve the generation API SHALL also be used to determine whether the resolved deployment explicitly supports the `temperature` parameter (`features.temperature === true`). `ConversationStreamingService` SHALL make no additional `getDeploymentDetails` (or equivalent deployment-details) call for this purpose — the boolean SHALL be derived from the `features` object already read while resolving `GenerationApi`, and passed through to whichever adapter's `buildRequest` is invoked for that generation.
 
@@ -97,12 +97,31 @@ This requirement SHALL NOT introduce, remove, or change any `@RequireFeature`/`F
 
 ### Requirement: Chat Completions transport extracted behind the adapter seam
 
-The existing SDK `sendChatCompletionRequest` call, request construction from `buildConversationHistory`'s `messages`, and SSE chunk parsing SHALL be extracted verbatim into `apps/chat-api/src/conversations/generation/chat-completions.adapter.ts`, exposing the same normalized chunk stream contract as the Responses adapter. This extraction SHALL NOT change any request sent to DIAL Core nor any chunk delivered to `apply-chunk.server.ts`.
+The SDK `sendChatCompletionRequest` call, request construction from `buildConversationHistory`'s `messages`, and SSE chunk parsing SHALL live in `ChatCompletionsAdapter` (`apps/chat-api/src/conversations/generation/chat-completions.adapter.ts`), exposing the same normalized chunk stream contract (`GenerationRelayOutcome`) as the Responses adapter. `ConversationStreamingService.streamCompletion` SHALL route every generation that does not resolve to `GenerationApi.Responses` through `ChatCompletionsAdapter.buildRequest` and `ChatCompletionsAdapter.stream`, symmetric with `ResponsesAdapter`, and SHALL hold no copy of that request construction or relay.
+
+The adapter SHALL send exactly what the streaming service sent before the move:
+
+- skill URLs encoded with `encodeDialResourcePath`;
+- the validated `X-Timezone` header when present;
+- the client-channel, conversation-id and job-title headers;
+- an `onChunkApplied` callback invoked with each applied chunk and the updated message.
+
+This move SHALL NOT change any request sent to DIAL Core nor any chunk delivered to `apply-chunk.server.ts`. `ChatCompletionsAdapter` SHALL NOT keep a method that writes to an Express `Response` directly.
 
 #### Scenario: Chat Completions behavior is unchanged after extraction
 
 - **WHEN** an existing Chat Completions integration test exercises `streamCompletion` for a non-Responses deployment
 - **THEN** the outbound DIAL Core request and the resulting `StreamChunk` sequence are identical to the pre-change behavior
+
+#### Scenario: The streaming service holds no Chat Completions transport
+
+- **WHEN** `conversation-streaming.service.ts` is searched for `sendChatCompletionRequest` or a chat-completions request body builder
+- **THEN** nothing is found; both generation APIs are reached only through their adapters
+
+#### Scenario: A skill URL with a space reaches DIAL Core encoded
+
+- **WHEN** a Chat Completions generation sends a message whose `custom_content.skills[0].url` is `skills/public/my chats/123`
+- **THEN** the request body built by `ChatCompletionsAdapter.buildRequest` carries `skills/public/my%20chats/123`
 
 ---
 
@@ -279,7 +298,7 @@ Any extracted message used in a log statement SHALL be sanitized per the reposit
 
 ### Requirement: No automatic fallback after a Responses call has started
 
-Once `responses.adapter.ts` has issued the `createResponse` call, a subsequent 4xx/5xx response or an in-stream error SHALL terminate the attempt as an error through the existing stream-error path. The system SHALL NOT automatically retry the same generation through the Chat Completions adapter. This SHALL hold regardless of the state of `features.responsesApiEnabled` — the flag only affects whether a Responses call is started in the first place; once started (flag was enabled and the deployment was eligible at the time `resolveGenerationApiForDeployment` ran), its outcome is never retried through Chat Completions even if the flag's resolved value could theoretically change between requests.
+Once `responses.adapter.ts` has issued the `createResponse` call, a subsequent 4xx/5xx response or an in-stream error SHALL terminate the attempt as an error through the existing stream-error path. The system SHALL NOT automatically retry the same generation through the Chat Completions adapter. This SHALL hold regardless of the state of `features.responsesApiEnabled` — the flag only affects whether a Responses call is started in the first place; once started (flag was enabled and the deployment was eligible at the time `GenerationApiSelector.select` ran), its outcome is never retried through Chat Completions even if the flag's resolved value could theoretically change between requests.
 
 #### Scenario: Upstream 5xx during a Responses call is not retried via Chat Completions
 
@@ -445,3 +464,4 @@ This internal transport change SHALL NOT alter `POST /api/v1/conversations/compl
 
 - **WHEN** background-path code retrieves, replays, cancels, or deletes a response
 - **THEN** it calls the wrapper's typed functions and contains no cast of its own
+
