@@ -1333,13 +1333,13 @@ describe('SkillEditor page — Back control and preview round trip', () => {
 
   /*
    * The Back control's accessible name depends on the current selection —
-   * `backAriaLabel` on the manifest view, `backToManifestAriaLabel` while a
+   * `buttons.back` on the manifest view, `backToManifestAriaLabel` while a
    * supporting file is selected — so it is matched by either name here and
    * asserted explicitly in the dedicated accessible-name test.
    */
   const getBackButton = () =>
     screen.getByRole('button', {
-      name: /^skillEditor\.back(AriaLabel|ToManifestAriaLabel)$/,
+      name: /^(buttons\.back|skillEditor\.backToManifestAriaLabel)$/,
     });
 
   const selectNode = async (name: string) => {

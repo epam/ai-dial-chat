@@ -40,7 +40,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
           <h1
             className={mergeClasses(
               styles.welcome,
-              'm-0 max-w-full [overflow-wrap:anywhere]',
+              'm-0 max-w-full wrap-anywhere',
               typography?.welcomeClassName || 'dial-display2-text',
             )}
           >
