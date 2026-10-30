@@ -92,312 +92,299 @@ describe('DeploymentSelectorPanel', () => {
     });
   });
 
-  describe('DeploymentSelectorPanel', () => {
-    it('shows a favorited Application in the list', () => {
-      renderPanel([makeItem('app-1', CatalogEntityType.Agent)]);
+  it('shows a favorited Application in the list', () => {
+    renderPanel([makeItem('app-1', CatalogEntityType.Agent)]);
 
-      expect(screen.getByRole('menuitemradio', { name: /app-1/ })).toBeTruthy();
-    });
+    expect(screen.getByRole('menuitemradio', { name: /app-1/ })).toBeTruthy();
+  });
 
-    it('shows a favorited Model in the list', () => {
-      renderPanel([makeItem('model-1', CatalogEntityType.Model)]);
+  it('shows a favorited Model in the list', () => {
+    renderPanel([makeItem('model-1', CatalogEntityType.Model)]);
+
+    expect(screen.getByRole('menuitemradio', { name: /model-1/ })).toBeTruthy();
+  });
+
+  it('shows a favorited Agent in the list', () => {
+    renderPanel([makeItem('agent-1', CatalogEntityType.Agent)]);
+
+    expect(screen.getByRole('menuitemradio', { name: /agent-1/ })).toBeTruthy();
+  });
+
+  it.each([CatalogEntityType.Toolset, CatalogEntityType.Skill])(
+    'excludes a favorited %s from the list',
+    (type) => {
+      renderPanel([makeItem('non-talkable-1', type)]);
 
       expect(
-        screen.getByRole('menuitemradio', { name: /model-1/ }),
-      ).toBeTruthy();
-    });
+        screen.queryByRole('menuitemradio', { name: /non-talkable-1/ }),
+      ).toBeNull();
+    },
+  );
 
-    it('shows a favorited Agent in the list', () => {
-      renderPanel([makeItem('agent-1', CatalogEntityType.Agent)]);
-
-      expect(
-        screen.getByRole('menuitemradio', { name: /agent-1/ }),
-      ).toBeTruthy();
-    });
-
-    it.each([CatalogEntityType.Toolset, CatalogEntityType.Skill])(
-      'excludes a favorited %s from the list',
-      (type) => {
-        renderPanel([makeItem('non-talkable-1', type)]);
-
-        expect(
-          screen.queryByRole('menuitemradio', { name: /non-talkable-1/ }),
-        ).toBeNull();
+  it('excludes a favorited application listed only under Toolsets', () => {
+    renderPanel([
+      {
+        ...makeItem('mcp-app', CatalogEntityType.Agent),
+        catalogTabs: [CatalogEntityType.Toolset],
       },
-    );
+    ]);
 
-    it('excludes a favorited application listed only under Toolsets', () => {
-      renderPanel([
-        {
-          ...makeItem('mcp-app', CatalogEntityType.Agent),
-          catalogTabs: [CatalogEntityType.Toolset],
-        },
-      ]);
+    expect(screen.queryByRole('menuitemradio', { name: /mcp-app/ })).toBeNull();
+  });
 
+  it('shows a favorited application listed under both Agents and Toolsets', () => {
+    renderPanel([
+      {
+        ...makeItem('dual-app', CatalogEntityType.Agent),
+        catalogTabs: [CatalogEntityType.Agent, CatalogEntityType.Toolset],
+      },
+    ]);
+
+    expect(
+      screen.getByRole('menuitemradio', { name: /dual-app/ }),
+    ).toBeTruthy();
+  });
+
+  it('shows Models and Applications together', () => {
+    renderPanel([
+      makeItem('model-1', CatalogEntityType.Model),
+      makeItem('app-1', CatalogEntityType.Agent),
+      makeItem('toolset-1', CatalogEntityType.Toolset),
+    ]);
+
+    expect(screen.getByRole('menuitemradio', { name: /model-1/ })).toBeTruthy();
+    expect(screen.getByRole('menuitemradio', { name: /app-1/ })).toBeTruthy();
+    expect(
+      screen.queryByRole('menuitemradio', { name: /toolset-1/ }),
+    ).toBeNull();
+  });
+
+  describe('currently-selected (not favorited) model', () => {
+    const selectedItem = makeItem('claude-opus', CatalogEntityType.Model);
+
+    it('shows a "Currently selected" section when the selected model is not a favorite', () => {
+      renderPanel([makeItem('gpt-4o', CatalogEntityType.Model)], {
+        selectedId: 'claude-opus',
+        selectedItem,
+      });
+
+      expect(screen.getByText('Currently selected')).toBeTruthy();
       expect(
-        screen.queryByRole('menuitemradio', { name: /mcp-app/ }),
-      ).toBeNull();
-    });
-
-    it('shows a favorited application listed under both Agents and Toolsets', () => {
-      renderPanel([
-        {
-          ...makeItem('dual-app', CatalogEntityType.Agent),
-          catalogTabs: [CatalogEntityType.Agent, CatalogEntityType.Toolset],
-        },
-      ]);
-
-      expect(
-        screen.getByRole('menuitemradio', { name: /dual-app/ }),
+        screen.getByRole('menuitemradio', { name: /claude-opus/ }),
       ).toBeTruthy();
     });
 
-    it('shows Models and Applications together', () => {
-      renderPanel([
-        makeItem('model-1', CatalogEntityType.Model),
-        makeItem('app-1', CatalogEntityType.Agent),
-        makeItem('toolset-1', CatalogEntityType.Toolset),
-      ]);
+    it('shows a favorited selected model in its own section, not in Favorites', () => {
+      renderPanel([selectedItem, makeItem('gpt-4o', CatalogEntityType.Model)], {
+        selectedId: 'claude-opus',
+        selectedItem,
+      });
 
+      expect(screen.getByText('Currently selected')).toBeTruthy();
+      const groups = screen.getAllByRole('group');
+      expect(groups[0].textContent).toContain('claude-opus');
+      expect(groups[1].textContent).not.toContain('claude-opus');
       expect(
-        screen.getByRole('menuitemradio', { name: /model-1/ }),
-      ).toBeTruthy();
-      expect(screen.getByRole('menuitemradio', { name: /app-1/ })).toBeTruthy();
+        screen.getAllByRole('menuitemradio', { name: /claude-opus/ }),
+      ).toHaveLength(1);
       expect(
-        screen.queryByRole('menuitemradio', { name: /toolset-1/ }),
-      ).toBeNull();
+        screen.getAllByRole('button', { name: 'Remove from favorites' }),
+      ).toHaveLength(2);
     });
 
-    describe('currently-selected (not favorited) model', () => {
-      const selectedItem = makeItem('claude-opus', CatalogEntityType.Model);
-
-      it('shows a "Currently selected" section when the selected model is not a favorite', () => {
-        renderPanel([makeItem('gpt-4o', CatalogEntityType.Model)], {
-          selectedId: 'claude-opus',
-          selectedItem,
-        });
-
-        expect(screen.getByText('Currently selected')).toBeTruthy();
-        expect(
-          screen.getByRole('menuitemradio', { name: /claude-opus/ }),
-        ).toBeTruthy();
-      });
-
-      it('shows a favorited selected model in its own section, not in Favorites', () => {
-        renderPanel(
-          [selectedItem, makeItem('gpt-4o', CatalogEntityType.Model)],
-          {
-            selectedId: 'claude-opus',
-            selectedItem,
-          },
-        );
-
-        expect(screen.getByText('Currently selected')).toBeTruthy();
-        const groups = screen.getAllByRole('group');
-        expect(groups[0].textContent).toContain('claude-opus');
-        expect(groups[1].textContent).not.toContain('claude-opus');
-        expect(
-          screen.getAllByRole('menuitemradio', { name: /claude-opus/ }),
-        ).toHaveLength(1);
-        expect(
-          screen.getAllByRole('button', { name: 'Remove from favorites' }),
-        ).toHaveLength(2);
-      });
-
-      it('shows nothing extra when there is no selected item', () => {
-        renderPanel([makeItem('gpt-4o', CatalogEntityType.Model)]);
-
-        expect(screen.queryByText('Currently selected')).toBeNull();
-      });
-
-      it('hides the currently-selected row when it does not match the search query', async () => {
-        const user = userEvent.setup();
-        renderPanel([makeItem('gpt-4o', CatalogEntityType.Model)], {
-          selectedId: 'claude-opus',
-          selectedItem,
-        });
-
-        await user.type(
-          screen.getByRole('textbox', { name: 'Search models, agents\u2026' }),
-          'gpt',
-        );
-
-        expect(screen.queryByText('Currently selected')).toBeNull();
-      });
-
-      it('adds the currently-selected item to favorites when its star is clicked', async () => {
-        vi.useFakeTimers({ shouldAdvanceTime: true });
-        const user = userEvent.setup({ delay: null });
-        const onToggleFavorite = vi.fn();
-        renderPanel([makeItem('gpt-4o', CatalogEntityType.Model)], {
-          selectedId: 'claude-opus',
-          selectedItem,
-          onToggleFavorite,
-        });
-
-        await user.click(
-          screen.getByRole('button', { name: 'Add to favorites' }),
-        );
-
-        await waitFor(() =>
-          expect(onToggleFavorite).toHaveBeenCalledWith('claude-opus', true),
-        );
-      });
-
-      it('selects the currently-selected row and closes the panel when clicked', async () => {
-        const user = userEvent.setup();
-        const onSelect = vi.fn();
-        const onClose = vi.fn();
-        renderPanel([makeItem('gpt-4o', CatalogEntityType.Model)], {
-          selectedId: 'claude-opus',
-          selectedItem,
-          onSelect,
-          onClose,
-        });
-
-        await user.click(
-          screen.getByRole('menuitemradio', { name: /claude-opus/ }),
-        );
-
-        expect(onSelect).toHaveBeenCalledWith('claude-opus');
-        expect(onClose).toHaveBeenCalledOnce();
-      });
-    });
-
-    it('shows a Favorites heading above the favorites list', () => {
+    it('shows nothing extra when there is no selected item', () => {
       renderPanel([makeItem('gpt-4o', CatalogEntityType.Model)]);
 
-      expect(screen.getByText('Favorites')).toBeTruthy();
+      expect(screen.queryByText('Currently selected')).toBeNull();
     });
 
-    describe('operator-default pinning', () => {
-      it('shows the pinned default before favorites when another deployment is selected', () => {
-        const pinnedItem = makeItem('default-model', CatalogEntityType.Model);
-
-        renderPanel([makeItem('favorite-model', CatalogEntityType.Model)], {
-          pinnedItem,
-          selectedId: 'conversation-model',
-          selectedItem: makeItem('conversation-model', CatalogEntityType.Model),
-        });
-
-        const rows = screen.getAllByRole('menuitemradio', {
-          name: /default-model|favorite-model/,
-        });
-        expect(rows[0].textContent).toContain('default-model');
-        expect(rows[1].textContent).toContain('favorite-model');
+    it('hides the currently-selected row when it does not match the search query', async () => {
+      const user = userEvent.setup();
+      renderPanel([makeItem('gpt-4o', CatalogEntityType.Model)], {
+        selectedId: 'claude-opus',
+        selectedItem,
       });
 
-      it('hides a pinned default and favorites tagged as hidden entities', () => {
-        renderPanel(
-          [
-            {
-              ...makeItem('hidden-favorite', CatalogEntityType.Model),
-              isHidden: true,
-            },
-            makeItem('visible-favorite', CatalogEntityType.Model),
-          ],
+      await user.type(
+        screen.getByRole('textbox', { name: 'Search models, agents\u2026' }),
+        'gpt',
+      );
+
+      expect(screen.queryByText('Currently selected')).toBeNull();
+    });
+
+    it('adds the currently-selected item to favorites when its star is clicked', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const user = userEvent.setup({ delay: null });
+      const onToggleFavorite = vi.fn();
+      renderPanel([makeItem('gpt-4o', CatalogEntityType.Model)], {
+        selectedId: 'claude-opus',
+        selectedItem,
+        onToggleFavorite,
+      });
+
+      await user.click(
+        screen.getByRole('button', { name: 'Add to favorites' }),
+      );
+
+      await waitFor(() =>
+        expect(onToggleFavorite).toHaveBeenCalledWith('claude-opus', true),
+      );
+    });
+
+    it('selects the currently-selected row and closes the panel when clicked', async () => {
+      const user = userEvent.setup();
+      const onSelect = vi.fn();
+      const onClose = vi.fn();
+      renderPanel([makeItem('gpt-4o', CatalogEntityType.Model)], {
+        selectedId: 'claude-opus',
+        selectedItem,
+        onSelect,
+        onClose,
+      });
+
+      await user.click(
+        screen.getByRole('menuitemradio', { name: /claude-opus/ }),
+      );
+
+      expect(onSelect).toHaveBeenCalledWith('claude-opus');
+      expect(onClose).toHaveBeenCalledOnce();
+    });
+  });
+
+  it('shows a Favorites heading above the favorites list', () => {
+    renderPanel([makeItem('gpt-4o', CatalogEntityType.Model)]);
+
+    expect(screen.getByText('Favorites')).toBeTruthy();
+  });
+
+  describe('operator-default pinning', () => {
+    it('shows the pinned default before favorites when another deployment is selected', () => {
+      const pinnedItem = makeItem('default-model', CatalogEntityType.Model);
+
+      renderPanel([makeItem('favorite-model', CatalogEntityType.Model)], {
+        pinnedItem,
+        selectedId: 'conversation-model',
+        selectedItem: makeItem('conversation-model', CatalogEntityType.Model),
+      });
+
+      const rows = screen.getAllByRole('menuitemradio', {
+        name: /default-model|favorite-model/,
+      });
+      expect(rows[0].textContent).toContain('default-model');
+      expect(rows[1].textContent).toContain('favorite-model');
+    });
+
+    it('hides a pinned default and favorites tagged as hidden entities', () => {
+      renderPanel(
+        [
           {
-            pinnedItem: {
-              ...makeItem('hidden-default', CatalogEntityType.Model),
-              isHidden: true,
-            },
-          },
-        );
-
-        expect(
-          screen.queryByRole('menuitemradio', { name: /hidden-/ }),
-        ).toBeNull();
-        expect(
-          screen.getByRole('menuitemradio', { name: /visible-favorite/ }),
-        ).toBeTruthy();
-      });
-
-      it('shows a hidden currently-selected model as unavailable: disabled and without a favorite toggle', async () => {
-        const onSelect = vi.fn();
-        renderPanel([], {
-          selectedId: 'hidden-model',
-          selectedItem: {
-            ...makeItem('hidden-model', CatalogEntityType.Model),
+            ...makeItem('hidden-favorite', CatalogEntityType.Model),
             isHidden: true,
           },
-          onSelect,
-        });
+          makeItem('visible-favorite', CatalogEntityType.Model),
+        ],
+        {
+          pinnedItem: {
+            ...makeItem('hidden-default', CatalogEntityType.Model),
+            isHidden: true,
+          },
+        },
+      );
 
-        const row = screen.getByRole('menuitemradio', { name: /hidden-model/ });
-        expect(row).toHaveProperty('disabled', true);
-        expect(row.textContent).toContain('Unavailable');
-        expect(
-          screen.queryByRole('button', { name: 'Add to favorites' }),
-        ).toBeNull();
-
-        await userEvent.click(row);
-        expect(onSelect).not.toHaveBeenCalled();
-      });
-
-      it('does not render the pinned default twice when it is already a favorite', () => {
-        const pinnedItem = makeItem('default-model', CatalogEntityType.Model);
-
-        renderPanel([pinnedItem], { pinnedItem });
-
-        expect(
-          screen.getAllByRole('menuitemradio', { name: /default-model/ }),
-        ).toHaveLength(1);
-      });
-
-      it('allows adding a non-favorite pinned default to favorites', async () => {
-        vi.useFakeTimers({ shouldAdvanceTime: true });
-        const user = userEvent.setup({ delay: null });
-        const onToggleFavorite = vi.fn();
-
-        renderPanel([], {
-          pinnedItem: makeItem('default-model', CatalogEntityType.Model),
-          onToggleFavorite,
-        });
-
-        await user.click(
-          screen.getByRole('button', { name: 'Add to favorites' }),
-        );
-
-        await waitFor(() =>
-          expect(onToggleFavorite).toHaveBeenCalledWith('default-model', true),
-        );
-      });
+      expect(
+        screen.queryByRole('menuitemradio', { name: /hidden-/ }),
+      ).toBeNull();
+      expect(
+        screen.getByRole('menuitemradio', { name: /visible-favorite/ }),
+      ).toBeTruthy();
     });
 
-    describe('removing a favorite plays its exit animation before committing', () => {
-      it('does not call onToggleFavorite synchronously on click', async () => {
-        const user = userEvent.setup();
-        const onToggleFavorite = vi.fn();
-        renderPanel([makeItem('gpt-4o', CatalogEntityType.Model)], {
-          onToggleFavorite,
-        });
-
-        await user.click(
-          screen.getByRole('button', { name: 'Remove from favorites' }),
-        );
-
-        expect(onToggleFavorite).not.toHaveBeenCalled();
-        expect(
-          screen.getByRole('menuitemradio', { name: /gpt-4o/ }),
-        ).toBeTruthy();
+    it('shows a hidden currently-selected model as unavailable: disabled and without a favorite toggle', async () => {
+      const onSelect = vi.fn();
+      renderPanel([], {
+        selectedId: 'hidden-model',
+        selectedItem: {
+          ...makeItem('hidden-model', CatalogEntityType.Model),
+          isHidden: true,
+        },
+        onSelect,
       });
 
-      it('calls onToggleFavorite with false once the exit animation finishes', async () => {
-        vi.useFakeTimers({ shouldAdvanceTime: true });
-        const user = userEvent.setup({ delay: null });
-        const onToggleFavorite = vi.fn();
-        renderPanel([makeItem('gpt-4o', CatalogEntityType.Model)], {
-          onToggleFavorite,
-        });
+      const row = screen.getByRole('menuitemradio', { name: /hidden-model/ });
+      expect(row).toHaveProperty('disabled', true);
+      expect(row.textContent).toContain('Unavailable');
+      expect(
+        screen.queryByRole('button', { name: 'Add to favorites' }),
+      ).toBeNull();
 
-        await user.click(
-          screen.getByRole('button', { name: 'Remove from favorites' }),
-        );
+      await userEvent.click(row);
+      expect(onSelect).not.toHaveBeenCalled();
+    });
 
-        await waitFor(() =>
-          expect(onToggleFavorite).toHaveBeenCalledWith('gpt-4o', false),
-        );
+    it('does not render the pinned default twice when it is already a favorite', () => {
+      const pinnedItem = makeItem('default-model', CatalogEntityType.Model);
+
+      renderPanel([pinnedItem], { pinnedItem });
+
+      expect(
+        screen.getAllByRole('menuitemradio', { name: /default-model/ }),
+      ).toHaveLength(1);
+    });
+
+    it('allows adding a non-favorite pinned default to favorites', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const user = userEvent.setup({ delay: null });
+      const onToggleFavorite = vi.fn();
+
+      renderPanel([], {
+        pinnedItem: makeItem('default-model', CatalogEntityType.Model),
+        onToggleFavorite,
       });
+
+      await user.click(
+        screen.getByRole('button', { name: 'Add to favorites' }),
+      );
+
+      await waitFor(() =>
+        expect(onToggleFavorite).toHaveBeenCalledWith('default-model', true),
+      );
+    });
+  });
+
+  describe('removing a favorite plays its exit animation before committing', () => {
+    it('does not call onToggleFavorite synchronously on click', async () => {
+      const user = userEvent.setup();
+      const onToggleFavorite = vi.fn();
+      renderPanel([makeItem('gpt-4o', CatalogEntityType.Model)], {
+        onToggleFavorite,
+      });
+
+      await user.click(
+        screen.getByRole('button', { name: 'Remove from favorites' }),
+      );
+
+      expect(onToggleFavorite).not.toHaveBeenCalled();
+      expect(
+        screen.getByRole('menuitemradio', { name: /gpt-4o/ }),
+      ).toBeTruthy();
+    });
+
+    it('calls onToggleFavorite with false once the exit animation finishes', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const user = userEvent.setup({ delay: null });
+      const onToggleFavorite = vi.fn();
+      renderPanel([makeItem('gpt-4o', CatalogEntityType.Model)], {
+        onToggleFavorite,
+      });
+
+      await user.click(
+        screen.getByRole('button', { name: 'Remove from favorites' }),
+      );
+
+      await waitFor(() =>
+        expect(onToggleFavorite).toHaveBeenCalledWith('gpt-4o', false),
+      );
     });
   });
 

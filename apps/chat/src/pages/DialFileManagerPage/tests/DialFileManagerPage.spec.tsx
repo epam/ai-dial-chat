@@ -318,89 +318,85 @@ describe('DialFileManagerPage', () => {
     });
   });
 
-  describe('DialFileManagerPage', () => {
-    it('gives the preview hook the listing, the bucket and the search results', () => {
-      render(<DialFileManagerPage />);
+  it('gives the preview hook the listing, the bucket and the search results', () => {
+    render(<DialFileManagerPage />);
 
-      expect(mockUseDialFilePreview).toHaveBeenCalledWith(
-        defaultHookResult.items,
-        'test-bucket',
-        defaultHookResult.searchResults,
-      );
-    });
+    expect(mockUseDialFilePreview).toHaveBeenCalledWith(
+      defaultHookResult.items,
+      'test-bucket',
+      defaultHookResult.searchResults,
+    );
+  });
 
-    it('opens a clicked file through the preview hook', async () => {
-      render(<DialFileManagerPage />);
+  it('opens a clicked file through the preview hook', async () => {
+    render(<DialFileManagerPage />);
 
-      await userEvent.click(
-        screen.getByRole('button', { name: 'Click report' }),
-      );
+    await userEvent.click(screen.getByRole('button', { name: 'Click report' }));
 
-      expect(mockOnFileClick).toHaveBeenCalledWith(
-        expect.objectContaining({ path: '/My files/report.pdf' }),
-      );
-    });
+    expect(mockOnFileClick).toHaveBeenCalledWith(
+      expect.objectContaining({ path: '/My files/report.pdf' }),
+    );
+  });
 
-    it('renders the shell with items from the hook result', () => {
-      render(<DialFileManagerPage />);
-      expect(screen.getByRole('region', { name: 'file manager' })).toBeTruthy();
-      expect(screen.getByText('1 items')).toBeTruthy();
-    });
+  it('renders the shell with items from the hook result', () => {
+    render(<DialFileManagerPage />);
+    expect(screen.getByRole('region', { name: 'file manager' })).toBeTruthy();
+    expect(screen.getByText('1 items')).toBeTruthy();
+  });
 
-    it('calls useDialFileManagerSections with standalone variant and full action profile on mount, without any user interaction', () => {
-      render(<DialFileManagerPage />);
-      expect(mockUseDialFileManager).toHaveBeenCalledWith(
-        expect.objectContaining({
-          bucket: 'test-bucket',
-          variant: DialFileManagerVariant.Standalone,
-          actionProfile: DialFileManagerActionProfile.Full,
-        }),
-      );
-    });
+  it('calls useDialFileManagerSections with standalone variant and full action profile on mount, without any user interaction', () => {
+    render(<DialFileManagerPage />);
+    expect(mockUseDialFileManager).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bucket: 'test-bucket',
+        variant: DialFileManagerVariant.Standalone,
+        actionProfile: DialFileManagerActionProfile.Full,
+      }),
+    );
+  });
 
-    it('does not render an Attach button or attach footer', () => {
-      render(<DialFileManagerPage />);
-      expect(screen.queryByRole('button', { name: /attach/i })).toBeNull();
-    });
+  it('does not render an Attach button or attach footer', () => {
+    render(<DialFileManagerPage />);
+    expect(screen.queryByRole('button', { name: /attach/i })).toBeNull();
+  });
 
-    it('keeps uploaded items unselected', () => {
-      render(<DialFileManagerPage />);
-      const manager = screen.getByRole('region', { name: 'file manager' });
-      expect(manager.getAttribute('data-auto-select-uploaded-items')).toBe(
-        'false',
-      );
-    });
+  it('keeps uploaded items unselected', () => {
+    render(<DialFileManagerPage />);
+    const manager = screen.getByRole('region', { name: 'file manager' });
+    expect(manager.getAttribute('data-auto-select-uploaded-items')).toBe(
+      'false',
+    );
+  });
 
-    it('renders the tab navigation for My Files, Shared, and Organization', () => {
-      mockActiveTab.value = DialFileManagerTabs.MyFiles;
-      render(<DialFileManagerPage />);
-      expect(screen.getByRole('region', { name: 'file manager' })).toBeTruthy();
-      expect(
-        screen
-          .getByRole('region', { name: 'file manager' })
-          .getAttribute('data-tab-count'),
-      ).toBe('3');
-    });
+  it('renders the tab navigation for My Files, Shared, and Organization', () => {
+    mockActiveTab.value = DialFileManagerTabs.MyFiles;
+    render(<DialFileManagerPage />);
+    expect(screen.getByRole('region', { name: 'file manager' })).toBeTruthy();
+    expect(
+      screen
+        .getByRole('region', { name: 'file manager' })
+        .getAttribute('data-tab-count'),
+    ).toBe('3');
+  });
 
-    it('renders only the tabs allowed by the deployment-configured fileManagerTabs', () => {
-      mockFileManagerTabs.value = ['my_files', 'organization'];
-      mockActiveTab.value = DialFileManagerTabs.MyFiles;
-      render(<DialFileManagerPage />);
-      const manager = screen.getByRole('region', { name: 'file manager' });
-      expect(manager.getAttribute('data-tab-count')).toBe('2');
-    });
+  it('renders only the tabs allowed by the deployment-configured fileManagerTabs', () => {
+    mockFileManagerTabs.value = ['my_files', 'organization'];
+    mockActiveTab.value = DialFileManagerTabs.MyFiles;
+    render(<DialFileManagerPage />);
+    const manager = screen.getByRole('region', { name: 'file manager' });
+    expect(manager.getAttribute('data-tab-count')).toBe('2');
+  });
 
-    it('forwards the AppConfig-sourced size limit as both maxSelectableFileSize and the ui-kit maxFileSize prop, with a translated oversized-upload message', () => {
-      render(<DialFileManagerPage />);
-      const manager = screen.getByRole('region', { name: 'file manager' });
-      expect(manager.getAttribute('data-max-selectable-file-size')).toBe(
-        '536870912',
-      );
-      expect(manager.getAttribute('data-max-file-size')).toBe('536870912');
-      expect(manager.getAttribute('data-oversized-files-message')).toBe(
-        'dialFileManager.uploadFileTooLarge',
-      );
-    });
+  it('forwards the AppConfig-sourced size limit as both maxSelectableFileSize and the ui-kit maxFileSize prop, with a translated oversized-upload message', () => {
+    render(<DialFileManagerPage />);
+    const manager = screen.getByRole('region', { name: 'file manager' });
+    expect(manager.getAttribute('data-max-selectable-file-size')).toBe(
+      '536870912',
+    );
+    expect(manager.getAttribute('data-max-file-size')).toBe('536870912');
+    expect(manager.getAttribute('data-oversized-files-message')).toBe(
+      'dialFileManager.uploadFileTooLarge',
+    );
   });
 
   describe('DialFileManagerPage — full action matrix on my_files', () => {

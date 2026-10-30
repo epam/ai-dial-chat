@@ -72,128 +72,126 @@ describe('MessageBubble', () => {
     vi.unstubAllGlobals();
   });
 
-  describe('MessageBubble', () => {
-    it.each([MessageRole.User, MessageRole.Assistant])(
-      'exposes only the text body for %s messages',
-      (role) => {
-        const contentRef = { current: null as HTMLDivElement | null };
-        render(
-          <MessageBubble
-            role={role}
-            text="Selected passage"
-            contentRef={contentRef}
-            afterContent={<button>Stage control</button>}
-            attachments={[ATTACHMENT]}
-          />,
-        );
-        expect(
-          contentRef.current?.contains(screen.getByText('Selected passage')),
-        ).toBe(true);
-        expect(contentRef.current?.textContent).toBe('Selected passage');
-        expect(
-          contentRef.current?.contains(screen.queryByText('report.pdf')),
-        ).toBe(false);
-      },
+  it.each([MessageRole.User, MessageRole.Assistant])(
+    'exposes only the text body for %s messages',
+    (role) => {
+      const contentRef = { current: null as HTMLDivElement | null };
+      render(
+        <MessageBubble
+          role={role}
+          text="Selected passage"
+          contentRef={contentRef}
+          afterContent={<button>Stage control</button>}
+          attachments={[ATTACHMENT]}
+        />,
+      );
+      expect(
+        contentRef.current?.contains(screen.getByText('Selected passage')),
+      ).toBe(true);
+      expect(contentRef.current?.textContent).toBe('Selected passage');
+      expect(
+        contentRef.current?.contains(screen.queryByText('report.pdf')),
+      ).toBe(false);
+    },
+  );
+  it('renders the provided text content', () => {
+    render(<MessageBubble text="Hello world" role={MessageRole.User} />);
+    expect(screen.getByText('Hello world')).toBeTruthy();
+  });
+
+  it('applies rounded-se-md with BubblePosition.Bottom (default)', () => {
+    const { container } = render(
+      <MessageBubble text="msg" role={MessageRole.User} />,
     );
-    it('renders the provided text content', () => {
-      render(<MessageBubble text="Hello world" role={MessageRole.User} />);
-      expect(screen.getByText('Hello world')).toBeTruthy();
-    });
+    /*
+     * The bubble div carries the position-dependent rounded corner but has
+     * no ARIA role of its own — a CSS-level check with no semantic query
+     * available (see spec.md's container.querySelector exception).
+     */
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- see comment above
+    expect(container.querySelector(':scope > * > * > *')?.className).toContain(
+      'rounded-se-md',
+    );
+  });
 
-    it('applies rounded-se-md with BubblePosition.Bottom (default)', () => {
-      const { container } = render(
-        <MessageBubble text="msg" role={MessageRole.User} />,
-      );
-      /*
-       * The bubble div carries the position-dependent rounded corner but has
-       * no ARIA role of its own — a CSS-level check with no semantic query
-       * available (see spec.md's container.querySelector exception).
-       */
-      // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- see comment above
-      expect(
-        container.querySelector(':scope > * > * > *')?.className,
-      ).toContain('rounded-se-md');
-    });
+  it('applies rounded-ee-md with BubblePosition.Top', () => {
+    const { container } = render(
+      <MessageBubble
+        text="msg"
+        role={MessageRole.User}
+        position={BubblePosition.Top}
+      />,
+    );
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- same structural CSS check as above, no ARIA anchor exists
+    expect(container.querySelector(':scope > * > * > *')?.className).toContain(
+      'rounded-ee-md',
+    );
+  });
 
-    it('applies rounded-ee-md with BubblePosition.Top', () => {
-      const { container } = render(
-        <MessageBubble
-          text="msg"
-          role={MessageRole.User}
-          position={BubblePosition.Top}
-        />,
-      );
-      // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- same structural CSS check as above, no ARIA anchor exists
-      expect(
-        container.querySelector(':scope > * > * > *')?.className,
-      ).toContain('rounded-ee-md');
-    });
+  it('merges additional className onto the container', () => {
+    render(
+      <MessageBubble
+        text="msg"
+        role={MessageRole.User}
+        styles={{ className: 'my-custom-class' }}
+      />,
+    );
+    expect(
+      screen.getByRole('group', { name: 'User message' }).className,
+    ).toContain('my-custom-class');
+  });
 
-    it('merges additional className onto the container', () => {
-      render(
-        <MessageBubble
-          text="msg"
-          role={MessageRole.User}
-          styles={{ className: 'my-custom-class' }}
-        />,
-      );
-      expect(
-        screen.getByRole('group', { name: 'User message' }).className,
-      ).toContain('my-custom-class');
+  it('does not apply user rounded classes for assistant messages', () => {
+    render(<MessageBubble text="msg" role={MessageRole.Assistant} />);
+    const { className } = screen.getByRole('group', {
+      name: 'Assistant message',
     });
+    expect(className).not.toContain('rounded-tr-[24px]');
+    expect(className).not.toContain('rounded-br-[24px]');
+  });
 
-    it('does not apply user rounded classes for assistant messages', () => {
-      render(<MessageBubble text="msg" role={MessageRole.Assistant} />);
-      const { className } = screen.getByRole('group', {
-        name: 'Assistant message',
-      });
-      expect(className).not.toContain('rounded-tr-[24px]');
-      expect(className).not.toContain('rounded-br-[24px]');
-    });
+  it('renders no action buttons when no actions prop is given (read-only)', () => {
+    render(<MessageBubble text="msg" role={MessageRole.User} />);
+    expect(screen.queryByRole('button', { name: 'Edit message' })).toBeNull();
+  });
 
-    it('renders no action buttons when no actions prop is given (read-only)', () => {
-      render(<MessageBubble text="msg" role={MessageRole.User} />);
-      expect(screen.queryByRole('button', { name: 'Edit message' })).toBeNull();
-    });
+  it('renders user actions from actions prop', () => {
+    render(
+      <MessageBubble
+        text="msg"
+        role={MessageRole.User}
+        actions={{ role: MessageRole.User, onEdit: vi.fn() }}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Edit message' })).toBeTruthy();
+  });
 
-    it('renders user actions from actions prop', () => {
-      render(
-        <MessageBubble
-          text="msg"
-          role={MessageRole.User}
-          actions={{ role: MessageRole.User, onEdit: vi.fn() }}
-        />,
-      );
-      expect(screen.getByRole('button', { name: 'Edit message' })).toBeTruthy();
-    });
+  it('renders assistant actions from actions prop', () => {
+    render(
+      <MessageBubble
+        text="msg"
+        role={MessageRole.Assistant}
+        actions={{ role: MessageRole.Assistant, onRegenerate: vi.fn() }}
+      />,
+    );
+    expect(
+      screen.getByRole('button', { name: 'Regenerate response' }),
+    ).toBeTruthy();
+  });
 
-    it('renders assistant actions from actions prop', () => {
-      render(
-        <MessageBubble
-          text="msg"
-          role={MessageRole.Assistant}
-          actions={{ role: MessageRole.Assistant, onRegenerate: vi.fn() }}
-        />,
-      );
-      expect(
-        screen.getByRole('button', { name: 'Regenerate response' }),
-      ).toBeTruthy();
+  it('makes actions always visible when hasAlwaysVisibleActions is true', () => {
+    render(
+      <MessageBubble
+        text="msg"
+        role={MessageRole.User}
+        actions={{ role: MessageRole.User, onEdit: vi.fn() }}
+        hasAlwaysVisibleActions
+      />,
+    );
+    const actionsWrapper = screen.getByRole('toolbar', {
+      name: 'Message actions',
     });
-
-    it('makes actions always visible when hasAlwaysVisibleActions is true', () => {
-      render(
-        <MessageBubble
-          text="msg"
-          role={MessageRole.User}
-          actions={{ role: MessageRole.User, onEdit: vi.fn() }}
-          hasAlwaysVisibleActions
-        />,
-      );
-      const actionsWrapper = screen.getByRole('toolbar', {
-        name: 'Message actions',
-      });
-      expect(actionsWrapper.className).not.toContain('opacity-0');
-    });
+    expect(actionsWrapper.className).not.toContain('opacity-0');
   });
 
   describe('UserMessageBubble — markdown', () => {

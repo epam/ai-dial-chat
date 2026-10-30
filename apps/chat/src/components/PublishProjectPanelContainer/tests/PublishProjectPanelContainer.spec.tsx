@@ -132,109 +132,105 @@ describe('PublishProjectPanelContainer', () => {
     vi.mocked(getCatalogPublishHistory).mockResolvedValue([]);
   });
 
-  describe('PublishProjectPanelContainer', () => {
-    it('names the project and never offers to replace a publication', () => {
-      renderContainer();
+  it('names the project and never offers to replace a publication', () => {
+    renderContainer();
 
-      expect(
-        screen.getByRole('dialog', { name: 'projects.publish.panelAriaLabel' }),
-      ).toBeTruthy();
-      expect(screen.getByText('q4-launch')).toBeTruthy();
-      expect(screen.getByText('allowReplace:false')).toBeTruthy();
-    });
+    expect(
+      screen.getByRole('dialog', { name: 'projects.publish.panelAriaLabel' }),
+    ).toBeTruthy();
+    expect(screen.getByText('q4-launch')).toBeTruthy();
+    expect(screen.getByText('allowReplace:false')).toBeTruthy();
+  });
 
-    it('flags a folder that already holds the project from its publish history', async () => {
-      vi.mocked(getCatalogPublishHistory).mockResolvedValue([
-        { folderPath: 'Marketing', publishedAt: '2026-10-01T00:00:00Z' },
-      ] as never);
-      renderContainer();
+  it('flags a folder that already holds the project from its publish history', async () => {
+    vi.mocked(getCatalogPublishHistory).mockResolvedValue([
+      { folderPath: 'Marketing', publishedAt: '2026-10-01T00:00:00Z' },
+    ] as never);
+    renderContainer();
 
-      await waitFor(() =>
-        expect(getCatalogPublishHistory).toHaveBeenCalledWith(
-          'project',
-          'projects/a1b2c3/q4-launch',
-        ),
-      );
-      await userEvent.click(
-        screen.getByRole('button', { name: 'Select Marketing' }),
-      );
-
-      expect(await screen.findByText('alreadyPublished:true')).toBeTruthy();
-    });
-
-    it('treats a failed history lookup as no publications', async () => {
-      vi.mocked(getCatalogPublishHistory).mockRejectedValue(new Error('down'));
-      renderContainer();
-
-      await userEvent.click(
-        screen.getByRole('button', { name: 'Select Marketing' }),
-      );
-
-      await waitFor(() => expect(getCatalogPublishHistory).toHaveBeenCalled());
-      expect(screen.getByText('alreadyPublished:false')).toBeTruthy();
-    });
-
-    it('publishes the whole project as a project entity and closes on success', async () => {
-      vi.mocked(publishCatalogEntity).mockResolvedValue({} as never);
-      const { onClose } = renderContainer();
-
-      await userEvent.click(
-        screen.getByRole('button', { name: 'Select Marketing' }),
-      );
-      await userEvent.click(
-        screen.getByRole('button', { name: 'Add mock rule' }),
-      );
-      await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
-
-      await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
-      expect(publishCatalogEntity).toHaveBeenCalledWith(
+    await waitFor(() =>
+      expect(getCatalogPublishHistory).toHaveBeenCalledWith(
         'project',
         'projects/a1b2c3/q4-launch',
-        {
-          folderPath: 'Marketing',
-          author: 'Jane Doe',
-          rules: [
-            expect.objectContaining({
-              source: 'role',
-              targets: ['engineering'],
-            }),
-          ],
-        },
-      );
-      expect(mockRememberPublishFolder).toHaveBeenCalledWith(['Marketing']);
-      expect(mockShowNotification).toHaveBeenCalled();
-    });
+      ),
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Select Marketing' }),
+    );
 
-    it('omits an empty author so the backend falls back to the session name', async () => {
-      vi.mocked(publishCatalogEntity).mockResolvedValue({} as never);
-      renderContainer();
+    expect(await screen.findByText('alreadyPublished:true')).toBeTruthy();
+  });
 
-      await userEvent.click(
-        screen.getByRole('button', { name: 'Select Marketing' }),
-      );
-      await userEvent.click(
-        screen.getByRole('button', { name: 'Clear author' }),
-      );
-      await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+  it('treats a failed history lookup as no publications', async () => {
+    vi.mocked(getCatalogPublishHistory).mockRejectedValue(new Error('down'));
+    renderContainer();
 
-      await waitFor(() => expect(publishCatalogEntity).toHaveBeenCalled());
-      expect(
-        vi.mocked(publishCatalogEntity).mock.calls[0][2],
-      ).not.toHaveProperty('author');
-    });
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Select Marketing' }),
+    );
 
-    it('reports a failed publish through the publish error notification', async () => {
-      vi.mocked(publishCatalogEntity).mockRejectedValue(new Error('denied'));
-      const { onClose } = renderContainer();
+    await waitFor(() => expect(getCatalogPublishHistory).toHaveBeenCalled());
+    expect(screen.getByText('alreadyPublished:false')).toBeTruthy();
+  });
 
-      await userEvent.click(
-        screen.getByRole('button', { name: 'Select Marketing' }),
-      );
-      await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+  it('publishes the whole project as a project entity and closes on success', async () => {
+    vi.mocked(publishCatalogEntity).mockResolvedValue({} as never);
+    const { onClose } = renderContainer();
 
-      await waitFor(() => expect(mockShowPublishError).toHaveBeenCalled());
-      expect(onClose).not.toHaveBeenCalled();
-    });
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Select Marketing' }),
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Add mock rule' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+    expect(publishCatalogEntity).toHaveBeenCalledWith(
+      'project',
+      'projects/a1b2c3/q4-launch',
+      {
+        folderPath: 'Marketing',
+        author: 'Jane Doe',
+        rules: [
+          expect.objectContaining({
+            source: 'role',
+            targets: ['engineering'],
+          }),
+        ],
+      },
+    );
+    expect(mockRememberPublishFolder).toHaveBeenCalledWith(['Marketing']);
+    expect(mockShowNotification).toHaveBeenCalled();
+  });
+
+  it('omits an empty author so the backend falls back to the session name', async () => {
+    vi.mocked(publishCatalogEntity).mockResolvedValue({} as never);
+    renderContainer();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Select Marketing' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Clear author' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+
+    await waitFor(() => expect(publishCatalogEntity).toHaveBeenCalled());
+    expect(vi.mocked(publishCatalogEntity).mock.calls[0][2]).not.toHaveProperty(
+      'author',
+    );
+  });
+
+  it('reports a failed publish through the publish error notification', async () => {
+    vi.mocked(publishCatalogEntity).mockRejectedValue(new Error('denied'));
+    const { onClose } = renderContainer();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Select Marketing' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Publish' }));
+
+    await waitFor(() => expect(mockShowPublishError).toHaveBeenCalled());
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   describe('PublishProjectPanelContainer — chats warning', () => {

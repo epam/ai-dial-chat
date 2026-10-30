@@ -78,30 +78,28 @@ describe('MarkdownMathBlock', () => {
     vi.unstubAllGlobals();
   });
 
-  describe('MarkdownMathBlock', () => {
-    it('renders the formula in a scrollable container without adding a tab stop when it fits', () => {
-      const { scrollContainer } = renderMathBlock();
+  it('renders the formula in a scrollable container without adding a tab stop when it fits', () => {
+    const { scrollContainer } = renderMathBlock();
 
-      act(() => resizeObserverCallback([], {} as ResizeObserver));
+    act(() => resizeObserverCallback([], {} as ResizeObserver));
 
-      expect(scrollContainer.className).toContain('overflow-x-auto');
-      expect(scrollContainer.getAttribute('role')).toBeNull();
-      expect(scrollContainer.getAttribute('aria-label')).toBeNull();
-      expect(scrollContainer.getAttribute('tabindex')).toBeNull();
-    });
+    expect(scrollContainer.className).toContain('overflow-x-auto');
+    expect(scrollContainer.getAttribute('role')).toBeNull();
+    expect(scrollContainer.getAttribute('aria-label')).toBeNull();
+    expect(scrollContainer.getAttribute('tabindex')).toBeNull();
+  });
 
-    it('exposes an overflowing formula as a labelled, keyboard-reachable region', () => {
-      const { scrollContainer, content } = renderMathBlock();
-      simulateOverflow(scrollContainer, content);
+  it('exposes an overflowing formula as a labelled, keyboard-reachable region', () => {
+    const { scrollContainer, content } = renderMathBlock();
+    simulateOverflow(scrollContainer, content);
 
-      act(() => resizeObserverCallback([], {} as ResizeObserver));
+    act(() => resizeObserverCallback([], {} as ResizeObserver));
 
-      expect(scrollContainer.getAttribute('role')).toBe('region');
-      expect(scrollContainer.getAttribute('aria-label')).toBe(
-        'Scrollable formula',
-      );
-      expect(scrollContainer.getAttribute('tabindex')).toBe('0');
-    });
+    expect(scrollContainer.getAttribute('role')).toBe('region');
+    expect(scrollContainer.getAttribute('aria-label')).toBe(
+      'Scrollable formula',
+    );
+    expect(scrollContainer.getAttribute('tabindex')).toBe('0');
   });
 
   describe('MarkdownMathBlock — public class names', () => {

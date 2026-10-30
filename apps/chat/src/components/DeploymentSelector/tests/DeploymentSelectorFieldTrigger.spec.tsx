@@ -49,119 +49,117 @@ describe('DeploymentSelectorFieldTrigger', () => {
     breakpoint.isMobile = false;
   });
 
-  describe('DeploymentSelectorFieldTrigger', () => {
-    it('shows the placeholder when nothing is selected', () => {
-      mockOverlay();
-      renderTrigger();
+  it('shows the placeholder when nothing is selected', () => {
+    mockOverlay();
+    renderTrigger();
 
-      expect(screen.getByPlaceholderText('Select Model or Agent')).toBeTruthy();
-    });
+    expect(screen.getByPlaceholderText('Select Model or Agent')).toBeTruthy();
+  });
 
-    it('shows the resolved deployment name when selected', () => {
-      mockOverlay({ resolvedLabel: 'GPT-4o' });
-      renderTrigger({ selectedId: 'gpt-4o' });
+  it('shows the resolved deployment name when selected', () => {
+    mockOverlay({ resolvedLabel: 'GPT-4o' });
+    renderTrigger({ selectedId: 'gpt-4o' });
 
-      expect(screen.getByDisplayValue('GPT-4o')).toBeTruthy();
-    });
+    expect(screen.getByDisplayValue('GPT-4o')).toBeTruthy();
+  });
 
-    it('opens the overlay content when activated', async () => {
-      mockOverlay();
-      const user = userEvent.setup({ delay: null });
-      renderTrigger();
+  it('opens the overlay content when activated', async () => {
+    mockOverlay();
+    const user = userEvent.setup({ delay: null });
+    renderTrigger();
 
-      expect(screen.queryByText('overlay content')).toBeNull();
+    expect(screen.queryByText('overlay content')).toBeNull();
 
-      await user.click(screen.getByRole('combobox'));
+    await user.click(screen.getByRole('combobox'));
 
-      expect(await screen.findByText('overlay content')).toBeTruthy();
-    });
+    expect(await screen.findByText('overlay content')).toBeTruthy();
+  });
 
-    it('opens when the trailing chevron icon is clicked, not just the input area', async () => {
-      mockOverlay();
-      const user = userEvent.setup({ delay: null });
-      const { container } = renderTrigger();
+  it('opens when the trailing chevron icon is clicked, not just the input area', async () => {
+    mockOverlay();
+    const user = userEvent.setup({ delay: null });
+    const { container } = renderTrigger();
 
-      expect(screen.queryByText('overlay content')).toBeNull();
+    expect(screen.queryByText('overlay content')).toBeNull();
 
-      /* The chevron is `aria-hidden` by design (decorative, click bubbles to the
+    /* The chevron is `aria-hidden` by design (decorative, click bubbles to the
        combobox wrapper), so it has no accessible role/text a Testing Library
        query could target — this is the one way to reach that exact node. */
-      // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
-      const chevron = container.querySelector('svg');
-      expect(chevron).toBeTruthy();
-      await user.click(chevron as SVGElement);
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
+    const chevron = container.querySelector('svg');
+    expect(chevron).toBeTruthy();
+    await user.click(chevron as SVGElement);
 
-      expect(await screen.findByText('overlay content')).toBeTruthy();
-    });
+    expect(await screen.findByText('overlay content')).toBeTruthy();
+  });
 
-    it('closes the overlay and calls onSelect when a deployment is picked', async () => {
-      mockOverlay();
-      const onSelect = vi.fn();
-      const user = userEvent.setup({ delay: null });
-      renderTrigger({ onSelect });
+  it('closes the overlay and calls onSelect when a deployment is picked', async () => {
+    mockOverlay();
+    const onSelect = vi.fn();
+    const user = userEvent.setup({ delay: null });
+    renderTrigger({ onSelect });
 
-      await user.click(screen.getByRole('combobox'));
-      await user.click(await screen.findByText('overlay content'));
+    await user.click(screen.getByRole('combobox'));
+    await user.click(await screen.findByText('overlay content'));
 
-      expect(screen.queryByText('overlay content')).toBeNull();
-    });
+    expect(screen.queryByText('overlay content')).toBeNull();
+  });
 
-    it('shows a busy affordance while loading', () => {
-      mockOverlay({ isLoading: true });
-      renderTrigger();
+  it('shows a busy affordance while loading', () => {
+    mockOverlay({ isLoading: true });
+    renderTrigger();
 
-      expect(screen.getByLabelText('deploymentSelector.loading')).toBeTruthy();
-    });
+    expect(screen.getByLabelText('deploymentSelector.loading')).toBeTruthy();
+  });
 
-    it('keeps showing the resolved label during a background refetch instead of flickering to the loading text', () => {
-      mockOverlay({ isLoading: true, resolvedLabel: 'GPT-4o' });
-      renderTrigger({ selectedId: 'gpt-4o' });
+  it('keeps showing the resolved label during a background refetch instead of flickering to the loading text', () => {
+    mockOverlay({ isLoading: true, resolvedLabel: 'GPT-4o' });
+    renderTrigger({ selectedId: 'gpt-4o' });
 
-      expect(screen.getByDisplayValue('GPT-4o')).toBeTruthy();
-      expect(
-        screen.queryByPlaceholderText('deploymentSelector.loading'),
-      ).toBeNull();
-    });
+    expect(screen.getByDisplayValue('GPT-4o')).toBeTruthy();
+    expect(
+      screen.queryByPlaceholderText('deploymentSelector.loading'),
+    ).toBeNull();
+  });
 
-    it('shows an error affordance and stays focusable when the fetch fails', () => {
-      mockOverlay({ error: new Error('failed') });
-      renderTrigger();
+  it('shows an error affordance and stays focusable when the fetch fails', () => {
+    mockOverlay({ error: new Error('failed') });
+    renderTrigger();
 
-      const trigger = screen.getByRole('combobox');
-      expect(trigger).toBeTruthy();
-      expect(trigger.hasAttribute('disabled')).toBe(false);
-    });
+    const trigger = screen.getByRole('combobox');
+    expect(trigger).toBeTruthy();
+    expect(trigger.hasAttribute('disabled')).toBe(false);
+  });
 
-    it('falls back to the raw id label without clearing selection when unresolvable', () => {
-      mockOverlay({ resolvedLabel: 'unknown-id' });
-      renderTrigger({ selectedId: 'unknown-id' });
+  it('falls back to the raw id label without clearing selection when unresolvable', () => {
+    mockOverlay({ resolvedLabel: 'unknown-id' });
+    renderTrigger({ selectedId: 'unknown-id' });
 
-      expect(screen.getByDisplayValue('unknown-id')).toBeTruthy();
-    });
+    expect(screen.getByDisplayValue('unknown-id')).toBeTruthy();
+  });
 
-    it('does not open when isDisabled is true', async () => {
-      mockOverlay();
-      const user = userEvent.setup({ delay: null });
-      renderTrigger({ isDisabled: true });
+  it('does not open when isDisabled is true', async () => {
+    mockOverlay();
+    const user = userEvent.setup({ delay: null });
+    renderTrigger({ isDisabled: true });
 
-      await user.click(screen.getByRole('combobox'));
+    await user.click(screen.getByRole('combobox'));
 
-      expect(screen.queryByText('overlay content')).toBeNull();
-    });
+    expect(screen.queryByText('overlay content')).toBeNull();
+  });
 
-    it('exposes aria-expanded and aria-labelledby', async () => {
-      mockOverlay();
-      const user = userEvent.setup({ delay: null });
-      renderTrigger({ labelledById: 'model-label' });
+  it('exposes aria-expanded and aria-labelledby', async () => {
+    mockOverlay();
+    const user = userEvent.setup({ delay: null });
+    renderTrigger({ labelledById: 'model-label' });
 
-      const trigger = screen.getByRole('combobox');
-      expect(trigger.getAttribute('aria-labelledby')).toBe('model-label');
-      expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    const trigger = screen.getByRole('combobox');
+    expect(trigger.getAttribute('aria-labelledby')).toBe('model-label');
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
 
-      await user.click(trigger);
+    await user.click(trigger);
 
-      expect(trigger.getAttribute('aria-expanded')).toBe('true');
-    });
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
   });
 
   describe('DeploymentSelectorFieldTrigger — mobile', () => {

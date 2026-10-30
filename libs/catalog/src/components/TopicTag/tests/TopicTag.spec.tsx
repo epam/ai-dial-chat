@@ -15,11 +15,9 @@ let widthConfig: { container: number; child: number; gap: number } | null =
 let originalDescriptors: Record<string, PropertyDescriptor | undefined>;
 
 describe('TopicTag', () => {
-  describe('TopicTag', () => {
-    it('renders the label text', () => {
-      render(<TopicTag label="Free" />);
-      expect(screen.getByText('Free')).toBeTruthy();
-    });
+  it('renders the label text', () => {
+    render(<TopicTag label="Free" />);
+    expect(screen.getByText('Free')).toBeTruthy();
   });
 
   beforeEach(() => {
