@@ -11,6 +11,7 @@ export { SettingsPanel } from './components/SettingsPanel/SettingsPanel';
 export type {
   SettingsPanelItem,
   SettingsPanelProps,
+  SettingsPanelColors,
   SettingsPanelStyles,
   SettingsPanelTypography,
 } from './models/settings-panel-props';

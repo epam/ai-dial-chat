@@ -61,7 +61,7 @@ const FooterMessage: FC = () => {
                version gets its own line instead of floating over the text
                ([#9618](https://github.com/epam/ai-dial-chat/issues/9618)). */
             isMessageVisible &&
-              'mt-1 desktop:absolute desktop:end-8 desktop:bottom-4 desktop:mt-0',
+              'mt-1 desktop:absolute desktop:inset-e-8 desktop:bottom-4 desktop:mt-0',
           )}
         >
           <span className="sr-only">

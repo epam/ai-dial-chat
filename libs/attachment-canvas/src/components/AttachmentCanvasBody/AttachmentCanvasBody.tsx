@@ -91,16 +91,6 @@ const ImageContent: FC<ImageContentProps> = ({
   );
 };
 
-/* Content types whose renderers read the `--ac-*` custom properties, so the
- * body root has to carry them. `buildCssVars` drops unset fields, so adding a
- * type here is safe; the remaining types still leave their `*Colors` fields
- * inert (see the JSON and status/error vars). */
-const THEMED_CONTENT_TYPES = new Set<AttachmentContentType>([
-  AttachmentContentType.PlainText,
-  AttachmentContentType.Code,
-  AttachmentContentType.Ooxml,
-]);
-
 const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
   content,
   isLoading = false,
@@ -211,6 +201,10 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
         '--ac-ooxml-highlight-bg': colors?.ooxmlHighlightBackground,
         '--ac-json-collapsed-text': colors?.jsonCollapsedText,
         '--ac-json-collapsed-bg': colors?.jsonCollapsedBackground,
+        '--ac-focus-outline': colors?.focusOutline,
+        '--ac-code-bg': colors?.codeBackground,
+        '--ac-mcp-app-loading-bg': colors?.mcpAppLoadingBackground,
+        '--ac-mcp-app-status-text': colors?.mcpAppStatusText,
         '--ac-font-family': hasFontClassName
           ? undefined
           : typography?.fontFamily,
@@ -272,7 +266,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
         return (
           <pre
             className={mergeClasses(
-              'break-words whitespace-pre-wrap',
+              'wrap-break-word whitespace-pre-wrap',
               styles.body,
               typography?.fontClassName,
             )}
@@ -361,7 +355,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
                 data={content.value as object}
                 style={{
                   container: mergeClasses(
-                    'whitespace-pre-wrap break-words p-2',
+                    'whitespace-pre-wrap wrap-break-word p-2',
                     typography?.jsonClassName ?? 'dial-code-text',
                   ),
                   basicChildStyle: defaultStyles.basicChildStyle,
@@ -392,7 +386,8 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
                     styles.jsonExpandIcon,
                   ),
                   collapsedContent: mergeClasses(
-                    'dial-caption-text me-1 cursor-pointer rounded px-1',
+                    typography?.jsonCollapsedClassName ?? 'dial-caption-text',
+                    'me-1 cursor-pointer rounded px-1',
                     styles.jsonCollapsedContent,
                   ),
                 }}
@@ -406,6 +401,8 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
           <CodeContent
             content={content}
             codeBlockTheme={codeBlockTheme}
+            codeClassName={typography?.codeClassName}
+            errorLabelClassName={typography?.errorMessageClassName}
             labels={{
               loadingLabel: codeContentLoadingLabel,
               errorLabel: codeContentErrorLabel,
@@ -424,6 +421,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
             isSourceView={isHtmlSourceView}
             title={fileName}
             codeBlockTheme={codeBlockTheme}
+            codeClassName={typography?.codeClassName}
           />
         );
       case AttachmentContentType.Pdf:
@@ -432,6 +430,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
             key={`${content.url}#${pdfReloadKey}`}
             retryKey={pdfRetryKey}
             onRetry={handleRetryPdf}
+            errorLabelClassName={typography?.errorMessageClassName}
             labels={{
               loadingLabel: pdfContentLoadingLabel,
               errorLabel: pdfContentErrorLabel,
@@ -448,6 +447,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
               onLoadError={handlePdfLoadError}
               hideHeader={hidePdfToolbar}
               configurePdfWorker={configurePdfWorker}
+              errorLabelClassName={typography?.errorMessageClassName}
               labels={{
                 thumbnailsLabel: pdfThumbnailsLabel,
                 showThumbnailsLabel: pdfShowThumbnailsLabel,
@@ -525,6 +525,9 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     typography?.jsonLabelClassName,
     typography?.xlsxFormulaLabelClassName,
     typography?.xlsxFormulaValueClassName,
+    typography?.codeClassName,
+    typography?.jsonCollapsedClassName,
+    typography?.errorMessageClassName,
     fileName,
     codeBlockTheme,
     unsupportedLabel,
@@ -570,11 +573,9 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
 
   return (
     <div
-      style={
-        !isLoading && THEMED_CONTENT_TYPES.has(content.type)
-          ? cssVars
-          : undefined
-      }
+      /* Every renderer reads `--ac-*` vars (status, error, JSON, code, MCP App), and
+       * `buildCssVars` drops unset fields, so the root carries them for all types. */
+      style={isLoading ? undefined : cssVars}
       className={mergeClasses(
         isLoading
           ? 'flex h-full items-center justify-center'

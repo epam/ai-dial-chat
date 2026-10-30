@@ -481,7 +481,7 @@ describe('NewConversationComposer', () => {
       screen.queryByRole('region', { name: ChatI18nKeys.WelcomeScreen }),
     ).toBeNull();
     // eslint-disable-next-line testing-library/no-node-access -- the layout classes sit on a wrapper with no role once it is not a region
-    const container = welcomeText.closest('[class*="container-type"]');
+    const container = welcomeText.closest('.\\@container');
     expect(container?.className).not.toContain('justify-center');
     expect(container?.className).not.toContain('justify-end');
     expect(screen.queryByText('app footer')).toBeNull();

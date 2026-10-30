@@ -317,9 +317,9 @@ export type AttachmentCanvasContent =
 export interface AttachmentCanvasColors {
   /** Primary text color for the content body. */
   text?: string;
-  /** Status/summary line text color. Defaults to `--text-secondary`. */
+  /** Status/summary line, lazy-load retry message and MCP App error detail text color. Defaults to `--text-secondary`. */
   statusText?: string;
-  /** Error icon color. Defaults to `--text-error`. */
+  /** Error icon color, including the MCP App load-error icon. Defaults to `--text-error`. */
   errorIcon?: string;
   /** "Open in new tab" link color in the blocked-iframe panel. Defaults to `--text-accent`. */
   openInNewTabText?: string;
@@ -365,6 +365,16 @@ export interface AttachmentCanvasColors {
   mcpAppDividerColor?: string;
   /** MCP App version text color in the panel title. Defaults to `--text-secondary`. */
   mcpAppVersionColor?: string;
+  /** Bottom border color of the panel header. Defaults to `--stroke-tertiary`. */
+  headerBorder?: string;
+  /** Focus outline color of the XLSX formula value field. Defaults to `--stroke-focus`. */
+  focusOutline?: string;
+  /** Background color of the code viewer. Defaults to `--bg-layer-raised`, or `--bg-layer-base` on a light syntax theme. */
+  codeBackground?: string;
+  /** Background color of the overlay shown while an MCP App loads. Defaults to `--bg-layer-1`. */
+  mcpAppLoadingBackground?: string;
+  /** Text color of the MCP App loading and error message. Defaults to `--text-primary`. */
+  mcpAppStatusText?: string;
 }
 
 /** Themeable typography overrides for the AttachmentCanvas plain-text content body. */
@@ -394,6 +404,12 @@ export interface AttachmentCanvasTypography {
   xlsxFormulaValueClassName?: string;
   /** CSS utility class applied to the MCP App version text in the panel title. Defaults to `'dial-caption-text'`. */
   mcpAppVersionClassName?: string;
+  /** CSS utility class applied to source code (code files and HTML source view). Defaults to `'dial-code-text'`. */
+  codeClassName?: string;
+  /** CSS utility class applied to a collapsed JSON node's summary. Defaults to `'dial-caption-text'`. */
+  jsonCollapsedClassName?: string;
+  /** CSS utility class applied to the code/PDF load-error message above Retry. Defaults to `'dial-body-text'`. */
+  errorMessageClassName?: string;
 }
 
 /** Style override prop for `AttachmentCanvasBody`'s content-rendering area. */

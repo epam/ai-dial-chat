@@ -37,6 +37,7 @@ README behind. So the obligation is same-change, not follow-up:
 | Change a lib's `dependencies` or `peerDependencies`        | `npm run docs:install-matrix`, then commit the regenerated doc          |
 | Rename a prop, change its type, or make it required        | Every README example that passes it                                     |
 | Add, rename, or remove an enum member                      | Every README that lists the members                                     |
+| Add a `*Colors` field or a `*ClassName`/`*Typography` prop | That lib's README where the fields and their defaults are listed        |
 | Add, rename, or remove a public `dial-*` class             | That lib's README class table — `npm run validate:docs` enforces it     |
 | Add or remove a lib/app, backend domain, context, or route | `docs/architecture.md` (see below)                                      |
 | Add or remove an environment variable                      | `apps/chat-api/README.md` and `apps/chat-api/.env.template`             |

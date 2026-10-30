@@ -217,7 +217,7 @@ The modal SHALL render a distinct loading, empty, and error state, and the error
 - When `items.length === 0 && !isLoading && !error`, `DialFileManager` shows an empty state chosen by `DialFileManagerShell`: an empty search shows `searchEmptyStateTitle` (`basic.noResults`); an empty subfolder shows `folderEmptyStateTitle` (i18n key `dialFileManager.empty`, English: `"This folder is empty"`) with an empty description; a tab root shows that tab's entry from `emptyStateByTab` (`dialFileManager.myFiles.emptyStateTitle`/`emptyStateDescription` for My files and All, and the matching `dialFileManager.shared.*` and `dialFileManager.organization.*` keys).
 
 **Error state**
-- When `error != null`, the modal body renders a `role="alert"` error card with the message (i18n key `dialFileManager.error`) and a retry button (i18n key `dialFileManager.retry`).
+- When `error != null`, the modal body renders a `role="alert"` error card with the message (i18n key `dialFileManager.error`) and a retry button (i18n key `buttons.retry`, shared via `ButtonsI18nKeys.Retry`).
 - `DialFileManager` is NOT rendered during the error state.
 - Clicking retry calls `useDialFileManager().retry()`, which increments `retryCounter`, causing the `useEffect` to re-run.
 
@@ -307,7 +307,7 @@ The picker SHALL be fully translated, keyboard-operable, direction-agnostic, and
 | `dialFileManager.attach` | `"Attach"` |
 | `dialFileManager.empty` | `"This folder is empty"` |
 | `dialFileManager.error` | `"Failed to load files"` |
-| `dialFileManager.retry` | `"Retry"` |
+| `buttons.retry` | `"Retry"` |
 | `dialFileManager.hiddenFiles` | `"Hidden files"` |
 | `dialFileManager.showHiddenFiles` | `"Show hidden files"` |
 | `dialFileManager.hideHiddenFiles` | `"Hide hidden files"` |

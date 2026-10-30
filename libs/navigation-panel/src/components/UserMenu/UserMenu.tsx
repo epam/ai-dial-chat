@@ -53,6 +53,7 @@ export const UserMenu: FC<UserMenuProps> = memo(
           '--np-menu-text': colors?.text,
           '--np-trigger-hover-bg': colors?.triggerHoverBackground,
           '--np-trigger-open-bg': colors?.triggerOpenBackground,
+          '--np-focus-outline': colors?.focusOutline,
           '--np-font-family': typography?.fontFamily,
         }),
       [colors, typography?.fontFamily],
@@ -172,12 +173,13 @@ export const UserMenu: FC<UserMenuProps> = memo(
                 profile={profile}
                 alt={labels.avatarAlt}
                 size={isCompactTrigger ? 24 : undefined}
+                initialsClassName={typography?.avatarInitialsClassName}
               />
             }
             className={mergeClasses(
               isCompactTrigger
-                ? '!size-10 !min-h-0 !min-w-0 gap-0 !rounded-full !border-0 !p-2'
-                : 'size-[44px] gap-0 !rounded-full p-0',
+                ? 'size-10! min-h-0! min-w-0! gap-0 rounded-full! border-0! p-2!'
+                : 'size-[44px] gap-0 rounded-full! p-0',
               styles.trigger,
               isCompactTrigger && isOpen && styles.triggerOpen,
             )}
@@ -196,7 +198,14 @@ export const UserMenu: FC<UserMenuProps> = memo(
             tooltip: profile.email,
             hideTooltip: isTooltipHidden,
           }}
-          iconBefore={<UserAvatar profile={profile} alt="" size={24} />}
+          iconBefore={
+            <UserAvatar
+              profile={profile}
+              alt=""
+              size={24}
+              initialsClassName={typography?.avatarInitialsClassName}
+            />
+          }
           label={
             <>
               <EllipsisTooltip
@@ -219,7 +228,7 @@ export const UserMenu: FC<UserMenuProps> = memo(
           }
           textClassName="min-w-0"
           className={mergeClasses(
-            '!h-10 !min-h-0 max-w-full !min-w-0 gap-2 !rounded-full !border-0 !p-2',
+            'h-10! min-h-0! max-w-full min-w-0! gap-2 rounded-full! border-0! p-2!',
             styles.trigger,
             isOpen && styles.triggerOpen,
           )}

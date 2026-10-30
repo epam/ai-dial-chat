@@ -250,7 +250,7 @@ describe('CitationCard', () => {
     const title = screen.getByText(
       'ReallyLongUnbrokenTitleTokenThatWouldOtherwiseOverflowTheFixedWidthCard',
     );
-    expect(title.className).toContain('break-words');
+    expect(title.className).toContain('wrap-break-word');
   });
 });
 

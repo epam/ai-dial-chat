@@ -26,7 +26,7 @@ export const useScheduledTaskFormLabels = (mode: 'create' | 'edit') => {
           ? ScheduledTasksI18nKeys.CreatePageTitle
           : ScheduledTasksI18nKeys.EditPageTitle,
       ),
-      backButtonLabel: t(ScheduledTasksI18nKeys.CreateBackButtonLabel),
+      backButtonLabel: t(ButtonsI18nKeys.Back),
       detailsSectionTitle: t(ScheduledTasksI18nKeys.CreateDetailsSectionTitle),
       detailsSectionSubtitle: t(
         ScheduledTasksI18nKeys.CreateDetailsSectionSubtitle,

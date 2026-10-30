@@ -105,12 +105,22 @@ export interface DeploymentCreationFormLabels {
   ariaLabel?: string;
 }
 
+/** CSS custom property overrides for `DeploymentLocalesField`. */
+export interface DeploymentLocalesFieldColors {
+  /** Text color of the "Locales: [DE]" summary. Defaults to `--text-secondary`. */
+  summaryText?: string;
+  /** Text color of each popup row's "Locale N" heading. Defaults to `--text-secondary`. */
+  rowLabelText?: string;
+}
+
 /** Optional per-slot class name overrides for visual composition by the host app. */
 export interface DeploymentCreationFormStyles {
   /** Class applied to the root container. Defaults to a vertical flex stack. */
   root?: string;
   /** Class applied to each individual field wrapper. */
   field?: string;
+  /** Color overrides forwarded to the additional-locales `DeploymentLocalesField`. */
+  localesColors?: DeploymentLocalesFieldColors;
 }
 
 /** Props accepted by the `DeploymentCreationForm` component. */

@@ -138,6 +138,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           fontFamily: typography?.fontFamily,
           groupHeaderClassName: typography?.groupHeaderClassName,
           itemTitleClassName: typography?.itemTitleClassName,
+          unreadItemTitleClassName: typography?.unreadItemTitleClassName,
         },
         itemIconBadgeClassName: panelStyles?.itemIconBadgeClassName,
       }),
@@ -146,6 +147,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         typography?.fontFamily,
         typography?.groupHeaderClassName,
         typography?.itemTitleClassName,
+        typography?.unreadItemTitleClassName,
         panelStyles?.itemIconBadgeClassName,
       ],
     );

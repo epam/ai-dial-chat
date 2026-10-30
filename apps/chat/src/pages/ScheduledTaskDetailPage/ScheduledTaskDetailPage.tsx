@@ -440,8 +440,8 @@ const ScheduledTaskDetailPage: FC = () => {
 
   const labels = useMemo(
     () => ({
-      backAriaLabel: t(ScheduledTasksI18nKeys.CreateBackButtonLabel),
-      editButtonLabel: t(ScheduledTasksI18nKeys.CardEditActionLabel),
+      backAriaLabel: t(ButtonsI18nKeys.Back),
+      editButtonLabel: t(ButtonsI18nKeys.Edit),
       deleteButtonLabel: t(ButtonsI18nKeys.Delete),
       deletedStateLabel: t(ScheduledTasksI18nKeys.DetailDeletedStateLabel),
       errorLabel: t(ScheduledTasksI18nKeys.DetailErrorLabel),
@@ -455,14 +455,15 @@ const ScheduledTaskDetailPage: FC = () => {
       ),
       instructionsLabel: t(ScheduledTasksI18nKeys.CreateInstructionsLabel),
       skillLabel: t(ScheduledTasksI18nKeys.CreateSkillLabel),
-      retryLabel: t(ScheduledTasksI18nKeys.ListRetryLabel),
+      retryLabel: t(ButtonsI18nKeys.Retry),
       historyTitle: t(ScheduledTasksI18nKeys.DetailHistoryTitle),
       historyEmptyLabel: t(ScheduledTasksI18nKeys.DetailHistoryEmptyLabel),
       historyEmptyDescription: t(
         ScheduledTasksI18nKeys.DetailHistoryEmptyDescription,
       ),
       historyErrorLabel: t(ScheduledTasksI18nKeys.DetailHistoryErrorLabel),
-      historyRetryLabel: t(ScheduledTasksI18nKeys.ListRetryLabel),
+      tabsAriaLabel: t(ScheduledTasksI18nKeys.DetailTabsAriaLabel),
+      historyRetryLabel: t(ButtonsI18nKeys.Retry),
       historyLoadingMoreLabel: t(
         ScheduledTasksI18nKeys.DetailHistoryLoadingMoreLabel,
       ),

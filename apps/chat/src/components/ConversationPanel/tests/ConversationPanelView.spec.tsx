@@ -518,7 +518,7 @@ const DELETE_ALL_ERROR = 'conversationPanel.deleteAll.deleteAllError';
 const PARTIAL_ERROR = 'conversationPanel.deleteAll.deleteAllPartialError';
 
 const DELETE_CONFIRM_BUTTON = 'buttons.delete';
-const SHARE_LABEL = 'share.title';
+const SHARE_LABEL = 'buttons.share';
 const PUBLISH_LABEL = 'buttons.publish';
 const UNPUBLISH_LABEL = 'buttons.unpublish';
 

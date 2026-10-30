@@ -2,7 +2,14 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { CredentialsIdentityIcon } from '../CredentialsIdentityIcon';
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
+vi.mock('@epam/ai-dial-ui-kit', async () => ({
+  /* The real live region: a hand-rolled stub would hide its always-mounted markup. */
+  ...(await vi
+    .importActual<typeof import('@epam/ai-dial-ui-kit')>('@epam/ai-dial-ui-kit')
+    .then(({ LiveRegion, LiveRegionElement }) => ({
+      LiveRegion,
+      LiveRegionElement,
+    }))),
   DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
 }));
@@ -41,5 +48,20 @@ describe('CredentialsIdentityIcon', () => {
       <CredentialsIdentityIcon icon={icon} isActive statusLabel="Signed in" />,
     );
     expect(screen.getByText('Signed in')).toBeTruthy();
+  });
+
+  it('keeps one status region and swaps its text when the level signs in', () => {
+    const { rerender } = render(
+      <CredentialsIdentityIcon icon={icon} statusLabel="Signed out" />,
+    );
+    const status = screen.getByRole('status');
+    expect(status.textContent).toBe('Signed out');
+
+    rerender(
+      <CredentialsIdentityIcon icon={icon} isActive statusLabel="Signed in" />,
+    );
+
+    expect(screen.getByRole('status')).toBe(status);
+    expect(status.textContent).toBe('Signed in');
   });
 });

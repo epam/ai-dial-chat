@@ -223,7 +223,7 @@ const getCancelButton = () =>
 const getCreateButton = () =>
   screen.getAllByRole('button', { name: 'buttons.create' })[0];
 const getSaveButton = () =>
-  screen.getAllByRole('button', { name: 'skillEditor.saveLabel' })[0];
+  screen.getAllByRole('button', { name: 'buttons.save' })[0];
 
 /*
  * The `Input`/`Textarea`/`MarkdownEditor` fields render their `labelProps`
@@ -1173,9 +1173,7 @@ describe('SkillEditor page — edit mode', () => {
     await user.click(
       screen.getByRole('button', { name: 'skillEditor.reloadLatestLabel' }),
     );
-    await user.click(
-      screen.getByRole('button', { name: 'skillEditor.reloadConfirmLabel' }),
-    );
+    await user.click(screen.getByRole('button', { name: 'buttons.reload' }));
 
     await waitFor(() => expect(downloadSkill).toHaveBeenCalledTimes(2));
   });
@@ -1335,13 +1333,13 @@ describe('SkillEditor page — Back control and preview round trip', () => {
 
   /*
    * The Back control's accessible name depends on the current selection —
-   * `backAriaLabel` on the manifest view, `backToManifestAriaLabel` while a
+   * `buttons.back` on the manifest view, `backToManifestAriaLabel` while a
    * supporting file is selected — so it is matched by either name here and
    * asserted explicitly in the dedicated accessible-name test.
    */
   const getBackButton = () =>
     screen.getByRole('button', {
-      name: /^skillEditor\.back(AriaLabel|ToManifestAriaLabel)$/,
+      name: /^(buttons\.back|skillEditor\.backToManifestAriaLabel)$/,
     });
 
   const selectNode = async (name: string) => {
@@ -1423,9 +1421,7 @@ describe('SkillEditor page — Back control and preview round trip', () => {
 
   it('describes returning to SKILL.md in the Back control accessible name while a supporting file is selected', async () => {
     await renderEditorWithSupportingFile();
-    expect(
-      screen.getByRole('button', { name: 'skillEditor.backAriaLabel' }),
-    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'buttons.back' })).toBeTruthy();
 
     await selectNode('analyzer.md');
 
@@ -1434,9 +1430,7 @@ describe('SkillEditor page — Back control and preview round trip', () => {
         name: 'skillEditor.backToManifestAriaLabel',
       }),
     ).toBeTruthy();
-    expect(
-      screen.queryByRole('button', { name: 'skillEditor.backAriaLabel' }),
-    ).toBeNull();
+    expect(screen.queryByRole('button', { name: 'buttons.back' })).toBeNull();
   });
 
   it('preserves edited manifest fields, uploaded files, and dirty state across a preview round trip', async () => {

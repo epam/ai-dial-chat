@@ -11,7 +11,6 @@ import { useTranslation } from 'react-i18next';
 import {
   ButtonsI18nKeys,
   FavoritesI18nKeys,
-  NavigationI18nKeys,
   PromptSelectorI18nKeys,
   SkillSelectorI18nKeys,
 } from '../../constants/translation-keys';
@@ -93,7 +92,7 @@ export const useSkillSelectorOverlay = ({
   const labels = useMemo<SkillSelectorOverlayLabels>(
     () => ({
       addMenuLabel: t(SkillSelectorI18nKeys.AddMenuLabel),
-      backLabel: t(NavigationI18nKeys.Back),
+      backLabel: t(ButtonsI18nKeys.Back),
       catalogModalTitleLabel: t(SkillSelectorI18nKeys.ModalTitle),
       emptyQueryHintLabel: t(SkillSelectorI18nKeys.EmptyQueryHint),
       deletedTooltipLabel: t(SkillSelectorI18nKeys.DeletedTooltipLabel),
@@ -117,8 +116,8 @@ export const useSkillSelectorOverlay = ({
    * 24px line height, keeping the chip's height matched to the line.
    */
   const historyChipLabelClassName = isMobile
-    ? 'dial-small-paragraph-text text-accent'
-    : 'dial-body-text text-accent';
+    ? 'dial-small-paragraph-text'
+    : 'dial-body-text';
 
   const overlay = useHostAgnosticSkillSelectorOverlay({
     isSkillsSupported,

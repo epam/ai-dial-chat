@@ -86,6 +86,8 @@ export interface SharePopoverColors {
   divider?: string;
   /** Loading-skeleton bar/shape color. */
   skeletonColor?: string;
+  /** Popover surface background color. Defaults to `--bg-layer-raised`. */
+  background?: string;
 }
 
 /** Typography overrides for `SharePopover`. */

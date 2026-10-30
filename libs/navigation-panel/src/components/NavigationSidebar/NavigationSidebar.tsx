@@ -53,7 +53,7 @@ const getRootClassName = (isDrawer: boolean, isOpen: boolean): string => {
     );
   }
   return mergeClasses(
-    'fixed inset-y-0 start-0 z-50 flex flex-col overflow-hidden shadow-sm outline-none',
+    'fixed inset-y-0 inset-s-0 z-50 flex flex-col overflow-hidden shadow-sm outline-none',
     'transition-[transform,visibility] duration-200 ease-in-out motion-reduce:transition-none',
     isOpen
       ? 'visible translate-x-0'

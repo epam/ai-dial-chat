@@ -591,7 +591,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
           resizableLeftColumn={resizableMetadata}
           labels={{
             backAriaLabel: t(EditorI18nKeys.BackAriaLabel),
-            savingStatusLabel: t(EditorI18nKeys.SavingStatus),
+            savingStatusLabel: t(ButtonsI18nKeys.Saving),
             metadataTitle: t(EditorI18nKeys.MetadataSectionTitle),
             setupTitle: t(EditorI18nKeys.SetupSectionTitle),
             resizeHandleLabel: t(EditorI18nKeys.ResizeHandleAriaLabel),

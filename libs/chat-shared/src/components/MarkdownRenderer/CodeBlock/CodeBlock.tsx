@@ -53,6 +53,8 @@ export interface MarkdownCodeBlockProps {
   copiedLabel?: string;
   /** Accessible label for the download button. Defaults to `'Download code'`. */
   downloadLabel?: string;
+  /** Accessible label for the scrollable code region. Defaults to `'Scrollable code'`. */
+  scrollRegionAriaLabel?: string;
   /** When true, hides the download button while still showing copy. Defaults to `false`. */
   hideDownload?: boolean;
   /** Extra classes applied to the outer container element. */
@@ -98,6 +100,7 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
     copyLabel = 'Copy code',
     copiedLabel = 'Copied!',
     downloadLabel = 'Download code',
+    scrollRegionAriaLabel = 'Scrollable code',
     hideDownload = false,
     hasContentTopPadding = true,
     containerClassName,
@@ -139,7 +142,7 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
       <div
         style={cssVars}
         className={mergeClasses(
-          'my-4 max-w-full [overflow:clip] rounded-xl border',
+          'my-4 max-w-full overflow-clip rounded-xl border',
           styles.container,
           isLightTheme && styles.containerLight,
           containerClassName,
@@ -210,6 +213,11 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
             'max-h-[60vh] overflow-auto',
           )}
           dir="ltr"
+          /* Code scrolls on both axes, so the region is always a named tab
+             stop: a keyboard user can scroll it with the arrow keys. */
+          role="region"
+          aria-label={scrollRegionAriaLabel}
+          tabIndex={0}
         >
           {language && canHighlight ? (
             <Suspense fallback={plainCode}>

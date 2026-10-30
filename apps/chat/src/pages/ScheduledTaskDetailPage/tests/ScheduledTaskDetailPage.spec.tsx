@@ -811,7 +811,7 @@ describe('ScheduledTaskDetailPage', () => {
       ).toBeTruthy();
       expect(
         screen.queryByRole('button', {
-          name: 'scheduledTasks.card.editActionLabel',
+          name: 'buttons.edit',
         }),
       ).toBeNull();
     });
@@ -870,7 +870,7 @@ describe('ScheduledTaskDetailPage', () => {
 
       expect(
         await screen.findByRole('button', {
-          name: 'scheduledTasks.card.editActionLabel',
+          name: 'buttons.edit',
         }),
       ).toBeTruthy();
     });
@@ -1044,7 +1044,7 @@ describe('ScheduledTaskDetailPage', () => {
       'scheduledTasks.detail.historyError',
     );
     await userEvent.click(
-      screen.getByRole('button', { name: 'scheduledTasks.list.retryLabel' }),
+      screen.getByRole('button', { name: 'buttons.retry' }),
     );
     expect(refetch).toHaveBeenCalledTimes(1);
     expect(screen.getByText('runs:1')).toBeTruthy();
@@ -1280,7 +1280,7 @@ describe('ScheduledTaskDetailPage', () => {
 
     expect(
       await screen.findByRole('button', {
-        name: 'scheduledTasks.list.retryLabel',
+        name: 'buttons.retry',
       }),
     ).toBeTruthy();
 
@@ -1290,7 +1290,7 @@ describe('ScheduledTaskDetailPage', () => {
       trigger: {},
     });
     await userEvent.click(
-      screen.getByRole('button', { name: 'scheduledTasks.list.retryLabel' }),
+      screen.getByRole('button', { name: 'buttons.retry' }),
     );
 
     await waitFor(() => expect(getScheduledTaskMock).toHaveBeenCalledTimes(2));
@@ -1318,7 +1318,7 @@ describe('ScheduledTaskDetailPage', () => {
     expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
     await userEvent.click(
       screen.getByRole('button', {
-        name: 'scheduledTasks.list.retryLabel',
+        name: 'buttons.retry',
       }),
     );
 
@@ -1459,7 +1459,7 @@ describe('ScheduledTaskDetailPage', () => {
 
     expect(
       screen.queryByRole('button', {
-        name: 'scheduledTasks.card.editActionLabel',
+        name: 'buttons.edit',
       }),
     ).not.toBeTruthy();
   });
@@ -1472,13 +1472,13 @@ describe('ScheduledTaskDetailPage', () => {
 
     expect(
       await screen.findByRole('button', {
-        name: 'scheduledTasks.list.retryLabel',
+        name: 'buttons.retry',
       }),
     ).toBeTruthy();
 
     expect(
       screen.queryByRole('button', {
-        name: 'scheduledTasks.card.editActionLabel',
+        name: 'buttons.edit',
       }),
     ).not.toBeTruthy();
   });
@@ -1494,7 +1494,7 @@ describe('ScheduledTaskDetailPage', () => {
 
     expect(
       await screen.findByRole('button', {
-        name: 'scheduledTasks.card.editActionLabel',
+        name: 'buttons.edit',
       }),
     ).toBeTruthy();
   });
@@ -1511,7 +1511,7 @@ describe('ScheduledTaskDetailPage', () => {
     expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
     await userEvent.click(
       screen.getByRole('button', {
-        name: 'scheduledTasks.card.editActionLabel',
+        name: 'buttons.edit',
       }),
     );
 
@@ -2026,7 +2026,7 @@ describe('ScheduledTaskDetailPage', () => {
       expect(screen.getByRole('switch')).toHaveProperty('disabled', true);
       expect(
         screen.getByRole('button', {
-          name: 'scheduledTasks.card.editActionLabel',
+          name: 'buttons.edit',
         }),
       ).toHaveProperty('disabled', true);
 
@@ -2348,7 +2348,7 @@ describe('ScheduledTaskDetailPage', () => {
       ).toBeNull();
       expect(
         screen.queryByRole('button', {
-          name: 'scheduledTasks.card.editActionLabel',
+          name: 'buttons.edit',
         }),
       ).toBeNull();
       expect(screen.queryByRole('switch')).toBeNull();

@@ -67,7 +67,8 @@ import { SettingsPanel } from '@epam/ai-dial-settings-panel';
 ```
 
 When the panel sits under a heading of its own (a dialog title), omit `sectionLabel` and pass
-`ariaLabel` to name the list instead. Pass `styles={{ typography }}` to override the
+`ariaLabel` to name the list instead. Pass `styles={{ colors, typography }}` to override the
+panel background (`colors.background`, as a CSS custom property defaulting to `--bg-layer-raised`) and the
 section-header typography class. The rows are
 drawn by the UI kit's `Tabs`, so their colors and typography (`dial-small-text` /
 `dial-small-semi-text`) come from the kit and are not overridable here.
@@ -103,7 +104,8 @@ entirely by the host — an empty `null` renders an empty cell with no layout sh
 
 Pass `styles={{ colors, typography }}` to override the container background, column-header,
 name, description, and warning-badge colors (as CSS custom properties) and the column-header,
-name, and description typography classes. `descriptionColor` and `descriptionClassName`
+name, description, and limited-access tooltip (`tooltipTitleClassName`,
+`tooltipDescriptionClassName`) and avatar-initials (`avatarInitialsClassName`) typography classes. `descriptionColor` and `descriptionClassName`
 apply to both the service description and the visible limited-access explanation. Without
 a color override, the explanation uses `--text-primary` with a `#161b2d` fallback.
 
@@ -111,14 +113,15 @@ a color override, the explanation uses `--text-primary` with a `#161b2d` fallbac
 
 - `SettingsPanelItem` — `{ id, label, icon?, disabled? }`
 - `SettingsPanelProps` — `{ items, activeId, onSelect, sectionLabel?, ariaLabel?, styles?, className? }`
-- `SettingsPanelStyles` — `{ typography? }`
+- `SettingsPanelStyles` — `{ colors?, typography? }`
+- `SettingsPanelColors` — `{ background? }`
 - `SettingsPanelTypography` — `{ sectionLabelClassName? }`
 - `ExtensionServiceItem` — `{ id, displayName, avatarColor?, description, isWarningVisible, limitedAccessLabel?, limitedAccessTooltipTitle?, limitedAccessTooltipDescription?, action }` — `avatarColor` is an `AVATAR_PALETTE` entry (`@epam/ai-dial-ui-kit`) pinned by the host; omitted keeps the name-derived colour — while `limitedAccessLabel` is set the row renders the red limited-access `Badge` with a two-line hover tooltip (bold `limitedAccessTooltipTitle`, normal `limitedAccessTooltipDescription`) instead of the `action`; `limitedAccessTooltipDescription` also remains visible below the badge at every breakpoint, wrapping within the action cell so keyboard and touch users can read it without hovering. The `Badge` references this visible explanation through `aria-describedby` for screen readers
 - `ExtensionsLabels` — `{ tableAriaLabel, nameColumnLabel, descriptionColumnLabel, actionsColumnLabel }`
 - `ExtensionsSectionProps` — `{ rows, labels, styles? }`
 - `ExtensionsStyles` — `{ colors?, typography? }`
 - `ExtensionsColors` — `{ containerBackground?, columnHeaderColor?, rowDividerColor?, nameColor?, descriptionColor?, warningBadgeColor? }`
-- `ExtensionsTypography` — `{ columnHeaderClassName?, nameClassName?, descriptionClassName? }`
+- `ExtensionsTypography` — `{ columnHeaderClassName?, nameClassName?, descriptionClassName?, tooltipTitleClassName?, tooltipDescriptionClassName?, avatarInitialsClassName? }`
 
 ## Public class names
 

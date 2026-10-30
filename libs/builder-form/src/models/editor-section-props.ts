@@ -8,10 +8,18 @@ export interface EditorSectionColors {
   titleColor?: string;
 }
 
+/** Typography class overrides for `EditorSection`. */
+export interface EditorSectionTypography {
+  /** Typography class of the section title heading. Defaults to `'dial-h3-text'`. */
+  titleClassName?: string;
+}
+
 /** Style overrides for `EditorSection`. */
 export interface EditorSectionStyles {
   /** Color token overrides. */
   colors?: EditorSectionColors;
+  /** Typography class overrides. */
+  typography?: EditorSectionTypography;
 }
 
 /** Props for `EditorSection`. */

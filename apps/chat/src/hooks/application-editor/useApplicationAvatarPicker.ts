@@ -76,7 +76,7 @@ export const useApplicationAvatarPicker = (): ApplicationAvatarPicker => {
       emptyTitle: t(DialFileManagerI18nKeys.Empty),
       emptyDescription: '',
       errorMessage: t(DialFileManagerI18nKeys.Error),
-      retryLabel: t(DialFileManagerI18nKeys.Retry),
+      retryLabel: t(ButtonsI18nKeys.Retry),
       hiddenFilesLabel: t(DialFileManagerI18nKeys.HiddenFiles),
       showHiddenFilesLabel: t(DialFileManagerI18nKeys.ShowHiddenFiles),
       hideHiddenFilesLabel: t(DialFileManagerI18nKeys.HideHiddenFiles),

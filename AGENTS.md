@@ -53,8 +53,10 @@ Ground-truth design docs live in `docs/`; every app and lib owns a `README.md` t
 
 Details live in path-scoped rules; the short version applies everywhere:
 
-- **RTL** (`.claude/rules/rtl.md`): every app and lib supports Arabic and other RTL locales. Use logical Tailwind classes (`ms-*`, `ps-*`, `start-*`, `text-start`, `border-s-*`, `rounded-s-*`) and CSS logical properties instead of physical ones; mirror directional icons with `rtl:scale-x-[-1]`; libs never read the language to decide direction.
-- **Accessibility** (`.claude/rules/a11y.md`): target WCAG 2.1 AAA on all interactive UI by default.
+- **RTL** (`.claude/rules/rtl.md`): every app and lib supports Arabic and other RTL locales. Use logical Tailwind classes (`ms-*`, `ps-*`, `inset-s-*`, `text-start`, `border-s-*`, `rounded-s-*`) and CSS logical properties instead of physical ones; mirror directional icons with `rtl:scale-x-[-1]`; libs never read the language to decide direction.
+- **Accessibility** (`.claude/rules/a11y.md`): target WCAG 2.1 AAA on all interactive UI by default; dynamic feedback goes through the kit `LiveRegion`, mounted before its text.
+- **Lib strings** (`i18n-strings` skill): in `libs/*` every user-visible string comes from a `*Labels` prop with an English default; `apps/chat` fills each one with `t()` and an enum key.
+- **Lib colors and typography** (`lib-theming` skill): in `libs/*` every color comes from a `*Colors` prop as `var(--<prefix>-x, fallback)` in the component's `.module.scss`, and every `dial-*-text` class from a `*ClassName` prop default — never hardcoded in lib JSX.
 - **Search results** (`.claude/rules/search-results-highlight.md`): render matched text with `Highlight` from `@epam/ai-dial-ui-kit`, threading the query down as `searchQuery`.
 - **UI kit** (`.claude/rules/all-tsx.md`): discover kit components only through the `@epam/ai-dial-ui-kit` MCP tools (`searchEntity`, `getEntityDetails`), never by grepping the package; always use 2.0 components over legacy `Dial*`; pass `stroke={DIAL_KIT_ICON_STROKE}` on every Tabler outline icon. The upgrade/breaking-change workflow is in the same file.
 - **TypeScript** (`.claude/rules/all-ts.md`): no `.js`/`.ts` extensions in relative specifiers, string enums over literal unions, `/* */` for multi-line comments.

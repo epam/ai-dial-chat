@@ -268,6 +268,21 @@ describe('ScheduledTaskRunHistoryList', () => {
     expect(onRunClick).toHaveBeenCalledWith(run);
   });
 
+  it('keeps a clickable row a listitem that holds the row button', () => {
+    render(
+      <ScheduledTaskRunHistoryList
+        items={[buildRun({ id: 'run_1', conversationId: 'conversations/c1' })]}
+        onRunClick={vi.fn()}
+        labels={labels}
+      />,
+    );
+
+    const item = screen.getByRole('listitem');
+    expect(
+      within(item).getByRole('button', { name: /Succeeded/ }),
+    ).toBeTruthy();
+  });
+
   it('invokes onRunClick when a row is activated via keyboard', async () => {
     const onRunClick = vi.fn();
     const run = buildRun({ id: 'run_1', conversationId: 'conversations/c1' });

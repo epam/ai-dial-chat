@@ -87,6 +87,7 @@ import { resolveFavoriteEntityType } from '../../utils/favorites';
 import {
   getAccessRulesLabels,
   getPublishAuthorLabels,
+  getPublishPanelCommonLabels,
 } from '../../utils/publish';
 import { canEditShareAccess } from '../../utils/share';
 import { ApplicationCredentials } from '../ApplicationCredentials/ApplicationCredentials';
@@ -678,6 +679,7 @@ const CatalogView: FC<Props> = ({
           rootFolderLabel: t(BasicI18nKeys.Organization),
           accessRulesLabels: getAccessRulesLabels(t),
           ...getPublishAuthorLabels(t),
+          ...getPublishPanelCommonLabels(t),
         }}
         shareOverlay={(item, onClose) => (
           <SharePopoverContainer
@@ -698,7 +700,7 @@ const CatalogView: FC<Props> = ({
           createSearchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
           createSearchClearLabel: t(BasicI18nKeys.ClearSearch),
           createNoResultsLabel: t(BasicI18nKeys.NoResults),
-          createMenuBackLabel: t(NavigationI18nKeys.Back),
+          createMenuBackLabel: t(ButtonsI18nKeys.Back),
           createMenuCloseLabel: t(ButtonsI18nKeys.Close),
           favoritesTitle: t(FavoritesI18nKeys.Title),
           browseTitle: t(ButtonsI18nKeys.Browse),
@@ -729,7 +731,7 @@ const CatalogView: FC<Props> = ({
             listView: t(CatalogI18nKeys.BrowseSettingsList),
             clear: t(ButtonsI18nKeys.Clear),
             apply: t(ButtonsI18nKeys.Apply),
-            back: t(NavigationI18nKeys.Back),
+            back: t(ButtonsI18nKeys.Back),
             close: t(ButtonsI18nKeys.Close),
             formatFilterCount: (selected, total) =>
               t(CatalogI18nKeys.BrowseSettingsFilterCount, { selected, total }),
@@ -893,7 +895,7 @@ const CatalogView: FC<Props> = ({
           ),
           tabConnectLabel: t(ButtonsI18nKeys.Connect),
           manageActionLabel: t(ButtonsI18nKeys.Manage),
-          deleteConfirmTitle: t(CatalogI18nKeys.DetailsDeleteConfirmTitle),
+          deleteConfirmTitle: t(ButtonsI18nKeys.Delete),
           deleteConfirmMessage: (name) => (
             <Trans
               i18nKey={CatalogI18nKeys.DetailsDeleteConfirmMessage}
@@ -907,7 +909,7 @@ const CatalogView: FC<Props> = ({
             t(BasicI18nKeys.ConsequenceCannotBeUndone),
           ],
           unshareLabel: t(ButtonsI18nKeys.RemoveFromMyList),
-          unshareConfirmTitle: t(CatalogI18nKeys.DetailsUnshareConfirmTitle),
+          unshareConfirmTitle: t(ButtonsI18nKeys.RemoveFromMyList),
           unshareConfirmMessage: (name) => (
             <Trans
               i18nKey={CatalogI18nKeys.DetailsUnshareConfirmMessage}

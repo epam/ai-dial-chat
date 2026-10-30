@@ -1236,10 +1236,22 @@ export const useConversationStream = ({
    * resume to take an attach-announced generation id, so those two keep their Stop behavior.
    */
   const resumeIfAwaitingGeneration = useCallback(
-    (currentConversationId: string, conversation: Conversation) =>
+    (currentConversationId: string, conversation: Conversation) => {
+      /* A load replay (StrictMode, or returning to an in-flight chat) can
+         restore our own empty buffer before the first token arrives. The
+         local stream already owns that path: attaching would replace its
+         buffer and let the resume's early read erase the answer. Internal
+         error/conflict recovery still calls resumeGeneration directly. */
+      if (
+        activeGenerationIdsRef.current.has(
+          getConversationPath(currentConversationId),
+        )
+      )
+        return;
       resumeGeneration(currentConversationId, conversation, {
         trackAttachGenerationId: true,
-      }),
+      });
+    },
     [resumeGeneration],
   );
 

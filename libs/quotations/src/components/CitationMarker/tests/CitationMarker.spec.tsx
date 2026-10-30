@@ -32,6 +32,21 @@ const parentOf = (element: Element): Element | null =>
   element.parentElement;
 
 describe('CitationMarker', () => {
+  it('forwards the popup state attributes to the button', () => {
+    renderMarker({
+      'aria-haspopup': 'dialog',
+      'aria-expanded': true,
+      'aria-controls': 'citation-card',
+    });
+
+    const button = screen.getByRole('button', {
+      name: 'Citation from Wikipedia',
+    });
+    expect(button.getAttribute('aria-haspopup')).toBe('dialog');
+    expect(button.getAttribute('aria-expanded')).toBe('true');
+    expect(button.getAttribute('aria-controls')).toBe('citation-card');
+  });
+
   it('uses the single label when annotationCount is 1', () => {
     renderMarker({ annotationCount: 1 });
     expect(screen.getByText('Wikipedia')).toBeTruthy();

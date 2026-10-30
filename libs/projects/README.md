@@ -126,15 +126,16 @@ Only logical properties are used, so the layout follows the inherited `dir`.
 
 `styles.colors` overrides the CSS custom properties. Each one falls back to the matching app theme token:
 
-| Field            | Fallback            |
-| ---------------- | ------------------- |
-| `background`     | `--bg-layer-base`   |
-| `subtitleText`   | `--text-secondary`  |
-| `sortButtonText` | `--text-primary`    |
-| `cardBackground` | `--bg-layer-raised` |
-| `cardTitleText`  | `--text-primary`    |
-| `updatedAtText`  | `--text-secondary`  |
-| `pathText`       | `--text-secondary`  |
+| Field              | Fallback            |
+| ------------------ | ------------------- |
+| `background`       | `--bg-layer-base`   |
+| `subtitleText`     | `--text-secondary`  |
+| `sortButtonText`   | `--text-primary`    |
+| `cardBackground`   | `--bg-layer-raised` |
+| `cardTitleText`    | `--text-primary`    |
+| `updatedAtText`    | `--text-secondary`  |
+| `pathText`         | `--text-secondary`  |
+| `cardFocusOutline` | `--stroke-focus`    |
 
 `styles.typography` overrides the type-scale classes:
 

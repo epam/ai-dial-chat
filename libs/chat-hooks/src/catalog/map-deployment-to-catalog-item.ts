@@ -18,7 +18,10 @@ import { isPublicToolsetId } from '../oauth/toolset-id';
 import { resolveLocalizedText } from '../shared/locale';
 import { safeDecodeURIComponent } from '../shared/string-utils';
 import type { EntitySpecificDetails } from './entity-details';
-import { mapEntityDetailsToCatalogDetails } from './map-entity-details-to-catalog';
+import {
+  type EntityDetailsLabels,
+  mapEntityDetailsToCatalogDetails,
+} from './map-entity-details-to-catalog';
 
 const AUTHENTICATION_TYPE_MAP: Record<
   DialToolsetAuthSettingsDto['authenticationType'],
@@ -180,6 +183,8 @@ const resolveToolsetFolder = (
 export interface MapDeploymentToCatalogItemOptions {
   favoriteIds?: ReadonlySet<string>;
   entityDetails?: EntitySpecificDetails;
+  /** Translated Overview labels for `entityDetails`. Unset fields fall back to the English defaults. */
+  entityDetailsLabels?: Partial<EntityDetailsLabels>;
   folderLabels: DeploymentFolderLabels;
   editableSchemaIds?: string[];
   isCustomAppsEditable?: boolean;
@@ -238,6 +243,7 @@ export const mapDeploymentToCatalogItem = (
   {
     favoriteIds = new Set(),
     entityDetails,
+    entityDetailsLabels,
     folderLabels,
     editableSchemaIds = [],
     isCustomAppsEditable = false,
@@ -289,7 +295,7 @@ export const mapDeploymentToCatalogItem = (
     folder: resolveDeploymentFolder(deployment, folderLabels),
     details:
       entityDetails != null
-        ? mapEntityDetailsToCatalogDetails(entityDetails)
+        ? mapEntityDetailsToCatalogDetails(entityDetails, entityDetailsLabels)
         : undefined,
     supportsMcp: deployment.features?.mcp === true,
     supportsChat: supportsChatInterface(deployment),

@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   CloseButton,
   Notification,
@@ -11,6 +11,7 @@ import {
   UsageLimitBannerSeverity,
   type UsageLimitBannerViewProps,
 } from '../../models/UsageLimitBanner';
+import styles from './UsageLimitBannerView.module.scss';
 
 const SEVERITY_VARIANTS: Record<UsageLimitBannerSeverity, NotificationVariant> =
   {
@@ -28,6 +29,7 @@ export const UsageLimitBannerView: FC<UsageLimitBannerViewProps> = ({
   limitTextClassName = 'dial-small-paragraph-semi-text',
   resetTextClassName = 'dial-small-paragraph-text',
   className,
+  colors,
 }) => {
   const limitSentence = <span className={limitTextClassName}>{limitText}</span>;
 
@@ -65,10 +67,11 @@ export const UsageLimitBannerView: FC<UsageLimitBannerViewProps> = ({
       title={resetSentence ? limitSentence : undefined}
       message={resetSentence || limitSentence}
       className={mergeClasses(
-        'bg-layer-sunken',
+        styles.banner,
         CONVERSATION_INPUT_CLASS.usageBanner,
         className,
       )}
+      style={buildCssVars({ '--ci-usage-banner-bg': colors?.background })}
     >
       {onClose != null && (
         <CloseButton

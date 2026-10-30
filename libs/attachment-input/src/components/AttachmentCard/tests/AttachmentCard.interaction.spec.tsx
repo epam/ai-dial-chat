@@ -84,7 +84,7 @@ describe('AttachmentCard — tiles with onClick', () => {
       render(<AttachmentCard attachment={attachment} onClick={vi.fn()} />);
 
       const tile = screen.getByRole('button', { name });
-      expect(tile.getAttribute('tabindex')).toBe('0');
+      expect(tile.tagName).toBe('BUTTON');
       expect(tile.className).toContain('cursor-pointer');
     },
   );
@@ -94,7 +94,8 @@ describe('AttachmentCard — tiles with onClick', () => {
     ['image', imageAttachment],
   ])(
     'calls onClick from mouse, Enter and Space on a %s tile',
-    (_, attachment) => {
+    async (_, attachment) => {
+      const user = userEvent.setup();
       const onClick = vi.fn();
       render(
         <AttachmentCard
@@ -105,9 +106,9 @@ describe('AttachmentCard — tiles with onClick', () => {
       );
 
       const tile = screen.getByRole('button', { name: 'Open it' });
-      fireEvent.click(tile);
-      fireEvent.keyDown(tile, { key: 'Enter' });
-      fireEvent.keyDown(tile, { key: ' ' });
+      await user.click(tile);
+      await user.keyboard('{Enter}');
+      await user.keyboard(' ');
       expect(onClick).toHaveBeenCalledTimes(3);
       expect(onClick).toHaveBeenCalledWith(attachment.id);
     },
@@ -146,7 +147,8 @@ describe('AttachmentCard — expandable pasted tiles', () => {
     ).toBeTruthy();
   });
 
-  it('expands on mouse, Enter and Space instead of calling onClick', () => {
+  it('expands on mouse, Enter and Space instead of calling onClick', async () => {
+    const user = userEvent.setup();
     const onExpand = vi.fn();
     const onClick = vi.fn();
     render(
@@ -158,9 +160,9 @@ describe('AttachmentCard — expandable pasted tiles', () => {
     );
 
     const tile = screen.getByRole('button', { name: 'Expand pasted text' });
-    fireEvent.click(tile);
-    fireEvent.keyDown(tile, { key: 'Enter' });
-    fireEvent.keyDown(tile, { key: ' ' });
+    await user.click(tile);
+    await user.keyboard('{Enter}');
+    await user.keyboard(' ');
 
     expect(onExpand).toHaveBeenCalledTimes(3);
     expect(onExpand).toHaveBeenCalledWith('p1');

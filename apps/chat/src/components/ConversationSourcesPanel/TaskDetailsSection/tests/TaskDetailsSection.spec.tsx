@@ -133,9 +133,7 @@ describe('TaskDetailsSection', () => {
         .getByText('scheduledTasks.conversationBanner.unavailableLabel')
         .getAttribute('role'),
     ).toBe('status');
-    await user.click(
-      screen.getByRole('button', { name: 'scheduledTasks.list.retryLabel' }),
-    );
+    await user.click(screen.getByRole('button', { name: 'buttons.retry' }));
     expect(onRetry).toHaveBeenCalledOnce();
   });
 });

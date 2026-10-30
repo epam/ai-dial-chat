@@ -11,13 +11,7 @@ import {
   Spinner,
 } from '@epam/ai-dial-ui-kit';
 import { IconPhoto } from '@tabler/icons-react';
-import {
-  CSSProperties,
-  type FC,
-  type HTMLAttributes,
-  type KeyboardEvent,
-  useMemo,
-} from 'react';
+import { CSSProperties, type FC, useMemo } from 'react';
 import {
   ATTACHMENT_TILE_BASE_CLASS,
   ATTACHMENT_TILE_FOCUS_RING_CLASS,
@@ -103,33 +97,6 @@ export const ImageAttachment: FC<ImageAttachmentProps> = ({
     }
   };
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    /*
-     * Only the tile itself activates on Enter/Space — see FileAttachment for
-     * why the corner action buttons must not have their activation cancelled
-     * by the preventDefault() below.
-     */
-    if (e.target !== e.currentTarget) return;
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      handleCardClick();
-    }
-  };
-
-  /*
-   * Role, Tab stop, name and handlers travel together, so the tile is either a
-   * complete button or a plain element — never a focusable no-op.
-   */
-  const interactiveProps: HTMLAttributes<HTMLDivElement> = hasAction
-    ? {
-        role: 'button',
-        tabIndex: 0,
-        'aria-label': isExpandable ? expandLabel : clickLabel,
-        onClick: handleCardClick,
-        onKeyDown: handleKeyDown,
-      }
-    : {};
-
   const cardClassName = mergeClasses(
     ATTACHMENT_TILE_BASE_CLASS,
     'group/attachment-tile',
@@ -145,12 +112,7 @@ export const ImageAttachment: FC<ImageAttachmentProps> = ({
   );
 
   return (
-    <div
-      className={cardClassName}
-      {...interactiveProps}
-      aria-busy={isLoading}
-      style={cssVars}
-    >
+    <div className={cardClassName} aria-busy={isLoading} style={cssVars}>
       <div className="relative h-full w-full overflow-hidden">
         <div className="absolute inset-e-1 top-1 z-10 flex">
           {onRemove && (
@@ -201,6 +163,20 @@ export const ImageAttachment: FC<ImageAttachmentProps> = ({
               : 'opacity-0',
           )}
         />
+        {/* A sibling of the corner actions rather than a role on the tile, so
+            no control is nested inside another (WCAG 4.1.2). The button exists
+            only when activating it does something. */}
+        {hasAction && (
+          <button
+            type="button"
+            aria-label={isExpandable ? expandLabel : clickLabel}
+            onClick={handleCardClick}
+            className={mergeClasses(
+              'absolute inset-0 cursor-pointer rounded-xl',
+              styles.tileAction,
+            )}
+          />
+        )}
         {isLoading && (
           /* Same indeterminate progressbar as FileAttachment's upload overlay. */
           <div
