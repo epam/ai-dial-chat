@@ -3,10 +3,12 @@ import { type IncomingHttpHeaders, createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { PassThrough, Readable } from 'node:stream';
 import { crc32 } from 'node:zlib';
 import {
   BadGatewayException,
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   HttpException,
   PayloadTooLargeException,
@@ -493,6 +495,195 @@ describe('FilesUploadService', () => {
       } finally {
         server.close();
       }
+    });
+
+    describe('streamed source', () => {
+      const PATTERN = Buffer.from(
+        Array.from({ length: 300_000 }, (_, i) => i % 251),
+      );
+
+      const streamedFile = (
+        payload: Buffer,
+        size: number = payload.length,
+      ): { stream: Readable; size: number; mimetype: string } => ({
+        stream: Readable.from(
+          (function* () {
+            for (let offset = 0; offset < payload.length; offset += 16_384) {
+              yield payload.subarray(offset, offset + 16_384);
+            }
+          })(),
+        ),
+        size,
+        mimetype: 'text/csv',
+      });
+
+      const captureBody = (fetchCore: ReturnType<typeof vi.fn>) => {
+        const captured: { body: Buffer } = { body: Buffer.alloc(0) };
+        fetchCore.mockImplementation(async (_: string, init: RequestInit) => {
+          captured.body = await readBody(init.body);
+          return new Response(null, { status: 201 });
+        });
+        return captured;
+      };
+
+      it('forwards a Content-Length of preamble + declared size + epilogue without chunked encoding', async () => {
+        const { service, fetchCore } = makeService();
+        const captured = captureBody(fetchCore);
+
+        await service.uploadFile(
+          'b',
+          'reports/q3.csv',
+          streamedFile(PATTERN),
+          't',
+        );
+
+        const { headers } = putCall(fetchCore);
+        const body = captured.body.toString('latin1');
+        const boundary = headers['Content-Type'].split('boundary=')[1];
+        const preamble = `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="q3.csv"\r\nContent-Type: text/csv\r\n\r\n`;
+        const epilogue = `\r\n--${boundary}--\r\n`;
+        expect(headers['Content-Length']).toBe(
+          String(preamble.length + PATTERN.length + epilogue.length),
+        );
+        expect(headers['Content-Length']).toBe(String(captured.body.length));
+        expect(headers).not.toHaveProperty('Transfer-Encoding');
+        expect(body.startsWith(preamble)).toBe(true);
+        expect(body.endsWith(epilogue)).toBe(true);
+      });
+
+      it('delivers the stream bytes to the fetch body in order', async () => {
+        const { service, fetchCore } = makeService();
+        const captured = captureBody(fetchCore);
+
+        await service.uploadFile('b', 'big.bin', streamedFile(PATTERN), 't');
+
+        expect(captured.body.includes(PATTERN)).toBe(true);
+      });
+
+      it.each([
+        ['ends short of', PATTERN.length + 1],
+        ['runs past', PATTERN.length - 1],
+      ])(
+        'errors the request body when the stream %s its declared size',
+        async (_label, declaredSize) => {
+          const { service, fetchCore } = makeService();
+          let bodyError: unknown;
+          fetchCore.mockImplementation(async (_: string, init: RequestInit) => {
+            bodyError = await readBody(init.body).then(
+              () => undefined,
+              (err: unknown) => err,
+            );
+            throw bodyError ?? new Error('body completed');
+          });
+
+          const error = await service
+            .uploadFile(
+              'b',
+              'big.bin',
+              streamedFile(PATTERN, declaredSize),
+              't',
+            )
+            .catch((err: unknown) => err);
+
+          expect((bodyError as Error).message).toMatch(/declared/);
+          expect(error).toBeInstanceOf(ServiceUnavailableException);
+        },
+      );
+
+      it('aborts the fetch and reports a client close when the external signal aborts', async () => {
+        const { service, fetchCore } = makeService();
+        const client = new AbortController();
+        let fetchSignal: AbortSignal | undefined;
+        fetchCore.mockImplementation(async (_: string, init: RequestInit) => {
+          fetchSignal = init.signal ?? undefined;
+          await (init.body as ReadableStream).getReader().read();
+          const pending = hangUntilAborted(init);
+          client.abort();
+          return pending;
+        });
+
+        const error = await service
+          .uploadFile(
+            'b',
+            'big.bin',
+            streamedFile(PATTERN),
+            't',
+            undefined,
+            client.signal,
+          )
+          .catch((err: unknown) => err);
+
+        expect(fetchSignal?.aborted).toBe(true);
+        expect(error).toBeInstanceOf(BadRequestException);
+        expect((error as Error).message).toBe('The client closed the upload');
+      });
+
+      it('aborts with the stall 503 when the stream stops delivering bytes', async () => {
+        const { service, fetchCore } = makeService({
+          FILE_TRANSFER_TIMEOUT_MS: 100,
+        });
+        const stalled = new PassThrough();
+        stalled.write(Buffer.alloc(1024));
+        fetchCore.mockImplementation((_: string, init: RequestInit) => {
+          void readBody(init.body).catch(() => undefined);
+          return hangUntilAborted(init);
+        });
+
+        const error = await service
+          .uploadFile(
+            'b',
+            'big.bin',
+            { stream: stalled, size: 4096, mimetype: 'text/plain' },
+            't',
+          )
+          .catch((err: unknown) => err);
+
+        expect(error).toBeInstanceOf(ServiceUnavailableException);
+        expect((error as Error).message).toMatch(/stalled/);
+      });
+
+      it('leaves the source stream open when DIAL Core answers before the body ends', async () => {
+        const { service, fetchCore } = makeService();
+        const source = new PassThrough();
+        source.write(Buffer.alloc(1024));
+        fetchCore.mockImplementation(async (_: string, init: RequestInit) => {
+          await (init.body as ReadableStream).getReader().read();
+          return new Response(null, { status: 413 });
+        });
+
+        await expect(
+          service.uploadFile(
+            'b',
+            'big.bin',
+            { stream: source, size: 4096, mimetype: 'text/plain' },
+            't',
+          ),
+        ).rejects.toThrow(PayloadTooLargeException);
+        expect(source.destroyed).toBe(false);
+      });
+
+      it.each([
+        [412, ConflictException],
+        [413, PayloadTooLargeException],
+        [500, BadGatewayException],
+        [503, BadGatewayException],
+      ])(
+        'maps DIAL Core %i to the matching exception',
+        async (status, error) => {
+          const { service, fetchCore } = makeService();
+          fetchCore.mockImplementation(respondWith(status));
+
+          await expect(
+            service.uploadFile(
+              'b',
+              'p',
+              streamedFile(PATTERN),
+              't',
+              'create-only',
+            ),
+          ).rejects.toThrow(error);
+        },
+      );
     });
 
     describe('progress-based timeouts', () => {

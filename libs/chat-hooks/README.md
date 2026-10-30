@@ -2632,6 +2632,31 @@ const uploadFileWithProgress = createUploadFileWithProgress({
 });
 ```
 
+The optional `bodyEncoding` dep (`UploadBodyEncoding`) selects how the request carries the file; it must match what the endpoint at `uploadUrl` accepts:
+
+| Member                                   | Request                                                                                                                                                                                                                   |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `UploadBodyEncoding.Multipart` (default) | `POST uploadUrl` with a `FormData` body carrying `file`, `bucket`, `path` and, when set, `uploadMode`                                                                                                                     |
+| `UploadBodyEncoding.Raw`                 | `PUT uploadUrl?bucket=…&path=…` (plus `uploadMode` when set and `contentType` when `file.type` is non-empty) with `Content-Type: application/octet-stream` and the `File` itself as the body, so the server can stream it |
+
+Progress, abort, CSRF and `401` handling are the same for both.
+
+```ts
+import {
+  UploadBodyEncoding,
+  createUploadFileWithProgress,
+} from '@epam/ai-dial-chat-hooks';
+
+const uploadFileWithProgress = createUploadFileWithProgress({
+  getCsrfToken,
+  setCsrfToken,
+  notifyUnauthorized,
+  createUnauthorizedError: (url) => new UnauthorizedError(url),
+  uploadUrl: '/api/v1/files/content',
+  bodyEncoding: UploadBodyEncoding.Raw,
+});
+```
+
 ### createChatStreamApi
 
 Builds the streamed-completion transport (`streamCompletion`/`stopCompletion`), parameterized by the host's CSRF state, completions base path, and an optional timezone resolver.
