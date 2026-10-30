@@ -7,6 +7,7 @@ import {
   Get,
   Header,
   HttpCode,
+  Logger,
   Param,
   Post,
   Put,
@@ -19,6 +20,7 @@ import {
 import {
   ApiBody,
   ApiConsumes,
+  ApiExtraModels,
   ApiHeader,
   ApiOperation,
   ApiParam,
@@ -32,6 +34,18 @@ import { FeatureGuard } from '../app-config/feature-flags/feature.guard';
 import { RequireFeature } from '../app-config/feature-flags/require-feature.decorator';
 import type { SessionUser } from '../auth/session/session.types';
 import { ApiDialCoreErrors } from '../common/dial/api-dial-core-errors.decorator';
+import {
+  SSE_DRAIN_TIMEOUT_MS,
+  SSE_KEEPALIVE_PAYLOAD,
+  startSseResponse,
+  waitForDrain,
+  writeSseChunk,
+} from '../common/utils/sse';
+import { SSE_KEEPALIVE_INTERVAL_MS } from '../conversations/streaming/conversation-completions.responder';
+import {
+  SseSubscriptionKind,
+  trackSseSubscription,
+} from '../telemetry/runtime-metrics';
 import type { UploadedContextFile } from './create/projects-create.service';
 import {
   type ProjectDownload,
@@ -47,13 +61,16 @@ import {
   ProjectFileParamDto,
   ProjectIdParamDto,
 } from './dto/project-id-param.dto';
+import { ProjectWatchEventDto } from './dto/project-watch-event.dto';
 import {
   UpdateProjectDto,
   UpdateProjectResponseDto,
 } from './dto/update-project.dto';
+import { WatchProjectsBodyDto } from './dto/watch-projects.dto';
 import { ProjectContextUploadInterceptor } from './project-context-upload.interceptor';
 import { ProjectsService, requireProjectId } from './projects.service';
 import { ProjectsUpdateService } from './update/projects-update.service';
+import { ProjectsWatchService } from './watch/projects-watch.service';
 
 /** Request header name of a conditional write's ETag, as Express lower-cases it. */
 const IF_MATCH_HEADER = 'if-match';
@@ -86,10 +103,13 @@ const abortOnClose = (req: Request): AbortSignal => {
 @UseGuards(FeatureGuard)
 @RequireFeature(FeatureKey.ProjectsEnabled)
 export class ProjectsController {
+  private readonly logger = new Logger(ProjectsController.name);
+
   constructor(
     private readonly projectsService: ProjectsService,
     private readonly downloadService: ProjectsDownloadService,
     private readonly updateService: ProjectsUpdateService,
+    private readonly watchService: ProjectsWatchService,
   ) {}
 
   @Get()
@@ -119,6 +139,99 @@ export class ProjectsController {
   listProjects(@Req() req: Request): Promise<ListProjectsResponseDto> {
     const { at, bucket } = req.user as SessionUser;
     return this.projectsService.listProjects(bucket, at);
+  }
+
+  @Post('watch')
+  @HttpCode(200)
+  @ApiProduces('text/event-stream')
+  @ApiExtraModels(ProjectWatchEventDto)
+  @ApiOperation({
+    operationId: 'watchProjects',
+    summary: 'Follow changes to listed projects via SSE',
+    description:
+      'Opens one DIAL Core resource subscription for the given project ids and streams ' +
+      'project-level changes as SSE: each `data:` line is a `ProjectWatchEventDto`. Events of ' +
+      'files inside a project are dropped, and a `: keepalive` comment is sent every 15 seconds. ' +
+      'The stream lasts until the client disconnects or DIAL Core ends it.',
+  })
+  @ApiDialCoreErrors()
+  @ApiResponse({
+    status: 200,
+    description: 'SSE stream of `ProjectWatchEventDto` events',
+    content: { 'text/event-stream': { schema: { type: 'string' } } },
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'The ids are missing, too many, duplicated or not project ids, or DIAL Core does not support project subscriptions',
+  })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({
+    status: 403,
+    description:
+      'The projectsEnabled feature is not enabled for this user, or DIAL Core denied READ on one of the projects',
+  })
+  async watchProjects(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Body() { ids }: WatchProjectsBodyDto,
+  ): Promise<void> {
+    const { at } = req.user as SessionUser;
+    const finishSubscription = trackSseSubscription(
+      SseSubscriptionKind.ProjectsWatch,
+    );
+    const abortController = new AbortController();
+    const handleClose = () => abortController.abort();
+    res.on('close', handleClose);
+
+    let keepaliveTimer: ReturnType<typeof setInterval> | undefined;
+    try {
+      const events = await this.watchService.watchProjects(
+        ids,
+        at,
+        abortController.signal,
+      );
+      if (abortController.signal.aborted) {
+        await events.return(undefined);
+        return;
+      }
+
+      startSseResponse(res);
+      keepaliveTimer = setInterval(() => {
+        writeSseChunk(res, SSE_KEEPALIVE_PAYLOAD);
+      }, SSE_KEEPALIVE_INTERVAL_MS);
+
+      try {
+        for await (const event of events) {
+          const { needsDrain } = writeSseChunk(
+            res,
+            `data: ${JSON.stringify(event)}\n\n`,
+          );
+          if (!needsDrain) continue;
+          const outcome = await waitForDrain(
+            res,
+            abortController.signal,
+            SSE_DRAIN_TIMEOUT_MS,
+          );
+          if (outcome !== 'drained') break;
+        }
+      } catch (err) {
+        if (!abortController.signal.aborted) {
+          this.logger.warn(
+            `Project watch stream failed (${err instanceof Error ? err.name : 'unknown error'})`,
+          );
+        }
+      } finally {
+        /* Leaving the loop early runs the generator's cleanup, which
+         * cancels the DIAL Core subscription. */
+        abortController.abort();
+        if (!res.writableEnded) res.end();
+      }
+    } finally {
+      if (keepaliveTimer != null) clearInterval(keepaliveTimer);
+      res.off('close', handleClose);
+      finishSubscription();
+    }
   }
 
   @Get(':id')

@@ -6302,6 +6302,50 @@ export type ProjectSource = (typeof ProjectSource)[keyof typeof ProjectSource];
 /**
  *
  * @export
+ */
+export const ProjectWatchAction = {
+  Create: 'CREATE',
+  Update: 'UPDATE',
+  Delete: 'DELETE',
+} as const;
+export type ProjectWatchAction =
+  (typeof ProjectWatchAction)[keyof typeof ProjectWatchAction];
+
+/**
+ *
+ * @export
+ * @interface ProjectWatchEventDto
+ */
+export interface ProjectWatchEventDto {
+  /**
+   * Id of the watched project the event is about.
+   * @type {string}
+   * @memberof ProjectWatchEventDto
+   */
+  id: string;
+  /**
+   *
+   * @type {ProjectWatchAction}
+   * @memberof ProjectWatchEventDto
+   */
+  action: ProjectWatchAction;
+  /**
+   * Epoch ms at which DIAL Core published the event; within milliseconds of the stored `updatedAt`, but not equal to it.
+   * @type {number}
+   * @memberof ProjectWatchEventDto
+   */
+  timestamp: number;
+  /**
+   * The project's new aggregate ETag; absent on `DELETE`.
+   * @type {string}
+   * @memberof ProjectWatchEventDto
+   */
+  etag?: string;
+}
+
+/**
+ *
+ * @export
  * @interface ProjectsConfigDto
  */
 export interface ProjectsConfigDto {
@@ -9377,4 +9421,17 @@ export interface WatchConversationBodyDto {
    * @memberof WatchConversationBodyDto
    */
   path: string;
+}
+/**
+ *
+ * @export
+ * @interface WatchProjectsBodyDto
+ */
+export interface WatchProjectsBodyDto {
+  /**
+   * Unique ids of the listed projects, `projects/{bucket}/{path}` each.
+   * @type {Array<string>}
+   * @memberof WatchProjectsBodyDto
+   */
+  ids: Array<string>;
 }

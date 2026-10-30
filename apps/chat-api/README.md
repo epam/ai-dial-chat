@@ -825,6 +825,25 @@ rejection carries a `ProjectCreateErrorCode`: `invalid-name`, `name-taken`
 or `too-many-files` (more than 100 context files). Logs carry only the outcome,
 the file count and the byte total.
 
+### Project live updates
+
+`POST /api/v1/projects/watch` (`watchProjects`) takes `{ "ids": [...] }`, 1
+to 1000 unique project ids, and opens one DIAL Core resource subscription
+(`POST /v1/ops/resource/subscribe`) for them. The response is an SSE stream:
+each `data:` line is a `ProjectWatchEventDto`
+(`{ id, action: CREATE | UPDATE | DELETE, timestamp, etag? }`), events of the
+files inside a project are dropped, and a `: keepalive` comment is written
+every 15 s. Closing the request closes the Core subscription. It is gated by
+`features.projectsEnabled`, and Core checks READ access on every project.
+
+Project events exist only in DIAL Core builds that contain commit `50b387b8`
+(epam/ai-dial-core#2179), which is newer than the `0.49.3` release. An older
+Core answers the subscribe call with `400`, a project the caller can no
+longer read makes it answer `403`, and the endpoint passes either status on
+before opening the stream. The Projects page then works without live
+updates for the rest of the visit. During a rolling Core upgrade, pods on
+the old release publish no project events.
+
 ### Project view, edit and delete
 
 Every per-project route takes `:id`, the DIAL id `projects/{bucket}/{path}`

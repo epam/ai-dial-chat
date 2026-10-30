@@ -2,6 +2,7 @@ import {
   buildCssVars,
   mergeClasses,
   PanelEmptyState,
+  useIsMobile,
 } from '@epam/ai-dial-chat-shared';
 import {
   Button,
@@ -19,15 +20,15 @@ import {
   LiveRegion,
   LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
-import { IconArrowsSort } from '@tabler/icons-react';
-import { FC, useMemo, useState } from 'react';
+import { IconArrowsSort, IconPlus } from '@tabler/icons-react';
+import { FC, useMemo } from 'react';
 import type { ProjectsProps } from '../../models/projects-props';
 import type { ProjectsSortKey } from '../../types/projects-sort-key';
 import { filterProjects, sortProjects } from '../../utils/projects';
 import { ProjectCard } from '../ProjectCard/ProjectCard';
 import styles from './Projects.module.scss';
 
-/** Projects page shell: header, search + sort toolbar, and a loading, error, empty, no-results or card-grid state. */
+/** Projects page shell: header (a floating New project button on mobile), search + sort toolbar, and a loading, error, empty, no-results or card-grid state. */
 export const Projects: FC<ProjectsProps> = ({
   projects,
   isLoading = false,
@@ -35,6 +36,7 @@ export const Projects: FC<ProjectsProps> = ({
   incompleteSources = [],
   onRetry,
   onCreateProject,
+  onTogglePin,
   onOpenProject,
   getProjectHref,
   searchQuery,
@@ -46,7 +48,7 @@ export const Projects: FC<ProjectsProps> = ({
   styles: projectsStyles,
 }) => {
   const { colors, typography } = projectsStyles ?? {};
-  const titleClassName = typography?.titleClassName ?? 'dial-h2-text';
+  const titleClassName = typography?.titleClassName ?? 'dial-h1-text';
   const subtitleClassName = typography?.subtitleClassName ?? 'dial-body-text';
   const cardTitleClassName =
     typography?.cardTitleClassName ?? 'dial-body-semi-text';
@@ -67,8 +69,13 @@ export const Projects: FC<ProjectsProps> = ({
     '--pr-card-focus-outline': colors?.cardFocusOutline,
   });
 
-  /* Fixed at mount: the relative times are a snapshot of the page visit. */
-  const [now] = useState(() => Date.now());
+  const isMobile = useIsMobile();
+
+  /* The relative times are a snapshot, taken again whenever the projects
+   * change, so a project the host updates while the page is open reads
+   * "now" rather than a time relative to when the page was mounted. */
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- `projects` is the snapshot trigger
+  const now = useMemo(() => Date.now(), [projects]);
   const trimmedQuery = searchQuery.trim();
   const isIncomplete = incompleteSources.length > 0;
   /* With nothing listed, a degraded answer must not claim "no projects yet". */
@@ -142,7 +149,7 @@ export const Projects: FC<ProjectsProps> = ({
           label={labels.emptyStateLabel}
           description={labels.emptyStateDescription}
           action={renderCreateButton(ButtonVariant.Secondary, 'mt-2')}
-          containerClassName="p-3"
+          containerClassName={emptyStateContainerClassName}
           labelClassName="mt-3"
           descriptionClassName={emptyStateDescriptionClassName}
         />
@@ -153,14 +160,14 @@ export const Projects: FC<ProjectsProps> = ({
       return (
         <PanelEmptyState
           label={labels.noResultsLabel}
-          containerClassName="p-3"
+          containerClassName={emptyStateContainerClassName}
           labelClassName="mt-3"
         />
       );
     }
 
     return (
-      <ul className="m-0 grid w-full min-w-0 list-none grid-cols-1 gap-5 p-0 desktop:grid-cols-3">
+      <ul className="m-0 grid w-full min-w-0 list-none grid-cols-1 gap-4 p-0 desktop:grid-cols-3 desktop:gap-5">
         {visibleProjects.map((project) => (
           <ProjectCard
             key={project.id}
@@ -169,6 +176,8 @@ export const Projects: FC<ProjectsProps> = ({
             sourceLabel={labels.sourceLabels[project.source]}
             folderPathLabel={labels.folderPathLabel}
             pinnedLabel={labels.pinnedLabel ?? 'Pinned'}
+            pinLabel={labels.pinLabel ?? 'Pin'}
+            onTogglePin={onTogglePin}
             href={getProjectHref?.(project.id)}
             onOpen={onOpenProject}
             now={now}
@@ -184,88 +193,118 @@ export const Projects: FC<ProjectsProps> = ({
   };
 
   const isCentered = isLoading || hasError || isFailedEmpty;
+  /* On mobile the cards start right under the toolbar while an empty state
+   * keeps the design's 24px gap. */
+  const emptyStateContainerClassName = 'mt-6 p-3 desktop:mt-0';
 
   return (
     <div
       style={cssVars}
       className={mergeClasses(
-        'flex h-full w-full min-w-0 flex-col overflow-y-auto',
+        'relative flex h-full w-full min-w-0 flex-col',
         styles.container,
       )}
     >
-      <div className="flex min-w-0 items-center gap-2 px-4 py-4 desktop:px-8">
-        <div className="min-w-0 flex-1">
-          <h1 className={mergeClasses('wrap-break-word', titleClassName)}>
-            {labels.title}
-          </h1>
-          {labels.subtitle && (
-            <p
-              className={mergeClasses(
-                'mt-0.5',
-                subtitleClassName,
-                styles.subtitle,
+      <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-y-auto">
+        {isMobile ? (
+          /* The mobile design has no page header: the app bar names the
+           * page and New project floats, so the title stays for assistive
+           * tech only. */
+          <h1 className="sr-only">{labels.title}</h1>
+        ) : (
+          <div className="flex min-w-0 items-start gap-2 px-8 py-4">
+            <div className="flex min-h-10 min-w-0 flex-1 flex-col justify-center gap-0.5">
+              <h1 className={mergeClasses('wrap-break-word', titleClassName)}>
+                {labels.title}
+              </h1>
+              {labels.subtitle && (
+                <p className={mergeClasses(subtitleClassName, styles.subtitle)}>
+                  {labels.subtitle}
+                </p>
               )}
-            >
-              {labels.subtitle}
-            </p>
-          )}
-        </div>
-        {renderCreateButton(ButtonVariant.Primary)}
-      </div>
+            </div>
+            {renderCreateButton(ButtonVariant.Primary)}
+          </div>
+        )}
 
-      <div className="flex flex-col gap-3 px-4 pt-4 pb-5 desktop:flex-row desktop:items-center desktop:px-8">
-        <div role="search" className="min-w-0 flex-1">
-          <Search
-            value={searchQuery}
-            onChange={handleSearchChange}
-            placeholder={labels.searchPlaceholder}
-            clearLabel={labels.clearSearchLabel}
-            aria-label={labels.searchAriaLabel}
-            size={ElementSize.Large}
-          />
-        </div>
-        {labels.sortOptions.length > 0 && (
-          <div role="group" aria-label={labels.sortLabel} className="shrink-0">
-            <ButtonDropdown
-              items={sortItems}
-              label={activeSortLabel}
-              variant={ButtonVariant.Primary}
-              appearance={ButtonAppearance.Ghost}
-              iconBefore={
-                <IconArrowsSort
-                  size={DIAL_ICON_SIZE.SM}
-                  aria-hidden
-                  stroke={DIAL_KIT_ICON_STROKE}
-                />
-              }
-              className={styles.sortButton}
+        <div className="flex items-center gap-2 p-4 desktop:gap-3 desktop:px-8 desktop:pt-4 desktop:pb-5">
+          <div role="search" className="min-w-0 flex-1">
+            <Search
+              value={searchQuery}
+              onChange={handleSearchChange}
+              placeholder={labels.searchPlaceholder}
+              clearLabel={labels.clearSearchLabel}
+              aria-label={labels.searchAriaLabel}
+              size={isMobile ? ElementSize.Standard : ElementSize.Large}
             />
           </div>
-        )}
-      </div>
-
-      <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
-        {getStatusMessage()}
-      </LiveRegion>
-
-      <div className="flex w-full min-w-0 flex-1 flex-col items-center gap-5 px-4 pt-6 pb-8 desktop:px-8">
-        {isIncomplete && !isLoading && !hasError && !isFailedEmpty && (
-          <div className="flex w-full max-w-[1116px] flex-wrap items-center gap-3">
-            <p className={mergeClasses(subtitleClassName, styles.subtitle)}>
-              {labels.incompleteLabel}
-            </p>
-            <GhostButton label={labels.retryLabel} onClick={onRetry} />
-          </div>
-        )}
-        <div
-          className={mergeClasses(
-            'flex w-full max-w-[1116px] min-w-0 flex-col items-center',
-            isCentered && 'flex-1 justify-center',
+          {labels.sortOptions.length > 0 && (
+            <div
+              role="group"
+              aria-label={labels.sortLabel}
+              className="shrink-0"
+            >
+              <ButtonDropdown
+                items={sortItems}
+                label={activeSortLabel}
+                variant={ButtonVariant.Primary}
+                appearance={ButtonAppearance.Ghost}
+                size={isMobile ? ElementSize.Small : ElementSize.Standard}
+                iconBefore={
+                  <IconArrowsSort
+                    size={isMobile ? DIAL_ICON_SIZE.SM : DIAL_ICON_SIZE.MD}
+                    aria-hidden
+                    stroke={DIAL_KIT_ICON_STROKE}
+                  />
+                }
+                /* The design's sort control is narrower than a standard button. */
+                className={mergeClasses('desktop:px-3', styles.sortButton)}
+              />
+            </div>
           )}
-        >
-          {renderContent()}
+        </div>
+
+        <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
+          {getStatusMessage()}
+        </LiveRegion>
+
+        {/* The mobile bottom padding keeps the last card clear of the floating
+         * button (16px inset + 40px button + 24px gap). */}
+        <div className="flex w-full min-w-0 flex-1 flex-col items-center gap-4 px-4 pb-20 desktop:gap-5 desktop:px-8 desktop:pt-6 desktop:pb-8">
+          {isIncomplete && !isLoading && !hasError && !isFailedEmpty && (
+            <div className="flex w-full max-w-[1116px] flex-wrap items-center gap-3">
+              <p className={mergeClasses(subtitleClassName, styles.subtitle)}>
+                {labels.incompleteLabel}
+              </p>
+              <GhostButton label={labels.retryLabel} onClick={onRetry} />
+            </div>
+          )}
+          <div
+            className={mergeClasses(
+              'flex w-full max-w-[1116px] min-w-0 flex-col items-center',
+              isCentered && 'flex-1 justify-center',
+            )}
+          >
+            {renderContent()}
+          </div>
         </div>
       </div>
+
+      {isMobile && onCreateProject && (
+        <Button
+          variant={ButtonVariant.Primary}
+          iconBefore={
+            <IconPlus
+              size={DIAL_ICON_SIZE.LG}
+              aria-hidden
+              stroke={DIAL_KIT_ICON_STROKE}
+            />
+          }
+          aria-label={labels.createProjectLabel}
+          onClick={onCreateProject}
+          className="absolute inset-e-4 bottom-4 z-10 size-10 rounded-full px-0"
+        />
+      )}
     </div>
   );
 };

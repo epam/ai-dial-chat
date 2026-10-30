@@ -3,9 +3,7 @@
 ## Purpose
 
 The flag-gated `/projects` page and the host-agnostic `@epam/ai-dial-projects` lib: data ownership in the app, search with highlight, client-side sort, content states, i18n, and the mobile-first, RTL and WCAG 2.1 AAA requirements.
-
 ## Requirements
-
 ### Requirement: Projects page renders behind the projectsEnabled flag
 
 The application SHALL register `ROUTES.Projects` (`/projects`) in `apps/chat/src/app/app.tsx` as a lazy-loaded `ProjectsPage` (`apps/chat/src/pages/ProjectsPage/ProjectsPage.tsx`), using the `RouteErrorBoundary` + `Suspense` + `RouteFallback` wrapper. The route is registered unconditionally. The page SHALL read `useFeatureFlag('projectsEnabled')` and render `NotFoundPage` (`apps/chat/src/pages/NotFound/NotFound.tsx`) when the flag is not `true`. This is the same guard `ScheduledTasksPage` applies (`apps/chat/src/pages/ScheduledTasksPage/ScheduledTasksPage.tsx`).
@@ -29,7 +27,7 @@ The application SHALL register `ROUTES.Projects` (`/projects`) in `apps/chat/src
 
 ### Requirement: The app owns project data through useProjects
 
-Data state SHALL be owned by the `useProjects(enabled: boolean)` hook (`apps/chat/src/hooks/projects/useProjects.ts`, one hook per file, with JSDoc on why it exists). No new React context is introduced, because only the page consumes the data.
+Data state SHALL be owned by the `useProjects(enabled: boolean)` hook (`apps/chat/src/hooks/projects/useProjects.ts`, one hook per file, with JSDoc on why it exists). It adapts the shared `useProjects` of `libs/chat-hooks/src/project/use-projects.ts` to the app's `projectsClient`. No new React context is introduced, because only the page consumes the data.
 
 The hook calls `listProjects({ signal })` from `apps/chat/src/server-api/projects.api.ts`. That wrapper calls `projectsApi.listProjects(...)` on the `ProjectsApi` instance exported from `apps/chat/src/server-api/api-client.ts`; no `fetch` and no `base.ts` helper is used. The hook maps each `ProjectDto` through `mapProjectDtoToItem` (`libs/chat-hooks/src/project/project-mapping.ts`), which maps `ProjectSource` onto the lib's `ProjectSource`.
 
@@ -39,6 +37,21 @@ The hook returns `{ projects, incompleteSources, isLoading, hasError, retry }`:
 - `isLoading` is derived, not stored: it is `true` whenever `enabled` is `true` and no result answers the current reload token. An enabled page is therefore loading from its first enabled render, including the render where the app config first becomes ready, and never momentarily shows the empty state.
 - `retry` is a stable `useCallback` that re-runs the fetch.
 - While `enabled` is `false`, the hook sends no request.
+
+**Live updates.** When the client provides `watchProjects` and a load succeeded with at least one project, the hook SHALL open `watchProjects(ids, signal)`. `ids` are the first `PROJECTS_WATCH_MAX_IDS` (1000) listed ids in list order. The hook SHALL apply every decoded `ProjectWatchEvent` through the pure reducer `applyProjectEvent` (`libs/chat-hooks/src/project/project-events.ts`):
+
+- `UPDATE` or `CREATE` for a listed id sets that item's `updatedAt` to the larger of its current value and the event `timestamp`;
+- `DELETE` for a listed id removes the item;
+- an event for an unlisted id changes nothing;
+- when nothing changes, the reducer returns the same `projects` reference.
+
+**Subscription key.** The watch is keyed on the sorted, joined id set. It is reopened only when that set changes through a load, a retry or a silent refresh. A `DELETE` does not reopen it. Unmount, `enabled` turning `false`, or a key change aborts the open stream.
+
+**Failures:**
+
+- If opening the watch fails (rejected promise or non-2xx), live updates stay off for the rest of the visit. There is no retry, no error state and no user-visible message.
+- If an open stream ends or errors, the hook reconnects after 1, 2, 4, 8 and 16 seconds. After the last failed attempt, live updates stay off.
+- After a successful reconnect, the hook reloads the list silently. `isLoading` stays `false`, the current `projects` stay visible until the new result replaces them, and a failed silent reload keeps the current list without entering the error state.
 
 #### Scenario: Successful load populates the list
 
@@ -59,6 +72,36 @@ The hook returns `{ projects, incompleteSources, isLoading, hasError, retry }`:
 
 - **WHEN** `listProjects` rejects and the user activates the retry action
 - **THEN** `listProjects` is called again, and a successful second response replaces the error state with the list
+
+#### Scenario: A live update moves a project forward
+
+- **WHEN** the list holds `projects/public/handbook` with `updatedAt: 1000`, and the watch emits `{ id: 'projects/public/handbook', action: 'UPDATE', timestamp: 5000 }`
+- **THEN** that item's `updatedAt` becomes `5000`, and `watchProjects` is not called again
+
+#### Scenario: An older event does not move the date back
+
+- **WHEN** an item has `updatedAt: 5000`, and an `UPDATE` with `timestamp: 4000` arrives
+- **THEN** the item keeps `updatedAt: 5000`, and `projects` keeps its reference
+
+#### Scenario: A deleted project disappears
+
+- **WHEN** the watch emits `{ id: 'projects/public/handbook', action: 'DELETE', timestamp: 6000 }`
+- **THEN** `projects` no longer contains that item, and no new watch is opened
+
+#### Scenario: Unsupported Core leaves the page as it was
+
+- **WHEN** `watchProjects` rejects on open
+- **THEN** `projects`, `isLoading` and `hasError` are unchanged, and `watchProjects` is not called again during the visit
+
+#### Scenario: A dropped stream reconnects and refreshes silently
+
+- **WHEN** an open watch stream ends, and the reconnect after 1 second succeeds
+- **THEN** `listProjects` is called again while `isLoading` stays `false` and the current cards stay rendered, and the new result replaces them
+
+#### Scenario: Unmount closes the watch
+
+- **WHEN** the page unmounts with an open watch
+- **THEN** the `AbortSignal` passed to `watchProjects` is aborted
 
 ### Requirement: @epam/ai-dial-projects is a host-agnostic presentational lib
 
@@ -171,10 +214,12 @@ Sorting applies after filtering. Pinned projects (`isPinned: true`) come before 
 
 The lib SHALL render the visible projects as a list (`<ul>` with one `<li>` per project), keyed by `id`. Each card is the kit `CardShell` (an `<article>` with the design's radius, padding and shadow), named by the project name through `aria-label`. It shows, top to bottom with an 8px gap:
 
-- when `updatedAt` is set, the last-updated time relative to the page visit, in a `<time>` element whose `dateTime` is the ISO timestamp, formatted with `Intl.RelativeTimeFormat(locale)` in the largest whole unit (e.g. `49 minutes ago`, `1 week ago`; under a minute reads `now`);
+- when `updatedAt` is set, the last-updated time relative to the reference time, in a `<time>` element whose `dateTime` is the ISO timestamp, formatted with `Intl.RelativeTimeFormat(locale)` in the largest whole unit (e.g. `49 minutes ago`, `1 week ago`; under a minute reads `now`);
 - the name, through `Highlight` with `maxLines={1}`;
-- when `isPinned`, an `IconPinFilled` marker (`aria-hidden`) followed by visually hidden `labels.pinnedLabel` text, on the inline end of the name row;
+- in the card's top inline-end corner, inside the card padding (the first row keeps clear of it), after the name in reading order: when the host passes `onTogglePin(id, isPinned)`, a kit `GhostIconButton` (`ElementSize.Small`) named by `labels.pinLabel` (default `'Pin'`) with `aria-pressed={isPinned}`, showing `IconPinFilled` when pinned and `IconPin` otherwise. It is painted above the stretched link, so its click never opens the project. An unpinned card's toggle is shown on card hover or focus within the card, and always where the pointer cannot hover. Without `onTogglePin`, a pinned card shows an `IconPinFilled` marker (`aria-hidden`) followed by visually hidden `labels.pinnedLabel` text;
 - the kit `FolderPath`, with no divider above it, named by `labels.folderPathLabel`, whose segments are `labels.sourceLabels[source]` followed by the `/`-separated `parentPath` folders.
+
+The reference time SHALL be taken from `Date.now()` again whenever the `projects` prop reference changes, and kept otherwise (`Projects` in `libs/projects/src/components/Projects/Projects.tsx`). A project updated while the page is open therefore reads `now` rather than a time relative to when the page was mounted. With an unchanged `projects` reference, the times stay a snapshot and do not tick.
 
 No description or source badge is rendered: the listing carries no description, and the design shows the source only in the folder path.
 
@@ -184,7 +229,7 @@ Without those props, cards are not interactive: no link, button or `tabIndex`.
 
 The **New project** buttons are specified separately, in "Projects page offers New project in the header and the empty state".
 
-**RTL impact:** the pin marker sits at the inline end through logical properties, and it is not mirrored. **i18n impact:** `projects.card.pinned` ("Pinned").
+**RTL impact:** the pin marker or toggle sits in the top inline-end corner through logical properties (`inset-e-*`, `pe-*`), so it moves to the left in RTL, and the icon is not mirrored. **i18n impact:** `projects.card.pinned` ("Pinned"); `ProjectsPage` fills `labels.pinLabel` from `ButtonsI18nKeys.Pin` and reports a failed pin with `projects.actions.pinError`, both existing keys.
 
 #### Scenario: Card content
 
@@ -213,8 +258,18 @@ The **New project** buttons are specified separately, in "Projects page offers N
 
 #### Scenario: Pinned card is marked
 
-- **WHEN** a project has `isPinned: true`
+- **WHEN** a project has `isPinned: true` and no `onTogglePin` is passed
 - **THEN** its card contains the text "Pinned", available to assistive technology
+
+#### Scenario: Pinning from the list
+
+- **WHEN** the Projects page passes `onTogglePin`, and the user activates the pin toggle of an unpinned card
+- **THEN** `onTogglePin(id, true)` is called, the project does not open, and the app pins it through `UserConfigContext` `setPinnedProject`; a failure rolls the pin back and shows the `projects.actions.pinError` notification
+
+#### Scenario: A live update reads as now
+
+- **WHEN** the page was mounted ten minutes ago, and the host passes a new `projects` array in which one item's `updatedAt` is the current time
+- **THEN** that card's `<time>` reads `now`
 
 ### Requirement: Projects page has explicit loading, error, empty and no-results states
 
@@ -294,21 +349,21 @@ The Projects lib and page SHALL meet the layout, RTL, accessibility and memoisat
 
 **Layout:**
 
-- The lib layout SHALL be mobile-first. Cards use one column by default and, under the `desktop:` variant from `tools/tailwind/theme.css`, three columns with a 20px gap in a centred grid at most 1116px wide.
-- The header, the toolbar and the content area have 16px inline padding on mobile and 32px under `desktop:`; the header has 16px block padding, the toolbar 16px above and 20px below, and the content area 24px above.
+- The lib layout SHALL be mobile-first. Cards use one column with a 16px gap by default and, under the `desktop:` variant from `tools/tailwind/theme.css`, three columns with a 20px gap in a centred grid at most 1116px wide.
+- Under `desktop:`, the header, the toolbar and the content area have 32px inline padding; the header has 16px block padding, the toolbar 16px above and 20px below, and the content area 24px above. On mobile, the toolbar has 16px padding on every side, the content area 16px inline padding and none above, and 80px below so the floating **New project** button never covers the last card.
+- On mobile, the toolbar keeps the search and the sort control on one row with an 8px gap: the search at `ElementSize.Standard` and the sort control at `ElementSize.Small` with a 16px icon. Under `desktop:`, the gap is 12px, the search is `ElementSize.Large`, and the sort control is `ElementSize.Standard` with a 20px icon and 12px inline padding. The sort control's text uses `--text-accent`. The component branches with `useIsMobile` from `@epam/ai-dial-chat-shared`.
 - No `sm:`/`md:`/`lg:`/`xl:` prefixes are used.
 - Long names truncate to one line with a tooltip, and the folder path collapses or truncates inside the card, so the page never scrolls horizontally at a 320 px viewport.
-- On `mobile`, the toolbar stacks the search above the sort control.
 
 **RTL:**
 
-- Only logical properties are used (`ms-*`/`me-*`, `ps-*`/`pe-*`, `start-*`/`end-*`, `text-start`, `border-s-*`).
-- The folder path's separators come from the kit `FolderPath`; the page adds no directional icon of its own (`IconArrowsSort` is symmetric).
+- Only logical properties are used (`ms-*`/`me-*`, `ps-*`/`pe-*`, `inset-s-*`/`inset-e-*`, `text-start`, `border-s-*`).
+- The folder path's separators come from the kit `FolderPath`; the page adds no directional icon of its own (`IconArrowsSort` and `IconPlus` are symmetric).
 - Direction is inherited from `<html dir>`. The lib does not read the language.
 
 **Accessibility:**
 
-- The title is the page's `<h1>`.
+- The title is the page's `<h1>`, styled `dial-h1-text` by default. On mobile it is visually hidden, because the design shows no title row there.
 - The search is inside `role="search"`.
 - Each card is an `<article>` named by its project, and its folder path is a `<nav>` named by `labels.folderPathLabel`.
 - A visually hidden `<span role="status" aria-live="polite">` announces each of these states:
@@ -318,8 +373,8 @@ The Projects lib and page SHALL meet the layout, RTL, accessibility and memoisat
   - the error label;
   - the incomplete label, which takes precedence over the result count.
   It announces nothing while loading.
-- Every Tabler icon passes `stroke={DIAL_KIT_ICON_STROKE}`. Decorative icons, including icons inside labelled controls, carry `aria-hidden`.
-- The sort dropdown and the retry button are reachable and operable by keyboard.
+- Every Tabler outline icon passes `stroke={DIAL_KIT_ICON_STROKE}`. Decorative icons, including icons inside labelled controls, carry `aria-hidden`.
+- The sort dropdown, the pin toggles and the retry button are reachable and operable by keyboard.
 - Text colors use theme tokens whose fallbacks meet a 7:1 contrast ratio.
 
 **Memoisation:**
@@ -347,18 +402,23 @@ The Projects lib and page SHALL meet the layout, RTL, accessibility and memoisat
 - **WHEN** `<html dir="rtl">` is set
 - **THEN** the toolbar and card content align to the inline start in RTL order, and no physical left/right class is present in the lib's source
 
+#### Scenario: Mobile keeps the title for assistive tech only
+
+- **WHEN** the page renders on mobile with a subtitle label
+- **THEN** the `<h1>` is visually hidden, and the subtitle is not rendered
+
 ### Requirement: Projects page offers New project in the header and the empty state
 
 When `onCreateProject` is supplied, the `Projects` lib component SHALL render two **New project** buttons, both labelled `labels.createProjectLabel` and both calling `onCreateProject`:
 
-- **Header button:** a primary kit `Button` without an icon, on the inline end of the title row. It is rendered in every content state.
+- **Header button:** under `desktop:`, a primary kit `Button` without an icon, on the inline end of the title row. On mobile, where there is no title row, it is a round 40px primary kit `Button` showing only an `IconPlus`, named by `labels.createProjectLabel` through `aria-label`, floating 16px from the bottom inline-end corner of the page. Either form is rendered in every content state.
 - **Empty-state button:** a secondary kit `Button` without an icon, passed as the `action` of the empty-state `PanelEmptyState`, so it renders only in the Empty state. It does not render in the no-results, error or incomplete states.
 
 When `onCreateProject` is omitted, neither button renders.
 
-`ProjectsPage` passes `onCreateProject={() => navigate(ROUTES.ProjectCreate)}` (memoised with `useCallback`), and resolves `labels.createProjectLabel` from `projects.page.newProject` ("New project"). On `mobile`, the header button stays visible next to the title. The title wraps before the button is pushed out, and the page never scrolls horizontally at 320 px.
+`ProjectsPage` passes `onCreateProject={() => navigate(ROUTES.ProjectCreate)}` (memoised with `useCallback`), and resolves `labels.createProjectLabel` from `projects.page.newProject` ("New project"). Under `desktop:`, the title wraps before the header button is pushed out, and the page never scrolls horizontally at 320 px.
 
-**Feature flag:** inherits `projectsEnabled` from the page. **RTL impact:** the button sits at the inline end through logical properties. **i18n impact:** `projects.page.newProject`.
+**Feature flag:** inherits `projectsEnabled` from the page. **RTL impact:** the buttons sit at the inline end through logical properties (`inset-e-4` for the floating one). **i18n impact:** `projects.page.newProject`.
 
 #### Scenario: Header button navigates to the create page
 
@@ -370,7 +430,13 @@ When `onCreateProject` is omitted, neither button renders.
 - **WHEN** there are no projects and every source is complete
 - **THEN** the empty state shows "No projects yet", its description, and a **New project** button, and the header button is also present
 
+#### Scenario: Mobile floats one New project button
+
+- **WHEN** projects are listed on mobile
+- **THEN** exactly one button is named "New project", and activating it calls `onCreateProject` once
+
 #### Scenario: No buttons without the callback
 
 - **WHEN** `Projects` renders without `onCreateProject`
 - **THEN** no button named "New project" is rendered
+

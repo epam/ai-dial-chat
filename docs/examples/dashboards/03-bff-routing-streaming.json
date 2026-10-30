@@ -692,7 +692,7 @@
     },
     {
       "title": "SSE subscription operations by process and kind",
-      "description": "client_channel, conversation_watch, generation_attach, conversation_titles. Includes asynchronous setup/cleanup, excludes ordinary completion-response delivery. Not a count of concurrent users. conversation_titles streams are short-lived (seconds, at most 60s): spikes there are history title loads, not long-lived subscriptions.",
+      "description": "client_channel, conversation_watch, generation_attach, conversation_titles, projects_watch. Includes asynchronous setup/cleanup, excludes ordinary completion-response delivery. Not a count of concurrent users. conversation_titles streams are short-lived (seconds, at most 60s): spikes there are history title loads, not long-lived subscriptions.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",

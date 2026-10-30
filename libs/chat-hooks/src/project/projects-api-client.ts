@@ -85,6 +85,10 @@ export interface ProjectsConfiguredClient {
     request: { id: string; attachGenerationDto: { path: string } },
     options?: RequestInit,
   ) => Promise<RawApiResponse>;
+  watchProjectsRaw: (
+    request: { watchProjectsBodyDto: { ids: string[] } },
+    options?: RequestInit,
+  ) => Promise<RawApiResponse>;
 }
 
 /** Text fields of a project create or edit request. */
@@ -185,6 +189,11 @@ export interface ProjectsApiClient {
     path: string,
     signal?: AbortSignal,
   ) => Promise<ReadableStream<Uint8Array>>;
+  /** Opens the SSE stream of changes to the given projects; a host without it gets no live updates. */
+  watchProjects?: (
+    ids: string[],
+    signal?: AbortSignal,
+  ) => Promise<ReadableStream<Uint8Array>>;
 }
 
 const PROJECTS_SEGMENT = 'projects';
@@ -253,7 +262,7 @@ export const buildCreateConversationDto = ({
  */
 export const createProjectsApiClient = (
   client: ProjectsConfiguredClient,
-): ProjectsApiClient => ({
+): Required<ProjectsApiClient> => ({
   listProjects: (signal) => client.listProjects(...withSignal(signal)),
   getProject: (id, signal) => client.getProject({ id }, ...withSignal(signal)),
   createProject: ({ name, description, instructions }, files, signal) =>
@@ -328,6 +337,14 @@ export const createProjectsApiClient = (
       ...withSignal(signal),
     );
     if (!raw.body) throw new Error('Attach endpoint returned no response body');
+    return raw.body as ReadableStream<Uint8Array>;
+  },
+  watchProjects: async (ids, signal) => {
+    const { raw } = await client.watchProjectsRaw(
+      { watchProjectsBodyDto: { ids } },
+      ...withSignal(signal),
+    );
+    if (!raw.body) throw new Error('Watch endpoint returned no response body');
     return raw.body as ReadableStream<Uint8Array>;
   },
 });

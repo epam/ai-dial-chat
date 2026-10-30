@@ -457,6 +457,17 @@ const ProjectsPage = () => {
 };
 ```
 
+`useProjects` keeps the list current while it is mounted when the client
+offers `watchProjects` (`createProjectsApiClient` always does). After a
+successful load it watches the first 1000 listed ids:
+
+- an `UPDATE` or `CREATE` moves that project's `updatedAt` forward, never back;
+- a `DELETE` removes it;
+- a stream that drops is reopened after 1, 2, 4, 8 and 16 seconds, and each successful reopen is followed by a silent reload, without the loading state;
+- a watch that cannot be opened is not retried for the rest of the visit.
+
+A client without `watchProjects` gets a one-off load, as before.
+
 ```tsx
 // ./offline-credentials — no peer beyond react
 import { useOfflineCredentialsGate } from '@epam/ai-dial-chat-hooks/offline-credentials';
