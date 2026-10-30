@@ -832,13 +832,13 @@ URL-encoded into one path segment; the bucket comes from the id, and DIAL Core
 authorizes each call with the caller's token. All of them are gated by
 `features.projectsEnabled`.
 
-| Method and path                            | Handler               | What it does                                                                                                                       |
-| ------------------------------------------ | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /api/v1/projects/:id`                 | `getProject`          | Name, description, instructions, context files with sizes, `etag`, `source` and `canEdit` (`true` only in the caller's own bucket) |
-| `GET /api/v1/projects/:id/archive`         | `downloadProject`     | Streams Core's ZIP as an attachment                                                                                                |
-| `GET /api/v1/projects/:id/files/:fileName` | `downloadProjectFile` | Streams `context/{fileName}` as an attachment with `X-Content-Type-Options: nosniff`                                               |
-| `PUT /api/v1/projects/:id`                 | `updateProject`       | One atomic save; a different `name` then moves the project                                                                         |
-| `DELETE /api/v1/projects/:id`              | `deleteProject`       | Conditional delete, then removes the caller's pin                                                                                  |
+| Method and path                            | Handler               | What it does                                                                                                                     |
+| ------------------------------------------ | --------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/v1/projects/:id`                 | `getProject`          | Name, description, instructions, context files with sizes, `etag`, `contentVersion`, `conversationCount`, `source` and `canEdit` |
+| `GET /api/v1/projects/:id/archive`         | `downloadProject`     | Streams Core's ZIP as an attachment                                                                                              |
+| `GET /api/v1/projects/:id/files/:fileName` | `downloadProjectFile` | Streams `context/{fileName}` as an attachment with `X-Content-Type-Options: nosniff`                                             |
+| `PUT /api/v1/projects/:id`                 | `updateProject`       | One atomic save; a different `name` then moves the project                                                                       |
+| `DELETE /api/v1/projects/:id`              | `deleteProject`       | Conditional delete, then removes the caller's pin                                                                                |
 
 DIAL Core's project metadata carries no file sizes, so `getProject` and
 `updateProject` read the project archive (`downloadProjectFolder`): its `ETag`
@@ -852,11 +852,18 @@ disconnect ends the wait. `getProject` aborts its sibling Core read as soon as
 one of its two reads fails or the client disconnects.
 
 `PUT` takes the create fields plus `removedFileNames` (JSON) and a required
-`If-Match`. `fileNames`/`files` carry only the added files; replacing a file
+`If-Match` carrying the details' `contentVersion` — a hash of every file except
+the project's conversations — not its `etag`, which every project chat write
+changes. `fileNames`/`files` carry only the added files; replacing a file
 lists its name in both. The BFF rebuilds `PROJECT.md` (keeping any frontmatter
 key other than `name` and `description`), keeps every stored context file not
-removed, adds the new ones, keeps any other file, and makes **one**
-`uploadProjectFolder` with `If-Match`, so an edit commits whole or not at all.
+removed, adds the new ones, keeps the stored conversations (as JSON) and any
+other file, and makes **one** `uploadProjectFolder` conditioned on the fresh
+snapshot's ETag, so an edit commits whole or not at all. A Core `412` (usually a
+chat written in between) re-reads the snapshot and, while `contentVersion` is
+unchanged, rebuilds and writes again — at most three writes. `DELETE` takes the
+same `contentVersion` and retries a `412` the same way; it deletes the project's
+conversations with it.
 On a rename it then calls `/v1/ops/resource/move` (after checking the
 destination is free), migrates the caller's pin and reads the new ETag back.
 The rename steps run under their own 30-second deadline, not the client's
@@ -875,8 +882,8 @@ Conditional writes answer:
 
 - `428 if-match-required` without `If-Match`, or with `*` or a list of tags
   (either would make Core's check unconditional);
-- `409 project-changed` when the ETag is stale (Core's `412`, or a snapshot
-  mismatch detected before writing), or when a rename's move fails after the
+- `409 project-changed` when `contentVersion` is stale, when Core still
+  answers `412` after three writes, or when a rename's move fails after the
   content was saved under the old name;
 - `409 name-taken` for a rename onto an existing name;
 - `413 project-too-large` when the stored `PROJECT.md` exceeds the 1 MiB
@@ -889,6 +896,36 @@ disconnects.
 
 The capacity and file-type rules are the create rules, applied to the
 resulting context set.
+
+### Project conversations
+
+A project conversation is the file `conversations/{name}` inside the project,
+with the body and the `{deploymentKey}__{title}__{uuid}` name of a top-level
+conversation (`deploymentKey` is the deployment id with `/`, `\` and `%` made
+`_`, so a custom application's id stays one file name); its id is `projects/{bucket}/{projectPath}/conversations/{name}`.
+All routes are gated by `features.projectsEnabled`; writes and completions are
+refused with `403` before any Core call outside the caller's own bucket.
+
+| Method and path                                              | Handler                     | What it does                                                                                            |
+| ------------------------------------------------------------ | --------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `GET /api/v1/projects/:id/conversations`                     | `listProjectConversations`  | Newest first, `limit` 1–100 (default 50) after `offset` (default 0), with titles, authors and `hasMore` |
+| `POST /api/v1/projects/:id/conversations`                    | `createProjectConversation` | Creates a conversation from its first message                                                           |
+| `GET /api/v1/projects/:id/conversations/:name`               | `getProjectConversation`    | Reads one conversation                                                                                  |
+| `PUT /api/v1/projects/:id/conversations/:name`               | `saveProjectConversation`   | Saves a body, never over a pending background answer                                                    |
+| `PATCH /api/v1/projects/:id/conversations/:name`             | `renameProjectConversation` | Renames it; the file name does not change                                                               |
+| `DELETE /api/v1/projects/:id/conversations/:name`            | `deleteProjectConversation` | Deletes it                                                                                              |
+| `POST /api/v1/projects/:id/conversations/completions`        | `streamProjectCompletion`   | Streams a completion, as `/api/v1/conversations/completions` does                                       |
+| `POST /api/v1/projects/:id/conversations/completions/stop`   | `stopProjectCompletion`     | Stops it                                                                                                |
+| `POST /api/v1/projects/:id/conversations/completions/attach` | `attachToProjectGeneration` | Replays an active generation                                                                            |
+
+The completion, stop and attach body `path` is the id without `projects/`, and
+must name a conversation of `:id` (`400` otherwise). A project completion sends
+`x-project-id: <project id>` (DIAL Core forwards it to the deployment) and is
+otherwise identical to a top-level completion: the BFF adds no system message
+and no attachment, and reads no project file before the model call. Core conditions
+a project file write on the whole project's ETag, so the BFF versions a
+conversation by a hash of its bytes and retries a `412` caused by another file;
+a write over the project's size limits answers `413 project-storage-full`.
 
 ### Transcription availability
 
@@ -1743,13 +1780,13 @@ URL-encoded into one path segment; the bucket comes from the id, and DIAL Core
 authorizes each call with the caller's token. All of them are gated by
 `features.projectsEnabled`.
 
-| Method and path                            | Handler               | What it does                                                                                                                       |
-| ------------------------------------------ | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /api/v1/projects/:id`                 | `getProject`          | Name, description, instructions, context files with sizes, `etag`, `source` and `canEdit` (`true` only in the caller's own bucket) |
-| `GET /api/v1/projects/:id/archive`         | `downloadProject`     | Streams Core's ZIP as an attachment                                                                                                |
-| `GET /api/v1/projects/:id/files/:fileName` | `downloadProjectFile` | Streams `context/{fileName}` as an attachment with `X-Content-Type-Options: nosniff`                                               |
-| `PUT /api/v1/projects/:id`                 | `updateProject`       | One atomic save; a different `name` then moves the project                                                                         |
-| `DELETE /api/v1/projects/:id`              | `deleteProject`       | Conditional delete, then removes the caller's pin                                                                                  |
+| Method and path                            | Handler               | What it does                                                                                                                     |
+| ------------------------------------------ | --------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/v1/projects/:id`                 | `getProject`          | Name, description, instructions, context files with sizes, `etag`, `contentVersion`, `conversationCount`, `source` and `canEdit` |
+| `GET /api/v1/projects/:id/archive`         | `downloadProject`     | Streams Core's ZIP as an attachment                                                                                              |
+| `GET /api/v1/projects/:id/files/:fileName` | `downloadProjectFile` | Streams `context/{fileName}` as an attachment with `X-Content-Type-Options: nosniff`                                             |
+| `PUT /api/v1/projects/:id`                 | `updateProject`       | One atomic save; a different `name` then moves the project                                                                       |
+| `DELETE /api/v1/projects/:id`              | `deleteProject`       | Conditional delete, then removes the caller's pin                                                                                |
 
 DIAL Core's project metadata carries no file sizes, so `getProject` and
 `updateProject` read the project archive (`downloadProjectFolder`): its `ETag`
@@ -1763,11 +1800,18 @@ disconnect ends the wait. `getProject` aborts its sibling Core read as soon as
 one of its two reads fails or the client disconnects.
 
 `PUT` takes the create fields plus `removedFileNames` (JSON) and a required
-`If-Match`. `fileNames`/`files` carry only the added files; replacing a file
+`If-Match` carrying the details' `contentVersion` — a hash of every file except
+the project's conversations — not its `etag`, which every project chat write
+changes. `fileNames`/`files` carry only the added files; replacing a file
 lists its name in both. The BFF rebuilds `PROJECT.md` (keeping any frontmatter
 key other than `name` and `description`), keeps every stored context file not
-removed, adds the new ones, keeps any other file, and makes **one**
-`uploadProjectFolder` with `If-Match`, so an edit commits whole or not at all.
+removed, adds the new ones, keeps the stored conversations (as JSON) and any
+other file, and makes **one** `uploadProjectFolder` conditioned on the fresh
+snapshot's ETag, so an edit commits whole or not at all. A Core `412` (usually a
+chat written in between) re-reads the snapshot and, while `contentVersion` is
+unchanged, rebuilds and writes again — at most three writes. `DELETE` takes the
+same `contentVersion` and retries a `412` the same way; it deletes the project's
+conversations with it.
 On a rename it then calls `/v1/ops/resource/move` (after checking the
 destination is free), migrates the caller's pin and reads the new ETag back.
 The rename steps run under their own 30-second deadline, not the client's
@@ -1786,8 +1830,8 @@ Conditional writes answer:
 
 - `428 if-match-required` without `If-Match`, or with `*` or a list of tags
   (either would make Core's check unconditional);
-- `409 project-changed` when the ETag is stale (Core's `412`, or a snapshot
-  mismatch detected before writing), or when a rename's move fails after the
+- `409 project-changed` when `contentVersion` is stale, when Core still
+  answers `412` after three writes, or when a rename's move fails after the
   content was saved under the old name;
 - `409 name-taken` for a rename onto an existing name;
 - `413 project-too-large` when the stored `PROJECT.md` exceeds the 1 MiB
@@ -1800,6 +1844,36 @@ disconnects.
 
 The capacity and file-type rules are the create rules, applied to the
 resulting context set.
+
+### Project conversations
+
+A project conversation is the file `conversations/{name}` inside the project,
+with the body and the `{deploymentKey}__{title}__{uuid}` name of a top-level
+conversation (`deploymentKey` is the deployment id with `/`, `\` and `%` made
+`_`, so a custom application's id stays one file name); its id is `projects/{bucket}/{projectPath}/conversations/{name}`.
+All routes are gated by `features.projectsEnabled`; writes and completions are
+refused with `403` before any Core call outside the caller's own bucket.
+
+| Method and path                                              | Handler                     | What it does                                                                                            |
+| ------------------------------------------------------------ | --------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `GET /api/v1/projects/:id/conversations`                     | `listProjectConversations`  | Newest first, `limit` 1–100 (default 50) after `offset` (default 0), with titles, authors and `hasMore` |
+| `POST /api/v1/projects/:id/conversations`                    | `createProjectConversation` | Creates a conversation from its first message                                                           |
+| `GET /api/v1/projects/:id/conversations/:name`               | `getProjectConversation`    | Reads one conversation                                                                                  |
+| `PUT /api/v1/projects/:id/conversations/:name`               | `saveProjectConversation`   | Saves a body, never over a pending background answer                                                    |
+| `PATCH /api/v1/projects/:id/conversations/:name`             | `renameProjectConversation` | Renames it; the file name does not change                                                               |
+| `DELETE /api/v1/projects/:id/conversations/:name`            | `deleteProjectConversation` | Deletes it                                                                                              |
+| `POST /api/v1/projects/:id/conversations/completions`        | `streamProjectCompletion`   | Streams a completion, as `/api/v1/conversations/completions` does                                       |
+| `POST /api/v1/projects/:id/conversations/completions/stop`   | `stopProjectCompletion`     | Stops it                                                                                                |
+| `POST /api/v1/projects/:id/conversations/completions/attach` | `attachToProjectGeneration` | Replays an active generation                                                                            |
+
+The completion, stop and attach body `path` is the id without `projects/`, and
+must name a conversation of `:id` (`400` otherwise). A project completion sends
+`x-project-id: <project id>` (DIAL Core forwards it to the deployment) and is
+otherwise identical to a top-level completion: the BFF adds no system message
+and no attachment, and reads no project file before the model call. Core conditions
+a project file write on the whole project's ETag, so the BFF versions a
+conversation by a hash of its bytes and retries a `412` caused by another file;
+a write over the project's size limits answers `413 project-storage-full`.
 
 ### Transcription availability
 
@@ -2655,13 +2729,13 @@ URL-encoded into one path segment; the bucket comes from the id, and DIAL Core
 authorizes each call with the caller's token. All of them are gated by
 `features.projectsEnabled`.
 
-| Method and path                            | Handler               | What it does                                                                                                                       |
-| ------------------------------------------ | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /api/v1/projects/:id`                 | `getProject`          | Name, description, instructions, context files with sizes, `etag`, `source` and `canEdit` (`true` only in the caller's own bucket) |
-| `GET /api/v1/projects/:id/archive`         | `downloadProject`     | Streams Core's ZIP as an attachment                                                                                                |
-| `GET /api/v1/projects/:id/files/:fileName` | `downloadProjectFile` | Streams `context/{fileName}` as an attachment with `X-Content-Type-Options: nosniff`                                               |
-| `PUT /api/v1/projects/:id`                 | `updateProject`       | One atomic save; a different `name` then moves the project                                                                         |
-| `DELETE /api/v1/projects/:id`              | `deleteProject`       | Conditional delete, then removes the caller's pin                                                                                  |
+| Method and path                            | Handler               | What it does                                                                                                                     |
+| ------------------------------------------ | --------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/v1/projects/:id`                 | `getProject`          | Name, description, instructions, context files with sizes, `etag`, `contentVersion`, `conversationCount`, `source` and `canEdit` |
+| `GET /api/v1/projects/:id/archive`         | `downloadProject`     | Streams Core's ZIP as an attachment                                                                                              |
+| `GET /api/v1/projects/:id/files/:fileName` | `downloadProjectFile` | Streams `context/{fileName}` as an attachment with `X-Content-Type-Options: nosniff`                                             |
+| `PUT /api/v1/projects/:id`                 | `updateProject`       | One atomic save; a different `name` then moves the project                                                                       |
+| `DELETE /api/v1/projects/:id`              | `deleteProject`       | Conditional delete, then removes the caller's pin                                                                                |
 
 DIAL Core's project metadata carries no file sizes, so `getProject` and
 `updateProject` read the project archive (`downloadProjectFolder`): its `ETag`
@@ -2675,11 +2749,18 @@ disconnect ends the wait. `getProject` aborts its sibling Core read as soon as
 one of its two reads fails or the client disconnects.
 
 `PUT` takes the create fields plus `removedFileNames` (JSON) and a required
-`If-Match`. `fileNames`/`files` carry only the added files; replacing a file
+`If-Match` carrying the details' `contentVersion` — a hash of every file except
+the project's conversations — not its `etag`, which every project chat write
+changes. `fileNames`/`files` carry only the added files; replacing a file
 lists its name in both. The BFF rebuilds `PROJECT.md` (keeping any frontmatter
 key other than `name` and `description`), keeps every stored context file not
-removed, adds the new ones, keeps any other file, and makes **one**
-`uploadProjectFolder` with `If-Match`, so an edit commits whole or not at all.
+removed, adds the new ones, keeps the stored conversations (as JSON) and any
+other file, and makes **one** `uploadProjectFolder` conditioned on the fresh
+snapshot's ETag, so an edit commits whole or not at all. A Core `412` (usually a
+chat written in between) re-reads the snapshot and, while `contentVersion` is
+unchanged, rebuilds and writes again — at most three writes. `DELETE` takes the
+same `contentVersion` and retries a `412` the same way; it deletes the project's
+conversations with it.
 On a rename it then calls `/v1/ops/resource/move` (after checking the
 destination is free), migrates the caller's pin and reads the new ETag back.
 The rename steps run under their own 30-second deadline, not the client's
@@ -2698,8 +2779,8 @@ Conditional writes answer:
 
 - `428 if-match-required` without `If-Match`, or with `*` or a list of tags
   (either would make Core's check unconditional);
-- `409 project-changed` when the ETag is stale (Core's `412`, or a snapshot
-  mismatch detected before writing), or when a rename's move fails after the
+- `409 project-changed` when `contentVersion` is stale, when Core still
+  answers `412` after three writes, or when a rename's move fails after the
   content was saved under the old name;
 - `409 name-taken` for a rename onto an existing name;
 - `413 project-too-large` when the stored `PROJECT.md` exceeds the 1 MiB
@@ -2712,6 +2793,36 @@ disconnects.
 
 The capacity and file-type rules are the create rules, applied to the
 resulting context set.
+
+### Project conversations
+
+A project conversation is the file `conversations/{name}` inside the project,
+with the body and the `{deploymentKey}__{title}__{uuid}` name of a top-level
+conversation (`deploymentKey` is the deployment id with `/`, `\` and `%` made
+`_`, so a custom application's id stays one file name); its id is `projects/{bucket}/{projectPath}/conversations/{name}`.
+All routes are gated by `features.projectsEnabled`; writes and completions are
+refused with `403` before any Core call outside the caller's own bucket.
+
+| Method and path                                              | Handler                     | What it does                                                                                            |
+| ------------------------------------------------------------ | --------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `GET /api/v1/projects/:id/conversations`                     | `listProjectConversations`  | Newest first, `limit` 1–100 (default 50) after `offset` (default 0), with titles, authors and `hasMore` |
+| `POST /api/v1/projects/:id/conversations`                    | `createProjectConversation` | Creates a conversation from its first message                                                           |
+| `GET /api/v1/projects/:id/conversations/:name`               | `getProjectConversation`    | Reads one conversation                                                                                  |
+| `PUT /api/v1/projects/:id/conversations/:name`               | `saveProjectConversation`   | Saves a body, never over a pending background answer                                                    |
+| `PATCH /api/v1/projects/:id/conversations/:name`             | `renameProjectConversation` | Renames it; the file name does not change                                                               |
+| `DELETE /api/v1/projects/:id/conversations/:name`            | `deleteProjectConversation` | Deletes it                                                                                              |
+| `POST /api/v1/projects/:id/conversations/completions`        | `streamProjectCompletion`   | Streams a completion, as `/api/v1/conversations/completions` does                                       |
+| `POST /api/v1/projects/:id/conversations/completions/stop`   | `stopProjectCompletion`     | Stops it                                                                                                |
+| `POST /api/v1/projects/:id/conversations/completions/attach` | `attachToProjectGeneration` | Replays an active generation                                                                            |
+
+The completion, stop and attach body `path` is the id without `projects/`, and
+must name a conversation of `:id` (`400` otherwise). A project completion sends
+`x-project-id: <project id>` (DIAL Core forwards it to the deployment) and is
+otherwise identical to a top-level completion: the BFF adds no system message
+and no attachment, and reads no project file before the model call. Core conditions
+a project file write on the whole project's ETag, so the BFF versions a
+conversation by a hash of its bytes and retries a `412` caused by another file;
+a write over the project's size limits answers `413 project-storage-full`.
 
 ### Transcription availability
 
@@ -3566,13 +3677,13 @@ URL-encoded into one path segment; the bucket comes from the id, and DIAL Core
 authorizes each call with the caller's token. All of them are gated by
 `features.projectsEnabled`.
 
-| Method and path                            | Handler               | What it does                                                                                                                       |
-| ------------------------------------------ | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /api/v1/projects/:id`                 | `getProject`          | Name, description, instructions, context files with sizes, `etag`, `source` and `canEdit` (`true` only in the caller's own bucket) |
-| `GET /api/v1/projects/:id/archive`         | `downloadProject`     | Streams Core's ZIP as an attachment                                                                                                |
-| `GET /api/v1/projects/:id/files/:fileName` | `downloadProjectFile` | Streams `context/{fileName}` as an attachment with `X-Content-Type-Options: nosniff`                                               |
-| `PUT /api/v1/projects/:id`                 | `updateProject`       | One atomic save; a different `name` then moves the project                                                                         |
-| `DELETE /api/v1/projects/:id`              | `deleteProject`       | Conditional delete, then removes the caller's pin                                                                                  |
+| Method and path                            | Handler               | What it does                                                                                                                     |
+| ------------------------------------------ | --------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/v1/projects/:id`                 | `getProject`          | Name, description, instructions, context files with sizes, `etag`, `contentVersion`, `conversationCount`, `source` and `canEdit` |
+| `GET /api/v1/projects/:id/archive`         | `downloadProject`     | Streams Core's ZIP as an attachment                                                                                              |
+| `GET /api/v1/projects/:id/files/:fileName` | `downloadProjectFile` | Streams `context/{fileName}` as an attachment with `X-Content-Type-Options: nosniff`                                             |
+| `PUT /api/v1/projects/:id`                 | `updateProject`       | One atomic save; a different `name` then moves the project                                                                       |
+| `DELETE /api/v1/projects/:id`              | `deleteProject`       | Conditional delete, then removes the caller's pin                                                                                |
 
 DIAL Core's project metadata carries no file sizes, so `getProject` and
 `updateProject` read the project archive (`downloadProjectFolder`): its `ETag`
@@ -3586,11 +3697,18 @@ disconnect ends the wait. `getProject` aborts its sibling Core read as soon as
 one of its two reads fails or the client disconnects.
 
 `PUT` takes the create fields plus `removedFileNames` (JSON) and a required
-`If-Match`. `fileNames`/`files` carry only the added files; replacing a file
+`If-Match` carrying the details' `contentVersion` — a hash of every file except
+the project's conversations — not its `etag`, which every project chat write
+changes. `fileNames`/`files` carry only the added files; replacing a file
 lists its name in both. The BFF rebuilds `PROJECT.md` (keeping any frontmatter
 key other than `name` and `description`), keeps every stored context file not
-removed, adds the new ones, keeps any other file, and makes **one**
-`uploadProjectFolder` with `If-Match`, so an edit commits whole or not at all.
+removed, adds the new ones, keeps the stored conversations (as JSON) and any
+other file, and makes **one** `uploadProjectFolder` conditioned on the fresh
+snapshot's ETag, so an edit commits whole or not at all. A Core `412` (usually a
+chat written in between) re-reads the snapshot and, while `contentVersion` is
+unchanged, rebuilds and writes again — at most three writes. `DELETE` takes the
+same `contentVersion` and retries a `412` the same way; it deletes the project's
+conversations with it.
 On a rename it then calls `/v1/ops/resource/move` (after checking the
 destination is free), migrates the caller's pin and reads the new ETag back.
 The rename steps run under their own 30-second deadline, not the client's
@@ -3609,8 +3727,8 @@ Conditional writes answer:
 
 - `428 if-match-required` without `If-Match`, or with `*` or a list of tags
   (either would make Core's check unconditional);
-- `409 project-changed` when the ETag is stale (Core's `412`, or a snapshot
-  mismatch detected before writing), or when a rename's move fails after the
+- `409 project-changed` when `contentVersion` is stale, when Core still
+  answers `412` after three writes, or when a rename's move fails after the
   content was saved under the old name;
 - `409 name-taken` for a rename onto an existing name;
 - `413 project-too-large` when the stored `PROJECT.md` exceeds the 1 MiB
@@ -3623,6 +3741,36 @@ disconnects.
 
 The capacity and file-type rules are the create rules, applied to the
 resulting context set.
+
+### Project conversations
+
+A project conversation is the file `conversations/{name}` inside the project,
+with the body and the `{deploymentKey}__{title}__{uuid}` name of a top-level
+conversation (`deploymentKey` is the deployment id with `/`, `\` and `%` made
+`_`, so a custom application's id stays one file name); its id is `projects/{bucket}/{projectPath}/conversations/{name}`.
+All routes are gated by `features.projectsEnabled`; writes and completions are
+refused with `403` before any Core call outside the caller's own bucket.
+
+| Method and path                                              | Handler                     | What it does                                                                                            |
+| ------------------------------------------------------------ | --------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `GET /api/v1/projects/:id/conversations`                     | `listProjectConversations`  | Newest first, `limit` 1–100 (default 50) after `offset` (default 0), with titles, authors and `hasMore` |
+| `POST /api/v1/projects/:id/conversations`                    | `createProjectConversation` | Creates a conversation from its first message                                                           |
+| `GET /api/v1/projects/:id/conversations/:name`               | `getProjectConversation`    | Reads one conversation                                                                                  |
+| `PUT /api/v1/projects/:id/conversations/:name`               | `saveProjectConversation`   | Saves a body, never over a pending background answer                                                    |
+| `PATCH /api/v1/projects/:id/conversations/:name`             | `renameProjectConversation` | Renames it; the file name does not change                                                               |
+| `DELETE /api/v1/projects/:id/conversations/:name`            | `deleteProjectConversation` | Deletes it                                                                                              |
+| `POST /api/v1/projects/:id/conversations/completions`        | `streamProjectCompletion`   | Streams a completion, as `/api/v1/conversations/completions` does                                       |
+| `POST /api/v1/projects/:id/conversations/completions/stop`   | `stopProjectCompletion`     | Stops it                                                                                                |
+| `POST /api/v1/projects/:id/conversations/completions/attach` | `attachToProjectGeneration` | Replays an active generation                                                                            |
+
+The completion, stop and attach body `path` is the id without `projects/`, and
+must name a conversation of `:id` (`400` otherwise). A project completion sends
+`x-project-id: <project id>` (DIAL Core forwards it to the deployment) and is
+otherwise identical to a top-level completion: the BFF adds no system message
+and no attachment, and reads no project file before the model call. Core conditions
+a project file write on the whole project's ETag, so the BFF versions a
+conversation by a hash of its bytes and retries a `412` caused by another file;
+a write over the project's size limits answers `413 project-storage-full`.
 
 ### Transcription availability
 

@@ -8,6 +8,11 @@ import {
   StandalonePublishPanel,
   usePublishFlow,
 } from '@epam/ai-dial-publish-panel';
+import {
+  Notification,
+  NotificationType,
+  NotificationVariant,
+} from '@epam/ai-dial-ui-kit';
 import type { FC, RefObject } from 'react';
 import { memo, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -48,6 +53,8 @@ interface Props {
   projectId: string;
   /** The project's name, shown in the summary row. */
   projectName: string;
+  /** Number of chats stored in the project; a warning says they are published with it. */
+  conversationCount?: number;
   /** Called when the panel should be dismissed. */
   onClose: () => void;
   /** Publish trigger that receives focus after dismissal. */
@@ -65,6 +72,7 @@ const PublishProjectPanelContainer: FC<Props> = ({
   isOpen,
   projectId,
   projectName,
+  conversationCount = 0,
   onClose,
   returnFocusRef,
 }) => {
@@ -90,6 +98,27 @@ const PublishProjectPanelContainer: FC<Props> = ({
   const resource = useMemo<PublishResourceSummary>(
     () => ({ title: projectName }),
     [projectName],
+  );
+  /* Publication copies the whole project, chats included: warn, do not block. */
+  const renderSummary = useMemo(
+    () =>
+      conversationCount > 0
+        ? () => (
+            <div className="flex min-w-0 flex-col gap-3">
+              <span className="dial-body-semi-text truncate">
+                {projectName}
+              </span>
+              <Notification
+                variant={NotificationVariant.Warning}
+                type={NotificationType.SectionMessage}
+                message={t(ProjectsI18nKeys.PublishChatsWarning, {
+                  count: conversationCount,
+                })}
+              />
+            </div>
+          )
+        : undefined,
+    [conversationCount, projectName, t],
   );
 
   /* Re-read on every open, so a publication requested since the last one
@@ -162,6 +191,7 @@ const PublishProjectPanelContainer: FC<Props> = ({
     <StandalonePublishPanel
       isOpen={isOpen}
       resource={resource}
+      renderSummary={renderSummary}
       folderItems={publishFlow.folderItems}
       selectedFolderPath={publishFlow.selectedFolderPath}
       onSelectedFolderPathChange={publishFlow.setSelectedFolderPath}

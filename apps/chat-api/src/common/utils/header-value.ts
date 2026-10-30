@@ -1,6 +1,13 @@
 /** Header DIAL Core reads the originating conversation id from. */
 export const CONVERSATION_ID_HEADER = 'X-CONVERSATION-ID';
 
+/**
+ * Header naming the project a project conversation belongs to. DIAL Core
+ * forwards it to the deployment on Chat Completions and Responses, which is
+ * how the deployment learns which project's files it may read.
+ */
+export const PROJECT_ID_HEADER = 'x-project-id';
+
 /** Header DIAL Core reads the caller's job title from. */
 export const JOB_TITLE_HEADER = 'X-JOB-TITLE';
 
@@ -50,6 +57,15 @@ export const buildConversationIdHeaders = (
   conversationId
     ? { [CONVERSATION_ID_HEADER]: encodeHeaderValue(conversationId) }
     : {};
+
+/**
+ * Builds the `x-project-id` header object for spreading into a DIAL Core
+ * call's `headers`, omitting it when the conversation is not in a project.
+ */
+export const buildProjectIdHeaders = (
+  projectId?: string,
+): Record<string, string> =>
+  projectId ? { [PROJECT_ID_HEADER]: encodeHeaderValue(projectId) } : {};
 
 /**
  * Builds the `X-JOB-TITLE` header object for spreading into a DIAL Core

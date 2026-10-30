@@ -10,9 +10,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import type { DialClientService } from '../../dial/dial-client.service';
 import type { UserConfigService } from '../../user-config/user-config.service';
+import { PROJECT_WRITE_ATTEMPTS } from '../constants/project-context.constants';
 import { ProjectsCreateService } from '../create/projects-create.service';
 import { ProjectsService } from '../projects.service';
-import type { ProjectsSnapshotService } from '../snapshot/projects-snapshot.service';
+import type {
+  ProjectSnapshot,
+  ProjectsSnapshotService,
+} from '../snapshot/projects-snapshot.service';
 
 const USER_BUCKET = 'a1b2c3';
 const PROJECT_ID = 'projects/a1b2c3/q4';
@@ -20,18 +24,27 @@ const config = {
   get: () => undefined,
 } as unknown as ConfigService<EnvironmentVariables>;
 
+const snapshotOf = (extra: Partial<ProjectSnapshot> = {}): ProjectSnapshot =>
+  ({
+    etag: '"e1"',
+    contentVersion: '"cv1"',
+    ...extra,
+  }) as ProjectSnapshot;
+
 const makeService = (
   result: unknown,
   removeProjectPin = vi.fn(async () => undefined),
+  snapshot: ProjectSnapshot = snapshotOf(),
 ) => {
   const deleteProjectFolder = vi.fn(async (..._args: unknown[]) => result);
+  const read = vi.fn(async (..._args: unknown[]) => snapshot);
   const service = new ProjectsService(
     { client: { deleteProjectFolder } } as unknown as DialClientService,
     new ProjectsCreateService(config),
-    {} as ProjectsSnapshotService,
+    { read } as unknown as ProjectsSnapshotService,
     { removeProjectPin } as unknown as UserConfigService,
   );
-  return { service, deleteProjectFolder, removeProjectPin };
+  return { service, deleteProjectFolder, removeProjectPin, read };
 };
 
 const deleted = { error: undefined, response: { status: 200 } };
@@ -55,11 +68,11 @@ describe('ProjectsService.deleteProject', () => {
     vi.restoreAllMocks();
   });
 
-  it('deletes with If-Match and removes the pin', async () => {
+  it('deletes with the snapshot ETag and removes the pin', async () => {
     const { service, deleteProjectFolder, removeProjectPin } =
       makeService(deleted);
 
-    await service.deleteProject(PROJECT_ID, '"e1"', USER_BUCKET, 'token');
+    await service.deleteProject(PROJECT_ID, '"cv1"', USER_BUCKET, 'token');
 
     const [bucket, path, init] = deleteProjectFolder.mock.calls[0] as [
       string,
@@ -118,8 +131,9 @@ describe('ProjectsService.deleteProject', () => {
     expect(deleteProjectFolder).not.toHaveBeenCalled();
   });
 
-  it('maps a stale ETag to 409 project-changed and keeps the pin', async () => {
-    const { service, removeProjectPin } = makeService(failed(412));
+  it('maps a stale contentVersion to 409 project-changed without deleting', async () => {
+    const { service, deleteProjectFolder, removeProjectPin } =
+      makeService(deleted);
 
     const error = await service
       .deleteProject(PROJECT_ID, '"old"', USER_BUCKET, 'token')
@@ -129,14 +143,57 @@ describe('ProjectsService.deleteProject', () => {
     expect((error as ConflictException).getResponse()).toMatchObject({
       code: 'project-changed',
     });
+    expect(deleteProjectFolder).not.toHaveBeenCalled();
     expect(removeProjectPin).not.toHaveBeenCalled();
+  });
+
+  it('deletes after a chat changed the ETag but not the contentVersion', async () => {
+    const { service, deleteProjectFolder } = makeService(
+      deleted,
+      undefined,
+      snapshotOf({ etag: '"after-chat"' }),
+    );
+
+    await service.deleteProject(PROJECT_ID, '"cv1"', USER_BUCKET, 'token');
+
+    const [, , init] = deleteProjectFolder.mock.calls[0] as [
+      string,
+      string,
+      { headers: Record<string, string> },
+    ];
+    expect(init.headers['If-Match']).toBe('"after-chat"');
+  });
+
+  it('retries a 412 from a fresh snapshot, bounded, then answers 409', async () => {
+    const { service, deleteProjectFolder, read, removeProjectPin } =
+      makeService(failed(412));
+
+    const error = await service
+      .deleteProject(PROJECT_ID, '"cv1"', USER_BUCKET, 'token')
+      .catch((err: unknown) => err);
+
+    expect((error as ConflictException).getResponse()).toMatchObject({
+      code: 'project-changed',
+    });
+    expect(deleteProjectFolder).toHaveBeenCalledTimes(PROJECT_WRITE_ATTEMPTS);
+    expect(read).toHaveBeenCalledTimes(PROJECT_WRITE_ATTEMPTS);
+    expect(removeProjectPin).not.toHaveBeenCalled();
+  });
+
+  it('succeeds when a retry after 412 lands', async () => {
+    const { service, deleteProjectFolder } = makeService(deleted);
+    deleteProjectFolder.mockResolvedValueOnce(failed(412));
+
+    await service.deleteProject(PROJECT_ID, '"cv1"', USER_BUCKET, 'token');
+
+    expect(deleteProjectFolder).toHaveBeenCalledTimes(2);
   });
 
   it('reports a missing project as not found', async () => {
     const { service } = makeService(failed(404));
 
     await expect(
-      service.deleteProject(PROJECT_ID, '"e1"', USER_BUCKET, 'token'),
+      service.deleteProject(PROJECT_ID, '"cv1"', USER_BUCKET, 'token'),
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 
@@ -149,7 +206,7 @@ describe('ProjectsService.deleteProject', () => {
     );
 
     await expect(
-      service.deleteProject(PROJECT_ID, '"e1"', USER_BUCKET, 'token'),
+      service.deleteProject(PROJECT_ID, '"cv1"', USER_BUCKET, 'token'),
     ).resolves.toBeUndefined();
     expect(warn).toHaveBeenCalled();
   });

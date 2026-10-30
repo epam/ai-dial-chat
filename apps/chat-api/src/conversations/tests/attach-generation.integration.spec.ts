@@ -21,6 +21,7 @@ import {
   ConversationMessageDto,
   ConversationMessageRole,
 } from '../dto/conversation-message.dto';
+import { ConversationCompletionsResponder } from '../streaming/conversation-completions.responder';
 
 const TEST_USER = {
   sid: 'test-sid',
@@ -92,6 +93,7 @@ describe('POST /conversations/completions/attach (integration)', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ConversationController],
       providers: [
+        ConversationCompletionsResponder,
         { provide: ConversationService, useValue: mockService },
         { provide: ConfigService, useValue: { get: vi.fn() } },
         ConversationGenerationService,
@@ -311,6 +313,7 @@ describe('POST /conversations/completions/attach — header-authenticated caller
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ConversationController],
       providers: [
+        ConversationCompletionsResponder,
         { provide: ConversationService, useValue: mockService },
         { provide: ConfigService, useValue: { get: vi.fn() } },
         ConversationGenerationService,
@@ -414,6 +417,7 @@ describe('POST /conversations/completions/attach — retained entry after the fi
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ConversationController],
       providers: [
+        ConversationCompletionsResponder,
         { provide: ConversationService, useValue: mockService },
         {
           provide: ConfigService,

@@ -102,17 +102,20 @@ export class CoreResponsesClient {
    * @param responseId - DIAL Core response id
    * @param token - the current request's bearer token
    * @param signal - aborts the upstream read
+   * @param extraHeaders - added to the replay call, e.g. `x-project-id`
    */
   async replayResponse(
     responseId: string,
     token: string,
     signal: AbortSignal,
+    extraHeaders?: Record<string, string>,
   ): Promise<CoreReplayResult> {
     const result = await this.call('replay', () =>
       this.dialClient.client.getResponseItem(encodeURIComponent(responseId), {
         headers: {
           ...getBearerAuthHeaders(token),
           Accept: 'text/event-stream',
+          ...extraHeaders,
         },
         params: { query: { stream: true } },
         parseAs: 'stream',

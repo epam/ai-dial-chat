@@ -877,14 +877,17 @@
       "openFile": "Download {{name}}",
       "error": "Could not load the project",
       "notFound": "Project not found",
-      "browseProjects": "Back to projects"
+      "browseProjects": "Back to projects",
+      "mainContent": "Project chats"
     },
     "actions": {
       "deleteConfirmTitle": "Delete \"{{name}}\"?",
       "deleteConfirmDescription": "The project and its context files will be deleted. This cannot be undone.",
       "deleteError": "Could not delete the project",
       "downloadError": "Could not download",
-      "pinError": "Could not update the pin"
+      "pinError": "Could not update the pin",
+      "deleteConfirmWithChatsDescription_one": "The project, its context files and its {{count}} chat will be deleted. This cannot be undone.",
+      "deleteConfirmWithChatsDescription_other": "The project, its context files and its {{count}} chats will be deleted. This cannot be undone."
     },
     "edit": {
       "title": "Edit project",
@@ -907,7 +910,34 @@
       "alreadyPublishedWarning": "This project is already published in {folder}.",
       "emptyFolderNameError": "Folder name cannot be empty.",
       "invalidFolderNameError": "Folder name contains invalid characters.",
-      "duplicateFolderNameError": "A folder with this name already exists."
+      "duplicateFolderNameError": "A folder with this name already exists.",
+      "chatsWarning_one": "The {{count}} chat in this project is published with it.",
+      "chatsWarning_other": "The {{count}} chats in this project are published with it."
+    },
+    "chats": {
+      "title": "Chats",
+      "empty": "No outputs or chats yet",
+      "emptyDescription": "Your outputs and chats will appear here once started.",
+      "loading": "Loading chats",
+      "error": "Could not load the chats",
+      "openLabel": "{{title}}, by {{author}}",
+      "openLabelNoAuthor": "{{title}}",
+      "moreActions": "More actions for {{title}}",
+      "renameTitle": "Rename chat",
+      "renameInputLabel": "Chat name",
+      "renameEmpty": "Enter a chat name",
+      "renameSuccess": "Chat renamed",
+      "renameError": "Could not rename the chat",
+      "deleteConfirmTitle": "Delete \"{{title}}\"?",
+      "deleteConfirmDescription": "The chat will be deleted. This cannot be undone.",
+      "deleteSuccess": "Chat deleted",
+      "deleteError": "Could not delete the chat",
+      "createError": "Could not start the chat",
+      "storageFull": "The project is full. Delete chats or context files to start a new chat."
+    },
+    "chat": {
+      "backToProject": "Back to {{name}}",
+      "notFound": "Chat not found"
     }
   },
   "scheduledTasks": {

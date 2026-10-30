@@ -8,7 +8,7 @@ import {
   mapProjectDetailsToViewModel,
   mapProjectDtoToItem,
   mapStoredContextFiles,
-} from '../map-project-dto';
+} from '../project-mapping';
 
 const dto = {
   id: 'projects/b/alpha',
@@ -64,6 +64,8 @@ describe('mapProjectDetailsToViewModel', () => {
       { name: 'blob', size: 1 },
     ],
     etag: '"e1"',
+    contentVersion: '"cv1"',
+    conversationCount: 0,
     canEdit: true,
   };
 

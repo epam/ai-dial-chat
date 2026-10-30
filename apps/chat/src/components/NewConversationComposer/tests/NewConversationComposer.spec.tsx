@@ -12,6 +12,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   AttachmentsI18nKeys,
   ButtonsI18nKeys,
+  ChatI18nKeys,
 } from '../../../constants/translation-keys';
 import {
   useAppConfig as mockUseAppConfig,
@@ -19,6 +20,7 @@ import {
 } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import * as useUiFeatureModule from '../../../hooks/useUiFeature';
+import { ComposerLayout } from '../../../types/conversation-composer';
 import NewConversationComposer from '../NewConversationComposer';
 
 const {
@@ -52,6 +54,9 @@ const {
 });
 
 vi.mock('../../../hooks/useUiFeature');
+vi.mock('../../FooterMessage/FooterMessage', () => ({
+  default: () => <p>app footer</p>,
+}));
 
 vi.mock('../../UsageLimitsControl/UsageLimitsControl', () => ({
   default: ({ deploymentId }: { deploymentId?: string }) => (
@@ -454,6 +459,48 @@ describe('NewConversationComposer', () => {
 
     const welcomeText = await screen.findByLabelText('welcome-text');
     expect(welcomeText.textContent).not.toBe('undefined');
+  });
+
+  it('omits the greeting and stays in normal flow in the embedded layout', async () => {
+    render(
+      <Suspense fallback={null}>
+        <NewConversationComposer
+          deployments={deployments}
+          selectedDeploymentId="gpt-4o"
+          placeholder="Message"
+          onCreateConversation={vi.fn()}
+          layout={ComposerLayout.Embedded}
+        />
+      </Suspense>,
+      { wrapper: AttachmentCanvasProvider },
+    );
+
+    const welcomeText = await screen.findByLabelText('welcome-text');
+    expect(welcomeText.textContent).toBe('undefined');
+    expect(
+      screen.queryByRole('region', { name: ChatI18nKeys.WelcomeScreen }),
+    ).toBeNull();
+    // eslint-disable-next-line testing-library/no-node-access -- the layout classes sit on a wrapper with no role once it is not a region
+    const container = welcomeText.closest('[class*="container-type"]');
+    expect(container?.className).not.toContain('justify-center');
+    expect(container?.className).not.toContain('justify-end');
+    expect(screen.queryByText('app footer')).toBeNull();
+  });
+
+  it('renders the page footer in the default layout', async () => {
+    render(
+      <Suspense fallback={null}>
+        <NewConversationComposer
+          deployments={deployments}
+          selectedDeploymentId="gpt-4o"
+          placeholder="Message"
+          onCreateConversation={vi.fn()}
+        />
+      </Suspense>,
+      { wrapper: AttachmentCanvasProvider },
+    );
+
+    expect(await screen.findByText('app footer')).toBeTruthy();
   });
 
   it('omits the greeting when hide-greeting is enabled', async () => {

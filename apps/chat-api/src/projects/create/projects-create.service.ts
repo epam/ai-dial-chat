@@ -15,6 +15,8 @@ import {
 } from '../utils/project-create-error.util';
 import {
   buildProjectManifest,
+  getContextFileContentType,
+  getFileExtension,
   PROJECT_CONTEXT_FOLDER,
   PROJECT_MANIFEST_FILE,
 } from '../utils/project-manifest.util';
@@ -51,17 +53,6 @@ const SIGNATURE_CHECKS: Record<string, (buffer: Buffer) => boolean> = {
     buffer[2] === 0x03 &&
     buffer[3] === 0x04,
   csv: (buffer) => !buffer.subarray(0, CSV_SNIFF_BYTES).includes(0),
-};
-
-const CONTENT_TYPES: Record<string, string> = {
-  csv: 'text/csv',
-  pdf: 'application/pdf',
-  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-};
-
-const getExtension = (fileName: string): string => {
-  const dotIndex = fileName.lastIndexOf('.');
-  return dotIndex > 0 ? fileName.slice(dotIndex + 1).toLowerCase() : '';
 };
 
 /**
@@ -161,8 +152,7 @@ export class ProjectsCreateService {
       new Blob([buffer], {
         /* The part's own Content-Type is client-controlled, so an
          * operator-added extension is stored as opaque bytes. */
-        type:
-          CONTENT_TYPES[getExtension(fileName)] ?? 'application/octet-stream',
+        type: getContextFileContentType(fileName),
       }),
       `${PROJECT_CONTEXT_FOLDER}/${fileName}`,
     );
@@ -223,7 +213,7 @@ export class ProjectsCreateService {
   ): void {
     const allowed = new Set(this.getAllowedExtensions());
     fileNames.forEach((fileName, index) => {
-      const extension = getExtension(fileName);
+      const extension = getFileExtension(fileName);
       const matchesSignature = SIGNATURE_CHECKS[extension] ?? (() => true);
       if (!allowed.has(extension) || !matchesSignature(files[index].buffer)) {
         throw projectBadRequest(

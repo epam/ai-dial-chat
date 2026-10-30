@@ -102,6 +102,10 @@ export default defineConfig(() => ({
         import.meta.dirname,
         '../../libs/chat-hooks/src/entry-points/scheduled-tasks.ts',
       ),
+      '@epam/ai-dial-chat-hooks/project': path.resolve(
+        import.meta.dirname,
+        '../../libs/chat-hooks/src/entry-points/project.ts',
+      ),
       '@epam/ai-dial-chat-hooks/sharing': path.resolve(
         import.meta.dirname,
         '../../libs/chat-hooks/src/entry-points/sharing.ts',
