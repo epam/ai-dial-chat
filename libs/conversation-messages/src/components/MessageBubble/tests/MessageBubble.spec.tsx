@@ -293,12 +293,9 @@ describe('MessageBubble', () => {
       expect(bubble?.className).toContain('max-w-full');
       expect(bubble?.className).toContain('min-w-0');
       expect(bubble?.className).toContain('wrap-anywhere');
-      expect(
-        // eslint-disable-next-line testing-library/no-node-access -- see comment above
-        screen
-          .getByText(longUrl, { selector: 'code' })
-          .closest('.overflow-auto'),
-      ).toBeTruthy();
+      const codeBlock = screen.getByText(longUrl, { selector: 'code' });
+      // eslint-disable-next-line testing-library/no-node-access -- see comment above
+      expect(codeBlock.closest('.overflow-auto')).toBeTruthy();
     });
 
     it('aligns lists to the inline start and keeps code LTR under dir="rtl"', () => {

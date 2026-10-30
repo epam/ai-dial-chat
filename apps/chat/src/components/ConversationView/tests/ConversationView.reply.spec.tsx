@@ -380,12 +380,10 @@ describe('ConversationView', () => {
 
     it('preserves the first attachment when another Reply exceeds the count limit', async () => {
       mocks.items[0].maxInputAttachments = 1;
-      const upload = vi
-        .fn()
-        .mockResolvedValue({
-          url: 'files/bucket/reply.txt',
-          name: 'reply.txt',
-        });
+      const upload = vi.fn().mockResolvedValue({
+        url: 'files/bucket/reply.txt',
+        name: 'reply.txt',
+      });
       render(
         <ConversationView
           {...defaults}
