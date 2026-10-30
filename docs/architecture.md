@@ -458,6 +458,7 @@ see [PDF citation metadata](../apps/chat-api/README.md#pdf-citation-metadata).
 
 - Uses `ReadableStream.getReader()` + line-by-line SSE parsing (`data: {json}`)
 - Handles `[DONE]` termination marker
+- Load-time resume never attaches over a locally active completion on the same path. This keeps a StrictMode load replay before the first token from replacing the local stream's buffer; internal interruption/conflict recovery can still hand it over to attach.
 - Supports `AbortSignal` for cancellation
 - Ignores comment lines (those starting with `:`), as every SSE reader in the repo must
 - Reports a lost connection (a rejected `fetch` or a failed read) and a stream silent for 45 s — keepalives included, re-checked immediately on `visibilitychange`/`online`/`pageshow` — as a `StreamInterruptedError`. `useConversationStream` then re-fetches the conversation and rejoins the still-running generation through `completions/attach` (falling back to `watch`), shows the saved answer if it already finished, and shows the error banner only if neither applies (issue #8959; OpenSpec capability `generation-stream-recovery`)

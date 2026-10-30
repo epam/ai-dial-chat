@@ -6,8 +6,8 @@ import {
 } from '@epam/ai-dial-chat-api-client';
 import {
   deriveConversationRowActionState,
-  findDeploymentByIdOrReference,
-  findDeploymentForConversationId,
+  createDeploymentLookup,
+  getModelIdCandidatesFromConversationId,
   getApiErrorDetails,
   getConversationPath,
   safeDecodeURIComponent,
@@ -386,6 +386,13 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     isLoading: isDeploymentsLoading,
     selectedItemId,
   } = useDeployments();
+
+  /* Menu lookups run for every visible row after recipient/history updates.
+     Normalize the deployment list once instead of scanning it per candidate. */
+  const findDeployment = useMemo(
+    () => createDeploymentLookup(deployments),
+    [deployments],
+  );
 
   /*
    * Only scheduled runs are marked viewed from here. The sync fires on every
@@ -832,10 +839,17 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       const isActiveRow =
         activeIdAtRender != null &&
         conversationIdsMatch(panelItem.id, activeIdAtRender);
-      const rowDeployment =
-        isActiveRow && selectedItemId
-          ? findDeploymentByIdOrReference(deployments, selectedItemId)
-          : findDeploymentForConversationId(deployments, contextId);
+      let rowDeployment: DeploymentItemDto | undefined;
+      if (isActiveRow && selectedItemId) {
+        rowDeployment = findDeployment(selectedItemId);
+      } else {
+        for (const candidate of getModelIdCandidatesFromConversationId(
+          contextId,
+        )) {
+          rowDeployment = findDeployment(candidate);
+          if (rowDeployment) break;
+        }
+      }
       const isModelHidden = !!rowDeployment?.isHidden;
 
       const {
@@ -1134,7 +1148,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     [
       toContextId,
       getRawItem,
-      deployments,
+      findDeployment,
       selectedItemId,
       t,
       pinConversation,
