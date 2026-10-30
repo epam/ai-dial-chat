@@ -5004,6 +5004,117 @@
         "tags": ["files"]
       }
     },
+    "/api/v1/files/content": {
+      "put": {
+        "description": "Streams the request body to DIAL Core without staging it. Requires Content-Type: application/octet-stream and a Content-Length; the file MIME type goes in the contentType query parameter.",
+        "operationId": "uploadFileContent",
+        "parameters": [
+          {
+            "name": "bucket",
+            "required": true,
+            "in": "query",
+            "description": "DIAL Core bucket name",
+            "schema": {
+              "example": "my-bucket",
+              "type": "string"
+            }
+          },
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "File path within the bucket (no leading slash, no ..)",
+            "schema": {
+              "example": "folder/file.pdf",
+              "type": "string"
+            }
+          },
+          {
+            "name": "uploadMode",
+            "required": false,
+            "in": "query",
+            "description": "Upload mode: 'overwrite' (default) overwrites any existing file; 'create-only' fails with 409 if the file already exists",
+            "schema": {
+              "example": "create-only",
+              "type": "string",
+              "enum": ["overwrite", "create-only"]
+            }
+          },
+          {
+            "name": "contentType",
+            "required": false,
+            "in": "query",
+            "description": "MIME type of the file, sent to DIAL Core as the Content-Type of the file part. Defaults to application/octet-stream.",
+            "schema": {
+              "maxLength": 255,
+              "example": "text/csv",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileUploadResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query parameter"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "DIAL Core resource not found"
+          },
+          "409": {
+            "description": "File already exists (create-only mode)"
+          },
+          "411": {
+            "description": "Content-Length is required"
+          },
+          "413": {
+            "description": "File exceeds FILE_UPLOAD_MAX_BYTES or the DIAL Core limit"
+          },
+          "415": {
+            "description": "Content-Type is not application/octet-stream"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable, or the transfer stalled or timed out"
+          }
+        },
+        "summary": "Upload a file streamed as the raw request body",
+        "tags": ["files"]
+      }
+    },
     "/api/v1/files/upload-archive": {
       "post": {
         "operationId": "uploadArchive",

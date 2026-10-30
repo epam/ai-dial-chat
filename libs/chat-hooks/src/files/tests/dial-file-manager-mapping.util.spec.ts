@@ -594,6 +594,8 @@ describe('resolveUploadFailureReason', () => {
     [502, FileUploadFailureReason.Unavailable],
     [503, FileUploadFailureReason.Unavailable],
     [400, FileUploadFailureReason.Unknown],
+    [411, FileUploadFailureReason.Unknown],
+    [415, FileUploadFailureReason.Unknown],
     [500, FileUploadFailureReason.Unknown],
   ])('maps HTTP %s to %s', async (status, expected) => {
     await expect(resolveUploadFailureReason(httpError(status))).resolves.toBe(
