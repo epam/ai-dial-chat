@@ -17,6 +17,7 @@ import {
   UsageResetOffsetPolicy,
   formatUsageResetTime,
 } from '../entry-points/usage-limits';
+
 it('publishes controllers and isolates instances', () => {
   for (const api of [
     useConversationTitleEnrichmentController,
@@ -29,8 +30,8 @@ it('publishes controllers and isolates instances', () => {
     toConversationTransferQueueItems,
   ])
     expect(typeof api).toBe('function');
-  const a = createGenerationRegistry(),
-    b = createGenerationRegistry();
+  const a = createGenerationRegistry();
+  const b = createGenerationRegistry();
   a.startGeneration('x', 'one');
   expect(b.hasActiveGeneration()).toBe(false);
   expect(UploadMimeTypePolicy.Normalize).toBe('normalize');

@@ -13,6 +13,7 @@ import {
   ExternalServiceLoginOutcomeType,
   useExternalServiceLogin as useSharedExternalServiceLogin,
 } from '../useExternalServiceLogin';
+
 const getExternalService = vi.fn();
 const signInExternalService = vi.fn();
 const signOutExternalService = vi.fn();

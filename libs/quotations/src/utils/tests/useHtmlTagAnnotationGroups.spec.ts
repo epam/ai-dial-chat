@@ -1,6 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { expect, it } from 'vitest';
 import { useHtmlTagAnnotationGroups } from '../useHtmlTagAnnotationGroups';
+
 it('ignores malformed input and preserves empty identity', () => {
   const { result, rerender } = renderHook(
     ({ input }) => useHtmlTagAnnotationGroups(input),

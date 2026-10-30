@@ -1,6 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { useDeploymentChangeTracking } from '../useDeploymentChangeTracking';
+
 describe('deployment change tracking', () => {
   it('treats a direct loaded conversation switch as restoration', () => {
     const onChange = vi.fn();

@@ -23,6 +23,7 @@ import {
   type useOfflineCredentialsLogin,
 } from '../offline-credentials/useOfflineCredentialsLogin/useOfflineCredentialsLogin';
 import { buildExternalServiceScopeId } from '../shared/external-services';
+
 /** External-service authentication method. */
 export enum ExternalServiceAuthType {
   None = 'NONE',
