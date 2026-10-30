@@ -31,109 +31,6 @@ let plan: BatPlan;
 let stop: (() => void) | undefined;
 let notificationPortal: HTMLElement | undefined;
 
-beforeEach(() => {
-  vi.useFakeTimers();
-  vi.clearAllMocks();
-  Object.defineProperty(document, 'timeline', {
-    configurable: true,
-    value: { currentTime: 2345 },
-  });
-  fixture = document.createElement('section');
-  fixture.setAttribute('role', 'region');
-  fixture.innerHTML = `
-    <ul><li id="conversation" style="opacity: 0.7"><a href="/conversations/a" id="conversation-link"><span>My conversation</span></a></li></ul>
-    <button id="starter" type="button"><span>Help me write</span></button>
-    <section id="composer"><textarea aria-label="Message"></textarea><button id="perch" type="button" aria-label="Attach"><svg><path /></svg></button></section>`;
-  document.body.appendChild(fixture);
-  composer = fixture.querySelector<HTMLElement>('#composer')!;
-  perch = fixture.querySelector<HTMLButtonElement>('#perch')!;
-  draft = fixture.querySelector('textarea')!;
-  draft.value = 'My unsent draft';
-  draft.focus();
-  draft.setSelectionRange(3, 9, 'backward');
-  /* JSDOM schedules selectionchange when the initial selection is assigned. */
-  vi.runOnlyPendingTimers();
-  host = document.createElement('div');
-  host.setAttribute('aria-hidden', 'true');
-  copies = document.createElement('div');
-  host.appendChild(copies);
-  document.body.appendChild(host);
-  plan = buildBatPlan(
-    {
-      width: 1280,
-      height: 900,
-      composer: { element: composer, rect: new DOMRect(420, 420, 540, 100) },
-      perch: { element: perch, rect: new DOMRect(440, 470, 32, 32) },
-      surfaces: [
-        {
-          element: fixture.querySelector<HTMLElement>('#conversation')!,
-          rect: new DOMRect(200, 480, 200, 40),
-        },
-        {
-          element: fixture.querySelector<HTMLElement>('#starter')!,
-          rect: new DOMRect(500, 335, 180, 48),
-        },
-      ],
-    },
-    false,
-    () => 0.5,
-  );
-  [
-    ...plan.surfaces.map(({ target }) => target),
-    plan.composer,
-    plan.perch,
-  ].forEach((target) => {
-    if (target)
-      vi.spyOn(target.element, 'getBoundingClientRect').mockReturnValue(
-        target.rect,
-      );
-  });
-  actors = plan.actors.map((bat) => {
-    const actor = document.createElement('div');
-    Object.keys(bat.parts).forEach((part) => {
-      const artwork = document.createElementNS(
-        'http://www.w3.org/2000/svg',
-        'g',
-      );
-      artwork.setAttribute('data-bat-part', part);
-      actor.appendChild(artwork);
-    });
-    host.appendChild(actor);
-    return actor;
-  });
-  Object.defineProperty(Element.prototype, 'animate', {
-    configurable: true,
-    value: vi.fn(function (
-      this: Element,
-      frames: Keyframe[],
-      options: KeyframeAnimationOptions,
-    ) {
-      const animation = { cancel: vi.fn() };
-      recorded.push({ element: this, frames, options, animation });
-      return animation;
-    }),
-  });
-});
-
-afterEach(() => {
-  stop?.();
-  stop = undefined;
-  host.remove();
-  fixture.remove();
-  notificationPortal?.remove();
-  notificationPortal = undefined;
-  document.documentElement.removeAttribute('dir');
-  recorded.length = 0;
-  if (originalAnimate)
-    Object.defineProperty(Element.prototype, 'animate', originalAnimate);
-  else delete (Element.prototype as Partial<Element>).animate;
-  if (originalTimeline)
-    Object.defineProperty(document, 'timeline', originalTimeline);
-  else Reflect.deleteProperty(document, 'timeline');
-  vi.restoreAllMocks();
-  vi.useRealTimers();
-});
-
 const play = () => {
   stop = animateBats(plan, { host, copies, actors }, onStop);
 };
@@ -156,6 +53,109 @@ const expectStopped = () => {
 };
 
 describe('bat crosswind animation ownership', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    Object.defineProperty(document, 'timeline', {
+      configurable: true,
+      value: { currentTime: 2345 },
+    });
+    fixture = document.createElement('section');
+    fixture.setAttribute('role', 'region');
+    fixture.innerHTML = `
+    <ul><li id="conversation" style="opacity: 0.7"><a href="/conversations/a" id="conversation-link"><span>My conversation</span></a></li></ul>
+    <button id="starter" type="button"><span>Help me write</span></button>
+    <section id="composer"><textarea aria-label="Message"></textarea><button id="perch" type="button" aria-label="Attach"><svg><path /></svg></button></section>`;
+    document.body.appendChild(fixture);
+    composer = fixture.querySelector<HTMLElement>('#composer')!;
+    perch = fixture.querySelector<HTMLButtonElement>('#perch')!;
+    draft = fixture.querySelector('textarea')!;
+    draft.value = 'My unsent draft';
+    draft.focus();
+    draft.setSelectionRange(3, 9, 'backward');
+    /* JSDOM schedules selectionchange when the initial selection is assigned. */
+    vi.runOnlyPendingTimers();
+    host = document.createElement('div');
+    host.setAttribute('aria-hidden', 'true');
+    copies = document.createElement('div');
+    host.appendChild(copies);
+    document.body.appendChild(host);
+    plan = buildBatPlan(
+      {
+        width: 1280,
+        height: 900,
+        composer: { element: composer, rect: new DOMRect(420, 420, 540, 100) },
+        perch: { element: perch, rect: new DOMRect(440, 470, 32, 32) },
+        surfaces: [
+          {
+            element: fixture.querySelector<HTMLElement>('#conversation')!,
+            rect: new DOMRect(200, 480, 200, 40),
+          },
+          {
+            element: fixture.querySelector<HTMLElement>('#starter')!,
+            rect: new DOMRect(500, 335, 180, 48),
+          },
+        ],
+      },
+      false,
+      () => 0.5,
+    );
+    [
+      ...plan.surfaces.map(({ target }) => target),
+      plan.composer,
+      plan.perch,
+    ].forEach((target) => {
+      if (target)
+        vi.spyOn(target.element, 'getBoundingClientRect').mockReturnValue(
+          target.rect,
+        );
+    });
+    actors = plan.actors.map((bat) => {
+      const actor = document.createElement('div');
+      Object.keys(bat.parts).forEach((part) => {
+        const artwork = document.createElementNS(
+          'http://www.w3.org/2000/svg',
+          'g',
+        );
+        artwork.setAttribute('data-bat-part', part);
+        actor.appendChild(artwork);
+      });
+      host.appendChild(actor);
+      return actor;
+    });
+    Object.defineProperty(Element.prototype, 'animate', {
+      configurable: true,
+      value: vi.fn(function (
+        this: Element,
+        frames: Keyframe[],
+        options: KeyframeAnimationOptions,
+      ) {
+        const animation = { cancel: vi.fn() };
+        recorded.push({ element: this, frames, options, animation });
+        return animation;
+      }),
+    });
+  });
+
+  afterEach(() => {
+    stop?.();
+    stop = undefined;
+    host.remove();
+    fixture.remove();
+    notificationPortal?.remove();
+    notificationPortal = undefined;
+    document.documentElement.removeAttribute('dir');
+    recorded.length = 0;
+    if (originalAnimate)
+      Object.defineProperty(Element.prototype, 'animate', originalAnimate);
+    else delete (Element.prototype as Partial<Element>).animate;
+    if (originalTimeline)
+      Object.defineProperty(document, 'timeline', originalTimeline);
+    else Reflect.deleteProperty(document, 'timeline');
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
   it('borrows only inert surfaces and preserves the live composer, focus, draft and selection', () => {
     const before = fixture.outerHTML;
     play();

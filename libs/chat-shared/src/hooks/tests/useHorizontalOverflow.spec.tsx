@@ -88,16 +88,16 @@ const setHorizontalMeasurements = ({
   return scrollContainer;
 };
 
-beforeEach(() => {
-  vi.stubGlobal('ResizeObserver', ResizeObserverMock);
-});
-
-afterEach(() => {
-  vi.restoreAllMocks();
-  vi.unstubAllGlobals();
-});
-
 describe('useHorizontalOverflow', () => {
+  beforeEach(() => {
+    vi.stubGlobal('ResizeObserver', ResizeObserverMock);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
   it.each(['ltr', 'rtl'] as const)(
     'tracks content beyond both logical edges in %s',
     (direction) => {

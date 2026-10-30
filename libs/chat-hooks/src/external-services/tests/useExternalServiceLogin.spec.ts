@@ -468,46 +468,47 @@ describe('useExternalServiceLogin', () => {
       });
     });
   });
-});
 
-it('does not turn an unsuccessful offline timeout into success', async () => {
-  const popup = { close: vi.fn() } as unknown as Window;
-  getExternalService.mockResolvedValue({ appLevelAuthStatus: 'SIGNED_IN' });
-  getOfflineCredentials.mockResolvedValue({
-    available: true,
-    connected: false,
-    connect: {
-      clientId: 'client',
-      authorizationEndpoint: 'https://example.com/auth',
-      scopes: [],
-    },
+  it('does not turn an unsuccessful offline timeout into success', async () => {
+    const popup = { close: vi.fn() } as unknown as Window;
+    getExternalService.mockResolvedValue({ appLevelAuthStatus: 'SIGNED_IN' });
+    getOfflineCredentials.mockResolvedValue({
+      available: true,
+      connected: false,
+      connect: {
+        clientId: 'client',
+        authorizationEndpoint: 'https://example.com/auth',
+        scopes: [],
+      },
+    });
+    loginOfflineCredentialsMock.mockResolvedValue({ type: 'timed-out' });
+    const { result } = renderHook(() => useExternalServiceLogin());
+    expect(
+      await result.current.login({
+        appId: APP_ID,
+        serviceId: SERVICE_ID,
+        credentialsLevel: ExternalServiceCredentialsLevel.User,
+        authenticationType: ExternalServiceAuthType.DialNative,
+        popup,
+      }),
+    ).toEqual({ type: ExternalServiceLoginOutcomeType.Failure });
   });
-  loginOfflineCredentialsMock.mockResolvedValue({ type: 'timed-out' });
-  const { result } = renderHook(() => useExternalServiceLogin());
-  expect(
-    await result.current.login({
-      appId: APP_ID,
-      serviceId: SERVICE_ID,
-      credentialsLevel: ExternalServiceCredentialsLevel.User,
-      authenticationType: ExternalServiceAuthType.DialNative,
-      popup,
-    }),
-  ).toEqual({ type: ExternalServiceLoginOutcomeType.Failure });
-});
-it('closes the reserved popup when OAuth navigation throws', async () => {
-  const popup = { close: vi.fn() } as unknown as Window;
-  vi.mocked(navigateToolsetOAuthPopup).mockImplementationOnce(() => {
-    throw new Error('navigation failed');
+
+  it('closes the reserved popup when OAuth navigation throws', async () => {
+    const popup = { close: vi.fn() } as unknown as Window;
+    vi.mocked(navigateToolsetOAuthPopup).mockImplementationOnce(() => {
+      throw new Error('navigation failed');
+    });
+    const { result } = renderHook(() => useExternalServiceLogin());
+    expect(
+      await result.current.login({
+        appId: APP_ID,
+        serviceId: SERVICE_ID,
+        credentialsLevel: ExternalServiceCredentialsLevel.User,
+        authenticationType: ExternalServiceAuthType.OAuth,
+        popup,
+      }),
+    ).toEqual({ type: ExternalServiceLoginOutcomeType.Failure });
+    expect(popup.close).toHaveBeenCalledOnce();
   });
-  const { result } = renderHook(() => useExternalServiceLogin());
-  expect(
-    await result.current.login({
-      appId: APP_ID,
-      serviceId: SERVICE_ID,
-      credentialsLevel: ExternalServiceCredentialsLevel.User,
-      authenticationType: ExternalServiceAuthType.OAuth,
-      popup,
-    }),
-  ).toEqual({ type: ExternalServiceLoginOutcomeType.Failure });
-  expect(popup.close).toHaveBeenCalledOnce();
 });

@@ -23,75 +23,6 @@ const recorded: {
   cancel: ReturnType<typeof vi.fn>;
   startTime?: number;
 }[] = [];
-beforeEach(() => {
-  vi.useFakeTimers();
-  vi.clearAllMocks();
-  recorded.length = 0;
-  fixture = document.createElement('div');
-  fixture.innerHTML = '<textarea>Private draft</textarea>';
-  document.body.append(fixture);
-  draft = fixture.querySelector('textarea')!;
-  draft.focus();
-  draft.setSelectionRange(2, 7, 'backward');
-  vi.runOnlyPendingTimers();
-  const rect = new DOMRect(400, 300, 500, 100);
-  vi.spyOn(fixture, 'getBoundingClientRect').mockReturnValue(rect);
-  plan = buildCandyPlan(
-    {
-      width: 1280,
-      height: 900,
-      rtl: false,
-      surfaces: [{ element: fixture, rect }],
-    },
-    false,
-  );
-  host = document.createElement('div');
-  document.body.append(host);
-  host.innerHTML =
-    plan.sweets.map((_, i) => `<div data-candy-sweet="${i}"></div>`).join('') +
-    plan.birds
-      .map(
-        (_, i) =>
-          `<div data-candy-bird="${i}"><div data-candy-facing></div><div data-candy-head></div><div data-candy-wing></div></div>`,
-      )
-      .join('') +
-    plan.janitors
-      .map(
-        (_, i) =>
-          `<div data-candy-janitor="${i}"><div data-candy-facing></div><div data-candy-arms></div><div data-candy-leg="0"></div><div data-candy-leg="1"></div></div>`,
-      )
-      .join('');
-  vi.stubGlobal(
-    'ResizeObserver',
-    class {
-      constructor(callback: ResizeObserverCallback) {
-        onResize = callback;
-      }
-      observe = vi.fn();
-      disconnect = disconnect;
-    },
-  );
-  Object.defineProperty(Element.prototype, 'animate', {
-    configurable: true,
-    value: vi.fn(function (this: Element) {
-      const a = { element: this, cancel: vi.fn() };
-      recorded.push(a);
-      return a;
-    }),
-  });
-});
-afterEach(() => {
-  stop?.();
-  stop = undefined;
-  host.remove();
-  fixture.remove();
-  vi.restoreAllMocks();
-  vi.unstubAllGlobals();
-  vi.useRealTimers();
-  if (descriptor)
-    Object.defineProperty(Element.prototype, 'animate', descriptor);
-  else Reflect.deleteProperty(Element.prototype, 'animate');
-});
 const play = () => {
   stop = animateCandy(plan, host, onStop);
 };
@@ -102,6 +33,79 @@ const expectStopped = () => {
   expect(vi.getTimerCount()).toBe(0);
 };
 describe('Candy playback ownership', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    recorded.length = 0;
+    fixture = document.createElement('div');
+    fixture.innerHTML = '<textarea>Private draft</textarea>';
+    document.body.append(fixture);
+    draft = fixture.querySelector('textarea')!;
+    draft.focus();
+    draft.setSelectionRange(2, 7, 'backward');
+    vi.runOnlyPendingTimers();
+    const rect = new DOMRect(400, 300, 500, 100);
+    vi.spyOn(fixture, 'getBoundingClientRect').mockReturnValue(rect);
+    plan = buildCandyPlan(
+      {
+        width: 1280,
+        height: 900,
+        rtl: false,
+        surfaces: [{ element: fixture, rect }],
+      },
+      false,
+    );
+    host = document.createElement('div');
+    document.body.append(host);
+    host.innerHTML =
+      plan.sweets
+        .map((_, i) => `<div data-candy-sweet="${i}"></div>`)
+        .join('') +
+      plan.birds
+        .map(
+          (_, i) =>
+            `<div data-candy-bird="${i}"><div data-candy-facing></div><div data-candy-head></div><div data-candy-wing></div></div>`,
+        )
+        .join('') +
+      plan.janitors
+        .map(
+          (_, i) =>
+            `<div data-candy-janitor="${i}"><div data-candy-facing></div><div data-candy-arms></div><div data-candy-leg="0"></div><div data-candy-leg="1"></div></div>`,
+        )
+        .join('');
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(callback: ResizeObserverCallback) {
+          onResize = callback;
+        }
+        observe = vi.fn();
+        disconnect = disconnect;
+      },
+    );
+    Object.defineProperty(Element.prototype, 'animate', {
+      configurable: true,
+      value: vi.fn(function (this: Element) {
+        const a = { element: this, cancel: vi.fn() };
+        recorded.push(a);
+        return a;
+      }),
+    });
+  });
+
+  afterEach(() => {
+    stop?.();
+    stop = undefined;
+    host.remove();
+    fixture.remove();
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+    if (descriptor)
+      Object.defineProperty(Element.prototype, 'animate', descriptor);
+    else Reflect.deleteProperty(Element.prototype, 'animate');
+  });
+
   it('keeps draft, selection, focus and DOM intact without measuring during playback', () => {
     const html = fixture.outerHTML;
     play();

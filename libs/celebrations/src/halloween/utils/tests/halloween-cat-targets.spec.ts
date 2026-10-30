@@ -34,26 +34,26 @@ const buttons = () =>
     testAnchors({ composer: 'composer', starterList: 'starters' }),
   ).buttons.map(({ element }) => element);
 
-beforeEach(() => {
-  vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(
-    1280,
-  );
-  vi.spyOn(document.documentElement, 'clientHeight', 'get').mockReturnValue(
-    900,
-  );
-  fixture = document.createElement('div');
-  fixture.innerHTML =
-    '<aside><button>History action</button></aside><section role="region"><div class="composer"><textarea></textarea></div><div class="starters"></div><div data-halloween-pumpkin-anchor><button>Pumpkin</button></div></section>';
-  document.body.appendChild(fixture);
-  place(composer(), 350, 300, 600, 180);
-});
-
-afterEach(() => {
-  fixture.remove();
-  vi.restoreAllMocks();
-});
-
 describe('cat gravity targets', () => {
+  beforeEach(() => {
+    vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(
+      1280,
+    );
+    vi.spyOn(document.documentElement, 'clientHeight', 'get').mockReturnValue(
+      900,
+    );
+    fixture = document.createElement('div');
+    fixture.innerHTML =
+      '<aside><button>History action</button></aside><section role="region"><div class="composer"><textarea></textarea></div><div class="starters"></div><div data-halloween-pumpkin-anchor><button>Pumpkin</button></div></section>';
+    document.body.appendChild(fixture);
+    place(composer(), 350, 300, 600, 180);
+  });
+
+  afterEach(() => {
+    fixture.remove();
+    vi.restoreAllMocks();
+  });
+
   it('keeps the focused composer as a read-only anchor and prefers its compact controls', () => {
     const input = composer().querySelector('textarea')!;
     input.value = 'Unsent draft';

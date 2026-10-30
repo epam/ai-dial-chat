@@ -6,10 +6,6 @@ import { PROMPTS_CLASS } from '../../../constants/public-class-names';
 import type { FavoritePromptItem } from '../../../models/favorite-prompt-item';
 import { FavoritePromptsPanel } from '../FavoritePromptsPanel';
 
-afterEach(() => {
-  vi.useRealTimers();
-});
-
 const makeItem = (
   overrides: Partial<FavoritePromptItem> = {},
 ): FavoritePromptItem => ({
@@ -32,115 +28,6 @@ const renderPanel = (
     />,
   );
 
-describe('FavoritePromptsPanel', () => {
-  it('renders the "My Collection" header', () => {
-    renderPanel();
-
-    expect(screen.getByText('My Collection')).toBeTruthy();
-  });
-
-  it('shows the empty-state hint when there are no favorites', () => {
-    renderPanel({ favorites: [] });
-
-    expect(screen.getByText('Star a prompt to pin it here')).toBeTruthy();
-  });
-
-  it('shows the "Browse" button even when there are no favorites', () => {
-    renderPanel({ favorites: [] });
-
-    expect(screen.getByRole('menuitem', { name: 'Browse' })).toBeTruthy();
-  });
-
-  it('renders a favorite row with its name and a pressed star toggle', () => {
-    renderPanel({ favorites: [makeItem()] });
-
-    expect(screen.getByText('Summarizer')).toBeTruthy();
-    const star = screen.getByRole('button', { name: 'Remove from favorites' });
-    expect(star.getAttribute('aria-pressed')).toBe('true');
-  });
-
-  it('calls onSelect with the item when a row is clicked', async () => {
-    const onSelect = vi.fn();
-    const item = makeItem();
-    renderPanel({ favorites: [item], onSelect });
-
-    await userEvent.click(screen.getByText('Summarizer'));
-
-    expect(onSelect).toHaveBeenCalledWith(item);
-  });
-
-  it('does not call onToggleFavorite synchronously on click', async () => {
-    const onToggleFavorite = vi.fn();
-    renderPanel({
-      favorites: [makeItem({ id: 'prompt-2' })],
-      onToggleFavorite,
-    });
-
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Remove from favorites' }),
-    );
-
-    expect(onToggleFavorite).not.toHaveBeenCalled();
-  });
-
-  it('calls onToggleFavorite with the id once the exit animation finishes', async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-    const user = userEvent.setup({ delay: null });
-    const onToggleFavorite = vi.fn();
-    renderPanel({
-      favorites: [makeItem({ id: 'prompt-2' })],
-      onToggleFavorite,
-    });
-
-    await user.click(
-      screen.getByRole('button', { name: 'Remove from favorites' }),
-    );
-
-    await waitFor(() =>
-      expect(onToggleFavorite).toHaveBeenCalledWith('prompt-2'),
-    );
-  });
-
-  it('calls onBrowse when "Browse" is clicked', async () => {
-    const onBrowse = vi.fn();
-    renderPanel({ onBrowse });
-
-    await userEvent.click(screen.getByRole('menuitem', { name: 'Browse' }));
-
-    expect(onBrowse).toHaveBeenCalledOnce();
-  });
-
-  it('renders the description in the row tooltip when a described row is hovered', async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-    renderPanel({
-      favorites: [makeItem({ description: 'Summarizes long text' })],
-    });
-
-    /*
-     * The kit's hover listener is a native `mouseenter` listener on the row
-     * wrapper that `asChild` creates, and `mouseenter` does not bubble, so
-     * user-event's hover on the inner row button never reaches it — dispatch
-     * the enter event directly instead.
-     */
-    fireEvent.mouseEnter(screen.getByRole('menuitem', { name: 'Summarizer' }));
-
-    expect(await screen.findByText('Summarizes long text')).toBeTruthy();
-  });
-
-  it('renders no row tooltip when isRowTooltipHidden is set', async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-    renderPanel({
-      favorites: [makeItem({ description: 'Summarizes long text' })],
-      isRowTooltipHidden: true,
-    });
-
-    fireEvent.mouseEnter(screen.getByRole('menuitem', { name: 'Summarizer' }));
-    await vi.advanceTimersByTimeAsync(1000);
-
-    expect(screen.queryByText('Summarizes long text')).toBeNull();
-  });
-});
-
 /*
  * Walking up to an unlabeled container is the only way to assert a class on it:
  * the element has no role or text of its own, and querying *by* the class would
@@ -150,15 +37,136 @@ const closestWithClass = (from: Element, className: string): Element | null =>
   // eslint-disable-next-line testing-library/no-node-access -- see above
   from.closest(`.${className}`);
 
-describe('FavoritePromptsPanel — public class names', () => {
-  it('stamps the panel root', () => {
-    renderPanel();
+describe('FavoritePromptsPanel', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
-    expect(
-      closestWithClass(
-        screen.getByText('My Collection'),
-        PROMPTS_CLASS.favoritesPanel,
-      ),
-    ).toBeTruthy();
+  describe('FavoritePromptsPanel', () => {
+    it('renders the "My Collection" header', () => {
+      renderPanel();
+
+      expect(screen.getByText('My Collection')).toBeTruthy();
+    });
+
+    it('shows the empty-state hint when there are no favorites', () => {
+      renderPanel({ favorites: [] });
+
+      expect(screen.getByText('Star a prompt to pin it here')).toBeTruthy();
+    });
+
+    it('shows the "Browse" button even when there are no favorites', () => {
+      renderPanel({ favorites: [] });
+
+      expect(screen.getByRole('menuitem', { name: 'Browse' })).toBeTruthy();
+    });
+
+    it('renders a favorite row with its name and a pressed star toggle', () => {
+      renderPanel({ favorites: [makeItem()] });
+
+      expect(screen.getByText('Summarizer')).toBeTruthy();
+      const star = screen.getByRole('button', {
+        name: 'Remove from favorites',
+      });
+      expect(star.getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('calls onSelect with the item when a row is clicked', async () => {
+      const onSelect = vi.fn();
+      const item = makeItem();
+      renderPanel({ favorites: [item], onSelect });
+
+      await userEvent.click(screen.getByText('Summarizer'));
+
+      expect(onSelect).toHaveBeenCalledWith(item);
+    });
+
+    it('does not call onToggleFavorite synchronously on click', async () => {
+      const onToggleFavorite = vi.fn();
+      renderPanel({
+        favorites: [makeItem({ id: 'prompt-2' })],
+        onToggleFavorite,
+      });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Remove from favorites' }),
+      );
+
+      expect(onToggleFavorite).not.toHaveBeenCalled();
+    });
+
+    it('calls onToggleFavorite with the id once the exit animation finishes', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const user = userEvent.setup({ delay: null });
+      const onToggleFavorite = vi.fn();
+      renderPanel({
+        favorites: [makeItem({ id: 'prompt-2' })],
+        onToggleFavorite,
+      });
+
+      await user.click(
+        screen.getByRole('button', { name: 'Remove from favorites' }),
+      );
+
+      await waitFor(() =>
+        expect(onToggleFavorite).toHaveBeenCalledWith('prompt-2'),
+      );
+    });
+
+    it('calls onBrowse when "Browse" is clicked', async () => {
+      const onBrowse = vi.fn();
+      renderPanel({ onBrowse });
+
+      await userEvent.click(screen.getByRole('menuitem', { name: 'Browse' }));
+
+      expect(onBrowse).toHaveBeenCalledOnce();
+    });
+
+    it('renders the description in the row tooltip when a described row is hovered', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      renderPanel({
+        favorites: [makeItem({ description: 'Summarizes long text' })],
+      });
+
+      /*
+       * The kit's hover listener is a native `mouseenter` listener on the row
+       * wrapper that `asChild` creates, and `mouseenter` does not bubble, so
+       * user-event's hover on the inner row button never reaches it — dispatch
+       * the enter event directly instead.
+       */
+      fireEvent.mouseEnter(
+        screen.getByRole('menuitem', { name: 'Summarizer' }),
+      );
+
+      expect(await screen.findByText('Summarizes long text')).toBeTruthy();
+    });
+
+    it('renders no row tooltip when isRowTooltipHidden is set', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      renderPanel({
+        favorites: [makeItem({ description: 'Summarizes long text' })],
+        isRowTooltipHidden: true,
+      });
+
+      fireEvent.mouseEnter(
+        screen.getByRole('menuitem', { name: 'Summarizer' }),
+      );
+      await vi.advanceTimersByTimeAsync(1000);
+
+      expect(screen.queryByText('Summarizes long text')).toBeNull();
+    });
+  });
+
+  describe('FavoritePromptsPanel — public class names', () => {
+    it('stamps the panel root', () => {
+      renderPanel();
+
+      expect(
+        closestWithClass(
+          screen.getByText('My Collection'),
+          PROMPTS_CLASS.favoritesPanel,
+        ),
+      ).toBeTruthy();
+    });
   });
 });

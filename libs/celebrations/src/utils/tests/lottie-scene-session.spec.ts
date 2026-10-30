@@ -37,57 +37,6 @@ let player: LottiePlayer & {
 const TIMINGS = { loadTimeoutMs: 2000, readyTimeoutMs: 250, playbackMs: 16000 };
 const original = () => ({ layers: [{ ty: 4, nm: 'helper' }], v: '5.13.0' });
 
-beforeEach(() => {
-  vi.useFakeTimers();
-  animations = [];
-  isLoadedOnCreate = true;
-  host = document.createElement('div');
-  document.body.append(host);
-  player = {
-    loadAnimation: vi.fn((options: AnimationConfigWithData<'svg'>) => {
-      const callbacks = new Map<string, () => void>();
-      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      options.container?.append(svg);
-      /* Like lottie_light's completeData, the fake player mutates its input. */
-      const data = options.animationData as Record<string, unknown>;
-      data.__complete = true;
-      (data.layers as unknown[]).length = 0;
-      const animation: FakeAnimation = {
-        callbacks,
-        isLoaded: isLoadedOnCreate,
-        currentFrame: 0,
-        frameRate: 60,
-        animationData: data,
-        play: vi.fn(),
-        setSubframe: vi.fn(),
-        destroy: vi.fn(() => svg.remove()),
-        emit: (name) => callbacks.get(name)?.(),
-      };
-      animations.push(animation);
-      return {
-        ...animation,
-        get isLoaded() {
-          return animation.isLoaded;
-        },
-        get currentFrame() {
-          return animation.currentFrame;
-        },
-        get frameRate() {
-          return animation.frameRate;
-        },
-        addEventListener: (name: string, callback: () => void) =>
-          callbacks.set(name, callback),
-        removeEventListener: (name: string) => callbacks.delete(name),
-      } as unknown as AnimationItem;
-    }),
-  };
-});
-afterEach(() => {
-  host.remove();
-  vi.restoreAllMocks();
-  vi.useRealTimers();
-});
-
 const flush = async () => {
   for (let i = 0; i < 6; i++) await Promise.resolve();
 };
@@ -152,6 +101,61 @@ const expectReleased = () => {
 };
 
 describe('createLottieSceneSession', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    animations = [];
+    isLoadedOnCreate = true;
+    host = document.createElement('div');
+    document.body.append(host);
+    player = {
+      loadAnimation: vi.fn((options: AnimationConfigWithData<'svg'>) => {
+        const callbacks = new Map<string, () => void>();
+        const svg = document.createElementNS(
+          'http://www.w3.org/2000/svg',
+          'svg',
+        );
+        options.container?.append(svg);
+        /* Like lottie_light's completeData, the fake player mutates its input. */
+        const data = options.animationData as Record<string, unknown>;
+        data.__complete = true;
+        (data.layers as unknown[]).length = 0;
+        const animation: FakeAnimation = {
+          callbacks,
+          isLoaded: isLoadedOnCreate,
+          currentFrame: 0,
+          frameRate: 60,
+          animationData: data,
+          play: vi.fn(),
+          setSubframe: vi.fn(),
+          destroy: vi.fn(() => svg.remove()),
+          emit: (name) => callbacks.get(name)?.(),
+        };
+        animations.push(animation);
+        return {
+          ...animation,
+          get isLoaded() {
+            return animation.isLoaded;
+          },
+          get currentFrame() {
+            return animation.currentFrame;
+          },
+          get frameRate() {
+            return animation.frameRate;
+          },
+          addEventListener: (name: string, callback: () => void) =>
+            callbacks.set(name, callback),
+          removeEventListener: (name: string) => callbacks.delete(name),
+        } as unknown as AnimationItem;
+      }),
+    };
+  });
+
+  afterEach(() => {
+    host.remove();
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
   it('starts the playback deadline at readiness, not at import or renderer creation', async () => {
     const { onTerminal } = await startInitializing();
     vi.advanceTimersByTime(200);

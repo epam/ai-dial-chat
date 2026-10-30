@@ -463,38 +463,6 @@ const defaultProps = {
   onSelectConversation: vi.fn(),
 };
 
-beforeEach(() => {
-  vi.clearAllMocks();
-  mockUseIsMobile.mockReturnValue(false);
-  vi.mocked(useUiFeature).mockImplementation(
-    (feature) =>
-      feature !== OverlayFeature.HideConversationExport &&
-      feature !== OverlayFeature.HideConversationImport,
-  );
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  vi.mocked(useConversations).mockReturnValue(baseContextValue as any);
-  vi.mocked(useNotification).mockReturnValue(
-    createNotificationContextValue(mockShowNotification),
-  );
-  vi.mocked(useConversationExport).mockReturnValue({
-    jobs: [],
-    exportSingle: mockExportSingle,
-    exportAll: mockExportAll,
-    cancelJob: mockCancelJob,
-    dismissJob: mockDismissJob,
-    retryJob: mockRetryJob,
-    dismissAll: vi.fn(),
-  });
-  vi.mocked(useConversationImport).mockReturnValue({
-    jobs: [],
-    importConversations: mockImportConversations,
-    cancelJob: mockCancelImportJob,
-    dismissJob: mockDismissImportJob,
-    retryJob: mockRetryImportJob,
-    dismissAll: vi.fn(),
-  });
-});
-
 /** Every feature on except the given ones, which model the `Hide*` opt-outs. */
 const enableAllExcept = (...disabled: OverlayFeature[]) =>
   vi
@@ -505,6 +473,38 @@ const renderSidebar = (props = {}) =>
   render(<ConversationPanelView {...defaultProps} {...props} />);
 
 describe('ConversationPanelView', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUseIsMobile.mockReturnValue(false);
+    vi.mocked(useUiFeature).mockImplementation(
+      (feature) =>
+        feature !== OverlayFeature.HideConversationExport &&
+        feature !== OverlayFeature.HideConversationImport,
+    );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    vi.mocked(useConversations).mockReturnValue(baseContextValue as any);
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(mockShowNotification),
+    );
+    vi.mocked(useConversationExport).mockReturnValue({
+      jobs: [],
+      exportSingle: mockExportSingle,
+      exportAll: mockExportAll,
+      cancelJob: mockCancelJob,
+      dismissJob: mockDismissJob,
+      retryJob: mockRetryJob,
+      dismissAll: vi.fn(),
+    });
+    vi.mocked(useConversationImport).mockReturnValue({
+      jobs: [],
+      importConversations: mockImportConversations,
+      cancelJob: mockCancelImportJob,
+      dismissJob: mockDismissImportJob,
+      retryJob: mockRetryImportJob,
+      dismissAll: vi.fn(),
+    });
+  });
+
   it('renders the section instead of the full panel', () => {
     renderSidebar();
 

@@ -9,27 +9,28 @@ const measure = (element: Element, box: DOMRect) =>
   vi.spyOn(element, 'getBoundingClientRect').mockReturnValue(box);
 let composer: HTMLElement;
 
-beforeEach(() => {
-  document.body.innerHTML =
-    '<main><div class="input-shell"><textarea>draft</textarea></div></main>';
-  Object.defineProperty(document.documentElement, 'clientWidth', {
-    configurable: true,
-    value: 1280,
-  });
-  Object.defineProperty(document.documentElement, 'clientHeight', {
-    configurable: true,
-    value: 900,
-  });
-  composer = document.querySelector('.input-shell')!;
-  composer.style.borderRadius = '16px';
-  measure(composer, new DOMRect(340, 720, 600, 120));
-});
-afterEach(() => {
-  vi.restoreAllMocks();
-  document.body.innerHTML = '';
-});
-
 describe('getSkeletonTargets', () => {
+  beforeEach(() => {
+    document.body.innerHTML =
+      '<main><div class="input-shell"><textarea>draft</textarea></div></main>';
+    Object.defineProperty(document.documentElement, 'clientWidth', {
+      configurable: true,
+      value: 1280,
+    });
+    Object.defineProperty(document.documentElement, 'clientHeight', {
+      configurable: true,
+      value: 900,
+    });
+    composer = document.querySelector('.input-shell')!;
+    composer.style.borderRadius = '16px';
+    measure(composer, new DOMRect(340, 720, 600, 120));
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    document.body.innerHTML = '';
+  });
+
   it('measures a focused draft composer without changing it', () => {
     const draft = document.querySelector('textarea')!;
     draft.focus();

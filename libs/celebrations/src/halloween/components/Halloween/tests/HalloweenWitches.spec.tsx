@@ -60,29 +60,31 @@ const descriptor = Object.getOwnPropertyDescriptor(
   'animate',
 );
 const stop = vi.fn();
-beforeEach(() => {
-  vi.clearAllMocks();
-  state.mobile = false;
-  state.reduced = false;
-  state.listeners.clear();
-  Object.defineProperty(Element.prototype, 'animate', {
-    configurable: true,
-    value: vi.fn(),
-  });
-  vi.mocked(animateWitches).mockReturnValue(stop);
-  vi.mocked(getWitchTargets).mockReturnValue({
-    width: 1280,
-    height: 800,
-    buttons: [],
-  });
-});
-afterEach(() => {
-  if (descriptor)
-    Object.defineProperty(Element.prototype, 'animate', descriptor);
-  else Reflect.deleteProperty(Element.prototype, 'animate');
-  vi.restoreAllMocks();
-});
 describe('witch scene integration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    state.mobile = false;
+    state.reduced = false;
+    state.listeners.clear();
+    Object.defineProperty(Element.prototype, 'animate', {
+      configurable: true,
+      value: vi.fn(),
+    });
+    vi.mocked(animateWitches).mockReturnValue(stop);
+    vi.mocked(getWitchTargets).mockReturnValue({
+      width: 1280,
+      height: 800,
+      buttons: [],
+    });
+  });
+
+  afterEach(() => {
+    if (descriptor)
+      Object.defineProperty(Element.prototype, 'animate', descriptor);
+    else Reflect.deleteProperty(Element.prototype, 'animate');
+    vi.restoreAllMocks();
+  });
+
   it.each([true, false])(
     'connects two witches and the broom-only story without changing input, mobile=%s',
     async (mobile) => {

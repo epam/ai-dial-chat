@@ -38,41 +38,41 @@ const addButton = (
 const composer = () => fixture.querySelector<HTMLElement>('.composer')!;
 const welcome = () => fixture.querySelector<HTMLElement>('[role="region"]')!;
 
-beforeEach(() => {
-  vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(
-    1280,
-  );
-  vi.spyOn(document.documentElement, 'clientHeight', 'get').mockReturnValue(
-    900,
-  );
-  fixture = document.createElement('div');
-  fixture.innerHTML =
-    '<ul class="celebration-history"></ul><section role="region"><h1>Welcome</h1><div class="composer"><textarea></textarea></div><div class="starters"></div><div data-halloween-pumpkin-anchor><button>Pumpkin</button></div></section>';
-  document.body.appendChild(fixture);
-  place(composer(), 350, 350, 650, 170);
-  place(welcome().querySelector('h1')!, 520, 150, 300, 50);
-  place(
-    welcome().querySelector('[data-halloween-pumpkin-anchor]')!,
-    1100,
-    680,
-    120,
-    120,
-  );
-  place(
-    welcome().querySelector('[data-halloween-pumpkin-anchor] button')!,
-    1100,
-    680,
-    120,
-    120,
-  );
-});
-
-afterEach(() => {
-  fixture.remove();
-  vi.restoreAllMocks();
-});
-
 describe('ghost possession targets', () => {
+  beforeEach(() => {
+    vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(
+      1280,
+    );
+    vi.spyOn(document.documentElement, 'clientHeight', 'get').mockReturnValue(
+      900,
+    );
+    fixture = document.createElement('div');
+    fixture.innerHTML =
+      '<ul class="celebration-history"></ul><section role="region"><h1>Welcome</h1><div class="composer"><textarea></textarea></div><div class="starters"></div><div data-halloween-pumpkin-anchor><button>Pumpkin</button></div></section>';
+    document.body.appendChild(fixture);
+    place(composer(), 350, 350, 650, 170);
+    place(welcome().querySelector('h1')!, 520, 150, 300, 50);
+    place(
+      welcome().querySelector('[data-halloween-pumpkin-anchor]')!,
+      1100,
+      680,
+      120,
+      120,
+    );
+    place(
+      welcome().querySelector('[data-halloween-pumpkin-anchor] button')!,
+      1100,
+      680,
+      120,
+      120,
+    );
+  });
+
+  afterEach(() => {
+    fixture.remove();
+    vi.restoreAllMocks();
+  });
+
   it('spreads whole homes between history, starter cards, controls and headings', () => {
     const row = addRow();
     const starter = addButton(

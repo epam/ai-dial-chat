@@ -6,27 +6,29 @@ const measure = (element: Element, box: DOMRect) =>
   vi.spyOn(element, 'getBoundingClientRect').mockReturnValue(box);
 let composer: HTMLElement;
 let button: HTMLButtonElement;
-beforeEach(() => {
-  document.body.innerHTML =
-    '<main role="region"><div class="input-shell"><textarea>draft</textarea></div><ul class="starters"><li><button>Try something</button></li></ul></main>';
-  Object.defineProperty(document.documentElement, 'clientWidth', {
-    configurable: true,
-    value: 1280,
-  });
-  Object.defineProperty(document.documentElement, 'clientHeight', {
-    configurable: true,
-    value: 900,
-  });
-  composer = document.querySelector('.input-shell')!;
-  button = document.querySelector('button')!;
-  measure(composer, new DOMRect(350, 400, 580, 100));
-  measure(button, new DOMRect(500, 550, 160, 44));
-});
-afterEach(() => {
-  vi.restoreAllMocks();
-  document.body.innerHTML = '';
-});
 describe('Candy measured edges', () => {
+  beforeEach(() => {
+    document.body.innerHTML =
+      '<main role="region"><div class="input-shell"><textarea>draft</textarea></div><ul class="starters"><li><button>Try something</button></li></ul></main>';
+    Object.defineProperty(document.documentElement, 'clientWidth', {
+      configurable: true,
+      value: 1280,
+    });
+    Object.defineProperty(document.documentElement, 'clientHeight', {
+      configurable: true,
+      value: 900,
+    });
+    composer = document.querySelector('.input-shell')!;
+    button = document.querySelector('button')!;
+    measure(composer, new DOMRect(350, 400, 580, 100));
+    measure(button, new DOMRect(500, 550, 160, 44));
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    document.body.innerHTML = '';
+  });
+
   it('uses below/above starters without requiring their ordering', () => {
     expect(
       getCandyTargets(anchors, false).surfaces.map((s) => s.element),

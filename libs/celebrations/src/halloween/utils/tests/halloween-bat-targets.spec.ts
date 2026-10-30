@@ -45,34 +45,34 @@ const surfaces = (limit = 5) =>
     limit,
   ).surfaces.map(({ element }) => element);
 
-beforeEach(() => {
-  vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(
-    1280,
-  );
-  vi.spyOn(document.documentElement, 'clientHeight', 'get').mockReturnValue(
-    900,
-  );
-  fixture = document.createElement('div');
-  fixture.innerHTML =
-    '<ul class="celebration-history"></ul><section role="region"><h1>Welcome</h1><div class="composer"><textarea></textarea></div><div class="starters"></div><div data-halloween-pumpkin-anchor><button>Pumpkin</button></div></section>';
-  document.body.appendChild(fixture);
-  place(composer(), 350, 300, 600, 180);
-  place(welcome().querySelector('h1')!, 480, 150, 300, 50);
-  place(
-    welcome().querySelector('[data-halloween-pumpkin-anchor] button')!,
-    620,
-    520,
-    90,
-    90,
-  );
-});
-
-afterEach(() => {
-  fixture.remove();
-  vi.restoreAllMocks();
-});
-
 describe('bat wind targets', () => {
+  beforeEach(() => {
+    vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(
+      1280,
+    );
+    vi.spyOn(document.documentElement, 'clientHeight', 'get').mockReturnValue(
+      900,
+    );
+    fixture = document.createElement('div');
+    fixture.innerHTML =
+      '<ul class="celebration-history"></ul><section role="region"><h1>Welcome</h1><div class="composer"><textarea></textarea></div><div class="starters"></div><div data-halloween-pumpkin-anchor><button>Pumpkin</button></div></section>';
+    document.body.appendChild(fixture);
+    place(composer(), 350, 300, 600, 180);
+    place(welcome().querySelector('h1')!, 480, 150, 300, 50);
+    place(
+      welcome().querySelector('[data-halloween-pumpkin-anchor] button')!,
+      620,
+      520,
+      90,
+      90,
+    );
+  });
+
+  afterEach(() => {
+    fixture.remove();
+    vi.restoreAllMocks();
+  });
+
   it('keeps the focused composer as an untouched anchor and reserves the nearest small perch', () => {
     const input = composer().querySelector('textarea')!;
     input.value = 'Unsent draft';

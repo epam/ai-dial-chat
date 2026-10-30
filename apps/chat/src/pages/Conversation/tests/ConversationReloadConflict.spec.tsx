@@ -180,66 +180,66 @@ const makeAttachStream = () => {
   };
 };
 
-beforeEach(() => {
-  vi.clearAllMocks();
-  routeState.conversationId = CONVERSATION_ID;
-  routeState.state = null;
-  vi.mocked(ClientChannelContextModule.useClientChannel).mockReturnValue({
-    channelId: 'channel-1',
-    pendingEvents: [],
-    reportEvent: vi.fn(),
-    ensureConnected: vi.fn(),
-    waitForChannel: vi.fn(),
-    notifyGenerationSettled: vi.fn(),
-  });
-  vi.mocked(ConversationsContextModule.useConversations).mockReturnValue({
-    conversations: [],
-    duplicateConversation: vi.fn(),
-    removeConversationFromList: vi.fn(),
-    updateConversationTitle: vi.fn(),
-    bumpConversationActivity: vi.fn(),
-    markConversationUnread: vi.fn(),
-    markConversationViewed: vi.fn(),
-    watchForDisplayNameUpdate: vi.fn(() => () => undefined),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any);
-  vi.mocked(DeploymentsContextModule.useDeployments).mockReturnValue(
-    createDeploymentsContextValue({ selectedItemId: 'gpt-4o' }),
-  );
-  vi.mocked(NotificationContextModule.useNotification).mockReturnValue(
-    createNotificationContextValue(vi.fn()),
-  );
-  vi.mocked(chatHooksModule.useConversationHandlers).mockReturnValue({
-    handleSend: vi.fn(),
-    handleUploadAttachment: vi.fn(),
-    handleRegenerateMessage: vi.fn(),
-    handleDeleteMessage: vi.fn(),
-    handleConfirmDelete: vi.fn(),
-    handleRateMessage: vi.fn(),
-    handleButtonSelect: vi.fn(),
-    handleConfirmStarter: vi.fn(),
-    handleStartEdit: vi.fn(),
-    handleCancelEdit: vi.fn(),
-    handleEditMessage: vi.fn(),
-    editingMessageIndexes: new Set<number>(),
-    pendingDeleteIndex: null,
-    setPendingDeleteIndex: vi.fn(),
-    pendingStarterContext: null,
-    setPendingStarterContext: vi.fn(),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any);
-  vi.mocked(chatStreamApi.streamCompletion).mockImplementation(
-    (_path, _message, _model, options) => {
-      options.onError(new GenerationConflictError());
-    },
-  );
-});
-
-afterEach(() => {
-  vi.useRealTimers();
-});
-
 describe('ConversationPage — reload before the first answer saved its start', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    routeState.conversationId = CONVERSATION_ID;
+    routeState.state = null;
+    vi.mocked(ClientChannelContextModule.useClientChannel).mockReturnValue({
+      channelId: 'channel-1',
+      pendingEvents: [],
+      reportEvent: vi.fn(),
+      ensureConnected: vi.fn(),
+      waitForChannel: vi.fn(),
+      notifyGenerationSettled: vi.fn(),
+    });
+    vi.mocked(ConversationsContextModule.useConversations).mockReturnValue({
+      conversations: [],
+      duplicateConversation: vi.fn(),
+      removeConversationFromList: vi.fn(),
+      updateConversationTitle: vi.fn(),
+      bumpConversationActivity: vi.fn(),
+      markConversationUnread: vi.fn(),
+      markConversationViewed: vi.fn(),
+      watchForDisplayNameUpdate: vi.fn(() => () => undefined),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+    vi.mocked(DeploymentsContextModule.useDeployments).mockReturnValue(
+      createDeploymentsContextValue({ selectedItemId: 'gpt-4o' }),
+    );
+    vi.mocked(NotificationContextModule.useNotification).mockReturnValue(
+      createNotificationContextValue(vi.fn()),
+    );
+    vi.mocked(chatHooksModule.useConversationHandlers).mockReturnValue({
+      handleSend: vi.fn(),
+      handleUploadAttachment: vi.fn(),
+      handleRegenerateMessage: vi.fn(),
+      handleDeleteMessage: vi.fn(),
+      handleConfirmDelete: vi.fn(),
+      handleRateMessage: vi.fn(),
+      handleButtonSelect: vi.fn(),
+      handleConfirmStarter: vi.fn(),
+      handleStartEdit: vi.fn(),
+      handleCancelEdit: vi.fn(),
+      handleEditMessage: vi.fn(),
+      editingMessageIndexes: new Set<number>(),
+      pendingDeleteIndex: null,
+      setPendingDeleteIndex: vi.fn(),
+      pendingStarterContext: null,
+      setPendingStarterContext: vi.fn(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+    vi.mocked(chatStreamApi.streamCompletion).mockImplementation(
+      (_path, _message, _model, options) => {
+        options.onError(new GenerationConflictError());
+      },
+    );
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('keeps the first answer after leaving an existing chat and creating a prefetched chat', async () => {
     vi.mocked(conversationsApi.getConversation).mockResolvedValue(
       saved() as never,

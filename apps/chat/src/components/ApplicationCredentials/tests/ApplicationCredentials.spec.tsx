@@ -50,16 +50,16 @@ const oauthService: ApplicationExternalServiceDto = {
   authorizationEndpoint: 'https://provider.example/authorize',
 };
 
-beforeEach(() => {
-  vi.resetAllMocks();
-  vi.mocked(listExternalServices).mockResolvedValue([
-    apiKeyService,
-    oauthService,
-  ]);
-  login.mockResolvedValue({ type: ExternalServiceLoginOutcomeType.Success });
-});
-
 describe('ApplicationCredentials', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.mocked(listExternalServices).mockResolvedValue([
+      apiKeyService,
+      oauthService,
+    ]);
+    login.mockResolvedValue({ type: ExternalServiceLoginOutcomeType.Success });
+  });
+
   it('loads each authenticated service and omits services needing no credentials', async () => {
     vi.mocked(listExternalServices).mockResolvedValue([
       apiKeyService,

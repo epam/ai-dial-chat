@@ -38,23 +38,6 @@ const emptySharedByMeResponse = { bucket: BUCKET, path: '', items: [] };
 
 let filesApi: DialFilesApi;
 
-beforeEach(() => {
-  filesApi = makeFilesApi();
-  vi.mocked(filesApi.listFiles).mockResolvedValue({
-    bucket: BUCKET,
-    path: '',
-    items: [],
-    nextToken: undefined,
-  });
-  vi.mocked(filesApi.listSharedFiles).mockResolvedValue(
-    emptySharedListResponse,
-  );
-  vi.mocked(filesApi.listPublicFiles).mockResolvedValue(
-    emptyPublicListResponse,
-  );
-  vi.mocked(filesApi.listSharedByMe).mockResolvedValue(emptySharedByMeResponse);
-});
-
 const renderListing = (overrides: Partial<UseDialFileListingOptions> = {}) =>
   renderHook(() =>
     useDialFileListing({
@@ -67,6 +50,25 @@ const renderListing = (overrides: Partial<UseDialFileListingOptions> = {}) =>
   );
 
 describe('useDialFileListing', () => {
+  beforeEach(() => {
+    filesApi = makeFilesApi();
+    vi.mocked(filesApi.listFiles).mockResolvedValue({
+      bucket: BUCKET,
+      path: '',
+      items: [],
+      nextToken: undefined,
+    });
+    vi.mocked(filesApi.listSharedFiles).mockResolvedValue(
+      emptySharedListResponse,
+    );
+    vi.mocked(filesApi.listPublicFiles).mockResolvedValue(
+      emptyPublicListResponse,
+    );
+    vi.mocked(filesApi.listSharedByMe).mockResolvedValue(
+      emptySharedByMeResponse,
+    );
+  });
+
   it('switching tabs resets folderPath to root and clears the listing cache', async () => {
     vi.mocked(filesApi.listFiles).mockResolvedValue({
       bucket: BUCKET,

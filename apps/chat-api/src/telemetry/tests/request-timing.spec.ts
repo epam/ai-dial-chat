@@ -25,27 +25,6 @@ import {
 const exporter = new InMemorySpanExporter();
 let createRequestTimingMiddleware: (env?: NodeJS.ProcessEnv) => RequestHandler;
 
-beforeAll(async () => {
-  context.setGlobalContextManager(new AsyncHooksContextManager().enable());
-  trace.setGlobalTracerProvider(
-    new BasicTracerProvider({
-      spanProcessors: [new SimpleSpanProcessor(exporter)],
-    }),
-  );
-  ({ createRequestTimingMiddleware } = await import('../request-timing'));
-});
-
-afterEach(() => {
-  exporter.reset();
-  stopCoreRequestTiming();
-  vi.restoreAllMocks();
-});
-
-afterAll(() => {
-  trace.disable();
-  context.disable();
-});
-
 const makeRequest = (url = '/api/v1/files/private-file?secret=value') => {
   const req = Object.assign(new EventEmitter(), {
     url,
@@ -60,6 +39,27 @@ const makeRequest = (url = '/api/v1/files/private-file?secret=value') => {
 };
 
 describe('request timing trace', () => {
+  beforeAll(async () => {
+    context.setGlobalContextManager(new AsyncHooksContextManager().enable());
+    trace.setGlobalTracerProvider(
+      new BasicTracerProvider({
+        spanProcessors: [new SimpleSpanProcessor(exporter)],
+      }),
+    );
+    ({ createRequestTimingMiddleware } = await import('../request-timing'));
+  });
+
+  afterEach(() => {
+    exporter.reset();
+    stopCoreRequestTiming();
+    vi.restoreAllMocks();
+  });
+
+  afterAll(() => {
+    trace.disable();
+    context.disable();
+  });
+
   it('ends once with matching total and phase attributes and no raw URL', () => {
     let now = 10;
     vi.spyOn(performance, 'now').mockImplementation(() => now);

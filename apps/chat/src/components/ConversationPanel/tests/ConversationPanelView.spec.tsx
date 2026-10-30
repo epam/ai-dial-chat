@@ -602,1589 +602,1677 @@ const openDeleteAllPopup = () => {
   fireEvent.click(screen.getByRole('button', { name: DELETE_ALL_LABEL }));
 };
 
-beforeEach(() => {
-  vi.clearAllMocks();
-  mockUseIsMobile.mockReturnValue(false);
-  vi.mocked(useUiFeature).mockImplementation(
-    (feature) =>
-      feature !== OverlayFeature.HideConversationExport &&
-      feature !== OverlayFeature.HideConversationImport,
-  );
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  vi.mocked(useConversations).mockReturnValue(baseContextValue as any);
-  vi.mocked(useNotification).mockReturnValue(
-    createNotificationContextValue(mockShowNotification),
-  );
-  vi.mocked(useConversationExport).mockReturnValue({
-    jobs: [],
-    exportSingle: mockExportSingle,
-    exportAll: mockExportAll,
-    cancelJob: mockCancelJob,
-    dismissJob: mockDismissJob,
-    retryJob: mockRetryJob,
-    dismissAll: vi.fn(),
-  });
-  vi.mocked(useConversationImport).mockReturnValue({
-    jobs: [],
-    importConversations: mockImportConversations,
-    cancelJob: mockCancelImportJob,
-    dismissJob: mockDismissImportJob,
-    retryJob: mockRetryImportJob,
-    dismissAll: vi.fn(),
-  });
-});
-
-describe('ConversationPanelView — memo boundary', () => {
-  it('re-renders the lib panel when the active conversation changes', () => {
-    const { rerender } = render(<ConversationPanelView {...defaultProps} />);
-    const rendersAfterMount = panelRenderCount.current;
-
-    rerender(
-      <ConversationPanelView {...defaultProps} activeConversationId="conv2" />,
+describe('ConversationPanelView', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUseIsMobile.mockReturnValue(false);
+    vi.mocked(useUiFeature).mockImplementation(
+      (feature) =>
+        feature !== OverlayFeature.HideConversationExport &&
+        feature !== OverlayFeature.HideConversationImport,
     );
-
-    expect(panelRenderCount.current).toBeGreaterThan(rendersAfterMount);
-  });
-});
-
-describe('ConversationPanelView — navigation keeps panel inputs', () => {
-  const ordinary = (id: string) => ({
-    id,
-    title: id,
-    isPinned: false,
-    updatedAt: 0,
-    sharedWithMe: false,
-    publishedWithMe: false,
-  });
-
-  it('keeps the conversations array and getActions when switching between ordinary conversations', () => {
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [ordinary('conv1'), ordinary('conv2')],
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-    const { rerender } = render(
-      <ConversationPanelView {...defaultProps} activeConversationId="conv1" />,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    vi.mocked(useConversations).mockReturnValue(baseContextValue as any);
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(mockShowNotification),
     );
-    const before = panelPropsLog[panelPropsLog.length - 1];
-
-    rerender(
-      <ConversationPanelView {...defaultProps} activeConversationId="conv2" />,
-    );
-    const after = panelPropsLog[panelPropsLog.length - 1];
-
-    expect(after).not.toBe(before);
-    expect(after.conversations).toBe(before.conversations);
-    expect(after.getActions).toBe(before.getActions);
+    vi.mocked(useConversationExport).mockReturnValue({
+      jobs: [],
+      exportSingle: mockExportSingle,
+      exportAll: mockExportAll,
+      cancelJob: mockCancelJob,
+      dismissJob: mockDismissJob,
+      retryJob: mockRetryJob,
+      dismissAll: vi.fn(),
+    });
+    vi.mocked(useConversationImport).mockReturnValue({
+      jobs: [],
+      importConversations: mockImportConversations,
+      cancelJob: mockCancelImportJob,
+      dismissJob: mockDismissImportJob,
+      retryJob: mockRetryImportJob,
+      dismissAll: vi.fn(),
+    });
   });
 
-  it('still reports duplicating the open read-only conversation', async () => {
-    const onDuplicateReadonly = vi.fn();
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [{ ...ordinary('conv1'), sharedWithMe: true }],
-      duplicateConversation: vi.fn().mockResolvedValue('conv1-copy'),
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-    render(
-      <ConversationPanelView
-        {...defaultProps}
-        activeConversationId="conv1"
-        onDuplicateReadonly={onDuplicateReadonly}
-      />,
-    );
+  describe('ConversationPanelView — memo boundary', () => {
+    it('re-renders the lib panel when the active conversation changes', () => {
+      const { rerender } = render(<ConversationPanelView {...defaultProps} />);
+      const rendersAfterMount = panelRenderCount.current;
 
-    fireEvent.click(screen.getByRole('button', { name: 'buttons.duplicate' }));
+      rerender(
+        <ConversationPanelView
+          {...defaultProps}
+          activeConversationId="conv2"
+        />,
+      );
 
-    await waitFor(() => expect(onDuplicateReadonly).toHaveBeenCalledOnce());
+      expect(panelRenderCount.current).toBeGreaterThan(rendersAfterMount);
+    });
   });
 
-  it.each([
-    ['an owned', false, 'conversations/bucket/hidden-model__Chat'],
-    ['a shared', true, 'conversations/bucket/hidden-model__Chat'],
-    [
-      'an owned in-folder',
-      false,
-      'conversations/bucket/qa-run/hidden-model__Chat__uuid',
-    ],
-    [
-      'a shared in-folder',
-      true,
-      'conversations/bucket/qa-run/nested/hidden-model__Chat',
-    ],
-  ])(
-    'offers no Duplicate on %s conversation whose model is hidden',
-    (_, sharedWithMe, conversationId) => {
-      deploymentsValue.items = [{ id: 'hidden-model', isHidden: true }];
-      try {
-        vi.mocked(useConversations).mockReturnValue({
-          ...baseContextValue,
-          conversations: [
-            {
-              ...ordinary(conversationId),
-              sharedWithMe,
-            },
-          ],
-        } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-        render(<ConversationPanelView {...defaultProps} />);
+  describe('ConversationPanelView — navigation keeps panel inputs', () => {
+    const ordinary = (id: string) => ({
+      id,
+      title: id,
+      isPinned: false,
+      updatedAt: 0,
+      sharedWithMe: false,
+      publishedWithMe: false,
+    });
 
-        expect(
-          screen.queryByRole('button', { name: 'buttons.duplicate' }),
-        ).toBeNull();
-      } finally {
-        deploymentsValue.items = [];
-      }
-    },
-  );
-
-  describe('with a hidden model', () => {
-    const renderRow = (
-      conversationId: string,
-      activeConversationId?: string,
-    ) => {
+    it('keeps the conversations array and getActions when switching between ordinary conversations', () => {
       vi.mocked(useConversations).mockReturnValue({
         ...baseContextValue,
-        conversations: [ordinary(conversationId)],
+        conversations: [ordinary('conv1'), ordinary('conv2')],
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+      const { rerender } = render(
+        <ConversationPanelView
+          {...defaultProps}
+          activeConversationId="conv1"
+        />,
+      );
+      const before = panelPropsLog[panelPropsLog.length - 1];
+
+      rerender(
+        <ConversationPanelView
+          {...defaultProps}
+          activeConversationId="conv2"
+        />,
+      );
+      const after = panelPropsLog[panelPropsLog.length - 1];
+
+      expect(after).not.toBe(before);
+      expect(after.conversations).toBe(before.conversations);
+      expect(after.getActions).toBe(before.getActions);
+    });
+
+    it('still reports duplicating the open read-only conversation', async () => {
+      const onDuplicateReadonly = vi.fn();
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        conversations: [{ ...ordinary('conv1'), sharedWithMe: true }],
+        duplicateConversation: vi.fn().mockResolvedValue('conv1-copy'),
       } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
       render(
         <ConversationPanelView
           {...defaultProps}
-          activeConversationId={activeConversationId}
+          activeConversationId="conv1"
+          onDuplicateReadonly={onDuplicateReadonly}
         />,
       );
-    };
 
-    afterEach(() => {
-      deploymentsValue.items = [];
-      deploymentsValue.selectedItemId = null;
-    });
-
-    it('offers no Share or Publish on a row whose model is hidden', () => {
-      deploymentsValue.items = [{ id: 'hidden-model', isHidden: true }];
-      renderRow('conversations/bucket/hidden-model__Chat');
-
-      expect(screen.queryByRole('button', { name: SHARE_LABEL })).toBeNull();
-      expect(screen.queryByRole('button', { name: PUBLISH_LABEL })).toBeNull();
-    });
-
-    it('judges the open conversation by the model selected in it now, not the one in its path', () => {
-      deploymentsValue.items = [
-        { id: 'visible-model' },
-        { id: 'hidden-model', isHidden: true },
-      ];
-      deploymentsValue.selectedItemId = 'hidden-model';
-      const id = 'conversations/bucket/visible-model__Chat';
-      renderRow(id, id);
-
-      expect(
-        screen.queryByRole('button', { name: 'buttons.duplicate' }),
-      ).toBeNull();
-      expect(screen.queryByRole('button', { name: SHARE_LABEL })).toBeNull();
-      expect(screen.queryByRole('button', { name: PUBLISH_LABEL })).toBeNull();
-    });
-
-    it('offers Duplicate, Share and Publish again once the open conversation is switched to a visible model', () => {
-      deploymentsValue.items = [
-        { id: 'visible-model' },
-        { id: 'hidden-model', isHidden: true },
-      ];
-      deploymentsValue.selectedItemId = 'visible-model';
-      const id = 'conversations/bucket/hidden-model__Chat';
-      renderRow(id, id);
-
-      expect(
+      fireEvent.click(
         screen.getByRole('button', { name: 'buttons.duplicate' }),
-      ).toBeTruthy();
-      expect(screen.getByRole('button', { name: SHARE_LABEL })).toBeTruthy();
-      expect(screen.getByRole('button', { name: PUBLISH_LABEL })).toBeTruthy();
-    });
-  });
+      );
 
-  it.each([
-    [
-      'the unavailable-model text when the server refuses a hidden current model',
-      ConversationErrorCode.ConversationDuplicateModelHidden,
-      'conversationPanel.duplicateUnavailableModel',
-    ],
-    [
-      'the generic error for any other failure',
-      undefined,
-      'conversationPanel.duplicateError',
-    ],
-  ])('shows %s', async (_, code, expectedMessage) => {
-    /* The path names a visible model; the model the chat was switched to is
+      await waitFor(() => expect(onDuplicateReadonly).toHaveBeenCalledOnce());
+    });
+
+    it.each([
+      ['an owned', false, 'conversations/bucket/hidden-model__Chat'],
+      ['a shared', true, 'conversations/bucket/hidden-model__Chat'],
+      [
+        'an owned in-folder',
+        false,
+        'conversations/bucket/qa-run/hidden-model__Chat__uuid',
+      ],
+      [
+        'a shared in-folder',
+        true,
+        'conversations/bucket/qa-run/nested/hidden-model__Chat',
+      ],
+    ])(
+      'offers no Duplicate on %s conversation whose model is hidden',
+      (_, sharedWithMe, conversationId) => {
+        deploymentsValue.items = [{ id: 'hidden-model', isHidden: true }];
+        try {
+          vi.mocked(useConversations).mockReturnValue({
+            ...baseContextValue,
+            conversations: [
+              {
+                ...ordinary(conversationId),
+                sharedWithMe,
+              },
+            ],
+          } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+          render(<ConversationPanelView {...defaultProps} />);
+
+          expect(
+            screen.queryByRole('button', { name: 'buttons.duplicate' }),
+          ).toBeNull();
+        } finally {
+          deploymentsValue.items = [];
+        }
+      },
+    );
+
+    describe('with a hidden model', () => {
+      const renderRow = (
+        conversationId: string,
+        activeConversationId?: string,
+      ) => {
+        vi.mocked(useConversations).mockReturnValue({
+          ...baseContextValue,
+          conversations: [ordinary(conversationId)],
+        } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+        render(
+          <ConversationPanelView
+            {...defaultProps}
+            activeConversationId={activeConversationId}
+          />,
+        );
+      };
+
+      afterEach(() => {
+        deploymentsValue.items = [];
+        deploymentsValue.selectedItemId = null;
+      });
+
+      it('offers no Share or Publish on a row whose model is hidden', () => {
+        deploymentsValue.items = [{ id: 'hidden-model', isHidden: true }];
+        renderRow('conversations/bucket/hidden-model__Chat');
+
+        expect(screen.queryByRole('button', { name: SHARE_LABEL })).toBeNull();
+        expect(
+          screen.queryByRole('button', { name: PUBLISH_LABEL }),
+        ).toBeNull();
+      });
+
+      it('judges the open conversation by the model selected in it now, not the one in its path', () => {
+        deploymentsValue.items = [
+          { id: 'visible-model' },
+          { id: 'hidden-model', isHidden: true },
+        ];
+        deploymentsValue.selectedItemId = 'hidden-model';
+        const id = 'conversations/bucket/visible-model__Chat';
+        renderRow(id, id);
+
+        expect(
+          screen.queryByRole('button', { name: 'buttons.duplicate' }),
+        ).toBeNull();
+        expect(screen.queryByRole('button', { name: SHARE_LABEL })).toBeNull();
+        expect(
+          screen.queryByRole('button', { name: PUBLISH_LABEL }),
+        ).toBeNull();
+      });
+
+      it('offers Duplicate, Share and Publish again once the open conversation is switched to a visible model', () => {
+        deploymentsValue.items = [
+          { id: 'visible-model' },
+          { id: 'hidden-model', isHidden: true },
+        ];
+        deploymentsValue.selectedItemId = 'visible-model';
+        const id = 'conversations/bucket/hidden-model__Chat';
+        renderRow(id, id);
+
+        expect(
+          screen.getByRole('button', { name: 'buttons.duplicate' }),
+        ).toBeTruthy();
+        expect(screen.getByRole('button', { name: SHARE_LABEL })).toBeTruthy();
+        expect(
+          screen.getByRole('button', { name: PUBLISH_LABEL }),
+        ).toBeTruthy();
+      });
+    });
+
+    it.each([
+      [
+        'the unavailable-model text when the server refuses a hidden current model',
+        ConversationErrorCode.ConversationDuplicateModelHidden,
+        'conversationPanel.duplicateUnavailableModel',
+      ],
+      [
+        'the generic error for any other failure',
+        undefined,
+        'conversationPanel.duplicateError',
+      ],
+    ])('shows %s', async (_, code, expectedMessage) => {
+      /* The path names a visible model; the model the chat was switched to is
        hidden, which only the server can see (#9183). */
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [ordinary('conversations/bucket/visible-model__Chat')],
-      duplicateConversation: vi.fn().mockRejectedValue({
-        response: new Response(JSON.stringify({ statusCode: 403, code }), {
-          status: 403,
-          headers: { 'Content-Type': 'application/json' },
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        conversations: [ordinary('conversations/bucket/visible-model__Chat')],
+        duplicateConversation: vi.fn().mockRejectedValue({
+          response: new Response(JSON.stringify({ statusCode: 403, code }), {
+            status: 403,
+            headers: { 'Content-Type': 'application/json' },
+          }),
         }),
-      }),
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-    render(<ConversationPanelView {...defaultProps} />);
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+      render(<ConversationPanelView {...defaultProps} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'buttons.duplicate' }));
+      fireEvent.click(
+        screen.getByRole('button', { name: 'buttons.duplicate' }),
+      );
 
-    await waitFor(() =>
-      expect(mockShowNotification).toHaveBeenCalledWith(
-        expect.objectContaining({
-          variant: 'error',
-          message: expectedMessage,
-        }),
-      ),
-    );
-    expect(mockNavigate).not.toHaveBeenCalled();
-  });
-});
-
-describe('ConversationPanelView — delete-all header action', () => {
-  it('renders the overflow trigger with the accessible label', () => {
-    render(<ConversationPanelView {...defaultProps} />);
-    expect(
-      screen.getByRole('button', { name: PANEL_ACTIONS_LABEL }),
-    ).toBeTruthy();
+      await waitFor(() =>
+        expect(mockShowNotification).toHaveBeenCalledWith(
+          expect.objectContaining({
+            variant: 'error',
+            message: expectedMessage,
+          }),
+        ),
+      );
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
   });
 
-  it('dropdown contains Export all conversations and Delete all conversations', () => {
-    render(<ConversationPanelView {...defaultProps} />);
-    openDropdown();
-    expect(
-      screen.getAllByRole('button', { name: DELETE_ALL_LABEL }),
-    ).toHaveLength(1);
-    expect(
-      screen.getAllByRole('button', { name: EXPORT_ALL_LABEL }),
-    ).toHaveLength(1);
-  });
+  describe('ConversationPanelView — delete-all header action', () => {
+    it('renders the overflow trigger with the accessible label', () => {
+      render(<ConversationPanelView {...defaultProps} />);
+      expect(
+        screen.getByRole('button', { name: PANEL_ACTIONS_LABEL }),
+      ).toBeTruthy();
+    });
 
-  it('clicking Export all conversations starts export-all without a modal', () => {
-    render(<ConversationPanelView {...defaultProps} />);
-    openDropdown();
-    fireEvent.click(screen.getByRole('button', { name: EXPORT_ALL_LABEL }));
+    it('dropdown contains Export all conversations and Delete all conversations', () => {
+      render(<ConversationPanelView {...defaultProps} />);
+      openDropdown();
+      expect(
+        screen.getAllByRole('button', { name: DELETE_ALL_LABEL }),
+      ).toHaveLength(1);
+      expect(
+        screen.getAllByRole('button', { name: EXPORT_ALL_LABEL }),
+      ).toHaveLength(1);
+    });
 
-    expect(mockExportAll).toHaveBeenCalledOnce();
-    expect(screen.queryByRole('dialog')).toBeNull();
-  });
+    it('clicking Export all conversations starts export-all without a modal', () => {
+      render(<ConversationPanelView {...defaultProps} />);
+      openDropdown();
+      fireEvent.click(screen.getByRole('button', { name: EXPORT_ALL_LABEL }));
 
-  it('clicking the item opens the confirmation popup without calling the API', () => {
-    render(<ConversationPanelView {...defaultProps} />);
-    openDeleteAllPopup();
-    expect(screen.getByRole('dialog')).toBeTruthy();
-    expect(screen.getByText(CONFIRM_TITLE)).toBeTruthy();
-    expect(mockDeleteAllConversations).not.toHaveBeenCalled();
-  });
-
-  it('cancelling the popup closes it without calling the API', async () => {
-    render(<ConversationPanelView {...defaultProps} />);
-    openDeleteAllPopup();
-    fireEvent.click(screen.getByRole('button', { name: CANCEL_BUTTON }));
-    await waitFor(() => {
+      expect(mockExportAll).toHaveBeenCalledOnce();
       expect(screen.queryByRole('dialog')).toBeNull();
     });
-    expect(mockDeleteAllConversations).not.toHaveBeenCalled();
-  });
 
-  it('complete success: closes popup and navigates to root when activeConversationId is set', async () => {
-    mockDeleteAllConversations.mockResolvedValueOnce({
-      requested: 1,
-      deleted: 1,
-      alreadyAbsent: 0,
-      failed: [],
-    });
-
-    /*
-     * Use empty conversations list to guard against stale-closure regression:
-     * navigation must not depend on finding the active conversation in the list.
-     */
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [],
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-    render(<ConversationPanelView {...defaultProps} />);
-    openDeleteAllPopup();
-    fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
-
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog')).toBeNull();
-    });
-    expect(mockNavigate).toHaveBeenCalledWith('/');
-  });
-
-  it('complete success with no active conversation: does not navigate', async () => {
-    mockDeleteAllConversations.mockResolvedValueOnce({
-      requested: 1,
-      deleted: 1,
-      alreadyAbsent: 0,
-      failed: [],
-    });
-
-    render(
-      <ConversationPanelView
-        {...defaultProps}
-        activeConversationId={undefined}
-      />,
-    );
-    openDeleteAllPopup();
-    fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
-
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog')).toBeNull();
-    });
-    expect(mockNavigate).not.toHaveBeenCalled();
-  });
-
-  it('total failure: popup stays open with inline error; navigate not called', async () => {
-    mockDeleteAllConversations.mockResolvedValueOnce({
-      requested: 1,
-      deleted: 0,
-      alreadyAbsent: 0,
-      failed: [
-        {
-          id: 'conv1',
-          code: ConversationDeletionFailureDtoCodeEnum.UpstreamError,
-        },
-      ],
-    });
-
-    render(<ConversationPanelView {...defaultProps} />);
-    openDeleteAllPopup();
-    fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
-
-    await waitFor(() => {
+    it('clicking the item opens the confirmation popup without calling the API', () => {
+      render(<ConversationPanelView {...defaultProps} />);
+      openDeleteAllPopup();
       expect(screen.getByRole('dialog')).toBeTruthy();
-      expect(screen.getByText(DELETE_ALL_ERROR)).toBeTruthy();
-    });
-    expect(mockNavigate).not.toHaveBeenCalled();
-  });
-
-  it('partial failure: popup closes, global notification shown, navigate called', async () => {
-    mockDeleteAllConversations.mockResolvedValueOnce({
-      requested: 2,
-      deleted: 1,
-      alreadyAbsent: 0,
-      failed: [
-        {
-          id: 'conv1',
-          code: ConversationDeletionFailureDtoCodeEnum.UpstreamError,
-        },
-      ],
+      expect(screen.getByText(CONFIRM_TITLE)).toBeTruthy();
+      expect(mockDeleteAllConversations).not.toHaveBeenCalled();
     });
 
-    render(<ConversationPanelView {...defaultProps} />);
-    openDeleteAllPopup();
-    fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
-
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog')).toBeNull();
-    });
-    expect(mockShowNotification).toHaveBeenCalledWith({
-      variant: 'error',
-      message: PARTIAL_ERROR,
-    });
-    expect(mockShowNotification).not.toHaveBeenCalledWith(
-      expect.objectContaining({ variant: 'success' }),
-    );
-    expect(mockNavigate).toHaveBeenCalledWith('/');
-  });
-
-  it('thrown error: popup stays open with inline error', async () => {
-    mockDeleteAllConversations.mockRejectedValueOnce(
-      new Error('Network failure'),
-    );
-
-    render(<ConversationPanelView {...defaultProps} />);
-    openDeleteAllPopup();
-    fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
-
-    await waitFor(() => {
-      expect(screen.getByRole('dialog')).toBeTruthy();
-      expect(screen.getByText(DELETE_ALL_ERROR)).toBeTruthy();
-    });
-    expect(mockNavigate).not.toHaveBeenCalled();
-  });
-
-  it('confirm button is disabled during in-flight request', async () => {
-    let resolveDelete:
-      ((result: ConversationDeletionResultDto) => void) | undefined;
-    const pendingPromise = new Promise<ConversationDeletionResultDto>(
-      (resolve) => {
-        resolveDelete = resolve;
-      },
-    );
-    mockDeleteAllConversations.mockReturnValueOnce(pendingPromise);
-
-    render(<ConversationPanelView {...defaultProps} />);
-    openDeleteAllPopup();
-    fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
-
-    await waitFor(() => {
-      const btn = screen.getByRole('button', { name: CONFIRM_BUTTON });
-      expect(btn.hasAttribute('disabled')).toBe(true);
+    it('cancelling the popup closes it without calling the API', async () => {
+      render(<ConversationPanelView {...defaultProps} />);
+      openDeleteAllPopup();
+      fireEvent.click(screen.getByRole('button', { name: CANCEL_BUTTON }));
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog')).toBeNull();
+      });
+      expect(mockDeleteAllConversations).not.toHaveBeenCalled();
     });
 
-    await act(async () => {
-      resolveDelete?.({
+    it('complete success: closes popup and navigates to root when activeConversationId is set', async () => {
+      mockDeleteAllConversations.mockResolvedValueOnce({
         requested: 1,
         deleted: 1,
         alreadyAbsent: 0,
         failed: [],
       });
-    });
-  });
 
-  it('shows a success notification for complete success', async () => {
-    mockDeleteAllConversations.mockResolvedValueOnce({
-      requested: 1,
-      deleted: 1,
-      alreadyAbsent: 0,
-      failed: [],
-    });
+      /*
+       * Use empty conversations list to guard against stale-closure regression:
+       * navigation must not depend on finding the active conversation in the list.
+       */
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        conversations: [],
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
-    render(<ConversationPanelView {...defaultProps} />);
-    openDeleteAllPopup();
-    fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
+      render(<ConversationPanelView {...defaultProps} />);
+      openDeleteAllPopup();
+      fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
 
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog')).toBeNull();
-    });
-    expect(mockShowNotification).toHaveBeenCalledWith({
-      variant: 'success',
-      title: 'conversationPanel.deleteAll.deleteAllSuccessTitle',
-      message: 'conversationPanel.deleteAll.deleteAllSuccess',
-    });
-  });
-
-  it('cancel is a no-op while deletion is in progress', async () => {
-    let resolveDelete:
-      ((result: ConversationDeletionResultDto) => void) | undefined;
-    const pendingPromise = new Promise<ConversationDeletionResultDto>(
-      (resolve) => {
-        resolveDelete = resolve;
-      },
-    );
-    mockDeleteAllConversations.mockReturnValueOnce(pendingPromise);
-
-    render(<ConversationPanelView {...defaultProps} />);
-    openDeleteAllPopup();
-    fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
-
-    await waitFor(() => {
-      const btn = screen.getByRole('button', { name: CONFIRM_BUTTON });
-      expect(btn.hasAttribute('disabled')).toBe(true);
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog')).toBeNull();
+      });
+      expect(mockNavigate).toHaveBeenCalledWith('/');
     });
 
-    fireEvent.click(screen.getByRole('button', { name: CANCEL_BUTTON }));
-    expect(screen.getByRole('dialog')).toBeTruthy();
-    expect(mockDeleteAllConversations).toHaveBeenCalledTimes(1);
-
-    await act(async () => {
-      resolveDelete?.({
+    it('complete success with no active conversation: does not navigate', async () => {
+      mockDeleteAllConversations.mockResolvedValueOnce({
         requested: 1,
         deleted: 1,
         alreadyAbsent: 0,
         failed: [],
       });
+
+      render(
+        <ConversationPanelView
+          {...defaultProps}
+          activeConversationId={undefined}
+        />,
+      );
+      openDeleteAllPopup();
+      fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
+
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog')).toBeNull();
+      });
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    it('total failure: popup stays open with inline error; navigate not called', async () => {
+      mockDeleteAllConversations.mockResolvedValueOnce({
+        requested: 1,
+        deleted: 0,
+        alreadyAbsent: 0,
+        failed: [
+          {
+            id: 'conv1',
+            code: ConversationDeletionFailureDtoCodeEnum.UpstreamError,
+          },
+        ],
+      });
+
+      render(<ConversationPanelView {...defaultProps} />);
+      openDeleteAllPopup();
+      fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeTruthy();
+        expect(screen.getByText(DELETE_ALL_ERROR)).toBeTruthy();
+      });
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    it('partial failure: popup closes, global notification shown, navigate called', async () => {
+      mockDeleteAllConversations.mockResolvedValueOnce({
+        requested: 2,
+        deleted: 1,
+        alreadyAbsent: 0,
+        failed: [
+          {
+            id: 'conv1',
+            code: ConversationDeletionFailureDtoCodeEnum.UpstreamError,
+          },
+        ],
+      });
+
+      render(<ConversationPanelView {...defaultProps} />);
+      openDeleteAllPopup();
+      fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
+
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog')).toBeNull();
+      });
+      expect(mockShowNotification).toHaveBeenCalledWith({
+        variant: 'error',
+        message: PARTIAL_ERROR,
+      });
+      expect(mockShowNotification).not.toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'success' }),
+      );
+      expect(mockNavigate).toHaveBeenCalledWith('/');
+    });
+
+    it('thrown error: popup stays open with inline error', async () => {
+      mockDeleteAllConversations.mockRejectedValueOnce(
+        new Error('Network failure'),
+      );
+
+      render(<ConversationPanelView {...defaultProps} />);
+      openDeleteAllPopup();
+      fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
+
+      await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeTruthy();
+        expect(screen.getByText(DELETE_ALL_ERROR)).toBeTruthy();
+      });
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    it('confirm button is disabled during in-flight request', async () => {
+      let resolveDelete:
+        ((result: ConversationDeletionResultDto) => void) | undefined;
+      const pendingPromise = new Promise<ConversationDeletionResultDto>(
+        (resolve) => {
+          resolveDelete = resolve;
+        },
+      );
+      mockDeleteAllConversations.mockReturnValueOnce(pendingPromise);
+
+      render(<ConversationPanelView {...defaultProps} />);
+      openDeleteAllPopup();
+      fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
+
+      await waitFor(() => {
+        const btn = screen.getByRole('button', { name: CONFIRM_BUTTON });
+        expect(btn.hasAttribute('disabled')).toBe(true);
+      });
+
+      await act(async () => {
+        resolveDelete?.({
+          requested: 1,
+          deleted: 1,
+          alreadyAbsent: 0,
+          failed: [],
+        });
+      });
+    });
+
+    it('shows a success notification for complete success', async () => {
+      mockDeleteAllConversations.mockResolvedValueOnce({
+        requested: 1,
+        deleted: 1,
+        alreadyAbsent: 0,
+        failed: [],
+      });
+
+      render(<ConversationPanelView {...defaultProps} />);
+      openDeleteAllPopup();
+      fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
+
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog')).toBeNull();
+      });
+      expect(mockShowNotification).toHaveBeenCalledWith({
+        variant: 'success',
+        title: 'conversationPanel.deleteAll.deleteAllSuccessTitle',
+        message: 'conversationPanel.deleteAll.deleteAllSuccess',
+      });
+    });
+
+    it('cancel is a no-op while deletion is in progress', async () => {
+      let resolveDelete:
+        ((result: ConversationDeletionResultDto) => void) | undefined;
+      const pendingPromise = new Promise<ConversationDeletionResultDto>(
+        (resolve) => {
+          resolveDelete = resolve;
+        },
+      );
+      mockDeleteAllConversations.mockReturnValueOnce(pendingPromise);
+
+      render(<ConversationPanelView {...defaultProps} />);
+      openDeleteAllPopup();
+      fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
+
+      await waitFor(() => {
+        const btn = screen.getByRole('button', { name: CONFIRM_BUTTON });
+        expect(btn.hasAttribute('disabled')).toBe(true);
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: CANCEL_BUTTON }));
+      expect(screen.getByRole('dialog')).toBeTruthy();
+      expect(mockDeleteAllConversations).toHaveBeenCalledTimes(1);
+
+      await act(async () => {
+        resolveDelete?.({
+          requested: 1,
+          deleted: 1,
+          alreadyAbsent: 0,
+          failed: [],
+        });
+      });
+    });
+
+    it('complete success: navigates to root even when conversations list is empty at callback time', async () => {
+      mockDeleteAllConversations.mockResolvedValueOnce({
+        requested: 0,
+        deleted: 0,
+        alreadyAbsent: 0,
+        failed: [],
+      });
+
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        conversations: [],
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      render(<ConversationPanelView {...defaultProps} />);
+      openDeleteAllPopup();
+      fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
+
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog')).toBeNull();
+      });
+      expect(mockNavigate).toHaveBeenCalledWith('/');
     });
   });
 
-  it('complete success: navigates to root even when conversations list is empty at callback time', async () => {
-    mockDeleteAllConversations.mockResolvedValueOnce({
-      requested: 0,
-      deleted: 0,
-      alreadyAbsent: 0,
-      failed: [],
-    });
-
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [],
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-    render(<ConversationPanelView {...defaultProps} />);
-    openDeleteAllPopup();
-    fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
-
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog')).toBeNull();
-    });
-    expect(mockNavigate).toHaveBeenCalledWith('/');
-  });
-});
-
-describe('ConversationPanelView — mark conversation viewed on open', () => {
-  const unreadTaskConversation = {
-    id: 'task1',
-    title: 'Task 1',
-    isPinned: false,
-    updatedAt: 0,
-    sharedWithMe: false,
-    publishedWithMe: false,
-    isScheduledTask: true,
-    isUnread: true,
-  };
-
-  it('marks an active task conversation viewed', () => {
-    const mockMarkConversationViewed = vi.fn();
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [unreadTaskConversation],
-      markConversationViewed: mockMarkConversationViewed,
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-    render(
-      <ConversationPanelView {...defaultProps} activeConversationId="task1" />,
-    );
-
-    expect(mockMarkConversationViewed).toHaveBeenCalledWith('task1');
-  });
-
-  it('calls markConversationViewed again when activeConversationId changes to another unread task conversation (direct navigation)', () => {
-    const secondUnreadTask = {
-      ...unreadTaskConversation,
-      id: 'task2',
+  describe('ConversationPanelView — mark conversation viewed on open', () => {
+    const unreadTaskConversation = {
+      id: 'task1',
+      title: 'Task 1',
+      isPinned: false,
+      updatedAt: 0,
+      sharedWithMe: false,
+      publishedWithMe: false,
+      isScheduledTask: true,
+      isUnread: true,
     };
-    const mockMarkConversationViewed = vi.fn();
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [unreadTaskConversation, secondUnreadTask],
-      markConversationViewed: mockMarkConversationViewed,
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
-    const { rerender } = render(
-      <ConversationPanelView {...defaultProps} activeConversationId="task1" />,
-    );
-    expect(mockMarkConversationViewed).toHaveBeenCalledWith('task1');
+    it('marks an active task conversation viewed', () => {
+      const mockMarkConversationViewed = vi.fn();
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        conversations: [unreadTaskConversation],
+        markConversationViewed: mockMarkConversationViewed,
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
-    rerender(
-      <ConversationPanelView {...defaultProps} activeConversationId="task2" />,
-    );
+      render(
+        <ConversationPanelView
+          {...defaultProps}
+          activeConversationId="task1"
+        />,
+      );
 
-    expect(mockMarkConversationViewed).toHaveBeenCalledWith('task2');
+      expect(mockMarkConversationViewed).toHaveBeenCalledWith('task1');
+    });
+
+    it('calls markConversationViewed again when activeConversationId changes to another unread task conversation (direct navigation)', () => {
+      const secondUnreadTask = {
+        ...unreadTaskConversation,
+        id: 'task2',
+      };
+      const mockMarkConversationViewed = vi.fn();
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        conversations: [unreadTaskConversation, secondUnreadTask],
+        markConversationViewed: mockMarkConversationViewed,
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      const { rerender } = render(
+        <ConversationPanelView
+          {...defaultProps}
+          activeConversationId="task1"
+        />,
+      );
+      expect(mockMarkConversationViewed).toHaveBeenCalledWith('task1');
+
+      rerender(
+        <ConversationPanelView
+          {...defaultProps}
+          activeConversationId="task2"
+        />,
+      );
+
+      expect(mockMarkConversationViewed).toHaveBeenCalledWith('task2');
+    });
+
+    it('leaves marking an active regular chat to the conversation page', () => {
+      const mockMarkConversationViewed = vi.fn();
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        conversations: [
+          {
+            ...unreadTaskConversation,
+            id: 'chat9',
+            isScheduledTask: false,
+          },
+        ],
+        markConversationViewed: mockMarkConversationViewed,
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      render(
+        <ConversationPanelView
+          {...defaultProps}
+          activeConversationId="chat9"
+        />,
+      );
+
+      expect(mockMarkConversationViewed).not.toHaveBeenCalled();
+    });
+
+    it('does not call markConversationViewed when no conversation is active', () => {
+      const mockMarkConversationViewed = vi.fn();
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        markConversationViewed: mockMarkConversationViewed,
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      render(
+        <ConversationPanelView
+          {...defaultProps}
+          activeConversationId={undefined}
+        />,
+      );
+
+      expect(mockMarkConversationViewed).not.toHaveBeenCalled();
+    });
+
+    it('passes isUnread through to the ConversationPanel item for a scheduler-created, unread conversation', () => {
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        conversations: [unreadTaskConversation],
+        markConversationViewed: vi.fn(),
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      render(
+        <ConversationPanelView
+          {...defaultProps}
+          activeConversationId={undefined}
+        />,
+      );
+
+      expect(screen.getByLabelText('unread indicator task1')).toBeTruthy();
+    });
+
+    it('does not pass isUnread through for a read scheduler-created conversation', () => {
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        conversations: [{ ...unreadTaskConversation, isUnread: false }],
+        markConversationViewed: vi.fn(),
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      render(
+        <ConversationPanelView
+          {...defaultProps}
+          activeConversationId={undefined}
+        />,
+      );
+
+      expect(screen.queryByLabelText('unread indicator task1')).toBeNull();
+    });
   });
 
-  it('leaves marking an active regular chat to the conversation page', () => {
-    const mockMarkConversationViewed = vi.fn();
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [
-        {
-          ...unreadTaskConversation,
-          id: 'chat9',
-          isScheduledTask: false,
-        },
-      ],
-      markConversationViewed: mockMarkConversationViewed,
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+  describe('ConversationPanelView — unread dot for regular chats', () => {
+    const unreadChat = {
+      id: 'chat9',
+      title: 'Chat 9',
+      isPinned: false,
+      updatedAt: 0,
+      sharedWithMe: false,
+      publishedWithMe: false,
+      isScheduledTask: false,
+      isUnread: true,
+    };
 
-    render(
-      <ConversationPanelView {...defaultProps} activeConversationId="chat9" />,
-    );
+    const mockContext = () =>
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        conversations: [unreadChat],
+        markConversationViewed: vi.fn(),
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
-    expect(mockMarkConversationViewed).not.toHaveBeenCalled();
+    it('shows the dot for an unread regular chat that is not open', () => {
+      mockContext();
+
+      render(
+        <ConversationPanelView
+          {...defaultProps}
+          activeConversationId={undefined}
+        />,
+      );
+
+      expect(screen.getByLabelText('unread indicator chat9')).toBeTruthy();
+    });
+
+    it('hides the dot while that chat is the open conversation', () => {
+      mockContext();
+
+      render(
+        <ConversationPanelView
+          {...defaultProps}
+          activeConversationId="chat9"
+        />,
+      );
+
+      expect(screen.queryByLabelText('unread indicator chat9')).toBeNull();
+    });
+
+    it('shows the dot as soon as the user navigates away from the chat', () => {
+      mockContext();
+      const { rerender } = render(
+        <ConversationPanelView
+          {...defaultProps}
+          activeConversationId="chat9"
+        />,
+      );
+      expect(screen.queryByLabelText('unread indicator chat9')).toBeNull();
+
+      rerender(
+        <ConversationPanelView
+          {...defaultProps}
+          activeConversationId={undefined}
+        />,
+      );
+
+      expect(screen.getByLabelText('unread indicator chat9')).toBeTruthy();
+    });
+
+    it('keeps showing the dot of another chat while a different one is open', () => {
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        conversations: [unreadChat, { ...unreadChat, id: 'chat10' }],
+        markConversationViewed: vi.fn(),
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      render(
+        <ConversationPanelView
+          {...defaultProps}
+          activeConversationId="chat9"
+        />,
+      );
+
+      expect(screen.queryByLabelText('unread indicator chat9')).toBeNull();
+      expect(screen.getByLabelText('unread indicator chat10')).toBeTruthy();
+    });
   });
 
-  it('does not call markConversationViewed when no conversation is active', () => {
-    const mockMarkConversationViewed = vi.fn();
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      markConversationViewed: mockMarkConversationViewed,
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+  describe('ConversationPanelView — one row per scheduled task', () => {
+    const taskRun = (runId: string, createdAt: number, isUnread = false) => ({
+      id: `conversations/bucket/.scheduler/s1/gpt-4__Daily__${runId}`,
+      title: 'Daily',
+      isPinned: false,
+      createdAt,
+      updatedAt: createdAt,
+      sharedWithMe: false,
+      publishedWithMe: false,
+      isReadonly: false,
+      isScheduledTask: true,
+      scheduleId: 's1',
+      runId,
+      isUnread,
+    });
+    const plainChat = {
+      id: 'conversations/bucket/gpt-4__Plain chat',
+      title: 'Plain chat',
+      isPinned: false,
+      updatedAt: 50,
+      sharedWithMe: false,
+      publishedWithMe: false,
+      isReadonly: false,
+      isScheduledTask: false,
+    };
+    const oldest = taskRun('run-a', 100);
+    const older = taskRun('run-b', 200, true);
+    const newest = taskRun('run-c', 300);
 
-    render(
-      <ConversationPanelView
-        {...defaultProps}
-        activeConversationId={undefined}
-      />,
-    );
+    const mockContextList = (
+      conversations: unknown[],
+      overrides: Record<string, unknown> = {},
+    ) => {
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        conversations,
+        ...overrides,
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+    };
 
-    expect(mockMarkConversationViewed).not.toHaveBeenCalled();
-  });
+    const rowFor = (runId: string) =>
+      screen.queryByRole('button', { name: new RegExp(`__${runId}$`) });
 
-  it('passes isUnread through to the ConversationPanel item for a scheduler-created, unread conversation', () => {
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [unreadTaskConversation],
-      markConversationViewed: vi.fn(),
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+    it('renders several runs of one task as a single row for the newest run', () => {
+      mockContextList([oldest, newest, older, plainChat]);
 
-    render(
-      <ConversationPanelView
-        {...defaultProps}
-        activeConversationId={undefined}
-      />,
-    );
+      render(
+        <ConversationPanelView
+          {...defaultProps}
+          activeConversationId={undefined}
+        />,
+      );
 
-    expect(screen.getByLabelText('unread indicator task1')).toBeTruthy();
-  });
+      expect(rowFor('run-c')).toBeTruthy();
+      expect(rowFor('run-a')).toBeNull();
+      expect(rowFor('run-b')).toBeNull();
+      expect(
+        screen.getByRole('button', { name: /gpt-4__Plain chat$/ }),
+      ).toBeTruthy();
+    });
 
-  it('does not pass isUnread through for a read scheduler-created conversation', () => {
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [{ ...unreadTaskConversation, isUnread: false }],
-      markConversationViewed: vi.fn(),
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+    it('gives every task row the scheduled-task icon and no TASK label', () => {
+      mockContextList([newest, plainChat]);
 
-    render(
-      <ConversationPanelView
-        {...defaultProps}
-        activeConversationId={undefined}
-      />,
-    );
+      render(
+        <ConversationPanelView
+          {...defaultProps}
+          activeConversationId={undefined}
+        />,
+      );
 
-    expect(screen.queryByLabelText('unread indicator task1')).toBeNull();
-  });
-});
+      expect(screen.getByTestId(/^leading icon .*__run-c$/)).toBeTruthy();
+      expect(screen.queryByTestId(/^leading icon .*Plain chat$/)).toBeNull();
+      expect(screen.queryByText('TASK')).toBeNull();
+    });
 
-describe('ConversationPanelView — unread dot for regular chats', () => {
-  const unreadChat = {
-    id: 'chat9',
-    title: 'Chat 9',
-    isPinned: false,
-    updatedAt: 0,
-    sharedWithMe: false,
-    publishedWithMe: false,
-    isScheduledTask: false,
-    isUnread: true,
-  };
+    it('shows the next run once the shown run is gone from the list', () => {
+      mockContextList([oldest, older, newest]);
+      const { rerender } = render(
+        <ConversationPanelView
+          {...defaultProps}
+          activeConversationId={undefined}
+        />,
+      );
+      expect(rowFor('run-c')).toBeTruthy();
 
-  const mockContext = () =>
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [unreadChat],
-      markConversationViewed: vi.fn(),
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-  it('shows the dot for an unread regular chat that is not open', () => {
-    mockContext();
-
-    render(
-      <ConversationPanelView
-        {...defaultProps}
-        activeConversationId={undefined}
-      />,
-    );
-
-    expect(screen.getByLabelText('unread indicator chat9')).toBeTruthy();
-  });
-
-  it('hides the dot while that chat is the open conversation', () => {
-    mockContext();
-
-    render(
-      <ConversationPanelView {...defaultProps} activeConversationId="chat9" />,
-    );
-
-    expect(screen.queryByLabelText('unread indicator chat9')).toBeNull();
-  });
-
-  it('shows the dot as soon as the user navigates away from the chat', () => {
-    mockContext();
-    const { rerender } = render(
-      <ConversationPanelView {...defaultProps} activeConversationId="chat9" />,
-    );
-    expect(screen.queryByLabelText('unread indicator chat9')).toBeNull();
-
-    rerender(
-      <ConversationPanelView
-        {...defaultProps}
-        activeConversationId={undefined}
-      />,
-    );
-
-    expect(screen.getByLabelText('unread indicator chat9')).toBeTruthy();
-  });
-
-  it('keeps showing the dot of another chat while a different one is open', () => {
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [unreadChat, { ...unreadChat, id: 'chat10' }],
-      markConversationViewed: vi.fn(),
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-    render(
-      <ConversationPanelView {...defaultProps} activeConversationId="chat9" />,
-    );
-
-    expect(screen.queryByLabelText('unread indicator chat9')).toBeNull();
-    expect(screen.getByLabelText('unread indicator chat10')).toBeTruthy();
-  });
-});
-
-describe('ConversationPanelView — one row per scheduled task', () => {
-  const taskRun = (runId: string, createdAt: number, isUnread = false) => ({
-    id: `conversations/bucket/.scheduler/s1/gpt-4__Daily__${runId}`,
-    title: 'Daily',
-    isPinned: false,
-    createdAt,
-    updatedAt: createdAt,
-    sharedWithMe: false,
-    publishedWithMe: false,
-    isReadonly: false,
-    isScheduledTask: true,
-    scheduleId: 's1',
-    runId,
-    isUnread,
-  });
-  const plainChat = {
-    id: 'conversations/bucket/gpt-4__Plain chat',
-    title: 'Plain chat',
-    isPinned: false,
-    updatedAt: 50,
-    sharedWithMe: false,
-    publishedWithMe: false,
-    isReadonly: false,
-    isScheduledTask: false,
-  };
-  const oldest = taskRun('run-a', 100);
-  const older = taskRun('run-b', 200, true);
-  const newest = taskRun('run-c', 300);
-
-  const mockContextList = (
-    conversations: unknown[],
-    overrides: Record<string, unknown> = {},
-  ) => {
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations,
-      ...overrides,
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-  };
-
-  const rowFor = (runId: string) =>
-    screen.queryByRole('button', { name: new RegExp(`__${runId}$`) });
-
-  it('renders several runs of one task as a single row for the newest run', () => {
-    mockContextList([oldest, newest, older, plainChat]);
-
-    render(
-      <ConversationPanelView
-        {...defaultProps}
-        activeConversationId={undefined}
-      />,
-    );
-
-    expect(rowFor('run-c')).toBeTruthy();
-    expect(rowFor('run-a')).toBeNull();
-    expect(rowFor('run-b')).toBeNull();
-    expect(
-      screen.getByRole('button', { name: /gpt-4__Plain chat$/ }),
-    ).toBeTruthy();
-  });
-
-  it('gives every task row the scheduled-task icon and no TASK label', () => {
-    mockContextList([newest, plainChat]);
-
-    render(
-      <ConversationPanelView
-        {...defaultProps}
-        activeConversationId={undefined}
-      />,
-    );
-
-    expect(screen.getByTestId(/^leading icon .*__run-c$/)).toBeTruthy();
-    expect(screen.queryByTestId(/^leading icon .*Plain chat$/)).toBeNull();
-    expect(screen.queryByText('TASK')).toBeNull();
-  });
-
-  it('shows the next run once the shown run is gone from the list', () => {
-    mockContextList([oldest, older, newest]);
-    const { rerender } = render(
-      <ConversationPanelView
-        {...defaultProps}
-        activeConversationId={undefined}
-      />,
-    );
-    expect(rowFor('run-c')).toBeTruthy();
-
-    mockContextList([oldest, older]);
-    /* A fresh callback defeats the view's `memo`, standing in for the
+      mockContextList([oldest, older]);
+      /* A fresh callback defeats the view's `memo`, standing in for the
        re-render a real context update would trigger. */
-    rerender(
-      <ConversationPanelView
-        {...defaultProps}
-        onRequestedFilterChange={vi.fn()}
-        activeConversationId={undefined}
-      />,
-    );
+      rerender(
+        <ConversationPanelView
+          {...defaultProps}
+          onRequestedFilterChange={vi.fn()}
+          activeConversationId={undefined}
+        />,
+      );
 
-    expect(rowFor('run-b')).toBeTruthy();
-    expect(rowFor('run-c')).toBeNull();
-  });
-
-  it('shows an opened older run as the task row and still marks it viewed', () => {
-    const mockMarkConversationViewed = vi.fn();
-    mockContextList([oldest, older, newest], {
-      markConversationViewed: mockMarkConversationViewed,
+      expect(rowFor('run-b')).toBeTruthy();
+      expect(rowFor('run-c')).toBeNull();
     });
 
-    render(
-      <ConversationPanelView
-        {...defaultProps}
-        activeConversationId={older.id}
-      />,
-    );
+    it('shows an opened older run as the task row and still marks it viewed', () => {
+      const mockMarkConversationViewed = vi.fn();
+      mockContextList([oldest, older, newest], {
+        markConversationViewed: mockMarkConversationViewed,
+      });
 
-    expect(rowFor('run-b')).toBeTruthy();
-    expect(rowFor('run-c')).toBeNull();
-    expect(mockMarkConversationViewed).toHaveBeenCalledWith(older.id);
-  });
-});
+      render(
+        <ConversationPanelView
+          {...defaultProps}
+          activeConversationId={older.id}
+        />,
+      );
 
-describe('ConversationPanelView — single-conversation delete navigation', () => {
-  it('navigates to root after deleting the active conversation', async () => {
-    render(<ConversationPanelView {...defaultProps} />);
-
-    fireEvent.click(
-      screen.getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
-    );
-
-    const dialog = screen.getByRole('dialog');
-    fireEvent.click(
-      within(dialog).getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
-    );
-
-    await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/');
+      expect(rowFor('run-b')).toBeTruthy();
+      expect(rowFor('run-c')).toBeNull();
+      expect(mockMarkConversationViewed).toHaveBeenCalledWith(older.id);
     });
   });
 
-  it('does not navigate when deleting a non-active conversation', async () => {
-    const secondConversation = {
-      id: 'conv2',
-      title: 'Chat 2',
-      isPinned: false,
-      updatedAt: 0,
-      sharedWithMe: false,
-      publishedWithMe: false,
-    };
+  describe('ConversationPanelView — single-conversation delete navigation', () => {
+    it('navigates to root after deleting the active conversation', async () => {
+      render(<ConversationPanelView {...defaultProps} />);
 
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [baseContextValue.conversations[0], secondConversation],
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+      fireEvent.click(
+        screen.getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+      );
 
-    render(
-      <ConversationPanelView {...defaultProps} activeConversationId="conv1" />,
-    );
+      const dialog = screen.getByRole('dialog');
+      fireEvent.click(
+        within(dialog).getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+      );
 
-    const deleteButtons = screen.getAllByRole('button', {
-      name: DELETE_CONFIRM_BUTTON,
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith('/');
+      });
     });
-    fireEvent.click(deleteButtons[1]);
 
-    const dialog = screen.getByRole('dialog');
-    fireEvent.click(
-      within(dialog).getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
-    );
+    it('does not navigate when deleting a non-active conversation', async () => {
+      const secondConversation = {
+        id: 'conv2',
+        title: 'Chat 2',
+        isPinned: false,
+        updatedAt: 0,
+        sharedWithMe: false,
+        publishedWithMe: false,
+      };
 
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog')).toBeNull();
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        conversations: [baseContextValue.conversations[0], secondConversation],
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      render(
+        <ConversationPanelView
+          {...defaultProps}
+          activeConversationId="conv1"
+        />,
+      );
+
+      const deleteButtons = screen.getAllByRole('button', {
+        name: DELETE_CONFIRM_BUTTON,
+      });
+      fireEvent.click(deleteButtons[1]);
+
+      const dialog = screen.getByRole('dialog');
+      fireEvent.click(
+        within(dialog).getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+      );
+
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog')).toBeNull();
+      });
+      expect(mockNavigate).not.toHaveBeenCalled();
     });
-    expect(mockNavigate).not.toHaveBeenCalled();
+
+    it('navigates to root when ID comparison requires decodeURIComponent', async () => {
+      /*
+       * Simulates a conversation whose title contains a space stored as %20 in the API id.
+       * getConversationRoute double-encodes to %2520; app.tsx decodes once back to %20.
+       * So activeConversationId still contains %20, not a literal space.
+       */
+      const encodedConversation = {
+        id: 'conversations/bucket/gpt-4__My%20Chat.json',
+        title: 'My Chat',
+        isPinned: false,
+        updatedAt: 0,
+        sharedWithMe: false,
+        publishedWithMe: false,
+      };
+
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        conversations: [encodedConversation],
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      render(
+        <ConversationPanelView
+          {...defaultProps}
+          activeConversationId="conversations/bucket/gpt-4__My%20Chat.json"
+        />,
+      );
+
+      fireEvent.click(
+        screen.getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+      );
+
+      const dialog = screen.getByRole('dialog');
+      fireEvent.click(
+        within(dialog).getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+      );
+
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith('/');
+      });
+    });
   });
 
-  it('navigates to root when ID comparison requires decodeURIComponent', async () => {
-    /*
-     * Simulates a conversation whose title contains a space stored as %20 in the API id.
-     * getConversationRoute double-encodes to %2520; app.tsx decodes once back to %20.
-     * So activeConversationId still contains %20, not a literal space.
-     */
-    const encodedConversation = {
-      id: 'conversations/bucket/gpt-4__My%20Chat.json',
-      title: 'My Chat',
-      isPinned: false,
-      updatedAt: 0,
-      sharedWithMe: false,
-      publishedWithMe: false,
-    };
+  describe('ConversationPanelView — rename', () => {
+    const RENAME_LABEL = 'buttons.rename';
 
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [encodedConversation],
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+    it('confirms a duplicated conversation and navigates to the copy', async () => {
+      const mockDuplicateConversation = vi
+        .fn()
+        .mockResolvedValue('conversations/bucket/conv1-copy');
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        duplicateConversation: mockDuplicateConversation,
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
-    render(
-      <ConversationPanelView
-        {...defaultProps}
-        activeConversationId="conversations/bucket/gpt-4__My%20Chat.json"
-      />,
-    );
+      render(<ConversationPanelView {...defaultProps} />);
+      fireEvent.click(
+        screen.getByRole('button', { name: 'buttons.duplicate' }),
+      );
 
-    fireEvent.click(
-      screen.getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
-    );
-
-    const dialog = screen.getByRole('dialog');
-    fireEvent.click(
-      within(dialog).getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
-    );
-
-    await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/');
+      /* getConversationRoute is mocked in this file as a plain `/conversations/`
+       * prefix, so the duplicate's id shows up verbatim after it. */
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith(
+          '/conversations/conversations/bucket/conv1-copy',
+        );
+      });
+      expect(mockDuplicateConversation).toHaveBeenCalledOnce();
+      expect(mockShowNotification).toHaveBeenCalledWith({
+        variant: 'success',
+        title: 'entityNotifications.conversation.duplicatedTitle',
+        message: 'entityNotifications.conversation.duplicated',
+      });
     });
-  });
-});
 
-describe('ConversationPanelView — rename', () => {
-  const RENAME_LABEL = 'buttons.rename';
+    it('clicking rename opens the popup with the current title', async () => {
+      const user = userEvent.setup();
+      render(<ConversationPanelView {...defaultProps} />);
 
-  it('confirms a duplicated conversation and navigates to the copy', async () => {
-    const mockDuplicateConversation = vi
-      .fn()
-      .mockResolvedValue('conversations/bucket/conv1-copy');
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      duplicateConversation: mockDuplicateConversation,
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+      await user.click(screen.getByRole('button', { name: RENAME_LABEL }));
 
-    render(<ConversationPanelView {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: 'buttons.duplicate' }));
+      const dialog = screen.getByRole('dialog', {
+        name: 'Rename Chat',
+      });
+      expect(
+        (within(dialog).getByRole('textbox') as HTMLInputElement).value,
+      ).toBe('Chat 1');
+    });
 
-    /* getConversationRoute is mocked in this file as a plain `/conversations/`
-     * prefix, so the duplicate's id shows up verbatim after it. */
-    await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith(
-        '/conversations/conversations/bucket/conv1-copy',
+    it('confirming rename does not navigate', async () => {
+      const mockRenameConversation = vi.fn().mockResolvedValue(undefined);
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        renameConversation: mockRenameConversation,
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      render(<ConversationPanelView {...defaultProps} />);
+      fireEvent.click(screen.getByRole('button', { name: RENAME_LABEL }));
+
+      const dialog = screen.getByRole('dialog', {
+        name: 'Rename Chat',
+      });
+      fireEvent.change(within(dialog).getByRole('textbox'), {
+        target: { value: 'New Title' },
+      });
+      fireEvent.click(
+        within(dialog).getByRole('button', { name: 'buttons.save' }),
+      );
+
+      expect(mockRenameConversation).toHaveBeenCalledWith('conv1', 'New Title');
+      expect(mockNavigate).not.toHaveBeenCalled();
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog')).toBeNull();
+      });
+      expect(mockShowNotification).toHaveBeenCalledWith({
+        variant: 'success',
+        title: 'entityNotifications.conversation.renamedTitle',
+        message: 'entityNotifications.conversation.renamed',
+      });
+    });
+
+    it('a failed rename keeps the popup open and raises no success notification', async () => {
+      const user = userEvent.setup();
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        renameConversation: vi.fn().mockRejectedValue(new Error('boom')),
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      render(<ConversationPanelView {...defaultProps} />);
+      await user.click(screen.getByRole('button', { name: RENAME_LABEL }));
+
+      const dialog = screen.getByRole('dialog', {
+        name: 'Rename Chat',
+      });
+      await user.clear(within(dialog).getByRole('textbox'));
+      await user.type(within(dialog).getByRole('textbox'), 'New Title');
+      await user.click(
+        within(dialog).getByRole('button', { name: 'buttons.save' }),
+      );
+
+      expect((await screen.findByRole('alert')).textContent).toBe(
+        'conversationPanel.rename.renameError',
+      );
+      expect(screen.getByRole('dialog')).toBeTruthy();
+      expect(mockShowNotification).not.toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'success' }),
       );
     });
-    expect(mockDuplicateConversation).toHaveBeenCalledOnce();
-    expect(mockShowNotification).toHaveBeenCalledWith({
-      variant: 'success',
-      title: 'entityNotifications.conversation.duplicatedTitle',
-      message: 'entityNotifications.conversation.duplicated',
-    });
-  });
 
-  it('clicking rename opens the popup with the current title', async () => {
-    const user = userEvent.setup();
-    render(<ConversationPanelView {...defaultProps} />);
+    it('passes translated popupTitle label to the rename popup', async () => {
+      const user = userEvent.setup();
+      render(<ConversationPanelView {...defaultProps} />);
+      await user.click(screen.getByRole('button', { name: RENAME_LABEL }));
 
-    await user.click(screen.getByRole('button', { name: RENAME_LABEL }));
-
-    const dialog = screen.getByRole('dialog', {
-      name: 'Rename Chat',
-    });
-    expect(
-      (within(dialog).getByRole('textbox') as HTMLInputElement).value,
-    ).toBe('Chat 1');
-  });
-
-  it('confirming rename does not navigate', async () => {
-    const mockRenameConversation = vi.fn().mockResolvedValue(undefined);
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      renameConversation: mockRenameConversation,
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-    render(<ConversationPanelView {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: RENAME_LABEL }));
-
-    const dialog = screen.getByRole('dialog', {
-      name: 'Rename Chat',
-    });
-    fireEvent.change(within(dialog).getByRole('textbox'), {
-      target: { value: 'New Title' },
-    });
-    fireEvent.click(
-      within(dialog).getByRole('button', { name: 'buttons.save' }),
-    );
-
-    expect(mockRenameConversation).toHaveBeenCalledWith('conv1', 'New Title');
-    expect(mockNavigate).not.toHaveBeenCalled();
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog')).toBeNull();
-    });
-    expect(mockShowNotification).toHaveBeenCalledWith({
-      variant: 'success',
-      title: 'entityNotifications.conversation.renamedTitle',
-      message: 'entityNotifications.conversation.renamed',
-    });
-  });
-
-  it('a failed rename keeps the popup open and raises no success notification', async () => {
-    const user = userEvent.setup();
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      renameConversation: vi.fn().mockRejectedValue(new Error('boom')),
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-    render(<ConversationPanelView {...defaultProps} />);
-    await user.click(screen.getByRole('button', { name: RENAME_LABEL }));
-
-    const dialog = screen.getByRole('dialog', {
-      name: 'Rename Chat',
-    });
-    await user.clear(within(dialog).getByRole('textbox'));
-    await user.type(within(dialog).getByRole('textbox'), 'New Title');
-    await user.click(
-      within(dialog).getByRole('button', { name: 'buttons.save' }),
-    );
-
-    expect((await screen.findByRole('alert')).textContent).toBe(
-      'conversationPanel.rename.renameError',
-    );
-    expect(screen.getByRole('dialog')).toBeTruthy();
-    expect(mockShowNotification).not.toHaveBeenCalledWith(
-      expect.objectContaining({ variant: 'success' }),
-    );
-  });
-
-  it('passes translated popupTitle label to the rename popup', async () => {
-    const user = userEvent.setup();
-    render(<ConversationPanelView {...defaultProps} />);
-    await user.click(screen.getByRole('button', { name: RENAME_LABEL }));
-
-    const dialog = screen.getByRole('dialog', { name: 'Rename Chat' });
-    expect(
-      within(dialog).getByRole('heading', {
-        name: 'Rename Chat',
-      }),
-    ).toBeTruthy();
-  });
-
-  it('wires AI title generation into the real rename popup', async () => {
-    render(<ConversationPanelView {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: RENAME_LABEL }));
-
-    fireEvent.click(screen.getByRole('button', { name: 'Rename with AI' }));
-
-    expect(mockGenerateConversationTitle).toHaveBeenCalledWith('conv1');
-    await waitFor(() =>
-      expect((screen.getByRole('textbox') as HTMLInputElement).value).toBe(
-        'AI title',
-      ),
-    );
-  });
-});
-
-describe('ConversationPanelView — share', () => {
-  it('owned conversation menu includes Share', () => {
-    render(<ConversationPanelView {...defaultProps} />);
-    expect(screen.getByRole('button', { name: SHARE_LABEL })).toBeTruthy();
-  });
-
-  it('readonly (shared-with-me) conversation menu excludes Share', () => {
-    const sharedConversation = {
-      id: 'conv2',
-      title: 'Shared chat',
-      isPinned: false,
-      updatedAt: 0,
-      sharedWithMe: true,
-      publishedWithMe: false,
-    };
-
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [sharedConversation],
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-    render(
-      <ConversationPanelView {...defaultProps} activeConversationId="conv2" />,
-    );
-
-    expect(screen.queryByRole('button', { name: SHARE_LABEL })).toBeNull();
-  });
-
-  it('clicking Share opens the popover for the conversation path', async () => {
-    const user = userEvent.setup();
-    render(<ConversationPanelView {...defaultProps} />);
-
-    await user.click(screen.getByRole('button', { name: SHARE_LABEL }));
-
-    const dialog = screen.getByRole('dialog');
-    expect(within(dialog).getByText('conv1')).toBeTruthy();
-  });
-
-  it('closing the popover clears the pending share state', async () => {
-    render(<ConversationPanelView {...defaultProps} />);
-
-    fireEvent.click(screen.getByRole('button', { name: SHARE_LABEL }));
-    const dialog = screen.getByRole('dialog');
-    fireEvent.click(
-      within(dialog).getByRole('button', { name: 'Close share' }),
-    );
-
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog')).toBeNull();
-    });
-  });
-
-  it('excludes Share from the menu when conversations-sharing is disabled', () => {
-    vi.mocked(useUiFeature).mockImplementation(
-      (feature) => feature !== OverlayFeature.ConversationsSharing,
-    );
-    render(<ConversationPanelView {...defaultProps} />);
-    expect(screen.queryByRole('button', { name: SHARE_LABEL })).toBeNull();
-  });
-});
-
-describe('ConversationPanelView — publish', () => {
-  it('owned conversation menu includes Publish', () => {
-    render(<ConversationPanelView {...defaultProps} />);
-    expect(screen.getByRole('button', { name: PUBLISH_LABEL })).toBeTruthy();
-  });
-
-  it('readonly (shared-with-me) conversation menu excludes Publish', () => {
-    const sharedConversation = {
-      id: 'conv2',
-      title: 'Shared chat',
-      isPinned: false,
-      updatedAt: 0,
-      sharedWithMe: true,
-      publishedWithMe: false,
-    };
-
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [sharedConversation],
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-    render(
-      <ConversationPanelView {...defaultProps} activeConversationId="conv2" />,
-    );
-
-    expect(screen.queryByRole('button', { name: PUBLISH_LABEL })).toBeNull();
-  });
-
-  it('published-with-me conversation menu excludes Publish', () => {
-    const publishedConversation = {
-      id: 'conv3',
-      title: 'Published chat',
-      isPinned: false,
-      updatedAt: 0,
-      sharedWithMe: false,
-      publishedWithMe: true,
-    };
-
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [publishedConversation],
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-    render(
-      <ConversationPanelView {...defaultProps} activeConversationId="conv3" />,
-    );
-
-    expect(screen.queryByRole('button', { name: PUBLISH_LABEL })).toBeNull();
-  });
-
-  it('clicking Publish opens the panel for the conversation path and title', async () => {
-    const user = userEvent.setup();
-    render(<ConversationPanelView {...defaultProps} />);
-
-    await user.click(screen.getByRole('button', { name: PUBLISH_LABEL }));
-
-    const dialog = screen.getByRole('dialog', {
-      name: 'publish conversation',
-    });
-    expect(within(dialog).getByText('conv1')).toBeTruthy();
-    expect(within(dialog).getByText('action trigger conv1')).toBeTruthy();
-  });
-
-  it('closing the panel clears the pending publish state', async () => {
-    render(<ConversationPanelView {...defaultProps} />);
-
-    fireEvent.click(screen.getByRole('button', { name: PUBLISH_LABEL }));
-    const dialog = screen.getByRole('dialog', {
-      name: 'publish conversation',
-    });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
-
-    await waitFor(() => {
+      const dialog = screen.getByRole('dialog', { name: 'Rename Chat' });
       expect(
-        screen.queryByRole('dialog', { name: 'publish conversation' }),
-      ).toBeNull();
+        within(dialog).getByRole('heading', {
+          name: 'Rename Chat',
+        }),
+      ).toBeTruthy();
+    });
+
+    it('wires AI title generation into the real rename popup', async () => {
+      render(<ConversationPanelView {...defaultProps} />);
+      fireEvent.click(screen.getByRole('button', { name: RENAME_LABEL }));
+
+      fireEvent.click(screen.getByRole('button', { name: 'Rename with AI' }));
+
+      expect(mockGenerateConversationTitle).toHaveBeenCalledWith('conv1');
+      await waitFor(() =>
+        expect((screen.getByRole('textbox') as HTMLInputElement).value).toBe(
+          'AI title',
+        ),
+      );
     });
   });
 
-  it('excludes Publish from the menu when conversations-publishing is disabled', () => {
-    vi.mocked(useUiFeature).mockImplementation(
-      (feature) => feature !== OverlayFeature.ConversationsPublishing,
-    );
-    render(<ConversationPanelView {...defaultProps} />);
-    expect(screen.queryByRole('button', { name: PUBLISH_LABEL })).toBeNull();
-  });
-});
-
-describe('ConversationPanelView — export/import notification mapping', () => {
-  it('maps a successful single-conversation export to a success notification with the title', () => {
-    render(<ConversationPanelView {...defaultProps} />);
-    const params = vi.mocked(useConversationExport).mock.calls.at(-1)?.[0];
-
-    params?.onSuccess?.({ jobId: 'job-1', titles: ['My Chat'] });
-
-    expect(mockShowNotification).toHaveBeenCalledWith(
-      expect.objectContaining({
-        message: 'conversationExport.successSingle',
-      }),
-    );
-  });
-
-  it('suppresses the export error notification for an unauthorized failure', () => {
-    render(<ConversationPanelView {...defaultProps} />);
-    const params = vi.mocked(useConversationExport).mock.calls.at(-1)?.[0];
-    mockShowNotification.mockClear();
-
-    params?.onError?.({
-      jobId: 'job-1',
-      code: ConversationTransferErrorCode.Unauthorized,
+  describe('ConversationPanelView — share', () => {
+    it('owned conversation menu includes Share', () => {
+      render(<ConversationPanelView {...defaultProps} />);
+      expect(screen.getByRole('button', { name: SHARE_LABEL })).toBeTruthy();
     });
 
-    expect(mockShowNotification).not.toHaveBeenCalled();
-  });
+    it('readonly (shared-with-me) conversation menu excludes Share', () => {
+      const sharedConversation = {
+        id: 'conv2',
+        title: 'Shared chat',
+        isPinned: false,
+        updatedAt: 0,
+        sharedWithMe: true,
+        publishedWithMe: false,
+      };
 
-  it('maps an import UnsupportedFormat error to the unsupported-format notification', () => {
-    render(<ConversationPanelView {...defaultProps} />);
-    const params = vi.mocked(useConversationImport).mock.calls.at(-1)?.[0];
-    mockShowNotification.mockClear();
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        conversations: [sharedConversation],
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
-    params?.onError?.({
-      jobId: 'imp-1',
-      code: ConversationTransferErrorCode.UnsupportedFormat,
+      render(
+        <ConversationPanelView
+          {...defaultProps}
+          activeConversationId="conv2"
+        />,
+      );
+
+      expect(screen.queryByRole('button', { name: SHARE_LABEL })).toBeNull();
     });
 
-    expect(mockShowNotification).toHaveBeenCalledWith(
-      expect.objectContaining({
-        message: 'conversationImport.unsupportedFormat',
-      }),
-    );
-  });
-});
+    it('clicking Share opens the popover for the conversation path', async () => {
+      const user = userEvent.setup();
+      render(<ConversationPanelView {...defaultProps} />);
 
-describe('ConversationPanelView — export', () => {
-  it('hides the row Export item and Export all when hide-conversation-export is on', () => {
-    vi.mocked(useUiFeature).mockReturnValue(true);
-    render(<ConversationPanelView {...defaultProps} />);
-    expect(screen.queryByText(EXPORT_LABEL)).toBeNull();
-    openDropdown();
-    expect(screen.queryByRole('button', { name: EXPORT_ALL_LABEL })).toBeNull();
-    expect(
-      screen.getAllByRole('button', { name: DELETE_ALL_LABEL }),
-    ).toHaveLength(1);
-  });
+      await user.click(screen.getByRole('button', { name: SHARE_LABEL }));
 
-  it('row action list contains an Export item (submenu trigger, no onClick of its own)', () => {
-    render(<ConversationPanelView {...defaultProps} />);
-    expect(screen.getByText(EXPORT_LABEL)).toBeTruthy();
-  });
-
-  it('the Export submenu offers "with attachments" and "without attachments" — no modal', () => {
-    render(<ConversationPanelView {...defaultProps} />);
-    expect(
-      screen.getByRole('button', {
-        name: 'conversationExport.withAttachmentsOption',
-      }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole('button', {
-        name: 'conversationExport.withoutAttachmentsOption',
-      }),
-    ).toBeTruthy();
-    expect(mockExportSingle).not.toHaveBeenCalled();
-    expect(screen.queryByRole('dialog')).toBeNull();
-  });
-
-  it('choosing "with attachments" calls exportSingle with the conversation id, title, and mode', () => {
-    render(<ConversationPanelView {...defaultProps} />);
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: 'conversationExport.withAttachmentsOption',
-      }),
-    );
-
-    expect(mockExportSingle).toHaveBeenCalledWith(
-      'conv1',
-      'Chat 1',
-      ConversationExportMode.WithAttachments,
-    );
-  });
-
-  it('choosing "without attachments" calls exportSingle with the conversation id, title, and mode', () => {
-    render(<ConversationPanelView {...defaultProps} />);
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: 'conversationExport.withoutAttachmentsOption',
-      }),
-    );
-
-    expect(mockExportSingle).toHaveBeenCalledWith(
-      'conv1',
-      'Chat 1',
-      ConversationExportMode.WithoutAttachments,
-    );
-  });
-
-  it('shows the non-modal export queue while jobs are present', () => {
-    vi.mocked(useConversationExport).mockReturnValue({
-      jobs: [
-        {
-          id: 'job-1',
-          subject: {
-            kind: ConversationTransferSubjectKind.Single,
-            title: 'Chat 1',
-          },
-          status: ConversationTransferJobStatus.InProgress,
-          fileName: 'export-1.dial',
-          progress: { percent: 0 },
-        },
-      ],
-      exportSingle: mockExportSingle,
-      exportAll: mockExportAll,
-      cancelJob: mockCancelJob,
-      dismissJob: mockDismissJob,
-      retryJob: mockRetryJob,
-      dismissAll: vi.fn(),
+      const dialog = screen.getByRole('dialog');
+      expect(within(dialog).getByText('conv1')).toBeTruthy();
     });
 
-    render(<ConversationPanelView {...defaultProps} />);
+    it('closing the popover clears the pending share state', async () => {
+      render(<ConversationPanelView {...defaultProps} />);
 
-    expect(getQueuePanels()).toHaveLength(1);
-    expect(screen.getByText('export-1.dial')).toBeTruthy();
-    expect(screen.queryByText('Chat 1')).toBeNull();
-    expect(screen.queryByRole('dialog')).toBeNull();
-  });
+      fireEvent.click(screen.getByRole('button', { name: SHARE_LABEL }));
+      const dialog = screen.getByRole('dialog');
+      fireEvent.click(
+        within(dialog).getByRole('button', { name: 'Close share' }),
+      );
 
-  it('hides the export queue when there are no jobs', () => {
-    render(<ConversationPanelView {...defaultProps} />);
-    expect(screen.queryByRole('status')).toBeNull();
-  });
-
-  it('clicking cancel on a queue job calls cancelJob with its id', () => {
-    vi.mocked(useConversationExport).mockReturnValue({
-      jobs: [
-        {
-          id: 'job-2',
-          subject: {
-            kind: ConversationTransferSubjectKind.Single,
-            title: 'Chat 2',
-          },
-          status: ConversationTransferJobStatus.InProgress,
-          fileName: 'export-2.dial',
-          progress: { percent: 0 },
-        },
-      ],
-      exportSingle: mockExportSingle,
-      exportAll: mockExportAll,
-      cancelJob: mockCancelJob,
-      dismissJob: mockDismissJob,
-      retryJob: mockRetryJob,
-      dismissAll: vi.fn(),
-    });
-
-    render(<ConversationPanelView {...defaultProps} />);
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: 'Cancel exporting "export-2.dial"',
-      }),
-    );
-
-    expect(mockCancelJob).toHaveBeenCalledWith('job-2');
-    expect(mockDismissJob).not.toHaveBeenCalled();
-  });
-
-  it('shows a failed export reason instead of a retry control', () => {
-    vi.mocked(useConversationExport).mockReturnValue({
-      jobs: [
-        {
-          id: 'job-3',
-          subject: {
-            kind: ConversationTransferSubjectKind.Single,
-            title: 'Chat 3',
-          },
-          status: ConversationTransferJobStatus.Failed,
-          fileName: 'export-3.dial',
-          progress: { percent: 0 },
-        },
-      ],
-      exportSingle: mockExportSingle,
-      exportAll: mockExportAll,
-      cancelJob: mockCancelJob,
-      dismissJob: mockDismissJob,
-      retryJob: mockRetryJob,
-      dismissAll: vi.fn(),
-    });
-
-    render(<ConversationPanelView {...defaultProps} />);
-
-    expect(
-      screen.getByRole('img', { name: 'Export failed. Please try again.' }),
-    ).toBeTruthy();
-    expect(screen.queryByRole('button', { name: /retry/i })).toBeNull();
-  });
-
-  it('renders the real export queue with its translated collapse label', () => {
-    vi.mocked(useConversationExport).mockReturnValue({
-      jobs: [
-        {
-          id: 'job-label',
-          subject: {
-            kind: ConversationTransferSubjectKind.Single,
-            title: 'Chat Label',
-          },
-          status: ConversationTransferJobStatus.InProgress,
-          fileName: 'export-4.dial',
-          progress: { percent: 0 },
-        },
-      ],
-      exportSingle: mockExportSingle,
-      exportAll: mockExportAll,
-      cancelJob: mockCancelJob,
-      dismissJob: mockDismissJob,
-      retryJob: mockRetryJob,
-      dismissAll: vi.fn(),
-    });
-
-    render(<ConversationPanelView {...defaultProps} />);
-
-    expect(
-      screen.getByRole('button', {
-        name: 'Collapse queue',
-      }),
-    ).toBeTruthy();
-  });
-});
-
-describe('ConversationPanelView — import header action', () => {
-  it('dropdown contains an Import item positioned after Export all', () => {
-    render(<ConversationPanelView {...defaultProps} />);
-    openDropdown();
-    expect(screen.getAllByRole('button', { name: IMPORT_LABEL })).toHaveLength(
-      1,
-    );
-  });
-
-  it('hides Import but keeps Export all when hide-conversation-import is on', () => {
-    vi.mocked(useUiFeature).mockImplementation(
-      (feature) => feature !== OverlayFeature.HideConversationExport,
-    );
-    render(<ConversationPanelView {...defaultProps} />);
-    openDropdown();
-    expect(screen.queryByRole('button', { name: IMPORT_LABEL })).toBeNull();
-    expect(
-      screen.getAllByRole('button', { name: EXPORT_ALL_LABEL }),
-    ).toHaveLength(1);
-  });
-
-  it('clicking Import triggers the hidden file input', () => {
-    render(<ConversationPanelView {...defaultProps} />);
-    const fileInput = getImportFileInput();
-    const clickSpy = vi.spyOn(fileInput, 'click');
-
-    openDropdown();
-    fireEvent.click(screen.getByRole('button', { name: IMPORT_LABEL }));
-
-    expect(clickSpy).toHaveBeenCalledOnce();
-  });
-
-  it('accepts .json, .dial, and .zip files', () => {
-    render(<ConversationPanelView {...defaultProps} />);
-    const fileInput = getImportFileInput();
-    expect(fileInput.accept).toBe(
-      '.json,.dial,.zip,application/json,application/zip',
-    );
-  });
-
-  it('leaves the import picker unfiltered on mobile', () => {
-    mockUseIsMobile.mockReturnValue(true);
-    render(<ConversationPanelView {...defaultProps} />);
-    const fileInput = getImportFileInput();
-    expect(fileInput.hasAttribute('accept')).toBe(false);
-  });
-
-  it('selecting a file calls importConversations with that file', () => {
-    render(<ConversationPanelView {...defaultProps} />);
-    const fileInput = getImportFileInput();
-    const file = new File(['{}'], 'export.json', {
-      type: 'application/json',
-    });
-
-    fireEvent.change(fileInput, { target: { files: [file] } });
-
-    expect(mockImportConversations).toHaveBeenCalledWith(file);
-  });
-
-  it('resets the file input value after selection so the same file can be re-picked', () => {
-    render(<ConversationPanelView {...defaultProps} />);
-    const fileInput = getImportFileInput();
-    const file = new File(['{}'], 'export.json');
-
-    fireEvent.change(fileInput, { target: { files: [file] } });
-
-    expect(fileInput.value).toBe('');
-  });
-});
-
-describe('ConversationPanelView — separate import/export transfer queues', () => {
-  it.each([
-    { names: ['absent.pdf'], expectedNames: '"absent.pdf"' },
-    {
-      names: ['absent.pdf', 'missing.txt'],
-      expectedNames: '"absent.pdf", "missing.txt"',
-    },
-    {
-      names: ['a.pdf', 'b.pdf', 'c.pdf', 'd.pdf', 'e.pdf', 'f.pdf'],
-      expectedNames: '"a.pdf", "b.pdf", "c.pdf", "d.pdf", "e.pdf" and 1 other',
-    },
-  ])(
-    'names skipped attachments in the notification and their own queue row: $expectedNames',
-    ({ names, expectedNames }) => {
-      const makeWarningJob = (id: string, warningNames: string[]) => ({
-        id,
-        subject: { kind: ConversationTransferSubjectKind.All as const },
-        status: ConversationTransferJobStatus.Warning,
-        fileName: id + '.dial',
-        progress: { percent: 100 },
-        warningCode: ConversationTransferWarningCode.AttachmentSkipped,
-        warningNames,
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog')).toBeNull();
       });
-      vi.mocked(useConversationImport).mockReturnValue({
+    });
+
+    it('excludes Share from the menu when conversations-sharing is disabled', () => {
+      vi.mocked(useUiFeature).mockImplementation(
+        (feature) => feature !== OverlayFeature.ConversationsSharing,
+      );
+      render(<ConversationPanelView {...defaultProps} />);
+      expect(screen.queryByRole('button', { name: SHARE_LABEL })).toBeNull();
+    });
+  });
+
+  describe('ConversationPanelView — publish', () => {
+    it('owned conversation menu includes Publish', () => {
+      render(<ConversationPanelView {...defaultProps} />);
+      expect(screen.getByRole('button', { name: PUBLISH_LABEL })).toBeTruthy();
+    });
+
+    it('readonly (shared-with-me) conversation menu excludes Publish', () => {
+      const sharedConversation = {
+        id: 'conv2',
+        title: 'Shared chat',
+        isPinned: false,
+        updatedAt: 0,
+        sharedWithMe: true,
+        publishedWithMe: false,
+      };
+
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        conversations: [sharedConversation],
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      render(
+        <ConversationPanelView
+          {...defaultProps}
+          activeConversationId="conv2"
+        />,
+      );
+
+      expect(screen.queryByRole('button', { name: PUBLISH_LABEL })).toBeNull();
+    });
+
+    it('published-with-me conversation menu excludes Publish', () => {
+      const publishedConversation = {
+        id: 'conv3',
+        title: 'Published chat',
+        isPinned: false,
+        updatedAt: 0,
+        sharedWithMe: false,
+        publishedWithMe: true,
+      };
+
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        conversations: [publishedConversation],
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      render(
+        <ConversationPanelView
+          {...defaultProps}
+          activeConversationId="conv3"
+        />,
+      );
+
+      expect(screen.queryByRole('button', { name: PUBLISH_LABEL })).toBeNull();
+    });
+
+    it('clicking Publish opens the panel for the conversation path and title', async () => {
+      const user = userEvent.setup();
+      render(<ConversationPanelView {...defaultProps} />);
+
+      await user.click(screen.getByRole('button', { name: PUBLISH_LABEL }));
+
+      const dialog = screen.getByRole('dialog', {
+        name: 'publish conversation',
+      });
+      expect(within(dialog).getByText('conv1')).toBeTruthy();
+      expect(within(dialog).getByText('action trigger conv1')).toBeTruthy();
+    });
+
+    it('closing the panel clears the pending publish state', async () => {
+      render(<ConversationPanelView {...defaultProps} />);
+
+      fireEvent.click(screen.getByRole('button', { name: PUBLISH_LABEL }));
+      const dialog = screen.getByRole('dialog', {
+        name: 'publish conversation',
+      });
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
+
+      await waitFor(() => {
+        expect(
+          screen.queryByRole('dialog', { name: 'publish conversation' }),
+        ).toBeNull();
+      });
+    });
+
+    it('excludes Publish from the menu when conversations-publishing is disabled', () => {
+      vi.mocked(useUiFeature).mockImplementation(
+        (feature) => feature !== OverlayFeature.ConversationsPublishing,
+      );
+      render(<ConversationPanelView {...defaultProps} />);
+      expect(screen.queryByRole('button', { name: PUBLISH_LABEL })).toBeNull();
+    });
+  });
+
+  describe('ConversationPanelView — export/import notification mapping', () => {
+    it('maps a successful single-conversation export to a success notification with the title', () => {
+      render(<ConversationPanelView {...defaultProps} />);
+      const params = vi.mocked(useConversationExport).mock.calls.at(-1)?.[0];
+
+      params?.onSuccess?.({ jobId: 'job-1', titles: ['My Chat'] });
+
+      expect(mockShowNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'conversationExport.successSingle',
+        }),
+      );
+    });
+
+    it('suppresses the export error notification for an unauthorized failure', () => {
+      render(<ConversationPanelView {...defaultProps} />);
+      const params = vi.mocked(useConversationExport).mock.calls.at(-1)?.[0];
+      mockShowNotification.mockClear();
+
+      params?.onError?.({
+        jobId: 'job-1',
+        code: ConversationTransferErrorCode.Unauthorized,
+      });
+
+      expect(mockShowNotification).not.toHaveBeenCalled();
+    });
+
+    it('maps an import UnsupportedFormat error to the unsupported-format notification', () => {
+      render(<ConversationPanelView {...defaultProps} />);
+      const params = vi.mocked(useConversationImport).mock.calls.at(-1)?.[0];
+      mockShowNotification.mockClear();
+
+      params?.onError?.({
+        jobId: 'imp-1',
+        code: ConversationTransferErrorCode.UnsupportedFormat,
+      });
+
+      expect(mockShowNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'conversationImport.unsupportedFormat',
+        }),
+      );
+    });
+  });
+
+  describe('ConversationPanelView — export', () => {
+    it('hides the row Export item and Export all when hide-conversation-export is on', () => {
+      vi.mocked(useUiFeature).mockReturnValue(true);
+      render(<ConversationPanelView {...defaultProps} />);
+      expect(screen.queryByText(EXPORT_LABEL)).toBeNull();
+      openDropdown();
+      expect(
+        screen.queryByRole('button', { name: EXPORT_ALL_LABEL }),
+      ).toBeNull();
+      expect(
+        screen.getAllByRole('button', { name: DELETE_ALL_LABEL }),
+      ).toHaveLength(1);
+    });
+
+    it('row action list contains an Export item (submenu trigger, no onClick of its own)', () => {
+      render(<ConversationPanelView {...defaultProps} />);
+      expect(screen.getByText(EXPORT_LABEL)).toBeTruthy();
+    });
+
+    it('the Export submenu offers "with attachments" and "without attachments" — no modal', () => {
+      render(<ConversationPanelView {...defaultProps} />);
+      expect(
+        screen.getByRole('button', {
+          name: 'conversationExport.withAttachmentsOption',
+        }),
+      ).toBeTruthy();
+      expect(
+        screen.getByRole('button', {
+          name: 'conversationExport.withoutAttachmentsOption',
+        }),
+      ).toBeTruthy();
+      expect(mockExportSingle).not.toHaveBeenCalled();
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
+    it('choosing "with attachments" calls exportSingle with the conversation id, title, and mode', () => {
+      render(<ConversationPanelView {...defaultProps} />);
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: 'conversationExport.withAttachmentsOption',
+        }),
+      );
+
+      expect(mockExportSingle).toHaveBeenCalledWith(
+        'conv1',
+        'Chat 1',
+        ConversationExportMode.WithAttachments,
+      );
+    });
+
+    it('choosing "without attachments" calls exportSingle with the conversation id, title, and mode', () => {
+      render(<ConversationPanelView {...defaultProps} />);
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: 'conversationExport.withoutAttachmentsOption',
+        }),
+      );
+
+      expect(mockExportSingle).toHaveBeenCalledWith(
+        'conv1',
+        'Chat 1',
+        ConversationExportMode.WithoutAttachments,
+      );
+    });
+
+    it('shows the non-modal export queue while jobs are present', () => {
+      vi.mocked(useConversationExport).mockReturnValue({
         jobs: [
-          makeWarningJob('imp-1', names),
-          makeWarningJob('imp-2', ['other.pdf']),
+          {
+            id: 'job-1',
+            subject: {
+              kind: ConversationTransferSubjectKind.Single,
+              title: 'Chat 1',
+            },
+            status: ConversationTransferJobStatus.InProgress,
+            fileName: 'export-1.dial',
+            progress: { percent: 0 },
+          },
         ],
-        importConversations: mockImportConversations,
-        cancelJob: mockCancelImportJob,
-        dismissJob: mockDismissImportJob,
-        retryJob: mockRetryImportJob,
+        exportSingle: mockExportSingle,
+        exportAll: mockExportAll,
+        cancelJob: mockCancelJob,
+        dismissJob: mockDismissJob,
+        retryJob: mockRetryJob,
         dismissAll: vi.fn(),
       });
 
       render(<ConversationPanelView {...defaultProps} />);
-      const message =
-        expectedNames + ' could not be uploaded and were skipped.';
-      expect(screen.getByRole('img', { name: message })).toBeTruthy();
+
+      expect(getQueuePanels()).toHaveLength(1);
+      expect(screen.getByText('export-1.dial')).toBeTruthy();
+      expect(screen.queryByText('Chat 1')).toBeNull();
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
+    it('hides the export queue when there are no jobs', () => {
+      render(<ConversationPanelView {...defaultProps} />);
+      expect(screen.queryByRole('status')).toBeNull();
+    });
+
+    it('clicking cancel on a queue job calls cancelJob with its id', () => {
+      vi.mocked(useConversationExport).mockReturnValue({
+        jobs: [
+          {
+            id: 'job-2',
+            subject: {
+              kind: ConversationTransferSubjectKind.Single,
+              title: 'Chat 2',
+            },
+            status: ConversationTransferJobStatus.InProgress,
+            fileName: 'export-2.dial',
+            progress: { percent: 0 },
+          },
+        ],
+        exportSingle: mockExportSingle,
+        exportAll: mockExportAll,
+        cancelJob: mockCancelJob,
+        dismissJob: mockDismissJob,
+        retryJob: mockRetryJob,
+        dismissAll: vi.fn(),
+      });
+
+      render(<ConversationPanelView {...defaultProps} />);
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: 'Cancel exporting "export-2.dial"',
+        }),
+      );
+
+      expect(mockCancelJob).toHaveBeenCalledWith('job-2');
+      expect(mockDismissJob).not.toHaveBeenCalled();
+    });
+
+    it('shows a failed export reason instead of a retry control', () => {
+      vi.mocked(useConversationExport).mockReturnValue({
+        jobs: [
+          {
+            id: 'job-3',
+            subject: {
+              kind: ConversationTransferSubjectKind.Single,
+              title: 'Chat 3',
+            },
+            status: ConversationTransferJobStatus.Failed,
+            fileName: 'export-3.dial',
+            progress: { percent: 0 },
+          },
+        ],
+        exportSingle: mockExportSingle,
+        exportAll: mockExportAll,
+        cancelJob: mockCancelJob,
+        dismissJob: mockDismissJob,
+        retryJob: mockRetryJob,
+        dismissAll: vi.fn(),
+      });
+
+      render(<ConversationPanelView {...defaultProps} />);
+
       expect(
-        screen.getByRole('img', {
-          name: '"other.pdf" could not be uploaded and were skipped.',
+        screen.getByRole('img', { name: 'Export failed. Please try again.' }),
+      ).toBeTruthy();
+      expect(screen.queryByRole('button', { name: /retry/i })).toBeNull();
+    });
+
+    it('renders the real export queue with its translated collapse label', () => {
+      vi.mocked(useConversationExport).mockReturnValue({
+        jobs: [
+          {
+            id: 'job-label',
+            subject: {
+              kind: ConversationTransferSubjectKind.Single,
+              title: 'Chat Label',
+            },
+            status: ConversationTransferJobStatus.InProgress,
+            fileName: 'export-4.dial',
+            progress: { percent: 0 },
+          },
+        ],
+        exportSingle: mockExportSingle,
+        exportAll: mockExportAll,
+        cancelJob: mockCancelJob,
+        dismissJob: mockDismissJob,
+        retryJob: mockRetryJob,
+        dismissAll: vi.fn(),
+      });
+
+      render(<ConversationPanelView {...defaultProps} />);
+
+      expect(
+        screen.getByRole('button', {
+          name: 'Collapse queue',
         }),
       ).toBeTruthy();
+    });
+  });
 
-      const params = vi.mocked(useConversationImport).mock.calls.at(-1)?.[0];
-      params?.onWarning?.({
-        jobId: 'imp-1',
-        code: ConversationTransferWarningCode.AttachmentSkipped,
-        names,
-      });
-      expect(mockShowNotification).toHaveBeenCalledWith(
-        expect.objectContaining({ message }),
+  describe('ConversationPanelView — import header action', () => {
+    it('dropdown contains an Import item positioned after Export all', () => {
+      render(<ConversationPanelView {...defaultProps} />);
+      openDropdown();
+      expect(
+        screen.getAllByRole('button', { name: IMPORT_LABEL }),
+      ).toHaveLength(1);
+    });
+
+    it('hides Import but keeps Export all when hide-conversation-import is on', () => {
+      vi.mocked(useUiFeature).mockImplementation(
+        (feature) => feature !== OverlayFeature.HideConversationExport,
       );
-    },
-  );
+      render(<ConversationPanelView {...defaultProps} />);
+      openDropdown();
+      expect(screen.queryByRole('button', { name: IMPORT_LABEL })).toBeNull();
+      expect(
+        screen.getAllByRole('button', { name: EXPORT_ALL_LABEL }),
+      ).toHaveLength(1);
+    });
 
-  it.each([{ warningNames: undefined }, { warningNames: [] }])(
-    'uses a generic warning for a job without names: %j',
-    ({ warningNames }) => {
+    it('clicking Import triggers the hidden file input', () => {
+      render(<ConversationPanelView {...defaultProps} />);
+      const fileInput = getImportFileInput();
+      const clickSpy = vi.spyOn(fileInput, 'click');
+
+      openDropdown();
+      fireEvent.click(screen.getByRole('button', { name: IMPORT_LABEL }));
+
+      expect(clickSpy).toHaveBeenCalledOnce();
+    });
+
+    it('accepts .json, .dial, and .zip files', () => {
+      render(<ConversationPanelView {...defaultProps} />);
+      const fileInput = getImportFileInput();
+      expect(fileInput.accept).toBe(
+        '.json,.dial,.zip,application/json,application/zip',
+      );
+    });
+
+    it('leaves the import picker unfiltered on mobile', () => {
+      mockUseIsMobile.mockReturnValue(true);
+      render(<ConversationPanelView {...defaultProps} />);
+      const fileInput = getImportFileInput();
+      expect(fileInput.hasAttribute('accept')).toBe(false);
+    });
+
+    it('selecting a file calls importConversations with that file', () => {
+      render(<ConversationPanelView {...defaultProps} />);
+      const fileInput = getImportFileInput();
+      const file = new File(['{}'], 'export.json', {
+        type: 'application/json',
+      });
+
+      fireEvent.change(fileInput, { target: { files: [file] } });
+
+      expect(mockImportConversations).toHaveBeenCalledWith(file);
+    });
+
+    it('resets the file input value after selection so the same file can be re-picked', () => {
+      render(<ConversationPanelView {...defaultProps} />);
+      const fileInput = getImportFileInput();
+      const file = new File(['{}'], 'export.json');
+
+      fireEvent.change(fileInput, { target: { files: [file] } });
+
+      expect(fileInput.value).toBe('');
+    });
+  });
+
+  describe('ConversationPanelView — separate import/export transfer queues', () => {
+    it.each([
+      { names: ['absent.pdf'], expectedNames: '"absent.pdf"' },
+      {
+        names: ['absent.pdf', 'missing.txt'],
+        expectedNames: '"absent.pdf", "missing.txt"',
+      },
+      {
+        names: ['a.pdf', 'b.pdf', 'c.pdf', 'd.pdf', 'e.pdf', 'f.pdf'],
+        expectedNames:
+          '"a.pdf", "b.pdf", "c.pdf", "d.pdf", "e.pdf" and 1 other',
+      },
+    ])(
+      'names skipped attachments in the notification and their own queue row: $expectedNames',
+      ({ names, expectedNames }) => {
+        const makeWarningJob = (id: string, warningNames: string[]) => ({
+          id,
+          subject: { kind: ConversationTransferSubjectKind.All as const },
+          status: ConversationTransferJobStatus.Warning,
+          fileName: id + '.dial',
+          progress: { percent: 100 },
+          warningCode: ConversationTransferWarningCode.AttachmentSkipped,
+          warningNames,
+        });
+        vi.mocked(useConversationImport).mockReturnValue({
+          jobs: [
+            makeWarningJob('imp-1', names),
+            makeWarningJob('imp-2', ['other.pdf']),
+          ],
+          importConversations: mockImportConversations,
+          cancelJob: mockCancelImportJob,
+          dismissJob: mockDismissImportJob,
+          retryJob: mockRetryImportJob,
+          dismissAll: vi.fn(),
+        });
+
+        render(<ConversationPanelView {...defaultProps} />);
+        const message =
+          expectedNames + ' could not be uploaded and were skipped.';
+        expect(screen.getByRole('img', { name: message })).toBeTruthy();
+        expect(
+          screen.getByRole('img', {
+            name: '"other.pdf" could not be uploaded and were skipped.',
+          }),
+        ).toBeTruthy();
+
+        const params = vi.mocked(useConversationImport).mock.calls.at(-1)?.[0];
+        params?.onWarning?.({
+          jobId: 'imp-1',
+          code: ConversationTransferWarningCode.AttachmentSkipped,
+          names,
+        });
+        expect(mockShowNotification).toHaveBeenCalledWith(
+          expect.objectContaining({ message }),
+        );
+      },
+    );
+
+    it.each([{ warningNames: undefined }, { warningNames: [] }])(
+      'uses a generic warning for a job without names: %j',
+      ({ warningNames }) => {
+        vi.mocked(useConversationImport).mockReturnValue({
+          jobs: [
+            {
+              id: 'imp-legacy',
+              subject: { kind: ConversationTransferSubjectKind.All },
+              status: ConversationTransferJobStatus.Warning,
+              fileName: 'legacy.dial',
+              progress: { percent: 100 },
+              warningCode: ConversationTransferWarningCode.AttachmentSkipped,
+              warningNames,
+            },
+          ],
+          importConversations: mockImportConversations,
+          cancelJob: mockCancelImportJob,
+          dismissJob: mockDismissImportJob,
+          retryJob: mockRetryImportJob,
+          dismissAll: vi.fn(),
+        });
+
+        render(<ConversationPanelView {...defaultProps} />);
+        expect(
+          screen.getByRole('img', {
+            name: 'Some attachments could not be uploaded and were skipped.',
+          }),
+        ).toBeTruthy();
+      },
+    );
+
+    it('shows an import job in its own non-modal queue', () => {
       vi.mocked(useConversationImport).mockReturnValue({
         jobs: [
           {
-            id: 'imp-legacy',
-            subject: { kind: ConversationTransferSubjectKind.All },
-            status: ConversationTransferJobStatus.Warning,
-            fileName: 'legacy.dial',
-            progress: { percent: 100 },
-            warningCode: ConversationTransferWarningCode.AttachmentSkipped,
-            warningNames,
+            id: 'imp-1',
+            subject: {
+              kind: ConversationTransferSubjectKind.Single,
+              title: 'Imported Chat',
+            },
+            status: ConversationTransferJobStatus.InProgress,
+            fileName: 'export-5.dial',
+            progress: { percent: 0 },
           },
         ],
         importConversations: mockImportConversations,
@@ -2195,986 +2283,980 @@ describe('ConversationPanelView — separate import/export transfer queues', () 
       });
 
       render(<ConversationPanelView {...defaultProps} />);
-      expect(
-        screen.getByRole('img', {
-          name: 'Some attachments could not be uploaded and were skipped.',
+
+      expect(getQueuePanels()).toHaveLength(1);
+      expect(screen.getByText('export-5.dial')).toBeTruthy();
+      expect(screen.queryByText('Imported Chat')).toBeNull();
+    });
+
+    it('renders two separate queues with their own titles when both import and export jobs are present', () => {
+      vi.mocked(useConversationExport).mockReturnValue({
+        jobs: [
+          {
+            id: 'job-1',
+            subject: {
+              kind: ConversationTransferSubjectKind.Single,
+              title: 'Chat 1',
+            },
+            status: ConversationTransferJobStatus.InProgress,
+            fileName: 'export-6.dial',
+            progress: { percent: 0 },
+          },
+        ],
+        exportSingle: mockExportSingle,
+        exportAll: mockExportAll,
+        cancelJob: mockCancelJob,
+        dismissJob: mockDismissJob,
+        retryJob: mockRetryJob,
+        dismissAll: vi.fn(),
+      });
+      vi.mocked(useConversationImport).mockReturnValue({
+        jobs: [
+          {
+            id: 'imp-1',
+            subject: {
+              kind: ConversationTransferSubjectKind.Single,
+              title: 'Imported Chat',
+            },
+            status: ConversationTransferJobStatus.InProgress,
+            fileName: 'export-7.dial',
+            progress: { percent: 0 },
+          },
+        ],
+        importConversations: mockImportConversations,
+        cancelJob: mockCancelImportJob,
+        dismissJob: mockDismissImportJob,
+        retryJob: mockRetryImportJob,
+        dismissAll: vi.fn(),
+      });
+
+      render(<ConversationPanelView {...defaultProps} />);
+
+      expect(getQueuePanels()).toHaveLength(2);
+      expect(screen.getByText('Exporting 1 file')).toBeTruthy();
+      expect(screen.getByText('Importing 1 file')).toBeTruthy();
+    });
+
+    it('shows the Importing title when only import jobs are present', () => {
+      vi.mocked(useConversationImport).mockReturnValue({
+        jobs: [
+          {
+            id: 'imp-1',
+            subject: {
+              kind: ConversationTransferSubjectKind.Single,
+              title: 'Imported Chat',
+            },
+            status: ConversationTransferJobStatus.InProgress,
+            fileName: 'export-8.dial',
+            progress: { percent: 0 },
+          },
+        ],
+        importConversations: mockImportConversations,
+        cancelJob: mockCancelImportJob,
+        dismissJob: mockDismissImportJob,
+        retryJob: mockRetryImportJob,
+        dismissAll: vi.fn(),
+      });
+
+      render(<ConversationPanelView {...defaultProps} />);
+
+      expect(screen.getByText('Importing 1 file')).toBeTruthy();
+    });
+
+    it('shows the Exporting title when only export jobs are present', () => {
+      vi.mocked(useConversationExport).mockReturnValue({
+        jobs: [
+          {
+            id: 'job-1',
+            subject: {
+              kind: ConversationTransferSubjectKind.Single,
+              title: 'Chat 1',
+            },
+            status: ConversationTransferJobStatus.InProgress,
+            fileName: 'export-9.dial',
+            progress: { percent: 0 },
+          },
+        ],
+        exportSingle: mockExportSingle,
+        exportAll: mockExportAll,
+        cancelJob: mockCancelJob,
+        dismissJob: mockDismissJob,
+        retryJob: mockRetryJob,
+        dismissAll: vi.fn(),
+      });
+
+      render(<ConversationPanelView {...defaultProps} />);
+
+      expect(screen.getByText('Exporting 1 file')).toBeTruthy();
+    });
+
+    it('wires the import queue cancel button to the import hook', () => {
+      vi.mocked(useConversationImport).mockReturnValue({
+        jobs: [
+          {
+            id: 'imp-1',
+            subject: {
+              kind: ConversationTransferSubjectKind.Single,
+              title: 'Imported Chat',
+            },
+            status: ConversationTransferJobStatus.InProgress,
+            fileName: 'export-10.dial',
+            progress: { percent: 0 },
+          },
+        ],
+        importConversations: mockImportConversations,
+        cancelJob: mockCancelImportJob,
+        dismissJob: mockDismissImportJob,
+        retryJob: mockRetryImportJob,
+        dismissAll: vi.fn(),
+      });
+
+      render(<ConversationPanelView {...defaultProps} />);
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: 'Cancel importing "export-10.dial"',
         }),
+      );
+
+      expect(mockCancelImportJob).toHaveBeenCalledWith('imp-1');
+      expect(mockCancelJob).not.toHaveBeenCalled();
+    });
+
+    it('shows a failed import reason instead of a retry control', () => {
+      vi.mocked(useConversationImport).mockReturnValue({
+        jobs: [
+          {
+            id: 'imp-1',
+            subject: {
+              kind: ConversationTransferSubjectKind.Single,
+              title: 'Imported Chat',
+            },
+            status: ConversationTransferJobStatus.Failed,
+            fileName: 'export-11.dial',
+            progress: { percent: 0 },
+          },
+        ],
+        importConversations: mockImportConversations,
+        cancelJob: mockCancelImportJob,
+        dismissJob: mockDismissImportJob,
+        retryJob: mockRetryImportJob,
+        dismissAll: vi.fn(),
+      });
+
+      render(<ConversationPanelView {...defaultProps} />);
+
+      expect(
+        screen.getByRole('img', { name: 'Import failed. Please try again.' }),
       ).toBeTruthy();
-    },
-  );
+      expect(screen.queryByRole('button', { name: /retry/i })).toBeNull();
+    });
+  });
 
-  it('shows an import job in its own non-modal queue', () => {
-    vi.mocked(useConversationImport).mockReturnValue({
-      jobs: [
-        {
-          id: 'imp-1',
-          subject: {
-            kind: ConversationTransferSubjectKind.Single,
-            title: 'Imported Chat',
+  describe('ConversationPanelView — unshare (Remove from My List)', () => {
+    const sharedConversation = {
+      id: 'conv1',
+      title: 'Shared chat',
+      isPinned: false,
+      updatedAt: 0,
+      sharedWithMe: true,
+      publishedWithMe: false,
+    };
+
+    beforeEach(() => {
+      vi.mocked(discardSharedCatalogItem).mockResolvedValue({ success: true });
+    });
+
+    it('shared-with-me row menu includes Remove from My List', () => {
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        conversations: [sharedConversation],
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      render(<ConversationPanelView {...defaultProps} />);
+      expect(screen.getByRole('button', { name: UNSHARE_BUTTON })).toBeTruthy();
+    });
+
+    it('owned row menu renders exactly one Delete action (the owner-delete, not an extra unshare one)', () => {
+      render(<ConversationPanelView {...defaultProps} />);
+      expect(
+        screen.getAllByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+      ).toHaveLength(1);
+    });
+
+    it('published-with-me (not shared-with-me) row menu does not include Remove from My List', () => {
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        conversations: [
+          { ...sharedConversation, sharedWithMe: false, publishedWithMe: true },
+        ],
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      render(<ConversationPanelView {...defaultProps} />);
+      expect(screen.queryByRole('button', { name: UNSHARE_BUTTON })).toBeNull();
+    });
+
+    it('clicking Remove from My List opens confirmation without calling the discard API', () => {
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        conversations: [sharedConversation],
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      render(<ConversationPanelView {...defaultProps} />);
+      fireEvent.click(screen.getByRole('button', { name: UNSHARE_BUTTON }));
+
+      const dialog = screen.getByRole('dialog');
+      expect(within(dialog).getByText(UNSHARE_CONFIRM_TITLE)).toBeTruthy();
+      expect(discardSharedCatalogItem).not.toHaveBeenCalled();
+    });
+
+    it('confirm calls discardSharedCatalogItem exactly once and disables the button while pending', async () => {
+      let resolveDiscard: (value: { success: boolean }) => void = () =>
+        undefined;
+      vi.mocked(discardSharedCatalogItem).mockReturnValue(
+        new Promise((resolve) => {
+          resolveDiscard = resolve;
+        }),
+      );
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        conversations: [sharedConversation],
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      render(<ConversationPanelView {...defaultProps} />);
+      fireEvent.click(screen.getByRole('button', { name: UNSHARE_BUTTON }));
+      const dialog = screen.getByRole('dialog');
+      const confirmButton = within(dialog).getByRole('button', {
+        name: UNSHARE_BUTTON,
+      });
+
+      fireEvent.click(confirmButton);
+      fireEvent.click(confirmButton);
+
+      expect(discardSharedCatalogItem).toHaveBeenCalledOnce();
+      expect(discardSharedCatalogItem).toHaveBeenCalledWith('conv1');
+      expect(confirmButton.hasAttribute('disabled')).toBe(true);
+
+      await act(async () => {
+        resolveDiscard({ success: true });
+      });
+    });
+
+    it('successful discard of a non-active conversation refreshes and notifies without navigating', async () => {
+      const otherConversation = {
+        id: 'other',
+        title: 'Other chat',
+        isPinned: false,
+        updatedAt: 0,
+        sharedWithMe: false,
+        publishedWithMe: false,
+      };
+      const mockRefresh = vi.fn().mockResolvedValue(undefined);
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        conversations: [sharedConversation, otherConversation],
+        refreshConversations: mockRefresh,
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      render(
+        <ConversationPanelView
+          {...defaultProps}
+          activeConversationId="other"
+        />,
+      );
+      mockRefresh.mockClear();
+
+      /* sharedConversation is listed first, so its Remove from My List button is the first match. */
+      fireEvent.click(
+        screen.getAllByRole('button', { name: UNSHARE_BUTTON })[0],
+      );
+      const dialog = screen.getByRole('dialog');
+      fireEvent.click(
+        within(dialog).getByRole('button', { name: UNSHARE_BUTTON }),
+      );
+
+      expect(discardSharedCatalogItem).toHaveBeenCalledWith('conv1');
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog')).toBeNull();
+      });
+      expect(mockRefresh).toHaveBeenCalledOnce();
+      expect(mockShowNotification).toHaveBeenCalledOnce();
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    it('successful discard of the active conversation navigates to root', async () => {
+      const mockRefresh = vi.fn().mockResolvedValue(undefined);
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        conversations: [sharedConversation],
+        refreshConversations: mockRefresh,
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      render(
+        <ConversationPanelView
+          {...defaultProps}
+          activeConversationId="conv1"
+        />,
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: UNSHARE_BUTTON }));
+      const dialog = screen.getByRole('dialog');
+      fireEvent.click(
+        within(dialog).getByRole('button', { name: UNSHARE_BUTTON }),
+      );
+
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith('/');
+      });
+    });
+
+    it('a refreshConversations rejection after a successful discard still shows success, not an error', async () => {
+      const mockRefresh = vi
+        .fn()
+        .mockRejectedValue(new Error('refresh failed'));
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        conversations: [sharedConversation],
+        refreshConversations: mockRefresh,
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      render(<ConversationPanelView {...defaultProps} />);
+
+      fireEvent.click(screen.getByRole('button', { name: UNSHARE_BUTTON }));
+      const dialog = screen.getByRole('dialog');
+      fireEvent.click(
+        within(dialog).getByRole('button', { name: UNSHARE_BUTTON }),
+      );
+
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog')).toBeNull();
+      });
+      expect(mockShowNotification).toHaveBeenCalledOnce();
+    });
+
+    it('failed discard keeps the popup open with an inline error and does not refresh or navigate', async () => {
+      vi.mocked(discardSharedCatalogItem).mockRejectedValue(new Error('403'));
+      const mockRefresh = vi.fn();
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        conversations: [sharedConversation],
+        refreshConversations: mockRefresh,
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      render(<ConversationPanelView {...defaultProps} />);
+
+      fireEvent.click(screen.getByRole('button', { name: UNSHARE_BUTTON }));
+      const dialog = screen.getByRole('dialog');
+      fireEvent.click(
+        within(dialog).getByRole('button', { name: UNSHARE_BUTTON }),
+      );
+
+      await waitFor(() => {
+        expect(within(dialog).getByText(UNSHARE_ERROR)).toBeTruthy();
+      });
+      expect(mockRefresh).not.toHaveBeenCalled();
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    it('cancel closes the popup without calling the discard API', () => {
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        conversations: [sharedConversation],
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      render(<ConversationPanelView {...defaultProps} />);
+      fireEvent.click(screen.getByRole('button', { name: UNSHARE_BUTTON }));
+      const dialog = screen.getByRole('dialog');
+      fireEvent.click(
+        within(dialog).getByRole('button', { name: CANCEL_BUTTON }),
+      );
+
+      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(discardSharedCatalogItem).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('ConversationPanelView — revoke access', () => {
+    const sharedWithMeConversation = {
+      id: 'conv1',
+      title: 'Shared chat',
+      isPinned: false,
+      updatedAt: 0,
+      sharedWithMe: true,
+      publishedWithMe: false,
+    };
+
+    beforeEach(() => {
+      vi.mocked(revokeSharedAccess).mockResolvedValue({ success: true });
+      vi.mocked(getShareRecipientsCount).mockResolvedValue({
+        itemId: 'conv1',
+        recipientsCount: 1,
+      });
+    });
+
+    /*
+     * The count that gates "Revoke access" is fetched when the row's action menu
+     * opens, so every test that expects the entry has to open the menu first.
+     */
+    const openRowMenu = async (id = 'conv1') => {
+      fireEvent.click(
+        screen.getByRole('button', { name: `action trigger ${id}` }),
+      );
+      await waitFor(() => expect(getShareRecipientsCount).toHaveBeenCalled());
+    };
+
+    /* The default lookup resolves one recipient, so the menu entry carries the
+     * counted label; the confirmation's own button keeps the plain one. The
+     * count arrives asynchronously after openRowMenu's own wait (which only
+     * confirms the request was issued), so the counted label must be awaited
+     * here rather than queried synchronously. */
+    const openRevokeConfirmation = async () => {
+      fireEvent.click(
+        await screen.findByRole('button', { name: REVOKE_BUTTON_WITH_COUNT }),
+      );
+      return screen.getByRole('dialog');
+    };
+
+    it('owned row menu includes Revoke access once the recipient count resolves', async () => {
+      render(<ConversationPanelView {...defaultProps} />);
+      await openRowMenu();
+
+      expect(getShareRecipientsCount).toHaveBeenCalledWith({ itemId: 'conv1' });
+      expect(
+        screen.getByRole('button', { name: REVOKE_BUTTON_WITH_COUNT }),
+      ).toBeTruthy();
+    });
+
+    it('does not request the recipient count until the row menu opens', () => {
+      render(<ConversationPanelView {...defaultProps} />);
+
+      expect(getShareRecipientsCount).not.toHaveBeenCalled();
+      expect(screen.queryByRole('button', { name: REVOKE_BUTTON })).toBeNull();
+      expect(
+        screen.queryByRole('button', { name: REVOKE_BUTTON_WITH_COUNT }),
+      ).toBeNull();
+    });
+
+    it('requests the recipient count once across repeated menu opens', async () => {
+      render(<ConversationPanelView {...defaultProps} />);
+      await openRowMenu();
+      await openRowMenu();
+
+      expect(getShareRecipientsCount).toHaveBeenCalledOnce();
+    });
+
+    it('shared-with-me row menu does not include Revoke access', async () => {
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        conversations: [sharedWithMeConversation],
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      render(<ConversationPanelView {...defaultProps} />);
+      fireEvent.click(
+        screen.getByRole('button', { name: 'action trigger conv1' }),
+      );
+
+      expect(getShareRecipientsCount).not.toHaveBeenCalled();
+      expect(screen.queryByRole('button', { name: REVOKE_BUTTON })).toBeNull();
+      expect(screen.getByRole('button', { name: UNSHARE_BUTTON })).toBeTruthy();
+    });
+
+    it('published-with-me row menu does not include Revoke access', () => {
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        conversations: [
+          {
+            ...sharedWithMeConversation,
+            sharedWithMe: false,
+            publishedWithMe: true,
           },
-          status: ConversationTransferJobStatus.InProgress,
-          fileName: 'export-5.dial',
-          progress: { percent: 0 },
-        },
-      ],
-      importConversations: mockImportConversations,
-      cancelJob: mockCancelImportJob,
-      dismissJob: mockDismissImportJob,
-      retryJob: mockRetryImportJob,
-      dismissAll: vi.fn(),
+        ],
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      render(<ConversationPanelView {...defaultProps} />);
+      fireEvent.click(
+        screen.getByRole('button', { name: 'action trigger conv1' }),
+      );
+
+      expect(screen.queryByRole('button', { name: REVOKE_BUTTON })).toBeNull();
     });
 
-    render(<ConversationPanelView {...defaultProps} />);
+    it('hides Revoke access for an owned conversation nobody currently holds access to', async () => {
+      vi.mocked(getShareRecipientsCount).mockResolvedValue({
+        itemId: 'conv1',
+        recipientsCount: 0,
+      });
 
-    expect(getQueuePanels()).toHaveLength(1);
-    expect(screen.getByText('export-5.dial')).toBeTruthy();
-    expect(screen.queryByText('Imported Chat')).toBeNull();
-  });
+      render(<ConversationPanelView {...defaultProps} />);
+      await openRowMenu();
 
-  it('renders two separate queues with their own titles when both import and export jobs are present', () => {
-    vi.mocked(useConversationExport).mockReturnValue({
-      jobs: [
-        {
-          id: 'job-1',
-          subject: {
-            kind: ConversationTransferSubjectKind.Single,
-            title: 'Chat 1',
-          },
-          status: ConversationTransferJobStatus.InProgress,
-          fileName: 'export-6.dial',
-          progress: { percent: 0 },
-        },
-      ],
-      exportSingle: mockExportSingle,
-      exportAll: mockExportAll,
-      cancelJob: mockCancelJob,
-      dismissJob: mockDismissJob,
-      retryJob: mockRetryJob,
-      dismissAll: vi.fn(),
-    });
-    vi.mocked(useConversationImport).mockReturnValue({
-      jobs: [
-        {
-          id: 'imp-1',
-          subject: {
-            kind: ConversationTransferSubjectKind.Single,
-            title: 'Imported Chat',
-          },
-          status: ConversationTransferJobStatus.InProgress,
-          fileName: 'export-7.dial',
-          progress: { percent: 0 },
-        },
-      ],
-      importConversations: mockImportConversations,
-      cancelJob: mockCancelImportJob,
-      dismissJob: mockDismissImportJob,
-      retryJob: mockRetryImportJob,
-      dismissAll: vi.fn(),
+      expect(screen.queryByRole('button', { name: REVOKE_BUTTON })).toBeNull();
+      expect(
+        screen.queryByRole('button', { name: REVOKE_BUTTON_WITH_COUNT }),
+      ).toBeNull();
     });
 
-    render(<ConversationPanelView {...defaultProps} />);
+    it('shows the recipient count in the Revoke access label when it is known', async () => {
+      vi.mocked(getShareRecipientsCount).mockResolvedValue({
+        itemId: 'conv1',
+        recipientsCount: 2,
+      });
 
-    expect(getQueuePanels()).toHaveLength(2);
-    expect(screen.getByText('Exporting 1 file')).toBeTruthy();
-    expect(screen.getByText('Importing 1 file')).toBeTruthy();
-  });
+      render(<ConversationPanelView {...defaultProps} />);
+      await openRowMenu();
 
-  it('shows the Importing title when only import jobs are present', () => {
-    vi.mocked(useConversationImport).mockReturnValue({
-      jobs: [
-        {
-          id: 'imp-1',
-          subject: {
-            kind: ConversationTransferSubjectKind.Single,
-            title: 'Imported Chat',
-          },
-          status: ConversationTransferJobStatus.InProgress,
-          fileName: 'export-8.dial',
-          progress: { percent: 0 },
-        },
-      ],
-      importConversations: mockImportConversations,
-      cancelJob: mockCancelImportJob,
-      dismissJob: mockDismissImportJob,
-      retryJob: mockRetryImportJob,
-      dismissAll: vi.fn(),
+      expect(
+        await screen.findByRole('button', { name: REVOKE_BUTTON_WITH_COUNT }),
+      ).toBeTruthy();
     });
 
-    render(<ConversationPanelView {...defaultProps} />);
+    it('keeps Revoke access reachable without a count when the lookup fails', async () => {
+      vi.mocked(getShareRecipientsCount).mockRejectedValue(new Error('503'));
 
-    expect(screen.getByText('Importing 1 file')).toBeTruthy();
-  });
+      render(<ConversationPanelView {...defaultProps} />);
+      await openRowMenu();
 
-  it('shows the Exporting title when only export jobs are present', () => {
-    vi.mocked(useConversationExport).mockReturnValue({
-      jobs: [
-        {
-          id: 'job-1',
-          subject: {
-            kind: ConversationTransferSubjectKind.Single,
-            title: 'Chat 1',
-          },
-          status: ConversationTransferJobStatus.InProgress,
-          fileName: 'export-9.dial',
-          progress: { percent: 0 },
-        },
-      ],
-      exportSingle: mockExportSingle,
-      exportAll: mockExportAll,
-      cancelJob: mockCancelJob,
-      dismissJob: mockDismissJob,
-      retryJob: mockRetryJob,
-      dismissAll: vi.fn(),
+      expect(
+        await screen.findByRole('button', { name: REVOKE_BUTTON }),
+      ).toBeTruthy();
     });
 
-    render(<ConversationPanelView {...defaultProps} />);
+    it('clicking Revoke access opens confirmation without calling the revoke API', async () => {
+      render(<ConversationPanelView {...defaultProps} />);
+      await openRowMenu();
+      const dialog = await openRevokeConfirmation();
 
-    expect(screen.getByText('Exporting 1 file')).toBeTruthy();
-  });
-
-  it('wires the import queue cancel button to the import hook', () => {
-    vi.mocked(useConversationImport).mockReturnValue({
-      jobs: [
-        {
-          id: 'imp-1',
-          subject: {
-            kind: ConversationTransferSubjectKind.Single,
-            title: 'Imported Chat',
-          },
-          status: ConversationTransferJobStatus.InProgress,
-          fileName: 'export-10.dial',
-          progress: { percent: 0 },
-        },
-      ],
-      importConversations: mockImportConversations,
-      cancelJob: mockCancelImportJob,
-      dismissJob: mockDismissImportJob,
-      retryJob: mockRetryImportJob,
-      dismissAll: vi.fn(),
+      expect(within(dialog).getByText(REVOKE_CONFIRM_TITLE)).toBeTruthy();
+      expect(revokeSharedAccess).not.toHaveBeenCalled();
     });
 
-    render(<ConversationPanelView {...defaultProps} />);
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: 'Cancel importing "export-10.dial"',
-      }),
-    );
+    it('confirm calls revokeSharedAccess exactly once and disables the button while pending', async () => {
+      let resolveRevoke: (value: { success: boolean }) => void = () =>
+        undefined;
+      vi.mocked(revokeSharedAccess).mockReturnValue(
+        new Promise((resolve) => {
+          resolveRevoke = resolve;
+        }),
+      );
 
-    expect(mockCancelImportJob).toHaveBeenCalledWith('imp-1');
-    expect(mockCancelJob).not.toHaveBeenCalled();
-  });
+      render(<ConversationPanelView {...defaultProps} />);
+      await openRowMenu();
+      const dialog = await openRevokeConfirmation();
+      const confirmButton = within(dialog).getByRole('button', {
+        name: REVOKE_BUTTON,
+      });
 
-  it('shows a failed import reason instead of a retry control', () => {
-    vi.mocked(useConversationImport).mockReturnValue({
-      jobs: [
-        {
-          id: 'imp-1',
-          subject: {
-            kind: ConversationTransferSubjectKind.Single,
-            title: 'Imported Chat',
-          },
-          status: ConversationTransferJobStatus.Failed,
-          fileName: 'export-11.dial',
-          progress: { percent: 0 },
-        },
-      ],
-      importConversations: mockImportConversations,
-      cancelJob: mockCancelImportJob,
-      dismissJob: mockDismissImportJob,
-      retryJob: mockRetryImportJob,
-      dismissAll: vi.fn(),
+      fireEvent.click(confirmButton);
+      expect(confirmButton.hasAttribute('disabled')).toBe(true);
+      fireEvent.click(confirmButton);
+
+      await act(async () => {
+        resolveRevoke({ success: true });
+      });
+
+      expect(revokeSharedAccess).toHaveBeenCalledOnce();
+      expect(revokeSharedAccess).toHaveBeenCalledWith('conv1');
     });
 
-    render(<ConversationPanelView {...defaultProps} />);
+    it('successful revoke of the active conversation refreshes, notifies, and does not navigate', async () => {
+      const mockRefresh = vi.fn().mockResolvedValue(undefined);
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        refreshConversations: mockRefresh,
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
-    expect(
-      screen.getByRole('img', { name: 'Import failed. Please try again.' }),
-    ).toBeTruthy();
-    expect(screen.queryByRole('button', { name: /retry/i })).toBeNull();
-  });
-});
+      render(<ConversationPanelView {...defaultProps} />);
+      await openRowMenu();
+      const dialog = await openRevokeConfirmation();
+      fireEvent.click(
+        within(dialog).getByRole('button', { name: REVOKE_BUTTON }),
+      );
 
-describe('ConversationPanelView — unshare (Remove from My List)', () => {
-  const sharedConversation = {
-    id: 'conv1',
-    title: 'Shared chat',
-    isPinned: false,
-    updatedAt: 0,
-    sharedWithMe: true,
-    publishedWithMe: false,
-  };
-
-  beforeEach(() => {
-    vi.mocked(discardSharedCatalogItem).mockResolvedValue({ success: true });
-  });
-
-  it('shared-with-me row menu includes Remove from My List', () => {
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [sharedConversation],
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-    render(<ConversationPanelView {...defaultProps} />);
-    expect(screen.getByRole('button', { name: UNSHARE_BUTTON })).toBeTruthy();
-  });
-
-  it('owned row menu renders exactly one Delete action (the owner-delete, not an extra unshare one)', () => {
-    render(<ConversationPanelView {...defaultProps} />);
-    expect(
-      screen.getAllByRole('button', { name: DELETE_CONFIRM_BUTTON }),
-    ).toHaveLength(1);
-  });
-
-  it('published-with-me (not shared-with-me) row menu does not include Remove from My List', () => {
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [
-        { ...sharedConversation, sharedWithMe: false, publishedWithMe: true },
-      ],
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-    render(<ConversationPanelView {...defaultProps} />);
-    expect(screen.queryByRole('button', { name: UNSHARE_BUTTON })).toBeNull();
-  });
-
-  it('clicking Remove from My List opens confirmation without calling the discard API', () => {
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [sharedConversation],
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-    render(<ConversationPanelView {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: UNSHARE_BUTTON }));
-
-    const dialog = screen.getByRole('dialog');
-    expect(within(dialog).getByText(UNSHARE_CONFIRM_TITLE)).toBeTruthy();
-    expect(discardSharedCatalogItem).not.toHaveBeenCalled();
-  });
-
-  it('confirm calls discardSharedCatalogItem exactly once and disables the button while pending', async () => {
-    let resolveDiscard: (value: { success: boolean }) => void = () => undefined;
-    vi.mocked(discardSharedCatalogItem).mockReturnValue(
-      new Promise((resolve) => {
-        resolveDiscard = resolve;
-      }),
-    );
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [sharedConversation],
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-    render(<ConversationPanelView {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: UNSHARE_BUTTON }));
-    const dialog = screen.getByRole('dialog');
-    const confirmButton = within(dialog).getByRole('button', {
-      name: UNSHARE_BUTTON,
+      /* The dialog closes last — after the refresh settles and the notification
+       * is raised — so waiting on it is what makes the rest of the chain, the
+       * negative navigate assertion included, observable. */
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog')).toBeNull();
+      });
+      expect(mockRefresh).toHaveBeenCalledOnce();
+      expect(mockShowNotification).toHaveBeenCalledOnce();
+      expect(mockNavigate).not.toHaveBeenCalled();
     });
 
-    fireEvent.click(confirmButton);
-    fireEvent.click(confirmButton);
+    it('a refresh failure after a successful revoke still notifies success', async () => {
+      const mockRefresh = vi.fn().mockRejectedValue(new Error('offline'));
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        refreshConversations: mockRefresh,
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
-    expect(discardSharedCatalogItem).toHaveBeenCalledOnce();
-    expect(discardSharedCatalogItem).toHaveBeenCalledWith('conv1');
-    expect(confirmButton.hasAttribute('disabled')).toBe(true);
+      render(<ConversationPanelView {...defaultProps} />);
+      await openRowMenu();
+      const dialog = await openRevokeConfirmation();
+      fireEvent.click(
+        within(dialog).getByRole('button', { name: REVOKE_BUTTON }),
+      );
 
-    await act(async () => {
-      resolveDiscard({ success: true });
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog')).toBeNull();
+      });
+      expect(mockShowNotification).toHaveBeenCalledOnce();
+    });
+
+    it('failed revoke keeps the popup open with an inline error and does not refresh', async () => {
+      vi.mocked(revokeSharedAccess).mockRejectedValue(new Error('403'));
+      const mockRefresh = vi.fn();
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        refreshConversations: mockRefresh,
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      render(<ConversationPanelView {...defaultProps} />);
+      await openRowMenu();
+      const dialog = await openRevokeConfirmation();
+      fireEvent.click(
+        within(dialog).getByRole('button', { name: REVOKE_BUTTON }),
+      );
+
+      await waitFor(() => {
+        expect(within(dialog).getByText(REVOKE_ERROR)).toBeTruthy();
+      });
+      expect(mockRefresh).not.toHaveBeenCalled();
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    it('cancel closes the popup without calling the revoke API', async () => {
+      render(<ConversationPanelView {...defaultProps} />);
+      await openRowMenu();
+      const dialog = await openRevokeConfirmation();
+      fireEvent.click(
+        within(dialog).getByRole('button', { name: CANCEL_BUTTON }),
+      );
+
+      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(revokeSharedAccess).not.toHaveBeenCalled();
+    });
+
+    it('keeps the action and its confirmation reachable under dir="rtl"', async () => {
+      document.documentElement.dir = 'rtl';
+      try {
+        render(<ConversationPanelView {...defaultProps} />);
+        await openRowMenu();
+        const dialog = await openRevokeConfirmation();
+        expect(within(dialog).getByText(REVOKE_CONFIRM_TITLE)).toBeTruthy();
+        expect(
+          within(dialog).getByRole('button', { name: REVOKE_BUTTON }),
+        ).toBeTruthy();
+      } finally {
+        document.documentElement.dir = 'ltr';
+      }
     });
   });
 
-  it('successful discard of a non-active conversation refreshes and notifies without navigating', async () => {
-    const otherConversation = {
-      id: 'other',
-      title: 'Other chat',
+  describe('ConversationPanelView — UI feature gates', () => {
+    it('does not render the panel when conversations-section is disabled', () => {
+      vi.mocked(useUiFeature).mockImplementation(
+        (feature) => feature !== OverlayFeature.ConversationsSection,
+      );
+      render(<ConversationPanelView {...defaultProps} />);
+      expect(
+        screen.queryByRole('region', { name: 'conversation panel' }),
+      ).toBeNull();
+    });
+
+    it('renders the panel when conversations-section is enabled', () => {
+      render(<ConversationPanelView {...defaultProps} />);
+      expect(
+        screen.getByRole('region', { name: 'conversation panel' }),
+      ).toBeTruthy();
+    });
+  });
+
+  describe('ConversationPanelView — unpublish', () => {
+    const historyEntry = (folderPath: string) => ({
+      path: 'conversations/bucket-123/conv1',
+      folderPath,
+      publishedAt: '2026-07-15T10:00:00.000Z',
+      publishedBy: 'Test User',
+    });
+
+    const openActionMenu = async () =>
+      userEvent.click(
+        screen.getByRole('button', { name: 'action trigger conv1' }),
+      );
+
+    beforeEach(() => {
+      vi.mocked(getConversationPublishHistory).mockResolvedValue([]);
+    });
+
+    it('issues no history request while rendering the list', () => {
+      render(<ConversationPanelView {...defaultProps} />);
+
+      expect(getConversationPublishHistory).not.toHaveBeenCalled();
+      expect(
+        screen.queryByRole('button', { name: UNPUBLISH_LABEL }),
+      ).toBeNull();
+    });
+
+    it('requests history once when the row action menu opens', async () => {
+      vi.mocked(getConversationPublishHistory).mockResolvedValue([
+        historyEntry('Organization/Shared chats'),
+      ]);
+      render(<ConversationPanelView {...defaultProps} />);
+
+      await openActionMenu();
+      await openActionMenu();
+
+      await waitFor(() =>
+        expect(getConversationPublishHistory).toHaveBeenCalledTimes(1),
+      );
+      expect(getConversationPublishHistory).toHaveBeenCalledWith('conv1');
+    });
+
+    it('shows Unpublish once history resolves with a folder', async () => {
+      vi.mocked(getConversationPublishHistory).mockResolvedValue([
+        historyEntry('Organization/Shared chats'),
+      ]);
+      render(<ConversationPanelView {...defaultProps} />);
+
+      await openActionMenu();
+
+      expect(
+        await screen.findByRole('button', { name: UNPUBLISH_LABEL }),
+      ).toBeTruthy();
+    });
+
+    /* The two are mutually exclusive: the menu shows the conversation's state. */
+    it('replaces Publish with Unpublish once history resolves with a folder', async () => {
+      vi.mocked(getConversationPublishHistory).mockResolvedValue([
+        historyEntry('Organization/Shared chats'),
+      ]);
+      render(<ConversationPanelView {...defaultProps} />);
+
+      await openActionMenu();
+
+      await screen.findByRole('button', { name: UNPUBLISH_LABEL });
+      expect(screen.queryByRole('button', { name: PUBLISH_LABEL })).toBeNull();
+    });
+
+    it('keeps Publish for a never-published conversation', async () => {
+      render(<ConversationPanelView {...defaultProps} />);
+
+      await openActionMenu();
+
+      await waitFor(() =>
+        expect(getConversationPublishHistory).toHaveBeenCalledOnce(),
+      );
+      expect(screen.getByRole('button', { name: PUBLISH_LABEL })).toBeTruthy();
+    });
+
+    it('hides Unpublish for a never-published conversation', async () => {
+      render(<ConversationPanelView {...defaultProps} />);
+
+      await openActionMenu();
+
+      await waitFor(() =>
+        expect(getConversationPublishHistory).toHaveBeenCalledOnce(),
+      );
+      expect(
+        screen.queryByRole('button', { name: UNPUBLISH_LABEL }),
+      ).toBeNull();
+    });
+
+    it('hides Unpublish and raises no notification when the lookup fails', async () => {
+      vi.mocked(getConversationPublishHistory).mockRejectedValue(
+        new Error('503'),
+      );
+      render(<ConversationPanelView {...defaultProps} />);
+
+      await openActionMenu();
+
+      await waitFor(() =>
+        expect(getConversationPublishHistory).toHaveBeenCalledOnce(),
+      );
+      expect(
+        screen.queryByRole('button', { name: UNPUBLISH_LABEL }),
+      ).toBeNull();
+      expect(mockShowNotification).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('ConversationPanelView — unpublish confirmation', () => {
+    const historyEntry = (folderPath: string) => ({
+      path: 'conversations/bucket-123/conv1',
+      folderPath,
+      publishedAt: '2026-07-15T10:00:00.000Z',
+      publishedBy: 'Test User',
+    });
+
+    const openUnpublishPopup = async (folders: string[]) => {
+      vi.mocked(getConversationPublishHistory).mockResolvedValue(
+        folders.map(historyEntry),
+      );
+      render(<ConversationPanelView {...defaultProps} />);
+      await userEvent.click(
+        screen.getByRole('button', { name: 'action trigger conv1' }),
+      );
+      await userEvent.click(
+        await screen.findByRole('button', { name: UNPUBLISH_LABEL }),
+      );
+    };
+
+    /* The row menu entry and the popup's confirm share the same label, so the
+     * confirm button is addressed through the dialog it lives in. */
+    const dialog = () => within(screen.getByRole('dialog'));
+    const confirmButton = () =>
+      dialog().getByRole('button', { name: UNPUBLISH_LABEL });
+
+    it('requests unpublish with the bucket-relative path and the single folder', async () => {
+      await openUnpublishPopup(['Organization/Shared chats']);
+
+      await userEvent.click(confirmButton());
+
+      expect(unpublishConversation).toHaveBeenCalledWith(
+        'conv1',
+        'Organization/Shared chats',
+      );
+    });
+
+    it('reports a submitted request and leaves the conversation list alone', async () => {
+      const mockRefresh = vi.fn();
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        refreshConversations: mockRefresh,
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+      await openUnpublishPopup(['Organization/Shared chats']);
+
+      await userEvent.click(confirmButton());
+
+      await waitFor(() =>
+        expect(mockShowNotification).toHaveBeenCalledWith(
+          expect.objectContaining({
+            title: 'entityNotifications.conversation.unpublishRequestedTitle',
+          }),
+        ),
+      );
+      expect(mockRefresh).not.toHaveBeenCalled();
+    });
+
+    it('requires a folder choice when the conversation is published to several', async () => {
+      await openUnpublishPopup([
+        'Organization/Shared chats',
+        'Organization/Ops',
+      ]);
+
+      const radios = dialog().getAllByRole('radio');
+      expect(radios).toHaveLength(2);
+      expect(radios.some((radio) => (radio as HTMLInputElement).checked)).toBe(
+        false,
+      );
+      expect(confirmButton().hasAttribute('disabled')).toBe(true);
+
+      await userEvent.click(dialog().getByRole('radio', { name: 'Ops' }));
+
+      expect(confirmButton().hasAttribute('disabled')).toBe(false);
+
+      await userEvent.click(confirmButton());
+
+      expect(unpublishConversation).toHaveBeenCalledWith(
+        'conv1',
+        'Organization/Ops',
+      );
+    });
+
+    it('raises no success notification when the request fails', async () => {
+      vi.mocked(unpublishConversation).mockRejectedValue(
+        new Error('Forbidden'),
+      );
+      await openUnpublishPopup(['Organization/Shared chats']);
+
+      await userEvent.click(confirmButton());
+
+      await waitFor(() =>
+        expect(mockShowNotification).toHaveBeenCalledWith(
+          expect.objectContaining({
+            variant: 'error',
+            title: 'publish.unpublishFailedTitle',
+          }),
+        ),
+      );
+      expect(unpublishConversation).toHaveBeenCalledOnce();
+      expect(
+        mockShowNotification.mock.calls.some(
+          ([notification]) => notification.variant === 'success',
+        ),
+      ).toBe(false);
+    });
+
+    it('dismisses without a request when Cancel is clicked', async () => {
+      await openUnpublishPopup(['Organization/Shared chats']);
+
+      await userEvent.click(
+        dialog().getByRole('button', { name: 'buttons.cancel' }),
+      );
+
+      expect(unpublishConversation).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('ConversationPanelView — visible-ID priority', () => {
+    const encodedId = 'conversations/bucket-123/gpt-4o__My%20chat';
+    const conversation = {
+      id: encodedId,
+      title: 'My chat',
       isPinned: false,
       updatedAt: 0,
       sharedWithMe: false,
       publishedWithMe: false,
     };
-    const mockRefresh = vi.fn().mockResolvedValue(undefined);
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [sharedConversation, otherConversation],
-      refreshConversations: mockRefresh,
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
-    render(
-      <ConversationPanelView {...defaultProps} activeConversationId="other" />,
-    );
-    mockRefresh.mockClear();
-
-    /* sharedConversation is listed first, so its Remove from My List button is the first match. */
-    fireEvent.click(screen.getAllByRole('button', { name: UNSHARE_BUTTON })[0]);
-    const dialog = screen.getByRole('dialog');
-    fireEvent.click(
-      within(dialog).getByRole('button', { name: UNSHARE_BUTTON }),
-    );
-
-    expect(discardSharedCatalogItem).toHaveBeenCalledWith('conv1');
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog')).toBeNull();
-    });
-    expect(mockRefresh).toHaveBeenCalledOnce();
-    expect(mockShowNotification).toHaveBeenCalledOnce();
-    expect(mockNavigate).not.toHaveBeenCalled();
-  });
-
-  it('successful discard of the active conversation navigates to root', async () => {
-    const mockRefresh = vi.fn().mockResolvedValue(undefined);
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [sharedConversation],
-      refreshConversations: mockRefresh,
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-    render(
-      <ConversationPanelView {...defaultProps} activeConversationId="conv1" />,
-    );
-
-    fireEvent.click(screen.getByRole('button', { name: UNSHARE_BUTTON }));
-    const dialog = screen.getByRole('dialog');
-    fireEvent.click(
-      within(dialog).getByRole('button', { name: UNSHARE_BUTTON }),
-    );
-
-    await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/');
-    });
-  });
-
-  it('a refreshConversations rejection after a successful discard still shows success, not an error', async () => {
-    const mockRefresh = vi.fn().mockRejectedValue(new Error('refresh failed'));
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [sharedConversation],
-      refreshConversations: mockRefresh,
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-    render(<ConversationPanelView {...defaultProps} />);
-
-    fireEvent.click(screen.getByRole('button', { name: UNSHARE_BUTTON }));
-    const dialog = screen.getByRole('dialog');
-    fireEvent.click(
-      within(dialog).getByRole('button', { name: UNSHARE_BUTTON }),
-    );
-
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog')).toBeNull();
-    });
-    expect(mockShowNotification).toHaveBeenCalledOnce();
-  });
-
-  it('failed discard keeps the popup open with an inline error and does not refresh or navigate', async () => {
-    vi.mocked(discardSharedCatalogItem).mockRejectedValue(new Error('403'));
-    const mockRefresh = vi.fn();
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [sharedConversation],
-      refreshConversations: mockRefresh,
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-    render(<ConversationPanelView {...defaultProps} />);
-
-    fireEvent.click(screen.getByRole('button', { name: UNSHARE_BUTTON }));
-    const dialog = screen.getByRole('dialog');
-    fireEvent.click(
-      within(dialog).getByRole('button', { name: UNSHARE_BUTTON }),
-    );
-
-    await waitFor(() => {
-      expect(within(dialog).getByText(UNSHARE_ERROR)).toBeTruthy();
-    });
-    expect(mockRefresh).not.toHaveBeenCalled();
-    expect(mockNavigate).not.toHaveBeenCalled();
-  });
-
-  it('cancel closes the popup without calling the discard API', () => {
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [sharedConversation],
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-    render(<ConversationPanelView {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: UNSHARE_BUTTON }));
-    const dialog = screen.getByRole('dialog');
-    fireEvent.click(
-      within(dialog).getByRole('button', { name: CANCEL_BUTTON }),
-    );
-
-    expect(screen.queryByRole('dialog')).toBeNull();
-    expect(discardSharedCatalogItem).not.toHaveBeenCalled();
-  });
-});
-
-describe('ConversationPanelView — revoke access', () => {
-  const sharedWithMeConversation = {
-    id: 'conv1',
-    title: 'Shared chat',
-    isPinned: false,
-    updatedAt: 0,
-    sharedWithMe: true,
-    publishedWithMe: false,
-  };
-
-  beforeEach(() => {
-    vi.mocked(revokeSharedAccess).mockResolvedValue({ success: true });
-    vi.mocked(getShareRecipientsCount).mockResolvedValue({
-      itemId: 'conv1',
-      recipientsCount: 1,
-    });
-  });
-
-  /*
-   * The count that gates "Revoke access" is fetched when the row's action menu
-   * opens, so every test that expects the entry has to open the menu first.
-   */
-  const openRowMenu = async (id = 'conv1') => {
-    fireEvent.click(
-      screen.getByRole('button', { name: `action trigger ${id}` }),
-    );
-    await waitFor(() => expect(getShareRecipientsCount).toHaveBeenCalled());
-  };
-
-  /* The default lookup resolves one recipient, so the menu entry carries the
-   * counted label; the confirmation's own button keeps the plain one. The
-   * count arrives asynchronously after openRowMenu's own wait (which only
-   * confirms the request was issued), so the counted label must be awaited
-   * here rather than queried synchronously. */
-  const openRevokeConfirmation = async () => {
-    fireEvent.click(
-      await screen.findByRole('button', { name: REVOKE_BUTTON_WITH_COUNT }),
-    );
-    return screen.getByRole('dialog');
-  };
-
-  it('owned row menu includes Revoke access once the recipient count resolves', async () => {
-    render(<ConversationPanelView {...defaultProps} />);
-    await openRowMenu();
-
-    expect(getShareRecipientsCount).toHaveBeenCalledWith({ itemId: 'conv1' });
-    expect(
-      screen.getByRole('button', { name: REVOKE_BUTTON_WITH_COUNT }),
-    ).toBeTruthy();
-  });
-
-  it('does not request the recipient count until the row menu opens', () => {
-    render(<ConversationPanelView {...defaultProps} />);
-
-    expect(getShareRecipientsCount).not.toHaveBeenCalled();
-    expect(screen.queryByRole('button', { name: REVOKE_BUTTON })).toBeNull();
-    expect(
-      screen.queryByRole('button', { name: REVOKE_BUTTON_WITH_COUNT }),
-    ).toBeNull();
-  });
-
-  it('requests the recipient count once across repeated menu opens', async () => {
-    render(<ConversationPanelView {...defaultProps} />);
-    await openRowMenu();
-    await openRowMenu();
-
-    expect(getShareRecipientsCount).toHaveBeenCalledOnce();
-  });
-
-  it('shared-with-me row menu does not include Revoke access', async () => {
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [sharedWithMeConversation],
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-    render(<ConversationPanelView {...defaultProps} />);
-    fireEvent.click(
-      screen.getByRole('button', { name: 'action trigger conv1' }),
-    );
-
-    expect(getShareRecipientsCount).not.toHaveBeenCalled();
-    expect(screen.queryByRole('button', { name: REVOKE_BUTTON })).toBeNull();
-    expect(screen.getByRole('button', { name: UNSHARE_BUTTON })).toBeTruthy();
-  });
-
-  it('published-with-me row menu does not include Revoke access', () => {
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [
-        {
-          ...sharedWithMeConversation,
-          sharedWithMe: false,
-          publishedWithMe: true,
-        },
-      ],
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-    render(<ConversationPanelView {...defaultProps} />);
-    fireEvent.click(
-      screen.getByRole('button', { name: 'action trigger conv1' }),
-    );
-
-    expect(screen.queryByRole('button', { name: REVOKE_BUTTON })).toBeNull();
-  });
-
-  it('hides Revoke access for an owned conversation nobody currently holds access to', async () => {
-    vi.mocked(getShareRecipientsCount).mockResolvedValue({
-      itemId: 'conv1',
-      recipientsCount: 0,
+    beforeEach(() => {
+      visibleIdsCallbacks.length = 0;
+      vi.mocked(useConversations).mockReturnValue({
+        ...baseContextValue,
+        conversations: [conversation],
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
     });
 
-    render(<ConversationPanelView {...defaultProps} />);
-    await openRowMenu();
+    const registrations = () =>
+      vi.mocked(baseContextValue.setVisibleConversationIds).mock.calls;
 
-    expect(screen.queryByRole('button', { name: REVOKE_BUTTON })).toBeNull();
-    expect(
-      screen.queryByRole('button', { name: REVOKE_BUTTON_WITH_COUNT }),
-    ).toBeNull();
-  });
-
-  it('shows the recipient count in the Revoke access label when it is known', async () => {
-    vi.mocked(getShareRecipientsCount).mockResolvedValue({
-      itemId: 'conv1',
-      recipientsCount: 2,
-    });
-
-    render(<ConversationPanelView {...defaultProps} />);
-    await openRowMenu();
-
-    expect(
-      await screen.findByRole('button', { name: REVOKE_BUTTON_WITH_COUNT }),
-    ).toBeTruthy();
-  });
-
-  it('keeps Revoke access reachable without a count when the lookup fails', async () => {
-    vi.mocked(getShareRecipientsCount).mockRejectedValue(new Error('503'));
-
-    render(<ConversationPanelView {...defaultProps} />);
-    await openRowMenu();
-
-    expect(
-      await screen.findByRole('button', { name: REVOKE_BUTTON }),
-    ).toBeTruthy();
-  });
-
-  it('clicking Revoke access opens confirmation without calling the revoke API', async () => {
-    render(<ConversationPanelView {...defaultProps} />);
-    await openRowMenu();
-    const dialog = await openRevokeConfirmation();
-
-    expect(within(dialog).getByText(REVOKE_CONFIRM_TITLE)).toBeTruthy();
-    expect(revokeSharedAccess).not.toHaveBeenCalled();
-  });
-
-  it('confirm calls revokeSharedAccess exactly once and disables the button while pending', async () => {
-    let resolveRevoke: (value: { success: boolean }) => void = () => undefined;
-    vi.mocked(revokeSharedAccess).mockReturnValue(
-      new Promise((resolve) => {
-        resolveRevoke = resolve;
-      }),
-    );
-
-    render(<ConversationPanelView {...defaultProps} />);
-    await openRowMenu();
-    const dialog = await openRevokeConfirmation();
-    const confirmButton = within(dialog).getByRole('button', {
-      name: REVOKE_BUTTON,
-    });
-
-    fireEvent.click(confirmButton);
-    expect(confirmButton.hasAttribute('disabled')).toBe(true);
-    fireEvent.click(confirmButton);
-
-    await act(async () => {
-      resolveRevoke({ success: true });
-    });
-
-    expect(revokeSharedAccess).toHaveBeenCalledOnce();
-    expect(revokeSharedAccess).toHaveBeenCalledWith('conv1');
-  });
-
-  it('successful revoke of the active conversation refreshes, notifies, and does not navigate', async () => {
-    const mockRefresh = vi.fn().mockResolvedValue(undefined);
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      refreshConversations: mockRefresh,
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-    render(<ConversationPanelView {...defaultProps} />);
-    await openRowMenu();
-    const dialog = await openRevokeConfirmation();
-    fireEvent.click(
-      within(dialog).getByRole('button', { name: REVOKE_BUTTON }),
-    );
-
-    /* The dialog closes last — after the refresh settles and the notification
-     * is raised — so waiting on it is what makes the rest of the chain, the
-     * negative navigate assertion included, observable. */
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog')).toBeNull();
-    });
-    expect(mockRefresh).toHaveBeenCalledOnce();
-    expect(mockShowNotification).toHaveBeenCalledOnce();
-    expect(mockNavigate).not.toHaveBeenCalled();
-  });
-
-  it('a refresh failure after a successful revoke still notifies success', async () => {
-    const mockRefresh = vi.fn().mockRejectedValue(new Error('offline'));
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      refreshConversations: mockRefresh,
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-    render(<ConversationPanelView {...defaultProps} />);
-    await openRowMenu();
-    const dialog = await openRevokeConfirmation();
-    fireEvent.click(
-      within(dialog).getByRole('button', { name: REVOKE_BUTTON }),
-    );
-
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog')).toBeNull();
-    });
-    expect(mockShowNotification).toHaveBeenCalledOnce();
-  });
-
-  it('failed revoke keeps the popup open with an inline error and does not refresh', async () => {
-    vi.mocked(revokeSharedAccess).mockRejectedValue(new Error('403'));
-    const mockRefresh = vi.fn();
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      refreshConversations: mockRefresh,
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-    render(<ConversationPanelView {...defaultProps} />);
-    await openRowMenu();
-    const dialog = await openRevokeConfirmation();
-    fireEvent.click(
-      within(dialog).getByRole('button', { name: REVOKE_BUTTON }),
-    );
-
-    await waitFor(() => {
-      expect(within(dialog).getByText(REVOKE_ERROR)).toBeTruthy();
-    });
-    expect(mockRefresh).not.toHaveBeenCalled();
-    expect(mockNavigate).not.toHaveBeenCalled();
-  });
-
-  it('cancel closes the popup without calling the revoke API', async () => {
-    render(<ConversationPanelView {...defaultProps} />);
-    await openRowMenu();
-    const dialog = await openRevokeConfirmation();
-    fireEvent.click(
-      within(dialog).getByRole('button', { name: CANCEL_BUTTON }),
-    );
-
-    expect(screen.queryByRole('dialog')).toBeNull();
-    expect(revokeSharedAccess).not.toHaveBeenCalled();
-  });
-
-  it('keeps the action and its confirmation reachable under dir="rtl"', async () => {
-    document.documentElement.dir = 'rtl';
-    try {
+    it('registers the list resource IDs behind the visible panel rows', () => {
       render(<ConversationPanelView {...defaultProps} />);
-      await openRowMenu();
-      const dialog = await openRevokeConfirmation();
-      expect(within(dialog).getByText(REVOKE_CONFIRM_TITLE)).toBeTruthy();
-      expect(
-        within(dialog).getByRole('button', { name: REVOKE_BUTTON }),
-      ).toBeTruthy();
-    } finally {
-      document.documentElement.dir = 'ltr';
-    }
-  });
-});
+      act(() =>
+        visibleIdsCallbacks[0]([toPanelConversationId(encodedId), 'unknown']),
+      );
+      expect(registrations().at(-1)).toEqual([expect.any(String), [encodedId]]);
+    });
 
-describe('ConversationPanelView — UI feature gates', () => {
-  it('does not render the panel when conversations-section is disabled', () => {
-    vi.mocked(useUiFeature).mockImplementation(
-      (feature) => feature !== OverlayFeature.ConversationsSection,
-    );
-    render(<ConversationPanelView {...defaultProps} />);
-    expect(
-      screen.queryByRole('region', { name: 'conversation panel' }),
-    ).toBeNull();
-  });
+    it('clears its registration while hidden and restores it when shown again', () => {
+      const { rerender } = render(<ConversationPanelView {...defaultProps} />);
+      act(() => visibleIdsCallbacks[0]([toPanelConversationId(encodedId)]));
+      const [viewKey] = registrations().at(-1) ?? [];
 
-  it('renders the panel when conversations-section is enabled', () => {
-    render(<ConversationPanelView {...defaultProps} />);
-    expect(
-      screen.getByRole('region', { name: 'conversation panel' }),
-    ).toBeTruthy();
-  });
-});
+      rerender(<ConversationPanelView {...defaultProps} isVisible={false} />);
+      expect(registrations().at(-1)).toEqual([viewKey, null]);
+      act(() => visibleIdsCallbacks[0]([]));
+      expect(registrations().at(-1)).toEqual([viewKey, null]);
+      act(() => visibleIdsCallbacks[0]([toPanelConversationId(encodedId)]));
 
-describe('ConversationPanelView — unpublish', () => {
-  const historyEntry = (folderPath: string) => ({
-    path: 'conversations/bucket-123/conv1',
-    folderPath,
-    publishedAt: '2026-07-15T10:00:00.000Z',
-    publishedBy: 'Test User',
-  });
+      rerender(<ConversationPanelView {...defaultProps} isVisible />);
+      expect(registrations().at(-1)).toEqual([viewKey, [encodedId]]);
+    });
 
-  const openActionMenu = async () =>
-    userEvent.click(
-      screen.getByRole('button', { name: 'action trigger conv1' }),
-    );
+    it('clears only the unmounted view when two views are registered', () => {
+      const { unmount: unmountFirst } = render(
+        <ConversationPanelView {...defaultProps} />,
+      );
+      render(<ConversationPanelView {...defaultProps} />);
+      act(() => visibleIdsCallbacks[0]([toPanelConversationId(encodedId)]));
+      act(() => visibleIdsCallbacks[1]([toPanelConversationId(encodedId)]));
+      const firstKey = registrations().at(-2)?.[0];
+      const secondKey = registrations().at(-1)?.[0];
+      expect(firstKey).not.toBe(secondKey);
 
-  beforeEach(() => {
-    vi.mocked(getConversationPublishHistory).mockResolvedValue([]);
-  });
-
-  it('issues no history request while rendering the list', () => {
-    render(<ConversationPanelView {...defaultProps} />);
-
-    expect(getConversationPublishHistory).not.toHaveBeenCalled();
-    expect(screen.queryByRole('button', { name: UNPUBLISH_LABEL })).toBeNull();
-  });
-
-  it('requests history once when the row action menu opens', async () => {
-    vi.mocked(getConversationPublishHistory).mockResolvedValue([
-      historyEntry('Organization/Shared chats'),
-    ]);
-    render(<ConversationPanelView {...defaultProps} />);
-
-    await openActionMenu();
-    await openActionMenu();
-
-    await waitFor(() =>
-      expect(getConversationPublishHistory).toHaveBeenCalledTimes(1),
-    );
-    expect(getConversationPublishHistory).toHaveBeenCalledWith('conv1');
-  });
-
-  it('shows Unpublish once history resolves with a folder', async () => {
-    vi.mocked(getConversationPublishHistory).mockResolvedValue([
-      historyEntry('Organization/Shared chats'),
-    ]);
-    render(<ConversationPanelView {...defaultProps} />);
-
-    await openActionMenu();
-
-    expect(
-      await screen.findByRole('button', { name: UNPUBLISH_LABEL }),
-    ).toBeTruthy();
-  });
-
-  /* The two are mutually exclusive: the menu shows the conversation's state. */
-  it('replaces Publish with Unpublish once history resolves with a folder', async () => {
-    vi.mocked(getConversationPublishHistory).mockResolvedValue([
-      historyEntry('Organization/Shared chats'),
-    ]);
-    render(<ConversationPanelView {...defaultProps} />);
-
-    await openActionMenu();
-
-    await screen.findByRole('button', { name: UNPUBLISH_LABEL });
-    expect(screen.queryByRole('button', { name: PUBLISH_LABEL })).toBeNull();
-  });
-
-  it('keeps Publish for a never-published conversation', async () => {
-    render(<ConversationPanelView {...defaultProps} />);
-
-    await openActionMenu();
-
-    await waitFor(() =>
-      expect(getConversationPublishHistory).toHaveBeenCalledOnce(),
-    );
-    expect(screen.getByRole('button', { name: PUBLISH_LABEL })).toBeTruthy();
-  });
-
-  it('hides Unpublish for a never-published conversation', async () => {
-    render(<ConversationPanelView {...defaultProps} />);
-
-    await openActionMenu();
-
-    await waitFor(() =>
-      expect(getConversationPublishHistory).toHaveBeenCalledOnce(),
-    );
-    expect(screen.queryByRole('button', { name: UNPUBLISH_LABEL })).toBeNull();
-  });
-
-  it('hides Unpublish and raises no notification when the lookup fails', async () => {
-    vi.mocked(getConversationPublishHistory).mockRejectedValue(
-      new Error('503'),
-    );
-    render(<ConversationPanelView {...defaultProps} />);
-
-    await openActionMenu();
-
-    await waitFor(() =>
-      expect(getConversationPublishHistory).toHaveBeenCalledOnce(),
-    );
-    expect(screen.queryByRole('button', { name: UNPUBLISH_LABEL })).toBeNull();
-    expect(mockShowNotification).not.toHaveBeenCalled();
-  });
-});
-
-describe('ConversationPanelView — unpublish confirmation', () => {
-  const historyEntry = (folderPath: string) => ({
-    path: 'conversations/bucket-123/conv1',
-    folderPath,
-    publishedAt: '2026-07-15T10:00:00.000Z',
-    publishedBy: 'Test User',
-  });
-
-  const openUnpublishPopup = async (folders: string[]) => {
-    vi.mocked(getConversationPublishHistory).mockResolvedValue(
-      folders.map(historyEntry),
-    );
-    render(<ConversationPanelView {...defaultProps} />);
-    await userEvent.click(
-      screen.getByRole('button', { name: 'action trigger conv1' }),
-    );
-    await userEvent.click(
-      await screen.findByRole('button', { name: UNPUBLISH_LABEL }),
-    );
-  };
-
-  /* The row menu entry and the popup's confirm share the same label, so the
-   * confirm button is addressed through the dialog it lives in. */
-  const dialog = () => within(screen.getByRole('dialog'));
-  const confirmButton = () =>
-    dialog().getByRole('button', { name: UNPUBLISH_LABEL });
-
-  it('requests unpublish with the bucket-relative path and the single folder', async () => {
-    await openUnpublishPopup(['Organization/Shared chats']);
-
-    await userEvent.click(confirmButton());
-
-    expect(unpublishConversation).toHaveBeenCalledWith(
-      'conv1',
-      'Organization/Shared chats',
-    );
-  });
-
-  it('reports a submitted request and leaves the conversation list alone', async () => {
-    const mockRefresh = vi.fn();
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      refreshConversations: mockRefresh,
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-    await openUnpublishPopup(['Organization/Shared chats']);
-
-    await userEvent.click(confirmButton());
-
-    await waitFor(() =>
-      expect(mockShowNotification).toHaveBeenCalledWith(
-        expect.objectContaining({
-          title: 'entityNotifications.conversation.unpublishRequestedTitle',
-        }),
-      ),
-    );
-    expect(mockRefresh).not.toHaveBeenCalled();
-  });
-
-  it('requires a folder choice when the conversation is published to several', async () => {
-    await openUnpublishPopup(['Organization/Shared chats', 'Organization/Ops']);
-
-    const radios = dialog().getAllByRole('radio');
-    expect(radios).toHaveLength(2);
-    expect(radios.some((radio) => (radio as HTMLInputElement).checked)).toBe(
-      false,
-    );
-    expect(confirmButton().hasAttribute('disabled')).toBe(true);
-
-    await userEvent.click(dialog().getByRole('radio', { name: 'Ops' }));
-
-    expect(confirmButton().hasAttribute('disabled')).toBe(false);
-
-    await userEvent.click(confirmButton());
-
-    expect(unpublishConversation).toHaveBeenCalledWith(
-      'conv1',
-      'Organization/Ops',
-    );
-  });
-
-  it('raises no success notification when the request fails', async () => {
-    vi.mocked(unpublishConversation).mockRejectedValue(new Error('Forbidden'));
-    await openUnpublishPopup(['Organization/Shared chats']);
-
-    await userEvent.click(confirmButton());
-
-    await waitFor(() =>
-      expect(mockShowNotification).toHaveBeenCalledWith(
-        expect.objectContaining({
-          variant: 'error',
-          title: 'publish.unpublishFailedTitle',
-        }),
-      ),
-    );
-    expect(unpublishConversation).toHaveBeenCalledOnce();
-    expect(
-      mockShowNotification.mock.calls.some(
-        ([notification]) => notification.variant === 'success',
-      ),
-    ).toBe(false);
-  });
-
-  it('dismisses without a request when Cancel is clicked', async () => {
-    await openUnpublishPopup(['Organization/Shared chats']);
-
-    await userEvent.click(
-      dialog().getByRole('button', { name: 'buttons.cancel' }),
-    );
-
-    expect(unpublishConversation).not.toHaveBeenCalled();
-  });
-});
-
-describe('ConversationPanelView — visible-ID priority', () => {
-  const encodedId = 'conversations/bucket-123/gpt-4o__My%20chat';
-  const conversation = {
-    id: encodedId,
-    title: 'My chat',
-    isPinned: false,
-    updatedAt: 0,
-    sharedWithMe: false,
-    publishedWithMe: false,
-  };
-
-  beforeEach(() => {
-    visibleIdsCallbacks.length = 0;
-    vi.mocked(useConversations).mockReturnValue({
-      ...baseContextValue,
-      conversations: [conversation],
-    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-  });
-
-  const registrations = () =>
-    vi.mocked(baseContextValue.setVisibleConversationIds).mock.calls;
-
-  it('registers the list resource IDs behind the visible panel rows', () => {
-    render(<ConversationPanelView {...defaultProps} />);
-    act(() =>
-      visibleIdsCallbacks[0]([toPanelConversationId(encodedId), 'unknown']),
-    );
-    expect(registrations().at(-1)).toEqual([expect.any(String), [encodedId]]);
-  });
-
-  it('clears its registration while hidden and restores it when shown again', () => {
-    const { rerender } = render(<ConversationPanelView {...defaultProps} />);
-    act(() => visibleIdsCallbacks[0]([toPanelConversationId(encodedId)]));
-    const [viewKey] = registrations().at(-1) ?? [];
-
-    rerender(<ConversationPanelView {...defaultProps} isVisible={false} />);
-    expect(registrations().at(-1)).toEqual([viewKey, null]);
-    act(() => visibleIdsCallbacks[0]([]));
-    expect(registrations().at(-1)).toEqual([viewKey, null]);
-    act(() => visibleIdsCallbacks[0]([toPanelConversationId(encodedId)]));
-
-    rerender(<ConversationPanelView {...defaultProps} isVisible />);
-    expect(registrations().at(-1)).toEqual([viewKey, [encodedId]]);
-  });
-
-  it('clears only the unmounted view when two views are registered', () => {
-    const { unmount: unmountFirst } = render(
-      <ConversationPanelView {...defaultProps} />,
-    );
-    render(<ConversationPanelView {...defaultProps} />);
-    act(() => visibleIdsCallbacks[0]([toPanelConversationId(encodedId)]));
-    act(() => visibleIdsCallbacks[1]([toPanelConversationId(encodedId)]));
-    const firstKey = registrations().at(-2)?.[0];
-    const secondKey = registrations().at(-1)?.[0];
-    expect(firstKey).not.toBe(secondKey);
-
-    vi.mocked(baseContextValue.setVisibleConversationIds).mockClear();
-    unmountFirst();
-    expect(registrations()).toEqual([[firstKey, null]]);
+      vi.mocked(baseContextValue.setVisibleConversationIds).mockClear();
+      unmountFirst();
+      expect(registrations()).toEqual([[firstKey, null]]);
+    });
   });
 });

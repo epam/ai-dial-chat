@@ -51,35 +51,37 @@ const descriptor = Object.getOwnPropertyDescriptor(
   'animate',
 );
 const stop = vi.fn();
-beforeEach(() => {
-  vi.clearAllMocks();
-  state.mobile = false;
-  state.reduced = false;
-  state.listeners.clear();
-  Object.defineProperty(Element.prototype, 'animate', {
-    configurable: true,
-    value: vi.fn(),
-  });
-  vi.stubGlobal('ResizeObserver', class {});
-  vi.mocked(animateSkeletons).mockReturnValue(stop);
-  vi.mocked(getSkeletonTargets).mockReturnValue({
-    width: 1280,
-    height: 900,
-    rtl: false,
-    composer: {
-      element: document.createElement('div'),
-      rect: new DOMRect(340, 720, 600, 120),
-    },
-  });
-});
-afterEach(() => {
-  vi.restoreAllMocks();
-  vi.unstubAllGlobals();
-  if (descriptor)
-    Object.defineProperty(Element.prototype, 'animate', descriptor);
-  else Reflect.deleteProperty(Element.prototype, 'animate');
-});
 describe('HalloweenSkeletons', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    state.mobile = false;
+    state.reduced = false;
+    state.listeners.clear();
+    Object.defineProperty(Element.prototype, 'animate', {
+      configurable: true,
+      value: vi.fn(),
+    });
+    vi.stubGlobal('ResizeObserver', class {});
+    vi.mocked(animateSkeletons).mockReturnValue(stop);
+    vi.mocked(getSkeletonTargets).mockReturnValue({
+      width: 1280,
+      height: 900,
+      rtl: false,
+      composer: {
+        element: document.createElement('div'),
+        rect: new DOMRect(340, 720, 600, 120),
+      },
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    if (descriptor)
+      Object.defineProperty(Element.prototype, 'animate', descriptor);
+    else Reflect.deleteProperty(Element.prototype, 'animate');
+  });
+
   it.each([true, false])(
     'renders the bounded cast and composer outline without changing input, mobile=%s',
     async (mobile) => {

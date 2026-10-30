@@ -43,12 +43,12 @@ const ignoreRejection = async (promise: Promise<unknown>): Promise<void> => {
   }
 };
 
-afterEach(() => {
-  setCsrfToken(null);
-  vi.restoreAllMocks();
-});
-
 describe('createApiConfiguration', () => {
+  afterEach(() => {
+    setCsrfToken(null);
+    vi.restoreAllMocks();
+  });
+
   it('wires the CSRF middleware to apps/chat CSRF state', async () => {
     setCsrfToken('test-token');
     const fetchSpy = setupFetch(200);

@@ -118,50 +118,50 @@ const waitForSettled = async (result: {
   await waitFor(() => expect(result.current.isLoading).toBe(false));
 };
 
-beforeEach(() => {
-  filesApi = makeFilesApi();
-  onNotification = vi.fn();
-  vi.mocked(filesApi.listFiles).mockImplementation((query) =>
-    Promise.resolve(
-      query.bucket === OWNER_BUCKET
-        ? {
-            bucket: OWNER_BUCKET,
-            path: query.path ?? '',
-            items: [],
-            permissions: ['READ', 'WRITE'],
-          }
-        : {
-            bucket: BUCKET,
-            path: query.path ?? '',
-            items: query.path
-              ? []
-              : [folder('reports'), folder('Shared stuff')],
-            permissions: ['READ', 'WRITE'],
-          },
-    ),
-  );
-  vi.mocked(filesApi.listSharedFiles).mockResolvedValue({
-    bucket: '',
-    path: '',
-    items: [sharedRootItem],
-  });
-  vi.mocked(filesApi.listPublicFiles).mockResolvedValue({
-    bucket: 'public',
-    path: '',
-    items: [],
-  });
-  vi.mocked(filesApi.listSharedByMe).mockResolvedValue({
-    bucket: BUCKET,
-    path: '',
-    items: [],
-  });
-});
-
-afterEach(() => {
-  vi.clearAllMocks();
-});
-
 describe('useDialFileManagerSections', () => {
+  beforeEach(() => {
+    filesApi = makeFilesApi();
+    onNotification = vi.fn();
+    vi.mocked(filesApi.listFiles).mockImplementation((query) =>
+      Promise.resolve(
+        query.bucket === OWNER_BUCKET
+          ? {
+              bucket: OWNER_BUCKET,
+              path: query.path ?? '',
+              items: [],
+              permissions: ['READ', 'WRITE'],
+            }
+          : {
+              bucket: BUCKET,
+              path: query.path ?? '',
+              items: query.path
+                ? []
+                : [folder('reports'), folder('Shared stuff')],
+              permissions: ['READ', 'WRITE'],
+            },
+      ),
+    );
+    vi.mocked(filesApi.listSharedFiles).mockResolvedValue({
+      bucket: '',
+      path: '',
+      items: [sharedRootItem],
+    });
+    vi.mocked(filesApi.listPublicFiles).mockResolvedValue({
+      bucket: 'public',
+      path: '',
+      items: [],
+    });
+    vi.mocked(filesApi.listSharedByMe).mockResolvedValue({
+      bucket: BUCKET,
+      path: '',
+      items: [],
+    });
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   describe('single tab', () => {
     it('returns the Shared section alone and leaves the other sections idle', async () => {
       const { result } = renderSections({

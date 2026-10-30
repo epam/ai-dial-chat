@@ -48,15 +48,6 @@ const CASES: { key: ConfirmationCopyKey; values: Record<string, string> }[] = [
 
 let i18n: I18n;
 
-beforeAll(async () => {
-  i18n = i18next.createInstance();
-  await i18n.use(initReactI18next).init({
-    resources: { en: { translation: en } },
-    lng: 'en',
-    interpolation: { escapeValue: false },
-  });
-});
-
 const renderMessage = (
   key: ConfirmationCopyKey,
   values: Record<string, string>,
@@ -72,6 +63,15 @@ const renderMessage = (
   );
 
 describe('confirmation copy', () => {
+  beforeAll(async () => {
+    i18n = i18next.createInstance();
+    await i18n.use(initReactI18next).init({
+      resources: { en: { translation: en } },
+      lng: 'en',
+      interpolation: { escapeValue: false },
+    });
+  });
+
   it.each(CASES)('emphasises the resource name in $key', ({ key, values }) => {
     const { container } = renderMessage(key, values);
 

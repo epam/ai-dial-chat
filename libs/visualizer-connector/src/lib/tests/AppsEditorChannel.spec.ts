@@ -68,12 +68,12 @@ const createChannel = () => {
   };
 };
 
-afterEach(() => {
-  endpoints.splice(0).forEach((endpoint) => endpoint.destroy());
-  vi.restoreAllMocks();
-});
-
 describe('application editor channel', () => {
+  afterEach(() => {
+    endpoints.splice(0).forEach((endpoint) => endpoint.destroy());
+    vi.restoreAllMocks();
+  });
+
   it('does not announce readiness or send requests on construction', () => {
     const { postToEditor, postToHost, onHostMessage, onClientMessage } =
       createChannel();

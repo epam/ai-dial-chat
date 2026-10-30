@@ -2,12 +2,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DownloadDestinationType } from '../download-destination';
 import { prepareDownloadDestination } from '../prepare-download-destination';
 
-afterEach(() => {
-  Reflect.deleteProperty(window, 'showSaveFilePicker');
-  vi.restoreAllMocks();
-});
-
 describe('prepareDownloadDestination', () => {
+  afterEach(() => {
+    Reflect.deleteProperty(window, 'showSaveFilePicker');
+    vi.restoreAllMocks();
+  });
+
   it('resolves a Stream destination when the file picker API is available', async () => {
     const writable = new WritableStream<Uint8Array>();
     Object.defineProperty(window, 'showSaveFilePicker', {

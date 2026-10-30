@@ -24,76 +24,6 @@ const recorded: {
   cancel: ReturnType<typeof vi.fn>;
   startTime?: number;
 }[] = [];
-beforeEach(() => {
-  vi.useFakeTimers();
-  vi.clearAllMocks();
-  recorded.length = 0;
-  fixture = document.createElement('div');
-  fixture.innerHTML = '<textarea>Private draft</textarea>';
-  document.body.append(fixture);
-  draft = fixture.querySelector('textarea')!;
-  draft.focus();
-  draft.setSelectionRange(2, 7, 'backward');
-  vi.runOnlyPendingTimers();
-  const rect = new DOMRect(400, 600, 500, 100);
-  vi.spyOn(fixture, 'getBoundingClientRect').mockReturnValue(rect);
-  plan = buildSkeletonPlan(
-    {
-      width: 1280,
-      height: 900,
-      rtl: false,
-      composer: { element: fixture, rect },
-    },
-    false,
-  );
-  const parts = (names: string[]) =>
-    names.map((name) => `<i data-skeleton-part="${name}"></i>`).join('');
-  const limbs = [
-    'body',
-    'skull',
-    'arm-left',
-    'arm-right',
-    'leg-left',
-    'leg-right',
-  ];
-  host = document.createElement('div');
-  document.body.append(host);
-  host.innerHTML =
-    `<div data-skeleton-ledge></div>` +
-    `<div data-skeleton-actor="showman"><div data-skeleton-facing>${parts([...limbs, 'face'])}</div></div>` +
-    `<div data-skeleton-actor="partner"><div data-skeleton-facing>${parts(limbs)}</div></div>` +
-    `<div data-skeleton-free-skull><div data-skeleton-turn>${parts(['face'])}</div></div>`;
-  vi.stubGlobal(
-    'ResizeObserver',
-    class {
-      constructor(callback: ResizeObserverCallback) {
-        onResize = callback;
-      }
-      observe = vi.fn();
-      disconnect = disconnect;
-    },
-  );
-  Object.defineProperty(Element.prototype, 'animate', {
-    configurable: true,
-    value: vi.fn(function (this: Element) {
-      const a = { element: this, cancel: vi.fn() };
-      recorded.push(a);
-      return a;
-    }),
-  });
-});
-afterEach(() => {
-  stop?.();
-  stop = undefined;
-  host.remove();
-  fixture.remove();
-  vi.restoreAllMocks();
-  vi.unstubAllGlobals();
-  vi.useRealTimers();
-  if (descriptor)
-    Object.defineProperty(Element.prototype, 'animate', descriptor);
-  else Reflect.deleteProperty(Element.prototype, 'animate');
-});
 const play = () => {
   stop = animateSkeletons(plan, host, onStop);
 };
@@ -104,6 +34,78 @@ const expectStopped = () => {
   expect(vi.getTimerCount()).toBe(0);
 };
 describe('animateSkeletons', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    recorded.length = 0;
+    fixture = document.createElement('div');
+    fixture.innerHTML = '<textarea>Private draft</textarea>';
+    document.body.append(fixture);
+    draft = fixture.querySelector('textarea')!;
+    draft.focus();
+    draft.setSelectionRange(2, 7, 'backward');
+    vi.runOnlyPendingTimers();
+    const rect = new DOMRect(400, 600, 500, 100);
+    vi.spyOn(fixture, 'getBoundingClientRect').mockReturnValue(rect);
+    plan = buildSkeletonPlan(
+      {
+        width: 1280,
+        height: 900,
+        rtl: false,
+        composer: { element: fixture, rect },
+      },
+      false,
+    );
+    const parts = (names: string[]) =>
+      names.map((name) => `<i data-skeleton-part="${name}"></i>`).join('');
+    const limbs = [
+      'body',
+      'skull',
+      'arm-left',
+      'arm-right',
+      'leg-left',
+      'leg-right',
+    ];
+    host = document.createElement('div');
+    document.body.append(host);
+    host.innerHTML =
+      `<div data-skeleton-ledge></div>` +
+      `<div data-skeleton-actor="showman"><div data-skeleton-facing>${parts([...limbs, 'face'])}</div></div>` +
+      `<div data-skeleton-actor="partner"><div data-skeleton-facing>${parts(limbs)}</div></div>` +
+      `<div data-skeleton-free-skull><div data-skeleton-turn>${parts(['face'])}</div></div>`;
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(callback: ResizeObserverCallback) {
+          onResize = callback;
+        }
+        observe = vi.fn();
+        disconnect = disconnect;
+      },
+    );
+    Object.defineProperty(Element.prototype, 'animate', {
+      configurable: true,
+      value: vi.fn(function (this: Element) {
+        const a = { element: this, cancel: vi.fn() };
+        recorded.push(a);
+        return a;
+      }),
+    });
+  });
+
+  afterEach(() => {
+    stop?.();
+    stop = undefined;
+    host.remove();
+    fixture.remove();
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+    if (descriptor)
+      Object.defineProperty(Element.prototype, 'animate', descriptor);
+    else Reflect.deleteProperty(Element.prototype, 'animate');
+  });
+
   it('keeps draft, selection, focus and DOM intact without measuring during playback', () => {
     const html = fixture.outerHTML;
     play();

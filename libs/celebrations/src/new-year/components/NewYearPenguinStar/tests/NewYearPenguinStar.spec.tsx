@@ -49,72 +49,6 @@ let onResize: () => void;
 let fixture: HTMLDivElement;
 let sourceRect: DOMRect;
 let rendererReady: boolean;
-
-beforeEach(() => {
-  vi.useFakeTimers();
-  vi.clearAllMocks();
-  state.mobile = false;
-  state.reduced = false;
-  animations.length = 0;
-  rendererReady = true;
-  sourceRect = new DOMRect(400, 350, 560, 100);
-  fixture = document.createElement('div');
-  fixture.innerHTML = '<textarea aria-label="Draft">Private draft</textarea>';
-  document.body.append(fixture);
-  vi.spyOn(fixture, 'getBoundingClientRect').mockImplementation(
-    () => sourceRect,
-  );
-  vi.mocked(getPenguinStarTargets).mockReturnValue({
-    width: 1280,
-    height: 900,
-    rtl: false,
-    box: { left: 400, top: 350, width: 560, height: 100 },
-    source: { element: fixture, rect: sourceRect },
-    heading: null,
-    center: 780,
-    throwCenter: 500,
-    modelSelector: null,
-  });
-  vi.stubGlobal(
-    'ResizeObserver',
-    class {
-      constructor(callback: () => void) {
-        onResize = callback;
-      }
-      observe = vi.fn();
-      disconnect = disconnect;
-    },
-  );
-  player.loadAnimation.mockReset().mockImplementation(({ container }) => {
-    const callbacks = new Map<string, () => void>();
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    container.append(svg);
-    const animation = {
-      callbacks,
-      isLoaded: rendererReady,
-      currentFrame: 0,
-      destroy: vi.fn(() => svg.remove()),
-      play: vi.fn(),
-      setSubframe: vi.fn(),
-      addEventListener: vi.fn((name: string, callback: () => void) => {
-        callbacks.set(name, callback);
-      }),
-      removeEventListener: vi.fn((name: string) => callbacks.delete(name)),
-    };
-    animations.push(animation);
-    queueMicrotask(() => {
-      if (rendererReady) callbacks.get('DOMLoaded')?.();
-    });
-    return animation as unknown as AnimationItem;
-  });
-  vi.mocked(loadLottiePlayer).mockReset().mockResolvedValue(player);
-});
-afterEach(() => {
-  fixture.remove();
-  vi.restoreAllMocks();
-  vi.unstubAllGlobals();
-  vi.useRealTimers();
-});
 const flush = async () => {
   await act(async () => {
     await Promise.resolve();
@@ -167,6 +101,73 @@ const withModelSelector = () => {
 };
 
 describe('Penguin star Lottie lifecycle', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    state.mobile = false;
+    state.reduced = false;
+    animations.length = 0;
+    rendererReady = true;
+    sourceRect = new DOMRect(400, 350, 560, 100);
+    fixture = document.createElement('div');
+    fixture.innerHTML = '<textarea aria-label="Draft">Private draft</textarea>';
+    document.body.append(fixture);
+    vi.spyOn(fixture, 'getBoundingClientRect').mockImplementation(
+      () => sourceRect,
+    );
+    vi.mocked(getPenguinStarTargets).mockReturnValue({
+      width: 1280,
+      height: 900,
+      rtl: false,
+      box: { left: 400, top: 350, width: 560, height: 100 },
+      source: { element: fixture, rect: sourceRect },
+      heading: null,
+      center: 780,
+      throwCenter: 500,
+      modelSelector: null,
+    });
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(callback: () => void) {
+          onResize = callback;
+        }
+        observe = vi.fn();
+        disconnect = disconnect;
+      },
+    );
+    player.loadAnimation.mockReset().mockImplementation(({ container }) => {
+      const callbacks = new Map<string, () => void>();
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      container.append(svg);
+      const animation = {
+        callbacks,
+        isLoaded: rendererReady,
+        currentFrame: 0,
+        destroy: vi.fn(() => svg.remove()),
+        play: vi.fn(),
+        setSubframe: vi.fn(),
+        addEventListener: vi.fn((name: string, callback: () => void) => {
+          callbacks.set(name, callback);
+        }),
+        removeEventListener: vi.fn((name: string) => callbacks.delete(name)),
+      };
+      animations.push(animation);
+      queueMicrotask(() => {
+        if (rendererReady) callbacks.get('DOMLoaded')?.();
+      });
+      return animation as unknown as AnimationItem;
+    });
+    vi.mocked(loadLottiePlayer).mockReset().mockResolvedValue(player);
+  });
+
+  afterEach(() => {
+    fixture.remove();
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+
   it.each(['complete', 'input', 'scroll', 'unmount'])(
     'restores the borrowed selector after %s',
     async (mode) => {

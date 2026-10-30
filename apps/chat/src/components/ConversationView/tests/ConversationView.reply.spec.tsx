@@ -160,142 +160,37 @@ const defaults = {
   stoppedGeneratingText: 'Stopped',
 };
 
-beforeEach(() => {
-  mocks.items[0].inputAttachmentTypes = ['text/plain'];
-  mocks.items[0].maxInputAttachments = 3;
-  mocks.items[0].isHidden = false;
-  mocks.notify.mockClear();
-  mocks.maxBytes = 10000;
-  mocks.deploymentConfiguration = null;
-  Object.defineProperty(Range.prototype, 'getClientRects', {
-    configurable: true,
-    value: () => [new DOMRect(20, 100, 150, 20)],
-  });
-  Object.defineProperty(document.documentElement, 'clientWidth', {
-    configurable: true,
-    value: 360,
-  });
-  Object.defineProperty(document.documentElement, 'clientHeight', {
-    configurable: true,
-    value: 800,
-  });
-});
-afterEach(() => {
-  window.getSelection()?.removeAllRanges();
-  vi.restoreAllMocks();
-});
-
-describe('ConversationView Reply attachment flow', () => {
-  it('rejects oversized text through the ordinary attachment validator without uploading', async () => {
-    mocks.maxBytes = 4;
-    const upload = vi.fn();
-    render(
-      <ConversationView
-        {...defaults}
-        onSend={vi.fn()}
-        onUploadAttachment={upload}
-      />,
-      { wrapper: AttachmentCanvasProvider },
-    );
-    await screen.findByRole('textbox');
-    fireEvent.click(await selectPassage());
-    await waitFor(() => expect(mocks.notify).toHaveBeenCalled());
-    expect(upload).not.toHaveBeenCalled();
-    expect(
-      screen
-        .getByRole('button', { name: 'chat.sendMessage' })
-        .getAttribute('aria-disabled'),
-    ).toBe('true');
-  });
-
-  it('does not insert an old upload into a different conversation', async () => {
-    let finish!: (value: { url: string; name: string }) => void;
-    const upload = vi.fn(
-      () =>
-        new Promise<{ url: string; name: string }>((resolve) => {
-          finish = resolve;
-        }),
-    );
-    const send = vi.fn();
-    const { rerender } = render(
-      <ConversationView
-        {...defaults}
-        onSend={send}
-        onUploadAttachment={upload}
-      />,
-      { wrapper: AttachmentCanvasProvider },
-    );
-    await screen.findByRole('textbox');
-    fireEvent.click(await selectPassage());
-    await waitFor(() => expect(upload).toHaveBeenCalledOnce());
-    rerender(
-      <ConversationView
-        {...defaults}
-        conversation={{ ...conversation, id: 'two' }}
-        onSend={send}
-        onUploadAttachment={upload}
-      />,
-    );
-    await act(async () =>
-      finish({ url: 'files/bucket/old.txt', name: 'old.txt' }),
-    );
-    expect(screen.queryByText('old')).toBeNull();
-    expect(screen.queryByRole('button', { name: 'chat.reply' })).toBeNull();
-  });
-
-  it('keeps dropped files when Reply joins the same composer', async () => {
-    const upload = vi.fn(async (attachment: Attachment) => ({
-      url: `files/bucket/${attachment.name}`,
-      name: attachment.name,
-    }));
-    const send = vi.fn();
-    render(
-      <ConversationView
-        {...defaults}
-        onSend={send}
-        onUploadAttachment={upload}
-      />,
-      { wrapper: AttachmentCanvasProvider },
-    );
-    await screen.findByRole('textbox');
-    const reply = await selectPassage();
-    const drop = new Event('drop', { bubbles: true });
-    Object.defineProperty(drop, 'dataTransfer', {
-      value: {
-        types: ['Files'],
-        files: [new File(['existing'], 'notes.txt', { type: 'text/plain' })],
-      },
+describe('ConversationView', () => {
+  beforeEach(() => {
+    mocks.items[0].inputAttachmentTypes = ['text/plain'];
+    mocks.items[0].maxInputAttachments = 3;
+    mocks.items[0].isHidden = false;
+    mocks.notify.mockClear();
+    mocks.maxBytes = 10000;
+    mocks.deploymentConfiguration = null;
+    Object.defineProperty(Range.prototype, 'getClientRects', {
+      configurable: true,
+      value: () => [new DOMRect(20, 100, 150, 20)],
     });
-    act(() => {
-      document.dispatchEvent(drop);
-      reply.click();
+    Object.defineProperty(document.documentElement, 'clientWidth', {
+      configurable: true,
+      value: 360,
     });
-    await waitFor(() => expect(upload).toHaveBeenCalledTimes(2));
-    await waitFor(() =>
-      expect(
-        screen
-          .getByRole('button', { name: 'chat.sendMessage' })
-          .getAttribute('aria-disabled'),
-      ).not.toBe('true'),
-    );
-    fireEvent.click(screen.getByRole('button', { name: 'chat.sendMessage' }));
-    await waitFor(() => expect(send).toHaveBeenCalledOnce());
-    expect(send.mock.calls[0][1]).toHaveLength(2);
-    expect(send.mock.calls[0][1].map((a: Attachment) => a.name)).toContain(
-      'notes.txt',
-    );
+    Object.defineProperty(document.documentElement, 'clientHeight', {
+      configurable: true,
+      value: 800,
+    });
   });
-  it.each([
-    { isChatMessageInputDisabled: true, isAccepted: false },
-    { isChatMessageInputDisabled: false, isAccepted: true },
-  ])(
-    'page file drop with isChatMessageInputDisabled=$isChatMessageInputDisabled',
-    async ({ isChatMessageInputDisabled, isAccepted }) => {
-      mocks.deploymentConfiguration = { isChatMessageInputDisabled };
-      const upload = vi.fn(async (attachment: Attachment) => ({
-        url: `files/bucket/${attachment.name}`,
-        name: attachment.name,
-      }));
+
+  afterEach(() => {
+    window.getSelection()?.removeAllRanges();
+    vi.restoreAllMocks();
+  });
+
+  describe('ConversationView Reply attachment flow', () => {
+    it('rejects oversized text through the ordinary attachment validator without uploading', async () => {
+      mocks.maxBytes = 4;
+      const upload = vi.fn();
       render(
         <ConversationView
           {...defaults}
@@ -305,300 +200,414 @@ describe('ConversationView Reply attachment flow', () => {
         { wrapper: AttachmentCanvasProvider },
       );
       await screen.findByRole('textbox');
-      const dragEvent = (type: string, files: File[] = []) => {
-        const event = new Event(type, { bubbles: true, cancelable: true });
-        Object.defineProperty(event, 'dataTransfer', {
-          value: { types: ['Files'], files },
-        });
-        return event;
-      };
-      act(() => {
-        document.dispatchEvent(dragEvent('dragenter'));
-      });
-      expect(
-        screen.getByText(
-          isAccepted ? 'basic.attachFiles' : 'fileDnd.overlayDeniedTitle',
-        ),
-      ).toBeTruthy();
-      const drop = dragEvent('drop', [
-        new File(['dropped'], 'dropped.txt', { type: 'text/plain' }),
-      ]);
-      act(() => {
-        document.dispatchEvent(drop);
-      });
-      /* A swallowed drop must still be cancelled, or the browser opens the file. */
-      expect(drop.defaultPrevented).toBe(true);
-      if (isAccepted) {
-        await waitFor(() => expect(upload).toHaveBeenCalledOnce());
-        expect(await screen.findByText('dropped')).toBeTruthy();
-      } else {
-        await act(async () => {
-          await new Promise((resolve) => setTimeout(resolve, 30));
-        });
-        expect(upload).not.toHaveBeenCalled();
-        expect(screen.queryByText('dropped')).toBeNull();
-      }
-    },
-  );
-
-  it('reuses upload failure, retry and removal without changing the draft', async () => {
-    const upload = vi
-      .fn()
-      .mockRejectedValueOnce(new Error('Offline'))
-      .mockResolvedValue({ url: 'files/bucket/reply.txt', name: 'reply.txt' });
-    const send = vi.fn();
-    render(
-      <ConversationView
-        {...defaults}
-        onSend={send}
-        onUploadAttachment={upload}
-      />,
-      { wrapper: AttachmentCanvasProvider },
-    );
-    const textarea = await screen.findByRole('textbox');
-    fireEvent.change(textarea, { target: { value: 'Keep draft' } });
-    fireEvent.click(await selectPassage());
-    const retry = await screen.findByRole('button', { name: /retry/i });
-    expect(
-      screen
-        .getByRole('button', { name: 'chat.sendMessage' })
-        .getAttribute('aria-disabled'),
-    ).toBe('true');
-    fireEvent.click(retry);
-    await screen.findByText('reply');
-    expect(upload).toHaveBeenCalledTimes(2);
-    fireEvent.click(screen.getByRole('button', { name: /remove/i }));
-    await waitFor(() => expect(screen.queryByText('reply')).toBeNull());
-    expect((textarea as HTMLTextAreaElement).value).toBe('Keep draft');
-    expect(send).not.toHaveBeenCalled();
-  });
-
-  it('preserves the first attachment when another Reply exceeds the count limit', async () => {
-    mocks.items[0].maxInputAttachments = 1;
-    const upload = vi
-      .fn()
-      .mockResolvedValue({ url: 'files/bucket/reply.txt', name: 'reply.txt' });
-    render(
-      <ConversationView
-        {...defaults}
-        onSend={vi.fn()}
-        onUploadAttachment={upload}
-      />,
-      { wrapper: AttachmentCanvasProvider },
-    );
-    await screen.findByRole('textbox');
-    fireEvent.click(await selectPassage());
-    await screen.findByText('reply');
-    fireEvent.click(await selectPassage());
-    await waitFor(() => expect(mocks.notify).toHaveBeenCalled());
-    expect(upload).toHaveBeenCalledOnce();
-    expect(screen.getAllByText('reply')).toHaveLength(1);
-    expect(screen.queryByText('chat.replyAttachmentAdded')).toBeNull();
-  });
-
-  it('does not offer Reply for a deployment that rejects text attachments', async () => {
-    mocks.items[0].inputAttachmentTypes = ['image/png'];
-    const upload = vi.fn();
-    render(
-      <ConversationView
-        {...defaults}
-        onSend={vi.fn()}
-        onUploadAttachment={upload}
-      />,
-      { wrapper: AttachmentCanvasProvider },
-    );
-    await screen.findByRole('textbox');
-    const range = document.createRange();
-    range.selectNodeContents(screen.getByText('Selected passage'));
-    window.getSelection()?.addRange(range);
-    fireEvent(document, new Event('selectionchange'));
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 30));
-    });
-    expect(screen.queryByRole('button', { name: 'chat.reply' })).toBeNull();
-    expect(upload).not.toHaveBeenCalled();
-  });
-  it('uploads once under Strict Mode, preserves the draft and sends an ordinary URL attachment', async () => {
-    const upload = vi.fn(async (attachment: Attachment) => ({
-      name: attachment.name,
-      url: 'files/bucket/reply.txt',
-    }));
-    const send = vi.fn();
-    render(
-      <StrictMode>
-        <ConversationView
-          {...defaults}
-          onSend={send}
-          onUploadAttachment={upload}
-        />
-      </StrictMode>,
-      { wrapper: AttachmentCanvasProvider },
-    );
-    const textarea = await screen.findByRole('textbox');
-    fireEvent.change(textarea, { target: { value: 'My draft' } });
-    fireEvent.click(await selectPassage());
-    await waitFor(() => expect(upload).toHaveBeenCalledOnce());
-    const uploadedFile = upload.mock.calls[0]?.[0]?.file;
-    if (uploadedFile == null) {
-      throw new Error('expected an uploaded file');
-    }
-    expect(await uploadedFile.text()).toBe('Selected passage');
-    expect((textarea as HTMLTextAreaElement).value).toBe('My draft');
-    expect(document.activeElement).toBe(textarea);
-    await waitFor(() =>
+      fireEvent.click(await selectPassage());
+      await waitFor(() => expect(mocks.notify).toHaveBeenCalled());
+      expect(upload).not.toHaveBeenCalled();
       expect(
         screen
           .getByRole('button', { name: 'chat.sendMessage' })
           .getAttribute('aria-disabled'),
-      ).not.toBe('true'),
-    );
-    fireEvent.click(screen.getByRole('button', { name: 'chat.sendMessage' }));
-    await waitFor(() => expect(send).toHaveBeenCalledOnce());
-    const [text, attachments] = send.mock.calls[0];
-    expect(text).toBe('My draft');
-    expect(attachmentsToDtos(attachments)).toEqual([
-      {
-        type: 'text/plain',
-        title: expect.stringMatching(/^reply-.*\.txt$/),
-        url: 'files/bucket/reply.txt',
+      ).toBe('true');
+    });
+
+    it('does not insert an old upload into a different conversation', async () => {
+      let finish!: (value: { url: string; name: string }) => void;
+      const upload = vi.fn(
+        () =>
+          new Promise<{ url: string; name: string }>((resolve) => {
+            finish = resolve;
+          }),
+      );
+      const send = vi.fn();
+      const { rerender } = render(
+        <ConversationView
+          {...defaults}
+          onSend={send}
+          onUploadAttachment={upload}
+        />,
+        { wrapper: AttachmentCanvasProvider },
+      );
+      await screen.findByRole('textbox');
+      fireEvent.click(await selectPassage());
+      await waitFor(() => expect(upload).toHaveBeenCalledOnce());
+      rerender(
+        <ConversationView
+          {...defaults}
+          conversation={{ ...conversation, id: 'two' }}
+          onSend={send}
+          onUploadAttachment={upload}
+        />,
+      );
+      await act(async () =>
+        finish({ url: 'files/bucket/old.txt', name: 'old.txt' }),
+      );
+      expect(screen.queryByText('old')).toBeNull();
+      expect(screen.queryByRole('button', { name: 'chat.reply' })).toBeNull();
+    });
+
+    it('keeps dropped files when Reply joins the same composer', async () => {
+      const upload = vi.fn(async (attachment: Attachment) => ({
+        url: `files/bucket/${attachment.name}`,
+        name: attachment.name,
+      }));
+      const send = vi.fn();
+      render(
+        <ConversationView
+          {...defaults}
+          onSend={send}
+          onUploadAttachment={upload}
+        />,
+        { wrapper: AttachmentCanvasProvider },
+      );
+      await screen.findByRole('textbox');
+      const reply = await selectPassage();
+      const drop = new Event('drop', { bubbles: true });
+      Object.defineProperty(drop, 'dataTransfer', {
+        value: {
+          types: ['Files'],
+          files: [new File(['existing'], 'notes.txt', { type: 'text/plain' })],
+        },
+      });
+      act(() => {
+        document.dispatchEvent(drop);
+        reply.click();
+      });
+      await waitFor(() => expect(upload).toHaveBeenCalledTimes(2));
+      await waitFor(() =>
+        expect(
+          screen
+            .getByRole('button', { name: 'chat.sendMessage' })
+            .getAttribute('aria-disabled'),
+        ).not.toBe('true'),
+      );
+      fireEvent.click(screen.getByRole('button', { name: 'chat.sendMessage' }));
+      await waitFor(() => expect(send).toHaveBeenCalledOnce());
+      expect(send.mock.calls[0][1]).toHaveLength(2);
+      expect(send.mock.calls[0][1].map((a: Attachment) => a.name)).toContain(
+        'notes.txt',
+      );
+    });
+    it.each([
+      { isChatMessageInputDisabled: true, isAccepted: false },
+      { isChatMessageInputDisabled: false, isAccepted: true },
+    ])(
+      'page file drop with isChatMessageInputDisabled=$isChatMessageInputDisabled',
+      async ({ isChatMessageInputDisabled, isAccepted }) => {
+        mocks.deploymentConfiguration = { isChatMessageInputDisabled };
+        const upload = vi.fn(async (attachment: Attachment) => ({
+          url: `files/bucket/${attachment.name}`,
+          name: attachment.name,
+        }));
+        render(
+          <ConversationView
+            {...defaults}
+            onSend={vi.fn()}
+            onUploadAttachment={upload}
+          />,
+          { wrapper: AttachmentCanvasProvider },
+        );
+        await screen.findByRole('textbox');
+        const dragEvent = (type: string, files: File[] = []) => {
+          const event = new Event(type, { bubbles: true, cancelable: true });
+          Object.defineProperty(event, 'dataTransfer', {
+            value: { types: ['Files'], files },
+          });
+          return event;
+        };
+        act(() => {
+          document.dispatchEvent(dragEvent('dragenter'));
+        });
+        expect(
+          screen.getByText(
+            isAccepted ? 'basic.attachFiles' : 'fileDnd.overlayDeniedTitle',
+          ),
+        ).toBeTruthy();
+        const drop = dragEvent('drop', [
+          new File(['dropped'], 'dropped.txt', { type: 'text/plain' }),
+        ]);
+        act(() => {
+          document.dispatchEvent(drop);
+        });
+        /* A swallowed drop must still be cancelled, or the browser opens the file. */
+        expect(drop.defaultPrevented).toBe(true);
+        if (isAccepted) {
+          await waitFor(() => expect(upload).toHaveBeenCalledOnce());
+          expect(await screen.findByText('dropped')).toBeTruthy();
+        } else {
+          await act(async () => {
+            await new Promise((resolve) => setTimeout(resolve, 30));
+          });
+          expect(upload).not.toHaveBeenCalled();
+          expect(screen.queryByText('dropped')).toBeNull();
+        }
       },
-    ]);
+    );
+
+    it('reuses upload failure, retry and removal without changing the draft', async () => {
+      const upload = vi
+        .fn()
+        .mockRejectedValueOnce(new Error('Offline'))
+        .mockResolvedValue({
+          url: 'files/bucket/reply.txt',
+          name: 'reply.txt',
+        });
+      const send = vi.fn();
+      render(
+        <ConversationView
+          {...defaults}
+          onSend={send}
+          onUploadAttachment={upload}
+        />,
+        { wrapper: AttachmentCanvasProvider },
+      );
+      const textarea = await screen.findByRole('textbox');
+      fireEvent.change(textarea, { target: { value: 'Keep draft' } });
+      fireEvent.click(await selectPassage());
+      const retry = await screen.findByRole('button', { name: /retry/i });
+      expect(
+        screen
+          .getByRole('button', { name: 'chat.sendMessage' })
+          .getAttribute('aria-disabled'),
+      ).toBe('true');
+      fireEvent.click(retry);
+      await screen.findByText('reply');
+      expect(upload).toHaveBeenCalledTimes(2);
+      fireEvent.click(screen.getByRole('button', { name: /remove/i }));
+      await waitFor(() => expect(screen.queryByText('reply')).toBeNull());
+      expect((textarea as HTMLTextAreaElement).value).toBe('Keep draft');
+      expect(send).not.toHaveBeenCalled();
+    });
+
+    it('preserves the first attachment when another Reply exceeds the count limit', async () => {
+      mocks.items[0].maxInputAttachments = 1;
+      const upload = vi
+        .fn()
+        .mockResolvedValue({
+          url: 'files/bucket/reply.txt',
+          name: 'reply.txt',
+        });
+      render(
+        <ConversationView
+          {...defaults}
+          onSend={vi.fn()}
+          onUploadAttachment={upload}
+        />,
+        { wrapper: AttachmentCanvasProvider },
+      );
+      await screen.findByRole('textbox');
+      fireEvent.click(await selectPassage());
+      await screen.findByText('reply');
+      fireEvent.click(await selectPassage());
+      await waitFor(() => expect(mocks.notify).toHaveBeenCalled());
+      expect(upload).toHaveBeenCalledOnce();
+      expect(screen.getAllByText('reply')).toHaveLength(1);
+      expect(screen.queryByText('chat.replyAttachmentAdded')).toBeNull();
+    });
+
+    it('does not offer Reply for a deployment that rejects text attachments', async () => {
+      mocks.items[0].inputAttachmentTypes = ['image/png'];
+      const upload = vi.fn();
+      render(
+        <ConversationView
+          {...defaults}
+          onSend={vi.fn()}
+          onUploadAttachment={upload}
+        />,
+        { wrapper: AttachmentCanvasProvider },
+      );
+      await screen.findByRole('textbox');
+      const range = document.createRange();
+      range.selectNodeContents(screen.getByText('Selected passage'));
+      window.getSelection()?.addRange(range);
+      fireEvent(document, new Event('selectionchange'));
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 30));
+      });
+      expect(screen.queryByRole('button', { name: 'chat.reply' })).toBeNull();
+      expect(upload).not.toHaveBeenCalled();
+    });
+    it('uploads once under Strict Mode, preserves the draft and sends an ordinary URL attachment', async () => {
+      const upload = vi.fn(async (attachment: Attachment) => ({
+        name: attachment.name,
+        url: 'files/bucket/reply.txt',
+      }));
+      const send = vi.fn();
+      render(
+        <StrictMode>
+          <ConversationView
+            {...defaults}
+            onSend={send}
+            onUploadAttachment={upload}
+          />
+        </StrictMode>,
+        { wrapper: AttachmentCanvasProvider },
+      );
+      const textarea = await screen.findByRole('textbox');
+      fireEvent.change(textarea, { target: { value: 'My draft' } });
+      fireEvent.click(await selectPassage());
+      await waitFor(() => expect(upload).toHaveBeenCalledOnce());
+      const uploadedFile = upload.mock.calls[0]?.[0]?.file;
+      if (uploadedFile == null) {
+        throw new Error('expected an uploaded file');
+      }
+      expect(await uploadedFile.text()).toBe('Selected passage');
+      expect((textarea as HTMLTextAreaElement).value).toBe('My draft');
+      expect(document.activeElement).toBe(textarea);
+      await waitFor(() =>
+        expect(
+          screen
+            .getByRole('button', { name: 'chat.sendMessage' })
+            .getAttribute('aria-disabled'),
+        ).not.toBe('true'),
+      );
+      fireEvent.click(screen.getByRole('button', { name: 'chat.sendMessage' }));
+      await waitFor(() => expect(send).toHaveBeenCalledOnce());
+      const [text, attachments] = send.mock.calls[0];
+      expect(text).toBe('My draft');
+      expect(attachmentsToDtos(attachments)).toEqual([
+        {
+          type: 'text/plain',
+          title: expect.stringMatching(/^reply-.*\.txt$/),
+          url: 'files/bucket/reply.txt',
+        },
+      ]);
+    });
+
+    it('blocks send during upload and restores the attachment after a rejected send', async () => {
+      let finish!: (value: { url: string; name: string }) => void;
+      const upload = vi.fn(
+        () =>
+          new Promise<{ url: string; name: string }>((resolve) => {
+            finish = resolve;
+          }),
+      );
+      const send = vi.fn().mockRejectedValue(new Error('Rejected'));
+      render(
+        <ConversationView
+          {...defaults}
+          onSend={send}
+          onUploadAttachment={upload}
+        />,
+        { wrapper: AttachmentCanvasProvider },
+      );
+      await screen.findByRole('textbox');
+      fireEvent.click(await selectPassage());
+      await waitFor(() => expect(upload).toHaveBeenCalledOnce());
+      expect(
+        screen
+          .getByRole('button', { name: 'chat.sendMessage' })
+          .getAttribute('aria-disabled'),
+      ).toBe('true');
+      await act(async () =>
+        finish({ url: 'files/bucket/reply.txt', name: 'reply.txt' }),
+      );
+      fireEvent.click(screen.getByRole('button', { name: 'chat.sendMessage' }));
+      await waitFor(() => expect(send).toHaveBeenCalledOnce());
+      expect(screen.getByText('reply')).toBeTruthy();
+    });
+
+    it.each([
+      { isReadOnly: true },
+      { isAssistantTyping: true },
+      { editingMessageIndexes: new Set([0]) },
+    ])('hides Reply when the composer cannot accept it: %j', async (props) => {
+      render(
+        <ConversationView
+          {...defaults}
+          {...props}
+          onSend={vi.fn()}
+          onUploadAttachment={vi.fn()}
+        />,
+        { wrapper: AttachmentCanvasProvider },
+      );
+      const range = document.createRange();
+      range.selectNodeContents(screen.getByText('Selected passage'));
+      window.getSelection()?.addRange(range);
+      fireEvent(document, new Event('selectionchange'));
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 30));
+      });
+      expect(screen.queryByRole('button', { name: 'chat.reply' })).toBeNull();
+    });
   });
 
-  it('blocks send during upload and restores the attachment after a rejected send', async () => {
-    let finish!: (value: { url: string; name: string }) => void;
-    const upload = vi.fn(
-      () =>
-        new Promise<{ url: string; name: string }>((resolve) => {
-          finish = resolve;
+  describe('ConversationView read-only duplicate action', () => {
+    it('offers the duplicate button on a read-only conversation', () => {
+      const onDuplicateConversation = vi.fn();
+      render(
+        <ConversationView
+          {...defaults}
+          isReadOnly
+          onSend={vi.fn()}
+          onDuplicateConversation={onDuplicateConversation}
+        />,
+        { wrapper: AttachmentCanvasProvider },
+      );
+
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: 'conversationPanel.duplicateReadOnlyDescription',
         }),
-    );
-    const send = vi.fn().mockRejectedValue(new Error('Rejected'));
-    render(
-      <ConversationView
-        {...defaults}
-        onSend={send}
-        onUploadAttachment={upload}
-      />,
-      { wrapper: AttachmentCanvasProvider },
-    );
-    await screen.findByRole('textbox');
-    fireEvent.click(await selectPassage());
-    await waitFor(() => expect(upload).toHaveBeenCalledOnce());
-    expect(
-      screen
-        .getByRole('button', { name: 'chat.sendMessage' })
-        .getAttribute('aria-disabled'),
-    ).toBe('true');
-    await act(async () =>
-      finish({ url: 'files/bucket/reply.txt', name: 'reply.txt' }),
-    );
-    fireEvent.click(screen.getByRole('button', { name: 'chat.sendMessage' }));
-    await waitFor(() => expect(send).toHaveBeenCalledOnce());
-    expect(screen.getByText('reply')).toBeTruthy();
-  });
-
-  it.each([
-    { isReadOnly: true },
-    { isAssistantTyping: true },
-    { editingMessageIndexes: new Set([0]) },
-  ])('hides Reply when the composer cannot accept it: %j', async (props) => {
-    render(
-      <ConversationView
-        {...defaults}
-        {...props}
-        onSend={vi.fn()}
-        onUploadAttachment={vi.fn()}
-      />,
-      { wrapper: AttachmentCanvasProvider },
-    );
-    const range = document.createRange();
-    range.selectNodeContents(screen.getByText('Selected passage'));
-    window.getSelection()?.addRange(range);
-    fireEvent(document, new Event('selectionchange'));
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 30));
+      );
+      expect(onDuplicateConversation).toHaveBeenCalledOnce();
     });
-    expect(screen.queryByRole('button', { name: 'chat.reply' })).toBeNull();
-  });
-});
 
-describe('ConversationView read-only duplicate action', () => {
-  it('offers the duplicate button on a read-only conversation', () => {
-    const onDuplicateConversation = vi.fn();
-    render(
-      <ConversationView
-        {...defaults}
-        isReadOnly
-        onSend={vi.fn()}
-        onDuplicateConversation={onDuplicateConversation}
-      />,
-      { wrapper: AttachmentCanvasProvider },
-    );
+    it('explains instead of offering the button when the model is hidden', () => {
+      render(
+        <ConversationView
+          {...defaults}
+          isReadOnly
+          isDuplicateUnavailable
+          onSend={vi.fn()}
+          onDuplicateConversation={vi.fn()}
+        />,
+        { wrapper: AttachmentCanvasProvider },
+      );
 
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: 'conversationPanel.duplicateReadOnlyDescription',
-      }),
-    );
-    expect(onDuplicateConversation).toHaveBeenCalledOnce();
-  });
-
-  it('explains instead of offering the button when the model is hidden', () => {
-    render(
-      <ConversationView
-        {...defaults}
-        isReadOnly
-        isDuplicateUnavailable
-        onSend={vi.fn()}
-        onDuplicateConversation={vi.fn()}
-      />,
-      { wrapper: AttachmentCanvasProvider },
-    );
-
-    expect(
-      screen.queryByRole('button', {
-        name: 'conversationPanel.duplicateReadOnlyDescription',
-      }),
-    ).toBeNull();
-    expect(
-      screen.getByText('conversationPanel.duplicateUnavailableModel'),
-    ).toBeTruthy();
-  });
-});
-
-describe('ConversationView — hidden model', () => {
-  const typeDraft = async () => {
-    const textarea = await screen.findByRole('textbox');
-    fireEvent.change(textarea, { target: { value: 'Hello' } });
-  };
-  const sendButton = () =>
-    screen.getByRole('button', { name: 'chat.sendMessage' });
-
-  it('blocks sending and explains why while the selected model is hidden', async () => {
-    mocks.items[0].isHidden = true;
-    render(<ConversationView {...defaults} onSend={vi.fn()} />, {
-      wrapper: AttachmentCanvasProvider,
+      expect(
+        screen.queryByRole('button', {
+          name: 'conversationPanel.duplicateReadOnlyDescription',
+        }),
+      ).toBeNull();
+      expect(
+        screen.getByText('conversationPanel.duplicateUnavailableModel'),
+      ).toBeTruthy();
     });
-    await typeDraft();
-
-    expect(sendButton().getAttribute('aria-disabled')).toBe('true');
-    expect(
-      screen
-        .getByText('conversation.modelUnavailableNotice')
-        .getAttribute('role'),
-    ).toBe('status');
   });
 
-  it('allows sending on a visible model, with no notice', async () => {
-    render(<ConversationView {...defaults} onSend={vi.fn()} />, {
-      wrapper: AttachmentCanvasProvider,
-    });
-    await typeDraft();
+  describe('ConversationView — hidden model', () => {
+    const typeDraft = async () => {
+      const textarea = await screen.findByRole('textbox');
+      fireEvent.change(textarea, { target: { value: 'Hello' } });
+    };
+    const sendButton = () =>
+      screen.getByRole('button', { name: 'chat.sendMessage' });
 
-    expect(sendButton().getAttribute('aria-disabled')).not.toBe('true');
-    expect(
-      screen.queryByText('conversation.modelUnavailableNotice'),
-    ).toBeNull();
+    it('blocks sending and explains why while the selected model is hidden', async () => {
+      mocks.items[0].isHidden = true;
+      render(<ConversationView {...defaults} onSend={vi.fn()} />, {
+        wrapper: AttachmentCanvasProvider,
+      });
+      await typeDraft();
+
+      expect(sendButton().getAttribute('aria-disabled')).toBe('true');
+      expect(
+        screen
+          .getByText('conversation.modelUnavailableNotice')
+          .getAttribute('role'),
+      ).toBe('status');
+    });
+
+    it('allows sending on a visible model, with no notice', async () => {
+      render(<ConversationView {...defaults} onSend={vi.fn()} />, {
+        wrapper: AttachmentCanvasProvider,
+      });
+      await typeDraft();
+
+      expect(sendButton().getAttribute('aria-disabled')).not.toBe('true');
+      expect(
+        screen.queryByText('conversation.modelUnavailableNotice'),
+      ).toBeNull();
+    });
   });
 });

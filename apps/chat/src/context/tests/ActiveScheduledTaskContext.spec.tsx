@@ -59,37 +59,37 @@ const taskConversation = (
 
 const scheduledTask = { id: 'schedule-1', displayName: 'Weekly digest' };
 
-beforeEach(() => {
-  vi.clearAllMocks();
-  contextMocks.pathname = '/conversations/conv1';
-  contextMocks.isFeatureEnabled = true;
-  contextMocks.conversations = [];
-  contextMocks.isConversationsLoading = false;
-  mockUseFeatureFlag.mockImplementation(() => contextMocks.isFeatureEnabled);
-  mockGetScheduledTask.mockResolvedValue(
-    scheduledTask as Awaited<
-      ReturnType<typeof scheduledTasksApi.getScheduledTask>
-    >,
-  );
-  useScheduledTaskRunsMock.mockReturnValue({
-    items: [],
-    isLoading: false,
-    isLoadingMore: false,
-    error: null,
-    loadMoreError: null,
-    hasMore: false,
-    loadMore: vi.fn(),
-    retryLoadMore: vi.fn(),
-    refetch: vi.fn(),
-  });
-});
-
 const renderActiveScheduledTask = () =>
   renderHook(() => useActiveScheduledTask(), {
     wrapper: ActiveScheduledTaskProvider,
   });
 
 describe('ActiveScheduledTaskContext', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    contextMocks.pathname = '/conversations/conv1';
+    contextMocks.isFeatureEnabled = true;
+    contextMocks.conversations = [];
+    contextMocks.isConversationsLoading = false;
+    mockUseFeatureFlag.mockImplementation(() => contextMocks.isFeatureEnabled);
+    mockGetScheduledTask.mockResolvedValue(
+      scheduledTask as Awaited<
+        ReturnType<typeof scheduledTasksApi.getScheduledTask>
+      >,
+    );
+    useScheduledTaskRunsMock.mockReturnValue({
+      items: [],
+      isLoading: false,
+      isLoadingMore: false,
+      error: null,
+      loadMoreError: null,
+      hasMore: false,
+      loadMore: vi.fn(),
+      retryLoadMore: vi.fn(),
+      refetch: vi.fn(),
+    });
+  });
+
   it('matches the active conversation via conversationIdsMatch, tolerating encoding differences', async () => {
     contextMocks.pathname = '/conversations/conv%31';
     contextMocks.conversations = [taskConversation()];

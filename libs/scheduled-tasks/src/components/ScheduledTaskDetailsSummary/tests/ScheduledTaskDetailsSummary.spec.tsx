@@ -17,11 +17,11 @@ vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
   };
 });
 
-beforeEach(() => {
-  viewerCalls.length = 0;
-});
-
 describe('ScheduledTaskDetailsSummary', () => {
+  beforeEach(() => {
+    viewerCalls.length = 0;
+  });
+
   it('shows all skill names and URL fallbacks in order, hiding an empty selection', () => {
     const { container, rerender } = render(
       <ScheduledTaskDetailsSummary

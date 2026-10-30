@@ -33,9 +33,10 @@ const targets = (width = 1280, rtl = false): RavenTargets => {
     edges: [composer, conversation],
   };
 };
-afterEach(() => vi.restoreAllMocks());
 
 describe('raven story geometry', () => {
+  afterEach(() => vi.restoreAllMocks());
+
   it.each([true, false])(
     'bounds all actors and timelines on mobile=%s',
     (mobile) => {

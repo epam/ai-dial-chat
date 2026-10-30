@@ -174,70 +174,72 @@ const props = {
   isAssistantTyping: true,
 };
 
-beforeEach(() => {
-  mocks.renderCountByIndex.clear();
-  mocks.attachmentClickByIndex.clear();
-  mocks.openAttachmentCanvas.mockClear();
-});
-
-describe('ConversationView — message item memoisation', () => {
-  it('re-renders only the streaming message when a chunk replaces it', () => {
-    const question = message(MessageRole.User, 'question');
-    const earlier = message(MessageRole.Assistant, 'earlier answer');
-    const followUp = message(MessageRole.User, 'follow-up');
-    const streaming = message(MessageRole.Assistant, 'partial');
-    const { rerender } = render(
-      <ConversationView
-        {...props}
-        messages={[question, earlier, followUp, streaming]}
-      />,
-      { wrapper: AttachmentCanvasProvider },
-    );
+describe('ConversationView', () => {
+  beforeEach(() => {
     mocks.renderCountByIndex.clear();
-
-    rerender(
-      <ConversationView
-        {...props}
-        messages={[
-          question,
-          earlier,
-          followUp,
-          { ...streaming, content: 'partial answer' },
-        ]}
-      />,
-    );
-
-    expect([...mocks.renderCountByIndex.keys()]).toEqual([3]);
+    mocks.attachmentClickByIndex.clear();
+    mocks.openAttachmentCanvas.mockClear();
   });
-});
 
-describe('ConversationView — attachment clicks', () => {
-  const attachment = (id: string) => ({ id }) as DisplayAttachment;
+  describe('ConversationView — message item memoisation', () => {
+    it('re-renders only the streaming message when a chunk replaces it', () => {
+      const question = message(MessageRole.User, 'question');
+      const earlier = message(MessageRole.Assistant, 'earlier answer');
+      const followUp = message(MessageRole.User, 'follow-up');
+      const streaming = message(MessageRole.Assistant, 'partial');
+      const { rerender } = render(
+        <ConversationView
+          {...props}
+          messages={[question, earlier, followUp, streaming]}
+        />,
+        { wrapper: AttachmentCanvasProvider },
+      );
+      mocks.renderCountByIndex.clear();
 
-  it('lets only the latest of two quick attachment clicks commit to the canvas', () => {
-    render(
-      <ConversationView
-        {...props}
-        isAssistantTyping={false}
-        messages={[
-          message(MessageRole.User, 'first'),
-          message(MessageRole.User, 'second'),
-        ]}
-      />,
-      { wrapper: AttachmentCanvasProvider },
-    );
+      rerender(
+        <ConversationView
+          {...props}
+          messages={[
+            question,
+            earlier,
+            followUp,
+            { ...streaming, content: 'partial answer' },
+          ]}
+        />,
+      );
 
-    mocks.attachmentClickByIndex.get(0)?.(attachment('a'), 0);
-    mocks.attachmentClickByIndex.get(1)?.(attachment('b'), 1);
+      expect([...mocks.renderCountByIndex.keys()]).toEqual([3]);
+    });
+  });
 
-    const [
-      [firstAttachment, firstKey, firstGuard],
-      [, secondKey, secondGuard],
-    ] = mocks.openAttachmentCanvas.mock.calls;
-    expect(firstAttachment).toEqual(attachment('a'));
-    expect(firstKey).toBe('0:a');
-    expect(secondKey).toBe('1:b');
-    expect(firstGuard()).toBe(false);
-    expect(secondGuard()).toBe(true);
+  describe('ConversationView — attachment clicks', () => {
+    const attachment = (id: string) => ({ id }) as DisplayAttachment;
+
+    it('lets only the latest of two quick attachment clicks commit to the canvas', () => {
+      render(
+        <ConversationView
+          {...props}
+          isAssistantTyping={false}
+          messages={[
+            message(MessageRole.User, 'first'),
+            message(MessageRole.User, 'second'),
+          ]}
+        />,
+        { wrapper: AttachmentCanvasProvider },
+      );
+
+      mocks.attachmentClickByIndex.get(0)?.(attachment('a'), 0);
+      mocks.attachmentClickByIndex.get(1)?.(attachment('b'), 1);
+
+      const [
+        [firstAttachment, firstKey, firstGuard],
+        [, secondKey, secondGuard],
+      ] = mocks.openAttachmentCanvas.mock.calls;
+      expect(firstAttachment).toEqual(attachment('a'));
+      expect(firstKey).toBe('0:a');
+      expect(secondKey).toBe('1:b');
+      expect(firstGuard()).toBe(false);
+      expect(secondGuard()).toBe(true);
+    });
   });
 });

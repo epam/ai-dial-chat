@@ -128,33 +128,33 @@ describe('useConversationDiscovery', () => {
     await act(async () => vi.advanceTimersByTimeAsync(60_000));
     expect(refresh).toHaveBeenCalledTimes(1);
   });
-});
 
-it('reports bounded retry failures and exposes initial refresh rejection', async () => {
-  vi.useFakeTimers();
-  try {
-    const failure = new Error('refresh');
-    const refresh = vi
-      .fn()
-      .mockResolvedValueOnce(undefined)
-      .mockRejectedValue(failure);
-    const onError = vi.fn();
-    const { result, unmount } = renderHook(() =>
-      useDiscovery({
-        items: [],
-        refresh,
-        sessionKey: 'user',
-        normalizeId,
-        onError,
-      }),
-    );
-    await act(async () => result.current(['a']));
-    await act(async () => vi.advanceTimersByTimeAsync(60_000));
-    expect(refresh).toHaveBeenCalledTimes(6);
-    expect(onError).toHaveBeenCalledTimes(5);
-    await expect(result.current()).rejects.toBe(failure);
-    unmount();
-  } finally {
-    vi.useRealTimers();
-  }
+  it('reports bounded retry failures and exposes initial refresh rejection', async () => {
+    vi.useFakeTimers();
+    try {
+      const failure = new Error('refresh');
+      const refresh = vi
+        .fn()
+        .mockResolvedValueOnce(undefined)
+        .mockRejectedValue(failure);
+      const onError = vi.fn();
+      const { result, unmount } = renderHook(() =>
+        useDiscovery({
+          items: [],
+          refresh,
+          sessionKey: 'user',
+          normalizeId,
+          onError,
+        }),
+      );
+      await act(async () => result.current(['a']));
+      await act(async () => vi.advanceTimersByTimeAsync(60_000));
+      expect(refresh).toHaveBeenCalledTimes(6);
+      expect(onError).toHaveBeenCalledTimes(5);
+      await expect(result.current()).rejects.toBe(failure);
+      unmount();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
