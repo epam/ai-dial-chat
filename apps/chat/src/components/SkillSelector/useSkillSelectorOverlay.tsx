@@ -1,4 +1,4 @@
-import { FavoriteEntityType } from '@epam/ai-dial-chat-hooks';
+import { FavoriteEntityType, findSkillByUrl } from '@epam/ai-dial-chat-hooks';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import {
   getSkillFallbackName,
@@ -18,7 +18,6 @@ import { useUser } from '../../context/auth/UserContext';
 import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
 import { useSkills } from '../../context/SkillsContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
-import { findSkillByUrl } from '../../utils/skills';
 
 const CatalogView = lazy(async () => {
   const module = await import('../CatalogView/CatalogView');
@@ -142,7 +141,7 @@ export const useSkillSelectorOverlay = ({
   /*
    * Name resolution mirrors the lib hook's own internal `skillByUrl` lookup —
    * the lib does not export it, so URL-only call sites (this one and the URL
-   * preselection) share the app's `findSkillByUrl` instead.
+   * preselection) share `findSkillByUrl` from `@epam/ai-dial-chat-hooks` instead.
    */
   const selectSkillByUrl = useCallback(
     (url: string) => {

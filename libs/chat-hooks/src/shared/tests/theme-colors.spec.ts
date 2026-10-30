@@ -1,6 +1,10 @@
-import { Theme } from '@epam/ai-dial-chat-shared';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { applyThemeColors } from '../apply-theme-colors';
+import type { Theme } from '@epam/ai-dial-chat-shared';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  applyThemeColors,
+  ColorScheme,
+  getOsPreferredTheme,
+} from '../theme-colors';
 
 describe('applyThemeColors', () => {
   let mockElement: HTMLElement;
@@ -22,7 +26,7 @@ describe('applyThemeColors', () => {
       },
     };
 
-    applyThemeColors(mockElement, mockTheme);
+    applyThemeColors(mockElement, mockTheme.colors);
 
     expect(mockElement.style.getPropertyValue('--primary-color')).toBe(
       '#000000',
@@ -45,7 +49,7 @@ describe('applyThemeColors', () => {
       },
     };
 
-    applyThemeColors(mockElement, mockTheme);
+    applyThemeColors(mockElement, mockTheme.colors);
 
     expect(mockElement.style.getPropertyValue('--primary-color')).toBe(
       '#ffffff',
@@ -68,7 +72,7 @@ describe('applyThemeColors', () => {
       colors: {},
     };
 
-    applyThemeColors(mockElement, mockTheme);
+    applyThemeColors(mockElement, mockTheme.colors);
 
     expect(mockElement.style.length).toBe(0);
   });
@@ -84,7 +88,7 @@ describe('applyThemeColors', () => {
       },
     };
 
-    applyThemeColors(mockElement, mockTheme);
+    applyThemeColors(mockElement, mockTheme.colors);
 
     expect(mockElement.style.getPropertyValue('--bg-color')).toBe(
       'rgb(255, 0, 0)',
@@ -109,10 +113,10 @@ describe('applyThemeColors', () => {
       colors: { 'bg-color': '#ffffff' },
     };
 
-    applyThemeColors(mockElement, darkTheme);
+    applyThemeColors(mockElement, darkTheme.colors);
     expect(mockElement.style.getPropertyValue('--bg-color')).toBe('#000000');
 
-    applyThemeColors(mockElement, lightTheme);
+    applyThemeColors(mockElement, lightTheme.colors);
     expect(mockElement.style.getPropertyValue('--bg-color')).toBe('#ffffff');
   });
 
@@ -141,8 +145,8 @@ describe('applyThemeColors', () => {
     };
 
     it('removes keys the next theme does not declare', () => {
-      applyThemeColors(mockElement, richTheme);
-      applyThemeColors(mockElement, sparseTheme);
+      applyThemeColors(mockElement, richTheme.colors);
+      applyThemeColors(mockElement, sparseTheme.colors);
 
       expect(mockElement.style.getPropertyValue('--bg-layer-base')).toBe(
         '#000000',
@@ -154,7 +158,7 @@ describe('applyThemeColors', () => {
     });
 
     it('clears everything previously written when called with no theme', () => {
-      applyThemeColors(mockElement, richTheme);
+      applyThemeColors(mockElement, richTheme.colors);
       applyThemeColors(mockElement, undefined);
 
       expect(mockElement.style.getPropertyValue('--bg-layer-base')).toBe('');
@@ -168,7 +172,7 @@ describe('applyThemeColors', () => {
     it('does not remove properties it never wrote', () => {
       mockElement.style.setProperty('--set-by-someone-else', '#123456');
 
-      applyThemeColors(mockElement, richTheme);
+      applyThemeColors(mockElement, richTheme.colors);
       applyThemeColors(mockElement, undefined);
 
       expect(mockElement.style.getPropertyValue('--set-by-someone-else')).toBe(
@@ -179,8 +183,8 @@ describe('applyThemeColors', () => {
     it('tracks applied keys per element', () => {
       const otherElement = document.createElement('div');
 
-      applyThemeColors(mockElement, richTheme);
-      applyThemeColors(otherElement, sparseTheme);
+      applyThemeColors(mockElement, richTheme.colors);
+      applyThemeColors(otherElement, sparseTheme.colors);
       applyThemeColors(otherElement, undefined);
 
       expect(mockElement.style.getPropertyValue('--text-accent-primary')).toBe(
@@ -190,8 +194,8 @@ describe('applyThemeColors', () => {
     });
 
     it('is idempotent when the same theme is applied twice', () => {
-      applyThemeColors(mockElement, richTheme);
-      applyThemeColors(mockElement, richTheme);
+      applyThemeColors(mockElement, richTheme.colors);
+      applyThemeColors(mockElement, richTheme.colors);
 
       expect(mockElement.style.getPropertyValue('--bg-layer-base')).toBe(
         '#ffffff',
@@ -203,5 +207,31 @@ describe('applyThemeColors', () => {
         '#cccccc',
       );
     });
+  });
+});
+
+describe('getOsPreferredTheme', () => {
+  const stubPrefersDark = (matches: boolean) =>
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn((query: string) => ({
+        matches: query === '(prefers-color-scheme: dark)' && matches,
+      })),
+    );
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('returns Dark when the OS prefers a dark scheme', () => {
+    stubPrefersDark(true);
+
+    expect(getOsPreferredTheme()).toBe(ColorScheme.Dark);
+  });
+
+  it('returns Light when the OS does not prefer a dark scheme', () => {
+    stubPrefersDark(false);
+
+    expect(getOsPreferredTheme()).toBe(ColorScheme.Light);
   });
 });

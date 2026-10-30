@@ -1,5 +1,6 @@
 import {
   findDeploymentByIdOrReference,
+  findSkillByUrl,
   getApiErrorDetails,
   normalizeDeploymentId,
   parsePromptResourceUrl,
@@ -29,7 +30,6 @@ import { useSkills } from '../../context/SkillsContext';
 import { getPrompt, getPublicPrompt } from '../../server-api/prompts.api';
 import { UrlPreselectionQuery } from '../../types/url-preselection';
 import { isDeepLinkableDeployment } from '../../utils/deployments';
-import { findSkillByUrl } from '../../utils/skills';
 import {
   getCleanedLocationTarget,
   getCurrentRouterState,

@@ -1,8 +1,8 @@
 import {
-  type ToolsetCredentialsLevel,
   ExternalServiceCredentialsLevel,
+  type ExternalServiceAuthType,
+  type ToolsetCredentialsLevel,
 } from '@epam/ai-dial-chat-hooks';
-import type { RowAuthType } from '../types/signin-interrupt';
 
 export interface OAuthSettings {
   clientId?: string;
@@ -15,7 +15,7 @@ export interface OAuthSettings {
 export interface ResolvedRowInfo {
   displayName: string;
   displayVersion?: string;
-  authenticationType?: RowAuthType;
+  authenticationType?: ExternalServiceAuthType;
   credentialsLevel: ToolsetCredentialsLevel | ExternalServiceCredentialsLevel;
   oauthSettings?: OAuthSettings;
 }

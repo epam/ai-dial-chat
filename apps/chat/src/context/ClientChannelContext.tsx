@@ -1,4 +1,11 @@
-import { parseExternalServiceUrl } from '@epam/ai-dial-chat-hooks';
+import {
+  ClientChannelRpcRequest,
+  EXTERNAL_SERVICE_SIGNIN_METHOD,
+  parseExternalServiceUrl,
+  PendingSigninEvent,
+  PendingSigninEventKind,
+  TOOLSET_SIGNIN_METHOD,
+} from '@epam/ai-dial-chat-hooks';
 import {
   createContext,
   type FC,
@@ -19,13 +26,6 @@ import {
   subscribeClientChannel,
   unsubscribeClientChannel,
 } from '../server-api/client-channel';
-import {
-  ClientChannelRpcRequest,
-  EXTERNAL_SERVICE_SIGNIN_METHOD,
-  PendingSigninEvent,
-  PendingSigninEventKind,
-  TOOLSET_SIGNIN_METHOD,
-} from '../types/client-channel';
 import { ROUTES } from '../types/routes';
 import { useFeatureFlag } from './AppConfigContext';
 import { useGeneration } from './GenerationContext';

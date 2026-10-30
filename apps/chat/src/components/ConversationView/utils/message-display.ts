@@ -5,11 +5,9 @@ import {
 import {
   MessageRole,
   type Message,
-  type Stage,
   type StarterOption,
   type StatusMessage,
 } from '@epam/ai-dial-chat-shared';
-import { prepareCitationContent } from '@epam/ai-dial-quotations';
 
 /*
  * Extracts a human-readable name from a raw deployment ID.
@@ -134,24 +132,3 @@ export const getInputMessageHistory = (
   isNavigationDisabled
     ? undefined
     : messages.filter((m) => m.role === MessageRole.User).map((m) => m.content);
-
-/**
- * Returns `stages` with citation markup in each stage's `content` prepared
- * for rendering (hidden while streaming, unsupported shapes escaped), keeping
- * every stage without `<cit` markup — and the array itself when none has
- * any — by reference so memoized stage rows are not re-rendered.
- */
-export const prepareStageCitations = (
-  stages: Stage[],
-  isStreaming: boolean,
-): Stage[] => {
-  if (!stages.some((stage) => stage.content?.includes('<cit'))) return stages;
-  return stages.map((stage) =>
-    stage.content?.includes('<cit')
-      ? {
-          ...stage,
-          content: prepareCitationContent(stage.content, isStreaming),
-        }
-      : stage,
-  );
-};

@@ -1,10 +1,16 @@
-import { Theme } from '@epam/ai-dial-chat-shared';
-import { ThemeId } from '../types/theme-id';
+/** Colour scheme the operating system reports through `prefers-color-scheme`. */
+export enum ColorScheme {
+  /** The OS asks for a dark scheme. */
+  Dark = 'dark',
+  /** The OS asks for a light scheme, or states no preference. */
+  Light = 'light',
+}
 
-export const getOsPreferredTheme = (): string =>
+/** Returns the colour scheme the OS currently prefers. */
+export const getOsPreferredTheme = (): ColorScheme =>
   window.matchMedia('(prefers-color-scheme: dark)').matches
-    ? ThemeId.Dark
-    : ThemeId.Light;
+    ? ColorScheme.Dark
+    : ColorScheme.Light;
 
 /*
  * Custom properties written by the last `applyThemeColors` call, per element.
@@ -16,23 +22,23 @@ export const getOsPreferredTheme = (): string =>
 const appliedProperties = new WeakMap<HTMLElement, string[]>();
 
 /**
- * Applies a theme's colors to `element` as CSS custom properties, first
- * removing the properties the previous call wrote to that same element.
- *
- * Passing no theme clears the previously applied properties and writes
- * nothing, returning the element to the values its stylesheets provide.
- * Properties this function never wrote are left alone.
+ * Writes `colors` to `element` as `--<key>` custom properties after removing
+ * the ones the previous call wrote to that element. Without `colors` it only
+ * removes them; properties it never wrote are left alone.
  */
-export const applyThemeColors = (element: HTMLElement, theme?: Theme) => {
+export const applyThemeColors = (
+  element: HTMLElement,
+  colors?: Readonly<Record<string, string>>,
+): void => {
   const previous = appliedProperties.get(element);
   if (previous) {
     previous.forEach((property) => element.style.removeProperty(property));
     appliedProperties.delete(element);
   }
 
-  if (!theme) return;
+  if (!colors) return;
 
-  const written = Object.entries(theme.colors).map(([key, value]) => {
+  const written = Object.entries(colors).map(([key, value]) => {
     const property = `--${key}`;
     element.style.setProperty(property, value);
     return property;

@@ -13,6 +13,7 @@ import {
   type ToolsetCredentialsLabels,
   useCatalogEditNavigation,
   useCatalogToolsetCredentials,
+  findSchemaDisplayName,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
@@ -79,10 +80,7 @@ import {
   getCatalogNoResultsTitle,
   getCatalogSearchPlaceholder,
 } from '../../utils/catalog';
-import {
-  findSchemaDisplayName,
-  resolveCatalogItemEntity,
-} from '../../utils/entity-notification';
+import { resolveCatalogItemEntity } from '../../utils/entity-notification';
 import { resolveFavoriteEntityType } from '../../utils/favorites';
 import {
   getAccessRulesLabels,

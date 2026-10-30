@@ -42,10 +42,12 @@ On success, `handleDelete` calls `onDeleteSuccess(item)` — `CatalogView`'s
 `notifyOperationSuccess`/`EntityOperation.Deleted` (see
 `entity-operation-notifications`). The notifiable entity is not fixed per
 branch: it is resolved by `resolveCatalogItemEntity(item.type, deployment, schemas)`
-(`apps/chat/src/utils/entity-notification.ts`), looking the deployment up by
+(`apps/chat/src/utils/entity-notification.ts`, mapping the kind from
+`resolveCatalogEntityKind` in `libs/chat-hooks/src/catalog/catalog-entity-kind.ts`), looking the deployment up by
 id or reference, so the notification names the kind of thing the user
 actually deleted rather than a generic noun; the interpolation values are the
-item's `name` and its schema display name (`findSchemaDisplayName`). When the
+item's `name` and its schema display name (`findSchemaDisplayName` from
+`@epam/ai-dial-chat-hooks`). When the
 deleted item's id is in the user's favourites, `handleDeleteSuccess` also
 removes it through `toggleFavorite(item.id, false, …)`; a failed cleanup is
 only logged with `console.warn` (Issue #9143).
