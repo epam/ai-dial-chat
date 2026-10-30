@@ -4,6 +4,7 @@ import { type Conversation, MessageRole } from '@epam/ai-dial-chat-shared';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as ClientChannelContextModule from '../../../context/ClientChannelContext';
+import { ConversationDataSourceProvider } from '../../../context/ConversationDataSourceContext';
 import * as ConversationsContextModule from '../../../context/ConversationsContext';
 import * as DeploymentsContextModule from '../../../context/DeploymentsContext';
 import * as NotificationContextModule from '../../../context/NotificationContext';
@@ -244,7 +245,7 @@ describe('ConversationPage — reload before the first answer saved its start', 
       /* The reload once the running generation finished. */
       .mockResolvedValue(saved() as never);
 
-    render(<ConversationPage />);
+    render(<ConversationPage />, { wrapper: ConversationDataSourceProvider });
 
     await waitFor(() =>
       expect(chatStreamApi.streamCompletion).toHaveBeenCalledOnce(),

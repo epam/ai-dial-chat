@@ -17,7 +17,7 @@ interface ProjectResult {
  * project for a new id. A `404` is a not-found result, every other failure an
  * error; the request is aborted on unmount and on an id change.
  *
- * @param client - Configured project requests, from `createProjectsApiClient`.
+ * @param client - Configured project requests, from `createProjectsApiClient`; it must be referentially stable, because a new object reloads.
  * @param id - The project's DIAL id, or `null` when the route names none.
  * @param enabled - Whether the page is enabled; no request is sent while `false`.
  */

@@ -79,6 +79,7 @@ export interface GetProjectConversationRequest {
 export interface ListProjectConversationsRequest {
   id: string;
   limit?: number;
+  offset?: number;
 }
 
 export interface RenameProjectConversationRequest {
@@ -782,6 +783,10 @@ export class ProjectsApi extends runtime.BaseAPI {
 
     if (requestParameters['limit'] != null) {
       queryParameters['limit'] = requestParameters['limit'];
+    }
+
+    if (requestParameters['offset'] != null) {
+      queryParameters['offset'] = requestParameters['offset'];
     }
 
     const headerParameters: runtime.HTTPHeaders = {};

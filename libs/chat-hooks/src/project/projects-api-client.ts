@@ -56,7 +56,7 @@ export interface ProjectsConfiguredClient {
     options?: RequestInit,
   ) => Promise<RawApiResponse>;
   listProjectConversations: (
-    request: { id: string; limit?: number },
+    request: { id: string; limit?: number; offset?: number },
     options?: RequestInit,
   ) => Promise<ProjectConversationListResponseDto>;
   createProjectConversation: (request: {
@@ -111,8 +111,16 @@ export interface ProjectUpdateRequest {
   contentVersion: string;
 }
 
-/** The first message of a project conversation, with the fields a top-level create sends. */
-export interface ProjectConversationCreateRequest {
+/** One page of a project's conversations, newest first. */
+export interface ProjectConversationListPage {
+  /** Page size, `1..100`; the BFF defaults to 50. */
+  limit?: number;
+  /** Conversations to skip; the next page starts at the count already loaded. */
+  offset?: number;
+}
+
+/** The first message of a new top-level or project conversation. */
+export interface ConversationCreateRequest {
   /** The first user message. */
   firstMessage: string;
   /** Model or application the conversation starts with. */
@@ -153,10 +161,11 @@ export interface ProjectsApiClient {
   listProjectConversations: (
     projectId: string,
     signal?: AbortSignal,
+    page?: ProjectConversationListPage,
   ) => Promise<ProjectConversationListResponseDto>;
   createProjectConversation: (
     projectId: string,
-    request: ProjectConversationCreateRequest,
+    request: ConversationCreateRequest,
   ) => Promise<ConversationResponseDto>;
   getProjectConversation: (
     conversationId: string,
@@ -212,31 +221,30 @@ const requireConversationParts = (conversationId: string) => {
 const withSignal = (signal?: AbortSignal): [RequestInit] | [] =>
   signal ? [{ signal }] : [];
 
-/** The create-conversation body a top-level create sends, for a project conversation. */
-export const buildProjectConversationCreateDto = ({
+/** The create-conversation body of a first message, the same for a top-level and a project conversation. */
+export const buildCreateConversationDto = ({
   firstMessage,
   deploymentId,
   attachments,
   configurationValue,
   formValue,
   skills,
-}: ProjectConversationCreateRequest): CreateConversationDto =>
-  ({
-    firstMessage,
-    deploymentId,
-    ...(attachments?.length || configurationValue || formValue || skills?.length
-      ? {
-          custom_content: {
-            ...(attachments?.length ? { attachments } : {}),
-            ...(configurationValue
-              ? { configuration_value: configurationValue }
-              : {}),
-            ...(formValue ? { form_value: formValue } : {}),
-            ...(skills?.length ? { skills } : {}),
-          },
-        }
-      : {}),
-  }) as CreateConversationDto;
+}: ConversationCreateRequest): CreateConversationDto => ({
+  firstMessage,
+  deploymentId,
+  ...(attachments?.length || configurationValue || formValue || skills?.length
+    ? {
+        custom_content: {
+          ...(attachments?.length ? { attachments } : {}),
+          ...(configurationValue
+            ? { configuration_value: configurationValue }
+            : {}),
+          ...(formValue ? { form_value: formValue } : {}),
+          ...(skills?.length ? { skills } : {}),
+        },
+      }
+    : {}),
+});
 
 /**
  * Composes the project requests over a configured generated `ProjectsApi`.
@@ -287,12 +295,15 @@ export const createProjectsApiClient = (
         ...withSignal(signal),
       )
     ).raw,
-  listProjectConversations: (projectId, signal) =>
-    client.listProjectConversations({ id: projectId }, ...withSignal(signal)),
+  listProjectConversations: (projectId, signal, page) =>
+    client.listProjectConversations(
+      { id: projectId, ...page },
+      ...withSignal(signal),
+    ),
   createProjectConversation: (projectId, request) =>
     client.createProjectConversation({
       id: projectId,
-      createConversationDto: buildProjectConversationCreateDto(request),
+      createConversationDto: buildCreateConversationDto(request),
     }),
   getProjectConversation: (conversationId, signal) =>
     client.getProjectConversation(

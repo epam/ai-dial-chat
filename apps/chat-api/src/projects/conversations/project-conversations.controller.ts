@@ -100,13 +100,13 @@ export class ProjectConversationsController {
       'The conversations; a project without conversations lists none',
     type: ProjectConversationListResponseDto,
   })
-  @ApiResponse({ status: 400, description: 'Invalid id or limit' })
+  @ApiResponse({ status: 400, description: 'Invalid id, limit or offset' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   @ApiResponse({ status: 403, description: READ_FORBIDDEN })
   @ApiResponse({ status: 404, description: 'The project does not exist' })
   listProjectConversations(
     @Param() { id }: ProjectIdParamDto,
-    @Query() { limit }: ProjectConversationListQueryDto,
+    @Query() { limit, offset }: ProjectConversationListQueryDto,
     @Req() req: Request,
   ): Promise<ProjectConversationListResponseDto> {
     const { at } = req.user as SessionUser;
@@ -114,6 +114,7 @@ export class ProjectConversationsController {
       requireProjectId(id),
       at,
       limit,
+      offset,
     );
   }
 

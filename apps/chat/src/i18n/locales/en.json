@@ -912,13 +912,12 @@
       "invalidFolderNameError": "Folder name contains invalid characters.",
       "duplicateFolderNameError": "A folder with this name already exists.",
       "chatsWarning_one": "The {{count}} chat in this project is published with it.",
-      "chatsWarning_other": "The {{count}} chats in this project are published with them."
+      "chatsWarning_other": "The {{count}} chats in this project are published with it."
     },
     "chats": {
       "title": "Chats",
       "empty": "No outputs or chats yet",
       "emptyDescription": "Your outputs and chats will appear here once started.",
-      "inputPlaceholder": "How can I help you today?",
       "loading": "Loading chats",
       "error": "Could not load the chats",
       "openLabel": "{{title}}, by {{author}}",

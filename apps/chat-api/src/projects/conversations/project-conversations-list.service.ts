@@ -100,16 +100,18 @@ export class ProjectConversationsListService {
    * @param project - the project to list
    * @param accessToken - caller's bearer token; Core checks read access
    * @param limit - page size, newest first
+   * @param offset - conversations to skip in the newest-first order
    */
   async listProjectConversations(
     project: ParsedProjectId,
     accessToken: string,
     limit = PROJECT_CONVERSATION_LIST_DEFAULT_LIMIT,
+    offset = 0,
   ): Promise<ProjectConversationListResponseDto> {
     const files = (await this.listFiles(project, accessToken)).sort(
       newestFirst,
     );
-    const page = files.slice(0, limit);
+    const page = files.slice(offset, offset + limit);
     const items = await mapWithConcurrency(
       page,
       TITLE_READ_CONCURRENCY,
@@ -118,7 +120,7 @@ export class ProjectConversationsListService {
     this.logger.debug(
       `Listed project conversations (total=${files.length}, returned=${items.length})`,
     );
-    return { items, hasMore: files.length > page.length };
+    return { items, hasMore: files.length > offset + page.length };
   }
 
   /** Drops the cached title of one conversation; called on every write through the project endpoints. */

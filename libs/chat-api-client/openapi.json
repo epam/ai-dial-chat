@@ -9899,6 +9899,18 @@
               "example": 50,
               "type": "number"
             }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "description": "Number of conversations to skip in the newest-first order; the next page starts at the count already loaded.",
+            "schema": {
+              "minimum": 0,
+              "default": 0,
+              "example": 0,
+              "type": "number"
+            }
           }
         ],
         "responses": {
@@ -9913,7 +9925,7 @@
             }
           },
           "400": {
-            "description": "Invalid id or limit"
+            "description": "Invalid id, limit or offset"
           },
           "401": {
             "description": "Not authenticated"

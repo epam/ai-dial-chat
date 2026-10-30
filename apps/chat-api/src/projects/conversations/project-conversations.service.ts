@@ -64,11 +64,13 @@ export class ProjectConversationsService {
     project: ParsedProjectId,
     accessToken: string,
     limit?: number,
+    offset?: number,
   ): Promise<ProjectConversationListResponseDto> {
     return this.listService.listProjectConversations(
       project,
       accessToken,
       limit,
+      offset,
     );
   }
 

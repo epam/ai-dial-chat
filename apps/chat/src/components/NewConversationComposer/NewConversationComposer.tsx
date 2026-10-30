@@ -554,8 +554,11 @@ const NewConversationComposer: FC<Props> = ({
           isWelcomeLayout &&
             'justify-center px-4 py-14 desktop:px-8 desktop:py-16',
         )}
-        role="region"
-        aria-label={t(ChatI18nKeys.WelcomeScreen)}
+        /* Embedded in a host page (a project's Chats), the composer is part of the host's own region. */
+        role={isEmbeddedLayout ? undefined : 'region'}
+        aria-label={
+          isEmbeddedLayout ? undefined : t(ChatI18nKeys.WelcomeScreen)
+        }
       >
         {isCelebrationEnabled && isWelcomeLayout && <CelebrationDecor />}
         {agentDescription && (

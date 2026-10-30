@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { getProjectConversationRoute } from '../../constants/routes';
 import {
+  ChatI18nKeys,
   ProjectsI18nKeys,
   ToolsI18nKeys,
 } from '../../constants/translation-keys';
@@ -46,20 +47,32 @@ interface Props {
   projectName: string;
   /** Whether the caller owns the project: only an owner chats, renames and deletes. */
   canEdit: boolean;
+  /** Called after a chat is deleted, so the page can keep its chat count current. */
+  onConversationDeleted?: () => void;
 }
 
 const ProjectConversationsSection: FC<Props> = ({
   projectId,
   projectName,
   canEdit,
+  onConversationDeleted,
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { language } = useLanguage();
   const { showErrorNotification, showSuccessNotification } = useNotification();
   const labels = useProjectConversationsPanelLabels();
-  const { items, isLoading, hasError, retry, rename, remove } =
-    useProjectConversations(projectId);
+  const {
+    items,
+    isLoading,
+    hasError,
+    hasMore,
+    isLoadingMore,
+    retry,
+    loadMore,
+    rename,
+    remove,
+  } = useProjectConversations(projectId);
   const {
     items: deployments,
     selectedItemId,
@@ -227,6 +240,7 @@ const ProjectConversationsSection: FC<Props> = ({
     async (id: string) => {
       try {
         await remove(id);
+        onConversationDeleted?.();
         showSuccessNotification({
           message: t(ProjectsI18nKeys.ChatsDeleteSuccess),
         });
@@ -239,8 +253,29 @@ const ProjectConversationsSection: FC<Props> = ({
         throw error;
       }
     },
-    [remove, showErrorNotification, showSuccessNotification, t],
+    [
+      onConversationDeleted,
+      remove,
+      showErrorNotification,
+      showSuccessNotification,
+      t,
+    ],
   );
+
+  const loadMoreWithToast = useCallback(async () => {
+    try {
+      await loadMore();
+    } catch (error) {
+      const { traceId } = await getApiErrorDetails(error);
+      showErrorNotification({
+        message: t(ProjectsI18nKeys.ChatsError),
+        requestId: traceId,
+      });
+    }
+  }, [loadMore, showErrorNotification, t]);
+  const handleLoadMore = useCallback(() => {
+    void loadMoreWithToast();
+  }, [loadMoreWithToast]);
 
   return (
     <>
@@ -259,7 +294,7 @@ const ProjectConversationsSection: FC<Props> = ({
               }
               isModelSelectorLoading={isDeploymentsLoading}
               modelSelectorError={deploymentsError}
-              placeholder={t(ProjectsI18nKeys.ChatsInputPlaceholder)}
+              placeholder={t(ChatI18nKeys.Placeholder)}
               onCreateConversation={handleCreateConversation}
               modelPickerOverlay={renderOverlay}
               toolsMenuItems={toolsMenuItems}
@@ -277,6 +312,9 @@ const ProjectConversationsSection: FC<Props> = ({
         isLoading={isLoading}
         hasError={hasError}
         onRetry={retry}
+        hasMore={hasMore}
+        isLoadingMore={isLoadingMore}
+        onLoadMore={handleLoadMore}
         onOpen={handleOpen}
         onRename={canEdit ? handleRename : undefined}
         onDelete={canEdit ? handleDelete : undefined}

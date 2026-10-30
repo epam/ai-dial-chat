@@ -91,7 +91,7 @@ describe('ProjectConversationsController', () => {
     service.listConversations.mockResolvedValue({ items: [], hasMore: false });
 
     const res = await request(app.getHttpServer())
-      .get(`/api/v1/projects/${ENCODED}/conversations?limit=10`)
+      .get(`/api/v1/projects/${ENCODED}/conversations?limit=10&offset=20`)
       .expect(200);
 
     expect(res.headers['cache-control']).toBe('private, no-store');
@@ -99,12 +99,13 @@ describe('ProjectConversationsController', () => {
       expect.objectContaining({ id: PROJECT_ID }),
       USER.at,
       10,
+      20,
     );
   });
 
-  it('rejects a limit above 100', async () => {
+  it.each(['limit=101', 'offset=-1'])('rejects %s', async (query) => {
     await request(app.getHttpServer())
-      .get(`/api/v1/projects/${ENCODED}/conversations?limit=101`)
+      .get(`/api/v1/projects/${ENCODED}/conversations?${query}`)
       .expect(400);
     expect(service.listConversations).not.toHaveBeenCalled();
   });

@@ -139,9 +139,10 @@ The page owns no conversation state: `ConversationPage` and `GenerationContext` 
 1. **The chat input, only when `project.canEdit`.**
    - It is `NewConversationComposer` with a new `ComposerLayout.Embedded` (`apps/chat/src/types/conversation-composer.ts`): no greeting, no page footer (`FooterMessage`: operator message and app version), the input in normal flow at the top of the column, with the model selector, attachments, tools, the `+` menu's Prompts and Skills entries, the `/` command menu, skill mentions (sent as the first message's `skills`, restored on a failed create) and the deployment's `isChatMessageInputDisabled`, exactly as on the new-conversation screen. Both screens take the prompt and skill wiring from one hook, `useComposerMenus` (`apps/chat/src/hooks/conversation/useComposerMenus.tsx`), so the two composers cannot drift apart.
    - The selection comes from `DeploymentsContext`, and the section calls `restoreDefaultSelection` on mount, as `ConversationRoute` does, so a model restored from a viewed chat does not leak in.
-   - Its placeholder is `projects.chats.inputPlaceholder` ("How can I help you today?").
+   - Its placeholder is the shared `chat.placeholder` ("How can I help you today?").
 2. **`ProjectConversationList`**, fed by `useProjectConversations(projectId)` (`apps/chat/src/hooks/projects/useProjectConversations.ts`).
-   - The hook owns `{ items, isLoading, hasError, retry, rename, remove }` in local state. It follows the `useFavicon` pattern: `AbortController` cleanup, async/await.
+   - The hook owns `{ items, isLoading, hasError, hasMore, isLoadingMore, retry, loadMore, rename, remove }` in local state. It follows the `useFavicon` pattern: `AbortController` cleanup, async/await.
+   - While `hasMore`, the list ends with a Show more button (`buttons.showMore`). `loadMore` requests the next page with `offset` set to the rows already listed, appends it without repeating a row, and a failure keeps the rows and shows `projects.chats.error`.
    - Items map from `ProjectConversationItemDto` (`title`, `author` → `authorName`).
 
 **First message.** Submitting the input SHALL:
@@ -154,10 +155,12 @@ The page owns no conversation state: `ConversationPage` and `GenerationContext` 
 
 **Row actions,** owner only:
 - `onOpen` navigates to the project chat route.
-- `onRename` opens a kit `Popup` named `projects.chats.renameTitle`, with a labelled `Input` seeded with the title and Save and Cancel buttons. Save trims the value, refuses an empty one inline (`projects.chats.renameEmpty`), and calls `renameProjectConversation`.
+- `onRename` opens a kit `Popup` named `projects.chats.renameTitle`, with a labelled `Input` seeded with the title and Save and Cancel buttons (`buttons.save`, `buttons.cancel`). Save, or Enter in the input, trims the value, refuses an empty one inline (`projects.chats.renameEmpty`), and calls `renameProjectConversation`.
 - `onDelete` opens `DeleteConfirmationDialog` with `projects.chats.deleteConfirmTitle` (`{{title}}`) and `projects.chats.deleteConfirmDescription`, then calls `deleteProjectConversation`.
 
-Success updates the list in place and shows a toast. Failure shows `projects.chats.renameError` or `projects.chats.deleteError`.
+Success updates the list in place and shows a toast. Failure shows `projects.chats.renameError` or `projects.chats.deleteError`. Neither dialog can be closed while its request is pending.
+
+After a delete, the project view's chat count (the delete-project message and the publish warning) drops by one without a reload.
 
 **Read-only** (`canEdit: false`): no input, and `onRename`/`onDelete` are omitted, so the list only opens chats.
 
@@ -186,7 +189,6 @@ New strings SHALL be added to `apps/chat/src/i18n/locales/en.json` and to `Proje
 - `projects.chats.title` ("Chats");
 - `projects.chats.empty` ("No outputs or chats yet");
 - `projects.chats.emptyDescription` ("Your outputs and chats will appear here once started.");
-- `projects.chats.inputPlaceholder` ("How can I help you today?");
 - `projects.chats.loading`, `projects.chats.error`;
 - `projects.chats.openLabel` ("{{title}}, by {{author}}") and `projects.chats.openLabelNoAuthor` ("{{title}}");
 - `projects.chats.moreActions` ("More actions for {{title}}");
@@ -198,7 +200,7 @@ New strings SHALL be added to `apps/chat/src/i18n/locales/en.json` and to `Proje
 - `projects.publish.chatsWarning_one` / `_other`;
 - `projects.actions.deleteConfirmWithChatsDescription_one` / `_other`.
 
-The Rename, Delete, Save and Retry labels reuse `buttons.rename`, `buttons.delete`, `buttons.save` and `buttons.retry`. The lib never imports i18n.
+The Rename, Delete, Save, Cancel, Retry and Show more labels reuse `buttons.rename`, `buttons.delete`, `buttons.save`, `buttons.cancel`, `buttons.retry` and `buttons.showMore`. The lib never imports i18n.
 
 #### Scenario: Labels come from the projects namespace
 
@@ -217,7 +219,8 @@ The project chat surfaces (`ProjectConversationsSection`, `ProjectConversationLi
   - Avatars are `aria-hidden`.
   - Every Tabler icon uses `stroke={DIAL_KIT_ICON_STROKE}`.
   - The row menu is keyboard-operable.
-  - The rename and delete dialogs are labelled, focus moves into them and returns to the row's ⋮ trigger on close.
+  - The rename and delete dialogs are labelled, focus moves into them and returns to the row's ⋮ trigger on close. After a delete, whose row is gone, focus moves to the row now in its place, the one before it, or the list.
+  - The embedded composer is not a landmark of its own: it carries no `Welcome screen` region inside the Chats column.
   - Loading, error and create/rename/delete outcomes are announced through a `role="status"` region or toasts.
   - Text fallbacks resolve to at least 7:1 contrast.
 - **Flag.** Everything here is behind `FeatureKey.ProjectsEnabled` (`PROJECTS_ENABLED`). No `ENABLED_FEATURES` role key applies.
@@ -227,6 +230,11 @@ The project chat surfaces (`ProjectConversationsSection`, `ProjectConversationLi
 
 - **WHEN** the project view with a 200-character chat title renders at 360px width
 - **THEN** the document has no horizontal scroll, and the title is truncated with its full text in a tooltip
+
+#### Scenario: Focus after a delete
+
+- **WHEN** the owner deletes the first of two rows
+- **THEN** focus moves to the row that is now first
 
 #### Scenario: Delete dialog returns focus
 

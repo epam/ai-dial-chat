@@ -107,6 +107,9 @@ const ProjectConversationListComponent: FC<ProjectConversationListProps> = ({
   isLoading = false,
   hasError = false,
   onRetry,
+  hasMore = false,
+  isLoadingMore = false,
+  onLoadMore,
   onOpen,
   onRename,
   onDelete,
@@ -156,19 +159,29 @@ const ProjectConversationListComponent: FC<ProjectConversationListProps> = ({
       );
     }
     return (
-      <ul className="m-0 flex min-w-0 list-none flex-col gap-1 p-0">
-        {items.map((item) => (
-          <ConversationRow
-            key={item.id}
-            item={item}
-            labels={labels}
-            rowTitleClassName={rowTitleClassName}
-            onOpen={onOpen}
-            onRename={onRename}
-            onDelete={onDelete}
+      <>
+        <ul className="m-0 flex min-w-0 list-none flex-col gap-1 p-0">
+          {items.map((item) => (
+            <ConversationRow
+              key={item.id}
+              item={item}
+              labels={labels}
+              rowTitleClassName={rowTitleClassName}
+              onOpen={onOpen}
+              onRename={onRename}
+              onDelete={onDelete}
+            />
+          ))}
+        </ul>
+        {hasMore && onLoadMore && (
+          <GhostButton
+            className="self-center"
+            label={labels.loadMoreLabel ?? 'Show more'}
+            disabled={isLoadingMore}
+            onClick={onLoadMore}
           />
-        ))}
-      </ul>
+        )}
+      </>
     );
   };
 

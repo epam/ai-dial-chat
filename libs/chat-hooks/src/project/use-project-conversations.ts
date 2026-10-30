@@ -1,27 +1,45 @@
+import type { ProjectConversationListResponseDto } from '@epam/ai-dial-chat-api-client';
 import type { ProjectConversationListItem } from '@epam/ai-dial-projects';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ProjectsApiClient } from './projects-api-client';
 
 interface ProjectConversationsState {
   items: ProjectConversationListItem[];
   isLoading: boolean;
   hasError: boolean;
+  /** More conversations exist after `items`. */
+  hasMore: boolean;
+  /** The next page is being read. */
+  isLoadingMore: boolean;
 }
 
 const INITIAL_STATE: ProjectConversationsState = {
   items: [],
   isLoading: true,
   hasError: false,
+  hasMore: false,
+  isLoadingMore: false,
 };
+
+const EMPTY_STATE: ProjectConversationsState = {
+  ...INITIAL_STATE,
+  isLoading: false,
+};
+
+const toListItems = ({
+  items,
+}: ProjectConversationListResponseDto): ProjectConversationListItem[] =>
+  items.map(({ id, title, author }) => ({ id, title, authorName: author }));
 
 /**
  * Loads a project's conversations for its Chats list and keeps them in local
- * state: there is no live subscription, so the list is read once per project
- * (and on retry), and rename and delete update it in place. The request is
- * aborted when the project changes or the view unmounts. Rename and delete
- * reject on failure for the caller's toast.
+ * state: there is no live subscription, so the first page is read once per
+ * project (and on retry), `loadMore` appends the next one, and rename and
+ * delete update the list in place. Requests are aborted when the project
+ * changes or the view unmounts. Rename, delete and `loadMore` reject on
+ * failure for the caller's toast.
  *
- * @param client - Configured project requests, from `createProjectsApiClient`.
+ * @param client - Configured project requests, from `createProjectsApiClient`; it must be referentially stable, because a new object reloads the list.
  * @param projectId - The project's DIAL id, or `null` while none is known.
  */
 export const useProjectConversations = (
@@ -35,30 +53,39 @@ export const useProjectConversations = (
 ) => {
   const [state, setState] = useState(INITIAL_STATE);
   const [reloadToken, setReloadToken] = useState(0);
+  /* Aborts a page read when the project changes, the list reloads or the view unmounts. */
+  const pageControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    if (projectId == null) return;
+    if (projectId == null) {
+      setState(EMPTY_STATE);
+      return;
+    }
     const controller = new AbortController();
+    pageControllerRef.current = controller;
     const load = async () => {
-      setState((prev) => ({ ...prev, isLoading: true, hasError: false }));
+      setState((prev) => ({
+        ...prev,
+        isLoading: true,
+        hasError: false,
+        isLoadingMore: false,
+      }));
       try {
-        const { items } = await client.listProjectConversations(
+        const page = await client.listProjectConversations(
           projectId,
           controller.signal,
         );
         if (controller.signal.aborted) return;
         setState({
-          items: items.map(({ id, title, author }) => ({
-            id,
-            title,
-            authorName: author,
-          })),
+          items: toListItems(page),
           isLoading: false,
           hasError: false,
+          hasMore: page.hasMore,
+          isLoadingMore: false,
         });
       } catch {
         if (controller.signal.aborted) return;
-        setState({ items: [], isLoading: false, hasError: true });
+        setState({ ...EMPTY_STATE, hasError: true });
       }
     };
     void load();
@@ -66,6 +93,37 @@ export const useProjectConversations = (
   }, [client, projectId, reloadToken]);
 
   const retry = useCallback(() => setReloadToken((token) => token + 1), []);
+
+  const loadMore = useCallback(async () => {
+    const controller = pageControllerRef.current;
+    if (projectId == null || controller == null) return;
+    setState((prev) => ({ ...prev, isLoadingMore: true }));
+    try {
+      const page = await client.listProjectConversations(
+        projectId,
+        controller.signal,
+        { offset: state.items.length },
+      );
+      if (controller.signal.aborted) return;
+      setState((prev) => {
+        /* A delete since the last read shifts the order; never list a conversation twice. */
+        const knownIds = new Set(prev.items.map((item) => item.id));
+        return {
+          ...prev,
+          items: [
+            ...prev.items,
+            ...toListItems(page).filter((item) => !knownIds.has(item.id)),
+          ],
+          hasMore: page.hasMore,
+          isLoadingMore: false,
+        };
+      });
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      setState((prev) => ({ ...prev, isLoadingMore: false }));
+      throw error;
+    }
+  }, [client, projectId, state.items.length]);
 
   const rename = useCallback(
     async (id: string, newTitle: string) => {
@@ -91,5 +149,5 @@ export const useProjectConversations = (
     [client],
   );
 
-  return { ...state, retry, rename, remove };
+  return { ...state, retry, loadMore, rename, remove };
 };

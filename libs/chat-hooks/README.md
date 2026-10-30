@@ -148,7 +148,7 @@ whether you need to `npm install` it.
 | `./oauth`                 | `@epam/ai-dial-chat-shared`                                                                                                                         | —                                                         |
 | `./offline-credentials`   | —                                                                                                                                                   | —                                                         |
 | `./scheduled-tasks`       | `@epam/ai-dial-scheduled-tasks`                                                                                                                     | —                                                         |
-| `./project`               | `@epam/ai-dial-projects`, `@epam/ai-dial-chat-shared`                                                                                               | —                                                         |
+| `./project`               | `@epam/ai-dial-projects`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-chat-shared`                                                                       | —                                                         |
 | `./sharing`               | `@epam/ai-dial-share`                                                                                                                               | —                                                         |
 | `./attachments`           | `@epam/ai-dial-quotations`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`                        | —                                                         |
 | `./utils`                 | —                                                                                                                                                   | `@epam/ai-dial-chat-shared`                               |
@@ -322,19 +322,29 @@ const { isAuthSessionError, connect } =
 import {
   createProjectsApiClient,
   useProject,
+  useProjectConversations,
   useProjects,
 } from '@epam/ai-dial-chat-hooks/project';
 
+/* Module scope: the hooks reload whenever the client object changes. */
 const projectsClient = createProjectsApiClient(projectsApi);
-const { projects, isLoading, hasError, retry } = useProjects(
-  projectsClient,
-  isProjectsEnabled,
-);
-const { project, isNotFound } = useProject(
-  projectsClient,
-  projectId,
-  isProjectsEnabled,
-);
+
+const ProjectsPage = () => {
+  const { projects, isLoading, hasError, retry } = useProjects(
+    projectsClient,
+    isProjectsEnabled,
+  );
+  const { project, isNotFound } = useProject(
+    projectsClient,
+    projectId,
+    isProjectsEnabled,
+  );
+  const { items, hasMore, loadMore } = useProjectConversations(
+    projectsClient,
+    projectId,
+  );
+  // …
+};
 ```
 
 ```tsx

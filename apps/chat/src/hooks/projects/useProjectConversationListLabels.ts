@@ -30,6 +30,7 @@ export const useProjectConversationListLabels =
         retryLabel: t(ButtonsI18nKeys.Retry),
         emptyTitle: t(ProjectsI18nKeys.ChatsEmpty),
         emptyDescription: t(ProjectsI18nKeys.ChatsEmptyDescription),
+        loadMoreLabel: t(ButtonsI18nKeys.ShowMore),
       }),
       [t],
     );

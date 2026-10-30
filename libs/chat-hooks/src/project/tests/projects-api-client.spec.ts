@@ -122,6 +122,19 @@ describe('createProjectsApiClient', () => {
     expect(await archive.text()).toBe('zip');
   });
 
+  it('lists a page of project conversations from the given offset', async () => {
+    const { client, generated } = makeClient();
+
+    await client.listProjectConversations(PROJECT_ID, undefined, {
+      offset: 50,
+    });
+
+    expect(generated.listProjectConversations).toHaveBeenCalledWith({
+      id: PROJECT_ID,
+      offset: 50,
+    });
+  });
+
   it('creates a project conversation with the first-message fields of a top-level create', async () => {
     const { client, generated } = makeClient();
 

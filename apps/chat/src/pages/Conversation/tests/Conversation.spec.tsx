@@ -6,6 +6,7 @@ import userEvent from '@testing-library/user-event';
 import { type ReactElement, type ReactNode, useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as ClientChannelContextModule from '../../../context/ClientChannelContext';
+import { ConversationDataSourceProvider } from '../../../context/ConversationDataSourceContext';
 import * as ConversationsContextModule from '../../../context/ConversationsContext';
 import * as DeploymentsContextModule from '../../../context/DeploymentsContext';
 import * as NotificationContextModule from '../../../context/NotificationContext';
@@ -339,7 +340,7 @@ describe('ConversationPage — a conversation the backend no longer has', () => 
   it('removes the row from the panel when the load fails with not-found', async () => {
     mockGetConversation.mockRejectedValueOnce(notFoundError);
 
-    render(<ConversationPage />);
+    render(<ConversationPage />, { wrapper: ConversationDataSourceProvider });
 
     await waitFor(() =>
       expect(removeConversationFromList).toHaveBeenCalledWith(CONVERSATION_ID),
@@ -352,7 +353,7 @@ describe('ConversationPage — a conversation the backend no longer has', () => 
       response: { status: 502, json: vi.fn() },
     });
 
-    render(<ConversationPage />);
+    render(<ConversationPage />, { wrapper: ConversationDataSourceProvider });
 
     await waitFor(() =>
       expect(routerMocks.navigate).toHaveBeenCalledWith(ROUTES.Root),
@@ -366,7 +367,7 @@ describe('ConversationPage — a conversation the backend no longer has', () => 
       makeConversation() as any,
     );
 
-    render(<ConversationPage />);
+    render(<ConversationPage />, { wrapper: ConversationDataSourceProvider });
 
     await waitFor(() => expect(mockGetConversation).toHaveBeenCalled());
     expect(removeConversationFromList).not.toHaveBeenCalled();
@@ -385,7 +386,7 @@ describe('ConversationPage — a conversation the backend no longer has', () => 
       makeConversation() as any,
     );
 
-    render(<ConversationPage />);
+    render(<ConversationPage />, { wrapper: ConversationDataSourceProvider });
 
     await waitFor(() =>
       expect(updateConversationTitle).toHaveBeenCalledWith(
@@ -439,7 +440,9 @@ describe('ConversationPage — opening another conversation mid-load', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .mockResolvedValueOnce(makeOther() as any);
 
-    const { rerender } = render(<ConversationPage />);
+    const { rerender } = render(<ConversationPage />, {
+      wrapper: ConversationDataSourceProvider,
+    });
     switchToOther(rerender);
 
     await waitFor(() =>
@@ -470,7 +473,9 @@ describe('ConversationPage — opening another conversation mid-load', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .mockResolvedValueOnce(makeOther() as any);
 
-    const { rerender } = render(<ConversationPage />);
+    const { rerender } = render(<ConversationPage />, {
+      wrapper: ConversationDataSourceProvider,
+    });
     switchToOther(rerender);
     await waitFor(() => expect(mockGetConversation).toHaveBeenCalledTimes(2));
 
@@ -516,7 +521,7 @@ describe('ConversationPage — conversation start label', () => {
   });
 
   it('renders exactly one start label for an existing conversation', async () => {
-    render(<ConversationPage />);
+    render(<ConversationPage />, { wrapper: ConversationDataSourceProvider });
 
     await waitFor(() => expect(getStartLabels()).toHaveLength(1));
     expect(getStartLabels()[0].getAttribute('datetime')).toBe(STARTED_AT);
@@ -524,7 +529,9 @@ describe('ConversationPage — conversation start label', () => {
 
   it('hides the start label for the conversation this page just created', async () => {
     routerMocks.state = { conversation: makeStarted() };
-    const { rerender } = render(<ConversationPage />);
+    const { rerender } = render(<ConversationPage />, {
+      wrapper: ConversationDataSourceProvider,
+    });
 
     expect(getStartLabels()).toHaveLength(0);
 
@@ -538,7 +545,9 @@ describe('ConversationPage — conversation start label', () => {
 
   it('shows the start label after leaving the just-created conversation and returning', async () => {
     routerMocks.state = { conversation: makeStarted() };
-    const { rerender } = render(<ConversationPage />);
+    const { rerender } = render(<ConversationPage />, {
+      wrapper: ConversationDataSourceProvider,
+    });
     expect(getStartLabels()).toHaveLength(0);
 
     routerMocks.state = null;
@@ -556,7 +565,7 @@ describe('ConversationPage — stream chunk batching', () => {
       makeConversation() as any,
     );
 
-    render(<ConversationPage />);
+    render(<ConversationPage />, { wrapper: ConversationDataSourceProvider });
 
     await waitFor(() => expect(mockGetConversation).toHaveBeenCalled());
     expect(streamMocks.batchChunksPerFrame).toBe(true);
@@ -570,7 +579,7 @@ describe('ConversationPage — onConversationDeleted', () => {
       makeConversation() as any,
     );
 
-    render(<ConversationPage />);
+    render(<ConversationPage />, { wrapper: ConversationDataSourceProvider });
     await waitFor(() => expect(handlersMocks.lastParams).toBeDefined());
 
     getHandlerParams().onConversationDeleted?.();
@@ -587,7 +596,7 @@ describe('ConversationPage — sidebar ordering on new activity', () => {
       makeConversation() as any,
     );
 
-    render(<ConversationPage />);
+    render(<ConversationPage />, { wrapper: ConversationDataSourceProvider });
     await waitFor(() => expect(handlersMocks.lastParams).toBeDefined());
 
     getHandlerParams().startStream(CONVERSATION_ID, 'hello', 1, 'gpt-4o');
@@ -604,7 +613,9 @@ describe('ConversationPage — sidebar ordering on new activity', () => {
 
 describe('ConversationPage — leaving the conversations routes', () => {
   it('closes the sources sidebar when the page unmounts', () => {
-    const { unmount } = render(<ConversationPage />);
+    const { unmount } = render(<ConversationPage />, {
+      wrapper: ConversationDataSourceProvider,
+    });
 
     sourcesSidebarMocks.handleClose.mockClear();
     unmount();
@@ -620,7 +631,7 @@ describe('ConversationPage — client-channel demand', () => {
       makeConversation() as any,
     );
 
-    render(<ConversationPage />);
+    render(<ConversationPage />, { wrapper: ConversationDataSourceProvider });
     await waitFor(() => expect(mockGetConversation).toHaveBeenCalled());
 
     /*
@@ -646,7 +657,7 @@ describe('ConversationPage — client-channel demand', () => {
       awaitingConversation as any,
     );
 
-    render(<ConversationPage />);
+    render(<ConversationPage />, { wrapper: ConversationDataSourceProvider });
 
     await waitFor(() => expect(streamMocks.startStream).toHaveBeenCalledOnce());
     const [, content, , , , , mode] = streamMocks.startStream.mock.calls[0];
@@ -661,7 +672,7 @@ describe('ConversationPage — client-channel demand', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
-    render(<ConversationPage />);
+    render(<ConversationPage />, { wrapper: ConversationDataSourceProvider });
 
     await waitFor(() => expect(streamMocks.startStream).toHaveBeenCalledOnce());
     expect(streamMocks.startStream).toHaveBeenCalledWith(
@@ -682,7 +693,9 @@ describe('ConversationPage — client-channel demand', () => {
       makeConversation() as any,
     );
 
-    const { rerender } = render(<ConversationPage />);
+    const { rerender } = render(<ConversationPage />, {
+      wrapper: ConversationDataSourceProvider,
+    });
     await waitFor(() => expect(mockGetConversation).toHaveBeenCalledOnce());
 
     mockUseClientChannel.mockReturnValue({
@@ -771,7 +784,7 @@ describe('ConversationPage — tool toggle driven by an assistant form_schema', 
       assistantTurn('report', false),
     ]);
 
-    render(<ConversationPage />);
+    render(<ConversationPage />, { wrapper: ConversationDataSourceProvider });
 
     await waitFor(() => expect(mockGetConversation).toHaveBeenCalled());
     await waitFor(() =>
@@ -782,7 +795,7 @@ describe('ConversationPage — tool toggle driven by an assistant form_schema', 
   it("keeps the question's toggle on load when no answer sets it", async () => {
     loadWith([userTurn({ deep_research: true }), assistantTurn('report')]);
 
-    render(<ConversationPage />);
+    render(<ConversationPage />, { wrapper: ConversationDataSourceProvider });
 
     await waitFor(() =>
       expect(chip().getAttribute('aria-pressed')).toBe('true'),
@@ -791,7 +804,7 @@ describe('ConversationPage — tool toggle driven by an assistant form_schema', 
 
   it('follows the values an answer streams and sends the last one with the next message', async () => {
     loadWith([userTurn({ deep_research: false }), assistantTurn('')]);
-    render(<ConversationPage />);
+    render(<ConversationPage />, { wrapper: ConversationDataSourceProvider });
     await waitFor(() =>
       expect(chip().getAttribute('aria-pressed')).toBe('false'),
     );
@@ -815,7 +828,7 @@ describe('ConversationPage — tool toggle driven by an assistant form_schema', 
       userTurn({ deep_research: true }),
       assistantTurn('report', false),
     ]);
-    render(<ConversationPage />);
+    render(<ConversationPage />, { wrapper: ConversationDataSourceProvider });
     await waitFor(() =>
       expect(chip().getAttribute('aria-pressed')).toBe('false'),
     );
@@ -835,7 +848,9 @@ describe('ConversationPage — tool toggle driven by an assistant form_schema', 
       createDeploymentsContextValue({ selectedItemId: 'gpt-4o' }),
     );
     loadWith([userTurn(), assistantTurn('working', true)]);
-    const { rerender } = render(<ConversationPage />);
+    const { rerender } = render(<ConversationPage />, {
+      wrapper: ConversationDataSourceProvider,
+    });
     await waitFor(() => expect(mockGetConversation).toHaveBeenCalled());
 
     vi.mocked(DeploymentsContextModule.useDeployments).mockReturnValue(
@@ -881,7 +896,7 @@ describe('ConversationPage — Custom Viewer', () => {
       makeConversation() as any,
     );
 
-    render(<ConversationPage />);
+    render(<ConversationPage />, { wrapper: ConversationDataSourceProvider });
 
     expect(
       await screen.findByText(`custom-viewer:${CONVERSATION_ID}`),
@@ -897,7 +912,7 @@ describe('ConversationPage — Custom Viewer', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockGetConversation.mockResolvedValueOnce(conversation as any);
 
-    render(<ConversationPage />);
+    render(<ConversationPage />, { wrapper: ConversationDataSourceProvider });
 
     await screen.findByText(`custom-viewer:${CONVERSATION_ID}`);
     expect(streamMocks.startStream).not.toHaveBeenCalled();
@@ -910,7 +925,7 @@ describe('ConversationPage — Custom Viewer', () => {
     );
     const { refreshConversations } = mockUseConversations();
 
-    render(<ConversationPage />);
+    render(<ConversationPage />, { wrapper: ConversationDataSourceProvider });
     await userEvent.click(
       await screen.findByRole('button', { name: 'viewer-updated' }),
     );
@@ -927,7 +942,7 @@ describe('ConversationPage — Custom Viewer', () => {
     );
     const { refreshConversations } = mockUseConversations();
 
-    render(<ConversationPage />);
+    render(<ConversationPage />, { wrapper: ConversationDataSourceProvider });
     await userEvent.click(
       await screen.findByRole('button', { name: 'viewer-created' }),
     );
@@ -949,7 +964,7 @@ describe('ConversationPage — Custom Viewer', () => {
       makeConversation() as any,
     );
 
-    render(<ConversationPage />);
+    render(<ConversationPage />, { wrapper: ConversationDataSourceProvider });
 
     expect(await screen.findByText('conversation-view')).toBeTruthy();
   });
@@ -968,7 +983,9 @@ describe('ConversationPage — overlay input content', () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
-    const { rerender } = render(<ConversationPage />);
+    const { rerender } = render(<ConversationPage />, {
+      wrapper: ConversationDataSourceProvider,
+    });
     await screen.findByText('conversation-view');
     act(() => overlayContentMocks.setOverlayInputContent?.('from host'));
 
@@ -990,7 +1007,7 @@ describe('ConversationPage — overlay input content', () => {
       }) as any,
     );
 
-    render(<ConversationPage />);
+    render(<ConversationPage />, { wrapper: ConversationDataSourceProvider });
     act(() => overlayContentMocks.setOverlayInputContent?.('from host'));
     await act(async () => resolveLoad(makeConversation()));
 

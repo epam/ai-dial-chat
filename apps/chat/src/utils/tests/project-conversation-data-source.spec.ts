@@ -7,6 +7,7 @@ import {
   saveProjectConversation,
 } from '../../server-api/project-conversations.api';
 import { createProjectConversationDataSource } from '../project-conversation-data-source';
+import { NO_CONVERSATION_LIST_SYNC } from '../regular-conversation-data-source';
 
 vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>()),
@@ -75,14 +76,32 @@ describe('createProjectConversationDataSource', () => {
     );
   });
 
-  it('opens no subscription for the conversation watch', async () => {
+  it('passes the completion stream through unchanged', () => {
+    const source = create();
+    const api = vi.mocked(createChatStreamApi).mock.results[0].value;
+
+    expect(source.transport.streamCompletion).toBe(api.streamCompletion);
+  });
+
+  it('polls the conversation watch with update events until aborted', async () => {
+    vi.useFakeTimers();
+    const controller = new AbortController();
     const stream = await create().transport.watchConversation(
       PATH,
-      new AbortController().signal,
+      controller.signal,
     );
-    const { done } = await stream.getReader().read();
+    const reader = stream.getReader();
 
-    expect(done).toBe(true);
+    const first = reader.read();
+    await vi.advanceTimersByTimeAsync(5_000);
+    const { value } = await first;
+    expect(new TextDecoder().decode(value)).toBe(
+      'data: {"action":"UPDATE"}\n\n',
+    );
+
+    const second = reader.read();
+    controller.abort();
+    expect((await second).done).toBe(true);
   });
 
   it('routes inside the project and never syncs the sidebar or duplicates', () => {
@@ -94,7 +113,7 @@ describe('createProjectConversationDataSource', () => {
     expect(source.getExitRoute()).toBe('/projects/view/a1b2c3/q4');
     expect(source.isReadOnly(ID)).toBe(true);
     expect(create(true).isReadOnly(ID)).toBe(false);
-    expect(source.listSync).toBeNull();
+    expect(source.listSync).toBe(NO_CONVERSATION_LIST_SYNC);
     expect(source.canDuplicate).toBe(false);
   });
 

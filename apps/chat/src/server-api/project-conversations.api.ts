@@ -4,17 +4,19 @@ import type {
   ProjectConversationListResponseDto,
   RenameConversationResponseDto,
 } from '@epam/ai-dial-chat-api-client';
+import type { ProjectConversationListPage } from '@epam/ai-dial-chat-hooks/project';
 import type { RequestSkill } from '@epam/ai-dial-chat-shared';
 import { projectsRequests } from './projects.api';
 
 export { splitProjectConversationId } from '@epam/ai-dial-chat-hooks/project';
 
-/** Lists a project's conversations, newest first. */
+/** Lists a page of a project's conversations, newest first. */
 export const listProjectConversations = (
   projectId: string,
   signal?: AbortSignal,
+  page?: ProjectConversationListPage,
 ): Promise<ProjectConversationListResponseDto> =>
-  projectsRequests.listProjectConversations(projectId, signal);
+  projectsRequests.listProjectConversations(projectId, signal, page);
 
 /** Creates a project conversation from its first message, with the fields a top-level create sends. */
 export const createProjectConversation = (

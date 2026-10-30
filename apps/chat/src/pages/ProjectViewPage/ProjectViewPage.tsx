@@ -52,6 +52,22 @@ const ProjectViewPage: FC = () => {
     [project],
   );
   const canEdit = project?.canEdit ?? false;
+  /* Chats deleted from the list since `project` was read; a fresh read resets the count. */
+  const [deletedChats, setDeletedChats] = useState({ project, count: 0 });
+  const deletedChatCount =
+    deletedChats.project === project ? deletedChats.count : 0;
+  const conversationCount = Math.max(
+    0,
+    (project?.conversationCount ?? 0) - deletedChatCount,
+  );
+  const handleConversationDeleted = useCallback(
+    () =>
+      setDeletedChats((prev) => ({
+        project,
+        count: (prev.project === project ? prev.count : 0) + 1,
+      })),
+    [project],
+  );
 
   const handleBrowseProjects = useCallback(
     () => navigate(ROUTES.Projects),
@@ -124,6 +140,7 @@ const ProjectViewPage: FC = () => {
                 projectId={project.id}
                 projectName={project.name}
                 canEdit={canEdit}
+                onConversationDeleted={handleConversationDeleted}
               />
             ) : undefined
           }
@@ -142,7 +159,7 @@ const ProjectViewPage: FC = () => {
           isOpen={isPublishOpen}
           projectId={project.id}
           projectName={project.name}
-          conversationCount={project.conversationCount}
+          conversationCount={conversationCount}
           onClose={handleClosePublish}
           returnFocusRef={publishTriggerRef}
         />
@@ -155,12 +172,12 @@ const ProjectViewPage: FC = () => {
           })}
           names={[project.name]}
           message={
-            project.conversationCount > 0 ? (
+            conversationCount > 0 ? (
               <Trans
                 i18nKey={
                   ProjectsI18nKeys.ActionsDeleteConfirmWithChatsDescription
                 }
-                count={project.conversationCount}
+                count={conversationCount}
                 components={BOLD_COMPONENTS}
               />
             ) : (

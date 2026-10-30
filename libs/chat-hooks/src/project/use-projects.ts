@@ -17,7 +17,7 @@ interface ProjectsResult {
  * token, so an enabled page is loading from its very first render. The
  * request is aborted on unmount or when `enabled` turns false.
  *
- * @param client - Configured project requests, from `createProjectsApiClient`.
+ * @param client - Configured project requests, from `createProjectsApiClient`; it must be referentially stable, because a new object reloads.
  * @param enabled - Whether the page is enabled; no request is sent while `false`.
  */
 export const useProjects = (

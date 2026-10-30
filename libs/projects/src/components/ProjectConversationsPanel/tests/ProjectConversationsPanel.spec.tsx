@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   ProjectConversationsPanelLabels,
@@ -120,5 +121,104 @@ describe('ProjectConversationsPanel', () => {
     );
 
     await waitFor(() => expect(onDelete).toHaveBeenCalledWith('c1'));
+  });
+
+  it('closes the rename dialog from Cancel without renaming', async () => {
+    const onRename = vi.fn(async () => undefined);
+    renderPanel({ onRename });
+
+    await openRowMenu('Rename');
+    await screen.findByRole('dialog', { name: 'Rename chat' });
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: 'Rename chat' })).toBeNull(),
+    );
+    expect(onRename).not.toHaveBeenCalled();
+  });
+
+  it('renames on Enter', async () => {
+    const onRename = vi.fn(async () => undefined);
+    renderPanel({ onRename });
+
+    await openRowMenu('Rename');
+    const dialog = await screen.findByRole('dialog', { name: 'Rename chat' });
+    /* The dialog moves its initial focus asynchronously; type only once it has. */
+    await waitFor(() =>
+      // eslint-disable-next-line testing-library/no-node-access -- focus placement has no query
+      expect(dialog.contains(document.activeElement)).toBe(true),
+    );
+    const input = screen.getByLabelText('Chat name');
+    await userEvent.clear(input);
+    await userEvent.type(input, 'Login article{Enter}');
+
+    await waitFor(() =>
+      expect(onRename).toHaveBeenCalledWith('c1', 'Login article'),
+    );
+  });
+
+  it('cannot close the rename dialog while the rename is pending', async () => {
+    let finishRename: () => void = () => undefined;
+    const onRename = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          finishRename = resolve;
+        }),
+    );
+    renderPanel({ onRename });
+
+    await openRowMenu('Rename');
+    await userEvent.click(await screen.findByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(onRename).toHaveBeenCalled());
+
+    const cancel = screen.getByRole('button', { name: 'Cancel' });
+    expect((cancel as HTMLButtonElement).disabled).toBe(true);
+    await userEvent.keyboard('{Escape}');
+    expect(screen.getByRole('dialog', { name: 'Rename chat' })).toBeTruthy();
+
+    finishRename();
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: 'Rename chat' })).toBeNull(),
+    );
+  });
+
+  it('moves focus to the row that takes the place of a deleted one', async () => {
+    const StatefulPanel = () => {
+      const [items, setItems] = useState([
+        { id: 'c1', title: 'Old title' },
+        { id: 'c2', title: 'Next title' },
+      ]);
+      return (
+        <ProjectConversationsPanel
+          items={items}
+          onRetry={vi.fn()}
+          onOpen={vi.fn()}
+          onDelete={async (id) => {
+            setItems((prev) => prev.filter((item) => item.id !== id));
+          }}
+          labels={labels}
+        />
+      );
+    };
+    render(<StatefulPanel />);
+
+    await openRowMenu('Delete');
+    await screen.findByRole('dialog', { name: 'Delete "Old title"?' });
+    await userEvent.click(
+      screen.getAllByRole('button', { name: 'Delete' }).at(-1) as HTMLElement,
+    );
+
+    const nextRow = await screen.findByRole('button', { name: 'Next title' });
+    // eslint-disable-next-line testing-library/no-node-access -- focus placement has no query; the focused element is the assertion
+    await waitFor(() => expect(document.activeElement).toBe(nextRow));
+  });
+
+  it('passes the load-more state through to the list', async () => {
+    const onLoadMore = vi.fn();
+    renderPanel({ hasMore: true, onLoadMore });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Show more' }));
+
+    expect(onLoadMore).toHaveBeenCalledOnce();
   });
 });

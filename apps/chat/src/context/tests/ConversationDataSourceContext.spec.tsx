@@ -27,6 +27,10 @@ vi.mock('../ConversationsContext', () => ({
   useConversations: () => mocks,
 }));
 
+const wrapper = ({ children }: { children: ReactNode }) => (
+  <ConversationDataSourceProvider>{children}</ConversationDataSourceProvider>
+);
+
 describe('ConversationDataSourceContext', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -34,11 +38,6 @@ describe('ConversationDataSourceContext', () => {
   });
 
   it('provides the regular data source over the existing calls', () => {
-    const wrapper = ({ children }: { children: ReactNode }) => (
-      <ConversationDataSourceProvider>
-        {children}
-      </ConversationDataSourceProvider>
-    );
     const { result } = renderHook(() => useConversationDataSource(), {
       wrapper,
     });
@@ -49,14 +48,16 @@ describe('ConversationDataSourceContext', () => {
     expect(result.current.canDuplicate).toBe(true);
     expect(result.current.watchTitle).toBe(mocks.watchForDisplayNameUpdate);
 
-    result.current.listSync?.remove('my-bucket/x');
+    result.current.listSync.remove('my-bucket/x');
     expect(mocks.removeConversationFromList).toHaveBeenCalledWith(
       'my-bucket/x',
     );
   });
 
   it('keeps the same value across renders while the list is unchanged', () => {
-    const { result, rerender } = renderHook(() => useConversationDataSource());
+    const { result, rerender } = renderHook(() => useConversationDataSource(), {
+      wrapper,
+    });
     const first = result.current;
 
     rerender();
@@ -65,7 +66,9 @@ describe('ConversationDataSourceContext', () => {
   });
 
   it('reads a conversation outside the caller bucket as read-only', () => {
-    const { result } = renderHook(() => useConversationDataSource());
+    const { result } = renderHook(() => useConversationDataSource(), {
+      wrapper,
+    });
 
     expect(result.current.isReadOnly('my-bucket/x')).toBe(false);
     expect(result.current.isReadOnly('other-bucket/x')).toBe(true);
@@ -75,22 +78,32 @@ describe('ConversationDataSourceContext', () => {
     mocks.conversations = [
       { id: 'conversations/my-bucket/x', sharedWithMe: true },
     ];
-    const { result } = renderHook(() => useConversationDataSource());
+    const { result } = renderHook(() => useConversationDataSource(), {
+      wrapper,
+    });
 
     expect(result.current.isReadOnly('my-bucket/x')).toBe(true);
   });
 
   it('returns the value a provider overrides it with', () => {
     const override = { canDuplicate: false } as ConversationDataSource;
-    const wrapper = ({ children }: { children: ReactNode }) => (
+    const overrideWrapper = ({ children }: { children: ReactNode }) => (
       <ConversationDataSourceContext.Provider value={override}>
         {children}
       </ConversationDataSourceContext.Provider>
     );
     const { result } = renderHook(() => useConversationDataSource(), {
-      wrapper,
+      wrapper: overrideWrapper,
     });
 
     expect(result.current).toBe(override);
+  });
+
+  it('throws outside any provider', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    expect(() => renderHook(() => useConversationDataSource())).toThrow(
+      'useConversationDataSource must be used within a ConversationDataSourceProvider',
+    );
   });
 });

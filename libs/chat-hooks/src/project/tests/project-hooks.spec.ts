@@ -170,6 +170,93 @@ describe('project hooks', () => {
         { id: 'c1', title: 'Renamed', authorName: 'Valery' },
       ]);
     });
+
+    it('appends the next page from the loaded count and drops rows it already lists', async () => {
+      client.listProjectConversations
+        .mockResolvedValueOnce({
+          items: [
+            { id: 'c1', name: 'n1', title: 'First' },
+            { id: 'c2', name: 'n2', title: 'Second' },
+          ],
+          hasMore: true,
+        })
+        .mockResolvedValueOnce({
+          items: [
+            { id: 'c2', name: 'n2', title: 'Second' },
+            { id: 'c3', name: 'n3', title: 'Third' },
+          ],
+          hasMore: false,
+        });
+      const { result } = renderHook(() =>
+        useProjectConversations(client, PROJECT_ID),
+      );
+      await waitFor(() => expect(result.current.hasMore).toBe(true));
+
+      await act(() => result.current.loadMore());
+
+      expect(client.listProjectConversations).toHaveBeenLastCalledWith(
+        PROJECT_ID,
+        expect.any(AbortSignal),
+        { offset: 2 },
+      );
+      expect(result.current.items.map((item) => item.id)).toEqual([
+        'c1',
+        'c2',
+        'c3',
+      ]);
+      expect(result.current.hasMore).toBe(false);
+      expect(result.current.isLoadingMore).toBe(false);
+    });
+
+    it('rejects a failed next page and keeps the rows', async () => {
+      client.listProjectConversations
+        .mockResolvedValueOnce({
+          items: [{ id: 'c1', name: 'n1', title: 'First' }],
+          hasMore: true,
+        })
+        .mockRejectedValueOnce(rejection(503));
+      const { result } = renderHook(() =>
+        useProjectConversations(client, PROJECT_ID),
+      );
+      await waitFor(() => expect(result.current.hasMore).toBe(true));
+
+      await act(async () => {
+        await expect(result.current.loadMore()).rejects.toBeInstanceOf(
+          ResponseError,
+        );
+      });
+
+      expect(result.current.items).toHaveLength(1);
+      expect(result.current.hasMore).toBe(true);
+      expect(result.current.isLoadingMore).toBe(false);
+    });
+
+    it('shows an error and loads again on retry', async () => {
+      client.listProjectConversations
+        .mockRejectedValueOnce(rejection(503))
+        .mockResolvedValueOnce({
+          items: [{ id: 'c1', name: 'n1', title: 'First' }],
+          hasMore: false,
+        });
+      const { result } = renderHook(() =>
+        useProjectConversations(client, PROJECT_ID),
+      );
+      await waitFor(() => expect(result.current.hasError).toBe(true));
+
+      act(() => result.current.retry());
+
+      await waitFor(() => expect(result.current.items).toHaveLength(1));
+      expect(result.current.hasError).toBe(false);
+    });
+
+    it('settles empty without a request while no project is known', async () => {
+      const { result } = renderHook(() =>
+        useProjectConversations(client, null),
+      );
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(client.listProjectConversations).not.toHaveBeenCalled();
+    });
   });
 
   describe('useProjectActions', () => {

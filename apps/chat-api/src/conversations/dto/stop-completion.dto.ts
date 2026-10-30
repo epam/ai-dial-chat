@@ -7,6 +7,7 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
+import { IsNotProjectConversationLocator } from './not-project-conversation-locator.validator';
 
 /** Upper bound for the shown answer text; far above any real answer, it only rejects abuse. */
 const STOP_CONTENT_MAX_LENGTH = 1_000_000;
@@ -29,6 +30,7 @@ export class StopCompletionDto {
   @Matches(/^(?!.*\.\.)[\s\S]+$/, {
     message: 'path contains invalid characters',
   })
+  @IsNotProjectConversationLocator()
   path!: string;
 
   @ApiPropertyOptional({

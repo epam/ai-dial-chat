@@ -906,17 +906,17 @@ conversation (`deploymentKey` is the deployment id with `/`, `\` and `%` made
 All routes are gated by `features.projectsEnabled`; writes and completions are
 refused with `403` before any Core call outside the caller's own bucket.
 
-| Method and path                                              | Handler                     | What it does                                                                 |
-| ------------------------------------------------------------ | --------------------------- | ---------------------------------------------------------------------------- |
-| `GET /api/v1/projects/:id/conversations`                     | `listProjectConversations`  | Newest first, `limit` 1–100 (default 50), with titles, authors and `hasMore` |
-| `POST /api/v1/projects/:id/conversations`                    | `createProjectConversation` | Creates a conversation from its first message                                |
-| `GET /api/v1/projects/:id/conversations/:name`               | `getProjectConversation`    | Reads one conversation                                                       |
-| `PUT /api/v1/projects/:id/conversations/:name`               | `saveProjectConversation`   | Saves a body, never over a pending background answer                         |
-| `PATCH /api/v1/projects/:id/conversations/:name`             | `renameProjectConversation` | Renames it; the file name does not change                                    |
-| `DELETE /api/v1/projects/:id/conversations/:name`            | `deleteProjectConversation` | Deletes it                                                                   |
-| `POST /api/v1/projects/:id/conversations/completions`        | `streamProjectCompletion`   | Streams a completion, as `/api/v1/conversations/completions` does            |
-| `POST /api/v1/projects/:id/conversations/completions/stop`   | `stopProjectCompletion`     | Stops it                                                                     |
-| `POST /api/v1/projects/:id/conversations/completions/attach` | `attachToProjectGeneration` | Replays an active generation                                                 |
+| Method and path                                              | Handler                     | What it does                                                                                            |
+| ------------------------------------------------------------ | --------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `GET /api/v1/projects/:id/conversations`                     | `listProjectConversations`  | Newest first, `limit` 1–100 (default 50) after `offset` (default 0), with titles, authors and `hasMore` |
+| `POST /api/v1/projects/:id/conversations`                    | `createProjectConversation` | Creates a conversation from its first message                                                           |
+| `GET /api/v1/projects/:id/conversations/:name`               | `getProjectConversation`    | Reads one conversation                                                                                  |
+| `PUT /api/v1/projects/:id/conversations/:name`               | `saveProjectConversation`   | Saves a body, never over a pending background answer                                                    |
+| `PATCH /api/v1/projects/:id/conversations/:name`             | `renameProjectConversation` | Renames it; the file name does not change                                                               |
+| `DELETE /api/v1/projects/:id/conversations/:name`            | `deleteProjectConversation` | Deletes it                                                                                              |
+| `POST /api/v1/projects/:id/conversations/completions`        | `streamProjectCompletion`   | Streams a completion, as `/api/v1/conversations/completions` does                                       |
+| `POST /api/v1/projects/:id/conversations/completions/stop`   | `stopProjectCompletion`     | Stops it                                                                                                |
+| `POST /api/v1/projects/:id/conversations/completions/attach` | `attachToProjectGeneration` | Replays an active generation                                                                            |
 
 The completion, stop and attach body `path` is the id without `projects/`, and
 must name a conversation of `:id` (`400` otherwise). A project completion sends
@@ -1854,17 +1854,17 @@ conversation (`deploymentKey` is the deployment id with `/`, `\` and `%` made
 All routes are gated by `features.projectsEnabled`; writes and completions are
 refused with `403` before any Core call outside the caller's own bucket.
 
-| Method and path                                              | Handler                     | What it does                                                                 |
-| ------------------------------------------------------------ | --------------------------- | ---------------------------------------------------------------------------- |
-| `GET /api/v1/projects/:id/conversations`                     | `listProjectConversations`  | Newest first, `limit` 1–100 (default 50), with titles, authors and `hasMore` |
-| `POST /api/v1/projects/:id/conversations`                    | `createProjectConversation` | Creates a conversation from its first message                                |
-| `GET /api/v1/projects/:id/conversations/:name`               | `getProjectConversation`    | Reads one conversation                                                       |
-| `PUT /api/v1/projects/:id/conversations/:name`               | `saveProjectConversation`   | Saves a body, never over a pending background answer                         |
-| `PATCH /api/v1/projects/:id/conversations/:name`             | `renameProjectConversation` | Renames it; the file name does not change                                    |
-| `DELETE /api/v1/projects/:id/conversations/:name`            | `deleteProjectConversation` | Deletes it                                                                   |
-| `POST /api/v1/projects/:id/conversations/completions`        | `streamProjectCompletion`   | Streams a completion, as `/api/v1/conversations/completions` does            |
-| `POST /api/v1/projects/:id/conversations/completions/stop`   | `stopProjectCompletion`     | Stops it                                                                     |
-| `POST /api/v1/projects/:id/conversations/completions/attach` | `attachToProjectGeneration` | Replays an active generation                                                 |
+| Method and path                                              | Handler                     | What it does                                                                                            |
+| ------------------------------------------------------------ | --------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `GET /api/v1/projects/:id/conversations`                     | `listProjectConversations`  | Newest first, `limit` 1–100 (default 50) after `offset` (default 0), with titles, authors and `hasMore` |
+| `POST /api/v1/projects/:id/conversations`                    | `createProjectConversation` | Creates a conversation from its first message                                                           |
+| `GET /api/v1/projects/:id/conversations/:name`               | `getProjectConversation`    | Reads one conversation                                                                                  |
+| `PUT /api/v1/projects/:id/conversations/:name`               | `saveProjectConversation`   | Saves a body, never over a pending background answer                                                    |
+| `PATCH /api/v1/projects/:id/conversations/:name`             | `renameProjectConversation` | Renames it; the file name does not change                                                               |
+| `DELETE /api/v1/projects/:id/conversations/:name`            | `deleteProjectConversation` | Deletes it                                                                                              |
+| `POST /api/v1/projects/:id/conversations/completions`        | `streamProjectCompletion`   | Streams a completion, as `/api/v1/conversations/completions` does                                       |
+| `POST /api/v1/projects/:id/conversations/completions/stop`   | `stopProjectCompletion`     | Stops it                                                                                                |
+| `POST /api/v1/projects/:id/conversations/completions/attach` | `attachToProjectGeneration` | Replays an active generation                                                                            |
 
 The completion, stop and attach body `path` is the id without `projects/`, and
 must name a conversation of `:id` (`400` otherwise). A project completion sends
@@ -2803,17 +2803,17 @@ conversation (`deploymentKey` is the deployment id with `/`, `\` and `%` made
 All routes are gated by `features.projectsEnabled`; writes and completions are
 refused with `403` before any Core call outside the caller's own bucket.
 
-| Method and path                                              | Handler                     | What it does                                                                 |
-| ------------------------------------------------------------ | --------------------------- | ---------------------------------------------------------------------------- |
-| `GET /api/v1/projects/:id/conversations`                     | `listProjectConversations`  | Newest first, `limit` 1–100 (default 50), with titles, authors and `hasMore` |
-| `POST /api/v1/projects/:id/conversations`                    | `createProjectConversation` | Creates a conversation from its first message                                |
-| `GET /api/v1/projects/:id/conversations/:name`               | `getProjectConversation`    | Reads one conversation                                                       |
-| `PUT /api/v1/projects/:id/conversations/:name`               | `saveProjectConversation`   | Saves a body, never over a pending background answer                         |
-| `PATCH /api/v1/projects/:id/conversations/:name`             | `renameProjectConversation` | Renames it; the file name does not change                                    |
-| `DELETE /api/v1/projects/:id/conversations/:name`            | `deleteProjectConversation` | Deletes it                                                                   |
-| `POST /api/v1/projects/:id/conversations/completions`        | `streamProjectCompletion`   | Streams a completion, as `/api/v1/conversations/completions` does            |
-| `POST /api/v1/projects/:id/conversations/completions/stop`   | `stopProjectCompletion`     | Stops it                                                                     |
-| `POST /api/v1/projects/:id/conversations/completions/attach` | `attachToProjectGeneration` | Replays an active generation                                                 |
+| Method and path                                              | Handler                     | What it does                                                                                            |
+| ------------------------------------------------------------ | --------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `GET /api/v1/projects/:id/conversations`                     | `listProjectConversations`  | Newest first, `limit` 1–100 (default 50) after `offset` (default 0), with titles, authors and `hasMore` |
+| `POST /api/v1/projects/:id/conversations`                    | `createProjectConversation` | Creates a conversation from its first message                                                           |
+| `GET /api/v1/projects/:id/conversations/:name`               | `getProjectConversation`    | Reads one conversation                                                                                  |
+| `PUT /api/v1/projects/:id/conversations/:name`               | `saveProjectConversation`   | Saves a body, never over a pending background answer                                                    |
+| `PATCH /api/v1/projects/:id/conversations/:name`             | `renameProjectConversation` | Renames it; the file name does not change                                                               |
+| `DELETE /api/v1/projects/:id/conversations/:name`            | `deleteProjectConversation` | Deletes it                                                                                              |
+| `POST /api/v1/projects/:id/conversations/completions`        | `streamProjectCompletion`   | Streams a completion, as `/api/v1/conversations/completions` does                                       |
+| `POST /api/v1/projects/:id/conversations/completions/stop`   | `stopProjectCompletion`     | Stops it                                                                                                |
+| `POST /api/v1/projects/:id/conversations/completions/attach` | `attachToProjectGeneration` | Replays an active generation                                                                            |
 
 The completion, stop and attach body `path` is the id without `projects/`, and
 must name a conversation of `:id` (`400` otherwise). A project completion sends
@@ -3751,17 +3751,17 @@ conversation (`deploymentKey` is the deployment id with `/`, `\` and `%` made
 All routes are gated by `features.projectsEnabled`; writes and completions are
 refused with `403` before any Core call outside the caller's own bucket.
 
-| Method and path                                              | Handler                     | What it does                                                                 |
-| ------------------------------------------------------------ | --------------------------- | ---------------------------------------------------------------------------- |
-| `GET /api/v1/projects/:id/conversations`                     | `listProjectConversations`  | Newest first, `limit` 1–100 (default 50), with titles, authors and `hasMore` |
-| `POST /api/v1/projects/:id/conversations`                    | `createProjectConversation` | Creates a conversation from its first message                                |
-| `GET /api/v1/projects/:id/conversations/:name`               | `getProjectConversation`    | Reads one conversation                                                       |
-| `PUT /api/v1/projects/:id/conversations/:name`               | `saveProjectConversation`   | Saves a body, never over a pending background answer                         |
-| `PATCH /api/v1/projects/:id/conversations/:name`             | `renameProjectConversation` | Renames it; the file name does not change                                    |
-| `DELETE /api/v1/projects/:id/conversations/:name`            | `deleteProjectConversation` | Deletes it                                                                   |
-| `POST /api/v1/projects/:id/conversations/completions`        | `streamProjectCompletion`   | Streams a completion, as `/api/v1/conversations/completions` does            |
-| `POST /api/v1/projects/:id/conversations/completions/stop`   | `stopProjectCompletion`     | Stops it                                                                     |
-| `POST /api/v1/projects/:id/conversations/completions/attach` | `attachToProjectGeneration` | Replays an active generation                                                 |
+| Method and path                                              | Handler                     | What it does                                                                                            |
+| ------------------------------------------------------------ | --------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `GET /api/v1/projects/:id/conversations`                     | `listProjectConversations`  | Newest first, `limit` 1–100 (default 50) after `offset` (default 0), with titles, authors and `hasMore` |
+| `POST /api/v1/projects/:id/conversations`                    | `createProjectConversation` | Creates a conversation from its first message                                                           |
+| `GET /api/v1/projects/:id/conversations/:name`               | `getProjectConversation`    | Reads one conversation                                                                                  |
+| `PUT /api/v1/projects/:id/conversations/:name`               | `saveProjectConversation`   | Saves a body, never over a pending background answer                                                    |
+| `PATCH /api/v1/projects/:id/conversations/:name`             | `renameProjectConversation` | Renames it; the file name does not change                                                               |
+| `DELETE /api/v1/projects/:id/conversations/:name`            | `deleteProjectConversation` | Deletes it                                                                                              |
+| `POST /api/v1/projects/:id/conversations/completions`        | `streamProjectCompletion`   | Streams a completion, as `/api/v1/conversations/completions` does                                       |
+| `POST /api/v1/projects/:id/conversations/completions/stop`   | `stopProjectCompletion`     | Stops it                                                                                                |
+| `POST /api/v1/projects/:id/conversations/completions/attach` | `attachToProjectGeneration` | Replays an active generation                                                                            |
 
 The completion, stop and attach body `path` is the id without `projects/`, and
 must name a conversation of `:id` (`400` otherwise). A project completion sends

@@ -1,5 +1,10 @@
 import { createHash } from 'crypto';
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadGatewayException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
@@ -197,12 +202,7 @@ export class ProjectConversationStore {
         this.logger.debug('Conditional project conversation write: conflict');
         return { isSaved: false };
       }
-      const status = await this.write(
-        parsed,
-        token,
-        body,
-        projectEtag ?? ANY_VERSION,
-      );
+      const status = await this.write(parsed, token, body, projectEtag);
       if (status !== 412) return { isSaved: true, conversation: body };
       this.logger.debug(
         `Conditional project conversation write: project changed, attempt ${attempt + 1}`,
@@ -258,11 +258,15 @@ export class ProjectConversationStore {
     };
   }
 
-  /** The project's aggregate ETag from its metadata — the version Core's `If-Match` on a project file checks. */
+  /**
+   * The project's aggregate ETag from its metadata — the version Core's
+   * `If-Match` on a project file checks. Metadata without one is `502`: a
+   * conditional write must never degrade to `If-Match: *`.
+   */
   private async readProjectEtag(
     parsed: ParsedProjectConversationLocator,
     token: string,
-  ): Promise<string | null> {
+  ): Promise<string> {
     const context = 'projects.conversations.read';
     try {
       const { data, error, response } =
@@ -277,10 +281,15 @@ export class ProjectConversationStore {
         }
         return handleDialSdkError(error, context, this.logger, response);
       }
-      return (data as { etag?: string | null }).etag ?? null;
+      const { etag } = data as { etag?: string | null };
+      if (etag) return etag;
     } catch (error) {
       return handleDialSdkError(error, context, this.logger);
     }
+    this.logger.error('DIAL Core returned project metadata without an ETag');
+    throw new BadGatewayException(
+      'DIAL Core returned project metadata without an ETag',
+    );
   }
 
   private async read(

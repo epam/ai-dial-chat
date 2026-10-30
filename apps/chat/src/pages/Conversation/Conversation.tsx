@@ -77,7 +77,6 @@ import { ROUTES } from '../../types/routes';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { logConversationStreamError } from '../../utils/conversation-stream-transport';
 import { resolveCustomViewer } from '../../utils/custom-viewer';
-import { NO_CONVERSATION_LIST_SYNC } from '../../utils/regular-conversation-data-source';
 
 interface Props {
   onDuplicateReadonly?: () => void;
@@ -197,7 +196,7 @@ export const ConversationPage: FC<Props> = ({
     bumpActivity: bumpConversationActivity,
     remove: removeConversationFromList,
     refresh: refreshConversations,
-  } = listSync ?? NO_CONVERSATION_LIST_SYNC;
+  } = listSync;
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
   const overlay = useOptionalOverlay();
   /*

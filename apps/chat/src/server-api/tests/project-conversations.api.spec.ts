@@ -57,6 +57,17 @@ describe('project conversations adapter', () => {
     );
   });
 
+  it('lists the next page from the given offset', async () => {
+    const signal = new AbortController().signal;
+
+    await listProjectConversations(PROJECT_ID, signal, { offset: 50 });
+
+    expect(projectsApi.listProjectConversations).toHaveBeenCalledWith(
+      { id: PROJECT_ID, offset: 50 },
+      { signal },
+    );
+  });
+
   it('creates with the same first-message fields as a top-level create', async () => {
     await createProjectConversation(
       PROJECT_ID,

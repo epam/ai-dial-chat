@@ -304,7 +304,7 @@ import { ProjectView } from '@epam/ai-dial-projects';
 
 ### ProjectConversationList
 
-A project's conversations as a `<section>` named by its `<h2>` (`labels.title`; with no chats the heading is hidden and the section keeps the name through `aria-label`), with one row per item: a button named `labels.openLabel(title, authorName)` holding the author's initials (`aria-hidden`) and the title truncated with a tooltip. When `onRename` or `onDelete` is given, each row also has a ⋮ menu (`labels.moreActionsLabel(title)`) with those items; without both it is read-only and rows only open. Exactly one state renders — loading, error with Retry, the empty state, or the rows — and the loading, error and empty states are a `role="status"` region. The lib loads nothing: the host passes the rows and handles the callbacks.
+A project's conversations as a `<section>` named by its `<h2>` (`labels.title`; with no chats the heading is hidden and the section keeps the name through `aria-label`), with one row per item: a button named `labels.openLabel(title, authorName)` holding the author's initials (`aria-hidden`) and the title truncated with a tooltip. When `onRename` or `onDelete` is given, each row also has a ⋮ menu (`labels.moreActionsLabel(title)`) with those items; without both it is read-only and rows only open. Exactly one state renders — loading, error with Retry, the empty state, or the rows — and the loading, error and empty states are a `role="status"` region. With `hasMore` and `onLoadMore`, a Show more button (`labels.loadMoreLabel`, default `'Show more'`) follows the rows and is disabled while `isLoadingMore`. The lib loads nothing: the host passes the rows and handles the callbacks.
 
 ```tsx
 import { ProjectConversationList } from '@epam/ai-dial-projects';
@@ -314,6 +314,8 @@ import { ProjectConversationList } from '@epam/ai-dial-projects';
     { id: 'c1', title: 'Weekly support summary', authorName: 'Valery Tester' },
   ]}
   onRetry={() => {}}
+  hasMore
+  onLoadMore={() => {}}
   onOpen={(id) => {}}
   onRename={(id) => {}}
   onDelete={(id) => {}}
@@ -329,6 +331,7 @@ import { ProjectConversationList } from '@epam/ai-dial-projects';
     retryLabel: 'Retry',
     emptyTitle: 'No outputs or chats yet',
     emptyDescription: 'Your outputs and chats will appear here once started.',
+    loadMoreLabel: 'Show more',
   }}
 />;
 ```
@@ -337,7 +340,7 @@ import { ProjectConversationList } from '@epam/ai-dial-projects';
 
 ### ProjectConversationsPanel
 
-A project's chat column for `ProjectView.mainContent`: the host's chat input (`composer`, any node), then `ProjectConversationList`, plus the rename dialog (a labelled input seeded with the title, an inline error for an empty name, the trimmed value sent to `onRename`) and the delete confirmation. Both dialogs return focus to the row's ⋮ trigger when they close and stay open while the host's promise rejects, so the host only reports the failure. Omitting `onRename` and `onDelete` makes it read-only.
+A project's chat column for `ProjectView.mainContent`: the host's chat input (`composer`, any node), then `ProjectConversationList`, plus the rename dialog (a labelled input seeded with the title, an inline error for an empty name, Cancel and Save buttons, Enter to save, the trimmed value sent to `onRename`) and the delete confirmation. `hasMore`, `isLoadingMore` and `onLoadMore` pass through to the list. Both dialogs return focus to the row's ⋮ trigger when they close; after a delete, whose row is gone, focus moves to the row now in its place, the one before it, or the list. They stay open, and cannot be closed, while the host's promise is pending, and stay open while it rejects, so the host only reports the failure. Omitting `onRename` and `onDelete` makes it read-only.
 
 ```tsx
 import { ProjectConversationsPanel } from '@epam/ai-dial-projects';
@@ -366,6 +369,7 @@ import { ProjectConversationsPanel } from '@epam/ai-dial-projects';
     renameInputLabel: 'Chat name',
     renameEmptyError: 'Enter a chat name',
     renameSaveLabel: 'Save',
+    renameCancelLabel: 'Cancel',
     deleteTitle: (title) => `Delete "${title}"?`,
     deleteDescription: 'The chat will be deleted. This cannot be undone.',
   }}

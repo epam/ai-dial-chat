@@ -7,6 +7,9 @@ export const PROJECT_CONVERSATION_LIST_DEFAULT_LIMIT = 50;
 /** Largest page size of `GET /api/v1/projects/:id/conversations`. */
 export const PROJECT_CONVERSATION_LIST_MAX_LIMIT = 100;
 
+const toOptionalNumber = ({ value }: { value: unknown }) =>
+  value != null ? Number(value) : undefined;
+
 /** Query of `GET /api/v1/projects/:id/conversations`. */
 export class ProjectConversationListQueryDto {
   @ApiPropertyOptional({
@@ -21,6 +24,19 @@ export class ProjectConversationListQueryDto {
   @IsInt()
   @Min(1)
   @Max(PROJECT_CONVERSATION_LIST_MAX_LIMIT)
-  @Transform(({ value }) => (value != null ? Number(value) : undefined))
+  @Transform(toOptionalNumber)
   limit?: number;
+
+  @ApiPropertyOptional({
+    description:
+      'Number of conversations to skip in the newest-first order; the next page starts at the count already loaded.',
+    example: 0,
+    minimum: 0,
+    default: 0,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Transform(toOptionalNumber)
+  offset?: number;
 }

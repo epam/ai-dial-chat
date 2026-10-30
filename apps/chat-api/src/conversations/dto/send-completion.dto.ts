@@ -14,6 +14,7 @@ import {
 } from 'class-validator';
 import { MessageCustomContentDto } from './message-custom-content.dto';
 import { IsMessageOrAttachmentsPresent } from './message-or-attachments.validator';
+import { IsNotProjectConversationLocator } from './not-project-conversation-locator.validator';
 
 export enum CompletionMode {
   Append = 'append',
@@ -41,6 +42,7 @@ export class SendCompletionDto {
   @Matches(/^(?!.*\.\.)[\s\S]+$/, {
     message: 'path contains invalid characters',
   })
+  @IsNotProjectConversationLocator()
   path!: string;
 
   @ApiProperty({

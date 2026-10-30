@@ -111,6 +111,26 @@ describe('ProjectConversationsListService', () => {
     expect(result.hasMore).toBe(true);
   });
 
+  it('returns the page after the offset, with hasMore only while more remain', async () => {
+    const { service } = makeService([
+      listing([
+        file('gpt-4o__A__1', 1),
+        file('gpt-4o__B__2', 2),
+        file('gpt-4o__C__3', 3),
+      ]),
+    ]);
+
+    const result = await service.listProjectConversations(
+      PROJECT,
+      'token',
+      2,
+      2,
+    );
+
+    expect(result.items.map((item) => item.name)).toEqual(['gpt-4o__A__1']);
+    expect(result.hasMore).toBe(false);
+  });
+
   it('skips folders under conversations/', async () => {
     const { service } = makeService([
       listing([{ name: 'nested', nodeType: 'FOLDER' }, file(OLDER, 1)]),

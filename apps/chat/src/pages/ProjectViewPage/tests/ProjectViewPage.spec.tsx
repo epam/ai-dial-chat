@@ -70,10 +70,19 @@ vi.mock(
     default: ({
       projectId,
       canEdit,
+      onConversationDeleted,
     }: {
       projectId: string;
       canEdit: boolean;
-    }) => <p>{`chats of ${projectId}, editable: ${String(canEdit)}`}</p>,
+      onConversationDeleted?: () => void;
+    }) => (
+      <>
+        <p>{`chats of ${projectId}, editable: ${String(canEdit)}`}</p>
+        <button type="button" onClick={onConversationDeleted}>
+          delete a chat
+        </button>
+      </>
+    ),
   }),
 );
 vi.mock('../../../components/ProjectShareOverlay/ProjectShareOverlay', () => ({
@@ -345,6 +354,29 @@ describe('ProjectViewPage', () => {
     expect(
       within(dialog).getByText(
         ProjectsI18nKeys.ActionsDeleteConfirmWithChatsDescription,
+      ),
+    ).toBeTruthy();
+  });
+
+  it('stops saying the chats are deleted too once the list deleted them all', async () => {
+    vi.mocked(getProject).mockResolvedValue(details({ conversationCount: 1 }));
+    renderAt();
+    await screen.findByRole('heading', { level: 1, name: 'q4' });
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'delete a chat' }),
+    );
+    const menu = await openMenu();
+    await userEvent.click(
+      within(menu).getByRole('menuitem', { name: ButtonsI18nKeys.Delete }),
+    );
+    const dialog = await screen.findByRole('dialog', {
+      name: ProjectsI18nKeys.ActionsDeleteConfirmTitle,
+    });
+
+    expect(
+      within(dialog).getByText(
+        ProjectsI18nKeys.ActionsDeleteConfirmDescription,
       ),
     ).toBeTruthy();
   });

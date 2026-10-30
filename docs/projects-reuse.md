@@ -13,7 +13,7 @@ base/theme styles once at the host root.
 | Project requests over a configured `ProjectsApi`      | `createProjectsApiClient(projectsApi)` from `@epam/ai-dial-chat-hooks/project`                             |
 | Projects list, one project, create and save           | `useProjects`, `useProject`, `useCreateProject`, `useSaveProject` (each takes the client first)            |
 | Pin, downloads and delete of the open project         | `useProjectActions(client, project, handlers)` — messages, pins and navigation come through `handlers`     |
-| A project's chats: load, rename, delete               | `useProjectConversations(client, projectId)`                                                               |
+| A project's chats: load, page, rename, delete         | `useProjectConversations(client, projectId)`                                                               |
 | DTO → view models and form errors                     | `mapProjectDtoToItem`, `mapProjectDetailsToViewModel`, `mapStoredContextFiles`, `getProjectFormError`      |
 | Context-file limits from the client config            | `resolveByteLimit`, `resolveExtensionList`, `getMimeTypesForExtensions` and the `DEFAULT_PROJECT_*` values |
 | Projects page, New/Edit form, project view            | `Projects`, `ProjectCreateForm`, `ProjectView` from `@epam/ai-dial-projects`                               |

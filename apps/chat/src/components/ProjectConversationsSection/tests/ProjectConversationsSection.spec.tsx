@@ -5,6 +5,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ButtonsI18nKeys,
+  ChatI18nKeys,
   ProjectsI18nKeys,
 } from '../../../constants/translation-keys';
 import { useDeployments } from '../../../context/DeploymentsContext';
@@ -135,7 +136,7 @@ describe('ProjectConversationsSection', () => {
 
     await userEvent.click(
       screen.getByRole('button', {
-        name: ProjectsI18nKeys.ChatsInputPlaceholder,
+        name: ChatI18nKeys.Placeholder,
       }),
     );
 
@@ -174,7 +175,7 @@ describe('ProjectConversationsSection', () => {
 
     await userEvent.click(
       screen.getByRole('button', {
-        name: ProjectsI18nKeys.ChatsInputPlaceholder,
+        name: ChatI18nKeys.Placeholder,
       }),
     );
 
@@ -200,7 +201,7 @@ describe('ProjectConversationsSection', () => {
     ).toBeTruthy();
     expect(
       screen.queryByRole('button', {
-        name: ProjectsI18nKeys.ChatsInputPlaceholder,
+        name: ChatI18nKeys.Placeholder,
       }),
     ).toBeNull();
     expect(

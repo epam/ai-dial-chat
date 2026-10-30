@@ -1,7 +1,14 @@
 import { DeleteConfirmationDialog } from '@epam/ai-dial-chat-shared';
-import { ButtonVariant, Input, Popup, PopupSize } from '@epam/ai-dial-ui-kit';
+import {
+  ButtonAppearance,
+  ButtonVariant,
+  Input,
+  Popup,
+  PopupSize,
+} from '@epam/ai-dial-ui-kit';
 import {
   type FC,
+  type KeyboardEvent,
   memo,
   useCallback,
   useId,
@@ -21,6 +28,9 @@ const ProjectConversationsPanelComponent: FC<
   isLoading = false,
   hasError = false,
   onRetry,
+  hasMore,
+  isLoadingMore,
+  onLoadMore,
   onOpen,
   onRename,
   onDelete,
@@ -28,6 +38,7 @@ const ProjectConversationsPanelComponent: FC<
   listTypography,
 }) => {
   const renameInputId = useId();
+  const listRef = useRef<HTMLDivElement | null>(null);
   const [renameRow, setRenameRow] =
     useState<ProjectConversationListItem | null>(null);
   const [renameValue, setRenameValue] = useState('');
@@ -46,6 +57,20 @@ const ProjectConversationsPanelComponent: FC<
     const trigger = triggerRef.current;
     triggerRef.current = null;
     if (trigger?.isConnected) window.setTimeout(() => trigger.focus(), 0);
+  }, []);
+  /* A deleted row takes its trigger with it: focus moves to the row now at its place, the one before, or the list. */
+  const focusRowAfterDelete = useCallback((index: number) => {
+    triggerRef.current = null;
+    window.setTimeout(() => {
+      const list = listRef.current;
+      if (!list) return;
+      const rows = list.querySelectorAll<HTMLElement>('li > button');
+      const target =
+        rows[Math.min(index, rows.length - 1)] ??
+        list.querySelector<HTMLElement>('h2, section');
+      if (target && !target.matches('button')) target.tabIndex = -1;
+      target?.focus();
+    }, 0);
   }, []);
 
   const findItem = useCallback(
@@ -71,9 +96,10 @@ const ProjectConversationsPanelComponent: FC<
     [findItem, rememberTrigger],
   );
   const handleRenameClose = useCallback(() => {
+    if (isRenaming) return;
     setRenameRow(null);
     restoreTriggerFocus();
-  }, [restoreTriggerFocus]);
+  }, [isRenaming, restoreTriggerFocus]);
   const handleDeleteClose = useCallback(() => {
     if (isDeleting) return;
     setDeleteRow(null);
@@ -81,7 +107,7 @@ const ProjectConversationsPanelComponent: FC<
   }, [isDeleting, restoreTriggerFocus]);
 
   const handleRenameSave = useCallback(async () => {
-    if (!renameRow || !onRename) return;
+    if (!renameRow || !onRename || isRenaming) return;
     const newTitle = renameValue.trim();
     if (!newTitle) {
       setRenameError(labels.renameEmptyError);
@@ -90,36 +116,54 @@ const ProjectConversationsPanelComponent: FC<
     setIsRenaming(true);
     try {
       await onRename(renameRow.id, newTitle);
-      handleRenameClose();
+      setRenameRow(null);
+      restoreTriggerFocus();
     } catch {
       /* The host reports the failure; the dialog stays open for another try. */
     } finally {
       setIsRenaming(false);
     }
   }, [
-    handleRenameClose,
+    isRenaming,
     labels.renameEmptyError,
     onRename,
     renameRow,
     renameValue,
+    restoreTriggerFocus,
   ]);
+  const handleRenameKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLInputElement>) => {
+      if (event.key !== 'Enter' || event.nativeEvent.isComposing) return;
+      event.preventDefault();
+      void handleRenameSave();
+    },
+    [handleRenameSave],
+  );
 
   const handleDeleteConfirm = useCallback(async () => {
     if (!deleteRow || !onDelete) return;
+    const index = items.findIndex((item) => item.id === deleteRow.id);
     setIsDeleting(true);
     try {
       await onDelete(deleteRow.id);
       setDeleteRow(null);
-      restoreTriggerFocus();
+      focusRowAfterDelete(Math.max(index, 0));
     } catch {
       /* The host reports the failure; the dialog stays open for another try. */
     } finally {
       setIsDeleting(false);
     }
-  }, [deleteRow, onDelete, restoreTriggerFocus]);
+  }, [deleteRow, focusRowAfterDelete, items, onDelete]);
 
   const renameButtons = useMemo(
     () => [
+      {
+        label: labels.renameCancelLabel ?? 'Cancel',
+        variant: ButtonVariant.Primary,
+        appearance: ButtonAppearance.Ghost,
+        disabled: isRenaming,
+        onClick: handleRenameClose,
+      },
       {
         label: labels.renameSaveLabel,
         variant: ButtonVariant.Primary,
@@ -129,23 +173,34 @@ const ProjectConversationsPanelComponent: FC<
         },
       },
     ],
-    [handleRenameSave, isRenaming, labels.renameSaveLabel],
+    [
+      handleRenameClose,
+      handleRenameSave,
+      isRenaming,
+      labels.renameCancelLabel,
+      labels.renameSaveLabel,
+    ],
   );
 
   return (
     <>
       {composer}
-      <ProjectConversationList
-        items={items}
-        isLoading={isLoading}
-        hasError={hasError}
-        onRetry={onRetry}
-        onOpen={onOpen}
-        onRename={onRename ? handleRenameRequest : undefined}
-        onDelete={onDelete ? handleDeleteRequest : undefined}
-        labels={labels.list}
-        typography={listTypography}
-      />
+      <div ref={listRef} className="contents">
+        <ProjectConversationList
+          items={items}
+          isLoading={isLoading}
+          hasError={hasError}
+          onRetry={onRetry}
+          hasMore={hasMore}
+          isLoadingMore={isLoadingMore}
+          onLoadMore={onLoadMore}
+          onOpen={onOpen}
+          onRename={onRename ? handleRenameRequest : undefined}
+          onDelete={onDelete ? handleDeleteRequest : undefined}
+          labels={labels.list}
+          typography={listTypography}
+        />
+      </div>
       {renameRow && (
         <Popup
           open
@@ -161,6 +216,7 @@ const ProjectConversationsPanelComponent: FC<
               labelProps={{ label: labels.renameInputLabel }}
               error={renameError}
               disabled={isRenaming}
+              onKeyDown={handleRenameKeyDown}
               onChange={(value) => {
                 setRenameValue(value ?? '');
                 setRenameError(undefined);

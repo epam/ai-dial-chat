@@ -48,8 +48,8 @@ export interface ConversationDataSource {
   getExitRoute: () => string;
   /** Whether the conversation opens read-only. */
   isReadOnly: (id: string) => boolean;
-  /** Sidebar list side effects, or `null` when the conversation is not in the sidebar. */
-  listSync: ConversationListSync | null;
+  /** Sidebar list side effects; `NO_CONVERSATION_LIST_SYNC` when the conversation is not in the sidebar. */
+  listSync: ConversationListSync;
   /** Whether a read-only conversation offers Duplicate. */
   canDuplicate: boolean;
   /** Translation key of the toast shown when the conversation cannot be loaded; the page's own when unset. */

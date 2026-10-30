@@ -135,6 +135,43 @@ describe('ProjectConversationList', () => {
     expect(onRetry).toHaveBeenCalledOnce();
   });
 
+  it('offers Show more only while more exist and a handler is given', async () => {
+    const onLoadMore = vi.fn();
+    const { rerender } = render(
+      <ProjectConversationList
+        items={items}
+        labels={labels}
+        onRetry={vi.fn()}
+        onOpen={vi.fn()}
+        onLoadMore={onLoadMore}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: 'Show more' })).toBeNull();
+
+    rerender(
+      <ProjectConversationList
+        items={items}
+        labels={{ ...labels, loadMoreLabel: 'Load older chats' }}
+        onRetry={vi.fn()}
+        onOpen={vi.fn()}
+        hasMore
+        onLoadMore={onLoadMore}
+      />,
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Load older chats' }),
+    );
+
+    expect(onLoadMore).toHaveBeenCalledOnce();
+  });
+
+  it('disables Show more while the next page loads', () => {
+    renderList({ hasMore: true, isLoadingMore: true, onLoadMore: vi.fn() });
+
+    const button = screen.getByRole('button', { name: 'Show more' });
+    expect((button as HTMLButtonElement).disabled).toBe(true);
+  });
+
   it('announces the loading state', () => {
     renderList({ isLoading: true });
 

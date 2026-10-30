@@ -86,12 +86,16 @@ export const ConversationDataSourceProvider = ({
 };
 
 /**
- * The data source of the nearest provider, or the regular one when none
- * overrides it. The regular source needs `ConversationsContext`, so this
- * throws outside `ConversationsProvider` like `useConversations` does.
+ * The data source of the nearest provider: a project chat's own, or the
+ * regular one `ConversationDataSourceProvider` supplies. Throws outside any
+ * provider, like `useConversations` does.
  */
 export const useConversationDataSource = (): ConversationDataSource => {
-  const provided = useContext(ConversationDataSourceContext);
-  const regular = useRegularConversationDataSource();
-  return provided ?? regular;
+  const value = useContext(ConversationDataSourceContext);
+  if (value == null) {
+    throw new Error(
+      'useConversationDataSource must be used within a ConversationDataSourceProvider',
+    );
+  }
+  return value;
 };

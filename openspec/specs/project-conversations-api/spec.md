@@ -99,6 +99,7 @@ A project conversation SHALL be stored as the file `conversations/{name}` inside
 - **Completion bodies.** The `path` in completion, stop and attach bodies SHALL equal the locator without its leading `projects/`, i.e. `{bucket}/{projectPath}/conversations/{name}`, which is the path the app's stream hook derives from the conversation id. The BFF re-prefixes it and requires the result to parse as a locator under `:id`, otherwise `400`. The path is also the generation-registry key, so stop and attach find the generation.
 - **Writes.** Create, save, rename, delete and completions SHALL be refused with `403` before any Core call when the project's bucket is not the session bucket, matching `canEdit` in `GET /api/v1/projects/:id`.
 - **Reads.** List and get go to Core with the caller's token, so a shared or organization project's conversations can be read.
+- **Only entry point.** The regular conversation routes SHALL refuse a project conversation locator with `400`, so the gating and owner check above cannot be bypassed. `IsNotProjectConversationLocator` (`apps/chat-api/src/conversations/dto/not-project-conversation-locator.validator.ts`) sits on the `path` of `ConversationPathDto` (and so of every query DTO extending it), `SendCompletionDto`, `StopCompletionDto`, `AttachGenerationDto` and `WatchConversationBodyDto`. A project completion body carries the locator without `projects/`, so it passes.
 - **OpenAPI.** Every route documents every status with `@ApiResponse`, and success responses name a DTO class.
 
 #### Scenario: Flag off
@@ -116,6 +117,11 @@ A project conversation SHALL be stored as the file `conversations/{name}` inside
 - **WHEN** `POST /api/v1/projects/projects%2Fa1b2c3%2Fq4/conversations/completions` carries `path: 'a1b2c3/other/conversations/x'`
 - **THEN** the response is `400`
 
+#### Scenario: A regular route is given a project locator
+
+- **WHEN** `POST /api/v1/conversations/completions` carries `path: 'projects/a1b2c3/q4/conversations/x'`
+- **THEN** the response is `400`, and no Core call is made
+
 #### Scenario: Traversal in the conversation name
 
 - **WHEN** `GET /api/v1/projects/{id}/conversations/..%2Fcontext%2Ftickets.csv` is called
@@ -127,7 +133,7 @@ A project conversation SHALL be stored as the file `conversations/{name}` inside
 
 1. keeps file items that are direct children of `conversations/`;
 2. sorts them by `updatedAt`, newest first, then by name;
-3. returns the first `limit` items (query, default 50, `1..100`), with `hasMore` when more exist.
+3. skips the first `offset` items (query, default 0, `>= 0`) and returns the next `limit` (query, default 50, `1..100`), with `hasMore` when more exist after them. The app's next page passes the count it already lists as `offset`.
 
 **Titles.** Every returned item's `title` is the conversation's display name:
 
@@ -172,13 +178,13 @@ Status codes:
 | Status | When |
 | --- | --- |
 | `200` | Listed. A project with no `conversations/` folder lists `items: []`. |
-| `400` | Invalid `:id` or `limit`. |
+| `400` | Invalid `:id`, `limit` or `offset`. |
 | `401` | No valid session. |
 | `403` | The flag is off, or Core denied read access. |
 | `404` | No such project. |
 | `429` / `502` / `503` | Upstream, through `handleDialSdkError`. |
 
-**Generated-client impact:** operationId `listProjectConversations`, so `ProjectsApi.listProjectConversations({ id, limit })` returns `ProjectConversationListResponseDto`. Callers use the normal method.
+**Generated-client impact:** operationId `listProjectConversations`, so `ProjectsApi.listProjectConversations({ id, limit, offset })` returns `ProjectConversationListResponseDto`. Callers use the normal method.
 
 #### Scenario: Newest first with titles
 
@@ -189,6 +195,11 @@ Status codes:
 
 - **WHEN** the list is requested twice and no conversation changed in between
 - **THEN** the second request makes no `downloadProjectFile` call
+
+#### Scenario: The next page starts after the offset
+
+- **WHEN** the project holds three conversations and the list is requested with `limit=2&offset=2`
+- **THEN** the response holds the oldest one only, with `hasMore: false`
 
 #### Scenario: Empty project
 

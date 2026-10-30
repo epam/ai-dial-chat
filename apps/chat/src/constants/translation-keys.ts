@@ -484,7 +484,6 @@ export enum ProjectsI18nKeys {
   ChatsTitle = 'projects.chats.title',
   ChatsEmpty = 'projects.chats.empty',
   ChatsEmptyDescription = 'projects.chats.emptyDescription',
-  ChatsInputPlaceholder = 'projects.chats.inputPlaceholder',
   ChatsLoading = 'projects.chats.loading',
   ChatsError = 'projects.chats.error',
   ChatsOpenLabel = 'projects.chats.openLabel',

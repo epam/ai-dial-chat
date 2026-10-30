@@ -30,6 +30,8 @@ export interface ProjectConversationListLabels {
   emptyTitle: string;
   /** Empty-state description. */
   emptyDescription: string;
+  /** Label of the action that loads more conversations. Defaults to `'Show more'`. */
+  loadMoreLabel?: string;
 }
 
 /** Typography overrides for the {@link ProjectConversationList} component. */
@@ -52,6 +54,12 @@ export interface ProjectConversationListProps {
   hasError?: boolean;
   /** Called from the retry action of the error state. */
   onRetry: () => void;
+  /** More conversations exist after `items`; shows the load-more action when `onLoadMore` is set. Defaults to `false`. */
+  hasMore?: boolean;
+  /** Disables the load-more action while the next page loads. Defaults to `false`. */
+  isLoadingMore?: boolean;
+  /** Called from the load-more action. */
+  onLoadMore?: () => void;
   /** Called with a conversation id when the user activates its row. */
   onOpen: (id: string) => void;
   /** Called from a row's Rename item; the item is hidden when omitted. */

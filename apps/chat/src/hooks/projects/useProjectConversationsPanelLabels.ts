@@ -22,6 +22,7 @@ export const useProjectConversationsPanelLabels =
         renameInputLabel: t(ProjectsI18nKeys.ChatsRenameInputLabel),
         renameEmptyError: t(ProjectsI18nKeys.ChatsRenameEmpty),
         renameSaveLabel: t(ButtonsI18nKeys.Save),
+        renameCancelLabel: t(ButtonsI18nKeys.Cancel),
         deleteTitle: (title) =>
           t(ProjectsI18nKeys.ChatsDeleteConfirmTitle, { title }),
         deleteDescription: t(ProjectsI18nKeys.ChatsDeleteConfirmDescription),

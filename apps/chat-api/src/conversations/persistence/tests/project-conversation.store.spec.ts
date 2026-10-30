@@ -1,4 +1,5 @@
 import {
+  BadGatewayException,
   ForbiddenException,
   Logger,
   NotFoundException,
@@ -206,6 +207,26 @@ describe('ProjectConversationStore', () => {
     expect(client.listProjectMetadata.mock.invocationCallOrder[0]).toBeLessThan(
       client.downloadProjectFile.mock.invocationCallOrder[0],
     );
+  });
+
+  it('refuses a conditional write when the project metadata has no ETag', async () => {
+    const { store, client } = makeStore();
+    const text = JSON.stringify(body());
+    client.downloadProjectFile.mockResolvedValue(download(text));
+    client.listProjectMetadata.mockResolvedValue({
+      ...metadata(''),
+      data: { nodeType: 'ITEM', etag: '' },
+    });
+
+    await expect(
+      store.saveConversationIfMatch(
+        LOCATOR,
+        'token',
+        body(),
+        hashProjectConversation(text),
+      ),
+    ).rejects.toBeInstanceOf(BadGatewayException);
+    expect(client.uploadProjectFile).not.toHaveBeenCalled();
   });
 
   it('resolves isSaved false without writing when the file itself changed', async () => {
