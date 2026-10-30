@@ -4,8 +4,8 @@ import { useUser } from '../../context/auth/UserContext';
 export const useUserProfile = () => {
   const { user } = useUser();
 
-  /* The BFF stores the standard OIDC `picture` claim (avatar URL). */
-  const image = user?.claims?.['picture'] as string | undefined;
+  /* An http(s) `picture` claim, or the BFF's endpoint for an inline one. */
+  const image = user?.pictureUrl;
   /*
    * Track the URL that failed rather than a boolean: the profile loads after
    * the first render, and a new avatar URL must get its own chance to load.

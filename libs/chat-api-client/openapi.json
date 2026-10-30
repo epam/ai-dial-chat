@@ -179,6 +179,60 @@
         "tags": ["auth"]
       }
     },
+    "/api/v1/auth/me/picture": {
+      "get": {
+        "description": "Serves the inline (data: URL) profile picture the identity provider returns from UserInfo. Only advertised through `pictureUrl` on `GET /auth/me` when the session has one.",
+        "operationId": "getCurrentUserPicture",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Profile picture bytes",
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/gif": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/webp": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session"
+          },
+          "404": {
+            "description": "The session has no inline profile picture"
+          },
+          "502": {
+            "description": "The identity provider UserInfo lookup failed"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Get current user profile picture",
+        "tags": ["auth"]
+      }
+    },
     "/api/v1/client-config": {
       "get": {
         "operationId": "getClientConfig",
@@ -11086,6 +11140,11 @@
             "type": "boolean",
             "example": false,
             "description": "Whether the user's roles claim intersects the provider's configured adminRoles"
+          },
+          "pictureUrl": {
+            "type": "string",
+            "example": "/api/v1/auth/me/picture",
+            "description": "URL of the user's profile picture: the IdP's absolute http(s) `picture` claim, or the same-origin `GET /auth/me/picture` path when the IdP supplied the image inline. Omitted when there is no picture."
           }
         },
         "required": ["sub", "providerId", "claims", "bucket", "isAdmin"]
