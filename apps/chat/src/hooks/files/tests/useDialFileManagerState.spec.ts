@@ -3,6 +3,7 @@ import { act, renderHook } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { resolveCatalogIconUrl } from '../../../utils/icon-path';
 import { useDialFileManagerState } from '../useDialFileManagerState';
+
 vi.mock('../../../utils/icon-path', () => ({
   resolveCatalogIconUrl: vi.fn(() => 'preview'),
 }));

@@ -106,4 +106,5 @@ const HalloweenTrain: FC<Props> = ({ soundtrackUrl }) => {
     </div>
   );
 };
+
 export default HalloweenTrain;

@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { usePersistedState } from '../usePersistedState';
+
 const storage = {
   read: (key: string) => localStorage.getItem(key),
   write: (key: string, value: string) => localStorage.setItem(key, value),

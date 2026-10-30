@@ -33,6 +33,7 @@ import { SNOWMAN_RIG } from '../snowman-delivery-rig';
 import { getSnowmanDeliveryTargets } from '../snowman-delivery-targets';
 
 type Point = [number, number];
+
 const FPS = 60;
 const END = SNOWMAN_DELIVERY_MS / 1000;
 const distance = (a: Point, b: Point) => Math.hypot(a[0] - b[0], a[1] - b[1]);

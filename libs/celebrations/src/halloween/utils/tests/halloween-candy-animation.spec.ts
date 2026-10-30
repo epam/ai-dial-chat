@@ -5,18 +5,19 @@ import {
   CANDY_MS,
   type CandyPlan,
 } from '../halloween-candy-plan';
+
 const descriptor = Object.getOwnPropertyDescriptor(
   Element.prototype,
   'animate',
 );
-let fixture: HTMLElement,
-  host: HTMLElement,
-  draft: HTMLTextAreaElement,
-  plan: CandyPlan,
-  stop: (() => void) | undefined;
+let fixture: HTMLElement;
+let host: HTMLElement;
+let draft: HTMLTextAreaElement;
+let plan: CandyPlan;
+let stop: (() => void) | undefined;
 let onResize: ResizeObserverCallback;
-const disconnect = vi.fn(),
-  onStop = vi.fn();
+const disconnect = vi.fn();
+const onStop = vi.fn();
 const recorded: {
   element: Element;
   cancel: ReturnType<typeof vi.fn>;
@@ -94,7 +95,7 @@ afterEach(() => {
 const play = () => {
   stop = animateCandy(plan, host, onStop);
 };
-const stopped = () => {
+const expectStopped = () => {
   expect(onStop).toHaveBeenCalledOnce();
   expect(disconnect).toHaveBeenCalledOnce();
   expect(recorded.every((a) => a.cancel.mock.calls.length === 1)).toBe(true);
@@ -116,7 +117,7 @@ describe('Candy playback ownership', () => {
     ]).toEqual([2, 7, 'backward']);
     vi.advanceTimersByTime(CANDY_MS);
     expect(fixture.getBoundingClientRect).not.toHaveBeenCalled();
-    stopped();
+    expectStopped();
   });
   it.each([
     'pointerdown',
@@ -135,7 +136,7 @@ describe('Candy playback ownership', () => {
     (name === 'resize' ? window : document).dispatchEvent(new Event(name));
     stop?.();
     vi.advanceTimersByTime(CANDY_MS);
-    stopped();
+    expectStopped();
   });
   it('does not interrupt a visible document on a visibility notification', () => {
     play();
@@ -150,7 +151,7 @@ describe('Candy playback ownership', () => {
       else if (kind === 'removal') fixture.remove();
       else document.body.setAttribute('dir', 'rtl');
       await Promise.resolve();
-      stopped();
+      expectStopped();
       document.body.removeAttribute('dir');
     },
   );
@@ -186,7 +187,7 @@ describe('Candy playback ownership', () => {
       ] as unknown as ResizeObserverEntry[],
       {} as ResizeObserver,
     );
-    stopped();
+    expectStopped();
   });
   it('cleans up a partial setup failure and cannot retain orphan animations', () => {
     vi.mocked(Element.prototype.animate)
@@ -199,12 +200,12 @@ describe('Candy playback ownership', () => {
         throw Error('unsupported');
       });
     play();
-    stopped();
+    expectStopped();
   });
   it('enforces track and keyframe limits before starting unbounded playback', () => {
     plan.animationLimit = 2;
     play();
     expect(recorded).toHaveLength(2);
-    stopped();
+    expectStopped();
   });
 });

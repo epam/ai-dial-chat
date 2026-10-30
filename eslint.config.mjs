@@ -1,4 +1,6 @@
 import nx from '@nx/eslint-plugin';
+import stylistic from '@stylistic/eslint-plugin';
+import vitest from '@vitest/eslint-plugin';
 import prettier from 'eslint-plugin-prettier';
 import prettierConfig from 'eslint-config-prettier';
 import importPlugin from 'eslint-plugin-import';
@@ -114,6 +116,7 @@ export default [
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
     plugins: {
+      '@stylistic': stylistic,
       prettier,
       import: importPlugin,
       'jsx-a11y': jsxA11y,
@@ -132,6 +135,18 @@ export default [
     rules: {
       // Prettier rules
       'prettier/prettier': 'error',
+
+      // Layout rules Prettier leaves alone
+      'one-var': ['error', 'never'],
+      '@stylistic/padding-line-between-statements': [
+        'error',
+        { blankLine: 'always', prev: 'import', next: '*' },
+        { blankLine: 'any', prev: 'import', next: 'import' },
+        { blankLine: 'always', prev: '*', next: ['interface', 'type'] },
+        { blankLine: 'always', prev: ['interface', 'type'], next: '*' },
+        { blankLine: 'always', prev: '*', next: 'export' },
+        { blankLine: 'any', prev: 'export', next: 'export' },
+      ],
 
       // React Hooks rules
       'react-hooks/rules-of-hooks': 'off',
@@ -295,9 +310,20 @@ export default [
     files: ['**/*.spec.ts', '**/*.spec.tsx'],
     plugins: {
       'testing-library': testingLibrary,
+      vitest,
     },
     rules: {
       ...testingLibrary.configs['flat/react'].rules,
+      'vitest/require-top-level-describe': 'error',
+      'vitest/expect-expect': [
+        'error',
+        /*
+         * `expect*` covers local assertion helpers (`expectRejection(...)`);
+         * `**.expect` covers supertest chains, including ones built by a
+         * helper (`postCompletion().expect(503)`).
+         */
+        { assertFunctionNames: ['expect*', '**.expect'] },
+      ],
     },
   },
   prettierConfig,

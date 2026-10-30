@@ -8,6 +8,7 @@ import {
   writeAppShellHtml,
 } from './application-mode.mjs';
 import { cleanupDir, createTmpRoot } from './harness.mjs';
+
 const keepFixtures = process.env.KEEP_FIXTURES === '1';
 const tmpRoot = createTmpRoot('ai-dial-chat-application-mode-unit-');
 after(() => {

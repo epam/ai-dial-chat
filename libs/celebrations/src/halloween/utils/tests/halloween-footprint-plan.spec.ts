@@ -75,9 +75,9 @@ describe('invisible cat contact plan', () => {
   it.each([360, 900, 1280, 1920])(
     'bounds geometry, tracks and alternating steps at %spx',
     (width) => {
-      const mobile = width < 1280,
-        input = fixture(width),
-        plan = buildFootprintPlan(input, mobile);
+      const mobile = width < 1280;
+      const input = fixture(width);
+      const plan = buildFootprintPlan(input, mobile);
       expect(plan.prints).toHaveLength(mobile ? 8 : 12);
       for (const print of plan.prints) {
         const x =

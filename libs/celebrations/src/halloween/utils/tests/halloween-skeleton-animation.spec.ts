@@ -6,18 +6,19 @@ import {
   SKELETON_MS,
   type SkeletonPlan,
 } from '../halloween-skeleton-plan';
+
 const descriptor = Object.getOwnPropertyDescriptor(
   Element.prototype,
   'animate',
 );
-let fixture: HTMLElement,
-  host: HTMLElement,
-  draft: HTMLTextAreaElement,
-  plan: SkeletonPlan,
-  stop: (() => void) | undefined;
+let fixture: HTMLElement;
+let host: HTMLElement;
+let draft: HTMLTextAreaElement;
+let plan: SkeletonPlan;
+let stop: (() => void) | undefined;
 let onResize: ResizeObserverCallback;
-const disconnect = vi.fn(),
-  onStop = vi.fn();
+const disconnect = vi.fn();
+const onStop = vi.fn();
 const recorded: {
   element: Element;
   cancel: ReturnType<typeof vi.fn>;
@@ -96,7 +97,7 @@ afterEach(() => {
 const play = () => {
   stop = animateSkeletons(plan, host, onStop);
 };
-const stopped = () => {
+const expectStopped = () => {
   expect(onStop).toHaveBeenCalledOnce();
   expect(disconnect).toHaveBeenCalledOnce();
   expect(recorded.every((a) => a.cancel.mock.calls.length === 1)).toBe(true);
@@ -118,7 +119,7 @@ describe('animateSkeletons', () => {
     ]).toEqual([2, 7, 'backward']);
     vi.advanceTimersByTime(SKELETON_MS);
     expect(fixture.getBoundingClientRect).not.toHaveBeenCalled();
-    stopped();
+    expectStopped();
   });
   it.each([
     'pointerdown',
@@ -137,7 +138,7 @@ describe('animateSkeletons', () => {
     (name === 'resize' ? window : document).dispatchEvent(new Event(name));
     stop?.();
     vi.advanceTimersByTime(SKELETON_MS);
-    stopped();
+    expectStopped();
   });
   it('does not interrupt a visible document on a visibility notification', () => {
     play();
@@ -152,7 +153,7 @@ describe('animateSkeletons', () => {
       else if (kind === 'removal') fixture.remove();
       else document.body.setAttribute('dir', 'rtl');
       await Promise.resolve();
-      stopped();
+      expectStopped();
       document.body.removeAttribute('dir');
     },
   );
@@ -188,7 +189,7 @@ describe('animateSkeletons', () => {
       ] as unknown as ResizeObserverEntry[],
       {} as ResizeObserver,
     );
-    stopped();
+    expectStopped();
   });
   it('cleans up a partial setup failure and cannot retain orphan animations', () => {
     vi.mocked(Element.prototype.animate)
@@ -201,7 +202,7 @@ describe('animateSkeletons', () => {
         throw Error('unsupported');
       });
     play();
-    stopped();
+    expectStopped();
   });
   it('enforces the keyframe limit before starting unbounded playback', () => {
     plan.skull.turn = Array.from({ length: 81 }, (_, i) => ({
@@ -209,14 +210,14 @@ describe('animateSkeletons', () => {
     }));
     play();
     expect(recorded).toHaveLength(18);
-    stopped();
+    expectStopped();
   });
 
   it('refuses playback when the artwork is missing', () => {
     host.querySelector('[data-skeleton-free-skull]')!.remove();
     play();
     expect(recorded).toHaveLength(17);
-    stopped();
+    expectStopped();
   });
 
   describe('greeting word', () => {
@@ -285,7 +286,7 @@ describe('animateSkeletons', () => {
       vi.advanceTimersByTime(plan.word!.restoreAt - plan.word!.hideAt);
       expect(highlights.size).toBe(0);
       vi.advanceTimersByTime(SKELETON_MS);
-      stopped();
+      expectStopped();
     });
 
     it.each(['keydown', 'heading change'])(
@@ -300,7 +301,7 @@ describe('animateSkeletons', () => {
           await Promise.resolve();
         }
         expect(highlights.size).toBe(0);
-        stopped();
+        expectStopped();
       },
     );
   });

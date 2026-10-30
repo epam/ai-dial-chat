@@ -26,6 +26,7 @@ type _HasGetSelectionLabel = DialFileManagerShellLabels extends {
 }
   ? true
   : never;
+
 const _labelsShape: _HasGetSelectionLabel = true;
 
 describe('package export surface', () => {

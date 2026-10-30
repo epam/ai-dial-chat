@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useConversationDiscovery as useDiscovery } from '../useConversationDiscovery';
+
 const normalizeId = (id: string) =>
   decodeURIComponent(id).replace(/^conversations\//, '');
 const useConversationDiscovery = (

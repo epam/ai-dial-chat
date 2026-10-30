@@ -1,9 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getCandyTargets } from '../halloween-candy-targets';
+
 const anchors = { composer: 'input-shell', starterList: 'starters' };
 const measure = (element: Element, box: DOMRect) =>
   vi.spyOn(element, 'getBoundingClientRect').mockReturnValue(box);
-let composer: HTMLElement, button: HTMLButtonElement;
+let composer: HTMLElement;
+let button: HTMLButtonElement;
 beforeEach(() => {
   document.body.innerHTML =
     '<main role="region"><div class="input-shell"><textarea>draft</textarea></div><ul class="starters"><li><button>Try something</button></li></ul></main>';

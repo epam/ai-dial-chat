@@ -12,7 +12,9 @@ import {
 } from '../penguin-star-targets';
 
 type Point = [number, number];
+
 type Scene = ReturnType<typeof buildPenguinStarComposition>['animationData'];
+
 type Layer = Scene['layers'][number];
 
 const target = (width: number, rtl = false): PenguinStarTargets => {

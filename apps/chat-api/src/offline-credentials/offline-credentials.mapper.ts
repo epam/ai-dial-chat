@@ -6,6 +6,7 @@ import type {
 
 type DialOfflineCredentialsStatus =
   components['schemas']['OfflineCredentialsStatus'];
+
 type DialOfflineCredentialsSignInRequest =
   operations['offlineCredentialsSignIn']['requestBody']['content']['application/json'];
 

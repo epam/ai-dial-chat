@@ -12,6 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { animateCandy } from '../../../utils/halloween-candy-animation';
 import { getCandyTargets } from '../../../utils/halloween-candy-targets';
 import HalloweenCandy from '../HalloweenCandy';
+
 const state = vi.hoisted(() => ({
   mobile: false,
   reduced: false,
@@ -46,10 +47,10 @@ vi.mock('../../../utils/halloween-candy-targets', () => ({
   getCandyTargets: vi.fn(),
 }));
 const descriptor = Object.getOwnPropertyDescriptor(
-    Element.prototype,
-    'animate',
-  ),
-  stop = vi.fn();
+  Element.prototype,
+  'animate',
+);
+const stop = vi.fn();
 beforeEach(() => {
   vi.clearAllMocks();
   state.mobile = false;

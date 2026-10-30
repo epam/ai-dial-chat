@@ -3,6 +3,7 @@ import type { Ref } from 'react';
 import type { ListViewColumnVisibility } from '../components/ListView/columns';
 import type { CatalogSelectionMode } from '../types/selection-mode';
 import { CatalogItem } from './catalog-item';
+
 /** Typography class overrides for `ListView` cells. */
 export interface ListViewTypography {
   /** Typography class for item name text. Default: `'dial-small-semi-text'`. */

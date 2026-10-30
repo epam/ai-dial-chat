@@ -17,11 +17,13 @@ export interface CandyPoint {
   x: number;
   y: number;
 }
+
 interface Pose extends CandyPoint {
   time: number;
   angle?: number;
   opacity?: number;
 }
+
 /** Every pose is shared with artwork and collision evidence. */
 export interface CandyContact extends CandyPoint {
   time: number;
@@ -30,16 +32,19 @@ export interface CandyContact extends CandyPoint {
   actor?: number;
   surface?: number;
 }
+
 interface Sweet {
   frames: Keyframe[];
   floorX: number;
 }
+
 interface Bird {
   frames: Keyframe[];
   head: Keyframe[];
   wing: Keyframe[];
   facing: Keyframe[];
 }
+
 interface Janitor {
   kind: CandyJanitorKind;
   frames: Keyframe[];
@@ -47,6 +52,7 @@ interface Janitor {
   legs: Keyframe[][];
   facing: Keyframe[];
 }
+
 /** Coordinates are mirrored as a single artwork layer in RTL; no host text enters it. */
 export interface CandyPlan {
   targets: CandyTargets;
@@ -88,6 +94,7 @@ const facing = (points: [number, number][]): Keyframe[] =>
     transform: `scaleX(${value})`,
     easing: 'steps(1, end)',
   }));
+
 /** The drawing's beak rotates around its neck; use this for every peck. */
 export const candyBeakPoint = (angle: number): CandyPoint => ({
   x: 48 + 47 * Math.cos((angle * Math.PI) / 180),
@@ -102,16 +109,16 @@ export const buildCandyPlan = (
   mobile: boolean,
 ): CandyPlan => {
   const { width, height, rtl } = targets;
-  const floor = Math.max(100, height - 22),
-    radius = mobile ? 9 : 11;
-  const birdScale = mobile ? 0.64 : 0.8,
-    janitorScale = mobile ? 0.5 : 0.76;
+  const floor = Math.max(100, height - 22);
+  const radius = mobile ? 9 : 11;
+  const birdScale = mobile ? 0.64 : 0.8;
+  const janitorScale = mobile ? 0.5 : 0.76;
   const peckAngle =
     (Math.asin(clamp((90 - radius / birdScale - 30) / 47, -1, 1)) * 180) /
     Math.PI;
   const beak = candyBeakPoint(peckAngle);
-  const count = mobile ? 12 : 18,
-    flock = mobile ? 4 : 6;
+  const count = mobile ? 12 : 18;
+  const flock = mobile ? 4 : 6;
   const contacts: CandyContact[] = [];
   const surfaces = targets.surfaces
     .map((target, index) => ({
@@ -156,8 +163,8 @@ export const buildCandyPlan = (
           0.2 + (i % 5) * 0.15,
         )
       : mix(24, width - 24, (i + 0.5) / count);
-    let y = -30,
-      time = 250 + (i % 6) * 100;
+    let y = -30;
+    let time = 250 + (i % 6) * 100;
     const higher = surfaces.filter(
       (surface) => surface.top < (target?.top ?? 0),
     );
@@ -277,10 +284,10 @@ export const buildCandyPlan = (
     sweetPoses.push(poses);
   }
   /* The mummy's first push leaves candy for the flock's second meal. */
-  const brushStart = positions[count - 1] + 18,
-    brushEnd = width * 0.65;
-  const firstSweepStart = 10900,
-    firstSweepEnd = 12600;
+  const brushStart = positions[count - 1] + 18;
+  const brushEnd = width * 0.65;
+  const firstSweepStart = 10900;
+  const firstSweepEnd = 12600;
   const firstX = (t: number) =>
     mix(
       brushStart,
@@ -315,10 +322,10 @@ export const buildCandyPlan = (
   const birds: Bird[] = [];
   for (let i = 0; i < flock; i++) {
     const food = i * 3;
-    const x = positions[food] - beak.x * birdScale,
-      laterX = settled[food] - beak.x * birdScale;
-    const y = floor - 90 * birdScale,
-      stagger = i * 110;
+    const x = positions[food] - beak.x * birdScale;
+    const laterX = settled[food] - beak.x * birdScale;
+    const y = floor - 90 * birdScale;
+    const stagger = i * 110;
     const chaseArrival = {
       x: width * 0.62 - (i % 3) * birdScale * 55,
       y: y - 55 - Math.floor(i / 3) * 50,
@@ -463,10 +470,10 @@ export const buildCandyPlan = (
   const janitors: Janitor[] = [];
   const janitorY = floor - CANDY_BRUSH.y * janitorScale;
   const brushOffset = CANDY_BRUSH.x * janitorScale;
-  const finalStart = 28400,
-    finalEnd = 32600;
-  const finalBrushStart = width * (mobile ? 0.66 : 0.74),
-    finalBrushEnd = -70;
+  const finalStart = 28400;
+  const finalEnd = 32600;
+  const finalBrushStart = width * (mobile ? 0.66 : 0.74);
+  const finalBrushEnd = -70;
   const sweepAt = (x: number) =>
     mix(
       finalStart,
@@ -496,8 +503,8 @@ export const buildCandyPlan = (
     );
   });
   for (let i = 0; i < 3; i++) {
-    const gap = i * (mobile ? 30 : 94),
-      start = 24000 + i * 220;
+    const gap = i * (mobile ? 30 : 94);
+    const start = 24000 + i * 220;
     const poses: Pose[] = [
       { time: 0, x: width + 180, y: janitorY, opacity: 0 },
     ];

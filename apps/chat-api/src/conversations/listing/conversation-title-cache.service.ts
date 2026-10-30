@@ -14,6 +14,7 @@ export const CONVERSATION_TITLE_CACHE_MAX_ENTRIES = 5000;
 const MAX_TITLE_LENGTH = 4096;
 const MAX_CONCURRENT_READS = 25;
 const MAX_PENDING_READS = 250;
+
 export const CONVERSATION_TITLE_QUEUE_WAIT_MS = 5000;
 
 export interface ConversationTitleSummary {

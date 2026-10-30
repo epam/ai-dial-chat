@@ -406,7 +406,10 @@ describe('useOAuthCallbackCompletion', () => {
       renderCompletion('?code=test-code&state=flow-17');
 
       await reported;
-      await screen.findByText(ToolsetOAuthFailureReason.LoginRequestFailed);
+
+      expect(
+        await screen.findByText(ToolsetOAuthFailureReason.LoginRequestFailed),
+      ).toBeTruthy();
     });
   });
 });

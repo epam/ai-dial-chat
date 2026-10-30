@@ -47,6 +47,7 @@ interface FakeAnimation {
   callbacks: Map<string, () => void>;
   currentFrame: number;
 }
+
 const animations: FakeAnimation[] = [];
 const player = {
   loadAnimation:

@@ -29,6 +29,7 @@ import {
 } from '../utils/skill-metadata.util';
 
 type DialSkillItem = DialMetadataBase & { items?: DialMetadataBase[] };
+
 type SharedSkillItem = DialMetadataBase & { permissions?: string[] };
 
 const CATALOG_PAGE_SIZE = 1000;

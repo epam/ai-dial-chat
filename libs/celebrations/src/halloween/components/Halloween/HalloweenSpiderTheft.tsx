@@ -211,4 +211,5 @@ const HalloweenSpiderTheft: FC = () => {
     </div>
   );
 };
+
 export default HalloweenSpiderTheft;
