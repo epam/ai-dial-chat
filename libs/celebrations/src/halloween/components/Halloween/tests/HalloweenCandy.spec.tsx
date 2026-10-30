@@ -12,6 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { animateCandy } from '../../../utils/halloween-candy-animation';
 import { getCandyTargets } from '../../../utils/halloween-candy-targets';
 import HalloweenCandy from '../HalloweenCandy';
+
 const state = vi.hoisted(() => ({
   mobile: false,
   reduced: false,
@@ -46,36 +47,38 @@ vi.mock('../../../utils/halloween-candy-targets', () => ({
   getCandyTargets: vi.fn(),
 }));
 const descriptor = Object.getOwnPropertyDescriptor(
-    Element.prototype,
-    'animate',
-  ),
-  stop = vi.fn();
-beforeEach(() => {
-  vi.clearAllMocks();
-  state.mobile = false;
-  state.reduced = false;
-  state.listeners.clear();
-  Object.defineProperty(Element.prototype, 'animate', {
-    configurable: true,
-    value: vi.fn(),
-  });
-  vi.stubGlobal('ResizeObserver', class {});
-  vi.mocked(animateCandy).mockReturnValue(stop);
-  vi.mocked(getCandyTargets).mockReturnValue({
-    width: 1280,
-    height: 900,
-    rtl: false,
-    surfaces: [],
-  });
-});
-afterEach(() => {
-  vi.restoreAllMocks();
-  vi.unstubAllGlobals();
-  if (descriptor)
-    Object.defineProperty(Element.prototype, 'animate', descriptor);
-  else Reflect.deleteProperty(Element.prototype, 'animate');
-});
+  Element.prototype,
+  'animate',
+);
+const stop = vi.fn();
 describe('Candy battle integration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    state.mobile = false;
+    state.reduced = false;
+    state.listeners.clear();
+    Object.defineProperty(Element.prototype, 'animate', {
+      configurable: true,
+      value: vi.fn(),
+    });
+    vi.stubGlobal('ResizeObserver', class {});
+    vi.mocked(animateCandy).mockReturnValue(stop);
+    vi.mocked(getCandyTargets).mockReturnValue({
+      width: 1280,
+      height: 900,
+      rtl: false,
+      surfaces: [],
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    if (descriptor)
+      Object.defineProperty(Element.prototype, 'animate', descriptor);
+    else Reflect.deleteProperty(Element.prototype, 'animate');
+  });
+
   it.each([true, false])(
     'renders the complete bounded cast without changing input, mobile=%s',
     async (mobile) => {

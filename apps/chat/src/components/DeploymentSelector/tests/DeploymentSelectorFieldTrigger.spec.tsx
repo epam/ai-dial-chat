@@ -15,10 +15,6 @@ vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
   useIsMobile: () => breakpoint.isMobile,
 }));
 
-afterEach(() => {
-  breakpoint.isMobile = false;
-});
-
 const mockOverlay = (
   overrides?: Partial<ReturnType<typeof useDeploymentSelectorFieldOverlay>>,
 ) => {
@@ -49,6 +45,10 @@ const renderTrigger = (
   );
 
 describe('DeploymentSelectorFieldTrigger', () => {
+  afterEach(() => {
+    breakpoint.isMobile = false;
+  });
+
   it('shows the placeholder when nothing is selected', () => {
     mockOverlay();
     renderTrigger();
@@ -161,206 +161,206 @@ describe('DeploymentSelectorFieldTrigger', () => {
 
     expect(trigger.getAttribute('aria-expanded')).toBe('true');
   });
-});
 
-describe('DeploymentSelectorFieldTrigger — mobile', () => {
-  it('keeps an open field and its host panel when switching between desktop and mobile', async () => {
-    mockOverlay();
-    const user = userEvent.setup({ delay: null });
-    const props = {
-      selectedId: null,
-      onSelect: vi.fn(),
-      placeholder: 'Choose model',
-    };
-    const { rerender } = renderTrigger(props);
-    await user.click(screen.getByRole('combobox'));
-    expect(await screen.findByText('overlay content')).toBeTruthy();
+  describe('DeploymentSelectorFieldTrigger — mobile', () => {
+    it('keeps an open field and its host panel when switching between desktop and mobile', async () => {
+      mockOverlay();
+      const user = userEvent.setup({ delay: null });
+      const props = {
+        selectedId: null,
+        onSelect: vi.fn(),
+        placeholder: 'Choose model',
+      };
+      const { rerender } = renderTrigger(props);
+      await user.click(screen.getByRole('combobox'));
+      expect(await screen.findByText('overlay content')).toBeTruthy();
 
-    breakpoint.isMobile = true;
-    rerender(
-      <DeploymentSelectorFieldTrigger {...props} className="mobile-host" />,
-    );
-    const sheet = await screen.findByRole('dialog', {
-      name: 'deploymentSelector.ariaLabel',
-    });
-    expect(within(sheet).getByText('overlay content')).toBeTruthy();
-    /* The modal sheet hides the page behind it from assistive tech, so the
+      breakpoint.isMobile = true;
+      rerender(
+        <DeploymentSelectorFieldTrigger {...props} className="mobile-host" />,
+      );
+      const sheet = await screen.findByRole('dialog', {
+        name: 'deploymentSelector.ariaLabel',
+      });
+      expect(within(sheet).getByText('overlay content')).toBeTruthy();
+      /* The modal sheet hides the page behind it from assistive tech, so the
        field is counted with hidden elements: it must not be duplicated. */
-    expect(screen.getAllByRole('combobox', { hidden: true })).toHaveLength(1);
+      expect(screen.getAllByRole('combobox', { hidden: true })).toHaveLength(1);
 
-    breakpoint.isMobile = false;
-    rerender(
-      <DeploymentSelectorFieldTrigger {...props} className="desktop-host" />,
-    );
-    expect(screen.queryByRole('dialog')).toBeNull();
-    expect(await screen.findByText('overlay content')).toBeTruthy();
-    await user.click(screen.getByText('overlay content'));
-    expect(screen.queryByText('overlay content')).toBeNull();
-  });
+      breakpoint.isMobile = false;
+      rerender(
+        <DeploymentSelectorFieldTrigger {...props} className="desktop-host" />,
+      );
+      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(await screen.findByText('overlay content')).toBeTruthy();
+      await user.click(screen.getByText('overlay content'));
+      expect(screen.queryByText('overlay content')).toBeNull();
+    });
 
-  it('opens the selector in a bottom sheet dialog when the field is tapped', async () => {
-    breakpoint.isMobile = true;
-    mockOverlay();
-    const user = userEvent.setup({ delay: null });
-    renderTrigger();
+    it('opens the selector in a bottom sheet dialog when the field is tapped', async () => {
+      breakpoint.isMobile = true;
+      mockOverlay();
+      const user = userEvent.setup({ delay: null });
+      renderTrigger();
 
-    await user.click(screen.getByRole('combobox'));
+      await user.click(screen.getByRole('combobox'));
 
-    expect(
+      expect(
+        await screen.findByRole('dialog', {
+          name: 'deploymentSelector.ariaLabel',
+        }),
+      ).toBeTruthy();
+    });
+
+    it('renders the overlay content inside the sheet, not as a loose popover', async () => {
+      breakpoint.isMobile = true;
+      mockOverlay();
+      const user = userEvent.setup({ delay: null });
+      renderTrigger();
+
+      await user.click(screen.getByRole('combobox'));
+      const sheet = await screen.findByRole('dialog', {
+        name: 'deploymentSelector.ariaLabel',
+      });
+
+      expect(within(sheet).getByText('overlay content')).toBeTruthy();
+      expect(screen.getAllByText('overlay content')).toHaveLength(1);
+    });
+
+    it('closes the sheet via the overlay close callback and via selection', async () => {
+      breakpoint.isMobile = true;
+      const onSelect = vi.fn();
+      mockOverlay();
+      const user = userEvent.setup({ delay: null });
+      renderTrigger({ onSelect });
+
+      await user.click(screen.getByRole('combobox'));
       await screen.findByRole('dialog', {
         name: 'deploymentSelector.ariaLabel',
-      }),
-    ).toBeTruthy();
-  });
+      });
 
-  it('renders the overlay content inside the sheet, not as a loose popover', async () => {
-    breakpoint.isMobile = true;
-    mockOverlay();
-    const user = userEvent.setup({ delay: null });
-    renderTrigger();
-
-    await user.click(screen.getByRole('combobox'));
-    const sheet = await screen.findByRole('dialog', {
-      name: 'deploymentSelector.ariaLabel',
-    });
-
-    expect(within(sheet).getByText('overlay content')).toBeTruthy();
-    expect(screen.getAllByText('overlay content')).toHaveLength(1);
-  });
-
-  it('closes the sheet via the overlay close callback and via selection', async () => {
-    breakpoint.isMobile = true;
-    const onSelect = vi.fn();
-    mockOverlay();
-    const user = userEvent.setup({ delay: null });
-    renderTrigger({ onSelect });
-
-    await user.click(screen.getByRole('combobox'));
-    await screen.findByRole('dialog', {
-      name: 'deploymentSelector.ariaLabel',
-    });
-
-    /* The mock's overlay button only calls `onClose`, closing the sheet
+      /* The mock's overlay button only calls `onClose`, closing the sheet
        without selecting. */
-    await user.click(screen.getByText('overlay content'));
-    expect(screen.queryByRole('dialog')).toBeNull();
+      await user.click(screen.getByText('overlay content'));
+      expect(screen.queryByRole('dialog')).toBeNull();
 
-    /* Selection is exercised through the wrapper the trigger passes into
+      /* Selection is exercised through the wrapper the trigger passes into
        the hook — the same wrapper the real overlay's `onSelect` reaches:
        it must call `onSelect` and close the sheet. */
-    await user.click(screen.getByRole('combobox'));
-    await screen.findByRole('dialog', {
-      name: 'deploymentSelector.ariaLabel',
-    });
-    const lastHookCall = vi
-      .mocked(useDeploymentSelectorFieldOverlay)
-      .mock.calls.at(-1);
-    act(() => lastHookCall?.[1]('gpt-4o'));
+      await user.click(screen.getByRole('combobox'));
+      await screen.findByRole('dialog', {
+        name: 'deploymentSelector.ariaLabel',
+      });
+      const lastHookCall = vi
+        .mocked(useDeploymentSelectorFieldOverlay)
+        .mock.calls.at(-1);
+      act(() => lastHookCall?.[1]('gpt-4o'));
 
-    expect(onSelect).toHaveBeenCalledWith('gpt-4o');
-    expect(screen.queryByRole('dialog')).toBeNull();
-  });
-
-  it('exposes the sheet open state via aria-expanded and aria-haspopup=dialog', async () => {
-    breakpoint.isMobile = true;
-    mockOverlay();
-    const user = userEvent.setup({ delay: null });
-    renderTrigger();
-
-    const trigger = screen.getByRole('combobox');
-    expect(trigger.getAttribute('aria-haspopup')).toBe('dialog');
-    expect(trigger.getAttribute('aria-expanded')).toBe('false');
-
-    await user.click(trigger);
-
-    expect(trigger.getAttribute('aria-expanded')).toBe('true');
-  });
-
-  it('closes the sheet from its close button', async () => {
-    breakpoint.isMobile = true;
-    mockOverlay();
-    const user = userEvent.setup({ delay: null });
-    renderTrigger();
-
-    await user.click(screen.getByRole('combobox'));
-    await screen.findByRole('dialog', {
-      name: 'deploymentSelector.ariaLabel',
+      expect(onSelect).toHaveBeenCalledWith('gpt-4o');
+      expect(screen.queryByRole('dialog')).toBeNull();
     });
 
-    await user.click(
-      screen.getByRole('button', { name: 'deploymentSelector.closeLabel' }),
-    );
+    it('exposes the sheet open state via aria-expanded and aria-haspopup=dialog', async () => {
+      breakpoint.isMobile = true;
+      mockOverlay();
+      const user = userEvent.setup({ delay: null });
+      renderTrigger();
 
-    expect(screen.queryByRole('dialog')).toBeNull();
-  });
+      const trigger = screen.getByRole('combobox');
+      expect(trigger.getAttribute('aria-haspopup')).toBe('dialog');
+      expect(trigger.getAttribute('aria-expanded')).toBe('false');
 
-  it('closes the sheet on Escape', async () => {
-    breakpoint.isMobile = true;
-    mockOverlay();
-    const user = userEvent.setup({ delay: null });
-    renderTrigger();
+      await user.click(trigger);
 
-    await user.click(screen.getByRole('combobox'));
-    await screen.findByRole('dialog', {
-      name: 'deploymentSelector.ariaLabel',
+      expect(trigger.getAttribute('aria-expanded')).toBe('true');
     });
 
-    await user.keyboard('{Escape}');
+    it('closes the sheet from its close button', async () => {
+      breakpoint.isMobile = true;
+      mockOverlay();
+      const user = userEvent.setup({ delay: null });
+      renderTrigger();
 
-    expect(screen.queryByRole('dialog')).toBeNull();
-  });
+      await user.click(screen.getByRole('combobox'));
+      await screen.findByRole('dialog', {
+        name: 'deploymentSelector.ariaLabel',
+      });
 
-  it('opens the sheet when the field is focused and Enter is pressed', async () => {
-    breakpoint.isMobile = true;
-    mockOverlay();
-    const user = userEvent.setup({ delay: null });
-    renderTrigger();
+      await user.click(
+        screen.getByRole('button', { name: 'deploymentSelector.closeLabel' }),
+      );
 
-    /* `user.type` would click first — opening the sheet, whose focus trap
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
+    it('closes the sheet on Escape', async () => {
+      breakpoint.isMobile = true;
+      mockOverlay();
+      const user = userEvent.setup({ delay: null });
+      renderTrigger();
+
+      await user.click(screen.getByRole('combobox'));
+      await screen.findByRole('dialog', {
+        name: 'deploymentSelector.ariaLabel',
+      });
+
+      await user.keyboard('{Escape}');
+
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
+    it('opens the sheet when the field is focused and Enter is pressed', async () => {
+      breakpoint.isMobile = true;
+      mockOverlay();
+      const user = userEvent.setup({ delay: null });
+      renderTrigger();
+
+      /* `user.type` would click first — opening the sheet, whose focus trap
        moves focus to the close button so the Enter lands there and closes
        it. Focusing without a click keeps focus on the combobox, which is
        the keyboard-parity path this test exists for. */
-    const trigger = screen.getByRole('combobox');
-    trigger.focus();
-    await user.keyboard('{Enter}');
+      const trigger = screen.getByRole('combobox');
+      trigger.focus();
+      await user.keyboard('{Enter}');
 
-    expect(
-      await screen.findByRole('dialog', {
-        name: 'deploymentSelector.ariaLabel',
-      }),
-    ).toBeTruthy();
-  });
+      expect(
+        await screen.findByRole('dialog', {
+          name: 'deploymentSelector.ariaLabel',
+        }),
+      ).toBeTruthy();
+    });
 
-  it('does not open the sheet when isDisabled is true', async () => {
-    breakpoint.isMobile = true;
-    mockOverlay();
-    const user = userEvent.setup({ delay: null });
-    const { container } = renderTrigger({ isDisabled: true });
+    it('does not open the sheet when isDisabled is true', async () => {
+      breakpoint.isMobile = true;
+      mockOverlay();
+      const user = userEvent.setup({ delay: null });
+      const { container } = renderTrigger({ isDisabled: true });
 
-    /* The disabled combobox suppresses pointer events itself, so the tap
+      /* The disabled combobox suppresses pointer events itself, so the tap
        is aimed at the chevron region of the wrapper — the area only the
        wrapper's guard protects. Same reachable-node exception as the
        desktop chevron test above. */
-    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
-    const chevron = container.querySelector('svg');
-    expect(chevron).toBeTruthy();
-    await user.click(chevron as SVGElement);
+      // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
+      const chevron = container.querySelector('svg');
+      expect(chevron).toBeTruthy();
+      await user.click(chevron as SVGElement);
 
-    expect(screen.queryByRole('dialog')).toBeNull();
-  });
-
-  it('keeps the catalog modal rendered outside the sheet', async () => {
-    breakpoint.isMobile = true;
-    mockOverlay({ catalogModal: <div>catalog modal stub</div> });
-    const user = userEvent.setup({ delay: null });
-    renderTrigger();
-
-    await user.click(screen.getByRole('combobox'));
-    const sheet = await screen.findByRole('dialog', {
-      name: 'deploymentSelector.ariaLabel',
+      expect(screen.queryByRole('dialog')).toBeNull();
     });
 
-    expect(screen.getByText('catalog modal stub')).toBeTruthy();
-    expect(within(sheet).queryByText('catalog modal stub')).toBeNull();
+    it('keeps the catalog modal rendered outside the sheet', async () => {
+      breakpoint.isMobile = true;
+      mockOverlay({ catalogModal: <div>catalog modal stub</div> });
+      const user = userEvent.setup({ delay: null });
+      renderTrigger();
+
+      await user.click(screen.getByRole('combobox'));
+      const sheet = await screen.findByRole('dialog', {
+        name: 'deploymentSelector.ariaLabel',
+      });
+
+      expect(screen.getByText('catalog modal stub')).toBeTruthy();
+      expect(within(sheet).queryByText('catalog modal stub')).toBeNull();
+    });
   });
 });

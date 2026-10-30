@@ -40,84 +40,6 @@ const rect = (
   vi.spyOn(element, 'getBoundingClientRect').mockReturnValue(bounds);
   return { element, rect: bounds };
 };
-beforeEach(() => {
-  vi.useFakeTimers();
-  vi.clearAllMocks();
-  recorded.length = 0;
-  fixture = document.createElement('section');
-  fixture.innerHTML =
-    '<div><textarea aria-label="Message">Unsent draft</textarea><button>Model</button><button>Attach</button></div>';
-  document.body.appendChild(fixture);
-  draft = fixture.querySelector('textarea')!;
-  draft.focus();
-  draft.setSelectionRange(2, 7, 'backward');
-  vi.runOnlyPendingTimers();
-  const composer = fixture.firstElementChild as HTMLElement;
-  plan = buildWitchPlan(
-    {
-      width: 1280,
-      height: 800,
-      composer: rect(composer, 400, 300, 500, 150),
-      buttons: Array.from(fixture.querySelectorAll('button')).map((button, i) =>
-        rect(button, 440 + i * 110, 385, 80, 40),
-      ),
-    },
-    false,
-  );
-  host = document.createElement('div');
-  copies = document.createElement('div');
-  host.appendChild(copies);
-  document.body.appendChild(host);
-  actors = plan.actors.map((actor) => {
-    const element = document.createElement('div');
-    Object.keys(actor.parts).forEach((part) => {
-      const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-      group.setAttribute('data-witch-part', part);
-      element.appendChild(group);
-    });
-    host.appendChild(element);
-    return element;
-  });
-  spells = plan.spells.map(() => {
-    const element = document.createElement('div');
-    host.appendChild(element);
-    return element;
-  });
-  frog = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  const legs = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-  legs.setAttribute('data-witch-frog-legs', '');
-  frog.appendChild(legs);
-  vi.stubGlobal(
-    'ResizeObserver',
-    class {
-      constructor(callback: ResizeObserverCallback) {
-        onResize = callback;
-      }
-      observe = vi.fn();
-      disconnect = disconnected;
-    },
-  );
-  Object.defineProperty(Element.prototype, 'animate', {
-    configurable: true,
-    value: vi.fn(function (this: Element, frames: Keyframe[]) {
-      const animation = { cancel: vi.fn() };
-      recorded.push({ element: this, frames, animation });
-      return animation;
-    }),
-  });
-});
-afterEach(() => {
-  stop?.();
-  stop = undefined;
-  host.remove();
-  fixture.remove();
-  vi.unstubAllGlobals();
-  vi.restoreAllMocks();
-  vi.useRealTimers();
-  if (originalAnimate)
-    Object.defineProperty(Element.prototype, 'animate', originalAnimate);
-  else Reflect.deleteProperty(Element.prototype, 'animate');
-});
 const play = () => {
   stop = animateWitches(plan, { host, copies, actors, spells, frog }, onStop);
 };
@@ -132,6 +54,89 @@ const expectStopped = () => {
 };
 
 describe('witch lesson playback ownership', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    recorded.length = 0;
+    fixture = document.createElement('section');
+    fixture.innerHTML =
+      '<div><textarea aria-label="Message">Unsent draft</textarea><button>Model</button><button>Attach</button></div>';
+    document.body.appendChild(fixture);
+    draft = fixture.querySelector('textarea')!;
+    draft.focus();
+    draft.setSelectionRange(2, 7, 'backward');
+    vi.runOnlyPendingTimers();
+    const composer = fixture.firstElementChild as HTMLElement;
+    plan = buildWitchPlan(
+      {
+        width: 1280,
+        height: 800,
+        composer: rect(composer, 400, 300, 500, 150),
+        buttons: Array.from(fixture.querySelectorAll('button')).map(
+          (button, i) => rect(button, 440 + i * 110, 385, 80, 40),
+        ),
+      },
+      false,
+    );
+    host = document.createElement('div');
+    copies = document.createElement('div');
+    host.appendChild(copies);
+    document.body.appendChild(host);
+    actors = plan.actors.map((actor) => {
+      const element = document.createElement('div');
+      Object.keys(actor.parts).forEach((part) => {
+        const group = document.createElementNS(
+          'http://www.w3.org/2000/svg',
+          'g',
+        );
+        group.setAttribute('data-witch-part', part);
+        element.appendChild(group);
+      });
+      host.appendChild(element);
+      return element;
+    });
+    spells = plan.spells.map(() => {
+      const element = document.createElement('div');
+      host.appendChild(element);
+      return element;
+    });
+    frog = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    const legs = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    legs.setAttribute('data-witch-frog-legs', '');
+    frog.appendChild(legs);
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(callback: ResizeObserverCallback) {
+          onResize = callback;
+        }
+        observe = vi.fn();
+        disconnect = disconnected;
+      },
+    );
+    Object.defineProperty(Element.prototype, 'animate', {
+      configurable: true,
+      value: vi.fn(function (this: Element, frames: Keyframe[]) {
+        const animation = { cancel: vi.fn() };
+        recorded.push({ element: this, frames, animation });
+        return animation;
+      }),
+    });
+  });
+
+  afterEach(() => {
+    stop?.();
+    stop = undefined;
+    host.remove();
+    fixture.remove();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+    if (originalAnimate)
+      Object.defineProperty(Element.prototype, 'animate', originalAnimate);
+    else Reflect.deleteProperty(Element.prototype, 'animate');
+  });
+
   it('animates inert recognizable copies without changing the live draft, focus or layout', () => {
     const before = fixture.outerHTML;
     play();

@@ -49,203 +49,205 @@ const readRedirectState = (popup: FakePopup) => {
   return decodeJsonFromBase64<Record<string, unknown>>(value);
 };
 
-afterEach(() => {
-  vi.restoreAllMocks();
-});
-
-describe('openToolsetOAuthPopup', () => {
-  it('opens a blank same-origin popup', () => {
-    const popup = createFakePopup();
-    const open = vi.spyOn(window, 'open').mockReturnValue(asWindow(popup));
-
-    expect(openToolsetOAuthPopup()).toBe(asWindow(popup));
-    expect(open).toHaveBeenCalledWith('', '_blank');
+describe('popup', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
-  it('returns null when the browser blocks the popup', () => {
-    vi.spyOn(window, 'open').mockReturnValue(null);
+  describe('openToolsetOAuthPopup', () => {
+    it('opens a blank same-origin popup', () => {
+      const popup = createFakePopup();
+      const open = vi.spyOn(window, 'open').mockReturnValue(asWindow(popup));
 
-    expect(openToolsetOAuthPopup()).toBeNull();
-  });
-});
-
-describe('initiateOAuthLogin', () => {
-  it('opens a same-origin popup synchronously, writes redirect state into it, and navigates it to the authorize URL', () => {
-    const popup = createFakePopup();
-    const open = vi.spyOn(window, 'open').mockReturnValue(asWindow(popup));
-
-    const result = initiateOAuthLogin(
-      validOAuthConfig,
-      TOOLSET_ID,
-      CALLBACK_PATH,
-      ToolsetCredentialsLevel.Global,
-    );
-
-    expect(open).toHaveBeenCalledWith('', '_blank');
-    expect(result.type).toBe(ToolsetOAuthInitiationResultType.Started);
-
-    const state = readRedirectState(popup);
-    expect(state).toMatchObject({
-      toolsetId: TOOLSET_ID,
-      credentialsLevel: ToolsetCredentialsLevel.Global,
-      redirectUri: `${window.location.origin}${CALLBACK_PATH}`,
-      resourceKind: OAuthResourceKind.Toolset,
+      expect(openToolsetOAuthPopup()).toBe(asWindow(popup));
+      expect(open).toHaveBeenCalledWith('', '_blank');
     });
 
-    const navigated = new URL(popup.location.href);
-    expect(navigated.origin).toBe('https://auth.example.com');
-    expect(navigated.searchParams.get('redirect_uri')).toBe(
-      `${window.location.origin}${CALLBACK_PATH}`,
-    );
+    it('returns null when the browser blocks the popup', () => {
+      vi.spyOn(window, 'open').mockReturnValue(null);
+
+      expect(openToolsetOAuthPopup()).toBeNull();
+    });
   });
 
-  it('writes redirect state for a non-Latin1 toolsetId without throwing', () => {
-    /*
-     * A plain `btoa` wrap throws on characters above U+00FF — after the
-     * popup has already opened, which would strand it on a blank window;
-     * the UTF-8-safe wrap must store any user-named resource id.
-     */
-    const popup = createFakePopup();
-    vi.spyOn(window, 'open').mockReturnValue(asWindow(popup));
+  describe('initiateOAuthLogin', () => {
+    it('opens a same-origin popup synchronously, writes redirect state into it, and navigates it to the authorize URL', () => {
+      const popup = createFakePopup();
+      const open = vi.spyOn(window, 'open').mockReturnValue(asWindow(popup));
 
-    const cyrillicToolsetId = 'инструменты/публичные/задача';
-    expect(() =>
-      initiateOAuthLogin(validOAuthConfig, cyrillicToolsetId, CALLBACK_PATH),
-    ).not.toThrow();
-    expect(readRedirectState(popup).toolsetId).toBe(cyrillicToolsetId);
-  });
+      const result = initiateOAuthLogin(
+        validOAuthConfig,
+        TOOLSET_ID,
+        CALLBACK_PATH,
+        ToolsetCredentialsLevel.Global,
+      );
 
-  it('resolves the redirect URI against the caller-supplied callback path', () => {
-    const popup = createFakePopup();
-    vi.spyOn(window, 'open').mockReturnValue(asWindow(popup));
+      expect(open).toHaveBeenCalledWith('', '_blank');
+      expect(result.type).toBe(ToolsetOAuthInitiationResultType.Started);
 
-    initiateOAuthLogin(
-      validOAuthConfig,
-      TOOLSET_ID,
-      '/toolsets/editor-callback',
-    );
+      const state = readRedirectState(popup);
+      expect(state).toMatchObject({
+        toolsetId: TOOLSET_ID,
+        credentialsLevel: ToolsetCredentialsLevel.Global,
+        redirectUri: `${window.location.origin}${CALLBACK_PATH}`,
+        resourceKind: OAuthResourceKind.Toolset,
+      });
 
-    expect(readRedirectState(popup).redirectUri).toBe(
-      `${window.location.origin}/toolsets/editor-callback`,
-    );
-  });
+      const navigated = new URL(popup.location.href);
+      expect(navigated.origin).toBe('https://auth.example.com');
+      expect(navigated.searchParams.get('redirect_uri')).toBe(
+        `${window.location.origin}${CALLBACK_PATH}`,
+      );
+    });
 
-  it('uses the generated state as both the CSRF token and the flow id', () => {
-    const popup = createFakePopup();
-    vi.spyOn(window, 'open').mockReturnValue(asWindow(popup));
+    it('writes redirect state for a non-Latin1 toolsetId without throwing', () => {
+      /*
+       * A plain `btoa` wrap throws on characters above U+00FF — after the
+       * popup has already opened, which would strand it on a blank window;
+       * the UTF-8-safe wrap must store any user-named resource id.
+       */
+      const popup = createFakePopup();
+      vi.spyOn(window, 'open').mockReturnValue(asWindow(popup));
 
-    const result = initiateOAuthLogin(
-      validOAuthConfig,
-      TOOLSET_ID,
-      CALLBACK_PATH,
-    );
+      const cyrillicToolsetId = 'инструменты/публичные/задача';
+      expect(() =>
+        initiateOAuthLogin(validOAuthConfig, cyrillicToolsetId, CALLBACK_PATH),
+      ).not.toThrow();
+      expect(readRedirectState(popup).toolsetId).toBe(cyrillicToolsetId);
+    });
 
-    if (result.type !== ToolsetOAuthInitiationResultType.Started) {
-      throw new Error('expected the flow to start');
-    }
-    expect(readRedirectState(popup).state).toBe(result.flowId);
-    expect(new URL(popup.location.href).searchParams.get('state')).toBe(
-      result.flowId,
-    );
-  });
+    it('resolves the redirect URI against the caller-supplied callback path', () => {
+      const popup = createFakePopup();
+      vi.spyOn(window, 'open').mockReturnValue(asWindow(popup));
 
-  it('severs the popup opener before navigating to the provider', () => {
-    const popup = createFakePopup();
-    vi.spyOn(window, 'open').mockReturnValue(asWindow(popup));
-
-    initiateOAuthLogin(validOAuthConfig, TOOLSET_ID, CALLBACK_PATH);
-
-    expect(popup.opener).toBeNull();
-  });
-
-  it('defaults the credentials level to USER', () => {
-    const popup = createFakePopup();
-    vi.spyOn(window, 'open').mockReturnValue(asWindow(popup));
-
-    initiateOAuthLogin(validOAuthConfig, TOOLSET_ID, CALLBACK_PATH);
-
-    expect(readRedirectState(popup).credentialsLevel).toBe(
-      ToolsetCredentialsLevel.User,
-    );
-  });
-
-  it('returns Blocked without writing any redirect state when the browser blocks the popup', () => {
-    vi.spyOn(window, 'open').mockReturnValue(null);
-
-    expect(
-      initiateOAuthLogin(validOAuthConfig, TOOLSET_ID, CALLBACK_PATH),
-    ).toEqual({ type: ToolsetOAuthInitiationResultType.Blocked });
-  });
-
-  it('returns InvalidConfig without opening a popup when the auth config is invalid', () => {
-    const open = vi.spyOn(window, 'open');
-
-    expect(
       initiateOAuthLogin(
+        validOAuthConfig,
+        TOOLSET_ID,
+        '/toolsets/editor-callback',
+      );
+
+      expect(readRedirectState(popup).redirectUri).toBe(
+        `${window.location.origin}/toolsets/editor-callback`,
+      );
+    });
+
+    it('uses the generated state as both the CSRF token and the flow id', () => {
+      const popup = createFakePopup();
+      vi.spyOn(window, 'open').mockReturnValue(asWindow(popup));
+
+      const result = initiateOAuthLogin(
+        validOAuthConfig,
+        TOOLSET_ID,
+        CALLBACK_PATH,
+      );
+
+      if (result.type !== ToolsetOAuthInitiationResultType.Started) {
+        throw new Error('expected the flow to start');
+      }
+      expect(readRedirectState(popup).state).toBe(result.flowId);
+      expect(new URL(popup.location.href).searchParams.get('state')).toBe(
+        result.flowId,
+      );
+    });
+
+    it('severs the popup opener before navigating to the provider', () => {
+      const popup = createFakePopup();
+      vi.spyOn(window, 'open').mockReturnValue(asWindow(popup));
+
+      initiateOAuthLogin(validOAuthConfig, TOOLSET_ID, CALLBACK_PATH);
+
+      expect(popup.opener).toBeNull();
+    });
+
+    it('defaults the credentials level to USER', () => {
+      const popup = createFakePopup();
+      vi.spyOn(window, 'open').mockReturnValue(asWindow(popup));
+
+      initiateOAuthLogin(validOAuthConfig, TOOLSET_ID, CALLBACK_PATH);
+
+      expect(readRedirectState(popup).credentialsLevel).toBe(
+        ToolsetCredentialsLevel.User,
+      );
+    });
+
+    it('returns Blocked without writing any redirect state when the browser blocks the popup', () => {
+      vi.spyOn(window, 'open').mockReturnValue(null);
+
+      expect(
+        initiateOAuthLogin(validOAuthConfig, TOOLSET_ID, CALLBACK_PATH),
+      ).toEqual({ type: ToolsetOAuthInitiationResultType.Blocked });
+    });
+
+    it('returns InvalidConfig without opening a popup when the auth config is invalid', () => {
+      const open = vi.spyOn(window, 'open');
+
+      expect(
+        initiateOAuthLogin(
+          { authorizationEndpoint: 'https://auth.example.com/authorize' },
+          TOOLSET_ID,
+          CALLBACK_PATH,
+        ),
+      ).toEqual({ type: ToolsetOAuthInitiationResultType.InvalidConfig });
+      expect(open).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('navigateToolsetOAuthPopup', () => {
+    it('writes redirect state into the given popup and navigates it', () => {
+      const popup = createFakePopup();
+
+      const result = navigateToolsetOAuthPopup(
+        asWindow(popup),
+        validOAuthConfig,
+        TOOLSET_ID,
+        CALLBACK_PATH,
+        ToolsetCredentialsLevel.User,
+      );
+
+      expect(result.type).toBe(ToolsetOAuthInitiationResultType.Started);
+      expect(readRedirectState(popup)).toMatchObject({
+        toolsetId: TOOLSET_ID,
+        credentialsLevel: ToolsetCredentialsLevel.User,
+        resourceKind: OAuthResourceKind.Toolset,
+      });
+      expect(new URL(popup.location.href).origin).toBe(
+        'https://auth.example.com',
+      );
+      expect(popup.opener).toBeNull();
+    });
+
+    it('records the resource kind the caller asked for', () => {
+      const popup = createFakePopup();
+
+      navigateToolsetOAuthPopup(
+        asWindow(popup),
+        validOAuthConfig,
+        'applications/b/app::jira',
+        CALLBACK_PATH,
+        ToolsetCredentialsLevel.User,
+        OAuthResourceKind.ExternalService,
+      );
+
+      expect(readRedirectState(popup).resourceKind).toBe(
+        OAuthResourceKind.ExternalService,
+      );
+    });
+
+    it('closes the popup and returns InvalidConfig when the auth config cannot build a URL', () => {
+      const popup = createFakePopup();
+
+      const result = navigateToolsetOAuthPopup(
+        asWindow(popup),
         { authorizationEndpoint: 'https://auth.example.com/authorize' },
         TOOLSET_ID,
         CALLBACK_PATH,
-      ),
-    ).toEqual({ type: ToolsetOAuthInitiationResultType.InvalidConfig });
-    expect(open).not.toHaveBeenCalled();
-  });
-});
+      );
 
-describe('navigateToolsetOAuthPopup', () => {
-  it('writes redirect state into the given popup and navigates it', () => {
-    const popup = createFakePopup();
-
-    const result = navigateToolsetOAuthPopup(
-      asWindow(popup),
-      validOAuthConfig,
-      TOOLSET_ID,
-      CALLBACK_PATH,
-      ToolsetCredentialsLevel.User,
-    );
-
-    expect(result.type).toBe(ToolsetOAuthInitiationResultType.Started);
-    expect(readRedirectState(popup)).toMatchObject({
-      toolsetId: TOOLSET_ID,
-      credentialsLevel: ToolsetCredentialsLevel.User,
-      resourceKind: OAuthResourceKind.Toolset,
+      expect(result).toEqual({
+        type: ToolsetOAuthInitiationResultType.InvalidConfig,
+      });
+      expect(popup.close).toHaveBeenCalledOnce();
+      expect(popup.sessionStorage.setItem).not.toHaveBeenCalled();
     });
-    expect(new URL(popup.location.href).origin).toBe(
-      'https://auth.example.com',
-    );
-    expect(popup.opener).toBeNull();
-  });
-
-  it('records the resource kind the caller asked for', () => {
-    const popup = createFakePopup();
-
-    navigateToolsetOAuthPopup(
-      asWindow(popup),
-      validOAuthConfig,
-      'applications/b/app::jira',
-      CALLBACK_PATH,
-      ToolsetCredentialsLevel.User,
-      OAuthResourceKind.ExternalService,
-    );
-
-    expect(readRedirectState(popup).resourceKind).toBe(
-      OAuthResourceKind.ExternalService,
-    );
-  });
-
-  it('closes the popup and returns InvalidConfig when the auth config cannot build a URL', () => {
-    const popup = createFakePopup();
-
-    const result = navigateToolsetOAuthPopup(
-      asWindow(popup),
-      { authorizationEndpoint: 'https://auth.example.com/authorize' },
-      TOOLSET_ID,
-      CALLBACK_PATH,
-    );
-
-    expect(result).toEqual({
-      type: ToolsetOAuthInitiationResultType.InvalidConfig,
-    });
-    expect(popup.close).toHaveBeenCalledOnce();
-    expect(popup.sessionStorage.setItem).not.toHaveBeenCalled();
   });
 });

@@ -75,19 +75,19 @@ describe('useActiveConversationBridge', () => {
     mockUseOptionalOverlay.mockReturnValue(undefined);
     const conversation = makeConversation();
 
-    renderHook(() =>
-      useActiveConversationBridge({
-        conversation,
-        conversationId: 'bucket/gpt-4o__Hello__uuid',
-        conversationRef: { current: conversation },
-        setConversation: vi.fn(),
-        handleSend: vi.fn(),
-        setOverlayInputContent: vi.fn(),
-      }),
-    );
-
-    // Nothing to assert on since useOptionalOverlay returned undefined —
-    // the absence of a thrown error/registration call is the behavior.
+    /* With no overlay there is nothing to register on, so mounting quietly is the behavior. */
+    expect(() =>
+      renderHook(() =>
+        useActiveConversationBridge({
+          conversation,
+          conversationId: 'bucket/gpt-4o__Hello__uuid',
+          conversationRef: { current: conversation },
+          setConversation: vi.fn(),
+          handleSend: vi.fn(),
+          setOverlayInputContent: vi.fn(),
+        }),
+      ),
+    ).not.toThrow();
   });
 
   it('registers a bridge and unregisters it on unmount', () => {

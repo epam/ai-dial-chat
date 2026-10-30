@@ -5,6 +5,7 @@ import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
 import * as path from 'path';
 import { createIsExternalPeerImport } from '../../tools/vite-external-matcher.mjs';
+
 const ownPackageJson = JSON.parse(
   readFileSync(path.join(import.meta.dirname, 'package.json'), 'utf8'),
 ) as {
@@ -16,6 +17,7 @@ const EXTERNAL_PEER_NAMES = [
   ...Object.keys(ownPackageJson.peerDependencies ?? {}),
 ];
 const isExternalPeerImport = createIsExternalPeerImport(EXTERNAL_PEER_NAMES);
+
 export default defineConfig(({ command }) => ({
   // Published libraries must also run with React's production runtime.
   oxc: command === 'build' ? { jsx: { development: false } } : undefined,

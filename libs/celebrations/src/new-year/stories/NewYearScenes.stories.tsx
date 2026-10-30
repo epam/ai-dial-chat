@@ -22,6 +22,7 @@ const meta = {
 } satisfies Meta<typeof ScenePlayer>;
 
 export default meta;
+
 type Story = StoryObj<typeof meta>;
 
 export const PenguinStar: Story = {

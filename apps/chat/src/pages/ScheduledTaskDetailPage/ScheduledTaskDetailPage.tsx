@@ -5,6 +5,7 @@ import {
 import {
   getApiErrorDetails,
   getApiErrorStatus,
+  getNextCronOccurrence,
   OfflineCredentialsGateStatus,
   OfflineCredentialsLoginOutcomeType,
 } from '@epam/ai-dial-chat-hooks';
@@ -72,7 +73,6 @@ import { resolveLocalizedText } from '../../utils/locale';
 import {
   buildScheduleLabel,
   getDeleteErrorMessageKey,
-  getNextCronOccurrence,
   resolveScheduledTaskErrorMessage,
 } from '../../utils/map-scheduled-task-dto';
 import { mapScheduledTaskRunDtosToItems } from '../../utils/map-scheduled-task-run-dto';

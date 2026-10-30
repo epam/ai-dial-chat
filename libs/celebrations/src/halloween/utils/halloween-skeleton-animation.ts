@@ -109,8 +109,8 @@ export const animateSkeletons = (
   const seen = new WeakSet<Element>();
   const resize = new ResizeObserver((entries) => {
     for (const entry of entries) {
-      const target = anchors.find(({ element }) => element === entry.target),
-        box = entry.borderBoxSize?.[0];
+      const target = anchors.find(({ element }) => element === entry.target);
+      const box = entry.borderBoxSize?.[0];
       if (
         target &&
         ((box &&

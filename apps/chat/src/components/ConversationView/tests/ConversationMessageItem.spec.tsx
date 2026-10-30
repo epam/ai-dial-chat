@@ -253,217 +253,425 @@ const defaultProps = {
   },
 };
 
-beforeEach(() => {
-  applicationVisualizersMock = {};
-  isMobileMock = false;
-  capturedActions = undefined;
-  capturedLabels = undefined;
-  capturedStageGroupProps = undefined;
-  vi.mocked(useUiFeatureModule.useUiFeature).mockImplementation(
-    (feature) =>
-      feature !== OverlayFeature.HideEditUserMessage &&
-      feature !== OverlayFeature.HideRegenerateAssistantMessage &&
-      feature !== OverlayFeature.HideDeleteUserMessage,
-  );
-});
-
-afterEach(() => {
-  vi.clearAllMocks();
-});
-
-/*
- * A file tile that opens the canvas and its corner download button are two
- * controls; giving both the download label made them indistinguishable to
- * assistive technology.
- */
-describe('ConversationMessageItem — attachment tile labels', () => {
-  it('names a canvas-opening tile and its download button separately', () => {
-    render(
-      <ConversationMessageItem {...defaultProps} onAttachmentClick={vi.fn()} />,
+describe('ConversationMessageItem', () => {
+  beforeEach(() => {
+    applicationVisualizersMock = {};
+    isMobileMock = false;
+    capturedActions = undefined;
+    capturedLabels = undefined;
+    capturedStageGroupProps = undefined;
+    vi.mocked(useUiFeatureModule.useUiFeature).mockImplementation(
+      (feature) =>
+        feature !== OverlayFeature.HideEditUserMessage &&
+        feature !== OverlayFeature.HideRegenerateAssistantMessage &&
+        feature !== OverlayFeature.HideDeleteUserMessage,
     );
+  });
 
-    expect(
-      screen.getByRole('button', { name: ButtonsI18nKeys.OpenInCanvas }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole('button', { name: AttachmentsI18nKeys.Download }),
-    ).toBeTruthy();
-    expect(capturedLabels).toMatchObject({
-      attachmentClickLabel: ButtonsI18nKeys.OpenInCanvas,
-      attachmentDownloadLabel: AttachmentsI18nKeys.Download,
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  /*
+   * A file tile that opens the canvas and its corner download button are two
+   * controls; giving both the download label made them indistinguishable to
+   * assistive technology.
+   */
+  describe('ConversationMessageItem — attachment tile labels', () => {
+    it('names a canvas-opening tile and its download button separately', () => {
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          onAttachmentClick={vi.fn()}
+        />,
+      );
+
+      expect(
+        screen.getByRole('button', { name: ButtonsI18nKeys.OpenInCanvas }),
+      ).toBeTruthy();
+      expect(
+        screen.getByRole('button', { name: AttachmentsI18nKeys.Download }),
+      ).toBeTruthy();
+      expect(capturedLabels).toMatchObject({
+        attachmentClickLabel: ButtonsI18nKeys.OpenInCanvas,
+        attachmentDownloadLabel: AttachmentsI18nKeys.Download,
+      });
+    });
+
+    it('names a tile that downloads by the download label', () => {
+      render(<ConversationMessageItem {...defaultProps} />);
+
+      expect(capturedLabels).toMatchObject({
+        attachmentClickLabel: AttachmentsI18nKeys.Download,
+        attachmentDownloadLabel: AttachmentsI18nKeys.Download,
+      });
     });
   });
 
-  it('names a tile that downloads by the download label', () => {
-    render(<ConversationMessageItem {...defaultProps} />);
-
-    expect(capturedLabels).toMatchObject({
-      attachmentClickLabel: AttachmentsI18nKeys.Download,
-      attachmentDownloadLabel: AttachmentsI18nKeys.Download,
-    });
-  });
-});
-
-describe('ConversationMessageItem — reference-only attachments', () => {
-  const ASSISTANT_WITH_REFERENCE: Message = {
-    role: MessageRole.Assistant,
-    content: 'Dinosaurs first appeared in the Triassic.',
-    timestamp: '2024-01-01T00:00:02Z',
-    custom_content: {
-      attachments: [
-        {
-          title: 'livescience.com',
-          type: 'text/markdown',
-          data: 'Dinosaurs first appeared in the Triassic Period.',
-          reference_url: 'https://example.com/redirect/a',
-          reference_type: 'text/markdown',
-        },
-      ],
-    },
-  };
-
-  it('excludes the reference-only attachment from the tray', () => {
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={ASSISTANT_WITH_REFERENCE}
-        index={1}
-      />,
-    );
-    expect(screen.queryByLabelText(AttachmentsI18nKeys.Download)).toBeNull();
-  });
-
-  it('keeps the citation card for a PDF-page reference chip', async () => {
-    const onPreviewReference = vi.fn();
-    const message: Message = {
+  describe('ConversationMessageItem — reference-only attachments', () => {
+    const ASSISTANT_WITH_REFERENCE: Message = {
       role: MessageRole.Assistant,
       content: 'Dinosaurs first appeared in the Triassic.',
       timestamp: '2024-01-01T00:00:02Z',
       custom_content: {
         attachments: [
           {
-            title: 'report.pdf',
-            type: 'application/pdf',
-            reference_url: 'files/bucket/report.pdf#page=2',
-            reference_type: 'application/pdf',
+            title: 'livescience.com',
+            type: 'text/markdown',
+            data: 'Dinosaurs first appeared in the Triassic Period.',
+            reference_url: 'https://example.com/redirect/a',
+            reference_type: 'text/markdown',
           },
         ],
       },
     };
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={message}
-        index={1}
-        onPreviewReference={onPreviewReference}
-      />,
-    );
 
-    await userEvent.click(
-      screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
-    );
-
-    expect(screen.getByRole('dialog')).toBeTruthy();
-    expect(
-      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
-    ).toBeTruthy();
-    expect(onPreviewReference).not.toHaveBeenCalled();
-    expect(mockOpenCanvas).not.toHaveBeenCalled();
-  });
-
-  it('renders a chip for the reference group', () => {
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={ASSISTANT_WITH_REFERENCE}
-        index={1}
-      />,
-    );
-    expect(
-      screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
-    ).toBeTruthy();
-  });
-});
-
-describe('ConversationMessageItem — inline citations', () => {
-  it.each([
-    ['text/html', 'https://example.com/page.html'],
-    ['text/html', 'files/bucket/page.html'],
-    ['application/pdf', 'https://example.com/report.pdf'],
-    [
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'https://example.com/report.docx',
-    ],
-  ])('opens a supported citation: %s %s', async (type, url) => {
-    const message: Message = {
-      role: MessageRole.Assistant,
-      content: 'Source<cit data-id="123"></cit>',
-      timestamp: '2026-09-21T13:47:50Z',
-      custom_content: {
-        annotations: [
-          {
-            target: { selector: { type: 'html_tag', tag: 'cit', id: '123' } },
-            body: {
-              source: { type: 'attachment', attachment: { type, url } },
-            },
-          },
-        ],
-      },
-    };
-    const onAttachmentClick = vi.fn();
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={message}
-        index={1}
-        onAttachmentClick={onAttachmentClick}
-      />,
-    );
-    await userEvent.click(
-      screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
-    );
-    if (type === 'text/html') {
-      /* A web link keeps the card; its Preview action opens the canvas. */
-      await userEvent.click(
-        screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+    it('excludes the reference-only attachment from the tray', () => {
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={ASSISTANT_WITH_REFERENCE}
+          index={1}
+        />,
       );
-      expect(onAttachmentClick).toHaveBeenCalledWith(
-        expect.objectContaining({ url, contentType: type }),
-        1,
-      );
-    } else {
-      /* A single file citation opens the canvas straight from its marker. */
-      expect(screen.queryByRole('dialog')).toBeNull();
-      expect(mockOpenCanvas).toHaveBeenCalledWith(
-        expect.objectContaining({ url }),
-        expect.any(String),
-      );
-    }
-  });
+      expect(screen.queryByLabelText(AttachmentsI18nKeys.Download)).toBeNull();
+    });
 
-  it.each([false, true])(
-    'offers only Open in browser for an external web citation (mobile: %s)',
-    async (isMobile) => {
-      isMobileMock = isMobile;
-      const url = 'https://data.imf.org/en/datasets/IMF.RES:WEO';
+    it('keeps the citation card for a PDF-page reference chip', async () => {
+      const onPreviewReference = vi.fn();
       const message: Message = {
         role: MessageRole.Assistant,
-        content:
-          'Inflation in 2026 increased, as reported by IMF:WEO dataset <cit data-id="123"></cit>',
+        content: 'Dinosaurs first appeared in the Triassic.',
+        timestamp: '2024-01-01T00:00:02Z',
+        custom_content: {
+          attachments: [
+            {
+              title: 'report.pdf',
+              type: 'application/pdf',
+              reference_url: 'files/bucket/report.pdf#page=2',
+              reference_type: 'application/pdf',
+            },
+          ],
+        },
+      };
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={message}
+          index={1}
+          onPreviewReference={onPreviewReference}
+        />,
+      );
+
+      await userEvent.click(
+        screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
+      );
+
+      expect(screen.getByRole('dialog')).toBeTruthy();
+      expect(
+        screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+      ).toBeTruthy();
+      expect(onPreviewReference).not.toHaveBeenCalled();
+      expect(mockOpenCanvas).not.toHaveBeenCalled();
+    });
+
+    it('renders a chip for the reference group', () => {
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={ASSISTANT_WITH_REFERENCE}
+          index={1}
+        />,
+      );
+      expect(
+        screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
+      ).toBeTruthy();
+    });
+  });
+
+  describe('ConversationMessageItem — inline citations', () => {
+    it.each([
+      ['text/html', 'https://example.com/page.html'],
+      ['text/html', 'files/bucket/page.html'],
+      ['application/pdf', 'https://example.com/report.pdf'],
+      [
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'https://example.com/report.docx',
+      ],
+    ])('opens a supported citation: %s %s', async (type, url) => {
+      const message: Message = {
+        role: MessageRole.Assistant,
+        content: 'Source<cit data-id="123"></cit>',
         timestamp: '2026-09-21T13:47:50Z',
         custom_content: {
           annotations: [
             {
-              index: 0,
               target: { selector: { type: 'html_tag', tag: 'cit', id: '123' } },
               body: {
-                title: 'World Economic Outlook',
+                source: { type: 'attachment', attachment: { type, url } },
+              },
+            },
+          ],
+        },
+      };
+      const onAttachmentClick = vi.fn();
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={message}
+          index={1}
+          onAttachmentClick={onAttachmentClick}
+        />,
+      );
+      await userEvent.click(
+        screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
+      );
+      if (type === 'text/html') {
+        /* A web link keeps the card; its Preview action opens the canvas. */
+        await userEvent.click(
+          screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+        );
+        expect(onAttachmentClick).toHaveBeenCalledWith(
+          expect.objectContaining({ url, contentType: type }),
+          1,
+        );
+      } else {
+        /* A single file citation opens the canvas straight from its marker. */
+        expect(screen.queryByRole('dialog')).toBeNull();
+        expect(mockOpenCanvas).toHaveBeenCalledWith(
+          expect.objectContaining({ url }),
+          expect.any(String),
+        );
+      }
+    });
+
+    it.each([false, true])(
+      'offers only Open in browser for an external web citation (mobile: %s)',
+      async (isMobile) => {
+        isMobileMock = isMobile;
+        const url = 'https://data.imf.org/en/datasets/IMF.RES:WEO';
+        const message: Message = {
+          role: MessageRole.Assistant,
+          content:
+            'Inflation in 2026 increased, as reported by IMF:WEO dataset <cit data-id="123"></cit>',
+          timestamp: '2026-09-21T13:47:50Z',
+          custom_content: {
+            annotations: [
+              {
+                index: 0,
+                target: {
+                  selector: { type: 'html_tag', tag: 'cit', id: '123' },
+                },
+                body: {
+                  title: 'World Economic Outlook',
+                  source: {
+                    type: 'attachment',
+                    attachment: {
+                      type: 'text/html',
+                      url,
+                      title: 'World Economic Outlook dataset',
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        };
+        const open = vi.spyOn(window, 'open').mockImplementation(() => null);
+        try {
+          render(
+            <ConversationMessageItem
+              {...defaultProps}
+              msg={message}
+              index={1}
+            />,
+          );
+          await userEvent.click(
+            screen.getByRole('button', {
+              name: CitationsI18nKeys.MarkerAriaLabel,
+            }),
+          );
+          expect(
+            screen.queryByRole('button', { name: BasicI18nKeys.Preview }),
+          ).toBeNull();
+          await userEvent.click(
+            screen.getByRole('button', {
+              name: CitationsI18nKeys.PopupOpenInBrowser,
+            }),
+          );
+          expect(open).toHaveBeenCalledWith(
+            url,
+            '_blank',
+            'noopener,noreferrer',
+          );
+          expect(mockOpenCanvas).not.toHaveBeenCalled();
+        } finally {
+          open.mockRestore();
+        }
+      },
+    );
+
+    it.each([false, true])(
+      'opens the selected cit document and page after reload (raw format: %s)',
+      async (rawFormat) => {
+        const entries = [
+          { id: 'first', page: 1, file: 'report.pdf' },
+          { id: 'grouped', page: 2, file: 'other.pdf' },
+          { id: 'grouped', page: 3, file: 'report.pdf' },
+        ];
+        const annotations = entries.map(({ id, page, file }, index) => ({
+          index,
+          target: { selector: { type: 'html_tag', tag: 'cit', id } },
+          body: {
+            selector: { type: 'pdf_bbox', page, x1: 0, y1: 0, x2: 0, y2: 0 },
+            source: {
+              type: 'attachment',
+              attachment: {
+                type: 'application/pdf',
+                url: `https://example.com/${file}`,
+              },
+            },
+          },
+        }));
+        const payload = {
+          role: MessageRole.Assistant,
+          content:
+            'First<cit data-id="first"></cit> Group<cit data-id="grouped"></cit>',
+          timestamp: '2026-09-09T07:00:00Z',
+          ...(rawFormat
+            ? {
+                custom_fields: {
+                  annotations: annotations.map((a) => ({
+                    ...a,
+                    body: {
+                      ...a.body,
+                      source: {
+                        type: 'attachment',
+                        url: a.body.source.attachment.url,
+                      },
+                    },
+                  })),
+                },
+              }
+            : { custom_content: { annotations } }),
+        };
+        const message: Message = JSON.parse(JSON.stringify(payload));
+        render(
+          <ConversationMessageItem {...defaultProps} msg={message} index={1} />,
+        );
+        const markers = () =>
+          screen.getAllByRole('button', {
+            name: CitationsI18nKeys.MarkerAriaLabel,
+          });
+        /* The single-citation marker previews directly; the grouped one keeps
+         the card so its second citation stays reachable through Next. */
+        await userEvent.click(markers()[0]);
+        expect(screen.queryByRole('dialog')).toBeNull();
+        expect(mockOpenCanvas).toHaveBeenLastCalledWith(
+          expect.objectContaining({
+            url: 'https://example.com/report.pdf',
+            page: 1,
+          }),
+          expect.any(String),
+        );
+        await userEvent.click(markers()[1]);
+        await userEvent.click(
+          screen.getByRole('button', {
+            name: CitationsI18nKeys.PopupNextCitation,
+          }),
+        );
+        await userEvent.click(
+          screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+        );
+        expect(mockOpenCanvas).toHaveBeenLastCalledWith(
+          expect.objectContaining({
+            url: 'https://example.com/report.pdf',
+            page: 3,
+            selectedHighlightId: '2',
+            highlights: [
+              expect.objectContaining({
+                id: '2',
+                bboxes: [expect.objectContaining({ page: 3 })],
+              }),
+            ],
+          }),
+          expect.any(String),
+        );
+      },
+    );
+    it('renders every matching html_tag citation in one message', () => {
+      const citationIds = Array.from(
+        { length: 6 },
+        (_, index) => `citation-${index + 1}`,
+      );
+      const message: Message = {
+        role: MessageRole.Assistant,
+        content: citationIds
+          .map(
+            (citationId, index) =>
+              `Fact ${index + 1}<cit data-id="${citationId}"></cit>`,
+          )
+          .join(' '),
+        timestamp: '2026-09-08T10:16:43.739Z',
+        custom_content: {
+          annotations: citationIds.map((citationId) => ({
+            target: {
+              selector: { type: 'html_tag', tag: 'cit', id: citationId },
+            },
+            body: {
+              title: 'shared-source.pdf',
+              source: {
+                type: 'attachment',
+                attachment: {
+                  type: 'application/pdf',
+                  url: 'files/shared-source.pdf',
+                  title: 'shared-source.pdf',
+                },
+              },
+            },
+          })),
+        },
+      };
+
+      render(
+        <ConversationMessageItem {...defaultProps} msg={message} index={1} />,
+      );
+
+      expect(
+        screen.getAllByRole('button', {
+          name: CitationsI18nKeys.MarkerAriaLabel,
+        }),
+      ).toHaveLength(6);
+    });
+
+    it('opens a persisted XLSX citation mislabeled as PDF in the OOXML canvas with no highlight, rather than falling through to generic attachment preview', async () => {
+      /*
+       * Before Office citation highlighting existed, every non-PDF citation
+       * fell through to the plain-attachment path. This citation carries no
+       * selector at all (a legacy annotation, or one the backend previously
+       * stripped) — per `openspec/changes/archive/2026-09-10-highlight-office-document-annotations/design.md`'s acceptance criteria, a missing selector
+       * still opens the Office document, just with no highlight, rather than
+       * falling through.
+       */
+      const onAttachmentClick = vi.fn();
+      const message: Message = {
+        role: MessageRole.Assistant,
+        content: 'Budget<cit data-id="xlsx-1"></cit>',
+        timestamp: '2026-09-08T10:16:43.739Z',
+        custom_content: {
+          annotations: [
+            {
+              target: {
+                selector: { type: 'html_tag', tag: 'cit', id: 'xlsx-1' },
+              },
+              body: {
+                title: 'budget.xlsx',
                 source: {
                   type: 'attachment',
                   attachment: {
-                    type: 'text/html',
-                    url,
-                    title: 'World Economic Outlook dataset',
+                    type: 'application/pdf',
+                    url: 'files/account/uploads/budget.xlsx',
+                    title: 'budget.xlsx',
                   },
                 },
               },
@@ -471,96 +679,161 @@ describe('ConversationMessageItem — inline citations', () => {
           ],
         },
       };
-      const open = vi.spyOn(window, 'open').mockImplementation(() => null);
-      try {
-        render(
-          <ConversationMessageItem {...defaultProps} msg={message} index={1} />,
-        );
-        await userEvent.click(
-          screen.getByRole('button', {
-            name: CitationsI18nKeys.MarkerAriaLabel,
-          }),
-        );
-        expect(
-          screen.queryByRole('button', { name: BasicI18nKeys.Preview }),
-        ).toBeNull();
-        await userEvent.click(
-          screen.getByRole('button', {
-            name: CitationsI18nKeys.PopupOpenInBrowser,
-          }),
-        );
-        expect(open).toHaveBeenCalledWith(url, '_blank', 'noopener,noreferrer');
-        expect(mockOpenCanvas).not.toHaveBeenCalled();
-      } finally {
-        open.mockRestore();
-      }
-    },
-  );
 
-  it.each([false, true])(
-    'opens the selected cit document and page after reload (raw format: %s)',
-    async (rawFormat) => {
-      const entries = [
-        { id: 'first', page: 1, file: 'report.pdf' },
-        { id: 'grouped', page: 2, file: 'other.pdf' },
-        { id: 'grouped', page: 3, file: 'report.pdf' },
-      ];
-      const annotations = entries.map(({ id, page, file }, index) => ({
-        index,
-        target: { selector: { type: 'html_tag', tag: 'cit', id } },
-        body: {
-          selector: { type: 'pdf_bbox', page, x1: 0, y1: 0, x2: 0, y2: 0 },
-          source: {
-            type: 'attachment',
-            attachment: {
-              type: 'application/pdf',
-              url: `https://example.com/${file}`,
-            },
-          },
-        },
-      }));
-      const payload = {
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={message}
+          index={1}
+          onAttachmentClick={onAttachmentClick}
+        />,
+      );
+
+      await userEvent.click(
+        screen.getByRole('button', {
+          name: CitationsI18nKeys.MarkerAriaLabel,
+        }),
+      );
+
+      expect(onAttachmentClick).not.toHaveBeenCalled();
+      expect(mockOpenCanvas).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: AttachmentContentType.Ooxml,
+          format: 'xlsx',
+        }),
+        'budget.xlsx',
+      );
+      expect(mockOpenCanvas.mock.calls[0][0]).not.toHaveProperty('highlights');
+    });
+
+    it('opens a DOCX citation in the OOXML canvas with the right format and the clicked annotation selected', async () => {
+      const message: Message = {
         role: MessageRole.Assistant,
-        content:
-          'First<cit data-id="first"></cit> Group<cit data-id="grouped"></cit>',
-        timestamp: '2026-09-09T07:00:00Z',
-        ...(rawFormat
-          ? {
-              custom_fields: {
-                annotations: annotations.map((a) => ({
-                  ...a,
-                  body: {
-                    ...a.body,
-                    source: {
-                      type: 'attachment',
-                      url: a.body.source.attachment.url,
-                    },
-                  },
-                })),
+        content: 'Fact<cit data-id="docx-1"></cit>',
+        timestamp: '2026-09-10T10:00:00Z',
+        custom_content: {
+          annotations: [
+            {
+              target: {
+                selector: { type: 'html_tag', tag: 'cit', id: 'docx-1' },
               },
-            }
-          : { custom_content: { annotations } }),
+              body: {
+                title: 'report.docx',
+                source: {
+                  type: 'attachment',
+                  attachment: {
+                    type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    url: 'files/account/uploads/report.docx',
+                    title: 'report.docx',
+                  },
+                },
+                selector: [
+                  {
+                    type: 'docx_text_range',
+                    story: 'body',
+                    path: [3, 1],
+                    start: 0,
+                    end: 5,
+                    text: 'Hello',
+                  },
+                ],
+              },
+            },
+          ],
+        },
       };
-      const message: Message = JSON.parse(JSON.stringify(payload));
+
       render(
         <ConversationMessageItem {...defaultProps} msg={message} index={1} />,
       );
-      const markers = () =>
-        screen.getAllByRole('button', {
-          name: CitationsI18nKeys.MarkerAriaLabel,
-        });
-      /* The single-citation marker previews directly; the grouped one keeps
-         the card so its second citation stays reachable through Next. */
-      await userEvent.click(markers()[0]);
-      expect(screen.queryByRole('dialog')).toBeNull();
-      expect(mockOpenCanvas).toHaveBeenLastCalledWith(
-        expect.objectContaining({
-          url: 'https://example.com/report.pdf',
-          page: 1,
-        }),
-        expect.any(String),
+      await userEvent.click(
+        screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
       );
-      await userEvent.click(markers()[1]);
+
+      /* The single annotation carries no `index`, so its highlight id is
+       derived from its own identity (cit id + selector digest) rather than
+       a fixed position — assert the shape, not a pinned literal (#8907). */
+      expect(mockOpenCanvas).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: AttachmentContentType.Ooxml,
+          format: 'docx',
+          highlights: [expect.objectContaining({ id: expect.any(String) })],
+          selectedHighlightId: expect.any(String),
+        }),
+        'report.docx',
+      );
+      const [call] = mockOpenCanvas.mock.calls;
+      const content = call[0] as {
+        highlights: { id: string }[];
+        selectedHighlightId: string;
+      };
+      expect(content.selectedHighlightId).toBe(content.highlights[0].id);
+    });
+
+    it('previews the second annotation of a grouped Office citation, not the group primary', async () => {
+      const url = 'files/account/uploads/report.docx';
+      const makeDocxSelector = (start: number, text: string) => [
+        {
+          type: 'docx_text_range',
+          story: 'body',
+          path: [start],
+          start: 0,
+          end: text.length,
+          text,
+        },
+      ];
+      const message: Message = {
+        role: MessageRole.Assistant,
+        content: 'Group<cit data-id="grouped"></cit>',
+        timestamp: '2026-09-10T10:00:00Z',
+        custom_content: {
+          annotations: [
+            {
+              index: 0,
+              target: {
+                selector: { type: 'html_tag', tag: 'cit', id: 'grouped' },
+              },
+              body: {
+                title: 'report.docx',
+                source: {
+                  type: 'attachment',
+                  attachment: {
+                    type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    url,
+                    title: 'report.docx',
+                  },
+                },
+                selector: makeDocxSelector(3, 'First'),
+              },
+            },
+            {
+              index: 1,
+              target: {
+                selector: { type: 'html_tag', tag: 'cit', id: 'grouped' },
+              },
+              body: {
+                title: 'report.docx',
+                source: {
+                  type: 'attachment',
+                  attachment: {
+                    type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    url,
+                    title: 'report.docx',
+                  },
+                },
+                selector: makeDocxSelector(7, 'Second'),
+              },
+            },
+          ],
+        },
+      };
+
+      render(
+        <ConversationMessageItem {...defaultProps} msg={message} index={1} />,
+      );
+      await userEvent.click(
+        screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
+      );
       await userEvent.click(
         screen.getByRole('button', {
           name: CitationsI18nKeys.PopupNextCitation,
@@ -569,682 +842,142 @@ describe('ConversationMessageItem — inline citations', () => {
       await userEvent.click(
         screen.getByRole('button', { name: BasicI18nKeys.Preview }),
       );
+
       expect(mockOpenCanvas).toHaveBeenLastCalledWith(
-        expect.objectContaining({
-          url: 'https://example.com/report.pdf',
-          page: 3,
-          selectedHighlightId: '2',
-          highlights: [
-            expect.objectContaining({
-              id: '2',
-              bboxes: [expect.objectContaining({ page: 3 })],
-            }),
-          ],
-        }),
-        expect.any(String),
+        expect.objectContaining({ selectedHighlightId: '1' }),
+        'report.docx',
       );
-    },
-  );
-  it('renders every matching html_tag citation in one message', () => {
-    const citationIds = Array.from(
-      { length: 6 },
-      (_, index) => `citation-${index + 1}`,
-    );
-    const message: Message = {
-      role: MessageRole.Assistant,
-      content: citationIds
-        .map(
-          (citationId, index) =>
-            `Fact ${index + 1}<cit data-id="${citationId}"></cit>`,
-        )
-        .join(' '),
-      timestamp: '2026-09-08T10:16:43.739Z',
-      custom_content: {
-        annotations: citationIds.map((citationId) => ({
-          target: {
-            selector: { type: 'html_tag', tag: 'cit', id: citationId },
-          },
-          body: {
-            title: 'shared-source.pdf',
-            source: {
-              type: 'attachment',
-              attachment: {
-                type: 'application/pdf',
-                url: 'files/shared-source.pdf',
-                title: 'shared-source.pdf',
-              },
-            },
-          },
-        })),
-      },
-    };
-
-    render(
-      <ConversationMessageItem {...defaultProps} msg={message} index={1} />,
-    );
-
-    expect(
-      screen.getAllByRole('button', {
-        name: CitationsI18nKeys.MarkerAriaLabel,
-      }),
-    ).toHaveLength(6);
-  });
-
-  it('opens a persisted XLSX citation mislabeled as PDF in the OOXML canvas with no highlight, rather than falling through to generic attachment preview', async () => {
-    /*
-     * Before Office citation highlighting existed, every non-PDF citation
-     * fell through to the plain-attachment path. This citation carries no
-     * selector at all (a legacy annotation, or one the backend previously
-     * stripped) — per `openspec/changes/archive/2026-09-10-highlight-office-document-annotations/design.md`'s acceptance criteria, a missing selector
-     * still opens the Office document, just with no highlight, rather than
-     * falling through.
-     */
-    const onAttachmentClick = vi.fn();
-    const message: Message = {
-      role: MessageRole.Assistant,
-      content: 'Budget<cit data-id="xlsx-1"></cit>',
-      timestamp: '2026-09-08T10:16:43.739Z',
-      custom_content: {
-        annotations: [
-          {
-            target: {
-              selector: { type: 'html_tag', tag: 'cit', id: 'xlsx-1' },
-            },
-            body: {
-              title: 'budget.xlsx',
-              source: {
-                type: 'attachment',
-                attachment: {
-                  type: 'application/pdf',
-                  url: 'files/account/uploads/budget.xlsx',
-                  title: 'budget.xlsx',
-                },
-              },
-            },
-          },
-        ],
-      },
-    };
-
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={message}
-        index={1}
-        onAttachmentClick={onAttachmentClick}
-      />,
-    );
-
-    await userEvent.click(
-      screen.getByRole('button', {
-        name: CitationsI18nKeys.MarkerAriaLabel,
-      }),
-    );
-
-    expect(onAttachmentClick).not.toHaveBeenCalled();
-    expect(mockOpenCanvas).toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: AttachmentContentType.Ooxml,
-        format: 'xlsx',
-      }),
-      'budget.xlsx',
-    );
-    expect(mockOpenCanvas.mock.calls[0][0]).not.toHaveProperty('highlights');
-  });
-
-  it('opens a DOCX citation in the OOXML canvas with the right format and the clicked annotation selected', async () => {
-    const message: Message = {
-      role: MessageRole.Assistant,
-      content: 'Fact<cit data-id="docx-1"></cit>',
-      timestamp: '2026-09-10T10:00:00Z',
-      custom_content: {
-        annotations: [
-          {
-            target: {
-              selector: { type: 'html_tag', tag: 'cit', id: 'docx-1' },
-            },
-            body: {
-              title: 'report.docx',
-              source: {
-                type: 'attachment',
-                attachment: {
-                  type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                  url: 'files/account/uploads/report.docx',
-                  title: 'report.docx',
-                },
-              },
-              selector: [
-                {
-                  type: 'docx_text_range',
-                  story: 'body',
-                  path: [3, 1],
-                  start: 0,
-                  end: 5,
-                  text: 'Hello',
-                },
-              ],
-            },
-          },
-        ],
-      },
-    };
-
-    render(
-      <ConversationMessageItem {...defaultProps} msg={message} index={1} />,
-    );
-    await userEvent.click(
-      screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
-    );
-
-    /* The single annotation carries no `index`, so its highlight id is
-       derived from its own identity (cit id + selector digest) rather than
-       a fixed position — assert the shape, not a pinned literal (#8907). */
-    expect(mockOpenCanvas).toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: AttachmentContentType.Ooxml,
-        format: 'docx',
-        highlights: [expect.objectContaining({ id: expect.any(String) })],
-        selectedHighlightId: expect.any(String),
-      }),
-      'report.docx',
-    );
-    const [call] = mockOpenCanvas.mock.calls;
-    const content = call[0] as {
-      highlights: { id: string }[];
-      selectedHighlightId: string;
-    };
-    expect(content.selectedHighlightId).toBe(content.highlights[0].id);
-  });
-
-  it('previews the second annotation of a grouped Office citation, not the group primary', async () => {
-    const url = 'files/account/uploads/report.docx';
-    const makeDocxSelector = (start: number, text: string) => [
-      {
-        type: 'docx_text_range',
-        story: 'body',
-        path: [start],
-        start: 0,
-        end: text.length,
-        text,
-      },
-    ];
-    const message: Message = {
-      role: MessageRole.Assistant,
-      content: 'Group<cit data-id="grouped"></cit>',
-      timestamp: '2026-09-10T10:00:00Z',
-      custom_content: {
-        annotations: [
-          {
-            index: 0,
-            target: {
-              selector: { type: 'html_tag', tag: 'cit', id: 'grouped' },
-            },
-            body: {
-              title: 'report.docx',
-              source: {
-                type: 'attachment',
-                attachment: {
-                  type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                  url,
-                  title: 'report.docx',
-                },
-              },
-              selector: makeDocxSelector(3, 'First'),
-            },
-          },
-          {
-            index: 1,
-            target: {
-              selector: { type: 'html_tag', tag: 'cit', id: 'grouped' },
-            },
-            body: {
-              title: 'report.docx',
-              source: {
-                type: 'attachment',
-                attachment: {
-                  type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                  url,
-                  title: 'report.docx',
-                },
-              },
-              selector: makeDocxSelector(7, 'Second'),
-            },
-          },
-        ],
-      },
-    };
-
-    render(
-      <ConversationMessageItem {...defaultProps} msg={message} index={1} />,
-    );
-    await userEvent.click(
-      screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
-    );
-    await userEvent.click(
-      screen.getByRole('button', { name: CitationsI18nKeys.PopupNextCitation }),
-    );
-    await userEvent.click(
-      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
-    );
-
-    expect(mockOpenCanvas).toHaveBeenLastCalledWith(
-      expect.objectContaining({ selectedHighlightId: '1' }),
-      'report.docx',
-    );
-  });
-
-  it('opens an Office citation with an unresolvable selector rather than falling through to the plain-attachment path', async () => {
-    const onAttachmentClick = vi.fn();
-    const message: Message = {
-      role: MessageRole.Assistant,
-      content: 'Fact<cit data-id="docx-bad"></cit>',
-      timestamp: '2026-09-10T10:00:00Z',
-      custom_content: {
-        annotations: [
-          {
-            target: {
-              selector: { type: 'html_tag', tag: 'cit', id: 'docx-bad' },
-            },
-            body: {
-              title: 'report.docx',
-              source: {
-                type: 'attachment',
-                attachment: {
-                  type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                  url: 'files/account/uploads/report.docx',
-                  title: 'report.docx',
-                },
-              },
-              selector: [
-                {
-                  type: 'docx_text_range',
-                  story: 'body',
-                  path: [3, 1],
-                  start: 5,
-                  end: 3,
-                  text: 'Hello',
-                },
-              ],
-            },
-          },
-        ],
-      },
-    };
-
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={message}
-        index={1}
-        onAttachmentClick={onAttachmentClick}
-      />,
-    );
-    await userEvent.click(
-      screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
-    );
-
-    expect(onAttachmentClick).not.toHaveBeenCalled();
-    expect(mockOpenCanvas).toHaveBeenCalledWith(
-      expect.objectContaining({ type: AttachmentContentType.Ooxml }),
-      'report.docx',
-    );
-  });
-
-  it('falls through a CSV citation to generic attachment preview, unchanged', async () => {
-    const onAttachmentClick = vi.fn();
-    const message: Message = {
-      role: MessageRole.Assistant,
-      content: 'Data<cit data-id="csv-1"></cit>',
-      timestamp: '2026-09-10T10:00:00Z',
-      custom_content: {
-        annotations: [
-          {
-            target: { selector: { type: 'html_tag', tag: 'cit', id: 'csv-1' } },
-            body: {
-              title: 'export.csv',
-              source: {
-                type: 'attachment',
-                attachment: {
-                  type: 'text/csv',
-                  url: 'files/account/uploads/export.csv',
-                  title: 'export.csv',
-                },
-              },
-            },
-          },
-        ],
-      },
-    };
-
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={message}
-        index={1}
-        onAttachmentClick={onAttachmentClick}
-      />,
-    );
-    await userEvent.click(
-      screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
-    );
-
-    expect(mockOpenCanvas).not.toHaveBeenCalled();
-    expect(onAttachmentClick).toHaveBeenCalledWith(
-      expect.objectContaining({ url: 'files/account/uploads/export.csv' }),
-      1,
-    );
-  });
-
-  it('activating one occurrence of a repeated cit id previews it exactly once with the group-identical annotation and opens no card', async () => {
-    const message: Message = {
-      role: MessageRole.Assistant,
-      content:
-        'Alice did X<cit data-id="e1"></cit> Bob did X<cit data-id="e1"></cit>',
-      timestamp: '2026-09-11T10:00:00Z',
-      custom_content: {
-        annotations: [
-          {
-            target: { selector: { type: 'html_tag', tag: 'cit', id: 'e1' } },
-            body: {
-              title: 'report.pdf',
-              selector: {
-                type: 'pdf_bbox',
-                page: 1,
-                x1: 0,
-                y1: 0,
-                x2: 0,
-                y2: 0,
-              },
-              source: {
-                type: 'attachment',
-                attachment: {
-                  type: 'application/pdf',
-                  url: 'https://example.com/report.pdf',
-                },
-              },
-            },
-          },
-        ],
-      },
-    };
-
-    render(
-      <ConversationMessageItem {...defaultProps} msg={message} index={1} />,
-    );
-
-    const markers = screen.getAllByRole('button', {
-      name: CitationsI18nKeys.MarkerAriaLabel,
     });
-    expect(markers).toHaveLength(2);
 
-    await userEvent.click(markers[0]);
-    expect(screen.queryByRole('dialog')).toBeNull();
-
-    expect(mockOpenCanvas).toHaveBeenCalledOnce();
-    /* `annotationToPdfCanvasContent` resolves the group via
-       `groups.find((g) => g.annotations.includes(annotation))` (F9) — a
-       cloned annotation would fail this lookup and `page` would be
-       `undefined`. */
-    expect(mockOpenCanvas).toHaveBeenCalledWith(
-      expect.objectContaining({
-        url: 'https://example.com/report.pdf',
-        page: 1,
-      }),
-      expect.any(String),
-    );
-  });
-
-  it('keeps two distinct cit ids independently previewable when their annotations share quote text and source URL', async () => {
-    const sharedQuote = 'Dinosaurs first appeared in the Triassic';
-    const sharedUrl = 'https://example.com/report.pdf';
-    const message: Message = {
-      role: MessageRole.Assistant,
-      content:
-        'Claim one<cit data-id="e1"></cit> Claim two<cit data-id="e2"></cit>',
-      timestamp: '2026-09-12T10:00:00Z',
-      custom_content: {
-        annotations: [
-          {
-            target: { selector: { type: 'html_tag', tag: 'cit', id: 'e1' } },
-            body: {
-              title: 'report.pdf',
-              quote: sharedQuote,
-              source: {
-                type: 'attachment',
-                attachment: { type: 'application/pdf', url: sharedUrl },
-              },
-            },
-          },
-          {
-            target: { selector: { type: 'html_tag', tag: 'cit', id: 'e2' } },
-            body: {
-              title: 'report.pdf',
-              quote: sharedQuote,
-              source: {
-                type: 'attachment',
-                attachment: { type: 'application/pdf', url: sharedUrl },
-              },
-            },
-          },
-        ],
-      },
-    };
-
-    render(
-      <ConversationMessageItem {...defaultProps} msg={message} index={1} />,
-    );
-
-    const markers = screen.getAllByRole('button', {
-      name: CitationsI18nKeys.MarkerAriaLabel,
-    });
-    expect(markers).toHaveLength(2);
-
-    await userEvent.click(markers[0]);
-    expect(mockOpenCanvas).toHaveBeenCalledOnce();
-
-    await userEvent.click(markers[1]);
-    expect(mockOpenCanvas).toHaveBeenCalledTimes(2);
-    expect(screen.queryByRole('dialog')).toBeNull();
-  });
-
-  it('activating repeated markers across two paragraphs previews the canvas each time', async () => {
-    const message: Message = {
-      role: MessageRole.Assistant,
-      content:
-        'First paragraph cites this<cit data-id="e1"></cit>.\n\nSecond paragraph cites it again<cit data-id="e1"></cit>.',
-      timestamp: '2026-09-13T10:00:00Z',
-      custom_content: {
-        annotations: [
-          {
-            target: { selector: { type: 'html_tag', tag: 'cit', id: 'e1' } },
-            body: {
-              title: 'report.pdf',
-              source: {
-                type: 'attachment',
-                attachment: {
-                  type: 'application/pdf',
-                  url: 'https://example.com/report.pdf',
-                },
-              },
-            },
-          },
-        ],
-      },
-    };
-
-    render(
-      <ConversationMessageItem {...defaultProps} msg={message} index={1} />,
-    );
-
-    const markers = screen.getAllByRole('button', {
-      name: CitationsI18nKeys.MarkerAriaLabel,
-    });
-    expect(markers).toHaveLength(2);
-
-    await userEvent.click(markers[0]);
-    expect(mockOpenCanvas).toHaveBeenCalledOnce();
-
-    await userEvent.click(markers[1]);
-    expect(mockOpenCanvas).toHaveBeenCalledTimes(2);
-    expect(screen.queryByRole('dialog')).toBeNull();
-  });
-
-  it('previews the annotation the card is showing after navigating with Next from a repeated marker', async () => {
-    const message: Message = {
-      role: MessageRole.Assistant,
-      content:
-        'Alice did X<cit data-id="e1"></cit> Bob did X<cit data-id="e1"></cit>',
-      timestamp: '2026-09-14T10:00:00Z',
-      custom_content: {
-        annotations: [
-          {
-            index: 0,
-            target: { selector: { type: 'html_tag', tag: 'cit', id: 'e1' } },
-            body: {
-              title: 'report.pdf',
-              selector: {
-                type: 'pdf_bbox',
-                page: 1,
-                x1: 0,
-                y1: 0,
-                x2: 0,
-                y2: 0,
-              },
-              source: {
-                type: 'attachment',
-                attachment: {
-                  type: 'application/pdf',
-                  url: 'https://example.com/report.pdf',
-                },
-              },
-            },
-          },
-          {
-            index: 1,
-            target: { selector: { type: 'html_tag', tag: 'cit', id: 'e1' } },
-            body: {
-              title: 'report.pdf',
-              selector: {
-                type: 'pdf_bbox',
-                page: 2,
-                x1: 0,
-                y1: 0,
-                x2: 0,
-                y2: 0,
-              },
-              source: {
-                type: 'attachment',
-                attachment: {
-                  type: 'application/pdf',
-                  url: 'https://example.com/report.pdf',
-                },
-              },
-            },
-          },
-        ],
-      },
-    };
-
-    render(
-      <ConversationMessageItem {...defaultProps} msg={message} index={1} />,
-    );
-
-    const markers = screen.getAllByRole('button', {
-      name: CitationsI18nKeys.MarkerAriaLabel,
-    });
-    await userEvent.click(markers[1]);
-    await userEvent.click(
-      screen.getByRole('button', { name: CitationsI18nKeys.PopupNextCitation }),
-    );
-    await userEvent.click(
-      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
-    );
-
-    expect(mockOpenCanvas).toHaveBeenCalledOnce();
-    expect(mockOpenCanvas).toHaveBeenCalledWith(
-      expect.objectContaining({
-        url: 'https://example.com/report.pdf',
-        page: 2,
-      }),
-      expect.any(String),
-    );
-  });
-
-  /*
-   * Fixture trimmed from a user-confirmed reproduction of [#8822](https://github.com/epam/ai-dial-chat/issues/8822): the
-   * assistant response's `content`/`custom_content.annotations`, source URL
-   * replaced with a test value, execution history/model state omitted.
-   * Findings from that payload (recorded in task 4.1 of
-   * `openspec/changes/archive/2026-09-16-fix-repeated-citation-popup-identity/tasks.md`):
-   * source is a PDF (not the issue's original DOCX); `ff3390`/`7bba1b` each
-   * occur twice in `content` against exactly one annotation each (no
-   * `index`); `ff3390`'s annotation carries two `pdf_region` selectors. This
-   * demonstrates the repeated-occurrence identity bug (F1) this change
-   * fixes; it does not demonstrate an intra-set highlight-id collision (F6)
-   * — each PDF group here has exactly one annotation, so
-   * `annotationsToPdfHighlights` never gathers more than one entry.
-   */
-  it.each([0, 1, 2, 3])(
-    'reproduces issue #8822: repeated PDF citation %i previews in the canvas',
-    async (markerIndex) => {
+    it('opens an Office citation with an unresolvable selector rather than falling through to the plain-attachment path', async () => {
+      const onAttachmentClick = vi.fn();
       const message: Message = {
         role: MessageRole.Assistant,
-        content:
-          '\n\r\n\rBased on the provided document, **David Reynolds** was an independent eye-witness to the incident. \n\nHere are the key details regarding his statement and involvement:\n* **Role:** He was a pedestrian located near the scene of the accident <cit data-id="ff3390"></cit>.\n* **Observations:** \n  * He reported hearing screeching tires and seeing a Honda vehicle spinning immediately after the initial impact <cit data-id="ff3390"></cit>.\n  * He noted that the Mustang involved had absolutely no opportunity to avoid the subsequent collision <cit data-id="7bba1b"></cit>.\n* **Conclusion:** He characterized the entire event as a rapid chain reaction <cit data-id="7bba1b"></cit>.',
-        timestamp: '2026-09-16T07:21:28.670Z',
+        content: 'Fact<cit data-id="docx-bad"></cit>',
+        timestamp: '2026-09-10T10:00:00Z',
         custom_content: {
           annotations: [
             {
               target: {
-                selector: { type: 'html_tag', tag: 'cit', id: 'ff3390' },
+                selector: { type: 'html_tag', tag: 'cit', id: 'docx-bad' },
               },
               body: {
-                title: 'max_artificial_claim.pdf',
-                quote:
-                  'David Reynolds, a pedestrian crossing nearby, reported, "I heard the screeching tires and turned to see the Honda spinning after the first impact.',
-                selector: [
-                  {
-                    type: 'pdf_region',
-                    page: 1,
-                    bbox: { lt: [68.544, 603.504], wh: [455.94, 19.8] },
-                  },
-                  {
-                    type: 'pdf_region',
-                    page: 1,
-                    bbox: { lt: [68.544, 614.592], wh: [299.268, 19.008] },
-                  },
-                ],
+                title: 'report.docx',
                 source: {
                   type: 'attachment',
                   attachment: {
-                    type: 'application/pdf',
-                    url: 'files/test-bucket/uploads/max_artificial_claim.pdf',
-                    title: 'max_artificial_claim.pdf',
+                    type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    url: 'files/account/uploads/report.docx',
+                    title: 'report.docx',
+                  },
+                },
+                selector: [
+                  {
+                    type: 'docx_text_range',
+                    story: 'body',
+                    path: [3, 1],
+                    start: 5,
+                    end: 3,
+                    text: 'Hello',
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      };
+
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={message}
+          index={1}
+          onAttachmentClick={onAttachmentClick}
+        />,
+      );
+      await userEvent.click(
+        screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
+      );
+
+      expect(onAttachmentClick).not.toHaveBeenCalled();
+      expect(mockOpenCanvas).toHaveBeenCalledWith(
+        expect.objectContaining({ type: AttachmentContentType.Ooxml }),
+        'report.docx',
+      );
+    });
+
+    it('falls through a CSV citation to generic attachment preview, unchanged', async () => {
+      const onAttachmentClick = vi.fn();
+      const message: Message = {
+        role: MessageRole.Assistant,
+        content: 'Data<cit data-id="csv-1"></cit>',
+        timestamp: '2026-09-10T10:00:00Z',
+        custom_content: {
+          annotations: [
+            {
+              target: {
+                selector: { type: 'html_tag', tag: 'cit', id: 'csv-1' },
+              },
+              body: {
+                title: 'export.csv',
+                source: {
+                  type: 'attachment',
+                  attachment: {
+                    type: 'text/csv',
+                    url: 'files/account/uploads/export.csv',
+                    title: 'export.csv',
                   },
                 },
               },
             },
+          ],
+        },
+      };
+
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={message}
+          index={1}
+          onAttachmentClick={onAttachmentClick}
+        />,
+      );
+      await userEvent.click(
+        screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
+      );
+
+      expect(mockOpenCanvas).not.toHaveBeenCalled();
+      expect(onAttachmentClick).toHaveBeenCalledWith(
+        expect.objectContaining({ url: 'files/account/uploads/export.csv' }),
+        1,
+      );
+    });
+
+    it('activating one occurrence of a repeated cit id previews it exactly once with the group-identical annotation and opens no card', async () => {
+      const message: Message = {
+        role: MessageRole.Assistant,
+        content:
+          'Alice did X<cit data-id="e1"></cit> Bob did X<cit data-id="e1"></cit>',
+        timestamp: '2026-09-11T10:00:00Z',
+        custom_content: {
+          annotations: [
             {
-              target: {
-                selector: { type: 'html_tag', tag: 'cit', id: '7bba1b' },
-              },
+              target: { selector: { type: 'html_tag', tag: 'cit', id: 'e1' } },
               body: {
-                title: 'max_artificial_claim.pdf',
-                quote:
-                  'The Mustang didn’t have a chance to avoid the collision — it was like a chain reaction."',
-                selector: [
-                  {
-                    type: 'pdf_region',
-                    page: 1,
-                    bbox: { lt: [68.544, 624.096], wh: [394.128, 19.8] },
-                  },
-                ],
+                title: 'report.pdf',
+                selector: {
+                  type: 'pdf_bbox',
+                  page: 1,
+                  x1: 0,
+                  y1: 0,
+                  x2: 0,
+                  y2: 0,
+                },
                 source: {
                   type: 'attachment',
                   attachment: {
                     type: 'application/pdf',
-                    url: 'files/test-bucket/uploads/max_artificial_claim.pdf',
-                    title: 'max_artificial_claim.pdf',
+                    url: 'https://example.com/report.pdf',
                   },
                 },
               },
@@ -1260,1305 +993,1611 @@ describe('ConversationMessageItem — inline citations', () => {
       const markers = screen.getAllByRole('button', {
         name: CitationsI18nKeys.MarkerAriaLabel,
       });
-      expect(markers).toHaveLength(4);
+      expect(markers).toHaveLength(2);
 
-      const marker = markers[markerIndex];
-      /* A single-citation file marker opens the canvas directly; the file is
-         downloaded from the canvas, so the card's Download is not offered. */
-      await userEvent.click(marker);
-      expect(mockOpenCanvas).toHaveBeenCalledOnce();
+      await userEvent.click(markers[0]);
       expect(screen.queryByRole('dialog')).toBeNull();
-      mockOpenCanvas.mockClear();
-      await userEvent.click(marker);
+
       expect(mockOpenCanvas).toHaveBeenCalledOnce();
-    },
-  );
-});
+      /* `annotationToPdfCanvasContent` resolves the group via
+       `groups.find((g) => g.annotations.includes(annotation))` (F9) — a
+       cloned annotation would fail this lookup and `page` would be
+       `undefined`. */
+      expect(mockOpenCanvas).toHaveBeenCalledWith(
+        expect.objectContaining({
+          url: 'https://example.com/report.pdf',
+          page: 1,
+        }),
+        expect.any(String),
+      );
+    });
 
-describe('ConversationMessageItem — stopped generation', () => {
-  const STOPPED_EMPTY_ASSISTANT: Message = {
-    role: MessageRole.Assistant,
-    content: '',
-    timestamp: '2024-01-01T00:00:01Z',
-    wasStoppedByUser: true,
-  };
+    it('keeps two distinct cit ids independently previewable when their annotations share quote text and source URL', async () => {
+      const sharedQuote = 'Dinosaurs first appeared in the Triassic';
+      const sharedUrl = 'https://example.com/report.pdf';
+      const message: Message = {
+        role: MessageRole.Assistant,
+        content:
+          'Claim one<cit data-id="e1"></cit> Claim two<cit data-id="e2"></cit>',
+        timestamp: '2026-09-12T10:00:00Z',
+        custom_content: {
+          annotations: [
+            {
+              target: { selector: { type: 'html_tag', tag: 'cit', id: 'e1' } },
+              body: {
+                title: 'report.pdf',
+                quote: sharedQuote,
+                source: {
+                  type: 'attachment',
+                  attachment: { type: 'application/pdf', url: sharedUrl },
+                },
+              },
+            },
+            {
+              target: { selector: { type: 'html_tag', tag: 'cit', id: 'e2' } },
+              body: {
+                title: 'report.pdf',
+                quote: sharedQuote,
+                source: {
+                  type: 'attachment',
+                  attachment: { type: 'application/pdf', url: sharedUrl },
+                },
+              },
+            },
+          ],
+        },
+      };
 
-  it('shows the stopped-generating label for an empty stopped assistant message', () => {
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={STOPPED_EMPTY_ASSISTANT}
-        index={1}
-      />,
+      render(
+        <ConversationMessageItem {...defaultProps} msg={message} index={1} />,
+      );
+
+      const markers = screen.getAllByRole('button', {
+        name: CitationsI18nKeys.MarkerAriaLabel,
+      });
+      expect(markers).toHaveLength(2);
+
+      await userEvent.click(markers[0]);
+      expect(mockOpenCanvas).toHaveBeenCalledOnce();
+
+      await userEvent.click(markers[1]);
+      expect(mockOpenCanvas).toHaveBeenCalledTimes(2);
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
+    it('activating repeated markers across two paragraphs previews the canvas each time', async () => {
+      const message: Message = {
+        role: MessageRole.Assistant,
+        content:
+          'First paragraph cites this<cit data-id="e1"></cit>.\n\nSecond paragraph cites it again<cit data-id="e1"></cit>.',
+        timestamp: '2026-09-13T10:00:00Z',
+        custom_content: {
+          annotations: [
+            {
+              target: { selector: { type: 'html_tag', tag: 'cit', id: 'e1' } },
+              body: {
+                title: 'report.pdf',
+                source: {
+                  type: 'attachment',
+                  attachment: {
+                    type: 'application/pdf',
+                    url: 'https://example.com/report.pdf',
+                  },
+                },
+              },
+            },
+          ],
+        },
+      };
+
+      render(
+        <ConversationMessageItem {...defaultProps} msg={message} index={1} />,
+      );
+
+      const markers = screen.getAllByRole('button', {
+        name: CitationsI18nKeys.MarkerAriaLabel,
+      });
+      expect(markers).toHaveLength(2);
+
+      await userEvent.click(markers[0]);
+      expect(mockOpenCanvas).toHaveBeenCalledOnce();
+
+      await userEvent.click(markers[1]);
+      expect(mockOpenCanvas).toHaveBeenCalledTimes(2);
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
+    it('previews the annotation the card is showing after navigating with Next from a repeated marker', async () => {
+      const message: Message = {
+        role: MessageRole.Assistant,
+        content:
+          'Alice did X<cit data-id="e1"></cit> Bob did X<cit data-id="e1"></cit>',
+        timestamp: '2026-09-14T10:00:00Z',
+        custom_content: {
+          annotations: [
+            {
+              index: 0,
+              target: { selector: { type: 'html_tag', tag: 'cit', id: 'e1' } },
+              body: {
+                title: 'report.pdf',
+                selector: {
+                  type: 'pdf_bbox',
+                  page: 1,
+                  x1: 0,
+                  y1: 0,
+                  x2: 0,
+                  y2: 0,
+                },
+                source: {
+                  type: 'attachment',
+                  attachment: {
+                    type: 'application/pdf',
+                    url: 'https://example.com/report.pdf',
+                  },
+                },
+              },
+            },
+            {
+              index: 1,
+              target: { selector: { type: 'html_tag', tag: 'cit', id: 'e1' } },
+              body: {
+                title: 'report.pdf',
+                selector: {
+                  type: 'pdf_bbox',
+                  page: 2,
+                  x1: 0,
+                  y1: 0,
+                  x2: 0,
+                  y2: 0,
+                },
+                source: {
+                  type: 'attachment',
+                  attachment: {
+                    type: 'application/pdf',
+                    url: 'https://example.com/report.pdf',
+                  },
+                },
+              },
+            },
+          ],
+        },
+      };
+
+      render(
+        <ConversationMessageItem {...defaultProps} msg={message} index={1} />,
+      );
+
+      const markers = screen.getAllByRole('button', {
+        name: CitationsI18nKeys.MarkerAriaLabel,
+      });
+      await userEvent.click(markers[1]);
+      await userEvent.click(
+        screen.getByRole('button', {
+          name: CitationsI18nKeys.PopupNextCitation,
+        }),
+      );
+      await userEvent.click(
+        screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+      );
+
+      expect(mockOpenCanvas).toHaveBeenCalledOnce();
+      expect(mockOpenCanvas).toHaveBeenCalledWith(
+        expect.objectContaining({
+          url: 'https://example.com/report.pdf',
+          page: 2,
+        }),
+        expect.any(String),
+      );
+    });
+
+    /*
+     * Fixture trimmed from a user-confirmed reproduction of [#8822](https://github.com/epam/ai-dial-chat/issues/8822): the
+     * assistant response's `content`/`custom_content.annotations`, source URL
+     * replaced with a test value, execution history/model state omitted.
+     * Findings from that payload (recorded in task 4.1 of
+     * `openspec/changes/archive/2026-09-16-fix-repeated-citation-popup-identity/tasks.md`):
+     * source is a PDF (not the issue's original DOCX); `ff3390`/`7bba1b` each
+     * occur twice in `content` against exactly one annotation each (no
+     * `index`); `ff3390`'s annotation carries two `pdf_region` selectors. This
+     * demonstrates the repeated-occurrence identity bug (F1) this change
+     * fixes; it does not demonstrate an intra-set highlight-id collision (F6)
+     * — each PDF group here has exactly one annotation, so
+     * `annotationsToPdfHighlights` never gathers more than one entry.
+     */
+    it.each([0, 1, 2, 3])(
+      'reproduces issue #8822: repeated PDF citation %i previews in the canvas',
+      async (markerIndex) => {
+        const message: Message = {
+          role: MessageRole.Assistant,
+          content:
+            '\n\r\n\rBased on the provided document, **David Reynolds** was an independent eye-witness to the incident. \n\nHere are the key details regarding his statement and involvement:\n* **Role:** He was a pedestrian located near the scene of the accident <cit data-id="ff3390"></cit>.\n* **Observations:** \n  * He reported hearing screeching tires and seeing a Honda vehicle spinning immediately after the initial impact <cit data-id="ff3390"></cit>.\n  * He noted that the Mustang involved had absolutely no opportunity to avoid the subsequent collision <cit data-id="7bba1b"></cit>.\n* **Conclusion:** He characterized the entire event as a rapid chain reaction <cit data-id="7bba1b"></cit>.',
+          timestamp: '2026-09-16T07:21:28.670Z',
+          custom_content: {
+            annotations: [
+              {
+                target: {
+                  selector: { type: 'html_tag', tag: 'cit', id: 'ff3390' },
+                },
+                body: {
+                  title: 'max_artificial_claim.pdf',
+                  quote:
+                    'David Reynolds, a pedestrian crossing nearby, reported, "I heard the screeching tires and turned to see the Honda spinning after the first impact.',
+                  selector: [
+                    {
+                      type: 'pdf_region',
+                      page: 1,
+                      bbox: { lt: [68.544, 603.504], wh: [455.94, 19.8] },
+                    },
+                    {
+                      type: 'pdf_region',
+                      page: 1,
+                      bbox: { lt: [68.544, 614.592], wh: [299.268, 19.008] },
+                    },
+                  ],
+                  source: {
+                    type: 'attachment',
+                    attachment: {
+                      type: 'application/pdf',
+                      url: 'files/test-bucket/uploads/max_artificial_claim.pdf',
+                      title: 'max_artificial_claim.pdf',
+                    },
+                  },
+                },
+              },
+              {
+                target: {
+                  selector: { type: 'html_tag', tag: 'cit', id: '7bba1b' },
+                },
+                body: {
+                  title: 'max_artificial_claim.pdf',
+                  quote:
+                    'The Mustang didn’t have a chance to avoid the collision — it was like a chain reaction."',
+                  selector: [
+                    {
+                      type: 'pdf_region',
+                      page: 1,
+                      bbox: { lt: [68.544, 624.096], wh: [394.128, 19.8] },
+                    },
+                  ],
+                  source: {
+                    type: 'attachment',
+                    attachment: {
+                      type: 'application/pdf',
+                      url: 'files/test-bucket/uploads/max_artificial_claim.pdf',
+                      title: 'max_artificial_claim.pdf',
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        };
+
+        render(
+          <ConversationMessageItem {...defaultProps} msg={message} index={1} />,
+        );
+
+        const markers = screen.getAllByRole('button', {
+          name: CitationsI18nKeys.MarkerAriaLabel,
+        });
+        expect(markers).toHaveLength(4);
+
+        const marker = markers[markerIndex];
+        /* A single-citation file marker opens the canvas directly; the file is
+         downloaded from the canvas, so the card's Download is not offered. */
+        await userEvent.click(marker);
+        expect(mockOpenCanvas).toHaveBeenCalledOnce();
+        expect(screen.queryByRole('dialog')).toBeNull();
+        mockOpenCanvas.mockClear();
+        await userEvent.click(marker);
+        expect(mockOpenCanvas).toHaveBeenCalledOnce();
+      },
     );
-    expect(screen.getByText('Stopped generating')).toBeTruthy();
   });
 
-  it('shows the partial content (not the stopped label) when a stopped message has text', () => {
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={{ ...STOPPED_EMPTY_ASSISTANT, content: 'Partial answer' }}
-        index={1}
-      />,
-    );
-    expect(screen.getByText('Partial answer')).toBeTruthy();
-    expect(screen.queryByText('Stopped generating')).toBeNull();
-  });
-});
+  describe('ConversationMessageItem — stopped generation', () => {
+    const STOPPED_EMPTY_ASSISTANT: Message = {
+      role: MessageRole.Assistant,
+      content: '',
+      timestamp: '2024-01-01T00:00:01Z',
+      wasStoppedByUser: true,
+    };
 
-describe('ConversationMessageItem — message action gates', () => {
-  const ASSISTANT_MESSAGE: Message = {
-    role: MessageRole.Assistant,
-    content: 'Hello there',
-    timestamp: '2024-01-01T00:00:03Z',
-  };
+    it('shows the stopped-generating label for an empty stopped assistant message', () => {
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={STOPPED_EMPTY_ASSISTANT}
+          index={1}
+        />,
+      );
+      expect(screen.getByText('Stopped generating')).toBeTruthy();
+    });
 
-  it('includes edit/delete for a user message and like/dislike for an assistant message by default', () => {
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={USER_MESSAGE}
-        onStartEdit={vi.fn()}
-        onDeleteMessage={vi.fn()}
-      />,
-    );
-    expect(capturedActions?.onEdit).toBeDefined();
-    expect(capturedActions?.onDelete).toBeDefined();
-
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={ASSISTANT_MESSAGE}
-        index={1}
-        onRegenerateMessage={vi.fn()}
-        onRateMessage={vi.fn()}
-        onDislikeMessage={vi.fn()}
-      />,
-    );
-    expect(capturedActions?.onRegenerate).toBeDefined();
-    expect(capturedActions?.onLike).toBeDefined();
-    expect(capturedActions?.onDislike).toBeDefined();
+    it('shows the partial content (not the stopped label) when a stopped message has text', () => {
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={{ ...STOPPED_EMPTY_ASSISTANT, content: 'Partial answer' }}
+          index={1}
+        />,
+      );
+      expect(screen.getByText('Partial answer')).toBeTruthy();
+      expect(screen.queryByText('Stopped generating')).toBeNull();
+    });
   });
 
-  it('omits onEdit when hide-edit-user-message is enabled', () => {
-    vi.mocked(useUiFeatureModule.useUiFeature).mockImplementation(
-      (feature) => feature === OverlayFeature.HideEditUserMessage,
-    );
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={USER_MESSAGE}
-        onStartEdit={vi.fn()}
-      />,
-    );
-    expect(capturedActions?.onEdit).toBeUndefined();
-  });
-
-  it('omits onDelete when hide-delete-user-message is enabled', () => {
-    vi.mocked(useUiFeatureModule.useUiFeature).mockImplementation(
-      (feature) => feature === OverlayFeature.HideDeleteUserMessage,
-    );
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={USER_MESSAGE}
-        onDeleteMessage={vi.fn()}
-      />,
-    );
-    expect(capturedActions?.onDelete).toBeUndefined();
-  });
-
-  it('omits onRegenerate when hide-regenerate-assistant-message is enabled', () => {
-    vi.mocked(useUiFeatureModule.useUiFeature).mockImplementation(
-      (feature) => feature === OverlayFeature.HideRegenerateAssistantMessage,
-    );
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={ASSISTANT_MESSAGE}
-        onRegenerateMessage={vi.fn()}
-      />,
-    );
-    expect(capturedActions?.onRegenerate).toBeUndefined();
-  });
-
-  it('omits onLike and onDislike when likes is disabled', () => {
-    vi.mocked(useUiFeatureModule.useUiFeature).mockImplementation(
-      (feature) => feature !== OverlayFeature.Likes,
-    );
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={ASSISTANT_MESSAGE}
-        onRateMessage={vi.fn()}
-        onDislikeMessage={vi.fn()}
-      />,
-    );
-    expect(capturedActions?.onLike).toBeUndefined();
-    expect(capturedActions?.onDislike).toBeUndefined();
-  });
-});
-
-describe('ConversationMessageItem — send time in the action row', () => {
-  it('shows a user message send time in the action toolbar when hasTimestamp is set', () => {
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={{ ...USER_MESSAGE, custom_content: undefined }}
-        hasTimestamp
-      />,
-    );
-
-    const time = within(screen.getByRole('toolbar')).getByRole('time');
-    expect(time.getAttribute('datetime')).toBe(USER_MESSAGE.timestamp);
-  });
-
-  it('shows an assistant response send time after its action buttons', () => {
-    const assistantMessage: Message = {
+  describe('ConversationMessageItem — message action gates', () => {
+    const ASSISTANT_MESSAGE: Message = {
       role: MessageRole.Assistant,
       content: 'Hello there',
       timestamp: '2024-01-01T00:00:03Z',
     };
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={assistantMessage}
-        index={1}
-        onRegenerateMessage={vi.fn()}
-        hasTimestamp
-      />,
-    );
 
-    const toolbar = screen.getByRole('toolbar');
-    const time = within(toolbar).getByRole('time');
-    expect(time.getAttribute('datetime')).toBe(assistantMessage.timestamp);
-    expect(toolbar.textContent?.endsWith(time.textContent ?? '')).toBe(true);
-  });
+    it('includes edit/delete for a user message and like/dislike for an assistant message by default', () => {
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={USER_MESSAGE}
+          onStartEdit={vi.fn()}
+          onDeleteMessage={vi.fn()}
+        />,
+      );
+      expect(capturedActions?.onEdit).toBeDefined();
+      expect(capturedActions?.onDelete).toBeDefined();
 
-  it('shows no send time by default', () => {
-    render(<ConversationMessageItem {...defaultProps} msg={USER_MESSAGE} />);
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={ASSISTANT_MESSAGE}
+          index={1}
+          onRegenerateMessage={vi.fn()}
+          onRateMessage={vi.fn()}
+          onDislikeMessage={vi.fn()}
+        />,
+      );
+      expect(capturedActions?.onRegenerate).toBeDefined();
+      expect(capturedActions?.onLike).toBeDefined();
+      expect(capturedActions?.onDislike).toBeDefined();
+    });
 
-    expect(screen.queryByRole('time')).toBeNull();
-  });
-});
+    it('omits onEdit when hide-edit-user-message is enabled', () => {
+      vi.mocked(useUiFeatureModule.useUiFeature).mockImplementation(
+        (feature) => feature === OverlayFeature.HideEditUserMessage,
+      );
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={USER_MESSAGE}
+          onStartEdit={vi.fn()}
+        />,
+      );
+      expect(capturedActions?.onEdit).toBeUndefined();
+    });
 
-describe('ConversationMessageItem — user message Copy action', () => {
-  const writeText = vi.fn(() => Promise.resolve());
+    it('omits onDelete when hide-delete-user-message is enabled', () => {
+      vi.mocked(useUiFeatureModule.useUiFeature).mockImplementation(
+        (feature) => feature === OverlayFeature.HideDeleteUserMessage,
+      );
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={USER_MESSAGE}
+          onDeleteMessage={vi.fn()}
+        />,
+      );
+      expect(capturedActions?.onDelete).toBeUndefined();
+    });
 
-  beforeEach(() => {
-    Object.defineProperty(navigator, 'clipboard', {
-      configurable: true,
-      value: { writeText },
+    it('omits onRegenerate when hide-regenerate-assistant-message is enabled', () => {
+      vi.mocked(useUiFeatureModule.useUiFeature).mockImplementation(
+        (feature) => feature === OverlayFeature.HideRegenerateAssistantMessage,
+      );
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={ASSISTANT_MESSAGE}
+          onRegenerateMessage={vi.fn()}
+        />,
+      );
+      expect(capturedActions?.onRegenerate).toBeUndefined();
+    });
+
+    it('omits onLike and onDislike when likes is disabled', () => {
+      vi.mocked(useUiFeatureModule.useUiFeature).mockImplementation(
+        (feature) => feature !== OverlayFeature.Likes,
+      );
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={ASSISTANT_MESSAGE}
+          onRateMessage={vi.fn()}
+          onDislikeMessage={vi.fn()}
+        />,
+      );
+      expect(capturedActions?.onLike).toBeUndefined();
+      expect(capturedActions?.onDislike).toBeUndefined();
     });
   });
 
-  it('renders a Copy message button on a user message', () => {
-    render(<ConversationMessageItem {...defaultProps} msg={USER_MESSAGE} />);
-    expect(screen.getByRole('button', { name: 'Copy message' })).toBeTruthy();
-  });
+  describe('ConversationMessageItem — send time in the action row', () => {
+    it('shows a user message send time in the action toolbar when hasTimestamp is set', () => {
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={{ ...USER_MESSAGE, custom_content: undefined }}
+          hasTimestamp
+        />,
+      );
 
-  it('keeps Copy message enabled while the assistant is typing', () => {
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={USER_MESSAGE}
-        isAssistantTyping
-      />,
-    );
-    expect(
-      (
-        screen.getByRole('button', {
-          name: 'Copy message',
-        }) as HTMLButtonElement
-      ).disabled,
-    ).toBe(false);
-  });
-
-  it('renders Copy message when edit and delete are hidden', () => {
-    vi.mocked(useUiFeatureModule.useUiFeature).mockImplementation(
-      (feature) =>
-        feature === OverlayFeature.HideEditUserMessage ||
-        feature === OverlayFeature.HideDeleteUserMessage,
-    );
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={USER_MESSAGE}
-        onStartEdit={vi.fn()}
-        onDeleteMessage={vi.fn()}
-      />,
-    );
-    expect(screen.queryByRole('button', { name: 'Edit message' })).toBeNull();
-    expect(screen.getByRole('button', { name: 'Copy message' })).toBeTruthy();
-  });
-
-  it('copies the full multiline content without editing or deleting the message', () => {
-    const onStartEdit = vi.fn();
-    const onDeleteMessage = vi.fn();
-    const content = 'Line one\n\n- item a\n- item b';
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={{ ...USER_MESSAGE, content }}
-        onStartEdit={onStartEdit}
-        onDeleteMessage={onDeleteMessage}
-      />,
-    );
-    fireEvent.click(screen.getByRole('button', { name: 'Copy message' }));
-
-    expect(writeText).toHaveBeenCalledWith(content);
-    expect(onStartEdit).not.toHaveBeenCalled();
-    expect(onDeleteMessage).not.toHaveBeenCalled();
-    expect(screen.getByText(/Line one/)).toBeTruthy();
-  });
-});
-
-describe('ConversationMessageItem — Markdown table actions', () => {
-  const TABLE_MARKDOWN = '| Name | Value |\n| --- | --- |\n| Alpha | 1 |';
-
-  it('passes localized table action labels to assistant tables', () => {
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={{
-          role: MessageRole.Assistant,
-          content: TABLE_MARKDOWN,
-          timestamp: '2024-01-01T00:00:04Z',
-        }}
-        index={1}
-      />,
-    );
-
-    expect(
-      screen.getByRole('button', { name: ButtonsI18nKeys.Copy }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole('button', { name: ButtonsI18nKeys.DownloadAsCsv }),
-    ).toBeTruthy();
-    expect(capturedLabels).toMatchObject({
-      tableCopyLabel: ButtonsI18nKeys.Copy,
-      tableCopiedLabel: ButtonsI18nKeys.Copied,
-      tableDownloadCsvLabel: ButtonsI18nKeys.DownloadAsCsv,
-      tableOpenInCanvasLabel: ButtonsI18nKeys.OpenInCanvas,
+      const time = within(screen.getByRole('toolbar')).getByRole('time');
+      expect(time.getAttribute('datetime')).toBe(USER_MESSAGE.timestamp);
     });
-    expect(capturedLabels?.tableScrollRegionAriaLabel).toBe(
-      ChatI18nKeys.ScrollableTable,
-    );
+
+    it('shows an assistant response send time after its action buttons', () => {
+      const assistantMessage: Message = {
+        role: MessageRole.Assistant,
+        content: 'Hello there',
+        timestamp: '2024-01-01T00:00:03Z',
+      };
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={assistantMessage}
+          index={1}
+          onRegenerateMessage={vi.fn()}
+          hasTimestamp
+        />,
+      );
+
+      const toolbar = screen.getByRole('toolbar');
+      const time = within(toolbar).getByRole('time');
+      expect(time.getAttribute('datetime')).toBe(assistantMessage.timestamp);
+      expect(toolbar.textContent?.endsWith(time.textContent ?? '')).toBe(true);
+    });
+
+    it('shows no send time by default', () => {
+      render(<ConversationMessageItem {...defaultProps} msg={USER_MESSAGE} />);
+
+      expect(screen.queryByRole('time')).toBeNull();
+    });
   });
 
-  it('opens the canvas with only the selected table and a localized title when Open in Canvas is activated', () => {
-    /* The action button's Tooltip mounts via floating-ui, which requires
-     * IntersectionObserver — absent by default in jsdom. */
-    vi.stubGlobal(
-      'IntersectionObserver',
-      class {
-        observe() {
-          // No-op in JSDOM.
-        }
-        unobserve() {
-          // No-op in JSDOM.
-        }
-        disconnect() {
-          // No-op in JSDOM.
-        }
-      },
-    );
+  describe('ConversationMessageItem — user message Copy action', () => {
+    const writeText = vi.fn(() => Promise.resolve());
 
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={{
-          role: MessageRole.Assistant,
-          content: TABLE_MARKDOWN,
-          timestamp: '2024-01-01T00:00:04Z',
-        }}
-        index={1}
-      />,
-    );
+    beforeEach(() => {
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: { writeText },
+      });
+    });
 
-    fireEvent.click(
-      screen.getByRole('button', { name: ButtonsI18nKeys.OpenInCanvas }),
-    );
+    it('renders a Copy message button on a user message', () => {
+      render(<ConversationMessageItem {...defaultProps} msg={USER_MESSAGE} />);
+      expect(screen.getByRole('button', { name: 'Copy message' })).toBeTruthy();
+    });
 
-    expect(mockOpenCanvas).toHaveBeenCalledWith(
-      {
-        type: AttachmentContentType.MarkdownTable,
-        text: '| Name | Value |\n| :-- | :-- |\n| Alpha | 1 |',
-      },
-      ChatI18nKeys.MarkdownTableTitle,
-    );
-    vi.unstubAllGlobals();
+    it('keeps Copy message enabled while the assistant is typing', () => {
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={USER_MESSAGE}
+          isAssistantTyping
+        />,
+      );
+      expect(
+        (
+          screen.getByRole('button', {
+            name: 'Copy message',
+          }) as HTMLButtonElement
+        ).disabled,
+      ).toBe(false);
+    });
+
+    it('renders Copy message when edit and delete are hidden', () => {
+      vi.mocked(useUiFeatureModule.useUiFeature).mockImplementation(
+        (feature) =>
+          feature === OverlayFeature.HideEditUserMessage ||
+          feature === OverlayFeature.HideDeleteUserMessage,
+      );
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={USER_MESSAGE}
+          onStartEdit={vi.fn()}
+          onDeleteMessage={vi.fn()}
+        />,
+      );
+      expect(screen.queryByRole('button', { name: 'Edit message' })).toBeNull();
+      expect(screen.getByRole('button', { name: 'Copy message' })).toBeTruthy();
+    });
+
+    it('copies the full multiline content without editing or deleting the message', () => {
+      const onStartEdit = vi.fn();
+      const onDeleteMessage = vi.fn();
+      const content = 'Line one\n\n- item a\n- item b';
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={{ ...USER_MESSAGE, content }}
+          onStartEdit={onStartEdit}
+          onDeleteMessage={onDeleteMessage}
+        />,
+      );
+      fireEvent.click(screen.getByRole('button', { name: 'Copy message' }));
+
+      expect(writeText).toHaveBeenCalledWith(content);
+      expect(onStartEdit).not.toHaveBeenCalled();
+      expect(onDeleteMessage).not.toHaveBeenCalled();
+      expect(screen.getByText(/Line one/)).toBeTruthy();
+    });
   });
-});
 
-describe('ConversationMessageItem — stage attachment click handling', () => {
-  const renderWithStageAttachment = (attachment: {
-    title: string;
-    data?: string;
-    reference_url?: string;
-  }) =>
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={{
-          role: MessageRole.Assistant,
-          content: 'Here are the results',
-          timestamp: '2024-01-01T00:00:05Z',
-          custom_content: {
-            stages: [
-              {
-                index: 0,
-                name: 'Combined search',
-                status: StageStatus.Completed,
-                attachments: [attachment],
-              },
-            ],
+  describe('ConversationMessageItem — Markdown table actions', () => {
+    const TABLE_MARKDOWN = '| Name | Value |\n| --- | --- |\n| Alpha | 1 |';
+
+    it('passes localized table action labels to assistant tables', () => {
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={{
+            role: MessageRole.Assistant,
+            content: TABLE_MARKDOWN,
+            timestamp: '2024-01-01T00:00:04Z',
+          }}
+          index={1}
+        />,
+      );
+
+      expect(
+        screen.getByRole('button', { name: ButtonsI18nKeys.Copy }),
+      ).toBeTruthy();
+      expect(
+        screen.getByRole('button', { name: ButtonsI18nKeys.DownloadAsCsv }),
+      ).toBeTruthy();
+      expect(capturedLabels).toMatchObject({
+        tableCopyLabel: ButtonsI18nKeys.Copy,
+        tableCopiedLabel: ButtonsI18nKeys.Copied,
+        tableDownloadCsvLabel: ButtonsI18nKeys.DownloadAsCsv,
+        tableOpenInCanvasLabel: ButtonsI18nKeys.OpenInCanvas,
+      });
+      expect(capturedLabels?.tableScrollRegionAriaLabel).toBe(
+        ChatI18nKeys.ScrollableTable,
+      );
+    });
+
+    it('opens the canvas with only the selected table and a localized title when Open in Canvas is activated', () => {
+      /* The action button's Tooltip mounts via floating-ui, which requires
+       * IntersectionObserver — absent by default in jsdom. */
+      vi.stubGlobal(
+        'IntersectionObserver',
+        class {
+          observe() {
+            // No-op in JSDOM.
+          }
+          unobserve() {
+            // No-op in JSDOM.
+          }
+          disconnect() {
+            // No-op in JSDOM.
+          }
+        },
+      );
+
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={{
+            role: MessageRole.Assistant,
+            content: TABLE_MARKDOWN,
+            timestamp: '2024-01-01T00:00:04Z',
+          }}
+          index={1}
+        />,
+      );
+
+      fireEvent.click(
+        screen.getByRole('button', { name: ButtonsI18nKeys.OpenInCanvas }),
+      );
+
+      expect(mockOpenCanvas).toHaveBeenCalledWith(
+        {
+          type: AttachmentContentType.MarkdownTable,
+          text: '| Name | Value |\n| :-- | :-- |\n| Alpha | 1 |',
+        },
+        ChatI18nKeys.MarkdownTableTitle,
+      );
+      vi.unstubAllGlobals();
+    });
+  });
+
+  describe('ConversationMessageItem — stage attachment click handling', () => {
+    const renderWithStageAttachment = (attachment: {
+      title: string;
+      data?: string;
+      reference_url?: string;
+    }) =>
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={{
+            role: MessageRole.Assistant,
+            content: 'Here are the results',
+            timestamp: '2024-01-01T00:00:05Z',
+            custom_content: {
+              stages: [
+                {
+                  index: 0,
+                  name: 'Combined search',
+                  status: StageStatus.Completed,
+                  attachments: [attachment],
+                },
+              ],
+            },
+          }}
+          index={1}
+        />,
+      );
+
+    it('opens a stage attachment with inline data as markdown in the attachment canvas', () => {
+      renderWithStageAttachment({
+        title: 'result.csv',
+        data: 'Some markdown search result',
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: 'result.csv' }));
+
+      expect(mockOpenCanvas).toHaveBeenCalledWith(
+        {
+          type: AttachmentContentType.Markdown,
+          text: 'Some markdown search result',
+        },
+        'result.csv',
+      );
+    });
+
+    it('opens a reference-only stage attachment (no inline data) in a new tab via the resolved download URL', () => {
+      const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+      renderWithStageAttachment({
+        title: 'result.csv',
+        reference_url: 'files/bucket-1/generated/report.txt',
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: 'result.csv' }));
+
+      expect(openSpy).toHaveBeenCalledWith(
+        '/api/v1/files/download?bucket=bucket-1&path=generated%2Freport.txt',
+        '_blank',
+        'noopener,noreferrer',
+      );
+      openSpy.mockRestore();
+    });
+  });
+
+  describe('ConversationMessageItem — markdown file URLs', () => {
+    it('rewrites DIAL file ids in assistant markdown images to download URLs', () => {
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={{
+            role: MessageRole.Assistant,
+            content:
+              '![Silver Lake chart](files/9gRuhxHb/appdata/applications/public/demo/chart.png)',
+            timestamp: '2024-01-01T00:00:02Z',
+          }}
+          index={1}
+        />,
+      );
+
+      expect(
+        screen
+          .getByRole('img', { name: 'Silver Lake chart' })
+          .getAttribute('src'),
+      ).toBe(
+        '/api/v1/files/download?bucket=9gRuhxHb&path=appdata%2Fapplications%2Fpublic%2Fdemo%2Fchart.png',
+      );
+    });
+  });
+
+  describe('ConversationMessageItem — user message markdown', () => {
+    const writeText = vi.fn(() => Promise.resolve());
+
+    beforeEach(() => {
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: { writeText },
+      });
+    });
+
+    it('renders a fenced code block in a user message', () => {
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={{ ...USER_MESSAGE, content: '```ts\nconst x = 1;\n```' }}
+        />,
+      );
+
+      expect(screen.getByText('ts')).toBeTruthy();
+      expect(screen.queryByText(/```/)).toBeNull();
+    });
+
+    it('copies the raw markdown source of a rendered user message', () => {
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={{ ...USER_MESSAGE, content: '**bold**' }}
+        />,
+      );
+
+      expect(screen.getByText('bold').tagName).toBe('STRONG');
+      fireEvent.click(screen.getByRole('button', { name: 'Copy message' }));
+
+      expect(writeText).toHaveBeenCalledWith('**bold**');
+    });
+
+    it('rewrites DIAL file ids in user markdown links to download URLs', () => {
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={{
+            ...USER_MESSAGE,
+            content: '[the chart](files/9gRuhxHb/uploads/chart.png)',
+          }}
+        />,
+      );
+
+      expect(
+        screen.getByRole('link', { name: 'the chart' }).getAttribute('href'),
+      ).toBe('/api/v1/files/download?bucket=9gRuhxHb&path=uploads%2Fchart.png');
+    });
+  });
+
+  describe('ConversationMessageItem — application visualizers', () => {
+    const ASSISTANT_WITH_ATTACHMENTS: Message = {
+      role: MessageRole.Assistant,
+      content: 'Here is the figure.',
+      timestamp: '2024-01-01T00:00:02Z',
+      custom_content: {
+        attachments: [
+          {
+            title: 'figure.viz',
+            type: 'application/x-my-viz',
+            url: 'files/bucket/figure.viz',
           },
-        }}
-        index={1}
-      />,
-    );
-
-  it('opens a stage attachment with inline data as markdown in the attachment canvas', () => {
-    renderWithStageAttachment({
-      title: 'result.csv',
-      data: 'Some markdown search result',
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: 'result.csv' }));
-
-    expect(mockOpenCanvas).toHaveBeenCalledWith(
-      {
-        type: AttachmentContentType.Markdown,
-        text: 'Some markdown search result',
+          {
+            title: 'notes.pdf',
+            type: 'application/pdf',
+            url: 'files/bucket/notes.pdf',
+          },
+        ],
       },
-      'result.csv',
-    );
-  });
+    };
 
-  it('opens a reference-only stage attachment (no inline data) in a new tab via the resolved download URL', () => {
-    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
-    renderWithStageAttachment({
-      title: 'result.csv',
-      reference_url: 'files/bucket-1/generated/report.txt',
+    const registryWith = (
+      overrides?: Partial<ApplicationVisualizer>,
+    ): ApplicationVisualizerRegistry => ({
+      'app-1': {
+        title: 'my-viz',
+        url: 'https://viz.example.com',
+        contentType: 'application/x-my-viz',
+        height: 600,
+        ...overrides,
+      },
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'result.csv' }));
+    const renderItem = (props?: Record<string, unknown>) =>
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={ASSISTANT_WITH_ATTACHMENTS}
+          index={1}
+          effectiveDeploymentId="app-1"
+          openedInCanvasLabel="Opened in Canvas"
+          {...props}
+        />,
+      );
 
-    expect(openSpy).toHaveBeenCalledWith(
-      '/api/v1/files/download?bucket=bucket-1&path=generated%2Freport.txt',
-      '_blank',
-      'noopener,noreferrer',
-    );
-    openSpy.mockRestore();
-  });
-});
+    it('renders the inline visualizer when the deployment matches an entry', () => {
+      applicationVisualizersMock = registryWith();
 
-describe('ConversationMessageItem — markdown file URLs', () => {
-  it('rewrites DIAL file ids in assistant markdown images to download URLs', () => {
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={{
-          role: MessageRole.Assistant,
-          content:
-            '![Silver Lake chart](files/9gRuhxHb/appdata/applications/public/demo/chart.png)',
-          timestamp: '2024-01-01T00:00:02Z',
-        }}
-        index={1}
-      />,
-    );
+      renderItem();
 
-    expect(
-      screen
-        .getByRole('img', { name: 'Silver Lake chart' })
-        .getAttribute('src'),
-    ).toBe(
-      '/api/v1/files/download?bucket=9gRuhxHb&path=appdata%2Fapplications%2Fpublic%2Fdemo%2Fchart.png',
-    );
-  });
-});
+      expect(screen.getByText('my-viz')).toBeTruthy();
+      expect(screen.getByTitle('my-viz')).toBeTruthy();
+    });
 
-describe('ConversationMessageItem — user message markdown', () => {
-  const writeText = vi.fn(() => Promise.resolve());
+    it('hides the inline header title when the entry sets withoutTitle', () => {
+      applicationVisualizersMock = registryWith({ withoutTitle: true });
 
-  beforeEach(() => {
-    Object.defineProperty(navigator, 'clipboard', {
-      configurable: true,
-      value: { writeText },
+      renderItem();
+
+      expect(screen.queryByText('my-viz')).toBeNull();
+      expect(screen.getByTitle('my-viz')).toBeTruthy();
+      expect(
+        screen.getByRole('button', { name: 'attachmentCanvas.expandAppLabel' }),
+      ).toBeTruthy();
+    });
+
+    it('renders the inline frame without its border when the entry sets borderless', () => {
+      applicationVisualizersMock = registryWith({ borderless: true });
+
+      renderItem();
+
+      const toolbar = screen.getByRole('toolbar', {
+        name: 'attachmentCanvas.visualizerActionsAriaLabel',
+      });
+      // eslint-disable-next-line testing-library/no-node-access -- the frame root is a presentational wrapper with no accessible role to query
+      const frame = toolbar.closest('.overflow-hidden');
+
+      expect(frame?.classList.contains('border')).toBe(false);
+    });
+
+    it('forwards a SEND_MESSAGE from the inline visualizer to onVisualizerSendMessage', () => {
+      applicationVisualizersMock = registryWith();
+      const onVisualizerSendMessage = vi.fn();
+
+      renderItem({ onVisualizerSendMessage });
+      act(() => {
+        visualizerSubscriptions.get('my-viz/SEND_MESSAGE')?.({
+          message: 'Next page',
+        });
+      });
+
+      expect(onVisualizerSendMessage).toHaveBeenCalledWith('Next page');
+    });
+
+    it('renders no inline visualizer when the registry is empty', () => {
+      renderItem();
+
+      expect(screen.queryByText('my-viz')).toBeNull();
+    });
+
+    it('renders no inline visualizer when the deployment id is absent from the registry', () => {
+      applicationVisualizersMock = registryWith();
+
+      renderItem({ effectiveDeploymentId: 'other-app' });
+
+      expect(screen.queryByText('my-viz')).toBeNull();
+    });
+
+    it('keeps the unclaimed attachment in the tray and drops the claimed one', () => {
+      applicationVisualizersMock = registryWith();
+
+      renderItem();
+
+      /* The tile splits the name — `DialFileName` renders the base name as the
+       * element's text and title, with the extension alongside it. */
+      expect(screen.getByTitle('notes')).toBeTruthy();
+      expect(screen.queryByTitle('figure')).toBeNull();
+    });
+
+    it('claims every URL attachment when the entry declares no contentType', () => {
+      applicationVisualizersMock = registryWith({ contentType: undefined });
+
+      renderItem();
+
+      expect(screen.queryByTitle('notes')).toBeNull();
+      expect(screen.queryByTitle('figure')).toBeNull();
+    });
+
+    it('opens the canvas with the grouped content and its message-scoped key', async () => {
+      applicationVisualizersMock = registryWith();
+
+      renderItem();
+      await userEvent.click(
+        screen.getByRole('button', { name: 'attachmentCanvas.expandAppLabel' }),
+      );
+
+      expect(mockOpenCanvas).toHaveBeenCalledOnce();
+      const [content, panelTitle, canvasKey] = mockOpenCanvas.mock.calls[0];
+      expect(content).toMatchObject({
+        type: AttachmentContentType.GroupedVisualizer,
+        url: 'https://viz.example.com',
+        visualizerName: 'my-viz',
+      });
+      expect(content.attachments).toHaveLength(1);
+      expect(content.attachments[0].mimeType).toBe('application/x-my-viz');
+      /* Absolute, not the host-relative path the same resolver hands same-origin
+       * callers: a relative URL posted into the iframe would resolve against the
+       * visualizer's own origin. */
+      expect(content.attachments[0].url).toBe(
+        'http://localhost:3000/api/v1/files/download?bucket=bucket&path=figure.viz',
+      );
+      expect(content.layout).toMatchObject({ themeId: 'dark', height: 600 });
+      expect(panelTitle).toBe('my-viz');
+      expect(canvasKey).toBe('1:grouped-visualizer');
+    });
+
+    it('replaces the inline frame with the opened-in-canvas placeholder', () => {
+      applicationVisualizersMock = registryWith();
+
+      renderItem({ selectedAttachmentKey: '1:grouped-visualizer' });
+
+      expect(screen.getAllByText('Opened in Canvas')).toHaveLength(2);
+      expect(screen.queryByTitle('my-viz')).toBeNull();
+    });
+
+    it('keeps the opened-in-canvas status region mounted and fills it once the visualizer opens in the canvas', () => {
+      applicationVisualizersMock = registryWith();
+
+      const { rerender } = renderItem();
+      const statusesBefore = screen.getAllByRole('status');
+      expect(
+        statusesBefore.some((node) => node.textContent === 'Opened in Canvas'),
+      ).toBe(false);
+
+      rerender(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={ASSISTANT_WITH_ATTACHMENTS}
+          index={1}
+          effectiveDeploymentId="app-1"
+          openedInCanvasLabel="Opened in Canvas"
+          selectedAttachmentKey="1:grouped-visualizer"
+        />,
+      );
+
+      const announcement = screen
+        .getAllByRole('status')
+        .find((node) => node.textContent === 'Opened in Canvas');
+      expect(announcement).toBeTruthy();
+      expect(statusesBefore).toContain(announcement);
     });
   });
 
-  it('renders a fenced code block in a user message', () => {
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={{ ...USER_MESSAGE, content: '```ts\nconst x = 1;\n```' }}
-      />,
-    );
+  describe('ConversationMessageItem — application visualizer sizing and fallbacks', () => {
+    const registry = (
+      overrides?: Partial<ApplicationVisualizer>,
+    ): ApplicationVisualizerRegistry => ({
+      'app-1': {
+        title: 'my-viz',
+        url: 'https://viz.example.com',
+        contentType: 'application/x-my-viz',
+        height: 600,
+        ...overrides,
+      },
+    });
 
-    expect(screen.getByText('ts')).toBeTruthy();
-    expect(screen.queryByText(/```/)).toBeNull();
-  });
+    const renderWith = (
+      attachments: { title: string; type: string; url: string }[],
+      props?: Record<string, unknown>,
+    ) =>
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={{
+            role: MessageRole.Assistant,
+            content: 'Here it is.',
+            timestamp: '2024-01-01T00:00:02Z',
+            custom_content: { attachments },
+          }}
+          index={1}
+          effectiveDeploymentId="app-1"
+          {...props}
+        />,
+      );
 
-  it('copies the raw markdown source of a rendered user message', () => {
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={{ ...USER_MESSAGE, content: '**bold**' }}
-      />,
-    );
+    it('uses mobileHeight on a mobile viewport', () => {
+      isMobileMock = true;
+      applicationVisualizersMock = registry({ mobileHeight: 320 });
 
-    expect(screen.getByText('bold').tagName).toBe('STRONG');
-    fireEvent.click(screen.getByRole('button', { name: 'Copy message' }));
-
-    expect(writeText).toHaveBeenCalledWith('**bold**');
-  });
-
-  it('rewrites DIAL file ids in user markdown links to download URLs', () => {
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={{
-          ...USER_MESSAGE,
-          content: '[the chart](files/9gRuhxHb/uploads/chart.png)',
-        }}
-      />,
-    );
-
-    expect(
-      screen.getByRole('link', { name: 'the chart' }).getAttribute('href'),
-    ).toBe('/api/v1/files/download?bucket=9gRuhxHb&path=uploads%2Fchart.png');
-  });
-});
-
-describe('ConversationMessageItem — application visualizers', () => {
-  const ASSISTANT_WITH_ATTACHMENTS: Message = {
-    role: MessageRole.Assistant,
-    content: 'Here is the figure.',
-    timestamp: '2024-01-01T00:00:02Z',
-    custom_content: {
-      attachments: [
+      const { container } = renderWith([
         {
           title: 'figure.viz',
           type: 'application/x-my-viz',
           url: 'files/bucket/figure.viz',
         },
+      ]);
+
+      // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- asserting an inline pixel height on the unlabeled frame wrapper, which has no accessible role or text to query
+      expect(container.querySelector('[style*="height: 320px"]')).toBeTruthy();
+    });
+
+    it('falls back to height on mobile when the entry declares no mobileHeight', () => {
+      isMobileMock = true;
+      applicationVisualizersMock = registry();
+
+      const { container } = renderWith([
         {
-          title: 'notes.pdf',
-          type: 'application/pdf',
-          url: 'files/bucket/notes.pdf',
+          title: 'figure.viz',
+          type: 'application/x-my-viz',
+          url: 'files/bucket/figure.viz',
         },
-      ],
-    },
-  };
+      ]);
 
-  const registryWith = (
-    overrides?: Partial<ApplicationVisualizer>,
-  ): ApplicationVisualizerRegistry => ({
-    'app-1': {
-      title: 'my-viz',
-      url: 'https://viz.example.com',
-      contentType: 'application/x-my-viz',
-      height: 600,
-      ...overrides,
-    },
-  });
-
-  const renderItem = (props?: Record<string, unknown>) =>
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={ASSISTANT_WITH_ATTACHMENTS}
-        index={1}
-        effectiveDeploymentId="app-1"
-        openedInCanvasLabel="Opened in Canvas"
-        {...props}
-      />,
-    );
-
-  it('renders the inline visualizer when the deployment matches an entry', () => {
-    applicationVisualizersMock = registryWith();
-
-    renderItem();
-
-    expect(screen.getByText('my-viz')).toBeTruthy();
-    expect(screen.getByTitle('my-viz')).toBeTruthy();
-  });
-
-  it('hides the inline header title when the entry sets withoutTitle', () => {
-    applicationVisualizersMock = registryWith({ withoutTitle: true });
-
-    renderItem();
-
-    expect(screen.queryByText('my-viz')).toBeNull();
-    expect(screen.getByTitle('my-viz')).toBeTruthy();
-    expect(
-      screen.getByRole('button', { name: 'attachmentCanvas.expandAppLabel' }),
-    ).toBeTruthy();
-  });
-
-  it('renders the inline frame without its border when the entry sets borderless', () => {
-    applicationVisualizersMock = registryWith({ borderless: true });
-
-    renderItem();
-
-    const toolbar = screen.getByRole('toolbar', {
-      name: 'attachmentCanvas.visualizerActionsAriaLabel',
-    });
-    // eslint-disable-next-line testing-library/no-node-access -- the frame root is a presentational wrapper with no accessible role to query
-    const frame = toolbar.closest('.overflow-hidden');
-
-    expect(frame?.classList.contains('border')).toBe(false);
-  });
-
-  it('forwards a SEND_MESSAGE from the inline visualizer to onVisualizerSendMessage', () => {
-    applicationVisualizersMock = registryWith();
-    const onVisualizerSendMessage = vi.fn();
-
-    renderItem({ onVisualizerSendMessage });
-    act(() => {
-      visualizerSubscriptions.get('my-viz/SEND_MESSAGE')?.({
-        message: 'Next page',
-      });
+      // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- same unlabeled frame wrapper
+      expect(container.querySelector('[style*="height: 600px"]')).toBeTruthy();
     });
 
-    expect(onVisualizerSendMessage).toHaveBeenCalledWith('Next page');
-  });
+    it('keeps a claimed attachment in the tray when no URL can be resolved for it', () => {
+      applicationVisualizersMock = registry();
 
-  it('renders no inline visualizer when the registry is empty', () => {
-    renderItem();
+      renderWith([
+        {
+          title: 'resolvable.viz',
+          type: 'application/x-my-viz',
+          url: 'files/bucket/resolvable.viz',
+        },
+        {
+          title: 'unresolvable.viz',
+          type: 'application/x-my-viz',
+          url: 'attachments/unresolvable.viz',
+        },
+      ]);
 
-    expect(screen.queryByText('my-viz')).toBeNull();
-  });
-
-  it('renders no inline visualizer when the deployment id is absent from the registry', () => {
-    applicationVisualizersMock = registryWith();
-
-    renderItem({ effectiveDeploymentId: 'other-app' });
-
-    expect(screen.queryByText('my-viz')).toBeNull();
-  });
-
-  it('keeps the unclaimed attachment in the tray and drops the claimed one', () => {
-    applicationVisualizersMock = registryWith();
-
-    renderItem();
-
-    /* The tile splits the name — `DialFileName` renders the base name as the
-     * element's text and title, with the extension alongside it. */
-    expect(screen.getByTitle('notes')).toBeTruthy();
-    expect(screen.queryByTitle('figure')).toBeNull();
-  });
-
-  it('claims every URL attachment when the entry declares no contentType', () => {
-    applicationVisualizersMock = registryWith({ contentType: undefined });
-
-    renderItem();
-
-    expect(screen.queryByTitle('notes')).toBeNull();
-    expect(screen.queryByTitle('figure')).toBeNull();
-  });
-
-  it('opens the canvas with the grouped content and its message-scoped key', async () => {
-    applicationVisualizersMock = registryWith();
-
-    renderItem();
-    await userEvent.click(
-      screen.getByRole('button', { name: 'attachmentCanvas.expandAppLabel' }),
-    );
-
-    expect(mockOpenCanvas).toHaveBeenCalledOnce();
-    const [content, panelTitle, canvasKey] = mockOpenCanvas.mock.calls[0];
-    expect(content).toMatchObject({
-      type: AttachmentContentType.GroupedVisualizer,
-      url: 'https://viz.example.com',
-      visualizerName: 'my-viz',
+      /* The inline surface still renders for the attachment that did resolve,
+       * and the one that did not falls back to an ordinary tile rather than
+       * disappearing from the message. */
+      expect(screen.getByTitle('my-viz')).toBeTruthy();
+      expect(screen.getByTitle('unresolvable')).toBeTruthy();
+      expect(screen.queryByTitle('resolvable')).toBeNull();
     });
-    expect(content.attachments).toHaveLength(1);
-    expect(content.attachments[0].mimeType).toBe('application/x-my-viz');
-    /* Absolute, not the host-relative path the same resolver hands same-origin
-     * callers: a relative URL posted into the iframe would resolve against the
-     * visualizer's own origin. */
-    expect(content.attachments[0].url).toBe(
-      'http://localhost:3000/api/v1/files/download?bucket=bucket&path=figure.viz',
-    );
-    expect(content.layout).toMatchObject({ themeId: 'dark', height: 600 });
-    expect(panelTitle).toBe('my-viz');
-    expect(canvasKey).toBe('1:grouped-visualizer');
+
+    it('renders no inline surface when nothing claimed resolves to a URL', () => {
+      applicationVisualizersMock = registry();
+
+      renderWith([
+        {
+          title: 'unresolvable.viz',
+          type: 'application/x-my-viz',
+          url: 'attachments/unresolvable.viz',
+        },
+      ]);
+
+      expect(screen.queryByText('my-viz')).toBeNull();
+      expect(screen.getByTitle('unresolvable')).toBeTruthy();
+    });
   });
 
-  it('replaces the inline frame with the opened-in-canvas placeholder', () => {
-    applicationVisualizersMock = registryWith();
-
-    renderItem({ selectedAttachmentKey: '1:grouped-visualizer' });
-
-    expect(screen.getAllByText('Opened in Canvas')).toHaveLength(2);
-    expect(screen.queryByTitle('my-viz')).toBeNull();
-  });
-
-  it('keeps the opened-in-canvas status region mounted and fills it once the visualizer opens in the canvas', () => {
-    applicationVisualizersMock = registryWith();
-
-    const { rerender } = renderItem();
-    const statusesBefore = screen.getAllByRole('status');
-    expect(
-      statusesBefore.some((node) => node.textContent === 'Opened in Canvas'),
-    ).toBe(false);
-
-    rerender(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={ASSISTANT_WITH_ATTACHMENTS}
-        index={1}
-        effectiveDeploymentId="app-1"
-        openedInCanvasLabel="Opened in Canvas"
-        selectedAttachmentKey="1:grouped-visualizer"
-      />,
-    );
-
-    const announcement = screen
-      .getAllByRole('status')
-      .find((node) => node.textContent === 'Opened in Canvas');
-    expect(announcement).toBeTruthy();
-    expect(statusesBefore).toContain(announcement);
-  });
-});
-
-describe('ConversationMessageItem — application visualizer sizing and fallbacks', () => {
-  const registry = (
-    overrides?: Partial<ApplicationVisualizer>,
-  ): ApplicationVisualizerRegistry => ({
-    'app-1': {
-      title: 'my-viz',
-      url: 'https://viz.example.com',
-      contentType: 'application/x-my-viz',
-      height: 600,
-      ...overrides,
-    },
-  });
-
-  const renderWith = (
-    attachments: { title: string; type: string; url: string }[],
-    props?: Record<string, unknown>,
-  ) =>
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={{
-          role: MessageRole.Assistant,
-          content: 'Here it is.',
-          timestamp: '2024-01-01T00:00:02Z',
-          custom_content: { attachments },
-        }}
-        index={1}
-        effectiveDeploymentId="app-1"
-        {...props}
-      />,
-    );
-
-  it('uses mobileHeight on a mobile viewport', () => {
-    isMobileMock = true;
-    applicationVisualizersMock = registry({ mobileHeight: 320 });
-
-    const { container } = renderWith([
-      {
-        title: 'figure.viz',
-        type: 'application/x-my-viz',
-        url: 'files/bucket/figure.viz',
-      },
-    ]);
-
-    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- asserting an inline pixel height on the unlabeled frame wrapper, which has no accessible role or text to query
-    expect(container.querySelector('[style*="height: 320px"]')).toBeTruthy();
-  });
-
-  it('falls back to height on mobile when the entry declares no mobileHeight', () => {
-    isMobileMock = true;
-    applicationVisualizersMock = registry();
-
-    const { container } = renderWith([
-      {
-        title: 'figure.viz',
-        type: 'application/x-my-viz',
-        url: 'files/bucket/figure.viz',
-      },
-    ]);
-
-    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- same unlabeled frame wrapper
-    expect(container.querySelector('[style*="height: 600px"]')).toBeTruthy();
-  });
-
-  it('keeps a claimed attachment in the tray when no URL can be resolved for it', () => {
-    applicationVisualizersMock = registry();
-
-    renderWith([
-      {
-        title: 'resolvable.viz',
-        type: 'application/x-my-viz',
-        url: 'files/bucket/resolvable.viz',
-      },
-      {
-        title: 'unresolvable.viz',
-        type: 'application/x-my-viz',
-        url: 'attachments/unresolvable.viz',
-      },
-    ]);
-
-    /* The inline surface still renders for the attachment that did resolve,
-     * and the one that did not falls back to an ordinary tile rather than
-     * disappearing from the message. */
-    expect(screen.getByTitle('my-viz')).toBeTruthy();
-    expect(screen.getByTitle('unresolvable')).toBeTruthy();
-    expect(screen.queryByTitle('resolvable')).toBeNull();
-  });
-
-  it('renders no inline surface when nothing claimed resolves to a URL', () => {
-    applicationVisualizersMock = registry();
-
-    renderWith([
-      {
-        title: 'unresolvable.viz',
-        type: 'application/x-my-viz',
-        url: 'attachments/unresolvable.viz',
-      },
-    ]);
-
-    expect(screen.queryByText('my-viz')).toBeNull();
-    expect(screen.getByTitle('unresolvable')).toBeTruthy();
-  });
-});
-
-describe('ConversationMessageItem — conversation-level annotation pool', () => {
-  const poolAnnotation: Annotation = {
-    target: { selector: { type: 'html_tag', tag: 'cit', id: 'pooled-1' } },
-    body: {
-      title: 'earlier-turn.pdf',
-      source: {
-        type: 'attachment',
-        attachment: {
-          type: 'application/pdf',
-          url: 'https://example.com/earlier-turn.pdf',
+  describe('ConversationMessageItem — conversation-level annotation pool', () => {
+    const poolAnnotation: Annotation = {
+      target: { selector: { type: 'html_tag', tag: 'cit', id: 'pooled-1' } },
+      body: {
+        title: 'earlier-turn.pdf',
+        source: {
+          type: 'attachment',
+          attachment: {
+            type: 'application/pdf',
+            url: 'https://example.com/earlier-turn.pdf',
+          },
         },
       },
-    },
-  };
-  const poolGroup: AnnotationGroup = {
-    groupKey: 'cit:pooled-1',
-    sourceUrl: 'https://example.com/earlier-turn.pdf',
-    sourceName: 'earlier-turn.pdf',
-    annotations: [poolAnnotation],
-    primaryAnnotation: poolAnnotation,
-  };
-  const message: Message = {
-    role: MessageRole.Assistant,
-    content: 'This claim<cit data-id="pooled-1"></cit> was cited earlier.',
-    timestamp: '2026-09-22T10:00:00Z',
-  };
-
-  it('renders an interactive citation marker for a citation resolved only from the pool', () => {
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={message}
-        index={1}
-        fallbackCitationGroups={[poolGroup]}
-      />,
-    );
-
-    expect(
-      screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
-    ).toBeTruthy();
-  });
-
-  it("invokes the canvas with the pooled annotation's attachment from its marker", async () => {
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={message}
-        index={1}
-        fallbackCitationGroups={[poolGroup]}
-      />,
-    );
-
-    await userEvent.click(
-      screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
-    );
-
-    expect(mockOpenCanvas).toHaveBeenCalledWith(
-      expect.objectContaining({ url: 'https://example.com/earlier-turn.pdf' }),
-      expect.any(String),
-    );
-  });
-
-  it('renders literal text for the same message when the pool is empty', () => {
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={message}
-        index={1}
-        fallbackCitationGroups={[]}
-      />,
-    );
-
-    expect(
-      screen.queryByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
-    ).toBeFalsy();
-    expect(
-      screen.getByText(
-        'This claim<cit data-id="pooled-1"></cit> was cited earlier.',
-      ),
-    ).toBeTruthy();
-  });
-});
-
-describe('ConversationMessageItem — stream error banner (issue #8979)', () => {
-  const failedMessage = (streamErrorMessage: string): Message => ({
-    role: MessageRole.Assistant,
-    content: 'Partial answer',
-    timestamp: '2024-01-01T00:00:02Z',
-    streamErrorMessage,
-  });
-
-  const renderFailed = (
-    streamErrorMessage: string,
-    props: Partial<ComponentProps<typeof ConversationMessageItem>> = {},
-  ) =>
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={failedMessage(streamErrorMessage)}
-        index={3}
-        onRegenerateMessage={vi.fn()}
-        {...props}
-      />,
-    );
-
-  it('shows the title and the localized fallback when the error carries no text', () => {
-    renderFailed('');
-
-    const alert = screen.getByRole('alert');
-    expect(alert.textContent).toContain(ChatI18nKeys.StreamErrorTitle);
-    expect(alert.textContent).toContain(ChatI18nKeys.StreamError);
-  });
-
-  it('shows upstream error text under the same title', () => {
-    renderFailed('Rate limit exceeded');
-
-    const alert = screen.getByRole('alert');
-    expect(alert.textContent).toContain(ChatI18nKeys.StreamErrorTitle);
-    expect(alert.textContent).toContain('Rate limit exceeded');
-    expect(screen.queryByText(ChatI18nKeys.StreamError)).toBeNull();
-  });
-
-  it('lets a long unbroken error text wrap instead of overflowing the banner', () => {
-    const longPath =
-      'Access denied to the skill skills/5Cky3SaEsMKzmtxBLUw5gTUHRyoqLL3J13vRDkn3x4QtubPvqJ6gSSLknbMRBB8vcn/english-wording-check';
-    renderFailed(longPath);
-
-    const { className } = screen.getByText(longPath);
-
-    expect(className).toContain('min-w-0');
-    expect(className).toContain('wrap-anywhere');
-  });
-
-  it.each([
-    { mobile: false, direction: 'ltr' },
-    { mobile: true, direction: 'ltr' },
-    { mobile: false, direction: 'rtl' },
-    { mobile: true, direction: 'rtl' },
-  ])(
-    'keeps an unsaved answer beside its accessible warning ($mobile, $direction)',
-    ({ mobile, direction }) => {
-      isMobileMock = mobile;
-      const warning =
-        'The response could not be saved. Copy it before continuing.';
-      render(
-        <div dir={direction}>
-          <ConversationMessageItem
-            {...defaultProps}
-            msg={failedMessage(warning)}
-            index={3}
-          />
-        </div>,
-      );
-      expect(screen.getByText('Partial answer')).toBeTruthy();
-      expect(screen.getByRole('alert').textContent).toContain(warning);
-    },
-  );
-
-  it('renders no error banner for a successful message', () => {
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={{
-          role: MessageRole.Assistant,
-          content: 'Done',
-          timestamp: '2024-01-01T00:00:02Z',
-        }}
-        onRegenerateMessage={vi.fn()}
-      />,
-    );
-
-    expect(screen.queryByRole('alert')).toBeNull();
-    expect(
-      screen.queryByRole('button', { name: ButtonsI18nKeys.TryAgain }),
-    ).toBeNull();
-  });
-
-  it('regenerates the failed message when Try again is clicked', async () => {
-    const onRegenerateMessage = vi.fn();
-    renderFailed('', { onRegenerateMessage });
-
-    const alert = screen.getByRole('alert');
-    const retry = screen.getByRole('button', {
-      name: ButtonsI18nKeys.TryAgain,
-    });
-    expect(alert.contains(retry)).toBe(true);
-
-    await userEvent.click(retry);
-
-    expect(onRegenerateMessage).toHaveBeenCalledOnce();
-    expect(onRegenerateMessage).toHaveBeenCalledWith(3);
-  });
-
-  it('regenerates the failed message when Try again is activated with the keyboard', async () => {
-    const onRegenerateMessage = vi.fn();
-    renderFailed('', { onRegenerateMessage });
-
-    screen.getByRole('button', { name: ButtonsI18nKeys.TryAgain }).focus();
-    await userEvent.keyboard('{Enter}');
-
-    expect(onRegenerateMessage).toHaveBeenCalledWith(3);
-  });
-
-  it('hides Try again when hide-regenerate-assistant-message is enabled', () => {
-    vi.mocked(useUiFeatureModule.useUiFeature).mockImplementation(
-      (feature) => feature === OverlayFeature.HideRegenerateAssistantMessage,
-    );
-    renderFailed('');
-
-    expect(screen.getByRole('alert')).toBeTruthy();
-    expect(
-      screen.queryByRole('button', { name: ButtonsI18nKeys.TryAgain }),
-    ).toBeNull();
-  });
-
-  it('hides Try again when no regenerate handler is provided', () => {
-    renderFailed('', { onRegenerateMessage: undefined });
-
-    expect(
-      screen.queryByRole('button', { name: ButtonsI18nKeys.TryAgain }),
-    ).toBeNull();
-  });
-
-  it('disables Try again while the assistant is typing', async () => {
-    const onRegenerateMessage = vi.fn();
-    renderFailed('', { onRegenerateMessage, isAssistantTyping: true });
-
-    const retry = screen.getByRole('button', {
-      name: ButtonsI18nKeys.TryAgain,
-    }) as HTMLButtonElement;
-    expect(retry.disabled).toBe(true);
-
-    await userEvent.click(retry);
-
-    expect(onRegenerateMessage).not.toHaveBeenCalled();
-  });
-
-  it('keeps Try again reachable in a right-to-left layout without physical-direction classes', () => {
-    render(
-      <div dir="rtl">
-        <ConversationMessageItem
-          {...defaultProps}
-          msg={failedMessage('')}
-          index={3}
-          onRegenerateMessage={vi.fn()}
-        />
-      </div>,
-    );
-
-    expect(
-      screen.getByRole('button', { name: ButtonsI18nKeys.TryAgain }),
-    ).toBeTruthy();
-    const alertMarkup = screen.getByRole('alert').innerHTML;
-    expect(alertMarkup).not.toMatch(/\b(ml|mr|pl|pr|left|right)-/);
-    expect(alertMarkup).not.toMatch(/\btext-(left|right)\b/);
-  });
-});
-
-describe('ConversationMessageItem — stage normalization at the app boundary', () => {
-  const assistantWith = (stages: unknown[]): Message => ({
-    role: MessageRole.Assistant,
-    content: 'Result',
-    timestamp: '2024-01-01T00:00:05Z',
-    custom_content: { stages: stages as never },
-  });
-
-  it('gives unindexed history stages positional indexes and keeps their parents', () => {
-    const history = [
-      { name: 'Plan', status: 'completed' },
-      { name: 'Search', status: 'completed', parent_stage_index: 0 },
-      { name: 'Read', parent_stage_index: 1 },
-    ];
-    const snapshot = structuredClone(history);
-
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={assistantWith(history)}
-        index={1}
-      />,
-    );
-
-    expect(capturedStageGroupProps?.stages).toEqual([
-      { index: 0, name: 'Plan', status: StageStatus.Completed },
-      {
-        index: 1,
-        name: 'Search',
-        status: StageStatus.Completed,
-        parent_stage_index: 0,
-      },
-      { index: 2, name: 'Read', status: null, parent_stage_index: 1 },
-    ]);
-    expect(history).toEqual(snapshot);
-  });
-
-  it('keeps explicit live indexes and parents from streamed or replayed data', () => {
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={assistantWith([
-          { index: 4, name: 'Plan', status: null },
-          { index: 9, name: 'Search', status: null, parent_stage_index: 4 },
-        ])}
-        index={1}
-        totalCount={2}
-        isAssistantTyping
-      />,
-    );
-
-    expect(capturedStageGroupProps?.stages).toEqual([
-      { index: 4, name: 'Plan', status: null },
-      { index: 9, name: 'Search', status: null, parent_stage_index: 4 },
-    ]);
-  });
-
-  it('reuses the normalized stages for the same stored array and refreshes on a new snapshot', () => {
-    const msg = assistantWith([{ index: 0, name: 'Plan', status: null }]);
-    const { rerender } = render(
-      <ConversationMessageItem {...defaultProps} msg={msg} index={1} />,
-    );
-    const first = capturedStageGroupProps?.stages;
-
-    rerender(<ConversationMessageItem {...defaultProps} msg={msg} index={1} />);
-    expect(capturedStageGroupProps?.stages).toBe(first);
-
-    rerender(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={assistantWith([
-          { index: 0, name: 'Plan', status: 'completed' },
-          { index: 1, name: 'Search', status: 'failed', parent_stage_index: 0 },
-        ])}
-        index={1}
-      />,
-    );
-    expect(capturedStageGroupProps?.stages).toEqual([
-      { index: 0, name: 'Plan', status: StageStatus.Completed },
-      {
-        index: 1,
-        name: 'Search',
-        status: StageStatus.Failed,
-        parent_stage_index: 0,
-      },
-    ]);
-  });
-
-  it('passes translated stage labels for nested attempts, status and actions', () => {
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={assistantWith([{ index: 0, name: 'Plan', status: null }])}
-        index={1}
-      />,
-    );
-
-    const labels = capturedStageGroupProps?.labels as {
-      executedLabel: string;
-      runningAriaLabel: string;
-      failedAriaLabel: string;
-      failedCountLabel: (count: number) => string;
-      attemptLabel: (number: number) => string;
-      copyAriaLabel: string;
-      attachmentClickLabel: string;
     };
-    expect(labels).toMatchObject({
-      executedLabel: 'Executed',
-      runningAriaLabel: 'conversation.stages.running',
-      failedAriaLabel: 'conversation.stages.failed',
-      copyAriaLabel: 'conversation.stages.copyContent',
-      attachmentClickLabel: 'conversation.stages.previewAttachment',
-    });
-    expect(labels.attemptLabel(2)).toBe('conversation.stages.attempt');
-    expect(labels.failedCountLabel(3)).toBe('conversation.stages.failedCount');
-  });
-});
-
-describe('ConversationMessageItem — stage citations', () => {
-  const webAnnotation = (id: string): Annotation => ({
-    target: { selector: { type: 'html_tag', tag: 'cit', id } },
-    body: {
-      title: 'Report page',
-      source: {
-        type: 'attachment',
-        attachment: { type: 'text/html', url: 'https://example.com/page.html' },
-      },
-    },
-  });
-  const messageWith = (
-    content: string,
-    stageContent: string,
-    annotations: Annotation[] = [],
-  ): Message => ({
-    role: MessageRole.Assistant,
-    content,
-    timestamp: '2026-10-21T10:00:00Z',
-    custom_content: {
-      annotations,
-      stages: [
-        {
-          index: 0,
-          name: 'Search documents',
-          status: StageStatus.Completed,
-          content: stageContent,
-        },
-      ],
-    },
-  });
-  const stageRegion = () =>
-    screen.getByRole('region', { name: 'Stage Search documents' });
-
-  it('resolves a stage marker from the message annotations and opens its card outside the stage', async () => {
-    const onAttachmentClick = vi.fn();
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={messageWith('Answer.', 'Searched<cit data-id="s1"></cit>', [
-          webAnnotation('s1'),
-        ])}
-        index={1}
-        onAttachmentClick={onAttachmentClick}
-      />,
-    );
-
-    await userEvent.click(
-      within(stageRegion()).getByRole('button', {
-        name: CitationsI18nKeys.MarkerAriaLabel,
-      }),
-    );
-    /* The card is portalled, so the stage's scroll box cannot clip it. */
-    expect(
-      within(stageRegion()).queryByRole('button', {
-        name: BasicI18nKeys.Preview,
-      }),
-    ).toBeNull();
-    await userEvent.click(
-      screen.getByRole('button', { name: BasicI18nKeys.Preview }),
-    );
-
-    expect(onAttachmentClick).toHaveBeenCalledWith(
-      expect.objectContaining({ url: 'https://example.com/page.html' }),
-      1,
-    );
-  });
-
-  it('resolves a stage marker from the conversation annotation pool', () => {
-    const poolAnnotation = webAnnotation('pooled-1');
     const poolGroup: AnnotationGroup = {
       groupKey: 'cit:pooled-1',
-      sourceUrl: 'https://example.com/page.html',
-      sourceName: 'Report page',
+      sourceUrl: 'https://example.com/earlier-turn.pdf',
+      sourceName: 'earlier-turn.pdf',
       annotations: [poolAnnotation],
       primaryAnnotation: poolAnnotation,
     };
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={messageWith('Answer.', 'Searched<cit data-id="pooled-1"></cit>')}
-        index={1}
-        fallbackCitationGroups={[poolGroup]}
-      />,
-    );
+    const message: Message = {
+      role: MessageRole.Assistant,
+      content: 'This claim<cit data-id="pooled-1"></cit> was cited earlier.',
+      timestamp: '2026-09-22T10:00:00Z',
+    };
 
-    expect(
-      within(stageRegion()).getByRole('button', {
-        name: CitationsI18nKeys.MarkerAriaLabel,
-      }),
-    ).toBeTruthy();
-  });
+    it('renders an interactive citation marker for a citation resolved only from the pool', () => {
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={message}
+          index={1}
+          fallbackCitationGroups={[poolGroup]}
+        />,
+      );
 
-  it('renders an unclaimed stage marker as literal text', () => {
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={messageWith('Answer.', 'Searched<cit data-id="zz"></cit>')}
-        index={1}
-      />,
-    );
-
-    expect(within(stageRegion()).queryByRole('button')).toBeNull();
-    expect(
-      within(stageRegion()).getByText('<cit data-id="zz"></cit>'),
-    ).toBeTruthy();
-  });
-
-  it('hides complete stage markers and keeps partial markup literal while streaming', () => {
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={messageWith(
-          'Answer',
-          'Searched<cit data-id="s1"></cit> then <cit data-id="s',
-          [webAnnotation('s1')],
-        )}
-        index={1}
-        totalCount={2}
-        isAssistantTyping
-      />,
-    );
-
-    expect(
-      screen.queryByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
-    ).toBeNull();
-    expect(capturedStageGroupProps?.stages).toEqual([
-      expect.objectContaining({
-        content: 'Searched then &lt;cit data-id="s',
-      }),
-    ]);
-  });
-
-  it('keeps one citation card open across the body and a stage', async () => {
-    render(
-      <ConversationMessageItem
-        {...defaultProps}
-        msg={messageWith(
-          'Answer<cit data-id="s1"></cit>.',
-          'Searched<cit data-id="s1"></cit>',
-          [webAnnotation('s1')],
-        )}
-        index={1}
-      />,
-    );
-    const [bodyMarker, stageMarker] = screen.getAllByRole('button', {
-      name: CitationsI18nKeys.MarkerAriaLabel,
+      expect(
+        screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
+      ).toBeTruthy();
     });
 
-    await userEvent.click(bodyMarker);
-    expect(screen.getAllByRole('dialog')).toHaveLength(1);
-    await userEvent.click(stageMarker);
+    it("invokes the canvas with the pooled annotation's attachment from its marker", async () => {
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={message}
+          index={1}
+          fallbackCitationGroups={[poolGroup]}
+        />,
+      );
 
-    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+      await userEvent.click(
+        screen.getByRole('button', { name: CitationsI18nKeys.MarkerAriaLabel }),
+      );
+
+      expect(mockOpenCanvas).toHaveBeenCalledWith(
+        expect.objectContaining({
+          url: 'https://example.com/earlier-turn.pdf',
+        }),
+        expect.any(String),
+      );
+    });
+
+    it('renders literal text for the same message when the pool is empty', () => {
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={message}
+          index={1}
+          fallbackCitationGroups={[]}
+        />,
+      );
+
+      expect(
+        screen.queryByRole('button', {
+          name: CitationsI18nKeys.MarkerAriaLabel,
+        }),
+      ).toBeFalsy();
+      expect(
+        screen.getByText(
+          'This claim<cit data-id="pooled-1"></cit> was cited earlier.',
+        ),
+      ).toBeTruthy();
+    });
+  });
+
+  describe('ConversationMessageItem — stream error banner (issue #8979)', () => {
+    const failedMessage = (streamErrorMessage: string): Message => ({
+      role: MessageRole.Assistant,
+      content: 'Partial answer',
+      timestamp: '2024-01-01T00:00:02Z',
+      streamErrorMessage,
+    });
+
+    const renderFailed = (
+      streamErrorMessage: string,
+      props: Partial<ComponentProps<typeof ConversationMessageItem>> = {},
+    ) =>
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={failedMessage(streamErrorMessage)}
+          index={3}
+          onRegenerateMessage={vi.fn()}
+          {...props}
+        />,
+      );
+
+    it('shows the title and the localized fallback when the error carries no text', () => {
+      renderFailed('');
+
+      const alert = screen.getByRole('alert');
+      expect(alert.textContent).toContain(ChatI18nKeys.StreamErrorTitle);
+      expect(alert.textContent).toContain(ChatI18nKeys.StreamError);
+    });
+
+    it('shows upstream error text under the same title', () => {
+      renderFailed('Rate limit exceeded');
+
+      const alert = screen.getByRole('alert');
+      expect(alert.textContent).toContain(ChatI18nKeys.StreamErrorTitle);
+      expect(alert.textContent).toContain('Rate limit exceeded');
+      expect(screen.queryByText(ChatI18nKeys.StreamError)).toBeNull();
+    });
+
+    it('lets a long unbroken error text wrap instead of overflowing the banner', () => {
+      const longPath =
+        'Access denied to the skill skills/5Cky3SaEsMKzmtxBLUw5gTUHRyoqLL3J13vRDkn3x4QtubPvqJ6gSSLknbMRBB8vcn/english-wording-check';
+      renderFailed(longPath);
+
+      const { className } = screen.getByText(longPath);
+
+      expect(className).toContain('min-w-0');
+      expect(className).toContain('wrap-anywhere');
+    });
+
+    it.each([
+      { mobile: false, direction: 'ltr' },
+      { mobile: true, direction: 'ltr' },
+      { mobile: false, direction: 'rtl' },
+      { mobile: true, direction: 'rtl' },
+    ])(
+      'keeps an unsaved answer beside its accessible warning ($mobile, $direction)',
+      ({ mobile, direction }) => {
+        isMobileMock = mobile;
+        const warning =
+          'The response could not be saved. Copy it before continuing.';
+        render(
+          <div dir={direction}>
+            <ConversationMessageItem
+              {...defaultProps}
+              msg={failedMessage(warning)}
+              index={3}
+            />
+          </div>,
+        );
+        expect(screen.getByText('Partial answer')).toBeTruthy();
+        expect(screen.getByRole('alert').textContent).toContain(warning);
+      },
+    );
+
+    it('renders no error banner for a successful message', () => {
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={{
+            role: MessageRole.Assistant,
+            content: 'Done',
+            timestamp: '2024-01-01T00:00:02Z',
+          }}
+          onRegenerateMessage={vi.fn()}
+        />,
+      );
+
+      expect(screen.queryByRole('alert')).toBeNull();
+      expect(
+        screen.queryByRole('button', { name: ButtonsI18nKeys.TryAgain }),
+      ).toBeNull();
+    });
+
+    it('regenerates the failed message when Try again is clicked', async () => {
+      const onRegenerateMessage = vi.fn();
+      renderFailed('', { onRegenerateMessage });
+
+      const alert = screen.getByRole('alert');
+      const retry = screen.getByRole('button', {
+        name: ButtonsI18nKeys.TryAgain,
+      });
+      expect(alert.contains(retry)).toBe(true);
+
+      await userEvent.click(retry);
+
+      expect(onRegenerateMessage).toHaveBeenCalledOnce();
+      expect(onRegenerateMessage).toHaveBeenCalledWith(3);
+    });
+
+    it('regenerates the failed message when Try again is activated with the keyboard', async () => {
+      const onRegenerateMessage = vi.fn();
+      renderFailed('', { onRegenerateMessage });
+
+      screen.getByRole('button', { name: ButtonsI18nKeys.TryAgain }).focus();
+      await userEvent.keyboard('{Enter}');
+
+      expect(onRegenerateMessage).toHaveBeenCalledWith(3);
+    });
+
+    it('hides Try again when hide-regenerate-assistant-message is enabled', () => {
+      vi.mocked(useUiFeatureModule.useUiFeature).mockImplementation(
+        (feature) => feature === OverlayFeature.HideRegenerateAssistantMessage,
+      );
+      renderFailed('');
+
+      expect(screen.getByRole('alert')).toBeTruthy();
+      expect(
+        screen.queryByRole('button', { name: ButtonsI18nKeys.TryAgain }),
+      ).toBeNull();
+    });
+
+    it('hides Try again when no regenerate handler is provided', () => {
+      renderFailed('', { onRegenerateMessage: undefined });
+
+      expect(
+        screen.queryByRole('button', { name: ButtonsI18nKeys.TryAgain }),
+      ).toBeNull();
+    });
+
+    it('disables Try again while the assistant is typing', async () => {
+      const onRegenerateMessage = vi.fn();
+      renderFailed('', { onRegenerateMessage, isAssistantTyping: true });
+
+      const retry = screen.getByRole('button', {
+        name: ButtonsI18nKeys.TryAgain,
+      }) as HTMLButtonElement;
+      expect(retry.disabled).toBe(true);
+
+      await userEvent.click(retry);
+
+      expect(onRegenerateMessage).not.toHaveBeenCalled();
+    });
+
+    it('keeps Try again reachable in a right-to-left layout without physical-direction classes', () => {
+      render(
+        <div dir="rtl">
+          <ConversationMessageItem
+            {...defaultProps}
+            msg={failedMessage('')}
+            index={3}
+            onRegenerateMessage={vi.fn()}
+          />
+        </div>,
+      );
+
+      expect(
+        screen.getByRole('button', { name: ButtonsI18nKeys.TryAgain }),
+      ).toBeTruthy();
+      const alertMarkup = screen.getByRole('alert').innerHTML;
+      expect(alertMarkup).not.toMatch(/\b(ml|mr|pl|pr|left|right)-/);
+      expect(alertMarkup).not.toMatch(/\btext-(left|right)\b/);
+    });
+  });
+
+  describe('ConversationMessageItem — stage normalization at the app boundary', () => {
+    const assistantWith = (stages: unknown[]): Message => ({
+      role: MessageRole.Assistant,
+      content: 'Result',
+      timestamp: '2024-01-01T00:00:05Z',
+      custom_content: { stages: stages as never },
+    });
+
+    it('gives unindexed history stages positional indexes and keeps their parents', () => {
+      const history = [
+        { name: 'Plan', status: 'completed' },
+        { name: 'Search', status: 'completed', parent_stage_index: 0 },
+        { name: 'Read', parent_stage_index: 1 },
+      ];
+      const snapshot = structuredClone(history);
+
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={assistantWith(history)}
+          index={1}
+        />,
+      );
+
+      expect(capturedStageGroupProps?.stages).toEqual([
+        { index: 0, name: 'Plan', status: StageStatus.Completed },
+        {
+          index: 1,
+          name: 'Search',
+          status: StageStatus.Completed,
+          parent_stage_index: 0,
+        },
+        { index: 2, name: 'Read', status: null, parent_stage_index: 1 },
+      ]);
+      expect(history).toEqual(snapshot);
+    });
+
+    it('keeps explicit live indexes and parents from streamed or replayed data', () => {
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={assistantWith([
+            { index: 4, name: 'Plan', status: null },
+            { index: 9, name: 'Search', status: null, parent_stage_index: 4 },
+          ])}
+          index={1}
+          totalCount={2}
+          isAssistantTyping
+        />,
+      );
+
+      expect(capturedStageGroupProps?.stages).toEqual([
+        { index: 4, name: 'Plan', status: null },
+        { index: 9, name: 'Search', status: null, parent_stage_index: 4 },
+      ]);
+    });
+
+    it('reuses the normalized stages for the same stored array and refreshes on a new snapshot', () => {
+      const msg = assistantWith([{ index: 0, name: 'Plan', status: null }]);
+      const { rerender } = render(
+        <ConversationMessageItem {...defaultProps} msg={msg} index={1} />,
+      );
+      const first = capturedStageGroupProps?.stages;
+
+      rerender(
+        <ConversationMessageItem {...defaultProps} msg={msg} index={1} />,
+      );
+      expect(capturedStageGroupProps?.stages).toBe(first);
+
+      rerender(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={assistantWith([
+            { index: 0, name: 'Plan', status: 'completed' },
+            {
+              index: 1,
+              name: 'Search',
+              status: 'failed',
+              parent_stage_index: 0,
+            },
+          ])}
+          index={1}
+        />,
+      );
+      expect(capturedStageGroupProps?.stages).toEqual([
+        { index: 0, name: 'Plan', status: StageStatus.Completed },
+        {
+          index: 1,
+          name: 'Search',
+          status: StageStatus.Failed,
+          parent_stage_index: 0,
+        },
+      ]);
+    });
+
+    it('passes translated stage labels for nested attempts, status and actions', () => {
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={assistantWith([{ index: 0, name: 'Plan', status: null }])}
+          index={1}
+        />,
+      );
+
+      const labels = capturedStageGroupProps?.labels as {
+        executedLabel: string;
+        runningAriaLabel: string;
+        failedAriaLabel: string;
+        failedCountLabel: (count: number) => string;
+        attemptLabel: (number: number) => string;
+        copyAriaLabel: string;
+        attachmentClickLabel: string;
+      };
+      expect(labels).toMatchObject({
+        executedLabel: 'Executed',
+        runningAriaLabel: 'conversation.stages.running',
+        failedAriaLabel: 'conversation.stages.failed',
+        copyAriaLabel: 'conversation.stages.copyContent',
+        attachmentClickLabel: 'conversation.stages.previewAttachment',
+      });
+      expect(labels.attemptLabel(2)).toBe('conversation.stages.attempt');
+      expect(labels.failedCountLabel(3)).toBe(
+        'conversation.stages.failedCount',
+      );
+    });
+  });
+
+  describe('ConversationMessageItem — stage citations', () => {
+    const webAnnotation = (id: string): Annotation => ({
+      target: { selector: { type: 'html_tag', tag: 'cit', id } },
+      body: {
+        title: 'Report page',
+        source: {
+          type: 'attachment',
+          attachment: {
+            type: 'text/html',
+            url: 'https://example.com/page.html',
+          },
+        },
+      },
+    });
+    const messageWith = (
+      content: string,
+      stageContent: string,
+      annotations: Annotation[] = [],
+    ): Message => ({
+      role: MessageRole.Assistant,
+      content,
+      timestamp: '2026-10-21T10:00:00Z',
+      custom_content: {
+        annotations,
+        stages: [
+          {
+            index: 0,
+            name: 'Search documents',
+            status: StageStatus.Completed,
+            content: stageContent,
+          },
+        ],
+      },
+    });
+    const stageRegion = () =>
+      screen.getByRole('region', { name: 'Stage Search documents' });
+
+    it('resolves a stage marker from the message annotations and opens its card outside the stage', async () => {
+      const onAttachmentClick = vi.fn();
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={messageWith('Answer.', 'Searched<cit data-id="s1"></cit>', [
+            webAnnotation('s1'),
+          ])}
+          index={1}
+          onAttachmentClick={onAttachmentClick}
+        />,
+      );
+
+      await userEvent.click(
+        within(stageRegion()).getByRole('button', {
+          name: CitationsI18nKeys.MarkerAriaLabel,
+        }),
+      );
+      /* The card is portalled, so the stage's scroll box cannot clip it. */
+      expect(
+        within(stageRegion()).queryByRole('button', {
+          name: BasicI18nKeys.Preview,
+        }),
+      ).toBeNull();
+      await userEvent.click(
+        screen.getByRole('button', { name: BasicI18nKeys.Preview }),
+      );
+
+      expect(onAttachmentClick).toHaveBeenCalledWith(
+        expect.objectContaining({ url: 'https://example.com/page.html' }),
+        1,
+      );
+    });
+
+    it('resolves a stage marker from the conversation annotation pool', () => {
+      const poolAnnotation = webAnnotation('pooled-1');
+      const poolGroup: AnnotationGroup = {
+        groupKey: 'cit:pooled-1',
+        sourceUrl: 'https://example.com/page.html',
+        sourceName: 'Report page',
+        annotations: [poolAnnotation],
+        primaryAnnotation: poolAnnotation,
+      };
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={messageWith('Answer.', 'Searched<cit data-id="pooled-1"></cit>')}
+          index={1}
+          fallbackCitationGroups={[poolGroup]}
+        />,
+      );
+
+      expect(
+        within(stageRegion()).getByRole('button', {
+          name: CitationsI18nKeys.MarkerAriaLabel,
+        }),
+      ).toBeTruthy();
+    });
+
+    it('renders an unclaimed stage marker as literal text', () => {
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={messageWith('Answer.', 'Searched<cit data-id="zz"></cit>')}
+          index={1}
+        />,
+      );
+
+      expect(within(stageRegion()).queryByRole('button')).toBeNull();
+      expect(
+        within(stageRegion()).getByText('<cit data-id="zz"></cit>'),
+      ).toBeTruthy();
+    });
+
+    it('hides complete stage markers and keeps partial markup literal while streaming', () => {
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={messageWith(
+            'Answer',
+            'Searched<cit data-id="s1"></cit> then <cit data-id="s',
+            [webAnnotation('s1')],
+          )}
+          index={1}
+          totalCount={2}
+          isAssistantTyping
+        />,
+      );
+
+      expect(
+        screen.queryByRole('button', {
+          name: CitationsI18nKeys.MarkerAriaLabel,
+        }),
+      ).toBeNull();
+      expect(capturedStageGroupProps?.stages).toEqual([
+        expect.objectContaining({
+          content: 'Searched then &lt;cit data-id="s',
+        }),
+      ]);
+    });
+
+    it('keeps one citation card open across the body and a stage', async () => {
+      render(
+        <ConversationMessageItem
+          {...defaultProps}
+          msg={messageWith(
+            'Answer<cit data-id="s1"></cit>.',
+            'Searched<cit data-id="s1"></cit>',
+            [webAnnotation('s1')],
+          )}
+          index={1}
+        />,
+      );
+      const [bodyMarker, stageMarker] = screen.getAllByRole('button', {
+        name: CitationsI18nKeys.MarkerAriaLabel,
+      });
+
+      await userEvent.click(bodyMarker);
+      expect(screen.getAllByRole('dialog')).toHaveLength(1);
+      await userEvent.click(stageMarker);
+
+      expect(screen.getAllByRole('dialog')).toHaveLength(1);
+    });
   });
 });

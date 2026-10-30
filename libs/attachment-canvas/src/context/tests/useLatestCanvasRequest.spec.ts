@@ -68,16 +68,16 @@ describe('useLatestCanvasRequest', () => {
 
     expect(result.current).toBe(first);
   });
-});
 
-it('keeps independent canvas providers independent', () => {
-  const view = renderHook(() => useLatestCanvasRequest());
-  const utils = renderHook(() => useLatestCanvasRequest());
-  const a = view.result.current();
-  const b = utils.result.current();
-  expect(a()).toBe(true);
-  expect(b()).toBe(true);
-  utils.unmount();
-  expect(a()).toBe(true);
-  expect(b()).toBe(false);
+  it('keeps independent canvas providers independent', () => {
+    const view = renderHook(() => useLatestCanvasRequest());
+    const utils = renderHook(() => useLatestCanvasRequest());
+    const a = view.result.current();
+    const b = utils.result.current();
+    expect(a()).toBe(true);
+    expect(b()).toBe(true);
+    utils.unmount();
+    expect(a()).toBe(true);
+    expect(b()).toBe(false);
+  });
 });

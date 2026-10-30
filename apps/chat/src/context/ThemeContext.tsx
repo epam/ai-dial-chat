@@ -1,3 +1,7 @@
+import {
+  applyThemeColors,
+  getOsPreferredTheme,
+} from '@epam/ai-dial-chat-hooks/utils';
 import { Theme, ThemeConfiguration } from '@epam/ai-dial-chat-shared';
 import {
   createContext,
@@ -12,10 +16,6 @@ import { useFavicon } from '../hooks/favicon/useFavicon';
 import { ApiEndpoints, get } from '../server-api/base';
 import { StorageKey } from '../types/storage-key';
 import { ThemeId } from '../types/theme-id';
-import {
-  applyThemeColors,
-  getOsPreferredTheme,
-} from '../utils/apply-theme-colors';
 import { getFromLocalStorage, setToLocalStorage } from '../utils/local-storage';
 
 interface ThemeContextType {
@@ -43,7 +43,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     (resolvedId: string) => {
       const theme = config?.themes.find((t) => t.id === resolvedId);
       const root = document.documentElement;
-      applyThemeColors(root, theme);
+      applyThemeColors(root, theme?.colors);
       setCurrentThemeId(resolvedId);
       const updatedLogo =
         resolvedId === ThemeId.Dark

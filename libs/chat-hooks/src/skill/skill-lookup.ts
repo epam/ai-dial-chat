@@ -1,10 +1,13 @@
 import type { SkillMetadataItemDto } from '@epam/ai-dial-chat-api-client';
-import { normalizeDeploymentId } from '@epam/ai-dial-chat-hooks';
+import { normalizeDeploymentId } from '../catalog/deployment-id';
 
-/** Skill listings a URL is looked up in, as `SkillsContext` exposes them. */
+/** Skill listings a URL is looked up in, as a host's skills state exposes them. */
 export interface SkillListingPools {
+  /** Skills the user owns. */
   skills: SkillMetadataItemDto[];
+  /** Skills shared with the user. */
   sharedWithMe?: SkillMetadataItemDto[];
+  /** Organisation-published skills. */
   publicSkills?: SkillMetadataItemDto[];
 }
 

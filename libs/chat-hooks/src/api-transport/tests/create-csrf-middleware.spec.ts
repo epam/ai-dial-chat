@@ -44,12 +44,12 @@ const ignoreRejection = async (promise: Promise<unknown>): Promise<void> => {
   }
 };
 
-afterEach(() => {
-  setCsrfToken(null);
-  vi.restoreAllMocks();
-});
-
 describe('createCsrfMiddleware', () => {
+  afterEach(() => {
+    setCsrfToken(null);
+    vi.restoreAllMocks();
+  });
+
   it('injects X-CSRF-Token header on POST when token is set', async () => {
     setCsrfToken('test-token');
     const fetchSpy = setupFetch(200);

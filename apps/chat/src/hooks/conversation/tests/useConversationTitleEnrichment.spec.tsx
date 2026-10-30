@@ -116,10 +116,11 @@ const requestedIds = (call: number) =>
 const requestSignal = (call: number) =>
   vi.mocked(streamConversationTitles).mock.calls[call][1];
 
-beforeEach(() => vi.resetAllMocks());
-afterEach(() => vi.useRealTimers());
-
 describe('useConversationTitleEnrichment', () => {
+  beforeEach(() => vi.resetAllMocks());
+
+  afterEach(() => vi.useRealTimers());
+
   it('keeps deletion tombstones across stale list responses and clears them for a later request', () => {
     const { result } = renderHook(() => useHarness('user'));
     const item = { ...pending('id'), isTitlePending: false };
@@ -496,7 +497,9 @@ describe('useConversationTitleEnrichment', () => {
     );
     expect(result.current.items[0].title).toBe('Known name');
     act(() =>
-      result.current.rememberTitle('id', 'Saving rename', { isWriting: true }),
+      result.current.rememberTitle('id', 'Saving rename', {
+        isWriting: true,
+      }),
     );
     vi.mocked(streamConversationTitles).mockClear();
     act(() =>
@@ -600,98 +603,100 @@ describe('useConversationTitleEnrichment', () => {
     expect(setItemsSpy).toHaveBeenCalledOnce();
     await stream.push(done(2, 2));
   });
-});
 
-describe('useConversationTitleEnrichment — viewport priority', () => {
-  const completeAll = (ids: string[]) => [
-    ...ids.map((id) => title(id, `T ${id}`)),
-    done(ids.length, ids.length),
-  ];
+  describe('useConversationTitleEnrichment — viewport priority', () => {
+    const completeAll = (ids: string[]) => [
+      ...ids.map((id) => title(id, `T ${id}`)),
+      done(ids.length, ids.length),
+    ];
 
-  it('requests visible IDs first when a view reports within the first frame', async () => {
-    respondWith(completeAll);
+    it('requests visible IDs first when a view reports within the first frame', async () => {
+      respondWith(completeAll);
+      const { result } = renderHook(() => useHarness('user'));
+      await act(async () => {
+        result.current.applyConversationList(
+          [pending('a'), pending('b'), pending('c')],
+          0,
+        );
+        result.current.setVisibleConversationIds('view', ['c', 'missing']);
+      });
+      await waitFor(() => expect(result.current.isUpdatingTitles).toBe(false));
+      expect(requestedIds(0)).toEqual(['c', 'a', 'b']);
+    });
+
+    it('keeps metadata order when no view reports anything visible', async () => {
+      respondWith(completeAll);
+      const { result } = renderHook(() => useHarness('user'));
+      act(() => result.current.setVisibleConversationIds('view', []));
+      await act(async () =>
+        result.current.applyConversationList(
+          [pending('a'), pending('b'), pending('c')],
+          0,
+        ),
+      );
+      await waitFor(() => expect(result.current.isUpdatingTitles).toBe(false));
+      expect(requestedIds(0)).toEqual(['a', 'b', 'c']);
+    });
+
+    it('merges views and drops only the registration of a hidden view', async () => {
+      respondWith(completeAll);
+      const { result } = renderHook(() => useHarness('user'));
+      act(() => {
+        result.current.setVisibleConversationIds('drawer', ['c']);
+        result.current.setVisibleConversationIds('sidebar', ['b']);
+        result.current.setVisibleConversationIds('drawer', null);
+      });
+      await act(async () =>
+        result.current.applyConversationList(
+          [pending('a'), pending('b'), pending('c')],
+          0,
+        ),
+      );
+      await waitFor(() => expect(result.current.isUpdatingTitles).toBe(false));
+      expect(requestedIds(0)).toEqual(['b', 'a', 'c']);
+    });
+
+    it('applies a scroll to the next request without restarting the active stream', async () => {
+      const stream = controlledStream();
+      vi.mocked(streamConversationTitles).mockResolvedValueOnce(
+        stream.iterable,
+      );
+      respondWith(completeAll);
+      const { result } = renderHook(() => useHarness('user'));
+      act(() => result.current.setVisibleConversationIds('view', ['a']));
+      await act(async () =>
+        result.current.applyConversationList(
+          ['a', 'b', 'c', 'd'].map(pending),
+          0,
+        ),
+      );
+      await waitFor(() =>
+        expect(streamConversationTitles).toHaveBeenCalledOnce(),
+      );
+      expect(requestedIds(0)).toEqual(['a', 'b', 'c', 'd']);
+
+      act(() => result.current.setVisibleConversationIds('view', ['d']));
+      expect(streamConversationTitles).toHaveBeenCalledOnce();
+      expect(requestSignal(0)?.aborted).toBe(false);
+
+      await stream.push(title('a', 'A'), done(1, 4, 'budget'));
+      await waitFor(() => expect(result.current.isUpdatingTitles).toBe(false));
+      expect(requestedIds(1)).toEqual(['d', 'b', 'c']);
+    });
+  });
+
+  it('does not open a stream for a snapshot superseded within the viewport window', async () => {
+    respondWith((ids) => [
+      ...ids.map((id) => title(id, 'Current')),
+      done(ids.length, ids.length),
+    ]);
     const { result } = renderHook(() => useHarness('user'));
     await act(async () => {
-      result.current.applyConversationList(
-        [pending('a'), pending('b'), pending('c')],
-        0,
-      );
-      result.current.setVisibleConversationIds('view', ['c', 'missing']);
+      result.current.applyConversationList([pending('old')], 0);
+      result.current.applyConversationList([pending('new')], 0);
     });
     await waitFor(() => expect(result.current.isUpdatingTitles).toBe(false));
-    expect(requestedIds(0)).toEqual(['c', 'a', 'b']);
-  });
-
-  it('keeps metadata order when no view reports anything visible', async () => {
-    respondWith(completeAll);
-    const { result } = renderHook(() => useHarness('user'));
-    act(() => result.current.setVisibleConversationIds('view', []));
-    await act(async () =>
-      result.current.applyConversationList(
-        [pending('a'), pending('b'), pending('c')],
-        0,
-      ),
-    );
-    await waitFor(() => expect(result.current.isUpdatingTitles).toBe(false));
-    expect(requestedIds(0)).toEqual(['a', 'b', 'c']);
-  });
-
-  it('merges views and drops only the registration of a hidden view', async () => {
-    respondWith(completeAll);
-    const { result } = renderHook(() => useHarness('user'));
-    act(() => {
-      result.current.setVisibleConversationIds('drawer', ['c']);
-      result.current.setVisibleConversationIds('sidebar', ['b']);
-      result.current.setVisibleConversationIds('drawer', null);
-    });
-    await act(async () =>
-      result.current.applyConversationList(
-        [pending('a'), pending('b'), pending('c')],
-        0,
-      ),
-    );
-    await waitFor(() => expect(result.current.isUpdatingTitles).toBe(false));
-    expect(requestedIds(0)).toEqual(['b', 'a', 'c']);
-  });
-
-  it('applies a scroll to the next request without restarting the active stream', async () => {
-    const stream = controlledStream();
-    vi.mocked(streamConversationTitles).mockResolvedValueOnce(stream.iterable);
-    respondWith(completeAll);
-    const { result } = renderHook(() => useHarness('user'));
-    act(() => result.current.setVisibleConversationIds('view', ['a']));
-    await act(async () =>
-      result.current.applyConversationList(
-        ['a', 'b', 'c', 'd'].map(pending),
-        0,
-      ),
-    );
-    await waitFor(() =>
-      expect(streamConversationTitles).toHaveBeenCalledOnce(),
-    );
-    expect(requestedIds(0)).toEqual(['a', 'b', 'c', 'd']);
-
-    act(() => result.current.setVisibleConversationIds('view', ['d']));
     expect(streamConversationTitles).toHaveBeenCalledOnce();
-    expect(requestSignal(0)?.aborted).toBe(false);
-
-    await stream.push(title('a', 'A'), done(1, 4, 'budget'));
-    await waitFor(() => expect(result.current.isUpdatingTitles).toBe(false));
-    expect(requestedIds(1)).toEqual(['d', 'b', 'c']);
+    expect(requestedIds(0)).toEqual(['new']);
   });
-});
-
-it('does not open a stream for a snapshot superseded within the viewport window', async () => {
-  respondWith((ids) => [
-    ...ids.map((id) => title(id, 'Current')),
-    done(ids.length, ids.length),
-  ]);
-  const { result } = renderHook(() => useHarness('user'));
-  await act(async () => {
-    result.current.applyConversationList([pending('old')], 0);
-    result.current.applyConversationList([pending('new')], 0);
-  });
-  await waitFor(() => expect(result.current.isUpdatingTitles).toBe(false));
-  expect(streamConversationTitles).toHaveBeenCalledOnce();
-  expect(requestedIds(0)).toEqual(['new']);
 });

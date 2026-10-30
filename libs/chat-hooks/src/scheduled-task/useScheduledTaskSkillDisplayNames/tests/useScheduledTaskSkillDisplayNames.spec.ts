@@ -88,53 +88,53 @@ describe('scheduled task skill display', () => {
     rerender({ urls: undefined });
     expect(result.current).toEqual([]);
   });
-});
 
-it('resolves listed and missing references independently in order', async () => {
-  listing.mockReturnValue({
-    skills: [{ url: 'skills/public/report', name: 'Report' }],
-    publicSkills: [],
-  });
-  metadata.mockImplementation((_bucket, path) =>
-    path === 'summary'
-      ? Promise.resolve({ name: 'Summary' })
-      : Promise.reject(new Error('Deleted')),
-  );
-  const { result } = renderHook(() =>
-    useScheduledTaskSkillDisplayNames([
-      'skills/public/report',
-      'skills/public/summary',
-      'skills/public/deleted',
-    ]),
-  );
-  await waitFor(() =>
-    expect(result.current).toEqual([
-      'Report',
-      'Summary',
-      'skills/public/deleted',
-    ]),
-  );
-});
-
-it('aborts metadata on unmount and ignores its late result', async () => {
-  let signal!: AbortSignal;
-  let finish!: (value: { name: string }) => void;
-  const load = vi.fn((_url: string, abort: AbortSignal) => {
-    signal = abort;
-    return new Promise<{ name: string }>((resolve) => {
-      finish = resolve;
+  it('resolves listed and missing references independently in order', async () => {
+    listing.mockReturnValue({
+      skills: [{ url: 'skills/public/report', name: 'Report' }],
+      publicSkills: [],
     });
+    metadata.mockImplementation((_bucket, path) =>
+      path === 'summary'
+        ? Promise.resolve({ name: 'Summary' })
+        : Promise.reject(new Error('Deleted')),
+    );
+    const { result } = renderHook(() =>
+      useScheduledTaskSkillDisplayNames([
+        'skills/public/report',
+        'skills/public/summary',
+        'skills/public/deleted',
+      ]),
+    );
+    await waitFor(() =>
+      expect(result.current).toEqual([
+        'Report',
+        'Summary',
+        'skills/public/deleted',
+      ]),
+    );
   });
-  const { result, unmount } = renderHook(() =>
-    useNames({
-      skillUrls: ['reference'],
-      listed: new Map(),
-      getMetadata: load,
-    }),
-  );
-  expect(result.current).toEqual(['reference']);
-  unmount();
-  expect(signal.aborted).toBe(true);
-  await act(async () => finish({ name: 'Late' }));
-  expect(result.current).toEqual(['reference']);
+
+  it('aborts metadata on unmount and ignores its late result', async () => {
+    let signal!: AbortSignal;
+    let finish!: (value: { name: string }) => void;
+    const load = vi.fn((_url: string, abort: AbortSignal) => {
+      signal = abort;
+      return new Promise<{ name: string }>((resolve) => {
+        finish = resolve;
+      });
+    });
+    const { result, unmount } = renderHook(() =>
+      useNames({
+        skillUrls: ['reference'],
+        listed: new Map(),
+        getMetadata: load,
+      }),
+    );
+    expect(result.current).toEqual(['reference']);
+    unmount();
+    expect(signal.aborted).toBe(true);
+    await act(async () => finish({ name: 'Late' }));
+    expect(result.current).toEqual(['reference']);
+  });
 });

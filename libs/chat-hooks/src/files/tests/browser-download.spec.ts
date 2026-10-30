@@ -9,12 +9,12 @@ vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
   triggerBlobDownload: vi.fn(),
 }));
 
-afterEach(() => {
-  Reflect.deleteProperty(window, 'showSaveFilePicker');
-  vi.restoreAllMocks();
-});
-
 describe('file download streaming', () => {
+  afterEach(() => {
+    Reflect.deleteProperty(window, 'showSaveFilePicker');
+    vi.restoreAllMocks();
+  });
+
   it.each([
     ['attachment; filename="plain.csv"; filename*=UTF-8\'\'%ZZ', 'plain.csv'],
     ["attachment; filename*=UTF-8''%ZZ", 'fallback.csv'],

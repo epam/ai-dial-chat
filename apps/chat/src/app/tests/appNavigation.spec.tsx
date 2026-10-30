@@ -172,16 +172,16 @@ const renderApp = () =>
     </MemoryRouter>,
   );
 
-beforeEach(() => {
-  mocks.isMobile = false;
-  mocks.isPanelOpen = true;
-  mocks.routeStateArgs = [];
-});
-
 const getSidebar = () =>
   screen.getByRole('navigation', { name: 'sidebar navigation' });
 
 describe('App — navigation', () => {
+  beforeEach(() => {
+    mocks.isMobile = false;
+    mocks.isPanelOpen = true;
+    mocks.routeStateArgs = [];
+  });
+
   it('renders the panel view inside the sidebar on a desktop viewport', () => {
     renderApp();
 

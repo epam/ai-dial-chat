@@ -73,55 +73,55 @@ const animateDescriptor = Object.getOwnPropertyDescriptor(
   'animate',
 );
 
-beforeEach(() => {
-  vi.clearAllMocks();
-  state.mobile = false;
-  state.reduced = false;
-  state.listeners.clear();
-  Object.defineProperty(Element.prototype, 'animate', {
-    configurable: true,
-    writable: true,
-    value: vi.fn(),
-  });
-  vi.mocked(animateBats).mockReturnValue(stop);
-  vi.mocked(getBatTargets).mockReturnValue({
-    width: 1280,
-    height: 800,
-    surfaces: [],
-  });
-  vi.mocked(buildBatPlan).mockImplementation((targets) => ({
-    active: true,
-    width: targets.width,
-    height: targets.height,
-    surfaces: [],
-    actors: Array.from({ length: 3 }, (_, index) => ({
-      size: 80,
-      sleeper: index === 0,
-      rest: { x: 320 + index * 120, y: 360 },
-      frames: [],
-      parts: {
-        [BatPart.WingLeft]: [],
-        [BatPart.WingRight]: [],
-        [BatPart.ForearmLeft]: [],
-        [BatPart.ForearmRight]: [],
-        [BatPart.Wrap]: [],
-        [BatPart.Sleep]: [],
-        [BatPart.Eye]: [],
-        [BatPart.Yawn]: [],
-        [BatPart.Gaze]: [],
-      },
-    })),
-  }));
-});
-
-afterEach(() => {
-  if (animateDescriptor)
-    Object.defineProperty(Element.prototype, 'animate', animateDescriptor);
-  else Reflect.deleteProperty(Element.prototype, 'animate');
-  vi.restoreAllMocks();
-});
-
 describe('bat scene integration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    state.mobile = false;
+    state.reduced = false;
+    state.listeners.clear();
+    Object.defineProperty(Element.prototype, 'animate', {
+      configurable: true,
+      writable: true,
+      value: vi.fn(),
+    });
+    vi.mocked(animateBats).mockReturnValue(stop);
+    vi.mocked(getBatTargets).mockReturnValue({
+      width: 1280,
+      height: 800,
+      surfaces: [],
+    });
+    vi.mocked(buildBatPlan).mockImplementation((targets) => ({
+      active: true,
+      width: targets.width,
+      height: targets.height,
+      surfaces: [],
+      actors: Array.from({ length: 3 }, (_, index) => ({
+        size: 80,
+        sleeper: index === 0,
+        rest: { x: 320 + index * 120, y: 360 },
+        frames: [],
+        parts: {
+          [BatPart.WingLeft]: [],
+          [BatPart.WingRight]: [],
+          [BatPart.ForearmLeft]: [],
+          [BatPart.ForearmRight]: [],
+          [BatPart.Wrap]: [],
+          [BatPart.Sleep]: [],
+          [BatPart.Eye]: [],
+          [BatPart.Yawn]: [],
+          [BatPart.Gaze]: [],
+        },
+      })),
+    }));
+  });
+
+  afterEach(() => {
+    if (animateDescriptor)
+      Object.defineProperty(Element.prototype, 'animate', animateDescriptor);
+    else Reflect.deleteProperty(Element.prototype, 'animate');
+    vi.restoreAllMocks();
+  });
+
   it.each([true, false])(
     'connects three articulated actors without beams or disturbing input, mobile=%s',
     async (mobile) => {

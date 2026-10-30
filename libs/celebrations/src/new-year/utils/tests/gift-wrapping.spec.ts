@@ -29,13 +29,17 @@ const target = (width: number, rtl = false): GiftWrappingTarget => ({
 type NativeLayer = ReturnType<
   typeof buildGiftWrappingComposition
 >['animationData']['layers'][number];
+
 type NativeShape = NativeLayer['shapes'][number];
+
 type NativeTransform = NativeLayer['ks'];
+
 interface NativePath {
   v: number[][];
   i: number[][];
   o: number[][];
 }
+
 interface NumericKeyframe {
   t: number;
   s: number[];
@@ -44,6 +48,7 @@ interface NumericKeyframe {
   o?: { x: number; y: number };
   i?: { x: number; y: number };
 }
+
 interface PathKeyframe extends Omit<NumericKeyframe, 's' | 'e'> {
   s: NativePath[];
   e?: NativePath[];

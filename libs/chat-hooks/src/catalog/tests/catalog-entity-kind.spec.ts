@@ -1,10 +1,10 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
-import { NotifiableEntity } from '../../types/entity-notification';
 import {
+  CatalogEntityKind,
   findSchemaDisplayName,
-  resolveCatalogItemEntity,
-} from '../entity-notification';
+  resolveCatalogEntityKind,
+} from '../catalog-entity-kind';
 
 const SCHEMAS = [
   {
@@ -17,20 +17,20 @@ const SCHEMAS = [
   },
 ];
 
-describe('resolveCatalogItemEntity', () => {
+describe('resolveCatalogEntityKind', () => {
   it('names an app of the QuickApp schema a quick app', () => {
     expect(
-      resolveCatalogItemEntity(
+      resolveCatalogEntityKind(
         CatalogEntityType.Agent,
         { applicationTypeSchemaId: 'https://example.com/schemas/quickapps2' },
         SCHEMAS,
       ),
-    ).toBe(NotifiableEntity.QuickApp);
+    ).toBe(CatalogEntityKind.QuickApp);
   });
 
   it('names an app a quick app when only its schema display name marks it as QuickApp', () => {
     expect(
-      resolveCatalogItemEntity(
+      resolveCatalogEntityKind(
         CatalogEntityType.Agent,
         { applicationTypeSchemaId: 'https://example.com/schemas/renamed' },
         [
@@ -40,38 +40,47 @@ describe('resolveCatalogItemEntity', () => {
           },
         ],
       ),
-    ).toBe(NotifiableEntity.QuickApp);
+    ).toBe(CatalogEntityKind.QuickApp);
   });
 
   it('names an app of another known schema by that schema', () => {
     expect(
-      resolveCatalogItemEntity(
+      resolveCatalogEntityKind(
         CatalogEntityType.Agent,
         { applicationTypeSchemaId: 'https://example.com/schemas/externalapps' },
         SCHEMAS,
       ),
-    ).toBe(NotifiableEntity.SchemaApp);
+    ).toBe(CatalogEntityKind.SchemaApp);
   });
 
-  it('falls back to the generic application copy when the schema is not loaded', () => {
+  it('falls back to the generic application kind when the schema is not loaded', () => {
     expect(
-      resolveCatalogItemEntity(CatalogEntityType.Agent, {
+      resolveCatalogEntityKind(CatalogEntityType.Agent, {
         applicationTypeSchemaId: 'https://example.com/schemas/unknown',
       }),
-    ).toBe(NotifiableEntity.Agent);
+    ).toBe(CatalogEntityKind.Agent);
   });
 
   it('names a schema-less app a custom app', () => {
     expect(
-      resolveCatalogItemEntity(CatalogEntityType.Agent, {
+      resolveCatalogEntityKind(CatalogEntityType.Agent, {
         applicationTypeSchemaId: null,
       }),
-    ).toBe(NotifiableEntity.CustomApp);
+    ).toBe(CatalogEntityKind.CustomApp);
   });
 
-  it('falls back to the generic application copy when the deployment is unknown', () => {
-    expect(resolveCatalogItemEntity(CatalogEntityType.Agent)).toBe(
-      NotifiableEntity.Agent,
+  it('maps non-application catalog types one to one', () => {
+    expect(resolveCatalogEntityKind(CatalogEntityType.Model)).toBe(
+      CatalogEntityKind.Model,
+    );
+    expect(resolveCatalogEntityKind(CatalogEntityType.Prompt)).toBe(
+      CatalogEntityKind.Prompt,
+    );
+  });
+
+  it('falls back to the generic application kind when the deployment is unknown', () => {
+    expect(resolveCatalogEntityKind(CatalogEntityType.Agent)).toBe(
+      CatalogEntityKind.Agent,
     );
   });
 });

@@ -210,21 +210,56 @@ describe('useTranscribeAudio', () => {
       ),
     ).rejects.toMatchObject({ reason: AudioTranscriptionErrorReason.Failed });
   });
-});
 
-it.each([
-  undefined,
-  UploadMimeTypePolicy.Preserve,
-  UploadMimeTypePolicy.Normalize,
-])(
-  'preserves bytes and metadata under upload policy %s',
-  async (uploadMimeTypePolicy) => {
-    uploadFile.mockResolvedValue({ url: 'file' });
-    transcribeAudio.mockResolvedValue({ transcript: 'ok' });
-    const file = new File(['audio bytes'], 'recording.webm', {
-      type: 'audio/webm;codecs=opus',
-      lastModified: 123,
-    });
+  it.each([
+    undefined,
+    UploadMimeTypePolicy.Preserve,
+    UploadMimeTypePolicy.Normalize,
+  ])(
+    'preserves bytes and metadata under upload policy %s',
+    async (uploadMimeTypePolicy) => {
+      uploadFile.mockResolvedValue({ url: 'file' });
+      transcribeAudio.mockResolvedValue({ transcript: 'ok' });
+      const file = new File(['audio bytes'], 'recording.webm', {
+        type: 'audio/webm;codecs=opus',
+        lastModified: 123,
+      });
+      const { result } = renderHook(() =>
+        useTranscribeAudio({
+          filesApi: fakeFilesApi,
+          transcriptionApi: fakeTranscriptionApi,
+          bucket: 'b',
+          asrModelId: 'asr',
+          maxSizeBytes: 1000,
+          uploadMimeTypePolicy,
+        }),
+      );
+      await result.current.transcribeAudio(file, new AbortController().signal);
+      const uploaded = uploadFile.mock.calls[
+        uploadFile.mock.calls.length - 1
+      ][0].file as File;
+      expect(uploaded.type).toBe(
+        uploadMimeTypePolicy === UploadMimeTypePolicy.Normalize
+          ? 'audio/webm'
+          : file.type,
+      );
+      expect(uploaded.name).toBe(file.name);
+      expect(uploaded.lastModified).toBe(123);
+      expect(uploaded.size).toBe(file.size);
+      const read = (blob: Blob) =>
+        new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.readAsText(blob);
+        });
+      expect(await read(uploaded)).toBe('audio bytes');
+      if (uploadMimeTypePolicy !== UploadMimeTypePolicy.Normalize)
+        expect(uploaded).toBe(file);
+    },
+  );
+
+  it('does not reconstruct an already normalized upload', async () => {
+    const file = new File(['a'], 'a.webm', { type: 'audio/webm' });
     const { result } = renderHook(() =>
       useTranscribeAudio({
         filesApi: fakeFilesApi,
@@ -232,45 +267,12 @@ it.each([
         bucket: 'b',
         asrModelId: 'asr',
         maxSizeBytes: 1000,
-        uploadMimeTypePolicy,
+        uploadMimeTypePolicy: UploadMimeTypePolicy.Normalize,
       }),
     );
     await result.current.transcribeAudio(file, new AbortController().signal);
-    const uploaded = uploadFile.mock.calls[uploadFile.mock.calls.length - 1][0]
-      .file as File;
-    expect(uploaded.type).toBe(
-      uploadMimeTypePolicy === UploadMimeTypePolicy.Normalize
-        ? 'audio/webm'
-        : file.type,
-    );
-    expect(uploaded.name).toBe(file.name);
-    expect(uploaded.lastModified).toBe(123);
-    expect(uploaded.size).toBe(file.size);
-    const read = (blob: Blob) =>
-      new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.readAsText(blob);
-      });
-    expect(await read(uploaded)).toBe('audio bytes');
-    if (uploadMimeTypePolicy !== UploadMimeTypePolicy.Normalize)
-      expect(uploaded).toBe(file);
-  },
-);
-it('does not reconstruct an already normalized upload', async () => {
-  const file = new File(['a'], 'a.webm', { type: 'audio/webm' });
-  const { result } = renderHook(() =>
-    useTranscribeAudio({
-      filesApi: fakeFilesApi,
-      transcriptionApi: fakeTranscriptionApi,
-      bucket: 'b',
-      asrModelId: 'asr',
-      maxSizeBytes: 1000,
-      uploadMimeTypePolicy: UploadMimeTypePolicy.Normalize,
-    }),
-  );
-  await result.current.transcribeAudio(file, new AbortController().signal);
-  expect(uploadFile.mock.calls[uploadFile.mock.calls.length - 1][0].file).toBe(
-    file,
-  );
+    expect(
+      uploadFile.mock.calls[uploadFile.mock.calls.length - 1][0].file,
+    ).toBe(file);
+  });
 });

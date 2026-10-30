@@ -47,7 +47,9 @@ import { type ParsedProjectId, parseProjectId } from './utils/project-id.util';
 type DialProjectListing = DialProjectMetadata & {
   items?: DialProjectMetadata[];
 };
+
 type BucketSource = ProjectSource.Personal | ProjectSource.Organization;
+
 type DialProjectItemMetadata = DialProjectMetadata & {
   author?: string;
   createdAt?: number;

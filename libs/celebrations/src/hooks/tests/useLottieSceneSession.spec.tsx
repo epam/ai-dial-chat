@@ -39,15 +39,6 @@ const PLAYBACK: LottieScenePlayback<Preparation> = {
   getAnimationData: () => ({ layers: [] }),
 };
 
-beforeEach(() => {
-  vi.useFakeTimers();
-  vi.clearAllMocks();
-  vi.mocked(loadLottiePlayer).mockReset().mockResolvedValue(player);
-});
-afterEach(() => {
-  vi.useRealTimers();
-});
-
 const flush = async () => {
   await act(async () => {
     for (let i = 0; i < 6; i++) await Promise.resolve();
@@ -83,6 +74,16 @@ const renderSession = (
 };
 
 describe('useLottieSceneSession', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    vi.mocked(loadLottiePlayer).mockReset().mockResolvedValue(player);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('imports the player and prepares once under StrictMode', async () => {
     const { result, prepare } = renderSession(true, undefined, strict);
     await flush();

@@ -31,6 +31,7 @@ export const identity = (): StarTransform => ({
 const ink = '#182226';
 const color = (hex: string) =>
   [1, 3, 5].map((n) => parseInt(hex.slice(n, n + 2), 16) / 255).concat(1);
+
 /** A vector group with optional transform and a single shared fill. */
 export const group = (
   nm: string,

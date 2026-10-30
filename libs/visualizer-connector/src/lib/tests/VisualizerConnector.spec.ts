@@ -60,38 +60,38 @@ const flushMicrotasks = async (): Promise<void> => {
   }
 };
 
-beforeEach(() => {
-  root = document.createElement('div');
-  document.body.appendChild(root);
-});
+describe('VisualizerConnector', () => {
+  beforeEach(() => {
+    root = document.createElement('div');
+    document.body.appendChild(root);
+  });
 
-afterEach(() => {
-  connectors.splice(0).forEach((connector) => connector.destroy());
-  root.remove();
-  vi.useRealTimers();
-  vi.restoreAllMocks();
-});
+  afterEach(() => {
+    connectors.splice(0).forEach((connector) => connector.destroy());
+    root.remove();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
 
-describe('protocol enums', () => {
-  it('keeps the wire values visualizers already expect', () => {
-    expect(VisualizerConnectorRequests).toEqual({
-      SendVisualizeData: 'SEND_VISUALIZE_DATA',
-      SendGroupedVisualizeData: 'SEND_GROUPED_VISUALIZE_DATA',
-      SetVisualizerOptions: 'SET_VISUALIZER_OPTIONS',
-    });
-    expect(VisualizerConnectorEvents).toEqual({
-      InitReady: 'INIT_READY',
-      Ready: 'READY',
-      ReadyToInteract: 'READY_TO_INTERACT',
-      SendMessage: 'SEND_MESSAGE',
-      CreatedConversationSuccess: 'CREATED_CONVERSATION_SUCCESS',
-      UpdatedConversationSuccess: 'UPDATED_CONVERSATION_SUCCESS',
-      UpdatedApplicationSuccess: 'UPDATED_APPLICATION_SUCCESS',
+  describe('protocol enums', () => {
+    it('keeps the wire values visualizers already expect', () => {
+      expect(VisualizerConnectorRequests).toEqual({
+        SendVisualizeData: 'SEND_VISUALIZE_DATA',
+        SendGroupedVisualizeData: 'SEND_GROUPED_VISUALIZE_DATA',
+        SetVisualizerOptions: 'SET_VISUALIZER_OPTIONS',
+      });
+      expect(VisualizerConnectorEvents).toEqual({
+        InitReady: 'INIT_READY',
+        Ready: 'READY',
+        ReadyToInteract: 'READY_TO_INTERACT',
+        SendMessage: 'SEND_MESSAGE',
+        CreatedConversationSuccess: 'CREATED_CONVERSATION_SUCCESS',
+        UpdatedConversationSuccess: 'UPDATED_CONVERSATION_SUCCESS',
+        UpdatedApplicationSuccess: 'UPDATED_APPLICATION_SUCCESS',
+      });
     });
   });
-});
 
-describe('VisualizerConnector', () => {
   describe('mounting', () => {
     it('mounts an iframe pointing at the visualizer URL', () => {
       createConnector();

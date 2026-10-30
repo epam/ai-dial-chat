@@ -9,6 +9,7 @@ const getMetadata = async (url: string, signal: AbortSignal) => {
     ? getSkillMetadata(resource.bucket, resource.path, signal)
     : undefined;
 };
+
 /** Resolves selected names using the current host catalog and configured metadata API. */
 export const useScheduledTaskSkillDisplayNames = (skillUrls?: string[]) => {
   const { skills, sharedWithMe, publicSkills } = useSkills();

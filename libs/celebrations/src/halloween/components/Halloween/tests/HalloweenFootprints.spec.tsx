@@ -60,30 +60,32 @@ const descriptor = Object.getOwnPropertyDescriptor(
   'animate',
 );
 const stop = vi.fn();
-beforeEach(() => {
-  vi.clearAllMocks();
-  state.mobile = false;
-  state.reduced = false;
-  state.listeners.clear();
-  Object.defineProperty(Element.prototype, 'animate', {
-    configurable: true,
-    value: vi.fn(),
-  });
-  vi.stubGlobal('ResizeObserver', class {});
-  vi.mocked(animateFootprints).mockReturnValue(stop);
-  vi.mocked(getFootprintTargets).mockReturnValue({
-    width: 1280,
-    height: 800,
-  });
-});
-afterEach(() => {
-  if (descriptor)
-    Object.defineProperty(Element.prototype, 'animate', descriptor);
-  else Reflect.deleteProperty(Element.prototype, 'animate');
-  vi.restoreAllMocks();
-  vi.unstubAllGlobals();
-});
 describe('invisible cat scene integration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    state.mobile = false;
+    state.reduced = false;
+    state.listeners.clear();
+    Object.defineProperty(Element.prototype, 'animate', {
+      configurable: true,
+      value: vi.fn(),
+    });
+    vi.stubGlobal('ResizeObserver', class {});
+    vi.mocked(animateFootprints).mockReturnValue(stop);
+    vi.mocked(getFootprintTargets).mockReturnValue({
+      width: 1280,
+      height: 800,
+    });
+  });
+
+  afterEach(() => {
+    if (descriptor)
+      Object.defineProperty(Element.prototype, 'animate', descriptor);
+    else Reflect.deleteProperty(Element.prototype, 'animate');
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
   it('renders a content-free input outline with shared contact geometry', async () => {
     const composer = document.createElement('div');
     composer.innerHTML = '<textarea>Private draft</textarea>';

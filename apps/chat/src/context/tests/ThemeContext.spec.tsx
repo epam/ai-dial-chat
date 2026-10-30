@@ -1,22 +1,26 @@
+import * as hooksUtils from '@epam/ai-dial-chat-hooks/utils';
 import { ThemeConfiguration } from '@epam/ai-dial-chat-shared';
 import { act, render, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as useFaviconModule from '../../hooks/favicon/useFavicon';
 import * as serverApi from '../../server-api/base';
-import * as applyThemeColors from '../../utils/apply-theme-colors';
 import * as localStorage from '../../utils/local-storage';
 import { ThemeProvider, useTheme } from '../ThemeContext';
 
 // Mock modules
 vi.mock('../../server-api/base');
 vi.mock('../../utils/local-storage');
-vi.mock('../../utils/apply-theme-colors');
+vi.mock('@epam/ai-dial-chat-hooks/utils', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-hooks/utils')>()),
+  applyThemeColors: vi.fn(),
+  getOsPreferredTheme: vi.fn(),
+}));
 vi.mock('../../hooks/favicon/useFavicon');
 
 describe('ThemeContext', () => {
   const mockGet = vi.mocked(serverApi.get);
   const mockGetFromLocalStorage = vi.mocked(localStorage.getFromLocalStorage);
-  const mockApplyThemeColors = vi.mocked(applyThemeColors.applyThemeColors);
+  const mockApplyThemeColors = vi.mocked(hooksUtils.applyThemeColors);
   const mockUseFavicon = vi.mocked(useFaviconModule.useFavicon);
 
   const mockThemeConfig: ThemeConfiguration = {
@@ -116,7 +120,7 @@ describe('ThemeContext', () => {
     await waitFor(() => {
       expect(mockApplyThemeColors).toHaveBeenCalledWith(
         document.documentElement,
-        mockThemeConfig.themes[1],
+        mockThemeConfig.themes[1].colors,
       );
     });
   });
@@ -135,7 +139,7 @@ describe('ThemeContext', () => {
     await waitFor(() => {
       expect(mockApplyThemeColors).toHaveBeenCalledWith(
         document.documentElement,
-        mockThemeConfig.themes[1],
+        mockThemeConfig.themes[1].colors,
       );
     });
   });
@@ -163,7 +167,7 @@ describe('ThemeContext', () => {
 
     expect(mockApplyThemeColors).toHaveBeenCalledWith(
       document.documentElement,
-      mockThemeConfig.themes[1],
+      mockThemeConfig.themes[1].colors,
     );
   });
 
@@ -229,7 +233,7 @@ describe('ThemeContext', () => {
 
       expect(mockApplyThemeColors).toHaveBeenCalledWith(
         document.documentElement,
-        mockThemeConfig.themes[0],
+        mockThemeConfig.themes[0].colors,
       );
     });
 
@@ -248,7 +252,7 @@ describe('ThemeContext', () => {
 
       expect(mockApplyThemeColors).toHaveBeenCalledWith(
         document.documentElement,
-        customThemeConfig.themes[2],
+        customThemeConfig.themes[2].colors,
       );
     });
 
@@ -273,7 +277,7 @@ describe('ThemeContext', () => {
       expect(result.current.currentTheme).toBe('light');
       expect(mockApplyThemeColors).toHaveBeenCalledWith(
         document.documentElement,
-        mockThemeConfig.themes[1],
+        mockThemeConfig.themes[1].colors,
       );
     });
 
@@ -300,7 +304,9 @@ describe('ThemeContext', () => {
        * provider's own OS-change subscription read the media query, so both
        * are stubbed here.
        */
-      vi.mocked(applyThemeColors.getOsPreferredTheme).mockReturnValue('dark');
+      vi.mocked(hooksUtils.getOsPreferredTheme).mockReturnValue(
+        hooksUtils.ColorScheme.Dark,
+      );
       vi.stubGlobal(
         'matchMedia',
         vi.fn(() => ({
@@ -330,7 +336,9 @@ describe('ThemeContext', () => {
      * through to no colours at all.
      */
     it('falls back to light when system is stored but dark is not configured', async () => {
-      vi.mocked(applyThemeColors.getOsPreferredTheme).mockReturnValue('dark');
+      vi.mocked(hooksUtils.getOsPreferredTheme).mockReturnValue(
+        hooksUtils.ColorScheme.Dark,
+      );
       mockGet.mockResolvedValue({
         ...mockThemeConfig,
         themes: [
@@ -356,7 +364,7 @@ describe('ThemeContext', () => {
       expect(result.current.currentTheme).toBe('light');
       expect(mockApplyThemeColors).toHaveBeenCalledWith(
         document.documentElement,
-        mockThemeConfig.themes[1],
+        mockThemeConfig.themes[1].colors,
       );
     });
 

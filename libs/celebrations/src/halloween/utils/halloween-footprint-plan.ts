@@ -29,16 +29,19 @@ export enum FootprintPart {
   Gaze = 'gaze',
   Grin = 'grin',
 }
+
 interface Point {
   x: number;
   y: number;
 }
+
 interface Print {
   point: Point;
   surface: FootprintSurface;
   contactAt: number;
   frames: Keyframe[];
 }
+
 /** Immutable geometry and tracks for one activation. */
 export interface FootprintPlan {
   anchors: CelebrationSnapshotTarget[];
@@ -165,8 +168,8 @@ export const buildFootprintPlan = (
     });
   };
   for (let i = 0; i < count; i++) {
-    const t = i / (count - 1),
-      side = i % 2 ? 5 : -5;
+    const t = i / (count - 1);
+    const side = i % 2 ? 5 : -5;
     stamp(
       {
         x: mix(start.x, end.x, t) - Math.sin(heading) * side,
@@ -197,8 +200,8 @@ export const buildFootprintPlan = (
   surfacePose(0, 0, 0, 0, 'steps(1, end)');
   surfacePose((FOOTPRINT_HIDE - 0.01) * FOOTPRINT_MS, 0, 0);
   for (let i = 0; i < count; i++) {
-    const t = i / (count - 1),
-      time = 3200 + t * 2000;
+    const t = i / (count - 1);
+    const time = 3200 + t * 2000;
     const local = { x: mix(firstX, lastX, t), y: i % 2 ? 3 : -3 };
     stamp(
       card

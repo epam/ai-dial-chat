@@ -3,6 +3,7 @@ export interface CelebrationSnapshotTarget {
   element: HTMLElement;
   rect: DOMRect;
 }
+
 interface SnapshotAnimationOptions {
   durationMs: number;
   hideAt: number | ((index: number) => number);

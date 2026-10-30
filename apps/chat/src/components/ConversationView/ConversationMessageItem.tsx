@@ -16,6 +16,7 @@ import {
   mapStages,
   messageHasStages,
   openAnnotationAttachment,
+  prepareStageCitations,
   referenceAttachmentToPdfCanvasContent,
   resolveGroupedVisualizerCanvasContent,
   useAttachmentAction,
@@ -126,7 +127,6 @@ import {
   getMessageStarterProps,
   getStatusMessageProps,
   isStreamingMessage,
-  prepareStageCitations,
 } from './utils/message-display';
 
 const EditMessageInput = lazy(async () => {

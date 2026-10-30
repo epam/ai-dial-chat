@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useConversationDiscovery as useDiscovery } from '../useConversationDiscovery';
+
 const normalizeId = (id: string) =>
   decodeURIComponent(id).replace(/^conversations\//, '');
 const useConversationDiscovery = (
@@ -127,33 +128,33 @@ describe('useConversationDiscovery', () => {
     await act(async () => vi.advanceTimersByTimeAsync(60_000));
     expect(refresh).toHaveBeenCalledTimes(1);
   });
-});
 
-it('reports bounded retry failures and exposes initial refresh rejection', async () => {
-  vi.useFakeTimers();
-  try {
-    const failure = new Error('refresh');
-    const refresh = vi
-      .fn()
-      .mockResolvedValueOnce(undefined)
-      .mockRejectedValue(failure);
-    const onError = vi.fn();
-    const { result, unmount } = renderHook(() =>
-      useDiscovery({
-        items: [],
-        refresh,
-        sessionKey: 'user',
-        normalizeId,
-        onError,
-      }),
-    );
-    await act(async () => result.current(['a']));
-    await act(async () => vi.advanceTimersByTimeAsync(60_000));
-    expect(refresh).toHaveBeenCalledTimes(6);
-    expect(onError).toHaveBeenCalledTimes(5);
-    await expect(result.current()).rejects.toBe(failure);
-    unmount();
-  } finally {
-    vi.useRealTimers();
-  }
+  it('reports bounded retry failures and exposes initial refresh rejection', async () => {
+    vi.useFakeTimers();
+    try {
+      const failure = new Error('refresh');
+      const refresh = vi
+        .fn()
+        .mockResolvedValueOnce(undefined)
+        .mockRejectedValue(failure);
+      const onError = vi.fn();
+      const { result, unmount } = renderHook(() =>
+        useDiscovery({
+          items: [],
+          refresh,
+          sessionKey: 'user',
+          normalizeId,
+          onError,
+        }),
+      );
+      await act(async () => result.current(['a']));
+      await act(async () => vi.advanceTimersByTimeAsync(60_000));
+      expect(refresh).toHaveBeenCalledTimes(6);
+      expect(onError).toHaveBeenCalledTimes(5);
+      await expect(result.current()).rejects.toBe(failure);
+      unmount();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

@@ -109,29 +109,29 @@ const renderContainer = (onClose = vi.fn(), conversationCount?: number) => {
   return { onClose };
 };
 
-beforeEach(() => {
-  vi.clearAllMocks();
-  vi.mocked(usePublishFolders).mockReturnValue({
-    folderItems: [{ path: ['Marketing'], name: 'Marketing' }],
-    expandedPaths: new Set<string>(),
-    loadedPaths: new Set<string>(),
-    loadingPaths: new Set<string>(),
-    onExpandedPathsChange: vi.fn(),
-    onCreatePublishFolder: vi.fn(),
-    rememberPublishFolder: mockRememberPublishFolder,
-    hasPublishWriteAccess: () => true,
-  });
-  vi.mocked(useNotification).mockReturnValue(
-    createNotificationContextValue(mockShowNotification),
-  );
-  useAppConfigMock.mockReturnValue({
-    config: { publicationFilterSources: ['role'] },
-  });
-  vi.mocked(getPublishRules).mockResolvedValue([]);
-  vi.mocked(getCatalogPublishHistory).mockResolvedValue([]);
-});
-
 describe('PublishProjectPanelContainer', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(usePublishFolders).mockReturnValue({
+      folderItems: [{ path: ['Marketing'], name: 'Marketing' }],
+      expandedPaths: new Set<string>(),
+      loadedPaths: new Set<string>(),
+      loadingPaths: new Set<string>(),
+      onExpandedPathsChange: vi.fn(),
+      onCreatePublishFolder: vi.fn(),
+      rememberPublishFolder: mockRememberPublishFolder,
+      hasPublishWriteAccess: () => true,
+    });
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(mockShowNotification),
+    );
+    useAppConfigMock.mockReturnValue({
+      config: { publicationFilterSources: ['role'] },
+    });
+    vi.mocked(getPublishRules).mockResolvedValue([]);
+    vi.mocked(getCatalogPublishHistory).mockResolvedValue([]);
+  });
+
   it('names the project and never offers to replace a publication', () => {
     renderContainer();
 
@@ -193,7 +193,10 @@ describe('PublishProjectPanelContainer', () => {
         folderPath: 'Marketing',
         author: 'Jane Doe',
         rules: [
-          expect.objectContaining({ source: 'role', targets: ['engineering'] }),
+          expect.objectContaining({
+            source: 'role',
+            targets: ['engineering'],
+          }),
         ],
       },
     );
@@ -229,19 +232,23 @@ describe('PublishProjectPanelContainer', () => {
     await waitFor(() => expect(mockShowPublishError).toHaveBeenCalled());
     expect(onClose).not.toHaveBeenCalled();
   });
-});
 
-describe('PublishProjectPanelContainer — chats warning', () => {
-  it('warns that the chats are published with the project', () => {
-    renderContainer(vi.fn(), 2);
+  describe('PublishProjectPanelContainer — chats warning', () => {
+    it('warns that the chats are published with the project', () => {
+      renderContainer(vi.fn(), 2);
 
-    expect(screen.getByText(ProjectsI18nKeys.PublishChatsWarning)).toBeTruthy();
-    expect(screen.getByText('q4-launch')).toBeTruthy();
-  });
+      expect(
+        screen.getByText(ProjectsI18nKeys.PublishChatsWarning),
+      ).toBeTruthy();
+      expect(screen.getByText('q4-launch')).toBeTruthy();
+    });
 
-  it('shows no warning for a project without chats', () => {
-    renderContainer(vi.fn(), 0);
+    it('shows no warning for a project without chats', () => {
+      renderContainer(vi.fn(), 0);
 
-    expect(screen.queryByText(ProjectsI18nKeys.PublishChatsWarning)).toBeNull();
+      expect(
+        screen.queryByText(ProjectsI18nKeys.PublishChatsWarning),
+      ).toBeNull();
+    });
   });
 });

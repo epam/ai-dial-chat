@@ -22,28 +22,30 @@ const add = (label: string) => {
   bounds(element);
   return element;
 };
-beforeEach(() => {
-  root = document.createElement('section');
-  root.setAttribute('role', 'region');
-  starters = document.createElement('div');
-  starters.className = anchors.starterList;
-  composer = document.createElement('div');
-  composer.className = anchors.composer;
-  root.append(starters, composer);
-  document.body.appendChild(root);
-  vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(
-    1280,
-  );
-  vi.spyOn(document.documentElement, 'clientHeight', 'get').mockReturnValue(
-    800,
-  );
-  bounds(composer, 350, 400, 560, 96);
-});
-afterEach(() => {
-  root.remove();
-  vi.restoreAllMocks();
-});
 describe('invisible cat starter selection', () => {
+  beforeEach(() => {
+    root = document.createElement('section');
+    root.setAttribute('role', 'region');
+    starters = document.createElement('div');
+    starters.className = anchors.starterList;
+    composer = document.createElement('div');
+    composer.className = anchors.composer;
+    root.append(starters, composer);
+    document.body.appendChild(root);
+    vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(
+      1280,
+    );
+    vi.spyOn(document.documentElement, 'clientHeight', 'get').mockReturnValue(
+      800,
+    );
+    bounds(composer, 350, 400, 560, 96);
+  });
+
+  afterEach(() => {
+    root.remove();
+    vi.restoreAllMocks();
+  });
+
   it('measures a focused composer even without starter anchors or buttons', () => {
     composer.style.borderRadius = '12px';
     const input = document.createElement('textarea');

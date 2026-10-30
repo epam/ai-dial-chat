@@ -1741,6 +1741,16 @@ const SourcesPanel = ({ messages }: { messages: Message[] }) => {
 
 `sources` gets one entry per distinct URL. A reference-only attachment keeps its `reference_url` as is. For a citation annotation on a `.pdf` file, the hook appends the cited page from its `pdf_bbox`/`pdf_region` selector (`files/bucket/doc.pdf#page=12`). This applies only when the URL has no fragment yet. As a result, each cited page of a document is a separate source, and two citations of the same page collapse into one.
 
+### prepareStageCitations
+
+Returns a message's stages with the citation markup in each stage's `content` prepared for rendering: hidden while the message streams, unsupported shapes escaped once it has finished. Stages without `<cit` markup — and the array itself when none has any — are returned by reference, so memoized stage rows do not re-render. Available from the root and `./conversation-sources`.
+
+```ts
+import { prepareStageCitations } from '@epam/ai-dial-chat-hooks/conversation-sources';
+
+const renderedStages = prepareStageCitations(stages, isStreaming);
+```
+
 ### useChatSettingsFormConfig
 
 Assembles the config object a chat-settings popover/modal consumes: feature flags derived from deployment features, the current `responseFormat`/`systemPrompt`/`temperature` values, the save handler, and the form labels. Works in two modes — `'local'` (an in-flight composer that holds values in state) and `'conversation'` (a persisted `Conversation` patched on save). Headless: the host supplies translated labels via `labels` and a save toast via `onSaved`.
@@ -1958,6 +1968,19 @@ const CatalogCard = ({
 | `favoriteIds`    | `ReadonlySet<string>`                                                                 | Current set of favorited IDs across all entity types.                                                                                                |
 | `isLoading`      | `boolean`                                                                             | `true` while the initial load is in flight.                                                                                                          |
 | `toggleFavorite` | `(id: string, isFavorite: boolean, entityType?: FavoriteEntityType) => Promise<void>` | Optimistically updates `favoriteIds`, calls `updateFavorite`, and rolls back on rejection. `entityType` defaults to `FavoriteEntityType.Deployment`. |
+
+### findSkillByUrl
+
+Finds the listed skill a `skills/{bucket}/{path}` resource URL names, across the personal, shared and organisation listings (`SkillListingPools` — the shape `useSkillsState` returns). Both sides are compared per-segment normalized, so a URL that arrives decoded, e.g. from a query string, still matches the percent-encoded `url` DIAL Core lists. Available from the root and `./skills-state`.
+
+```ts
+import { findSkillByUrl } from '@epam/ai-dial-chat-hooks/skills-state';
+
+const skill = findSkillByUrl(
+  { skills, sharedWithMe, publicSkills },
+  'skills/bucket/My skill',
+);
+```
 
 ### useSkillsState
 
@@ -2843,6 +2866,23 @@ import { getBrowserTimezone } from '@epam/ai-dial-chat-hooks';
 getBrowserTimezone(); // e.g. 'Europe/Warsaw'
 ```
 
+### applyThemeColors / getOsPreferredTheme / ColorScheme
+
+`applyThemeColors(element, colors?)` writes each entry of `colors` to `element` as a `--<key>` custom property, first removing the properties its previous call wrote to that same element — so switching to a theme that declares fewer keys does not keep the old theme's values. Called without `colors`, it only removes them. Properties it never wrote are left alone. `getOsPreferredTheme()` returns `ColorScheme.Dark` or `ColorScheme.Light` from the `prefers-color-scheme` media query. Available from the root and `./utils`.
+
+```ts
+import {
+  applyThemeColors,
+  ColorScheme,
+  getOsPreferredTheme,
+} from '@epam/ai-dial-chat-hooks/utils';
+
+const themeId = getOsPreferredTheme(); // ColorScheme.Dark | ColorScheme.Light
+const theme = themes.find(({ id }) => id === themeId);
+
+applyThemeColors(document.documentElement, theme?.colors);
+```
+
 ### apSchedulerDayToJsDay / jsDayToApSchedulerDay
 
 Converts between DIAL Scheduler's APScheduler weekday convention (Monday=0..Sunday=6) and JS `Date`'s weekday convention (Sunday=0..Saturday=6).
@@ -2913,6 +2953,56 @@ import { parseExternalServiceUrl } from '@epam/ai-dial-chat-hooks';
 
 parseExternalServiceUrl('applications/bucket/app/external_services/jira');
 // { appId: 'applications/bucket/app', serviceName: 'jira' }
+```
+
+### Client-channel sign-in events
+
+DIAL Core asks the user to sign in mid-completion through client-channel RPC requests on the `subscribe` SSE stream. `ClientChannelRpcRequest` is that request's shape, and `TOOLSET_SIGNIN_METHOD` (`'toolset/signin'`) and `EXTERNAL_SERVICE_SIGNIN_METHOD` (`'external-service/signin'`) are the two method names a host answers. `PendingSigninEvent` — a union of `PendingToolsetSigninEvent` and `PendingExternalServiceSigninEvent`, told apart by `PendingSigninEventKind` — is a request the host has queued while it waits for the user to sign in or decline. Available from the root and `./utils`.
+
+```ts
+import {
+  EXTERNAL_SERVICE_SIGNIN_METHOD,
+  parseExternalServiceUrl,
+  PendingSigninEventKind,
+  TOOLSET_SIGNIN_METHOD,
+  type ClientChannelRpcRequest,
+  type PendingSigninEvent,
+} from '@epam/ai-dial-chat-hooks/utils';
+
+const toPendingEvent = (
+  request: ClientChannelRpcRequest,
+): PendingSigninEvent | undefined => {
+  const url = String(request.params?.url ?? '');
+  if (request.method === TOOLSET_SIGNIN_METHOD) {
+    return {
+      kind: PendingSigninEventKind.Toolset,
+      id: request.id,
+      toolsetId: url,
+    };
+  }
+  const service =
+    request.method === EXTERNAL_SERVICE_SIGNIN_METHOD
+      ? parseExternalServiceUrl(url)
+      : undefined;
+  return service
+    ? {
+        kind: PendingSigninEventKind.ExternalService,
+        id: request.id,
+        ...service,
+      }
+    : undefined;
+};
+```
+
+### ExternalServiceAuthType / ExternalServiceAuthStatus / ExternalServiceCredentialsLevel
+
+The external-service auth enums `useExternalServiceLogin` takes and compares: the authentication method (`None`, `ApiKey`, `OAuth`, `DialNative`), the sign-in state DIAL Core reports per credentials level (`SignedIn`, `SignedOut`, `Failed` — the values of `GetExternalServiceResponseDto`'s `*AuthStatus` fields), and the level credentials belong to (`Global`, `Application`, `User`). Available from the root and `./external-services`.
+
+```ts
+import { ExternalServiceAuthStatus } from '@epam/ai-dial-chat-hooks';
+
+const isSignedIn =
+  service.userLevelAuthStatus === ExternalServiceAuthStatus.SignedIn;
 ```
 
 ## OAuth Popup Flow
@@ -3690,6 +3780,26 @@ getPublicCatalogEntityFolderPath(
 ); // ['Data Science']
 ```
 
+### resolveCatalogEntityKind / findSchemaDisplayName / CatalogEntityKind
+
+`resolveCatalogEntityKind(type, deployment?, schemas = [])` returns the `CatalogEntityKind` of a catalog item. Non-application types map one to one (`Model`, `Toolset`, `Skill`, `Prompt`). An `Agent` item is narrowed by its deployment's `applicationTypeSchemaId`: `CustomApp` with no schema, `QuickApp` for the QuickApp schema (matched by id or display name, as `isQuickAppSchema` does), `SchemaApp` when the schema's display name is known, and `Agent` otherwise or when no deployment is given. `findSchemaDisplayName(schemas, schemaId)` returns that schema's display name, or `undefined`. A host maps the kind onto its own copy — for example a notification noun. Available from the root and `./catalog`.
+
+```ts
+import {
+  CatalogEntityKind,
+  findSchemaDisplayName,
+  resolveCatalogEntityKind,
+} from '@epam/ai-dial-chat-hooks';
+
+const kind = resolveCatalogEntityKind(item.type, deployment, schemas);
+if (kind === CatalogEntityKind.SchemaApp) {
+  const schemaName = findSchemaDisplayName(
+    schemas,
+    deployment?.applicationTypeSchemaId,
+  );
+}
+```
+
 ## Prompt Utilities
 
 ### validatePromptName / validatePromptDescription / validatePromptContent / getRemainingCharacters / buildPromptPath
@@ -3788,6 +3898,19 @@ const result = mapScheduledTaskDtoToFormValues(scheduledTaskDto);
 if (result.ok) {
   // result.values: ScheduledTaskCreateFormValues
 }
+```
+
+### getNextCronOccurrence
+
+Returns the next UTC time a cron trigger with a fixed `hour`/`minute` fires after `from` (default: now), honouring its `day_of_week` (APScheduler Monday=0) or `day` (a number or `'last'`) constraint. Returns `undefined` when the fields are not plain values it can evaluate (`*`, ranges, lists). Available from the root and `./scheduled-tasks`.
+
+```ts
+import { getNextCronOccurrence } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
+
+getNextCronOccurrence(
+  { fields: { hour: '9', minute: '0', day_of_week: '0' } },
+  new Date('2026-10-07T08:00:00.000Z'),
+); // 2026-10-12T09:00:00.000Z — the next Monday
 ```
 
 ## Catalog Hooks

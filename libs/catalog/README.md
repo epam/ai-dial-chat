@@ -43,7 +43,7 @@ installing both is required rather than optional.
 (`.`) entry: `CredentialsLevel`, `CredentialsBadgeState`, `CredentialStatus`,
 `CredentialsUiState`, `ToolsetAuthenticationType`, `CatalogSortKey`,
 `CatalogItem`, `CatalogItemCredentials`, `filterCatalogItems`,
-`filterCatalogItemsByQuery`, `CatalogItemsQuery`, `getTopicOptions`, `sortCatalogItems`, `buildCatalogTabs`, `getCatalogItemTabs`,
+`filterCatalogItemsByQuery`, `CatalogItemsQuery`, `getTopicOptions`, `sortCatalogItems`, `buildCatalogTabs`, `CATALOG_TAB_ORDER`, `getCatalogItemTabs`,
 `applyCatalogSelection`,
 `getCredentialsBadgeState`, `getCredentialsUiState`, `getDirectCredentialsLevel`, and `getSignedInLevel` —
 the headless enums and pure item-mapping functions a host can use (e.g. to
@@ -1596,6 +1596,7 @@ sentinel rather than a cap, so it renders its note instead of a progress bar.
 import {
   applyCatalogSelection,
   buildCatalogTabs,
+  CATALOG_TAB_ORDER,
   filterCatalogItems,
   filterCatalogItemsByQuery,
   getCatalogItemTabs,
@@ -1639,6 +1640,11 @@ const topicOptions = getTopicOptions(items);
 
 // The tabs one item is listed under: its non-empty `catalogTabs`, else `[type]`.
 const itemTabs = getCatalogItemTabs(items[0]);
+
+// The order `buildCatalogTabs` sorts tabs in: Model, Agent, Toolset, Skill, Prompt.
+const firstTab = CATALOG_TAB_ORDER.find((type) =>
+  items.some((item) => getCatalogItemTabs(item).includes(type)),
+);
 ```
 
 ## Rollback

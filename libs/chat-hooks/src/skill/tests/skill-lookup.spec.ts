@@ -1,6 +1,6 @@
 import type { SkillMetadataItemDto } from '@epam/ai-dial-chat-api-client';
 import { describe, expect, it } from 'vitest';
-import { findSkillByUrl } from '../skills';
+import { findSkillByUrl } from '../skill-lookup';
 
 const skill = (url: string, name = 'skill'): SkillMetadataItemDto =>
   ({ url, name }) as SkillMetadataItemDto;

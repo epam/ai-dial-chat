@@ -3,12 +3,13 @@ import type {
   GetExternalServiceResponseDto,
 } from '@epam/ai-dial-chat-api-client';
 import {
+  ExternalServiceAuthStatus,
+  type ExternalServiceAuthType,
+  ExternalServiceCredentialsLevel,
   getExternalServiceFallbackName,
   resolveToolsetCredentialsLevel,
-  ExternalServiceCredentialsLevel,
 } from '@epam/ai-dial-chat-hooks';
 import type { ResolvedRowInfo } from '../models/signin-interrupt';
-import type { RowAuthType } from '../types/signin-interrupt';
 import { PRIMARY_LOCALE, resolveLocalizedText } from './locale';
 import { getToolsetFallbackName } from './toolsets';
 
@@ -22,7 +23,7 @@ export const resolveToolsetInfo = (
     getToolsetFallbackName(toolsetId),
   displayVersion: toolset?.displayVersion,
   authenticationType: toolset?.authSettings?.authenticationType as
-    RowAuthType | undefined,
+    ExternalServiceAuthType | undefined,
   credentialsLevel: resolveToolsetCredentialsLevel(toolsetId),
   oauthSettings: {
     clientId: toolset?.authSettings?.clientId,
@@ -39,7 +40,8 @@ export const resolveExternalServiceInfo = (
 ): ResolvedRowInfo => ({
   displayName:
     service?.displayName || getExternalServiceFallbackName(serviceName),
-  authenticationType: service?.authenticationType as RowAuthType | undefined,
+  authenticationType: service?.authenticationType as
+    ExternalServiceAuthType | undefined,
   /*
    * Best-effort default per `openspec/changes/archive/2026-07-30-interactive-external-service-login-chat/design.md` Open Question 2 — Core does not yet
    * document how a *pushed* event determines credentials level; USER
@@ -47,7 +49,7 @@ export const resolveExternalServiceInfo = (
    */
   credentialsLevel:
     service?.globalAuthStatus != null &&
-    service.globalAuthStatus !== 'SIGNED_IN' &&
+    service.globalAuthStatus !== ExternalServiceAuthStatus.SignedIn &&
     service.userLevelAuthStatus == null
       ? ExternalServiceCredentialsLevel.Global
       : ExternalServiceCredentialsLevel.User,

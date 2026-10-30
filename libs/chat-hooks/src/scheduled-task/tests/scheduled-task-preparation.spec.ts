@@ -71,20 +71,20 @@ describe('scheduled task request preparation', () => {
       errors: { dayOfWeek: ScheduledTaskValidationErrorCode.DayOfWeekInvalid },
     });
   });
-});
 
-it('deduplicates multi-skill requests in order and preserves all skills on hydration', () => {
-  const skillUrls = [
-    'skills/public/report',
-    'skills/public/summary',
-    'skills/public/report',
-  ];
-  const result = prepareScheduledTaskCreateBody(
-    { ...values, skillUrls },
-    { ...options, isSkillsSupported: true },
-  );
-  expect(result).toMatchObject({
-    ok: true,
-    body: { skillUrls: skillUrls.slice(0, 2) },
+  it('deduplicates multi-skill requests in order and preserves all skills on hydration', () => {
+    const skillUrls = [
+      'skills/public/report',
+      'skills/public/summary',
+      'skills/public/report',
+    ];
+    const result = prepareScheduledTaskCreateBody(
+      { ...values, skillUrls },
+      { ...options, isSkillsSupported: true },
+    );
+    expect(result).toMatchObject({
+      ok: true,
+      body: { skillUrls: skillUrls.slice(0, 2) },
+    });
   });
 });

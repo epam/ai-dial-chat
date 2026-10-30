@@ -10,6 +10,7 @@ import {
   mapPublishHistoryEntryDto,
   toPublishEntityType,
   toPublishRuleDto,
+  findSchemaDisplayName,
 } from '@epam/ai-dial-chat-hooks';
 import type {
   PublicationRule,
@@ -25,10 +26,7 @@ import {
   unpublishCatalogEntity,
 } from '../../server-api/publish.api';
 import { EntityOperation } from '../../types/entity-notification';
-import {
-  findSchemaDisplayName,
-  resolveCatalogItemEntity,
-} from '../../utils/entity-notification';
+import { resolveCatalogItemEntity } from '../../utils/entity-notification';
 import { getPublishFolderLabel } from '../../utils/publish';
 import type { useOperationNotification } from '../useOperationNotification';
 

@@ -108,11 +108,11 @@ const renderMutations = (overrides: RenderMutationsOverrides = {}) => {
   };
 };
 
-afterEach(() => {
-  vi.clearAllMocks();
-});
-
 describe('useDialFileMutations', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   describe('onCreateFolderValidate', () => {
     const parentFolder: DialFile = {
       id: 'root',

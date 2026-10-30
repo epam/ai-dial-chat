@@ -10,19 +10,25 @@ enum ElfCharacter {
   Master = 'master',
   Helper = 'helper',
 }
+
 type Vector = number[];
+
 type Sample = [seconds: number, value: Vector];
+
 type ScalarSample = [seconds: number, value: number];
+
 interface Property {
   a: number;
   k: unknown;
 }
+
 interface Shape {
   ty: string;
   nm?: string;
   it?: Shape[];
   [key: string]: unknown;
 }
+
 interface Transform {
   a: Property;
   p: Property;
@@ -30,6 +36,7 @@ interface Transform {
   r: Property;
   o: Property;
 }
+
 interface Layer {
   ty: number;
   ind: number;
@@ -41,6 +48,7 @@ interface Layer {
   ks: Transform;
   shapes: Shape[];
 }
+
 interface Contour {
   v: Vector[];
   i: Vector[];

@@ -6,10 +6,6 @@ import { PROMPTS_CLASS } from '../../../constants/public-class-names';
 import type { FavoritePromptItem } from '../../../models/favorite-prompt-item';
 import { FavoritePromptsPanel } from '../FavoritePromptsPanel';
 
-afterEach(() => {
-  vi.useRealTimers();
-});
-
 const makeItem = (
   overrides: Partial<FavoritePromptItem> = {},
 ): FavoritePromptItem => ({
@@ -32,7 +28,20 @@ const renderPanel = (
     />,
   );
 
+/*
+ * Walking up to an unlabeled container is the only way to assert a class on it:
+ * the element has no role or text of its own, and querying *by* the class would
+ * still pass with the class on the wrong node.
+ */
+const closestWithClass = (from: Element, className: string): Element | null =>
+  // eslint-disable-next-line testing-library/no-node-access -- see above
+  from.closest(`.${className}`);
+
 describe('FavoritePromptsPanel', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('renders the "My Collection" header', () => {
     renderPanel();
 
@@ -55,7 +64,9 @@ describe('FavoritePromptsPanel', () => {
     renderPanel({ favorites: [makeItem()] });
 
     expect(screen.getByText('Summarizer')).toBeTruthy();
-    const star = screen.getByRole('button', { name: 'Remove from favorites' });
+    const star = screen.getByRole('button', {
+      name: 'Remove from favorites',
+    });
     expect(star.getAttribute('aria-pressed')).toBe('true');
   });
 
@@ -139,26 +150,17 @@ describe('FavoritePromptsPanel', () => {
 
     expect(screen.queryByText('Summarizes long text')).toBeNull();
   });
-});
 
-/*
- * Walking up to an unlabeled container is the only way to assert a class on it:
- * the element has no role or text of its own, and querying *by* the class would
- * still pass with the class on the wrong node.
- */
-const closestWithClass = (from: Element, className: string): Element | null =>
-  // eslint-disable-next-line testing-library/no-node-access -- see above
-  from.closest(`.${className}`);
+  describe('FavoritePromptsPanel — public class names', () => {
+    it('stamps the panel root', () => {
+      renderPanel();
 
-describe('FavoritePromptsPanel — public class names', () => {
-  it('stamps the panel root', () => {
-    renderPanel();
-
-    expect(
-      closestWithClass(
-        screen.getByText('My Collection'),
-        PROMPTS_CLASS.favoritesPanel,
-      ),
-    ).toBeTruthy();
+      expect(
+        closestWithClass(
+          screen.getByText('My Collection'),
+          PROMPTS_CLASS.favoritesPanel,
+        ),
+      ).toBeTruthy();
+    });
   });
 });

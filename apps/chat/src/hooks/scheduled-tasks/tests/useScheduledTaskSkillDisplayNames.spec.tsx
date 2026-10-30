@@ -82,30 +82,30 @@ describe('scheduled task skill display', () => {
     rerender({ urls: undefined });
     expect(result.current).toEqual([]);
   });
-});
 
-it('resolves listed and missing references independently in order', async () => {
-  listing.mockReturnValue({
-    skills: [{ url: 'skills/public/report', name: 'Report' }],
-    publicSkills: [],
+  it('resolves listed and missing references independently in order', async () => {
+    listing.mockReturnValue({
+      skills: [{ url: 'skills/public/report', name: 'Report' }],
+      publicSkills: [],
+    });
+    metadata.mockImplementation((_bucket, path) =>
+      path === 'summary'
+        ? Promise.resolve({ name: 'Summary' })
+        : Promise.reject(new Error('Deleted')),
+    );
+    const { result } = renderHook(() =>
+      useScheduledTaskSkillDisplayNames([
+        'skills/public/report',
+        'skills/public/summary',
+        'skills/public/deleted',
+      ]),
+    );
+    await waitFor(() =>
+      expect(result.current).toEqual([
+        'Report',
+        'Summary',
+        'skills/public/deleted',
+      ]),
+    );
   });
-  metadata.mockImplementation((_bucket, path) =>
-    path === 'summary'
-      ? Promise.resolve({ name: 'Summary' })
-      : Promise.reject(new Error('Deleted')),
-  );
-  const { result } = renderHook(() =>
-    useScheduledTaskSkillDisplayNames([
-      'skills/public/report',
-      'skills/public/summary',
-      'skills/public/deleted',
-    ]),
-  );
-  await waitFor(() =>
-    expect(result.current).toEqual([
-      'Report',
-      'Summary',
-      'skills/public/deleted',
-    ]),
-  );
 });

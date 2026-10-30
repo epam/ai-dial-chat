@@ -112,12 +112,13 @@ The provider SHALL NOT fall back to `config.themes[0].id`; the only fallback is 
 
 ### Requirement: Applying a theme clears the previously applied custom properties
 
-`applyThemeColors` (`apps/chat/src/utils/apply-theme-colors.ts`) SHALL remove every CSS custom
+`applyThemeColors` (`libs/chat-hooks/src/shared/theme-colors.ts`, exported from `@epam/ai-dial-chat-hooks`
+and its `./utils` subpath; `ThemeProvider` passes it the resolved theme's `colors`) SHALL remove every CSS custom
 property it previously set on the target element before writing the next theme's properties, using
 `element.style.removeProperty`. The set of previously written property names SHALL be tracked per
 target element.
 
-Calling `applyThemeColors` with no theme SHALL clear the previously applied properties and write
+Calling `applyThemeColors` with no colors SHALL clear the previously applied properties and write
 nothing, returning the element to the stylesheet's own values.
 
 #### Scenario: Keys from the previous theme do not leak
@@ -128,7 +129,7 @@ nothing, returning the element to the stylesheet's own values.
 
 #### Scenario: Clearing restores the stylesheet defaults
 
-- **WHEN** a theme has been applied and `applyThemeColors` is then called with no theme
+- **WHEN** a theme has been applied and `applyThemeColors` is then called with no colors
 - **THEN** every property that theme wrote is removed from the element's inline style
 
 #### Scenario: A theme with an unrecognised key still applies

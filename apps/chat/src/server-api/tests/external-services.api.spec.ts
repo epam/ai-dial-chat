@@ -24,11 +24,11 @@ const mockResponse = (body: unknown) => {
   return fetchMock;
 };
 
-afterEach(() => {
-  vi.unstubAllGlobals();
-});
-
 describe('external-service generated client adapter', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('lists the services of an application with their OAuth client settings using an encoded application id', async () => {
     const services = [
       {

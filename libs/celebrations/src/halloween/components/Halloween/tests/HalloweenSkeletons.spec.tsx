@@ -12,6 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { animateSkeletons } from '../../../utils/halloween-skeleton-animation';
 import { getSkeletonTargets } from '../../../utils/halloween-skeleton-targets';
 import HalloweenSkeletons from '../HalloweenSkeletons';
+
 const state = vi.hoisted(() => ({
   mobile: false,
   reduced: false,
@@ -46,39 +47,41 @@ vi.mock('../../../utils/halloween-skeleton-targets', () => ({
   getSkeletonTargets: vi.fn(),
 }));
 const descriptor = Object.getOwnPropertyDescriptor(
-    Element.prototype,
-    'animate',
-  ),
-  stop = vi.fn();
-beforeEach(() => {
-  vi.clearAllMocks();
-  state.mobile = false;
-  state.reduced = false;
-  state.listeners.clear();
-  Object.defineProperty(Element.prototype, 'animate', {
-    configurable: true,
-    value: vi.fn(),
-  });
-  vi.stubGlobal('ResizeObserver', class {});
-  vi.mocked(animateSkeletons).mockReturnValue(stop);
-  vi.mocked(getSkeletonTargets).mockReturnValue({
-    width: 1280,
-    height: 900,
-    rtl: false,
-    composer: {
-      element: document.createElement('div'),
-      rect: new DOMRect(340, 720, 600, 120),
-    },
-  });
-});
-afterEach(() => {
-  vi.restoreAllMocks();
-  vi.unstubAllGlobals();
-  if (descriptor)
-    Object.defineProperty(Element.prototype, 'animate', descriptor);
-  else Reflect.deleteProperty(Element.prototype, 'animate');
-});
+  Element.prototype,
+  'animate',
+);
+const stop = vi.fn();
 describe('HalloweenSkeletons', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    state.mobile = false;
+    state.reduced = false;
+    state.listeners.clear();
+    Object.defineProperty(Element.prototype, 'animate', {
+      configurable: true,
+      value: vi.fn(),
+    });
+    vi.stubGlobal('ResizeObserver', class {});
+    vi.mocked(animateSkeletons).mockReturnValue(stop);
+    vi.mocked(getSkeletonTargets).mockReturnValue({
+      width: 1280,
+      height: 900,
+      rtl: false,
+      composer: {
+        element: document.createElement('div'),
+        rect: new DOMRect(340, 720, 600, 120),
+      },
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    if (descriptor)
+      Object.defineProperty(Element.prototype, 'animate', descriptor);
+    else Reflect.deleteProperty(Element.prototype, 'animate');
+  });
+
   it.each([true, false])(
     'renders the bounded cast and composer outline without changing input, mobile=%s',
     async (mobile) => {

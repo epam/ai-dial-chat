@@ -66,22 +66,22 @@ const wrapper = ({ children }: { children: ReactNode }) => (
   <UserConfigProvider>{children}</UserConfigProvider>
 );
 
-beforeEach(() => {
-  vi.clearAllMocks();
-  contextMocks.userSub = 'user-1';
-  mockGetUserConfig.mockResolvedValue(fullConfig as never);
-  mockPinConversation.mockResolvedValue(undefined);
-  mockPinProject.mockResolvedValue(undefined);
-  mockUpdateInstalledToolset.mockResolvedValue(undefined);
-  mockUpdateInstalledDeployment.mockResolvedValue(undefined);
-  mockUpdateSelectedDeployment.mockResolvedValue(undefined);
-});
-
-afterEach(() => {
-  vi.restoreAllMocks();
-});
-
 describe('UserConfigContext', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    contextMocks.userSub = 'user-1';
+    mockGetUserConfig.mockResolvedValue(fullConfig as never);
+    mockPinConversation.mockResolvedValue(undefined);
+    mockPinProject.mockResolvedValue(undefined);
+    mockUpdateInstalledToolset.mockResolvedValue(undefined);
+    mockUpdateInstalledDeployment.mockResolvedValue(undefined);
+    mockUpdateSelectedDeployment.mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   describe('initial load', () => {
     it('transitions status from Loading to Ready on successful fetch', async () => {
       const { result } = renderHook(() => useUserConfig(), { wrapper });

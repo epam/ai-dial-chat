@@ -14,9 +14,9 @@ const created = channel('undici:request:create');
 const completed = channel('undici:request:trailers');
 const failed = channel('undici:request:error');
 
-afterEach(stopCoreRequestTiming);
-
 describe('Core wire timing', () => {
+  afterEach(stopCoreRequestTiming);
+
   it('attributes the full transfer to its original request context', () => {
     initializeCoreRequestTiming();
     initializeCoreRequestTiming();

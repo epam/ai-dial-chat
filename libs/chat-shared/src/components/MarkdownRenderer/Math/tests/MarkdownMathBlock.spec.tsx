@@ -59,16 +59,25 @@ const simulateOverflow = (
   } as DOMRect);
 };
 
-beforeEach(() => {
-  vi.stubGlobal('ResizeObserver', ResizeObserverMock);
-});
-
-afterEach(() => {
-  vi.restoreAllMocks();
-  vi.unstubAllGlobals();
-});
+/*
+ * Walking up to an unlabeled container is the only way to assert a class on it:
+ * the element has no role or text of its own, and querying *by* the class would
+ * still pass with the class on the wrong node.
+ */
+const closestWithClass = (from: Element, className: string): Element | null =>
+  // eslint-disable-next-line testing-library/no-node-access -- see above
+  from.closest(`.${className}`);
 
 describe('MarkdownMathBlock', () => {
+  beforeEach(() => {
+    vi.stubGlobal('ResizeObserver', ResizeObserverMock);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
   it('renders the formula in a scrollable container without adding a tab stop when it fits', () => {
     const { scrollContainer } = renderMathBlock();
 
@@ -92,30 +101,21 @@ describe('MarkdownMathBlock', () => {
     );
     expect(scrollContainer.getAttribute('tabindex')).toBe('0');
   });
-});
 
-/*
- * Walking up to an unlabeled container is the only way to assert a class on it:
- * the element has no role or text of its own, and querying *by* the class would
- * still pass with the class on the wrong node.
- */
-const closestWithClass = (from: Element, className: string): Element | null =>
-  // eslint-disable-next-line testing-library/no-node-access -- see above
-  from.closest(`.${className}`);
+  describe('MarkdownMathBlock — public class names', () => {
+    it('stamps the scrolling box around the formula', () => {
+      render(
+        <MarkdownMathBlock scrollRegionAriaLabel="Scrollable formula">
+          <span>formula</span>
+        </MarkdownMathBlock>,
+      );
 
-describe('MarkdownMathBlock — public class names', () => {
-  it('stamps the scrolling box around the formula', () => {
-    render(
-      <MarkdownMathBlock scrollRegionAriaLabel="Scrollable formula">
-        <span>formula</span>
-      </MarkdownMathBlock>,
-    );
-
-    expect(
-      closestWithClass(
-        screen.getByText('formula'),
-        CHAT_SHARED_CLASS.mathBlock,
-      ),
-    ).toBeTruthy();
+      expect(
+        closestWithClass(
+          screen.getByText('formula'),
+          CHAT_SHARED_CLASS.mathBlock,
+        ),
+      ).toBeTruthy();
+    });
   });
 });

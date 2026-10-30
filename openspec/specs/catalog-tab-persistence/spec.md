@@ -136,8 +136,9 @@ RTL impact: none.
 available tab ids supplied to that app-owned hook SHALL be the `availableTabIds`
 returned by `useCatalogItems` (`apps/chat/src/hooks/useCatalogItems/useCatalogItems.ts`),
 which derives them through `deriveAvailableTabIds(visibleCatalogItems, CATALOG_TAB_ORDER)`
-from `@epam/ai-dial-chat-hooks` (`CATALOG_TAB_ORDER` in `apps/chat/src/types/catalog.ts`:
-Model, Agent, Toolset, Skill, Prompt). The pure helper SHALL include only entity types
+from `@epam/ai-dial-chat-hooks` (`CATALOG_TAB_ORDER` exported from `@epam/ai-dial-catalog`,
+`libs/catalog/src/utils/catalog-tabs.ts`: Model, Agent, Toolset, Skill, Prompt — the same order
+`buildCatalogTabs` uses). The pure helper SHALL include only entity types
 present in the current visible items, preserve the supplied tab order, and read
 no storage, context, route, translation, or feature flag.
 

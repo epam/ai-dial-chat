@@ -44,9 +44,12 @@ export const toDialExternalServiceAppId = (appId: string): string =>
     : appId;
 
 type DialExternalServiceData = components['schemas']['ExternalServiceData'];
+
 type DialExternalServiceDefinition = components['schemas']['ExternalService'];
+
 type DialExternalServiceSigninBody =
   operations['externalServiceSignIn']['requestBody']['content']['application/json'];
+
 type DialExternalServiceSignoutBody =
   operations['externalServiceSignOut']['requestBody']['content']['application/json'];
 
