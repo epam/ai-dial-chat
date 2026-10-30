@@ -506,6 +506,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
               temperatureHint={chatSettings.temperatureHint}
               saveLabel={chatSettings.saveLabel}
               saveDisabledTooltip={chatSettings.saveDisabledTooltip}
+              colors={chatSettings.modalColors}
             />
           )}
         </>

@@ -19,7 +19,7 @@ Use **logical** direction utilities everywhere text or element direction should 
 | `ml-*` / `mr-*`                          | `ms-*` / `me-*`               |
 | `pl-*` / `pr-*`                          | `ps-*` / `pe-*`               |
 | `text-left` / `text-right`               | `text-start` / `text-end`     |
-| `left-*` / `right-*`                     | `start-*` / `end-*`           |
+| `left-*` / `right-*`                     | `inset-s-*` / `inset-e-*`     |
 | `border-l-*` / `border-r-*`              | `border-s-*` / `border-e-*`   |
 | `rounded-l-*` / `rounded-r-*`            | `rounded-s-*` / `rounded-e-*` |
 | one-sided `inset-x-*`                    | `inset-inline-start/end-*`    |

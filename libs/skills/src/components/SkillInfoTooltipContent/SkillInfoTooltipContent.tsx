@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   Button,
   ButtonAppearance,
@@ -11,6 +11,7 @@ import { IconEye, IconLock, IconTrash } from '@tabler/icons-react';
 import type { FC } from 'react';
 import type { SkillInfoTooltipContentProps } from '../../models/skill-info-tooltip-content-props';
 import { SkillUnresolvedReason } from '../../types/skill-unresolved-reason';
+import styles from './SkillInfoTooltipContent.module.scss';
 
 /** Inner content of a skill's interactive tooltip: the description above a "View details" link action, the unsupported-model message alone, or an unresolved-skill message alone. */
 export const SkillInfoTooltipContent: FC<SkillInfoTooltipContentProps> = ({
@@ -23,6 +24,7 @@ export const SkillInfoTooltipContent: FC<SkillInfoTooltipContentProps> = ({
   onViewDetails,
   viewDetailsTabIndex,
   textClassName = 'dial-tiny-text',
+  colors,
 }) => {
   /*
    * An unresolved url replaces the whole content: an icon plus a fixed
@@ -37,14 +39,26 @@ export const SkillInfoTooltipContent: FC<SkillInfoTooltipContentProps> = ({
     const message = isDeleted ? deletedMessage : notSharedMessage;
 
     return (
-      <div className="flex flex-row items-center gap-2">
+      <div
+        className="flex flex-row items-center gap-2"
+        style={buildCssVars({
+          '--sk-tooltip-unresolved-icon': colors?.unresolvedIcon,
+          '--sk-tooltip-unresolved-message': colors?.unresolvedMessage,
+        })}
+      >
         <Icon
           size={DIAL_ICON_SIZE.MD}
           stroke={DIAL_KIT_ICON_STROKE}
           aria-hidden
-          className="shrink-0 text-secondary"
+          className={mergeClasses('shrink-0', styles.unresolvedIcon)}
         />
-        <p className={mergeClasses(textClassName, 'text-start text-primary')}>
+        <p
+          className={mergeClasses(
+            textClassName,
+            'text-start',
+            styles.unresolvedMessage,
+          )}
+        >
           {message}
         </p>
       </div>

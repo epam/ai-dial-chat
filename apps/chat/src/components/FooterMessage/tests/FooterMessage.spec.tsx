@@ -233,11 +233,11 @@ describe('FooterMessage', () => {
       mockState.appVersion = '0.45.0';
       renderFooter();
 
-      /* `end-*` is a logical inset resolved against this element's own
+      /* `inset-e-*` is a logical inset resolved against this element's own
        * direction — a `dir` here would defeat the RTL corner flip. */
       const label = screen.getByRole('paragraph');
       expect(label?.hasAttribute('dir')).toBe(false);
-      expect(label?.className).toContain('desktop:end-8');
+      expect(label?.className).toContain('desktop:inset-e-8');
     });
 
     it('keeps the label on its own line below the message on mobile', () => {

@@ -1,0 +1,22 @@
+/* Declared in this order so a selected row keeps its tint, and hover/focus win over it. */
+.focusedRow {
+  background-color: var(
+    --cat-content-tree-row-hover-bg,
+    var(--bg-control-accent-alpha-hover, #2764d924)
+  );
+}
+
+.selectedRow {
+  background-color: var(
+    --cat-content-tree-row-selected-bg,
+    var(--bg-control-accent-alpha-active, #2764d933)
+  );
+}
+
+.row:hover,
+.row:focus-visible {
+  background-color: var(
+    --cat-content-tree-row-hover-bg,
+    var(--bg-control-accent-alpha-hover, #2764d924)
+  );
+}

@@ -191,7 +191,7 @@ const DialFileManagerPage: FC = () => {
       singleFileTitle: t(DialFileManagerI18nKeys.ConflictSingleTitle),
       multipleFilesTitle: t(DialFileManagerI18nKeys.ConflictMultipleTitle),
       actionLabels: {
-        replace: t(DialFileManagerI18nKeys.ConflictReplace),
+        replace: t(ButtonsI18nKeys.Replace),
         duplicate: t(ButtonsI18nKeys.Duplicate),
         cancel: t(ButtonsI18nKeys.Cancel),
       },
@@ -218,7 +218,7 @@ const DialFileManagerPage: FC = () => {
   const labels: DialFileManagerShellLabels = useMemo(
     () => ({
       errorMessage: t(DialFileManagerI18nKeys.Error),
-      retryLabel: t(DialFileManagerI18nKeys.Retry),
+      retryLabel: t(ButtonsI18nKeys.Retry),
       hiddenFilesLabel: t(DialFileManagerI18nKeys.HiddenFiles),
       showHiddenFilesLabel: t(DialFileManagerI18nKeys.ShowHiddenFiles),
       hideHiddenFilesLabel: t(DialFileManagerI18nKeys.HideHiddenFiles),

@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ScheduledTaskDetailsSummary } from '../ScheduledTaskDetailsSummary';
+import styles from '../ScheduledTaskDetailsSummary.module.scss';
 
 /* Captures every mock-rendered MDMessageViewer's props so label forwarding is assertable. */
 const viewerCalls = vi.hoisted(() => [] as Array<Record<string, unknown>>);
@@ -155,10 +156,10 @@ describe('ScheduledTaskDetailsSummary', () => {
     );
 
     expect(screen.getByText('Model').className).toContain('dial-tiny-text');
-    expect(screen.getByText('Model').className).toContain('text-secondary');
+    expect(screen.getByText('Model').className).toContain(styles.fieldLabel);
     expect(screen.getByText('GPT-5.1').className).toContain('dial-small-text');
     expect(screen.getByText('Skill').className).toContain('dial-tiny-text');
-    expect(screen.getByText('Skill').className).toContain('text-secondary');
+    expect(screen.getByText('Skill').className).toContain(styles.fieldLabel);
   });
 
   it('forwards the supplied markdown labels to the default renderer, omitting them otherwise', () => {
@@ -195,7 +196,7 @@ describe('ScheduledTaskDetailsSummary', () => {
     });
   });
 
-  it('defaults the built-in viewer to the small 14/20 scale and forwards a host map wholesale', () => {
+  it('defaults the built-in viewer to the small 14/20 scale and merges a host map over it', () => {
     render(
       <ScheduledTaskDetailsSummary
         modelLabel="Model"
@@ -216,7 +217,32 @@ describe('ScheduledTaskDetailsSummary', () => {
         instructionsClassNames={{ p: 'custom-p' }}
       />,
     );
-    expect(viewerCalls.at(-1)?.classNames).toEqual({ p: 'custom-p' });
+    expect(viewerCalls.at(-1)?.classNames).toMatchObject({
+      p: 'custom-p',
+      h1: expect.stringContaining('dial-small-semi-text'),
+    });
+  });
+
+  it('takes the built-in viewer type step from the typography styles', () => {
+    render(
+      <ScheduledTaskDetailsSummary
+        modelLabel="Model"
+        instructionsLabel="Instructions"
+        instructionsMarkdown="plain instructions"
+        styles={{
+          typography: {
+            instructionsHeadingClassName: 'custom-heading',
+            instructionsTextClassName: 'custom-text',
+          },
+        }}
+      />,
+    );
+    const classNames = viewerCalls.at(-1)?.classNames as
+      Record<string, string> | undefined;
+    expect(classNames?.h2).toContain('custom-heading');
+    expect(classNames?.h2).not.toContain('dial-small-semi-text');
+    expect(classNames?.ul).toContain('custom-text');
+    expect(classNames?.ul).not.toContain('dial-small-text');
   });
 
   it('lets a host override the field label and value classes', () => {

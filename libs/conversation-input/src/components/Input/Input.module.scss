@@ -87,6 +87,22 @@
   );
 }
 
+.selectionHighlight {
+  background-color: var(
+    --ci-selection-highlight-bg,
+    var(--bg-control-accent-alpha-active, #2764d933)
+  );
+}
+
+/*
+ * The dropdown panel when `modelPickerOverlay` supplies the content. It
+ * renders in a portal, so the var arrives through `listStyle`; the doubled
+ * class outranks the kit panel's own single-class background.
+ */
+.modelOverlayPanel.modelOverlayPanel {
+  background-color: var(--ci-model-overlay-bg, var(--bg-layer-raised, #fcfcfc));
+}
+
 .modelSelectorButton {
   .modelSelectorCaret {
     color: var(--ci-model-selector-caret-color, var(--text-primary, #161b2d));

@@ -658,8 +658,8 @@ describe('DialFileManagerModal', () => {
     expect(fileManager.getAttribute('data-grid-class')).toBe(
       'size-full gap-6 px-6 py-4',
     );
-    expect(fileManager.getAttribute('data-tree-container-class')).toBe(
-      'min-h-0 h-full w-[360px] shrink-0 border-e border-tertiary bg-layer-raised',
+    expect(fileManager.getAttribute('data-tree-container-class')).toMatch(
+      /^min-h-0 h-full w-\[360px\] shrink-0 border-e \S*tree/,
     );
     expect(fileManager.getAttribute('data-grid-layout')).toBe('normal');
     expect(fileManager.getAttribute('data-show-hidden-files-toggle')).toBe(
@@ -688,7 +688,7 @@ describe('DialFileManagerModal', () => {
       'dialFileManager.conflictMultipleTitle',
     );
     expect(manager.getAttribute('data-conflict-replace')).toBe(
-      'dialFileManager.conflictReplace',
+      'buttons.replace',
     );
     expect(manager.getAttribute('data-conflict-duplicate')).toBe(
       'buttons.duplicate',
@@ -706,7 +706,7 @@ describe('DialFileManagerModal', () => {
 
     const dialog = screen.getByRole('dialog');
     expect(dialog.classList.contains('h-[min(900px,100dvh)]!')).toBe(true);
-    expect(dialog.classList.contains('bg-layer-raised!')).toBe(true);
+    expect(dialog.className).toMatch(/popup/);
     expect(dialog.classList.contains('max-w-[1600px]!')).toBe(true);
     expect(dialog.classList.contains('mobile:h-full!')).toBe(true);
     expect(dialog.classList.contains('mobile:max-w-full!')).toBe(true);
@@ -858,7 +858,7 @@ describe('DialFileManagerModal', () => {
     }).parentElement;
     /* eslint-enable testing-library/no-node-access */
     expect(surface?.style.getPropertyValue('--dfms-surface')).toBe(
-      'var(--bg-layer-raised)',
+      'var(--fmam-bg, var(--bg-layer-raised, #fcfcfc))',
     );
   });
 

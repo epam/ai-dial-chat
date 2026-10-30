@@ -245,19 +245,17 @@ const NewConversationComposer: FC<Props> = ({
   );
 
   const isMobile = useIsMobile();
-  /* One display step down on a phone, where Display 1 leaves a short name
-     taking the whole width. */
   const composerStyles: ConversationInputStyles = useMemo(
     () => ({
       ...inputStyles,
       typography: {
-        welcomeClassName: isMobile
-          ? 'dial-display2-text'
-          : 'dial-display1-text',
+        /* The greeting is light 36px by design; every kit `dial-display*-text`
+           step is semibold, so no scale class matches it. */
+        welcomeClassName: 'font-light text-4xl',
         ...inputStyles?.typography,
       },
     }),
-    [inputStyles, isMobile],
+    [inputStyles],
   );
 
   const [isSending, setIsSending] = useState(false);
@@ -555,7 +553,7 @@ const NewConversationComposer: FC<Props> = ({
           ([#9036](https://github.com/epam/ai-dial-chat/issues/9036)). */}
       <div
         className={mergeClasses(
-          '[container-type:inline-size] relative flex flex-auto shrink-0 flex-col items-center overflow-hidden',
+          '@container relative flex flex-auto shrink-0 flex-col items-center overflow-hidden',
           isInlineLayout && 'justify-end px-6',
           isWelcomeLayout &&
             'justify-center px-4 py-14 desktop:px-8 desktop:py-16',
@@ -629,7 +627,7 @@ const NewConversationComposer: FC<Props> = ({
           isModelSelectorDisabled={isModelSelectorDisabled}
           isSendDisabled={isDisabledSendEnabled || isSkillUnsupported}
           modelSelectorLabels={modelSelectorLabels}
-          addMenuTitle={t(ConversationI18nKeys.AddMenuTitle)}
+          addMenuTitle={t(ButtonsI18nKeys.Add)}
           sendLabel={t(ChatI18nKeys.SendMessage)}
           sendTooltip={t(ChatI18nKeys.SendMessage)}
           stopLabel={t(ChatI18nKeys.StopStreaming)}
@@ -715,7 +713,7 @@ const NewConversationComposer: FC<Props> = ({
           emptyTitle={t(DialFileManagerI18nKeys.Empty)}
           emptyDescription=""
           errorMessage={t(DialFileManagerI18nKeys.Error)}
-          retryLabel={t(DialFileManagerI18nKeys.Retry)}
+          retryLabel={t(ButtonsI18nKeys.Retry)}
           hiddenFilesLabel={t(DialFileManagerI18nKeys.HiddenFiles)}
           showHiddenFilesLabel={t(DialFileManagerI18nKeys.ShowHiddenFiles)}
           hideHiddenFilesLabel={t(DialFileManagerI18nKeys.HideHiddenFiles)}

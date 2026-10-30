@@ -135,7 +135,7 @@ const SigninRow: FC<SigninRowProps> = ({
             <span>{rowState.error}</span>
             <LinkButton
               className="h-auto"
-              label={t(ToolsetSigninI18nKeys.ErrorRetry)}
+              label={t(ButtonsI18nKeys.Retry)}
               onClick={() => onLogin(event, info)}
             />
           </>

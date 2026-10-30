@@ -49,6 +49,7 @@ import { getScheduledTaskDetailRoute } from '../../constants/routes';
 import {
   ScheduledTasksI18nKeys,
   SkillSelectorI18nKeys,
+  ButtonsI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -361,7 +362,7 @@ const ScheduledTaskEditPage: FC = () => {
           title={t(ScheduledTasksI18nKeys.EditLoadErrorLabel)}
           action={
             <GhostButton
-              label={t(ScheduledTasksI18nKeys.ListRetryLabel)}
+              label={t(ButtonsI18nKeys.Retry)}
               onClick={handleRetry}
             />
           }
@@ -383,10 +384,7 @@ const ScheduledTaskEditPage: FC = () => {
           }
           title={t(ScheduledTasksI18nKeys.EditInvalidScheduleLabel)}
           action={
-            <GhostButton
-              label={t(ScheduledTasksI18nKeys.CreateBackButtonLabel)}
-              onClick={handleBack}
-            />
+            <GhostButton label={t(ButtonsI18nKeys.Back)} onClick={handleBack} />
           }
         />
       </div>

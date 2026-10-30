@@ -244,9 +244,14 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
       onResizeStop={onResizeStop}
       styles={{
         ...panelStyles,
+        cssVars: {
+          ...buildCssVars({ '--ac-header-border': colors?.headerBorder }),
+          ...panelStyles?.cssVars,
+        },
         titleClassName: panelStyles?.titleClassName ?? 'dial-h3-text',
         headerClassName: mergeClasses(
-          'border-b border-tertiary',
+          'border-b',
+          styles.panelHeader,
           panelStyles?.headerClassName,
         ),
         className: mergeClasses(

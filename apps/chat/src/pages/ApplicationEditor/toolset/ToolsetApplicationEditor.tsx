@@ -301,7 +301,7 @@ const ToolsetApplicationEditor: FC = () => {
         createTitle: t(ToolsetEditorI18nKeys.CreateTitle),
         editTitle: t(ToolsetEditorI18nKeys.EditTitle),
         backAriaLabel: t(EditorI18nKeys.BackAriaLabel),
-        savingStatusLabel: t(EditorI18nKeys.SavingStatus),
+        savingStatusLabel: t(ButtonsI18nKeys.Saving),
         metadataSectionTitle: t(EditorI18nKeys.MetadataSectionTitle),
         setupSectionTitle: t(EditorI18nKeys.SetupSectionTitle),
         cancelLabel: t(ButtonsI18nKeys.Cancel),

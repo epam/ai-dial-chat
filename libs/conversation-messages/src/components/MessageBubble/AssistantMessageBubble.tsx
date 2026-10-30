@@ -116,6 +116,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   const cssVars = buildCssVars({
     '--cm-bubble-text': colors?.text,
     '--cm-starters-divider': colors?.startersDivider,
+    '--cm-timestamp-text': colors?.timestampText,
     '--cm-bubble-first-line-indent': firstLineIndent,
   });
 

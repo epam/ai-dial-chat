@@ -110,7 +110,7 @@ export const MetricCell: FC<MetricCellProps> = ({
               max={100}
               size={ElementSize.Small}
               className={mergeClasses(
-                '!h-1 w-full',
+                'h-1! w-full',
                 styles.progressTrack,
                 getProgressFillClassName(cell.status),
               )}

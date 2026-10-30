@@ -47,7 +47,7 @@ const SharePopoverContainer: FC<Props> = ({
       onAccessChange={setAccess}
       onClose={onClose}
       labels={{
-        title: t(ShareI18nKeys.Title),
+        title: t(ButtonsI18nKeys.Share),
         qrButtonLabel: t(ShareI18nKeys.QrButtonLabel),
         linkLabel: t(ButtonsI18nKeys.Link),
         anyoneWithLinkTitle: t(ShareI18nKeys.AnyoneWithLinkTitle),

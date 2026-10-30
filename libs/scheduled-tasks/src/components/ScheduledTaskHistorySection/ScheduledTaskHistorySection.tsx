@@ -132,7 +132,7 @@ export const ScheduledTaskHistorySection: FC<
     return (
       <div
         className={mergeClasses(
-          'flex max-h-[var(--st-history-max-height,70vh)] w-full max-w-full flex-col overflow-y-auto rounded-xl shadow-md',
+          'flex max-h-(--st-history-max-height,70vh) w-full max-w-full flex-col overflow-y-auto rounded-xl shadow-md',
           styles.historyCard,
           styles.cardLayout,
         )}

@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UsageLimitBannerSeverity } from '../../../models/UsageLimitBanner';
 import type { UsageLimitBannerViewProps } from '../../../models/UsageLimitBanner';
 import { UsageLimitBannerView } from '../UsageLimitBannerView';
+import styles from '../UsageLimitBannerView.module.scss';
 
 const RESET = {
   isoValue: '2026-11-01T00:00:00Z',
@@ -47,10 +48,10 @@ describe('UsageLimitBannerView', () => {
       expect(icon?.classList.contains(iconClass)).toBe(true);
 
       /* The kit variant tints the root, which the glyph inherits; the fill
-         stays on the neutral sunken layer. */
+         stays on the neutral sunken layer through the banner class, whose
+         doubled selector outranks the kit's variant background utility. */
       expect(banner.classList.contains(colorClass)).toBe(true);
-      expect(banner.classList.contains('bg-layer-sunken')).toBe(true);
-      expect(banner.className).not.toMatch(/(^|\s)bg-(warning|error)(\s|$)/);
+      expect(banner.classList.contains(styles.banner)).toBe(true);
     },
   );
 

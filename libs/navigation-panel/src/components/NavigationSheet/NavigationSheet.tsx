@@ -39,6 +39,7 @@ export const NavigationSheet: FC<NavigationSheetProps> = memo(
           '--np-avatar-bg': colors?.avatarBackground,
           '--np-avatar-text': colors?.avatarText,
           '--np-menu-active-icon': colors?.activeIcon,
+          '--np-sheet-muted-text': colors?.mutedText,
           '--np-font-family': typography?.fontFamily,
         }),
       [colors, typography?.fontFamily],
@@ -66,6 +67,7 @@ export const NavigationSheet: FC<NavigationSheetProps> = memo(
           groups={groups}
           footer={footer}
           textClassName={typography?.fontClassName}
+          avatarInitialsClassName={typography?.avatarInitialsClassName}
         />
       </NavigableBottomSheet>
     );

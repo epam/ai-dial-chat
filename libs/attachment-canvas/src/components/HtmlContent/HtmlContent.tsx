@@ -36,6 +36,8 @@ export interface HtmlContentProps {
   codeBlockTheme?: CodeBlockTheme;
   /** Typography class applied to the "Open in new tab" link in the blocked-state panel. Defaults to `'dial-body-semi-text'`. */
   openInNewTabButtonTypographyClassName?: string;
+  /** Typography class of the source-view code, forwarded to `CodeContent`. When omitted, `CodeContent` falls back to `'dial-code-text'`. */
+  codeClassName?: string;
 }
 
 /** Renders HTML content inside a sandboxed iframe, or as highlighted source when `isSourceView` is true. */
@@ -47,6 +49,7 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
     title,
     codeBlockTheme,
     openInNewTabButtonTypographyClassName = 'dial-body-semi-text',
+    codeClassName,
   }) => {
     const {
       htmlFrameBlockedLabel = 'This page cannot be displayed in preview',
@@ -218,6 +221,7 @@ export const HtmlContent: FC<HtmlContentProps> = memo(
             language: 'html',
           }}
           codeBlockTheme={codeBlockTheme}
+          codeClassName={codeClassName}
         />
       );
     }

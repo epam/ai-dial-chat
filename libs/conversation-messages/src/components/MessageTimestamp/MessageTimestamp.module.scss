@@ -1,0 +1,4 @@
+/* `--cm-timestamp-text` is set on the enclosing message bubble. */
+.time {
+  color: var(--cm-timestamp-text, var(--text-secondary, #57647a));
+}

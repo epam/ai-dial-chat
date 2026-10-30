@@ -161,8 +161,13 @@ jobs:
       - name: Install dependencies
         id: install
         run: npm ci
+      # Static output keeps the log of passing tasks (Nx hides it otherwise,
+      # and with it every warning); the formatter turns each problem into a
+      # PR annotation and lists all of them in the job's Step Summary.
       - name: Lint all projects
-        run: npm exec nx run-many -- -t lint --all
+        run: >-
+          npm exec nx run-many -- -t lint --all --output-style=static
+          -- --format="$GITHUB_WORKSPACE/tools/eslint-github-formatter.mjs"
       - name: Typecheck all projects
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: npm exec nx run-many -- -t typecheck --all

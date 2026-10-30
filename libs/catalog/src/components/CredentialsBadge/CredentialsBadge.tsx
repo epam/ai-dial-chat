@@ -50,7 +50,7 @@ export const CredentialsBadge: FC<CredentialsBadgeProps> = ({
         aria-label={loggedOutLabel}
         style={cssVars}
         className={mergeClasses(
-          'absolute -end-1 -bottom-1 shrink-0',
+          'absolute -inset-e-1 -bottom-1 shrink-0',
           className,
         )}
       >

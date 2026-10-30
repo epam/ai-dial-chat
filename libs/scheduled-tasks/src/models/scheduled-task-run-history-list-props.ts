@@ -37,6 +37,8 @@ export interface ScheduledTaskRunHistoryListColors {
   subtitleTextColor?: string;
   /** Current-run row background. Fallback: `--bg-control-accent-alpha-active`. */
   currentRunBackground?: string;
+  /** Duration text color on the current-run row. Fallback: `--text-primary`. */
+  currentRunSubtitleTextColor?: string;
   /** Unread-dot indicator fill color. Fallback: `--text-accent`. */
   unreadDotColor?: string;
 }

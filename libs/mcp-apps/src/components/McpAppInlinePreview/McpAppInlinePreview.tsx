@@ -25,6 +25,7 @@ import {
   McpAppInlinePreviewStatus,
   type McpAppHostAdapter,
   type McpAppInlinePreviewColors,
+  type McpAppInlinePreviewTypography,
   type McpAppResponseCache,
   type McpAppToolCallSeed,
   type McpAppToolRef,
@@ -64,6 +65,8 @@ export interface McpAppInlinePreviewProps {
   openedInCanvasLabel: string;
   /** Color overrides applied as CSS custom properties on the preview's root. */
   colors?: McpAppInlinePreviewColors;
+  /** Typography class overrides; each field has a kit scale default. */
+  typography?: McpAppInlinePreviewTypography;
 }
 
 /** Compact, always-visible header+frame preview of a message's matched MCP App — see `McpAppInlinePreviewProps` and the mcp-app-trigger openspec. */
@@ -81,7 +84,13 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
   isOpenedInCanvas = false,
   openedInCanvasLabel,
   colors,
+  typography,
 }) => {
+  const {
+    headerNameClassName = 'dial-tiny-lead-semi-text',
+    versionClassName = 'dial-caption-text',
+    messageClassName = 'dial-body-text',
+  } = typography ?? {};
   /* Populated once `ui/initialize` completes; reset per `cacheKey` — see mcp-app-trigger spec.md. */
   const [appInfo, setAppInfo] = useState<Implementation | undefined>(undefined);
   useEffect(() => {
@@ -104,6 +113,10 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
     '--mcpapp-preview-bg': colors?.previewBackground,
     '--mcpapp-preview-border': colors?.previewBorder,
     '--mcpapp-preview-header-border': colors?.previewHeaderBorder,
+    '--mcpapp-header-text': colors?.headerText,
+    '--mcpapp-placeholder-text': colors?.placeholderText,
+    '--mcpapp-error-icon': colors?.errorIcon,
+    '--mcpapp-error-text': colors?.errorText,
   });
 
   const { status, content, reload, attemptId } = useMcpAppInlinePreview(
@@ -144,27 +157,23 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
           text={
             appInfo != null ? (
               <>
-                <span className="dial-tiny-lead-semi-text">
-                  {match.mcpToolName}
-                </span>
+                <span className={headerNameClassName}>{match.mcpToolName}</span>
                 <span
                   aria-hidden
                   className="mx-1.5 inline-block h-3 w-0 border-s border-current align-middle"
                 />
-                <span className="dial-tiny-lead-semi-text">{appInfo.name}</span>
+                <span className={headerNameClassName}>{appInfo.name}</span>
                 {appInfo.version && (
-                  <span className="dial-caption-text ms-2">
+                  <span className={mergeClasses(versionClassName, 'ms-2')}>
                     {appInfo.version}
                   </span>
                 )}
               </>
             ) : (
-              <span className="dial-tiny-lead-semi-text">
-                {match.mcpToolName}
-              </span>
+              <span className={headerNameClassName}>{match.mcpToolName}</span>
             )
           }
-          className="text-secondary"
+          className={styles.headerText}
         />
         <div
           role="toolbar"
@@ -207,7 +216,13 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
             aria-hidden
             className="absolute inset-0 flex items-center justify-center p-4"
           >
-            <span className="dial-body-text text-center text-secondary">
+            <span
+              className={mergeClasses(
+                messageClassName,
+                'text-center',
+                styles.placeholderText,
+              )}
+            >
               {openedInCanvasLabel}
             </span>
           </div>
@@ -224,11 +239,15 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
                   size={40}
                   stroke={DIAL_KIT_ICON_STROKE}
                   aria-hidden
-                  className="text-error"
+                  className={styles.errorIcon}
                 />
                 <p
                   role="status"
-                  className="dial-body-text text-center text-primary"
+                  className={mergeClasses(
+                    messageClassName,
+                    'text-center',
+                    styles.errorText,
+                  )}
                 >
                   {loadErrorLabel}
                 </p>

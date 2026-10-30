@@ -265,6 +265,7 @@ const ConversationSourcesPanelContainer: FC = () => {
     () => ({
       ariaLabel: t(SidebarI18nKeys.AriaLabel),
       closeLabel: t(ButtonsI18nKeys.Close),
+      resizeLabel: t(SidebarI18nKeys.ResizePanel),
       searchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
       searchClearLabel: t(BasicI18nKeys.ClearSearch),
       noDataLabel: t(SidebarI18nKeys.SourcesEmptyTitle),

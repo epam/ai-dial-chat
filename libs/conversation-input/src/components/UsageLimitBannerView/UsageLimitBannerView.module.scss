@@ -1,0 +1,4 @@
+/* The doubled class outranks the kit section message's variant background. */
+.banner.banner {
+  background-color: var(--ci-usage-banner-bg, var(--bg-layer-sunken, #eef1f7));
+}

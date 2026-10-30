@@ -27,6 +27,8 @@ export interface NavigationSheetColors {
   avatarText?: string;
   /** Check-mark color marking the active option. */
   activeIcon?: string;
+  /** Text color of the user's display name on the profile page. Defaults to `--text-secondary`. */
+  mutedText?: string;
 }
 
 /** Typography overrides for the mobile navigation sheet. */
@@ -35,6 +37,8 @@ export interface NavigationSheetTypography {
   fontClassName?: string;
   /** `font-family` applied to the sheet content. */
   fontFamily?: string;
+  /** Typography class of the avatar's initials fallback. Defaults to `'dial-tiny-text'`. */
+  avatarInitialsClassName?: string;
 }
 
 /** Combined style overrides for the mobile navigation sheet. */

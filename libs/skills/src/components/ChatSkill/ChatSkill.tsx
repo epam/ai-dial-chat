@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   InteractiveTooltip,
   InteractiveTooltipTrigger,
@@ -9,6 +9,7 @@ import { SKILLS_CLASS } from '../../constants/public-class-names';
 import { SKILL_INFO_TOOLTIP_CONTENT_CLASS_NAME } from '../../constants/skill-info-tooltip';
 import type { ChatSkillProps } from '../../models/chat-skill-props';
 import { SkillInfoTooltipContent } from '../SkillInfoTooltipContent/SkillInfoTooltipContent';
+import styles from './ChatSkill.module.scss';
 
 /**
  * A used skill rendered as a `/name` chip — plain, selectable text styled to
@@ -21,9 +22,8 @@ export const ChatSkill: FC<ChatSkillProps> = ({
   description,
   isUnsupported = false,
   unresolvedReason,
-  labelClassName = 'dial-body-paragraph-text text-accent',
-  unsupportedLabelClassName = 'text-error',
-  unsupportedClassName = 'bg-error',
+  labelClassName = 'dial-body-paragraph-text',
+  colors,
   detailsTrigger = 'hover',
   onViewDetails,
   labels = {},
@@ -42,6 +42,12 @@ export const ChatSkill: FC<ChatSkillProps> = ({
    * card in its closed state.
    */
   const [tooltipGeneration, setTooltipGeneration] = useState(0);
+  const cssVars = buildCssVars({
+    '--sk-chip-label': colors?.label,
+    '--sk-chip-hover-bg': colors?.hoverBackground,
+    '--sk-chip-unsupported-label': colors?.unsupportedLabel,
+    '--sk-chip-unsupported-bg': colors?.unsupportedBackground,
+  });
   const isClickTriggered = detailsTrigger === 'click';
 
   const handleViewDetails = () => {
@@ -93,6 +99,7 @@ export const ChatSkill: FC<ChatSkillProps> = ({
           unresolvedReason={unresolvedReason}
           deletedMessage={deletedTooltipLabel}
           notSharedMessage={notSharedTooltipLabel}
+          colors={colors?.tooltip}
         />
       );
     }
@@ -138,14 +145,12 @@ export const ChatSkill: FC<ChatSkillProps> = ({
         tabIndex={0}
         className={mergeClasses(
           'relative -ms-1 -me-1 inline cursor-pointer rounded-full ps-1 pe-1 select-text',
-          isUnsupported
-            ? unsupportedClassName
-            : 'hover:bg-info focus-visible:bg-info active:bg-info',
-          isUnsupported
-            ? mergeClasses(labelClassName, unsupportedLabelClassName)
-            : labelClassName,
+          styles.chip,
+          isUnsupported && styles.unsupported,
+          labelClassName,
           SKILLS_CLASS.chip,
         )}
+        style={cssVars}
         aria-label={`/${name}`}
       >
         <span

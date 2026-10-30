@@ -29,4 +29,7 @@ export {
   sanitizeToolName,
 } from './utils/mcp-app';
 export { MCP_APPS_CLASS } from './constants/public-class-names';
-export type { McpAppInlinePreviewColors } from './models/mcp-apps';
+export type {
+  McpAppInlinePreviewColors,
+  McpAppInlinePreviewTypography,
+} from './models/mcp-apps';

@@ -49,6 +49,8 @@ import {
   AttachmentCanvasI18nKeys,
   ButtonsI18nKeys,
   ChatI18nKeys,
+  SidebarI18nKeys,
+  AttachmentsI18nKeys,
 } from '../constants/translation-keys';
 import { ActiveScheduledTaskProvider } from '../context/ActiveScheduledTaskContext';
 import { useSourcesSidebar } from '../context/SourcesSidebarContext';
@@ -585,6 +587,10 @@ const App: FC = () => {
             labels={{
               ariaLabel: t(AttachmentCanvasI18nKeys.AriaLabel),
               closeLabel: t(AttachmentCanvasI18nKeys.CloseLabel),
+              resizeLabel: t(SidebarI18nKeys.ResizePanel),
+              visualizerErrorLabel: t(
+                AttachmentCanvasI18nKeys.VisualizerLoadErrorLabel,
+              ),
               downloadLabel: t(AttachmentCanvasI18nKeys.DownloadLabel),
               unsupportedLabel: t(AttachmentCanvasI18nKeys.UnsupportedLabel),
               loadErrorLabel: t(AttachmentCanvasI18nKeys.LoadErrorLabel),
@@ -600,9 +606,7 @@ const App: FC = () => {
               htmlFrameBlockedLabel: t(
                 AttachmentCanvasI18nKeys.HtmlFrameBlocked,
               ),
-              htmlOpenInNewTabLabel: t(
-                AttachmentCanvasI18nKeys.HtmlOpenInNewTab,
-              ),
+              htmlOpenInNewTabLabel: t(AttachmentsI18nKeys.OpenInNewTab),
               htmlViewSourceLabel: t(AttachmentCanvasI18nKeys.HtmlViewSource),
               htmlViewRenderedLabel: t(
                 AttachmentCanvasI18nKeys.HtmlViewRendered,

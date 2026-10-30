@@ -139,6 +139,12 @@ import { ChatSkill } from '@epam/ai-dial-skills';
 />;
 ```
 
+`labelClassName` sets the label's type step (default
+`'dial-body-paragraph-text'`). `colors` (`ChatSkillColors`) sets `label`
+(default `--text-accent`), `hoverBackground` (default `--bg-info`, on hover,
+focus and press), `unsupportedLabel`, `unsupportedBackground`, and `tooltip`
+(`SkillInfoTooltipContentColors`) as CSS custom properties.
+
 Renders one used skill: a ui-kit `GhostButton` whose visible (and accessible)
 label is `/` followed by `name`, wrapped in the ui-kit `InteractiveTooltip`
 (`asChild`, uncontrolled, 420px max panel width scrolling past 280px, top placement flipping with
@@ -155,8 +161,9 @@ Backspace-at-start gesture.
 is clicked.
 
 While `isUnsupported` is set the chip renders in an error state: the `/{name}`
-label carries `unsupportedLabelClassName` (default `text-error`), the chip
-carries `unsupportedClassName` (default `bg-error`), and the tooltip's content
+label and chip switch to the `colors.unsupportedLabel` (default
+`--text-error`) and `colors.unsupportedBackground` (default `--bg-error`)
+colors, and the tooltip's content
 is the unsupported-model message alone (`labels.unsupportedTooltipLabel`) — no
 description paragraph and no "View details" button.
 
@@ -256,11 +263,13 @@ description paragraph and no "View details" button. That state is why
 the callback goes unused there.
 
 While `unresolvedReason` (`SkillUnresolvedReason`) is set, it takes
-precedence over `unsupportedMessage`: the content is a `dial-tiny-text
-text-primary` message (`deletedMessage` for `SkillUnresolvedReason.Deleted`,
-`notSharedMessage` for `SkillUnresolvedReason.NotShared`) beside a
-`text-secondary` icon (`IconTrash` or `IconLock`, `DIAL_ICON_SIZE.MD`) — again
-no description paragraph and no "View details" button.
+precedence over `unsupportedMessage`: the content is a `textClassName`
+message (`deletedMessage` for `SkillUnresolvedReason.Deleted`,
+`notSharedMessage` for `SkillUnresolvedReason.NotShared`) beside an icon
+(`IconTrash` or `IconLock`, `DIAL_ICON_SIZE.MD`) — again no description
+paragraph and no "View details" button. `colors`
+(`SkillInfoTooltipContentColors`) sets `unresolvedMessage` (default
+`--text-primary`) and `unresolvedIcon` (default `--text-secondary`).
 
 `viewDetailsTabIndex` sets the "View details" button's `tabIndex`; pass `-1`
 to keep it clickable but out of the Tab sequence, as `FavoriteSkillsPanel`
@@ -539,10 +548,11 @@ a tap opens it instead.
 A live-composing mention also renders as a real `ChatSkill` chip — with
 `isUnsupported` error styling applied when the skill is not supported — via
 `HighlightedTextRange.render`, consistent with how history segments render.
-Its label takes `activeMentionLabelClassName` (default `'text-accent'`) rather
-than `historyChipLabelClassName`: it overlays the textarea's invisible text, so
-it must inherit the input's font to stay exactly as wide as that text and keep
-the native caret on the visible text. Pass color classes only.
+Its label takes no typography class (not `historyChipLabelClassName`): it
+overlays the textarea's invisible text, so it must inherit the input's font to
+stay exactly as wide as that text and keep the native caret on the visible
+text. `chipColors` (`ChatSkillColors`) recolors active mentions and history
+chips alike.
 
 Row and chip descriptions come from the listing entries the host injects —
 no per-skill fetch happens anywhere in the flow, and opening a tooltip

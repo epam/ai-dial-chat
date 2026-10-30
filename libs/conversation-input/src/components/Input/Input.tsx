@@ -187,6 +187,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
             colors?.mentionHighlightUnsupportedBg,
           '--ci-mention-highlight-unsupported-text':
             colors?.mentionHighlightUnsupportedText,
+          '--ci-selection-highlight-bg': colors?.selectionHighlightBg,
         }),
       [colors],
     );
@@ -943,7 +944,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
           styles.textarea,
           isMirrorActive && styles.textareaMentionMode,
           typography?.fontClassName || 'dial-body-paragraph-text',
-          'relative z-0 [field-sizing:content] max-h-[272px] w-full resize-none overflow-y-auto border-0 bg-transparent ps-1 pe-1 outline-hidden',
+          'relative z-0 field-sizing-content max-h-[272px] w-full resize-none overflow-y-auto border-0 bg-transparent ps-1 pe-1 outline-hidden',
           'disabled:cursor-not-allowed',
         )}
         ref={textareaRef}
@@ -1084,7 +1085,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
               styles.textarea,
               typography?.fontClassName || 'dial-body-paragraph-text',
               // Bleed room for chip edges — see `openspec/changes/archive/2026-09-25-multi-skill-message-mentions/design.md` Decision 3a.
-              'pointer-events-none absolute inset-0 z-10 max-h-[272px] w-full overflow-hidden ps-1 pe-1 [overflow-wrap:anywhere] whitespace-pre-wrap',
+              'pointer-events-none absolute inset-0 z-10 max-h-[272px] w-full overflow-hidden ps-1 pe-1 wrap-anywhere whitespace-pre-wrap',
             )}
           >
             {renderHighlightedText(
@@ -1098,7 +1099,10 @@ export const Input = forwardRef<InputHandle, InputProps>(
               <div
                 key={`selection-${index}`}
                 aria-hidden
-                className="pointer-events-none absolute rounded-sm bg-control-accent-alpha-active"
+                className={mergeClasses(
+                  'pointer-events-none absolute rounded-sm',
+                  styles.selectionHighlight,
+                )}
                 /*
                  * A measured pixel rect from `Range.getClientRects()` — see
                  * the `left`/`top` exception noted on `caretAnchor` above.
@@ -1329,7 +1333,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
             {!isInlineActionRow && chipsNode}
             <div
               className={mergeClasses(
-                'ms-auto flex flex-shrink-0 items-center gap-2',
+                'ms-auto flex shrink-0 items-center gap-2',
                 CONVERSATION_INPUT_CLASS.footerActions,
               )}
             >
@@ -1344,6 +1348,8 @@ export const Input = forwardRef<InputHandle, InputProps>(
                     onDeploymentChange={onDeploymentChange}
                     modelSelectorLabels={modelSelectorLabels}
                     menuStyles={modelMenu}
+                    nameClassName={typography?.modelSelectorNameClassName}
+                    versionClassName={typography?.modelSelectorVersionClassName}
                     isStreaming={isStreaming}
                     isMobile={isMobile}
                     isDisabled={isModelSelectorDisabled}

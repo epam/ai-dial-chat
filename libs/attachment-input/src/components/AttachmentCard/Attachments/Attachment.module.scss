@@ -120,6 +120,18 @@
 /* A non-interactive tile with a single action: the tile's own ring marks that
  * action's focus, and the kit's ring around the button is dropped so the two
  * do not stack. Out-specifies `.dial-kit-static-solid-button:focus-visible`. */
+/* The tile's own action is a full-size button laid under the corner actions,
+ * not a role on the tile, so the actions are not nested inside it. Its focus
+ * is drawn as the tile ring. */
+.tile:has(.tileAction:focus-visible) {
+  outline-style: solid;
+  outline-width: 1px;
+}
+
+.tileAction:focus-visible {
+  outline: none;
+}
+
 .tile.proxyFocus {
   &:has(:focus-visible) {
     outline-style: solid;

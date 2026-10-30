@@ -204,9 +204,7 @@ describe('PromptEditor', () => {
 
     expect(screen.getByText('promptEditor.createTitle')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'buttons.create' })).toBeTruthy();
-    expect(
-      screen.getByRole('button', { name: 'promptEditor.backButtonLabel' }),
-    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'buttons.back' })).toBeTruthy();
     expect(getPrompt).not.toHaveBeenCalled();
   });
 
@@ -238,7 +236,7 @@ describe('PromptEditor', () => {
     expect(await screen.findByRole('alert')).toBeTruthy();
     expect(screen.getByText('promptEditor.loadError')).toBeTruthy();
     expect(
-      screen.getByRole('button', { name: 'promptEditor.retryLabel' }),
+      screen.getByRole('button', { name: 'buttons.tryAgain' }),
     ).toBeTruthy();
     /* An error must not silently degrade into an empty create form. */
     expect(screen.queryByText('promptEditor.createTitle')).toBeNull();

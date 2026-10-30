@@ -71,7 +71,7 @@ Every user-visible navigation string MUST be looked up via `useTranslation().t()
 #### Scenario: Navigation keys are present in en.json
 
 - **WHEN** the locale file is inspected
-- **THEN** `en.json` contains `navigation.ariaLabel`, `navigation.catalog`, `navigation.menu`, `navigation.sidebar`, `navigation.back`, `navigation.collapseSidebar`, and `navigation.expandSidebar`
+- **THEN** `en.json` contains `navigation.ariaLabel`, `navigation.catalog`, `navigation.menu`, `navigation.sidebar`, `navigation.collapseSidebar`, and `navigation.expandSidebar`, and the back label resolves from the shared `buttons.back` (`ButtonsI18nKeys.Back`)
 
 #### Scenario: Components use the t function
 

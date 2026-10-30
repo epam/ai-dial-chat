@@ -8,7 +8,6 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ButtonsI18nKeys,
-  NavigationI18nKeys,
   ProjectsI18nKeys,
 } from '../../constants/translation-keys';
 import { useTextRefinementLabels } from '../useTextRefinementLabels';
@@ -40,7 +39,7 @@ export const useProjectCreateFormLabels = ({
 
     return {
       title: t(ProjectsI18nKeys.CreateTitle),
-      backLabel: t(NavigationI18nKeys.Back),
+      backLabel: t(ButtonsI18nKeys.Back),
       cancelLabel: t(ButtonsI18nKeys.Cancel),
       createLabel: t(ButtonsI18nKeys.Create),
       submittingLabel: t(ProjectsI18nKeys.CreateStatusCreating),

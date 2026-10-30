@@ -176,6 +176,11 @@ keeps Preview for DIAL files and supported external file sources, and hides it
 for ordinary external web pages such as `https://data.imf.org/en/datasets/IMF.RES:WEO`.
 The library does not interpret DIAL file paths or decide which viewers the host supports.
 
+A cited paragraph takes its type step from the optional `paragraphClassName`
+(default `'dial-body-paragraph-text'`) or, when the fifth
+`isCompactTypography` argument is `true`, `compactParagraphClassName`
+(default `'dial-small-paragraph-text'`).
+
 An optional trailing `fallbackGroups` parameter (default `[]`) is a pool of groups that do not belong to this message — supplied by the host for a `<cit data-id="…">` element the message's own `groups` do not resolve. It participates only in `data-id` lookup: it is never passed to sentinel injection, so it cannot shift a marker position in `processedContent`, and a colliding id always resolves from `groups` first.
 
 ```tsx
