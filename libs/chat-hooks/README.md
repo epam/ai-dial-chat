@@ -1328,6 +1328,8 @@ Also exports `DEFAULT_MAX_ARCHIVE_BYTES`, `EXPORT_APP_NAME` and `formatQuotedNam
 
 Owns completion-streaming state — per-conversation-path streaming/stoppable tracking, cross-navigation live-message buffering, stale-chunk rejection, reload-after-complete, and hard-refresh resume detection — driven entirely through an injected `ConversationStreamTransport`. The library never hardcodes an `/api` path, CSRF handling, or a `server-api` import; the host implements the transport against its own BFF/generated-client calls.
 
+The public `resumeIfAwaitingGeneration` leaves a path alone while this hook already owns its local completion stream, including the wait before its first token. Replayed load effects and return navigation therefore cannot replace that stream's buffer with an unnecessary attach/resume. Internal interruption and conflict recovery can still hand the local stream over to attach.
+
 ```tsx
 import {
   useConversationStream,
@@ -3346,9 +3348,11 @@ This is the only export that needs `@epam/ai-dial-chat-overlay`, so it lives beh
 
 Pure mappers from DIAL Core deployment/prompt/skill/toolset DTOs into `@epam/ai-dial-catalog`'s `CatalogItem`/`CatalogItemTabData` shapes. Every label is a fixed English string — i18n stays at the app edge, passed in via a `*Labels` parameter.
 
-### encodeDeploymentId / decodeDeploymentId / normalizeDeploymentId / findDeploymentByIdOrReference
+### encodeDeploymentId / decodeDeploymentId / normalizeDeploymentId / findDeploymentByIdOrReference / createDeploymentLookup
 
 `encodeDeploymentId` percent-encodes each `/`-separated segment of a deployment/application id, keeping `/` as a literal separator. `decodeDeploymentId` inverts it, passing a malformed percent-encoded segment through unchanged rather than throwing, since it decodes externally-sourced ids (the settings iframe's postMessage protocol). `normalizeDeploymentId` decodes then re-encodes, which is idempotent whether the id it receives is already percent-encoded or raw — use it instead of `encodeDeploymentId` at a boundary that cannot guarantee which form it gets (e.g. a `postMessage` payload from an embedded iframe), since encoding an already-encoded id a second time double-escapes it and the backend only ever undoes one layer. `findDeploymentByIdOrReference` finds a deployment matching an id or (fallback) `reference`.
+
+`createDeploymentLookup(deployments)` builds an index for repeated lookups against a deployment-list snapshot. It returns a resolver accepting an id, reference, `null` or `undefined`. Matches prefer exact id, then exact reference, then normalized id, preserving the first matching deployment in each category. Memoize the index and rebuild it when the deployment list changes; repeated lookups avoid scanning and normalizing the whole list again.
 
 ```ts
 import {
