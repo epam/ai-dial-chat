@@ -15,8 +15,16 @@ export interface TranscribeWithDeploymentParams {
   signal: AbortSignal;
 }
 
+/** Upload file MIME policy. */
+export enum UploadMimeTypePolicy {
+  Preserve = 'preserve',
+  Normalize = 'normalize',
+}
+
 /** Parameters for {@link useTranscribeAudio}. */
 export interface UseTranscribeAudioParams {
+  /** File upload MIME policy; defaults to preserve. */
+  uploadMimeTypePolicy?: UploadMimeTypePolicy;
   /** Already-configured generated-client instance used for the ASR-model path. */
   transcriptionApi?: Pick<TranscriptionApi, 'transcribeAudio'>;
   /** Already-configured generated-client instance used to upload the recording. */
@@ -60,6 +68,7 @@ export const useTranscribeAudio = ({
   asrModelId,
   selectedDeploymentId,
   maxSizeBytes,
+  uploadMimeTypePolicy = UploadMimeTypePolicy.Preserve,
 }: UseTranscribeAudioParams): UseTranscribeAudioResult => {
   const transcribeAudio = useCallback(
     async (file: File, signal: AbortSignal): Promise<string> => {
@@ -76,9 +85,18 @@ export const useTranscribeAudio = ({
         );
       }
       try {
+        const normalizedType = normalizeMimeType(file.type);
+        const upload =
+          uploadMimeTypePolicy === UploadMimeTypePolicy.Normalize &&
+          file.type !== normalizedType
+            ? new File([file], file.name, {
+                type: normalizedType,
+                lastModified: file.lastModified,
+              })
+            : file;
         const path = `uploads/${new Date().toISOString().slice(0, 7)}/${encodeURIComponent(file.name)}`;
         const { url } = await filesApi.uploadFile(
-          { bucket, path, file },
+          { bucket, path, file: upload },
           { signal },
         );
         signal.throwIfAborted();
@@ -126,6 +144,7 @@ export const useTranscribeAudio = ({
       asrModelId,
       selectedDeploymentId,
       maxSizeBytes,
+      uploadMimeTypePolicy,
       filesApi,
       transcriptionApi,
       transcribeWithDeployment,

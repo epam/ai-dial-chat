@@ -141,6 +141,12 @@
       "types": "./dist/mcp-apps.d.ts",
       "import": "./dist/mcp-apps.js",
       "default": "./dist/mcp-apps.js"
+    },
+    "./external-services": {
+      "@epam/source": "./src/entry-points/external-services.ts",
+      "types": "./dist/external-services.d.ts",
+      "import": "./dist/external-services.js",
+      "default": "./dist/external-services.js"
     }
   },
   "dependencies": {

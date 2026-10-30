@@ -16,6 +16,8 @@ import {
   useConversationStream,
   useToolsMenu,
 } from '@epam/ai-dial-chat-hooks';
+import { ClientGenerationStatus } from '@epam/ai-dial-chat-hooks/conversation';
+import { ActiveScheduledTaskStatus } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
 import {
   generateUUID,
   MessageRating,
@@ -56,10 +58,7 @@ import { useUser } from '../../context/auth/UserContext';
 import { useClientChannel } from '../../context/ClientChannelContext';
 import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
-import {
-  ClientGenerationStatus,
-  useGeneration,
-} from '../../context/GenerationContext';
+import { useGeneration } from '../../context/GenerationContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
@@ -79,7 +78,6 @@ import {
   getConversation as apiGetConversation,
   saveConversation,
 } from '../../server-api/conversations.api';
-import { ActiveScheduledTaskStatus } from '../../types/active-scheduled-task';
 import { ROUTES } from '../../types/routes';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
 import { conversationIdsMatch } from '../../utils/conversation-id-match';

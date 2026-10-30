@@ -1,3 +1,5 @@
+import type { ApplicationExternalServiceDto } from '@epam/ai-dial-chat-api-client';
+import { ExternalServiceLoginOutcomeType } from '@epam/ai-dial-chat-hooks';
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -6,15 +8,11 @@ import {
   ButtonsI18nKeys,
   ToolsetSigninI18nKeys,
 } from '../../../constants/translation-keys';
-import { ExternalServiceLoginOutcomeType } from '../../../hooks/externalServices/useExternalServiceLogin';
 import {
   externalServicesApi,
   offlineCredentialsApi,
 } from '../../../server-api/api-client';
-import {
-  signOutExternalService,
-  type ApplicationExternalServiceDto,
-} from '../../../server-api/external-services';
+import { signOutExternalService } from '../../../server-api/external-services';
 import { ApplicationCredentials } from '../ApplicationCredentials';
 
 const login = vi.hoisted(() => vi.fn());

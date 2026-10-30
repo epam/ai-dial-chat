@@ -2,6 +2,7 @@ import {
   AttachmentCanvasBody,
   useAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
+import { SkillFilePreviewState } from '@epam/ai-dial-chat-hooks/skill-editor';
 import { CodeBlockTheme, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   ErrorText,
@@ -17,7 +18,6 @@ import {
 } from '../../constants/translation-keys';
 import { useTheme } from '../../context/ThemeContext';
 import { usePdfPreviewLoader } from '../../hooks/attachment/usePdfPreviewLoader';
-import { SkillFilePreviewState } from '../../types/skill-file-preview';
 import { ThemeId } from '../../types/theme-id';
 import { configurePdfWorker } from '../../utils/pdf';
 

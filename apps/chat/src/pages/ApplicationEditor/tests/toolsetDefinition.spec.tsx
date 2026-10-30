@@ -90,7 +90,9 @@ vi.mock('@epam/ai-dial-toolset-editor', async (importOriginal) => {
     await importOriginal<typeof import('@epam/ai-dial-toolset-editor')>();
   const { useState } = await import('react');
   const { ToolsetAuthTypes, ToolsetCredentialsLevel, WithLogin } =
-    await import('@epam/ai-dial-chat-hooks');
+    await vi.importActual<typeof import('@epam/ai-dial-chat-hooks')>(
+      '@epam/ai-dial-chat-hooks',
+    );
 
   interface StubProps {
     initialForm: { name: string; version: string };
