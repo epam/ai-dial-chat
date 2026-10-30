@@ -82,11 +82,7 @@ export const AppIdentity: FC<AppIdentityProps> = ({
       style={cssVars}
     >
       <div
-        className={mergeClasses(
-          'relative flex-shrink-0',
-          logoClass,
-          iconClassName,
-        )}
+        className={mergeClasses('relative shrink-0', logoClass, iconClassName)}
       >
         <div className="size-full overflow-hidden rounded-[inherit]">
           <DeploymentIcon

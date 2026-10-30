@@ -1,10 +1,20 @@
-import type { MarkdownRendererClassNames } from '@epam/ai-dial-chat-shared';
-import { Accordion, GhostButton } from '@epam/ai-dial-ui-kit';
+import {
+  buildCssVars,
+  mergeClasses,
+  type MarkdownRendererClassNames,
+} from '@epam/ai-dial-chat-shared';
+import {
+  Accordion,
+  GhostButton,
+  LiveRegion,
+  LiveRegionElement,
+} from '@epam/ai-dial-ui-kit';
 import { ReactNode, useEffect, useState, type FC } from 'react';
 import type { ScheduledTaskDetailsSummaryStyles } from '../../models/scheduled-task-details-summary-props';
 import type { ScheduledTaskInstructionsMarkdownLabels } from '../../models/scheduled-task-instructions';
 import { ScheduledTaskDetailsSummary } from '../ScheduledTaskDetailsSummary/ScheduledTaskDetailsSummary';
 import { SectionAccordionTitle } from '../SectionAccordionTitle/SectionAccordionTitle';
+import styles from './ScheduledTaskConversationDetailsSection.module.scss';
 
 /**
  * Display state of a task conversation's own details, mapped from the host's
@@ -38,6 +48,12 @@ export interface ScheduledTaskConversationDetailsSectionLabels {
   retryLabel: string;
 }
 
+/** Color overrides for {@link ScheduledTaskConversationDetailsSection}. */
+export interface ScheduledTaskConversationDetailsSectionColors {
+  /** Text color of the unavailable/error message. Defaults to `--text-secondary`. */
+  unavailableText?: string;
+}
+
 /** Props for the {@link ScheduledTaskConversationDetailsSection} component. */
 export interface ScheduledTaskConversationDetailsSectionProps {
   /** Active schedule id — the expanded state resets whenever it changes. Omit when no schedule is active. */
@@ -54,7 +70,7 @@ export interface ScheduledTaskConversationDetailsSectionProps {
   instructionsMarkdown?: string;
   /** Renders `instructionsMarkdown` as a ReactNode. When omitted, `instructionsMarkdown` is rendered via `MDMessageViewer` (the same markdown stack chat assistant messages use). */
   renderInstructions?: (markdown: string) => ReactNode;
-  /** Class names forwarded to the summary's built-in instructions `MDMessageViewer`. Defaults to the summary's small 14/20 scale; a supplied map replaces it wholesale. Ignored when `renderInstructions` is supplied. */
+  /** Class names forwarded to the summary's built-in instructions `MDMessageViewer`. Merged key by key over the summary's small 14/20 defaults. Ignored when `renderInstructions` is supplied. */
   instructionsClassNames?: MarkdownRendererClassNames;
   /** Code-block, table and formula labels for the summary's built-in `MDMessageViewer` renderer. Ignored when `renderInstructions` is supplied. */
   markdownLabels?: ScheduledTaskInstructionsMarkdownLabels;
@@ -64,8 +80,10 @@ export interface ScheduledTaskConversationDetailsSectionProps {
   labels: ScheduledTaskConversationDetailsSectionLabels;
   /** CSS class applied to the accordion title. Defaults to `'dial-tiny-semi-text'`. */
   titleClassName?: string;
-  /** CSS class applied to the unavailable/error message. Defaults to `'dial-body-text text-secondary'`. */
+  /** Typography class applied to the unavailable/error message. Defaults to `'dial-body-text'`. */
   unavailableTextClassName?: string;
+  /** Color overrides, applied as CSS custom properties. */
+  colors?: ScheduledTaskConversationDetailsSectionColors;
 }
 
 /**
@@ -89,7 +107,8 @@ export const ScheduledTaskConversationDetailsSection: FC<
   summaryStyles,
   labels,
   titleClassName = 'dial-tiny-semi-text',
-  unavailableTextClassName = 'dial-body-text text-secondary',
+  unavailableTextClassName = 'dial-body-text',
+  colors,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -101,28 +120,45 @@ export const ScheduledTaskConversationDetailsSection: FC<
     state === ScheduledTaskConversationDetailsState.Error ||
     state === ScheduledTaskConversationDetailsState.Unavailable;
 
-  const content = isUnavailable ? (
-    <div className="flex flex-col items-start gap-2">
-      <p role="status" className={unavailableTextClassName}>
-        {labels.unavailableLabel}
-      </p>
-      {state === ScheduledTaskConversationDetailsState.Error && onRetry && (
-        <GhostButton label={labels.retryLabel} onClick={onRetry} />
+  const canRetry =
+    state === ScheduledTaskConversationDetailsState.Error && onRetry != null;
+
+  /* The status region stays mounted in every state, so a fetch that fails
+     while the section is open is announced; only its text changes. */
+  const content = (
+    <>
+      <LiveRegion
+        as={LiveRegionElement.P}
+        className={mergeClasses(
+          unavailableTextClassName,
+          styles.unavailableText,
+        )}
+        style={buildCssVars({
+          '--stcd-unavailable-text': colors?.unavailableText,
+        })}
+      >
+        {isUnavailable && labels.unavailableLabel}
+      </LiveRegion>
+      {canRetry && (
+        <div className="mt-2">
+          <GhostButton label={labels.retryLabel} onClick={onRetry} />
+        </div>
       )}
-    </div>
-  ) : (
-    <ScheduledTaskDetailsSummary
-      modelLabel={labels.modelLabel}
-      instructionsLabel={labels.instructionsLabel}
-      skillLabel={labels.skillLabel}
-      skillDisplayNames={skillDisplayNames}
-      modelDisplayName={modelDisplayName}
-      instructionsMarkdown={instructionsMarkdown}
-      renderInstructions={renderInstructions}
-      instructionsClassNames={instructionsClassNames}
-      markdownLabels={markdownLabels}
-      styles={summaryStyles}
-    />
+      {!isUnavailable && (
+        <ScheduledTaskDetailsSummary
+          modelLabel={labels.modelLabel}
+          instructionsLabel={labels.instructionsLabel}
+          skillLabel={labels.skillLabel}
+          skillDisplayNames={skillDisplayNames}
+          modelDisplayName={modelDisplayName}
+          instructionsMarkdown={instructionsMarkdown}
+          renderInstructions={renderInstructions}
+          instructionsClassNames={instructionsClassNames}
+          markdownLabels={markdownLabels}
+          styles={summaryStyles}
+        />
+      )}
+    </>
   );
 
   return (

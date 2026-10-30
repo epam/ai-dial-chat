@@ -19,10 +19,10 @@ sequenceDiagram
     BFF->>BFF: Read tx cookie, verify state + nonce
     BFF->>IDP: POST /token (code + verifier + client_secret)
     IDP-->>BFF: access_token + refresh_token + id_token
-    opt Keycloak: no usable ID-token job_title and UserInfo available
+    opt Keycloak: no usable ID-token job_title or picture and UserInfo available
         BFF->>IDP: GET /userinfo (access token)
         IDP-->>BFF: UserInfo profile (or lookup error)
-        BFF->>BFF: Copy only job_title if sub matches<br/>Ignore missing/invalid values or lookup failures
+        BFF->>BFF: Copy only missing job_title / picture URL if sub matches<br/>Inline data: picture -> store only a pic flag<br/>Ignore missing/invalid values or lookup failures
     end
     BFF->>BFF: Set session_exp = now + configured lifetime<br/>Resolve provider expiry if known<br/>Encrypt v2 payload (AES-GCM via jose)
     BFF-->>U: Set __Host-chat.sess cookie<br/>302 -> /

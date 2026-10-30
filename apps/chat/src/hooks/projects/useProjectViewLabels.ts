@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import {
   BasicI18nKeys,
   ButtonsI18nKeys,
-  NavigationI18nKeys,
   ProjectsI18nKeys,
 } from '../../constants/translation-keys';
 
@@ -18,7 +17,7 @@ export const useProjectViewLabels = (): ProjectViewLabels => {
 
   return useMemo<ProjectViewLabels>(
     () => ({
-      backLabel: t(NavigationI18nKeys.Back),
+      backLabel: t(ButtonsI18nKeys.Back),
       pinLabel: t(ButtonsI18nKeys.Pin),
       publishLabel: t(ButtonsI18nKeys.Publish),
       editLabel: t(ButtonsI18nKeys.Edit),

@@ -22,10 +22,6 @@ import {
   type ConditionalUpdateResult,
 } from '../conversation-persistence.port';
 import {
-  ConversationMessageDto,
-  ConversationMessageRole,
-} from '../dto/conversation-message.dto';
-import {
   ConversationDeletionFailureDto,
   ConversationDeletionResultDto,
 } from '../dto/delete-conversations.dto';
@@ -43,7 +39,7 @@ import { ConversationErrorCode } from '../types/conversation-error-code.enum';
 import type { MetadataResult } from '../types/conversation.types';
 import {
   buildConversationUrl,
-  getConversationName,
+  buildNewConversation,
   getConversationTitleFromName,
   getDeploymentKey,
   isApplicationDeploymentPath,
@@ -78,34 +74,13 @@ export class ConversationLifecycleService {
     deploymentId: string,
     customContent?: MessageCustomContentDto,
   ): Promise<ConversationResponseDto> {
-    const now = Date.now();
-    const uuid = generateUUID();
-    const baseName = getConversationName('New chat', firstMessage);
-    const name = baseName;
-    const conversationPath = `${deploymentId}__${baseName}__${uuid}`;
-    const folderId = `${bucket}`;
-
-    const userMessage: ConversationMessageDto = {
-      id: uuid,
-      role: ConversationMessageRole.User,
-      content: firstMessage,
-      timestamp: new Date(now).toISOString(),
-      custom_content: customContent,
-    };
-
-    const conversation: ConversationResponseDto = {
-      id: `${folderId}/${conversationPath}`,
-      folderId,
-      name,
-      model: { id: deploymentId },
-      prompt: '',
-      temperature: 1,
-      messages: [userMessage],
-      lastActivityDate: now,
-      updatedAt: now,
-      selectedAddons: [],
-      assistantModelId: deploymentId,
-    };
+    const { fileName: conversationPath, conversation } = buildNewConversation({
+      firstMessage,
+      deploymentId,
+      customContent,
+      folderId: bucket,
+      toId: (fileName) => `${bucket}/${fileName}`,
+    });
 
     try {
       const encodedConversationPath = encodeDialResourcePath(conversationPath);

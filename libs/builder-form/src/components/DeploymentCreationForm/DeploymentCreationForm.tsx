@@ -200,6 +200,7 @@ export const DeploymentCreationForm: FC<DeploymentCreationFormProps> = ({
           availableLocaleOptions={availableLocaleOptions}
           labels={labels.otherLocales}
           className={styles?.field}
+          colors={styles?.localesColors}
         />
       )}
 

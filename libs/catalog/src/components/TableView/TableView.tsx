@@ -44,7 +44,7 @@ const RowValue: FC<RowValueProps> = ({
   return (
     <span
       className={mergeClasses(
-        'min-w-0 break-words',
+        'min-w-0 wrap-break-word',
         valueClassName,
         styles.valueText,
       )}

@@ -79,6 +79,13 @@ arrives through `usePublishFlow`'s `defaultAuthor`.
 Override its copy through `labels.authorLabel`, `labels.authorPlaceholder`, and
 `labels.authorHint`.
 
+Typography comes from three class props: `summaryTitleClassName` and
+`headingClassName` (both `'dial-body-semi-text'`), and
+`calloutFolderNameClassName` (`'dial-small-paragraph-semi-text'`) for the folder
+name emphasised in the replace-warning and no-access callouts.
+`StandalonePublishPanel` forwards them as `panelSummaryTitleClassName`,
+`panelHeadingClassName` and `panelCalloutFolderNameClassName`.
+
 #### Credentials opt-in
 
 Supply `onPublishCredentialsChange` to render an opt-in checkbox below the

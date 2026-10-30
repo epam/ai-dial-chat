@@ -17,6 +17,10 @@ export interface CardTypography {
   folderLabelClassName?: string;
   /** Typography class applied to the leaf (last) folder path segment. Default: `'dial-tiny-semi-text'`. */
   folderLeafClassName?: string;
+  /** Typography class of the text in the full-description tooltip (paragraphs, lists and headings). Default: `'dial-small-text'`. */
+  descriptionTooltipClassName?: string;
+  /** Typography class of bold text in the full-description tooltip. Default: `'dial-small-semi-text'`. */
+  descriptionTooltipStrongClassName?: string;
 }
 
 /** Color overrides applied as CSS custom properties for `Card`. */

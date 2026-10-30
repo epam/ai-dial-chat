@@ -46,10 +46,26 @@ export class ProjectDetailsDto extends ProjectDto {
   @ApiProperty({
     example: '"9f2c"',
     description:
-      'Aggregate ETag of the version these details were read from; send it as `If-Match` on update and delete.',
+      'Aggregate ETag of the version these details were read from. It changes on every write, project conversation writes included.',
   })
   @IsString()
   etag!: string;
+
+  @ApiProperty({
+    example: '"3b8e0c"',
+    description:
+      'Version of the project content (`PROJECT.md`, `context/` and every other non-conversation file). A conversation write leaves it unchanged. Send it as `If-Match` on update and delete.',
+  })
+  @IsString()
+  contentVersion!: string;
+
+  @ApiProperty({
+    example: 3,
+    description: 'Number of conversations stored in the project.',
+  })
+  @IsInt()
+  @Min(0)
+  conversationCount!: number;
 
   @ApiProperty({
     example: true,

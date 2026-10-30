@@ -5,7 +5,10 @@ import type {
   MenuOverlayConfig,
 } from '@epam/ai-dial-conversation-input';
 import type { ComponentType, ReactNode } from 'react';
-import type { ChatSkillDetailsTrigger } from './chat-skill-props';
+import type {
+  ChatSkillColors,
+  ChatSkillDetailsTrigger,
+} from './chat-skill-props';
 import type { SkillListingEntry } from './favorite-skill-item';
 import type { FavoriteSkillsPanelLabels } from './favorite-skills-panel-props';
 
@@ -100,13 +103,8 @@ export interface UseSkillSelectorOverlayOptions {
    * to that line. Unset falls back to the chip's own default label class.
    */
   historyChipLabelClassName?: string;
-  /**
-   * Class applied to the label of each mention rendered in an active composer.
-   * Pass color classes only: the label inherits the input's own font, which
-   * keeps it exactly as wide as the invisible text under it. Defaults to
-   * `'text-accent'`.
-   */
-  activeMentionLabelClassName?: string;
+  /** Color overrides forwarded to every `ChatSkill` chip — active mentions and history chips alike. */
+  chipColors?: ChatSkillColors;
   /**
    * Trigger used by mentions rendered in an active composer. Unset retains
    * `ChatSkill`'s hover-and-focus default; history chips are unaffected.

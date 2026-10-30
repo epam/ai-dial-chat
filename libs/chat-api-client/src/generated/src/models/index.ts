@@ -6005,6 +6005,62 @@ export interface ProjectContextFileDto {
    */
   size: number;
 }
+/**
+ *
+ * @export
+ * @interface ProjectConversationItemDto
+ */
+export interface ProjectConversationItemDto {
+  /**
+   * Locator of the conversation, `projects/{bucket}/{projectPath}/conversations/{name}`; it is the conversation id.
+   * @type {string}
+   * @memberof ProjectConversationItemDto
+   */
+  id: string;
+  /**
+   * File name under the project `conversations/` folder.
+   * @type {string}
+   * @memberof ProjectConversationItemDto
+   */
+  name: string;
+  /**
+   * Display title: the stored body's `name`, or the title derived from the file name when the body cannot be read.
+   * @type {string}
+   * @memberof ProjectConversationItemDto
+   */
+  title: string;
+  /**
+   * Display name of the conversation's last writer, from DIAL Core.
+   * @type {string}
+   * @memberof ProjectConversationItemDto
+   */
+  author?: string;
+  /**
+   * Last update time, in epoch milliseconds.
+   * @type {number}
+   * @memberof ProjectConversationItemDto
+   */
+  updatedAt?: number;
+}
+/**
+ *
+ * @export
+ * @interface ProjectConversationListResponseDto
+ */
+export interface ProjectConversationListResponseDto {
+  /**
+   * Conversations, newest first.
+   * @type {Array<ProjectConversationItemDto>}
+   * @memberof ProjectConversationListResponseDto
+   */
+  items: Array<ProjectConversationItemDto>;
+  /**
+   * Whether the project holds more conversations than `items`.
+   * @type {boolean}
+   * @memberof ProjectConversationListResponseDto
+   */
+  hasMore: boolean;
+}
 
 /**
  *
@@ -6023,6 +6079,7 @@ export const ProjectCreateErrorCode = {
   IfMatchRequired: 'if-match-required',
   ProjectTooLarge: 'project-too-large',
   UnknownFile: 'unknown-file',
+  ProjectStorageFull: 'project-storage-full',
 } as const;
 export type ProjectCreateErrorCode =
   (typeof ProjectCreateErrorCode)[keyof typeof ProjectCreateErrorCode];
@@ -6144,11 +6201,23 @@ export interface ProjectDetailsDto {
    */
   contextFiles: Array<ProjectContextFileDto>;
   /**
-   * Aggregate ETag of the version these details were read from; send it as `If-Match` on update and delete.
+   * Aggregate ETag of the version these details were read from. It changes on every write, project conversation writes included.
    * @type {string}
    * @memberof ProjectDetailsDto
    */
   etag: string;
+  /**
+   * Version of the project content (`PROJECT.md`, `context/` and every other non-conversation file). A conversation write leaves it unchanged. Send it as `If-Match` on update and delete.
+   * @type {string}
+   * @memberof ProjectDetailsDto
+   */
+  contentVersion: string;
+  /**
+   * Number of conversations stored in the project.
+   * @type {number}
+   * @memberof ProjectDetailsDto
+   */
+  conversationCount: number;
   /**
    * Whether the caller may edit, delete, share and publish the project — `true` only in the caller's own bucket.
    * @type {boolean}
@@ -9289,6 +9358,12 @@ export interface UserProfileDto {
    * @memberof UserProfileDto
    */
   isAdmin: boolean;
+  /**
+   * URL of the user's profile picture: the IdP's absolute http(s) `picture` claim, or the same-origin `GET /auth/me/picture` path when the IdP supplied the image inline. Omitted when there is no picture.
+   * @type {string}
+   * @memberof UserProfileDto
+   */
+  pictureUrl?: string;
 }
 /**
  *

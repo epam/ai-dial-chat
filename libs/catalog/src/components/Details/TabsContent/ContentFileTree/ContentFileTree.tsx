@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconFolder } from '@tabler/icons-react';
 import {
@@ -12,6 +12,15 @@ import {
 } from 'react';
 import type { CatalogContentTreeNode } from '../../../../models/item-details-data';
 import { CatalogContentNodeType } from '../../../../types/catalog-content-type';
+import styles from './ContentFileTree.module.scss';
+
+/** Color overrides for {@link ContentFileTree}, applied as CSS custom properties on its root. */
+interface ContentFileTreeColors {
+  /** Background of a hovered or focused row. Defaults to `--bg-control-accent-alpha-hover`. */
+  rowHoverBackground?: string;
+  /** Background of the displayed file's row. Defaults to `--bg-control-accent-alpha-active`. */
+  rowSelectedBackground?: string;
+}
 
 /** Props for {@link ContentFileTree}. */
 export interface ContentFileTreeProps {
@@ -31,6 +40,8 @@ export interface ContentFileTreeProps {
   ariaLabel?: string;
   /** Typography class applied to every row's name text. Defaults to `'dial-small-text'`. */
   rowNameClassName?: string;
+  /** Color overrides; the tree renders in a portal, so it sets the vars it reads on its own root. */
+  colors?: ContentFileTreeColors;
 }
 
 interface FlatRow {
@@ -64,7 +75,12 @@ export const ContentFileTree: FC<ContentFileTreeProps> = ({
   onClose,
   ariaLabel = 'Select file',
   rowNameClassName = 'dial-small-text',
+  colors,
 }) => {
+  const cssVars = buildCssVars({
+    '--cat-content-tree-row-hover-bg': colors?.rowHoverBackground,
+    '--cat-content-tree-row-selected-bg': colors?.rowSelectedBackground,
+  });
   const rows = useMemo(
     () => flattenVisible(nodes, expandedFolderIds),
     [nodes, expandedFolderIds],
@@ -148,8 +164,8 @@ export const ContentFileTree: FC<ContentFileTreeProps> = ({
   const rowClassName = (isFocused: boolean) =>
     mergeClasses(
       'flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-2 px-3 outline-hidden',
-      'hover:bg-control-accent-alpha-hover focus-visible:bg-control-accent-alpha-hover',
-      isFocused && 'bg-control-accent-alpha-hover',
+      styles.row,
+      isFocused && styles.focusedRow,
     );
 
   const renderNode = (node: CatalogContentTreeNode): ReactNode => {
@@ -171,7 +187,7 @@ export const ContentFileTree: FC<ContentFileTreeProps> = ({
           tabIndex={isFocused ? 0 : -1}
           className={mergeClasses(
             rowClassName(isFocused),
-            isSelected && 'bg-control-accent-alpha-active',
+            isSelected && styles.selectedRow,
           )}
           onClick={() => onSelectFile(node.id)}
           onFocus={() => setFocusedId(node.id)}
@@ -245,7 +261,12 @@ export const ContentFileTree: FC<ContentFileTreeProps> = ({
   return (
     // Focus lives on the roving-tabIndex treeitem rows, not the tree root itself.
     // eslint-disable-next-line jsx-a11y/interactive-supports-focus
-    <div role="tree" aria-label={ariaLabel} onKeyDown={handleKeyDown}>
+    <div
+      role="tree"
+      aria-label={ariaLabel}
+      style={cssVars}
+      onKeyDown={handleKeyDown}
+    >
       {nodes.map((node) => renderNode(node))}
     </div>
   );

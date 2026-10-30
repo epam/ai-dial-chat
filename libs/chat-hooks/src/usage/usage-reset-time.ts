@@ -104,6 +104,15 @@ const formatInCurrentOffset = (
     .replace(NARROW_NO_BREAK_SPACE, ' ');
 };
 
+/** Offset reference used to format an unchanged reset boundary. */
+export enum UsageResetOffsetPolicy {
+  CurrentOffset = 'current-offset',
+  ResetInstant = 'reset-instant',
+}
+/** Optional host reset-display policy. */
+export interface UsageResetTimeOptions {
+  /** Defaults to current-offset. */ offsetPolicy?: UsageResetOffsetPolicy;
+}
 /**
  * Formats DIAL Core's `resetsAt` for display in the viewer's locale and
  * timezone, at the viewer's current UTC offset, always stating that offset so
@@ -123,6 +132,7 @@ export const formatUsageResetTime = (
   resetsAt: string | undefined,
   activeLocale: string,
   t: TranslateFn,
+  options: UsageResetTimeOptions = {},
 ): ResetTimeDisplay | undefined => {
   if (!resetsAt) {
     return undefined;
@@ -147,7 +157,10 @@ export const formatUsageResetTime = (
      */
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const zoneOverride = timeZone ? { timeZone } : {};
-    const now = new Date();
+    const now =
+      options.offsetPolicy === UsageResetOffsetPolicy.ResetInstant
+        ? new Date(resetsAtMs)
+        : new Date();
 
     /*
      * Every reset time is stated in the viewer's offset as it is now, so the

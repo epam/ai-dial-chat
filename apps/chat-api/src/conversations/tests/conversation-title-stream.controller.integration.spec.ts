@@ -25,6 +25,7 @@ import {
   ConversationTitleStreamService,
 } from '../listing/conversation-title-stream.service';
 import { ConversationTitlesService } from '../listing/conversation-titles.service';
+import { ConversationCompletionsResponder } from '../streaming/conversation-completions.responder';
 
 const APP_ORIGIN = 'https://app.example.com';
 const STREAM_PATH = '/api/v1/conversations/titles/stream';
@@ -142,6 +143,7 @@ describe('POST /conversations/titles/stream (integration)', () => {
     const moduleRef = await Test.createTestingModule({
       controllers: [ConversationController],
       providers: [
+        ConversationCompletionsResponder,
         ConversationTitleCacheService,
         ConversationTitlesService,
         ConversationTitleStreamService,

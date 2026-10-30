@@ -1,9 +1,15 @@
-import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
+import type {
+  DialToolsetDto,
+  GetExternalServiceResponseDto,
+} from '@epam/ai-dial-chat-api-client';
 import {
   buildExternalServiceScopeId,
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
   ToolsetLoginOutcomeType,
+  ExternalServiceLoginOutcomeType,
+  ExternalServiceAuthType,
+  ExternalServiceCredentialsLevel,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
@@ -39,21 +45,13 @@ import {
 import { useFeatureFlag } from '../../context/AppConfigContext';
 import { useClientChannel } from '../../context/ClientChannelContext';
 import { useDeployments } from '../../context/DeploymentsContext';
-import {
-  ExternalServiceLoginOutcomeType,
-  useExternalServiceLogin,
-} from '../../hooks/externalServices/useExternalServiceLogin';
+import { useExternalServiceLogin } from '../../hooks/externalServices/useExternalServiceLogin';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useToolsetLogin } from '../../hooks/toolsets/useToolsetLogin';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import type { ResolvedRowInfo } from '../../models/signin-interrupt';
 import { ClientChannelReportResult } from '../../server-api/client-channel';
-import {
-  ExternalServiceAuthType,
-  ExternalServiceCredentialsLevel,
-  getExternalService,
-  type GetExternalServiceResponseDto,
-} from '../../server-api/external-services';
+import { getExternalService } from '../../server-api/external-services';
 import { getToolset } from '../../server-api/toolsets';
 import {
   PendingSigninEventKind,
@@ -137,7 +135,7 @@ const SigninRow: FC<SigninRowProps> = ({
             <span>{rowState.error}</span>
             <LinkButton
               className="h-auto"
-              label={t(ToolsetSigninI18nKeys.ErrorRetry)}
+              label={t(ButtonsI18nKeys.Retry)}
               onClick={() => onLogin(event, info)}
             />
           </>

@@ -6,8 +6,8 @@ import {
 } from '@epam/ai-dial-chat-api-client';
 import {
   deriveConversationRowActionState,
-  findDeploymentByIdOrReference,
-  findDeploymentForConversationId,
+  createDeploymentLookup,
+  getModelIdCandidatesFromConversationId,
   getApiErrorDetails,
   getConversationPath,
   safeDecodeURIComponent,
@@ -33,6 +33,7 @@ import {
   ConversationTransferErrorCode,
   DeleteConfirmationDialog,
   FilterTab,
+  toConversationTransferQueueItems as toTransferQueueItems,
 } from '@epam/ai-dial-chat-shared';
 import {
   ConversationListSection,
@@ -99,7 +100,6 @@ import {
   ConversationImportI18nKeys,
   ConversationPanelI18nKeys,
   ConversationUnpublishI18nKeys,
-  ShareI18nKeys,
 } from '../../constants/translation-keys';
 import { useFeatureFlag } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
@@ -141,7 +141,6 @@ import {
   getExportErrorKey,
   getExportFailureToastKey,
   getImportErrorKey,
-  toTransferQueueItems,
 } from '../../utils/conversation-transfer';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
@@ -387,6 +386,13 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     isLoading: isDeploymentsLoading,
     selectedItemId,
   } = useDeployments();
+
+  /* Menu lookups run for every visible row after recipient/history updates.
+     Normalize the deployment list once instead of scanning it per candidate. */
+  const findDeployment = useMemo(
+    () => createDeploymentLookup(deployments),
+    [deployments],
+  );
 
   /*
    * Only scheduled runs are marked viewed from here. The sync fires on every
@@ -833,10 +839,17 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       const isActiveRow =
         activeIdAtRender != null &&
         conversationIdsMatch(panelItem.id, activeIdAtRender);
-      const rowDeployment =
-        isActiveRow && selectedItemId
-          ? findDeploymentByIdOrReference(deployments, selectedItemId)
-          : findDeploymentForConversationId(deployments, contextId);
+      let rowDeployment: DeploymentItemDto | undefined;
+      if (isActiveRow && selectedItemId) {
+        rowDeployment = findDeployment(selectedItemId);
+      } else {
+        for (const candidate of getModelIdCandidatesFromConversationId(
+          contextId,
+        )) {
+          rowDeployment = findDeployment(candidate);
+          if (rowDeployment) break;
+        }
+      }
       const isModelHidden = !!rowDeployment?.isHidden;
 
       const {
@@ -858,8 +871,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       const pinAction: DropdownItem = {
         key: 'pin',
         label: panelItem.isPinned
-          ? t(ConversationPanelI18nKeys.UnpinLabel)
-          : t(ConversationPanelI18nKeys.PinLabel),
+          ? t(ButtonsI18nKeys.Unpin)
+          : t(ButtonsI18nKeys.Pin),
         icon: panelItem.isPinned ? (
           <IconPinnedFilled
             size={DIAL_ICON_SIZE.MD}
@@ -998,7 +1011,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           ? [
               {
                 key: 'share',
-                label: t(ShareI18nKeys.Title),
+                label: t(ButtonsI18nKeys.Share),
                 icon: (
                   <IconShare
                     size={DIAL_ICON_SIZE.MD}
@@ -1135,7 +1148,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     [
       toContextId,
       getRawItem,
-      deployments,
+      findDeployment,
       selectedItemId,
       t,
       pinConversation,
@@ -1454,7 +1467,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         },
       },
       groupLabels,
-      actionsLabel: t(ConversationPanelI18nKeys.ActionsLabel),
+      actionsLabel: t(ButtonsI18nKeys.MoreActions),
       unreadIndicatorLabel,
     }),
     [t, filterLabels, groupLabels, unreadIndicatorLabel],

@@ -199,7 +199,16 @@ export const ContentTab: FC<ContentTabProps> = ({
               renderFileTree ? (
                 renderFileTree(fileTreeProps)
               ) : (
-                <ContentFileTree {...fileTreeProps} />
+                <ContentFileTree
+                  {...fileTreeProps}
+                  colors={{
+                    rowHoverBackground:
+                      detailsStyles?.colors?.contentFileTreeRowHoverBackground,
+                    rowSelectedBackground:
+                      detailsStyles?.colors
+                        ?.contentFileTreeRowSelectedBackground,
+                  }}
+                />
               )
             }
           >
@@ -242,7 +251,7 @@ export const ContentTab: FC<ContentTabProps> = ({
           'min-h-0 flex-1 text-start',
           filePreviewContent != null
             ? 'overflow-hidden'
-            : 'overflow-auto break-words',
+            : 'overflow-auto wrap-break-word',
           filePreviewContent == null && styles.body,
           filePreviewContent == null && bodyClassName,
         )}

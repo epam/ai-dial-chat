@@ -64,6 +64,7 @@ export const Projects: FC<ProjectsProps> = ({
     '--pr-card-title-text': colors?.cardTitleText,
     '--pr-updated-at-text': colors?.updatedAtText,
     '--pr-path-text': colors?.pathText,
+    '--pr-card-focus-outline': colors?.cardFocusOutline,
   });
 
   /* Fixed at mount: the relative times are a snapshot of the page visit. */
@@ -194,7 +195,7 @@ export const Projects: FC<ProjectsProps> = ({
     >
       <div className="flex min-w-0 items-center gap-2 px-4 py-4 desktop:px-8">
         <div className="min-w-0 flex-1">
-          <h1 className={mergeClasses('break-words', titleClassName)}>
+          <h1 className={mergeClasses('wrap-break-word', titleClassName)}>
             {labels.title}
           </h1>
           {labels.subtitle && (

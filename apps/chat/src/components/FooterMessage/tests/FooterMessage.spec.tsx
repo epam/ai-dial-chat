@@ -233,11 +233,23 @@ describe('FooterMessage', () => {
       mockState.appVersion = '0.45.0';
       renderFooter();
 
-      /* `end-*` is a logical inset resolved against this element's own
+      /* `inset-e-*` is a logical inset resolved against this element's own
        * direction — a `dir` here would defeat the RTL corner flip. */
       const label = screen.getByRole('paragraph');
       expect(label?.hasAttribute('dir')).toBe(false);
-      expect(label?.className).toContain('end-4');
+      expect(label?.className).toContain('desktop:inset-e-8');
+    });
+
+    it('keeps the label on its own line below the message on mobile', () => {
+      mockState.footerHtmlMessage = 'Operator copy';
+      mockState.appVersion = '0.45.0';
+      renderFooter();
+
+      /* Pinned to the corner, the label overlapped the last line of a
+       * message that wraps on a phone (#9618). Only desktop positions it. */
+      const classes = screen.getByRole('paragraph').className.split(' ');
+      expect(classes).toContain('desktop:absolute');
+      expect(classes).not.toContain('absolute');
     });
 
     it('keeps the label in flow when there is no footer message to centre', () => {

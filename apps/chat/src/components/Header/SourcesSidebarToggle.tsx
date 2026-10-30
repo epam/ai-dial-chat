@@ -7,10 +7,10 @@ import {
 import { IconFileDescription } from '@tabler/icons-react';
 import { memo, useCallback, type ComponentType, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useMatch } from 'react-router';
+import { useLocation } from 'react-router';
+import { isConversationPagePath } from '../../constants/routes';
 import { SidebarI18nKeys } from '../../constants/translation-keys';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
-import { ROUTES } from '../../types/routes';
 
 interface Props {
   /** Tabler icon drawn in the button. Defaults to the document glyph. */
@@ -24,7 +24,8 @@ const SourcesSidebarToggle: FC<Props> = ({
   iconClassName,
 }) => {
   const { t } = useTranslation();
-  const isConversationRoute = !!useMatch(`${ROUTES.Conversations}/*`);
+  const { pathname } = useLocation();
+  const isConversationRoute = isConversationPagePath(pathname);
   const { isOpen, handleOpen } = useSourcesSidebar();
   const { closeCanvas } = useAttachmentCanvas();
 

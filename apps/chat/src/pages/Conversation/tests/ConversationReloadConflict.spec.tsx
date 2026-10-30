@@ -2,8 +2,10 @@ import * as chatHooksModule from '@epam/ai-dial-chat-hooks';
 import { GenerationConflictError } from '@epam/ai-dial-chat-hooks';
 import { type Conversation, MessageRole } from '@epam/ai-dial-chat-shared';
 import { act, render, screen, waitFor } from '@testing-library/react';
+import { StrictMode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as ClientChannelContextModule from '../../../context/ClientChannelContext';
+import { ConversationDataSourceProvider } from '../../../context/ConversationDataSourceContext';
 import * as ConversationsContextModule from '../../../context/ConversationsContext';
 import * as DeploymentsContextModule from '../../../context/DeploymentsContext';
 import * as NotificationContextModule from '../../../context/NotificationContext';
@@ -24,12 +26,17 @@ import { ConversationPage } from '../Conversation';
 const CONVERSATION_ID = 'conversations/bucket/gpt-4o__Hello';
 const CONFLICT_TEXT = 'Another generation is in progress';
 
+const routeState = vi.hoisted(() => ({
+  conversationId: 'conversations/bucket/gpt-4o__Hello',
+  state: null as unknown,
+}));
+
 vi.mock('react-router', () => ({
   useNavigate: () => vi.fn(),
-  useParams: () => ({ '*': CONVERSATION_ID }),
+  useParams: () => ({ '*': routeState.conversationId }),
   useLocation: () => ({
-    state: null,
-    pathname: `/conversations/${CONVERSATION_ID}`,
+    state: routeState.state,
+    pathname: `/conversations/${routeState.conversationId}`,
     search: '',
   }),
 }));
@@ -175,6 +182,8 @@ const makeAttachStream = () => {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  routeState.conversationId = CONVERSATION_ID;
+  routeState.state = null;
   vi.mocked(ClientChannelContextModule.useClientChannel).mockReturnValue({
     channelId: 'channel-1',
     pendingEvents: [],
@@ -231,6 +240,108 @@ afterEach(() => {
 });
 
 describe('ConversationPage — reload before the first answer saved its start', () => {
+  it('keeps the first answer after leaving an existing chat and creating a prefetched chat', async () => {
+    vi.mocked(conversationsApi.getConversation).mockResolvedValue(
+      saved() as never,
+    );
+    const { unmount } = render(
+      <StrictMode>
+        <ConversationPage />
+      </StrictMode>,
+      { wrapper: ConversationDataSourceProvider },
+    );
+    await screen.findByText('DIAL is a platform.');
+    unmount();
+    vi.mocked(conversationsApi.getConversation).mockClear();
+
+    routeState.conversationId = 'conversations/bucket/gpt-4o__New';
+    routeState.state = {
+      conversation: { ...preStart(), id: routeState.conversationId },
+    };
+    /* A premature attach cannot see the generation yet; its final read still
+       sees only the user message, before the completion saves its start. */
+    vi.mocked(conversationsApi.attachToGeneration).mockRejectedValue(
+      new Error('not started'),
+    );
+    vi.mocked(conversationsApi.watchConversation).mockRejectedValue(
+      new Error('watch unavailable'),
+    );
+    let deliverAnswer!: () => void;
+    let complete!: () => void;
+    let completed = false;
+    vi.mocked(chatStreamApi.streamCompletion).mockImplementation(
+      (_path, _message, _model, options) => {
+        deliverAnswer = () =>
+          options.onChunk({
+            id: 'reply',
+            object: 'chat.completion.chunk',
+            choices: [
+              {
+                index: 0,
+                delta: { content: 'New answer' },
+                finish_reason: null,
+              },
+            ],
+          });
+        complete = () => {
+          completed = true;
+          return options.onComplete();
+        };
+      },
+    );
+    vi.mocked(conversationsApi.getConversation).mockImplementation(
+      async () =>
+        ({
+          ...(completed ? saved() : preStart()),
+          id: routeState.conversationId,
+          ...(completed
+            ? {
+                messages: [
+                  userTurn,
+                  {
+                    role: MessageRole.Assistant,
+                    content: 'New answer',
+                    timestamp: 't',
+                  },
+                ],
+              }
+            : {}),
+        }) as never,
+    );
+    const { rerender } = render(
+      <StrictMode>
+        <ConversationPage />
+      </StrictMode>,
+      { wrapper: ConversationDataSourceProvider },
+    );
+    await waitFor(() =>
+      expect(chatStreamApi.streamCompletion).toHaveBeenCalledOnce(),
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+    await act(async () => {
+      deliverAnswer();
+    });
+    await screen.findByText('New answer');
+    expect(conversationsApi.attachToGeneration).not.toHaveBeenCalled();
+    expect(conversationsApi.getConversation).not.toHaveBeenCalled();
+    routeState.state = null;
+    rerender(
+      <StrictMode>
+        <ConversationPage />
+      </StrictMode>,
+    );
+    await act(async () => {
+      await complete();
+    });
+    expect(await screen.findByText('New answer')).toBeTruthy();
+    expect(chatStreamApi.streamCompletion).toHaveBeenCalledOnce();
+    await waitFor(() =>
+      expect(conversationsApi.getConversation).toHaveBeenCalledOnce(),
+    );
+  });
+
   it('joins the generation already running and shows its saved answer', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     const attach = makeAttachStream();
@@ -246,7 +357,7 @@ describe('ConversationPage — reload before the first answer saved its start', 
       /* The reload once the running generation finished. */
       .mockResolvedValue(saved() as never);
 
-    render(<ConversationPage />);
+    render(<ConversationPage />, { wrapper: ConversationDataSourceProvider });
 
     await waitFor(() =>
       expect(chatStreamApi.streamCompletion).toHaveBeenCalledOnce(),

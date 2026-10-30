@@ -78,15 +78,12 @@ describe('Projects adapter', () => {
 
     await createProject({ name: 'p', description: '', instructions: '' }, []);
 
-    expect(projectsApi.createProject).toHaveBeenCalledWith(
-      {
-        name: 'p',
-        description: '',
-        instructions: '',
-        fileNames: '[]',
-        files: [],
-      },
-      undefined,
-    );
+    expect(projectsApi.createProject).toHaveBeenCalledWith({
+      name: 'p',
+      description: '',
+      instructions: '',
+      fileNames: '[]',
+      files: [],
+    });
   });
 });

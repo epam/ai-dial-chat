@@ -247,7 +247,7 @@ export const TitleRow: FC<TitleRowProps> = ({
               {isFilterActive && (
                 <span
                   className={mergeClasses(
-                    'pointer-events-none absolute end-2.5 top-2.5 size-2 rounded-full',
+                    'pointer-events-none absolute inset-e-2.5 top-2.5 size-2 rounded-full',
                     styles.settingsDot,
                   )}
                   aria-hidden

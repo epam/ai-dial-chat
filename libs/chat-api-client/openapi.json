@@ -179,6 +179,60 @@
         "tags": ["auth"]
       }
     },
+    "/api/v1/auth/me/picture": {
+      "get": {
+        "description": "Serves the inline (data: URL) profile picture the identity provider returns from UserInfo. Only advertised through `pictureUrl` on `GET /auth/me` when the session has one.",
+        "operationId": "getCurrentUserPicture",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Profile picture bytes",
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/gif": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/webp": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session"
+          },
+          "404": {
+            "description": "The session has no inline profile picture"
+          },
+          "502": {
+            "description": "The identity provider UserInfo lookup failed"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Get current user profile picture",
+        "tags": ["auth"]
+      }
+    },
     "/api/v1/client-config": {
       "get": {
         "operationId": "getClientConfig",
@@ -9628,7 +9682,7 @@
         "tags": ["projects"]
       },
       "put": {
-        "description": "Saves the name, description, instructions and context of a project in one conditional DIAL Core write: the BFF rebuilds PROJECT.md, keeps every stored context file not listed in `removedFileNames`, adds the `files` parts and writes the whole project with `If-Match`. A different name then moves the project in its folder and keeps the caller's pin. Only a project in the caller's own bucket can be saved. Every domain rejection carries a ProjectCreateErrorCode.",
+        "description": "Saves the name, description, instructions and context of a project in one conditional DIAL Core write: the BFF rebuilds PROJECT.md, keeps every stored context file not listed in `removedFileNames`, adds the `files` parts, carries the stored conversations over, and writes the whole project conditioned on the fresh snapshot's ETag, retrying a concurrent conversation write while `If-Match` still names the `contentVersion`. A different name then moves the project in its folder and keeps the caller's pin. Only a project in the caller's own bucket can be saved. Every domain rejection carries a ProjectCreateErrorCode.",
         "operationId": "updateProject",
         "parameters": [
           {
@@ -9644,7 +9698,7 @@
           {
             "name": "If-Match",
             "in": "header",
-            "description": "The single `etag` of the project version the caller read. A stale value yields 409 project-changed; a missing one, `*` or a comma-separated list, 428.",
+            "description": "The single `contentVersion` of the project the caller read from `GET /api/v1/projects/:id` (not its `etag`, which every project conversation write changes). A stale value yields 409 project-changed; a missing one, `*` or a comma-separated list, 428.",
             "required": true,
             "schema": {
               "type": "string"
@@ -9768,7 +9822,7 @@
         "tags": ["projects"]
       },
       "delete": {
-        "description": "Deletes the project only if it is still the version named by `If-Match`, then removes it from the caller's pins. Only a project in the caller's own bucket can be deleted.",
+        "description": "Deletes the project, its conversations included, only if its content is still the `contentVersion` named by `If-Match`, then removes it from the caller's pins. Only a project in the caller's own bucket can be deleted.",
         "operationId": "deleteProject",
         "parameters": [
           {
@@ -9784,7 +9838,7 @@
           {
             "name": "If-Match",
             "in": "header",
-            "description": "The single `etag` of the project version the caller read. A stale value yields 409 project-changed; a missing one, `*` or a comma-separated list, 428.",
+            "description": "The single `contentVersion` of the project the caller read from `GET /api/v1/projects/:id` (not its `etag`, which every project conversation write changes). A stale value yields 409 project-changed; a missing one, `*` or a comma-separated list, 428.",
             "required": true,
             "schema": {
               "type": "string"
@@ -9980,6 +10034,645 @@
           }
         },
         "summary": "Download one context file of a project",
+        "tags": ["projects"]
+      }
+    },
+    "/api/v1/projects/{id}/conversations": {
+      "get": {
+        "description": "Lists the conversations stored in the project's `conversations/` folder, newest first, with their titles and authors.",
+        "operationId": "listProjectConversations",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The DIAL project id `projects/{bucket}/{path}`, URL-encoded into one path segment.",
+            "schema": {
+              "example": "projects%2Fa1b2c3%2Fmarketing%2Fq4-launch",
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Maximum number of conversations to return, newest first. `hasMore` tells whether more exist.",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50,
+              "example": 50,
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "description": "Number of conversations to skip in the newest-first order; the next page starts at the count already loaded.",
+            "schema": {
+              "minimum": 0,
+              "default": 0,
+              "example": 0,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The conversations; a project without conversations lists none",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectConversationListResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid id, limit or offset"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The projectsEnabled feature is not enabled for this user, or DIAL Core denied read access"
+          },
+          "404": {
+            "description": "The project does not exist"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned a server error or an unexpected response"
+          },
+          "503": {
+            "description": "DIAL Core is unreachable or timed out"
+          }
+        },
+        "summary": "List a project's conversations",
+        "tags": ["projects"]
+      },
+      "post": {
+        "description": "Creates a conversation inside the project from its first message, as `POST /api/v1/conversations` does at the top level.",
+        "operationId": "createProjectConversation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The DIAL project id `projects/{bucket}/{path}`, URL-encoded into one path segment.",
+            "schema": {
+              "example": "projects%2Fa1b2c3%2Fmarketing%2Fq4-launch",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateConversationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The conversation was created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid id or body"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The projectsEnabled feature is not enabled for this user, the project is not in the caller's own bucket, or DIAL Core denied access"
+          },
+          "404": {
+            "description": "The project does not exist"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "The project has no room for the conversation (project-storage-full)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectCreateErrorDto"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned a server error or an unexpected response"
+          },
+          "503": {
+            "description": "DIAL Core is unreachable or timed out"
+          }
+        },
+        "summary": "Create a project conversation",
+        "tags": ["projects"]
+      }
+    },
+    "/api/v1/projects/{id}/conversations/completions": {
+      "post": {
+        "description": "Streams a completion as SSE exactly as `POST /api/v1/conversations/completions` does, with the `x-project-id` header on the model call and nothing else added to the request.",
+        "operationId": "streamProjectCompletion",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The DIAL project id `projects/{bucket}/{path}`, URL-encoded into one path segment.",
+            "schema": {
+              "example": "projects%2Fa1b2c3%2Fmarketing%2Fq4-launch",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendCompletionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SSE stream of completion chunks",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid body, or `path` does not name a conversation of the addressed project"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The projectsEnabled feature is not enabled for this user, the project is not in the caller's own bucket, or DIAL Core denied access"
+          },
+          "404": {
+            "description": "The project or the conversation does not exist"
+          },
+          "409": {
+            "description": "Another generation is already active for this conversation, or it has a pending background answer"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned a server error or an unexpected response"
+          },
+          "503": {
+            "description": "DIAL Core is unreachable or timed out"
+          }
+        },
+        "summary": "Stream a completion of a project conversation",
+        "tags": ["projects"]
+      }
+    },
+    "/api/v1/projects/{id}/conversations/completions/stop": {
+      "post": {
+        "operationId": "stopProjectCompletion",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The DIAL project id `projects/{bucket}/{path}`, URL-encoded into one path segment.",
+            "schema": {
+              "example": "projects%2Fa1b2c3%2Fmarketing%2Fq4-launch",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StopCompletionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Generation stopped successfully"
+          },
+          "400": {
+            "description": "Invalid body, or `path` does not name a conversation of the addressed project"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The projectsEnabled feature is not enabled for this user, the project is not in the caller's own bucket, or DIAL Core denied access"
+          },
+          "404": {
+            "description": "No active generation found for this principal for the given path and generationId"
+          },
+          "503": {
+            "description": "The stopped state of a background generation could not be saved; Stop can be retried"
+          }
+        },
+        "summary": "Stop a generation of a project conversation",
+        "tags": ["projects"]
+      }
+    },
+    "/api/v1/projects/{id}/conversations/completions/attach": {
+      "post": {
+        "description": "Replays the active generation of a project conversation as SSE, exactly as `POST /api/v1/conversations/completions/attach` does.",
+        "operationId": "attachToProjectGeneration",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The DIAL project id `projects/{bucket}/{path}`, URL-encoded into one path segment.",
+            "schema": {
+              "example": "projects%2Fa1b2c3%2Fmarketing%2Fq4-launch",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttachGenerationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SSE stream: one snapshot event, live chunk events, then one terminal event",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid body, or `path` does not name a conversation of the addressed project"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The projectsEnabled feature is not enabled for this user, the project is not in the caller's own bucket, or DIAL Core denied access"
+          },
+          "404": {
+            "description": "No active generation found for the given path"
+          }
+        },
+        "summary": "Attach to a generation of a project conversation",
+        "tags": ["projects"]
+      }
+    },
+    "/api/v1/projects/{id}/conversations/{conversationName}": {
+      "get": {
+        "operationId": "getProjectConversation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The DIAL project id `projects/{bucket}/{path}`, URL-encoded into one path segment.",
+            "schema": {
+              "example": "projects%2Fa1b2c3%2Fmarketing%2Fq4-launch",
+              "type": "string"
+            }
+          },
+          {
+            "name": "conversationName",
+            "required": true,
+            "in": "path",
+            "description": "File name of the conversation under the project `conversations/` folder, URL-encoded.",
+            "schema": {
+              "example": "gpt-4o__Weekly%20support%20health%20summary__7c1d",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The conversation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid id or conversation name"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The projectsEnabled feature is not enabled for this user, or DIAL Core denied read access"
+          },
+          "404": {
+            "description": "The project or the conversation does not exist"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned a server error or an unexpected response"
+          },
+          "503": {
+            "description": "DIAL Core is unreachable or timed out"
+          }
+        },
+        "summary": "Get a project conversation",
+        "tags": ["projects"]
+      },
+      "put": {
+        "description": "Overwrites the conversation body, never over a pending background answer, as `PUT /api/v1/conversations` does.",
+        "operationId": "saveProjectConversation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The DIAL project id `projects/{bucket}/{path}`, URL-encoded into one path segment.",
+            "schema": {
+              "example": "projects%2Fa1b2c3%2Fmarketing%2Fq4-launch",
+              "type": "string"
+            }
+          },
+          {
+            "name": "conversationName",
+            "required": true,
+            "in": "path",
+            "description": "File name of the conversation under the project `conversations/` folder, URL-encoded.",
+            "schema": {
+              "example": "gpt-4o__Weekly%20support%20health%20summary__7c1d",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveConversationBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The conversation was saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid id, conversation name or body"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The projectsEnabled feature is not enabled for this user, the project is not in the caller's own bucket, or DIAL Core denied access"
+          },
+          "404": {
+            "description": "The project or the conversation does not exist"
+          },
+          "409": {
+            "description": "The conversation has a pending background answer"
+          },
+          "413": {
+            "description": "The project has no room for the conversation (project-storage-full)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectCreateErrorDto"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned a server error or an unexpected response"
+          },
+          "503": {
+            "description": "DIAL Core is unreachable or timed out"
+          }
+        },
+        "summary": "Save a project conversation",
+        "tags": ["projects"]
+      },
+      "patch": {
+        "description": "Rewrites the conversation's display name; its file name does not change.",
+        "operationId": "renameProjectConversation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The DIAL project id `projects/{bucket}/{path}`, URL-encoded into one path segment.",
+            "schema": {
+              "example": "projects%2Fa1b2c3%2Fmarketing%2Fq4-launch",
+              "type": "string"
+            }
+          },
+          {
+            "name": "conversationName",
+            "required": true,
+            "in": "path",
+            "description": "File name of the conversation under the project `conversations/` folder, URL-encoded.",
+            "schema": {
+              "example": "gpt-4o__Weekly%20support%20health%20summary__7c1d",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenameConversationBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The conversation was renamed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RenameConversationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid id, conversation name or newTitle"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The projectsEnabled feature is not enabled for this user, the project is not in the caller's own bucket, or DIAL Core denied access"
+          },
+          "404": {
+            "description": "The project or the conversation does not exist"
+          },
+          "409": {
+            "description": "The conversation has a pending background answer"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned a server error or an unexpected response"
+          },
+          "503": {
+            "description": "DIAL Core is unreachable or timed out"
+          }
+        },
+        "summary": "Rename a project conversation",
+        "tags": ["projects"]
+      },
+      "delete": {
+        "operationId": "deleteProjectConversation",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The DIAL project id `projects/{bucket}/{path}`, URL-encoded into one path segment.",
+            "schema": {
+              "example": "projects%2Fa1b2c3%2Fmarketing%2Fq4-launch",
+              "type": "string"
+            }
+          },
+          {
+            "name": "conversationName",
+            "required": true,
+            "in": "path",
+            "description": "File name of the conversation under the project `conversations/` folder, URL-encoded.",
+            "schema": {
+              "example": "gpt-4o__Weekly%20support%20health%20summary__7c1d",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The conversation was deleted"
+          },
+          "400": {
+            "description": "Invalid id or conversation name"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The projectsEnabled feature is not enabled for this user, the project is not in the caller's own bucket, or DIAL Core denied access"
+          },
+          "404": {
+            "description": "The project or the conversation does not exist"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned a server error or an unexpected response"
+          },
+          "503": {
+            "description": "DIAL Core is unreachable or timed out"
+          }
+        },
+        "summary": "Delete a project conversation",
         "tags": ["projects"]
       }
     },
@@ -10558,6 +11251,11 @@
             "type": "boolean",
             "example": false,
             "description": "Whether the user's roles claim intersects the provider's configured adminRoles"
+          },
+          "pictureUrl": {
+            "type": "string",
+            "example": "/api/v1/auth/me/picture",
+            "description": "URL of the user's profile picture: the IdP's absolute http(s) `picture` claim, or the same-origin `GET /auth/me/picture` path when the IdP supplied the image inline. Omitted when there is no picture."
           }
         },
         "required": ["sub", "providerId", "claims", "bucket", "isAdmin"]
@@ -17360,7 +18058,17 @@
           "etag": {
             "type": "string",
             "example": "\"9f2c\"",
-            "description": "Aggregate ETag of the version these details were read from; send it as `If-Match` on update and delete."
+            "description": "Aggregate ETag of the version these details were read from. It changes on every write, project conversation writes included."
+          },
+          "contentVersion": {
+            "type": "string",
+            "example": "\"3b8e0c\"",
+            "description": "Version of the project content (`PROJECT.md`, `context/` and every other non-conversation file). A conversation write leaves it unchanged. Send it as `If-Match` on update and delete."
+          },
+          "conversationCount": {
+            "type": "number",
+            "example": 3,
+            "description": "Number of conversations stored in the project."
           },
           "canEdit": {
             "type": "boolean",
@@ -17378,6 +18086,8 @@
           "instructions",
           "contextFiles",
           "etag",
+          "contentVersion",
+          "conversationCount",
           "canEdit"
         ]
       },
@@ -17395,7 +18105,8 @@
           "project-changed",
           "if-match-required",
           "project-too-large",
-          "unknown-file"
+          "unknown-file",
+          "project-storage-full"
         ]
       },
       "ProjectCreateErrorDto": {
@@ -17498,6 +18209,55 @@
           }
         },
         "required": ["id", "name", "bucket", "path"]
+      },
+      "ProjectConversationItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Locator of the conversation, `projects/{bucket}/{projectPath}/conversations/{name}`; it is the conversation id.",
+            "example": "projects/a1b2c3/support-quality/conversations/gpt-4o__Weekly support health summary__7c1d"
+          },
+          "name": {
+            "type": "string",
+            "description": "File name under the project `conversations/` folder.",
+            "example": "gpt-4o__Weekly support health summary__7c1d"
+          },
+          "title": {
+            "type": "string",
+            "description": "Display title: the stored body's `name`, or the title derived from the file name when the body cannot be read.",
+            "example": "Write a weekly support health summary for the VP of Customer Success."
+          },
+          "author": {
+            "type": "string",
+            "description": "Display name of the conversation's last writer, from DIAL Core.",
+            "example": "Valery Tester"
+          },
+          "updatedAt": {
+            "type": "number",
+            "description": "Last update time, in epoch milliseconds.",
+            "example": 1793000000000
+          }
+        },
+        "required": ["id", "name", "title"]
+      },
+      "ProjectConversationListResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "Conversations, newest first.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectConversationItemDto"
+            }
+          },
+          "hasMore": {
+            "type": "boolean",
+            "description": "Whether the project holds more conversations than `items`.",
+            "example": false
+          }
+        },
+        "required": ["items", "hasMore"]
       },
       "OfflineCredentialsConnectDto": {
         "type": "object",

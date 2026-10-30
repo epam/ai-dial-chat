@@ -1,4 +1,5 @@
 import {
+  buildCssVars,
   mergeClasses,
   RESIZABLE_TEXTAREA_CLASS_NAME,
 } from '@epam/ai-dial-chat-shared';
@@ -22,7 +23,9 @@ import type {
   DeploymentCreationFormLocaleEntry,
   DeploymentCreationFormLocaleLabels,
   DeploymentCreationFormLocaleOption,
+  DeploymentLocalesFieldColors,
 } from '../../models/deployment-creation-form';
+import styles from './DeploymentLocalesField.module.scss';
 
 /** Props accepted by the `DeploymentLocalesField` component. */
 export interface DeploymentLocalesFieldProps {
@@ -36,10 +39,12 @@ export interface DeploymentLocalesFieldProps {
   labels: DeploymentCreationFormLocaleLabels;
   /** Class applied to the summary row container. */
   className?: string;
-  /** Typography and color class applied to the summary text. Defaults to `'dial-body-text text-secondary'`. */
+  /** Typography class applied to the summary text. Defaults to `'dial-body-text'`. */
   summaryClassName?: string;
-  /** Typography and color class applied to each row's heading. Defaults to `'dial-tiny-lead-text text-secondary'`, which uppercases the label itself. */
+  /** Typography class applied to each row's heading. Defaults to `'dial-tiny-lead-text'`, which uppercases the label itself. */
   rowLabelClassName?: string;
+  /** Color overrides, applied as CSS custom properties. */
+  colors?: DeploymentLocalesFieldColors;
 }
 
 const createEmptyRow = (
@@ -62,9 +67,14 @@ export const DeploymentLocalesField: FC<DeploymentLocalesFieldProps> = ({
   availableLocaleOptions = [],
   labels,
   className,
-  summaryClassName = 'dial-body-text text-secondary',
-  rowLabelClassName = 'dial-tiny-lead-text text-secondary',
+  summaryClassName = 'dial-body-text',
+  rowLabelClassName = 'dial-tiny-lead-text',
+  colors,
 }) => {
+  const cssVars = buildCssVars({
+    '--dlf-summary-text': colors?.summaryText,
+    '--dlf-row-label-text': colors?.rowLabelText,
+  });
   const {
     summaryLabel,
     addLabel,
@@ -158,9 +168,12 @@ export const DeploymentLocalesField: FC<DeploymentLocalesFieldProps> = ({
   if (availableLocaleOptions.length === 0) return null;
 
   return (
-    <div className={mergeClasses('flex items-center gap-2', className)}>
+    <div
+      className={mergeClasses('flex items-center gap-2', className)}
+      style={cssVars}
+    >
       {value.length > 0 && (
-        <span className={summaryClassName}>
+        <span className={mergeClasses(styles.summary, summaryClassName)}>
           {`${summaryLabel}: ${value.map((entry) => `[${localeLabel(entry.language)}]`).join(', ')}`}
         </span>
       )}
@@ -191,7 +204,8 @@ export const DeploymentLocalesField: FC<DeploymentLocalesFieldProps> = ({
           },
         ]}
       >
-        <div className="flex flex-col gap-8 px-6 py-3">
+        {/* The popup renders in a portal, outside the root that carries the vars. */}
+        <div className="flex flex-col gap-8 px-6 py-3" style={cssVars}>
           {draftEntries.map((entry, index) => {
             const usedByOtherRows = new Set(
               draftEntries
@@ -203,7 +217,9 @@ export const DeploymentLocalesField: FC<DeploymentLocalesFieldProps> = ({
             return (
               <div key={entry.id} className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
-                  <span className={rowLabelClassName}>
+                  <span
+                    className={mergeClasses(styles.rowLabel, rowLabelClassName)}
+                  >
                     {localeRowLabel} {index + 1}
                   </span>
                   <DangerIconButton

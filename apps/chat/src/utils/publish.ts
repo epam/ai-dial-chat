@@ -1,5 +1,6 @@
 import {
   PublishAccessRulesLabels,
+  PublishFooterLabels,
   PublishPanelLabels,
 } from '@epam/ai-dial-publish-panel';
 import type { TFunction } from 'i18next';
@@ -82,6 +83,34 @@ export const getAccessRulesLabels = (
     cancelLabel: t(ButtonsI18nKeys.Cancel),
     dialogAriaLabel: t(PublishAccessRulesI18nKeys.DialogAriaLabel),
   },
+});
+
+/** Builds the translated folder, search, access-error and version labels shared by every publish panel host. */
+export const getPublishPanelCommonLabels = (
+  t: TFunction,
+): Pick<
+  PublishPanelLabels,
+  | 'folderLabel'
+  | 'clearSearchAriaLabel'
+  | 'noAccessError'
+  | 'addSiblingFolderLabel'
+  | 'addChildFolderLabel'
+  | 'summaryVersionLabel'
+> => ({
+  folderLabel: t(PublishI18nKeys.FolderLabel),
+  clearSearchAriaLabel: t(BasicI18nKeys.ClearSearch),
+  noAccessError: t(PublishI18nKeys.NoAccessError),
+  addSiblingFolderLabel: t(PublishI18nKeys.AddSiblingFolder),
+  addChildFolderLabel: t(PublishI18nKeys.AddChildFolder),
+  summaryVersionLabel: t(PublishI18nKeys.SummaryVersion),
+});
+
+/** Builds the translated Update and in-progress footer labels shared by the conversation and project publish panels. */
+export const getPublishFooterProgressLabels = (
+  t: TFunction,
+): Pick<PublishFooterLabels, 'updateLabel' | 'publishingInProgressLabel'> => ({
+  updateLabel: t(PublishI18nKeys.UpdateVersion),
+  publishingInProgressLabel: t(PublishI18nKeys.PublishingInProgress),
 });
 
 /** Builds the translated author-field label overrides shared by every publish panel host (catalog, conversation). */

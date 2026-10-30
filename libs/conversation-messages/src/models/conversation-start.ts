@@ -16,6 +16,12 @@ export interface ConversationStartTimestampLabels {
   yesterday?: (time: string) => string;
 }
 
+/** CSS custom property overrides for `ConversationStartTimestamp`. */
+export interface ConversationStartTimestampColors {
+  /** Text color of the label. Defaults to `--text-secondary`. */
+  text?: string;
+}
+
 /** Props for `ConversationStartTimestamp`. */
 export interface ConversationStartTimestampProps {
   /** ISO-8601 start time, usually the first message's `timestamp`. Nothing renders when it is missing or unparsable. */
@@ -24,8 +30,10 @@ export interface ConversationStartTimestampProps {
   locale?: string;
   /** Localised "Today"/"Yesterday" templates. */
   labels?: ConversationStartTimestampLabels;
-  /** Typography and color classes on the label. Defaults to `'dial-small-text text-secondary'`. */
+  /** Typography class on the label. Defaults to `'dial-small-text'`. */
   className?: string;
+  /** Color overrides, applied as CSS custom properties. */
+  colors?: ConversationStartTimestampColors;
 }
 
 /** Props for the relative send time rendered in a message's action row. */
@@ -34,6 +42,6 @@ export interface MessageTimestampProps {
   timestamp: string;
   /** BCP 47 locale for the relative text and the absolute tooltip. Defaults to the runtime's default locale. */
   locale?: string;
-  /** Typography and color classes on the time. Defaults to `'dial-small-text text-secondary'`. */
+  /** Typography class on the time. Defaults to `'dial-small-text'`. */
   className?: string;
 }

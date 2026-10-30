@@ -1,0 +1,15 @@
+.chip {
+  color: var(--sk-chip-label, var(--text-accent, #1d4ed8));
+
+  &:hover,
+  &:focus-visible,
+  &:active {
+    background: var(--sk-chip-hover-bg, var(--bg-info, #e1eaf9));
+  }
+}
+
+/* Doubled with `.chip` so the error colors win over its hover state. */
+.chip.unsupported {
+  color: var(--sk-chip-unsupported-label, var(--text-error, #ae2f2f));
+  background: var(--sk-chip-unsupported-bg, var(--bg-error, #f3d6d8));
+}

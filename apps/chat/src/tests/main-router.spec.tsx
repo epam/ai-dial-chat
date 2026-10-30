@@ -27,6 +27,9 @@ vi.mock('../context/CelebrationHost', () => ({ CelebrationHost: passThrough }));
 vi.mock('../context/ClientChannelContext', () => ({
   ClientChannelProvider: passThrough,
 }));
+vi.mock('../context/ConversationDataSourceContext', () => ({
+  ConversationDataSourceProvider: passThrough,
+}));
 vi.mock('../context/ConversationPanelContext', () => ({
   ConversationPanelProvider: passThrough,
 }));

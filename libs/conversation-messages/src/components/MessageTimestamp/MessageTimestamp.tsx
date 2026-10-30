@@ -8,6 +8,7 @@ import {
   formatRelativeTime,
   parseTimestamp,
 } from '../../utils/date-time';
+import styles from './MessageTimestamp.module.scss';
 
 const REFRESH_INTERVAL_MS = 60_000;
 
@@ -24,7 +25,7 @@ const VISIBILITY_CLASS_NAME =
 export const MessageTimestamp: FC<MessageTimestampProps> = ({
   timestamp,
   locale,
-  className = 'dial-small-text text-secondary',
+  className = 'dial-small-text',
 }) => {
   const now = useNow(REFRESH_INTERVAL_MS);
   const date = parseTimestamp(timestamp);
@@ -37,6 +38,7 @@ export const MessageTimestamp: FC<MessageTimestampProps> = ({
         tabIndex={0}
         className={mergeClasses(
           'px-1 whitespace-nowrap',
+          styles.time,
           className,
           VISIBILITY_CLASS_NAME,
         )}

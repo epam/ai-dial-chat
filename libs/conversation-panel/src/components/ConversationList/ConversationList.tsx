@@ -402,6 +402,7 @@ export const ConversationList: FC<ConversationListProps> = memo(
         styles: {
           groupHeaderClassName: typography?.groupHeaderClassName,
           itemTitleClassName: typography?.itemTitleClassName,
+          unreadItemTitleClassName: typography?.unreadItemTitleClassName,
           itemIconBadgeClassName,
         },
         draggingId,
@@ -428,6 +429,7 @@ export const ConversationList: FC<ConversationListProps> = memo(
         rowVariant,
         typography?.groupHeaderClassName,
         typography?.itemTitleClassName,
+        typography?.unreadItemTitleClassName,
         itemIconBadgeClassName,
         draggingId,
         dragOverId,

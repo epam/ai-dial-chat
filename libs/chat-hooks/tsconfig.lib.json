@@ -31,6 +31,9 @@
       "path": "../scheduled-tasks/tsconfig.lib.json"
     },
     {
+      "path": "../projects/tsconfig.lib.json"
+    },
+    {
       "path": "../quotations/tsconfig.lib.json"
     },
     {

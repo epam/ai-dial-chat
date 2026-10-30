@@ -228,7 +228,7 @@ export const PublishAccessRuleEditor: FC<PublishAccessRuleEditorProps> = ({
       onKeyDown={handleKeyDown}
       style={cssVars}
       className={mergeClasses(
-        'fixed inset-0 z-[60] flex flex-col gap-3 overflow-y-auto p-4',
+        'fixed inset-0 z-60 flex flex-col gap-3 overflow-y-auto p-4',
         'desktop:static desktop:z-auto desktop:flex-none desktop:overflow-visible desktop:rounded-lg desktop:p-3',
         styles.dialog,
       )}

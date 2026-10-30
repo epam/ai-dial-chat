@@ -94,8 +94,6 @@ describe('TaskHistorySection', () => {
     expect(
       screen.queryByText('scheduledTasks.detail.historyErrorLabel'),
     ).toBeNull();
-    expect(
-      screen.queryByRole('button', { name: 'scheduledTasks.list.retryLabel' }),
-    ).toBeNull();
+    expect(screen.queryByRole('button', { name: 'buttons.retry' })).toBeNull();
   });
 });

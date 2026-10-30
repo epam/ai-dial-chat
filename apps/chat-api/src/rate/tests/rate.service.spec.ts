@@ -125,6 +125,22 @@ describe('RateService', () => {
       expect(headers['Authorization']).toBe(`Bearer ${ACCESS_TOKEN}`);
     });
 
+    it('forwards a project conversation locator as the X-CONVERSATION-ID header', async () => {
+      fetchSpy.mockResolvedValue({ ok: true } as Response);
+      const service = makeService();
+      const locator =
+        'projects/a1b2c3/support-quality/conversations/gpt-4o__Hi__1';
+
+      await service.rateMessage(
+        { ...validDto, conversationId: locator },
+        ACCESS_TOKEN,
+      );
+
+      const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+      const headers = init.headers as Record<string, string>;
+      expect(headers['X-CONVERSATION-ID']).toBe(locator);
+    });
+
     it('forwards the conversation id in the X-CONVERSATION-ID header', async () => {
       fetchSpy.mockResolvedValue({ ok: true } as Response);
       const service = makeService();

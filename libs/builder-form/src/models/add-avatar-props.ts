@@ -30,6 +30,8 @@ export interface AddAvatarProps {
   captionText?: string;
   /** Called when the "Add avatar" button is clicked. The host opens its own file picker/manager and, once a file is chosen, passes its URL back in as `avatarUrl`. */
   onAddAvatarClick: () => void;
+  /** Typography class of the format/size caption. Defaults to `'dial-tiny-text'`. */
+  captionClassName?: string;
   /** Style overrides applied via CSS custom properties. */
   styles?: AddAvatarStyles;
   /** Additional CSS class applied to the root element. */

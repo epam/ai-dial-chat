@@ -4,14 +4,26 @@ import type { ScheduledTaskInstructionsMarkdownLabels } from './scheduled-task-i
 
 /** Typography overrides for the {@link ScheduledTaskDetailsSummary} component. */
 export interface ScheduledTaskDetailsSummaryTypography {
-  /** CSS class applied to the "Model"/"Instructions" field labels. Defaults to `'dial-tiny-text text-secondary'`. */
+  /** CSS class applied to the "Model"/"Instructions" field labels. Defaults to `'dial-tiny-text'`. */
   fieldLabelClassName?: string;
   /** CSS class applied to the resolved field values. Defaults to `'dial-small-text'`. */
   fieldValueClassName?: string;
+  /** Typography class of the built-in Instructions viewer's headings (`h1`–`h6`). Defaults to `'dial-small-semi-text'`. */
+  instructionsHeadingClassName?: string;
+  /** Typography class of the built-in Instructions viewer's paragraphs and lists. Defaults to `'dial-small-text'`. */
+  instructionsTextClassName?: string;
+}
+
+/** Color overrides for the {@link ScheduledTaskDetailsSummary} component. */
+export interface ScheduledTaskDetailsSummaryColors {
+  /** Text color of the "Model"/"Skill"/"Instructions" field labels. Defaults to `--text-secondary`. */
+  fieldLabel?: string;
 }
 
 /** Style overrides for the {@link ScheduledTaskDetailsSummary} component. */
 export interface ScheduledTaskDetailsSummaryStyles {
+  /** Color overrides, applied as CSS custom properties. */
+  colors?: ScheduledTaskDetailsSummaryColors;
   /** Typography class overrides. */
   typography?: ScheduledTaskDetailsSummaryTypography;
 }
@@ -32,7 +44,7 @@ export interface ScheduledTaskDetailsSummaryProps {
   instructionsMarkdown?: string;
   /** Renders `instructionsMarkdown` as a ReactNode. When omitted, `instructionsMarkdown` is rendered via `MDMessageViewer` (the same markdown stack chat assistant messages use). */
   renderInstructions?: (markdown: string) => ReactNode;
-  /** Class names for the built-in instructions `MDMessageViewer`. Defaults to the summary's small 14/20 scale (paragraphs and lists at `'dial-small-text'`, headings at `'dial-small-semi-text'`); a supplied map replaces it wholesale. Ignored when `renderInstructions` is supplied. */
+  /** Class names merged key by key over the built-in instructions `MDMessageViewer` defaults; a supplied key replaces that element's classes, type step included. Set the type step alone through `styles.typography.instructionsHeadingClassName` / `instructionsTextClassName`. Ignored when `renderInstructions` is supplied. */
   instructionsClassNames?: MarkdownRendererClassNames;
   /** Code-block, table and formula labels for the built-in `MDMessageViewer`. Ignored when `renderInstructions` is supplied. */
   markdownLabels?: ScheduledTaskInstructionsMarkdownLabels;

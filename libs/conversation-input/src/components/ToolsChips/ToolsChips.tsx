@@ -27,6 +27,8 @@ interface ToolsChipsColors {
   chipHoverBg?: string;
   /** Chip background color while the tool is on. Defaults to `--bg-control-accent-alpha`. */
   chipSelectedBg?: string;
+  /** Chip background color on hover/focus while the tool is on. Defaults to `--bg-control-accent-alpha-hover`. */
+  chipSelectedHoverBg?: string;
   /** Chip border color while the tool is on. Defaults to `--stroke-accent`. */
   chipSelectedBorder?: string;
   /** Chip leading-icon color while the tool is on. Defaults to `--text-accent`. */
@@ -98,6 +100,7 @@ export const ToolsChips: FC<ToolsChipsProps> = ({
     '--ci-chip-text': colors?.chipText,
     '--ci-chip-hover-bg': colors?.chipHoverBg,
     '--ci-chip-selected-bg': colors?.chipSelectedBg,
+    '--ci-chip-selected-bg-hover': colors?.chipSelectedHoverBg,
     '--ci-chip-selected-border': colors?.chipSelectedBorder,
     '--ci-chip-selected-icon': colors?.chipSelectedIcon,
     '--ci-chip-selected-text': colors?.chipSelectedText,

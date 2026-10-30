@@ -91,6 +91,7 @@ export const ConversationListHeader: FC<ConversationListHeaderProps> = memo(
       headerStyles?.typography?.titleClassName ?? 'dial-tiny-lead-semi-text';
     const searchTextClassName =
       headerStyles?.typography?.searchTextClassName ?? 'dial-tiny-text';
+    const filterValueColor = headerStyles?.colors?.filterValue;
     const searchToggleRef = useRef<HTMLButtonElement>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
     const wasSearchOpenRef = useRef(isSearchOpen);
@@ -143,13 +144,23 @@ export const ConversationListHeader: FC<ConversationListHeaderProps> = memo(
        single-select submenu. */
     const filterItems = useMemo<DropdownItem[]>(() => {
       const { filterLabels } = labels;
+      /* The menu renders in a portal, outside the root that carries the
+         header vars, so the value span sets its own. */
+      const filterValueVars = buildCssVars({
+        '--cp-list-header-filter-value': filterValueColor,
+      });
       /* The kit draws a submenu row's chevron itself and ignores
          `rightControl` there, so the row's content is supplied whole: the
          name, then the current value right before the chevron. */
       const renderRow = (name: string, value: string) => () => (
         <>
           <span className="min-w-0 flex-1 truncate text-start">{name}</span>
-          <span className="shrink-0 text-secondary">{value}</span>
+          <span
+            className={mergeClasses('shrink-0', styles.filterValue)}
+            style={filterValueVars}
+          >
+            {value}
+          </span>
         </>
       );
       const items: DropdownItem[] = [];
@@ -210,6 +221,7 @@ export const ConversationListHeader: FC<ConversationListHeaderProps> = memo(
       activeTypeFilter,
       onFilterChange,
       onTypeFilterChange,
+      filterValueColor,
     ]);
 
     const cssVars = useMemo(
@@ -248,7 +260,7 @@ export const ConversationListHeader: FC<ConversationListHeaderProps> = memo(
           <Search
             containerClassName="min-w-0 flex-1"
             wrapperClassName={mergeClasses(
-              '!h-6 !min-h-0 !py-1 !pe-2 [&_svg]:!size-4',
+              'h-6! min-h-0! py-1! pe-2! [&_svg]:size-4!',
               searchTextClassName,
             )}
             inputRef={searchInputRef}
@@ -349,7 +361,7 @@ export const ConversationListHeader: FC<ConversationListHeaderProps> = memo(
                         aria-hidden
                         className={mergeClasses(
                           styles.filterIndicator,
-                          'absolute -end-0.5 -top-0.5 size-1.5 rounded-full',
+                          'absolute -inset-e-0.5 -top-0.5 size-1.5 rounded-full',
                         )}
                       />
                     )}

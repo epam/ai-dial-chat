@@ -4,22 +4,20 @@ import {
   ToolsetOAuthInitiationResultType,
   ToolsetOAuthResultType,
   waitForToolsetOAuthResult,
+  ExternalServiceLoginOutcomeType,
+  ExternalServiceAuthType,
+  ExternalServiceCredentialsLevel,
 } from '@epam/ai-dial-chat-hooks';
 import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  ExternalServiceAuthType,
-  ExternalServiceCredentialsLevel,
   getExternalService,
   signInExternalService,
   signOutExternalService,
 } from '../../../server-api/external-services';
 import { getOfflineCredentials } from '../../../server-api/offline-credentials';
 import { ROUTES } from '../../../types/routes';
-import {
-  ExternalServiceLoginOutcomeType,
-  useExternalServiceLogin,
-} from '../useExternalServiceLogin';
+import { useExternalServiceLogin } from '../useExternalServiceLogin';
 
 const APP_ID = 'applications/public/finhub-via-openapi__1.0.0';
 const SERVICE_ID = 'finhub-api2';
@@ -46,16 +44,21 @@ vi.mock('../../../server-api/offline-credentials', () => ({
   getOfflineCredentials: vi.fn(),
 }));
 
-vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>();
-  return {
-    ...actual,
+vi.mock(
+  '../../../../../../libs/chat-hooks/src/oauth/popup',
+  async (importOriginal) => ({
+    ...(await importOriginal<object>()),
     navigateToolsetOAuthPopup: vi.fn(),
     openToolsetOAuthPopup: vi.fn(),
+  }),
+);
+vi.mock(
+  '../../../../../../libs/chat-hooks/src/oauth/handshake',
+  async (importOriginal) => ({
+    ...(await importOriginal<object>()),
     waitForToolsetOAuthResult: vi.fn(),
-  };
-});
+  }),
+);
 
 /*
  * The app login wiring is the test seam for the DIAL-native path: the shared

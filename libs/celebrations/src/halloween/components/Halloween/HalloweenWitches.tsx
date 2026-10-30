@@ -209,7 +209,7 @@ const HalloweenWitches: FC = () => {
             aria-hidden="true"
             focusable="false"
             className={mergeClasses(
-              'absolute -top-2.5 z-[4] size-5 opacity-0',
+              'absolute -top-2.5 z-4 size-5 opacity-0',
               spell.mentor ? styles.mentorSpell : styles.spell,
             )}
             style={{ left: -10, right: 'auto' }}

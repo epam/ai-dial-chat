@@ -8,6 +8,19 @@ const wrapper = ({ children }: { children: ReactNode }) => (
 );
 
 describe('GenerationContext', () => {
+  it('preserves the context value across renders and leaves generation active on unmount', () => {
+    const { result, rerender, unmount } = renderHook(() => useGeneration(), {
+      wrapper,
+    });
+    const value = result.current;
+    const controller = value.startGeneration('path', 'generation');
+    rerender();
+    expect(result.current).toBe(value);
+    unmount();
+    expect(controller.signal.aborted).toBe(false);
+    expect(value.hasActiveGeneration()).toBe(true);
+  });
+
   describe('hasActiveGeneration', () => {
     it('returns false when no generation has been started', () => {
       const { result } = renderHook(() => useGeneration(), { wrapper });

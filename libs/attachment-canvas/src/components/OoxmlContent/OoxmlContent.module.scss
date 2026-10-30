@@ -24,6 +24,10 @@
   );
   background: var(--ac-ooxml-formula-bg, var(--bg-layer-base, #f5f7fa));
   color: var(--ac-ooxml-formula-text, var(--text-primary, #161b2d));
+
+  &:focus-visible {
+    outline-color: var(--ac-focus-outline, var(--stroke-focus, #161b2d));
+  }
 }
 
 .statusOverlay {

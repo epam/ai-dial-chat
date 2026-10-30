@@ -271,6 +271,12 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     '--cat-cred-row-description-text':
       detailsColors?.credentialsRowDescriptionText,
     '--cat-cred-error-text': detailsColors?.credentialsErrorText,
+    '--cat-cred-delete-action-text': detailsColors?.credentialsDeleteActionText,
+    '--cat-details-limit-reached-bg': detailsColors?.limitReachedBackground,
+    '--cat-details-limit-reached-text': detailsColors?.limitReachedText,
+    '--cat-details-limit-running-low-bg':
+      detailsColors?.limitRunningLowBackground,
+    '--cat-details-limit-running-low-text': detailsColors?.limitRunningLowText,
     '--cat-cred-card-bg': detailsColors?.credentialsCardBackground,
     '--cat-cred-card-icon': detailsColors?.credentialsCardIcon,
     '--cat-cred-card-title-text': detailsColors?.credentialsCardTitleText,

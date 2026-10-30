@@ -497,7 +497,7 @@ header staying in view. Give the parent a definite height (a flex child with
 The table frame, header, row dividers and selected-row tint come from the
 `Grid` theme: the list renders the kit's `GridAppearance.Chat`, a borderless
 12px card with the MD shadow and inset row dividers. `styles.colors` (`ListViewColors`) covers cell content only:
-`starFilled`, `folderIcon` and `selectedRowCheckIcon`. With no items, the grid
+`starFilled`, `folderIcon`, `selectedRowCheckIcon`, `nameText` and `versionText`. With no items, the grid
 shows its own empty state from `emptyStateTitle` (default `'No results'`) and
 `emptyStateDescription`.
 
@@ -616,8 +616,10 @@ receives the searched, filtered and sorted items and the search query.
   i18n.
 - The dialog fills the screen below 768px, the kit `Popup`'s own breakpoint,
   and is a centred dialog from there up. The footer rule drawn with
-  `footerStart` reads `--cat-picker-footer-border`, falling back to
-  `--stroke-tertiary`.
+  `footerStart` takes its color from `colors.footerBorder`
+  (`CatalogPickerModalColors`), falling back to `--stroke-tertiary`.
+- `headingClassName` sets the type of the heading above the list, defaulting to
+  `'dial-body-semi-text'`.
 
 ### AddOnCatalogModal
 
@@ -654,6 +656,7 @@ import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 - `listProps` passes further `ListView` props (`columnVisibility`, `isFavoriteVisible`,
   `credentialsBadgeLoggedOutLabel`, …); the selection props are the picker's own.
 - `labels.selectAll` and `labels.selectRow` default to `'Select all'` and `Select <name>`.
+- `headingClassName` is forwarded to `CatalogPickerModal` (default `'dial-body-semi-text'`).
 
 ### AddOnListItem
 
@@ -685,8 +688,10 @@ import { AddOnListItem } from '@epam/ai-dial-catalog';
 - `credentials` draws the `CredentialsBadge` over the icon while signed out.
 - `trailing` adds content after the text (status badges, say).
 - `titleClassName`, `versionClassName` and `descriptionClassName` default to
-  `'dial-small-semi-text text-primary'`, `'dial-tiny-text text-secondary'` and
-  `'dial-tiny-text text-secondary'`.
+  `'dial-small-semi-text'`, `'dial-tiny-text'` and `'dial-tiny-text'`.
+- `colors` (`AddOnListItemColors`) overrides `rowHoverBackground`, `focusOutline`, `title`, `version` and
+  `description`, falling back to `--bg-control-accent-alpha`, `--stroke-accent-focus`, `--text-primary` and
+  `--text-secondary`.
 
 ### useListRemoveFocus
 
@@ -1763,6 +1768,12 @@ the default is no content; `showEmptyState` enables an explicit empty message.
 `ApplicationCredentialLoginParams` and `ApplicationCredentialsProps` are exported
 alongside the service and text models. Text overrides use English defaults and the
 same credentials CSS variables as the toolset rows.
+
+`typography` (`ApplicationCredentialsTypography`) sets the type classes:
+`titleClassName` (`'dial-h3-text'`), `rowLabelClassName` (`'dial-small-semi-text'`),
+`rowDescriptionClassName` (`'dial-small-text'`, also the hint line), `errorClassName`
+(`'dial-caption-text'`), `keyCardTitleClassName` (`'dial-tiny-semi-text'`) and
+`keyCardDescriptionClassName` (`'dial-tiny-text'`).
 
 `Catalog` and `DetailsPanel` accept `renderCredentials?: (item: CatalogItem) => ReactNode`.
 The slot appears below the item header in the open, editable, normal details view.
