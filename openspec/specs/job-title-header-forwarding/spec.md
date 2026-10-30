@@ -52,7 +52,8 @@ ID-token subject. This SHALL NOT add UserInfo requests for other providers.
 - **WHEN** the ID token contains a non-empty string `job_title`
 - **THEN** that value is preserved and never replaced by a UserInfo value
 - **AND** UserInfo is requested only when the ID token also lacks a usable
-  `picture` (avatar URL), which the same lookup supplies
+  `picture` (an http(s) avatar URL), which the same lookup supplies; see
+  `spa-auth-session` for how the picture reaches the UI
 
 #### Scenario: UserInfo cannot supply a trusted usable value
 
