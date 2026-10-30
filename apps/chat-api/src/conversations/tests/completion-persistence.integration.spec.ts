@@ -34,6 +34,8 @@ import { GenerationApiSelector } from '../generation/generation-api-selector.ser
 import { ResponsesAdapter } from '../generation/responses.adapter';
 import { ConversationTitleCacheService } from '../listing/conversation-title-cache.service';
 import { ConversationPersistenceService } from '../persistence/conversation-persistence.service';
+import { ProjectConversationStore } from '../persistence/project-conversation.store';
+import { ConversationCompletionsResponder } from '../streaming/conversation-completions.responder';
 import { ConversationStreamingService } from '../streaming/conversation-streaming.service';
 
 /*
@@ -185,6 +187,7 @@ describe('completion persistence over HTTP', () => {
         maybeRenameAfterFirstReply: vi.fn(),
       } as never,
       new ConversationTitleCacheService(),
+      new ProjectConversationStore(dial),
     );
     const deployments = {
       resolveDeploymentItem: vi.fn().mockResolvedValue(null),
@@ -213,6 +216,7 @@ describe('completion persistence over HTTP', () => {
     const module = await Test.createTestingModule({
       controllers: [ConversationController],
       providers: [
+        ConversationCompletionsResponder,
         {
           provide: ConversationService,
           useValue: {

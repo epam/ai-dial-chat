@@ -246,6 +246,15 @@ export const SUBPATH_FIXTURES = [
     peers: ['@epam/ai-dial-scheduled-tasks', ...CHAT_SHARED_ROOT_PEERS],
   },
   {
+    name: 'project',
+    subpath: 'project',
+    peers: [
+      '@epam/ai-dial-projects',
+      '@epam/ai-dial-chat-shared',
+      ...CHAT_SHARED_ROOT_PEERS,
+    ],
+  },
+  {
     name: 'sharing',
     subpath: 'sharing',
     /*
@@ -311,6 +320,7 @@ export const ALL_OPTIONAL_PEERS = [
   '@epam/ai-dial-chat-shared',
   '@epam/ai-dial-conversation-input',
   '@epam/ai-dial-mcp-apps',
+  '@epam/ai-dial-projects',
   '@epam/ai-dial-publish-panel',
   '@epam/ai-dial-quotations',
   '@epam/ai-dial-react-file-manager',

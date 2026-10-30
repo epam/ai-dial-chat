@@ -65,6 +65,15 @@ export * from './scheduled-task/scheduled-tasks-api-client';
 export * from './scheduled-task/use-scheduled-tasks';
 export * from './scheduled-task/use-scheduled-task-runs';
 export * from './scheduled-task/scheduled-task-trigger';
+export * from './project/projects-api-client';
+export * from './project/project-mapping';
+export * from './project/project-limits';
+export * from './project/project-form-errors';
+export * from './project/use-projects';
+export * from './project/use-project';
+export * from './project/use-project-submit';
+export * from './project/use-project-conversations';
+export * from './project/use-project-actions';
 /*
  * Re-exported so consumers of the gate result can name the consent enum
  * without importing the generated client directly (the public-API-surface

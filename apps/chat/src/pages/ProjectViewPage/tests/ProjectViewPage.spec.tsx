@@ -65,6 +65,27 @@ vi.mock(
       ),
   }),
 );
+vi.mock(
+  '../../../components/ProjectConversationsSection/ProjectConversationsSection',
+  () => ({
+    default: ({
+      projectId,
+      canEdit,
+      onConversationDeleted,
+    }: {
+      projectId: string;
+      canEdit: boolean;
+      onConversationDeleted?: () => void;
+    }) => (
+      <>
+        <p>{`chats of ${projectId}, editable: ${String(canEdit)}`}</p>
+        <button type="button" onClick={onConversationDeleted}>
+          delete a chat
+        </button>
+      </>
+    ),
+  }),
+);
 vi.mock('../../../components/ProjectShareOverlay/ProjectShareOverlay', () => ({
   default: ({ projectId }: { projectId: string }) => (
     <div role="dialog" aria-label="share">
@@ -88,6 +109,8 @@ const details = (
   instructions: '',
   contextFiles: [{ name: 'tickets.csv', size: 2048 }],
   etag: '"e1"',
+  contentVersion: '"cv1"',
+  conversationCount: 0,
   canEdit: true,
   ...extra,
 });
@@ -294,7 +317,7 @@ describe('ProjectViewPage', () => {
     expect(shareDialog.closest('[inert]')).toBeNull();
   });
 
-  it('deletes after confirmation with the loaded ETag and returns to the list', async () => {
+  it('deletes after confirmation with the loaded contentVersion and returns to the list', async () => {
     vi.mocked(deleteProject).mockResolvedValue(undefined);
     const { router } = renderAt();
     await screen.findByRole('heading', { level: 1, name: 'q4' });
@@ -313,7 +336,61 @@ describe('ProjectViewPage', () => {
     await waitFor(() =>
       expect(router.state.location.pathname).toBe('/projects'),
     );
-    expect(deleteProject).toHaveBeenCalledWith(PROJECT_ID, '"e1"');
+    expect(deleteProject).toHaveBeenCalledWith(PROJECT_ID, '"cv1"');
+  });
+
+  it('says the chats are deleted too when the project has some', async () => {
+    vi.mocked(getProject).mockResolvedValue(details({ conversationCount: 2 }));
+    renderAt();
+    await screen.findByRole('heading', { level: 1, name: 'q4' });
+
+    const menu = await openMenu();
+    await userEvent.click(
+      within(menu).getByRole('menuitem', { name: ButtonsI18nKeys.Delete }),
+    );
+    const dialog = await screen.findByRole('dialog', {
+      name: ProjectsI18nKeys.ActionsDeleteConfirmTitle,
+    });
+
+    expect(
+      within(dialog).getByText(
+        ProjectsI18nKeys.ActionsDeleteConfirmWithChatsDescription,
+      ),
+    ).toBeTruthy();
+  });
+
+  it('stops saying the chats are deleted too once the list deleted them all', async () => {
+    vi.mocked(getProject).mockResolvedValue(details({ conversationCount: 1 }));
+    renderAt();
+    await screen.findByRole('heading', { level: 1, name: 'q4' });
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'delete a chat' }),
+    );
+    const menu = await openMenu();
+    await userEvent.click(
+      within(menu).getByRole('menuitem', { name: ButtonsI18nKeys.Delete }),
+    );
+    const dialog = await screen.findByRole('dialog', {
+      name: ProjectsI18nKeys.ActionsDeleteConfirmTitle,
+    });
+
+    expect(
+      within(dialog).getByText(
+        ProjectsI18nKeys.ActionsDeleteConfirmDescription,
+      ),
+    ).toBeTruthy();
+  });
+
+  it('fills the main column with the project chats', async () => {
+    renderAt();
+
+    expect(
+      await screen.findByText(`chats of ${PROJECT_ID}, editable: true`),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('region', { name: ProjectsI18nKeys.ViewMainContent }),
+    ).toBeTruthy();
   });
 
   it('reloads the project when a delete loses to a concurrent change', async () => {

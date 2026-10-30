@@ -8,6 +8,7 @@ import AppConfigProvider from './context/AppConfigContext';
 import { UserProvider } from './context/auth/UserContext';
 import { CelebrationHost } from './context/CelebrationHost';
 import { ClientChannelProvider } from './context/ClientChannelContext';
+import { ConversationDataSourceProvider } from './context/ConversationDataSourceContext';
 import { ConversationPanelProvider } from './context/ConversationPanelContext';
 import { ConversationsProvider } from './context/ConversationsContext';
 import { DeploymentsProvider } from './context/DeploymentsContext';
@@ -67,11 +68,13 @@ const AppRoot: FC = () => (
                                             <PromptsProvider>
                                               <SkillsProvider>
                                                 <ConversationsProvider>
-                                                  <VisualizerMessageProvider>
-                                                    <UnsavedChangesProvider>
-                                                      <App />
-                                                    </UnsavedChangesProvider>
-                                                  </VisualizerMessageProvider>
+                                                  <ConversationDataSourceProvider>
+                                                    <VisualizerMessageProvider>
+                                                      <UnsavedChangesProvider>
+                                                        <App />
+                                                      </UnsavedChangesProvider>
+                                                    </VisualizerMessageProvider>
+                                                  </ConversationDataSourceProvider>
                                                 </ConversationsProvider>
                                               </SkillsProvider>
                                             </PromptsProvider>

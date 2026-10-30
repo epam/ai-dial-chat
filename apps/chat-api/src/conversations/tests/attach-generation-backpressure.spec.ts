@@ -22,6 +22,7 @@ import {
   ConversationMessageDto,
   ConversationMessageRole,
 } from '../dto/conversation-message.dto';
+import { createConversationController } from './conversation-controller.fixture';
 
 /**
  * A minimal `Response`-shaped `EventEmitter` whose `writableLength` is
@@ -97,7 +98,7 @@ const makeController = (
   const generationService = new ConversationGenerationService({
     get: (key: keyof EnvironmentVariables) => config[key],
   } as unknown as ConfigService<EnvironmentVariables>);
-  const controller = new ConversationController(
+  const controller = createConversationController(
     {
       resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
       stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
@@ -433,7 +434,7 @@ describe('attachToGeneration — background replay backpressure', () => {
         };
       }
     };
-    const controller = new ConversationController(
+    const controller = createConversationController(
       {
         resolveBackgroundAttach: vi.fn(
           async (
