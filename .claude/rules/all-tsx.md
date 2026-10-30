@@ -55,7 +55,7 @@ Call `mergeClasses` during render, never at module scope. A module-level `const 
 
 **Always prefer UI kit components over raw HTML elements.** Before reaching for native `<button>`, `<input>`, `<select>`, or other HTML elements:
 
-1. **Look for a UI kit component** — check if a suitable component exists for your use case using the `@epam/ai-dial-ui-kit` MCP tools (`searchEntity` / `getEntityDetails`).
+1. **Look for a UI kit component** — check if a suitable component exists for your use case using the `@epam/ai-dial-ui-kit` MCP tools (`searchEntity` / `getEntityDetails`). Use those tools for **every** kit lookup — never `grep`/`glob` the package, which misses type information and examples.
 2. **Use raw elements only as last resort** — if and only if no UI kit component meets the requirements, use native HTML (and document why).
 
 ### Always use generation 2.0 kit components
@@ -162,6 +162,17 @@ controls, standalone dividers and table frames, `border-2` for active/selected
 highlighting, and `0.5px solid` in a stylesheet for dividers **inside** a table.
 A named `borderWidth` token cannot work — `borderColor` already owns `warning`,
 `error` and friends, so `border-warning` would set a width and a colour at once.
+
+## UI kit upgrades and breaking changes
+
+When a kit upgrade breaks a build or a prop disappears:
+
+1. Find the target release: the installed `@epam/ai-dial-ui-kit` version in `package.json`; a dev version (`x.y.z-dev.N`) maps to the next release (`0.11.0.18` → `0.11.0`).
+2. Read the `### Breaking Changes` entries between the previous and target release in `node_modules/@epam/ai-dial-ui-kit/dist/CHANGELOG.md`.
+3. Follow the migration guides in `node_modules/@epam/ai-dial-ui-kit/dist/migration-guides/<version>/`.
+4. Confirm the current prop signature with `getEntityDetails("component", "<Name>")` before applying the fix.
+
+The MCP server (`node_modules/@epam/ai-dial-ui-kit/dist/mcp-server.cjs`) reads the kit manifest once, at startup. After bumping the kit in a running session, reconnect it (`/mcp` → `ai-dial-ui-kit`) before trusting a "not found" — a stale process still answers for the previous version.
 
 ## aria-label values go through i18n
 

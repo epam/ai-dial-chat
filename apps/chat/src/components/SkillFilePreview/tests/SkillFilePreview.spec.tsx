@@ -1,6 +1,6 @@
+import { SkillFilePreviewState } from '@epam/ai-dial-chat-hooks/skill-editor';
 import { render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { SkillFilePreviewState } from '../../../types/skill-file-preview';
 import { configurePdfWorker } from '../../../utils/pdf';
 import { SkillFilePreview } from '../SkillFilePreview';
 

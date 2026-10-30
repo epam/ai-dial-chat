@@ -187,3 +187,19 @@ describe('useDeploymentChangeEffect', () => {
     expect(msg.deploymentId).toBe('gpt-4');
   });
 });
+
+it('does not report a restored model during a direct loaded conversation switch', () => {
+  const addStatusMessage = vi.fn();
+  mockUseDeployments.mockReturnValue(makeDeploymentsContext('a'));
+  const { rerender } = renderHook(
+    ({ id }) => useDeploymentChangeEffect(id, addStatusMessage, true),
+    { initialProps: { id: 'first' } },
+  );
+  mockUseDeployments.mockReturnValue(makeDeploymentsContext('b'));
+  rerender({ id: 'second' });
+  expect(addStatusMessage).not.toHaveBeenCalled();
+  mockUseDeployments.mockReturnValue(makeDeploymentsContext('c'));
+  rerender({ id: 'second' });
+  expect(addStatusMessage).toHaveBeenCalledOnce();
+  expect(addStatusMessage.mock.calls[0][0].deploymentId).toBe('c');
+});

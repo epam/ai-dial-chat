@@ -89,3 +89,5 @@ export * from './hooks/useUnsavedChangesGuard';
 export * from './file-manager/index';
 export { CHAT_SHARED_CLASS } from './constants/public-class-names';
 export { isSkillSelectionUnsupported } from './utils/is-skill-selection-unsupported';
+
+export * from './conversation-transfer/conversation-transfer-queue';

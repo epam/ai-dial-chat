@@ -1,4 +1,8 @@
 import {
+  ActiveScheduledTaskDetailState,
+  ActiveScheduledTaskStatus,
+} from '@epam/ai-dial-chat-hooks/scheduled-tasks';
+import {
   DIAL_KIT_ICON_STROKE,
   GhostButton,
   Skeleton,
@@ -14,10 +18,6 @@ import {
   ButtonsI18nKeys,
 } from '../../constants/translation-keys';
 import { useActiveScheduledTask } from '../../context/ActiveScheduledTaskContext';
-import {
-  ActiveScheduledTaskDetailState,
-  ActiveScheduledTaskStatus,
-} from '../../types/active-scheduled-task';
 import { formatRunTimestamp } from '../../utils/map-scheduled-task-run-dto';
 
 const CARD_CLASS_NAME =

@@ -8,7 +8,7 @@ applyTo: '**'
 
 # RTL and Arabic language support
 
-All apps and libs must support Arabic (`ar`) and any other right-to-left locale. The active language drives `document.documentElement.dir` — `rtl` or `ltr` — which Tailwind's `rtl:` / `ltr:` variants and CSS logical properties key off.
+All apps and libs must support Arabic (`ar`) and any other right-to-left locale. The active language drives `document.documentElement.dir` — `rtl` or `ltr` — which Tailwind's `rtl:` / `ltr:` variants and CSS logical properties key off. Never hardcode `dir` or `lang` in static HTML: `apps/chat/src/i18n/config.ts` sets both on `document.documentElement` on every language change.
 
 ## Tailwind: logical over physical
 
@@ -22,6 +22,7 @@ Use **logical** direction utilities everywhere text or element direction should 
 | `left-*` / `right-*`                     | `inset-s-*` / `inset-e-*`     |
 | `border-l-*` / `border-r-*`              | `border-s-*` / `border-e-*`   |
 | `rounded-l-*` / `rounded-r-*`            | `rounded-s-*` / `rounded-e-*` |
+| one-sided `inset-x-*`                    | `inset-inline-start/end-*`    |
 
 In `.scss` / `.css` use CSS logical properties: `margin-inline-start/end`, `padding-inline-start/end`, `inset-inline-start/end`, `inset-inline`, `border-inline-start/end`.
 
@@ -29,13 +30,15 @@ In `.scss` / `.css` use CSS logical properties: `margin-inline-start/end`, `padd
 
 ## Directional icons
 
-Icons with inherent left/right meaning (back/forward arrows, chevrons used for navigation or expand/collapse) must be mirrored in RTL:
+Icons with inherent left/right meaning (back/forward arrows, chevrons used for navigation or expand/collapse, send, indent/dedent) must be mirrored in RTL:
 
 ```tsx
 <IconChevronRight className="rtl:scale-x-[-1]" />
 ```
 
 Symmetric icons (×, +, ⚙, ↑, ↓) must NOT be flipped.
+
+When no logical utility covers the layout change, use the `rtl:` variant (`rtl:rotate-180`, `rtl:flex-row-reverse`); it applies under any `dir="rtl"` ancestor.
 
 ## Slide-in drawers and panels
 

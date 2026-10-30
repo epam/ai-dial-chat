@@ -150,3 +150,11 @@ npm test
 Set `KEEP_FIXTURES=1` when running `node scripts/run.mjs` directly to skip the
 final cleanup and inspect the isolated fixture's `node_modules`/typecheck/
 bundle output by hand.
+
+## Remaining reuse contracts
+
+The fixture additionally packs quotations and chat-shared roots, imports the external-services
+subpath, executes public contract smoke tests and two-instance JSON/incremental title tests
+against installed artifacts. Vitest, jsdom and Testing Library are fixture-only dependencies
+pinned from the workspace lockfile. No source aliases or package overrides are used in the
+isolated install. Publication and downstream application verification are not performed.

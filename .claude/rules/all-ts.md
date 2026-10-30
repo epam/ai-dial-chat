@@ -24,6 +24,13 @@ function formatDate(date: Date): string { ... }
 - Use the `void` operator before Promise-returning calls only for intentional fire-and-forget work where errors are handled internally. Do not add it as a routine prefix for local async helpers.
 - Prefer `value == null` over `value === null || value === undefined`, and `value != null` over `value !== null && value !== undefined`, unless you must distinguish `null` from `undefined` explicitly.
 
+- Use block comments (`/* ... */`) for explanatory comments that span multiple lines. Keep `//` comments for short, single-line notes only.
+
+## Module specifiers
+
+- Omit `.js`, `.jsx`, `.ts`, and `.tsx` from relative module specifiers: `./Component`, not `./Component.js`. Keep extensions that identify non-code resources (`.css`, `.scss`, `.json`, images) and package subpaths whose published API includes an extension.
+- Vite-built apps and libs use `moduleResolution: "bundler"` with `module: "esnext"`. Do not switch frontend code to `node16`/`nodenext` to make `.js` specifiers compile; a native Node ESM package executed without a bundler needs its own Node-compatible build strategy instead.
+
 ## File naming
 
 **Components and hooks** use PascalCase for both the folder and the file name, matching the exported symbol:
@@ -72,7 +79,7 @@ Component folders under `src/components/` must use PascalCase and match the comp
 
 Don't write utility functions in the same file as a component. If a helper function is needed, place it in the utils folder of corresponding lib or app. Prefer a general utils file over a narrow one (e.g., `apps/chat/src/utils/formatting.ts` rather than `apps/chat/src/utils/format-conversation-timestamp.ts`), and export it from there.
 
-Prefer using enums over union types for sets of related string or numeric constants, especially when they are used in multiple places or have associated logic. Enums provide better readability, maintainability, and type safety compared to unions of literal types. Place enums in a 'types' directory. Follow rules from AGENTS.md for naming enums and their members.
+Prefer using enums over union types for sets of related string or numeric constants, especially when they are used in multiple places or have associated logic. Enums provide better readability, maintainability, and type safety compared to unions of literal types. Place enums in a 'types' directory. Use string enums for named finite sets of statuses, modes, variants, or lifecycle states — `enum UploadStatus { Idle = 'idle' }`, not `type UploadStatus = 'idle' | ...` — whenever the values are reused across a module, exported, or compared in component logic/tests.
 
 Prefer using `interface` over `type` for defining object shapes, and `type` for unions, intersections, and other complex types. Don't place interfaces in a component file expect for Props and State interfaces that are tightly coupled to that component. Instead, place shared interfaces in a 'models' directory.
 

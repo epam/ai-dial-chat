@@ -112,8 +112,10 @@ vi.mock('../../../context/SkillsContext', () => ({
 vi.mock('@epam/ai-dial-attachment-canvas', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@epam/ai-dial-attachment-canvas')>();
+  const beginRequest = () => () => true;
   return {
     ...actual,
+    useLatestCanvasRequest: () => beginRequest,
     useAttachmentCanvas: () => ({
       isOpen: false,
       isLoading: false,

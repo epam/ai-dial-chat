@@ -33,6 +33,7 @@ import {
   ConversationTransferErrorCode,
   DeleteConfirmationDialog,
   FilterTab,
+  toConversationTransferQueueItems as toTransferQueueItems,
 } from '@epam/ai-dial-chat-shared';
 import {
   ConversationListSection,
@@ -140,7 +141,6 @@ import {
   getExportErrorKey,
   getExportFailureToastKey,
   getImportErrorKey,
-  toTransferQueueItems,
 } from '../../utils/conversation-transfer';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';

@@ -244,6 +244,7 @@ const NewConversationComposer: FC<Props> = ({
     [selectedDeployment, language],
   );
 
+  const isMobile = useIsMobile();
   const composerStyles: ConversationInputStyles = useMemo(
     () => ({
       ...inputStyles,
@@ -398,7 +399,6 @@ const NewConversationComposer: FC<Props> = ({
     itemCount: deployments.length,
   });
 
-  const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
   const isChatSettingsEnabled = useUiFeature(OverlayFeature.ChatSettings);
   const isEmptyChatSettingsEnabled = useUiFeature(

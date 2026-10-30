@@ -5,13 +5,13 @@ import {
   ConversationTransferSubjectKind,
   ConversationTransferWarningCode,
 } from '@epam/ai-dial-chat-shared';
+import { toConversationTransferQueueItems as toTransferQueueItems } from '@epam/ai-dial-chat-shared';
 import { TransferQueueItemStatus } from '@epam/ai-dial-ui-kit';
 import type { TFunction } from 'i18next';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConversationImportI18nKeys } from '../../constants/translation-keys';
 import {
   formatTransferNameList,
-  toTransferQueueItems,
   TRANSFER_NAME_LIST_LIMIT,
 } from '../conversation-transfer';
 
