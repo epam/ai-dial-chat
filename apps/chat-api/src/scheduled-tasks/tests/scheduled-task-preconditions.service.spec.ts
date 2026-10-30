@@ -4,6 +4,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ScheduledTasksService } from '../scheduled-tasks.service';
 import { ScheduledTaskErrorCode } from '../types/scheduled-task-error-code.enum';
 import {
   createScheduledTasksService,

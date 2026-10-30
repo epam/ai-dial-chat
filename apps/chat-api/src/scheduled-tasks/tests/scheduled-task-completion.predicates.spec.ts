@@ -45,7 +45,7 @@ describe('scheduled task completion predicates', () => {
         isCompletionCandidate(
           makeTask({
             triggerType: ScheduleTriggerType.Date,
-            nextRunTime: null,
+            nextRunTime: undefined,
           }),
         ),
       ).toBe(true);
@@ -88,7 +88,7 @@ describe('scheduled task completion predicates', () => {
         isCompletionCandidate(
           makeTask({
             triggerType: ScheduleTriggerType.Cron,
-            nextRunTime: null,
+            nextRunTime: undefined,
           }),
         ),
       ).toBe(false);
@@ -101,7 +101,7 @@ describe('scheduled task completion predicates', () => {
         isExpiredRecurring(
           makeTask({
             triggerType: ScheduleTriggerType.Cron,
-            nextRunTime: null,
+            nextRunTime: undefined,
             trigger: { cron: { endDate: PAST } },
           } as Partial<ScheduledTaskDto>),
         ),
@@ -113,7 +113,7 @@ describe('scheduled task completion predicates', () => {
         isExpiredRecurring(
           makeTask({
             triggerType: ScheduleTriggerType.Cron,
-            nextRunTime: null,
+            nextRunTime: undefined,
             trigger: { cron: { endDate: FUTURE } },
           } as Partial<ScheduledTaskDto>),
         ),
@@ -122,7 +122,7 @@ describe('scheduled task completion predicates', () => {
         isExpiredRecurring(
           makeTask({
             triggerType: ScheduleTriggerType.Cron,
-            nextRunTime: null,
+            nextRunTime: undefined,
           }),
         ),
       ).toBe(false);
@@ -142,7 +142,7 @@ describe('scheduled task completion predicates', () => {
         isExpiredRecurring(
           makeTask({
             triggerType: ScheduleTriggerType.Date,
-            nextRunTime: null,
+            nextRunTime: undefined,
             trigger: { date: PAST },
           }),
         ),
