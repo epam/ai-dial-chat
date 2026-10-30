@@ -30,7 +30,8 @@ vi.mock('@epam/ai-dial-celebrations', () => ({
 }));
 vi.mock('../AppConfigContext', async () => import('./app-config-context-mock'));
 vi.mock('../NotificationContext', () => ({ useNotification: vi.fn() }));
-vi.mock('../../hooks/breakpoint/useBreakpoint', () => ({
+vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
   useIsMobile: () => true,
 }));
 vi.mock('react-i18next', () => ({

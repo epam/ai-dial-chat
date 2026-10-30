@@ -131,7 +131,7 @@ A shared tracking hook SHALL accept conversation identity, loaded state, selecte
 
 ### Requirement: Annotation grouping accepts unknown input without persisted-schema knowledge
 
-`quotations` SHALL export a memoized html-tag annotation grouping hook accepting unknown input. It SHALL reject non-arrays and invalid entries, retain supported html_tag selectors and call existing groupAnnotationsByCitId. Empty results SHALL use a stable shared empty reference; unchanged input SHALL preserve result identity. The app adapter in `apps/chat/src/hooks/conversation/useConversationAnnotationPool.ts` SHALL extract persisted customViewState annotations and handle a missing conversation before delegation.
+`quotations` SHALL export a memoized html-tag annotation grouping hook accepting unknown input. It SHALL reject non-arrays and invalid entries, retain supported html_tag selectors and call existing groupAnnotationsByCitId. Empty results SHALL use a stable shared empty reference; unchanged input SHALL preserve result identity. `useConversationAnnotationPool` in `libs/chat-hooks/src/conversation-sources/useConversationAnnotationPool/useConversationAnnotationPool.ts` (exported from `@epam/ai-dial-chat-hooks` and its `./conversation-sources` subpath) SHALL extract persisted customViewState annotations and handle a missing conversation before delegation.
 
 #### Scenario: Malformed persisted annotations
 

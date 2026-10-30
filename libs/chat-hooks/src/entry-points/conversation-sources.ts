@@ -1,2 +1,3 @@
 export * from '../conversation-sources/useConversationSources/useConversationSources';
 export * from '../conversation-sources/stage-citations';
+export * from '../conversation-sources/useConversationAnnotationPool/useConversationAnnotationPool';

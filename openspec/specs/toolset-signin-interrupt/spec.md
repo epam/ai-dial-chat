@@ -178,7 +178,7 @@ When a login for one event succeeds, the client SHALL report `success` individua
 
 ### Requirement: Mobile and desktop layout parity
 
-`SigninInterruptDialog` SHALL render usably on both mobile and desktop breakpoints using the project's named Tailwind breakpoints (`mobile`, `desktop`) and, where JS branching is required, `useBreakpoint`/`useIsMobile` — never raw `window.innerWidth` checks. On mobile it SHALL use a full-width/bottom-sheet-style layout consistent with other global mobile dialogs in the app; on desktop a centered modal.
+`SigninInterruptDialog` SHALL render usably on both mobile and desktop breakpoints using the project's named Tailwind breakpoints (`mobile`, `desktop`) and, where JS branching is required, `useIsMobile` — never raw `window.innerWidth` checks. On mobile it SHALL use a full-width/bottom-sheet-style layout consistent with other global mobile dialogs in the app; on desktop a centered modal.
 
 #### Scenario: Mobile viewport
 - **WHEN** the dialog renders at a mobile breakpoint

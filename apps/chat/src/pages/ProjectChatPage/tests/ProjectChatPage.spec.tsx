@@ -1,4 +1,5 @@
 import { ProjectSource } from '@epam/ai-dial-chat-api-client';
+import { useIsMobile } from '@epam/ai-dial-chat-shared';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
@@ -14,7 +15,6 @@ import {
   useAppConfig as useAppConfigMock,
   useFeatureFlag as useFeatureFlagMock,
 } from '../../../context/tests/app-config-context-mock';
-import { useIsMobile } from '../../../hooks/breakpoint/useBreakpoint';
 import { getProject } from '../../../server-api/projects.api';
 import ProjectChatPage from '../ProjectChatPage';
 
@@ -23,7 +23,8 @@ vi.mock(
   async () => import('../../../context/tests/app-config-context-mock'),
 );
 vi.mock('../../../server-api/projects.api', () => ({ getProject: vi.fn() }));
-vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
+vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
   useIsMobile: vi.fn(() => false),
 }));
 vi.mock('../../../context/ConversationsContext', () => ({

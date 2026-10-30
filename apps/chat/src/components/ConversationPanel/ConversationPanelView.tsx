@@ -35,6 +35,7 @@ import {
   DeleteConfirmationDialog,
   FilterTab,
   toConversationTransferQueueItems as toTransferQueueItems,
+  useIsMobile,
 } from '@epam/ai-dial-chat-shared';
 import {
   ConversationListSection,
@@ -105,7 +106,6 @@ import { useUser } from '../../context/auth/UserContext';
 import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
-import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { useConversationPublishHistory } from '../../hooks/useConversationPublishHistory/useConversationPublishHistory';

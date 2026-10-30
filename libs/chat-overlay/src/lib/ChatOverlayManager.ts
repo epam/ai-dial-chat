@@ -21,7 +21,7 @@ import { injectStyleSheet, setStyles } from './internal/dom-styles';
  * Mirrors MOBILE_MAX_WIDTH_PX from @epam/ai-dial-chat-shared's breakpoint
  * constants — this package has no dependencies, so the value is repeated
  * here and pinned to the constant by
- * apps/chat/src/hooks/breakpoint/breakpoint-sync.spec.ts.
+ * libs/chat-shared/src/constants/tests/breakpoint-sync.spec.ts.
  */
 const MOBILE_BREAKPOINT_PX = 1279;
 const DEFAULT_WIDTH = 380;

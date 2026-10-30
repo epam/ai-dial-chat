@@ -23,7 +23,8 @@ vi.mock('../../../context/FavoriteApplicationsContext', () => ({
 vi.mock('../../../context/SkillsContext', () => ({
   useSkills: () => ({ skills: [], sharedWithMe: [], publicSkills: [] }),
 }));
-vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
+vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
   useIsMobile: () => state.isMobile,
 }));
 vi.mock('react-i18next', () => ({

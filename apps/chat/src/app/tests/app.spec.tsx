@@ -68,7 +68,8 @@ vi.mock('../../hooks/attachment/useCanvasVisualizerMessageHandler', () => ({
 vi.mock('../../hooks/attachment/usePdfPreviewLoader', () => ({
   usePdfPreviewLoader: () => undefined,
 }));
-vi.mock('../../hooks/breakpoint/useBreakpoint', () => ({
+vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
   useIsMobile: () => false,
 }));
 vi.mock('../../hooks/conversation/useConversationListBridge', () => ({

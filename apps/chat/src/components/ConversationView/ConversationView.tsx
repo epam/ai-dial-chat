@@ -12,11 +12,12 @@ import {
   findDeploymentByIdOrReference,
   getQuickAppConversationStarters,
   isQuickAppSchema,
-  referenceAttachmentToPdfCanvasContent,
   normalizeResponseFormat,
+  referenceAttachmentToPdfCanvasContent,
   shouldRerunGenerationOnEdit,
   useAttachmentValidation,
   useChatSettingsFormConfig,
+  useConversationAnnotationPool,
 } from '@epam/ai-dial-chat-hooks';
 import {
   type ConversationDraft,
@@ -31,20 +32,21 @@ import { useConversationScroll } from '@epam/ai-dial-chat-hooks/scroll-anchoring
 import { usePageFileDrag } from '@epam/ai-dial-chat-hooks/viewport-layout';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
+  type Annotation,
+  type Attachment,
+  type Conversation,
   DisplayAttachment,
   formatFileSize,
   isStatusMessage,
   mergeClasses,
-  StatusEvent,
-  type Annotation,
-  type Attachment,
-  type Conversation,
-  type MessageRating,
   type Message as MessageType,
+  type MessageRating,
   type RequestSkill,
   type StarterOption,
+  StatusEvent,
   type ToolMenuItem,
   type UploadedAttachmentResult,
+  useIsMobile,
 } from '@epam/ai-dial-chat-shared';
 import {
   useComposerSeed,
@@ -103,9 +105,7 @@ import { useNotification } from '../../context/NotificationContext';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
 import { useMcpAppHostAdapter } from '../../hooks/attachment/useMcpAppHostAdapter';
-import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useChatSettingsFormLabels } from '../../hooks/conversation/useChatSettingsFormLabels';
-import { useConversationAnnotationPool } from '../../hooks/conversation/useConversationAnnotationPool';
 import { useConversationDraftStore } from '../../hooks/conversation/useConversationDraftStore';
 import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';
 import { useDialFileManagerState } from '../../hooks/files/useDialFileManagerState';
