@@ -1717,6 +1717,16 @@ const Composer = ({ allowedMimeTypes }: { allowedMimeTypes: string[] }) => {
 
 **Returns** (`UseAttachmentValidationResult`): `{ inputAttachmentTypes: string[], isAttachmentsAllowed: boolean, validateAttachment: (attachment: Attachment) => AttachmentErrorReason | undefined, fileAccept: string | undefined }`.
 
+### useConversationAnnotationPool
+
+Groups the html-tag citation annotations a conversation persisted in `customViewState.annotations` by citation id, through `useHtmlTagAnnotationGroups` from `@epam/ai-dial-quotations`. Malformed or absent annotations yield the shared empty result, so a host can pass any conversation, `null` or `undefined`. Available from the root and `./conversation-sources`.
+
+```ts
+import { useConversationAnnotationPool } from '@epam/ai-dial-chat-hooks/conversation-sources';
+
+const fallbackCitationGroups = useConversationAnnotationPool(conversation);
+```
+
 ### useConversationSources
 
 Derives, via a pure `useMemo` computation, a deduplicated list of a conversation's uploaded/generated attachments and its quotation sources from a message list.

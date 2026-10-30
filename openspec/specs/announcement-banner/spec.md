@@ -289,7 +289,7 @@ The layout's **structure and behavior** are the contract — centered text, dism
 
 ### Requirement: Banner layout is mobile-first and responsive
 
-The banner SHALL be usable on narrow viewports without horizontal overflow, without clipping the close control, and — while collapsed — without growing beyond its single-line height. Truncation (and the expand/collapse control it triggers) SHALL apply at every viewport width. Any JavaScript branching on viewport size SHALL use `useBreakpoint`/`useIsMobile` rather than reading `window.innerWidth`. Only the project's named Tailwind breakpoints (`mobile`, `desktop`) SHALL be used.
+The banner SHALL be usable on narrow viewports without horizontal overflow, without clipping the close control, and — while collapsed — without growing beyond its single-line height. Truncation (and the expand/collapse control it triggers) SHALL apply at every viewport width. Any JavaScript branching on viewport size SHALL use `useIsMobile` rather than reading `window.innerWidth`. Only the project's named Tailwind breakpoints (`mobile`, `desktop`) SHALL be used.
 
 #### Scenario: Mobile layout truncates without overflow
 

@@ -12,7 +12,7 @@ The app-level toast stack rendered by `NotificationContainer` (`apps/chat/src/co
 
 From the `desktop` breakpoint (`tools/tailwind/theme.css`) up, the stack SHALL be fixed to the **bottom-end** corner of the viewport, with each toast aligned to the inline-end edge. The anchor SHALL use logical inset utilities only (releasing the inline-start inset at `desktop`, with `items-end`), never physical `right-*` / `left-*`, so the corner is bottom-right in LTR and bottom-left in RTL. On desktop the stack SHALL have a definite width (at most 600px and never wider than the viewport minus its gutters) rather than shrink-to-fit, so each entry's percentage max-width resolves against a fixed box.
 
-Placement SHALL be pure CSS through the `desktop:` variant. The container SHALL NOT branch in JS on `useBreakpoint` / `useIsMobile` or read `window.innerWidth`.
+Placement SHALL be pure CSS through the `desktop:` variant. The container SHALL NOT branch in JS on `useIsMobile` or read `window.innerWidth`.
 
 State ownership is unchanged: the queue stays in `NotificationProvider`. This requirement adds no context, hook, or memoisation requirement beyond the existing `memo(NotificationContainer)` and memoised `NotificationEntry`.
 

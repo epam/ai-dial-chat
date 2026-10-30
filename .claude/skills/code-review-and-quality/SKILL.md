@@ -202,7 +202,7 @@ Block merge for OpenSpec-backed work when code behavior materially diverges from
 
 - UI changes use the project's named breakpoint prefixes (`mobile:` / `desktop:`), not nonexistent `small_tablet:`/`large_tablet:`/`large_desktop:`, Tailwind defaults such as `sm:`/`md:`/`lg:`, or arbitrary `min-[…]:` queries
 - Authoring style is mobile-first — base classes describe the smallest supported viewport, larger bands are added via the named prefixes
-- Components that branch in JS use `useBreakpoint` / `useIsMobile` from `apps/chat/src/hooks/breakpoint/useBreakpoint.ts`, not direct `window.innerWidth` reads
+- Components that branch in JS use `useIsMobile` from `@epam/ai-dial-chat-shared`, not direct `window.innerWidth` reads
 - Touch targets meet ~44×44 CSS px on mobile; no `:hover`-only affordances; no horizontal scroll at 360px
 - Verification story names which breakpoints were exercised — "desktop verified only" is a request-changes signal for any user-facing change
 - See `.claude/skills/responsive-design/SKILL.md` for the full rubric
@@ -393,7 +393,7 @@ Use as a literal template when writing a review:
 ### Responsive parity
 
 - [ ] Uses project's named breakpoint prefixes; mobile-first authoring
-- [ ] JS branches go through `useBreakpoint` / `useIsMobile`, not `window.innerWidth`
+- [ ] JS branches go through `useIsMobile`, not `window.innerWidth`
 - [ ] Touch targets, hover-only affordances, and 360px overflow checked
 - [ ] Verification names the breakpoints exercised
 

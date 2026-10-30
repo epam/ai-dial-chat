@@ -1,3 +1,4 @@
+import { useIsMobile } from '@epam/ai-dial-chat-shared';
 import { ProjectChatHeader } from '@epam/ai-dial-projects';
 import {
   DIAL_ICON_SIZE,
@@ -27,7 +28,6 @@ import { ProjectsI18nKeys } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useChatLayoutHeaderSlot } from '../../context/ChatLayoutHeaderSlotContext';
 import { ConversationDataSourceContext } from '../../context/ConversationDataSourceContext';
-import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useProject } from '../../hooks/projects/useProject';
 import type {
   ProjectChatNavigationState,

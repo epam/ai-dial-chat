@@ -142,6 +142,7 @@ export { isAwaitingGenerationResume } from './conversation/useConversationStream
 export * from './conversation/useConversationStream/useConversationStream';
 export * from './conversation-sources/useConversationSources/useConversationSources';
 export * from './conversation-sources/stage-citations';
+export * from './conversation-sources/useConversationAnnotationPool/useConversationAnnotationPool';
 export * from './files/dial-files-api';
 export * from './files/dial-file-manager.types';
 export * from './files/dial-file-manager.model';

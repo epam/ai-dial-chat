@@ -434,7 +434,8 @@ vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: () => deploymentsValue,
 }));
 const mockUseIsMobile = vi.hoisted(() => vi.fn(() => false));
-vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
+vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
   useIsMobile: mockUseIsMobile,
 }));
 vi.mock('../../../hooks/useUiFeature');
@@ -3185,6 +3186,27 @@ describe('ConversationPanelView', () => {
           ([notification]) => notification.variant === 'success',
         ),
       ).toBe(false);
+    });
+
+    it('keeps both actions rendered and disabled while the request is in flight', async () => {
+      vi.mocked(unpublishConversation).mockReturnValue(
+        new Promise(() => undefined),
+      );
+      await openUnpublishPopup(['Organization/Shared chats']);
+      const status = dialog().getByRole('status');
+      expect(status.textContent).toBe('');
+
+      await userEvent.click(confirmButton());
+
+      expect(confirmButton().hasAttribute('disabled')).toBe(true);
+      expect(
+        dialog()
+          .getByRole('button', { name: 'buttons.cancel' })
+          .hasAttribute('disabled'),
+      ).toBe(true);
+      // The confirm button's spinner is a second status node; the region itself must not remount.
+      expect(dialog().getAllByRole('status')).toContain(status);
+      expect(status.textContent).toBe('conversationUnpublish.requestingStatus');
     });
 
     it('dismisses without a request when Cancel is clicked', async () => {

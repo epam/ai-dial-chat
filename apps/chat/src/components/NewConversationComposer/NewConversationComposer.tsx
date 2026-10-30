@@ -20,13 +20,14 @@ import {
 import { usePageFileDrag } from '@epam/ai-dial-chat-hooks/viewport-layout';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
-  formatFileSize,
-  mergeClasses,
-  ResponseFormat,
   type Attachment,
   type DeploymentItem,
   type DisplayAttachment,
+  formatFileSize,
+  mergeClasses,
+  ResponseFormat,
   type ToolMenuItem,
+  useIsMobile,
 } from '@epam/ai-dial-chat-shared';
 import type {
   CommandMenuConfig,
@@ -54,7 +55,6 @@ import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
-import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useAudioTranscription } from '../../hooks/conversation/useAudioTranscription';
 import { useChatSettingsFormLabels } from '../../hooks/conversation/useChatSettingsFormLabels';
 import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';

@@ -72,7 +72,8 @@ vi.mock('../../../hooks/useUiFeature', () => ({
   /* Drafts stay on, as by default, so the memo check covers the draft wiring. */
   useUiFeature: (feature: string) => feature === 'conversation-drafts',
 }));
-vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
+vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
   useIsMobile: () => false,
 }));
 vi.mock(

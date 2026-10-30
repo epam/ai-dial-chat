@@ -60,7 +60,7 @@ RTL: dialog and row layout reuse the existing logical-Tailwind-utility layout al
 
 Accessibility: reuses the existing dialog's `role="dialog"` + `aria-modal="true"` + `aria-labelledby`, focus trap via `inert` on background content, and per-row `aria-busy` — no new accessibility pattern is introduced for the added row kind.
 
-Mobile/desktop: reuses the existing dialog's responsive layout (`useBreakpoint`/`useIsMobile`-driven where the dialog itself branches, otherwise delegated to the shared modal component) — no separate mobile layout for external-service rows.
+Mobile/desktop: reuses the existing dialog's responsive layout (`useIsMobile`-driven where the dialog itself branches, otherwise delegated to the shared modal component) — no separate mobile layout for external-service rows.
 
 Memoization: per-row resolved metadata and disabled state SHALL be memoized with `useMemo`/`useCallback`, consistent with the existing toolset row requirement, to avoid re-rendering unrelated rows when the pending map changes.
 

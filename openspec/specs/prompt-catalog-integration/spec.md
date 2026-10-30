@@ -130,6 +130,17 @@ Selector mode (`isSelectorMode`) SHALL NOT show prompts: `PICKER_VISIBLE_TYPES` 
 
 ---
 
+### Requirement: Prompt listing failure is surfaced without breaking the catalog
+
+When `OverlayFeature.Prompts` is enabled and the prompts context reports a non-null `error`, `CatalogView` SHALL show it once through `useNotification().showErrorNotification({ message: t(CatalogI18nKeys.PromptsLoadError) })`. The i18n key is `catalog.promptsLoadError`, English text `'Failed to load prompts'`. Without the notification the Prompts tab would silently disappear. Every other catalog item SHALL keep rendering. An empty listing is not an error and raises no notification.
+
+#### Scenario: Listing failure notifies once
+
+- **WHEN** the aggregate prompt listing (`listPrompts`) rejects
+- **THEN** one error notification is shown with the `catalog.promptsLoadError` message and the catalog still renders deployments, toolsets, and skills
+
+---
+
 ### Requirement: Prompt delete, share, favourite, and unshare reflect real backend capability
 
 `CatalogView` SHALL wire each action for prompts as follows:

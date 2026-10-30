@@ -267,6 +267,7 @@ export enum CatalogI18nKeys {
   TabPrompts = 'catalog.tab.prompts',
   TabSkills = 'catalog.tab.skills',
   SkillsLoadError = 'catalog.skillsLoadError',
+  PromptsLoadError = 'catalog.promptsLoadError',
   ScrollToTop = 'catalog.scrollToTop',
   CreatePrompt = 'catalog.create.prompt',
   CreateSkill = 'catalog.create.skill',
