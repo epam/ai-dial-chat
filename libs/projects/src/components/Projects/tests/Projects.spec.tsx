@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ProjectItem } from '../../../models/project-item';
 import type {
   ProjectsLabels,
@@ -408,6 +408,50 @@ describe('Projects', () => {
 
       expect(onOpenProject).not.toHaveBeenCalled();
       expect(wasPrevented).toBe(false);
+    });
+  });
+
+  describe('Projects — relative times', () => {
+    const MOUNTED_AT = Date.UTC(2026, 9, 30, 12, 0, 0);
+    const TEN_MINUTES = 10 * 60 * 1000;
+    const props = {
+      onRetry: vi.fn(),
+      searchQuery: '',
+      onSearchQueryChange: vi.fn(),
+      sortKey: ProjectsSortKey.Newest,
+      onSortKeyChange: vi.fn(),
+      labels,
+      locale: 'en',
+    };
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('reads now for a project the host updates while the page is open', () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(MOUNTED_AT);
+      const items: ProjectItem[] = [
+        {
+          id: 'p1',
+          name: 'Q4 Launch',
+          source: ProjectSource.Personal,
+          updatedAt: MOUNTED_AT - TEN_MINUTES,
+        },
+      ];
+      const { rerender } = render(<Projects {...props} projects={items} />);
+
+      vi.setSystemTime(MOUNTED_AT + TEN_MINUTES);
+      rerender(<Projects {...props} projects={items} />);
+      expect(screen.getByText('10 minutes ago')).toBeTruthy();
+
+      rerender(
+        <Projects
+          {...props}
+          projects={[{ ...items[0], updatedAt: MOUNTED_AT + TEN_MINUTES }]}
+        />,
+      );
+      expect(screen.getByText('now')).toBeTruthy();
     });
   });
 });

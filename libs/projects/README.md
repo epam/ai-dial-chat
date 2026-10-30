@@ -45,7 +45,7 @@ Page shell with:
 - a sort control inside a `role="group"` named by `labels.sortLabel`. Its trigger shows the applied option's label, or `labels.sortLabel` when `sortKey` matches no option;
 - the content region.
 
-Search matches project names case-insensitively, using the trimmed `searchQuery`, and highlights the match. Projects with `isPinned: true` come first in every order, and their card shows a pin marker with visually hidden `labels.pinnedLabel` text (default `'Pinned'`). In both date orders, projects without `updatedAt` come last. Name A–Z collates with `Intl.Collator(locale, { sensitivity: 'base', numeric: true })`.
+Search matches project names case-insensitively, using the trimmed `searchQuery`, and highlights the match. Projects with `isPinned: true` come first in every order. When `onTogglePin(id, isPinned)` is supplied, every card has a pin toggle in its top inline-end corner, named by `labels.pinLabel` (default `'Pin'`) with `aria-pressed` for the state; an unpinned card's toggle shows on hover or keyboard focus, and stays visible on touch screens. Without the callback, a pinned card shows a static marker there instead, with visually hidden `labels.pinnedLabel` text (default `'Pinned'`). In both date orders, projects without `updatedAt` come last. Name A–Z collates with `Intl.Collator(locale, { sensitivity: 'base', numeric: true })`.
 
 A visually hidden `role="status"` region announces:
 
@@ -55,7 +55,7 @@ A visually hidden `role="status"` region announces:
 
 Each card is an `<article>` named by the project. It shows the last-updated time relative to the page visit (`Intl.RelativeTimeFormat(locale)`, e.g. `3 days ago`) in a `<time>` element when `updatedAt` is set, then the name, then the folder path. The folder path is the kit `FolderPath`, named by `labels.folderPathLabel`. When `getProjectHref` is supplied, the name is a link to `getProjectHref(id)` stretched over the whole card; the name and the folder path stay above the link, so their truncation tooltips still open. A plain primary click calls `onOpenProject(id)` when it is supplied, and otherwise follows the `href`, as does a modified or middle click, so the project opens in a new tab. Without `getProjectHref`, cards are not interactive.
 
-When `onCreateProject` is supplied, a primary **New project** button labelled `labels.createProjectLabel` sits at the inline end of the title row, and a secondary one is the empty state's action. Neither renders without the callback.
+When `onCreateProject` is supplied, a primary **New project** button labelled `labels.createProjectLabel` sits at the inline end of the title row (on mobile, a round icon-only `+` button named by the same label floats at the bottom inline-end corner instead), and a secondary one is the empty state's action. None renders without the callback.
 
 ```tsx
 import {
@@ -82,6 +82,7 @@ import {
   sortKey={ProjectsSortKey.Newest}
   onSortKeyChange={() => {}}
   onCreateProject={() => {}}
+  onTogglePin={(id, isPinned) => {}}
   onOpenProject={(id) => {}}
   getProjectHref={(id) => `/projects/view/${id.slice('projects/'.length)}`}
   locale="en"
@@ -112,14 +113,15 @@ import {
     folderPathLabel: 'Project location',
     createProjectLabel: 'New project',
     pinnedLabel: 'Pinned',
+    pinLabel: 'Pin',
   }}
 />;
 ```
 
 The layout is mobile-first:
 
-- On mobile, the toolbar stacks the search above the sort control, and cards use a single column.
-- From the `desktop` breakpoint, the toolbar is one row and the grid has three columns with a 20px gap, at most 1116px wide and centred.
+- On mobile, there is no visible title row (the `<h1>` stays for assistive tech and the subtitle is not shown), the toolbar keeps a standard-size search and a small sort control on one row, and cards use a single column with a 16px gap.
+- From the `desktop` breakpoint, the title row is shown, the search is large, and the grid has three columns with a 20px gap, at most 1116px wide and centred.
 - The empty and no-results states sit at the top of the content area; loading and error states are centred in it.
 
 Only logical properties are used, so the layout follows the inherited `dir`.
@@ -130,7 +132,7 @@ Only logical properties are used, so the layout follows the inherited `dir`.
 | ------------------ | ------------------- |
 | `background`       | `--bg-layer-base`   |
 | `subtitleText`     | `--text-secondary`  |
-| `sortButtonText`   | `--text-primary`    |
+| `sortButtonText`   | `--text-accent`     |
 | `cardBackground`   | `--bg-layer-raised` |
 | `cardTitleText`    | `--text-primary`    |
 | `updatedAtText`    | `--text-secondary`  |
@@ -141,7 +143,7 @@ Only logical properties are used, so the layout follows the inherited `dir`.
 
 | Field                            | Default                       |
 | -------------------------------- | ----------------------------- |
-| `titleClassName`                 | `'dial-h2-text'`              |
+| `titleClassName`                 | `'dial-h1-text'`              |
 | `subtitleClassName`              | `'dial-body-text'`            |
 | `cardTitleClassName`             | `'dial-body-semi-text'`       |
 | `pathLabelClassName`             | `'dial-tiny-text'`            |

@@ -2,10 +2,13 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   CardShell,
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
+  ElementSize,
   FolderPath,
+  GhostIconButton,
   Highlight,
 } from '@epam/ai-dial-ui-kit';
-import { IconPinFilled } from '@tabler/icons-react';
+import { IconPin, IconPinFilled } from '@tabler/icons-react';
 import type { FC, MouseEvent } from 'react';
 import type { ProjectItem } from '../../models/project-item';
 import { formatRelativeTime } from '../../utils/relative-time';
@@ -23,6 +26,10 @@ export interface ProjectCardProps {
   folderPathLabel: string;
   /** Visually hidden text of the pinned marker. */
   pinnedLabel: string;
+  /** Accessible name of the pin toggle. */
+  pinLabel: string;
+  /** Called with the project id and its new pinned state; the card shows a pin toggle instead of the static marker when given. */
+  onTogglePin?: (id: string, isPinned: boolean) => void;
   /** Link target of the card; the card is not interactive when omitted. */
   href?: string;
   /** Called with the project id on a plain primary click of the card link. */
@@ -55,13 +62,15 @@ const isPlainPrimaryClick = (event: MouseEvent<HTMLAnchorElement>): boolean =>
   !event.shiftKey &&
   !event.altKey;
 
-/** List item showing a project's last-updated time, name, pin marker and folder path on the shared card shell; a link when `href` is given. */
+/** List item showing a project's last-updated time, name, pin marker or toggle and folder path on the shared card shell; a link when `href` is given. */
 export const ProjectCard: FC<ProjectCardProps> = ({
   project,
   searchQuery,
   sourceLabel,
   folderPathLabel,
   pinnedLabel,
+  pinLabel,
+  onTogglePin,
   href,
   onOpen,
   now,
@@ -107,12 +116,21 @@ export const ProjectCard: FC<ProjectCardProps> = ({
         {project.updatedAt != null && (
           <time
             dateTime={new Date(project.updatedAt).toISOString()}
-            className={mergeClasses(updatedAtClassName, styles.updatedAt)}
+            className={mergeClasses(
+              updatedAtClassName,
+              styles.updatedAt,
+              (project.isPinned || onTogglePin != null) && 'pe-6',
+            )}
           >
             {formatRelativeTime(project.updatedAt, now, locale)}
           </time>
         )}
-        <div className="flex min-w-0 items-center gap-2">
+        <div
+          className={mergeClasses(
+            'flex min-w-0 items-center',
+            (project.isPinned || onTogglePin != null) && 'pe-6',
+          )}
+        >
           {href != null ? (
             <a
               href={href}
@@ -124,11 +142,46 @@ export const ProjectCard: FC<ProjectCardProps> = ({
           ) : (
             <div className="min-w-0 flex-1">{name}</div>
           )}
-          {project.isPinned && (
-            <span className={mergeClasses('shrink-0', styles.pin)}>
-              <IconPinFilled size={DIAL_ICON_SIZE.SM} aria-hidden />
-              <span className="sr-only">{pinnedLabel}</span>
-            </span>
+          {onTogglePin != null ? (
+            /* Drawn in the card's top inline-end corner over the stretched
+             * link, so it takes its own clicks; unpinned, it shows on hover
+             * or focus only where the pointer can hover. */
+            <GhostIconButton
+              size={ElementSize.Small}
+              icon={
+                project.isPinned ? (
+                  <IconPinFilled size={DIAL_ICON_SIZE.SM} aria-hidden />
+                ) : (
+                  <IconPin
+                    size={DIAL_ICON_SIZE.SM}
+                    aria-hidden
+                    stroke={DIAL_KIT_ICON_STROKE}
+                  />
+                )
+              }
+              aria-label={pinLabel}
+              aria-pressed={project.isPinned === true}
+              onClick={() => onTogglePin(project.id, !project.isPinned)}
+              className={mergeClasses(
+                'absolute inset-e-4 top-4',
+                styles.pinToggle,
+                !project.isPinned && styles.pinToggleIdle,
+              )}
+            />
+          ) : (
+            project.isPinned && (
+              /* Read after the name, drawn in the card's top inline-end corner
+               * (the shell's 20px padding); the first row keeps clear of it. */
+              <span
+                className={mergeClasses(
+                  'absolute inset-e-5 top-5 flex',
+                  styles.pin,
+                )}
+              >
+                <IconPinFilled size={DIAL_ICON_SIZE.SM} aria-hidden />
+                <span className="sr-only">{pinnedLabel}</span>
+              </span>
+            )
           )}
         </div>
         <FolderPath

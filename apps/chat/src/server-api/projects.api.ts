@@ -36,6 +36,13 @@ export const getProject = (
   { signal }: { signal?: AbortSignal } = {},
 ): Promise<ProjectDetailsDto> => projectsRequests.getProject(id, signal);
 
+/** Opens the SSE stream of changes to the given projects, with caller cancellation. */
+export const watchProjects = (
+  ids: string[],
+  signal?: AbortSignal,
+): Promise<ReadableStream<Uint8Array>> =>
+  projectsRequests.watchProjects(ids, signal);
+
 /** Downloads a whole project as Core's ZIP archive. */
 export const downloadProjectArchive = (
   id: string,

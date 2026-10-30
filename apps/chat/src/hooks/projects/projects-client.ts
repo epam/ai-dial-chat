@@ -16,6 +16,7 @@ import {
   getProject,
   listProjects,
   updateProject,
+  watchProjects,
 } from '../../server-api/projects.api';
 
 /*
@@ -68,4 +69,5 @@ export const projectsClient: ProjectsApiClient = {
   renameProjectConversation: (...args) => renameProjectConversation(...args),
   deleteProjectConversation: (...args) => deleteProjectConversation(...args),
   attachToProjectGeneration: (...args) => attachToProjectGeneration(...args),
+  watchProjects: (...args) => watchProjects(...args),
 };

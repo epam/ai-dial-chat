@@ -126,12 +126,16 @@ describe('runtime metrics', () => {
     const finishTitles = trackSseSubscription(
       SseSubscriptionKind.ConversationTitles,
     );
+    const finishProjectsWatch = trackSseSubscription(
+      SseSubscriptionKind.ProjectsWatch,
+    );
     finishOperations.push(
       finishClient,
       finishOtherClient,
       finishWatch,
       finishAttach,
       finishTitles,
+      finishProjectsWatch,
     );
 
     expect(await collectValues('dial.chat.sse.active')).toEqual([
@@ -142,6 +146,7 @@ describe('runtime metrics', () => {
         value: 1,
         attributes: { kind: SseSubscriptionKind.ConversationTitles },
       },
+      { value: 1, attributes: { kind: SseSubscriptionKind.ProjectsWatch } },
     ]);
 
     finishClient();
@@ -150,6 +155,7 @@ describe('runtime metrics', () => {
     finishAttach();
     finishTitles();
     finishTitles();
+    finishProjectsWatch();
 
     expect(await collectValues('dial.chat.sse.active')).toEqual([
       { value: 1, attributes: { kind: SseSubscriptionKind.ClientChannel } },
@@ -159,6 +165,7 @@ describe('runtime metrics', () => {
         value: 0,
         attributes: { kind: SseSubscriptionKind.ConversationTitles },
       },
+      { value: 0, attributes: { kind: SseSubscriptionKind.ProjectsWatch } },
     ]);
   });
 

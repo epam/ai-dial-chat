@@ -9613,6 +9613,67 @@
         "tags": ["projects"]
       }
     },
+    "/api/v1/projects/watch": {
+      "post": {
+        "description": "Opens one DIAL Core resource subscription for the given project ids and streams project-level changes as SSE: each `data:` line is a `ProjectWatchEventDto`. Events of files inside a project are dropped, and a `: keepalive` comment is sent every 15 seconds. The stream lasts until the client disconnects or DIAL Core ends it.",
+        "operationId": "watchProjects",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WatchProjectsBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SSE stream of `ProjectWatchEventDto` events",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The ids are missing, too many, duplicated or not project ids, or DIAL Core does not support project subscriptions"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The projectsEnabled feature is not enabled for this user, or DIAL Core denied READ on one of the projects"
+          },
+          "404": {
+            "description": "DIAL Core resource not found"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned a server error or an unexpected response"
+          },
+          "503": {
+            "description": "DIAL Core is unreachable or timed out"
+          }
+        },
+        "summary": "Follow changes to listed projects via SSE",
+        "tags": ["projects"]
+      }
+    },
     "/api/v1/projects/{id}": {
       "get": {
         "description": "Returns one project's name, description, instructions, context files with their sizes, and the ETag of the version they were read from. The BFF reads the project archive from DIAL Core, because project metadata carries no file sizes; `canEdit` is true only for a project in the caller's own bucket.",
@@ -17974,6 +18035,58 @@
           }
         },
         "required": ["items", "incompleteSources"]
+      },
+      "ProjectWatchAction": {
+        "type": "string",
+        "enum": ["CREATE", "UPDATE", "DELETE"]
+      },
+      "ProjectWatchEventDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "projects/a1b2c3/marketing/q4-launch",
+            "description": "Id of the watched project the event is about."
+          },
+          "action": {
+            "example": "UPDATE",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProjectWatchAction"
+              }
+            ]
+          },
+          "timestamp": {
+            "type": "number",
+            "example": 1761560100000,
+            "description": "Epoch ms at which DIAL Core published the event; within milliseconds of the stored `updatedAt`, but not equal to it."
+          },
+          "etag": {
+            "type": "string",
+            "example": "\"c3d4\"",
+            "description": "The project's new aggregate ETag; absent on `DELETE`."
+          }
+        },
+        "required": ["id", "action", "timestamp"]
+      },
+      "WatchProjectsBodyDto": {
+        "type": "object",
+        "properties": {
+          "ids": {
+            "minItems": 1,
+            "maxItems": 1000,
+            "example": [
+              "projects/a1b2c3/marketing/q4-launch",
+              "projects/public/handbook"
+            ],
+            "description": "Unique ids of the listed projects, `projects/{bucket}/{path}` each.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["ids"]
       },
       "ProjectContextFileDto": {
         "type": "object",

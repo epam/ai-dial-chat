@@ -10,6 +10,7 @@ export enum SseSubscriptionKind {
   ConversationWatch = 'conversation_watch',
   GenerationAttach = 'generation_attach',
   ConversationTitles = 'conversation_titles',
+  ProjectsWatch = 'projects_watch',
 }
 
 /*
@@ -32,6 +33,7 @@ const activeSubscriptions: Record<SseSubscriptionKind, number> = {
   [SseSubscriptionKind.ConversationWatch]: 0,
   [SseSubscriptionKind.GenerationAttach]: 0,
   [SseSubscriptionKind.ConversationTitles]: 0,
+  [SseSubscriptionKind.ProjectsWatch]: 0,
 };
 const activeGenerationsByState: Record<GenerationGaugeState, number> = {
   [GenerationGaugeState.Active]: 0,
