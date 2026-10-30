@@ -38,11 +38,23 @@ README behind. So the obligation is same-change, not follow-up:
 | Rename a prop, change its type, or make it required        | Every README example that passes it                                     |
 | Add, rename, or remove an enum member                      | Every README that lists the members                                     |
 | Add, rename, or remove a public `dial-*` class             | That lib's README class table — `npm run validate:docs` enforces it     |
-| Add or remove a lib/app, backend domain, context, or route | `docs/architecture.md` (see the Docs section of `AGENTS.md`)            |
+| Add or remove a lib/app, backend domain, context, or route | `docs/architecture.md` (see below)                                      |
 | Add or remove an environment variable                      | `apps/chat-api/README.md` and `apps/chat-api/.env.template`             |
 | Change a build output path, port, or npm script            | The root `README.md` and the affected app README                        |
 | Bump a tooling major listed in a version table             | The root `README.md` tech-stack list and `docs/architecture.md`         |
 | Delete a doc                                               | Every link to it — `npm run validate:docs` finds them                   |
+
+## Keep `docs/architecture.md` current
+
+`docs/architecture.md` is the map of what exists, and it goes stale silently. Update it in the **same change** whenever you:
+
+- add, rename, or remove a library under `libs/` or an app under `apps/`
+- add, rename, or remove a backend domain folder under `apps/chat-api/src/` or a controller base path
+- add or remove a React context in `apps/chat/src/context/`, a route folder under `pages/`, or an `ApiEndpoints` enum entry
+- change a cross-cutting mechanism it describes — auth/session/CSRF, SSE streaming, theming token flow, the overlay protocol, styling tiers, or module boundaries
+- change a tooling major version listed in its Monorepo & Tooling table
+
+State what the code does today; when intent and code disagree, say so explicitly (see the `Open` rows in its Decision Log). Deep detail belongs in the specialized doc (`docs/theme-customization.md`, `docs/chat-overlay-migration-guide.md`, `docs/auth/`), with `architecture.md` carrying a summary and a link.
 
 ## Examples must compile against the current API
 
