@@ -650,6 +650,7 @@ existing offline-credentials flow.
 | `GET`  | `/api/v1/auth/callback/{providerId}` | OIDC callback — this is the redirect URI registered in the IdP (public) |
 | `POST` | `/api/v1/auth/logout`                | Clear the session cookie, then RP-initiated logout (public)             |
 | `GET`  | `/api/v1/auth/me`                    | Current user profile; also returns the `X-CSRF-Token` header            |
+| `GET`  | `/api/v1/auth/me/picture`            | Inline (`data:`) profile picture re-read from UserInfo; 404 when none   |
 
 There is no refresh endpoint: `CookieSessionStrategy` renews an expired access
 token through `RefreshService` while authenticating the incoming request, so the

@@ -6,6 +6,7 @@ import {
   ForbiddenException,
   Get,
   Logger,
+  NotFoundException,
   Param,
   Post,
   Query,
@@ -69,13 +70,18 @@ import { SessionService } from './session/session.service';
 import {
   getJobTitleClaim,
   getPictureClaim,
+  InlinePictureType,
   JOB_TITLE_CLAIM,
+  parseInlinePicture,
   PICTURE_CLAIM,
   type SessionPayload,
   type SessionUser,
 } from './session/session.types';
 import { resolveCallbackUrl } from './utils/callback-url.util';
 import { resolveClaimPath } from './utils/claims.util';
+
+/** Same-origin URL `GET /auth/me` advertises as `pictureUrl` for an inline picture. */
+const CURRENT_USER_PICTURE_PATH = '/api/v1/auth/me/picture';
 
 @ApiTags('auth')
 @Controller({ path: 'auth', version: '1' })
@@ -415,7 +421,10 @@ export class AuthController {
      * UserInfo. Some realms expose these there without including them in
      * either token. Copy only these optional claims, only when the ID token
      * lacks them, and only when the profile belongs to the ID-token user.
+     * A picture that carries the image itself (`data:` URL) is too large for
+     * the cookie: only a flag is stored and `GET /auth/me/picture` re-reads it.
      */
+    let hasInlinePicture = false;
     if (
       providerConfig.id === AuthProviderId.Keycloak &&
       (idTokenJobTitle === undefined || idTokenPicture === undefined) &&
@@ -432,6 +441,8 @@ export class AuthController {
           const picture = idTokenPicture ?? getPictureClaim(userInfo);
           if (picture) {
             filteredClaims[PICTURE_CLAIM] = picture;
+          } else {
+            hasInlinePicture = parseInlinePicture(userInfo) !== undefined;
           }
         } else {
           this.logger.warn(
@@ -476,6 +487,7 @@ export class AuthController {
       csrf: randomUUID(),
       claims: filteredClaims,
       bucket,
+      ...(hasInlinePicture ? { pic: true as const } : {}),
     };
 
     const sessionToken = await this.session.encrypt(payload);
@@ -627,12 +639,72 @@ export class AuthController {
     if (req.authSource === AuthSource.Cookie && user.csrf) {
       res.setHeader('X-CSRF-Token', user.csrf);
     }
+    const pictureUrl = user.hasInlinePicture
+      ? CURRENT_USER_PICTURE_PATH
+      : getPictureClaim(user.claims);
     return {
       sub: user.sub,
       providerId: user.providerId,
       claims: user.claims,
       bucket: user.bucket,
       isAdmin: this.adminRoleService.isAdmin(user),
+      ...(pictureUrl ? { pictureUrl } : {}),
     };
+  }
+
+  @Get('me/picture')
+  @ApiCookieAuth('session')
+  @ApiOperation({
+    summary: 'Get current user profile picture',
+    description:
+      'Serves the inline (data: URL) profile picture the identity provider ' +
+      'returns from UserInfo. Only advertised through `pictureUrl` on ' +
+      '`GET /auth/me` when the session has one.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Profile picture bytes',
+    content: Object.fromEntries(
+      Object.values(InlinePictureType).map((type) => [
+        type,
+        { schema: { type: 'string', format: 'binary' } },
+      ]),
+    ),
+  })
+  @ApiResponse({ status: 401, description: 'No valid session' })
+  @ApiResponse({
+    status: 404,
+    description: 'The session has no inline profile picture',
+  })
+  @ApiResponse({
+    status: 502,
+    description: 'The identity provider UserInfo lookup failed',
+  })
+  async getCurrentUserPicture(@Req() req: Request, @Res() res: Response) {
+    const user = req.user as SessionUser;
+    if (!user.hasInlinePicture) {
+      throw new NotFoundException('No profile picture');
+    }
+    const { client } = this.registry.getProvider(user.providerId);
+    if (!client.issuer.metadata.userinfo_endpoint) {
+      throw new NotFoundException('No profile picture');
+    }
+
+    let userInfo: Record<string, unknown>;
+    try {
+      userInfo = await client.userinfo(user.at);
+    } catch {
+      this.logger.warn('userinfo: picture lookup failed');
+      throw new BadGatewayException('Profile picture lookup failed');
+    }
+    const picture =
+      userInfo['sub'] === user.sub ? parseInlinePicture(userInfo) : undefined;
+    if (!picture) {
+      throw new NotFoundException('No profile picture');
+    }
+
+    res.setHeader('Content-Type', picture.contentType);
+    res.setHeader('Cache-Control', 'private, max-age=3600');
+    res.send(picture.data);
   }
 }

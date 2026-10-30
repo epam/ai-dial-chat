@@ -787,9 +787,9 @@ describe('AuthController (integration)', () => {
 
   describe('job title and picture from Keycloak UserInfo', () => {
     const AVATAR_URL = 'https://keycloak.example.com/avatars/user-1.png';
-    const loginAndGetClaims = async (
+    const loginAndGetProfile = async (
       idTokenClaims: Record<string, unknown> = {},
-    ): Promise<Record<string, unknown>> => {
+    ): Promise<{ body: Record<string, unknown>; sessionCookies: string }> => {
       const state = 'job-title-state';
       const txCookieValue = await makeTxCookie({
         state,
@@ -819,8 +819,17 @@ describe('AuthController (integration)', () => {
         .get('/api/v1/auth/me')
         .set('Cookie', sessionCookies)
         .expect(200);
-      return profile.body.claims;
+      return { body: profile.body, sessionCookies };
     };
+    const loginAndGetClaims = async (
+      idTokenClaims: Record<string, unknown> = {},
+    ): Promise<Record<string, unknown>> =>
+      (await loginAndGetProfile(idTokenClaims)).body['claims'] as Record<
+        string,
+        unknown
+      >;
+    const INLINE_PICTURE_BYTES = Buffer.from([0xff, 0xd8, 0xff, 0xe0]);
+    const INLINE_PICTURE = `data:image/jpeg;base64,${INLINE_PICTURE_BYTES.toString('base64')}`;
 
     it('persists a UserInfo-only job title without copying other profile claims', async () => {
       MOCK_CLIENT.userinfo.mockResolvedValue({
@@ -973,6 +982,79 @@ describe('AuthController (integration)', () => {
 
       expect(await loginAndGetClaims()).toEqual({ sub: 'user-1' });
       expect(MOCK_CLIENT.userinfo).not.toHaveBeenCalled();
+    });
+
+    it('advertises an http(s) picture claim as pictureUrl', async () => {
+      const { body } = await loginAndGetProfile({ picture: AVATAR_URL });
+
+      expect(body['pictureUrl']).toBe(AVATAR_URL);
+    });
+
+    it('keeps an inline UserInfo picture out of the session and serves it from /auth/me/picture', async () => {
+      MOCK_CLIENT.userinfo.mockResolvedValue({
+        sub: 'user-1',
+        picture: INLINE_PICTURE,
+      });
+
+      const { body, sessionCookies } = await loginAndGetProfile();
+
+      expect(body['claims']).toEqual({ sub: 'user-1' });
+      expect(body['pictureUrl']).toBe('/api/v1/auth/me/picture');
+
+      const picture = await request(app.getHttpServer())
+        .get('/api/v1/auth/me/picture')
+        .set('Cookie', sessionCookies)
+        .expect(200);
+      expect(picture.headers['content-type']).toBe('image/jpeg');
+      expect(picture.headers['cache-control']).toBe('private, max-age=3600');
+      expect(Buffer.from(picture.body)).toEqual(INLINE_PICTURE_BYTES);
+    });
+
+    it.each([
+      'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=',
+      'data:text/html;base64,PGI+aGk8L2I+',
+      'data:image/jpeg;base64,',
+    ])('ignores an unusable inline picture (%j)', async (picture) => {
+      MOCK_CLIENT.userinfo.mockResolvedValue({ sub: 'user-1', picture });
+
+      const { body, sessionCookies } = await loginAndGetProfile();
+
+      expect(body).not.toHaveProperty('pictureUrl');
+      await request(app.getHttpServer())
+        .get('/api/v1/auth/me/picture')
+        .set('Cookie', sessionCookies)
+        .expect(404);
+    });
+
+    it('returns 502 when the picture UserInfo lookup fails', async () => {
+      MOCK_CLIENT.userinfo.mockResolvedValue({
+        sub: 'user-1',
+        picture: INLINE_PICTURE,
+      });
+      const { sessionCookies } = await loginAndGetProfile();
+      MOCK_CLIENT.userinfo.mockRejectedValue(new Error('UserInfo unavailable'));
+
+      await request(app.getHttpServer())
+        .get('/api/v1/auth/me/picture')
+        .set('Cookie', sessionCookies)
+        .expect(502);
+    });
+
+    it('returns 404 when the picture UserInfo belongs to another subject', async () => {
+      MOCK_CLIENT.userinfo.mockResolvedValue({
+        sub: 'user-1',
+        picture: INLINE_PICTURE,
+      });
+      const { sessionCookies } = await loginAndGetProfile();
+      MOCK_CLIENT.userinfo.mockResolvedValue({
+        sub: 'another-user',
+        picture: INLINE_PICTURE,
+      });
+
+      await request(app.getHttpServer())
+        .get('/api/v1/auth/me/picture')
+        .set('Cookie', sessionCookies)
+        .expect(404);
     });
   });
 
