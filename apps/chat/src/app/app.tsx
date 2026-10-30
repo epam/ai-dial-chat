@@ -42,6 +42,7 @@ import RouteFallback from '../components/RouteFallback/RouteFallback';
 import { MIN_CONTENT_AREA_WIDTH } from '../constants/layout';
 import {
   getConversationRoute,
+  isConversationPagePath,
   normalizeConversationId,
 } from '../constants/routes';
 import {
@@ -78,6 +79,9 @@ const DialFileManagerPage = lazy(
 const ProjectsPage = lazy(() => import('../pages/ProjectsPage/ProjectsPage'));
 const ProjectCreatePage = lazy(
   () => import('../pages/ProjectCreatePage/ProjectCreatePage'),
+);
+const ProjectChatPage = lazy(
+  () => import('../pages/ProjectChatPage/ProjectChatPage'),
 );
 const ProjectViewPage = lazy(
   () => import('../pages/ProjectViewPage/ProjectViewPage'),
@@ -203,8 +207,8 @@ const App: FC = () => {
   }, [pathname]);
 
   const matchRoot = useMatch(ROUTES.Root);
-  const matchConversation = useMatch(`${ROUTES.Conversations}/*`);
-  const isConversationRoute = !!(matchRoot ?? matchConversation);
+  /* A top-level or a project chat; the sidebar highlight below stays `/conversations/` only. */
+  const isConversationRoute = !!matchRoot || isConversationPagePath(pathname);
   const activeConversationId = useMemo(() => {
     const prefix = `${ROUTES.Conversations}/`;
     if (!pathname.startsWith(prefix)) return;
@@ -331,6 +335,16 @@ const App: FC = () => {
                         <ConversationPage
                           onDuplicateReadonly={handleDuplicateReadonly}
                         />
+                      </Suspense>
+                    </RouteErrorBoundary>
+                  }
+                />
+                <Route
+                  path={ROUTES.ProjectChat}
+                  element={
+                    <RouteErrorBoundary>
+                      <Suspense fallback={<RouteFallback />}>
+                        <ProjectChatPage />
                       </Suspense>
                     </RouteErrorBoundary>
                   }

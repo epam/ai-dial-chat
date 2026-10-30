@@ -5,6 +5,14 @@ import { parseProjectId } from '../utils/project-id.util';
 
 const PROJECT_ID_EXAMPLE = 'projects/a1b2c3/marketing/q4-launch';
 
+/** Swagger metadata of the URL-encoded `:id` param shared by every per-project route. */
+export const PROJECT_ID_PARAM = {
+  name: 'id',
+  description:
+    'The DIAL project id `projects/{bucket}/{path}`, URL-encoded into one path segment.',
+  example: 'projects%2Fa1b2c3%2Fmarketing%2Fq4-launch',
+};
+
 /** class-validator decorator: the value parses as a `projects/{bucket}/{path…}` id. */
 const IsProjectId = () => (object: object, propertyName: string) => {
   registerDecorator({

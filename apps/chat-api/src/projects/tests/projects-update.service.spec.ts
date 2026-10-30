@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import type { DialClientService } from '../../dial/dial-client.service';
 import type { UserConfigService } from '../../user-config/user-config.service';
+import { PROJECT_WRITE_ATTEMPTS } from '../constants/project-context.constants';
 import { ProjectsCreateService } from '../create/projects-create.service';
 import type {
   ProjectSnapshot,
@@ -30,12 +31,14 @@ const snapshotOf = (
   },
 ): ProjectSnapshot => ({
   etag: '"e1"',
+  contentVersion: '"cv1"',
   manifest: { description: 'old', instructions: 'old', isMalformed: false },
   hasOversizedManifest: false,
   contextFiles: [
     { name: 'survey.csv', size: 3 },
     { name: 'tickets.csv', size: 3 },
   ],
+  conversationEntries: [],
   otherEntries: [],
   readEntry: vi.fn(async (path: string) => Buffer.from(entries[path] ?? '')),
   ...extra,
@@ -54,6 +57,7 @@ const found = {
 
 const makeService = ({
   snapshot = snapshotOf(),
+  snapshots = [] as ProjectSnapshot[],
   upload = {
     error: undefined,
     response: { status: 200, headers: new Headers({ etag: '"e2"' }) },
@@ -80,7 +84,8 @@ const makeService = ({
     replaceProjectPin: vi.fn(async () => undefined),
     getPinnedProjectIds: vi.fn(async () => pinnedIds),
   };
-  const read = vi.fn(async () => snapshot);
+  const snapshotQueue = [...snapshots];
+  const read = vi.fn(async () => snapshotQueue.shift() ?? snapshot);
   const service = new ProjectsUpdateService(
     { client } as unknown as DialClientService,
     new ProjectsCreateService(config),
@@ -130,7 +135,7 @@ describe('ProjectsUpdateService', () => {
       PROJECT,
       { name: 'q4', description: 'new', instructions: '## New' },
       [],
-      '"e1"',
+      '"cv1"',
       USER_BUCKET,
       'token',
     );
@@ -177,7 +182,7 @@ describe('ProjectsUpdateService', () => {
     expect(read).not.toHaveBeenCalled();
   });
 
-  it('detects a stale ETag before writing', async () => {
+  it('detects a stale contentVersion before writing', async () => {
     const { service, client } = makeService();
 
     const { status, body } = await errorOf(
@@ -196,8 +201,8 @@ describe('ProjectsUpdateService', () => {
     expect(client.uploadProjectFolder).not.toHaveBeenCalled();
   });
 
-  it('maps a concurrent write caught by Core to 409 project-changed', async () => {
-    const { service } = makeService({
+  it('gives up with 409 project-changed after the bounded write attempts', async () => {
+    const { service, client } = makeService({
       upload: {
         error: { message: 'precondition' },
         response: { status: 412, headers: new Headers() },
@@ -209,7 +214,7 @@ describe('ProjectsUpdateService', () => {
         PROJECT,
         { name: 'q4' },
         [],
-        '"e1"',
+        '"cv1"',
         USER_BUCKET,
         'token',
       ),
@@ -217,6 +222,124 @@ describe('ProjectsUpdateService', () => {
 
     expect(status).toBe(409);
     expect(body.code).toBe('project-changed');
+    expect(client.uploadProjectFolder).toHaveBeenCalledTimes(
+      PROJECT_WRITE_ATTEMPTS,
+    );
+  });
+
+  it('saves when a chat changed the ETag but not the contentVersion', async () => {
+    const { service, client } = makeService({
+      snapshot: snapshotOf({ etag: '"after-chat"' }),
+    });
+
+    await service.updateProject(
+      PROJECT,
+      { name: 'q4', description: 'new' },
+      [],
+      '"cv1"',
+      USER_BUCKET,
+      'token',
+    );
+
+    expect(uploadedParts(client).headers['If-Match']).toBe('"after-chat"');
+  });
+
+  it('re-uploads stored conversations as JSON', async () => {
+    const { service, client } = makeService({
+      snapshot: snapshotOf(
+        {
+          conversationEntries: [{ name: 'gpt-4o__Q4 summary__1b2c', size: 7 }],
+        },
+        { 'conversations/gpt-4o__Q4 summary__1b2c': '{"a":1}' },
+      ),
+    });
+
+    await service.updateProject(
+      PROJECT,
+      { name: 'q4' },
+      [],
+      '"cv1"',
+      USER_BUCKET,
+      'token',
+    );
+
+    const file = uploadedParts(client).file(
+      'conversations/gpt-4o__Q4 summary__1b2c',
+    );
+    expect(file?.type).toBe('application/json');
+    expect(await file?.text()).toBe('{"a":1}');
+  });
+
+  it('retries a 412 with the fresh snapshot and its newer conversation bytes', async () => {
+    const conversation = 'conversations/gpt-4o__Q4 summary__1b2c';
+    const entries = [{ name: 'gpt-4o__Q4 summary__1b2c', size: 1 }];
+    let uploads = 0;
+    const { service, client } = makeService({
+      snapshots: [
+        snapshotOf({ conversationEntries: entries }, { [conversation]: 'old' }),
+        snapshotOf(
+          { etag: '"e2"', conversationEntries: entries },
+          { [conversation]: 'newer' },
+        ),
+      ],
+      onUpload: () => {
+        uploads += 1;
+      },
+    });
+    client.uploadProjectFolder.mockImplementationOnce(async () => {
+      uploads += 1;
+      return {
+        error: { message: 'precondition' },
+        response: { status: 412, headers: new Headers() },
+      };
+    });
+
+    const result = await service.updateProject(
+      PROJECT,
+      { name: 'q4' },
+      [],
+      '"cv1"',
+      USER_BUCKET,
+      'token',
+    );
+
+    expect(uploads).toBe(2);
+    const [, , retry] = client.uploadProjectFolder.mock.calls[1] as [
+      string,
+      string,
+      { headers: Record<string, string>; body: FormData },
+    ];
+    expect(retry.headers['If-Match']).toBe('"e2"');
+    const retried = (retry.body.getAll('file') as File[]).find(
+      (file) => file.name === conversation,
+    );
+    expect(await retried?.text()).toBe('newer');
+    expect(result.etag).toBe('"e2"');
+  });
+
+  it('answers 409 when a real edit landed between the read and the write', async () => {
+    const { service, client } = makeService({
+      snapshots: [snapshotOf(), snapshotOf({ contentVersion: '"cv2"' })],
+      upload: {
+        error: { message: 'precondition' },
+        response: { status: 412, headers: new Headers() },
+      },
+    });
+
+    const { status, body } = await errorOf(
+      service.updateProject(
+        PROJECT,
+        { name: 'q4' },
+        [],
+        '"cv1"',
+        USER_BUCKET,
+        'token',
+      ),
+    );
+
+    expect(status).toBe(409);
+    expect(body.code).toBe('project-changed');
+    expect(client.uploadProjectFolder).toHaveBeenCalledOnce();
   });
 
   it('adds new files and drops removed ones, uploading only the new bytes', async () => {
@@ -230,7 +353,7 @@ describe('ProjectsUpdateService', () => {
         removedFileNames: '["survey.csv"]',
       },
       [pdf()],
-      '"e1"',
+      '"cv1"',
       USER_BUCKET,
       'token',
     );
@@ -253,7 +376,7 @@ describe('ProjectsUpdateService', () => {
         removedFileNames: '["tickets.csv"]',
       },
       [csv('new,data')],
-      '"e1"',
+      '"cv1"',
       USER_BUCKET,
       'token',
     );
@@ -273,7 +396,7 @@ describe('ProjectsUpdateService', () => {
         PROJECT,
         { name: 'q4', fileNames: '["tickets.csv"]' },
         [csv('x')],
-        '"e1"',
+        '"cv1"',
         USER_BUCKET,
         'token',
       ),
@@ -291,7 +414,7 @@ describe('ProjectsUpdateService', () => {
         PROJECT,
         { name: 'q4', removedFileNames: '["missing.csv"]' },
         [],
-        '"e1"',
+        '"cv1"',
         USER_BUCKET,
         'token',
       ),
@@ -313,7 +436,7 @@ describe('ProjectsUpdateService', () => {
         PROJECT,
         { name: 'q4', fileNames: '["more.csv"]' },
         [{ buffer: Buffer.alloc(MIB - 1, 'a') }],
-        '"e1"',
+        '"cv1"',
         USER_BUCKET,
         'token',
       ),
@@ -340,7 +463,7 @@ describe('ProjectsUpdateService', () => {
       PROJECT,
       { name: 'q4' },
       [],
-      '"e1"',
+      '"cv1"',
       USER_BUCKET,
       'token',
     );
@@ -359,7 +482,7 @@ describe('ProjectsUpdateService', () => {
       PROJECT,
       { name: 'Q4 launch' },
       [],
-      '"e1"',
+      '"cv1"',
       USER_BUCKET,
       'token',
     );
@@ -401,7 +524,7 @@ describe('ProjectsUpdateService', () => {
         PROJECT,
         { name: 'Handbook' },
         [],
-        '"e1"',
+        '"cv1"',
         USER_BUCKET,
         'token',
       ),
@@ -424,7 +547,7 @@ describe('ProjectsUpdateService', () => {
         PROJECT,
         { name: 'Handbook' },
         [],
-        '"e1"',
+        '"cv1"',
         USER_BUCKET,
         'token',
       ),
@@ -443,7 +566,7 @@ describe('ProjectsUpdateService', () => {
         PROJECT,
         { name: 'Q4 launch' },
         [],
-        '"e1"',
+        '"cv1"',
         USER_BUCKET,
         'token',
       ),
@@ -458,7 +581,7 @@ describe('ProjectsUpdateService', () => {
         PROJECT,
         { name: 'a/b' },
         [],
-        '"e1"',
+        '"cv1"',
         USER_BUCKET,
         'token',
       ),
@@ -479,7 +602,7 @@ describe('ProjectsUpdateService', () => {
       PROJECT,
       { name: 'q4', description: 'Secret plan', fileNames: '["retro.pdf"]' },
       [pdf()],
-      '"e1"',
+      '"cv1"',
       USER_BUCKET,
       'token',
     );
@@ -502,7 +625,7 @@ describe('ProjectsUpdateService', () => {
         },
         { name: 'q4' },
         [],
-        '"e1"',
+        '"cv1"',
         USER_BUCKET,
         'token',
       ),
@@ -543,7 +666,7 @@ describe('ProjectsUpdateService', () => {
         PROJECT,
         { name: 'q4' },
         [],
-        '"e1"',
+        '"cv1"',
         USER_BUCKET,
         'token',
       ),
@@ -570,7 +693,7 @@ describe('ProjectsUpdateService', () => {
       PROJECT,
       { name: 'q4', description: 'new' },
       [],
-      '"e1"',
+      '"cv1"',
       USER_BUCKET,
       'token',
     );
@@ -602,7 +725,7 @@ describe('ProjectsUpdateService', () => {
         PROJECT,
         { name: 'Q4 launch' },
         [],
-        '"e1"',
+        '"cv1"',
         USER_BUCKET,
         'token',
       );
@@ -626,7 +749,7 @@ describe('ProjectsUpdateService', () => {
         PROJECT,
         { name: 'Q4 launch' },
         [],
-        '"e1"',
+        '"cv1"',
         USER_BUCKET,
         'token',
       ),
@@ -653,7 +776,7 @@ describe('ProjectsUpdateService', () => {
       PROJECT,
       { name: 'Q4 launch' },
       [],
-      '"e1"',
+      '"cv1"',
       USER_BUCKET,
       'token',
       clientRequest.signal,

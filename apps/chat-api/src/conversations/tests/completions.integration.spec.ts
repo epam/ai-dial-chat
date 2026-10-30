@@ -26,6 +26,8 @@ import {
 import { ConversationController } from '../conversation.controller';
 import { ConversationService } from '../conversation.service';
 import type { SendCompletionDto } from '../dto/send-completion.dto';
+import { ConversationCompletionsResponder } from '../streaming/conversation-completions.responder';
+import { createConversationController } from './conversation-controller.fixture';
 
 const TEST_USER = {
   sid: 'test-sid',
@@ -115,6 +117,7 @@ describe('POST /conversations/completions (integration)', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ConversationController],
       providers: [
+        ConversationCompletionsResponder,
         { provide: ConversationService, useValue: mockService },
         {
           provide: ConversationGenerationService,
@@ -253,6 +256,19 @@ describe('POST /conversations/completions (integration)', () => {
       TEST_USER.at,
       TEST_USER.bucket,
     );
+  });
+
+  it('refuses a project conversation locator before any generation starts', async () => {
+    await request(app.getHttpServer())
+      .post('/conversations/completions')
+      .send({
+        ...VALID_COMPLETION_BODY,
+        path: 'projects/a1b2c3/q4/conversations/gpt-4o__Hi__1',
+      })
+      .expect(400);
+
+    expect(mockService.streamCompletion).not.toHaveBeenCalled();
+    expect(mockService.markConversationUnviewed).not.toHaveBeenCalled();
   });
 
   it('leaves the viewed ids alone when the generation is rejected with 409', async () => {
@@ -449,7 +465,7 @@ describe('POST /conversations/completions (integration)', () => {
       reachedNaturalEnd = true;
     });
 
-    await new ConversationController(
+    await createConversationController(
       mockService as unknown as ConversationService,
       mockGenerationService as unknown as ConversationGenerationService,
     ).streamCompletion(
@@ -517,7 +533,7 @@ describe('POST /conversations/completions — backpressure-driven detachment (di
       getStatus: vi.fn().mockReturnValue(GenerationStatus.Active),
     };
 
-    const controller = new ConversationController(
+    const controller = createConversationController(
       mockService as unknown as ConversationService,
       mockGenerationService as unknown as ConversationGenerationService,
     );
@@ -594,6 +610,7 @@ describe('POST /conversations/completions/stop (integration)', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ConversationController],
       providers: [
+        ConversationCompletionsResponder,
         { provide: ConversationService, useValue: mockService },
         {
           provide: ConversationGenerationService,
@@ -735,6 +752,7 @@ describe('completions endpoints — header-authenticated (bearer) caller', () =>
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ConversationController],
       providers: [
+        ConversationCompletionsResponder,
         { provide: ConversationService, useValue: mockService },
         {
           provide: ConversationGenerationService,
@@ -875,6 +893,7 @@ describe('generation ownership isolation (real registry)', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ConversationController],
       providers: [
+        ConversationCompletionsResponder,
         { provide: ConversationService, useValue: mockService },
         { provide: ConfigService, useValue: { get: vi.fn() } },
         ConversationGenerationService,

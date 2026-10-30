@@ -43,6 +43,7 @@ import { ListProjectsResponseDto } from './dto/list-projects-response.dto';
 import { ProjectCreateErrorDto } from './dto/project-create-error.dto';
 import { ProjectDetailsDto } from './dto/project-details.dto';
 import {
+  PROJECT_ID_PARAM,
   ProjectFileParamDto,
   ProjectIdParamDto,
 } from './dto/project-id-param.dto';
@@ -62,15 +63,7 @@ const IF_MATCH_HEADER_DOC = {
   name: 'If-Match',
   required: true,
   description:
-    'The single `etag` of the project version the caller read. A stale value yields 409 project-changed; a missing one, `*` or a comma-separated list, 428.',
-};
-
-/** Swagger metadata of the URL-encoded `:id` param shared by every per-project route. */
-const PROJECT_ID_PARAM = {
-  name: 'id',
-  description:
-    'The DIAL project id `projects/{bucket}/{path}`, URL-encoded into one path segment.',
-  example: 'projects%2Fa1b2c3%2Fmarketing%2Fq4-launch',
+    'The single `contentVersion` of the project the caller read from `GET /api/v1/projects/:id` (not its `etag`, which every project conversation write changes). A stale value yields 409 project-changed; a missing one, `*` or a comma-separated list, 428.',
 };
 
 /** Swagger description of `403` on the owner-only writes. */
@@ -209,7 +202,9 @@ export class ProjectsController {
     description:
       'Saves the name, description, instructions and context of a project in one conditional DIAL Core write: ' +
       'the BFF rebuilds PROJECT.md, keeps every stored context file not listed in `removedFileNames`, adds the ' +
-      '`files` parts and writes the whole project with `If-Match`. A different name then moves the project in its ' +
+      '`files` parts, carries the stored conversations over, and writes the whole project conditioned on the ' +
+      "fresh snapshot's ETag, retrying a concurrent conversation write while `If-Match` still names the " +
+      '`contentVersion`. A different name then moves the project in its ' +
       "folder and keeps the caller's pin. Only a project in the caller's own bucket can be saved. " +
       'Every domain rejection carries a ProjectCreateErrorCode.',
   })
@@ -282,8 +277,8 @@ export class ProjectsController {
     operationId: 'deleteProject',
     summary: 'Delete a project',
     description:
-      'Deletes the project only if it is still the version named by `If-Match`, then removes it from ' +
-      "the caller's pins. Only a project in the caller's own bucket can be deleted.",
+      'Deletes the project, its conversations included, only if its content is still the `contentVersion` named ' +
+      "by `If-Match`, then removes it from the caller's pins. Only a project in the caller's own bucket can be deleted.",
   })
   @ApiParam(PROJECT_ID_PARAM)
   @ApiHeader(IF_MATCH_HEADER_DOC)

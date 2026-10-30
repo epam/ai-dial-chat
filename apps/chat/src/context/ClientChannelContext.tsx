@@ -11,7 +11,8 @@ import {
   useRef,
   useState,
 } from 'react';
-import { useMatch } from 'react-router';
+import { useLocation, useMatch } from 'react-router';
+import { isConversationPagePath } from '../constants/routes';
 import {
   ClientChannelReportResult,
   reportClientChannel,
@@ -111,9 +112,11 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
    * and navigates to `/conversations/<id>` before any stream exists, so it
    * is intentionally excluded here.
    */
-  const matchConversations = useMatch(`${ROUTES.Conversations}/*`);
+  const { pathname } = useLocation();
   const matchAppsEditor = useMatch(ROUTES.AppsEditor);
-  const isStreamingCapablePage = !!(matchConversations ?? matchAppsEditor);
+  /* A top-level or a project chat; both stream through `useConversationStream`. */
+  const isStreamingCapablePage =
+    isConversationPagePath(pathname) || !!matchAppsEditor;
   const isActive = isEnabled && isStreamingCapablePage;
 
   const [channelId, setChannelId] = useState<string | null>(null);

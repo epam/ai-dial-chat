@@ -44,6 +44,7 @@ export default defineConfig(({ command }) => ({
       aliasesExclude: [
         '@epam/ai-dial-attachment-canvas',
         '@epam/ai-dial-mcp-apps',
+        '@epam/ai-dial-projects',
         '@epam/ai-dial-scheduled-tasks/validation',
       ],
     }),
@@ -74,6 +75,7 @@ export default defineConfig(({ command }) => ({
         'external-services': 'src/entry-points/external-services.ts',
         'offline-credentials': 'src/entry-points/offline-credentials.ts',
         'scheduled-tasks': 'src/entry-points/scheduled-tasks.ts',
+        project: 'src/entry-points/project.ts',
         sharing: 'src/entry-points/sharing.ts',
         attachments: 'src/entry-points/attachments.ts',
         utils: 'src/entry-points/utils.ts',
@@ -139,6 +141,10 @@ export default defineConfig(({ command }) => ({
       '@epam/ai-dial-conversation-input': path.resolve(
         import.meta.dirname,
         '../conversation-input/src/index.ts',
+      ),
+      '@epam/ai-dial-projects': path.resolve(
+        import.meta.dirname,
+        '../projects/src/index.ts',
       ),
       '@epam/ai-dial-publish-panel': path.resolve(
         import.meta.dirname,

@@ -13,7 +13,10 @@ import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import { DialClientService } from '../../dial/dial-client.service';
 import { UserConfigService } from '../../user-config/user-config.service';
-import { PROJECT_MANIFEST_MAX_BYTES } from '../constants/project-context.constants';
+import {
+  PROJECT_MANIFEST_MAX_BYTES,
+  PROJECT_WRITE_ATTEMPTS,
+} from '../constants/project-context.constants';
 import {
   type ProjectCreateInput,
   ProjectsCreateService,
@@ -25,6 +28,7 @@ import {
   ProjectsSnapshotService,
 } from '../snapshot/projects-snapshot.service';
 import { ProjectCreateErrorCode } from '../types/project-create-error-code.enum';
+import { PROJECT_CONVERSATIONS_FOLDER } from '../utils/project-conversation-id.util';
 import {
   projectBadRequest,
   projectChanged,
@@ -80,10 +84,14 @@ const describeError = (err: unknown): string =>
 
 /**
  * Saves a project edit in one DIAL Core write. The caller's `If-Match` must
- * name the snapshot the BFF reads; the BFF then rebuilds `PROJECT.md`, keeps
- * every untouched file from that snapshot, adds the uploaded ones and makes
- * a single conditional `uploadProjectFolder` — so an edit commits whole or
- * not at all. A rename is a Core move that follows the write, because Core's
+ * name the snapshot's `contentVersion`, not Core's ETag, so a project
+ * conversation written meanwhile does not fail the save. The BFF rebuilds
+ * `PROJECT.md`, keeps every untouched file from the snapshot (conversations
+ * included), adds the uploaded ones and makes one conditional
+ * `uploadProjectFolder` on the snapshot's ETag — so an edit commits whole or
+ * not at all. Core's `412` (typically a conversation write in between)
+ * re-reads the snapshot and, while `contentVersion` is unchanged, rebuilds
+ * and writes again, up to `PROJECT_WRITE_ATTEMPTS` writes. A rename is a Core move that follows the write, because Core's
  * move takes no ETag (`openspec/changes/add-project-view-page/design.md` D5).
  * Only the owner edits: a project outside the caller's bucket is refused
  * before any Core call, matching `canEdit`. Logs carry counts and byte
@@ -112,7 +120,7 @@ export class ProjectsUpdateService {
     if (project.bucket !== sessionBucket) {
       throw new ForbiddenException('Only the owner can edit a project');
     }
-    const expectedEtag = requireSingleIfMatch(ifMatch);
+    const expectedVersion = requireSingleIfMatch(ifMatch);
 
     this.createService.validateName(input.name);
     const fileNames = this.createService.validateIncomingFiles(
@@ -126,53 +134,69 @@ export class ProjectsUpdateService {
       ? AbortSignal.any([signal, timeoutSignal])
       : timeoutSignal;
 
-    const snapshot = await this.snapshotService.read(
-      project.bucket,
-      project.path,
-      accessToken,
-      sessionBucket,
-      requestSignal,
-    );
-    if (snapshot.etag !== expectedEtag) throw projectChanged();
-    /* Rebuilding a manifest the BFF never read would overwrite it. */
-    if (snapshot.hasOversizedManifest) throw manifestTooLarge();
-
-    const keptFiles = this.resolveKeptFiles(
-      snapshot,
-      removedFileNames,
-      fileNames,
-    );
-    const totalBytes =
-      keptFiles.reduce((total, file) => total + file.size, 0) +
-      files.reduce((total, file) => total + file.buffer.length, 0);
-    this.createService.assertWithinFileCount(keptFiles.length + files.length);
-    this.createService.assertWithinCapacity(totalBytes);
-
     const destination =
       input.name === project.name
         ? null
         : buildSiblingProjectId(project, input.name);
-    if (destination != null) {
-      await this.assertNameFree(destination, accessToken, requestSignal);
-    }
 
-    const formData = await this.buildFormData(
-      snapshot,
-      input,
-      keptFiles.map((file) => file.name),
-      fileNames,
-      files,
-    );
-    const writtenEtag = await this.write(
-      project,
-      formData,
-      snapshot.etag,
-      accessToken,
-      requestSignal,
-    );
-    this.logger.log(
-      `Project saved (kept=${keptFiles.length}, added=${files.length}, removed=${removedFileNames.length}, bytes=${totalBytes})`,
-    );
+    let writtenEtag: string | null = null;
+    for (
+      let attempt = 0;
+      attempt < PROJECT_WRITE_ATTEMPTS && writtenEtag == null;
+      attempt++
+    ) {
+      const snapshot = await this.snapshotService.read(
+        project.bucket,
+        project.path,
+        accessToken,
+        sessionBucket,
+        requestSignal,
+      );
+      if (snapshot.contentVersion !== expectedVersion) throw projectChanged();
+      /* Rebuilding a manifest the BFF never read would overwrite it. */
+      if (snapshot.hasOversizedManifest) throw manifestTooLarge();
+
+      const keptFiles = this.resolveKeptFiles(
+        snapshot,
+        removedFileNames,
+        fileNames,
+      );
+      const totalBytes =
+        keptFiles.reduce((total, file) => total + file.size, 0) +
+        files.reduce((total, file) => total + file.buffer.length, 0);
+      this.createService.assertWithinFileCount(keptFiles.length + files.length);
+      this.createService.assertWithinCapacity(totalBytes);
+
+      if (attempt === 0 && destination != null) {
+        await this.assertNameFree(destination, accessToken, requestSignal);
+      }
+
+      /* Rebuilt from each fresh snapshot, so a retry carries the newer conversation bytes. */
+      const formData = await this.buildFormData(
+        snapshot,
+        input,
+        keptFiles.map((file) => file.name),
+        fileNames,
+        files,
+      );
+      writtenEtag = await this.write(
+        project,
+        formData,
+        snapshot.etag,
+        accessToken,
+        requestSignal,
+      );
+      if (writtenEtag == null) {
+        this.logger.debug(
+          `Project save met a concurrent write, attempt ${attempt + 1}`,
+        );
+      } else {
+        this.logger.log(
+          `Project saved (kept=${keptFiles.length}, added=${files.length}, removed=${removedFileNames.length}, conversations=${snapshot.conversationEntries.length}, bytes=${totalBytes})`,
+        );
+      }
+    }
+    if (writtenEtag == null) throw projectChanged();
 
     if (destination == null) {
       return this.toResponse(project, writtenEtag, accessToken, sessionBucket);
@@ -323,6 +347,17 @@ export class ProjectsUpdateService {
      * and path, but not their content type: the archive carries none, so
      * they are re-uploaded as `application/octet-stream`.
      */
+    /* Project conversations keep their bytes; their stored type is always JSON. */
+    for (const { name } of snapshot.conversationEntries) {
+      const entryPath = `${PROJECT_CONVERSATIONS_FOLDER}/${name}`;
+      formData.append(
+        'file',
+        new Blob([await snapshot.readEntry(entryPath)], {
+          type: 'application/json',
+        }),
+        entryPath,
+      );
+    }
     for (const entryPath of snapshot.otherEntries) {
       formData.append(
         'file',
@@ -335,14 +370,17 @@ export class ProjectsUpdateService {
     return formData;
   }
 
-  /** One conditional whole-project write; Core's `412` means the project changed since the snapshot. */
+  /**
+   * One conditional whole-project write. Resolves the new ETag, or `null` on
+   * Core's `412` (the project changed since the snapshot).
+   */
   private async write(
     project: ParsedProjectId,
     formData: FormData,
     etag: string,
     accessToken: string,
     signal: AbortSignal,
-  ): Promise<string> {
+  ): Promise<string | null> {
     try {
       const { error, response } =
         await this.dialClient.client.uploadProjectFolder(
@@ -355,7 +393,7 @@ export class ProjectsUpdateService {
           },
         );
       if (error != null || response.status >= 400) {
-        if (response.status === 412) throw projectChanged();
+        if (response.status === 412) return null;
         return mapDialHttpStatus(
           response.status,
           UPDATE_CONTEXT,

@@ -136,6 +136,73 @@ describe('ProjectsSnapshotService', () => {
     ]);
   });
 
+  it('classifies direct conversations/ children without inflating them', async () => {
+    const zip = await buildZip({
+      'PROJECT.md': buildProjectManifest({
+        name: 'q4',
+        description: '',
+        instructions: '',
+      }),
+      'context/tickets.csv': 't',
+      'conversations/gpt-4o__Q4 summary__1b2c.json': Buffer.alloc(40_000, 'c'),
+      'conversations/nested/x.json': 'n',
+    });
+    const { service } = makeService(archiveResponse(zip));
+    const openReadStream = vi.spyOn(
+      (await import('yauzl')).ZipFile.prototype,
+      'openReadStreamPromise',
+    );
+
+    const snapshot = await read(service);
+
+    expect(snapshot.conversationEntries).toEqual([
+      { name: 'gpt-4o__Q4 summary__1b2c.json', size: 40_000 },
+    ]);
+    expect(snapshot.otherEntries).toEqual(['conversations/nested/x.json']);
+    expect(snapshot.contextFiles).toEqual([{ name: 'tickets.csv', size: 1 }]);
+    expect(openReadStream).toHaveBeenCalledOnce();
+    openReadStream.mockRestore();
+  });
+
+  it('keeps contentVersion when only a conversation changes', async () => {
+    const base = { 'PROJECT.md': 'p', 'context/tickets.csv': 't' };
+    const first = await read(
+      makeService(
+        archiveResponse(
+          await buildZip({ ...base, 'conversations/c.json': '{"a":1}' }),
+          { etag: '"e1"' },
+        ),
+      ).service,
+    );
+    const second = await read(
+      makeService(
+        archiveResponse(
+          await buildZip({ ...base, 'conversations/c.json': '{"a":2,"b":3}' }),
+          { etag: '"e2"' },
+        ),
+      ).service,
+    );
+
+    expect(first.contentVersion).toMatch(/^"[\da-f]{64}"$/);
+    expect(second.contentVersion).toBe(first.contentVersion);
+    expect(second.etag).not.toBe(first.etag);
+  });
+
+  it('changes contentVersion when a context file changes', async () => {
+    const first = await read(
+      makeService(
+        archiveResponse(await buildZip({ 'context/tickets.csv': 'a,b' })),
+      ).service,
+    );
+    const second = await read(
+      makeService(
+        archiveResponse(await buildZip({ 'context/tickets.csv': 'a,c' })),
+      ).service,
+    );
+
+    expect(second.contentVersion).not.toBe(first.contentVersion);
+  });
+
   it('ignores a manifest above the manifest limit and flags it', async () => {
     const zip = await buildZip({ 'PROJECT.md': Buffer.alloc(1_048_577, 'a') });
     const { service } = makeService(archiveResponse(zip));
