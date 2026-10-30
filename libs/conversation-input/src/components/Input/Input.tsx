@@ -1180,10 +1180,17 @@ export const Input = forwardRef<InputHandle, InputProps>(
       </div>
     );
 
+    /*
+     * In the wrapping row the chips never shrink below their own width, so on
+     * a phone the trailing actions wrap to the next line instead of crushing
+     * a chip down to its icon. `max-w-full` still lets one over-long chip
+     * truncate its label.
+     */
     const chipsNode = visibleTools.length > 0 && onToolToggle != null && (
       <div
         className={mergeClasses(
-          'min-w-0 flex-1',
+          'min-w-0',
+          isInlineActionRow ? 'flex-1' : 'max-w-full flex-[1_0_auto]',
           CONVERSATION_INPUT_CLASS.toolsChips,
         )}
       >
@@ -1357,7 +1364,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
                       }
                       aria-label={micLabel}
                       tooltipProps={{ tooltip: micLabel }}
-                      className="size-[40px] shrink-0 mobile:min-h-11 mobile:min-w-11"
+                      className="shrink-0"
                       onClick={() =>
                         startRecording(VoiceRecordingMode.Dictation)
                       }
