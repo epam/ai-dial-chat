@@ -37,6 +37,10 @@ interface StoryHostPageProps {
   children?: ReactNode;
   /** Composer text, for the secret-phrase playground. */
   composerValue?: string;
+  /** Initial draft for an uncontrolled scene fixture. */
+  composerDefaultValue?: string;
+  /** Text shown while the fixture editor is empty. */
+  composerPlaceholder?: string;
   /** Called when the composer text changes. */
   onComposerChange?: (value: string) => void;
   /** Called when the fixture's send button is pressed. */
@@ -54,6 +58,8 @@ export const StoryHostPage: FC<StoryHostPageProps> = ({
   showStarters = true,
   composerAlign = 'center',
   composerValue,
+  composerDefaultValue,
+  composerPlaceholder,
   onComposerChange,
   onSend,
 }) => {
@@ -118,6 +124,8 @@ export const StoryHostPage: FC<StoryHostPageProps> = ({
             rows={1}
             className="order-first min-w-0 basis-full resize-none bg-transparent desktop:order-0 desktop:flex-1 desktop:basis-auto"
             value={composerValue}
+            defaultValue={composerDefaultValue}
+            placeholder={composerPlaceholder}
             onChange={(event) => onComposerChange?.(event.target.value)}
           />
           <button

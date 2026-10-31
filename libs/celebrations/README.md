@@ -197,7 +197,8 @@ export const halloweenLabels: Partial<HalloweenLabels> = {
 ### NewYearScene
 
 `PenguinStar` and `SnowmanDelivery` play on a gift click, picked at random.
-`GiftWrapping` plays only for the secret phrase `happy new year`. Snow, confetti
+`GiftWrapping` and `ReindeerTakeoff` form the secret pool for `happy new year`,
+selected without consecutive repeats independently of gift clicks. Snow, confetti
 and sleigh scenes are no longer included.
 
 ## Types
@@ -213,6 +214,10 @@ selector if no prompt qualifies. The button folds down to a paper ball in its
 flipper; the penguin crushes that into a gold star and throws it onto the fir. After a
 surprised look and a bow to the tree, it leaves by the same side. The borrowed
 button returns to its original appearance when the scene ends or is interrupted.
+The working flipper follows the body's lean; the captured fragment and thrown
+star share its actual grip in LTR and RTL. Short alternating steps accompany
+the entrance, approach to the fir and departure. The throw uses one continuous
+arc, and the feet settle during held reactions and the bow.
 One 20-second native Lottie SVG composition owns the scene; the
 provider allows 22.5 seconds including player loading. The existing light
 player loads only for animated playback, with a two-second import deadline and
@@ -232,7 +237,7 @@ its reversible visual transform is cancelled when playback stops.
 Typing, pointer/focus interaction, scrolling, viewport or target changes,
 hidden tabs, navigation, scene replacement and motion-preference changes stop
 the scene and release its player, listeners, observers and timers. The gift
-picks the penguin or the snowman; the secret phrase plays the elves.
+picks the penguin or the snowman; the secret phrase picks the elves or reindeer.
 Hosts can override `penguinStarToastMessage` through existing labels. The scene
 budgets 140 generated SVG artwork nodes, 32 animated properties, 80 keyframes
 per property and 120 KB of composition data. It uses no external assets,
@@ -249,6 +254,9 @@ presents his work while the frustrated master hops away with a chest bow and a
 ribbon around his
 ankles; the helper follows with the reel. Both elves and the full story remain
 on mobile and in RTL layouts.
+The original character contours remain intact: cap movement and recoil are
+restrained, while each frustrated hop slows on ascent and accelerates into
+landing without stopping horizontally at its apex.
 
 The scene plays one sixteen-second Lottie vector composition and unmounts by
 eighteen and a half seconds. Its light SVG player loads only for animated
@@ -265,9 +273,63 @@ host.
 
 Interaction, focus changes, scrolling, viewport or target changes, hidden tabs,
 navigation and motion-preference changes cancel playback and release the player.
-Only the secret phrase `happy new year` selects the elves; a gift
-click picks the penguin or the snowman. Hosts can override `giftWrappingToastMessage`
+The secret phrase `happy new year` picks the elves or reindeer without
+consecutive repeats; a gift click picks the penguin or the snowman. Hosts can override `giftWrappingToastMessage`
 through the existing New Year labels.
+
+New Year's reindeer takeoff, "Reindeer, Release the Brake!", has a chestnut
+adult, a smaller calf in a burgundy scarf and a red gift sleigh. They walk on
+the upper edge of the composer. A trailing ribbon catches a word in its text
+(or the placeholder when empty). Two resisted pulls lift the word above the
+rim; the calf walks back, fails one nose nudge, then lifts the loop. The word
+returns before takeoff. Snow falls from the flying sleigh and stays along its
+route, slowly drifting and fading even after the formation leaves.
+
+Steps follow distance traveled, with planted soles and bending joints. The
+bodies compress before pulling and takeoff; the calf turns before walking
+back. Forelegs and hind legs bend differently with staggered contacts. The
+adult has a fuller chest and longer antlers; the calf has a rounder face and
+compact proportions. Neck, gaze and ear gestures distinguish the adult's
+effort from the calf's curiosity. The nose and caught loop share the articulated
+neck/head geometry. During takeoff the legs extend, fold and settle into a
+relaxed glide instead of continuing to walk in the air. A continuous flight
+arc carries the adult first, then the calf and
+sleigh with a short delay. The reins and snow follow the actual tilted rigs.
+All support solving is baked before playback.
+
+The 23-second scene uses the existing 25.5-second provider lifetime, including
+the 2-second import and 250 ms renderer deadlines. The complete cast remains
+on mobile, scaled to the input width. Ground travel clips to the composer;
+at takeoff the clip opens to the welcome-region width. All three silhouettes
+stay visible through 20.5 seconds before physically leaving the frame.
+
+Only an inert word fragment is borrowed: at most 32 characters / 280 × 48 px,
+using a text span and a cover over its original pixels. A disposable native
+layout mirror reads at most 512 characters during preparation. The real
+textarea's value, placeholder, focus, selection, styles and editing state are
+never changed. Scrolled/clipped, invisible or transparent-ink text and
+non-flat backgrounds use a small drawn catch on the rim. Hosts without
+anchors use a decorative stage. Invalid supplied composers, insufficient
+headroom, reduced motion, unavailable APIs or player failures show the static
+resolution; reduced motion does not measure the host or load the player.
+RTL mirrors travel and artwork, preserving the text's original direction.
+
+One local native Lottie SVG composition and at most four WAAPI companions
+share the renderer's frame-zero clock. Input, focus, pointer, scrolling,
+viewport/target/direction changes, hidden tabs, navigation and unmount remove
+the copies, snow, player, observers and animations. Hosts can disable
+`NewYearScene.ReindeerTakeoff` or override `reindeerTakeoffToastMessage`.
+
+Budgets are one player, two deer, one sleigh, 24 snow clusters on desktop or
+16 on mobile; 500 KB composition data, 24 layers, 110 animated properties,
+7,000 keys (380 per property), 320 generated SVG nodes, 140 paths and 2,000
+vertices. Preparation scans at most four composers, four textareas and 24
+background ancestors. No external/raster assets, filters, SVG masks,
+per-frame host reads or React updates. These limits are structural budgets,
+not a frame-rate guarantee. Run
+`node libs/celebrations/browser-tests/reindeer-takeoff.browser.spec.mjs`
+against Storybook at port 6010 (`STORYBOOK_URL` overrides it); captures and
+profiles go to `tmp/reindeer-verification`.
 
 New Year's snowman delivery, "Delivery Without Losing Your Head", stars a
 slightly pompous snowman with a carrot nose, burgundy scarf and mittens. He
