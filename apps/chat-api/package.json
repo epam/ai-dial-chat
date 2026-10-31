@@ -178,6 +178,12 @@
   "overrides": {
     "js-yaml": "^4.1.1 || ^5.4.1",
     "multer": "2.5.0",
-    "proxy-addr": "2.0.8"
+    "proxy-addr": "2.0.8",
+    "archiver-utils": {
+      "glob": "^14.0.2"
+    },
+    "readdir-glob": {
+      "minimatch": "^11.0.1"
+    }
   }
 }
