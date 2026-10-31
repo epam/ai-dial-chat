@@ -57,6 +57,7 @@ export default defineConfig(({ command }) => ({
         index: 'src/index.ts',
         halloween: 'src/halloween/index.ts',
         'new-year': 'src/new-year/index.ts',
+        packs: 'src/packs/index.ts',
       },
       name: '@epam/ai-dial-celebrations',
       cssFileName: 'index',

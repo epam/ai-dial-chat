@@ -4,7 +4,7 @@ Seasonal start-page celebrations with lazily loaded Halloween and New Year scene
 
 ## Overview
 
-`@epam/ai-dial-celebrations` adds seasonal easter eggs to a chat start page: a decoration with a clickable trigger (a pumpkin, a gift), full-screen animated scenes that play when the trigger is pressed, and an optional secret phrase that plays a hidden scene instead of sending the message. The runtime is a React provider that owns playback — which event is loaded, which scene is playing and when it ends — while the host decides everything the library cannot know: which event is active and on which page, how texts are translated, how notifications are shown, whether the layout is mobile, and which DOM elements scenes may borrow. Each event lives in its own entry point (`./halloween`, `./new-year`) and is loaded only when selected, so a host that never enables New Year never downloads it. Hosts can disable individual scenes, individual decoration behaviors and the secret phrase per event. Every scene respects `prefers-reduced-motion`, all artwork is `aria-hidden` and pointer-transparent, and scenes that borrow interface elements restore their original appearance on completion or interruption.
+`@epam/ai-dial-celebrations` adds seasonal easter eggs to a chat start page: a decoration with a clickable trigger (a pumpkin, a gift), full-screen animated scenes that play when the trigger is pressed, and an optional secret phrase that plays a hidden scene instead of sending the message. The runtime is a React provider that owns playback — which event is loaded, which scene is playing and when it ends — while the host decides everything the library cannot know: which event is active and on which page, how texts are translated, how notifications are shown, whether the layout is mobile, and which DOM elements scenes may borrow. Each event lives in its own entry point (`./halloween`, `./new-year`) and is loaded only when selected, so a host that never enables New Year never downloads it. Externally delivered packs — a Lottie scene that replaces a bundled scene by id, or a whole external-only event — are described by transport-independent descriptors from the main entry and rendered by the lazy `./packs` entry; the library never fetches them, the host passes asset loaders. Hosts can disable individual scenes, individual decoration behaviors and the secret phrase per event. Every scene respects `prefers-reduced-motion`, all artwork is `aria-hidden` and pointer-transparent, and scenes that borrow interface elements restore their original appearance on completion or interruption.
 
 ## Installation
 
@@ -149,6 +149,264 @@ export const loadHalloween = async () =>
 
 `@epam/ai-dial-celebrations/new-year` exports the default `newYearEvent`, `NEW_YEAR_LABELS` and `NewYearScene`. Its decoration is a garland with a gift trigger; the secret phrase is `happy new year`.
 
+### Packs
+
+`@epam/ai-dial-celebrations/packs` renders host-validated pack descriptors. Import it only after a pack has resolved, so `LottieScene` and the static trigger stay out of the main chunk. Its exports are `LottieScene`, `StaticTriggerDecoration`, `createCelebrationSceneFromDescriptor`, `replaceCelebrationScenes` and `createCelebrationEventFromDescriptor`.
+
+The host supplies every asset through `CelebrationAssetLoaders`: `loadAnimationData(assetId, signal)` resolves parsed Lottie JSON and must reject on abort; `resolveImageUrl(assetId)` returns an `<img>` URL or `undefined`. The library never calls `fetch`, never imports a URL and never injects markup. Hosts can disable individual scenes, individual decoration behaviors and the secret phrase per event. Every scene respects `prefers-reduced-motion`, all artwork is `aria-hidden` and pointer-transparent, and scenes that borrow interface elements restore their original appearance on completion or interruption.
+
+## Installation
+
+```json
+{
+  "dependencies": {
+    "@epam/ai-dial-celebrations": "*"
+  }
+}
+```
+
+Import the stylesheet once in the consuming app:
+
+```ts
+import '@epam/ai-dial-celebrations/styles.css';
+```
+
+## Peer Dependencies
+
+- `react`
+- `react-dom`
+- `@epam/ai-dial-chat-shared`
+- `@epam/ai-dial-ui-kit`
+
+## Components
+
+### CelebrationProvider
+
+Owns celebration playback. Every host concern arrives as a prop; the library reads no router, i18n, config or storage. Pass `null` as `activeEventId` wherever celebrations must not appear.
+
+```tsx
+import {
+  CelebrationProvider,
+  type CelebrationAnchors,
+  type CelebrationEventLoader,
+} from '@epam/ai-dial-celebrations';
+import { HalloweenScene } from '@epam/ai-dial-celebrations/halloween';
+import type { FC, ReactNode } from 'react';
+
+const EVENTS: Record<string, CelebrationEventLoader> = {
+  halloween: () => import('@epam/ai-dial-celebrations/halloween'),
+  'new-year': () => import('@epam/ai-dial-celebrations/new-year'),
+};
+
+const ANCHORS: CelebrationAnchors = {
+  composer: 'my-composer',
+  starterList: 'my-starters',
+  historyContainer: 'my-history',
+  historyRowLink: 'a[href^="/conversations/"]',
+};
+
+interface HostProps {
+  children: ReactNode;
+  isStartPage: boolean;
+  navigationKey: string;
+  isMobile: boolean;
+  notify: (title: string, message: string) => void;
+}
+
+export const CelebrationHost: FC<HostProps> = ({
+  children,
+  isStartPage,
+  navigationKey,
+  isMobile,
+  notify,
+}) => (
+  <CelebrationProvider
+    events={EVENTS}
+    activeEventId={isStartPage ? 'halloween' : null}
+    resetKey={navigationKey}
+    isMobile={isMobile}
+    anchors={ANCHORS}
+    onNotify={({ title, message }) => notify(title, message)}
+    selection={{ halloween: { disabledScenes: [HalloweenScene.Cat] } }}
+  >
+    {children}
+  </CelebrationProvider>
+);
+```
+
+| Prop              | Type                                              | Description                                                                  |
+| ----------------- | ------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `events`          | `Record<string, CelebrationEventLoader>`          | Loaders keyed by event id; resolve to the module or the event itself.        |
+| `activeEventId`   | `string \| null`                                  | Event to show; `null` for none.                                              |
+| `resetKey`        | `unknown`                                         | Any value whose change cancels the active scene and reloads the event.       |
+| `labels`          | `Record<string, Record<string, string>>`          | Label overrides keyed by event id, merged over the event's English defaults. |
+| `onNotify`        | `(notification: CelebrationNotification) => void` | Called once per played scene with a resolved title and message.              |
+| `isMobile`        | `boolean`                                         | Whether scenes use their mobile layout. Default: `false`.                    |
+| `anchors`         | `CelebrationAnchors`                              | Host DOM hooks interface-borrowing scenes may measure.                       |
+| `selection`       | `Record<string, CelebrationEventSelection>`       | Per-event scene and decoration selection keyed by event id.                  |
+| `portalContainer` | `Element`                                         | Where scenes render. Default: `document.body`.                               |
+
+### CelebrationDecor
+
+Renders the active event's decoration and trigger; place it inside the start-page region.
+
+```tsx
+import { CelebrationDecor } from '@epam/ai-dial-celebrations';
+
+export const StartPage = () => (
+  <main role="region" aria-label="Start page" className="relative">
+    <CelebrationDecor />
+  </main>
+);
+```
+
+## Hooks
+
+### useCelebration
+
+Returns the celebration state, or an inert value outside `CelebrationProvider`. Hand every composer message to `consumeSecretPhrase` before sending it.
+
+```tsx
+import { useCelebration } from '@epam/ai-dial-celebrations';
+
+export const useSend = (send: (text: string) => void) => {
+  const { consumeSecretPhrase } = useCelebration();
+  return (text: string) => {
+    if (consumeSecretPhrase(text)) return;
+    send(text);
+  };
+};
+```
+
+`useCelebration()` returns `{ event, isEnabled, activate, celebrate, consumeSecretPhrase }`. `event.iconUrl` is the event's icon, which a host may show in place of its own logo.
+
+## Events
+
+### Halloween
+
+`@epam/ai-dial-celebrations/halloween` exports the default `halloweenEvent`, `createHalloweenEvent`, `HALLOWEEN_LABELS`, `HalloweenScene` and `HalloweenDecorBehavior`. Its decoration is a corner web with a spider and a pumpkin trigger; the secret phrase is `trick or treat`.
+
+```ts
+import { createHalloweenEvent } from '@epam/ai-dial-celebrations/halloween';
+
+/* A loader that also plays a soundtrack in the train scene. */
+export const loadHalloween = async () =>
+  createHalloweenEvent({ trainSoundtrackUrl: '/sounds/train.mp3' });
+```
+
+### New Year
+
+`@epam/ai-dial-celebrations/new-year` exports the default `newYearEvent`, `NEW_YEAR_LABELS` and `NewYearScene`. Its decoration is a garland with a gift trigger; the secret phrase is `happy new year`.
+
+### Packs
+
+`@epam/ai-dial-celebrations/packs` renders host-validated pack descriptors. Import it only after a pack has resolved, so `LottieScene` and the static trigger stay out of the main chunk. Its exports are `LottieScene`, `StaticTriggerDecoration`, `createCelebrationSceneFromDescriptor`, `replaceCelebrationScenes` and `createCelebrationEventFromDescriptor`.
+
+The host supplies every asset through `CelebrationAssetLoaders`: `loadAnimationData(assetId, signal)` resolves parsed Lottie JSON and must reject on abort; `resolveImageUrl(assetId)` returns an `<img>` URL or `undefined`. The library never calls `fetch`, never imports a URL and never injects markup.
+
+Replace a bundled scene by its stable id. Only ids the event already has are replaced; each replacement keeps the bundled `labelId`, and the trigger, pools, secret phrase, labels and decor behaviors stay the same:
+
+```ts
+import {
+  CelebrationColorScheme,
+  type CelebrationAssetLoaders,
+  type CelebrationSceneDescriptor,
+} from '@epam/ai-dial-celebrations';
+
+declare const snowman: CelebrationSceneDescriptor;
+declare const loaders: CelebrationAssetLoaders;
+
+export const loadNewYear = async () => {
+  const [
+    { createCelebrationSceneFromDescriptor, replaceCelebrationScenes },
+    { newYearEvent },
+  ] = await Promise.all([
+    import('@epam/ai-dial-celebrations/packs'),
+    import('@epam/ai-dial-celebrations/new-year'),
+  ]);
+  return replaceCelebrationScenes(newYearEvent, [
+    createCelebrationSceneFromDescriptor(snowman, loaders, {
+      direction: 'ltr',
+      colorScheme: CelebrationColorScheme.Light,
+    }),
+  ]);
+};
+```
+
+An external-only event comes from a pack descriptor with an `event` block. It gets the `static-trigger-v1` decoration, the pack's English labels, its click pool filtered to declared scenes, and no secret phrase or decor behaviors. The function throws for a descriptor without `event`:
+
+```ts
+import {
+  CelebrationColorScheme,
+  type CelebrationAssetLoaders,
+  type CelebrationPackDescriptor,
+} from '@epam/ai-dial-celebrations';
+
+declare const pack: CelebrationPackDescriptor;
+declare const loaders: CelebrationAssetLoaders;
+
+export const loadAnniversary = async () => {
+  const { createCelebrationEventFromDescriptor } =
+    await import('@epam/ai-dial-celebrations/packs');
+  return createCelebrationEventFromDescriptor(pack, loaders, {
+    direction: 'rtl',
+    colorScheme: CelebrationColorScheme.Dark,
+  });
+};
+```
+
+`LottieScene` plays one `CelebrationSceneDescriptor` inside the provider's scene layer. It picks the variant matching the most of layout (`isMobile`), direction and color scheme, places a `viewport-stage-v1` stage by `fit` and `align` (`start`/`end` follow the supplied direction, never the document language), flips a `mirror` scene in RTL, and clones the data before the player gets it. Under reduced motion, for an unsupported scene, or on a failure before playback, it shows the poster `<img alt="">` for `posterDurationMs` without loading the player or the data; after a failure past the first frame it renders nothing. A generated SVG with more than 800 elements counts as a failure before playback.
+
+```tsx
+import { LottieScene } from '@epam/ai-dial-celebrations/packs';
+import {
+  CelebrationColorScheme,
+  type CelebrationAssetLoaders,
+  type CelebrationSceneDescriptor,
+} from '@epam/ai-dial-celebrations';
+
+declare const scene: CelebrationSceneDescriptor;
+declare const loaders: CelebrationAssetLoaders;
+
+export const SnowmanScene = () => (
+  <LottieScene
+    scene={scene}
+    loaders={loaders}
+    context={{ direction: 'ltr', colorScheme: CelebrationColorScheme.Light }}
+  />
+);
+```
+
+`StaticTriggerDecoration` is a native `<button type="button">` named by `label` (default `Play celebration` when empty), with an `aria-hidden` image from `imageUrl`. It calls `onActivate` on click, Enter and Space, draws its focus ring in `currentColor` and declares no colors of its own.
+
+```tsx
+import { StaticTriggerDecoration } from '@epam/ai-dial-celebrations/packs';
+
+export const Trigger = ({ onActivate }: { onActivate: () => void }) => (
+  <StaticTriggerDecoration
+    onActivate={onActivate}
+    imageUrl="/images/anniversary-trigger.svg"
+    label="Celebrate ten years"
+  />
+);
+```
+
+## Capabilities
+
+`SUPPORTED_CELEBRATION_CAPABILITIES` is the read-only set of capability ids this release implements: `lottie-light-svg-v1`, `viewport-stage-v1`, `static-poster-v1` and `static-trigger-v1`. `composer-anchor-v1` is not implemented yet. A host keeps only scenes whose `requiredCapabilities` are all in the set:
+
+```ts
+import {
+  SUPPORTED_CELEBRATION_CAPABILITIES,
+  type CelebrationSceneDescriptor,
+} from '@epam/ai-dial-celebrations';
+
+export const isPlayable = (scene: CelebrationSceneDescriptor) =>
+  scene.requiredCapabilities.every((id) =>
+    SUPPORTED_CELEBRATION_CAPABILITIES.has(id),
+  );
+```
+
 ## Choosing scenes
 
 `selection` takes, per event id, `enabledScenes` (when set, only these may play), `disabledScenes`, `disabledDecorBehaviors` and `isSecretEnabled` (default `true`). Everything is enabled by default. A disabled scene leaves both the click and the secret pools; the secret phrase is consumed only while one of its scenes is enabled, otherwise the message is sent normally.
@@ -200,9 +458,24 @@ export const halloweenLabels: Partial<HalloweenLabels> = {
 `GiftWrapping` plays only for the secret phrase `happy new year`. Snow, confetti
 and sleigh scenes are no longer included.
 
+### Pack enums
+
+From the main entry:
+
+- `CelebrationCapability`: `LottieLightSvgV1`, `ViewportStageV1`, `ComposerAnchorV1`, `StaticPosterV1`, `StaticTriggerV1`.
+- `CelebrationDirectionMode`: `None`, `Mirror`, `Variant`.
+- `CelebrationLayout`: `Mobile`, `Desktop`.
+- `CelebrationColorScheme`: `Light`, `Dark`.
+- `CelebrationPlacementTemplate`: `ViewportStageV1`, `ComposerAnchorV1` (only the first is rendered in this release).
+- `CelebrationStageFit`: `Contain`, `Cover`.
+- `CelebrationStageAlign`: `Center`, `Top`, `Bottom`, `TopStart`, `TopEnd`, `BottomStart`, `BottomEnd`.
+- `CelebrationDecorationTemplate`: `StaticTriggerV1`.
+
 ## Types
 
 `CelebrationProviderProps`, `CelebrationContextValue`, `CelebrationEvent`, `CelebrationEventLoader`, `CelebrationScene`, `CelebrationSecretTrigger`, `CelebrationDecorationProps`, `CelebrationEventSelection`, `CelebrationAnchors`, `CelebrationNotification`, `HalloweenEventOptions`, `HalloweenLabels`, `NewYearLabels`.
+
+Pack descriptors, from the main entry: `CelebrationPackDescriptor`, `CelebrationSceneDescriptor`, `CelebrationSceneVariantDescriptor`, `CelebrationVariantConditions`, `CelebrationSceneTiming`, `CelebrationPlacementDescriptor`, `CelebrationViewportStagePlacement`, `CelebrationExternalEventDescriptor`, `CelebrationDecorationDescriptor`, `CelebrationAssetLoaders`, `CelebrationVariantContext` and `CelebrationTextDirection`. From `./packs`: `LottieSceneProps` and `StaticTriggerDecorationProps`.
 
 ## Scenes
 
@@ -565,11 +838,11 @@ and the browser-tab favicon. No event state is persisted.
 
 A host cannot style the library through its CSS-module locals, which are hashed at build time. Three elements therefore carry a stable public class, exported as `CELEBRATIONS_CLASS`.
 
-| Key          | Class                           | Element                                    |
-| ------------ | ------------------------------- | ------------------------------------------ |
-| `decor`      | `dial-celebrations-decor`       | Wrapper of the active event's decoration   |
-| `trigger`    | `dial-celebrations-trigger`     | The event's trigger button (pumpkin, gift) |
-| `sceneLayer` | `dial-celebrations-scene-layer` | Viewport layer a playing scene renders in  |
+| Key          | Class                           | Element                                                    |
+| ------------ | ------------------------------- | ---------------------------------------------------------- |
+| `decor`      | `dial-celebrations-decor`       | Wrapper of the active event's decoration                   |
+| `trigger`    | `dial-celebrations-trigger`     | The event's trigger button (pumpkin, gift, static trigger) |
+| `sceneLayer` | `dial-celebrations-scene-layer` | Viewport layer a playing scene renders in                  |
 
 ## Storybook
 

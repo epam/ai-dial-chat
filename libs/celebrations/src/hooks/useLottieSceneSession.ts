@@ -16,6 +16,7 @@ export const useLottieSceneSession = <P>({
   enabled,
   playback,
   prepare,
+  loadData,
 }: UseLottieSceneSessionOptions<P>): LottieSceneSessionResult<P> => {
   const [prepared, setPrepared] = useState<{
     session: LottieSceneSession;
@@ -31,12 +32,16 @@ export const useLottieSceneSession = <P>({
   prepareRef.current = prepare;
   const playbackRef = useRef(playback);
   playbackRef.current = playback;
+  const loadDataRef = useRef(loadData);
+  loadDataRef.current = loadData;
 
   useEffect(() => {
     if (!enabled || isEnded || isFailed) return;
+    const load = loadDataRef.current;
     const session = createLottieSceneSession<P>({
       playback: playbackRef.current,
-      prepare: (player) => prepareRef.current(player),
+      prepare: (player, data) => prepareRef.current(player, data),
+      loadData: load ? (signal) => load(signal) : undefined,
       onPrepared: (preparation) => setPrepared({ session, preparation }),
       onTerminal: (outcome) => {
         if (outcome === LottieSceneOutcome.Failed) setIsFailed(true);

@@ -98,12 +98,16 @@ const createSession = ({
   ownership = LottieDataOwnership.Transferred,
   onAnimationCreated,
   onPlaybackStarted,
+  isRendererAccepted,
+  loadData,
 }: {
   loadPlayer?: () => Promise<LottiePlayer>;
-  prepare?: () => Preparation;
+  prepare?: (player: LottiePlayer, data: unknown) => Preparation;
   ownership?: LottieDataOwnership;
   onAnimationCreated?: LottieScenePlayback<Preparation>['onAnimationCreated'];
   onPlaybackStarted?: LottieScenePlayback<Preparation>['onPlaybackStarted'];
+  isRendererAccepted?: LottieScenePlayback<Preparation>['isRendererAccepted'];
+  loadData?: (signal: AbortSignal) => Promise<unknown>;
 } = {}) => {
   const onPrepared = vi.fn();
   const onTerminal = vi.fn();
@@ -113,6 +117,7 @@ const createSession = ({
     getAnimationData: ({ data }) => data,
     onAnimationCreated,
     onPlaybackStarted,
+    isRendererAccepted,
   };
   const session = createLottieSceneSession({
     playback,
@@ -120,6 +125,7 @@ const createSession = ({
     onPrepared,
     onTerminal,
     loadPlayer,
+    loadData,
   });
   return { session, onPrepared, onTerminal, loadPlayer, prepare };
 };
@@ -431,7 +437,7 @@ describe('createLottieSceneSession', () => {
     resolve(player);
     await flush();
     expect(prepare).toHaveBeenCalledOnce();
-    expect(prepare).toHaveBeenCalledWith(player);
+    expect(prepare).toHaveBeenCalledWith(player, undefined);
     expect(onPrepared).toHaveBeenCalledOnce();
     expect(session.state).toBe(LottieSceneSessionState.Prepared);
     expect(vi.getTimerCount()).toBe(0);
@@ -542,6 +548,135 @@ describe('createLottieSceneSession', () => {
       animations[0].emit('DOMLoaded');
 
       expect(animations[0].callbacks.has('enterFrame')).toBe(false);
+    });
+  });
+
+  describe('animation data', () => {
+    const deferredData = () => {
+      let resolve: (value: unknown) => void = () => undefined;
+      let reject: (error: Error) => void = () => undefined;
+      const signals: AbortSignal[] = [];
+      const load = vi.fn(
+        (signal: AbortSignal) =>
+          new Promise<unknown>((complete, abort) => {
+            signals.push(signal);
+            resolve = complete;
+            reject = abort;
+          }),
+      );
+      return {
+        load,
+        signals,
+        resolve: (value: unknown) => resolve(value),
+        reject: (error: Error) => reject(error),
+      };
+    };
+
+    it('loads data beside the player and prepares with it', async () => {
+      const data = { w: 10, h: 10, layers: [] };
+      const prepare = vi.fn((): Preparation => ({ data: original() }));
+      const { session, onPrepared } = createSession({
+        prepare,
+        loadData: vi.fn(async () => data),
+      });
+      session.start();
+      await flush();
+      expect(prepare).toHaveBeenCalledWith(player, data);
+      expect(onPrepared).toHaveBeenCalledOnce();
+    });
+
+    it('aborts the data request when the session is cancelled during load', async () => {
+      const { load, signals } = deferredData();
+      const { session, onTerminal } = createSession({ loadData: load });
+      session.start();
+      await flush();
+      expect(signals[0].aborted).toBe(false);
+      session.cancel();
+      expect(signals[0].aborted).toBe(true);
+      expect(onTerminal).toHaveBeenCalledWith(LottieSceneOutcome.Cancelled);
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it('ignores data that resolves after cancellation', async () => {
+      const { load, resolve } = deferredData();
+      const { session, prepare } = createSession({ loadData: load });
+      session.start();
+      await flush();
+      session.dispose();
+      resolve({ layers: [] });
+      await flush();
+      expect(prepare).not.toHaveBeenCalled();
+      expect(player.loadAnimation).not.toHaveBeenCalled();
+    });
+
+    it('fails when the data request rejects', async () => {
+      const { load, reject } = deferredData();
+      const { session, onTerminal, prepare } = createSession({
+        loadData: load,
+      });
+      session.start();
+      await flush();
+      reject(new Error('unavailable'));
+      await flush();
+      expect(onTerminal).toHaveBeenCalledWith(LottieSceneOutcome.Failed);
+      expect(prepare).not.toHaveBeenCalled();
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it('bounds player and data with one load deadline and aborts the late request', async () => {
+      const { load, signals } = deferredData();
+      const { session, onTerminal } = createSession({ loadData: load });
+      session.start();
+      await flush();
+      vi.advanceTimersByTime(1999);
+      expect(onTerminal).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(1);
+      expect(onTerminal).toHaveBeenCalledWith(LottieSceneOutcome.Failed);
+      expect(signals[0].aborted).toBe(true);
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it('does not abort a request that already resolved', async () => {
+      const { load, signals, resolve } = deferredData();
+      const { session } = createSession({ loadData: load });
+      session.start();
+      await flush();
+      resolve({ layers: [] });
+      await flush();
+      session.cancel();
+      expect(signals[0].aborted).toBe(false);
+    });
+  });
+
+  describe('renderer acceptance', () => {
+    it('fails at readiness without playing when the renderer is rejected', async () => {
+      const isRendererAccepted = vi.fn(() => false);
+      const { onTerminal } = await startInitializing({ isRendererAccepted });
+      animations[0].emit('DOMLoaded');
+      expect(isRendererAccepted).toHaveBeenCalledWith(host);
+      expect(onTerminal).toHaveBeenCalledWith(LottieSceneOutcome.Failed);
+      expect(animations[0].play).not.toHaveBeenCalled();
+      expectReleased();
+    });
+
+    it('fails when the acceptance check throws', async () => {
+      const { onTerminal } = await startInitializing({
+        isRendererAccepted: () => {
+          throw new Error('broken');
+        },
+      });
+      animations[0].emit('DOMLoaded');
+      expect(onTerminal).toHaveBeenCalledWith(LottieSceneOutcome.Failed);
+      expectReleased();
+    });
+
+    it('plays when the renderer is accepted', async () => {
+      const { session } = await startInitializing({
+        isRendererAccepted: () => true,
+      });
+      animations[0].emit('DOMLoaded');
+      expect(animations[0].play).toHaveBeenCalledOnce();
+      expect(session.state).toBe(LottieSceneSessionState.Playing);
     });
   });
 });
