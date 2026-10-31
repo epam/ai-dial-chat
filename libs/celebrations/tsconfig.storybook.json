@@ -27,7 +27,9 @@
     ".storybook/*.js",
     ".storybook/*.ts",
     "src/stories/**/*.ts",
-    "src/stories/**/*.tsx"
+    "src/stories/**/*.tsx",
+    "src/stories/**/*.json",
+    "src/test-utils/**/*.ts"
   ],
   "references": [
     {

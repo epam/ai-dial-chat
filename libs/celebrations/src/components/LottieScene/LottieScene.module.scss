@@ -1,0 +1,61 @@
+/* The scene fills the provider's fixed layer and measures it as a size
+   container, so the stage scales uniformly without reading layout in JS. */
+.scene {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  container-type: size;
+  pointer-events: none;
+  user-select: none;
+}
+
+.blockStart {
+  align-items: flex-start;
+}
+
+.blockCenter {
+  align-items: center;
+}
+
+.blockEnd {
+  align-items: flex-end;
+}
+
+/* `justify-content` follows the scene's own `dir`, so start/end are logical. */
+.inlineStart {
+  justify-content: flex-start;
+}
+
+.inlineCenter {
+  justify-content: center;
+}
+
+.inlineEnd {
+  justify-content: flex-end;
+}
+
+.stage {
+  flex: none;
+  aspect-ratio: var(--celebrations-stage-ratio);
+  inline-size: min(100cqi, 100cqb * var(--celebrations-stage-ratio));
+  overflow: clip;
+}
+
+.cover {
+  inline-size: max(100cqi, 100cqb * var(--celebrations-stage-ratio));
+}
+
+.poster {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+}
+
+.posterCover {
+  object-fit: cover;
+}
+
+/* A mirrored scene has no text layers, so flipping it is safe. */
+.mirrored {
+  transform: scaleX(-1);
+}
