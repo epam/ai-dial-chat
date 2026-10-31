@@ -51,6 +51,53 @@ export const Decor: Story = {
   parameters: { celebrationDecor: 'new-year' },
 };
 
+export const ReindeerTakeoff: Story = {
+  args: {
+    sceneId: NewYearScene.ReindeerTakeoff,
+    composerPlaceholder: 'Type a message',
+    startersBelowComposer: true,
+  },
+  parameters: { celebrationScene: NewYearScene.ReindeerTakeoff },
+};
+export const ReindeerTakeoffMobile: Story = {
+  args: {
+    sceneId: NewYearScene.ReindeerTakeoff,
+    composerPlaceholder: 'Type a message',
+    isMobile: true,
+    startersBelowComposer: true,
+  },
+};
+export const ReindeerTakeoffRtl: Story = {
+  args: {
+    sceneId: NewYearScene.ReindeerTakeoff,
+    composerPlaceholder: 'Type a message',
+    dir: 'rtl',
+    startersBelowComposer: true,
+  },
+};
+export const ReindeerTakeoffReducedMotion: Story = {
+  args: {
+    sceneId: NewYearScene.ReindeerTakeoff,
+    composerPlaceholder: 'Type a message',
+    isReducedMotion: true,
+  },
+};
+export const ReindeerTakeoffDraft: Story = {
+  args: {
+    sceneId: NewYearScene.ReindeerTakeoff,
+    composerPlaceholder: 'Type a message',
+    showStarters: false,
+    composerValue: 'Winter wishes stay in my draft',
+  },
+};
+export const ReindeerTakeoffBottomComposer: Story = {
+  args: {
+    sceneId: NewYearScene.ReindeerTakeoff,
+    composerPlaceholder: 'Type a message',
+    composerAlign: 'bottom',
+  },
+};
+
 export const GiftWrapping: Story = {
   args: { sceneId: NewYearScene.GiftWrapping },
   parameters: { celebrationScene: NewYearScene.GiftWrapping },

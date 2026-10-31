@@ -6,6 +6,8 @@ export enum NewYearScene {
   GiftWrapping = 'gift-wrapping',
   /** A pompous snowman sleds on a borrowed starter card to deliver a present, loses his head in a fir on impact, recovers it and returns the card. */
   SnowmanDelivery = 'snowman-delivery',
+  /** Two reindeer free a ribbon caught on a page button before taking flight. */
+  ReindeerTakeoff = 'reindeer-takeoff',
 }
 
 /** Where the snowman stages his delivery, chosen once from measured geometry. */
