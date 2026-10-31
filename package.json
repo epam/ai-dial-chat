@@ -200,6 +200,12 @@
     "multer": "2.5.0",
     "@mcp-ui/client": {
       "zod": "^4.6.7"
+    },
+    "archiver-utils": {
+      "glob": "^14.0.2"
+    },
+    "readdir-glob": {
+      "minimatch": "^11.0.1"
     }
   },
   "workspaces": [
