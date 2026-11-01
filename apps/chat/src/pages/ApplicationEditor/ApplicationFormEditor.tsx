@@ -598,10 +598,10 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
       </span>
       {isBusy && (
         <div
-          className="bg-backdrop absolute inset-0 flex items-center justify-center"
+          className="absolute inset-0 flex items-center justify-center bg-backdrop"
           aria-hidden="true"
         >
-          <div className="bg-layer-sunken flex items-center gap-3 rounded-lg px-4 py-3 shadow-lg">
+          <div className="flex items-center gap-3 rounded-lg bg-layer-sunken px-4 py-3 shadow-lg">
             <Spinner />
             <span className="dial-small-text text-primary">{overlayLabel}</span>
           </div>
