@@ -1979,6 +1979,16 @@ const CatalogCard = ({
 | `isLoading`      | `boolean`                                                                             | `true` while the initial load is in flight.                                                                                                          |
 | `toggleFavorite` | `(id: string, isFavorite: boolean, entityType?: FavoriteEntityType) => Promise<void>` | Optimistically updates `favoriteIds`, calls `updateFavorite`, and rolls back on rejection. `entityType` defaults to `FavoriteEntityType.Deployment`. |
 
+### resolveFavoriteEntityType
+
+Returns the `FavoriteEntityType` — the user-config section — a catalog item's favorite state is stored in: `Toolset`, `Prompt` and `Skill` items map to their own section, and every other type, or an unknown one, to `Deployment`. Available from the root and `./catalog`.
+
+```ts
+import { resolveFavoriteEntityType } from '@epam/ai-dial-chat-hooks/catalog';
+
+await updateFavorite(item.id, isFavorite, resolveFavoriteEntityType(item.type));
+```
+
 ### findSkillByUrl
 
 Finds the listed skill a `skills/{bucket}/{path}` resource URL names, across the personal, shared and organisation listings (`SkillListingPools` — the shape `useSkillsState` returns). Both sides are compared per-segment normalized, so a URL that arrives decoded, e.g. from a query string, still matches the percent-encoded `url` DIAL Core lists. Available from the root and `./skills-state`.

@@ -10,10 +10,11 @@ import {
   type CatalogEditNavigationLabels,
   type CatalogEditNavigationUrls,
   findDeploymentByIdOrReference,
+  findSchemaDisplayName,
+  resolveFavoriteEntityType,
   type ToolsetCredentialsLabels,
   useCatalogEditNavigation,
   useCatalogToolsetCredentials,
-  findSchemaDisplayName,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
@@ -81,7 +82,6 @@ import {
   getCatalogSearchPlaceholder,
 } from '../../utils/catalog';
 import { resolveCatalogItemEntity } from '../../utils/entity-notification';
-import { resolveFavoriteEntityType } from '../../utils/favorites';
 import {
   getAccessRulesLabels,
   getPublishAuthorLabels,
