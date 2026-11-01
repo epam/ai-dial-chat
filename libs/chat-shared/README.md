@@ -1157,6 +1157,27 @@ import { useIsMobile } from '@epam/ai-dial-chat-shared';
 const isMobile = useIsMobile();
 ```
 
+### useIsTextClipped
+
+`useIsTextClipped(isMeasuring, contentKey)` reports whether an element's text
+overflows horizontally, so a caller can offer an expand control only when
+something is actually hidden. It measures while `isMeasuring` is `true` (the
+element is in its truncated state) and keeps the last result once the caller
+lets the text wrap; a change of `contentKey` forces a re-measure.
+
+```tsx
+import { useIsTextClipped } from '@epam/ai-dial-chat-shared';
+
+const { ref, isClipped } = useIsTextClipped<HTMLSpanElement>(
+  !isExpanded,
+  title,
+);
+
+<span ref={ref} className={isExpanded ? undefined : 'truncate'}>
+  {title}
+</span>;
+```
+
 ### useUnsavedChangesGuard
 
 `useUnsavedChangesGuard(isDirty)` defers a "leave the form" action until the user confirms discarding. `guard(action)` runs `action` at once when `isDirty` is `false`; otherwise it stores the action and sets `isConfirmOpen`. `confirm()` closes the confirmation and runs the stored action, `dismiss()` closes it and drops the action. While `isDirty` is `true` the hook also registers a `beforeunload` listener so the browser warns before the page unloads. The hook renders nothing — pair it with a confirmation such as `ConfirmationDialog`, and compute `isDirty` yourself.
