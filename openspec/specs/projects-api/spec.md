@@ -52,7 +52,9 @@ Example `200` response:
       "name": "shared-research",
       "bucket": "z9y8x7",
       "path": "shared-research",
-      "source": "shared"
+      "source": "shared",
+      "createdAt": 1788000000000,
+      "updatedAt": 1790500000000
     }
   ],
   "incompleteSources": []
@@ -170,7 +172,10 @@ For the shared listing, the mapper:
 - keeps only `nodeType === 'ITEM'`;
 - decodes `url` with `safeDecodeURIComponent` and strips trailing slashes;
 - requires the `projects/{bucket}/{path…}` shape (other prefixes, a missing bucket or an empty path are dropped);
-- derives `bucket`, `path`, `name` (the last segment) and `parentPath`.
+- derives `bucket`, `path`, `name` (the last segment) and `parentPath`;
+- copies `author`, `createdAt` and `updatedAt` when present.
+
+DIAL Core sends `createdAt` and `updatedAt` for share-list items starting with the build that includes epam/ai-dial-core#2210; the fix is not in a Core release yet (it is not in `0.49.4`). Older Core versions send no dates for shared items, so those shared projects carry neither field, show no updated time and sort last in the date orders (see `openspec/specs/projects-page-ui/spec.md`).
 
 `ProjectDto` SHALL be a class with `@ApiProperty` / `@ApiPropertyOptional` on every field:
 
@@ -195,6 +200,16 @@ For the shared listing, the mapper:
 
 - **WHEN** a listing returns an `ITEM` with no `name`
 - **THEN** that entry is omitted, and the remaining entries are returned with `200`
+
+#### Scenario: Shared project keeps the dates Core sends
+
+- **WHEN** `getSharedResources` returns an item with url `projects/z9y8x7/shared-research`, `createdAt: 1790000000000` and `updatedAt: 1791234567000`
+- **THEN** the shared `ProjectDto` carries both values unchanged
+
+#### Scenario: Shared project from an older Core has no dates
+
+- **WHEN** `getSharedResources` returns a shared item without `createdAt` or `updatedAt`
+- **THEN** the shared `ProjectDto` omits both fields
 
 #### Scenario: Shared URL with a foreign prefix is dropped
 

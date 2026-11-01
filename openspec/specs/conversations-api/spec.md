@@ -677,7 +677,7 @@ The display-name resolution (`resolveListDisplayTitle`, also used by `getConvers
 
 `ConversationListItemDto` (`apps/chat-api/src/conversations/dto/conversation-list.dto.ts`) SHALL include an optional field `createdAt?: number` — Unix epoch milliseconds of the resource's creation, documented with `@ApiPropertyOptional({ example: 1779206400000, description: ... })`.
 
-`ConversationListingService.listConversations` SHALL populate it from DIAL Core metadata (`ResourceItemMetadata.createdAt`) for user-bucket and public-bucket items when DIAL Core returns a finite number, and SHALL omit it otherwise. Items from `getSharedResources` SHALL omit `createdAt` (that payload carries no dates). The field is purely additive: item count, the `updatedAt`-descending sort, pagination, and every other field of `GET /api/v1/conversations/list` are unchanged.
+`ConversationListingService.listConversations` SHALL populate it from DIAL Core metadata (`ResourceItemMetadata.createdAt`) for user-bucket and public-bucket items when DIAL Core returns a finite number, and SHALL omit it otherwise. Items from `getSharedResources` SHALL omit `createdAt`: their `updatedAt` stays `0` and the Shared group is ordered by share time on purpose, so the dates a newer DIAL Core sends for share-list items (epam/ai-dial-core#2210) are not used here without a separate decision. The field is purely additive: item count, the `updatedAt`-descending sort, pagination, and every other field of `GET /api/v1/conversations/list` are unchanged.
 
 Example response item:
 

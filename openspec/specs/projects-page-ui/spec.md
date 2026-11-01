@@ -143,7 +143,7 @@ Sorting applies after filtering. Pinned projects (`isPinned: true`) come before 
 
 - **Newest**: by `updatedAt`, descending.
 - **Oldest**: by `updatedAt`, ascending.
-- **Undated projects**: in both date orders, items without `updatedAt` come last.
+- **Undated projects**: in both date orders, items without `updatedAt` come last. The order ignores `source`: a shared project with `updatedAt` (sent by a DIAL Core that includes epam/ai-dial-core#2210) sorts by date together with personal and organization ones, and only a shared project from an older Core, which has no date, goes last.
 - **Name A–Z**: by `name`, using `Intl.Collator(locale, { sensitivity: 'base', numeric: true })`.
 - **Ties**: in date orders, ties are broken by name with the same collator.
 
