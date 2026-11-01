@@ -153,7 +153,7 @@ The container SHALL pass the scheduled-task History and Details accordions as `a
 
 When the panel is globally empty:
 
-- The body SHALL render `NoDataContent` from `@epam/ai-dial-ui-kit`, centred horizontally and vertically, with `title={labels.noDataLabel}` (the container passes `t(BasicI18nKeys.Empty)`, i.e. `basic.noData`). No `icon` prop is supplied.
+- The body SHALL render `NoDataContent` from `@epam/ai-dial-ui-kit`, centred horizontally and vertically, with `title={labels.noDataLabel}` and `description={labels.noDataDescription}`. The container passes the sidebar-specific i18n keys `sidebar.sources.emptyTitle` ("No files or sources yet") and `sidebar.sources.emptyDescription` ("Files and sources from this chat will appear here."), not the shared `basic.noData`. No `icon` prop is supplied.
 - No search input, download-all button, or section headings SHALL be rendered; the header carries only the close button.
 
 When at least one of `uploaded`, `generated`, or `sources` is non-empty:
@@ -164,7 +164,7 @@ When at least one of `uploaded`, `generated`, or `sources` is non-empty:
 
 The body SHALL render, in order: `additionalSections` (History, then Details, when present), then the Uploaded Files `FilesSection`, the Generated Files `FilesSection`, and `SourcesSection`. Each of the three file/source sections renders `null` when its own (filtered) list is empty.
 
-Search SHALL filter `uploaded` and `generated` by attachment `name`, and `sources` by `title`, `url`, or `quote`, all case-insensitively. When the query is non-empty and all three filtered lists are empty, the three sections are replaced by `PanelNoResults` (`labels.noResultsLabel`, `basic.noResults`) and a polite `role="status"` region announces the same label. `additionalSections` still render above it and are never filtered.
+Search SHALL filter `uploaded` and `generated` by attachment `name`, and `sources` by `title`, `url`, or `quote`, all case-insensitively. When the query is non-empty and all three filtered lists are empty, the three sections are replaced by `PanelNoResults` with `labels.noResultsLabel` (i18n key `sidebar.sources.noResultsTitle`, "No files or sources found", not the shared `basic.noResults`) and `labels.noResultsDescription` (i18n key `basic.noResultsDescription`) and a polite `role="status"` region announces the same label. `additionalSections` still render above it and are never filtered.
 
 For both states the container SHALL pass:
 
@@ -176,7 +176,7 @@ For both states the container SHALL pass:
 #### Scenario: Global empty state when no files exist and no scheduled task is active
 
 - **WHEN** `uploaded`, `generated`, and `sources` are empty AND the active conversation is not a scheduled-task conversation
-- **THEN** the body shows centred `NoDataContent` with the `basic.noData` title and default icon
+- **THEN** the body shows centred `NoDataContent` with the `sidebar.sources.emptyTitle` title ("No files or sources yet"), the `sidebar.sources.emptyDescription` description and the default icon
 - **AND** no section heading is rendered
 - **AND** no search or download-all button is rendered
 
