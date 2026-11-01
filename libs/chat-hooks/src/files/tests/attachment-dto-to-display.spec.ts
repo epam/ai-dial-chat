@@ -1,8 +1,14 @@
 import type { AttachmentDto } from '@epam/ai-dial-chat-api-client';
-import type { AttachmentDisplayResolvers } from '@epam/ai-dial-chat-shared';
+import type {
+  Annotation,
+  AttachmentDisplayResolvers,
+} from '@epam/ai-dial-chat-shared';
 import { AttachmentType } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
-import { attachmentDtoToDisplayAttachment } from '../attachment-dto-to-display';
+import {
+  annotationToDisplayAttachment,
+  attachmentDtoToDisplayAttachment,
+} from '../attachment-dto-to-display';
 
 /*
  * Stand-in resolvers with the same shape as the app's real
@@ -121,5 +127,25 @@ describe('attachmentDtoToDisplayAttachment', () => {
     const attachment = attachmentDtoToDisplayAttachment(dto, resolvers);
 
     expect(attachment.playUrl).toBe('data:audio/mpeg;base64,SGVsbG8=');
+  });
+});
+
+describe('annotationToDisplayAttachment', () => {
+  it('decodes percent escapes in a citation file name', () => {
+    const annotation: Annotation = {
+      body: {
+        source: {
+          type: 'attachment',
+          attachment: {
+            type: 'text/plain',
+            url: 'files/bucket/Pasted%20text%202026-11-01%2018-50-06.txt',
+          },
+        },
+      },
+    };
+
+    expect(annotationToDisplayAttachment(annotation)?.name).toBe(
+      'Pasted text 2026-11-01 18-50-06.txt',
+    );
   });
 });
