@@ -100,6 +100,37 @@ describe('mapSharedProject', () => {
     });
   });
 
+  it('keeps the createdAt and updatedAt a newer DIAL Core sends for shared items', () => {
+    expect(
+      mapSharedProject(
+        item({
+          bucket: undefined,
+          name: undefined,
+          url: 'projects/z9y8x7/shared-research',
+          createdAt: 1790000000000,
+          updatedAt: 1791234567000,
+        }),
+      ),
+    ).toMatchObject({
+      id: 'projects/z9y8x7/shared-research',
+      source: ProjectSource.Shared,
+      createdAt: 1790000000000,
+      updatedAt: 1791234567000,
+    });
+  });
+
+  it('leaves both dates unset when an older DIAL Core sends none', () => {
+    const result = mapSharedProject(
+      item({
+        bucket: undefined,
+        name: undefined,
+        url: 'projects/z9y8x7/shared-research',
+      }),
+    );
+    expect(result?.createdAt).toBeUndefined();
+    expect(result?.updatedAt).toBeUndefined();
+  });
+
   it('decodes a percent-encoded shared url', () => {
     const result = mapSharedProject(
       item({ url: 'projects/z9y8x7/Q4%20Launch' }),

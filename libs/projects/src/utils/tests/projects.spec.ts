@@ -72,6 +72,25 @@ describe('sortProjects', () => {
     ]);
   });
 
+  it('sorts dated shared projects together with personal ones and keeps undated shared ones last', () => {
+    const shared = (name: string, updatedAt?: number): ProjectItem => ({
+      ...project(name, updatedAt),
+      source: ProjectSource.Shared,
+    });
+    const projects = [
+      shared('shared-undated'),
+      project('personal-1', 1),
+      shared('shared-2', 2),
+      project('personal-3', 3),
+    ];
+    expect(names(sortProjects(projects, ProjectsSortKey.Newest))).toEqual([
+      'personal-3',
+      'shared-2',
+      'personal-1',
+      'shared-undated',
+    ]);
+  });
+
   it('breaks date ties by name', () => {
     const projects = [project('beta', 5), project('alpha', 5)];
     expect(names(sortProjects(projects, ProjectsSortKey.Newest))).toEqual([

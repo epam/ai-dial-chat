@@ -1,4 +1,8 @@
-import { ConflictException, ForbiddenException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../../../config/environment.config';
@@ -69,9 +73,17 @@ describe('FilesFolderService', () => {
       data: undefined,
     });
 
+    const parentListing = () => ({
+      error: undefined,
+      response: { status: 200, headers: { get: () => null } },
+      data: { nodeType: 'FOLDER', items: [] },
+    });
+
     it('returns CreateFolderResponseDto on success', async () => {
       const { service, sdkClient, fetchCore } = makeService();
-      sdkClient.getFileMetadata.mockResolvedValue(notFound());
+      sdkClient.getFileMetadata
+        .mockResolvedValueOnce(parentListing())
+        .mockResolvedValueOnce(notFound());
       fetchCore.mockImplementation(respondWith(201));
 
       const result = await service.createFolder(
@@ -157,7 +169,9 @@ describe('FilesFolderService', () => {
 
     it('normalizes parentPath to include trailing slash', async () => {
       const { service, sdkClient, fetchCore } = makeService();
-      sdkClient.getFileMetadata.mockResolvedValue(notFound());
+      sdkClient.getFileMetadata
+        .mockResolvedValueOnce(parentListing())
+        .mockResolvedValueOnce(notFound());
       fetchCore.mockImplementation(respondWith(201));
 
       const result = await service.createFolder(
@@ -183,6 +197,29 @@ describe('FilesFolderService', () => {
       );
       expect(result.path).toBe('files/my-bucket/top/');
       expect(result.parentPath).toBe('');
+      expect(sdkClient.getFileMetadata).toHaveBeenCalledOnce();
+    });
+
+    it('throws NotFoundException without uploading when the parent folder does not exist', async () => {
+      const { service, sdkClient, fetchCore } = makeService();
+      sdkClient.getFileMetadata.mockResolvedValue(notFound());
+
+      await expect(
+        service.createFolder('my-bucket', 'missing/', 'child', 'token'),
+      ).rejects.toThrow(NotFoundException);
+      expect(sdkClient.getFileMetadata).toHaveBeenCalledOnce();
+      expect(sdkClient.getFileMetadata.mock.calls[0][1]).toBe('missing/');
+      expect(fetchCore).not.toHaveBeenCalled();
+    });
+
+    it('throws ForbiddenException when DIAL Core returns 403 on the parent check', async () => {
+      const { service, sdkClient, fetchCore } = makeService();
+      sdkClient.getFileMetadata.mockResolvedValue(errResponse(403));
+
+      await expect(
+        service.createFolder('my-bucket', 'reports/', '2026', 'token'),
+      ).rejects.toThrow(ForbiddenException);
+      expect(fetchCore).not.toHaveBeenCalled();
     });
   });
 });
