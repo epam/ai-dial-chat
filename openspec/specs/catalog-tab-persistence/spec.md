@@ -86,7 +86,7 @@ A custom hook `useCatalogActiveTabPreference` SHALL be created at `apps/chat/src
 The hook SHALL accept the list of currently available tab ids (`string[]`, derived by the caller via `deriveAvailableTabIds`, see below), and SHALL:
 
 - Call `useLocalStorage<string | null>(StorageKey.CatalogActiveTab, null)` to obtain the persisted tab id and its setter.
-- Resolve the effective active tab in this order: (1) the persisted `localStorage` value, if it is present in the available tab ids; (2) the first available tab id, or `undefined` if the available tab id list is empty.
+- Resolve the effective active tab in this order: (1) the persisted `localStorage` value, if it is present in the available tab ids; (2) the first available tab id, or `undefined` if the available tab id list is empty. The resolution is `resolveCatalogActiveTab` from `@epam/ai-dial-chat-hooks`; storage stays in the app hook.
 - Expose `activeTab: string | undefined` (the resolved value) and `setActiveTab: (tabId: string) => void`.
 - On every `setActiveTab` call, forward the new value to the underlying `useLocalStorage` setter for `StorageKey.CatalogActiveTab`.
 - Rely on `useLocalStorage`'s own `try`/`catch` handling for `localStorage` read/write failures — the hook does not need its own storage-access error handling.

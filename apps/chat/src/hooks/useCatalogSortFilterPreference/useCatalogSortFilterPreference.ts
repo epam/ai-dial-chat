@@ -1,4 +1,8 @@
 import { CatalogSortKey } from '@epam/ai-dial-catalog';
+import {
+  parseCatalogFilterTopics,
+  resolveCatalogSortKey,
+} from '@epam/ai-dial-chat-hooks';
 import { useCallback, useMemo } from 'react';
 import { StorageKey } from '../../types/storage-key';
 import useLocalStorage from '../useLocalStorage';
@@ -32,19 +36,10 @@ export const useCatalogSortFilterPreference =
       false,
     );
 
-    const sortKey = Object.values(CatalogSortKey).includes(
-      storedSortKey as CatalogSortKey,
-    )
-      ? (storedSortKey as CatalogSortKey)
-      : CatalogSortKey.RecentlyUpdated;
+    const sortKey = resolveCatalogSortKey(storedSortKey);
 
     const filterTopics = useMemo(
-      () =>
-        new Set(
-          Array.isArray(storedFilterTopics)
-            ? storedFilterTopics.filter((topic) => typeof topic === 'string')
-            : [],
-        ),
+      () => parseCatalogFilterTopics(storedFilterTopics),
       [storedFilterTopics],
     );
 

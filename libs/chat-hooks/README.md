@@ -1989,6 +1989,22 @@ import { resolveFavoriteEntityType } from '@epam/ai-dial-chat-hooks/catalog';
 await updateFavorite(item.id, isFavorite, resolveFavoriteEntityType(item.type));
 ```
 
+### resolveCatalogSortKey / parseCatalogFilterTopics / resolveCatalogActiveTab
+
+Validate catalog view preferences a host read back from its own storage, which may be stale or malformed. `resolveCatalogSortKey(stored)` keeps a known `CatalogSortKey` and otherwise returns `CatalogSortKey.RecentlyUpdated`. `parseCatalogFilterTopics(stored)` returns the string entries of a stored array as a `Set`, and an empty set for anything else. `resolveCatalogActiveTab(stored, availableTabIds)` keeps a stored tab that is still available and otherwise returns the first available tab id (`undefined` when there is none). The functions never read or write storage. Available from the root and `./catalog`.
+
+```ts
+import {
+  parseCatalogFilterTopics,
+  resolveCatalogActiveTab,
+  resolveCatalogSortKey,
+} from '@epam/ai-dial-chat-hooks/catalog';
+
+const sortKey = resolveCatalogSortKey(storedSortKey);
+const filterTopics = parseCatalogFilterTopics(storedFilterTopics);
+const activeTab = resolveCatalogActiveTab(storedActiveTab, availableTabIds);
+```
+
 ### findSkillByUrl
 
 Finds the listed skill a `skills/{bucket}/{path}` resource URL names, across the personal, shared and organisation listings (`SkillListingPools` — the shape `useSkillsState` returns). Both sides are compared per-segment normalized, so a URL that arrives decoded, e.g. from a query string, still matches the percent-encoded `url` DIAL Core lists. Available from the root and `./skills-state`.
