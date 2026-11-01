@@ -5180,6 +5180,39 @@ maps returned service DTOs into its view models and calls `refresh` after a
 successful credential mutation. Errors, including offline-status failures, set
 `hasError`; `refresh` retries them.
 
+### mapApplicationCredentials / buildApplicationCredentialLoginParams
+
+Pure adapters between `useApplicationCredentials` and the catalog's
+`ApplicationCredentials` forms. `mapApplicationCredentials(services, options)`
+returns one `ApplicationCredential` per service: a `DIAL_NATIVE` service counts
+as signed in only when `isOfflineConnected` and its app-level status is
+`SIGNED_IN`, and it can be neither logged out nor offered offline consent;
+every other service follows its user-level status, and shows
+`hasSharedCredentials` while signed out with a global or app-level login.
+`buildApplicationCredentialLoginParams(appId, service, params)` returns the
+user-level `ExternalServiceLoginParams` for `useExternalServiceLogin().login`,
+with the service's OAuth settings and `forceStale` when its user-level status
+is `FAILED`.
+
+```tsx
+import {
+  buildApplicationCredentialLoginParams,
+  mapApplicationCredentials,
+} from '@epam/ai-dial-chat-hooks/catalog';
+
+const credentials = mapApplicationCredentials(services, {
+  isOfflineConnected,
+  dialNativeHint: t('toolsetSignin.dialNativeHint'),
+});
+
+const outcome = await login(
+  buildApplicationCredentialLoginParams(appId, service, params),
+);
+```
+
+`MapApplicationCredentialsOptions` is exported. The host keeps localization,
+the outcome-to-message mapping and logout.
+
 ### useOfflineCredentialsGate
 
 Offline-credentials status check behind a host's offline-credentials surfaces

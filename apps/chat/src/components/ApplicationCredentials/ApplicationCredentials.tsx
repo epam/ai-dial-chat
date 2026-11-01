@@ -1,17 +1,16 @@
 import {
   ApplicationCredentials as CredentialsForms,
-  CredentialStatus,
-  ToolsetAuthenticationType,
   type ApplicationCredentialLoginParams,
 } from '@epam/ai-dial-catalog';
 import {
-  ExternalServiceAuthStatus,
+  buildApplicationCredentialLoginParams,
   ExternalServiceAuthType,
   ExternalServiceCredentialsLevel,
   ExternalServiceLoginOutcomeType,
+  mapApplicationCredentials,
   useApplicationCredentials,
 } from '@epam/ai-dial-chat-hooks';
-import { useCallback, type FC } from 'react';
+import { useCallback, useMemo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ApplicationCredentialsI18nKeys,
@@ -53,23 +52,9 @@ export const ApplicationCredentials: FC<ApplicationCredentialsProps> = ({
       if (!service) return false;
       let outcome;
       try {
-        outcome = await login({
-          appId,
-          serviceId,
-          ...params,
-          credentialsLevel: ExternalServiceCredentialsLevel.User,
-          authenticationType:
-            service.authenticationType as ExternalServiceAuthType,
-          oauthSettings: {
-            clientId: service.clientId,
-            authorizationEndpoint: service.authorizationEndpoint,
-            scopes: service.scopesSupported,
-            codeChallenge: service.codeChallenge,
-            codeChallengeMethod: service.codeChallengeMethod,
-          },
-          forceStale:
-            service.userLevelAuthStatus === ExternalServiceAuthStatus.Failed,
-        });
+        outcome = await login(
+          buildApplicationCredentialLoginParams(appId, service, params),
+        );
       } catch {
         throw new Error(t(ToolsetSigninI18nKeys.ErrorLoginFailed));
       }
@@ -120,38 +105,20 @@ export const ApplicationCredentials: FC<ApplicationCredentialsProps> = ({
     [appId, services, refresh, t],
   );
 
+  const dialNativeHint = t(ToolsetSigninI18nKeys.DialNativeHint);
+  const credentials = useMemo(
+    () =>
+      mapApplicationCredentials(services, {
+        isOfflineConnected,
+        dialNativeHint,
+      }),
+    [services, isOfflineConnected, dialNativeHint],
+  );
+
   return (
     <CredentialsForms
       key={appId}
-      services={services.map((service) => {
-        const isNative =
-          service.authenticationType === ExternalServiceAuthType.DialNative;
-        const signedIn = isNative
-          ? isOfflineConnected &&
-            service.appLevelAuthStatus === ExternalServiceAuthStatus.SignedIn
-          : service.userLevelAuthStatus === ExternalServiceAuthStatus.SignedIn;
-        return {
-          id: service.id,
-          name: service.displayName || service.id,
-          description: service.description,
-          authenticationType:
-            service.authenticationType === ExternalServiceAuthType.ApiKey
-              ? ToolsetAuthenticationType.ApiKey
-              : ToolsetAuthenticationType.OAuth,
-          status: signedIn
-            ? CredentialStatus.SignedIn
-            : CredentialStatus.SignedOut,
-          hasSharedCredentials:
-            !isNative &&
-            !signedIn &&
-            (service.globalAuthStatus === ExternalServiceAuthStatus.SignedIn ||
-              service.appLevelAuthStatus ===
-                ExternalServiceAuthStatus.SignedIn),
-          canLogout: !isNative,
-          canConsentToOfflineUsage: !isNative,
-          hint: isNative ? t(ToolsetSigninI18nKeys.DialNativeHint) : undefined,
-        };
-      })}
+      services={credentials}
       isLoading={isLoading}
       hasError={hasError}
       showEmptyState={showEmptyState}
