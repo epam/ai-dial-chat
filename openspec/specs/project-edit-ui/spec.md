@@ -37,7 +37,7 @@ The page SHALL:
 
 `ProjectEditPage` SHALL render `ProjectCreateForm` with its state seeded once per loaded `etag`:
 
-- `values` = `{ name, description, instructions }` from the DTO;
+- `values` = `{ name, instructions }` from the DTO; the form has no description field, so the DTO's `description` is not edited;
 - `contextFiles` = one `StoredProjectContextFile` per `contextFiles[]` entry: `{ id: 'stored:' + name, name, size, contentType, type, status: RequestStatus.Idle, isStored: true }`, with `contentType` and `type` inferred from the name.
 
 The page owns these, in `useState`:
@@ -55,14 +55,14 @@ The page owns these, in `useState`:
 - `submittingLabel`: `projects.edit.saving` ("Saving…");
 - `creatingStatus`: `projects.edit.savingStatus` ("Saving project…").
 
-**Other props.** The limits, the file-manager picker and the refinement callbacks are wired as on `ProjectCreatePage`. `onBack` and `onCancel` navigate to `getProjectViewRoute(id)`.
+**Other props.** The limits, the file-manager picker and the Instructions refinement callback are wired as on `ProjectCreatePage`. `onBack` and `onCancel` navigate to `getProjectViewRoute(id)`.
 
 **Dirty state.** `isDirty` is `true` when any value differs from the loaded DTO, any stored file was removed, or any new file was added. It is passed to `useBuilderLeaveGuard({ isDirty })`, which arms both the in-app confirmation and `beforeunload`.
 
 #### Scenario: Form is prefilled
 
-- **WHEN** the edit page loads a project with a description, instructions and two context files
-- **THEN** the form shows those values, and two removable context cards, and the capacity meter reflects their sizes
+- **WHEN** the edit page loads a project with a name, instructions and two context files
+- **THEN** the form shows those values and two removable context cards
 
 #### Scenario: Removing a stored file marks the form dirty
 
@@ -83,7 +83,6 @@ projectsApi.updateProject({
   id,
   ifMatch: contentVersion,
   name,
-  description,
   instructions,
   fileNames: JSON.stringify(newFiles.map((file) => file.name)),
   removedFileNames: JSON.stringify(removedFileNames),
@@ -91,7 +90,7 @@ projectsApi.updateProject({
 });
 ```
 
-`contentVersion` is the value the loaded `ProjectDetailsDto` carries, not its `etag`: a project conversation written while the form is open does not change it, so chatting in another tab never makes the save fail (see the `project-detail-api` capability). The hook returns `{ save, isSubmitting }`, aborts the request on unmount, and normalizes failures with `getApiErrorDetails` into `{ status, code, requestId }`. Before submitting, the page trims `name`.
+`contentVersion` is the value the loaded `ProjectDetailsDto` carries, not its `etag`: a project conversation written while the form is open does not change it, so chatting in another tab never makes the save fail (see the `project-detail-api` capability). The hook returns `{ save, isSubmitting }`, aborts the request on unmount, and normalizes failures with `getApiErrorDetails` into `{ status, code, requestId }`. Before submitting, the page trims `name`. No `description` is sent, and the BFF keeps the project's stored description (`project-detail-api`).
 
 The page maps outcomes as follows:
 

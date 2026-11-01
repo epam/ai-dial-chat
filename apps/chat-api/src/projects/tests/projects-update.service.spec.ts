@@ -163,6 +163,23 @@ describe('ProjectsUpdateService', () => {
     });
   });
 
+  it('keeps the stored description when the edit omits it', async () => {
+    const { service, client } = makeService();
+
+    await service.updateProject(
+      PROJECT,
+      { name: 'q4', instructions: '## New' },
+      [],
+      '"cv1"',
+      USER_BUCKET,
+      'token',
+    );
+
+    expect(await uploadedParts(client).file('PROJECT.md')?.text()).toContain(
+      'description: old',
+    );
+  });
+
   it('refuses a save without If-Match before reading the project', async () => {
     const { service, read } = makeService();
 

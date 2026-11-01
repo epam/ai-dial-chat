@@ -841,25 +841,19 @@
         "label": "Name",
         "placeholder": "Enter project name"
       },
-      "description": {
-        "label": "Description",
-        "placeholder": "Describe what the project is about"
-      },
       "instructions": {
         "label": "Instructions",
         "placeholder": "Explain your reasoning step by step for complex problems. Use specific examples."
       },
       "context": {
         "label": "Context",
-        "dropZone": "Drag&drop context, upload from device or file manager",
+        "dropZone": "Drag&drop context, upload <device>from device</device> or <manager>file manager</manager>",
+        "dropZoneDeviceOnly": "Drag&drop context or upload <device>from device</device>",
+        "uploadFromDevice": "Upload context from device",
         "hint": "File formats {{extensions}} (max {{maxSize}})",
-        "fromDevice": "Upload from device",
-        "fromFileManager": "File manager",
         "fileManagerTitle": "Add context from file manager",
         "dropOverlayTitle": "Upload files",
         "dropOverlaySubtitle": "Drop files here to add them to this project",
-        "capacityMeter": "Context capacity",
-        "capacity": "{{percent}}% of capacity used",
         "remove": "Remove {{name}}"
       },
       "status": {

@@ -46,6 +46,7 @@ export type {
   ProjectCreateFormStyles,
   ProjectCreateFormTypography,
   ProjectCreateFormValues,
+  ProjectDropZoneLinks,
 } from './models/project-create-form-props';
 export type {
   ProjectContextFile,

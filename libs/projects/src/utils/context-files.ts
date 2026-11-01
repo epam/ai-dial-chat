@@ -127,18 +127,6 @@ export const checkContextFiles = (
   return { accepted, rejected };
 };
 
-/** Share of the capacity in use, as a whole percentage clamped to 0–100; any use below 1% reads as 1%. */
-export const getCapacityPercent = (
-  usedBytes: number,
-  maxBytes: number,
-): number => {
-  if (usedBytes <= 0) return 0;
-  if (maxBytes <= 0) return 100;
-  /* Rounding a few KiB of a 10 MiB capacity down to 0% would show a meter
-   * claiming nothing is used next to the files that use it. */
-  return Math.min(100, Math.max(1, Math.round((usedBytes / maxBytes) * 100)));
-};
-
 /** Context files whose name contains the trimmed `query`, case-insensitively; every file for a blank query. */
 export const filterContextFileItems = <T extends { name: string }>(
   files: T[],
