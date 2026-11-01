@@ -675,6 +675,68 @@ import { PanelEmptyState } from '@epam/ai-dial-chat-shared';
 />;
 ```
 
+### FullScreenAlert
+
+Full-screen state that replaces the whole app — an error fallback, a blocking
+prompt — built on the kit's `StateScreen`: an icon badge, the heading as the
+screen's `h1` (naming the `section`), a message, and one `PrimaryButton` that
+takes focus on mount. It has no live-region role: the screen is page state,
+and the focused action is what gets announced. All strings come from the host.
+
+```tsx
+import { FullScreenAlert } from '@epam/ai-dial-chat-shared';
+import { DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
+import { IconAlertTriangle } from '@tabler/icons-react';
+
+<FullScreenAlert
+  icon={
+    <IconAlertTriangle
+      aria-hidden="true"
+      size={48}
+      stroke={DIAL_KIT_ICON_STROKE}
+    />
+  }
+  heading="Something went wrong"
+  message="Try again in a moment."
+  actionLabel="Try again"
+  onAction={resetErrorBoundary}
+/>;
+```
+
+### NewVersionAlert
+
+`FullScreenAlert` preset shown instead of the app once a newer build has been
+deployed: a refresh icon, `NewVersionAlertLabels` (`heading`, `message`,
+`reloadLabel`, each with an English default) and `onReload`. The host decides
+what reloading means, normally `window.location.reload()`.
+`NewVersionAlertColors.icon` sets the icon color (default `--text-accent`).
+
+```tsx
+import { NewVersionAlert } from '@epam/ai-dial-chat-shared';
+
+<NewVersionAlert
+  onReload={() => window.location.reload()}
+  labels={{ heading: t('appUpdate.heading') }}
+/>;
+```
+
+### ErrorAlert
+
+`FullScreenAlert` preset for an error fallback: a warning icon,
+`ErrorAlertLabels` (`heading`, `message`, `actionLabel`, each with an English
+default) and `onAction`. The host decides how to recover — reset its error
+boundary or reload the page. `ErrorAlertColors.icon` sets the icon color
+(default `--text-error`).
+
+```tsx
+import { ErrorAlert } from '@epam/ai-dial-chat-shared';
+import type { FallbackProps } from 'react-error-boundary';
+
+const ErrorFallback = ({ resetErrorBoundary }: FallbackProps) => (
+  <ErrorAlert onAction={resetErrorBoundary} />
+);
+```
+
 ### ItemHeader
 
 Item title row with an optional postfix (version, count) and a trailing slot.
