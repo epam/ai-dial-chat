@@ -50,7 +50,7 @@ vi.mock(
 );
 
 interface FakeFormProps {
-  values: { name: string; description: string; instructions: string };
+  values: { name: string; instructions: string };
   errors: { name?: string; context?: string };
   onFieldChange: (field: string, value: string) => void;
   contextFiles: ProjectContextFile[];
@@ -202,7 +202,6 @@ describe('ProjectEditPage', () => {
     ).toBeTruthy();
     expect(formProps.current?.values).toEqual({
       name: 'q4',
-      description: 'About',
       instructions: '## Steps',
     });
     expect(formProps.current?.contextFiles.map((file) => file.name)).toEqual([
@@ -277,7 +276,6 @@ describe('ProjectEditPage', () => {
     expect(id).toBe('projects/my-bucket/q4');
     expect(fields).toEqual({
       name: 'q4',
-      description: 'About',
       instructions: '## Steps',
     });
     expect(files.map((file) => file.name)).toEqual(['retro.pdf']);

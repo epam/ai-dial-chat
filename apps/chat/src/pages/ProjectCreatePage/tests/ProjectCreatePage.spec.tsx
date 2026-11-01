@@ -47,7 +47,7 @@ vi.mock(
 );
 
 interface FakeFormProps {
-  values: { name: string; description: string; instructions: string };
+  values: { name: string; instructions: string };
   errors: { name?: string; context?: string };
   onFieldChange: (field: string, value: string) => void;
   contextFiles: Attachment[];
@@ -56,7 +56,6 @@ interface FakeFormProps {
   maxFileBytes: number;
   maxTotalBytes: number;
   onPickFromFileManager?: () => Promise<File[] | undefined>;
-  onRefineDescription?: (value: string, signal: AbortSignal) => Promise<string>;
   onRefineInstructions?: (
     value: string,
     signal: AbortSignal,
@@ -181,24 +180,16 @@ describe('ProjectCreatePage', () => {
     expect(formProps.current?.onPickFromFileManager).toBeTypeOf('function');
   });
 
-  it('refines the fields with the project purposes', async () => {
+  it('refines the instructions with the project purpose', async () => {
     vi.mocked(refineText).mockResolvedValue('Refined');
     renderAtRoute();
 
-    await formProps.current?.onRefineDescription?.(
-      'draft',
-      new AbortController().signal,
-    );
     await formProps.current?.onRefineInstructions?.(
       'steps',
       new AbortController().signal,
     );
 
-    expect(refineText).toHaveBeenCalledWith(
-      TextRefinementPurpose.ProjectDescription,
-      'draft',
-      expect.any(AbortSignal),
-    );
+    expect(refineText).toHaveBeenCalledOnce();
     expect(refineText).toHaveBeenCalledWith(
       TextRefinementPurpose.ProjectInstructions,
       'steps',
@@ -213,7 +204,6 @@ describe('ProjectCreatePage', () => {
     });
     renderAtRoute();
 
-    expect(formProps.current?.onRefineDescription).toBeUndefined();
     expect(formProps.current?.onRefineInstructions).toBeUndefined();
   });
 
@@ -234,7 +224,7 @@ describe('ProjectCreatePage', () => {
       '/projects/view/my-bucket/Handbook',
     );
     expect(createProject).toHaveBeenCalledWith(
-      { name: 'Handbook', description: '', instructions: '' },
+      { name: 'Handbook', instructions: '' },
       [],
       expect.any(AbortSignal),
     );

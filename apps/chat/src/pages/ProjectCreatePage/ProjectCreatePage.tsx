@@ -33,7 +33,6 @@ import NotFoundPage from '../NotFound/NotFound';
 
 const DEFAULT_VALUES: ProjectCreateFormValues = {
   name: '',
-  description: '',
   instructions: '',
 };
 
@@ -45,9 +44,6 @@ const ProjectCreatePage: FC = () => {
   const { user } = useUser();
   const { currentTheme } = useTheme();
   const { showSuccessNotification, showErrorNotification } = useNotification();
-  const onRefineDescription = useTextRefinementCallback(
-    TextRefinementPurpose.ProjectDescription,
-  );
   const onRefineInstructions = useTextRefinementCallback(
     TextRefinementPurpose.ProjectInstructions,
   );
@@ -66,10 +62,7 @@ const ProjectCreatePage: FC = () => {
    * does: in-app navigation asks for confirmation and `beforeunload` is armed
    * while anything was entered. */
   const isDirty =
-    values.name !== '' ||
-    values.description !== '' ||
-    values.instructions !== '' ||
-    contextFiles.length > 0;
+    values.name !== '' || values.instructions !== '' || contextFiles.length > 0;
   const { allowNextNavigation } = useBuilderLeaveGuard({ isDirty });
 
   const { create, isSubmitting } = useCreateProject();
@@ -176,7 +169,6 @@ const ProjectCreatePage: FC = () => {
         onPickFromFileManager={
           user?.bucket ? picker.pickFromFileManager : undefined
         }
-        onRefineDescription={onRefineDescription}
         onRefineInstructions={onRefineInstructions}
         onBack={handleLeave}
         onCancel={handleLeave}

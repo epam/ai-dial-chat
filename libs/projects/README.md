@@ -4,7 +4,7 @@
 
 Presentational Projects pages for a host app: the Projects list, the New project form (also used to edit a project) and the project view. `Projects` renders a header, a search and sort toolbar, and a grid of project cards. Each card, on the kit `CardShell`, shows the project's name with the search match highlighted and, under a divider, its folder path: the source (personal, shared or organization) followed by the grouping folders it sits in. The component filters the projects by name and sorts them itself (Newest, Oldest or Name A–Z). It renders exactly one content state at a time: loading, error with retry, empty, no results, or the list. When the host reports `incompleteSources`, a notice with a retry action sits above the list; with nothing listed, that notice replaces the empty state so the page never claims there are no projects.
 
-`ProjectCreateForm` is the New project form: a name, a description and markdown instructions (both with optional Refine with AI), and context files added from the device, by drag and drop, or from a host-supplied file picker, with a capacity meter. It checks names and files with the same rules the chat's BFF enforces, so it rejects early. Given stored context files, the same form edits an existing project.
+`ProjectCreateForm` is the New project form: a name, markdown instructions (with optional Refine with AI), and context files added from the device, by drag and drop, or from a host-supplied file picker. It checks names and files with the same rules the chat's BFF enforces, so it rejects early. Given stored context files, the same form edits an existing project.
 
 `ProjectView` is one project's page: a header with Pin, Publish, Edit and a more-actions menu, and a Details panel with the description, the markdown instructions and a searchable list of context files.
 
@@ -156,20 +156,21 @@ Only logical properties are used, so the layout follows the inherited `dir`.
 Controlled New project form inside the builder-form shell: a header with a back button (mirrored in RTL), the `<h1>` title, **Cancel** and **Create**, moved into a sticky footer on mobile.
 
 - **Name** is required. `validateProjectName` checks it after the field is first blurred; a host `errors.name` (for example a taken name) takes precedence, is announced as an alert, and moves focus back to the field. The error is linked through `aria-describedby`.
-- **Description** and **Instructions** (the kit markdown editor) get a Refine with AI action when `onRefineDescription` / `onRefineInstructions` is supplied. At most one refinement runs at a time.
-- **Context** files come from the drop zone, a drag anywhere over the form, or the **Add** menu (device, and the file manager when `onPickFromFileManager` is supplied). `checkContextFiles` filters them; rejections are listed under the drop zone and announced. Each file renders as an `AttachmentCard` with a named remove button. Once a file is added, a `role="meter"` — the kit `ProgressBar` in its `ProgressBarRole.Meter` role, a small 60px bar with the percentage beside it — shows the share of `maxTotalBytes` in use, in the Context header next to the small neutral **Add** menu.
+- **Instructions** (the kit markdown editor) get a Refine with AI action when `onRefineInstructions` is supplied. The form has no description field.
+- **Context** files come from the kit `FileDropzone` (a click or a drop opens and takes the device picker) or a drag anywhere over the form. `labels.dropZoneLabel` places two link elements in its sentence: an underlined "from device" span — the whole zone opens the device picker — and, when `onPickFromFileManager` is supplied, a "file manager" button that opens the host's picker instead. `labels.dropZoneAriaLabel` names the zone's file input. `checkContextFiles` filters the files against `maxFileBytes` and `maxTotalBytes`; each rejection, and a host `errors.context` after them, shows as the kit drop zone's `errorText` — one per line in the error color, with an error border, linked to the file input through `aria-describedby` / `aria-invalid` — and is announced. Each file renders as an `AttachmentCard` with a named remove button. The form shows no capacity meter.
 - **Create** is disabled while the name is invalid, a refinement is pending, or `isSubmitting` is true.
 
 The form shows no unsaved-changes dialog: leaving is the host's decision through `onBack` / `onCancel`.
 
-The same form edits an existing project: the host passes the project's files as `StoredProjectContextFile`s (`size`, `isStored: true`) alongside newly added `Attachment`s, and supplies the edit strings through `labels` (`title`, `createLabel`, `submittingLabel`, `creatingStatus`). Stored files count toward the capacity and render as removable cards; `isStoredContextFile` separates them when the host builds its save request.
+The same form edits an existing project: the host passes the project's files as `StoredProjectContextFile`s (`size`, `isStored: true`) alongside newly added `Attachment`s, and supplies the edit strings through `labels` (`title`, `createLabel`, `submittingLabel`, `creatingStatus`). Stored files count toward `maxTotalBytes` and render as removable cards; `isStoredContextFile` separates them when the host builds its save request.
 
 ```tsx
 import { ProjectCreateForm } from '@epam/ai-dial-projects';
 import { ContextFileRejection, ProjectNameError } from '@epam/ai-dial-projects';
+import { cloneElement } from 'react';
 
 <ProjectCreateForm
-  values={{ name: '', description: '', instructions: '' }}
+  values={{ name: '', instructions: '' }}
   errors={{}}
   onFieldChange={(field, value) => {}}
   contextFiles={[]}
@@ -195,19 +196,20 @@ import { ContextFileRejection, ProjectNameError } from '@epam/ai-dial-projects';
       [ProjectNameError.Reserved]: 'This name is reserved',
       [ProjectNameError.TooLong]: 'The name is too long',
     },
-    descriptionLabel: 'Description',
-    descriptionPlaceholder: 'Describe what the project is about',
     instructionsLabel: 'Instructions',
     instructionsPlaceholder:
       'Explain your reasoning step by step for complex problems. Use specific examples.',
     contextLabel: 'Context',
-    dropZoneLabel: 'Drag&drop context, upload from device or file manager',
+    dropZoneLabel: ({ fromDevice, fileManager }) => (
+      <>
+        Drag&drop context, upload {cloneElement(fromDevice, {}, 'from device')}
+        {fileManager && (
+          <> or {cloneElement(fileManager, {}, 'file manager')}</>
+        )}
+      </>
+    ),
+    dropZoneAriaLabel: 'Upload context from device',
     dropZoneHint: 'File formats .csv, .pdf, .xlsx (max 1 MB)',
-    addLabel: 'Add',
-    addFromDeviceLabel: 'Upload from device',
-    addFromFileManagerLabel: 'File manager',
-    capacityMeterLabel: 'Context capacity',
-    capacityLabel: (percent) => `${percent}% of capacity used`,
     removeFileLabel: (name) => `Remove ${name}`,
     fileRejections: {
       [ContextFileRejection.UnsupportedType]: (name) =>
@@ -226,7 +228,7 @@ import { ContextFileRejection, ProjectNameError } from '@epam/ai-dial-projects';
 />;
 ```
 
-`labels.submittingLabel` (defaults to `createLabel`), `labels.dropOverlayTitle` / `dropOverlaySubtitle` and `labels.refinement` (`TextRefinementLabels`) are optional. `markdownEditorTheme` sets the editor theme.
+`labels.submittingLabel` (defaults to `createLabel`), `labels.dropZoneAriaLabel`, `labels.dropOverlayTitle` / `dropOverlaySubtitle` and `labels.refinement` (`TextRefinementLabels`) are optional. A host with i18n can fill `dropZoneLabel` with its rich-text interpolation instead of `cloneElement` — `apps/chat` uses `react-i18next`'s `Trans` with `components={{ device: fromDevice, manager: fileManager }}`. `markdownEditorTheme` sets the editor theme.
 
 `styles.colors` overrides the CSS custom properties:
 
@@ -235,9 +237,7 @@ import { ContextFileRejection, ProjectNameError } from '@epam/ai-dial-projects';
 | `background`   | `--bg-layer-base`   |
 | `headerBorder` | `--stroke-tertiary` |
 | `labelText`    | `--text-secondary`  |
-| `helperText`   | `--text-secondary`  |
-| `meterTrack`   | `--bg-layer-sunken` |
-| `meterFill`    | `--stroke-accent`   |
+| `linkText`     | drop zone text      |
 
 `styles.typography` overrides the type-scale classes:
 
@@ -447,9 +447,10 @@ Why a context file was not added: `UnsupportedType` (`'unsupported-type'`), `Too
 - `ProjectsLabels` — every user-visible string, including `sourceLabels`, `folderPathLabel` and the `resultCountLabel` callback.
 - `ProjectsProps` — the props of `Projects`.
 - `ProjectsStyles`, `ProjectsColors`, `ProjectsTypography` — style overrides.
-- `ProjectCreateFormValues` — `{ name, description, instructions }`.
+- `ProjectCreateFormValues` — `{ name, instructions }`.
 - `ProjectCreateFormErrors` — `{ name?, context? }`, host-supplied errors.
 - `ProjectCreateFormLabels` — every string of the form, including the `nameErrors` and `fileRejections` maps.
+- `ProjectDropZoneLinks` — `{ fromDevice, fileManager? }`, the link elements `labels.dropZoneLabel` places in its sentence.
 - `ProjectCreateFormProps` — the props of `ProjectCreateForm`.
 - `ProjectCreateFormStyles`, `ProjectCreateFormColors`, `ProjectCreateFormTypography` — style overrides.
 - `ContextFileLimits`, `ContextFileCheck`, `RejectedContextFile` — the input and result of `checkContextFiles`.

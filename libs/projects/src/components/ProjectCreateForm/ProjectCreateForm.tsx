@@ -8,21 +8,15 @@ import {
   TextRefinementField,
   useAvailableHeightCap,
   useTextRefinement,
-  type TextRefinementCallback,
 } from '@epam/ai-dial-chat-shared';
 import {
-  ButtonDropdown,
-  ButtonVariant,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
-  ElementSize,
   ErrorText,
   FileDropzone,
   Input,
   Label,
   Spinner,
-  Textarea,
-  type DropdownItem,
   LiveRegion,
   LiveRegionElement,
   LiveRegionPoliteness,
@@ -39,24 +33,21 @@ import '@uiw/react-md-editor/markdown-editor.css';
 import {
   lazy,
   Suspense,
-  useCallback,
   useEffect,
   useId,
   useMemo,
   useRef,
   useState,
-  type ChangeEvent,
   type FC,
+  type MouseEvent,
 } from 'react';
 import { useFileDropSurface } from '../../hooks/useFileDropSurface';
 import type { ProjectCreateFormProps } from '../../models/project-create-form-props';
 import {
   checkContextFiles,
-  getContextFilesSize,
   type RejectedContextFile,
 } from '../../utils/context-files';
 import { validateProjectName } from '../../utils/project-name';
-import { ProjectCapacityMeter } from '../ProjectCapacityMeter/ProjectCapacityMeter';
 import styles from './ProjectCreateForm.module.scss';
 
 const MarkdownEditor = lazy(async () => {
@@ -64,10 +55,7 @@ const MarkdownEditor = lazy(async () => {
   return { default: module.MarkdownEditor };
 });
 
-const ADD_FROM_DEVICE_KEY = 'device';
-const ADD_FROM_FILE_MANAGER_KEY = 'file-manager';
-
-/** Presentational New and Edit project form: name, description, instructions and context files, including stored ones when editing. */
+/** Presentational New and Edit project form: name, instructions and context files, including stored ones when editing. */
 export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
   values,
   errors,
@@ -78,7 +66,6 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
   maxFileBytes,
   maxTotalBytes,
   onPickFromFileManager,
-  onRefineDescription,
   onRefineInstructions,
   onBack,
   onCancel,
@@ -91,58 +78,21 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
 }) => {
   const nameId = useId();
   const nameErrorId = useId();
-  const descriptionId = useId();
   const instructionsId = useId();
   const contextLabelId = useId();
   const nameInputRef = useRef<HTMLInputElement>(null);
-  const deviceInputRef = useRef<HTMLInputElement>(null);
   const instructionsCapRef = useAvailableHeightCap<HTMLDivElement>();
   const [isNameTouched, setIsNameTouched] = useState(false);
   const [rejections, setRejections] = useState<RejectedContextFile[]>([]);
   const [statusMessage, setStatusMessage] = useState('');
 
-  /* At most one refinement may be pending per form, as in the scheduled-task
-   * form: a second Refine is rejected as an abort while the first runs. */
-  const refinementLock = useRef<AbortSignal | undefined>(undefined);
-  const guardRefinement = useCallback(
-    (callback?: TextRefinementCallback): TextRefinementCallback | undefined =>
-      callback
-        ? async (value, signal) => {
-            if (refinementLock.current && !refinementLock.current.aborted)
-              throw new DOMException('Busy', 'AbortError');
-            refinementLock.current = signal;
-            try {
-              return await callback(value, signal);
-            } finally {
-              if (refinementLock.current === signal)
-                refinementLock.current = undefined;
-            }
-          }
-        : undefined,
-    [],
-  );
-  const guardedRefineDescription = useMemo(
-    () => guardRefinement(onRefineDescription),
-    [guardRefinement, onRefineDescription],
-  );
-  const guardedRefineInstructions = useMemo(
-    () => guardRefinement(onRefineInstructions),
-    [guardRefinement, onRefineInstructions],
-  );
-  const descriptionRefinement = useTextRefinement({
-    value: values.description,
-    onChange: (value) => onFieldChange('description', value),
-    onRefine: guardedRefineDescription,
-    disabled: isSubmitting,
-  });
   const instructionsRefinement = useTextRefinement({
     value: values.instructions,
     onChange: (value) => onFieldChange('instructions', value),
-    onRefine: guardedRefineInstructions,
+    onRefine: onRefineInstructions,
     disabled: isSubmitting,
   });
-  const isRefining =
-    descriptionRefinement.isPending || instructionsRefinement.isPending;
+  const isRefining = instructionsRefinement.isPending;
 
   const nameCheck = validateProjectName(values.name);
   const nameError =
@@ -157,10 +107,6 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
     if (errors.name) nameInputRef.current?.focus();
   }, [errors.name]);
 
-  const usedBytes = useMemo(
-    () => getContextFilesSize(contextFiles),
-    [contextFiles],
-  );
   const accept = useMemo(
     () => allowedExtensions.map((extension) => `.${extension}`).join(','),
     [allowedExtensions],
@@ -199,12 +145,12 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
     if (removed) setStatusMessage(labels.fileRemovedStatus(removed.name));
   };
 
-  const handleDeviceInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-    addFiles(Array.from(event.target.files ?? []));
-    event.target.value = '';
-  };
-
-  const handlePickFromFileManager = async () => {
+  const handlePickFromFileManager = async (
+    event: MouseEvent<HTMLButtonElement>,
+  ) => {
+    /* The link sits inside the drop zone's label; keep the click from also opening the device picker. */
+    event.preventDefault();
+    event.stopPropagation();
     if (!onPickFromFileManager) return;
     try {
       const picked = await onPickFromFileManager();
@@ -214,29 +160,8 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
     }
   };
 
-  const addItems: DropdownItem[] = [
-    {
-      key: ADD_FROM_DEVICE_KEY,
-      label: labels.addFromDeviceLabel,
-      onClick: () => deviceInputRef.current?.click(),
-    },
-    ...(onPickFromFileManager
-      ? [
-          {
-            key: ADD_FROM_FILE_MANAGER_KEY,
-            label: labels.addFromFileManagerLabel,
-            onClick: () => void handlePickFromFileManager(),
-          },
-        ]
-      : []),
-  ];
-
   const handleSubmit = () => {
-    if (
-      !isCreateDisabled &&
-      (!refinementLock.current || refinementLock.current.aborted)
-    )
-      onSubmit();
+    if (!isCreateDisabled) onSubmit();
   };
 
   const { colors, typography } = formStyles ?? {};
@@ -247,14 +172,31 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
   );
   const helperClassName = typography?.helperClassName ?? 'dial-tiny-text';
   const cssVars = buildCssVars({
-    '--pcf-helper-text': colors?.helperText,
     '--pcf-label-text': colors?.labelText,
-    '--pcf-meter-track': colors?.meterTrack,
-    '--pcf-meter-fill': colors?.meterFill,
+    '--pcf-link-text': colors?.linkText,
   });
   const refinementLabels = labels.refinement;
   const contextError = errors.context;
-  const isContextInvalid = Boolean(contextError);
+  /* The kit drop zone draws its error in the error color, below the area, and links it to the file input. */
+  const dropZoneError = [
+    ...rejections.map(({ name, reason }) =>
+      labels.fileRejections[reason](name),
+    ),
+    contextError,
+  ]
+    .filter(Boolean)
+    .join('\n');
+  const dropZoneLabel = labels.dropZoneLabel({
+    fromDevice: <span className={styles.link} />,
+    fileManager: onPickFromFileManager ? (
+      <button
+        type="button"
+        className={styles.link}
+        disabled={isSubmitting}
+        onClick={(event) => void handlePickFromFileManager(event)}
+      />
+    ) : undefined,
+  });
 
   return (
     <div
@@ -301,7 +243,7 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
       >
         <div
           className={mergeClasses(
-            'mx-auto flex w-full max-w-[1040px] min-w-0 flex-col gap-5 py-6',
+            'mx-auto flex w-full max-w-262 min-w-0 flex-col gap-5 py-6',
             styles.formColumn,
           )}
         >
@@ -335,31 +277,6 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
               />
             )}
           </div>
-
-          <TextRefinementField
-            isEnabled={Boolean(onRefineDescription)}
-            fieldId={descriptionId}
-            label={labels.descriptionLabel}
-            labelClassName={labelClassName}
-            labels={refinementLabels}
-            refinement={descriptionRefinement}
-            disabled={isSubmitting || isRefining}
-          >
-            <Textarea
-              id={descriptionId}
-              value={values.description}
-              onChange={(value) => {
-                descriptionRefinement.reset();
-                onFieldChange('description', value);
-              }}
-              placeholder={labels.descriptionPlaceholder}
-              labelProps={
-                onRefineDescription
-                  ? undefined
-                  : { label: labels.descriptionLabel }
-              }
-            />
-          </TextRefinementField>
 
           <TextRefinementField
             isEnabled={Boolean(onRefineInstructions)}
@@ -407,71 +324,30 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
             aria-labelledby={contextLabelId}
             className="flex flex-col gap-2"
           >
-            <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
-              <h2 id={contextLabelId} className={labelClassName}>
-                {labels.contextLabel}
-              </h2>
-              <div className="flex min-w-0 items-center gap-4">
-                <ProjectCapacityMeter
-                  usedBytes={usedBytes}
-                  maxBytes={maxTotalBytes}
-                  ariaLabel={labels.capacityMeterLabel}
-                  formatLabel={labels.capacityLabel}
-                  textClassName={helperClassName}
-                />
-                <ButtonDropdown
-                  items={addItems}
-                  label={labels.addLabel}
-                  variant={ButtonVariant.Neutral}
-                  size={ElementSize.Small}
-                  disabled={isSubmitting}
-                />
-              </div>
-            </div>
-            <input
-              ref={deviceInputRef}
-              type="file"
-              multiple
-              accept={accept}
-              tabIndex={-1}
-              aria-hidden
-              className="sr-only"
-              onChange={handleDeviceInputChange}
-            />
+            <h2 id={contextLabelId} className={labelClassName}>
+              {labels.contextLabel}
+            </h2>
             <FileDropzone
-              label={labels.dropZoneLabel}
+              label={dropZoneLabel}
+              ariaLabel={labels.dropZoneAriaLabel}
               description={labels.dropZoneHint}
               accept={accept}
               multiple
               disabled={isSubmitting}
               onChange={addFiles}
               onReject={addFiles}
+              errorText={dropZoneError || undefined}
+              className={styles.dropZone}
             />
-            {rejections.length > 0 && (
-              <ul
-                className={mergeClasses(
-                  'flex flex-col gap-1',
-                  helperClassName,
-                  styles.helper,
-                )}
-              >
-                {rejections.map(({ name, reason }) => (
-                  <li key={`${reason}:${name}`}>
-                    {labels.fileRejections[reason](name)}
-                  </li>
-                ))}
-              </ul>
-            )}
-            {/* Mounted before a host context error arrives, so it is announced; out of the section gap while empty. */}
-            <LiveRegion politeness={LiveRegionPoliteness.Assertive}>
-              {isContextInvalid && (
-                <p className={mergeClasses(helperClassName, styles.helper)}>
-                  {contextError}
-                </p>
-              )}
+            {/* Mounted before a host context error arrives, so it is announced; the drop zone shows it. Client rejections go through the status region. */}
+            <LiveRegion
+              visuallyHidden
+              politeness={LiveRegionPoliteness.Assertive}
+            >
+              {contextError}
             </LiveRegion>
             {contextFiles.length > 0 && (
-              <ul className="flex min-w-0 flex-wrap gap-2 pt-1">
+              <ul className="flex min-w-0 flex-wrap gap-2 pt-3">
                 {contextFiles.map((file) => (
                   <li key={file.id} className="min-w-0">
                     <AttachmentCard
