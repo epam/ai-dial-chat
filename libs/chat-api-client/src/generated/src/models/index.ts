@@ -920,6 +920,550 @@ export type CatalogCreationType =
 /**
  *
  * @export
+ * @interface CelebrationAssetDto
+ */
+export interface CelebrationAssetDto {
+  /**
+   * Asset ID, unique across the catalog; ends with the first 16 hex characters of its SHA-256.
+   * @type {string}
+   * @memberof CelebrationAssetDto
+   */
+  assetId: string;
+  /**
+   * Media type the asset is served with.
+   * @type {CelebrationMediaType}
+   * @memberof CelebrationAssetDto
+   */
+  mediaType: CelebrationMediaType;
+  /**
+   * Exact byte length of the uncompressed asset.
+   * @type {number}
+   * @memberof CelebrationAssetDto
+   */
+  bytes: number;
+  /**
+   * Lowercase hex SHA-256 of the uncompressed asset.
+   * @type {string}
+   * @memberof CelebrationAssetDto
+   */
+  sha256: string;
+}
+
+/**
+ *
+ * @export
+ * @interface CelebrationCatalogDto
+ */
+export interface CelebrationCatalogDto {
+  /**
+   * Schema version of the published celebration index.
+   * @type {number}
+   * @memberof CelebrationCatalogDto
+   */
+  schemaVersion: number;
+  /**
+   * Catalog revision. Changes whenever the published index changes; every pack resolved from this index reports it as catalogRevision.
+   * @type {string}
+   * @memberof CelebrationCatalogDto
+   */
+  revision: string;
+  /**
+   * Every published pack version, in index order.
+   * @type {Array<CelebrationCatalogPackDto>}
+   * @memberof CelebrationCatalogDto
+   */
+  packs: Array<CelebrationCatalogPackDto>;
+  /**
+   * Default pack per event ID. Each value names a listed pack whose eventId equals the key; invalid entries are dropped.
+   * @type {{ [key: string]: CelebrationPackRefDto; }}
+   * @memberof CelebrationCatalogDto
+   */
+  defaults: { [key: string]: CelebrationPackRefDto };
+}
+/**
+ *
+ * @export
+ * @interface CelebrationCatalogPackDto
+ */
+export interface CelebrationCatalogPackDto {
+  /**
+   * Pack ID, lowercase kebab-case.
+   * @type {string}
+   * @memberof CelebrationCatalogPackDto
+   */
+  packId: string;
+  /**
+   * Pack version, strict semver.
+   * @type {string}
+   * @memberof CelebrationCatalogPackDto
+   */
+  version: string;
+  /**
+   * Celebration event the pack belongs to.
+   * @type {string}
+   * @memberof CelebrationCatalogPackDto
+   */
+  eventId: string;
+}
+/**
+ *
+ * @export
+ * @interface CelebrationDecorationDto
+ */
+export interface CelebrationDecorationDto {
+  /**
+   * Decoration template ID.
+   * @type {string}
+   * @memberof CelebrationDecorationDto
+   */
+  template: string;
+  /**
+   * Asset ID of the trigger image.
+   * @type {string}
+   * @memberof CelebrationDecorationDto
+   */
+  posterAssetId: string;
+  /**
+   * Label ID of the trigger accessible name.
+   * @type {string}
+   * @memberof CelebrationDecorationDto
+   */
+  labelId: string;
+}
+/**
+ *
+ * @export
+ * @interface CelebrationDeliveryDto
+ */
+export interface CelebrationDeliveryDto {
+  /**
+   * Where scenes come from. Sourced from UI_EVENT_DELIVERY_MODE; bundled unless it is prefer-external.
+   * @type {CelebrationDeliveryMode}
+   * @memberof CelebrationDeliveryDto
+   */
+  mode: CelebrationDeliveryMode;
+  /**
+   * Operator revision of this policy, from UI_EVENT_DELIVERY_REVISION; changing it restarts a playing scene. Defaults to "0".
+   * @type {string}
+   * @memberof CelebrationDeliveryDto
+   */
+  revision: string;
+  /**
+   * Scenes of compiled events that may come from a pack, from UI_EVENT_EXTERNAL_SCENES. Empty by default.
+   * @type {Array<CelebrationExternalSceneDto>}
+   * @memberof CelebrationDeliveryDto
+   */
+  externalScenes: Array<CelebrationExternalSceneDto>;
+  /**
+   * Event IDs without a compiled module that may come entirely from a pack, from UI_EVENT_EXTERNAL_EVENTS. Empty by default.
+   * @type {Array<string>}
+   * @memberof CelebrationDeliveryDto
+   */
+  externalEvents: Array<string>;
+}
+
+/**
+ * Where scenes come from. Sourced from UI_EVENT_DELIVERY_MODE; bundled unless it is prefer-external.
+ * @export
+ */
+export const CelebrationDeliveryMode = {
+  Bundled: 'bundled',
+  PreferExternal: 'prefer-external',
+} as const;
+export type CelebrationDeliveryMode =
+  (typeof CelebrationDeliveryMode)[keyof typeof CelebrationDeliveryMode];
+
+/**
+ *
+ * @export
+ * @interface CelebrationEventDto
+ */
+export interface CelebrationEventDto {
+  /**
+   * Label ID of the notification title.
+   * @type {string}
+   * @memberof CelebrationEventDto
+   */
+  titleLabelId: string;
+  /**
+   * Scenes the trigger plays, each a declared scene ID.
+   * @type {Array<string>}
+   * @memberof CelebrationEventDto
+   */
+  clickSceneIds: Array<string>;
+  /**
+   * Asset ID of the event icon.
+   * @type {string}
+   * @memberof CelebrationEventDto
+   */
+  iconAssetId?: string;
+  /**
+   * The static trigger.
+   * @type {CelebrationDecorationDto}
+   * @memberof CelebrationEventDto
+   */
+  decoration: CelebrationDecorationDto;
+}
+/**
+ *
+ * @export
+ * @interface CelebrationExternalSceneDto
+ */
+export interface CelebrationExternalSceneDto {
+  /**
+   * Celebration event ID.
+   * @type {string}
+   * @memberof CelebrationExternalSceneDto
+   */
+  eventId: string;
+  /**
+   * Scene ID within the event.
+   * @type {string}
+   * @memberof CelebrationExternalSceneDto
+   */
+  sceneId: string;
+}
+
+/**
+ * Media type the asset is served with.
+ * @export
+ */
+export const CelebrationMediaType = {
+  ApplicationJson: 'application/json',
+  ImageSvgxml: 'image/svg+xml',
+  ImagePng: 'image/png',
+  ImageWebp: 'image/webp',
+} as const;
+export type CelebrationMediaType =
+  (typeof CelebrationMediaType)[keyof typeof CelebrationMediaType];
+
+/**
+ *
+ * @export
+ * @interface CelebrationPackDto
+ */
+export interface CelebrationPackDto {
+  /**
+   * Pack ID.
+   * @type {string}
+   * @memberof CelebrationPackDto
+   */
+  packId: string;
+  /**
+   * Pack version.
+   * @type {string}
+   * @memberof CelebrationPackDto
+   */
+  version: string;
+  /**
+   * Celebration event ID.
+   * @type {string}
+   * @memberof CelebrationPackDto
+   */
+  eventId: string;
+  /**
+   * Revision of the celebration index the pack was resolved from.
+   * @type {string}
+   * @memberof CelebrationPackDto
+   */
+  catalogRevision: string;
+  /**
+   * Capabilities the pack as a whole requires.
+   * @type {Array<string>}
+   * @memberof CelebrationPackDto
+   */
+  requiredCapabilities: Array<string>;
+  /**
+   * Every asset the pack declares.
+   * @type {Array<CelebrationAssetDto>}
+   * @memberof CelebrationPackDto
+   */
+  assets: Array<CelebrationAssetDto>;
+  /**
+   * Pack labels as locale → label ID → plain text. Includes en whenever it is non-empty.
+   * @type {{ [key: string]: { [key: string]: string; }; }}
+   * @memberof CelebrationPackDto
+   */
+  labels: { [key: string]: { [key: string]: string } };
+  /**
+   * Event-level fields; present only for an external-only event.
+   * @type {CelebrationEventDto}
+   * @memberof CelebrationPackDto
+   */
+  event?: CelebrationEventDto;
+  /**
+   * Scenes in declaration order.
+   * @type {Array<CelebrationSceneDto>}
+   * @memberof CelebrationPackDto
+   */
+  scenes: Array<CelebrationSceneDto>;
+}
+/**
+ *
+ * @export
+ * @interface CelebrationPackRefDto
+ */
+export interface CelebrationPackRefDto {
+  /**
+   * Pack ID, lowercase kebab-case.
+   * @type {string}
+   * @memberof CelebrationPackRefDto
+   */
+  packId: string;
+  /**
+   * Pack version, strict semver.
+   * @type {string}
+   * @memberof CelebrationPackRefDto
+   */
+  version: string;
+}
+/**
+ *
+ * @export
+ * @interface CelebrationPlacementDto
+ */
+export interface CelebrationPlacementDto {
+  /**
+   * Placement template ID. Templates other than viewport-stage-v1 are passed as the ID alone, and clients without the matching capability skip the scene.
+   * @type {string}
+   * @memberof CelebrationPlacementDto
+   */
+  template: string;
+  /**
+   * How the stage scales into the viewport (viewport-stage-v1).
+   * @type {CelebrationStageFit}
+   * @memberof CelebrationPlacementDto
+   */
+  fit?: CelebrationStageFit;
+  /**
+   * Where the stage sits in the viewport, in logical terms (viewport-stage-v1).
+   * @type {CelebrationStageAlign}
+   * @memberof CelebrationPlacementDto
+   */
+  align?: CelebrationStageAlign;
+}
+
+/**
+ * How the scene adapts to a right-to-left host.
+ * @export
+ */
+export const CelebrationSceneDirection = {
+  None: 'none',
+  Mirror: 'mirror',
+  Variant: 'variant',
+} as const;
+export type CelebrationSceneDirection =
+  (typeof CelebrationSceneDirection)[keyof typeof CelebrationSceneDirection];
+
+/**
+ *
+ * @export
+ * @interface CelebrationSceneDto
+ */
+export interface CelebrationSceneDto {
+  /**
+   * Scene ID; a scene that replaces a bundled scene uses its bundled ID.
+   * @type {string}
+   * @memberof CelebrationSceneDto
+   */
+  id: string;
+  /**
+   * Label ID of the notification text shown with the scene.
+   * @type {string}
+   * @memberof CelebrationSceneDto
+   */
+  labelId: string;
+  /**
+   * Renderer capability ID.
+   * @type {string}
+   * @memberof CelebrationSceneDto
+   */
+  renderer: string;
+  /**
+   * Capabilities the client must support to play the scene.
+   * @type {Array<string>}
+   * @memberof CelebrationSceneDto
+   */
+  requiredCapabilities: Array<string>;
+  /**
+   * Scene placement.
+   * @type {CelebrationPlacementDto}
+   * @memberof CelebrationSceneDto
+   */
+  placement: CelebrationPlacementDto;
+  /**
+   * How the scene adapts to a right-to-left host.
+   * @type {CelebrationSceneDirection}
+   * @memberof CelebrationSceneDto
+   */
+  direction: CelebrationSceneDirection;
+  /**
+   * Scene timing.
+   * @type {CelebrationTimingDto}
+   * @memberof CelebrationSceneDto
+   */
+  timing: CelebrationTimingDto;
+  /**
+   * Asset ID of the static poster.
+   * @type {string}
+   * @memberof CelebrationSceneDto
+   */
+  posterAssetId: string;
+  /**
+   * How long the poster stays, from 1000 to maxLifetimeMs.
+   * @type {number}
+   * @memberof CelebrationSceneDto
+   */
+  posterDurationMs: number;
+  /**
+   * One to eight variants, in declaration order.
+   * @type {Array<CelebrationVariantDto>}
+   * @memberof CelebrationSceneDto
+   */
+  variants: Array<CelebrationVariantDto>;
+}
+
+/**
+ * Where the stage sits in the viewport, in logical terms (viewport-stage-v1).
+ * @export
+ */
+export const CelebrationStageAlign = {
+  Center: 'center',
+  Top: 'top',
+  Bottom: 'bottom',
+  TopStart: 'top-start',
+  TopEnd: 'top-end',
+  BottomStart: 'bottom-start',
+  BottomEnd: 'bottom-end',
+} as const;
+export type CelebrationStageAlign =
+  (typeof CelebrationStageAlign)[keyof typeof CelebrationStageAlign];
+
+/**
+ * How the stage scales into the viewport (viewport-stage-v1).
+ * @export
+ */
+export const CelebrationStageFit = {
+  Contain: 'contain',
+  Cover: 'cover',
+} as const;
+export type CelebrationStageFit =
+  (typeof CelebrationStageFit)[keyof typeof CelebrationStageFit];
+
+/**
+ *
+ * @export
+ * @interface CelebrationTimingDto
+ */
+export interface CelebrationTimingDto {
+  /**
+   * Authored story length.
+   * @type {number}
+   * @memberof CelebrationTimingDto
+   */
+  playbackDurationMs: number;
+  /**
+   * Time allowed for the player and animation data, at most 2000.
+   * @type {number}
+   * @memberof CelebrationTimingDto
+   */
+  loadTimeoutMs: number;
+  /**
+   * Time from loadAnimation to renderer readiness, at most 250.
+   * @type {number}
+   * @memberof CelebrationTimingDto
+   */
+  readyTimeoutMs: number;
+  /**
+   * Total lifetime from mount, at least load + ready + playback and at most 32000.
+   * @type {number}
+   * @memberof CelebrationTimingDto
+   */
+  maxLifetimeMs: number;
+}
+
+/**
+ * Required color scheme.
+ * @export
+ */
+export const CelebrationVariantColorScheme = {
+  Light: 'light',
+  Dark: 'dark',
+} as const;
+export type CelebrationVariantColorScheme =
+  (typeof CelebrationVariantColorScheme)[keyof typeof CelebrationVariantColorScheme];
+
+/**
+ *
+ * @export
+ * @interface CelebrationVariantConditionsDto
+ */
+export interface CelebrationVariantConditionsDto {
+  /**
+   * Required host layout.
+   * @type {CelebrationVariantLayout}
+   * @memberof CelebrationVariantConditionsDto
+   */
+  layout?: CelebrationVariantLayout;
+  /**
+   * Required text direction.
+   * @type {CelebrationVariantDirection}
+   * @memberof CelebrationVariantConditionsDto
+   */
+  direction?: CelebrationVariantDirection;
+  /**
+   * Required color scheme.
+   * @type {CelebrationVariantColorScheme}
+   * @memberof CelebrationVariantConditionsDto
+   */
+  colorScheme?: CelebrationVariantColorScheme;
+}
+
+/**
+ * Required text direction.
+ * @export
+ */
+export const CelebrationVariantDirection = {
+  Ltr: 'ltr',
+  Rtl: 'rtl',
+} as const;
+export type CelebrationVariantDirection =
+  (typeof CelebrationVariantDirection)[keyof typeof CelebrationVariantDirection];
+
+/**
+ *
+ * @export
+ * @interface CelebrationVariantDto
+ */
+export interface CelebrationVariantDto {
+  /**
+   * Conditions the variant requires.
+   * @type {CelebrationVariantConditionsDto}
+   * @memberof CelebrationVariantDto
+   */
+  when: CelebrationVariantConditionsDto;
+  /**
+   * Asset ID of the Lottie JSON.
+   * @type {string}
+   * @memberof CelebrationVariantDto
+   */
+  animationAssetId: string;
+}
+
+/**
+ * Required host layout.
+ * @export
+ */
+export const CelebrationVariantLayout = {
+  Mobile: 'mobile',
+  Desktop: 'desktop',
+} as const;
+export type CelebrationVariantLayout =
+  (typeof CelebrationVariantLayout)[keyof typeof CelebrationVariantLayout];
+
+/**
+ *
+ * @export
  * @interface CellAddressDto
  */
 export interface CellAddressDto {
@@ -1241,6 +1785,12 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   celebrationsEnabledByDefault: boolean;
+  /**
+   * Operator policy for external celebration packs, from UI_EVENT_DELIVERY_MODE, UI_EVENT_DELIVERY_REVISION, UI_EVENT_EXTERNAL_SCENES and UI_EVENT_EXTERNAL_EVENTS. The default is bundled with empty lists, in which case the client makes no celebration request.
+   * @type {CelebrationDeliveryDto}
+   * @memberof ClientConfigDto
+   */
+  celebrationDelivery: CelebrationDeliveryDto;
   /**
    * Maximum size in bytes of one project context file. Sourced from PROJECT_CONTEXT_FILE_MAX_BYTES, which POST /api/v1/projects enforces.
    * @type {number}

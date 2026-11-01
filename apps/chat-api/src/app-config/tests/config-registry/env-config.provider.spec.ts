@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../../../config/environment.config';
 import type { AppConfigEvalContext } from '../../app-config.types';
 import { EnvConfigProvider } from '../../config-registry/env-config.provider';
+import { CelebrationDeliveryMode } from '../../types/celebration-delivery';
 
 const ctx: AppConfigEvalContext = { appId: 'chat-ui' };
 
@@ -465,6 +466,42 @@ describe('EnvConfigProvider', () => {
     it('uses the registry null default when UI_EVENT is absent', async () => {
       const { provider } = makeProvider();
       expect(await provider.resolve('ui.activeEventId', ctx)).toBeUndefined();
+    });
+  });
+
+  describe('ui.celebrationDelivery', () => {
+    it('returns the validated policy values', async () => {
+      const { provider } = makeProvider({
+        UI_EVENT_DELIVERY_MODE: CelebrationDeliveryMode.PreferExternal,
+        UI_EVENT_DELIVERY_REVISION: '2026-11-15.1',
+        UI_EVENT_EXTERNAL_SCENES: ['new-year/snowman-delivery'],
+        UI_EVENT_EXTERNAL_EVENTS: ['company-anniversary'],
+      });
+
+      expect(await provider.resolve('ui.celebrationDelivery.mode', ctx)).toBe(
+        'prefer-external',
+      );
+      expect(
+        await provider.resolve('ui.celebrationDelivery.revision', ctx),
+      ).toBe('2026-11-15.1');
+      expect(
+        await provider.resolve('ui.celebrationDelivery.externalScenes', ctx),
+      ).toEqual(['new-year/snowman-delivery']);
+      expect(
+        await provider.resolve('ui.celebrationDelivery.externalEvents', ctx),
+      ).toEqual(['company-anniversary']);
+    });
+
+    it('leaves the registry defaults in charge when the env vars are absent', async () => {
+      const { provider } = makeProvider();
+      for (const key of [
+        'ui.celebrationDelivery.mode',
+        'ui.celebrationDelivery.revision',
+        'ui.celebrationDelivery.externalScenes',
+        'ui.celebrationDelivery.externalEvents',
+      ]) {
+        expect(await provider.resolve(key, ctx), key).toBeUndefined();
+      }
     });
   });
 

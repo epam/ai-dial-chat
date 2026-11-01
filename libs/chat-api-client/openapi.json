@@ -6212,6 +6212,183 @@
         "security": []
       }
     },
+    "/api/v1/celebrations": {
+      "get": {
+        "description": "Returns the validated celebration index: every published pack version and the default pack per event. Cached for 60 seconds, with an ETag; manifest paths and hashes are never exposed.",
+        "operationId": "getCelebrationCatalog",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The celebration catalog",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CelebrationCatalogDto"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "The catalog matches the If-None-Match ETag"
+          },
+          "404": {
+            "description": "The themes host publishes no celebration index"
+          },
+          "502": {
+            "description": "The themes host answered with an invalid status, a redirect, an unsupported schemaVersion, a schema violation, an exceeded cap, or a size, hash or media-type mismatch"
+          },
+          "503": {
+            "description": "THEMES_CONFIG_URL is not configured, or the themes host is unreachable or timed out"
+          }
+        },
+        "summary": "Get the celebration catalog",
+        "tags": ["celebrations"],
+        "security": []
+      }
+    },
+    "/api/v1/celebrations/packs/{packId}/{version}": {
+      "get": {
+        "description": "Returns one validated pack version that the current celebration index lists. A version is immutable, so the response may be cached for a year.",
+        "operationId": "getCelebrationPack",
+        "parameters": [
+          {
+            "name": "packId",
+            "required": true,
+            "in": "path",
+            "description": "Pack ID, lowercase kebab-case, at most 64 characters.",
+            "schema": {
+              "example": "new-year-default",
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "required": true,
+            "in": "path",
+            "description": "Pack version, strict MAJOR.MINOR.PATCH.",
+            "schema": {
+              "example": "1.0.0",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The validated pack",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CelebrationPackDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "packId or version fails its allowlist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "statusCode": 400,
+                    "message": [
+                      "packId must be a lowercase kebab-case identifier"
+                    ],
+                    "error": "Bad Request"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The current celebration index does not list the pack version"
+          },
+          "502": {
+            "description": "The themes host answered with an invalid status, a redirect, an unsupported schemaVersion, a schema violation, an exceeded cap, or a size, hash or media-type mismatch"
+          },
+          "503": {
+            "description": "THEMES_CONFIG_URL is not configured, or the themes host is unreachable or timed out"
+          }
+        },
+        "summary": "Get a celebration pack",
+        "tags": ["celebrations"],
+        "security": []
+      }
+    },
+    "/api/v1/celebrations/assets/{assetId}": {
+      "get": {
+        "description": "Returns the verified bytes of an asset that a manifest of the current celebration index declares, with its registered Content-Type. JSON and SVG are compressed when the client accepts br or gzip.",
+        "operationId": "getCelebrationAsset",
+        "parameters": [
+          {
+            "name": "assetId",
+            "required": true,
+            "in": "path",
+            "description": "Asset ID: lowercase letters, digits and dashes, at most 96 characters.",
+            "schema": {
+              "example": "new-year-default-snowman-delivery-poster-8e2d4a6c0f1b3957",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The asset bytes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              },
+              "image/svg+xml": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/webp": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "assetId fails its allowlist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "statusCode": 400,
+                    "message": ["assetId must be a lowercase asset identifier"],
+                    "error": "Bad Request"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No manifest listed by the current celebration index declares the asset"
+          },
+          "502": {
+            "description": "The themes host answered with an invalid status, a redirect, an unsupported schemaVersion, a schema violation, an exceeded cap, or a size, hash or media-type mismatch"
+          },
+          "503": {
+            "description": "THEMES_CONFIG_URL is not configured, or the themes host is unreachable or timed out"
+          }
+        },
+        "summary": "Get a celebration asset",
+        "tags": ["celebrations"],
+        "security": []
+      }
+    },
     "/api/v1/share": {
       "post": {
         "description": "Creates a share link for a DIAL Core resource (catalog entity — agent, application, skill, toolset, or model — conversation, or prompt) by proxying DIAL Core's resource-sharing API. Returns the share URL, access level, and expiry.",
@@ -11324,6 +11501,62 @@
         },
         "required": ["title", "contentType", "url"]
       },
+      "CelebrationDeliveryMode": {
+        "type": "string",
+        "enum": ["bundled", "prefer-external"],
+        "description": "Where scenes come from. Sourced from UI_EVENT_DELIVERY_MODE; bundled unless it is prefer-external."
+      },
+      "CelebrationExternalSceneDto": {
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "description": "Celebration event ID.",
+            "example": "new-year"
+          },
+          "sceneId": {
+            "type": "string",
+            "description": "Scene ID within the event.",
+            "example": "snowman-delivery"
+          }
+        },
+        "required": ["eventId", "sceneId"]
+      },
+      "CelebrationDeliveryDto": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "description": "Where scenes come from. Sourced from UI_EVENT_DELIVERY_MODE; bundled unless it is prefer-external.",
+            "example": "bundled",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CelebrationDeliveryMode"
+              }
+            ]
+          },
+          "revision": {
+            "type": "string",
+            "description": "Operator revision of this policy, from UI_EVENT_DELIVERY_REVISION; changing it restarts a playing scene. Defaults to \"0\".",
+            "example": "0"
+          },
+          "externalScenes": {
+            "description": "Scenes of compiled events that may come from a pack, from UI_EVENT_EXTERNAL_SCENES. Empty by default.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CelebrationExternalSceneDto"
+            }
+          },
+          "externalEvents": {
+            "description": "Event IDs without a compiled module that may come entirely from a pack, from UI_EVENT_EXTERNAL_EVENTS. Empty by default.",
+            "example": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["mode", "revision", "externalScenes", "externalEvents"]
+      },
       "CatalogCreationType": {
         "type": "string",
         "enum": ["custom-app", "schema-app", "toolset", "prompt", "skill"],
@@ -11538,6 +11771,14 @@
             "description": "Operator default for the seasonal-celebrations switch, applied to users who have not saved a choice of their own; a saved choice overrides it. Sourced from UI_EVENT_ENABLED_BY_DEFAULT; true unless it is false, 0 or no. Has no visible effect while activeEventId is null.",
             "example": true
           },
+          "celebrationDelivery": {
+            "description": "Operator policy for external celebration packs, from UI_EVENT_DELIVERY_MODE, UI_EVENT_DELIVERY_REVISION, UI_EVENT_EXTERNAL_SCENES and UI_EVENT_EXTERNAL_EVENTS. The default is bundled with empty lists, in which case the client makes no celebration request.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CelebrationDeliveryDto"
+              }
+            ]
+          },
           "projectContextFileMaxBytes": {
             "type": "number",
             "description": "Maximum size in bytes of one project context file. Sourced from PROJECT_CONTEXT_FILE_MAX_BYTES, which POST /api/v1/projects enforces.",
@@ -11583,6 +11824,7 @@
           "maxAttachmentFileSizeBytes",
           "usageLimitsWarningThresholdPercent",
           "celebrationsEnabledByDefault",
+          "celebrationDelivery",
           "projectContextFileMaxBytes",
           "projectContextTotalMaxBytes",
           "projectContextAllowedExtensions",
@@ -16661,6 +16903,484 @@
           }
         },
         "required": ["themes", "images"]
+      },
+      "CelebrationPackRefDto": {
+        "type": "object",
+        "properties": {
+          "packId": {
+            "type": "string",
+            "description": "Pack ID, lowercase kebab-case.",
+            "example": "new-year-default"
+          },
+          "version": {
+            "type": "string",
+            "description": "Pack version, strict semver.",
+            "example": "1.0.0"
+          }
+        },
+        "required": ["packId", "version"]
+      },
+      "CelebrationCatalogPackDto": {
+        "type": "object",
+        "properties": {
+          "packId": {
+            "type": "string",
+            "description": "Pack ID, lowercase kebab-case.",
+            "example": "new-year-default"
+          },
+          "version": {
+            "type": "string",
+            "description": "Pack version, strict semver.",
+            "example": "1.0.0"
+          },
+          "eventId": {
+            "type": "string",
+            "description": "Celebration event the pack belongs to.",
+            "example": "new-year"
+          }
+        },
+        "required": ["packId", "version", "eventId"]
+      },
+      "CelebrationCatalogDto": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "number",
+            "description": "Schema version of the published celebration index.",
+            "example": 1
+          },
+          "revision": {
+            "type": "string",
+            "description": "Catalog revision. Changes whenever the published index changes; every pack resolved from this index reports it as catalogRevision.",
+            "example": "2026-11-15.1"
+          },
+          "packs": {
+            "description": "Every published pack version, in index order.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CelebrationCatalogPackDto"
+            }
+          },
+          "defaults": {
+            "type": "object",
+            "description": "Default pack per event ID. Each value names a listed pack whose eventId equals the key; invalid entries are dropped.",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/CelebrationPackRefDto"
+            },
+            "example": {
+              "new-year": {
+                "packId": "new-year-default",
+                "version": "1.0.0"
+              }
+            }
+          }
+        },
+        "required": ["schemaVersion", "revision", "packs", "defaults"]
+      },
+      "CelebrationMediaType": {
+        "type": "string",
+        "enum": [
+          "application/json",
+          "image/svg+xml",
+          "image/png",
+          "image/webp"
+        ],
+        "description": "Media type the asset is served with."
+      },
+      "CelebrationAssetDto": {
+        "type": "object",
+        "properties": {
+          "assetId": {
+            "type": "string",
+            "description": "Asset ID, unique across the catalog; ends with the first 16 hex characters of its SHA-256.",
+            "example": "new-year-default-snowman-delivery-poster-8e2d4a6c0f1b3957"
+          },
+          "mediaType": {
+            "description": "Media type the asset is served with.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CelebrationMediaType"
+              }
+            ]
+          },
+          "bytes": {
+            "type": "number",
+            "description": "Exact byte length of the uncompressed asset.",
+            "example": 5210
+          },
+          "sha256": {
+            "type": "string",
+            "description": "Lowercase hex SHA-256 of the uncompressed asset.",
+            "example": "8e2d4a6c0f1b39570000000000000000000000000000000000000000000000ab"
+          }
+        },
+        "required": ["assetId", "mediaType", "bytes", "sha256"]
+      },
+      "CelebrationDecorationDto": {
+        "type": "object",
+        "properties": {
+          "template": {
+            "type": "string",
+            "description": "Decoration template ID.",
+            "example": "static-trigger-v1"
+          },
+          "posterAssetId": {
+            "type": "string",
+            "description": "Asset ID of the trigger image.",
+            "example": "company-anniversary-icon-fdfbf047a8df14a3"
+          },
+          "labelId": {
+            "type": "string",
+            "description": "Label ID of the trigger accessible name.",
+            "example": "activate"
+          }
+        },
+        "required": ["template", "posterAssetId", "labelId"]
+      },
+      "CelebrationEventDto": {
+        "type": "object",
+        "properties": {
+          "titleLabelId": {
+            "type": "string",
+            "description": "Label ID of the notification title.",
+            "example": "toastTitle"
+          },
+          "clickSceneIds": {
+            "description": "Scenes the trigger plays, each a declared scene ID.",
+            "example": ["confetti"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "iconAssetId": {
+            "type": "string",
+            "description": "Asset ID of the event icon.",
+            "example": "company-anniversary-icon-fdfbf047a8df14a3"
+          },
+          "decoration": {
+            "description": "The static trigger.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CelebrationDecorationDto"
+              }
+            ]
+          }
+        },
+        "required": ["titleLabelId", "clickSceneIds", "decoration"]
+      },
+      "CelebrationStageFit": {
+        "type": "string",
+        "enum": ["contain", "cover"],
+        "description": "How the stage scales into the viewport (viewport-stage-v1)."
+      },
+      "CelebrationStageAlign": {
+        "type": "string",
+        "enum": [
+          "center",
+          "top",
+          "bottom",
+          "top-start",
+          "top-end",
+          "bottom-start",
+          "bottom-end"
+        ],
+        "description": "Where the stage sits in the viewport, in logical terms (viewport-stage-v1)."
+      },
+      "CelebrationPlacementDto": {
+        "type": "object",
+        "properties": {
+          "template": {
+            "type": "string",
+            "description": "Placement template ID. Templates other than viewport-stage-v1 are passed as the ID alone, and clients without the matching capability skip the scene.",
+            "example": "viewport-stage-v1"
+          },
+          "fit": {
+            "description": "How the stage scales into the viewport (viewport-stage-v1).",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CelebrationStageFit"
+              }
+            ]
+          },
+          "align": {
+            "description": "Where the stage sits in the viewport, in logical terms (viewport-stage-v1).",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CelebrationStageAlign"
+              }
+            ]
+          }
+        },
+        "required": ["template"]
+      },
+      "CelebrationSceneDirection": {
+        "type": "string",
+        "enum": ["none", "mirror", "variant"],
+        "description": "How the scene adapts to a right-to-left host."
+      },
+      "CelebrationTimingDto": {
+        "type": "object",
+        "properties": {
+          "playbackDurationMs": {
+            "type": "number",
+            "description": "Authored story length.",
+            "example": 12000
+          },
+          "loadTimeoutMs": {
+            "type": "number",
+            "description": "Time allowed for the player and animation data, at most 2000.",
+            "example": 2000
+          },
+          "readyTimeoutMs": {
+            "type": "number",
+            "description": "Time from loadAnimation to renderer readiness, at most 250.",
+            "example": 250
+          },
+          "maxLifetimeMs": {
+            "type": "number",
+            "description": "Total lifetime from mount, at least load + ready + playback and at most 32000.",
+            "example": 15000
+          }
+        },
+        "required": [
+          "playbackDurationMs",
+          "loadTimeoutMs",
+          "readyTimeoutMs",
+          "maxLifetimeMs"
+        ]
+      },
+      "CelebrationVariantLayout": {
+        "type": "string",
+        "enum": ["mobile", "desktop"],
+        "description": "Required host layout."
+      },
+      "CelebrationVariantDirection": {
+        "type": "string",
+        "enum": ["ltr", "rtl"],
+        "description": "Required text direction."
+      },
+      "CelebrationVariantColorScheme": {
+        "type": "string",
+        "enum": ["light", "dark"],
+        "description": "Required color scheme."
+      },
+      "CelebrationVariantConditionsDto": {
+        "type": "object",
+        "properties": {
+          "layout": {
+            "description": "Required host layout.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CelebrationVariantLayout"
+              }
+            ]
+          },
+          "direction": {
+            "description": "Required text direction.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CelebrationVariantDirection"
+              }
+            ]
+          },
+          "colorScheme": {
+            "description": "Required color scheme.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CelebrationVariantColorScheme"
+              }
+            ]
+          }
+        }
+      },
+      "CelebrationVariantDto": {
+        "type": "object",
+        "properties": {
+          "when": {
+            "description": "Conditions the variant requires.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CelebrationVariantConditionsDto"
+              }
+            ]
+          },
+          "animationAssetId": {
+            "type": "string",
+            "description": "Asset ID of the Lottie JSON.",
+            "example": "new-year-default-snowman-delivery-desktop-5b0c7e19a2d4f836"
+          }
+        },
+        "required": ["when", "animationAssetId"]
+      },
+      "CelebrationSceneDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Scene ID; a scene that replaces a bundled scene uses its bundled ID.",
+            "example": "snowman-delivery"
+          },
+          "labelId": {
+            "type": "string",
+            "description": "Label ID of the notification text shown with the scene.",
+            "example": "snowmanDeliveryToastMessage"
+          },
+          "renderer": {
+            "type": "string",
+            "description": "Renderer capability ID.",
+            "example": "lottie-light-svg-v1"
+          },
+          "requiredCapabilities": {
+            "description": "Capabilities the client must support to play the scene.",
+            "example": [
+              "lottie-light-svg-v1",
+              "viewport-stage-v1",
+              "static-poster-v1"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "placement": {
+            "description": "Scene placement.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CelebrationPlacementDto"
+              }
+            ]
+          },
+          "direction": {
+            "description": "How the scene adapts to a right-to-left host.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CelebrationSceneDirection"
+              }
+            ]
+          },
+          "timing": {
+            "description": "Scene timing.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CelebrationTimingDto"
+              }
+            ]
+          },
+          "posterAssetId": {
+            "type": "string",
+            "description": "Asset ID of the static poster.",
+            "example": "new-year-default-snowman-delivery-poster-8e2d4a6c0f1b3957"
+          },
+          "posterDurationMs": {
+            "type": "number",
+            "description": "How long the poster stays, from 1000 to maxLifetimeMs.",
+            "example": 4000
+          },
+          "variants": {
+            "description": "One to eight variants, in declaration order.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CelebrationVariantDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "labelId",
+          "renderer",
+          "requiredCapabilities",
+          "placement",
+          "direction",
+          "timing",
+          "posterAssetId",
+          "posterDurationMs",
+          "variants"
+        ]
+      },
+      "CelebrationPackDto": {
+        "type": "object",
+        "properties": {
+          "packId": {
+            "type": "string",
+            "description": "Pack ID.",
+            "example": "new-year-default"
+          },
+          "version": {
+            "type": "string",
+            "description": "Pack version.",
+            "example": "1.0.0"
+          },
+          "eventId": {
+            "type": "string",
+            "description": "Celebration event ID.",
+            "example": "new-year"
+          },
+          "catalogRevision": {
+            "type": "string",
+            "description": "Revision of the celebration index the pack was resolved from.",
+            "example": "2026-11-15.1"
+          },
+          "requiredCapabilities": {
+            "description": "Capabilities the pack as a whole requires.",
+            "example": [
+              "lottie-light-svg-v1",
+              "viewport-stage-v1",
+              "static-poster-v1"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "assets": {
+            "description": "Every asset the pack declares.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CelebrationAssetDto"
+            }
+          },
+          "labels": {
+            "type": "object",
+            "description": "Pack labels as locale → label ID → plain text. Includes en whenever it is non-empty.",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "example": {
+              "en": {
+                "toastTitle": "Happy anniversary!"
+              }
+            }
+          },
+          "event": {
+            "description": "Event-level fields; present only for an external-only event.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CelebrationEventDto"
+              }
+            ]
+          },
+          "scenes": {
+            "description": "Scenes in declaration order.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CelebrationSceneDto"
+            }
+          }
+        },
+        "required": [
+          "packId",
+          "version",
+          "eventId",
+          "catalogRevision",
+          "requiredCapabilities",
+          "assets",
+          "labels",
+          "scenes"
+        ]
       },
       "CreateShareLinkDto": {
         "type": "object",

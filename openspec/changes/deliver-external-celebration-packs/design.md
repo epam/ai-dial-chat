@@ -50,11 +50,11 @@ Authorization: `@Public()`, because the endpoints carry no user data and the sta
 `CelebrationsUpstreamReader.read({ path, maxBytes, expected?: { bytes, sha256, mediaType } })` works in these steps:
 
 1. It resolves `new URL(path, celebrationsBase)` with `celebrationsBase = THEMES_CONFIG_URL + '/celebrations/'`, and requires the same origin and a pathname prefix of `celebrationsBase`. A stored path containing `..`, `\`, `:` or a leading `/` is rejected before any request.
-2. It calls `fetch` with `redirect: 'error'` and the existing `THEMES_SERVICE_TIMEOUT_MS`.
+2. It calls `fetch` with `redirect: 'manual'` and the existing `THEMES_SERVICE_TIMEOUT_MS`. A redirect is never followed: its 3xx status is a non-OK response and therefore a 502. `redirect: 'error'` would refuse it too, but as the same `TypeError` an unreachable host raises, which would turn a redirect into a 503.
 3. It streams through `response.body.getReader()`, counting bytes and cancelling once `maxBytes` is exceeded.
 4. It checks the exact length and the `crypto.createHash('sha256')` value, then the declared `mediaType` against the allowlist.
 
-The reader never trusts the upstream `Content-Type`. The served `Content-Type` is the registered `mediaType`.
+The reader never trusts the upstream `Content-Type`. The served `Content-Type` is the registered `mediaType`. A stored path is accepted only when every segment matches `[A-Za-z0-9_-][A-Za-z0-9._-]*`, which also rules out percent-encoded `..`; a rejected path is a 404, so only that pack is unavailable.
 
 The alternative was to verify inside each endpoint, which would duplicate the security-critical code three times. The reader is the one place the security review has to check. Raw `fetch` is used because the themes host is a static non-DIAL upstream, which `apps/chat-api/AGENTS.md` allows.
 
@@ -64,11 +64,15 @@ The C1 → C2 mapping lives in `celebration-index.normalizer.ts` and `celebratio
 
 The alternatives were class-validator with `plainToInstance` on upstream data, or a JSON-Schema library. Class-validator would need `whitelist` behavior on nested arrays and would turn kebab-case keys into class fields. There is no kebab-case in the index, but a schema library is still a new dependency, and S0 open question 5 (a canonical JSON Schema) is not settled yet. The response DTO classes still carry `@ApiProperty` for Swagger and the generated client.
 
+Two allowlist rules are deliberately stricter than stripping. A variant `when` key outside `layout`, `direction` and `colorScheme` rejects the manifest, because dropping a condition would let the variant match hosts it was not authored for. A placement template other than `viewport-stage-v1` (S3's `composer-anchor-v1`) is passed as `{ template }` alone, so the pack stays servable and a client without that capability skips the scene.
+
 ### D4: Byte-bounded immutable store, separate from `CACHE_MANAGER`
 
 `ImmutableResourceStore` is a `Map`-based LRU in `apps/chat-api/src/celebrations/`, with `maxTotalBytes = 16 MiB` and a per-entry cap equal to the largest resource cap (300 KiB). It provides single-flight: concurrent misses for a key share one promise. Only verified entries are stored.
 
 The index stays in `CACHE_MANAGER` under `celebrations:v1:index` with a 60 s TTL. A `lastValidIndex` field in the service is served when a refetch is invalid. Manifests are keyed `celebrations:v1:manifest:<packId>:<version>` and assets `celebrations:v1:asset:<assetId>`.
+
+A manifest is stored without `catalogRevision`; the service adds the current index revision per response, so a new revision never needs a new manifest entry. The first validated manifest to declare an asset ID claims its `sha256` for the life of the process.
 
 To serve an asset ID, the BFF looks it up in an asset index built from every manifest that the current valid celebration index lists and that the BFF has validated. An unknown ID gives `404` without an upstream request. A listed pack whose manifest is not cached yet is loaded first, so it can be checked for membership.
 
@@ -149,7 +153,7 @@ Publication order: resources, then the manifest, then `celebrations/index.json`.
 
 ### D12: The celebrations endpoints compress their own responses
 
-`apps/chat-api` has no compression middleware, and Lottie JSON compresses 5–8×. Immutable resources are compressed once with Node `zlib` (Brotli 11 / gzip 9) after verification, and the copies are kept in the immutable store under its byte limit. The index is compressed per response at Brotli 5. Negotiation uses `Accept-Encoding`, with `Vary: Accept-Encoding`. `sha256` and `bytes` keep describing the identity bytes.
+`apps/chat-api` has no compression middleware, and Lottie JSON compresses 5–8×. Assets are compressed once with Node `zlib` (Brotli 11 / gzip 9) after verification, off the event loop and on first request for each encoding, and the copies are kept in the immutable store under its byte limit. The index and manifests are compressed per response at Brotli 5: both are at most 64 KiB, and a manifest response carries the current `catalogRevision`. Negotiation uses `Accept-Encoding`, with `Vary: Accept-Encoding`. `sha256` and `bytes` keep describing the identity bytes.
 
 The alternatives were the `compression` middleware, which is a new dependency and would compress every API response (including SSE streaming, which it can break unless excluded), or leaving it to the ingress, which is not guaranteed in every deployment.
 

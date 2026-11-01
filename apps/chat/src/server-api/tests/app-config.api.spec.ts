@@ -1,4 +1,7 @@
-import { CatalogCreationType } from '@epam/ai-dial-chat-api-client';
+import {
+  CatalogCreationType,
+  CelebrationDeliveryMode,
+} from '@epam/ai-dial-chat-api-client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { appConfigApi } from '../api-client';
 import { getClientConfig } from '../app-config.api';
@@ -37,6 +40,12 @@ describe('app-config API', () => {
         maxAttachmentFileSizeBytes: 536_870_912,
         usageLimitsWarningThresholdPercent: 75,
         celebrationsEnabledByDefault: true,
+        celebrationDelivery: {
+          mode: CelebrationDeliveryMode.Bundled,
+          revision: '0',
+          externalScenes: [],
+          externalEvents: [],
+        },
         projectContextFileMaxBytes: 1_048_576,
         projectContextTotalMaxBytes: 10_485_760,
         projectContextAllowedExtensions: ['csv', 'pdf', 'xlsx'],

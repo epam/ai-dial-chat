@@ -3,6 +3,7 @@
 export * from './AppConfigApi';
 export * from './ApplicationsApi';
 export * from './AuthApi';
+export * from './CelebrationsApi';
 export * from './ChatApi';
 export * from './ClientChannelApi';
 export * from './ConversationsApi';

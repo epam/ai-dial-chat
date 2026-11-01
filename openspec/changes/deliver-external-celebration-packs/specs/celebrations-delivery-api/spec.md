@@ -131,7 +131,7 @@ Every upstream read for the celebrations endpoints SHALL go through one reader i
 - It resolves the target from a server-side path only: the fixed `celebrations/index.json`, an index `manifest.path`, or a manifest-relative asset `file`.
 - It requires the resolved URL to keep the origin of `THEMES_CONFIG_URL` and to stay under its `celebrations/` path. `..`, an absolute URL, a scheme or a backslash in the stored path makes the resource unavailable.
 - It never builds a URL from client input other than the validated IDs used as registry keys.
-- It uses `redirect: 'error'` and the existing `THEMES_SERVICE_TIMEOUT_MS` through an `AbortController`.
+- It never follows a redirect (`redirect: 'manual'`, so a 3xx is treated as an invalid upstream status) and uses the existing `THEMES_SERVICE_TIMEOUT_MS` through an `AbortController`.
 - It reads the body as a stream and aborts once the cap is exceeded. The caps are 64 KiB for the index, 64 KiB for a manifest, 300 KiB for Lottie JSON and 100 KiB for a poster or icon.
 - It verifies the exact declared `bytes` and the lowercase SHA-256 before parsing, caching or serving, and verifies the declared media type against the allowlist `application/json`, `image/svg+xml`, `image/png`, `image/webp`.
 - It parses JSON with a depth limit: 32 for the index and manifests, 64 for Lottie.
@@ -213,8 +213,8 @@ Caching SHALL follow these rules:
 
 - For `application/json` and `image/svg+xml` (the index, manifests, Lottie JSON and SVG posters), the BFF SHALL serve `br` when `Accept-Encoding` allows it, else `gzip`, else identity. It SHALL send `Content-Encoding` and `Vary: Accept-Encoding`.
 - PNG and WebP SHALL be served as identity.
-- Immutable resources SHALL be compressed once, after verification, with Node `zlib` (Brotli quality 11, gzip level 9). The compressed copies are stored next to the identity bytes in the immutable resource store, and the store counts every copy toward its 16 MiB limit.
-- The index SHALL be compressed per response at Brotli quality 5.
+- Assets SHALL be compressed once, after verification, with Node `zlib` (Brotli quality 11, gzip level 9). The compressed copies are stored next to the identity bytes in the immutable resource store, and the store counts every copy toward its 16 MiB limit.
+- The index and manifests SHALL be compressed per response at Brotli quality 5, because a manifest response carries the current `catalogRevision`.
 - `sha256` and `bytes` always describe the identity bytes.
 - No new npm dependency is added.
 

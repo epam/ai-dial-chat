@@ -5,6 +5,7 @@ package.json
 src/apis/AppConfigApi.ts
 src/apis/ApplicationsApi.ts
 src/apis/AuthApi.ts
+src/apis/CelebrationsApi.ts
 src/apis/ChatApi.ts
 src/apis/ClientChannelApi.ts
 src/apis/ConversationsApi.ts
