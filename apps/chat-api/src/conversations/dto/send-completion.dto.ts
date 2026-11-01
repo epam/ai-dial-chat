@@ -12,6 +12,7 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
+import { IsConversationPath } from '../../common/validators/conversation-path.validator';
 import { MessageCustomContentDto } from './message-custom-content.dto';
 import { IsMessageOrAttachmentsPresent } from './message-or-attachments.validator';
 import { IsNotProjectConversationLocator } from './not-project-conversation-locator.validator';
@@ -39,9 +40,7 @@ export class SendCompletionDto {
   })
   @IsString()
   @MinLength(1)
-  @Matches(/^(?!.*\.\.)[\s\S]+$/, {
-    message: 'path contains invalid characters',
-  })
+  @IsConversationPath()
   @IsNotProjectConversationLocator()
   path!: string;
 
