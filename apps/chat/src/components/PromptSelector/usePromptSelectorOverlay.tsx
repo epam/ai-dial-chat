@@ -11,7 +11,6 @@ import { useTranslation } from 'react-i18next';
 import {
   ButtonsI18nKeys,
   FavoritesI18nKeys,
-  NavigationI18nKeys,
   PromptSelectorI18nKeys,
 } from '../../constants/translation-keys';
 import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
@@ -81,7 +80,7 @@ export const usePromptSelectorOverlay = ({
       parametersLabels: {
         title: t(PromptSelectorI18nKeys.ParametersTitle),
         closeLabel: t(ButtonsI18nKeys.Close),
-        backLabel: t(NavigationI18nKeys.Back),
+        backLabel: t(ButtonsI18nKeys.Back),
         parametersLabel: t(PromptSelectorI18nKeys.ParametersLabel),
         detailsLabel: t(PromptSelectorI18nKeys.DetailsLabel),
         enterValuePlaceholder: t(PromptSelectorI18nKeys.EnterValuePlaceholder),

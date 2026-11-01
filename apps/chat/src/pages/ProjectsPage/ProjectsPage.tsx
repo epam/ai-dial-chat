@@ -1,3 +1,4 @@
+import { getApiErrorDetails } from '@epam/ai-dial-chat-hooks';
 import {
   Projects,
   ProjectSource,
@@ -15,6 +16,7 @@ import {
   ProjectsI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
+import { useNotification } from '../../context/NotificationContext';
 import { useUserConfig } from '../../context/UserConfigContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useProjects } from '../../hooks/projects/useProjects';
@@ -29,7 +31,8 @@ const ProjectsPage: FC = () => {
   const isEnabled = useFeatureFlag('projectsEnabled');
   const { projects, incompleteSources, isLoading, hasError, retry } =
     useProjects(isEnabled);
-  const { pinnedProjectIds } = useUserConfig();
+  const { pinnedProjectIds, setPinnedProject } = useUserConfig();
+  const { showErrorNotification } = useNotification();
   const projectItems = useMemo(() => {
     const pinned = new Set(pinnedProjectIds);
     return projects.map((project) =>
@@ -45,6 +48,23 @@ const ProjectsPage: FC = () => {
   const handleOpenProject = useCallback(
     (id: string) => navigate(getProjectViewRoute(id)),
     [navigate],
+  );
+
+  /* The context pins optimistically and rolls back on failure; only the
+   * error is left to report. */
+  const handleTogglePin = useCallback(
+    async (id: string, isPinned: boolean) => {
+      try {
+        await setPinnedProject(id, isPinned);
+      } catch (err) {
+        const { traceId } = await getApiErrorDetails(err);
+        showErrorNotification({
+          message: t(ProjectsI18nKeys.ActionsPinError),
+          requestId: traceId,
+        });
+      }
+    },
+    [setPinnedProject, showErrorNotification, t],
   );
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -87,6 +107,7 @@ const ProjectsPage: FC = () => {
       folderPathLabel: t(ProjectsI18nKeys.CardFolderPath),
       createProjectLabel: t(ProjectsI18nKeys.PageNewProject),
       pinnedLabel: t(ProjectsI18nKeys.CardPinned),
+      pinLabel: t(ButtonsI18nKeys.Pin),
     }),
     [t],
   );
@@ -107,6 +128,7 @@ const ProjectsPage: FC = () => {
       incompleteSources={incompleteSources}
       onRetry={retry}
       onCreateProject={handleCreateProject}
+      onTogglePin={handleTogglePin}
       onOpenProject={handleOpenProject}
       getProjectHref={getProjectViewRoute}
       searchQuery={searchQuery}

@@ -99,6 +99,8 @@ export const ListView: FC<ListViewProps> = ({
     '--cat-card-star-filled': colors?.starFilled,
     '--cat-list-folder-icon': colors?.folderIcon,
     '--cat-list-selected-check': colors?.selectedRowCheckIcon,
+    '--cat-list-name-text': colors?.nameText,
+    '--cat-list-version-text': colors?.versionText,
   } as CSSProperties;
 
   const gridApiRef = useRef<GridApi<CatalogItem> | null>(null);

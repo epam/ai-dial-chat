@@ -24,6 +24,8 @@ export interface MessageBubbleColors {
   text?: string;
   /** Divider color above quick-reply buttons. Falls back to `--color-secondary`. */
   startersDivider?: string;
+  /** Text color of the send time shown when `timestamp` is set. Defaults to `--text-secondary`. */
+  timestampText?: string;
 }
 
 /** Typography overrides for message bubble components. */
@@ -42,7 +44,7 @@ export interface MessageBubbleStyles {
   className?: string;
   /** Extra class(es) on the bubble element. */
   bubbleClassName?: string;
-  /** Typography and color classes on the send time shown when `timestamp` is set. Defaults to `'dial-small-text text-secondary'`. */
+  /** Typography class on the send time shown when `timestamp` is set. Defaults to `'dial-small-text'`. */
   timestampClassName?: string;
 }
 

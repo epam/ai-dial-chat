@@ -1,4 +1,6 @@
 import {
+  ExternalServiceLoginOutcomeType,
+  PendingSigninEventKind,
   ToolsetAuthTypes,
   ToolsetLoginOutcomeType,
 } from '@epam/ai-dial-chat-hooks';
@@ -12,15 +14,11 @@ import {
 import { useFeatureFlag } from '../../../context/AppConfigContext';
 import { useClientChannel } from '../../../context/ClientChannelContext';
 import { useDeployments } from '../../../context/DeploymentsContext';
-import {
-  ExternalServiceLoginOutcomeType,
-  useExternalServiceLogin,
-} from '../../../hooks/externalServices/useExternalServiceLogin';
+import { useExternalServiceLogin } from '../../../hooks/externalServices/useExternalServiceLogin';
 import { useToolsetLogin } from '../../../hooks/toolsets/useToolsetLogin';
 import { useUiFeature } from '../../../hooks/useUiFeature';
 import { getExternalService } from '../../../server-api/external-services';
 import { getToolset } from '../../../server-api/toolsets';
-import { PendingSigninEventKind } from '../../../types/client-channel';
 import SigninInterruptDialog from '../SigninInterruptDialog';
 
 vi.mock(

@@ -24,32 +24,34 @@ const addRow = (index: number) => {
   rect(row, 24, 80 + index * 45);
   return row;
 };
-beforeEach(() => {
-  vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(
-    1280,
-  );
-  vi.spyOn(document.documentElement, 'clientHeight', 'get').mockReturnValue(
-    900,
-  );
-  fixture = document.createElement('section');
-  fixture.innerHTML =
-    '<div class="composer"><textarea></textarea></div><div data-halloween-pumpkin-anchor><button>Pumpkin</button></div><ul class="celebration-history"></ul>';
-  document.body.appendChild(fixture);
-  rect(fixture.querySelector('.composer')!, 400, 400, 700, 150);
-  rect(
-    fixture.querySelector('[data-halloween-pumpkin-anchor]')!,
-    1100,
-    650,
-    128,
-    128,
-  );
-});
-afterEach(() => {
-  fixture.remove();
-  vi.restoreAllMocks();
-});
 
 describe('raven UI targets', () => {
+  beforeEach(() => {
+    vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(
+      1280,
+    );
+    vi.spyOn(document.documentElement, 'clientHeight', 'get').mockReturnValue(
+      900,
+    );
+    fixture = document.createElement('section');
+    fixture.innerHTML =
+      '<div class="composer"><textarea></textarea></div><div data-halloween-pumpkin-anchor><button>Pumpkin</button></div><ul class="celebration-history"></ul>';
+    document.body.appendChild(fixture);
+    rect(fixture.querySelector('.composer')!, 400, 400, 700, 150);
+    rect(
+      fixture.querySelector('[data-halloween-pumpkin-anchor]')!,
+      1100,
+      650,
+      128,
+      128,
+    );
+  });
+
+  afterEach(() => {
+    fixture.remove();
+    vi.restoreAllMocks();
+  });
+
   it('finds one visible conversation, composer and pumpkin without touching focus or contents', () => {
     const row = addRow(0);
     const input = fixture.querySelector('textarea')!;

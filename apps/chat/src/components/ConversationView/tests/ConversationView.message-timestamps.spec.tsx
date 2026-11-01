@@ -154,11 +154,11 @@ const messages = [
   message(MessageRole.User, 'follow-up'),
 ];
 
-beforeEach(() => {
-  mocks.hasTimestampByIndex.clear();
-});
-
 describe('ConversationView — message timestamps', () => {
+  beforeEach(() => {
+    mocks.hasTimestampByIndex.clear();
+  });
+
   it('asks every message item for its send time when hasMessageTimestamps is set', () => {
     render(
       <ConversationView {...props} messages={messages} hasMessageTimestamps />,

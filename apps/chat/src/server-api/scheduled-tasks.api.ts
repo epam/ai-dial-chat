@@ -8,24 +8,20 @@ import type {
   UpdateScheduledTaskBodyDto,
   UpdatedScheduledTaskDto,
 } from '@epam/ai-dial-chat-api-client';
-import { createScheduledTasksApiClient } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
-import type {
-  ListScheduledTaskRunsParams,
-  ListScheduledTasksParams,
-} from '../models/scheduled-tasks';
+import {
+  createScheduledTasksApiClient,
+  type ScheduledTaskRunsListRequest,
+  type ScheduledTasksListRequest,
+} from '@epam/ai-dial-chat-hooks/scheduled-tasks';
 import { scheduledTasksApi } from './api-client';
 
 /* The app owns generated-client configuration; chat-hooks owns scheduler API composition. */
 export const schedulerClient = createScheduledTasksApiClient(scheduledTasksApi);
 
-export const listScheduledTasks = ({
-  limit,
-  offset,
-  search,
-  sort,
-  signal,
-}: ListScheduledTasksParams = {}): Promise<ListScheduledTasksResponseDto> =>
-  schedulerClient.listScheduledTasks({ limit, offset, search, sort, signal });
+export const listScheduledTasks = (
+  request: ScheduledTasksListRequest = {},
+): Promise<ListScheduledTasksResponseDto> =>
+  schedulerClient.listScheduledTasks(request);
 
 export const createScheduledTask = (
   body: CreateScheduledTaskBodyDto,
@@ -69,10 +65,7 @@ export const getScheduledTaskRun = (
     signal ? { signal } : undefined,
   );
 
-export const listScheduledTaskRuns = ({
-  scheduleId,
-  limit,
-  offset,
-  signal,
-}: ListScheduledTaskRunsParams): Promise<ListScheduledTaskRunsResponseDto> =>
-  schedulerClient.listScheduledTaskRuns({ scheduleId, limit, offset, signal });
+export const listScheduledTaskRuns = (
+  request: ScheduledTaskRunsListRequest,
+): Promise<ListScheduledTaskRunsResponseDto> =>
+  schedulerClient.listScheduledTaskRuns(request);

@@ -3,6 +3,7 @@ export enum ApiEndpoints {
   THEME_ICON = '/api/themes/icon',
   CHAT_COMPLETIONS = '/api/v1/chat/completions',
   CONVERSATIONS = '/api/v1/conversations',
+  PROJECTS = '/api/v1/projects',
   MODELS = '/api/v1/models',
   AUTH_ME = '/api/v1/auth/me',
   AUTH_LOGOUT = '/api/v1/auth/logout',
@@ -48,9 +49,11 @@ enum CsrfErrorCode {
 }
 
 type UnauthorizedListener = (url: string) => void;
+
 const listeners = new Set<UnauthorizedListener>();
 
 let _csrfToken: string | null = null;
+
 export const setCsrfToken = (token: string | null): void => {
   _csrfToken = token;
 };

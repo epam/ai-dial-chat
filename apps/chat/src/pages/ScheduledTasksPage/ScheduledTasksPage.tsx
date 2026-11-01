@@ -210,7 +210,7 @@ const ScheduledTasksPage: FC = () => {
       noResultsLabel: t(ScheduledTasksI18nKeys.ListNoResultsLabel),
       noResultsDescription: t(BasicI18nKeys.NoResultsDescription),
       errorLabel: t(ScheduledTasksI18nKeys.ListErrorLabel),
-      retryLabel: t(ScheduledTasksI18nKeys.ListRetryLabel),
+      retryLabel: t(ButtonsI18nKeys.Retry),
       loadingMoreLabel: t(ScheduledTasksI18nKeys.ListLoadingMoreLabel),
       loadMoreErrorLabel: t(ScheduledTasksI18nKeys.ListLoadMoreErrorLabel),
       cardLabels: {

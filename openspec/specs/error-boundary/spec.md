@@ -15,7 +15,7 @@ The component SHALL NOT catch errors thrown inside event handlers, async functio
 ```ts
 interface Props extends FallbackProps {
   // from FallbackProps: error: unknown; resetErrorBoundary: () => void;
-  actionLabel?: ParseKeys<'translation'>; // i18n key override, default ErrorBoundaryI18nKeys.RetryLabel ("errorBoundary.retryLabel")
+  actionLabel?: ParseKeys<'translation'>; // i18n key override, default ButtonsI18nKeys.TryAgain ("buttons.tryAgain")
 }
 ```
 
@@ -24,7 +24,6 @@ interface Props extends FallbackProps {
 "errorBoundary": {
   "heading": "Something went wrong",
   "description": "An unexpected error occurred. You can try again or reload the page.",
-  "retryLabel": "Try again",
   "reloadLabel": "Reload the page"
 }
 ```

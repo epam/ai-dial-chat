@@ -556,7 +556,7 @@ export const OoxmlContent: FC<OoxmlContentProps> = ({
             tabIndex={0}
             aria-live="polite"
             className={mergeClasses(
-              'h-8 min-w-0 flex-1 overflow-x-auto rounded border px-2 py-1 whitespace-nowrap focus-visible:outline focus-visible:outline-focus',
+              'h-8 min-w-0 flex-1 overflow-x-auto rounded border px-2 py-1 whitespace-nowrap focus-visible:outline',
               styles.formulaValue,
               formulaValueClassName,
             )}

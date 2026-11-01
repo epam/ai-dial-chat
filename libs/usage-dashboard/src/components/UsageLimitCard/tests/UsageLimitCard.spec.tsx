@@ -248,7 +248,7 @@ describe('UsageLimitCard', () => {
       renderCard(resetFields);
 
       const resetLine = screen.getByText(RESET_LABEL);
-      expect(resetLine.className).toContain('break-words');
+      expect(resetLine.className).toContain('wrap-break-word');
       expect(resetLine.className).not.toContain('whitespace-nowrap');
     });
   });

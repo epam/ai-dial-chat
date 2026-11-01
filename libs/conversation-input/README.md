@@ -105,6 +105,12 @@ import type { AttachmentTrayStyles } from '@epam/ai-dial-attachment-input';
 
 `Input` takes the same object as a top-level `attachmentTray` prop.
 
+`styles.typography.input` (`InputTypography`) sets the composer's type:
+`fontClassName` on the textarea (default `'dial-body-paragraph-text'`), and
+`modelSelectorNameClassName` / `modelSelectorVersionClassName` on the selected
+model's name and version on the selector trigger (default `'dial-small-text'` /
+`'dial-tiny-text'`).
+
 `styles.modelMenu` themes the model menu in both presentations — the desktop
 dropdown and the mobile bottom sheet — with one `ModelMenuStyles` object.
 `className` lands on the menu panel (also when `modelPickerOverlay` supplies
@@ -114,14 +120,15 @@ to `itemClassName`. Each is merged after the component's own classes, so a
 conflicting utility replaces the default instead of landing beside it.
 `colors` takes runtime values, in both presentations:
 
-| Field                    | Colours                       | Default                                                        |
-| ------------------------ | ----------------------------- | -------------------------------------------------------------- |
-| `searchHeaderBackground` | The search row                | `--bg-layer-raised` on desktop, transparent in the sheet       |
-| `itemText`               | Every row's label and icon    | `--text-primary`                                               |
-| `itemHoverBackground`    | A hovered row                 | `--bg-control-accent-alpha-hover` / `--bg-layer-raised`        |
-| `selectedItemBackground` | The selected row at rest      | None                                                           |
-| `selectedItemText`       | The selected row's label      | `itemText`                                                     |
-| `checkIcon`              | The selected row's check mark | The row's text colour on desktop, `--text-accent` in the sheet |
+| Field                    | Colours                                                          | Default                                                        |
+| ------------------------ | ---------------------------------------------------------------- | -------------------------------------------------------------- |
+| `searchHeaderBackground` | The search row                                                   | `--bg-layer-raised` on desktop, transparent in the sheet       |
+| `itemText`               | Every row's label and icon                                       | `--text-primary`                                               |
+| `itemHoverBackground`    | A hovered row                                                    | `--bg-control-accent-alpha-hover` / `--bg-layer-raised`        |
+| `selectedItemBackground` | The selected row at rest                                         | None                                                           |
+| `selectedItemText`       | The selected row's label                                         | `itemText`                                                     |
+| `checkIcon`              | The selected row's check mark                                    | The row's text colour on desktop, `--text-accent` in the sheet |
+| `overlayBackground`      | The desktop panel when `modelPickerOverlay` supplies the content | `--bg-layer-raised`                                            |
 
 A row colour that is not set leaves that part of the row exactly as the kit
 draws it. The desktop panel renders in a portal outside the composer, so these
@@ -250,7 +257,7 @@ For a usage-limit notice, pass a [`UsageLimitBannerView`](#usagelimitbannerview)
 
 A presentational usage-limit notice built for `aboveInputSlot`: a section
 message rendered with the kit `Notification` (warning / error variant, kept on
-the neutral `bg-layer-sunken` surface), with a limit sentence in semibold and an optional
+the neutral `--bg-layer-sunken` surface, recoloured by `colors.background`), with a limit sentence in semibold and an optional
 reset sentence after it. `UsageLimitBannerSeverity.Warning` renders the kit's
 filled warning icon and `UsageLimitBannerSeverity.Reached` its filled error icon.
 Both announce politely through `role="status"`, because the banner reports
@@ -296,7 +303,8 @@ import {
 `limitTextClassName` (default `'dial-small-paragraph-semi-text'`) and
 `resetTextClassName` (default `'dial-small-paragraph-text'`) take classes from
 the kit type scale; `className` lands on the banner root next to
-`dial-ci-usage-banner`.
+`dial-ci-usage-banner`. `colors` (`UsageLimitBannerColors`) sets `background`
+(default `--bg-layer-sunken`).
 
 ### EditMessageInput
 
@@ -399,6 +407,8 @@ import { ChatSettingsModal } from '@epam/ai-dial-conversation-input';
   );
 }
 ```
+
+`colors.background` (`ChatSettingsModalColors`, default `--bg-layer-raised`) recolours the surface. `Popup` portals the modal, so the value travels on the popup overlay (`overlayStyle`). Inside `Input`, pass it as `chatSettings.modalColors`.
 
 ### BottomSheetShell
 

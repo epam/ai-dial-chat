@@ -31,98 +31,6 @@ let plan: CatPlan;
 let stop: (() => void) | undefined;
 let notification: HTMLElement | undefined;
 
-beforeEach(() => {
-  vi.useFakeTimers();
-  vi.clearAllMocks();
-  Object.defineProperty(document, 'timeline', {
-    configurable: true,
-    value: { currentTime: 2345 },
-  });
-  fixture = document.createElement('section');
-  fixture.innerHTML = `<section id="composer"><textarea aria-label="Message"></textarea>
-    <button id="first" type="button" style="opacity: 0.7"><span>Attach</span></button>
-    <button id="second" type="button"><svg><path /></svg></button></section>
-    <button id="support" type="button">Help me write</button>`;
-  document.body.appendChild(fixture);
-  composer = fixture.querySelector<HTMLElement>('#composer')!;
-  draft = fixture.querySelector('textarea')!;
-  draft.value = 'My unsent draft';
-  draft.focus();
-  draft.setSelectionRange(3, 9, 'backward');
-  vi.runOnlyPendingTimers();
-  host = document.createElement('div');
-  host.setAttribute('aria-hidden', 'true');
-  copies = document.createElement('div');
-  actor = document.createElement('div');
-  facing = document.createElement('div');
-  actor.appendChild(facing);
-  host.append(copies, actor);
-  document.body.appendChild(host);
-  plan = buildCatPlan(
-    {
-      width: 1280,
-      height: 900,
-      composer: { element: composer, rect: new DOMRect(420, 420, 540, 100) },
-      buttons: [
-        {
-          element: fixture.querySelector<HTMLElement>('#first')!,
-          rect: new DOMRect(440, 470, 40, 40),
-        },
-        {
-          element: fixture.querySelector<HTMLElement>('#second')!,
-          rect: new DOMRect(492, 470, 40, 40),
-        },
-      ],
-      supports: [
-        {
-          element: fixture.querySelector<HTMLElement>('#support')!,
-          rect: new DOMRect(420, 570, 300, 44),
-        },
-      ],
-    },
-    false,
-  );
-  plan.anchors.forEach(({ element, rect }) => {
-    vi.spyOn(element, 'getBoundingClientRect').mockReturnValue(rect);
-  });
-  Object.keys(plan.parts).forEach((part) => {
-    const artwork = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    artwork.setAttribute('data-cat-part', part);
-    facing.appendChild(artwork);
-  });
-  Object.defineProperty(Element.prototype, 'animate', {
-    configurable: true,
-    value: vi.fn(function (
-      this: Element,
-      frames: Keyframe[],
-      options: KeyframeAnimationOptions,
-    ) {
-      const animation = { cancel: vi.fn() };
-      recorded.push({ element: this, frames, options, animation });
-      return animation;
-    }),
-  });
-});
-
-afterEach(() => {
-  stop?.();
-  stop = undefined;
-  host.remove();
-  fixture.remove();
-  notification?.remove();
-  notification = undefined;
-  document.documentElement.removeAttribute('dir');
-  recorded.length = 0;
-  if (originalAnimate)
-    Object.defineProperty(Element.prototype, 'animate', originalAnimate);
-  else Reflect.deleteProperty(Element.prototype, 'animate');
-  if (originalTimeline)
-    Object.defineProperty(document, 'timeline', originalTimeline);
-  else Reflect.deleteProperty(document, 'timeline');
-  vi.restoreAllMocks();
-  vi.useRealTimers();
-});
-
 const play = () => {
   stop = animateCat(plan, { host, copies, actor, facing }, onStop);
 };
@@ -145,6 +53,101 @@ const expectStopped = () => {
 };
 
 describe('cat gravity animation ownership', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    Object.defineProperty(document, 'timeline', {
+      configurable: true,
+      value: { currentTime: 2345 },
+    });
+    fixture = document.createElement('section');
+    fixture.innerHTML = `<section id="composer"><textarea aria-label="Message"></textarea>
+    <button id="first" type="button" style="opacity: 0.7"><span>Attach</span></button>
+    <button id="second" type="button"><svg><path /></svg></button></section>
+    <button id="support" type="button">Help me write</button>`;
+    document.body.appendChild(fixture);
+    composer = fixture.querySelector<HTMLElement>('#composer')!;
+    draft = fixture.querySelector('textarea')!;
+    draft.value = 'My unsent draft';
+    draft.focus();
+    draft.setSelectionRange(3, 9, 'backward');
+    vi.runOnlyPendingTimers();
+    host = document.createElement('div');
+    host.setAttribute('aria-hidden', 'true');
+    copies = document.createElement('div');
+    actor = document.createElement('div');
+    facing = document.createElement('div');
+    actor.appendChild(facing);
+    host.append(copies, actor);
+    document.body.appendChild(host);
+    plan = buildCatPlan(
+      {
+        width: 1280,
+        height: 900,
+        composer: { element: composer, rect: new DOMRect(420, 420, 540, 100) },
+        buttons: [
+          {
+            element: fixture.querySelector<HTMLElement>('#first')!,
+            rect: new DOMRect(440, 470, 40, 40),
+          },
+          {
+            element: fixture.querySelector<HTMLElement>('#second')!,
+            rect: new DOMRect(492, 470, 40, 40),
+          },
+        ],
+        supports: [
+          {
+            element: fixture.querySelector<HTMLElement>('#support')!,
+            rect: new DOMRect(420, 570, 300, 44),
+          },
+        ],
+      },
+      false,
+    );
+    plan.anchors.forEach(({ element, rect }) => {
+      vi.spyOn(element, 'getBoundingClientRect').mockReturnValue(rect);
+    });
+    Object.keys(plan.parts).forEach((part) => {
+      const artwork = document.createElementNS(
+        'http://www.w3.org/2000/svg',
+        'g',
+      );
+      artwork.setAttribute('data-cat-part', part);
+      facing.appendChild(artwork);
+    });
+    Object.defineProperty(Element.prototype, 'animate', {
+      configurable: true,
+      value: vi.fn(function (
+        this: Element,
+        frames: Keyframe[],
+        options: KeyframeAnimationOptions,
+      ) {
+        const animation = { cancel: vi.fn() };
+        recorded.push({ element: this, frames, options, animation });
+        return animation;
+      }),
+    });
+  });
+
+  afterEach(() => {
+    stop?.();
+    stop = undefined;
+    host.remove();
+    fixture.remove();
+    notification?.remove();
+    notification = undefined;
+    document.documentElement.removeAttribute('dir');
+    recorded.length = 0;
+    if (originalAnimate)
+      Object.defineProperty(Element.prototype, 'animate', originalAnimate);
+    else Reflect.deleteProperty(Element.prototype, 'animate');
+    if (originalTimeline)
+      Object.defineProperty(document, 'timeline', originalTimeline);
+    else Reflect.deleteProperty(document, 'timeline');
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
   it('borrows only inert buttons and leaves the focused composer, draft and backward selection intact', () => {
     const before = fixture.outerHTML;
     play();

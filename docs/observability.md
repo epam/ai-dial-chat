@@ -300,11 +300,11 @@ For bounded outcomes and reasons, see [auth metrics](../apps/chat-api/src/auth/a
 
 ### Process memory and outstanding work
 
-| Series                         | Unit / labels                                                                                            |
-| ------------------------------ | -------------------------------------------------------------------------------------------------------- |
-| `dial_chat_process_memory`     | Bytes; `kind` = `rss`, `heap_used`, `heap_total`, `external`, `array_buffers`.                           |
-| `dial_chat_sse_active`         | Operations; `kind` = `client_channel`, `conversation_watch`, `generation_attach`, `conversation_titles`. |
-| `dial_chat_generations_active` | Retained entries; `state` as below.                                                                      |
+| Series                         | Unit / labels                                                                                                              |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| `dial_chat_process_memory`     | Bytes; `kind` = `rss`, `heap_used`, `heap_total`, `external`, `array_buffers`.                                             |
+| `dial_chat_sse_active`         | Operations; `kind` = `client_channel`, `conversation_watch`, `generation_attach`, `conversation_titles`, `projects_watch`. |
+| `dial_chat_generations_active` | Retained entries; `state` as below.                                                                                        |
 
 Memory kinds overlap: array buffers are part of external memory, and heap total includes heap
 used. **Do not sum or stack memory kinds.** Dashboard 04 separates them; its summary sums only

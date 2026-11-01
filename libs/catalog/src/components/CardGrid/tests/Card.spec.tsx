@@ -115,7 +115,7 @@ describe('Card — long name (#9121)', () => {
     // eslint-disable-next-line testing-library/no-node-access -- the clamped name box has no role or name of its own; it is the text's direct parent.
     const name = screen.getByText('Claude').parentElement as HTMLElement;
     expect(name.className).toContain('line-clamp-2');
-    expect(name.className).toContain('break-words');
+    expect(name.className).toContain('wrap-break-word');
   });
 
   it('shows the full name in a tooltip only while the clamp hides part of it', async () => {

@@ -244,11 +244,14 @@ const NewConversationComposer: FC<Props> = ({
     [selectedDeployment, language],
   );
 
+  const isMobile = useIsMobile();
   const composerStyles: ConversationInputStyles = useMemo(
     () => ({
       ...inputStyles,
       typography: {
-        welcomeClassName: 'dial-display1-text',
+        /* The greeting is light 36px by design; every kit `dial-display*-text`
+           step is semibold, so no scale class matches it. */
+        welcomeClassName: 'font-light text-4xl',
         ...inputStyles?.typography,
       },
     }),
@@ -396,7 +399,6 @@ const NewConversationComposer: FC<Props> = ({
     itemCount: deployments.length,
   });
 
-  const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
   const isChatSettingsEnabled = useUiFeature(OverlayFeature.ChatSettings);
   const isEmptyChatSettingsEnabled = useUiFeature(
@@ -423,8 +425,11 @@ const NewConversationComposer: FC<Props> = ({
     OverlayFeature.ShowAgentDescription,
   );
   const isInlineLayout = layout === ComposerLayout.Inline;
+  const isEmbeddedLayout = layout === ComposerLayout.Embedded;
+  /* Only the welcome screen greets, describes the agent and celebrates. */
+  const isWelcomeLayout = layout === ComposerLayout.Welcome;
   const agentDescription =
-    isAgentDescriptionEnabled && !isInlineLayout
+    isAgentDescriptionEnabled && isWelcomeLayout
       ? resolvedSelectedDeployment?.description?.trim()
       : undefined;
   const { displayName } = useUserProfile();
@@ -515,7 +520,13 @@ const NewConversationComposer: FC<Props> = ({
     ) : null;
 
   return (
-    <div className="flex flex-1 flex-col overflow-y-auto">
+    <div
+      className={
+        isEmbeddedLayout
+          ? 'flex flex-col'
+          : 'flex flex-1 flex-col overflow-y-auto'
+      }
+    >
       <FileDndOverlay
         isVisible={isDragging}
         isAttachmentsAllowed={isPageDropAllowed}
@@ -542,15 +553,18 @@ const NewConversationComposer: FC<Props> = ({
           ([#9036](https://github.com/epam/ai-dial-chat/issues/9036)). */}
       <div
         className={mergeClasses(
-          '[container-type:inline-size] relative flex flex-auto shrink-0 flex-col items-center overflow-hidden',
-          isInlineLayout
-            ? 'justify-end px-6'
-            : 'justify-center px-4 py-14 desktop:px-8 desktop:py-16',
+          '@container relative flex flex-auto shrink-0 flex-col items-center overflow-hidden',
+          isInlineLayout && 'justify-end px-6',
+          isWelcomeLayout &&
+            'justify-center px-4 py-14 desktop:px-8 desktop:py-16',
         )}
-        role="region"
-        aria-label={t(ChatI18nKeys.WelcomeScreen)}
+        /* Embedded in a host page (a project's Chats), the composer is part of the host's own region. */
+        role={isEmbeddedLayout ? undefined : 'region'}
+        aria-label={
+          isEmbeddedLayout ? undefined : t(ChatI18nKeys.WelcomeScreen)
+        }
       >
-        {isCelebrationEnabled && !isInlineLayout && <CelebrationDecor />}
+        {isCelebrationEnabled && isWelcomeLayout && <CelebrationDecor />}
         {agentDescription && (
           <Suspense fallback={null}>
             <AgentDescription content={agentDescription} />
@@ -566,7 +580,7 @@ const NewConversationComposer: FC<Props> = ({
           /* `ConversationInput` renders the description only under a
              greeting, so `hide-greeting` removes both. */
           welcomeText={
-            isGreetingHidden || isInlineLayout
+            isGreetingHidden || !isWelcomeLayout
               ? undefined
               : getTimeOfDayGreeting(
                   new Date().getHours(),
@@ -592,7 +606,9 @@ const NewConversationComposer: FC<Props> = ({
                 )
           }
           descriptionText={
-            isInlineLayout ? undefined : (welcomeScreenDescription ?? undefined)
+            isWelcomeLayout
+              ? (welcomeScreenDescription ?? undefined)
+              : undefined
           }
           belowWelcomeSlot={isStartersBelowGreeting ? startersBlock : undefined}
           placeholder={placeholder}
@@ -611,7 +627,7 @@ const NewConversationComposer: FC<Props> = ({
           isModelSelectorDisabled={isModelSelectorDisabled}
           isSendDisabled={isDisabledSendEnabled || isSkillUnsupported}
           modelSelectorLabels={modelSelectorLabels}
-          addMenuTitle={t(ConversationI18nKeys.AddMenuTitle)}
+          addMenuTitle={t(ButtonsI18nKeys.Add)}
           sendLabel={t(ChatI18nKeys.SendMessage)}
           sendTooltip={t(ChatI18nKeys.SendMessage)}
           stopLabel={t(ChatI18nKeys.StopStreaming)}
@@ -679,7 +695,8 @@ const NewConversationComposer: FC<Props> = ({
         />
         {!isStartersBelowGreeting && startersBlock}
       </div>
-      <FooterMessage />
+      {/* The page footer (operator message, app version) belongs to a full-page chat, not a composer embedded in another page. */}
+      {!isEmbeddedLayout && <FooterMessage />}
       {isDialFileManagerOpen && (
         <DialFileManagerModal
           isOpen={isDialFileManagerOpen}
@@ -696,7 +713,7 @@ const NewConversationComposer: FC<Props> = ({
           emptyTitle={t(DialFileManagerI18nKeys.Empty)}
           emptyDescription=""
           errorMessage={t(DialFileManagerI18nKeys.Error)}
-          retryLabel={t(DialFileManagerI18nKeys.Retry)}
+          retryLabel={t(ButtonsI18nKeys.Retry)}
           hiddenFilesLabel={t(DialFileManagerI18nKeys.HiddenFiles)}
           showHiddenFilesLabel={t(DialFileManagerI18nKeys.ShowHiddenFiles)}
           hideHiddenFilesLabel={t(DialFileManagerI18nKeys.HideHiddenFiles)}

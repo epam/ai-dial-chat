@@ -6,7 +6,13 @@ import type { ScheduledTaskRunItem } from '../../../models/scheduled-task-run-it
 import { ScheduledTaskRunStatus } from '../../../types/scheduled-task-run-status';
 import { ScheduledTaskConversationHistorySection } from '../ScheduledTaskConversationHistorySection';
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
+vi.mock('@epam/ai-dial-ui-kit', async () => ({
+  ...(await vi
+    .importActual<typeof import('@epam/ai-dial-ui-kit')>('@epam/ai-dial-ui-kit')
+    .then(({ LiveRegion, LiveRegionElement }) => ({
+      LiveRegion,
+      LiveRegionElement,
+    }))),
   DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   ButtonVariant: { Primary: 'primary' },
@@ -205,5 +211,29 @@ describe('ScheduledTaskConversationHistorySection', () => {
         .getByRole('button', { name: 'History' })
         .getAttribute('aria-expanded'),
     ).toBe('true');
+  });
+
+  it('keeps one status region mounted and fills it when history turns unavailable', () => {
+    const { rerender } = render(
+      <ScheduledTaskConversationHistorySection
+        scheduleId="schedule-1"
+        items={runs}
+        labels={labels}
+      />,
+    );
+    const region = screen.getByRole('status');
+    expect(region.textContent).toBe('');
+
+    rerender(
+      <ScheduledTaskConversationHistorySection
+        scheduleId="schedule-1"
+        items={runs}
+        isUnavailable
+        labels={{ ...labels, unavailableLabel: 'History is unavailable' }}
+      />,
+    );
+
+    expect(screen.getByRole('status')).toBe(region);
+    expect(region.textContent).toBe('History is unavailable');
   });
 });

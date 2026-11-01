@@ -381,4 +381,26 @@ describe('ProjectView', () => {
     );
     expect(onBrowseProjects).toHaveBeenCalledOnce();
   });
+
+  it('renders the main column before the Details panel, named by its label', () => {
+    renderView({
+      mainContent: <p>Chats go here</p>,
+      mainContentLabel: 'Project chats',
+    });
+
+    const main = screen.getByRole('region', { name: 'Project chats' });
+    const details = screen.getByRole('complementary');
+    expect(main.textContent).toContain('Chats go here');
+    expect(
+      main.compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it('omits the main column when no content is given', () => {
+    renderView();
+
+    expect(
+      screen.queryByRole('region', { name: 'Project content' }),
+    ).toBeNull();
+  });
 });

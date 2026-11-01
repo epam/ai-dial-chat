@@ -135,6 +135,8 @@ const details = (
     { name: 'survey.xlsx', size: 1024 },
   ],
   etag: '"e1"',
+  contentVersion: '"cv1"',
+  conversationCount: 0,
   canEdit: true,
   ...extra,
 });
@@ -247,7 +249,7 @@ describe('ProjectEditPage', () => {
     ).toBeTruthy();
   });
 
-  it('saves only the new files and the removed names with the loaded ETag', async () => {
+  it('saves only the new files and the removed names with the loaded contentVersion', async () => {
     vi.mocked(updateProject).mockResolvedValue({
       id: 'projects/my-bucket/q4',
       name: 'q4',
@@ -270,7 +272,7 @@ describe('ProjectEditPage', () => {
         '/projects/view/my-bucket/q4',
       ),
     );
-    const [id, fields, files, removed, etag] =
+    const [id, fields, files, removed, contentVersion] =
       vi.mocked(updateProject).mock.calls[0];
     expect(id).toBe('projects/my-bucket/q4');
     expect(fields).toEqual({
@@ -280,10 +282,40 @@ describe('ProjectEditPage', () => {
     });
     expect(files.map((file) => file.name)).toEqual(['retro.pdf']);
     expect(removed).toEqual(['survey.xlsx']);
-    expect(etag).toBe('"e1"');
+    expect(contentVersion).toBe('"cv1"');
     expect(
       screen.queryByRole('dialog', { name: UnsavedChangesI18nKeys.Title }),
     ).toBeNull();
+  });
+
+  it('sends the contentVersion, not the ETag a chat write changed', async () => {
+    vi.mocked(getProject).mockResolvedValue(
+      details({ etag: '"after-chat"', contentVersion: '"cv1"' }),
+    );
+    vi.mocked(updateProject).mockResolvedValue({
+      id: 'projects/my-bucket/q4',
+      name: 'q4',
+      bucket: 'my-bucket',
+      path: 'q4',
+      etag: '"e2"',
+      isPinned: false,
+    });
+    const { router } = renderAt();
+    await screen.findByRole('heading', { name: ProjectsI18nKeys.EditTitle });
+
+    typeName('q4 renamed');
+    typeName('q4');
+    await userEvent.click(
+      screen.getByRole('button', { name: 'remove survey.xlsx' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe(
+        '/projects/view/my-bucket/q4',
+      ),
+    );
+    expect(vi.mocked(updateProject).mock.calls[0][4]).toBe('"cv1"');
   });
 
   it('opens the renamed project and keeps its pin', async () => {

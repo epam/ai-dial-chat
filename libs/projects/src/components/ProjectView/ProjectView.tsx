@@ -69,6 +69,8 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
   onOpenFile,
   onRetry,
   onBrowseProjects,
+  mainContent,
+  mainContentLabel = 'Project content',
   labels,
   styles: viewStyles,
 }) => {
@@ -332,7 +334,20 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
         {renderMenu(true, 'desktop:hidden')}
       </header>
 
-      <div className="flex min-w-0 flex-1 flex-col desktop:flex-row desktop:justify-end">
+      <div
+        className={mergeClasses(
+          'flex min-w-0 flex-1 flex-col desktop:flex-row',
+          mainContent == null && 'desktop:justify-end',
+        )}
+      >
+        {mainContent != null && (
+          <section
+            aria-label={mainContentLabel}
+            className="flex min-w-0 flex-1 flex-col gap-6 px-4 py-6 desktop:px-8"
+          >
+            {mainContent}
+          </section>
+        )}
         {/* No card: the panel is framed only by an inline-start border on
          * desktop, and a top border where it stacks under the header. */}
         <aside
@@ -360,7 +375,7 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
               </h3>
               <p
                 className={mergeClasses(
-                  'break-words whitespace-pre-line',
+                  'wrap-break-word whitespace-pre-line',
                   bodyClassName,
                   styles.body,
                 )}
@@ -381,7 +396,7 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
               </h3>
               <div
                 className={mergeClasses(
-                  'min-w-0 break-words',
+                  'min-w-0 wrap-break-word',
                   bodyClassName,
                   styles.body,
                 )}

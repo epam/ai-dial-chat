@@ -32,9 +32,9 @@
 
 /* Name/version colors the list cell took from `ItemHeader` before it stopped using it. */
 .name {
-  color: var(--text-primary, #161b2d);
+  color: var(--cat-list-name-text, var(--text-primary, #161b2d));
 }
 
 .version {
-  color: var(--text-secondary, #57647a);
+  color: var(--cat-list-version-text, var(--text-secondary, #57647a));
 }

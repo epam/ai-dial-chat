@@ -248,6 +248,7 @@ describe('UsageTab', () => {
 
     it('announces completion in the same region once loading ends', () => {
       type UsageDataResult = ReturnType<typeof useUsageData>;
+
       /* State-backed so the memoized tab re-renders when the result changes. */
       let setUsageData: (next: UsageDataResult) => void = () => undefined;
       mockUseUsageData.mockImplementation(() => {

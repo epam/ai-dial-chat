@@ -19,6 +19,7 @@ export const ApplicationCredentials: FC<ApplicationCredentialsProps> = ({
   onLogin,
   onLogout,
   texts,
+  typography,
 }) => {
   if (isLoading && !services.length) {
     return (
@@ -58,7 +59,9 @@ export const ApplicationCredentials: FC<ApplicationCredentialsProps> = ({
       aria-label={texts?.title ?? 'Credentials'}
       className="flex min-w-0 flex-col gap-5 px-6 py-4"
     >
-      <h2 className="dial-h3-text">{texts?.title ?? 'Credentials'}</h2>
+      <h2 className={typography?.titleClassName ?? 'dial-h3-text'}>
+        {texts?.title ?? 'Credentials'}
+      </h2>
       <div className="flex min-w-0 flex-col">
         {services.map((service) => (
           <ApplicationCredentialRow
@@ -67,6 +70,7 @@ export const ApplicationCredentials: FC<ApplicationCredentialsProps> = ({
             texts={texts}
             onLogin={onLogin}
             onLogout={onLogout}
+            typography={typography}
           />
         ))}
       </div>

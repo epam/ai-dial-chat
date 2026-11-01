@@ -5,6 +5,7 @@ import {
   RequestStatus,
 } from '@epam/ai-dial-chat-shared';
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { ATTACHMENT_INPUT_CLASS } from '../../../constants/public-class-names';
 import { AttachmentCard } from '../AttachmentCard';
@@ -161,7 +162,8 @@ describe('AttachmentCard — corner actions in the error state', () => {
     expect(onClick).not.toHaveBeenCalled();
   });
 
-  it('still activates the tile itself on Enter', () => {
+  it('still activates the tile itself on Enter', async () => {
+    const user = userEvent.setup();
     const onClick = vi.fn();
     render(
       <AttachmentCard
@@ -172,8 +174,8 @@ describe('AttachmentCard — corner actions in the error state', () => {
       />,
     );
 
-    const tile = screen.getByRole('button', { name: 'Download attachment' });
-    fireEvent.keyDown(tile, { key: 'Enter' });
+    screen.getByRole('button', { name: 'Download attachment' }).focus();
+    await user.keyboard('{Enter}');
     expect(onClick).toHaveBeenCalledWith('a1');
   });
 });
@@ -205,29 +207,33 @@ describe('AttachmentCard — upload in progress', () => {
     expect(screen.getByRole('progressbar', { name: 'Загрузка' })).toBeTruthy();
   });
 
+  /* eslint-disable testing-library/no-node-access -- aria-busy sits on the tile root, which has no role of its own */
+  const getBusyTile = () =>
+    screen
+      .getByLabelText('Remove attachment')
+      .closest(`.${ATTACHMENT_INPUT_CLASS.tile}`);
+  /* eslint-enable testing-library/no-node-access */
+
   it('marks the tile busy while uploading and not busy once settled', () => {
     const { rerender } = render(
-      <AttachmentCard attachment={uploadingAttachment} onClick={vi.fn()} />,
+      <AttachmentCard
+        attachment={uploadingAttachment}
+        onClick={vi.fn()}
+        onRemove={vi.fn()}
+      />,
     );
 
-    expect(
-      screen
-        .getByRole('button', { name: 'Download attachment' })
-        .getAttribute('aria-busy'),
-    ).toBe('true');
+    expect(getBusyTile()?.getAttribute('aria-busy')).toBe('true');
 
     rerender(
       <AttachmentCard
         attachment={{ ...uploadingAttachment, status: RequestStatus.Idle }}
         onClick={vi.fn()}
+        onRemove={vi.fn()}
       />,
     );
 
-    expect(
-      screen
-        .getByRole('button', { name: 'Download attachment' })
-        .getAttribute('aria-busy'),
-    ).toBe('false');
+    expect(getBusyTile()?.getAttribute('aria-busy')).toBe('false');
     expect(screen.queryByRole('progressbar')).toBeNull();
   });
 });
@@ -256,7 +262,7 @@ describe('AttachmentCard — long filename', () => {
     /* jsdom does no layout, so assert the classes that make the clamp work. */
     const name = screen.getByTitle('ARCHITECTUREDECISIONRECORDS');
     expect(name.className).toContain('w-full');
-    expect(name.className).toContain('break-words');
+    expect(name.className).toContain('wrap-break-word');
     expect(name.className).toContain('line-clamp-2');
   });
 });
@@ -338,7 +344,11 @@ describe('AttachmentCard — focus ring', () => {
       />,
     );
 
-    const tile = screen.getByRole('button', { name: 'Download attachment' });
+    const tileAction = screen.getByRole('button', {
+      name: 'Download attachment',
+    });
+    expect(tileAction.className).toMatch(/tileAction/);
+    const tile = getTileOf('Remove attachment')!;
     expect(tile.className).toContain('focus-visible:outline-1');
     expect(tile.className).toContain('outline-offset-1');
     // Tailwind v4's bare `outline-1` also sets a solid style, ringing every tile.

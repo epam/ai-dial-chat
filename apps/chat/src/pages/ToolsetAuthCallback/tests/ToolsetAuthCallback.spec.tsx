@@ -227,6 +227,7 @@ describe('ToolsetAuthCallback', () => {
       credentialsLevel: ToolsetCredentialsLevel.User,
       redirectUri: 'http://localhost/auth/toolset-signin',
       resourceKind: OAuthResourceKind.ExternalService,
+      offlineUsageConsent: true,
     });
     vi.mocked(externalServicesApi.signInExternalService).mockResolvedValue({
       success: true,
@@ -242,6 +243,7 @@ describe('ToolsetAuthCallback', () => {
           credentialsLevel: 'USER',
           authenticationType: 'OAUTH',
           code: 'auth-code-xyz',
+          offlineUsageConsent: true,
           redirectUri: 'http://localhost/auth/toolset-signin',
         }),
       ),

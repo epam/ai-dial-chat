@@ -147,4 +147,22 @@ export interface McpAppInlinePreviewColors {
   previewBorder?: string;
   /** Divider under the header strip. Fallback: `--stroke-tertiary`. */
   previewHeaderBorder?: string;
+  /** Text color of the header strip's app or tool name. Fallback: `--text-secondary`. */
+  headerText?: string;
+  /** Text color of the "opened in canvas" placeholder. Fallback: `--text-secondary`. */
+  placeholderText?: string;
+  /** Color of the load-error icon. Fallback: `--text-error`. */
+  errorIcon?: string;
+  /** Text color of the load-error message. Fallback: `--text-primary`. */
+  errorText?: string;
+}
+
+/** Typography class overrides for `McpAppInlinePreview`. */
+export interface McpAppInlinePreviewTypography {
+  /** Typography class of the header strip's tool and app names. Defaults to `'dial-tiny-lead-semi-text'`. */
+  headerNameClassName?: string;
+  /** Typography class of the app version beside its name. Defaults to `'dial-caption-text'`. */
+  versionClassName?: string;
+  /** Typography class of the "opened in canvas" and load-error messages. Defaults to `'dial-body-text'`. */
+  messageClassName?: string;
 }

@@ -89,6 +89,61 @@ export const getProjectViewRoute = (id: string): string =>
 export const getProjectEditRoute = (id: string): string =>
   buildProjectRoute(PROJECT_EDIT_ROUTE_BASE, id);
 
+const PROJECT_CHAT_ROUTE_BASE = `${ROUTES.Projects}/chat`;
+const PROJECT_CONVERSATIONS_SEGMENT = 'conversations';
+
+/**
+ * URL of a conversation stored inside a project, from its id
+ * `projects/{bucket}/{projectPath…}/conversations/{name}`, or `/projects`
+ * when the id is not that shape or has an unsafe segment.
+ */
+export const getProjectConversationRoute = (conversationId: string): string => {
+  const segments = conversationId.split('/');
+  if (
+    segments.length < 5 ||
+    segments[segments.length - 2] !== PROJECT_CONVERSATIONS_SEGMENT
+  ) {
+    return ROUTES.Projects;
+  }
+  return buildProjectRoute(PROJECT_CHAT_ROUTE_BASE, conversationId);
+};
+
+/**
+ * Rebuilds the project and conversation ids from the `ProjectChat` route
+ * params (`:bucket` and the already-decoded splat). The splat's last segment
+ * is the conversation name and the one before it must be `conversations`,
+ * so a project folder named `conversations` stays unambiguous. `null` for an
+ * empty or unsafe splat, or one without that `conversations` segment.
+ */
+export const parseProjectConversationRouteParams = (params: {
+  bucket?: string;
+  '*'?: string;
+}): { projectId: string; conversationId: string } | null => {
+  const { bucket } = params;
+  const path = params['*'];
+  if (!bucket || !path || !isSafePathSegment(bucket)) return null;
+  const segments = path.split('/');
+  if (
+    segments.length < 3 ||
+    segments.some((segment) => !isSafePathSegment(segment)) ||
+    segments[segments.length - 2] !== PROJECT_CONVERSATIONS_SEGMENT
+  ) {
+    return null;
+  }
+  const projectId = `${PROJECT_ID_PREFIX}${bucket}/${segments.slice(0, -2).join('/')}`;
+  return { projectId, conversationId: `${PROJECT_ID_PREFIX}${bucket}/${path}` };
+};
+
+/**
+ * Whether `pathname` shows a conversation page: a top-level or a project
+ * chat. Matches what `useMatch('/conversations/*')` did, the bare
+ * `/conversations` included.
+ */
+export const isConversationPagePath = (pathname: string): boolean =>
+  pathname === ROUTES.Conversations ||
+  pathname.startsWith(CONVERSATION_ROUTE_PREFIX) ||
+  pathname.startsWith(`${PROJECT_CHAT_ROUTE_BASE}/`);
+
 /**
  * Rebuilds a project id from the `ProjectView` / `ProjectEdit` route params
  * (`:bucket` and the splat, which React Router has already decoded), or

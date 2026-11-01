@@ -115,39 +115,39 @@ const buildOptions = (
   ...overrides,
 });
 
-beforeEach(() => {
-  filesApi = makeFilesApi();
-  mockListFiles = vi.mocked(filesApi.listFiles);
-  mockListSharedFiles = vi.mocked(filesApi.listSharedFiles);
-  mockListPublicFiles = vi.mocked(filesApi.listPublicFiles);
-  mockListSharedByMe = vi.mocked(filesApi.listSharedByMe);
-  mockDownloadArchive = vi.mocked(filesApi.downloadArchive);
-  mockDownloadFile = vi.mocked(filesApi.downloadFile);
-  mockDeleteFiles = vi.mocked(filesApi.deleteFiles);
-  mockCopyFiles = vi.mocked(filesApi.copyFiles);
-  mockMoveFiles = vi.mocked(filesApi.moveFiles);
-  mockDiscardShared = vi.mocked(filesApi.discardShared);
-  mockRevokeAccess = vi.mocked(filesApi.revokeAccess);
-  mockGetFileMetadata = vi.mocked(filesApi.getFileMetadata);
-  mockOnOperationSuccess = vi.fn();
-  mockOnNotification = vi.fn();
-
-  mockListFiles.mockResolvedValue({
-    bucket: BUCKET,
-    path: '',
-    items: [],
-    nextToken: undefined,
-  });
-  mockListSharedFiles.mockResolvedValue(emptySharedListResponse);
-  mockListPublicFiles.mockResolvedValue(emptyPublicListResponse);
-  mockListSharedByMe.mockResolvedValue(emptySharedByMeResponse);
-});
-
-afterEach(() => {
-  vi.clearAllMocks();
-});
-
 describe('useDialFileManager', () => {
+  beforeEach(() => {
+    filesApi = makeFilesApi();
+    mockListFiles = vi.mocked(filesApi.listFiles);
+    mockListSharedFiles = vi.mocked(filesApi.listSharedFiles);
+    mockListPublicFiles = vi.mocked(filesApi.listPublicFiles);
+    mockListSharedByMe = vi.mocked(filesApi.listSharedByMe);
+    mockDownloadArchive = vi.mocked(filesApi.downloadArchive);
+    mockDownloadFile = vi.mocked(filesApi.downloadFile);
+    mockDeleteFiles = vi.mocked(filesApi.deleteFiles);
+    mockCopyFiles = vi.mocked(filesApi.copyFiles);
+    mockMoveFiles = vi.mocked(filesApi.moveFiles);
+    mockDiscardShared = vi.mocked(filesApi.discardShared);
+    mockRevokeAccess = vi.mocked(filesApi.revokeAccess);
+    mockGetFileMetadata = vi.mocked(filesApi.getFileMetadata);
+    mockOnOperationSuccess = vi.fn();
+    mockOnNotification = vi.fn();
+
+    mockListFiles.mockResolvedValue({
+      bucket: BUCKET,
+      path: '',
+      items: [],
+      nextToken: undefined,
+    });
+    mockListSharedFiles.mockResolvedValue(emptySharedListResponse);
+    mockListPublicFiles.mockResolvedValue(emptyPublicListResponse);
+    mockListSharedByMe.mockResolvedValue(emptySharedByMeResponse);
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('starts with isLoading true and resolves to items', async () => {
     const item: ListFilesItemDto = {
       name: 'report.pdf',

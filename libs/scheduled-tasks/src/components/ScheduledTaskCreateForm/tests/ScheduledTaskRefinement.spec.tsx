@@ -2,6 +2,13 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import type {
+  ScheduledTaskCreateFormProps,
+  ScheduledTaskCreateFormValues,
+} from '../../../models/scheduled-task-create-form-props';
+import { ScheduledTaskRepeat } from '../../../types/scheduled-task-schedule';
+import { ScheduledTaskCreateForm } from '../ScheduledTaskCreateForm';
+
 vi.mock('@epam/ai-dial-ui-kit/editors', () => ({
   LazyMarkdownEditor: () =>
     Promise.resolve({
@@ -51,12 +58,7 @@ const field = (name = 'Description') =>
   screen.getByRole<HTMLTextAreaElement>('textbox', {
     name: new RegExp('^' + name),
   });
-import type {
-  ScheduledTaskCreateFormProps,
-  ScheduledTaskCreateFormValues,
-} from '../../../models/scheduled-task-create-form-props';
-import { ScheduledTaskRepeat } from '../../../types/scheduled-task-schedule';
-import { ScheduledTaskCreateForm } from '../ScheduledTaskCreateForm';
+
 const labels = {
   pageTitle: 'New task',
   backButtonLabel: 'Back',

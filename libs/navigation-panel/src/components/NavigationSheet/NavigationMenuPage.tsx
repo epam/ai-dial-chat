@@ -32,6 +32,8 @@ export interface NavigationMenuPageProps {
   footer?: ReactNode;
   /** CSS class controlling the row labels' type scale. Defaults to `'dial-small-text'`. */
   textClassName?: string;
+  /** Typography class of the avatar's initials fallback. Defaults to `'dial-tiny-text'`. */
+  avatarInitialsClassName?: string;
 }
 
 /** Root page of the navigation bottom sheet: destinations plus a profile entry. */
@@ -48,6 +50,7 @@ export const NavigationMenuPage: FC<NavigationMenuPageProps> = memo(
     groups,
     footer,
     textClassName,
+    avatarInitialsClassName,
   }) => {
     const { push, close } = useSheetNavigation();
 
@@ -69,6 +72,7 @@ export const NavigationMenuPage: FC<NavigationMenuPageProps> = memo(
             settingsLabel={settingsLabel}
             onSettings={onSettings}
             textClassName={textClassName}
+            avatarInitialsClassName={avatarInitialsClassName}
           />
         ),
       });

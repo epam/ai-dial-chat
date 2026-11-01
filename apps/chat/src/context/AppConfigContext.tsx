@@ -1,5 +1,12 @@
 import type { CatalogCreationPermissionsDto } from '@epam/ai-dial-chat-api-client';
 import type { AnnouncementListItem } from '@epam/ai-dial-chat-hooks';
+import {
+  DEFAULT_PROJECT_CONTEXT_ALLOWED_EXTENSIONS,
+  DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES,
+  DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES,
+  resolveByteLimit,
+  resolveExtensionList,
+} from '@epam/ai-dial-chat-hooks/project';
 import type {
   ApplicationVisualizerRegistry,
   CustomVisualizer,
@@ -22,13 +29,6 @@ import {
   getCatalogCreationIdentity,
   parseCatalogCreationPermissions,
 } from '../utils/catalog-creation';
-import {
-  DEFAULT_PROJECT_CONTEXT_ALLOWED_EXTENSIONS,
-  DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES,
-  DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES,
-  resolveByteLimit,
-  resolveExtensionList,
-} from '../utils/project-limits';
 import { useUser } from './auth/UserContext';
 
 const DEFAULT_TRANSCRIBE_SIZE_LIMIT = 5 * 1024 * 1024;

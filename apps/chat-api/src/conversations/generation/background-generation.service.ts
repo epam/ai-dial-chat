@@ -29,6 +29,7 @@ import {
   withStoredLlmDisplayName,
 } from '../persistence/conversation-persistence.service';
 import { buildConversationHistory } from '../utils/conversation-history-builder';
+import { buildProjectHeadersForPath } from '../utils/conversation.utils';
 import { parseChunkFrame, readChunkResponseId } from './background-chunk';
 import {
   BackgroundWriteResult,
@@ -190,7 +191,10 @@ export class BackgroundGenerationService {
       placeholder.conversation.id,
       undefined,
       params.jobTitle,
-      { isPassThrough: true },
+      {
+        isPassThrough: true,
+        extraHeaders: buildProjectHeadersForPath(params.conversationPath),
+      },
     );
 
     let responseId: string | undefined;
@@ -568,6 +572,7 @@ export class BackgroundGenerationService {
       responseId,
       context.token,
       signal,
+      buildProjectHeadersForPath(context.conversationPath),
     );
     if (replay.kind === CoreResponseResultKind.Ok) {
       const relay = this.responsesAdapter.stream(

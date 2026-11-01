@@ -18,6 +18,8 @@ const details = {
   instructions: '',
   contextFiles: [],
   etag: '"e1"',
+  contentVersion: '"cv1"',
+  conversationCount: 0,
   canEdit: true,
 };
 

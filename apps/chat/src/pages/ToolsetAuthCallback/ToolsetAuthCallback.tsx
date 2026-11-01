@@ -23,6 +23,10 @@ import {
   type OAuthExchangeParams,
 } from '@epam/ai-dial-chat-hooks';
 import {
+  ExternalServiceAuthType,
+  ExternalServiceCredentialsLevel,
+} from '@epam/ai-dial-chat-hooks';
+import {
   Button,
   ButtonAppearance,
   ButtonVariant,
@@ -40,11 +44,7 @@ import {
   ButtonsI18nKeys,
   ToolsetSigninI18nKeys,
 } from '../../constants/translation-keys';
-import {
-  ExternalServiceAuthType,
-  ExternalServiceCredentialsLevel,
-  signInExternalService,
-} from '../../server-api/external-services';
+import { signInExternalService } from '../../server-api/external-services';
 import { signInOfflineCredentials } from '../../server-api/offline-credentials';
 import { loginToolset } from '../../server-api/toolsets';
 import { ROUTES } from '../../types/routes';

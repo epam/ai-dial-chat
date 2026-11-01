@@ -23,9 +23,13 @@ const TREE_X = 0;
 const NEAR_TREE_X = -65;
 const TREE_HEIGHT = 140;
 const TREE_CROWN_Y = -TREE_HEIGHT - 8;
+
 type Point = [number, number];
+
 type Sample = [seconds: number, position: Point];
+
 type Scalar = [seconds: number, value: number];
+
 interface Layer {
   ty: number;
   ind: number;

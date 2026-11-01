@@ -63,3 +63,11 @@ export const PROJECT_MANIFEST_MAX_BYTES = 1_048_576;
  * Downloads stream through and are not counted.
  */
 export const PROJECT_ARCHIVE_READ_CONCURRENCY = 4;
+
+/*
+ * Whole-project writes (`PUT` and `DELETE`) a request makes at most. Core
+ * conditions them on the aggregate ETag, which every project conversation
+ * write changes; a `412` therefore re-reads the snapshot and writes again
+ * while `contentVersion` still matches the caller's `If-Match`.
+ */
+export const PROJECT_WRITE_ATTEMPTS = 3;

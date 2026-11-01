@@ -7,7 +7,13 @@ import {
   ScheduledTaskConversationDetailsState,
 } from '../ScheduledTaskConversationDetailsSection';
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
+vi.mock('@epam/ai-dial-ui-kit', async () => ({
+  ...(await vi
+    .importActual<typeof import('@epam/ai-dial-ui-kit')>('@epam/ai-dial-ui-kit')
+    .then(({ LiveRegion, LiveRegionElement }) => ({
+      LiveRegion,
+      LiveRegionElement,
+    }))),
   DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   Accordion: ({
@@ -232,5 +238,29 @@ describe('ScheduledTaskConversationDetailsSection', () => {
       'status',
     );
     expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull();
+  });
+
+  it('keeps one status region mounted and fills it when the details fetch fails', () => {
+    const { rerender } = render(
+      <ScheduledTaskConversationDetailsSection
+        scheduleId="schedule-1"
+        state={ScheduledTaskConversationDetailsState.Ready}
+        labels={labels}
+      />,
+    );
+    const region = screen.getByRole('status');
+    expect(region.textContent).toBe('');
+
+    rerender(
+      <ScheduledTaskConversationDetailsSection
+        scheduleId="schedule-1"
+        state={ScheduledTaskConversationDetailsState.Error}
+        onRetry={vi.fn()}
+        labels={labels}
+      />,
+    );
+
+    expect(screen.getByRole('status')).toBe(region);
+    expect(region.textContent).toBe(labels.unavailableLabel);
   });
 });

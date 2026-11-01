@@ -1,6 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { Button, Spinner } from '@epam/ai-dial-ui-kit';
 import { Component, Suspense, type FC, type ReactNode } from 'react';
+import styles from './LazyContentBoundary.module.scss';
 
 /** User-visible strings for {@link LazyContentBoundary}. All fields have English defaults. */
 interface LazyContentBoundaryLabels {
@@ -44,6 +45,8 @@ export interface LazyContentBoundaryProps {
   errorContent?: ReactNode;
   /** User-visible strings. All fields have English defaults. */
   labels?: LazyContentBoundaryLabels;
+  /** Typography class of the retry message. Defaults to `'dial-body-text'`. */
+  errorLabelClassName?: string;
 }
 
 interface LazyContentPendingProps {
@@ -76,6 +79,7 @@ interface LazyContentErrorProps {
   retryLabel: string;
   onRetry: () => void;
   errorContent?: ReactNode;
+  errorLabelClassName?: string;
 }
 
 /** Accessible retry state shared by lazy imports and asynchronous runtime preparation. */
@@ -84,13 +88,14 @@ export const LazyContentError: FC<LazyContentErrorProps> = ({
   retryLabel,
   onRetry,
   errorContent,
+  errorLabelClassName = 'dial-body-text',
 }) => (
   <div className="flex h-full flex-col items-center justify-center gap-3 p-4">
     {errorContent}
     <div className="flex flex-col items-center gap-3 text-center">
       <p
         role="status"
-        className={mergeClasses('dial-body-text', 'text-secondary')}
+        className={mergeClasses(errorLabelClassName, styles.errorLabel)}
       >
         {errorLabel}
       </p>
@@ -136,6 +141,7 @@ export class LazyContentBoundary extends Component<
       onRetry,
       pendingContent,
       errorContent,
+      errorLabelClassName,
       labels: {
         loadingLabel = 'Loading…',
         errorLabel = 'Failed to load content',
@@ -150,6 +156,7 @@ export class LazyContentBoundary extends Component<
           retryLabel={retryLabel}
           onRetry={onRetry}
           errorContent={errorContent}
+          errorLabelClassName={errorLabelClassName}
         />
       );
     }

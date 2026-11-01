@@ -369,7 +369,7 @@ New user-visible strings introduced for card/grid/loading/error/no-results state
 #### Scenario: New keys are present in en.json
 
 - **WHEN** the change is applied
-- **THEN** `en.json` contains `scheduledTasks.list.noResultsLabel`, `scheduledTasks.list.errorLabel`, `scheduledTasks.list.retryLabel`, `scheduledTasks.list.loadingMoreLabel`, and the card-facing `scheduledTasks.card.newBadgeLabel`, `scheduledTasks.card.completedBadgeLabel` and `scheduledTasks.card.schedule*` label keys
+- **THEN** `en.json` contains `scheduledTasks.list.noResultsLabel`, `scheduledTasks.list.errorLabel`, `scheduledTasks.list.loadingMoreLabel`, and the card-facing `scheduledTasks.card.newBadgeLabel`, `scheduledTasks.card.completedBadgeLabel` and `scheduledTasks.card.schedule*` label keys
 
 #### Scenario: Lib receives strings, not translation keys
 

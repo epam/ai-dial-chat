@@ -1,6 +1,9 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TextRefinementI18nKeys } from '../constants/translation-keys';
+import {
+  TextRefinementI18nKeys,
+  ButtonsI18nKeys,
+} from '../constants/translation-keys';
 
 /** Supplies the same translated refinement copy to both authoring forms. */
 export const useTextRefinementLabels = () => {
@@ -9,7 +12,7 @@ export const useTextRefinementLabels = () => {
     () => ({
       refineWithAiLabel: t(TextRefinementI18nKeys.Action),
       refineRefiningLabel: t(TextRefinementI18nKeys.Refining),
-      refineRegenerateLabel: t(TextRefinementI18nKeys.Regenerate),
+      refineRegenerateLabel: t(ButtonsI18nKeys.Regenerate),
       refineUndoLabel: t(TextRefinementI18nKeys.Undo),
       refineErrorLabel: t(TextRefinementI18nKeys.Error),
       refinePendingAriaLabel: t(TextRefinementI18nKeys.Pending),

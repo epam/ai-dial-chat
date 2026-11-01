@@ -39,7 +39,7 @@ const CostValue: FC<CostValueProps> = ({
       <span className="sr-only">{label}: </span>
       <span
         className={mergeClasses(
-          'min-w-0 break-words',
+          'min-w-0 wrap-break-word',
           secondaryValueClassName,
           styles.secondaryValue,
         )}
@@ -57,7 +57,7 @@ const CostValue: FC<CostValueProps> = ({
       {value}
       <span
         className={mergeClasses(
-          'min-w-0 break-words',
+          'min-w-0 wrap-break-word',
           secondaryValueClassName,
           styles.secondaryValue,
         )}

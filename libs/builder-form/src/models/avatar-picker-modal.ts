@@ -115,6 +115,20 @@ export interface AvatarPickerFileManagerModalProps {
   canAttachFolders?: boolean;
 }
 
+/** CSS custom property overrides for `AvatarPickerModal`. */
+export interface AvatarPickerModalColors {
+  /** Text color of the delete-confirmation body. Defaults to `--text-secondary`. */
+  confirmText?: string;
+  /** Text color of the item name or count inside the delete-confirmation body. Defaults to `--text-primary`. */
+  confirmItemText?: string;
+}
+
+/** Style overrides for `AvatarPickerModal`. */
+export interface AvatarPickerModalStyles {
+  /** Color overrides, applied as CSS custom properties. */
+  colors?: AvatarPickerModalColors;
+}
+
 /** Props accepted by the `AvatarPickerModal` component. */
 export interface AvatarPickerModalProps {
   /** Whether the modal is open. */
@@ -137,4 +151,8 @@ export interface AvatarPickerModalProps {
   maxFileSizeBytes: number;
   /** Pre-translated labels for the modal. */
   labels: AvatarPickerModalLabels;
+  /** Typography class of the delete-confirmation body. Defaults to `'dial-small-text'`. */
+  confirmBodyClassName?: string;
+  /** Style overrides. */
+  styles?: AvatarPickerModalStyles;
 }

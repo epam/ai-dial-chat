@@ -18,8 +18,9 @@ import {
   ModelLimitStatus,
 } from '@epam/ai-dial-usage-dashboard';
 import { normalizeDeploymentId } from '../catalog/deployment-id';
-export type { FormatResetTime } from './map-usage-data-to-dashboard';
 import type { FormatResetTime } from './map-usage-data-to-dashboard';
+
+export type { FormatResetTime } from './map-usage-data-to-dashboard';
 
 /** A translate function compatible with i18next's `TFunction`. */
 type Translate = (key: string, options?: Record<string, unknown>) => string;

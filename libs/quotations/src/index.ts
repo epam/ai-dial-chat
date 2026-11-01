@@ -74,3 +74,5 @@ export {
 } from './utils/reference-attachment';
 export type { PdfPageReference } from './utils/reference-attachment';
 export { QUOTATIONS_CLASS } from './constants/public-class-names';
+
+export * from './utils/useHtmlTagAnnotationGroups';

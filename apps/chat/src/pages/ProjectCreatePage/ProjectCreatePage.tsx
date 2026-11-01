@@ -1,4 +1,5 @@
 import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
+import { getMimeTypesForExtensions } from '@epam/ai-dial-chat-hooks/project';
 import { MIME_TYPE_EXT_MAP } from '@epam/ai-dial-chat-shared';
 import {
   isStoredContextFile,
@@ -28,7 +29,6 @@ import { ROUTES } from '../../types/routes';
 import { ThemeId } from '../../types/theme-id';
 import { UserConfigStatus } from '../../types/user-config-status';
 import { mapProjectCreateError } from '../../utils/project-create-errors';
-import { getMimeTypesForExtensions } from '../../utils/project-limits';
 import NotFoundPage from '../NotFound/NotFound';
 
 const DEFAULT_VALUES: ProjectCreateFormValues = {

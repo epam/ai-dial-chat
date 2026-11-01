@@ -207,6 +207,7 @@ import { AddAvatar } from '@epam/ai-dial-builder-form';
 | `addAvatarLabel`   | `string`          |          | `'Add avatar'`                 | Label for the "Add avatar" button.                                                                                                              |
 | `captionText`      | `string`          |          | `'PNG, JPG or SVG (max 1 MB)'` | Caption describing the accepted formats and max size.                                                                                           |
 | `onAddAvatarClick` | `() => void`      | ✓        | —                              | Called when the "Add avatar" button is clicked. The host opens its own file picker/manager and passes the resulting URL back in as `avatarUrl`. |
+| `captionClassName` | `string`          |          | `'dial-tiny-text'`             | Typography class of the format/size caption.                                                                                                    |
 | `styles`           | `AddAvatarStyles` |          | —                              | CSS custom property overrides.                                                                                                                  |
 | `className`        | `string`          |          | —                              | Additional CSS class applied to the root element.                                                                                               |
 
@@ -262,6 +263,8 @@ import { AvatarPickerModal } from '@epam/ai-dial-builder-form';
   }}
 />;
 ```
+
+`confirmBodyClassName` (`'dial-small-text'`) sets the delete-confirmation body's typography. `styles.colors` (`AvatarPickerModalColors`) recolors the delete-confirmation body: `confirmText` (defaults to `--text-secondary`) and `confirmItemText` for the item name or count (defaults to `--text-primary`).
 
 ### EntityEditor
 
@@ -436,6 +439,8 @@ import { DeploymentLocalesField } from '@epam/ai-dial-builder-form';
 />;
 ```
 
+`summaryClassName` (`'dial-body-text'`) and `rowLabelClassName` (`'dial-tiny-lead-text'`) set typography only. Colors come from `colors` (`DeploymentLocalesFieldColors`): `summaryText` and `rowLabelText`, both defaulting to `--text-secondary`. `DeploymentCreationForm` forwards `styles.localesColors` to it.
+
 ## Utilities
 
 ### validateDeploymentCreationFields
@@ -557,6 +562,8 @@ MetadataField.Tags;
 import type {
   AvatarPickerModalProps,
   AvatarPickerModalLabels,
+  AvatarPickerModalStyles,
+  AvatarPickerModalColors,
   AvatarPickerFileManagerModalProps,
   DeploymentCreationFormProps,
   DeploymentCreationFormValues,
@@ -571,6 +578,7 @@ import type {
   DeploymentCreationFormErrorCodes,
   DeploymentCreationFormValidationOptions,
   DeploymentLocalesFieldProps,
+  DeploymentLocalesFieldColors,
   BuilderFormContainerProps,
   BuilderFormContainerStyles,
   BuilderFormContainerColors,
@@ -583,10 +591,12 @@ import type {
   EditorLayoutLabels,
   EditorLayoutStyles,
   EditorLayoutColors,
+  EditorLayoutTypography,
   ResizableLeftColumn,
   EditorSectionProps,
   EditorSectionStyles,
   EditorSectionColors,
+  EditorSectionTypography,
   AddAvatarProps,
   AddAvatarColors,
   AddAvatarStyles,
@@ -601,8 +611,9 @@ import type {
 } from '@epam/ai-dial-builder-form';
 ```
 
-`DeploymentCreationFormStyles` carries only per-slot class names (`root`,
-`field`) — the field set composes into a host layout rather than owning one.
+`DeploymentCreationFormStyles` carries per-slot class names (`root`,
+`field`) — the field set composes into a host layout rather than owning one —
+plus `localesColors`, forwarded to `DeploymentLocalesField`.
 
 `BuilderFormContainer`'s header is configured through `labels` (typed
 `BuilderFormHeaderLabels`, which extends `BuilderFormActionsLabels` — the

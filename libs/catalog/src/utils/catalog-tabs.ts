@@ -15,7 +15,7 @@ const DEFAULT_TAB_LABELS: Record<CatalogEntityType, string> = {
 };
 
 /** Canonical display order for entity type tabs. */
-const TAB_ORDER: CatalogEntityType[] = [
+export const CATALOG_TAB_ORDER: readonly CatalogEntityType[] = [
   CatalogEntityType.Model,
   CatalogEntityType.Agent,
   CatalogEntityType.Toolset,
@@ -47,10 +47,12 @@ export const buildCatalogTabs = (
 ): TabModel[] => {
   const labels = { ...DEFAULT_TAB_LABELS, ...tabLabels };
   const presentTypes = new Set(items.flatMap(getCatalogItemTabs));
-  return TAB_ORDER.filter((type) => presentTypes.has(type)).map((type) => ({
-    id: type,
-    label: labels[type] ?? type,
-  }));
+  return CATALOG_TAB_ORDER.filter((type) => presentTypes.has(type)).map(
+    (type) => ({
+      id: type,
+      label: labels[type] ?? type,
+    }),
+  );
 };
 
 /** Scrolls a horizontally scrolling tab row just enough to bring its selected tab fully into view. */

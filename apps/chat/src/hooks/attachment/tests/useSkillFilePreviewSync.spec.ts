@@ -1,11 +1,11 @@
 import type { SkillFileContent } from '@epam/ai-dial-chat-hooks/skill-editor';
+import { SkillFilePreviewState } from '@epam/ai-dial-chat-hooks/skill-editor';
 import {
   SkillFileNodeKind,
   type SkillFileTreeNode,
 } from '@epam/ai-dial-skill-editor';
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { SkillFilePreviewState } from '../../../types/skill-file-preview';
 import { useSkillFilePreviewSync } from '../useSkillFilePreviewSync';
 
 /*
@@ -47,6 +47,11 @@ const setCanvas = (next: CanvasState) => {
   listeners.forEach((listener) => listener());
 };
 
+let requestToken = 0;
+const beginRequest = () => {
+  const token = ++requestToken;
+  return () => token === requestToken;
+};
 const closeCanvas = vi.fn(() => {
   setCanvas({ isOpen: false, isLoading: false, attachmentId: undefined });
 });
@@ -90,6 +95,7 @@ const openAttachmentCanvas = vi.fn(
 vi.mock('@epam/ai-dial-attachment-canvas', async () => {
   const { useSyncExternalStore } = await import('react');
   return {
+    useLatestCanvasRequest: () => beginRequest,
     useAttachmentCanvas: () => {
       const state = useSyncExternalStore(subscribe, () => canvas);
       return { ...state, closeCanvas };

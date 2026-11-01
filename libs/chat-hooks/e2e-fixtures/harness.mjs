@@ -57,6 +57,7 @@ const npmCliPath =
     'bin',
     'npm-cli.js',
   );
+
 /** Shared npm runner for packed fixture operations. */
 export const execNpmSync = (args, options) =>
   execFileSync(process.execPath, [npmCliPath, ...args], options);

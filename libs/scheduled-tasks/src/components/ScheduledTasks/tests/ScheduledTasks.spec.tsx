@@ -158,10 +158,6 @@ const baseLabels: ScheduledTasksProps['labels'] = {
 
 let onCreateClickMock: (() => void) | undefined = vi.fn();
 
-beforeEach(() => {
-  onCreateClickMock = vi.fn();
-});
-
 const renderScheduledTasks = (overrides?: Partial<ScheduledTasksProps>) =>
   render(
     <ScheduledTasks
@@ -177,6 +173,10 @@ const renderScheduledTasks = (overrides?: Partial<ScheduledTasksProps>) =>
   );
 
 describe('ScheduledTasks', () => {
+  beforeEach(() => {
+    onCreateClickMock = vi.fn();
+  });
+
   it('renders the header and toolbar from props', () => {
     renderScheduledTasks();
 

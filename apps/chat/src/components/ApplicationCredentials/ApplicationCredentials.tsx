@@ -4,7 +4,13 @@ import {
   ToolsetAuthenticationType,
   type ApplicationCredentialLoginParams,
 } from '@epam/ai-dial-catalog';
-import { useApplicationCredentials } from '@epam/ai-dial-chat-hooks';
+import {
+  ExternalServiceAuthStatus,
+  ExternalServiceAuthType,
+  ExternalServiceCredentialsLevel,
+  ExternalServiceLoginOutcomeType,
+  useApplicationCredentials,
+} from '@epam/ai-dial-chat-hooks';
 import { useCallback, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -15,19 +21,12 @@ import {
   ToolsetEditorI18nKeys,
   ToolsetSigninI18nKeys,
 } from '../../constants/translation-keys';
-import {
-  ExternalServiceLoginOutcomeType,
-  useExternalServiceLogin,
-} from '../../hooks/externalServices/useExternalServiceLogin';
+import { useExternalServiceLogin } from '../../hooks/externalServices/useExternalServiceLogin';
 import {
   externalServicesApi,
   offlineCredentialsApi,
 } from '../../server-api/api-client';
-import {
-  ExternalServiceAuthType,
-  ExternalServiceCredentialsLevel,
-  signOutExternalService,
-} from '../../server-api/external-services';
+import { signOutExternalService } from '../../server-api/external-services';
 
 interface ApplicationCredentialsProps {
   appId: string;
@@ -68,7 +67,8 @@ export const ApplicationCredentials: FC<ApplicationCredentialsProps> = ({
             codeChallenge: service.codeChallenge,
             codeChallengeMethod: service.codeChallengeMethod,
           },
-          forceStale: service.userLevelAuthStatus === 'FAILED',
+          forceStale:
+            service.userLevelAuthStatus === ExternalServiceAuthStatus.Failed,
         });
       } catch {
         throw new Error(t(ToolsetSigninI18nKeys.ErrorLoginFailed));
@@ -127,8 +127,9 @@ export const ApplicationCredentials: FC<ApplicationCredentialsProps> = ({
         const isNative =
           service.authenticationType === ExternalServiceAuthType.DialNative;
         const signedIn = isNative
-          ? isOfflineConnected && service.appLevelAuthStatus === 'SIGNED_IN'
-          : service.userLevelAuthStatus === 'SIGNED_IN';
+          ? isOfflineConnected &&
+            service.appLevelAuthStatus === ExternalServiceAuthStatus.SignedIn
+          : service.userLevelAuthStatus === ExternalServiceAuthStatus.SignedIn;
         return {
           id: service.id,
           name: service.displayName || service.id,
@@ -143,8 +144,9 @@ export const ApplicationCredentials: FC<ApplicationCredentialsProps> = ({
           hasSharedCredentials:
             !isNative &&
             !signedIn &&
-            (service.globalAuthStatus === 'SIGNED_IN' ||
-              service.appLevelAuthStatus === 'SIGNED_IN'),
+            (service.globalAuthStatus === ExternalServiceAuthStatus.SignedIn ||
+              service.appLevelAuthStatus ===
+                ExternalServiceAuthStatus.SignedIn),
           canLogout: !isNative,
           canConsentToOfflineUsage: !isNative,
           hint: isNative ? t(ToolsetSigninI18nKeys.DialNativeHint) : undefined,

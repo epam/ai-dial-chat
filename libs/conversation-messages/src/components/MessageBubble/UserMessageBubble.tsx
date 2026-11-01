@@ -122,6 +122,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
     '--cm-bubble-user-border': colors?.userBorder,
     '--cm-bubble-fade-start': colors?.fadeStart,
     '--cm-bubble-text': colors?.text,
+    '--cm-timestamp-text': colors?.timestampText,
     '--cm-bubble-collapsed-height': isOverflowing
       ? `${collapsedMaxHeight}px`
       : undefined,

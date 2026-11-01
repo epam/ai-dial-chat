@@ -1,4 +1,5 @@
 import {
+  buildCssVars,
   DeploymentItem,
   mergeClasses,
   SELECT_LIST_MAX_HEIGHT_PX,
@@ -26,6 +27,8 @@ interface Props {
   modelSelectorLabels?: ModelSelectorLabels;
   /** Host styling hooks for the menu panel, search row and deployment rows. */
   menuStyles?: ModelMenuStyles;
+  nameClassName?: string;
+  versionClassName?: string;
   isStreaming: boolean;
   isMobile: boolean;
   /**
@@ -52,6 +55,8 @@ export const ModelSelectorControl: FC<Props> = ({
   onDeploymentChange,
   modelSelectorLabels,
   menuStyles,
+  nameClassName = 'dial-small-text',
+  versionClassName = 'dial-tiny-text',
   isStreaming,
   isMobile,
   isDisabled = false,
@@ -197,10 +202,14 @@ export const ModelSelectorControl: FC<Props> = ({
           modelPickerOverlay(() => onPickerOpenChange?.(false))
         }
         listClassName={mergeClasses(
-          '!w-[368px] !bg-layer-raised',
+          'w-[368px]!',
+          styles.modelOverlayPanel,
           menuStyles?.className,
           CONVERSATION_INPUT_CLASS.modelMenu,
         )}
+        listStyle={buildCssVars({
+          '--ci-model-overlay-bg': menuStyles?.colors?.overlayBackground,
+        })}
       >
         {/* No `variant`: the `--ci-model-selector-*` properties keep the
             colours. The geometry classes replace the kit's 40px height and
@@ -211,7 +220,7 @@ export const ModelSelectorControl: FC<Props> = ({
           aria-disabled={isBlocked || undefined}
           tooltipProps={{ tooltip: chipTooltip }}
           className={mergeClasses(
-            'h-auto min-w-0 gap-1.5 !rounded-full !border-0 px-0 py-1.5 ps-1.5 pe-2',
+            'h-auto min-w-0 gap-1.5 rounded-full! border-0! px-0 py-1.5 ps-1.5 pe-2',
             styles.modelSelectorButton,
             disabledIconClassName,
             isBlocked && styles.modelSelectorButtonDisabled,
@@ -229,7 +238,8 @@ export const ModelSelectorControl: FC<Props> = ({
             <span className="flex max-w-[180px] min-w-0 items-baseline gap-1">
               <span
                 className={mergeClasses(
-                  'dial-small-text max-w-[180px] shrink-0 truncate',
+                  'max-w-[180px] shrink-0 truncate',
+                  nameClassName,
                   styles.modelSelectorName,
                 )}
               >
@@ -238,7 +248,8 @@ export const ModelSelectorControl: FC<Props> = ({
               {selectedVersion && (
                 <span
                   className={mergeClasses(
-                    'dial-tiny-text min-w-0 truncate',
+                    'min-w-0 truncate',
+                    versionClassName,
                     styles.modelSelectorVersion,
                   )}
                 >
@@ -268,7 +279,7 @@ export const ModelSelectorControl: FC<Props> = ({
            inside a header that stays put. */
         maxDropdownHeight={SELECT_LIST_MAX_HEIGHT_PX}
         listClassName={mergeClasses(
-          '!w-[240px]',
+          'w-[240px]!',
           menuStyles?.className,
           CONVERSATION_INPUT_CLASS.modelMenu,
         )}
@@ -283,7 +294,7 @@ export const ModelSelectorControl: FC<Props> = ({
           iconBefore={iconNode}
           iconAfter={caretIcon}
           className={mergeClasses(
-            'h-auto gap-1 !rounded-full !border-0 p-1.5',
+            'h-auto gap-1 rounded-full! border-0! p-1.5',
             styles.modelSelectorButton,
             isBlocked && styles.modelSelectorButtonDisabled,
             CONVERSATION_INPUT_CLASS.modelSelectorButton,

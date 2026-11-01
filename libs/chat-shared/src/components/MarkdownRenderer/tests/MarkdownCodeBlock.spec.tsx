@@ -52,6 +52,20 @@ describe('MarkdownCodeBlock', () => {
     },
   );
 
+  it('exposes the code as a named, keyboard-focusable scroll region', () => {
+    render(
+      <MarkdownCodeBlock
+        language=""
+        value="a,b,c"
+        scrollRegionAriaLabel="Scrollable code"
+      />,
+    );
+
+    const region = screen.getByRole('region', { name: 'Scrollable code' });
+    expect(region.getAttribute('tabindex')).toBe('0');
+    expect(region.textContent).toContain('a,b,c');
+  });
+
   it('copies and downloads the complete text when highlighting is bypassed', async () => {
     const user = userEvent.setup();
     const value = JSON.stringify({ contentBytes: 'A'.repeat(175_052) });

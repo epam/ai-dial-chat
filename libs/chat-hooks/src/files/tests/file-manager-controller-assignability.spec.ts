@@ -9,7 +9,9 @@ import type { UseDialFileManagerSectionsResult } from '../useDialFileManagerSect
  * compiling, the shell's view contract diverged from the hook result.
  */
 type AssertAssignable<Target, Source extends Target> = Source;
+
 type _Proof = AssertAssignable<FileManagerController, UseDialFileManagerResult>;
+
 type _SectionsProof = AssertAssignable<
   FileManagerController,
   UseDialFileManagerSectionsResult
@@ -30,10 +32,12 @@ describe('FileManagerController assignability', () => {
 
   it('controller does not include host-only fields (isAnyOperationInProgress, isCreatingFolder)', () => {
     type ControllerKeys = keyof FileManagerController;
+
     type ForbiddenKeys = 'isAnyOperationInProgress' | 'isCreatingFolder';
 
     /* This will fail to compile if any forbidden key appears in FileManagerController. */
     type NonePresent = ForbiddenKeys extends ControllerKeys ? never : true;
+
     const _check: NonePresent = true;
     expect(_check).toBe(true);
   });

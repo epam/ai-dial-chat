@@ -38,8 +38,8 @@ const sampleAt = (frames: Keyframe[], time: number, pattern: RegExp) => {
     if ((frame.offset as number) > offset) {
       const span = (frame.offset as number) - (previous.offset as number);
       const t = span ? (offset - (previous.offset as number)) / span : 1;
-      const a = numbers(previous, pattern),
-        b = numbers(frame, pattern);
+      const a = numbers(previous, pattern);
+      const b = numbers(frame, pattern);
       return a.map((v, i) => v + (b[i] - v) * t);
     }
     previous = frame;
@@ -104,8 +104,8 @@ describe('Skeleton lost-skull plan', () => {
 
   it('launches the free skull exactly where the attached skull was hidden', () => {
     const plan = buildSkeletonPlan(targets(), false);
-    const s = plan.showman.scale,
-      half = plan.skullSize / 2;
+    const s = plan.showman.scale;
+    const half = plan.skullSize / 2;
     const [x, y] = sampleAt(plan.showman.root, 5200, px);
     const [fx, fy] = sampleAt(plan.skull.root, 5201, px);
     expect(fx + half).toBeCloseTo(x + SKELETON_ART.skull.x * s, 0);

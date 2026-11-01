@@ -18,6 +18,7 @@ import {
   npmInstallFixture,
 } from './harness.mjs';
 import { ALL_OPTIONAL_PEERS } from './fixtures.mjs';
+
 export const APPLICATION_ENTRY_SOURCE = `import { createElement, createContext, useContext, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { clearAttachmentCache } from '@epam/ai-dial-chat-hooks/file-manager-canvas';
@@ -187,6 +188,7 @@ const MODULE_ORIGIN_PLUGIN_SOURCE = `{
       writeFileSync(path.join(outDirAbs, 'module-origins.json'), JSON.stringify(origins));
     },
   }`;
+
 export const buildEntry = (
   workspaceRoot,
   dir,
@@ -308,6 +310,7 @@ const canonicalPath = (value) => {
     existsSync(clean) ? realpathSync(clean) : path.resolve(clean)
   ).replaceAll('\\', '/');
 };
+
 export const auditResolvedOrigins = ({ measured, fixtureDir }) => {
   const root = canonicalPath(path.join(fixtureDir, 'node_modules')) + '/';
   const entry = canonicalPath(path.join(fixtureDir, 'entry.ts'));

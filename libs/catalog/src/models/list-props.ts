@@ -3,6 +3,7 @@ import type { Ref } from 'react';
 import type { ListViewColumnVisibility } from '../components/ListView/columns';
 import type { CatalogSelectionMode } from '../types/selection-mode';
 import { CatalogItem } from './catalog-item';
+
 /** Typography class overrides for `ListView` cells. */
 export interface ListViewTypography {
   /** Typography class for item name text. Default: `'dial-small-semi-text'`. */
@@ -23,6 +24,10 @@ export interface ListViewColors {
   folderIcon?: string;
   /** Color of the checkmark icon in the selected row's name cell. Fallback: `--text-accent`. */
   selectedRowCheckIcon?: string;
+  /** Color of the item name in the name cell. Fallback: `--text-primary`. */
+  nameText?: string;
+  /** Color of the version after the item name. Fallback: `--text-secondary`. */
+  versionText?: string;
 }
 
 /** Combined style overrides for `ListView`. */

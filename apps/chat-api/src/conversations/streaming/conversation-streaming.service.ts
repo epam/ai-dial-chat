@@ -62,6 +62,7 @@ import { buildConversationHistory } from '../utils/conversation-history-builder'
 import { mergeHtmlTagAnnotationsIntoViewState } from '../utils/conversation-view-state.server';
 import {
   buildConversationUrl,
+  buildProjectHeadersForPath,
   qualifySessionConversationPath,
   resolveConversationLocation,
 } from '../utils/conversation.utils';
@@ -667,6 +668,7 @@ export class ConversationStreamingService {
               startConversation.id,
               publishChunk,
               jobTitle,
+              { extraHeaders: buildProjectHeadersForPath(conversationPath) },
             )
           : this.chatCompletionsAdapter.stream(
               model,
@@ -685,6 +687,7 @@ export class ConversationStreamingService {
               startConversation.id,
               publishChunk,
               jobTitle,
+              { extraHeaders: buildProjectHeadersForPath(conversationPath) },
             );
     }
     let relayCompletedNormally = false;

@@ -1,0 +1,19 @@
+.row {
+  &:hover {
+    background-color: var(
+      --cat-add-on-row-hover-bg,
+      var(--bg-control-accent-alpha, #2764d90f)
+    );
+  }
+}
+
+.focusable:focus-visible {
+  outline-color: var(
+    --cat-add-on-focus-outline,
+    var(--stroke-accent-focus, #6785fb)
+  );
+}
+
+.description {
+  color: var(--cat-add-on-description, var(--text-secondary, #57647a));
+}

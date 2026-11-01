@@ -24,6 +24,7 @@ const config = {
 
 const snapshotOf = (extra: Partial<ProjectSnapshot> = {}): ProjectSnapshot => ({
   etag: '"e1"',
+  contentVersion: '"cv1"',
   manifest: {
     description: 'About Q4',
     instructions: '## Steps',
@@ -31,6 +32,7 @@ const snapshotOf = (extra: Partial<ProjectSnapshot> = {}): ProjectSnapshot => ({
   },
   hasOversizedManifest: false,
   contextFiles: [{ name: 'tickets.csv', size: 2048 }],
+  conversationEntries: [],
   otherEntries: [],
   readEntry: vi.fn(),
   ...extra,
@@ -104,6 +106,8 @@ describe('ProjectsService.getProject', () => {
       instructions: '## Steps',
       contextFiles: [{ name: 'tickets.csv', size: 2048 }],
       etag: '"e1"',
+      contentVersion: '"cv1"',
+      conversationCount: 0,
       canEdit: true,
     });
     const [, , , , readSignal] = read.mock.calls[0] as unknown as unknown[];
@@ -113,6 +117,27 @@ describe('ProjectsService.getProject', () => {
       { signal: AbortSignal },
     ];
     expect(metadataInit.signal).toBe(readSignal);
+  });
+
+  it('counts the project conversations without returning them', async () => {
+    const { service } = makeService({
+      snapshot: snapshotOf({
+        conversationEntries: [
+          { name: 'gpt-4o__A__1', size: 10 },
+          { name: 'gpt-4o__B__2', size: 20 },
+          { name: 'gpt-4o__C__3', size: 30 },
+        ],
+      }),
+    });
+
+    const project = await service.getProject(
+      'projects/a1b2c3/q4',
+      USER_BUCKET,
+      'token',
+    );
+
+    expect(project.conversationCount).toBe(3);
+    expect(JSON.stringify(project)).not.toContain('gpt-4o__A__1');
   });
 
   it('logs the item metadata Core returned at debug level', async () => {

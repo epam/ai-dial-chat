@@ -23,6 +23,7 @@ import { ToolsetEditorQuery } from '../../../constants/toolsets';
 import {
   CustomAppI18nKeys,
   EditorI18nKeys,
+  ButtonsI18nKeys,
 } from '../../../constants/translation-keys';
 import type { ApplicationSetupErrors } from '../../../models/application-editor';
 import type { CustomAppFormData } from '../../../models/custom-apps';
@@ -174,7 +175,7 @@ export const customAppDefinition = defineApplicationEditor<CustomAppFormData>({
   confirmation: {
     titleKey: CustomAppI18nKeys.SaveConfirmTitle,
     descriptionKey: CustomAppI18nKeys.SaveConfirmDescription,
-    confirmKey: CustomAppI18nKeys.SaveConfirmLabel,
+    confirmKey: ButtonsI18nKeys.Save,
   },
   Setup: CustomAppSetup,
   create,

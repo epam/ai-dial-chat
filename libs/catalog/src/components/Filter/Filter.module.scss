@@ -69,7 +69,8 @@
   background: var(--cat-filter-overlay-bg, var(--bg-layer-raised, #fcfcfc));
   border: 1px solid
     var(--cat-filter-overlay-border, var(--stroke-tertiary, #e0e6f0));
-  box-shadow: 1px 10px 25px 12px var(--shadow-lg, #2764d914); /* `shadow-lg` */
+  box-shadow: 1px 10px 25px 12px
+    var(--cat-filter-overlay-shadow, var(--shadow-lg, #2764d914)); /* `shadow-lg` */
 }
 
 /* Checkbox row — the row itself is the kit's `MenuItem`, which owns the rest,

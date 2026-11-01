@@ -256,7 +256,7 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
                   menuStyles?.colors?.searchHeaderBackground,
               })}
               className={mergeClasses(
-                'flex-shrink-0 px-4 py-[10px]',
+                'shrink-0 px-4 py-[10px]',
                 styles.search,
                 menuStyles?.searchHeaderClassName,
                 CONVERSATION_INPUT_CLASS.modelMenuSearch,

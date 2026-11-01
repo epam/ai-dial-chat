@@ -51,6 +51,37 @@ export const normalizeDeploymentId = (id: string): string =>
   encodeDeploymentId(decodeDeploymentId(id));
 
 /**
+ * Indexes a deployment-list snapshot for repeated lookups. Rebuild when the
+ * list changes. Preserves the exact-id, exact-reference, normalized-id
+ * precedence and first-match behavior of `findDeploymentByIdOrReference`.
+ */
+export const createDeploymentLookup = (deployments: DeploymentItemDto[]) => {
+  const byId = new Map<string, DeploymentItemDto>();
+  const byReference = new Map<string, DeploymentItemDto>();
+  const byNormalizedId = new Map<string, DeploymentItemDto>();
+  for (const deployment of deployments) {
+    if (!byId.has(deployment.id)) byId.set(deployment.id, deployment);
+    if (deployment.reference && !byReference.has(deployment.reference)) {
+      byReference.set(deployment.reference, deployment);
+    }
+    const normalizedId = normalizeDeploymentId(deployment.id);
+    if (!byNormalizedId.has(normalizedId)) {
+      byNormalizedId.set(normalizedId, deployment);
+    }
+  }
+  return (
+    idOrReference: string | null | undefined,
+  ): DeploymentItemDto | undefined => {
+    if (!idOrReference) return undefined;
+    return (
+      byId.get(idOrReference) ??
+      byReference.get(idOrReference) ??
+      byNormalizedId.get(normalizeDeploymentId(idOrReference))
+    );
+  };
+};
+
+/**
  * Finds a deployment matching `idOrReference` by `id` first, falling back to
  * `reference` when no `id` matches, and finally to an `id` match that ignores
  * percent-encoding. DIAL Core sometimes addresses a deployment by `reference`

@@ -6,6 +6,7 @@ import { createLibTailwindUtilities } from '../../tools/vite-lib-tailwind-utilit
 import * as path from 'path';
 import { createIsExternalPeerImport } from '../../tools/vite-external-matcher.mjs';
 import { createVerifyPublishedStyles } from '../../tools/vite-verify-published-styles.mjs';
+
 const REQUIRED_PUBLISHED_STYLE_MARKERS = [
   '.rtl\\:scale-x-\\[-1\\]',
   '.text-start',
@@ -15,6 +16,7 @@ const EXTERNAL_PEER_NAMES = [
   '@epam/ai-dial-publish-panel',
 ];
 const isExternalPeerImport = createIsExternalPeerImport(EXTERNAL_PEER_NAMES);
+
 export default defineConfig(({ command }) => ({
   // Published libraries must also run with React's production runtime.
   oxc: command === 'build' ? { jsx: { development: false } } : undefined,

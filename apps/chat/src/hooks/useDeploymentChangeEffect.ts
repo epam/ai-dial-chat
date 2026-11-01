@@ -1,6 +1,9 @@
-import { createDeploymentChangedMessage } from '@epam/ai-dial-chat-hooks';
+import {
+  createDeploymentChangedMessage,
+  useDeploymentChangeTracking,
+} from '@epam/ai-dial-chat-hooks';
 import { Message } from '@epam/ai-dial-chat-shared';
-import { useEffect, useRef } from 'react';
+import { useCallback } from 'react';
 import { useDeployments } from '../context/DeploymentsContext';
 
 /**
@@ -22,37 +25,18 @@ export const useDeploymentChangeEffect = (
   isConversationLoaded: boolean,
 ): void => {
   const { selectedItemId } = useDeployments();
-  const prevIdRef = useRef<string | null>(selectedItemId);
-  const isLoadedRef = useRef(false);
-
-  /*
-   * When the conversation finishes loading, capture the current selectedItemId
-   * (which has already been restored from conversation history by the caller)
-   * as the baseline. This prevents treating that restoration as a change.
-   * Reset when the conversation unloads so the next load gets a fresh baseline.
-   */
-  useEffect(() => {
-    if (!isConversationLoaded) {
-      isLoadedRef.current = false;
-      return;
-    }
-    if (!isLoadedRef.current) {
-      isLoadedRef.current = true;
-      prevIdRef.current = selectedItemId;
-    }
-  }, [isConversationLoaded, selectedItemId]);
-
-  useEffect(() => {
-    if (!conversationId || !isConversationLoaded) return;
-    if (prevIdRef.current === selectedItemId) return;
-
-    const previous = prevIdRef.current;
-    prevIdRef.current = selectedItemId;
-
-    if (selectedItemId == null) return;
-
-    addStatusMessage(
-      createDeploymentChangedMessage(previous, selectedItemId) as Message,
-    );
-  }, [conversationId, selectedItemId, addStatusMessage, isConversationLoaded]);
+  const onChange = useCallback(
+    (previous: string | null, next: string) => {
+      addStatusMessage(
+        createDeploymentChangedMessage(previous, next) as Message,
+      );
+    },
+    [addStatusMessage],
+  );
+  useDeploymentChangeTracking({
+    conversationId,
+    selectedDeploymentId: selectedItemId,
+    isLoaded: isConversationLoaded,
+    onChange,
+  });
 };

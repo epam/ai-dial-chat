@@ -92,6 +92,12 @@ export interface StandalonePublishPanelProps {
   panelLabels?: PublishPanelLabels;
   /** Style overrides for the panel body. */
   panelStyles?: PublishPanelStyles;
+  /** Typography class forwarded to the panel body's `summaryTitleClassName`. Default: `'dial-body-semi-text'`. */
+  panelSummaryTitleClassName?: string;
+  /** Typography class forwarded to the panel body's `headingClassName`. Default: `'dial-body-semi-text'`. */
+  panelHeadingClassName?: string;
+  /** Typography class forwarded to the panel body's `calloutFolderNameClassName`. Default: `'dial-small-paragraph-semi-text'`. */
+  panelCalloutFolderNameClassName?: string;
   /** Text overrides for the pinned footer. */
   footerLabels?: PublishFooterLabels;
   /** Text overrides for the header/shell. */
@@ -147,6 +153,9 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
   onSubmit,
   panelLabels,
   panelStyles,
+  panelSummaryTitleClassName,
+  panelHeadingClassName,
+  panelCalloutFolderNameClassName,
   footerLabels,
   labels = {},
   titleClassName = 'dial-body-semi-text',
@@ -300,6 +309,9 @@ export const StandalonePublishPanel: FC<StandalonePublishPanelProps> = ({
             hasRulesLoadError={hasRulesLoadError}
             labels={panelLabels}
             styles={panelStyles}
+            summaryTitleClassName={panelSummaryTitleClassName}
+            headingClassName={panelHeadingClassName}
+            calloutFolderNameClassName={panelCalloutFolderNameClassName}
           />
         </div>
       </div>

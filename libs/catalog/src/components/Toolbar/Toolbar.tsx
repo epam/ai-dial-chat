@@ -36,7 +36,7 @@ export const Toolbar: FC<ToolbarProps> = ({
   return (
     <section
       className={mergeClasses(
-        'flex-shrink-0 px-4',
+        'shrink-0 px-4',
         styles.section,
         CATALOG_CLASS.toolbar,
       )}

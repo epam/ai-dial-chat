@@ -2,10 +2,9 @@
  * Three-tier fallback per openspec/lib-styling-guide.md: the host's own
  * variable, then this app's design token, then the light-theme literal.
  *
- * The prefix is `--mcpapp-`: `--mcp-` is already claimed by
- * `@epam/ai-dial-attachment-canvas` for the full-width canvas renderer's
- * status colors, and one prefix owned by two libs is what the class grammar
- * exists to prevent.
+ * The prefix is `--mcpapp-`, so it never collides with another lib's own
+ * prefix (`@epam/ai-dial-attachment-canvas` owns `--ac-`); one prefix owned by
+ * two libs is what the class grammar exists to prevent.
  */
 
 .preview {
@@ -25,4 +24,20 @@
     --mcpapp-preview-header-border,
     var(--stroke-tertiary, #e0e6f0)
   );
+}
+
+.headerText {
+  color: var(--mcpapp-header-text, var(--text-secondary, #57647a));
+}
+
+.placeholderText {
+  color: var(--mcpapp-placeholder-text, var(--text-secondary, #57647a));
+}
+
+.errorIcon {
+  color: var(--mcpapp-error-icon, var(--text-error, #ae2f2f));
+}
+
+.errorText {
+  color: var(--mcpapp-error-text, var(--text-primary, #161b2d));
 }

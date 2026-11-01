@@ -119,6 +119,43 @@ export class AuthApi extends runtime.BaseAPI {
   }
 
   /**
+   * Serves the inline (data: URL) profile picture the identity provider returns from UserInfo. Only advertised through `pictureUrl` on `GET /auth/me` when the session has one.
+   * Get current user profile picture
+   */
+  async getCurrentUserPictureRaw(
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<Blob>> {
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/auth/me/picture`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.BlobApiResponse(response);
+  }
+
+  /**
+   * Serves the inline (data: URL) profile picture the identity provider returns from UserInfo. Only advertised through `pictureUrl` on `GET /auth/me` when the session has one.
+   * Get current user profile picture
+   */
+  async getCurrentUserPicture(
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<Blob> {
+    const response = await this.getCurrentUserPictureRaw(initOverrides);
+    return await response.value();
+  }
+
+  /**
    * List configured identity providers
    */
   async listProvidersRaw(

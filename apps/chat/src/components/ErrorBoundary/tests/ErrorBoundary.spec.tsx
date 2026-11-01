@@ -64,7 +64,7 @@ describe('ErrorFallback', () => {
   it('renders the retry button', () => {
     renderFallback();
     expect(
-      screen.getByRole('button', { name: 'errorBoundary.retryLabel' }),
+      screen.getByRole('button', { name: 'buttons.tryAgain' }),
     ).toBeTruthy();
   });
 
@@ -72,7 +72,7 @@ describe('ErrorFallback', () => {
     renderFallback();
     expect(
       screen
-        .getByRole('button', { name: 'errorBoundary.retryLabel' })
+        .getByRole('button', { name: 'buttons.tryAgain' })
         .matches(':focus'),
     ).toBe(true);
   });
@@ -95,7 +95,7 @@ describe('ErrorFallback', () => {
     const resetErrorBoundary = vi.fn();
     renderFallback({ resetErrorBoundary });
     await userEvent.click(
-      screen.getByRole('button', { name: 'errorBoundary.retryLabel' }),
+      screen.getByRole('button', { name: 'buttons.tryAgain' }),
     );
     expect(resetErrorBoundary).toHaveBeenCalledOnce();
   });

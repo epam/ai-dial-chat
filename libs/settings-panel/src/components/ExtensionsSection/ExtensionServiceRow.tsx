@@ -41,6 +41,9 @@ export const ExtensionServiceRow: FC<ExtensionServiceRowProps> = ({
   const {
     nameClassName = 'dial-small-semi-text',
     descriptionClassName = 'dial-small-text',
+    tooltipTitleClassName = 'dial-small-semi-text',
+    tooltipDescriptionClassName = 'dial-small-text',
+    avatarInitialsClassName = 'dial-h2-text',
   } = typography;
 
   const {
@@ -73,7 +76,7 @@ export const ExtensionServiceRow: FC<ExtensionServiceRowProps> = ({
             name={displayName}
             size={AVATAR_SIZE}
             color={avatarColor}
-            textClassName="dial-h2-text"
+            textClassName={avatarInitialsClassName}
           />
           {isWarningVisible && (
             /* The glyph is informational decoration: the connected state is
@@ -117,10 +120,10 @@ export const ExtensionServiceRow: FC<ExtensionServiceRowProps> = ({
             <Tooltip
               tooltip={
                 <span className="flex flex-col gap-1 text-start">
-                  <span className="dial-small-semi-text">
+                  <span className={tooltipTitleClassName}>
                     {limitedAccessTooltipTitle}
                   </span>
-                  <span className="dial-small-text">
+                  <span className={tooltipDescriptionClassName}>
                     {limitedAccessTooltipDescription}
                   </span>
                 </span>

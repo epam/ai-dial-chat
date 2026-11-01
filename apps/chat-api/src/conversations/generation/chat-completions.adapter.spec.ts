@@ -87,6 +87,25 @@ describe('ChatCompletionsAdapter', () => {
       expect(body.messages[0]).not.toHaveProperty('custom_content');
     });
 
+    it('builds the system message from the conversation prompt only', () => {
+      const { adapter } = makeAdapter();
+      const params = {
+        startConversation: { prompt: 'P' } as never,
+        messagesForCompletion: [
+          { role: ConversationMessageRole.User, content: 'Hi' } as never,
+        ],
+        temperatureSupported: false,
+      };
+
+      expect(adapter.buildRequest(params)).toEqual({
+        messages: [
+          { role: 'system', content: 'P' },
+          { role: ConversationMessageRole.User, content: 'Hi' },
+        ],
+        stream: true,
+      });
+    });
+
     it('omits custom_fields when no configuration is given', () => {
       const { adapter } = makeAdapter();
       const body = adapter.buildRequest({
@@ -184,6 +203,35 @@ describe('ChatCompletionsAdapter', () => {
       );
       expect(sentHeaders(sendChatCompletionRequest)).not.toHaveProperty(
         'X-Timezone',
+      );
+    });
+
+    it('adds the extra headers, such as x-project-id, to the model call', async () => {
+      const { adapter, sendChatCompletionRequest } = makeAdapter();
+      sendChatCompletionRequest.mockImplementation(async () =>
+        okResponse(['data: [DONE]\n\n']),
+      );
+
+      await drain(
+        adapter.stream(
+          'gpt-4o',
+          {},
+          'token',
+          new AbortController().signal,
+          assistantSeed,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          { extraHeaders: { 'x-project-id': 'projects/a1b2c3/q4' } },
+        ),
+      );
+
+      expect(sentHeaders(sendChatCompletionRequest)).toHaveProperty(
+        'x-project-id',
+        'projects/a1b2c3/q4',
       );
     });
 

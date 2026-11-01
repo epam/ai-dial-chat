@@ -30,6 +30,10 @@ export interface UseCitationMarkdownComponentsCallbacks {
   isPreviewOpen?: boolean;
   /** Whether a marker click previews a single-citation file source directly instead of showing the card; web-link (HTML/XHTML) sources and multi-citation groups keep the card. Defaults to `false`. */
   previewFilesOnMarkerClick?: boolean;
+  /** Typography class of a cited paragraph. Defaults to `'dial-body-paragraph-text'`. */
+  paragraphClassName?: string;
+  /** Typography class of a cited paragraph while `isCompactTypography` is set. Defaults to `'dial-small-paragraph-text'`. */
+  compactParagraphClassName?: string;
   /** Builds the translated label bundles used by a given citation group's card and marker. */
   buildLabels(group: AnnotationGroup): {
     cardLabels: CitationCardLabels;
@@ -97,6 +101,8 @@ export const useCitationMarkdownComponents = (
     isDownloadEnabled = true,
     isPreviewOpen = false,
     previewFilesOnMarkerClick = false,
+    paragraphClassName = 'dial-body-paragraph-text',
+    compactParagraphClassName = 'dial-small-paragraph-text',
     buildLabels,
   } = callbacks;
 
@@ -158,9 +164,9 @@ export const useCitationMarkdownComponents = (
           {...rest}
           className={mergeClasses(
             isCompactTypography
-              ? 'dial-small-paragraph-text'
-              : 'dial-body-paragraph-text',
-            'mb-3 [text-wrap:pretty] [overflow-wrap:anywhere] last:mb-0',
+              ? compactParagraphClassName
+              : paragraphClassName,
+            'mb-3 text-pretty wrap-anywhere last:mb-0',
           )}
         >
           {replaceSentinelsInChildren(children, renderMarker)}
@@ -182,6 +188,8 @@ export const useCitationMarkdownComponents = (
     isPreviewOpen,
     previewFilesOnMarkerClick,
     buildLabels,
+    paragraphClassName,
+    compactParagraphClassName,
     isCompactTypography,
     hasCitElement,
   ]);

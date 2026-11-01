@@ -10,7 +10,6 @@ import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   Dropdown,
-  ElementSize,
   GhostIconButton,
   MenuItemMark,
 } from '@epam/ai-dial-ui-kit';
@@ -383,7 +382,6 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
               />
             }
             aria-label={addMenuTitle}
-            size={ElementSize.Large}
             tooltipProps={{ tooltip: addMenuTitle }}
             disabled={isDisabled}
             onClick={() => setIsSheetOpen(true)}
@@ -508,6 +506,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
               temperatureHint={chatSettings.temperatureHint}
               saveLabel={chatSettings.saveLabel}
               saveDisabledTooltip={chatSettings.saveDisabledTooltip}
+              colors={chatSettings.modalColors}
             />
           )}
         </>

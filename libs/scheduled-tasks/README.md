@@ -217,9 +217,10 @@ import {
 When the host omits `renderInstructions`, `instructionsMarkdown` is rendered by
 the built-in `MDMessageViewer` from `@epam/ai-dial-chat-shared` at the
 summary's small 14/20 scale (paragraphs and lists at `dial-small-text`,
-headings at `dial-small-semi-text`) — pass `instructionsClassNames` (a
-`MarkdownRendererClassNames` map, replacing the default wholesale) to change
-it. Name the viewer's controls through the optional
+headings at `dial-small-semi-text`). Change the type step through
+`styles.typography.instructionsTextClassName` /
+`instructionsHeadingClassName`, or pass `instructionsClassNames` (a
+`MarkdownRendererClassNames` map merged key by key over the defaults). Name the viewer's controls through the optional
 `labels.codeBlockCopyLabel`, `labels.codeBlockCopiedLabel`,
 `labels.codeBlockDownloadLabel`, `labels.tableScrollRegionAriaLabel` and
 `labels.mathScrollRegionAriaLabel` (the `ScheduledTaskInstructionsMarkdownLabels`
@@ -227,7 +228,10 @@ fields); each falls back to the renderer's English default (`'Copy code'`,
 `'Copied!'`, `'Download code'`, `'Scrollable table'`, `'Scrollable formula'`).
 `ScheduledTaskDetailsSummary` takes the same fields as its `markdownLabels`
 prop. A host-supplied `renderInstructions` owns its own labels and classNames,
-and these are ignored.
+and these are ignored. `styles.colors.fieldLabel`
+(`ScheduledTaskDetailsSummaryColors`) sets the field labels' color through
+`--stds-field-label` (default `--text-secondary`); `styles.typography` sets
+their type step (default `'dial-tiny-text'`).
 
 ```tsx
 import {
@@ -316,7 +320,11 @@ state, pagination callbacks, and labels are all supplied by the host; a run row
 renders as clickable only when its item carries a `conversationId` and
 `onRunClick` is supplied. An `Error` row whose item carries `errorText` reveals
 that text in a tooltip on its status icon (hover or focus) and appends it to the
-row's accessible name; `errorText` is ignored for every other status. Set
+row's accessible name; `errorText` is ignored for every other status.
+`colors.unavailableText` (`ScheduledTaskConversationHistorySectionColors`,
+var `--stch-unavailable-text`, default `--text-secondary`) colors the
+unavailable message; `unavailableTextClassName` sets its type step (default
+`'dial-body-text'`). Set
 `isUnavailable` when the history exists but cannot be shown to the viewer (for
 example a task shared by its owner): `labels.unavailableLabel` then replaces the
 runs, the error message, the retry action and the footer — mirroring
@@ -382,6 +390,10 @@ name its controls through `markdownLabels`
 `ScheduledTaskDetailsSummary` takes) and rescale it through
 `instructionsClassNames` (the same prop `ScheduledTaskDetailsSummary` takes);
 both are ignored when `renderInstructions` is supplied.
+`colors.unavailableText` (`ScheduledTaskConversationDetailsSectionColors`,
+var `--stcd-unavailable-text`, default `--text-secondary`) colors the
+unavailable message; `unavailableTextClassName` sets its type step (default
+`'dial-body-text'`).
 
 ```tsx
 import {

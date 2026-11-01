@@ -78,11 +78,13 @@ export { ScheduledTaskDetailsSummary } from './components/ScheduledTaskDetailsSu
 export type { ScheduledTaskInstructionsMarkdownLabels } from './models/scheduled-task-instructions';
 export { ScheduledTaskConversationHistorySection } from './components/ScheduledTaskConversationHistorySection/ScheduledTaskConversationHistorySection';
 export type {
+  ScheduledTaskConversationHistorySectionColors,
   ScheduledTaskConversationHistorySectionProps,
   ScheduledTaskConversationHistorySectionLabels,
 } from './components/ScheduledTaskConversationHistorySection/ScheduledTaskConversationHistorySection';
 export { ScheduledTaskConversationDetailsSection } from './components/ScheduledTaskConversationDetailsSection/ScheduledTaskConversationDetailsSection';
 export type {
+  ScheduledTaskConversationDetailsSectionColors,
   ScheduledTaskConversationDetailsSectionProps,
   ScheduledTaskConversationDetailsSectionLabels,
 } from './components/ScheduledTaskConversationDetailsSection/ScheduledTaskConversationDetailsSection';
@@ -94,6 +96,7 @@ export type {
   ScheduledTaskDeleteConfirmationStyles,
 } from './components/ScheduledTaskDeleteConfirmation/ScheduledTaskDeleteConfirmation';
 export type {
+  ScheduledTaskDetailsSummaryColors,
   ScheduledTaskDetailsSummaryProps,
   ScheduledTaskDetailsSummaryStyles,
   ScheduledTaskDetailsSummaryTypography,

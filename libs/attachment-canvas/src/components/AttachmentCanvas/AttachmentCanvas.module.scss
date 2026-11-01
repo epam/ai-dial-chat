@@ -5,3 +5,7 @@
 .mcpAppVersion {
   color: var(--ac-mcp-app-version, var(--text-secondary, #57647a));
 }
+
+.panelHeader {
+  border-color: var(--ac-header-border, var(--stroke-tertiary, #e0e6f0));
+}

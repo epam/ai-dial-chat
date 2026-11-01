@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CanvasWidthMode, resolveCanvasWidth } from '../canvas-width';
+
 const policy = {
   minWidth: 400,
   defaultMaxWidth: 640,

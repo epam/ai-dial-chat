@@ -15,6 +15,7 @@ import {
 import { IsConversationPath } from '../../common/validators/conversation-path.validator';
 import { MessageCustomContentDto } from './message-custom-content.dto';
 import { IsMessageOrAttachmentsPresent } from './message-or-attachments.validator';
+import { IsNotProjectConversationLocator } from './not-project-conversation-locator.validator';
 
 export enum CompletionMode {
   Append = 'append',
@@ -40,6 +41,7 @@ export class SendCompletionDto {
   @IsString()
   @MinLength(1)
   @IsConversationPath()
+  @IsNotProjectConversationLocator()
   path!: string;
 
   @ApiProperty({

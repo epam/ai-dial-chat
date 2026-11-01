@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 /** One file of a project's context, as the {@link ProjectView} renders it. */
 export interface ProjectContextFileItem {
   /** File name under the project's context folder. */
@@ -147,6 +149,10 @@ export interface ProjectViewProps {
   onRetry: () => void;
   /** Called from the not-found state's action. */
   onBrowseProjects: () => void;
+  /** Content of the main column, before the Details panel (stacked above it on mobile); the column is omitted when unset. */
+  mainContent?: ReactNode;
+  /** Accessible name of the main column. Defaults to `'Project content'`. */
+  mainContentLabel?: string;
   /** Localized labels. */
   labels: ProjectViewLabels;
   /** Color and typography overrides. */

@@ -38,7 +38,7 @@ Displays a single attachment with its name, status, and actions. Every callback 
 
 Each action the card renders — download, retry, open-in-new-tab, remove — gets its own accessible name from `labels`, so pass every label whose action the card can show. They are laid out as one row in the tile's corner. The download button on both image and file tiles is named by `labels.downloadLabel` (default `'Download attachment'`), never by `clickLabel`, so a tile that is both clickable and downloadable exposes two distinctly named buttons.
 
-The tile itself is a `role="button"` Tab stop only when activating it does something: `onExpand` on a pasted-text card (named by `labels.expandLabel`, default `'Expand pasted text'`, and taking precedence over `onClick`), otherwise `onClick` (named by `labels.clickLabel`, default `'Open attachment'` on image tiles and `'Download attachment'` on file, link and pasted-text tiles). Click, `Enter` and `Space` run the same action. With neither handler — or while an image tile is still loading — the tile renders as a plain, non-focusable element.
+The tile gets its own full-size `<button>`, laid under the corner actions rather than wrapping them, only when activating it does something: `onExpand` on a pasted-text card (named by `labels.expandLabel`, default `'Expand pasted text'`, and taking precedence over `onClick`), otherwise `onClick` (named by `labels.clickLabel`, default `'Open attachment'` on image tiles and `'Download attachment'` on file, link and pasted-text tiles). Click, `Enter` and `Space` run the same action. With neither handler — or while an image tile is still loading — no tile button is rendered.
 
 ```tsx
 import { AttachmentCard } from '@epam/ai-dial-attachment-input';

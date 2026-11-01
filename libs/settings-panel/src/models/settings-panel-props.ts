@@ -18,8 +18,16 @@ export interface SettingsPanelTypography {
   sectionLabelClassName?: string;
 }
 
+/** Color overrides for the {@link SettingsPanel} component, applied as CSS custom properties. */
+export interface SettingsPanelColors {
+  /** Panel background color. Defaults to `--bg-layer-raised`. */
+  background?: string;
+}
+
 /** Style overrides for the {@link SettingsPanel} component. */
 export interface SettingsPanelStyles {
+  /** Color overrides. */
+  colors?: SettingsPanelColors;
   /** Typography overrides. */
   typography?: SettingsPanelTypography;
 }

@@ -26,6 +26,7 @@ import { createNotificationContextValue } from '../../../context/tests/notificat
 import { UnsavedChangesProvider } from '../../../context/UnsavedChangesContext';
 import { renderWithLeaveGuard } from '../../../hooks/unsaved-changes/tests/render-with-leave-guard';
 import ScheduledTaskCreatePage from '../ScheduledTaskCreatePage';
+
 vi.mock(
   '../../../components/ScheduledTaskSkillField/ScheduledTaskSkillField',
   () => ({
@@ -150,6 +151,7 @@ const refineTextMock = vi.fn();
 vi.mock('../../../server-api/text-refinement.api', () => ({
   refineText: (...args: unknown[]) => refineTextMock(...args),
 }));
+
 interface FormProps {
   onRefineDescription?: (value: string, signal: AbortSignal) => Promise<string>;
   onRefineInstructions?: (

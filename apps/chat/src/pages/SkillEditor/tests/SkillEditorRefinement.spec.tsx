@@ -116,9 +116,7 @@ describe('skill refinement host integration', () => {
       expect(form.labels?.refineWithAiLabel).toBe('textRefinement.action');
       expect(form.labels?.refineUndoLabel).toBe('textRefinement.undo');
       expect(form.labels?.refineRefiningLabel).toBe('textRefinement.refining');
-      expect(form.labels?.refineRegenerateLabel).toBe(
-        'textRefinement.regenerate',
-      );
+      expect(form.labels?.refineRegenerateLabel).toBe('buttons.regenerate');
     },
   );
   it.each([false, undefined])(

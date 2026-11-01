@@ -35,7 +35,10 @@ export const ClampedName: FC<ClampedNameProps> = ({
     <Tooltip asChild tooltip={name} hideTooltip={!isClamped}>
       <span
         ref={ref}
-        className={mergeClasses('line-clamp-2 min-w-0 break-words', className)}
+        className={mergeClasses(
+          'line-clamp-2 min-w-0 wrap-break-word',
+          className,
+        )}
       >
         <Highlight text={name} query={query} />
       </span>

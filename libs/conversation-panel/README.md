@@ -158,7 +158,8 @@ always renders `Avatar` rows.
 
 `styles.typography.fontClassName` puts one typography class on the list root, which rows
 and group headers inherit unless they set their own (`groupHeaderClassName`,
-`itemTitleClassName`), and `styles.typography.fontFamily` sets its `font-family`
+`itemTitleClassName`, `unreadItemTitleClassName` — `'dial-small-semi-text'` by
+default for an unread title), and `styles.typography.fontFamily` sets its `font-family`
 (`--cp-list-font-family`). `ConversationPanel` forwards `fontFamily` but not
 `fontClassName`, which there names the title.
 
@@ -218,7 +219,9 @@ While `activeFilter` or `activeTypeFilter` is not `All`, the filter trigger
 carries a dot and is described by `labels.filterActiveLabel` (default
 `'Filters applied'`) for assistive tech; `styles.colors.filterIndicator`
 recolors the dot (`--cp-list-header-filter-indicator`, defaults to
-`--text-accent`).
+`--text-accent`), and `styles.colors.filterValue` recolors each filter row's
+current value in the menu (`--cp-list-header-filter-value`, defaults to
+`--text-secondary`).
 
 ### ConversationListSection
 

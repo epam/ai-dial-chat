@@ -53,6 +53,8 @@ export interface AddOnCatalogModalProps {
   onConfirm: (ids: string[]) => void;
   /** Called when the user cancels or closes the dialog. */
   onClose: () => void;
+  /** Typography class of the heading above the list, forwarded to `CatalogPickerModal`. Defaults to `'dial-body-semi-text'`. */
+  headingClassName?: string;
 }
 
 /** Add-on picker dialog: a catalog checklist that opens on the attached items and commits the checked set on Add. */
@@ -68,6 +70,7 @@ export const AddOnCatalogModal: FC<AddOnCatalogModalProps> = ({
   renderFooterStart,
   onConfirm,
   onClose,
+  headingClassName,
 }) => {
   const [checkedIds, setCheckedIds] = useState<Set<string>>(
     () => new Set(attachedIds),
@@ -98,6 +101,7 @@ export const AddOnCatalogModal: FC<AddOnCatalogModalProps> = ({
       footerStart={renderFooterStart?.(checkedIds)}
       onConfirm={handleConfirm}
       onClose={onClose}
+      headingClassName={headingClassName}
       listProps={{
         ...listProps,
         type,

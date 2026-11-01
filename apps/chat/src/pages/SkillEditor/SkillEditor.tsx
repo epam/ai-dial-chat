@@ -454,7 +454,7 @@ const SkillEditorPage: FC = () => {
       instructionsLabel: t(SkillEditorI18nKeys.InstructionsLabel),
       instructionsPlaceholder: t(SkillEditorI18nKeys.InstructionsPlaceholder),
       createLabel: isEditMode
-        ? t(SkillEditorI18nKeys.SaveLabel)
+        ? t(ButtonsI18nKeys.Save)
         : t(ButtonsI18nKeys.Create),
       cancelLabel: t(ButtonsI18nKeys.Cancel),
       retryLabel: t(ButtonsI18nKeys.Retry),
@@ -464,7 +464,7 @@ const SkillEditorPage: FC = () => {
           : loadState === SkillEditorLoadState.NotFound
             ? t(SkillEditorI18nKeys.LoadErrorNotFound)
             : t(SkillEditorI18nKeys.LoadError),
-      savingStatusLabel: t(SkillEditorI18nKeys.SavingStatus),
+      savingStatusLabel: t(ButtonsI18nKeys.Saving),
       loadingAriaLabel: t(SkillEditorI18nKeys.LoadingAriaLabel),
       instructionsLoadingAriaLabel: t(
         SkillEditorI18nKeys.InstructionsLoadingAriaLabel,
@@ -583,7 +583,7 @@ const SkillEditorPage: FC = () => {
           onRetry={retryLoad}
           backAriaLabel={
             isManifestSelected
-              ? t(SkillEditorI18nKeys.BackAriaLabel)
+              ? t(ButtonsI18nKeys.Back)
               : t(SkillEditorI18nKeys.BackToManifestAriaLabel)
           }
           title={
@@ -602,8 +602,8 @@ const SkillEditorPage: FC = () => {
           open={pendingReload}
           header={t(SkillEditorI18nKeys.ReloadConfirmTitle)}
           description={t(SkillEditorI18nKeys.ReloadConfirmMessage)}
-          confirmLabel={t(SkillEditorI18nKeys.ReloadConfirmLabel)}
-          cancelLabel={t(SkillEditorI18nKeys.ReloadCancelLabel)}
+          confirmLabel={t(ButtonsI18nKeys.Reload)}
+          cancelLabel={t(ButtonsI18nKeys.Cancel)}
           variant={ConfirmationPopupVariant.Danger}
           onConfirm={confirmReloadLatest}
           onCancel={() => setPendingReload(false)}

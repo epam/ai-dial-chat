@@ -1,4 +1,8 @@
-import { DeploymentIcon, ItemHeader } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  DeploymentIcon,
+  ItemHeader,
+} from '@epam/ai-dial-chat-shared';
 import {
   Breadcrumbs,
   DIAL_ICON_SIZE,
@@ -13,6 +17,7 @@ import { IconTrash } from '@tabler/icons-react';
 import { type FC, type ReactNode, useId } from 'react';
 import type { CatalogItemCredentials } from '../../models/catalog-item-credentials';
 import { CredentialsBadge } from '../CredentialsBadge/CredentialsBadge';
+import styles from './AddOnListItem.module.scss';
 
 /** User-visible strings of `AddOnListItem`; pass translated ones in a localised host. */
 export interface AddOnListItemLabels {
@@ -22,6 +27,20 @@ export interface AddOnListItemLabels {
   location?: string;
   /** Label and tooltip of the logged-out badge. Defaults to `CredentialsBadge`'s own. */
   credentialsBadge?: string;
+}
+
+/** Color overrides for `AddOnListItem`, applied as CSS custom properties. */
+export interface AddOnListItemColors {
+  /** Row background on hover. Defaults to `--bg-control-accent-alpha`. */
+  rowHoverBackground?: string;
+  /** Outline color of the focused row button. Defaults to `--stroke-accent-focus`. */
+  focusOutline?: string;
+  /** Color of the name. Defaults to `--text-primary`. */
+  title?: string;
+  /** Color of the version. Defaults to `--text-secondary`. */
+  version?: string;
+  /** Color of the line under the name. Defaults to `--text-secondary`. */
+  description?: string;
 }
 
 /** Props for `AddOnListItem`. */
@@ -46,11 +65,13 @@ export interface AddOnListItemProps {
   credentials?: CatalogItemCredentials;
   /** User-visible strings. */
   labels?: AddOnListItemLabels;
-  /** CSS class applied to the name. Defaults to `'dial-small-semi-text text-primary'`. */
+  /** Color overrides, applied as CSS custom properties. */
+  colors?: AddOnListItemColors;
+  /** CSS class applied to the name. Defaults to `'dial-small-semi-text'`. */
   titleClassName?: string;
-  /** CSS class applied to the version. Defaults to `'dial-tiny-text text-secondary'`. */
+  /** CSS class applied to the version. Defaults to `'dial-tiny-text'`. */
   versionClassName?: string;
-  /** CSS class applied to the line under the name. Defaults to `'dial-tiny-text text-secondary'`. */
+  /** CSS class applied to the line under the name. Defaults to `'dial-tiny-text'`. */
   descriptionClassName?: string;
   /** Disables the row's buttons. Defaults to `false`. */
   isDisabled?: boolean;
@@ -61,9 +82,8 @@ export interface AddOnListItemProps {
 }
 
 const ROW_CLASS =
-  'group relative flex min-w-0 items-center gap-1 rounded-[10px] pe-1 hover:bg-control-accent-alpha';
-const FOCUS_CLASS =
-  'outline-hidden focus-visible:outline focus-visible:outline-accent-focus';
+  'group relative flex min-w-0 items-center gap-1 rounded-[10px] pe-1';
+const FOCUS_CLASS = 'outline-hidden focus-visible:outline';
 
 /** One attached add-on in a list: a button showing its icon, name, version and a line, with a remove beside it. */
 export const AddOnListItem: FC<AddOnListItemProps> = ({
@@ -77,9 +97,10 @@ export const AddOnListItem: FC<AddOnListItemProps> = ({
   trailing,
   credentials,
   labels,
-  titleClassName = 'dial-small-semi-text text-primary',
-  versionClassName = 'dial-tiny-text text-secondary',
-  descriptionClassName = 'dial-tiny-text text-secondary',
+  colors,
+  titleClassName = 'dial-small-semi-text',
+  versionClassName = 'dial-tiny-text',
+  descriptionClassName = 'dial-tiny-text',
   isDisabled = false,
   onOpen,
   onRemove,
@@ -87,6 +108,11 @@ export const AddOnListItem: FC<AddOnListItemProps> = ({
   const nameId = useId();
   const descriptionId = useId();
   const hasDescription = description != null && description !== '';
+  const cssVars = buildCssVars({
+    '--cat-add-on-row-hover-bg': colors?.rowHoverBackground,
+    '--cat-add-on-focus-outline': colors?.focusOutline,
+    '--cat-add-on-description': colors?.description,
+  });
 
   /* Hidden as a whole: the button is named by the item, and a badge's meaning
      belongs in the description the host passes. */
@@ -118,7 +144,11 @@ export const AddOnListItem: FC<AddOnListItemProps> = ({
   const line = hasDescription && (
     <span
       id={descriptionId}
-      className={mergeClasses('truncate', descriptionClassName)}
+      className={mergeClasses(
+        'truncate',
+        styles.description,
+        descriptionClassName,
+      )}
     >
       {description}
     </span>
@@ -128,7 +158,7 @@ export const AddOnListItem: FC<AddOnListItemProps> = ({
   };
 
   return (
-    <div className={ROW_CLASS}>
+    <div className={mergeClasses(ROW_CLASS, styles.row)} style={cssVars}>
       {path ? (
         <>
           {/* A trail is not phrasing content, so it cannot sit in the button:
@@ -141,6 +171,7 @@ export const AddOnListItem: FC<AddOnListItemProps> = ({
             className={mergeClasses(
               'absolute inset-0 rounded-[10px] bg-transparent',
               FOCUS_CLASS,
+              styles.focusable,
             )}
             onClick={onOpen}
           />
@@ -165,6 +196,7 @@ export const AddOnListItem: FC<AddOnListItemProps> = ({
           className={mergeClasses(
             'flex min-w-0 flex-1 items-center gap-2.5 rounded-[10px] py-1 text-start',
             FOCUS_CLASS,
+            styles.focusable,
           )}
           onClick={onOpen}
         >
@@ -176,6 +208,7 @@ export const AddOnListItem: FC<AddOnListItemProps> = ({
                 postfix={version || undefined}
                 titleClassName={titleClassName}
                 postfixClassName={versionClassName}
+                colors={{ title: colors?.title, count: colors?.version }}
                 className="min-w-0 items-baseline gap-1.5"
               />
             </span>

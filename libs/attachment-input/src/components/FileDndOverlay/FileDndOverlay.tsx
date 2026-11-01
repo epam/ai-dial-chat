@@ -54,7 +54,7 @@ export const FileDndOverlay: FC<FileDndOverlayProps> = ({
       {statusRegion}
       <div
         className={mergeClasses(
-          'fixed inset-0 z-[9999] flex items-center justify-center backdrop-blur-sm',
+          'fixed inset-0 z-9999 flex items-center justify-center backdrop-blur-sm',
           styles.overlay,
           isAttachmentsAllowed
             ? 'pointer-events-none'

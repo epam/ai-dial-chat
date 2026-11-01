@@ -65,7 +65,8 @@ No new React context is introduced.
 `libs/projects` SHALL export:
 
 - `ProjectView`;
-- the `ProjectViewProps`, `ProjectViewLabels`, `ProjectViewStyles`, `ProjectViewModel` and `ProjectContextFileItem` types.
+- the `ProjectViewProps`, `ProjectViewLabels`, `ProjectViewStyles`, `ProjectViewModel` and `ProjectContextFileItem` types;
+- `ProjectConversationList` and its types (see the `project-conversations-ui` capability).
 
 The lib SHALL NOT import `@epam/ai-dial-chat-api-client`, REST paths, feature flags, i18n, the router or app contexts.
 
@@ -91,12 +92,21 @@ Props:
 | `onOpenFile` | `(fileName: string) => void` |
 | `onRetry` | `() => void` |
 | `onBrowseProjects` | `() => void` |
+| `mainContent` | optional `ReactNode`: the main column's content |
 | `labels` | `ProjectViewLabels` |
 | `styles` | optional `ProjectViewStyles`, applied via `buildCssVars` |
 
+**Main column.** When `mainContent` is supplied, the loaded layout renders it in a `<section>` before the Details `<aside>`:
+
+- it is named by `labels.mainContentLabel`, a new optional label;
+- it is `flex-1 min-w-0`, with `24px 32px` padding on `desktop`;
+- its content is centered at the design's 748px max width.
+
+On `mobile` the section stacks above the Details panel. Without `mainContent`, the layout is unchanged, so the Details panel is pushed to the inline end. The lib renders the node as given: the chat input and the Chats list are composed by the host.
+
 Every declared prop SHALL be read. Read-only mode is expressed only by omitting `onEdit`, `onDelete`, `onShare` and `onPublish`. The lib has no `isReadOnly` flag, so a prop cannot contradict the callbacks.
 
-`ProjectViewPage` maps the DTO into `ProjectViewModel` with `mapProjectDetailsToViewModel` (`apps/chat/src/utils/map-project-dto.ts`). Each `contentType` comes from `inferMimeTypeFromPath` (`@epam/ai-dial-chat-shared`), falling back to `application/octet-stream`.
+`ProjectViewPage` maps the DTO into `ProjectViewModel` with `mapProjectDetailsToViewModel` (`libs/chat-hooks/src/project/project-mapping.ts`). Each `contentType` comes from `inferMimeTypeFromPath` (`@epam/ai-dial-chat-shared`), falling back to `application/octet-stream`.
 
 #### Scenario: Lib has no host integration knowledge
 
@@ -107,6 +117,16 @@ Every declared prop SHALL be read. Read-only mode is expressed only by omitting 
 
 - **WHEN** `ProjectView` renders without `onEdit`, `onDelete`, `onShare` and `onPublish`
 - **THEN** no Edit, Delete, Share or Publish control is rendered, and Pin and Download are
+
+#### Scenario: Main column renders before the Details panel
+
+- **WHEN** `ProjectView` renders a loaded project with `mainContent={<p>chats</p>}`
+- **THEN** a `<section>` named by `labels.mainContentLabel` contains "chats" and precedes the Details `<aside>` in DOM order
+
+#### Scenario: No main column without mainContent
+
+- **WHEN** `ProjectView` renders without `mainContent`
+- **THEN** no main-column `<section>` renders
 
 ### Requirement: The header shows back, the name, and the project actions
 
@@ -228,15 +248,17 @@ The error and not-found titles are announced through `role="alert"`.
 
 **Delete.**
 
-- The page opens `DeleteConfirmationDialog` (`@epam/ai-dial-chat-shared`). Its title is `projects.actions.deleteConfirmTitle` (interpolating `{{name}}`), its body is `projects.actions.deleteConfirmDescription`, and its labels are the shared confirm and cancel labels.
-- Confirming calls `deleteProject(id, etag)`, and the dialog shows `isLoading` while the request runs.
+- The page opens `DeleteConfirmationDialog` (`@epam/ai-dial-chat-shared`). Its title is `projects.actions.deleteConfirmTitle` (interpolating `{{name}}`), and its labels are the shared confirm and cancel labels. Its body is:
+  - `projects.actions.deleteConfirmDescription` when the loaded project has `conversationCount: 0`;
+  - otherwise `projects.actions.deleteConfirmWithChatsDescription`, pluralised by `count` (`_one` / `_other`), which says the project's chats are deleted too.
+- Confirming calls `deleteProject(id, contentVersion)`, and the dialog shows `isLoading` while the request runs.
 - **Success:** `notifyOperationSuccess(NotifiableEntity.Project, EntityOperation.Deleted, { name })`, then `replacePinnedProjectId(id, null)` (the BFF already removed the pin), then `navigate(ROUTES.Projects, { replace: true })`, so Back does not reopen the deleted project.
 - **`409 project-changed`:** close the dialog, show `showErrorNotification` with `projects.errors.changedElsewhere`, and call `retry()`.
 - **Other failures:** `showErrorNotification` with `projects.actions.deleteError`. The dialog stays open.
 
 **Share.** `SharePopoverContainer` is rendered with `itemId={id}` and `canEditAccess={false}`.
 
-**Publish.** `PublishProjectPanelContainer` is rendered with `projectId`, `projectName`, `onClose` and `returnFocusRef` (the Publish trigger).
+**Publish.** `PublishProjectPanelContainer` is rendered with `projectId`, `projectName`, `conversationCount`, `onClose` and `returnFocusRef` (the Publish trigger).
 
 **Gating.** `onPublish`, `onEdit`, `onShare` and `onDelete` are passed to `ProjectView` only when `project.canEdit` is `true`. Pin and Download are always passed.
 
@@ -245,7 +267,12 @@ The error and not-found titles are announced through `role="alert"`.
 #### Scenario: Delete confirms, deletes and navigates
 
 - **WHEN** the user chooses Delete, then confirms
-- **THEN** `deleteProject` is called with the loaded ETag, a success toast is shown, and the router is at `/projects`
+- **THEN** `deleteProject` is called with the loaded `contentVersion`, a success toast is shown, and the router is at `/projects`
+
+#### Scenario: Delete confirmation mentions chats
+
+- **WHEN** the loaded project has `conversationCount: 3`, and the user chooses Delete
+- **THEN** the dialog body is `projects.actions.deleteConfirmWithChatsDescription_other` with `count: 3`
 
 #### Scenario: Delete on a changed project
 
@@ -273,10 +300,26 @@ It submits through `publishCatalogEntity({ entityType: CatalogPublishEntityType.
 
 `CatalogPublishEntityType` in `libs/chat-hooks/src/catalog/publish.ts` SHALL gain `'project'`. `CatalogEntityType` in `libs/chat-shared` is not changed.
 
+**Chats warning.** DIAL Core publishes a project as a whole, `conversations/` included. When `conversationCount > 0`, the container renders a kit `Notification` with the warning variant through `StandalonePublishPanel`'s `renderSummary`, after the resource title, so `libs/publish-panel` is not changed.
+
+- Its text is `projects.publish.chatsWarning`, pluralised by `count`: "This project's {{count}} chats will be published with it and visible to everyone who can see the project."
+- The warning does not block submission: publishing stays the user's choice.
+- It sits inside the panel's labelled region, so screen readers read it with the summary.
+
 #### Scenario: Publish request
 
 - **WHEN** the user selects a folder and submits
 - **THEN** `POST /api/v1/catalog/project/{encoded id}/publish` is sent, and a "publish requested" toast is shown
+
+#### Scenario: Chats warning on a project with chats
+
+- **WHEN** the panel opens for a project with `conversationCount: 2`
+- **THEN** a warning `Notification` with `projects.publish.chatsWarning_other` (`count: 2`) renders, and Submit stays enabled
+
+#### Scenario: No warning without chats
+
+- **WHEN** the panel opens for a project with `conversationCount: 0`
+- **THEN** no chats warning renders
 
 ### Requirement: Project view strings flow through react-i18next
 

@@ -45,25 +45,27 @@ vi.mock('../../../utils/halloween-raven-targets', () => ({
   getRavenTargets: vi.fn(),
 }));
 const stop = vi.fn();
-beforeEach(() => {
-  vi.clearAllMocks();
-  state.mobile = false;
-  state.reduced = false;
-  state.listeners.clear();
-  vi.mocked(animateRavens).mockReturnValue(stop);
-  vi.mocked(getRavenTargets).mockReturnValue({
-    width: 1280,
-    height: 800,
-    pumpkin: null,
-    composer: null,
-    conversation: null,
-    fragments: [],
-    edges: [],
-  });
-});
-afterEach(() => vi.restoreAllMocks());
 
 describe('raven scene integration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    state.mobile = false;
+    state.reduced = false;
+    state.listeners.clear();
+    vi.mocked(animateRavens).mockReturnValue(stop);
+    vi.mocked(getRavenTargets).mockReturnValue({
+      width: 1280,
+      height: 800,
+      pumpkin: null,
+      composer: null,
+      conversation: null,
+      fragments: [],
+      edges: [],
+    });
+  });
+
+  afterEach(() => vi.restoreAllMocks());
+
   it.each([true, false])(
     'supplies one plan with the correct actor budget, mobile=%s',
     async (mobile) => {

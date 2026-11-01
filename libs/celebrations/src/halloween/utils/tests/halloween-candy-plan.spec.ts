@@ -9,6 +9,7 @@ import {
   CandyJanitorKind,
 } from '../halloween-candy-plan';
 import type { CandyTargets } from '../halloween-candy-targets';
+
 const input = (width = 360, rtl = false): CandyTargets => ({
   width,
   height: 900,
@@ -33,17 +34,17 @@ const position = (frames: Keyframe[], time: number) => {
   const offset = time / CANDY_MS;
   const next = frames.findIndex((f) => Number(f.offset) > offset);
   if (next < 0) return coords(frames.at(-1)!);
-  const a = frames[Math.max(0, next - 1)],
-    b = frames[next],
-    p = coords(a),
-    q = coords(b);
+  const a = frames[Math.max(0, next - 1)];
+  const b = frames[next];
+  const p = coords(a);
+  const q = coords(b);
   const t = (offset - Number(a.offset)) / (Number(b.offset) - Number(a.offset));
   return p.map((v, i) => v + (q[i] - v) * t);
 };
 describe('Candy cleanup battle plan', () => {
   it('reaches cards below a wider composer without crossing its body', () => {
-    const source = input(1280),
-      p = buildCandyPlan(source, false);
+    const source = input(1280);
+    const p = buildCandyPlan(source, false);
     expect(
       new Set(
         p.contacts
@@ -65,8 +66,8 @@ describe('Candy cleanup battle plan', () => {
   it.each([360, 900, 1280, 1920])(
     'keeps every actor, finite tracks and persistent candy at %spx',
     (width) => {
-      const mobile = width < 1280,
-        p = buildCandyPlan(input(width), mobile);
+      const mobile = width < 1280;
+      const p = buildCandyPlan(input(width), mobile);
       expect(p.sweets).toHaveLength(mobile ? 12 : 18);
       expect(p.birds).toHaveLength(mobile ? 4 : 6);
       expect(p.janitors.map((j) => j.kind)).toEqual([
@@ -98,8 +99,8 @@ describe('Candy cleanup battle plan', () => {
   it.each([false, true])(
     'shares exact edge, beak and broom contact poses, RTL=%s',
     (rtl) => {
-      const source = input(1280, rtl),
-        p = buildCandyPlan(source, false);
+      const source = input(1280, rtl);
+      const p = buildCandyPlan(source, false);
       expect(p.contacts.some((c) => c.kind === CandyContactKind.Edge)).toBe(
         true,
       );
@@ -115,8 +116,8 @@ describe('Candy cleanup battle plan', () => {
           expect(c.y + p.radius).toBeCloseTo(rect.top);
         }
         if (c.kind === CandyContactKind.Peck) {
-          const bird = position(p.birds[c.actor!].frames, c.time),
-            tip = candyBeakPoint(p.peckAngle);
+          const bird = position(p.birds[c.actor!].frames, c.time);
+          const tip = candyBeakPoint(p.peckAngle);
           expect(bird[0] + tip.x * p.birdScale).toBeCloseTo(c.x);
           expect(bird[1] + tip.y * p.birdScale).toBeCloseTo(c.y);
         }
@@ -148,8 +149,8 @@ describe('Candy cleanup battle plan', () => {
       );
   });
   it('retains the whole story without anchors and is deterministic', () => {
-    const source = { ...input(), surfaces: [] },
-      p = buildCandyPlan(source, true);
+    const source = { ...input(), surfaces: [] };
+    const p = buildCandyPlan(source, true);
     expect(p).toEqual(buildCandyPlan(source, true));
     expect(p.contacts.some((c) => c.kind === CandyContactKind.Edge)).toBe(
       false,

@@ -1,5 +1,6 @@
 import type { ScheduledTaskDto } from '@epam/ai-dial-chat-api-client';
 import { findDeploymentByIdOrReference } from '@epam/ai-dial-chat-hooks';
+import { ActiveScheduledTaskDetailState } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
 import {
   ScheduledTaskConversationDetailsSection,
   ScheduledTaskConversationDetailsState,
@@ -15,7 +16,6 @@ import { useDeployments } from '../../../context/DeploymentsContext';
 import { useSourcesSidebarData } from '../../../context/SourcesSidebarContext';
 import { useLanguage } from '../../../hooks/language/useLanguage';
 import { useScheduledTaskSkillDisplayNames } from '../../../hooks/scheduled-tasks/useScheduledTaskSkillDisplayNames';
-import { ActiveScheduledTaskDetailState } from '../../../types/active-scheduled-task';
 import { resolveLocalizedText } from '../../../utils/locale';
 
 /* Maps the app's fetch status to the lib section's display state; idle/loading resolve to the summary branch. */
@@ -92,7 +92,7 @@ const TaskDetailsSection: FC<Props> = ({
       unavailableLabel: t(
         ScheduledTasksI18nKeys.ConversationBannerUnavailableLabel,
       ),
-      retryLabel: t(ScheduledTasksI18nKeys.ListRetryLabel),
+      retryLabel: t(ButtonsI18nKeys.Retry),
     }),
     [t],
   );

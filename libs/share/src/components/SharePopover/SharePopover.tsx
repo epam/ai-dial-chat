@@ -70,6 +70,7 @@ const SharePopover: FC<SharePopoverProps> = ({
     '--shp-note-text': colors?.noteText,
     '--shp-divider': colors?.divider,
     '--shp-skeleton-color': colors?.skeletonColor,
+    '--shp-bg': colors?.background,
   });
   /*
    * The access menu renders in a floating portal outside this popover, so a
@@ -198,7 +199,8 @@ const SharePopover: FC<SharePopoverProps> = ({
       tabIndex={-1}
       style={cssVars}
       className={mergeClasses(
-        'flex w-96 flex-col gap-3 rounded-xl bg-layer-raised px-6 pt-4 pb-6 shadow-lg outline-hidden',
+        'flex w-96 flex-col gap-3 rounded-xl px-6 pt-4 pb-6 shadow-lg outline-hidden',
+        styles.popover,
         className,
         SHARE_CLASS.popover,
       )}

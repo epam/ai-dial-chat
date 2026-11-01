@@ -2,7 +2,9 @@ import type { PublicationRule } from '@epam/ai-dial-publish-panel';
 import { PublicationRuleFunction } from '@epam/ai-dial-publish-panel';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ProjectsI18nKeys } from '../../../constants/translation-keys';
 import { useNotification } from '../../../context/NotificationContext';
 import { useAppConfig as useAppConfigMock } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
@@ -35,8 +37,10 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       onAuthorChange,
       onSubmit,
       labels,
+      renderSummary,
     }: {
       resource?: { title: string };
+      renderSummary?: () => ReactNode;
       allowReplace: boolean;
       hasExistingPublicationInFolder: boolean;
       rules: PublicationRule[];
@@ -47,7 +51,7 @@ vi.mock('@epam/ai-dial-publish-panel', async (importOriginal) => {
       labels: { ariaLabel: string };
     }) => (
       <div role="dialog" aria-label={labels.ariaLabel}>
-        <span>{resource?.title}</span>
+        {renderSummary ? renderSummary() : <span>{resource?.title}</span>}
         <span>allowReplace:{String(allowReplace)}</span>
         <span>alreadyPublished:{String(hasExistingPublicationInFolder)}</span>
         <button onClick={() => onSelectedFolderPathChange(['Marketing'])}>
@@ -92,41 +96,42 @@ vi.mock('react-i18next', () => ({
 const mockShowNotification = vi.fn();
 const mockRememberPublishFolder = vi.fn();
 
-const renderContainer = (onClose = vi.fn()) => {
+const renderContainer = (onClose = vi.fn(), conversationCount?: number) => {
   render(
     <PublishProjectPanelContainer
       isOpen
       projectId="projects/a1b2c3/q4-launch"
       projectName="q4-launch"
+      conversationCount={conversationCount}
       onClose={onClose}
     />,
   );
   return { onClose };
 };
 
-beforeEach(() => {
-  vi.clearAllMocks();
-  vi.mocked(usePublishFolders).mockReturnValue({
-    folderItems: [{ path: ['Marketing'], name: 'Marketing' }],
-    expandedPaths: new Set<string>(),
-    loadedPaths: new Set<string>(),
-    loadingPaths: new Set<string>(),
-    onExpandedPathsChange: vi.fn(),
-    onCreatePublishFolder: vi.fn(),
-    rememberPublishFolder: mockRememberPublishFolder,
-    hasPublishWriteAccess: () => true,
-  });
-  vi.mocked(useNotification).mockReturnValue(
-    createNotificationContextValue(mockShowNotification),
-  );
-  useAppConfigMock.mockReturnValue({
-    config: { publicationFilterSources: ['role'] },
-  });
-  vi.mocked(getPublishRules).mockResolvedValue([]);
-  vi.mocked(getCatalogPublishHistory).mockResolvedValue([]);
-});
-
 describe('PublishProjectPanelContainer', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(usePublishFolders).mockReturnValue({
+      folderItems: [{ path: ['Marketing'], name: 'Marketing' }],
+      expandedPaths: new Set<string>(),
+      loadedPaths: new Set<string>(),
+      loadingPaths: new Set<string>(),
+      onExpandedPathsChange: vi.fn(),
+      onCreatePublishFolder: vi.fn(),
+      rememberPublishFolder: mockRememberPublishFolder,
+      hasPublishWriteAccess: () => true,
+    });
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(mockShowNotification),
+    );
+    useAppConfigMock.mockReturnValue({
+      config: { publicationFilterSources: ['role'] },
+    });
+    vi.mocked(getPublishRules).mockResolvedValue([]);
+    vi.mocked(getCatalogPublishHistory).mockResolvedValue([]);
+  });
+
   it('names the project and never offers to replace a publication', () => {
     renderContainer();
 
@@ -188,7 +193,10 @@ describe('PublishProjectPanelContainer', () => {
         folderPath: 'Marketing',
         author: 'Jane Doe',
         rules: [
-          expect.objectContaining({ source: 'role', targets: ['engineering'] }),
+          expect.objectContaining({
+            source: 'role',
+            targets: ['engineering'],
+          }),
         ],
       },
     );
@@ -223,5 +231,24 @@ describe('PublishProjectPanelContainer', () => {
 
     await waitFor(() => expect(mockShowPublishError).toHaveBeenCalled());
     expect(onClose).not.toHaveBeenCalled();
+  });
+
+  describe('PublishProjectPanelContainer — chats warning', () => {
+    it('warns that the chats are published with the project', () => {
+      renderContainer(vi.fn(), 2);
+
+      expect(
+        screen.getByText(ProjectsI18nKeys.PublishChatsWarning),
+      ).toBeTruthy();
+      expect(screen.getByText('q4-launch')).toBeTruthy();
+    });
+
+    it('shows no warning for a project without chats', () => {
+      renderContainer(vi.fn(), 0);
+
+      expect(
+        screen.queryByText(ProjectsI18nKeys.PublishChatsWarning),
+      ).toBeNull();
+    });
   });
 });

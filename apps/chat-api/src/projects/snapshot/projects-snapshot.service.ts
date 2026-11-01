@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import {
   BadGatewayException,
   HttpException,
@@ -16,6 +17,7 @@ import {
   PROJECT_MANIFEST_MAX_BYTES,
 } from '../constants/project-context.constants';
 import { ProjectCreateErrorCode } from '../types/project-create-error-code.enum';
+import { PROJECT_CONVERSATIONS_FOLDER } from '../utils/project-conversation-id.util';
 import { projectPayloadTooLarge } from '../utils/project-create-error.util';
 import {
   type ParsedProjectManifest,
@@ -37,13 +39,22 @@ export interface ProjectSnapshotFile {
  */
 export interface ProjectSnapshot {
   etag: string;
+  /**
+   * SHA-256 over the path, CRC-32 and size of every entry except
+   * `conversationEntries`, quoted like an entity tag. A conversation write
+   * changes `etag` but never this; an edit of `PROJECT.md`, `context/` or any
+   * other path does. `PUT` and `DELETE` take it in `If-Match`.
+   */
+  contentVersion: string;
   /** Parsed `PROJECT.md`, or `null` when the project has none (or it is too large). */
   manifest: ParsedProjectManifest | null;
   /** `PROJECT.md` exists but exceeds `PROJECT_MANIFEST_MAX_BYTES`, so it was not read. */
   hasOversizedManifest: boolean;
   /** Direct children of `context/`, sorted by name. */
   contextFiles: ProjectSnapshotFile[];
-  /** Every other file path (nested `context/` paths included); a save keeps its bytes and path. */
+  /** Direct children of `conversations/` (project conversations), sorted by name; never inflated by a read. */
+  conversationEntries: ProjectSnapshotFile[];
+  /** Every other file path (nested `context/` and `conversations/` paths included); a save keeps its bytes and path. */
   otherEntries: string[];
   /** Inflates one entry by its archive path. */
   readEntry: (path: string) => Promise<Buffer>;
@@ -51,6 +62,33 @@ export interface ProjectSnapshot {
 
 const SNAPSHOT_CONTEXT = 'projects.readSnapshot';
 const CONTEXT_PREFIX = `${PROJECT_CONTEXT_FOLDER}/`;
+const CONVERSATIONS_PREFIX = `${PROJECT_CONVERSATIONS_FOLDER}/`;
+
+/* The name of a direct child of `prefix`, or `null` for any other path. */
+const directChildName = (path: string, prefix: string): string | null => {
+  if (!path.startsWith(prefix)) return null;
+  const name = path.slice(prefix.length);
+  return name.includes('/') ? null : name;
+};
+
+const byName = (a: ProjectSnapshotFile, b: ProjectSnapshotFile): number => {
+  if (a.name === b.name) return 0;
+  return a.name < b.name ? -1 : 1;
+};
+
+/**
+ * `contentVersion` of the entries a project edit can change: one line
+ * `{path}\t{crc32}\t{size}` per entry, sorted by path, from the central
+ * directory only, so nothing is inflated.
+ */
+export const computeProjectContentVersion = (
+  entries: { path: string; crc32: number; size: number }[],
+): string => {
+  const lines = entries
+    .map(({ path, crc32, size }) => `${path}\t${crc32}\t${size}`)
+    .sort();
+  return `"${createHash('sha256').update(lines.join('\n'), 'utf8').digest('hex')}"`;
+};
 
 const tooLarge = (): HttpException =>
   projectPayloadTooLarge(
@@ -305,21 +343,34 @@ export class ProjectsSnapshotService {
     }
 
     const contextFiles: ProjectSnapshotFile[] = [];
+    const conversationEntries: ProjectSnapshotFile[] = [];
     const otherEntries: string[] = [];
+    const versionedEntries: { path: string; crc32: number; size: number }[] =
+      [];
     for (const [entryPath, entry] of entries) {
+      const conversationName = directChildName(entryPath, CONVERSATIONS_PREFIX);
+      if (conversationName != null) {
+        conversationEntries.push({
+          name: conversationName,
+          size: entry.uncompressedSize,
+        });
+        continue;
+      }
+      versionedEntries.push({
+        path: entryPath,
+        crc32: entry.crc32,
+        size: entry.uncompressedSize,
+      });
       if (entryPath === PROJECT_MANIFEST_FILE) continue;
-      const contextName = entryPath.startsWith(CONTEXT_PREFIX)
-        ? entryPath.slice(CONTEXT_PREFIX.length)
-        : null;
-      if (contextName != null && !contextName.includes('/')) {
+      const contextName = directChildName(entryPath, CONTEXT_PREFIX);
+      if (contextName != null) {
         contextFiles.push({ name: contextName, size: entry.uncompressedSize });
       } else {
         otherEntries.push(entryPath);
       }
     }
-    contextFiles.sort((a, b) =>
-      a.name < b.name ? -1 : a.name > b.name ? 1 : 0,
-    );
+    contextFiles.sort(byName);
+    conversationEntries.sort(byName);
 
     const readEntry = async (entryPath: string): Promise<Buffer> => {
       const entry = entries.get(entryPath);
@@ -354,11 +405,13 @@ export class ProjectsSnapshotService {
 
     return {
       etag,
+      contentVersion: computeProjectContentVersion(versionedEntries),
       manifest,
       hasOversizedManifest:
         manifestEntry != null &&
         manifestEntry.uncompressedSize > PROJECT_MANIFEST_MAX_BYTES,
       contextFiles,
+      conversationEntries,
       otherEntries,
       readEntry,
     };

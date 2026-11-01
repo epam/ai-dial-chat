@@ -189,7 +189,7 @@ shown in full as plain text without loading or invoking the syntax highlighter.
 The limits use the shared `isSyntaxHighlightingAllowed` guard from
 `@epam/ai-dial-chat-shared` and apply to every highlighting language.
 
-Standalone syntax-highlighted code view used by the canvas for `CodeCanvasContent`. Exported for hosts that need the same rendering outside the panel. `labels` customizes the loading/error/retry strings shown while the syntax-highlighter engine's dynamic import is pending or fails — see [Styling](#styling) above.
+Standalone syntax-highlighted code view used by the canvas for `CodeCanvasContent`. Exported for hosts that need the same rendering outside the panel. `labels` customizes the loading/error/retry strings shown while the syntax-highlighter engine's dynamic import is pending or fails — see [Styling](#styling) above. `codeClassName` (default `'dial-code-text'`) and `errorLabelClassName` (default `'dial-body-text'`) set the code and error-message type.
 
 ```tsx
 import {
@@ -692,13 +692,24 @@ Style overrides go through `AttachmentCanvasStyles` (`AttachmentCanvasColors`,
 `AttachmentCanvasLabels`. `AttachmentCanvasProps`,
 `AttachmentCanvasContainerProps`, `CodeContentProps`, `CodeContentLabels`, and
 `AttachmentCanvasContextValue` are exported for hosts building those objects.
+Every color the canvas paints has an `AttachmentCanvasColors` field, falling
+back to the app theme token: besides the content-body fields, `headerBorder`
+(`--stroke-tertiary`) colors the panel header's bottom border, `focusOutline`
+(`--stroke-focus`) the XLSX formula field's focus ring, `codeBackground`
+(`--bg-layer-raised`, or `--bg-layer-base` on a light syntax theme) the code
+viewer, and `mcpAppLoadingBackground` (`--bg-layer-1`) and `mcpAppStatusText`
+(`--text-primary`) the MCP App loading/error overlay, whose error icon and
+detail line follow `errorIcon` and `statusText`.
 Use `xlsxFormulaLabel` to localize the persistent XLSX `fx` bar's accessible
 label; it defaults to `Formula`. The visual `fx` mark is direction-neutral and
 does not replace that label for assistive technology. Its typography defaults
 to the UI Kit's `dial-italic-text` and can be overridden through
 `styles.typography.xlsxFormulaLabelClassName`. The active cell content beside
 it defaults to `dial-code-text` and can be overridden through
-`styles.typography.xlsxFormulaValueClassName`.
+`styles.typography.xlsxFormulaValueClassName`. Source code takes
+`codeClassName` (`dial-code-text`), a collapsed JSON node
+`jsonCollapsedClassName` (`dial-caption-text`), and the code/PDF load-error
+message `errorMessageClassName` (`dial-body-text`).
 
 `McpAppDisplayMode` is the display-mode union of the MCP UI protocol
 (`'inline'` | `'fullscreen'` | `'pip'`) — the accepted values for

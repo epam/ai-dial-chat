@@ -16,6 +16,7 @@ import {
   matchesForbiddenOrigin,
   recordProvenance,
 } from './application-mode.mjs';
+
 const forbiddenPathSegments = HARD_EXCLUDED_MODULE_MARKERS;
 const MAX_PACKED_VS_SOURCE_RATIO = 1.2;
 const here = path.dirname(fileURLToPath(import.meta.url));

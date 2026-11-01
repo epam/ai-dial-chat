@@ -1,3 +1,27 @@
 .name {
   color: var(--cat-details-name-text, var(--text-primary, #161b2d));
 }
+
+.limitReached {
+  background-color: var(
+    --cat-details-limit-reached-bg,
+    var(--bg-error, #f3d6d8)
+  );
+  color: var(--cat-details-limit-reached-text, var(--text-error, #ae2f2f));
+}
+
+.limitRunningLow {
+  background-color: var(
+    --cat-details-limit-running-low-bg,
+    var(--bg-warning, #faf0cf)
+  );
+  color: var(
+    --cat-details-limit-running-low-text,
+    var(--text-warning, #7f6300)
+  );
+}
+
+/* The manage menu renders in a portal, so the icon carries its own var. */
+.manageMenuIcon {
+  color: var(--cat-details-manage-menu-icon, var(--text-secondary, #57647a));
+}

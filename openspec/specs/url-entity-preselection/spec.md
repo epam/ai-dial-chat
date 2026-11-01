@@ -267,7 +267,7 @@ When the message input (`libs/conversation-input/src/components/Input/Input.tsx`
 
 ### Requirement: skill-id and prompt-id combine as skill mention first, then prompt text
 
-When both `skill-id` and `prompt-id` resolve successfully:
+When both `skill-id` and `prompt-id` resolve successfully, the system SHALL apply them as follows:
 
 - For a prompt without parameters, the message input SHALL contain the skill's `/{name} ` mention followed immediately by the prompt body, with the mention remaining a recognised skill mention. A `/otherSkill` written inside the prompt body SHALL NOT be turned into a mention (as in the catalog's plain-prompt seeding).
 - For a prompt with parameters, the skill mention SHALL be seeded first and the "Prompt parameters" popup SHALL open; when the user submits the popup, the resolved prompt text SHALL be inserted at the caret, after the mention, without discarding it.

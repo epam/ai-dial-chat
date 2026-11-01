@@ -74,7 +74,18 @@ export interface BufferedUploadFile extends UploadedFileMeta {
   buffer: Buffer;
 }
 
-export type UploadedFile = StagedUploadFile | BufferedUploadFile;
+/**
+ * A request body read as it arrives (`PUT /api/v1/files/content`). `size` is
+ * the declared `Content-Length`; the stream must end with exactly that many
+ * bytes.
+ */
+export interface StreamedUploadFile extends UploadedFileMeta {
+  stream: Readable;
+  size: number;
+}
+
+export type UploadedFile =
+  StagedUploadFile | BufferedUploadFile | StreamedUploadFile;
 
 export interface UploadedArchiveFile {
   path: string;
@@ -149,12 +160,44 @@ const UPLOAD_ABORT_MESSAGES: Record<UploadAbortReason, string> = {
 const getUploadedFileSize = (file: UploadedFile): number =>
   'buffer' in file ? file.buffer.length : file.size;
 
+/**
+ * Passes the chunks of `stream` through and errors unless it ends with exactly
+ * `size` bytes, so a short body aborts the DIAL Core request instead of
+ * completing a truncated file. `destroyOnReturn: false` leaves the stream to
+ * its owner when the upload stops early: destroying an unfinished request
+ * would close the socket before the error response reaches the browser.
+ */
+async function* readExactly(
+  stream: Readable,
+  size: number,
+): AsyncGenerator<Buffer> {
+  let received = 0;
+  for await (const chunk of stream.iterator({ destroyOnReturn: false })) {
+    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    received += buffer.length;
+    if (received > size) {
+      throw new Error(`Upload body exceeded its declared ${size} bytes`);
+    }
+    yield buffer;
+  }
+  if (received !== size) {
+    throw new Error(
+      `Upload body ended after ${received} of its declared ${size} bytes`,
+    );
+  }
+}
+
 const readUploadedFile = (
   file: UploadedFile,
-): AsyncIterable<Buffer> | Iterable<Buffer> =>
-  'buffer' in file
-    ? sliceBuffer(file.buffer)
-    : createReadStream(file.path, { highWaterMark: UPLOAD_CHUNK_BYTES });
+): AsyncIterable<Buffer> | Iterable<Buffer> => {
+  if ('buffer' in file) {
+    return sliceBuffer(file.buffer);
+  }
+  if ('stream' in file) {
+    return readExactly(file.stream, file.size);
+  }
+  return createReadStream(file.path, { highWaterMark: UPLOAD_CHUNK_BYTES });
+};
 
 interface StreamUploadOptions {
   /** Sends `If-None-Match: *` so DIAL Core rejects an existing path with 412. Defaults to true. */
@@ -197,6 +240,9 @@ export class FilesUploadService {
    * large files outlive. Shares the DIAL Core upload contract
    * (`If-None-Match: '*'`, 412 -> 409 Conflict) with archive entries through
    * uploadFileStream().
+   *
+   * `clientSignal` aborts the transfer when the caller goes away (the browser
+   * closing a streamed request body); it is combined with the watchdog.
    */
   async uploadFile(
     bucket: string,
@@ -204,6 +250,7 @@ export class FilesUploadService {
     file: UploadedFile,
     token: string,
     uploadMode?: UploadMode,
+    clientSignal?: AbortSignal,
   ): Promise<FileUploadResponseDto> {
     const fileSize = getUploadedFileSize(file);
     this.logger.debug(
@@ -211,6 +258,10 @@ export class FilesUploadService {
     );
 
     const watchdog = new UploadWatchdog(this.getUploadLimits());
+    const signal =
+      clientSignal == null
+        ? watchdog.signal
+        : AbortSignal.any([watchdog.signal, clientSignal]);
 
     try {
       await this.uploadFileStream(
@@ -219,7 +270,7 @@ export class FilesUploadService {
         Readable.from(watchdog.watch(readUploadedFile(file))),
         fileSize,
         token,
-        watchdog.signal,
+        signal,
         {
           createOnly: uploadMode === 'create-only',
           fileName: file.originalname ?? getFileNameFromPath(path),
@@ -241,6 +292,12 @@ export class FilesUploadService {
         throw new ServiceUnavailableException(
           UPLOAD_ABORT_MESSAGES[watchdog.reason],
         );
+      }
+      if (clientSignal?.aborted) {
+        this.logger.warn(
+          `Upload aborted: the client closed the upload for ${bucket}/${path}, size=${fileSize}`,
+        );
+        throw new BadRequestException('The client closed the upload');
       }
       if (!(err instanceof HttpException)) {
         this.logger.error(`Upload failed for ${bucket}/${path}`, err);
@@ -651,6 +708,10 @@ export class FilesUploadService {
         );
       }
     } catch (err) {
+      /* The owner of the signal reports why it aborted (watchdog limit, archive timeout, client gone). */
+      if (signal.aborted && !(err instanceof HttpException)) {
+        throw err;
+      }
       return handleDialFetchError(
         err,
         'files.uploadFile',

@@ -41,6 +41,30 @@ export interface SettingsFormLabels {
   auth?: AuthSectionLabels;
 }
 
+/** Color overrides for the Setup section form, applied as CSS custom properties. */
+export interface SettingsFormColors {
+  /** Text color of the "Connect toolset" title. Defaults to `--text-primary`. */
+  connectTitle?: string;
+  /** Text color of the "Connect toolset" description. Defaults to `--text-secondary`. */
+  connectDescription?: string;
+  /** Color of the divider above the "Connect toolset" block. Defaults to `--stroke-tertiary`. */
+  connectDivider?: string;
+  /** Text color of the open-access ("None" auth) description. Defaults to `--text-secondary`. */
+  openAccessDescription?: string;
+}
+
+/** Typography class overrides for the Setup section form. */
+export interface SettingsFormTypography {
+  /** Typography class of the "Authentication" heading. Defaults to `'dial-h3-text'`. */
+  authTitleClassName?: string;
+  /** Typography class of the open-access ("None" auth) description. Defaults to `'dial-small-text'`. */
+  openAccessDescriptionClassName?: string;
+  /** Typography class of the "Connect toolset" title. Defaults to `'dial-body-semi-text'`. */
+  connectTitleClassName?: string;
+  /** Typography class of the "Connect toolset" description. Defaults to `'dial-small-text'`. */
+  connectDescriptionClassName?: string;
+}
+
 /** Props of the internal Setup section form. */
 export interface SettingsFormProps {
   /** Current toolset form state. */
@@ -83,4 +107,8 @@ export interface SettingsFormProps {
   onEnsureSaved: () => Promise<string | false>;
   /** Pre-translated labels, all optional with English defaults. */
   labels?: SettingsFormLabels;
+  /** Color overrides. */
+  colors?: SettingsFormColors;
+  /** Typography class overrides. */
+  typography?: SettingsFormTypography;
 }

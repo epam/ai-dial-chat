@@ -7,6 +7,7 @@ import {
   Get,
   HttpCode,
   Post,
+  Put,
   Query,
   Req,
   Res,
@@ -59,11 +60,19 @@ import {
   UploadArchiveDto,
   UploadArchiveResponseDto,
 } from './dto/upload-archive.dto';
+import { UploadFileContentQueryDto } from './dto/upload-file-content.dto';
 import { FileUploadResponseDto } from './dto/upload-file-response.dto';
 import { UploadFileDto } from './dto/upload-file.dto';
 import { FileUploadInterceptor } from './file-upload.interceptor';
 import { FilesService } from './files.service';
 import { HTML_PREVIEW_FRAME_DOCUMENT } from './html-preview-frame';
+import {
+  closeConnectionAfterResponse,
+  readStreamedUploadSize,
+  watchClientDisconnect,
+} from './upload/streamed-upload-request';
+
+const DEFAULT_FILE_UPLOAD_MAX_BYTES = 536_870_912;
 
 @ApiTags('files')
 @Controller({ path: 'files', version: '1' })
@@ -130,6 +139,71 @@ export class FilesController {
       at,
       body.uploadMode,
     );
+  }
+
+  @Put('content')
+  @HttpCode(201)
+  @ApiOperation({
+    summary: 'Upload a file streamed as the raw request body',
+    description:
+      'Streams the request body to DIAL Core without staging it. Requires Content-Type: application/octet-stream and a Content-Length; the file MIME type goes in the contentType query parameter.',
+  })
+  @ApiConsumes('application/octet-stream')
+  @ApiBody({ schema: { type: 'string', format: 'binary' } })
+  @ApiDialCoreErrors()
+  @ApiResponse({ status: 201, type: FileUploadResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid query parameter' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({
+    status: 409,
+    description: 'File already exists (create-only mode)',
+  })
+  @ApiResponse({ status: 411, description: 'Content-Length is required' })
+  @ApiResponse({
+    status: 413,
+    description: 'File exceeds FILE_UPLOAD_MAX_BYTES or the DIAL Core limit',
+  })
+  @ApiResponse({
+    status: 415,
+    description: 'Content-Type is not application/octet-stream',
+  })
+  @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core unreachable, or the transfer stalled or timed out',
+  })
+  async uploadFileContent(
+    @Query() query: UploadFileContentQueryDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<FileUploadResponseDto> {
+    const disconnect = watchClientDisconnect(req);
+    try {
+      const size = readStreamedUploadSize(
+        req,
+        this.configService.get('FILE_UPLOAD_MAX_BYTES', { infer: true }) ??
+          DEFAULT_FILE_UPLOAD_MAX_BYTES,
+      );
+      const { at } = req.user as SessionUser;
+      return await this.filesService.uploadFileContent(
+        query.bucket,
+        query.path,
+        {
+          stream: req,
+          size,
+          mimetype: query.contentType ?? 'application/octet-stream',
+        },
+        at,
+        query.uploadMode,
+        disconnect.signal,
+      );
+    } catch (err) {
+      closeConnectionAfterResponse(req, res);
+      throw err;
+    } finally {
+      disconnect.dispose();
+    }
   }
 
   @Post('upload-archive')

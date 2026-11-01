@@ -11,6 +11,7 @@ import { ClientChannelService } from '../../client-channel/client-channel.servic
 import { ConversationGenerationService } from '../../conversations/conversation-generation.service';
 import { ConversationController } from '../../conversations/conversation.controller';
 import { ConversationService } from '../../conversations/conversation.service';
+import { ConversationCompletionsResponder } from '../../conversations/streaming/conversation-completions.responder';
 import {
   initializeRuntimeMetrics,
   SseSubscriptionKind,
@@ -87,6 +88,7 @@ describe('SSE subscription metrics', () => {
     module = await Test.createTestingModule({
       controllers: [ClientChannelController, ConversationController],
       providers: [
+        ConversationCompletionsResponder,
         { provide: ClientChannelService, useValue: { subscribe } },
         {
           provide: ConversationService,
@@ -341,6 +343,7 @@ describe('SSE subscription metrics', () => {
       const generationModule = await Test.createTestingModule({
         controllers: [ConversationController],
         providers: [
+          ConversationCompletionsResponder,
           ConversationGenerationService,
           { provide: ConfigService, useValue: { get: () => 1_800_000 } },
           {

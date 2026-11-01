@@ -15,6 +15,7 @@ const meta = {
 } satisfies Meta<typeof HalloweenBehaviorPlayer>;
 
 export default meta;
+
 type Story = StoryObj<typeof meta>;
 
 /** The web, the corner spider with every behavior on, and the pumpkin trigger. */

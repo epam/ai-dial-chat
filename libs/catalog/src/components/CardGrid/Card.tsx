@@ -20,6 +20,7 @@ import {
   MouseEvent,
   useCallback,
   useEffect,
+  useMemo,
   useState,
 } from 'react';
 import { CATALOG_CLASS } from '../../constants/public-class-names';
@@ -34,21 +35,6 @@ import { TopicsLine } from '../TopicTag/TopicTag';
 import styles from './CardGrid.module.scss';
 
 const DESCRIPTION_MARKDOWN_COMPONENTS = { img: () => null };
-
-const TOOLTIP_TEXT_CLASS_NAME = 'dial-small-text';
-
-const TOOLTIP_MARKDOWN_CLASS_NAMES = {
-  p: TOOLTIP_TEXT_CLASS_NAME,
-  ul: TOOLTIP_TEXT_CLASS_NAME,
-  ol: TOOLTIP_TEXT_CLASS_NAME,
-  h1: TOOLTIP_TEXT_CLASS_NAME,
-  h2: TOOLTIP_TEXT_CLASS_NAME,
-  h3: TOOLTIP_TEXT_CLASS_NAME,
-  h4: TOOLTIP_TEXT_CLASS_NAME,
-  h5: TOOLTIP_TEXT_CLASS_NAME,
-  h6: TOOLTIP_TEXT_CLASS_NAME,
-  strong: 'dial-small-semi-text',
-} satisfies MarkdownRendererClassNames;
 
 const isLinkEvent = (
   event: MouseEvent<HTMLElement> | KeyboardEvent<HTMLElement>,
@@ -109,6 +95,26 @@ export const Card: FC<CardProps> = ({
     cardStyles?.typography?.folderLabelClassName ?? 'dial-tiny-text';
   const folderLeafClassName =
     cardStyles?.typography?.folderLeafClassName ?? 'dial-tiny-semi-text';
+  const tooltipTextClassName =
+    cardStyles?.typography?.descriptionTooltipClassName ?? 'dial-small-text';
+  const tooltipStrongClassName =
+    cardStyles?.typography?.descriptionTooltipStrongClassName ??
+    'dial-small-semi-text';
+  const tooltipMarkdownClassNames = useMemo(
+    (): MarkdownRendererClassNames => ({
+      p: tooltipTextClassName,
+      ul: tooltipTextClassName,
+      ol: tooltipTextClassName,
+      h1: tooltipTextClassName,
+      h2: tooltipTextClassName,
+      h3: tooltipTextClassName,
+      h4: tooltipTextClassName,
+      h5: tooltipTextClassName,
+      h6: tooltipTextClassName,
+      strong: tooltipStrongClassName,
+    }),
+    [tooltipTextClassName, tooltipStrongClassName],
+  );
 
   const cssVars = buildCssVars({
     '--cg-description-text': cardStyles?.colors?.textSecondary,
@@ -187,7 +193,7 @@ export const Card: FC<CardProps> = ({
         <IconCheck
           size={DIAL_ICON_SIZE.SM}
           className={mergeClasses(
-            'absolute end-3 top-3 shrink-0',
+            'absolute inset-e-3 top-3 shrink-0',
             styles.checkIcon,
           )}
           aria-hidden
@@ -225,7 +231,7 @@ export const Card: FC<CardProps> = ({
           item.description && (
             <MarkdownRenderer
               content={item.description}
-              classNames={TOOLTIP_MARKDOWN_CLASS_NAMES}
+              classNames={tooltipMarkdownClassNames}
               components={DESCRIPTION_MARKDOWN_COMPONENTS}
               {...markdownLabels}
             />
@@ -245,7 +251,7 @@ export const Card: FC<CardProps> = ({
             item.topics.length > 0
               ? 'line-clamp-2 min-h-[2lh]'
               : 'line-clamp-3 min-h-[3lh]',
-            'break-words',
+            'wrap-break-word',
             styles.description,
           )}
         >

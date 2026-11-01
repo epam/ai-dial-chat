@@ -1,7 +1,9 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   ExternalServiceAuthType,
   ExternalServiceCredentialsLevel,
+} from '@epam/ai-dial-chat-hooks';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
   getExternalService,
   listExternalServices,
   signInExternalService,
@@ -22,11 +24,11 @@ const mockResponse = (body: unknown) => {
   return fetchMock;
 };
 
-afterEach(() => {
-  vi.unstubAllGlobals();
-});
-
 describe('external-service generated client adapter', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('lists the services of an application with their OAuth client settings using an encoded application id', async () => {
     const services = [
       {

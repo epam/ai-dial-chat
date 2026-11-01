@@ -54,3 +54,9 @@ export * from '../useToolsMenu/useToolsMenu';
 export * from '../conversation/scheduled-task-grouping';
 export * from '../conversation/useConversationDiscovery/useConversationDiscovery';
 export * from '../conversation/useEntityPreselection/useEntityPreselection';
+
+export * from '../conversation/generation-registry';
+
+export * from '../conversation/useConversationTitleEnrichmentController';
+
+export * from '../conversation/useDeploymentChangeTracking';

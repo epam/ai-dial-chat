@@ -1,6 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MessageTimestamp } from '../MessageTimestamp';
+import styles from '../MessageTimestamp.module.scss';
 
 const renderTimestamp = (timestamp: string, className?: string) =>
   render(
@@ -56,21 +57,22 @@ describe('MessageTimestamp', () => {
     expect(screen.queryByRole('time')).toBeNull();
   });
 
-  it('applies the default typography and color classes, replaceable by className', () => {
+  it('applies the default typography class, replaceable by className, and the color class', () => {
     const { rerender } = renderTimestamp(sentAt.toISOString());
-    expect(screen.getByRole('time').classList.contains('text-secondary')).toBe(
-      true,
-    );
+    const defaultClassList = screen.getByRole('time').classList;
+    expect(defaultClassList.contains('dial-small-text')).toBe(true);
+    expect(defaultClassList.contains(styles.time)).toBe(true);
 
     rerender(
       <MessageTimestamp
         timestamp={sentAt.toISOString()}
-        className="dial-tiny-text text-primary"
+        className="dial-tiny-text"
       />,
     );
     const { classList } = screen.getByRole('time');
-    expect(classList.contains('text-primary')).toBe(true);
-    expect(classList.contains('text-secondary')).toBe(false);
+    expect(classList.contains('dial-tiny-text')).toBe(true);
+    expect(classList.contains('dial-small-text')).toBe(false);
+    expect(classList.contains(styles.time)).toBe(true);
   });
 
   it('is hidden by default and revealed by bubble hover, focus, or a no-hover device', () => {

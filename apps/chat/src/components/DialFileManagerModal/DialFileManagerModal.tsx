@@ -323,7 +323,7 @@ const DialFileManagerModal: FC<Props> = ({
       singleFileTitle: t(DialFileManagerI18nKeys.ConflictSingleTitle),
       multipleFilesTitle: t(DialFileManagerI18nKeys.ConflictMultipleTitle),
       actionLabels: {
-        replace: t(DialFileManagerI18nKeys.ConflictReplace),
+        replace: t(ButtonsI18nKeys.Replace),
         duplicate: t(ButtonsI18nKeys.Duplicate),
         cancel: t(ButtonsI18nKeys.Cancel),
       },

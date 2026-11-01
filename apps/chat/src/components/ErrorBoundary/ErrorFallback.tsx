@@ -4,7 +4,10 @@ import type { ParseKeys } from 'i18next';
 import { memo, type FC } from 'react';
 import type { FallbackProps } from 'react-error-boundary';
 import { useTranslation } from 'react-i18next';
-import { ErrorBoundaryI18nKeys } from '../../constants/translation-keys';
+import {
+  ErrorBoundaryI18nKeys,
+  ButtonsI18nKeys,
+} from '../../constants/translation-keys';
 import AlertShell from '../AlertShell/AlertShell';
 
 interface Props extends FallbackProps {
@@ -30,7 +33,7 @@ const ErrorFallback: FC<Props> = ({
       }
       heading={t(ErrorBoundaryI18nKeys.Heading)}
       message={t(ErrorBoundaryI18nKeys.Description)}
-      actionLabel={t(actionLabel ?? ErrorBoundaryI18nKeys.RetryLabel)}
+      actionLabel={t(actionLabel ?? ButtonsI18nKeys.TryAgain)}
       onAction={resetErrorBoundary}
     />
   );

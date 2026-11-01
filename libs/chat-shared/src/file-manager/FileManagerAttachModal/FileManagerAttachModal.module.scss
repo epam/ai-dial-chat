@@ -1,0 +1,8 @@
+/* `!important` keeps the kit Popup's own surface class from winning. */
+.popup {
+  background: var(--fmam-bg, var(--bg-layer-raised, #fcfcfc)) !important;
+}
+
+.title {
+  color: var(--fmam-title, var(--text-primary, #161b2d));
+}

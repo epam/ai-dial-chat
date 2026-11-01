@@ -16,6 +16,7 @@ import {
   assertProbeIsolation,
   probeBudget,
 } from './cold-load-probes.mjs';
+
 const here = path.dirname(fileURLToPath(import.meta.url));
 const chatHooksRoot = path.resolve(here, '..');
 const workspaceRoot = path.resolve(chatHooksRoot, '..', '..');

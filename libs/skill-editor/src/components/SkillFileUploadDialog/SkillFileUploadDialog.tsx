@@ -1,4 +1,8 @@
-import { formatFileSize, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  formatFileSize,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import {
   CaptionText,
   DIAL_KIT_ICON_STROKE,
@@ -33,6 +37,15 @@ import { SkillFileUploadMode } from '../../types/skill-file-upload-mode';
 import { resolveCandidatePath } from '../../utils/candidate-path';
 import { buildDuplicatePath, joinSkillPath } from '../../utils/file-tree';
 import { SkillEditorDialog } from '../SkillEditorDialog/SkillEditorDialog';
+import styles from './SkillFileUploadDialog.module.scss';
+
+/** Color overrides for `SkillFileUploadDialog`, applied as CSS custom properties. */
+export interface SkillFileUploadDialogColors {
+  /** Border color of the drop zone while every staged file is invalid. Defaults to `--stroke-error`. */
+  invalidDropZoneBorder?: string;
+  /** Border color of each staged row. Defaults to `--stroke-tertiary`. */
+  rowBorder?: string;
+}
 
 /** Props for `SkillFileUploadDialog`. */
 export interface SkillFileUploadDialogProps {
@@ -68,6 +81,8 @@ export interface SkillFileUploadDialogProps {
   labels?: SkillEditorLabels;
   /** Color overrides for the mobile sheet footer. */
   dialogColors?: SkillEditorDialogColors;
+  /** Color overrides for the drop zone and staged rows. */
+  colors?: SkillFileUploadDialogColors;
 }
 
 const ARCHIVE_ACCEPT = '.zip,application/zip';
@@ -104,6 +119,7 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
   rowCaptionClassName,
   labels,
   dialogColors,
+  colors,
 }) => {
   const t = labels ?? {};
   const [candidates, setCandidates] = useState<SkillFileUploadCandidate[]>([]);
@@ -429,7 +445,13 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
       onCancel={onClose}
       colors={dialogColors}
     >
-      <div className="flex flex-col gap-4 px-4 py-4 desktop:px-6">
+      <div
+        className="flex flex-col gap-4 px-4 py-4 desktop:px-6"
+        style={buildCssVars({
+          '--se-upload-invalid-dropzone-border': colors?.invalidDropZoneBorder,
+          '--se-upload-row-border': colors?.rowBorder,
+        })}
+      >
         <FileDropzone
           label={
             <>
@@ -457,9 +479,7 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
           ariaLabel={t.uploadDropZoneAriaLabel ?? 'Upload files'}
           multiple
           accept={isArchiveMode ? ARCHIVE_ACCEPT : undefined}
-          className={
-            isAllInvalid ? 'border-error hover:border-error' : undefined
-          }
+          className={isAllInvalid ? styles.invalidDropZone : undefined}
           onChange={addFiles}
           onReject={
             isArchiveMode
@@ -507,7 +527,10 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
               return (
                 <li
                   key={candidate.id}
-                  className="flex items-center gap-2 rounded-lg border border-tertiary p-2"
+                  className={mergeClasses(
+                    'flex items-center gap-2 rounded-lg border p-2',
+                    styles.row,
+                  )}
                 >
                   <FileName
                     name={candidate.path}

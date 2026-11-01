@@ -1,3 +1,5 @@
+import { generateUUID } from '../../common/utils/generate-uuid';
+import { buildProjectIdHeaders } from '../../common/utils/header-value';
 import { StringUtils } from '../../common/utils/string-utils';
 import {
   DIAL_ENTITY_NAME_FORBIDDEN_CHARS_RE,
@@ -5,10 +7,16 @@ import {
 } from '../../common/validators/dial-entity-name.validator';
 import { PUBLIC_BUCKET } from '../../constants/dial.constants';
 import type { ConversationResponseDto } from '../../openapi/openapi-response.dto';
+import { parseProjectConversationLocator } from '../../projects/utils/project-conversation-id.util';
 import {
   COMPOUND_TOKEN_PREFIX,
   SCHEDULER_SEGMENT,
 } from '../constants/conversation.constants';
+import {
+  type ConversationMessageDto,
+  ConversationMessageRole,
+} from '../dto/conversation-message.dto';
+import type { MessageCustomContentDto } from '../dto/message-custom-content.dto';
 import type { CompoundNextToken } from '../types/conversation.types';
 
 const CONVERSATION_NAME_SEPARATOR = '__';
@@ -123,6 +131,77 @@ export const prepareEntityName = (prompt?: string): string => {
     StringUtils.truncateToUtf8Bytes(clearName, DIAL_ENTITY_NAME_MAX_BYTES),
     '.',
   ).trimEnd();
+};
+
+/**
+ * The `x-project-id` header of a conversation path: the project id for a
+ * project conversation locator, nothing for any other path. It is the only
+ * project context a model call carries; DIAL Core forwards it to the
+ * deployment.
+ */
+export const buildProjectHeadersForPath = (
+  conversationPath: string,
+): Record<string, string> =>
+  buildProjectIdHeaders(
+    parseProjectConversationLocator(conversationPath)?.project.id,
+  );
+
+/** A conversation created from its first message, before it is stored. */
+export interface NewConversation {
+  /** File name, `{deploymentId}__{title}__{uuid}`. */
+  fileName: string;
+  conversation: ConversationResponseDto;
+}
+
+/**
+ * Builds the body and file name of a conversation created from its first
+ * message, as `POST /api/v1/conversations` stores it. `folderId` is the
+ * folder the conversation lives in and `toId` maps the file name to its id,
+ * so a top-level and a project conversation share one shape.
+ */
+export const buildNewConversation = ({
+  firstMessage,
+  deploymentId,
+  fileDeploymentKey = deploymentId,
+  customContent,
+  folderId,
+  toId,
+}: {
+  firstMessage: string;
+  deploymentId: string;
+  /** Deployment part of the file name; defaults to `deploymentId`. */
+  fileDeploymentKey?: string;
+  customContent?: MessageCustomContentDto;
+  folderId: string;
+  toId: (fileName: string) => string;
+}): NewConversation => {
+  const now = Date.now();
+  const uuid = generateUUID();
+  const name = getConversationName('New chat', firstMessage);
+  const fileName = `${fileDeploymentKey}__${name}__${uuid}`;
+  const userMessage: ConversationMessageDto = {
+    id: uuid,
+    role: ConversationMessageRole.User,
+    content: firstMessage,
+    timestamp: new Date(now).toISOString(),
+    custom_content: customContent,
+  };
+  return {
+    fileName,
+    conversation: {
+      id: toId(fileName),
+      folderId,
+      name,
+      model: { id: deploymentId },
+      prompt: '',
+      temperature: 1,
+      messages: [userMessage],
+      lastActivityDate: now,
+      updatedAt: now,
+      selectedAddons: [],
+      assistantModelId: deploymentId,
+    },
+  };
 };
 
 export const getConversationName = (
@@ -287,6 +366,15 @@ export const resolveConversationLocation = (
   conversationPath: string,
   sessionBucket: string,
 ): { bucket: string; subPath: string } => {
+  /* A project conversation locator is self-describing and passes through whole. */
+  const projectConversation = parseProjectConversationLocator(conversationPath);
+  if (projectConversation) {
+    return {
+      bucket: projectConversation.project.bucket,
+      subPath: conversationPath,
+    };
+  }
+
   if (
     conversationPath === sessionBucket ||
     conversationPath.startsWith(`${sessionBucket}/`)
@@ -323,13 +411,17 @@ export const resolveConversationLocation = (
   return { bucket: sessionBucket, subPath: conversationPath };
 };
 
-/** Prefixes a bare (session-relative) conversation path with the session bucket. */
+/**
+ * Prefixes a bare (session-relative) conversation path with the session
+ * bucket. A project conversation locator is returned unchanged.
+ */
 export const qualifySessionConversationPath = (
   conversationPath: string,
   sessionBucket: string,
 ): string =>
   conversationPath === sessionBucket ||
-  conversationPath.startsWith(`${sessionBucket}/`)
+  conversationPath.startsWith(`${sessionBucket}/`) ||
+  parseProjectConversationLocator(conversationPath) != null
     ? conversationPath
     : `${sessionBucket}/${conversationPath}`;
 

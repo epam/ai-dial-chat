@@ -1,4 +1,8 @@
 import {
+  ActiveScheduledTaskDetailState,
+  ActiveScheduledTaskStatus,
+} from '@epam/ai-dial-chat-hooks/scheduled-tasks';
+import {
   DIAL_KIT_ICON_STROKE,
   GhostButton,
   Skeleton,
@@ -9,12 +13,11 @@ import { FC, memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { getScheduledTaskDetailRoute } from '../../constants/routes';
-import { ScheduledTasksI18nKeys } from '../../constants/translation-keys';
-import { useActiveScheduledTask } from '../../context/ActiveScheduledTaskContext';
 import {
-  ActiveScheduledTaskDetailState,
-  ActiveScheduledTaskStatus,
-} from '../../types/active-scheduled-task';
+  ScheduledTasksI18nKeys,
+  ButtonsI18nKeys,
+} from '../../constants/translation-keys';
+import { useActiveScheduledTask } from '../../context/ActiveScheduledTaskContext';
 import { formatRunTimestamp } from '../../utils/map-scheduled-task-run-dto';
 
 const CARD_CLASS_NAME =
@@ -101,7 +104,7 @@ const ScheduledTaskConversationBanner: FC = () => {
         </p>
         {taskState === ActiveScheduledTaskDetailState.Error && (
           <GhostButton
-            label={t(ScheduledTasksI18nKeys.ListRetryLabel)}
+            label={t(ButtonsI18nKeys.Retry)}
             aria-label={t(
               ScheduledTasksI18nKeys.ConversationBannerRetryAriaLabel,
             )}

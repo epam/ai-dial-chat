@@ -34,6 +34,8 @@ export interface ProfilePageProps {
   groups?: NavigationMenuGroup[];
   /** CSS class controlling the row labels' type scale. Defaults to `'dial-small-text'`. */
   textClassName?: string;
+  /** Typography class of the avatar's initials fallback. Defaults to `'dial-tiny-text'`. */
+  avatarInitialsClassName?: string;
 }
 
 /**
@@ -49,6 +51,7 @@ export const ProfilePage: FC<ProfilePageProps> = memo(
     onSettings,
     groups,
     textClassName = 'dial-small-text',
+    avatarInitialsClassName,
   }) => {
     const { push, close } = useSheetNavigation();
 
@@ -69,7 +72,11 @@ export const ProfilePage: FC<ProfilePageProps> = memo(
     return (
       <>
         <div className="flex h-[56px] items-center gap-3 px-4 py-2">
-          <UserAvatar profile={profile} alt="" />
+          <UserAvatar
+            profile={profile}
+            alt=""
+            initialsClassName={avatarInitialsClassName}
+          />
           <EllipsisTooltip
             text={profile.displayName}
             className={mergeClasses(

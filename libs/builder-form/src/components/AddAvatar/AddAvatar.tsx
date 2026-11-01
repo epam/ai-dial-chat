@@ -19,6 +19,7 @@ export const AddAvatar: FC<AddAvatarProps> = ({
   addAvatarLabel = 'Add avatar',
   captionText = 'PNG, JPG or SVG (max 1 MB)',
   onAddAvatarClick,
+  captionClassName = 'dial-tiny-text',
   styles: stylesProp,
   className,
 }) => {
@@ -72,7 +73,7 @@ export const AddAvatar: FC<AddAvatarProps> = ({
             label={addAvatarLabel}
             onClick={onAddAvatarClick}
           />
-          <span className={mergeClasses('dial-tiny-text', styles.caption)}>
+          <span className={mergeClasses(captionClassName, styles.caption)}>
             {captionText}
           </span>
         </div>

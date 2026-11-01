@@ -3,8 +3,11 @@ import { ROUTES } from '../../types/routes';
 import { SettingsTabs } from '../../types/settings-tabs';
 import {
   getConversationRoute,
+  getProjectConversationRoute,
   getProjectEditRoute,
   getProjectViewRoute,
+  isConversationPagePath,
+  parseProjectConversationRouteParams,
   getScheduledTaskDetailRoute,
   getScheduledTaskEditRoute,
   getSettingsTabRoute,
@@ -216,5 +219,88 @@ describe('parseProjectRouteParams', () => {
         '*': rest.map(decodeURIComponent).join('/'),
       }),
     ).toBe(id);
+  });
+});
+
+describe('getProjectConversationRoute', () => {
+  it('builds the project chat route, re-encoding every segment', () => {
+    expect(
+      getProjectConversationRoute(
+        'projects/a1b2c3/marketing/Q4 launch/conversations/gpt-4o__Summary__1b2c',
+      ),
+    ).toBe(
+      '/projects/chat/a1b2c3/marketing/Q4%20launch/conversations/gpt-4o__Summary__1b2c',
+    );
+  });
+
+  it.each([
+    'projects/a1b2c3/q4/context/x',
+    'projects/a1b2c3/conversations/x',
+    'projects/a1b2c3/q4/conversations/..',
+    'conversations/a1b2c3/x',
+  ])('falls back to the projects list for %s', (id) => {
+    expect(getProjectConversationRoute(id)).toBe(ROUTES.Projects);
+  });
+});
+
+describe('parseProjectConversationRouteParams', () => {
+  it('splits the project and the conversation', () => {
+    expect(
+      parseProjectConversationRouteParams({
+        bucket: 'a1b2c3',
+        '*': 'q4/conversations/x',
+      }),
+    ).toEqual({
+      projectId: 'projects/a1b2c3/q4',
+      conversationId: 'projects/a1b2c3/q4/conversations/x',
+    });
+  });
+
+  it('keeps a project folder named conversations unambiguous', () => {
+    expect(
+      parseProjectConversationRouteParams({
+        bucket: 'a1b2c3',
+        '*': 'conversations/team/conversations/gpt-4o__Plan__9f',
+      }),
+    ).toEqual({
+      projectId: 'projects/a1b2c3/conversations/team',
+      conversationId:
+        'projects/a1b2c3/conversations/team/conversations/gpt-4o__Plan__9f',
+    });
+  });
+
+  it.each([
+    [{ bucket: 'a1b2c3', '*': 'q4-launch' }],
+    [{ bucket: 'a1b2c3', '*': 'conversations/x' }],
+    [{ bucket: 'a1b2c3', '*': 'q4/conversations/..' }],
+    [{ bucket: 'a1b2c3' }],
+    [{ '*': 'q4/conversations/x' }],
+  ])('returns null for %j', (params) => {
+    expect(parseProjectConversationRouteParams(params)).toBeNull();
+  });
+
+  it('round-trips with getProjectConversationRoute', () => {
+    const id = 'projects/a1b2c3/marketing/Q4 launch/conversations/gpt-4o__A__1';
+    const [, , , bucket, ...rest] = getProjectConversationRoute(id).split('/');
+
+    expect(
+      parseProjectConversationRouteParams({
+        bucket: decodeURIComponent(bucket),
+        '*': rest.map(decodeURIComponent).join('/'),
+      })?.conversationId,
+    ).toBe(id);
+  });
+});
+
+describe('isConversationPagePath', () => {
+  it.each([
+    ['/conversations/a1b2c3/x', true],
+    ['/conversations', true],
+    ['/conversationsx', false],
+    ['/projects/chat/a1b2c3/q4/conversations/x', true],
+    ['/projects/view/a1b2c3/q4', false],
+    ['/', false],
+  ])('treats %s as a conversation page: %s', (pathname, expected) => {
+    expect(isConversationPagePath(pathname)).toBe(expected);
   });
 });

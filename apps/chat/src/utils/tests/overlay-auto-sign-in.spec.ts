@@ -7,13 +7,13 @@ import {
 
 const HREF = 'https://chat.example.com/';
 
-afterEach(() => {
-  window.sessionStorage.clear();
-  vi.restoreAllMocks();
-  vi.useRealTimers();
-});
-
 describe('overlay auto sign-in attempt record', () => {
+  afterEach(() => {
+    window.sessionStorage.clear();
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
   it('reports no attempt when storage is empty', () => {
     expect(hasRecentOverlayAutoSignInAttempt(HREF)).toBe(false);
   });

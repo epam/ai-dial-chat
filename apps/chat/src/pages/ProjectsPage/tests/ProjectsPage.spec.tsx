@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  ButtonsI18nKeys,
   NotFoundI18nKeys,
   ProjectsI18nKeys,
 } from '../../../constants/translation-keys';
@@ -21,11 +22,21 @@ vi.mock(
 
 vi.mock('../../../server-api/projects.api', () => ({
   listProjects: vi.fn(),
+  /* Live updates are covered by the shared hook's suite. */
+  watchProjects: vi.fn(() => new Promise(() => undefined)),
 }));
 
-const userConfig = vi.hoisted(() => ({ pinnedProjectIds: [] as string[] }));
+const userConfig = vi.hoisted(() => ({
+  pinnedProjectIds: [] as string[],
+  setPinnedProject: vi.fn(),
+}));
 vi.mock('../../../context/UserConfigContext', () => ({
   useUserConfig: () => userConfig,
+}));
+
+const notifications = vi.hoisted(() => ({ showErrorNotification: vi.fn() }));
+vi.mock('../../../context/NotificationContext', () => ({
+  useNotification: () => notifications,
 }));
 
 const listing = {
@@ -205,8 +216,46 @@ describe('ProjectsPage', () => {
     const cards = await screen.findAllByRole('article');
     expect(cards[0].getAttribute('aria-label')).toBe('Handbook');
     expect(
-      within(cards[0]).getByText(ProjectsI18nKeys.CardPinned),
-    ).toBeTruthy();
+      within(cards[0])
+        .getByRole('button', { name: ButtonsI18nKeys.Pin })
+        .getAttribute('aria-pressed'),
+    ).toBe('true');
+  });
+
+  it('pins a project from its card', async () => {
+    userConfig.setPinnedProject.mockResolvedValue(undefined);
+    vi.mocked(listProjects).mockResolvedValue(listing);
+    useFeatureFlagMock.mockReturnValue(true);
+    renderPage();
+
+    const card = await screen.findByRole('article', { name: 'Q4 Launch' });
+    await userEvent.click(
+      within(card).getByRole('button', { name: ButtonsI18nKeys.Pin }),
+    );
+
+    expect(userConfig.setPinnedProject).toHaveBeenCalledWith(
+      'projects/b/q4-launch',
+      true,
+    );
+    expect(notifications.showErrorNotification).not.toHaveBeenCalled();
+  });
+
+  it('reports a pin that could not be saved', async () => {
+    userConfig.setPinnedProject.mockRejectedValue(new Error('offline'));
+    vi.mocked(listProjects).mockResolvedValue(listing);
+    useFeatureFlagMock.mockReturnValue(true);
+    renderPage();
+
+    const card = await screen.findByRole('article', { name: 'Q4 Launch' });
+    await userEvent.click(
+      within(card).getByRole('button', { name: ButtonsI18nKeys.Pin }),
+    );
+
+    await vi.waitFor(() =>
+      expect(notifications.showErrorNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ message: ProjectsI18nKeys.ActionsPinError }),
+      ),
+    );
   });
 
   it('opens a project from its card', async () => {

@@ -107,7 +107,7 @@ export const ConfirmationView: FC<ConfirmationViewProps> = ({
       <p
         className={mergeClasses(
           messageClassName,
-          'break-words',
+          'wrap-break-word',
           styles.message,
         )}
       >

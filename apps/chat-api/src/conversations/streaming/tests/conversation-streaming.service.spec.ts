@@ -33,6 +33,7 @@ import { GENERATION_PERSISTENCE_ERROR } from '../../generation/persistence-error
 import { ResponsesAdapter } from '../../generation/responses.adapter';
 import { ConversationTitleCacheService } from '../../listing/conversation-title-cache.service';
 import { ConversationPersistenceService } from '../../persistence/conversation-persistence.service';
+import { ProjectConversationStore } from '../../persistence/project-conversation.store';
 import { ConversationErrorCode } from '../../types/conversation-error-code.enum';
 import { mergeHtmlTagAnnotationsIntoViewState } from '../../utils/conversation-view-state.server';
 import { ConversationStreamingService } from '../conversation-streaming.service';
@@ -229,6 +230,7 @@ describe('ConversationStreamingService', () => {
       mockDialClient,
       mockConversationNamingService as never,
       new ConversationTitleCacheService(),
+      new ProjectConversationStore(mockDialClient),
     );
     chatCompletionsAdapter = new ChatCompletionsAdapter(mockDialClient);
     service = new ConversationStreamingService(

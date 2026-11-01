@@ -3,6 +3,7 @@ import type {
   ConversationResponseDto,
   ConversationTitleStreamEventDto,
 } from '@epam/ai-dial-chat-api-client';
+import { buildCreateConversationDto } from '@epam/ai-dial-chat-hooks';
 import type { RequestSkill } from '@epam/ai-dial-chat-shared';
 import { conversationsApi } from './api-client';
 import {
@@ -19,25 +20,14 @@ export const createConversation = (
   skills?: RequestSkill[],
 ) =>
   conversationsApi.createConversation({
-    createConversationDto: {
+    createConversationDto: buildCreateConversationDto({
       firstMessage,
       deploymentId,
-      ...(attachments?.length ||
-      configurationValue ||
-      formValue ||
-      skills?.length
-        ? {
-            custom_content: {
-              ...(attachments?.length ? { attachments } : {}),
-              ...(configurationValue
-                ? { configuration_value: configurationValue }
-                : {}),
-              ...(formValue ? { form_value: formValue } : {}),
-              ...(skills?.length ? { skills } : {}),
-            },
-          }
-        : {}),
-    },
+      attachments,
+      configurationValue,
+      formValue,
+      skills,
+    }),
   });
 
 export const getConversation = (

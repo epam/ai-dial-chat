@@ -10,27 +10,27 @@ const tooltips = {
   emptyMessageTooltip: 'Type a message first',
 };
 
-beforeEach(() => {
-  vi.stubGlobal(
-    'ResizeObserver',
-    class {
-      observe = vi.fn();
-      unobserve = vi.fn();
-      disconnect = vi.fn();
-    },
-  );
-  vi.useFakeTimers({ shouldAdvanceTime: true });
-});
-
-afterEach(() => {
-  vi.useRealTimers();
-  vi.unstubAllGlobals();
-});
-
 describe.each([
   { name: 'Input', Component: Input },
   { name: 'ConversationInput', Component: ConversationInput },
 ])('$name send tooltip', ({ Component }) => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe = vi.fn();
+        unobserve = vi.fn();
+        disconnect = vi.fn();
+      },
+    );
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
   it.each(['', '   \n'])(
     'shows the empty hint for draft %j',
     async (message) => {
@@ -135,30 +135,30 @@ describe.each([
     expect(screen.queryByText('Send message')).toBeNull();
     expect(screen.queryByRole('tooltip')).toBeNull();
   });
-});
 
-it.each([RequestStatus.Idle, RequestStatus.Loading, RequestStatus.Error])(
-  'uses the regular tooltip for an attachment-only message with status %s',
-  async (status) => {
-    const user = userEvent.setup({ delay: null });
-    render(
-      <Input
-        {...tooltips}
-        initialAttachments={[
-          {
-            id: 'report',
-            name: 'report.pdf',
-            file: new File([], 'report.pdf', { type: 'application/pdf' }),
-            type: AttachmentType.File,
-            contentType: 'application/pdf',
-            url: 'files/report.pdf',
-            status,
-          },
-        ]}
-      />,
-    );
-    await user.hover(screen.getByRole('button', { name: 'Send message' }));
-    expect(await screen.findByText('Send message')).toBeTruthy();
-    expect(screen.queryByText('Type a message first')).toBeNull();
-  },
-);
+  it.each([RequestStatus.Idle, RequestStatus.Loading, RequestStatus.Error])(
+    'uses the regular tooltip for an attachment-only message with status %s',
+    async (status) => {
+      const user = userEvent.setup({ delay: null });
+      render(
+        <Input
+          {...tooltips}
+          initialAttachments={[
+            {
+              id: 'report',
+              name: 'report.pdf',
+              file: new File([], 'report.pdf', { type: 'application/pdf' }),
+              type: AttachmentType.File,
+              contentType: 'application/pdf',
+              url: 'files/report.pdf',
+              status,
+            },
+          ]}
+        />,
+      );
+      await user.hover(screen.getByRole('button', { name: 'Send message' }));
+      expect(await screen.findByText('Send message')).toBeTruthy();
+      expect(screen.queryByText('Type a message first')).toBeNull();
+    },
+  );
+});

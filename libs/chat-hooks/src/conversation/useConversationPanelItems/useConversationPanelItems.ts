@@ -171,6 +171,7 @@ export const useConversationPanelItems = ({
   );
 
   type PanelItem = ReturnType<typeof mapItem>;
+
   const cacheRef = useRef<PanelItemCache<typeof mapItem, PanelItem> | null>(
     null,
   );

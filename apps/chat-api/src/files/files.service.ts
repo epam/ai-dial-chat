@@ -32,6 +32,7 @@ import { FilesFolderService } from './folder/files-folder.service';
 import { FilesListingService } from './listing/files-listing.service';
 import { FilesSharingService } from './sharing/files-sharing.service';
 import type {
+  StreamedUploadFile,
   UploadedArchiveFile,
   UploadedFile,
 } from './upload/files-upload.service';
@@ -68,6 +69,24 @@ export class FilesService {
       file,
       token,
       uploadMode,
+    );
+  }
+
+  uploadFileContent(
+    bucket: string,
+    path: string,
+    file: StreamedUploadFile,
+    token: string,
+    uploadMode: UploadMode | undefined,
+    clientSignal: AbortSignal,
+  ): Promise<FileUploadResponseDto> {
+    return this.filesUploadService.uploadFile(
+      bucket,
+      path,
+      file,
+      token,
+      uploadMode,
+      clientSignal,
     );
   }
 

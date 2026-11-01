@@ -11,6 +11,26 @@ export const PROJECT_MANIFEST_FILE = 'PROJECT.md';
 /** Folder, relative to the project root, that holds the context files. */
 export const PROJECT_CONTEXT_FOLDER = 'context';
 
+const CONTEXT_CONTENT_TYPES: Record<string, string> = {
+  csv: 'text/csv',
+  pdf: 'application/pdf',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+};
+
+/** Lower-cased extension of `fileName` without the dot; empty when it has none. */
+export const getFileExtension = (fileName: string): string => {
+  const dotIndex = fileName.lastIndexOf('.');
+  return dotIndex > 0 ? fileName.slice(dotIndex + 1).toLowerCase() : '';
+};
+
+/**
+ * The content type of a context file, inferred from its extension only;
+ * an unknown extension is `application/octet-stream`.
+ */
+export const getContextFileContentType = (fileName: string): string =>
+  CONTEXT_CONTENT_TYPES[getFileExtension(fileName)] ??
+  'application/octet-stream';
+
 export interface ProjectManifestInput {
   name: string;
   description: string;

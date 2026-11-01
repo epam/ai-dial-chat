@@ -16,6 +16,7 @@ import {
   mapStages,
   messageHasStages,
   openAnnotationAttachment,
+  prepareStageCitations,
   referenceAttachmentToPdfCanvasContent,
   resolveGroupedVisualizerCanvasContent,
   useAttachmentAction,
@@ -126,7 +127,6 @@ import {
   getMessageStarterProps,
   getStatusMessageProps,
   isStreamingMessage,
-  prepareStageCitations,
 } from './utils/message-display';
 
 const EditMessageInput = lazy(async () => {
@@ -816,6 +816,7 @@ const ConversationMessageItem: FC<Props> = ({
               styles={{ ...messageTextStyles, className: 'justify-end' }}
               attachments={allDisplayAttachments}
               labels={{
+                userMessageAriaLabel: t(ChatI18nKeys.UserMessageAriaLabel),
                 showMoreLabel,
                 showLessLabel,
                 showMoreAriaLabel: showMoreUserMessageAriaLabel,

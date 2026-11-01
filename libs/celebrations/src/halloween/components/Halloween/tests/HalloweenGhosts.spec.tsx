@@ -71,52 +71,54 @@ const animateDescriptor = Object.getOwnPropertyDescriptor(
   Element.prototype,
   'animate',
 );
-beforeEach(() => {
-  vi.clearAllMocks();
-  state.mobile = false;
-  state.reduced = false;
-  state.listeners.clear();
-  Object.defineProperty(Element.prototype, 'animate', {
-    configurable: true,
-    writable: true,
-    value: vi.fn(),
-  });
-  vi.mocked(animateGhosts).mockReturnValue(stop);
-  vi.mocked(getGhostTargets).mockReturnValue({
-    width: 1280,
-    height: 800,
-    homes: [],
-  });
-  vi.mocked(buildGhostPlan).mockImplementation((targets, mobile) => ({
-    active: true,
-    width: targets.width,
-    height: targets.height,
-    pumpkin: {
-      element: document.createElement('span'),
-      rect: new DOMRect(480, 440, 96, 96),
-    },
-    homes: [],
-    leaderHome: 0,
-    actors: Array.from({ length: mobile ? 3 : 5 }, (_, index) => ({
-      variant: Object.values(HalloweenGhostVariant)[index % 4],
-      size: 64,
-      leader: index === 0,
-      home: index,
-      rest: { x: 100 + index * 120, y: 180 },
-      frames: [],
-      clothFrames: [],
-      frightFrames: [],
-    })),
-  }));
-});
-afterEach(() => {
-  if (animateDescriptor)
-    Object.defineProperty(Element.prototype, 'animate', animateDescriptor);
-  else Reflect.deleteProperty(Element.prototype, 'animate');
-  vi.restoreAllMocks();
-});
 
 describe('ghost scene integration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    state.mobile = false;
+    state.reduced = false;
+    state.listeners.clear();
+    Object.defineProperty(Element.prototype, 'animate', {
+      configurable: true,
+      writable: true,
+      value: vi.fn(),
+    });
+    vi.mocked(animateGhosts).mockReturnValue(stop);
+    vi.mocked(getGhostTargets).mockReturnValue({
+      width: 1280,
+      height: 800,
+      homes: [],
+    });
+    vi.mocked(buildGhostPlan).mockImplementation((targets, mobile) => ({
+      active: true,
+      width: targets.width,
+      height: targets.height,
+      pumpkin: {
+        element: document.createElement('span'),
+        rect: new DOMRect(480, 440, 96, 96),
+      },
+      homes: [],
+      leaderHome: 0,
+      actors: Array.from({ length: mobile ? 3 : 5 }, (_, index) => ({
+        variant: Object.values(HalloweenGhostVariant)[index % 4],
+        size: 64,
+        leader: index === 0,
+        home: index,
+        rest: { x: 100 + index * 120, y: 180 },
+        frames: [],
+        clothFrames: [],
+        frightFrames: [],
+      })),
+    }));
+  });
+
+  afterEach(() => {
+    if (animateDescriptor)
+      Object.defineProperty(Element.prototype, 'animate', animateDescriptor);
+    else Reflect.deleteProperty(Element.prototype, 'animate');
+    vi.restoreAllMocks();
+  });
+
   it.each([true, false])(
     'prepares bounded decorative actors without disturbing the draft or focus, mobile=%s',
     async (mobile) => {

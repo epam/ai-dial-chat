@@ -1,9 +1,12 @@
 import type { DeploymentFeatures } from '@epam/ai-dial-chat-shared';
-import { ResponseFormat } from '@epam/ai-dial-chat-shared';
+import { buildCssVars, ResponseFormat } from '@epam/ai-dial-chat-shared';
 import { ButtonVariant, Popup, PopupSize } from '@epam/ai-dial-ui-kit';
 import { type FC } from 'react';
 import { useChatSettingsForm } from '../../hooks/useChatSettingsForm';
-import type { ChatSettingsValues } from '../../models/Input';
+import type {
+  ChatSettingsModalColors,
+  ChatSettingsValues,
+} from '../../models/Input';
 import { ChatSettingsFields } from '../ChatSettingsFields/ChatSettingsFields';
 import styles from './ChatSettingsModal.module.scss';
 
@@ -47,13 +50,10 @@ export interface ChatSettingsModalProps {
   saveLabel?: string;
   /** Tooltip shown on the save button when it is disabled (e.g. no response format selected). */
   saveDisabledTooltip?: string;
-  /**
-   * CSS class applied for the modal background. Defaults to a
-   * `--bg-layer-raised` background. `Popup` renders through a portal and
-   * accepts no `style`, so this class (or setting `--csm-bg` at theme level) is
-   * the only way to override the surface color — there is no `colors` prop.
-   */
+  /** CSS class applied to the modal surface. Defaults to a class that paints `colors.background`. */
   backgroundClassName?: string;
+  /** Color overrides, set on the popup overlay so they reach the portalled surface. */
+  colors?: ChatSettingsModalColors;
 }
 
 /** Desktop modal for chat settings (system prompt, temperature, response format). */
@@ -78,6 +78,7 @@ export const ChatSettingsModal: FC<ChatSettingsModalProps> = ({
   saveLabel = 'Apply changes',
   saveDisabledTooltip,
   backgroundClassName = styles.modal,
+  colors,
 }) => {
   const {
     responseFormat,
@@ -105,6 +106,7 @@ export const ChatSettingsModal: FC<ChatSettingsModalProps> = ({
       size={PopupSize.Sm}
       onClose={onClose}
       className={backgroundClassName}
+      overlayStyle={buildCssVars({ '--csm-bg': colors?.background })}
       mainButtons={[
         {
           label: saveLabel,

@@ -2,6 +2,7 @@ import { EventEmitter } from 'node:events';
 import type { Request, Response } from 'express';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConversationController } from '../conversation.controller';
+import { createConversationController } from './conversation-controller.fixture';
 
 class TestResponse extends EventEmitter {
   writableEnded = false;
@@ -26,7 +27,7 @@ describe('ConversationController.watchConversation — early close and backpress
   beforeEach(() => {
     response = new TestResponse();
     watchConversation = vi.fn();
-    controller = new ConversationController(
+    controller = createConversationController(
       { watchConversation } as never,
       {} as never,
     );

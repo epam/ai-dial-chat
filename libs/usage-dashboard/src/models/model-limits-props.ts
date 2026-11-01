@@ -198,6 +198,8 @@ export interface ModelLimitsTypography {
   modelTypeClassName?: string;
   /** CSS class for the model version. Defaults to `'dial-small-text'`. */
   versionClassName?: string;
+  /** CSS class for the initials in a model avatar without an icon. Defaults to `'dial-h2-text'`. */
+  avatarInitialsClassName?: string;
   /** CSS class for a metric's prominent used value. Defaults to `'dial-small-text'`. */
   valueClassName?: string;
   /** CSS class for a metric's secondary caption (total / "No limit" / "Not available"). Defaults to `'dial-tiny-text'`. */

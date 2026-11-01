@@ -1,8 +1,10 @@
+import { mapProjectDetailsToViewModel } from '@epam/ai-dial-chat-hooks/project';
 import { DeleteConfirmationDialog } from '@epam/ai-dial-chat-shared';
 import { ProjectView } from '@epam/ai-dial-projects';
 import { memo, useCallback, useMemo, useRef, useState, type FC } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
+import ProjectConversationsSection from '../../components/ProjectConversationsSection/ProjectConversationsSection';
 import ProjectShareOverlay from '../../components/ProjectShareOverlay/ProjectShareOverlay';
 import PublishProjectPanelContainer from '../../components/PublishProjectPanelContainer/PublishProjectPanelContainer';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
@@ -18,7 +20,6 @@ import { useProjectViewLabels } from '../../hooks/projects/useProjectViewLabels'
 import { useDeleteConfirmationLabels } from '../../hooks/useDeleteConfirmationLabels';
 import { ROUTES } from '../../types/routes';
 import { UserConfigStatus } from '../../types/user-config-status';
-import { mapProjectDetailsToViewModel } from '../../utils/map-project-dto';
 import NotFoundPage from '../NotFound/NotFound';
 
 const BOLD_COMPONENTS = { bold: <strong /> };
@@ -51,6 +52,22 @@ const ProjectViewPage: FC = () => {
     [project],
   );
   const canEdit = project?.canEdit ?? false;
+  /* Chats deleted from the list since `project` was read; a fresh read resets the count. */
+  const [deletedChats, setDeletedChats] = useState({ project, count: 0 });
+  const deletedChatCount =
+    deletedChats.project === project ? deletedChats.count : 0;
+  const conversationCount = Math.max(
+    0,
+    (project?.conversationCount ?? 0) - deletedChatCount,
+  );
+  const handleConversationDeleted = useCallback(
+    () =>
+      setDeletedChats((prev) => ({
+        project,
+        count: (prev.project === project ? prev.count : 0) + 1,
+      })),
+    [project],
+  );
 
   const handleBrowseProjects = useCallback(
     () => navigate(ROUTES.Projects),
@@ -117,6 +134,17 @@ const ProjectViewPage: FC = () => {
           onOpenFile={handleOpenFile}
           onRetry={retry}
           onBrowseProjects={handleBrowseProjects}
+          mainContent={
+            project ? (
+              <ProjectConversationsSection
+                projectId={project.id}
+                projectName={project.name}
+                canEdit={canEdit}
+                onConversationDeleted={handleConversationDeleted}
+              />
+            ) : undefined
+          }
+          mainContentLabel={t(ProjectsI18nKeys.ViewMainContent)}
           labels={labels}
         />
       </div>
@@ -131,6 +159,7 @@ const ProjectViewPage: FC = () => {
           isOpen={isPublishOpen}
           projectId={project.id}
           projectName={project.name}
+          conversationCount={conversationCount}
           onClose={handleClosePublish}
           returnFocusRef={publishTriggerRef}
         />
@@ -143,10 +172,20 @@ const ProjectViewPage: FC = () => {
           })}
           names={[project.name]}
           message={
-            <Trans
-              i18nKey={ProjectsI18nKeys.ActionsDeleteConfirmDescription}
-              components={BOLD_COMPONENTS}
-            />
+            conversationCount > 0 ? (
+              <Trans
+                i18nKey={
+                  ProjectsI18nKeys.ActionsDeleteConfirmWithChatsDescription
+                }
+                count={conversationCount}
+                components={BOLD_COMPONENTS}
+              />
+            ) : (
+              <Trans
+                i18nKey={ProjectsI18nKeys.ActionsDeleteConfirmDescription}
+                components={BOLD_COMPONENTS}
+              />
+            )
           }
           labels={deleteLabels}
           isLoading={actions.isDeleting}

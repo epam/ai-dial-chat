@@ -529,13 +529,13 @@ describe('ScheduledTaskEditPage', () => {
 
     expect(
       await screen.findByRole('button', {
-        name: 'scheduledTasks.list.retryLabel',
+        name: 'buttons.retry',
       }),
     ).toBeTruthy();
 
     getScheduledTaskMock.mockResolvedValue(baseTask);
     await userEvent.click(
-      screen.getByRole('button', { name: 'scheduledTasks.list.retryLabel' }),
+      screen.getByRole('button', { name: 'buttons.retry' }),
     );
 
     await waitFor(() => expect(getScheduledTaskMock).toHaveBeenCalledTimes(2));

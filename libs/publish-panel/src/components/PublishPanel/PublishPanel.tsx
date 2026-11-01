@@ -168,6 +168,8 @@ export interface PublishPanelProps {
   summaryTitleClassName?: string;
   /** Typography class for the "Publish to folder" section heading. Default: `'dial-body-semi-text'`. */
   headingClassName?: string;
+  /** Typography class for the folder name emphasised inside the replace-warning and no-access callouts. Default: `'dial-small-paragraph-semi-text'`. */
+  calloutFolderNameClassName?: string;
   /** Style overrides. */
   styles?: PublishPanelStyles;
 }
@@ -200,6 +202,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
   labels = {},
   summaryTitleClassName = 'dial-body-semi-text',
   headingClassName = 'dial-body-semi-text',
+  calloutFolderNameClassName = 'dial-small-paragraph-semi-text',
   styles: stylesProp = {},
 }) => {
   const {
@@ -370,6 +373,7 @@ export const PublishPanel: FC<PublishPanelProps> = ({
                   submitError,
                   folderName,
                   version: resource?.version,
+                  folderNameClassName: calloutFolderNameClassName,
                 })}
               />
             </div>
@@ -441,6 +445,7 @@ const calloutVariant = (
 const withBoldFolderName = (
   template: string,
   folderName: string,
+  folderNameClassName: string,
 ): ReactNode => {
   const [before, after, ...rest] = template.split('{folder}');
   if (after === undefined || rest.length > 0) {
@@ -449,7 +454,7 @@ const withBoldFolderName = (
   return (
     <>
       {before}
-      <strong className="dial-small-paragraph-semi-text">{folderName}</strong>
+      <strong className={folderNameClassName}>{folderName}</strong>
       {after}
     </>
   );
@@ -466,16 +471,22 @@ const calloutMessage = (
     submitError: string;
     folderName: string;
     version?: string;
+    folderNameClassName: string;
   },
 ): ReactNode => {
   if (kind === PublishCalloutKind.ReplaceWarning) {
     return withBoldFolderName(
       strings.replaceWarning.replace('{version}', strings.version ?? ''),
       strings.folderName,
+      strings.folderNameClassName,
     );
   }
   if (kind === PublishCalloutKind.NoAccess) {
-    return withBoldFolderName(strings.noAccessError, strings.folderName);
+    return withBoldFolderName(
+      strings.noAccessError,
+      strings.folderName,
+      strings.folderNameClassName,
+    );
   }
   return strings.submitError;
 };

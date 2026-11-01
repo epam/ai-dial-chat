@@ -165,95 +165,97 @@ const SidebarValueHost: FC = () => {
   );
 };
 
-beforeEach(() => {
-  mocks.panelCommits = 0;
-  mocks.enabledFeatures = new Set();
-  mocks.canvasProps = null;
-});
-
-describe('App — conversation panel memo boundary', () => {
-  it('does not re-render the conversation panel when an unrelated context value changes', async () => {
-    render(<SidebarValueHost />);
-    const commitsAfterMount = mocks.panelCommits;
-
-    await userEvent.click(screen.getByRole('button', { name: BUMP_LABEL }));
-
-    expect(mocks.panelCommits).toBe(commitsAfterMount);
-  });
-});
-
-describe('App — attachment canvas container mounting', () => {
-  const renderAt = async (
-    path: string,
-    features: OverlayFeature[] = [],
-  ): Promise<void> => {
-    mocks.enabledFeatures = new Set(features);
-    render(
-      <MemoryRouter initialEntries={[path]}>
-        <App />
-      </MemoryRouter>,
-    );
-    await screen.findByRole('main');
-  };
-
-  const queryCanvas = () => screen.queryByLabelText('attachment canvas');
-
-  it('renders the canvas on the file manager page with AttachmentsManager disabled', async () => {
-    await renderAt('/files', [OverlayFeature.FileManager]);
-
-    expect(queryCanvas()).toBeTruthy();
+describe('app', () => {
+  beforeEach(() => {
+    mocks.panelCommits = 0;
+    mocks.enabledFeatures = new Set();
+    mocks.canvasProps = null;
   });
 
-  it('gives the file manager page a 400 px minimum width', async () => {
-    await renderAt('/files', [OverlayFeature.FileManager]);
+  describe('App — conversation panel memo boundary', () => {
+    it('does not re-render the conversation panel when an unrelated context value changes', async () => {
+      render(<SidebarValueHost />);
+      const commitsAfterMount = mocks.panelCommits;
 
-    expect(mocks.canvasProps?.minWidth).toBe(400);
+      await userEvent.click(screen.getByRole('button', { name: BUMP_LABEL }));
+
+      expect(mocks.panelCommits).toBe(commitsAfterMount);
+    });
   });
 
-  it('renders the canvas on a conversation route when AttachmentsManager is enabled', async () => {
-    await renderAt('/', [OverlayFeature.AttachmentsManager]);
+  describe('App — attachment canvas container mounting', () => {
+    const renderAt = async (
+      path: string,
+      features: OverlayFeature[] = [],
+    ): Promise<void> => {
+      mocks.enabledFeatures = new Set(features);
+      render(
+        <MemoryRouter initialEntries={[path]}>
+          <App />
+        </MemoryRouter>,
+      );
+      await screen.findByRole('main');
+    };
 
-    expect(queryCanvas()).toBeTruthy();
+    const queryCanvas = () => screen.queryByLabelText('attachment canvas');
+
+    it('renders the canvas on the file manager page with AttachmentsManager disabled', async () => {
+      await renderAt('/files', [OverlayFeature.FileManager]);
+
+      expect(queryCanvas()).toBeTruthy();
+    });
+
+    it('gives the file manager page a 400 px minimum width', async () => {
+      await renderAt('/files', [OverlayFeature.FileManager]);
+
+      expect(mocks.canvasProps?.minWidth).toBe(400);
+    });
+
+    it('renders the canvas on a conversation route when AttachmentsManager is enabled', async () => {
+      await renderAt('/', [OverlayFeature.AttachmentsManager]);
+
+      expect(queryCanvas()).toBeTruthy();
+    });
+
+    it('keeps the canvas default minimum on a conversation route', async () => {
+      await renderAt('/', [OverlayFeature.AttachmentsManager]);
+
+      expect(mocks.canvasProps?.minWidth).toBeUndefined();
+    });
+
+    it('does not render the canvas on a conversation route when AttachmentsManager is disabled', async () => {
+      await renderAt('/');
+
+      expect(queryCanvas()).toBeNull();
+    });
+
+    it('does not render the canvas on other routes', async () => {
+      await renderAt('/catalog', [OverlayFeature.AttachmentsManager]);
+
+      expect(queryCanvas()).toBeNull();
+    });
   });
 
-  it('keeps the canvas default minimum on a conversation route', async () => {
-    await renderAt('/', [OverlayFeature.AttachmentsManager]);
+  describe('App — projects routes', () => {
+    it('renders the New project page on /projects/new', async () => {
+      render(
+        <MemoryRouter initialEntries={['/projects/new']}>
+          <App />
+        </MemoryRouter>,
+      );
 
-    expect(mocks.canvasProps?.minWidth).toBeUndefined();
-  });
+      expect(await screen.findByText('New project page')).toBeTruthy();
+      expect(screen.queryByText('Projects list page')).toBeNull();
+    });
 
-  it('does not render the canvas on a conversation route when AttachmentsManager is disabled', async () => {
-    await renderAt('/');
+    it('keeps the list page on /projects', async () => {
+      render(
+        <MemoryRouter initialEntries={['/projects']}>
+          <App />
+        </MemoryRouter>,
+      );
 
-    expect(queryCanvas()).toBeNull();
-  });
-
-  it('does not render the canvas on other routes', async () => {
-    await renderAt('/catalog', [OverlayFeature.AttachmentsManager]);
-
-    expect(queryCanvas()).toBeNull();
-  });
-});
-
-describe('App — projects routes', () => {
-  it('renders the New project page on /projects/new', async () => {
-    render(
-      <MemoryRouter initialEntries={['/projects/new']}>
-        <App />
-      </MemoryRouter>,
-    );
-
-    expect(await screen.findByText('New project page')).toBeTruthy();
-    expect(screen.queryByText('Projects list page')).toBeNull();
-  });
-
-  it('keeps the list page on /projects', async () => {
-    render(
-      <MemoryRouter initialEntries={['/projects']}>
-        <App />
-      </MemoryRouter>,
-    );
-
-    expect(await screen.findByText('Projects list page')).toBeTruthy();
+      expect(await screen.findByText('Projects list page')).toBeTruthy();
+    });
   });
 });

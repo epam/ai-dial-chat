@@ -13,6 +13,10 @@ import {
   isExternalSourcePreviewable,
   resolveExternalSourceContentType,
 } from '@epam/ai-dial-chat-hooks/file-manager';
+import {
+  ActiveScheduledTaskDetailState,
+  ActiveScheduledTaskStatus,
+} from '@epam/ai-dial-chat-hooks/scheduled-tasks';
 import { usePanelMaxWidth } from '@epam/ai-dial-chat-hooks/viewport-layout';
 import type {
   AttachmentDisplayResolvers,
@@ -49,10 +53,6 @@ import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachme
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useCloseSourcesSidebarOnSubjectChange } from '../../hooks/sources-sidebar/useCloseSourcesSidebarOnSubjectChange';
 import useLocalStorage from '../../hooks/useLocalStorage';
-import {
-  ActiveScheduledTaskDetailState,
-  ActiveScheduledTaskStatus,
-} from '../../types/active-scheduled-task';
 import { StorageKey } from '../../types/storage-key';
 import { resolveDialFileDownloadUrl } from '../../utils/dial-file';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
@@ -265,6 +265,7 @@ const ConversationSourcesPanelContainer: FC = () => {
     () => ({
       ariaLabel: t(SidebarI18nKeys.AriaLabel),
       closeLabel: t(ButtonsI18nKeys.Close),
+      resizeLabel: t(SidebarI18nKeys.ResizePanel),
       searchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
       searchClearLabel: t(BasicI18nKeys.ClearSearch),
       noDataLabel: t(SidebarI18nKeys.SourcesEmptyTitle),

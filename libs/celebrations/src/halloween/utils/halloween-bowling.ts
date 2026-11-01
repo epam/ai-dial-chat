@@ -9,6 +9,7 @@ interface BowlingHit extends CelebrationHistoryRow {
   contact: number;
   contactRect: DOMRect;
 }
+
 export interface BowlingPlan {
   startX: number;
   endX: number;

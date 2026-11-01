@@ -1,4 +1,5 @@
 import {
+  buildCssVars,
   CatalogEntityType,
   EntityHeader,
   mergeClasses,
@@ -71,21 +72,26 @@ const defaultManageCredentialsActionLabel = (
     : 'Manage credentials';
 
 const LIMIT_STATUS_CLASSES: Record<CatalogLimitStatus, string> = {
-  [CatalogLimitStatus.LimitReached]: 'bg-error text-error',
-  [CatalogLimitStatus.RunningLow]: 'bg-warning text-warning',
+  [CatalogLimitStatus.LimitReached]: styles.limitReached,
+  [CatalogLimitStatus.RunningLow]: styles.limitRunningLow,
 };
 
 interface LimitStatusBadgeProps {
   status: CatalogLimitStatus;
   label: string;
+  className: string;
 }
 
 /** Small status pill matching `FeaturedChip`'s shape, shown in the same header corner. */
-const LimitStatusBadge: FC<LimitStatusBadgeProps> = ({ status, label }) => (
+const LimitStatusBadge: FC<LimitStatusBadgeProps> = ({
+  status,
+  label,
+  className,
+}) => (
   <div
     className={mergeClasses(
       'flex h-[24px] items-center justify-center gap-1 rounded-2xl px-2 whitespace-nowrap',
-      'dial-caption-lead-semi-text',
+      className,
       LIMIT_STATUS_CLASSES[status],
     )}
   >
@@ -299,6 +305,7 @@ export const Header: FC<HeaderProps> = ({
     nameClassName = 'dial-body-semi-text',
     folderLabelClassName = 'dial-tiny-text',
     folderLeafClassName = 'dial-tiny-semi-text',
+    limitStatusBadgeClassName = 'dial-caption-lead-semi-text',
   } = detailsStyles?.typography ?? {};
 
   const limitStatus = item.details?.limits?.status;
@@ -306,6 +313,7 @@ export const Header: FC<HeaderProps> = ({
     limitStatus != null ? (
       <LimitStatusBadge
         status={limitStatus}
+        className={limitStatusBadgeClassName}
         label={
           limitStatus === CatalogLimitStatus.LimitReached
             ? (texts?.limitReachedLabel ?? 'Limit reached')
@@ -645,7 +653,7 @@ export const Header: FC<HeaderProps> = ({
         key: 'share',
         label: texts?.shareLabel ?? 'Share',
         Icon: IconShare,
-        iconClassName: 'text-secondary',
+        iconClassName: styles.manageMenuIcon,
         onClick: handleShare,
       });
     }
@@ -654,7 +662,7 @@ export const Header: FC<HeaderProps> = ({
         key: 'edit',
         label: texts?.editActionLabel ?? 'Edit',
         Icon: IconPencil,
-        iconClassName: 'text-secondary',
+        iconClassName: styles.manageMenuIcon,
         onClick: handleEdit,
       });
     }
@@ -663,7 +671,7 @@ export const Header: FC<HeaderProps> = ({
         key: 'download',
         label: texts?.downloadActionLabel ?? 'Download',
         Icon: IconDownload,
-        iconClassName: 'text-secondary',
+        iconClassName: styles.manageMenuIcon,
         onClick: handleDownload,
       });
     }
@@ -672,7 +680,7 @@ export const Header: FC<HeaderProps> = ({
         key: 'publish',
         label: texts?.publishLabel ?? 'Publish',
         Icon: IconWorldShare,
-        iconClassName: 'text-secondary',
+        iconClassName: styles.manageMenuIcon,
         onClick: handleOpenPublish,
       });
     }
@@ -684,7 +692,7 @@ export const Header: FC<HeaderProps> = ({
         key: 'unpublish',
         label: texts?.unpublishLabel ?? 'Unpublish',
         Icon: IconWorldOff,
-        iconClassName: 'text-secondary',
+        iconClassName: styles.manageMenuIcon,
         onClick: handleOpenUnpublish,
       });
     }
@@ -747,6 +755,11 @@ export const Header: FC<HeaderProps> = ({
     handleUnshare,
   ]);
 
+  const manageMenuIcon = detailsStyles?.colors?.manageMenuIcon;
+  const manageMenuIconVars = useMemo(
+    () => buildCssVars({ '--cat-details-manage-menu-icon': manageMenuIcon }),
+    [manageMenuIcon],
+  );
   const manageItems = useMemo<DropdownItem[]>(
     () =>
       manageActions.map(
@@ -758,6 +771,7 @@ export const Header: FC<HeaderProps> = ({
               size={DIAL_ICON_SIZE.SM}
               aria-hidden
               className={iconClassName}
+              style={manageMenuIconVars}
               stroke={DIAL_KIT_ICON_STROKE}
             />
           ),
@@ -765,7 +779,7 @@ export const Header: FC<HeaderProps> = ({
           onClick,
         }),
       ),
-    [manageActions],
+    [manageActions, manageMenuIconVars],
   );
 
   /*
@@ -953,6 +967,7 @@ export const Header: FC<HeaderProps> = ({
             onClose={() => setIsApiKeyOverlayOpen(false)}
             texts={texts}
             colors={detailsStyles?.colors}
+            typography={detailsStyles?.typography}
           />
         )}
       >

@@ -1,4 +1,7 @@
-import { ProjectCreateErrorCode } from '@epam/ai-dial-chat-api-client';
+import {
+  getProjectFormError,
+  ProjectFormErrorReason,
+} from '@epam/ai-dial-chat-hooks/project';
 import type { ProjectCreateFormErrors } from '@epam/ai-dial-projects';
 import { ProjectsI18nKeys } from '../constants/translation-keys';
 
@@ -8,43 +11,14 @@ export interface ProjectCreateFieldError {
   key: ProjectsI18nKeys;
 }
 
-const FIELD_ERRORS: Partial<Record<string, ProjectCreateFieldError>> = {
-  [ProjectCreateErrorCode.NameTaken]: {
-    field: 'name',
-    key: ProjectsI18nKeys.CreateErrorNameTaken,
-  },
-  [ProjectCreateErrorCode.InvalidName]: {
-    field: 'name',
-    key: ProjectsI18nKeys.CreateErrorNameInvalid,
-  },
-  [ProjectCreateErrorCode.TooManyFiles]: {
-    field: 'context',
-    key: ProjectsI18nKeys.CreateErrorTooManyFiles,
-  },
-  [ProjectCreateErrorCode.UnsupportedFileType]: {
-    field: 'context',
-    key: ProjectsI18nKeys.CreateErrorFilesRejected,
-  },
-  [ProjectCreateErrorCode.FileTooLarge]: {
-    field: 'context',
-    key: ProjectsI18nKeys.CreateErrorFilesRejected,
-  },
-  [ProjectCreateErrorCode.CapacityExceeded]: {
-    field: 'context',
-    key: ProjectsI18nKeys.CreateErrorFilesRejected,
-  },
-  [ProjectCreateErrorCode.InvalidFileName]: {
-    field: 'context',
-    key: ProjectsI18nKeys.CreateErrorFilesRejected,
-  },
-  [ProjectCreateErrorCode.DuplicateFileName]: {
-    field: 'context',
-    key: ProjectsI18nKeys.CreateErrorFilesRejected,
-  },
-  [ProjectCreateErrorCode.UnknownFile]: {
-    field: 'context',
-    key: ProjectsI18nKeys.EditErrorUnknownFile,
-  },
+const REASON_MESSAGES: Record<ProjectFormErrorReason, ProjectsI18nKeys> = {
+  [ProjectFormErrorReason.NameTaken]: ProjectsI18nKeys.CreateErrorNameTaken,
+  [ProjectFormErrorReason.NameInvalid]: ProjectsI18nKeys.CreateErrorNameInvalid,
+  [ProjectFormErrorReason.TooManyFiles]:
+    ProjectsI18nKeys.CreateErrorTooManyFiles,
+  [ProjectFormErrorReason.FilesRejected]:
+    ProjectsI18nKeys.CreateErrorFilesRejected,
+  [ProjectFormErrorReason.UnknownFile]: ProjectsI18nKeys.EditErrorUnknownFile,
 };
 
 /**
@@ -53,5 +27,9 @@ const FIELD_ERRORS: Partial<Record<string, ProjectCreateFieldError>> = {
  */
 export const mapProjectCreateError = (
   code: string | undefined,
-): ProjectCreateFieldError | null =>
-  (code != null ? FIELD_ERRORS[code] : undefined) ?? null;
+): ProjectCreateFieldError | null => {
+  const error = getProjectFormError(code);
+  return error
+    ? { field: error.field, key: REASON_MESSAGES[error.reason] }
+    : null;
+};

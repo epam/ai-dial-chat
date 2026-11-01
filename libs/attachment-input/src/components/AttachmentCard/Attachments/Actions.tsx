@@ -52,7 +52,7 @@ const ActionButton: FC<ActionProps> = ({
       className={mergeClasses(
         isAlwaysVisible
           ? 'opacity-100'
-          : 'opacity-0 group-hover/attachment-tile:opacity-100 group-focus-visible/attachment-tile:opacity-100 group-has-[:focus-visible]/attachment-tile:opacity-100',
+          : 'opacity-0 group-hover/attachment-tile:opacity-100 group-focus-visible/attachment-tile:opacity-100 group-has-focus-visible/attachment-tile:opacity-100',
         styles.actionButton,
         className,
         ATTACHMENT_INPUT_CLASS.tileAction,

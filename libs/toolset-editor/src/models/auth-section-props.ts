@@ -124,4 +124,8 @@ export interface AuthSectionProps {
   onEnsureSaved: () => Promise<string | false>;
   /** Pre-translated labels, all optional with English defaults. */
   labels?: AuthSectionLabels;
+  /** Typography class of the "Authentication" heading. Defaults to `'dial-h3-text'`. */
+  titleClassName?: string;
+  /** Typography class of the open-access ("None" auth) description. Defaults to `'dial-small-text'`. */
+  openAccessDescriptionClassName?: string;
 }

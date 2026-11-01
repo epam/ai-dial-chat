@@ -1,10 +1,14 @@
 import { ProjectSource } from '@epam/ai-dial-chat-api-client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { projectsApi } from '../api-client';
-import { createProject, listProjects } from '../projects.api';
+import { createProject, listProjects, watchProjects } from '../projects.api';
 
 vi.mock('../api-client', () => ({
-  projectsApi: { listProjects: vi.fn(), createProject: vi.fn() },
+  projectsApi: {
+    listProjects: vi.fn(),
+    createProject: vi.fn(),
+    watchProjectsRaw: vi.fn(),
+  },
 }));
 
 describe('Projects adapter', () => {
@@ -78,15 +82,36 @@ describe('Projects adapter', () => {
 
     await createProject({ name: 'p', description: '', instructions: '' }, []);
 
-    expect(projectsApi.createProject).toHaveBeenCalledWith(
-      {
-        name: 'p',
-        description: '',
-        instructions: '',
-        fileNames: '[]',
-        files: [],
-      },
-      undefined,
+    expect(projectsApi.createProject).toHaveBeenCalledWith({
+      name: 'p',
+      description: '',
+      instructions: '',
+      fileNames: '[]',
+      files: [],
+    });
+  });
+
+  it('watches projects through the raw generated method and returns the response body', async () => {
+    const signal = new AbortController().signal;
+    const body = new ReadableStream<Uint8Array>();
+    vi.mocked(projectsApi.watchProjectsRaw).mockResolvedValue({
+      raw: new Response(body),
+    } as Awaited<ReturnType<typeof projectsApi.watchProjectsRaw>>);
+
+    await expect(
+      watchProjects(['projects/b/alpha'], signal),
+    ).resolves.toBeInstanceOf(ReadableStream);
+    expect(projectsApi.watchProjectsRaw).toHaveBeenCalledWith(
+      { watchProjectsBodyDto: { ids: ['projects/b/alpha'] } },
+      { signal },
     );
+  });
+
+  it('rejects a watch answer without a body', async () => {
+    vi.mocked(projectsApi.watchProjectsRaw).mockResolvedValue({
+      raw: new Response(null),
+    } as Awaited<ReturnType<typeof projectsApi.watchProjectsRaw>>);
+
+    await expect(watchProjects(['projects/b/alpha'])).rejects.toThrow();
   });
 });

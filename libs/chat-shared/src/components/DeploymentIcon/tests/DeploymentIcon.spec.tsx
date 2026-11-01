@@ -205,7 +205,7 @@ describe('DeploymentIcon', () => {
       />,
     );
 
-    await screen.findByText('MB');
+    expect(await screen.findByText('MB')).toBeTruthy();
   });
 
   it('shows the fallback avatar when src becomes absent', () => {

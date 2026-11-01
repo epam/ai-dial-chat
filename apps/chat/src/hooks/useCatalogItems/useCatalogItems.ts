@@ -1,4 +1,4 @@
-import type { CatalogItem } from '@epam/ai-dial-catalog';
+import { CATALOG_TAB_ORDER, type CatalogItem } from '@epam/ai-dial-catalog';
 import type {
   ApplicationSchemaSummaryDto,
   DeploymentItemDto,
@@ -39,10 +39,10 @@ import {
   getSkillMetadata,
   listSkillFiles,
 } from '../../server-api/skills.api';
-import { CATALOG_TAB_ORDER } from '../../types/catalog';
 import { buildSkillOverviewLabels } from '../../utils/catalog';
 import {
   buildDeploymentFolderLabels,
+  buildEntityDetailsLabels,
   mapDeploymentToCatalogItem,
   mapToolsetToCatalogItem,
 } from '../../utils/map-deployment-to-catalog-item';
@@ -151,6 +151,7 @@ export const useCatalogItems = ({
   );
 
   const skillOverviewLabels = useMemo(() => buildSkillOverviewLabels(t), [t]);
+  const entityDetailsLabels = useMemo(() => buildEntityDetailsLabels(t), [t]);
 
   const deploymentLimitsLabels: DeploymentLimitsLabels = useMemo(
     () => ({
@@ -210,6 +211,7 @@ export const useCatalogItems = ({
       skillOverviewLabels,
       promptOverviewLabels,
       deploymentLimitsLabels,
+      entityDetailsLabels,
     });
 
   const catalogItems = useMemo(() => {

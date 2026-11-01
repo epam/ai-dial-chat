@@ -37,6 +37,19 @@ export class UploadNetworkError extends Error {
   }
 }
 
+/** How {@link createUploadFileWithProgress} encodes the upload request. */
+export enum UploadBodyEncoding {
+  /** `POST` with a `FormData` body carrying `file`, `bucket`, `path` and `uploadMode`. */
+  Multipart = 'multipart',
+  /**
+   * `PUT` with the `File` itself as the body (`Content-Type:
+   * application/octet-stream`) and `bucket`, `path`, `uploadMode` and
+   * `contentType` in the query string, so the server can stream the body
+   * without parsing it.
+   */
+  Raw = 'raw',
+}
+
 export interface CreateUploadFileWithProgressDeps {
   /** Returns the currently held CSRF token, or `null` when none is set. */
   getCsrfToken: () => string | null;
@@ -48,6 +61,11 @@ export interface CreateUploadFileWithProgressDeps {
   createUnauthorizedError: (url: string) => Error;
   /** The upload endpoint's URL. */
   uploadUrl: string;
+  /**
+   * How the request carries the file and its fields; must match what the
+   * endpoint at `uploadUrl` accepts. Defaults to {@link UploadBodyEncoding.Multipart}.
+   */
+  bodyEncoding?: UploadBodyEncoding;
   /** Builds the `XMLHttpRequest` instance to upload through. Defaults to `() => new XMLHttpRequest()`. */
   xhrFactory?: () => XMLHttpRequest;
 }
@@ -61,7 +79,11 @@ export interface CreateUploadFileWithProgressDeps {
 export const createUploadFileWithProgress = (
   deps: CreateUploadFileWithProgressDeps,
 ): UploadFileWithProgressFn => {
-  const { uploadUrl, xhrFactory = () => new XMLHttpRequest() } = deps;
+  const {
+    uploadUrl,
+    bodyEncoding = UploadBodyEncoding.Multipart,
+    xhrFactory = () => new XMLHttpRequest(),
+  } = deps;
 
   return (
     bucket: string,
@@ -71,20 +93,26 @@ export const createUploadFileWithProgress = (
   ): Promise<FileUploadResponseDto> =>
     new Promise((resolve, reject) => {
       const xhr = xhrFactory();
-      xhr.open('POST', uploadUrl);
+      const isRaw = bodyEncoding === UploadBodyEncoding.Raw;
+      const fields = new URLSearchParams({ bucket, path });
+      if (uploadMode != null) {
+        fields.append('uploadMode', uploadMode);
+      }
+
+      if (isRaw) {
+        if (file.type !== '') {
+          fields.append('contentType', file.type);
+        }
+        xhr.open('PUT', `${uploadUrl}?${fields.toString()}`);
+        xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+      } else {
+        xhr.open('POST', uploadUrl);
+      }
       xhr.withCredentials = true;
 
       const csrfToken = deps.getCsrfToken();
       if (csrfToken != null) {
         xhr.setRequestHeader('X-CSRF-Token', csrfToken);
-      }
-
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('bucket', bucket);
-      formData.append('path', path);
-      if (uploadMode != null) {
-        formData.append('uploadMode', uploadMode);
       }
 
       xhr.upload.addEventListener('progress', (event) => {
@@ -136,6 +164,13 @@ export const createUploadFileWithProgress = (
         signal.addEventListener('abort', () => xhr.abort(), { once: true });
       }
 
+      if (isRaw) {
+        xhr.send(file);
+        return;
+      }
+      const formData = new FormData();
+      formData.append('file', file);
+      fields.forEach((value, name) => formData.append(name, value));
       xhr.send(formData);
     });
 };

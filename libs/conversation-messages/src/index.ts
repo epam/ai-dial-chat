@@ -45,6 +45,7 @@ export type {
   MessageSourceTypography,
 } from './models/message-source';
 export type {
+  ConversationStartTimestampColors,
   ConversationStartTimestampLabels,
   ConversationStartTimestampProps,
 } from './models/conversation-start';

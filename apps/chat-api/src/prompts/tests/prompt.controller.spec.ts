@@ -613,10 +613,11 @@ describe('PromptController (integration)', () => {
       ['PUT', '/api/v1/prompts/folders'],
       ['DELETE', '/api/v1/prompts/folders'],
     ])('returns 400 for %s %s without path', async (method, url) => {
-      await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         [method.toLowerCase() as 'get'](url)
-        .send({})
-        .expect(400);
+        .send({});
+
+      expect(response.status).toBe(400);
     });
 
     it.each([
@@ -625,10 +626,11 @@ describe('PromptController (integration)', () => {
       ['DELETE', '/api/v1/prompts'],
       ['POST', '/api/v1/prompts/move'],
     ])('returns 400 for %s %s without id', async (method, url) => {
-      await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         [method.toLowerCase() as 'get'](url)
-        .send(method === 'POST' ? { targetFolderId: '' } : {})
-        .expect(400);
+        .send(method === 'POST' ? { targetFolderId: '' } : {});
+
+      expect(response.status).toBe(400);
     });
 
     it.each([

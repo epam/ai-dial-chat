@@ -133,6 +133,10 @@ export class ChatCompletionsAdapter {
       message: ConversationMessageDto,
     ) => void,
     jobTitle?: string,
+    options?: {
+      /** Added to the model call, e.g. `x-project-id` for a project conversation. */
+      extraHeaders?: Record<string, string>;
+    },
   ): AsyncGenerator<Uint8Array, GenerationRelayOutcome, void> {
     let assembledMessage = initialAssembledMessage;
     let upstreamReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
@@ -153,6 +157,7 @@ export class ChatCompletionsAdapter {
             ...(timezone ? { 'X-Timezone': timezone } : {}),
             ...buildConversationIdHeaders(conversationId),
             ...buildJobTitleHeaders(jobTitle),
+            ...options?.extraHeaders,
           },
           params: { query: { 'api-version': this.dialClient.dialApiVersion } },
           parseAs: 'stream',

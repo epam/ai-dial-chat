@@ -15,6 +15,20 @@ export { ProjectSource } from './types/project-source';
 export { ProjectsSortKey } from './types/projects-sort-key';
 export { ProjectCreateForm } from './components/ProjectCreateForm/ProjectCreateForm';
 export { ProjectView } from './components/ProjectView/ProjectView';
+export { ProjectConversationList } from './components/ProjectConversationList/ProjectConversationList';
+export type {
+  ProjectConversationListItem,
+  ProjectConversationListLabels,
+  ProjectConversationListProps,
+  ProjectConversationListTypography,
+} from './models/project-conversation-list-props';
+export { ProjectConversationsPanel } from './components/ProjectConversationsPanel/ProjectConversationsPanel';
+export type {
+  ProjectConversationsPanelLabels,
+  ProjectConversationsPanelProps,
+} from './models/project-conversations-panel-props';
+export { ProjectChatHeader } from './components/ProjectChatHeader/ProjectChatHeader';
+export type { ProjectChatHeaderProps } from './models/project-chat-header-props';
 export type {
   ProjectContextFileItem,
   ProjectViewColors,

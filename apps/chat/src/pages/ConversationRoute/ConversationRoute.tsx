@@ -16,16 +16,11 @@ import type {
   StarterOption,
 } from '@epam/ai-dial-chat-shared';
 import {
-  useComposerSeed,
-  useComposerSeedSource,
-} from '@epam/ai-dial-conversation-input';
-import {
-  BASE_ICON_SIZE,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   NoDataContent,
 } from '@epam/ai-dial-ui-kit';
-import { IconPrompt, IconTelescope } from '@tabler/icons-react';
+import { IconTelescope } from '@tabler/icons-react';
 import {
   FC,
   memo,
@@ -44,19 +39,11 @@ import { useDeploymentSelectorOverlay } from '../../components/DeploymentSelecto
 import NewConversationComposer, {
   type NewConversationChatSettings,
 } from '../../components/NewConversationComposer/NewConversationComposer';
-import {
-  PendingParametersPrompt,
-  usePromptSelectorOverlay,
-} from '../../components/PromptSelector/usePromptSelectorOverlay';
+import type { PendingParametersPrompt } from '../../components/PromptSelector/usePromptSelectorOverlay';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
-import { useSkillSelectorOverlay } from '../../components/SkillSelector/useSkillSelectorOverlay';
 import StarterButtons from '../../components/StarterButtons/StarterButtons';
 import { getConversationRoute } from '../../constants/routes';
-import {
-  ChatI18nKeys,
-  PromptSelectorI18nKeys,
-  ToolsI18nKeys,
-} from '../../constants/translation-keys';
+import { ChatI18nKeys, ToolsI18nKeys } from '../../constants/translation-keys';
 import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import {
@@ -65,6 +52,7 @@ import {
 } from '../../context/IsolatedModelViewContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useOptionalOverlay } from '../../context/overlay/OverlayContext';
+import { useComposerMenus } from '../../hooks/conversation/useComposerMenus';
 import { useCustomViewer } from '../../hooks/custom-viewer/useCustomViewer';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useUrlEntityPreselection } from '../../hooks/useUrlEntityPreselection/useUrlEntityPreselection';
@@ -95,32 +83,6 @@ const ConversationRoute: FC = () => {
     state as { pendingPrompt?: PendingParametersPrompt } | null
   )?.pendingPrompt;
   const routeSkillId = (state as { skillId?: string } | null)?.skillId;
-  /*
-   * Merges every one-shot "seed the composer" source — a picked prompt's
-   * route state, a non-submitting starter selection, and the skill hook's
-   * own message/messageRevision push (a mention insertion) — into the one
-   * message/messageRevision pair `NewConversationComposer` accepts.
-   */
-  const {
-    message: composerSeedText,
-    messageRevision: composerSeedRevision,
-    seedMessage: seedComposerText,
-  } = useComposerSeed();
-  /*
-   * A picked prompt is inserted at the caret rather than written to
-   * `composerSeed`, so it cannot discard a draft the user has already typed
-   * on this screen ([#8754](https://github.com/epam/ai-dial-chat/issues/8754)). The route-state seeding below still
-   * replaces, because it arrives with a fresh navigation onto an empty
-   * composer.
-   */
-  const [inputInsertion, setInputInsertion] = useState({
-    revision: 0,
-    text: '',
-  });
-
-  const handleInsertText = useCallback((text: string) => {
-    setInputInsertion((prev) => ({ revision: prev.revision + 1, text }));
-  }, []);
   const {
     items,
     selectedItemId,
@@ -149,82 +111,23 @@ const ConversationRoute: FC = () => {
   );
 
   const {
-    skillMenuOverlay,
-    commandMenu,
-    skillCatalogModal,
-    skillDetailsPanel,
-    message: skillMessage,
-    messageRevision: skillMessageRevision,
-    activeMentions,
-    onDraftChange,
-    onBackspaceAtCaret,
-    caretPositionOverride,
+    composerProps,
+    modals: composerModals,
     selectedSkills,
-    isSkillUnsupported,
-    selectSkillByUrl,
     resetSkillMentions,
     seedSkillMentions,
-    recognizeMentionsInInsertion,
-  } = useSkillSelectorOverlay({
+    selectSkillByUrl,
+    seedComposerText,
+    openParametersPopup,
+  } = useComposerMenus({
     isSkillsSupported: selectedDeployment?.features?.skillsSupported === true,
   });
-
-  /* A `/skill-name` written in a prompt's text becomes a real mention once inserted ([#9354](https://github.com/epam/ai-dial-chat/issues/9354)). */
-  const handlePromptInsertText = useCallback(
-    (text: string) => {
-      recognizeMentionsInInsertion(text);
-      handleInsertText(text);
-    },
-    [recognizeMentionsInInsertion, handleInsertText],
-  );
-  const {
-    renderOverlay: renderPromptsOverlay,
-    promptCatalogModal,
-    parametersPopup: promptParametersPopup,
-    openParametersPopup,
-  } = usePromptSelectorOverlay({ onInsertText: handlePromptInsertText });
-  const promptsMenuOverlays = useMemo(
-    () =>
-      renderPromptsOverlay
-        ? [
-            {
-              key: 'prompts',
-              title: t(PromptSelectorI18nKeys.AddMenuLabel),
-              icon: (
-                <IconPrompt
-                  size={BASE_ICON_SIZE}
-                  aria-hidden
-                  stroke={DIAL_KIT_ICON_STROKE}
-                />
-              ),
-              renderOverlay: renderPromptsOverlay,
-            },
-          ]
-        : undefined,
-    [renderPromptsOverlay, t],
-  );
-
-  useComposerSeedSource(skillMessageRevision, () =>
-    seedComposerText(skillMessage),
-  );
   /*
    * The first message's skills payload comes from the overlay hook. On a
    * successful create this route navigates away and unmounts (clearing the
    * selection with it); on failure the create promise rejects and the
    * selection survives for the retry.
    */
-  /*
-   * The Skills entry joins the Prompts entry in array order, so it renders
-   * below Prompts in the `+` menu; `undefined` when both are flag-disabled
-   * keeps the `+` button's empty-menu rule intact.
-   */
-  const menuOverlays = useMemo(() => {
-    const entries = [
-      ...(promptsMenuOverlays ?? []),
-      ...(skillMenuOverlay ? [skillMenuOverlay] : []),
-    ];
-    return entries.length > 0 ? entries : undefined;
-  }, [promptsMenuOverlays, skillMenuOverlay]);
   const { showErrorNotification } = useNotification();
   const overlay = useOptionalOverlay();
   // TODO: remove in next release
@@ -662,18 +565,9 @@ const ConversationRoute: FC = () => {
         isInputDisabled={isInputDisabled}
         placeholder={t(ChatI18nKeys.Placeholder)}
         introText={starterIntroText}
-        message={composerSeedText}
-        messageRevision={composerSeedRevision}
-        onChange={onDraftChange}
-        inputInsertion={inputInsertion}
+        {...composerProps}
         onCreateConversation={handleCreateConversation}
         modelPickerOverlay={renderOverlay}
-        menuOverlays={menuOverlays}
-        activeMentions={activeMentions}
-        onBackspaceAtCaret={onBackspaceAtCaret}
-        caretPositionOverride={caretPositionOverride}
-        isSkillUnsupported={isSkillUnsupported}
-        commandMenu={commandMenu}
         toolsMenuItems={toolsMenuItems}
         onToolToggle={onToolToggle}
         toolsMenuTitle={t(ToolsI18nKeys.MenuTitle)}
@@ -696,10 +590,7 @@ const ConversationRoute: FC = () => {
         )}
       </NewConversationComposer>
       {catalogModal}
-      {promptCatalogModal}
-      {promptParametersPopup}
-      {skillCatalogModal}
-      {skillDetailsPanel}
+      {composerModals}
     </Suspense>
   );
 };

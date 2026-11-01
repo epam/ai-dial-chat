@@ -70,7 +70,9 @@ Every Core call sends `getBearerAuthHeaders(accessToken)` and goes through `Dial
 - The entries are classified:
   - `PROJECT.md`;
   - `contextFiles`: direct children of `context/`, as `{ name, size }`;
-  - `otherEntries`: every other path, including nested paths under `context/`.
+  - `conversationEntries`: direct children of `conversations/` (project conversations, see the `project-conversations-api` capability), as `{ name, size }`. They are never inflated by a read. Only the edit save (`PUT`) inflates them, to carry them into the new version;
+  - `otherEntries`: every other path, including nested paths under `context/` and `conversations/`.
+- **`contentVersion`:** the snapshot SHALL compute a content version over every entry that is not in `conversationEntries`. It is a SHA-256, hex-encoded and quoted like an entity tag (`"…"`), of the lines `{path}\t{crc32}\t{uncompressedSize}`, one per entry, sorted by path. The CRC-32 and size come from the ZIP central directory, so nothing is inflated. A conversation write therefore never changes `contentVersion`, while any write to `PROJECT.md`, `context/` or another non-conversation path does.
 
 **Logging.** `log` and `warn` logs carry counts and byte totals only, never a file name, bucket or content. An unreadable archive is logged with the error's `name` only, because `yauzl`'s messages quote entry file names. At `debug` level (`LOG_LEVEL=debug`, off by default) the snapshot also logs what Core's archive held — the ETag, the archive size, whether `PROJECT.md` parsed, and every entry's path and size — and `getProject` logs the item metadata exactly as Core returned it. File content and tokens are never logged at any level.
 
@@ -99,6 +101,21 @@ Every Core call sends `getBearerAuthHeaders(accessToken)` and goes through `Dial
 
 - **WHEN** the archive contains `context/a/b.csv`
 - **THEN** it is not in `contextFiles`, and it is in `otherEntries`
+
+#### Scenario: Conversation entries are classified but not inflated
+
+- **WHEN** the archive contains `PROJECT.md`, `context/tickets.csv` and `conversations/gpt-4o__Q4 summary__1b2c.json` (40,000 bytes)
+- **THEN** the conversation is in `conversationEntries` with size 40,000, it is not in `otherEntries`, and only `PROJECT.md` is inflated
+
+#### Scenario: A conversation write does not change contentVersion
+
+- **WHEN** two archives differ only in the bytes of `conversations/gpt-4o__Q4 summary__1b2c.json`
+- **THEN** both snapshots have the same `contentVersion` and different `etag`s
+
+#### Scenario: A context change changes contentVersion
+
+- **WHEN** two archives differ only in the bytes of `context/tickets.csv`
+- **THEN** their `contentVersion`s differ
 
 ### Requirement: PROJECT.md is parsed tolerantly and the name always comes from the path
 
@@ -162,8 +179,12 @@ When either call rejects, the sibling-failure controller aborts with that error,
 - `author?`, `createdAt?`, `updatedAt?`;
 - `description`, `instructions`;
 - `contextFiles: ProjectContextFileDto[]`, where each item is `{ name: string; size: number }`, sorted by name;
-- `etag`;
+- `etag`: Core's aggregate ETag of the version read. It changes on every write, conversation writes included;
+- `contentVersion`: the snapshot's `contentVersion`. It is the value `PUT` and `DELETE` take in `If-Match`;
+- `conversationCount: number`: the number of `conversationEntries`. The publish panel's chats warning and the delete confirmation use it;
 - `canEdit: boolean`.
+
+Conversation content is never part of this response. The project page lists conversations through `GET /api/v1/projects/:id/conversations`.
 
 Example request:
 
@@ -192,6 +213,8 @@ Example `200` response:
     { "name": "tickets.csv", "size": 2048 }
   ],
   "etag": "\"9f2c\"",
+  "contentVersion": "\"3b8e0c…\"",
+  "conversationCount": 3,
   "canEdit": true
 }
 ```
@@ -214,6 +237,11 @@ Status codes:
 
 - **WHEN** a user reads a project in their own bucket
 - **THEN** the response is `200` with `source: 'personal'` and `canEdit: true`
+
+#### Scenario: Conversations are counted, not returned
+
+- **WHEN** the project holds three files under `conversations/`
+- **THEN** the response has `conversationCount: 3`, and no conversation name or content
 
 #### Scenario: Shared project is read-only
 
@@ -253,7 +281,7 @@ Status codes:
 - `fileNames`: a JSON array paired positionally with the `files` parts, holding the added files only;
 - `removedFileNames`: a JSON array of stored context file names.
 
-It also requires an `If-Match` header. `ProjectsUpdateService` (`apps/chat-api/src/projects/update/projects-update.service.ts`) SHALL:
+It also requires an `If-Match` header carrying the `contentVersion` the client read from `GET /api/v1/projects/:id`, not Core's ETag, so a project conversation written in between does not make the save fail. `ProjectsUpdateService` (`apps/chat-api/src/projects/update/projects-update.service.ts`) SHALL:
 
 1. **Require ownership and a single `If-Match`.** Before any Core call:
    - a project whose bucket is not the session bucket is `403` (`ForbiddenException`), matching `canEdit`;
@@ -263,7 +291,7 @@ It also requires an `If-Match` header. `ProjectsUpdateService` (`apps/chat-api/s
    - file-name rules (`invalid-file-name`);
    - extension and signature (`unsupported-file-type`);
    - per-file size (`file-too-large`).
-3. **Read the snapshot.** If its `etag` differs from `If-Match`, answer `409` with `code: 'project-changed'`, without writing. If its `hasOversizedManifest` is `true`, answer `413` with `code: 'project-too-large'`, without writing, because rebuilding a `PROJECT.md` the BFF never read would overwrite it.
+3. **Read the snapshot.** If its `contentVersion` differs from `If-Match`, answer `409` with `code: 'project-changed'`, without writing. If its `hasOversizedManifest` is `true`, answer `413` with `code: 'project-too-large'`, without writing, because rebuilding a `PROJECT.md` the BFF never read would overwrite it.
 4. **Compute the resulting context set:** snapshot files, minus `removedFileNames`, plus the new files.
    - A removed name that is not in the snapshot is `400 unknown-file`.
    - A new name equal to a kept file is `400 duplicate-file-name`, so replacing a file requires listing its name in `removedFileNames` as well.
@@ -274,10 +302,17 @@ It also requires an `If-Match` header. `ProjectsUpdateService` (`apps/chat-api/s
    - `PROJECT.md` from `buildProjectManifest({ name: newName, description, instructions, extraFrontmatter })`, where `extraFrontmatter` is the stored manifest's unknown keys;
    - every kept context file, inflated from the snapshot;
    - every new file;
+   - every `conversationEntries` file, inflated from the snapshot;
    - every `otherEntries` path, inflated from the snapshot.
 
-   Kept files keep their bytes and path, but not their stored content type, because Core's archive carries none: a kept context file is retyped from its extension, as on create, and an `otherEntries` file is uploaded as `application/octet-stream`. This is a known limitation.
-7. **Write once.** Make exactly one `uploadProjectFolder(bucket, encodeDialResourcePath(path), …)` call with `If-Match: <snapshot etag>`, under `AbortSignal.any([disconnect, AbortSignal.timeout(60_000)])`. Core `412` is `409 project-changed`.
+   Kept files keep their bytes and path, but not their stored content type, because Core's archive carries none:
+   - a kept context file is retyped from its extension, as on create;
+   - a `conversationEntries` file is uploaded as `application/json`;
+   - an `otherEntries` file is uploaded as `application/octet-stream`. This is a known limitation.
+7. **Write once per attempt.** Make one `uploadProjectFolder(bucket, encodeDialResourcePath(path), …)` call with `If-Match: <snapshot etag>`, under `AbortSignal.any([disconnect, AbortSignal.timeout(60_000)])`.
+   - On a Core `412`, a write landed between the read and the write, typically a project conversation. Go back to step 3 with a fresh snapshot. The new files stay in memory and are not re-sent.
+   - When the fresh `contentVersion` still equals `If-Match`, rebuild the `FormData` from the fresh snapshot (so the newer conversation bytes are carried, not the older ones) and write again.
+   - At most `PROJECT_WRITE_ATTEMPTS` (3, in `apps/chat-api/src/projects/constants/project-context.constants.ts`) writes are made. A `412` on the last one, or a changed `contentVersion`, is `409 project-changed`.
 8. **Move on rename.** The write has committed, so every rename step runs under a fresh `AbortSignal.timeout(30_000)` only — not the client-disconnect signal — and a closed tab cannot stop the rename half-way. Call `moveResource({ body: { sourceUrl, destinationUrl, overwrite: false } })`.
    - On a Core `400`, re-check the destination: when it exists, answer `409 name-taken`.
    - Any other failure (another status, a failed re-check, a network error or the timeout) is `409 project-changed`, so the client reloads and sees the content saved under the old name. A warning without names records that the content was saved under the old name.
@@ -290,7 +325,7 @@ Example request:
 
 ```http
 PUT /api/v1/projects/projects%2Fa1b2c3%2Fq4-launch HTTP/1.1
-If-Match: "9f2c"
+If-Match: "3b8e0c…"
 Content-Type: multipart/form-data; boundary=x
 
 --x
@@ -343,7 +378,7 @@ Status codes:
 | `401` | No valid session. |
 | `403` | The flag is off, the project is not in the caller's own bucket, or Core denied write access. |
 | `404` | No such project. |
-| `409` | `project-changed` (stale ETag, or a rename that failed after the content was saved) or `name-taken`. |
+| `409` | `project-changed` (stale `contentVersion`, a write still racing after `PROJECT_WRITE_ATTEMPTS`, or a rename that failed after the content was saved) or `name-taken`. |
 | `413` | `file-too-large`, `capacity-exceeded`, or `project-too-large` (the archive, or the stored `PROJECT.md` above `PROJECT_MANIFEST_MAX_BYTES`). |
 | `428` | `if-match-required` (missing, `*`, or a list of tags). |
 | `429` / `502` / `503` | Upstream. |
@@ -354,19 +389,34 @@ Every error code is a `ProjectCreateErrorCode` member. The enum gains `ProjectCh
 
 #### Scenario: Text-only edit is one Core write
 
-- **WHEN** the user changes only the description, with the current ETag
+- **WHEN** the user changes only the description, with the current `contentVersion`
 - **THEN** exactly one `uploadProjectFolder` call is made with `If-Match` equal to the snapshot ETag
-- **AND** its parts are the rebuilt `PROJECT.md` and every stored context file, and no move is made
+- **AND** its parts are the rebuilt `PROJECT.md`, every stored context file and every stored conversation, and no move is made
 
-#### Scenario: Stale ETag is detected before writing
+#### Scenario: Stale contentVersion is detected before writing
 
-- **WHEN** `If-Match` is `"old"` and the snapshot ETag is `"new"`
+- **WHEN** `If-Match` is `"old"` and the snapshot `contentVersion` is `"new"`
 - **THEN** the response is `409` with `code: 'project-changed'`, and no `uploadProjectFolder` call is made
 
-#### Scenario: Concurrent write between read and write
+#### Scenario: A chat written while editing does not fail the save
 
-- **WHEN** Core answers the `uploadProjectFolder` call with `412`
-- **THEN** the response is `409` with `code: 'project-changed'`
+- **WHEN** a project conversation was written after the edit page loaded, so the snapshot `etag` differs from the one the page read but `contentVersion` equals `If-Match`
+- **THEN** the save writes with the fresh snapshot ETag and answers `200`
+
+#### Scenario: A conversation write between read and write is retried
+
+- **WHEN** Core answers the first `uploadProjectFolder` call with `412`, and the re-read snapshot has the same `contentVersion` and newer bytes for `conversations/gpt-4o__Q4 summary__1b2c.json`
+- **THEN** a second `uploadProjectFolder` call is made with the fresh ETag and the newer conversation bytes, and the response is `200`
+
+#### Scenario: Concurrent content edit between read and write
+
+- **WHEN** Core answers `uploadProjectFolder` with `412`, and the re-read snapshot's `contentVersion` differs from `If-Match`
+- **THEN** the response is `409` with `code: 'project-changed'`, and no further write is made
+
+#### Scenario: Write attempts are bounded
+
+- **WHEN** Core answers all three `uploadProjectFolder` calls with `412`
+- **THEN** the response is `409` with `code: 'project-changed'`, and no fourth call is made
 
 #### Scenario: Replacing a file keeps capacity honest
 
@@ -436,19 +486,21 @@ Every error code is a `ProjectCreateErrorCode` member. The enum gains `ProjectCh
 
 ### Requirement: DELETE /api/v1/projects/:id deletes a project conditionally
 
-`deleteProject` SHALL, before any Core call, refuse a project whose bucket is not the session bucket with `403` (`ForbiddenException`), and require an `If-Match` that is exactly one entity tag, answering `428 if-match-required` when it is missing, `*` or a comma-separated list. It calls `deleteProjectFolder(bucket, encodeDialResourcePath(path), { headers: { 'If-Match': ifMatch } })`:
+`deleteProject` SHALL, before any Core call, refuse a project whose bucket is not the session bucket with `403` (`ForbiddenException`), and require an `If-Match` that is exactly one entity tag, answering `428 if-match-required` when it is missing, `*` or a comma-separated list. The tag is the project's `contentVersion`, as for `PUT`. It then:
 
-- Core `412` is `409 project-changed`.
-- `404` is `404`.
-- Other errors go through `handleDialSdkError` with context `projects.deleteProject`.
+1. Reads the snapshot. A `contentVersion` that differs from `If-Match` is `409 project-changed`, without deleting.
+2. Calls `deleteProjectFolder(bucket, encodeDialResourcePath(path), { headers: { 'If-Match': <snapshot etag> } })`.
+   - Core `412` (a conversation write landed in between) goes back to step 1, at most `PROJECT_WRITE_ATTEMPTS` times in total, then `409 project-changed`.
+   - `404` is `404`.
+   - Other errors go through `handleDialSdkError` with context `projects.deleteProject`.
 
-On success it calls `UserConfigService.removeProjectPin(id, …)` as a best effort, and answers `204`.
+Deleting a project deletes its `conversations/` with it. On success it calls `UserConfigService.removeProjectPin(id, …)` as a best effort, and answers `204`.
 
 Example request:
 
 ```http
 DELETE /api/v1/projects/projects%2Fa1b2c3%2Fq4-launch HTTP/1.1
-If-Match: "9f2c"
+If-Match: "3b8e0c…"
 ```
 
 Status codes:
@@ -466,10 +518,15 @@ Status codes:
 
 **Generated-client impact:** `ProjectsApi.deleteProject({ id, ifMatch })`, returning `void`.
 
-#### Scenario: Delete with the current ETag
+#### Scenario: Delete with the current contentVersion
 
-- **WHEN** a pinned project is deleted with its current ETag
-- **THEN** the response is `204`, and its id is no longer in `projects.pinnedIds`
+- **WHEN** a pinned project is deleted with its current `contentVersion`
+- **THEN** the response is `204`, its conversations are gone with it, and its id is no longer in `projects.pinnedIds`
+
+#### Scenario: A chat written before delete does not block it
+
+- **WHEN** a project conversation was written after the page loaded, and `contentVersion` is unchanged
+- **THEN** `deleteProjectFolder` is called with the fresh snapshot ETag, and the response is `204`
 
 #### Scenario: Delete of another user's project
 
@@ -481,10 +538,10 @@ Status codes:
 - **WHEN** `DELETE` is called with `If-Match: *`
 - **THEN** the response is `428` with `code: 'if-match-required'`, and no DIAL Core call is made
 
-#### Scenario: Delete with a stale ETag
+#### Scenario: Delete with a stale contentVersion
 
-- **WHEN** Core answers `deleteProjectFolder` with `412`
-- **THEN** the response is `409` with `code: 'project-changed'`, and the pin is unchanged
+- **WHEN** the snapshot's `contentVersion` differs from `If-Match`
+- **THEN** the response is `409` with `code: 'project-changed'`, no `deleteProjectFolder` call is made, and the pin is unchanged
 
 ### Requirement: Project and context-file downloads stream through the BFF
 

@@ -30,96 +30,6 @@ let actors: HTMLElement[];
 let plan: GhostPlan;
 let stop: (() => void) | undefined;
 
-beforeEach(() => {
-  vi.useFakeTimers();
-  vi.clearAllMocks();
-  Object.defineProperty(document, 'timeline', {
-    configurable: true,
-    value: { currentTime: 2345 },
-  });
-  fixture = document.createElement('section');
-  fixture.innerHTML = `
-    <ul><li id="conversation" style="opacity: 0.7"><a href="/conversations/a" id="conversation-link"><span>My conversation</span></a></li></ul>
-    <button id="starter" type="button"><span>Help me write</span></button>
-    <button id="attachment" type="button" aria-label="Attach"><svg><defs><linearGradient id="icon-glow" /></defs><path fill="url(#icon-glow)" /></svg></button>
-    <textarea aria-label="Message"></textarea>
-    <button id="pumpkin" type="button" aria-label="Halloween"><svg><g data-halloween-pumpkin-light><path /></g></svg></button>`;
-  document.body.appendChild(fixture);
-  pumpkin = fixture.querySelector<HTMLButtonElement>('#pumpkin')!;
-  draft = fixture.querySelector('textarea')!;
-  draft.value = 'My unsent draft';
-  pumpkin.focus();
-  host = document.createElement('div');
-  host.setAttribute('aria-hidden', 'true');
-  copies = document.createElement('div');
-  faceTemplate = document.createElement('div');
-  faceTemplate.id = 'possessed-face-template';
-  faceTemplate.hidden = true;
-  faceTemplate.innerHTML =
-    '<svg><circle data-ghost-pupil /><circle data-ghost-pupil /></svg>';
-  pumpkinGlow = document.createElement('div');
-  host.append(copies, faceTemplate, pumpkinGlow);
-  document.body.appendChild(host);
-  plan = buildGhostPlan(
-    {
-      width: 1280,
-      height: 800,
-      pumpkin: { element: pumpkin, rect: new DOMRect(1050, 560, 120, 120) },
-      homes: [
-        {
-          element: fixture.querySelector<HTMLElement>('#conversation')!,
-          rect: new DOMRect(20, 150, 230, 40),
-        },
-        {
-          element: fixture.querySelector<HTMLElement>('#starter')!,
-          rect: new DOMRect(500, 380, 210, 48),
-        },
-        {
-          element: fixture.querySelector<HTMLElement>('#attachment')!,
-          rect: new DOMRect(410, 600, 32, 32),
-        },
-      ],
-    },
-    false,
-    () => 0.5,
-  );
-  actors = plan.actors.map(() => {
-    const actor = document.createElement('div');
-    actor.innerHTML =
-      '<div data-ghost-cloth><svg><g data-ghost-calm-face /><g data-ghost-fright-face /><g data-ghost-arms /></svg></div>';
-    host.appendChild(actor);
-    return actor;
-  });
-  Object.defineProperty(Element.prototype, 'animate', {
-    configurable: true,
-    value: vi.fn(function (
-      this: Element,
-      frames: Keyframe[],
-      options: KeyframeAnimationOptions,
-    ) {
-      const animation = { cancel: vi.fn() };
-      recorded.push({ element: this, frames, options, animation });
-      return animation;
-    }),
-  });
-});
-
-afterEach(() => {
-  stop?.();
-  stop = undefined;
-  host.remove();
-  fixture.remove();
-  recorded.length = 0;
-  if (originalAnimate)
-    Object.defineProperty(Element.prototype, 'animate', originalAnimate);
-  else delete (Element.prototype as Partial<Element>).animate;
-  if (originalTimeline)
-    Object.defineProperty(document, 'timeline', originalTimeline);
-  else Reflect.deleteProperty(document, 'timeline');
-  vi.restoreAllMocks();
-  vi.useRealTimers();
-});
-
 const play = () => {
   stop = animateGhosts(
     plan,
@@ -146,6 +56,96 @@ const expectStopped = () => {
 };
 
 describe('ghost animation ownership', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    Object.defineProperty(document, 'timeline', {
+      configurable: true,
+      value: { currentTime: 2345 },
+    });
+    fixture = document.createElement('section');
+    fixture.innerHTML = `
+    <ul><li id="conversation" style="opacity: 0.7"><a href="/conversations/a" id="conversation-link"><span>My conversation</span></a></li></ul>
+    <button id="starter" type="button"><span>Help me write</span></button>
+    <button id="attachment" type="button" aria-label="Attach"><svg><defs><linearGradient id="icon-glow" /></defs><path fill="url(#icon-glow)" /></svg></button>
+    <textarea aria-label="Message"></textarea>
+    <button id="pumpkin" type="button" aria-label="Halloween"><svg><g data-halloween-pumpkin-light><path /></g></svg></button>`;
+    document.body.appendChild(fixture);
+    pumpkin = fixture.querySelector<HTMLButtonElement>('#pumpkin')!;
+    draft = fixture.querySelector('textarea')!;
+    draft.value = 'My unsent draft';
+    pumpkin.focus();
+    host = document.createElement('div');
+    host.setAttribute('aria-hidden', 'true');
+    copies = document.createElement('div');
+    faceTemplate = document.createElement('div');
+    faceTemplate.id = 'possessed-face-template';
+    faceTemplate.hidden = true;
+    faceTemplate.innerHTML =
+      '<svg><circle data-ghost-pupil /><circle data-ghost-pupil /></svg>';
+    pumpkinGlow = document.createElement('div');
+    host.append(copies, faceTemplate, pumpkinGlow);
+    document.body.appendChild(host);
+    plan = buildGhostPlan(
+      {
+        width: 1280,
+        height: 800,
+        pumpkin: { element: pumpkin, rect: new DOMRect(1050, 560, 120, 120) },
+        homes: [
+          {
+            element: fixture.querySelector<HTMLElement>('#conversation')!,
+            rect: new DOMRect(20, 150, 230, 40),
+          },
+          {
+            element: fixture.querySelector<HTMLElement>('#starter')!,
+            rect: new DOMRect(500, 380, 210, 48),
+          },
+          {
+            element: fixture.querySelector<HTMLElement>('#attachment')!,
+            rect: new DOMRect(410, 600, 32, 32),
+          },
+        ],
+      },
+      false,
+      () => 0.5,
+    );
+    actors = plan.actors.map(() => {
+      const actor = document.createElement('div');
+      actor.innerHTML =
+        '<div data-ghost-cloth><svg><g data-ghost-calm-face /><g data-ghost-fright-face /><g data-ghost-arms /></svg></div>';
+      host.appendChild(actor);
+      return actor;
+    });
+    Object.defineProperty(Element.prototype, 'animate', {
+      configurable: true,
+      value: vi.fn(function (
+        this: Element,
+        frames: Keyframe[],
+        options: KeyframeAnimationOptions,
+      ) {
+        const animation = { cancel: vi.fn() };
+        recorded.push({ element: this, frames, options, animation });
+        return animation;
+      }),
+    });
+  });
+
+  afterEach(() => {
+    stop?.();
+    stop = undefined;
+    host.remove();
+    fixture.remove();
+    recorded.length = 0;
+    if (originalAnimate)
+      Object.defineProperty(Element.prototype, 'animate', originalAnimate);
+    else delete (Element.prototype as Partial<Element>).animate;
+    if (originalTimeline)
+      Object.defineProperty(document, 'timeline', originalTimeline);
+    else Reflect.deleteProperty(document, 'timeline');
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
   it('borrows inert copies with attached eyes without changing original DOM, focus or drafts', () => {
     const before = fixture.outerHTML;
     play();

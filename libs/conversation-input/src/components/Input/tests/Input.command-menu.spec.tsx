@@ -9,6 +9,7 @@ import {
   type CommandMenuContext,
 } from '../../../models/Input';
 import { Input } from '../Input';
+import inputStyles from '../Input.module.scss';
 
 vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
@@ -256,7 +257,7 @@ describe('Input — selection highlight while a /query is typed', () => {
 
       // eslint-disable-next-line testing-library/no-node-access -- the highlight is a decorative overlay with no role or text
       const highlight = document.querySelector<HTMLElement>(
-        '.bg-control-accent-alpha-active',
+        `.${inputStyles.selectionHighlight}`,
       );
       expect(highlight).toBeTruthy();
       expect(highlight?.style.width).toBe('40px');

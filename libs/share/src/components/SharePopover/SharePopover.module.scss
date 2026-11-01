@@ -1,3 +1,7 @@
+.popover {
+  background: var(--shp-bg, var(--bg-layer-raised, #fcfcfc));
+}
+
 .accessTriggerBtn {
   background-color: var(
     --shp-access-trigger-bg,

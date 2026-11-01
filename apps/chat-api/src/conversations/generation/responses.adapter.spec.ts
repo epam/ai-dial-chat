@@ -565,6 +565,43 @@ describe('ResponsesAdapter', () => {
     });
   });
 
+  describe('project id header', () => {
+    it('adds the extra headers to createResponse', async () => {
+      const { adapter, mockDialClient } = makeAdapter();
+      const createResponse = vi
+        .spyOn(mockDialClient.client, 'createResponse')
+        .mockResolvedValue({
+          response: new Response(
+            textToStream([
+              'data: {"type":"response.completed","response":{"id":"r","status":"completed"}}\n\n',
+            ]),
+            { status: 200 },
+          ),
+        } as never);
+
+      const iterator = adapter.stream(
+        { model: 'gpt-4o', input: [], stream: true, store: false },
+        'test-token',
+        new AbortController().signal,
+        { role: ConversationMessageRole.Assistant, content: '' } as never,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        { extraHeaders: { 'x-project-id': 'projects/a1b2c3/q4' } },
+      );
+      let next = await iterator.next();
+      while (!next.done) next = await iterator.next();
+
+      const [init] = createResponse.mock.calls[0] as unknown as [
+        { headers: Record<string, string> },
+      ];
+      expect(init.headers['x-project-id']).toBe('projects/a1b2c3/q4');
+    });
+  });
+
   describe('stream pass-through', () => {
     it('relays normalized chunks without assembling the answer or publishing chunks', async () => {
       const { adapter, mockDialClient } = makeAdapter();

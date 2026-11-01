@@ -27,906 +27,592 @@ const baseValues: ScheduledTaskCreateFormValues = {
   prompt: 'Summarize my inbox',
 };
 
-/* Recurring-schedule conversion reads the timezone offset in effect "now",
+describe('scheduled-task-trigger', () => {
+  /* Recurring-schedule conversion reads the timezone offset in effect "now",
    so pin the clock to a summer date — the expectations below assume summer
    offsets (e.g. Europe/Warsaw UTC+2, America/New_York UTC-4). */
-beforeEach(() => {
-  vi.useFakeTimers({ toFake: ['Date'] });
-  vi.setSystemTime(new Date('2026-07-15T12:00:00Z'));
-});
-
-afterEach(() => {
-  vi.useRealTimers();
-});
-
-describe('mapFormValuesToCreateBody', () => {
   beforeEach(() => {
-    vi.stubEnv('TZ', 'UTC');
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-07-15T12:00:00Z'));
   });
 
   afterEach(() => {
-    vi.unstubAllEnvs();
+    vi.useRealTimers();
   });
 
-  it('maps a one-time repeat to trigger.date', () => {
-    const body = mapFormValuesToCreateBody({
-      ...baseValues,
-      repeat: ScheduledTaskRepeat.OneTime,
-      runAt: '2026-07-24T09:00',
+  describe('mapFormValuesToCreateBody', () => {
+    beforeEach(() => {
+      vi.stubEnv('TZ', 'UTC');
+    });
+
+    afterEach(() => {
+      vi.unstubAllEnvs();
     });
 
-    expect(body.trigger.date).toBe(new Date('2026-07-24T09:00').toISOString());
-    expect(body.trigger.cron).toBeUndefined();
-  });
-
-  it('maps an hourly repeat to a wildcard hour with the user-selected minute', () => {
-    const body = mapFormValuesToCreateBody({
-      ...baseValues,
-      repeat: ScheduledTaskRepeat.Hourly,
-      minute: '15',
-    });
-
-    expect(body.trigger.date).toBeUndefined();
-    expect(body.trigger.cron?.fields).toEqual({ hour: '*', minute: '15' });
-  });
-
-  it('maps a daily repeat to trigger.cron.fields', () => {
-    const body = mapFormValuesToCreateBody({
-      ...baseValues,
-      repeat: ScheduledTaskRepeat.Daily,
-      time: '09:00',
-    });
-
-    expect(body.trigger.date).toBeUndefined();
-    expect(body.trigger.cron?.fields).toEqual({ hour: '9', minute: '0' });
-  });
-
-  it('maps a weekly repeat with day_of_week', () => {
-    const body = mapFormValuesToCreateBody({
-      ...baseValues,
-      repeat: ScheduledTaskRepeat.Weekly,
-      time: '14:30',
-      dayOfWeek: '1',
-    });
-
-    expect(body.trigger.cron?.fields).toEqual({
-      hour: '14',
-      minute: '30',
-      day_of_week: '1',
-    });
-  });
-
-  it('maps a monthly repeat with day', () => {
-    const body = mapFormValuesToCreateBody({
-      ...baseValues,
-      repeat: ScheduledTaskRepeat.Monthly,
-      time: '00:05',
-      dayOfMonth: '15',
-    });
-
-    expect(body.trigger.cron?.fields).toEqual({
-      hour: '0',
-      minute: '5',
-      day: '15',
-    });
-  });
-
-  it('carries displayName, model, and prompt through', () => {
-    const body = mapFormValuesToCreateBody({
-      ...baseValues,
-      repeat: ScheduledTaskRepeat.Daily,
-    });
-
-    expect(body.displayName).toBe('Daily summary');
-    expect(body.model).toBe('gpt-4o');
-    expect(body.prompt).toBe('Summarize my inbox');
-    expect(body).not.toHaveProperty('stream');
-  });
-
-  it('includes a trimmed description when non-empty', () => {
-    const body = mapFormValuesToCreateBody({
-      ...baseValues,
-      repeat: ScheduledTaskRepeat.OneTime,
-      runAt: '2026-07-24T09:00',
-      description: '  Summarizes unread inbox items  ',
-    });
-
-    expect(body.description).toBe('Summarizes unread inbox items');
-  });
-
-  it('omits description when empty', () => {
-    const body = mapFormValuesToCreateBody({
-      ...baseValues,
-      repeat: ScheduledTaskRepeat.OneTime,
-      runAt: '2026-07-24T09:00',
-      description: '',
-    });
-
-    expect(body.description).toBeUndefined();
-  });
-
-  it('omits description when whitespace-only', () => {
-    const body = mapFormValuesToCreateBody({
-      ...baseValues,
-      repeat: ScheduledTaskRepeat.OneTime,
-      runAt: '2026-07-24T09:00',
-      description: '   ',
-    });
-
-    expect(body.description).toBeUndefined();
-  });
-
-  it('omits description when not provided', () => {
-    const body = mapFormValuesToCreateBody({
-      ...baseValues,
-      repeat: ScheduledTaskRepeat.OneTime,
-      runAt: '2026-07-24T09:00',
-    });
-
-    expect(body.description).toBeUndefined();
-  });
-
-  it('omits startDate/endDate from trigger.cron when neither is set', () => {
-    const body = mapFormValuesToCreateBody({
-      ...baseValues,
-      repeat: ScheduledTaskRepeat.Daily,
-    });
-
-    expect(body.trigger.cron).not.toHaveProperty('startDate');
-    expect(body.trigger.cron).not.toHaveProperty('endDate');
-  });
-
-  it('never includes startDate/endDate for a one-time repeat even if present in values', () => {
-    const body = mapFormValuesToCreateBody({
-      ...baseValues,
-      repeat: ScheduledTaskRepeat.OneTime,
-      runAt: '2026-07-24T09:00',
-      startDate: '2026-08-01',
-      endDate: '2026-08-31',
-    });
-
-    expect(body.trigger.cron).toBeUndefined();
-    expect(body.trigger).not.toHaveProperty('startDate');
-    expect(body.trigger).not.toHaveProperty('endDate');
-  });
-
-  it('maps a custom repeat with the week step alongside the UTC-converted day and time', () => {
-    const body = mapFormValuesToCreateBody({
-      ...baseValues,
-      repeat: ScheduledTaskRepeat.Custom,
-      everyWeeks: '2',
-      dayOfWeek: '0', // Monday, APScheduler convention
-      time: '09:00',
-    });
-
-    expect(body.trigger.cron?.fields).toEqual({
-      week: '*/2',
-      day_of_week: '0',
-      hour: '9',
-      minute: '0',
-    });
-  });
-
-  it('emits the week field for every-1-week custom repeats', () => {
-    const body = mapFormValuesToCreateBody({
-      ...baseValues,
-      repeat: ScheduledTaskRepeat.Custom,
-      everyWeeks: '1',
-      dayOfWeek: '0',
-      time: '09:00',
-    });
-
-    expect(body.trigger.cron?.fields?.week).toBe('*/1');
-  });
-
-  it('never includes startDate/endDate for a custom repeat even if present in values', () => {
-    const body = mapFormValuesToCreateBody({
-      ...baseValues,
-      repeat: ScheduledTaskRepeat.Custom,
-      everyWeeks: '2',
-      dayOfWeek: '0',
-      time: '09:00',
-      startDate: '2026-08-01',
-      endDate: '2026-08-31',
-    });
-
-    expect(body.trigger.cron?.fields).toEqual({
-      week: '*/2',
-      day_of_week: '0',
-      hour: '9',
-      minute: '0',
-    });
-    expect(body.trigger.cron).not.toHaveProperty('startDate');
-    expect(body.trigger.cron).not.toHaveProperty('endDate');
-  });
-
-  it('maps hourly datetime-local boundaries to the picked instants', () => {
-    const body = mapFormValuesToCreateBody({
-      ...baseValues,
-      repeat: ScheduledTaskRepeat.Hourly,
-      minute: '0',
-      startDate: '2026-08-01T08:30',
-      endDate: '2026-08-31T18:45',
-    });
-
-    expect(body.trigger.cron?.startDate).toBe('2026-08-01T08:30:00.000Z');
-    expect(body.trigger.cron?.endDate).toBe('2026-08-31T18:45:00.000Z');
-  });
-});
-
-describe('mapFormValuesToCreateBody — recurring schedule timezone conversion', () => {
-  afterEach(() => {
-    vi.unstubAllEnvs();
-  });
-
-  it('converts a daily local time to its UTC equivalent', () => {
-    vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer
-
-    const body = mapFormValuesToCreateBody({
-      ...baseValues,
-      repeat: ScheduledTaskRepeat.Daily,
-      time: '09:00',
-    });
-
-    expect(body.trigger.cron?.fields).toEqual({ hour: '7', minute: '0' });
-  });
-
-  it('shifts day_of_week forward when the UTC conversion crosses midnight', () => {
-    vi.stubEnv('TZ', 'America/New_York'); // UTC-4 in summer: UTC = local + 4h
-
-    const body = mapFormValuesToCreateBody({
-      ...baseValues,
-      repeat: ScheduledTaskRepeat.Weekly,
-      time: '22:00',
-      dayOfWeek: '0', // Monday, APScheduler convention
-    });
-
-    expect(body.trigger.cron?.fields).toEqual({
-      hour: '2',
-      minute: '0',
-      day_of_week: '1', // Tuesday
-    });
-  });
-
-  it('shifts a custom day_of_week across midnight while the week step stays unconverted', () => {
-    vi.stubEnv('TZ', 'America/New_York'); // UTC-4 in summer: UTC = local + 4h
-
-    const body = mapFormValuesToCreateBody({
-      ...baseValues,
-      repeat: ScheduledTaskRepeat.Custom,
-      everyWeeks: '3',
-      time: '22:00',
-      dayOfWeek: '0', // Monday, APScheduler convention
-    });
-
-    expect(body.trigger.cron?.fields).toEqual({
-      week: '*/3',
-      hour: '2',
-      minute: '0',
-      day_of_week: '1', // Tuesday
-    });
-  });
-
-  it('shifts day_of_week backward when the UTC conversion crosses midnight the other way', () => {
-    vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer: UTC = local - 2h
-
-    const body = mapFormValuesToCreateBody({
-      ...baseValues,
-      repeat: ScheduledTaskRepeat.Weekly,
-      time: '01:00',
-      dayOfWeek: '0', // Monday, APScheduler convention
-    });
-
-    expect(body.trigger.cron?.fields).toEqual({
-      hour: '23',
-      minute: '0',
-      day_of_week: '6', // Sunday
-    });
-  });
-
-  it('produces no shift when the browser timezone is UTC', () => {
-    vi.stubEnv('TZ', 'UTC');
-
-    const body = mapFormValuesToCreateBody({
-      ...baseValues,
-      repeat: ScheduledTaskRepeat.Daily,
-      time: '09:00',
-    });
-
-    expect(body.trigger.cron?.fields).toEqual({ hour: '9', minute: '0' });
-  });
-
-  it('converts a monthly local day/time to its UTC equivalent with no rollover', () => {
-    vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer
-
-    const body = mapFormValuesToCreateBody({
-      ...baseValues,
-      repeat: ScheduledTaskRepeat.Monthly,
-      time: '09:00',
-      dayOfMonth: '15',
-    });
-
-    expect(body.trigger.cron?.fields).toEqual({
-      hour: '7',
-      minute: '0',
-      day: '15',
-    });
-  });
-
-  it('maps a local 1st that falls on the previous UTC day to the last day of the month', () => {
-    vi.stubEnv('TZ', 'Europe/Kyiv'); // UTC+3 in summer
-
-    const body = mapFormValuesToCreateBody({
-      ...baseValues,
-      repeat: ScheduledTaskRepeat.Monthly,
-      time: '00:30',
-      dayOfMonth: '1',
-    });
-
-    expect(body.trigger.cron?.fields).toEqual({
-      hour: '21',
-      minute: '30',
-      day: 'last',
-    });
-  });
-
-  it('shifts the monthly day back when the UTC conversion crosses midnight', () => {
-    vi.stubEnv('TZ', 'Europe/Kyiv'); // UTC+3 in summer
-
-    const body = mapFormValuesToCreateBody({
-      ...baseValues,
-      repeat: ScheduledTaskRepeat.Monthly,
-      time: '00:30',
-      dayOfMonth: '15',
-    });
-
-    expect(body.trigger.cron?.fields?.day).toBe('14');
-  });
-
-  it('shifts the monthly day forward when the UTC conversion crosses midnight', () => {
-    vi.stubEnv('TZ', 'America/New_York'); // UTC-4 in summer
-
-    const body = mapFormValuesToCreateBody({
-      ...baseValues,
-      repeat: ScheduledTaskRepeat.Monthly,
-      time: '22:00',
-      dayOfMonth: '15',
-    });
-
-    expect(body.trigger.cron?.fields).toEqual({
-      hour: '2',
-      minute: '0',
-      day: '16',
-    });
-  });
-
-  it('keeps the 31st when the form is submitted during a 30-day month', () => {
-    vi.setSystemTime(new Date('2026-11-15T12:00:00Z'));
-    vi.stubEnv('TZ', 'Europe/Kyiv'); // UTC+2 in winter
-
-    const body = mapFormValuesToCreateBody({
-      ...baseValues,
-      repeat: ScheduledTaskRepeat.Monthly,
-      time: '09:00',
-      dayOfMonth: '31',
-    });
-
-    expect(body.trigger.cron?.fields).toEqual({
-      hour: '7',
-      minute: '0',
-      day: '31',
-    });
-  });
-
-  it('does not shift the hourly minute at a whole-hour-offset timezone', () => {
-    vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer (whole-hour offset)
-
-    const body = mapFormValuesToCreateBody({
-      ...baseValues,
-      repeat: ScheduledTaskRepeat.Hourly,
-      minute: '15',
-    });
-
-    expect(body.trigger.cron?.fields).toEqual({ hour: '*', minute: '15' });
-  });
-
-  it('shifts the hourly minute at a sub-hour-offset timezone', () => {
-    vi.stubEnv('TZ', 'Asia/Kolkata'); // UTC+5:30
-
-    const body = mapFormValuesToCreateBody({
-      ...baseValues,
-      repeat: ScheduledTaskRepeat.Hourly,
-      minute: '15',
-    });
-
-    expect(body.trigger.cron?.fields).toEqual({ hour: '*', minute: '45' });
-  });
-
-  it('converts startDate/endDate to UTC start/end-of-local-day at a non-zero offset', () => {
-    vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer
-
-    const body = mapFormValuesToCreateBody({
-      ...baseValues,
-      repeat: ScheduledTaskRepeat.Daily,
-      startDate: '2026-08-01',
-      endDate: '2026-08-31',
-    });
-
-    expect(body.trigger.cron?.startDate).toBe('2026-07-31T22:00:00.000Z');
-    expect(body.trigger.cron?.endDate).toBe('2026-08-31T21:59:59.999Z');
-  });
-
-  it('applies the offset in effect on each boundary day across a DST transition', () => {
-    // Poland's DST ends 2026-10-25: Oct 1 is UTC+2 (CEST), Nov 1 is UTC+1 (CET).
-    vi.stubEnv('TZ', 'Europe/Warsaw');
-
-    const body = mapFormValuesToCreateBody({
-      ...baseValues,
-      repeat: ScheduledTaskRepeat.Daily,
-      startDate: '2026-10-01',
-      endDate: '2026-11-01',
-    });
-
-    expect(body.trigger.cron?.startDate).toBe('2026-09-30T22:00:00.000Z');
-    expect(body.trigger.cron?.endDate).toBe('2026-11-01T22:59:59.999Z');
-  });
-});
-
-describe('mapFormValuesToUpdateBody', () => {
-  it('maps values to the same shape as mapFormValuesToCreateBody', () => {
-    const values: ScheduledTaskCreateFormValues = {
-      displayName: 'Daily summary',
-      repeat: ScheduledTaskRepeat.OneTime,
-      time: '09:00',
-      runAt: '2026-07-24T09:00',
-      modelId: 'gpt-4o',
-      prompt: 'Summarize my inbox',
-    };
-
-    expect(mapFormValuesToUpdateBody(values)).toEqual({
-      ...mapFormValuesToCreateBody(values),
-      skillUrls: [],
-    });
-  });
-});
-
-describe('mapScheduledTaskDtoToFormValues', () => {
-  it('hydrates a skill-only detail without synthesizing instructions', () => {
-    expect(
-      mapScheduledTaskDtoToFormValues({
-        ...baseDto,
-        prompt: '',
-        skillUrls: ['skills/public/report'],
-        trigger: { cron: { fields: { hour: '9', minute: '0' } } },
-      }),
-    ).toMatchObject({
-      ok: true,
-      values: { prompt: '', skillUrls: ['skills/public/report'] },
-    });
-  });
-  afterEach(() => {
-    vi.unstubAllEnvs();
-  });
-
-  it('fails closed when model is missing', () => {
-    const result = mapScheduledTaskDtoToFormValues({
-      ...baseDto,
-      model: undefined,
-      trigger: { date: '2026-07-24T09:00:00.000Z' },
-    });
-
-    expect(result).toEqual({
-      ok: false,
-      reason: UnsupportedTriggerReason.MissingRequiredFields,
-    });
-  });
-
-  it('fails closed when prompt is missing', () => {
-    const result = mapScheduledTaskDtoToFormValues({
-      ...baseDto,
-      prompt: undefined,
-      trigger: { date: '2026-07-24T09:00:00.000Z' },
-    });
-
-    expect(result).toEqual({
-      ok: false,
-      reason: UnsupportedTriggerReason.MissingRequiredFields,
-    });
-  });
-
-  it('fails closed when neither trigger.date nor trigger.cron is set', () => {
-    const result = mapScheduledTaskDtoToFormValues({
-      ...baseDto,
-      trigger: {},
-    });
-
-    expect(result).toEqual({
-      ok: false,
-      reason: UnsupportedTriggerReason.UnsupportedTriggerType,
-    });
-  });
-
-  it('fails closed when both trigger.date and trigger.cron are set', () => {
-    const result = mapScheduledTaskDtoToFormValues({
-      ...baseDto,
-      trigger: {
-        date: '2026-07-24T09:00:00.000Z',
-        cron: { fields: { hour: '9', minute: '0' } },
-      },
-    });
-
-    expect(result).toEqual({
-      ok: false,
-      reason: UnsupportedTriggerReason.UnsupportedTriggerType,
-    });
-  });
-
-  it('fails closed on a cron shape with an unsupported field key', () => {
-    const result = mapScheduledTaskDtoToFormValues({
-      ...baseDto,
-      trigger: { cron: { fields: { hour: '9', minute: '0', week: '2' } } },
-    });
-
-    expect(result).toEqual({
-      ok: false,
-      reason: UnsupportedTriggerReason.UnsupportedCronShape,
-    });
-  });
-
-  it('treats null-valued cron fields as absent, not as unsupported extra keys', () => {
-    // DIAL Scheduler always returns every cron field key, using `null` for
-    // unset ones — this must round-trip like a plain daily schedule.
-    vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer
-
-    const fields = {
-      day: null,
-      hour: '9',
-      week: null,
-      year: null,
-      month: null,
-      minute: '0',
-      second: null,
-      day_of_week: null,
-    } as unknown as Record<string, string>;
-
-    const result = mapScheduledTaskDtoToFormValues({
-      ...baseDto,
-      trigger: { cron: { fields } },
-    });
-
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.values.repeat).toBe(ScheduledTaskRepeat.Daily);
-      expect(result.values.time).toBe('11:00');
-      expect(result.values.dayOfWeek).toBeUndefined();
-      expect(result.values.dayOfMonth).toBeUndefined();
-    }
-  });
-
-  it('fails closed when both day_of_week and day are present', () => {
-    const result = mapScheduledTaskDtoToFormValues({
-      ...baseDto,
-      trigger: {
-        cron: {
-          fields: { hour: '9', minute: '0', day_of_week: '0', day: '1' },
-        },
-      },
-    });
-
-    expect(result).toEqual({
-      ok: false,
-      reason: UnsupportedTriggerReason.UnsupportedCronShape,
-    });
-  });
-
-  it('fails closed when hour is `*` combined with a set day_of_week', () => {
-    const result = mapScheduledTaskDtoToFormValues({
-      ...baseDto,
-      trigger: {
-        cron: { fields: { hour: '*', minute: '0', day_of_week: '0' } },
-      },
-    });
-
-    expect(result).toEqual({
-      ok: false,
-      reason: UnsupportedTriggerReason.UnsupportedCronShape,
-    });
-  });
-
-  it('round-trips a one-time schedule back to local runAt', () => {
-    vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer
-
-    const result = mapScheduledTaskDtoToFormValues({
-      ...baseDto,
-      trigger: { date: '2026-07-24T07:00:00.000Z' },
-    });
-
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.values.repeat).toBe(ScheduledTaskRepeat.OneTime);
-      expect(result.values.runAt).toBe('2026-07-24T09:00');
-      // Not '00:00' — switching Repeat to a time-based cadence on the edit
-      // page must not silently start from midnight.
-      expect(result.values.time).toBe('09:00');
-    }
-  });
-
-  it('round-trips an hourly schedule at a whole-hour-offset timezone with no minute shift', () => {
-    vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer
-
-    const result = mapScheduledTaskDtoToFormValues({
-      ...baseDto,
-      trigger: { cron: { fields: { hour: '*', minute: '15' } } },
-    });
-
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.values.repeat).toBe(ScheduledTaskRepeat.Hourly);
-      expect(result.values.minute).toBe('15');
-      // Not '00:00' — switching Repeat to a time-based cadence on the edit
-      // page must not silently start from midnight.
-      expect(result.values.time).toBe('09:00');
-      expect(result.values.dayOfWeek).toBeUndefined();
-      expect(result.values.dayOfMonth).toBeUndefined();
-    }
-  });
-
-  it('round-trips an hourly schedule at a sub-hour-offset timezone with a minute shift', () => {
-    vi.stubEnv('TZ', 'Asia/Kolkata'); // UTC+5:30
-
-    const result = mapScheduledTaskDtoToFormValues({
-      ...baseDto,
-      trigger: { cron: { fields: { hour: '*', minute: '45' } } },
-    });
-
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.values.repeat).toBe(ScheduledTaskRepeat.Hourly);
-      expect(result.values.minute).toBe('15');
-    }
-  });
-
-  it('round-trips a daily recurring schedule back to local time', () => {
-    vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer
-
-    const result = mapScheduledTaskDtoToFormValues({
-      ...baseDto,
-      trigger: { cron: { fields: { hour: '7', minute: '0' } } },
-    });
-
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.values.repeat).toBe(ScheduledTaskRepeat.Daily);
-      expect(result.values.time).toBe('09:00');
-    }
-  });
-
-  it('round-trips a monthly recurring schedule back to local time and day', () => {
-    vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer
-
-    const result = mapScheduledTaskDtoToFormValues({
-      ...baseDto,
-      trigger: { cron: { fields: { hour: '7', minute: '0', day: '15' } } },
-    });
-
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.values.repeat).toBe(ScheduledTaskRepeat.Monthly);
-      expect(result.values.time).toBe('09:00');
-      expect(result.values.dayOfMonth).toBe('15');
-    }
-  });
-
-  it('maps the last day of the month one day behind local time back to the 1st', () => {
-    vi.stubEnv('TZ', 'Europe/Kyiv'); // UTC+3 in summer
-
-    const result = mapScheduledTaskDtoToFormValues({
-      ...baseDto,
-      trigger: { cron: { fields: { hour: '21', minute: '30', day: 'last' } } },
-    });
-
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.values.repeat).toBe(ScheduledTaskRepeat.Monthly);
-      expect(result.values.time).toBe('00:30');
-      expect(result.values.dayOfMonth).toBe('1');
-    }
-  });
-
-  it('fails closed on the last day of the month that is not one day behind local time', () => {
-    vi.stubEnv('TZ', 'Europe/Kyiv'); // UTC+3 in summer
-
-    const result = mapScheduledTaskDtoToFormValues({
-      ...baseDto,
-      trigger: { cron: { fields: { hour: '6', minute: '0', day: 'last' } } },
+    it('maps a one-time repeat to trigger.date', () => {
+      const body = mapFormValuesToCreateBody({
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.OneTime,
+        runAt: '2026-07-24T09:00',
+      });
+
+      expect(body.trigger.date).toBe(
+        new Date('2026-07-24T09:00').toISOString(),
+      );
+      expect(body.trigger.cron).toBeUndefined();
     });
 
-    expect(result).toEqual({
-      ok: false,
-      reason: UnsupportedTriggerReason.UnsupportedCronShape,
-    });
-  });
+    it('maps an hourly repeat to a wildcard hour with the user-selected minute', () => {
+      const body = mapFormValuesToCreateBody({
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.Hourly,
+        minute: '15',
+      });
 
-  it('keeps the 31st when the task is opened during a 30-day month', () => {
-    vi.setSystemTime(new Date('2026-11-15T12:00:00Z'));
-    vi.stubEnv('TZ', 'Europe/Kyiv'); // UTC+2 in winter
-
-    const result = mapScheduledTaskDtoToFormValues({
-      ...baseDto,
-      trigger: { cron: { fields: { hour: '7', minute: '0', day: '31' } } },
+      expect(body.trigger.date).toBeUndefined();
+      expect(body.trigger.cron?.fields).toEqual({ hour: '*', minute: '15' });
     });
-
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.values.time).toBe('09:00');
-      expect(result.values.dayOfMonth).toBe('31');
-    }
-  });
 
-  it('maps a UTC 31st one day behind local time to the 1st', () => {
-    vi.stubEnv('TZ', 'Europe/Kyiv'); // UTC+3 in summer
+    it('maps a daily repeat to trigger.cron.fields', () => {
+      const body = mapFormValuesToCreateBody({
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.Daily,
+        time: '09:00',
+      });
 
-    const result = mapScheduledTaskDtoToFormValues({
-      ...baseDto,
-      trigger: { cron: { fields: { hour: '21', minute: '30', day: '31' } } },
+      expect(body.trigger.date).toBeUndefined();
+      expect(body.trigger.cron?.fields).toEqual({ hour: '9', minute: '0' });
     });
 
-    expect(result.ok).toBe(true);
-    if (result.ok) expect(result.values.dayOfMonth).toBe('1');
-  });
+    it('maps a weekly repeat with day_of_week', () => {
+      const body = mapFormValuesToCreateBody({
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.Weekly,
+        time: '14:30',
+        dayOfWeek: '1',
+      });
 
-  it('round-trips a weekly recurring schedule, shifting day_of_week back across a UTC day boundary', () => {
-    vi.stubEnv('TZ', 'America/New_York'); // UTC-4 in summer
-
-    const result = mapScheduledTaskDtoToFormValues({
-      ...baseDto,
-      trigger: {
-        cron: { fields: { hour: '2', minute: '0', day_of_week: '1' } }, // Tuesday UTC
-      },
+      expect(body.trigger.cron?.fields).toEqual({
+        hour: '14',
+        minute: '30',
+        day_of_week: '1',
+      });
     });
-
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.values.repeat).toBe(ScheduledTaskRepeat.Weekly);
-      expect(result.values.time).toBe('22:00');
-      expect(result.values.dayOfWeek).toBe('0'); // Monday, APScheduler convention
-    }
-  });
-
-  it('round-trips a custom schedule, passing the week step through unconverted', () => {
-    vi.stubEnv('TZ', 'America/New_York'); // UTC-4 in summer
 
-    const result = mapScheduledTaskDtoToFormValues({
-      ...baseDto,
-      trigger: {
-        cron: {
-          fields: {
-            week: '*/2',
-            hour: '2',
-            minute: '0',
-            day_of_week: '1',
-          }, // Tuesday UTC
-        },
-      },
+    it('maps a monthly repeat with day', () => {
+      const body = mapFormValuesToCreateBody({
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.Monthly,
+        time: '00:05',
+        dayOfMonth: '15',
+      });
+
+      expect(body.trigger.cron?.fields).toEqual({
+        hour: '0',
+        minute: '5',
+        day: '15',
+      });
     });
-
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.values.repeat).toBe(ScheduledTaskRepeat.Custom);
-      expect(result.values.everyWeeks).toBe('2');
-      expect(result.values.time).toBe('22:00');
-      expect(result.values.dayOfWeek).toBe('0'); // Monday, APScheduler convention
-      expect(result.values.startDate).toBeUndefined();
-      expect(result.values.endDate).toBeUndefined();
-    }
-  });
-
-  it('round-trips a custom Monday shortly after midnight through UTC Sunday', () => {
-    vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer
-    const values: ScheduledTaskCreateFormValues = {
-      ...baseValues,
-      repeat: ScheduledTaskRepeat.Custom,
-      everyWeeks: '2',
-      dayOfWeek: '0',
-      time: '00:30',
-    };
-    const body = mapFormValuesToCreateBody(values);
-
-    expect(body.trigger.cron?.fields).toEqual({
-      week: '*/2',
-      day_of_week: '6',
-      hour: '22',
-      minute: '30',
+
+    it('carries displayName, model, and prompt through', () => {
+      const body = mapFormValuesToCreateBody({
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.Daily,
+      });
+
+      expect(body.displayName).toBe('Daily summary');
+      expect(body.model).toBe('gpt-4o');
+      expect(body.prompt).toBe('Summarize my inbox');
+      expect(body).not.toHaveProperty('stream');
     });
-    expect(
-      mapScheduledTaskDtoToFormValues({ ...baseDto, trigger: body.trigger }),
-    ).toMatchObject({
-      ok: true,
-      values: {
+
+    it('includes a trimmed description when non-empty', () => {
+      const body = mapFormValuesToCreateBody({
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.OneTime,
+        runAt: '2026-07-24T09:00',
+        description: '  Summarizes unread inbox items  ',
+      });
+
+      expect(body.description).toBe('Summarizes unread inbox items');
+    });
+
+    it('omits description when empty', () => {
+      const body = mapFormValuesToCreateBody({
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.OneTime,
+        runAt: '2026-07-24T09:00',
+        description: '',
+      });
+
+      expect(body.description).toBeUndefined();
+    });
+
+    it('omits description when whitespace-only', () => {
+      const body = mapFormValuesToCreateBody({
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.OneTime,
+        runAt: '2026-07-24T09:00',
+        description: '   ',
+      });
+
+      expect(body.description).toBeUndefined();
+    });
+
+    it('omits description when not provided', () => {
+      const body = mapFormValuesToCreateBody({
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.OneTime,
+        runAt: '2026-07-24T09:00',
+      });
+
+      expect(body.description).toBeUndefined();
+    });
+
+    it('omits startDate/endDate from trigger.cron when neither is set', () => {
+      const body = mapFormValuesToCreateBody({
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.Daily,
+      });
+
+      expect(body.trigger.cron).not.toHaveProperty('startDate');
+      expect(body.trigger.cron).not.toHaveProperty('endDate');
+    });
+
+    it('never includes startDate/endDate for a one-time repeat even if present in values', () => {
+      const body = mapFormValuesToCreateBody({
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.OneTime,
+        runAt: '2026-07-24T09:00',
+        startDate: '2026-08-01',
+        endDate: '2026-08-31',
+      });
+
+      expect(body.trigger.cron).toBeUndefined();
+      expect(body.trigger).not.toHaveProperty('startDate');
+      expect(body.trigger).not.toHaveProperty('endDate');
+    });
+
+    it('maps a custom repeat with the week step alongside the UTC-converted day and time', () => {
+      const body = mapFormValuesToCreateBody({
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.Custom,
+        everyWeeks: '2',
+        dayOfWeek: '0', // Monday, APScheduler convention
+        time: '09:00',
+      });
+
+      expect(body.trigger.cron?.fields).toEqual({
+        week: '*/2',
+        day_of_week: '0',
+        hour: '9',
+        minute: '0',
+      });
+    });
+
+    it('emits the week field for every-1-week custom repeats', () => {
+      const body = mapFormValuesToCreateBody({
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.Custom,
+        everyWeeks: '1',
+        dayOfWeek: '0',
+        time: '09:00',
+      });
+
+      expect(body.trigger.cron?.fields?.week).toBe('*/1');
+    });
+
+    it('never includes startDate/endDate for a custom repeat even if present in values', () => {
+      const body = mapFormValuesToCreateBody({
+        ...baseValues,
         repeat: ScheduledTaskRepeat.Custom,
         everyWeeks: '2',
         dayOfWeek: '0',
+        time: '09:00',
+        startDate: '2026-08-01',
+        endDate: '2026-08-31',
+      });
+
+      expect(body.trigger.cron?.fields).toEqual({
+        week: '*/2',
+        day_of_week: '0',
+        hour: '9',
+        minute: '0',
+      });
+      expect(body.trigger.cron).not.toHaveProperty('startDate');
+      expect(body.trigger.cron).not.toHaveProperty('endDate');
+    });
+
+    it('maps hourly datetime-local boundaries to the picked instants', () => {
+      const body = mapFormValuesToCreateBody({
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.Hourly,
+        minute: '0',
+        startDate: '2026-08-01T08:30',
+        endDate: '2026-08-31T18:45',
+      });
+
+      expect(body.trigger.cron?.startDate).toBe('2026-08-01T08:30:00.000Z');
+      expect(body.trigger.cron?.endDate).toBe('2026-08-31T18:45:00.000Z');
+    });
+  });
+
+  describe('mapFormValuesToCreateBody — recurring schedule timezone conversion', () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    it('converts a daily local time to its UTC equivalent', () => {
+      vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer
+
+      const body = mapFormValuesToCreateBody({
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.Daily,
+        time: '09:00',
+      });
+
+      expect(body.trigger.cron?.fields).toEqual({ hour: '7', minute: '0' });
+    });
+
+    it('shifts day_of_week forward when the UTC conversion crosses midnight', () => {
+      vi.stubEnv('TZ', 'America/New_York'); // UTC-4 in summer: UTC = local + 4h
+
+      const body = mapFormValuesToCreateBody({
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.Weekly,
+        time: '22:00',
+        dayOfWeek: '0', // Monday, APScheduler convention
+      });
+
+      expect(body.trigger.cron?.fields).toEqual({
+        hour: '2',
+        minute: '0',
+        day_of_week: '1', // Tuesday
+      });
+    });
+
+    it('shifts a custom day_of_week across midnight while the week step stays unconverted', () => {
+      vi.stubEnv('TZ', 'America/New_York'); // UTC-4 in summer: UTC = local + 4h
+
+      const body = mapFormValuesToCreateBody({
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.Custom,
+        everyWeeks: '3',
+        time: '22:00',
+        dayOfWeek: '0', // Monday, APScheduler convention
+      });
+
+      expect(body.trigger.cron?.fields).toEqual({
+        week: '*/3',
+        hour: '2',
+        minute: '0',
+        day_of_week: '1', // Tuesday
+      });
+    });
+
+    it('shifts day_of_week backward when the UTC conversion crosses midnight the other way', () => {
+      vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer: UTC = local - 2h
+
+      const body = mapFormValuesToCreateBody({
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.Weekly,
+        time: '01:00',
+        dayOfWeek: '0', // Monday, APScheduler convention
+      });
+
+      expect(body.trigger.cron?.fields).toEqual({
+        hour: '23',
+        minute: '0',
+        day_of_week: '6', // Sunday
+      });
+    });
+
+    it('produces no shift when the browser timezone is UTC', () => {
+      vi.stubEnv('TZ', 'UTC');
+
+      const body = mapFormValuesToCreateBody({
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.Daily,
+        time: '09:00',
+      });
+
+      expect(body.trigger.cron?.fields).toEqual({ hour: '9', minute: '0' });
+    });
+
+    it('converts a monthly local day/time to its UTC equivalent with no rollover', () => {
+      vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer
+
+      const body = mapFormValuesToCreateBody({
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.Monthly,
+        time: '09:00',
+        dayOfMonth: '15',
+      });
+
+      expect(body.trigger.cron?.fields).toEqual({
+        hour: '7',
+        minute: '0',
+        day: '15',
+      });
+    });
+
+    it('maps a local 1st that falls on the previous UTC day to the last day of the month', () => {
+      vi.stubEnv('TZ', 'Europe/Kyiv'); // UTC+3 in summer
+
+      const body = mapFormValuesToCreateBody({
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.Monthly,
         time: '00:30',
-      },
+        dayOfMonth: '1',
+      });
+
+      expect(body.trigger.cron?.fields).toEqual({
+        hour: '21',
+        minute: '30',
+        day: 'last',
+      });
+    });
+
+    it('shifts the monthly day back when the UTC conversion crosses midnight', () => {
+      vi.stubEnv('TZ', 'Europe/Kyiv'); // UTC+3 in summer
+
+      const body = mapFormValuesToCreateBody({
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.Monthly,
+        time: '00:30',
+        dayOfMonth: '15',
+      });
+
+      expect(body.trigger.cron?.fields?.day).toBe('14');
+    });
+
+    it('shifts the monthly day forward when the UTC conversion crosses midnight', () => {
+      vi.stubEnv('TZ', 'America/New_York'); // UTC-4 in summer
+
+      const body = mapFormValuesToCreateBody({
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.Monthly,
+        time: '22:00',
+        dayOfMonth: '15',
+      });
+
+      expect(body.trigger.cron?.fields).toEqual({
+        hour: '2',
+        minute: '0',
+        day: '16',
+      });
+    });
+
+    it('keeps the 31st when the form is submitted during a 30-day month', () => {
+      vi.setSystemTime(new Date('2026-11-15T12:00:00Z'));
+      vi.stubEnv('TZ', 'Europe/Kyiv'); // UTC+2 in winter
+
+      const body = mapFormValuesToCreateBody({
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.Monthly,
+        time: '09:00',
+        dayOfMonth: '31',
+      });
+
+      expect(body.trigger.cron?.fields).toEqual({
+        hour: '7',
+        minute: '0',
+        day: '31',
+      });
+    });
+
+    it('does not shift the hourly minute at a whole-hour-offset timezone', () => {
+      vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer (whole-hour offset)
+
+      const body = mapFormValuesToCreateBody({
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.Hourly,
+        minute: '15',
+      });
+
+      expect(body.trigger.cron?.fields).toEqual({ hour: '*', minute: '15' });
+    });
+
+    it('shifts the hourly minute at a sub-hour-offset timezone', () => {
+      vi.stubEnv('TZ', 'Asia/Kolkata'); // UTC+5:30
+
+      const body = mapFormValuesToCreateBody({
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.Hourly,
+        minute: '15',
+      });
+
+      expect(body.trigger.cron?.fields).toEqual({ hour: '*', minute: '45' });
+    });
+
+    it('converts startDate/endDate to UTC start/end-of-local-day at a non-zero offset', () => {
+      vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer
+
+      const body = mapFormValuesToCreateBody({
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.Daily,
+        startDate: '2026-08-01',
+        endDate: '2026-08-31',
+      });
+
+      expect(body.trigger.cron?.startDate).toBe('2026-07-31T22:00:00.000Z');
+      expect(body.trigger.cron?.endDate).toBe('2026-08-31T21:59:59.999Z');
+    });
+
+    it('applies the offset in effect on each boundary day across a DST transition', () => {
+      // Poland's DST ends 2026-10-25: Oct 1 is UTC+2 (CEST), Nov 1 is UTC+1 (CET).
+      vi.stubEnv('TZ', 'Europe/Warsaw');
+
+      const body = mapFormValuesToCreateBody({
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.Daily,
+        startDate: '2026-10-01',
+        endDate: '2026-11-01',
+      });
+
+      expect(body.trigger.cron?.startDate).toBe('2026-09-30T22:00:00.000Z');
+      expect(body.trigger.cron?.endDate).toBe('2026-11-01T22:59:59.999Z');
     });
   });
 
-  it.each<Record<string, string>>([
-    { month: '1' },
-    { year: '2027' },
-    { second: '30' },
-  ])('fails closed on additional Custom cron constraints: %j', (constraint) => {
-    expect(
-      mapScheduledTaskDtoToFormValues({
+  describe('mapFormValuesToUpdateBody', () => {
+    it('maps values to the same shape as mapFormValuesToCreateBody', () => {
+      const values: ScheduledTaskCreateFormValues = {
+        displayName: 'Daily summary',
+        repeat: ScheduledTaskRepeat.OneTime,
+        time: '09:00',
+        runAt: '2026-07-24T09:00',
+        modelId: 'gpt-4o',
+        prompt: 'Summarize my inbox',
+      };
+
+      expect(mapFormValuesToUpdateBody(values)).toEqual({
+        ...mapFormValuesToCreateBody(values),
+        skillUrls: [],
+      });
+    });
+  });
+
+  describe('mapScheduledTaskDtoToFormValues', () => {
+    it('hydrates a skill-only detail without synthesizing instructions', () => {
+      expect(
+        mapScheduledTaskDtoToFormValues({
+          ...baseDto,
+          prompt: '',
+          skillUrls: ['skills/public/report'],
+          trigger: { cron: { fields: { hour: '9', minute: '0' } } },
+        }),
+      ).toMatchObject({
+        ok: true,
+        values: { prompt: '', skillUrls: ['skills/public/report'] },
+      });
+    });
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    it('fails closed when model is missing', () => {
+      const result = mapScheduledTaskDtoToFormValues({
         ...baseDto,
-        trigger: {
-          cron: {
-            fields: {
-              week: '*/2',
-              day_of_week: '0',
-              hour: '9',
-              minute: '0',
-              ...constraint,
-            },
-          },
-        },
-      }),
-    ).toEqual({
-      ok: false,
-      reason: UnsupportedTriggerReason.UnsupportedCronShape,
+        model: undefined,
+        trigger: { date: '2026-07-24T09:00:00.000Z' },
+      });
+
+      expect(result).toEqual({
+        ok: false,
+        reason: UnsupportedTriggerReason.MissingRequiredFields,
+      });
     });
-  });
 
-  it('ignores null-valued extra fields when hydrating a custom schedule', () => {
-    const fields = {
-      week: '*/2',
-      day_of_week: '0',
-      hour: '9',
-      minute: '0',
-      year: null,
-      month: null,
-      day: null,
-      second: null,
-    } as unknown as Record<string, string>;
-
-    expect(
-      mapScheduledTaskDtoToFormValues({
+    it('fails closed when prompt is missing', () => {
+      const result = mapScheduledTaskDtoToFormValues({
         ...baseDto,
-        trigger: { cron: { fields } },
-      }),
-    ).toMatchObject({
-      ok: true,
-      values: { repeat: ScheduledTaskRepeat.Custom, everyWeeks: '2' },
-    });
-  });
+        prompt: undefined,
+        trigger: { date: '2026-07-24T09:00:00.000Z' },
+      });
 
-  it('hydrates a weekly schedule with a null week value as Weekly, not Custom', () => {
-    const fields = {
-      hour: '9',
-      minute: '0',
-      day_of_week: '0',
-      week: null,
-    } as unknown as Record<string, string>;
-
-    const result = mapScheduledTaskDtoToFormValues({
-      ...baseDto,
-      trigger: { cron: { fields } },
+      expect(result).toEqual({
+        ok: false,
+        reason: UnsupportedTriggerReason.MissingRequiredFields,
+      });
     });
 
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.values.repeat).toBe(ScheduledTaskRepeat.Weekly);
-      expect(result.values.everyWeeks).toBeUndefined();
-    }
-  });
+    it('fails closed when neither trigger.date nor trigger.cron is set', () => {
+      const result = mapScheduledTaskDtoToFormValues({
+        ...baseDto,
+        trigger: {},
+      });
 
-  it.each(['2-40', '1,3', '*/12', '2'])(
-    "fails closed on a week expression outside the editor's step range (%s)",
-    (week) => {
+      expect(result).toEqual({
+        ok: false,
+        reason: UnsupportedTriggerReason.UnsupportedTriggerType,
+      });
+    });
+
+    it('fails closed when both trigger.date and trigger.cron are set', () => {
       const result = mapScheduledTaskDtoToFormValues({
         ...baseDto,
         trigger: {
-          cron: { fields: { week, hour: '9', minute: '0', day_of_week: '0' } },
+          date: '2026-07-24T09:00:00.000Z',
+          cron: { fields: { hour: '9', minute: '0' } },
+        },
+      });
+
+      expect(result).toEqual({
+        ok: false,
+        reason: UnsupportedTriggerReason.UnsupportedTriggerType,
+      });
+    });
+
+    it('fails closed on a cron shape with an unsupported field key', () => {
+      const result = mapScheduledTaskDtoToFormValues({
+        ...baseDto,
+        trigger: { cron: { fields: { hour: '9', minute: '0', week: '2' } } },
+      });
+
+      expect(result).toEqual({
+        ok: false,
+        reason: UnsupportedTriggerReason.UnsupportedCronShape,
+      });
+    });
+
+    it('treats null-valued cron fields as absent, not as unsupported extra keys', () => {
+      // DIAL Scheduler always returns every cron field key, using `null` for
+      // unset ones — this must round-trip like a plain daily schedule.
+      vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer
+
+      const fields = {
+        day: null,
+        hour: '9',
+        week: null,
+        year: null,
+        month: null,
+        minute: '0',
+        second: null,
+        day_of_week: null,
+      } as unknown as Record<string, string>;
+
+      const result = mapScheduledTaskDtoToFormValues({
+        ...baseDto,
+        trigger: { cron: { fields } },
+      });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.values.repeat).toBe(ScheduledTaskRepeat.Daily);
+        expect(result.values.time).toBe('11:00');
+        expect(result.values.dayOfWeek).toBeUndefined();
+        expect(result.values.dayOfMonth).toBeUndefined();
+      }
+    });
+
+    it('fails closed when both day_of_week and day are present', () => {
+      const result = mapScheduledTaskDtoToFormValues({
+        ...baseDto,
+        trigger: {
+          cron: {
+            fields: { hour: '9', minute: '0', day_of_week: '0', day: '1' },
+          },
         },
       });
 
@@ -934,104 +620,429 @@ describe('mapScheduledTaskDtoToFormValues', () => {
         ok: false,
         reason: UnsupportedTriggerReason.UnsupportedCronShape,
       });
-    },
-  );
+    });
 
-  it('fails closed on a custom schedule that also carries an activity window', () => {
-    const result = mapScheduledTaskDtoToFormValues({
-      ...baseDto,
-      trigger: {
-        cron: {
-          fields: { week: '*/2', hour: '9', minute: '0', day_of_week: '0' },
-          startDate: '2026-08-01T00:00:00.000Z',
+    it('fails closed when hour is `*` combined with a set day_of_week', () => {
+      const result = mapScheduledTaskDtoToFormValues({
+        ...baseDto,
+        trigger: {
+          cron: { fields: { hour: '*', minute: '0', day_of_week: '0' } },
         },
-      },
+      });
+
+      expect(result).toEqual({
+        ok: false,
+        reason: UnsupportedTriggerReason.UnsupportedCronShape,
+      });
     });
 
-    expect(result).toEqual({
-      ok: false,
-      reason: UnsupportedTriggerReason.UnsupportedCronShape,
+    it('round-trips a one-time schedule back to local runAt', () => {
+      vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer
+
+      const result = mapScheduledTaskDtoToFormValues({
+        ...baseDto,
+        trigger: { date: '2026-07-24T07:00:00.000Z' },
+      });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.values.repeat).toBe(ScheduledTaskRepeat.OneTime);
+        expect(result.values.runAt).toBe('2026-07-24T09:00');
+        // Not '00:00' — switching Repeat to a time-based cadence on the edit
+        // page must not silently start from midnight.
+        expect(result.values.time).toBe('09:00');
+      }
     });
-  });
 
-  it('round-trips activity-window startDate/endDate to local date-only values', () => {
-    vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer
+    it('round-trips an hourly schedule at a whole-hour-offset timezone with no minute shift', () => {
+      vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer
 
-    const result = mapScheduledTaskDtoToFormValues({
-      ...baseDto,
-      trigger: {
-        cron: {
-          fields: { hour: '7', minute: '0' },
-          startDate: '2026-07-31T22:00:00.000Z',
-          endDate: '2026-08-31T21:59:59.999Z',
+      const result = mapScheduledTaskDtoToFormValues({
+        ...baseDto,
+        trigger: { cron: { fields: { hour: '*', minute: '15' } } },
+      });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.values.repeat).toBe(ScheduledTaskRepeat.Hourly);
+        expect(result.values.minute).toBe('15');
+        // Not '00:00' — switching Repeat to a time-based cadence on the edit
+        // page must not silently start from midnight.
+        expect(result.values.time).toBe('09:00');
+        expect(result.values.dayOfWeek).toBeUndefined();
+        expect(result.values.dayOfMonth).toBeUndefined();
+      }
+    });
+
+    it('round-trips an hourly schedule at a sub-hour-offset timezone with a minute shift', () => {
+      vi.stubEnv('TZ', 'Asia/Kolkata'); // UTC+5:30
+
+      const result = mapScheduledTaskDtoToFormValues({
+        ...baseDto,
+        trigger: { cron: { fields: { hour: '*', minute: '45' } } },
+      });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.values.repeat).toBe(ScheduledTaskRepeat.Hourly);
+        expect(result.values.minute).toBe('15');
+      }
+    });
+
+    it('round-trips a daily recurring schedule back to local time', () => {
+      vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer
+
+      const result = mapScheduledTaskDtoToFormValues({
+        ...baseDto,
+        trigger: { cron: { fields: { hour: '7', minute: '0' } } },
+      });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.values.repeat).toBe(ScheduledTaskRepeat.Daily);
+        expect(result.values.time).toBe('09:00');
+      }
+    });
+
+    it('round-trips a monthly recurring schedule back to local time and day', () => {
+      vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer
+
+      const result = mapScheduledTaskDtoToFormValues({
+        ...baseDto,
+        trigger: { cron: { fields: { hour: '7', minute: '0', day: '15' } } },
+      });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.values.repeat).toBe(ScheduledTaskRepeat.Monthly);
+        expect(result.values.time).toBe('09:00');
+        expect(result.values.dayOfMonth).toBe('15');
+      }
+    });
+
+    it('maps the last day of the month one day behind local time back to the 1st', () => {
+      vi.stubEnv('TZ', 'Europe/Kyiv'); // UTC+3 in summer
+
+      const result = mapScheduledTaskDtoToFormValues({
+        ...baseDto,
+        trigger: {
+          cron: { fields: { hour: '21', minute: '30', day: 'last' } },
         },
-      },
+      });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.values.repeat).toBe(ScheduledTaskRepeat.Monthly);
+        expect(result.values.time).toBe('00:30');
+        expect(result.values.dayOfMonth).toBe('1');
+      }
     });
 
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.values.startDate).toBe('2026-08-01');
-      expect(result.values.endDate).toBe('2026-08-31');
-    }
-  });
+    it('fails closed on the last day of the month that is not one day behind local time', () => {
+      vi.stubEnv('TZ', 'Europe/Kyiv'); // UTC+3 in summer
 
-  it('round-trips activity-window startDate/endDate for an hourly schedule as datetime-local values', () => {
-    vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer
+      const result = mapScheduledTaskDtoToFormValues({
+        ...baseDto,
+        trigger: { cron: { fields: { hour: '6', minute: '0', day: 'last' } } },
+      });
 
-    const result = mapScheduledTaskDtoToFormValues({
-      ...baseDto,
-      trigger: {
-        cron: {
-          fields: { hour: '*', minute: '0' },
-          startDate: '2026-07-31T22:00:00.000Z',
-          endDate: '2026-08-31T21:59:59.999Z',
+      expect(result).toEqual({
+        ok: false,
+        reason: UnsupportedTriggerReason.UnsupportedCronShape,
+      });
+    });
+
+    it('keeps the 31st when the task is opened during a 30-day month', () => {
+      vi.setSystemTime(new Date('2026-11-15T12:00:00Z'));
+      vi.stubEnv('TZ', 'Europe/Kyiv'); // UTC+2 in winter
+
+      const result = mapScheduledTaskDtoToFormValues({
+        ...baseDto,
+        trigger: { cron: { fields: { hour: '7', minute: '0', day: '31' } } },
+      });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.values.time).toBe('09:00');
+        expect(result.values.dayOfMonth).toBe('31');
+      }
+    });
+
+    it('maps a UTC 31st one day behind local time to the 1st', () => {
+      vi.stubEnv('TZ', 'Europe/Kyiv'); // UTC+3 in summer
+
+      const result = mapScheduledTaskDtoToFormValues({
+        ...baseDto,
+        trigger: { cron: { fields: { hour: '21', minute: '30', day: '31' } } },
+      });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) expect(result.values.dayOfMonth).toBe('1');
+    });
+
+    it('round-trips a weekly recurring schedule, shifting day_of_week back across a UTC day boundary', () => {
+      vi.stubEnv('TZ', 'America/New_York'); // UTC-4 in summer
+
+      const result = mapScheduledTaskDtoToFormValues({
+        ...baseDto,
+        trigger: {
+          cron: { fields: { hour: '2', minute: '0', day_of_week: '1' } }, // Tuesday UTC
         },
-      },
+      });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.values.repeat).toBe(ScheduledTaskRepeat.Weekly);
+        expect(result.values.time).toBe('22:00');
+        expect(result.values.dayOfWeek).toBe('0'); // Monday, APScheduler convention
+      }
     });
 
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.values.repeat).toBe(ScheduledTaskRepeat.Hourly);
-      expect(result.values.startDate).toBe('2026-08-01T00:00');
-      expect(result.values.endDate).toBe('2026-08-31T23:59');
-    }
-  });
+    it('round-trips a custom schedule, passing the week step through unconverted', () => {
+      vi.stubEnv('TZ', 'America/New_York'); // UTC-4 in summer
 
-  it('round-trips activity-window boundaries across a DST transition without drift', () => {
-    // Poland's DST ends 2026-10-25: Oct 1 is UTC+2 (CEST), Nov 1 is UTC+1 (CET).
-    vi.stubEnv('TZ', 'Europe/Warsaw');
-
-    const result = mapScheduledTaskDtoToFormValues({
-      ...baseDto,
-      trigger: {
-        cron: {
-          fields: { hour: '7', minute: '0' },
-          startDate: '2026-09-30T22:00:00.000Z',
-          endDate: '2026-11-01T22:59:59.999Z',
+      const result = mapScheduledTaskDtoToFormValues({
+        ...baseDto,
+        trigger: {
+          cron: {
+            fields: {
+              week: '*/2',
+              hour: '2',
+              minute: '0',
+              day_of_week: '1',
+            }, // Tuesday UTC
+          },
         },
+      });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.values.repeat).toBe(ScheduledTaskRepeat.Custom);
+        expect(result.values.everyWeeks).toBe('2');
+        expect(result.values.time).toBe('22:00');
+        expect(result.values.dayOfWeek).toBe('0'); // Monday, APScheduler convention
+        expect(result.values.startDate).toBeUndefined();
+        expect(result.values.endDate).toBeUndefined();
+      }
+    });
+
+    it('round-trips a custom Monday shortly after midnight through UTC Sunday', () => {
+      vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer
+      const values: ScheduledTaskCreateFormValues = {
+        ...baseValues,
+        repeat: ScheduledTaskRepeat.Custom,
+        everyWeeks: '2',
+        dayOfWeek: '0',
+        time: '00:30',
+      };
+      const body = mapFormValuesToCreateBody(values);
+
+      expect(body.trigger.cron?.fields).toEqual({
+        week: '*/2',
+        day_of_week: '6',
+        hour: '22',
+        minute: '30',
+      });
+      expect(
+        mapScheduledTaskDtoToFormValues({ ...baseDto, trigger: body.trigger }),
+      ).toMatchObject({
+        ok: true,
+        values: {
+          repeat: ScheduledTaskRepeat.Custom,
+          everyWeeks: '2',
+          dayOfWeek: '0',
+          time: '00:30',
+        },
+      });
+    });
+
+    it.each<Record<string, string>>([
+      { month: '1' },
+      { year: '2027' },
+      { second: '30' },
+    ])(
+      'fails closed on additional Custom cron constraints: %j',
+      (constraint) => {
+        expect(
+          mapScheduledTaskDtoToFormValues({
+            ...baseDto,
+            trigger: {
+              cron: {
+                fields: {
+                  week: '*/2',
+                  day_of_week: '0',
+                  hour: '9',
+                  minute: '0',
+                  ...constraint,
+                },
+              },
+            },
+          }),
+        ).toEqual({
+          ok: false,
+          reason: UnsupportedTriggerReason.UnsupportedCronShape,
+        });
       },
+    );
+
+    it('ignores null-valued extra fields when hydrating a custom schedule', () => {
+      const fields = {
+        week: '*/2',
+        day_of_week: '0',
+        hour: '9',
+        minute: '0',
+        year: null,
+        month: null,
+        day: null,
+        second: null,
+      } as unknown as Record<string, string>;
+
+      expect(
+        mapScheduledTaskDtoToFormValues({
+          ...baseDto,
+          trigger: { cron: { fields } },
+        }),
+      ).toMatchObject({
+        ok: true,
+        values: { repeat: ScheduledTaskRepeat.Custom, everyWeeks: '2' },
+      });
     });
 
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.values.startDate).toBe('2026-10-01');
-      expect(result.values.endDate).toBe('2026-11-01');
-    }
-  });
+    it('hydrates a weekly schedule with a null week value as Weekly, not Custom', () => {
+      const fields = {
+        hour: '9',
+        minute: '0',
+        day_of_week: '0',
+        week: null,
+      } as unknown as Record<string, string>;
 
-  it('carries displayName, model, prompt, and description through', () => {
-    const result = mapScheduledTaskDtoToFormValues({
-      ...baseDto,
-      description: 'Summarizes unread inbox items',
-      trigger: { date: '2026-07-24T09:00:00.000Z' },
+      const result = mapScheduledTaskDtoToFormValues({
+        ...baseDto,
+        trigger: { cron: { fields } },
+      });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.values.repeat).toBe(ScheduledTaskRepeat.Weekly);
+        expect(result.values.everyWeeks).toBeUndefined();
+      }
     });
 
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.values.displayName).toBe('Daily summary');
-      expect(result.values.modelId).toBe('gpt-4o');
-      expect(result.values.prompt).toBe('Summarize my inbox');
-      expect(result.values.description).toBe('Summarizes unread inbox items');
-    }
+    it.each(['2-40', '1,3', '*/12', '2'])(
+      "fails closed on a week expression outside the editor's step range (%s)",
+      (week) => {
+        const result = mapScheduledTaskDtoToFormValues({
+          ...baseDto,
+          trigger: {
+            cron: {
+              fields: { week, hour: '9', minute: '0', day_of_week: '0' },
+            },
+          },
+        });
+
+        expect(result).toEqual({
+          ok: false,
+          reason: UnsupportedTriggerReason.UnsupportedCronShape,
+        });
+      },
+    );
+
+    it('fails closed on a custom schedule that also carries an activity window', () => {
+      const result = mapScheduledTaskDtoToFormValues({
+        ...baseDto,
+        trigger: {
+          cron: {
+            fields: { week: '*/2', hour: '9', minute: '0', day_of_week: '0' },
+            startDate: '2026-08-01T00:00:00.000Z',
+          },
+        },
+      });
+
+      expect(result).toEqual({
+        ok: false,
+        reason: UnsupportedTriggerReason.UnsupportedCronShape,
+      });
+    });
+
+    it('round-trips activity-window startDate/endDate to local date-only values', () => {
+      vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer
+
+      const result = mapScheduledTaskDtoToFormValues({
+        ...baseDto,
+        trigger: {
+          cron: {
+            fields: { hour: '7', minute: '0' },
+            startDate: '2026-07-31T22:00:00.000Z',
+            endDate: '2026-08-31T21:59:59.999Z',
+          },
+        },
+      });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.values.startDate).toBe('2026-08-01');
+        expect(result.values.endDate).toBe('2026-08-31');
+      }
+    });
+
+    it('round-trips activity-window startDate/endDate for an hourly schedule as datetime-local values', () => {
+      vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer
+
+      const result = mapScheduledTaskDtoToFormValues({
+        ...baseDto,
+        trigger: {
+          cron: {
+            fields: { hour: '*', minute: '0' },
+            startDate: '2026-07-31T22:00:00.000Z',
+            endDate: '2026-08-31T21:59:59.999Z',
+          },
+        },
+      });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.values.repeat).toBe(ScheduledTaskRepeat.Hourly);
+        expect(result.values.startDate).toBe('2026-08-01T00:00');
+        expect(result.values.endDate).toBe('2026-08-31T23:59');
+      }
+    });
+
+    it('round-trips activity-window boundaries across a DST transition without drift', () => {
+      // Poland's DST ends 2026-10-25: Oct 1 is UTC+2 (CEST), Nov 1 is UTC+1 (CET).
+      vi.stubEnv('TZ', 'Europe/Warsaw');
+
+      const result = mapScheduledTaskDtoToFormValues({
+        ...baseDto,
+        trigger: {
+          cron: {
+            fields: { hour: '7', minute: '0' },
+            startDate: '2026-09-30T22:00:00.000Z',
+            endDate: '2026-11-01T22:59:59.999Z',
+          },
+        },
+      });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.values.startDate).toBe('2026-10-01');
+        expect(result.values.endDate).toBe('2026-11-01');
+      }
+    });
+
+    it('carries displayName, model, prompt, and description through', () => {
+      const result = mapScheduledTaskDtoToFormValues({
+        ...baseDto,
+        description: 'Summarizes unread inbox items',
+        trigger: { date: '2026-07-24T09:00:00.000Z' },
+      });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.values.displayName).toBe('Daily summary');
+        expect(result.values.modelId).toBe('gpt-4o');
+        expect(result.values.prompt).toBe('Summarize my inbox');
+        expect(result.values.description).toBe('Summarizes unread inbox items');
+      }
+    });
   });
 });

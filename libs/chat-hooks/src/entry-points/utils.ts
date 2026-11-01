@@ -13,6 +13,8 @@ export * from '../shared/external-services';
 export * from '../shared/formatting';
 export * from '../shared/locale';
 export * from '../shared/string-utils';
+export * from '../shared/client-channel';
+export * from '../shared/theme-colors';
 export * from '../usage/useUsageData/useUsageData';
 export * from '../files/browser-download';
 export * from '../shared/usePersistedState/usePersistedState';

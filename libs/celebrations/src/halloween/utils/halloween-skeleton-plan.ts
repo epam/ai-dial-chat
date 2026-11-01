@@ -61,6 +61,7 @@ const ARM =
   ) || 1;
 const deg = (radians: number) => (radians * 180) / Math.PI;
 const rad = (degrees: number) => (degrees * Math.PI) / 180;
+
 /** Direction of the resting right arm from its shoulder. */
 export const SKELETON_ARM_REST = deg(
   Math.atan2(
@@ -148,10 +149,12 @@ export interface SkeletonWordPlan {
 }
 
 type Key = [time: number, ...values: number[]];
+
 interface Eased {
   key: Key;
   easing: string;
 }
+
 const round = (n: number) => Math.round(n * 100) / 100;
 const mix = (a: number, b: number, t: number) => a + (b - a) * t;
 const clamp = (n: number, min: number, max: number) =>
@@ -255,9 +258,9 @@ export const buildSkeletonPlan = (
   mobile: boolean,
 ): SkeletonPlan => {
   const { width, height, rtl, composer } = targets;
-  const s = mobile ? 0.56 : 0.72,
-    sB = s * 0.92,
-    rs = SKELETON_ART.skullRadius * s;
+  const s = mobile ? 0.56 : 0.72;
+  const sB = s * 0.92;
+  const rs = SKELETON_ART.skullRadius * s;
   const box = composer && {
     left: rtl ? width - composer.rect.right : composer.rect.left,
     right: rtl ? width - composer.rect.left : composer.rect.right,
@@ -276,12 +279,12 @@ export const buildSkeletonPlan = (
   );
   const w = right - left;
   const below = height + 20;
-  const yA = stageY - SKELETON_ART.feetY * s,
-    yB = stageY - SKELETON_ART.feetY * sB;
-  const aX = left + 0.2 * w - 50 * s,
-    bX = left + 0.52 * w - 50 * sB;
-  const aPlace = aX + 8,
-    aAfter = aX + 14;
+  const yA = stageY - SKELETON_ART.feetY * s;
+  const yB = stageY - SKELETON_ART.feetY * sB;
+  const aX = left + 0.2 * w - 50 * s;
+  const bX = left + 0.52 * w - 50 * sB;
+  const aPlace = aX + 8;
+  const aAfter = aX + 14;
   const contacts: SkeletonContact[] = [];
   const contact = (
     time: number,
@@ -290,24 +293,24 @@ export const buildSkeletonPlan = (
   ) => contacts.push({ time, kind, ...point });
 
   /* ---- Showman: dances, loses the skull, gropes, is fixed. ---- */
-  const aRoot = new Track(),
-    aFacing = new Track(),
-    aBody = new Track(),
-    aSkull = new Track(),
-    aFace = new Track(),
-    aArmL = new Track(),
-    aArmR = new Track(),
-    aLegL = new Track(),
-    aLegR = new Track();
+  const aRoot = new Track();
+  const aFacing = new Track();
+  const aBody = new Track();
+  const aSkull = new Track();
+  const aFace = new Track();
+  const aArmL = new Track();
+  const aArmR = new Track();
+  const aLegL = new Track();
+  const aLegR = new Track();
   /* ---- Partner: dances, catches, carries and places the skull. ---- */
-  const bRoot = new Track(),
-    bFacing = new Track(),
-    bBody = new Track(),
-    bSkull = new Track(),
-    bArmL = new Track(),
-    bArmR = new Track(),
-    bLegL = new Track(),
-    bLegR = new Track();
+  const bRoot = new Track();
+  const bFacing = new Track();
+  const bBody = new Track();
+  const bSkull = new Track();
+  const bArmL = new Track();
+  const bArmR = new Track();
+  const bLegL = new Track();
+  const bLegR = new Track();
 
   aRoot.add('linear', [0, aX, below, 0], [300, aX, below, 1]);
   arc(aRoot, { x: aX, y: below }, { x: aX, y: yA }, 300, 1000, 130 * s);
@@ -356,8 +359,8 @@ export const buildSkeletonPlan = (
     [3800, bX - 8, yB],
   );
   for (let n = 0; n < 8; n++) {
-    const t = 1400 + n * 400,
-      even = n % 2 === 0;
+    const t = 1400 + n * 400;
+    const even = n % 2 === 0;
     aBody.add(smooth, [t, 0], [t + 200, -4]);
     bBody.add(snappy, [t + 40, 0], [t + 200, -5]);
     aSkull.add(smooth, [t, 0, 1, 1], [t + 200, even ? 6 : -6, 1, 1]);
@@ -422,9 +425,9 @@ export const buildSkeletonPlan = (
   aBody.add('linear', [8600, 0], [9400, 0]);
 
   /* ---- Free skull: flight over the partner, bounce, roll, teeter. ---- */
-  const skull = new Track(),
-    turn = new Track(),
-    freeFace = new Track();
+  const skull = new Track();
+  const turn = new Track();
+  const freeFace = new Track();
   const land = { x: left + 0.72 * w, y: stageY - rs };
   const bounce = { x: land.x + 0.05 * w, y: land.y };
   const corner = {
@@ -439,8 +442,8 @@ export const buildSkeletonPlan = (
   arc(skull, land, bounce, 5900, 6250, 16 * s, (t) => [200 + 40 * t, 1]);
   contact(6250, SkeletonContactKind.Impact, { x: bounce.x, y: stageY });
   for (let k = 1; k <= 8; k++) {
-    const t = k / 8,
-      p = 1 - (1 - t) ** 2;
+    const t = k / 8;
+    const p = 1 - (1 - t) ** 2;
     skull.add('linear', [
       mix(6250, 7000, t),
       mix(bounce.x, corner.x, p),
@@ -449,8 +452,8 @@ export const buildSkeletonPlan = (
       1,
     ]);
   }
-  const rest = 240 + roll,
-    tip = ledge ? 3 : 0;
+  const rest = 240 + roll;
+  const tip = ledge ? 3 : 0;
   skull.add(
     smooth,
     [7150, corner.x + tip * 0.5, corner.y, rest + 10, 1],

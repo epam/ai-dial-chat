@@ -40,6 +40,12 @@ export enum ROUTES {
   ProjectView = '/projects/view/:bucket/*',
   /** Route pattern for one project's edit page; build with `getProjectEditRoute`. */
   ProjectEdit = '/projects/edit/:bucket/*',
+  /**
+   * Route pattern for a conversation stored inside a project; the splat is
+   * `{projectPath…}/conversations/{name}`. Build a URL with
+   * `getProjectConversationRoute`.
+   */
+  ProjectChat = '/projects/chat/:bucket/*',
   /** Landing route of a project share link; must match the BFF's `getInvitationRoutePath`. */
   ProjectSharedInvitation = '/projects/shared/:invitationId',
   ScheduledTasks = '/scheduled-tasks',

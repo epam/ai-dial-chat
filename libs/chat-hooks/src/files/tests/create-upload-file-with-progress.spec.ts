@@ -1,7 +1,10 @@
 import type { FileUploadResponseDto } from '@epam/ai-dial-chat-api-client';
 import { FileUploadFailureReason } from '@epam/ai-dial-chat-shared';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createUploadFileWithProgress } from '../create-upload-file-with-progress';
+import {
+  UploadBodyEncoding,
+  createUploadFileWithProgress,
+} from '../create-upload-file-with-progress';
 import { resolveUploadFailureReason } from '../dial-file-manager-mapping.util';
 
 type XhrListener = (event?: ProgressEvent<EventTarget>) => void;
@@ -79,6 +82,7 @@ const makeUploader = (
     notifyUnauthorized: (url: string) => void;
   }> = {},
   xhrFactory?: () => XMLHttpRequest,
+  bodyEncoding?: UploadBodyEncoding,
 ) =>
   createUploadFileWithProgress({
     getCsrfToken: overrides.getCsrfToken ?? (() => null),
@@ -86,6 +90,7 @@ const makeUploader = (
     notifyUnauthorized: overrides.notifyUnauthorized ?? vi.fn(),
     createUnauthorizedError: (url) => new UnauthorizedTestError(url),
     uploadUrl: '/api/v1/files',
+    bodyEncoding,
     xhrFactory,
   });
 
@@ -200,5 +205,136 @@ describe('createUploadFileWithProgress', () => {
     await expect(resolveUploadFailureReason(error)).resolves.toBe(
       FileUploadFailureReason.Network,
     );
+  });
+
+  it('sends a multipart POST with the file and fields by default', async () => {
+    const mock = new MockXMLHttpRequest();
+    const file = new File(['data'], 'q3.csv', { type: 'text/csv' });
+    const upload = makeUploader({}, () => mock as unknown as XMLHttpRequest);
+
+    await upload('Abc123', 'reports/q3.csv', file, {
+      uploadMode: 'create-only',
+    });
+
+    expect(mock.open).toHaveBeenCalledWith('POST', '/api/v1/files');
+    const [[body]] = mock.send.mock.calls as unknown as [[unknown]];
+    expect(body).toBeInstanceOf(FormData);
+    const formData = body as FormData;
+    expect(formData.get('file')).toBeInstanceOf(File);
+    expect(formData.get('bucket')).toBe('Abc123');
+    expect(formData.get('path')).toBe('reports/q3.csv');
+    expect(formData.get('uploadMode')).toBe('create-only');
+    expect(formData.has('contentType')).toBe(false);
+  });
+
+  describe('createUploadFileWithProgress — raw encoding', () => {
+    const makeRawUploader = (
+      mock: MockXMLHttpRequest,
+      overrides: Parameters<typeof makeUploader>[0] = {},
+    ) =>
+      makeUploader(
+        overrides,
+        () => mock as unknown as XMLHttpRequest,
+        UploadBodyEncoding.Raw,
+      );
+
+    it('sends a PUT with the fields in the query and the File as the body', async () => {
+      const mock = new MockXMLHttpRequest();
+      const file = new File(['data'], 'q3.csv', { type: 'text/csv' });
+
+      await makeRawUploader(mock)('Abc123', 'reports/q3.csv', file, {
+        uploadMode: 'create-only',
+      });
+
+      expect(mock.open).toHaveBeenCalledWith(
+        'PUT',
+        '/api/v1/files?bucket=Abc123&path=reports%2Fq3.csv&uploadMode=create-only&contentType=text%2Fcsv',
+      );
+      expect(mock.setRequestHeader).toHaveBeenCalledWith(
+        'Content-Type',
+        'application/octet-stream',
+      );
+      expect(mock.send).toHaveBeenCalledWith(file);
+    });
+
+    it('omits contentType and uploadMode when they are not set', async () => {
+      const mock = new MockXMLHttpRequest();
+
+      await makeRawUploader(mock)(
+        'Abc123',
+        'blob.bin',
+        new File(['data'], 'blob.bin'),
+        {},
+      );
+
+      expect(mock.open).toHaveBeenCalledWith(
+        'PUT',
+        '/api/v1/files?bucket=Abc123&path=blob.bin',
+      );
+    });
+
+    it('reports upload progress', async () => {
+      const mock = new MockXMLHttpRequest();
+      const progress: number[] = [];
+
+      await makeRawUploader(mock)(
+        'bucket',
+        'report.pdf',
+        new File(['data'], 'report.pdf'),
+        { onProgress: (percent) => progress.push(percent) },
+      );
+
+      expect(progress).toEqual([50, 100]);
+    });
+
+    it('attaches the current CSRF token and captures a rotated one', async () => {
+      const mock = new MockXMLHttpRequest();
+      mock.setMockResponseHeader('x-csrf-token', 'rotated-token');
+      const setCsrfToken = vi.fn();
+
+      await makeRawUploader(mock, {
+        getCsrfToken: () => 'current-token',
+        setCsrfToken,
+      })('bucket', 'report.pdf', new File(['data'], 'report.pdf'), {});
+
+      expect(mock.setRequestHeader).toHaveBeenCalledWith(
+        'X-CSRF-Token',
+        'current-token',
+      );
+      expect(setCsrfToken).toHaveBeenCalledWith('rotated-token');
+    });
+
+    it('rejects with the injected unauthorized error on a 401 response', async () => {
+      const mock = new MockXMLHttpRequest();
+      mock.status = 401;
+      const notifyUnauthorized = vi.fn();
+
+      await expect(
+        makeRawUploader(mock, { notifyUnauthorized })(
+          'bucket',
+          'report.pdf',
+          new File(['data'], 'report.pdf'),
+          {},
+        ),
+      ).rejects.toBeInstanceOf(UnauthorizedTestError);
+      expect(notifyUnauthorized).toHaveBeenCalledWith('/api/v1/files');
+    });
+
+    it('aborts the request when the signal aborts', async () => {
+      const mock = new MockXMLHttpRequest();
+      mock.send = vi.fn();
+      const controller = new AbortController();
+
+      const result = makeRawUploader(mock)(
+        'bucket',
+        'report.pdf',
+        new File(['data'], 'report.pdf'),
+        { signal: controller.signal },
+      );
+      controller.abort();
+
+      await expect(result).rejects.toMatchObject({ name: 'AbortError' });
+      expect(mock.abort).toHaveBeenCalledOnce();
+    });
   });
 });

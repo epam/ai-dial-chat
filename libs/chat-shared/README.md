@@ -366,6 +366,12 @@ reachable instead of being clipped; each container becomes a labelled,
 focusable `role="region"` only while it actually overflows. Pass
 `tableScrollRegionAriaLabel` and `mathScrollRegionAriaLabel` to translate those
 labels — they default to `'Scrollable table'` and `'Scrollable formula'`.
+`colors.mathScrollbar` and `colors.mathFocus` recolor a scrollable formula's
+scrollbar and focus outline (`--cm-math-scrollbar` / `--cm-math-focus`, default
+`--stroke-primary` / `--stroke-focus`). The exported `MarkdownTable` takes
+`colors.actionsBorder` and `colors.actionsBackground` for its copy/download
+toolbar (`--cm-table-actions-border` / `--cm-table-actions-bg`, default
+`--stroke-tertiary` / `--bg-layer-raised`).
 Code blocks take `codeBlockCopyLabel`, `codeBlockCopiedLabel` and
 `codeBlockDownloadLabel` for their copy button, copied announcement and
 download button — they default to `'Copy code'`, `'Copied!'` and
@@ -1353,13 +1359,14 @@ import type { DialFileManagerShellLabels } from '@epam/ai-dial-chat-shared';
 
 ### DialFileManagerShellStyles
 
-Color overrides for the shell, passed as `styles`. `colors.surface` sets the background of the shell's surface and of the grid area (`--dfms-surface`, default `--bg-layer-base`). A host can instead set `--dfms-surface` on any ancestor, which is how a responsive value is applied.
+Color overrides for the shell, passed as `styles`. `colors.surface` sets the background of the shell's surface and of the grid area (`--dfms-surface`, default `--bg-layer-base`). A host can instead set `--dfms-surface` on any ancestor, which is how a responsive value is applied. In the attach variant, `colors.treeBackground` and `colors.treeBorder` color the folder tree and its divider (`--dfms-tree-bg` / `--dfms-tree-border`, default `--bg-layer-raised` / `--stroke-tertiary`), and `colors.overlayBackdrop` colors the scrim behind the operation spinner (`--dfms-overlay-backdrop`, default `--bg-backdrop`). `operationLoader` (`OperationLoaderModalColors`) is forwarded to the copy/move `OperationLoaderModal`, and `operationLoaderTextClassName` sets its progress-line type (default `'dial-small-text'`).
 
 ```ts
 import type { DialFileManagerShellStyles } from '@epam/ai-dial-chat-shared';
 
 const styles: DialFileManagerShellStyles = {
   colors: { surface: 'transparent' },
+  operationLoader: { text: 'var(--text-secondary)' },
 };
 ```
 
@@ -1415,6 +1422,8 @@ import type { FileManagerAttachModalLabels } from '@epam/ai-dial-chat-shared';
 // { title: string; attachLabel: string; headerDescription?: string | null }
 // … plus every DialFileManagerShellLabels field
 ```
+
+`colors` (`FileManagerAttachModalColors`) sets the dialog background — also used as the file-manager surface inside it — and the title color shown with a header description (`background` / `title`, default `--bg-layer-raised` / `--text-primary`). `titleClassName` and `descriptionClassName` set the type of that title and description (default `'dial-h1-text'` / `'dial-small-text'`).
 
 ### FileManagerSelectableNode
 
@@ -1485,7 +1494,7 @@ const { handleGridApiChange, reset } = useGridEditingScroll();
 
 ### OperationLoaderModal
 
-Internal modal already rendered by `DialFileManagerShell`. Exported for hosts that need to compose it independently outside the shell.
+Internal modal already rendered by `DialFileManagerShell`. Exported for hosts that need to compose it independently outside the shell. `colors.text` (`OperationLoaderModalColors`) sets the progress-line color (`--olm-text`, default `--text-secondary`), and `textClassName` its type (default `'dial-small-text'`).
 
 ```tsx
 import { OperationLoaderModal } from '@epam/ai-dial-chat-shared';
@@ -1601,3 +1610,34 @@ is in [`openspec/lib-styling-guide.md`](../../openspec/lib-styling-guide.md).
 
 Write host overrides with CSS logical properties (`margin-inline-start`,
 `inset-inline-end`) so they keep working under `dir="rtl"`.
+
+## Remaining controller extraction contracts
+
+The following adoption matrix tracks extract-remaining-chat-reuse-controllers.
+B1?B8 and compatibility options A2/D are implemented; Packed-artifact verification and downstream adoption are tracked separately. Existing app exports and defaults are preserved.
+
+| Audit | Contract                                                                | Public entry                     | Host responsibility                                           |
+| ----- | ----------------------------------------------------------------------- | -------------------------------- | ------------------------------------------------------------- |
+| B1    | createGenerationRegistry (implemented)                                  | chat-hooks root and conversation | Provider lifetime and opaque paths                            |
+| B2    | resolveActiveScheduledTask, useActiveScheduledTaskDetails (implemented) | chat-hooks/scheduled-tasks       | Routes, matcher, flags, loading callback                      |
+| B3    | useConversationTitleEnrichmentController (implemented)                  | chat-hooks/conversation          | Identity, JSON/stream adapters, bounds, protection duration   |
+| B4    | useSkillFilePreviewSyncController (implemented)                         | chat-hooks/skill-editor          | Selection, resource key, canvas operations and request guards |
+| B5    | useExternalServiceLogin (implemented)                                   | chat-hooks/external-services     | Auth callbacks, callback path and reserved popup              |
+| B6    | useDeploymentChangeTracking (implemented)                               | chat-hooks/conversation          | Conversation identity, selected deployment and change sink    |
+| B7    | useHtmlTagAnnotationGroups (implemented)                                | quotations root                  | Extract persisted annotations                                 |
+| B8    | toConversationTransferQueueItems (implemented)                          | chat-shared root                 | Translated error/warning resolvers                            |
+| A2    | uploadMimeTypePolicy (implemented)                                      | Existing transcription API       | Preserve default; normalize opt-in                            |
+| D     | offsetPolicy (implemented)                                              | Existing reset-time formatter    | Current-offset default; reset-instant opt-in                  |
+
+Only B5 adds a subpath. B8 uses the existing shared root and leaves the
+file-manager mapper unchanged. A1 is already complete and outside this work.
+Downstream ExternalService callback dispatch must be adopted in the downstream
+repository; parent implementation does not prove downstream adoption or publish
+packages.
+
+### Conversation transfer queue
+
+toConversationTransferQueueItems accepts readonly ConversationTransferJob entries and
+TransferQueueMessageResolvers. Only failed rows resolve errors; only warning rows resolve
+warnings with warningNames. IDs, file names and progress are preserved without mutation.
+This root export is separate from the file-manager toTransferQueueItems helper.

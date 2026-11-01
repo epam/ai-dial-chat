@@ -492,7 +492,7 @@ describe('ModelLimitsSection', () => {
       const supporting = within(dayCell).getByText(
         'Includes cost of models it called',
       );
-      expect(supporting.classList).toContain('break-words');
+      expect(supporting.classList).toContain('wrap-break-word');
     });
 
     it('ignores a supporting label on an unavailable cost cell', async () => {

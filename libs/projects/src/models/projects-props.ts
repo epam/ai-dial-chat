@@ -41,6 +41,8 @@ export interface ProjectsLabels {
   createProjectLabel?: string;
   /** Visually hidden text of a pinned card's marker. Defaults to `'Pinned'`. */
   pinnedLabel?: string;
+  /** Accessible name of a card's pin toggle, whose `aria-pressed` carries the state. Defaults to `'Pin'`. */
+  pinLabel?: string;
 }
 
 /**
@@ -52,7 +54,7 @@ export interface ProjectsColors {
   background?: string;
   /** Subtitle and status-message text color. Fallback: `--text-secondary`. */
   subtitleText?: string;
-  /** Sort control label/icon color. Fallback: `--text-primary`. */
+  /** Sort control label/icon color. Fallback: `--text-accent`. */
   sortButtonText?: string;
   /** Card background. Fallback: `--bg-layer-raised`. */
   cardBackground?: string;
@@ -62,11 +64,13 @@ export interface ProjectsColors {
   updatedAtText?: string;
   /** Folder path text color on a card. Fallback: `--text-secondary`. */
   pathText?: string;
+  /** Focus outline color around a card whose link has keyboard focus. Fallback: `--stroke-focus`. */
+  cardFocusOutline?: string;
 }
 
 /** Typography overrides for the {@link Projects} component. */
 export interface ProjectsTypography {
-  /** CSS class applied to the page title. Defaults to `'dial-h2-text'`. */
+  /** CSS class applied to the page title. Defaults to `'dial-h1-text'`. */
   titleClassName?: string;
   /** CSS class applied to the subtitle and status messages. Defaults to `'dial-body-text'`. */
   subtitleClassName?: string;
@@ -104,6 +108,8 @@ export interface ProjectsProps {
   onRetry: () => void;
   /** Called from the New project buttons; the buttons are not rendered when omitted. */
   onCreateProject?: () => void;
+  /** Called from a card's pin toggle with the project id and its new pinned state; without it, a pinned card shows a static marker instead. */
+  onTogglePin?: (id: string, isPinned: boolean) => void;
   /** Called with a project id on a plain primary click of a card link, in place of the browser's navigation; ignored without `getProjectHref`. */
   onOpenProject?: (id: string) => void;
   /** URL of a project's page, used as each card link's `href`; cards are not interactive when omitted. */

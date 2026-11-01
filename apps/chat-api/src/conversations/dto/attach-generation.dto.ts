@@ -4,6 +4,7 @@ import {
   CONVERSATION_PATH_VALIDATION_MESSAGE,
   IsConversationPath,
 } from '../../common/validators/conversation-path.validator';
+import { IsNotProjectConversationLocator } from './not-project-conversation-locator.validator';
 
 export class AttachGenerationDto {
   @ApiProperty({
@@ -15,5 +16,6 @@ export class AttachGenerationDto {
   @MinLength(1)
   @IsConversationPath()
   @Matches(/^[^\\]*$/, { message: CONVERSATION_PATH_VALIDATION_MESSAGE })
+  @IsNotProjectConversationLocator()
   path!: string;
 }

@@ -287,7 +287,7 @@ describe('ApplicationEditorPage — custom app', () => {
     expect(createApplication).not.toHaveBeenCalled();
     await user.click(
       await screen.findByRole('button', {
-        name: CustomAppI18nKeys.SaveConfirmLabel,
+        name: ButtonsI18nKeys.Save,
       }),
     );
 

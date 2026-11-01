@@ -75,6 +75,8 @@ await Promise.all(
           /formParams\.append\(([^,]+),\s*([^)]+)\s+as\s+any\)/g,
           'formParams.append($1, $2)',
         )
+        // Fix raw binary body generator gap: a `Blob` request body is already a valid HTTPBody
+        .replace(/body: (requestParameters\['\w+'\]) as any,/g, 'body: $1,')
         // Replace loose object index-signature any in API return types and response wrappers
         .replace(/\{ \[key: string\]: any;? \}/g, '{ [key: string]: unknown }')
         // Replace JSONApiResponse<any> where the generator emitted an explicit any type arg

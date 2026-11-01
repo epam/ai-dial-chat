@@ -162,7 +162,7 @@ const StageGroupRow: FC<StageGroupRowProps> = ({
       </span>
       <span
         className={mergeClasses(
-          'max-w-[22rem] min-w-0 truncate',
+          'max-w-88 min-w-0 truncate',
           typography?.fontClassName ?? 'dial-small-text',
           styles.stageName,
           hasFailed && styles.stageNameFailed,

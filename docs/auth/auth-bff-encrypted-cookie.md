@@ -223,6 +223,27 @@ It copies only a non-empty string `job_title`, and only when UserInfo's `sub`
 matches the validated ID-token subject. This restores the legacy Keycloak
 profile source; other providers keep their ID-token path. A failed lookup or
 subject mismatch leaves the optional value unset and does not block login.
+
+The same allowlist keeps the OIDC `picture` claim (the user's avatar URL) when
+it is an absolute `http(s)` URL; any other value is dropped from the claims.
+Keycloak realms often expose `picture` only in UserInfo, so the Keycloak lookup
+above also runs when the ID token has no usable `picture`, and copies it under
+the same subject check. An ID-token value is never replaced by a UserInfo one.
+
+Some realms put the image itself in UserInfo as a base64 `data:` URL. That is
+too large for the session cookie, so the callback stores only a `pic` flag on
+the payload when the value is a JPEG, PNG, GIF or WebP of at most 256 KiB (SVG
+is refused because it can carry script). `GET /api/v1/auth/me/picture` then
+re-reads UserInfo with the session's access token, checks the subject again,
+and returns the decoded bytes with their image type and
+`Cache-Control: private, max-age=3600`. It answers 404 when the session has no
+inline picture or UserInfo no longer supplies a usable one, and 502 when the
+lookup fails.
+
+`GET /api/v1/auth/me` returns `pictureUrl`: the `http(s)` claim, or
+`/api/v1/auth/me/picture` for an inline picture, omitted when there is none.
+The SPA renders it in place of the initials badge and falls back to initials
+when it is absent or fails to load.
 Claims are captured at login; transparent token refresh does not reload them.
 
 #### 5.1.1 Overlay External Login

@@ -11,15 +11,6 @@ vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
   useIsMobile: () => breakpoint.isMobile,
 }));
 
-beforeAll(() => {
-  Element.prototype.scrollIntoView = vi.fn();
-});
-
-afterEach(() => {
-  breakpoint.isMobile = false;
-  vi.useRealTimers();
-});
-
 const makeItem = (id: string, type: CatalogEntityType): CatalogItem => ({
   id,
   type,
@@ -45,53 +36,62 @@ const renderPanel = (
     />,
   );
 
-describe('DeploymentSelectorPanel — long version', () => {
-  const longVersionItem = {
-    ...makeItem('model-1', CatalogEntityType.Model),
-    version: 'With Google Search Grounding',
-  };
-
-  it('gives the version the row width the name leaves instead of a fixed fraction of it', () => {
-    renderPanel([longVersionItem]);
-
-    const version = screen.getByText('With Google Search Grounding');
-    /* Asserting CSS-level layout (not text/role) has no semantic query
-       equivalent — this repo's spec conventions carve out this exact case. */
-    expect(version.className).not.toContain('max-w-');
-    expect(version.className).not.toContain('truncate');
-  });
-
-  it('wraps the version onto its own line rather than truncating it to a hover-only tooltip', () => {
-    renderPanel([longVersionItem]);
-
-    const version = screen.getByText('With Google Search Grounding');
-    expect(version.className).toContain('wrap-break-word');
-    /* The wrap rule lives on the name+version wrapper, which the version text
-       node is the only stable handle on. */
-    expect(version.parentElement?.className).toContain('flex-wrap');
-  });
-
-  it('keeps the whole version in the row so it is readable without hovering', () => {
-    renderPanel([longVersionItem]);
-
-    expect(
-      screen.getByRole('menuitemradio', {
-        name: /model-1 With Google Search Grounding/,
-      }),
-    ).toBeTruthy();
-  });
-
-  it('renders no version element when the item has an empty version', () => {
-    renderPanel([makeItem('model-1', CatalogEntityType.Model)]);
-
-    /* Absence of the version element is only observable through the class that
-       styles it, since an empty version has no text to query by. */
-    // eslint-disable-next-line testing-library/no-node-access
-    expect(document.querySelector('.dial-tiny-text')).toBeNull();
-  });
-});
-
 describe('DeploymentSelectorPanel', () => {
+  beforeAll(() => {
+    Element.prototype.scrollIntoView = vi.fn();
+  });
+
+  afterEach(() => {
+    breakpoint.isMobile = false;
+    vi.useRealTimers();
+  });
+
+  describe('DeploymentSelectorPanel — long version', () => {
+    const longVersionItem = {
+      ...makeItem('model-1', CatalogEntityType.Model),
+      version: 'With Google Search Grounding',
+    };
+
+    it('gives the version the row width the name leaves instead of a fixed fraction of it', () => {
+      renderPanel([longVersionItem]);
+
+      const version = screen.getByText('With Google Search Grounding');
+      /* Asserting CSS-level layout (not text/role) has no semantic query
+       equivalent — this repo's spec conventions carve out this exact case. */
+      expect(version.className).not.toContain('max-w-');
+      expect(version.className).not.toContain('truncate');
+    });
+
+    it('wraps the version onto its own line rather than truncating it to a hover-only tooltip', () => {
+      renderPanel([longVersionItem]);
+
+      const version = screen.getByText('With Google Search Grounding');
+      expect(version.className).toContain('wrap-break-word');
+      /* The wrap rule lives on the name+version wrapper, which the version text
+       node is the only stable handle on. */
+      expect(version.parentElement?.className).toContain('flex-wrap');
+    });
+
+    it('keeps the whole version in the row so it is readable without hovering', () => {
+      renderPanel([longVersionItem]);
+
+      expect(
+        screen.getByRole('menuitemradio', {
+          name: /model-1 With Google Search Grounding/,
+        }),
+      ).toBeTruthy();
+    });
+
+    it('renders no version element when the item has an empty version', () => {
+      renderPanel([makeItem('model-1', CatalogEntityType.Model)]);
+
+      /* Absence of the version element is only observable through the class that
+       styles it, since an empty version has no text to query by. */
+      // eslint-disable-next-line testing-library/no-node-access
+      expect(document.querySelector('.dial-tiny-text')).toBeNull();
+    });
+  });
+
   it('shows a favorited Application in the list', () => {
     renderPanel([makeItem('app-1', CatalogEntityType.Agent)]);
 
@@ -387,94 +387,94 @@ describe('DeploymentSelectorPanel', () => {
       );
     });
   });
-});
 
-describe('DeploymentSelectorPanel — focus on open', () => {
-  it('focuses the search field so a keyboard user lands inside the panel', () => {
-    renderPanel([makeItem('gpt-4o', CatalogEntityType.Model)]);
+  describe('DeploymentSelectorPanel — focus on open', () => {
+    it('focuses the search field so a keyboard user lands inside the panel', () => {
+      renderPanel([makeItem('gpt-4o', CatalogEntityType.Model)]);
 
-    const search = screen.getByRole('textbox', {
-      name: 'Search models, agents\u2026',
-    });
-    expect(search.matches(':focus')).toBe(true);
-  });
-
-  it('leaves focus alone on mobile, where the panel opens in a bottom sheet', () => {
-    breakpoint.isMobile = true;
-
-    renderPanel([makeItem('gpt-4o', CatalogEntityType.Model)]);
-
-    const search = screen.getByRole('textbox', {
-      name: 'Search models, agents\u2026',
-    });
-    expect(search.matches(':focus')).toBe(false);
-  });
-});
-
-describe('DeploymentSelectorPanel — extra options', () => {
-  const modes = [
-    { id: 'default-agent', label: 'Default agent' },
-    { id: 'last-used-agent', label: 'Last used agent' },
-  ];
-
-  it('renders the extra rows above the catalog sections', () => {
-    renderPanel([makeItem('model-1', CatalogEntityType.Model)], {
-      extraOptions: modes,
+      const search = screen.getByRole('textbox', {
+        name: 'Search models, agents\u2026',
+      });
+      expect(search.matches(':focus')).toBe(true);
     });
 
-    const rows = screen
-      .getAllByRole('menuitemradio')
-      .map((row) => row.textContent);
+    it('leaves focus alone on mobile, where the panel opens in a bottom sheet', () => {
+      breakpoint.isMobile = true;
 
-    expect(rows[0]).toContain('Default agent');
-    expect(rows[1]).toContain('Last used agent');
-    expect(rows[2]).toContain('model-1');
+      renderPanel([makeItem('gpt-4o', CatalogEntityType.Model)]);
+
+      const search = screen.getByRole('textbox', {
+        name: 'Search models, agents\u2026',
+      });
+      expect(search.matches(':focus')).toBe(false);
+    });
   });
 
-  it('marks the chosen extra row as the selected one', () => {
-    renderPanel([], { extraOptions: modes, selectedId: 'last-used-agent' });
+  describe('DeploymentSelectorPanel — extra options', () => {
+    const modes = [
+      { id: 'default-agent', label: 'Default agent' },
+      { id: 'last-used-agent', label: 'Last used agent' },
+    ];
 
-    expect(
-      screen
-        .getByRole('menuitemradio', { name: 'Last used agent' })
-        .getAttribute('aria-checked'),
-    ).toBe('true');
-  });
+    it('renders the extra rows above the catalog sections', () => {
+      renderPanel([makeItem('model-1', CatalogEntityType.Model)], {
+        extraOptions: modes,
+      });
 
-  it('reports the extra row id and closes when one is picked', async () => {
-    const onSelect = vi.fn();
-    const onClose = vi.fn();
-    renderPanel([], { extraOptions: modes, onSelect, onClose });
+      const rows = screen
+        .getAllByRole('menuitemradio')
+        .map((row) => row.textContent);
 
-    await userEvent.click(
-      screen.getByRole('menuitemradio', { name: 'Default agent' }),
-    );
+      expect(rows[0]).toContain('Default agent');
+      expect(rows[1]).toContain('Last used agent');
+      expect(rows[2]).toContain('model-1');
+    });
 
-    expect(onSelect).toHaveBeenCalledWith('default-agent');
-    expect(onClose).toHaveBeenCalledOnce();
-  });
+    it('marks the chosen extra row as the selected one', () => {
+      renderPanel([], { extraOptions: modes, selectedId: 'last-used-agent' });
 
-  it('filters the extra rows by the search query', async () => {
-    renderPanel([], { extraOptions: modes });
-
-    await userEvent.type(
-      screen.getByRole('textbox', { name: 'Search models, agents…' }),
-      'Last',
-    );
-
-    await waitFor(() =>
       expect(
-        screen.queryByRole('menuitemradio', { name: /Default agent/ }),
-      ).toBeNull(),
-    );
-    expect(
-      screen.getByRole('menuitemradio', { name: /Last used agent/ }),
-    ).toBeTruthy();
-  });
+        screen
+          .getByRole('menuitemradio', { name: 'Last used agent' })
+          .getAttribute('aria-checked'),
+      ).toBe('true');
+    });
 
-  it('gives an extra row no favourite toggle', () => {
-    renderPanel([], { extraOptions: modes });
+    it('reports the extra row id and closes when one is picked', async () => {
+      const onSelect = vi.fn();
+      const onClose = vi.fn();
+      renderPanel([], { extraOptions: modes, onSelect, onClose });
 
-    expect(screen.queryByRole('button', { name: /favorites/i })).toBeNull();
+      await userEvent.click(
+        screen.getByRole('menuitemradio', { name: 'Default agent' }),
+      );
+
+      expect(onSelect).toHaveBeenCalledWith('default-agent');
+      expect(onClose).toHaveBeenCalledOnce();
+    });
+
+    it('filters the extra rows by the search query', async () => {
+      renderPanel([], { extraOptions: modes });
+
+      await userEvent.type(
+        screen.getByRole('textbox', { name: 'Search models, agents…' }),
+        'Last',
+      );
+
+      await waitFor(() =>
+        expect(
+          screen.queryByRole('menuitemradio', { name: /Default agent/ }),
+        ).toBeNull(),
+      );
+      expect(
+        screen.getByRole('menuitemradio', { name: /Last used agent/ }),
+      ).toBeTruthy();
+    });
+
+    it('gives an extra row no favourite toggle', () => {
+      renderPanel([], { extraOptions: modes });
+
+      expect(screen.queryByRole('button', { name: /favorites/i })).toBeNull();
+    });
   });
 });

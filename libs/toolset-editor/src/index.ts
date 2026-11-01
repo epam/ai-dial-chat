@@ -1,14 +1,18 @@
 export { ToolsetEditor } from './components/ToolsetEditor/ToolsetEditor';
 export type {
+  ToolsetEditorColors,
   ToolsetEditorLabels,
   ToolsetEditorLayoutLabels,
   ToolsetEditorProps,
+  ToolsetEditorTypography,
   ToolsetEditorValidationLabels,
 } from './models/toolset-editor-props';
 export type { GeneralFormLabels } from './models/general-form-labels';
 export type {
   ConnectMcpUrlContentLabels,
+  SettingsFormColors,
   SettingsFormLabels,
+  SettingsFormTypography,
 } from './models/settings-form-props';
 export type { AuthSectionLabels } from './models/auth-section-props';
 export { ToolsetOAuthLoginStatus } from './models/toolset-oauth-login';

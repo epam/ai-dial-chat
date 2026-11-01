@@ -47,6 +47,7 @@ interface FakeAnimation {
   callbacks: Map<string, () => void>;
   currentFrame: number;
 }
+
 const animations: FakeAnimation[] = [];
 const player = {
   loadAnimation:
@@ -84,62 +85,6 @@ const targets = (mode = SnowmanStage.Ledge): SnowmanDeliveryTargets => {
   };
 };
 
-beforeEach(() => {
-  vi.useFakeTimers();
-  vi.clearAllMocks();
-  state.mobile = false;
-  state.reduced = false;
-  animations.length = 0;
-  document.body.innerHTML =
-    '<textarea aria-label="Draft">Private draft</textarea><button>Tell me a riddle</button>';
-  draft = screen.getByRole('textbox', { name: 'Draft' }) as HTMLTextAreaElement;
-  card = screen.getByRole('button', {
-    name: 'Tell me a riddle',
-  }) as HTMLButtonElement;
-  vi.mocked(getSnowmanDeliveryTargets).mockImplementation(() => targets());
-  vi.mocked(animateCelebrationSnapshots).mockReturnValue(stopCard);
-  vi.stubGlobal(
-    'ResizeObserver',
-    class {
-      observe = vi.fn();
-      disconnect = disconnect;
-    },
-  );
-  player.loadAnimation.mockReset().mockImplementation(({ container }) => {
-    const callbacks = new Map<string, () => void>();
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    container.append(svg);
-    const animation: FakeAnimation = {
-      callbacks,
-      currentFrame: 0,
-      destroy: vi.fn(() => svg.remove()),
-      play: vi.fn(),
-    };
-    animations.push(animation);
-    queueMicrotask(() => callbacks.get('DOMLoaded')?.());
-    return {
-      ...animation,
-      isLoaded: true,
-      frameRate: 60,
-      get currentFrame() {
-        return animation.currentFrame;
-      },
-      setSubframe: vi.fn(),
-      addEventListener: vi.fn((name: string, callback: () => void) =>
-        callbacks.set(name, callback),
-      ),
-      removeEventListener: vi.fn((name: string) => callbacks.delete(name)),
-    } as unknown as AnimationItem;
-  });
-  vi.mocked(loadLottiePlayer).mockReset().mockResolvedValue(player);
-});
-afterEach(() => {
-  document.body.replaceChildren();
-  vi.restoreAllMocks();
-  vi.unstubAllGlobals();
-  vi.useRealTimers();
-});
-
 const flush = async () => {
   await act(async () => {
     for (let i = 0; i < 4; i++) await Promise.resolve();
@@ -159,6 +104,65 @@ const expectReleased = () => {
 };
 
 describe('NewYearSnowmanDelivery', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    state.mobile = false;
+    state.reduced = false;
+    animations.length = 0;
+    document.body.innerHTML =
+      '<textarea aria-label="Draft">Private draft</textarea><button>Tell me a riddle</button>';
+    draft = screen.getByRole('textbox', {
+      name: 'Draft',
+    }) as HTMLTextAreaElement;
+    card = screen.getByRole('button', {
+      name: 'Tell me a riddle',
+    }) as HTMLButtonElement;
+    vi.mocked(getSnowmanDeliveryTargets).mockImplementation(() => targets());
+    vi.mocked(animateCelebrationSnapshots).mockReturnValue(stopCard);
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe = vi.fn();
+        disconnect = disconnect;
+      },
+    );
+    player.loadAnimation.mockReset().mockImplementation(({ container }) => {
+      const callbacks = new Map<string, () => void>();
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      container.append(svg);
+      const animation: FakeAnimation = {
+        callbacks,
+        currentFrame: 0,
+        destroy: vi.fn(() => svg.remove()),
+        play: vi.fn(),
+      };
+      animations.push(animation);
+      queueMicrotask(() => callbacks.get('DOMLoaded')?.());
+      return {
+        ...animation,
+        isLoaded: true,
+        frameRate: 60,
+        get currentFrame() {
+          return animation.currentFrame;
+        },
+        setSubframe: vi.fn(),
+        addEventListener: vi.fn((name: string, callback: () => void) =>
+          callbacks.set(name, callback),
+        ),
+        removeEventListener: vi.fn((name: string) => callbacks.delete(name)),
+      } as unknown as AnimationItem;
+    });
+    vi.mocked(loadLottiePlayer).mockReset().mockResolvedValue(player);
+  });
+
+  afterEach(() => {
+    document.body.replaceChildren();
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+
   it.each([false, true])(
     'plays one composition and starts the card copy on its first frame, mobile=%s',
     async (mobile) => {

@@ -15,6 +15,7 @@ import {
   typecheckFixture,
 } from '../libs/chat-hooks/e2e-fixtures/harness.mjs';
 import { ALL_OPTIONAL_PEERS } from '../libs/chat-hooks/e2e-fixtures/fixtures.mjs';
+
 const here = path.dirname(fileURLToPath(import.meta.url));
 const workspaceRoot = path.resolve(here, '..');
 const keepFixtures = process.env.KEEP_FIXTURES === '1';

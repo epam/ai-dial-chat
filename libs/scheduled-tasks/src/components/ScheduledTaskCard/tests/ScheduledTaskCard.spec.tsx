@@ -128,7 +128,7 @@ describe('ScheduledTaskCard', () => {
     render(<ScheduledTaskCard item={buildItem()} />);
 
     expect(screen.getByRole('group').className).toContain(
-      'h-[var(--st-card-height,232px)]',
+      'h-(--st-card-height,232px)',
     );
   });
 

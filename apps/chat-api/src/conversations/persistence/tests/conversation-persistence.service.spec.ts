@@ -12,6 +12,7 @@ import {
   ConversationPersistenceService,
   runConditionalUpdate,
 } from '../conversation-persistence.service';
+import { ProjectConversationStore } from '../project-conversation.store';
 
 vi.mock('../../../common/dial/dial-error.mapper', () => ({
   handleDialSdkError: vi.fn(),
@@ -60,6 +61,7 @@ describe('ConversationPersistenceService', () => {
       mockDialClient,
       mockConversationNamingService as never,
       new ConversationTitleCacheService(),
+      new ProjectConversationStore(mockDialClient),
     );
     vi.mocked(handleDialSdkError).mockReset();
     vi.spyOn(
@@ -672,6 +674,125 @@ describe('ConversationPersistenceService', () => {
         conversation: { ...TEST_CONVERSATION, name: '' },
         etag: '"v7"',
       });
+    });
+  });
+
+  describe('project conversation locators', () => {
+    const LOCATOR = 'projects/z9y8x7/research/conversations/gpt-4o__Hi__1';
+    const stored = { ...TEST_CONVERSATION, id: LOCATOR };
+    let projectStore: Record<string, ReturnType<typeof vi.fn>>;
+    let routed: ConversationPersistenceService;
+
+    beforeEach(() => {
+      projectStore = {
+        getConversationWithStoredVersion: vi.fn().mockResolvedValue({
+          conversation: stored,
+          stored: { conversation: stored, etag: '"sha256:a"' },
+        }),
+        getStoredConversation: vi.fn().mockResolvedValue({
+          conversation: stored,
+          subPath: 'conversations/gpt-4o__Hi__1',
+          etag: '"sha256:a"',
+        }),
+        readConversationWithEtag: vi
+          .fn()
+          .mockResolvedValue({ conversation: stored, etag: '"sha256:a"' }),
+        saveConversation: vi.fn(async (_l, _t, body) => body),
+        saveConversationIfMatch: vi.fn(async (_l, _t, body) => ({
+          isSaved: true,
+          conversation: body,
+        })),
+      };
+      routed = new ConversationPersistenceService(
+        mockDialClient,
+        mockConversationNamingService as never,
+        new ConversationTitleCacheService(),
+        projectStore as unknown as ProjectConversationStore,
+      );
+    });
+
+    it('reads a project conversation through the store, ignoring the session bucket', async () => {
+      const conversation = await routed.getConversation(
+        LOCATOR,
+        'token',
+        'a1b2c3',
+      );
+
+      expect(conversation).toBe(stored);
+      expect(
+        projectStore.getConversationWithStoredVersion,
+      ).toHaveBeenCalledWith(LOCATOR, 'token');
+      expect(mockDialClient.client.getConversation).not.toHaveBeenCalled();
+    });
+
+    it('routes getStoredConversation and readConversationWithEtag to the store', async () => {
+      await routed.getStoredConversation(LOCATOR, 'token', 'a1b2c3');
+      await routed.readConversationWithEtag(LOCATOR, 'token', 'a1b2c3');
+
+      expect(projectStore.getStoredConversation).toHaveBeenCalledWith(
+        LOCATOR,
+        'token',
+      );
+      expect(projectStore.readConversationWithEtag).toHaveBeenCalledWith(
+        LOCATOR,
+        'token',
+      );
+      expect(mockDialClient.client.getConversation).not.toHaveBeenCalled();
+    });
+
+    it('saves through the store, keeps the stored LLM name and schedules naming', async () => {
+      projectStore.getStoredConversation.mockResolvedValue({
+        conversation: { ...stored, name: 'LLM title', llmNamingDone: true },
+        subPath: 'conversations/gpt-4o__Hi__1',
+        etag: '"sha256:a"',
+      });
+
+      const saved = await routed.saveConversation(LOCATOR, 'token', 'a1b2c3', {
+        ...stored,
+        name: 'from message',
+        messages: [{ role: ConversationMessageRole.User, content: 'Hi' }],
+      } as never);
+
+      expect(saved.name).toBe('LLM title');
+      expect(mockDialClient.client.saveConversation).not.toHaveBeenCalled();
+      expect(
+        mockConversationNamingService.maybeRenameAfterFirstReply,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('schedules naming after an unnamed project conversation is saved', async () => {
+      projectStore.getStoredConversation.mockRejectedValue(
+        new NotFoundException(),
+      );
+
+      await routed.saveConversation(
+        LOCATOR,
+        'token',
+        'a1b2c3',
+        stored as never,
+      );
+
+      expect(
+        mockConversationNamingService.maybeRenameAfterFirstReply,
+      ).toHaveBeenCalledWith(LOCATOR, 'token', 'a1b2c3', stored);
+    });
+
+    it('runs updateConversation against the store with its content-hash version', async () => {
+      const result = await routed.updateConversation(
+        LOCATOR,
+        'token',
+        'a1b2c3',
+        (current) => current && { ...current.conversation, name: 'New' },
+      );
+
+      expect(result.status).toBe(ConditionalUpdateStatus.Saved);
+      expect(projectStore.saveConversationIfMatch).toHaveBeenCalledWith(
+        LOCATOR,
+        'token',
+        expect.objectContaining({ name: 'New' }),
+        '"sha256:a"',
+      );
+      expect(mockDialClient.client.saveConversation).not.toHaveBeenCalled();
     });
   });
 });

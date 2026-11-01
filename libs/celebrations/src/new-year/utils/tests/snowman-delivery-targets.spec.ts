@@ -87,20 +87,6 @@ const build = ({
   return { region, buttons };
 };
 
-beforeEach(() => {
-  Object.defineProperty(HTMLElement.prototype, 'animate', {
-    configurable: true,
-    value: vi.fn(),
-  });
-});
-
-afterEach(() => {
-  document.body.replaceChildren();
-  document.documentElement.removeAttribute('dir');
-  document.documentElement.style.direction = '';
-  vi.restoreAllMocks();
-});
-
 const expectHeadMatchesSled = (
   targets: ReturnType<typeof getSnowmanDeliveryTargets>,
 ) => {
@@ -111,6 +97,20 @@ const expectHeadMatchesSled = (
 };
 
 describe('getSnowmanDeliveryTargets', () => {
+  beforeEach(() => {
+    Object.defineProperty(HTMLElement.prototype, 'animate', {
+      configurable: true,
+      value: vi.fn(),
+    });
+  });
+
+  afterEach(() => {
+    document.body.replaceChildren();
+    document.documentElement.removeAttribute('dir');
+    document.documentElement.style.direction = '';
+    vi.restoreAllMocks();
+  });
+
   it('stages a ledge under starters that sit below the composer', () => {
     const { buttons } = build();
 
