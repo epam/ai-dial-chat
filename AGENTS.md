@@ -43,7 +43,7 @@ The boundaries lint enforces — one `type:*` tag per project, which kinds may i
 - `address-current-branch-review`: fix requests do not authorize inline replies; reply only after the user explicitly asks and the pushed fix is visible in the PR.
 - `celebration-scene-ideas`: include scene-specific performance budgets and use OpenSpec propose/apply when implementation is requested.
 - Before changing anything under `libs/*`, check the library isolation rule above. Libs are also governed by `.claude/rules/libs.md` (manifest metadata, `dependencies` vs `peerDependencies`, the `exports`/`styles.css` contract, README shape, JSDoc, `buildCssVars` theming) and `.claude/rules/lib-styling.md` — read `libs.md` before touching a lib manifest. A host must install one package and render without a peer laundry list or a bundler alias.
-- UI work is mobile-first. The named Tailwind breakpoints (`mobile`, `desktop`) live in `tools/tailwind/theme.css`; do not introduce `small_tablet:`/`large_tablet:`/`large_desktop:` or `sm:`/`md:`/`lg:`/`xl:` prefixes. When a component must branch in JS, use `useBreakpoint` / `useIsMobile` from `apps/chat/src/hooks/breakpoint/useBreakpoint.ts`, never `window.innerWidth`.
+- UI work is mobile-first. The named Tailwind breakpoints (`mobile`, `desktop`) live in `tools/tailwind/theme.css`; do not introduce `small_tablet:`/`large_tablet:`/`large_desktop:` or `sm:`/`md:`/`lg:`/`xl:` prefixes. When a component must branch in JS, use `useIsMobile` from `@epam/ai-dial-chat-shared`, never `window.innerWidth`.
 
 ## Docs
 

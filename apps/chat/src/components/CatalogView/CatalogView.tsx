@@ -10,10 +10,11 @@ import {
   type CatalogEditNavigationLabels,
   type CatalogEditNavigationUrls,
   findDeploymentByIdOrReference,
+  findSchemaDisplayName,
+  resolveFavoriteEntityType,
   type ToolsetCredentialsLabels,
   useCatalogEditNavigation,
   useCatalogToolsetCredentials,
-  findSchemaDisplayName,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
@@ -81,7 +82,6 @@ import {
   getCatalogSearchPlaceholder,
 } from '../../utils/catalog';
 import { resolveCatalogItemEntity } from '../../utils/entity-notification';
-import { resolveFavoriteEntityType } from '../../utils/favorites';
 import {
   getAccessRulesLabels,
   getPublishAuthorLabels,
@@ -238,6 +238,7 @@ const CatalogView: FC<Props> = ({
     prompts,
     sharedWithMe: sharedPrompts,
     publicPrompts,
+    error: promptsError,
     refetchPrompts,
   } = usePrompts();
 
@@ -272,6 +273,12 @@ const CatalogView: FC<Props> = ({
     if (skillsError == null) return;
     showErrorNotification({ message: t(CatalogI18nKeys.SkillsLoadError) });
   }, [skillsError, showErrorNotification, t]);
+
+  // Same for prompts: without it the Prompts tab silently disappears.
+  useEffect(() => {
+    if (!isPromptsEnabled || promptsError == null) return;
+    showErrorNotification({ message: t(CatalogI18nKeys.PromptsLoadError) });
+  }, [isPromptsEnabled, promptsError, showErrorNotification, t]);
 
   const {
     quickAppDeploymentIds,

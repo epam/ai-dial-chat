@@ -200,9 +200,14 @@ export class OfflineCredentialsService {
       /*
        * Mirrors ExternalServicesService.signOut: a 404 from Core means there
        * was no grant left to revoke, which is the idempotent success state a
-       * sign-out call wants, not an error.
+       * sign-out call wants, not an error. Checked by status alone because
+       * openapi-fetch leaves `error` empty for a bodiless non-OK response.
        */
-      if (response.error && response.response.status !== 404) {
+      if (response.response.status === 404) {
+        this.logger.debug('No offline-credentials grant left to revoke');
+        return;
+      }
+      if (response.error || response.response.status >= 400) {
         return mapDialHttpStatus(
           response.response.status,
           'sign out offline-credentials',

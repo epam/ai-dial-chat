@@ -5,7 +5,7 @@ import {
   sanitizeAnnouncementMessageHtml,
   type AnnouncementContent,
 } from '@epam/ai-dial-chat-hooks';
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { mergeClasses, useIsTextClipped } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
@@ -18,7 +18,6 @@ import { useTranslation } from 'react-i18next';
 import { AnnouncementBannerI18nKeys } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useAnnouncementDismissal } from '../../hooks/useAnnouncementDismissal/useAnnouncementDismissal';
-import { useIsTextClipped } from '../../hooks/useIsTextClipped/useIsTextClipped';
 import { UserConfigStatus } from '../../types/user-config-status';
 import AnnouncementsPopover from '../AnnouncementsPopover/AnnouncementsPopover';
 

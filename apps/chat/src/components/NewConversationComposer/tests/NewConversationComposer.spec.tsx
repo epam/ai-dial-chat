@@ -162,7 +162,8 @@ vi.mock('../../../hooks/attachment/useAttachmentCanvasResolvers', () => ({
   useAttachmentCanvasResolvers: () => ({ resolvers: {}, options: {} }),
 }));
 
-vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
+vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
   useIsMobile: () => false,
 }));
 

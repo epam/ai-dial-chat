@@ -11,7 +11,8 @@ vi.mock('react-i18next', () => ({
 vi.mock('../useDeploymentSelectorFieldOverlay');
 
 const breakpoint = vi.hoisted(() => ({ isMobile: false }));
-vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
+vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
   useIsMobile: () => breakpoint.isMobile,
 }));
 

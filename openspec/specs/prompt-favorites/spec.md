@@ -80,7 +80,7 @@ Adding an already-present path SHALL NOT duplicate it; removing an absent path S
 
 `toggleFavorite` SHALL dispatch to the endpoint matching the entity type through a lookup keyed by `FavoriteEntityType` (`INSTALL_BY_ENTITY_TYPE`), and SHALL keep its existing optimistic-update-then-revert-on-failure behaviour for prompts. It SHALL always be called with the prompt's full resource-path `id` — the same `id` `CatalogItem` carries for every prompt, personal or shared — with no bucket-relative fallback.
 
-`resolveFavoriteEntityType` (`apps/chat/src/utils/favorites.ts`) SHALL map a `CatalogEntityType` to the section its favourite is stored in, defaulting to `Deployment` for an unknown or absent type.
+`resolveFavoriteEntityType` (`libs/chat-hooks/src/catalog/favorite-entity-type.ts`) SHALL map a `CatalogEntityType` to the section its favourite is stored in, defaulting to `Deployment` for an unknown or absent type.
 
 #### Scenario: Favourite ids include prompts on load
 

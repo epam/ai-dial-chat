@@ -50,6 +50,7 @@
     "validate:agent-docs:test": "node --test scripts/validate-agent-docs.spec.mjs",
     "validate:docs": "node scripts/validate-docs.mjs && node scripts/generate-install-matrix.mjs --check",
     "validate:specs": "node scripts/validate-spec-references.mjs",
+    "validate:lib-duplicates": "node scripts/validate-lib-duplicates.mjs",
     "validate:specs:test": "node --test scripts/validate-spec-references.spec.mjs scripts/spec-impact.spec.mjs",
     "spec:impact": "node scripts/spec-impact.mjs",
     "prepare": "git config core.hooksPath .githooks",
@@ -134,9 +135,9 @@
     "webpack-node-externals": "^3.0.0"
   },
   "dependencies": {
-    "@epam/ai-dial-react-file-manager": "0.4.0-dev.19",
+    "@epam/ai-dial-react-file-manager": "0.4.0-dev.25",
     "@epam/ai-dial-react-pdf-highlighter": "0.3.0-dev.6",
-    "@epam/ai-dial-ui-kit": "^0.16.0-dev.56",
+    "@epam/ai-dial-ui-kit": "^0.16.0-dev.59",
     "@epam/pdf-highlighter-kit": "^0.0.19",
     "@mcp-ui/client": "^7.1.1",
     "@monaco-editor/react": "^4.7.0",
