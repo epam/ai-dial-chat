@@ -365,6 +365,7 @@ export class ConversationStreamingService {
     sub: string,
     clientChannelId?: string,
     timezone?: string,
+    lang?: string,
     jobTitle?: string,
   ): AsyncGenerator<Uint8Array | string, void, void> {
     this.logger.debug(
@@ -494,6 +495,7 @@ export class ConversationStreamingService {
           onReadyToStream,
           clientChannelId,
           timezone,
+          lang,
           jobTitle,
           storedConversation,
         });
@@ -664,6 +666,7 @@ export class ConversationStreamingService {
               assembledMessage,
               clientChannelId,
               timezone,
+              lang,
               timing,
               startConversation.id,
               publishChunk,
@@ -683,6 +686,7 @@ export class ConversationStreamingService {
               assembledMessage,
               clientChannelId,
               timezone,
+              lang,
               timing,
               startConversation.id,
               publishChunk,

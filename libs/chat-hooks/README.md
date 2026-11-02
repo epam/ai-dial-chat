@@ -2828,7 +2828,7 @@ const uploadFileWithProgress = createUploadFileWithProgress({
 
 ### createChatStreamApi
 
-Builds the streamed-completion transport (`streamCompletion`/`stopCompletion`), parameterized by the host's CSRF state, completions base path, and an optional timezone resolver.
+Builds the streamed-completion transport (`streamCompletion`/`stopCompletion`), parameterized by the host's CSRF state, completions base path, and optional timezone and language resolvers.
 
 ```ts
 import { createChatStreamApi } from '@epam/ai-dial-chat-hooks';
@@ -2838,8 +2838,11 @@ const { streamCompletion, stopCompletion } = createChatStreamApi({
   setCsrfToken,
   completionsBasePath: '/api/v1/conversations',
   getTimezone: getBrowserTimezone,
+  getLanguage: () => i18n.resolvedLanguage,
 });
 ```
+
+`getLanguage`, like `getTimezone`, is resolved per request; a non-empty value is sent as the `X-Lang` request header on `POST .../completions` (validated by the chat-api BFF and forwarded to DIAL Core for language-sensitive tools), and an absent value omits the header.
 
 `streamCompletion` reports a `409` from the completions endpoint as a `GenerationConflictError` (message defaulting to `DEFAULT_GENERATION_CONFLICT_MESSAGE`) rather than a generic transport error, so callers can present it as an expected state — the conversation is already generating, typically in another browser tab of the same session. `useConversationStream` uses that distinction to show its `generationConflictMessage`. Both the error class and the default message are exported:
 

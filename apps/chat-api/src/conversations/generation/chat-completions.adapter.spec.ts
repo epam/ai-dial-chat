@@ -206,6 +206,44 @@ describe('ChatCompletionsAdapter', () => {
       );
     });
 
+    it('sends X-Lang only when a lang is given', async () => {
+      const { adapter, sendChatCompletionRequest } = makeAdapter();
+      sendChatCompletionRequest.mockImplementation(async () =>
+        okResponse(['data: [DONE]\n\n']),
+      );
+
+      await drain(
+        adapter.stream(
+          'gpt-4o',
+          {},
+          'token',
+          new AbortController().signal,
+          assistantSeed,
+          undefined,
+          undefined,
+          'en',
+        ),
+      );
+      expect(sentHeaders(sendChatCompletionRequest)).toHaveProperty(
+        'X-Lang',
+        'en',
+      );
+
+      sendChatCompletionRequest.mockClear();
+      await drain(
+        adapter.stream(
+          'gpt-4o',
+          {},
+          'token',
+          new AbortController().signal,
+          assistantSeed,
+        ),
+      );
+      expect(sentHeaders(sendChatCompletionRequest)).not.toHaveProperty(
+        'X-Lang',
+      );
+    });
+
     it('adds the extra headers, such as x-project-id, to the model call', async () => {
       const { adapter, sendChatCompletionRequest } = makeAdapter();
       sendChatCompletionRequest.mockImplementation(async () =>
@@ -219,6 +257,7 @@ describe('ChatCompletionsAdapter', () => {
           'token',
           new AbortController().signal,
           assistantSeed,
+          undefined,
           undefined,
           undefined,
           undefined,
@@ -253,6 +292,7 @@ describe('ChatCompletionsAdapter', () => {
           'token',
           new AbortController().signal,
           assistantSeed,
+          undefined,
           undefined,
           undefined,
           undefined,

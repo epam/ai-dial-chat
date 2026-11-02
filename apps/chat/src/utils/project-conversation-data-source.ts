@@ -7,6 +7,7 @@ import {
   getBrowserTimezone,
   type ConversationStreamTransport,
 } from '@epam/ai-dial-chat-hooks';
+import { getUiLanguage } from '../i18n/get-ui-language';
 import type { Conversation } from '@epam/ai-dial-chat-shared';
 import {
   getProjectConversationRoute,
@@ -125,6 +126,7 @@ export const createProjectConversationDataSource = ({
     setCsrfToken,
     completionsBasePath: `${ApiEndpoints.PROJECTS}/${encodeURIComponent(projectId)}/conversations`,
     getTimezone: getBrowserTimezone,
+    getLanguage: getUiLanguage,
   });
   const saveConversation = (
     path: string,

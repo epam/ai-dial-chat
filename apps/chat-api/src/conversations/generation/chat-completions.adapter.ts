@@ -126,6 +126,7 @@ export class ChatCompletionsAdapter {
     initialAssembledMessage: ConversationMessageDto,
     clientChannelId?: string,
     timezone?: string,
+    lang?: string,
     timing?: GenerationRelayTiming,
     conversationId?: string,
     onChunkApplied?: (
@@ -155,6 +156,7 @@ export class ChatCompletionsAdapter {
               ? { 'X-DIAL-CLIENT-CHANNEL-ID': clientChannelId }
               : {}),
             ...(timezone ? { 'X-Timezone': timezone } : {}),
+            ...(lang ? { 'X-Lang': lang } : {}),
             ...buildConversationIdHeaders(conversationId),
             ...buildJobTitleHeaders(jobTitle),
             ...options?.extraHeaders,

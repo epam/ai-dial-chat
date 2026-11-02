@@ -82,6 +82,7 @@ import {
   SSE_KEEPALIVE_INTERVAL_MS,
 } from './streaming/conversation-completions.responder';
 import { TIMEZONE_HEADER, TIMEZONE_MAX_LENGTH } from './utils/timezone-header';
+import { LANG_HEADER, LANG_MAX_LENGTH } from './utils/lang-header';
 
 @ApiTags('conversations')
 @Controller({ path: 'conversations', version: '1' })
@@ -358,6 +359,18 @@ export class ConversationController {
       example: 'Europe/Warsaw',
     },
   })
+  @ApiHeader({
+    name: LANG_HEADER,
+    required: false,
+    description:
+      "Current UI language forwarded to DIAL Core for language-sensitive tools and agents.",
+    schema: {
+      type: 'string',
+      maxLength: LANG_MAX_LENGTH,
+      pattern: '^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$',
+      example: 'en',
+    },
+  })
   @ApiDialCoreErrors()
   @ApiResponse({ status: 200, description: 'SSE stream of completion chunks' })
   @ApiResponse({
@@ -384,12 +397,14 @@ export class ConversationController {
     @Res() res: Response,
     @Body() dto: SendCompletionDto,
     @Headers(TIMEZONE_HEADER) timezoneHeader: string | string[] | undefined,
+    @Headers(LANG_HEADER) langHeader: string | string[] | undefined,
   ): Promise<void> {
     return this.completionsResponder.streamCompletion(
       req,
       res,
       dto,
       timezoneHeader,
+      langHeader,
       dto.path,
       { isUnreadTracked: true },
     );

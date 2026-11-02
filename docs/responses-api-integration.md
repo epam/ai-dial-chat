@@ -188,6 +188,29 @@ The validated value stays request-local. The BFF forwards it unchanged as
 The timezone is context for DIAL Core only. Chat does not persist it, cache it,
 put it into metrics, or include it in logs.
 
+### Browser language context
+
+The same pipeline carries the app's current UI language. For each completion
+request, the frontend resolves the active i18n locale
+(`i18n.resolvedLanguage`, the language the UI actually renders — the user's
+best predictor of the language they expect documents and names in) and sends
+it as the optional request header:
+
+```http
+X-Lang: en
+```
+
+`ConversationController` validates a present header before generation starts
+(`assertValidOptionalLang`, `apps/chat-api/src/conversations/utils/lang-header.ts`):
+a single BCP-47-like string of at most 35 characters
+(`^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$`). Malformed, oversized, or multi-value
+input returns `400 Bad Request` without calling DIAL Core; an absent header is
+accepted for backward compatibility. The validated value stays request-local
+and the BFF forwards it unchanged as `X-Lang` through both upstream paths
+(Chat Completions and Responses), where DIAL Core reads it via its
+`PROXY_LANGUAGE_HEADER` setting for language-sensitive tools and agents. Chat
+does not persist, cache, or log the value.
+
 ## Responses API Request
 
 The Responses adapter calls the SDK's `createResponse` method, which sends a request to:
@@ -229,9 +252,9 @@ Mapping rules:
 
 The request also includes the user's Bearer token, `Accept: text/event-stream`,
 an AbortSignal, the stable persisted conversation id in `X-CONVERSATION-ID`,
-`X-DIAL-CLIENT-CHANNEL-ID` when available, and the validated `X-Timezone` when
-supplied by the browser. The Chat Completions adapter forwards the same
-conversation and timezone headers.
+`X-DIAL-CLIENT-CHANNEL-ID` when available, and the validated `X-Timezone` and
+`X-Lang` when supplied by the browser. The Chat Completions adapter forwards
+the same conversation, timezone and language headers.
 
 Both adapters build the conversation header through
 `buildConversationIdHeaders` (`apps/chat-api/src/common/utils/header-value.ts`),
