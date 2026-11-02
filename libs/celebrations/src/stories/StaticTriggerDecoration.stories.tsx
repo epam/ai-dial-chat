@@ -35,6 +35,7 @@ const meta = {
 } satisfies Meta<typeof StaticTriggerPlayer>;
 
 export default meta;
+
 type Story = StoryObj<typeof meta>;
 
 /** Click, or focus it and press Enter or Space. */

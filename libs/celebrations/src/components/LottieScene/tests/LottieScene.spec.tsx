@@ -99,50 +99,54 @@ const flush = async () => {
 
 const poster = (container: HTMLElement) => container.querySelector('img');
 
-beforeEach(() => {
-  vi.useFakeTimers();
-  vi.clearAllMocks();
-  state.mobile = false;
-  state.reduced = false;
-  animations.length = 0;
-  extraElements = 0;
-  source = lottieFixture();
-  player.loadAnimation
-    .mockReset()
-    .mockImplementation(({ container, animationData }) => {
-      const callbacks = new Map<string, () => void>();
-      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      for (let i = 0; i < extraElements; i++)
-        svg.append(document.createElementNS('http://www.w3.org/2000/svg', 'g'));
-      container?.append(svg);
-      const animation: FakeAnimation = {
-        data: animationData as object,
-        destroy: vi.fn(() => svg.remove()),
-        play: vi.fn(),
-        callbacks,
-        emit: (name) => callbacks.get(name)?.(),
-      };
-      animations.push(animation);
-      return {
-        isLoaded: true,
-        currentFrame: 0,
-        frameRate: 60,
-        setSubframe: vi.fn(),
-        play: animation.play,
-        destroy: animation.destroy,
-        addEventListener: (name: string, callback: () => void) =>
-          callbacks.set(name, callback),
-        removeEventListener: (name: string) => callbacks.delete(name),
-      } as unknown as AnimationItem;
-    });
-  vi.mocked(loadLottiePlayer).mockReset().mockResolvedValue(player);
-});
-afterEach(() => {
-  vi.restoreAllMocks();
-  vi.useRealTimers();
-});
-
 describe('LottieScene', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    state.mobile = false;
+    state.reduced = false;
+    animations.length = 0;
+    extraElements = 0;
+    source = lottieFixture();
+    player.loadAnimation
+      .mockReset()
+      .mockImplementation(({ container, animationData }) => {
+        const callbacks = new Map<string, () => void>();
+        const svg = document.createElementNS(
+          'http://www.w3.org/2000/svg',
+          'svg',
+        );
+        for (let i = 0; i < extraElements; i++)
+          svg.append(
+            document.createElementNS('http://www.w3.org/2000/svg', 'g'),
+          );
+        container?.append(svg);
+        const animation: FakeAnimation = {
+          data: animationData as object,
+          destroy: vi.fn(() => svg.remove()),
+          play: vi.fn(),
+          callbacks,
+          emit: (name) => callbacks.get(name)?.(),
+        };
+        animations.push(animation);
+        return {
+          isLoaded: true,
+          currentFrame: 0,
+          frameRate: 60,
+          setSubframe: vi.fn(),
+          play: animation.play,
+          destroy: animation.destroy,
+          addEventListener: (name: string, callback: () => void) =>
+            callbacks.set(name, callback),
+          removeEventListener: (name: string) => callbacks.delete(name),
+        } as unknown as AnimationItem;
+      });
+    vi.mocked(loadLottiePlayer).mockReset().mockResolvedValue(player);
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
   it('loads the desktop variant after mount and plays a clone of its data', async () => {
     const sceneLoaders = loaders();
     const { container } = renderScene(packSceneFixture(), sceneLoaders);

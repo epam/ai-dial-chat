@@ -106,6 +106,7 @@ const meta = {
 } satisfies Meta<typeof LottieScenePlayer>;
 
 export default meta;
+
 type Story = StoryObj<typeof meta>;
 
 /** The fixture clip plays once on a contain-fitted, bottom-aligned stage. */
