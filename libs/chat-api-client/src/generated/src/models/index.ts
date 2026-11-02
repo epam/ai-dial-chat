@@ -6591,6 +6591,12 @@ export interface ProjectConversationItemDto {
    * @memberof ProjectConversationItemDto
    */
   updatedAt?: number;
+  /**
+   * Whether the conversation changed after the caller's read baseline and since the caller last viewed it; `false` when the caller's read state cannot be read.
+   * @type {boolean}
+   * @memberof ProjectConversationItemDto
+   */
+  isUnread: boolean;
 }
 /**
  *

@@ -17,10 +17,12 @@ import {
   useFeatureFlag as useFeatureFlagMock,
 } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
+import { listProjectConversations } from '../../../server-api/project-conversations.api';
 import {
   deleteProject,
   downloadProjectArchive,
   getProject,
+  watchProjects,
 } from '../../../server-api/projects.api';
 import ProjectViewPage from '../ProjectViewPage';
 
@@ -45,6 +47,11 @@ vi.mock('../../../server-api/projects.api', () => ({
   deleteProject: vi.fn(),
   downloadProjectArchive: vi.fn(),
   downloadProjectContextFile: vi.fn(),
+  watchProjects: vi.fn(),
+}));
+vi.mock('../../../server-api/project-conversations.api', () => ({
+  listProjectConversations: vi.fn(),
+  markProjectConversationViewed: vi.fn(),
 }));
 vi.mock('@epam/ai-dial-chat-hooks/utils', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@epam/ai-dial-chat-hooks/utils')>()),
@@ -71,14 +78,23 @@ vi.mock(
     default: ({
       projectId,
       canEdit,
+      conversations,
       onConversationDeleted,
     }: {
       projectId: string;
       canEdit: boolean;
+      conversations: { items: { title: string; isUnread?: boolean }[] };
       onConversationDeleted?: () => void;
     }) => (
       <>
         <p>{`chats of ${projectId}, editable: ${String(canEdit)}`}</p>
+        <ul aria-label="chat rows">
+          {conversations.items.map((item) => (
+            <li key={item.title}>
+              {`${item.title}${item.isUnread ? ' (unread)' : ''}`}
+            </li>
+          ))}
+        </ul>
         <button type="button" onClick={onConversationDeleted}>
           delete a chat
         </button>
@@ -147,6 +163,12 @@ describe('ProjectViewPage', () => {
     useAppConfigMock.mockReturnValue(READY_CONFIG);
     useFeatureFlagMock.mockReturnValue(true);
     vi.mocked(getProject).mockResolvedValue(details());
+    /* Without a stream the page behaves as on a Core without project events. */
+    vi.mocked(watchProjects).mockRejectedValue(new Error('no watch'));
+    vi.mocked(listProjectConversations).mockResolvedValue({
+      items: [],
+      hasMore: false,
+    });
   });
 
   it('renders NotFound without a request when the flag is off', () => {
@@ -418,5 +440,208 @@ describe('ProjectViewPage', () => {
 
     await waitFor(() => expect(getProject).toHaveBeenCalledTimes(2));
     expect(showNotificationMock).toHaveBeenCalled();
+  });
+
+  describe('live updates', () => {
+    /** A watch stream the test feeds. */
+    const createWatchStream = () => {
+      let controller!: ReadableStreamDefaultController<Uint8Array>;
+      const stream = new ReadableStream<Uint8Array>({
+        start(streamController) {
+          controller = streamController;
+        },
+      });
+      return {
+        stream,
+        send: (event: object) =>
+          controller.enqueue(
+            new TextEncoder().encode(`data: ${JSON.stringify(event)}\n\n`),
+          ),
+      };
+    };
+
+    const renderWatched = async () => {
+      const watch = createWatchStream();
+      vi.mocked(watchProjects).mockResolvedValue(watch.stream);
+      const view = renderAt();
+      await screen.findByRole('heading', { level: 1, name: 'q4' });
+      await waitFor(() =>
+        expect(watchProjects).toHaveBeenCalledWith(
+          [PROJECT_ID],
+          expect.objectContaining({ aborted: false }),
+        ),
+      );
+      return { ...view, watch };
+    };
+
+    beforeEach(() => {
+      vi.mocked(listProjectConversations).mockResolvedValue({
+        items: [
+          {
+            id: `${PROJECT_ID}/conversations/c1`,
+            name: 'c1',
+            title: 'c1',
+            isUnread: false,
+          },
+        ],
+        hasMore: false,
+      });
+    });
+
+    it('refreshes the details and the chats without a spinner on an update', async () => {
+      const { watch } = await renderWatched();
+      vi.mocked(getProject).mockResolvedValue(
+        details({ description: 'Edited elsewhere', etag: '"e2"' }),
+      );
+      vi.mocked(listProjectConversations).mockResolvedValue({
+        items: [
+          {
+            id: `${PROJECT_ID}/conversations/c2`,
+            name: 'c2',
+            title: 'c2',
+            isUnread: true,
+          },
+          {
+            id: `${PROJECT_ID}/conversations/c1`,
+            name: 'c1',
+            title: 'c1',
+            isUnread: false,
+          },
+        ],
+        hasMore: false,
+      });
+
+      watch.send({
+        id: PROJECT_ID,
+        action: 'UPDATE',
+        timestamp: 1,
+        etag: '"e2"',
+      });
+
+      expect(await screen.findByText('Edited elsewhere')).toBeTruthy();
+      expect(await screen.findByText('c2 (unread)')).toBeTruthy();
+      expect(
+        screen.getByRole('heading', { level: 1, name: 'q4' }),
+      ).toBeTruthy();
+    });
+
+    it('keeps the context search query through a refresh', async () => {
+      const { watch } = await renderWatched();
+      const search = screen.getByRole('textbox', {
+        name: ProjectsI18nKeys.ViewContextSearchAriaLabel,
+      });
+      await userEvent.type(search, 'tick');
+      vi.mocked(getProject).mockResolvedValue(details({ etag: '"e2"' }));
+
+      watch.send({
+        id: PROJECT_ID,
+        action: 'UPDATE',
+        timestamp: 1,
+        etag: '"e2"',
+      });
+
+      await waitFor(() => expect(getProject).toHaveBeenCalledTimes(2));
+      expect(
+        (
+          screen.getByRole('textbox', {
+            name: ProjectsI18nKeys.ViewContextSearchAriaLabel,
+          }) as HTMLInputElement
+        ).value,
+      ).toBe('tick');
+    });
+
+    it('skips an update for the version already shown', async () => {
+      const { watch } = await renderWatched();
+
+      watch.send({
+        id: PROJECT_ID,
+        action: 'UPDATE',
+        timestamp: 1,
+        etag: '"e1"',
+      });
+      await new Promise((resolve) => setTimeout(resolve, 20));
+
+      expect(getProject).toHaveBeenCalledOnce();
+    });
+
+    it('announces a delete made elsewhere and returns to the projects list', async () => {
+      const { watch, router } = await renderWatched();
+
+      watch.send({ id: PROJECT_ID, action: 'DELETE', timestamp: 2 });
+
+      await waitFor(() =>
+        expect(router.state.location.pathname).toBe('/projects'),
+      );
+      expect(showNotificationMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: ProjectsI18nKeys.ViewDeletedElsewhere,
+        }),
+      );
+      expect(userConfig.replacePinnedProjectId).toHaveBeenCalledWith(
+        PROJECT_ID,
+        null,
+      );
+    });
+
+    it('still leaves on a delete made elsewhere after its own delete failed', async () => {
+      const { watch, router } = await renderWatched();
+      vi.mocked(deleteProject).mockRejectedValue(
+        new ResponseError(new Response(null, { status: 503 })),
+      );
+      const menu = await openMenu();
+      await userEvent.click(
+        within(menu).getByRole('menuitem', { name: ButtonsI18nKeys.Delete }),
+      );
+      const dialog = await screen.findByRole('dialog', {
+        name: ProjectsI18nKeys.ActionsDeleteConfirmTitle,
+      });
+      await userEvent.click(
+        within(dialog).getByRole('button', { name: ButtonsI18nKeys.Delete }),
+      );
+      await waitFor(() => expect(deleteProject).toHaveBeenCalled());
+
+      watch.send({ id: PROJECT_ID, action: 'DELETE', timestamp: 2 });
+
+      await waitFor(() =>
+        expect(router.state.location.pathname).toBe('/projects'),
+      );
+      expect(showNotificationMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: ProjectsI18nKeys.ViewDeletedElsewhere,
+        }),
+      );
+    });
+
+    it('leaves the page when a refresh finds the project gone', async () => {
+      const { watch, router } = await renderWatched();
+      vi.mocked(getProject).mockRejectedValue(
+        new ResponseError(new Response(null, { status: 404 })),
+      );
+
+      watch.send({
+        id: PROJECT_ID,
+        action: 'UPDATE',
+        timestamp: 1,
+        etag: '"e2"',
+      });
+
+      await waitFor(() =>
+        expect(router.state.location.pathname).toBe('/projects'),
+      );
+      expect(showNotificationMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: ProjectsI18nKeys.ViewDeletedElsewhere,
+        }),
+      );
+    });
+
+    it('closes the watch when the user leaves the page', async () => {
+      const { router } = await renderWatched();
+      const signal = vi.mocked(watchProjects).mock.calls[0][1] as AbortSignal;
+
+      await router.navigate('/projects');
+
+      await waitFor(() => expect(signal.aborted).toBe(true));
+    });
   });
 });

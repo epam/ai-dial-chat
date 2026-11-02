@@ -468,6 +468,55 @@ successful load it watches the first 1000 listed ids:
 
 A client without `watchProjects` gets a one-off load, as before.
 
+A page that shows one project keeps it current with `useProjectWatch`. It
+opens once `etag` is known, skips an event carrying the loaded `etag`, runs
+`onChange` one at a time (plus one trailing run for whatever arrived
+meanwhile), calls `onDelete` once on a delete, and reconnects with the same
+backoff as `useProjects`, followed by one `onChange`. `useProject().refresh()`
+and `useProjectConversations().refresh()` re-read without the loading state;
+`refresh` of `useProject` resolves a `ProjectRefreshOutcome` (`Updated`,
+`NotFound`, `Failed`, `Skipped`). `useProjectConversations().markViewed(id)`
+clears a row's `isUnread` at once and calls the optional
+`ProjectsApiClient.markProjectConversationViewed`.
+`createSerializedKeyedWriter(write)` returns `{ enqueue, drop }`, a queue that
+runs one write at a time and never queues a key twice, for hosts that mark
+chats viewed from more than one page.
+
+```tsx
+import {
+  ProjectRefreshOutcome,
+  createProjectsApiClient,
+  createSerializedKeyedWriter,
+  useProject,
+  useProjectConversations,
+  useProjectWatch,
+} from '@epam/ai-dial-chat-hooks/project';
+
+/* Module scope: one queue for every page that marks chats viewed. */
+const projectsRequests = createProjectsApiClient(projectsApi);
+const viewedWriter = createSerializedKeyedWriter((id) =>
+  projectsRequests.markProjectConversationViewed(id),
+);
+const projectsClient = {
+  ...projectsRequests,
+  markProjectConversationViewed: (id: string) => viewedWriter.enqueue(id),
+};
+
+const ProjectPage = () => {
+  const { project, refresh } = useProject(projectsClient, projectId, true);
+  const conversations = useProjectConversations(projectsClient, projectId);
+  useProjectWatch(projectsClient, projectId, {
+    etag: project?.etag,
+    onChange: async () => {
+      const [outcome] = await Promise.all([refresh(), conversations.refresh()]);
+      if (outcome === ProjectRefreshOutcome.NotFound) leavePage();
+    },
+    onDelete: leavePage,
+  });
+  // …
+};
+```
+
 ```tsx
 // ./offline-credentials — no peer beyond react
 import { useOfflineCredentialsGate } from '@epam/ai-dial-chat-hooks/offline-credentials';

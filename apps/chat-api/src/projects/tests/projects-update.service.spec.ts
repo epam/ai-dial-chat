@@ -84,6 +84,7 @@ const makeService = ({
     replaceProjectPin: vi.fn(async () => undefined),
     getPinnedProjectIds: vi.fn(async () => pinnedIds),
   };
+  const readState = { renameProject: vi.fn(async () => undefined) };
   const snapshotQueue = [...snapshots];
   const read = vi.fn(async () => snapshotQueue.shift() ?? snapshot);
   const service = new ProjectsUpdateService(
@@ -91,8 +92,9 @@ const makeService = ({
     new ProjectsCreateService(config),
     { read } as unknown as ProjectsSnapshotService,
     userConfig as unknown as UserConfigService,
+    readState as never,
   );
-  return { service, client, userConfig, read };
+  return { service, client, userConfig, read, readState };
 };
 
 const uploadedParts = (client: ReturnType<typeof makeService>['client']) => {
@@ -574,6 +576,42 @@ describe('ProjectsUpdateService', () => {
     expect(body.code).toBe('name-taken');
   });
 
+  it("re-keys the caller's read state after a rename", async () => {
+    const { service, readState } = makeService();
+
+    await service.updateProject(
+      PROJECT,
+      { name: 'Q4 launch' },
+      [],
+      '"cv1"',
+      USER_BUCKET,
+      'token',
+    );
+
+    expect(readState.renameProject).toHaveBeenCalledWith(
+      PROJECT.id,
+      'projects/a1b2c3/marketing/Q4 launch',
+      'token',
+      USER_BUCKET,
+    );
+  });
+
+  it('still saves a rename when the read-state migration fails', async () => {
+    const { service, readState } = makeService();
+    readState.renameProject.mockRejectedValue(new Error('core down'));
+
+    await expect(
+      service.updateProject(
+        PROJECT,
+        { name: 'Q4 launch' },
+        [],
+        '"cv1"',
+        USER_BUCKET,
+        'token',
+      ),
+    ).resolves.toMatchObject({ id: 'projects/a1b2c3/marketing/Q4 launch' });
+  });
+
   it('still saves a rename when the pin migration fails', async () => {
     const { service, userConfig } = makeService();
     userConfig.replaceProjectPin.mockRejectedValue(new Error('config down'));
@@ -757,7 +795,7 @@ describe('ProjectsUpdateService', () => {
     const warn = vi
       .spyOn(Logger.prototype, 'warn')
       .mockImplementation(() => undefined);
-    const { service, client, userConfig } = makeService({
+    const { service, client, userConfig, readState } = makeService({
       move: { error: { message: 'down' }, response: { status: 503 } },
     });
 
@@ -776,6 +814,7 @@ describe('ProjectsUpdateService', () => {
     expect(body.code).toBe('project-changed');
     expect(client.uploadProjectFolder).toHaveBeenCalledOnce();
     expect(userConfig.replaceProjectPin).not.toHaveBeenCalled();
+    expect(readState.renameProject).not.toHaveBeenCalled();
     const warned = warn.mock.calls
       .map(([message]) => String(message))
       .join('\n');

@@ -83,6 +83,11 @@ export interface ListProjectConversationsRequest {
   offset?: number;
 }
 
+export interface MarkProjectConversationViewedRequest {
+  id: string;
+  conversationName: string;
+}
+
 export interface RenameProjectConversationRequest {
   id: string;
   conversationName: string;
@@ -885,6 +890,78 @@ export class ProjectsApi extends runtime.BaseAPI {
   ): Promise<ListProjectsResponseDto> {
     const response = await this.listProjectsRaw(initOverrides);
     return await response.value();
+  }
+
+  /**
+   * Records the conversation\'s current version as seen by the caller, in the caller\'s own read state, so it is not reported unread until it changes. Any reader of the project may call it.
+   * Mark a project conversation as viewed
+   */
+  async markProjectConversationViewedRaw(
+    requestParameters: MarkProjectConversationViewedRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling markProjectConversationViewed().',
+      );
+    }
+
+    if (requestParameters['conversationName'] == null) {
+      throw new runtime.RequiredError(
+        'conversationName',
+        'Required parameter "conversationName" was null or undefined when calling markProjectConversationViewed().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/projects/{id}/conversations/{conversationName}/viewed`;
+    urlPath = urlPath.replace(
+      `{${'id'}}`,
+      encodeURIComponent(String(requestParameters['id'])),
+    );
+    urlPath = urlPath.replace(
+      `{${'conversationName'}}`,
+      encodeURIComponent(String(requestParameters['conversationName'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'PATCH',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Records the conversation\'s current version as seen by the caller, in the caller\'s own read state, so it is not reported unread until it changes. Any reader of the project may call it.
+   * Mark a project conversation as viewed
+   */
+  async markProjectConversationViewed(
+    requestParameters: MarkProjectConversationViewedRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.markProjectConversationViewedRaw(
+      requestParameters,
+      initOverrides,
+    );
   }
 
   /**

@@ -396,6 +396,7 @@
   },
   "buttons": {
     "showMore": "Show more",
+    "seeMore": "See more",
     "showLess": "Show less",
     "create": "Create",
     "browse": "Browse",
@@ -898,6 +899,7 @@
       "error": "Could not load the project",
       "notFound": "Project not found",
       "browseProjects": "Back to projects",
+      "deletedElsewhere": "This project was deleted",
       "mainContent": "Project chats"
     },
     "actions": {

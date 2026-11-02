@@ -213,11 +213,33 @@ describe('ProjectConversationsPanel', () => {
     await waitFor(() => expect(document.activeElement).toBe(nextRow));
   });
 
+  it('closes the rename dialog when a refresh removes its row', async () => {
+    const onRename = vi.fn(async () => undefined);
+    const { rerender } = renderPanel({ onRename });
+    await openRowMenu('Rename');
+    expect(await screen.findByLabelText('Chat name')).toBeTruthy();
+
+    rerender(
+      <ProjectConversationsPanel
+        items={[]}
+        onRetry={vi.fn()}
+        onOpen={vi.fn()}
+        onRename={onRename}
+        labels={labels}
+      />,
+    );
+
+    await waitFor(() =>
+      expect(screen.queryByLabelText('Chat name')).toBeNull(),
+    );
+    expect(onRename).not.toHaveBeenCalled();
+  });
+
   it('passes the load-more state through to the list', async () => {
     const onLoadMore = vi.fn();
     renderPanel({ hasMore: true, onLoadMore });
 
-    await userEvent.click(screen.getByRole('button', { name: 'Show more' }));
+    await userEvent.click(screen.getByRole('button', { name: 'See more' }));
 
     expect(onLoadMore).toHaveBeenCalledOnce();
   });

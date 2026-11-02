@@ -1,10 +1,14 @@
-import type { ProjectsApiClient } from '@epam/ai-dial-chat-hooks/project';
+import {
+  createSerializedKeyedWriter,
+  type ProjectsApiClient,
+} from '@epam/ai-dial-chat-hooks/project';
 import {
   attachToProjectGeneration,
   createProjectConversation,
   deleteProjectConversation,
   getProjectConversation,
   listProjectConversations,
+  markProjectConversationViewed,
   renameProjectConversation,
   saveProjectConversation,
 } from '../../server-api/project-conversations.api';
@@ -18,6 +22,15 @@ import {
   updateProject,
   watchProjects,
 } from '../../server-api/projects.api';
+
+/*
+ * One queue for the viewed marks of both project pages: it outlives a route
+ * change, runs one write at a time, and lets a starting generation drop a
+ * mark still waiting for its chat.
+ */
+export const projectViewedWriter = createSerializedKeyedWriter((id) =>
+  markProjectConversationViewed(id),
+);
 
 /*
  * The project requests the chat-hooks project hooks run, resolved through the
@@ -68,6 +81,7 @@ export const projectsClient: ProjectsApiClient = {
   saveProjectConversation: (...args) => saveProjectConversation(...args),
   renameProjectConversation: (...args) => renameProjectConversation(...args),
   deleteProjectConversation: (...args) => deleteProjectConversation(...args),
+  markProjectConversationViewed: (id) => projectViewedWriter.enqueue(id),
   attachToProjectGeneration: (...args) => attachToProjectGeneration(...args),
   watchProjects: (...args) => watchProjects(...args),
 };

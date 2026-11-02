@@ -50,6 +50,14 @@ export class ProjectConversationItemDto {
   @IsOptional()
   @IsInt()
   updatedAt?: number;
+
+  @ApiProperty({
+    description:
+      "Whether the conversation changed after the caller's read baseline and since the caller last viewed it; `false` when the caller's read state cannot be read.",
+    example: false,
+  })
+  @IsBoolean()
+  isUnread!: boolean;
 }
 
 /** Response of `GET /api/v1/projects/:id/conversations`. */

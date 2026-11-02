@@ -481,11 +481,12 @@ export const ConversationPage: FC<Props> = ({
    * read; leaving first never marks it, and the chat stays unread.
    */
   const isOpenChatUnread = useMemo(() => {
+    if (listSync.shouldMarkOpenChatViewed) return true;
     const openRow = conversationId
       ? conversations.find((c) => conversationIdsMatch(c.id, conversationId))
       : undefined;
     return !!openRow && !openRow.isScheduledTask && !!openRow.isUnread;
-  }, [conversations, conversationId]);
+  }, [conversations, conversationId, listSync.shouldMarkOpenChatViewed]);
   const isOpenChatLoaded =
     !isFetching && !!conversation && loadedConversationId === conversationId;
   /*

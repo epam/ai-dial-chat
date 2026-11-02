@@ -6,16 +6,19 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ButtonsI18nKeys,
   ChatI18nKeys,
+  ConversationPanelI18nKeys,
   ProjectsI18nKeys,
 } from '../../../constants/translation-keys';
 import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { createDeploymentsContextValue } from '../../../context/tests/deployments-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
+import { useProjectConversations } from '../../../hooks/projects/useProjectConversations';
 import {
   createProjectConversation,
   deleteProjectConversation,
   listProjectConversations,
+  markProjectConversationViewed,
   renameProjectConversation,
   saveProjectConversation,
 } from '../../../server-api/project-conversations.api';
@@ -82,6 +85,7 @@ vi.mock('../../../server-api/project-conversations.api', () => ({
   saveProjectConversation: vi.fn(),
   renameProjectConversation: vi.fn(),
   deleteProjectConversation: vi.fn(),
+  markProjectConversationViewed: vi.fn(),
 }));
 
 const PROJECT_ID = 'projects/a1b2c3/q4';
@@ -89,18 +93,25 @@ const CHAT_ID = `${PROJECT_ID}/conversations/gpt-4o__Old__1`;
 const showNotification = vi.fn();
 const restoreDefaultSelection = vi.fn();
 
+/* The page owns the list state; the harness plays the page. */
+const SectionHarness = ({ canEdit }: { canEdit: boolean }) => {
+  const conversations = useProjectConversations(PROJECT_ID);
+  return (
+    <ProjectConversationsSection
+      projectId={PROJECT_ID}
+      projectName="Q4 launch"
+      canEdit={canEdit}
+      conversations={conversations}
+    />
+  );
+};
+
 const renderSection = (canEdit = true) => {
   const router = createMemoryRouter(
     [
       {
         path: '/projects/view/:bucket/*',
-        element: (
-          <ProjectConversationsSection
-            projectId={PROJECT_ID}
-            projectName="Q4 launch"
-            canEdit={canEdit}
-          />
-        ),
+        element: <SectionHarness canEdit={canEdit} />,
       },
       { path: '/projects/chat/:bucket/*', element: <p>project chat</p> },
     ],
@@ -126,6 +137,35 @@ describe('ProjectConversationsSection', () => {
       items: [{ id: CHAT_ID, name: 'gpt-4o__Old__1', title: 'Old title' }],
       hasMore: false,
     });
+  });
+
+  it('marks an unread chat read and opens it', async () => {
+    vi.mocked(listProjectConversations).mockResolvedValue({
+      items: [
+        {
+          id: CHAT_ID,
+          name: 'gpt-4o__Old__1',
+          title: 'Old title',
+          isUnread: true,
+        },
+      ],
+      hasMore: false,
+    });
+    vi.mocked(markProjectConversationViewed).mockResolvedValue(undefined);
+    const { router } = renderSection();
+    const row = await screen.findByRole('button', {
+      name: ProjectsI18nKeys.ChatsOpenLabelNoAuthor,
+      description: ConversationPanelI18nKeys.UnreadIndicatorLabel,
+    });
+
+    await userEvent.click(row);
+
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe(
+        '/projects/chat/a1b2c3/q4/conversations/gpt-4o__Old__1',
+      ),
+    );
+    expect(markProjectConversationViewed).toHaveBeenCalledWith(CHAT_ID);
   });
 
   it('opens the new chat after the first message', async () => {

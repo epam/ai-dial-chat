@@ -1,5 +1,5 @@
 import {
-  InitialsAvatar,
+  buildCssVars,
   mergeClasses,
   PanelEmptyState,
 } from '@epam/ai-dial-chat-shared';
@@ -12,22 +12,23 @@ import {
   EllipsisTooltip,
   GhostButton,
   GhostIconButton,
+  LinkButton,
   Spinner,
 } from '@epam/ai-dial-ui-kit';
 import { IconDotsVertical } from '@tabler/icons-react';
-import { type FC, memo, useId, useMemo } from 'react';
+import { type FC, memo, useId, useMemo, useState } from 'react';
 import type {
   ProjectConversationListItem,
   ProjectConversationListLabels,
   ProjectConversationListProps,
 } from '../../models/project-conversation-list-props';
-
-const AVATAR_SIZE = 24;
+import styles from './ProjectConversationList.module.scss';
 
 interface RowProps {
   item: ProjectConversationListItem;
   labels: ProjectConversationListLabels;
   rowTitleClassName: string;
+  unreadRowTitleClassName: string;
   onOpen: (id: string) => void;
   onRename?: (id: string) => void;
   onDelete?: (id: string) => void;
@@ -37,10 +38,14 @@ const ConversationRow: FC<RowProps> = ({
   item,
   labels,
   rowTitleClassName,
+  unreadRowTitleClassName,
   onOpen,
   onRename,
   onDelete,
 }) => {
+  const unreadId = useId();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const isUnread = item.isUnread === true;
   const menuItems = useMemo<DropdownItem[]>(
     () => [
       ...(onRename
@@ -67,27 +72,54 @@ const ConversationRow: FC<RowProps> = ({
   );
 
   return (
-    <li className="flex min-w-0 items-center gap-1 rounded focus-within:bg-(--bg-accent-primary-alpha,rgba(92,141,234,0.15)) hover:bg-(--bg-accent-primary-alpha,rgba(92,141,234,0.15))">
+    <li className="group/row flex min-w-0 items-center gap-1 rounded-xl focus-within:bg-(--bg-accent-primary-alpha,rgba(92,141,234,0.15)) hover:bg-(--bg-accent-primary-alpha,rgba(92,141,234,0.15))">
       <button
         type="button"
         aria-label={labels.openLabel(item.title, item.authorName)}
-        className="flex min-w-0 flex-1 items-center gap-3 rounded px-3 py-2 text-start focus-visible:outline-2 focus-visible:-outline-offset-2"
+        aria-describedby={isUnread ? unreadId : undefined}
+        className="flex min-w-0 flex-1 items-center gap-3 rounded-xl p-3 text-start focus-visible:outline-2 focus-visible:-outline-offset-2"
         onClick={() => onOpen(item.id)}
       >
-        <span aria-hidden className="shrink-0">
-          <InitialsAvatar name={item.authorName ?? ''} size={AVATAR_SIZE} />
+        {/* The status point: an outline when read, filled when unread. */}
+        <span
+          aria-hidden
+          className="flex size-4 shrink-0 items-center justify-center"
+        >
+          <span
+            className={mergeClasses(
+              'size-[7.11px] rounded-full',
+              isUnread ? styles.unreadDot : styles.readDot,
+            )}
+          />
         </span>
         <EllipsisTooltip
           text={item.title}
-          className={mergeClasses('min-w-0 flex-1', rowTitleClassName)}
+          className={mergeClasses(
+            'min-w-0 flex-1',
+            isUnread ? unreadRowTitleClassName : rowTitleClassName,
+          )}
         />
       </button>
+      {isUnread && (
+        <span id={unreadId} className="sr-only">
+          {labels.unreadLabel ?? 'Unread'}
+        </span>
+      )}
       {menuItems.length > 0 && (
-        <Dropdown items={menuItems} placement="bottom-end">
+        <Dropdown
+          items={menuItems}
+          placement="bottom-end"
+          onOpenChange={setIsMenuOpen}
+        >
+          {/* On desktop the trigger shows on hover, focus or while its menu is open; touch screens have no hover, so it always shows there. */}
           <GhostIconButton
             aria-label={labels.moreActionsLabel(item.title)}
             size={ElementSize.Small}
-            className="me-2 shrink-0"
+            className={mergeClasses(
+              'me-2 shrink-0',
+              !isMenuOpen &&
+                'desktop:opacity-0 desktop:group-focus-within/row:opacity-100 desktop:group-hover/row:opacity-100',
+            )}
             icon={
               <IconDotsVertical
                 aria-hidden
@@ -115,10 +147,21 @@ const ProjectConversationListComponent: FC<ProjectConversationListProps> = ({
   onDelete,
   labels,
   typography,
+  colors,
 }) => {
   const headingId = useId();
   const titleClassName = typography?.titleClassName ?? 'dial-body-semi-text';
   const rowTitleClassName = typography?.rowTitleClassName ?? 'dial-body-text';
+  const unreadRowTitleClassName =
+    typography?.unreadRowTitleClassName ?? 'dial-body-semi-text';
+  const cssVars = useMemo(
+    () =>
+      buildCssVars({
+        '--pcl-read-dot': colors?.readDot,
+        '--pcl-unread-dot': colors?.unreadDot,
+      }),
+    [colors?.readDot, colors?.unreadDot],
+  );
   const messageClassName = typography?.messageClassName ?? 'dial-small-text';
   /* The design shows only the empty state, with no Chats heading, while the project has no chats. */
   const isEmpty = !isLoading && !hasError && items.length === 0;
@@ -160,13 +203,14 @@ const ProjectConversationListComponent: FC<ProjectConversationListProps> = ({
     }
     return (
       <>
-        <ul className="m-0 flex min-w-0 list-none flex-col gap-1 p-0">
+        <ul className="m-0 flex min-w-0 list-none flex-col gap-2 p-0">
           {items.map((item) => (
             <ConversationRow
               key={item.id}
               item={item}
               labels={labels}
               rowTitleClassName={rowTitleClassName}
+              unreadRowTitleClassName={unreadRowTitleClassName}
               onOpen={onOpen}
               onRename={onRename}
               onDelete={onDelete}
@@ -174,9 +218,9 @@ const ProjectConversationListComponent: FC<ProjectConversationListProps> = ({
           ))}
         </ul>
         {hasMore && onLoadMore && (
-          <GhostButton
-            className="self-center"
-            label={labels.loadMoreLabel ?? 'Show more'}
+          <LinkButton
+            className="self-start"
+            label={labels.loadMoreLabel ?? 'See more'}
             disabled={isLoadingMore}
             onClick={onLoadMore}
           />
@@ -189,7 +233,8 @@ const ProjectConversationListComponent: FC<ProjectConversationListProps> = ({
     <section
       aria-labelledby={isEmpty ? undefined : headingId}
       aria-label={isEmpty ? labels.title : undefined}
-      className="flex min-w-0 flex-col gap-2"
+      className="flex min-w-0 flex-col gap-2 pt-3"
+      style={cssVars}
     >
       {!isEmpty && (
         <h2 id={headingId} className={mergeClasses('m-0', titleClassName)}>

@@ -35,7 +35,7 @@ const makeCache = (): Cache => {
   } as unknown as Cache;
 };
 
-const makeService = (responses: unknown[]) => {
+const makeService = (responses: unknown[], readState: unknown = null) => {
   const queue = [...responses];
   const client = {
     listProjectFileMetadata: vi.fn(async () => queue.shift()),
@@ -47,12 +47,16 @@ const makeService = (responses: unknown[]) => {
     })),
   };
   const cache = makeCache();
+  const readStateService = {
+    getProjectReadState: vi.fn(async () => readState),
+  };
   const service = new ProjectConversationsListService(
     { client } as unknown as DialClientService,
     store as unknown as ProjectConversationStore,
     cache as never,
+    readStateService as never,
   );
-  return { service, client, store, cache };
+  return { service, client, store, cache, readStateService };
 };
 
 describe('ProjectConversationsListService', () => {
@@ -70,7 +74,11 @@ describe('ProjectConversationsListService', () => {
       listing([file(OLDER, 1), file(NEWER, 2)]),
     ]);
 
-    const result = await service.listProjectConversations(PROJECT, 'token');
+    const result = await service.listProjectConversations(
+      PROJECT,
+      'token',
+      'a1b2c3',
+    );
 
     expect(result).toEqual({
       items: [
@@ -80,6 +88,7 @@ describe('ProjectConversationsListService', () => {
           title: 'Body of Newer chat',
           author: 'Valery Tester',
           updatedAt: 2,
+          isUnread: false,
         },
         expect.objectContaining({ name: OLDER, title: 'Body of Older chat' }),
       ],
@@ -101,7 +110,12 @@ describe('ProjectConversationsListService', () => {
       listing([file('gpt-4o__B__2', 2), file('gpt-4o__C__3', 3)]),
     ]);
 
-    const result = await service.listProjectConversations(PROJECT, 'token', 2);
+    const result = await service.listProjectConversations(
+      PROJECT,
+      'token',
+      'a1b2c3',
+      2,
+    );
 
     expect(client.listProjectFileMetadata).toHaveBeenCalledTimes(2);
     expect(result.items.map((item) => item.name)).toEqual([
@@ -123,6 +137,7 @@ describe('ProjectConversationsListService', () => {
     const result = await service.listProjectConversations(
       PROJECT,
       'token',
+      'a1b2c3',
       2,
       2,
     );
@@ -136,7 +151,11 @@ describe('ProjectConversationsListService', () => {
       listing([{ name: 'nested', nodeType: 'FOLDER' }, file(OLDER, 1)]),
     ]);
 
-    const result = await service.listProjectConversations(PROJECT, 'token');
+    const result = await service.listProjectConversations(
+      PROJECT,
+      'token',
+      'a1b2c3',
+    );
 
     expect(result.items.map((item) => item.name)).toEqual([OLDER]);
   });
@@ -147,8 +166,8 @@ describe('ProjectConversationsListService', () => {
       listing([file(OLDER, 1)]),
     ]);
 
-    await service.listProjectConversations(PROJECT, 'token');
-    await service.listProjectConversations(PROJECT, 'token');
+    await service.listProjectConversations(PROJECT, 'token', 'a1b2c3');
+    await service.listProjectConversations(PROJECT, 'token', 'a1b2c3');
 
     expect(store.readConversationWithEtag).toHaveBeenCalledOnce();
   });
@@ -160,12 +179,12 @@ describe('ProjectConversationsListService', () => {
       listing([file(OLDER, 2)]),
     ]);
 
-    await service.listProjectConversations(PROJECT, 'token');
-    await service.listProjectConversations(PROJECT, 'token');
+    await service.listProjectConversations(PROJECT, 'token', 'a1b2c3');
+    await service.listProjectConversations(PROJECT, 'token', 'a1b2c3');
     await service.evict(
       `projects/a1b2c3/support-quality/conversations/${OLDER}`,
     );
-    await service.listProjectConversations(PROJECT, 'token');
+    await service.listProjectConversations(PROJECT, 'token', 'a1b2c3');
 
     expect(store.readConversationWithEtag).toHaveBeenCalledTimes(3);
   });
@@ -174,7 +193,11 @@ describe('ProjectConversationsListService', () => {
     const { service, store } = makeService([listing([file(OLDER, 1)])]);
     store.readConversationWithEtag.mockRejectedValueOnce(new Error('boom'));
 
-    const result = await service.listProjectConversations(PROJECT, 'token');
+    const result = await service.listProjectConversations(
+      PROJECT,
+      'token',
+      'a1b2c3',
+    );
 
     expect(result.items[0].title).toBe('Older chat');
   });
@@ -189,7 +212,7 @@ describe('ProjectConversationsListService', () => {
     ]);
 
     await expect(
-      service.listProjectConversations(PROJECT, 'token'),
+      service.listProjectConversations(PROJECT, 'token', 'a1b2c3'),
     ).resolves.toEqual({ items: [], hasMore: false });
   });
 
@@ -208,8 +231,128 @@ describe('ProjectConversationsListService', () => {
       return { conversation: { name: 't' }, etag: null } as never;
     });
 
-    await service.listProjectConversations(PROJECT, 'token');
+    await service.listProjectConversations(PROJECT, 'token', 'a1b2c3');
 
     expect(peak).toBe(4);
+  });
+});
+
+describe('ProjectConversationsListService — unread', () => {
+  const LOCATOR = `projects/a1b2c3/support-quality/conversations/${NEWER}`;
+
+  beforeEach(() => {
+    vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, 'debug').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const stateWith = (versions: [string, string][] = []) => ({
+    readBefore: 100,
+    versions: new Map(versions),
+  });
+
+  it("reads the caller's project read state from the session bucket", async () => {
+    const { service, readStateService } = makeService(
+      [listing([file(NEWER, 200)])],
+      stateWith(),
+    );
+
+    await service.listProjectConversations(PROJECT, 'token', 'u-bucket');
+
+    expect(readStateService.getProjectReadState).toHaveBeenCalledWith(
+      PROJECT.id,
+      'token',
+      'u-bucket',
+    );
+  });
+
+  it('reports a chat changed after the baseline and never viewed as unread', async () => {
+    const { service } = makeService([listing([file(NEWER, 200)])], stateWith());
+
+    const { items } = await service.listProjectConversations(
+      PROJECT,
+      'token',
+      'a1b2c3',
+    );
+
+    expect(items[0].isUnread).toBe(true);
+  });
+
+  it('reports a chat viewed at its current version as read', async () => {
+    const { service } = makeService(
+      [listing([file(NEWER, 200)])],
+      stateWith([[LOCATOR, '"sha256:x"']]),
+    );
+
+    const { items } = await service.listProjectConversations(
+      PROJECT,
+      'token',
+      'a1b2c3',
+    );
+
+    expect(items[0].isUnread).toBe(false);
+  });
+
+  it('reports a chat older than the baseline as read', async () => {
+    const { service } = makeService([listing([file(NEWER, 50)])], stateWith());
+
+    const { items } = await service.listProjectConversations(
+      PROJECT,
+      'token',
+      'a1b2c3',
+    );
+
+    expect(items[0].isUnread).toBe(false);
+  });
+
+  it('takes the version from the title cache without reading the body again', async () => {
+    const { service, store } = makeService(
+      [listing([file(NEWER, 200)]), listing([file(NEWER, 200)])],
+      stateWith([[LOCATOR, 'sha256:old']]),
+    );
+
+    await service.listProjectConversations(PROJECT, 'token', 'a1b2c3');
+    const { items } = await service.listProjectConversations(
+      PROJECT,
+      'token',
+      'a1b2c3',
+    );
+
+    expect(store.readConversationWithEtag).toHaveBeenCalledOnce();
+    expect(items[0].isUnread).toBe(true);
+  });
+
+  it('reports a chat whose body cannot be read as read', async () => {
+    const { service, store } = makeService(
+      [listing([file(NEWER, 200)])],
+      stateWith(),
+    );
+    store.readConversationWithEtag.mockRejectedValue(new Error('down'));
+
+    const { items } = await service.listProjectConversations(
+      PROJECT,
+      'token',
+      'a1b2c3',
+    );
+
+    expect(items[0].isUnread).toBe(false);
+  });
+
+  it('reports every chat as read when the read state is unavailable', async () => {
+    const { service } = makeService(
+      [listing([file(NEWER, 200), file(OLDER, 300)])],
+      null,
+    );
+
+    const { items } = await service.listProjectConversations(
+      PROJECT,
+      'token',
+      'a1b2c3',
+    );
+
+    expect(items.map((item) => item.isUnread)).toEqual([false, false]);
   });
 });

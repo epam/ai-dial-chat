@@ -15,6 +15,8 @@ export interface ConversationListSync {
   markViewed: (id: string) => Promise<void>;
   remove: (id: string) => void;
   refresh: (expectedIds?: readonly string[]) => Promise<void>;
+  /** The open chat is marked viewed without a sidebar row saying it is unread; a project chat has no row. */
+  shouldMarkOpenChatViewed?: boolean;
 }
 
 /**

@@ -23,7 +23,7 @@ import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useComposerMenus } from '../../hooks/conversation/useComposerMenus';
 import { useLanguage } from '../../hooks/language/useLanguage';
-import { useProjectConversations } from '../../hooks/projects/useProjectConversations';
+import type { ProjectConversationsState } from '../../hooks/projects/useProjectConversations';
 import { useProjectConversationsPanelLabels } from '../../hooks/projects/useProjectConversationsPanelLabels';
 import type { ProjectChatProjectSummary } from '../../models/project-chat';
 import {
@@ -47,6 +47,8 @@ interface Props {
   projectName: string;
   /** Whether the caller owns the project: only an owner chats, renames and deletes. */
   canEdit: boolean;
+  /** The Chats list state, owned by the page so its live updates can refresh it. */
+  conversations: ProjectConversationsState;
   /** Called after a chat is deleted, so the page can keep its chat count current. */
   onConversationDeleted?: () => void;
 }
@@ -55,6 +57,7 @@ const ProjectConversationsSection: FC<Props> = ({
   projectId,
   projectName,
   canEdit,
+  conversations,
   onConversationDeleted,
 }) => {
   const { t } = useTranslation();
@@ -72,7 +75,8 @@ const ProjectConversationsSection: FC<Props> = ({
     loadMore,
     rename,
     remove,
-  } = useProjectConversations(projectId);
+    markViewed,
+  } = conversations;
   const {
     items: deployments,
     selectedItemId,
@@ -212,9 +216,11 @@ const ProjectConversationsSection: FC<Props> = ({
   );
 
   const handleOpen = useCallback(
-    (id: string) =>
-      navigate(getProjectConversationRoute(id), { state: { project } }),
-    [navigate, project],
+    (id: string) => {
+      markViewed(id);
+      navigate(getProjectConversationRoute(id), { state: { project } });
+    },
+    [markViewed, navigate, project],
   );
 
   const handleRename = useCallback(

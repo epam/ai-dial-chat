@@ -3,8 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DialClientService } from '../../dial/dial-client.service';
 import {
   ConversationReadStateService,
+  isProjectConversationUnread,
   isRegularConversationUnread,
 } from '../conversation-read-state.service';
+import { parseViewedConversations } from '../dto/viewed-conversations.dto';
 
 const BASELINE_PATH = '.client_data/.conversations-read-baseline.json';
 const VIEWED_PATH = '.client_data/.viewed-conversations.json';
@@ -383,5 +385,292 @@ describe('isRegularConversationUnread', () => {
     expect(
       isRegularConversationUnread(encoded, 'conversations/b/My%20chat', 10),
     ).toBe(false);
+  });
+});
+
+describe('parseViewedConversations', () => {
+  it('reads a file without the project field as an empty project map', () => {
+    expect(
+      parseViewedConversations({ version: 1, conversationIds: ['c'] }),
+    ).toEqual({
+      version: 1,
+      conversationIds: ['c'],
+      projectConversationIds: {},
+    });
+  });
+
+  it('drops malformed project entries and non-string versions and keeps the rest', () => {
+    expect(
+      parseViewedConversations({
+        version: 1,
+        conversationIds: [],
+        projectConversationIds: {
+          'projects/a/p': ['not-a-map'],
+          'projects/a/q': {
+            'projects/a/q/conversations/c': 'sha256:1',
+            'projects/a/q/conversations/d': 7,
+          },
+          'projects/a/r': { 'projects/a/r/conversations/e': null },
+        },
+      }).projectConversationIds,
+    ).toEqual({
+      'projects/a/q': { 'projects/a/q/conversations/c': 'sha256:1' },
+    });
+  });
+
+  it('reads a non-object project field as an empty map', () => {
+    expect(
+      parseViewedConversations({ projectConversationIds: 'x' })
+        .projectConversationIds,
+    ).toEqual({});
+  });
+});
+
+describe('ConversationReadStateService — project read state', () => {
+  const PROJECT = 'projects/a1b2c3/q4';
+  const CHAT = `${PROJECT}/conversations/gpt__Summary__1`;
+
+  beforeEach(() => {
+    vi.spyOn(Date, 'now').mockReturnValue(NOW);
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const stored = (bucket: ReturnType<typeof makeBucket>) =>
+    JSON.parse(bucket.files[VIEWED_PATH]);
+
+  it('returns the baseline and the versions of one project, creating the baseline when missing', async () => {
+    const bucket = makeBucket({
+      [VIEWED_PATH]: json({
+        version: 1,
+        conversationIds: [],
+        projectConversationIds: {
+          [PROJECT]: { [CHAT]: 'sha256:1' },
+          'projects/a1b2c3/other': { x: 'sha256:9' },
+        },
+      }),
+    });
+
+    const state = await makeService(bucket.dialClient).getProjectReadState(
+      PROJECT,
+      'token',
+      'b',
+    );
+
+    expect(state?.readBefore).toBe(NOW);
+    expect([...(state?.versions ?? [])]).toEqual([[CHAT, 'sha256:1']]);
+    expect(bucket.uploads).toEqual([BASELINE_PATH]);
+  });
+
+  it('fails closed when the viewed file cannot be read', async () => {
+    const bucket = makeBucket(
+      { [BASELINE_PATH]: json({ version: 1, readBefore: 1 }) },
+      { [VIEWED_PATH]: 503 },
+    );
+
+    await expect(
+      makeService(bucket.dialClient).getProjectReadState(PROJECT, 't', 'b'),
+    ).resolves.toBeNull();
+  });
+
+  it('stores the viewed version and keeps the regular ids', async () => {
+    const bucket = makeBucket({
+      [VIEWED_PATH]: json({ version: 1, conversationIds: ['conversations/x'] }),
+    });
+
+    await makeService(bucket.dialClient).markProjectConversationViewed(
+      PROJECT,
+      CHAT,
+      'sha256:2',
+      't',
+      'b',
+    );
+
+    expect(stored(bucket)).toEqual({
+      version: 1,
+      conversationIds: ['conversations/x'],
+      projectConversationIds: { [PROJECT]: { [CHAT]: 'sha256:2' } },
+    });
+  });
+
+  it('does not upload when the viewed version is unchanged', async () => {
+    const bucket = makeBucket({
+      [VIEWED_PATH]: json({
+        version: 1,
+        conversationIds: [],
+        projectConversationIds: { [PROJECT]: { [CHAT]: 'sha256:2' } },
+      }),
+    });
+
+    await makeService(bucket.dialClient).markProjectConversationViewed(
+      PROJECT,
+      CHAT,
+      'sha256:2',
+      't',
+      'b',
+    );
+
+    expect(bucket.uploads).toEqual([]);
+  });
+
+  it('keeps the project state when a regular chat is marked viewed', async () => {
+    const projects = { [PROJECT]: { [CHAT]: 'sha256:1' } };
+    const bucket = makeBucket({
+      [VIEWED_PATH]: json({
+        version: 1,
+        conversationIds: [],
+        projectConversationIds: projects,
+      }),
+    });
+
+    await makeService(bucket.dialClient).addViewed(
+      'conversations/b/chat',
+      't',
+      'b',
+    );
+
+    expect(stored(bucket).projectConversationIds).toEqual(projects);
+  });
+
+  it('carries a viewed version over a write the user did not see as a change', async () => {
+    const bucket = makeBucket({
+      [VIEWED_PATH]: json({
+        version: 1,
+        conversationIds: [],
+        projectConversationIds: { [PROJECT]: { [CHAT]: 'sha256:1' } },
+      }),
+    });
+    const service = makeService(bucket.dialClient);
+
+    await service.carryProjectConversationViewed(
+      PROJECT,
+      CHAT,
+      'sha256:1',
+      'sha256:2',
+      't',
+      'b',
+    );
+    await service.carryProjectConversationViewed(
+      PROJECT,
+      CHAT,
+      'sha256:9',
+      'sha256:3',
+      't',
+      'b',
+    );
+
+    expect(stored(bucket).projectConversationIds).toEqual({
+      [PROJECT]: { [CHAT]: 'sha256:2' },
+    });
+    expect(bucket.uploads).toEqual([VIEWED_PATH]);
+  });
+
+  it('does not mark a never-viewed chat when carrying a version', async () => {
+    const bucket = makeBucket({
+      [VIEWED_PATH]: json({ version: 1, conversationIds: [] }),
+    });
+
+    await makeService(bucket.dialClient).carryProjectConversationViewed(
+      PROJECT,
+      CHAT,
+      'sha256:1',
+      'sha256:2',
+      't',
+      'b',
+    );
+
+    expect(bucket.uploads).toEqual([]);
+  });
+
+  it('removes a conversation and drops the emptied project key', async () => {
+    const bucket = makeBucket({
+      [VIEWED_PATH]: json({
+        version: 1,
+        conversationIds: [],
+        projectConversationIds: { [PROJECT]: { [CHAT]: 'sha256:1' } },
+      }),
+    });
+
+    await makeService(bucket.dialClient).removeProjectConversation(
+      PROJECT,
+      CHAT,
+      't',
+      'b',
+    );
+
+    expect(stored(bucket).projectConversationIds).toEqual({});
+  });
+
+  it('does not upload when removing an absent project', async () => {
+    const bucket = makeBucket({
+      [VIEWED_PATH]: json({ version: 1, conversationIds: [] }),
+    });
+
+    await makeService(bucket.dialClient).removeProject(PROJECT, 't', 'b');
+
+    expect(bucket.uploads).toEqual([]);
+  });
+
+  it('re-keys a renamed project and rewrites its locators', async () => {
+    const NEW = 'projects/a1b2c3/q4-final';
+    const bucket = makeBucket({
+      [VIEWED_PATH]: json({
+        version: 1,
+        conversationIds: [],
+        projectConversationIds: {
+          [PROJECT]: { [CHAT]: 'sha256:1' },
+          [NEW]: { [`${NEW}/conversations/kept`]: 'sha256:5' },
+        },
+      }),
+    });
+
+    await makeService(bucket.dialClient).renameProject(PROJECT, NEW, 't', 'b');
+
+    expect(stored(bucket).projectConversationIds).toEqual({
+      [NEW]: {
+        [`${NEW}/conversations/kept`]: 'sha256:5',
+        [`${NEW}/conversations/gpt__Summary__1`]: 'sha256:1',
+      },
+    });
+  });
+});
+
+describe('isProjectConversationUnread', () => {
+  const CHAT = 'projects/a/p/conversations/c';
+  const state = {
+    readBefore: 1000,
+    versions: new Map([[CHAT, 'sha256:1']]),
+  };
+
+  it('is read when updated at or before the baseline', () => {
+    expect(isProjectConversationUnread(state, 'x', 1000, 'sha256:9')).toBe(
+      false,
+    );
+  });
+
+  it('is unread when changed after the baseline and never viewed', () => {
+    expect(isProjectConversationUnread(state, 'x', 1001, 'sha256:9')).toBe(
+      true,
+    );
+  });
+
+  it('is read when the viewed version is the current one', () => {
+    expect(isProjectConversationUnread(state, CHAT, 5000, 'sha256:1')).toBe(
+      false,
+    );
+  });
+
+  it('is unread when a newer version exists than the one viewed', () => {
+    expect(isProjectConversationUnread(state, CHAT, 5000, 'sha256:2')).toBe(
+      true,
+    );
+  });
+
+  it('is read when the version or the time is unknown', () => {
+    expect(isProjectConversationUnread(state, 'x', 5000, undefined)).toBe(
+      false,
+    );
+    expect(isProjectConversationUnread(state, 'x', undefined, 'v')).toBe(false);
   });
 });

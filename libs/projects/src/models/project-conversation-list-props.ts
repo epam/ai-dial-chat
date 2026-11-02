@@ -4,8 +4,10 @@ export interface ProjectConversationListItem {
   id: string;
   /** Display title. */
   title: string;
-  /** Display name of the conversation's author; drives the avatar initials. */
+  /** Display name of the conversation's author; part of the row's accessible name. */
   authorName?: string;
+  /** Whether the conversation changed since the viewer last opened it. Defaults to `false`. */
+  isUnread?: boolean;
 }
 
 /** Localized labels used by the {@link ProjectConversationList} component. */
@@ -30,8 +32,10 @@ export interface ProjectConversationListLabels {
   emptyTitle: string;
   /** Empty-state description. */
   emptyDescription: string;
-  /** Label of the action that loads more conversations. Defaults to `'Show more'`. */
+  /** Label of the link that loads more conversations. Defaults to `'See more'`. */
   loadMoreLabel?: string;
+  /** Accessible description of an unread row. Defaults to `'Unread'`. */
+  unreadLabel?: string;
 }
 
 /** Typography overrides for the {@link ProjectConversationList} component. */
@@ -40,8 +44,18 @@ export interface ProjectConversationListTypography {
   titleClassName?: string;
   /** CSS class applied to each row title. Defaults to `'dial-body-text'`. */
   rowTitleClassName?: string;
+  /** CSS class applied to the title of an unread row. Defaults to `'dial-body-semi-text'`. */
+  unreadRowTitleClassName?: string;
   /** CSS class applied to the error text. Defaults to `'dial-small-text'`. */
   messageClassName?: string;
+}
+
+/** Color overrides for the {@link ProjectConversationList} component, applied as CSS custom properties. */
+export interface ProjectConversationListColors {
+  /** Outline of a read row's status point. Defaults to `--stroke-secondary`. */
+  readDot?: string;
+  /** Fill of an unread row's status point. Defaults to `--text-accent`. */
+  unreadDot?: string;
 }
 
 /** Props for the {@link ProjectConversationList} component. */
@@ -70,4 +84,6 @@ export interface ProjectConversationListProps {
   labels: ProjectConversationListLabels;
   /** Typography overrides. */
   typography?: ProjectConversationListTypography;
+  /** Color overrides. */
+  colors?: ProjectConversationListColors;
 }

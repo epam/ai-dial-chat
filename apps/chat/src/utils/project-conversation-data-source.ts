@@ -13,7 +13,11 @@ import {
   getProjectViewRoute,
 } from '../constants/routes';
 import { ProjectsI18nKeys } from '../constants/translation-keys';
-import type { ConversationDataSource } from '../models/conversation-data-source';
+import { projectViewedWriter } from '../hooks/projects/projects-client';
+import type {
+  ConversationDataSource,
+  ConversationListSync,
+} from '../models/conversation-data-source';
 import { ApiEndpoints, getCsrfToken, setCsrfToken } from '../server-api/base';
 import {
   attachToProjectGeneration,
@@ -30,6 +34,24 @@ const TITLE_READ_DELAY_MS = 2_000;
 /* Re-read interval of a generation resumed without attach. */
 const WATCH_POLL_INTERVAL_MS = 5_000;
 const WATCH_UPDATE_FRAME = 'data: {"action":"UPDATE"}\n\n';
+
+/*
+ * A project chat has no sidebar row, so the page marks the open chat viewed
+ * itself, through the queue the project view's list shares; a generation
+ * starting drops a mark still waiting for its chat.
+ */
+const PROJECT_CONVERSATION_LIST_SYNC: ConversationListSync = {
+  ...NO_CONVERSATION_LIST_SYNC,
+  markUnread: (id) => projectViewedWriter.drop(id),
+  markViewed: async (id) => {
+    try {
+      await projectViewedWriter.enqueue(id);
+    } catch {
+      /* The next open or finished generation marks it again. */
+    }
+  },
+  shouldMarkOpenChatViewed: true,
+};
 
 /* A stream path is the conversation id without `projects/`. */
 const toConversationId = (path: string): string =>
@@ -161,7 +183,7 @@ export const createProjectConversationDataSource = ({
     getConversationRoute: getProjectConversationRoute,
     getExitRoute: () => getProjectViewRoute(projectId),
     isReadOnly: () => !canEdit,
-    listSync: NO_CONVERSATION_LIST_SYNC,
+    listSync: PROJECT_CONVERSATION_LIST_SYNC,
     canDuplicate: false,
     notFoundMessageKey: ProjectsI18nKeys.ChatNotFound,
   };

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import type {
   ProjectConversationListItem,
   ProjectConversationListLabels,
+  ProjectConversationListColors,
   ProjectConversationListTypography,
 } from './project-conversation-list-props';
 
@@ -56,4 +57,6 @@ export interface ProjectConversationsPanelProps {
   labels: ProjectConversationsPanelLabels;
   /** Typography overrides of the Chats list. */
   listTypography?: ProjectConversationListTypography;
+  /** Color overrides of the Chats list. */
+  listColors?: ProjectConversationListColors;
 }
