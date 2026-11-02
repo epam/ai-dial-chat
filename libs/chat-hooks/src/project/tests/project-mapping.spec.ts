@@ -5,6 +5,7 @@ import {
 import { ProjectSource } from '@epam/ai-dial-projects';
 import { describe, expect, it } from 'vitest';
 import {
+  mapProjectArtifactsToOutputs,
   mapProjectDetailsToViewModel,
   mapProjectDtoToItem,
   mapStoredContextFiles,
@@ -101,5 +102,21 @@ describe('mapStoredContextFiles', () => {
     });
     /* Empty, not octet-stream, so the card labels it `.xlsx` rather than `.bin`. */
     expect(xlsx.contentType).toBe('');
+  });
+});
+
+describe('mapProjectArtifactsToOutputs', () => {
+  it('keeps the listing order and infers each content type from the name', () => {
+    expect(
+      mapProjectArtifactsToOutputs([
+        { name: 'summary.md', updatedAt: 3, author: 'Jane Doe' },
+        { name: 'report.pdf', updatedAt: 2 },
+        { name: 'raw.unknownext' },
+      ]),
+    ).toEqual([
+      { name: 'summary.md', contentType: 'text/markdown' },
+      { name: 'report.pdf', contentType: 'application/pdf' },
+      { name: 'raw.unknownext', contentType: '' },
+    ]);
   });
 });

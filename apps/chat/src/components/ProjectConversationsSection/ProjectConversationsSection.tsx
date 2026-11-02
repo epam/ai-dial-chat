@@ -13,7 +13,14 @@ import type { Attachment, DeploymentItem } from '@epam/ai-dial-chat-shared';
 import { ProjectConversationsPanel } from '@epam/ai-dial-projects';
 import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
 import { IconTelescope } from '@tabler/icons-react';
-import { memo, useCallback, useEffect, useMemo, type FC } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  type FC,
+  type ReactNode,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { getProjectConversationRoute } from '../../constants/routes';
@@ -52,6 +59,8 @@ interface Props {
   conversations: ProjectConversationsState;
   /** Called after a chat is deleted, so the page can keep its chat count current. */
   onConversationDeleted?: () => void;
+  /** The page's Outputs section, rendered between the chat input and the Chats list; omitted when unset. */
+  outputs?: ReactNode;
 }
 
 const ProjectConversationsSection: FC<Props> = ({
@@ -60,6 +69,7 @@ const ProjectConversationsSection: FC<Props> = ({
   canEdit,
   conversations,
   onConversationDeleted,
+  outputs,
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -315,6 +325,7 @@ const ProjectConversationsSection: FC<Props> = ({
             />
           ) : undefined
         }
+        outputs={outputs}
         items={items}
         isLoading={isLoading}
         hasError={hasError}

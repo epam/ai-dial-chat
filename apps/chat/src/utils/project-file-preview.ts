@@ -6,10 +6,13 @@ import {
 import {
   isStoredContextFile,
   type ProjectContextFile,
+  type ProjectOutputItem,
 } from '@epam/ai-dial-projects';
-import { toProjectContextFileUrl } from './dial-file';
+import { toProjectArtifactUrl, toProjectContextFileUrl } from './dial-file';
 
 const PREVIEW_KEY_SEPARATOR = '::';
+/* A context file name never contains `/`, so this prefix keeps an output's card id apart from a context file's. */
+const OUTPUT_CARD_ID_PREFIX = 'artifacts/';
 
 /** A project file card the page opens in the canvas: its card id, name and MIME type. */
 interface ProjectFileCard {
@@ -31,18 +34,49 @@ export const fromProjectPreviewKey = (
   return key?.startsWith(prefix) ? key.slice(prefix.length) : undefined;
 };
 
-/** The attachment for a file stored in a project: its `url` is the context file locator, which the canvas content resolvers fetch like any DIAL file. */
+/** Card id of an output in a project preview key, `artifacts/{name}`. */
+export const toProjectOutputCardId = (name: string): string =>
+  `${OUTPUT_CARD_ID_PREFIX}${name}`;
+
+/** Output name behind a card id, or `undefined` when the card is not an output. */
+export const fromProjectOutputCardId = (
+  cardId: string | undefined,
+): string | undefined =>
+  cardId?.startsWith(OUTPUT_CARD_ID_PREFIX)
+    ? cardId.slice(OUTPUT_CARD_ID_PREFIX.length)
+    : undefined;
+
+/**
+ * The attachment for a file stored in a project: its `url` is the file's
+ * locator (a context file's by default), which the canvas content resolvers
+ * fetch like any DIAL file.
+ */
 export const toStoredProjectFileAttachment = (
   { id, name, contentType }: ProjectFileCard,
   projectId: string,
+  toLocator: (
+    projectId: string,
+    name: string,
+  ) => string = toProjectContextFileUrl,
 ): DisplayAttachment => ({
   id,
   name,
   contentType,
   type: getAttachmentTypeFromMime(contentType),
   status: RequestStatus.Idle,
-  url: toProjectContextFileUrl(projectId, name),
+  url: toLocator(projectId, name),
 });
+
+/** The attachment the project view opens in the canvas for one of its outputs; its `url` is the output locator. */
+export const toProjectOutputAttachment = (
+  { name, contentType }: ProjectOutputItem,
+  projectId: string,
+): DisplayAttachment =>
+  toStoredProjectFileAttachment(
+    { id: name, name, contentType },
+    projectId,
+    toProjectArtifactUrl,
+  );
 
 /**
  * The attachment a project form opens in the canvas for one of its cards: a

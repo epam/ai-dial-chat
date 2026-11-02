@@ -22,6 +22,7 @@ import { projectPayloadTooLarge } from '../utils/project-create-error.util';
 import {
   type ParsedProjectManifest,
   parseProjectManifest,
+  PROJECT_ARTIFACTS_FOLDER,
   PROJECT_CONTEXT_FOLDER,
   PROJECT_MANIFEST_FILE,
 } from '../utils/project-manifest.util';
@@ -41,9 +42,10 @@ export interface ProjectSnapshot {
   etag: string;
   /**
    * SHA-256 over the path, CRC-32 and size of every entry except
-   * `conversationEntries`, quoted like an entity tag. A conversation write
-   * changes `etag` but never this; an edit of `PROJECT.md`, `context/` or any
-   * other path does. `PUT` and `DELETE` take it in `If-Match`.
+   * `conversationEntries` and `artifactEntries`, quoted like an entity tag. A
+   * conversation or artifact write changes `etag` but never this; an edit of
+   * `PROJECT.md`, `context/` or any other path does. `PUT` and `DELETE` take
+   * it in `If-Match`.
    */
   contentVersion: string;
   /** Parsed `PROJECT.md`, or `null` when the project has none (or it is too large). */
@@ -54,6 +56,8 @@ export interface ProjectSnapshot {
   contextFiles: ProjectSnapshotFile[];
   /** Direct children of `conversations/` (project conversations), sorted by name; never inflated by a read. */
   conversationEntries: ProjectSnapshotFile[];
+  /** Every path under `artifacts/`, nested ones included, sorted; agents write them, and a save keeps their bytes and path. */
+  artifactEntries: string[];
   /** Every other file path (nested `context/` and `conversations/` paths included); a save keeps its bytes and path. */
   otherEntries: string[];
   /** Inflates one entry by its archive path. */
@@ -63,6 +67,7 @@ export interface ProjectSnapshot {
 const SNAPSHOT_CONTEXT = 'projects.readSnapshot';
 const CONTEXT_PREFIX = `${PROJECT_CONTEXT_FOLDER}/`;
 const CONVERSATIONS_PREFIX = `${PROJECT_CONVERSATIONS_FOLDER}/`;
+const ARTIFACTS_PREFIX = `${PROJECT_ARTIFACTS_FOLDER}/`;
 
 /* The name of a direct child of `prefix`, or `null` for any other path. */
 const directChildName = (path: string, prefix: string): string | null => {
@@ -344,6 +349,7 @@ export class ProjectsSnapshotService {
 
     const contextFiles: ProjectSnapshotFile[] = [];
     const conversationEntries: ProjectSnapshotFile[] = [];
+    const artifactEntries: string[] = [];
     const otherEntries: string[] = [];
     const versionedEntries: { path: string; crc32: number; size: number }[] =
       [];
@@ -354,6 +360,11 @@ export class ProjectsSnapshotService {
           name: conversationName,
           size: entry.uncompressedSize,
         });
+        continue;
+      }
+      /* Agents write here at any time; an edit must not fail because of it. */
+      if (entryPath.startsWith(ARTIFACTS_PREFIX)) {
+        artifactEntries.push(entryPath);
         continue;
       }
       versionedEntries.push({
@@ -371,6 +382,7 @@ export class ProjectsSnapshotService {
     }
     contextFiles.sort(byName);
     conversationEntries.sort(byName);
+    artifactEntries.sort();
 
     const readEntry = async (entryPath: string): Promise<Buffer> => {
       const entry = entries.get(entryPath);
@@ -412,6 +424,7 @@ export class ProjectsSnapshotService {
         manifestEntry.uncompressedSize > PROJECT_MANIFEST_MAX_BYTES,
       contextFiles,
       conversationEntries,
+      artifactEntries,
       otherEntries,
       readEntry,
     };

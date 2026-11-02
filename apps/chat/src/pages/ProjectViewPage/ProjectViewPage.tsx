@@ -4,11 +4,12 @@ import {
   useOpenAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
 import {
+  mapProjectArtifactsToOutputs,
   mapProjectDetailsToViewModel,
   ProjectRefreshOutcome,
 } from '@epam/ai-dial-chat-hooks/project';
 import { DeleteConfirmationDialog } from '@epam/ai-dial-chat-shared';
-import { ProjectView } from '@epam/ai-dial-projects';
+import { ProjectOutputs, ProjectView } from '@epam/ai-dial-projects';
 import {
   memo,
   useCallback,
@@ -35,14 +36,19 @@ import { useUserConfig } from '../../context/UserConfigContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
 import { useProject } from '../../hooks/projects/useProject';
 import { useProjectActions } from '../../hooks/projects/useProjectActions';
+import { useProjectArtifacts } from '../../hooks/projects/useProjectArtifacts';
 import { useProjectConversations } from '../../hooks/projects/useProjectConversations';
+import { useProjectOutputsLabels } from '../../hooks/projects/useProjectOutputsLabels';
 import { useProjectViewLabels } from '../../hooks/projects/useProjectViewLabels';
 import { useProjectWatch } from '../../hooks/projects/useProjectWatch';
 import { useDeleteConfirmationLabels } from '../../hooks/useDeleteConfirmationLabels';
 import { ROUTES } from '../../types/routes';
 import { UserConfigStatus } from '../../types/user-config-status';
 import {
+  fromProjectOutputCardId,
   fromProjectPreviewKey,
+  toProjectOutputAttachment,
+  toProjectOutputCardId,
   toProjectPreviewKey,
   toStoredProjectFileAttachment,
 } from '../../utils/project-file-preview';
@@ -61,6 +67,7 @@ const ProjectViewPage: FC = () => {
     useProject(projectId, isEnabled);
   const actions = useProjectActions(project, retry);
   const conversations = useProjectConversations(project?.id ?? null);
+  const artifacts = useProjectArtifacts(project?.id ?? null);
   const { showInfoNotification } = useNotification();
   const { replacePinnedProjectId } = useUserConfig();
 
@@ -80,16 +87,22 @@ const ProjectViewPage: FC = () => {
     navigate(ROUTES.Projects, { replace: true });
   }, [navigate, projectId, replacePinnedProjectId, showInfoNotification, t]);
   const { refresh: refreshConversations } = conversations;
+  const { refresh: refreshArtifacts } = artifacts;
   const handleProjectChanged = useCallback(async () => {
-    const [outcome] = await Promise.all([refresh(), refreshConversations()]);
+    const [outcome] = await Promise.all([
+      refresh(),
+      refreshConversations(),
+      refreshArtifacts(),
+    ]);
     if (outcome === ProjectRefreshOutcome.NotFound) handleDeletedElsewhere();
-  }, [handleDeletedElsewhere, refresh, refreshConversations]);
+  }, [handleDeletedElsewhere, refresh, refreshArtifacts, refreshConversations]);
   useProjectWatch(project?.id ?? null, {
     etag: project?.etag,
     onChange: handleProjectChanged,
     onDelete: handleDeletedElsewhere,
   });
   const labels = useProjectViewLabels();
+  const outputsLabels = useProjectOutputsLabels();
   const deleteLabels = useDeleteConfirmationLabels();
 
   const [contextSearchQuery, setContextSearchQuery] = useState('');
@@ -110,10 +123,11 @@ const ProjectViewPage: FC = () => {
   const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
   const startCanvasRequest = useLatestCanvasRequest();
   const previewScope = projectId ?? '';
-  const selectedContextFileId = fromProjectPreviewKey(
-    previewScope,
-    attachmentId,
-  );
+  const selectedCardId = fromProjectPreviewKey(previewScope, attachmentId);
+  /* An output's card id is `artifacts/{name}`, which no context file name can match. */
+  const selectedOutputName = fromProjectOutputCardId(selectedCardId);
+  const selectedContextFileId =
+    selectedOutputName == null ? selectedCardId : undefined;
   const handleContextFileClick = useCallback(
     (name: string) => {
       const file = viewModel?.contextFiles.find((item) => item.name === name);
@@ -126,6 +140,28 @@ const ProjectViewPage: FC = () => {
     },
     [
       viewModel,
+      projectId,
+      previewScope,
+      openAttachmentCanvas,
+      startCanvasRequest,
+    ],
+  );
+  const outputItems = useMemo(
+    () => mapProjectArtifactsToOutputs(artifacts.items),
+    [artifacts.items],
+  );
+  const handleOpenOutput = useCallback(
+    (name: string) => {
+      const item = outputItems.find((output) => output.name === name);
+      if (!item || projectId == null) return;
+      void openAttachmentCanvas(
+        toProjectOutputAttachment(item, projectId),
+        toProjectPreviewKey(previewScope, toProjectOutputCardId(name)),
+        startCanvasRequest(),
+      );
+    },
+    [
+      outputItems,
       projectId,
       previewScope,
       openAttachmentCanvas,
@@ -208,7 +244,7 @@ const ProjectViewPage: FC = () => {
           onDownload={handleDownload}
           onContextFileClick={handleContextFileClick}
           selectedContextFileId={selectedContextFileId}
-          isDetailsStacked={selectedContextFileId != null}
+          isDetailsStacked={selectedCardId != null}
           onRetry={retry}
           onBrowseProjects={handleBrowseProjects}
           mainContent={
@@ -219,6 +255,17 @@ const ProjectViewPage: FC = () => {
                 canEdit={canEdit}
                 conversations={conversations}
                 onConversationDeleted={handleConversationDeleted}
+                /* Always mounted: it shows nothing until there are outputs or an error, and keeps its live region in place. */
+                outputs={
+                  <ProjectOutputs
+                    items={outputItems}
+                    onOpenOutput={handleOpenOutput}
+                    selectedOutputName={selectedOutputName}
+                    hasError={artifacts.hasError}
+                    onRetry={artifacts.retry}
+                    labels={outputsLabels}
+                  />
+                }
               />
             ) : undefined
           }

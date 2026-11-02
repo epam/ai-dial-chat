@@ -69,6 +69,13 @@ export const isAttachmentDownloadable = (
 
 const PROJECT_ID_PREFIX = 'projects/';
 const PROJECT_CONTEXT_FILE_SEGMENT = '/files/context/';
+const PROJECT_ARTIFACT_SEGMENT = '/files/artifacts/';
+
+/* Each project file locator segment and the BFF route segment that serves it. */
+const PROJECT_FILE_ROUTES = [
+  { segment: PROJECT_CONTEXT_FILE_SEGMENT, route: 'files' },
+  { segment: PROJECT_ARTIFACT_SEGMENT, route: 'artifacts' },
+];
 
 /**
  * Locator of a project's context file, `{projectId}/files/context/{fileName}`:
@@ -81,32 +88,45 @@ export const toProjectContextFileUrl = (
 ): string => `${projectId}${PROJECT_CONTEXT_FILE_SEGMENT}${fileName}`;
 
 /**
- * Converts a project context file locator to the BFF project file endpoint
- * (`GET /api/v1/projects/:id/files/:fileName`). Returns `undefined` when the
- * input is not such a locator: no `projects/` prefix, no project before the
- * context segment, or no single-segment file name after it.
+ * Locator of a project's output, `{projectId}/files/artifacts/{fileName}`: a
+ * file an agent saved under the project's `artifacts/` folder, opened in the
+ * canvas like a context file.
  */
-export const resolveProjectContextFileDownloadUrl = (
+export const toProjectArtifactUrl = (
+  projectId: string,
+  fileName: string,
+): string => `${projectId}${PROJECT_ARTIFACT_SEGMENT}${fileName}`;
+
+/**
+ * Converts a project file locator to the BFF endpoint that streams it:
+ * `GET /api/v1/projects/:id/files/:fileName` for a context file and
+ * `GET /api/v1/projects/:id/artifacts/:fileName` for an output. Returns
+ * `undefined` when the input is not such a locator: no `projects/` prefix, no
+ * project before the folder segment, or no single-segment file name after it.
+ */
+export const resolveProjectFileDownloadUrl = (
   url: string,
 ): string | undefined => {
   if (!url.startsWith(PROJECT_ID_PREFIX)) return undefined;
-  const separatorIndex = url.lastIndexOf(PROJECT_CONTEXT_FILE_SEGMENT);
-  if (separatorIndex <= PROJECT_ID_PREFIX.length) return undefined;
-  const projectId = url.slice(0, separatorIndex);
-  const fileName = url.slice(
-    separatorIndex + PROJECT_CONTEXT_FILE_SEGMENT.length,
-  );
+  /* The file name is one segment, so the last folder segment in the URL is the real one. */
+  const match = PROJECT_FILE_ROUTES.map((entry) => ({
+    ...entry,
+    index: url.lastIndexOf(entry.segment),
+  })).reduce((best, entry) => (entry.index > best.index ? entry : best));
+  if (match.index <= PROJECT_ID_PREFIX.length) return undefined;
+  const projectId = url.slice(0, match.index);
+  const fileName = url.slice(match.index + match.segment.length);
   if (projectId.endsWith('/') || fileName === '' || fileName.includes('/')) {
     return undefined;
   }
-  return `${ApiEndpoints.PROJECTS}/${encodeURIComponent(projectId)}/files/${encodeURIComponent(fileName)}`;
+  return `${ApiEndpoints.PROJECTS}/${encodeURIComponent(projectId)}/${match.route}/${encodeURIComponent(fileName)}`;
 };
 
 /**
  * Returns the best downloadable DIAL-file URL from an attachment's `url` or
  * `referenceUrl`, or `undefined` when neither is a valid DIAL `files/` path
- * to a file (a folder id is not downloadable). A project context file locator
- * in `url` resolves to the BFF project file endpoint.
+ * to a file (a folder id is not downloadable). A project context file or
+ * output locator in `url` resolves to the BFF endpoint that streams it.
  */
 export const resolveDialUrl = (
   attachment: DisplayAttachment,
@@ -119,7 +139,7 @@ export const resolveDialUrl = (
   }
   return attachment.url == null
     ? undefined
-    : resolveProjectContextFileDownloadUrl(attachment.url);
+    : resolveProjectFileDownloadUrl(attachment.url);
 };
 
 /**

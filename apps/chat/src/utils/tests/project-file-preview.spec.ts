@@ -12,8 +12,11 @@ import type { ProjectContextFile } from '@epam/ai-dial-projects';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { attachmentCanvasUrlResolvers } from '../attachment-display-resolvers';
 import {
+  fromProjectOutputCardId,
   fromProjectPreviewKey,
   toProjectContextFileAttachment,
+  toProjectOutputAttachment,
+  toProjectOutputCardId,
   toProjectPreviewKey,
   toStoredProjectFileAttachment,
 } from '../project-file-preview';
@@ -45,6 +48,44 @@ describe('project preview keys', () => {
     ['no key', undefined],
   ])('returns nothing for %s', (_, key) => {
     expect(fromProjectPreviewKey(PROJECT_ID, key)).toBeUndefined();
+  });
+});
+
+describe('project output cards', () => {
+  it('prefixes an output name so it never matches a context file name', () => {
+    const key = toProjectPreviewKey(
+      PROJECT_ID,
+      toProjectOutputCardId('notes.md'),
+    );
+
+    expect(key).toBe('projects/b/q4::artifacts/notes.md');
+    expect(fromProjectPreviewKey(PROJECT_ID, key)).not.toBe('notes.md');
+    expect(
+      fromProjectOutputCardId(fromProjectPreviewKey(PROJECT_ID, key)),
+    ).toBe('notes.md');
+  });
+
+  it.each([
+    ['a context file card id', 'notes.md'],
+    ['no card id', undefined],
+  ])('reads no output name from %s', (_, cardId) => {
+    expect(fromProjectOutputCardId(cardId)).toBeUndefined();
+  });
+
+  it('builds an idle attachment whose url is the output locator', () => {
+    expect(
+      toProjectOutputAttachment(
+        { name: 'report.pdf', contentType: 'application/pdf' },
+        PROJECT_ID,
+      ),
+    ).toEqual({
+      id: 'report.pdf',
+      name: 'report.pdf',
+      contentType: 'application/pdf',
+      type: AttachmentType.File,
+      status: RequestStatus.Idle,
+      url: 'projects/b/q4/files/artifacts/report.pdf',
+    });
   });
 });
 

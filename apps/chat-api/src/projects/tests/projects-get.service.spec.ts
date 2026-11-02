@@ -33,6 +33,7 @@ const snapshotOf = (extra: Partial<ProjectSnapshot> = {}): ProjectSnapshot => ({
   hasOversizedManifest: false,
   contextFiles: [{ name: 'tickets.csv', size: 2048 }],
   conversationEntries: [],
+  artifactEntries: [],
   otherEntries: [],
   readEntry: vi.fn(),
   ...extra,

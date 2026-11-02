@@ -499,6 +499,13 @@ and `useProjectConversations().refresh()` re-read without the loading state;
 `NotFound`, `Failed`, `Skipped`). `useProjectConversations().markViewed(id)`
 clears a row's `isUnread` at once and calls the optional
 `ProjectsApiClient.markProjectConversationViewed`.
+`useProjectArtifacts(client, projectId)` reads the files the agents of the
+project's chats saved under `artifacts/` (`ProjectsApiClient.listProjectArtifacts`,
+newest first) and returns `{ items, isLoading, hasError, retry, refresh }`;
+`refresh` re-reads without the loading state and keeps the items on failure.
+`mapProjectArtifactsToOutputs(items)` turns them into the `ProjectOutputItem`s
+that `ProjectOutputs` from `@epam/ai-dial-projects` renders, with each content
+type inferred from the file name.
 `createSerializedKeyedWriter(write)` returns `{ enqueue, drop }`, a queue that
 runs one write at a time and never queues a key twice, for hosts that mark
 chats viewed from more than one page.
@@ -508,7 +515,9 @@ import {
   ProjectRefreshOutcome,
   createProjectsApiClient,
   createSerializedKeyedWriter,
+  mapProjectArtifactsToOutputs,
   useProject,
+  useProjectArtifacts,
   useProjectConversations,
   useProjectWatch,
 } from '@epam/ai-dial-chat-hooks/project';
@@ -526,10 +535,16 @@ const projectsClient = {
 const ProjectPage = () => {
   const { project, refresh } = useProject(projectsClient, projectId, true);
   const conversations = useProjectConversations(projectsClient, projectId);
+  const artifacts = useProjectArtifacts(projectsClient, projectId);
+  const outputs = mapProjectArtifactsToOutputs(artifacts.items);
   useProjectWatch(projectsClient, projectId, {
     etag: project?.etag,
     onChange: async () => {
-      const [outcome] = await Promise.all([refresh(), conversations.refresh()]);
+      const [outcome] = await Promise.all([
+        refresh(),
+        conversations.refresh(),
+        artifacts.refresh(),
+      ]);
       if (outcome === ProjectRefreshOutcome.NotFound) leavePage();
     },
     onDelete: leavePage,

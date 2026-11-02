@@ -10275,6 +10275,141 @@
         "tags": ["projects"]
       }
     },
+    "/api/v1/projects/{id}/artifacts": {
+      "get": {
+        "description": "Lists the files directly under the project `artifacts/` folder, where the agents of the project's chats save their outputs, newest first. Nested paths are not listed. Any reader of the project may call it.",
+        "operationId": "listProjectArtifacts",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The DIAL project id `projects/{bucket}/{path}`, URL-encoded into one path segment.",
+            "schema": {
+              "example": "projects%2Fa1b2c3%2Fmarketing%2Fq4-launch",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The outputs; a project without `artifacts/` lists none",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectArtifactListResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The project id is invalid"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The projectsEnabled feature is not enabled for this user, or DIAL Core denied access"
+          },
+          "404": {
+            "description": "The project does not exist"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "List a project's outputs",
+        "tags": ["projects"]
+      }
+    },
+    "/api/v1/projects/{id}/artifacts/{fileName}": {
+      "get": {
+        "description": "Streams one file directly under the project `artifacts/` folder as an attachment with `X-Content-Type-Options: nosniff`. Any reader of the project may call it.",
+        "operationId": "downloadProjectArtifact",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The DIAL project id `projects/{bucket}/{path}`, URL-encoded into one path segment.",
+            "schema": {
+              "example": "projects%2Fa1b2c3%2Fmarketing%2Fq4-launch",
+              "type": "string"
+            }
+          },
+          {
+            "name": "fileName",
+            "required": true,
+            "in": "path",
+            "description": "Name of a file directly under the project `artifacts/` folder.",
+            "schema": {
+              "example": "report.pdf",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Streamed file content",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The project id or the file name is invalid"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The projectsEnabled feature is not enabled for this user, or DIAL Core denied access"
+          },
+          "404": {
+            "description": "The project or the file does not exist"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Download one output of a project",
+        "tags": ["projects"]
+      }
+    },
     "/api/v1/projects/{id}/conversations": {
       "get": {
         "description": "Lists the conversations stored in the project's `conversations/` folder, newest first, with their titles and authors.",
@@ -19078,6 +19213,40 @@
           }
         },
         "required": ["id", "name", "bucket", "path", "isPinned"]
+      },
+      "ProjectArtifactItemDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "File name under the project `artifacts/` folder.",
+            "example": "report.pdf"
+          },
+          "updatedAt": {
+            "type": "number",
+            "description": "Last update time, in epoch milliseconds.",
+            "example": 1793606400000
+          },
+          "author": {
+            "type": "string",
+            "description": "Display name of the file's last writer, from DIAL Core.",
+            "example": "Jane Doe"
+          }
+        },
+        "required": ["name"]
+      },
+      "ProjectArtifactListResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "Files directly under `artifacts/`, newest first; nested paths are not listed.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectArtifactItemDto"
+            }
+          }
+        },
+        "required": ["items"]
       },
       "CreateProjectResponseDto": {
         "type": "object",

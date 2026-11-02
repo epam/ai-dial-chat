@@ -59,6 +59,24 @@ describe('ProjectConversationsPanel', () => {
     expect(screen.getByRole('region', { name: 'Chats' })).toBeTruthy();
   });
 
+  it('renders the host outputs between the composer and the Chats list', () => {
+    renderPanel({
+      composer: <p>composer here</p>,
+      outputs: <p>outputs here</p>,
+    });
+
+    const composer = screen.getByText('composer here');
+    const outputs = screen.getByText('outputs here');
+    const chats = screen.getByRole('heading', { name: 'Chats' });
+    expect(
+      composer.compareDocumentPosition(outputs) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      outputs.compareDocumentPosition(chats) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   it('has no row menu without rename and delete handlers', () => {
     renderPanel();
 

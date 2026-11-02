@@ -4,6 +4,7 @@ import type {
   CreateConversationDto,
   CreateProjectResponseDto,
   ListProjectsResponseDto,
+  ProjectArtifactListResponseDto,
   ProjectConversationListResponseDto,
   ProjectDetailsDto,
   RenameConversationResponseDto,
@@ -59,6 +60,10 @@ export interface ProjectsConfiguredClient {
     request: { id: string; limit?: number; offset?: number },
     options?: RequestInit,
   ) => Promise<ProjectConversationListResponseDto>;
+  listProjectArtifacts: (
+    request: { id: string },
+    options?: RequestInit,
+  ) => Promise<ProjectArtifactListResponseDto>;
   createProjectConversation: (request: {
     id: string;
     createConversationDto: CreateConversationDto;
@@ -166,6 +171,11 @@ export interface ProjectsApiClient {
     fileName: string,
     signal?: AbortSignal,
   ) => Promise<Response>;
+  /** Lists the files the agents saved under the project's `artifacts/` folder, newest first. */
+  listProjectArtifacts: (
+    projectId: string,
+    signal?: AbortSignal,
+  ) => Promise<ProjectArtifactListResponseDto>;
   listProjectConversations: (
     projectId: string,
     signal?: AbortSignal,
@@ -310,6 +320,8 @@ export const createProjectsApiClient = (
         ...withSignal(signal),
       )
     ).raw,
+  listProjectArtifacts: (projectId, signal) =>
+    client.listProjectArtifacts({ id: projectId }, ...withSignal(signal)),
   listProjectConversations: (projectId, signal, page) =>
     client.listProjectConversations(
       { id: projectId, ...page },

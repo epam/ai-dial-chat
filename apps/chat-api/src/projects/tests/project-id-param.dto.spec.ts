@@ -2,6 +2,7 @@ import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
 import { describe, expect, it } from 'vitest';
 import {
+  ProjectArtifactParamDto,
   ProjectFileParamDto,
   ProjectIdParamDto,
 } from '../dto/project-id-param.dto';
@@ -14,6 +15,8 @@ const validateId = (id: unknown) =>
   validateSync(plainToInstance(ProjectIdParamDto, { id }));
 const validateFile = (id: unknown, fileName: unknown) =>
   validateSync(plainToInstance(ProjectFileParamDto, { id, fileName }));
+const validateArtifact = (id: unknown, fileName: unknown) =>
+  validateSync(plainToInstance(ProjectArtifactParamDto, { id, fileName }));
 
 describe('ProjectIdParamDto', () => {
   it.each([
@@ -49,6 +52,22 @@ describe('ProjectFileParamDto', () => {
     'rejects the file name %j',
     (fileName) => {
       const errors = validateFile('projects/a1b2c3/q4', fileName);
+      expect(errors.map((error) => error.property)).toEqual(['fileName']);
+    },
+  );
+});
+
+describe('ProjectArtifactParamDto', () => {
+  it('accepts a plain file name', () => {
+    expect(validateArtifact('projects/a1b2c3/q4', 'report.pdf')).toHaveLength(
+      0,
+    );
+  });
+
+  it.each(['..', 'context/tickets.csv', 'a\\b', '../x'])(
+    'rejects the file name %j',
+    (fileName) => {
+      const errors = validateArtifact('projects/a1b2c3/q4', fileName);
       expect(errors.map((error) => error.property)).toEqual(['fileName']);
     },
   );

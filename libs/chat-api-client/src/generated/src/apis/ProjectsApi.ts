@@ -19,6 +19,7 @@ import type {
   CreateConversationDto,
   CreateProjectResponseDto,
   ListProjectsResponseDto,
+  ProjectArtifactListResponseDto,
   ProjectConversationListResponseDto,
   ProjectCreateErrorDto,
   ProjectDetailsDto,
@@ -63,6 +64,11 @@ export interface DownloadProjectRequest {
   id: string;
 }
 
+export interface DownloadProjectArtifactRequest {
+  id: string;
+  fileName: string;
+}
+
 export interface DownloadProjectFileRequest {
   id: string;
   fileName: string;
@@ -75,6 +81,10 @@ export interface GetProjectRequest {
 export interface GetProjectConversationRequest {
   id: string;
   conversationName: string;
+}
+
+export interface ListProjectArtifactsRequest {
+  id: string;
 }
 
 export interface ListProjectConversationsRequest {
@@ -572,6 +582,79 @@ export class ProjectsApi extends runtime.BaseAPI {
   }
 
   /**
+   * Streams one file directly under the project `artifacts/` folder as an attachment with `X-Content-Type-Options: nosniff`. Any reader of the project may call it.
+   * Download one output of a project
+   */
+  async downloadProjectArtifactRaw(
+    requestParameters: DownloadProjectArtifactRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<Blob>> {
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling downloadProjectArtifact().',
+      );
+    }
+
+    if (requestParameters['fileName'] == null) {
+      throw new runtime.RequiredError(
+        'fileName',
+        'Required parameter "fileName" was null or undefined when calling downloadProjectArtifact().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/projects/{id}/artifacts/{fileName}`;
+    urlPath = urlPath.replace(
+      `{${'id'}}`,
+      encodeURIComponent(String(requestParameters['id'])),
+    );
+    urlPath = urlPath.replace(
+      `{${'fileName'}}`,
+      encodeURIComponent(String(requestParameters['fileName'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.BlobApiResponse(response);
+  }
+
+  /**
+   * Streams one file directly under the project `artifacts/` folder as an attachment with `X-Content-Type-Options: nosniff`. Any reader of the project may call it.
+   * Download one output of a project
+   */
+  async downloadProjectArtifact(
+    requestParameters: DownloadProjectArtifactRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<Blob> {
+    const response = await this.downloadProjectArtifactRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
    * Streams one file directly under the project `context/` folder as an attachment with `X-Content-Type-Options: nosniff`.
    * Download one context file of a project
    */
@@ -768,6 +851,70 @@ export class ProjectsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<ConversationResponseDto> {
     const response = await this.getProjectConversationRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Lists the files directly under the project `artifacts/` folder, where the agents of the project\'s chats save their outputs, newest first. Nested paths are not listed. Any reader of the project may call it.
+   * List a project\'s outputs
+   */
+  async listProjectArtifactsRaw(
+    requestParameters: ListProjectArtifactsRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ProjectArtifactListResponseDto>> {
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling listProjectArtifacts().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/projects/{id}/artifacts`;
+    urlPath = urlPath.replace(
+      `{${'id'}}`,
+      encodeURIComponent(String(requestParameters['id'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ProjectArtifactListResponseDto>(
+      response,
+    );
+  }
+
+  /**
+   * Lists the files directly under the project `artifacts/` folder, where the agents of the project\'s chats save their outputs, newest first. Nested paths are not listed. Any reader of the project may call it.
+   * List a project\'s outputs
+   */
+  async listProjectArtifacts(
+    requestParameters: ListProjectArtifactsRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ProjectArtifactListResponseDto> {
+    const response = await this.listProjectArtifactsRaw(
       requestParameters,
       initOverrides,
     );

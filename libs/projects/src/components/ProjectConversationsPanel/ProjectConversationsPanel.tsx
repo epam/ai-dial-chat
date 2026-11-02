@@ -25,6 +25,7 @@ const ProjectConversationsPanelComponent: FC<
   ProjectConversationsPanelProps
 > = ({
   composer,
+  outputs,
   items,
   isLoading = false,
   hasError = false,
@@ -208,6 +209,7 @@ const ProjectConversationsPanelComponent: FC<
   return (
     <>
       {composer}
+      {outputs}
       <div ref={listRef} className="contents">
         <ProjectConversationList
           items={items}
