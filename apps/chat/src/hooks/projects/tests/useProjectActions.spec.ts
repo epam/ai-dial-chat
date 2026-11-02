@@ -9,7 +9,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   deleteProject,
   downloadProjectArchive,
-  downloadProjectContextFile,
 } from '../../../server-api/projects.api';
 import {
   EntityOperation,
@@ -52,7 +51,6 @@ vi.mock('../../../context/UserConfigContext', () => ({
 vi.mock('../../../server-api/projects.api', () => ({
   deleteProject: vi.fn(),
   downloadProjectArchive: vi.fn(),
-  downloadProjectContextFile: vi.fn(),
 }));
 vi.mock('@epam/ai-dial-chat-hooks/utils', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@epam/ai-dial-chat-hooks/utils')>()),
@@ -124,23 +122,6 @@ describe('useProjectActions', () => {
       NotifiableEntity.Project,
       EntityOperation.Downloaded,
       { name: 'q4.zip' },
-    );
-  });
-
-  it('downloads one context file under its own name', async () => {
-    const response = new Response('a,b');
-    vi.mocked(downloadProjectContextFile).mockResolvedValue(response);
-    const { result } = renderHook(() => useProjectActions(project, vi.fn()));
-
-    await act(() => result.current.openFile('tickets.csv'));
-
-    expect(downloadProjectContextFile).toHaveBeenCalledWith(
-      'projects/b/q4',
-      'tickets.csv',
-    );
-    expect(triggerBrowserDownload).toHaveBeenCalledWith(
-      response,
-      'tickets.csv',
     );
   });
 

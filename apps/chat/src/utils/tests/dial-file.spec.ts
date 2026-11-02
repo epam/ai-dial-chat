@@ -8,6 +8,8 @@ import {
   resolveDialFileDownloadUrl,
   resolveDialFileMetadataUrl,
   resolveDialUrl,
+  resolveProjectContextFileDownloadUrl,
+  toProjectContextFileUrl,
 } from '../dial-file';
 
 const makeAttachment = (
@@ -80,5 +82,55 @@ describe('resolveDialFileMetadataUrl', () => {
     expect(
       resolveDialFileMetadataUrl('https://example.com/report.txt'),
     ).toBeUndefined();
+  });
+});
+
+describe('project context file URLs', () => {
+  const PROJECT_ID = 'projects/bucket-1/marketing/q4';
+
+  it('builds the locator of a context file from its project id and name', () => {
+    expect(toProjectContextFileUrl(PROJECT_ID, 'tickets.csv')).toBe(
+      'projects/bucket-1/marketing/q4/files/context/tickets.csv',
+    );
+  });
+
+  it('resolves a locator to the BFF project file endpoint with the id and name encoded', () => {
+    expect(
+      resolveProjectContextFileDownloadUrl(
+        toProjectContextFileUrl(PROJECT_ID, 'Q4 tickets (1).csv'),
+      ),
+    ).toBe(
+      '/api/v1/projects/projects%2Fbucket-1%2Fmarketing%2Fq4/files/Q4%20tickets%20(1).csv',
+    );
+  });
+
+  it.each([
+    ['a conversation id of the project', 'projects/b/p/conversations/c1'],
+    ['a plain DIAL file id', 'files/bucket-1/docs/report.txt'],
+    ['a locator with no file name', 'projects/b/p/files/context/'],
+    ['a locator whose name has a path', 'projects/b/p/files/context/a/b.csv'],
+    ['a locator with no project', 'projects//files/context/a.csv'],
+    ['an external URL', 'https://example.com/projects/b/p/files/context/a.csv'],
+  ])('does not resolve %s', (_, url) => {
+    expect(resolveProjectContextFileDownloadUrl(url)).toBeUndefined();
+  });
+
+  it('lets resolveDialUrl return the project file endpoint for an attachment carrying a locator', () => {
+    expect(
+      resolveDialUrl(
+        makeAttachment({
+          name: 'tickets.csv',
+          url: toProjectContextFileUrl(PROJECT_ID, 'tickets.csv'),
+        }),
+      ),
+    ).toBe(
+      '/api/v1/projects/projects%2Fbucket-1%2Fmarketing%2Fq4/files/tickets.csv',
+    );
+  });
+
+  it('keeps resolving a DIAL file id exactly as before', () => {
+    expect(
+      resolveDialUrl(makeAttachment({ url: 'files/bucket-1/docs/report.txt' })),
+    ).toBe('/api/v1/files/download?bucket=bucket-1&path=docs%2Freport.txt');
   });
 });

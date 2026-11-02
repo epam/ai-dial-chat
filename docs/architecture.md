@@ -608,6 +608,15 @@ A project conversation is the file `conversations/{name}` inside the project (a 
 - **Completions.** `ConversationCompletionsResponder` owns the SSE side of completions, stop and attach for both controllers. A project chat's model calls carry the `x-project-id` header (DIAL Core forwards it to the deployment on Chat Completions and Responses, background replay included) and nothing else: the BFF adds no system message or attachment, so the deployment resolves the project's instructions and context from that header itself.
 - **App.** `ProjectChatPage` provides a project `ConversationDataSourceContext` value to `ConversationPage`; the project view's main column (`ProjectView.mainContent`) holds the embedded composer and the `ProjectConversationList`.
 
+#### Project context file preview
+
+The New project, edit and view pages open a context file card in the shared attachment canvas the way `ConversationView` opens a message attachment: the page calls `useOpenAttachmentCanvas` with `useAttachmentCanvasResolvers` and a `useLatestCanvasRequest` guard, and has no preview hook of its own. `AttachmentCanvasContainer` (`apps/chat/src/app/app.tsx`) is also mounted on `ROUTES.ProjectCreate`, `ROUTES.ProjectView` and `ROUTES.ProjectEdit`, without the attachments-manager overlay feature that gates it on the conversation route; it opens at the conversation default width, and the sources toggle is left out of its mobile header there.
+
+- **Sources.** An unsaved file opens from the `File` its card carries, with no request. A stored file opens as an attachment whose `url` is the locator `{projectId}/files/context/{fileName}`; the app's `resolveDialUrl` (`apps/chat/src/utils/dial-file.ts`) maps it to `GET /api/v1/projects/:id/files/:fileName`, and the shared content resolvers fetch it and classify a `403` or any other failure as they do for a DIAL file. The file has no metadata URL, so nothing is cached on the client.
+- **Keys.** The canvas key is `{scope}::{cardId}`, the scope being the project id (or `new` on the create page), so only this project's open file marks a card selected. The canvas closes on a `pathname` change, as on every route.
+- **Layout.** `libs/projects` receives only `onContextFileClick`, `selectedContextFileId` and, on `ProjectView`, `isDetailsStacked`, which moves the Details panel under the main column while a preview takes the inline end. The lib imports neither the canvas nor a REST path.
+- **Not here.** Escape, focus return and live-region announcements are not part of the conversation canvas either; they are a follow-up for the shared canvas.
+
 #### Scheduled tasks
 
 Scheduled-task create/update accepts an optional `skillUrls: string[]` alongside

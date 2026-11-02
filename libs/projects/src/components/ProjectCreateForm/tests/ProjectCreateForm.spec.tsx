@@ -54,6 +54,7 @@ const LABELS: ProjectCreateFormProps['labels'] = {
   dropZoneAriaLabel: 'Upload context from device',
   dropZoneHint: 'File formats .csv, .pdf and .xlsx (max 1 MB)',
   removeFileLabel: (name) => `Remove ${name}`,
+  openFileLabel: (name) => `Preview ${name}`,
   fileRejections: {
     [ContextFileRejection.UnsupportedType]: (name) =>
       `${name}: unsupported file type`,
@@ -384,6 +385,85 @@ describe('ProjectCreateForm', () => {
 
       expect(props.onContextFilesChange).toHaveBeenCalledWith([]);
       expect(getFormStatus().textContent).toBe('tickets.csv removed');
+    });
+
+    it('reports the activated card id through onContextFileClick', async () => {
+      const files = stageFiles([makeFile('tickets.csv', 10)]);
+      const onContextFileClick = vi.fn();
+      renderForm({ contextFiles: files, onContextFileClick });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Preview tickets.csv' }),
+      );
+
+      expect(onContextFileClick).toHaveBeenCalledOnce();
+      expect(onContextFileClick).toHaveBeenCalledWith(files[0].id);
+    });
+
+    it('renders only the card named by selectedContextFileId as selected', () => {
+      const files = stageFiles([
+        makeFile('tickets.csv', 10),
+        makeFile('survey.xlsx', 10),
+      ]);
+      renderForm({
+        contextFiles: files,
+        onContextFileClick: vi.fn(),
+        selectedContextFileId: files[1].id,
+      });
+
+      expect(
+        screen
+          .getByRole('button', { name: 'Preview survey.xlsx' })
+          .getAttribute('aria-pressed'),
+      ).toBe('true');
+      expect(
+        screen
+          .getByRole('button', { name: 'Preview tickets.csv' })
+          .getAttribute('aria-pressed'),
+      ).toBe('false');
+    });
+
+    it('does not preview a card when its remove button is activated', async () => {
+      const files = stageFiles([makeFile('tickets.csv', 10)]);
+      const onContextFileClick = vi.fn();
+      const { props } = renderForm({
+        contextFiles: files,
+        onContextFileClick,
+      });
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Remove tickets.csv' }),
+      );
+
+      expect(props.onContextFileClick).not.toHaveBeenCalled();
+      expect(props.onContextFilesChange).toHaveBeenCalledWith([]);
+    });
+
+    it('names a clickable card "Preview" when the host supplies no openFileLabel', () => {
+      const files = stageFiles([makeFile('tickets.csv', 10)]);
+      const { openFileLabel: omitted, ...labelsWithoutOpen } = LABELS;
+      void omitted;
+      renderForm({
+        contextFiles: files,
+        onContextFileClick: vi.fn(),
+        labels: labelsWithoutOpen,
+      });
+
+      expect(
+        screen.getByRole('button', { name: 'Preview tickets.csv' }),
+      ).toBeTruthy();
+    });
+
+    it('keeps the cards unclickable when onContextFileClick is omitted', () => {
+      const files = stageFiles([makeFile('tickets.csv', 10)]);
+      renderForm({ contextFiles: files });
+
+      expect(
+        screen.queryByRole('button', { name: 'Preview tickets.csv' }),
+      ).toBeNull();
+      expect(
+        screen.getByRole('button', { name: 'Remove tickets.csv' }),
+      ).toBeTruthy();
     });
 
     it('renders a stored file as a removable card', async () => {
