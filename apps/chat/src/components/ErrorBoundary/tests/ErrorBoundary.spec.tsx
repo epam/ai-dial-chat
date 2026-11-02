@@ -61,9 +61,7 @@ describe('RootErrorBoundary', () => {
 
   it('announces the crash through an assertive live region', () => {
     renderRoot(true);
-    expect(screen.getByRole('alert').textContent).toBe(
-      'errorBoundary.heading',
-    );
+    expect(screen.getByRole('alert').textContent).toBe('errorBoundary.heading');
   });
 
   it('focuses the reload button without reloading automatically', () => {
