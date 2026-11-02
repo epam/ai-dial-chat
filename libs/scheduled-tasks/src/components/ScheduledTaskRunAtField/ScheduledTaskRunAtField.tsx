@@ -5,6 +5,7 @@ import {
 import {
   Calendar,
   CalendarMode,
+  type CalendarTimeFieldRenderProps,
   type CalendarValue,
   ErrorText,
   LiveRegionPoliteness,
@@ -14,6 +15,7 @@ import {
   calendarValueToRunAt,
   runAtToCalendarValue,
 } from '../../utils/calendar-value';
+import { ScheduledTaskRunAtTimeField } from '../ScheduledTaskRunAtTimeField/ScheduledTaskRunAtTimeField';
 import styles from './ScheduledTaskRunAtField.module.scss';
 
 export interface ScheduledTaskRunAtFieldProps {
@@ -32,6 +34,11 @@ export interface ScheduledTaskRunAtFieldProps {
   /** CSS class applied to the error text. Defaults to `'dial-tiny-text'`. */
   errorClassName?: string;
 }
+
+/** Footer time control of the date-time popover. */
+const renderTimeField = (props: CalendarTimeFieldRenderProps) => (
+  <ScheduledTaskRunAtTimeField {...props} />
+);
 
 /** One-shot "run at" date-time picker for the create/edit form: the kit's masked `Calendar` whose earliest selectable moment is pinned at mount, and the submit-time error below it. */
 export const ScheduledTaskRunAtField: FC<ScheduledTaskRunAtFieldProps> = ({
@@ -70,6 +77,7 @@ export const ScheduledTaskRunAtField: FC<ScheduledTaskRunAtFieldProps> = ({
         placeholder={placeholder}
         invalid={Boolean(error)}
         disabled={disabled}
+        renderTimeField={renderTimeField}
       />
       {/* Mounted before the error arrives, so it is announced; out of the column gap while empty. */}
       <ErrorText
