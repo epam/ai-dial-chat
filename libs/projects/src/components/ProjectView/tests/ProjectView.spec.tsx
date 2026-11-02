@@ -35,6 +35,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
 const labels: ProjectViewLabels = {
   backLabel: 'Back',
   pinLabel: 'Pin',
+  unpinLabel: 'Unpin',
   publishLabel: 'Publish',
   editLabel: 'Edit',
   moreActionsLabel: 'More actions',
@@ -221,22 +222,21 @@ describe('ProjectView', () => {
     expect(screen.queryByRole('search')).toBeNull();
   });
 
-  it('exposes the pin state through aria-pressed and calls onTogglePin', async () => {
+  it('shows Pin on an unpinned project and calls onTogglePin', async () => {
     const { onTogglePin } = renderView();
 
     const pin = screen.getByRole('button', { name: 'Pin' });
-    expect(pin.getAttribute('aria-pressed')).toBe('false');
+    expect(pin.hasAttribute('aria-pressed')).toBe(false);
     await userEvent.click(pin);
 
     expect(onTogglePin).toHaveBeenCalledOnce();
   });
 
-  it('keeps the toggle name stable and reports the pinned state as pressed', () => {
+  it('shows Unpin on a pinned project', () => {
     renderView({ isPinned: true });
 
-    expect(
-      screen.getByRole('button', { name: 'Pin' }).getAttribute('aria-pressed'),
-    ).toBe('true');
+    expect(screen.getByRole('button', { name: 'Unpin' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Pin' })).toBeNull();
   });
 
   it('keeps the toggle focusable and ignores it while a pin change is pending', async () => {

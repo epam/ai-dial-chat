@@ -230,10 +230,8 @@ describe('ProjectViewPage', () => {
     await screen.findByRole('heading', { level: 1, name: 'q4' });
 
     expect(
-      screen
-        .getByRole('button', { name: ButtonsI18nKeys.Pin })
-        .getAttribute('aria-pressed'),
-    ).toBe('true');
+      screen.getByRole('button', { name: ButtonsI18nKeys.Unpin }),
+    ).toBeTruthy();
   });
 
   it('downloads the project archive', async () => {

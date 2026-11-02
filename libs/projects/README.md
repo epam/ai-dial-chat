@@ -249,7 +249,7 @@ import { cloneElement } from 'react';
 
 ### ProjectView
 
-A project's home page: a header with back, the name (an `<h1>`, truncated with a tooltip), a Pin toggle (a stable `labels.pinLabel` name with `aria-pressed`, still focusable while `isPinPending`), Publish and Edit buttons and a ⋮ menu (Share, Download, Delete), then a Details panel — an `<aside>` headed by an `<h2>`, a 488px column on the inline end on desktop framed only by an inline-start border (a top border when stacked under the header on mobile) — with the description, the instructions rendered as markdown, and the context: a search that filters and highlights the files and announces the match count, and one `AttachmentCard` per file. The view shows no capacity meter. On mobile, Publish and Edit move into the ⋮ menu.
+A project's home page: a header with back, the name (an `<h1>`, truncated with a tooltip), a Pin button (`IconPin` with `labels.pinLabel`, or `IconPinnedOff` with `labels.unpinLabel` while `isPinned`, still focusable while `isPinPending`), Publish and Edit buttons with icons and a ⋮ menu (Share, Download, Delete, each with an icon), then a Details panel — an `<aside>` headed by an `<h2>`, a 488px column on the inline end on desktop framed only by an inline-start border (a top border when stacked under the header on mobile) — with the description, the instructions rendered as markdown, and the context: a search that filters and highlights the files and announces the match count, and one `AttachmentCard` per file. The view shows no capacity meter. On mobile, Publish and Edit move into the ⋮ menu.
 
 `mainContent` fills a main column rendered before the Details panel (stacked above it on mobile), named by `mainContentLabel` (default `'Project content'`); without it the panel stays on the inline end. The host puts its own content there, such as a chat input and a `ProjectConversationList`.
 
@@ -278,6 +278,7 @@ import { ProjectView } from '@epam/ai-dial-projects';
   labels={{
     backLabel: 'Back',
     pinLabel: 'Pin',
+    unpinLabel: 'Unpin',
     publishLabel: 'Publish',
     editLabel: 'Edit',
     moreActionsLabel: 'More actions',
