@@ -4,6 +4,7 @@ import {
   DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES,
 } from '../../projects/constants/project-context.constants';
 import type { ConfigDefinition } from '../app-config.types';
+import { CelebrationDeliveryMode } from '../types/celebration-delivery';
 
 export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
   {
@@ -291,6 +292,54 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
       'Operator default for the seasonal-celebrations switch in Settings → Preferences, applied to users who have not saved a choice of their own; a saved choice overrides it. On by default; only false, 0 or no turns it off. Has no visible effect without ui.activeEventId.',
     owner: 'chat-team',
     envVar: 'UI_EVENT_ENABLED_BY_DEFAULT',
+  },
+  {
+    key: 'ui.celebrationDelivery.mode',
+    type: 'config',
+    valueType: 'string',
+    visibility: 'client',
+    defaultValue: CelebrationDeliveryMode.Bundled,
+    critical: false,
+    description:
+      'Where celebration scenes come from: bundled (compiled scenes only, no celebration request) or prefer-external (allowlisted scenes and admitted events from external packs served by /api/v1/celebrations). Sourced from UI_EVENT_DELIVERY_MODE; bundled by default.',
+    owner: 'chat-team',
+    envVar: 'UI_EVENT_DELIVERY_MODE',
+  },
+  {
+    key: 'ui.celebrationDelivery.revision',
+    type: 'config',
+    valueType: 'string',
+    visibility: 'client',
+    defaultValue: '0',
+    critical: false,
+    description:
+      'Operator revision of the celebration delivery policy; a change restarts a playing scene. Sourced from UI_EVENT_DELIVERY_REVISION; "0" by default.',
+    owner: 'chat-team',
+    envVar: 'UI_EVENT_DELIVERY_REVISION',
+  },
+  {
+    key: 'ui.celebrationDelivery.externalScenes',
+    type: 'config',
+    valueType: 'json',
+    visibility: 'client',
+    defaultValue: [],
+    critical: false,
+    description:
+      'Scenes of compiled celebration events that may come from an external pack, as eventId/sceneId pairs. Sourced from UI_EVENT_EXTERNAL_SCENES (comma-separated, at most 64); empty by default.',
+    owner: 'chat-team',
+    envVar: 'UI_EVENT_EXTERNAL_SCENES',
+  },
+  {
+    key: 'ui.celebrationDelivery.externalEvents',
+    type: 'config',
+    valueType: 'json',
+    visibility: 'client',
+    defaultValue: [],
+    critical: false,
+    description:
+      'Celebration event IDs without a compiled module that may come entirely from an external pack. Sourced from UI_EVENT_EXTERNAL_EVENTS (comma-separated, at most 64); empty by default.',
+    owner: 'chat-team',
+    envVar: 'UI_EVENT_EXTERNAL_EVENTS',
   },
   {
     key: 'overlay.enabled',

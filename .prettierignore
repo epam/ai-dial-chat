@@ -20,3 +20,5 @@ vitest.config.*.timestamp*
 .github/workflows/*.md
 openspec
 scripts/.agent-docs-fixtures*
+# Hash-pinned celebration fixtures: their sha256 covers the exact bytes
+apps/chat-api/src/celebrations/tests/fixtures

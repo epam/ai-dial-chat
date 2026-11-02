@@ -79,12 +79,18 @@ describe('CLIENT_CONFIG_MAPPINGS', () => {
     });
 
     it('assigns each response field to exactly one entry and covers every default field', () => {
-      const fields = [...CLIENT_CONFIG_MAPPINGS.values()].map(
-        (mapping) => mapping.field,
+      /* A field shared by several keys is owned part by part. */
+      const owners = [...CLIENT_CONFIG_MAPPINGS.values()].map(
+        ({ field, part }) => (part ? `${field}.${part}` : field),
       );
-      const duplicated = fields.filter(
-        (field, index) => fields.indexOf(field) !== index,
+      const duplicated = owners.filter(
+        (owner, index) => owners.indexOf(owner) !== index,
       );
+      const fields = [
+        ...new Set(
+          [...CLIENT_CONFIG_MAPPINGS.values()].map(({ field }) => field),
+        ),
+      ];
 
       expect(
         duplicated,

@@ -93,7 +93,7 @@ const world = (
   return position;
 };
 const distance = (a: Point, b: Point) => Math.hypot(a[0] - b[0], a[1] - b[1]);
-const touching = (a: Point, b: Point) =>
+const expectTouching = (a: Point, b: Point) =>
   expect(distance(a, b)).toBeLessThan(1.5);
 const starAt = (data: Scene, seconds: number): Point => {
   const active = data.layers.filter(
@@ -169,16 +169,22 @@ describe('Penguin star native choreography', () => {
       for (const [from, to, seconds] of handoffs) {
         expect(getLayer(data, from).op).toBe(seconds * data.fr);
         expect(getLayer(data, to).ip).toBe(seconds * data.fr);
-        touching(world(data, from, seconds), world(data, to, seconds));
+        expectTouching(world(data, from, seconds), world(data, to, seconds));
       }
-      touching(world(data, 'crumpled-interface', 6.8), flipperTip(6.8));
-      touching(starAt(data, 7.7), flipperTip(7.7));
+      expectTouching(world(data, 'crumpled-interface', 6.8), flipperTip(6.8));
+      expectTouching(starAt(data, 7.7), flipperTip(7.7));
       expect(distance(starAt(data, 9.2), flipperTip(9.2))).toBeGreaterThan(40);
       expect(data.layers.some((layer) => layer.nm === 'star-on-hat')).toBe(
         false,
       );
-      touching(starAt(data, 10.8), world(data, 'fir-tree', 10.8, [0, -148]));
-      touching(starAt(data, 11.8), world(data, 'fir-tree', 11.8, [0, -148]));
+      expectTouching(
+        starAt(data, 10.8),
+        world(data, 'fir-tree', 10.8, [0, -148]),
+      );
+      expectTouching(
+        starAt(data, 11.8),
+        world(data, 'fir-tree', 11.8, [0, -148]),
+      );
       expect(starAt(data, 13.6)).toEqual(world(data, 'star-on-fir', 13.6));
     },
   );
@@ -221,7 +227,11 @@ describe('Penguin star native choreography', () => {
       expect(plan.capturePoint[0]).toBeLessThan(360);
       expect(plan.capturePoint[1]).toBeGreaterThan(200);
       expect(plan.capturePoint[1]).toBeLessThan(900);
-      touching(
+      expectTouching(
+        plan.capturePoint,
+        world(plan.animationData, 'penguin-flipper', 6.7, [28, 0]),
+      );
+      expectTouching(
         starAt(plan.animationData, 10.8),
         world(plan.animationData, 'fir-tree', 10.8, [0, -148]),
       );
@@ -245,8 +255,8 @@ describe('Penguin star native choreography', () => {
       expect(at(pot.ks.o, 0)[0]).toBe(100);
       expect(at(penguin.ks.o, 0)[0]).toBe(0);
       for (const seconds of [0, 4, 5.4, 8.5, 10, 13.5, 16, 20]) {
-        touching(world(data, tree.nm, seconds), world(data, tree.nm, 0));
-        touching(world(data, pot.nm, seconds), world(data, pot.nm, 0));
+        expectTouching(world(data, tree.nm, seconds), world(data, tree.nm, 0));
+        expectTouching(world(data, pot.nm, seconds), world(data, pot.nm, 0));
       }
       expect(Math.abs(at(flipper.ks.r, 8.5)[0])).toBeGreaterThan(
         Math.abs(at(flipper.ks.r, 6.7)[0]),
@@ -256,7 +266,7 @@ describe('Penguin star native choreography', () => {
       ).toBeLessThan(1);
       expect(Math.abs(at(tree.ks.r, 13.5)[0])).toBeGreaterThanOrEqual(10);
       expect(at(pot.ks.r, 13.5)[0]).toBe(0);
-      touching(world(data, pot.nm, 13.5), world(data, tree.nm, 13.5));
+      expectTouching(world(data, pot.nm, 13.5), world(data, tree.nm, 13.5));
       expect(Math.abs(at(penguin.ks.r, 15.1)[0])).toBeGreaterThan(5);
       expect(Math.abs(at(penguin.ks.r, 16)[0])).toBeLessThan(1);
       expect(
@@ -272,6 +282,39 @@ describe('Penguin star native choreography', () => {
   });
 
   it.each([false, true])(
+    'keeps the shoulder attached while leaning and lifting the star, rtl=%s',
+    (rtl) => {
+      const { animationData: data } = buildPenguinStarComposition(
+        target(1280, rtl),
+        false,
+      );
+      for (let t = 0; t <= 20; t += 0.1)
+        expectTouching(
+          world(data, 'penguin-flipper', t),
+          world(data, 'penguin', t, [20, -47]),
+        );
+    },
+  );
+
+  it('alternates foot lifts on the approach and settles before bowing', () => {
+    const { animationData: data } = buildPenguinStarComposition(
+      target(1280),
+      false,
+    );
+    const clearance = (name: string, t: number) =>
+      world(data, name, t)[1] - world(data, 'penguin', t)[1];
+    const left = 'penguin-left-foot';
+    const right = 'penguin-right-foot';
+    const step = (13.5 - 11.8) / 8;
+    expect(clearance(left, 11.8 + step)).toBeLessThan(-3);
+    expect(clearance(right, 11.8 + step)).toBeCloseTo(0);
+    expect(clearance(right, 11.8 + 3 * step)).toBeLessThan(-3);
+    expect(clearance(left, 11.8 + 3 * step)).toBeCloseTo(0);
+    for (const foot of [left, right])
+      expect(clearance(foot, 14.8)).toBeCloseTo(0);
+  });
+
+  it.each([false, true])(
     'enters directly from the side at stage height and leaves by that side, rtl=%s',
     (rtl) => {
       const targets = target(360, rtl);
@@ -281,7 +324,7 @@ describe('Penguin star native choreography', () => {
       const start = world(data, 'penguin', 0);
       const end = world(data, 'penguin', 20);
       expect(start[0]).toBeCloseTo(sideX, 1);
-      touching(start, end);
+      expectTouching(start, end);
       for (const seconds of [0, 1, 2, 3, 4]) {
         const [x, y] = world(data, 'penguin', seconds);
         expect(y).toBeGreaterThan(417);

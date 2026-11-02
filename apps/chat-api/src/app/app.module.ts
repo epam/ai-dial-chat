@@ -6,6 +6,7 @@ import { AppConfigModule } from '../app-config/app-config.module';
 import { ApplicationSchemasModule } from '../application-schemas/application-schemas.module';
 import { ApplicationsModule } from '../applications/applications.module';
 import { AuthModule } from '../auth/auth.module';
+import { CelebrationsModule } from '../celebrations/celebrations.module';
 import { ChatModule } from '../chat/chat.module';
 import { ClientChannelModule } from '../client-channel/client-channel.module';
 import { MetricsInterceptor } from '../common/interceptors/metrics.interceptor';
@@ -64,6 +65,7 @@ import { createAppCacheOptions } from './cache.config';
     RateModule,
     TranscriptionModule,
     ThemesModule,
+    CelebrationsModule,
     ShareModule,
     PublishModule,
     ScheduledTasksModule,

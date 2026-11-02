@@ -19,8 +19,8 @@
     }
   },
   "dependencies": {
-    "@tabler/icons-react": "^3.44.0",
-    "@modelcontextprotocol/sdk": "^1.32.1",
+    "@tabler/icons-react": "^3.50.0",
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "@epam/ai-dial-attachment-canvas": "*"
   },
   "peerDependencies": {

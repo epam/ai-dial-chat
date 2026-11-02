@@ -42,12 +42,12 @@
   },
   "dependencies": {
     "ag-grid-community": "^35.3.0",
-    "@tabler/icons-react": "^3.44.0",
+    "@tabler/icons-react": "^3.50.0",
     "classnames": "2.5.1",
     "dompurify": "3.4.17",
-    "katex": "^0.19.0",
+    "katex": "^0.19.1",
     "react-markdown": "^10.1.0",
-    "react-syntax-highlighter": "^16.1.1",
+    "react-syntax-highlighter": "^16.1.2",
     "rehype-katex": "^7.0.1",
     "rehype-raw": "^7.0.0",
     "rehype-sanitize": "^6.0.0",
@@ -57,7 +57,7 @@
     "remark-math": "^6.0.0",
     "remark-parse": "^11.0.0",
     "remark-rehype": "^11.1.2",
-    "tailwind-merge": "^3.6.0",
+    "tailwind-merge": "^3.7.0",
     "unified": "^11.0.5"
   },
   "nx": {
