@@ -53,7 +53,7 @@ import '@epam/ai-dial-skills/styles.css';
 ## Peer Dependencies
 
 - `react` `^19.2.8`
-- `@epam/ai-dial-ui-kit` `^0.16.0-dev.59`
+- `@epam/ai-dial-ui-kit` `^0.16.0-dev.62`
 - `@epam/ai-dial-chat-shared` `*`
 - `@epam/ai-dial-react-file-manager` `^0.4.0-dev.25` — `SkillDetailsSidePanel`
   renders its `DialFoldersTree`
@@ -575,6 +575,23 @@ Builds a `FavoriteSkillItem` from a listing entry, mapping its `description`
 straight through. The entry needs only `{ url, name }` — the host's skill
 listing DTO satisfies it directly, and an entry that carries no `description`
 produces no description paragraph.
+
+### `buildSkillSelectorOptions`
+
+```tsx
+import {
+  buildSkillSelectorOptions,
+  SkillSelectorField,
+} from '@epam/ai-dial-skills';
+
+const options = buildSkillSelectorOptions(skills, sharedWithMe, publicSkills);
+
+<SkillSelectorField skills={options} {...fieldProps} />;
+```
+
+Merges skill listings (each `{ url, name }[]` or `undefined`) into one
+`SkillSelectorOption` per URL, for `SkillSelectorField`'s `skills`. A URL listed
+twice keeps its first position and takes the later listing's name.
 
 ## Types
 

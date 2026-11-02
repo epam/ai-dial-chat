@@ -38,7 +38,7 @@ export const buildExternalServiceScopeId = (
 /**
  * Derives a human-readable fallback label from an external service's raw
  * `serviceName` when metadata hasn't resolved yet — mirrors
- * `getToolsetFallbackName`'s percent-decoding behavior.
+ * `getToolsetFallbackName`'s percent-decoding behavior (`oauth/toolset-id`).
  */
 export const getExternalServiceFallbackName = (serviceName: string): string => {
   try {

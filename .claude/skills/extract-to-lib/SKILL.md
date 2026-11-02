@@ -21,6 +21,13 @@ without widening what a host must install.
   copy and import the lib's — nothing moves.
 - A comment saying a value "mirrors" or is "kept in sync" with a lib is a
   private lib value that should be exported.
+- For `apps/chat/src/components`, the same import test finds presentational
+  components: one that reads no app context, router, `t()` or `server-api` —
+  often already taking every string as a prop — belongs in the feature lib it
+  renders, or `libs/chat-shared`. `npm run validate:lib-duplicates` prints these
+  as warnings.
+- A block repeated verbatim in two app components is an app utility even when
+  it uses `t()`; dedupe it inside the app.
 
 ## 2. Check it is not host policy
 
@@ -44,6 +51,15 @@ Only the parts the doc calls shared move.
 - `libs/chat-hooks` stays non-rendering and host-agnostic (see `AGENTS.md`
   "Library isolation"): pass translated labels, locale, URLs and id
   comparison in as parameters.
+- A component goes to a feature lib or `libs/chat-shared`, never to
+  `libs/chat-hooks`. It follows `.claude/rules/libs.md`: `*Labels` with English
+  defaults copied from `en.json`, colours through `*Colors` and CSS variables,
+  typography through `*ClassName` props. The app component that stays becomes a
+  thin adapter passing translated copy and state.
+- A component in a lib that `chat-hooks` cannot import (every lib except the
+  ones `AGENTS.md` lists) cannot take a `chat-hooks` enum as a prop. Give it
+  plain props (`isVisible`, `isLoggingIn`, `retryMessage`) and keep the
+  enum-to-props mapping in the app adapter.
 
 ## 4. Move code and tests together
 
@@ -71,7 +87,34 @@ Only the parts the doc calls shared move.
   `npm run validate:lib-duplicates`, then `nx run-many -t lint typecheck`
   for the lib and the app.
 
-## 7. Report
+## 7. Traps
+
+Each of these broke or nearly broke a move:
+
+- **Object-literal test mocks.** An app spec that mocks a lib with
+  `vi.mock('@epam/…', () => ({ … }))` hides every export it does not list —
+  including the component or enum the app now imports from that lib, and
+  anything another lib reads from it. Grep `apps/**/*.spec.tsx` for such mocks
+  of the target lib and add the new export with `importOriginal`.
+- **Module-level reads of another lib.** A lib module that reads another lib's
+  enum at import time (a `Record` keyed by it, a `Set` of its members) crashes
+  every test that mocks that lib without the enum. Keep such maps inside the
+  function, or keep the enum in the same lib as the code that reads it.
+- **Hidden peers.** A relative import can pull a module whose own imports add a
+  peer to the entry point (`usage/usage-banner-source.ts` imports
+  `@epam/ai-dial-conversation-input`). Move the shared piece to a
+  dependency-free module and re-export it from the old one.
+- **New runtime imports in a lib.** `createPortal` needs `react-dom` as a peer;
+  check the lib's `package.json` before using a package it does not declare, add
+  it in the same change, run `npm run docs:install-matrix`, and update the
+  README peer list.
+- **App tests of moved code.** Move or delete the app spec for the function, or
+  `nx typecheck` fails on an import the app module no longer exports.
+- **Docs that say "keep in the app".** A guide that keeps a callback in the host
+  may still allow the callback to call a lib helper; update the guide to name
+  it rather than moving the callback.
+
+## 8. Report
 
 List what moved (name, module, entry points), what was deleted as a
 duplicate, and what stayed host-owned and why. Note any behaviour difference a

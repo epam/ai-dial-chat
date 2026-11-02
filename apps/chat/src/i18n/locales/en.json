@@ -696,6 +696,7 @@
     "loading": "Checking your session…",
     "loginTitle": "Welcome to DIAL Chat",
     "loginDescription": "Sign in with:",
+    "loginProvidersLabel": "Sign-in options",
     "providersError": "Could not load identity providers. Please retry.",
     "overlayLoginTitle": "Sign in to continue",
     "overlayLoginDescription": "Choose a sign-in option to use DIAL Chat in this embedded view.",

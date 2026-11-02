@@ -14,6 +14,7 @@ export * from '../catalog/catalog-derivations';
 export * from '../catalog/catalog-entity-kind';
 export * from '../catalog/favorite-entity-type';
 export * from '../catalog/catalog-preferences';
+export * from '../catalog/usage-limit-rows';
 export * from '../catalog/catalog-primary-action';
 export * from '../catalog/useCatalogEditNavigation/useCatalogEditNavigation';
 export * from '../catalog/useCatalogItemDetails';

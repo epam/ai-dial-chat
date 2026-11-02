@@ -1,4 +1,7 @@
-import type { ConversationResponseDto } from '@epam/ai-dial-chat-api-client';
+import {
+  type ConversationResponseDto,
+  ProjectCreateErrorCode,
+} from '@epam/ai-dial-chat-api-client';
 import {
   attachmentsToDtos,
   findDeploymentByIdOrReference,
@@ -37,8 +40,6 @@ import { useDeploymentSelectorOverlay } from '../DeploymentSelector/useDeploymen
 import NewConversationComposer, {
   type NewConversationChatSettings,
 } from '../NewConversationComposer/NewConversationComposer';
-
-const PROJECT_STORAGE_FULL = 'project-storage-full';
 
 interface Props {
   /** The project whose chats this section lists. */
@@ -173,7 +174,7 @@ const ProjectConversationsSection: FC<Props> = ({
         const { code, traceId } = await getApiErrorDetails(error);
         showErrorNotification({
           message: t(
-            code === PROJECT_STORAGE_FULL
+            code === ProjectCreateErrorCode.ProjectStorageFull
               ? ProjectsI18nKeys.ChatsStorageFull
               : ProjectsI18nKeys.ChatsCreateError,
           ),

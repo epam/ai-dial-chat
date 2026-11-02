@@ -4,6 +4,7 @@ import type {
 } from '@epam/ai-dial-chat-api-client';
 import {
   attachmentsToDtos,
+  DEFAULT_CHAT_SETTINGS,
   findDeploymentByIdOrReference,
   getApiErrorDetails,
   getConversationPath,
@@ -436,11 +437,7 @@ const AppPreviewChat: FC<Props> = ({ appId, appDisplayName, appIconUrl }) => {
 
       const createFromStarter = async () => {
         try {
-          await handleCreateConversation(text, [], {
-            responseFormat: ResponseFormat.Markdown,
-            systemPrompt: '',
-            temperature: 0.5,
-          });
+          await handleCreateConversation(text, [], DEFAULT_CHAT_SETTINGS);
         } catch (err) {
           const { message: errorMessage, traceId } =
             await getApiErrorDetails(err);

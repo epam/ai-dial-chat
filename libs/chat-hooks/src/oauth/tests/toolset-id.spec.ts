@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   decodeToolsetId,
   encodeToolsetId,
+  getToolsetFallbackName,
   isPublicToolsetId,
 } from '../toolset-id';
 
@@ -53,5 +54,17 @@ describe('isPublicToolsetId', () => {
 
   it('returns false for a bucket that merely starts with "public"', () => {
     expect(isPublicToolsetId('toolsets/public-ish/jira')).toBe(false);
+  });
+});
+
+describe('getToolsetFallbackName', () => {
+  it('returns the decoded last segment without its version suffix', () => {
+    expect(getToolsetFallbackName('toolsets/bucket/My%20Toolset__1.0.0')).toBe(
+      'My Toolset',
+    );
+  });
+
+  it('keeps a segment that is not valid percent-encoding as is', () => {
+    expect(getToolsetFallbackName('toolsets/bucket/100%__2')).toBe('100%');
   });
 });

@@ -1,5 +1,6 @@
 import {
   getStartersFromSchema,
+  isMessageStreaming,
   safeDecodeURIComponent,
 } from '@epam/ai-dial-chat-hooks';
 import {
@@ -56,31 +57,17 @@ export const getStatusMessageProps = (
 };
 
 /**
- * Returns `true` when the message at `index` is the last assistant message
- * in the list and the assistant is currently streaming a response.
- */
-export const isStreamingMessage = (
-  role: MessageRole,
-  index: number,
-  totalCount: number,
-  isAssistantTyping: boolean,
-): boolean =>
-  isAssistantTyping &&
-  role === MessageRole.Assistant &&
-  index === totalCount - 1;
-
-/**
  * Returns `true` when quick-reply starters should be rendered for this message:
  * it must be an assistant message that is not currently streaming.
  */
 export const shouldShowStarters = (
-  role: MessageRole,
+  msg: Message,
   index: number,
   totalCount: number,
   isAssistantTyping: boolean,
 ): boolean =>
-  role === MessageRole.Assistant &&
-  !isStreamingMessage(role, index, totalCount, isAssistantTyping);
+  msg.role === MessageRole.Assistant &&
+  !isMessageStreaming(msg, index, totalCount, isAssistantTyping);
 
 /**
  * Derives the `starters` and `onSelectStarter` props for a `MessageBubble`
@@ -104,12 +91,7 @@ export const getMessageStarterProps = (
   const { starters, propertyKey, description } = getStartersFromSchema(
     msg.custom_content?.form_schema,
   );
-  const canShow = shouldShowStarters(
-    msg.role,
-    index,
-    totalCount,
-    isAssistantTyping,
-  );
+  const canShow = shouldShowStarters(msg, index, totalCount, isAssistantTyping);
   const activeStarters = canShow && starters.length > 0 ? starters : undefined;
   return {
     starters: activeStarters,

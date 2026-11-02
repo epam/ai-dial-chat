@@ -10,6 +10,7 @@ export { useSkillSelectorOverlay } from './hooks/useSkillSelectorOverlay/useSkil
 export { buildFavoriteSkillItem } from './models/favorite-skill-item';
 export { matchSkillMentions } from './utils/skill-mention-matching';
 export { getSkillFallbackName } from './utils/skill-url';
+export { buildSkillSelectorOptions } from './utils/skill-selector-options';
 export {
   diffTextChange,
   findMentionAtCaret,

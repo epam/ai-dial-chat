@@ -1,4 +1,5 @@
 import {
+  buildSkillSelectorOptions,
   SkillSelectorField,
   type SkillSelectorFieldProps,
 } from '@epam/ai-dial-skills';
@@ -20,15 +21,10 @@ const ScheduledTaskSkillField: FC<
 > = ({ fieldLabel, ...props }) => {
   const { t } = useTranslation();
   const { skills, sharedWithMe, publicSkills } = useSkills();
-  const options = useMemo(() => {
-    const entries = new Map(
-      [...skills, ...(sharedWithMe ?? []), ...publicSkills].map((skill) => [
-        skill.url,
-        { id: skill.url, name: skill.name },
-      ]),
-    );
-    return [...entries.values()];
-  }, [skills, sharedWithMe, publicSkills]);
+  const options = useMemo(
+    () => buildSkillSelectorOptions(skills, sharedWithMe, publicSkills),
+    [skills, sharedWithMe, publicSkills],
+  );
   const names = useScheduledTaskSkillDisplayNames(props.value);
   const displayNames = Object.fromEntries(
     props.value.map((url, index) => [url, names[index]]),

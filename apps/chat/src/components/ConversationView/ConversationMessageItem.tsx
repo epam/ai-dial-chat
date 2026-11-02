@@ -8,16 +8,16 @@ import {
 } from '@epam/ai-dial-attachment-canvas';
 import {
   annotationToDisplayAttachment,
-  annotationToOoxmlCanvasContent,
-  annotationToPdfCanvasContent,
   attachmentDtosToDisplayAttachments,
   isDialFileId,
   isExternalSourcePreviewable,
+  isMessageStreaming,
   mapStages,
   messageHasStages,
   openAnnotationAttachment,
   prepareStageCitations,
   referenceAttachmentToPdfCanvasContent,
+  resolveAnnotationCanvasContent,
   resolveGroupedVisualizerCanvasContent,
   useAttachmentAction,
 } from '@epam/ai-dial-chat-hooks';
@@ -126,7 +126,6 @@ import { buildMessageActions } from './utils/build-message-actions';
 import {
   getMessageStarterProps,
   getStatusMessageProps,
-  isStreamingMessage,
 } from './utils/message-display';
 
 const EditMessageInput = lazy(async () => {
@@ -466,8 +465,8 @@ const ConversationMessageItem: FC<Props> = ({
     },
     [handleDownload],
   );
-  const isStreaming = isStreamingMessage(
-    msg.role,
+  const isStreaming = isMessageStreaming(
+    msg,
     index,
     totalCount,
     isAssistantTyping,
@@ -531,28 +530,14 @@ const ConversationMessageItem: FC<Props> = ({
     : undefined;
   const handleCitationPreview = useCallback(
     (annotation: Annotation) => {
-      const pdfContent = annotationToPdfCanvasContent(
+      const canvas = resolveAnnotationCanvasContent(
         annotation,
         citationGroupsWithFallback,
-        attachmentCanvasUrlResolvers,
-      );
-      if (pdfContent != null) {
-        const attachment = annotation.body?.source?.attachment;
-        const rawSegment = attachment?.url?.split('/').pop() ?? '';
-        const fileName = attachment?.title ?? decodeURIComponent(rawSegment);
-        openCanvas(pdfContent, fileName);
-        return;
-      }
-      const ooxmlContent = annotationToOoxmlCanvasContent(
-        annotation,
         annotationsWithFallback,
         attachmentCanvasUrlResolvers,
       );
-      if (ooxmlContent != null) {
-        const attachment = annotation.body?.source?.attachment;
-        const rawSegment = attachment?.url?.split('/').pop() ?? '';
-        const fileName = attachment?.title ?? decodeURIComponent(rawSegment);
-        openCanvas(ooxmlContent, fileName);
+      if (canvas != null) {
+        openCanvas(canvas.content, canvas.fileName);
         return;
       }
       const display = annotationToDisplayAttachment(annotation);

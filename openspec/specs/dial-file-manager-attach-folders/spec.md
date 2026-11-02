@@ -70,7 +70,7 @@ When `canAttachFolders` is `true` and the user selects both a folder and a file 
 
 Dedup logic: a selected item (file or folder) is excluded from the result if any other selected folder path is a proper prefix of its path. A "proper prefix" check uses a trailing `/` separator to avoid false matches (e.g., `files/bucket/foo/` must not match `files/bucket/foobar/file.txt`).
 
-This dedup runs on the virtual grid paths inside `handleAttach` in `FileManagerAttachModal` before calling `onAttach`; each surviving folder is then converted by the host-supplied `resolveFolderPath` (in `DialFileManagerModal`: a `files/<bucket>/<path>/` DIAL path with `.`/`..` segments stripped and a trailing `/`) to produce `folderPaths`. Hidden-path items are skipped, files rejected by `isFileTypeAllowed` are dropped (triggering `onSkippedUnsupportedFiles`), and when `existingAttachmentsAmount` + files + folders exceeds `maximumAttachmentsAmount`, `onCountLimitExceeded` is called instead of `onAttach`.
+This dedup runs on the virtual grid paths inside `handleAttach` in `FileManagerAttachModal` before calling `onAttach`; each surviving folder is then converted by the host-supplied `resolveFolderPath` (in `DialFileManagerModal`: `resolveDialFolderPath` from `@epam/ai-dial-chat-hooks`, a `files/<bucket>/<path>/` DIAL path with `.`/`..` segments stripped and a trailing `/`) to produce `folderPaths`. Hidden-path items are skipped, files rejected by `isFileTypeAllowed` are dropped (triggering `onSkippedUnsupportedFiles`), and when `existingAttachmentsAmount` + files + folders exceeds `maximumAttachmentsAmount`, `onCountLimitExceeded` is called instead of `onAttach`.
 
 RTL: none
 Feature flag: none

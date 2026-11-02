@@ -413,7 +413,7 @@ PDF is downloadable. `isDownloadable` returns `true` for `PdfCanvasContent`. `do
 
 ### Citation preview
 
-When a user clicks "Preview" in a `CitationDropdown`, `useCitationMarkdownComponents`'s `onPreview` (bound to `handleCitationPreview` in `apps/chat/src/components/ConversationView/ConversationMessageItem.tsx`) opens the canvas with the full source file: PDF sources through `annotationToPdfCanvasContent`, then Office sources through `annotationToOoxmlCanvasContent`, then the generic fallback below.
+When a user clicks "Preview" in a `CitationDropdown`, `useCitationMarkdownComponents`'s `onPreview` (bound to `handleCitationPreview` in `apps/chat/src/components/ConversationView/ConversationMessageItem.tsx`) opens the canvas with the full source file: PDF sources through `annotationToPdfCanvasContent`, then Office sources through `annotationToOoxmlCanvasContent` (both tried by `resolveAnnotationCanvasContent` from `@epam/ai-dial-chat-hooks`), then the generic fallback below.
 
 #### PDF sources (highlights)
 
@@ -1092,6 +1092,8 @@ When opening a citation whose source attachment is a DOCX, XLSX, or PPTX file, t
 1. `annotationToPdfCanvasContent` — unchanged, still first.
 2. **New**: `annotationToOoxmlCanvasContent`, attempted only when the PDF mapper returned `null`. When it returns non-`null`, the canvas opens with that content and the same `fileName` derivation the PDF branch already uses (`attachment.title`, falling back to the decoded last URL segment).
 3. `annotationToDisplayAttachment` + `handleAttachmentClick` — unchanged, still the final fallback, now reached only when neither mapper resolves.
+
+Steps 1 and 2, with the `fileName` derivation, are `resolveAnnotationCanvasContent` in `libs/chat-hooks/src/files/attachment-canvas.ts`; `handleCitationPreview` opens its result or falls through to step 3.
 
 The clicked annotation SHALL be the one whose highlight is selected, never the group's `primaryAnnotation` — the same rule the PDF path already follows when a grouped citation's popup has been switched to another annotation.
 

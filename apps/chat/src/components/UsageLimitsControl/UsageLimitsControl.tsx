@@ -4,6 +4,7 @@ import {
   LimitsTab,
 } from '@epam/ai-dial-catalog';
 import {
+  findWorstCappedRow,
   formatUsageResetTime,
   mapDeploymentLimitsToInput,
   type UsageLimitsApi,
@@ -43,10 +44,7 @@ import { getDeploymentUsage } from '../../server-api/deployment-limits';
 import { getUserUsage } from '../../server-api/user-limits';
 import { ROUTES } from '../../types/routes';
 import { resolveLocalizedText } from '../../utils/locale';
-import {
-  findWorstCappedRow,
-  getGaugeNeedleAngle,
-} from '../../utils/usage-limits';
+import { getGaugeNeedleAngle } from '../../utils/usage-limits';
 import styles from './UsageLimitsControl.module.scss';
 
 /* The deployment's own token stats and the account's cost budget, each from

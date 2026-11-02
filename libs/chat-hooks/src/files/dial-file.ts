@@ -1,3 +1,4 @@
+import { DialFileNodeType, type DialFile } from '@epam/ai-dial-ui-kit';
 import { safeDecodeURI } from '../shared/string-utils';
 
 /** True when `url` looks like a DIAL Core file id (`files/{bucket}/{path}`). */
@@ -56,4 +57,47 @@ export const resolveDialFileBucketAndPath = (
     path = rawPath;
   }
   return { bucket, path };
+};
+
+/** What a file-manager selection consists of, for picking its confirmation copy. */
+export enum FileSelectionKind {
+  /** Exactly one file. */
+  File = 'file',
+  /** Exactly one folder. */
+  Folder = 'folder',
+  /** Zero or several items. */
+  Multiple = 'multiple',
+}
+
+/** Returns whether a selection is one file, one folder or several items. */
+export const getFileSelectionKind = (
+  items: readonly Pick<DialFile, 'nodeType'>[],
+): FileSelectionKind => {
+  if (items.length !== 1) return FileSelectionKind.Multiple;
+  return items[0].nodeType === DialFileNodeType.FOLDER
+    ? FileSelectionKind.Folder
+    : FileSelectionKind.File;
+};
+
+/**
+ * Returns the DIAL folder path (`files/{bucket}/{path}/`) for a file-manager
+ * folder, or `null` when it carries neither `url` nor `id`.
+ */
+export const resolveDialFolderPath = (
+  file: Pick<DialFile, 'url' | 'id' | 'bucket'>,
+  bucket: string,
+): string | null => {
+  const source = file.url ?? file.id ?? '';
+  if (!source) return null;
+  const dialPath = isDialFileId(source)
+    ? source
+    : `files/${file.bucket ?? bucket}/${source.replace(/^\/+/, '')}`;
+  // Strip `../`/`./` segments before the path reaches DIAL Core; the BFF is the trust boundary, this guards against a compromised response.
+  const normalizedDialPath = dialPath
+    .split('/')
+    .filter((segment) => segment !== '..' && segment !== '.')
+    .join('/');
+  return normalizedDialPath.endsWith('/')
+    ? normalizedDialPath
+    : `${normalizedDialPath}/`;
 };

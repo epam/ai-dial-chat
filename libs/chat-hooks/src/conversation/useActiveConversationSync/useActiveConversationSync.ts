@@ -1,5 +1,5 @@
 ﻿import type { ConversationListItemDto } from '@epam/ai-dial-chat-api-client';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 /** Parameters for `useActiveConversationSync`. */
 export interface UseActiveConversationSyncParams {
@@ -21,6 +21,8 @@ export interface UseActiveConversationSyncParams {
   conversationIdsMatch: (a: string, b: string) => boolean;
   /** Converts a raw context id to the panel-space id. App-specific. */
   toPanelConversationId: (id: string) => string;
+  /** Whether the active listed conversation should be marked viewed. Defaults to marking every one. */
+  shouldMarkViewed?: (item: ConversationListItemDto) => boolean;
 }
 
 /**
@@ -32,7 +34,7 @@ export interface UseActiveConversationSyncParams {
  *    refresh. The list and refresh callback are intentionally excluded from
  *    the dependency array to avoid a refresh-loop on every list update.
  * 2. Marks the active conversation as viewed when its matching identity becomes
- *    available. List refreshes and persistence rollback do not retry the write.
+ *    available and `shouldMarkViewed` accepts it. List refreshes and persistence rollback do not retry the write.
  */
 export const useActiveConversationSync = ({
   activeConversationId,
@@ -41,6 +43,7 @@ export const useActiveConversationSync = ({
   markConversationViewed,
   conversationIdsMatch,
   toPanelConversationId,
+  shouldMarkViewed,
 }: UseActiveConversationSyncParams): string | undefined => {
   const panelActiveConversationId = useMemo(
     () =>
@@ -61,18 +64,35 @@ export const useActiveConversationSync = ({
     // dependency array to avoid re-triggering on every list update.
   }, [panelActiveConversationId, conversationIdsMatch]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const activeItemId = panelActiveConversationId
+  const activeItem = panelActiveConversationId
     ? items.find((item) =>
         conversationIdsMatch(item.id, panelActiveConversationId),
-      )?.id
+      )
     : undefined;
+  const activeItemId = activeItem?.id;
+  const isMarkable =
+    activeItem != null && (shouldMarkViewed?.(activeItem) ?? true);
 
   /* Persist once per matching active identity, including late-loaded metadata.
-     A rollback changes the list, but must not cause an automatic retry loop. */
+     A rollback changes the list, but must not cause an automatic retry loop —
+     nor may `shouldMarkViewed` flipping back and forth for the same identity. */
+  const markedIdentityRef = useRef<string | undefined>(undefined);
   useEffect(() => {
-    if (panelActiveConversationId && activeItemId)
-      void markConversationViewed(activeItemId);
-  }, [panelActiveConversationId, activeItemId, markConversationViewed]);
+    if (!panelActiveConversationId || !activeItemId) {
+      markedIdentityRef.current = undefined;
+      return;
+    }
+    if (!isMarkable) return;
+    const identity = `${panelActiveConversationId}\u0000${activeItemId}`;
+    if (markedIdentityRef.current === identity) return;
+    markedIdentityRef.current = identity;
+    void markConversationViewed(activeItemId);
+  }, [
+    panelActiveConversationId,
+    activeItemId,
+    isMarkable,
+    markConversationViewed,
+  ]);
 
   return panelActiveConversationId;
 };
