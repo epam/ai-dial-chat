@@ -10,6 +10,7 @@ import {
 import {
   AttachmentValidationErrorReason,
   findDeploymentByIdOrReference,
+  getEffectiveDeploymentIds,
   getQuickAppConversationStarters,
   isQuickAppSchema,
   normalizeResponseFormat,
@@ -37,13 +38,11 @@ import {
   type Conversation,
   DisplayAttachment,
   formatFileSize,
-  isStatusMessage,
   mergeClasses,
   type Message as MessageType,
   type MessageRating,
   type RequestSkill,
   type StarterOption,
-  StatusEvent,
   type ToolMenuItem,
   type UploadedAttachmentResult,
   useIsMobile,
@@ -815,21 +814,10 @@ const ConversationView: FC<Props> = ({
    * For each message, resolve the deployment active at that point in the conversation.
    * Scans status messages in order so messages before a model change get the initial model icon.
    */
-  const effectiveDeploymentIds = useMemo<(string | undefined)[]>(() => {
-    /* Single linear pass — copying the accumulator per message was O(n²) on long conversations. */
-    const result: (string | undefined)[] = [];
-    let activeId = initialModelId;
-    for (const msg of messages) {
-      if (
-        isStatusMessage(msg) &&
-        msg.custom_content?.event_type === StatusEvent.ModelChanged
-      ) {
-        activeId = msg.custom_content.new_deployment_id;
-      }
-      result.push(msg.deploymentId ?? activeId);
-    }
-    return result;
-  }, [messages, initialModelId]);
+  const effectiveDeploymentIds = useMemo(
+    () => getEffectiveDeploymentIds(messages, initialModelId),
+    [messages, initialModelId],
+  );
 
   const messageHistory = useMemo(
     () => getInputMessageHistory(messages, isInputHistoryNavigationDisabled),

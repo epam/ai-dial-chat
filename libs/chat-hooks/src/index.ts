@@ -251,6 +251,8 @@ export * from './scheduled-task/active-scheduled-task';
 export * from './scheduled-task/useActiveScheduledTaskDetails';
 
 export * from './conversation/useConversationTitleEnrichmentController';
+export * from './conversation/useVisibleConversationIdsReporter/useVisibleConversationIdsReporter';
+export * from './conversation/conversation-list';
 
 export * from './skill-editor/useSkillFilePreviewSyncController';
 

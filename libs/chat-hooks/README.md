@@ -3385,6 +3385,16 @@ import { getLastDeploymentId } from '@epam/ai-dial-chat-hooks';
 getLastDeploymentId(conversation.messages); // string | null
 ```
 
+### getEffectiveDeploymentIds
+
+`getEffectiveDeploymentIds(messages, initialModelId?)` returns, index for index, the deployment each message ran on: its own `deploymentId`, otherwise the model set by the latest preceding `model_changed` status message, otherwise `initialModelId`. One linear pass. Available from the root and `./conversation`.
+
+```ts
+import { getEffectiveDeploymentIds } from '@epam/ai-dial-chat-hooks/conversation';
+
+const deploymentIds = getEffectiveDeploymentIds(messages, initialModelId);
+```
+
 ### getToolConfigurationFromFormSchema / getLatestToolConfiguration / getFormSchemaToolSyncKey
 
 Let a DIAL app drive a tools-menu toggle from an assistant message's `custom_content.form_schema`. A property counts when it carries a boolean `default`, or, with no `default`, a `oneOf` with exactly one entry whose `const` is a boolean. `getToolConfigurationFromFormSchema` returns those values keyed by property name. `getLatestToolConfiguration` returns the last user message's `configuration_value` overlaid by the `form_schema` values of the assistant messages after it, for restoring a (re-)loaded conversation. `getFormSchemaToolSyncKey` returns the last assistant message's values restricted to the given tool ids plus a key that changes only when those values do, so a host applies each app value once and keeps a later user toggle.
@@ -4805,6 +4815,22 @@ const content = annotationToOoxmlCanvasContent(
 if (content != null) openCanvas(content, fileName);
 ```
 
+### resolveAnnotationCanvasContent
+
+`resolveAnnotationCanvasContent(annotation, groups, annotations, resolvers)` tries `annotationToPdfCanvasContent` and then `annotationToOoxmlCanvasContent`, and returns `{ content, fileName }` (`AnnotationCanvasContent`) — `fileName` is the source attachment's `title`, or the decoded last segment of its URL — or `null` when the citation opens in neither viewer, so the host can fall back to opening the plain attachment.
+
+```ts
+import { resolveAnnotationCanvasContent } from '@epam/ai-dial-chat-hooks';
+
+const canvas = resolveAnnotationCanvasContent(
+  annotation,
+  citationGroups,
+  messageAnnotations,
+  resolvers,
+);
+if (canvas != null) openCanvas(canvas.content, canvas.fileName);
+```
+
 ### attachmentDtoToDisplayAttachment / attachmentDtosToDisplayAttachments / annotationToDisplayAttachment
 
 Maps Chat API message-attachment DTOs (and an annotation's source attachment) to the display-only `DisplayAttachment` model UI components consume.
@@ -4954,16 +4980,52 @@ const panelActiveConversationId = useActiveConversationSync({
 
 **Parameters** (`UseActiveConversationSyncParams`):
 
-| Name                     | Type                                | Description                                                                                   |
-| ------------------------ | ----------------------------------- | --------------------------------------------------------------------------------------------- |
-| `activeConversationId`   | `string \| undefined`               | The app's currently active conversation (context-space).                                      |
-| `items`                  | `ConversationListItemDto[]`         | Raw DTOs from the API.                                                                        |
-| `refreshConversations`   | `() => Promise<void>`               | Called when the active conversation is not found in `items`.                                  |
-| `markConversationViewed` | `(id: string) => Promise<void>`     | Called with the matching raw DTO id when the active conversation or matched identity changes. |
-| `conversationIdsMatch`   | `(a: string, b: string) => boolean` | Equality predicate for context-space ids.                                                     |
-| `toPanelConversationId`  | `(id: string) => string`            | Maps a DTO `id` to the panel-space identifier.                                                |
+| Name                     | Type                                         | Description                                                                                   |
+| ------------------------ | -------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `activeConversationId`   | `string \| undefined`                        | The app's currently active conversation (context-space).                                      |
+| `items`                  | `ConversationListItemDto[]`                  | Raw DTOs from the API.                                                                        |
+| `refreshConversations`   | `() => Promise<void>`                        | Called when the active conversation is not found in `items`.                                  |
+| `markConversationViewed` | `(id: string) => Promise<void>`              | Called with the matching raw DTO id when the active conversation or matched identity changes. |
+| `conversationIdsMatch`   | `(a: string, b: string) => boolean`          | Equality predicate for context-space ids.                                                     |
+| `toPanelConversationId`  | `(id: string) => string`                     | Maps a DTO `id` to the panel-space identifier.                                                |
+| `shouldMarkViewed`       | `(item: ConversationListItemDto) => boolean` | Optional. Whether the matched active conversation is marked viewed; defaults to every one.    |
 
 **Returns**: `string | undefined` — the panel-space id to highlight.
+
+### useVisibleConversationIdsReporter
+
+Feeds the conversation panel's viewport report into title-enrichment priority. It returns the `(panelIds: string[]) => void` callback the panel calls with its visible rows, maps those panel ids back to list ids through `toPanelConversationId`, and registers them with `setVisibleConversationIds(viewKey, ids)` (from `useConversationTitleEnrichmentController`) under a per-instance key. While `isVisible` is `false` it registers `null` but keeps the last report, so reopening restores priority without a scroll; unmounting withdraws the registration. `UseVisibleConversationIdsReporterParams` is exported.
+
+```tsx
+import { useVisibleConversationIdsReporter } from '@epam/ai-dial-chat-hooks/conversation';
+
+const handleVisibleConversationIdsChange = useVisibleConversationIdsReporter({
+  items,
+  isVisible,
+  toPanelConversationId,
+  setVisibleConversationIds,
+});
+
+<ConversationListSection
+  onVisibleConversationIdsChange={handleVisibleConversationIdsChange}
+/>;
+```
+
+### isTotalDeletionFailure / resolveConversationPinChange
+
+Conversation-list decisions. `isTotalDeletionFailure(result)` is `true` when a delete-all `ConversationDeletionResultDto` reports failures and nothing deleted or already absent. `resolveConversationPinChange(targetGroupKey, isPinned)` returns the pin state for a conversation dragged into a group: `true` for `FilterTab.Pinned`, `false` when a pinned conversation leaves it, and `undefined` otherwise. Available from the root and `./conversation`.
+
+```ts
+import {
+  isTotalDeletionFailure,
+  resolveConversationPinChange,
+} from '@epam/ai-dial-chat-hooks/conversation';
+
+if (isTotalDeletionFailure(await deleteAllConversations())) throw new Error();
+
+const pinned = resolveConversationPinChange(targetGroupKey, item.isPinned);
+if (pinned != null) void pinConversation(id, pinned);
+```
 
 ### useAsyncConfirmDialog
 

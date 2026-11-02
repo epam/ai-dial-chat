@@ -122,4 +122,26 @@ describe('useActiveConversationSync', () => {
 
     await waitFor(() => expect(refreshConversations).toHaveBeenCalledOnce());
   });
+
+  it('marks the active conversation only when shouldMarkViewed accepts it', async () => {
+    const markConversationViewed = vi.fn(async () => undefined);
+    const render = (item: ConversationListItemDto) =>
+      renderHook(() =>
+        useActiveConversationSync({
+          activeConversationId: item.id,
+          items: [item],
+          refreshConversations: () => Promise.resolve(),
+          markConversationViewed,
+          conversationIdsMatch: (a, b) => a === b,
+          toPanelConversationId: (id) => id,
+          shouldMarkViewed: (candidate) => candidate.isScheduledTask,
+        }),
+      );
+
+    render({ ...makeItem('chat'), isScheduledTask: false });
+    render({ ...makeItem('run'), isScheduledTask: true });
+
+    await waitFor(() => expect(markConversationViewed).toHaveBeenCalledOnce());
+    expect(markConversationViewed).toHaveBeenCalledWith('run');
+  });
 });

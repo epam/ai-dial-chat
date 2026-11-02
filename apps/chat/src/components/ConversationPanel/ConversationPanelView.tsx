@@ -16,6 +16,8 @@ import {
   useConversationLookupMaps,
   useConversationPanelItems,
   useImportFilePicker,
+  resolveConversationPinChange,
+  useVisibleConversationIdsReporter,
 } from '@epam/ai-dial-chat-hooks';
 import { applyActiveScheduledTaskRun } from '@epam/ai-dial-chat-hooks/conversation';
 import {
@@ -77,8 +79,6 @@ import {
   Suspense,
   useCallback,
   useEffect,
-  useId,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -175,6 +175,9 @@ const SCHEDULED_TASK_ICON = (
  * and reports unparsable ones through the import queue.
  */
 const IMPORT_FILE_ACCEPT = '.json,.dial,.zip,application/json,application/zip';
+
+const isScheduledTaskConversation = (item: ConversationListItemDto) =>
+  item.isScheduledTask;
 
 interface ConversationPanelViewProps {
   activeConversationId?: string;
@@ -400,27 +403,14 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
    * for good. The conversation page marks regular chats once no generation is
    * running.
    */
-  const itemsRef = useRef(items);
-  useLayoutEffect(() => {
-    itemsRef.current = items;
-  }, [items]);
-  const markScheduledRunViewed = useCallback(
-    (id: string) => {
-      const item = itemsRef.current.find((c) => conversationIdsMatch(c.id, id));
-      return item?.isScheduledTask
-        ? markConversationViewed(id)
-        : Promise.resolve();
-    },
-    [markConversationViewed],
-  );
-
   const panelActiveConversationId = useActiveConversationSync({
     activeConversationId,
     items,
     refreshConversations,
-    markConversationViewed: markScheduledRunViewed,
+    markConversationViewed,
     conversationIdsMatch,
     toPanelConversationId,
+    shouldMarkViewed: isScheduledTaskConversation,
   });
   /* Read by row actions at click time, so `getActions` keeps its identity
      across navigation and the panel does not rebuild every row's menu. */
@@ -655,44 +645,13 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     [scheduledTaskGrouping, activeConversationId],
   );
 
-  /*
-   * Viewport priority for title enrichment. The list reports panel ids; the
-   * context schedules by list resource ids. A hidden view keeps its last
-   * report so reopening restores priority without waiting for a scroll.
-   */
-  const visibilityKey = useId();
-  const panelIdToConversationIdRef = useRef(new Map<string, string>());
-  useEffect(() => {
-    panelIdToConversationIdRef.current = new Map(
-      panelItems.map((item) => [toPanelConversationId(item.id), item.id]),
-    );
-  }, [panelItems]);
-  const lastVisibleIdsRef = useRef<string[]>([]);
-  const isVisibleRef = useRef(isVisible);
-  const registerVisibleIds = useCallback(() => {
-    setVisibleConversationIds(
-      visibilityKey,
-      isVisibleRef.current ? lastVisibleIdsRef.current : null,
-    );
-  }, [setVisibleConversationIds, visibilityKey]);
-  const handleVisibleConversationIdsChange = useCallback(
-    (panelIds: string[]) => {
-      lastVisibleIdsRef.current = panelIds.flatMap((panelId) => {
-        const id = panelIdToConversationIdRef.current.get(panelId);
-        return id ? [id] : [];
-      });
-      registerVisibleIds();
-    },
-    [registerVisibleIds],
-  );
-  useEffect(() => {
-    isVisibleRef.current = isVisible;
-    registerVisibleIds();
-  }, [isVisible, registerVisibleIds]);
-  useEffect(
-    () => () => setVisibleConversationIds(visibilityKey, null),
-    [setVisibleConversationIds, visibilityKey],
-  );
+  /* Viewport priority for title enrichment. */
+  const handleVisibleConversationIdsChange = useVisibleConversationIdsReporter({
+    items: panelItems,
+    isVisible,
+    toPanelConversationId,
+    setVisibleConversationIds,
+  });
 
   const conversations = useConversationPanelItems({
     items: panelItems,
@@ -758,12 +717,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       const draggedItem = conversations.find((c) => c.id === draggedId);
       if (!draggedItem) return;
 
-      if (targetGroupKey === FilterTab.Pinned) {
-        void pinConversation(contextId, true);
-      } else if (draggedItem.isPinned) {
-        void pinConversation(contextId, false);
-      }
-      // Same-group reorder: no API available in this iteration — no-op.
+      const pinned = resolveConversationPinChange(
+        targetGroupKey,
+        draggedItem.isPinned,
+      );
+      if (pinned != null) void pinConversation(contextId, pinned);
     },
     [toContextId, conversations, pinConversation],
   );
@@ -1513,7 +1471,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
        * overlays — popup 52, dropdown 53, tooltip 55 — so a row's error tooltip
        * and the close confirmation open over the queue, not under it.
        */}
-      <div className="fixed inset-e-4 bottom-4 z-51 flex flex-col-reverse gap-2">
+      <div className="inset-e-4 fixed bottom-4 z-51 flex flex-col-reverse gap-2">
         <TransferQueue
           title={importQueueTitle}
           items={importQueueItems}

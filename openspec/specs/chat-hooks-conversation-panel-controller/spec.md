@@ -93,13 +93,15 @@ row-action call sites.
 `@epam/ai-dial-chat-hooks` SHALL export `useActiveConversationSync(params: { activeConversationId:
 string | undefined; items: ConversationListItemDto[]; refreshConversations: () => Promise<void>;
 markConversationViewed: (id: string) => Promise<void>; conversationIdsMatch: (a: string, b: string) =>
-boolean; toPanelConversationId: (id: string) => string }): string | undefined`, returning the active
+boolean; toPanelConversationId: (id: string) => string; shouldMarkViewed?: (item: ConversationListItemDto) => boolean }): string | undefined`, returning the active
 conversation's panel-space id. The hook SHALL run two effects: (1) if the
 active conversation is not found in `items`, call `refreshConversations()`, deliberately excluding
 `items`/`refreshConversations` from its own dependency array to avoid a refetch loop — this omission
 SHALL be documented in the hook's JSDoc with the same rationale as the code it replaces; (2) once per
 matching active identity (keyed on the active panel id and the matching item's raw id, so a list refresh
-or rollback does not retry the write), call `markConversationViewed(activeItemId)`.
+or rollback does not retry the write), call `markConversationViewed(activeItemId)` — only when
+`shouldMarkViewed` is omitted or returns `true` for the matching item. `apps/chat` passes a predicate
+that accepts scheduled-task runs only.
 
 #### Scenario: Missing active conversation triggers exactly one refresh, not a loop
 - **GIVEN** `activeConversationId` does not match any entry in `items`

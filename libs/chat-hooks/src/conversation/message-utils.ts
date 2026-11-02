@@ -51,6 +51,30 @@ export const getLastDeploymentId = (messages: Message[]): string | null => {
   return null;
 };
 
+/**
+ * Returns, for each message, the deployment it ran on: its own `deploymentId`,
+ * otherwise the model set by the latest preceding `model_changed` status
+ * message, otherwise `initialModelId`.
+ */
+export const getEffectiveDeploymentIds = (
+  messages: readonly Message[],
+  initialModelId?: string,
+): (string | undefined)[] => {
+  // Single linear pass — copying the accumulator per message was O(n²) on long conversations.
+  const result: (string | undefined)[] = [];
+  let activeId = initialModelId;
+  for (const msg of messages) {
+    if (
+      isStatusMessage(msg) &&
+      msg.custom_content?.event_type === StatusEvent.ModelChanged
+    ) {
+      activeId = msg.custom_content.new_deployment_id;
+    }
+    result.push(msg.deploymentId ?? activeId);
+  }
+  return result;
+};
+
 /** True when `message` is an assistant message carrying at least one stage. */
 export const messageHasStages = (message: Message): boolean =>
   message.role === MessageRole.Assistant &&
