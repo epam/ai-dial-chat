@@ -8,6 +8,7 @@ import { IsOptional, IsString } from 'class-validator';
 import { AnnouncementItemDto } from './announcement-item.dto';
 import { ApplicationVisualizerDto } from './application-visualizer.dto';
 import { CatalogCreationPermissionsDto } from './catalog-creation-permissions.dto';
+import { CelebrationDeliveryDto } from './celebration-delivery.dto';
 import { CustomVisualizerDto } from './custom-visualizer.dto';
 
 /* ApplicationVisualizerDto is reachable only through an additionalProperties
@@ -279,6 +280,13 @@ export class ClientConfigDto {
     example: true,
   })
   celebrationsEnabledByDefault!: boolean;
+
+  @ApiProperty({
+    description:
+      'Operator policy for external celebration packs, from UI_EVENT_DELIVERY_MODE, UI_EVENT_DELIVERY_REVISION, UI_EVENT_EXTERNAL_SCENES and UI_EVENT_EXTERNAL_EVENTS. The default is bundled with empty lists, in which case the client makes no celebration request.',
+    type: CelebrationDeliveryDto,
+  })
+  celebrationDelivery!: CelebrationDeliveryDto;
 
   @ApiProperty({
     description:

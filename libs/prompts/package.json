@@ -25,7 +25,7 @@
     }
   },
   "dependencies": {
-    "@tabler/icons-react": "^3.44.0",
+    "@tabler/icons-react": "^3.50.0",
     "@epam/ai-dial-catalog": "*"
   },
   "peerDependencies": {

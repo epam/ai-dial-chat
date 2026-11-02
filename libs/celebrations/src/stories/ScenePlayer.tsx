@@ -51,6 +51,10 @@ export interface ScenePlayerProps {
   /** Hide starters to exercise a composer-only host. */
   showStarters?: boolean;
   /** Pin the composer to the viewport bottom to exercise cramped geometry. */
+  /** Optional editor text for scene contact fixtures. */
+  composerValue?: string;
+  /** Empty-editor hint for scene contact fixtures. */
+  composerPlaceholder?: string;
   composerAlign?: 'center' | 'bottom';
   /** Host scene and decoration selection for the event. */
   selection?: CelebrationEventSelection;
@@ -84,6 +88,8 @@ export const ScenePlayer: FC<ScenePlayerProps> = ({
   isReducedMotion = false,
   startersBelowComposer = false,
   showStarters = true,
+  composerValue,
+  composerPlaceholder,
   composerAlign = 'center',
   selection,
   children,
@@ -111,6 +117,8 @@ export const ScenePlayer: FC<ScenePlayerProps> = ({
           startersBelowComposer={startersBelowComposer}
           showStarters={showStarters}
           composerAlign={composerAlign}
+          composerDefaultValue={composerValue}
+          composerPlaceholder={composerPlaceholder}
         >
           <CelebrationDecor />
         </StoryHostPage>
