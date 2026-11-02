@@ -28,6 +28,12 @@
       "types": "./dist/new-year/index.d.ts",
       "import": "./dist/new-year.js",
       "default": "./dist/new-year.js"
+    },
+    "./packs": {
+      "@epam/source": "./src/packs/index.ts",
+      "types": "./dist/packs/index.d.ts",
+      "import": "./dist/packs.js",
+      "default": "./dist/packs.js"
     }
   },
   "dependencies": {

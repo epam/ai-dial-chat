@@ -172,6 +172,45 @@ describe('AppConfigService', () => {
       ]);
     });
 
+    it('returns the bundled celebration delivery policy by default', async () => {
+      const { service } = makeService(async () => undefined);
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.celebrationDelivery).toEqual({
+        mode: 'bundled',
+        revision: '0',
+        externalScenes: [],
+        externalEvents: [],
+      });
+    });
+
+    it('surfaces an operator-configured celebration delivery policy', async () => {
+      const values: Record<string, unknown> = {
+        'ui.celebrationDelivery.mode': 'prefer-external',
+        'ui.celebrationDelivery.revision': '2026-11-15.1',
+        'ui.celebrationDelivery.externalScenes': ['new-year/snowman-delivery'],
+        'ui.celebrationDelivery.externalEvents': ['company-anniversary'],
+      };
+      const { service } = makeService(async (key: string) => values[key]);
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.celebrationDelivery).toEqual({
+        mode: 'prefer-external',
+        revision: '2026-11-15.1',
+        externalScenes: [{ eventId: 'new-year', sceneId: 'snowman-delivery' }],
+        externalEvents: ['company-anniversary'],
+      });
+    });
+
+    it('does not share the default celebration lists between responses', async () => {
+      const { service } = makeService(async () => undefined);
+      const first = await service.getClientConfig({ ...ctx, roles: ['a'] });
+      first.config.celebrationDelivery.externalEvents.push('leaked');
+      const second = await service.getClientConfig({ ...ctx, roles: ['b'] });
+
+      expect(second.config.celebrationDelivery.externalEvents).toEqual([]);
+    });
+
     it('surfaces operator-configured project context limits', async () => {
       const values: Record<string, unknown> = {
         'projects.contextFileMaxBytes': 2_097_152,
@@ -1481,6 +1520,7 @@ describe('AppConfigService', () => {
         'maxAttachmentFileSizeBytes',
         'usageLimitsWarningThresholdPercent',
         'celebrationsEnabledByDefault',
+        'celebrationDelivery',
         'projectContextFileMaxBytes',
         'projectContextTotalMaxBytes',
         'projectContextAllowedExtensions',

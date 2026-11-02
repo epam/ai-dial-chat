@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "packId": "new-year-default",
+  "version": "1.0.0",
+  "eventId": "new-year",
+  "requiredCapabilities": [
+    "lottie-light-svg-v1",
+    "viewport-stage-v1",
+    "static-poster-v1"
+  ],
+  "assets": [
+    {
+      "assetId": "new-year-default-snowman-delivery-desktop-c574a799b1e315fe",
+      "file": "snowman-delivery.desktop.c574a799b1e315fe.json",
+      "mediaType": "application/json",
+      "bytes": 740,
+      "sha256": "c574a799b1e315fef44286b6aa3cac02841b0c6ddc0febbc4d67b31ccee87943"
+    },
+    {
+      "assetId": "new-year-default-snowman-delivery-mobile-70baf6daf3401deb",
+      "file": "snowman-delivery.mobile.70baf6daf3401deb.json",
+      "mediaType": "application/json",
+      "bytes": 738,
+      "sha256": "70baf6daf3401debb3d0238a9b9dce0d1a0e9d1c694970c5be7d014ca6f05826"
+    },
+    {
+      "assetId": "new-year-default-snowman-delivery-poster-01ed8dc1d8e1de9c",
+      "file": "snowman-delivery.poster.01ed8dc1d8e1de9c.svg",
+      "mediaType": "image/svg+xml",
+      "bytes": 136,
+      "sha256": "01ed8dc1d8e1de9c2d25715e74b659c1ae12dceb992e50e1dee6c2f16decfae9"
+    }
+  ],
+  "scenes": [
+    {
+      "id": "snowman-delivery",
+      "labelId": "snowmanDeliveryToastMessage",
+      "renderer": "lottie-light-svg-v1",
+      "requiredCapabilities": [
+        "lottie-light-svg-v1",
+        "viewport-stage-v1",
+        "static-poster-v1"
+      ],
+      "placement": {
+        "template": "viewport-stage-v1",
+        "fit": "contain",
+        "align": "bottom"
+      },
+      "direction": "mirror",
+      "timing": {
+        "playbackDurationMs": 12000,
+        "loadTimeoutMs": 2000,
+        "readyTimeoutMs": 250,
+        "maxLifetimeMs": 15000
+      },
+      "posterAssetId": "new-year-default-snowman-delivery-poster-01ed8dc1d8e1de9c",
+      "posterDurationMs": 4000,
+      "variants": [
+        {
+          "when": {
+            "layout": "desktop"
+          },
+          "animationAssetId": "new-year-default-snowman-delivery-desktop-c574a799b1e315fe"
+        },
+        {
+          "when": {
+            "layout": "mobile"
+          },
+          "animationAssetId": "new-year-default-snowman-delivery-mobile-70baf6daf3401deb"
+        }
+      ]
+    }
+  ]
+}

@@ -57,6 +57,64 @@ describe('validate', () => {
     ).toBe(expected);
   });
 
+  describe('celebration delivery policy', () => {
+    it('defaults to bundled, revision 0 and empty lists', () => {
+      const config = validate({ ...baseConfig });
+      expect(config.UI_EVENT_DELIVERY_MODE).toBe('bundled');
+      expect(config.UI_EVENT_DELIVERY_REVISION).toBe('0');
+      expect(config.UI_EVENT_EXTERNAL_SCENES).toEqual([]);
+      expect(config.UI_EVENT_EXTERNAL_EVENTS).toEqual([]);
+    });
+
+    it('accepts a valid policy and trims and de-duplicates the lists', () => {
+      const config = validate({
+        ...baseConfig,
+        UI_EVENT_DELIVERY_MODE: 'prefer-external',
+        UI_EVENT_DELIVERY_REVISION: '2026-11-15.1',
+        UI_EVENT_EXTERNAL_SCENES:
+          ' new-year/snowman-delivery , new-year/snowman-delivery,,',
+        UI_EVENT_EXTERNAL_EVENTS: 'company-anniversary, company-anniversary',
+      });
+      expect(config.UI_EVENT_DELIVERY_MODE).toBe('prefer-external');
+      expect(config.UI_EVENT_DELIVERY_REVISION).toBe('2026-11-15.1');
+      expect(config.UI_EVENT_EXTERNAL_SCENES).toEqual([
+        'new-year/snowman-delivery',
+      ]);
+      expect(config.UI_EVENT_EXTERNAL_EVENTS).toEqual(['company-anniversary']);
+    });
+
+    it.each([
+      ['UI_EVENT_DELIVERY_MODE', 'external'],
+      ['UI_EVENT_DELIVERY_REVISION', 'rev 1'],
+      ['UI_EVENT_DELIVERY_REVISION', 'x'.repeat(65)],
+      ['UI_EVENT_EXTERNAL_SCENES', 'new-year/Snowman'],
+      ['UI_EVENT_EXTERNAL_SCENES', 'new-year'],
+      ['UI_EVENT_EXTERNAL_SCENES', 'new-year/snowman/extra'],
+      ['UI_EVENT_EXTERNAL_SCENES', `new-year/${'a'.repeat(65)}`],
+      ['UI_EVENT_EXTERNAL_EVENTS', 'Company_Anniversary'],
+      ['UI_EVENT_EXTERNAL_EVENTS', 'a'.repeat(65)],
+    ])('rejects %s=%j at startup', (key, value) => {
+      expect(() => validate({ ...baseConfig, [key]: value })).toThrow(
+        new RegExp(key),
+      );
+    });
+
+    it('rejects more than 64 distinct entries', () => {
+      const events = Array.from({ length: 65 }, (_, i) => `event-${i}`);
+      expect(() =>
+        validate({ ...baseConfig, UI_EVENT_EXTERNAL_EVENTS: events.join(',') }),
+      ).toThrow(/UI_EVENT_EXTERNAL_EVENTS/);
+      expect(
+        validate({
+          ...baseConfig,
+          UI_EVENT_EXTERNAL_EVENTS: [...events.slice(0, 64), 'event-0'].join(
+            ',',
+          ),
+        }).UI_EVENT_EXTERNAL_EVENTS,
+      ).toHaveLength(64);
+    });
+  });
+
   it('defaults external connections to an empty allowlist', () => {
     expect(validate({ ...baseConfig }).ALLOWED_CONNECT_ORIGINS).toEqual([]);
     expect(

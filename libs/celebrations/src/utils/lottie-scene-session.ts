@@ -42,6 +42,7 @@ export const createLottieSceneSession = <P>({
   onPrepared,
   onTerminal,
   loadPlayer = loadLottiePlayer,
+  loadData,
 }: LottieSceneSessionOptions<P>): LottieSceneSession => {
   let state = LottieSceneSessionState.Idle;
   let isStarted = false;
@@ -51,6 +52,7 @@ export const createLottieSceneSession = <P>({
   let host: HTMLElement | undefined;
   let animation: AnimationItem | undefined;
   let context: LottieAnimationContext<P> | undefined;
+  let dataRequest: AbortController | undefined;
   let loadDeadline: ReturnType<typeof setTimeout> | undefined;
   let readyDeadline: ReturnType<typeof setTimeout> | undefined;
   let playbackDeadline: ReturnType<typeof setTimeout> | undefined;
@@ -67,6 +69,9 @@ export const createLottieSceneSession = <P>({
     clearTimeout(loadDeadline);
     clearTimeout(readyDeadline);
     clearTimeout(playbackDeadline);
+    const request = dataRequest;
+    dataRequest = undefined;
+    if (request) attempt(() => request.abort());
     disposers.splice(0).reverse().forEach(attempt);
     const item = animation;
     if (item) {
@@ -116,6 +121,19 @@ export const createLottieSceneSession = <P>({
       fail();
       return;
     }
+    const accepts = playback.isRendererAccepted;
+    if (accepts && host) {
+      let isAccepted = false;
+      try {
+        isAccepted = accepts(host);
+      } catch {
+        /* A throwing check rejects the renderer like a failed one. */
+      }
+      if (!isAccepted) {
+        fail();
+        return;
+      }
+    }
     state = LottieSceneSessionState.Playing;
     clearTimeout(readyDeadline);
     animation.removeEventListener('DOMLoaded', ready);
@@ -144,22 +162,30 @@ export const createLottieSceneSession = <P>({
     }
     state = LottieSceneSessionState.Loading;
     loadDeadline = setTimeout(fail, playback.timings.loadTimeoutMs);
+    /* Player and data share one deadline, so their waits never stack. */
+    dataRequest = loadData ? new AbortController() : undefined;
+    const signal = dataRequest?.signal;
     let loaded: LottiePlayer;
+    let data: unknown;
     try {
-      loaded = await loadPlayer();
+      [loaded, data] = await Promise.all([
+        loadPlayer(),
+        loadData && signal ? loadData(signal) : undefined,
+      ]);
     } catch {
       if (state === LottieSceneSessionState.Loading) fail();
       return;
     }
     /* An import cannot be aborted; a late one after any ending is ignored. */
     if (state !== LottieSceneSessionState.Loading) return;
+    dataRequest = undefined;
     clearTimeout(loadDeadline);
     if (document.hidden) {
       cancel();
       return;
     }
     try {
-      prepared = { preparation: prepare(loaded) };
+      prepared = { preparation: prepare(loaded, data) };
       player = loaded;
       state = LottieSceneSessionState.Prepared;
       onPrepared(prepared.preparation);
