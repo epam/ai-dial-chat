@@ -1,3 +1,4 @@
+import { ScheduledTasksLoginBannerState } from '@epam/ai-dial-chat-hooks';
 import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
@@ -9,15 +10,6 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconArrowRight } from '@tabler/icons-react';
 import { memo, type FC } from 'react';
-
-export enum ScheduledTasksLoginBannerState {
-  Shown = 'shown',
-  LoginInProgress = 'login-in-progress',
-  RetryPopupBlocked = 'retry-popup-blocked',
-  RetryCancelled = 'retry-cancelled',
-  RetryTimeout = 'retry-timeout',
-  RetryFailed = 'retry-failed',
-}
 
 /** Retry states — every state other than `Shown` and `LoginInProgress`. */
 const RETRY_STATES = new Set<ScheduledTasksLoginBannerState>([

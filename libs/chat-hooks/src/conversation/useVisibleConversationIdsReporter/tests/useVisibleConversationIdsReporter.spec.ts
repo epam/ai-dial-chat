@@ -7,7 +7,7 @@ const items = [{ id: 'a' }, { id: 'b' }];
 
 const renderReporter = (isVisible = true) => {
   const setVisibleConversationIds = vi.fn();
-  const hook = renderHook(
+  const view = renderHook(
     ({ isVisible: visible }) =>
       useVisibleConversationIdsReporter({
         items,
@@ -17,7 +17,7 @@ const renderReporter = (isVisible = true) => {
       }),
     { initialProps: { isVisible } },
   );
-  return { ...hook, setVisibleConversationIds };
+  return { ...view, setVisibleConversationIds };
 };
 
 describe('useVisibleConversationIdsReporter', () => {

@@ -7,11 +7,11 @@ import {
   type ExternalServiceAuthType,
   ExternalServiceCredentialsLevel,
   getExternalServiceFallbackName,
+  getToolsetFallbackName,
   resolveToolsetCredentialsLevel,
 } from '@epam/ai-dial-chat-hooks';
 import type { ResolvedRowInfo } from '../models/signin-interrupt';
 import { PRIMARY_LOCALE, resolveLocalizedText } from './locale';
-import { getToolsetFallbackName } from './toolsets';
 
 export const resolveToolsetInfo = (
   toolsetId: string,

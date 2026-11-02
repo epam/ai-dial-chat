@@ -1,6 +1,7 @@
 import { mimeTypesToExtensionLabels } from '@epam/ai-dial-attachment-input';
 import {
   mimeTypesToAttachmentExtensionLabels,
+  resolveDialFolderPath,
   useFileAttachmentPicker,
 } from '@epam/ai-dial-chat-hooks';
 import {
@@ -277,24 +278,7 @@ const DialFileManagerModal: FC<Props> = ({
   }, [maxSelectableFileSize, t]);
 
   const resolveFolderPath = useCallback(
-    (file: DialFile): string | null => {
-      const source = file.url ?? file.id ?? '';
-      if (!source) return null;
-      const dialPath = source.startsWith('files/')
-        ? source
-        : `files/${file.bucket ?? bucket}/${source.replace(/^\/+/, '')}`;
-      /*
-       * Strip any `../`/`./` segments before the path is forwarded to DIAL Core —
-       * the BFF is the trust boundary, but this guards against a compromised response.
-       */
-      const normalizedDialPath = dialPath
-        .split('/')
-        .filter((segment) => segment !== '..' && segment !== '.')
-        .join('/');
-      return normalizedDialPath.endsWith('/')
-        ? normalizedDialPath
-        : `${normalizedDialPath}/`;
-    },
+    (file: DialFile): string | null => resolveDialFolderPath(file, bucket),
     [bucket],
   );
 

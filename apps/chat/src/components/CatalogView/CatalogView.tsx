@@ -9,6 +9,7 @@ import { CatalogCreationType } from '@epam/ai-dial-chat-api-client';
 import {
   type CatalogEditNavigationLabels,
   type CatalogEditNavigationUrls,
+  canEditShareAccess,
   findDeploymentByIdOrReference,
   findSchemaDisplayName,
   resolveFavoriteEntityType,
@@ -87,7 +88,6 @@ import {
   getPublishAuthorLabels,
   getPublishPanelCommonLabels,
 } from '../../utils/publish';
-import { canEditShareAccess } from '../../utils/share';
 import { ApplicationCredentials } from '../ApplicationCredentials/ApplicationCredentials';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
 import SkillArchiveUploadDialog from '../SkillArchiveUploadDialog/SkillArchiveUploadDialog';

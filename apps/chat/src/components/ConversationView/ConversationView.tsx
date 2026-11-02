@@ -8,7 +8,7 @@ import {
   isMimeTypeAllowed,
 } from '@epam/ai-dial-attachment-input';
 import {
-  AttachmentValidationErrorReason,
+  type AttachmentValidationErrorEvent,
   findDeploymentByIdOrReference,
   getEffectiveDeploymentIds,
   getQuickAppConversationStarters,
@@ -37,7 +37,6 @@ import {
   type Attachment,
   type Conversation,
   DisplayAttachment,
-  formatFileSize,
   mergeClasses,
   type Message as MessageType,
   type MessageRating,
@@ -113,6 +112,7 @@ import { useLanguage } from '../../hooks/language/useLanguage';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { mcpAppsApiClient } from '../../server-api/mcp-apps';
 import { attachmentCanvasUrlResolvers } from '../../utils/attachment-display-resolvers';
+import { buildAttachmentValidationNotification } from '../../utils/attachment-validation-notification';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
 import { useDeploymentSelectorOverlay } from '../DeploymentSelector/useDeploymentSelectorOverlay';
@@ -626,42 +626,8 @@ const ConversationView: FC<Props> = ({
   );
 
   const handleAttachmentValidationError = useCallback(
-    ({
-      reason,
-      formats,
-      maxFileSizeBytes,
-    }: {
-      reason: AttachmentValidationErrorReason;
-      formats?: string;
-      maxFileSizeBytes?: number;
-    }) => {
-      if (reason === AttachmentValidationErrorReason.FileTooLarge) {
-        showErrorNotification({
-          title: t(AttachmentsI18nKeys.FileTooLargeTitle),
-          message: t(AttachmentsI18nKeys.FileTooLargeMessage, {
-            maxSize:
-              maxFileSizeBytes != null ? formatFileSize(maxFileSizeBytes) : '',
-          }),
-        });
-        return;
-      }
-
-      const noTypesAllowed =
-        reason === AttachmentValidationErrorReason.NoTypesAllowed;
-      showErrorNotification({
-        title: t(
-          noTypesAllowed
-            ? AttachmentsI18nKeys.NoAttachmentsAllowedTitle
-            : AttachmentsI18nKeys.UnsupportedTypeTitle,
-        ),
-        message: t(
-          noTypesAllowed
-            ? AttachmentsI18nKeys.NoAttachmentsAllowedMessage
-            : AttachmentsI18nKeys.UnsupportedTypeMessage,
-          noTypesAllowed ? undefined : { formats },
-        ),
-      });
-    },
+    (event: AttachmentValidationErrorEvent) =>
+      showErrorNotification(buildAttachmentValidationNotification(event, t)),
     [showErrorNotification, t],
   );
 

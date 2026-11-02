@@ -364,7 +364,7 @@ Creating a share link already validates any DIAL id (`CreateShareLinkDto`, `IsDi
 
 `SharePopoverContainer` (`apps/chat/src/components/SharePopoverContainer/SharePopoverContainer.tsx`) SHALL take `itemId: string` and `canEditAccess: boolean` instead of a `CatalogItem`:
 
-- `EDITABLE_ACCESS_TYPES` moves to `canEditShareAccess(type: CatalogEntityType): boolean` in `apps/chat/src/utils/share.ts`;
+- `EDITABLE_ACCESS_TYPES` moves to `canEditShareAccess(type: CatalogEntityType): boolean`, exported from `@epam/ai-dial-chat-hooks` (`libs/chat-hooks/src/catalog/catalog-derivations.ts`);
 - `CatalogView` passes `itemId={item.id}` and `canEditAccess={canEditShareAccess(item.type)}`, so catalog behavior is unchanged.
 
 **Feature flag:** the project page that opens the popover is gated by `projectsEnabled`. The share endpoints are not.

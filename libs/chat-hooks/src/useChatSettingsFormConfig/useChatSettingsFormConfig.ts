@@ -15,6 +15,13 @@ export interface ChatSettingsValues {
   temperature?: number;
 }
 
+/** Chat settings a conversation starts with before the user changes any: Markdown, no system prompt, temperature `0.5`. */
+export const DEFAULT_CHAT_SETTINGS: Readonly<Required<ChatSettingsValues>> = {
+  responseFormat: ResponseFormat.Markdown,
+  systemPrompt: '',
+  temperature: 0.5,
+};
+
 /**
  * Translatable strings the chat-settings form surfaces. Every field defaults
  * to an English fallback inside the hook; pass translated values from the

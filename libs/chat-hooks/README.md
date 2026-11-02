@@ -1832,6 +1832,16 @@ const ComposerSettings = ({
 
 **Returns** (`UseChatSettingsFormConfigResult`): `{ features, responseFormat, systemPrompt, temperature, onSave, menuItemLabel, title, responseFormatLabel, responseFormatHint, responseFormatMarkdownLabel, responseFormatPlainTextLabel, systemPromptLabel, systemPromptTooltip, temperatureLabel, temperatureLabels, temperatureHint, saveLabel, saveDisabledTooltip }` — spread directly into `ChatSettingsModal` / `ChatSettingsBottomSheet` from `@epam/ai-dial-conversation-input`.
 
+### DEFAULT_CHAT_SETTINGS
+
+The `Required<ChatSettingsValues>` a conversation starts with before the user changes anything: `ResponseFormat.Markdown`, an empty system prompt and temperature `0.5`. Available from the root and `./conversation`.
+
+```ts
+import { DEFAULT_CHAT_SETTINGS } from '@epam/ai-dial-chat-hooks';
+
+const [settings, setSettings] = useState(DEFAULT_CHAT_SETTINGS);
+```
+
 ### useAttachmentAction
 
 Default click behavior for an attachment tile: downloads DIAL-hosted and inline (`data`) files, and for reference-only attachments (RAG/search-grounding chunks), opens a PDF in the canvas scrolled to its referenced page when present, otherwise opens/downloads the reference as-is.
@@ -2003,6 +2013,19 @@ import {
 const sortKey = resolveCatalogSortKey(storedSortKey);
 const filterTopics = parseCatalogFilterTopics(storedFilterTopics);
 const activeTab = resolveCatalogActiveTab(storedActiveTab, availableTabIds);
+```
+
+### canEditShareAccess
+
+`canEditShareAccess(type)` is `true` for the catalog entity types whose share link may grant edit access — Agent, Prompt, Skill and Toolset — and `false` for Model, which is only ever shared view-only. Available from the root and `./catalog`.
+
+```tsx
+import { canEditShareAccess } from '@epam/ai-dial-chat-hooks/catalog';
+
+<SharePopoverContainer
+  itemId={item.id}
+  canEditAccess={canEditShareAccess(item.type)}
+/>;
 ```
 
 ### findSkillByUrl
@@ -3126,6 +3149,16 @@ selectToolsetAuthStatus(toolset.authSettings, credentialsLevel);
 // toolset.authSettings?.globalAuthStatus
 ```
 
+### getToolsetFallbackName
+
+`getToolsetFallbackName(toolsetId)` returns a display name for a toolset whose metadata has not loaded: the last path segment, without its `__version` suffix, percent-decoded (kept as is when it is not valid encoding). Available from the root and `./oauth`.
+
+```ts
+import { getToolsetFallbackName } from '@epam/ai-dial-chat-hooks/oauth';
+
+getToolsetFallbackName('toolsets/bucket/My%20Toolset__1.0.0'); // 'My Toolset'
+```
+
 ### getToolsetRedirectUri / buildToolsetAuthorizeUrl
 
 `getToolsetRedirectUri` resolves the host's own callback path against `window.location.origin`. `buildToolsetAuthorizeUrl` builds an authorization-code URL carrying `response_type=code`, `client_id`, `redirect_uri` and `state`, plus `code_challenge`/`code_challenge_method` and a space-joined `scope` when the supplied settings carry them. It returns `null` — never throws — for a configuration that cannot produce a valid URL: a missing or blank `clientId`/`authorizationEndpoint`, an unparseable endpoint, or an endpoint whose scheme is not `http:`/`https:` (so `javascript:` and `data:` URLs never reach the popup). Plain `http:` is accepted for any host.
@@ -3639,6 +3672,16 @@ const limits = mapDeploymentLimitsToInput(
   labels,
   formatResetTime,
 );
+```
+
+### findWorstCappedRow
+
+`findWorstCappedRow(limits)` returns the capped row closest to its limit across every group of a `CatalogItemLimits` — `{ label, usedPercent }` (`WorstCappedRow`), the percentage rounded and clamped to 0–100 — or `undefined` when no row is capped. Unlimited rows and DIAL Core's unlimited sentinel never count. Available from the root and `./catalog`.
+
+```ts
+import { findWorstCappedRow } from '@epam/ai-dial-chat-hooks/catalog';
+
+const worst = findWorstCappedRow(mapDeploymentLimitsToInput(limits, labels));
 ```
 
 ### mapDeploymentLimitsDtoToCatalogLimits
@@ -4735,6 +4778,21 @@ resolveDialFileBucketAndPath('files/my-bucket/reports/q1.pdf');
 isDialFolderId('files/my-bucket/reports/'); // true
 ```
 
+### FileSelectionKind / getFileSelectionKind / resolveDialFolderPath
+
+`getFileSelectionKind(items)` returns `FileSelectionKind.File` or `Folder` for a single file-manager item, by its `nodeType`, and `Multiple` otherwise — the host maps it to its confirmation copy. `resolveDialFolderPath(file, bucket)` returns the `files/{bucket}/{path}/` DIAL folder path for a file-manager folder (its own `bucket` wins over the given one, an existing `files/` path is kept, `.`/`..` segments are dropped), or `null` when it has neither `url` nor `id`. Available from the root and `./file-manager`.
+
+```ts
+import {
+  FileSelectionKind,
+  getFileSelectionKind,
+  resolveDialFolderPath,
+} from '@epam/ai-dial-chat-hooks/file-manager';
+
+const isFolder = getFileSelectionKind(items) === FileSelectionKind.Folder;
+const folderPath = resolveDialFolderPath(folder, bucket);
+```
+
 ### openAnnotationAttachment
 
 Default click behavior for a cited/referenced attachment: triggers a browser download for DIAL-hosted files via the injected `resolveDownloadUrl`, otherwise opens the URL in a new tab.
@@ -5364,6 +5422,23 @@ const { isLoggingIn, loginOutcome, isLoggingOut, logIn, logOut } =
 host-configured client (only `signOutOfflineCredentials`) and the callback
 path. `logIn` no-ops while `connect` is absent; `logOut` resolves
 `Disconnected` only when a fresh refetch confirms `connected: false`.
+
+### ScheduledTasksLoginBannerState / getScheduledTasksLoginRetryState / resolveScheduledTasksLoginBannerState
+
+State of the scheduled-tasks offline-credentials login banner. `getScheduledTasksLoginRetryState(outcome)` turns an `OfflineCredentialsLoginOutcomeType` into the retry state it leaves (`undefined` after `Success`). `resolveScheduledTasksLoginBannerState({ isLoggingIn, retryState, status })` returns `LoginInProgress` while a login runs, then the retry state, then `Shown` while the gate reports `Available` or `Unavailable`, and `undefined` to hide the banner. Available from the root and `./offline-credentials`.
+
+```ts
+import {
+  getScheduledTasksLoginRetryState,
+  resolveScheduledTasksLoginBannerState,
+} from '@epam/ai-dial-chat-hooks/offline-credentials';
+
+const bannerState = resolveScheduledTasksLoginBannerState({
+  isLoggingIn,
+  retryState: loginOutcome && getScheduledTasksLoginRetryState(loginOutcome),
+  status,
+});
+```
 
 ### mapOfflineCredentialsResponse / normalizeOfflineCredentialsConnectSettings
 

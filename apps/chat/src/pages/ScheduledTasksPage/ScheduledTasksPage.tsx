@@ -1,6 +1,6 @@
 import {
-  OfflineCredentialsGateStatus,
-  OfflineCredentialsLoginOutcomeType,
+  getScheduledTasksLoginRetryState,
+  resolveScheduledTasksLoginBannerState,
 } from '@epam/ai-dial-chat-hooks';
 import {
   ScheduledTasks,
@@ -20,9 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import ScheduledTasksLimitedAccessBanner from '../../components/ScheduledTasksLimitedAccessBanner/ScheduledTasksLimitedAccessBanner';
-import ScheduledTasksLoginBanner, {
-  ScheduledTasksLoginBannerState,
-} from '../../components/ScheduledTasksLoginBanner/ScheduledTasksLoginBanner';
+import ScheduledTasksLoginBanner from '../../components/ScheduledTasksLoginBanner/ScheduledTasksLoginBanner';
 import { getScheduledTaskDetailRoute } from '../../constants/routes';
 import {
   BasicI18nKeys,
@@ -44,46 +42,6 @@ import NotFoundPage from '../NotFound/NotFound';
 interface NavigationState {
   refresh?: boolean;
 }
-
-/*
- * Banner retry presentation for each terminal login outcome — every outcome
- * other than Success (which the authoritative gate refetch resolves to a
- * hidden banner).
- */
-const RETRY_BANNER_STATES: Partial<
-  Record<OfflineCredentialsLoginOutcomeType, ScheduledTasksLoginBannerState>
-> = {
-  [OfflineCredentialsLoginOutcomeType.PopupBlocked]:
-    ScheduledTasksLoginBannerState.RetryPopupBlocked,
-  [OfflineCredentialsLoginOutcomeType.Cancelled]:
-    ScheduledTasksLoginBannerState.RetryCancelled,
-  [OfflineCredentialsLoginOutcomeType.TimedOut]:
-    ScheduledTasksLoginBannerState.RetryTimeout,
-  [OfflineCredentialsLoginOutcomeType.Failure]:
-    ScheduledTasksLoginBannerState.RetryFailed,
-};
-
-const resolveBannerState = ({
-  isLoggingIn,
-  loginOutcome,
-  status,
-}: {
-  isLoggingIn: boolean;
-  loginOutcome: OfflineCredentialsLoginOutcomeType | undefined;
-  status: OfflineCredentialsGateStatus;
-}): ScheduledTasksLoginBannerState | undefined => {
-  const retryState =
-    loginOutcome != null ? RETRY_BANNER_STATES[loginOutcome] : undefined;
-  if (isLoggingIn) return ScheduledTasksLoginBannerState.LoginInProgress;
-  if (retryState) return retryState;
-  if (
-    status === OfflineCredentialsGateStatus.Available ||
-    status === OfflineCredentialsGateStatus.Unavailable
-  ) {
-    return ScheduledTasksLoginBannerState.Shown;
-  }
-  return undefined;
-};
 
 /* The page header: a 40px title row over a
    small-text description, as on the other pages. */
@@ -164,9 +122,12 @@ const ScheduledTasksPage: FC = () => {
     [navigate],
   );
 
-  const bannerState = resolveBannerState({
+  const bannerState = resolveScheduledTasksLoginBannerState({
     isLoggingIn,
-    loginOutcome,
+    retryState:
+      loginOutcome != null
+        ? getScheduledTasksLoginRetryState(loginOutcome)
+        : undefined,
     status: credentialsStatus,
   });
 

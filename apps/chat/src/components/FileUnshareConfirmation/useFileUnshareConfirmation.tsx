@@ -1,12 +1,13 @@
 import {
+  FileSelectionKind,
+  getFileSelectionKind,
+} from '@epam/ai-dial-chat-hooks';
+import {
   ConfirmationDialog,
   ConfirmationIdentityRow,
   ResourceSummary,
 } from '@epam/ai-dial-chat-shared';
-import {
-  DialFileNodeType,
-  type DialFile,
-} from '@epam/ai-dial-react-file-manager';
+import type { DialFile } from '@epam/ai-dial-react-file-manager';
 import { ConfirmationPopupVariant } from '@epam/ai-dial-ui-kit';
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
@@ -19,6 +20,13 @@ import {
 
 /* Same cap as the delete confirmation's list, so both dialogs stay the same height. */
 const MAX_LISTED_NAMES = 10;
+
+const UNSHARE_TITLE_KEYS: Record<FileSelectionKind, DialFileManagerI18nKeys> = {
+  [FileSelectionKind.File]: DialFileManagerI18nKeys.UnshareConfirmTitleFile,
+  [FileSelectionKind.Folder]: DialFileManagerI18nKeys.UnshareConfirmTitleFolder,
+  [FileSelectionKind.Multiple]:
+    DialFileManagerI18nKeys.UnshareConfirmTitleMultiple,
+};
 
 interface UnshareController {
   onUnshareFiles: (files: DialFile[]) => void;
@@ -66,13 +74,7 @@ export const useFileUnshareConfirmation = <T extends UnshareController>(
   const listedItems = items.slice(0, MAX_LISTED_NAMES);
   const restCount = items.length - listedItems.length;
 
-  let title = t(DialFileManagerI18nKeys.UnshareConfirmTitleMultiple);
-  if (isSingle) {
-    title =
-      items[0].nodeType === DialFileNodeType.FOLDER
-        ? t(DialFileManagerI18nKeys.UnshareConfirmTitleFolder)
-        : t(DialFileManagerI18nKeys.UnshareConfirmTitleFile);
-  }
+  const title = t(UNSHARE_TITLE_KEYS[getFileSelectionKind(items)]);
 
   const unshareConfirmation =
     pendingItems == null ? null : (

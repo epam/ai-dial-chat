@@ -9,7 +9,9 @@ import {
 import { CelebrationDecor, useCelebration } from '@epam/ai-dial-celebrations';
 import type { DeploymentItemDto } from '@epam/ai-dial-chat-api-client';
 import {
-  AttachmentValidationErrorReason,
+  type AttachmentValidationErrorEvent,
+  type ChatSettingsValues,
+  DEFAULT_CHAT_SETTINGS,
   getApiErrorDetails,
   getTimeOfDayGreeting,
   isQuickAppSchema,
@@ -23,9 +25,7 @@ import {
   type Attachment,
   type DeploymentItem,
   type DisplayAttachment,
-  formatFileSize,
   mergeClasses,
-  ResponseFormat,
   type ToolMenuItem,
   useIsMobile,
 } from '@epam/ai-dial-chat-shared';
@@ -66,6 +66,7 @@ import { useUiFeature } from '../../hooks/useUiFeature';
 import { filesApi } from '../../server-api/api-client';
 import { ComposerLayout } from '../../types/conversation-composer';
 import { buildNetworkUploadErrorNotification } from '../../utils/attachment-network-error-notification';
+import { buildAttachmentValidationNotification } from '../../utils/attachment-validation-notification';
 import { resolveLocalizedText } from '../../utils/locale';
 import FileDeleteConfirmContent from '../FileDeleteConfirmContent/FileDeleteConfirmContent';
 import FooterMessage from '../FooterMessage/FooterMessage';
@@ -90,11 +91,7 @@ const AgentDescription = lazy(async () => {
 });
 
 /** Local (not-yet-persisted) chat settings collected before a conversation exists. */
-export interface NewConversationChatSettings {
-  responseFormat: ResponseFormat;
-  systemPrompt: string;
-  temperature: number;
-}
+export type NewConversationChatSettings = Required<ChatSettingsValues>;
 
 interface Props {
   /** Deployment list for the model selector menu. Pass a single fixed item to pin the model. */
@@ -261,11 +258,7 @@ const NewConversationComposer: FC<Props> = ({
   const [isSending, setIsSending] = useState(false);
   const [attachmentsAmount, setAttachmentsAmount] = useState(0);
   const [chatSettingsValues, setChatSettingsValues] =
-    useState<NewConversationChatSettings>({
-      responseFormat: ResponseFormat.Markdown,
-      systemPrompt: '',
-      temperature: 0.5,
-    });
+    useState<NewConversationChatSettings>(DEFAULT_CHAT_SETTINGS);
 
   const {
     isOpen: isDialFileManagerOpen,
@@ -277,42 +270,8 @@ const NewConversationComposer: FC<Props> = ({
   } = useDialFileManagerState(bucket);
 
   const handleAttachmentValidationError = useCallback(
-    ({
-      reason,
-      formats,
-      maxFileSizeBytes,
-    }: {
-      reason: AttachmentValidationErrorReason;
-      formats?: string;
-      maxFileSizeBytes?: number;
-    }) => {
-      if (reason === AttachmentValidationErrorReason.FileTooLarge) {
-        showErrorNotification({
-          title: t(AttachmentsI18nKeys.FileTooLargeTitle),
-          message: t(AttachmentsI18nKeys.FileTooLargeMessage, {
-            maxSize:
-              maxFileSizeBytes != null ? formatFileSize(maxFileSizeBytes) : '',
-          }),
-        });
-        return;
-      }
-
-      const noTypesAllowed =
-        reason === AttachmentValidationErrorReason.NoTypesAllowed;
-      showErrorNotification({
-        title: t(
-          noTypesAllowed
-            ? AttachmentsI18nKeys.NoAttachmentsAllowedTitle
-            : AttachmentsI18nKeys.UnsupportedTypeTitle,
-        ),
-        message: t(
-          noTypesAllowed
-            ? AttachmentsI18nKeys.NoAttachmentsAllowedMessage
-            : AttachmentsI18nKeys.UnsupportedTypeMessage,
-          noTypesAllowed ? undefined : { formats },
-        ),
-      });
-    },
+    (event: AttachmentValidationErrorEvent) =>
+      showErrorNotification(buildAttachmentValidationNotification(event, t)),
     [showErrorNotification, t],
   );
 
