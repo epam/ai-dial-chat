@@ -30,6 +30,8 @@ const ATTACHMENT: DisplayAttachment = {
 
 const TABLE_MARKDOWN = '| A | B |\n| - | - |\n| 1 | 2 |';
 
+const LONG_TOKEN = `sha512-${'f2'.repeat(120)}`;
+
 const ASSISTANT_TABLE_LABELS = {
   tableCopyLabel: 'Copy',
   tableCopiedLabel: 'Copied!',
@@ -860,6 +862,46 @@ describe('MessageBubble', () => {
       ).toBeTruthy();
       fireEvent.click(screen.getByRole('button', { name: 'Download file' }));
       expect(onDownloadAll).toHaveBeenCalledWith([ATTACHMENT]);
+    });
+  });
+
+  describe('MessageBubble — long unbreakable text', () => {
+    it('breaks a long token in an assistant heading that carries no break class of its own', () => {
+      render(<AssistantMessageBubble text={`# ${LONG_TOKEN}`} />);
+
+      const heading = screen.getByRole('heading', {
+        level: 1,
+        name: LONG_TOKEN,
+      });
+
+      expect(heading.className).not.toContain('overflow-wrap');
+
+      /*
+       * The `.cm-bubble-markdown` wrapper carries no role — a CSS-level check
+       * with no semantic query available.
+       */
+      // eslint-disable-next-line testing-library/no-node-access -- see comment above
+      const wrapper = heading.closest('.cm-bubble-markdown') as HTMLElement;
+
+      expect(wrapper.className).toContain('wrap-anywhere');
+    });
+
+    it('keeps a long token breakable when a host override drops the paragraph break classes', () => {
+      render(
+        <AssistantMessageBubble
+          text={LONG_TOKEN}
+          markdownClassNames={{ p: 'dial-body-paragraph-text' }}
+        />,
+      );
+
+      const paragraph = findMessageParagraph(LONG_TOKEN);
+
+      expect(paragraph.className).not.toContain('[overflow-wrap:anywhere]');
+
+      // eslint-disable-next-line testing-library/no-node-access -- same wrapper check as above
+      const wrapper = paragraph.closest('.cm-bubble-markdown') as HTMLElement;
+
+      expect(wrapper.className).toContain('wrap-anywhere');
     });
   });
 
