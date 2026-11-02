@@ -58,6 +58,7 @@ export * from '../conversation/useEntityPreselection/useEntityPreselection';
 export * from '../conversation/generation-registry';
 
 export * from '../conversation/useConversationTitleEnrichmentController';
+export * from '../conversation/conversation-title-stream';
 export * from '../conversation/useVisibleConversationIdsReporter/useVisibleConversationIdsReporter';
 export * from '../conversation/conversation-list';
 

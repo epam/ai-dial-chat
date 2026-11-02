@@ -616,6 +616,18 @@ TIME_OF_DAY_PATTERN.test('09:30'); // true
 TIME_OF_DAY_PATTERN.test('9:5'); // false
 ```
 
+### SCHEDULED_TASK_CREATE_DEFAULT_VALUES
+
+The `ScheduledTaskCreateFormValues` a new task starts with: a daily run at
+`09:00` (`minute: '0'`, `everyWeeks: '1'`), with name, model and prompt empty and
+no activity window.
+
+```ts
+import { SCHEDULED_TASK_CREATE_DEFAULT_VALUES } from '@epam/ai-dial-scheduled-tasks';
+
+const [values, setValues] = useState(SCHEDULED_TASK_CREATE_DEFAULT_VALUES);
+```
+
 ### DESCRIPTION_MAX_LENGTH
 
 Maximum length of the create form's description field: `500` characters.

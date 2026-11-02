@@ -1,4 +1,5 @@
 import { ShareInvitationErrorCode } from '@epam/ai-dial-chat-api-client';
+import { getAcceptInvitationErrorItemName } from '@epam/ai-dial-chat-hooks';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -8,10 +9,7 @@ import { useNotification } from '../../../context/NotificationContext';
 import { usePrompts } from '../../../context/PromptsContext';
 import { useSkills } from '../../../context/SkillsContext';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
-import {
-  acceptInvitation,
-  getAcceptInvitationErrorItemName,
-} from '../../../server-api/share.api';
+import { acceptInvitation } from '../../../server-api/share.api';
 import { ROUTES } from '../../../types/routes';
 import SharedInvitationPage from '../SharedInvitation';
 
@@ -45,6 +43,10 @@ vi.mock('../../../context/PromptsContext', () => ({
 
 vi.mock('../../../server-api/share.api', () => ({
   acceptInvitation: vi.fn(),
+}));
+
+vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>()),
   getAcceptInvitationErrorItemName: vi.fn(),
 }));
 

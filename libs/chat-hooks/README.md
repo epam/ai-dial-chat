@@ -2921,6 +2921,20 @@ text stays with the host.
 
 ## Locale Utilities
 
+### getAcceptInvitationErrorItemName
+
+`getAcceptInvitationErrorItemName(error)` resolves the shared item's title that
+a refused `acceptInvitation` call carries in its `AcceptInvitationErrorDto` body,
+or `undefined` when the error is not a `ResponseError`, the body is not JSON or
+the title is empty. The response is cloned, so the body stays readable. Available
+from the root and `./utils`.
+
+```ts
+import { getAcceptInvitationErrorItemName } from '@epam/ai-dial-chat-hooks';
+
+const itemName = await getAcceptInvitationErrorItemName(error);
+```
+
 ### toBaseLocale / resolveLocalizedText / appendLocaleCode
 
 Resolves DIAL Core's `LocalizedText` shape (a plain string, or a map of locale code to translated value) to a single display string, with base-language and primary-locale fallback.
@@ -3948,6 +3962,15 @@ import {
 
 const error = validatePromptName('My Prompt'); // PromptFieldError | null
 const remaining = getRemainingCharacters('My Prompt', PROMPT_NAME_MAX_LENGTH);
+```
+
+`PROMPT_FIELD_VALIDATORS` maps each prompt form field (`name`, `description`, `content`) to its validator, and `PromptFieldErrors` holds one optional `PromptFieldError` per field — the shape a prompt form validates into on each change.
+
+```ts
+import { PROMPT_FIELD_VALIDATORS } from '@epam/ai-dial-chat-hooks';
+
+const validateField = PROMPT_FIELD_VALIDATORS[field];
+const error = validateField(value) ?? undefined;
 ```
 
 ### PromptSource / parsePromptResourceUrl
@@ -5142,6 +5165,33 @@ const panelActiveConversationId = useActiveConversationSync({
 | `shouldMarkViewed`       | `(item: ConversationListItemDto) => boolean` | Optional. Whether the matched active conversation is marked viewed; defaults to every one.    |
 
 **Returns**: `string | undefined` — the panel-space id to highlight.
+
+### readConversationTitleStream / createSseFrameDecoder / parseConversationTitleStreamEvent
+
+Typed reader for the body of `streamConversationTitles` (the finite SSE title
+stream). `readConversationTitleStream(body)` yields each event as a
+`ConversationTitleStreamEventDto`; `createSseFrameDecoder` splits bytes into SSE
+frames and `parseConversationTitleStreamEvent` validates one `data:` payload
+against the generated event union. A frame over
+`CONVERSATION_TITLE_STREAM_MAX_FRAME_BYTES` or a payload outside the union throws
+`ConversationTitleStreamProtocolError`, after which the attempt must stop
+without retrying. `isConversationTitleStreamUnsupported(error)` is `true` when
+the route answered 404 or 405 (an older backend), so the host can fall back to
+the JSON titles endpoint. `CONVERSATION_TITLE_STREAM_MAX_IDS` and
+`CONVERSATION_TITLE_STREAM_MAX_ID_BYTES` are the request bounds. Available from
+the root and `./conversation`.
+
+```ts
+import { readConversationTitleStream } from '@epam/ai-dial-chat-hooks/conversation';
+
+const response = await conversationsApi.streamConversationTitlesRaw(
+  { streamConversationTitlesBodyDto: { ids } },
+  { signal },
+);
+for await (const event of readConversationTitleStream(response.raw.body!)) {
+  applyTitleEvent(event);
+}
+```
 
 ### useVisibleConversationIdsReporter
 

@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
 import {
   PROMPT_CONTENT_MAX_LENGTH,
   PROMPT_DESCRIPTION_MAX_LENGTH,
+  PROMPT_FIELD_VALIDATORS,
   PROMPT_NAME_MAX_LENGTH,
   PromptFieldError,
   buildPromptPath,
@@ -105,5 +106,19 @@ describe('buildPromptPath', () => {
 
   it('joins the folder path and the name', () => {
     expect(buildPromptPath('Work/AI', 'summarize')).toBe('Work/AI/summarize');
+  });
+});
+
+describe('PROMPT_FIELD_VALIDATORS', () => {
+  it('validates each field with its own rule', () => {
+    expect(PROMPT_FIELD_VALIDATORS.name('')).toBe(PromptFieldError.Required);
+    expect(PROMPT_FIELD_VALIDATORS.content(' ')).toBe(
+      PromptFieldError.Required,
+    );
+    expect(
+      PROMPT_FIELD_VALIDATORS.description(
+        'x'.repeat(PROMPT_DESCRIPTION_MAX_LENGTH + 1),
+      ),
+    ).toBe(PromptFieldError.TooLong);
   });
 });

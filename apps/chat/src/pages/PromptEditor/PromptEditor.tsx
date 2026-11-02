@@ -6,7 +6,9 @@ import {
   getApiErrorDetails,
   PROMPT_CONTENT_MAX_LENGTH,
   PROMPT_DESCRIPTION_MAX_LENGTH,
+  PROMPT_FIELD_VALIDATORS,
   PromptFieldError,
+  type PromptFieldErrors,
   validatePromptContent,
   validatePromptDescription,
   validatePromptName,
@@ -52,21 +54,6 @@ import {
 import { ROUTES } from '../../types/routes';
 import { ThemeId } from '../../types/theme-id';
 
-interface FormErrors {
-  name?: PromptFieldError;
-  description?: PromptFieldError;
-  content?: PromptFieldError;
-}
-
-const FIELD_VALIDATORS: Record<
-  keyof PromptEditorValues,
-  (value: string) => PromptFieldError | null
-> = {
-  name: validatePromptName,
-  description: validatePromptDescription,
-  content: validatePromptContent,
-};
-
 const PromptEditorPage: FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -85,7 +72,7 @@ const PromptEditorPage: FC = () => {
   });
 
   const [loadedValues, setLoadedValues] = useState<PromptEditorValues>();
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [errors, setErrors] = useState<PromptFieldErrors>({});
   const [isLoading, setIsLoading] = useState(isEditMode);
   const [loadError, setLoadError] = useState<unknown>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -181,7 +168,7 @@ const PromptEditorPage: FC = () => {
   const handleFieldChange = useCallback(
     (field: keyof PromptEditorValues, value: string) => {
       setErrors((previous) => {
-        const error = FIELD_VALIDATORS[field](value) ?? undefined;
+        const error = PROMPT_FIELD_VALIDATORS[field](value) ?? undefined;
         const nextError =
           error === PromptFieldError.Required &&
           previous[field] !== PromptFieldError.Required
@@ -210,7 +197,7 @@ const PromptEditorPage: FC = () => {
     async ({ name, description, content }: PromptEditorValues) => {
       if (isSaving) return;
 
-      const nextErrors: FormErrors = {};
+      const nextErrors: PromptFieldErrors = {};
       const nameError = validatePromptName(name);
       if (nameError) nextErrors.name = nameError;
       const descriptionError = validatePromptDescription(description);

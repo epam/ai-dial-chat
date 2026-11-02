@@ -49,7 +49,10 @@ export type {
   ScheduledTaskEveryWeekOption,
   ScheduledTaskCustomDayOption,
 } from './models/scheduled-task-create-form-props';
-export { DESCRIPTION_MAX_LENGTH } from './constants/scheduled-task-create-form';
+export {
+  DESCRIPTION_MAX_LENGTH,
+  SCHEDULED_TASK_CREATE_DEFAULT_VALUES,
+} from './constants/scheduled-task-create-form';
 export {
   calendarValueToDateValue,
   calendarValueToRunAt,

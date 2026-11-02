@@ -11,8 +11,9 @@ import {
   ResponseError,
 } from '@epam/ai-dial-chat-api-client';
 
-/* Request bounds enforced by `POST /conversations/titles/stream`. */
+/** Most conversation ids one `streamConversationTitles` request may carry. */
 export const CONVERSATION_TITLE_STREAM_MAX_IDS = 500;
+/** Most bytes the serialized ids of one `streamConversationTitles` request may take. */
 export const CONVERSATION_TITLE_STREAM_MAX_ID_BYTES = 256 * 1024;
 /** No single event (data lines plus an unterminated line) may exceed this. */
 export const CONVERSATION_TITLE_STREAM_MAX_FRAME_BYTES = 64 * 1024;

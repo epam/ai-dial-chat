@@ -7,16 +7,14 @@ import {
   ConversationTitleStreamTitleEventDtoTypeEnum,
 } from '@epam/ai-dial-chat-api-client';
 import {
+  CONVERSATION_TITLE_STREAM_MAX_ID_BYTES,
+  CONVERSATION_TITLE_STREAM_MAX_IDS,
+  isConversationTitleStreamUnsupported,
   useConversationTitleEnrichmentController,
   type ConversationTitleEnrichmentOptions,
 } from '@epam/ai-dial-chat-hooks/conversation';
 import { ConversationTitleRequestEnd } from '@epam/ai-dial-chat-hooks/conversation';
 import { type Dispatch, type SetStateAction } from 'react';
-import {
-  CONVERSATION_TITLE_STREAM_MAX_ID_BYTES,
-  CONVERSATION_TITLE_STREAM_MAX_IDS,
-  isConversationTitleStreamUnsupported,
-} from '../../server-api/conversation-title-stream';
 import {
   getConversationTitles,
   streamConversationTitles,

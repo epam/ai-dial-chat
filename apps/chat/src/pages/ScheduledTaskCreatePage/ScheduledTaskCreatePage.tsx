@@ -6,7 +6,7 @@ import {
   ScheduledTaskCreateForm,
   ScheduledTaskCreateFormErrors,
   ScheduledTaskCreateFormValues,
-  ScheduledTaskRepeat,
+  SCHEDULED_TASK_CREATE_DEFAULT_VALUES,
 } from '@epam/ai-dial-scheduled-tasks';
 import {
   Button,
@@ -43,18 +43,6 @@ import {
 } from '../../utils/scheduled-task-form-validation';
 import NotFoundPage from '../NotFound/NotFound';
 
-const DEFAULT_VALUES: ScheduledTaskCreateFormValues = {
-  displayName: '',
-  repeat: ScheduledTaskRepeat.Daily,
-  time: '09:00',
-  minute: '0',
-  everyWeeks: '1',
-  startDate: undefined,
-  endDate: undefined,
-  modelId: '',
-  prompt: '',
-};
-
 const ScheduledTaskCreatePage: FC = () => {
   const { t } = useTranslation();
   const onRefineDescription = useTextRefinementCallback(
@@ -75,8 +63,9 @@ const ScheduledTaskCreatePage: FC = () => {
   const markdownEditorTheme: EditorThemes =
     currentTheme === ThemeId.Dark ? EditorThemes.dark : EditorThemes.light;
 
-  const [values, setValues] =
-    useState<ScheduledTaskCreateFormValues>(DEFAULT_VALUES);
+  const [values, setValues] = useState<ScheduledTaskCreateFormValues>(
+    SCHEDULED_TASK_CREATE_DEFAULT_VALUES,
+  );
   const [errors, setErrors] = useState<ScheduledTaskCreateFormErrors>({});
   const isSkillsSupported = useScheduledTaskSkillSupport(values?.modelId);
   /* A capability change invalidates a prior server rejection. Local validation
