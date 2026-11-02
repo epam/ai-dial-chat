@@ -243,17 +243,21 @@ describe('scheduled-task-trigger', () => {
       expect(body.trigger.cron).not.toHaveProperty('endDate');
     });
 
-    it('maps hourly datetime-local boundaries to the picked instants', () => {
+    it('maps hourly date-only boundaries to the start and end of the local day', () => {
       const body = mapFormValuesToCreateBody({
         ...baseValues,
         repeat: ScheduledTaskRepeat.Hourly,
         minute: '0',
-        startDate: '2026-08-01T08:30',
-        endDate: '2026-08-31T18:45',
+        startDate: '2026-08-01',
+        endDate: '2026-08-31',
       });
 
-      expect(body.trigger.cron?.startDate).toBe('2026-08-01T08:30:00.000Z');
-      expect(body.trigger.cron?.endDate).toBe('2026-08-31T18:45:00.000Z');
+      expect(body.trigger.cron?.startDate).toBe(
+        new Date(2026, 7, 1, 0, 0, 0, 0).toISOString(),
+      );
+      expect(body.trigger.cron?.endDate).toBe(
+        new Date(2026, 7, 31, 23, 59, 59, 999).toISOString(),
+      );
     });
   });
 
@@ -985,7 +989,7 @@ describe('scheduled-task-trigger', () => {
       }
     });
 
-    it('round-trips activity-window startDate/endDate for an hourly schedule as datetime-local values', () => {
+    it('round-trips activity-window startDate/endDate for an hourly schedule as date-only values', () => {
       vi.stubEnv('TZ', 'Europe/Warsaw'); // UTC+2 in summer
 
       const result = mapScheduledTaskDtoToFormValues({
@@ -1002,8 +1006,8 @@ describe('scheduled-task-trigger', () => {
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.values.repeat).toBe(ScheduledTaskRepeat.Hourly);
-        expect(result.values.startDate).toBe('2026-08-01T00:00');
-        expect(result.values.endDate).toBe('2026-08-31T23:59');
+        expect(result.values.startDate).toBe('2026-08-01');
+        expect(result.values.endDate).toBe('2026-08-31');
       }
     });
 

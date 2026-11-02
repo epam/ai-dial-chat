@@ -374,10 +374,8 @@ const buildFormProps = (
       { value: '6', shortLabel: 'S', fullName: 'Sunday' },
     ],
     startDateLabel: 'Start date',
-    startDateAndTimeLabel: 'Start date and time',
     startDatePlaceholder: 'Pick start date',
     endDateLabel: 'End date',
-    endDateAndTimeLabel: 'End date and time',
     endDatePlaceholder: 'Pick end date',
     modelOrAgentLabel: 'Model or Agent',
     descriptionLabel: 'Description',
@@ -614,7 +612,7 @@ describe('ScheduledTaskCreateForm', () => {
       );
     };
 
-    it('clears both boundaries when switching from Hourly to a day-based repeat', async () => {
+    it('keeps both boundaries when switching from Hourly to a day-based repeat', async () => {
       const onFieldChange = vi.fn();
       await renderForm({
         onFieldChange,
@@ -625,8 +623,8 @@ describe('ScheduledTaskCreateForm', () => {
           prompt: 'Summarize',
           repeat: ScheduledTaskRepeat.Hourly,
           minute: '30',
-          startDate: '2026-09-22T18:00',
-          endDate: '2026-09-23T18:45',
+          startDate: '2026-09-22',
+          endDate: '2026-09-23',
         },
       });
       onFieldChange.mockClear();
@@ -637,11 +635,17 @@ describe('ScheduledTaskCreateForm', () => {
         'repeat',
         ScheduledTaskRepeat.Daily,
       );
-      expect(onFieldChange).toHaveBeenCalledWith('startDate', '');
-      expect(onFieldChange).toHaveBeenCalledWith('endDate', '');
+      expect(onFieldChange).not.toHaveBeenCalledWith(
+        'startDate',
+        expect.anything(),
+      );
+      expect(onFieldChange).not.toHaveBeenCalledWith(
+        'endDate',
+        expect.anything(),
+      );
     });
 
-    it('clears both boundaries when switching to Hourly', async () => {
+    it('keeps both boundaries when switching to Hourly', async () => {
       const onFieldChange = vi.fn();
       await renderForm({
         onFieldChange,
@@ -662,8 +666,14 @@ describe('ScheduledTaskCreateForm', () => {
         'repeat',
         ScheduledTaskRepeat.Hourly,
       );
-      expect(onFieldChange).toHaveBeenCalledWith('startDate', '');
-      expect(onFieldChange).toHaveBeenCalledWith('endDate', '');
+      expect(onFieldChange).not.toHaveBeenCalledWith(
+        'startDate',
+        expect.anything(),
+      );
+      expect(onFieldChange).not.toHaveBeenCalledWith(
+        'endDate',
+        expect.anything(),
+      );
     });
 
     it('leaves boundaries untouched when switching between day-based repeats', async () => {
@@ -1185,33 +1195,32 @@ describe('ScheduledTaskCreateForm', () => {
     expect(screen.getByText('Enter a valid minute')).toBeTruthy();
   });
 
-  it('renders date-and-time boundary pickers when repeat is hourly', async () => {
+  it('renders date-only boundary pickers when repeat is hourly', async () => {
     await renderForm({
       values: { ...baseValues, repeat: ScheduledTaskRepeat.Hourly },
     });
 
-    expect(screen.getByText('Start date and time')).toBeTruthy();
-    expect(screen.getByText('End date and time')).toBeTruthy();
-    /* Both boundary pickers switch to the kit's DateTime mode. */
-    expect(screen.getAllByText('isDateTimeMode')).toHaveLength(2);
+    expect(screen.getByText('Start date')).toBeTruthy();
+    expect(screen.getByText('End date')).toBeTruthy();
+    expect(screen.queryByText('isDateTimeMode')).toBeNull();
   });
 
-  it('writes datetime-local boundaries when the hourly pickers change', async () => {
+  it('writes date-only boundaries when the hourly pickers change', async () => {
     const onFieldChange = vi.fn();
     await renderForm({
       onFieldChange,
       values: { ...baseValues, repeat: ScheduledTaskRepeat.Hourly },
     });
 
-    fireEvent.change(screen.getByLabelText('Start date and time'), {
-      target: { value: '2027-06-15T09:30' },
+    fireEvent.change(screen.getByLabelText('Start date'), {
+      target: { value: '2027-06-15' },
     });
-    fireEvent.change(screen.getByLabelText('End date and time'), {
-      target: { value: '2027-06-20T18:45' },
+    fireEvent.change(screen.getByLabelText('End date'), {
+      target: { value: '2027-06-20' },
     });
 
-    expect(onFieldChange).toHaveBeenCalledWith('startDate', '2027-06-15T09:30');
-    expect(onFieldChange).toHaveBeenCalledWith('endDate', '2027-06-20T18:45');
+    expect(onFieldChange).toHaveBeenCalledWith('startDate', '2027-06-15');
+    expect(onFieldChange).toHaveBeenCalledWith('endDate', '2027-06-20');
   });
 
   it('writes date-only boundaries when a day-based repeat picker changes', async () => {

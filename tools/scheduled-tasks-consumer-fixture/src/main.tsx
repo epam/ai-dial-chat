@@ -197,10 +197,8 @@ const Fixture = () => {
               { value: '1', shortLabel: 'T', fullName: 'Tuesday' },
             ],
             startDateLabel: 'Start date',
-            startDateAndTimeLabel: 'Start date and time',
             startDatePlaceholder: 'Choose a start date',
             endDateLabel: 'End date',
-            endDateAndTimeLabel: 'End date and time',
             endDatePlaceholder: 'Choose an end date',
           }}
           values={{

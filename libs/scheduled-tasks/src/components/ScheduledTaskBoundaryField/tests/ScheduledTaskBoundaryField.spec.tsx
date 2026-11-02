@@ -1,4 +1,3 @@
-import { CalendarMode } from '@epam/ai-dial-ui-kit';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { ScheduledTaskBoundaryField } from '../ScheduledTaskBoundaryField';
@@ -88,7 +87,6 @@ const renderField = (
   render(
     <ScheduledTaskBoundaryField
       id="scheduled-task-start-date"
-      mode={CalendarMode.Date}
       label="Start date"
       placeholder="Pick start date"
       value=""
@@ -128,15 +126,6 @@ describe('ScheduledTaskBoundaryField', () => {
     expect(onChange).toHaveBeenCalledWith('2026-06-15');
   });
 
-  it('reports an exact-moment boundary as a datetime-local value in DateTime mode', () => {
-    const onChange = vi.fn();
-    renderField({ mode: CalendarMode.DateTime, onChange });
-
-    typeIntoPicker('2026-06-15T09:30');
-
-    expect(onChange).toHaveBeenCalledWith('2026-06-15T09:30');
-  });
-
   it('reports an empty value when the draft cannot be parsed', () => {
     const onChange = vi.fn();
     renderField({ onChange });
@@ -173,7 +162,6 @@ describe('ScheduledTaskBoundaryField', () => {
     rerender(
       <ScheduledTaskBoundaryField
         id="scheduled-task-start-date"
-        mode={CalendarMode.Date}
         label="Start date"
         placeholder="Pick start date"
         value=""
