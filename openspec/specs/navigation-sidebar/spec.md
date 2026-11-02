@@ -113,8 +113,8 @@ While the sidebar is active, the existing UI-feature keys SHALL keep these meani
 | Key | Effect in the sidebar |
 |---|---|
 | `conversations-section` off | No conversation block; header, items and footer remain |
-| `conversations-panel-toggle` off | No desktop expand/collapse toggle; the sidebar stays in its initial state, whether or not the canvas is open. On mobile it only matters under `hide-navigation-menu`, where it keeps the header toggle |
-| `showConversationsSectionByDefault` | Initial state: expanded when on, collapsed when off |
+| `conversations-panel-toggle` off | No desktop expand/collapse toggle; the sidebar stays in its initial state, whether or not the canvas is open, and a stored choice is neither read nor written. On mobile it only matters under `hide-navigation-menu`, where it keeps the header toggle |
+| `showConversationsSectionByDefault` | Initial state when no choice is stored: expanded when on, collapsed when off |
 | `hide-conversations-filter` | No filter trigger in the conversation block header |
 | `hide-new-conversation` | No New chat item |
 | `hide-user-menu` | No user menu in the footer, on desktop and in the mobile drawer (the earlier mobile sheet ignored this key) |
@@ -139,6 +139,11 @@ While the sidebar is active, the existing UI-feature keys SHALL keep these meani
 
 - **WHEN** `conversations-panel-toggle` is off, the sidebar is expanded and the attachment canvas opens and then closes
 - **THEN** the sidebar stays expanded throughout
+
+#### Scenario: No toggle ignores a stored choice
+
+- **WHEN** `conversations-panel-toggle` is off, `showConversationsSectionByDefault` is on and a collapsed choice is stored from an earlier session
+- **THEN** the sidebar renders expanded, and the stored value is left unchanged
 
 ---
 
@@ -194,13 +199,18 @@ The width change SHALL animate, except under `prefers-reduced-motion: reduce`.
 
 On desktop, `ConversationPanelContext`'s `isPanelOpen` SHALL mean "expanded"; on mobile it is reset and ignored, because the drawer's open state is `isNavOpen` in `app.tsx`. No other state owns the sidebar's width.
 
-`useConversationPanelRouteState` SHALL receive `isSidebarLayout` and, when it is `true`:
+`useConversationPanelRouteState` (`apps/chat/src/hooks/conversation-panel/useConversationPanelRouteState.ts`) owns the desktop state. It:
 - SHALL NOT change the state on any route change, inside or outside the conversation section;
-- SHALL start from `showConversationsSectionByDefault` and keep the user's own choice for the rest of the page session.
+- SHALL start from the user's stored choice when there is one, and otherwise from `showConversationsSectionByDefault`;
+- SHALL keep the user's own choice for the rest of the page session.
 
-The state SHALL NOT be persisted across reloads. After the initial state, only the user's own toggle SHALL collapse or expand the sidebar: opening the attachment canvas or an MCP app canvas, from any call site, SHALL leave it as it is, and expanding the sidebar SHALL leave the attachment canvas open. The canvas's width is bounded by the room the sidebar leaves (see the `canvas` capability), so both fit side by side.
+The user's choice SHALL be persisted across reloads in `localStorage` under `StorageKey.NavigationSidebarExpanded` (`apps/chat/src/types/storage-key.ts`), through the app's `useLocalStorage` hook. The stored value is a boolean meaning "expanded". Only the user's toggle SHALL write it. Route changes, the canvas, a change of `showConversationsSectionByDefault` and the reset on entering the mobile layout SHALL NOT write it. Storage that cannot be read or written SHALL fall back to the in-memory behaviour without surfacing an error. The persistence lives at the app edge: `@epam/ai-dial-navigation-panel` keeps receiving only `isCollapsed` and `onToggleCollapse`.
 
-When `isEnabled('conversations-panel-toggle')` is `false`, no toggle SHALL render and the sidebar SHALL stay in its initial state.
+After the initial state, only the user's own toggle SHALL collapse or expand the sidebar: opening the attachment canvas or an MCP app canvas, from any call site, SHALL leave it as it is, and expanding the sidebar SHALL leave the attachment canvas open. The canvas's width is bounded by the room the sidebar leaves (see the `canvas` capability), so both fit side by side.
+
+When `isEnabled('conversations-panel-toggle')` is `false`, no toggle SHALL render, the sidebar SHALL stay in its initial state from `showConversationsSectionByDefault`, and the stored choice SHALL be neither read nor written.
+
+The mobile drawer is unaffected: it starts closed on every load and its open state is never persisted.
 
 #### Scenario: Navigating to another page keeps the sidebar expanded
 
@@ -214,13 +224,28 @@ When `isEnabled('conversations-panel-toggle')` is `false`, no toggle SHALL rende
 
 #### Scenario: Initial state follows showConversationsSectionByDefault
 
-- **WHEN** the page loads with `showConversationsSectionByDefault` disabled
+- **WHEN** the page loads with `showConversationsSectionByDefault` disabled and no stored choice
 - **THEN** the sidebar starts collapsed
 
-#### Scenario: Reload starts from the default again
+#### Scenario: The user's collapse survives a reload
 
 - **WHEN** the user collapses the sidebar and reloads the page with `showConversationsSectionByDefault` enabled
+- **THEN** the sidebar starts collapsed
+
+#### Scenario: The user's expand survives a reload
+
+- **WHEN** the user expands the sidebar and reloads the page with `showConversationsSectionByDefault` disabled
 - **THEN** the sidebar starts expanded
+
+#### Scenario: Only the toggle writes the stored choice
+
+- **WHEN** the page loads with no stored choice and the user navigates, opens the canvas, or resizes into the mobile layout and back without touching the toggle
+- **THEN** nothing is written under `StorageKey.NavigationSidebarExpanded`
+
+#### Scenario: Unavailable storage falls back to the session
+
+- **WHEN** reading or writing `localStorage` throws and the user collapses the sidebar
+- **THEN** the sidebar collapses for the rest of the page session and no error is shown
 
 #### Scenario: Opening the canvas keeps the sidebar expanded
 
