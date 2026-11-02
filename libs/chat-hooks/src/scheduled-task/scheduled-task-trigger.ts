@@ -117,28 +117,19 @@ const buildCronFields = (
 };
 
 /*
- * Converts a window-boundary value to the UTC ISO instant the cron trigger
- * stores, keyed off the active repeat: an Hourly boundary is the exact
- * `YYYY-MM-DDTHH:mm` instant the user picked, passed through as-is; a
- * day-based boundary is date-only `YYYY-MM-DD`, resolving to the start or
- * end of that local day, using the same reference-`Date`-plus-getters
- * technique as `buildCronFields` above: the browser's own timezone/DST
- * handling does the conversion, rather than manual offset arithmetic. A
- * day-based `end` resolves to `23:59:59.999` local, not midnight of the
- * next day, so the last local day the user picked stays fully inside the
- * window. The form clears both boundaries on a shape-changing repeat
- * switch and validation rejects a boundary whose shape does not match the
- * cadence, so the shape reaching this function always matches the repeat
- * it is converted by.
+ * Converts a date-only `YYYY-MM-DD` window boundary to the UTC ISO instant
+ * the cron trigger stores, resolving to the start or end of that local day
+ * using the same reference-`Date`-plus-getters technique as
+ * `buildCronFields` above: the browser's own timezone/DST handling does the
+ * conversion, rather than manual offset arithmetic. An `end` resolves to
+ * `23:59:59.999` local, not midnight of the next day, so the last local day
+ * the user picked stays fully inside the window. Every cadence that renders
+ * boundary pickers uses this one shape.
  */
 const buildCronWindowBoundary = (
-  repeat: ScheduledTaskRepeat,
   dateValue: string,
   edge: CronWindowEdge,
 ): string => {
-  if (repeat === ScheduledTaskRepeat.Hourly) {
-    return new Date(dateValue).toISOString();
-  }
   const [year, month, day] = dateValue.split('-').map(Number);
   const reference = new Date(year, month - 1, day);
   if (edge === CronWindowEdge.Start) {
@@ -170,7 +161,6 @@ export const mapFormValuesToCreateBody = (
             ...(values.repeat !== ScheduledTaskRepeat.Custom && values.startDate
               ? {
                   startDate: buildCronWindowBoundary(
-                    values.repeat,
                     values.startDate,
                     CronWindowEdge.Start,
                   ),
@@ -179,7 +169,6 @@ export const mapFormValuesToCreateBody = (
             ...(values.repeat !== ScheduledTaskRepeat.Custom && values.endDate
               ? {
                   endDate: buildCronWindowBoundary(
-                    values.repeat,
                     values.endDate,
                     CronWindowEdge.End,
                   ),
@@ -452,12 +441,10 @@ export const mapScheduledTaskDtoToFormValues = (
         repeat: ScheduledTaskRepeat.Hourly,
         time: DEFAULT_TIME_PLACEHOLDER,
         minute: parsed.minute,
-        /* Hourly boundaries hydrate as datetime-local values, since the
-         * hourly editor picks exact moments, unlike the day-based pair. */
         ...(cron.startDate
-          ? { startDate: isoToLocalDateTime(cron.startDate) }
+          ? { startDate: isoToLocalDateOnly(cron.startDate) }
           : {}),
-        ...(cron.endDate ? { endDate: isoToLocalDateTime(cron.endDate) } : {}),
+        ...(cron.endDate ? { endDate: isoToLocalDateOnly(cron.endDate) } : {}),
       },
     };
   }

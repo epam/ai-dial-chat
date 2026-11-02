@@ -47,9 +47,9 @@ export interface ScheduledTaskCreateFormValues {
   minute?: string;
   /** Week-count (`'1'`-`'10'`) used when `repeat` is `'custom'`. */
   everyWeeks?: string;
-  /** Window-start boundary: `YYYY-MM-DD` for day-based repeats, `YYYY-MM-DDTHH:mm` for `'hourly'`. Ignored when `repeat` is `'oneTime'`. */
+  /** Window-start boundary: a whole local day as `YYYY-MM-DD`. Ignored when `repeat` is `'oneTime'`. */
   startDate?: string;
-  /** Window-end boundary: `YYYY-MM-DD` for day-based repeats, `YYYY-MM-DDTHH:mm` for `'hourly'`. Ignored when `repeat` is `'oneTime'`. */
+  /** Window-end boundary: a whole local day as `YYYY-MM-DD`. Ignored when `repeat` is `'oneTime'`. */
   endDate?: string;
   /** Selected deployment id sent to the BFF as `model` (required). */
   modelId: string;
@@ -131,14 +131,10 @@ export interface ScheduledTaskCreateFormLabels extends TextRefinementLabels {
   customDayOptions: ScheduledTaskCustomDayOption[];
   /** Start-date field label (shown when `repeat` is not "oneTime"; the field itself is optional, so this label carries no required marker). */
   startDateLabel: string;
-  /** Start-date-and-time field label (shown when `repeat` is "hourly"; the field itself is optional, so this label carries no required marker). */
-  startDateAndTimeLabel: string;
   /** Placeholder shown in the start-date picker when unset. */
   startDatePlaceholder: string;
   /** End-date field label (shown when `repeat` is not "oneTime"; the field itself is optional, so this label carries no required marker). */
   endDateLabel: string;
-  /** End-date-and-time field label (shown when `repeat` is "hourly"; the field itself is optional, so this label carries no required marker). */
-  endDateAndTimeLabel: string;
   /** Placeholder shown in the end-date picker when unset. */
   endDatePlaceholder: string;
   /** Label for the Model or Agent field, rendered above `modelSelector`. */

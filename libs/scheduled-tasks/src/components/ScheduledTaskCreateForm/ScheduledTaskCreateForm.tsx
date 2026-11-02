@@ -215,11 +215,9 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
   };
 
   /*
-   * A repeat switch clears both window boundaries whenever the boundary
-   * shape changes (see `keepWindowBoundaryOnRepeatSwitch`): an hourly
-   * boundary is an exact picked instant while a day-based one is a whole
-   * local day, so carrying a value across would silently change its
-   * meaning. A switch within the day-based cadences keeps both as-is.
+   * A repeat switch into or out of Custom clears both window boundaries (see
+   * `keepWindowBoundaryOnRepeatSwitch`): Custom renders no boundary pickers,
+   * so a carried-over value would stay live in form state while invisible.
    */
   const handleRepeatChange = (next: string | string[]) => {
     const repeat = next as ScheduledTaskRepeat;
@@ -246,25 +244,10 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
     values.repeat !== ScheduledTaskRepeat.OneTime &&
     values.repeat !== ScheduledTaskRepeat.Hourly;
 
-  /* Hourly repeats pick exact window boundaries: date-and-time pickers
-   * writing `YYYY-MM-DDTHH:mm` values, unlike the day-based repeats' date-only
-   * pair. A repeat switch that changes the boundary shape clears both
-   * boundaries (see `handleRepeatChange`), so the shape always matches the
-   * pickers. */
-  const isHourlyRepeat = values.repeat === ScheduledTaskRepeat.Hourly;
   const isCustomRepeat = values.repeat === ScheduledTaskRepeat.Custom;
   /* Custom blocks Save until a weekday is selected, like the other
    * required fields. */
   const isCustomDayMissing = isCustomRepeat && !values.dayOfWeek;
-  const boundaryMode = isHourlyRepeat
-    ? CalendarMode.DateTime
-    : CalendarMode.Date;
-  const startBoundaryLabel = isHourlyRepeat
-    ? labels.startDateAndTimeLabel
-    : labels.startDateLabel;
-  const endBoundaryLabel = isHourlyRepeat
-    ? labels.endDateAndTimeLabel
-    : labels.endDateLabel;
 
   /*
    * A blur error describes the time field's visible draft. When a repeat
@@ -666,19 +649,11 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                   {/* Custom renders no boundary fields — it has no activity
                    * window by design (see the Custom repeat requirement). */}
                   {!isCustomRepeat && (
-                    /* The two boundary fields share one row for time-of-day
-                     * repeats; for hourly repeats each takes its own
-                     * full-width row as a date-and-time picker. */
-                    <div
-                      className={mergeClasses(
-                        'gap-3',
-                        isHourlyRepeat ? 'flex flex-col' : 'flex flex-row',
-                      )}
-                    >
+                    /* The two boundary fields share one row. */
+                    <div className="flex flex-row gap-3">
                       <ScheduledTaskBoundaryField
                         id="scheduled-task-start-date"
-                        mode={boundaryMode}
-                        label={startBoundaryLabel}
+                label={labels.startDateLabel}
                         placeholder={labels.startDatePlaceholder}
                         value={values.startDate}
                         onChange={(value) => onFieldChange('startDate', value)}
@@ -690,8 +665,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
 
                       <ScheduledTaskBoundaryField
                         id="scheduled-task-end-date"
-                        mode={boundaryMode}
-                        label={endBoundaryLabel}
+                label={labels.endDateLabel}
                         placeholder={labels.endDatePlaceholder}
                         value={values.endDate}
                         onChange={(value) => onFieldChange('endDate', value)}
