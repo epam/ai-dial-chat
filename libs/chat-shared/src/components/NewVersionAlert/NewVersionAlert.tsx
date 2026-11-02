@@ -1,4 +1,4 @@
-import { DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
 import { IconRefresh } from '@tabler/icons-react';
 import { memo, type FC } from 'react';
 import { buildCssVars } from '../../utils/build-css-vars';
@@ -42,7 +42,7 @@ export const NewVersionAlert: FC<NewVersionAlertProps> = memo(
         icon={
           <IconRefresh
             aria-hidden="true"
-            size={48}
+            size={DIAL_ICON_SIZE.LG}
             stroke={DIAL_KIT_ICON_STROKE}
             className={styles.icon}
           />

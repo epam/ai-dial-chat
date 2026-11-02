@@ -42,7 +42,7 @@ export const ErrorAlert: FC<ErrorAlertProps> = memo(
         icon={
           <IconAlertTriangle
             aria-hidden="true"
-            size={48}
+            size={DIAL_ICON_SIZE.LG}
             stroke={DIAL_KIT_ICON_STROKE}
             className={styles.icon}
           />
