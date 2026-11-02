@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AppConfigModule } from '../app-config/app-config.module';
 import { ConversationModule } from '../conversations/conversation.module';
+import { ScheduledTaskUnreadModule } from '../scheduled-task-unread/scheduled-task-unread.module';
 import { UserConfigModule } from '../user-config/user-config.module';
 import { ProjectConversationsListService } from './conversations/project-conversations-list.service';
 import { ProjectConversationsController } from './conversations/project-conversations.controller';
@@ -15,7 +16,12 @@ import { ProjectsUpdateService } from './update/projects-update.service';
 import { ProjectsWatchService } from './watch/projects-watch.service';
 
 @Module({
-  imports: [AppConfigModule, UserConfigModule, ConversationModule],
+  imports: [
+    AppConfigModule,
+    UserConfigModule,
+    ConversationModule,
+    ScheduledTaskUnreadModule,
+  ],
   controllers: [ProjectsController, ProjectConversationsController],
   providers: [
     ProjectsService,

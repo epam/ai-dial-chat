@@ -81,6 +81,10 @@ export interface ProjectsConfiguredClient {
     id: string;
     conversationName: string;
   }) => Promise<void>;
+  markProjectConversationViewed: (request: {
+    id: string;
+    conversationName: string;
+  }) => Promise<void>;
   attachToProjectGenerationRaw: (
     request: { id: string; attachGenerationDto: { path: string } },
     options?: RequestInit,
@@ -184,6 +188,8 @@ export interface ProjectsApiClient {
     newTitle: string,
   ) => Promise<RenameConversationResponseDto>;
   deleteProjectConversation: (conversationId: string) => Promise<void>;
+  /** Records that the caller has seen the conversation's current version; a host without it keeps no read state. */
+  markProjectConversationViewed?: (conversationId: string) => Promise<void>;
   attachToProjectGeneration: (
     projectId: string,
     path: string,
@@ -331,6 +337,10 @@ export const createProjectsApiClient = (
     }),
   deleteProjectConversation: (conversationId) =>
     client.deleteProjectConversation(requireConversationParts(conversationId)),
+  markProjectConversationViewed: (conversationId) =>
+    client.markProjectConversationViewed(
+      requireConversationParts(conversationId),
+    ),
   attachToProjectGeneration: async (projectId, path, signal) => {
     const { raw } = await client.attachToProjectGenerationRaw(
       { id: projectId, attachGenerationDto: { path } },

@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
@@ -135,7 +135,7 @@ describe('ProjectConversationList', () => {
     expect(onRetry).toHaveBeenCalledOnce();
   });
 
-  it('offers Show more only while more exist and a handler is given', async () => {
+  it('offers See more only while more exist and a handler is given', async () => {
     const onLoadMore = vi.fn();
     const { rerender } = render(
       <ProjectConversationList
@@ -146,7 +146,7 @@ describe('ProjectConversationList', () => {
         onLoadMore={onLoadMore}
       />,
     );
-    expect(screen.queryByRole('button', { name: 'Show more' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'See more' })).toBeNull();
 
     rerender(
       <ProjectConversationList
@@ -165,10 +165,10 @@ describe('ProjectConversationList', () => {
     expect(onLoadMore).toHaveBeenCalledOnce();
   });
 
-  it('disables Show more while the next page loads', () => {
+  it('disables See more while the next page loads', () => {
     renderList({ hasMore: true, isLoadingMore: true, onLoadMore: vi.fn() });
 
-    const button = screen.getByRole('button', { name: 'Show more' });
+    const button = screen.getByRole('button', { name: 'See more' });
     expect((button as HTMLButtonElement).disabled).toBe(true);
   });
 
@@ -191,5 +191,140 @@ describe('ProjectConversationList', () => {
       screen.getByRole('button', { name: 'More actions for Login article' })
         .className,
     ).toContain('me-2');
+  });
+
+  describe('unread rows', () => {
+    const unread = [
+      { id: 'c1', title: 'Weekly summary', isUnread: true },
+      { id: 'c2', title: 'Login article' },
+    ];
+
+    it('describes an unread row as unread without changing its name', () => {
+      renderList({
+        items: unread,
+        labels: { ...labels, unreadLabel: 'Unread' },
+      });
+
+      expect(
+        screen.getByRole('button', {
+          name: 'Weekly summary',
+          description: 'Unread',
+        }),
+      ).toBeTruthy();
+    });
+
+    it('gives a read row no unread description', () => {
+      renderList({ items: unread });
+
+      expect(
+        screen.getByRole('button', { name: 'Login article', description: '' }),
+      ).toBeTruthy();
+      expect(screen.getAllByText('Unread')).toHaveLength(1);
+    });
+
+    it('leads each row with a status point: filled when unread, an outline when read', () => {
+      renderList({ items: unread });
+
+      const pointSelector = 'li > button > span[aria-hidden] > span';
+      // eslint-disable-next-line testing-library/no-node-access -- the status point is decorative and has no role
+      const points = [...document.querySelectorAll(pointSelector)];
+      expect(points.map((point) => point.className)).toEqual([
+        expect.stringMatching(/unreadDot/),
+        expect.stringMatching(/readDot/),
+      ]);
+    });
+
+    it('sets the read point colour as a CSS variable', () => {
+      renderList({ items: unread, colors: { readDot: 'gray' } });
+
+      expect(
+        screen
+          .getByRole('region', { name: 'Chats' })
+          .style.getPropertyValue('--pcl-read-dot'),
+      ).toBe('gray');
+    });
+
+    it('hides the row menu on desktop until the row is hovered or focused', () => {
+      renderList({ items: unread, onRename: vi.fn() });
+
+      expect(
+        screen.getByRole('button', { name: 'More actions for Weekly summary' })
+          .className,
+      ).toContain('desktop:opacity-0');
+    });
+
+    it('styles the unread title with the unread class and a read one with the row class', () => {
+      renderList({ items: unread });
+
+      expect(screen.getByText('Weekly summary').className).toContain(
+        'dial-body-semi-text',
+      );
+      expect(screen.getByText('Login article').className).toContain(
+        'dial-body-text',
+      );
+    });
+
+    it('takes the unread title class from the typography prop', () => {
+      renderList({
+        items: unread,
+        typography: { unreadRowTitleClassName: 'dial-small-semi-text' },
+      });
+
+      expect(screen.getByText('Weekly summary').className).toContain(
+        'dial-small-semi-text',
+      );
+    });
+
+    it('sets the unread dot colour as a CSS variable', () => {
+      renderList({ items: unread, colors: { unreadDot: 'red' } });
+
+      expect(
+        screen
+          .getByRole('region', { name: 'Chats' })
+          .style.getPropertyValue('--pcl-unread-dot'),
+      ).toBe('red');
+    });
+
+    it('keeps focus on a row that turns unread in place', async () => {
+      const { rerender } = render(
+        <ProjectConversationList
+          items={[{ id: 'c1', title: 'Weekly summary' }]}
+          labels={labels}
+          onRetry={vi.fn()}
+          onOpen={vi.fn()}
+        />,
+      );
+      const row = screen.getByRole('button', { name: 'Weekly summary' });
+      row.focus();
+
+      rerender(
+        <ProjectConversationList
+          items={[{ id: 'c1', title: 'Weekly summary', isUnread: true }]}
+          labels={labels}
+          onRetry={vi.fn()}
+          onOpen={vi.fn()}
+        />,
+      );
+
+      expect(
+        screen.getByRole('button', {
+          name: 'Weekly summary',
+          description: 'Unread',
+        }),
+      ).toBe(row);
+      // eslint-disable-next-line testing-library/no-node-access -- focus retention has no query; the focused element is the assertion
+      await waitFor(() => expect(document.activeElement).toBe(row));
+    });
+
+    it('places the unread indicator with logical spacing only in RTL', () => {
+      document.documentElement.dir = 'rtl';
+      renderList({
+        items: unread,
+        onRename: vi.fn(),
+      });
+
+      const markup = screen.getByRole('region', { name: 'Chats' }).innerHTML;
+      expect(markup).not.toMatch(/\b(ml|mr|pl|pr)-\d/);
+    });
   });
 });

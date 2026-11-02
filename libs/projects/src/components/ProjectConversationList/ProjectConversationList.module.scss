@@ -1,0 +1,7 @@
+.readDot {
+  border: 1.5px solid var(--pcl-read-dot, var(--stroke-secondary, #d1dbea));
+}
+
+.unreadDot {
+  background: var(--pcl-unread-dot, var(--text-accent, #1d4ed8));
+}

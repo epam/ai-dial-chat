@@ -957,17 +957,18 @@ conversation (`deploymentKey` is the deployment id with `/`, `\` and `%` made
 All routes are gated by `features.projectsEnabled`; writes and completions are
 refused with `403` before any Core call outside the caller's own bucket.
 
-| Method and path                                              | Handler                     | What it does                                                                                            |
-| ------------------------------------------------------------ | --------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `GET /api/v1/projects/:id/conversations`                     | `listProjectConversations`  | Newest first, `limit` 1–100 (default 50) after `offset` (default 0), with titles, authors and `hasMore` |
-| `POST /api/v1/projects/:id/conversations`                    | `createProjectConversation` | Creates a conversation from its first message                                                           |
-| `GET /api/v1/projects/:id/conversations/:name`               | `getProjectConversation`    | Reads one conversation                                                                                  |
-| `PUT /api/v1/projects/:id/conversations/:name`               | `saveProjectConversation`   | Saves a body, never over a pending background answer                                                    |
-| `PATCH /api/v1/projects/:id/conversations/:name`             | `renameProjectConversation` | Renames it; the file name does not change                                                               |
-| `DELETE /api/v1/projects/:id/conversations/:name`            | `deleteProjectConversation` | Deletes it                                                                                              |
-| `POST /api/v1/projects/:id/conversations/completions`        | `streamProjectCompletion`   | Streams a completion, as `/api/v1/conversations/completions` does                                       |
-| `POST /api/v1/projects/:id/conversations/completions/stop`   | `stopProjectCompletion`     | Stops it                                                                                                |
-| `POST /api/v1/projects/:id/conversations/completions/attach` | `attachToProjectGeneration` | Replays an active generation                                                                            |
+| Method and path                                              | Handler                         | What it does                                                                                                        |
+| ------------------------------------------------------------ | ------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/v1/projects/:id/conversations`                     | `listProjectConversations`      | Newest first, `limit` 1–100 (default 50) after `offset` (default 0), with titles, authors, `isUnread` and `hasMore` |
+| `POST /api/v1/projects/:id/conversations`                    | `createProjectConversation`     | Creates a conversation from its first message                                                                       |
+| `GET /api/v1/projects/:id/conversations/:name`               | `getProjectConversation`        | Reads one conversation                                                                                              |
+| `PUT /api/v1/projects/:id/conversations/:name`               | `saveProjectConversation`       | Saves a body, never over a pending background answer                                                                |
+| `PATCH /api/v1/projects/:id/conversations/:name`             | `renameProjectConversation`     | Renames it; the file name does not change                                                                           |
+| `DELETE /api/v1/projects/:id/conversations/:name`            | `deleteProjectConversation`     | Deletes it                                                                                                          |
+| `PATCH /api/v1/projects/:id/conversations/:name/viewed`      | `markProjectConversationViewed` | `204`: records the conversation's current version as seen by the caller (any reader; `404` when it does not exist)  |
+| `POST /api/v1/projects/:id/conversations/completions`        | `streamProjectCompletion`       | Streams a completion, as `/api/v1/conversations/completions` does                                                   |
+| `POST /api/v1/projects/:id/conversations/completions/stop`   | `stopProjectCompletion`         | Stops it                                                                                                            |
+| `POST /api/v1/projects/:id/conversations/completions/attach` | `attachToProjectGeneration`     | Replays an active generation                                                                                        |
 
 The completion, stop and attach body `path` is the id without `projects/`, and
 must name a conversation of `:id` (`400` otherwise). A project completion sends
@@ -977,6 +978,20 @@ and no attachment, and reads no project file before the model call. Core conditi
 a project file write on the whole project's ETag, so the BFF versions a
 conversation by a hash of its bytes and retries a `412` caused by another file;
 a write over the project's size limits answers `413 project-storage-full`.
+
+**Unread project chats.** Each reader keeps their own read state in
+`.client_data/.viewed-conversations.json` in their own bucket, next to the
+regular `conversationIds`:
+`projectConversationIds: { [projectId]: { [conversationId]: version } }`, where
+`version` is the content hash the store versions the conversation by. A chat is
+`isUnread` when its `updatedAt` is after the shared read-before baseline and
+its current hash is not the stored one, so an owner's new answer turns unread
+for every reader and no write is made when a generation starts. The hash comes
+from the body read that resolves the title (cached by `updatedAt`). A failed
+read of the read state reports every chat read. Deleting a conversation or a
+project drops the caller's entry, renaming a project re-keys it, and renaming
+a chat that was read keeps it read for the renamer; other readers' files are
+never written. A missing or malformed field reads as `{}`.
 
 ### Transcription availability
 

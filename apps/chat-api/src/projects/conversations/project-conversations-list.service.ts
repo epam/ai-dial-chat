@@ -8,6 +8,11 @@ import { ProjectConversationStore } from '../../conversations/persistence/projec
 import { getConversationTitleFromName } from '../../conversations/utils/conversation.utils';
 import { DialClientService } from '../../dial/dial-client.service';
 import {
+  ConversationReadStateService,
+  isProjectConversationUnread,
+  type ProjectReadState,
+} from '../../scheduled-task-unread/conversation-read-state.service';
+import {
   buildProjectConversationLocator,
   PROJECT_CONVERSATIONS_FOLDER,
 } from '../utils/project-conversation-id.util';
@@ -42,6 +47,14 @@ interface CoreFileListing {
 interface CachedTitle {
   updatedAt: number | undefined;
   title: string;
+  /** Content version of the body the title was read from; decides the read state. */
+  version?: string;
+}
+
+/** A title and the version it was read from; the version is unknown when the body could not be read. */
+interface ResolvedTitle {
+  title: string;
+  version?: string;
 }
 
 /* `openapi-fetch` resolves an empty-bodied error with `error: undefined`, so the status decides. */
@@ -94,28 +107,38 @@ export class ProjectConversationsListService {
     private readonly dialClient: DialClientService,
     private readonly store: ProjectConversationStore,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly readStateService: ConversationReadStateService,
   ) {}
 
   /**
    * @param project - the project to list
    * @param accessToken - caller's bearer token; Core checks read access
+   * @param sessionBucket - caller's own bucket, which holds their read state
    * @param limit - page size, newest first
    * @param offset - conversations to skip in the newest-first order
    */
   async listProjectConversations(
     project: ParsedProjectId,
     accessToken: string,
+    sessionBucket: string,
     limit = PROJECT_CONVERSATION_LIST_DEFAULT_LIMIT,
     offset = 0,
   ): Promise<ProjectConversationListResponseDto> {
-    const files = (await this.listFiles(project, accessToken)).sort(
-      newestFirst,
-    );
+    /* Never rejects: a failed read state is `null`, so every chat reads as read. */
+    const [listed, readState] = await Promise.all([
+      this.listFiles(project, accessToken),
+      this.readStateService.getProjectReadState(
+        project.id,
+        accessToken,
+        sessionBucket,
+      ),
+    ]);
+    const files = listed.sort(newestFirst);
     const page = files.slice(offset, offset + limit);
     const items = await mapWithConcurrency(
       page,
       TITLE_READ_CONCURRENCY,
-      (file) => this.toItem(project, file, accessToken),
+      (file) => this.toItem(project, file, accessToken, readState),
     );
     this.logger.debug(
       `Listed project conversations (total=${files.length}, returned=${items.length})`,
@@ -176,14 +199,28 @@ export class ProjectConversationsListService {
     project: ParsedProjectId,
     file: CoreFileItem & { name: string },
     accessToken: string,
+    readState: ProjectReadState | null,
   ): Promise<ProjectConversationItemDto> {
     const locator = buildProjectConversationLocator(project, file.name);
+    const { title, version } = await this.resolveTitle(
+      locator,
+      file,
+      accessToken,
+    );
     return {
       id: locator,
       name: file.name,
-      title: await this.resolveTitle(locator, file, accessToken),
+      title,
       ...(file.author != null ? { author: file.author } : {}),
       ...(file.updatedAt != null ? { updatedAt: file.updatedAt } : {}),
+      isUnread:
+        readState != null &&
+        isProjectConversationUnread(
+          readState,
+          locator,
+          file.updatedAt,
+          version,
+        ),
     };
   }
 
@@ -191,11 +228,16 @@ export class ProjectConversationsListService {
     locator: string,
     file: CoreFileItem & { name: string },
     accessToken: string,
-  ): Promise<string> {
+  ): Promise<ResolvedTitle> {
     const key = titleCacheKey(locator);
     const cached = await this.cacheManager.get<CachedTitle>(key);
-    if (cached != null && cached.updatedAt === file.updatedAt) {
-      return cached.title;
+    /* An entry cached before versions were kept has none and is re-read once. */
+    if (
+      cached != null &&
+      cached.updatedAt === file.updatedAt &&
+      typeof cached.version === 'string'
+    ) {
+      return { title: cached.title, version: cached.version };
     }
 
     const pathTitle = getConversationTitleFromName(file.name, false);
@@ -204,19 +246,20 @@ export class ProjectConversationsListService {
         locator,
         accessToken,
       );
-      if (stored == null) return pathTitle;
+      if (stored == null) return { title: pathTitle };
       const title = stored.conversation.name?.trim() || pathTitle;
+      const version = stored.etag ?? undefined;
       await this.cacheManager.set(
         key,
-        { updatedAt: file.updatedAt, title } satisfies CachedTitle,
+        { updatedAt: file.updatedAt, title, version } satisfies CachedTitle,
         TITLE_CACHE_TTL_MS,
       );
-      return title;
+      return { title, version };
     } catch (err) {
       this.logger.warn(
         `Project conversation title read failed (${err instanceof Error ? err.name : 'unknown error'}); using the file name`,
       );
-      return pathTitle;
+      return { title: pathTitle };
     }
   }
 }

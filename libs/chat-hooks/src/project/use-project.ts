@@ -1,6 +1,7 @@
 import type { ProjectDetailsDto } from '@epam/ai-dial-chat-api-client';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { getApiErrorStatus } from '../api-error/api-error';
+import { ProjectRefreshOutcome } from './project-refresh';
 import type { ProjectsApiClient } from './projects-api-client';
 
 interface ProjectResult {
@@ -15,7 +16,8 @@ interface ProjectResult {
  * Loads one project's details. Loading is derived from whether a result
  * answers the current id and reload token, so a page never renders a stale
  * project for a new id. A `404` is a not-found result, every other failure an
- * error; the request is aborted on unmount and on an id change.
+ * error; the request is aborted on unmount and on an id change. `refresh`
+ * re-reads the loaded project without the loading state, for live updates.
  *
  * @param client - Configured project requests, from `createProjectsApiClient`; it must be referentially stable, because a new object reloads.
  * @param id - The project's DIAL id, or `null` when the route names none.
@@ -55,12 +57,46 @@ export const useProject = (
   }, []);
 
   const settled = result?.key === key ? result : undefined;
+  const loadedProject = settled?.project ?? null;
+  const refreshControllerRef = useRef<AbortController | null>(null);
+
+  /* A newer refresh and an id change supersede an older one. */
+  useEffect(
+    () => () => {
+      refreshControllerRef.current?.abort();
+      refreshControllerRef.current = null;
+    },
+    [key],
+  );
+
+  const refresh = useCallback(async (): Promise<ProjectRefreshOutcome> => {
+    if (loadedProject == null || id == null) {
+      return ProjectRefreshOutcome.Skipped;
+    }
+    refreshControllerRef.current?.abort();
+    const controller = new AbortController();
+    refreshControllerRef.current = controller;
+    try {
+      const project = await client.getProject(id, controller.signal);
+      if (controller.signal.aborted) return ProjectRefreshOutcome.Skipped;
+      setResult((current) =>
+        current?.key === key ? { ...current, project } : current,
+      );
+      return ProjectRefreshOutcome.Updated;
+    } catch (err) {
+      if (controller.signal.aborted) return ProjectRefreshOutcome.Skipped;
+      return getApiErrorStatus(err) === 404
+        ? ProjectRefreshOutcome.NotFound
+        : ProjectRefreshOutcome.Failed;
+    }
+  }, [client, id, key, loadedProject]);
 
   return {
-    project: settled?.project ?? null,
+    project: loadedProject,
     isLoading: enabled && id != null && settled == null,
     hasError: settled?.hasError ?? false,
     isNotFound: settled?.isNotFound ?? false,
     retry,
+    refresh,
   };
 };

@@ -1,16 +1,13 @@
 import type { ListProjectsResponseDto } from '@epam/ai-dial-chat-api-client';
 import type { ProjectItem, ProjectSource } from '@epam/ai-dial-projects';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { readSseEvents } from '../shared/read-sse-events';
-import { applyProjectEvent, parseProjectWatchEvent } from './project-events';
+import { applyProjectEvent } from './project-events';
 import { mapProjectDtoToItem, mapProjectSource } from './project-mapping';
+import { runProjectWatch } from './project-watch-stream';
 import type { ProjectsApiClient } from './projects-api-client';
 
 /** Most project ids one watch subscribes to; the same bound the BFF enforces. */
 const PROJECTS_WATCH_MAX_IDS = 1000;
-
-/** Delays before each reconnect attempt of a dropped watch stream. */
-const WATCH_RECONNECT_DELAYS_MS = [1000, 2000, 4000, 8000, 16000];
 
 /* Project ids are path-like and never contain a newline. */
 const WATCH_KEY_SEPARATOR = '\n';
@@ -127,60 +124,27 @@ export const useProjects = (
       return;
     }
 
-    const ids = watchKey.split(WATCH_KEY_SEPARATOR);
     const controller = new AbortController();
-    let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
-
-    const handleEvent = (payload: unknown): boolean => {
-      const event = parseProjectWatchEvent(payload);
-      if (event != null) {
+    runProjectWatch({
+      watchProjects,
+      ids: watchKey.split(WATCH_KEY_SEPARATOR),
+      signal: controller.signal,
+      onEvent: (event) =>
         setResult((current) => {
           if (current == null) return current;
           const projects = applyProjectEvent(current.projects, event);
           return projects === current.projects
             ? current
             : { ...current, projects };
-        });
-      }
-      return controller.signal.aborted;
-    };
-
-    const connect = async (failedAttempts: number, isReconnect: boolean) => {
-      let stream: ReadableStream<Uint8Array>;
-      try {
-        stream = await watchProjects(ids, controller.signal);
-      } catch {
-        if (controller.signal.aborted) return;
-        if (!isReconnect) {
-          /* Core without project events, or a project no longer readable. */
-          isWatchUnavailableRef.current = true;
-          return;
-        }
-        scheduleReconnect(failedAttempts + 1);
-        return;
-      }
-      if (isReconnect) void refreshSilently();
-      await readSseEvents(stream, handleEvent);
-      if (controller.signal.aborted) return;
-      scheduleReconnect(0);
-    };
-
-    const scheduleReconnect = (failedAttempts: number) => {
-      const delay = WATCH_RECONNECT_DELAYS_MS[failedAttempts];
-      if (delay == null) {
+        }),
+      onReconnected: () => {
+        void refreshSilently();
+      },
+      onUnavailable: () => {
         isWatchUnavailableRef.current = true;
-        return;
-      }
-      reconnectTimer = setTimeout(() => {
-        void connect(failedAttempts, true);
-      }, delay);
-    };
-
-    void connect(0, false);
-    return () => {
-      controller.abort();
-      clearTimeout(reconnectTimer);
-    };
+      },
+    });
+    return () => controller.abort();
   }, [watchProjects, watchKey, refreshSilently]);
 
   const retry = useCallback(() => {

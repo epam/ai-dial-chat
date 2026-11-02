@@ -109,10 +109,11 @@ export class ProjectConversationsController {
     @Query() { limit, offset }: ProjectConversationListQueryDto,
     @Req() req: Request,
   ): Promise<ProjectConversationListResponseDto> {
-    const { at } = req.user as SessionUser;
+    const { at, bucket } = req.user as SessionUser;
     return this.conversationsService.listConversations(
       requireProjectId(id),
       at,
+      bucket,
       limit,
       offset,
     );
@@ -416,6 +417,38 @@ export class ProjectConversationsController {
   ): Promise<void> {
     const { at, bucket } = req.user as SessionUser;
     return this.conversationsService.deleteConversation(
+      requireProjectId(id),
+      conversationName,
+      at,
+      bucket,
+    );
+  }
+
+  @Patch(':id/conversations/:conversationName/viewed')
+  @HttpCode(204)
+  @ApiOperation({
+    operationId: 'markProjectConversationViewed',
+    summary: 'Mark a project conversation as viewed',
+    description:
+      "Records the conversation's current version as seen by the caller, in the caller's own read state, so it is not reported unread until it changes. Any reader of the project may call it.",
+  })
+  @ApiParam(PROJECT_ID_PARAM)
+  @ApiParam(CONVERSATION_NAME_PARAM)
+  @ApiDialCoreErrors()
+  @ApiResponse({ status: 204, description: 'Conversation marked as viewed' })
+  @ApiResponse({ status: 400, description: 'Invalid id or conversation name' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 403, description: READ_FORBIDDEN })
+  @ApiResponse({
+    status: 404,
+    description: 'The project or the conversation does not exist',
+  })
+  markProjectConversationViewed(
+    @Param() { id, conversationName }: ProjectConversationParamDto,
+    @Req() req: Request,
+  ): Promise<void> {
+    const { at, bucket } = req.user as SessionUser;
+    return this.conversationsService.markViewed(
       requireProjectId(id),
       conversationName,
       at,

@@ -35,13 +35,22 @@ The page SHALL:
 
 ### Requirement: The app owns project data through useProject
 
-`useProject(id: string | null, enabled: boolean)` (`apps/chat/src/hooks/projects/useProject.ts`, one hook per file, with JSDoc on why it exists) SHALL call `getProject(id, { signal })` from `apps/chat/src/server-api/projects.api.ts`, which wraps `projectsApi.getProject`. It returns `{ project, isLoading, hasError, isNotFound, retry }`:
+`useProject(client, id: string | null, enabled: boolean)` (`libs/chat-hooks/src/project/use-project.ts`, exported from `@epam/ai-dial-chat-hooks/project`) SHALL call `client.getProject(id, signal)`. The app adapter `useProject(id, enabled)` (`apps/chat/src/hooks/projects/useProject.ts`) binds it to `projectsClient`, which wraps `getProject` from `apps/chat/src/server-api/projects.api.ts` (`projectsApi.getProject`). The hook returns `{ project, isLoading, hasError, isNotFound, retry, refresh }`:
 
 - `project` is the `ProjectDetailsDto`, or `null`.
 - The fetch runs in `useEffect` with an `AbortController`. It aborts on unmount and on an id change, and a cancelled request never sets state.
 - `isLoading` is derived, as in `useProjects`: it is `true` while `enabled && id != null` and no result answers the current reload token.
 - A `404` sets `isNotFound`. Any other failure sets `hasError`.
 - `retry` is a stable `useCallback`.
+- `refresh` is a stable `useCallback` returning `Promise<ProjectRefreshOutcome>`. `ProjectRefreshOutcome` is a string enum in `libs/chat-hooks/src/project/project-refresh.ts`: `Updated = 'updated'`, `NotFound = 'not-found'`, `Failed = 'failed'`, `Skipped = 'skipped'`.
+  - It re-requests `getProject` without touching `isLoading`, `hasError` or `isNotFound`.
+  - On success it replaces `project` in the current result, which keeps its key, and resolves `Updated`.
+  - On `404` it keeps the current `project` and resolves `NotFound`, so the page can leave (see the `project-view-live-updates` capability).
+  - On any other failure it keeps the current `project` and resolves `Failed`.
+  - A refresh started while no project is loaded resolves `Skipped`.
+  - A newer `refresh` or an id change aborts an older one. An aborted refresh sets no state and resolves `Skipped`.
+
+The page's derived state follows `project`: the view model, `canEdit`, `conversationCount` and the header actions. A refresh that turns `canEdit` to `false` (the project was unshared) therefore hides Edit, Delete, Share and Publish without a reload.
 
 No new React context is introduced.
 
@@ -59,6 +68,16 @@ No new React context is introduced.
 
 - **WHEN** `getProject` rejects with `503` and the user activates Retry
 - **THEN** `getProject` is called again
+
+#### Scenario: Silent refresh
+
+- **WHEN** a project is loaded and `refresh()` resolves with new instructions
+- **THEN** `isLoading` stays `false` throughout, `project.instructions` is the new value, and the promise resolves `Updated`
+
+#### Scenario: Failed refresh keeps the page
+
+- **WHEN** `refresh()` rejects with `503`
+- **THEN** `project` is unchanged, `hasError` stays `false`, and the promise resolves `Failed`
 
 ### Requirement: ProjectView is a host-agnostic presentational component in libs/projects
 
@@ -146,13 +165,12 @@ The `ProjectView` header SHALL render, in inline order:
 
 - a back kit `GhostIconButton` named `labels.backLabel`, with `IconArrowNarrowLeft` (`aria-hidden`, `stroke={DIAL_KIT_ICON_STROKE}`, `rtl:scale-x-[-1]`), calling `onBack`;
 - the name as the page's `<h1>`, truncated to one line with `EllipsisTooltip`, so the full name is in the tooltip;
-- a Pin toggle kit `GhostIconButton`:
-  - icon `IconPin` when unpinned, `IconPinFilled` when pinned;
-  - a stable accessible name `labels.pinLabel`, with the state carried by `aria-pressed={isPinned}` alone, so the name never contradicts the pressed state;
+- a Pin kit `GhostButton` with an icon and a text label:
+  - `IconPin` and `labels.pinLabel` when unpinned, `IconPinOff` (a crossed-out `IconPin` drawn in `libs/projects/src/components/IconPinOff/IconPinOff.ts`, since Tabler has none) and `labels.unpinLabel` when pinned, so the label names the action and shows the state; it has no `aria-pressed`, because a pressed state would contradict a label that already changes;
   - while `isPinPending` it is `aria-disabled` and ignores activation but stays focusable, so keyboard focus is not dropped to `<body>`;
   - it calls `onTogglePin`;
-- a Publish `Button` (`labels.publishLabel`) and an Edit `Button` (`labels.editLabel`), when their callbacks are supplied;
-- a ⋮ kit `Dropdown` triggered by a `GhostIconButton` named `labels.moreActionsLabel`, with items Share (when `onShare`), Download and Delete (when `onDelete`). The dropdown is keyboard-operable: Enter, Space and the arrow keys come from the kit.
+- a Publish `NeutralButton` (`IconWorldShare`, `labels.publishLabel`) and an Edit `NeutralButton` (`IconPencilMinus`, `labels.editLabel`), when their callbacks are supplied;
+- a ⋮ kit `Dropdown` triggered by a `GhostIconButton` named `labels.moreActionsLabel`, with items Share (when `onShare`, `IconShare`), Download (`IconDownload`) and Delete (when `onDelete`, `IconTrashX`, danger). Every item carries its icon, and Publish and Edit keep theirs in the mobile menu. The dropdown is keyboard-operable: Enter, Space and the arrow keys come from the kit.
 
 On `mobile`, Publish and Edit move into the ⋮ menu (before Share). The lib renders both placements and hides one through the `mobile:` / `desktop:` variants, so it never needs `useIsMobile`.
 
@@ -170,7 +188,7 @@ Every handler is memoised with `useCallback`.
 #### Scenario: Pin toggles and announces state
 
 - **WHEN** the user activates Pin on an unpinned project
-- **THEN** `setPinnedProject` is called with `true`, and the button reports `aria-pressed="true"` and is still named "Pin"
+- **THEN** `setPinnedProject` is called with `true`, and the button is then labelled "Unpin"
 
 #### Scenario: Long name is truncated with a tooltip
 
@@ -417,12 +435,12 @@ The project view page and `ProjectView` SHALL meet the following contract.
 
 - Logical properties only (`ms-*`, `pe-*`, `start-*`, `border-s-*`, `text-start`).
 - The back arrow is mirrored with `rtl:scale-x-[-1]`.
-- The pin, ⋮, share, download and delete icons are not mirrored.
+- The pin, publish, edit, ⋮, share, download and delete icons are not mirrored.
 
 **Accessibility:**
 
 - Every icon-only button has an accessible name.
-- Pin uses `aria-pressed`.
+- Pin names its action ("Pin" / "Unpin") instead of using `aria-pressed`.
 - The ⋮ menu is keyboard-operable.
 - The delete confirmation is a labeled dialog (`DeleteConfirmationDialog`, whose title names it).
 - Context search results are announced through the `aria-live` status.

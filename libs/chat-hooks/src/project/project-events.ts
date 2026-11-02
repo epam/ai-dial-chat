@@ -4,10 +4,10 @@ import {
 } from '@epam/ai-dial-chat-api-client';
 import type { ProjectItem } from '@epam/ai-dial-projects';
 
-/** The part of a projects watch event the list reacts to. */
+/** The part of a projects watch event the hooks react to; `etag` is the project's new aggregate ETag, absent on a delete. */
 export type ProjectWatchEvent = Pick<
   ProjectWatchEventDto,
-  'id' | 'action' | 'timestamp'
+  'id' | 'action' | 'timestamp' | 'etag'
 >;
 
 const WATCH_ACTIONS: ReadonlySet<string> = new Set(
@@ -19,7 +19,7 @@ export const parseProjectWatchEvent = (
   payload: unknown,
 ): ProjectWatchEvent | undefined => {
   if (payload == null || typeof payload !== 'object') return undefined;
-  const { id, action, timestamp } = payload as Record<string, unknown>;
+  const { id, action, timestamp, etag } = payload as Record<string, unknown>;
   if (
     typeof id !== 'string' ||
     typeof action !== 'string' ||
@@ -28,7 +28,12 @@ export const parseProjectWatchEvent = (
   ) {
     return undefined;
   }
-  return { id, action: action as ProjectWatchAction, timestamp };
+  return {
+    id,
+    action: action as ProjectWatchAction,
+    timestamp,
+    ...(typeof etag === 'string' ? { etag } : {}),
+  };
 };
 
 /**

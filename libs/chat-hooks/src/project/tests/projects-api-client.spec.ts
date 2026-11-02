@@ -24,6 +24,7 @@ const makeClient = () => {
     saveProjectConversation: vi.fn(),
     renameProjectConversation: vi.fn(),
     deleteProjectConversation: vi.fn(),
+    markProjectConversationViewed: vi.fn(),
     attachToProjectGenerationRaw: vi.fn(),
     watchProjectsRaw: vi.fn(),
   };
@@ -162,6 +163,7 @@ describe('createProjectsApiClient', () => {
     await client.saveProjectConversation(CHAT_ID, body);
     await client.renameProjectConversation(CHAT_ID, 'New');
     await client.deleteProjectConversation(CHAT_ID);
+    await client.markProjectConversationViewed(CHAT_ID);
 
     expect(generated.saveProjectConversation).toHaveBeenCalledWith({
       ...PARTS,
@@ -172,6 +174,7 @@ describe('createProjectsApiClient', () => {
       renameConversationBodyDto: { newTitle: 'New' },
     });
     expect(generated.deleteProjectConversation).toHaveBeenCalledWith(PARTS);
+    expect(generated.markProjectConversationViewed).toHaveBeenCalledWith(PARTS);
     expect(() => client.getProjectConversation('a1b2c3/x')).toThrow();
   });
 

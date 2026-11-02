@@ -38,13 +38,15 @@ const makeService = (
 ) => {
   const deleteProjectFolder = vi.fn(async (..._args: unknown[]) => result);
   const read = vi.fn(async (..._args: unknown[]) => snapshot);
+  const readState = { removeProject: vi.fn(async () => undefined) };
   const service = new ProjectsService(
     { client: { deleteProjectFolder } } as unknown as DialClientService,
     new ProjectsCreateService(config),
     { read } as unknown as ProjectsSnapshotService,
     { removeProjectPin } as unknown as UserConfigService,
+    readState as never,
   );
-  return { service, deleteProjectFolder, removeProjectPin, read };
+  return { service, deleteProjectFolder, removeProjectPin, read, readState };
 };
 
 const deleted = { error: undefined, response: { status: 200 } };
@@ -195,6 +197,37 @@ describe('ProjectsService.deleteProject', () => {
     await expect(
       service.deleteProject(PROJECT_ID, '"cv1"', USER_BUCKET, 'token'),
     ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it("removes the project from the caller's read state", async () => {
+    const { service, readState } = makeService(deleted);
+
+    await service.deleteProject(PROJECT_ID, '"cv1"', USER_BUCKET, 'token');
+
+    expect(readState.removeProject).toHaveBeenCalledWith(
+      PROJECT_ID,
+      'token',
+      USER_BUCKET,
+    );
+  });
+
+  it('still succeeds when the read-state cleanup fails', async () => {
+    const { service, readState } = makeService(deleted);
+    readState.removeProject.mockRejectedValue(new Error('core down'));
+
+    await expect(
+      service.deleteProject(PROJECT_ID, '"cv1"', USER_BUCKET, 'token'),
+    ).resolves.toBeUndefined();
+    expect(warn).toHaveBeenCalled();
+  });
+
+  it('does not touch the read state when the delete is refused', async () => {
+    const { service, readState } = makeService(deleted);
+
+    await expect(
+      service.deleteProject(PROJECT_ID, '"stale"', USER_BUCKET, 'token'),
+    ).rejects.toThrow();
+    expect(readState.removeProject).not.toHaveBeenCalled();
   });
 
   it('still succeeds when the pin cleanup fails', async () => {

@@ -55,9 +55,15 @@ describe('ConversationNamingService', () => {
   let mockConfigService: Pick<ConfigService<EnvironmentVariables>, 'get'>;
   let mockDialClient: DialClientService;
   let namingPrompt: string | undefined;
+  let mockReadState: {
+    carryProjectConversationViewed: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
     namingPrompt = undefined;
+    mockReadState = {
+      carryProjectConversationViewed: vi.fn().mockResolvedValue(undefined),
+    };
     mockAppConfigService = {
       isEnabled: vi.fn().mockResolvedValue(true),
     };
@@ -103,6 +109,7 @@ describe('ConversationNamingService', () => {
       mockConfigService as ConfigService<EnvironmentVariables>,
       mockAppConfigService as unknown as AppConfigService,
       mockConversationPersistence,
+      mockReadState as never,
     );
 
     vi.spyOn(
@@ -216,6 +223,46 @@ describe('ConversationNamingService', () => {
       }),
       '"v1"',
     );
+  });
+
+  it("carries the caller's viewed version of a project chat over its display-name write", async () => {
+    const locator = 'projects/a1b2c3/q4/conversations/gpt-4o__Hello__1';
+    mockConversationPersistence.readConversationWithEtag
+      .mockResolvedValueOnce({
+        conversation: makeConversation({ name: 'Hello' }),
+        etag: '"v1"',
+      })
+      .mockResolvedValueOnce({
+        conversation: makeConversation({ name: 'Docker networking basics' }),
+        etag: '"v2"',
+      });
+
+    await service['runMaybeRenameAfterFirstReply'](
+      locator,
+      'test-token',
+      'a1b2c3',
+      makeConversation(),
+    );
+
+    expect(mockReadState.carryProjectConversationViewed).toHaveBeenCalledWith(
+      'projects/a1b2c3/q4',
+      locator,
+      '"v1"',
+      '"v2"',
+      'test-token',
+      'a1b2c3',
+    );
+  });
+
+  it('leaves the read state of a top-level chat alone', async () => {
+    await service['runMaybeRenameAfterFirstReply'](
+      'gpt-4o__Hello',
+      'test-token',
+      'test-bucket',
+      makeConversation(),
+    );
+
+    expect(mockReadState.carryProjectConversationViewed).not.toHaveBeenCalled();
   });
 
   it('re-reads and writes the newer version when the conversation changed concurrently', async () => {
