@@ -115,9 +115,9 @@ const walk = (
   Array.from({ length: steps + 1 }, (_, index) => {
     const phase = index / steps;
     const progress = phase * phase * (3 - 2 * phase);
-    const bob = index === 0 || index === steps ? 0 : index % 2 ? -3 : 0;
+    const bob = -2 * Math.sin((index * Math.PI) / 2) ** 2;
     return [
-      start + (end - start) * progress,
+      start + (end - start) * phase,
       [
         from[0] + (to[0] - from[0]) * progress,
         from[1] + (to[1] - from[1]) * progress + bob,
@@ -151,27 +151,29 @@ export const buildPenguinStarComposition = (
   const entrance: Point = local([sideX, floor]);
   const throwHome: Point = [throwX, 0];
   const nearTree: Point = [NEAR_TREE_X, 0];
-  const arrival = walk(entrance, throwHome, 0, 4, 12);
-  const departure = walk(nearTree, entrance, 16, 20, 12);
+  const arrival = walk(entrance, throwHome, 0, 4, 24);
+  const approach = walk(throwHome, nearTree, 11.8, 13.5, 8);
+  const departure = walk(nearTree, entrance, 16, 20, 24);
   const poses: Sample[] = [
     ...arrival,
     [5.1, [throwX, -3]],
     [6.7, [throwX, 2]],
     [7.6, throwHome],
-    [8.5, [throwX, -12]],
+    [8.5, [throwX, -3]],
     [9.05, throwHome],
     [10.7, throwHome],
     [11.8, throwHome],
-    ...walk(throwHome, nearTree, 11.8, 13.5, 8).slice(1),
+    ...approach.slice(1),
     [14.8, nearTree],
     [15.1, [NEAR_TREE_X, 4]],
     [15.7, [NEAR_TREE_X, -3]],
     [16, nearTree],
     ...departure.slice(1),
   ];
-  const grip = (position: Point, angle: number): Point =>
-    add(add(position, [20, -47]), rotate([28, 0], angle));
-  const capturePoint = world(grip([throwX, 2], -35 * dir));
+  /* Local angles are mirrored once by world(), just like the parented SVG. */
+  const grip = (position: Point, lean: number, angle: number): Point =>
+    add(position, rotate(add([20, -47], rotate([28, 0], angle)), lean));
+  const capturePoint = world(grip([throwX, 2], 8, -35));
 
   const layers: Layer[] = [];
   const transform = (
@@ -281,15 +283,15 @@ export const buildPenguinStarComposition = (
     ]);
     head.r = scalar([
       [0, 0],
-      [5.1, -10 * dir],
-      [6.8, 7 * dir],
+      [5.1, -10],
+      [6.8, 7],
       [7.6, 0],
       [10.7, 0],
-      [11.05, -9 * dir],
-      [11.45, 5 * dir],
+      [11.05, -9],
+      [11.45, 5],
       [11.7, 0],
       [12.1, 0],
-      [12.7, -3 * dir],
+      [12.7, -3],
       [13.5, 0],
       [20, 0],
     ]);
@@ -309,21 +311,28 @@ export const buildPenguinStarComposition = (
       [20, 0],
     ]);
   }
-  layer('penguin', penguinShapes, bodyKs);
+  const penguin = layer('penguin', penguinShapes, bodyKs);
 
   const foot = (name: string, side: -1 | 1, shapes: StarShape[]) => {
     const ks = transform(poses[0][1]);
     ks.p = animated(
       poses.map(([t, position]) => {
-        const moving = t <= 4 || t >= 16;
-        const phase = Math.sin(t * Math.PI * 5 + (side === 1 ? Math.PI : 0));
+        const interval = [arrival, approach, departure].find(
+          (samples) => t >= samples[0][0] && t <= samples.at(-1)![0],
+        );
+        let phase = 0;
+        if (interval) {
+          const start = interval[0][0];
+          const progress = (t - start) / (interval.at(-1)![0] - start);
+          phase = Math.sin(
+            (progress * (interval.length - 1) * Math.PI) / 2 +
+              (side === 1 ? Math.PI : 0),
+          );
+        }
         return [
           t,
           world(
-            add(position, [
-              side * 16 + (moving ? phase * 5 : 0),
-              moving ? -Math.max(0, phase) * 4 : 0,
-            ]),
+            add(position, [side * 16 + phase * 8, -Math.max(0, phase) * 5]),
           ),
         ];
       }),
@@ -335,27 +344,24 @@ export const buildPenguinStarComposition = (
   foot('penguin-left-foot', -1, leftFootArt());
   foot('penguin-right-foot', 1, rightFootArt());
 
-  const flipperKs = transform(add(poses[0][1], [20, -47]));
-  flipperKs.p = animated(
-    poses.map(([t, position]) => [t, world(add(position, [20, -47]))]),
-    true,
-  );
+  const flipperKs = { ...identity(), p: fixed([20, -47]) };
   flipperKs.r = scalar([
-    [0, 60 * dir],
-    [4.2, 60 * dir],
-    [5.1, -50 * dir],
-    [6.7, -35 * dir],
-    [7.3, 20 * dir],
-    [7.6, 60 * dir],
-    [8.5, -70 * dir],
-    [9.05, 60 * dir],
-    [14.8, 60 * dir],
-    [15.1, 30 * dir],
-    [16, 60 * dir],
-    [20, 60 * dir],
+    [0, 60],
+    [4.2, 60],
+    [5.1, -50],
+    [6.7, -35],
+    [7.3, 20],
+    [7.6, 60],
+    [8.5, -70],
+    [9.05, 60],
+    [14.8, 60],
+    [15.1, 30],
+    [16, 60],
+    [20, 60],
   ]);
   flipperKs.o = fade();
   const flipper = layer('penguin-flipper', flipperArt(), flipperKs);
+  flipper.parent = penguin.ind;
 
   const carriedStar = (name: string, start: number, end: number) => {
     const star = layer(
@@ -402,18 +408,25 @@ export const buildPenguinStarComposition = (
   paper.parent = flipper.ind;
   carriedStar('star-in-flipper', 7.6, 8.5);
 
-  const freeStarKs = transform(grip([throwX, -12], -70), size * 100);
-  const freeStarPath: Sample[] = [
-    [8.5, grip([throwX, -12], -70)],
-    [9.2, [throwX * 0.64, TREE_CROWN_Y - 180]],
-    [9.85, [throwX * 0.25, TREE_CROWN_Y - 145]],
-    [10.7, [TREE_X, TREE_CROWN_Y]],
-  ];
+  const release = grip([throwX, -3], -9, -70);
+  const freeStarKs = transform(release, size * 100);
+  /* One arc: uniform-time samples preserve motion through the apex. */
+  const freeStarPath: Sample[] = Array.from({ length: 25 }, (_, index) => {
+    const p = index / 24;
+    return [
+      8.5 + 2.2 * p,
+      [
+        release[0] + (TREE_X - release[0]) * p,
+        release[1] + (TREE_CROWN_Y - release[1]) * p - 560 * p * (1 - p),
+      ],
+    ];
+  });
   freeStarKs.p = animated(
     freeStarPath.map(([t, position]) => [t, world(position)]),
+    true,
   );
   freeStarKs.r = scalar([
-    [8.5, 0],
+    [8.5, -79 * dir],
     [9.2, 220 * dir],
     [10.7, 360 * dir],
   ]);

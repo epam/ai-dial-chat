@@ -169,6 +169,29 @@ const distance = (from: number[], to: number[]) =>
   Math.hypot(to[0] - from[0], to[1] - from[1]);
 
 describe('Gift wrapping composition', () => {
+  it.each([false, true])(
+    'keeps cap movement restrained and carries a hop through its apex, rtl=%s',
+    (rtl) => {
+      const { animationData } = buildGiftWrappingComposition(
+        target(1280, rtl),
+        false,
+      );
+      const master = animationData.layers.find(({ nm }) => nm === 'master')!;
+      const cap = characterTransforms(master, 'cap')[0];
+      for (let t = 0; t <= 16; t += 0.05)
+        expect(Math.abs(numericAt(cap.r, t)[0])).toBeLessThanOrEqual(10);
+      const position = (t: number) => numericAt(master.ks.p, t);
+      const speed = (from: number, to: number, axis: number) =>
+        (position(to)[axis] - position(from)[axis]) / (to - from);
+      expect(Math.abs(speed(10.3, 10.35, 1))).toBeGreaterThan(
+        Math.abs(speed(10.55, 10.6, 1)),
+      );
+      expect(speed(10.9, 10.95, 1)).toBeGreaterThan(speed(10.7, 10.75, 1));
+      expect(Math.abs(speed(10.63, 10.65, 0))).toBeGreaterThan(10);
+      expect(speed(10.63, 10.65, 0)).toBeCloseTo(speed(10.65, 10.67, 0), 4);
+    },
+  );
+
   it.each([360, 900, 1280, 1920])(
     'authors bounded native vectors at %ipx in either direction',
     (width) => {

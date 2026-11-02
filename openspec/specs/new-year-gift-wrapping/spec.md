@@ -8,7 +8,7 @@ Define the finite New Year gift-wrapping celebration with expressive elves and c
 
 ### Requirement: The gift offers a finite wrapping story
 
-New Year SHALL register `NewYearScene.GiftWrapping` as its only `happy new year` secret-phrase scene. The existing provider SHALL own selection and an 18.5-second mount deadline. The scene SHALL play one non-looping 16-second Lottie composition after at most two seconds of importing the player plus 250 ms of SVG initialization.
+New Year SHALL register `NewYearScene.GiftWrapping` as a `happy new year` secret-phrase scene alongside `NewYearScene.ReindeerTakeoff`, with enabled scenes selected without consecutive repeats. The existing provider SHALL own selection and an 18.5-second mount deadline. The scene SHALL play one non-looping 16-second Lottie composition after at most two seconds of importing the player plus 250 ms of SVG initialization.
 
 The scene SHALL show these beats, in order:
 
@@ -115,3 +115,21 @@ The change SHALL record resource tests, actual production chunk sizes and actual
 
 - **WHEN** the story runs at desktop and mobile sizes
 - **THEN** structural and production payload budgets pass, no playback geometry polling or accumulated resources are found, and browser frame/layout/paint observations are reported separately from unit-test results and authored timeline frame rate
+
+### Requirement: Restrained connected elf poses and directed hops
+
+The existing scene-local Lottie composition SHALL preserve both elves' source artwork, distinct expressions and compact arm connections. Secondary cap rotation SHALL stay within 10 degrees of its authored rest orientation, preserving the brim/head overlap. The bound master's hops SHALL show preparation, decelerating ascent and accelerating descent with horizontal travel continuing through the apex. Ribbon grips, reel and coils SHALL remain synchronized with the original shared winding geometry in LTR and RTL.
+
+The existing provider/session, host anchors, full mobile story, reduced-motion still, restoration, 16-second duration and resource ceilings SHALL remain unchanged: two elves, one player, <=12 layers, <=500 SVG descendants, <=180 paths, <=240 KB composition, <=1,400 total keys, zero particles and zero snapshots. No new public state, API, labels, flags, telemetry or persistence SHALL be introduced. SnowmanDelivery and shared playback/timeline code SHALL remain unchanged.
+
+#### Scenario: A pull causes the master to recoil
+
+- **WHEN** the ribbon tightens and the master's head and body react
+- **THEN** the cap remains seated on his head and the original silhouette stays recognizable
+- **AND** the helper's hand remains on the ribbon
+
+#### Scenario: The bound master hops away
+
+- **WHEN** a frustrated hop begins
+- **THEN** a short grounded preparation precedes lift, the ascent slows toward the apex and descent accelerates toward landing
+- **AND** horizontal movement continues through the apex without an extra pause
