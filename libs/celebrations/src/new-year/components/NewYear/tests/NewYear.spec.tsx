@@ -41,11 +41,12 @@ describe('NewYear', () => {
   });
 
   describe('New Year event contract', () => {
-    it('offers the penguin and the snowman on gift clicks and only the elves for the phrase', () => {
+    it('offers the penguin and the snowman on gift clicks and the elves or reindeer for the phrase', () => {
       expect(newYear.scenes.map(({ id }) => id)).toEqual([
         NewYearScene.PenguinStar,
         NewYearScene.GiftWrapping,
         NewYearScene.SnowmanDelivery,
+        NewYearScene.ReindeerTakeoff,
       ]);
       expect(newYear.clickSceneIds).toEqual([
         NewYearScene.PenguinStar,
@@ -53,6 +54,7 @@ describe('NewYear', () => {
       ]);
       expect(newYear.secretTrigger?.sceneIds).toEqual([
         NewYearScene.GiftWrapping,
+        NewYearScene.ReindeerTakeoff,
       ]);
     });
 
@@ -66,7 +68,10 @@ describe('NewYear', () => {
           disabledScenes: [disabled],
         });
         expect(pools.clickSceneIds).toEqual(expected);
-        expect(pools.secretSceneIds).toEqual([NewYearScene.GiftWrapping]);
+        expect(pools.secretSceneIds).toEqual([
+          NewYearScene.GiftWrapping,
+          NewYearScene.ReindeerTakeoff,
+        ]);
       },
     );
 
@@ -81,6 +86,30 @@ describe('NewYear', () => {
         const key = labelId as keyof typeof NEW_YEAR_LABELS;
         expect(NEW_YEAR_LABELS[key]).toContain('{{phrase}}');
       });
+    });
+
+    it.each([NewYearScene.GiftWrapping, NewYearScene.ReindeerTakeoff])(
+      'keeps the other secret story when the host disables %s',
+      (disabled) => {
+        const pools = resolveCelebrationPools(newYear, {
+          disabledScenes: [disabled],
+        });
+        expect(pools.secretSceneIds).toEqual(
+          newYear.secretTrigger?.sceneIds.filter((id) => id !== disabled),
+        );
+        expect(pools.isSecretEnabled).toBe(true);
+        expect(pools.clickSceneIds).toEqual(newYear.clickSceneIds);
+      },
+    );
+    it('leaves the phrase to ordinary chat when both secret stories are disabled', () => {
+      const pools = resolveCelebrationPools(newYear, {
+        disabledScenes: [
+          NewYearScene.GiftWrapping,
+          NewYearScene.ReindeerTakeoff,
+        ],
+      });
+      expect(pools.isSecretEnabled).toBe(false);
+      expect(pools.clickSceneIds).toEqual(newYear.clickSceneIds);
     });
   });
 });

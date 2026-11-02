@@ -74,7 +74,11 @@ export interface GiftWrappingComposition {
 }
 
 const fixed = (k: unknown): Property => ({ a: 0, k });
-const animated = (samples: Sample[], linear = false): Property => ({
+const animated = (
+  samples: Sample[],
+  linear = false,
+  linearFrom = Infinity,
+): Property => ({
   a: 1,
   k: samples.map(([time, value], index) => ({
     t: time * FPS,
@@ -83,8 +87,8 @@ const animated = (samples: Sample[], linear = false): Property => ({
       ? {}
       : {
           e: samples[index + 1][1],
-          o: { x: linear ? 0 : 0.42, y: 0 },
-          i: { x: linear ? 1 : 0.58, y: 1 },
+          o: { x: linear || time >= linearFrom ? 0 : 0.42, y: 0 },
+          i: { x: linear || time >= linearFrom ? 1 : 0.58, y: 1 },
         }),
   })),
 });
@@ -235,6 +239,38 @@ export const buildGiftWrappingComposition = (
     [15.55, [departure - 25, 0]],
     [16, [departure - 25, 0]],
   ];
+  /* Keep winding poses intact. After release, one impulse carries each hop:
+     X crosses the apex continuously while Y slows up and accelerates down. */
+  const hops = [
+    [10.25, 10.65, 11],
+    [11.35, 11.7, 12],
+    [12.45, 12.9, 13.3],
+    [13.55, 14, 14.4],
+    [14.65, 15.1, 15.55],
+  ];
+  for (const [start, apex, end] of hops) {
+    const from = masterPos.find(([t]) => t === start)![1];
+    const peak = masterPos.find(([t]) => t === apex)![1];
+    const to = masterPos.find(([t]) => t === end)![1];
+    peak[0] = from[0] + ((to[0] - from[0]) * (apex - start)) / (end - start);
+    for (let half = 0; half < 2; half++) {
+      const t0 = half === 0 ? start : apex;
+      const t1 = half === 0 ? apex : end;
+      for (let step = 1; step < 6; step++) {
+        const p = step / 6;
+        const t = t0 + (t1 - t0) * p;
+        const y =
+          half === 0
+            ? peak[1] + (from[1] - peak[1]) * (1 - p) ** 2
+            : peak[1] + (to[1] - peak[1]) * p ** 2;
+        masterPos.push([
+          t,
+          [from[0] + ((to[0] - from[0]) * (t - start)) / (end - start), y],
+        ]);
+      }
+    }
+  }
+  masterPos.sort(([a], [b]) => a - b);
   const helperPos: Sample[] = [
     [0, [helperX + 90, 0]],
     [1.8, [helperX, 0]],
@@ -254,10 +290,10 @@ export const buildGiftWrappingComposition = (
   const helperLean: Sample[] = [
     [0, [0]],
     [4.5, [0]],
-    [5.2, [14]],
-    [5.65, [14]],
-    [6.35, [-21]],
-    [6.65, [-25]],
+    [5.2, [9]],
+    [5.65, [9]],
+    [6.35, [-12]],
+    [6.65, [-14]],
     [7.3, [0]],
     [16, [0]],
   ];
@@ -285,7 +321,11 @@ export const buildGiftWrappingComposition = (
   const actor = (name: ElfCharacter, poses: Sample[]) => {
     const art = cloneArt(name);
     const ks = transform();
-    ks.p = animated(poses.map(([time, [x, y]]) => [time, world(x, y)]));
+    ks.p = animated(
+      poses.map(([time, [x, y]]) => [time, world(x, y)]),
+      false,
+      name === ElfCharacter.Master ? 10.25 : Infinity,
+    );
     ks.s = fixed([
       (name === ElfCharacter.Helper ? -1 : 1) * direction * size * 100,
       size * 100,
@@ -369,8 +409,8 @@ export const buildGiftWrappingComposition = (
     [4.5, [0]],
     [5.1, [-7]],
     [5.6, [0]],
-    [6.2, [18]],
-    [7.05, [-20]],
+    [6.2, [10]],
+    [7.05, [-12]],
     [7.5, [0]],
     [10, [0]],
     [10.25, [-7]],
@@ -435,18 +475,18 @@ export const buildGiftWrappingComposition = (
     'cap',
     'r',
     scalar([
-      [0, -7],
+      [0, -4],
       [1.8, 0],
       [5.8, 0],
-      [6.35, -25],
-      [7, 22],
-      [7.7, -12],
+      [6.35, -8],
+      [7, 7],
+      [7.7, -4],
       [8, 0],
-      [10.65, -15],
-      [11.15, 10],
+      [10.65, -5],
+      [11.15, 4],
       [11.5, 0],
-      [11.7, -12],
-      [12.15, 6],
+      [11.7, -4],
+      [12.15, 3],
       [12.4, 0],
     ]),
   );

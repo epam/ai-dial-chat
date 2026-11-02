@@ -15,6 +15,7 @@ const MESSAGES: Record<NewYearScene, keyof NewYearLabels> = {
   [NewYearScene.PenguinStar]: 'penguinStarToastMessage',
   [NewYearScene.GiftWrapping]: 'giftWrappingToastMessage',
   [NewYearScene.SnowmanDelivery]: 'snowmanDeliveryToastMessage',
+  [NewYearScene.ReindeerTakeoff]: 'reindeerTakeoffToastMessage',
 };
 
 /** The New Year celebration event. */
@@ -34,6 +35,6 @@ export const newYearEvent: CelebrationEvent = {
   secretTrigger: {
     phrases: [NEW_YEAR_SECRET_PHRASE],
     hintPhrase: NEW_YEAR_SECRET_PHRASE,
-    sceneIds: [NewYearScene.GiftWrapping],
+    sceneIds: [NewYearScene.GiftWrapping, NewYearScene.ReindeerTakeoff],
   },
 };
