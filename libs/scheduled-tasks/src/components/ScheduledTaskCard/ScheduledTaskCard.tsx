@@ -38,7 +38,7 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
   /* `Highlight` takes a numeric `maxLines`, so the two-line mobile title
    * branches in JS rather than CSS. */
   const isMobile = useIsMobile();
-  const newBadgeLabel = labels?.newBadgeLabel ?? 'NEW';
+  const newBadgeLabel = item.newBadgeLabel ?? labels?.newBadgeLabel ?? 'NEW';
   const pausedBadgeLabel = labels?.pausedBadgeLabel ?? 'Paused';
   const completedBadgeLabel = labels?.completedBadgeLabel ?? 'Completed';
 

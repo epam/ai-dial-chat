@@ -124,6 +124,17 @@ describe('ScheduledTaskCard', () => {
     expect(screen.getByText('NEW')).toBeTruthy();
   });
 
+  it("renders the item's own badge text over the shared label", () => {
+    render(
+      <ScheduledTaskCard
+        item={buildItem({ isNew: true, newBadgeLabel: '3 NEW' })}
+        labels={{ newBadgeLabel: 'NEW' }}
+      />,
+    );
+
+    expect(screen.getByText('3 NEW')).toBeTruthy();
+  });
+
   it('renders the card with a fixed height', () => {
     render(<ScheduledTaskCard item={buildItem()} />);
 

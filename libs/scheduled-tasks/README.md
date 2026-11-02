@@ -91,6 +91,8 @@ A single scheduled task rendered as a card: title, optional description/prompt p
 
 Supply `labels.completedBadgeLabel` for localized completed-state copy.
 
+The "new" badge reads `labels.newBadgeLabel` (default `'NEW'`); `item.newBadgeLabel` overrides it for one card, e.g. with an unread-run count (`'3 NEW'`).
+
 The description/prompt-preview line defaults to `dial-small-paragraph-text` (14px/24px) and clamps to three lines on desktop cards (two below the desktop breakpoint); override it with `styles.typography.descriptionClassName`. Whitespace in the preview collapses (unlike the detail view's description, which preserves the author's line breaks): the preview is typically the raw `description` field, and preserved blank lines would spend the whole clamp budget before any text.
 
 The Completed badge mirrors the Paused badge's theming contract: `styles.colors.completedBadgeBackground` / `completedBadgeBorder` / `completedBadgeText` (CSS vars `--stc-completed-*`, set on the card root; the badge background defaults to transparent — only the schedule pill keeps a filled background) and `styles.typography.completedBadgeClassName` (defaults to `'dial-tiny-text'`).
@@ -578,6 +580,28 @@ String enum of card visual statuses: `Scheduled = 'scheduled'` (schedule pill), 
 ### ScheduledTaskPresentationStatus
 
 String enum of host-supplied status overrides — the optional `presentationStatus` input on `ScheduledTaskItem`, not a duplicate of `ScheduledTaskStatus`: `Active = 'active'`, `Paused = 'paused'`, `Completed = 'completed'`. `getScheduledTaskStatus` maps it onto `ScheduledTaskStatus` (`Active` → `Scheduled`), and it wins over the derived `isCompleted`/`isActive` fields. Reach for it only when the host's own status source disagrees with what those fields derive.
+
+### runAtToCalendarValue / calendarValueToRunAt / dateValueToCalendarValue / calendarValueToDateValue
+
+Converters between the kit `Calendar`'s value and the form's strings, for a
+host that drives its own `Calendar` the way the create form does.
+`runAtToCalendarValue(runAt)` and `calendarValueToRunAt(value)` go to and from
+a `datetime-local`-style `YYYY-MM-DDTHH:mm` run time;
+`dateValueToCalendarValue(date)` and `calendarValueToDateValue(value)` go to
+and from a date-only `YYYY-MM-DD` value. An empty value maps to `null`, and
+`null` maps back to an empty string.
+
+```ts
+import {
+  calendarValueToRunAt,
+  runAtToCalendarValue,
+} from '@epam/ai-dial-scheduled-tasks';
+
+<Calendar
+  value={runAtToCalendarValue(values.runAt)}
+  onChange={(value) => setRunAt(calendarValueToRunAt(value))}
+/>;
+```
 
 ## Constants
 

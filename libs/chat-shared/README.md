@@ -707,7 +707,8 @@ after `dismissDelayMs` (default `5000`); a toast with an `action` or a
 `requestId` stays until closed. A `requestId` renders as a copyable "Request ID"
 row under the message, with the copy result announced through a `LiveRegion`.
 Long messages scroll inside the toast, and the stack scrolls to each new toast.
-Strings come from `NotificationStackLabels` (English defaults); `className`
+Strings, including the close button's accessible name (`close`), come from
+`NotificationStackLabels` (English defaults); `className`
 replaces the default bottom-edge / bottom-end-corner placement; the request-id
 row takes `requestIdClassName` (default `'dial-tiny-text'`). The host owns the
 list and passes `items` in arrival order.

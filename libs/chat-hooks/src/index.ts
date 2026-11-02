@@ -29,6 +29,7 @@ export * from './catalog/catalog-preferences';
 export * from './catalog/usage-limit-rows';
 export * from './catalog/catalog-primary-action';
 export * from './catalog/useCatalogEditNavigation/useCatalogEditNavigation';
+export * from './catalog/useCatalogItemDelete/useCatalogItemDelete';
 export * from './catalog/useCatalogItemDetails';
 export * from './catalog/useCatalogToolsetCredentials/useCatalogToolsetCredentials';
 export * from './catalog/application-credentials';

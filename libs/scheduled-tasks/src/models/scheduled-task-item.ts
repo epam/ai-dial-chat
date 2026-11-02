@@ -12,6 +12,8 @@ export interface ScheduledTaskItem {
   locationSegments?: string[];
   /** When set, the card shows a "new" badge for this task. */
   isNew?: boolean;
+  /** Text of this card's "new" badge, e.g. an unread count `'3 NEW'`, overriding `labels.newBadgeLabel`. */
+  newBadgeLabel?: string;
   /** When explicitly `false`, the card shows a "Paused" badge in place of the schedule pill. `true` or `undefined` renders the schedule pill as usual. */
   isActive?: boolean;
   /** Optional explicit display status; takes precedence over the derived `isCompleted`/`isActive` statuses. */

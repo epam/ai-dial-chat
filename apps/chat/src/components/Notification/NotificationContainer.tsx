@@ -1,7 +1,10 @@
 import { NotificationStack } from '@epam/ai-dial-chat-shared';
 import { memo, useMemo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
-import { NotificationI18nKeys } from '../../constants/translation-keys';
+import {
+  ButtonsI18nKeys,
+  NotificationI18nKeys,
+} from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
 
 /*
@@ -18,6 +21,7 @@ const NotificationContainer: FC = () => {
       copyRequestIdAriaLabel: t(NotificationI18nKeys.RequestIdCopyAriaLabel),
       requestIdCopied: t(NotificationI18nKeys.RequestIdCopiedStatus),
       requestIdCopyFailed: t(NotificationI18nKeys.RequestIdCopyFailedStatus),
+      close: t(ButtonsI18nKeys.Close),
     }),
     [t],
   );

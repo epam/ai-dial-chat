@@ -75,11 +75,13 @@ describe('NotificationStack', () => {
         labels={{
           requestId: 'ID запроса',
           copyRequestIdAriaLabel: 'Копировать',
+          close: 'Закрыть',
         }}
       />,
     );
 
     expect(screen.getByText('ID запроса:')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Копировать' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Закрыть' })).toBeTruthy();
   });
 });

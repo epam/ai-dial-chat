@@ -91,6 +91,12 @@ export interface UseToolsetLoginParams {
   ) => Promise<unknown>;
   /** Re-reads a toolset so a reported cancellation can be checked against the backend. */
   getToolset: (toolsetId: string) => Promise<DialToolsetDto>;
+  /**
+   * Whether an OAuth login reads the toolset's current OAuth settings with
+   * `getToolset` after opening the popup, instead of using
+   * `ToolsetLoginParams.oauthSettings`. Defaults to `false`.
+   */
+  shouldFetchOAuthSettings?: boolean;
 }
 
 /** Result returned by {@link useToolsetLogin}. */
@@ -112,6 +118,7 @@ export const useToolsetLogin = ({
   loginToolset,
   logoutToolset,
   getToolset,
+  shouldFetchOAuthSettings = false,
 }: UseToolsetLoginParams): UseToolsetLoginResult => {
   const logoutLevel = useCallback(
     async (
@@ -160,36 +167,58 @@ export const useToolsetLogin = ({
        * `navigateToolsetOAuthPopup`) preserves that guarantee even though a
        * network call now has to happen before the provider URL is known.
        */
-      const initiation = forceStale
-        ? await (async () => {
-            const popup = openToolsetOAuthPopup();
-            if (!popup) {
-              return {
-                type: ToolsetOAuthInitiationResultType.Blocked,
-              } as const;
-            }
-            await logoutLevel(
-              toolsetId,
-              credentialsLevel,
-              ToolsetAuthTypes.OAuth,
-            );
-            return navigateToolsetOAuthPopup(
-              popup,
-              authSettings,
-              toolsetId,
-              callbackPath,
-              credentialsLevel,
-              OAuthResourceKind.Toolset,
-              offlineUsageConsent,
-            );
-          })()
-        : initiateOAuthLogin(
-            authSettings,
+      let initiation: ReturnType<typeof initiateOAuthLogin>;
+      if (forceStale || shouldFetchOAuthSettings) {
+        const popup = openToolsetOAuthPopup();
+        if (!popup) return { type: ToolsetLoginOutcomeType.PopupBlocked };
+        if (forceStale) {
+          await logoutLevel(
             toolsetId,
-            callbackPath,
             credentialsLevel,
-            offlineUsageConsent,
+            ToolsetAuthTypes.OAuth,
           );
+        }
+        let settings = authSettings;
+        if (shouldFetchOAuthSettings) {
+          /* The toolset's OAuth configuration may have changed since it was listed. */
+          try {
+            const { authSettings: fresh } = await getToolset(toolsetId);
+            if (popup.closed)
+              return { type: ToolsetLoginOutcomeType.Cancelled };
+            if (fresh?.authenticationType !== ToolsetAuthTypes.OAuth) {
+              popup.close();
+              return { type: ToolsetLoginOutcomeType.Failure };
+            }
+            settings = {
+              clientId: fresh.clientId,
+              authorizationEndpoint: fresh.authorizationEndpoint,
+              scopes: fresh.scopesSupported,
+              codeChallenge: fresh.codeChallenge,
+              codeChallengeMethod: fresh.codeChallengeMethod,
+            };
+          } catch {
+            popup.close();
+            return { type: ToolsetLoginOutcomeType.Failure };
+          }
+        }
+        initiation = navigateToolsetOAuthPopup(
+          popup,
+          settings,
+          toolsetId,
+          callbackPath,
+          credentialsLevel,
+          OAuthResourceKind.Toolset,
+          offlineUsageConsent,
+        );
+      } else {
+        initiation = initiateOAuthLogin(
+          authSettings,
+          toolsetId,
+          callbackPath,
+          credentialsLevel,
+          offlineUsageConsent,
+        );
+      }
 
       if (initiation.type === ToolsetOAuthInitiationResultType.Blocked) {
         return { type: ToolsetLoginOutcomeType.PopupBlocked };
@@ -243,7 +272,7 @@ export const useToolsetLogin = ({
       }
       return { type: ToolsetLoginOutcomeType.Cancelled };
     },
-    [callbackPath, getToolset, logoutLevel],
+    [callbackPath, getToolset, logoutLevel, shouldFetchOAuthSettings],
   );
 
   const loginWithApiKey = useCallback(

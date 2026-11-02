@@ -3323,12 +3323,13 @@ For OAuth, a reported cancellation is re-checked against the backend through `ge
 
 **Parameters**:
 
-| Name            | Type                                                                  | Description                                           |
-| --------------- | --------------------------------------------------------------------- | ----------------------------------------------------- |
-| `callbackPath`  | `string`                                                              | The host's OAuth callback route.                      |
-| `loginToolset`  | `(toolsetId: string, body: ToolsetLoginBodyDto) => Promise<unknown>`  | Submits credentials at one level.                     |
-| `logoutToolset` | `(toolsetId: string, body: ToolsetLogoutBodyDto) => Promise<unknown>` | Clears credentials at one level.                      |
-| `getToolset`    | `(toolsetId: string) => Promise<DialToolsetDto>`                      | Re-reads a toolset to verify a reported cancellation. |
+| Name                       | Type                                                                  | Description                                                                                                                                                                                                                                                             |
+| -------------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `callbackPath`             | `string`                                                              | The host's OAuth callback route.                                                                                                                                                                                                                                        |
+| `loginToolset`             | `(toolsetId: string, body: ToolsetLoginBodyDto) => Promise<unknown>`  | Submits credentials at one level.                                                                                                                                                                                                                                       |
+| `logoutToolset`            | `(toolsetId: string, body: ToolsetLogoutBodyDto) => Promise<unknown>` | Clears credentials at one level.                                                                                                                                                                                                                                        |
+| `getToolset`               | `(toolsetId: string) => Promise<DialToolsetDto>`                      | Re-reads a toolset to verify a reported cancellation.                                                                                                                                                                                                                   |
+| `shouldFetchOAuthSettings` | `boolean`                                                             | Optional, default `false`. An OAuth login opens the popup first, then reads the toolset's current OAuth settings with `getToolset` instead of using `params.oauthSettings`; a popup closed meanwhile resolves cancelled, a toolset no longer on OAuth resolves failure. |
 
 **Returns**: `{ login: (params: ToolsetLoginParams) => Promise<ToolsetLoginOutcome> }` — `login` is `useCallback`-stable while the injected callbacks are unchanged.
 
@@ -4334,6 +4335,56 @@ const {
   canCreateSkill,
   canCreateSchema,
 });
+```
+
+### useCatalogItemDelete
+
+The delete handler `useCatalogEditNavigation` returns, for a host that builds its
+own Edit and Create flows. `useCatalogItemDelete(params)` returns
+`(item) => Promise<void>`: it deletes a prompt, toolset or skill through its own
+operation (a skill by the bucket and path parsed from its resource URL) and any
+other item as an application, refetches that listing and calls
+`onDeleteSuccess`. On failure it calls `onNotify` with `deleteErrorLabel` and
+the request's trace id, then rethrows so a confirmation stays open.
+`UseCatalogItemDeleteParams` and `CatalogItemDeleteNotification` are exported.
+Available from the root and `./catalog`.
+
+```ts
+import { useCatalogItemDelete } from '@epam/ai-dial-chat-hooks/catalog';
+
+const handleDelete = useCatalogItemDelete({
+  deletePrompt,
+  deleteToolset,
+  deleteSkill,
+  deleteApplication,
+  refetchPrompts,
+  refetchToolsets,
+  refetchSkills,
+  refetchDeployments,
+  onDeleteSuccess: notifyDeleted,
+  deleteErrorLabel: t('catalog.details.deleteError'),
+  onNotify: showErrorNotification,
+});
+```
+
+### rememberPublishFolderKey / hasPublishFolderWriteAccess
+
+The publish-destination rules `usePublishFolders` applies, for a host that
+builds its own folder tree. `rememberPublishFolderKey(storedKeys, folderKey)`
+returns the remembered destination keys with `folderKey` moved to the front and
+the list capped at 50, or `undefined` when nothing changes (an empty key, or one
+already first); a stored value that is not an array of strings is ignored.
+`hasPublishFolderWriteAccess(folderPath)` is `false` for a folder under a
+`Production` segment. Available from the root and `./catalog`.
+
+```ts
+import {
+  hasPublishFolderWriteAccess,
+  rememberPublishFolderKey,
+} from '@epam/ai-dial-chat-hooks/catalog';
+
+const next = rememberPublishFolderKey(storedKeys, toFolderPathKey(folderPath));
+if (next) setStoredKeys(next);
 ```
 
 ### useCatalogToolsetCredentials
