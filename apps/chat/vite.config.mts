@@ -8,6 +8,7 @@ import {
   CSP_NONCE_PLACEHOLDER,
   trustedStyleNoncePlugin,
 } from '../../tools/vite/csp-nonce.mjs';
+import { nxReadySignal } from '@nx/vite/plugins/nx-ready-signal.plugin';
 
 export default defineConfig(() => ({
   root: import.meta.dirname,
@@ -27,7 +28,13 @@ export default defineConfig(() => ({
     port: 4207,
     host: 'localhost',
   },
-  plugins: [trustedStyleNoncePlugin(), tailwindcss(), react(), svgr()],
+  plugins: [
+    trustedStyleNoncePlugin(),
+    tailwindcss(),
+    react(),
+    svgr(),
+    nxReadySignal(),
+  ],
   resolve: {
     alias: {
       /* remark-math resolves math delimiters through micromark-extension-math, which only
