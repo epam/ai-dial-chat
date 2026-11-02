@@ -24,8 +24,10 @@ export interface ProjectViewModel {
 export interface ProjectViewLabels {
   /** Accessible name of the back button. */
   backLabel: string;
-  /** Accessible name of the Pin toggle; its state is announced through `aria-pressed`. */
+  /** Pin action label, shown while the project is not pinned. */
   pinLabel: string;
+  /** Unpin action label, shown while the project is pinned. */
+  unpinLabel: string;
   /** Publish action label. */
   publishLabel: string;
   /** Edit action label. */

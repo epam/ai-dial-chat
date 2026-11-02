@@ -146,13 +146,12 @@ The `ProjectView` header SHALL render, in inline order:
 
 - a back kit `GhostIconButton` named `labels.backLabel`, with `IconArrowNarrowLeft` (`aria-hidden`, `stroke={DIAL_KIT_ICON_STROKE}`, `rtl:scale-x-[-1]`), calling `onBack`;
 - the name as the page's `<h1>`, truncated to one line with `EllipsisTooltip`, so the full name is in the tooltip;
-- a Pin toggle kit `GhostIconButton`:
-  - icon `IconPin` when unpinned, `IconPinFilled` when pinned;
-  - a stable accessible name `labels.pinLabel`, with the state carried by `aria-pressed={isPinned}` alone, so the name never contradicts the pressed state;
+- a Pin kit `GhostButton` with an icon and a text label:
+  - `IconPin` and `labels.pinLabel` when unpinned, `IconPinOff` (a crossed-out `IconPin` drawn in `libs/projects/src/components/IconPinOff/IconPinOff.ts`, since Tabler has none) and `labels.unpinLabel` when pinned, so the label names the action and shows the state; it has no `aria-pressed`, because a pressed state would contradict a label that already changes;
   - while `isPinPending` it is `aria-disabled` and ignores activation but stays focusable, so keyboard focus is not dropped to `<body>`;
   - it calls `onTogglePin`;
-- a Publish `Button` (`labels.publishLabel`) and an Edit `Button` (`labels.editLabel`), when their callbacks are supplied;
-- a ⋮ kit `Dropdown` triggered by a `GhostIconButton` named `labels.moreActionsLabel`, with items Share (when `onShare`), Download and Delete (when `onDelete`). The dropdown is keyboard-operable: Enter, Space and the arrow keys come from the kit.
+- a Publish `NeutralButton` (`IconWorldShare`, `labels.publishLabel`) and an Edit `NeutralButton` (`IconPencilMinus`, `labels.editLabel`), when their callbacks are supplied;
+- a ⋮ kit `Dropdown` triggered by a `GhostIconButton` named `labels.moreActionsLabel`, with items Share (when `onShare`, `IconShare`), Download (`IconDownload`) and Delete (when `onDelete`, `IconTrashX`, danger). Every item carries its icon, and Publish and Edit keep theirs in the mobile menu. The dropdown is keyboard-operable: Enter, Space and the arrow keys come from the kit.
 
 On `mobile`, Publish and Edit move into the ⋮ menu (before Share). The lib renders both placements and hides one through the `mobile:` / `desktop:` variants, so it never needs `useIsMobile`.
 
@@ -170,7 +169,7 @@ Every handler is memoised with `useCallback`.
 #### Scenario: Pin toggles and announces state
 
 - **WHEN** the user activates Pin on an unpinned project
-- **THEN** `setPinnedProject` is called with `true`, and the button reports `aria-pressed="true"` and is still named "Pin"
+- **THEN** `setPinnedProject` is called with `true`, and the button is then labelled "Unpin"
 
 #### Scenario: Long name is truncated with a tooltip
 
@@ -417,12 +416,12 @@ The project view page and `ProjectView` SHALL meet the following contract.
 
 - Logical properties only (`ms-*`, `pe-*`, `start-*`, `border-s-*`, `text-start`).
 - The back arrow is mirrored with `rtl:scale-x-[-1]`.
-- The pin, ⋮, share, download and delete icons are not mirrored.
+- The pin, publish, edit, ⋮, share, download and delete icons are not mirrored.
 
 **Accessibility:**
 
 - Every icon-only button has an accessible name.
-- Pin uses `aria-pressed`.
+- Pin names its action ("Pin" / "Unpin") instead of using `aria-pressed`.
 - The ⋮ menu is keyboard-operable.
 - The delete confirmation is a labeled dialog (`DeleteConfirmationDialog`, whose title names it).
 - Context search results are announced through the `aria-live` status.

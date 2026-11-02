@@ -10,8 +10,6 @@ import {
   RequestStatus,
 } from '@epam/ai-dial-chat-shared';
 import {
-  Button,
-  ButtonVariant,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   Dropdown,
@@ -28,8 +26,13 @@ import {
 import {
   IconArrowNarrowLeft,
   IconDotsVertical,
+  IconDownload,
+  IconPencilMinus,
   IconPin,
-  IconPinFilled,
+  IconShare,
+  IconTrashX,
+  IconWorldShare,
+  type TablerIcon,
 } from '@tabler/icons-react';
 import { type FC, memo, useId, useMemo } from 'react';
 import type {
@@ -37,6 +40,7 @@ import type {
   ProjectViewProps,
 } from '../../models/project-view-props';
 import { filterContextFileItems } from '../../utils/context-files';
+import { IconPinOff } from '../IconPinOff/IconPinOff';
 import styles from './ProjectView.module.scss';
 
 const toDisplayAttachment = (
@@ -124,30 +128,47 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
   /* The same actions in two placements: on desktop Publish and Edit are
    * header buttons, on mobile they lead the ⋮ menu. CSS hides one copy, so
    * the hidden one is out of the accessibility tree too. */
+  const renderMenuIcon = (Icon: TablerIcon) => (
+    <Icon size={DIAL_ICON_SIZE.SM} aria-hidden stroke={DIAL_KIT_ICON_STROKE} />
+  );
+
   const buildMenuItems = (includePrimary: boolean): DropdownItem[] => {
     const items: DropdownItem[] = [];
     if (includePrimary && onPublish) {
       items.push({
         key: 'publish',
         label: labels.publishLabel,
+        icon: renderMenuIcon(IconWorldShare),
         onClick: onPublish,
       });
     }
     if (includePrimary && onEdit) {
-      items.push({ key: 'edit', label: labels.editLabel, onClick: onEdit });
+      items.push({
+        key: 'edit',
+        label: labels.editLabel,
+        icon: renderMenuIcon(IconPencilMinus),
+        onClick: onEdit,
+      });
     }
     if (onShare) {
-      items.push({ key: 'share', label: labels.shareLabel, onClick: onShare });
+      items.push({
+        key: 'share',
+        label: labels.shareLabel,
+        icon: renderMenuIcon(IconShare),
+        onClick: onShare,
+      });
     }
     items.push({
       key: 'download',
       label: labels.downloadLabel,
+      icon: renderMenuIcon(IconDownload),
       onClick: onDownload,
     });
     if (onDelete) {
       items.push({
         key: 'delete',
         label: labels.deleteLabel,
+        icon: renderMenuIcon(IconTrashX),
         danger: true,
         onClick: onDelete,
       });
@@ -301,10 +322,15 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
         >
           <EllipsisTooltip text={project.name} />
         </h1>
-        <GhostIconButton
-          icon={
+        <GhostButton
+          label={isPinned ? labels.unpinLabel : labels.pinLabel}
+          iconBefore={
             isPinned ? (
-              <IconPinFilled size={DIAL_ICON_SIZE.MD} aria-hidden />
+              <IconPinOff
+                size={DIAL_ICON_SIZE.MD}
+                aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
             ) : (
               <IconPin
                 size={DIAL_ICON_SIZE.MD}
@@ -313,22 +339,34 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
               />
             )
           }
-          aria-label={labels.pinLabel}
-          aria-pressed={isPinned}
           aria-disabled={isPinPending || undefined}
           onClick={handleTogglePin}
+          className="shrink-0"
         />
         {onPublish && (
           <NeutralButton
             label={labels.publishLabel}
+            iconBefore={
+              <IconWorldShare
+                size={DIAL_ICON_SIZE.MD}
+                aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
+            }
             onClick={onPublish}
             className="hidden shrink-0 desktop:inline-flex"
           />
         )}
         {onEdit && (
-          <Button
+          <NeutralButton
             label={labels.editLabel}
-            variant={ButtonVariant.Primary}
+            iconBefore={
+              <IconPencilMinus
+                size={DIAL_ICON_SIZE.MD}
+                aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
+            }
             onClick={onEdit}
             className="hidden shrink-0 desktop:inline-flex"
           />
