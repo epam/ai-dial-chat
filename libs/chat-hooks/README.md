@@ -190,7 +190,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.59
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.62
 - `@epam/ai-dial-usage-dashboard` \*
 - `@modelcontextprotocol/sdk` ^1.32.1
 - `@epam/pdf-highlighter-kit` ^0.0.19
@@ -4917,7 +4917,7 @@ if (content != null) openCanvas(content, fileName);
 
 ### resolveAnnotationCanvasContent
 
-`resolveAnnotationCanvasContent(annotation, groups, annotations, resolvers)` tries `annotationToPdfCanvasContent` and then `annotationToOoxmlCanvasContent`, and returns `{ content, fileName }` (`AnnotationCanvasContent`) — `fileName` is the source attachment's `title`, or the decoded last segment of its URL — or `null` when the citation opens in neither viewer, so the host can fall back to opening the plain attachment.
+`resolveAnnotationCanvasContent(annotation, groups, annotations, resolvers)` tries `annotationToPdfCanvasContent` and then `annotationToOoxmlCanvasContent`, and returns `{ content, fileName }` (`AnnotationCanvasContent`) — `fileName` is the source attachment's `title`, or, when that is missing or empty, the decoded last segment of its URL — or `null` when the citation opens in neither viewer, so the host can fall back to opening the plain attachment.
 
 ```ts
 import { resolveAnnotationCanvasContent } from '@epam/ai-dial-chat-hooks';

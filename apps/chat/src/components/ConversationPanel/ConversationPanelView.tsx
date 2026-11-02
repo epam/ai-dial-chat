@@ -1471,7 +1471,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
        * overlays — popup 52, dropdown 53, tooltip 55 — so a row's error tooltip
        * and the close confirmation open over the queue, not under it.
        */}
-      <div className="inset-e-4 fixed bottom-4 z-51 flex flex-col-reverse gap-2">
+      <div className="fixed inset-e-4 bottom-4 z-51 flex flex-col-reverse gap-2">
         <TransferQueue
           title={importQueueTitle}
           items={importQueueItems}

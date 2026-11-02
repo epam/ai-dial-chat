@@ -878,6 +878,7 @@ export enum AuthI18nKeys {
   Loading = 'auth.loading',
   LoginTitle = 'auth.loginTitle',
   LoginDescription = 'auth.loginDescription',
+  LoginProvidersLabel = 'auth.loginProvidersLabel',
   ProvidersError = 'auth.providersError',
   OverlayLoginTitle = 'auth.overlayLoginTitle',
   OverlayLoginDescription = 'auth.overlayLoginDescription',

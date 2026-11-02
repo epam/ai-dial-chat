@@ -716,7 +716,7 @@ export const resolveAnnotationCanvasContent = (
   const rawSegment = attachment?.url?.split('/').pop() ?? '';
   return {
     content,
-    fileName: attachment?.title ?? decodeURIComponent(rawSegment),
+    fileName: attachment?.title || decodeURIComponent(rawSegment),
   };
 };
 

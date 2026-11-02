@@ -1,4 +1,5 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, render, renderHook } from '@testing-library/react';
+import { createElement, useLayoutEffect, type FC } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { useVisibleConversationIdsReporter } from '../useVisibleConversationIdsReporter';
 
@@ -57,6 +58,27 @@ describe('useVisibleConversationIdsReporter', () => {
     expect(setVisibleConversationIds).toHaveBeenLastCalledWith(
       expect.any(String),
       null,
+    );
+  });
+
+  it('resolves a report the panel fires during its first render', () => {
+    const setVisibleConversationIds = vi.fn();
+    const Panel: FC = () => {
+      const report = useVisibleConversationIdsReporter({
+        items,
+        isVisible: true,
+        toPanelConversationId,
+        setVisibleConversationIds,
+      });
+      useLayoutEffect(() => report(['panel:a']), [report]);
+      return null;
+    };
+
+    render(createElement(Panel));
+
+    expect(setVisibleConversationIds).toHaveBeenLastCalledWith(
+      expect.any(String),
+      ['a'],
     );
   });
 });

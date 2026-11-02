@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useRef } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef } from 'react';
 
 /** Parameters of `useVisibleConversationIdsReporter`. */
 export interface UseVisibleConversationIdsReporterParams {
@@ -25,12 +25,12 @@ export const useVisibleConversationIdsReporter = ({
   setVisibleConversationIds,
 }: UseVisibleConversationIdsReporterParams): ((panelIds: string[]) => void) => {
   const visibilityKey = useId();
-  const panelIdToConversationIdRef = useRef(new Map<string, string>());
-  useEffect(() => {
-    panelIdToConversationIdRef.current = new Map(
-      items.map((item) => [toPanelConversationId(item.id), item.id]),
-    );
-  }, [items, toPanelConversationId]);
+  /* Built during render, so a report the panel fires on mount already resolves. */
+  const panelIdToConversationId = useMemo(
+    () =>
+      new Map(items.map((item) => [toPanelConversationId(item.id), item.id])),
+    [items, toPanelConversationId],
+  );
   const lastVisibleIdsRef = useRef<string[]>([]);
   const isVisibleRef = useRef(isVisible);
   const registerVisibleIds = useCallback(() => {
@@ -42,12 +42,12 @@ export const useVisibleConversationIdsReporter = ({
   const handleVisibleConversationIdsChange = useCallback(
     (panelIds: string[]) => {
       lastVisibleIdsRef.current = panelIds.flatMap((panelId) => {
-        const id = panelIdToConversationIdRef.current.get(panelId);
+        const id = panelIdToConversationId.get(panelId);
         return id ? [id] : [];
       });
       registerVisibleIds();
     },
-    [registerVisibleIds],
+    [panelIdToConversationId, registerVisibleIds],
   );
   useEffect(() => {
     isVisibleRef.current = isVisible;

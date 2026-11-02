@@ -2235,4 +2235,17 @@ describe('resolveAnnotationCanvasContent', () => {
       resolveAnnotationCanvasContent(annotation, [], [annotation], resolvers),
     ).toBeNull();
   });
+
+  it('falls back to the URL segment when the title is empty', () => {
+    const annotation = citation({
+      type: 'application/pdf',
+      url: 'files/bucket/report.pdf',
+      title: '',
+    });
+
+    expect(
+      resolveAnnotationCanvasContent(annotation, [], [annotation], resolvers)
+        ?.fileName,
+    ).toBe('report.pdf');
+  });
 });

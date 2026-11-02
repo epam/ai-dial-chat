@@ -1,5 +1,5 @@
 ﻿import type { ConversationListItemDto } from '@epam/ai-dial-chat-api-client';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 /** Parameters for `useActiveConversationSync`. */
 export interface UseActiveConversationSyncParams {
@@ -74,10 +74,19 @@ export const useActiveConversationSync = ({
     activeItem != null && (shouldMarkViewed?.(activeItem) ?? true);
 
   /* Persist once per matching active identity, including late-loaded metadata.
-     A rollback changes the list, but must not cause an automatic retry loop. */
+     A rollback changes the list, but must not cause an automatic retry loop —
+     nor may `shouldMarkViewed` flipping back and forth for the same identity. */
+  const markedIdentityRef = useRef<string | undefined>(undefined);
   useEffect(() => {
-    if (panelActiveConversationId && activeItemId && isMarkable)
-      void markConversationViewed(activeItemId);
+    if (!panelActiveConversationId || !activeItemId) {
+      markedIdentityRef.current = undefined;
+      return;
+    }
+    if (!isMarkable) return;
+    const identity = `${panelActiveConversationId}\u0000${activeItemId}`;
+    if (markedIdentityRef.current === identity) return;
+    markedIdentityRef.current = identity;
+    void markConversationViewed(activeItemId);
   }, [
     panelActiveConversationId,
     activeItemId,

@@ -144,4 +144,29 @@ describe('useActiveConversationSync', () => {
     await waitFor(() => expect(markConversationViewed).toHaveBeenCalledOnce());
     expect(markConversationViewed).toHaveBeenCalledWith('run');
   });
+
+  it('marks an identity once even when shouldMarkViewed flips back and forth', () => {
+    const markConversationViewed = vi.fn(async () => undefined);
+    const item = makeItem('run');
+    const { rerender } = renderHook(
+      ({ isMarkable }) =>
+        useActiveConversationSync({
+          activeConversationId: 'run',
+          items: [item],
+          refreshConversations: () => Promise.resolve(),
+          markConversationViewed,
+          conversationIdsMatch: (a, b) => a === b,
+          toPanelConversationId: (id) => id,
+          shouldMarkViewed: () => isMarkable,
+        }),
+      { initialProps: { isMarkable: false } },
+    );
+
+    expect(markConversationViewed).not.toHaveBeenCalled();
+    rerender({ isMarkable: true });
+    rerender({ isMarkable: false });
+    rerender({ isMarkable: true });
+
+    expect(markConversationViewed).toHaveBeenCalledExactlyOnceWith('run');
+  });
 });
