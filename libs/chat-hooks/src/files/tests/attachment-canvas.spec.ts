@@ -20,6 +20,7 @@ import type { AttachmentCanvasUrlResolvers } from '../attachment-canvas';
 import {
   annotationToOoxmlCanvasContent,
   annotationToPdfCanvasContent,
+  resolveAnnotationCanvasContent,
   clearAttachmentCache,
   hasAttachmentTextSource,
   referenceAttachmentToPdfCanvasContent,
@@ -2173,5 +2174,78 @@ describe('resolveVisualizerCanvasContent', () => {
         layout: expect.objectContaining({ themeId: 'light' }),
       }),
     );
+  });
+});
+
+describe('resolveAnnotationCanvasContent', () => {
+  const citation = (attachment: {
+    type: string;
+    url: string;
+    title?: string;
+  }): Annotation => ({
+    target: { selector: { type: 'html_tag', tag: 'cit', id: 'c1' } },
+    body: {
+      source: { type: 'attachment', attachment },
+      selector: { type: 'pdf_bbox', page: 2, x1: 0, y1: 0, x2: 0, y2: 0 },
+    },
+  });
+
+  it('returns PDF content named after the decoded last URL segment when the source has no title', () => {
+    const annotation = citation({
+      type: 'application/pdf',
+      url: 'files/bucket/annual%20report.pdf',
+    });
+
+    const result = resolveAnnotationCanvasContent(
+      annotation,
+      [],
+      [annotation],
+      resolvers,
+    );
+
+    expect(result?.content.type).toBe(AttachmentContentType.Pdf);
+    expect(result?.fileName).toBe('annual report.pdf');
+  });
+
+  it('returns OOXML content named after the source title for an Office document', () => {
+    const annotation = citation({
+      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      url: 'files/bucket/report.docx',
+      title: 'Quarterly report.docx',
+    });
+
+    const result = resolveAnnotationCanvasContent(
+      annotation,
+      [],
+      [annotation],
+      resolvers,
+    );
+
+    expect(result?.content.type).toBe(AttachmentContentType.Ooxml);
+    expect(result?.fileName).toBe('Quarterly report.docx');
+  });
+
+  it('returns null for a source neither viewer opens', () => {
+    const annotation = citation({
+      type: 'text/html',
+      url: 'https://example.com/a',
+    });
+
+    expect(
+      resolveAnnotationCanvasContent(annotation, [], [annotation], resolvers),
+    ).toBeNull();
+  });
+
+  it('falls back to the URL segment when the title is empty', () => {
+    const annotation = citation({
+      type: 'application/pdf',
+      url: 'files/bucket/report.pdf',
+      title: '',
+    });
+
+    expect(
+      resolveAnnotationCanvasContent(annotation, [], [annotation], resolvers)
+        ?.fileName,
+    ).toBe('report.pdf');
   });
 });

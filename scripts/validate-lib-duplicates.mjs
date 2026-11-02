@@ -10,10 +10,15 @@
  *
  *   ERROR (exit 1)
  *     - An app enum with the same value set as a lib enum (two or more members).
+ *     - A comment in an app source file saying it mirrors `libs/…` or is kept
+ *       in sync with it: the lib should export the value instead.
  *     - An allowlist entry without a `reason`.
  *
  *   WARNING (never fails)
  *     - An allowlist entry that no longer matches anything.
+ *     - An app component of PRESENTATIONAL_MIN_LINES or more non-empty lines
+ *       that imports no app context, hook, route, `server-api`, i18n or sibling
+ *       app component: a candidate for a feature lib or chat-shared.
  *
  * Not scanned: tests, build output, `apps/chat-api` (the backend legitimately
  * mirrors its own DTO enums) and `libs/chat-api-client` (generated from it).
@@ -59,6 +64,15 @@ const GENERIC_VALUES = new Set([
   'unavailable',
 ]);
 const SOURCE_FILE = /\.tsx?$/;
+/* A comment line claiming the code copies a lib. */
+const MIRROR_COMMENT =
+  /(?:\/\/|\/?\*).*(?:\bmirrors?\b|\bke(?:pt|ep) in sync\b).*\blibs\//i;
+/* An import tying a component to the app: i18n, routing, contexts, app hooks, server-api, routes, sibling components. */
+const APP_COUPLING =
+  /react-i18next|react-router|from '[./]+\/(?:context|server-api|hooks)\/|translation-keys|types\/routes|from '\.\.\/[A-Z]/;
+/* Thin adapters over a lib component stay below this size and are not reported. */
+const PRESENTATIONAL_MIN_LINES = 100;
+const COMPONENTS_DIR = join('apps', 'chat', 'src', 'components');
 const TEST_FILE = /\.(spec|test)\.tsx?$/;
 const ENUM = /export\s+enum\s+(\w+)\s*\{([^}]*)\}/g;
 const STRING_MEMBER = /^\s*\w+\s*=\s*(['"])(.*?)\1\s*$/;
@@ -113,6 +127,42 @@ const collect = (kind) => {
     .flatMap(readEnums);
 };
 
+const appSourceFiles = () => {
+  const base = join(ROOT, 'apps');
+  if (!existsSync(base)) return [];
+  return readdirSync(base)
+    .filter((project) => !SKIPPED_PROJECTS.has(`apps/${project}`))
+    .map((project) => join(base, project, 'src'))
+    .filter(existsSync)
+    .flatMap(walk);
+};
+
+/* Returns `file:line` for every comment that says the code mirrors a lib. */
+const findMirrorComments = () =>
+  appSourceFiles().flatMap((file) =>
+    readFileSync(file, 'utf8')
+      .split('\n')
+      .flatMap((line, index) =>
+        MIRROR_COMMENT.test(line)
+          ? [`${toPosix(relative(ROOT, file))}:${index + 1}`]
+          : [],
+      ),
+  );
+
+/* Returns app components that import nothing from the app and are not thin adapters. */
+const findPresentationalComponents = () => {
+  const base = join(ROOT, COMPONENTS_DIR);
+  if (!existsSync(base)) return [];
+  return walk(base)
+    .filter((file) => file.endsWith('.tsx'))
+    .filter((file) => {
+      const text = readFileSync(file, 'utf8');
+      const lines = text.split('\n').filter((line) => line.trim()).length;
+      return lines >= PRESENTATIONAL_MIN_LINES && !APP_COUPLING.test(text);
+    })
+    .map((file) => toPosix(relative(ROOT, file)));
+};
+
 const readAllowlist = () => {
   if (!existsSync(ALLOWLIST)) return [];
   return JSON.parse(readFileSync(ALLOWLIST, 'utf8')).entries ?? [];
@@ -149,6 +199,18 @@ const main = () => {
     );
   }
 
+  for (const location of findMirrorComments()) {
+    errors.push(
+      `${location} says it mirrors a lib — export the value from the lib and import it`,
+    );
+  }
+
+  for (const file of findPresentationalComponents()) {
+    console.warn(
+      `warning: ${file} imports nothing from the app — write it in a feature lib or chat-shared`,
+    );
+  }
+
   for (const entry of allowlist) {
     if (!usedAllowEntries.has(entry)) {
       console.warn(
@@ -164,7 +226,9 @@ const main = () => {
     );
     process.exit(1);
   }
-  console.log('lib duplicates: no app enum re-declares a lib enum.');
+  console.log(
+    'lib duplicates: no app enum re-declares a lib enum and no app code mirrors a lib.',
+  );
 };
 
 main();

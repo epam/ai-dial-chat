@@ -6,6 +6,7 @@ import type {
 import {
   getConversationPath,
   isConversationNotFoundError,
+  isTotalDeletionFailure,
   safeDecodeURIComponent,
 } from '@epam/ai-dial-chat-hooks';
 import { generateUUID } from '@epam/ai-dial-chat-shared';
@@ -738,11 +739,7 @@ export const ConversationsProvider = ({
         survivingDrafts.forEach(({ id, draft }) => draftStore.write(id, draft));
       }
 
-      if (
-        result.deleted > 0 ||
-        result.alreadyAbsent > 0 ||
-        result.failed.length === 0
-      ) {
+      if (!isTotalDeletionFailure(result)) {
         await refreshConversations();
       }
 

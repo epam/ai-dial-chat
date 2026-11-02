@@ -1,4 +1,7 @@
-import { useAsyncConfirmDialog } from '@epam/ai-dial-chat-hooks';
+import {
+  isTotalDeletionFailure,
+  useAsyncConfirmDialog,
+} from '@epam/ai-dial-chat-hooks';
 import { ConfirmationDialog, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   ConfirmationPopupVariant,
@@ -140,12 +143,7 @@ const ConversationPanelMenu: FC<Props> = ({
     await confirmDeleteDialog(
       async () => {
         const deletionResult = await deleteAllConversations();
-        const isTotalFailure =
-          deletionResult.failed.length > 0 &&
-          deletionResult.deleted === 0 &&
-          deletionResult.alreadyAbsent === 0;
-
-        if (isTotalFailure) {
+        if (isTotalDeletionFailure(deletionResult)) {
           throw new Error();
         }
 

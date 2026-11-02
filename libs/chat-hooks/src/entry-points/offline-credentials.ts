@@ -8,3 +8,4 @@ export * from '../offline-credentials/useOfflineCredentialsGate/useOfflineCreden
 export * from '../offline-credentials/useOfflineCredentialsLogin/useOfflineCredentialsLogin';
 export * from '../offline-credentials/useOfflineCredentialsAuth/useOfflineCredentialsAuth';
 export * from '../offline-credentials/map-offline-credentials-response';
+export * from '../offline-credentials/scheduled-tasks-login-banner';

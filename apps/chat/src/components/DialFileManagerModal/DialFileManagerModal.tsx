@@ -1,6 +1,8 @@
-import { mimeTypesToExtensionLabels } from '@epam/ai-dial-attachment-input';
 import {
+  areAllMimeTypesAllowed,
+  buildAttachConstraintDescription,
   mimeTypesToAttachmentExtensionLabels,
+  resolveDialFolderPath,
   useFileAttachmentPicker,
 } from '@epam/ai-dial-chat-hooks';
 import {
@@ -186,78 +188,41 @@ const DialFileManagerModal: FC<Props> = ({
     [t],
   );
 
-  const headerDescription = useMemo(() => {
-    const hasTypeConstraint = allowedTypes != null && allowedTypes.length > 0;
-    const hasSizeConstraint =
-      maxSelectableFileSize != null && maxSelectableFileSize > 0;
-    const hasCountConstraint =
-      maximumAttachmentsAmount != null &&
-      maximumAttachmentsAmount > 0 &&
-      isFinite(maximumAttachmentsAmount);
-
-    if (!hasTypeConstraint && !hasSizeConstraint && !hasCountConstraint) {
-      return null;
-    }
-
-    const parts: string[] = [];
-
-    if (hasTypeConstraint || hasSizeConstraint) {
-      const isAllTypesAllowed =
-        hasTypeConstraint &&
-        (allowedTypes ?? []).some((type) => type === '*' || type === '*/*');
-
-      const typeLabel =
-        allowedTypesLabel ??
-        (isAllTypesAllowed
-          ? t(DialFileManagerI18nKeys.AllTypes)
-          : hasTypeConstraint
-            ? mimeTypesToExtensionLabels(allowedTypes ?? [])
-            : undefined);
-
-      const maxSize =
-        hasSizeConstraint && maxSelectableFileSize != null
-          ? formatFileSize(maxSelectableFileSize)
-          : undefined;
-
-      if (typeLabel != null && maxSize != null) {
-        parts.push(
-          t(DialFileManagerI18nKeys.MaxSizeSupportedTypes, {
-            maxSize,
-            allowedExtensions: typeLabel,
-          }),
-        );
-      } else if (maxSize != null) {
-        parts.push(t(DialFileManagerI18nKeys.MaxSizeOnly, { maxSize }));
-      } else if (typeLabel != null) {
-        parts.push(typeLabel);
-      }
-    }
-
-    if (hasCountConstraint) {
-      parts.push(
-        t(DialFileManagerI18nKeys.UpToFiles, {
-          count: maximumAttachmentsAmount,
-        }),
-      );
-    }
-
-    return `${parts.join('. ')}.`;
-  }, [
-    allowedTypes,
-    maxSelectableFileSize,
-    maximumAttachmentsAmount,
-    allowedTypesLabel,
-    t,
-  ]);
+  const headerDescription = useMemo(
+    () =>
+      buildAttachConstraintDescription(
+        {
+          allowedTypes,
+          allowedTypesLabel,
+          maxFileSize: maxSelectableFileSize,
+          maxCount: maximumAttachmentsAmount,
+        },
+        {
+          allTypes: t(DialFileManagerI18nKeys.AllTypes),
+          maxSizeWithTypes: (maxSize, allowedExtensions) =>
+            t(DialFileManagerI18nKeys.MaxSizeSupportedTypes, {
+              maxSize,
+              allowedExtensions,
+            }),
+          maxSizeOnly: (maxSize) =>
+            t(DialFileManagerI18nKeys.MaxSizeOnly, { maxSize }),
+          upToFiles: (count) => t(DialFileManagerI18nKeys.UpToFiles, { count }),
+        },
+      ),
+    [
+      allowedTypes,
+      maxSelectableFileSize,
+      maximumAttachmentsAmount,
+      allowedTypesLabel,
+      t,
+    ],
+  );
 
   const unsupportedFileTypeTooltip = useMemo(() => {
     if (allowedTypes == null || allowedTypes.length === 0) {
       return undefined;
     }
-    const areAllTypesAllowed = allowedTypes.some(
-      (type) => type === '*' || type === '*/*',
-    );
-    if (areAllTypesAllowed) {
+    if (areAllMimeTypesAllowed(allowedTypes)) {
       return undefined;
     }
     const allowedExtensions =
@@ -277,24 +242,7 @@ const DialFileManagerModal: FC<Props> = ({
   }, [maxSelectableFileSize, t]);
 
   const resolveFolderPath = useCallback(
-    (file: DialFile): string | null => {
-      const source = file.url ?? file.id ?? '';
-      if (!source) return null;
-      const dialPath = source.startsWith('files/')
-        ? source
-        : `files/${file.bucket ?? bucket}/${source.replace(/^\/+/, '')}`;
-      /*
-       * Strip any `../`/`./` segments before the path is forwarded to DIAL Core —
-       * the BFF is the trust boundary, but this guards against a compromised response.
-       */
-      const normalizedDialPath = dialPath
-        .split('/')
-        .filter((segment) => segment !== '..' && segment !== '.')
-        .join('/');
-      return normalizedDialPath.endsWith('/')
-        ? normalizedDialPath
-        : `${normalizedDialPath}/`;
-    },
+    (file: DialFile): string | null => resolveDialFolderPath(file, bucket),
     [bucket],
   );
 

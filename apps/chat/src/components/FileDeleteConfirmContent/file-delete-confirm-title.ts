@@ -1,9 +1,17 @@
 import {
-  DialFileNodeType,
-  type DialFile,
-} from '@epam/ai-dial-react-file-manager';
+  FileSelectionKind,
+  getFileSelectionKind,
+} from '@epam/ai-dial-chat-hooks';
+import type { DialFile } from '@epam/ai-dial-react-file-manager';
 import type { TFunction } from 'i18next';
 import { DialFileManagerI18nKeys } from '../../constants/translation-keys';
+
+const DELETE_TITLE_KEYS: Record<FileSelectionKind, DialFileManagerI18nKeys> = {
+  [FileSelectionKind.File]: DialFileManagerI18nKeys.DeleteConfirmTitleFile,
+  [FileSelectionKind.Folder]: DialFileManagerI18nKeys.DeleteConfirmTitleFolder,
+  [FileSelectionKind.Multiple]:
+    DialFileManagerI18nKeys.DeleteConfirmTitleMultiple,
+};
 
 /**
  * Title of the file manager's delete confirmation: "Delete folder" or
@@ -13,12 +21,4 @@ import { DialFileManagerI18nKeys } from '../../constants/translation-keys';
 export const getFileDeleteConfirmTitle = (
   t: TFunction,
   items: DialFile[],
-): string => {
-  if (items.length !== 1) {
-    return t(DialFileManagerI18nKeys.DeleteConfirmTitleMultiple);
-  }
-
-  return items[0].nodeType === DialFileNodeType.FOLDER
-    ? t(DialFileManagerI18nKeys.DeleteConfirmTitleFolder)
-    : t(DialFileManagerI18nKeys.DeleteConfirmTitleFile);
-};
+): string => t(DELETE_TITLE_KEYS[getFileSelectionKind(items)]);

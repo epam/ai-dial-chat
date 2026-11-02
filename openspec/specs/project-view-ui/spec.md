@@ -89,7 +89,9 @@ Props:
 | `onShare` | optional `() => void`; hidden when omitted |
 | `onDelete` | optional `() => void`; hidden when omitted |
 | `onDownload` | `() => void` |
-| `onOpenFile` | `(fileName: string) => void` |
+| `onContextFileClick` | `(id: string) => void`, called with a context file's name when the user activates its card; the host decides what opens |
+| `selectedContextFileId` | optional `string`: the name of the context file whose card renders selected |
+| `isDetailsStacked` | optional `boolean`, default `false`: renders the Details panel below the main column at every width, instead of beside it on `desktop` |
 | `onRetry` | `() => void` |
 | `onBrowseProjects` | `() => void` |
 | `mainContent` | optional `ReactNode`: the main column's content |
@@ -102,7 +104,7 @@ Props:
 - it is `flex-1 min-w-0`, with `24px 32px` padding on `desktop`;
 - its content is centered at the design's 748px max width.
 
-On `mobile` the section stacks above the Details panel. Without `mainContent`, the layout is unchanged, so the Details panel is pushed to the inline end. The lib renders the node as given: the chat input and the Chats list are composed by the host.
+On `mobile`, and on `desktop` while `isDetailsStacked` is `true`, the section stacks above the Details panel. Without `mainContent`, the layout is unchanged, so the Details panel is pushed to the inline end; a panel stacked by `isDetailsStacked` without `mainContent` stays at the top instead. The lib renders the node as given: the chat input and the Chats list are composed by the host.
 
 Every declared prop SHALL be read. Read-only mode is expressed only by omitting `onEdit`, `onDelete`, `onShare` and `onPublish`. The lib has no `isReadOnly` flag, so a prop cannot contradict the callbacks.
 
@@ -127,6 +129,16 @@ Every declared prop SHALL be read. Read-only mode is expressed only by omitting 
 
 - **WHEN** `ProjectView` renders without `mainContent`
 - **THEN** no main-column `<section>` renders
+
+#### Scenario: Details stacked on desktop
+
+- **WHEN** `ProjectView` renders on a `desktop` viewport with `mainContent` and `isDetailsStacked`
+- **THEN** the Details `<aside>` is below the main column, full width, with a top border and no inline-start border
+
+#### Scenario: Stacked Details without a main column stays at the top
+
+- **WHEN** `ProjectView` renders on a `desktop` viewport with `isDetailsStacked` and no `mainContent`
+- **THEN** the Details `<aside>` is not bottom-aligned
 
 ### Requirement: The header shows back, the name, and the project actions
 
@@ -174,14 +186,14 @@ Every handler is memoised with `useCallback`.
 
 `ProjectView` SHALL render the Details panel as an `<aside>` named by its visible `<h2>` `labels.detailsLabel`:
 
-- **Placement:** a column on the inline end side on `desktop`, running the height of the page below the header, and stacked below the header on `mobile`.
-- **Frame:** no card. The panel has the page background and only a border on its inline-start side on `desktop` (`border-inline-start`, so it flips in RTL), and a top border on `mobile`, where it is stacked.
-- **Size and type (design):** 488px wide on `desktop`, `24px 32px` padding, `20px` between sections. The heading is `dial-body-semi-text` (16/24 semibold, `--text-primary`); the Description, Instructions and Context labels are `dial-tiny-text` (12/16, `--text-secondary`) with `4px` to their content; the description and the rendered instructions are `dial-small-text` (14/20, `--text-primary`); the Context section uses `8px` gaps and the file list `8px` top padding. The search is the kit `Search` at its standard 40px height.
+- **Placement:** a column on the inline end side on `desktop`, running the height of the page below the header, and stacked below the header on `mobile`. While `isDetailsStacked` is `true` it is stacked below the main column on `desktop` too, so a host that shows a canvas beside the page keeps the panel and its context cards reachable.
+- **Frame:** no card. The panel has the page background and only a border on its inline-start side on `desktop` (`border-inline-start`, so it flips in RTL), and a top border on `mobile`, where it is stacked, and wherever `isDetailsStacked` stacks it.
+- **Size and type (design):** 488px wide on `desktop` (full width when stacked), `24px 32px` padding, `20px` between sections. The heading is `dial-body-semi-text` (16/24 semibold, `--text-primary`); the Description, Instructions and Context labels are `dial-tiny-text` (12/16, `--text-secondary`) with `4px` to their content; the description and the rendered instructions are `dial-small-text` (14/20, `--text-primary`); the Context section uses `8px` gaps and the file list `8px` top padding. The search is the kit `Search` at its standard 40px height.
 - **Description:** a section headed `labels.descriptionLabel`, rendering the text in a `<p>` with preserved line breaks. Omitted when the description is empty.
 - **Instructions:** a section headed `labels.instructionsLabel`, rendering `MarkdownRenderer` from `@epam/ai-dial-chat-shared`, read-only, as the catalog About tab does (`libs/catalog/src/components/Details/TabsContent/About.tsx`). Every markdown heading takes `typography.instructionsHeadingClassName` (default `dial-small-semi-text`), so a `#` line never outsizes the project title. Omitted when empty.
 - **Context:** a section headed `labels.contextLabel`, containing:
   - a kit `Search` inside `<div role="search">`, named `labels.contextSearchAriaLabel`, with `labels.clearSearchLabel` on its clear action, bound to `contextSearchQuery`;
-  - a `<ul>` of `AttachmentCard`s from `@epam/ai-dial-attachment-input`, one per file whose name contains the trimmed query, case-insensitively. Each shows the type icon and extension, and its name goes through `Highlight` with `query={trimmedQuery}` and `maxLines={1}`, so the full name is in a tooltip. Activating a card calls `onOpenFile(name)`, and its accessible name is `labels.openFileLabel(name)`.
+  - a `<ul>` of `AttachmentCard`s from `@epam/ai-dial-attachment-input`, one per file whose name contains the trimmed query, case-insensitively. Each shows the type icon and extension, and its name goes through `Highlight` with `query={trimmedQuery}` and `maxLines={1}`, so the full name is in a tooltip. Activating a card calls `onContextFileClick(name)`, and its accessible name is `labels.openFileLabel(name)`. The card whose name equals `selectedContextFileId` renders selected (`isSelected`).
   - an empty state: `labels.emptyContextLabel` when the project has no context files, and `labels.noContextMatchesLabel` when a query matches none.
 - **Live region:** a `role="status"` `aria-live="polite"` region announces `labels.contextResultCountLabel(count)` while the trimmed query is non-empty.
 
@@ -210,7 +222,12 @@ Every handler is memoised with `useCallback`.
 #### Scenario: Clicking a file downloads it
 
 - **WHEN** the user activates the `tickets.csv` card
-- **THEN** `onOpenFile('tickets.csv')` is called
+- **THEN** `onContextFileClick('tickets.csv')` is called, and the lib itself downloads nothing: the title keeps its former wording because archive requires every scenario of a modified requirement to survive, and the page now opens a preview instead of a download (see "A context card no longer downloads")
+
+#### Scenario: Selected file card
+
+- **WHEN** `ProjectView` renders with `selectedContextFileId="tickets.csv"`
+- **THEN** the `tickets.csv` card renders selected, and the other cards do not
 
 ### Requirement: The view page has explicit loading, error, not-found and loaded states
 
@@ -244,7 +261,7 @@ The error and not-found titles are announced through `role="alert"`.
 - Success calls `notifyOperationSuccess(NotifiableEntity.Project, EntityOperation.Downloaded, { name })`.
 - Failure calls `showErrorNotification` with `projects.actions.downloadError`.
 
-**Open file.** `downloadProjectContextFile(id, fileName)` works the same way, through `downloadProjectFileRaw`.
+**Open file.** The hook no longer downloads a single context file. Activating a context card opens the file in the attachment canvas (see the `project-context-file-preview` capability), and downloading that one file is the canvas header's Download action.
 
 **Delete.**
 
@@ -288,6 +305,11 @@ The error and not-found titles are announced through `role="alert"`.
 
 - **WHEN** the user chooses Download
 - **THEN** `downloadProjectRaw` is called, and the browser receives `{name}.zip`
+
+#### Scenario: A context card no longer downloads
+
+- **WHEN** the user activates a context card on the view page
+- **THEN** no browser download starts, and the file opens in the canvas
 
 ### Requirement: Projects can be published through the standalone publish panel
 
@@ -351,7 +373,7 @@ It submits through `publishCatalogEntity({ entityType: CatalogPublishEntityType.
 | `projects.view.contextResultCount_one` / `_other` | `{{count}} file found` / `{{count}} files found` |
 | `projects.view.emptyContext` | No context files |
 | `projects.view.noContextMatches` | No files match your search |
-| `projects.view.openFile` | `Download {{name}}` |
+| `projects.view.openFile` | `Preview {{name}}` |
 | `projects.view.error` | Could not load the project |
 | `projects.view.notFound` | Project not found |
 | `projects.view.browseProjects` | Back to projects |
@@ -375,6 +397,11 @@ Every key exists in every locale file, with English placeholders where no transl
 
 - **WHEN** `ProjectViewPage.tsx` is inspected
 - **THEN** every `t()` argument is an enum member from `translation-keys.ts`
+
+#### Scenario: The card name says preview
+
+- **WHEN** the view page renders the `tickets.csv` card
+- **THEN** its accessible name is "Preview tickets.csv"
 
 ### Requirement: The project view page is mobile-first, RTL-safe and meets WCAG 2.1 AAA
 

@@ -146,6 +146,12 @@ const App: FC = () => {
   const isMobile = useIsMobile();
   const loadPdf = usePdfPreviewLoader();
   const isFileManagerRoute = !!useMatch(ROUTES.FileManager);
+  /* The project create, edit and view pages preview their context files in the canvas. */
+  const isProjectCreateRoute = !!useMatch(ROUTES.ProjectCreate);
+  const isProjectViewRoute = !!useMatch(ROUTES.ProjectView);
+  const isProjectEditRoute = !!useMatch(ROUTES.ProjectEdit);
+  const isProjectPageRoute =
+    isProjectCreateRoute || isProjectViewRoute || isProjectEditRoute;
   const viewportWidth = useViewportWidth();
   const { currentTheme } = useTheme();
   const codeBlockTheme =
@@ -583,6 +589,7 @@ const App: FC = () => {
           {isConversationRoute && <ConversationSourcesPanel />}
         </ActiveScheduledTaskProvider>
         {(isFileManagerRoute ||
+          isProjectPageRoute ||
           (isConversationRoute && isAttachmentsManagerEnabled)) && (
           <AttachmentCanvasContainer
             loadPdf={loadPdf}
@@ -657,7 +664,12 @@ const App: FC = () => {
                 AttachmentCanvasI18nKeys.OoxmlHighlightNavigatedLabel,
               ),
             }}
-            leftActions={isMobile ? <SourcesSidebarToggle /> : undefined}
+            /* The project pages have no sources panel for the toggle to drive. */
+            leftActions={
+              isMobile && !isProjectPageRoute ? (
+                <SourcesSidebarToggle />
+              ) : undefined
+            }
             isMobile={isMobile}
             defaultWidth={canvasDefaultWidth}
             minWidth={canvasMinWidth}

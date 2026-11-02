@@ -127,7 +127,9 @@ File attachment:
 3. Delete the local selection/tab state and the app-side hidden-path filter.
    Final filtering, folder/descendant deduplication and the attachment count
    check stay in `FileManagerAttachModal`.
-4. Keep `resolveFolderPath` in the app.
+4. Keep `resolveFolderPath` in the app; `resolveDialFolderPath(file, bucket)`
+   from `@epam/ai-dial-chat-hooks` builds the `files/{bucket}/{path}/` path
+   with dot segments dropped.
 
 Prompt selection:
 

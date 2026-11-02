@@ -384,26 +384,23 @@ The create/edit form's action placement, header chrome, and pickers SHALL adapt 
 `ScheduledTaskCreateFormValues` SHALL have two optional boundary fields:
 
 ```ts
-/** `YYYY-MM-DD` for day-based repeats, `YYYY-MM-DDTHH:mm` for `'hourly'`. Ignored when `repeat` is `'oneTime'`. */
+/** A whole local day as `YYYY-MM-DD`, for every cadence that renders boundary pickers. Ignored when `repeat` is `'oneTime'`. */
 startDate?: string;
-/** `YYYY-MM-DD` for day-based repeats, `YYYY-MM-DDTHH:mm` for `'hourly'`. Ignored when `repeat` is `'oneTime'`. */
+/** A whole local day as `YYYY-MM-DD`, for every cadence that renders boundary pickers. Ignored when `repeat` is `'oneTime'`. */
 endDate?: string;
 ```
 
-`ScheduledTaskCreateFormErrors` SHALL have `startDate?: string` and `endDate?: string`. `ScheduledTaskCreateFormLabels` SHALL have `startDateLabel`, `endDateLabel`, `startDatePlaceholder` (default `"Pick start date"`), `endDatePlaceholder` (default `"Pick end date"`), and — for the hourly date-and-time pair — `startDateAndTimeLabel` and `endDateAndTimeLabel`. Both fields are optional, so no label renders a required marker.
+`ScheduledTaskCreateFormErrors` SHALL have `startDate?: string` and `endDate?: string`. `ScheduledTaskCreateFormLabels` SHALL have `startDateLabel`, `endDateLabel`, `startDatePlaceholder` (default `"Pick start date"`), `endDatePlaceholder` (default `"Pick end date"`). Both fields are optional, so no label renders a required marker.
 
 `ScheduledTaskCreateForm` SHALL render both pickers whenever `values.repeat` is `'hourly'`, `'daily'`, `'weekly'`, or `'monthly'` (the activity window is not restricted to a subset of those cadences) — but SHALL NOT render either picker when `values.repeat` is `'oneTime'` or `'custom'`: a one-time task has no recurrence to bound, and a Custom schedule has no activity window by design (see the Custom repeat requirement in "ScheduledTaskCreateForm lib component matches the BFF create contract"). The pickers are positioned after the cadence's own fields — below **Time** and **Day of week**/**Day of month** when those render, and for `'hourly'` (which renders no Time/Day field) below the **Minute** field. Both pickers render through the internal `ScheduledTaskBoundaryField` component (`libs/scheduled-tasks/src/components/ScheduledTaskBoundaryField`, not re-exported from the package index), which wraps the `Calendar` component from `@epam/ai-dial-ui-kit` and carries the field's label, placeholder, `minDate`, `error`, `errorClassName`, and `disabled` handling.
 
-The picker mode follows the cadence:
+Every cadence that renders the pair (`'hourly'`, `'daily'`, `'weekly'`, `'monthly'`) uses the same date-only pickers — `mode={CalendarMode.Date}`, `YYYY-MM-DD` values via the `dateValueToCalendarValue`/`calendarValueToDateValue` helpers — sharing one row (`flex flex-row gap-3`, each picker `flex-1`) at every breakpoint; the two fields never stack. `'hourly'` picks no time for its window: its time within the hour is the **Minute** field, and its window is bounded at whole local days (start of the start day, end of the end day), exactly like the day-based repeats.
 
-- **Day-based repeats** (`'daily'`, `'weekly'`, `'monthly'`) keep the date-only pair — `mode={CalendarMode.Date}`, `YYYY-MM-DD` values via the `dateValueToCalendarValue`/`calendarValueToDateValue` helpers — sharing one row (`flex flex-row gap-3`, each picker `flex-1`) at every breakpoint; the two fields never stack.
-- **`'hourly'`** renders the pair as two full-width date-and-time pickers — `mode={CalendarMode.DateTime}`, labeled `labels.startDateAndTimeLabel`/`labels.endDateAndTimeLabel`, one per row (`flex flex-col`) — writing `YYYY-MM-DDTHH:mm` boundary values, so an hourly window is bounded at exact picked moments, not whole local days.
-
-A repeat switch that changes the boundary shape — between `hourly` and a day-based cadence — clears both boundaries (via `keepWindowBoundaryOnRepeatSwitch` in `libs/scheduled-tasks/src/utils/window-boundary.ts`): the two shapes mean different things (an exact picked instant vs a whole local day), so a carried-over value would silently change meaning. A switch between day-based cadences keeps both boundaries unchanged. A switch into or out of `'custom'` also clears both boundaries: Custom renders no boundary pickers, so a carried-over value would be invisible yet remain live in form state (dirty-check noise, silently dropped by the submit mapping) — it is cleared rather than parked. Validation rejects a boundary whose shape does not match the cadence (`isValidWindowBoundary` parses either format, the shape check in `libs/scheduled-tasks/src/validation/scheduled-task-validation.ts` enforces the match), and the UTC-boundary mapping dispatches on the repeat — so the two shapes never mix anywhere in the stack.
+A repeat switch into or out of `'custom'` clears both boundaries (via `keepWindowBoundaryOnRepeatSwitch` in `libs/scheduled-tasks/src/utils/window-boundary.ts`): Custom renders no boundary pickers, so a carried-over value would be invisible yet remain live in form state (dirty-check noise, silently dropped by the submit mapping) — it is cleared rather than parked. A switch between any two other cadences (including `'hourly'` and a day-based one) keeps both boundaries unchanged: the shape and meaning are the same. Validation (`isValidDateOnly` in `libs/scheduled-tasks/src/validation/scheduled-task-validation.ts`) accepts only the date-only shape, so a boundary carrying a time part is rejected.
 
 Both pickers pin the earliest selectable day at the form's mount date — a `minDate` memoized once per form mount, mirroring the run-at field's pinned earliest moment — so days strictly before the mount date render unselectable and activating them fires no `onFieldChange('startDate'/'endDate', …)`; the mount date itself and future days remain selectable. Errors render with the same inline-error paragraph pattern already used for `runAt`/`time` (`errors.startDate`/`errors.endDate` shown in a `<p>` with `instructionsErrorClassName`).
 
-`libs/scheduled-tasks/src/utils/calendar-value.ts` keeps the `dateValueToCalendarValue`/`calendarValueToDateValue` helpers producing/consuming the `YYYY-MM-DD` date-only string, and the date-and-time pickers reuse the run-at field's datetime adaptation for the `YYYY-MM-DDTHH:mm` shape. The pickers' `onChange` callbacks adapt the ui-kit's `CalendarValue` into `onFieldChange('startDate', ...)` / `onFieldChange('endDate', ...)` calls, following the same controlled-value pattern as `runAt`/`time`.
+`libs/scheduled-tasks/src/utils/calendar-value.ts` keeps the `dateValueToCalendarValue`/`calendarValueToDateValue` helpers producing/consuming the `YYYY-MM-DD` date-only string. The pickers' `onChange` callbacks adapt the ui-kit's `CalendarValue` into `onFieldChange('startDate', ...)` / `onFieldChange('endDate', ...)` calls, following the same controlled-value pattern as `runAt`/`time`.
 
 The lib remains presentational: it performs no timezone conversion, no i18n, and no cross-field ordering validation between `startDate` and `endDate` — it only renders whatever `errors.startDate`/`errors.endDate` the page supplies. The component continues to import nothing from `apps/chat`, `server-api`, any generated API client, routing, feature-flag context, notification context, deployments context, auth, env, or analytics.
 
@@ -422,27 +419,22 @@ The lib remains presentational: it performs no timezone conversion, no i18n, and
 - **WHEN** `values.repeat` is `'daily'`, `'weekly'`, or `'monthly'`
 - **THEN** both the Start date and End date `Calendar` (`mode={CalendarMode.Date}`) pickers render, neither carrying a required-field marker, side by side in one row, each taking half its width, at both the `mobile` and `desktop` breakpoints
 
-#### Scenario: Hourly renders two full-width date-and-time pickers
+#### Scenario: Hourly renders the same date-only pair as the day-based repeats
 
 - **WHEN** `values.repeat === 'hourly'`
-- **THEN** the pair renders as two `Calendar` (`mode={CalendarMode.DateTime}`) pickers labeled `labels.startDateAndTimeLabel` and `labels.endDateAndTimeLabel`, each full-width on its own row, placed after the Minute field
+- **THEN** the pair renders as two `Calendar` (`mode={CalendarMode.Date}`) pickers labeled `labels.startDateLabel` and `labels.endDateLabel`, side by side in one row, placed after the Minute field, with no time-of-day control
 
 #### Scenario: Day-based picker onChange adapts CalendarValue to a date-only string
 
-- **WHEN** the user selects a date in the Start date picker while `values.repeat` is a day-based cadence
+- **WHEN** the user selects a date in the Start date picker (any cadence that renders the pair, including `'hourly'`)
 - **THEN** `onFieldChange('startDate', <YYYY-MM-DD string>)` is called via `calendarValueToDateValue`, not a `datetime-local` string
 
-#### Scenario: Hourly picker onChange writes an exact-moment boundary
+#### Scenario: Only a switch into or out of Custom clears the boundaries
 
-- **WHEN** the user picks a date and time in the hourly Start date-and-time picker
-- **THEN** `onFieldChange('startDate', <YYYY-MM-DDTHH:mm string>)` is called — the exact picked moment, not a local-day start
-
-#### Scenario: A shape-changing repeat switch clears both boundaries
-
-- **WHEN** the user sets `startDate` while `values.repeat === 'hourly'` (a `YYYY-MM-DDTHH:mm` value), then switches `repeat` to `'daily'`
-- **THEN** `onFieldChange('startDate', '')` and `onFieldChange('endDate', '')` are called alongside `onFieldChange('repeat', 'daily')` — the boundary's meaning (an exact picked instant) does not survive into a whole-day cadence, so the value is cleared rather than reinterpreted
-- **WHEN** the user switches `repeat` between two day-based cadences (e.g. `'daily'` to `'weekly'`) with boundaries set
-- **THEN** no `onFieldChange('startDate'/'endDate', …)` call fires — same shape, same meaning, the boundaries stay
+- **WHEN** the user sets `startDate` while `values.repeat === 'hourly'`, then switches `repeat` to `'daily'` (or between any two non-Custom cadences)
+- **THEN** only `onFieldChange('repeat', …)` fires — no `onFieldChange('startDate'/'endDate', …)` call, the date-only boundaries stay
+- **WHEN** the user switches `repeat` to or from `'custom'` with boundaries set
+- **THEN** `onFieldChange('startDate', '')` and `onFieldChange('endDate', '')` are called alongside `onFieldChange('repeat', …)`
 
 #### Scenario: A switch into or out of Custom clears both boundaries
 
@@ -473,16 +465,13 @@ The lib remains presentational: it performs no timezone conversion, no i18n, and
 
 `ScheduledTaskCreatePage`'s `DEFAULT_VALUES` SHALL include `startDate: undefined` and `endDate: undefined`. Before calling `createScheduledTask`, when both `values.startDate` and `values.endDate` are set and `endDate` is earlier than `startDate`, the page SHALL set `errors.endDate` to a validation message and block submit; `endDate` equal to `startDate` is a valid single-day window for day-based repeats (the start boundary resolves to that day's `00:00:00.000` local and the end boundary to its `23:59:59.999`), so it MUST NOT be rejected. When either or both fields are empty, this check is skipped (both empty is valid — an unbounded recurring schedule). This check applies whenever `values.repeat !== 'oneTime'`, including `'hourly'`.
 
-The shared `validateScheduledTaskFormValues` (`libs/scheduled-tasks/src/validation`) SHALL additionally reject a recurring activity-window boundary earlier than the validating clock's local today, returning the `StartDateInPast`/`EndDateInPast` error codes — a boundary that is both past and mis-ordered reports the past-date code, which runs after the ordering check so the more actionable message wins. A boundary equal to the option's `originalStartDate`/`originalEndDate` SHALL be exempt: `ScheduledTaskEditPage` passes the hydrated boundaries in those options, so an older task's prefilled past window does not block saving unrelated edits, while a boundary changed into the past is still rejected. The create page passes no originals, so the rule applies to every boundary there. The past-date comparison SHALL follow the boundary's shape — a `YYYY-MM-DDTHH:mm` value is compared against the clock's now instant at its picked moment, a `YYYY-MM-DD` value against the clock's local today at its calendar day. Validation SHALL additionally reject a boundary whose shape does not match the cadence (`StartDateInvalid`/`EndDateInvalid`) — hourly boundaries are `YYYY-MM-DDTHH:mm` instants, day-based boundaries are `YYYY-MM-DD` days — so a mismatched value (which can only come from a host that bypassed the form's repeat-switch clearing) never reaches the UTC-boundary mapping that dispatches on the repeat.
+The shared `validateScheduledTaskFormValues` (`libs/scheduled-tasks/src/validation`) SHALL additionally reject a recurring activity-window boundary earlier than the validating clock's local today, returning the `StartDateInPast`/`EndDateInPast` error codes — a boundary that is both past and mis-ordered reports the past-date code, which runs after the ordering check so the more actionable message wins. A boundary equal to the option's `originalStartDate`/`originalEndDate` SHALL be exempt: `ScheduledTaskEditPage` passes the hydrated boundaries in those options, so an older task's prefilled past window does not block saving unrelated edits, while a boundary changed into the past is still rejected. The create page passes no originals, so the rule applies to every boundary there. The past-date comparison is by calendar day: a `YYYY-MM-DD` boundary is past when its day is earlier than the clock's local today, so today itself is allowed. Validation SHALL reject a boundary that is not a valid date-only `YYYY-MM-DD` value (`StartDateInvalid`/`EndDateInvalid`), including one carrying a time part, for every cadence.
 
-`mapFormValuesToCreateBody` (`libs/chat-hooks/src/scheduled-task/scheduled-task-trigger.ts`, using its `buildCronWindowBoundary` helper) SHALL build the `trigger.cron` object for any non-`'oneTime'` `repeat` value as `{ fields, ...(startDate ? { startDate: <iso> } : {}), ...(endDate ? { endDate: <iso> } : {}) }`, and MUST NOT include `startDate`/`endDate` when `repeat === 'oneTime'` (the one-time branch is unaffected by this change). `buildCronWindowBoundary` SHALL dispatch on the active `repeat` value — which the form's repeat-switch boundary clearing and the validation shape check keep in sync with each boundary's shape:
+`mapFormValuesToCreateBody` (`libs/chat-hooks/src/scheduled-task/scheduled-task-trigger.ts`, using its `buildCronWindowBoundary` helper) SHALL build the `trigger.cron` object for any non-`'oneTime'` `repeat` value as `{ fields, ...(startDate ? { startDate: <iso> } : {}), ...(endDate ? { endDate: <iso> } : {}) }`, and MUST NOT include `startDate`/`endDate` when `repeat === 'oneTime'` (the one-time branch is unaffected by this change). `buildCronWindowBoundary` takes only the date-only value and the edge, for every cadence including `'hourly'`: `startDate` converts to that local calendar day's `00:00:00.000` local time, then to its UTC ISO equivalent; `endDate` converts to that local calendar day's `23:59:59.999` local time, then to its UTC ISO equivalent, so the last local day the user selected is not cut off by the UTC conversion. It uses the reference-`Date`-plus-getters technique `buildCronFields` already uses, so the browser's own timezone/DST handling does the conversion.
 
-- `repeat === 'hourly'` — the `YYYY-MM-DDTHH:mm` value is the picked instant itself, converted to its UTC ISO equivalent directly, with no local-day widening, so an hourly window is bounded at the exact moments the user picked.
-- A day-based repeat — the date-only `YYYY-MM-DD` value converts by the reference-`Date`-plus-UTC-getters technique `buildCronFields` already uses and documents in its own code comment, extended to cover this case: `startDate` converts to that local calendar day's `00:00:00.000` local time, then to its UTC ISO equivalent; `endDate` converts to that local calendar day's `23:59:59.999` local time, then to its UTC ISO equivalent, so the last local day the user selected is not cut off by the UTC conversion.
+The reverse mapping `mapScheduledTaskDtoToFormValues` SHALL hydrate every cadence's boundaries as local `YYYY-MM-DD` values (via `isoToLocalDateOnly`), including an hourly task's — an older hourly task saved with an exact time-of-day boundary opens with just its calendar day.
 
-The reverse mapping `mapScheduledTaskDtoToFormValues` SHALL hydrate an hourly task's boundaries as `YYYY-MM-DDTHH:mm` values (via `isoToLocalDateTime`) — the hourly editor picks exact moments — while day-based cadences keep the date-only hydration (via `isoToLocalDateOnly`).
-
-Feature-specific i18n keys `scheduledTasks.create.startDateLabel`, `scheduledTasks.create.endDateLabel`, `scheduledTasks.create.startDateAndTimeLabel`, `scheduledTasks.create.endDateAndTimeLabel`, `scheduledTasks.create.startDatePlaceholder`, `scheduledTasks.create.endDatePlaceholder`, `scheduledTasks.create.endDateBeforeStartError`, `scheduledTasks.create.startDateInPast`, and `scheduledTasks.create.endDateInPast` SHALL exist in `apps/chat/src/i18n/locales/en.json` with matching `ScheduledTasksI18nKeys` enum entries, resolved via `useTranslation().t()` in `useScheduledTaskFormLabels` and passed into the lib as plain strings, per the existing i18n requirement for this page.
+Feature-specific i18n keys `scheduledTasks.create.startDateLabel`, `scheduledTasks.create.endDateLabel`, `scheduledTasks.create.startDatePlaceholder`, `scheduledTasks.create.endDatePlaceholder`, `scheduledTasks.create.endDateBeforeStartError`, `scheduledTasks.create.startDateInPast`, and `scheduledTasks.create.endDateInPast` SHALL exist in `apps/chat/src/i18n/locales/en.json` with matching `ScheduledTasksI18nKeys` enum entries, resolved via `useTranslation().t()` in `useScheduledTaskFormLabels` and passed into the lib as plain strings, per the existing i18n requirement for this page.
 
 #### Scenario: No dates set is a valid submit
 
@@ -494,15 +483,15 @@ Feature-specific i18n keys `scheduledTasks.create.startDateLabel`, `scheduledTas
 - **WHEN** `values.repeat` is a day-based cadence, `startDate = '2026-08-01'`, `endDate = '2026-08-31'`, and the browser's local timezone is UTC+2
 - **THEN** the POST body's `trigger.cron.startDate` is `'2026-07-31T22:00:00.000Z'` (local midnight Aug 1 in UTC+2) and `trigger.cron.endDate` is `'2026-08-31T21:59:59.999Z'` (local 23:59:59.999 Aug 31 in UTC+2)
 
-#### Scenario: Hourly boundary values convert at the exact picked moments
+#### Scenario: Hourly boundary values convert to the start and end of the local day
 
-- **WHEN** `values.repeat === 'hourly'`, `startDate = '2026-08-01T09:00'`, `endDate = '2026-08-31T18:30'`, and the browser's local timezone is UTC+2
-- **THEN** the POST body's `trigger.cron.startDate` is `'2026-08-01T07:00:00.000Z'` and `trigger.cron.endDate` is `'2026-08-31T16:30:00.000Z'` — the picked instants themselves, with no local-day widening
+- **WHEN** `values.repeat === 'hourly'`, `startDate = '2026-08-01'`, `endDate = '2026-08-31'`, and the browser's local timezone is UTC+2
+- **THEN** the POST body's `trigger.cron.startDate` is `'2026-07-31T22:00:00.000Z'` and `trigger.cron.endDate` is `'2026-08-31T21:59:59.999Z'` — the same conversion as the day-based repeats
 
-#### Scenario: An hourly task's boundaries hydrate as datetime-local values
+#### Scenario: An hourly task's boundaries hydrate as date-only values
 
-- **WHEN** an hourly task with `trigger.cron.startDate = '2026-08-01T07:00:00.000Z'` is loaded on the edit page in a UTC+2 browser
-- **THEN** `values.startDate` hydrates as `'2026-08-01T09:00'` (via `isoToLocalDateTime`), and the date-and-time pickers render the exact moment
+- **WHEN** an hourly task with `trigger.cron.startDate = '2026-07-31T22:00:00.000Z'` and `endDate = '2026-08-31T21:59:59.999Z'` is loaded on the edit page in a UTC+2 browser
+- **THEN** `values.startDate` hydrates as `'2026-08-01'` and `values.endDate` as `'2026-08-31'` (via `isoToLocalDateOnly`)
 
 #### Scenario: endDate earlier than startDate blocks submit with an inline error
 
@@ -551,8 +540,8 @@ Feature-specific i18n keys `scheduledTasks.create.startDateLabel`, `scheduledTas
 
 #### Scenario: Activity window applies unchanged to Hourly
 
-- **WHEN** `values.repeat === 'hourly'`, `startDate = '2026-08-01T09:00'`, and `endDate = '2026-08-31T18:30'`
-- **THEN** the POST body's `trigger.cron` includes `fields: { hour: '*', minute: '0' }` alongside the exact-moment UTC-converted `startDate`/`endDate` boundaries
+- **WHEN** `values.repeat === 'hourly'`, `startDate = '2026-08-01'`, and `endDate = '2026-08-31'`
+- **THEN** the POST body's `trigger.cron` includes `fields: { hour: '*', minute: '0' }` alongside the local-day-start/day-end UTC-converted `startDate`/`endDate` boundaries
 ### Requirement: Edit route loads the task and reuses ScheduledTaskCreateForm
 
 The application SHALL expose a lazy-loaded `ScheduledTaskEditPage` at `ROUTES.ScheduledTaskEdit` (`/scheduled-tasks/:scheduleId/edit`), registered in `apps/chat/src/app/app.tsx` using the same `RouteErrorBoundary` + `Suspense` + `RouteFallback` pattern as `ROUTES.ScheduledTaskCreate`/`ROUTES.ScheduledTaskDetail`, gated behind `useFeatureFlag('scheduledTasksEnabled')` inside the page component (not at route registration), matching the existing create/detail pages' gating pattern. On mount, `ScheduledTaskEditPage` SHALL call `getScheduledTask(scheduleId)` and, on success, prefill `ScheduledTaskCreateForm`'s `values` via the reverse mapping described in the "Reverse trigger mapping is fail-closed" requirement below. `ScheduledTaskEditPage` SHALL render `ScheduledTaskCreateForm` with the same component contract used by the create page (`labels`, `values`, `errors`, `modelSelector`, `modelLabelId`, `onFieldChange`, `onBack`, `onCancel`, `onSubmit`, `isSubmitting?`) — no `mode` prop is added to the lib; edit-flavored copy (page title "Edit scheduled task", Save button text) is supplied entirely by the page's `labels` object. `ScheduledTaskEditPage` SHALL build its `modelSelector` element from the loaded task's `values.modelId` (from the reverse mapping) as the trigger's `selectedId`, so the task's current deployment is preselected even when it is not present in the favorites or initially-loaded deployment subset.

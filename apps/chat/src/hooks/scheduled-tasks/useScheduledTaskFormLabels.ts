@@ -95,14 +95,10 @@ export const useScheduledTaskFormLabels = (mode: 'create' | 'edit') => {
       dayOfMonthLabel: t(ScheduledTasksI18nKeys.CreateDayOfMonthLabel),
       minuteLabel: t(ScheduledTasksI18nKeys.CreateMinuteLabel),
       startDateLabel: t(ScheduledTasksI18nKeys.CreateStartDateLabel),
-      startDateAndTimeLabel: t(
-        ScheduledTasksI18nKeys.CreateStartDateAndTimeLabel,
-      ),
       startDatePlaceholder: t(
         ScheduledTasksI18nKeys.CreateStartDatePlaceholder,
       ),
       endDateLabel: t(ScheduledTasksI18nKeys.CreateEndDateLabel),
-      endDateAndTimeLabel: t(ScheduledTasksI18nKeys.CreateEndDateAndTimeLabel),
       endDatePlaceholder: t(ScheduledTasksI18nKeys.CreateEndDatePlaceholder),
       modelOrAgentLabel: t(ScheduledTasksI18nKeys.CreateModelOrAgentLabel),
       descriptionLabel: t(ScheduledTasksI18nKeys.CreateDescriptionLabel),

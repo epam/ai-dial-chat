@@ -116,7 +116,7 @@ import { ScheduledTaskCard } from '@epam/ai-dial-scheduled-tasks';
 
 ### ScheduledTaskCreateForm
 
-Presentational create-task form: a back-navigable header, display name, a one-shot/recurring schedule section (with an optional Start date / End date pair bounding a recurring schedule's activity window), a Model or Agent field, a description field, and a markdown Instructions editor. Field values and validation errors are supplied by the host app; the Model or Agent field's control is a fully-composed `modelSelector` element the host renders — the lib wraps it with the field's required label and error message. Other fields, including the masked time-of-day picker (shown when `repeat` is "daily", "weekly", "monthly", or "custom"), is lib-owned: the picker shows the viewer's timezone hint and validates its visible draft on blur, since the ui kit's masked time input only reports complete `HH:mm` values through `onChange` — while that blur error is set, Save stays disabled so a half-typed draft cannot be saved as the stale last-complete value. Every blur reports the visible draft through `onFieldChange('time', …)` — complete or not — so a host that clears a field's error on change also clears its own `errors.time` without the value having to change; the blur pass validates the draft separately and keeps showing its own message for incomplete ones. The one-shot run-at picker is the internal `ScheduledTaskRunAtField` component: it cannot select a moment earlier than the field's mount time — the earliest selectable moment is pinned when the field mounts, so past days render unselectable while the mount date and future days stay selectable. The Start date / End date pair is bounded the same way: both pickers pin the earliest selectable day at the form's mount date, so days before it render unselectable. For `hourly` repeats the pair becomes two full-width date-and-time pickers (labels "Start date and time" / "End date and time" via `labels.startDateAndTimeLabel` / `labels.endDateAndTimeLabel`) writing `YYYY-MM-DDTHH:mm` boundary values, one per row, while day-based repeats keep the date-only pickers sharing one row; a repeat switch that changes the boundary shape (between hourly and a day-based cadence, or into or out of `custom`) clears both boundaries — the two shapes mean different things (an exact picked instant vs a whole local day), and `custom` renders no boundary pickers at all — while a switch between day-based cadences keeps them, and validation rejects a boundary whose shape does not match the cadence. The form's only internal state is the time field's blur error, which resets when a repeat switch hides the field.
+Presentational create-task form: a back-navigable header, display name, a one-shot/recurring schedule section (with an optional Start date / End date pair bounding a recurring schedule's activity window), a Model or Agent field, a description field, and a markdown Instructions editor. Field values and validation errors are supplied by the host app; the Model or Agent field's control is a fully-composed `modelSelector` element the host renders — the lib wraps it with the field's required label and error message. Other fields, including the masked time-of-day picker (shown when `repeat` is "daily", "weekly", "monthly", or "custom"), is lib-owned: the picker shows the viewer's timezone hint and validates its visible draft on blur, since the ui kit's masked time input only reports complete `HH:mm` values through `onChange` — while that blur error is set, Save stays disabled so a half-typed draft cannot be saved as the stale last-complete value. Every blur reports the visible draft through `onFieldChange('time', …)` — complete or not — so a host that clears a field's error on change also clears its own `errors.time` without the value having to change; the blur pass validates the draft separately and keeps showing its own message for incomplete ones. The one-shot run-at picker is the internal `ScheduledTaskRunAtField` component: it cannot select a moment earlier than the field's mount time — the earliest selectable moment is pinned when the field mounts, so past days render unselectable while the mount date and future days stay selectable. The Start date / End date pair is bounded the same way: both pickers pin the earliest selectable day at the form's mount date, so days before it render unselectable. A repeat switch into or out of `custom` clears both boundaries, since `custom` renders no boundary pickers at all; a switch between the other cadences keeps them. The form's only internal state is the time field's blur error, which resets when a repeat switch hides the field.
 
 When `repeat` is `ScheduledTaskRepeat.Custom`, the schedule section renders an "Every" dropdown (`labels.everyLabel`, options `labels.everyWeekOptions`, value `values.everyWeeks` — `'1'`–`'10'`), the time-of-day picker, and below it a single-select day-of-week button row under a visible required "Day" label (`labels.dayOfWeekLabel`, also the row's accessible name via `aria-labelledby`): circular 40×40px kit `Button`s at a 2px gap — Primary Solid selected, Neutral Solid unselected — built from `labels.customDayOptions`, each button carrying its full day name as the accessible name and an `aria-pressed` selection state, writing `values.dayOfWeek` in the same APScheduler `'0'`=Monday–`'6'`=Sunday convention the Weekly picker uses. Custom has no Start date / End date pair and blocks Save until a day is selected.
 
@@ -256,6 +256,43 @@ const markdownLabels: ScheduledTaskInstructionsMarkdownLabels = {
   instructionsMarkdown="Summarize my inbox"
   markdownLabels={markdownLabels}
 />;
+```
+
+### ScheduledTasksLoginBanner
+
+Non-dismissible warning banner (kit `WarningMessageNotification`, neutral
+surface) asking the user to log in so scheduled tasks keep running offline.
+`isVisible` draws it; `isLoggingIn` disables the button and shows
+`labels.loggingIn`; a `retryMessage` switches the button to `labels.retry` and
+is announced. A visually hidden `LiveRegion` stays mounted whether or not the
+banner is visible and announces `retryMessage` or, without one,
+`liveAnnouncement`. Omitting `onLogIn` hides the button. Strings come from
+`ScheduledTasksLoginBannerLabels` with English defaults.
+
+```tsx
+import { ScheduledTasksLoginBanner } from '@epam/ai-dial-scheduled-tasks';
+
+<ScheduledTasksLoginBanner
+  isVisible={needsLogin}
+  isLoggingIn={isLoggingIn}
+  retryMessage={retryMessage}
+  liveAnnouncement={announcement}
+  onLogIn={logIn}
+/>;
+```
+
+### ScheduledTasksLimitedAccessBanner
+
+Non-dismissible error section message for missing scheduler access, with the
+bold title and the body on one line. Strings come from
+`ScheduledTasksLimitedAccessBannerLabels` (English defaults); typography from
+`titleClassName` (default `'dial-small-paragraph-semi-text'`) and
+`bodyClassName` (default `'dial-small-paragraph-text'`).
+
+```tsx
+import { ScheduledTasksLimitedAccessBanner } from '@epam/ai-dial-scheduled-tasks';
+
+<ScheduledTasksLimitedAccessBanner labels={{ title, body }} />;
 ```
 
 ### ScheduledTaskDeleteConfirmation

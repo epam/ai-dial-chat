@@ -4,6 +4,7 @@ import {
   resolveDialFileBucketAndPath,
 } from '@epam/ai-dial-chat-hooks';
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
+import { ApiEndpoints } from '../server-api/base';
 
 /**
  * Converts a DIAL file ID (`files/{bucket}/{path}`) to the BFF download URL.
@@ -66,10 +67,46 @@ export const isAttachmentDownloadable = (
   attachment: DisplayAttachment,
 ): boolean => attachment.url == null || !isDialFolderId(attachment.url);
 
+const PROJECT_ID_PREFIX = 'projects/';
+const PROJECT_CONTEXT_FILE_SEGMENT = '/files/context/';
+
+/**
+ * Locator of a project's context file, `{projectId}/files/context/{fileName}`:
+ * the `url` a project page gives the attachment it opens in the canvas, so the
+ * canvas content resolvers fetch it like any other DIAL file.
+ */
+export const toProjectContextFileUrl = (
+  projectId: string,
+  fileName: string,
+): string => `${projectId}${PROJECT_CONTEXT_FILE_SEGMENT}${fileName}`;
+
+/**
+ * Converts a project context file locator to the BFF project file endpoint
+ * (`GET /api/v1/projects/:id/files/:fileName`). Returns `undefined` when the
+ * input is not such a locator: no `projects/` prefix, no project before the
+ * context segment, or no single-segment file name after it.
+ */
+export const resolveProjectContextFileDownloadUrl = (
+  url: string,
+): string | undefined => {
+  if (!url.startsWith(PROJECT_ID_PREFIX)) return undefined;
+  const separatorIndex = url.lastIndexOf(PROJECT_CONTEXT_FILE_SEGMENT);
+  if (separatorIndex <= PROJECT_ID_PREFIX.length) return undefined;
+  const projectId = url.slice(0, separatorIndex);
+  const fileName = url.slice(
+    separatorIndex + PROJECT_CONTEXT_FILE_SEGMENT.length,
+  );
+  if (projectId.endsWith('/') || fileName === '' || fileName.includes('/')) {
+    return undefined;
+  }
+  return `${ApiEndpoints.PROJECTS}/${encodeURIComponent(projectId)}/files/${encodeURIComponent(fileName)}`;
+};
+
 /**
  * Returns the best downloadable DIAL-file URL from an attachment's `url` or
  * `referenceUrl`, or `undefined` when neither is a valid DIAL `files/` path
- * to a file (a folder id is not downloadable).
+ * to a file (a folder id is not downloadable). A project context file locator
+ * in `url` resolves to the BFF project file endpoint.
  */
 export const resolveDialUrl = (
   attachment: DisplayAttachment,
@@ -80,7 +117,9 @@ export const resolveDialUrl = (
   if (isDownloadableDialFileId(attachment.referenceUrl)) {
     return resolveDialFileDownloadUrl(stripFragment(attachment.referenceUrl));
   }
-  return undefined;
+  return attachment.url == null
+    ? undefined
+    : resolveProjectContextFileDownloadUrl(attachment.url);
 };
 
 /**

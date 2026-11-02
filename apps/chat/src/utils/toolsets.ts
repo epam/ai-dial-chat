@@ -30,22 +30,6 @@ import { PRIMARY_LOCALE, resolveLocalizedText } from './locale';
 export const getToolsetRedirectUri = (): string =>
   resolveOAuthRedirectUri(ROUTES.ToolsetSignIn);
 
-/**
- * Derives a human-readable name from a raw toolset id when no `DialToolsetDto`
- * is available yet (e.g. a `toolset/signin` event for a toolset whose
- * metadata hasn't loaded) — takes the last path segment, strips a trailing
- * `__version` suffix, and decodes percent-encoding.
- */
-export const getToolsetFallbackName = (toolsetId: string): string => {
-  const lastSegment = toolsetId.split('/').pop() ?? toolsetId;
-  const [namePart] = lastSegment.split('__');
-  try {
-    return decodeURIComponent(namePart);
-  } catch {
-    return namePart;
-  }
-};
-
 const isSignedIn = (status?: string): boolean =>
   status === ToolsetAuthStatus.SignedIn;
 

@@ -6,8 +6,11 @@ import {
   getApiErrorDetails,
   getApiErrorStatus,
   getNextCronOccurrence,
+  getScheduledTasksLoginRetryState,
   OfflineCredentialsGateStatus,
   OfflineCredentialsLoginOutcomeType,
+  resolveScheduledTasksLoginBannerState,
+  ScheduledTasksLoginBannerState,
 } from '@epam/ai-dial-chat-hooks';
 import {
   ScheduledTaskDetailView,
@@ -33,9 +36,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import ScheduledTaskDeleteModal from '../../components/ScheduledTaskDeleteModal/ScheduledTaskDeleteModal';
-import ScheduledTasksLoginBanner, {
-  ScheduledTasksLoginBannerState,
-} from '../../components/ScheduledTasksLoginBanner/ScheduledTasksLoginBanner';
+import ScheduledTasksLoginBanner from '../../components/ScheduledTasksLoginBanner/ScheduledTasksLoginBanner';
 import {
   getConversationRoute,
   getScheduledTaskEditRoute,
@@ -91,15 +92,11 @@ const resolveCredentialsBannerState = ({
   status: OfflineCredentialsGateStatus;
 }): ScheduledTasksLoginBannerState | undefined => {
   if (!isCredentialsRequired) return undefined;
-  if (isLoggingIn) return ScheduledTasksLoginBannerState.LoginInProgress;
-  if (retryState) return retryState;
-  if (
-    status === OfflineCredentialsGateStatus.Available ||
-    status === OfflineCredentialsGateStatus.Unavailable
-  ) {
-    return ScheduledTasksLoginBannerState.Shown;
-  }
-  return undefined;
+  return resolveScheduledTasksLoginBannerState({
+    isLoggingIn,
+    retryState,
+    status,
+  });
 };
 
 const RUN_STATUS_LABEL_KEYS: Record<
@@ -728,33 +725,12 @@ const ScheduledTaskDetailPage: FC = () => {
       );
       setIsLoggingIn(false);
 
-      switch (outcome.type) {
-        case OfflineCredentialsLoginOutcomeType.Success:
-          setCredentialsStatusAnnouncement(
-            t(
-              ScheduledTasksI18nKeys.OfflineCredentialsBannerSuccessAnnouncement,
-            ),
-          );
-          setCredentialsRetryState(undefined);
-          break;
-        case OfflineCredentialsLoginOutcomeType.PopupBlocked:
-          setCredentialsRetryState(
-            ScheduledTasksLoginBannerState.RetryPopupBlocked,
-          );
-          break;
-        case OfflineCredentialsLoginOutcomeType.Cancelled:
-          setCredentialsRetryState(
-            ScheduledTasksLoginBannerState.RetryCancelled,
-          );
-          break;
-        case OfflineCredentialsLoginOutcomeType.TimedOut:
-          setCredentialsRetryState(ScheduledTasksLoginBannerState.RetryTimeout);
-          break;
-        case OfflineCredentialsLoginOutcomeType.Failure:
-        default:
-          setCredentialsRetryState(ScheduledTasksLoginBannerState.RetryFailed);
-          break;
+      if (outcome.type === OfflineCredentialsLoginOutcomeType.Success) {
+        setCredentialsStatusAnnouncement(
+          t(ScheduledTasksI18nKeys.OfflineCredentialsBannerSuccessAnnouncement),
+        );
       }
+      setCredentialsRetryState(getScheduledTasksLoginRetryState(outcome.type));
     };
     void run();
   }, [

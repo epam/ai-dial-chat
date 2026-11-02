@@ -55,6 +55,8 @@ const MarkdownEditor = lazy(async () => {
   return { default: module.MarkdownEditor };
 });
 
+const DEFAULT_OPEN_FILE_LABEL = (name: string): string => `Preview ${name}`;
+
 /** Presentational New and Edit project form: name, instructions and context files, including stored ones when editing. */
 export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
   values,
@@ -62,6 +64,8 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
   onFieldChange,
   contextFiles,
   onContextFilesChange,
+  onContextFileClick,
+  selectedContextFileId,
   allowedExtensions,
   maxFileBytes,
   maxTotalBytes,
@@ -137,6 +141,8 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
 
   const { isDragActive, handlers: dropSurfaceHandlers } =
     useFileDropSurface(addFiles);
+
+  const openFileLabel = labels.openFileLabel ?? DEFAULT_OPEN_FILE_LABEL;
 
   const handleRemoveFile = (id: string) => {
     const removed = contextFiles.find((file) => file.id === id);
@@ -352,9 +358,16 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
                   <li key={file.id} className="min-w-0">
                     <AttachmentCard
                       attachment={file}
+                      onClick={onContextFileClick}
+                      isSelected={
+                        onContextFileClick == null
+                          ? undefined
+                          : file.id === selectedContextFileId
+                      }
                       onRemove={handleRemoveFile}
                       labels={{
                         removeLabel: labels.removeFileLabel(file.name),
+                        clickLabel: openFileLabel(file.name),
                       }}
                     />
                   </li>

@@ -215,6 +215,10 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
         <button
           type="button"
           aria-label={isExpandAction ? expandLabel : clickLabel}
+          /* A selected state carried only by a CSS class is invisible to assistive technology, so a tile whose action is `onClick` reports it as pressed. An expandable pasted tile is not a toggle, so it never does. */
+          aria-pressed={
+            !isExpandAction && onClick !== undefined ? isSelected : undefined
+          }
           onClick={handleClick}
           className={mergeClasses(
             'absolute inset-0 cursor-pointer rounded-[11px]',

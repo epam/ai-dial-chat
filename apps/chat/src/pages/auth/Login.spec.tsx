@@ -112,6 +112,24 @@ describe('LoginPage', () => {
     expect(await screen.findByText(AuthI18nKeys.ProvidersError)).toBeTruthy();
   });
 
+  it('announces the error in the same live region that showed the loading text', async () => {
+    let rejectProviders: (reason: Error) => void = () => undefined;
+    mockGetProviders.mockReturnValue(
+      new Promise((_resolve, reject) => {
+        rejectProviders = reject;
+      }),
+    );
+
+    renderLogin();
+
+    const region = screen.getByRole('status');
+    expect(region.textContent).toBe(AuthI18nKeys.Loading);
+
+    rejectProviders(new Error('network error'));
+
+    expect(await screen.findByText(AuthI18nKeys.ProvidersError)).toBe(region);
+  });
+
   it('replaces an external callbackUrl with the app root', async () => {
     mockGetProviders.mockResolvedValue([{ id: 'keycloak', label: 'Keycloak' }]);
 
@@ -141,6 +159,28 @@ describe('LoginPage', () => {
     expect(mockUseAuthRedirect).toHaveBeenCalledWith();
   });
 
+  it('renders the sign-in screen as a section named by the login title', () => {
+    mockGetProviders.mockReturnValue(neverResolvingProviders);
+
+    renderLogin();
+
+    expect(
+      screen.getByRole('region', { name: AuthI18nKeys.LoginTitle }),
+    ).toBeTruthy();
+  });
+
+  it('lists providers under the localised provider-list label', async () => {
+    mockGetProviders.mockResolvedValue([{ id: 'keycloak', label: 'Keycloak' }]);
+
+    renderLogin();
+
+    expect(
+      await screen.findByRole('list', {
+        name: AuthI18nKeys.LoginProvidersLabel,
+      }),
+    ).toBeTruthy();
+  });
+
   it('renders theme favicon when currentThemeFavicon is set', () => {
     mockUseTheme.mockReturnValue({
       currentTheme: ThemeId.Light,
@@ -153,11 +193,10 @@ describe('LoginPage', () => {
 
     const { container } = renderLogin();
 
-    /* The favicon element carries no role/text/testid; asserting the inline
-     * `background-image` style is CSS-level behavior with no semantic query available. */
+    /* The logo is a decorative `aria-hidden` image with empty alt, so it has
+     * no role or name to query by. */
     // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
-    const faviconEl = container.querySelector('[style*="background-image"]');
+    const faviconEl = container.querySelector('img[src*="favicon.png"]');
     expect(faviconEl).toBeTruthy();
-    expect(faviconEl?.getAttribute('style')).toContain('favicon.png');
   });
 });

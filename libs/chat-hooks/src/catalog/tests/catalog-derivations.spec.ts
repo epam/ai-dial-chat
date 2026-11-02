@@ -2,6 +2,7 @@ import type { CatalogItem } from '@epam/ai-dial-catalog';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import {
+  canEditShareAccess,
   deriveAvailableTabIds,
   deriveFavoriteItems,
   filterCatalogItemsBySelector,
@@ -223,5 +224,18 @@ describe('reconcileFilterTopics', () => {
   it('returns empty set when items array is empty', () => {
     const persisted = new Set(['alpha']);
     expect(reconcileFilterTopics(persisted, [])).toEqual(new Set());
+  });
+});
+
+describe('canEditShareAccess', () => {
+  it('allows edit access for agents, prompts, skills and toolsets', () => {
+    expect(canEditShareAccess(CatalogEntityType.Agent)).toBe(true);
+    expect(canEditShareAccess(CatalogEntityType.Prompt)).toBe(true);
+    expect(canEditShareAccess(CatalogEntityType.Skill)).toBe(true);
+    expect(canEditShareAccess(CatalogEntityType.Toolset)).toBe(true);
+  });
+
+  it('keeps models view-only', () => {
+    expect(canEditShareAccess(CatalogEntityType.Model)).toBe(false);
   });
 });

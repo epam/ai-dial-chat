@@ -8,13 +8,13 @@ Where the app-level toast stack (`NotificationContainer`) sits in the viewport �
 
 ### Requirement: The toast stack is anchored to the bottom-end corner on desktop
 
-The app-level toast stack rendered by `NotificationContainer` (`apps/chat/src/components/Notification/NotificationContainer.tsx`) SHALL be the only placement owner for every notification queued through `useNotification()` (`apps/chat/src/context/NotificationContext.tsx`), whatever its variant (`Info`, `Success`, `Warning`, `Error`, `Loading`). Call sites SHALL NOT add placement of their own.
+The app-level toast stack rendered by `NotificationContainer` (`apps/chat/src/components/Notification/NotificationContainer.tsx`) — `NotificationStack` from `@epam/ai-dial-chat-shared` at its default placement, which this requirement describes — SHALL be the only placement owner for every notification queued through `useNotification()` (`apps/chat/src/context/NotificationContext.tsx`), whatever its variant (`Info`, `Success`, `Warning`, `Error`, `Loading`). Call sites SHALL NOT add placement of their own.
 
 From the `desktop` breakpoint (`tools/tailwind/theme.css`) up, the stack SHALL be fixed to the **bottom-end** corner of the viewport, with each toast aligned to the inline-end edge. The anchor SHALL use logical inset utilities only (releasing the inline-start inset at `desktop`, with `items-end`), never physical `right-*` / `left-*`, so the corner is bottom-right in LTR and bottom-left in RTL. On desktop the stack SHALL have a definite width (at most 600px and never wider than the viewport minus its gutters) rather than shrink-to-fit, so each entry's percentage max-width resolves against a fixed box.
 
 Placement SHALL be pure CSS through the `desktop:` variant. The container SHALL NOT branch in JS on `useIsMobile` or read `window.innerWidth`.
 
-State ownership is unchanged: the queue stays in `NotificationProvider`. This requirement adds no context, hook, or memoisation requirement beyond the existing `memo(NotificationContainer)` and memoised `NotificationEntry`.
+State ownership is unchanged: the queue stays in `NotificationProvider`. This requirement adds no context, hook, or memoisation requirement beyond the existing `memo(NotificationContainer)` and the memoised per-toast entry inside `NotificationStack`.
 
 **Feature flag:** none — always active.
 **i18n:** none — no new user-visible strings.
