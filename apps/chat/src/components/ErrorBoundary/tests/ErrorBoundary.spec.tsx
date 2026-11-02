@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
-import { ErrorBoundary as LibErrorBoundary } from 'react-error-boundary';
-import { MemoryRouter } from 'react-router';
+import { Link, MemoryRouter, useLocation } from 'react-router';
 import {
   afterEach,
   beforeEach,
@@ -12,94 +11,13 @@ import {
   type MockInstance,
 } from 'vitest';
 import { RootErrorBoundary, RouteErrorBoundary } from '../ErrorBoundary';
-import ErrorFallback from '../ErrorFallback';
 
 // react-i18next is globally mocked in test-setup.ts; t(key) returns the key string.
 
-const mockError = new Error('Test component crash — internal details');
-
-const renderFallback = (
-  overrides?: Partial<Parameters<typeof ErrorFallback>[0]>,
-) =>
-  render(
-    <ErrorFallback
-      error={mockError}
-      resetErrorBoundary={vi.fn()}
-      {...overrides}
-    />,
-  );
-
 const ThrowingChild = ({ shouldThrow }: { shouldThrow: boolean }) => {
-  if (shouldThrow) throw new Error('Render crash');
+  if (shouldThrow) throw new Error('Render crash — internal details');
   return <p>Normal content</p>;
 };
-
-// ─── ErrorFallback ────────────────────────────────────────────────────────────
-
-describe('ErrorFallback', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('renders a region named by the heading, not a live region', () => {
-    renderFallback();
-    expect(
-      screen.getByRole('region', { name: 'errorBoundary.heading' }),
-    ).toBeTruthy();
-    expect(screen.queryByRole('alert')).toBeNull();
-  });
-
-  it('renders the heading as the screen h1', () => {
-    renderFallback();
-    expect(
-      screen.getByRole('heading', { level: 1, name: 'errorBoundary.heading' }),
-    ).toBeTruthy();
-  });
-
-  it('renders the description', () => {
-    renderFallback();
-    expect(screen.getByText('errorBoundary.description')).toBeTruthy();
-  });
-
-  it('renders the retry button', () => {
-    renderFallback();
-    expect(
-      screen.getByRole('button', { name: 'buttons.tryAgain' }),
-    ).toBeTruthy();
-  });
-
-  it('sets focus on the action button on mount', () => {
-    renderFallback();
-    expect(
-      screen
-        .getByRole('button', { name: 'buttons.tryAgain' })
-        .matches(':focus'),
-    ).toBe(true);
-  });
-
-  it('uses actionLabel i18n key when provided', () => {
-    renderFallback({ actionLabel: 'errorBoundary.reloadLabel' });
-    expect(
-      screen.getByRole('button', { name: 'errorBoundary.reloadLabel' }),
-    ).toBeTruthy();
-  });
-
-  it('does not render raw error message in the DOM', () => {
-    renderFallback();
-    expect(
-      screen.queryByText('Test component crash — internal details'),
-    ).toBeNull();
-  });
-
-  it('calls resetErrorBoundary when retry button is clicked', async () => {
-    const resetErrorBoundary = vi.fn();
-    renderFallback({ resetErrorBoundary });
-    await userEvent.click(
-      screen.getByRole('button', { name: 'buttons.tryAgain' }),
-    );
-    expect(resetErrorBoundary).toHaveBeenCalledOnce();
-  });
-});
 
 // ─── RootErrorBoundary ────────────────────────────────────────────────────────
 
@@ -133,29 +51,42 @@ describe('RootErrorBoundary', () => {
     expect(screen.getByText('Normal content')).toBeTruthy();
   });
 
-  it('shows the reload fallback without reloading automatically', () => {
+  it('renders the translated heading as the screen h1 and the description', () => {
+    renderRoot(true);
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'errorBoundary.heading' }),
+    ).toBeTruthy();
+    expect(screen.getByText('errorBoundary.description')).toBeTruthy();
+  });
+
+  it('announces the crash through an assertive live region', () => {
+    renderRoot(true);
+    expect(screen.getByRole('alert').textContent).toBe(
+      'errorBoundary.heading',
+    );
+  });
+
+  it('focuses the reload button without reloading automatically', () => {
     renderRoot(true);
     expect(reloadSpy).not.toHaveBeenCalled();
     expect(
-      screen.getByRole('button', {
-        name: 'errorBoundary.reloadLabel',
-      }),
-    ).toBeTruthy();
+      screen
+        .getByRole('button', { name: 'errorBoundary.reloadLabel' })
+        .matches(':focus'),
+    ).toBe(true);
   });
 
   it('reloads only after the user clicks the recovery button', async () => {
     renderRoot(true);
     await userEvent.click(
-      screen.getByRole('button', {
-        name: 'errorBoundary.reloadLabel',
-      }),
+      screen.getByRole('button', { name: 'errorBoundary.reloadLabel' }),
     );
     expect(reloadSpy).toHaveBeenCalledOnce();
   });
 
-  it('does not render raw error message in the DOM', () => {
+  it('does not render the raw error message in the DOM', () => {
     renderRoot(true);
-    expect(screen.queryByText('Render crash')).toBeNull();
+    expect(screen.queryByText(/internal details/)).toBeNull();
   });
 });
 
@@ -175,61 +106,80 @@ describe('RouteErrorBoundary', () => {
     consoleErrorSpy.mockRestore();
   });
 
+  const renderRoute = (pathname: string, shouldThrow: boolean) => (
+    <MemoryRouter initialEntries={[pathname]}>
+      <RouteErrorBoundary>
+        <ThrowingChild shouldThrow={shouldThrow} />
+      </RouteErrorBoundary>
+    </MemoryRouter>
+  );
+
   it('renders children normally when no error occurs', () => {
-    render(
-      <MemoryRouter initialEntries={['/catalog']}>
-        <RouteErrorBoundary>
-          <ThrowingChild shouldThrow={false} />
-        </RouteErrorBoundary>
-      </MemoryRouter>,
-    );
+    render(renderRoute('/catalog', false));
     expect(screen.getByText('Normal content')).toBeTruthy();
   });
 
-  it('shows the fallback when a child throws', () => {
+  it('shows the fallback with a try-again action when a child throws', () => {
+    render(renderRoute('/catalog', true));
+    expect(
+      screen.getByRole('region', { name: 'errorBoundary.heading' }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'buttons.tryAgain' }),
+    ).toBeTruthy();
+  });
+
+  it('renders the children again when try again is clicked', async () => {
+    let shouldThrow = true;
+    const Flaky = () => <ThrowingChild shouldThrow={shouldThrow} />;
     render(
       <MemoryRouter initialEntries={['/catalog']}>
         <RouteErrorBoundary>
-          <ThrowingChild shouldThrow={true} />
+          <Flaky />
+        </RouteErrorBoundary>
+      </MemoryRouter>,
+    );
+
+    shouldThrow = false;
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.tryAgain' }),
+    );
+
+    expect(screen.getByText('Normal content')).toBeTruthy();
+  });
+
+  it('shows the fallback again when the child throws again after try again', async () => {
+    render(renderRoute('/catalog', true));
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'buttons.tryAgain' }),
+    );
+
+    expect(
+      screen.getByRole('region', { name: 'errorBoundary.heading' }),
+    ).toBeTruthy();
+  });
+
+  it('clears the error when the route changes', async () => {
+    const RouteChild = () => (
+      <ThrowingChild shouldThrow={useLocation().pathname === '/catalog'} />
+    );
+    render(
+      <MemoryRouter initialEntries={['/catalog']}>
+        <Link to="/conversations">Go to conversations</Link>
+        <RouteErrorBoundary>
+          <RouteChild />
         </RouteErrorBoundary>
       </MemoryRouter>,
     );
     expect(
       screen.getByRole('region', { name: 'errorBoundary.heading' }),
     ).toBeTruthy();
-  });
 
-  it('resets error state when the route key changes', () => {
-    /*
-     * Test the underlying key-change mechanism directly:
-     * RouteErrorBoundary uses resetKeys=[pathname], which the library treats the same as a key change.
-     */
-    const { rerender } = render(
-      <ErrorBoundaryWithKey routeKey="/catalog" shouldThrow={true} />,
+    await userEvent.click(
+      screen.getByRole('link', { name: 'Go to conversations' }),
     );
-    expect(
-      screen.getByRole('region', { name: 'errorBoundary.heading' }),
-    ).toBeTruthy();
 
-    rerender(
-      <ErrorBoundaryWithKey routeKey="/conversations" shouldThrow={false} />,
-    );
     expect(screen.getByText('Normal content')).toBeTruthy();
-    expect(
-      screen.queryByRole('region', { name: 'errorBoundary.heading' }),
-    ).toBeNull();
   });
 });
-
-// Helper: remounts the library boundary to verify recovery after a route identity change.
-const ErrorBoundaryWithKey = ({
-  routeKey,
-  shouldThrow,
-}: {
-  routeKey: string;
-  shouldThrow: boolean;
-}) => (
-  <LibErrorBoundary key={routeKey} FallbackComponent={ErrorFallback}>
-    <ThrowingChild shouldThrow={shouldThrow} />
-  </LibErrorBoundary>
-);

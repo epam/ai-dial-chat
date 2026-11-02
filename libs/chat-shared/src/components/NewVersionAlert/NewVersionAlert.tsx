@@ -1,8 +1,12 @@
-import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
+  PrimaryButton,
+  StateScreen,
+} from '@epam/ai-dial-ui-kit';
 import { IconRefresh } from '@tabler/icons-react';
 import { memo, type FC } from 'react';
 import { buildCssVars } from '../../utils/build-css-vars';
-import { FullScreenAlert } from '../FullScreenAlert/FullScreenAlert';
 import styles from './NewVersionAlert.module.scss';
 
 /** User-visible strings of `NewVersionAlert`. */
@@ -31,6 +35,7 @@ export interface NewVersionAlertProps {
   colors?: NewVersionAlertColors;
 }
 
+// Page state, not a live update: the auto-focused action is what gets announced.
 /** Full-screen prompt shown instead of the app once a newer build has been deployed. */
 export const NewVersionAlert: FC<NewVersionAlertProps> = memo(
   ({ onReload, labels, colors }) => (
@@ -38,7 +43,7 @@ export const NewVersionAlert: FC<NewVersionAlertProps> = memo(
       className="size-full"
       style={buildCssVars({ '--nva-icon': colors?.icon })}
     >
-      <FullScreenAlert
+      <StateScreen
         icon={
           <IconRefresh
             aria-hidden="true"
@@ -47,12 +52,17 @@ export const NewVersionAlert: FC<NewVersionAlertProps> = memo(
             className={styles.icon}
           />
         }
-        heading={labels?.heading ?? 'New version available'}
-        message={
+        title={labels?.heading ?? 'New version available'}
+        description={
           labels?.message ?? 'Reload the page to get the latest version.'
         }
-        actionLabel={labels?.reloadLabel ?? 'Reload the page'}
-        onAction={onReload}
+        action={
+          <PrimaryButton
+            autoFocus
+            label={labels?.reloadLabel ?? 'Reload the page'}
+            onClick={onReload}
+          />
+        }
       />
     </div>
   ),

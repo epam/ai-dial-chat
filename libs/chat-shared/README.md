@@ -44,7 +44,7 @@ Peers:
 
 - `react` ^19.2.8
 - `react-dom` ^19.2.8 (`NotificationStack` portals into `document.body`)
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.62
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.66
 - `@epam/ai-dial-react-file-manager` ^0.4.0-dev.25
 
 Installed for you as dependencies: `ag-grid-community`, `@tabler/icons-react`, `react-markdown`,
@@ -676,38 +676,13 @@ import { PanelEmptyState } from '@epam/ai-dial-chat-shared';
 />;
 ```
 
-### FullScreenAlert
-
-Full-screen state that replaces the whole app — an error fallback, a blocking
-prompt — built on the kit's `StateScreen`: an icon badge, the heading as the
-screen's `h1` (naming the `section`), a message, and one `PrimaryButton` that
-takes focus on mount. It has no live-region role: the screen is page state,
-and the focused action is what gets announced. All strings come from the host.
-
-```tsx
-import { FullScreenAlert } from '@epam/ai-dial-chat-shared';
-import { DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
-import { IconAlertTriangle } from '@tabler/icons-react';
-
-<FullScreenAlert
-  icon={
-    <IconAlertTriangle
-      aria-hidden="true"
-      size={48}
-      stroke={DIAL_KIT_ICON_STROKE}
-    />
-  }
-  heading="Something went wrong"
-  message="Try again in a moment."
-  actionLabel="Try again"
-  onAction={resetErrorBoundary}
-/>;
-```
-
 ### NewVersionAlert
 
-`FullScreenAlert` preset shown instead of the app once a newer build has been
-deployed: a refresh icon, `NewVersionAlertLabels` (`heading`, `message`,
+Kit `StateScreen` preset shown instead of the app once a newer build has been
+deployed: a refresh icon, the heading as the screen's `h1` (naming the
+`section`), a message and a `PrimaryButton` that takes focus on mount. It has
+no live-region role: the screen is page state, and the focused action is what
+gets announced. Takes `NewVersionAlertLabels` (`heading`, `message`,
 `reloadLabel`, each with an English default) and `onReload`. The host decides
 what reloading means, normally `window.location.reload()`.
 `NewVersionAlertColors.icon` sets the icon color (default `--text-accent`).
@@ -721,22 +696,9 @@ import { NewVersionAlert } from '@epam/ai-dial-chat-shared';
 />;
 ```
 
-### ErrorAlert
-
-`FullScreenAlert` preset for an error fallback: a warning icon,
-`ErrorAlertLabels` (`heading`, `message`, `actionLabel`, each with an English
-default) and `onAction`. The host decides how to recover — reset its error
-boundary or reload the page. `ErrorAlertColors.icon` sets the icon color
-(default `--text-error`).
-
-```tsx
-import { ErrorAlert } from '@epam/ai-dial-chat-shared';
-import type { FallbackProps } from 'react-error-boundary';
-
-const ErrorFallback = ({ resetErrorBoundary }: FallbackProps) => (
-  <ErrorAlert onAction={resetErrorBoundary} />
-);
-```
+For a crash screen, use the kit's `ErrorBoundary` from `@epam/ai-dial-ui-kit`:
+it catches the error, draws the same `StateScreen` layout and announces the
+crash.
 
 ### NotificationStack
 
