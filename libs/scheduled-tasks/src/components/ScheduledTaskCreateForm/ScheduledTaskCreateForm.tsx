@@ -653,7 +653,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                     <div className="flex flex-row gap-3">
                       <ScheduledTaskBoundaryField
                         id="scheduled-task-start-date"
-                label={labels.startDateLabel}
+                        label={labels.startDateLabel}
                         placeholder={labels.startDatePlaceholder}
                         value={values.startDate}
                         onChange={(value) => onFieldChange('startDate', value)}
@@ -665,7 +665,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
 
                       <ScheduledTaskBoundaryField
                         id="scheduled-task-end-date"
-                label={labels.endDateLabel}
+                        label={labels.endDateLabel}
                         placeholder={labels.endDatePlaceholder}
                         value={values.endDate}
                         onChange={(value) => onFieldChange('endDate', value)}

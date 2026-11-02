@@ -8,9 +8,7 @@ import {
 import { DESCRIPTION_MAX_LENGTH } from '../constants/scheduled-task-create-form';
 import type { ScheduledTaskCreateFormValues } from '../models/scheduled-task-create-form-props';
 import { ScheduledTaskRepeat } from '../types/scheduled-task-schedule';
-import {
-  TIME_OF_DAY_PATTERN,
-} from '../utils/calendar-value';
+import { TIME_OF_DAY_PATTERN } from '../utils/calendar-value';
 
 /** Stable error codes that a host translates at its application boundary. */
 export enum ScheduledTaskValidationErrorCode {
