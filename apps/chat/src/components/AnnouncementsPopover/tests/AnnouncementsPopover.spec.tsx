@@ -140,7 +140,8 @@ describe('AnnouncementsPopover — accessibility', () => {
     const pill = screen.getByRole('button', { name: PILL_NAME });
     expect(pill.getAttribute('aria-expanded')).toBe('false');
     expect(pill.getAttribute('aria-haspopup')).toBeNull();
-    expect(pill.getAttribute('aria-controls')).toBeTruthy();
+    // The overlay is unmounted while closed, so nothing to point aria-controls at
+    expect(pill.getAttribute('aria-controls')).toBeNull();
   });
 
   it('renders the overlay without a menu or dialog role', async () => {

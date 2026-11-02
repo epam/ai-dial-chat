@@ -19,8 +19,8 @@
     }
   },
   "dependencies": {
-    "react-window": "^2.2.7",
-    "@tabler/icons-react": "^3.44.0",
+    "react-window": "^2.5.3",
+    "@tabler/icons-react": "^3.50.0",
     "@epam/ai-dial-attachment-input": "*"
   },
   "peerDependencies": {
