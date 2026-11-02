@@ -135,7 +135,7 @@ The `ProjectView` header SHALL render, in inline order:
 - a back kit `GhostIconButton` named `labels.backLabel`, with `IconArrowNarrowLeft` (`aria-hidden`, `stroke={DIAL_KIT_ICON_STROKE}`, `rtl:scale-x-[-1]`), calling `onBack`;
 - the name as the page's `<h1>`, truncated to one line with `EllipsisTooltip`, so the full name is in the tooltip;
 - a Pin kit `GhostButton` with an icon and a text label:
-  - `IconPin` and `labels.pinLabel` when unpinned, `IconPinnedOff` and `labels.unpinLabel` when pinned, so the label names the action and shows the state; it has no `aria-pressed`, because a pressed state would contradict a label that already changes;
+  - `IconPin` and `labels.pinLabel` when unpinned, `IconPinOff` (a crossed-out `IconPin` drawn in `libs/projects/src/components/IconPinOff/IconPinOff.ts`, since Tabler has none) and `labels.unpinLabel` when pinned, so the label names the action and shows the state; it has no `aria-pressed`, because a pressed state would contradict a label that already changes;
   - while `isPinPending` it is `aria-disabled` and ignores activation but stays focusable, so keyboard focus is not dropped to `<body>`;
   - it calls `onTogglePin`;
 - a Publish `NeutralButton` (`IconWorldShare`, `labels.publishLabel`) and an Edit `NeutralButton` (`IconPencilMinus`, `labels.editLabel`), when their callbacks are supplied;

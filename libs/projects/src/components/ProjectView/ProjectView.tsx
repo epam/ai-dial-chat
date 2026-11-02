@@ -29,7 +29,6 @@ import {
   IconDownload,
   IconPencilMinus,
   IconPin,
-  IconPinnedOff,
   IconShare,
   IconTrashX,
   IconWorldShare,
@@ -41,6 +40,7 @@ import type {
   ProjectViewProps,
 } from '../../models/project-view-props';
 import { filterContextFileItems } from '../../utils/context-files';
+import { IconPinOff } from '../IconPinOff/IconPinOff';
 import styles from './ProjectView.module.scss';
 
 const toDisplayAttachment = (
@@ -323,7 +323,7 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
           label={isPinned ? labels.unpinLabel : labels.pinLabel}
           iconBefore={
             isPinned ? (
-              <IconPinnedOff
+              <IconPinOff
                 size={DIAL_ICON_SIZE.MD}
                 aria-hidden
                 stroke={DIAL_KIT_ICON_STROKE}
