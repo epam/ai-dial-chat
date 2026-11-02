@@ -43,6 +43,7 @@ is installed as dependencies.
 Peers:
 
 - `react` ^19.2.8
+- `react-dom` ^19.2.8 (`NotificationStack` portals into `document.body`)
 - `@epam/ai-dial-ui-kit` ^0.16.0-dev.59
 - `@epam/ai-dial-react-file-manager` ^0.4.0-dev.25
 
@@ -59,7 +60,7 @@ of this package already has its own test tooling, not this library's).
 ### Entry-point-to-peer matrix
 
 All entries share the package's required peer set: `@epam/ai-dial-ui-kit` and
-`@epam/ai-dial-react-file-manager`, in addition to React.
+`@epam/ai-dial-react-file-manager`, in addition to React and React DOM.
 
 The build preserves source-module boundaries so consumers can remove unused features.
 The FilterTab and CodeBlockTheme packed probes verify small root-import bundles without
@@ -735,6 +736,28 @@ import type { FallbackProps } from 'react-error-boundary';
 const ErrorFallback = ({ resetErrorBoundary }: FallbackProps) => (
   <ErrorAlert onAction={resetErrorBoundary} />
 );
+```
+
+### NotificationStack
+
+Portalled stack of kit `Notification` toasts. Plain toasts dismiss themselves
+after `dismissDelayMs` (default `5000`); a toast with an `action` or a
+`requestId` stays until closed. A `requestId` renders as a copyable "Request ID"
+row under the message, with the copy result announced through a `LiveRegion`.
+Long messages scroll inside the toast, and the stack scrolls to each new toast.
+Strings come from `NotificationStackLabels` (English defaults); `className`
+replaces the default bottom-edge / bottom-end-corner placement; the request-id
+row takes `requestIdClassName` (default `'dial-tiny-text'`). The host owns the
+list and passes `items` in arrival order.
+
+```tsx
+import { NotificationStack } from '@epam/ai-dial-chat-shared';
+
+<NotificationStack
+  items={notifications}
+  onDismiss={dismissNotification}
+  labels={{ requestId: t('notification.requestId.label') }}
+/>;
 ```
 
 ### ItemHeader

@@ -1717,6 +1717,24 @@ const Composer = ({ allowedMimeTypes }: { allowedMimeTypes: string[] }) => {
 
 **Returns** (`UseAttachmentValidationResult`): `{ inputAttachmentTypes: string[], isAttachmentsAllowed: boolean, validateAttachment: (attachment: Attachment) => AttachmentErrorReason | undefined, fileAccept: string | undefined }`.
 
+### buildAttachConstraintDescription / areAllMimeTypesAllowed
+
+`buildAttachConstraintDescription(constraints, labels)` returns the attach dialog's limits as text: the size and type limits as one sentence (`maxSizeWithTypes`, `maxSizeOnly`, or the type label alone), then `upToFiles`, joined with `. ` and ending in `.` — or `null` when nothing is limited. The type label is `allowedTypesLabel` when given, `labels.allTypes` when `allowedTypes` holds `*` or `*/*`, otherwise the extension labels of `allowedTypes`. `areAllMimeTypesAllowed(types)` is that wildcard check. `AttachConstraints` and `AttachConstraintLabels` are exported. Available from the root and `./attachments`.
+
+```ts
+import { buildAttachConstraintDescription } from '@epam/ai-dial-chat-hooks/attachments';
+
+const description = buildAttachConstraintDescription(
+  { allowedTypes, maxFileSize, maxCount },
+  {
+    allTypes: t('allTypes'),
+    maxSizeWithTypes: (maxSize, types) => t('maxSizeTypes', { maxSize, types }),
+    maxSizeOnly: (maxSize) => t('maxSize', { maxSize }),
+    upToFiles: (count) => t('upToFiles', { count }),
+  },
+);
+```
+
 ### useConversationAnnotationPool
 
 Groups the html-tag citation annotations a conversation persisted in `customViewState.annotations` by citation id, through `useHtmlTagAnnotationGroups` from `@epam/ai-dial-quotations`. Malformed or absent annotations yield the shared empty result, so a host can pass any conversation, `null` or `undefined`. Available from the root and `./conversation-sources`.

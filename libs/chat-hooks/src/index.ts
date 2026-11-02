@@ -3,6 +3,7 @@ export * from './api-transport/create-csrf-middleware';
 export * from './api-transport/create-unauthorized-middleware';
 export * from './attachment/useAttachmentAction/useAttachmentAction';
 export * from './attachment/useAttachmentValidation/useAttachmentValidation';
+export * from './attachment/attach-constraints';
 export { EXPORT_APP_NAME } from './conversation/conversation-transfer/export-conversation';
 export {
   formatDateYM,
