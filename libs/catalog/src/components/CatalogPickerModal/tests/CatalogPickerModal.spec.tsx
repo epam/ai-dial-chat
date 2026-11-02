@@ -313,10 +313,9 @@ describe('CatalogPickerModal', () => {
       );
 
       expect(listViewScrollToTop).toHaveBeenCalledOnce();
-      // Focus is a document-level fact; no Testing Library query reports it.
-      expect(document.activeElement).toBe(
-        screen.getByRole('textbox', { name: 'Search' }),
-      );
+      expect(
+        screen.getByRole('textbox', { name: 'Search' }).matches(':focus'),
+      ).toBe(true);
     });
 
     it('is named by labels.scrollToTop', () => {
