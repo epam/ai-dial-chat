@@ -53,6 +53,27 @@ run by creation time, update time and descending ID; applying an older active
 run preserves its original relative position. Unchanged active selections
 reuse the collapsed array.
 
+For DIAL Core conversation listings, pass `getScheduledTaskRunGroupKey` as
+`getGroupKey` (it keys a run by `{bucket}/{scheduleId}`, because a schedule id
+is unique only per owner) and `isScheduledTaskRunCollapsible` as
+`isCollapsible` (pinned runs and runs shared with or published to the user stay
+visible):
+
+```ts
+import {
+  collapseScheduledTaskConversations,
+  getScheduledTaskRunGroupKey,
+  isScheduledTaskRunCollapsible,
+} from '@epam/ai-dial-chat-hooks/conversation';
+
+const visible = collapseScheduledTaskConversations(items, {
+  getGroupKey: getScheduledTaskRunGroupKey,
+  isCollapsible: isScheduledTaskRunCollapsible,
+  conversationIdsMatch,
+  activeConversationId,
+});
+```
+
 `useConversationDiscovery` accepts `UseConversationDiscoveryOptions`: `items`,
 `refresh`, `sessionKey`, `normalizeId`, optional `onError`, `retryCount` and
 `retryDelayMs`. Defaults are five additional retries, two seconds after each

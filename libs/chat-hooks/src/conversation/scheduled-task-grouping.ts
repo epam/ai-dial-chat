@@ -1,3 +1,6 @@
+import type { ConversationListItemDto } from '@epam/ai-dial-chat-api-client';
+import { safeDecodeURIComponent } from '../shared/string-utils';
+
 /** Timestamped conversation used for immutable scheduled-run grouping. */
 export interface ScheduledTaskConversation {
   /** Host conversation identity. */
@@ -132,3 +135,29 @@ export const collapseScheduledTaskConversations = <
     groupScheduledTaskConversations(items, options),
     options.activeConversationId,
   );
+
+const CONVERSATION_RESOURCE_TYPE = 'conversations';
+
+/** Returns a DIAL Core run's `{bucket}/{scheduleId}` group key, or `undefined` when the item is not a scheduled-task run. */
+export const getScheduledTaskRunGroupKey = (
+  item: ConversationListItemDto,
+): string | undefined => {
+  if (!item.isScheduledTask || !item.scheduleId) return undefined;
+  // `scheduleId` is unique only per owner, so the bucket keeps owners apart.
+  const segments = safeDecodeURIComponent(item.id).split('/');
+  if (segments[0] !== CONVERSATION_RESOURCE_TYPE || !segments[1]) {
+    return undefined;
+  }
+  return `${segments[1]}/${item.scheduleId}`;
+};
+
+/** Returns whether a DIAL Core conversation may be hidden behind a newer run: not pinned, shared with or published to the user. */
+export const isScheduledTaskRunCollapsible = (
+  item: ConversationListItemDto,
+): boolean =>
+  /*
+   * A run shared with or published to the user belongs to someone else, so
+   * its task History is unreachable and hiding it would lose the run. A pin
+   * keeps a run visible on purpose.
+   */
+  !item.isPinned && !item.sharedWithMe && !item.publishedWithMe;
