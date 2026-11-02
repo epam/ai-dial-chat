@@ -256,6 +256,43 @@ const markdownLabels: ScheduledTaskInstructionsMarkdownLabels = {
 />;
 ```
 
+### ScheduledTasksLoginBanner
+
+Non-dismissible warning banner (kit `WarningMessageNotification`, neutral
+surface) asking the user to log in so scheduled tasks keep running offline.
+`isVisible` draws it; `isLoggingIn` disables the button and shows
+`labels.loggingIn`; a `retryMessage` switches the button to `labels.retry` and
+is announced. A visually hidden `LiveRegion` stays mounted whether or not the
+banner is visible and announces `retryMessage` or, without one,
+`liveAnnouncement`. Omitting `onLogIn` hides the button. Strings come from
+`ScheduledTasksLoginBannerLabels` with English defaults.
+
+```tsx
+import { ScheduledTasksLoginBanner } from '@epam/ai-dial-scheduled-tasks';
+
+<ScheduledTasksLoginBanner
+  isVisible={needsLogin}
+  isLoggingIn={isLoggingIn}
+  retryMessage={retryMessage}
+  liveAnnouncement={announcement}
+  onLogIn={logIn}
+/>;
+```
+
+### ScheduledTasksLimitedAccessBanner
+
+Non-dismissible error section message for missing scheduler access, with the
+bold title and the body on one line. Strings come from
+`ScheduledTasksLimitedAccessBannerLabels` (English defaults); typography from
+`titleClassName` (default `'dial-small-paragraph-semi-text'`) and
+`bodyClassName` (default `'dial-small-paragraph-text'`).
+
+```tsx
+import { ScheduledTasksLimitedAccessBanner } from '@epam/ai-dial-scheduled-tasks';
+
+<ScheduledTasksLimitedAccessBanner labels={{ title, body }} />;
+```
+
 ### ScheduledTaskDeleteConfirmation
 
 Controlled deletion presentation that leaves mutations, routing, notifications,

@@ -1,23 +1,6 @@
 import { ScheduledTasksLoginBannerState } from '@epam/ai-dial-chat-hooks';
-import {
-  DIAL_ICON_SIZE,
-  DIAL_KIT_ICON_STROKE,
-  LinkButton,
-  LiveRegion,
-  LiveRegionElement,
-  NotificationSurface,
-  WarningMessageNotification,
-} from '@epam/ai-dial-ui-kit';
-import { IconArrowRight } from '@tabler/icons-react';
+import { ScheduledTasksLoginBanner as LoginBanner } from '@epam/ai-dial-scheduled-tasks';
 import { memo, type FC } from 'react';
-
-/** Retry states — every state other than `Shown` and `LoginInProgress`. */
-const RETRY_STATES = new Set<ScheduledTasksLoginBannerState>([
-  ScheduledTasksLoginBannerState.RetryPopupBlocked,
-  ScheduledTasksLoginBannerState.RetryCancelled,
-  ScheduledTasksLoginBannerState.RetryTimeout,
-  ScheduledTasksLoginBannerState.RetryFailed,
-]);
 
 export interface Props {
   /** `undefined` renders nothing visible — covers the page's checking/hidden/error gate states. */
@@ -62,27 +45,10 @@ const retryMessageFor = (
   }
 };
 
-const resolvePrimaryLabel = (
-  state: ScheduledTasksLoginBannerState,
-  props: Pick<
-    Props,
-    'loginButtonLabel' | 'retryButtonLabel' | 'loggingInLabel'
-  >,
-): string => {
-  if (state === ScheduledTasksLoginBannerState.LoginInProgress) {
-    return props.loggingInLabel;
-  }
-  if (RETRY_STATES.has(state)) {
-    return props.retryButtonLabel;
-  }
-  return props.loginButtonLabel;
-};
-
 /**
- * Non-blocking, non-dismissible inline banner shown on the Scheduled Tasks
- * list page when offline-credentials login is required. Takes no SDK/route
- * import — all state and callbacks are supplied by `ScheduledTasksPage` via
- * `useOfflineCredentialsGate`/`useOfflineCredentialsLogin`.
+ * Inline banner on the Scheduled Tasks pages when offline-credentials login is
+ * required: maps the page's banner state onto the lib banner's visibility,
+ * progress and retry message.
  */
 const ScheduledTasksLoginBanner: FC<Props> = ({
   state,
@@ -97,64 +63,26 @@ const ScheduledTasksLoginBanner: FC<Props> = ({
   failedMessage,
   liveAnnouncement,
   onLogIn,
-}) => {
-  const handleLogIn = () => onLogIn?.();
-
-  const isLoggingIn = state === ScheduledTasksLoginBannerState.LoginInProgress;
-  const isRetry = state !== undefined && RETRY_STATES.has(state);
-  const retryMessage = retryMessageFor(state, {
-    popupBlockedMessage,
-    cancelledMessage,
-    timeoutMessage,
-    failedMessage,
-  });
-
-  /*
-   * The polite status span sits outside the conditional banner so it stays
-   * mounted across every state change (including `undefined`) — a live
-   * region that mounts in the same render as its text is announced
-   * unreliably.
-   *
-   * The banner keeps the warning variant's own `role="alert"`: it appears
-   * when scheduled tasks newly need a login to keep running, which the user
-   * should hear at once rather than after the queue drains.
-   */
-  return (
-    <>
-      {state !== undefined && (
-        <WarningMessageNotification
-          surface={NotificationSurface.Neutral}
-          title={title}
-          message={body}
-          action={
-            onLogIn && (
-              <LinkButton
-                label={resolvePrimaryLabel(state, {
-                  loginButtonLabel,
-                  retryButtonLabel,
-                  loggingInLabel,
-                })}
-                disabled={isLoggingIn}
-                iconAfter={
-                  <IconArrowRight
-                    size={DIAL_ICON_SIZE.SM}
-                    stroke={DIAL_KIT_ICON_STROKE}
-                    aria-hidden
-                    className="rtl:scale-x-[-1]"
-                  />
-                }
-                onClick={handleLogIn}
-                className="min-h-11 min-w-11"
-              />
-            )
-          }
-        />
-      )}
-      <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
-        {isRetry ? retryMessage : liveAnnouncement}
-      </LiveRegion>
-    </>
-  );
-};
+}) => (
+  <LoginBanner
+    isVisible={state !== undefined}
+    isLoggingIn={state === ScheduledTasksLoginBannerState.LoginInProgress}
+    retryMessage={retryMessageFor(state, {
+      popupBlockedMessage,
+      cancelledMessage,
+      timeoutMessage,
+      failedMessage,
+    })}
+    liveAnnouncement={liveAnnouncement}
+    labels={{
+      title,
+      body,
+      logIn: loginButtonLabel,
+      retry: retryButtonLabel,
+      loggingIn: loggingInLabel,
+    }}
+    onLogIn={onLogIn}
+  />
+);
 
 export default memo(ScheduledTasksLoginBanner);
