@@ -4,6 +4,7 @@ import {
   attachToProjectGeneration,
   deleteProjectConversation,
   getProjectConversation,
+  markProjectConversationViewed,
   saveProjectConversation,
 } from '../../server-api/project-conversations.api';
 import { createProjectConversationDataSource } from '../project-conversation-data-source';
@@ -20,6 +21,7 @@ vi.mock('../../server-api/project-conversations.api', () => ({
   attachToProjectGeneration: vi.fn(),
   deleteProjectConversation: vi.fn(),
   getProjectConversation: vi.fn(),
+  markProjectConversationViewed: vi.fn(),
   saveProjectConversation: vi.fn(),
 }));
 
@@ -113,8 +115,37 @@ describe('createProjectConversationDataSource', () => {
     expect(source.getExitRoute()).toBe('/projects/view/a1b2c3/q4');
     expect(source.isReadOnly(ID)).toBe(true);
     expect(create(true).isReadOnly(ID)).toBe(false);
-    expect(source.listSync).toBe(NO_CONVERSATION_LIST_SYNC);
+    expect(source.listSync).toMatchObject({
+      updateTitle: NO_CONVERSATION_LIST_SYNC.updateTitle,
+      bumpActivity: NO_CONVERSATION_LIST_SYNC.bumpActivity,
+      remove: NO_CONVERSATION_LIST_SYNC.remove,
+      refresh: NO_CONVERSATION_LIST_SYNC.refresh,
+      shouldMarkOpenChatViewed: true,
+    });
     expect(source.canDuplicate).toBe(false);
+  });
+
+  it('marks the open chat viewed through the shared queue and drops a waiting mark when a generation starts', async () => {
+    let releaseFirst!: () => void;
+    vi.mocked(markProjectConversationViewed)
+      .mockReturnValueOnce(
+        new Promise<void>((resolve) => {
+          releaseFirst = resolve;
+        }),
+      )
+      .mockResolvedValue(undefined);
+    const { listSync } = create();
+    const other = 'projects/a1b2c3/q4/conversations/gpt-4o__Other__2';
+
+    const first = listSync.markViewed(other);
+    const second = listSync.markViewed(ID);
+    listSync.markUnread(ID);
+    releaseFirst();
+    await Promise.all([first, second]);
+
+    expect(vi.mocked(markProjectConversationViewed).mock.calls).toEqual([
+      [other],
+    ]);
   });
 
   it('re-reads the conversation until its title changes', async () => {

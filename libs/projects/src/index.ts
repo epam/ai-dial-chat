@@ -17,6 +17,7 @@ export { ProjectCreateForm } from './components/ProjectCreateForm/ProjectCreateF
 export { ProjectView } from './components/ProjectView/ProjectView';
 export { ProjectConversationList } from './components/ProjectConversationList/ProjectConversationList';
 export type {
+  ProjectConversationListColors,
   ProjectConversationListItem,
   ProjectConversationListLabels,
   ProjectConversationListProps,

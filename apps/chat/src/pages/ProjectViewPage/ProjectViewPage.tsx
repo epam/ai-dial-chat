@@ -3,10 +3,21 @@ import {
   useLatestCanvasRequest,
   useOpenAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
-import { mapProjectDetailsToViewModel } from '@epam/ai-dial-chat-hooks/project';
+import {
+  mapProjectDetailsToViewModel,
+  ProjectRefreshOutcome,
+} from '@epam/ai-dial-chat-hooks/project';
 import { DeleteConfirmationDialog } from '@epam/ai-dial-chat-shared';
 import { ProjectView } from '@epam/ai-dial-projects';
-import { memo, useCallback, useMemo, useRef, useState, type FC } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FC,
+} from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 import ProjectConversationsSection from '../../components/ProjectConversationsSection/ProjectConversationsSection';
@@ -19,10 +30,14 @@ import {
 } from '../../constants/routes';
 import { ProjectsI18nKeys } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
+import { useNotification } from '../../context/NotificationContext';
+import { useUserConfig } from '../../context/UserConfigContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
 import { useProject } from '../../hooks/projects/useProject';
 import { useProjectActions } from '../../hooks/projects/useProjectActions';
+import { useProjectConversations } from '../../hooks/projects/useProjectConversations';
 import { useProjectViewLabels } from '../../hooks/projects/useProjectViewLabels';
+import { useProjectWatch } from '../../hooks/projects/useProjectWatch';
 import { useDeleteConfirmationLabels } from '../../hooks/useDeleteConfirmationLabels';
 import { ROUTES } from '../../types/routes';
 import { UserConfigStatus } from '../../types/user-config-status';
@@ -42,11 +57,38 @@ const ProjectViewPage: FC = () => {
   const { status: appConfigStatus } = useAppConfig();
   const isEnabled = useFeatureFlag('projectsEnabled');
   const projectId = parseProjectRouteParams(params);
-  const { project, isLoading, hasError, isNotFound, retry } = useProject(
-    projectId,
-    isEnabled,
-  );
+  const { project, isLoading, hasError, isNotFound, retry, refresh } =
+    useProject(projectId, isEnabled);
   const actions = useProjectActions(project, retry);
+  const conversations = useProjectConversations(project?.id ?? null);
+  const { showInfoNotification } = useNotification();
+  const { replacePinnedProjectId } = useUserConfig();
+
+  /* The page's own delete already notifies and leaves; a delete event racing it must not toast twice. */
+  const isOwnDeleteRef = useRef(false);
+  const hasLeftRef = useRef(false);
+  useEffect(() => {
+    isOwnDeleteRef.current = actions.isDeleting;
+  }, [actions.isDeleting]);
+  const handleDeletedElsewhere = useCallback(() => {
+    if (isOwnDeleteRef.current || hasLeftRef.current || projectId == null) {
+      return;
+    }
+    hasLeftRef.current = true;
+    showInfoNotification({ message: t(ProjectsI18nKeys.ViewDeletedElsewhere) });
+    replacePinnedProjectId(projectId, null);
+    navigate(ROUTES.Projects, { replace: true });
+  }, [navigate, projectId, replacePinnedProjectId, showInfoNotification, t]);
+  const { refresh: refreshConversations } = conversations;
+  const handleProjectChanged = useCallback(async () => {
+    const [outcome] = await Promise.all([refresh(), refreshConversations()]);
+    if (outcome === ProjectRefreshOutcome.NotFound) handleDeletedElsewhere();
+  }, [handleDeletedElsewhere, refresh, refreshConversations]);
+  useProjectWatch(project?.id ?? null, {
+    etag: project?.etag,
+    onChange: handleProjectChanged,
+    onDelete: handleDeletedElsewhere,
+  });
   const labels = useProjectViewLabels();
   const deleteLabels = useDeleteConfirmationLabels();
 
@@ -175,6 +217,7 @@ const ProjectViewPage: FC = () => {
                 projectId={project.id}
                 projectName={project.name}
                 canEdit={canEdit}
+                conversations={conversations}
                 onConversationDeleted={handleConversationDeleted}
               />
             ) : undefined

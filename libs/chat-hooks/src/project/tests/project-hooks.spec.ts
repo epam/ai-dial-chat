@@ -10,6 +10,7 @@ import {
   ProjectFormErrorField,
   ProjectFormErrorReason,
 } from '../project-form-errors';
+import { ProjectRefreshOutcome } from '../project-refresh';
 import type { ProjectsApiClient } from '../projects-api-client';
 import { useProject } from '../use-project';
 import { ProjectActionError, useProjectActions } from '../use-project-actions';
@@ -52,6 +53,7 @@ const client = {
   listProjectConversations: vi.fn(),
   renameProjectConversation: vi.fn(),
   deleteProjectConversation: vi.fn(),
+  markProjectConversationViewed: vi.fn(),
 } as unknown as Record<keyof ProjectsApiClient, ReturnType<typeof vi.fn>> &
   ProjectsApiClient;
 
@@ -94,6 +96,72 @@ describe('project hooks', () => {
       act(() => result.current.retry());
 
       await waitFor(() => expect(result.current.project).toEqual(details));
+    });
+
+    it('refreshes silently without entering the loading state', async () => {
+      const updated = { ...details, instructions: 'New', etag: '"e2"' };
+      client.getProject
+        .mockResolvedValueOnce(details)
+        .mockResolvedValueOnce(updated);
+      const { result } = renderHook(() => useProject(client, PROJECT_ID, true));
+      await waitFor(() => expect(result.current.project).toEqual(details));
+
+      let outcome: ProjectRefreshOutcome | undefined;
+      const loadingStates: boolean[] = [];
+      await act(async () => {
+        const pending = result.current.refresh();
+        loadingStates.push(result.current.isLoading);
+        outcome = await pending;
+      });
+
+      expect(outcome).toBe(ProjectRefreshOutcome.Updated);
+      expect(loadingStates).toEqual([false]);
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.project).toEqual(updated);
+    });
+
+    it('keeps the project and reports a failed refresh', async () => {
+      client.getProject
+        .mockResolvedValueOnce(details)
+        .mockRejectedValueOnce(rejection(503));
+      const { result } = renderHook(() => useProject(client, PROJECT_ID, true));
+      await waitFor(() => expect(result.current.project).toEqual(details));
+
+      let outcome: ProjectRefreshOutcome | undefined;
+      await act(async () => {
+        outcome = await result.current.refresh();
+      });
+
+      expect(outcome).toBe(ProjectRefreshOutcome.Failed);
+      expect(result.current.project).toEqual(details);
+      expect(result.current.hasError).toBe(false);
+    });
+
+    it('reports a refresh that finds the project gone as not found', async () => {
+      client.getProject
+        .mockResolvedValueOnce(details)
+        .mockRejectedValueOnce(rejection(404));
+      const { result } = renderHook(() => useProject(client, PROJECT_ID, true));
+      await waitFor(() => expect(result.current.project).toEqual(details));
+
+      let outcome: ProjectRefreshOutcome | undefined;
+      await act(async () => {
+        outcome = await result.current.refresh();
+      });
+
+      expect(outcome).toBe(ProjectRefreshOutcome.NotFound);
+      expect(result.current.isNotFound).toBe(false);
+      expect(result.current.project).toEqual(details);
+    });
+
+    it('skips a refresh while no project is loaded', async () => {
+      client.getProject.mockReturnValue(new Promise(() => undefined));
+      const { result } = renderHook(() => useProject(client, PROJECT_ID, true));
+
+      await expect(result.current.refresh()).resolves.toBe(
+        ProjectRefreshOutcome.Skipped,
+      );
+      expect(client.getProject).toHaveBeenCalledOnce();
     });
   });
 
@@ -229,6 +297,194 @@ describe('project hooks', () => {
       expect(result.current.items).toHaveLength(1);
       expect(result.current.hasMore).toBe(true);
       expect(result.current.isLoadingMore).toBe(false);
+    });
+
+    const row = (id: string, extra: object = {}) => ({
+      id,
+      name: id,
+      title: id,
+      ...extra,
+    });
+
+    it('maps the unread state of each row', async () => {
+      client.listProjectConversations.mockResolvedValue({
+        items: [row('c1', { isUnread: true }), row('c2', { isUnread: false })],
+        hasMore: false,
+      });
+      const { result } = renderHook(() =>
+        useProjectConversations(client, PROJECT_ID),
+      );
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      expect(result.current.items).toEqual([
+        { id: 'c1', title: 'c1', authorName: undefined, isUnread: true },
+        { id: 'c2', title: 'c2', authorName: undefined },
+      ]);
+    });
+
+    it('refreshes silently, adding a new row without the loading state', async () => {
+      client.listProjectConversations
+        .mockResolvedValueOnce({ items: [row('c1')], hasMore: false })
+        .mockResolvedValueOnce({
+          items: [row('c2'), row('c1')],
+          hasMore: false,
+        });
+      const { result } = renderHook(() =>
+        useProjectConversations(client, PROJECT_ID),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      const loadingStates: boolean[] = [];
+      await act(async () => {
+        const pending = result.current.refresh();
+        loadingStates.push(result.current.isLoading);
+        await pending;
+      });
+
+      expect(loadingStates).toEqual([false]);
+      expect(result.current.items.map((item) => item.id)).toEqual(['c2', 'c1']);
+      expect(client.listProjectConversations).toHaveBeenLastCalledWith(
+        PROJECT_ID,
+        expect.any(AbortSignal),
+        { offset: 0, limit: 50 },
+      );
+    });
+
+    it('re-reads every loaded row in pages of at most 100', async () => {
+      const ids = (from: number, count: number) =>
+        Array.from({ length: count }, (_, i) => row(`c${from + i}`));
+      client.listProjectConversations
+        .mockResolvedValueOnce({ items: ids(0, 50), hasMore: true })
+        .mockResolvedValueOnce({ items: ids(50, 50), hasMore: true })
+        .mockResolvedValueOnce({ items: ids(100, 20), hasMore: true })
+        .mockResolvedValueOnce({ items: ids(0, 100), hasMore: true })
+        .mockResolvedValueOnce({ items: ids(100, 20), hasMore: true });
+      const { result } = renderHook(() =>
+        useProjectConversations(client, PROJECT_ID),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      await act(() => result.current.loadMore());
+      await act(() => result.current.loadMore());
+      expect(result.current.items).toHaveLength(120);
+
+      await act(() => result.current.refresh());
+
+      const calls = client.listProjectConversations.mock.calls.slice(-2);
+      expect(calls.map((call) => call[2])).toEqual([
+        { offset: 0, limit: 100 },
+        { offset: 100, limit: 20 },
+      ]);
+      expect(result.current.items).toHaveLength(120);
+      expect(result.current.hasMore).toBe(true);
+    });
+
+    it('keeps the rows when a refresh fails', async () => {
+      client.listProjectConversations
+        .mockResolvedValueOnce({ items: [row('c1')], hasMore: false })
+        .mockRejectedValueOnce(rejection(503));
+      const { result } = renderHook(() =>
+        useProjectConversations(client, PROJECT_ID),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      await act(() => result.current.refresh());
+
+      expect(result.current.items.map((item) => item.id)).toEqual(['c1']);
+      expect(result.current.hasError).toBe(false);
+    });
+
+    it('drops a next page that settles after a refresh started', async () => {
+      let resolveMore!: (page: unknown) => void;
+      client.listProjectConversations
+        .mockResolvedValueOnce({ items: [row('c1')], hasMore: true })
+        .mockReturnValueOnce(
+          new Promise((resolve) => {
+            resolveMore = resolve;
+          }),
+        )
+        .mockResolvedValueOnce({
+          items: [row('c0'), row('c1')],
+          hasMore: false,
+        });
+      const { result } = renderHook(() =>
+        useProjectConversations(client, PROJECT_ID),
+      );
+      await waitFor(() => expect(result.current.hasMore).toBe(true));
+
+      let more: Promise<void> | undefined;
+      act(() => {
+        more = result.current.loadMore();
+      });
+      await act(() => result.current.refresh());
+      await act(async () => {
+        resolveMore({ items: [row('stale')], hasMore: false });
+        await more;
+      });
+
+      expect(result.current.items.map((item) => item.id)).toEqual(['c0', 'c1']);
+      expect(result.current.isLoadingMore).toBe(false);
+    });
+
+    it('marks a row read at once and records it through the client', async () => {
+      client.listProjectConversations.mockResolvedValue({
+        items: [row('c1', { isUnread: true, updatedAt: 10 })],
+        hasMore: false,
+      });
+      client.markProjectConversationViewed.mockResolvedValue(undefined);
+      const { result } = renderHook(() =>
+        useProjectConversations(client, PROJECT_ID),
+      );
+      await waitFor(() => expect(result.current.items[0]?.isUnread).toBe(true));
+
+      act(() => result.current.markViewed('c1'));
+
+      expect(result.current.items[0].isUnread).toBe(false);
+      expect(client.markProjectConversationViewed).toHaveBeenCalledWith('c1');
+    });
+
+    it('keeps a marked row read when a stale read still reports it unread', async () => {
+      client.listProjectConversations
+        .mockResolvedValueOnce({
+          items: [row('c1', { isUnread: true, updatedAt: 10 })],
+          hasMore: false,
+        })
+        .mockResolvedValueOnce({
+          items: [row('c1', { isUnread: true, updatedAt: 10 })],
+          hasMore: false,
+        });
+      client.markProjectConversationViewed.mockRejectedValue(rejection(503));
+      const { result } = renderHook(() =>
+        useProjectConversations(client, PROJECT_ID),
+      );
+      await waitFor(() => expect(result.current.items[0]?.isUnread).toBe(true));
+
+      act(() => result.current.markViewed('c1'));
+      await act(() => result.current.refresh());
+
+      expect(result.current.items[0].isUnread).toBeFalsy();
+    });
+
+    it('shows a marked row unread again once a newer version is listed', async () => {
+      client.listProjectConversations
+        .mockResolvedValueOnce({
+          items: [row('c1', { isUnread: true, updatedAt: 10 })],
+          hasMore: false,
+        })
+        .mockResolvedValueOnce({
+          items: [row('c1', { isUnread: true, updatedAt: 20 })],
+          hasMore: false,
+        });
+      client.markProjectConversationViewed.mockResolvedValue(undefined);
+      const { result } = renderHook(() =>
+        useProjectConversations(client, PROJECT_ID),
+      );
+      await waitFor(() => expect(result.current.items[0]?.isUnread).toBe(true));
+
+      act(() => result.current.markViewed('c1'));
+      await act(() => result.current.refresh());
+
+      expect(result.current.items[0].isUnread).toBe(true);
     });
 
     it('shows an error and loads again on retry', async () => {

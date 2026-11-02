@@ -63,6 +63,12 @@ export const deleteProjectConversation = (
   conversationId: string,
 ): Promise<void> => projectsRequests.deleteProjectConversation(conversationId);
 
+/** Records that the user has seen the project conversation's current version. */
+export const markProjectConversationViewed = (
+  conversationId: string,
+): Promise<void> =>
+  projectsRequests.markProjectConversationViewed(conversationId);
+
 /** Attaches to a project conversation's active generation; `path` is the id without `projects/`. */
 export const attachToProjectGeneration = (
   projectId: string,

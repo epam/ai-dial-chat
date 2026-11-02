@@ -12,6 +12,7 @@ import {
 import { getBearerAuthHeaders } from '../../common/utils/auth-header';
 import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import { DialClientService } from '../../dial/dial-client.service';
+import { ConversationReadStateService } from '../../scheduled-task-unread/conversation-read-state.service';
 import { UserConfigService } from '../../user-config/user-config.service';
 import {
   PROJECT_MANIFEST_MAX_BYTES,
@@ -106,6 +107,7 @@ export class ProjectsUpdateService {
     private readonly createService: ProjectsCreateService,
     private readonly snapshotService: ProjectsSnapshotService,
     private readonly userConfigService: UserConfigService,
+    private readonly readStateService: ConversationReadStateService,
   ) {}
 
   async updateProject(
@@ -205,6 +207,12 @@ export class ProjectsUpdateService {
     const renameSignal = AbortSignal.timeout(PROJECT_RENAME_TIMEOUT_MS);
     await this.move(project, destination, accessToken, renameSignal);
     await this.migratePinQuietly(
+      project.id,
+      destination.id,
+      accessToken,
+      sessionBucket,
+    );
+    await this.migrateReadStateQuietly(
       project.id,
       destination.id,
       accessToken,
@@ -515,6 +523,27 @@ export class ProjectsUpdateService {
     } catch (err) {
       this.logger.warn(
         `Pin migration after a project rename failed (${describeError(err)})`,
+      );
+    }
+  }
+
+  /** Best-effort read-state re-keying after a committed rename; a failure is logged, not thrown. */
+  private async migrateReadStateQuietly(
+    oldId: string,
+    newId: string,
+    accessToken: string,
+    sessionBucket: string,
+  ): Promise<void> {
+    try {
+      await this.readStateService.renameProject(
+        oldId,
+        newId,
+        accessToken,
+        sessionBucket,
+      );
+    } catch (err) {
+      this.logger.warn(
+        `Read-state migration after a project rename failed (${describeError(err)})`,
       );
     }
   }

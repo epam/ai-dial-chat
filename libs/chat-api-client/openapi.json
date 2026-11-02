@@ -10914,6 +10914,71 @@
         "tags": ["projects"]
       }
     },
+    "/api/v1/projects/{id}/conversations/{conversationName}/viewed": {
+      "patch": {
+        "description": "Records the conversation's current version as seen by the caller, in the caller's own read state, so it is not reported unread until it changes. Any reader of the project may call it.",
+        "operationId": "markProjectConversationViewed",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The DIAL project id `projects/{bucket}/{path}`, URL-encoded into one path segment.",
+            "schema": {
+              "example": "projects%2Fa1b2c3%2Fmarketing%2Fq4-launch",
+              "type": "string"
+            }
+          },
+          {
+            "name": "conversationName",
+            "required": true,
+            "in": "path",
+            "description": "File name of the conversation under the project `conversations/` folder, URL-encoded.",
+            "schema": {
+              "example": "gpt-4o__Weekly%20support%20health%20summary__7c1d",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Conversation marked as viewed"
+          },
+          "400": {
+            "description": "Invalid id or conversation name"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The projectsEnabled feature is not enabled for this user, or DIAL Core denied read access"
+          },
+          "404": {
+            "description": "The project or the conversation does not exist"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned a server error or an unexpected response"
+          },
+          "503": {
+            "description": "DIAL Core is unreachable or timed out"
+          }
+        },
+        "summary": "Mark a project conversation as viewed",
+        "tags": ["projects"]
+      }
+    },
     "/api/v1/offline-credentials": {
       "get": {
         "description": "Returns the session user's offline-credentials consent status by proxying DIAL Core (GET /v1/user/offline-credentials). Never cached.",
@@ -19070,9 +19135,14 @@
             "type": "number",
             "description": "Last update time, in epoch milliseconds.",
             "example": 1793000000000
+          },
+          "isUnread": {
+            "type": "boolean",
+            "description": "Whether the conversation changed after the caller's read baseline and since the caller last viewed it; `false` when the caller's read state cannot be read.",
+            "example": false
           }
         },
-        "required": ["id", "name", "title"]
+        "required": ["id", "name", "title", "isUnread"]
       },
       "ProjectConversationListResponseDto": {
         "type": "object",

@@ -69,6 +69,7 @@ const makeService = ({
     new ProjectsCreateService(config),
     { read } as unknown as ProjectsSnapshotService,
     {} as UserConfigService,
+    {} as never,
   );
   return { service, listProjectMetadata, read };
 };

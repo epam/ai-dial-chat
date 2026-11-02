@@ -315,7 +315,7 @@ import { ProjectView } from '@epam/ai-dial-projects';
 
 ### ProjectConversationList
 
-A project's conversations as a `<section>` named by its `<h2>` (`labels.title`; with no chats the heading is hidden and the section keeps the name through `aria-label`), with one row per item: a button named `labels.openLabel(title, authorName)` holding the author's initials (`aria-hidden`) and the title truncated with a tooltip. When `onRename` or `onDelete` is given, each row also has a ⋮ menu (`labels.moreActionsLabel(title)`) with those items; without both it is read-only and rows only open. Exactly one state renders — loading, error with Retry, the empty state, or the rows — and the loading, error and empty states are a `role="status"` region. With `hasMore` and `onLoadMore`, a Show more button (`labels.loadMoreLabel`, default `'Show more'`) follows the rows and is disabled while `isLoadingMore`. The lib loads nothing: the host passes the rows and handles the callbacks.
+A project's conversations as a `<section>` named by its `<h2>` (`labels.title`; with no chats the heading is hidden and the section keeps the name through `aria-label`), with one row per item: a button named `labels.openLabel(title, authorName)` holding an `aria-hidden` status point (an outline when read, filled when unread) and the title truncated with a tooltip. When `onRename` or `onDelete` is given, each row also has a ⋮ menu (`labels.moreActionsLabel(title)`) with those items, shown on `desktop` only while the row is hovered or focused or the menu is open (always on `mobile`); without both it is read-only and rows only open. Exactly one state renders — loading, error with Retry, the empty state, or the rows — and the loading, error and empty states are a `role="status"` region. With `hasMore` and `onLoadMore`, a See more link button (`labels.loadMoreLabel`, default `'See more'`) follows the rows and is disabled while `isLoadingMore`. The lib loads nothing: the host passes the rows and handles the callbacks.
 
 ```tsx
 import { ProjectConversationList } from '@epam/ai-dial-projects';
@@ -342,16 +342,28 @@ import { ProjectConversationList } from '@epam/ai-dial-projects';
     retryLabel: 'Retry',
     emptyTitle: 'No outputs or chats yet',
     emptyDescription: 'Your outputs and chats will appear here once started.',
-    loadMoreLabel: 'Show more',
+    loadMoreLabel: 'See more',
   }}
 />;
 ```
 
-`typography` defaults to `'dial-body-semi-text'` (`titleClassName`), `'dial-body-text'` (`rowTitleClassName`) and `'dial-small-text'` (`messageClassName`).
+`typography` defaults to `'dial-body-semi-text'` (`titleClassName`), `'dial-body-text'` (`rowTitleClassName`), `'dial-body-semi-text'` (`unreadRowTitleClassName`) and `'dial-small-text'` (`messageClassName`).
+
+An item with `isUnread: true` shows its title in `unreadRowTitleClassName` and a filled status point, and its row button is described by `labels.unreadLabel` (default `'Unread'`) through `aria-describedby`, so its accessible name does not change. `colors.readDot` sets the read point's outline (`--pcl-read-dot`, default `var(--stroke-secondary, #d1dbea)`), and `colors.unreadDot` the unread point's fill (`--pcl-unread-dot`, default `var(--text-accent, #1d4ed8)`).
+
+```tsx
+<ProjectConversationList
+  items={[{ id: 'c1', title: 'Weekly summary', isUnread: true }]}
+  onRetry={retry}
+  onOpen={openChat}
+  labels={{ ...labels, unreadLabel: 'Unread' }}
+  colors={{ unreadDot: 'var(--text-accent)' }}
+/>
+```
 
 ### ProjectConversationsPanel
 
-A project's chat column for `ProjectView.mainContent`: the host's chat input (`composer`, any node), then `ProjectConversationList`, plus the rename dialog (a labelled input seeded with the title, an inline error for an empty name, Cancel and Save buttons, Enter to save, the trimmed value sent to `onRename`) and the delete confirmation. `hasMore`, `isLoadingMore` and `onLoadMore` pass through to the list. Both dialogs return focus to the row's ⋮ trigger when they close; after a delete, whose row is gone, focus moves to the row now in its place, the one before it, or the list. They stay open, and cannot be closed, while the host's promise is pending, and stay open while it rejects, so the host only reports the failure. Omitting `onRename` and `onDelete` makes it read-only.
+A project's chat column for `ProjectView.mainContent`: the host's chat input (`composer`, any node), then `ProjectConversationList`, plus the rename dialog (a labelled input seeded with the title, an inline error for an empty name, Cancel and Save buttons, Enter to save, the trimmed value sent to `onRename`) and the delete confirmation. `hasMore`, `isLoadingMore` and `onLoadMore` pass through to the list, and so do `listTypography` and `listColors` (as its `typography` and `colors`). A rename or delete dialog whose row disappears from `items` (a live refresh) closes, and focus moves to the list. Both dialogs return focus to the row's ⋮ trigger when they close; after a delete, whose row is gone, focus moves to the row now in its place, the one before it, or the list. They stay open, and cannot be closed, while the host's promise is pending, and stay open while it rejects, so the host only reports the failure. Omitting `onRename` and `onDelete` makes it read-only.
 
 ```tsx
 import { ProjectConversationsPanel } from '@epam/ai-dial-projects';
@@ -465,6 +477,6 @@ Why a context file was not added: `UnsupportedType` (`'unsupported-type'`), `Too
 - `ProjectContextFile` — `Attachment | StoredProjectContextFile`, the type of `ProjectCreateForm`'s `contextFiles`; `StoredProjectContextFile` is a file already in the project (`size`, `isStored: true`, no `File`), so the same form edits a project.
 - `ProjectViewProps`, `ProjectViewLabels`, `ProjectViewModel`, `ProjectContextFileItem` — the props, strings and content of `ProjectView`.
 - `ProjectViewStyles`, `ProjectViewColors`, `ProjectViewTypography` — style overrides of `ProjectView`.
-- `ProjectConversationListProps`, `ProjectConversationListItem`, `ProjectConversationListLabels`, `ProjectConversationListTypography` — the props, rows, strings and typography of `ProjectConversationList`.
+- `ProjectConversationListProps`, `ProjectConversationListItem`, `ProjectConversationListLabels`, `ProjectConversationListTypography`, `ProjectConversationListColors` — the props, rows, strings, typography and colours of `ProjectConversationList`.
 - `ProjectConversationsPanelProps`, `ProjectConversationsPanelLabels` — the props and strings of `ProjectConversationsPanel`.
 - `ProjectChatHeaderProps` — the props of `ProjectChatHeader`.
