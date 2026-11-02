@@ -14,6 +14,8 @@ import {
   Spinner,
   Switch,
   Tabs,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import type { TabItem } from '@epam/ai-dial-ui-kit';
 import {
@@ -455,14 +457,14 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
       </div>
 
       {labels.activeStatusAnnouncement != null && (
-        <span role="status" aria-live="polite" className="sr-only">
+        <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
           {labels.activeStatusAnnouncement}
-        </span>
+        </LiveRegion>
       )}
       {labels.startStatusAnnouncement != null && (
-        <span role="status" aria-live="polite" className="sr-only">
+        <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
           {labels.startStatusAnnouncement}
-        </span>
+        </LiveRegion>
       )}
 
       {isLoading && (

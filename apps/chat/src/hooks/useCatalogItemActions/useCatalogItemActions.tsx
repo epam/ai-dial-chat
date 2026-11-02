@@ -10,10 +10,12 @@ import {
   parsePromptResourceUrl,
   parseSkillResourceUrl,
   resolveCatalogPrimaryAction,
+  resolveFavoriteEntityType,
   sanitizeFileName,
   serializePromptExport,
   type SkillFileContent,
 } from '@epam/ai-dial-chat-hooks';
+import { triggerBrowserDownload } from '@epam/ai-dial-chat-hooks/utils';
 import {
   CatalogEntityType,
   triggerBlobDownload,
@@ -34,8 +36,6 @@ import {
   NotifiableEntity,
 } from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
-import { resolveFavoriteEntityType } from '../../utils/favorites';
-import { triggerBrowserDownload } from '../../utils/file-download';
 import type { useOperationNotification } from '../useOperationNotification';
 
 interface NotificationParams {

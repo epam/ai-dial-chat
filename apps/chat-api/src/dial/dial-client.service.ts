@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { resolveAppVersion } from '../common/utils/app-version';
 import { StringUtils } from '../common/utils/string-utils';
 import { EnvironmentVariables } from '../config/environment.config';
+import { withCoreRequestTiming } from '../telemetry/core-request-timing';
 
 const USER_AGENT_PRODUCT = 'ai-dial-chat';
 const UNSUPPORTED_USER_AGENT_VERSION_CHARACTERS = /[^A-Za-z0-9._-]+/g;
@@ -52,7 +53,9 @@ export class DialClientService {
       );
       headers.set('User-Agent', this.userAgent);
 
-      return globalThis.fetch(input, { ...init, headers });
+      return withCoreRequestTiming(() =>
+        globalThis.fetch(input, { ...init, headers }),
+      );
     };
 
     this.logger.debug(

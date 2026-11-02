@@ -21,6 +21,8 @@ describe('useCustomVisualizers', () => {
     vi.mocked(useAppConfig).mockReturnValue({
       status: UserConfigStatus.Loading,
       features: {},
+      catalogCreationStatus: UserConfigStatus.Loading,
+      catalogCreationPermissions: null,
       config: { customVisualizers: [makeEntry('application/x-test')] } as never,
     });
 
@@ -36,6 +38,8 @@ describe('useCustomVisualizers', () => {
     vi.mocked(useAppConfig).mockReturnValue({
       status: UserConfigStatus.Ready,
       features: {},
+      catalogCreationStatus: UserConfigStatus.Loading,
+      catalogCreationPermissions: null,
       config: { customVisualizers: entries } as never,
     });
 
@@ -47,6 +51,8 @@ describe('useCustomVisualizers', () => {
     vi.mocked(useAppConfig).mockReturnValue({
       status: UserConfigStatus.Error,
       features: {},
+      catalogCreationStatus: UserConfigStatus.Loading,
+      catalogCreationPermissions: null,
       config: { customVisualizers: [makeEntry('application/x-test')] } as never,
     });
 
@@ -59,6 +65,8 @@ describe('useCustomVisualizers', () => {
     vi.mocked(useAppConfig).mockReturnValue({
       status: UserConfigStatus.Ready,
       features: {},
+      catalogCreationStatus: UserConfigStatus.Loading,
+      catalogCreationPermissions: null,
       config: { customVisualizers: entries } as never,
     });
 
@@ -72,6 +80,8 @@ describe('useCustomVisualizers', () => {
     vi.mocked(useAppConfig).mockReturnValue({
       status: UserConfigStatus.Loading,
       features: {},
+      catalogCreationStatus: UserConfigStatus.Loading,
+      catalogCreationPermissions: null,
       config: { customVisualizers: [makeEntry('application/x-test')] } as never,
     });
 

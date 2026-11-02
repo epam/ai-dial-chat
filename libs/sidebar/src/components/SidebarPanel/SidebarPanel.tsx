@@ -193,7 +193,7 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
     <div
       style={shouldSetInlineWidth ? { width: panelWidth } : undefined}
       className={mergeClasses(
-        'h-full flex-shrink-0 gap-3 overflow-hidden shadow-sm',
+        'h-full shrink-0 gap-3 overflow-hidden shadow-sm',
         orientation === SidebarOrientation.Left &&
           '[clip-path:inset(-24px_-24px_-24px_0)] rtl:[clip-path:inset(-24px_0_-24px_-24px)]',
         getTransitionClass(),

@@ -18,14 +18,19 @@ describe('NewVersionFallback', () => {
     vi.unstubAllGlobals();
   });
 
-  it('renders role="alert" container', () => {
+  it('renders a region named by the heading, not a live region', () => {
     render(<NewVersionFallback />);
-    expect(screen.getByRole('alert')).toBeTruthy();
+    expect(
+      screen.getByRole('region', { name: 'appUpdate.heading' }),
+    ).toBeTruthy();
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 
-  it('renders the heading', () => {
+  it('renders the heading as the screen h1', () => {
     render(<NewVersionFallback />);
-    expect(screen.getByText('appUpdate.heading')).toBeTruthy();
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'appUpdate.heading' }),
+    ).toBeTruthy();
   });
 
   it('renders the message', () => {

@@ -29,13 +29,19 @@ export {
   getTopicOptions,
 } from '../utils/catalog-filter';
 export type { CatalogItemsQuery } from '../utils/catalog-filter';
+export { applyCatalogSelection } from '../utils/list-selection';
 export { sortCatalogItems } from '../utils/catalog-sort';
-export { buildCatalogTabs } from '../utils/catalog-tabs';
+export {
+  buildCatalogTabs,
+  CATALOG_TAB_ORDER,
+  getCatalogItemTabs,
+} from '../utils/catalog-tabs';
 export { getCatalogDetailsTabs } from '../utils/details-tabs';
 export type { CatalogDetailsTabsOptions } from '../utils/details-tabs';
 export {
   getCredentialsBadgeState,
   getCredentialsBannerState,
   getCredentialsUiState,
+  getDirectCredentialsLevel,
   getSignedInLevel,
 } from '../utils/toolset-credentials';

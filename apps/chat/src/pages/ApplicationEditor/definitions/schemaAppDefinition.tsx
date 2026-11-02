@@ -2,6 +2,7 @@ import {
   SEMVER_VERSION_PATTERN,
   type DeploymentCreationFormValues,
 } from '@epam/ai-dial-builder-form';
+import { CatalogCreationType } from '@epam/ai-dial-chat-api-client';
 import type { TFunction } from 'i18next';
 import { AppsEditorI18nKeys } from '../../../constants/translation-keys';
 import type {
@@ -88,6 +89,7 @@ const update = (
 export const schemaAppDefinition =
   defineApplicationEditor<SchemaApplicationSetup>({
     kind: ApplicationEditorKind.SchemaApp,
+    creationType: CatalogCreationType.SchemaApp,
     // Fallback only: `getNotificationTarget` always resolves the entity from the schema.
     notifiableEntity: NotifiableEntity.Agent,
     getNotificationTarget: resolveSchemaNotificationTarget,

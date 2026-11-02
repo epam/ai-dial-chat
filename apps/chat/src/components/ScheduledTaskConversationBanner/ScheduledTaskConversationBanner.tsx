@@ -1,4 +1,8 @@
 import {
+  ActiveScheduledTaskDetailState,
+  ActiveScheduledTaskStatus,
+} from '@epam/ai-dial-chat-hooks/scheduled-tasks';
+import {
   DIAL_KIT_ICON_STROKE,
   GhostButton,
   Skeleton,
@@ -9,12 +13,11 @@ import { FC, memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { getScheduledTaskDetailRoute } from '../../constants/routes';
-import { ScheduledTasksI18nKeys } from '../../constants/translation-keys';
-import { useActiveScheduledTask } from '../../context/ActiveScheduledTaskContext';
 import {
-  ActiveScheduledTaskDetailState,
-  ActiveScheduledTaskStatus,
-} from '../../types/active-scheduled-task';
+  ScheduledTasksI18nKeys,
+  ButtonsI18nKeys,
+} from '../../constants/translation-keys';
+import { useActiveScheduledTask } from '../../context/ActiveScheduledTaskContext';
 import { formatRunTimestamp } from '../../utils/map-scheduled-task-run-dto';
 
 const CARD_CLASS_NAME =
@@ -71,12 +74,13 @@ const ScheduledTaskConversationBanner: FC = () => {
     taskState === ActiveScheduledTaskDetailState.Idle
   ) {
     return (
-      <div className={CARD_CLASS_NAME}>
-        <div
-          role="status"
-          aria-label={t(ScheduledTasksI18nKeys.ConversationBannerLoadingLabel)}
-          className="flex h-5 items-center"
-        >
+      /* A transient placeholder, not a live region: it mounts already
+       * loading, so it marks itself busy and names itself in text instead. */
+      <div aria-busy="true" className={CARD_CLASS_NAME}>
+        <div className="flex h-5 items-center">
+          <span className="sr-only">
+            {t(ScheduledTasksI18nKeys.ConversationBannerLoadingLabel)}
+          </span>
           <Skeleton
             variant={SkeletonVariant.Rectangular}
             width="220px"
@@ -93,12 +97,14 @@ const ScheduledTaskConversationBanner: FC = () => {
   ) {
     return (
       <div className={CARD_CLASS_NAME}>
-        <p role="alert" className="dial-small-text text-primary">
+        {/* Page state of the banner, not a failure of the user's own action:
+            a polite status, not an interrupting alert. */}
+        <p role="status" className="dial-small-text text-primary">
           {t(ScheduledTasksI18nKeys.ConversationBannerUnavailableLabel)}
         </p>
         {taskState === ActiveScheduledTaskDetailState.Error && (
           <GhostButton
-            label={t(ScheduledTasksI18nKeys.ListRetryLabel)}
+            label={t(ButtonsI18nKeys.Retry)}
             aria-label={t(
               ScheduledTasksI18nKeys.ConversationBannerRetryAriaLabel,
             )}

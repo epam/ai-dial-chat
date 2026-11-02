@@ -21,6 +21,8 @@ export interface ToolsetAuthFormData {
   clientId?: string;
   /** OAUTH: client secret, never returned by the backend on read. */
   clientSecret?: string;
+  /** OAUTH: last characters of the saved client secret, supplied by the host for display only. */
+  clientSecretHint?: string;
   /** OAUTH: authorization endpoint URL. */
   authorizationEndpoint?: string;
   /** OAUTH: token endpoint URL. */

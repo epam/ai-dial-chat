@@ -178,7 +178,7 @@ The application fixture builds the same React host against source aliases and is
 
 - `test-packed-parity` checks raw/gzip static startup ratios, fixed JS/CSS/assets ceilings, retained module origins and installed tarball integrity. HTML includes CSS from the complete static closure.
 - `test-packed-browser-parity` counts requests by start time, including responses arriving after the ready marker. It checks deferred mounts/reopen, OAuth identity and markdown reload recovery/mobile RTL. Same-document retry and attachment renderer browser coverage remain separate acceptance tasks until implemented.
-- `test-packed-cold-load-probes` checks seven public imports against fixed raw/gzip ceilings and semantic exclusions. Root probes install their documented resolution peers; scoped utility/classifier probes use minimal peers.
+- `test-packed-cold-load-probes` checks seven public imports against fixed raw/gzip ceilings and semantic exclusions. Root probes install their documented resolution peers. The `utils` probe reuses its subpath fixture's peer set: the bundler must resolve `triggerBrowserDownload`'s `chat-shared` import before tree-shaking it away, even when only `safeDecodeURIComponent` is consumed. The source-content classifier probe needs no feature peers.
 - `npm run publish:lib:coherent-release-test` checks normal installation and declarations for a coherent release, and identifies a conflicting internal peer in an existing mixed tarball set.
 
 The executable limits live in `application-mode.mjs` and `cold-load-probes.mjs`. Both source and packed fixtures must meet the fixed limits; a source regression cannot automatically raise them. Keep a measurement and rationale with any intentional budget amendment.

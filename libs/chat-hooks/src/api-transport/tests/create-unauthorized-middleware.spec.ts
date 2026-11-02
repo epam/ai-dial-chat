@@ -80,12 +80,12 @@ const failingRefresh = (): Promise<CsrfRefreshOutcome> => {
   throw new Error('refreshCsrfToken should not be called in this test');
 };
 
-afterEach(() => {
-  setCsrfToken(null);
-  vi.restoreAllMocks();
-});
-
 describe('createUnauthorizedMiddleware', () => {
+  afterEach(() => {
+    setCsrfToken(null);
+    vi.restoreAllMocks();
+  });
+
   it('throws UnauthorizedError and notifies on 401', async () => {
     setCsrfToken('stale-token');
     setupFetch(401);

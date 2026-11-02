@@ -30,6 +30,10 @@ export interface ConversationListSectionProps {
   conversations: ConversationItem[];
   /** When true, renders skeleton rows instead of the conversation list. */
   isLoading?: boolean;
+  /** True while the host resolves titles in the background; existing rows remain usable. */
+  isUpdatingTitles?: boolean;
+  /** Keeps an opened search result visible after its title changes, until the query changes. Defaults to `false`. */
+  preserveActiveSearchResult?: boolean;
   /** Called with the conversation `id` when a row is clicked. */
   onSelectConversation: (id: string) => void;
   /** `id` of the currently viewed conversation; that row gets `aria-current="page"`. */
@@ -59,6 +63,8 @@ export interface ConversationListSectionProps {
   ) => void;
   /** Called when the user completes a drag-and-drop move. */
   onMoveConversation?: (move: ConversationMove) => void;
+  /** Called with the distinct IDs of conversation rows in the visible viewport, in row order, whenever that sequence changes; excludes group headers and overscan rows, and is empty when no rows are visible. */
+  onVisibleConversationIdsChange?: (ids: string[]) => void;
   /** Style overrides for the header and the list. */
   styles?: ConversationListSectionStyles;
   /** Extra class name(s) merged onto the list root, e.g. a host anchor. */

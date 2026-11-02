@@ -2,13 +2,13 @@ import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useStreamedMarkdownContent } from '../../../../chat-shared/src/hooks/useStreamedMarkdownContent';
 
-afterEach(() => {
-  vi.useRealTimers();
-  vi.restoreAllMocks();
-  Reflect.deleteProperty(window, 'matchMedia');
-});
-
 describe('useStreamedMarkdownContent', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+    Reflect.deleteProperty(window, 'matchMedia');
+  });
+
   it('reveals appended content gradually while streaming', () => {
     vi.useFakeTimers();
 

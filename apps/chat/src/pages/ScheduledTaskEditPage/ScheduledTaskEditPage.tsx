@@ -23,10 +23,14 @@ import {
   Button,
   ButtonAppearance,
   ButtonVariant,
+  DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   EditorThemes,
   ElementSize,
   GhostButton,
+  StateScreen,
 } from '@epam/ai-dial-ui-kit';
+import { IconAlertTriangle } from '@tabler/icons-react';
 import {
   memo,
   useCallback,
@@ -45,6 +49,7 @@ import { getScheduledTaskDetailRoute } from '../../constants/routes';
 import {
   ScheduledTasksI18nKeys,
   SkillSelectorI18nKeys,
+  ButtonsI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -154,7 +159,13 @@ const ScheduledTaskEditPage: FC = () => {
           return;
         }
         setTask(result);
-        const hydratedValues = { minute: '0', ...mapped.values };
+        /* `everyWeeks` defaults like `minute`: a mapped Custom task always
+         * carries it, and other cadences ignore it. */
+        const hydratedValues = {
+          minute: '0',
+          everyWeeks: '1',
+          ...mapped.values,
+        };
         setValues(hydratedValues);
         setInitialValues(hydratedValues);
         setOriginalWindowDates({
@@ -339,14 +350,22 @@ const ScheduledTaskEditPage: FC = () => {
 
   if (taskError) {
     return (
-      <div
-        role="alert"
-        className="flex size-full flex-col items-center justify-center gap-3"
-      >
-        <p>{t(ScheduledTasksI18nKeys.EditLoadErrorLabel)}</p>
-        <GhostButton
-          label={t(ScheduledTasksI18nKeys.ListRetryLabel)}
-          onClick={handleRetry}
+      <div className="size-full">
+        <StateScreen
+          icon={
+            <IconAlertTriangle
+              aria-hidden
+              size={DIAL_ICON_SIZE.LG}
+              stroke={DIAL_KIT_ICON_STROKE}
+            />
+          }
+          title={t(ScheduledTasksI18nKeys.EditLoadErrorLabel)}
+          action={
+            <GhostButton
+              label={t(ButtonsI18nKeys.Retry)}
+              onClick={handleRetry}
+            />
+          }
         />
       </div>
     );
@@ -354,14 +373,19 @@ const ScheduledTaskEditPage: FC = () => {
 
   if (isUnsupported || !values || !task) {
     return (
-      <div
-        role="alert"
-        className="flex size-full flex-col items-center justify-center gap-3"
-      >
-        <p>{t(ScheduledTasksI18nKeys.EditInvalidScheduleLabel)}</p>
-        <GhostButton
-          label={t(ScheduledTasksI18nKeys.CreateBackButtonLabel)}
-          onClick={handleBack}
+      <div className="size-full">
+        <StateScreen
+          icon={
+            <IconAlertTriangle
+              aria-hidden
+              size={DIAL_ICON_SIZE.LG}
+              stroke={DIAL_KIT_ICON_STROKE}
+            />
+          }
+          title={t(ScheduledTasksI18nKeys.EditInvalidScheduleLabel)}
+          action={
+            <GhostButton label={t(ButtonsI18nKeys.Back)} onClick={handleBack} />
+          }
         />
       </div>
     );

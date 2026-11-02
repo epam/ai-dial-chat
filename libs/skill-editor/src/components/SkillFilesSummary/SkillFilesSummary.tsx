@@ -18,7 +18,7 @@ export const SkillFilesSummary: FC<SkillFilesSummaryProps> = ({
     expanded={isExpanded}
     onToggle={onToggle}
     title={
-      <span className={mergeClasses(styles.label, labelClassName)}>
+      <span className={mergeClasses('block', styles.label, labelClassName)}>
         {label}
       </span>
     }
@@ -28,9 +28,13 @@ export const SkillFilesSummary: FC<SkillFilesSummaryProps> = ({
         nameClassName={mergeClasses(styles.fileName, fileNameClassName)}
       />
     }
-    className={mergeClasses('rounded-xl border py-0 shadow-xs', styles.card)}
-    headerClassName={mergeClasses('gap-2 px-3 py-2', styles.header)}
-    contentClassName="px-3 pb-3"
+    className={mergeClasses('rounded-lg border py-0 shadow-xs', styles.card)}
+    headerClassName={mergeClasses(
+      'gap-4 rounded-lg py-2 ps-3 pe-2 text-start [&>span]:flex-1 [&>span]:gap-1 [&>svg]:size-6',
+      isExpanded ? '[&>svg]:-rotate-90' : '[&>svg]:rotate-90',
+      styles.header,
+    )}
+    contentClassName="max-h-[416px] overflow-y-auto pt-4 pb-2 ps-3 pe-2"
   >
     {children}
   </Accordion>

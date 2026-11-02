@@ -476,6 +476,8 @@ describe('Halloween event through the celebration runtime', () => {
   });
 
   it('loads New Year through the same decor slot and consumes only its own phrase', async () => {
+    // The gift click picks a scene at random; 0 selects PenguinStar.
+    vi.spyOn(Math, 'random').mockReturnValue(0);
     configuredEventId = 'new-year';
     const NewYearTriggers: FC = () => {
       const { consumeSecretPhrase } = useCelebration();
@@ -515,7 +517,10 @@ describe('Halloween event through the celebration runtime', () => {
     await userEvent.click(gift);
     expect(showSuccessNotification).toHaveBeenLastCalledWith({
       title: NEW_YEAR_LABELS.toastTitle,
-      message: expect.stringContaining('"happy new year"'),
+      message: NEW_YEAR_LABELS.penguinStarToastMessage.replace(
+        '{{phrase}}',
+        'happy new year',
+      ),
     });
     await userEvent.click(
       screen.getByRole('button', { name: 'new year phrase' }),
@@ -523,7 +528,7 @@ describe('Halloween event through the celebration runtime', () => {
     expect(lastConsumeResult).toBe(true);
     expect(showSuccessNotification).toHaveBeenLastCalledWith({
       title: NEW_YEAR_LABELS.toastTitle,
-      message: NEW_YEAR_LABELS.confettiToastMessage.replace(
+      message: NEW_YEAR_LABELS.giftWrappingToastMessage.replace(
         '{{phrase}}',
         'happy new year',
       ),

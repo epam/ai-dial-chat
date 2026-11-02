@@ -4,13 +4,16 @@ import {
   DangerButton,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
+  ErrorText,
   NeutralButton,
+  LiveRegionPoliteness,
 } from '@epam/ai-dial-ui-kit';
 import { IconBuildingCommunity, IconUser } from '@tabler/icons-react';
 import { useState, type FC } from 'react';
 import type {
   ApplicationCredential,
   ApplicationCredentialsProps,
+  ApplicationCredentialsTypography,
 } from '../../../models/application-credentials';
 import {
   CredentialsLevel,
@@ -27,6 +30,8 @@ interface ApplicationCredentialRowProps extends Pick<
 > {
   /** Host-resolved presentation of this service. */
   service: ApplicationCredential;
+  /** Typography class overrides forwarded from `ApplicationCredentials`. */
+  typography?: ApplicationCredentialsTypography;
 }
 
 /** Per-service consent and removal confirmation around the shared credentials row. */
@@ -35,7 +40,15 @@ export const ApplicationCredentialRow: FC<ApplicationCredentialRowProps> = ({
   texts,
   onLogin,
   onLogout,
+  typography,
 }) => {
+  const {
+    rowLabelClassName = 'dial-small-semi-text',
+    rowDescriptionClassName = 'dial-small-text',
+    errorClassName = 'dial-caption-text',
+    keyCardTitleClassName = 'dial-tiny-semi-text',
+    keyCardDescriptionClassName = 'dial-tiny-text',
+  } = typography ?? {};
   const [offlineUsageConsent, setOfflineUsageConsent] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
@@ -88,12 +101,12 @@ export const ApplicationCredentialRow: FC<ApplicationCredentialRowProps> = ({
       disabled={isConfirming}
       isPending={isRemoving}
       texts={texts}
-      labelClassName="dial-small-semi-text"
-      descriptionClassName="dial-small-text"
-      errorClassName="dial-caption-text"
-      keyCardTitleClassName="dial-tiny-semi-text"
-      keyCardDescriptionClassName="dial-tiny-text"
-      deleteActionClassName={styles.errorText}
+      labelClassName={rowLabelClassName}
+      descriptionClassName={rowDescriptionClassName}
+      errorClassName={errorClassName}
+      keyCardTitleClassName={keyCardTitleClassName}
+      keyCardDescriptionClassName={keyCardDescriptionClassName}
+      deleteActionClassName={styles.deleteAction}
       renderLoginOptions={
         service.canConsentToOfflineUsage
           ? (disabled) => (
@@ -113,7 +126,8 @@ export const ApplicationCredentialRow: FC<ApplicationCredentialRowProps> = ({
       {service.hint && (
         <p
           className={mergeClasses(
-            'dial-small-text break-words',
+            rowDescriptionClassName,
+            'wrap-break-word',
             styles.description,
           )}
         >
@@ -138,11 +152,12 @@ export const ApplicationCredentialRow: FC<ApplicationCredentialRowProps> = ({
       {isConfirming && (
         <div className="flex flex-col gap-3 pt-3">
           <p>{removeMessage}</p>
-          {error && (
-            <p role="alert" className={styles.errorText}>
-              {error}
-            </p>
-          )}
+          {/* Mounted with the confirmation, before a failed logout, so the failure is announced; out of the column gap while empty. */}
+          <ErrorText
+            announce={LiveRegionPoliteness.Assertive}
+            className={styles.errorText}
+            text={error ?? ''}
+          />
           <div className="flex flex-wrap justify-end gap-2">
             <NeutralButton
               className="min-h-11"

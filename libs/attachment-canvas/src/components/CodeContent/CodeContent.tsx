@@ -48,11 +48,21 @@ export interface CodeContentProps {
   codeBlockTheme?: CodeBlockTheme;
   /** User-visible strings for the syntax-highlighter loading/error states. All fields have English defaults. */
   labels?: CodeContentLabels;
+  /** Typography class of the code text. Defaults to `'dial-code-text'`. */
+  codeClassName?: string;
+  /** Typography class of the highlighter load-error message. Defaults to `'dial-body-text'`. */
+  errorLabelClassName?: string;
 }
 
 /** Renders syntax-highlighted source code or plain text for a `CodeCanvasContent` payload. */
 export const CodeContent: FC<CodeContentProps> = memo(
-  ({ content, codeBlockTheme = CodeBlockTheme.Light, labels }) => {
+  ({
+    content,
+    codeBlockTheme = CodeBlockTheme.Light,
+    labels,
+    codeClassName = 'dial-code-text',
+    errorLabelClassName,
+  }) => {
     const { text, language } = content;
     const canHighlight = useMemo(
       () => isSyntaxHighlightingAllowed(text),
@@ -72,7 +82,14 @@ export const CodeContent: FC<CodeContentProps> = memo(
     }, []);
 
     const plainTextFallback = (
-      <pre className="p-4 wrap-break-word whitespace-pre-wrap">{text}</pre>
+      <pre
+        className={mergeClasses(
+          codeClassName,
+          'p-4 wrap-break-word whitespace-pre-wrap',
+        )}
+      >
+        {text}
+      </pre>
     );
 
     return (
@@ -93,6 +110,7 @@ export const CodeContent: FC<CodeContentProps> = memo(
             pendingContent={plainTextFallback}
             errorContent={plainTextFallback}
             labels={labels}
+            errorLabelClassName={errorLabelClassName}
           >
             <LazySyntaxHighlighter
               language={language}
@@ -101,11 +119,10 @@ export const CodeContent: FC<CodeContentProps> = memo(
                 margin: 0,
                 borderRadius: 0,
                 background: 'transparent',
-                fontSize: 14,
-                lineHeight: 1.5,
                 padding: '16px',
-                letterSpacing: 0,
               }}
+              className={codeClassName}
+              codeTagProps={{ className: codeClassName }}
               wrapLongLines
             >
               {text}

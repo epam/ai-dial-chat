@@ -35,3 +35,4 @@ export type {
   UseGridEditingScrollResult,
 } from '@epam/ai-dial-chat-shared';
 export { useGridEditingScroll } from '@epam/ai-dial-chat-shared';
+export * from '../files/useFileAttachmentModalState/useFileAttachmentModalState';

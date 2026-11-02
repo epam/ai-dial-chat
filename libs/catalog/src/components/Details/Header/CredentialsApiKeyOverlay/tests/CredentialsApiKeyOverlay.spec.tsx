@@ -11,11 +11,37 @@ import {
 import { CredentialsApiKeyOverlay } from '../CredentialsApiKeyOverlay';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  LiveRegionPoliteness: { Polite: 'polite', Assertive: 'assertive' },
+  LiveRegionElement: { Div: 'div', Span: 'span', P: 'p' },
+  LiveRegion: ({
+    politeness = 'polite',
+    visuallyHidden,
+    as: Tag = 'div',
+    atomic,
+    className,
+    children,
+    ...rest
+  }: {
+    politeness?: string;
+    visuallyHidden?: boolean;
+    as?: 'div' | 'span' | 'p';
+    atomic?: boolean;
+  } & React.HTMLAttributes<HTMLElement>) => (
+    <Tag
+      {...rest}
+      role={politeness === 'assertive' ? 'alert' : 'status'}
+      aria-live={politeness as 'polite' | 'assertive'}
+      aria-atomic={atomic}
+      className={visuallyHidden ? 'sr-only' : className}
+    >
+      {children}
+    </Tag>
+  ),
   DIAL_KIT_ICON_STROKE: 1.5,
   CaptionText: ({ id, text }: { id?: string; text?: string }) =>
     text ? <span id={id}>{text}</span> : null,
-  ErrorText: ({ text }: { text?: string }) =>
-    text ? <span>{text}</span> : null,
+  ErrorText: ({ id, text }: { id?: string; text?: string }) =>
+    text ? <span id={id}>{text}</span> : null,
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   Input: ({
     onChange,
@@ -141,7 +167,11 @@ describe('CredentialsApiKeyOverlay', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Add' }));
 
-    expect(screen.getByText('API key is required.')).toBeTruthy();
+    const error = screen.getByText('API key is required.');
+    const input = screen.getByLabelText('API key');
+    expect(input.getAttribute('aria-describedby')?.split(' ')).toContain(
+      error.id,
+    );
     expect(onLogin).not.toHaveBeenCalled();
     expect(onClose).not.toHaveBeenCalled();
   });
@@ -226,6 +256,31 @@ describe('CredentialsApiKeyOverlay', () => {
     expect(screen.getByRole('button', { name: 'Delete' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Add' })).toBeNull();
     expect(screen.queryByLabelText('API key')).toBeNull();
+  });
+
+  it('announces the added confirmation through a status region mounted before the key is added', () => {
+    const { rerender } = render(
+      <CredentialsApiKeyOverlay
+        item={item}
+        level={CredentialsLevel.User}
+        status={CredentialStatus.SignedOut}
+        onClose={vi.fn()}
+      />,
+    );
+    const status = screen.getByRole('status');
+    expect(status.textContent).toBe('');
+
+    rerender(
+      <CredentialsApiKeyOverlay
+        item={item}
+        level={CredentialsLevel.User}
+        status={CredentialStatus.SignedIn}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('status')).toBe(status);
+    expect(status.textContent).toContain('Personal key has been added');
   });
 
   it('shows when the key was added as support text below the confirmation', () => {

@@ -171,6 +171,10 @@ describe('InlineGroupedVisualizer', () => {
 
     renderComponent({ errorLabel: 'Failed to load visualizer' });
 
-    expect(await screen.findByRole('alert')).toBeTruthy();
+    expect(
+      (await screen.findByText('Failed to load visualizer')).getAttribute(
+        'role',
+      ),
+    ).toBe('status');
   });
 });

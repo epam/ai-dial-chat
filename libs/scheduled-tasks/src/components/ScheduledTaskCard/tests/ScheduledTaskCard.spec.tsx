@@ -128,7 +128,7 @@ describe('ScheduledTaskCard', () => {
     render(<ScheduledTaskCard item={buildItem()} />);
 
     expect(screen.getByRole('group').className).toContain(
-      'h-[var(--st-card-height,232px)]',
+      'h-(--st-card-height,232px)',
     );
   });
 
@@ -191,7 +191,7 @@ describe('ScheduledTaskCard', () => {
 
     const description = screen.getByText('a'.repeat(600));
     expect(description.className).toContain('min-w-0');
-    expect(description.className).toContain('[overflow-wrap:anywhere]');
+    expect(description.className).toContain('wrap-anywhere');
     expect(screen.getByRole('group').className).toContain('min-w-0');
   });
 

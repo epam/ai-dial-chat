@@ -57,7 +57,7 @@ Any `chat-api` integration that calls a DIAL Core URL without an SDK operation M
 - **THEN** it uses the `DialClientService` transport and includes both the operation's existing headers and the canonical User-Agent
 
 #### Scenario: Scheduler request uses the shared transport
-- **WHEN** `ScheduledTasksService` calls the DIAL Core Scheduler route not exposed by the SDK
+- **WHEN** `SchedulerUpstreamClient` calls the DIAL Core Scheduler route not exposed by the SDK
 - **THEN** it uses the `DialClientService` transport and includes both the operation's existing headers and the canonical User-Agent
 
 #### Scenario: Streaming file upload uses the shared transport
@@ -85,3 +85,4 @@ Except for cross-cutting transport behavior explicitly specified by this capabil
 #### Scenario: Identical operation-specific requests before and after migration
 - **WHEN** any migrated service (e.g. `ModelsService.listModels`) issues the same logical request before and after the `DialClientService` migration
 - **THEN** the resulting DIAL Core HTTP request has the same URL, method, operation-specific headers, and body, while also carrying any shared transport headers required by this capability
+

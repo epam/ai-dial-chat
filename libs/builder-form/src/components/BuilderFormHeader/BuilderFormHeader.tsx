@@ -3,6 +3,8 @@ import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   GhostIconButton,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import { IconArrowLeft } from '@tabler/icons-react';
 import type { FC } from 'react';
@@ -84,9 +86,9 @@ export const BuilderFormHeader: FC<BuilderFormHeaderProps> = ({
         />
       </div>
 
-      <span role="status" aria-live="polite" className="sr-only">
+      <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
         {isSubmitting ? (labels.submittingLabel ?? 'Submitting') : ''}
-      </span>
+      </LiveRegion>
     </div>
   );
 };

@@ -122,6 +122,7 @@ export type {
 export { ListView } from './components/ListView/ListView';
 export type {
   ListViewColors,
+  ListViewHandle,
   ListViewProps,
   ListViewStyles,
   ListViewTypography,
@@ -137,7 +138,22 @@ export type { FavoriteCardProps } from './components/Favorites/FavoriteCard';
 export { Filter } from './components/Filter/Filter';
 export type { FilterColors, FilterProps } from './components/Filter/Filter';
 export { CatalogPickerModal } from './components/CatalogPickerModal/CatalogPickerModal';
+export { AddOnCatalogModal } from './components/AddOnCatalogModal/AddOnCatalogModal';
 export type {
+  AddOnCatalogListProps,
+  AddOnCatalogModalLabels,
+  AddOnCatalogModalProps,
+} from './components/AddOnCatalogModal/AddOnCatalogModal';
+export { AddOnListItem } from './components/AddOnListItem/AddOnListItem';
+export type {
+  AddOnListItemColors,
+  AddOnListItemLabels,
+  AddOnListItemProps,
+} from './components/AddOnListItem/AddOnListItem';
+export { useListRemoveFocus } from './utils/use-list-remove-focus';
+export type {
+  CatalogPickerListProps,
+  CatalogPickerModalColors,
   CatalogPickerModalLabels,
   CatalogPickerModalProps,
 } from './components/CatalogPickerModal/CatalogPickerModal';
@@ -211,4 +227,5 @@ export type {
   ApplicationCredentialLoginParams,
   ApplicationCredentialsProps,
   ApplicationCredentialsTexts,
+  ApplicationCredentialsTypography,
 } from './models/application-credentials';

@@ -40,7 +40,7 @@ export interface TextRefinementResult {
   canRefine: boolean;
   /** Whether an original baseline can be restored. */
   canUndo: boolean;
-  /** Refines the latest committed value; duplicate activation is ignored. */
+  /** Refines the latest committed value, or the Undo baseline when one exists; duplicate activation is ignored. */
   refine: () => Promise<void>;
   /** Restores the baseline from before the first successful refinement. */
   undo: () => void;
@@ -126,6 +126,8 @@ export const useTextRefinement = (
     current.controller = controller;
     const generation = ++current.generation;
     const original = input.value;
+    // After a result, regenerating rewrites the author's draft, not the previous result.
+    const source = current.baseline ?? original;
     const isCurrent = () =>
       mounted.current &&
       generation === current.generation &&
@@ -133,7 +135,7 @@ export const useTextRefinement = (
       latest.current.value === original;
     setState(TextRefinementState.Pending);
     try {
-      const text = await input.onRefine(original, controller.signal);
+      const text = await input.onRefine(source, controller.signal);
       if (!isCurrent()) return;
       if (typeof text !== 'string' || !text.trim())
         throw new Error('Empty refinement');

@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./out-tsc/vitest",
-    "types": ["node", "vitest/globals"],
+    "types": ["node", "vitest/globals", "multer"],
     "module": "esnext",
     "moduleResolution": "bundler",
     "experimentalDecorators": true,

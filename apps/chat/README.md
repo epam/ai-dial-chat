@@ -57,6 +57,31 @@ Rapidly opening several run chats queues their viewed writes within the current
 app instance; older list responses cannot replace a newer successfully loaded
 conversation snapshot. A newer failed request does not discard an older success.
 
+### Unread dot for regular chats
+
+A regular chat shows the unread dot when its answer arrived while the user was
+not looking at it. The backend reports `isUnread: true` for a chat in the user's
+own bucket that was updated after a one-time read-before baseline
+(`.client_data/.conversations-read-baseline.json`, created by the first list
+request) and is not in the viewed ids (`.client_data/.viewed-conversations.json`).
+Older chats are read by condition, nothing is migrated; scheduled runs keep their
+own viewed file.
+
+- Starting a generation (send, regenerate, edit) marks the chat unread in the
+  local list at once, and the server removes it from the viewed ids when the
+  completion starts.
+- The open conversation never shows the dot, so watching a chat generate shows no
+  dot, and leaving it mid-stream shows the dot immediately.
+- The conversation page marks an open unread chat viewed once it has loaded and
+  its stream is not running; returning to a chat that is still generating writes
+  nothing, and the chat is marked when the stream ends while it is open. Leaving
+  mid-stream never marks it. The panel's active-conversation sync only marks
+  scheduled runs.
+  A failed recovery of a generating chat keeps it unread, and a viewed write
+  queued when a generation starts in that chat is dropped.
+- Renaming a read chat keeps it read. A failed viewed write leaves a regular chat
+  read locally; the next list that still reports it unread retries once.
+
 History and Start now pass expected chat ids to
 `ConversationsContext.refreshConversations(expectedIds?)`. Missing chats get up to
 five additional list requests, two seconds apart after each request settles.
@@ -289,7 +314,7 @@ apps/chat/
 │   ├── components/              # Feature components (see below)
 │   ├── constants/               # Route helpers, translation keys, feature keys
 │   ├── context/                 # React context providers (see below)
-│   ├── hooks/                   # Shared hooks, incl. breakpoint/useBreakpoint
+│   ├── hooks/                   # Shared hooks
 │   ├── i18n/                    # i18n configuration and locale JSON
 │   ├── models/                  # App-level domain models
 │   ├── pages/                   # Route-level pages
@@ -408,8 +433,8 @@ shape — is in
 | `desktop` | `min-width: 1280px` |
 
 Do not introduce `sm:`/`md:`/`lg:`/`xl:` or tablet variants. When a component
-must branch in JavaScript, use `useBreakpoint` / `useIsMobile` from
-`src/hooks/breakpoint/useBreakpoint.ts` instead of reading `window.innerWidth`.
+must branch in JavaScript, use `useIsMobile` from `@epam/ai-dial-chat-shared`
+instead of reading `window.innerWidth`.
 
 ### RTL
 
@@ -571,6 +596,11 @@ The Quick Apps iframe receives
 `{ type: 'REQUEST_APPLICATION_CREDENTIALS', appId: 'applications/public/my-agent' }`
 from that iframe opens the same host dialog; no credentials are sent through
 `postMessage`. See [the authentication flow](../../docs/auth/auth-bff-encrypted-cookie.md#proactive-application-credential-forms).
+An editor that already knows the one service to connect checks `externalServiceLogin=true`
+and sends
+`{ type: 'REQUEST_EXTERNAL_SERVICE_LOGIN', appId, serviceId, offlineUsageConsent }` instead:
+the host signs the user in to that service at `USER` level without the dialog, opening only
+the provider's consent popup, and answers with `EXTERNAL_SERVICE_LOGIN_RESULT`.
 
 ## AI text refinement
 

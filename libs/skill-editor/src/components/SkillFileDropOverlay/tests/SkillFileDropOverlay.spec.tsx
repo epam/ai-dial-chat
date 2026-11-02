@@ -7,10 +7,18 @@ vi.mock('@tabler/icons-react', () => ({
 }));
 
 describe('SkillFileDropOverlay', () => {
-  it('renders nothing when not visible', () => {
-    render(<SkillFileDropOverlay isVisible={false} />);
+  it('keeps an empty status region mounted while hidden and fills it when shown', () => {
+    const { rerender } = render(<SkillFileDropOverlay isVisible={false} />);
+    const status = screen.getByRole('status');
+    expect(status.textContent).toBe('');
+    expect(screen.queryByText('Upload files')).toBeNull();
 
-    expect(screen.queryByRole('status')).toBeNull();
+    rerender(<SkillFileDropOverlay isVisible />);
+
+    expect(screen.getByRole('status')).toBe(status);
+    expect(status.textContent).toBe(
+      'Upload files. Drop files here to add them to this skill',
+    );
   });
 
   it('shows the default title and subtitle when visible', () => {

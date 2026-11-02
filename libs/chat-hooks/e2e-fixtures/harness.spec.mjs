@@ -10,7 +10,40 @@ import {
   createTmpRoot,
   execNpmSync,
   resolvePeerClosure,
+  writeFixturePackageJson,
 } from './harness.mjs';
+
+test('pins direct peers without redundant overrides and retains absent optional pins', () => {
+  const dir = createTmpRoot('chat-hooks-peer-pins-');
+  try {
+    writeFixturePackageJson(dir, {
+      name: 'peer-pins',
+      tarballPath: path.join(dir, 'hooks.tgz'),
+      reactVersion: '19.2.8',
+      reactTypesVersion: '19.3.0',
+      peers: ['@epam/ai-dial-ui-kit'],
+      dependencyResolver: {
+        resolvePeerClosure: () => ({ '@epam/ai-dial-ui-kit': '0.16.0-dev.45' }),
+      },
+      externalPeerOverrides: {
+        '@epam/ai-dial-ui-kit': '0.16.0-dev.45',
+        '@epam/ai-dial-react-file-manager': '0.4.0-dev.19',
+      },
+    });
+    const manifest = JSON.parse(
+      readFileSync(path.join(dir, 'package.json'), 'utf8'),
+    );
+    assert.equal(
+      manifest.dependencies['@epam/ai-dial-ui-kit'],
+      '0.16.0-dev.45',
+    );
+    assert.deepEqual(manifest.overrides, {
+      '@epam/ai-dial-react-file-manager': '0.4.0-dev.19',
+    });
+  } finally {
+    cleanupDir(dir);
+  }
+});
 
 test('resolves workspace peers to local artifacts and external peers to exact locked versions', () => {
   const specs = {

@@ -4,7 +4,7 @@ Seasonal start-page celebrations with lazily loaded Halloween and New Year scene
 
 ## Overview
 
-`@epam/ai-dial-celebrations` adds seasonal easter eggs to a chat start page: a decoration with a clickable trigger (a pumpkin, a gift), full-screen animated scenes that play when the trigger is pressed, and an optional secret phrase that plays a hidden scene instead of sending the message. The runtime is a React provider that owns playback — which event is loaded, which scene is playing and when it ends — while the host decides everything the library cannot know: which event is active and on which page, how texts are translated, how notifications are shown, whether the layout is mobile, and which DOM elements scenes may borrow. Each event lives in its own entry point (`./halloween`, `./new-year`) and is loaded only when selected, so a host that never enables New Year never downloads it. Hosts can disable individual scenes, individual decoration behaviors and the secret phrase per event. Every scene respects `prefers-reduced-motion`, all artwork is `aria-hidden` and pointer-transparent, and scenes that borrow interface elements restore their original appearance on completion or interruption.
+`@epam/ai-dial-celebrations` adds seasonal easter eggs to a chat start page: a decoration with a clickable trigger (a pumpkin, a gift), full-screen animated scenes that play when the trigger is pressed, and an optional secret phrase that plays a hidden scene instead of sending the message. The runtime is a React provider that owns playback — which event is loaded, which scene is playing and when it ends — while the host decides everything the library cannot know: which event is active and on which page, how texts are translated, how notifications are shown, whether the layout is mobile, and which DOM elements scenes may borrow. Each event lives in its own entry point (`./halloween`, `./new-year`) and is loaded only when selected, so a host that never enables New Year never downloads it. Externally delivered packs — a Lottie scene that replaces a bundled scene by id, or a whole external-only event — are described by transport-independent descriptors from the main entry and rendered by the lazy `./packs` entry; the library never fetches them, the host passes asset loaders. Hosts can disable individual scenes, individual decoration behaviors and the secret phrase per event. Every scene respects `prefers-reduced-motion`, all artwork is `aria-hidden` and pointer-transparent, and scenes that borrow interface elements restore their original appearance on completion or interruption.
 
 ## Installation
 
@@ -149,6 +149,115 @@ export const loadHalloween = async () =>
 
 `@epam/ai-dial-celebrations/new-year` exports the default `newYearEvent`, `NEW_YEAR_LABELS` and `NewYearScene`. Its decoration is a garland with a gift trigger; the secret phrase is `happy new year`.
 
+### Packs
+
+`@epam/ai-dial-celebrations/packs` renders host-validated pack descriptors. Import it only after a pack has resolved, so `LottieScene` and the static trigger stay out of the main chunk. Its exports are `LottieScene`, `StaticTriggerDecoration`, `createCelebrationSceneFromDescriptor`, `replaceCelebrationScenes` and `createCelebrationEventFromDescriptor`.
+
+The host supplies every asset through `CelebrationAssetLoaders`: `loadAnimationData(assetId, signal)` resolves parsed Lottie JSON and must reject on abort; `resolveImageUrl(assetId)` returns an `<img>` URL or `undefined`. The library never calls `fetch`, never imports a URL and never injects markup.
+
+Replace a bundled scene by its stable id. Only ids the event already has are replaced; each replacement keeps the bundled `labelId`, and the trigger, pools, secret phrase, labels and decor behaviors stay the same:
+
+```ts
+import {
+  CelebrationColorScheme,
+  type CelebrationAssetLoaders,
+  type CelebrationSceneDescriptor,
+} from '@epam/ai-dial-celebrations';
+
+declare const snowman: CelebrationSceneDescriptor;
+declare const loaders: CelebrationAssetLoaders;
+
+export const loadNewYear = async () => {
+  const [
+    { createCelebrationSceneFromDescriptor, replaceCelebrationScenes },
+    { newYearEvent },
+  ] = await Promise.all([
+    import('@epam/ai-dial-celebrations/packs'),
+    import('@epam/ai-dial-celebrations/new-year'),
+  ]);
+  return replaceCelebrationScenes(newYearEvent, [
+    createCelebrationSceneFromDescriptor(snowman, loaders, {
+      direction: 'ltr',
+      colorScheme: CelebrationColorScheme.Light,
+    }),
+  ]);
+};
+```
+
+An external-only event comes from a pack descriptor with an `event` block. It gets the `static-trigger-v1` decoration, the pack's English labels, its click pool filtered to declared scenes, and no secret phrase or decor behaviors. The function throws for a descriptor without `event`:
+
+```ts
+import {
+  CelebrationColorScheme,
+  type CelebrationAssetLoaders,
+  type CelebrationPackDescriptor,
+} from '@epam/ai-dial-celebrations';
+
+declare const pack: CelebrationPackDescriptor;
+declare const loaders: CelebrationAssetLoaders;
+
+export const loadAnniversary = async () => {
+  const { createCelebrationEventFromDescriptor } =
+    await import('@epam/ai-dial-celebrations/packs');
+  return createCelebrationEventFromDescriptor(pack, loaders, {
+    direction: 'rtl',
+    colorScheme: CelebrationColorScheme.Dark,
+  });
+};
+```
+
+`LottieScene` plays one `CelebrationSceneDescriptor` inside the provider's scene layer. It picks the variant matching the most of layout (`isMobile`), direction and color scheme, places a `viewport-stage-v1` stage by `fit` and `align` (`start`/`end` follow the supplied direction, never the document language), flips a `mirror` scene in RTL, and clones the data before the player gets it. Under reduced motion, for an unsupported scene, or on a failure before playback, it shows the poster `<img alt="">` for `posterDurationMs` without loading the player or the data; after a failure past the first frame it renders nothing. A generated SVG with more than 800 elements counts as a failure before playback.
+
+```tsx
+import { LottieScene } from '@epam/ai-dial-celebrations/packs';
+import {
+  CelebrationColorScheme,
+  type CelebrationAssetLoaders,
+  type CelebrationSceneDescriptor,
+} from '@epam/ai-dial-celebrations';
+
+declare const scene: CelebrationSceneDescriptor;
+declare const loaders: CelebrationAssetLoaders;
+
+export const SnowmanScene = () => (
+  <LottieScene
+    scene={scene}
+    loaders={loaders}
+    context={{ direction: 'ltr', colorScheme: CelebrationColorScheme.Light }}
+  />
+);
+```
+
+`StaticTriggerDecoration` is a native `<button type="button">` named by `label` (default `Play celebration` when empty), with an `aria-hidden` image from `imageUrl`. It calls `onActivate` on click, Enter and Space, draws its focus ring in `currentColor` and declares no colors of its own.
+
+```tsx
+import { StaticTriggerDecoration } from '@epam/ai-dial-celebrations/packs';
+
+export const Trigger = ({ onActivate }: { onActivate: () => void }) => (
+  <StaticTriggerDecoration
+    onActivate={onActivate}
+    imageUrl="/images/anniversary-trigger.svg"
+    label="Celebrate ten years"
+  />
+);
+```
+
+## Capabilities
+
+`SUPPORTED_CELEBRATION_CAPABILITIES` is the read-only set of capability ids this release implements: `lottie-light-svg-v1`, `viewport-stage-v1`, `static-poster-v1` and `static-trigger-v1`. `composer-anchor-v1` is not implemented yet. A host keeps only scenes whose `requiredCapabilities` are all in the set:
+
+```ts
+import {
+  SUPPORTED_CELEBRATION_CAPABILITIES,
+  type CelebrationSceneDescriptor,
+} from '@epam/ai-dial-celebrations';
+
+export const isPlayable = (scene: CelebrationSceneDescriptor) =>
+  scene.requiredCapabilities.every((id) =>
+    SUPPORTED_CELEBRATION_CAPABILITIES.has(id),
+  );
+```
+
 ## Choosing scenes
 
 `selection` takes, per event id, `enabledScenes` (when set, only these may play), `disabledScenes`, `disabledDecorBehaviors` and `isSecretEnabled` (default `true`). Everything is enabled by default. A disabled scene leaves both the click and the secret pools; the secret phrase is consumed only while one of its scenes is enabled, otherwise the message is sent normally.
@@ -196,11 +305,29 @@ export const halloweenLabels: Partial<HalloweenLabels> = {
 
 ### NewYearScene
 
-`Snow`, `Confetti`, `Sleigh`, `GiftWrapping`, `PenguinStar`. `Confetti` is also the secret-phrase scene.
+`PenguinStar` and `SnowmanDelivery` play on a gift click, picked at random.
+`GiftWrapping` and `ReindeerTakeoff` form the secret pool for `happy new year`,
+selected without consecutive repeats independently of gift clicks. Snow, confetti
+and sleigh scenes are no longer included.
+
+### Pack enums
+
+From the main entry:
+
+- `CelebrationCapability`: `LottieLightSvgV1`, `ViewportStageV1`, `ComposerAnchorV1`, `StaticPosterV1`, `StaticTriggerV1`.
+- `CelebrationDirectionMode`: `None`, `Mirror`, `Variant`.
+- `CelebrationLayout`: `Mobile`, `Desktop`.
+- `CelebrationColorScheme`: `Light`, `Dark`.
+- `CelebrationPlacementTemplate`: `ViewportStageV1`, `ComposerAnchorV1` (only the first is rendered in this release).
+- `CelebrationStageFit`: `Contain`, `Cover`.
+- `CelebrationStageAlign`: `Center`, `Top`, `Bottom`, `TopStart`, `TopEnd`, `BottomStart`, `BottomEnd`.
+- `CelebrationDecorationTemplate`: `StaticTriggerV1`.
 
 ## Types
 
 `CelebrationProviderProps`, `CelebrationContextValue`, `CelebrationEvent`, `CelebrationEventLoader`, `CelebrationScene`, `CelebrationSecretTrigger`, `CelebrationDecorationProps`, `CelebrationEventSelection`, `CelebrationAnchors`, `CelebrationNotification`, `HalloweenEventOptions`, `HalloweenLabels`, `NewYearLabels`.
+
+Pack descriptors, from the main entry: `CelebrationPackDescriptor`, `CelebrationSceneDescriptor`, `CelebrationSceneVariantDescriptor`, `CelebrationVariantConditions`, `CelebrationSceneTiming`, `CelebrationPlacementDescriptor`, `CelebrationViewportStagePlacement`, `CelebrationExternalEventDescriptor`, `CelebrationDecorationDescriptor`, `CelebrationAssetLoaders`, `CelebrationVariantContext` and `CelebrationTextDirection`. From `./packs`: `LottieSceneProps` and `StaticTriggerDecorationProps`.
 
 ## Scenes
 
@@ -211,6 +338,10 @@ selector if no prompt qualifies. The button folds down to a paper ball in its
 flipper; the penguin crushes that into a gold star and throws it onto the fir. After a
 surprised look and a bow to the tree, it leaves by the same side. The borrowed
 button returns to its original appearance when the scene ends or is interrupted.
+The working flipper follows the body's lean; the captured fragment and thrown
+star share its actual grip in LTR and RTL. Short alternating steps accompany
+the entrance, approach to the fir and departure. The throw uses one continuous
+arc, and the feet settle during held reactions and the bow.
 One 20-second native Lottie SVG composition owns the scene; the
 provider allows 22.5 seconds including player loading. The existing light
 player loads only for animated playback, with a two-second import deadline and
@@ -230,7 +361,7 @@ its reversible visual transform is cancelled when playback stops.
 Typing, pointer/focus interaction, scrolling, viewport or target changes,
 hidden tabs, navigation, scene replacement and motion-preference changes stop
 the scene and release its player, listeners, observers and timers. The gift
-selects it from the random click pool; the secret phrase still plays confetti.
+picks the penguin or the snowman; the secret phrase picks the elves or reindeer.
 Hosts can override `penguinStarToastMessage` through existing labels. The scene
 budgets 140 generated SVG artwork nodes, 32 animated properties, 80 keyframes
 per property and 120 KB of composition data. It uses no external assets,
@@ -247,6 +378,9 @@ presents his work while the frustrated master hops away with a chest bow and a
 ribbon around his
 ankles; the helper follows with the reel. Both elves and the full story remain
 on mobile and in RTL layouts.
+The original character contours remain intact: cap movement and recoil are
+restrained, while each frustrated hop slows on ascent and accelerates into
+landing without stopping horizontally at its apex.
 
 The scene plays one sixteen-second Lottie vector composition and unmounts by
 eighteen and a half seconds. Its light SVG player loads only for animated
@@ -263,9 +397,112 @@ host.
 
 Interaction, focus changes, scrolling, viewport or target changes, hidden tabs,
 navigation and motion-preference changes cancel playback and release the player.
-The gift selects the scene from the existing random click pool; the secret
-phrase still plays confetti. Hosts can override `giftWrappingToastMessage`
+The secret phrase `happy new year` picks the elves or reindeer without
+consecutive repeats; a gift click picks the penguin or the snowman. Hosts can override `giftWrappingToastMessage`
 through the existing New Year labels.
+
+New Year's reindeer takeoff, "Reindeer, Release the Brake!", has a chestnut
+adult, a smaller calf in a burgundy scarf and a red gift sleigh. They walk on
+the upper edge of the composer. A trailing ribbon catches a word in its text
+(or the placeholder when empty). Two resisted pulls lift the word above the
+rim; the calf walks back, fails one nose nudge, then lifts the loop. The word
+returns before takeoff. Snow falls from the flying sleigh and stays along its
+route, slowly drifting and fading even after the formation leaves.
+
+Steps follow distance traveled, with planted soles and bending joints. The
+bodies compress before pulling and takeoff; the calf turns before walking
+back. Forelegs and hind legs bend differently with staggered contacts. The
+adult has a fuller chest and longer antlers; the calf has a rounder face and
+compact proportions. Neck, gaze and ear gestures distinguish the adult's
+effort from the calf's curiosity. The nose and caught loop share the articulated
+neck/head geometry. During takeoff the legs extend, fold and settle into a
+relaxed glide instead of continuing to walk in the air. A continuous flight
+arc carries the adult first, then the calf and
+sleigh with a short delay. The reins and snow follow the actual tilted rigs.
+All support solving is baked before playback.
+
+The 23-second scene uses the existing 25.5-second provider lifetime, including
+the 2-second import and 250 ms renderer deadlines. The complete cast remains
+on mobile, scaled to the input width. Ground travel clips to the composer;
+at takeoff the clip opens to the welcome-region width. All three silhouettes
+stay visible through 20.5 seconds before physically leaving the frame.
+
+Only an inert word fragment is borrowed: at most 32 characters / 280 × 48 px,
+using a text span and a cover over its original pixels. A disposable native
+layout mirror reads at most 512 characters during preparation. The real
+textarea's value, placeholder, focus, selection, styles and editing state are
+never changed. Scrolled/clipped, invisible or transparent-ink text and
+non-flat backgrounds use a small drawn catch on the rim. Hosts without
+anchors use a decorative stage. Invalid supplied composers, insufficient
+headroom, reduced motion, unavailable APIs or player failures show the static
+resolution; reduced motion does not measure the host or load the player.
+RTL mirrors travel and artwork, preserving the text's original direction.
+
+One local native Lottie SVG composition and at most four WAAPI companions
+share the renderer's frame-zero clock. Input, focus, pointer, scrolling,
+viewport/target/direction changes, hidden tabs, navigation and unmount remove
+the copies, snow, player, observers and animations. Hosts can disable
+`NewYearScene.ReindeerTakeoff` or override `reindeerTakeoffToastMessage`.
+
+Budgets are one player, two deer, one sleigh, 24 snow clusters on desktop or
+16 on mobile; 500 KB composition data, 24 layers, 110 animated properties,
+7,000 keys (380 per property), 320 generated SVG nodes, 140 paths and 2,000
+vertices. Preparation scans at most four composers, four textareas and 24
+background ancestors. No external/raster assets, filters, SVG masks,
+per-frame host reads or React updates. These limits are structural budgets,
+not a frame-rate guarantee. Run
+`node libs/celebrations/browser-tests/reindeer-takeoff.browser.spec.mjs`
+against Storybook at port 6010 (`STORYBOOK_URL` overrides it); captures and
+profiles go to `tmp/reindeer-verification`.
+
+New Year's snowman delivery, "Delivery Without Losing Your Head", stars a
+slightly pompous snowman with a carrot nose, burgundy scarf and mittens. He
+walks in with a present, eyes a small fir at the far end of his stage, then
+the distance, then a starter-prompt card, and has an idea. He balances the
+present on his head, jumps to grip the card (or reaches it, when it is low
+enough), hangs on it until his weight tears an inert visual copy free, lowers
+it in front of him and drops it onto the snow. He tests it with one foot, sits
+on it hugging the present, scoots twice and glides, turning from cautious to
+smug. The sled stops in a snowbank; his body squashes and his head flies on
+into the fir's bough at the sled's own speed. After an indignant pause the
+headless body delivers the present with a deep bow, gropes for its head and
+spreads its mittens; the head sneezes, the bough flexes and drops it into the
+waiting mittens — backwards. He pauses, turns it the right way round,
+straightens the present, carries the card back, jumps it back into its exact
+slot and leaves holding his head with both mittens.
+
+Staging follows the measured page: with starters below the composer (the
+chat's default) he works on a drawn snow ledge under the starter row, low
+enough that his seated head clears the row; with starters above the composer
+and a clear band, he rides the composer's snowy upper edge; without an
+eligible card he uses a drawn sled, and when the rim is crowded he plays on a
+snowy platform below the page content. When no band fits, the scene shows a
+static snowman holding his head beside the delivered present. The scene is
+clipped to the welcome region, and he walks in from at most 200 units before
+his pickup spot. Travel shortens on mobile, where the story is otherwise
+complete; RTL mirrors travel and staging but never the copied card's text.
+
+One 25-second native Lottie SVG composition carries the cast and props, with
+the snowman in one precomposition so a single opacity fades him in and out;
+the provider allows 27.5 seconds. The card copy is an inert, `aria-hidden`
+snapshot driven by WAAPI keyframes generated from the same plan and started on
+the Lottie clock through the session's `onPlaybackStarted` callback, which
+reports the document-timeline time of frame 0. Only the original card's
+opacity is animated, from the grip until the copy is back in its rect; the
+card is never clicked, focused or reparented, and its original returns at once
+on completion or any interruption. An eligible card is idle, visible,
+unfocused, at most 240 × 96 px with at most 40 nodes, in the starter row next
+to the chosen stage.
+
+Typing, pointer/focus interaction, scrolling, viewport or target changes,
+hidden tabs, navigation and motion-preference changes stop the scene and
+release its player, card copy, listeners, observers and timers. Hosts can
+override `snowmanDeliveryToastMessage` through the New Year labels. The scene
+budgets one player, one card copy, at most 16 top-level layers, 56 animated
+properties (48 on mobile), 128 keyframes per property, 1,300 keyframes in
+total, 170 KB of composition data and 10 snow puffs (4 on mobile). It uses no
+external assets, filters, masks, gradients or per-frame host measurements;
+these limits are not a frame-rate guarantee.
 
 The Halloween portal briefly pulls visual copies of up to two adjacent, visible
 conversation-history rows into its claw, then restores the rows. It never changes
@@ -514,11 +751,11 @@ and the browser-tab favicon. No event state is persisted.
 
 A host cannot style the library through its CSS-module locals, which are hashed at build time. Three elements therefore carry a stable public class, exported as `CELEBRATIONS_CLASS`.
 
-| Key          | Class                           | Element                                    |
-| ------------ | ------------------------------- | ------------------------------------------ |
-| `decor`      | `dial-celebrations-decor`       | Wrapper of the active event's decoration   |
-| `trigger`    | `dial-celebrations-trigger`     | The event's trigger button (pumpkin, gift) |
-| `sceneLayer` | `dial-celebrations-scene-layer` | Viewport layer a playing scene renders in  |
+| Key          | Class                           | Element                                                    |
+| ------------ | ------------------------------- | ---------------------------------------------------------- |
+| `decor`      | `dial-celebrations-decor`       | Wrapper of the active event's decoration                   |
+| `trigger`    | `dial-celebrations-trigger`     | The event's trigger button (pumpkin, gift, static trigger) |
+| `sceneLayer` | `dial-celebrations-scene-layer` | Viewport layer a playing scene renders in                  |
 
 ## Storybook
 

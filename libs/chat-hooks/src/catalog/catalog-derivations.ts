@@ -1,8 +1,8 @@
-import type { CatalogItem } from '@epam/ai-dial-catalog';
+import { type CatalogItem, getCatalogItemTabs } from '@epam/ai-dial-catalog';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 
 /**
- * Filters catalog items to those whose type is in `visibleTypes` and whose `supportsChat` is not `false`.
+ * Filters catalog items to those listed under at least one tab in `visibleTypes` (see `getCatalogItemTabs`) and whose `supportsChat` is not `false`.
  * Call only when selector mode is active; otherwise pass through the original array.
  */
 export const filterCatalogItemsBySelector = (
@@ -10,7 +10,9 @@ export const filterCatalogItemsBySelector = (
   visibleTypes: ReadonlySet<CatalogEntityType>,
 ): CatalogItem[] =>
   items.filter(
-    (item) => visibleTypes.has(item.type) && item.supportsChat !== false,
+    (item) =>
+      getCatalogItemTabs(item).some((tab) => visibleTypes.has(tab)) &&
+      item.supportsChat !== false,
   );
 
 /**
@@ -32,14 +34,14 @@ export const deriveFavoriteItems = (
   items.filter((item) => item.isUserFavorite && !item.isHidden);
 
 /**
- * Returns the subset of `tabOrder` entries whose entity type is present in
- * `items`, preserving tab order.
+ * Returns the subset of `tabOrder` entries that at least one item in `items`
+ * is listed under (see `getCatalogItemTabs`), preserving tab order.
  */
 export const deriveAvailableTabIds = <T extends CatalogEntityType>(
   items: readonly CatalogItem[],
   tabOrder: readonly T[],
 ): T[] => {
-  const presentTypes = new Set(items.map((item) => item.type));
+  const presentTypes = new Set(items.flatMap(getCatalogItemTabs));
   return tabOrder.filter((type) => presentTypes.has(type));
 };
 

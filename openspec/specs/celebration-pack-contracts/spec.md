@@ -129,7 +129,7 @@ Hashes shortened to `…(64 hex)` in these examples are full lowercase SHA-256 v
 }
 ```
 
-For a known event, `labels` is optional. A label ID that the bundled event already defines keeps resolving from the app's i18n keys and then the bundled English default (see `celebration-lottie-authoring-profile`). The example repeats the existing English `sleighToastMessage` only to show the shape.
+For a known event, `labels` is optional. A label ID that the bundled event already defines keeps resolving from the app's i18n keys and then the bundled English default (see `celebration-lottie-authoring-profile`). The example supplies a pack-owned `sleighToastMessage`; sleigh is not a bundled New Year scene.
 
 External-only events (no compiled module) SHALL additionally declare these, and known events SHALL NOT declare them:
 
@@ -151,7 +151,7 @@ A v1 manifest SHALL NOT declare a secret phrase, decoration behaviors, scripts, 
 
 - `version` SHALL be strict semver `MAJOR.MINOR.PATCH` without pre-release or build metadata.
 - `assetId` SHALL match `^[a-z0-9][a-z0-9-]{0,95}$`, SHALL end with the first 16 hex characters of its SHA-256, and SHALL be unique across the whole catalog (the catalog `assets` registry plus every listed manifest).
-- Label IDs SHALL match `^[a-z][A-Za-z0-9]{0,63}$`, the same camelCase form that existing label keys such as `sleighToastMessage` and `toastTitle` use.
+- Label IDs SHALL match `^[a-z][A-Za-z0-9]{0,63}$`, the same camelCase form that existing label keys such as `giftWrappingToastMessage` and `toastTitle` use.
 - Scene IDs that replace a bundled scene SHALL equal the existing `HalloweenScene` or `NewYearScene` value.
 - An ID SHALL never be reused for different content.
 

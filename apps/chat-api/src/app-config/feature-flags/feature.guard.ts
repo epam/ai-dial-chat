@@ -7,6 +7,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
 import type { SessionUser } from '../../auth/session/session.types';
+import { UserRolesService } from '../../auth/user-roles.service';
 import type { AppConfigEvalContext } from '../app-config.types';
 import { FeatureFlagsService } from './feature-flags.service';
 import { FeatureKey } from './feature-key.enum';
@@ -17,6 +18,7 @@ export class FeatureGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly featureFlagsService: FeatureFlagsService,
+    private readonly userRoles: UserRolesService,
   ) {}
 
   async canActivate(executionContext: ExecutionContext): Promise<boolean> {
@@ -37,7 +39,7 @@ export class FeatureGuard implements CanActivate {
     const context: AppConfigEvalContext = {
       appId: 'chat-ui',
       userId: sessionUser?.sub,
-      roles: extractRoles(sessionUser?.claims),
+      roles: sessionUser ? this.userRoles.getRoles(sessionUser) : undefined,
     };
     const featureKeys = Array.isArray(featureKey) ? featureKey : [featureKey];
     for (const key of featureKeys) {
@@ -49,13 +51,4 @@ export class FeatureGuard implements CanActivate {
       `Feature "${featureKeys.join('" or "')}" is not enabled`,
     );
   }
-}
-
-function extractRoles(
-  claims: Record<string, unknown> | undefined,
-): string[] | undefined {
-  const roles = claims?.['roles'];
-  return Array.isArray(roles)
-    ? roles.filter((role): role is string => typeof role === 'string')
-    : undefined;
 }

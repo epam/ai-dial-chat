@@ -1,4 +1,11 @@
-import { parseExternalServiceUrl } from '@epam/ai-dial-chat-hooks';
+import {
+  ClientChannelRpcRequest,
+  EXTERNAL_SERVICE_SIGNIN_METHOD,
+  parseExternalServiceUrl,
+  PendingSigninEvent,
+  PendingSigninEventKind,
+  TOOLSET_SIGNIN_METHOD,
+} from '@epam/ai-dial-chat-hooks';
 import {
   createContext,
   type FC,
@@ -11,20 +18,14 @@ import {
   useRef,
   useState,
 } from 'react';
-import { useMatch } from 'react-router';
+import { useLocation, useMatch } from 'react-router';
+import { isConversationPagePath } from '../constants/routes';
 import {
   ClientChannelReportResult,
   reportClientChannel,
   subscribeClientChannel,
   unsubscribeClientChannel,
 } from '../server-api/client-channel';
-import {
-  ClientChannelRpcRequest,
-  EXTERNAL_SERVICE_SIGNIN_METHOD,
-  PendingSigninEvent,
-  PendingSigninEventKind,
-  TOOLSET_SIGNIN_METHOD,
-} from '../types/client-channel';
 import { ROUTES } from '../types/routes';
 import { useFeatureFlag } from './AppConfigContext';
 import { useGeneration } from './GenerationContext';
@@ -111,9 +112,11 @@ export const ClientChannelProvider: FC<Props> = ({ children }) => {
    * and navigates to `/conversations/<id>` before any stream exists, so it
    * is intentionally excluded here.
    */
-  const matchConversations = useMatch(`${ROUTES.Conversations}/*`);
+  const { pathname } = useLocation();
   const matchAppsEditor = useMatch(ROUTES.AppsEditor);
-  const isStreamingCapablePage = !!(matchConversations ?? matchAppsEditor);
+  /* A top-level or a project chat; both stream through `useConversationStream`. */
+  const isStreamingCapablePage =
+    isConversationPagePath(pathname) || !!matchAppsEditor;
   const isActive = isEnabled && isStreamingCapablePage;
 
   const [channelId, setChannelId] = useState<string | null>(null);

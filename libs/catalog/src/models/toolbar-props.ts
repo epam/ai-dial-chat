@@ -1,5 +1,5 @@
 import { SelectOption } from '@epam/ai-dial-ui-kit';
-import type { ReactNode } from 'react';
+import type { ReactNode, Ref } from 'react';
 import { CatalogViewMode } from '../types/view-mode';
 
 /** Typography class overrides for `Toolbar`. */
@@ -86,6 +86,8 @@ export interface ToolbarProps {
   browseHeaderRenderer?: ReactNode;
   /** Search input placeholder. Default: 'Search models, tools, agents…'. */
   searchPlaceholder?: string;
+  /** Ref attached to the search `<input>`, e.g. so the host can focus it. */
+  searchInputRef?: Ref<HTMLInputElement>;
   /** Accessible label for switching to grid view. Default: 'Grid view'. */
   gridViewLabel?: string;
   /** Accessible label for switching to list view. Default: 'List view'. */

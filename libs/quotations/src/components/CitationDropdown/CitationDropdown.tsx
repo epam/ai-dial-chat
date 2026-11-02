@@ -162,7 +162,7 @@ export const CitationDropdown: FC<CitationDropdownProps> = ({
       matchReferenceWidth={false}
       className={mergeClasses('ms-1 inline-flex align-middle', styles.trigger)}
       listClassName={mergeClasses(
-        '!p-0 !bg-transparent !shadow-none !rounded-none',
+        'p-0! bg-transparent! shadow-none! rounded-none!',
         QUOTATIONS_CLASS.citationDropdown,
       )}
       renderOverlay={renderCard}

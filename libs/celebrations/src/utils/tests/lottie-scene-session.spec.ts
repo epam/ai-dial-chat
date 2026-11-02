@@ -12,6 +12,8 @@ import { createLottieSceneSession } from '../lottie-scene-session';
 interface FakeAnimation {
   callbacks: Map<string, () => void>;
   isLoaded: boolean;
+  currentFrame: number;
+  frameRate: number;
   animationData: Record<string, unknown>;
   play: ReturnType<typeof vi.fn>;
   setSubframe: ReturnType<typeof vi.fn>;
@@ -35,49 +37,6 @@ let player: LottiePlayer & {
 const TIMINGS = { loadTimeoutMs: 2000, readyTimeoutMs: 250, playbackMs: 16000 };
 const original = () => ({ layers: [{ ty: 4, nm: 'helper' }], v: '5.13.0' });
 
-beforeEach(() => {
-  vi.useFakeTimers();
-  animations = [];
-  isLoadedOnCreate = true;
-  host = document.createElement('div');
-  document.body.append(host);
-  player = {
-    loadAnimation: vi.fn((options: AnimationConfigWithData<'svg'>) => {
-      const callbacks = new Map<string, () => void>();
-      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      options.container?.append(svg);
-      /* Like lottie_light's completeData, the fake player mutates its input. */
-      const data = options.animationData as Record<string, unknown>;
-      data.__complete = true;
-      (data.layers as unknown[]).length = 0;
-      const animation: FakeAnimation = {
-        callbacks,
-        isLoaded: isLoadedOnCreate,
-        animationData: data,
-        play: vi.fn(),
-        setSubframe: vi.fn(),
-        destroy: vi.fn(() => svg.remove()),
-        emit: (name) => callbacks.get(name)?.(),
-      };
-      animations.push(animation);
-      return {
-        ...animation,
-        get isLoaded() {
-          return animation.isLoaded;
-        },
-        addEventListener: (name: string, callback: () => void) =>
-          callbacks.set(name, callback),
-        removeEventListener: (name: string) => callbacks.delete(name),
-      } as unknown as AnimationItem;
-    }),
-  };
-});
-afterEach(() => {
-  host.remove();
-  vi.restoreAllMocks();
-  vi.useRealTimers();
-});
-
 const flush = async () => {
   for (let i = 0; i < 6; i++) await Promise.resolve();
 };
@@ -87,11 +46,17 @@ const createSession = ({
   prepare = vi.fn((): Preparation => ({ data: original() })),
   ownership = LottieDataOwnership.Transferred,
   onAnimationCreated,
+  onPlaybackStarted,
+  isRendererAccepted,
+  loadData,
 }: {
   loadPlayer?: () => Promise<LottiePlayer>;
-  prepare?: () => Preparation;
+  prepare?: (player: LottiePlayer, data: unknown) => Preparation;
   ownership?: LottieDataOwnership;
   onAnimationCreated?: LottieScenePlayback<Preparation>['onAnimationCreated'];
+  onPlaybackStarted?: LottieScenePlayback<Preparation>['onPlaybackStarted'];
+  isRendererAccepted?: LottieScenePlayback<Preparation>['isRendererAccepted'];
+  loadData?: (signal: AbortSignal) => Promise<unknown>;
 } = {}) => {
   const onPrepared = vi.fn();
   const onTerminal = vi.fn();
@@ -100,6 +65,8 @@ const createSession = ({
     ownership,
     getAnimationData: ({ data }) => data,
     onAnimationCreated,
+    onPlaybackStarted,
+    isRendererAccepted,
   };
   const session = createLottieSceneSession({
     playback,
@@ -107,6 +74,7 @@ const createSession = ({
     onPrepared,
     onTerminal,
     loadPlayer,
+    loadData,
   });
   return { session, onPrepared, onTerminal, loadPlayer, prepare };
 };
@@ -139,6 +107,61 @@ const expectReleased = () => {
 };
 
 describe('createLottieSceneSession', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    animations = [];
+    isLoadedOnCreate = true;
+    host = document.createElement('div');
+    document.body.append(host);
+    player = {
+      loadAnimation: vi.fn((options: AnimationConfigWithData<'svg'>) => {
+        const callbacks = new Map<string, () => void>();
+        const svg = document.createElementNS(
+          'http://www.w3.org/2000/svg',
+          'svg',
+        );
+        options.container?.append(svg);
+        /* Like lottie_light's completeData, the fake player mutates its input. */
+        const data = options.animationData as Record<string, unknown>;
+        data.__complete = true;
+        (data.layers as unknown[]).length = 0;
+        const animation: FakeAnimation = {
+          callbacks,
+          isLoaded: isLoadedOnCreate,
+          currentFrame: 0,
+          frameRate: 60,
+          animationData: data,
+          play: vi.fn(),
+          setSubframe: vi.fn(),
+          destroy: vi.fn(() => svg.remove()),
+          emit: (name) => callbacks.get(name)?.(),
+        };
+        animations.push(animation);
+        return {
+          ...animation,
+          get isLoaded() {
+            return animation.isLoaded;
+          },
+          get currentFrame() {
+            return animation.currentFrame;
+          },
+          get frameRate() {
+            return animation.frameRate;
+          },
+          addEventListener: (name: string, callback: () => void) =>
+            callbacks.set(name, callback),
+          removeEventListener: (name: string) => callbacks.delete(name),
+        } as unknown as AnimationItem;
+      }),
+    };
+  });
+
+  afterEach(() => {
+    host.remove();
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
   it('starts the playback deadline at readiness, not at import or renderer creation', async () => {
     const { onTerminal } = await startInitializing();
     vi.advanceTimersByTime(200);
@@ -418,7 +441,7 @@ describe('createLottieSceneSession', () => {
     resolve(player);
     await flush();
     expect(prepare).toHaveBeenCalledOnce();
-    expect(prepare).toHaveBeenCalledWith(player);
+    expect(prepare).toHaveBeenCalledWith(player, undefined);
     expect(onPrepared).toHaveBeenCalledOnce();
     expect(session.state).toBe(LottieSceneSessionState.Prepared);
     expect(vi.getTimerCount()).toBe(0);
@@ -471,5 +494,193 @@ describe('createLottieSceneSession', () => {
     expect(loadPlayer).toHaveBeenCalledTimes(2);
     expect(animations[0].play).toHaveBeenCalledOnce();
     second.session.dispose();
+  });
+  describe('onPlaybackStarted', () => {
+    it('reports the timeline time of frame 0 once, on the first rendered frame', async () => {
+      const onPlaybackStarted = vi.fn();
+      vi.spyOn(performance, 'now').mockReturnValue(5000);
+      await startInitializing({ onPlaybackStarted });
+      const [animation] = animations;
+      animation.emit('DOMLoaded');
+      expect(onPlaybackStarted).not.toHaveBeenCalled();
+
+      animation.currentFrame = 3;
+      animation.emit('enterFrame');
+      animation.emit('enterFrame');
+
+      expect(onPlaybackStarted).toHaveBeenCalledOnce();
+      expect(onPlaybackStarted.mock.calls[0][0]).toMatchObject({
+        host,
+        timelineZeroMs: 4950,
+      });
+      expect(animation.callbacks.has('enterFrame')).toBe(false);
+    });
+
+    it('never reports a playback cancelled before its first frame', async () => {
+      const onPlaybackStarted = vi.fn();
+      const { session } = await startInitializing({ onPlaybackStarted });
+      const [animation] = animations;
+      animation.emit('DOMLoaded');
+      const firstFrame = animation.callbacks.get('enterFrame');
+
+      session.cancel();
+      firstFrame?.();
+
+      expect(onPlaybackStarted).not.toHaveBeenCalled();
+      expectReleased();
+    });
+
+    it('fails and runs every disposer when the callback throws', async () => {
+      const dispose = vi.fn();
+      const { onTerminal } = await startInitializing({
+        onAnimationCreated: ({ addDisposer }) => addDisposer(dispose),
+        onPlaybackStarted: () => {
+          throw new Error('companion');
+        },
+      });
+      const [animation] = animations;
+      animation.emit('DOMLoaded');
+      animation.emit('enterFrame');
+
+      expect(onTerminal).toHaveBeenCalledWith(LottieSceneOutcome.Failed);
+      expect(dispose).toHaveBeenCalledOnce();
+      expectReleased();
+    });
+
+    it('adds no frame listener for an adapter without the callback', async () => {
+      await startInitializing();
+      animations[0].emit('DOMLoaded');
+
+      expect(animations[0].callbacks.has('enterFrame')).toBe(false);
+    });
+  });
+
+  describe('animation data', () => {
+    const deferredData = () => {
+      let resolve: (value: unknown) => void = () => undefined;
+      let reject: (error: Error) => void = () => undefined;
+      const signals: AbortSignal[] = [];
+      const load = vi.fn(
+        (signal: AbortSignal) =>
+          new Promise<unknown>((complete, abort) => {
+            signals.push(signal);
+            resolve = complete;
+            reject = abort;
+          }),
+      );
+      return {
+        load,
+        signals,
+        resolve: (value: unknown) => resolve(value),
+        reject: (error: Error) => reject(error),
+      };
+    };
+
+    it('loads data beside the player and prepares with it', async () => {
+      const data = { w: 10, h: 10, layers: [] };
+      const prepare = vi.fn((): Preparation => ({ data: original() }));
+      const { session, onPrepared } = createSession({
+        prepare,
+        loadData: vi.fn(async () => data),
+      });
+      session.start();
+      await flush();
+      expect(prepare).toHaveBeenCalledWith(player, data);
+      expect(onPrepared).toHaveBeenCalledOnce();
+    });
+
+    it('aborts the data request when the session is cancelled during load', async () => {
+      const { load, signals } = deferredData();
+      const { session, onTerminal } = createSession({ loadData: load });
+      session.start();
+      await flush();
+      expect(signals[0].aborted).toBe(false);
+      session.cancel();
+      expect(signals[0].aborted).toBe(true);
+      expect(onTerminal).toHaveBeenCalledWith(LottieSceneOutcome.Cancelled);
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it('ignores data that resolves after cancellation', async () => {
+      const { load, resolve } = deferredData();
+      const { session, prepare } = createSession({ loadData: load });
+      session.start();
+      await flush();
+      session.dispose();
+      resolve({ layers: [] });
+      await flush();
+      expect(prepare).not.toHaveBeenCalled();
+      expect(player.loadAnimation).not.toHaveBeenCalled();
+    });
+
+    it('fails when the data request rejects', async () => {
+      const { load, reject } = deferredData();
+      const { session, onTerminal, prepare } = createSession({
+        loadData: load,
+      });
+      session.start();
+      await flush();
+      reject(new Error('unavailable'));
+      await flush();
+      expect(onTerminal).toHaveBeenCalledWith(LottieSceneOutcome.Failed);
+      expect(prepare).not.toHaveBeenCalled();
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it('bounds player and data with one load deadline and aborts the late request', async () => {
+      const { load, signals } = deferredData();
+      const { session, onTerminal } = createSession({ loadData: load });
+      session.start();
+      await flush();
+      vi.advanceTimersByTime(1999);
+      expect(onTerminal).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(1);
+      expect(onTerminal).toHaveBeenCalledWith(LottieSceneOutcome.Failed);
+      expect(signals[0].aborted).toBe(true);
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it('does not abort a request that already resolved', async () => {
+      const { load, signals, resolve } = deferredData();
+      const { session } = createSession({ loadData: load });
+      session.start();
+      await flush();
+      resolve({ layers: [] });
+      await flush();
+      session.cancel();
+      expect(signals[0].aborted).toBe(false);
+    });
+  });
+
+  describe('renderer acceptance', () => {
+    it('fails at readiness without playing when the renderer is rejected', async () => {
+      const isRendererAccepted = vi.fn(() => false);
+      const { onTerminal } = await startInitializing({ isRendererAccepted });
+      animations[0].emit('DOMLoaded');
+      expect(isRendererAccepted).toHaveBeenCalledWith(host);
+      expect(onTerminal).toHaveBeenCalledWith(LottieSceneOutcome.Failed);
+      expect(animations[0].play).not.toHaveBeenCalled();
+      expectReleased();
+    });
+
+    it('fails when the acceptance check throws', async () => {
+      const { onTerminal } = await startInitializing({
+        isRendererAccepted: () => {
+          throw new Error('broken');
+        },
+      });
+      animations[0].emit('DOMLoaded');
+      expect(onTerminal).toHaveBeenCalledWith(LottieSceneOutcome.Failed);
+      expectReleased();
+    });
+
+    it('plays when the renderer is accepted', async () => {
+      const { session } = await startInitializing({
+        isRendererAccepted: () => true,
+      });
+      animations[0].emit('DOMLoaded');
+      expect(animations[0].play).toHaveBeenCalledOnce();
+      expect(session.state).toBe(LottieSceneSessionState.Playing);
+    });
   });
 });

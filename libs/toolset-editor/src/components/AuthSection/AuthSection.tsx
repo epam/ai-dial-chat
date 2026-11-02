@@ -4,8 +4,12 @@ import {
   ToolsetCredentialsLevel,
   WithLogin,
 } from '@epam/ai-dial-chat-hooks';
-import { TAG_INPUT_TAG_CLASS_NAME } from '@epam/ai-dial-chat-shared';
 import {
+  mergeClasses,
+  TAG_INPUT_TAG_CLASS_NAME,
+} from '@epam/ai-dial-chat-shared';
+import {
+  CaptionText,
   ConfirmationPopup,
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
@@ -32,6 +36,12 @@ import type {
 import type { ToolsetOAuthLoginResult } from '../../models/toolset-oauth-login';
 import { ToolsetOAuthLoginStatus } from '../../models/toolset-oauth-login';
 import { isToolsetAuthValid, isValidEndpointUrl } from '../../utils/toolsets';
+import styles from './AuthSection.module.scss';
+
+const CLIENT_SECRET_KEEP_CAPTION_ID = 'toolset-client-secret-keep-caption';
+
+const defaultClientSecretHintPlaceholder = (hint: string): string =>
+  `******${hint}`;
 
 // OAuth defaults to standard login (dynamic client registration); custom login is opt-in.
 const defaultWithLoginFor = (type: ToolsetAuthTypes): WithLogin =>
@@ -65,11 +75,19 @@ export const AuthSection: FC<AuthSectionProps> = ({
   onAuthChange,
   onEnsureSaved,
   labels,
+  titleClassName = 'dial-h3-text',
+  openAccessDescriptionClassName = 'dial-small-text',
 }) => {
   const [isAuthBusy, setIsAuthBusy] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const isControlsDisabled = auth.isLoggedIn || isSaving || isAuthBusy;
+  /* The saved secret's hint stands in for the secret only while editing a
+   * saved toolset and before the user types a replacement. */
+  const savedClientSecretHint =
+    isEditMode && auth.clientSecretHint && !auth.clientSecret
+      ? auth.clientSecretHint
+      : undefined;
 
   const canLogIn =
     isValidEndpointUrl(endpoint) &&
@@ -284,27 +302,48 @@ export const AuthSection: FC<AuthSectionProps> = ({
             invalid={!!errors.clientId}
             disabled={isControlsDisabled}
           />
-          <PasswordInput
-            id="toolset-client-secret"
-            value={auth.clientSecret ?? ''}
-            onChange={(value) => onAuthChange({ clientSecret: value ?? '' })}
-            labelProps={{
-              label: labels?.clientSecretLabel ?? 'Client secret',
-              required: !isEditMode,
-            }}
-            placeholder={
-              labels?.clientSecretPlaceholder ?? 'Enter client secret'
-            }
-            showPasswordLabel={
-              labels?.showClientSecretLabel ?? 'Show client secret'
-            }
-            hidePasswordLabel={
-              labels?.hideClientSecretLabel ?? 'Hide client secret'
-            }
-            error={errors.clientSecret || undefined}
-            invalid={!!errors.clientSecret}
-            disabled={isControlsDisabled}
-          />
+          <div className="flex flex-col gap-1">
+            <PasswordInput
+              id="toolset-client-secret"
+              value={auth.clientSecret ?? ''}
+              onChange={(value) => onAuthChange({ clientSecret: value ?? '' })}
+              labelProps={{
+                label: labels?.clientSecretLabel ?? 'Client secret',
+                required: !isEditMode,
+              }}
+              placeholder={
+                savedClientSecretHint != null
+                  ? (
+                      labels?.clientSecretHintPlaceholder ??
+                      defaultClientSecretHintPlaceholder
+                    )(savedClientSecretHint)
+                  : (labels?.clientSecretPlaceholder ?? 'Enter client secret')
+              }
+              aria-describedby={
+                savedClientSecretHint != null
+                  ? CLIENT_SECRET_KEEP_CAPTION_ID
+                  : undefined
+              }
+              showPasswordLabel={
+                labels?.showClientSecretLabel ?? 'Show client secret'
+              }
+              hidePasswordLabel={
+                labels?.hideClientSecretLabel ?? 'Hide client secret'
+              }
+              error={errors.clientSecret || undefined}
+              invalid={!!errors.clientSecret}
+              disabled={isControlsDisabled}
+            />
+            {savedClientSecretHint != null && (
+              <CaptionText
+                id={CLIENT_SECRET_KEEP_CAPTION_ID}
+                text={
+                  labels?.clientSecretKeepCaption ??
+                  'Leave empty to keep the saved secret.'
+                }
+              />
+            )}
+          </div>
           <Input
             id="toolset-authorization-endpoint"
             value={auth.authorizationEndpoint ?? ''}
@@ -314,6 +353,7 @@ export const AuthSection: FC<AuthSectionProps> = ({
             labelProps={{
               label:
                 labels?.authorizationEndpointLabel ?? 'Authorization endpoint',
+              required: true,
             }}
             placeholder={
               labels?.authorizationEndpointPlaceholder ??
@@ -329,6 +369,7 @@ export const AuthSection: FC<AuthSectionProps> = ({
             onChange={(value) => onAuthChange({ tokenEndpoint: value ?? '' })}
             labelProps={{
               label: labels?.tokenEndpointLabel ?? 'Token endpoint',
+              required: true,
             }}
             placeholder={
               labels?.tokenEndpointPlaceholder ?? 'Enter token endpoint'
@@ -356,7 +397,13 @@ export const AuthSection: FC<AuthSectionProps> = ({
   );
 
   const renderNoneContent = () => (
-    <p className="dial-small-text pt-2 text-secondary">
+    <p
+      className={mergeClasses(
+        'pt-2',
+        openAccessDescriptionClassName,
+        styles.openAccessDescription,
+      )}
+    >
       {labels?.openAccessDescription ?? 'Open endpoint, no credentials'}
     </p>
   );
@@ -426,7 +473,7 @@ export const AuthSection: FC<AuthSectionProps> = ({
 
   return (
     <section className="flex flex-col gap-2">
-      <h3 className="dial-h3-text">
+      <h3 className={titleClassName}>
         {labels?.sectionTitle ?? 'Authentication'}
       </h3>
 

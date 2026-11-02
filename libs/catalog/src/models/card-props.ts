@@ -1,3 +1,4 @@
+import type { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type { CSSProperties } from 'react';
 import type { CatalogItem } from './catalog-item';
 import type { CatalogMarkdownLabels } from './item-details-props';
@@ -16,6 +17,10 @@ export interface CardTypography {
   folderLabelClassName?: string;
   /** Typography class applied to the leaf (last) folder path segment. Default: `'dial-tiny-semi-text'`. */
   folderLeafClassName?: string;
+  /** Typography class of the text in the full-description tooltip (paragraphs, lists and headings). Default: `'dial-small-text'`. */
+  descriptionTooltipClassName?: string;
+  /** Typography class of bold text in the full-description tooltip. Default: `'dial-small-semi-text'`. */
+  descriptionTooltipStrongClassName?: string;
 }
 
 /** Color overrides applied as CSS custom properties for `Card`. */
@@ -84,4 +89,6 @@ export interface CardProps {
   isReadonly?: boolean;
   /** Code-block, table and formula labels forwarded to the description markdown. Defaults to the renderer's English labels. */
   markdownLabels?: CatalogMarkdownLabels;
+  /** Active Browse tab; an item listed under it is labeled with that type instead of `item.type`. */
+  activeTab?: CatalogEntityType;
 }

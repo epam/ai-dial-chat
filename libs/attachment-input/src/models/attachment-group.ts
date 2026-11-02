@@ -57,6 +57,8 @@ export interface AttachmentGroupProps {
    * `onAttachmentClick` once per downloadable attachment when omitted.
    */
   onDownloadAll?: (attachments: DisplayAttachment[]) => void;
+  /** Whether an attachment can be downloaded; `false` hides its tile's download button and leaves it out of "download all". Defaults to every attachment being downloadable. */
+  isAttachmentDownloadable?: (attachment: DisplayAttachment) => boolean;
   /** Called when the user retries a failed upload. */
   onRetry?: (id: string) => void;
   /** Localised accessible labels for the group region, its actions, and the non-extension attachment type names (prompt/pasted/image), forwarded to each tile. */

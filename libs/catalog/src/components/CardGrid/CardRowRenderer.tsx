@@ -32,6 +32,7 @@ export const CardRowRenderer: FC<CardRowRendererProps> = memo(
     isReadonly,
     featuredChipStyle,
     markdownLabels,
+    activeTab,
   }) => {
     const start = rowIndex * columnCount;
     const rowItems = items.slice(start, start + columnCount);
@@ -70,6 +71,7 @@ export const CardRowRenderer: FC<CardRowRendererProps> = memo(
                   isReadonly={isReadonly}
                   styles={{ colors: { featuredChipStyle } }}
                   markdownLabels={markdownLabels}
+                  activeTab={activeTab}
                 />
               )}
             </div>

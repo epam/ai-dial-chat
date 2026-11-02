@@ -124,6 +124,23 @@ export class AppsEditorClient {
     });
   }
 
+  /**
+   * Requests a host-run, user-level sign-in to one external service of an application. `offlineUsageConsent`
+   * is the person's choice collected by the editor; the host answers with `ExternalServiceLoginResult`.
+   */
+  requestExternalServiceLogin(
+    appId: string,
+    serviceId: string,
+    options: { offlineUsageConsent: boolean },
+  ): void {
+    this.send({
+      type: AppsEditorMessages.RequestExternalServiceLogin,
+      appId,
+      serviceId,
+      offlineUsageConsent: options.offlineUsageConsent,
+    });
+  }
+
   /** Stops receiving and sending messages; repeated calls are harmless. */
   destroy(): void {
     if (this.isDestroyed) return;

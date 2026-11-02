@@ -1,5 +1,6 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
+import { nxReadySignal } from '@nx/vite/plugins/nx-ready-signal.plugin';
 
 /*
  * Deliberately no `resolve.alias` and no `tsconfig.base.json` extension:
@@ -15,7 +16,7 @@ import { defineConfig } from 'vite';
 export default defineConfig(() => ({
   root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/tools/attachment-canvas-consumer-fixture',
-  plugins: [react()],
+  plugins: [react(), nxReadySignal()],
   build: {
     outDir: './dist',
     emptyOutDir: true,

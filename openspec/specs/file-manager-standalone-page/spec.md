@@ -57,9 +57,9 @@ Specifies the standalone `/files` route: its registration (`apps/chat/src/types/
 
 **Rendering:**
 
-- Renders `DialFileManagerShell` fed by the composer's result, including its `sectionTab`. Below the `desktop` band (1279px and narrower) the shell fills the full page with no additional chrome.
-- From 1280px the page frames the shell: the page title `t('dialFileManager.page.title')` as its `h1` in a header row that uses `PAGE_HEADER_ROW_CLASS` (`apps/chat/src/constants/layout.ts`), 32px of horizontal margin, and the shell inside a raised `bg-layer-raised` card with 20px of inner padding. The frame is the same in both navigation layouts.
-- For `DialFileManagerVariant.Standalone`, the shell paints its content wrapper and `<DialFileManager>` (search, grid and the rest of the right-hand area) with `--dfms-surface`, which defaults to `--bg-layer-base` (`DialFileManagerShellStyles.colors.surface` overrides it). From 1280px the page sets `--dfms-surface: transparent` on a wrapper around the shell, so they are transparent inside the card. The attach modal keeps `bg-layer-sunken`. The folders panel is divided from the grid by a line on its inline-end edge (`border-e border-tertiary`, no shadow), and the grid is a flat table: the shell passes `gridOptions` with `containerClassName: 'rounded-none shadow-none'`, `filterable: false` and `withoutHeaderBorders: true`.
+- Renders `DialFileManagerShell` fed by the composer's result, including its `sectionTab`.
+- The page frames the shell at every width (PRs #9544, #9553; this replaced an earlier full-bleed layout below 1280px): a header row with the page title `t('dialFileManager.page.title')` as its `h1` (`dial-h1-text`), then the shell inside a raised card (`rounded-xl bg-layer-raised shadow-sm`). Below the `desktop` band (1279px and narrower) the frame is tighter: a 48px-minimum header row, 12px of horizontal and bottom margin around the card, and 8px of vertical card padding with no horizontal card padding, so the grid's shadow is not clipped. From 1280px the header row is at least 72px tall, the margins are 32px horizontally and 16px at the bottom, and the card has 20px of inner padding. The frame is the same in both navigation layouts.
+- For `DialFileManagerVariant.Standalone`, the shell paints its content wrapper and `<DialFileManager>` (search, grid and the rest of the right-hand area) with `--dfms-surface`, which defaults to `--bg-layer-base` (`DialFileManagerShellStyles.colors.surface` overrides it). The page sets `--dfms-surface: transparent` on a wrapper around the shell at every width, so they are transparent inside the card. The attach modal keeps `bg-layer-sunken`. The folders panel is divided from the grid by a line on its inline-end edge (`border-e border-tertiary`, no shadow), and the grid is a flat table: the shell passes `gridOptions` with `containerClassName: 'rounded-none shadow-none'`, `filterable: false` and `withoutHeaderBorders: true`.
 - `treeHeaderByTab[All]` is `t(DialFileManagerI18nKeys.MyFilesTreeHeader)`.
 - Clears the grid selection whenever the active tab or the composer's `sectionTab` changes.
 - Forwards `maxSelectableFileSize` (for existing-file selection and grid `isRowSelectable`; see `dial-file-manager-attach-validation`) and a translated `oversizedUploadMessage` (built from the i18n key `dialFileManager.uploadFileTooLarge`) to `DialFileManagerShell`. The shell forwards them to `<DialFileManager>` as `maxSelectableFileSize` and as `maxFileSize`/`uploadValidationMessages.oversizedFiles` respectively.
@@ -82,10 +82,11 @@ Specifies the standalone `/files` route: its registration (`apps/chat/src/types/
 - **WHEN** `DialFileManagerPage` is rendered
 - **THEN** there is no "Attach" button, no attach footer, and no attach-selection-limit messaging anywhere on the page
 
-#### Scenario: Page content sits on the base layer
+#### Scenario: Phone page is framed
 
-- **WHEN** `DialFileManagerPage` is rendered below 1280px
-- **THEN** `<DialFileManager>` carries `bg-layer-base` and not `bg-layer-sunken`
+- **WHEN** `DialFileManagerPage` is rendered below 1280px (for example at 360×800)
+- **THEN** a level-1 heading "File manager" renders above a raised card that holds the file manager, with 12px margins around the card
+- **AND** `<DialFileManager>` is transparent inside the card and never carries `bg-layer-sunken`
 
 #### Scenario: Desktop page is framed
 

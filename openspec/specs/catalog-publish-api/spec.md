@@ -400,7 +400,7 @@ The app adapter SHALL omit `version` when `CatalogItem.version` is empty and exp
 
 ### Requirement: A new version is published under its own target name
 
-DIAL Core stores applications and toolsets as `{name}__{version}`, but updating an existing one's version (`updateToolset`, `updateApplication`) rewrites only the version inside the resource; its path keeps the version it was created with. `PublishService.publish` SHALL therefore build the `targetUrl` resource name with `getVersionedTargetResourceName` (`apps/chat-api/src/publish/publish-target.util.ts`): for an `applications/` or `toolsets/` source whose name has a `__` suffix, the suffix is replaced by the request's `version` when that version is valid SemVer (`SEMVER_VERSION_PATTERN`, percent-encoded); every other case keeps the source's own resource name. A non-SemVer `version` never reaches the path.
+DIAL Core stores applications and toolsets as `{name}__{version}`, but updating an existing one's version (`updateToolset`, `updateApplication`) rewrites only the version inside the resource; its path keeps the version it was created with. `PublishService.publish` SHALL therefore build the `targetUrl` resource name with `getVersionedTargetResourceName` (`apps/chat-api/src/publish/publish-target.util.ts`): for an `applications/` or `toolsets/` source whose name has a `__` suffix, the suffix is replaced by the request's `version` when that version matches the DTO version charset (`TARGET_VERSION_PATTERN`: 1–64 letters, digits, `_`, `.`, `+`, `-`, not only dots; percent-encoded); every other case keeps the source's own resource name. A `version` outside that charset never reaches the path.
 
 #### Scenario: Publishing an edited toolset's new version to a folder holding the old one
 - **GIVEN** a toolset stored at `toolsets/{bucket}/my-tool__1.0.0` whose version was edited to `1.0.1`, and `my-tool__1.0.0` already published to `Team`
@@ -509,3 +509,48 @@ Response (200):
 
 - **WHEN** publish history is read for an entity with a mix of `ADD` and approved `DELETE` publications
 - **THEN** the set of entries returned, their order, and their folder paths are exactly what they were before this change — only the extra field is added to each entry
+
+### Requirement: Project publication uses the whole-project resource URL
+
+`CatalogEntityType` in `apps/chat-api/src/publish/dto/catalog-entity-params.dto.ts` SHALL gain `Project = 'project'`, so every `/api/v1/catalog/{entityType}/{entityId}/…` publish route accepts `entityType: project`.
+
+- **Resource URL.** A project SHALL be published as its whole `projects/{bucket}/{path}` resource URL, never as an individual file URL, exactly as a Skill is.
+- **Target.** The target is derived from the id's prefix by the existing `getResourceTypePrefix` / `getPublishedTargetUrl` (`apps/chat-api/src/publish/publish-target.util.ts`). Projects are not in `VERSIONED_RESOURCE_PREFIXES`.
+- **Version.** An omitted version and every project publish-history entry use an empty string.
+- **Core support.** DIAL Core's publication service accepts the `PROJECT` resource type.
+
+Validation, status codes, the history cache key `publish-history:{entityType}:{entityId}` (60 s TTL, invalidated on publish and unpublish) and authorization are unchanged.
+
+**Generated-client impact:** `PublishCatalogEntityEntityTypeEnum.Project = 'project'` after `npm run openapi`. `CatalogPublishEntityType` in `libs/chat-hooks/src/catalog/publish.ts` gains `'project'`.
+
+Example request:
+
+```http
+POST /api/v1/catalog/project/projects%2Fa1b2c3%2Fq4-launch/publish HTTP/1.1
+Content-Type: application/json
+
+{ "folderPath": "Marketing", "rules": [] }
+```
+
+Example `201` response:
+
+```json
+{
+  "entityId": "projects/a1b2c3/q4-launch",
+  "entityType": "project",
+  "folderPath": "Marketing",
+  "version": "",
+  "publishedAt": "2026-10-28T12:00:00.000Z",
+  "publishedBy": "jane.doe"
+}
+```
+
+#### Scenario: Owned project is published without version
+
+- **WHEN** an owner publishes `projects/a1b2c3/q4-launch` to `Marketing`
+- **THEN** the BFF calls Core for the whole project resource with target `projects/public/Marketing/q4-launch`, returns 201, and reports `version: ""`
+
+#### Scenario: Unknown entity type is still rejected
+
+- **WHEN** `entityType` is `folder`
+- **THEN** the response is 400

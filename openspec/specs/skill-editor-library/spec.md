@@ -47,7 +47,7 @@ The `headerContent?: ReactNode` prop IS REMOVED from `SkillEditorProps`. It is r
 ### Requirement: Form field state ownership
 `SkillEditor` SHALL own the current `name`, `description`, and `instructions` field values as internal state, seeded from an `initialValues` prop and re-seeded whenever `initialValues`'s identity changes, mirroring `libs/prompt-editor`'s `PromptEditorValues` pattern. Field-level validation messages, `invalid` state, and submit-time conflict errors SHALL be supplied by the host via an `errors` prop rather than computed internally, since DIAL-specific normalization and path-safety rules live at the app boundary.
 
-When the host passes `isNameReadOnly`, the Name field SHALL render as non-editable (disabled/read-only, with its value still visible and still included in submitted values unchanged) regardless of any local edit attempt. `SkillEditor` SHALL call an optional `onDirtyChange(isDirty: boolean)` prop whenever any field value or the file-tree state diverges from its most recently seeded `initialValues`/`files`, and again with `false` when it returns to exactly that seeded state (e.g. the user undoes their own edit).
+When the host passes `isNameReadOnly`, the Name field SHALL render disabled (its value still visible and still included in submitted values unchanged) regardless of any local edit attempt, and its tooltip SHALL show `labels.nameReadOnlyTooltip`, defaulting to `"The skill name can't be changed after creation"`. `SkillEditor` SHALL call an optional `onDirtyChange(isDirty: boolean)` prop whenever any field value or the file-tree state diverges from its most recently seeded `initialValues`/`files`, and again with `false` when it returns to exactly that seeded state (e.g. the user undoes their own edit).
 
 #### Scenario: Editing a field updates local state and notifies the host
 - **WHEN** a user types into the Name field
@@ -59,7 +59,7 @@ When the host passes `isNameReadOnly`, the Name field SHALL render as non-editab
 
 #### Scenario: Read-only Name cannot be edited
 - **WHEN** the host passes `isNameReadOnly={true}`
-- **THEN** the Name field's input rejects keystrokes/paste and any submitted value for `name` equals the seeded `initialValues.name` unchanged
+- **THEN** the Name field's input is disabled, carries the read-only tooltip, and any submitted value for `name` equals the seeded `initialValues.name` unchanged
 
 #### Scenario: Dirty state is reported on first edit
 - **WHEN** a user changes any field or adds/removes a file after the form has seeded from `initialValues`
@@ -171,7 +171,7 @@ When the host passes `isNameReadOnly`, the Name field SHALL render as non-editab
 
 #### Scenario: Host-resolved label reflects edit mode
 - **WHEN** the host renders `<SkillEditor isNameReadOnly labels={{ createLabel: 'Save', ... }} .../>` (host-resolved per its own i18n and edit-mode state)
-- **THEN** the submit button shows "Save" and the Name field is read-only, with no `mode` prop involved
+- **THEN** the submit button shows "Save" and the Name field is disabled, with no `mode` prop involved
 
 #### Scenario: Conflict state renders a non-destructive reload action
 - **WHEN** the host passes a `conflict` prop describing a stale-ETag save failure
@@ -188,6 +188,7 @@ When the host passes `isNameReadOnly`, the Name field SHALL render as non-editab
   - `isDescriptionRequired`
   - `nameCaption` (the existing lowercase-and-hyphens caption)
   - `isNameReadOnly` forwarded from the existing prop
+  - `nameReadOnlyTooltip` from `labels.nameReadOnlyTooltip`, with its English default
   - `renderDescription` wrapping the Description textarea in `TextRefinementField` when `onRefineDescription` is supplied, so the AI refine action keeps working
 
   For another selected file, `setup` is the host-rendered supporting-file content slot. The Name and Description values stay owned by the skill editor's field state (see "Form field state ownership"). `MetadataForm` is controlled.

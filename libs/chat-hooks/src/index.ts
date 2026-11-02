@@ -22,10 +22,14 @@ export * from './catalog/map-skill-to-catalog-item';
 export * from './catalog/mcp-endpoint-url';
 export * from './catalog/publish';
 export * from './catalog/catalog-derivations';
+export * from './catalog/catalog-entity-kind';
+export * from './catalog/favorite-entity-type';
+export * from './catalog/catalog-preferences';
 export * from './catalog/catalog-primary-action';
 export * from './catalog/useCatalogEditNavigation/useCatalogEditNavigation';
 export * from './catalog/useCatalogItemDetails';
 export * from './catalog/useCatalogToolsetCredentials/useCatalogToolsetCredentials';
+export * from './catalog/application-credentials';
 export * from './catalog/useApplicationCredentials/useApplicationCredentials';
 export * from './catalog/useSkillItemDetails';
 export * from './catalog/useSkillDetailsPanelData/useSkillDetailsPanelData';
@@ -65,6 +69,22 @@ export * from './scheduled-task/scheduled-tasks-api-client';
 export * from './scheduled-task/use-scheduled-tasks';
 export * from './scheduled-task/use-scheduled-task-runs';
 export * from './scheduled-task/scheduled-task-trigger';
+export * from './scheduled-task/scheduled-task-next-occurrence';
+export * from './project/projects-api-client';
+export * from './project/project-mapping';
+export * from './project/project-limits';
+export * from './project/project-form-errors';
+export * from './project/use-projects';
+export * from './project/use-project';
+export * from './project/use-project-submit';
+export * from './project/use-project-conversations';
+export * from './project/use-project-actions';
+/*
+ * Re-exported so consumers of the gate result can name the consent enum
+ * without importing the generated client directly (the public-API-surface
+ * rule: every type reachable through a public result is exported from here).
+ */
+export { SchedulerServiceConsentStatus } from '@epam/ai-dial-chat-api-client';
 export * from './offline-credentials/useOfflineCredentialsGate/useOfflineCredentialsGate';
 export * from './offline-credentials/useOfflineCredentialsLogin/useOfflineCredentialsLogin';
 export * from './offline-credentials/useOfflineCredentialsAuth/useOfflineCredentialsAuth';
@@ -79,6 +99,7 @@ export * from './skill/useSkillFileActions';
 export * from './skill/useSkillFilePreview';
 export * from './skill/skill-manifest';
 export * from './skill/skill-types';
+export * from './skill/skill-lookup';
 export * from './skill/useSkillsState/useSkillsState';
 export * from './skill/useSkillArchiveImport/useSkillArchiveImport';
 export * from './conversation/deriveConversationRowActionState/deriveConversationRowActionState';
@@ -123,6 +144,8 @@ export { getConversationPath } from './conversation/useConversationStream/conver
 export { isAwaitingGenerationResume } from './conversation/useConversationStream/generation-resume';
 export * from './conversation/useConversationStream/useConversationStream';
 export * from './conversation-sources/useConversationSources/useConversationSources';
+export * from './conversation-sources/stage-citations';
+export * from './conversation-sources/useConversationAnnotationPool/useConversationAnnotationPool';
 export * from './files/dial-files-api';
 export * from './files/dial-file-manager.types';
 export * from './files/dial-file-manager.model';
@@ -164,6 +187,8 @@ export * from './shared/external-services';
 export * from './shared/formatting';
 export * from './shared/locale';
 export * from './shared/string-utils';
+export * from './shared/client-channel';
+export * from './shared/theme-colors';
 export * from './shared/toolset-login-events';
 export * from './useChatSettingsFormConfig/useChatSettingsFormConfig';
 export * from './usePageFileDrag/usePageFileDrag';
@@ -209,3 +234,26 @@ export type {
   UseGridEditingScrollResult,
 } from '@epam/ai-dial-chat-shared';
 export { useGridEditingScroll } from '@epam/ai-dial-chat-shared';
+export * from './files/browser-download';
+export * from './conversation/scheduled-task-grouping';
+export * from './conversation/useConversationDiscovery/useConversationDiscovery';
+export * from './scheduled-task/useScheduledTaskSkillDisplayNames/useScheduledTaskSkillDisplayNames';
+export * from './skill-editor/useSkillFileSystemPicker/useSkillFileSystemPicker';
+export * from './files/useFileAttachmentModalState/useFileAttachmentModalState';
+export * from './files/useDialFilePreview/useDialFilePreview';
+export * from './conversation/useEntityPreselection/useEntityPreselection';
+export * from './viewport-layout/canvas-width';
+export * from './shared/usePersistedState/usePersistedState';
+
+export * from './conversation/generation-registry';
+
+export * from './scheduled-task/active-scheduled-task';
+export * from './scheduled-task/useActiveScheduledTaskDetails';
+
+export * from './conversation/useConversationTitleEnrichmentController';
+
+export * from './skill-editor/useSkillFilePreviewSyncController';
+
+export * from './external-services/useExternalServiceLogin';
+
+export * from './conversation/useDeploymentChangeTracking';

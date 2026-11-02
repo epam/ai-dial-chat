@@ -20,7 +20,7 @@
  *   npm exec nx run @epam/ai-dial-chat-hooks:test-packed-smoke
  */
 
-import { existsSync, readFileSync } from 'fs';
+import { appendFileSync, existsSync, readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -50,6 +50,7 @@ import {
   SIDE_EFFECT_CHECKS,
   SIDE_EFFECT_SYMBOLS,
   SUBPATH_FIXTURES,
+  REUSABLE_CONTROLLER_EXPORTS,
 } from './fixtures.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -134,6 +135,13 @@ const runFixture = (
   }
 
   writeEntryFile(dir, subpath);
+  const controllerExports = REUSABLE_CONTROLLER_EXPORTS[subpath];
+  if (controllerExports) {
+    appendFileSync(
+      path.join(dir, 'entry.ts'),
+      `export { ${controllerExports.join(', ')} } from '@epam/ai-dial-chat-hooks/${subpath}';\n`,
+    );
+  }
 
   steps.push({
     step: 'rolled declaration imports resolve',

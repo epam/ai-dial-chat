@@ -185,6 +185,8 @@ export interface PdfContentProps {
   labels?: PdfContentLabels;
   /** Called with the document URL when fetching the PDF blob rejects. */
   onLoadError?: (url: string) => void;
+  /** Typography class of the worker-preparation error message. Defaults to `'dial-body-text'`. */
+  errorLabelClassName?: string;
 }
 
 /** Renders a PDF with highlight annotations, a floating collapsible thumbnails panel, and page navigation. */
@@ -197,6 +199,7 @@ export const PdfContent: FC<PdfContentProps> = ({
   configurePdfWorker,
   hideHeader = false,
   onLoadError,
+  errorLabelClassName,
   labels: {
     thumbnailsLabel = 'Thumbnails',
     showThumbnailsLabel = 'Show thumbnails',
@@ -597,6 +600,7 @@ export const PdfContent: FC<PdfContentProps> = ({
         errorLabel={errorLabel}
         retryLabel={retryLabel}
         onRetry={handleRetryPreparation}
+        errorLabelClassName={errorLabelClassName}
       />
     );
   }

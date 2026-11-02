@@ -7,7 +7,7 @@ day/week/month cost and token stat, the calendar-period (not rolling-window) sem
 establishes, its normalization and localized formatting at the `apps/chat` edge, the rules for
 degrading silently when it is absent, unparseable, already past, or inconsistent, and the
 boundary-triggered re-fetch that keeps post-reset figures coming from DIAL Core rather than from
-local arithmetic. All `Date`/`Intl` work lives in `apps/chat`; `libs/usage-dashboard` and
+local arithmetic. Reset-time formatting is provided by `libs/chat-hooks` with host-selected policies; `libs/usage-dashboard` and
 `libs/catalog` receive preformatted strings only (see the `usage-dashboard-lib`,
 `usage-model-limits`, `usage-data-hook`, `user-usage-limits-api`, and
 `conversation-input-usage-limits` capabilities). Reset times are displayed in Usage page,
@@ -79,7 +79,7 @@ as trailing, rolling, or "last N days" windows.
 
 ### Requirement: Reset-time normalization at the application edge
 
-All interpretation of `resetsAt` SHALL happen in `apps/chat`, never in a hand-authored library.
+The application SHALL choose reset-time display policy, locale and translations. Shared formatting mechanics SHALL live in `chat-hooks`; presentational libraries SHALL receive preformatted strings only.
 `libs/chat-hooks/src/usage/usage-reset-time.ts` SHALL expose a formatter with this contract:
 
 ```ts
@@ -94,6 +94,7 @@ export const formatUsageResetTime: (
   resetsAt: string | undefined,
   activeLocale: string,
   t: (key: string, options?: Record<string, unknown>) => string,
+  options?: { offsetPolicy?: 'current-offset' | 'reset-instant' },
 ) => ResetTimeDisplay | undefined;
 ```
 
@@ -102,6 +103,7 @@ The formatter:
 - SHALL parse with `Date.parse` and return `undefined` when the result is `NaN`
 - SHALL return `undefined` when `resetsAt` is `undefined` or an empty string
 - SHALL format the visible `label` via `Intl.DateTimeFormat(activeLocale, { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'shortOffset' })`, and the spoken `ariaLabel` with the same components but `timeZoneName: 'long'`.
+- In the default `current-offset` policy, SHALL state every reset time at the viewer zone's UTC offset as it is at formatting time, and name that same zone (`GMT+2`, `Central European Summer Time`) on every label. A boundary that falls after a daylight-saving switch is therefore shown in the current offset (the week boundary `2026-10-26T00:00:00Z` reads `2:00 AM GMT+2` when formatted on 25 October in `Europe/Warsaw`), so the day, week and month headers never mix two offsets. The current offset is the only use of the current time, and it never moves a boundary.
   The components are named individually rather than through `dateStyle`/`timeStyle` because
   ECMA-402 forbids combining either style shorthand with `timeZoneName` — that combination throws a
   `TypeError` at construction, which under the rules below would make the formatter return
@@ -144,6 +146,12 @@ unaffected by which non-presentational location they live in now.
 - **THEN** `label` names 16 September at 02:00 and includes the offset (`GMT+2`), and `resetsAtMs`
   equals `Date.parse('2026-09-16T00:00:00Z')`
 
+#### Scenario: One offset across a daylight-saving switch
+- **WHEN** the viewer's zone is `Europe/Warsaw`, the current time is `2026-10-24T22:30:00Z` (CEST), and
+  the day and week boundaries are `2026-10-25T00:00:00Z` and `2026-10-26T00:00:00Z`
+- **THEN** both labels state `GMT+2` — `Oct 25, 2026, 2:00 AM GMT+2` and `Oct 26, 2026, 2:00 AM GMT+2`
+  — and each `resetsAtMs` still equals its boundary
+
 #### Scenario: Timezone is always stated
 - **WHEN** any `resetsAt` is formatted
 - **THEN** the visible `label` contains a timezone designator, so a UTC boundary shown in local time
@@ -172,6 +180,22 @@ unaffected by which non-presentational location they live in now.
 > the constraint is on date/time interpretation, not on `Intl` as a namespace. Those instances live
 > with the adapters in `libs/chat-hooks`; the presentational library's remaining components format
 > nothing.
+The optional `offsetPolicy` SHALL default to `current-offset`, preserving existing callers and parent UI behavior. With `reset-instant`, the formatter SHALL use the viewer zone's offset and name at the reset instant, rather than at formatting time. Both policies SHALL preserve the original ISO value and parsed epoch boundary, use the existing translation callback, and return undefined on invalid input or Intl failure. They SHALL NOT infer a reset boundary from local calendar arithmetic. No new i18n keys, UI, feature flags or telemetry are introduced; direction and accessibility behavior remain unchanged.
+
+#### Scenario: Reset-instant opt-in crosses autumn DST
+
+- **WHEN** the viewer zone is Europe/Warsaw, the current time is 2026-10-24T22:30:00Z, the reset is 2026-10-26T00:00:00Z, and offsetPolicy is reset-instant
+- **THEN** the visible date/time is 1:00 AM in GMT+1 on October 26, the accessible zone name matches that reset instant, and resetsAtMs and isoValue still represent the original UTC boundary
+
+#### Scenario: Existing callers preserve their policy
+
+- **WHEN** the options argument is omitted for the same autumn DST inputs
+- **THEN** the visible date/time remains 2:00 AM in GMT+2 and existing current-offset callers require no source change
+
+#### Scenario: Both policies handle spring DST and invalid inputs
+
+- **WHEN** a reset crosses the spring transition, or the input is missing/invalid, or Intl throws
+- **THEN** each policy uses its specified offset reference without changing the UTC boundary, and missing/invalid/unsupported formatting returns undefined in both modes
 
 ---
 
@@ -183,8 +207,12 @@ headers.
 
 - On a `UsageLimitCard`, the reset line SHALL render below the existing remaining/percent caption
   row as a `<time dateTime={resetIsoValue}>` element, so existing content does not move.
-- On a Model-limits `PeriodHeader`, the reset line SHALL render as a second line beneath the column
-  label, sourced from the same top-level `*CostStats` stat that drives that header's status.
+- On a Model-limits `PeriodHeader`, the reset time SHALL NOT render as a header line. It SHALL render
+  as a focusable info icon (`IconInfoCircle`) beside the column label, whose tooltip holds the
+  `<time dateTime={resetIsoValue}>` with `resetLabel` and whose accessible name is `resetAriaLabel`
+  (or `resetLabel` when no spoken form is supplied), with at least a 44×44 CSS-pixel touch target on
+  mobile. It is sourced from the same top-level `*CostStats` stat that drives that header's status.
+  `ModelLimitsTypography` SHALL NOT carry a `resetLabelClassName`.
 - The reset line SHALL render for a card regardless of whether the card is `isUnlimited` — an
   unconfigured limit still accumulates spend against a period that rolls over.
 
@@ -214,9 +242,11 @@ existing `progressAriaLabel` SHALL NOT be altered.
 - **WHEN** `weekCostStats.total >= 2 ** 53` and the stat carries a `resetsAt`
 - **THEN** the card renders the unlimited treatment (spend only, no ratio) **and** the reset line
 
-#### Scenario: Period header shows its reset time
+#### Scenario: Period header shows its reset time in an info tooltip
 - **WHEN** the Model-limits table renders and the top-level `monthCostStats` carries a `resetsAt`
-- **THEN** the month period header shows the column label and, beneath it, the formatted reset time
+- **THEN** the month period header shows the column label and a focusable info icon named by the
+  spoken reset form, and no visible reset line
+- **AND** hovering or focusing the icon shows the formatted reset time in a `<time>` tooltip
 
 #### Scenario: Mobile layout does not overflow
 - **WHEN** the Usage page renders at mobile width with a long formatted reset label

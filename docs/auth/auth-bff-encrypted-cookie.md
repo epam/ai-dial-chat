@@ -223,6 +223,27 @@ It copies only a non-empty string `job_title`, and only when UserInfo's `sub`
 matches the validated ID-token subject. This restores the legacy Keycloak
 profile source; other providers keep their ID-token path. A failed lookup or
 subject mismatch leaves the optional value unset and does not block login.
+
+The same allowlist keeps the OIDC `picture` claim (the user's avatar URL) when
+it is an absolute `http(s)` URL; any other value is dropped from the claims.
+Keycloak realms often expose `picture` only in UserInfo, so the Keycloak lookup
+above also runs when the ID token has no usable `picture`, and copies it under
+the same subject check. An ID-token value is never replaced by a UserInfo one.
+
+Some realms put the image itself in UserInfo as a base64 `data:` URL. That is
+too large for the session cookie, so the callback stores only a `pic` flag on
+the payload when the value is a JPEG, PNG, GIF or WebP of at most 256 KiB (SVG
+is refused because it can carry script). `GET /api/v1/auth/me/picture` then
+re-reads UserInfo with the session's access token, checks the subject again,
+and returns the decoded bytes with their image type and
+`Cache-Control: private, max-age=3600`. It answers 404 when the session has no
+inline picture or UserInfo no longer supplies a usable one, and 502 when the
+lookup fails.
+
+`GET /api/v1/auth/me` returns `pictureUrl`: the `http(s)` claim, or
+`/api/v1/auth/me/picture` for an inline picture, omitted when there is none.
+The SPA renders it in place of the initials badge and falls back to initials
+when it is absent or fails to load.
 Claims are captured at login; transparent token refresh does not reload them.
 
 #### 5.1.1 Overlay External Login
@@ -265,6 +286,8 @@ This flow is not auth-specific plumbing — every non-public route goes through 
 ![Federated logout](./auth-diagrams/05-logout-flow.svg)
 
 _Source: [`auth-diagrams/05-logout-flow.mmd`](./auth-diagrams/05-logout-flow.mmd)_
+
+Outside an overlay, a completed `POST /auth/logout` is followed by a full document load of `/login`. Before navigating, `useLogout` writes a short-lived marker to `sessionStorage` (`apps/chat/src/utils/signed-out-marker.ts`); the `UserContext` of the load that follows consumes it and starts `Unauthenticated` without its usual `GET /api/v1/auth/me` probe, which could only return a 401 there. A failed logout request writes no marker, so a session that may still be alive is probed as usual.
 
 ### 5.4 Cross-Pod Stateless Decryption
 
@@ -350,6 +373,17 @@ origin and exact source window, then opens the same forms in a host dialog. API 
 authorization codes and tokens never cross this message boundary. Both repositories
 must include this contract for the action to appear. No client-channel subscription or
 chat request is needed, and closing the dialog preserves unsaved Quick app settings.
+
+An editor that already shows one service with its own Connect action can skip the dialog.
+When the iframe URL carries `externalServiceLogin=true` (the same gates), it sends
+`{ type: 'REQUEST_EXTERNAL_SERVICE_LOGIN', appId, serviceId, offlineUsageConsent }`. After the
+same origin and source checks, the host reserves the OAuth popup during the message event,
+reads the service's public metadata from `GET /api/v1/external-services/{appId}`, and signs
+in through `useExternalServiceLogin` at `USER` level with the editor's offline-use choice,
+which the host forwards and never sets itself. OAuth and DIAL-native services are supported;
+API-key and `NONE` services are refused. The result,
+`{ type: 'EXTERNAL_SERVICE_LOGIN_RESULT', appId, serviceId, success, reason? }`, echoes the
+identifiers as sent; no credential crosses the frame in either direction.
 
 ### 5.6 Proactive Offline-Credentials Consent (Scheduled Tasks)
 

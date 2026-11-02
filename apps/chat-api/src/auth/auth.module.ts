@@ -13,6 +13,7 @@ import { SessionService } from './session/session.service';
 import { AUTH_STRATEGIES } from './strategies/auth-strategies.token';
 import { CookieSessionStrategy } from './strategies/cookie-session.strategy';
 import { HeaderTokenStrategy } from './strategies/header-token.strategy';
+import { UserRolesService } from './user-roles.service';
 
 @Module({
   controllers: [AuthController],
@@ -22,6 +23,7 @@ import { HeaderTokenStrategy } from './strategies/header-token.strategy';
     SessionService,
     RefreshService,
     ProviderRegistryService,
+    UserRolesService,
     AdminRoleService,
     BucketService,
     HeaderTokenStrategy,
@@ -48,6 +50,7 @@ import { HeaderTokenStrategy } from './strategies/header-token.strategy';
     SessionService,
     KeysService,
     AUTH_STRATEGIES,
+    UserRolesService,
     AdminRoleService,
   ],
 })

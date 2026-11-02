@@ -3,6 +3,7 @@ import {
   HttpException,
   Injectable,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { handleDialSdkError } from '../../common/dial/dial-error.mapper';
@@ -54,6 +55,8 @@ export class FilesFolderService {
     );
 
     try {
+      await this.assertParentExists(bucket, normalizedParent, at);
+
       const {
         data,
         error: metaError,
@@ -117,6 +120,42 @@ export class FilesFolderService {
         err,
       );
       return handleDialSdkError(err, 'files.createFolder', this.logger);
+    }
+  }
+
+  /*
+   * DIAL Core creates missing prefixes implicitly on upload, so without this
+   * probe a folder under an invented parent would silently create the parent
+   * too. The bucket root always exists and is not probed.
+   */
+  private async assertParentExists(
+    bucket: string,
+    normalizedParent: string,
+    at: string,
+  ): Promise<void> {
+    if (normalizedParent === '') return;
+
+    const { error, response } = await this.dialClient.client.getFileMetadata(
+      bucket,
+      encodeDialFilePath(normalizedParent),
+      {
+        headers: getBearerAuthHeaders(at),
+        params: { query: { limit: 1 } },
+        signal: AbortSignal.timeout(this.getTimeoutMs()),
+      },
+    );
+    const status = (response as { status: number }).status;
+
+    if (status === 404) {
+      this.logger.debug(
+        `createFolder parent not found: bucket=${bucket}, parentPath=${normalizedParent}`,
+      );
+      throw new NotFoundException(
+        `Parent folder "${normalizedParent}" not found`,
+      );
+    }
+    if (error != null) {
+      handleDialSdkError(error, 'files.createFolder', this.logger, { status });
     }
   }
 

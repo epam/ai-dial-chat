@@ -1,5 +1,6 @@
 import { Transform } from 'class-transformer';
 import {
+  ArrayMaxSize,
   IsArray,
   IsNotEmpty,
   IsBoolean,
@@ -14,10 +15,23 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
+import { CelebrationDeliveryMode } from '../app-config/types/celebration-delivery';
 import {
   DeploymentType,
   normalizeDeploymentTypesInput,
 } from '../deployments/dto/deployment-type';
+import {
+  DEFAULT_PROJECT_CONTEXT_ALLOWED_EXTENSIONS,
+  DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES,
+  DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES,
+  parseProjectContextExtensions,
+  PROJECT_CONTEXT_EXTENSION_PATTERN,
+} from '../projects/constants/project-context.constants';
+import {
+  IsCatalogCreationRoles,
+  parseCatalogCreationRoles,
+  type CatalogCreationRolesConfig,
+} from './catalog-creation.types';
 import { CspMode } from './csp';
 
 export enum ApplicationLogLevel {
@@ -36,6 +50,29 @@ export enum ApplicationLogLevel {
  */
 export const IFRAME_ORIGIN_PATTERN =
   /^(https?):\/\/(?:\*\.)?[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*(?::\d+)?$/;
+
+const CELEBRATION_ID_MAX_LENGTH = 64;
+const CELEBRATION_POLICY_MAX_ENTRIES = 64;
+const CELEBRATION_ID = '[a-z][a-z0-9]*(?:-[a-z0-9]+)*';
+const CELEBRATION_EVENT_ID_PATTERN = new RegExp(`^${CELEBRATION_ID}$`);
+/* The lookaheads cap each part at 64 characters. */
+const CELEBRATION_SCENE_PAIR_PATTERN = new RegExp(
+  `^(?=[^/]{1,${CELEBRATION_ID_MAX_LENGTH}}/)${CELEBRATION_ID}/(?=[^/]{1,${CELEBRATION_ID_MAX_LENGTH}}$)${CELEBRATION_ID}$`,
+);
+
+/* Splits a comma-separated list, dropping blanks and repeats, so the
+ * 64-entry limit counts distinct entries. */
+const parseCelebrationList = (value: unknown): string[] | undefined => {
+  if (value == null || value === '') return undefined;
+  const entries = Array.isArray(value) ? value : String(value).split(',');
+  return [
+    ...new Set(
+      entries
+        .map((entry: unknown) => String(entry).trim())
+        .filter((entry) => entry.length > 0),
+    ),
+  ];
+};
 
 export class EnvironmentVariables {
   @IsOptional()
@@ -760,6 +797,14 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
+  TEXT_REFINEMENT_PROJECT_DESCRIPTION_PROMPT?: string;
+
+  @IsOptional()
+  @IsString()
+  TEXT_REFINEMENT_PROJECT_INSTRUCTIONS_PROMPT?: string;
+
+  @IsOptional()
+  @IsString()
   CONVERSATION_NAMING_SYSTEM_PROMPT?: string;
 
   @IsOptional()
@@ -893,6 +938,23 @@ export class EnvironmentVariables {
   @IsString({ each: true })
   ENABLED_UI_FEATURES?: string[] | null = null;
 
+  /*
+   * Server-only creation policy, independent of ENABLED_UI_FEATURES: role
+   * lists by creation type and by exact application schema id, e.g.
+   * `{"types":{"skill":["authors"]},"schemas":{"<schema id>":["team-A"]}}`.
+   * Absent or blank means no restriction. Only the shape is checked here;
+   * AppConfigService normalizes the role lists once at startup. Never sent to
+   * the browser — client-config carries only the evaluated permissions.
+   */
+  @Transform(({ obj, key }) =>
+    parseCatalogCreationRoles((obj as Record<string, unknown>)[key]),
+  )
+  @IsCatalogCreationRoles()
+  CATALOG_CREATION_ROLES: CatalogCreationRolesConfig = {
+    types: {},
+    schemas: {},
+  };
+
   @IsOptional()
   @Transform(({ obj, key }) => {
     const raw = (obj as Record<string, unknown>)[key];
@@ -951,6 +1013,54 @@ export class EnvironmentVariables {
   @IsBoolean()
   UI_EVENT_ENABLED_BY_DEFAULT?: boolean = true;
 
+  /*
+   * External celebration pack policy. The default keeps every scene bundled
+   * and makes no celebration request; unsetting the variables is the rollback.
+   */
+  @IsOptional()
+  @Transform(({ value }) =>
+    value == null || value === '' ? undefined : String(value).trim(),
+  )
+  @IsEnum(CelebrationDeliveryMode, {
+    message: 'UI_EVENT_DELIVERY_MODE must be bundled or prefer-external',
+  })
+  UI_EVENT_DELIVERY_MODE?: CelebrationDeliveryMode =
+    CelebrationDeliveryMode.Bundled;
+
+  @IsOptional()
+  @Transform(({ value }) =>
+    value == null || value === '' ? undefined : String(value).trim(),
+  )
+  @IsString()
+  @Matches(/^[A-Za-z0-9._-]{1,64}$/, {
+    message:
+      'UI_EVENT_DELIVERY_REVISION must be 1–64 characters of letters, digits, dot, dash or underscore',
+  })
+  UI_EVENT_DELIVERY_REVISION?: string = '0';
+
+  /* Comma-separated eventId/sceneId pairs; trimmed and de-duplicated. */
+  @IsOptional()
+  @Transform(({ value }) => parseCelebrationList(value))
+  @ArrayMaxSize(CELEBRATION_POLICY_MAX_ENTRIES)
+  @Matches(CELEBRATION_SCENE_PAIR_PATTERN, {
+    each: true,
+    message:
+      'UI_EVENT_EXTERNAL_SCENES entries must be eventId/sceneId pairs of lowercase kebab-case IDs',
+  })
+  UI_EVENT_EXTERNAL_SCENES?: string[] = [];
+
+  /* Comma-separated event IDs; trimmed and de-duplicated. */
+  @IsOptional()
+  @Transform(({ value }) => parseCelebrationList(value))
+  @ArrayMaxSize(CELEBRATION_POLICY_MAX_ENTRIES)
+  @Matches(CELEBRATION_EVENT_ID_PATTERN, {
+    each: true,
+    message:
+      'UI_EVENT_EXTERNAL_EVENTS entries must be lowercase kebab-case event IDs',
+  })
+  @MaxLength(CELEBRATION_ID_MAX_LENGTH, { each: true })
+  UI_EVENT_EXTERNAL_EVENTS?: string[] = [];
+
   @IsOptional()
   @Transform(({ value }) => {
     if (value == null || value === '') return [];
@@ -982,6 +1092,61 @@ export class EnvironmentVariables {
   })
   @IsString({ each: true })
   SCHEDULED_TASKS_ENABLED_ROLES?: string[] = [];
+
+  @IsOptional()
+  @Transform(({ obj, key }) => {
+    const raw = (obj as Record<string, unknown>)[key];
+    if (raw == null) return undefined;
+    if (typeof raw === 'boolean') return raw;
+    return !['false', '0', 'no'].includes(String(raw).toLowerCase());
+  })
+  @IsBoolean()
+  PROJECTS_ENABLED?: boolean = false;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null || value === '') return [];
+    return String(value)
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 0);
+  })
+  @IsString({ each: true })
+  PROJECTS_ENABLED_ROLES?: string[] = [];
+
+  /*
+   * Project context limits, enforced by `POST /api/v1/projects` and
+   * published to the browser as `projects.*` client config. Keep them at or
+   * below DIAL Core's `complexResource.types.projects` limits (built-in:
+   * 5 MiB per file, 64 MiB total). `validate` also requires
+   * TOTAL >= FILE, and TOTAL <= the 64 MiB project read limit minus the
+   * 1 MiB PROJECT.md limit (63 MiB), so every project stays editable.
+   */
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  PROJECT_CONTEXT_FILE_MAX_BYTES?: number =
+    DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  PROJECT_CONTEXT_TOTAL_MAX_BYTES?: number =
+    DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES;
+
+  @IsOptional()
+  @Transform(({ value }) => parseProjectContextExtensions(value))
+  @IsArray()
+  @Matches(PROJECT_CONTEXT_EXTENSION_PATTERN, {
+    each: true,
+    message:
+      'PROJECT_CONTEXT_ALLOWED_EXTENSIONS entries must be 1-16 lower-case letters or digits',
+  })
+  PROJECT_CONTEXT_ALLOWED_EXTENSIONS?: string[] = [
+    ...DEFAULT_PROJECT_CONTEXT_ALLOWED_EXTENSIONS,
+  ];
 
   @IsOptional()
   @Transform(({ obj, key }) => {
@@ -1138,4 +1303,19 @@ export class EnvironmentVariables {
   @IsInt()
   @Min(1000)
   GENERATION_FINALIZE_TIMEOUT_MS?: number = 60_000;
+
+  /*
+   * Bounds how long a completion may wait in preparation — the hidden-model
+   * check, capability resolution, the stored-conversation read and the
+   * start-state save — before SSE headers are sent (see
+   * openspec/specs/generation-registry/spec.md). On expiry the request fails
+   * with 503 and attach subscribers are released, but the entry keeps its
+   * registry key (`settling`) until the abandoned DIAL Core call settles: the
+   * bound stops the wait, never the remote work.
+   */
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1000)
+  GENERATION_PREPARATION_TIMEOUT_MS?: number = 30_000;
 }

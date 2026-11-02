@@ -3,6 +3,7 @@ import {
   mergeClasses,
   useCodeCopy,
 } from '@epam/ai-dial-chat-shared';
+import { LiveRegion, LiveRegionPoliteness } from '@epam/ai-dial-ui-kit';
 import {
   type FC,
   type KeyboardEvent,
@@ -69,6 +70,7 @@ const SharePopover: FC<SharePopoverProps> = ({
     '--shp-note-text': colors?.noteText,
     '--shp-divider': colors?.divider,
     '--shp-skeleton-color': colors?.skeletonColor,
+    '--shp-bg': colors?.background,
   });
   /*
    * The access menu renders in a floating portal outside this popover, so a
@@ -197,7 +199,8 @@ const SharePopover: FC<SharePopoverProps> = ({
       tabIndex={-1}
       style={cssVars}
       className={mergeClasses(
-        'flex w-96 flex-col gap-3 rounded-xl bg-layer-raised px-6 pt-4 pb-6 shadow-lg outline-hidden',
+        'flex w-96 flex-col gap-3 rounded-xl px-6 pt-4 pb-6 shadow-lg outline-hidden',
+        styles.popover,
         className,
         SHARE_CLASS.popover,
       )}
@@ -213,25 +216,25 @@ const SharePopover: FC<SharePopoverProps> = ({
 
       <div className={mergeClasses('-mt-1.5 h-px w-full', styles.divider)} />
 
-      {isLoading && (
-        <LoadingSkeleton
-          ariaLabel={loadingLabel}
-          skeletonColor={colors?.skeletonColor}
-        />
-      )}
+      {/* Mounted with the popover rather than with the skeleton, so the loading text lands in a region that already exists and is announced. */}
+      <LiveRegion visuallyHidden>{isLoading ? loadingLabel : null}</LiveRegion>
 
-      {!isLoading && error != null && (
-        <p
-          role="alert"
-          className={mergeClasses(
-            typography?.errorClassName ?? 'dial-tiny-text',
-            'py-6 text-center',
-            styles.errorText,
-          )}
-        >
-          {errorTitle}
-        </p>
-      )}
+      {isLoading && <LoadingSkeleton skeletonColor={colors?.skeletonColor} />}
+
+      {/* Mounted with the popover, before the link request fails, so the failure is announced; out of the column gap while empty. */}
+      <LiveRegion politeness={LiveRegionPoliteness.Assertive}>
+        {!isLoading && error != null && (
+          <p
+            className={mergeClasses(
+              typography?.errorClassName ?? 'dial-tiny-text',
+              'py-6 text-center',
+              styles.errorText,
+            )}
+          >
+            {errorTitle}
+          </p>
+        )}
+      </LiveRegion>
 
       {!isLoading && error == null && url != null && (
         <>

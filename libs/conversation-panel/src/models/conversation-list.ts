@@ -12,7 +12,7 @@ export interface ConversationListColors {
   itemActive?: string;
   /** Primary text color. */
   text?: string;
-  /** Secondary text color (dates, metadata). */
+  /** Text color of the group headers (Pinned, My chats, …). Defaults to `--text-secondary`. */
   textSecondary?: string;
   /** Ring color shown around a group header acting as a drag-and-drop target. */
   dropZoneRing?: string;
@@ -40,6 +40,8 @@ export interface ConversationListTypography {
   groupHeaderClassName?: string;
   /** Typography class applied to conversation title text in each row. Defaults to `'dial-small-text'`. */
   itemTitleClassName?: string;
+  /** Typography class applied to the title of an unread conversation. Defaults to `'dial-small-semi-text'`. */
+  unreadItemTitleClassName?: string;
 }
 
 /** Style overrides for `ConversationList`. */
@@ -50,6 +52,14 @@ export interface ConversationListStyles {
   typography?: ConversationListTypography;
   /** CSS class applied to the icon badge in each conversation row. Defaults to `'rounded-full'`. */
   itemIconBadgeClassName?: string;
+}
+
+/** Empty-state text for one filter tab; a field left out falls back to the generic no-results text. */
+export interface FilterEmptyLabels {
+  /** Heading shown instead of `noResultsLabel`. */
+  label?: string;
+  /** Secondary line shown instead of `noResultsDescription`. */
+  description?: string;
 }
 
 /** Localised labels for `ConversationList`. */
@@ -64,8 +74,16 @@ export interface ConversationListLabels {
   noResultsDescription?: string;
   /** Secondary line under `noResultsLabel` when the `Shared` filter matches nothing and no search is typed. Defaults to `noResultsDescription`. */
   sharedEmptyDescription?: string;
+  /**
+   * Empty-state text per filter tab, used when that tab alone narrows the list to
+   * nothing (no search typed, type filter at `All`). Takes precedence over
+   * `noResultsLabel`, `noResultsDescription` and `sharedEmptyDescription`.
+   */
+  tabEmptyLabels?: Partial<Record<FilterTab, FilterEmptyLabels>>;
   /** Status message announced to assistive tech while conversations are loading. Defaults to `'Loading conversations'`. */
   loadingLabel?: string;
+  /** Status while the host resolves titles. Defaults to `'Updating conversation names'`. */
+  updatingTitlesLabel?: string;
   /** Labels for collapsible group section headings. */
   groupLabels?: {
     /** Heading for the Pinned section. Defaults to `"Pinned"`. */
@@ -89,6 +107,10 @@ export interface ConversationListProps {
   conversations: ConversationItem[];
   /** When true, renders skeleton rows instead of the conversation list. */
   isLoading?: boolean;
+  /** Keeps rows visible while the host resolves titles; suppresses a final empty-search result. Defaults to `false`. */
+  isUpdatingTitles?: boolean;
+  /** Keeps an opened search result visible after its title changes, until the query changes. Defaults to `false`. */
+  preserveActiveSearchResult?: boolean;
   /** Called with the conversation `id` when a row is clicked. */
   onSelectConversation: (id: string) => void;
   /** `id` of the currently viewed conversation; that row gets `aria-current="page"`. */
@@ -114,6 +136,8 @@ export interface ConversationListProps {
   ) => void;
   /** Called when the user completes a drag-and-drop move. */
   onMoveConversation?: (move: ConversationMove) => void;
+  /** Called with the distinct IDs of conversation rows in the visible viewport, in row order, whenever that sequence changes; excludes group headers and overscan rows, and is empty when no rows are visible. */
+  onVisibleConversationIdsChange?: (ids: string[]) => void;
   /** Style overrides for colors, typography and the row icon badge. */
   styles?: ConversationListStyles;
   /** `id` of the list root, for a header's `aria-controls` to reference. */

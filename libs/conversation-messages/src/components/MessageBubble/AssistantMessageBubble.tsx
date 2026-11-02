@@ -50,6 +50,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   markdownUrlTransform,
   onAttachmentClick,
   onDownloadAll,
+  isAttachmentDownloadable,
   onAttachmentRetry,
   codeBlockTheme,
   tableOnOpenInCanvas,
@@ -115,6 +116,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   const cssVars = buildCssVars({
     '--cm-bubble-text': colors?.text,
     '--cm-starters-divider': colors?.startersDivider,
+    '--cm-timestamp-text': colors?.timestampText,
     '--cm-bubble-first-line-indent': firstLineIndent,
   });
 
@@ -204,7 +206,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
                */}
               <div
                 ref={contentRef}
-                className="cm-bubble-markdown max-w-full min-w-0 [overflow-wrap:anywhere]"
+                className="cm-bubble-markdown max-w-full min-w-0 wrap-anywhere"
               >
                 <MDMessageViewer
                   content={text ?? ''}
@@ -238,6 +240,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
                 : undefined
             }
             onDownloadAll={onDownloadAll}
+            isAttachmentDownloadable={isAttachmentDownloadable}
             onRetry={onAttachmentRetry}
             labels={{
               clickLabel: attachmentClickLabel,

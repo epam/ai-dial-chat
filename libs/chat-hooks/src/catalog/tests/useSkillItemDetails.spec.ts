@@ -95,7 +95,6 @@ const OVERVIEW_LABELS: UseSkillItemDetailsOptions['skillOverviewLabels'] = {
   authorLabel: 'Author',
   updatedLabel: 'Updated',
   fileCountLabel: 'File count',
-  detailsSectionTitle: 'Details',
 };
 
 const makeApi = (overrides?: Partial<SkillDetailsApi>): SkillDetailsApi => ({

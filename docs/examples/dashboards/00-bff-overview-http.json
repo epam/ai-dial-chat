@@ -1085,7 +1085,7 @@
     },
     {
       "title": "Streaming transports — mean duration",
-      "description": "Terminal transport duration for the four exact /api/v1 SSE routes, split by outcome. Includes interrupted streams, not just completed ones; still-running streams have no duration sample. Mean supports durations above 60s. This is not backend generation lifetime.",
+      "description": "Terminal transport duration for the five exact /api/v1 SSE routes, including the finite conversations/titles/stream (closed by 60s), split by outcome. Includes interrupted streams, not just completed ones; still-running streams have no duration sample. Mean supports durations above 60s. This is not backend generation lifetime.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",

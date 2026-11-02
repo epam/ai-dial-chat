@@ -43,7 +43,7 @@ In the `mobile` band `SidebarNavigation` SHALL render the sidebar with `Navigati
 
 The drawer carries the same items, conversation block, Usage link and user menu as the column, with the logo and a close button in its header instead of the collapse toggle. It has no collapsed state. There is no backdrop, as the conversation drawer it replaces had none.
 
-While closed the drawer SHALL be `inert` and hidden from assistive technology, while staying mounted so the conversation list keeps its state. While it is open on a mobile viewport the page behind it (`<main>`) SHALL be `inert`, so Tab and assistive technology stay inside the drawer; there is no backdrop. When it opens, focus SHALL move into it; when it closes, focus SHALL return to the control that had it when the drawer opened. In `apps/chat` that control is the header toggle, which sits inside the `<main>` that is made `inert` while the drawer is open, so the browser has already moved focus to the page body and closing leaves it there; a drawer that is open on mount keeps the focus where it is. The lib SHALL call `onClose` on the close button and on an Escape pressed inside the drawer, ignoring one that comes from a dialog or menu its children render elsewhere in the DOM; the app SHALL also close it on any route change, when a conversation or New chat is chosen (even the one already open), and when the viewport leaves the `mobile` band.
+While closed the drawer SHALL be `inert` and hidden from assistive technology, while staying mounted so the conversation list keeps its state. While it is open on a mobile viewport the page behind it (`<main>`) SHALL be `inert`, so Tab and assistive technology stay inside the drawer; there is no backdrop. When it opens, focus SHALL move into it; when it closes, focus SHALL return to the control that had it when the drawer opened. In `apps/chat` that control is the header toggle, which sits inside the `<main>` that is made `inert` while the drawer is open, so the browser has already moved focus to the page body and closing leaves it there; a drawer that is open on mount keeps the focus where it is. The lib SHALL call `onClose` on the close button and on an Escape pressed inside the drawer, ignoring one that comes from a dialog or menu its children render elsewhere in the DOM, and SHALL wrap Tab from its last control to its first and Shift+Tab from its first control (or the drawer itself) to its last, so keyboard focus cannot leave it while it is open; the app SHALL also close it on any route change, when a conversation or New chat is chosen (even the one already open), and when the viewport leaves the `mobile` band.
 
 The user menu in the drawer SHALL carry the keyboard-shortcut group in addition to the language group. `hide-navigation-menu` removes the drawer's items, user menu and Usage link, leaving the conversation block.
 
@@ -60,6 +60,11 @@ The user menu in the drawer SHALL carry the keyboard-shortcut group in addition 
 
 - **WHEN** the user opens the drawer from the header toggle and then presses Escape
 - **THEN** focus moved into the drawer on opening, the drawer closes, and focus returns to the toggle
+
+#### Scenario: Tab stays inside the open drawer
+
+- **WHEN** the drawer is open and focus is on its last control
+- **THEN** Tab moves focus to its first control, and Shift+Tab from the first control moves it back to the last
 
 #### Scenario: Choosing the conversation that is already open closes the drawer
 

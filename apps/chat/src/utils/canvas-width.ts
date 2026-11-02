@@ -1,4 +1,8 @@
 import {
+  CanvasWidthMode,
+  resolveCanvasWidth as resolveWidth,
+} from '@epam/ai-dial-chat-hooks/viewport-layout';
+import {
   FILE_MANAGER_CANVAS_DEFAULT_MAX_WIDTH,
   FILE_MANAGER_CANVAS_MIN_WIDTH,
   FILE_MANAGER_CANVAS_WIDTH_RATIO,
@@ -36,36 +40,20 @@ interface CanvasWidth {
  */
 export const resolveCanvasWidth = ({
   isFileManagerRoute,
-  isMobile,
-  viewportWidth,
-  maxWidth,
-}: ResolveCanvasWidthParams): CanvasWidth => {
-  const minWidth = isFileManagerRoute
-    ? FILE_MANAGER_CANVAS_MIN_WIDTH
-    : undefined;
-
-  if (isMobile) {
-    return { defaultWidth: viewportWidth, minWidth };
-  }
-
-  if (isFileManagerRoute) {
-    const share = Math.round(viewportWidth * FILE_MANAGER_CANVAS_WIDTH_RATIO);
-    const bounded = Math.max(
-      FILE_MANAGER_CANVAS_MIN_WIDTH,
-      Math.min(FILE_MANAGER_CANVAS_DEFAULT_MAX_WIDTH, share),
-    );
-    return { defaultWidth: Math.min(maxWidth, bounded), minWidth };
-  }
-
-  return {
-    defaultWidth: Math.min(
-      maxWidth,
-      Math.round((maxWidth + MIN_CONTENT_AREA_WIDTH) * 0.5),
-    ),
-    minWidth,
-  };
-};
-
+  ...params
+}: ResolveCanvasWidthParams): CanvasWidth =>
+  resolveWidth({
+    ...params,
+    mode: isFileManagerRoute
+      ? CanvasWidthMode.BoundedPanel
+      : CanvasWidthMode.Conversation,
+    policy: {
+      minWidth: FILE_MANAGER_CANVAS_MIN_WIDTH,
+      defaultMaxWidth: FILE_MANAGER_CANVAS_DEFAULT_MAX_WIDTH,
+      widthRatio: FILE_MANAGER_CANVAS_WIDTH_RATIO,
+      minContentWidth: MIN_CONTENT_AREA_WIDTH,
+    },
+  });
 /** Desktop navigation sidebar width in pixels for its expanded or collapsed state. */
 export const getNavigationSidebarWidth = (isExpanded: boolean): number =>
   isExpanded

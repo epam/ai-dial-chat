@@ -1,5 +1,6 @@
 import {
   isDialFileId,
+  isDialFolderId,
   resolveDialFileBucketAndPath,
 } from '@epam/ai-dial-chat-hooks';
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
@@ -52,20 +53,31 @@ const stripFragment = (fileId: string): string => fileId.split('#')[0];
 export const resolveMarkdownUrl = (url: string): string =>
   resolveDialFileDownloadUrl(stripFragment(url)) ?? url;
 
+/* A folder id ends with `/`; DIAL Core has no download for a folder. */
+const isDownloadableDialFileId = (url: string | undefined): url is string =>
+  url != null && isDialFileId(url) && !isDialFolderId(url);
+
+/**
+ * Whether an attachment tile may offer a download. Only a DIAL folder
+ * attachment is ruled out; reference-only and inline attachments keep the
+ * download action their click handler already supports.
+ */
+export const isAttachmentDownloadable = (
+  attachment: DisplayAttachment,
+): boolean => attachment.url == null || !isDialFolderId(attachment.url);
+
 /**
  * Returns the best downloadable DIAL-file URL from an attachment's `url` or
- * `referenceUrl`, or `undefined` when neither is a valid DIAL `files/` path.
+ * `referenceUrl`, or `undefined` when neither is a valid DIAL `files/` path
+ * to a file (a folder id is not downloadable).
  */
 export const resolveDialUrl = (
   attachment: DisplayAttachment,
 ): string | undefined => {
-  if (attachment.url != null && isDialFileId(attachment.url)) {
+  if (isDownloadableDialFileId(attachment.url)) {
     return resolveDialFileDownloadUrl(stripFragment(attachment.url));
   }
-  if (
-    attachment.referenceUrl != null &&
-    isDialFileId(attachment.referenceUrl)
-  ) {
+  if (isDownloadableDialFileId(attachment.referenceUrl)) {
     return resolveDialFileDownloadUrl(stripFragment(attachment.referenceUrl));
   }
   return undefined;

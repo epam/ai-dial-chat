@@ -1,5 +1,10 @@
 import { ChatOverlay, OverlayEventType } from '@epam/ai-dial-chat-overlay';
-import { NeutralButton } from '@epam/ai-dial-ui-kit';
+import {
+  NeutralButton,
+  LiveRegion,
+  LiveRegionElement,
+  LiveRegionPoliteness,
+} from '@epam/ai-dial-ui-kit';
 import { FC, memo, useCallback, useEffect, useRef, useState } from 'react';
 import EventLog from '../../components/EventLog/EventLog';
 import MissingEnvNotice from '../../components/MissingEnvNotice/MissingEnvNotice';
@@ -168,17 +173,24 @@ const DirectOverlayCase: FC = () => {
     );
   };
 
+  const isHandshakeHintShown = isHandshakeSlow && !isReady;
+
   if (!host) {
     return <MissingEnvNotice />;
   }
 
   return (
     <div>
-      <h1 className="text-3xl font-bold">Direct ChatOverlay case</h1>
-      <p aria-live="polite">
+      <h1 className="dial-display2-text">Direct ChatOverlay case</h1>
+      <LiveRegion as={LiveRegionElement.P}>
         Ready: {isReady ? 'yes' : 'waiting for handshake...'}
-      </p>
-      {isHandshakeSlow && !isReady && <p role="alert">{handshakeHint}</p>}
+      </LiveRegion>
+      <LiveRegion
+        politeness={LiveRegionPoliteness.Assertive}
+        as={LiveRegionElement.P}
+      >
+        {isHandshakeHintShown && handshakeHint}
+      </LiveRegion>
       <div className="my-3 flex flex-wrap gap-2">
         <NeutralButton
           className="min-h-11"

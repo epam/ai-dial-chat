@@ -14,6 +14,7 @@ import { UserConfigI18nKeys } from '../constants/translation-keys';
 import {
   getUserConfig,
   pinConversation as apiPinConversation,
+  pinProject as apiPinProject,
   updateInstalledDeployment,
   updateInstalledToolset,
   updateSelectedDeployment as apiUpdateSelectedDeployment,
@@ -24,11 +25,15 @@ import { useNotification } from './NotificationContext';
 
 interface UserConfigContextType {
   pinnedConversationIds: string[];
+  pinnedProjectIds: string[];
   installedToolsetIds: string[];
   installedDeploymentIds: string[];
   selectedDeploymentId: string | null;
   status: UserConfigStatus;
   setPinnedConversation: (id: string, isPinned: boolean) => Promise<void>;
+  setPinnedProject: (id: string, isPinned: boolean) => Promise<void>;
+  /** Mirrors a pin change the BFF already persisted (a rename, or a delete when `newId` is `null`); sends no request. */
+  replacePinnedProjectId: (oldId: string, newId: string | null) => void;
   setInstalledToolset: (id: string, isInstalled: boolean) => Promise<void>;
   setInstalledDeployment: (id: string, isInstalled: boolean) => Promise<void>;
   setSelectedDeployment: (id: string | null) => Promise<void>;
@@ -50,6 +55,7 @@ export const UserConfigProvider = ({ children }: { children: ReactNode }) => {
   const [pinnedConversationIds, setPinnedConversationIds] = useState<string[]>(
     [],
   );
+  const [pinnedProjectIds, setPinnedProjectIds] = useState<string[]>([]);
   const [installedToolsetIds, setInstalledToolsetIds] = useState<string[]>([]);
   const [installedDeploymentIds, setInstalledDeploymentIds] = useState<
     string[]
@@ -71,6 +77,7 @@ export const UserConfigProvider = ({ children }: { children: ReactNode }) => {
     const load = async () => {
       setStatus(UserConfigStatus.Loading);
       setPinnedConversationIds([]);
+      setPinnedProjectIds([]);
       setInstalledToolsetIds([]);
       setInstalledDeploymentIds([]);
       setSelectedDeploymentId(null);
@@ -78,6 +85,7 @@ export const UserConfigProvider = ({ children }: { children: ReactNode }) => {
         const config = await getUserConfig();
         if (guard.isCancelled) return;
         setPinnedConversationIds(config.conversations?.pinnedIds ?? []);
+        setPinnedProjectIds(config.projects?.pinnedIds ?? []);
         setInstalledToolsetIds(config.toolsets?.installed ?? []);
         setInstalledDeploymentIds(config.deployments?.installed ?? []);
         setSelectedDeploymentId(config.deployments?.selectedId ?? null);
@@ -120,6 +128,34 @@ export const UserConfigProvider = ({ children }: { children: ReactNode }) => {
       }
     },
     [pinnedConversationIds],
+  );
+
+  const setPinnedProject = useCallback(
+    async (id: string, isPinned: boolean) => {
+      const snapshot = pinnedProjectIds;
+      setPinnedProjectIds((prev) => {
+        if (!isPinned) return prev.filter((x) => x !== id);
+        return prev.includes(id) ? prev : [...prev, id];
+      });
+      try {
+        await apiPinProject(id, isPinned);
+      } catch (err) {
+        setPinnedProjectIds(snapshot);
+        throw err;
+      }
+    },
+    [pinnedProjectIds],
+  );
+
+  const replacePinnedProjectId = useCallback(
+    (oldId: string, newId: string | null) => {
+      setPinnedProjectIds((prev) => {
+        if (!prev.includes(oldId)) return prev;
+        if (newId == null) return prev.filter((id) => id !== oldId);
+        return prev.map((id) => (id === oldId ? newId : id));
+      });
+    },
+    [],
   );
 
   const setInstalledToolset = useCallback(
@@ -177,22 +213,28 @@ export const UserConfigProvider = ({ children }: { children: ReactNode }) => {
   const value = useMemo(
     () => ({
       pinnedConversationIds,
+      pinnedProjectIds,
       installedToolsetIds,
       installedDeploymentIds,
       selectedDeploymentId,
       status,
       setPinnedConversation,
+      setPinnedProject,
+      replacePinnedProjectId,
       setInstalledToolset,
       setInstalledDeployment,
       setSelectedDeployment,
     }),
     [
       pinnedConversationIds,
+      pinnedProjectIds,
       installedToolsetIds,
       installedDeploymentIds,
       selectedDeploymentId,
       status,
       setPinnedConversation,
+      setPinnedProject,
+      replacePinnedProjectId,
       setInstalledToolset,
       setInstalledDeployment,
       setSelectedDeployment,

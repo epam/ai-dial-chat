@@ -31,6 +31,7 @@ interface SettingsPanelProps {
   activeId: string;
   onSelect: (id: string) => void;
   sectionLabel?: string;
+  ariaLabel?: string;
   styles?: SettingsPanelStyles; // { typography?: SettingsPanelTypography }
   className?: string;
 }
@@ -39,6 +40,10 @@ interface SettingsPanelProps {
 Row colors (inactive, hover, active, focus ring) come from the UI kit's vertical `Tabs` and are
 not overridable through `SettingsPanel` props. The section header typography defaults to
 `dial-h1-text`, overridable via `styles.typography.sectionLabelClassName`.
+
+`sectionLabel` both renders the visible header and names the tablist. A host that places the panel
+under a heading of its own (a dialog title) SHALL omit `sectionLabel` and pass `ariaLabel`, which
+the panel forwards to the kit `Tabs` as the tablist's accessible name without rendering a header.
 
 #### Scenario: Rendering the item list
 - **WHEN** the panel is given `items` with one active id and one or more disabled items
@@ -52,6 +57,10 @@ not overridable through `SettingsPanel` props. The section header typography def
 #### Scenario: Disabled rows do not fire onSelect
 - **WHEN** a user clicks a `disabled: true` row
 - **THEN** `onSelect` is not called and the active row does not change
+
+#### Scenario: Naming the list without a visible header
+- **WHEN** the panel is given `ariaLabel` and no `sectionLabel`
+- **THEN** the `role="tablist"` is named by `ariaLabel` and no header text is rendered
 
 ---
 
@@ -121,7 +130,9 @@ interface ExtensionServiceItem {
   displayName: string;
   description: string;
   isWarningVisible: boolean;
-  authorizeLabel: string;
+  limitedAccessLabel?: string;
+  limitedAccessTooltipTitle?: string;
+  limitedAccessTooltipDescription?: string;
   action: ReactNode;
 }
 interface ExtensionsLabels {
@@ -145,8 +156,10 @@ interface ExtensionsSectionProps {
 #### Scenario: Warning badge and action stay host-driven
 - **WHEN** a row renders with `isWarningVisible: false` and a host-supplied `action`
 - **THEN** the avatar carries no warning badge, the action renders in the trailing cell, and an
-  `isWarningVisible: true` row renders the badge with the row's `authorizeLabel` as its tooltip
-  and accessible name
+  `isWarningVisible: true` row renders the decorative warning glyph on the avatar's corner while
+  a row with `limitedAccessLabel` set renders the red limited-access `Badge` in the trailing cell
+  instead of the `action`, with the tooltip title/description strings and the `Badge`'s
+  `aria-describedby`-linked screen-reader description all host-supplied
 
 #### Scenario: The consuming tab stays the host of state and strings
 - **WHEN** `apps/chat` renders the Extensions tab

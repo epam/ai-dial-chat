@@ -65,8 +65,10 @@ export class UploadWatchdog {
   }
 
   /** Passes chunks through, restarting the idle timer each time one is requested. */
-  async *watch(chunks: Iterable<Buffer>): AsyncGenerator<Buffer> {
-    for (const chunk of chunks) {
+  async *watch(
+    chunks: AsyncIterable<Buffer> | Iterable<Buffer>,
+  ): AsyncGenerator<Buffer> {
+    for await (const chunk of chunks) {
       this.armStepTimer(this.limits.idleMs, UploadAbortReason.Stalled);
       yield chunk;
     }

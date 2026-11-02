@@ -3,6 +3,7 @@
 export * from './AppConfigApi';
 export * from './ApplicationsApi';
 export * from './AuthApi';
+export * from './CelebrationsApi';
 export * from './ChatApi';
 export * from './ClientChannelApi';
 export * from './ConversationsApi';
@@ -13,6 +14,7 @@ export * from './FilesApi';
 export * from './HealthApi';
 export * from './ModelsApi';
 export * from './OfflineCredentialsApi';
+export * from './ProjectsApi';
 export * from './PromptsApi';
 export * from './PublishApi';
 export * from './RateApi';

@@ -17,7 +17,15 @@ also calls `useOfflineCredentialsGate` on entry, but renders the same
 `status: Error` and `resultStage: 'credentials'` (body text
 `scheduledTasks.detail.runCredentialsRequired`, "Sign in to DIAL Chat to run
 this task."), and re-fetches the status once per newly seen credentials-failed
-run.
+run. When the same check reports `schedulerServiceConsent: 'signed_out'`, the
+list route SHALL render the limited-access banner (the
+`scheduled-tasks-page-ui` "Limited-access banner and create gating on the list
+page" requirement) instead of the login-required banner. The detail route
+renders no limited-access banner — its banner behaviour, including the
+credentials-failed-run login banner, is unchanged by the consent state (a
+review decision: the banner is a list-page surface only).
+A `schedulerServiceConsent` of `signed_in` or `unknown` changes nothing: the
+pre-change banner conditions apply unchanged.
 
 #### Scenario: Entering the Scheduled Tasks list
 - **WHEN** an authenticated user navigates to `ROUTES.ScheduledTasks`
@@ -43,6 +51,10 @@ run.
 - **THEN** the login-required banner renders only if a run of that task has
   `status: Error` and `resultStage: 'credentials'`; otherwise no banner renders
 
+#### Scenario: Revoked consent replaces the login banner on the list route
+- **WHEN** the status check reports `schedulerServiceConsent: 'signed_out'`
+- **THEN** the list route renders the limited-access banner instead of the login-required banner (regardless of `connected`), and the detail route renders no limited-access banner
+
 #### Scenario: Callback route is excluded
 - **WHEN** the OAuth provider redirects back to `ROUTES.ToolsetSignIn`
 - **THEN** no offline-credentials status check runs on that route
@@ -63,7 +75,6 @@ run.
 - **WHEN** the status request fails (network error or non-2xx response)
 - **THEN** the page does not show the login-required banner and does not
   treat the failure as `connected: false`
-
 ### Requirement: OAuth login flow reusing toolset infrastructure
 The system SHALL let the user complete offline-credentials OAuth consent from
 the login-required banner's "Log in" action by reusing the existing toolset
@@ -119,8 +130,11 @@ banner.
 ### Requirement: Login-required banner
 The system SHALL show a non-blocking inline banner on the Scheduled Tasks
 list page explaining that logging in is required for scheduled tasks to run,
-whenever the status check reports `connected: false`, and SHALL NOT show it
-once `connected: true` is confirmed. The banner SHALL render between the page's
+whenever the status check reports `connected: false` and
+`schedulerServiceConsent` is not `signed_out`, and SHALL NOT show it
+once `connected: true` is confirmed or while `schedulerServiceConsent` is
+`signed_out` (the limited-access banner replaces it — see the
+`scheduled-tasks-page-ui` delta). The banner SHALL render between the page's
 search/sort toolbar and its task cards. The banner SHALL display a warning
 icon, the bold text "Log in required.", the supporting text "Scheduled tasks
 need authorization to run offline.", and, only when Core reports
@@ -141,7 +155,15 @@ has no dismiss/close action.
 
 #### Scenario: Already connected
 - **WHEN** the status check returns `{ available: true, connected: true }`
-- **THEN** the banner does not render
+- **THEN** the banner does not render, the page passes no `banner` into the
+  lib's banner slot (no in-flow flex child — and no gap row — renders between
+  the toolbar and the content), and the login flow's polite `aria-live`
+  status region renders at page level, outside the width-constrained banner
+  slot, so announcements continue while no visible banner renders
+
+#### Scenario: Revoked consent suppresses the login banner
+- **WHEN** the status check returns `schedulerServiceConsent: 'signed_out'`
+- **THEN** the login-required banner does not render on any condition, and the limited-access banner renders in its place
 
 #### Scenario: Status still checking
 - **WHEN** the status check has not yet resolved for the current route entry
@@ -162,7 +184,6 @@ has no dismiss/close action.
 - **WHEN** the banner is visible and a subsequent status refetch reports
   `connected: true`
 - **THEN** the banner disappears from the page without a route change
-
 ### Requirement: Accessible banner
 The login-required banner SHALL meet WCAG 2.1 AAA expectations: keyboard
 operability, meaningful button labeling, decorative-icon handling, and

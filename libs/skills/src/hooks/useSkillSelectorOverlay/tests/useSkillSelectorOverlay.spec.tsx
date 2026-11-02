@@ -170,7 +170,7 @@ describe('useSkillSelectorOverlay', () => {
     const { result } = renderHook(() =>
       useSkillSelectorOverlay({
         ...baseOptions,
-        historyChipLabelClassName: 'dial-small-paragraph-text text-accent',
+        historyChipLabelClassName: 'dial-small-paragraph-text',
       }),
     );
 
@@ -185,17 +185,17 @@ describe('useSkillSelectorOverlay', () => {
       { url: abcSkill.url },
     ]) as ReactElement<ChatSkillProps>[];
 
-    expect(activeChip.props.labelClassName).toBe('text-accent');
+    expect(activeChip.props.labelClassName).toBe('');
     expect(historyChips[0].props.labelClassName).toBe(
-      'dial-small-paragraph-text text-accent',
+      'dial-small-paragraph-text',
     );
   });
 
-  it('applies the configured class to active mention chips', () => {
+  it('forwards chipColors to active mention and history chips', () => {
     const { result } = renderHook(() =>
       useSkillSelectorOverlay({
         ...baseOptions,
-        activeMentionLabelClassName: 'text-primary',
+        chipColors: { label: '#123456' },
       }),
     );
 
@@ -207,7 +207,12 @@ describe('useSkillSelectorOverlay', () => {
       result.current.activeMentions[0].render,
     )() as ReactElement<ChatSkillProps>;
 
-    expect(activeChip.props.labelClassName).toBe('text-primary');
+    const historyChips = result.current.renderHistorySkills([
+      { url: abcSkill.url },
+    ]) as ReactElement<ChatSkillProps>[];
+
+    expect(activeChip.props.colors).toEqual({ label: '#123456' });
+    expect(historyChips[0].props.colors).toEqual({ label: '#123456' });
   });
 
   it('forwards the history trigger only to history chips', () => {

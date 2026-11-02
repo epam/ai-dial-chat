@@ -56,6 +56,13 @@ describe('RevokeSharedAccessDto', () => {
     expect(errors).toHaveLength(0);
   });
 
+  it('accepts a projects/{bucket}/{path} itemId', async () => {
+    const errors = await validateDto({
+      itemId: 'projects/owner-bucket/marketing/q4-launch',
+    });
+    expect(errors).toHaveLength(0);
+  });
+
   it('rejects an itemId containing a path-traversal segment', async () => {
     const errors = await validateDto({
       itemId: 'applications/owner-bucket/../escape',

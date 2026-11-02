@@ -52,6 +52,7 @@ export type ScheduledTaskValidationErrors = Partial<
 /** Explicit clock and lead-time inputs make schedule validation deterministic. */
 export interface ScheduledTaskValidationOptions {
   now: Date;
+  /** Minimum time a one-shot `runAt` must lie ahead of `now`. Defaults to `SCHEDULED_TASK_MINIMUM_LEAD_MS`. */
   minimumLeadMs?: number;
   /** Explicit capability of the draft's selected model; omitted means unsupported. */
   isSkillsSupported?: boolean;
@@ -94,7 +95,8 @@ export const validateScheduledTaskTextField = (
   }
 };
 
-const DEFAULT_MINIMUM_LEAD_MS = 60_000;
+/** Minimum time a one-shot `runAt` must lie ahead of `now`; the default of `minimumLeadMs`. */
+export const SCHEDULED_TASK_MINIMUM_LEAD_MS = 60_000;
 const MINUTE_PATTERN = /^(?:[0-9]|[1-5][0-9])$/;
 const WEEKDAY_PATTERN = /^[0-6]$/;
 const MONTH_DAY_PATTERN = /^(?:[1-9]|[12][0-9]|3[01])$/;
@@ -166,7 +168,7 @@ export const validateScheduledTaskFormValues = (
   values: ScheduledTaskCreateFormValues,
   {
     now,
-    minimumLeadMs = DEFAULT_MINIMUM_LEAD_MS,
+    minimumLeadMs = SCHEDULED_TASK_MINIMUM_LEAD_MS,
     isSkillsSupported,
     originalStartDate,
     originalEndDate,
@@ -225,10 +227,12 @@ export const validateScheduledTaskFormValues = (
     errors.time = ScheduledTaskValidationErrorCode.TimeInvalid;
   }
 
-  if (
-    values.repeat === ScheduledTaskRepeat.Weekly &&
-    !WEEKDAY_PATTERN.test(values.dayOfWeek ?? '')
-  ) {
+  /* Weekly picks its day in the weekday Calendar; Custom in the segmented
+   * day row — both store the same APScheduler-convention string. */
+  const isDayOfWeekRepeat =
+    values.repeat === ScheduledTaskRepeat.Weekly ||
+    values.repeat === ScheduledTaskRepeat.Custom;
+  if (isDayOfWeekRepeat && !WEEKDAY_PATTERN.test(values.dayOfWeek ?? '')) {
     errors.dayOfWeek = ScheduledTaskValidationErrorCode.DayOfWeekInvalid;
   }
   if (

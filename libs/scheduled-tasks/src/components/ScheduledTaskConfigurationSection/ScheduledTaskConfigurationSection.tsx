@@ -53,7 +53,7 @@ export const ScheduledTaskConfigurationSection: FC<
         {/* overflow-wrap:anywhere breaks a skill name only when it cannot
          * fit a line by itself; break-all would chop ordinary names at the
          * column edge. */}
-        <p className="[overflow-wrap:anywhere] whitespace-normal">
+        <p className="wrap-anywhere whitespace-normal">
           {skillDisplayNames?.map((name, index) => (
             <span className="block" key={`${index}:${name}`}>
               {name}

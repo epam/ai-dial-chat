@@ -94,7 +94,7 @@
       "id": 31,
       "title": "SSE operations at range end",
       "type": "stat",
-      "description": "Instant observation at the selected range end, summed across the selected processes. Missing series remain missing. Includes setup and cleanup, not users.",
+      "description": "Instant observation at the selected range end, summed across the selected processes. Missing series remain missing. Includes setup and cleanup, not users. Includes short-lived conversation_titles streams.",
       "datasource": {
         "type": "prometheus",
         "uid": "$datasource"
@@ -646,7 +646,7 @@
     {
       "id": 1,
       "title": "SSE operations by process and kind",
-      "description": "Outstanding client_channel, conversation_watch and generation_attach operations per pod. Includes setup/cleanup. Ordinary completion-response delivery is not counted.",
+      "description": "Outstanding client_channel, conversation_watch, generation_attach and conversation_titles operations per pod. Includes setup/cleanup. Ordinary completion-response delivery is not counted. conversation_titles streams are short-lived (seconds, at most 60s): spikes there are history title loads, not long-lived subscriptions.",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",

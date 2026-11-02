@@ -1,8 +1,11 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   ExternalServiceAuthType,
   ExternalServiceCredentialsLevel,
+} from '@epam/ai-dial-chat-hooks';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
   getExternalService,
+  listExternalServices,
   signInExternalService,
   signOutExternalService,
 } from '../external-services';
@@ -21,11 +24,31 @@ const mockResponse = (body: unknown) => {
   return fetchMock;
 };
 
-afterEach(() => {
-  vi.unstubAllGlobals();
-});
-
 describe('external-service generated client adapter', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('lists the services of an application with their OAuth client settings using an encoded application id', async () => {
+    const services = [
+      {
+        id: 'gitlab-oauth',
+        displayName: 'GitLab',
+        authenticationType: ExternalServiceAuthType.OAuth,
+        clientId: 'client',
+        authorizationEndpoint: 'https://gitlab.example.com/oauth/authorize',
+        scopesSupported: ['read_repository'],
+      },
+    ];
+    const fetchMock = mockResponse(services);
+
+    expect(await listExternalServices(APP_ID)).toEqual(services);
+    expect(fetchMock).toHaveBeenCalledWith(
+      `/api/v1/external-services/${encodeURIComponent(APP_ID)}`,
+      expect.objectContaining({ method: 'GET', credentials: 'include' }),
+    );
+  });
+
   it('reads DIAL_NATIVE metadata using an encoded application id', async () => {
     const metadata = {
       displayName: 'DIAL',

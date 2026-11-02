@@ -39,10 +39,84 @@ export type TranslateFn = (
   options?: Record<string, unknown>,
 ) => string;
 
+const DATE_TIME_PARTS = {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+  hour: 'numeric',
+  minute: '2-digit',
+} as const;
+
+const OFFSET_PATTERN = /GMT([+-])(\d{2}):(\d{2})/;
+/* V8's `format()` turns U+202F into a plain space for web compatibility; `formatToParts()` does not. */
+const NARROW_NO_BREAK_SPACE = new RegExp('\\u202f', 'g');
+
+interface ZoneOverride {
+  timeZone?: string;
+}
+
+/* The viewer zone's UTC offset at `now`, in minutes; 'GMT' alone is UTC. */
+const getOffsetMinutes = (now: Date, zoneOverride: ZoneOverride): number => {
+  const zoneName = new Intl.DateTimeFormat('en-US', {
+    timeZoneName: 'longOffset',
+    ...zoneOverride,
+  })
+    .formatToParts(now)
+    .find((part) => part.type === 'timeZoneName')?.value;
+  const match = OFFSET_PATTERN.exec(zoneName ?? '');
+  if (match == null) {
+    return 0;
+  }
+  const sign = match[1] === '-' ? -1 : 1;
+  return sign * (Number(match[2]) * 60 + Number(match[3]));
+};
+
+/*
+ * Formats an instant at the viewer's current offset: the instant is shifted by
+ * that offset and formatted as UTC, and the UTC zone name is swapped for the
+ * viewer's own as it reads at `now`. The locale still orders every part.
+ */
+const formatInCurrentOffset = (
+  instantMs: number,
+  now: Date,
+  activeLocale: string,
+  timeZoneName: 'shortOffset' | 'long',
+  zoneOverride: ZoneOverride,
+): string => {
+  const currentZoneName =
+    new Intl.DateTimeFormat(activeLocale, { timeZoneName, ...zoneOverride })
+      .formatToParts(now)
+      .find((part) => part.type === 'timeZoneName')?.value ?? '';
+  const shifted = new Date(
+    instantMs + getOffsetMinutes(now, zoneOverride) * 60_000,
+  );
+
+  return new Intl.DateTimeFormat(activeLocale, {
+    ...DATE_TIME_PARTS,
+    timeZoneName,
+    timeZone: 'UTC',
+  })
+    .formatToParts(shifted)
+    .map((part) =>
+      part.type === 'timeZoneName' ? currentZoneName : part.value,
+    )
+    .join('')
+    .replace(NARROW_NO_BREAK_SPACE, ' ');
+};
+
+/** Offset reference used to format an unchanged reset boundary. */
+export enum UsageResetOffsetPolicy {
+  CurrentOffset = 'current-offset',
+  ResetInstant = 'reset-instant',
+}
+/** Optional host reset-display policy. */
+export interface UsageResetTimeOptions {
+  /** Defaults to current-offset. */ offsetPolicy?: UsageResetOffsetPolicy;
+}
 /**
  * Formats DIAL Core's `resetsAt` for display in the viewer's locale and
- * timezone, always stating the zone so a UTC boundary shown in local time is
- * never ambiguous.
+ * timezone, at the viewer's current UTC offset, always stating that offset so
+ * a UTC boundary shown in local time is never ambiguous.
  *
  * Returns `undefined` on every failure path — an absent, empty, or
  * unparseable value, or an `Intl` implementation that throws (embedded and
@@ -58,6 +132,7 @@ export const formatUsageResetTime = (
   resetsAt: string | undefined,
   activeLocale: string,
   t: TranslateFn,
+  options: UsageResetTimeOptions = {},
 ): ResetTimeDisplay | undefined => {
   if (!resetsAt) {
     return undefined;
@@ -81,22 +156,24 @@ export const formatUsageResetTime = (
      * while still carrying the offset.
      */
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-    const boundary = new Date(resetsAtMs);
     const zoneOverride = timeZone ? { timeZone } : {};
-    const dateTimeParts = {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    } as const;
+    const now =
+      options.offsetPolicy === UsageResetOffsetPolicy.ResetInstant
+        ? new Date(resetsAtMs)
+        : new Date();
 
-    const dateTime = new Intl.DateTimeFormat(activeLocale, {
-      ...dateTimeParts,
-      timeZoneName: 'shortOffset',
-      ...zoneOverride,
-    }).format(boundary);
+    /*
+     * Every reset time is stated in the viewer's offset as it is now, so the
+     * day, week and month headers never mix two offsets across a daylight
+     * saving switch (a Sunday boundary in GMT+2, the next one in GMT+1).
+     */
+    const dateTime = formatInCurrentOffset(
+      resetsAtMs,
+      now,
+      activeLocale,
+      'shortOffset',
+      zoneOverride,
+    );
 
     /*
      * The spoken form names the zone in full ('Central European Summer Time'
@@ -104,11 +181,13 @@ export const formatUsageResetTime = (
      * line — a screen reader reading out an offset abbreviation is far less
      * useful than the zone's name.
      */
-    const spokenDateTime = new Intl.DateTimeFormat(activeLocale, {
-      ...dateTimeParts,
-      timeZoneName: 'long',
-      ...zoneOverride,
-    }).format(boundary);
+    const spokenDateTime = formatInCurrentOffset(
+      resetsAtMs,
+      now,
+      activeLocale,
+      'long',
+      zoneOverride,
+    );
 
     return {
       resetsAtMs,

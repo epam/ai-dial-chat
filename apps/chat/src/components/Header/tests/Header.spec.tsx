@@ -26,6 +26,8 @@ vi.mock('@epam/ai-dial-attachment-canvas', () => ({
 }));
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_KIT_ICON_STROKE: 1.5,
+  /* Read at import time by conversation-input's UsageLimitBannerView. */
+  NotificationVariant: { Warning: 'warning', Error: 'error' },
   DIAL_ICON_SIZE: { LG: 24 },
   GhostIconButton: ({
     'aria-label': ariaLabel,

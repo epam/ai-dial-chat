@@ -6,6 +6,8 @@ import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   GhostButton,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck, IconCopy, IconDownload } from '@tabler/icons-react';
 import { type FC, useEffect, useRef, useState } from 'react';
@@ -132,9 +134,9 @@ export const QrActions: FC<QrActionsProps> = ({
         />
       </div>
       {/* Screen-reader-only announcement: the label change is visual-only. */}
-      <span role="status" aria-live="polite" className="sr-only">
+      <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
         {isCopied ? copiedLabel : ''}
-      </span>
+      </LiveRegion>
     </>
   );
 };

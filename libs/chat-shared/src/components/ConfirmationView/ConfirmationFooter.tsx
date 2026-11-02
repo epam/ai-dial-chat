@@ -6,6 +6,8 @@ import {
   GhostButton,
   NeutralButton,
   Spinner,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import { IconTrashX } from '@tabler/icons-react';
 import { FC } from 'react';
@@ -110,10 +112,11 @@ export const ConfirmationFooter: FC<ConfirmationFooterProps> = ({
         iconBefore={iconBefore}
         onClick={onConfirm}
       />
-      {isLoading && loadingStatusLabel != null && (
-        <span role="status" aria-live="polite" className="sr-only">
-          {loadingStatusLabel}
-        </span>
+      {/* Mounted whenever a label is supplied, so the region exists before loading starts. */}
+      {loadingStatusLabel != null && (
+        <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
+          {isLoading ? loadingStatusLabel : ''}
+        </LiveRegion>
       )}
     </div>
   );

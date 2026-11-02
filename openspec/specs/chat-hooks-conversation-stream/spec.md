@@ -348,6 +348,14 @@ outcome.
   whose last message is an empty, non-stopped assistant placeholder
 - **THEN** the conversation's path is added to the streaming-paths set
 
+#### Scenario: Load replay does not resume over its own active stream
+
+- **GIVEN** the hook owns a locally started completion for a conversation path, including the wait before its first token
+- **WHEN** a replayed load effect or return navigation calls `resumeIfAwaitingGeneration` for that same path
+- **THEN** no attach, watch, or reload is started, and the local buffer and Stop remain owned by the local completion
+- **AND** subsequent chunks and the completion's final reload still update the displayed answer
+- **AND** internal interruption and conflict recovery can still hand the stream over to attach
+
 #### Scenario: Attach succeeds and replays progressively
 
 - **WHEN** `transport.attachToGeneration` succeeds and delivers a `snapshot`

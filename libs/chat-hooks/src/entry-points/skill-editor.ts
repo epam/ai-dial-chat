@@ -6,3 +6,6 @@ export * from '../skill/useSkillEditorSubmit';
 export * from '../skill/useSkillFileActions';
 export * from '../skill/skill-manifest';
 export * from '../skill/useSkillArchiveImport/useSkillArchiveImport';
+export * from '../skill-editor/useSkillFileSystemPicker/useSkillFileSystemPicker';
+
+export * from '../skill-editor/useSkillFilePreviewSyncController';

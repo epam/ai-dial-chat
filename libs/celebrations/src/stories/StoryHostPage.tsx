@@ -1,3 +1,4 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import type { FC, MouseEvent, ReactNode } from 'react';
 import type { CelebrationAnchors } from '../models/celebration';
 
@@ -30,10 +31,16 @@ interface StoryHostPageProps {
   startersBelowComposer?: boolean;
   /** Exercise scenes when the host has only a composer. */
   showStarters?: boolean;
+  /** Pin the composer and starters to the viewport bottom, leaving no room below them. */
+  composerAlign?: 'center' | 'bottom';
   /** Decoration slot rendered inside the welcome region. */
   children?: ReactNode;
   /** Composer text, for the secret-phrase playground. */
   composerValue?: string;
+  /** Initial draft for an uncontrolled scene fixture. */
+  composerDefaultValue?: string;
+  /** Text shown while the fixture editor is empty. */
+  composerPlaceholder?: string;
   /** Called when the composer text changes. */
   onComposerChange?: (value: string) => void;
   /** Called when the fixture's send button is pressed. */
@@ -49,7 +56,10 @@ export const StoryHostPage: FC<StoryHostPageProps> = ({
   children,
   startersBelowComposer = false,
   showStarters = true,
+  composerAlign = 'center',
   composerValue,
+  composerDefaultValue,
+  composerPlaceholder,
   onComposerChange,
   onSend,
 }) => {
@@ -94,7 +104,10 @@ export const StoryHostPage: FC<StoryHostPageProps> = ({
       <main
         role="region"
         aria-label="Start page"
-        className="relative flex min-w-0 flex-1 flex-col items-center justify-center gap-4 overflow-hidden p-4 desktop:gap-6 desktop:p-8"
+        className={mergeClasses(
+          'relative flex min-w-0 flex-1 flex-col items-center gap-4 overflow-hidden p-4 desktop:gap-6 desktop:p-8',
+          composerAlign === 'bottom' ? 'justify-end' : 'justify-center',
+        )}
       >
         {children}
         <h1>Good evening!</h1>
@@ -111,6 +124,8 @@ export const StoryHostPage: FC<StoryHostPageProps> = ({
             rows={1}
             className="order-first min-w-0 basis-full resize-none bg-transparent desktop:order-0 desktop:flex-1 desktop:basis-auto"
             value={composerValue}
+            defaultValue={composerDefaultValue}
+            placeholder={composerPlaceholder}
             onChange={(event) => onComposerChange?.(event.target.value)}
           />
           <button

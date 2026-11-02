@@ -94,7 +94,7 @@ describe('MarkdownRenderer', () => {
     expect(table.className).toContain('min-w-full');
     expect(tableWrapper?.className).toContain('max-w-full');
     expect(tableWrapper?.className).toContain('min-w-0');
-    expect(tableWrapper?.className).toContain('[overflow:clip]');
+    expect(tableWrapper?.className).toContain('overflow-clip');
     expect(tableWrapper?.className).toContain('rounded-xl');
     expect(tableWrapper?.className).toContain('border');
     expect(scrollContainer?.className).toContain('overflow-x-auto');
@@ -670,8 +670,8 @@ describe('MarkdownRenderer', () => {
     const paragraph = document.querySelector('p');
     const link = screen.getByRole('link');
 
-    expect(paragraph?.className).toContain('break-words');
-    expect(link.className).toContain('break-words');
+    expect(paragraph?.className).toContain('wrap-break-word');
+    expect(link.className).toContain('wrap-break-word');
     expect(link.getAttribute('href')).toBe(longUrl);
   });
 
@@ -689,7 +689,7 @@ describe('MarkdownRenderer', () => {
     // eslint-disable-next-line testing-library/no-node-access
     const root = container.firstElementChild;
 
-    expect(root?.className).toContain('[overflow-wrap:anywhere]');
+    expect(root?.className).toContain('wrap-anywhere');
     expect(root?.className).toContain('host-class');
   });
 

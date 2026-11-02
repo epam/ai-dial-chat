@@ -1,12 +1,14 @@
-import { type CatalogItem } from '@epam/ai-dial-catalog';
+import { type CatalogItem, getCatalogItemTabs } from '@epam/ai-dial-catalog';
 import {
   CatalogEntityType,
   DeploymentIcon,
   mergeClasses,
   SELECT_LIST_MAX_HEIGHT_CLASS_NAME,
   SELECT_LIST_MAX_HEIGHT_PX,
+  useIsMobile,
 } from '@epam/ai-dial-chat-shared';
 import {
+  CaptionText,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   EllipsisTooltip,
@@ -28,7 +30,7 @@ import {
   type FC,
   type ReactNode,
 } from 'react';
-import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
+import { scrollChildIntoContainerView } from '../../utils/scroll';
 import styles from './DeploymentSelectorPanel.module.scss';
 
 /** Localizable string labels for `DeploymentSelectorPanel`. */
@@ -175,8 +177,10 @@ const DeploymentSelectorPanel: FC<Props> = ({
     return quickItems.filter(
       (f) =>
         !f.isHidden &&
-        (f.type === CatalogEntityType.Model ||
-          f.type === CatalogEntityType.Agent),
+        getCatalogItemTabs(f).some(
+          (tab) =>
+            tab === CatalogEntityType.Model || tab === CatalogEntityType.Agent,
+        ),
     );
   }, [favorites, pinnedItem]);
 
@@ -228,9 +232,19 @@ const DeploymentSelectorPanel: FC<Props> = ({
    * item sits further down, making it look like the pick didn't take effect.
    */
   const selectedRowRef = useRef<HTMLLIElement>(null);
+  const listScrollRef = useRef<HTMLDivElement>(null);
 
+  /* Scoped to the list: `scrollIntoView` would also scroll the mobile bottom
+     sheet's backdrop while the sheet is still sliding up, so the sheet jumps
+     past its resting place and snaps back
+     ([#9618](https://github.com/epam/ai-dial-chat/issues/9618)). */
   useEffect(() => {
-    selectedRowRef.current?.scrollIntoView({ block: 'nearest' });
+    if (listScrollRef.current && selectedRowRef.current) {
+      scrollChildIntoContainerView(
+        listScrollRef.current,
+        selectedRowRef.current,
+      );
+    }
   }, []);
 
   const isMobile = useIsMobile();
@@ -375,9 +389,10 @@ const DeploymentSelectorPanel: FC<Props> = ({
                 />
               )}
               {item.version && (
-                <span className="dial-tiny-text min-w-0 wrap-break-word text-secondary">
-                  {item.version}
-                </span>
+                <CaptionText
+                  text={item.version}
+                  className="min-w-0 wrap-break-word"
+                />
               )}
             </span>
           }
@@ -448,6 +463,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
       </div>
 
       <div
+        ref={listScrollRef}
         className={mergeClasses(
           SELECT_LIST_MAX_HEIGHT_CLASS_NAME,
           'min-h-0 flex-1 overflow-y-auto',

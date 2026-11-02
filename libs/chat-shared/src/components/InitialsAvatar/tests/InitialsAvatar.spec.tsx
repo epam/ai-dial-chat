@@ -1,3 +1,8 @@
+import {
+  AVATAR_PALETTE,
+  AvatarColor,
+  type AvatarColorClasses,
+} from '@epam/ai-dial-ui-kit';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { InitialsAvatar } from '../InitialsAvatar';
@@ -6,6 +11,7 @@ const renderAvatar = (
   props?: Partial<{
     name: string;
     size: number;
+    color: AvatarColorClasses;
     className: string;
     textClassName: string;
   }>,
@@ -58,5 +64,11 @@ describe('InitialsAvatar', () => {
   it('forwards className to the root element', () => {
     renderAvatar({ className: 'shrink-0' });
     expect(badgeOf('MA').className).toContain('shrink-0');
+  });
+
+  it('pins the colour to the supplied palette entry instead of the name-derived pick', () => {
+    renderAvatar({ color: AVATAR_PALETTE[AvatarColor.Violet1] });
+    expect(badgeOf('MA').className).toContain('bg-violet-1');
+    expect(badgeOf('MA').className).toContain('text-violet-2');
   });
 });

@@ -41,14 +41,19 @@ describe('ErrorFallback', () => {
     vi.clearAllMocks();
   });
 
-  it('renders role="alert" container', () => {
+  it('renders a region named by the heading, not a live region', () => {
     renderFallback();
-    expect(screen.getByRole('alert')).toBeTruthy();
+    expect(
+      screen.getByRole('region', { name: 'errorBoundary.heading' }),
+    ).toBeTruthy();
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 
-  it('renders the heading', () => {
+  it('renders the heading as the screen h1', () => {
     renderFallback();
-    expect(screen.getByText('errorBoundary.heading')).toBeTruthy();
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'errorBoundary.heading' }),
+    ).toBeTruthy();
   });
 
   it('renders the description', () => {
@@ -59,7 +64,7 @@ describe('ErrorFallback', () => {
   it('renders the retry button', () => {
     renderFallback();
     expect(
-      screen.getByRole('button', { name: 'errorBoundary.retryLabel' }),
+      screen.getByRole('button', { name: 'buttons.tryAgain' }),
     ).toBeTruthy();
   });
 
@@ -67,7 +72,7 @@ describe('ErrorFallback', () => {
     renderFallback();
     expect(
       screen
-        .getByRole('button', { name: 'errorBoundary.retryLabel' })
+        .getByRole('button', { name: 'buttons.tryAgain' })
         .matches(':focus'),
     ).toBe(true);
   });
@@ -90,7 +95,7 @@ describe('ErrorFallback', () => {
     const resetErrorBoundary = vi.fn();
     renderFallback({ resetErrorBoundary });
     await userEvent.click(
-      screen.getByRole('button', { name: 'errorBoundary.retryLabel' }),
+      screen.getByRole('button', { name: 'buttons.tryAgain' }),
     );
     expect(resetErrorBoundary).toHaveBeenCalledOnce();
   });
@@ -189,7 +194,9 @@ describe('RouteErrorBoundary', () => {
         </RouteErrorBoundary>
       </MemoryRouter>,
     );
-    expect(screen.getByRole('alert')).toBeTruthy();
+    expect(
+      screen.getByRole('region', { name: 'errorBoundary.heading' }),
+    ).toBeTruthy();
   });
 
   it('resets error state when the route key changes', () => {
@@ -200,13 +207,17 @@ describe('RouteErrorBoundary', () => {
     const { rerender } = render(
       <ErrorBoundaryWithKey routeKey="/catalog" shouldThrow={true} />,
     );
-    expect(screen.getByRole('alert')).toBeTruthy();
+    expect(
+      screen.getByRole('region', { name: 'errorBoundary.heading' }),
+    ).toBeTruthy();
 
     rerender(
       <ErrorBoundaryWithKey routeKey="/conversations" shouldThrow={false} />,
     );
     expect(screen.getByText('Normal content')).toBeTruthy();
-    expect(screen.queryByRole('alert')).toBeNull();
+    expect(
+      screen.queryByRole('region', { name: 'errorBoundary.heading' }),
+    ).toBeNull();
   });
 });
 

@@ -15,12 +15,14 @@ export type {
   EditorSectionColors,
   EditorSectionProps,
   EditorSectionStyles,
+  EditorSectionTypography,
 } from './models/editor-section-props';
 export type {
   EditorLayoutColors,
   EditorLayoutProps,
   EditorLayoutLabels,
   EditorLayoutStyles,
+  EditorLayoutTypography,
   ResizableLeftColumn,
 } from './models/editor-layout-props';
 export type {
@@ -55,8 +57,10 @@ export type {
 export type { DeploymentLocalesFieldProps } from './components/DeploymentLocalesField/DeploymentLocalesField';
 export type {
   AvatarPickerFileManagerModalProps,
+  AvatarPickerModalColors,
   AvatarPickerModalLabels,
   AvatarPickerModalProps,
+  AvatarPickerModalStyles,
 } from './models/avatar-picker-modal';
 export type {
   DeploymentCreationFormFieldErrors,
@@ -69,6 +73,7 @@ export type {
   DeploymentCreationFormProps,
   DeploymentCreationFormStyles,
   DeploymentCreationFormValues,
+  DeploymentLocalesFieldColors,
 } from './models/deployment-creation-form';
 export type {
   DeploymentCreationFormErrorCodes,

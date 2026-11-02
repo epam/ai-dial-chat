@@ -22,6 +22,112 @@ Framework-level React hooks extracted from AI DIAL Chat, published so teams buil
 
 ## Overview
 
+### Browser downloads
+
+`triggerBrowserDownload` is available from the root and `./utils`.
+`DownloadDestination` and `DownloadDestinationType` retain their existing root
+and `./file-manager` exports. The host acquires
+the response and opens any save picker before passing its prepared destination.
+
+```ts
+import { triggerBrowserDownload } from '@epam/ai-dial-chat-hooks/utils';
+
+const saveResponse = (response: Response) =>
+  triggerBrowserDownload(response, 'download.zip');
+```
+
+Blob downloads prefer a valid UTF-8 `filename*` header, then the plain filename,
+then the supplied fallback; header names have path separators removed. Stream
+destinations use the prepared fallback name and propagate stream failures. A
+missing response body aborts the writable and rejects. Cancelled destinations
+return the fallback without consuming the response.
+
+### Scheduled conversation controllers
+
+The root and `./conversation` export `groupScheduledTaskConversations`,
+`applyActiveScheduledTaskRun`, `collapseScheduledTaskConversations` and their
+generic option/result types. Supply `getGroupKey`, `isCollapsible` and
+`conversationIdsMatch`: the library assumes no resource prefix or owner format.
+The complete input list remains host-owned. Grouping picks the newest eligible
+run by creation time, update time and descending ID; applying an older active
+run preserves its original relative position. Unchanged active selections
+reuse the collapsed array.
+
+`useConversationDiscovery` accepts `UseConversationDiscoveryOptions`: `items`,
+`refresh`, `sessionKey`, `normalizeId`, optional `onError`, `retryCount` and
+`retryDelayMs`. Defaults are five additional retries, two seconds after each
+request settles. One timer serves pending IDs; changing session or unmounting
+retires old work. Initial refresh errors reject the returned promise; retry
+errors go to `onError`.
+
+### Selected skill names and file selection
+
+`useScheduledTaskSkillDisplayNames` (root and `./scheduled-tasks`) takes selected
+`skillUrls`, a `listed` name map and `getMetadata(url, signal)`. Listed names win;
+unavailable metadata retains the URL. Selection/listing changes and unmount
+abort obsolete requests. `UseScheduledTaskSkillDisplayNamesOptions` and
+`ScheduledTaskSkillName` describe the inputs.
+
+`useSkillFileSystemPicker<T>` (root and `./skill-editor`) accepts
+`materializeFile(file, signal)` and `onError`. Its
+`UseSkillFileSystemPickerResult<T>` exposes `isOpen`, `pickFromFileSystem`,
+`handleAttach` and `handleClose`. Only files are materialized, in selection
+order. Replacement, close and unmount cancel the old promise with `undefined`;
+late completions cannot settle a new attempt. The host owns downloads, paths,
+File construction and translated errors.
+
+### Pending attachment results
+
+`useFileAttachmentModalState` (root and `./file-manager`) accepts `bucket` and
+optional `resolvePreviewUrl`. It exposes modal open/close actions,
+`pendingAttachments`, `handleAttach` and `clearPendingAttachments`. Attach maps
+files and folders and closes the modal; clear consumes the result, and reopening
+does not restore it. This lifetime is separate from `useFileAttachmentPicker`.
+The exported contracts are `UseFileAttachmentModalStateOptions` and
+`UseFileAttachmentModalStateResult`.
+
+### Canvas preview and entity preselection
+
+`useDialFilePreview` (root and `./file-manager-canvas`) accepts current `items`,
+optional `searchResults`, `bucket`, `previewExtensions`, `startRequest`,
+`openAttachment`, `openUnsupported` and `resolveUrl`. Its callbacks keep their
+identity across listing refreshes and ignore obsolete/unmounted results. The
+host calls canvas hooks and supplies their adapted callbacks; this controller
+never calls a feature hook. `UseDialFilePreviewOptions` and
+`UseDialFilePreviewResult` are public.
+
+`useEntityPreselection` (root and `./conversation`) captures an
+`EntityPreselectionSnapshot` once per mount and applies deployment, skill and
+prompt sources through `EntityPreselectionSinks`. Supply listing/loading/error
+inputs, `resolveDeployment`, `resolveSkill`, `loadPrompt`, feature booleans,
+`onConsume` and `onOutcome` via `UseEntityPreselectionOptions`. The source and
+failure enums are `EntityPreselectionSource` and `EntityPreselectionOutcome`.
+`EntityPreselectionSkill`, `EntityPreselectionPrompt` and
+`EntityPreselectionPromptResult` are structural loader results. Superseded
+sources are consumed without application; disabled snapshots perform no side
+effects. Remount for a new arrival. In-flight prompt loads receive an abort
+signal and cannot commit after unmount. `UseEntityPreselectionResult` exposes
+deployment pending/override flags; URL parsing, cleanup and notifications are
+host-owned.
+
+### Canvas widths and persisted state
+
+`resolveCanvasWidth` (root and `./viewport-layout`) takes
+`ResolveCanvasWidthParams`: `CanvasWidthMode`, viewport/mobile/available widths
+and a numeric `CanvasWidthPolicy`. It returns `CanvasWidth`. Bounded-panel mode
+rounds and clamps the viewport share; conversation mode rounds half the sum of
+available width and the content budget. Mobile fills the viewport. Routes,
+breakpoints and sidebar dimensions stay in the host.
+
+`usePersistedState<T, TStored>` (root and `./utils`) takes
+`UsePersistedStateOptions<T, TStored>` with `key`, `initialValue`, a
+`PersistedStateStorage<TStored>` read/write port and
+`PersistedStateCodec<T, TStored>` decode/encode callbacks. Read/decode failures
+use the initial value; write/encode failures preserve in-memory updates.
+Changing key or codec does not reload state: subsequent writes use the new
+inputs, while remounting performs a new read. No storage medium, namespace or
+cross-tab synchronization is chosen by the library.
+
 `@epam/ai-dial-chat-hooks` is a headless hooks library: every hook here solves a piece of chat-interface UI mechanics (scrolling, streaming, anchoring, attachment upload/validation — more hooks will be added over time) using only React, standard browser APIs, and a narrow set of already-published, host-agnostic DIAL packages (the generated `@epam/ai-dial-chat-api-client` and its DTOs, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-attachment-input`, and others listed under Peer Dependencies below). It never depends on AI DIAL Chat's React contexts, a _configured_ REST client instance, i18n, or routing, and never renders a UI-kit component — every hook that needs to call DIAL Core accepts an already-configured generated-client instance as a parameter instead of importing or constructing one itself. A few hooks do import non-component symbols from `@epam/ai-dial-ui-kit` (enums such as `NotificationVariant`, constants such as `NOT_ALLOWED_SYMBOLS`, types such as `FilterChipItem`) to describe values the host renders — that is a data/type dependency, not a rendering one. This means a consumer can drop a hook from this package into a completely different chat UI, wire its returned refs/callbacks and injected client instances onto their own app, and get the same tuned, edge-case-tested behavior AI DIAL Chat ships with, without adopting anything else from this repository.
 
 ## Installation
@@ -76,17 +182,17 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-chat-shared` \*
 - `@epam/ai-dial-conversation-input` \*
 - `@epam/ai-dial-mcp-apps` \*
+- `@epam/ai-dial-projects` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.4.0-dev.11
+- `@epam/ai-dial-react-file-manager` ^0.4.0-dev.25
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.35
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.59
 - `@epam/ai-dial-usage-dashboard` \*
-- `@mcp-ui/client` ^7.1.1
-- `@modelcontextprotocol/sdk` ^1.32.1
+- `@modelcontextprotocol/sdk` ^1.32.2
 - `@epam/pdf-highlighter-kit` ^0.0.19
 
 `@epam/ai-dial-chat-api-client` is **not** a peer. Every entry that calls DIAL Core
@@ -123,36 +229,42 @@ compiled output rather than externalized, so it is not a peer either — nothing
 
 ### Entry-point-to-peer matrix
 
+Entries that use chat-shared also resolve its required File Manager peer and
+its AG Grid dependency for public declarations. npm installs that transitive
+closure; utility bundles still exclude grid-rendering engines. See
+[chat-shared's package contract](../chat-shared/README.md#peer-dependencies).
+
 One row per subpath, its peers, and (right column) which peers are required only to resolve a
 type at build time — a name imported with `import type`, erased before the code runs. Both
 kinds still need the package installed for `tsc`/the bundler to resolve the specifier while
 building that entry; the distinction is about what the code does with the import, not about
 whether you need to `npm install` it.
 
-| Entry point               | Runtime peers beyond `react`                                                                                                                        | Type-only peers                                           |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| `.` (root, unchanged)     | every runtime peer appearing in the rows below                                                                                                      | `@epam/ai-dial-source-panel`, `@epam/pdf-highlighter-kit` |
-| `./viewport-layout`       | —                                                                                                                                                   | —                                                         |
-| `./scroll-anchoring`      | —                                                                                                                                                   | —                                                         |
-| `./conversation`          | `@epam/ai-dial-chat-shared`                                                                                                                         | `@epam/ai-dial-publish-panel`                             |
-| `./conversation-overlay`  | `@epam/ai-dial-chat-shared`, `@epam/ai-dial-chat-overlay`                                                                                           | —                                                         |
-| `./conversation-transfer` | `@epam/ai-dial-chat-shared`                                                                                                                         | —                                                         |
-| `./conversation-sources`  | `@epam/ai-dial-chat-shared`, `@epam/ai-dial-quotations`                                                                                             | `@epam/ai-dial-source-panel`                              |
-| `./file-manager`          | `@epam/ai-dial-react-file-manager`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-chat-shared`                                                             | —                                                         |
-| `./file-manager-canvas`   | `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-quotations`, `@epam/ai-dial-chat-shared`                                                          | `@epam/pdf-highlighter-kit`                               |
-| `./source-content`        | —                                                                                                                                                   | —                                                         |
-| `./catalog`               | `@epam/ai-dial-catalog`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-publish-panel`, `@epam/ai-dial-skill-editor` | —                                                         |
-| `./skills-state`          | —                                                                                                                                                   | —                                                         |
-| `./skill-editor`          | `@epam/ai-dial-skill-editor`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-ui-kit`                                                                   | —                                                         |
-| `./oauth`                 | `@epam/ai-dial-chat-shared`                                                                                                                         | —                                                         |
-| `./offline-credentials`   | —                                                                                                                                                   | —                                                         |
-| `./scheduled-tasks`       | `@epam/ai-dial-scheduled-tasks`                                                                                                                     | —                                                         |
-| `./sharing`               | `@epam/ai-dial-share`                                                                                                                               | —                                                         |
-| `./attachments`           | `@epam/ai-dial-quotations`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`                        | —                                                         |
-| `./utils`                 | —                                                                                                                                                   | `@epam/ai-dial-chat-shared`                               |
-| `./usage`                 | `@epam/ai-dial-usage-dashboard`, `@epam/ai-dial-chat-shared`                                                                                        | —                                                         |
-| `./usage-limits`          | `@epam/ai-dial-conversation-input`, `@epam/ai-dial-chat-shared`                                                                                     | —                                                         |
-| `./mcp-apps`              | `@epam/ai-dial-mcp-apps`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`, `@mcp-ui/client`, `@modelcontextprotocol/sdk`             | —                                                         |
+| Entry point               | Runtime peers beyond `react`                                                                                                                        | Type-only peers                                                 |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| `.` (root, unchanged)     | every runtime peer appearing in the rows below                                                                                                      | `@epam/ai-dial-source-panel`, `@epam/pdf-highlighter-kit`       |
+| `./viewport-layout`       | —                                                                                                                                                   | —                                                               |
+| `./scroll-anchoring`      | —                                                                                                                                                   | —                                                               |
+| `./conversation`          | `@epam/ai-dial-chat-shared`                                                                                                                         | `@epam/ai-dial-publish-panel`                                   |
+| `./conversation-overlay`  | `@epam/ai-dial-chat-shared`, `@epam/ai-dial-chat-overlay`                                                                                           | —                                                               |
+| `./conversation-transfer` | `@epam/ai-dial-chat-shared`                                                                                                                         | —                                                               |
+| `./conversation-sources`  | `@epam/ai-dial-chat-shared`, `@epam/ai-dial-quotations`                                                                                             | `@epam/ai-dial-source-panel`                                    |
+| `./file-manager`          | `@epam/ai-dial-react-file-manager`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-chat-shared`                                                             | —                                                               |
+| `./file-manager-canvas`   | `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-quotations`, `@epam/ai-dial-chat-shared`                                                          | `@epam/pdf-highlighter-kit`, `@epam/ai-dial-react-file-manager` |
+| `./source-content`        | —                                                                                                                                                   | —                                                               |
+| `./catalog`               | `@epam/ai-dial-catalog`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-publish-panel`, `@epam/ai-dial-skill-editor` | —                                                               |
+| `./skills-state`          | —                                                                                                                                                   | —                                                               |
+| `./skill-editor`          | `@epam/ai-dial-skill-editor`, `@epam/ai-dial-chat-shared`, `@epam/ai-dial-ui-kit`                                                                   | `@epam/ai-dial-react-file-manager`                              |
+| `./oauth`                 | `@epam/ai-dial-chat-shared`                                                                                                                         | —                                                               |
+| `./offline-credentials`   | —                                                                                                                                                   | —                                                               |
+| `./scheduled-tasks`       | `@epam/ai-dial-scheduled-tasks`                                                                                                                     | —                                                               |
+| `./project`               | `@epam/ai-dial-projects`, `@epam/ai-dial-ui-kit`, `@epam/ai-dial-chat-shared`                                                                       | —                                                               |
+| `./sharing`               | `@epam/ai-dial-share`                                                                                                                               | —                                                               |
+| `./attachments`           | `@epam/ai-dial-quotations`, `@epam/ai-dial-attachment-input`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`                        | —                                                               |
+| `./utils`                 | —                                                                                                                                                   | `@epam/ai-dial-chat-shared`                                     |
+| `./usage`                 | `@epam/ai-dial-usage-dashboard`, `@epam/ai-dial-chat-shared`                                                                                        | —                                                               |
+| `./usage-limits`          | `@epam/ai-dial-conversation-input`, `@epam/ai-dial-chat-shared`                                                                                     | —                                                               |
+| `./mcp-apps`              | `@epam/ai-dial-mcp-apps`, `@epam/ai-dial-attachment-canvas`, `@epam/ai-dial-chat-shared`, `@modelcontextprotocol/sdk`                               | —                                                               |
 
 Five of the peers above (`@epam/ai-dial-catalog`,
 `@epam/ai-dial-chat-overlay`, `@epam/ai-dial-publish-panel`,
@@ -316,12 +428,52 @@ const { isAuthSessionError, connect } =
 ```
 
 ```tsx
+// ./project — the app passes its configured generated `ProjectsApi`
+import {
+  createProjectsApiClient,
+  useProject,
+  useProjectConversations,
+  useProjects,
+} from '@epam/ai-dial-chat-hooks/project';
+
+/* Module scope: the hooks reload whenever the client object changes. */
+const projectsClient = createProjectsApiClient(projectsApi);
+
+const ProjectsPage = () => {
+  const { projects, isLoading, hasError, retry } = useProjects(
+    projectsClient,
+    isProjectsEnabled,
+  );
+  const { project, isNotFound } = useProject(
+    projectsClient,
+    projectId,
+    isProjectsEnabled,
+  );
+  const { items, hasMore, loadMore } = useProjectConversations(
+    projectsClient,
+    projectId,
+  );
+  // …
+};
+```
+
+`useProjects` keeps the list current while it is mounted when the client
+offers `watchProjects` (`createProjectsApiClient` always does). After a
+successful load it watches the first 1000 listed ids:
+
+- an `UPDATE` or `CREATE` moves that project's `updatedAt` forward, never back;
+- a `DELETE` removes it;
+- a stream that drops is reopened after 1, 2, 4, 8 and 16 seconds, and each successful reopen is followed by a silent reload, without the loading state;
+- a watch that cannot be opened is not retried for the rest of the visit.
+
+A client without `watchProjects` gets a one-off load, as before.
+
+```tsx
 // ./offline-credentials — no peer beyond react
 import { useOfflineCredentialsGate } from '@epam/ai-dial-chat-hooks/offline-credentials';
 
-const { status, connect, connected, refetch } = useOfflineCredentialsGate({
-  offlineCredentialsClient,
-});
+const { status, connect, connected, schedulerServiceConsent, refetch } =
+  useOfflineCredentialsGate({ offlineCredentialsClient });
 ```
 
 ```tsx
@@ -1219,6 +1371,8 @@ Also exports `DEFAULT_MAX_ARCHIVE_BYTES`, `EXPORT_APP_NAME` and `formatQuotedNam
 
 Owns completion-streaming state — per-conversation-path streaming/stoppable tracking, cross-navigation live-message buffering, stale-chunk rejection, reload-after-complete, and hard-refresh resume detection — driven entirely through an injected `ConversationStreamTransport`. The library never hardcodes an `/api` path, CSRF handling, or a `server-api` import; the host implements the transport against its own BFF/generated-client calls.
 
+The public `resumeIfAwaitingGeneration` leaves a path alone while this hook already owns its local completion stream, including the wait before its first token. Replayed load effects and return navigation therefore cannot replace that stream's buffer with an unnecessary attach/resume. Internal interruption and conflict recovery can still hand the local stream over to attach.
+
 ```tsx
 import {
   useConversationStream,
@@ -1563,6 +1717,16 @@ const Composer = ({ allowedMimeTypes }: { allowedMimeTypes: string[] }) => {
 
 **Returns** (`UseAttachmentValidationResult`): `{ inputAttachmentTypes: string[], isAttachmentsAllowed: boolean, validateAttachment: (attachment: Attachment) => AttachmentErrorReason | undefined, fileAccept: string | undefined }`.
 
+### useConversationAnnotationPool
+
+Groups the html-tag citation annotations a conversation persisted in `customViewState.annotations` by citation id, through `useHtmlTagAnnotationGroups` from `@epam/ai-dial-quotations`. Malformed or absent annotations yield the shared empty result, so a host can pass any conversation, `null` or `undefined`. Available from the root and `./conversation-sources`.
+
+```ts
+import { useConversationAnnotationPool } from '@epam/ai-dial-chat-hooks/conversation-sources';
+
+const fallbackCitationGroups = useConversationAnnotationPool(conversation);
+```
+
 ### useConversationSources
 
 Derives, via a pure `useMemo` computation, a deduplicated list of a conversation's uploaded/generated attachments and its quotation sources from a message list.
@@ -1586,6 +1750,16 @@ const SourcesPanel = ({ messages }: { messages: Message[] }) => {
 **Returns** (`UseConversationSourcesResult`): `{ uploaded: DisplayAttachment[], generated: DisplayAttachment[], sources: QuotationSource[] }`.
 
 `sources` gets one entry per distinct URL. A reference-only attachment keeps its `reference_url` as is. For a citation annotation on a `.pdf` file, the hook appends the cited page from its `pdf_bbox`/`pdf_region` selector (`files/bucket/doc.pdf#page=12`). This applies only when the URL has no fragment yet. As a result, each cited page of a document is a separate source, and two citations of the same page collapse into one.
+
+### prepareStageCitations
+
+Returns a message's stages with the citation markup in each stage's `content` prepared for rendering: hidden while the message streams, unsupported shapes escaped once it has finished. Stages without `<cit` markup — and the array itself when none has any — are returned by reference, so memoized stage rows do not re-render. Available from the root and `./conversation-sources`.
+
+```ts
+import { prepareStageCitations } from '@epam/ai-dial-chat-hooks/conversation-sources';
+
+const renderedStages = prepareStageCitations(stages, isStreaming);
+```
 
 ### useChatSettingsFormConfig
 
@@ -1683,7 +1857,7 @@ const AttachmentTile = ({ attachment }: { attachment: DisplayAttachment }) => {
 
 **Returns** (`UseAttachmentActionResult`): `{ handleAttachmentClick: (attachment: DisplayAttachment) => void }`.
 
-Also exports `isDialFileId`, `isDownloadableAttachment`, and `downloadAttachment` (the standalone functions the hook is built on) for callers that need the download decision outside the click handler.
+Also exports `isDialFileId`, `isDownloadableAttachment`, and `downloadAttachment` (the standalone functions the hook is built on) for callers that need the download decision outside the click handler. A DIAL folder attachment (`url` ending with `/`) is not downloadable: `isDownloadableAttachment` returns `false` and `downloadAttachment` does nothing for it.
 
 ### usePromptsState
 
@@ -1804,6 +1978,45 @@ const CatalogCard = ({
 | `favoriteIds`    | `ReadonlySet<string>`                                                                 | Current set of favorited IDs across all entity types.                                                                                                |
 | `isLoading`      | `boolean`                                                                             | `true` while the initial load is in flight.                                                                                                          |
 | `toggleFavorite` | `(id: string, isFavorite: boolean, entityType?: FavoriteEntityType) => Promise<void>` | Optimistically updates `favoriteIds`, calls `updateFavorite`, and rolls back on rejection. `entityType` defaults to `FavoriteEntityType.Deployment`. |
+
+### resolveFavoriteEntityType
+
+Returns the `FavoriteEntityType` — the user-config section — a catalog item's favorite state is stored in: `Toolset`, `Prompt` and `Skill` items map to their own section, and every other type, or an unknown one, to `Deployment`. Available from the root and `./catalog`.
+
+```ts
+import { resolveFavoriteEntityType } from '@epam/ai-dial-chat-hooks/catalog';
+
+await updateFavorite(item.id, isFavorite, resolveFavoriteEntityType(item.type));
+```
+
+### resolveCatalogSortKey / parseCatalogFilterTopics / resolveCatalogActiveTab
+
+Validate catalog view preferences a host read back from its own storage, which may be stale or malformed. `resolveCatalogSortKey(stored)` keeps a known `CatalogSortKey` and otherwise returns `CatalogSortKey.RecentlyUpdated`. `parseCatalogFilterTopics(stored)` returns the string entries of a stored array as a `Set`, and an empty set for anything else. `resolveCatalogActiveTab(stored, availableTabIds)` keeps a stored tab that is still available and otherwise returns the first available tab id (`undefined` when there is none). The functions never read or write storage. Available from the root and `./catalog`.
+
+```ts
+import {
+  parseCatalogFilterTopics,
+  resolveCatalogActiveTab,
+  resolveCatalogSortKey,
+} from '@epam/ai-dial-chat-hooks/catalog';
+
+const sortKey = resolveCatalogSortKey(storedSortKey);
+const filterTopics = parseCatalogFilterTopics(storedFilterTopics);
+const activeTab = resolveCatalogActiveTab(storedActiveTab, availableTabIds);
+```
+
+### findSkillByUrl
+
+Finds the listed skill a `skills/{bucket}/{path}` resource URL names, across the personal, shared and organisation listings (`SkillListingPools` — the shape `useSkillsState` returns). Both sides are compared per-segment normalized, so a URL that arrives decoded, e.g. from a query string, still matches the percent-encoded `url` DIAL Core lists. Available from the root and `./skills-state`.
+
+```ts
+import { findSkillByUrl } from '@epam/ai-dial-chat-hooks/skills-state';
+
+const skill = findSkillByUrl(
+  { skills, sharedWithMe, publicSkills },
+  'skills/bucket/My skill',
+);
+```
 
 ### useSkillsState
 
@@ -2328,7 +2541,7 @@ const { handleGridApiChange, reset } = useGridEditingScroll();
 ### Supporting types
 
 - **`DialFilesApi`** — the operation port every file-manager hook that performs network I/O accepts as a parameter, mirroring the host's own files-API transport (list/upload/download/create/rename/move/copy/delete/share methods) instead of a configured REST client.
-- **`FileManagerNotification`** — the structured toast event file-manager hooks emit through `onNotification`, carrying a `variant` (`NotificationVariant`), an optional `reason` (`FileManagerNotificationReason`), and optional interpolation data (`count`, `name`, `folder`, `names`, `restCount`).
+- **`FileManagerNotification`** — the structured toast event file-manager hooks emit through `onNotification`, carrying a `variant` (`NotificationVariant`), an optional `reason` (`FileManagerNotificationReason`), and optional interpolation data (`count`, `name`, `folder`, `names`, `restCount`), and, on `UploadFailed`, an optional `failureReason` (`FileUploadFailureReason` from `@epam/ai-dial-chat-shared`) set when every failed file of the batch failed for the same reason.
 - **`FileManagerNotificationReason`** — library-owned enum identifying why a hook is surfacing a notification (e.g. `FolderLoadFailed`, `FolderCreateFailed`, `FilesDeleted`, `UploadCompleted`, `UnshareFailed`) — see the exported enum for the full member list.
 - **`FileNameValidationErrorReason`** — library-owned enum identifying why a file/folder name failed validation: `Empty`, `ForbiddenSymbols`, `ReservedName`, `TooLong`, `DuplicateName`.
 - **`FileNameValidationError`** — discriminated union returned by `onCreateFolderValidate`/`onRenameValidate` instead of a translated message; members are `{ reason: FileNameValidationErrorReason.Empty }`, `{ reason: FileNameValidationErrorReason.ForbiddenSymbols; symbols: string }`, `{ reason: FileNameValidationErrorReason.ReservedName }`, `{ reason: FileNameValidationErrorReason.TooLong; maxLength: number }`, `{ reason: FileNameValidationErrorReason.DuplicateName; existingName: string }`.
@@ -2523,6 +2736,31 @@ const uploadFileWithProgress = createUploadFileWithProgress({
 });
 ```
 
+The optional `bodyEncoding` dep (`UploadBodyEncoding`) selects how the request carries the file; it must match what the endpoint at `uploadUrl` accepts:
+
+| Member                                   | Request                                                                                                                                                                                                                   |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `UploadBodyEncoding.Multipart` (default) | `POST uploadUrl` with a `FormData` body carrying `file`, `bucket`, `path` and, when set, `uploadMode`                                                                                                                     |
+| `UploadBodyEncoding.Raw`                 | `PUT uploadUrl?bucket=…&path=…` (plus `uploadMode` when set and `contentType` when `file.type` is non-empty) with `Content-Type: application/octet-stream` and the `File` itself as the body, so the server can stream it |
+
+Progress, abort, CSRF and `401` handling are the same for both.
+
+```ts
+import {
+  UploadBodyEncoding,
+  createUploadFileWithProgress,
+} from '@epam/ai-dial-chat-hooks';
+
+const uploadFileWithProgress = createUploadFileWithProgress({
+  getCsrfToken,
+  setCsrfToken,
+  notifyUnauthorized,
+  createUnauthorizedError: (url) => new UnauthorizedError(url),
+  uploadUrl: '/api/v1/files/content',
+  bodyEncoding: UploadBodyEncoding.Raw,
+});
+```
+
 ### createChatStreamApi
 
 Builds the streamed-completion transport (`streamCompletion`/`stopCompletion`), parameterized by the host's CSRF state, completions base path, and an optional timezone resolver.
@@ -2664,6 +2902,23 @@ import { getBrowserTimezone } from '@epam/ai-dial-chat-hooks';
 getBrowserTimezone(); // e.g. 'Europe/Warsaw'
 ```
 
+### applyThemeColors / getOsPreferredTheme / ColorScheme
+
+`applyThemeColors(element, colors?)` writes each entry of `colors` to `element` as a `--<key>` custom property, first removing the properties its previous call wrote to that same element — so switching to a theme that declares fewer keys does not keep the old theme's values. Called without `colors`, it only removes them. Properties it never wrote are left alone. `getOsPreferredTheme()` returns `ColorScheme.Dark` or `ColorScheme.Light` from the `prefers-color-scheme` media query. Available from the root and `./utils`.
+
+```ts
+import {
+  applyThemeColors,
+  ColorScheme,
+  getOsPreferredTheme,
+} from '@epam/ai-dial-chat-hooks/utils';
+
+const themeId = getOsPreferredTheme(); // ColorScheme.Dark | ColorScheme.Light
+const theme = themes.find(({ id }) => id === themeId);
+
+applyThemeColors(document.documentElement, theme?.colors);
+```
+
 ### apSchedulerDayToJsDay / jsDayToApSchedulerDay
 
 Converts between DIAL Scheduler's APScheduler weekday convention (Monday=0..Sunday=6) and JS `Date`'s weekday convention (Sunday=0..Saturday=6).
@@ -2702,7 +2957,7 @@ isCustomAppSchema({ id: 'custom_app' }); // true
 
 ### getRunnerSchemas
 
-Returns the application schemas (runners) that create schema-based apps: unique by `id`, with id-less entries and the custom-app schema removed. It accepts any schema shape with an optional `id` and `displayName` and returns the same objects. `useCatalogEditNavigation` builds one Create option per returned schema.
+Returns the application schemas (runners) that create schema-based apps: unique by `id`, with id-less entries and the custom-app schema removed. It accepts any schema shape with an optional `id` and `displayName` and returns the same objects. `useCatalogEditNavigation` builds one Create option per returned schema that its `canCreateSchema` allows.
 
 ```ts
 import { getRunnerSchemas } from '@epam/ai-dial-chat-hooks';
@@ -2734,6 +2989,56 @@ import { parseExternalServiceUrl } from '@epam/ai-dial-chat-hooks';
 
 parseExternalServiceUrl('applications/bucket/app/external_services/jira');
 // { appId: 'applications/bucket/app', serviceName: 'jira' }
+```
+
+### Client-channel sign-in events
+
+DIAL Core asks the user to sign in mid-completion through client-channel RPC requests on the `subscribe` SSE stream. `ClientChannelRpcRequest` is that request's shape, and `TOOLSET_SIGNIN_METHOD` (`'toolset/signin'`) and `EXTERNAL_SERVICE_SIGNIN_METHOD` (`'external-service/signin'`) are the two method names a host answers. `PendingSigninEvent` — a union of `PendingToolsetSigninEvent` and `PendingExternalServiceSigninEvent`, told apart by `PendingSigninEventKind` — is a request the host has queued while it waits for the user to sign in or decline. Available from the root and `./utils`.
+
+```ts
+import {
+  EXTERNAL_SERVICE_SIGNIN_METHOD,
+  parseExternalServiceUrl,
+  PendingSigninEventKind,
+  TOOLSET_SIGNIN_METHOD,
+  type ClientChannelRpcRequest,
+  type PendingSigninEvent,
+} from '@epam/ai-dial-chat-hooks/utils';
+
+const toPendingEvent = (
+  request: ClientChannelRpcRequest,
+): PendingSigninEvent | undefined => {
+  const url = String(request.params?.url ?? '');
+  if (request.method === TOOLSET_SIGNIN_METHOD) {
+    return {
+      kind: PendingSigninEventKind.Toolset,
+      id: request.id,
+      toolsetId: url,
+    };
+  }
+  const service =
+    request.method === EXTERNAL_SERVICE_SIGNIN_METHOD
+      ? parseExternalServiceUrl(url)
+      : undefined;
+  return service
+    ? {
+        kind: PendingSigninEventKind.ExternalService,
+        id: request.id,
+        ...service,
+      }
+    : undefined;
+};
+```
+
+### ExternalServiceAuthType / ExternalServiceAuthStatus / ExternalServiceCredentialsLevel
+
+The external-service auth enums `useExternalServiceLogin` takes and compares: the authentication method (`None`, `ApiKey`, `OAuth`, `DialNative`), the sign-in state DIAL Core reports per credentials level (`SignedIn`, `SignedOut`, `Failed` — the values of `GetExternalServiceResponseDto`'s `*AuthStatus` fields), and the level credentials belong to (`Global`, `Application`, `User`). Available from the root and `./external-services`.
+
+```ts
+import { ExternalServiceAuthStatus } from '@epam/ai-dial-chat-hooks';
+
+const isSignedIn =
+  service.userLevelAuthStatus === ExternalServiceAuthStatus.SignedIn;
 ```
 
 ## OAuth Popup Flow
@@ -3237,9 +3542,11 @@ This is the only export that needs `@epam/ai-dial-chat-overlay`, so it lives beh
 
 Pure mappers from DIAL Core deployment/prompt/skill/toolset DTOs into `@epam/ai-dial-catalog`'s `CatalogItem`/`CatalogItemTabData` shapes. Every label is a fixed English string — i18n stays at the app edge, passed in via a `*Labels` parameter.
 
-### encodeDeploymentId / decodeDeploymentId / normalizeDeploymentId / findDeploymentByIdOrReference
+### encodeDeploymentId / decodeDeploymentId / normalizeDeploymentId / findDeploymentByIdOrReference / createDeploymentLookup
 
 `encodeDeploymentId` percent-encodes each `/`-separated segment of a deployment/application id, keeping `/` as a literal separator. `decodeDeploymentId` inverts it, passing a malformed percent-encoded segment through unchanged rather than throwing, since it decodes externally-sourced ids (the settings iframe's postMessage protocol). `normalizeDeploymentId` decodes then re-encodes, which is idempotent whether the id it receives is already percent-encoded or raw — use it instead of `encodeDeploymentId` at a boundary that cannot guarantee which form it gets (e.g. a `postMessage` payload from an embedded iframe), since encoding an already-encoded id a second time double-escapes it and the backend only ever undoes one layer. `findDeploymentByIdOrReference` finds a deployment matching an id or (fallback) `reference`.
+
+`createDeploymentLookup(deployments)` builds an index for repeated lookups against a deployment-list snapshot. It returns a resolver accepting an id, reference, `null` or `undefined`. Matches prefer exact id, then exact reference, then normalized id, preserving the first matching deployment in each category. Memoize the index and rebuild it when the deployment list changes; repeated lookups avoid scanning and normalizing the whole list again.
 
 ```ts
 import {
@@ -3389,6 +3696,10 @@ Maps a deployment or toolset listing row into a catalog `CatalogItem`. Both take
 
 For application deployments, `resolveDeploymentFolder` gives ownership flags priority: owned applications use the Personal label, and shared applications use the Shared label. Other applications with no folder path use the Public label (displayed as **Organization** by the chat app). Public application paths retain their nested folders. Models do not receive this fallback.
 
+`mapDeploymentToCatalogItem` also sets `catalogTabs` from the deployment's DIAL Core `interfaces`, keeping `type: Agent` for every application: an application exposing `chat` or `custom_ui` is listed under Agents, one exposing `mcp` under Toolsets, one exposing both under both. Models, deployments without `interfaces`, and applications exposing none of these get no `catalogTabs` (their tab is their `type`). Pass `isToolsetTabEnabled: false` (default `true`) when the host shows no Toolsets tab; Toolsets is then dropped, and an MCP-only application stays under Agents.
+
+`mapDeploymentToCatalogItem` sets `supportsChat` through `supportsChatInterface(deployment)`, which is `true` when the deployment offers the `chat` interface or declares no `interfaces`. A host that must apply the same rule outside the catalog (e.g. validating a deep-linked deployment) calls `supportsChatInterface` directly.
+
 `mapToolsetToCatalogItem` applies the same label priority when `folderLabels` are supplied: Personal for owned toolsets, Shared for shared toolsets, and Public for configured toolsets with plain IDs. Toolset resource paths retain their nested folders. When labels are omitted, no root label is added.
 
 ```ts
@@ -3438,7 +3749,7 @@ const item = mapPromptToCatalogItem(promptDto, {
 
 ### mapSkillToCatalogItem / buildSkillOverview / buildSkillContentTree / resolveSkillManifestFileId / resolveSkillFileDownloadPath / readSkillFileBytes / readSkillFilePreviewBytes / readSkillManifest
 
-Maps a skill's DIAL Core metadata into a catalog `CatalogItem` — the item's `description` carries the listing entry's `description` (an empty string when the listing has none), so the catalog card and details header show it before any manifest fetch; the remaining functions build the Overview tab's specification/details sections, the Content tab's hierarchical file tree, resolve the manifest file's opaque listing id, resolve a file-listing id to its download path, and read a skill file/manifest response's bytes/text bounded by `SKILL_MANIFEST_MAX_BYTES`. `readSkillFilePreviewBytes` is the unbounded counterpart used for the supporting-file preview path, where a realistic binary (a PDF, an image) routinely exceeds that manifest-sized cap; it never returns `null`, so file size is not a failure class there.
+Maps a skill's DIAL Core metadata into a catalog `CatalogItem` — the item's `description` carries the listing entry's `description` (an empty string when the listing has none), so the catalog card and details header show it before any manifest fetch; the remaining functions build the Overview tab's Specification section, the Content tab's hierarchical file tree, resolve the manifest file's opaque listing id, resolve a file-listing id to its download path, and read a skill file/manifest response's bytes/text bounded by `SKILL_MANIFEST_MAX_BYTES`. `readSkillFilePreviewBytes` is the unbounded counterpart used for the supporting-file preview path, where a realistic binary (a PDF, an image) routinely exceeds that manifest-sized cap; it never returns `null`, so file size is not a failure class there.
 
 ```ts
 import {
@@ -3459,10 +3770,9 @@ const overviewLabels: SkillOverviewLabels = {
   allowedToolsLabel: 'Allowed tools',
   bundledResourcesLabel: 'Bundled resources',
   specificationSectionTitle: 'Specification',
-  authorLabel: 'Author',
-  updatedLabel: 'Updated',
+  authorLabel: 'Created by',
+  updatedLabel: 'Last updated',
   fileCountLabel: 'Files',
-  detailsSectionTitle: 'Details',
 };
 
 const overview = buildSkillOverview(
@@ -3504,6 +3814,26 @@ isPublicCatalogEntityId('applications/my-bucket/Revenue bot'); // false
 getPublicCatalogEntityFolderPath(
   'applications/public/Data%20Science/Revenue bot',
 ); // ['Data Science']
+```
+
+### resolveCatalogEntityKind / findSchemaDisplayName / CatalogEntityKind
+
+`resolveCatalogEntityKind(type, deployment?, schemas = [])` returns the `CatalogEntityKind` of a catalog item. Non-application types map one to one (`Model`, `Toolset`, `Skill`, `Prompt`). An `Agent` item is narrowed by its deployment's `applicationTypeSchemaId`: `CustomApp` with no schema, `QuickApp` for the QuickApp schema (matched by id or display name, as `isQuickAppSchema` does), `SchemaApp` when the schema's display name is known, and `Agent` otherwise or when no deployment is given. `findSchemaDisplayName(schemas, schemaId)` returns that schema's display name, or `undefined`. A host maps the kind onto its own copy — for example a notification noun. Available from the root and `./catalog`.
+
+```ts
+import {
+  CatalogEntityKind,
+  findSchemaDisplayName,
+  resolveCatalogEntityKind,
+} from '@epam/ai-dial-chat-hooks';
+
+const kind = resolveCatalogEntityKind(item.type, deployment, schemas);
+if (kind === CatalogEntityKind.SchemaApp) {
+  const schemaName = findSchemaDisplayName(
+    schemas,
+    deployment?.applicationTypeSchemaId,
+  );
+}
 ```
 
 ## Prompt Utilities
@@ -3604,6 +3934,19 @@ const result = mapScheduledTaskDtoToFormValues(scheduledTaskDto);
 if (result.ok) {
   // result.values: ScheduledTaskCreateFormValues
 }
+```
+
+### getNextCronOccurrence
+
+Returns the next UTC time a cron trigger with a fixed `hour`/`minute` fires after `from` (default: now), honouring its `day_of_week` (APScheduler Monday=0) or `day` (a number or `'last'`) constraint. Returns `undefined` when the fields are not plain values it can evaluate (`*`, ranges, lists). Available from the root and `./scheduled-tasks`.
+
+```ts
+import { getNextCronOccurrence } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
+
+getNextCronOccurrence(
+  { fields: { hour: '9', minute: '0', day_of_week: '0' } },
+  new Date('2026-10-07T08:00:00.000Z'),
+); // 2026-10-12T09:00:00.000Z — the next Monday
 ```
 
 ## Catalog Hooks
@@ -3775,7 +4118,7 @@ import {
   reconcileFilterTopics,
 } from '@epam/ai-dial-chat-hooks';
 
-// Keep only items whose type is in visibleTypes and whose supportsChat is not false (for selector mode)
+// Keep only items listed under a tab in visibleTypes (getCatalogItemTabs) whose supportsChat is not false (for selector mode)
 const selected = filterCatalogItemsBySelector(
   items,
   new Set([CatalogEntityType.Model]),
@@ -3787,7 +4130,7 @@ const visible = filterHiddenOwnedItems(items, hideOwned);
 // Extract user-favorited items in original order
 const favorites = deriveFavoriteItems(items);
 
-// Derive available tab ids (in tabOrder sequence) from present entity types
+// Derive available tab ids (in tabOrder sequence) from the tabs items are listed under
 const tabs = deriveAvailableTabIds(items, tabOrder);
 
 // Intersect persisted filter topics with those that still exist in items
@@ -3800,26 +4143,31 @@ Owns the catalog's edit/delete/create-menu navigation: routing the details panel
 
 **Parameters** (`UseCatalogEditNavigationParams`):
 
-| Name                                                                          | Type                                                        | Description                                                                                         |
-| ----------------------------------------------------------------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `deployments`                                                                 | `DeploymentItemDto[]`                                       | Used to tell a custom app apart from a schema-based app, and to find its schema, when routing Edit. |
-| `isCustomAppsEnabled`                                                         | `boolean`                                                   | Gates the custom-app editor route and Create option.                                                |
-| `isSchemaAppsEnabled`                                                         | `boolean`                                                   | Gates the runner (schema-based app) Create options.                                                 |
-| `isHideCustomAppCreationEnabled`                                              | `boolean`                                                   | Hides the runner and custom-app Create options.                                                     |
-| `isToolsetsEnabled`                                                           | `boolean`                                                   | Gates the toolset Create option.                                                                    |
-| `isPromptsEnabled`                                                            | `boolean`                                                   | Gates the prompt Create option.                                                                     |
-| `schemas`                                                                     | `ApplicationSchemaSummaryDto[]`                             | Application schemas (runners); each one except the custom-app schema gets its own Create option.    |
-| `urls`                                                                        | `CatalogEditNavigationUrls`                                 | Injected editor-route URL builders.                                                                 |
-| `onNavigate`                                                                  | `(url: string) => void`                                     | Navigates the host to a URL built by `urls`.                                                        |
-| `deletePrompt`                                                                | `(id: string) => Promise<unknown>`                          | Deletes a personal or shared prompt.                                                                |
-| `deleteToolset`                                                               | `(id: string) => Promise<unknown>`                          | Deletes a toolset.                                                                                  |
-| `deleteSkill`                                                                 | `(bucket: string, path: string) => Promise<unknown>`        | Deletes a skill package.                                                                            |
-| `deleteApplication`                                                           | `(id: string) => Promise<unknown>`                          | Deletes a deployment/application.                                                                   |
-| `refetchPrompts` / `refetchToolsets` / `refetchSkills` / `refetchDeployments` | `() => Promise<void>`                                       | Refreshes the deleted item's list.                                                                  |
-| `onDeleteSuccess`                                                             | `(item: CatalogItem) => void`                               | Called after a successful delete, so the host can notify with its own entity/operation vocabulary.  |
-| `labels`                                                                      | `CatalogEditNavigationLabels`                               | Localized notification and Create-menu copy, resolved by the host.                                  |
-| `onNotify`                                                                    | `(notification: CatalogEditNavigationNotification) => void` | Called to surface a host notification when a delete fails.                                          |
-| `onSkillUploadClick`                                                          | `() => void`                                                | Called when the Create menu's Skill → Upload option is picked.                                      |
+| Name                                                                          | Type                                                        | Description                                                                                          |
+| ----------------------------------------------------------------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `deployments`                                                                 | `DeploymentItemDto[]`                                       | Used to tell a custom app apart from a schema-based app, and to find its schema, when routing Edit.  |
+| `isCustomAppsEnabled`                                                         | `boolean`                                                   | Gates the custom-app editor route and Create option.                                                 |
+| `isSchemaAppsEnabled`                                                         | `boolean`                                                   | Gates the runner (schema-based app) Create options.                                                  |
+| `isHideCustomAppCreationEnabled`                                              | `boolean`                                                   | Hides the runner and custom-app Create options.                                                      |
+| `isToolsetsEnabled`                                                           | `boolean`                                                   | Gates the toolset Create option.                                                                     |
+| `isPromptsEnabled`                                                            | `boolean`                                                   | Gates the prompt Create option.                                                                      |
+| `schemas`                                                                     | `ApplicationSchemaSummaryDto[]`                             | Application schemas (runners); each one except the custom-app schema gets its own Create option.     |
+| `urls`                                                                        | `CatalogEditNavigationUrls`                                 | Injected editor-route URL builders.                                                                  |
+| `onNavigate`                                                                  | `(url: string) => void`                                     | Navigates the host to a URL built by `urls`.                                                         |
+| `deletePrompt`                                                                | `(id: string) => Promise<unknown>`                          | Deletes a personal or shared prompt.                                                                 |
+| `deleteToolset`                                                               | `(id: string) => Promise<unknown>`                          | Deletes a toolset.                                                                                   |
+| `deleteSkill`                                                                 | `(bucket: string, path: string) => Promise<unknown>`        | Deletes a skill package.                                                                             |
+| `deleteApplication`                                                           | `(id: string) => Promise<unknown>`                          | Deletes a deployment/application.                                                                    |
+| `refetchPrompts` / `refetchToolsets` / `refetchSkills` / `refetchDeployments` | `() => Promise<void>`                                       | Refreshes the deleted item's list.                                                                   |
+| `onDeleteSuccess`                                                             | `(item: CatalogItem) => void`                               | Called after a successful delete, so the host can notify with its own entity/operation vocabulary.   |
+| `labels`                                                                      | `CatalogEditNavigationLabels`                               | Localized notification and Create-menu copy, resolved by the host.                                   |
+| `onNotify`                                                                    | `(notification: CatalogEditNavigationNotification) => void` | Called to surface a host notification when a delete fails.                                           |
+| `onSkillUploadClick`                                                          | `() => void`                                                | Called when the Create menu's Skill → Upload option is picked.                                       |
+| `canCreateCustomApp?` / `canCreateToolset?` / `canCreatePrompt?`              | `boolean`                                                   | Host-resolved creation decisions for that Create option, on top of its feature flag. Default `true`. |
+| `canCreateSkill?`                                                             | `boolean`                                                   | Gates the Skill group and both its children (no feature flag). Default `true`.                       |
+| `canCreateSchema?`                                                            | `(schemaId: string) => boolean`                             | Whether a runner Create option is offered for this exact schema id. Defaults to every schema.        |
+
+The creation inputs narrow only the Create menu — `createOptions`, `createMenuByType`, `createSearch`, and `hasCreateOptions`. They never change `handleEdit`, `handleDelete`, or the schemas edit routing resolves against, and they cannot offer an option whose feature flag is off. A host without a creation policy omits them and keeps the flag-only menu. The hook takes plain decisions: it reads no roles, configuration, or app state.
 
 `CatalogEditNavigationUrls` has one URL-builder pair per item kind — `buildPromptEditUrl(promptId)` / `buildPromptCreateUrl()`, and the same edit/create pair for `Skill`, `Toolset`, and `CustomApp` — plus `buildQuickAppEditUrl(schemaId, appId)` / `buildQuickAppCreateUrl(schemaId)`, which every runner schema (the quick app included) uses.
 
@@ -3830,8 +4178,9 @@ Owns the catalog's edit/delete/create-menu navigation: routing the details panel
 | `handleEdit`       | `(item: CatalogItem) => void`                              | Navigates to the right editor URL for the item's type.                                                                                                                                                                                                                                                                   |
 | `handleDelete`     | `(item: CatalogItem) => Promise<void>`                     | Deletes the item and notifies the outcome.                                                                                                                                                                                                                                                                               |
 | `createOptions`    | `DropdownItem[]`                                           | The Create dropdown's items, gated by the enabled feature flags and filtered by the search query: Toolset, Skill and Prompt sorted by label, then a divider and a `labels.createRunners` header, then Custom App and the runners sorted by label. The divider and header appear only while both sections hold an option. |
-| `createSearch`     | `CatalogCreateSearch \| undefined`                         | The Create menu's search state for `Catalog`'s `createSearch` prop; `undefined` when no runner option is offered.                                                                                                                                                                                                        |
+| `createSearch`     | `CatalogCreateSearch \| undefined`                         | The Create menu's search state for `Catalog`'s `createSearch` prop; `undefined` when no runner option is creatable.                                                                                                                                                                                                      |
 | `createMenuByType` | `Partial<Record<CatalogEntityType, CatalogTabCreateMenu>>` | The same menu narrowed per entity type, for `Catalog`'s `createMenuByTab` prop: agents get the runners and custom app (with `createSearch`), toolsets, skills and prompts their own options; models have no entry.                                                                                                       |
+| `hasCreateOptions` | `boolean`                                                  | Whether any Create option passes the feature flags and creation decisions, before the search query is applied. Hide the host's Create controls when it is `false`; a search that matches nothing leaves it `true`.                                                                                                       |
 
 ```tsx
 import {
@@ -3858,30 +4207,38 @@ const labels: CatalogEditNavigationLabels = {
   deleteError: t('catalog.details.deleteError'),
 };
 
-const { handleEdit, handleDelete, createOptions, createSearch } =
-  useCatalogEditNavigation({
-    deployments,
-    isCustomAppsEnabled,
-    isSchemaAppsEnabled,
-    isHideCustomAppCreationEnabled,
-    isToolsetsEnabled,
-    isPromptsEnabled,
-    schemas,
-    urls,
-    onNavigate: navigate,
-    deletePrompt,
-    deleteToolset,
-    deleteSkill,
-    deleteApplication,
-    refetchPrompts,
-    refetchToolsets,
-    refetchSkills,
-    refetchDeployments,
-    onDeleteSuccess: (item) => notifyOperationSuccess(item),
-    labels,
-    onNotify: showErrorNotification,
-    onSkillUploadClick: openSkillUploadDialog,
-  });
+const {
+  handleEdit,
+  handleDelete,
+  createOptions,
+  createSearch,
+  hasCreateOptions,
+} = useCatalogEditNavigation({
+  deployments,
+  isCustomAppsEnabled,
+  isSchemaAppsEnabled,
+  isHideCustomAppCreationEnabled,
+  isToolsetsEnabled,
+  isPromptsEnabled,
+  schemas,
+  urls,
+  onNavigate: navigate,
+  deletePrompt,
+  deleteToolset,
+  deleteSkill,
+  deleteApplication,
+  refetchPrompts,
+  refetchToolsets,
+  refetchSkills,
+  refetchDeployments,
+  onDeleteSuccess: (item) => notifyOperationSuccess(item),
+  labels,
+  onNotify: showErrorNotification,
+  onSkillUploadClick: openSkillUploadDialog,
+  // Optional host creation decisions; omitted ones allow creation.
+  canCreateSkill,
+  canCreateSchema,
+});
 ```
 
 ### useCatalogToolsetCredentials
@@ -4353,15 +4710,19 @@ import { sanitizeFileName } from '@epam/ai-dial-chat-hooks';
 sanitizeFileName('report:final?.pdf'); // 'report_final_.pdf'
 ```
 
-### isDialFileId / resolveRelativeDialFilePath / resolveDialFileBucketAndPath
+### isDialFileId / isDialFolderId / resolveRelativeDialFilePath / resolveDialFileBucketAndPath
 
-Recognizes a DIAL Core file id (`files/{bucket}/{path}`) and resolves it to a bucket-relative path or its `{ bucket, path }` parts.
+Recognizes a DIAL Core file id (`files/{bucket}/{path}`) or folder id (a file id ending with `/`) and resolves it to a bucket-relative path or its `{ bucket, path }` parts.
 
 ```ts
-import { resolveDialFileBucketAndPath } from '@epam/ai-dial-chat-hooks';
+import {
+  isDialFolderId,
+  resolveDialFileBucketAndPath,
+} from '@epam/ai-dial-chat-hooks';
 
 resolveDialFileBucketAndPath('files/my-bucket/reports/q1.pdf');
 // { bucket: 'my-bucket', path: 'reports/q1.pdf' }
+isDialFolderId('files/my-bucket/reports/'); // true
 ```
 
 ### openAnnotationAttachment
@@ -4518,6 +4879,8 @@ const conversations = useConversationPanelItems({
 **Returns**: `ConversationItem[]` — the mapped panel items, memoized by reference-stable inputs. The hook maps every item it is given; collapsing a scheduled task's runs into one row is left to the host. While every input except `items` keeps its reference, a DTO that is the same object as in the previous render maps to the same `ConversationItem` object, so a list change only produces new items for the DTOs that changed. Keep the resolvers referentially stable (`useCallback`) to benefit; a new resolver or `deployments` array rebuilds every item. Deployments are resolved by `id` first, then by `reference`.
 
 `resolveTaskPresentation` replaced `resolveTaskBadge` (`{ label, isUnread }`) when the conversation panel dropped its TASK pill.
+
+A regular chat (no task presentation) keeps the chat kind and carries `isUnread: true` onto its item when its DTO reports `isUnread: true`; otherwise `isUnread` stays absent. Hiding the dot for the open conversation is a host display rule, not part of this hook.
 
 ### getConversationSource
 
@@ -4833,6 +5196,39 @@ maps returned service DTOs into its view models and calls `refresh` after a
 successful credential mutation. Errors, including offline-status failures, set
 `hasError`; `refresh` retries them.
 
+### mapApplicationCredentials / buildApplicationCredentialLoginParams
+
+Pure adapters between `useApplicationCredentials` and the catalog's
+`ApplicationCredentials` forms. `mapApplicationCredentials(services, options)`
+returns one `ApplicationCredential` per service: a `DIAL_NATIVE` service counts
+as signed in only when `isOfflineConnected` and its app-level status is
+`SIGNED_IN`, and it can be neither logged out nor offered offline consent;
+every other service follows its user-level status, and shows
+`hasSharedCredentials` while signed out with a global or app-level login.
+`buildApplicationCredentialLoginParams(appId, service, params)` returns the
+user-level `ExternalServiceLoginParams` for `useExternalServiceLogin().login`,
+with the service's OAuth settings and `forceStale` when its user-level status
+is `FAILED`.
+
+```tsx
+import {
+  buildApplicationCredentialLoginParams,
+  mapApplicationCredentials,
+} from '@epam/ai-dial-chat-hooks/catalog';
+
+const credentials = mapApplicationCredentials(services, {
+  isOfflineConnected,
+  dialNativeHint: t('toolsetSignin.dialNativeHint'),
+});
+
+const outcome = await login(
+  buildApplicationCredentialLoginParams(appId, service, params),
+);
+```
+
+`MapApplicationCredentialsOptions` is exported. The host keeps localization,
+the outcome-to-message mapping and logout.
+
 ### useOfflineCredentialsGate
 
 Offline-credentials status check behind a host's offline-credentials surfaces
@@ -4844,16 +5240,19 @@ login-required surface.
 ```tsx
 import { useOfflineCredentialsGate } from '@epam/ai-dial-chat-hooks';
 
-const { status, connect, connected, refetch } = useOfflineCredentialsGate({
-  offlineCredentialsClient,
-});
+const { status, connect, connected, schedulerServiceConsent, refetch } =
+  useOfflineCredentialsGate({ offlineCredentialsClient });
 ```
 
 `UseOfflineCredentialsGateOptions` is exported. The host-configured client is
 required (only `getOfflineCredentials`); the hook owns no client configuration.
 `status` is the `OfflineCredentialsGateStatus` enum (`Checking`/`Hidden`/
 `Available`/`Unavailable`/`Error`); `connect` carries usable OAuth client
-settings only while `status` is `Available`.
+settings only while `status` is `Available`. `schedulerServiceConsent` is the
+generated `SchedulerServiceConsentStatus` (`signed_in`/`signed_out`/`unknown`,
+defaulting to `unknown` before the first check resolves or while it failed) —
+the hook parses and exposes the field only; which banner, badge, or button each
+surface renders from it stays with the consuming surface.
 
 ### useOfflineCredentialsLogin
 
@@ -5024,3 +5423,120 @@ Additional cron constraints and supported scheduler expressions outside the
 simple categories stay `Custom` with their complete expression. Invalid
 numeric ranges/dates are `Invalid`. Monthly schedules crossing midnight stay Custom when the shifted day is not
 equivalent around short months; shifts wholly within days 1–28 remain Monthly. The host owns all localized text.
+
+## Remaining controller extraction contracts
+
+The following adoption matrix tracks extract-remaining-chat-reuse-controllers.
+B1?B8 and compatibility options A2/D are implemented; Packed-artifact verification and downstream adoption are tracked separately. Existing app exports and defaults are preserved.
+
+| Audit | Contract                                                                | Public entry                     | Host responsibility                                           |
+| ----- | ----------------------------------------------------------------------- | -------------------------------- | ------------------------------------------------------------- |
+| B1    | createGenerationRegistry (implemented)                                  | chat-hooks root and conversation | Provider lifetime and opaque paths                            |
+| B2    | resolveActiveScheduledTask, useActiveScheduledTaskDetails (implemented) | chat-hooks/scheduled-tasks       | Routes, matcher, flags, loading callback                      |
+| B3    | useConversationTitleEnrichmentController (implemented)                  | chat-hooks/conversation          | Identity, JSON/stream adapters, bounds, protection duration   |
+| B4    | useSkillFilePreviewSyncController (implemented)                         | chat-hooks/skill-editor          | Selection, resource key, canvas operations and request guards |
+| B5    | useExternalServiceLogin (implemented)                                   | chat-hooks/external-services     | Auth callbacks, callback path and reserved popup              |
+| B6    | useDeploymentChangeTracking (implemented)                               | chat-hooks/conversation          | Conversation identity, selected deployment and change sink    |
+| B7    | useHtmlTagAnnotationGroups (implemented)                                | quotations root                  | Extract persisted annotations                                 |
+| B8    | toConversationTransferQueueItems (implemented)                          | chat-shared root                 | Translated error/warning resolvers                            |
+| A2    | uploadMimeTypePolicy (implemented)                                      | Existing transcription API       | Preserve default; normalize opt-in                            |
+| D     | offsetPolicy (implemented)                                              | Existing reset-time formatter    | Current-offset default; reset-instant opt-in                  |
+
+Only B5 adds a subpath. B8 uses the existing shared root and leaves the
+file-manager mapper unchanged. A1 is already complete and outside this work.
+Downstream ExternalService callback dispatch must be adopted in the downstream
+repository; parent implementation does not prove downstream adoption or publish
+packages.
+
+### Generation registry
+
+Import createGenerationRegistry, ClientGenerationStatus and the GenerationRegistry
+and GenerationEntry types from the root or conversation entry. Each factory call
+owns independent entries. startGeneration aborts only an active predecessor on
+the same exact path; completeGeneration ignores stale identities. getGeneration
+returns the current entry and hasActiveGeneration queries the instance. Operations
+are stable and non-reactive. There is no automatic teardown or persistence; the
+host retains one registry for its provider lifetime.
+
+### Active scheduled task
+
+The root and scheduled-tasks entry export resolveActiveScheduledTask and
+useActiveScheduledTaskDetails, their input types, and ActiveScheduledTaskStatus
+and ActiveScheduledTaskDetailState. The resolver accepts guarded route identity,
+list loading state, feature eligibility, candidate metadata and a matching callback.
+The details hook accepts scheduleId and a stable loader taking (id, AbortSignal).
+It returns taskState, task, taskError and retryTask. Missing identity is idle;
+404 is unavailable; other failures expose an error. Identity change and unmount
+abort requests and discard late completions. Run identity is not a fetch input.
+Hosts retain route validation, client configuration and run-history composition;
+the parent provider shares one details instance across its consumers.
+
+### Title enrichment controller
+
+The root and conversation entry export useConversationTitleEnrichmentController.
+Pass an identity scope, a React list setter and stable ConversationTitleEnrichmentOptions.
+The controller owns revisions, tombstones, local-title protection, visible-ID priority
+and bounded scheduling. Hosts supply getTitles, optional streamTitles, batch/count/byte/
+flush limits, protectionMs and optionally now. Omitting streamTitles uses sequential
+JSON batches; set batchSize to 25 to match the parent. The incremental adapter reports
+ConversationTitleRequestEnd plus settledIds and emits titles through its callback.
+Wire parsing and unsupported-endpoint detection remain in the parent adapter.
+Parent policy remains 315000 ms local protection. No package publication or downstream
+migration is implied. Packed-consumer proof remains pending.
+
+### Skill preview synchronization
+
+useSkillFilePreviewSyncController is exported from the root and skill-editor entry.
+Pass SkillFilePreviewSyncOptions containing a resolved node and content, an opaque
+resource key, content revision, canvas snapshot, open/close callbacks and a
+provider-scoped beginRequest predicate. Hosts invoke feature hooks themselves.
+The controller reuses skillFileToAttachment and returns state plus retry. Empty
+selection is Idle; the parent retains its existing Loading presentation for the
+manifest. Failures remain stable until retry or changed resource/revision.
+A newer canvas owner invalidates old commits and prevents cleanup closing its
+content. Cleanup runs in the layout phase before the host request hook retires
+its passive-effect lifetime. No file fetching or resource-key construction lives
+in the controller.
+
+### External-service login
+
+useExternalServiceLogin and its params/outcome/auth enums are available from the
+root and external-services entry. ExternalServiceLoginOptions supplies callbackPath,
+service get/sign-in/sign-out operations, offline status and offline login callbacks.
+The controller uses the existing OAuth popup/handshake implementation; hosts retain
+client configuration and callback code exchange. A reserved popup is reused, stale
+logout is best-effort, API keys are trimmed, ambiguous cancellation is checked against
+fresh service status and DIAL-native login verifies administrator consent again after
+successful offline login. Offline timeout maps explicitly to failure.
+
+The parent callback already dispatches ExternalService, OfflineCredentials and Toolset
+separately. Downstream adoption must add the missing ExternalService callback exchange
+branch and forward consent before switching its adapter. This change does not edit or
+verify that repository and does not publish packages.
+
+### Deployment change tracking
+
+useDeploymentChangeTracking and DeploymentChangeTrackingOptions are exported from
+root and conversation. Supply conversationId, selectedDeploymentId, isLoaded and a
+stable onChange(previous, next) callback. Initial restoration, direct loaded-to-loaded
+conversation switches, unloaded changes and null selections emit no notification.
+The next non-null user selection reports its baseline and new ID. The host retains
+createDeploymentChangedMessage, persistence and deployment-context lookup.
+
+Skill preview hosts backed by a mutable byte cache may supply getContent instead
+of content. It synchronously reads already-loaded bytes during the controller effect;
+it must not fetch. This keeps mutable refs out of render.
+
+### Compatibility policies
+
+useTranscribeAudio defaults to UploadMimeTypePolicy.Preserve (original File upload).
+Opt into UploadMimeTypePolicy.Normalize with uploadMimeTypePolicy to strip codec
+parameters from the uploaded File while preserving its bytes, name and lastModified.
+Already-normalized files retain identity. Both policies normalize transcription metadata,
+validate before upload and reuse the uploaded URL during recognition retries.
+
+formatUsageResetTime accepts a fourth UsageResetTimeOptions argument. The default
+UsageResetOffsetPolicy.CurrentOffset retains the viewer's formatting-time offset;
+UsageResetOffsetPolicy.ResetInstant uses the offset at the reset boundary. Both preserve
+isoValue and resetsAtMs. The shortened formatter and parent defaults are unchanged.
+Downstream can select the explicit policies instead of copying these algorithms.

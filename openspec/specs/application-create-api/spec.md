@@ -36,7 +36,7 @@ The endpoint SHALL:
   description?: string;  // optional, @IsString, @IsOptional, @MaxLength(2000)
   iconUrl?: string;      // optional, @IsString, @IsOptional, @IsValidResourceReference (https?:// URL or a
                          //   DIAL file id "files/{bucket}/{path}", no traversal segments)
-  version?: string;      // optional, @IsString, @IsOptional, @Matches(SEMVER_VERSION_PATTERN) — SemVer 2.0.0
+  version?: string;      // optional, @IsString, @IsOptional, @Matches(/^[a-zA-Z0-9._-]+$/)
                          //   — defaults to "1.0.0" in the service
   topics?: string[];     // optional, @IsArray, @IsString({ each: true }), @IsOptional
   applicationProperties?: Record<string, unknown>; // optional, @IsObject, @IsOptional
@@ -169,8 +169,7 @@ The service SHALL NOT branch on `body.type` to decide `application_properties` c
 
 ### Requirement: Safe template creation
 
-A caller MAY set `createOnly: true` to send `If-None-Match: *` on the DIAL Core write.
-Core SHALL check existence atomically with the write. The storage path is derived from
+A caller MAY set `createOnly: true` to send `If-None-Match: *` on the DIAL Core write. Core SHALL check existence atomically with the write. The storage path is derived from
 the name at creation and does not follow a later rename, so a taken path does not mean
 an app with that name is visible to the user. On Core's 412 precondition failure the BFF
 SHALL retry at the next candidate path (`<name>-2__<version>`, `<name>-3__<version>`, …,

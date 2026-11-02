@@ -134,6 +134,14 @@ const renderSection = (props: Partial<ConversationListSectionProps> = {}) =>
   );
 
 describe('ConversationListSection', () => {
+  it('forwards the visible-conversation callback to the list', () => {
+    const onVisibleConversationIdsChange = vi.fn();
+    renderSection({ onVisibleConversationIdsChange });
+    expect(listProps.current?.onVisibleConversationIdsChange).toBe(
+      onVisibleConversationIdsChange,
+    );
+  });
+
   it('renders a region named by the title around the header and the list', () => {
     renderSection();
 

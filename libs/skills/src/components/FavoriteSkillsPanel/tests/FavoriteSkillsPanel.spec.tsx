@@ -146,3 +146,25 @@ describe('FavoriteSkillsPanel — row tooltip', () => {
     expect(screen.queryByRole('button', { name: 'View details' })).toBeNull();
   });
 });
+
+describe('FavoriteSkillsPanel — no matches', () => {
+  it('keeps the status region mounted and fills it once the search matches nothing', () => {
+    const panel = (searchQuery: string) => (
+      <FavoriteSkillsPanel
+        favorites={FAVORITES}
+        searchQuery={searchQuery}
+        onSelect={vi.fn()}
+        onBrowse={vi.fn()}
+        onToggleFavorite={vi.fn()}
+      />
+    );
+    const { rerender } = render(panel('al'));
+    const status = screen.getByRole('status');
+    expect(status.textContent).toBe('');
+
+    rerender(panel('zzz'));
+
+    expect(screen.getByRole('status')).toBe(status);
+    expect(status.textContent).toBe('No matching skills');
+  });
+});

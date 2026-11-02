@@ -60,4 +60,11 @@ export enum AppsEditorMessages {
   ToolsetLogoutResult = 'TOOLSET_LOGOUT_RESULT',
   /** Editor → host: open the host's credential forms; `appId: string`. No credential crosses the frame. */
   RequestApplicationCredentials = 'REQUEST_APPLICATION_CREDENTIALS',
+  /**
+   * Editor → host: sign the person in to one external service at user level;
+   * `appId: string`, `serviceId: string`, `offlineUsageConsent: boolean`. No credential crosses the frame.
+   */
+  RequestExternalServiceLogin = 'REQUEST_EXTERNAL_SERVICE_LOGIN',
+  /** Host → editor: outcome of `RequestExternalServiceLogin`. */
+  ExternalServiceLoginResult = 'EXTERNAL_SERVICE_LOGIN_RESULT',
 }

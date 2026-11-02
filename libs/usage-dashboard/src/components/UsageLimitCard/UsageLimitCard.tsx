@@ -122,7 +122,7 @@ export const UsageLimitCard: FC<UsageLimitCardProps> = ({
               max={100}
               size={ElementSize.Small}
               className={mergeClasses(
-                '!h-1 w-full',
+                'h-1! w-full',
                 styles.progressTrack,
                 data.status === UsageLimitStatus.Default &&
                   styles.progressFillDefault,
@@ -173,7 +173,7 @@ export const UsageLimitCard: FC<UsageLimitCardProps> = ({
               dateTime={data.resetIsoValue}
               aria-hidden={data.resetAriaLabel != null || undefined}
               className={mergeClasses(
-                'block break-words',
+                'block wrap-break-word',
                 resetLabelClassName,
                 styles.secondaryAmount,
               )}

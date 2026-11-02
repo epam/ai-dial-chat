@@ -1,6 +1,8 @@
+import { AttachmentCanvasProvider } from '@epam/ai-dial-attachment-canvas';
 import {
   MessageRole,
   type Conversation,
+  type DisplayAttachment,
   type Message,
 } from '@epam/ai-dial-chat-shared';
 import { render } from '@testing-library/react';
@@ -15,6 +17,11 @@ const mocks = vi.hoisted(() => {
   const noop = () => undefined;
   return {
     renderCountByIndex: new Map<number, number>(),
+    attachmentClickByIndex: new Map<
+      number,
+      (attachment: DisplayAttachment, messageIndex: number) => void
+    >(),
+    openAttachmentCanvas: vi.fn(),
     deployments: {
       items: [{ id: 'model', displayName: 'Model', inputAttachmentTypes: [] }],
       selectedItemId: 'model',
@@ -35,7 +42,9 @@ const mocks = vi.hoisted(() => {
     mcpTools: [],
     mcpCanvas: { openMcpAppCanvas: noop },
     canvas: { openCanvas: noop },
-    openCanvas: { openAttachmentCanvas: noop },
+    get openCanvas() {
+      return { openAttachmentCanvas: this.openAttachmentCanvas };
+    },
     scroll: { setMessageRef: noop, armAnchor: noop },
     empty: {},
     skills: {
@@ -70,7 +79,8 @@ vi.mock('../../../hooks/useUiFeature', () => ({
   /* Drafts stay on, as by default, so the memo check covers the draft wiring. */
   useUiFeature: (feature: string) => feature === 'conversation-drafts',
 }));
-vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
+vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
   useIsMobile: () => false,
 }));
 vi.mock(
@@ -115,13 +125,25 @@ vi.mock('../../UsageLimitBanner/UsageLimitBanner', () => ({
 vi.mock('../ConversationMessageItem', async () => {
   const { memo } = await import('react');
   return {
-    default: memo(({ index }: { index: number }) => {
-      mocks.renderCountByIndex.set(
+    default: memo(
+      ({
         index,
-        (mocks.renderCountByIndex.get(index) ?? 0) + 1,
-      );
-      return null;
-    }),
+        onAttachmentClick,
+      }: {
+        index: number;
+        onAttachmentClick: (
+          attachment: DisplayAttachment,
+          messageIndex: number,
+        ) => void;
+      }) => {
+        mocks.attachmentClickByIndex.set(index, onAttachmentClick);
+        mocks.renderCountByIndex.set(
+          index,
+          (mocks.renderCountByIndex.get(index) ?? 0) + 1,
+        );
+        return null;
+      },
+    ),
   };
 });
 
@@ -153,36 +175,72 @@ const props = {
   isAssistantTyping: true,
 };
 
-beforeEach(() => {
-  mocks.renderCountByIndex.clear();
-});
-
-describe('ConversationView — message item memoisation', () => {
-  it('re-renders only the streaming message when a chunk replaces it', () => {
-    const question = message(MessageRole.User, 'question');
-    const earlier = message(MessageRole.Assistant, 'earlier answer');
-    const followUp = message(MessageRole.User, 'follow-up');
-    const streaming = message(MessageRole.Assistant, 'partial');
-    const { rerender } = render(
-      <ConversationView
-        {...props}
-        messages={[question, earlier, followUp, streaming]}
-      />,
-    );
+describe('ConversationView', () => {
+  beforeEach(() => {
     mocks.renderCountByIndex.clear();
+    mocks.attachmentClickByIndex.clear();
+    mocks.openAttachmentCanvas.mockClear();
+  });
 
-    rerender(
-      <ConversationView
-        {...props}
-        messages={[
-          question,
-          earlier,
-          followUp,
-          { ...streaming, content: 'partial answer' },
-        ]}
-      />,
-    );
+  describe('ConversationView — message item memoisation', () => {
+    it('re-renders only the streaming message when a chunk replaces it', () => {
+      const question = message(MessageRole.User, 'question');
+      const earlier = message(MessageRole.Assistant, 'earlier answer');
+      const followUp = message(MessageRole.User, 'follow-up');
+      const streaming = message(MessageRole.Assistant, 'partial');
+      const { rerender } = render(
+        <ConversationView
+          {...props}
+          messages={[question, earlier, followUp, streaming]}
+        />,
+        { wrapper: AttachmentCanvasProvider },
+      );
+      mocks.renderCountByIndex.clear();
 
-    expect([...mocks.renderCountByIndex.keys()]).toEqual([3]);
+      rerender(
+        <ConversationView
+          {...props}
+          messages={[
+            question,
+            earlier,
+            followUp,
+            { ...streaming, content: 'partial answer' },
+          ]}
+        />,
+      );
+
+      expect([...mocks.renderCountByIndex.keys()]).toEqual([3]);
+    });
+  });
+
+  describe('ConversationView — attachment clicks', () => {
+    const attachment = (id: string) => ({ id }) as DisplayAttachment;
+
+    it('lets only the latest of two quick attachment clicks commit to the canvas', () => {
+      render(
+        <ConversationView
+          {...props}
+          isAssistantTyping={false}
+          messages={[
+            message(MessageRole.User, 'first'),
+            message(MessageRole.User, 'second'),
+          ]}
+        />,
+        { wrapper: AttachmentCanvasProvider },
+      );
+
+      mocks.attachmentClickByIndex.get(0)?.(attachment('a'), 0);
+      mocks.attachmentClickByIndex.get(1)?.(attachment('b'), 1);
+
+      const [
+        [firstAttachment, firstKey, firstGuard],
+        [, secondKey, secondGuard],
+      ] = mocks.openAttachmentCanvas.mock.calls;
+      expect(firstAttachment).toEqual(attachment('a'));
+      expect(firstKey).toBe('0:a');
+      expect(secondKey).toBe('1:b');
+      expect(firstGuard()).toBe(false);
+      expect(secondGuard()).toBe(true);
+    });
   });
 });

@@ -11,11 +11,14 @@ import {
   DIAL_KIT_ICON_STROKE,
   DropdownItem,
   ElementSize,
+  ErrorMessageNotification,
   GhostButton,
   MenuItemMark,
   PrimaryButton,
   Search,
   Spinner,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import { IconArrowsSort, IconPlus } from '@tabler/icons-react';
 import {
@@ -27,6 +30,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { SCHEDULED_TASKS_GRID_DEFAULT_MAX_WIDTH } from '../../models/scheduled-task-card-grid-props';
 import { ScheduledTasksProps } from '../../models/scheduled-tasks-props';
 import { ScheduledTasksSortKey } from '../../types/scheduled-tasks-sort-key';
 import { ScheduledTaskCardGrid } from '../ScheduledTaskCardGrid/ScheduledTaskCardGrid';
@@ -258,12 +262,18 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
           layout={gridLayout}
         />
         {loadMoreError && (
-          <div role="alert" className="flex items-center gap-3">
-            <span className={mergeClasses(subtitleClassName, styles.subtitle)}>
-              {labels.loadMoreErrorLabel ?? labels.errorLabel}
-            </span>
-            <GhostButton label={labels.retryLabel} onClick={onRetryLoadMore} />
-          </div>
+          /* The kit error section message is an assertive `alert` live region, with Retry in its `action` slot. */
+          <ErrorMessageNotification
+            message={labels.loadMoreErrorLabel ?? labels.errorLabel}
+            textClassName={subtitleClassName}
+            iconStroke={DIAL_KIT_ICON_STROKE}
+            action={
+              <GhostButton
+                label={labels.retryLabel}
+                onClick={onRetryLoadMore}
+              />
+            }
+          />
         )}
 
         <div ref={sentinelRef} aria-hidden className="h-px w-full" />
@@ -294,26 +304,28 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
           </p>
         </div>
 
-        <PrimaryButton
-          /* The kit wraps `label` in its own span (carrying `textClassName`)
-           * that stays a flex item even when its content is hidden — the gap
-           * then pushes the icon off-center. Hiding the wrapper span itself
-           * below the desktop breakpoint removes the flex item entirely, so
-           * the plus icon alone carries the action, centered. `aria-label`
-           * keeps the accessible name stable at every width. */
-          label={labels.createButtonLabel}
-          textClassName={styles.createButtonLabel}
-          aria-label={labels.createButtonLabel}
-          iconBefore={
-            <IconPlus
-              size={DIAL_ICON_SIZE.SM}
-              aria-hidden
-              stroke={DIAL_KIT_ICON_STROKE}
-            />
-          }
-          onClick={onCreateClick}
-          className={mergeClasses('shrink-0', styles.createButton)}
-        />
+        {onCreateClick != null && (
+          <PrimaryButton
+            /* The kit wraps `label` in its own span (carrying `textClassName`)
+             * that stays a flex item even when its content is hidden — the gap
+             * then pushes the icon off-center. Hiding the wrapper span itself
+             * below the desktop breakpoint removes the flex item entirely, so
+             * the plus icon alone carries the action, centered. `aria-label`
+             * keeps the accessible name stable at every width. */
+            label={labels.createButtonLabel}
+            textClassName={styles.createButtonLabel}
+            aria-label={labels.createButtonLabel}
+            iconBefore={
+              <IconPlus
+                size={DIAL_ICON_SIZE.SM}
+                aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
+            }
+            onClick={onCreateClick}
+            className={mergeClasses('shrink-0', styles.createButton)}
+          />
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -365,11 +377,25 @@ export const ScheduledTasks: FC<ScheduledTasksProps> = ({
         )}
       </div>
 
-      {banner}
+      {banner != null && typeof banner !== 'boolean' && (
+        /* The banner shares the card grid's width cap and centering so the
+         * two align horizontally — without this cap the banner renders wider
+         * than the cards below it. Nullish or boolean banners add no empty
+         * flex child (and no gap row) between toolbar and content. */
+        <div
+          className="mx-auto w-full min-w-0"
+          style={{
+            maxWidth:
+              gridLayout?.maxWidth ?? SCHEDULED_TASKS_GRID_DEFAULT_MAX_WIDTH,
+          }}
+        >
+          {banner}
+        </div>
+      )}
 
-      <span role="status" aria-live="polite" className="sr-only">
+      <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
         {statusMessage}
-      </span>
+      </LiveRegion>
 
       <div
         className={mergeClasses(

@@ -41,7 +41,9 @@ describe('buildAppRoutes', () => {
   it('renders the root fallback instead of the router error page when the root throws', () => {
     renderRoutes();
 
-    expect(screen.getByRole('alert')).toBeTruthy();
+    expect(
+      screen.getByRole('region', { name: 'errorBoundary.heading' }),
+    ).toBeTruthy();
     expect(
       screen.getByRole('button', { name: 'errorBoundary.reloadLabel' }),
     ).toBeTruthy();

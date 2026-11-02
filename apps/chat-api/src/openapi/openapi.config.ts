@@ -2,11 +2,21 @@ import type { INestApplication } from '@nestjs/common';
 import {
   DocumentBuilder,
   type OpenAPIObject,
+  type SchemaObject,
   type SwaggerDocumentOptions,
   SwaggerModule,
 } from '@nestjs/swagger';
 import { DEFAULT_SESSION_COOKIE_NAME } from '../auth/cookies/cookie-options';
 import { OPENAPI_PUBLIC_EXTENSION } from '../common/decorators/public.decorator';
+import { CONVERSATION_TITLE_STREAM_EVENT_SCHEMA } from '../conversations/dto/stream-conversation-titles.dto';
+
+/*
+ * Named union components. Swagger decorators can only describe classes, so a
+ * `oneOf` that the generated client must expose by name is registered here.
+ */
+const UNION_SCHEMAS: Record<string, SchemaObject> = {
+  ConversationTitleStreamEventDto: CONVERSATION_TITLE_STREAM_EVENT_SCHEMA,
+};
 
 /** Security scheme key for the encrypted session cookie. */
 export const SESSION_SECURITY_SCHEME = 'session';
@@ -96,6 +106,16 @@ export const applyPublicOperationSecurity = (
   return document;
 };
 
+/** Adds {@link UNION_SCHEMAS} to the document's components. */
+export const applyUnionSchemas = (document: OpenAPIObject): OpenAPIObject => {
+  document.components ??= {};
+  document.components.schemas = {
+    ...document.components.schemas,
+    ...UNION_SCHEMAS,
+  };
+  return document;
+};
+
 /**
  * Builds the Chat API OpenAPI document — shared by the Swagger UI in
  * `main.ts` and the committed spec generator `openapi-spec.ts`, so both
@@ -105,10 +125,12 @@ export const createOpenApiDocument = (
   app: INestApplication,
   port: string | number,
 ): OpenAPIObject =>
-  applyPublicOperationSecurity(
-    SwaggerModule.createDocument(
-      app,
-      createOpenApiConfig(port),
-      openApiDocumentOptions,
+  applyUnionSchemas(
+    applyPublicOperationSecurity(
+      SwaggerModule.createDocument(
+        app,
+        createOpenApiConfig(port),
+        openApiDocumentOptions,
+      ),
     ),
   );

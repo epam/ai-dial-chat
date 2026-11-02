@@ -29,18 +29,19 @@
     }
   },
   "dependencies": {
-    "@tabler/icons-react": "^3.44.0",
+    "@tabler/icons-react": "^3.50.0",
     "ag-grid-community": "^35.3.0",
     "@epam/ai-dial-publish-panel": "*"
   },
   "peerDependencies": {
     "react": "^19.2.8",
     "@epam/ai-dial-chat-shared": "*",
-    "@epam/ai-dial-ui-kit": "^0.16.0-dev.35"
+    "@epam/ai-dial-ui-kit": "^0.16.0-dev.59"
   },
   "nx": {
     "tags": [
-      "publishable"
+      "publishable",
+      "type:ui"
     ],
     "targets": {
       "publish": {

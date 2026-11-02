@@ -19,16 +19,17 @@
     }
   },
   "dependencies": {
-    "@tabler/icons-react": "^3.44.0"
+    "@tabler/icons-react": "^3.50.0"
   },
   "peerDependencies": {
     "@epam/ai-dial-chat-shared": "*",
-    "@epam/ai-dial-ui-kit": "^0.16.0-dev.35",
+    "@epam/ai-dial-ui-kit": "^0.16.0-dev.59",
     "react": "^19.2.8"
   },
   "nx": {
     "tags": [
-      "publishable"
+      "publishable",
+      "type:ui"
     ],
     "targets": {
       "publish": {

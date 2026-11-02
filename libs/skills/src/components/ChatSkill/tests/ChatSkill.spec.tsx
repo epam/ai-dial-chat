@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SkillUnresolvedReason } from '../../../types/skill-unresolved-reason';
 import { ChatSkill } from '../ChatSkill';
+import styles from '../ChatSkill.module.scss';
 
 const DESKTOP_WIDTH = 1024;
 
@@ -204,8 +205,8 @@ describe('ChatSkill', () => {
 
     const chip = screen.getByLabelText('/summarize');
     expect(chip.className).toContain('dial-body-paragraph-text');
-    expect(chip.className).toContain('text-accent');
-    expect(chip.className).not.toContain('bg-error');
+    expect(chip.className).toContain(styles.chip);
+    expect(chip.className).not.toContain(styles.unsupported);
   });
 
   it('lays the chip out inline so it wraps at the same points as the raw textarea text', () => {

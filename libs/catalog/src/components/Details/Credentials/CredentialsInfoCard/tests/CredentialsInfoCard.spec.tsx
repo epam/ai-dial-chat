@@ -3,24 +3,25 @@ import { describe, expect, it } from 'vitest';
 import { CredentialsInfoCard } from '../CredentialsInfoCard';
 
 describe('CredentialsInfoCard', () => {
-  it('renders the icon, title, and a role="status" live region', () => {
-    render(
-      <CredentialsInfoCard icon={<svg data-testid="icon" />} title="Title" />,
-    );
-    expect(screen.getByRole('status')).toBeTruthy();
+  it('renders the title without a live region of its own', () => {
+    /* The card mounts together with its text, so callers own the live region. */
+    render(<CredentialsInfoCard icon={<svg />} title="Title" />);
+    expect(screen.queryByRole('status')).toBeNull();
     expect(screen.getByText('Title')).toBeTruthy();
   });
 
   it('omits the description when not provided', () => {
-    render(<CredentialsInfoCard icon={<svg />} title="Title" />);
-    expect(screen.getByRole('status').textContent).toBe('Title');
+    const { container } = render(
+      <CredentialsInfoCard icon={<svg />} title="Title" />,
+    );
+    expect(container.textContent).toBe('Title');
   });
 
   it('renders the description below the title, in DOM order', () => {
-    render(
+    const { container } = render(
       <CredentialsInfoCard icon={<svg />} title="Title" description="Body" />,
     );
-    const text = screen.getByRole('status').textContent ?? '';
+    const text = container.textContent ?? '';
     expect(text.indexOf('Title')).toBeLessThan(text.indexOf('Body'));
   });
 

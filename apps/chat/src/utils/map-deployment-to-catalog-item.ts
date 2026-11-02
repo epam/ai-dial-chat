@@ -5,6 +5,7 @@ import type {
 } from '@epam/ai-dial-chat-api-client';
 import type {
   DeploymentFolderLabels,
+  EntityDetailsLabels,
   EntitySpecificDetails,
   MapDeploymentToCatalogItemOptions as MapDeploymentToCatalogItemOptionsLib,
   MapToolsetToCatalogItemOptions as MapToolsetToCatalogItemOptionsLib,
@@ -14,7 +15,10 @@ import {
   mapToolsetToCatalogItem as mapToolsetToCatalogItemLib,
 } from '@epam/ai-dial-chat-hooks';
 import type { TFunction } from 'i18next';
-import { CatalogI18nKeys } from '../constants/translation-keys';
+import {
+  CatalogI18nKeys,
+  ToolsetEditorI18nKeys,
+} from '../constants/translation-keys';
 import { resolveCatalogIconUrl } from './icon-path';
 import { PRIMARY_LOCALE } from './locale';
 
@@ -27,6 +31,36 @@ export const buildDeploymentFolderLabels = (
   public: t(CatalogI18nKeys.FolderPublic),
 });
 
+/** Builds the translated catalog Overview labels the lib's entity-details mapper needs. */
+export const buildEntityDetailsLabels = (
+  t: TFunction,
+): EntityDetailsLabels => ({
+  capabilitiesTitle: t(CatalogI18nKeys.EntityDetailsCapabilitiesTitle),
+  specificationTitle: t(CatalogI18nKeys.DetailsSpecificationSection),
+  configurationTitle: t(CatalogI18nKeys.EntityDetailsConfigurationTitle),
+  tools: t(CatalogI18nKeys.DetailsTabTools),
+  parallelToolCalls: t(CatalogI18nKeys.EntityDetailsParallelToolCalls),
+  reasoningEfforts: t(CatalogI18nKeys.EntityDetailsReasoningEfforts),
+  skills: t(CatalogI18nKeys.TabSkills),
+  provider: t(CatalogI18nKeys.EntityDetailsProvider),
+  vendor: t(CatalogI18nKeys.EntityDetailsVendor),
+  license: t(CatalogI18nKeys.EntityDetailsLicense),
+  knowledgeCutoffDate: t(CatalogI18nKeys.EntityDetailsKnowledgeCutoffDate),
+  parameters: t(CatalogI18nKeys.EntityDetailsParameters),
+  hostedBy: t(CatalogI18nKeys.EntityDetailsHostedBy),
+  releaseDate: t(CatalogI18nKeys.EntityDetailsReleaseDate),
+  contextWindow: t(CatalogI18nKeys.EntityDetailsContextWindow),
+  maxOutputTokens: t(CatalogI18nKeys.EntityDetailsMaxOutputTokens),
+  inputModalities: t(CatalogI18nKeys.EntityDetailsInputModalities),
+  inputAttachments: t(CatalogI18nKeys.EntityDetailsInputAttachments),
+  routes: t(CatalogI18nKeys.EntityDetailsRoutes),
+  configurationSchema: t(CatalogI18nKeys.EntityDetailsConfigurationSchema),
+  authentication: t(ToolsetEditorI18nKeys.AuthSectionTitle),
+  authorizationEndpoint: t(ToolsetEditorI18nKeys.AuthorizationEndpointLabel),
+  tokenEndpoint: t(ToolsetEditorI18nKeys.TokenEndpointLabel),
+  oauthScopes: t(CatalogI18nKeys.EntityDetailsOauthScopes),
+});
+
 export interface MapDeploymentToCatalogItemOptions {
   favoriteIds?: ReadonlySet<string>;
   entityDetails?: EntitySpecificDetails;
@@ -34,6 +68,7 @@ export interface MapDeploymentToCatalogItemOptions {
   editableSchemaIds?: string[];
   isCustomAppsEditable?: boolean;
   activeLocale?: string;
+  isToolsetTabEnabled?: boolean;
 }
 
 export const mapDeploymentToCatalogItem = (
@@ -45,6 +80,7 @@ export const mapDeploymentToCatalogItem = (
     editableSchemaIds,
     isCustomAppsEditable,
     activeLocale = PRIMARY_LOCALE,
+    isToolsetTabEnabled,
   }: MapDeploymentToCatalogItemOptions,
 ): CatalogItem => {
   const options: MapDeploymentToCatalogItemOptionsLib = {
@@ -56,6 +92,8 @@ export const mapDeploymentToCatalogItem = (
     primaryLocale: PRIMARY_LOCALE,
     resolveIconUrl: resolveCatalogIconUrl,
     folderLabels: buildDeploymentFolderLabels(t),
+    entityDetailsLabels: buildEntityDetailsLabels(t),
+    isToolsetTabEnabled,
   };
   return mapDeploymentToCatalogItemLib(deployment, options);
 };

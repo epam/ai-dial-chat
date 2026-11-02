@@ -8,7 +8,11 @@ import {
   useViewportWidth,
 } from '@epam/ai-dial-chat-hooks/viewport-layout';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
-import { CodeBlockTheme, FilterTab } from '@epam/ai-dial-chat-shared';
+import {
+  CodeBlockTheme,
+  FilterTab,
+  useIsMobile,
+} from '@epam/ai-dial-chat-shared';
 import {
   lazy,
   memo,
@@ -42,19 +46,21 @@ import RouteFallback from '../components/RouteFallback/RouteFallback';
 import { MIN_CONTENT_AREA_WIDTH } from '../constants/layout';
 import {
   getConversationRoute,
+  isConversationPagePath,
   normalizeConversationId,
 } from '../constants/routes';
 import {
   AttachmentCanvasI18nKeys,
   ButtonsI18nKeys,
   ChatI18nKeys,
+  SidebarI18nKeys,
+  AttachmentsI18nKeys,
 } from '../constants/translation-keys';
 import { ActiveScheduledTaskProvider } from '../context/ActiveScheduledTaskContext';
 import { useSourcesSidebar } from '../context/SourcesSidebarContext';
 import { useTheme } from '../context/ThemeContext';
 import { useCanvasVisualizerMessageHandler } from '../hooks/attachment/useCanvasVisualizerMessageHandler';
 import { usePdfPreviewLoader } from '../hooks/attachment/usePdfPreviewLoader';
-import { useIsMobile } from '../hooks/breakpoint/useBreakpoint';
 import { useConversationListBridge } from '../hooks/conversation/useConversationListBridge';
 import { useConversationPanelRouteState } from '../hooks/conversation-panel/useConversationPanelRouteState';
 import { useOverlayPendingModel } from '../hooks/overlay/useOverlayPendingModel';
@@ -74,6 +80,22 @@ import { renderSettingsRoutes, renderUsageRoute } from './settings-routes';
 const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
 const DialFileManagerPage = lazy(
   () => import('../pages/DialFileManagerPage/DialFileManagerPage'),
+);
+const ProjectsPage = lazy(() => import('../pages/ProjectsPage/ProjectsPage'));
+const ProjectCreatePage = lazy(
+  () => import('../pages/ProjectCreatePage/ProjectCreatePage'),
+);
+const ProjectChatPage = lazy(
+  () => import('../pages/ProjectChatPage/ProjectChatPage'),
+);
+const ProjectViewPage = lazy(
+  () => import('../pages/ProjectViewPage/ProjectViewPage'),
+);
+const ProjectEditPage = lazy(
+  () => import('../pages/ProjectEditPage/ProjectEditPage'),
+);
+const ProjectSharedInvitationPage = lazy(
+  () => import('../pages/ProjectSharedInvitation/ProjectSharedInvitation'),
 );
 const ScheduledTasksPage = lazy(
   () => import('../pages/ScheduledTasksPage/ScheduledTasksPage'),
@@ -190,8 +212,8 @@ const App: FC = () => {
   }, [pathname]);
 
   const matchRoot = useMatch(ROUTES.Root);
-  const matchConversation = useMatch(`${ROUTES.Conversations}/*`);
-  const isConversationRoute = !!(matchRoot ?? matchConversation);
+  /* A top-level or a project chat; the sidebar highlight below stays `/conversations/` only. */
+  const isConversationRoute = !!matchRoot || isConversationPagePath(pathname);
   const activeConversationId = useMemo(() => {
     const prefix = `${ROUTES.Conversations}/`;
     if (!pathname.startsWith(prefix)) return;
@@ -274,6 +296,7 @@ const App: FC = () => {
       onRequestedFilterChange={handlePanelRequestedFilterChange}
       onActiveFilterChange={handlePanelActiveFilterChange}
       onDuplicateReadonly={handleDuplicateReadonly}
+      isVisible={isMobile ? isNavOpen : isPanelOpen}
     />
   );
 
@@ -317,6 +340,16 @@ const App: FC = () => {
                         <ConversationPage
                           onDuplicateReadonly={handleDuplicateReadonly}
                         />
+                      </Suspense>
+                    </RouteErrorBoundary>
+                  }
+                />
+                <Route
+                  path={ROUTES.ProjectChat}
+                  element={
+                    <RouteErrorBoundary>
+                      <Suspense fallback={<RouteFallback />}>
+                        <ProjectChatPage />
                       </Suspense>
                     </RouteErrorBoundary>
                   }
@@ -369,6 +402,56 @@ const App: FC = () => {
                 }
               />
               {renderUsageRoute(isUsagePageHidden)}
+              <Route
+                path={ROUTES.Projects}
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <ProjectsPage />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
+              <Route
+                path={ROUTES.ProjectCreate}
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <ProjectCreatePage />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
+              <Route
+                path={ROUTES.ProjectView}
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <ProjectViewPage />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
+              <Route
+                path={ROUTES.ProjectEdit}
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <ProjectEditPage />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
+              <Route
+                path={ROUTES.ProjectSharedInvitation}
+                element={
+                  <RouteErrorBoundary>
+                    <Suspense fallback={<RouteFallback />}>
+                      <ProjectSharedInvitationPage />
+                    </Suspense>
+                  </RouteErrorBoundary>
+                }
+              />
               <Route
                 path={ROUTES.ScheduledTasks}
                 element={
@@ -507,6 +590,10 @@ const App: FC = () => {
             labels={{
               ariaLabel: t(AttachmentCanvasI18nKeys.AriaLabel),
               closeLabel: t(AttachmentCanvasI18nKeys.CloseLabel),
+              resizeLabel: t(SidebarI18nKeys.ResizePanel),
+              visualizerErrorLabel: t(
+                AttachmentCanvasI18nKeys.VisualizerLoadErrorLabel,
+              ),
               downloadLabel: t(AttachmentCanvasI18nKeys.DownloadLabel),
               unsupportedLabel: t(AttachmentCanvasI18nKeys.UnsupportedLabel),
               loadErrorLabel: t(AttachmentCanvasI18nKeys.LoadErrorLabel),
@@ -522,9 +609,7 @@ const App: FC = () => {
               htmlFrameBlockedLabel: t(
                 AttachmentCanvasI18nKeys.HtmlFrameBlocked,
               ),
-              htmlOpenInNewTabLabel: t(
-                AttachmentCanvasI18nKeys.HtmlOpenInNewTab,
-              ),
+              htmlOpenInNewTabLabel: t(AttachmentsI18nKeys.OpenInNewTab),
               htmlViewSourceLabel: t(AttachmentCanvasI18nKeys.HtmlViewSource),
               htmlViewRenderedLabel: t(
                 AttachmentCanvasI18nKeys.HtmlViewRendered,

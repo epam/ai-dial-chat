@@ -19,13 +19,12 @@ export interface StatusMessageBubbleProps {
 export const StatusMessageBubble: FC<StatusMessageBubbleProps> = ({
   labels: { titleText = 'Model switched.', bodyText },
 }) => {
+  /* InfoMessageNotification is a status region itself; wrapping it in another would nest live regions. */
   return (
-    <div role="status" aria-live="polite">
-      <InfoMessageNotification
-        title={titleText}
-        message={bodyText}
-        textClassName="flex-row flex-wrap gap-1"
-      />
-    </div>
+    <InfoMessageNotification
+      title={titleText}
+      message={bodyText}
+      textClassName="flex-row flex-wrap gap-1"
+    />
   );
 };

@@ -1,3 +1,4 @@
+import { SchedulerServiceConsentStatus } from '@epam/ai-dial-chat-api-client';
 import type {
   GetOfflineCredentialsResponseDto,
   OfflineCredentialsConnectDto,
@@ -26,9 +27,12 @@ export const normalizeOfflineCredentialsConnectSettings = (
 /**
  * Normalizes a `getOfflineCredentials` response into the shared
  * `OfflineCredentialsStatusResult`: the `available`/`connected` flags
- * null-coalesced to `false`, and OAuth client settings present only when a
+ * null-coalesced to `false`, OAuth client settings present only when a
  * login is possible — the service is available and disconnected, and the
- * response's `connect` object is complete enough to drive one.
+ * response's `connect` object is complete enough to drive one — and the
+ * scheduler service consent passed through, defaulting to `unknown` when
+ * the response omitted it (older BFF) or carried a value outside the
+ * enum.
  */
 export const mapOfflineCredentialsResponse = (
   response: GetOfflineCredentialsResponseDto,
@@ -43,5 +47,12 @@ export const mapOfflineCredentialsResponse = (
       available && !connected
         ? normalizeOfflineCredentialsConnectSettings(response.connect)
         : undefined,
+    schedulerServiceConsent:
+      response.schedulerServiceConsent != null &&
+      Object.values(SchedulerServiceConsentStatus).includes(
+        response.schedulerServiceConsent,
+      )
+        ? response.schedulerServiceConsent
+        : SchedulerServiceConsentStatus.Unknown,
   };
 };

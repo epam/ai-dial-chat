@@ -1,15 +1,21 @@
-import { AttachmentContentType } from '@epam/ai-dial-attachment-canvas';
+import {
+  AttachmentCanvasProvider,
+  AttachmentContentType,
+} from '@epam/ai-dial-attachment-canvas';
 import {
   DialFileNodeType,
   type DialFile,
   type FileManagerGridRow,
 } from '@epam/ai-dial-react-file-manager';
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook as render, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   DIAL_FILE_PREVIEW_EXTENSIONS,
   useDialFilePreview,
 } from '../useDialFilePreview';
+
+const renderHook: typeof render = (callback, options) =>
+  render(callback, { ...options, wrapper: AttachmentCanvasProvider });
 
 const openAttachmentCanvas = vi.fn();
 const openCanvas = vi.fn();

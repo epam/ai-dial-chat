@@ -23,6 +23,7 @@
     "apiKey": "API key"
   },
   "chat": {
+    "userMessageAriaLabel": "User message",
     "reply": "Reply",
     "replySelectionAvailable": "Reply to selected text is available",
     "replyAttachmentAdded": "Text attached",
@@ -63,6 +64,7 @@
     "thinking": "Thinking",
     "scrollableTable": "Scrollable table",
     "scrollableFormula": "Scrollable formula",
+    "scrollableCode": "Scrollable code",
     "markdownTableTitle": "Table",
     "showMoreUserMessage": "Show full user message",
     "showLessUserMessage": "Collapse user message"
@@ -85,8 +87,8 @@
   "navigation": {
     "ariaLabel": "Main navigation",
     "catalog": "Catalog",
+    "projects": "Projects",
     "menu": "Navigation menu",
-    "back": "Back",
     "sidebar": "Sidebar",
     "collapseSidebar": "Collapse sidebar",
     "expandSidebar": "Expand sidebar"
@@ -170,7 +172,8 @@
         "value": "{{used}} / {{total}}",
         "followsCostLimit": "Follows cost limit",
         "followsCostLimitAriaLabel": "{{label}}: {{used}} used. Follows cost limit.",
-        "progressAriaLabel": "{{label}}: {{used}} of {{total}} used"
+        "progressAriaLabel": "{{label}}: {{used}} of {{total}} used",
+        "footerNote": "Model-specific limits only. To view your full usage limits, go to the <link>Usage limits</link> page."
       },
       "credentials": {
         "signedInLabel": "Signed in",
@@ -222,14 +225,12 @@
         "apiKeyDeletedSuccessUser": "Your personal API key for \"{{name}}\" version {{version}} has been deleted."
       },
       "delete": {
-        "confirmTitle": "Delete",
         "confirmMessage": "Are you sure you want to delete <bold>{{name}}</bold>? This action is permanent and cannot be undone.",
         "consequenceSharedConfigurations": "All shared configurations will be lost",
         "consequenceUsersLoseAccess": "Users who rely on it will lose access",
         "error": "Failed to delete. Please try again."
       },
       "unshare": {
-        "confirmTitle": "Remove from My List",
         "confirmMessage": "Remove <bold>{{name}}</bold> from your list? You'll need a new invitation to access it again.",
         "consequenceYouLoseAccess": "You will lose access to this item",
         "consequenceOthersKeepAccess": "Other people keep their access",
@@ -266,17 +267,15 @@
         "toolsetTitle": "Connect toolset",
         "toolsetDescription": "Copy endpoint URL to easily integrate toolset into your workflows"
       },
+      "specificationSection": "Specification",
       "prompt": {
-        "section": "Prompt",
-        "author": "Author",
+        "author": "Created by",
         "updated": "Last updated"
       },
       "skill": {
-        "section": "Skill",
-        "author": "Author",
+        "author": "Created by",
         "updated": "Last updated",
         "fileCount": "Files",
-        "specificationSection": "Specification",
         "whenToUse": "When to use",
         "allowedTools": "Allowed tools",
         "bundledResources": "Bundled resources"
@@ -300,6 +299,11 @@
       "skillUpload": "Upload",
       "runners": "Runners"
     },
+    "creation": {
+      "loading": "Checking whether you can create this item…",
+      "unavailable": "Creation is unavailable right now. Please try again later.",
+      "denied": "You don't have permission to create this item."
+    },
     "publishFolderSearchPlaceholder": "Search folders",
     "publishFolderEmptyState": "No folders match \"{{query}}\".",
     "publish": {
@@ -308,6 +312,8 @@
       "versionAlreadyPublishedWarning": "Version {version} is already published in {folder}. Change the version to publish it again."
     },
     "skillsLoadError": "Failed to load skills",
+    "promptsLoadError": "Failed to load prompts",
+    "scrollToTop": "Scroll to top",
     "tab": {
       "models": "Models",
       "applications": "Agents",
@@ -319,6 +325,26 @@
       "personal": "Personal",
       "public": "Organization",
       "shared": "Shared with me"
+    },
+    "entityDetails": {
+      "capabilitiesTitle": "Capabilities",
+      "configurationTitle": "Configuration",
+      "parallelToolCalls": "Parallel tool calls",
+      "reasoningEfforts": "Reasoning efforts",
+      "provider": "Provider",
+      "vendor": "Vendor",
+      "license": "License",
+      "knowledgeCutoffDate": "Knowledge cutoff date",
+      "parameters": "Parameters",
+      "hostedBy": "Hosted by",
+      "releaseDate": "Release date",
+      "contextWindow": "Context window",
+      "maxOutputTokens": "Max output tokens",
+      "inputModalities": "Input modalities",
+      "inputAttachments": "Input attachments",
+      "routes": "Routes",
+      "configurationSchema": "Configuration schema",
+      "oauthScopes": "OAuth scopes"
     }
   },
   "deploymentSelector": {
@@ -407,6 +433,9 @@
     "copyText": "Copy text",
     "copyMessage": "Copy message",
     "messageCopiedStatus": "Message copied to clipboard",
+    "responseCopiedStatus": "Copied to clipboard",
+    "markdownCopiedStatus": "Copied as Markdown to clipboard",
+    "messageActionsGroup": "Message actions",
     "likeResponse": "Like response",
     "dislikeResponse": "Dislike response",
     "useInChat": "Use in chat",
@@ -426,11 +455,17 @@
     "removeFromMyList": "Remove from My List",
     "revokeAccess": "Revoke access",
     "revokeAccessWithCount": "Revoke access ({{count}})",
-    "replace": "Replace"
+    "replace": "Replace",
+    "share": "Share",
+    "pin": "Pin",
+    "unpin": "Unpin",
+    "moreActions": "More actions",
+    "back": "Back"
   },
   "sidebar": {
     "base": {
-      "toggleOpen": "Open panel"
+      "toggleOpen": "Open panel",
+      "resizePanel": "Resize panel"
     },
     "sources": {
       "ariaLabel": "Conversation sources",
@@ -463,12 +498,12 @@
       "previewAttachment": "Preview search result"
     },
     "attachMenuDialFileSystem": "DIAL file system",
-    "addMenuTitle": "Add",
     "messageTooLong": "Max allowed message length is {{max}}",
     "startedToday": "Today {{time}}",
     "startedYesterday": "Yesterday {{time}}"
   },
   "conversationPanel": {
+    "updatingTitles": "Updating conversation names…",
     "chatsAndTasks": "Chats and tasks",
     "search": {
       "open": "Search chats",
@@ -477,7 +512,11 @@
     "empty": "No chats yet",
     "emptyDescription": "Chats will appear here once you start one.",
     "noResults": "No chats found",
+    "myChatsEmpty": "No personal chats yet",
+    "sharedEmpty": "No shared chats yet",
     "sharedEmptyDescription": "Chats other people share with you will show up here.",
+    "organizationEmpty": "No organization chats yet",
+    "organizationEmptyDescription": "Chats published in your organization will show up here.",
     "filter": {
       "all": "All",
       "groupAriaLabel": "Filter chats",
@@ -490,11 +529,6 @@
       "task": "Task",
       "pinnedSection": "Pinned",
       "myChatsSection": "My chats"
-    },
-    "actions": {
-      "actionsLabel": "More actions",
-      "pinLabel": "Pin",
-      "unpinLabel": "Unpin"
     },
     "delete": {
       "deleteConfirmTitle": "Delete chat",
@@ -562,7 +596,14 @@
     "submitErrorCallout": "Publishing failed. Please try again.",
     "authorLabel": "Author",
     "authorPlaceholder": "Author name",
-    "authorHint": "Shown as the publication's author. Defaults to you — replace it to credit a team instead."
+    "authorHint": "Shown as the publication's author. Defaults to you — replace it to credit a team instead.",
+    "folderLabel": "Publish to folder",
+    "noAccessError": "You don't have permission to publish to {folder}. Pick another, or ask an owner for access.",
+    "addSiblingFolder": "Add sibling",
+    "addChildFolder": "Add child",
+    "summaryVersion": "Version {version} · current",
+    "updateVersion": "Update version {version}",
+    "publishingInProgress": "Publishing…"
   },
   "publishAccessRules": {
     "heading": "Allow access if all match",
@@ -694,7 +735,9 @@
     "service": {
       "defaultName": "Dial native",
       "description": "Provides access to built-in apps within the platform.",
-      "authorizeTooltip": "Authorize to use this extension"
+      "limitedAccessLabel": "Limited access",
+      "limitedAccessTooltipTitle": "Limited access.",
+      "limitedAccessTooltipDescription": "Contact your administrator for more details."
     }
   },
   "attachments": {
@@ -755,6 +798,168 @@
     "overlayDeniedTitle": "No attachments allowed",
     "overlayDeniedSubtitle": "Attachments can't be added to message"
   },
+  "projects": {
+    "page": {
+      "title": "All projects",
+      "newProject": "New project"
+    },
+    "toolbar": {
+      "searchPlaceholder": "Search projects",
+      "searchAriaLabel": "Search projects",
+      "sortNewest": "Newest",
+      "sortOldest": "Oldest",
+      "sortNameAsc": "Name A–Z"
+    },
+    "emptyState": {
+      "label": "No projects yet",
+      "description": "Your projects will appear here once created."
+    },
+    "noResults": {
+      "label": "No projects match your search"
+    },
+    "error": {
+      "label": "Projects could not be loaded"
+    },
+    "incomplete": {
+      "label": "Some projects could not be loaded. The list may be incomplete."
+    },
+    "status": {
+      "resultCount_one": "{{count}} project",
+      "resultCount_other": "{{count}} projects"
+    },
+    "source": {
+      "personal": "Personal",
+      "shared": "Shared",
+      "organization": "Organization"
+    },
+    "card": {
+      "folderPath": "Project location",
+      "pinned": "Pinned"
+    },
+    "create": {
+      "title": "New project",
+      "name": {
+        "label": "Name",
+        "placeholder": "Enter project name"
+      },
+      "instructions": {
+        "label": "Instructions",
+        "placeholder": "Explain your reasoning step by step for complex problems. Use specific examples."
+      },
+      "context": {
+        "label": "Context",
+        "dropZone": "Drag&drop context, upload <device>from device</device> or <manager>file manager</manager>",
+        "dropZoneDeviceOnly": "Drag&drop context or upload <device>from device</device>",
+        "uploadFromDevice": "Upload context from device",
+        "hint": "File formats {{extensions}} (max {{maxSize}})",
+        "fileManagerTitle": "Add context from file manager",
+        "dropOverlayTitle": "Upload files",
+        "dropOverlaySubtitle": "Drop files here to add them to this project",
+        "remove": "Remove {{name}}"
+      },
+      "status": {
+        "added_one": "{{count}} file added",
+        "added_other": "{{count}} files added",
+        "removed": "{{name}} removed",
+        "creating": "Creating project…"
+      },
+      "errors": {
+        "nameRequired": "Enter a project name",
+        "nameInvalid": "The name can’t contain : ; , = / \\ { } % & \" or control characters",
+        "nameReserved": "This name is reserved. Choose another one",
+        "nameTooLong": "The name is too long",
+        "nameTaken": "A project with this name already exists",
+        "unsupportedType": "{{name}}: this file format isn’t supported",
+        "tooLarge": "{{name}}: the file is larger than {{maxSize}}",
+        "capacityExceeded": "{{name}}: not enough capacity left for this file",
+        "duplicate": "{{name}}: a file with this name is already added",
+        "invalidFileName": "{{name}}: the file name isn’t valid",
+        "tooManyFiles": "A project can’t have this many context files",
+        "filesRejected": "Some files were rejected. Remove them and try again"
+      },
+      "toast": {
+        "success": "Project “{{name}}” created",
+        "error": "The project couldn’t be created. Try again",
+        "fileManagerError": "Couldn’t copy files from the file manager"
+      }
+    },
+    "view": {
+      "details": "Details",
+      "description": "Description",
+      "instructions": "Instructions",
+      "context": "Context",
+      "contextSearchPlaceholder": "Search files",
+      "contextSearchAriaLabel": "Search context files",
+      "contextResultCount_one": "{{count}} file found",
+      "contextResultCount_other": "{{count}} files found",
+      "emptyContext": "No context files",
+      "noContextMatches": "No files match your search",
+      "openFile": "Download {{name}}",
+      "error": "Could not load the project",
+      "notFound": "Project not found",
+      "browseProjects": "Back to projects",
+      "mainContent": "Project chats"
+    },
+    "actions": {
+      "deleteConfirmTitle": "Delete \"{{name}}\"?",
+      "deleteConfirmDescription": "The project and its context files will be deleted. This cannot be undone.",
+      "deleteError": "Could not delete the project",
+      "downloadError": "Could not download",
+      "pinError": "Could not update the pin",
+      "deleteConfirmWithChatsDescription_one": "The project, its context files and its {{count}} chat will be deleted. This cannot be undone.",
+      "deleteConfirmWithChatsDescription_other": "The project, its context files and its {{count}} chats will be deleted. This cannot be undone."
+    },
+    "edit": {
+      "title": "Edit project",
+      "saving": "Saving…",
+      "savingStatus": "Saving project…",
+      "toast": {
+        "success": "Project \"{{name}}\" saved",
+        "error": "Could not save the project",
+        "tooLarge": "This project is too large to edit here"
+      },
+      "errors": {
+        "unknownFile": "A removed file no longer exists. Reload and try again."
+      }
+    },
+    "errors": {
+      "changedElsewhere": "This project was changed by someone else. Reload to see the latest version."
+    },
+    "publish": {
+      "panelAriaLabel": "Publish project",
+      "alreadyPublishedWarning": "This project is already published in {folder}.",
+      "emptyFolderNameError": "Folder name cannot be empty.",
+      "invalidFolderNameError": "Folder name contains invalid characters.",
+      "duplicateFolderNameError": "A folder with this name already exists.",
+      "chatsWarning_one": "The {{count}} chat in this project is published with it.",
+      "chatsWarning_other": "The {{count}} chats in this project are published with it."
+    },
+    "chats": {
+      "title": "Chats",
+      "empty": "No outputs or chats yet",
+      "emptyDescription": "Your outputs and chats will appear here once started.",
+      "loading": "Loading chats",
+      "error": "Could not load the chats",
+      "openLabel": "{{title}}, by {{author}}",
+      "openLabelNoAuthor": "{{title}}",
+      "moreActions": "More actions for {{title}}",
+      "renameTitle": "Rename chat",
+      "renameInputLabel": "Chat name",
+      "renameEmpty": "Enter a chat name",
+      "renameSuccess": "Chat renamed",
+      "renameError": "Could not rename the chat",
+      "deleteConfirmTitle": "Delete \"{{title}}\"?",
+      "deleteConfirmDescription": "The chat will be deleted. This cannot be undone.",
+      "deleteSuccess": "Chat deleted",
+      "deleteError": "Could not delete the chat",
+      "createError": "Could not start the chat",
+      "storageFull": "The project is full. Delete chats or context files to start a new chat."
+    },
+    "chat": {
+      "backToProject": "Back to {{name}}",
+      "notFound": "Chat not found"
+    }
+  },
   "scheduledTasks": {
     "typeLabel": "Scheduled task",
     "page": {
@@ -779,7 +984,6 @@
     "list": {
       "noResultsLabel": "No scheduled tasks found",
       "errorLabel": "Failed to load scheduled tasks",
-      "retryLabel": "Retry",
       "loadingMoreLabel": "Loading more scheduled tasks…",
       "loadMoreErrorLabel": "Failed to load more scheduled tasks"
     },
@@ -787,19 +991,19 @@
       "newBadgeLabel": "NEW",
       "pausedBadgeLabel": "Paused",
       "completedBadgeLabel": "Completed",
-      "editActionLabel": "Edit",
       "scheduleDailyAt": "Every day at {{time}}",
       "scheduleWeeklyAt": "Every {{day}} at {{time}}",
       "scheduleMonthlyAt": "Monthly on day {{day}} at {{time}}",
       "scheduleHourlyAt": "Hourly, {{minute}} min past the hour",
       "scheduleEveryNMinutes_one": "Every minute",
       "scheduleEveryNMinutes_other": "Every {{count}} minutes",
+      "scheduleEveryNWeeks_one": "Every week on {{day}} at {{time}}",
+      "scheduleEveryNWeeks_other": "Every {{count}} weeks on {{day}} at {{time}}",
       "scheduleOnceAt": "Once on {{date}}",
       "scheduleRecurringFallback": "Recurring schedule"
     },
     "create": {
       "pageTitle": "New task",
-      "backButtonLabel": "Back",
       "detailsSectionTitle": "Details",
       "detailsSectionSubtitle": "Basic info about this scheduled task",
       "configurationSectionTitle": "Configuration",
@@ -812,6 +1016,10 @@
       "repeatDaily": "Daily",
       "repeatWeekly": "Weekly",
       "repeatMonthly": "Monthly",
+      "repeatCustom": "Custom",
+      "everyLabel": "Every",
+      "everyWeeksOption_one": "{{count}} week",
+      "everyWeeksOption_other": "{{count}} weeks",
       "timeLabel": "Time",
       "timeInvalid": "Enter a valid time",
       "dayOfWeekLabel": "Day",
@@ -852,10 +1060,14 @@
       "historyEmptyLabel": "No runs yet",
       "historyEmptyDescription": "Runs will appear here once the task starts.",
       "historyErrorLabel": "Failed to load history",
+      "tabsAriaLabel": "Scheduled task sections",
       "historyLoadingMoreLabel": "Loading more runs…",
       "historyTodayAt": "today at {{time}}",
       "historyDateAt": "{{date}} at {{time}}",
-      "historyDurationSuffix": "({{seconds}}s)",
+      "historyDurationSuffix": "({{duration}})",
+      "historyDurationHours": "{{count}}h",
+      "historyDurationMinutes": "{{count}}m",
+      "historyDurationSeconds": "{{count}}s",
       "statusSuccess": "Succeeded",
       "statusError": "Failed",
       "statusInProgress": "Running",
@@ -919,6 +1131,10 @@
       "successAnnouncement": "You're logged in. Scheduled tasks can now run automatically.",
       "loggingInLabel": "Logging in…"
     },
+    "limitedAccessBanner": {
+      "title": "Limited access.",
+      "body": "You can't create or edit tasks. Contact your administrator for more details."
+    },
     "disconnect": {
       "confirmTitle": "Log out from Dial native",
       "confirmDescription": "Are you sure you want to log out?",
@@ -934,7 +1150,6 @@
     "attach": "Attach",
     "empty": "This folder is empty",
     "error": "Failed to load files",
-    "retry": "Retry",
     "hiddenFiles": "Hidden files",
     "showHiddenFiles": "Show hidden files",
     "hideHiddenFiles": "Hide hidden files",
@@ -949,10 +1164,10 @@
     "uploadConflict": "A file with this name already exists",
     "uploadFailedTooLarge": "The file is too large to upload",
     "uploadFailedUnavailable": "The file service is unavailable. Please try again later.",
+    "uploadFailedSeeQueue": "Check the upload list for details.",
     "forbiddenSymbolsTooltip": "File name should not contain special symbols {{notAllowedSymbols}}",
     "conflictSingleTitle": "Replace or Duplicate Item",
     "conflictMultipleTitle": "Replace or Duplicate Items",
-    "conflictReplace": "Replace",
     "conflictDecideForEach": "Decide for each",
     "conflictReplaceAll": "Replace all",
     "conflictDuplicateAll": "Duplicate all",
@@ -1133,7 +1348,6 @@
     "loadErrorLabel": "Failed to load file",
     "forbiddenErrorLabel": "You don't have permission to access this file",
     "htmlFrameBlocked": "This page cannot be displayed in preview",
-    "htmlOpenInNewTab": "Open in new tab",
     "htmlViewSource": "View source",
     "htmlViewRendered": "View rendered",
     "openedInCanvasLabel": "Opened in Canvas",
@@ -1183,7 +1397,6 @@
   "errorBoundary": {
     "heading": "Something went wrong",
     "description": "An unexpected error occurred. You can try again or reload the page.",
-    "retryLabel": "Try again",
     "reloadLabel": "Reload the page"
   },
   "appUpdate": {
@@ -1191,7 +1404,6 @@
     "message": "Reload the page to get the latest version."
   },
   "share": {
-    "title": "Share",
     "qrButtonLabel": "QR",
     "anyoneWithLinkTitle": "Anyone with the link",
     "anyoneWithLinkSubtitle": "in your organization",
@@ -1217,7 +1429,6 @@
   },
   "editor": {
     "backAriaLabel": "Back to catalog",
-    "savingStatus": "Saving",
     "metadataSectionTitle": "Metadata",
     "setupSectionTitle": "Setup",
     "resizeHandleAriaLabel": "Resize the Metadata and Setup columns",
@@ -1226,7 +1437,6 @@
     "nameRequired": "Name is required",
     "fieldTooLong": "Use {{count}} characters or fewer.",
     "nameControlCharacters": "Remove line breaks, tabs and other control characters.",
-    "versionInvalid": "Version must follow semantic versioning (e.g., 1.0.0)",
     "descriptionLabel": "Description",
     "avatarLabel": "Avatar",
     "addAvatarButtonLabel": "Add avatar",
@@ -1270,7 +1480,8 @@
     "generalForm": {
       "namePlaceholder": "Enter application name",
       "descriptionPlaceholder": "Describe your application",
-      "nameInvalid": "Name may only contain letters, digits, spaces, underscores, dots, and dashes"
+      "nameInvalid": "Name may only contain letters, digits, spaces, underscores, dots, and dashes",
+      "versionInvalid": "Version format is invalid (example: 0.0.1)"
     },
     "settingsStep": {
       "loadingLabel": "Loading editor…",
@@ -1296,7 +1507,8 @@
     "editTitle": "Edit toolset",
     "general": {
       "namePlaceholder": "Enter name",
-      "descriptionPlaceholder": "Describe what this toolset does"
+      "descriptionPlaceholder": "Describe what this toolset does",
+      "versionInvalid": "Version may only contain letters, digits, dots, underscores, and dashes"
     },
     "settings": {
       "endpointCaption": "The HTTPS address where the server accepts MCP requests. Choose the transport under Protocol below.",
@@ -1329,13 +1541,16 @@
       "clientIdRequired": "Client ID is required",
       "clientSecretLabel": "Client secret",
       "clientSecretPlaceholder": "Enter client secret",
+      "clientSecretKeepCaption": "Leave empty to keep the saved secret.",
       "clientSecretRequired": "Client secret is required",
       "showClientSecretLabel": "Show client secret",
       "hideClientSecretLabel": "Hide client secret",
       "authorizationEndpointLabel": "Authorization endpoint",
       "authorizationEndpointPlaceholder": "Enter authorization endpoint",
+      "authorizationEndpointRequired": "Authorization endpoint is required",
       "tokenEndpointLabel": "Token endpoint",
       "tokenEndpointPlaceholder": "Enter token endpoint",
+      "tokenEndpointRequired": "Token endpoint is required",
       "scopesLabel": "Scopes",
       "scopesPlaceholder": "Enter scopes",
       "logoutConfirmDescription": "Are you sure you want to log out? You will need to re-enter your credentials to use this toolset again."
@@ -1366,7 +1581,6 @@
     "dialNativeHint": "Connect your account for offline access. An administrator must separately approve this application's access.",
     "errorPopupBlocked": "The login popup was blocked by your browser. Please allow popups for this site and try again.",
     "errorDeclineFailed": "Failed to decline. Please try again.",
-    "errorRetry": "Retry",
     "statusLoginSuccess": "Login succeeded for {{name}}.",
     "statusDeclineSuccess": "Declined {{name}}.",
     "noCredentialsRequired": "No credentials required",
@@ -1447,8 +1661,7 @@
     },
     "saveConfirm": {
       "title": "Only valid data will be saved",
-      "description": "Some fields are invalid or required fields are missing. Changes in those fields will not be saved. Exit and save only valid information?",
-      "confirmLabel": "Save"
+      "description": "Some fields are invalid or required fields are missing. Changes in those fields will not be saved. Exit and save only valid information?"
     },
     "savingOverlay": "Saving in progress…",
     "loadingOverlay": "Loading…",
@@ -1461,7 +1674,6 @@
   "promptEditor": {
     "createTitle": "Create prompt",
     "editTitle": "Edit prompt",
-    "backButtonLabel": "Back",
     "nameLabel": "Name",
     "namePlaceholder": "Give your prompt a short name",
     "descriptionLabel": "Description",
@@ -1478,15 +1690,12 @@
     },
     "charactersRemaining": "{{count}} characters left",
     "loadError": "Couldn't load this prompt.",
-    "retryLabel": "Try again",
-    "savingStatus": "Saving",
     "saveError": "Couldn't save this prompt. Please try again.",
     "loadingAriaLabel": "Loading prompt",
     "contentLoadingAriaLabel": "Loading prompt editor"
   },
   "skillEditor": {
     "title": "Create skill",
-    "backAriaLabel": "Back",
     "backToManifestAriaLabel": "Back to SKILL.md",
     "returnedToManifestStatus": "Returned to SKILL.md",
     "filesHeading": "Files",
@@ -1495,12 +1704,12 @@
     "nameLabel": "Name",
     "namePlaceholder": "good-morning-breakfast",
     "nameCaption": "Lowercase letters and hyphens only, no spaces. We'll reformat automatically if needed.",
+    "nameReadOnlyTooltip": "The skill name can't be changed after creation",
     "descriptionLabel": "Description",
     "descriptionPlaceholder": "What this skill does and when to use it",
     "instructionsLabel": "Instructions",
     "instructionsPlaceholder": "Write the skill instructions in Markdown",
     "loadError": "Couldn't load this skill. Please try again.",
-    "savingStatus": "Saving",
     "loadingAriaLabel": "Loading skill",
     "instructionsLoadingAriaLabel": "Loading",
     "supportingFileNote": "This supporting file is included in the skill package as-is. Remove it from the Files panel to replace its content.",
@@ -1528,15 +1737,12 @@
       "manifestImportDeclined": "Manifest import cancelled, staged files kept."
     },
     "editTitle": "Edit skill",
-    "saveLabel": "Save",
     "loadErrorForbidden": "You don't have access to this skill.",
     "loadErrorNotFound": "This skill could not be found.",
     "conflictMessage": "Someone else changed this skill since you opened it.",
     "reloadLatestLabel": "Reload latest",
     "reloadConfirmTitle": "Reload latest version?",
     "reloadConfirmMessage": "Reloading will discard your unsaved changes. This cannot be undone.",
-    "reloadConfirmLabel": "Reload",
-    "reloadCancelLabel": "Cancel",
     "uploadDialogTitle": "Upload files from device",
     "uploadDropZoneLabel": "Drag and drop it or click here to upload",
     "uploadDropZoneMobileLabel": "Click here to upload",
@@ -1713,6 +1919,14 @@
       "renamed": "Folder \"{{name}}\" is renamed.",
       "downloadedTitle": "Folder downloaded successfully",
       "downloaded": "Folder \"{{name}}\" is saved on your device."
+    },
+    "project": {
+      "deletedTitle": "Project deleted successfully",
+      "deleted": "Project \"{{name}}\" is not available anymore.",
+      "downloadedTitle": "Project downloaded successfully",
+      "downloaded": "Project \"{{name}}\" is saved on your device.",
+      "publishRequestedTitle": "Project publish requested",
+      "publishRequested": "Publish request for project \"{{name}}\" was submitted to folder \"{{folder}}\". It will appear there once an admin approves it."
     }
   },
   "usage": {
@@ -1776,12 +1990,11 @@
     "mummyToastMessage": "The mummy is pushing the chat input out of the way — it will be right back! Send \"{{phrase}}\" in the start-page chat for another secret surprise."
   },
   "newYear": {
+    "reindeerTakeoffToastMessage": "A little attention goes a long way. Send \"{{phrase}}\" in the start-page chat for another secret surprise.",
     "penguinStarToastMessage": "Every tree deserves a star. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
     "giftWrappingToastMessage": "Some gifts have a mind of their own. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
+    "snowmanDeliveryToastMessage": "Delivered in one piece, almost. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
     "toastTitle": "Happy New Year!",
-    "snowToastMessage": "A little winter magic. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
-    "confettiToastMessage": "Here's to a bright new year! Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
-    "sleighToastMessage": "Special delivery from the night sky. Send \"{{phrase}}\" in the start-page chat for a secret surprise.",
     "giftLabel": "New Year gift"
   },
   "applicationCredentials": {
@@ -1794,7 +2007,8 @@
   },
   "textRefinement": {
     "action": "Refine with AI",
-    "undo": "Undo",
+    "refining": "Refining",
+    "undo": "Restore original",
     "error": "Could not refine this text. Please try again.",
     "pending": "Refining text",
     "success": "Text refined",
@@ -1812,5 +2026,17 @@
     "message": "You have unsaved changes. Leaving now will discard them.",
     "confirmLabel": "Discard changes",
     "cancelLabel": "Keep editing"
+  },
+  "urlPreselection": {
+    "deploymentNotFoundTitle": "Deployment not found",
+    "deploymentNotFoundMessage": "The requested deployment \"{{id}}\" is unavailable, so the default one is selected.",
+    "deploymentsLoadFailedTitle": "Could not load deployments",
+    "deploymentsLoadFailedMessage": "The requested deployment could not be selected, so the default one is used.",
+    "skillUnavailableTitle": "Skill unavailable",
+    "skillUnavailableMessage": "The requested skill does not exist or you do not have access to it.",
+    "skillsLoadFailedTitle": "Could not load skills",
+    "skillsLoadFailedMessage": "The skill list could not be loaded, so the requested skill was not added.",
+    "promptUnavailableTitle": "Prompt unavailable",
+    "promptUnavailableMessage": "The requested prompt could not be loaded."
   }
 }

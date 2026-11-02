@@ -113,6 +113,7 @@ export const mapToolsetAuthSettings = (
     tokenEndpoint: getString(raw, 'token_endpoint'),
     apiKeyHeader: getString(raw, 'api_key_header'),
     clientId: getString(raw, 'client_id'),
+    clientSecretHint: getString(raw, 'client_secret_hint'),
     redirectUri: getString(raw, 'redirect_uri'),
     tokenEndpointAuthMethod: getString(raw, 'token_endpoint_auth_method'),
     codeChallenge: getString(raw, 'code_challenge'),

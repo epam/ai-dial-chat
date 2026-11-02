@@ -164,6 +164,7 @@ export class CookieSessionStrategy implements AuthStrategy {
       at: payload.at,
       csrf: csrfForCurrentRequest,
       bucket: payload.bucket,
+      hasInlinePicture: payload.pic === true,
     };
   }
 
@@ -194,6 +195,7 @@ export class CookieSessionStrategy implements AuthStrategy {
       at: payload.at,
       csrf: payload.csrf,
       bucket: payload.bucket,
+      hasInlinePicture: payload.pic === true,
     };
   }
 }

@@ -27,6 +27,7 @@ describe('FavoriteApplicationsContext', () => {
     vi.mocked(getUserConfig).mockResolvedValue({
       version: 1,
       conversations: { pinnedIds: [] },
+      projects: { pinnedIds: [] },
       toolsets: { installed: ['toolsets/b/search__0.0.1'] },
       deployments: { installed: ['gpt-4o'], selectedId: null },
       prompts: { installed: ['prompts/my-bucket/Work/AI/summarize'] },

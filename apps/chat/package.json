@@ -37,6 +37,9 @@
           "command": "node --test browser-tests/toolset-oauth-popup.browser.spec.mjs"
         }
       }
-    }
+    },
+    "tags": [
+      "type:app"
+    ]
   }
 }

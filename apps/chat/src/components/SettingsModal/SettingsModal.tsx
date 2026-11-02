@@ -116,19 +116,23 @@ const SettingsModal: FC<Props> = ({ onClose }) => {
       onClose={onClose}
       mainButtons={mainButtons}
     >
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 px-4 py-2 desktop:flex-row desktop:gap-6 desktop:px-6">
-        {/* A phone keeps the width for the section when there is only one. */}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 px-4 py-2 desktop:flex-row desktop:gap-6 desktop:px-6 desktop:py-0">
+        {/*
+          A phone keeps the width for the section when there is only one. On a
+          desktop the rail runs flush under the header divider, and the dialog
+          title already names it, so it renders no heading of its own.
+        */}
         <SettingsPanel
           className={mergeClasses(
-            'shrink-0 rounded-lg bg-layer-base desktop:w-[240px]',
+            'shrink-0 rounded-2xl bg-layer-base desktop:w-[240px] desktop:rounded-none desktop:pt-3',
             items.length < 2 && 'hidden desktop:flex',
           )}
-          sectionLabel={t(BasicI18nKeys.Settings)}
+          ariaLabel={t(BasicI18nKeys.Settings)}
           items={items}
           activeId={activeId}
           onSelect={setActiveId}
         />
-        <div className="flex min-w-0 flex-1 flex-col gap-5 overflow-y-auto pt-3">
+        <div className="flex min-w-0 flex-1 flex-col gap-5 overflow-y-auto pt-3 desktop:py-6">
           {isPreferences ? (
             <>
               <h3 className="dial-small-semi-text m-0 text-primary">

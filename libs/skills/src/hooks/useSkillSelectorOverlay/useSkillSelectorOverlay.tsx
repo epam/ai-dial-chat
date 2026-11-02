@@ -65,7 +65,7 @@ export const useSkillSelectorOverlay = ({
   onToggleFavorite,
   labels,
   historyChipLabelClassName,
-  activeMentionLabelClassName = 'text-accent',
+  chipColors,
   activeMentionDetailsTrigger,
   historyDetailsTrigger,
   isRowTooltipHidden = false,
@@ -172,7 +172,8 @@ export const useSkillSelectorOverlay = ({
           <ChatSkill
             name={anchor.name}
             path={anchor.url}
-            labelClassName={activeMentionLabelClassName}
+            labelClassName=""
+            colors={chipColors}
             description={skillByUrl.get(anchor.url)?.description}
             isUnsupported={!isSkillsSupported}
             detailsTrigger={activeMentionDetailsTrigger}
@@ -188,7 +189,7 @@ export const useSkillSelectorOverlay = ({
       mentions.anchors,
       isSkillsSupported,
       skillByUrl,
-      activeMentionLabelClassName,
+      chipColors,
       activeMentionDetailsTrigger,
       panelLabels,
       unsupportedTooltipLabel,
@@ -352,6 +353,7 @@ export const useSkillSelectorOverlay = ({
               name={name}
               path={skillEntry.url}
               labelClassName={historyChipLabelClassName}
+              colors={chipColors}
               description={skill?.description}
               unresolvedReason={unresolvedReason}
               detailsTrigger={historyDetailsTrigger}
@@ -377,6 +379,7 @@ export const useSkillSelectorOverlay = ({
       resolveName,
       skillByUrl,
       historyChipLabelClassName,
+      chipColors,
       historyDetailsTrigger,
       panelLabels,
       viewerBucket,
@@ -410,6 +413,7 @@ export const useSkillSelectorOverlay = ({
             name={name}
             path={entry.url}
             labelClassName={historyChipLabelClassName}
+            colors={chipColors}
             description={skill?.description}
             unresolvedReason={unresolvedReason}
             detailsTrigger={historyDetailsTrigger}
@@ -426,6 +430,7 @@ export const useSkillSelectorOverlay = ({
     [
       skillByUrl,
       historyChipLabelClassName,
+      chipColors,
       historyDetailsTrigger,
       panelLabels,
       viewerBucket,

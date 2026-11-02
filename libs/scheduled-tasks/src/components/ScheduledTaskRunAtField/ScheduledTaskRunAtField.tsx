@@ -1,12 +1,15 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  mergeClasses,
+  useControlErrorAssociation,
+} from '@epam/ai-dial-chat-shared';
 import {
   Calendar,
   CalendarMode,
   type CalendarValue,
   ErrorText,
+  LiveRegionPoliteness,
 } from '@epam/ai-dial-ui-kit';
-import { useRef, type FC } from 'react';
-import { usePickerErrorAssociation } from '../../hooks/usePickerErrorAssociation/usePickerErrorAssociation';
+import { useId, useRef, type FC } from 'react';
 import {
   calendarValueToRunAt,
   runAtToCalendarValue,
@@ -24,7 +27,7 @@ export interface ScheduledTaskRunAtFieldProps {
   onChange: (value: string) => void;
   /** Disables the picker, e.g. while the form is submitting. */
   disabled?: boolean;
-  /** Submit-time validation error rendered under the picker, associated with it via `aria-describedby` and announced via `role="alert"` when it appears. */
+  /** Submit-time validation error rendered under the picker, associated with it via `aria-describedby` and announced through the kit `ErrorText` `announce` live region, mounted before the error arrives. */
   error?: string;
   /** CSS class applied to the error text. Defaults to `'dial-tiny-text'`. */
   errorClassName?: string;
@@ -48,7 +51,12 @@ export const ScheduledTaskRunAtField: FC<ScheduledTaskRunAtFieldProps> = ({
   const handleCalendarChange = (next: CalendarValue) =>
     onChange(calendarValueToRunAt(next));
 
-  const errorId = usePickerErrorAssociation('scheduled-task-run-at', error);
+  const errorId = useId();
+  useControlErrorAssociation(
+    () => document.getElementById('scheduled-task-run-at'),
+    errorId,
+    Boolean(error),
+  );
 
   return (
     <div className="flex flex-col gap-1">
@@ -63,14 +71,13 @@ export const ScheduledTaskRunAtField: FC<ScheduledTaskRunAtFieldProps> = ({
         invalid={Boolean(error)}
         disabled={disabled}
       />
-      {error && (
-        <ErrorText
-          id={errorId}
-          role="alert"
-          className={mergeClasses(errorClassName, styles.error)}
-          text={error}
-        />
-      )}
+      {/* Mounted before the error arrives, so it is announced; out of the column gap while empty. */}
+      <ErrorText
+        announce={LiveRegionPoliteness.Assertive}
+        id={errorId}
+        className={mergeClasses(errorClassName, styles.error)}
+        text={error ?? ''}
+      />
     </div>
   );
 };

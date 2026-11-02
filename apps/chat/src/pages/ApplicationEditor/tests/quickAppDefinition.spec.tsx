@@ -1,3 +1,4 @@
+import { CatalogCreationType } from '@epam/ai-dial-chat-api-client';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -9,11 +10,16 @@ import {
   AppsEditorI18nKeys,
   BasicI18nKeys,
   ButtonsI18nKeys,
+  CatalogI18nKeys,
   EditorI18nKeys,
   UnsavedChangesI18nKeys,
 } from '../../../constants/translation-keys';
 import * as DeploymentsContextModule from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
+import {
+  resetCatalogCreationState,
+  setCatalogCreationState,
+} from '../../../context/tests/catalog-creation-state';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import { renderWithLeaveGuard } from '../../../hooks/unsaved-changes/tests/render-with-leave-guard';
 import {
@@ -27,6 +33,7 @@ import {
   NotifiableEntity,
 } from '../../../types/entity-notification';
 import { ROUTES } from '../../../types/routes';
+import { UserConfigStatus } from '../../../types/user-config-status';
 import ApplicationEditorPage from '../ApplicationEditorPage';
 
 interface IframeStubProps {
@@ -42,9 +49,17 @@ const captureIframeProps = vi.fn<(props: IframeStubProps) => void>();
 const getIframeProps = () => captureIframeProps.mock.lastCall?.[0];
 const mockTriggerSave = vi.fn<(general?: TriggerSaveGeneralPayload) => void>();
 
-vi.mock('../../../context/AppConfigContext', () => ({
-  useAppConfig: () => ({ status: 'ready', config: {} }),
-}));
+vi.mock('../../../context/AppConfigContext', async () => {
+  const { useCatalogCreationState } =
+    await import('../../../context/tests/catalog-creation-state');
+  return {
+    useAppConfig: () => ({
+      status: 'ready',
+      config: {},
+      ...useCatalogCreationState(),
+    }),
+  };
+});
 vi.mock('../setup/AppEditorIframe', () => ({
   default: forwardRef(function AppEditorIframeStub(
     props: IframeStubProps,
@@ -121,6 +136,13 @@ const queryAction = (name: string) =>
 const getNameInput = () =>
   screen.getByLabelText(EditorI18nKeys.NameLabel, { exact: false });
 
+/* The editor keeps its alert region mounted, so "no alert" means every region is empty. */
+const alertText = () =>
+  screen
+    .queryAllByRole('alert')
+    .map((region) => region.textContent)
+    .join('');
+
 const createSearch = `schema=${SCHEMA.id}`;
 const editSearch = `${createSearch}&appId=${encodeURIComponent(APP_ID)}`;
 
@@ -129,6 +151,7 @@ describe('ApplicationEditorPage — quick app', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    resetCatalogCreationState();
     mockRefetchDeployments.mockResolvedValue(undefined);
     vi.mocked(createApplication).mockResolvedValue({ id: APP_ID } as never);
     vi.mocked(updateApplication).mockResolvedValue({ id: APP_ID } as never);
@@ -195,7 +218,9 @@ describe('ApplicationEditorPage — quick app', () => {
       expect(
         screen.getByText(AppsEditorI18nKeys.GeneralFormNameInvalid),
       ).toBeTruthy();
-      expect(screen.getByText(EditorI18nKeys.VersionInvalid)).toBeTruthy();
+      expect(
+        screen.getByText(AppsEditorI18nKeys.GeneralFormVersionInvalid),
+      ).toBeTruthy();
       expect(createApplication).not.toHaveBeenCalled();
     });
 
@@ -316,6 +341,117 @@ describe('ApplicationEditorPage — quick app', () => {
     });
   });
 
+  describe('creation permissions', () => {
+    const ALL_TYPES = Object.values(CatalogCreationType);
+    const denySchema = () =>
+      setCatalogCreationState({
+        allowedTypes: ALL_TYPES,
+        restrictedSchemaIds: [SCHEMA.id],
+      });
+
+    it('shows the denied state for a restricted schema and sends no create request', () => {
+      denySchema();
+      renderPage(createSearch);
+
+      expect(
+        screen.getByRole('heading', {
+          level: 1,
+          name: CatalogI18nKeys.CreationDenied,
+        }),
+      ).toBeTruthy();
+      expect(screen.queryByLabelText(EditorI18nKeys.NameLabel)).toBeNull();
+      expect(createApplication).not.toHaveBeenCalled();
+    });
+
+    it('shows the denied state when the schema-app type is denied', () => {
+      setCatalogCreationState({
+        allowedTypes: [CatalogCreationType.CustomApp],
+        restrictedSchemaIds: [],
+      });
+      renderPage(createSearch);
+
+      expect(
+        screen.getByRole('heading', {
+          level: 1,
+          name: CatalogI18nKeys.CreationDenied,
+        }),
+      ).toBeTruthy();
+    });
+
+    it('shows the pending state while permissions load', () => {
+      setCatalogCreationState(null, UserConfigStatus.Loading);
+      renderPage(createSearch);
+
+      expect(
+        screen.getByRole('img', { name: CatalogI18nKeys.CreationLoading }),
+      ).toBeTruthy();
+      expect(screen.queryByLabelText(EditorI18nKeys.NameLabel)).toBeNull();
+    });
+
+    it.each([
+      ['no schema parameter', ''],
+      ['an unknown schema id', 'schema=https%3A%2F%2Fexample.com%2Funknown'],
+      ['the custom-app schema id', 'schema=custom_app'],
+    ])('shows the unavailable state for %s', (_label, search) => {
+      renderPage(search);
+
+      expect(
+        screen.getByRole('heading', {
+          level: 1,
+          name: CatalogI18nKeys.CreationUnavailable,
+        }),
+      ).toBeTruthy();
+      expect(createApplication).not.toHaveBeenCalled();
+    });
+
+    it('does not resolve the schema by its display name', () => {
+      renderPage(`schema=${SCHEMA.displayName}`);
+
+      expect(
+        screen.getByRole('heading', {
+          level: 1,
+          name: CatalogI18nKeys.CreationUnavailable,
+        }),
+      ).toBeTruthy();
+    });
+
+    it('blocks the create request when permission is lost while the form is open', async () => {
+      renderPage(createSearch);
+      await user.type(getNameInput(), 'My App');
+
+      act(() => denySchema());
+      await user.click(getAction(ButtonsI18nKeys.Create));
+
+      expect(createApplication).not.toHaveBeenCalled();
+      expect(mockShowNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ message: CatalogI18nKeys.CreationDenied }),
+      );
+      expect((getNameInput() as HTMLInputElement).value).toBe('My App');
+    });
+
+    it('continues in edit mode after a metadata-first create even if creation is then denied', async () => {
+      renderPage(createSearch);
+      await user.type(getNameInput(), 'My App');
+      await user.click(getAction(ButtonsI18nKeys.Create));
+      await screen.findByText(`embedded-editor-${APP_ID}`);
+
+      act(() => denySchema());
+
+      expect(alertText()).toBe('');
+      expect(getAction(ButtonsI18nKeys.Save)).toBeTruthy();
+      expect(createApplication).toHaveBeenCalledOnce();
+    });
+
+    it('opens an existing app of a restricted schema for editing', () => {
+      denySchema();
+      renderPage(editSearch);
+
+      expect(alertText()).toBe('');
+      expect(getAction(ButtonsI18nKeys.Save)).toBeTruthy();
+      expect(screen.getByText(`embedded-editor-${APP_ID}`)).toBeTruthy();
+    });
+  });
+
   describe('edit mode', () => {
     const typeName = async () => {
       await user.type(getNameInput(), 'My App');
@@ -359,13 +495,13 @@ describe('ApplicationEditorPage — quick app', () => {
       expect(getAction(BasicI18nKeys.Preview).disabled).toBe(false);
     });
 
-    it('forwards the Metadata to the embedded editor on Save, reasserts, confirms and exits', async () => {
+    it('forwards the Metadata to the embedded editor on Save, confirms and exits', async () => {
       renderPage(editSearch);
       await typeName();
       await user.clear(screen.getByLabelText(EditorI18nKeys.VersionLabel));
       await user.type(
         screen.getByLabelText(EditorI18nKeys.VersionLabel),
-        '2.0.0',
+        '2.0',
       );
       act(() => getIframeProps()?.onReadyChange?.(true));
 
@@ -374,17 +510,14 @@ describe('ApplicationEditorPage — quick app', () => {
       await waitFor(() => expect(mockTriggerSave).toHaveBeenCalledOnce());
       const general = mockTriggerSave.mock.calls[0][0];
       expect(general).toEqual(
-        expect.objectContaining({ name: 'My App', display_version: '2.0.0' }),
+        expect.objectContaining({ name: 'My App', display_version: '2.0' }),
       );
       expect(general).not.toHaveProperty('version');
 
       act(() => getIframeProps()?.onSaveSuccess?.(false));
 
       await screen.findByText('Catalog');
-      expect(updateApplication).toHaveBeenCalledWith(
-        APP_ID,
-        expect.objectContaining({ name: 'My App' }),
-      );
+      expect(updateApplication).not.toHaveBeenCalled();
       expect(mockRefetchDeployments).toHaveBeenCalled();
       expect(mockNotifyOperationSuccess).toHaveBeenCalledWith(
         NotifiableEntity.QuickApp,
@@ -449,14 +582,17 @@ describe('ApplicationEditorPage — quick app', () => {
       ).toBe(false);
     });
 
-    it('opens a full-page preview after a save without Metadata and hides the editor', async () => {
+    it('opens a full-page preview after a save with Metadata and hides the editor', async () => {
       renderPage(editSearch);
       await typeName();
       act(() => getIframeProps()?.onReadyChange?.(true));
 
       const backToSetup = await enterPreview();
 
-      expect(mockTriggerSave).toHaveBeenCalledWith(undefined);
+      expect(mockTriggerSave).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'My App' }),
+      );
+      expect(updateApplication).not.toHaveBeenCalled();
       expect(mockRefetchDeployments).toHaveBeenCalled();
       expect(mockNotifyOperationSuccess).not.toHaveBeenCalled();
       expect(screen.getByText('preview-chat')).toBeTruthy();

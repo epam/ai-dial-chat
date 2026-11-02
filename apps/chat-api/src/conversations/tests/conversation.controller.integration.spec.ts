@@ -21,6 +21,7 @@ import { AuthSource } from '../../auth/auth-source.enum';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { DeploymentsService } from '../../deployments/deployments.service';
 import { DialClientService } from '../../dial/dial-client.service';
+import { ConversationReadStateService } from '../../scheduled-task-unread/conversation-read-state.service';
 import { ScheduledTaskUnreadService } from '../../scheduled-task-unread/scheduled-task-unread.service';
 import { UserConfigService } from '../../user-config/user-config.service';
 import {
@@ -33,11 +34,17 @@ import { ConversationService } from '../conversation.service';
 import { BackgroundGenerationService } from '../generation/background-generation.service';
 import { ChatCompletionsAdapter } from '../generation/chat-completions.adapter';
 import { CoreResponsesClient } from '../generation/core-responses.client';
+import { GenerationApiSelector } from '../generation/generation-api-selector.service';
 import { ResponsesAdapter } from '../generation/responses.adapter';
 import { ConversationLifecycleService } from '../lifecycle/conversation-lifecycle.service';
 import { ConversationListingService } from '../listing/conversation-listing.service';
+import { ConversationTitleCacheService } from '../listing/conversation-title-cache.service';
+import { ConversationTitleStreamService } from '../listing/conversation-title-stream.service';
+import { ConversationTitlesService } from '../listing/conversation-titles.service';
 import { ConversationPersistenceService } from '../persistence/conversation-persistence.service';
+import { ProjectConversationStore } from '../persistence/project-conversation.store';
 import { PublishedFolderAttachmentsService } from '../published-folder-attachments.service';
+import { ConversationCompletionsResponder } from '../streaming/conversation-completions.responder';
 import { ConversationStreamingService } from '../streaming/conversation-streaming.service';
 
 const TEST_USER = {
@@ -55,6 +62,7 @@ describe('ConversationController (integration)', () => {
   let service: {
     createConversation: ReturnType<typeof vi.fn>;
     listConversations: ReturnType<typeof vi.fn>;
+    getConversationTitles: ReturnType<typeof vi.fn>;
     renameConversation: ReturnType<typeof vi.fn>;
     generateTitle: ReturnType<typeof vi.fn>;
     deleteConversations: ReturnType<typeof vi.fn>;
@@ -72,6 +80,7 @@ describe('ConversationController (integration)', () => {
       stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
       createConversation: vi.fn(),
       listConversations: vi.fn(),
+      getConversationTitles: vi.fn(),
       renameConversation: vi.fn(),
       generateTitle: vi.fn(),
       deleteConversations: vi.fn(),
@@ -94,6 +103,7 @@ describe('ConversationController (integration)', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ConversationController],
       providers: [
+        ConversationCompletionsResponder,
         { provide: ConversationService, useValue: service },
         {
           provide: ConversationGenerationService,
@@ -124,6 +134,71 @@ describe('ConversationController (integration)', () => {
   afterEach(async () => {
     vi.clearAllMocks();
     await app.close();
+  });
+
+  describe('POST /conversations/titles', () => {
+    const id = 'conversations/test-bucket/gpt-4o__Original';
+
+    it('returns a typed title projection and delegates using the session token', async () => {
+      service.getConversationTitles.mockResolvedValue({
+        items: [{ id, title: 'Renamed' }],
+      });
+      await request(app.getHttpServer())
+        .post('/conversations/titles')
+        .send({ ids: [id] })
+        .expect(200, { items: [{ id, title: 'Renamed' }] });
+      expect(service.getConversationTitles).toHaveBeenCalledWith(
+        [id],
+        TEST_USER.at,
+        expect.any(AbortSignal),
+      );
+    });
+
+    it.each([
+      {},
+      { ids: [] },
+      { ids: Array<string>(26).fill(id) },
+      { ids: ['conversations/test-bucket/../secret'] },
+      { ids: ['conversations/test-bucket/%252e%252e/secret'] },
+      { ids: ['conversations/test-bucket/a%2F..%2Fsecret'] },
+      { ids: ['conversations/test-bucket/name%0Ainjected'] },
+      { ids: ['conversations/test-bucket/name%255Cinjected'] },
+      { ids: ['https://example.com/conversations/test-bucket/name'] },
+      { ids: [id], extra: true },
+    ])('rejects an invalid title request: %j', async (payload) => {
+      await request(app.getHttpServer())
+        .post('/conversations/titles')
+        .send(payload)
+        .expect(400);
+      expect(service.getConversationTitles).not.toHaveBeenCalled();
+    });
+
+    it('accepts encoded deployment slashes and literal percent escapes', async () => {
+      const ids = [
+        'conversations/public/applications/public/Team%2FApp__0.0.1__hello',
+        'conversations/other-bucket/applications/public/pg-agent%255F%255F1.0.0__New%20chat',
+      ];
+      service.getConversationTitles.mockResolvedValue({ items: [] });
+      await request(app.getHttpServer())
+        .post('/conversations/titles')
+        .send({ ids })
+        .expect(200);
+      expect(service.getConversationTitles).toHaveBeenCalledWith(
+        ids,
+        TEST_USER.at,
+        expect.any(AbortSignal),
+      );
+    });
+
+    it('preserves an upstream availability failure', async () => {
+      service.getConversationTitles.mockRejectedValue(
+        new ServiceUnavailableException(),
+      );
+      await request(app.getHttpServer())
+        .post('/conversations/titles')
+        .send({ ids: [id] })
+        .expect(503);
+    });
   });
 
   describe('POST /conversations', () => {
@@ -268,19 +343,26 @@ describe('ConversationController (integration)', () => {
       const realModule: TestingModule = await Test.createTestingModule({
         controllers: [ConversationController],
         providers: [
+          ConversationCompletionsResponder,
           { provide: ConfigService, useValue: configService },
           DialClientService,
           ConversationService,
           ConversationPersistenceService,
+          ProjectConversationStore,
           ConversationListingService,
+          ConversationTitleCacheService,
+          ConversationTitlesService,
+          ConversationTitleStreamService,
           ConversationLifecycleService,
           PublishedFolderAttachmentsService,
           { provide: CACHE_MANAGER, useValue: { get: vi.fn(), set: vi.fn() } },
           ConversationStreamingService,
           UserConfigService,
           ScheduledTaskUnreadService,
+          ConversationReadStateService,
           ConversationGenerationService,
           ChatCompletionsAdapter,
+          GenerationApiSelector,
           ResponsesAdapter,
           CoreResponsesClient,
           BackgroundGenerationService,
@@ -992,7 +1074,7 @@ describe('ConversationController (integration)', () => {
     it('carries no @RequireFeature/FeatureGuard metadata tied to ResponsesApiEnabled', () => {
       /*
        * The Responses-vs-Chat-Completions selection is an internal routing
-       * decision (ConversationStreamingService.resolveGenerationApiForDeployment),
+       * decision (GenerationApiSelector.select),
        * not a per-route feature gate — a disabled flag must select Chat
        * Completions, never 403 the whole endpoint. Asserted via reflection
        * rather than an HTTP call so it fails fast on either an accidental
@@ -1046,6 +1128,7 @@ describe('ConversationController (integration)', () => {
       const module: TestingModule = await Test.createTestingModule({
         controllers: [ConversationController],
         providers: [
+          ConversationCompletionsResponder,
           { provide: ConversationService, useValue: streamingStub },
           {
             provide: ConversationGenerationService,

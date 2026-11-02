@@ -11,11 +11,13 @@ export interface UserAvatarProps {
   alt: string;
   /** Diameter in pixels. Defaults to `28`. */
   size?: number;
+  /** Typography class of the avatar's initials fallback. Defaults to `'dial-tiny-text'`. */
+  initialsClassName?: string;
 }
 
 /** Avatar image with an initials badge fallback for a missing or broken image. */
 export const UserAvatar: FC<UserAvatarProps> = memo(
-  ({ profile, alt, size = 28 }) => {
+  ({ profile, alt, size = 28, initialsClassName = 'dial-tiny-text' }) => {
     const isFallbackShown = profile.isFallbackShown || !profile.imageUrl;
 
     return (
@@ -26,7 +28,7 @@ export const UserAvatar: FC<UserAvatarProps> = memo(
         /* Only the image is named; the initials fallback stays decorative. */
         alt={isFallbackShown ? '' : alt}
         size={size}
-        textClassName="dial-tiny-text"
+        textClassName={initialsClassName}
         className={styles.avatar}
         onImageError={profile.onImageError}
       />

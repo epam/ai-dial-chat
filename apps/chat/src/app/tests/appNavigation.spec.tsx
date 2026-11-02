@@ -32,7 +32,10 @@ vi.mock('@epam/ai-dial-attachment-canvas', () => ({
 vi.mock('@epam/ai-dial-chat-hooks/file-manager-canvas', () => ({
   clearAttachmentCache: vi.fn(),
 }));
-vi.mock('@epam/ai-dial-chat-hooks/viewport-layout', () => ({
+vi.mock('@epam/ai-dial-chat-hooks/viewport-layout', async (original) => ({
+  ...(await original<
+    typeof import('@epam/ai-dial-chat-hooks/viewport-layout')
+  >()),
   usePanelMaxWidth: () => 1200,
   useViewportWidth: () => 1440,
 }));
@@ -55,7 +58,8 @@ vi.mock('../../hooks/attachment/useCanvasVisualizerMessageHandler', () => ({
 vi.mock('../../hooks/attachment/usePdfPreviewLoader', () => ({
   usePdfPreviewLoader: () => undefined,
 }));
-vi.mock('../../hooks/breakpoint/useBreakpoint', () => ({
+vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
   useIsMobile: () => mocks.isMobile,
 }));
 vi.mock('../../hooks/conversation/useConversationListBridge', () => ({
@@ -169,16 +173,16 @@ const renderApp = () =>
     </MemoryRouter>,
   );
 
-beforeEach(() => {
-  mocks.isMobile = false;
-  mocks.isPanelOpen = true;
-  mocks.routeStateArgs = [];
-});
-
 const getSidebar = () =>
   screen.getByRole('navigation', { name: 'sidebar navigation' });
 
 describe('App — navigation', () => {
+  beforeEach(() => {
+    mocks.isMobile = false;
+    mocks.isPanelOpen = true;
+    mocks.routeStateArgs = [];
+  });
+
   it('renders the panel view inside the sidebar on a desktop viewport', () => {
     renderApp();
 

@@ -23,16 +23,30 @@ Use these templates when writing/updating local docs. **English only.** Replace 
 
 ## Scorecard (summary)
 
-| Area                               | Status         |
-| ---------------------------------- | -------------- |
-| Phase 1                            | X/7            |
-| Phase 2.1 DialCoreModule           | ✅/…           |
-| Phase 2.3 Split FilesService       | …              |
-| Phase 2.2 ConversationService      | …              |
-| Phase 3.2 Split useDialFileManager | …              |
-| Phase 4 Platform                   | …              |
-| Dead-code coverage                 | Full / Partial |
+| Area                                       | Status                             |
+| ------------------------------------------ | ---------------------------------- |
+| Phase 1 (1.1–1.7)                          | X/7 — ❌ open items                |
+| Phase 2.1 DialCoreModule                   | ✅ / ⚠️ / ❌ + one-line evidence   |
+| Phase 2.2 Split ConversationService        | …                                  |
+| Phase 2.3 Split FilesService               | …                                  |
+| Phase 2.4 Toolsets / deployments / prompts | …                                  |
+| Phase 2.5 Mega-spec split                  | …                                  |
+| Phase 3.1 Conversation input extractions   | …                                  |
+| Phase 3.2 Split useDialFileManager         | …                                  |
+| Phase 3.3 Context slimming                 | …                                  |
+| Phase 3.4 server-api adapters              | …                                  |
+| Phase 4 Platform                           | X/4 — status of 4.1, 4.2, 4.3, 4.5 |
+| Dead-code coverage                         | Full / Partial                     |
+```
 
+Scorecard rules:
+
+- **Every phase row from the backend and frontend scorecards appears here**, in phase-number order. A summary that drops ⚠️/❌ phases reads healthier than the audit.
+- Use only `✅`, `⚠️`, `❌`, or `✅ / ⚠️` (done, but the extracted pieces regrew). No bold, no free-form words like "open" in place of a status mark.
+- Keep the status consistent with the matching row in `refactoring-backend.md` / `refactoring-frontend.md`.
+- Run `npx prettier --write refactoring*.md` after writing so table columns align.
+
+```markdown
 ## Top debt
 
 | #   | Backend | Frontend |

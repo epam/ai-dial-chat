@@ -154,7 +154,9 @@ export const useConversationPanelItems = ({
               leadingIcon: taskPresentation.leadingIcon,
               isUnread: taskPresentation.isUnread,
             }
-          : {}),
+          : item.isUnread
+            ? { leadingIcon: undefined, isUnread: true }
+            : {}),
       };
     },
     [
@@ -169,6 +171,7 @@ export const useConversationPanelItems = ({
   );
 
   type PanelItem = ReturnType<typeof mapItem>;
+
   const cacheRef = useRef<PanelItemCache<typeof mapItem, PanelItem> | null>(
     null,
   );

@@ -53,13 +53,15 @@ const BODY_METHODS: ReadonlySet<CustomApiMethod> = new Set([
   CustomApiMethod.Put,
 ]);
 /*
- * One leading slash, nonempty ASCII letter/digit/underscore/hyphen segments
- * separated by single slashes, no trailing slash. The restricted alphabet
- * alone rejects dots (`..`), percent encodings, backslashes, absolute/
- * protocol-relative URLs and query/fragment syntax; the "nonempty segment"
- * requirement rejects doubled and trailing slashes.
+ * One leading slash, nonempty ASCII letter/digit/underscore/hyphen/dot
+ * segments separated by single slashes, no trailing slash. The restricted
+ * alphabet rejects percent encodings, backslashes, absolute/protocol-relative
+ * URLs and query/fragment syntax; the "nonempty segment" requirement rejects
+ * doubled and trailing slashes. A dot is allowed inside a segment (an
+ * application id such as `runner__1.0.0`), never as a `.` or `..` segment,
+ * the only dot forms URL parsing resolves.
  */
-const CORE_PATH_PATTERN = /^\/[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_-]+)*$/;
+const CORE_PATH_PATTERN = /^(?:\/(?!\.\.?(?:\/|$))[A-Za-z0-9_.-]+)+$/;
 
 const ALLOWED_ROOT_KEYS = new Set(['version', 'operations']);
 const ALLOWED_OPERATION_KEYS = new Set([

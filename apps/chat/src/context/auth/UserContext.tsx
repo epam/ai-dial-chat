@@ -16,6 +16,7 @@ import {
   UnauthorizedError,
 } from '../../server-api/base';
 import { AuthStatus } from '../../types/auth-status';
+import { consumeSignedOut } from '../../utils/signed-out-marker';
 
 interface UserContextType {
   status: AuthStatus;
@@ -112,7 +113,23 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     [invalidateSession],
   );
 
+  /*
+   * Read once per provider instance and kept in a ref, so StrictMode's
+   * mount → cleanup → mount still sees the marker the first run consumed.
+   */
+  const isSignedOutOnLoadRef = useRef<boolean | null>(null);
+
   useEffect(() => {
+    isSignedOutOnLoadRef.current ??= consumeSignedOut();
+    if (isSignedOutOnLoadRef.current) {
+      /*
+       * The logout flow just cleared the session and reloaded the document;
+       * probing /auth/me now can only return a 401 (#9560).
+       */
+      clearCsrfToken();
+      setStatus(AuthStatus.Unauthenticated);
+      return;
+    }
     const signal = { isCancelled: false };
     bootstrap(signal);
     return () => {

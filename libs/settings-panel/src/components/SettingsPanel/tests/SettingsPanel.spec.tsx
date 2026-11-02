@@ -169,6 +169,13 @@ describe('SettingsPanel', () => {
     expect(screen.getByText('Settings')).toBeTruthy();
   });
 
+  it('names the tab list with ariaLabel without rendering a heading', () => {
+    renderPanel({ ariaLabel: 'Settings' });
+
+    expect(screen.getByRole('tablist', { name: 'Settings' })).toBeTruthy();
+    expect(screen.queryByText('Settings')).toBeNull();
+  });
+
   it('renders no section label by default', () => {
     renderPanel();
 

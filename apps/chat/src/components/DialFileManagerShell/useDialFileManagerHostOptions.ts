@@ -2,6 +2,7 @@ import {
   prepareDownloadDestination,
   type UseDialFileManagerOptions,
 } from '@epam/ai-dial-chat-hooks';
+import { triggerBrowserDownload } from '@epam/ai-dial-chat-hooks/utils';
 import { DialFileManagerActions } from '@epam/ai-dial-react-file-manager';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -10,9 +11,9 @@ import {
   DialFileManagerI18nKeys,
 } from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
+import { useMaxUploadFileSizeLabel } from '../../hooks/files/useMaxUploadFileSizeLabel';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { dialFilesApiAdapter } from '../../server-api/dial-files-api.adapter';
-import { triggerBrowserDownload } from '../../utils/file-download';
 import {
   buildFileManagerNotificationOptions,
   buildValidationErrorMessage,
@@ -42,6 +43,7 @@ export const useDialFileManagerHostOptions = (): DialFileManagerHostOptions => {
   const { t, i18n } = useTranslation();
   const { showNotification, showSuccessNotification } = useNotification();
   const { notifyOperationSuccess } = useOperationNotification();
+  const maxUploadSize = useMaxUploadFileSizeLabel();
 
   const labels = useMemo(
     (): Partial<Record<DialFileManagerActions, string>> => ({
@@ -72,8 +74,10 @@ export const useDialFileManagerHostOptions = (): DialFileManagerHostOptions => {
     NonNullable<DialFileManagerHostOptions['onNotification']>
   >(
     (notification) =>
-      showNotification(buildFileManagerNotificationOptions(t, notification)),
-    [t, showNotification],
+      showNotification(
+        buildFileManagerNotificationOptions(t, notification, { maxUploadSize }),
+      ),
+    [t, showNotification, maxUploadSize],
   );
 
   const onOperationSuccess = useCallback<

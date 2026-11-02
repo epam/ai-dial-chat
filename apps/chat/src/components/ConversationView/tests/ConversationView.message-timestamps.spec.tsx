@@ -1,3 +1,4 @@
+import { AttachmentCanvasProvider } from '@epam/ai-dial-attachment-canvas';
 import {
   MessageRole,
   type Conversation,
@@ -71,7 +72,8 @@ vi.mock('../../../hooks/useUiFeature', () => ({
   /* Drafts stay on, as by default, so the memo check covers the draft wiring. */
   useUiFeature: (feature: string) => feature === 'conversation-drafts',
 }));
-vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
+vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
   useIsMobile: () => false,
 }));
 vi.mock(
@@ -153,14 +155,15 @@ const messages = [
   message(MessageRole.User, 'follow-up'),
 ];
 
-beforeEach(() => {
-  mocks.hasTimestampByIndex.clear();
-});
-
 describe('ConversationView — message timestamps', () => {
+  beforeEach(() => {
+    mocks.hasTimestampByIndex.clear();
+  });
+
   it('asks every message item for its send time when hasMessageTimestamps is set', () => {
     render(
       <ConversationView {...props} messages={messages} hasMessageTimestamps />,
+      { wrapper: AttachmentCanvasProvider },
     );
 
     expect([...mocks.hasTimestampByIndex.entries()]).toEqual([
@@ -171,7 +174,9 @@ describe('ConversationView — message timestamps', () => {
   });
 
   it('leaves send times off by default', () => {
-    render(<ConversationView {...props} messages={messages} />);
+    render(<ConversationView {...props} messages={messages} />, {
+      wrapper: AttachmentCanvasProvider,
+    });
 
     expect([...mocks.hasTimestampByIndex.values()]).toEqual([
       false,

@@ -47,7 +47,7 @@ describe('ScheduledTaskDetailsSection', () => {
 
     const value = screen.getByText('a'.repeat(600));
     expect(value.className).toContain('whitespace-pre-wrap');
-    expect(value.className).toContain('[overflow-wrap:anywhere]');
+    expect(value.className).toContain('wrap-anywhere');
     expect(value.className).not.toContain('break-all');
   });
 

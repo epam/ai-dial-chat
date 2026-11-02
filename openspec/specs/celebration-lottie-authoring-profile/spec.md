@@ -169,7 +169,7 @@ Direction handling SHALL be declared once per scene as `direction`:
 
 Locale resolution SHALL be owned by the app adapter. The library SHALL receive resolved strings only and SHALL NOT read i18n.
 
-Order for a label ID that a bundled event already defines (for example `sleighToastMessage`):
+Order for a label ID that a bundled event already defines (for example `giftWrappingToastMessage`):
 
 1. the app's existing translation key (`newYear.*` / `halloween.*` through `CelebrationHost`)
 2. the bundled English default

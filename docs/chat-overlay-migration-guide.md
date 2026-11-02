@@ -634,6 +634,14 @@ It uses **replace**, not merge, semantics:
 
 Do not send a partial diff. Always send the complete desired set.
 
+`enabledFeatures` controls which UI features exist, not who may create
+catalog entities. The server's per-user creation policy
+([`CATALOG_CREATION_ROLES`](../apps/chat-api/README.md#catalog-creation-roles))
+is a separate condition on every create action. Enabling `custom-apps`,
+`schema-apps`, `toolsets` or `prompts` from the host keeps their existing
+listing and editing, but it does not let a user create a type or schema the
+policy denies them. The same applies to an isolated view's feature override.
+
 ### Renamed flags
 
 | Legacy flag                | New flag                                                    |

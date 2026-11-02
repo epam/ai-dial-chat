@@ -337,6 +337,8 @@ Both authentication types qualify — OAuth and API key. A shared team API key i
 
 Only the global level qualifies, matching the legacy chat. Publishing always acts on the publisher's own source item (`isPublishVisible` already requires `item.isMyApp`), where `globalStatus` is the owner's own credential, and DIAL Core copies that global credential to the published copy on approval. A `userStatus` sign-in alone gives Core nothing to copy, so the copy would stay signed out and members would still be asked to authorise. Access the publisher does not hold at the global level cannot be passed on, so a toolset whose `globalStatus` is not `SignedIn` SHALL offer no control.
 
+The owner reaches that state from the catalog itself: the details header signs a private toolset in at `GLOBAL` level (`getDirectCredentialsLevel`, see `catalog-toolset-credentials`), so an owner who clicks "Log in" or adds an API key there is offered the control. A private toolset signed in at `USER` level only — a sign-in made before that rule — offers no control until the owner logs out and signs in again.
+
 The eligibility decision SHALL be made inside `libs/catalog` from `item.credentials`, which `DetailsPanel` already receives and already branches on for its credentials action (see `catalog-toolset-credentials`). No new fetch, no new loading state, and no new host prop are introduced for it, and `libs/publish-panel` SHALL remain unaware of toolsets and credential levels (see `publish-panel-library`).
 
 **No role gate.** Any publisher who is signed in to the toolset may select the option; administrator status is irrelevant. DIAL Core's existing pending-approval lifecycle — every publication is `PENDING` until an administrator approves — is the control point for the act.

@@ -8,6 +8,7 @@ import {
   CSP_NONCE_PLACEHOLDER,
   trustedStyleNoncePlugin,
 } from '../../tools/vite/csp-nonce.mjs';
+import { nxReadySignal } from '@nx/vite/plugins/nx-ready-signal.plugin';
 
 export default defineConfig(() => ({
   root: import.meta.dirname,
@@ -27,7 +28,13 @@ export default defineConfig(() => ({
     port: 4207,
     host: 'localhost',
   },
-  plugins: [trustedStyleNoncePlugin(), tailwindcss(), react(), svgr()],
+  plugins: [
+    trustedStyleNoncePlugin(),
+    tailwindcss(),
+    react(),
+    svgr(),
+    nxReadySignal(),
+  ],
   resolve: {
     alias: {
       /* remark-math resolves math delimiters through micromark-extension-math, which only
@@ -101,6 +108,10 @@ export default defineConfig(() => ({
       '@epam/ai-dial-chat-hooks/scheduled-tasks': path.resolve(
         import.meta.dirname,
         '../../libs/chat-hooks/src/entry-points/scheduled-tasks.ts',
+      ),
+      '@epam/ai-dial-chat-hooks/project': path.resolve(
+        import.meta.dirname,
+        '../../libs/chat-hooks/src/entry-points/project.ts',
       ),
       '@epam/ai-dial-chat-hooks/sharing': path.resolve(
         import.meta.dirname,
@@ -219,6 +230,10 @@ export default defineConfig(() => ({
       '@epam/ai-dial-scheduled-tasks': path.resolve(
         import.meta.dirname,
         '../../libs/scheduled-tasks/src/index.ts',
+      ),
+      '@epam/ai-dial-projects': path.resolve(
+        import.meta.dirname,
+        '../../libs/projects/src/index.ts',
       ),
       '@epam/ai-dial-quotations': path.resolve(
         import.meta.dirname,

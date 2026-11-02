@@ -11,6 +11,24 @@ export interface ScheduledTaskRepeatOption {
   label: string;
 }
 
+/** One option in the Custom repeat's "Every" week-count dropdown. */
+export interface ScheduledTaskEveryWeekOption {
+  /** Option value: the week-count string `'1'`–`'10'`. */
+  value: string;
+  /** Localized display label, e.g. "1 week" / "2 weeks". */
+  label: string;
+}
+
+/** One weekday segment in the Custom repeat's day-of-week control. */
+export interface ScheduledTaskCustomDayOption {
+  /** Segment value: the APScheduler-convention day string `'0'` (Monday) – `'6'` (Sunday). */
+  value: string;
+  /** Single-character visible label, e.g. "M". */
+  shortLabel: string;
+  /** Full day name used as the segment's accessible name, e.g. "Monday". */
+  fullName: string;
+}
+
 /** Current form field values for the {@link ScheduledTaskCreateForm} component. */
 export interface ScheduledTaskCreateFormValues {
   /** The scheduled task's display name (required). */
@@ -27,6 +45,8 @@ export interface ScheduledTaskCreateFormValues {
   dayOfMonth?: string;
   /** Minute of the hour (`'0'`-`'59'`) used when `repeat` is `'hourly'`. */
   minute?: string;
+  /** Week-count (`'1'`-`'10'`) used when `repeat` is `'custom'`. */
+  everyWeeks?: string;
   /** Window-start boundary: `YYYY-MM-DD` for day-based repeats, `YYYY-MM-DDTHH:mm` for `'hourly'`. Ignored when `repeat` is `'oneTime'`. */
   startDate?: string;
   /** Window-end boundary: `YYYY-MM-DD` for day-based repeats, `YYYY-MM-DDTHH:mm` for `'hourly'`. Ignored when `repeat` is `'oneTime'`. */
@@ -103,6 +123,12 @@ export interface ScheduledTaskCreateFormLabels extends TextRefinementLabels {
   dayOfMonthLabel: string;
   /** Minute field label (shown when `repeat` is "hourly"). */
   minuteLabel: string;
+  /** "Every" field label for the Custom repeat's week-count dropdown. */
+  everyLabel: string;
+  /** Options rendered in the Custom repeat's "Every" dropdown ("1 week"…"10 weeks"). */
+  everyWeekOptions: ScheduledTaskEveryWeekOption[];
+  /** Weekday segments for the Custom repeat's day-of-week control, Monday-first. */
+  customDayOptions: ScheduledTaskCustomDayOption[];
   /** Start-date field label (shown when `repeat` is not "oneTime"; the field itself is optional, so this label carries no required marker). */
   startDateLabel: string;
   /** Start-date-and-time field label (shown when `repeat` is "hourly"; the field itself is optional, so this label carries no required marker). */

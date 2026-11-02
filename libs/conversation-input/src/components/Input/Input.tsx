@@ -14,6 +14,9 @@ import {
   Dropdown,
   ErrorText,
   GhostIconButton,
+  LiveRegion,
+  LiveRegionElement,
+  LiveRegionPoliteness,
 } from '@epam/ai-dial-ui-kit';
 import { IconFile, IconMicrophone } from '@tabler/icons-react';
 import {
@@ -184,6 +187,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
             colors?.mentionHighlightUnsupportedBg,
           '--ci-mention-highlight-unsupported-text':
             colors?.mentionHighlightUnsupportedText,
+          '--ci-selection-highlight-bg': colors?.selectionHighlightBg,
         }),
       [colors],
     );
@@ -214,6 +218,25 @@ export const Input = forwardRef<InputHandle, InputProps>(
       messageRevision,
     });
 
+    /*
+     * An autofocused textarea created already holding text keeps its caret at the
+     * start, so typing would land in front of a seeded `/skill` mention. Only a
+     * focused textarea is touched: `setSelectionRange` on an unfocused one moves
+     * focus in some WebKit versions, and `useTextInsertion` already inserts at
+     * the end of a composer nobody has focused.
+     */
+    useEffect(() => {
+      const textarea = textareaRef.current;
+      if (
+        textarea == null ||
+        textarea.value.length === 0 ||
+        document.activeElement !== textarea
+      ) {
+        return;
+      }
+      textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+    }, [textareaRef]);
+
     useEffect(() => {
       if (focusRequestId !== undefined) textareaRef.current?.focus();
     }, [focusRequestId, textareaRef]);
@@ -227,7 +250,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
       [message, textareaRef],
     );
 
-    const { handleUndoKeyDown } = useTextInsertion({
+    const { handleUndoKeyDown, markCaretPlaced } = useTextInsertion({
       insertion: textInsertion,
       textareaRef,
     });
@@ -472,6 +495,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
         caretPositionOverride,
         caretPositionOverride,
       );
+      markCaretPlaced();
       /* Re-evaluates the command menu for this new caret position — a programmatic restore can land the caret back in a matching `/word`. */
       handleCommandMenuCaretMove(caretPositionOverride);
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -920,7 +944,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
           styles.textarea,
           isMirrorActive && styles.textareaMentionMode,
           typography?.fontClassName || 'dial-body-paragraph-text',
-          'relative z-0 [field-sizing:content] max-h-[272px] w-full resize-none overflow-y-auto border-0 bg-transparent ps-1 pe-1 outline-hidden',
+          'relative z-0 field-sizing-content max-h-[272px] w-full resize-none overflow-y-auto border-0 bg-transparent ps-1 pe-1 outline-hidden',
           'disabled:cursor-not-allowed',
         )}
         ref={textareaRef}
@@ -1061,7 +1085,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
               styles.textarea,
               typography?.fontClassName || 'dial-body-paragraph-text',
               // Bleed room for chip edges — see `openspec/changes/archive/2026-09-25-multi-skill-message-mentions/design.md` Decision 3a.
-              'pointer-events-none absolute inset-0 z-10 max-h-[272px] w-full overflow-hidden ps-1 pe-1 [overflow-wrap:anywhere] whitespace-pre-wrap',
+              'pointer-events-none absolute inset-0 z-10 max-h-[272px] w-full overflow-hidden ps-1 pe-1 wrap-anywhere whitespace-pre-wrap',
             )}
           >
             {renderHighlightedText(
@@ -1075,7 +1099,10 @@ export const Input = forwardRef<InputHandle, InputProps>(
               <div
                 key={`selection-${index}`}
                 aria-hidden
-                className="pointer-events-none absolute rounded-sm bg-control-accent-alpha-active"
+                className={mergeClasses(
+                  'pointer-events-none absolute rounded-sm',
+                  styles.selectionHighlight,
+                )}
                 /*
                  * A measured pixel rect from `Range.getClientRects()` — see
                  * the `left`/`top` exception noted on `caretAnchor` above.
@@ -1157,10 +1184,17 @@ export const Input = forwardRef<InputHandle, InputProps>(
       </div>
     );
 
+    /*
+     * In the wrapping row the chips never shrink below their own width, so on
+     * a phone the trailing actions wrap to the next line instead of crushing
+     * a chip down to its icon. `max-w-full` still lets one over-long chip
+     * truncate its label.
+     */
     const chipsNode = visibleTools.length > 0 && onToolToggle != null && (
       <div
         className={mergeClasses(
-          'min-w-0 flex-1',
+          'min-w-0',
+          isInlineActionRow ? 'flex-1' : 'max-w-full flex-[1_0_auto]',
           CONVERSATION_INPUT_CLASS.toolsChips,
         )}
       >
@@ -1245,12 +1279,13 @@ export const Input = forwardRef<InputHandle, InputProps>(
             onChange={handleFileChange}
           />
         )}
-        {/* A failed dictation is not a field error: announce it. */}
-        {voiceError && (
-          <div role="alert" className="min-w-0 px-1 wrap-break-word">
-            <ErrorText text={voiceError} />
-          </div>
-        )}
+        {/* A failed dictation is not a field error: announce it. Mounted before the failure so it is announced; out of the column gap while empty. */}
+        <LiveRegion
+          politeness={LiveRegionPoliteness.Assertive}
+          className="min-w-0 px-1 wrap-break-word"
+        >
+          {voiceError && <ErrorText text={voiceError} />}
+        </LiveRegion>
         {isVoiceActive && (
           <VoiceBar
             embedded
@@ -1298,7 +1333,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
             {!isInlineActionRow && chipsNode}
             <div
               className={mergeClasses(
-                'ms-auto flex flex-shrink-0 items-center gap-2',
+                'ms-auto flex shrink-0 items-center gap-2',
                 CONVERSATION_INPUT_CLASS.footerActions,
               )}
             >
@@ -1313,6 +1348,8 @@ export const Input = forwardRef<InputHandle, InputProps>(
                     onDeploymentChange={onDeploymentChange}
                     modelSelectorLabels={modelSelectorLabels}
                     menuStyles={modelMenu}
+                    nameClassName={typography?.modelSelectorNameClassName}
+                    versionClassName={typography?.modelSelectorVersionClassName}
                     isStreaming={isStreaming}
                     isMobile={isMobile}
                     isDisabled={isModelSelectorDisabled}
@@ -1333,7 +1370,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
                       }
                       aria-label={micLabel}
                       tooltipProps={{ tooltip: micLabel }}
-                      className="size-[40px] shrink-0 mobile:min-h-11 mobile:min-w-11"
+                      className="shrink-0"
                       onClick={() =>
                         startRecording(VoiceRecordingMode.Dictation)
                       }
@@ -1361,14 +1398,9 @@ export const Input = forwardRef<InputHandle, InputProps>(
             </div>
           </div>
         )}
-        <span
-          className="sr-only"
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-        >
+        <LiveRegion visuallyHidden atomic as={LiveRegionElement.Span}>
           <span key={latestTranscript.revision}>{latestTranscript.text}</span>
-        </span>
+        </LiveRegion>
       </div>
     );
   },

@@ -2,6 +2,7 @@ import {
   SEMVER_VERSION_PATTERN,
   type DeploymentCreationFormValues,
 } from '@epam/ai-dial-builder-form';
+import { CatalogCreationType } from '@epam/ai-dial-chat-api-client';
 import type {
   CreateApplicationBodyDto,
   DeploymentItemDto,
@@ -22,6 +23,7 @@ import { ToolsetEditorQuery } from '../../../constants/toolsets';
 import {
   CustomAppI18nKeys,
   EditorI18nKeys,
+  ButtonsI18nKeys,
 } from '../../../constants/translation-keys';
 import type { ApplicationSetupErrors } from '../../../models/application-editor';
 import type { CustomAppFormData } from '../../../models/custom-apps';
@@ -150,6 +152,7 @@ const update = (
 /** Schema-less custom application: Metadata plus completion URL, features, and attachment limits. */
 export const customAppDefinition = defineApplicationEditor<CustomAppFormData>({
   kind: ApplicationEditorKind.CustomApp,
+  creationType: CatalogCreationType.CustomApp,
   notifiableEntity: NotifiableEntity.CustomApp,
   createStrategy: ApplicationCreateStrategy.AllAtOnce,
   idQueryParam: ToolsetEditorQuery.Id,
@@ -172,7 +175,7 @@ export const customAppDefinition = defineApplicationEditor<CustomAppFormData>({
   confirmation: {
     titleKey: CustomAppI18nKeys.SaveConfirmTitle,
     descriptionKey: CustomAppI18nKeys.SaveConfirmDescription,
-    confirmKey: CustomAppI18nKeys.SaveConfirmLabel,
+    confirmKey: ButtonsI18nKeys.Save,
   },
   Setup: CustomAppSetup,
   create,

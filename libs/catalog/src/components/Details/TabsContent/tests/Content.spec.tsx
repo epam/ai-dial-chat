@@ -390,16 +390,44 @@ describe('ContentTab — file selector', () => {
     expect(status.getAttribute('role')).toBe('status');
   });
 
+  it('keeps the loading status region mounted and fills it when a file starts loading', () => {
+    const { rerender } = render(
+      <ContentTab
+        content=""
+        files={flatFiles}
+        selectedFileId="analyzer.md"
+        fileLoadingLabel="Loading file"
+      />,
+    );
+    /* The loading region precedes the preview, which may carry live regions of its own. */
+    const status = screen.getAllByRole('status')[0];
+    expect(status.textContent).toBe('');
+
+    rerender(
+      <ContentTab
+        content=""
+        files={flatFiles}
+        selectedFileId="analyzer.md"
+        isFileLoading
+        fileLoadingLabel="Loading file"
+      />,
+    );
+
+    expect(screen.getAllByRole('status')[0]).toBe(status);
+    expect(status.textContent).toBe('Loading file');
+  });
+
   it('announces nothing once the file has loaded', () => {
     render(
       <ContentTab
         content="Body"
         files={flatFiles}
         selectedFileId="analyzer.md"
+        fileLoadingLabel="Loading file"
       />,
     );
 
-    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.queryByText('Loading file')).toBeNull();
   });
 
   it('renders a host-supplied file tree in place of the built-in one', async () => {

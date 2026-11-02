@@ -40,6 +40,7 @@ the mobile layout does — pass `isOverlay` so the panel slides in and out at fu
 width rather than collapsing in place.
 
 ```tsx
+import { FilterTab } from '@epam/ai-dial-chat-shared';
 import { ConversationPanel } from '@epam/ai-dial-conversation-panel';
 import type { ConversationPanelProps } from '@epam/ai-dial-conversation-panel';
 
@@ -59,6 +60,12 @@ import type { ConversationPanelProps } from '@epam/ai-dial-conversation-panel';
     noResultsDescription: 'Try a different search term or check your filters.',
     sharedEmptyDescription:
       'Chats other people share with you will show up here.',
+    tabEmptyLabels: {
+      [FilterTab.Shared]: {
+        label: 'No shared chats yet',
+        description: 'Chats other people share with you will show up here.',
+      },
+    },
     newChatLabel: 'New chat',
     searchPlaceholder: 'Search…',
     searchClearLabel: 'Clear search',
@@ -99,6 +106,23 @@ actions and the active-row scroll behave identically. Search text and the
 filter arrive as controlled props, so the host decides where those controls
 live.
 
+`isUpdatingTitles` keeps the loaded rows interactive while the host fills in
+missing names. An empty text search shows `labels.updatingTitlesLabel` (default:
+"Updating conversation names") until this flag clears, instead of reporting
+that no conversation exists. It also announces the update through the list's
+live region. `preserveActiveSearchResult` keeps a matching opened row visible
+if its title changes, until the search query changes; source and type filters
+still apply. Both options default to `false` and are also available on
+`ConversationListSection` and `ConversationPanel`. The host owns requests,
+cancellation, failures and when to finish the update state.
+
+`onVisibleConversationIdsChange(ids)` reports the distinct conversation IDs of
+the rows actually inside the virtual viewport, in row order — group headers and
+overscan rows excluded — whenever that sequence changes. It reports `[]` while
+the list is loading, empty or showing no search results. The list only reports
+IDs; a host uses them, for example, to resolve visible titles first. It is also
+available on `ConversationListSection` and `ConversationPanel`.
+
 ```tsx
 import {
   ConversationList,
@@ -115,6 +139,7 @@ import { FilterTab } from '@epam/ai-dial-chat-shared';
   rowVariant={ConversationRowVariant.Indicator}
   getActions={buildRowActions}
   onMoveConversation={handleMove}
+  onVisibleConversationIdsChange={handleVisibleIdsChange}
   labels={{
     emptyLabel: 'No conversations yet',
     noResultsLabel: 'No results found',
@@ -133,7 +158,8 @@ always renders `Avatar` rows.
 
 `styles.typography.fontClassName` puts one typography class on the list root, which rows
 and group headers inherit unless they set their own (`groupHeaderClassName`,
-`itemTitleClassName`), and `styles.typography.fontFamily` sets its `font-family`
+`itemTitleClassName`, `unreadItemTitleClassName` — `'dial-small-semi-text'` by
+default for an unread title), and `styles.typography.fontFamily` sets its `font-family`
 (`--cp-list-font-family`). `ConversationPanel` forwards `fontFamily` but not
 `fontClassName`, which there names the title.
 
@@ -193,7 +219,9 @@ While `activeFilter` or `activeTypeFilter` is not `All`, the filter trigger
 carries a dot and is described by `labels.filterActiveLabel` (default
 `'Filters applied'`) for assistive tech; `styles.colors.filterIndicator`
 recolors the dot (`--cp-list-header-filter-indicator`, defaults to
-`--text-accent`).
+`--text-accent`), and `styles.colors.filterValue` recolors each filter row's
+current value in the menu (`--cp-list-header-filter-value`, defaults to
+`--text-secondary`).
 
 ### ConversationListSection
 
@@ -234,6 +262,10 @@ search and no filter applied, and `noResultsLabel` / `noResultsDescription`
 when a search or a filter (origin or type other than `All`) matches nothing.
 Under the `Shared` filter with no search, the description is
 `sharedEmptyDescription`, which falls back to `noResultsDescription`.
+`tabEmptyLabels` goes further: when one filter tab alone narrows the list to
+nothing (no search typed, type filter at `All`), its `label` and `description`
+replace `noResultsLabel` and the description above, each falling back to them
+when left out.
 
 `requestedFilter` makes the section adopt a filter whenever it changes (the user
 can still pick another afterwards), `onFilterChange` reports the user's choice,
@@ -242,8 +274,8 @@ can still pick another afterwards), `onFilterChange` reports the user's choice,
 the chosen type, and `hiddenSources` removes sources from the list altogether.
 A conversation is a task when its `ConversationItem.kind` is
 `ConversationKind.Task` (from `@epam/ai-dial-chat-shared`); without a kind it is
-a chat. Row actions, `onActionMenuOpen` and
-`onMoveConversation` go to the list unchanged, `headerActions` to the header,
+a chat. Row actions, `onActionMenuOpen`, `onMoveConversation` and
+`onVisibleConversationIdsChange` go to the list unchanged, `headerActions` to the header,
 and `styles.header` / `styles.list` to the matching component. `listClassName`
 is merged onto the list root, for a host anchor. The section fills the height
 its parent gives it, with the list scrolling inside.
@@ -490,7 +522,7 @@ Payload for a completed drag-and-drop move: the dragged `draggedId`, the
 
 The floating queue that shows export/import job progress is no longer part of
 this package: it is the UI kit's generic `TransferQueue`
-(`@epam/ai-dial-ui-kit` `^0.16.0-dev.35`). A host maps its
+(`@epam/ai-dial-ui-kit` `^0.16.0-dev.59`). A host maps its
 `ConversationTransferJob`s (from `@epam/ai-dial-chat-shared`) onto
 `TransferQueueItem`s — `id`, `fileName` as `name`, the status, `progress.percent`
 as `percent`, and the translated failure or warning reason as `message` — and

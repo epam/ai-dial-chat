@@ -39,7 +39,7 @@ export const translateDeploymentCreationErrors = (
     errors.name = translateNameCode(codes.name, t);
   }
   if (codes.version) {
-    errors.version = t(EditorI18nKeys.VersionInvalid);
+    errors.version = t(AppsEditorI18nKeys.GeneralFormVersionInvalid);
   }
   if (codes.description) {
     errors.description = t(EditorI18nKeys.FieldTooLong, {

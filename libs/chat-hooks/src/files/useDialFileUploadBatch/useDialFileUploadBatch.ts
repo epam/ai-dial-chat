@@ -271,6 +271,7 @@ export const useDialFileUploadBatch = ({
         let successCount = 0;
         let failedCount = 0;
         let canceledCount = 0;
+        const failureReasons = new Set<FileUploadFailureReason>();
 
         const worker = async () => {
           while (nextIndex < files.length) {
@@ -333,6 +334,7 @@ export const useDialFileUploadBatch = ({
               } else {
                 failedCount += 1;
                 const failureReason = await resolveUploadFailureReason(error);
+                failureReasons.add(failureReason);
                 setUploadBatchState((prev) =>
                   updateEntry(prev, id, {
                     status: FileUploadStatus.Failed,
@@ -353,9 +355,13 @@ export const useDialFileUploadBatch = ({
         /* A batch the user canceled outright gets no toast — the queue already says so. */
         if (canceledCount < files.length) {
           if (successCount === 0 && failedCount > 0) {
+            const [sharedFailureReason] = failureReasons;
             onNotification?.({
               variant: NotificationVariant.Error,
               reason: FileManagerNotificationReason.UploadFailed,
+              ...(failureReasons.size === 1 && {
+                failureReason: sharedFailureReason,
+              }),
             });
           } else if (successCount > 0) {
             onNotification?.({

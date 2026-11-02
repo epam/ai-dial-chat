@@ -19,6 +19,32 @@ import {
 import { Header } from '../Header';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  LiveRegionPoliteness: { Polite: 'polite', Assertive: 'assertive' },
+  LiveRegionElement: { Div: 'div', Span: 'span', P: 'p' },
+  LiveRegion: ({
+    politeness = 'polite',
+    visuallyHidden,
+    as: Tag = 'div',
+    atomic,
+    className,
+    children,
+    ...rest
+  }: {
+    politeness?: string;
+    visuallyHidden?: boolean;
+    as?: 'div' | 'span' | 'p';
+    atomic?: boolean;
+  } & React.HTMLAttributes<HTMLElement>) => (
+    <Tag
+      {...rest}
+      role={politeness === 'assertive' ? 'alert' : 'status'}
+      aria-live={politeness as 'polite' | 'assertive'}
+      aria-atomic={atomic}
+      className={visuallyHidden ? 'sr-only' : className}
+    >
+      {children}
+    </Tag>
+  ),
   DIAL_KIT_ICON_STROKE: 1.5,
   CaptionText: ({ id, text }: { id?: string; text?: string }) =>
     text ? <span id={id}>{text}</span> : null,
@@ -199,10 +225,16 @@ vi.mock('../ShareButton/ShareButton', () => ({
 }));
 vi.mock('../CredentialsApiKeyOverlay/CredentialsApiKeyOverlay', () => ({
   CredentialsApiKeyOverlay: ({
+    level,
     status,
   }: {
+    level: 'USER' | 'GLOBAL';
     status?: 'SIGNED_IN' | 'SIGNED_OUT' | 'FAILED';
-  }) => <div>{status === 'SIGNED_IN' ? 'Delete' : 'Add'} popover content</div>,
+  }) => (
+    <div>
+      {status === 'SIGNED_IN' ? 'Delete' : 'Add'} {level} popover content
+    </div>
+  ),
 }));
 
 const makeItem = (type: CatalogEntityType): CatalogItem => ({
@@ -728,6 +760,8 @@ describe('Header — Download as primary action', () => {
         onDownload={onDownload}
       />,
     );
+    const status = screen.getByRole('status');
+    expect(status.textContent).toBe('');
 
     await userEvent.click(screen.getByRole('button', { name: 'Download' }));
 
@@ -736,7 +770,8 @@ describe('Header — Download as primary action', () => {
     }) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
     expect(button.getAttribute('aria-busy')).toBe('true');
-    expect(screen.getByRole('status').textContent).toBe('Downloading');
+    expect(screen.getByRole('status')).toBe(status);
+    expect(status.textContent).toBe('Downloading');
 
     resolveDownload();
     await waitFor(() =>
@@ -1447,12 +1482,29 @@ describe('Header', () => {
       expect(onOpenCredentialsManagement).toHaveBeenCalledOnce();
     });
 
-    it('calls onLogin directly at USER level when Log in is clicked', async () => {
+    it('calls onLogin directly at GLOBAL level when Log in is clicked on a private toolset', async () => {
       const onLogin = vi.fn();
       const item = {
         ...makeItem(CatalogEntityType.Toolset),
         credentials: {
           authenticationType: ToolsetAuthenticationType.OAuth,
+          userStatus: CredentialStatus.SignedOut,
+        },
+      };
+      render(<Header item={item} onLogin={onLogin} />);
+      await userEvent.click(screen.getByRole('button', { name: 'Log in' }));
+      expect(onLogin).toHaveBeenCalledWith(item, {
+        level: CredentialsLevel.Global,
+      });
+    });
+
+    it('calls onLogin directly at USER level when Log in is clicked on a public toolset', async () => {
+      const onLogin = vi.fn();
+      const item = {
+        ...makeItem(CatalogEntityType.Toolset),
+        credentials: {
+          authenticationType: ToolsetAuthenticationType.OAuth,
+          isPublic: true,
           userStatus: CredentialStatus.SignedOut,
         },
       };
@@ -1609,7 +1661,7 @@ describe('Header', () => {
       );
       await userEvent.click(screen.getByRole('button', { name: 'API key' }));
       expect(onLogin).not.toHaveBeenCalled();
-      expect(screen.getByText('Add popover content')).toBeTruthy();
+      expect(screen.getByText('Add GLOBAL popover content')).toBeTruthy();
     });
 
     it('opens the popover showing the delete affordance when already signed in', async () => {
@@ -1628,7 +1680,43 @@ describe('Header', () => {
       await userEvent.click(
         screen.getByRole('button', { name: 'Change API key' }),
       );
-      expect(screen.getByText('Delete popover content')).toBeTruthy();
+      expect(screen.getByText('Delete USER popover content')).toBeTruthy();
+    });
+
+    it("manages the owner's GLOBAL key in the popover of a private toolset signed in globally", async () => {
+      render(
+        <Header
+          item={{
+            ...makeItem(CatalogEntityType.Toolset),
+            credentials: {
+              authenticationType: ToolsetAuthenticationType.ApiKey,
+              globalStatus: CredentialStatus.SignedIn,
+            },
+          }}
+          onLogout={vi.fn()}
+        />,
+      );
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Change API key' }),
+      );
+      expect(screen.getByText('Delete GLOBAL popover content')).toBeTruthy();
+    });
+
+    it('adds a personal USER key in the popover of a public toolset', async () => {
+      render(
+        <Header
+          item={{
+            ...makeItem(CatalogEntityType.Toolset),
+            credentials: {
+              authenticationType: ToolsetAuthenticationType.ApiKey,
+              isPublic: true,
+            },
+          }}
+          onLogin={vi.fn()}
+        />,
+      );
+      await userEvent.click(screen.getByRole('button', { name: 'API key' }));
+      expect(screen.getByText('Add USER popover content')).toBeTruthy();
     });
 
     it('renders Manage API keys when isManageableByAdmin is true', () => {
@@ -1668,7 +1756,7 @@ describe('Header', () => {
         screen.getByRole('button', { name: 'Manage API keys' }),
       );
       expect(onOpenCredentialsManagement).toHaveBeenCalledOnce();
-      expect(screen.queryByText('Add popover content')).toBeNull();
+      expect(screen.queryByText(/popover content/)).toBeNull();
     });
   });
 

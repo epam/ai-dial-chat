@@ -1,6 +1,8 @@
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import type { FC } from 'react';
 import { Suspense, useCallback } from 'react';
 import type { AvatarPickerModalProps } from '../../models/avatar-picker-modal';
+import styles from './AvatarPickerModal.module.scss';
 
 /** File manager modal restricted to a single image up to a host-configured size, for picking an entity's avatar. */
 export const AvatarPickerModal: FC<AvatarPickerModalProps> = ({
@@ -12,7 +14,12 @@ export const AvatarPickerModal: FC<AvatarPickerModalProps> = ({
   allowedMimeTypes,
   maxFileSizeBytes,
   labels,
+  confirmBodyClassName = 'dial-small-text',
+  styles: stylesProp,
 }) => {
+  const confirmTextColor = stylesProp?.colors?.confirmText;
+  const confirmItemTextColor = stylesProp?.colors?.confirmItemText;
+
   const deleteConfirmTitle = useCallback(
     (names: string[]) =>
       names.length === 1
@@ -23,19 +30,27 @@ export const AvatarPickerModal: FC<AvatarPickerModalProps> = ({
 
   const deleteConfirmBody = useCallback(
     (names: string[]) => (
-      <div className="dial-small-text px-6 py-3">
-        <p className="mb-3 text-secondary">
+      <div
+        className={mergeClasses(confirmBodyClassName, 'px-6 py-3')}
+        style={buildCssVars({
+          '--apm-confirm-text': confirmTextColor,
+          '--apm-confirm-item-text': confirmItemTextColor,
+        })}
+      >
+        <p className={mergeClasses('mb-3', styles.confirmText)}>
           {names.length === 1 ? (
             <>
               {labels.deleteConfirmSingleText}{' '}
-              <span className="wrap-break-word text-primary">
+              <span
+                className={mergeClasses('wrap-break-word', styles.confirmItem)}
+              >
                 &quot;{names[0].split('/').pop()}&quot;?
               </span>
             </>
           ) : (
             <>
               {labels.deleteConfirmMultipleText}{' '}
-              <span className="text-primary">
+              <span className={styles.confirmItem}>
                 {names.length} {labels.deleteConfirmItemsLabel}
               </span>
             </>
@@ -47,6 +62,9 @@ export const AvatarPickerModal: FC<AvatarPickerModalProps> = ({
       labels.deleteConfirmSingleText,
       labels.deleteConfirmMultipleText,
       labels.deleteConfirmItemsLabel,
+      confirmTextColor,
+      confirmItemTextColor,
+      confirmBodyClassName,
     ],
   );
 

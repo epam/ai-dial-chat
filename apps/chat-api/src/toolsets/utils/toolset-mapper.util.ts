@@ -371,6 +371,7 @@ export const mapAuthSettings = (
     dynamicallyRegistered: getBoolean(raw, 'dynamically_registered'),
     apiKeyHeader: getString(raw, 'api_key_header'),
     clientId: getString(raw, 'client_id'),
+    clientSecretHint: getString(raw, 'client_secret_hint'),
     redirectUri: getString(raw, 'redirect_uri'),
     authorizationEndpoint: getString(raw, 'authorization_endpoint'),
     tokenEndpoint: getString(raw, 'token_endpoint'),

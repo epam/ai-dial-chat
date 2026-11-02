@@ -6,8 +6,8 @@ import {
 } from '@epam/ai-dial-chat-api-client';
 import {
   deriveConversationRowActionState,
-  findDeploymentByIdOrReference,
-  findDeploymentForConversationId,
+  createDeploymentLookup,
+  getModelIdCandidatesFromConversationId,
   getApiErrorDetails,
   getConversationPath,
   safeDecodeURIComponent,
@@ -17,6 +17,7 @@ import {
   useConversationPanelItems,
   useImportFilePicker,
 } from '@epam/ai-dial-chat-hooks';
+import { applyActiveScheduledTaskRun } from '@epam/ai-dial-chat-hooks/conversation';
 import {
   ConversationExportMode,
   ConversationTransferWarningCode,
@@ -29,9 +30,12 @@ import {
 import { useShareRecipientsCount } from '@epam/ai-dial-chat-hooks/sharing';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
+  ConfirmationDialog,
   ConversationTransferErrorCode,
   DeleteConfirmationDialog,
   FilterTab,
+  toConversationTransferQueueItems as toTransferQueueItems,
+  useIsMobile,
 } from '@epam/ai-dial-chat-shared';
 import {
   ConversationListSection,
@@ -73,6 +77,8 @@ import {
   Suspense,
   useCallback,
   useEffect,
+  useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -94,14 +100,12 @@ import {
   ConversationImportI18nKeys,
   ConversationPanelI18nKeys,
   ConversationUnpublishI18nKeys,
-  ShareI18nKeys,
 } from '../../constants/translation-keys';
 import { useFeatureFlag } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
-import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { useConversationPublishHistory } from '../../hooks/useConversationPublishHistory/useConversationPublishHistory';
@@ -126,10 +130,7 @@ import {
 } from '../../types/entity-notification';
 import { PublishHistoryStatus } from '../../types/publish-history';
 import { ROUTES } from '../../types/routes';
-import {
-  applyActiveScheduledTaskRun,
-  groupScheduledTaskConversations,
-} from '../../utils/collapse-scheduled-task-conversations';
+import { groupScheduledTaskConversations } from '../../utils/collapse-scheduled-task-conversations';
 import {
   conversationIdsMatch,
   toPanelConversationId,
@@ -139,7 +140,6 @@ import {
   getExportErrorKey,
   getExportFailureToastKey,
   getImportErrorKey,
-  toTransferQueueItems,
 } from '../../utils/conversation-transfer';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
@@ -183,6 +183,8 @@ interface ConversationPanelViewProps {
   onRequestedFilterChange?: () => void;
   onActiveFilterChange?: (tab: FilterTab) => void;
   onDuplicateReadonly?: () => void;
+  /* False while the desktop sidebar is collapsed or the mobile drawer is closed. */
+  isVisible?: boolean;
 }
 
 const ConversationPanelView: FC<ConversationPanelViewProps> = ({
@@ -192,6 +194,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   onRequestedFilterChange,
   onActiveFilterChange,
   onDuplicateReadonly,
+  isVisible = true,
 }) => {
   const { t } = useTranslation();
   const deleteConfirmationLabels = useDeleteConfirmationLabels();
@@ -227,6 +230,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   const {
     conversations: items,
     isLoading,
+    isUpdatingTitles,
     pinConversation,
     markConversationViewed,
     deleteConversation,
@@ -234,6 +238,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     generateConversationTitle,
     duplicateConversation,
     refreshConversations,
+    setVisibleConversationIds,
   } = useConversations();
   const classifyTransferError = useCallback((error: unknown) => {
     if (error instanceof UnauthorizedError) return { isUnauthorized: true };
@@ -381,11 +386,39 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     selectedItemId,
   } = useDeployments();
 
+  /* Menu lookups run for every visible row after recipient/history updates.
+     Normalize the deployment list once instead of scanning it per candidate. */
+  const findDeployment = useMemo(
+    () => createDeploymentLookup(deployments),
+    [deployments],
+  );
+
+  /*
+   * Only scheduled runs are marked viewed from here. The sync fires on every
+   * re-entry into a chat, and the panel cannot tell whether the chat is still
+   * generating: writing the id to the viewed ids mid-stream would hide the dot
+   * for good. The conversation page marks regular chats once no generation is
+   * running.
+   */
+  const itemsRef = useRef(items);
+  useLayoutEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
+  const markScheduledRunViewed = useCallback(
+    (id: string) => {
+      const item = itemsRef.current.find((c) => conversationIdsMatch(c.id, id));
+      return item?.isScheduledTask
+        ? markConversationViewed(id)
+        : Promise.resolve();
+    },
+    [markConversationViewed],
+  );
+
   const panelActiveConversationId = useActiveConversationSync({
     activeConversationId,
     items,
     refreshConversations,
-    markConversationViewed,
+    markConversationViewed: markScheduledRunViewed,
     conversationIdsMatch,
     toPanelConversationId,
   });
@@ -622,6 +655,45 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     [scheduledTaskGrouping, activeConversationId],
   );
 
+  /*
+   * Viewport priority for title enrichment. The list reports panel ids; the
+   * context schedules by list resource ids. A hidden view keeps its last
+   * report so reopening restores priority without waiting for a scroll.
+   */
+  const visibilityKey = useId();
+  const panelIdToConversationIdRef = useRef(new Map<string, string>());
+  useEffect(() => {
+    panelIdToConversationIdRef.current = new Map(
+      panelItems.map((item) => [toPanelConversationId(item.id), item.id]),
+    );
+  }, [panelItems]);
+  const lastVisibleIdsRef = useRef<string[]>([]);
+  const isVisibleRef = useRef(isVisible);
+  const registerVisibleIds = useCallback(() => {
+    setVisibleConversationIds(
+      visibilityKey,
+      isVisibleRef.current ? lastVisibleIdsRef.current : null,
+    );
+  }, [setVisibleConversationIds, visibilityKey]);
+  const handleVisibleConversationIdsChange = useCallback(
+    (panelIds: string[]) => {
+      lastVisibleIdsRef.current = panelIds.flatMap((panelId) => {
+        const id = panelIdToConversationIdRef.current.get(panelId);
+        return id ? [id] : [];
+      });
+      registerVisibleIds();
+    },
+    [registerVisibleIds],
+  );
+  useEffect(() => {
+    isVisibleRef.current = isVisible;
+    registerVisibleIds();
+  }, [isVisible, registerVisibleIds]);
+  useEffect(
+    () => () => setVisibleConversationIds(visibilityKey, null),
+    [setVisibleConversationIds, visibilityKey],
+  );
+
   const conversations = useConversationPanelItems({
     items: panelItems,
     deployments,
@@ -632,6 +704,25 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     resolveHref,
     resolveTaskPresentation,
   });
+
+  /*
+   * The open chat is never shown as unread: watching a chat that is generating
+   * must not flash a dot, and the dot appears the moment the user navigates
+   * away. A display rule only — the list keeps the chat unread, so leaving
+   * mid-stream needs no extra state. Keeps the mapped array while the open row
+   * carries no dot, so most navigations leave every row untouched.
+   */
+  const displayedConversations = useMemo(() => {
+    const unreadActiveIndex = panelActiveConversationId
+      ? conversations.findIndex(
+          (c) => c.id === panelActiveConversationId && c.isUnread,
+        )
+      : -1;
+    if (unreadActiveIndex === -1) return conversations;
+    const next = conversations.slice();
+    next[unreadActiveIndex] = { ...next[unreadActiveIndex], isUnread: false };
+    return next;
+  }, [conversations, panelActiveConversationId]);
 
   const filterLabels = useMemo(
     () => ({
@@ -747,10 +838,17 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       const isActiveRow =
         activeIdAtRender != null &&
         conversationIdsMatch(panelItem.id, activeIdAtRender);
-      const rowDeployment =
-        isActiveRow && selectedItemId
-          ? findDeploymentByIdOrReference(deployments, selectedItemId)
-          : findDeploymentForConversationId(deployments, contextId);
+      let rowDeployment: DeploymentItemDto | undefined;
+      if (isActiveRow && selectedItemId) {
+        rowDeployment = findDeployment(selectedItemId);
+      } else {
+        for (const candidate of getModelIdCandidatesFromConversationId(
+          contextId,
+        )) {
+          rowDeployment = findDeployment(candidate);
+          if (rowDeployment) break;
+        }
+      }
       const isModelHidden = !!rowDeployment?.isHidden;
 
       const {
@@ -772,8 +870,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       const pinAction: DropdownItem = {
         key: 'pin',
         label: panelItem.isPinned
-          ? t(ConversationPanelI18nKeys.UnpinLabel)
-          : t(ConversationPanelI18nKeys.PinLabel),
+          ? t(ButtonsI18nKeys.Unpin)
+          : t(ButtonsI18nKeys.Pin),
         icon: panelItem.isPinned ? (
           <IconPinnedFilled
             size={DIAL_ICON_SIZE.MD}
@@ -912,7 +1010,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           ? [
               {
                 key: 'share',
-                label: t(ShareI18nKeys.Title),
+                label: t(ButtonsI18nKeys.Share),
                 icon: (
                   <IconShare
                     size={DIAL_ICON_SIZE.MD}
@@ -1049,7 +1147,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     [
       toContextId,
       getRawItem,
-      deployments,
+      findDeployment,
       selectedItemId,
       t,
       pinConversation,
@@ -1349,12 +1447,26 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       emptyLabel: t(ConversationPanelI18nKeys.Empty),
       emptyDescription: t(ConversationPanelI18nKeys.EmptyDescription),
       noResultsLabel: t(ConversationPanelI18nKeys.NoResults),
+      updatingTitlesLabel: t(ConversationPanelI18nKeys.UpdatingTitles),
       noResultsDescription: t(BasicI18nKeys.NoResultsDescription),
-      sharedEmptyDescription: t(
-        ConversationPanelI18nKeys.SharedEmptyDescription,
-      ),
+      tabEmptyLabels: {
+        [FilterTab.MyChats]: {
+          label: t(ConversationPanelI18nKeys.MyChatsEmpty),
+          description: t(ConversationPanelI18nKeys.EmptyDescription),
+        },
+        [FilterTab.Shared]: {
+          label: t(ConversationPanelI18nKeys.SharedEmpty),
+          description: t(ConversationPanelI18nKeys.SharedEmptyDescription),
+        },
+        [FilterTab.Organization]: {
+          label: t(ConversationPanelI18nKeys.OrganizationEmpty),
+          description: t(
+            ConversationPanelI18nKeys.OrganizationEmptyDescription,
+          ),
+        },
+      },
       groupLabels,
-      actionsLabel: t(ConversationPanelI18nKeys.ActionsLabel),
+      actionsLabel: t(ButtonsI18nKeys.MoreActions),
       unreadIndicatorLabel,
     }),
     [t, filterLabels, groupLabels, unreadIndicatorLabel],
@@ -1362,8 +1474,10 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
 
   const sidebarBlock = (
     <ConversationListSection
-      conversations={conversations}
+      conversations={displayedConversations}
       isLoading={isLoading}
+      isUpdatingTitles={isUpdatingTitles}
+      preserveActiveSearchResult
       activeConversationId={panelActiveConversationId}
       requestedFilter={requestedFilter}
       isFilterHidden={isConversationsFilterHidden}
@@ -1375,6 +1489,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       getActions={getActions}
       onActionMenuOpen={handleActionMenuOpen}
       onMoveConversation={handleMoveConversation}
+      onVisibleConversationIdsChange={handleVisibleConversationIdsChange}
       listClassName={CELEBRATION_HISTORY_CLASS}
     />
   );
@@ -1441,58 +1556,49 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         {deleteError && <ErrorMessageNotification message={deleteError} />}
       </DeleteConfirmationDialog>
 
-      <ConfirmationPopup
+      {/* Keeps Cancel/Unpublish rendered and disabled while the request runs,
+          announcing progress through the footer's live region. */}
+      <ConfirmationDialog
         open={isUnpublishPending}
-        header={t(ConversationUnpublishI18nKeys.ConfirmTitle)}
+        title={t(ConversationUnpublishI18nKeys.ConfirmTitle)}
         confirmLabel={t(ButtonsI18nKeys.Unpublish)}
         cancelLabel={t(ButtonsI18nKeys.Cancel)}
         variant={ConfirmationPopupVariant.Danger}
         isLoading={isUnpublishing}
-        disableConfirmButton={
+        isConfirmDisabled={
           hasUnpublishFolderChoice && selectedUnpublishFolder == null
         }
-        description={
-          <>
-            <span className="wrap-break-word">
-              {hasUnpublishFolderChoice
-                ? t(ConversationUnpublishI18nKeys.SelectFolderMessage, {
-                    name: pendingUnpublish?.title ?? '',
-                  })
-                : t(ConversationUnpublishI18nKeys.ConfirmMessage, {
-                    name: pendingUnpublish?.title ?? '',
-                    folder: getPublishFolderLabel(unpublishFolders[0] ?? '', t),
-                  })}
-            </span>
-            {hasUnpublishFolderChoice && (
-              <RadioGroup
-                className="mt-3"
-                ariaLabel={t(
-                  ConversationUnpublishI18nKeys.FolderGroupAriaLabel,
-                )}
-                value={selectedUnpublishFolder ?? undefined}
-                onChange={setSelectedUnpublishFolder}
-                disabled={isUnpublishing}
-                items={unpublishFolders.map((folder) => ({
-                  value: folder,
-                  label: getPublishFolderLabel(folder, t),
-                }))}
-                radioClassName="dial-small-text text-primary"
-              />
-            )}
-          </>
+        loadingStatusLabel={t(ConversationUnpublishI18nKeys.RequestingStatus)}
+        message={
+          <span className="wrap-break-word">
+            {hasUnpublishFolderChoice
+              ? t(ConversationUnpublishI18nKeys.SelectFolderMessage, {
+                  name: pendingUnpublish?.title ?? '',
+                })
+              : t(ConversationUnpublishI18nKeys.ConfirmMessage, {
+                  name: pendingUnpublish?.title ?? '',
+                  folder: getPublishFolderLabel(unpublishFolders[0] ?? '', t),
+                })}
+          </span>
         }
         onConfirm={handleConfirmUnpublish}
-        onCancel={handleCloseUnpublishDialog}
         onClose={handleCloseUnpublishDialog}
-      />
-
-      {pendingUnpublish != null && (
-        <span role="status" aria-live="polite" className="sr-only">
-          {isUnpublishing
-            ? t(ConversationUnpublishI18nKeys.RequestingStatus)
-            : ''}
-        </span>
-      )}
+      >
+        {hasUnpublishFolderChoice && (
+          <RadioGroup
+            className="mt-3"
+            ariaLabel={t(ConversationUnpublishI18nKeys.FolderGroupAriaLabel)}
+            value={selectedUnpublishFolder ?? undefined}
+            onChange={setSelectedUnpublishFolder}
+            disabled={isUnpublishing}
+            items={unpublishFolders.map((folder) => ({
+              value: folder,
+              label: getPublishFolderLabel(folder, t),
+            }))}
+            radioClassName="dial-small-text text-primary"
+          />
+        )}
+      </ConfirmationDialog>
 
       <ConfirmationPopup
         open={isUnsharePending}
@@ -1583,7 +1689,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
                 header={t(ButtonsI18nKeys.Publish)}
                 onClose={handleClosePublishPanel}
               >
-                <p role="status">{t(BasicI18nKeys.Loading)}</p>
+                {/* Not a live region: the dialog mounts with this text, so
+                    opening it already reads it; mark the content busy. */}
+                <p aria-busy="true">{t(BasicI18nKeys.Loading)}</p>
               </Popup>
             }
           >

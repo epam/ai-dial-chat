@@ -296,6 +296,69 @@ describe('mapDeploymentToCatalogItem', () => {
 
     expect(result.supportsChat).toBe(true);
   });
+
+  describe('catalog tab membership', () => {
+    it('lists an MCP-only application under Toolsets while keeping it an agent', () => {
+      const result = mapItem({ ...baseDeployment, interfaces: ['mcp'] });
+
+      expect(result.type).toBe(CatalogEntityType.Agent);
+      expect(result.catalogTabs).toEqual([CatalogEntityType.Toolset]);
+    });
+
+    it('lists a chat and MCP application under both Agents and Toolsets', () => {
+      const result = mapItem({
+        ...baseDeployment,
+        interfaces: ['chat', 'mcp'],
+      });
+
+      expect(result.type).toBe(CatalogEntityType.Agent);
+      expect(result.catalogTabs).toEqual([
+        CatalogEntityType.Agent,
+        CatalogEntityType.Toolset,
+      ]);
+    });
+
+    it('lists a custom-UI application under Agents', () => {
+      const result = mapItem({ ...baseDeployment, interfaces: ['custom_ui'] });
+
+      expect(result.catalogTabs).toEqual([CatalogEntityType.Agent]);
+    });
+
+    it('leaves membership unset when the deployment reports no interfaces', () => {
+      const result = mapItem(baseDeployment);
+
+      expect(result.type).toBe(CatalogEntityType.Agent);
+      expect(result.catalogTabs).toBeUndefined();
+    });
+
+    it('leaves membership unset for a model', () => {
+      const result = mapItem({
+        ...baseDeployment,
+        type: 'model',
+        interfaces: ['chat'],
+      });
+
+      expect(result.catalogTabs).toBeUndefined();
+    });
+
+    it('keeps an MCP-only application under Agents when the Toolsets tab is unavailable', () => {
+      const result = mapItem(
+        { ...baseDeployment, interfaces: ['mcp'] },
+        { isToolsetTabEnabled: false },
+      );
+
+      expect(result.catalogTabs).toEqual([CatalogEntityType.Agent]);
+    });
+
+    it('drops Toolsets from a chat and MCP application when the Toolsets tab is unavailable', () => {
+      const result = mapItem(
+        { ...baseDeployment, interfaces: ['chat', 'mcp'] },
+        { isToolsetTabEnabled: false },
+      );
+
+      expect(result.catalogTabs).toEqual([CatalogEntityType.Agent]);
+    });
+  });
 });
 
 describe('mapToolsetToCatalogItem', () => {

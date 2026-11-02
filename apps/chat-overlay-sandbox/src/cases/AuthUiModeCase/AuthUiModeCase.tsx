@@ -9,6 +9,8 @@ import {
   NeutralButton,
   PrimaryButton,
   Select,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import { FC, memo, useCallback, useEffect, useRef, useState } from 'react';
 import EventLog from '../../components/EventLog/EventLog';
@@ -130,7 +132,7 @@ const AuthUiModeCase: FC = () => {
 
   return (
     <main className="max-w-[960px] pb-6">
-      <h1 className="text-3xl font-bold">Provider auth UI mode case</h1>
+      <h1 className="dial-display2-text">Provider auth UI mode case</h1>
       <p>
         Use provider IDs returned by your deployment. Test while signed out:
         configured providers appear in the login picker, and unconfigured
@@ -142,11 +144,16 @@ const AuthUiModeCase: FC = () => {
       </p>
 
       <fieldset className="my-4 max-w-[720px] rounded-lg border border-secondary px-3 py-3">
-        <legend className="px-1 font-semibold">auth.providerUiModes</legend>
-        <p className="mt-1 mb-3 text-secondary" aria-live="polite">
+        <legend className="dial-small-semi-text px-1">
+          auth.providerUiModes
+        </legend>
+        <LiveRegion
+          as={LiveRegionElement.P}
+          className="mt-1 mb-3 text-secondary"
+        >
           {providerModes.length}{' '}
           {providerModes.length === 1 ? 'provider' : 'providers'} configured
-        </p>
+        </LiveRegion>
         <div className="mb-3 grid grid-cols-1 gap-3">
           {providerModes.map((provider, index) => (
             <div

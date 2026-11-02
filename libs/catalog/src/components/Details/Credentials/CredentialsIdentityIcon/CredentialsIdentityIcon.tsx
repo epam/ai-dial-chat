@@ -1,5 +1,9 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_ICON_SIZE,
+  LiveRegion,
+  LiveRegionElement,
+} from '@epam/ai-dial-ui-kit';
 import { IconCircleCheckFilled } from '@tabler/icons-react';
 import { FC, ReactNode } from 'react';
 import styles from './CredentialsIdentityIcon.module.scss';
@@ -27,7 +31,7 @@ interface CredentialsIdentityIconProps {
   isActive?: boolean;
   /** Surface the chip is drawn on. Defaults to {@link CredentialsIconSurface.Sunken}. */
   surface?: CredentialsIconSurface;
-  /** Screen-reader-only text describing the state the checkmark conveys visually. Omit where surrounding copy already states it. */
+  /** Screen-reader-only status describing the state the checkmark conveys visually. Pass it in every state, so the region stays mounted; omit it where surrounding copy already states it. */
   statusLabel?: string;
 }
 
@@ -55,13 +59,18 @@ export const CredentialsIdentityIcon: FC<CredentialsIdentityIconProps> = ({
       <IconCircleCheckFilled
         size={DIAL_ICON_SIZE.MD}
         aria-hidden
-        className={mergeClasses('absolute -end-2 -top-2', styles.activeIcon)}
+        className={mergeClasses(
+          'absolute -inset-e-2 -top-2',
+          styles.activeIcon,
+        )}
       />
     )}
+    {/* A caller that passes a label passes one in every state (signed in /
+        signed out), so the region stays mounted and only its text changes. */}
     {statusLabel != null && (
-      <span role="status" className="sr-only">
+      <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
         {statusLabel}
-      </span>
+      </LiveRegion>
     )}
   </span>
 );

@@ -1,4 +1,5 @@
 import {
+  useLatestCanvasRequest,
   useAttachmentCanvas,
   useOpenAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
@@ -8,16 +9,15 @@ import {
 } from '@epam/ai-dial-attachment-input';
 import {
   AttachmentValidationErrorReason,
-  dialFilesToAttachments,
-  dialFolderPathToAttachment,
   findDeploymentByIdOrReference,
   getQuickAppConversationStarters,
   isQuickAppSchema,
-  referenceAttachmentToPdfCanvasContent,
   normalizeResponseFormat,
+  referenceAttachmentToPdfCanvasContent,
   shouldRerunGenerationOnEdit,
   useAttachmentValidation,
   useChatSettingsFormConfig,
+  useConversationAnnotationPool,
 } from '@epam/ai-dial-chat-hooks';
 import {
   type ConversationDraft,
@@ -32,20 +32,21 @@ import { useConversationScroll } from '@epam/ai-dial-chat-hooks/scroll-anchoring
 import { usePageFileDrag } from '@epam/ai-dial-chat-hooks/viewport-layout';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
+  type Annotation,
+  type Attachment,
+  type Conversation,
   DisplayAttachment,
   formatFileSize,
   isStatusMessage,
-  StatusEvent,
-  type Annotation,
-  type AttachResult,
-  type Attachment,
-  type Conversation,
-  type MessageRating,
+  mergeClasses,
   type Message as MessageType,
+  type MessageRating,
   type RequestSkill,
   type StarterOption,
+  StatusEvent,
   type ToolMenuItem,
   type UploadedAttachmentResult,
+  useIsMobile,
 } from '@epam/ai-dial-chat-shared';
 import {
   useComposerSeed,
@@ -66,6 +67,8 @@ import {
   ErrorMessageNotification,
   FabButton,
   NeutralButton,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import { IconCopy, IconPrompt } from '@tabler/icons-react';
 import {
@@ -102,11 +105,10 @@ import { useNotification } from '../../context/NotificationContext';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
 import { useMcpAppHostAdapter } from '../../hooks/attachment/useMcpAppHostAdapter';
-import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useChatSettingsFormLabels } from '../../hooks/conversation/useChatSettingsFormLabels';
-import { useConversationAnnotationPool } from '../../hooks/conversation/useConversationAnnotationPool';
 import { useConversationDraftStore } from '../../hooks/conversation/useConversationDraftStore';
 import { useModelSelectorLabels } from '../../hooks/conversation/useModelSelectorLabels';
+import { useDialFileManagerState } from '../../hooks/files/useDialFileManagerState';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useUiFeature } from '../../hooks/useUiFeature';
@@ -314,6 +316,10 @@ const ConversationView: FC<Props> = ({
    * enabled: switching to a visible model is how the conversation continues.
    */
   const isSelectedModelHidden = !!selectedDeployment?.isHidden;
+  /* Set only while the reload notification is shown. */
+  const retryConversationReload = hasConversationReloadError
+    ? onRetryConversationReload
+    : undefined;
   /* Exactly one usage surface is composed: the dial when the flag is on,
      otherwise the banner above the input. */
   const usageDeploymentId =
@@ -553,13 +559,18 @@ const ConversationView: FC<Props> = ({
   );
   // bucket is the authenticated user's DIAL Core storage bucket from their profile
   const bucket = user?.bucket ?? '';
-  const [isDialFileManagerOpen, setIsDialFileManagerOpen] = useState(false);
-  const [pendingDialAttachments, setPendingDialAttachments] = useState<
-    Attachment[]
-  >([]);
+  const {
+    isOpen: isDialFileManagerOpen,
+    openModal: handleOpenDialFileManager,
+    closeModal: closeDialFileManager,
+    pendingAttachments: pendingDialAttachments,
+    clearPendingAttachments: clearPendingDialAttachments,
+    handleAttach: handleAttachDialFiles,
+  } = useDialFileManagerState(bucket);
   const [attachmentsAmount, setAttachmentsAmount] = useState(0);
   const { resolvers, options } = useAttachmentCanvasResolvers();
   const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
+  const startCanvasRequest = useLatestCanvasRequest();
   /* Applies to existing messages as well as new ones, which is what the
      chat-settings hint promises — the format is a property of the
      conversation, not of the message it was chosen before. */
@@ -849,6 +860,9 @@ const ConversationView: FC<Props> = ({
       copyResponse: t(ButtonsI18nKeys.CopyResponse),
       copyMessage: t(ButtonsI18nKeys.CopyMessage),
       copiedMessageStatus: t(ButtonsI18nKeys.MessageCopiedStatus),
+      copiedStatus: t(ButtonsI18nKeys.ResponseCopiedStatus),
+      copiedMarkdownStatus: t(ButtonsI18nKeys.MarkdownCopiedStatus),
+      actionsGroup: t(ButtonsI18nKeys.MessageActionsGroup),
       copyAsMarkdown: t(ButtonsI18nKeys.CopyAsMarkdown),
       likeResponse: t(ButtonsI18nKeys.LikeResponse),
       dislikeResponse: t(ButtonsI18nKeys.DislikeResponse),
@@ -923,10 +937,6 @@ const ConversationView: FC<Props> = ({
     latestRef.current = { messages, isAssistantTyping };
   }, [messages, isAssistantTyping]);
 
-  const handleOpenDialFileManager = useCallback(
-    () => setIsDialFileManagerOpen(true),
-    [],
-  );
   const editMenuOverlays = useMemo(
     () => (editSkillMenuOverlay ? [editSkillMenuOverlay] : undefined),
     [editSkillMenuOverlay],
@@ -1033,20 +1043,6 @@ const ConversationView: FC<Props> = ({
       }),
   });
 
-  const handleAttachDialFiles = useCallback(
-    (result: AttachResult) => {
-      const fileAttachments = dialFilesToAttachments(result.files, bucket, {
-        resolvePreviewUrl: resolveCatalogIconUrl,
-      });
-      const folderAttachments = result.folderPaths.map(
-        dialFolderPathToAttachment,
-      );
-      setPendingDialAttachments([...fileAttachments, ...folderAttachments]);
-      setIsDialFileManagerOpen(false);
-    },
-    [bucket],
-  );
-
   const handleReplyAttachmentsChange = reply.onAttachmentsChange;
   const handleAttachmentsChange = useCallback(
     (attachments: Attachment[]) => {
@@ -1081,14 +1077,9 @@ const ConversationView: FC<Props> = ({
 
   const handleInputAttachmentClick = useCallback(
     (attachment: DisplayAttachment) => {
-      void openAttachmentCanvas(attachment);
+      void openAttachmentCanvas(attachment, undefined, startCanvasRequest());
     },
-    [openAttachmentCanvas],
-  );
-
-  const clearPendingDialAttachments = useCallback(
-    () => setPendingDialAttachments([]),
-    [],
+    [openAttachmentCanvas, startCanvasRequest],
   );
 
   const handleMessageAttachmentClick = useCallback(
@@ -1099,9 +1090,13 @@ const ConversationView: FC<Props> = ({
        * attached twice) — prefix with the message index so the "selected"
        * tile highlight can't spuriously match a different message's tile.
        */
-      void openAttachmentCanvas(attachment, `${messageIndex}:${attachment.id}`);
+      void openAttachmentCanvas(
+        attachment,
+        `${messageIndex}:${attachment.id}`,
+        startCanvasRequest(),
+      );
     },
-    [openAttachmentCanvas],
+    [openAttachmentCanvas, startCanvasRequest],
   );
 
   return (
@@ -1191,6 +1186,7 @@ const ConversationView: FC<Props> = ({
                     onEditDraftChange={onEditDraftChange}
                     editCommandMenu={editCommandMenu}
                     editMenuOverlays={editMenuOverlays}
+                    editSendOnEnter={sendOnEnter}
                     renderHistorySkillSegments={renderHistorySkillSegments}
                     renderHistorySkills={renderHistorySkills}
                     onUploadAttachment={onUploadAttachment}
@@ -1285,11 +1281,11 @@ const ConversationView: FC<Props> = ({
                 </div>
               );
             })}
-            {hasConversationReloadError && onRetryConversationReload && (
+            {retryConversationReload != null && (
               <ConversationReloadNotification
                 isReloading={isReloadingConversation}
                 isStreaming={isAssistantTyping}
-                onRetry={onRetryConversationReload}
+                onRetry={retryConversationReload}
               />
             )}
           </div>
@@ -1300,6 +1296,14 @@ const ConversationView: FC<Props> = ({
             style={{ height: 0 }}
           />
         </div>
+
+        {/* The reload notification mounts inside the log on demand; this
+            always-mounted region carries its announcement instead. */}
+        <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
+          {retryConversationReload != null
+            ? `${t(ChatI18nKeys.ConversationReloadErrorTitle)} ${t(ChatI18nKeys.ConversationReloadError)}`
+            : ''}
+        </LiveRegion>
 
         {isScrollButtonVisible && (
           <FabButton
@@ -1341,14 +1345,17 @@ const ConversationView: FC<Props> = ({
           </div>
         ) : (
           <>
-            {isSelectedModelHidden && (
-              <p
-                role="status"
-                className="dial-small-text pb-2 text-center text-secondary"
-              >
-                {t(ConversationI18nKeys.ModelUnavailableNotice)}
-              </p>
-            )}
+            {/* Empty while the model is available, so it takes no space. */}
+            <LiveRegion
+              as={LiveRegionElement.P}
+              className={mergeClasses(
+                'dial-small-text text-center text-secondary',
+                isSelectedModelHidden && 'pb-2',
+              )}
+            >
+              {isSelectedModelHidden &&
+                t(ConversationI18nKeys.ModelUnavailableNotice)}
+            </LiveRegion>
             <Suspense fallback={null}>
               <ConversationInput
                 key={conversation.id}
@@ -1383,7 +1390,7 @@ const ConversationView: FC<Props> = ({
                 }
                 isInputDisabled={isInputDisabled}
                 modelSelectorLabels={modelSelectorLabels}
-                addMenuTitle={t(ConversationI18nKeys.AddMenuTitle)}
+                addMenuTitle={t(ButtonsI18nKeys.Add)}
                 sendLabel={t(ChatI18nKeys.SendMessage)}
                 sendTooltip={t(ChatI18nKeys.SendMessage)}
                 stopLabel={t(ChatI18nKeys.StopStreaming)}
@@ -1418,9 +1425,7 @@ const ConversationView: FC<Props> = ({
                   !isEditActive ? reply.onFilesConsumed : undefined
                 }
                 onPendingAttachmentsConsumed={
-                  !isEditActive
-                    ? () => setPendingDialAttachments([])
-                    : undefined
+                  !isEditActive ? clearPendingDialAttachments : undefined
                 }
                 autoFocus={!isMobile && !isSkipFocusChatInputOnloadEnabled}
                 onDialFileSystemClick={
@@ -1476,7 +1481,7 @@ const ConversationView: FC<Props> = ({
               {isDialFileManagerOpen && (
                 <DialFileManagerModal
                   isOpen={isDialFileManagerOpen}
-                  onClose={() => setIsDialFileManagerOpen(false)}
+                  onClose={closeDialFileManager}
                   onAttach={handleAttachDialFiles}
                   bucket={bucket}
                   allowedTypes={inputAttachmentTypes}
@@ -1493,7 +1498,7 @@ const ConversationView: FC<Props> = ({
                   emptyTitle={t(DialFileManagerI18nKeys.Empty)}
                   emptyDescription=""
                   errorMessage={t(DialFileManagerI18nKeys.Error)}
-                  retryLabel={t(DialFileManagerI18nKeys.Retry)}
+                  retryLabel={t(ButtonsI18nKeys.Retry)}
                   hiddenFilesLabel={t(DialFileManagerI18nKeys.HiddenFiles)}
                   showHiddenFilesLabel={t(
                     DialFileManagerI18nKeys.ShowHiddenFiles,

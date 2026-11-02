@@ -16,33 +16,36 @@ import {
   mapStages,
   messageHasStages,
   openAnnotationAttachment,
+  prepareStageCitations,
   referenceAttachmentToPdfCanvasContent,
   resolveGroupedVisualizerCanvasContent,
   useAttachmentAction,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
-  CodeBlockTheme,
-  COMPACT_MARKDOWN_CLASS_NAMES,
-  isStatusMessage,
-  mergeClasses,
-  MessageRole,
   type Annotation,
   type Attachment,
   type AttachmentErrorReason,
+  CodeBlockTheme,
+  COMPACT_MARKDOWN_CLASS_NAMES,
   type DisplayAttachment,
-  type MessageRating,
+  isStatusMessage,
+  mergeClasses,
   type Message as MessageType,
-  type ResponseFormat,
+  type MessageRating,
+  MessageRole,
   type RequestSkill,
+  type ResponseFormat,
   type StarterOption,
   type TextSegment,
   type UploadedAttachmentResult,
+  useIsMobile,
 } from '@epam/ai-dial-chat-shared';
 import type {
   CommandMenuConfig,
   HighlightedTextRange,
   MenuOverlayConfig,
+  SendOnEnter,
 } from '@epam/ai-dial-conversation-input';
 import {
   MessageBubble,
@@ -79,6 +82,8 @@ import {
   DIAL_KIT_ICON_STROKE,
   ElementSize,
   ErrorMessageNotification,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import { IconLink } from '@tabler/icons-react';
 import {
@@ -104,7 +109,6 @@ import {
 import { useTheme } from '../../context/ThemeContext';
 import { useApplicationVisualizers } from '../../hooks/attachment/useApplicationVisualizers';
 import { useMcpAppHostAdapter } from '../../hooks/attachment/useMcpAppHostAdapter';
-import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { ThemeId } from '../../types/theme-id';
@@ -113,6 +117,7 @@ import {
   attachmentDisplayResolvers,
 } from '../../utils/attachment-display-resolvers';
 import {
+  isAttachmentDownloadable,
   resolveAbsoluteDialUrl,
   resolveDialFileDownloadUrl,
   resolveMarkdownUrl,
@@ -122,7 +127,6 @@ import {
   getMessageStarterProps,
   getStatusMessageProps,
   isStreamingMessage,
-  prepareStageCitations,
 } from './utils/message-display';
 
 const EditMessageInput = lazy(async () => {
@@ -306,6 +310,8 @@ interface Props {
   editCommandMenu?: CommandMenuConfig;
   /** Host-injected `+`-menu entries for adding a skill mid-edit. Forwarded to `EditMessageInput`'s `menuOverlays`. */
   editMenuOverlays?: MenuOverlayConfig[];
+  /** The user's send-key preference. Forwarded to `EditMessageInput`'s `sendOnEnter`. */
+  editSendOnEnter?: SendOnEnter;
   /**
    * Renders a user message's `content` and `custom_content.skills` as an
    * ordered array interleaving plain-text runs and `ChatSkill` elements at
@@ -403,6 +409,7 @@ const ConversationMessageItem: FC<Props> = ({
   onEditDraftChange,
   editCommandMenu,
   editMenuOverlays,
+  editSendOnEnter,
   renderHistorySkillSegments,
   renderHistorySkills,
   fallbackCitationGroups = EMPTY_FALLBACK_CITATION_GROUPS,
@@ -809,6 +816,7 @@ const ConversationMessageItem: FC<Props> = ({
               styles={{ ...messageTextStyles, className: 'justify-end' }}
               attachments={allDisplayAttachments}
               labels={{
+                userMessageAriaLabel: t(ChatI18nKeys.UserMessageAriaLabel),
                 showMoreLabel,
                 showLessLabel,
                 showMoreAriaLabel: showMoreUserMessageAriaLabel,
@@ -821,6 +829,7 @@ const ConversationMessageItem: FC<Props> = ({
               }}
               onAttachmentClick={handleAttachmentClick}
               onDownloadAll={handleDownloadAll}
+              isAttachmentDownloadable={isAttachmentDownloadable}
             />
           }
         >
@@ -863,6 +872,7 @@ const ConversationMessageItem: FC<Props> = ({
             onChange={onEditDraftChange}
             commandMenu={editCommandMenu}
             menuOverlays={editMenuOverlays}
+            sendOnEnter={editSendOnEnter}
           />
         </Suspense>
       </div>
@@ -1082,11 +1092,16 @@ const ConversationMessageItem: FC<Props> = ({
                   renderCitation={renderStageCitation}
                 />
               )}
+              {/* Always mounted: a live region that mounts in the same render as
+                  its text is announced unreliably, so only its text toggles
+                  when the visualizer moves into the canvas. */}
+              <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
+                {isGroupedVisualizerOpenedInCanvas ? openedInCanvasLabel : ''}
+              </LiveRegion>
               {groupedVisualizer != null &&
                 (isGroupedVisualizerOpenedInCanvas ? (
                   <div
-                    role="status"
-                    aria-live="polite"
+                    aria-hidden
                     className="bg-layer-2 flex h-[120px] w-[280px] items-center justify-center rounded"
                   >
                     <span className="dial-body-text text-primary">
@@ -1191,6 +1206,7 @@ const ConversationMessageItem: FC<Props> = ({
         tableOnOpenInCanvas={handleTableOpenInCanvas}
         onAttachmentClick={handleAttachmentClick}
         onDownloadAll={handleDownloadAll}
+        isAttachmentDownloadable={isAttachmentDownloadable}
         selectedAttachmentId={selectedAttachmentId}
       />
     </CitationCardProvider>

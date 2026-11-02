@@ -5,6 +5,10 @@ export interface ConversationsConfig {
   pinnedIds: string[];
 }
 
+export interface ProjectsConfig {
+  pinnedIds: string[];
+}
+
 export interface ToolsetsConfig {
   installed: string[];
 }
@@ -25,6 +29,7 @@ export interface SkillsConfig {
 export interface UserConfig {
   version: number;
   conversations: ConversationsConfig;
+  projects: ProjectsConfig;
   toolsets: ToolsetsConfig;
   deployments: DeploymentsConfig;
   prompts: PromptsConfig;
@@ -37,6 +42,15 @@ export class ConversationsConfigDto implements ConversationsConfig {
   @ApiProperty({
     description: 'Pinned conversation identifiers.',
     example: ['conversations/default-bucket/gpt-4__My chat__uuid'],
+    type: [String],
+  })
+  pinnedIds!: string[];
+}
+
+export class ProjectsConfigDto implements ProjectsConfig {
+  @ApiProperty({
+    description: 'Pinned project identifiers (`projects/{bucket}/{path}`).',
+    example: ['projects/default-bucket/q4-launch'],
     type: [String],
   })
   pinnedIds!: string[];
@@ -93,6 +107,9 @@ export class UserConfigDto implements UserConfig {
   @ApiProperty({ type: ConversationsConfigDto })
   conversations!: ConversationsConfigDto;
 
+  @ApiProperty({ type: ProjectsConfigDto })
+  projects!: ProjectsConfigDto;
+
   @ApiProperty({ type: ToolsetsConfigDto })
   toolsets!: ToolsetsConfigDto;
 
@@ -106,11 +123,12 @@ export class UserConfigDto implements UserConfig {
   skills!: SkillsConfigDto;
 }
 
-export const CURRENT_CONFIG_VERSION = 6;
+export const CURRENT_CONFIG_VERSION = 7;
 
 export const DEFAULT_USER_CONFIG: UserConfig = {
   version: CURRENT_CONFIG_VERSION,
   conversations: { pinnedIds: [] },
+  projects: { pinnedIds: [] },
   toolsets: { installed: [] },
   deployments: { installed: [], selectedId: null },
   prompts: { installed: [] },
@@ -124,6 +142,7 @@ export const DEFAULT_USER_CONFIG: UserConfig = {
 export const createDefaultUserConfig = (): UserConfig => ({
   version: CURRENT_CONFIG_VERSION,
   conversations: { pinnedIds: [] },
+  projects: { pinnedIds: [] },
   toolsets: { installed: [] },
   deployments: { installed: [], selectedId: null },
   prompts: { installed: [] },
@@ -163,6 +182,13 @@ const qualifyInstalledPrompts = (
       : `${PROMPT_RESOURCE_PREFIX}${userBucket}/${id}`,
   );
 
+/**
+ * Normalizes a stored config of any version to the current shape. In the v2+
+ * shape every top-level key this version does not know is carried through
+ * unchanged, so a config a newer BFF wrote survives a rollback: this
+ * version's next write-back keeps the newer sections instead of dropping
+ * them.
+ */
 export const migrateConfig = (raw: unknown, userBucket: string): UserConfig => {
   if (raw == null || typeof raw !== 'object') {
     return createDefaultUserConfig();
@@ -202,6 +228,15 @@ export const migrateConfig = (raw: unknown, userBucket: string): UserConfig => {
     userBucket,
   );
 
+  /* v6→v7: project pins. Absent in every earlier shape. */
+  const projectsObj = obj['projects'] as Record<string, unknown> | undefined;
+  const projectsPinnedRaw = projectsObj?.['pinnedIds'];
+  const projectsPinnedIds = Array.isArray(projectsPinnedRaw)
+    ? (projectsPinnedRaw as unknown[]).filter(
+        (id): id is string => typeof id === 'string',
+      )
+    : [];
+
   /* v4→v5: skill favorites. Absent in every earlier shape. */
   const skillsObj = obj['skills'] as Record<string, unknown> | undefined;
   const skillsInstalled = readInstalledIds(skillsObj);
@@ -217,8 +252,10 @@ export const migrateConfig = (raw: unknown, userBucket: string): UserConfig => {
     obj['legacyMigrationDone'] === true ? true : undefined;
 
   return {
+    ...obj,
     version: CURRENT_CONFIG_VERSION,
     conversations: { pinnedIds },
+    projects: { pinnedIds: projectsPinnedIds },
     toolsets: { installed: toolsetsInstalled },
     deployments: {
       installed: deploymentsInstalled,

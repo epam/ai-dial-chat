@@ -11,6 +11,7 @@ import {
   FilesApi,
   HealthApi,
   OfflineCredentialsApi,
+  ProjectsApi,
   PromptsApi,
   PublishApi,
   RateApi,
@@ -101,6 +102,7 @@ export const skillsApi = new SkillsApi(config);
 export const textRefinementApi = new TextRefinementApi(config);
 export const publishApi = new PublishApi(config);
 export const promptsApi = new PromptsApi(config);
+export const projectsApi = new ProjectsApi(config);
 export const clientChannelApi = new ClientChannelApi(config);
 export const scheduledTasksApi = new ScheduledTasksApi(config);
 export const offlineCredentialsApi = new OfflineCredentialsApi(config);

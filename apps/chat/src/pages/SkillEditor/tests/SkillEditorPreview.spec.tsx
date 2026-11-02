@@ -33,9 +33,6 @@ import SkillEditor from '../SkillEditor';
  */
 vi.setConfig({ testTimeout: 10_000 });
 
-vi.mock('../../../context/AppConfigContext', () => ({
-  useAppConfig: () => ({ status: 'ready', config: {} }),
-}));
 vi.mock('react-router', () => ({
   useNavigate: () => vi.fn(),
   useSearchParams: () => [mockSearchParams, vi.fn()],
@@ -56,9 +53,17 @@ vi.mock('../../../context/ThemeContext', () => ({
   useTheme: () => ({ currentTheme: 'light' }),
 }));
 
-vi.mock('../../../context/AppConfigContext', () => ({
-  useAppConfig: () => ({ config: { allowedConnectOrigins: [] } }),
-}));
+vi.mock('../../../context/AppConfigContext', async () => {
+  const { useCatalogCreationState } =
+    await import('../../../context/tests/catalog-creation-state');
+  return {
+    useAppConfig: () => ({
+      status: 'ready',
+      config: { allowedConnectOrigins: [] },
+      ...useCatalogCreationState(),
+    }),
+  };
+});
 
 vi.mock('../../../context/NotificationContext', () => ({
   useNotification: vi.fn(),

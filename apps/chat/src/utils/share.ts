@@ -1,8 +1,26 @@
+import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import type { ShareLinkData } from '@epam/ai-dial-share';
 import type { TFunction } from 'i18next';
 import { ShareI18nKeys } from '../constants/translation-keys';
 
 const HOURS_PER_DAY = 24;
+
+/*
+ * Agent-tab entities (Agent + Application, both shown under the "Agents"
+ * catalog tab — see libs/catalog/src/utils/catalog-tabs.ts), Skill, Toolset,
+ * and Prompt support edit access. Model can only ever be shared view-only, so
+ * its access control is a static label, not a dropdown.
+ */
+const EDITABLE_ACCESS_TYPES = new Set<CatalogEntityType>([
+  CatalogEntityType.Agent,
+  CatalogEntityType.Prompt,
+  CatalogEntityType.Skill,
+  CatalogEntityType.Toolset,
+]);
+
+/** Whether a share link for a catalog entity of this type may grant edit access. */
+export const canEditShareAccess = (type: CatalogEntityType): boolean =>
+  EDITABLE_ACCESS_TYPES.has(type);
 
 /**
  * Builds the share popover's expiry sentence from the link's remaining

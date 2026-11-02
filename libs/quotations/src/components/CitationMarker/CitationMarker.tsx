@@ -1,6 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { ElementSize, NeutralButton } from '@epam/ai-dial-ui-kit';
-import { FC, ReactNode } from 'react';
+import { FC, HTMLAttributes, ReactNode } from 'react';
 import { QUOTATIONS_CLASS } from '../../constants/public-class-names';
 
 /** User-visible strings for `CitationMarker`. */
@@ -13,8 +13,11 @@ export interface CitationMarkerLabels {
   labelWithOverflow: string;
 }
 
-/** Props for the `CitationMarker` component. */
-export interface CitationMarkerProps {
+/** Props for the `CitationMarker` component; the popup ARIA attributes are forwarded to the button. */
+export interface CitationMarkerProps extends Pick<
+  HTMLAttributes<HTMLButtonElement>,
+  'aria-haspopup' | 'aria-expanded' | 'aria-controls'
+> {
   /** Human-readable source name derived from the attachment URL. */
   sourceName: string;
   /** Total number of annotations in this citation group. */
@@ -36,6 +39,7 @@ export const CitationMarker: FC<CitationMarkerProps> = ({
   icon,
   labels,
   labelClassName = 'dial-caption-text',
+  ...popupAria
 }) => (
   <NeutralButton
     size={ElementSize.Small}
@@ -57,6 +61,9 @@ export const CitationMarker: FC<CitationMarkerProps> = ({
       </span>
     }
     aria-label={labels.ariaLabel}
+    /* The popup state a wrapping `Dropdown` hands its trigger; without it the
+       button never reports whether the citation card is open. */
+    {...popupAria}
     onClick={onOpen}
   />
 );

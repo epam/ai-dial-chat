@@ -228,7 +228,7 @@ export const CelebrationProvider: FC<CelebrationProviderProps> = ({
               <div
                 aria-hidden="true"
                 className={mergeClasses(
-                  'pointer-events-none fixed inset-0 z-[70] overflow-hidden select-none',
+                  'pointer-events-none fixed inset-0 z-70 overflow-hidden select-none',
                   CELEBRATIONS_CLASS.sceneLayer,
                 )}
               >

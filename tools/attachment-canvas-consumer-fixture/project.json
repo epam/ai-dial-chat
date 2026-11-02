@@ -30,5 +30,6 @@
       "executor": "nx:noop",
       "dependsOn": ["verify"]
     }
-  }
+  },
+  "tags": ["type:fixture"]
 }

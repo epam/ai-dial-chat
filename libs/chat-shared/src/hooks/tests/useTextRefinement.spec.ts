@@ -75,6 +75,53 @@ describe('useTextRefinement', () => {
     act(() => result.current.undo());
     expect(result.current.value).toBe('A');
   });
+  it('regenerates from the original draft and keeps it as the Undo baseline', async () => {
+    const callback = vi
+      .fn()
+      .mockResolvedValueOnce('B')
+      .mockResolvedValueOnce('C');
+    const { result } = controlled(callback, 'A');
+    await act(async () => {
+      await result.current.refine();
+    });
+    await act(async () => {
+      await result.current.refine();
+    });
+    expect(callback.mock.calls.map(([value]) => value)).toEqual(['A', 'A']);
+    expect(result.current.value).toBe('C');
+    act(() => result.current.undo());
+    expect(result.current.value).toBe('A');
+  });
+  it('keeps the refined text and the baseline when regenerating fails', async () => {
+    const callback = vi
+      .fn()
+      .mockResolvedValueOnce('B')
+      .mockRejectedValueOnce(new Error('unavailable'));
+    const { result } = controlled(callback, 'A');
+    for (let i = 0; i < 2; i++)
+      await act(async () => {
+        await result.current.refine();
+      });
+    expect(result.current.value).toBe('B');
+    expect(result.current.state).toBe(TextRefinementState.Error);
+    expect(result.current.canUndo).toBe(true);
+  });
+  it('refines the edited text after a manual edit drops the baseline', async () => {
+    const callback = vi
+      .fn()
+      .mockResolvedValueOnce('B')
+      .mockResolvedValueOnce('D');
+    const { result } = controlled(callback, 'A');
+    await act(async () => {
+      await result.current.refine();
+    });
+    act(() => result.current.setValue('B edited'));
+    expect(result.current.canUndo).toBe(false);
+    await act(async () => {
+      await result.current.refine();
+    });
+    expect(callback).toHaveBeenLastCalledWith('B edited', expect.anything());
+  });
   it('makes no write and creates no Undo for identical text', async () => {
     const onChange = vi.fn();
     const { result } = renderHook(() =>

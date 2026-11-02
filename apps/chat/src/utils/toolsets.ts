@@ -87,6 +87,7 @@ const authSettingsDtoToForm = (
     isLoggedIn,
     keyHeader: authSettings?.apiKeyHeader ?? '',
     clientId: authSettings?.clientId ?? '',
+    clientSecretHint: authSettings?.clientSecretHint,
     authorizationEndpoint: normalizeReturnedEndpointUrl(
       authSettings?.authorizationEndpoint,
     ),

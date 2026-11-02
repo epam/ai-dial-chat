@@ -229,6 +229,18 @@ describe('useAttachmentAction', () => {
       expect(anchorClickSpy).not.toHaveBeenCalled();
     });
 
+    it('returns false and does not download for a DIAL folder attachment (#7663)', () => {
+      const attachment = makeAttachment({
+        name: 'New folder',
+        url: 'files/my-bucket/New%20folder/',
+      });
+
+      const result = downloadAttachment(attachment, resolveDownloadUrl);
+
+      expect(result).toBe(false);
+      expect(anchorClickSpy).not.toHaveBeenCalled();
+    });
+
     it('returns false and does not download for an attachment with no URL', () => {
       const attachment = makeAttachment({ url: undefined });
 
@@ -251,6 +263,14 @@ describe('useAttachmentAction', () => {
           makeAttachment({ url: undefined, data: btoa('# Report') }),
         ),
       ).toBe(true);
+    });
+
+    it('rejects a DIAL folder attachment (#7663)', () => {
+      expect(
+        isDownloadableAttachment(
+          makeAttachment({ url: 'files/my-bucket/New%20folder/' }),
+        ),
+      ).toBe(false);
     });
 
     it('rejects reference-only and external attachments', () => {

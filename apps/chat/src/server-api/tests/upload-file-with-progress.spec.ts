@@ -85,4 +85,27 @@ describe('uploadFileWithProgress', () => {
     expect(progress).toEqual([50, 100]);
     expect(MockXMLHttpRequest.instances[0]?.withCredentials).toBe(true);
   });
+
+  it('streams the raw file with a PUT to the content endpoint', async () => {
+    vi.stubGlobal(
+      'XMLHttpRequest',
+      MockXMLHttpRequest as unknown as typeof XMLHttpRequest,
+    );
+    const file = new File(['data'], 'q3.csv', { type: 'text/csv' });
+
+    await uploadFileWithProgress('Abc123', 'reports/q3.csv', file, {
+      uploadMode: 'create-only',
+    });
+
+    const [xhr] = MockXMLHttpRequest.instances;
+    expect(xhr?.open).toHaveBeenCalledWith(
+      'PUT',
+      '/api/v1/files/content?bucket=Abc123&path=reports%2Fq3.csv&uploadMode=create-only&contentType=text%2Fcsv',
+    );
+    expect(xhr?.setRequestHeader).toHaveBeenCalledWith(
+      'Content-Type',
+      'application/octet-stream',
+    );
+    expect(xhr?.send).toHaveBeenCalledWith(file);
+  });
 });

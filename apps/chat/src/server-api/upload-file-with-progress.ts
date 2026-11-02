@@ -1,4 +1,7 @@
-import { createUploadFileWithProgress } from '@epam/ai-dial-chat-hooks';
+import {
+  UploadBodyEncoding,
+  createUploadFileWithProgress,
+} from '@epam/ai-dial-chat-hooks';
 import {
   UnauthorizedError,
   getCsrfToken,
@@ -6,7 +9,8 @@ import {
   setCsrfToken,
 } from './base';
 
-const UPLOAD_URL = '/api/v1/files';
+/* Streamed raw-body upload: the BFF pipes the body to DIAL Core without staging it. */
+const UPLOAD_URL = '/api/v1/files/content';
 
 export const uploadFileWithProgress = createUploadFileWithProgress({
   getCsrfToken,
@@ -14,4 +18,5 @@ export const uploadFileWithProgress = createUploadFileWithProgress({
   notifyUnauthorized,
   createUnauthorizedError: (url) => new UnauthorizedError(url),
   uploadUrl: UPLOAD_URL,
+  bodyEncoding: UploadBodyEncoding.Raw,
 });

@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UsageLimitBannerSeverity } from '../../../models/UsageLimitBanner';
 import type { UsageLimitBannerViewProps } from '../../../models/UsageLimitBanner';
 import { UsageLimitBannerView } from '../UsageLimitBannerView';
+import styles from '../UsageLimitBannerView.module.scss';
 
 const RESET = {
   isoValue: '2026-11-01T00:00:00Z',
@@ -41,11 +42,16 @@ describe('UsageLimitBannerView', () => {
     (severity, iconClass, colorClass) => {
       renderView({ severity });
 
-      // eslint-disable-next-line testing-library/no-node-access -- the icon is aria-hidden; its glyph and color classes are the assertion
-      const icon = screen.getByRole('status').querySelector('svg');
+      const banner = screen.getByRole('status');
+      // eslint-disable-next-line testing-library/no-node-access -- the icon is aria-hidden; its glyph class is the assertion
+      const icon = banner.querySelector('svg');
       expect(icon?.classList.contains(iconClass)).toBe(true);
 
-      expect(icon?.parentElement?.classList.contains(colorClass)).toBe(true);
+      /* The kit variant tints the root, which the glyph inherits; the fill
+         stays on the neutral sunken layer through the banner class, whose
+         doubled selector outranks the kit's variant background utility. */
+      expect(banner.classList.contains(colorClass)).toBe(true);
+      expect(banner.classList.contains(styles.banner)).toBe(true);
     },
   );
 

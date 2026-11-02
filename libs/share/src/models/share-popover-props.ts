@@ -42,7 +42,7 @@ export interface SharePopoverLabels {
   qrDownloadButtonLabel?: string;
   /** File name for the downloaded QR code PNG. Defaults to `"share-qr-code.png"`. */
   qrDownloadFileName?: string;
-  /** `aria-label` for the loading skeleton. Defaults to `"Creating share link…"`. */
+  /** Text announced through the popover's always-mounted status region while `isLoading` is `true`; the skeleton itself is `aria-hidden`. Defaults to `"Creating share link…"`. */
   loadingLabel?: string;
   /** Error message shown when share-link creation fails. */
   errorTitle?: string;
@@ -86,6 +86,8 @@ export interface SharePopoverColors {
   divider?: string;
   /** Loading-skeleton bar/shape color. */
   skeletonColor?: string;
+  /** Popover surface background color. Defaults to `--bg-layer-raised`. */
+  background?: string;
 }
 
 /** Typography overrides for `SharePopover`. */

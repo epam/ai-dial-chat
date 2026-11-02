@@ -25,6 +25,7 @@ import type {
 } from '../../models/navigation-item';
 import type { NavigationSidebarProps } from '../../models/navigation-sidebar-props';
 import { NavigationSidebarVariant } from '../../types/navigation-sidebar-variant';
+import { getTabbableElements } from '../../utils/focus';
 import { ItemGradients } from '../common/ItemGradients';
 import styles from './NavigationSidebar.module.scss';
 
@@ -53,7 +54,7 @@ const getRootClassName = (isDrawer: boolean, isOpen: boolean): string => {
     );
   }
   return mergeClasses(
-    'fixed inset-y-0 start-0 z-50 flex flex-col overflow-hidden shadow-sm outline-none',
+    'fixed inset-y-0 inset-s-0 z-50 flex flex-col overflow-hidden shadow-sm outline-none',
     'transition-[transform,visibility] duration-200 ease-in-out motion-reduce:transition-none',
     isOpen
       ? 'visible translate-x-0'
@@ -114,7 +115,32 @@ export const NavigationSidebar: FC<NavigationSidebarProps> = memo(
       /* React bubbles events through portals, so an Escape from a dialog or
          menu a child renders elsewhere in the DOM is not the drawer's. */
       if (!event.currentTarget.contains(event.target as Node)) return;
-      if (event.key === 'Escape') onClose?.();
+      if (event.key === 'Escape') {
+        onClose?.();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+
+      /* Tab wraps around the drawer's own controls so focus cannot leave it
+         for the page behind while it is open. */
+      const tabbable = getTabbableElements(event.currentTarget);
+      if (tabbable.length === 0) {
+        event.preventDefault();
+        return;
+      }
+      const first = tabbable[0];
+      const last = tabbable[tabbable.length - 1];
+      const active = document.activeElement;
+      if (
+        event.shiftKey &&
+        (active === first || active === event.currentTarget)
+      ) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
 
     const rootCssVars = useMemo(

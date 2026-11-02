@@ -115,7 +115,9 @@ owns the drawer behaviour: it is fixed to the start edge and slides in
 (mirrored under `dir="rtl"`) when `isOpen` turns `true`, is `inert` and hidden
 while `isOpen` is `false` (its default), moves focus into itself on opening and back to the
 control that opened it on closing, and calls `onClose` on an Escape pressed
-inside it (one that comes from a dialog its children render elsewhere in the DOM is ignored). `id` names the
+inside it (one that comes from a dialog its children render elsewhere in the DOM is ignored).
+Tab and Shift+Tab wrap around its own controls, so keyboard focus cannot leave it
+while it is open. `id` names the
 `<nav>` element, so the host's toggle can point `aria-controls` at it. The host
 still owns the toggle that sets `isOpen`, the backdrop if it wants one, and
 closing on navigation. A drawer with no backdrop leaves the page behind it
@@ -227,7 +229,7 @@ A `SheetRow` marks state through two props: `isCurrent` sets `aria-current="true
 
 ### Shared primitives
 
-`UserAvatar` (image with initials fallback) and `AvatarInitials` (circular initials badge), both drawn by the UI kit's `Avatar`. Only the image is named by `alt`; the initials badge is decorative.
+`UserAvatar` (image with initials fallback) and `AvatarInitials` (circular initials badge), both drawn by the UI kit's `Avatar`. Only the image is named by `alt`; the initials badge is decorative. Both take the initials' type step from a prop defaulting to `'dial-tiny-text'` (`UserAvatar`'s `initialsClassName`, `AvatarInitials`' `textClassName`); `UserMenuTypography` and `NavigationSheetTypography` forward it as `avatarInitialsClassName`.
 
 `UserMenu`'s submenu rows mark the applied option through the UI kit's own `MenuItemMark.Check`, so the trailing check and the `menuitemradio` role come from `Dropdown` rather than from this library.
 
@@ -245,7 +247,7 @@ Throws when called outside a `NavigableBottomSheet`.
 
 ## Theming
 
-Colors come from CSS custom properties with DIAL token fallbacks, overridable through each component's `styles.colors`. The rail reads `--np-bg`, `--np-item-text`, `--np-item-active-text`, `--np-item-selected-bg`, `--np-item-hover-bg`, `--np-item-hover-icon` (the icon stroke on hover), `--np-item-active-icon` (the active icon paint), and `--np-item-active-bg`; both icon vars default to a built-in blue-to-violet gradient. The active item is always filled, in the rail and in the sheet: an item that sets `activeIcon` swaps to that filled glyph, painted by `fill` instead of `stroke`, and an item without one fills its outline `icon` in place (`fill` plus `stroke`); the sidebar reads `--np-sidebar-bg`, `--np-sidebar-item-text`, `--np-sidebar-item-hover-bg`, `--np-sidebar-item-selected-bg`, `--np-sidebar-item-active-icon` (a built-in blue-to-violet gradient by default, whose ends are `--np-sidebar-gradient-start` and `--np-sidebar-gradient-end`), `--np-sidebar-focus-outline` and `--np-sidebar-font-family`; the menus and sheet read `--np-menu-text`, `--np-menu-active-icon`, `--np-avatar-bg`, `--np-avatar-text`, `--np-trigger-hover-bg` (hover and keyboard focus), `--np-trigger-open-bg` (the `Profile` and `Compact` triggers while the menu is open), `--np-sheet-text`, `--np-sheet-icon`, `--np-sheet-item-hover`, `--np-sheet-item-active`, and `--np-sheet-divider`.
+Colors come from CSS custom properties with DIAL token fallbacks, overridable through each component's `styles.colors`. The rail reads `--np-bg`, `--np-item-text`, `--np-item-active-text`, `--np-item-selected-bg`, `--np-item-hover-bg`, `--np-item-hover-icon` (the icon stroke on hover), `--np-item-active-icon` (the active icon paint), and `--np-item-active-bg`; both icon vars default to a built-in blue-to-violet gradient. The active item is always filled, in the rail and in the sheet: an item that sets `activeIcon` swaps to that filled glyph, painted by `fill` instead of `stroke`, and an item without one fills its outline `icon` in place (`fill` plus `stroke`); the sidebar reads `--np-sidebar-bg`, `--np-sidebar-item-text`, `--np-sidebar-item-hover-bg`, `--np-sidebar-item-selected-bg`, `--np-sidebar-item-active-icon` (a built-in blue-to-violet gradient by default, whose ends are `--np-sidebar-gradient-start` and `--np-sidebar-gradient-end`), `--np-sidebar-focus-outline` and `--np-sidebar-font-family`; the menus and sheet read `--np-menu-text`, `--np-menu-active-icon`, `--np-avatar-bg`, `--np-avatar-text`, `--np-trigger-hover-bg` (hover and keyboard focus), `--np-trigger-open-bg` (the `Profile` and `Compact` triggers while the menu is open), `--np-focus-outline` (the trigger focus ring, `UserMenuColors.focusOutline`), `--np-sheet-text`, `--np-sheet-icon`, `--np-sheet-item-hover`, `--np-sheet-item-active`, `--np-sheet-divider`, and `--np-sheet-muted-text` (the profile page display name, `NavigationSheetColors.mutedText`).
 
 ## Enums
 

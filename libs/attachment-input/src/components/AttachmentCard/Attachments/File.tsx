@@ -10,15 +10,10 @@ import {
   FileIcon,
   Highlight,
   Spinner,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
-import {
-  type FC,
-  type HTMLAttributes,
-  type KeyboardEvent,
-  useCallback,
-  useId,
-  useMemo,
-} from 'react';
+import { type FC, useCallback, useId, useMemo } from 'react';
 import {
   ATTACHMENT_TILE_BASE_CLASS,
   ATTACHMENT_TILE_FOCUS_RING_CLASS,
@@ -126,20 +121,6 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
     }
   };
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    /*
-     * Only the tile itself activates on Enter/Space. Without this guard the
-     * preventDefault() below cancels the native activation of the corner
-     * action buttons whose key events bubble through here, leaving retry and
-     * remove dead to the keyboard.
-     */
-    if (e.target !== e.currentTarget) return;
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      handleClick();
-    }
-  };
-
   const displayName = useMemo(() => getNameWithoutExtension(name), [name]);
 
   const onOpenInNewTab = useCallback((): void => {
@@ -173,7 +154,7 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
          * tile's `overflow-hidden` instead of wrapping and clamping with an
          * ellipsis.
          */
-        'line-clamp-2 w-full min-w-0 break-words',
+        'line-clamp-2 w-full min-w-0 wrap-break-word',
         styles.nameText,
         ATTACHMENT_INPUT_CLASS.tileName,
       )}
@@ -222,24 +203,25 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
     </div>
   );
 
-  /*
-   * Role, Tab stop, name and handlers travel together, so the tile is either a
-   * complete button or a plain element — never a focusable no-op.
-   */
-  const interactiveProps: HTMLAttributes<HTMLDivElement> = hasAction
-    ? {
-        role: 'button',
-        tabIndex: 0,
-        'aria-label': isExpandAction ? expandLabel : clickLabel,
-        onClick: handleClick,
-        onKeyDown: handleKeyDown,
-      }
-    : {};
-
   const tileContent = (
     <>
       {nameEl}
       {typeRow}
+
+      {/* A full-size sibling of the corner actions rather than a role on the
+          tile, so no control is nested inside another (WCAG 4.1.2). It comes
+          before the actions so they stack above it. */}
+      {hasAction && (
+        <button
+          type="button"
+          aria-label={isExpandAction ? expandLabel : clickLabel}
+          onClick={handleClick}
+          className={mergeClasses(
+            'absolute inset-0 cursor-pointer rounded-[11px]',
+            styles.tileAction,
+          )}
+        />
+      )}
 
       {isLoading && (
         /*
@@ -299,23 +281,16 @@ export const FileAttachment: FC<FileAttachmentProps> = ({
         )}
       </div>
 
-      {isError && (
-        <span
-          id={errorDescId}
-          role="status"
-          aria-live="polite"
-          className="sr-only"
-        >
-          {errorTitle}
-        </span>
-      )}
+      {/* Always mounted so the polite region exists before the error text arrives. */}
+      <LiveRegion id={errorDescId} visuallyHidden as={LiveRegionElement.Span}>
+        {isError ? errorTitle : ''}
+      </LiveRegion>
     </>
   );
 
   return (
     <div style={cssVars} className={mergeClasses('inline-flex', className)}>
       <div
-        {...interactiveProps}
         aria-busy={isLoading}
         style={cssVars}
         className={mergeClasses(

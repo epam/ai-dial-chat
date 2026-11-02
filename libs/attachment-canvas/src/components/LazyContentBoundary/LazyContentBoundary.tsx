@@ -1,6 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { Button, Spinner } from '@epam/ai-dial-ui-kit';
 import { Component, Suspense, type FC, type ReactNode } from 'react';
+import styles from './LazyContentBoundary.module.scss';
 
 /** User-visible strings for {@link LazyContentBoundary}. All fields have English defaults. */
 interface LazyContentBoundaryLabels {
@@ -37,13 +38,15 @@ export interface LazyContentBoundaryProps {
    */
   pendingContent?: ReactNode;
   /**
-   * Rendered above the `role="alert"` retry message when the lazy import
+   * Rendered above the `role="status"` retry message when the lazy import
    * fails — e.g. a plain-text fallback that stays usable while retry is
    * offered. Omitted by default.
    */
   errorContent?: ReactNode;
   /** User-visible strings. All fields have English defaults. */
   labels?: LazyContentBoundaryLabels;
+  /** Typography class of the retry message. Defaults to `'dial-body-text'`. */
+  errorLabelClassName?: string;
 }
 
 interface LazyContentPendingProps {
@@ -61,7 +64,12 @@ export const LazyContentPending: FC<LazyContentPendingProps> = ({
     aria-live="polite"
     className="flex h-full items-center justify-center"
   >
-    {pendingContent ?? <Spinner />}
+    {/* The kit Spinner is a status region of its own; hidden so regions don't nest. */}
+    {pendingContent ?? (
+      <span aria-hidden>
+        <Spinner />
+      </span>
+    )}
     <span className="sr-only">{loadingLabel}</span>
   </div>
 );
@@ -71,6 +79,7 @@ interface LazyContentErrorProps {
   retryLabel: string;
   onRetry: () => void;
   errorContent?: ReactNode;
+  errorLabelClassName?: string;
 }
 
 /** Accessible retry state shared by lazy imports and asynchronous runtime preparation. */
@@ -79,11 +88,15 @@ export const LazyContentError: FC<LazyContentErrorProps> = ({
   retryLabel,
   onRetry,
   errorContent,
+  errorLabelClassName = 'dial-body-text',
 }) => (
   <div className="flex h-full flex-col items-center justify-center gap-3 p-4">
     {errorContent}
-    <div role="alert" className="flex flex-col items-center gap-3 text-center">
-      <p className={mergeClasses('dial-body-text', 'text-secondary')}>
+    <div className="flex flex-col items-center gap-3 text-center">
+      <p
+        role="status"
+        className={mergeClasses(errorLabelClassName, styles.errorLabel)}
+      >
         {errorLabel}
       </p>
       <Button label={retryLabel} aria-label={retryLabel} onClick={onRetry} />
@@ -98,7 +111,7 @@ interface LazyContentBoundaryState {
 
 /**
  * Wraps a `lazy()`-loaded component with an accessible pending state
- * (`role="status"`) and a retryable failure state (`role="alert"`).
+ * (`role="status"`) and a retryable failure state (`role="status"`).
  */
 export class LazyContentBoundary extends Component<
   LazyContentBoundaryProps,
@@ -128,6 +141,7 @@ export class LazyContentBoundary extends Component<
       onRetry,
       pendingContent,
       errorContent,
+      errorLabelClassName,
       labels: {
         loadingLabel = 'Loading…',
         errorLabel = 'Failed to load content',
@@ -142,6 +156,7 @@ export class LazyContentBoundary extends Component<
           retryLabel={retryLabel}
           onRetry={onRetry}
           errorContent={errorContent}
+          errorLabelClassName={errorLabelClassName}
         />
       );
     }

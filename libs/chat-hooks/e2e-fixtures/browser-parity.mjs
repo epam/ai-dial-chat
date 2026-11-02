@@ -19,6 +19,7 @@ import {
   DEFERRED_FEATURES,
   writeAppShellHtml,
 } from './application-mode.mjs';
+
 const MAX_PACKED_VS_SOURCE_RATIO = 1.2;
 const APP_READY_TIMEOUT_MS = 20000;
 const CONTENT_TYPES = {
@@ -50,6 +51,7 @@ const serveDir = (rootDir) =>
     server.listen(0, '127.0.0.1', () => resolve(server));
   });
 const closeServer = (server) => new Promise((resolve) => server.close(resolve));
+
 export const measureInBrowser = async (fixture) => {
   writeAppShellHtml(fixture.outDir);
   const server = await serveDir(fixture.outDir);

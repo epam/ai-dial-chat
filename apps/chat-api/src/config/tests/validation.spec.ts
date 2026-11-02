@@ -57,6 +57,64 @@ describe('validate', () => {
     ).toBe(expected);
   });
 
+  describe('celebration delivery policy', () => {
+    it('defaults to bundled, revision 0 and empty lists', () => {
+      const config = validate({ ...baseConfig });
+      expect(config.UI_EVENT_DELIVERY_MODE).toBe('bundled');
+      expect(config.UI_EVENT_DELIVERY_REVISION).toBe('0');
+      expect(config.UI_EVENT_EXTERNAL_SCENES).toEqual([]);
+      expect(config.UI_EVENT_EXTERNAL_EVENTS).toEqual([]);
+    });
+
+    it('accepts a valid policy and trims and de-duplicates the lists', () => {
+      const config = validate({
+        ...baseConfig,
+        UI_EVENT_DELIVERY_MODE: 'prefer-external',
+        UI_EVENT_DELIVERY_REVISION: '2026-11-15.1',
+        UI_EVENT_EXTERNAL_SCENES:
+          ' new-year/snowman-delivery , new-year/snowman-delivery,,',
+        UI_EVENT_EXTERNAL_EVENTS: 'company-anniversary, company-anniversary',
+      });
+      expect(config.UI_EVENT_DELIVERY_MODE).toBe('prefer-external');
+      expect(config.UI_EVENT_DELIVERY_REVISION).toBe('2026-11-15.1');
+      expect(config.UI_EVENT_EXTERNAL_SCENES).toEqual([
+        'new-year/snowman-delivery',
+      ]);
+      expect(config.UI_EVENT_EXTERNAL_EVENTS).toEqual(['company-anniversary']);
+    });
+
+    it.each([
+      ['UI_EVENT_DELIVERY_MODE', 'external'],
+      ['UI_EVENT_DELIVERY_REVISION', 'rev 1'],
+      ['UI_EVENT_DELIVERY_REVISION', 'x'.repeat(65)],
+      ['UI_EVENT_EXTERNAL_SCENES', 'new-year/Snowman'],
+      ['UI_EVENT_EXTERNAL_SCENES', 'new-year'],
+      ['UI_EVENT_EXTERNAL_SCENES', 'new-year/snowman/extra'],
+      ['UI_EVENT_EXTERNAL_SCENES', `new-year/${'a'.repeat(65)}`],
+      ['UI_EVENT_EXTERNAL_EVENTS', 'Company_Anniversary'],
+      ['UI_EVENT_EXTERNAL_EVENTS', 'a'.repeat(65)],
+    ])('rejects %s=%j at startup', (key, value) => {
+      expect(() => validate({ ...baseConfig, [key]: value })).toThrow(
+        new RegExp(key),
+      );
+    });
+
+    it('rejects more than 64 distinct entries', () => {
+      const events = Array.from({ length: 65 }, (_, i) => `event-${i}`);
+      expect(() =>
+        validate({ ...baseConfig, UI_EVENT_EXTERNAL_EVENTS: events.join(',') }),
+      ).toThrow(/UI_EVENT_EXTERNAL_EVENTS/);
+      expect(
+        validate({
+          ...baseConfig,
+          UI_EVENT_EXTERNAL_EVENTS: [...events.slice(0, 64), 'event-0'].join(
+            ',',
+          ),
+        }).UI_EVENT_EXTERNAL_EVENTS,
+      ).toHaveLength(64);
+    });
+  });
+
   it('defaults external connections to an empty allowlist', () => {
     expect(validate({ ...baseConfig }).ALLOWED_CONNECT_ORIGINS).toEqual([]);
     expect(
@@ -401,6 +459,7 @@ describe('validate', () => {
 
   describe.each([
     'SCHEDULED_TASKS_ENABLED',
+    'PROJECTS_ENABLED',
     'LIVE_CHAT_INTERACTION_ENABLED',
     'LLM_CONVERSATION_NAMING_ENABLED',
   ] as const)('%s', (key) => {
@@ -495,6 +554,114 @@ describe('validate', () => {
           AUTH_HEADER_TOKEN_CLOCK_TOLERANCE_SECONDS: 'not-a-number',
         }),
       ).toThrow(/Environment validation failed/);
+    });
+  });
+  describe('project context limits', () => {
+    it('defaults to 1 MiB per file, 10 MiB in total and csv, pdf, xlsx', () => {
+      const config = validate({ ...baseConfig });
+
+      expect(config.PROJECT_CONTEXT_FILE_MAX_BYTES).toBe(1_048_576);
+      expect(config.PROJECT_CONTEXT_TOTAL_MAX_BYTES).toBe(10_485_760);
+      expect(config.PROJECT_CONTEXT_ALLOWED_EXTENSIONS).toEqual([
+        'csv',
+        'pdf',
+        'xlsx',
+      ]);
+    });
+
+    it('normalizes a custom extension list', () => {
+      const config = validate({
+        ...baseConfig,
+        PROJECT_CONTEXT_ALLOWED_EXTENSIONS: ' csv, PDF ,.md,, ',
+      });
+
+      expect(config.PROJECT_CONTEXT_ALLOWED_EXTENSIONS).toEqual([
+        'csv',
+        'pdf',
+        'md',
+      ]);
+    });
+
+    it('falls back to the default extensions for an empty value', () => {
+      expect(
+        validate({ ...baseConfig, PROJECT_CONTEXT_ALLOWED_EXTENSIONS: '' })
+          .PROJECT_CONTEXT_ALLOWED_EXTENSIONS,
+      ).toEqual(['csv', 'pdf', 'xlsx']);
+    });
+
+    it('fails fast at boot when an extension entry is unsafe', () => {
+      expect(() =>
+        validate({
+          ...baseConfig,
+          PROJECT_CONTEXT_ALLOWED_EXTENSIONS: 'csv,../exe',
+        }),
+      ).toThrow(/PROJECT_CONTEXT_ALLOWED_EXTENSIONS/);
+    });
+
+    it('accepts custom byte limits', () => {
+      const config = validate({
+        ...baseConfig,
+        PROJECT_CONTEXT_FILE_MAX_BYTES: '2097152',
+        PROJECT_CONTEXT_TOTAL_MAX_BYTES: '4194304',
+      });
+
+      expect(config.PROJECT_CONTEXT_FILE_MAX_BYTES).toBe(2_097_152);
+      expect(config.PROJECT_CONTEXT_TOTAL_MAX_BYTES).toBe(4_194_304);
+    });
+
+    it('fails fast at boot when the total limit is below the per-file limit', () => {
+      expect(() =>
+        validate({
+          ...baseConfig,
+          PROJECT_CONTEXT_FILE_MAX_BYTES: '2097152',
+          PROJECT_CONTEXT_TOTAL_MAX_BYTES: '1048576',
+        }),
+      ).toThrow(/PROJECT_CONTEXT_TOTAL_MAX_BYTES/);
+    });
+
+    it('accepts a total limit at the project read limit minus the manifest limit', () => {
+      expect(
+        validate({
+          ...baseConfig,
+          PROJECT_CONTEXT_TOTAL_MAX_BYTES: '66060288',
+        }).PROJECT_CONTEXT_TOTAL_MAX_BYTES,
+      ).toBe(66_060_288);
+    });
+
+    it('fails fast at boot when the total limit leaves no room in the project read limit', () => {
+      expect(() =>
+        validate({
+          ...baseConfig,
+          PROJECT_CONTEXT_TOTAL_MAX_BYTES: '66060289',
+        }),
+      ).toThrow(/PROJECT_CONTEXT_TOTAL_MAX_BYTES must be at most 66060288/);
+    });
+
+    it('fails fast at boot when a byte limit is not positive', () => {
+      expect(() =>
+        validate({ ...baseConfig, PROJECT_CONTEXT_FILE_MAX_BYTES: '0' }),
+      ).toThrow();
+    });
+  });
+
+  describe('GENERATION_PREPARATION_TIMEOUT_MS', () => {
+    it('defaults to 30 seconds when unset', () => {
+      expect(
+        validate({ ...baseConfig }).GENERATION_PREPARATION_TIMEOUT_MS,
+      ).toBe(30_000);
+    });
+
+    it('parses a configured value', () => {
+      expect(
+        validate({ ...baseConfig, GENERATION_PREPARATION_TIMEOUT_MS: '45000' })
+          .GENERATION_PREPARATION_TIMEOUT_MS,
+      ).toBe(45_000);
+    });
+
+    it('fails fast at boot when the value is below 1000', () => {
+      expect(() =>
+        validate({ ...baseConfig, GENERATION_PREPARATION_TIMEOUT_MS: '999' }),
+      ).toThrow(/GENERATION_PREPARATION_TIMEOUT_MS/);
     });
   });
 });

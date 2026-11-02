@@ -7,3 +7,4 @@
  * ([#8855](https://github.com/epam/ai-dial-chat/issues/8855)).
  */
 export * from '../files/attachment-canvas';
+export * from '../files/useDialFilePreview/useDialFilePreview';

@@ -46,6 +46,7 @@ const AgentDescription: FC<Props> = ({ content }) => {
       codeBlockDownloadLabel={t(ButtonsI18nKeys.Download)}
       tableScrollRegionAriaLabel={t(ChatI18nKeys.ScrollableTable)}
       mathScrollRegionAriaLabel={t(ChatI18nKeys.ScrollableFormula)}
+      codeBlockScrollRegionAriaLabel={t(ChatI18nKeys.ScrollableCode)}
     />
   );
 };

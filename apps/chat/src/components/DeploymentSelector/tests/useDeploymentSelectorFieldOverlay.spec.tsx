@@ -10,6 +10,9 @@ vi.mock('react-i18next', () => ({
 }));
 vi.mock('../../../context/DeploymentsContext');
 vi.mock('../../../context/FavoriteApplicationsContext');
+vi.mock('../../../hooks/useUiFeature', () => ({
+  useUiFeature: () => true,
+}));
 vi.mock('../../../hooks/language/useLanguage', async (importOriginal) => {
   const actual =
     await importOriginal<

@@ -18,6 +18,7 @@ export enum AppsEditorIframeQuery {
   Theme = 'theme',
   ApplicationCredentials = 'applicationCredentials',
   ApplicationName = 'applicationName',
+  ExternalServiceLogin = 'externalServiceLogin',
 }
 
 /** Shared editor wire values, retaining the app's existing event names. */
@@ -57,6 +58,28 @@ export interface ToolsetLogoutResultPayload {
   credentialsLevel?: ToolsetCredentialsLevel;
   reason?: string;
   credentials?: RefreshedToolsetCredentials;
+}
+
+/** Why an external-service login requested by the embedded editor did not complete. */
+export enum ExternalServiceLoginFailureReason {
+  PopupBlocked = 'popup-blocked',
+  NotFound = 'not-found',
+  UnsupportedAuthType = 'unsupported-auth-type',
+  Cancelled = 'cancelled',
+  AdminConsentRequired = 'admin-consent-required',
+  OfflineUnavailable = 'offline-unavailable',
+  Failure = 'failure',
+}
+
+/** Payload of an `ExternalServiceLoginResult` message posted back to the embedded editor. */
+export interface ExternalServiceLoginResultPayload {
+  type: AppsEditorMessages.ExternalServiceLoginResult;
+  /** The application id exactly as the editor sent it. */
+  appId: string;
+  /** The external-service id exactly as the editor sent it. */
+  serviceId: string;
+  success: boolean;
+  reason?: ExternalServiceLoginFailureReason;
 }
 
 /**

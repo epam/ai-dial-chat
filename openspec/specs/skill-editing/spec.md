@@ -147,11 +147,11 @@ When a save's `updateSkill` call rejects with `412 Precondition Failed` (the ETa
 ---
 
 ### Requirement: Resource path and Name are immutable in edit mode
-DIAL Core has no rename or move operation for a whole-skill resource. The page SHALL render the Name field read-only in edit mode (via `libs/skill-editor`'s `isNameReadOnly` prop) and SHALL construct the `updateSkill` call's `path` for a save from the *originally loaded* path, never from a (disabled, but defensively re-derived) edited name. The page SHALL NOT implement a rename by creating a new skill at a different path and deleting the old one.
+DIAL Core has no rename or move operation for a whole-skill resource. The page SHALL render the Name field disabled in edit mode (via `libs/skill-editor`'s `isNameReadOnly` prop), with the `skillEditor.nameReadOnlyTooltip` translation key ("The skill name can't be changed after creation") passed as `labels.nameReadOnlyTooltip` so hovering the field explains why it cannot be edited, and SHALL construct the `updateSkill` call's `path` for a save from the *originally loaded* path, never from a (disabled, but defensively re-derived) edited name. The page SHALL NOT implement a rename by creating a new skill at a different path and deleting the old one.
 
-#### Scenario: Name field is read-only in edit mode
+#### Scenario: Name field is disabled in edit mode
 - **WHEN** a user opens `/skill-editor?id=...` for an existing skill
-- **THEN** the Name field renders read-only and the save path is the originally loaded path regardless of any attempted edit
+- **THEN** the Name field renders disabled, its tooltip says the skill name can't be changed after creation, and the save path is the originally loaded path regardless of any attempted edit
 
 #### Scenario: No create-then-delete rename path exists
 - **WHEN** the codebase is searched for any code path that calls `createSkill` at a new path and `deleteSkill` at the old path within the same user action

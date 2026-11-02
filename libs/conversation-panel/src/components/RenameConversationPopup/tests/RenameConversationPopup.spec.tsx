@@ -16,7 +16,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RenameConversationPopupLabels } from '../../../models/rename-conversation-popup';
 import { RenameConversationPopup } from '../RenameConversationPopup';
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
+vi.mock('@epam/ai-dial-ui-kit', async () => ({
+  /* The real live region: a hand-rolled stub would hide its always-mounted markup. */
+  ...(await vi
+    .importActual<typeof import('@epam/ai-dial-ui-kit')>('@epam/ai-dial-ui-kit')
+    .then(({ LiveRegion, LiveRegionElement, LiveRegionPoliteness }) => ({
+      LiveRegion,
+      LiveRegionElement,
+      LiveRegionPoliteness,
+    }))),
   DIAL_KIT_ICON_STROKE: 1.5,
   PopupSize: { Sm: 'sm' },
   ButtonVariant: { Primary: 'primary', Neutral: 'neutral' },
@@ -212,6 +220,25 @@ describe('RenameConversationPopup', () => {
     expect(
       screen.queryByRole('button', { name: DEFAULT_LABELS.cancelLabel }),
     ).toBeNull();
+  });
+
+  it('keeps the failure alert mounted while saving and fills it when the save fails', () => {
+    const { rerender } = render(
+      <RenameConversationPopup {...DEFAULT_PROPS} isSaving={true} />,
+    );
+    const alert = screen.getByRole('alert');
+    expect(alert.textContent).toBe('');
+
+    rerender(
+      <RenameConversationPopup
+        {...DEFAULT_PROPS}
+        isSaving={false}
+        error="Failed to rename"
+      />,
+    );
+
+    expect(screen.getByRole('alert')).toBe(alert);
+    expect(alert.textContent).toBe('Failed to rename');
   });
 
   it('Save button is enabled when value differs from currentTitle', async () => {

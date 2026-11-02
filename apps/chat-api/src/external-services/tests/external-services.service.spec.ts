@@ -90,6 +90,21 @@ describe('ExternalServicesService', () => {
       ).toEqual([]);
     });
 
+    it('passes a caller-supplied abort signal to the Core read', async () => {
+      const { service, dialClient } = makeService();
+      vi.mocked(dialClient.client.getApplication).mockResolvedValue(
+        okResponse({}),
+      );
+      const signal = new AbortController().signal;
+
+      await service.listExternalServices('token', APP_ID, signal);
+
+      expect(dialClient.client.getApplication).toHaveBeenCalledWith(APP_ID, {
+        headers: { Authorization: 'Bearer token' },
+        signal,
+      });
+    });
+
     it('re-reads authentication statuses on every request', async () => {
       const { service, dialClient } = makeService();
       vi.mocked(dialClient.client.getApplication)
@@ -270,6 +285,48 @@ describe('ExternalServicesService', () => {
       await expect(
         service.getExternalService('token', APP_ID, 'missing-service'),
       ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('passes a caller-supplied abort signal to the Core read', async () => {
+      const { service, dialClient } = makeService();
+      vi.mocked(dialClient.client.getExternalService).mockResolvedValue(
+        okResponse({ display_name: 'FinHub API' }),
+      );
+      const signal = new AbortController().signal;
+
+      await service.getExternalService('token', APP_ID, SERVICE_ID, signal);
+
+      expect(dialClient.client.getExternalService).toHaveBeenCalledWith(
+        'public/finhub-via-openapi__1.0.0',
+        SERVICE_ID,
+        { headers: { Authorization: 'Bearer token' }, signal },
+      );
+    });
+
+    it('propagates the abort signal into the application-resource fallback', async () => {
+      const { service, dialClient } = makeService();
+      vi.mocked(dialClient.client.getExternalService).mockResolvedValue(
+        errResponse(404),
+      );
+      vi.mocked(dialClient.client.getCustomApplication).mockResolvedValue(
+        okResponse({
+          external_services: {
+            [SERVICE_ID]: {
+              display_name: 'GitLab',
+              auth_settings: { authentication_type: 'OAUTH' },
+            },
+          },
+        }),
+      );
+      const signal = new AbortController().signal;
+
+      await service.getExternalService('token', APP_ID, SERVICE_ID, signal);
+
+      expect(dialClient.client.getCustomApplication).toHaveBeenCalledWith(
+        'public',
+        'finhub-via-openapi__1.0.0',
+        { headers: { Authorization: 'Bearer token' }, signal },
+      );
     });
 
     it('does not reach for the application on a non-404 failure', async () => {

@@ -5,11 +5,14 @@ import {
   DangerButton,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
+  ElementSize,
   ErrorText,
   Input,
   LinkButton,
   NeutralButton,
   Spinner,
+  LiveRegion,
+  LiveRegionPoliteness,
 } from '@epam/ai-dial-ui-kit';
 import { IconKey } from '@tabler/icons-react';
 import { type FC, type ReactNode, useCallback, useId, useState } from 'react';
@@ -142,6 +145,7 @@ export const CredentialsRow: FC<CredentialsRowProps> = ({
   const configuredMessage =
     texts?.apiKeyConfiguredMessage ?? 'Key has been configured';
   const headerHintId = `${inputId}-header-hint`;
+  const emptyKeyErrorId = `${inputId}-empty-key-error`;
   const headerHint = apiKeyHeader
     ? (
         texts?.apiKeyHeaderHint ??
@@ -185,9 +189,10 @@ export const CredentialsRow: FC<CredentialsRowProps> = ({
             (isSignedIn ? (
               onRequestLogout && (
                 <DangerButton
+                  size={ElementSize.Small}
                   appearance={ButtonAppearance.Ghost}
                   label={logoutLabel}
-                  className="min-h-11 min-w-28 shrink-0 justify-center whitespace-nowrap"
+                  className="min-w-28 shrink-0 justify-center whitespace-nowrap"
                   onClick={onRequestLogout}
                   disabled={isSaving || disabled}
                 />
@@ -201,8 +206,9 @@ export const CredentialsRow: FC<CredentialsRowProps> = ({
                     <Spinner size={DIAL_ICON_SIZE.SM} ariaLabel={loginLabel} />
                   ) : undefined
                 }
+                size={ElementSize.Small}
                 disabled={isSaving || disabled}
-                className="min-h-11 min-w-28 shrink-0 justify-center whitespace-nowrap"
+                className="min-w-28 shrink-0 justify-center whitespace-nowrap"
                 onClick={handleLogin}
               />
             ))}
@@ -214,7 +220,14 @@ export const CredentialsRow: FC<CredentialsRowProps> = ({
               <div className="flex items-end gap-2">
                 <Input
                   id={inputId}
-                  aria-describedby={headerHint ? headerHintId : undefined}
+                  aria-describedby={
+                    [
+                      headerHint ? headerHintId : undefined,
+                      hasEmptyKeyError ? emptyKeyErrorId : undefined,
+                    ]
+                      .filter(Boolean)
+                      .join(' ') || undefined
+                  }
                   type="password"
                   autoComplete="off"
                   value={apiKey}
@@ -256,6 +269,7 @@ export const CredentialsRow: FC<CredentialsRowProps> = ({
               />
               {hasEmptyKeyError && (
                 <ErrorText
+                  id={emptyKeyErrorId}
                   className={mergeClasses(errorClassName, styles.errorText)}
                   text={
                     texts?.apiKeyRequiredErrorMessage ?? 'API key is required.'
@@ -265,46 +279,48 @@ export const CredentialsRow: FC<CredentialsRowProps> = ({
             </div>
           )}
 
-        {authenticationType === ToolsetAuthenticationType.ApiKey &&
-          isSignedIn && (
-            <div className="animate-fadeIn pt-1">
-              <CredentialsInfoCard
-                icon={
-                  <IconKey
-                    size={DIAL_ICON_SIZE.SM}
-                    aria-hidden
-                    stroke={DIAL_KIT_ICON_STROKE}
-                  />
-                }
-                title={configuredMessage}
-                description={addedWhenLabel}
-                titleClassName={keyCardTitleClassName}
-                descriptionClassName={keyCardDescriptionClassName}
-                action={
-                  onRequestDeleteApiKey && (
-                    <LinkButton
-                      label={deleteLabel}
-                      className={mergeClasses(
-                        'min-h-11',
-                        deleteActionClassName,
-                      )}
-                      onClick={onRequestDeleteApiKey}
-                      disabled={isSaving || disabled}
+        {/* Mounted before the key card appears, so the card is announced once the key is added; taken out of the column gap while empty. */}
+        {authenticationType === ToolsetAuthenticationType.ApiKey && (
+          <LiveRegion>
+            {isSignedIn && (
+              <div className="animate-fadeIn pt-1">
+                <CredentialsInfoCard
+                  icon={
+                    <IconKey
+                      size={DIAL_ICON_SIZE.SM}
+                      aria-hidden
+                      stroke={DIAL_KIT_ICON_STROKE}
                     />
-                  )
-                }
-              />
-            </div>
-          )}
-        {!isSignedIn && renderLoginOptions?.(isSaving || disabled)}
-        {error && (
-          <p
-            role="alert"
-            className={mergeClasses(errorClassName, styles.errorText)}
-          >
-            {error}
-          </p>
+                  }
+                  title={configuredMessage}
+                  description={addedWhenLabel}
+                  titleClassName={keyCardTitleClassName}
+                  descriptionClassName={keyCardDescriptionClassName}
+                  action={
+                    onRequestDeleteApiKey && (
+                      <LinkButton
+                        label={deleteLabel}
+                        className={mergeClasses(
+                          'min-h-11',
+                          deleteActionClassName,
+                        )}
+                        onClick={onRequestDeleteApiKey}
+                        disabled={isSaving || disabled}
+                      />
+                    )
+                  }
+                />
+              </div>
+            )}
+          </LiveRegion>
         )}
+        {!isSignedIn && renderLoginOptions?.(isSaving || disabled)}
+        {/* Mounted before the login failure appears, so the message is announced; taken out of the column gap while empty. */}
+        <ErrorText
+          announce={LiveRegionPoliteness.Assertive}
+          className={mergeClasses(errorClassName, styles.errorText)}
+          text={error ?? ''}
+        />
         {children}
       </div>
     </div>

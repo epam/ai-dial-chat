@@ -1,0 +1,457 @@
+## ADDED Requirements
+
+### Requirement: Per-project endpoints are flag-gated and address a project by its encoded DIAL id
+
+`ProjectsController` (`apps/chat-api/src/projects/projects.controller.ts`) SHALL add five handlers under its existing class-level `@UseGuards(FeatureGuard)` + `@RequireFeature(FeatureKey.ProjectsEnabled)`:
+
+| Method and path | Handler / `operationId` |
+| --- | --- |
+| `GET /api/v1/projects/:id` | `getProject` |
+| `GET /api/v1/projects/:id/files/:fileName` | `downloadProjectFile` |
+| `GET /api/v1/projects/:id/archive` | `downloadProject` |
+| `PUT /api/v1/projects/:id` | `updateProject` |
+| `DELETE /api/v1/projects/:id` | `deleteProject` |
+
+**The `:id` parameter.** `:id` is the full DIAL id `projects/{bucket}/{path…}`, URL-encoded into one path segment, as `publish.controller.ts` takes `:entityId`.
+
+- `ProjectIdParamDto` SHALL validate it with `@Matches(/^projects\/[^/\s]+\/[^\r\n]+$/)` and a check that rejects:
+  - an empty, `.` or `..` segment;
+  - a control character;
+  - a trailing `/`.
+- The bucket and path are parsed from `:id`, never from the session. Core authorizes every call with the caller's token.
+
+**The `:fileName` parameter.** `ProjectFileParamDto.fileName` SHALL be validated with `IsDialEntityName` (`apps/chat-api/src/common/validators/dial-entity-name.validator.ts`), the rule create applies to context file names.
+
+Every Core call sends `getBearerAuthHeaders(accessToken)` and goes through `DialClientService.client`.
+
+**Feature flag:** `features.projectsEnabled` (env `PROJECTS_ENABLED`, roles `PROJECTS_ENABLED_ROLES`). **RTL impact:** none, this is a backend surface. **i18n impact:** none.
+
+#### Scenario: Flag off rejects every per-project route
+
+- **WHEN** `PROJECTS_ENABLED` is unset and an authenticated user calls any of the five routes
+- **THEN** `FeatureGuard` answers `403` and no DIAL Core call is made
+
+#### Scenario: Path traversal in the id is rejected
+
+- **WHEN** `GET /api/v1/projects/projects%2Fa1b2c3%2F..%2Fother` is called
+- **THEN** the response is `400`, and no DIAL Core call is made
+
+#### Scenario: Path traversal in the file name is rejected
+
+- **WHEN** `GET /api/v1/projects/projects%2Fa1b2c3%2Fq4/files/..%2F..%2Fsecret` is called
+- **THEN** the response is `400`, and no DIAL Core call is made
+
+#### Scenario: Foreign prefix is rejected
+
+- **WHEN** `:id` decodes to `skills/a1b2c3/q4`
+- **THEN** the response is `400`
+
+### Requirement: A project snapshot is read from DIAL Core's archive
+
+`ProjectsSnapshotService` (`apps/chat-api/src/projects/snapshot/projects-snapshot.service.ts`) SHALL read a project with `downloadProjectFolder(bucket, encodeDialResourcePath(path), { parseAs: 'stream' })`.
+
+**ETag.** The snapshot's `etag` is the response's `ETag` header. A response without `ETag` is an invalid upstream response, `502`.
+
+**Size cap.** `PROJECT_ARCHIVE_READ_MAX_BYTES` is a module constant of 64 MiB, Core's default per-project total. When the response's `Content-Length`, or the running byte count while buffering, exceeds it, the read is aborted and the BFF answers `413` with `code: 'project-too-large'`.
+
+**Parsing.** The buffered archive is opened with `yauzl.fromBufferPromise` (`lazyEntries: true`):
+
+- Every central-directory entry is recorded with its name and uncompressed size, without being inflated.
+- An entry whose name is absolute, contains a `..` segment, or contains a backslash makes the archive invalid, `502`.
+- `PROJECT.md` is inflated, capped at `PROJECT_MANIFEST_MAX_BYTES` (1 MiB). Above the cap the manifest is treated as absent, and a warning is logged.
+- The entries are classified:
+  - `PROJECT.md`;
+  - `contextFiles`: direct children of `context/`, as `{ name, size }`;
+  - `otherEntries`: every other path, including nested paths under `context/`.
+
+**Logging.** `log` and `warn` logs carry counts and byte totals only, never a file name, bucket or content. At `debug` level (`LOG_LEVEL=debug`, off by default) the snapshot also logs what Core's archive held — the ETag, the archive size, whether `PROJECT.md` parsed, and every entry's path and size — and `getProject` logs the item metadata exactly as Core returned it. File content and tokens are never logged at any level.
+
+#### Scenario: Snapshot ETag comes from the archive response
+
+- **WHEN** Core answers the archive with `ETag: "e1"` and entries `PROJECT.md`, `context/tickets.csv` (2,048 bytes) and `context/survey.xlsx` (10,240 bytes)
+- **THEN** the snapshot has `etag: "e1"`, and two context files with exactly those sizes
+
+#### Scenario: Oversized archive is refused before buffering
+
+- **WHEN** Core answers with `Content-Length` greater than 64 MiB
+- **THEN** the stream is cancelled, and the response is `413` with `code: 'project-too-large'`
+
+#### Scenario: Traversal entry name makes the archive invalid
+
+- **WHEN** the archive contains an entry named `../evil.txt`
+- **THEN** the response is `502`, and nothing from the archive is returned
+
+#### Scenario: Nested context entries are kept but not listed
+
+- **WHEN** the archive contains `context/a/b.csv`
+- **THEN** it is not in `contextFiles`, and it is in `otherEntries`
+
+### Requirement: PROJECT.md is parsed tolerantly and the name always comes from the path
+
+`parseProjectManifest(text)` in `apps/chat-api/src/projects/utils/project-manifest.util.ts` SHALL be the inverse of `buildProjectManifest`:
+
+- **Parsing:** a leading `---` fence, then YAML parsed with `yaml`'s `parse` using the default schema, then the closing `---`.
+- **`description`:** read when it is a string, otherwise `''`.
+- **`instructions`:** the body after the closing fence, with the single blank line `buildProjectManifest` writes removed.
+- **Malformed input** (no fence, a YAML error, or a non-object): `description: ''`, `instructions` = the whole text, and one warning without content.
+- **Missing manifest:** a project without `PROJECT.md` has `description: ''` and `instructions: ''`.
+
+The project `name` SHALL always be the last segment of the path, as in the listing (`apps/chat-api/src/projects/projects.mapper.ts`). The frontmatter `name` is never read for display.
+
+#### Scenario: Round trip
+
+- **WHEN** `parseProjectManifest(buildProjectManifest({ name: 'Q4', description: 'a: b\n---', instructions: '## Steps\n1. Go' }))` is called
+- **THEN** it returns `description: 'a: b\n---'` and `instructions: '## Steps\n1. Go'`
+
+#### Scenario: Missing PROJECT.md falls back
+
+- **WHEN** the snapshot of `projects/a1b2c3/marketing/q4-launch` has no `PROJECT.md`
+- **THEN** `getProject` returns `name: 'q4-launch'`, `description: ''` and `instructions: ''`
+
+#### Scenario: Frontmatter name differs from the path
+
+- **WHEN** `PROJECT.md` has `name: Old` and the path is `projects/a1b2c3/New`
+- **THEN** `getProject` returns `name: 'New'`
+
+### Requirement: GET /api/v1/projects/:id returns one project's details
+
+`getProject` SHALL call two things concurrently under one `AbortSignal.timeout(PROJECT_READ_TIMEOUT_MS)` (30,000 ms):
+
+- `listProjectMetadata(bucket, encodeDialResourcePath(path))`;
+- the snapshot.
+
+**Metadata outcomes:**
+
+- A metadata answer with `nodeType: 'FOLDER'` (a grouping folder) is `404`.
+- Core `404` from either call is `404`. Core `403` is `403`.
+- Other failures go through `handleDialSdkError` with context `projects.getProject`.
+
+**`source` and `canEdit`:**
+
+- `source` is `personal` when the bucket equals `SessionUser.bucket`, `organization` when it equals `PUBLIC_BUCKET`, and `shared` otherwise.
+- `canEdit` is `source === 'personal'`.
+
+**Caching.** The response carries `Cache-Control: private, no-store`. There is no server cache, so there is no key, TTL or invalidation.
+
+`ProjectDetailsDto` SHALL be a class with Swagger metadata on every field:
+
+- `id`, `name`, `bucket`, `path`, `parentPath?`;
+- `source: ProjectSource`;
+- `author?`, `createdAt?`, `updatedAt?`;
+- `description`, `instructions`;
+- `contextFiles: ProjectContextFileDto[]`, where each item is `{ name: string; size: number }`, sorted by name;
+- `etag`;
+- `canEdit: boolean`.
+
+Example request:
+
+```http
+GET /api/v1/projects/projects%2Fa1b2c3%2Fmarketing%2Fq4-launch HTTP/1.1
+Cookie: <session cookie>
+```
+
+Example `200` response:
+
+```json
+{
+  "id": "projects/a1b2c3/marketing/q4-launch",
+  "name": "q4-launch",
+  "bucket": "a1b2c3",
+  "path": "marketing/q4-launch",
+  "parentPath": "marketing",
+  "source": "personal",
+  "author": "jane.doe",
+  "createdAt": 1790000000000,
+  "updatedAt": 1791234567000,
+  "description": "Bundles the Q4 support tickets and survey results.",
+  "instructions": "## Approach\nExplain your reasoning step by step.",
+  "contextFiles": [
+    { "name": "survey.xlsx", "size": 10240 },
+    { "name": "tickets.csv", "size": 2048 }
+  ],
+  "etag": "\"9f2c\"",
+  "canEdit": true
+}
+```
+
+Status codes:
+
+| Status | When |
+| --- | --- |
+| `200` | The project was read. |
+| `400` | `:id` is invalid. |
+| `401` | No valid session. |
+| `403` | The flag is off, or Core denied read access. |
+| `404` | No such project, or the id names a grouping folder. |
+| `413` | `project-too-large`. |
+| `429` / `502` / `503` | As derived by `handleDialSdkError`. |
+
+**Generated-client impact:** `ProjectsApi.getProject({ id })` returning `ProjectDetailsDto`. Callers use the normal method.
+
+#### Scenario: Personal project is editable
+
+- **WHEN** a user reads a project in their own bucket
+- **THEN** the response is `200` with `source: 'personal'` and `canEdit: true`
+
+#### Scenario: Shared project is read-only
+
+- **WHEN** a user reads `projects/z9y8x7/shared-research`, owned by another user and shared with them
+- **THEN** the response is `200` with `source: 'shared'` and `canEdit: false`
+
+#### Scenario: Unknown project
+
+- **WHEN** Core answers the metadata call with `404`
+- **THEN** the response is `404`
+
+#### Scenario: Grouping folder is not a project
+
+- **WHEN** `listProjectMetadata` answers with a `FOLDER` node for the id
+- **THEN** the response is `404`
+
+#### Scenario: Upstream timeout
+
+- **WHEN** the archive read exceeds the deadline
+- **THEN** the response is `503`
+
+### Requirement: PUT /api/v1/projects/:id saves an edit in one atomic Core write
+
+`updateProject` SHALL take `multipart/form-data` through `ProjectContextUploadInterceptor`, with these fields:
+
+- `name`, `description` and `instructions`, as on create (`UpdateProjectDto`);
+- `fileNames`: a JSON array paired positionally with the `files` parts, holding the added files only;
+- `removedFileNames`: a JSON array of stored context file names.
+
+It also requires an `If-Match` header. `ProjectsUpdateService` (`apps/chat-api/src/projects/update/projects-update.service.ts`) SHALL:
+
+1. **Require `If-Match`.** Reject a missing `If-Match` with `428`, `code: 'if-match-required'`, before any Core call.
+2. **Validate** the text fields and the new files with the same rules, codes and limits as `POST /api/v1/projects`:
+   - name rules (`invalid-name`);
+   - file-name rules (`invalid-file-name`);
+   - extension and signature (`unsupported-file-type`);
+   - per-file size (`file-too-large`).
+3. **Read the snapshot.** If its `etag` differs from `If-Match`, answer `409` with `code: 'project-changed'`, without writing.
+4. **Compute the resulting context set:** snapshot files, minus `removedFileNames`, plus the new files.
+   - A removed name that is not in the snapshot is `400 unknown-file`.
+   - A new name equal to a kept file is `400 duplicate-file-name`, so replacing a file requires listing its name in `removedFileNames` as well.
+   - The total size above `PROJECT_CONTEXT_TOTAL_MAX_BYTES` is `413 capacity-exceeded`.
+   - More than `PROJECT_CONTEXT_MAX_FILES` files is `400 too-many-files`.
+5. **Pre-check the destination on rename.** When the trimmed name differs from the last path segment, call `listProjectMetadata` for `{parentPath}/{name}` in the same bucket. An existing item or folder is `409` with `code: 'name-taken'` and `field: 'name'`, without writing.
+6. **Build one `FormData`:**
+   - `PROJECT.md` from `buildProjectManifest({ name: newName, description, instructions })`;
+   - every kept context file, inflated from the snapshot;
+   - every new file;
+   - every `otherEntries` path, inflated verbatim.
+7. **Write once.** Make exactly one `uploadProjectFolder(bucket, encodeDialResourcePath(path), …)` call with `If-Match: <snapshot etag>`, under `AbortSignal.any([disconnect, AbortSignal.timeout(60_000)])`. Core `412` is `409 project-changed`.
+8. **Move on rename.** Call `moveResource({ body: { sourceUrl, destinationUrl, overwrite: false } })`.
+   - On a Core `400`, re-check the destination: when it exists, answer `409 name-taken`; otherwise use `mapDialHttpStatus`.
+   - After the move, read the destination's ETag with `listProjectMetadata`.
+9. **Migrate the pin on rename.** Call `UserConfigService.replaceProjectPin(oldId, newId, …)`. A failure is logged and does not fail the request.
+
+Response: `200` with `UpdateProjectResponseDto { id, name, bucket, path, etag, isPinned }`. Logs carry the outcome, file counts and byte totals, never names or content.
+
+Example request:
+
+```http
+PUT /api/v1/projects/projects%2Fa1b2c3%2Fq4-launch HTTP/1.1
+If-Match: "9f2c"
+Content-Type: multipart/form-data; boundary=x
+
+--x
+Content-Disposition: form-data; name="name"
+
+Q4 launch
+--x
+Content-Disposition: form-data; name="description"
+
+Bundles the Q4 tickets.
+--x
+Content-Disposition: form-data; name="instructions"
+
+Explain your reasoning step by step.
+--x
+Content-Disposition: form-data; name="fileNames"
+
+["retro.pdf"]
+--x
+Content-Disposition: form-data; name="removedFileNames"
+
+["survey.xlsx"]
+--x
+Content-Disposition: form-data; name="files"; filename="retro.pdf"
+Content-Type: application/pdf
+
+%PDF-…
+--x--
+```
+
+Example `200` response:
+
+```json
+{
+  "id": "projects/a1b2c3/Q4 launch",
+  "name": "Q4 launch",
+  "bucket": "a1b2c3",
+  "path": "Q4 launch",
+  "etag": "\"b71e\"",
+  "isPinned": true
+}
+```
+
+Status codes:
+
+| Status | When |
+| --- | --- |
+| `200` | Saved, and moved when renamed. |
+| `400` | Invalid field, name or file, `unknown-file`, `duplicate-file-name`, or `too-many-files`. |
+| `401` | No valid session. |
+| `403` | The flag is off, or Core denied write access. |
+| `404` | No such project. |
+| `409` | `project-changed` or `name-taken`. |
+| `413` | `file-too-large`, `capacity-exceeded`, or `project-too-large`. |
+| `428` | `if-match-required`. |
+| `429` / `502` / `503` | Upstream. |
+
+Every error code is a `ProjectCreateErrorCode` member. The enum gains `ProjectChanged = 'project-changed'`, `IfMatchRequired = 'if-match-required'`, `ProjectTooLarge = 'project-too-large'` and `UnknownFile = 'unknown-file'`.
+
+**Generated-client impact:** `ProjectsApi.updateProject({ id, ifMatch, name, description, instructions, fileNames, removedFileNames, files })` returning `UpdateProjectResponseDto`. Callers use the normal method.
+
+#### Scenario: Text-only edit is one Core write
+
+- **WHEN** the user changes only the description, with the current ETag
+- **THEN** exactly one `uploadProjectFolder` call is made with `If-Match` equal to the snapshot ETag
+- **AND** its parts are the rebuilt `PROJECT.md` and every stored context file, and no move is made
+
+#### Scenario: Stale ETag is detected before writing
+
+- **WHEN** `If-Match` is `"old"` and the snapshot ETag is `"new"`
+- **THEN** the response is `409` with `code: 'project-changed'`, and no `uploadProjectFolder` call is made
+
+#### Scenario: Concurrent write between read and write
+
+- **WHEN** Core answers the `uploadProjectFolder` call with `412`
+- **THEN** the response is `409` with `code: 'project-changed'`
+
+#### Scenario: Replacing a file keeps capacity honest
+
+- **WHEN** `tickets.csv` (2 KiB) is in `removedFileNames` and a new `tickets.csv` (3 KiB) is uploaded
+- **THEN** the capacity check uses the 3 KiB size, and the written set contains the new file only
+
+#### Scenario: Removing an unknown file
+
+- **WHEN** `removedFileNames` contains `missing.csv`, and the snapshot has no such context file
+- **THEN** the response is `400` with `code: 'unknown-file'`
+
+#### Scenario: Capacity is enforced against stored files
+
+- **WHEN** the stored files total 9.5 MiB and a 1 MiB file is added with the default 10 MiB capacity
+- **THEN** the response is `413` with `code: 'capacity-exceeded'`
+
+#### Scenario: Rename moves the project and its pin
+
+- **WHEN** a pinned project `projects/a1b2c3/q4` is saved with name `Q4 launch`, and no project of that name exists
+- **THEN** the content is written to `q4`, then moved to `projects/a1b2c3/Q4 launch`
+- **AND** `replaceProjectPin` is called with the old and new ids, and the response has the new `id` and `isPinned: true`
+
+#### Scenario: Rename onto a taken name
+
+- **WHEN** a project named `Handbook` already exists in the same folder, and the user renames to `Handbook`
+- **THEN** the response is `409` with `code: 'name-taken'` and `field: 'name'`, and no `uploadProjectFolder` or move call is made
+
+#### Scenario: Other clients' files survive a save
+
+- **WHEN** the snapshot contains `notes/readme.txt` and the user saves a description change
+- **THEN** the written `FormData` contains `notes/readme.txt` with its original bytes
+
+#### Scenario: Missing If-Match
+
+- **WHEN** `PUT /api/v1/projects/:id` is called without `If-Match`
+- **THEN** the response is `428` with `code: 'if-match-required'`, and no DIAL Core call is made
+
+### Requirement: DELETE /api/v1/projects/:id deletes a project conditionally
+
+`deleteProject` SHALL require `If-Match`, answering `428 if-match-required` without it. It calls `deleteProjectFolder(bucket, encodeDialResourcePath(path), { headers: { 'If-Match': ifMatch } })`:
+
+- Core `412` is `409 project-changed`.
+- `404` is `404`.
+- Other errors go through `handleDialSdkError` with context `projects.deleteProject`.
+
+On success it calls `UserConfigService.removeProjectPin(id, …)` as a best effort, and answers `204`.
+
+Example request:
+
+```http
+DELETE /api/v1/projects/projects%2Fa1b2c3%2Fq4-launch HTTP/1.1
+If-Match: "9f2c"
+```
+
+Status codes:
+
+| Status | When |
+| --- | --- |
+| `204` | Deleted. |
+| `400` | Invalid `:id`. |
+| `401` | No valid session. |
+| `403` | The flag is off, or Core denied access. |
+| `404` | No such project. |
+| `409` | `project-changed`. |
+| `428` | `if-match-required`. |
+| `429` / `502` / `503` | Upstream. |
+
+**Generated-client impact:** `ProjectsApi.deleteProject({ id, ifMatch })`, returning `void`.
+
+#### Scenario: Delete with the current ETag
+
+- **WHEN** a pinned project is deleted with its current ETag
+- **THEN** the response is `204`, and its id is no longer in `projects.pinnedIds`
+
+#### Scenario: Delete with a stale ETag
+
+- **WHEN** Core answers `deleteProjectFolder` with `412`
+- **THEN** the response is `409` with `code: 'project-changed'`, and the pin is unchanged
+
+### Requirement: Project and context-file downloads stream through the BFF
+
+`downloadProject` SHALL stream `downloadProjectFolder` (`parseAs: 'stream'`) to the client, and `downloadProjectFile` SHALL stream `downloadProjectFile(bucket, path, 'context/' + fileName)`. Both follow `SkillsController.downloadSkill`:
+
+- They register a disconnect abort before awaiting Core, and pipe with `pipeline(Readable.fromWeb(stream), res)`, destroying the response on a pipe error.
+- They forward only `content-type` and `etag` from Core.
+- They set `Content-Disposition: attachment; filename*=UTF-8''<encoded>` (`{name}.zip` for the archive, the file name for a context file), `X-Content-Type-Options: nosniff` and `Cache-Control: private, no-store`.
+- Upstream `404` is `404`, and an empty-body error is treated as a failure.
+
+Swagger declares `@ApiProduces('application/zip')` for the archive and `application/octet-stream` for files.
+
+**Generated-client impact:** the generator emits `Blob | void`, so `downloadProjectRaw` and `downloadProjectFileRaw` are used. The frontend wrappers return the raw `Response` for `triggerBrowserDownload`.
+
+#### Scenario: Archive download
+
+- **WHEN** `GET /api/v1/projects/projects%2Fa1b2c3%2Fq4-launch/archive` is called
+- **THEN** the response streams Core's ZIP with `Content-Disposition: attachment; filename*=UTF-8''q4-launch.zip`
+
+#### Scenario: Context file is never served inline
+
+- **WHEN** a context file is downloaded
+- **THEN** the response carries `Content-Disposition: attachment` and `X-Content-Type-Options: nosniff`
+
+#### Scenario: Missing file
+
+- **WHEN** Core answers `downloadProjectFile` with `404`
+- **THEN** the response is `404`
+
+### Requirement: Per-project endpoints document every status in OpenAPI
+
+Each new handler SHALL declare:
+
+- `@ApiOperation` with its `operationId`;
+- `@ApiParam` metadata for `:id` and `:fileName`;
+- `@ApiHeader` `If-Match` (required) on `updateProject` and `deleteProject`;
+- an `@ApiResponse` for every status in its table, with a `type` on JSON successes and errors (`ProjectCreateErrorDto` for coded errors);
+- `@ApiDialCoreErrors()`.
+
+After the change, `npm run openapi` and `npm run openapi:check` SHALL pass, and `libs/chat-api-client` SHALL build and lint.
+
+**Observability:** no new metric is added. The routes are covered by `MetricsInterceptor`. Domain logs at `log`/`warn` never include tokens, ETags, bucket ids, file names or content; the `debug` logs of Core's project metadata and archive entries (see the snapshot requirement) include ETags, ids and paths but never tokens or file content.
+
+#### Scenario: Generated client exposes the operations
+
+- **WHEN** `npm run openapi` runs
+- **THEN** `ProjectsApi` has `getProject`, `updateProject`, `deleteProject`, `downloadProjectRaw` and `downloadProjectFileRaw`, and exports `ProjectDetailsDto`, `ProjectContextFileDto` and `UpdateProjectResponseDto`

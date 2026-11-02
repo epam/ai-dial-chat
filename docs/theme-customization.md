@@ -280,9 +280,10 @@ shadow-xs-1  shadow-xs-2  shadow-sm-1  shadow-sm-2  shadow-md-1  shadow-md-2  sh
 ```
 
 The variables are named after the elevation that consumes them, not after their
-hue. `shadow-xs` paints two layers — a wide blue one from `shadow-xs-1` and a
-tight grey one from `shadow-xs-2`. `shadow-sm` and `shadow-md` paint two blue
-layers too, as the design's Shadow SM and Shadow MD: a drop from `shadow-sm-2` /
+hue. `shadow-xs` paints a single blue halo from `shadow-xs-1`; `shadow-xs-2`
+(a tight grey) is only read by `shadow-chat-button`. `shadow-sm` and
+`shadow-md` paint two blue layers, as the design's Shadow SM and Shadow MD: a
+drop from `shadow-sm-2` /
 `shadow-md-2` and a tight halo from `shadow-sm-1` / `shadow-md-1`. A theme that
 still sets the old single `shadow-sm` / `shadow-md` colour keeps it on the drop
 layer. `shadow-lg` is a single blue layer with one variable. Themes that set
@@ -292,8 +293,8 @@ its own variable.
 
 Besides the four scale steps there is `shadow-chat-button`, the resting shadow
 the chat button kept when `shadow-sm` was retuned. It is not a foundations
-elevation and has no variable of its own — it paints the same two variables as
-`shadow-xs` at a wider offset and blur.
+elevation and has no variable of its own — it paints `shadow-xs-1` and
+`shadow-xs-2` as two offset layers.
 
 There is no inset variant: a recessed seam between a panel and the content
 beside it is painted by the panel's own `shadow-sm`, not by an inset shadow on

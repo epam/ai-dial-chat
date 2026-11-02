@@ -35,7 +35,15 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
   };
 });
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
+vi.mock('@epam/ai-dial-ui-kit', async () => ({
+  /* The real live region: a hand-rolled stub would hide its always-mounted markup. */
+  ...(await vi
+    .importActual<typeof import('@epam/ai-dial-ui-kit')>('@epam/ai-dial-ui-kit')
+    .then(({ LiveRegion, LiveRegionElement, LiveRegionPoliteness }) => ({
+      LiveRegion,
+      LiveRegionElement,
+      LiveRegionPoliteness,
+    }))),
   ButtonDropdown: ({ label }: { label: ReactNode }) => (
     <button aria-haspopup="menu">{label}</button>
   ),
@@ -77,7 +85,20 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     </span>
   ),
   CaptionText: ({ text }: { text?: string }) => <span>{text}</span>,
-  ErrorText: ({ text }: { text?: string }) => <span>{text}</span>,
+  ErrorText: ({ text, id }: { text?: string; id?: string }) =>
+    text ? <span id={id}>{text}</span> : null,
+  ErrorMessageNotification: ({
+    message,
+    action,
+  }: {
+    message: ReactNode;
+    action?: ReactNode;
+  }) => (
+    <div role="alert">
+      {message}
+      {action}
+    </div>
+  ),
   FileDropzone: ({
     label,
     ariaLabel,
@@ -163,6 +184,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     caption,
     disabled,
     readOnly,
+    tooltipText,
   }: {
     id?: string;
     labelProps?: { label: ReactNode; required?: boolean };
@@ -172,6 +194,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     caption?: string;
     disabled?: boolean;
     readOnly?: boolean;
+    tooltipText?: string;
   }) => (
     <label>
       {labelProps?.label}
@@ -182,6 +205,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
         value={value ?? ''}
         disabled={disabled}
         readOnly={readOnly}
+        title={tooltipText}
         onChange={(e) => onChange?.(e.target.value)}
       />
       {error && <span>{error}</span>}
@@ -278,13 +302,16 @@ vi.mock('@epam/ai-dial-ui-kit/editors', () => ({
   LazyMarkdownEditor: () =>
     Promise.resolve({
       MarkdownEditor: ({
+        id,
         value,
         onChange,
       }: {
+        id?: string;
         value: string;
         onChange: (value: string) => void;
       }) => (
         <textarea
+          id={id}
           aria-label="Instructions"
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -461,16 +488,19 @@ describe('SkillEditor', () => {
     expect(screen.getByRole('textbox', { name: /Name/ })).toBeTruthy();
   });
 
-  it('renders the Name field read-only when isNameReadOnly is set', () => {
+  it('renders the Name field disabled when isNameReadOnly is set', () => {
     renderEditor({
       isNameReadOnly: true,
       initialValues: { name: 'good-morning-breakfast' },
     });
 
-    expect(
-      (screen.getByDisplayValue('good-morning-breakfast') as HTMLInputElement)
-        .readOnly,
-    ).toBe(true);
+    const nameField = screen.getByDisplayValue(
+      'good-morning-breakfast',
+    ) as HTMLInputElement;
+    expect(nameField.disabled).toBe(true);
+    expect(nameField.title).toBe(
+      "The skill name can't be changed after creation",
+    );
   });
 
   it('calls onDirtyChange(true) on the first edit and onDirtyChange(false) when reverted', async () => {
@@ -526,6 +556,32 @@ describe('SkillEditor', () => {
     const message = screen.getByText('Remove the front matter block');
     expect(message.className).not.toMatch(
       /\b(ml-|mr-|pl-|pr-|left-|right-|text-left|text-right)/,
+    );
+  });
+
+  it('links the Instructions error to the editor through aria-describedby', async () => {
+    const props: SkillEditorProps = {
+      title: 'Test Skill',
+      onBack: vi.fn(),
+      files: [],
+      fileActions,
+      onSubmit: vi.fn(),
+      onCancel: vi.fn(),
+    };
+    const { rerender } = render(<SkillEditor {...props} />);
+    const editor = await screen.findByRole('textbox', { name: 'Instructions' });
+    expect(editor.getAttribute('aria-invalid')).toBeNull();
+
+    rerender(
+      <SkillEditor
+        {...props}
+        errors={{ instructions: 'Instructions are required' }}
+      />,
+    );
+
+    expect(editor.getAttribute('aria-invalid')).toBe('true');
+    expect(editor.getAttribute('aria-describedby')).toBe(
+      screen.getByText('Instructions are required').id,
     );
   });
 

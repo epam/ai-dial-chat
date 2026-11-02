@@ -69,6 +69,8 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     classes.filter(Boolean).join(' '),
   ButtonVariant: { Primary: 'primary' },
   PopupSize: { Lg: 'lg' },
+  /* Read at import time by conversation-input's UsageLimitBannerView. */
+  NotificationVariant: { Warning: 'warning', Error: 'error' },
   Popup: ({
     header,
     children,

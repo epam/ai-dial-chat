@@ -10,6 +10,8 @@ import {
   GhostIconButton,
   Highlight,
   LinkButton,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import { IconCopy } from '@tabler/icons-react';
 import { memo, useMemo, useState, type FC, type ReactNode } from 'react';
@@ -166,9 +168,9 @@ const SourcesSection: FC<SourcesSectionProps> = ({
           </li>
         ))}
       </ul>
-      <span role="status" aria-live="polite" className="sr-only">
+      <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
         {copyStatus}
-      </span>
+      </LiveRegion>
     </section>
   );
 };

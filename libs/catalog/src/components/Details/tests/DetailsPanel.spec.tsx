@@ -1735,8 +1735,10 @@ describe('DetailsPanel', () => {
       />,
     );
     expect(
-      screen.getByRole('status', { name: 'Loading details' }),
-    ).toBeTruthy();
+      screen
+        .getAllByRole('status')
+        .some((status) => status.textContent === 'Loading details'),
+    ).toBe(true);
   });
 
   it('does not show a loading placeholder when isDetailsLoading is false', () => {
@@ -1748,9 +1750,7 @@ describe('DetailsPanel', () => {
         onClose={vi.fn()}
       />,
     );
-    expect(
-      screen.queryByRole('status', { name: 'Loading details' }),
-    ).toBeNull();
+    expect(screen.queryByText('Loading details')).toBeNull();
   });
 
   it('uses a custom detailsLoadingAriaLabel', () => {
@@ -1764,8 +1764,10 @@ describe('DetailsPanel', () => {
       />,
     );
     expect(
-      screen.getByRole('status', { name: 'Fetching details' }),
-    ).toBeTruthy();
+      screen
+        .getAllByRole('status')
+        .some((status) => status.textContent === 'Fetching details'),
+    ).toBe(true);
   });
 
   it('renders the description on the About tab, not in the summary section', () => {

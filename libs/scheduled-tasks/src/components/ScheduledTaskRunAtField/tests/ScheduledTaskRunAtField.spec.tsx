@@ -3,12 +3,29 @@ import { describe, expect, it, vi } from 'vitest';
 import { ScheduledTaskRunAtField } from '../ScheduledTaskRunAtField';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  LiveRegionPoliteness: { Polite: 'polite', Assertive: 'assertive' },
   DIAL_KIT_ICON_STROKE: 1.5,
   ErrorText: ({
     text,
+    announce,
     ...rest
-  }: { text?: string } & React.HTMLAttributes<HTMLSpanElement>) =>
-    text ? <span {...rest}>{text}</span> : null,
+  }: {
+    text?: string;
+    announce?: string;
+  } & React.HTMLAttributes<HTMLSpanElement>) => {
+    const node = text ? <span {...rest}>{text}</span> : null;
+    return announce ? (
+      <span
+        role={announce === 'assertive' ? 'alert' : 'status'}
+        aria-live={announce as 'polite' | 'assertive'}
+        aria-atomic
+      >
+        {node}
+      </span>
+    ) : (
+      node
+    );
+  },
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   CalendarMode: {
     Date: 'date',
@@ -132,8 +149,27 @@ describe('ScheduledTaskRunAtField', () => {
     expect(screen.getByRole('alert').textContent).toBe(
       'Pick a date in the future',
     );
-    expect(screen.getByRole('alert').id).toBe(errorId);
+    expect(screen.getByText('Pick a date in the future').id).toBe(errorId);
     expect(screen.getByText('isInvalid')).toBeTruthy();
+  });
+
+  it('mounts the alert region empty before the error, then fills the same region', () => {
+    const { rerender } = renderField();
+    const region = screen.getByRole('alert');
+    expect(region.textContent).toBe('');
+
+    rerender(
+      <ScheduledTaskRunAtField
+        label="Date and time"
+        placeholder="Pick date and time"
+        value=""
+        onChange={vi.fn()}
+        error="Pick a date in the future"
+      />,
+    );
+
+    expect(screen.getByRole('alert')).toBe(region);
+    expect(region.textContent).toBe('Pick a date in the future');
   });
 
   it('renders no error and no invalid flag without an error', () => {

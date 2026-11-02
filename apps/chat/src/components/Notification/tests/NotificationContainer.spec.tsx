@@ -1,69 +1,93 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { ReactNode } from 'react';
+import { useSyncExternalStore, type ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NotificationItem } from '../../../context/NotificationContext';
 import NotificationContainer from '../NotificationContainer';
 
 const dismissNotification = vi.fn();
 let notifications: NotificationItem[] = [];
+const listeners = new Set<() => void>();
+
+/* Replaces the queue and re-renders subscribers, like the real provider's state update. */
+const setNotifications = (next: NotificationItem[]) => {
+  notifications = next;
+  listeners.forEach((listener) => listener());
+};
+
+const subscribe = (listener: () => void) => {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+};
 
 vi.mock('../../../context/NotificationContext', () => ({
-  useNotification: () => ({ notifications, dismissNotification }),
+  useNotification: () => {
+    useSyncExternalStore(subscribe, () => notifications);
+    return { notifications, dismissNotification };
+  },
 }));
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
-  DIAL_KIT_ICON_STROKE: 1.5,
-  mergeClasses: (...args: (string | undefined)[]) =>
-    args.filter(Boolean).join(' '),
-  DIAL_ICON_SIZE: { SM: 16, LG: 24 },
-  NotificationVariant: {
-    Error: 'error',
-    Warning: 'warning',
-    Info: 'info',
-    Success: 'success',
-    Loading: 'loading',
-  },
-  Notification: ({
-    variant,
-    title,
-    message,
-    action,
-    closable,
-    onClose,
-  }: {
-    variant: string;
-    title?: string;
-    message: ReactNode;
-    action?: ReactNode;
-    closable?: boolean;
-    onClose?: () => void;
-  }) => (
-    /* The kit reserves the assertive `alert` role for error/warning; the rest are polite. */
-    <div
-      role={variant === 'error' || variant === 'warning' ? 'alert' : 'status'}
-      data-variant={variant}
-    >
-      {title && <div>{title}</div>}
-      <div>{message}</div>
-      {action}
-      {closable && <button aria-label="Close notification" onClick={onClose} />}
-    </div>
-  ),
-  GhostIconButton: ({
-    icon,
-    onClick,
-    ...rest
-  }: {
-    icon?: ReactNode;
-    onClick?: () => void;
-    'aria-label'?: string;
-  }) => (
-    <button onClick={onClick} {...rest}>
-      {icon}
-    </button>
-  ),
-}));
+vi.mock('@epam/ai-dial-ui-kit', async () => {
+  const actual = await vi.importActual<typeof import('@epam/ai-dial-ui-kit')>(
+    '@epam/ai-dial-ui-kit',
+  );
+  return {
+    LiveRegion: actual.LiveRegion,
+    LiveRegionElement: actual.LiveRegionElement,
+    DIAL_KIT_ICON_STROKE: 1.5,
+    mergeClasses: (...args: (string | undefined)[]) =>
+      args.filter(Boolean).join(' '),
+    DIAL_ICON_SIZE: { SM: 16, LG: 24 },
+    NotificationVariant: {
+      Error: 'error',
+      Warning: 'warning',
+      Info: 'info',
+      Success: 'success',
+      Loading: 'loading',
+    },
+    Notification: ({
+      variant,
+      title,
+      message,
+      action,
+      closable,
+      onClose,
+    }: {
+      variant: string;
+      title?: string;
+      message: ReactNode;
+      action?: ReactNode;
+      closable?: boolean;
+      onClose?: () => void;
+    }) => (
+      /* The kit reserves the assertive `alert` role for error/warning; the rest are polite. */
+      <div
+        role={variant === 'error' || variant === 'warning' ? 'alert' : 'status'}
+        data-variant={variant}
+      >
+        {title && <div>{title}</div>}
+        <div>{message}</div>
+        {action}
+        {closable && (
+          <button aria-label="Close notification" onClick={onClose} />
+        )}
+      </div>
+    ),
+    GhostIconButton: ({
+      icon,
+      onClick,
+      ...rest
+    }: {
+      icon?: ReactNode;
+      onClick?: () => void;
+      'aria-label'?: string;
+    }) => (
+      <button onClick={onClick} {...rest}>
+        {icon}
+      </button>
+    ),
+  };
+});
 
 const makeItem = (overrides: Partial<NotificationItem>): NotificationItem => ({
   id: '1',
@@ -117,6 +141,82 @@ describe('NotificationContainer', () => {
     expect(alerts[0].textContent).toContain('First');
     expect(alerts[1].textContent).toContain('Second');
     expect(alerts[2].textContent).toContain('Third');
+  });
+
+  describe('scrolling the stack', () => {
+    /* jsdom has no layout, so stub an overflowing stack's scroll metrics.
+       Call it after render(), so the mount effect runs on unstubbed metrics
+       and a test can only pass on the change it makes. */
+    const stubScrollMetrics = (stack: HTMLElement) => {
+      let scrollTop = 0;
+      Object.defineProperty(stack, 'scrollHeight', {
+        configurable: true,
+        get: () => 500,
+      });
+      Object.defineProperty(stack, 'scrollTop', {
+        configurable: true,
+        get: () => scrollTop,
+        set: (value: number) => {
+          scrollTop = value;
+        },
+      });
+    };
+
+    /* The stack has no role of its own; it is the toasts' shared scroll parent. */
+    const getStack = (): HTMLElement => {
+      // eslint-disable-next-line testing-library/no-node-access -- scroll position lives on the unnamed stack element
+      const stack = screen.getAllByRole('status')[0].parentElement;
+      if (!stack) throw new Error('toast stack not rendered');
+      return stack;
+    };
+
+    it('scrolls the newest toast into view when one is added', () => {
+      const first = makeItem({ id: 'a', message: 'First' });
+      const second = makeItem({ id: 'b', message: 'Second' });
+      notifications = [first, second];
+      render(<NotificationContainer />);
+      const stack = getStack();
+      stubScrollMetrics(stack);
+
+      act(() =>
+        setNotifications([
+          first,
+          second,
+          makeItem({ id: 'c', message: 'Third' }),
+        ]),
+      );
+
+      expect(stack.scrollTop).toBe(500);
+    });
+
+    it('scrolls when a toast is added in the same update as a dismissal', () => {
+      const first = makeItem({ id: 'a', message: 'First' });
+      const second = makeItem({ id: 'b', message: 'Second' });
+      notifications = [first, second];
+      render(<NotificationContainer />);
+      const stack = getStack();
+      stubScrollMetrics(stack);
+
+      act(() =>
+        setNotifications([second, makeItem({ id: 'c', message: 'Third' })]),
+      );
+
+      expect(stack.scrollTop).toBe(500);
+    });
+
+    it('does not scroll when a toast is dismissed', () => {
+      const first = makeItem({ id: 'a', message: 'First' });
+      const second = makeItem({ id: 'b', message: 'Second' });
+      notifications = [first, second];
+      render(<NotificationContainer />);
+      const stack = getStack();
+      stubScrollMetrics(stack);
+      stack.scrollTop = 120;
+
+      act(() => setNotifications([second]));
+
+      expect(stack.scrollTop).toBe(120);
+    });
   });
 
   it('renders the dismiss button by default (closable is always true for toasts)', () => {

@@ -11,6 +11,10 @@
   }
 }
 
+.filterValue {
+  color: var(--cp-list-header-filter-value, var(--text-secondary, #57647a));
+}
+
 /* Marks the filter trigger while an origin or type filter is applied. */
 .filterIndicator {
   background-color: var(

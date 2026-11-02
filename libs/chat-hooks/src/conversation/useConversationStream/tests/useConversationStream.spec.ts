@@ -500,10 +500,7 @@ describe('useConversationStream', () => {
       );
     });
 
-    it('keeps the Stop of a live local generation when a resume of the same path ends', async () => {
-      vi.mocked(transport.getConversation).mockResolvedValue(stoppedPartial());
-      const attach = makeAttachStream();
-      transport.attachToGeneration = vi.fn().mockResolvedValue(attach.stream);
+    it('keeps the local answer and Stop when a load asks to resume the same active path', async () => {
       const initial = placeholder();
       const { result } = renderHook(() =>
         useHookHarness({
@@ -530,14 +527,25 @@ describe('useConversationStream', () => {
           initial,
         ),
       );
-      await waitFor(() =>
-        expect(transport.attachToGeneration).toHaveBeenCalled(),
-      );
-      await act(async () => {
-        attach.emit(snapshotOf('Hel', ATTACH_ID));
-        attach.emit({ type: 'done' });
+      act(() => {
+        capturedOptions?.onChunk({
+          id: 'local-answer',
+          object: 'chat.completion.chunk',
+          choices: [
+            {
+              delta: { content: 'Local answer' },
+              index: 0,
+              finish_reason: null,
+            },
+          ],
+        });
       });
-      await waitFor(() => expect(transport.getConversation).toHaveBeenCalled());
+
+      expect(transport.attachToGeneration).not.toHaveBeenCalled();
+      expect(transport.getConversation).not.toHaveBeenCalled();
+      expect(result.current.conversation?.messages[1].content).toBe(
+        'Local answer',
+      );
 
       expect(result.current.stream.canStopStreaming).toBe(true);
       act(() => result.current.stream.handleStop());

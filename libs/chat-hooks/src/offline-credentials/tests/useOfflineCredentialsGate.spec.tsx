@@ -1,6 +1,8 @@
+import { SchedulerServiceConsentStatus } from '@epam/ai-dial-chat-api-client';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { StrictMode, type ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { mapOfflineCredentialsResponse } from '../map-offline-credentials-response';
 import {
   OfflineCredentialsGateStatus,
   useOfflineCredentialsGate,
@@ -189,12 +191,18 @@ describe('useOfflineCredentialsGate', () => {
       ),
     );
 
-    let refetched: { available: boolean; connected: boolean } | null = null;
+    let refetched: ReturnType<typeof mapOfflineCredentialsResponse> | null =
+      null;
     await act(async () => {
       refetched = await result.current.refetch();
     });
 
-    expect(refetched).toEqual({ available: true, connected: true });
+    expect(refetched).toEqual({
+      available: true,
+      connected: true,
+      connect: undefined,
+      schedulerServiceConsent: SchedulerServiceConsentStatus.Unknown,
+    });
     expect(result.current.status).toBe(OfflineCredentialsGateStatus.Hidden);
   });
 

@@ -1,5 +1,5 @@
-import { FavoriteEntityType } from '@epam/ai-dial-chat-hooks';
-import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+import { FavoriteEntityType, findSkillByUrl } from '@epam/ai-dial-chat-hooks';
+import { CatalogEntityType, useIsMobile } from '@epam/ai-dial-chat-shared';
 import {
   getSkillFallbackName,
   useSkillSelectorOverlay as useHostAgnosticSkillSelectorOverlay,
@@ -11,14 +11,12 @@ import { useTranslation } from 'react-i18next';
 import {
   ButtonsI18nKeys,
   FavoritesI18nKeys,
-  NavigationI18nKeys,
   PromptSelectorI18nKeys,
   SkillSelectorI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
 import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
 import { useSkills } from '../../context/SkillsContext';
-import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 
 const CatalogView = lazy(async () => {
   const module = await import('../CatalogView/CatalogView');
@@ -92,7 +90,7 @@ export const useSkillSelectorOverlay = ({
   const labels = useMemo<SkillSelectorOverlayLabels>(
     () => ({
       addMenuLabel: t(SkillSelectorI18nKeys.AddMenuLabel),
-      backLabel: t(NavigationI18nKeys.Back),
+      backLabel: t(ButtonsI18nKeys.Back),
       catalogModalTitleLabel: t(SkillSelectorI18nKeys.ModalTitle),
       emptyQueryHintLabel: t(SkillSelectorI18nKeys.EmptyQueryHint),
       deletedTooltipLabel: t(SkillSelectorI18nKeys.DeletedTooltipLabel),
@@ -116,8 +114,8 @@ export const useSkillSelectorOverlay = ({
    * 24px line height, keeping the chip's height matched to the line.
    */
   const historyChipLabelClassName = isMobile
-    ? 'dial-small-paragraph-text text-accent'
-    : 'dial-body-text text-accent';
+    ? 'dial-small-paragraph-text'
+    : 'dial-body-text';
 
   const overlay = useHostAgnosticSkillSelectorOverlay({
     isSkillsSupported,
@@ -140,19 +138,14 @@ export const useSkillSelectorOverlay = ({
   const { seedSkillMentions } = overlay;
 
   /*
-   * `allSkills`/name resolution mirrors the lib hook's own internal
-   * `skillByUrl` lookup — duplicated here (not exported by the lib) because
-   * this is the one call site with a URL but no `SkillListingEntry` in hand.
+   * Name resolution mirrors the lib hook's own internal `skillByUrl` lookup —
+   * the lib does not export it, so URL-only call sites (this one and the URL
+   * preselection) share `findSkillByUrl` from `@epam/ai-dial-chat-hooks` instead.
    */
   const selectSkillByUrl = useCallback(
     (url: string) => {
-      const allSkills = [
-        ...skills,
-        ...(sharedWithMe ?? []),
-        ...(publicSkills ?? []),
-      ];
       const name =
-        allSkills.find((skill) => skill.url === url)?.name ??
+        findSkillByUrl({ skills, sharedWithMe, publicSkills }, url)?.name ??
         getSkillFallbackName(url);
       seedSkillMentions(`/${name} `, [{ url }]);
     },

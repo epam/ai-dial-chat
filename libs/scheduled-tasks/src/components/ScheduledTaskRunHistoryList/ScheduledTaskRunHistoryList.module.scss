@@ -21,6 +21,11 @@
   );
 }
 
+/* On the accent highlight the secondary grey drops below 4.5:1 (WCAG 1.4.3). */
+.currentRun .subtitleText {
+  color: var(--strhl-current-run-subtitle-text, var(--text-primary, #161b2d));
+}
+
 /* Hover stays lighter than the current-run highlight so the current row keeps visible hover feedback. */
 .interactiveRow:hover {
   background: var(

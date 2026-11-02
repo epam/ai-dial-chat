@@ -1,12 +1,15 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  mergeClasses,
+  useControlErrorAssociation,
+} from '@epam/ai-dial-chat-shared';
 import {
   Calendar,
   CalendarMode,
   type CalendarValue,
   ErrorText,
+  LiveRegionPoliteness,
 } from '@epam/ai-dial-ui-kit';
-import type { FC } from 'react';
-import { usePickerErrorAssociation } from '../../hooks/usePickerErrorAssociation/usePickerErrorAssociation';
+import { useId, type FC } from 'react';
 import {
   calendarValueToDateValue,
   calendarValueToRunAt,
@@ -29,7 +32,7 @@ export interface ScheduledTaskBoundaryFieldProps {
   onChange: (value: string) => void;
   /** Earliest selectable day, pinned by the owning form. */
   minDate: Date;
-  /** Submit-time validation error rendered under the picker, associated with it via `aria-describedby` and announced via `role="alert"` when it appears. */
+  /** Submit-time validation error rendered under the picker, associated with it via `aria-describedby` and announced through the kit `ErrorText` `announce` live region, mounted before the error arrives. */
   error?: string;
   /** CSS class applied to the error text. */
   errorClassName?: string;
@@ -61,7 +64,12 @@ export const ScheduledTaskBoundaryField: FC<
         : calendarValueToDateValue(next),
     );
 
-  const errorId = usePickerErrorAssociation(id, error);
+  const errorId = useId();
+  useControlErrorAssociation(
+    () => document.getElementById(id),
+    errorId,
+    Boolean(error),
+  );
 
   return (
     <div className="flex flex-1 flex-col gap-1">
@@ -76,14 +84,13 @@ export const ScheduledTaskBoundaryField: FC<
         invalid={Boolean(error)}
         disabled={disabled}
       />
-      {error && (
-        <ErrorText
-          id={errorId}
-          role="alert"
-          className={mergeClasses(errorClassName, styles.error)}
-          text={error}
-        />
-      )}
+      {/* Mounted before the error arrives, so it is announced; out of the column gap while empty. */}
+      <ErrorText
+        announce={LiveRegionPoliteness.Assertive}
+        id={errorId}
+        className={mergeClasses(errorClassName, styles.error)}
+        text={error ?? ''}
+      />
     </div>
   );
 };

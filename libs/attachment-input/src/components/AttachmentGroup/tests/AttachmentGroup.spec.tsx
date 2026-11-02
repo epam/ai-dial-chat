@@ -141,6 +141,41 @@ describe('AttachmentGroup', () => {
       expect(onDownloadAll).toHaveBeenCalledWith([file]);
     });
 
+    it('hides the download button of a tile isAttachmentDownloadable rejects, and leaves it out of "download all" (#7663)', () => {
+      const onDownloadAll = vi.fn();
+      const file = makeFile('a');
+      const folder = makeFile('folder', { name: 'New folder' });
+      render(
+        <AttachmentGroup
+          attachments={[file, folder]}
+          onDownloadAll={onDownloadAll}
+          isAttachmentDownloadable={(attachment) => attachment.id !== 'folder'}
+        />,
+      );
+
+      expect(
+        screen.getAllByRole('button', { name: 'Download attachment' }),
+      ).toHaveLength(1);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Download all' }));
+      expect(onDownloadAll).toHaveBeenCalledWith([file]);
+    });
+
+    it('hides "download all" when no attachment is downloadable', () => {
+      render(
+        <AttachmentGroup
+          attachments={[makeFile('a'), makeFile('b')]}
+          onDownloadAll={vi.fn()}
+          isAttachmentDownloadable={() => false}
+        />,
+      );
+
+      expect(screen.queryByRole('button', { name: 'Download all' })).toBeNull();
+      expect(
+        screen.queryByRole('button', { name: 'Download attachment' }),
+      ).toBeNull();
+    });
+
     it("names each file tile's download button by downloadLabel, not clickLabel", () => {
       const onAttachmentClick = vi.fn();
       const onDownloadAll = vi.fn();

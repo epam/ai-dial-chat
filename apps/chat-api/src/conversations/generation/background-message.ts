@@ -6,7 +6,10 @@ import {
   type VersionedConversation,
 } from '../conversation-persistence.port';
 import { BackgroundGenerationStatus } from '../dto/background-generation.dto';
-import type { ConversationMessageDto } from '../dto/conversation-message.dto';
+import {
+  ConversationMessageRole,
+  type ConversationMessageDto,
+} from '../dto/conversation-message.dto';
 
 /**
  * Message fields only the backend may write while a background generation owns the
@@ -273,3 +276,88 @@ export const neutralizeForeignPendingMessages = <
       streamErrorMessage: '',
     };
   });
+
+/**
+ * The messages to store for a client save. Storage stays authoritative for background
+ * messages, because a client never receives the marker during a live stream and a
+ * stale tab may still show an old state:
+ * - the body's copy of a stored background message (pending or finished) takes that
+ *   message's server-owned fields, so a client never changes a background answer. The
+ *   copy is the body message carrying the same generation id or, when none does, an
+ *   unmarked assistant message at the stored position. For a finished message the
+ *   position counts only while the body still lines up with storage (same length, same
+ *   preceding message), because deleting earlier messages shifts every position; a
+ *   pending message cannot move, since messages are not deleted while it streams;
+ * - when the body still has no copy of the stored pending message, the stored message
+ *   replaces another generation's answer at its position (a tab that has not seen a
+ *   regenerate), and a body too short to reach it gets the stored messages up to and
+ *   including it;
+ * - every other pending marker in the body is neutralized.
+ * @param messages - messages sent by the client
+ * @param storedMessages - messages currently in storage
+ */
+export const mergeClientMessages = (
+  messages: StoredMessage[],
+  storedMessages: StoredMessage[],
+): StoredMessage[] => {
+  const storedByGeneration = new Map(
+    storedMessages
+      .filter((message) => message.backgroundGeneration != null)
+      .map((message) => [
+        message.backgroundGeneration?.generationId as string,
+        message,
+      ]),
+  );
+  const merged = messages.map((message) => {
+    const generationId = message.backgroundGeneration?.generationId;
+    const stored = generationId
+      ? storedByGeneration.get(generationId)
+      : undefined;
+    return stored
+      ? withServerOwnedFields(message, pickServerOwnedFields(stored))
+      : message;
+  });
+  const hasCopy = (generationId: string | undefined): boolean =>
+    merged.some(
+      (message) => message.backgroundGeneration?.generationId === generationId,
+    );
+  const isAligned = (index: number): boolean =>
+    merged.length === storedMessages.length &&
+    merged[index - 1]?.content === storedMessages[index - 1]?.content;
+  storedMessages.forEach((stored, index) => {
+    const generationId = stored.backgroundGeneration?.generationId;
+    const atPosition = merged[index];
+    const isPending =
+      stored.backgroundGeneration?.status ===
+      BackgroundGenerationStatus.Pending;
+    if (
+      generationId != null &&
+      !hasCopy(generationId) &&
+      (isPending || isAligned(index)) &&
+      atPosition?.role === ConversationMessageRole.Assistant &&
+      atPosition.backgroundGeneration == null
+    ) {
+      merged[index] = withServerOwnedFields(
+        atPosition,
+        pickServerOwnedFields(stored),
+      );
+    }
+  });
+
+  const pending = findPendingBackgroundMessage({ messages: storedMessages });
+  const pendingGenerationId =
+    pending?.message.backgroundGeneration?.generationId;
+  if (pending && !hasCopy(pendingGenerationId)) {
+    if (merged[pending.index]?.role === ConversationMessageRole.Assistant) {
+      merged[pending.index] = pending.message;
+    } else {
+      const insertAt = Math.min(pending.index, merged.length);
+      merged.splice(
+        insertAt,
+        0,
+        ...storedMessages.slice(insertAt, pending.index + 1),
+      );
+    }
+  }
+  return neutralizeForeignPendingMessages(merged, pendingGenerationId);
+};

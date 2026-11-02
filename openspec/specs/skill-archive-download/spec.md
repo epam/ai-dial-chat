@@ -105,7 +105,7 @@ The details panel SHALL remain open after any failure. No confirmation dialog SH
 
 ### Requirement: The save filename comes from `Content-Disposition`, with a sanitized deterministic fallback
 
-The Skill branch SHALL resolve the saved file's name through the existing `apps/chat/src/utils/file-download.ts::triggerBrowserDownload(response, fallbackName)`, unmodified. `fallbackName` SHALL be `` `${sanitizeFileName(item.name)}.zip` ``, using the existing `sanitizeFileName` (`libs/chat-hooks/src/files/file-name.ts`, imported from `@epam/ai-dial-chat-hooks`) unmodified.
+The Skill branch SHALL resolve the saved file's name through the existing `libs/chat-hooks/src/files/browser-download.ts::triggerBrowserDownload(response, fallbackName)`, unmodified. `fallbackName` SHALL be `` `${sanitizeFileName(item.name)}.zip` ``, using the existing `sanitizeFileName` (`libs/chat-hooks/src/files/file-name.ts`, imported from `@epam/ai-dial-chat-hooks`) unmodified.
 
 `triggerBrowserDownload` SHALL be relied upon, not reimplemented, for: extracting a filename from a quoted or unquoted `Content-Disposition` header, stripping `/`/`\` from whatever it extracts, falling back to `fallbackName` when the header is absent or unusable, converting the response body to a `Blob`, and triggering the browser save through the existing `triggerBlobDownload` from `@epam/ai-dial-chat-shared` (which creates and, after `DOWNLOAD_CLEANUP_DELAY_MS`, revokes the object URL).
 

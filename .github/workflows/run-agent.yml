@@ -85,6 +85,7 @@ jobs:
             base="${DIAL_CORE_URL%/}/${DIAL_ROUTE_PATH:-anthropic}"
             { echo "ANTHROPIC_BASE_URL=${base}"
               echo "ANTHROPIC_AUTH_TOKEN=${DIAL_API_KEY}"
+              echo "ANTHROPIC_CUSTOM_HEADERS=API-KEY: ${DIAL_API_KEY}"
               echo "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1"
               echo "SDLC_DIAL_MODE=1"
               if [ -n "${DIAL_MODEL:-}" ]; then echo "SDLC_DIAL_MODEL=${DIAL_MODEL}"; fi

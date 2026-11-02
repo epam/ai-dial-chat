@@ -22,8 +22,20 @@ vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
 });
 
 vi.mock('react-json-view-lite', () => ({
-  JsonView: ({ data }: { data: object }) => (
-    <section aria-label="json-viewer">{JSON.stringify(data)}</section>
+  JsonView: ({
+    data,
+    style,
+  }: {
+    data: object;
+    style?: { label?: string; clickableLabel?: string };
+  }) => (
+    <section
+      aria-label="json-viewer"
+      data-label-class-name={style?.label}
+      data-clickable-label-class-name={style?.clickableLabel}
+    >
+      {JSON.stringify(data)}
+    </section>
   ),
   defaultStyles: {},
 }));
@@ -220,6 +232,49 @@ describe('AttachmentCanvasBody', () => {
       value: { key: 'value' },
     });
     expect(screen.getByRole('region', { name: 'json-viewer' })).toBeTruthy();
+  });
+
+  it('sets JSON keys in the semibold code step unless the host overrides the viewer typography', () => {
+    const content = {
+      type: AttachmentContentType.Json as const,
+      value: { key: 'value' },
+    };
+    const view = renderBody(content);
+    const viewer = screen.getByRole('region', { name: 'json-viewer' });
+    expect(viewer.getAttribute('data-label-class-name')).toContain(
+      'dial-code-semi-text',
+    );
+    expect(viewer.getAttribute('data-clickable-label-class-name')).toContain(
+      'dial-code-semi-text',
+    );
+    expect(viewer.getAttribute('data-label-class-name')).not.toContain(
+      'font-semibold',
+    );
+
+    view.unmount();
+    const { unmount } = renderBody(content, {
+      styles: { typography: { jsonClassName: 'dial-tiny-code-text' } },
+    });
+    expect(
+      screen
+        .getByRole('region', { name: 'json-viewer' })
+        .getAttribute('data-label-class-name'),
+    ).not.toContain('dial-code-semi-text');
+
+    unmount();
+    renderBody(content, {
+      styles: {
+        typography: {
+          jsonClassName: 'dial-tiny-code-text',
+          jsonLabelClassName: 'dial-tiny-code-semi-text',
+        },
+      },
+    });
+    expect(
+      screen
+        .getByRole('region', { name: 'json-viewer' })
+        .getAttribute('data-label-class-name'),
+    ).toContain('dial-tiny-code-semi-text');
   });
 
   it('renders plain code content when no language is set', () => {

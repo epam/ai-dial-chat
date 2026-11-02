@@ -2,9 +2,14 @@ import {
   sanitizeAnnouncementHtml,
   type AnnouncementListItem,
 } from '@epam/ai-dial-chat-hooks';
-import { Dropdown, LinkButton, NeutralButton } from '@epam/ai-dial-ui-kit';
+import {
+  Dropdown,
+  DropdownOverlayRole,
+  LinkButton,
+  NeutralButton,
+} from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
-import { memo, useCallback, useEffect, useId, useState } from 'react';
+import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AnnouncementsPopoverI18nKeys } from '../../constants/translation-keys';
 
@@ -17,47 +22,6 @@ interface Props {
 const AnnouncementsPopover: FC<Props> = ({ announcements }) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
-  const overlayId = useId();
-  const pillId = useId();
-
-  /* The ui-kit Dropdown mounts its overlay with Floating UI's `initialFocus`
-   * disabled, so opening the panel leaves focus on the pill: the rows and their
-   * links stay out of reach until the user tabs past the trigger, and the
-   * Escape handler below has nothing inside the panel to return from. Focusing
-   * the region rather than the first link keeps the whole list one step ahead in
-   * the reading order, which is what the scroll container is focusable for.
-   *
-   * Done from a ref callback rather than an effect on `isOpen`: the overlay
-   * renders inside a `FloatingPortal`, whose portal node is itself created in an
-   * effect, so the section is still unmounted on the commit that opens the
-   * popover. The callback runs when the node actually attaches. */
-  const handleOverlayRef = useCallback((node: HTMLElement | null) => {
-    node?.focus();
-  }, []);
-
-  /* Escape is handled here rather than left to the overlay so focus lands back
-   * on the pill — Floating UI closes the panel but does not restore focus to a
-   * trigger it does not own. Bound to the document because the overlay renders
-   * in a portal, so a wrapper element would not reliably see the key event.
-   *
-   * The pill is looked up by id rather than held in a ref: it is a ui-kit
-   * component, and whether it forwards a ref to its underlying <button> is its
-   * implementation detail, not a contract this component should depend on. */
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsOpen(false);
-        document.getElementById(pillId)?.focus();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, pillId]);
 
   if (announcements.length === 0) {
     return null;
@@ -67,10 +31,10 @@ const AnnouncementsPopover: FC<Props> = ({ announcements }) => {
     /* tabIndex makes the region focusable so a keyboard-only user can reach the
      * scroll container and page through rows with the arrow keys. Rows are not
      * guaranteed to contain a link, so tabbing between links is not a
-     * sufficient way to scroll the list. */
+     * sufficient way to scroll the list. Being the first tabbable element in
+     * the overlay, it is also where the Dropdown's click-open focus lands, so
+     * the whole list sits one step ahead in the reading order. */
     <section
-      ref={handleOverlayRef}
-      id={overlayId}
       aria-label={t(AnnouncementsPopoverI18nKeys.ListAriaLabel)}
       className="max-w-[420px]"
       tabIndex={0}
@@ -139,13 +103,14 @@ const AnnouncementsPopover: FC<Props> = ({ announcements }) => {
          * the element carrying the max height, and `listClassName` is the prop
          * that targets it. */
         listClassName="overflow-y-auto"
+        /* The panel is a named region of announcements, not a menu of actions:
+         * a role-less overlay keeps the section's own region semantics and lets
+         * Tab move between row links. The Dropdown still sets aria-expanded and
+         * aria-controls on the pill, and returns focus to it on Escape. */
+        overlayRole={DropdownOverlayRole.None}
         renderOverlay={renderOverlay}
       >
         <NeutralButton
-          id={pillId}
-          aria-expanded={isOpen}
-          aria-haspopup="true"
-          aria-controls={overlayId}
           label={t(AnnouncementsPopoverI18nKeys.PillLabel, {
             count: announcements.length,
           })}

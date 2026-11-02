@@ -6,7 +6,7 @@ import {
   INDICATOR_ITEM_ROW_HEIGHT,
   ITEM_ROW_HEIGHT,
 } from '../constants/virtual-list';
-import type { RowRendererData } from '../models/virtual-row';
+import type { RowRendererData, VirtualRow } from '../models/virtual-row';
 import { ConversationRowVariant } from '../types/conversation-row-variant';
 import { VirtualRowKind } from '../types/virtual-row';
 
@@ -58,3 +58,25 @@ export const getOverscanCount = (height: number): number =>
     MIN_OVERSCAN_COUNT,
     Math.ceil(Math.ceil(height / ITEM_ROW_HEIGHT) / 2),
   );
+
+/** Returns the distinct conversation IDs of item rows in the inclusive `startIndex`–`stopIndex` range, in row order. */
+export const getConversationIdsInRange = (
+  rows: VirtualRow[],
+  { startIndex, stopIndex }: { startIndex: number; stopIndex: number },
+): string[] => {
+  const ids = new Set<string>();
+  for (
+    let index = Math.max(0, startIndex);
+    index <= Math.min(stopIndex, rows.length - 1);
+    index++
+  ) {
+    const row = rows[index];
+    if (row.kind === VirtualRowKind.Item) ids.add(row.item.id);
+  }
+  return [...ids];
+};
+
+/** Returns true when both ID sequences hold the same IDs in the same order. */
+export const isSameIdSequence = (left: string[], right: string[]): boolean =>
+  left.length === right.length &&
+  left.every((id, index) => id === right[index]);

@@ -1,4 +1,19 @@
 import type { SkillUnresolvedReason } from '../types/skill-unresolved-reason';
+import type { SkillInfoTooltipContentColors } from './skill-info-tooltip-content-props';
+
+/** Color overrides for {@link ChatSkillProps}'s component. */
+export interface ChatSkillColors {
+  /** Text color of the `/{name}` label. Defaults to `--text-accent`. */
+  label?: string;
+  /** Chip background on hover, keyboard focus and press. Defaults to `--bg-info`. */
+  hoverBackground?: string;
+  /** Text color of the `/{name}` label while `isUnsupported` is set. Defaults to `--text-error`. */
+  unsupportedLabel?: string;
+  /** Chip background while `isUnsupported` is set. Defaults to `--bg-error`. */
+  unsupportedBackground?: string;
+  /** Colors of the tooltip's unresolved-skill content. */
+  tooltip?: SkillInfoTooltipContentColors;
+}
 
 /** Localizable string labels for {@link ChatSkillProps}'s component. */
 export interface ChatSkillLabels {
@@ -40,8 +55,8 @@ export interface ChatSkillProps {
   description?: string;
   /**
    * Whether the current model/application does not support skills. While
-   * `true` the `/{name}` label carries `unsupportedLabelClassName`, the chip
-   * carries `unsupportedClassName`, and the tooltip shows the
+   * `true` the chip renders in the `colors.unsupportedLabel` /
+   * `colors.unsupportedBackground` error colors, and the tooltip shows the
    * unsupported-model message alone — no description paragraph and no
    * "View details" button.
    */
@@ -55,18 +70,10 @@ export interface ChatSkillProps {
    * unaffected — it keeps rendering with `labelClassName` alone.
    */
   unresolvedReason?: SkillUnresolvedReason;
-  /** CSS class applied to the `/name` label. Defaults to `'dial-body-paragraph-text text-accent'`. */
+  /** Typography class applied to the `/name` label. Defaults to `'dial-body-paragraph-text'`. */
   labelClassName?: string;
-  /**
-   * Color class applied to the `/{name}` label in addition to
-   * `labelClassName` while `isUnsupported` is set. Defaults to `'text-error'`.
-   */
-  unsupportedLabelClassName?: string;
-  /**
-   * Class applied to the chip in addition to its layout classes while
-   * `isUnsupported` is set. Defaults to `'bg-error'`.
-   */
-  unsupportedClassName?: string;
+  /** Color overrides, applied as CSS custom properties. */
+  colors?: ChatSkillColors;
   /**
    * How the description card opens. Defaults to `'hover'` so existing hosts
    * retain their hover-and-focus behaviour.

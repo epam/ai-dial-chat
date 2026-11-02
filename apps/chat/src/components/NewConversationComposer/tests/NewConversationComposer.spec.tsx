@@ -1,6 +1,10 @@
+import { AttachmentCanvasProvider } from '@epam/ai-dial-attachment-canvas';
 import type { DeploymentItemDto } from '@epam/ai-dial-chat-api-client';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
-import { type DeploymentItem } from '@epam/ai-dial-chat-shared';
+import {
+  type DeploymentItem,
+  type DisplayAttachment,
+} from '@epam/ai-dial-chat-shared';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { act, render, screen } from '@testing-library/react';
 import { type ReactNode, Suspense } from 'react';
@@ -8,6 +12,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   AttachmentsI18nKeys,
   ButtonsI18nKeys,
+  ChatI18nKeys,
 } from '../../../constants/translation-keys';
 import {
   useAppConfig as mockUseAppConfig,
@@ -15,18 +20,21 @@ import {
 } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import * as useUiFeatureModule from '../../../hooks/useUiFeature';
+import { ComposerLayout } from '../../../types/conversation-composer';
 import NewConversationComposer from '../NewConversationComposer';
 
 const {
   mockShowNotification,
   capturedInputProps,
   mockUsePageFileDrag,
+  mockOpenAttachmentCanvas,
   pageDrag,
 } = vi.hoisted(() => {
   const pageDrag = { isDragging: false };
   return {
     pageDrag,
     mockShowNotification: vi.fn(),
+    mockOpenAttachmentCanvas: vi.fn(),
     mockUsePageFileDrag: vi.fn(
       (_isAttachmentsAllowed?: boolean, _isEnabled?: boolean) => ({
         isDragging: pageDrag.isDragging,
@@ -39,11 +47,16 @@ const {
         ((message: string, attachments: never[]) => Promise<void>) | undefined,
       expandLabel: undefined as string | undefined,
       clickLabel: undefined as string | undefined,
+      onAttachmentClick: undefined as
+        ((attachment: DisplayAttachment) => void) | undefined,
     },
   };
 });
 
 vi.mock('../../../hooks/useUiFeature');
+vi.mock('../../FooterMessage/FooterMessage', () => ({
+  default: () => <p>app footer</p>,
+}));
 
 vi.mock('../../UsageLimitsControl/UsageLimitsControl', () => ({
   default: ({ deploymentId }: { deploymentId?: string }) => (
@@ -72,6 +85,7 @@ vi.mock('@epam/ai-dial-conversation-input', () => ({
     clickLabel,
     usageLimitsSlot,
     aboveInputSlot,
+    onAttachmentClick,
   }: {
     deployments?: unknown[];
     chatSettings?: unknown;
@@ -85,8 +99,10 @@ vi.mock('@epam/ai-dial-conversation-input', () => ({
     clickLabel?: string;
     usageLimitsSlot?: ReactNode;
     aboveInputSlot?: ReactNode;
+    onAttachmentClick?: (attachment: DisplayAttachment) => void;
   }) => {
     capturedInputProps.onSend = onSend;
+    capturedInputProps.onAttachmentClick = onAttachmentClick;
     capturedInputProps.expandLabel = expandLabel;
     capturedInputProps.clickLabel = clickLabel;
     return (
@@ -137,7 +153,7 @@ vi.mock('@epam/ai-dial-attachment-canvas', async (importOriginal) => {
   return {
     ...actual,
     useOpenAttachmentCanvas: () => ({
-      openAttachmentCanvas: vi.fn(),
+      openAttachmentCanvas: mockOpenAttachmentCanvas,
     }),
   };
 });
@@ -146,7 +162,8 @@ vi.mock('../../../hooks/attachment/useAttachmentCanvasResolvers', () => ({
   useAttachmentCanvasResolvers: () => ({ resolvers: {}, options: {} }),
 }));
 
-vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
+vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
   useIsMobile: () => false,
 }));
 
@@ -256,6 +273,8 @@ describe('NewConversationComposer', () => {
     capturedInputProps.onSend = undefined;
     capturedInputProps.expandLabel = undefined;
     capturedInputProps.clickLabel = undefined;
+    capturedInputProps.onAttachmentClick = undefined;
+    mockOpenAttachmentCanvas.mockClear();
     mockUsePageFileDrag.mockClear();
     pageDrag.isDragging = false;
     vi.mocked(mockUseFeatureFlag).mockReturnValue(false);
@@ -276,6 +295,7 @@ describe('NewConversationComposer', () => {
           onCreateConversation={vi.fn()}
         />
       </Suspense>,
+      { wrapper: AttachmentCanvasProvider },
     );
 
     expect((await screen.findByLabelText('usage-banner')).textContent).toBe(
@@ -297,6 +317,7 @@ describe('NewConversationComposer', () => {
           onCreateConversation={vi.fn()}
         />
       </Suspense>,
+      { wrapper: AttachmentCanvasProvider },
     );
 
     expect((await screen.findByLabelText('usage-limits')).textContent).toBe(
@@ -315,12 +336,40 @@ describe('NewConversationComposer', () => {
           onCreateConversation={vi.fn()}
         />
       </Suspense>,
+      { wrapper: AttachmentCanvasProvider },
     );
 
     await screen.findByText('Conversation input');
     expect(capturedInputProps.expandLabel).toBe(
       AttachmentsI18nKeys.ExpandPastedText,
     );
+  });
+
+  it('lets only the latest of two quick attachment clicks commit to the canvas', async () => {
+    render(
+      <Suspense fallback={null}>
+        <NewConversationComposer
+          deployments={deployments}
+          selectedDeploymentId="gpt-4o"
+          placeholder="Message"
+          onCreateConversation={vi.fn()}
+        />
+      </Suspense>,
+      { wrapper: AttachmentCanvasProvider },
+    );
+    await screen.findByLabelText('usage-banner');
+    const first = { id: 'a' } as DisplayAttachment;
+    const second = { id: 'b' } as DisplayAttachment;
+
+    capturedInputProps.onAttachmentClick?.(first);
+    capturedInputProps.onAttachmentClick?.(second);
+
+    const [[firstAttachment, , firstGuard], [secondAttachment, , secondGuard]] =
+      mockOpenAttachmentCanvas.mock.calls;
+    expect(firstAttachment).toBe(first);
+    expect(secondAttachment).toBe(second);
+    expect(firstGuard()).toBe(false);
+    expect(secondGuard()).toBe(true);
   });
 
   it('names composer attachment tiles after the open-in-canvas action', async () => {
@@ -333,6 +382,7 @@ describe('NewConversationComposer', () => {
           onCreateConversation={vi.fn()}
         />
       </Suspense>,
+      { wrapper: AttachmentCanvasProvider },
     );
 
     await screen.findByText('Conversation input');
@@ -352,6 +402,7 @@ describe('NewConversationComposer', () => {
           <button type="button">Draft</button>
         </NewConversationComposer>
       </Suspense>,
+      { wrapper: AttachmentCanvasProvider },
     );
 
     const input = await screen.findByTestId('conversation-input');
@@ -384,6 +435,7 @@ describe('NewConversationComposer', () => {
           <button type="button">Draft</button>
         </NewConversationComposer>
       </Suspense>,
+      { wrapper: AttachmentCanvasProvider },
     );
 
     const input = await screen.findByTestId('conversation-input');
@@ -403,10 +455,53 @@ describe('NewConversationComposer', () => {
           onCreateConversation={vi.fn()}
         />
       </Suspense>,
+      { wrapper: AttachmentCanvasProvider },
     );
 
     const welcomeText = await screen.findByLabelText('welcome-text');
     expect(welcomeText.textContent).not.toBe('undefined');
+  });
+
+  it('omits the greeting and stays in normal flow in the embedded layout', async () => {
+    render(
+      <Suspense fallback={null}>
+        <NewConversationComposer
+          deployments={deployments}
+          selectedDeploymentId="gpt-4o"
+          placeholder="Message"
+          onCreateConversation={vi.fn()}
+          layout={ComposerLayout.Embedded}
+        />
+      </Suspense>,
+      { wrapper: AttachmentCanvasProvider },
+    );
+
+    const welcomeText = await screen.findByLabelText('welcome-text');
+    expect(welcomeText.textContent).toBe('undefined');
+    expect(
+      screen.queryByRole('region', { name: ChatI18nKeys.WelcomeScreen }),
+    ).toBeNull();
+    // eslint-disable-next-line testing-library/no-node-access -- the layout classes sit on a wrapper with no role once it is not a region
+    const container = welcomeText.closest('.\\@container');
+    expect(container?.className).not.toContain('justify-center');
+    expect(container?.className).not.toContain('justify-end');
+    expect(screen.queryByText('app footer')).toBeNull();
+  });
+
+  it('renders the page footer in the default layout', async () => {
+    render(
+      <Suspense fallback={null}>
+        <NewConversationComposer
+          deployments={deployments}
+          selectedDeploymentId="gpt-4o"
+          placeholder="Message"
+          onCreateConversation={vi.fn()}
+        />
+      </Suspense>,
+      { wrapper: AttachmentCanvasProvider },
+    );
+
+    expect(await screen.findByText('app footer')).toBeTruthy();
   });
 
   it('omits the greeting when hide-greeting is enabled', async () => {
@@ -422,6 +517,7 @@ describe('NewConversationComposer', () => {
           onCreateConversation={vi.fn()}
         />
       </Suspense>,
+      { wrapper: AttachmentCanvasProvider },
     );
 
     const welcomeText = await screen.findByLabelText('welcome-text');
@@ -438,6 +534,7 @@ describe('NewConversationComposer', () => {
           onCreateConversation={vi.fn()}
         />
       </Suspense>,
+      { wrapper: AttachmentCanvasProvider },
     );
     await screen.findByTestId('conversation-input');
     expect(screen.getByLabelText('chat-settings').textContent).toBe('defined');
@@ -456,6 +553,7 @@ describe('NewConversationComposer', () => {
           onCreateConversation={vi.fn()}
         />
       </Suspense>,
+      { wrapper: AttachmentCanvasProvider },
     );
     await screen.findByTestId('conversation-input');
     expect(screen.getByLabelText('chat-settings').textContent).toBe(
@@ -476,6 +574,7 @@ describe('NewConversationComposer', () => {
           onCreateConversation={vi.fn()}
         />
       </Suspense>,
+      { wrapper: AttachmentCanvasProvider },
     );
     await screen.findByTestId('conversation-input');
     expect(screen.getByLabelText('chat-settings').textContent).toBe(
@@ -496,6 +595,7 @@ describe('NewConversationComposer', () => {
           onCreateConversation={vi.fn()}
         />
       </Suspense>,
+      { wrapper: AttachmentCanvasProvider },
     );
     await screen.findByTestId('conversation-input');
     expect(screen.getByLabelText('deployments').textContent).toBe('undefined');
@@ -511,6 +611,7 @@ describe('NewConversationComposer', () => {
           onCreateConversation={vi.fn()}
         />
       </Suspense>,
+      { wrapper: AttachmentCanvasProvider },
     );
     await screen.findByTestId('conversation-input');
     expect(screen.getByLabelText('deployments').textContent).toBe(
@@ -531,6 +632,7 @@ describe('NewConversationComposer', () => {
           onCreateConversation={vi.fn()}
         />
       </Suspense>,
+      { wrapper: AttachmentCanvasProvider },
     );
     await screen.findByTestId('conversation-input');
     expect(screen.getByLabelText('send-disabled').textContent).toBe('true');
@@ -548,6 +650,7 @@ describe('NewConversationComposer', () => {
           onCreateConversation={vi.fn()}
         />
       </Suspense>,
+      { wrapper: AttachmentCanvasProvider },
     );
     await screen.findByTestId('conversation-input');
     expect(mockUsePageFileDrag).toHaveBeenLastCalledWith(false, true);
@@ -565,6 +668,7 @@ describe('NewConversationComposer', () => {
           onCreateConversation={vi.fn()}
         />
       </Suspense>,
+      { wrapper: AttachmentCanvasProvider },
     );
     await screen.findByTestId('conversation-input');
     expect(mockUsePageFileDrag).toHaveBeenLastCalledWith(true, true);
@@ -584,6 +688,7 @@ describe('NewConversationComposer', () => {
           onCreateConversation={vi.fn()}
         />
       </Suspense>,
+      { wrapper: AttachmentCanvasProvider },
     );
     await screen.findByTestId('conversation-input');
     expect(screen.getByLabelText('auto-focus').textContent).toBe('false');
@@ -599,6 +704,7 @@ describe('NewConversationComposer', () => {
           onCreateConversation={vi.fn()}
         />
       </Suspense>,
+      { wrapper: AttachmentCanvasProvider },
     );
     await screen.findByTestId('conversation-input');
     expect(screen.getByLabelText('auto-focus').textContent).toBe('true');
@@ -620,6 +726,7 @@ describe('NewConversationComposer', () => {
           <button type="button">Draft</button>
         </NewConversationComposer>
       </Suspense>,
+      { wrapper: AttachmentCanvasProvider },
     );
 
     const link = await screen.findByRole('link', { name: 'the terms' });
@@ -642,6 +749,7 @@ describe('NewConversationComposer', () => {
           onCreateConversation={vi.fn()}
         />
       </Suspense>,
+      { wrapper: AttachmentCanvasProvider },
     );
     await screen.findByTestId('conversation-input');
 
@@ -659,6 +767,7 @@ describe('NewConversationComposer', () => {
           onCreateConversation={vi.fn().mockRejectedValue(failure)}
         />
       </Suspense>,
+      { wrapper: AttachmentCanvasProvider },
     );
     await screen.findByTestId('conversation-input');
 

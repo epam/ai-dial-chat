@@ -29,6 +29,14 @@ export interface LottieAnimationContext<P> {
   cancel: () => void;
 }
 
+/** What a scene adapter receives once the first frame of playback renders. */
+export interface LottiePlaybackStartContext<
+  P,
+> extends LottieAnimationContext<P> {
+  /** The `document.timeline` time, in milliseconds, of the composition's frame 0. */
+  timelineZeroMs: number;
+}
+
 /** A scene's fixed contribution to its Lottie session. */
 export interface LottieScenePlayback<P> {
   /** Deadlines of the session. */
@@ -39,14 +47,20 @@ export interface LottieScenePlayback<P> {
   getAnimationData: (preparation: P) => object;
   /** Installs scene observers once the renderer exists. */
   onAnimationCreated?: (context: LottieAnimationContext<P>) => void;
+  /** Starts companion animations on the Lottie clock; called once, on the first rendered frame. */
+  onPlaybackStarted?: (context: LottiePlaybackStartContext<P>) => void;
+  /** Checks the rendered DOM at readiness, before play; `false` fails the session. */
+  isRendererAccepted?: (host: HTMLElement) => boolean;
 }
 
 /** Inputs of one Lottie scene session. */
 export interface LottieSceneSessionOptions<P> {
   /** The scene's timings, data ownership and observers. */
   playback: LottieScenePlayback<P>;
-  /** Measures targets and builds the composition after the player loads. */
-  prepare: (player: LottiePlayer) => P;
+  /** Measures targets and builds the composition after the player and data load. */
+  prepare: (player: LottiePlayer, data: unknown) => P;
+  /** Loads animation data beside the player, under the same load deadline; aborted when the session ends first. */
+  loadData?: (signal: AbortSignal) => Promise<unknown>;
   /** Receives the preparation so the host element can render. */
   onPrepared: (preparation: P) => void;
   /** Receives the outcome once, unless the session was disposed. */
@@ -75,8 +89,10 @@ export interface UseLottieSceneSessionOptions<P> {
   enabled: boolean;
   /** The scene's timings, data ownership and observers. */
   playback: LottieScenePlayback<P>;
-  /** Measures targets and builds the composition after the player loads. */
-  prepare: (player: LottiePlayer) => P;
+  /** Measures targets and builds the composition after the player and data load. */
+  prepare: (player: LottiePlayer, data: unknown) => P;
+  /** Loads animation data beside the player, under the same load deadline; aborted when the session ends first. */
+  loadData?: (signal: AbortSignal) => Promise<unknown>;
 }
 
 /** State and controls a scene component renders from. */

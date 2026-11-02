@@ -77,6 +77,7 @@ describe('useSkillFileSystemPicker', () => {
     expect(mockDownloadFile).toHaveBeenCalledWith(
       'other-bucket',
       'docs/notes.md',
+      expect.any(AbortSignal),
     );
     expect(result.current.isOpen).toBe(false);
     expect(entries?.map((entry) => entry.path)).toEqual(['notes.md']);

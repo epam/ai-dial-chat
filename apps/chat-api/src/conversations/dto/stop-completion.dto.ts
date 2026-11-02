@@ -3,10 +3,11 @@ import {
   IsOptional,
   IsString,
   IsUUID,
-  Matches,
   MaxLength,
   MinLength,
 } from 'class-validator';
+import { IsConversationPath } from '../../common/validators/conversation-path.validator';
+import { IsNotProjectConversationLocator } from './not-project-conversation-locator.validator';
 
 /** Upper bound for the shown answer text; far above any real answer, it only rejects abuse. */
 const STOP_CONTENT_MAX_LENGTH = 1_000_000;
@@ -26,9 +27,8 @@ export class StopCompletionDto {
   })
   @IsString()
   @MinLength(1)
-  @Matches(/^(?!.*\.\.)[\s\S]+$/, {
-    message: 'path contains invalid characters',
-  })
+  @IsConversationPath()
+  @IsNotProjectConversationLocator()
   path!: string;
 
   @ApiPropertyOptional({

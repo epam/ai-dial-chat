@@ -118,11 +118,8 @@ export const buildSkillOverviewLabels = (
   whenToUseLabel: t(CatalogI18nKeys.DetailsSkillWhenToUse),
   allowedToolsLabel: t(CatalogI18nKeys.DetailsSkillAllowedTools),
   bundledResourcesLabel: t(CatalogI18nKeys.DetailsSkillBundledResources),
-  specificationSectionTitle: t(
-    CatalogI18nKeys.DetailsSkillSpecificationSection,
-  ),
+  specificationSectionTitle: t(CatalogI18nKeys.DetailsSpecificationSection),
   authorLabel: t(CatalogI18nKeys.DetailsSkillAuthor),
   updatedLabel: t(CatalogI18nKeys.DetailsSkillUpdated),
   fileCountLabel: t(CatalogI18nKeys.DetailsSkillFileCount),
-  detailsSectionTitle: t(CatalogI18nKeys.DetailsSkillSection),
 });

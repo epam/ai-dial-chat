@@ -50,6 +50,8 @@ export interface ModelPriceRow {
   key: string;
   /** Per-unit price formatted for display, e.g. `$3/M tokens`. */
   price: string;
+  /** Condition under which a tiered price applies, formatted for display, e.g. `prompt tokens > 200K`; absent for a flat price. */
+  condition?: string;
 }
 
 /** A model deployment's full price list. */

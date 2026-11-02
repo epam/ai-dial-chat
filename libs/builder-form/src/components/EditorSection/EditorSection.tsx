@@ -27,7 +27,14 @@ export const EditorSection: FC<EditorSectionProps> = ({
       style={cssVars}
     >
       {title != null && (
-        <h2 className={mergeClasses('dial-h3-text', styles.title)}>{title}</h2>
+        <h2
+          className={mergeClasses(
+            stylesProp?.typography?.titleClassName ?? 'dial-h3-text',
+            styles.title,
+          )}
+        >
+          {title}
+        </h2>
       )}
       {children}
     </section>

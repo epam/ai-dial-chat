@@ -9,6 +9,7 @@ import {
   ValidatorConstraintInterface,
 } from 'class-validator';
 import { EnvironmentVariables } from '../../config/environment.config';
+import { SchedulerServiceConsentStatus } from '../../external-services/types/scheduler-service-consent-status.enum';
 
 /*
  * Allowlisted app-owned OAuth callback paths this endpoint accepts as a
@@ -93,6 +94,19 @@ export class GetOfflineCredentialsResponseDto {
 
   @ApiPropertyOptional({ type: OfflineCredentialsConnectDto })
   connect?: OfflineCredentialsConnectDto;
+
+  @ApiProperty({
+    enum: SchedulerServiceConsentStatus,
+    enumName: 'SchedulerServiceConsentStatus',
+    example: SchedulerServiceConsentStatus.SignedIn,
+    description:
+      'Consent state of the DIAL_NATIVE scheduler external service: ' +
+      "'signed_out' when the administrator's application consent is missing " +
+      "or revoked, 'signed_in' when it is in place, and 'unknown' when the " +
+      'consent read itself failed (the offline-credentials status is still ' +
+      'valid).',
+  })
+  schedulerServiceConsent!: SchedulerServiceConsentStatus;
 }
 
 export class OfflineCredentialsSigninBodyDto {

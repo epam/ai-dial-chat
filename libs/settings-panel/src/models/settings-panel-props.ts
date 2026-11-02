@@ -18,8 +18,16 @@ export interface SettingsPanelTypography {
   sectionLabelClassName?: string;
 }
 
+/** Color overrides for the {@link SettingsPanel} component, applied as CSS custom properties. */
+export interface SettingsPanelColors {
+  /** Panel background color. Defaults to `--bg-layer-raised`. */
+  background?: string;
+}
+
 /** Style overrides for the {@link SettingsPanel} component. */
 export interface SettingsPanelStyles {
+  /** Color overrides. */
+  colors?: SettingsPanelColors;
   /** Typography overrides. */
   typography?: SettingsPanelTypography;
 }
@@ -34,6 +42,8 @@ export interface SettingsPanelProps {
   onSelect: (id: string) => void;
   /** Already-localized header text rendered above the item list. Omit to render no header. */
   sectionLabel?: string;
+  /** Already-localized accessible name for the item list, for a panel rendered without `sectionLabel`. */
+  ariaLabel?: string;
   /** Style overrides. */
   styles?: SettingsPanelStyles;
   /** Additional CSS class applied to the root element. */

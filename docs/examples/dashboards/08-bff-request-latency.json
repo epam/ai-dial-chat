@@ -1,0 +1,1863 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "Application Prometheus",
+      "description": "Choose the Prometheus data source that scrapes the BFF /metrics listener and contains dial_chat_generations_active with otel_scope_name=\"dial-chat-api\". An OTLP data source may use different metric names or labels.",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    }
+  ],
+  "id": null,
+  "uid": null,
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "graphTooltip": 1,
+  "style": "dark",
+  "annotations": {
+    "list": []
+  },
+  "links": [],
+  "title": "DIAL BFF - Request latency and Core attribution",
+  "description": "Whole-period endpoint latency and request-local Core attribution. Requests count when their transport ends. Core time is the union of observed Core activity; outside-Core time includes Chat processing and other waits. Default: last 24 hours, ordinary transports.",
+  "tags": ["dial-chat", "bff", "observability", "request-latency"],
+  "timezone": "browser",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "refresh": "5m",
+  "timepicker": {
+    "refresh_intervals": ["1m", "5m", "15m", "30m", "1h"]
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "label": "Data source",
+        "type": "datasource",
+        "query": "prometheus",
+        "refresh": 1,
+        "regex": "",
+        "hide": 0,
+        "multi": false,
+        "includeAll": false,
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": "${DS_PROMETHEUS}",
+          "value": "${DS_PROMETHEUS}"
+        }
+      },
+      {
+        "name": "cluster",
+        "label": "Cluster",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
+        "definition": "label_values(dial_chat_generations_active{otel_scope_name=\"dial-chat-api\"}, cluster)",
+        "query": {
+          "query": "label_values(dial_chat_generations_active{otel_scope_name=\"dial-chat-api\"}, cluster)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "sort": 1,
+        "regex": "",
+        "hide": 0,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": ["All"],
+          "value": ["$__all"]
+        },
+        "skipUrlSync": false
+      },
+      {
+        "name": "namespace",
+        "label": "Namespace",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
+        "definition": "label_values(dial_chat_generations_active{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\"}, namespace)",
+        "query": {
+          "query": "label_values(dial_chat_generations_active{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\"}, namespace)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "sort": 1,
+        "regex": "",
+        "hide": 0,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": ["All"],
+          "value": ["$__all"]
+        },
+        "skipUrlSync": false
+      },
+      {
+        "name": "job",
+        "label": "Scrape job",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
+        "definition": "label_values(dial_chat_generations_active{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\"}, job)",
+        "query": {
+          "query": "label_values(dial_chat_generations_active{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\"}, job)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "sort": 1,
+        "regex": "",
+        "hide": 0,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": ["All"],
+          "value": ["$__all"]
+        },
+        "skipUrlSync": false
+      },
+      {
+        "name": "pod",
+        "label": "Pod",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
+        "definition": "label_values(dial_chat_generations_active{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\"}, pod)",
+        "query": {
+          "query": "label_values(dial_chat_generations_active{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\"}, pod)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "sort": 1,
+        "regex": "",
+        "hide": 0,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": ["All"],
+          "value": ["$__all"]
+        },
+        "skipUrlSync": false
+      },
+      {
+        "name": "transport",
+        "label": "Transport",
+        "type": "custom",
+        "query": "ordinary,streaming",
+        "hide": 0,
+        "multi": false,
+        "includeAll": true,
+        "allValue": "ordinary|streaming",
+        "options": [
+          {
+            "selected": true,
+            "text": "ordinary",
+            "value": "ordinary"
+          },
+          {
+            "selected": false,
+            "text": "streaming",
+            "value": "streaming"
+          }
+        ],
+        "current": {
+          "selected": true,
+          "text": "ordinary",
+          "value": "ordinary"
+        },
+        "skipUrlSync": false,
+        "description": "Ordinary excludes the explicitly classified long-lived streaming routes. It still includes synchronous generation and file transfers. All combines both classes."
+      },
+      {
+        "name": "http_method",
+        "label": "Method",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
+        "definition": "label_values(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_http_phase=\"total\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\"}, http_request_method)",
+        "query": {
+          "query": "label_values(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_http_phase=\"total\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\"}, http_request_method)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "sort": 1,
+        "regex": "",
+        "hide": 0,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": ["All"],
+          "value": ["$__all"]
+        },
+        "skipUrlSync": false
+      },
+      {
+        "name": "http_route",
+        "label": "Endpoint",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
+        "definition": "label_values(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_http_phase=\"total\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\"}, http_route)",
+        "query": {
+          "query": "label_values(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_http_phase=\"total\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\"}, http_route)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "sort": 1,
+        "regex": "",
+        "hide": 0,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": ["All"],
+          "value": ["$__all"]
+        },
+        "skipUrlSync": false
+      },
+      {
+        "name": "outcome",
+        "label": "Outcome",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
+        "definition": "label_values(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_http_phase=\"total\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\"}, dial_chat_http_outcome)",
+        "query": {
+          "query": "label_values(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",dial_chat_http_phase=\"total\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\"}, dial_chat_http_outcome)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "sort": 1,
+        "regex": "",
+        "hide": 0,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": ["All"],
+          "value": ["$__all"]
+        },
+        "skipUrlSync": false
+      },
+      {
+        "name": "tempo_datasource",
+        "label": "Trace datasource (Tempo)",
+        "type": "datasource",
+        "query": "tempo",
+        "refresh": 1,
+        "regex": "",
+        "hide": 0,
+        "multi": false,
+        "includeAll": false,
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": "",
+          "value": ""
+        }
+      },
+      {
+        "name": "trace_service",
+        "label": "Trace service.name",
+        "type": "textbox",
+        "query": "@epam/chat-api",
+        "hide": 0,
+        "options": [],
+        "current": {
+          "selected": true,
+          "text": "@epam/chat-api",
+          "value": "@epam/chat-api"
+        },
+        "description": "Actual OTEL_SERVICE_NAME, independent of metric scope. Literal service name; quotes/backslashes require custom Explore JSON escaping."
+      },
+      {
+        "name": "trace_min_duration",
+        "label": "Trace minimum duration",
+        "type": "custom",
+        "query": "1s,5s,10s,30s,60s,5m",
+        "hide": 0,
+        "multi": false,
+        "includeAll": false,
+        "options": [
+          {
+            "selected": false,
+            "text": "1s",
+            "value": "1s"
+          },
+          {
+            "selected": true,
+            "text": "5s",
+            "value": "5s"
+          },
+          {
+            "selected": false,
+            "text": "10s",
+            "value": "10s"
+          },
+          {
+            "selected": false,
+            "text": "30s",
+            "value": "30s"
+          },
+          {
+            "selected": false,
+            "text": "60s",
+            "value": "60s"
+          },
+          {
+            "selected": false,
+            "text": "5m",
+            "value": "5m"
+          }
+        ],
+        "current": {
+          "selected": true,
+          "text": "5s",
+          "value": "5s"
+        },
+        "skipUrlSync": false,
+        "description": "Only affects the optional Tempo table. Independent of metric thresholds, workload, endpoint, transport and outcome filters."
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Latency over the selected period",
+      "type": "text",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 4
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**Compare endpoints over the full selected period (default: last 24 hours).** Requests count when they end; open streams appear later. **Core** is observed time with at least one Core operation active, including network/transfer. **Outside Core** includes Chat processing, other dependencies and delivery waits; it is not CPU time. Ordinary transports are selected by default. Missing data stays missing; new measurements have no historical backfill."
+      }
+    },
+    {
+      "id": 2,
+      "title": "Ended requests in period (estimated)",
+      "type": "stat",
+      "description": "One total-phase observation per ended matched request. All selected outcomes count; open requests are absent. Increase is a scrape-based estimate, not an audit count.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 8,
+        "h": 3
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "sum (increase(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range]))",
+          "legendFormat": "Ended requests in period (estimated)",
+          "range": false,
+          "instant": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "locale",
+          "decimals": 0,
+          "min": 0,
+          "noValue": "No samples",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 3,
+      "title": "Mean request duration in period",
+      "type": "stat",
+      "description": "Weighted duration across ended requests in the full selected period. Includes all selected outcomes and statuses; change the filters to compare a specific population.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 4,
+        "w": 8,
+        "h": 3
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "(sum (increase(dial_chat_http_request_phase_duration_sum{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range]))) / (sum (increase(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range])) > 0)",
+          "legendFormat": "Mean request duration in period",
+          "range": false,
+          "instant": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 3,
+          "min": 0,
+          "noValue": "No samples",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 4,
+      "title": "Core share of request time in period",
+      "type": "stat",
+      "description": "Core-active time divided by total request time across the same ended requests. Concurrent Core calls overlap once within each request. This is a ratio of sums, not an average of per-request percentages.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 4,
+        "w": 8,
+        "h": 3
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "(sum (increase(dial_chat_http_request_phase_duration_sum{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"core\"}[$__range]))) / (sum (increase(dial_chat_http_request_phase_duration_sum{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range])) > 0)",
+          "legendFormat": "Core share of request time in period",
+          "range": false,
+          "instant": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 1,
+          "min": 0,
+          "noValue": "No samples",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 5,
+      "title": "All endpoints — latency in period",
+      "type": "table",
+      "description": "Each row is one method and matched route template over the whole period, including endpoints outside the top ten. Sort by count, mean or percentile. Percentiles are histogram estimates and are omitted when above the last finite 3600-second bucket; consult the slow-request table. Low counts make tail estimates less representative.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 7,
+        "w": 24,
+        "h": 11
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "label_join(sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range])) > 0, \"endpoint\", \" \", \"http_request_method\", \"http_route\")",
+          "legendFormat": "{{http_request_method}} {{http_route}}",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "B",
+          "editorMode": "code",
+          "expr": "label_join((sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_sum{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range]))) / (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range])) > 0), \"endpoint\", \" \", \"http_request_method\", \"http_route\")",
+          "legendFormat": "{{http_request_method}} {{http_route}}",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "C",
+          "editorMode": "code",
+          "expr": "label_join((histogram_quantile(0.95, sum by (le, http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_bucket{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range])))) and ((sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_bucket{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\",le=~\"3600([.]0+)?\"}[$__range]))) / (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range])) > 0) >= 0.95), \"endpoint\", \" \", \"http_request_method\", \"http_route\")",
+          "legendFormat": "{{http_request_method}} {{http_route}}",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "D",
+          "editorMode": "code",
+          "expr": "label_join((histogram_quantile(0.99, sum by (le, http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_bucket{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range])))) and ((sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_bucket{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\",le=~\"3600([.]0+)?\"}[$__range]))) / (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range])) > 0) >= 0.99), \"endpoint\", \" \", \"http_request_method\", \"http_route\")",
+          "legendFormat": "{{http_request_method}} {{http_route}}",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 3,
+          "min": 0,
+          "noValue": "No samples",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Endpoint"
+            },
+            "properties": [
+              {
+                "id": "custom.minWidth",
+                "value": 360
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Requests (estimated)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "locale"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.width",
+                "value": 155
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Mean total"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "decimals",
+                "value": 3
+              },
+              {
+                "id": "custom.width",
+                "value": 155
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "p95 total"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "decimals",
+                "value": 3
+              },
+              {
+                "id": "custom.width",
+                "value": 155
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "p99 total"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "decimals",
+                "value": 3
+              },
+              {
+                "id": "custom.width",
+                "value": 155
+              }
+            ]
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "http_route": true,
+              "http_request_method": true
+            },
+            "indexByName": {
+              "endpoint": 0,
+              "Value #A": 1,
+              "Value #B": 2,
+              "Value #C": 3,
+              "Value #D": 4
+            },
+            "renameByName": {
+              "endpoint": "Endpoint",
+              "Value #A": "Requests (estimated)",
+              "Value #B": "Mean total",
+              "Value #C": "p95 total",
+              "Value #D": "p99 total"
+            }
+          }
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "md",
+        "sortBy": [
+          {
+            "displayName": "Mean total",
+            "desc": true
+          }
+        ],
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "Top 10 endpoints — mean duration in period",
+      "type": "bargauge",
+      "description": "Ranks endpoints by mean duration over the full selected period. Low-volume endpoints can rank highly; compare their request counts in the table.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 18,
+        "w": 12,
+        "h": 13
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "topk(10, (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_sum{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range]))) / (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range])) > 0))",
+          "legendFormat": "{{http_request_method}} {{http_route}}",
+          "range": false,
+          "instant": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 2,
+          "min": 0,
+          "noValue": "No samples",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "basic",
+        "showUnfilled": false,
+        "valueMode": "text",
+        "namePlacement": "top",
+        "sizing": "manual",
+        "minVizHeight": 34,
+        "maxVizHeight": 38,
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "text": {
+          "titleSize": 13,
+          "valueSize": 16
+        }
+      }
+    },
+    {
+      "id": 7,
+      "title": "Top 10 endpoints — accumulated request time",
+      "type": "bargauge",
+      "description": "Total duration of ended requests over the selected period. Concurrent requests contribute independently, so the sum can exceed wall-clock time; it is neither CPU usage nor time spent inside Core.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 18,
+        "w": 12,
+        "h": 13
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "topk(10, sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_sum{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range])) > 0)",
+          "legendFormat": "{{http_request_method}} {{http_route}}",
+          "range": false,
+          "instant": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 2,
+          "min": 0,
+          "noValue": "No samples",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "basic",
+        "showUnfilled": false,
+        "valueMode": "text",
+        "namePlacement": "top",
+        "sizing": "manual",
+        "minVizHeight": 34,
+        "maxVizHeight": 38,
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "text": {
+          "titleSize": 13,
+          "valueSize": 16
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "All endpoints — Core and outside-Core attribution",
+      "type": "table",
+      "description": "Components are recorded for the same request population at transport settlement. Core is the union of observed request-local Core intervals, clipped at settlement. Outside Core is total minus that union and includes Chat work, IdP/other dependencies, scheduling and client delivery waits. Core includes network/transfer and may overlap local work; it is not Core server CPU time. Requests without Core calls have an observed zero Core component.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 31,
+        "w": 24,
+        "h": 11
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "label_join((sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_sum{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range]))) / (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range])) > 0), \"endpoint\", \" \", \"http_request_method\", \"http_route\")",
+          "legendFormat": "{{http_request_method}} {{http_route}}",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "B",
+          "editorMode": "code",
+          "expr": "label_join((sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_sum{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"core\"}[$__range]))) / (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range])) > 0), \"endpoint\", \" \", \"http_request_method\", \"http_route\")",
+          "legendFormat": "{{http_request_method}} {{http_route}}",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "C",
+          "editorMode": "code",
+          "expr": "label_join((sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_sum{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"chat\"}[$__range]))) / (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range])) > 0), \"endpoint\", \" \", \"http_request_method\", \"http_route\")",
+          "legendFormat": "{{http_request_method}} {{http_route}}",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "D",
+          "editorMode": "code",
+          "expr": "label_join((sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_sum{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"core\"}[$__range]))) / (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_sum{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range])) > 0), \"endpoint\", \" \", \"http_request_method\", \"http_route\")",
+          "legendFormat": "{{http_request_method}} {{http_route}}",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 3,
+          "min": 0,
+          "noValue": "No samples",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Endpoint"
+            },
+            "properties": [
+              {
+                "id": "custom.minWidth",
+                "value": 360
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Mean total"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "decimals",
+                "value": 3
+              },
+              {
+                "id": "custom.width",
+                "value": 155
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Mean Core"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "decimals",
+                "value": 3
+              },
+              {
+                "id": "custom.width",
+                "value": 155
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Mean outside Core"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "decimals",
+                "value": 3
+              },
+              {
+                "id": "custom.width",
+                "value": 155
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Core time share"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              },
+              {
+                "id": "custom.width",
+                "value": 155
+              }
+            ]
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "http_route": true,
+              "http_request_method": true
+            },
+            "indexByName": {
+              "endpoint": 0,
+              "Value #A": 1,
+              "Value #B": 2,
+              "Value #C": 3,
+              "Value #D": 4
+            },
+            "renameByName": {
+              "endpoint": "Endpoint",
+              "Value #A": "Mean total",
+              "Value #B": "Mean Core",
+              "Value #C": "Mean outside Core",
+              "Value #D": "Core time share"
+            }
+          }
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "md",
+        "sortBy": [
+          {
+            "displayName": "Mean outside Core",
+            "desc": true
+          }
+        ],
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 9,
+      "title": "Top 10 slowest endpoints — mean time components",
+      "type": "barchart",
+      "description": "Same whole-period mean ranking as above. Each horizontal bar adds mean Core-active time and mean outside-Core time to the mean total duration. Concurrent Core calls count once. The attribution table includes every endpoint and can be sorted by outside-Core time.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 42,
+        "w": 24,
+        "h": 13
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "label_join(((sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_sum{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"core\"}[$__range]))) / (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range])) > 0)) and on (http_request_method, http_route) (topk(10, (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_sum{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range]))) / (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range])) > 0))), \"endpoint\", \" \", \"http_request_method\", \"http_route\")",
+          "legendFormat": "{{http_request_method}} {{http_route}}",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "B",
+          "editorMode": "code",
+          "expr": "label_join(((sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_sum{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"chat\"}[$__range]))) / (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range])) > 0)) and on (http_request_method, http_route) (topk(10, (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_sum{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range]))) / (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range])) > 0))), \"endpoint\", \" \", \"http_request_method\", \"http_route\")",
+          "legendFormat": "{{http_request_method}} {{http_route}}",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "C",
+          "editorMode": "code",
+          "expr": "label_join(topk(10, (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_sum{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range]))) / (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range])) > 0)), \"endpoint\", \" \", \"http_request_method\", \"http_route\")",
+          "legendFormat": "{{http_request_method}} {{http_route}}",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 3,
+          "min": 0,
+          "noValue": "No samples",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 85,
+            "axisPlacement": "auto",
+            "axisLabel": "Mean request duration",
+            "axisColorMode": "text",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Core"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Outside Core"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Value #C",
+                "desc": true
+              }
+            ]
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "http_route": true,
+              "http_request_method": true,
+              "Value #C": true
+            },
+            "indexByName": {
+              "endpoint": 0,
+              "Value #A": 1,
+              "Value #B": 2
+            },
+            "renameByName": {
+              "endpoint": "Endpoint",
+              "Value #A": "Core",
+              "Value #B": "Outside Core"
+            }
+          }
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "xField": "Endpoint",
+        "stacking": "normal",
+        "showValue": "auto",
+        "groupWidth": 0.7,
+        "barWidth": 0.97,
+        "barRadius": 0,
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0,
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 10,
+      "title": "All endpoints — requests above duration thresholds",
+      "type": "table",
+      "description": "Estimated ended requests strictly above each boundary in the full period. Counts are rounded for display only. The 1-hour share explains missing tail quantiles: p95 is omitted when more than 5% exceed 1 hour, and p99 when more than 1% do. No requests or missing telemetry gives no percentage.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 55,
+        "w": 24,
+        "h": 11
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "label_join((clamp_min((sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range]))) - (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_bucket{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\",le=~\"5([.]0+)?\"}[$__range]))), 0)) and (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range])) > 0), \"endpoint\", \" \", \"http_request_method\", \"http_route\")",
+          "legendFormat": "{{http_request_method}} {{http_route}}",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "B",
+          "editorMode": "code",
+          "expr": "label_join((clamp_min((sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range]))) - (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_bucket{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\",le=~\"5([.]0+)?\"}[$__range]))), 0)) / (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range])) > 0), \"endpoint\", \" \", \"http_request_method\", \"http_route\")",
+          "legendFormat": "{{http_request_method}} {{http_route}}",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "C",
+          "editorMode": "code",
+          "expr": "label_join((clamp_min((sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range]))) - (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_bucket{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\",le=~\"60([.]0+)?\"}[$__range]))), 0)) and (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range])) > 0), \"endpoint\", \" \", \"http_request_method\", \"http_route\")",
+          "legendFormat": "{{http_request_method}} {{http_route}}",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "D",
+          "editorMode": "code",
+          "expr": "label_join((clamp_min((sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range]))) - (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_bucket{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\",le=~\"60([.]0+)?\"}[$__range]))), 0)) / (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range])) > 0), \"endpoint\", \" \", \"http_request_method\", \"http_route\")",
+          "legendFormat": "{{http_request_method}} {{http_route}}",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "E",
+          "editorMode": "code",
+          "expr": "label_join((clamp_min((sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range]))) - (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_bucket{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\",le=~\"3600([.]0+)?\"}[$__range]))), 0)) / (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range])) > 0), \"endpoint\", \" \", \"http_request_method\", \"http_route\")",
+          "legendFormat": "{{http_request_method}} {{http_route}}",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 3,
+          "min": 0,
+          "noValue": "No samples",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Endpoint"
+            },
+            "properties": [
+              {
+                "id": "custom.minWidth",
+                "value": 360
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Requests > 5s"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "locale"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.width",
+                "value": 155
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Share > 5s"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              },
+              {
+                "id": "custom.width",
+                "value": 155
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Requests > 60s"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "locale"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.width",
+                "value": 155
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Share > 60s"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              },
+              {
+                "id": "custom.width",
+                "value": 155
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Share > 1h"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              },
+              {
+                "id": "custom.width",
+                "value": 155
+              }
+            ]
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "http_route": true,
+              "http_request_method": true
+            },
+            "indexByName": {
+              "endpoint": 0,
+              "Value #A": 1,
+              "Value #B": 2,
+              "Value #C": 3,
+              "Value #D": 4,
+              "Value #E": 5
+            },
+            "renameByName": {
+              "endpoint": "Endpoint",
+              "Value #A": "Requests > 5s",
+              "Value #B": "Share > 5s",
+              "Value #C": "Requests > 60s",
+              "Value #D": "Share > 60s",
+              "Value #E": "Share > 1h"
+            }
+          }
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "md",
+        "sortBy": [
+          {
+            "displayName": "Requests > 5s",
+            "desc": true
+          }
+        ],
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 11,
+      "title": "Mean duration over time — fixed period top 10",
+      "type": "timeseries",
+      "description": "Recent mean duration over $__rate_interval for a fixed top ten ranked by mean duration over the full selected period at its end. Changes in endpoint traffic mix affect the mean. Gaps remain gaps; a flat or missing series does not establish zero latency.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 66,
+        "w": 24,
+        "h": 11
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "refId": "A",
+          "editorMode": "code",
+          "expr": "((sum by (http_request_method, http_route) (rate(dial_chat_http_request_phase_duration_sum{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__rate_interval]))) / (sum by (http_request_method, http_route) (rate(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__rate_interval])) > 0)) and on (http_request_method, http_route) topk(10, (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_sum{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range] @ ${__to:date:seconds}))) / (sum by (http_request_method, http_route) (increase(dial_chat_http_request_phase_duration_count{otel_scope_name=\"dial-chat-api\",cluster=~\"$cluster\",namespace=~\"$namespace\",job=~\"$job\",pod=~\"$pod\",http_route!=\"unmatched\",dial_chat_http_transport_kind=~\"$transport\",http_request_method=~\"$http_method\",http_route=~\"$http_route\",dial_chat_http_outcome=~\"$outcome\",dial_chat_http_phase=\"total\"}[$__range] @ ${__to:date:seconds})) > 0))",
+          "legendFormat": "{{http_request_method}} {{http_route}}",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 3,
+          "min": 0,
+          "noValue": "No samples",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Mean request duration",
+            "axisPlacement": "auto",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 100,
+      "type": "row",
+      "title": "Optional — individual slow requests (Tempo)",
+      "collapsed": true,
+      "gridPos": {
+        "x": 0,
+        "y": 77,
+        "w": 24,
+        "h": 1
+      },
+      "panels": [
+        {
+          "id": 12,
+          "type": "text",
+          "title": "Configure the independent trace search",
+          "gridPos": {
+            "x": 0,
+            "y": 78,
+            "w": 24,
+            "h": 5
+          },
+          "options": {
+            "mode": "markdown",
+            "content": "Select a **Trace datasource (Tempo)**, set **Trace service.name** to the deployed `OTEL_SERVICE_NAME` (default `@epam/chat-api`), and choose **Trace minimum duration**. The table uses this service, threshold and the dashboard time range. **Metric workload, endpoint, transport and outcome filters do not apply to this table.** Select a Tempo source scoped to the intended environment or add verified resource filters in the query.\n\nOpen a **Trace / span** link to inspect one request. Timing columns are seconds and carry the same Core/outside-Core interpretation as the metrics. Results include up to 100 matching traces and 20 spans per spanset, sorted by total duration among those returned. Sampling, retention and search limits apply: this is not an exhaustive daily ranking of every request. The collapsed section does not load its panels until expanded."
+          }
+        },
+        {
+          "id": 13,
+          "title": "Slow request instances — longest among returned matches",
+          "type": "table",
+          "description": "Independent Tempo search over the dashboard time range. Only the trace service and minimum-duration variables apply. At most 100 traces, with up to 20 spans per spanset; sorting returned matches does not establish the globally slowest requests. Click Trace / span to open the trace at the matching timing span.",
+          "datasource": {
+            "type": "tempo",
+            "uid": "$tempo_datasource"
+          },
+          "gridPos": {
+            "x": 0,
+            "y": 83,
+            "w": 24,
+            "h": 13
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "type": "tempo",
+                "uid": "$tempo_datasource"
+              },
+              "queryType": "traceql",
+              "query": "{ resource.service.name = ${trace_service:json} && span.dial.chat.http.request.timing = true && span:duration > $trace_min_duration } | select(span.http.route, span.http.request.method, span.dial.chat.http.duration.total, span.dial.chat.http.duration.core, span.dial.chat.http.duration.chat)",
+              "filters": [],
+              "tableType": "spans",
+              "limit": 100,
+              "spss": 20
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "noValue": "No samples",
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "filterable": true
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Trace / span"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 200
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Method"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 90
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Endpoint"
+                },
+                "properties": [
+                  {
+                    "id": "custom.minWidth",
+                    "value": 320
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Total"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "s"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 3
+                  },
+                  {
+                    "id": "custom.width",
+                    "value": 150
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Core"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "s"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 3
+                  },
+                  {
+                    "id": "custom.width",
+                    "value": 150
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Outside Core"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "s"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 3
+                  },
+                  {
+                    "id": "custom.width",
+                    "value": 150
+                  }
+                ]
+              }
+            ]
+          },
+          "transformations": [
+            {
+              "id": "convertFieldType",
+              "options": {
+                "conversions": [
+                  {
+                    "targetField": "dial.chat.http.duration.total",
+                    "destinationType": "number"
+                  },
+                  {
+                    "targetField": "dial.chat.http.duration.core",
+                    "destinationType": "number"
+                  },
+                  {
+                    "targetField": "dial.chat.http.duration.chat",
+                    "destinationType": "number"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Trace Service": true,
+                  "Trace Name": true,
+                  "Name": true,
+                  "Duration": true
+                },
+                "indexByName": {
+                  "Span ID": 0,
+                  "Start time": 1,
+                  "http.request.method": 2,
+                  "http.route": 3,
+                  "dial.chat.http.duration.total": 4,
+                  "dial.chat.http.duration.core": 5,
+                  "dial.chat.http.duration.chat": 6,
+                  "traceIdHidden": 7
+                },
+                "renameByName": {
+                  "Span ID": "Trace / span",
+                  "http.request.method": "Method",
+                  "http.route": "Endpoint",
+                  "dial.chat.http.duration.total": "Total",
+                  "dial.chat.http.duration.core": "Core",
+                  "dial.chat.http.duration.chat": "Outside Core"
+                }
+              }
+            }
+          ],
+          "options": {
+            "showHeader": true,
+            "cellHeight": "md",
+            "enablePagination": true,
+            "sortBy": [
+              {
+                "displayName": "Total",
+                "desc": true
+              }
+            ],
+            "footer": {
+              "show": false
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

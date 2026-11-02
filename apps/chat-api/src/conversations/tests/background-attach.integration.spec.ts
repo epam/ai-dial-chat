@@ -30,6 +30,7 @@ import {
   runConditionalUpdate,
   type ConversationPersistenceService,
 } from '../persistence/conversation-persistence.service';
+import { ConversationCompletionsResponder } from '../streaming/conversation-completions.responder';
 
 const TEST_USER = {
   sid: 'test-sid',
@@ -146,6 +147,7 @@ describe('POST /conversations/completions/attach — background generations', ()
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ConversationController],
       providers: [
+        ConversationCompletionsResponder,
         {
           provide: ConversationService,
           useValue: {
@@ -274,10 +276,12 @@ describe('POST /conversations/completions/attach — background generations', ()
       content: 'Hello world',
       backgroundGeneration: { status: BackgroundGenerationStatus.Completed },
     });
+    /* A top-level conversation sends no `x-project-id` on the replay. */
     expect(core.replayResponse).toHaveBeenCalledWith(
       RESPONSE_ID,
       'test-access-token',
       expect.any(AbortSignal),
+      {},
     );
   });
 

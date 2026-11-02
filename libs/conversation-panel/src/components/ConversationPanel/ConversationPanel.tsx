@@ -29,6 +29,8 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
   ({
     conversations,
     isLoading,
+    isUpdatingTitles,
+    preserveActiveSearchResult,
     isOpen,
     onSelectConversation,
     activeConversationId,
@@ -42,6 +44,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     onToggle,
     headerActions,
     onMoveConversation,
+    onVisibleConversationIdsChange,
     activeFilter,
     onActiveFilterChange,
     isFilterTabsHidden = false,
@@ -64,7 +67,9 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       noResultsLabel,
       noResultsDescription,
       sharedEmptyDescription,
+      tabEmptyLabels,
       loadingLabel,
+      updatingTitlesLabel,
       newChatLabel,
       searchPlaceholder,
       searchClearLabel,
@@ -104,7 +109,9 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         noResultsLabel,
         noResultsDescription,
         sharedEmptyDescription,
+        tabEmptyLabels,
         loadingLabel,
+        updatingTitlesLabel,
         groupLabels,
         actionsLabel,
         unreadIndicatorLabel,
@@ -115,7 +122,9 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         noResultsLabel,
         noResultsDescription,
         sharedEmptyDescription,
+        tabEmptyLabels,
         loadingLabel,
+        updatingTitlesLabel,
         groupLabels,
         actionsLabel,
         unreadIndicatorLabel,
@@ -129,6 +138,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           fontFamily: typography?.fontFamily,
           groupHeaderClassName: typography?.groupHeaderClassName,
           itemTitleClassName: typography?.itemTitleClassName,
+          unreadItemTitleClassName: typography?.unreadItemTitleClassName,
         },
         itemIconBadgeClassName: panelStyles?.itemIconBadgeClassName,
       }),
@@ -137,6 +147,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         typography?.fontFamily,
         typography?.groupHeaderClassName,
         typography?.itemTitleClassName,
+        typography?.unreadItemTitleClassName,
         panelStyles?.itemIconBadgeClassName,
       ],
     );
@@ -210,6 +221,8 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         <ConversationList
           conversations={conversations}
           isLoading={isLoading}
+          isUpdatingTitles={isUpdatingTitles}
+          preserveActiveSearchResult={preserveActiveSearchResult}
           onSelectConversation={onSelectConversation}
           activeConversationId={activeConversationId}
           labels={listLabels}
@@ -219,6 +232,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           getActions={getActions}
           onActionMenuOpen={onActionMenuOpen}
           onMoveConversation={onMoveConversation}
+          onVisibleConversationIdsChange={onVisibleConversationIdsChange}
           styles={listStyles}
         />
       </SidebarPanel>

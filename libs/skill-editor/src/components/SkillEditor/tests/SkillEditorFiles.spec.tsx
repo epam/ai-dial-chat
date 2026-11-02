@@ -126,7 +126,18 @@ vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => {
   };
 });
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
+vi.mock('@epam/ai-dial-ui-kit', async () => ({
+  /* The real live region and ErrorText: a hand-rolled stub would hide the always-mounted region `announce` renders. */
+  ...(await vi
+    .importActual<typeof import('@epam/ai-dial-ui-kit')>('@epam/ai-dial-ui-kit')
+    .then(
+      ({ ErrorText, LiveRegion, LiveRegionElement, LiveRegionPoliteness }) => ({
+        ErrorText,
+        LiveRegion,
+        LiveRegionElement,
+        LiveRegionPoliteness,
+      }),
+    )),
   ButtonDropdown: ({
     label,
     items,
@@ -228,7 +239,18 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     </div>
   ),
   CaptionText: ({ text }: { text?: string }) => <span>{text}</span>,
-  ErrorText: ({ text }: { text?: string }) => <span>{text}</span>,
+  ErrorMessageNotification: ({
+    message,
+    action,
+  }: {
+    message: ReactNode;
+    action?: ReactNode;
+  }) => (
+    <div role="alert">
+      {message}
+      {action}
+    </div>
+  ),
   FileDropzone: ({
     label,
     ariaLabel,
@@ -531,12 +553,20 @@ describe('SkillEditor — files pane', () => {
     await openUploadDialog(user);
     stageFile(file);
     expect(await screen.findByText('analyzer.md')).toBeTruthy();
+    // Staging renders the row before the async validation settles; Add stays disabled until it does.
+    await waitFor(() =>
+      expect(
+        within(screen.getByRole('dialog')).getByRole('button', { name: 'Add' }),
+      ).toHaveProperty('disabled', false),
+    );
 
     await confirmDialog(user);
 
-    expect(commitBatch).toHaveBeenCalledWith([
-      expect.objectContaining({ file, path: 'analyzer.md' }),
-    ]);
+    await waitFor(() =>
+      expect(commitBatch).toHaveBeenCalledWith([
+        expect.objectContaining({ file, path: 'analyzer.md' }),
+      ]),
+    );
   });
 
   it('shows the validation error and disables confirm for a rejected staged file', async () => {
@@ -1367,10 +1397,10 @@ describe('SkillEditor — Upload archive', () => {
     await openArchiveDialogFor(user);
     stageFile(new File(['zip'], 'bundle.zip'));
 
-    const alert = await screen.findByRole('alert');
+    await screen.findByText("Couldn't read this archive");
     expect(
-      await within(alert).findByText("Couldn't read this archive"),
-    ).toBeTruthy();
+      screen.getAllByRole('alert').map((alert) => alert.textContent),
+    ).toContain("Couldn't read this archive");
     expect(
       within(screen.getByRole('dialog')).queryByRole('listitem'),
     ).toBeNull();

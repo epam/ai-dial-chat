@@ -332,3 +332,39 @@ The Log out entry SHALL call `openLogout()` from `useLogout()`, which opens `Log
 - **THEN** a `fetch` `POST` to `/api/v1/auth/logout` is sent with `credentials: 'include'`, the CSRF token is cleared, `useUser().reset()` is called, and the app navigates to `/login`
 - **AND WHEN** the same happens in overlay mode
 - **THEN** the app stays on the current route
+
+### Requirement: The user avatar shows the identity provider's profile picture
+
+`GET /api/v1/auth/me` SHALL return an optional `pictureUrl` on `UserProfileDto` (mirrored as `UserProfile.pictureUrl` in `@epam/ai-dial-chat-shared`), omitted when there is no picture. Its value is one of:
+
+- the `picture` claim, when it is an absolute `http(s)` URL (`getPictureClaim`);
+- the same-origin path `/api/v1/auth/me/picture`, when the session carries the `pic` flag.
+
+The login callback SHALL set `pic` only for an inline `data:` picture that `parseInlinePicture` accepts: JPEG, PNG, GIF or WebP, at most 256 KiB decoded, read from Keycloak UserInfo whose `sub` matches the ID token. The image itself SHALL NOT be stored in the session cookie. SVG and any other type SHALL be refused because SVG can carry script.
+
+`GET /api/v1/auth/me/picture` SHALL re-read UserInfo with the session's access token and check the subject again. It SHALL return the decoded bytes with their image `Content-Type` and `Cache-Control: private, max-age=3600`. It SHALL return `404` when the session has no `pic` flag, when the provider advertises no UserInfo endpoint, or when UserInfo no longer supplies a usable picture for the same subject. It SHALL return `502` when the UserInfo lookup fails.
+
+`useUserProfile` SHALL use `user.pictureUrl` as the avatar `image`, and SHALL NOT read the claims for it. The initials fallback SHALL show when `pictureUrl` is absent or when that exact URL has failed to load. A different URL arriving later, for example once the profile resolves after the first render, SHALL get its own load attempt.
+
+#### Scenario: http(s) picture claim
+
+- **WHEN** the ID token or Keycloak UserInfo carries `picture: 'https://idp.example.com/u.png'`
+- **THEN** `GET /api/v1/auth/me` returns `pictureUrl: 'https://idp.example.com/u.png'`
+- **AND** the sidebar avatar renders that image
+
+#### Scenario: Inline picture from Keycloak UserInfo
+
+- **WHEN** Keycloak UserInfo for the signed-in subject carries `picture: 'data:image/jpeg;base64,...'`
+- **THEN** the session cookie holds only the `pic` flag and no `picture` claim
+- **AND** `GET /api/v1/auth/me` returns `pictureUrl: '/api/v1/auth/me/picture'`
+- **AND** `GET /api/v1/auth/me/picture` returns the JPEG bytes with `Content-Type: image/jpeg`
+
+#### Scenario: Unusable or missing picture
+
+- **WHEN** the picture is an SVG or other non-raster `data:` URL, is empty, or is absent
+- **THEN** `GET /api/v1/auth/me` has no `pictureUrl`, `GET /api/v1/auth/me/picture` returns `404`, and the avatar shows the initials
+
+#### Scenario: Picture fails to load
+
+- **WHEN** the browser fails to load `pictureUrl`
+- **THEN** the avatar falls back to the initials until a different `pictureUrl` arrives

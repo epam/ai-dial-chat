@@ -6,6 +6,7 @@ import {
   type FileNameValidationError,
   type FileOperationSuccessEvent,
 } from '@epam/ai-dial-chat-hooks';
+import { FileUploadFailureReason } from '@epam/ai-dial-chat-shared';
 import type { DialFile } from '@epam/ai-dial-react-file-manager';
 import { DialFileNodeType } from '@epam/ai-dial-react-file-manager';
 import {
@@ -31,6 +32,38 @@ type ShowSuccessNotification = (options: {
   message: string;
 }) => void;
 
+/** Host-resolved values `buildFileManagerNotificationOptions` interpolates into its copy. */
+interface FileManagerNotificationContext {
+  /** Configured maximum upload size, already formatted (e.g. `512 MB`); `undefined` when no limit is configured. */
+  maxUploadSize?: string;
+}
+
+/** Body of the `UploadFailed` toast for the reason every failed file shared; `undefined` means mixed reasons. */
+const buildUploadFailedMessage = (
+  t: TFunction,
+  failureReason: FileUploadFailureReason | undefined,
+  maxUploadSize: string | undefined,
+): string => {
+  switch (failureReason) {
+    case FileUploadFailureReason.Network:
+      return t(DialFileManagerI18nKeys.CheckInternetConnection);
+    case FileUploadFailureReason.TooLarge:
+      return maxUploadSize != null
+        ? t(DialFileManagerI18nKeys.UploadFileTooLarge, {
+            maxSize: maxUploadSize,
+          })
+        : t(DialFileManagerI18nKeys.UploadFailedTooLarge);
+    case FileUploadFailureReason.Conflict:
+      return t(DialFileManagerI18nKeys.UploadConflict);
+    case FileUploadFailureReason.Forbidden:
+      return t(DialFileManagerI18nKeys.NoPermissionToCreate);
+    case FileUploadFailureReason.Unavailable:
+      return t(DialFileManagerI18nKeys.UploadFailedUnavailable);
+    default:
+      return t(DialFileManagerI18nKeys.UploadFailedSeeQueue);
+  }
+};
+
 /**
  * Translates a `FileManagerNotification`'s library-owned `reason` into the
  * `{variant, title?, message}` shape `useNotification`'s `showNotification`
@@ -39,9 +72,18 @@ type ShowSuccessNotification = (options: {
 export const buildFileManagerNotificationOptions = (
   t: TFunction,
   notification: FileManagerNotification,
+  { maxUploadSize }: FileManagerNotificationContext = {},
 ): { variant: NotificationVariant; title?: string; message: string } => {
-  const { variant, reason, count, name, folder, names, restCount } =
-    notification;
+  const {
+    variant,
+    reason,
+    count,
+    name,
+    folder,
+    names,
+    restCount,
+    failureReason,
+  } = notification;
 
   const buildNamesWithRest = (): string => {
     const joined = (names ?? []).join(', ');
@@ -130,7 +172,7 @@ export const buildFileManagerNotificationOptions = (
       return {
         variant,
         title: t(DialFileManagerI18nKeys.UploadFailed),
-        message: t(DialFileManagerI18nKeys.CheckInternetConnection),
+        message: buildUploadFailedMessage(t, failureReason, maxUploadSize),
       };
     case FileManagerNotificationReason.UploadCompleted:
       return {

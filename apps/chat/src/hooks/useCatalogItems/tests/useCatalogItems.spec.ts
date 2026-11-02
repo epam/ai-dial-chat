@@ -9,7 +9,10 @@ import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { renderHook } from '@testing-library/react';
 import type { TFunction } from 'i18next';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { CatalogI18nKeys } from '../../../constants/translation-keys';
+import {
+  CatalogI18nKeys,
+  ToolsetEditorI18nKeys,
+} from '../../../constants/translation-keys';
 import { getDeploymentLimits } from '../../../server-api/deployment-limits';
 import { getDeploymentDetails } from '../../../server-api/deployments';
 import { getPrompt, getPublicPrompt } from '../../../server-api/prompts.api';
@@ -392,6 +395,51 @@ describe('useCatalogItems', () => {
     });
   });
 
+  describe('interface-based tab membership', () => {
+    const mcpApp = {
+      id: 'mcp-app',
+      displayName: 'MCP app',
+      type: 'application',
+      interfaces: ['mcp'],
+    } as DeploymentItemDto;
+
+    const findMcpApp = (
+      items: { id: string; catalogTabs?: readonly CatalogEntityType[] }[],
+    ) => requireItem(items.find((item) => item.id === 'mcp-app'));
+
+    it('lists an MCP-only application under Toolsets when toolsets are enabled', () => {
+      const { result } = renderHook(() =>
+        useCatalogItems(makeParams({ deployments: [mcpApp] })),
+      );
+
+      expect(findMcpApp(result.current.catalogItems).catalogTabs).toEqual([
+        CatalogEntityType.Toolset,
+      ]);
+    });
+
+    it('keeps an MCP-only application under Agents when toolsets are disabled', () => {
+      const { result } = renderHook(() =>
+        useCatalogItems(
+          makeParams({ deployments: [mcpApp], isToolsetsEnabled: false }),
+        ),
+      );
+
+      expect(findMcpApp(result.current.catalogItems).catalogTabs).toEqual([
+        CatalogEntityType.Agent,
+      ]);
+    });
+
+    it('offers the Toolsets tab for an MCP-only application even with no toolsets loaded', () => {
+      const { result } = renderHook(() =>
+        useCatalogItems(makeParams({ deployments: [mcpApp], toolsets: [] })),
+      );
+
+      expect(result.current.availableTabIds).toEqual([
+        CatalogEntityType.Toolset,
+      ]);
+    });
+  });
+
   describe('catalogItems memoization', () => {
     it('recomputes when a dependency changes but keeps its identity across an unrelated rerender', () => {
       const initialParams = makeParams({
@@ -554,19 +602,30 @@ describe('useCatalogItems', () => {
 
       expect(details?.overview?.sections).toEqual([
         {
-          title: 'Specification',
+          title: CatalogI18nKeys.DetailsSpecificationSection,
           specs: [
-            { label: 'Hosted by', value: 'Yauheniya Hladkaya' },
-            { label: 'Routes', value: 'default · health' },
+            {
+              label: CatalogI18nKeys.EntityDetailsHostedBy,
+              value: 'Yauheniya Hladkaya',
+            },
+            {
+              label: CatalogI18nKeys.EntityDetailsRoutes,
+              value: 'default · health',
+            },
           ],
         },
         {
-          title: 'Capabilities',
-          specs: [{ label: 'Tools', value: false }],
+          title: CatalogI18nKeys.EntityDetailsCapabilitiesTitle,
+          specs: [{ label: CatalogI18nKeys.DetailsTabTools, value: false }],
         },
         {
-          title: 'Configuration',
-          specs: [{ label: 'Input attachments', value: 'Text files' }],
+          title: CatalogI18nKeys.EntityDetailsConfigurationTitle,
+          specs: [
+            {
+              label: CatalogI18nKeys.EntityDetailsInputAttachments,
+              value: 'Text files',
+            },
+          ],
         },
       ]);
     });
@@ -606,17 +665,26 @@ describe('useCatalogItems', () => {
 
       expect(details?.overview?.sections).toEqual([
         {
-          title: 'Specification',
+          title: CatalogI18nKeys.DetailsSpecificationSection,
           specs: [
-            { label: 'Authentication', value: 'OAUTH' },
-            { label: 'Hosted by', value: 'Anastasiia Harkot' },
-            { label: 'OAuth scopes', value: 'read · write' },
             {
-              label: 'Authorization endpoint',
+              label: ToolsetEditorI18nKeys.AuthSectionTitle,
+              value: 'OAUTH',
+            },
+            {
+              label: CatalogI18nKeys.EntityDetailsHostedBy,
+              value: 'Anastasiia Harkot',
+            },
+            {
+              label: CatalogI18nKeys.EntityDetailsOauthScopes,
+              value: 'read · write',
+            },
+            {
+              label: ToolsetEditorI18nKeys.AuthorizationEndpointLabel,
               value: 'https://mcp.example.com/oauth/authorize',
             },
             {
-              label: 'Token endpoint',
+              label: ToolsetEditorI18nKeys.TokenEndpointLabel,
               value: 'https://mcp.example.com/oauth/token',
             },
           ],

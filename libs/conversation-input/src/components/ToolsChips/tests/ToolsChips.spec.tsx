@@ -124,6 +124,29 @@ describe('ToolsChips', () => {
 
       expect(onToolToggle).toHaveBeenCalledWith('web-search');
     });
+
+    it('renders each chip as the kit ToggleChip', () => {
+      renderChips([buildTool('web-search', 'Web Search', false)], {
+        canRemove: false,
+      });
+
+      expect(
+        screen
+          .getByRole('button', { name: 'Web Search' })
+          .classList.contains('dial-kit-toggle-chip'),
+      ).toBe(true);
+    });
+
+    it('keeps the ON/OFF state text out of the accessible name', () => {
+      renderChips([buildTool('web-search', 'Web Search', true)], {
+        canRemove: false,
+        stateOnLabel: 'On',
+        stateOffLabel: 'Off',
+      });
+
+      const chip = screen.getByRole('button', { name: 'Web Search' });
+      expect(chip.textContent).toBe('Web Search:On');
+    });
   });
 
   describe('state labels', () => {

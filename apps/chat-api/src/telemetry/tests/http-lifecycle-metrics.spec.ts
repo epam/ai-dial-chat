@@ -102,6 +102,7 @@ describe('http-lifecycle-metrics', () => {
       '/api/v1/conversations/completions',
       '/api/v1/conversations/completions/attach',
       '/api/v1/conversations/watch',
+      '/api/v1/conversations/titles/stream',
       '/api/v1/client-channel/subscribe',
     ])('classifies %s as streaming', (route) => {
       expect(httpLifecycleMetrics.resolveTransportKind(route)).toBe(

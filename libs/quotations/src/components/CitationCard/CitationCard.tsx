@@ -266,7 +266,7 @@ export const CitationCard: FC<CitationCardProps> = ({
               className={mergeClasses(
                 titleClassName,
                 styles.title,
-                'break-words',
+                'wrap-break-word',
               )}
             >
               {annotation.body.title}
@@ -283,7 +283,7 @@ export const CitationCard: FC<CitationCardProps> = ({
                 className={mergeClasses(
                   quoteClassName,
                   styles.quote,
-                  'w-full break-words',
+                  'w-full wrap-break-word',
                   isQuoteExpanded
                     ? 'max-h-[min(20rem,50vh)] overflow-y-auto'
                     : 'line-clamp-6',

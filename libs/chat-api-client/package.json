@@ -20,7 +20,8 @@
   "nx": {
     "name": "chat-api-client",
     "tags": [
-      "publishable"
+      "publishable",
+      "type:api-client"
     ],
     "targets": {
       "publish": {
@@ -36,6 +37,6 @@
     }
   },
   "dependencies": {
-    "tslib": "^2.3.0"
+    "tslib": "^2.9.1"
   }
 }

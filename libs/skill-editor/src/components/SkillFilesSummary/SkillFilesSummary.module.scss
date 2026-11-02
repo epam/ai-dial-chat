@@ -1,5 +1,6 @@
-.card {
-  background: var(--se-files-card-bg, var(--bg-layer-base, #f5f7fa));
+/* Override Accordion's transparent utility regardless of stylesheet order. */
+.card.card {
+  background: var(--se-files-card-bg, var(--bg-layer-sunken, #eef1f7));
   border-color: var(--se-files-card-border, var(--stroke-tertiary, #e0e6f0));
 }
 

@@ -4,6 +4,7 @@ import {
   FileOperationKind,
   type FileOperationSuccessEvent,
 } from '@epam/ai-dial-chat-hooks';
+import { FileUploadFailureReason } from '@epam/ai-dial-chat-shared';
 import { DialFileNodeType } from '@epam/ai-dial-react-file-manager';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { describe, expect, it, vi } from 'vitest';
@@ -312,6 +313,69 @@ describe('buildFileManagerNotificationOptions', () => {
     expect(result).toEqual({
       variant: NotificationVariant.Success,
       message: 'dialFileManager.uploadSuccess',
+    });
+  });
+
+  describe('upload-batch failure', () => {
+    const uploadFailed = (failureReason?: FileUploadFailureReason) => ({
+      variant: NotificationVariant.Error,
+      reason: FileManagerNotificationReason.UploadFailed,
+      ...(failureReason != null && { failureReason }),
+    });
+
+    it.each([
+      [
+        FileUploadFailureReason.Network,
+        'dialFileManager.checkInternetConnection',
+      ],
+      [FileUploadFailureReason.Conflict, 'dialFileManager.uploadConflict'],
+      [
+        FileUploadFailureReason.Forbidden,
+        'dialFileManager.noPermissionToCreate',
+      ],
+      [
+        FileUploadFailureReason.Unavailable,
+        'dialFileManager.uploadFailedUnavailable',
+      ],
+      [FileUploadFailureReason.Unknown, 'dialFileManager.uploadFailedSeeQueue'],
+    ])('explains a %s failure with %s', (failureReason, message) => {
+      expect(
+        buildFileManagerNotificationOptions(t, uploadFailed(failureReason)),
+      ).toEqual({
+        variant: NotificationVariant.Error,
+        title: 'dialFileManager.uploadFailed',
+        message,
+      });
+    });
+
+    it('points to the upload list when failed files have different reasons', () => {
+      expect(
+        buildFileManagerNotificationOptions(t, uploadFailed()).message,
+      ).toBe('dialFileManager.uploadFailedSeeQueue');
+    });
+
+    it('names the configured maximum size when the files were too large', () => {
+      const tWithOptions = ((key: string, options?: { maxSize?: string }) =>
+        options?.maxSize != null
+          ? `${key}:${options.maxSize}`
+          : key) as unknown as typeof t;
+
+      expect(
+        buildFileManagerNotificationOptions(
+          tWithOptions,
+          uploadFailed(FileUploadFailureReason.TooLarge),
+          { maxUploadSize: '512 MB' },
+        ).message,
+      ).toBe('dialFileManager.uploadFileTooLarge:512 MB');
+    });
+
+    it('falls back to the generic too-large message when no limit is configured', () => {
+      expect(
+        buildFileManagerNotificationOptions(
+          t,
+          uploadFailed(FileUploadFailureReason.TooLarge),
+        ).message,
+      ).toBe('dialFileManager.uploadFailedTooLarge');
     });
   });
 

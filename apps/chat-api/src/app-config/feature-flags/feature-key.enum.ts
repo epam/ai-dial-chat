@@ -3,6 +3,7 @@ export enum FeatureKey {
   LlmConversationNaming = 'features.llmConversationNaming',
   LiveChatInteraction = 'features.liveChatInteraction',
   ScheduledTasksEnabled = 'features.scheduledTasksEnabled',
+  ProjectsEnabled = 'features.projectsEnabled',
   Footer = 'features.footer',
   ResponsesApiEnabled = 'features.responsesApiEnabled',
   ResponsesBackgroundEnabled = 'features.responsesBackgroundEnabled',

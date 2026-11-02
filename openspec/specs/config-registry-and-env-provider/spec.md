@@ -4,6 +4,7 @@
 
 The backend configuration registry and the provider chain — env, static defaults, composite — that resolves every declared key.
 ## Requirements
+
 ### Requirement: ConfigDefinition registry declares all known keys
 
 The system SHALL maintain a `CONFIG_DEFINITIONS` registry in `apps/chat-api/src/app-config/config-registry/config-registry.constants.ts` that is the single authoritative list of all known configuration keys. Each entry SHALL conform to the `ConfigDefinition` interface:
@@ -95,21 +96,24 @@ interface AppConfigEvalContext {
 }
 ```
 
-`AppConfigController` (`apps/chat-api/src/app-config/app-config.controller.ts`) builds the context from the validated `appId` query parameter, the optional session (`OptionalSessionGuard`): `userId` = the session user's `sub` and `roles` = the string entries of the session claims' `roles` array. The context carries no environment field: no provider reads one, and the controller does not read `process.env`. Context fields MUST NOT be serialized into the client response. Providers receive the full context and MAY ignore user-specific fields; `EnvConfigProvider` reads only `roles`, for definitions that declare `allowedRolesEnvVar`.
+`AppConfigController` (`apps/chat-api/src/app-config/app-config.controller.ts`) builds the context from the validated `appId` query parameter and the optional session (`OptionalSessionGuard`). `userId` is the session user's `sub`. `roles` is `UserRolesService.getRoles(sessionUser)` (see "Session roles are read through the provider's rolesClaim"), which honors the provider's `rolesClaim`. It is not taken from a hardcoded `claims['roles']`. With no session, `userId` and `roles` are left unset. The context carries no environment field: no provider reads one, and the controller does not read `process.env`. Context fields MUST NOT be serialized into the client response. Providers receive the full context and MAY ignore user-specific fields. `EnvConfigProvider` reads only `roles`, for definitions that declare `allowedRolesEnvVar`. `AppConfigService` also reads `roles` to compute `catalogCreationPermissions` (see `catalog-creation-role-restrictions`).
 
 **RTL impact:** None. **i18n impact:** None.
 
 #### Scenario: Context is built from appId
 
 - **WHEN** the controller receives `?appId=chat-ui`
-- **THEN** an `AppConfigEvalContext` with `appId='chat-ui'` and — when a session is present — the session user's `userId` and `roles` is constructed and passed to `AppConfigService`
+- **THEN** an `AppConfigEvalContext` with `appId='chat-ui'` is constructed and passed to `AppConfigService`. When a session is present, the context also carries the session user's `userId` and the roles returned by `UserRolesService.getRoles`
+
+#### Scenario: Roles follow the provider's rolesClaim
+
+- **WHEN** the session's provider has `rolesClaim='dial_roles'`, the session holds `claims.dial_roles = ["R"]`, and `ASR_ENABLED_ROLES=R` is set with an ASR model configured
+- **THEN** the context's `roles` is `["R"]` and `features.asrEnabled` is `true` for that user
 
 #### Scenario: Context does not appear in response
 
 - **WHEN** the client-config response is serialized
 - **THEN** it MUST NOT contain `userId` or `roles` fields
-
----
 
 ### Requirement: ConfigProvider interface is implemented by all providers
 
@@ -673,8 +677,11 @@ client-config mapping table, or it is `app.version`, which `AppConfigService` re
 through its documented special path. Every mapping-table entry SHALL name a key that
 exists in `CONFIG_DEFINITIONS` with `visibility: 'client'` and `type: 'config'`. No two
 mapping entries SHALL write the same response field. The mapped fields, together with
-`appVersion` and `aiTextRefinementAvailable`, SHALL cover every `ClientConfigDto`
-field.
+`appVersion`, `aiTextRefinementAvailable`, and `catalogCreationPermissions`, SHALL cover every
+`ClientConfigDto` field. `AppConfigService` computes `catalogCreationPermissions` itself, from
+the startup-normalized `CATALOG_CREATION_ROLES` map and the request's roles. It is not
+a registry key, because `CATALOG_CREATION_ROLES` is server-only and is never sent to
+the browser.
 
 The mapping table is `CLIENT_CONFIG_MAPPINGS` in `apps/chat-api/src/app-config/client-config.mapper.ts`. A unit test in `apps/chat-api/src/app-config/tests/` (`client-config.mapper.spec.ts`) SHALL enforce these properties
 against the real `CONFIG_DEFINITIONS`, so a new unmapped client key fails the test
@@ -710,6 +717,11 @@ provider priority, or provider fallback behavior.
 
 - **WHEN** the mapping table is inspected
 - **THEN** it has no entry for `utility.modelId` or for any `features.*` key
+
+#### Scenario: catalogCreationPermissions is assembled by the service
+
+- **WHEN** the mapping table and `CONFIG_DEFINITIONS` are inspected
+- **THEN** neither contains a `catalogCreationPermissions` entry or a `CATALOG_CREATION_ROLES` key, and the client-config response still carries `config.catalogCreationPermissions`
 
 ### Requirement: UI_EVENT_ENABLED_BY_DEFAULT sets the operator default for the celebrations preference
 
@@ -764,3 +776,82 @@ Example response excerpt:
 - **WHEN** the client config is fetched
 - **THEN** `celebrationsEnabledByDefault` is present under `config` and absent from `features`
 
+### Requirement: Session roles are read through the provider's rolesClaim
+
+The auth domain (`apps/chat-api/src/auth/`) SHALL provide `UserRolesService`, registered in and exported from `AuthModule`. It SHALL be the only place in `apps/chat-api` that turns a `SessionUser` into a list of role names. `UserRolesService.getRoles(user: SessionUser | undefined): string[]` SHALL:
+
+1. Return `[]` for an `undefined` user, or for a user whose `providerId` the `ProviderRegistryService` does not know.
+2. Use the provider's `rolesClaim`, or `roles` when the provider has none.
+3. Read `user.claims[rolesClaim]` as a flat key first. This is how the OIDC callback (`AuthController.callback`) stores the value. When that key is absent, it SHALL resolve `rolesClaim` as a dot-separated path into `user.claims`. This is how a header-token session (`apps/chat-api/src/auth/strategies/header-token.strategy.ts`) keeps the full verified payload.
+4. Convert the value into a list. An array is converted with `map(String)`, preserving the existing `AdminRoleService` coercion, and a string becomes a one-element list. Anything else yields `[]`.
+
+The dot-path resolver that `AuthController` uses today SHALL move to a shared `claims.util.ts` helper in the auth utilities. `AuthController` and `UserRolesService` SHALL both import it, so the two cannot interpret a path differently. `AdminRoleService.isAdmin` SHALL get its roles from `UserRolesService.getRoles`. Its admin rule itself SHALL stay unchanged: the provider's `adminRoles` must intersect the user's roles.
+
+**RTL impact:** None. **i18n impact:** None.
+
+#### Scenario: Default dial_roles claim is honored
+
+- **WHEN** the provider's `rolesClaim` is `dial_roles` and a cookie session holds `claims.dial_roles = ["R"]`
+- **THEN** `getRoles` returns `["R"]`
+
+#### Scenario: Header-token session with a dotted claim
+
+- **WHEN** the provider's `rolesClaim` is `realm_access.roles` and a header-token session holds `claims.realm_access.roles = ["R"]`
+- **THEN** `getRoles` returns `["R"]`
+
+#### Scenario: Flat key wins over the nested path
+
+- **WHEN** `rolesClaim` is `realm_access.roles` and `claims` holds both the flat key `"realm_access.roles": ["A"]` and a nested `realm_access.roles = ["B"]`
+- **THEN** `getRoles` returns `["A"]`
+
+#### Scenario: Unknown provider or no session yields no roles
+
+- **WHEN** `getRoles` receives `undefined`, or a user whose `providerId` is not registered
+- **THEN** it returns `[]`
+
+#### Scenario: Admin detection shares the lookup
+
+- **WHEN** a provider's `adminRoles` is `["admin"]`, its `rolesClaim` is `realm_access.roles`, and a header-token user holds `realm_access.roles = ["admin"]`
+- **THEN** `AdminRoleService.isAdmin` returns `true`
+
+#### Scenario: Existing admin role-array coercion is retained
+
+- **WHEN** the configured claim contains `["R", 7]`
+- **THEN** the shared reader returns `["R", "7"]`, as the existing admin helper does
+
+### Requirement: Registry declares the project context limit keys
+
+`CONFIG_DEFINITIONS` (`apps/chat-api/src/app-config/config-registry/config-registry.constants.ts`) SHALL include three entries, each with `type='config'`, `visibility='client'`, `critical=false` and `owner='chat-team'`:
+
+| Key | `valueType` | `defaultValue` | `envVar` |
+| --- | --- | --- | --- |
+| `projects.contextFileMaxBytes` | `number` | `1048576` | `PROJECT_CONTEXT_FILE_MAX_BYTES` |
+| `projects.contextTotalMaxBytes` | `number` | `10485760` | `PROJECT_CONTEXT_TOTAL_MAX_BYTES` |
+| `projects.contextAllowedExtensions` | `json` | `['csv', 'pdf', 'xlsx']` | `PROJECT_CONTEXT_ALLOWED_EXTENSIONS` |
+
+The keys reuse the same environment variables that `ProjectsService.createProject` enforces, through the `EnvironmentVariables` fields declared in `project-create-api`. The browser's pre-upload checks and the BFF's enforcement can therefore never diverge.
+
+`CLIENT_CONFIG_MAPPINGS` (`apps/chat-api/src/app-config/client-config.mapper.ts`) SHALL map the three keys to these `ClientConfigDto` fields:
+
+- `projectContextFileMaxBytes` (`number`);
+- `projectContextTotalMaxBytes` (`number`);
+- `projectContextAllowedExtensions` (`string[]`).
+
+Each field has `@ApiProperty` and is always emitted, like every other mapped field (`MappedClientConfig` is `Required`), so the existing registry-coverage test stays green. The keys are not gated by `projectsEnabled`, because they are plain limits with no secret value. Like other client config values, they are boot-time constants, so there is no cache and no invalidation.
+
+**Feature flag:** none on the keys themselves. **RTL impact:** none. **i18n impact:** none.
+
+#### Scenario: Registry contains the three keys
+
+- **WHEN** the registry is imported
+- **THEN** it contains the three entries with exactly the `valueType`, `defaultValue` and `envVar` above
+
+#### Scenario: Operator-configured values are resolved
+
+- **WHEN** `PROJECT_CONTEXT_FILE_MAX_BYTES=2097152` and `PROJECT_CONTEXT_ALLOWED_EXTENSIONS=csv, PDF ,.md` are set
+- **THEN** `EnvConfigProvider` resolves `projects.contextFileMaxBytes` to `2097152` and `projects.contextAllowedExtensions` to `['csv', 'pdf', 'md']`
+
+#### Scenario: Unset values fall back to defaults
+
+- **WHEN** none of the three variables is set
+- **THEN** the client config response carries `projectContextFileMaxBytes: 1048576`, `projectContextTotalMaxBytes: 10485760` and `projectContextAllowedExtensions: ['csv', 'pdf', 'xlsx']`

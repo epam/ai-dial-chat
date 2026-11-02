@@ -4,7 +4,7 @@ import {
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import { PanelEmpty, PanelNoResults } from '@epam/ai-dial-sidebar';
-import { Skeleton } from '@epam/ai-dial-ui-kit';
+import { Skeleton, LiveRegion, LiveRegionElement } from '@epam/ai-dial-ui-kit';
 import {
   type FC,
   memo,
@@ -28,9 +28,11 @@ import {
   matchesTab,
 } from '../../utils/conversation-filter';
 import {
+  getConversationIdsInRange,
   getOverscanCount,
   getRowHeight,
   getSkeletonWidth,
+  isSameIdSequence,
   SKELETON_ROW_COUNT,
 } from '../../utils/conversation-row';
 import {
@@ -52,6 +54,8 @@ export const ConversationList: FC<ConversationListProps> = memo(
   ({
     conversations,
     isLoading,
+    isUpdatingTitles = false,
+    preserveActiveSearchResult = false,
     onSelectConversation,
     activeConversationId,
     labels,
@@ -63,6 +67,7 @@ export const ConversationList: FC<ConversationListProps> = memo(
     getActions,
     onActionMenuOpen,
     onMoveConversation,
+    onVisibleConversationIdsChange,
     styles,
     id,
     className,
@@ -74,7 +79,9 @@ export const ConversationList: FC<ConversationListProps> = memo(
       noResultsLabel,
       noResultsDescription,
       sharedEmptyDescription = noResultsDescription,
+      tabEmptyLabels,
       loadingLabel = 'Loading conversations',
+      updatingTitlesLabel = 'Updating conversation names',
       groupLabels,
       actionsLabel,
       unreadIndicatorLabel,
@@ -202,15 +209,73 @@ export const ConversationList: FC<ConversationListProps> = memo(
       '--cp-list-font-family': typography?.fontFamily,
     });
 
+    const [retainedSearchResult, setRetainedSearchResult] = useState<{
+      id: string;
+      query: string;
+    } | null>(null);
+
+    useEffect(() => {
+      if (
+        !preserveActiveSearchResult ||
+        !searchQuery ||
+        !activeConversationId
+      ) {
+        setRetainedSearchResult(null);
+        return;
+      }
+      const active = visibleConversations.find(
+        (item) => item.id === activeConversationId,
+      );
+      setRetainedSearchResult((previous) => {
+        if (active && matchesSearch(active, searchQuery)) {
+          return previous?.id === active.id && previous.query === searchQuery
+            ? previous
+            : { id: active.id, query: searchQuery };
+        }
+        return previous?.id === activeConversationId &&
+          previous.query === searchQuery
+          ? previous
+          : null;
+      });
+    }, [
+      preserveActiveSearchResult,
+      searchQuery,
+      activeConversationId,
+      visibleConversations,
+    ]);
+
+    const handleSelectConversation = useCallback(
+      (selectedId: string) => {
+        if (preserveActiveSearchResult && searchQuery) {
+          setRetainedSearchResult({ id: selectedId, query: searchQuery });
+        }
+        onSelectConversation(selectedId);
+      },
+      [preserveActiveSearchResult, searchQuery, onSelectConversation],
+    );
+
+    const retainedId =
+      preserveActiveSearchResult &&
+      searchQuery !== '' &&
+      retainedSearchResult?.query === searchQuery &&
+      retainedSearchResult.id === activeConversationId
+        ? retainedSearchResult.id
+        : undefined;
     const filteredItems = useMemo(
       () =>
         visibleConversations.filter(
           (item) =>
             matchesTab(item, activeFilter) &&
             matchesKind(item, activeTypeFilter) &&
-            matchesSearch(item, searchQuery),
+            (matchesSearch(item, searchQuery) || item.id === retainedId),
         ),
-      [visibleConversations, activeFilter, activeTypeFilter, searchQuery],
+      [
+        visibleConversations,
+        activeFilter,
+        activeTypeFilter,
+        searchQuery,
+        retainedId,
+      ],
     );
 
     const pinnedItems = useMemo(
@@ -328,7 +393,7 @@ export const ConversationList: FC<ConversationListProps> = memo(
         listId,
         activeConversationId,
         searchQuery,
-        onSelectConversation,
+        onSelectConversation: handleSelectConversation,
         getActions,
         onActionMenuOpen,
         actionsLabel,
@@ -337,6 +402,7 @@ export const ConversationList: FC<ConversationListProps> = memo(
         styles: {
           groupHeaderClassName: typography?.groupHeaderClassName,
           itemTitleClassName: typography?.itemTitleClassName,
+          unreadItemTitleClassName: typography?.unreadItemTitleClassName,
           itemIconBadgeClassName,
         },
         draggingId,
@@ -355,7 +421,7 @@ export const ConversationList: FC<ConversationListProps> = memo(
         listId,
         activeConversationId,
         searchQuery,
-        onSelectConversation,
+        handleSelectConversation,
         getActions,
         onActionMenuOpen,
         actionsLabel,
@@ -363,6 +429,7 @@ export const ConversationList: FC<ConversationListProps> = memo(
         rowVariant,
         typography?.groupHeaderClassName,
         typography?.itemTitleClassName,
+        typography?.unreadItemTitleClassName,
         itemIconBadgeClassName,
         draggingId,
         dragOverId,
@@ -384,17 +451,72 @@ export const ConversationList: FC<ConversationListProps> = memo(
     const isListEmpty = filteredItems.length === 0;
     const isNoResults = isListEmpty && isNarrowed;
     const isEmpty = isListEmpty && !isNarrowed;
-    /* Under the Shared filter alone there is no query to rephrase: say where
-       shared chats come from instead. */
-    const currentNoResultsDescription =
+    /* A tab that alone narrows the list has no query to rephrase: the host can
+       say what belongs in that tab instead (Shared falls back to
+       `sharedEmptyDescription`). */
+    const isTabOnlyNarrowed =
+      isNoResults &&
+      searchQuery === '' &&
+      activeTypeFilter === ConversationTypeFilter.All;
+    const tabEmptyLabel = isTabOnlyNarrowed
+      ? tabEmptyLabels?.[activeFilter]
+      : undefined;
+    const currentNoResultsLabel = tabEmptyLabel?.label ?? noResultsLabel;
+    const fallbackNoResultsDescription =
       activeFilter === FilterTab.Shared && searchQuery === ''
         ? sharedEmptyDescription
         : noResultsDescription;
+    const currentNoResultsDescription =
+      tabEmptyLabel?.description ?? fallbackNoResultsDescription;
+
+    /*
+     * Visible-row reporting. The last rendered range is kept so a change of
+     * rows under an unchanged range (filtering, collapsing, new titles) is
+     * reported too; the callback ref keeps `handleRowsRendered` stable.
+     */
+    const isListShown = !isLoading && !isListEmpty;
+    const visibleRangeRef = useRef<{
+      startIndex: number;
+      stopIndex: number;
+    } | null>(null);
+    const reportedIdsRef = useRef<string[] | null>(null);
+    const onVisibleIdsChangeRef = useRef(onVisibleConversationIdsChange);
+    useEffect(() => {
+      onVisibleIdsChangeRef.current = onVisibleConversationIdsChange;
+    }, [onVisibleConversationIdsChange]);
+    const reportVisibleIds = useCallback((ids: string[]) => {
+      if (
+        reportedIdsRef.current &&
+        isSameIdSequence(reportedIdsRef.current, ids)
+      ) {
+        return;
+      }
+      reportedIdsRef.current = ids;
+      onVisibleIdsChangeRef.current?.(ids);
+    }, []);
+    const handleRowsRendered = useCallback(
+      (visibleRows: { startIndex: number; stopIndex: number }) => {
+        visibleRangeRef.current = visibleRows;
+        reportVisibleIds(getConversationIdsInRange(virtualRows, visibleRows));
+      },
+      [virtualRows, reportVisibleIds],
+    );
+    useEffect(() => {
+      if (!isListShown) {
+        visibleRangeRef.current = null;
+        reportVisibleIds([]);
+      } else if (visibleRangeRef.current) {
+        reportVisibleIds(
+          getConversationIdsInRange(virtualRows, visibleRangeRef.current),
+        );
+      }
+    }, [isListShown, virtualRows, reportVisibleIds]);
 
     const getStatusMessage = (): string => {
       if (isLoading) return loadingLabel;
+      if (isUpdatingTitles) return updatingTitlesLabel;
       if (isEmpty) return emptyLabel;
-      if (isNoResults) return noResultsLabel;
+      if (isNoResults) return currentNoResultsLabel;
       return '';
     };
 
@@ -417,10 +539,12 @@ export const ConversationList: FC<ConversationListProps> = memo(
       }
       if (isEmpty)
         return <PanelEmpty label={emptyLabel} description={emptyDescription} />;
+      if (isNoResults && searchQuery !== '' && isUpdatingTitles)
+        return <PanelEmpty label={updatingTitlesLabel} />;
       if (isNoResults)
         return (
           <PanelNoResults
-            label={noResultsLabel}
+            label={currentNoResultsLabel}
             description={currentNoResultsDescription}
           />
         );
@@ -435,6 +559,7 @@ export const ConversationList: FC<ConversationListProps> = memo(
           rowHeight={getRowHeight}
           overscanCount={overscanCount}
           onResize={handleListResize}
+          onRowsRendered={handleRowsRendered}
           rowProps={rowProps}
         />
       );
@@ -455,9 +580,9 @@ export const ConversationList: FC<ConversationListProps> = memo(
           CONVERSATION_PANEL_CLASS.list,
         )}
       >
-        <span role="status" aria-live="polite" className="sr-only">
+        <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
           {getStatusMessage()}
-        </span>
+        </LiveRegion>
         {renderBody()}
       </div>
     );

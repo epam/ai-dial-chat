@@ -33,7 +33,10 @@ vi.mock('../../AvatarPickerModal/AvatarPickerModal', () => ({
 
 vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@epam/ai-dial-ui-kit')>()),
+  /* Mirrors the kit: the error renders with no role, is linked to the
+   * field through `aria-describedby`, and marks the field `aria-invalid`. */
   Input: ({
+    id,
     value,
     onChange,
     onBlur,
@@ -42,6 +45,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
     placeholder,
     inputRef,
   }: {
+    id?: string;
     value?: string;
     onChange?: (v?: string) => void;
     onBlur?: () => void;
@@ -55,13 +59,16 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
         {labelProps?.label}
         <input
           ref={inputRef}
+          id={id}
           value={value ?? ''}
           placeholder={placeholder}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${id}-error` : undefined}
           onChange={(e) => onChange?.(e.target.value)}
           onBlur={onBlur}
         />
       </label>
-      {error && <p role="alert">{error}</p>}
+      {error && <span id={`${id}-error`}>{error}</span>}
     </>
   ),
   Textarea: ({
@@ -196,7 +203,11 @@ describe('MetadataForm', () => {
 
   it('shows the name error supplied by the host', () => {
     renderForm({ errors: { name: 'Name is required' } });
-    expect(screen.getByRole('alert').textContent).toBe('Name is required');
+    const field = screen.getByRole('textbox', {
+      name: 'Name',
+      description: 'Name is required',
+    });
+    expect(field.getAttribute('aria-invalid')).toBe('true');
   });
 
   it('reports field edits and blur events to the host', () => {

@@ -117,7 +117,7 @@ const messageTextSegments: TextSegment[] = [
 />;
 ```
 
-Both bubbles forward their attachment labels to `AttachmentGroup`: `labels.attachmentClickLabel` names an interactive tile (rendered when `onAttachmentClick` is given) and `labels.attachmentDownloadLabel` names each file tile's own download button (rendered when `onDownloadAll` is given; default `'Download attachment'`). Pass two distinct, translated strings when the tile does something other than download, so the two buttons stay distinguishable to assistive technology.
+Both bubbles forward their attachment labels to `AttachmentGroup`: `labels.attachmentClickLabel` names an interactive tile (rendered when `onAttachmentClick` is given) and `labels.attachmentDownloadLabel` names each file tile's own download button (rendered when `onDownloadAll` is given; default `'Download attachment'`). Pass two distinct, translated strings when the tile does something other than download, so the two buttons stay distinguishable to assistive technology. `isAttachmentDownloadable` is forwarded too: an attachment it rejects (e.g. a folder) gets no download button and is left out of "download all".
 
 ### AssistantMessageBubble
 
@@ -212,7 +212,7 @@ Pass `timestamp` (the message's ISO send time) to show a relative time (`3 hours
 - appears while the bubble is hovered or holds keyboard focus, and is always shown on devices without hover;
 - refreshes every minute.
 
-`locale` sets the BCP 47 locale for the wording and the date; it defaults to the runtime default. `styles.timestampClassName` replaces the default `'dial-small-text text-secondary'` classes. Formatting uses `Intl`, so no labels are needed.
+`locale` sets the BCP 47 locale for the wording and the date; it defaults to the runtime default. `styles.timestampClassName` replaces the default `'dial-small-text'` typography; `styles.colors.timestampText` sets its color (defaults to `--text-secondary`). Formatting uses `Intl`, so no labels are needed.
 
 ```tsx
 import { MessageBubble } from '@epam/ai-dial-conversation-messages';
@@ -232,7 +232,7 @@ Centered label for when a conversation started:
 - `Today 11:51 AM` or `Yesterday 3:24 PM`, by local calendar day;
 - otherwise the full date and time (`Sep 20, 2026, 10:15 AM`).
 
-It renders nothing for a missing or unparsable `timestamp`. Time and date come from `Intl` in `locale`. The `labels.today` and `labels.yesterday` templates receive the localized time and default to English. The host decides _when_ to show the label (for example, not for a conversation the user has just created).
+It renders nothing for a missing or unparsable `timestamp`. Time and date come from `Intl` in `locale`. The `labels.today` and `labels.yesterday` templates receive the localized time and default to English. The host decides _when_ to show the label (for example, not for a conversation the user has just created). `className` sets typography (defaults to `'dial-small-text'`); `colors.text` (`ConversationStartTimestampColors`) sets the color, defaulting to `--text-secondary`.
 
 ```tsx
 import { ConversationStartTimestamp } from '@epam/ai-dial-conversation-messages';
@@ -316,7 +316,6 @@ CONVERSATION_MESSAGES_CLASS.userBubble; // 'dial-cm-user-bubble'
 | Class                       | Element                                         |
 | --------------------------- | ----------------------------------------------- |
 | `dial-cm-user-bubble`       | The user message's bubble                       |
-| `dial-cm-user-content`      | The user message's text content region          |
 | `dial-cm-assistant-content` | The assistant message's streamed content region |
 
 `dial-cm-user-bubble` is emitted only when the bubble renders — a message with
@@ -391,6 +390,7 @@ import type {
   MessageActionAriaLabels,
   ConversationStartTimestampProps,
   ConversationStartTimestampLabels,
+  ConversationStartTimestampColors,
 } from '@epam/ai-dial-conversation-messages';
 ```
 

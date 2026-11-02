@@ -28,21 +28,28 @@
       "types": "./dist/new-year/index.d.ts",
       "import": "./dist/new-year.js",
       "default": "./dist/new-year.js"
+    },
+    "./packs": {
+      "@epam/source": "./src/packs/index.ts",
+      "types": "./dist/packs/index.d.ts",
+      "import": "./dist/packs.js",
+      "default": "./dist/packs.js"
     }
   },
   "dependencies": {
     "lottie-web": "5.13.0",
-    "react-error-boundary": "^6.1.5"
+    "react-error-boundary": "^6.1.6"
   },
   "peerDependencies": {
     "@epam/ai-dial-chat-shared": "*",
-    "@epam/ai-dial-ui-kit": "^0.16.0-dev.35",
+    "@epam/ai-dial-ui-kit": "^0.16.0-dev.59",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
   "nx": {
     "tags": [
-      "publishable"
+      "publishable",
+      "type:ui"
     ],
     "targets": {
       "publish": {

@@ -9,13 +9,14 @@ import { NavigationSheet } from '../NavigationSheet';
 /* The sheet rows are the real kit `MenuItem`, so their role, name and
    `aria-current` are what a user gets; the rest stays stubbed. */
 vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
-  const { Avatar, BottomSheet, MenuItem, MenuItemMark } =
+  const { Avatar, BottomSheet, MenuItem, MenuItemMark, NotificationVariant } =
     await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
   return {
     Avatar,
     BottomSheet,
     MenuItem,
     MenuItemMark,
+    NotificationVariant,
     DIAL_KIT_ICON_STROKE: 1.5,
     BASE_ICON_SIZE: 20,
     DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },

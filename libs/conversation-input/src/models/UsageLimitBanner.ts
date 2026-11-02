@@ -16,6 +16,12 @@ export interface UsageLimitBannerReset {
   ariaLabel?: string;
 }
 
+/** Color overrides for `UsageLimitBannerView`, applied as CSS custom properties. */
+export interface UsageLimitBannerColors {
+  /** Background of the banner. Defaults to `--bg-layer-sunken`. */
+  background?: string;
+}
+
 /** Props for `UsageLimitBannerView`. */
 export interface UsageLimitBannerViewProps {
   /** Severity of the reported limit; selects the banner icon. */
@@ -34,4 +40,6 @@ export interface UsageLimitBannerViewProps {
   resetTextClassName?: string;
   /** Additional class applied to the banner root, alongside `dial-ci-usage-banner`. */
   className?: string;
+  /** Color overrides. */
+  colors?: UsageLimitBannerColors;
 }

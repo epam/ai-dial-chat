@@ -3,6 +3,7 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { OptionalSessionGuard } from '../auth/session/optional-session.guard';
 import type { SessionUser } from '../auth/session/session.types';
+import { UserRolesService } from '../auth/user-roles.service';
 import { Public } from '../common/decorators/public.decorator';
 import { AppConfigService } from './app-config.service';
 import type { AppConfigEvalContext } from './app-config.types';
@@ -17,7 +18,10 @@ import { GetClientConfigDto } from './dto/get-client-config.dto';
 @ApiTags('app-config')
 @Controller({ path: 'client-config', version: '1' })
 export class AppConfigController {
-  constructor(private readonly appConfigService: AppConfigService) {}
+  constructor(
+    private readonly appConfigService: AppConfigService,
+    private readonly userRoles: UserRolesService,
+  ) {}
 
   @Get()
   @Public()
@@ -41,18 +45,8 @@ export class AppConfigController {
     const context: AppConfigEvalContext = {
       appId: query.appId,
       userId: sessionUser?.sub,
-      roles: extractRoles(sessionUser?.claims),
+      roles: sessionUser ? this.userRoles.getRoles(sessionUser) : undefined,
     };
     return this.appConfigService.getClientConfig(context);
   }
-}
-
-function extractRoles(
-  claims: Record<string, unknown> | undefined,
-): string[] | undefined {
-  if (!claims) return undefined;
-  const roles = claims['roles'];
-  if (Array.isArray(roles))
-    return roles.filter((r): r is string => typeof r === 'string');
-  return undefined;
 }

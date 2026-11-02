@@ -17,13 +17,18 @@ import {
   useAvailableHeightCap,
   useTextRefinement,
   useUnsavedChangesGuard,
+  useControlErrorAssociation,
 } from '@epam/ai-dial-chat-shared';
 import {
   ConfirmationPopupVariant,
+  DIAL_KIT_ICON_STROKE,
+  ErrorMessageNotification,
   ErrorText,
   Label,
   NeutralButton,
   Spinner,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import { LazyMarkdownEditor } from '@epam/ai-dial-ui-kit/editors';
 /*
@@ -130,6 +135,12 @@ export const PromptEditor: FC<PromptEditorProps> = ({
   const [values, setValues] = useState<PromptEditorValues>(seededValues);
   const contentLabelId = useId();
   const contentEditorId = useId();
+  const contentErrorId = useId();
+  useControlErrorAssociation(
+    () => document.getElementById(contentEditorId),
+    contentErrorId,
+    Boolean(errors?.content),
+  );
   const contentEditorCapRef = useAvailableHeightCap<HTMLDivElement>({
     bottomGap: CONTENT_EDITOR_BOTTOM_GAP,
     minHeight: CONTENT_EDITOR_MIN_HEIGHT,
@@ -331,12 +342,9 @@ export const PromptEditor: FC<PromptEditorProps> = ({
         {...editorProps}
         isSubmitting={isSaving}
         metadata={
-          <div
-            role="status"
-            aria-label={labels?.loadingAriaLabel ?? 'Loading prompt'}
-            className="flex flex-1 items-center justify-center p-8"
-          >
-            <Spinner />
+          /* The kit Spinner is the status region; a labelled wrapper would nest a second one. */
+          <div className="flex flex-1 items-center justify-center p-8">
+            <Spinner ariaLabel={labels?.loadingAriaLabel ?? 'Loading prompt'} />
           </div>
         }
       />
@@ -348,18 +356,23 @@ export const PromptEditor: FC<PromptEditorProps> = ({
       <EntityEditor
         {...editorProps}
         metadata={
-          <div role="alert" className="flex flex-col items-start gap-3">
-            <p className={mergeClasses('m-0', helperTextClassName)}>
-              {labels?.loadErrorMessage ??
-                "Couldn't load this prompt. Please try again."}
-            </p>
-            {onRetry != null && (
-              <NeutralButton
-                label={labels?.retryLabel ?? 'Retry'}
-                onClick={onRetry}
-              />
-            )}
-          </div>
+          /* The kit error section message is an assertive `alert` live region, with Retry in its `action` slot. */
+          <ErrorMessageNotification
+            message={
+              labels?.loadErrorMessage ??
+              "Couldn't load this prompt. Please try again."
+            }
+            textClassName={helperTextClassName}
+            iconStroke={DIAL_KIT_ICON_STROKE}
+            action={
+              onRetry != null && (
+                <NeutralButton
+                  label={labels?.retryLabel ?? 'Retry'}
+                  onClick={onRetry}
+                />
+              )
+            }
+          />
         }
       />
     );
@@ -414,6 +427,7 @@ export const PromptEditor: FC<PromptEditorProps> = ({
   );
   const contentError = (
     <ErrorText
+      id={contentErrorId}
       text={errors?.content}
       className={mergeClasses(helperTextClassName, styles.contentError)}
     />
@@ -486,12 +500,12 @@ export const PromptEditor: FC<PromptEditorProps> = ({
                 {contentError}
               </div>
             )}
-            <span role="status" aria-live="polite" className="sr-only">
+            <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
               {descriptionRemaining != null &&
                 buildCounterMessage(descriptionRemaining)}
               {contentRemaining != null &&
                 buildCounterMessage(contentRemaining)}
-            </span>
+            </LiveRegion>
           </>
         }
       />

@@ -5,10 +5,13 @@ import {
   CredentialsLevel,
   ToolsetAuthenticationType,
 } from '@epam/ai-dial-catalog';
+import { CatalogCreationType } from '@epam/ai-dial-chat-api-client';
 import {
   type CatalogEditNavigationLabels,
   type CatalogEditNavigationUrls,
   findDeploymentByIdOrReference,
+  findSchemaDisplayName,
+  resolveFavoriteEntityType,
   type ToolsetCredentialsLabels,
   useCatalogEditNavigation,
   useCatalogToolsetCredentials,
@@ -16,10 +19,11 @@ import {
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { SkillContentFileTree } from '@epam/ai-dial-skills';
+import { LiveRegion, LiveRegionElement } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
-import { useNavigate, useSearchParams } from 'react-router';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import { CONFIRMATION_BOLD_COMPONENTS } from '../../constants/confirmation-copy';
 import { PAGE_HEADER_ROW_CLASS } from '../../constants/layout';
 import { ToolsetEditorQuery } from '../../constants/toolsets';
@@ -42,6 +46,7 @@ import { useFavoriteApplications } from '../../context/FavoriteApplicationsConte
 import { useNotification } from '../../context/NotificationContext';
 import { usePrompts } from '../../context/PromptsContext';
 import { useSkills } from '../../context/SkillsContext';
+import { useCatalogCreationPermissions } from '../../hooks/catalog/useCatalogCreationPermissions';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { usePublishFolders } from '../../hooks/publish/usePublishFolders';
@@ -76,15 +81,13 @@ import {
   getCatalogNoResultsTitle,
   getCatalogSearchPlaceholder,
 } from '../../utils/catalog';
-import {
-  findSchemaDisplayName,
-  resolveCatalogItemEntity,
-} from '../../utils/entity-notification';
-import { resolveFavoriteEntityType } from '../../utils/favorites';
+import { resolveCatalogItemEntity } from '../../utils/entity-notification';
 import {
   getAccessRulesLabels,
   getPublishAuthorLabels,
+  getPublishPanelCommonLabels,
 } from '../../utils/publish';
+import { canEditShareAccess } from '../../utils/share';
 import { ApplicationCredentials } from '../ApplicationCredentials/ApplicationCredentials';
 import SharePopoverContainer from '../SharePopoverContainer/SharePopoverContainer';
 import SkillArchiveUploadDialog from '../SkillArchiveUploadDialog/SkillArchiveUploadDialog';
@@ -229,11 +232,13 @@ const CatalogView: FC<Props> = ({
   );
   const isPromptsEnabled = useUiFeature(OverlayFeature.Prompts);
   const isSkillsEnabled = useUiFeature(OverlayFeature.Skills);
+  const isUsagePageHidden = useUiFeature(OverlayFeature.HideUsagePage);
 
   const {
     prompts,
     sharedWithMe: sharedPrompts,
     publicPrompts,
+    error: promptsError,
     refetchPrompts,
   } = usePrompts();
 
@@ -268,6 +273,12 @@ const CatalogView: FC<Props> = ({
     if (skillsError == null) return;
     showErrorNotification({ message: t(CatalogI18nKeys.SkillsLoadError) });
   }, [skillsError, showErrorNotification, t]);
+
+  // Same for prompts: without it the Prompts tab silently disappears.
+  useEffect(() => {
+    if (!isPromptsEnabled || promptsError == null) return;
+    showErrorNotification({ message: t(CatalogI18nKeys.PromptsLoadError) });
+  }, [isPromptsEnabled, promptsError, showErrorNotification, t]);
 
   const {
     quickAppDeploymentIds,
@@ -543,12 +554,17 @@ const CatalogView: FC<Props> = ({
     [deployments, favoriteIds, notifyOperationSuccess, schemas, toggleFavorite],
   );
 
+  /* Creation decisions narrow only the Create menu; the feature flags above
+   * still govern listing and editing on their own. */
+  const { canCreateType, canCreateSchema } = useCatalogCreationPermissions();
+
   const {
     handleEdit,
     handleDelete,
     createOptions,
     createSearch,
     createMenuByType,
+    hasCreateOptions,
   } = useCatalogEditNavigation({
     deployments,
     isCustomAppsEnabled,
@@ -571,6 +587,11 @@ const CatalogView: FC<Props> = ({
     labels: catalogEditNavigationLabels,
     onNotify: showErrorNotification,
     onSkillUploadClick: openSkillArchiveDialog,
+    canCreateCustomApp: canCreateType(CatalogCreationType.CustomApp),
+    canCreateToolset: canCreateType(CatalogCreationType.Toolset),
+    canCreatePrompt: canCreateType(CatalogCreationType.Prompt),
+    canCreateSkill: canCreateType(CatalogCreationType.Skill),
+    canCreateSchema,
   });
 
   if (!isCatalogEnabled && !isSelectorMode) {
@@ -587,9 +608,9 @@ const CatalogView: FC<Props> = ({
         onFilesSelected={handleSkillArchiveFilesSelected}
         onFilesRejected={handleSkillArchiveFilesRejected}
       />
-      <span role="status" aria-live="polite" className="sr-only">
+      <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
         {skillArchiveStatusMessage}
-      </span>
+      </LiveRegion>
       <Catalog
         items={visibleCatalogItems}
         isLoading={isLoading}
@@ -597,7 +618,7 @@ const CatalogView: FC<Props> = ({
         createOptions={createOptions}
         createSearch={createSearch}
         createMenuByTab={createMenuByType}
-        hideCreateButton={isSelectorMode}
+        hideCreateButton={isSelectorMode || !hasCreateOptions}
         hidePageTitle={isSelectorMode}
         isFullWidth={isFullWidth}
         selectedItemId={
@@ -663,10 +684,12 @@ const CatalogView: FC<Props> = ({
           rootFolderLabel: t(BasicI18nKeys.Organization),
           accessRulesLabels: getAccessRulesLabels(t),
           ...getPublishAuthorLabels(t),
+          ...getPublishPanelCommonLabels(t),
         }}
         shareOverlay={(item, onClose) => (
           <SharePopoverContainer
-            item={item}
+            itemId={item.id}
+            canEditAccess={canEditShareAccess(item.type)}
             isQuickApp={quickAppDeploymentIds.has(item.id)}
             onClose={onClose}
           />
@@ -682,7 +705,7 @@ const CatalogView: FC<Props> = ({
           createSearchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
           createSearchClearLabel: t(BasicI18nKeys.ClearSearch),
           createNoResultsLabel: t(BasicI18nKeys.NoResults),
-          createMenuBackLabel: t(NavigationI18nKeys.Back),
+          createMenuBackLabel: t(ButtonsI18nKeys.Back),
           createMenuCloseLabel: t(ButtonsI18nKeys.Close),
           favoritesTitle: t(FavoritesI18nKeys.Title),
           browseTitle: t(ButtonsI18nKeys.Browse),
@@ -713,12 +736,13 @@ const CatalogView: FC<Props> = ({
             listView: t(CatalogI18nKeys.BrowseSettingsList),
             clear: t(ButtonsI18nKeys.Clear),
             apply: t(ButtonsI18nKeys.Apply),
-            back: t(NavigationI18nKeys.Back),
+            back: t(ButtonsI18nKeys.Back),
             close: t(ButtonsI18nKeys.Close),
             formatFilterCount: (selected, total) =>
               t(CatalogI18nKeys.BrowseSettingsFilterCount, { selected, total }),
           },
           ariaLabel: t(NavigationI18nKeys.Catalog),
+          scrollToTopLabel: t(CatalogI18nKeys.ScrollToTop),
           tabLabels: {
             [CatalogEntityType.Model]: t(CatalogI18nKeys.TabModels),
             [CatalogEntityType.Agent]: t(CatalogI18nKeys.TabApplications),
@@ -727,6 +751,23 @@ const CatalogView: FC<Props> = ({
             [CatalogEntityType.Skill]: t(CatalogI18nKeys.TabSkills),
           },
         }}
+        /* The Limits tab lists only the model's own limits, so it points to
+           the page with the user's full picture — unless a host hides it. */
+        detailsLimitsFooterNote={
+          isUsagePageHidden ? undefined : (
+            <Trans
+              i18nKey={CatalogI18nKeys.DetailsLimitsFooterNote}
+              components={{
+                link: (
+                  <Link
+                    to={ROUTES.Usage}
+                    className="text-accent underline hover:opacity-75 focus-visible:outline focus-visible:outline-focus"
+                  />
+                ),
+              }}
+            />
+          )
+        }
         detailsTexts={{
           tabToolsLabel: t(CatalogI18nKeys.DetailsTabTools),
           tabContentLabel: t(CatalogI18nKeys.DetailsTabContent),
@@ -859,7 +900,7 @@ const CatalogView: FC<Props> = ({
           ),
           tabConnectLabel: t(ButtonsI18nKeys.Connect),
           manageActionLabel: t(ButtonsI18nKeys.Manage),
-          deleteConfirmTitle: t(CatalogI18nKeys.DetailsDeleteConfirmTitle),
+          deleteConfirmTitle: t(ButtonsI18nKeys.Delete),
           deleteConfirmMessage: (name) => (
             <Trans
               i18nKey={CatalogI18nKeys.DetailsDeleteConfirmMessage}
@@ -873,7 +914,7 @@ const CatalogView: FC<Props> = ({
             t(BasicI18nKeys.ConsequenceCannotBeUndone),
           ],
           unshareLabel: t(ButtonsI18nKeys.RemoveFromMyList),
-          unshareConfirmTitle: t(CatalogI18nKeys.DetailsUnshareConfirmTitle),
+          unshareConfirmTitle: t(ButtonsI18nKeys.RemoveFromMyList),
           unshareConfirmMessage: (name) => (
             <Trans
               i18nKey={CatalogI18nKeys.DetailsUnshareConfirmMessage}

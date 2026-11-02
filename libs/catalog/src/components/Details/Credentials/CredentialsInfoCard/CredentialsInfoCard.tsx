@@ -28,8 +28,6 @@ export const CredentialsInfoCard: FC<CredentialsInfoCardProps> = ({
   descriptionClassName = 'dial-small-text',
 }) => (
   <div
-    role="status"
-    aria-live="polite"
     className={mergeClasses(
       'flex items-center gap-3 rounded-xl p-3',
       styles.card,

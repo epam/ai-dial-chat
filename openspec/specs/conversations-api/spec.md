@@ -94,7 +94,7 @@ The `Conversation` and `Message` interfaces SHALL be declared in `libs/chat-shar
 
 ### Requirement: ConversationModule is registered in the root AppModule
 
-`ConversationModule` (`apps/chat-api/src/conversations/conversation.module.ts`) SHALL be listed in the `imports` array of `apps/chat-api/src/app/app.module.ts`. It MUST import `UserConfigModule`, `ScheduledTaskUnreadModule`, `AppConfigModule`, and `DeploymentsModule`; declare `ConversationController` and `ConversationPublishController` in its `controllers` array; and provide the `ConversationService` facade plus `ConversationPersistenceService` (also bound to the `CONVERSATION_PERSISTENCE` token), `ConversationListingService`, `ConversationLifecycleService`, `ConversationStreamingService`, `ConversationNamingService`, `ConversationGenerationService`, `ConversationPublishService`, `ChatCompletionsAdapter`, `ResponsesAdapter`, `CoreResponsesClient`, and `BackgroundGenerationService`.
+`ConversationModule` (`apps/chat-api/src/conversations/conversation.module.ts`) SHALL be listed in the `imports` array of `apps/chat-api/src/app/app.module.ts`. It MUST import `UserConfigModule`, `ScheduledTaskUnreadModule`, `AppConfigModule`, and `DeploymentsModule`; declare `ConversationController` and `ConversationPublishController` in its `controllers` array; and provide the `ConversationService` facade plus `ConversationPersistenceService` (also bound to the `CONVERSATION_PERSISTENCE` token), `ConversationListingService`, `ConversationTitleCacheService`, `ConversationTitlesService`, `ConversationLifecycleService`, `ConversationStreamingService`, `ConversationNamingService`, `ConversationGenerationService`, `ConversationPublishService`, `ChatCompletionsAdapter`, `ResponsesAdapter`, `CoreResponsesClient`, and `BackgroundGenerationService`.
 
 #### Scenario: Module is wired into the app
 
@@ -236,7 +236,9 @@ On success the endpoint returns HTTP 200 with `ConversationListResponseDto`:
 ```ts
 class ConversationListItemDto {
   id: string;               // Full DIAL Core resource URL (e.g. "conversations/bucket/model__title__uuid")
-  title: string;            // Human-readable conversation title extracted from the resource name
+  title: string;            // Cached display title, or the resource-name fallback while pending
+  isTitlePending?: boolean; // True when the stored title needs background resolution
+  createdAt?: number;       // Core creation time in Unix epoch milliseconds; absent for shared items
   updatedAt: number;        // Unix epoch milliseconds of the last update
   sharedWithMe: boolean;    // True when the conversation was shared with the current user
   publishedWithMe: boolean; // True when this conversation is from the public bucket (organisation content)
@@ -245,7 +247,7 @@ class ConversationListItemDto {
   isScheduledTask: boolean; // True only for a user-bucket item whose resource path matches the .scheduler reserved-segment pattern; always false for public and shared items
   scheduleId?: string;      // Present only when isScheduledTask === true; the scheduler task id from the path
   runId?: string;           // Present only when isScheduledTask === true; the scheduler run id from the path
-  isUnread?: boolean;       // Present only when isScheduledTask === true; true when the user has not yet opened this conversation
+  isUnread?: boolean;       // Scheduled-task run: always present (true until opened). Regular user-bucket chat: present, as true, only while the chat is unread (see "Regular-chat unread" below); omitted otherwise
 }
 
 class ConversationListResponseDto {
@@ -254,12 +256,13 @@ class ConversationListResponseDto {
 }
 ```
 
-**Five-way parallel fetch.** The service issues all of the following in a single `Promise.all`, always against the bucket root (recursive, no folder scoping):
+**Six-way parallel fetch.** The service issues all of the following in a single `Promise.all`, always against the bucket root (recursive, no folder scoping):
 1. `getConversationMetadata(bucket, '', { recursive: true, limit, permissions: true, token: userCursor })` — user's own conversations
 2. `getConversationMetadata('public', '', { recursive: true, limit, token: publicCursor })` — organisation-published conversations
 3. `getSharedResources({ body: { resourceTypes: ['CONVERSATION'], with: 'me' } })` — conversations shared directly with the user
 4. `UserConfigService.getPinnedIds(token, bucket)` — pinned conversation IDs
 5. `ScheduledTaskUnreadService.getViewedIds(token, bucket)` — viewed scheduler-created conversation IDs
+6. The regular-chat read state of the user's bucket: the read-before baseline and the viewed regular-chat ids (see the `regular-conversation-read-state` spec)
 
 **Cursor following in complete-history mode.** The personal and public bucket walks are independent — each follows its own `nextToken` chain to exhaustion, so an empty intermediate page that still carries a cursor does not end that bucket's walk. Each bucket's walk keeps the set of cursors it has already requested; if DIAL Core returns a cursor that bucket has already followed, the service throws `BadGatewayException` rather than looping forever. In paged mode no cursor following happens: exactly one request per bucket is issued.
 
@@ -271,15 +274,17 @@ Items from all three data sources are merged and sorted by `updatedAt` descendin
 
 **Scheduler metadata.** Only an item from the user's own bucket (data source 1) can be a scheduled task. For each such item the service SHALL call `parseScheduledTaskConversationPath(item.id)` (see the "Scheduler-created conversations are detected from their DIAL Core resource path" requirement above). When it returns a non-null result, the item SHALL have `isScheduledTask: true`, `scheduleId` and `runId` set from the result, and `isUnread` set to `true` unless the item's `id` is present in the viewed-ids set from `ScheduledTaskUnreadService.getViewedIds`, in which case `isUnread: false`. When `parseScheduledTaskConversationPath` returns `null`, the item SHALL have `isScheduledTask: false` with `scheduleId`/`runId`/`isUnread` all omitted.
 
+**Regular-chat unread.** An item from the user's own bucket (data source 1) that is not a scheduled task SHALL have `isUnread: true` when its `updatedAt` is greater than the read-before baseline and its `id` is absent from the viewed regular-chat ids; otherwise `isUnread` SHALL be omitted. Ids are compared after the same URI-decoding the scheduler viewed set uses. When the baseline file is missing, the first list request SHALL create it with the current time and treat every chat as read; when the baseline file is malformed, or either file cannot be read (a failed download other than a missing file), the service SHALL omit `isUnread` for every regular chat, write no read-state file (so a missing baseline is not created while the viewed ids cannot be read) and log a warning. A malformed viewed-ids file is treated as an empty set, as for scheduled runs.
+
 **Published and shared runs are ordinary conversations.** Items from the `'public'` bucket (data source 2) and from `getSharedResources` (data source 3) SHALL always have `isScheduledTask: false` with `scheduleId`/`runId`/`isUnread` all omitted, even when their path has the `.scheduler/{scheduleId}/` shape. Publishing or sharing hands the recipient one conversation, not the task: the recipient cannot open that task, its run history or its settings, and the viewed-ids file in the recipient's bucket is keyed by the recipient's own bucket. The rule is decided by data source, not by the `sharedWithMe`/`publishedWithMe` flags DIAL Core reports on a user-bucket item. This matches the "Duplicating a scheduled-task run produces an ordinary conversation" requirement of the `duplicate-conversation` spec.
 
 **Scheduler conversation titles.** For filename-derived titles from any of the three data sources, the service SHALL recognize an application deployment path both at `applications/...` and beneath `.scheduler/{scheduleId}/applications/...`. The application version belongs to the deployment id, not the displayed conversation title: a filename `Daily%20plan__0.0.1__Todoist__{runId}` beneath `.scheduler/{scheduleId}/applications/{bucket}/` yields `title: "Todoist"` while its full `id` remains unchanged. This rule SHALL NOT treat a numeric title on a plain model deployment as an application version (for example, `model__18__{runId}` yields `title: "18"`). An authoritative stored display name remains governed by the display-name resolution requirement below.
 
 **Compound `nextToken`.** Pagination state is tracked independently for the user bucket and public bucket (the `getSharedResources` endpoint returns all results at once and has no cursor). The response `nextToken` format is `ct1.<base64url(JSON)>` where the JSON object has optional fields `u` (user-bucket cursor) and `p` (public-bucket cursor). An incoming token without the `ct1.` prefix is treated as a legacy user-only cursor. The response `nextToken` is omitted when neither paginated source has more results.
 
-**Resilience.** If the public bucket, shared resources, or viewed-ids call fails (throws or returns an error response), the endpoint logs a warning and continues — it still returns results from the other sources, with affected items falling back to `isUnread: true` for scheduler-created items when the viewed-ids fetch failed (fail open, so a transient error never silently hides a genuinely unread task). If the user bucket call fails, the endpoint returns the error to the client. In complete-history mode this applies to **every** page of the walk, not just the first: a failure on any personal-bucket page fails the whole request rather than returning a silently truncated history, and a failure on any public-bucket page drops the public contribution (including the pages already collected) while the request still succeeds.
+**Resilience.** If the public bucket, shared resources, or viewed-ids call fails (throws or returns an error response), the endpoint logs a warning and continues — it still returns results from the other sources, with affected items falling back to `isUnread: true` for scheduler-created items when the viewed-ids fetch failed (fail open, so a transient error never silently hides a genuinely unread task). A failed regular-chat read-state fetch fails closed instead: no regular chat is flagged unread, so a transient error never turns the whole history unread. If the user bucket call fails, the endpoint returns the error to the client. In complete-history mode this applies to **every** page of the walk, not just the first: a failure on any personal-bucket page fails the whole request rather than returning a silently truncated history, and a failure on any public-bucket page drops the public contribution (including the pages already collected) while the request still succeeds.
 
-`isPinned` is populated by `UserConfigService.getPinnedIds` against the user's DIAL Core bucket. See the [user-config-api spec](../user-config-api/spec.md). `isUnread` is populated by `ScheduledTaskUnreadService.getViewedIds` against the user's DIAL Core bucket. See the `scheduled-task-unread-tracking` spec. Both fall back to `[]`/`isUnread: true` on error.
+`isPinned` is populated by `UserConfigService.getPinnedIds` against the user's DIAL Core bucket. See the [user-config-api spec](../user-config-api/spec.md). `isUnread` for scheduler-created items is populated by `ScheduledTaskUnreadService.getViewedIds` against the user's DIAL Core bucket (see the `scheduled-task-unread-tracking` spec) and for regular chats from the read state described above (see the `regular-conversation-read-state` spec). Pins and scheduler viewed ids fall back to `[]`/`isUnread: true` on error; the regular-chat read state falls back to no `isUnread`.
 
 Generated-client impact:
 - OpenAPI operationId: `listConversations`
@@ -390,9 +395,39 @@ Error codes:
 
 #### Scenario: Non-scheduler conversation omits isUnread
 
-- **GIVEN** a conversation whose id does not match the `.scheduler/{scheduleId}/{runId}` path pattern
+- **GIVEN** a conversation whose id does not match the `.scheduler/{scheduleId}/{runId}` path pattern, with `updatedAt` less than or equal to the read-before baseline (or any non-scheduler conversation from the public bucket or shared resources)
 - **WHEN** `GET /api/v1/conversations/list` is called
 - **THEN** that item has `isScheduledTask: false` and `isUnread` omitted
+
+#### Scenario: Regular chat updated after the baseline and not viewed is unread
+
+- **GIVEN** a user-bucket regular chat with `updatedAt` greater than the baseline and an id absent from the viewed regular-chat ids
+- **WHEN** `GET /api/v1/conversations/list` is called
+- **THEN** that item has `isScheduledTask: false` and `isUnread: true`
+
+#### Scenario: Regular chat updated after the baseline but viewed omits isUnread
+
+- **GIVEN** a user-bucket regular chat with `updatedAt` greater than the baseline and an id present in the viewed regular-chat ids
+- **WHEN** `GET /api/v1/conversations/list` is called
+- **THEN** that item has `isUnread` omitted
+
+#### Scenario: First list request creates the baseline
+
+- **GIVEN** the user's bucket has no read-before baseline file
+- **WHEN** `GET /api/v1/conversations/list` is called
+- **THEN** the file is written with the current time, and no regular chat has `isUnread`
+
+#### Scenario: Read-state failure fails closed for regular chats
+
+- **GIVEN** reading the baseline or the viewed regular-chat ids fails with anything other than a missing file, or the baseline file is malformed
+- **WHEN** `GET /api/v1/conversations/list` is called
+- **THEN** the response is still 200, a warning is logged, no regular chat has `isUnread`, and no read-state file is written
+
+#### Scenario: Shared and published chats never carry isUnread
+
+- **GIVEN** a chat from `getSharedResources` or the `'public'` bucket
+- **WHEN** `GET /api/v1/conversations/list` is called
+- **THEN** that item has `isUnread` omitted regardless of the read state
 
 #### Scenario: Viewed-ids fetch failure falls back to unread for scheduler items
 
@@ -592,8 +627,8 @@ No new HTTP endpoint is added for LLM naming.
 #### Scenario: Client discovers renamed title on subsequent fetch
 
 - **GIVEN** LLM naming succeeds asynchronously after the first save
-- **WHEN** the client later calls `GET /api/v1/conversations/list` or `GET /api/v1/conversations?path=...`
-- **THEN** the response reflects the updated `name` and `llmNamingDone: true`
+- **WHEN** the client fetches the conversation or resolves its pending list title through `POST /api/v1/conversations/titles`
+- **THEN** the conversation response reflects the updated `name` and `llmNamingDone: true`, and the title projection reflects the updated name
 
 ---
 
@@ -611,39 +646,38 @@ Before persisting, `ConversationPersistenceService.saveConversation` SHALL call 
 
 ### Requirement: Conversation list uses stored display name for writable items
 
-`ConversationListingService.listConversations` (invoked via the `ConversationService` facade) SHALL enrich writable user-owned list items with `conversation.name` from `getConversation` when available, so list `title` reflects the stored display name (including LLM-renamed and manually-renamed titles), not only the filename-derived title.
+`ConversationListingService.listConversations` SHALL return metadata without reading conversation bodies. It SHALL substitute a recently cached stored display name when available and SHALL mark an uncached or expired title with `isTitlePending: true`. Clients SHALL resolve pending titles through the bounded title endpoint after rendering the list.
 
-The display-name resolution (`resolveListDisplayTitle`, also used by `getConversation`) SHALL treat a non-empty stored `name` as authoritative for the display title whenever the conversation is finally named (`llmNamingDone === true`), even when the filename-derived title diverges from `name`. A manual rename sets `llmNamingDone: true`, so a manually renamed conversation whose filename still encodes the old title SHALL display the new `name`. The prior heuristic that fell back to the filename-derived title when the stored `name` differed from the message-derived title MUST NOT override an authoritative stored `name`.
+The display-name resolution (`resolveListDisplayTitle`, also used by `getConversation`) SHALL treat a non-empty stored `name` as authoritative whenever `llmNamingDone === true`. A manual rename sets this marker. Otherwise the filename-derived title remains the fallback. The rule SHALL apply consistently to owned, published and shared entries without changing resource IDs.
 
-#### Scenario: List title reflects LLM-renamed display name
+#### Scenario: Cold listing completes independently of body latency
 
-- **GIVEN** a conversation is stored at `gpt-4o__Hello__<uuid>` with `name: "Docker networking basics"` and `llmNamingDone: true`
-- **WHEN** `GET /api/v1/conversations` is called
-- **THEN** the matching list item `title` is `"Docker networking basics"`
+- **WHEN** metadata listing succeeds but individual conversation reads would remain unresolved
+- **THEN** `GET /api/v1/conversations/list` returns metadata-derived titles and pending markers without starting or waiting for those reads
 
-#### Scenario: List title reflects manually-renamed display name when filename diverges
+#### Scenario: Cached manually or LLM renamed title
 
-- **GIVEN** a conversation is stored at `gpt-4o__Old Title__<uuid>` with `name: "New Title"` and `llmNamingDone: true` after a manual rename
-- **WHEN** `GET /api/v1/conversations` is called
-- **THEN** the matching list item `title` is `"New Title"` (not the filename-derived `"Old Title"`)
+- **GIVEN** an entry has a valid cached stored name and `llmNamingDone: true`
+- **WHEN** its metadata is listed
+- **THEN** its title uses the stored name and does not require another body read
 
-#### Scenario: An older renamed conversation is listed under the title opening it returns
+#### Scenario: Older title converges with opening the conversation
 
-- **GIVEN** an application conversation stored at `Untitled app 1__0.0.1__Say hello in exactly three words` with `name: "Three-Word Greeting"` and `llmNamingDone: true`, and at least twenty more recently updated conversations
-- **WHEN** `GET /api/v1/conversations` is called, and the conversation is then opened through `GET /api/v1/conversations?path=...`
-- **THEN** the list item `title` and the opened conversation's display title are both `"Three-Word Greeting"`, so opening it does not change the title the panel search matched against
+- **GIVEN** an older conversation has an uncached renamed title
+- **WHEN** the list is displayed and its background title batch succeeds
+- **THEN** the list title equals the title returned by opening the conversation, even beyond the former twenty-item limit
 
 #### Scenario: GET reflects manually-renamed display name when filename diverges
 
-- **GIVEN** the same manually-renamed conversation
-- **WHEN** `GET /api/v1/conversations?path=...` is called for it
-- **THEN** the returned display title is `"New Title"`
+- **GIVEN** a manually renamed conversation whose filename still has its old title
+- **WHEN** `GET /api/v1/conversations?path=...` is called
+- **THEN** the returned display title is the authoritative stored name
 
 ### Requirement: Conversation list items carry the DIAL Core creation time
 
 `ConversationListItemDto` (`apps/chat-api/src/conversations/dto/conversation-list.dto.ts`) SHALL include an optional field `createdAt?: number` — Unix epoch milliseconds of the resource's creation, documented with `@ApiPropertyOptional({ example: 1779206400000, description: ... })`.
 
-`ConversationListingService.listConversations` SHALL populate it from DIAL Core metadata (`ResourceItemMetadata.createdAt`) for user-bucket and public-bucket items when DIAL Core returns a finite number, and SHALL omit it otherwise. Items from `getSharedResources` SHALL omit `createdAt` (that payload carries no dates). The field is purely additive: item count, the `updatedAt`-descending sort, pagination, and every other field of `GET /api/v1/conversations/list` are unchanged.
+`ConversationListingService.listConversations` SHALL populate it from DIAL Core metadata (`ResourceItemMetadata.createdAt`) for user-bucket and public-bucket items when DIAL Core returns a finite number, and SHALL omit it otherwise. Items from `getSharedResources` SHALL omit `createdAt`: their `updatedAt` stays `0` and the Shared group is ordered by share time on purpose, so the dates a newer DIAL Core sends for share-list items (epam/ai-dial-core#2210) are not used here without a separate decision. The field is purely additive: item count, the `updatedAt`-descending sort, pagination, and every other field of `GET /api/v1/conversations/list` are unchanged.
 
 Example response item:
 
@@ -701,3 +735,188 @@ Authorization and error codes are unchanged (401 without a bearer token; 400 on 
 - **WHEN** the list is fetched
 - **THEN** items are still ordered by `updatedAt` descending
 
+
+### Requirement: Bounded conversation title projection endpoint
+
+`POST /api/v1/conversations/titles` SHALL require the standard authenticated BFF session and accept a validated JSON body with 1–25 full conversation resource IDs. Its generated operation SHALL be `getConversationTitles`. It SHALL return HTTP 200 with `{ items: [{ id, title }] }` containing only successful projections and no conversation messages. Missing or inaccessible individual resources SHALL be omitted. Invalid IDs or batch sizes SHALL return 400; missing authentication SHALL return 401; upstream authentication failures SHALL not be hidden as successful titles. Batch-level upstream failures SHALL follow the existing 502/503 mapping.
+
+#### Scenario: Exact encoded identity
+
+- **WHEN** a permitted resource ID contains a literal percent escape represented as `%25` in its URL
+- **THEN** the body request preserves that resource identity and does not decode it twice
+
+#### Scenario: Partial missing resources
+
+- **WHEN** one resource in a valid batch no longer exists
+- **THEN** successful titles remain in the response and no title is invented for the missing item
+
+#### Scenario: Invalid or oversized batch
+
+- **WHEN** the request has more than 25 IDs, an empty array, a non-conversation resource, traversal, or control characters
+- **THEN** validation rejects the request before any upstream reads
+
+### Requirement: Bounded isolated title cache
+
+Title caching SHALL store only title-resolution fields, use a 5000-entry bound and five-minute expiry, and scope `conversations:title:<token-digest>:<normalized-resource-id>` keys to a non-reversible digest of the caller's token plus exact resource identity. It SHALL coalesce concurrent equivalent reads. Successful saves, renames and LLM naming SHALL refresh or invalidate affected projections; deletion and newer listing metadata SHALL invalidate stale projections. A prior in-flight read or failure SHALL not overwrite or invalidate a later successful write or delete.
+
+Each consumer of a coalesced read SHALL have independent cancellation ownership. The last consumer leaving SHALL remove queued work or abort the active SDK read, while a remaining consumer SHALL keep it alive. The shared operation SHALL own its abort controller and timeout. The actual read slot SHALL remain occupied until the underlying operation settles. Cancelled operations SHALL NOT populate the cache, and obsolete completion callbacks SHALL NOT delete a newer entry. The existing JSON endpoint SHALL share these rules without changing its public response/error contract.
+
+#### Scenario: Identity isolation
+
+- **WHEN** two different bearer tokens request the same resource ID
+- **THEN** one token's cached title is not served from the other token's cache namespace
+
+#### Scenario: Rename wins over earlier refresh
+
+- **WHEN** a body read starts before a successful rename and completes after it
+- **THEN** the cache retains the renamed title rather than the earlier fetched name
+
+#### Scenario: Expiry or eviction
+
+- **WHEN** a title's cache lifetime expires or capacity evicts it
+- **THEN** metadata listing remains fast and marks it pending for a later bounded request
+
+#### Scenario: One of two consumers disconnects
+
+- **WHEN** a stream and a second JSON/stream caller share a read and only the stream disconnects
+- **THEN** the second caller still receives its outcome and the upstream read is not aborted
+
+#### Scenario: Last consumer leaves
+
+- **WHEN** the final consumer aborts while its operation is queued or reading
+- **THEN** queued work is removed or the active SDK signal is aborted
+- **AND** resources release exactly once without storing a late result or exceeding the global read limit
+
+#### Scenario: Late failure after a newer write
+
+- **WHEN** an older cancelled/read operation fails after a successful write populated the same cache key
+- **THEN** its cleanup leaves the newer summary intact
+
+### Requirement: Finite incremental conversation title stream
+
+`POST /api/v1/conversations/titles/stream` SHALL accept `StreamConversationTitlesBodyDto` containing 1–500 `ids`, each a full conversation resource URL validated with the parser in `apps/chat-api/src/conversations/utils/conversation-resource-id.ts`. Each ID SHALL retain the existing 4096-character limit; UTF-8 `JSON.stringify(ids)` SHALL be limited to 256 KiB. Duplicate identical IDs SHALL produce one outcome in first-occurrence order of admission. The endpoint SHALL require the ordinary authenticated session and CSRF checks, with no new role or feature flag. Resource access SHALL remain governed by Core.
+
+The OpenAPI operation SHALL be `streamConversationTitles`. The documented success body SHALL be a `text/event-stream` string, with `ConversationTitleStreamEventDto` and its discriminated event DTOs exposed in components. `ConversationsApi.streamConversationTitlesRaw` SHALL supply the raw response body to the adapter in `apps/chat/src/server-api/conversations.api.ts`; no application component or shared UI library SHALL construct the endpoint or decode a generated ordinary JSON response as a stream.
+
+Example request:
+
+```json
+{
+  "ids": [
+    "conversations/example/model__First",
+    "conversations/example/model__Second"
+  ]
+}
+```
+
+Example successful HTTP 200 response, where the second item finishes first:
+
+```text
+: init
+
+data: {"type":"title","id":"conversations/example/model__Second","title":"Second renamed title"}
+
+data: {"type":"title","id":"conversations/example/model__First","title":"First renamed title"}
+
+data: {"type":"done","reason":"complete","processed":2,"total":2}
+
+```
+
+Each resolved title SHALL be emitted as soon as it is ready and the response is writable. The service SHALL NOT wait for a whole batch before emission or before filling a newly available read slot. Events SHALL never contain messages. A missing/forbidden item SHALL emit `{"type":"unavailable","id":"..."}`. An individually failed upstream read SHALL emit `{"type":"item_error","id":"...","code":"upstream_error"}` or code `timeout`. Each accepted distinct ID SHALL receive at most one item outcome; `processed` counts all such outcomes. Complete streams SHALL have `processed === total`. A budget completion SHALL leave untouched IDs without item outcomes for a later request.
+
+Validation/auth/admission errors before headers SHALL be HTTP 400 (invalid IDs/count), 401 (authentication), 403 (CSRF), 413 (input byte bound), or 503 (stream capacity); any upstream setup failure before headers SHALL map to 502/503. After headers, a fatal error SHALL emit `{"type":"error","status":503,"code":"unavailable"}` or use the paired status/code `401`/`unauthenticated` or `502`/`upstream_error`, and close without a `done` event. Core authentication rejection, 429, queue unavailability, or five consecutive upstream read failures SHALL terminate the stream. Successful Core reads SHALL reset the consecutive-failure count. An EOF without `done`/`error` SHALL be an interrupted stream, never proof of completion. Existing list and JSON title endpoint contracts SHALL remain unchanged.
+
+#### Scenario: Fast title bypasses a slow peer
+
+- **WHEN** one read remains unresolved and another title in the same request resolves
+- **THEN** the resolved title frame reaches the HTTP client before the slow read settles
+- **AND** the freed worker admits the next ID without a batch-wide wait
+
+#### Scenario: Validation occurs before upstream work
+
+- **WHEN** the ID array is empty, oversized, malformed, or contains encoded traversal/control characters
+- **THEN** the request fails with 400 or 413 before headers are opened or Core reads begin
+
+#### Scenario: Exact identity survives normalization
+
+- **WHEN** a valid ID contains a literal percent escape or two requested aliases share a normalized resource
+- **THEN** Core reads preserve the resource path and coalesce where appropriate
+- **AND** each response outcome uses its exact requested ID
+
+#### Scenario: Missing and successful resources coexist
+
+- **WHEN** Core rejects one item with 403/404 and resolves another
+- **THEN** the stream emits an unavailable outcome for the first and a title for the second, then completes with both counted
+
+#### Scenario: Upstream session or capacity fails after headers
+
+- **WHEN** Core rejects authentication or the read gate becomes unavailable after the stream starts
+- **THEN** a terminal error describes 401 or 503 without changing the already-sent HTTP status
+- **AND** no new work or successful terminal frame follows it
+
+### Requirement: Bounded continuous title scheduling
+
+The title stream SHALL keep a request-local finite queue and admit at most 25 workers through the cache's process-wide gate, shared with the JSON endpoint. Actual Core title reads SHALL never exceed 25 per process. The global queued-read limit SHALL remain 250, queue wait five seconds and per-read timeout ten seconds. No more than 16 title streams SHALL be retained per process, including setup/cleanup. Queued IDs SHALL NOT all become eagerly started promises or global admission requests.
+
+Admission SHALL stop after 45 seconds and the stream SHALL close by 60 seconds. Admitted work SHALL drain or emit timeout item outcomes; unattempted IDs SHALL remain eligible after `done` with `reason: budget`. A zero-progress budget expiration SHALL terminate with 503 instead of creating a continuation loop. Frames SHALL be serialized through one writer with at most 25 ready item events and 64 KiB per frame. Backpressure SHALL pause further admission; a five-second drain timeout SHALL detach the request and cancel its work. Existing initial comments and 15-second keepalives SHALL be retained. Disconnect, abort, timeout and shutdown SHALL run idempotent cleanup.
+
+An outcome-buffer permit SHALL be reserved before item admission and held through outcome delivery/discard, bounding active plus buffered items to 25 per stream. Blocked producer promises SHALL not form an additional unbounded buffer. The 60-second deadline SHALL also end drain waiting; an unwritable response SHALL close as interrupted rather than delay closure or emit inaccurate terminal counts.
+
+#### Scenario: Multiple clients share the process cap
+
+- **WHEN** concurrent JSON and stream callers request uncached titles
+- **THEN** the total active Core reads remains at or below 25 and excess work obeys the bounded queue
+
+#### Scenario: Slow receiver applies backpressure
+
+- **WHEN** the HTTP writable cannot drain while title reads finish
+- **THEN** event buffering and new read admission stay bounded
+- **AND** a receiver that remains stalled for five seconds is disconnected and its ownership is cancelled
+
+#### Scenario: Work continues beyond one finite request
+
+- **WHEN** a request reaches its admission/lifetime budget with some IDs untouched
+- **THEN** it emits item outcomes for admitted work and a budget terminal with truthful processed/total counts
+- **AND** untouched IDs can be submitted in a later request without replaying completed outcomes
+
+### Requirement: POST /api/v1/conversations/completions removes the conversation from the viewed regular-chat ids
+
+When a generation is accepted on `POST /api/v1/conversations/completions` for a conversation that is not a scheduled-task run (every mode: append, regenerate and edit), the backend SHALL remove that conversation's id from the viewed regular-chat ids before the stream starts, so the chat becomes unread once its `updatedAt` passes the baseline. The removal SHALL be best effort: a failed read or write is logged as a warning and SHALL NOT fail, delay beyond the write itself, or alter the completion stream. A request rejected before generation starts (validation, authorization, an active generation conflict) SHALL NOT change the viewed ids. The write SHALL have finished before the request ends on every exit path, including a generation that fails before its first chunk, so the client's own viewed mark can never be overtaken by it. The id is built the same way as for `PATCH /api/v1/conversations/viewed`.
+
+#### Scenario: Sending a message un-views the chat
+
+- **GIVEN** a chat whose id is in the viewed regular-chat ids
+- **WHEN** a completion is started for it
+- **THEN** its id is no longer in the viewed ids and a later `GET /api/v1/conversations/list` returns `isUnread: true` for it once `updatedAt` exceeds the baseline
+
+#### Scenario: A rejected completion leaves the viewed ids unchanged
+
+- **GIVEN** a completion request that fails with 409 because another generation is active
+- **WHEN** the request is rejected
+- **THEN** the viewed regular-chat ids are not modified
+
+#### Scenario: Un-view failure does not fail the completion
+
+- **WHEN** removing the id from the viewed file fails
+- **THEN** the completion stream still starts, and a warning is logged
+
+### Requirement: Renaming a conversation preserves its read state
+
+When `PATCH /api/v1/conversations` renames a regular chat that was read immediately before the rename (its `updatedAt` was less than or equal to the baseline, or its id was in the viewed regular-chat ids), the backend SHALL add its id to the viewed regular-chat ids so the rename's `updatedAt` bump does not make it unread. A chat that was unread before the rename SHALL stay unread. The read-state update SHALL be best effort and SHALL NOT fail the rename. Renaming a scheduled-task run does not touch the regular-chat read state.
+
+#### Scenario: Renaming a read chat keeps it read
+
+- **GIVEN** a chat updated before the baseline
+- **WHEN** it is renamed
+- **THEN** its id is added to the viewed regular-chat ids and the next list does not mark it unread
+
+#### Scenario: Renaming an unread chat keeps it unread
+
+- **GIVEN** a chat updated after the baseline whose id is not viewed
+- **WHEN** it is renamed
+- **THEN** its id is not added to the viewed ids and the next list still marks it unread
+
+#### Scenario: Read-state failure does not fail the rename
+
+- **WHEN** updating the read state fails during a rename
+- **THEN** the rename still succeeds and a warning is logged

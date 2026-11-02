@@ -1,5 +1,10 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { NeutralButton, PrimaryButton } from '@epam/ai-dial-ui-kit';
+import {
+  NeutralButton,
+  PrimaryButton,
+  LiveRegion,
+  LiveRegionPoliteness,
+} from '@epam/ai-dial-ui-kit';
 import { memo, type FC } from 'react';
 import { BUILDER_FORM_CLASS } from '../../constants/public-class-names';
 import type { EntityEditorProps } from '../../models/entity-editor-props';
@@ -38,12 +43,16 @@ const EntityEditorComponent: FC<EntityEditorProps> = ({
   styles,
   dir,
 }) => {
-  const alertRegion =
-    alert != null ? (
-      <div role="alert" className={ALERT_CLASS_NAME}>
-        {alert}
-      </div>
-    ) : null;
+  /* Always mounted so a message arriving later is announced: a live region
+     rendered together with its text is not read reliably. Empty, it takes no space. */
+  const alertRegion = (
+    <LiveRegion
+      politeness={LiveRegionPoliteness.Assertive}
+      className={alert != null ? ALERT_CLASS_NAME : undefined}
+    >
+      {alert}
+    </LiveRegion>
+  );
   const hasSetup = setup != null;
 
   return (

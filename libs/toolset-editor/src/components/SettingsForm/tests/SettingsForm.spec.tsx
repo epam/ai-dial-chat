@@ -40,7 +40,10 @@ vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
 vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@epam/ai-dial-ui-kit')>()),
   DIAL_KIT_ICON_STROKE: 1.5,
+  /* Mirrors the kit: the error renders with no role, is linked to the
+   * field through `aria-describedby`, and marks the field `aria-invalid`. */
   Input: ({
+    id,
     value,
     onChange,
     labelProps,
@@ -48,6 +51,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
     placeholder,
     caption,
   }: {
+    id?: string;
     value?: string;
     onChange?: (v?: string) => void;
     labelProps?: { label?: string; required?: boolean };
@@ -59,13 +63,16 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
       <label>
         {labelProps?.label}
         <input
+          id={id}
           value={value ?? ''}
           placeholder={placeholder}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${id}-error` : undefined}
           onChange={(e) => onChange?.(e.target.value)}
         />
       </label>
       {caption && <p>{caption}</p>}
-      {error && <p role="alert">{error}</p>}
+      {error && <span id={`${id}-error`}>{error}</span>}
     </>
   ),
   RadioGroup: ({
@@ -185,144 +192,148 @@ const renderSettings = (props: Partial<SettingsFormProps> = {}) =>
     />,
   );
 
-beforeEach(() => {
-  vi.clearAllMocks();
-});
-
-describe('SettingsForm — endpoint field', () => {
-  it('renders the endpoint error message when errors.endpoint is provided', () => {
-    renderSettings({ errors: { endpoint: 'Endpoint is required' } });
-    expect(screen.getByRole('alert').textContent).toContain(
-      'Endpoint is required',
-    );
+describe('SettingsForm', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it('renders HTTP and SSE as protocol radio options', () => {
-    renderSettings();
-    expect(screen.getByRole('radio', { name: 'HTTP' })).toBeTruthy();
-    expect(screen.getByRole('radio', { name: 'SSE' })).toBeTruthy();
-  });
+  describe('SettingsForm — endpoint field', () => {
+    it('renders the endpoint error message when errors.endpoint is provided', () => {
+      renderSettings({ errors: { endpoint: 'Endpoint is required' } });
+      const field = screen.getByRole('textbox', {
+        name: 'Endpoint',
+        description: 'Endpoint is required',
+      });
+      expect(field.getAttribute('aria-invalid')).toBe('true');
+    });
 
-  it('reports protocol changes through onChange', async () => {
-    const user = userEvent.setup({ delay: null });
-    const onChange = vi.fn();
-    renderSettings({ onChange });
+    it('renders HTTP and SSE as protocol radio options', () => {
+      renderSettings();
+      expect(screen.getByRole('radio', { name: 'HTTP' })).toBeTruthy();
+      expect(screen.getByRole('radio', { name: 'SSE' })).toBeTruthy();
+    });
 
-    await user.click(screen.getByRole('radio', { name: 'SSE' }));
+    it('reports protocol changes through onChange', async () => {
+      const user = userEvent.setup({ delay: null });
+      const onChange = vi.fn();
+      renderSettings({ onChange });
 
-    expect(onChange).toHaveBeenCalledWith({
-      protocol: ToolsetTransportType.Sse,
+      await user.click(screen.getByRole('radio', { name: 'SSE' }));
+
+      expect(onChange).toHaveBeenCalledWith({
+        protocol: ToolsetTransportType.Sse,
+      });
     });
   });
-});
 
-describe('SettingsForm — allowed tools field', () => {
-  it('renders the free-text tag input when listToolNames is omitted', () => {
-    renderSettings();
-    expect(
-      screen.getByPlaceholderText('Add tools, comma separated'),
-    ).toBeTruthy();
-  });
-
-  it('renders the select with fetched tool names once they resolve', async () => {
-    const listToolNames = vi.fn().mockResolvedValue(['echo', 'fetch']);
-    renderSettings({ listToolNames });
-
-    expect(await screen.findByText('echo')).toBeTruthy();
-    expect(screen.getByText('fetch')).toBeTruthy();
-    expect(listToolNames).toHaveBeenCalledWith('toolsets/b/my__1.0.0');
-    expect(
-      screen.queryByPlaceholderText('Add tools, comma separated'),
-    ).toBeNull();
-  });
-
-  it('falls back to the tag input when the fetch resolves no tools', async () => {
-    const listToolNames = vi.fn().mockResolvedValue([]);
-    renderSettings({ listToolNames });
-
-    expect(
-      await screen.findByPlaceholderText('Add tools, comma separated'),
-    ).toBeTruthy();
-    expect(screen.queryByText('Select allowed tools')).toBeNull();
-  });
-
-  it('falls back to the tag input when the fetch rejects', async () => {
-    const listToolNames = vi.fn().mockRejectedValue(new Error('fail'));
-    renderSettings({ listToolNames });
-
-    expect(
-      await screen.findByPlaceholderText('Add tools, comma separated'),
-    ).toBeTruthy();
-  });
-
-  it('does not fetch tool names before the toolset is persisted', () => {
-    const listToolNames = vi.fn().mockResolvedValue(['echo']);
-    renderSettings({ toolsetId: '', isEditMode: false, listToolNames });
-
-    expect(listToolNames).not.toHaveBeenCalled();
-    expect(
-      screen.getByPlaceholderText('Add tools, comma separated'),
-    ).toBeTruthy();
-  });
-});
-
-describe('SettingsForm — Connect toolset section', () => {
-  it('renders the connect section when connectUrl and toolsetId are set', () => {
-    renderSettings({ connectUrl: 'https://dial-core.example.com/mcp' });
-    expect(screen.getByText('Connect toolset')).toBeTruthy();
-    expect(
-      screen.getByText(
-        'Copy endpoint URL to easily integrate toolset into your workflows',
-      ),
-    ).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Copy URL' })).toBeTruthy();
-  });
-
-  it('hides the connect section when toolsetId is empty', () => {
-    renderSettings({
-      toolsetId: '',
-      isEditMode: false,
-      connectUrl: 'https://dial-core.example.com/mcp',
+  describe('SettingsForm — allowed tools field', () => {
+    it('renders the free-text tag input when listToolNames is omitted', () => {
+      renderSettings();
+      expect(
+        screen.getByPlaceholderText('Add tools, comma separated'),
+      ).toBeTruthy();
     });
-    expect(screen.queryByText('Connect toolset')).toBeNull();
-  });
 
-  it('hides the connect section when connectUrl is omitted', () => {
-    renderSettings();
-    expect(screen.queryByText('Connect toolset')).toBeNull();
-  });
+    it('renders the select with fetched tool names once they resolve', async () => {
+      const listToolNames = vi.fn().mockResolvedValue(['echo', 'fetch']);
+      renderSettings({ listToolNames });
 
-  it('passes the host-resolved URL to the shared copy control', async () => {
-    const user = userEvent.setup({ delay: null });
-    const mockCopy = vi.fn();
-    vi.mocked(useCodeCopy).mockReturnValueOnce({
-      isCopied: false,
-      copy: mockCopy,
+      expect(await screen.findByText('echo')).toBeTruthy();
+      expect(screen.getByText('fetch')).toBeTruthy();
+      expect(listToolNames).toHaveBeenCalledWith('toolsets/b/my__1.0.0');
+      expect(
+        screen.queryByPlaceholderText('Add tools, comma separated'),
+      ).toBeNull();
     });
-    renderSettings({ connectUrl: 'https://dial-core.example.com/mcp' });
 
-    await user.click(screen.getByRole('button', { name: 'Copy URL' }));
+    it('falls back to the tag input when the fetch resolves no tools', async () => {
+      const listToolNames = vi.fn().mockResolvedValue([]);
+      renderSettings({ listToolNames });
 
-    expect(useCodeCopy).toHaveBeenCalledWith(
-      'https://dial-core.example.com/mcp',
-    );
-    expect(mockCopy).toHaveBeenCalledOnce();
+      expect(
+        await screen.findByPlaceholderText('Add tools, comma separated'),
+      ).toBeTruthy();
+      expect(screen.queryByText('Select allowed tools')).toBeNull();
+    });
+
+    it('falls back to the tag input when the fetch rejects', async () => {
+      const listToolNames = vi.fn().mockRejectedValue(new Error('fail'));
+      renderSettings({ listToolNames });
+
+      expect(
+        await screen.findByPlaceholderText('Add tools, comma separated'),
+      ).toBeTruthy();
+    });
+
+    it('does not fetch tool names before the toolset is persisted', () => {
+      const listToolNames = vi.fn().mockResolvedValue(['echo']);
+      renderSettings({ toolsetId: '', isEditMode: false, listToolNames });
+
+      expect(listToolNames).not.toHaveBeenCalled();
+      expect(
+        screen.getByPlaceholderText('Add tools, comma separated'),
+      ).toBeTruthy();
+    });
   });
 
-  it('threads the connect labels through to the section', () => {
-    renderSettings({
-      connectUrl: 'https://dial-core.example.com/mcp',
-      labels: {
-        connect: {
-          title: 'Connect toolset title',
-          description: 'Connect toolset description',
-          copyLabel: 'Copy the URL',
-          copiedLabel: 'Copied the URL!',
+  describe('SettingsForm — Connect toolset section', () => {
+    it('renders the connect section when connectUrl and toolsetId are set', () => {
+      renderSettings({ connectUrl: 'https://dial-core.example.com/mcp' });
+      expect(screen.getByText('Connect toolset')).toBeTruthy();
+      expect(
+        screen.getByText(
+          'Copy endpoint URL to easily integrate toolset into your workflows',
+        ),
+      ).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Copy URL' })).toBeTruthy();
+    });
+
+    it('hides the connect section when toolsetId is empty', () => {
+      renderSettings({
+        toolsetId: '',
+        isEditMode: false,
+        connectUrl: 'https://dial-core.example.com/mcp',
+      });
+      expect(screen.queryByText('Connect toolset')).toBeNull();
+    });
+
+    it('hides the connect section when connectUrl is omitted', () => {
+      renderSettings();
+      expect(screen.queryByText('Connect toolset')).toBeNull();
+    });
+
+    it('passes the host-resolved URL to the shared copy control', async () => {
+      const user = userEvent.setup({ delay: null });
+      const mockCopy = vi.fn();
+      vi.mocked(useCodeCopy).mockReturnValueOnce({
+        isCopied: false,
+        copy: mockCopy,
+      });
+      renderSettings({ connectUrl: 'https://dial-core.example.com/mcp' });
+
+      await user.click(screen.getByRole('button', { name: 'Copy URL' }));
+
+      expect(useCodeCopy).toHaveBeenCalledWith(
+        'https://dial-core.example.com/mcp',
+      );
+      expect(mockCopy).toHaveBeenCalledOnce();
+    });
+
+    it('threads the connect labels through to the section', () => {
+      renderSettings({
+        connectUrl: 'https://dial-core.example.com/mcp',
+        labels: {
+          connect: {
+            title: 'Connect toolset title',
+            description: 'Connect toolset description',
+            copyLabel: 'Copy the URL',
+            copiedLabel: 'Copied the URL!',
+          },
         },
-      },
+      });
+      expect(screen.getByText('Connect toolset title')).toBeTruthy();
+      expect(screen.getByText('Connect toolset description')).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Copy the URL' })).toBeTruthy();
     });
-    expect(screen.getByText('Connect toolset title')).toBeTruthy();
-    expect(screen.getByText('Connect toolset description')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Copy the URL' })).toBeTruthy();
   });
 });

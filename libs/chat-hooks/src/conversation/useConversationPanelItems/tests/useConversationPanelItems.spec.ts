@@ -136,6 +136,18 @@ describe('useConversationPanelItems', () => {
     expect(chat.isUnread).toBeUndefined();
   });
 
+  it('carries the unread flag of a regular chat without turning it into a task', () => {
+    const params = makeParams({
+      items: [makeItem('unread-chat', { isUnread: true }), makeItem('chat')],
+    });
+    const { result } = renderHook(() => useConversationPanelItems(params));
+
+    const [unreadChat, chat] = result.current;
+    expect(unreadChat.isUnread).toBe(true);
+    expect(unreadChat.kind).toBe(ConversationKind.Chat);
+    expect(chat.isUnread).toBeUndefined();
+  });
+
   it('maps every run of a task, leaving any collapsing to the host', () => {
     const run = (runId: string) =>
       makeItem(`conversations/bucket/.scheduler/s1/model-1__Daily__${runId}`, {

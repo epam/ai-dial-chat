@@ -5,6 +5,7 @@ import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
 import * as path from 'path';
 import { createIsExternalPeerImport } from '../../tools/vite-external-matcher.mjs';
+
 const ownPackageJson = JSON.parse(
   readFileSync(path.join(import.meta.dirname, 'package.json'), 'utf8'),
 ) as {
@@ -16,6 +17,7 @@ const EXTERNAL_PEER_NAMES = [
   ...Object.keys(ownPackageJson.peerDependencies ?? {}),
 ];
 const isExternalPeerImport = createIsExternalPeerImport(EXTERNAL_PEER_NAMES);
+
 export default defineConfig(({ command }) => ({
   // Published libraries must also run with React's production runtime.
   oxc: command === 'build' ? { jsx: { development: false } } : undefined,
@@ -44,6 +46,8 @@ export default defineConfig(({ command }) => ({
       aliasesExclude: [
         '@epam/ai-dial-attachment-canvas',
         '@epam/ai-dial-mcp-apps',
+        '@epam/ai-dial-projects',
+        '@epam/ai-dial-scheduled-tasks/validation',
       ],
     }),
   ],
@@ -70,8 +74,10 @@ export default defineConfig(({ command }) => ({
         'skills-state': 'src/entry-points/skills-state.ts',
         'skill-editor': 'src/entry-points/skill-editor.ts',
         oauth: 'src/entry-points/oauth.ts',
+        'external-services': 'src/entry-points/external-services.ts',
         'offline-credentials': 'src/entry-points/offline-credentials.ts',
         'scheduled-tasks': 'src/entry-points/scheduled-tasks.ts',
+        project: 'src/entry-points/project.ts',
         sharing: 'src/entry-points/sharing.ts',
         attachments: 'src/entry-points/attachments.ts',
         utils: 'src/entry-points/utils.ts',
@@ -137,6 +143,10 @@ export default defineConfig(({ command }) => ({
       '@epam/ai-dial-conversation-input': path.resolve(
         import.meta.dirname,
         '../conversation-input/src/index.ts',
+      ),
+      '@epam/ai-dial-projects': path.resolve(
+        import.meta.dirname,
+        '../projects/src/index.ts',
       ),
       '@epam/ai-dial-publish-panel': path.resolve(
         import.meta.dirname,

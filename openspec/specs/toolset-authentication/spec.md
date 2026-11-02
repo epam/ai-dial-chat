@@ -32,8 +32,9 @@ is enabled; the API key input is rendered only in the "with login" mode.
 
 ### Requirement: OAuth credential fields
 When OAuth auth is selected with config, the system SHALL allow entering client id, client
-secret, authorization endpoint, token endpoint, and scopes, and SHALL require client id and
-client secret before triggering the login, except that client secret is not required when the
+secret, authorization endpoint, token endpoint, and scopes, and SHALL require client id, client
+secret, authorization endpoint, and token endpoint before saving or triggering the login, except
+that client secret is not required when the
 editor was opened to edit a toolset that was already saved with OAuth-with-config credentials
 (i.e. the editor's route carries an existing toolset id) — Core never returns a stored client
 secret, so re-entering it is not required to log in again with the already-stored value. The
@@ -46,6 +47,13 @@ the current create flow (e.g. from an earlier "Log in" persist).
 - **WHEN** OAuth auth with config is selected and client id or client secret is empty
 - **THEN** the system shows required errors for the missing field(s) and blocks the login
 
+#### Scenario: Missing OAuth endpoints
+- **WHEN** OAuth auth with config is selected and the authorization endpoint or token endpoint is
+  empty
+- **THEN** both endpoint inputs are marked required, the system shows "Authorization endpoint is
+  required" / "Token endpoint is required" for the missing field(s), and blocks the save and the
+  login; a non-empty value that is not an `http(s)` URL shows "Enter a valid http(s) URL" instead
+
 #### Scenario: Client secret required while creating a new toolset
 - **WHEN** a user is creating a new toolset (the editor was not opened with an existing toolset
   id in its route) and selects OAuth with login & config, even after the in-progress draft has
@@ -57,8 +65,8 @@ the current create flow (e.g. from an earlier "Log in" persist).
 - **WHEN** a user opens the editor to edit a toolset that was already saved with OAuth
   with-login-&-config credentials (the editor's route carries that toolset's id)
 - **THEN** the Client Secret field is not marked required and the Log In button can become
-  enabled without a client secret value, provided the other required fields (client id, valid
-  endpoints) are filled in
+  enabled without a client secret value, provided the other required fields (client id,
+  authorization endpoint, token endpoint) are filled in with valid values
 
 ### Requirement: Login mode selection
 For API Key and OAuth, the system SHALL offer login-mode radios backed by the `WithLogin` enum
@@ -460,3 +468,35 @@ the login was initiated from the Toolset Editor's Auth section or the Catalog De
   request succeeds
 - **THEN** the system shows a success notification, marks the toolset as logged in, and refetches
   the shared toolset list
+
+### Requirement: Saved OAuth client secret hint in edit mode
+
+When the editor is opened to edit an already-saved toolset (`isEditMode`) with OAuth "Custom login" (`with-config`) selected, and the loaded toolset carries `authSettings.clientSecretHint`, the Client secret input SHALL stay empty and SHALL show the hint masked as six asterisks followed by the hint (e.g. `******d4c6`) as its placeholder, with the caption `Leave empty to keep the saved secret.` as the input's accessible description. The masked value SHALL be shown only while the user has typed no new secret; as soon as the field has a value, the regular placeholder and no "keep" caption apply. The hint SHALL NOT be shown in create mode, on the "Standard login" mode, or for API-key toolsets.
+
+Saving or logging in with the field left empty SHALL send no `clientSecret` (unchanged from the existing `isEditMode` rule of "OAuth credential fields"), so DIAL Core keeps the stored secret. The hint SHALL never be sent as, or in place of, the client secret.
+
+The host maps the hint from `DialToolsetDto.authSettings.clientSecretHint` into `ToolsetAuthFormData.clientSecretHint` in `authSettingsDtoToForm` (`apps/chat/src/utils/toolsets.ts`); `formToToolsetBody` builds `clientSecret` only from `ToolsetAuthFormData.clientSecret`. The caption is localised through the new i18n key `toolsetEditor.auth.clientSecretKeepCaption` (`ToolsetEditorI18nKeys.ClientSecretKeepCaption`), passed by `ToolsetApplicationEditor` as `labels.settings.auth.clientSecretKeepCaption`; the masked placeholder carries no translatable text. RTL impact: none — the masked value is direction-neutral and no directional icon is added. Not gated behind `ENABLED_FEATURES`.
+
+#### Scenario: Editing a toolset with a saved secret shows the masked hint
+
+- **GIVEN** a saved OAuth "Custom login" toolset whose `GET /api/v1/toolsets/{toolsetName}` response has `authSettings.clientSecretHint: "d4c6"`
+- **WHEN** the user opens it in the toolset editor
+- **THEN** the Client secret input is empty, its placeholder is `******d4c6`, and it is described by `Leave empty to keep the saved secret.`
+
+#### Scenario: Leaving the field empty keeps the stored secret
+
+- **GIVEN** the editor shows the masked hint
+- **WHEN** the user saves without typing a client secret
+- **THEN** the `PATCH /api/v1/toolsets/{toolsetName}` body has no `authSettings.clientSecret` and no `clientSecretHint`
+
+#### Scenario: Typing a new secret replaces the hint display
+
+- **GIVEN** the editor shows the masked hint
+- **WHEN** the user types a new client secret
+- **THEN** the hint placeholder and the "keep" caption are no longer shown, and saving sends the typed value as `clientSecret`
+
+#### Scenario: No hint available
+
+- **GIVEN** the loaded toolset has no `authSettings.clientSecretHint`
+- **WHEN** the user opens it in the editor
+- **THEN** the Client secret input renders with the regular `Enter client secret` placeholder and no "keep" caption, exactly as before

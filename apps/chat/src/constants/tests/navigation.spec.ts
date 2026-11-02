@@ -39,6 +39,18 @@ describe('NAVIGATION_CONFIG', () => {
     expect(scheduledTasksItem?.featureFlag).toBe('scheduledTasksEnabled');
   });
 
+  it('places a Projects entry gated behind projectsEnabled directly after New chat', () => {
+    const projectsIndex = NAVIGATION_CONFIG.findIndex(
+      (item) => item.path === ROUTES.Projects,
+    );
+    expect(NAVIGATION_CONFIG[projectsIndex - 1]?.path).toBe(ROUTES.Root);
+    expect(NAVIGATION_CONFIG[projectsIndex]).toMatchObject({
+      labelKey: NavigationI18nKeys.Projects,
+      featureFlag: 'projectsEnabled',
+    });
+    expect(resolveKey(NavigationI18nKeys.Projects)).toBe('Projects');
+  });
+
   it('resolves every nav item label key to an existing en.json string', () => {
     NAVIGATION_CONFIG.forEach((item) => {
       expect(typeof resolveKey(item.labelKey)).toBe('string');

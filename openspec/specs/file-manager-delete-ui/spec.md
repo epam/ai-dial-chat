@@ -349,7 +349,7 @@ The Delete action label, the confirm button, and Cancel reuse `buttons.delete` /
 The delete surfaces SHALL introduce no physical-direction styling, so they follow the writing direction unchanged:
 
 - No new physical-direction Tailwind classes. All classes follow the logical pattern or are symmetric.
-- Toast placement is handled by `NotificationContainer`, which uses logical positioning (`start-1/2`).
+- Toast placement is handled by `NotificationContainer`, which anchors to the bottom-end corner with logical inset utilities only, as owned by the `notification-placement` capability.
 - `aria-live`, `role="alert"`, `z-*`, `bg-*` — direction-agnostic.
 - No new directional icons.
 

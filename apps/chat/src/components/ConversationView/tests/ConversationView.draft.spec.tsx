@@ -1,3 +1,4 @@
+import { AttachmentCanvasProvider } from '@epam/ai-dial-attachment-canvas';
 import {
   type Conversation,
   type RequestSkill,
@@ -57,7 +58,8 @@ vi.mock('../../../hooks/useUiFeature', () => ({
   useUiFeature: (feature: string) =>
     feature === 'conversation-drafts' && mocks.isDraftsEnabled,
 }));
-vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
+vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
   useIsMobile: () => false,
 }));
 vi.mock(
@@ -174,6 +176,7 @@ describe('ConversationView drafts', () => {
   const renderView = (props: Partial<ViewProps> = {}) => {
     const view = render(
       <ConversationView {...defaults} onSend={onSend} {...props} />,
+      { wrapper: AttachmentCanvasProvider },
     );
     const rerenderWith = (next: Partial<ViewProps>) =>
       view.rerender(

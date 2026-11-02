@@ -53,6 +53,27 @@ The conversation input rendered on the new chat (landing) screen — before any 
 
 ---
 
+### Requirement: Edit-message input respects the keyboard shortcut preference
+
+The inline edit form rendered when the user edits a sent message (`EditMessageInput`) SHALL receive the value of `useKeyboardShortcutPreference` as its `sendOnEnter` prop and forward it to the inner `Input`, so the same send/newline rules apply while editing as in the main composer. `ConversationView` reads the preference and passes it to each `ConversationMessageItem` as `editSendOnEnter`.
+
+#### Scenario: Bare Enter inserts a newline while editing when preference is meta-enter
+- **GIVEN** the user has set `preference = 'meta-enter'`
+- **WHEN** the user edits a sent message and presses bare Enter
+- **THEN** a newline is inserted and the edited message is NOT submitted
+
+#### Scenario: Meta+Enter submits the edit when preference is meta-enter
+- **GIVEN** the user has set `preference = 'meta-enter'`
+- **WHEN** the user edits a sent message and presses ⌘+Enter (macOS) or Ctrl+Enter (Windows/Linux)
+- **THEN** the edited message is submitted
+
+#### Scenario: Enter submits the edit by default
+- **GIVEN** no preference has been stored in localStorage
+- **WHEN** the user edits a sent message and presses bare Enter
+- **THEN** the edited message is submitted
+
+---
+
 ### Requirement: Focus and cursor position retained after newline insertion
 
 When a newline-inserting key combination (Shift+Enter with `preference = 'enter'`, or bare Enter with `preference = 'meta-enter'`) is pressed, the `Input` component SHALL:

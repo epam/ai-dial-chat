@@ -17,6 +17,7 @@ import {
   TextRefinementField,
   useTextRefinement,
   type TextRefinementCallback,
+  useControlErrorAssociation,
 } from '@epam/ai-dial-chat-shared';
 import type { DialFile } from '@epam/ai-dial-react-file-manager';
 import {
@@ -29,8 +30,10 @@ import {
   ButtonVariant,
   CaptionText,
   DIAL_ICON_SIZE,
+  DIAL_KIT_ICON_STROKE,
   EditorThemes,
   ElementSize,
+  ErrorMessageNotification,
   ErrorText,
   GhostButton,
   GhostIconButton,
@@ -177,6 +180,12 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     instructions: initialValues?.instructions ?? '',
   });
   const instructionsId = useId();
+  const instructionsErrorId = useId();
+  useControlErrorAssociation(
+    () => document.getElementById(instructionsId),
+    instructionsErrorId,
+    Boolean(errors?.instructions),
+  );
   const refinementLock = useRef<AbortSignal | undefined>(undefined);
   const instructionsCapRef = useAvailableHeightCap<HTMLDivElement>({
     bottomGap: INSTRUCTIONS_EDITOR_BOTTOM_GAP,
@@ -362,7 +371,11 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   const helperTextClassName =
     typography.helperTextClassName ?? 'dial-tiny-semi-text';
   const removeIconClassName = typography.removeIconClassName;
-  const menuIconClassName = typography.menuIconClassName ?? 'text-secondary';
+  /* The Add menu renders in a portal outside the editor root, so its icons carry their own var. */
+  const menuIconCssVars = useMemo(
+    () => buildCssVars({ '--se-menu-icon': colors?.menuIcon }),
+    [colors?.menuIcon],
+  );
 
   const cssVars = buildCssVars({
     '--se-title-color': colors?.title,
@@ -371,6 +384,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     '--se-refine-error-text': colors?.refineErrorText,
     '--se-files-card-bg': colors?.filesCardBackground,
     '--se-files-card-border': colors?.filesCardBorder,
+    '--se-drop-overlay-icon': colors?.dropOverlayIcon,
   });
   const dialogColors = {
     footerBackground: colors?.dialogFooterBackground,
@@ -546,7 +560,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
   const buildAddMenuItems = useCallback(
     (targetFolderPath: string, pane: SkillFilesPane): DropdownItem[] => {
       const menuIcon = (Icon: TablerIcon) =>
-        renderIcon(Icon, menuIconClassName);
+        renderIcon(Icon, styles.menuIcon, undefined, menuIconCssVars);
       const items: DropdownItem[] = [];
       if (onCreateFolder) {
         items.push({
@@ -589,7 +603,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
       return items;
     },
     [
-      menuIconClassName,
+      menuIconCssVars,
       onCreateFolder,
       extractArchive,
       pickFromFileSystem,
@@ -809,12 +823,9 @@ export const SkillEditor: FC<SkillEditorProps> = ({
         <EntityEditor
           {...editorProps}
           metadata={
-            <div
-              role="status"
-              aria-label={t.loadingAriaLabel ?? 'Loading skill'}
-              className="flex flex-1 items-center justify-center p-8"
-            >
-              <Spinner />
+            /* The kit Spinner is the status region; a labelled wrapper would nest a second one. */
+            <div className="flex flex-1 items-center justify-center p-8">
+              <Spinner ariaLabel={t.loadingAriaLabel ?? 'Loading skill'} />
             </div>
           }
         />
@@ -828,16 +839,20 @@ export const SkillEditor: FC<SkillEditorProps> = ({
         <EntityEditor
           {...editorProps}
           metadata={
-            <div role="alert" className="flex flex-col items-center gap-4 p-8">
-              <ErrorText
-                text={
+            /* The kit error section message is an assertive `alert` live region, with Retry in its `action` slot. */
+            <div className="p-8">
+              <ErrorMessageNotification
+                message={
                   t.loadErrorMessage ??
                   "Couldn't load this skill. Please try again."
                 }
-              />
-              <PrimaryButton
-                label={t.retryLabel ?? 'Retry'}
-                onClick={onRetry}
+                iconStroke={DIAL_KIT_ICON_STROKE}
+                action={
+                  <PrimaryButton
+                    label={t.retryLabel ?? 'Retry'}
+                    onClick={onRetry}
+                  />
+                }
               />
             </div>
           }
@@ -933,7 +948,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
           </Suspense>
         </div>
         {errors?.instructions != null && (
-          <ErrorText text={errors.instructions} />
+          <ErrorText id={instructionsErrorId} text={errors.instructions} />
         )}
       </div>
     </TextRefinementField>
@@ -943,7 +958,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
     <div
       dir={dir}
       className={mergeClasses(
-        'relative flex min-h-0 flex-1 flex-col',
+        'relative flex min-h-0 min-w-0 flex-1 flex-col',
         SKILL_EDITOR_CLASS.root,
       )}
       style={cssVars}
@@ -952,6 +967,8 @@ export const SkillEditor: FC<SkillEditorProps> = ({
       <SkillFileDropOverlay
         isVisible={isSurfaceDragActive && !isUploadDialogOpen}
         labels={labels}
+        titleClassName={typography.dropOverlayTitleClassName}
+        subtitleClassName={typography.dropOverlaySubtitleClassName}
       />
 
       <EntityEditor
@@ -995,6 +1012,10 @@ export const SkillEditor: FC<SkillEditorProps> = ({
                 fields={METADATA_FIELDS}
                 isDescriptionRequired
                 isNameReadOnly={isNameReadOnly}
+                nameReadOnlyTooltip={
+                  t.nameReadOnlyTooltip ??
+                  "The skill name can't be changed after creation"
+                }
                 nameCaption={
                   errors?.name
                     ? undefined
@@ -1009,7 +1030,7 @@ export const SkillEditor: FC<SkillEditorProps> = ({
           ) : (
             <>
               {selectedNode?.kind === SkillFileNodeKind.File && (
-                <div className="flex min-h-0 flex-1 flex-col">
+                <div className="flex h-[max(320px,60dvh)] min-h-0 min-w-0 flex-none flex-col desktop:h-auto desktop:flex-1">
                   {supportingFileContent ?? (
                     <CaptionText
                       text={
@@ -1043,6 +1064,10 @@ export const SkillEditor: FC<SkillEditorProps> = ({
         rowCaptionClassName={typography.uploadRowCaptionClassName}
         labels={labels}
         dialogColors={dialogColors}
+        colors={{
+          invalidDropZoneBorder: colors?.uploadInvalidDropZoneBorder,
+          rowBorder: colors?.uploadRowBorder,
+        }}
       />
 
       <SkillCreateFolderDialog

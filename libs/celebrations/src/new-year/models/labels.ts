@@ -4,14 +4,12 @@ export interface NewYearLabels {
   penguinStarToastMessage?: string;
   /** Notification message of the gift-wrapping scene. */
   giftWrappingToastMessage?: string;
+  /** Notification message of the snowman delivery scene. */
+  snowmanDeliveryToastMessage?: string;
+  /** Notification message of the reindeer takeoff scene. */
+  reindeerTakeoffToastMessage?: string;
   /** Title of every scene notification. */
   toastTitle: string;
-  /** Notification message of the snow scene. */
-  snowToastMessage: string;
-  /** Notification message of the confetti scene. */
-  confettiToastMessage: string;
-  /** Notification message of the sleigh scene. */
-  sleighToastMessage: string;
   /** Accessible name of the gift trigger. */
   giftLabel: string;
 }

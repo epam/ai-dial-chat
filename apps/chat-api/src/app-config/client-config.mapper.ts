@@ -1,9 +1,19 @@
+import {
+  DEFAULT_PROJECT_CONTEXT_ALLOWED_EXTENSIONS,
+  DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES,
+  DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES,
+} from '../projects/constants/project-context.constants';
 import { normalizeAnnouncements } from './announcements.normalizer';
 import type { ApplicationVisualizerDto } from './dto/application-visualizer.dto';
+import type {
+  CelebrationDeliveryDto,
+  CelebrationExternalSceneDto,
+} from './dto/celebration-delivery.dto';
 import type { ClientConfigDto } from './dto/client-config-response.dto';
 import { normalizeEnabledUiFeatures } from './enabled-ui-features.normalizer';
 import { sanitizeAnnouncementHtml, sanitizeFooterHtml } from './html-sanitizer';
 import { toNullableText } from './text.util';
+import { CelebrationDeliveryMode } from './types/celebration-delivery';
 
 const DEFAULT_TRANSCRIBE_SIZE_LIMIT_BYTES = 5 * 1024 * 1024;
 const DEFAULT_MAX_ATTACHMENT_FILE_SIZE_BYTES = 536_870_912;
@@ -22,13 +32,18 @@ const DEFAULT_PUBLICATION_FILTER_SOURCES: readonly string[] = [
 
 /**
  * The `config` fields of the client-config response that are derived from a
- * single registry key. `appVersion` (resolved ahead of the loop) and
- * `aiTextRefinementAvailable` (read from `ConfigService`) are assembled by
+ * single registry key. `appVersion` (resolved ahead of the loop),
+ * `aiTextRefinementAvailable` (read from `ConfigService`) and
+ * `catalogCreationPermissions` (evaluated from the server-only
+ * `CATALOG_CREATION_ROLES`, which is not a registry key) are assembled by
  * `AppConfigService` itself. `Required` keeps `allowedConnectOrigins`, which is
  * optional in the DTO, always present, as the response has always emitted it.
  */
 export type MappedClientConfig = Required<
-  Omit<ClientConfigDto, 'aiTextRefinementAvailable' | 'appVersion'>
+  Omit<
+    ClientConfigDto,
+    'aiTextRefinementAvailable' | 'appVersion' | 'catalogCreationPermissions'
+  >
 >;
 
 /**
@@ -45,6 +60,8 @@ export interface ClientConfigMappingInput {
 
 export interface ClientConfigMapping {
   readonly field: keyof MappedClientConfig;
+  /** The part of an object field the entry owns, when several keys share one field. */
+  readonly part?: string;
   readonly apply: (
     config: MappedClientConfig,
     input: ClientConfigMappingInput,
@@ -63,6 +80,43 @@ const defineMapping = <K extends keyof MappedClientConfig>(
   },
 });
 
+/* The four ui.celebrationDelivery.* keys build one response object; each
+ * entry replaces only its own part, so key order does not matter. */
+const defineCelebrationDeliveryMapping = <
+  K extends keyof CelebrationDeliveryDto,
+>(
+  part: K,
+  convert: (input: ClientConfigMappingInput) => CelebrationDeliveryDto[K],
+): ClientConfigMapping => ({
+  field: 'celebrationDelivery',
+  part,
+  apply: (config, input) => {
+    config.celebrationDelivery = {
+      ...config.celebrationDelivery,
+      [part]: convert(input),
+    };
+  },
+});
+
+const isStringList = (value: unknown): value is string[] =>
+  Array.isArray(value) && value.every((entry) => typeof entry === 'string');
+
+/* The env schema already validated each pair, so a split always yields two parts. */
+const toExternalScenes = (value: unknown): CelebrationExternalSceneDto[] =>
+  isStringList(value)
+    ? value.map((pair) => {
+        const [eventId, sceneId] = pair.split('/');
+        return { eventId, sceneId };
+      })
+    : [];
+
+const createDefaultCelebrationDelivery = (): CelebrationDeliveryDto => ({
+  mode: CelebrationDeliveryMode.Bundled,
+  revision: '0',
+  externalScenes: [],
+  externalEvents: [],
+});
+
 const toNullableString = (value: unknown): string | null =>
   typeof value === 'string' ? value : null;
 
@@ -73,6 +127,9 @@ const isApplicationVisualizerRegistry = (
   value: unknown,
 ): value is Record<string, ApplicationVisualizerDto> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const isPositiveNumber = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value) && value > 0;
 
 const isCustomVariables = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -112,6 +169,12 @@ export const createDefaultClientConfig = (): MappedClientConfig => ({
   usageLimitsWarningThresholdPercent:
     DEFAULT_USAGE_LIMITS_WARNING_THRESHOLD_PERCENT,
   celebrationsEnabledByDefault: true,
+  celebrationDelivery: createDefaultCelebrationDelivery(),
+  projectContextFileMaxBytes: DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES,
+  projectContextTotalMaxBytes: DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES,
+  projectContextAllowedExtensions: [
+    ...DEFAULT_PROJECT_CONTEXT_ALLOWED_EXTENSIONS,
+  ],
 });
 
 /**
@@ -295,6 +358,58 @@ export const CLIENT_CONFIG_MAPPINGS: ReadonlyMap<string, ClientConfigMapping> =
       defineMapping(
         'celebrationsEnabledByDefault',
         ({ resolved }) => resolved !== false,
+      ),
+    ],
+    [
+      'ui.celebrationDelivery.mode',
+      defineCelebrationDeliveryMapping('mode', ({ resolved }) =>
+        resolved === CelebrationDeliveryMode.PreferExternal
+          ? CelebrationDeliveryMode.PreferExternal
+          : CelebrationDeliveryMode.Bundled,
+      ),
+    ],
+    [
+      'ui.celebrationDelivery.revision',
+      defineCelebrationDeliveryMapping('revision', ({ resolved }) =>
+        typeof resolved === 'string' && resolved.length > 0 ? resolved : '0',
+      ),
+    ],
+    [
+      'ui.celebrationDelivery.externalScenes',
+      defineCelebrationDeliveryMapping('externalScenes', ({ resolved }) =>
+        toExternalScenes(resolved),
+      ),
+    ],
+    [
+      'ui.celebrationDelivery.externalEvents',
+      defineCelebrationDeliveryMapping('externalEvents', ({ resolved }) =>
+        isStringList(resolved) ? [...resolved] : [],
+      ),
+    ],
+    [
+      'projects.contextFileMaxBytes',
+      defineMapping('projectContextFileMaxBytes', ({ resolved }) =>
+        isPositiveNumber(resolved)
+          ? resolved
+          : DEFAULT_PROJECT_CONTEXT_FILE_MAX_BYTES,
+      ),
+    ],
+    [
+      'projects.contextTotalMaxBytes',
+      defineMapping('projectContextTotalMaxBytes', ({ resolved }) =>
+        isPositiveNumber(resolved)
+          ? resolved
+          : DEFAULT_PROJECT_CONTEXT_TOTAL_MAX_BYTES,
+      ),
+    ],
+    [
+      'projects.contextAllowedExtensions',
+      defineMapping('projectContextAllowedExtensions', ({ resolved }) =>
+        Array.isArray(resolved) &&
+        resolved.length > 0 &&
+        resolved.every((entry) => typeof entry === 'string')
+          ? [...resolved]
+          : [...DEFAULT_PROJECT_CONTEXT_ALLOWED_EXTENSIONS],
       ),
     ],
   ]);

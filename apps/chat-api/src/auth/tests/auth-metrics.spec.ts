@@ -32,6 +32,7 @@ import type { SessionGuard as SessionGuardClass } from '../session/session.guard
 import type { SessionService } from '../session/session.service';
 import type { SessionPayload, SessionUser } from '../session/session.types';
 import type { AuthStrategy } from '../strategies/auth-strategy.interface';
+import { UserRolesService } from '../user-roles.service';
 
 /*
  * `MetricData` (the element type of `ScopeMetrics.metrics[number].dataPoints`)
@@ -152,7 +153,9 @@ describe('auth and session metrics', () => {
         getUserBucket: vi.fn().mockResolvedValue({ bucket: 'bucket-1' }),
       } as unknown as BucketService,
       new AdminRoleService(
-        (overrides.registry ?? {}) as ProviderRegistryService,
+        new UserRolesService(
+          (overrides.registry ?? {}) as ProviderRegistryService,
+        ),
       ),
     );
 

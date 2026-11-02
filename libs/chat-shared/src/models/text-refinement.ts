@@ -2,7 +2,11 @@
 export interface TextRefinementLabels {
   /** Refinement copy. Defaults to 'Refine with AI'. */
   refineWithAiLabel?: string;
-  /** Refinement copy. Defaults to 'Undo'. */
+  /** Label of the action while a request is pending. Defaults to 'Refining'. */
+  refineRefiningLabel?: string;
+  /** Label of the action that refines the original draft again after a result. Defaults to 'Regenerate'. */
+  refineRegenerateLabel?: string;
+  /** Label of the action that restores the pre-refine draft. Defaults to 'Restore original'. */
   refineUndoLabel?: string;
   /** Refinement copy. Defaults to 'Could not refine this text. Please try again.'. */
   refineErrorLabel?: string;

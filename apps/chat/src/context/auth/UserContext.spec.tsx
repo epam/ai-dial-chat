@@ -10,6 +10,7 @@ import {
   UnauthorizedError,
 } from '../../server-api/base';
 import { AuthStatus } from '../../types/auth-status';
+import { rememberSignedOut } from '../../utils/signed-out-marker';
 import { UserProvider, useUser } from './UserContext';
 
 const mockProfile: UserProfileDto = {
@@ -29,6 +30,7 @@ describe('UserContext', () => {
     setCsrfToken(null);
     vi.restoreAllMocks();
     localStorage.clear();
+    sessionStorage.clear();
   });
 
   const seedCatalogPreferences = () => {
@@ -57,6 +59,37 @@ describe('UserContext', () => {
       expect(result.current.status).toBe(AuthStatus.Authenticated),
     );
     expect(result.current.user).toEqual(mockProfile);
+  });
+
+  it('load right after logout: starts unauthenticated without probing /auth/me', async () => {
+    setCsrfToken('stale-csrf-token');
+    rememberSignedOut();
+    const getMeSpy = vi.spyOn(authApi, 'getMe').mockResolvedValue(mockProfile);
+
+    const { result } = renderHook(() => useUser(), { wrapper });
+
+    await waitFor(() =>
+      expect(result.current.status).toBe(AuthStatus.Unauthenticated),
+    );
+    expect(getMeSpy).not.toHaveBeenCalled();
+    expect(result.current.user).toBeNull();
+    expect(getCsrfToken()).toBeNull();
+  });
+
+  it('a later load after the post-logout one probes /auth/me again', async () => {
+    rememberSignedOut();
+    vi.spyOn(authApi, 'getMe').mockResolvedValue(mockProfile);
+    const view = renderHook(() => useUser(), { wrapper });
+    await waitFor(() =>
+      expect(view.result.current.status).toBe(AuthStatus.Unauthenticated),
+    );
+    view.unmount();
+
+    const { result } = renderHook(() => useUser(), { wrapper });
+
+    await waitFor(() =>
+      expect(result.current.status).toBe(AuthStatus.Authenticated),
+    );
   });
 
   it('401 path: status becomes unauthenticated and user is null', async () => {

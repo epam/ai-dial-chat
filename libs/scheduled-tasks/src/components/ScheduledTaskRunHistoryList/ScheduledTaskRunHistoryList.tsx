@@ -8,9 +8,12 @@ import {
   SkeletonVariant,
   Spinner,
   Tooltip,
+  LiveRegion,
+  LiveRegionElement,
+  LiveRegionPoliteness,
 } from '@epam/ai-dial-ui-kit';
 import { IconAlertTriangle, IconCheck, IconCircleX } from '@tabler/icons-react';
-import { type CSSProperties, type FC, type KeyboardEvent } from 'react';
+import { type CSSProperties, type FC } from 'react';
 import type { ScheduledTaskRunHistoryListProps } from '../../models/scheduled-task-run-history-list-props';
 import type { ScheduledTaskRunItem } from '../../models/scheduled-task-run-item';
 import { ScheduledTaskRunStatus } from '../../types/scheduled-task-run-status';
@@ -91,6 +94,7 @@ export const ScheduledTaskRunHistoryList: FC<
     '--strhl-missed-icon': colors?.missedIconColor,
     '--strhl-subtitle-text': colors?.subtitleTextColor,
     '--strhl-current-run-bg': colors?.currentRunBackground,
+    '--strhl-current-run-subtitle-text': colors?.currentRunSubtitleTextColor,
     '--strhl-unread-dot': colors?.unreadDotColor,
     '--strhl-row-hover-bg': listStyles?.rowHoverBackground,
     '--strhl-row-focus-bg': listStyles?.rowFocusBackground,
@@ -129,36 +133,20 @@ export const ScheduledTaskRunHistoryList: FC<
      */
     const isClickable = Boolean(run.conversationId) && Boolean(onRunClick);
 
-    return (
-      <li
-        key={run.id}
-        {...(isClickable
-          ? {
-              role: 'button',
-              tabIndex: 0,
-              onClick: () => onRunClick?.(run),
-              onKeyDown: (event: KeyboardEvent) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault();
-                  onRunClick?.(run);
-                }
-              },
-            }
-          : {})}
-        aria-label={accessibleName}
-        aria-current={isCurrent ? 'true' : undefined}
-        className={mergeClasses(
-          /*
-           * `--strhl-row-bleed` (unset: 0) pulls the row's highlight pill out
-           * into the host's padding, so its icon lines up with the content
-           * edge instead of sitting one pill-padding further in.
-           */
-          '-mx-(--strhl-row-bleed,0px) flex min-h-[var(--strhl-row-min-height,32px)] max-w-[328px] items-center justify-between gap-2 rounded-full px-3',
-          isCurrent && styles.currentRun,
-          isClickable && 'cursor-pointer',
-          isClickable && styles.interactiveRow,
-        )}
-      >
+    const rowClassName = mergeClasses(
+      /*
+       * `--strhl-row-bleed` (unset: 0) pulls the row's highlight pill out
+       * into the host's padding, so its icon lines up with the content
+       * edge instead of sitting one pill-padding further in.
+       */
+      '-mx-(--strhl-row-bleed,0px) flex min-h-(--strhl-row-min-height,32px) max-w-[328px] items-center justify-between gap-2 rounded-full px-3',
+      isCurrent && styles.currentRun,
+      isClickable && 'w-full cursor-pointer text-start',
+      isClickable && styles.interactiveRow,
+    );
+
+    const rowContent = (
+      <>
         <span className="flex min-w-0 items-center gap-1">
           {errorText ? (
             <Tooltip
@@ -216,6 +204,36 @@ export const ScheduledTaskRunHistoryList: FC<
             />
           )}
         </span>
+      </>
+    );
+
+    /* A `role="button"` on the `<li>` would replace its listitem role, which
+       leaves the list with children it may not own — so a clickable row nests
+       a native button inside the item instead. */
+    if (isClickable) {
+      return (
+        <li key={run.id}>
+          <button
+            type="button"
+            aria-label={accessibleName}
+            aria-current={isCurrent ? 'true' : undefined}
+            className={rowClassName}
+            onClick={() => onRunClick?.(run)}
+          >
+            {rowContent}
+          </button>
+        </li>
+      );
+    }
+
+    return (
+      <li
+        key={run.id}
+        aria-label={accessibleName}
+        aria-current={isCurrent ? 'true' : undefined}
+        className={rowClassName}
+      >
+        {rowContent}
       </li>
     );
   };
@@ -262,7 +280,7 @@ export const ScheduledTaskRunHistoryList: FC<
     return (
       <div style={cssVars} className="flex flex-col items-start gap-3">
         <p
-          role="alert"
+          role="status"
           className={mergeClasses(subtitleClassName, styles.subtitleText)}
         >
           {labels.errorLabel}
@@ -285,31 +303,38 @@ export const ScheduledTaskRunHistoryList: FC<
   }
 
   return (
-    <ul
-      style={
-        {
-          ...cssVars,
-          '--strhl-row-min-height': listStyles?.rowMinHeight,
-        } as CSSProperties
-      }
-      aria-label={labels.historyTitle}
-      className="flex flex-col gap-0.5"
-    >
-      {items.map(renderRow)}
-      {isLoadingMore && renderSkeletons(skeletonCount)}
-      {error ? (
-        <li className="flex flex-col items-start gap-3 px-5 py-2">
-          <p
-            role="alert"
-            className={mergeClasses(subtitleClassName, styles.subtitleText)}
-          >
-            {labels.errorLabel}
-          </p>
-          <GhostButton label={labels.retryLabel} onClick={onRetry} />
-        </li>
-      ) : (
-        footer
-      )}
-    </ul>
+    <>
+      <ul
+        style={
+          {
+            ...cssVars,
+            '--strhl-row-min-height': listStyles?.rowMinHeight,
+          } as CSSProperties
+        }
+        aria-label={labels.historyTitle}
+        className="flex flex-col gap-0.5"
+      >
+        {items.map(renderRow)}
+        {isLoadingMore && renderSkeletons(skeletonCount)}
+        {error ? (
+          <li className="flex flex-col items-start gap-3 px-5 py-2">
+            <p className={mergeClasses(subtitleClassName, styles.subtitleText)}>
+              {labels.errorLabel}
+            </p>
+            <GhostButton label={labels.retryLabel} onClick={onRetry} />
+          </li>
+        ) : (
+          footer
+        )}
+      </ul>
+      {/* The error row mounts with the failure; this region is mounted with the list so the failure is announced. */}
+      <LiveRegion
+        politeness={LiveRegionPoliteness.Assertive}
+        visuallyHidden
+        as={LiveRegionElement.Span}
+      >
+        {error ? labels.errorLabel : ''}
+      </LiveRegion>
+    </>
   );
 };

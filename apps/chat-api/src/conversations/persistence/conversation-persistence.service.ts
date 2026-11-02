@@ -6,6 +6,7 @@ import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../../common/utils/uri';
 import { DialClientService } from '../../dial/dial-client.service';
 import { ConversationResponseDto } from '../../openapi/openapi-response.dto';
+import { isProjectConversationLocator } from '../../projects/utils/project-conversation-id.util';
 import { ConversationNamingService } from '../conversation-naming.service';
 import {
   CONDITIONAL_WRITE_ATTEMPTS,
@@ -15,6 +16,7 @@ import {
   type ConversationPersistencePort,
   type VersionedConversation,
 } from '../conversation-persistence.port';
+import { ConversationTitleCacheService } from '../listing/conversation-title-cache.service';
 import {
   getConversationTitleFromName,
   isApplicationDeploymentPath,
@@ -22,6 +24,7 @@ import {
   resolveConversationLocation,
   resolveListDisplayTitle,
 } from '../utils/conversation.utils';
+import { ProjectConversationStore } from './project-conversation.store';
 
 /**
  * Keeps the display title LLM naming already stored: a client body without
@@ -101,6 +104,13 @@ export const runConditionalUpdate = async (
   return { status: ConditionalUpdateStatus.Conflict };
 };
 
+/**
+ * Reads and writes conversations in DIAL Core. A project conversation
+ * locator (`projects/{bucket}/{path}/conversations/{name}`) is routed to
+ * {@link ProjectConversationStore} at the top of every method, with the
+ * `bucket` argument ignored: the locator names its own bucket, which for a
+ * shared or organization project is not the session bucket.
+ */
 @Injectable()
 export class ConversationPersistenceService implements ConversationPersistencePort {
   private readonly logger = new Logger(ConversationPersistenceService.name);
@@ -109,6 +119,8 @@ export class ConversationPersistenceService implements ConversationPersistencePo
     private readonly dialClient: DialClientService,
     @Inject(forwardRef(() => ConversationNamingService))
     private readonly conversationNamingService: ConversationNamingService,
+    private readonly titleCache: ConversationTitleCacheService,
+    private readonly projectStore: ProjectConversationStore,
   ) {}
 
   async getConversation(
@@ -140,6 +152,12 @@ export class ConversationPersistenceService implements ConversationPersistencePo
     conversation: ConversationResponseDto;
     stored: VersionedConversation;
   }> {
+    if (isProjectConversationLocator(conversationPath)) {
+      return this.projectStore.getConversationWithStoredVersion(
+        conversationPath,
+        token,
+      );
+    }
     try {
       const {
         conversation: storedConversation,
@@ -186,22 +204,29 @@ export class ConversationPersistenceService implements ConversationPersistencePo
     subPath: string;
     etag: string | null;
   }> {
+    if (isProjectConversationLocator(conversationPath)) {
+      return this.projectStore.getStoredConversation(conversationPath, token);
+    }
     const { bucket, subPath } = resolveConversationLocation(
       conversationPath,
       sessionBucket,
     );
 
+    const encodedPath = encodeDialResourcePath(subPath);
+    const cacheRead = this.titleCache.reader(
+      token,
+      `conversations/${bucket}/${encodedPath}`,
+    );
     const { data, error, response } =
-      (await this.dialClient.client.getConversation(
-        bucket,
-        encodeDialResourcePath(subPath),
-        { headers: getBearerAuthHeaders(token) },
-      )) as {
+      (await this.dialClient.client.getConversation(bucket, encodedPath, {
+        headers: getBearerAuthHeaders(token),
+      })) as {
         data?: unknown;
         error?: unknown;
         response: globalThis.Response;
       };
     if (error != null || !data) {
+      if (response.status === 404) cacheRead();
       this.logger.debug(
         `getStoredConversation rejected — bucket: ${bucket}, subPath: ${subPath}, status: ${response.status}, error: ${JSON.stringify(error)}`,
       );
@@ -213,6 +238,7 @@ export class ConversationPersistenceService implements ConversationPersistencePo
       );
     }
 
+    cacheRead(data as ConversationResponseDto);
     return {
       conversation: data as ConversationResponseDto,
       subPath,
@@ -226,6 +252,20 @@ export class ConversationPersistenceService implements ConversationPersistencePo
     bucket: string,
     conversation: ConversationResponseDto,
   ): Promise<ConversationResponseDto> {
+    if (isProjectConversationLocator(conversationPath)) {
+      const saved = await this.projectStore.saveConversation(
+        conversationPath,
+        token,
+        await this.preserveLlmDisplayName(
+          conversationPath,
+          token,
+          bucket,
+          conversation,
+        ),
+      );
+      this.scheduleNaming(conversationPath, token, bucket, saved);
+      return saved;
+    }
     const bodyToSave = await this.preserveLlmDisplayName(
       conversationPath,
       token,
@@ -253,14 +293,12 @@ export class ConversationPersistenceService implements ConversationPersistencePo
         );
       }
       const saved = { ...data, ...bodyToSave } as ConversationResponseDto;
-      if (saved.llmNamingDone !== true) {
-        this.conversationNamingService.maybeRenameAfterFirstReply(
-          conversationPath,
-          token,
-          bucket,
-          saved,
-        );
-      }
+      this.titleCache.set(
+        token,
+        `conversations/${bucket}/${encodeDialResourcePath(conversationPath)}`,
+        saved,
+      );
+      this.scheduleNaming(conversationPath, token, bucket, saved);
       return saved;
     } catch (error) {
       this.logger.error('DIAL Core rejected saveConversation', error);
@@ -284,21 +322,33 @@ export class ConversationPersistenceService implements ConversationPersistencePo
     token: string,
     bucket: string,
   ): Promise<VersionedConversation | null> {
+    if (isProjectConversationLocator(conversationPath)) {
+      return this.projectStore.readConversationWithEtag(
+        conversationPath,
+        token,
+      );
+    }
     const { bucket: resolvedBucket, subPath } = resolveConversationLocation(
       qualifySessionConversationPath(conversationPath, bucket),
       bucket,
     );
+    const encodedPath = encodeDialResourcePath(subPath);
+    const resourceId = `conversations/${resolvedBucket}/${encodedPath}`;
+    const cacheRead = this.titleCache.reader(token, resourceId);
     const { data, error, response } =
       (await this.dialClient.client.getConversation(
         resolvedBucket,
-        encodeDialResourcePath(subPath),
+        encodedPath,
         { headers: getBearerAuthHeaders(token) },
       )) as {
         data?: unknown;
         error?: unknown;
         response: globalThis.Response;
       };
-    if (response.status === 404) return null;
+    if (response.status === 404) {
+      cacheRead();
+      return null;
+    }
     if (error != null || !data) {
       return handleDialSdkError(
         error,
@@ -307,6 +357,7 @@ export class ConversationPersistenceService implements ConversationPersistencePo
         response,
       );
     }
+    cacheRead(data as ConversationResponseDto);
     return {
       conversation: data as ConversationResponseDto,
       etag: response.headers.get('etag'),
@@ -329,6 +380,23 @@ export class ConversationPersistenceService implements ConversationPersistencePo
     conversation: ConversationResponseDto,
     etag: string,
   ): Promise<ConditionalSaveResult> {
+    if (isProjectConversationLocator(conversationPath)) {
+      const result = await this.projectStore.saveConversationIfMatch(
+        conversationPath,
+        token,
+        conversation,
+        etag,
+      );
+      if (result.isSaved) {
+        this.scheduleNaming(
+          conversationPath,
+          token,
+          bucket,
+          result.conversation,
+        );
+      }
+      return result;
+    }
     const { bucket: resolvedBucket, subPath } = resolveConversationLocation(
       qualifySessionConversationPath(conversationPath, bucket),
       bucket,
@@ -355,14 +423,12 @@ export class ConversationPersistenceService implements ConversationPersistencePo
       );
     }
     const saved = { ...data, ...conversation } as ConversationResponseDto;
-    if (saved.llmNamingDone !== true) {
-      this.conversationNamingService.maybeRenameAfterFirstReply(
-        conversationPath,
-        token,
-        bucket,
-        saved,
-      );
-    }
+    this.titleCache.set(
+      token,
+      `conversations/${resolvedBucket}/${encodeDialResourcePath(subPath)}`,
+      saved,
+    );
+    this.scheduleNaming(conversationPath, token, bucket, saved);
     return { isSaved: true, conversation: saved };
   }
 
@@ -392,6 +458,22 @@ export class ConversationPersistenceService implements ConversationPersistencePo
       update,
       initial,
     );
+  }
+
+  private scheduleNaming(
+    conversationPath: string,
+    token: string,
+    bucket: string,
+    saved: ConversationResponseDto,
+  ): void {
+    if (saved.llmNamingDone !== true) {
+      this.conversationNamingService.maybeRenameAfterFirstReply(
+        conversationPath,
+        token,
+        bucket,
+        saved,
+      );
+    }
   }
 
   /**

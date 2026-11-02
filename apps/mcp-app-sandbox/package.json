@@ -79,23 +79,26 @@
           }
         }
       }
-    }
+    },
+    "tags": [
+      "type:fixture"
+    ]
   },
   "dependencies": {
-    "@nestjs/common": "^11.0.0",
+    "@nestjs/common": "^11.2.8",
     "@nestjs/config": "^4.0.4",
-    "@nestjs/core": "^11.0.0",
-    "@nestjs/platform-express": "^11.2.6",
+    "@nestjs/core": "^11.2.8",
+    "@nestjs/platform-express": "^11.2.8",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
-    "helmet": "^8.1.0",
+    "helmet": "^8.3.0",
     "multer": "2.5.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.0",
-    "tslib": "^2.3.0"
+    "tslib": "^2.9.1"
   },
   "devDependencies": {
-    "@nestjs/testing": "^11.0.0"
+    "@nestjs/testing": "^11.2.8"
   },
   "overrides": {
     "multer": "2.5.0",

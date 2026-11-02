@@ -7,6 +7,7 @@ import {
   ScheduledTasksSortKey,
   type ScheduledTasksStyles,
 } from '@epam/ai-dial-scheduled-tasks';
+import { LiveRegion, LiveRegionElement } from '@epam/ai-dial-ui-kit';
 import {
   memo,
   useCallback,
@@ -18,6 +19,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
+import ScheduledTasksLimitedAccessBanner from '../../components/ScheduledTasksLimitedAccessBanner/ScheduledTasksLimitedAccessBanner';
 import ScheduledTasksLoginBanner, {
   ScheduledTasksLoginBannerState,
 } from '../../components/ScheduledTasksLoginBanner/ScheduledTasksLoginBanner';
@@ -36,6 +38,7 @@ import { ROUTES } from '../../types/routes';
 import { UserConfigStatus } from '../../types/user-config-status';
 import { mapScheduledTaskDtosToItems } from '../../utils/map-scheduled-task-dto';
 import { OFFLINE_CREDENTIALS_LOGIN_ANNOUNCEMENT_KEYS } from '../../utils/offline-credentials-announcements';
+import { isSchedulerConsentMissing } from '../../utils/scheduler-consent';
 import NotFoundPage from '../NotFound/NotFound';
 
 interface NavigationState {
@@ -119,6 +122,7 @@ const ScheduledTasksPage: FC = () => {
   const {
     status: credentialsStatus,
     connect,
+    schedulerServiceConsent,
     refetch: refetchCredentials,
   } = useOfflineCredentialsGate();
   const { isLoggingIn, loginOutcome, logIn } = useOfflineCredentialsAuth({
@@ -166,6 +170,14 @@ const ScheduledTasksPage: FC = () => {
     status: credentialsStatus,
   });
 
+  /*
+   * Consent is evaluated before the login state: with the scheduler service
+   * consent missing, neither logging in nor logging out can restore it, so
+   * the create action withdraws and the limited-access banner replaces the
+   * login banner. `unknown` (a failed consent read) fails open.
+   */
+  const isLimitedAccess = isSchedulerConsentMissing(schedulerServiceConsent);
+
   const labels = useMemo(
     () => ({
       title: t(ScheduledTasksI18nKeys.PageTitle),
@@ -198,7 +210,7 @@ const ScheduledTasksPage: FC = () => {
       noResultsLabel: t(ScheduledTasksI18nKeys.ListNoResultsLabel),
       noResultsDescription: t(BasicI18nKeys.NoResultsDescription),
       errorLabel: t(ScheduledTasksI18nKeys.ListErrorLabel),
-      retryLabel: t(ScheduledTasksI18nKeys.ListRetryLabel),
+      retryLabel: t(ButtonsI18nKeys.Retry),
       loadingMoreLabel: t(ScheduledTasksI18nKeys.ListLoadingMoreLabel),
       loadMoreErrorLabel: t(ScheduledTasksI18nKeys.ListLoadMoreErrorLabel),
       cardLabels: {
@@ -223,52 +235,76 @@ const ScheduledTasksPage: FC = () => {
     return <NotFoundPage />;
   }
 
+  /* No banner has visible content (the connected/checking/error gate
+   * states): the login banner would render only its sr-only status span,
+   * and passing it into the banner slot keeps that slot as an in-flow flex
+   * child that adds a gap between the toolbar and the content, so the
+   * hidden banner's live region renders at page level instead, outside the
+   * lib's layout entirely — while a visible banner renders, its own
+   * aria-live region carries the announcements. The page-level span stays
+   * mounted (empty while the banner owns announcements) because a live
+   * region that mounts in the same render as its text is announced
+   * unreliably. */
+  const isBannerSlotEmpty = !isLimitedAccess && bannerState == null;
+
   return (
-    <ScheduledTasks
-      labels={labels}
-      styles={PAGE_STYLES}
-      onCreateClick={handleCreateClick}
-      searchQuery={searchQuery}
-      onSearchQueryChange={setSearchQuery}
-      sortKey={sortKey}
-      onSortChange={setSortKey}
-      items={items}
-      isLoading={isLoading}
-      error={error}
-      onRetry={refetch}
-      hasMore={hasMore}
-      isLoadingMore={isLoadingMore}
-      loadMoreError={loadMoreError}
-      onLoadMore={loadMore}
-      onRetryLoadMore={retryLoadMore}
-      onCardClick={handleCardClick}
-      banner={
-        <ScheduledTasksLoginBanner
-          state={bannerState}
-          title={t(ScheduledTasksI18nKeys.OfflineCredentialsBannerTitle)}
-          body={t(ScheduledTasksI18nKeys.OfflineCredentialsBannerBody)}
-          loginButtonLabel={t(ButtonsI18nKeys.LogIn)}
-          retryButtonLabel={t(ButtonsI18nKeys.Retry)}
-          loggingInLabel={t(
-            ScheduledTasksI18nKeys.OfflineCredentialsBannerLoggingInLabel,
-          )}
-          popupBlockedMessage={t(
-            ScheduledTasksI18nKeys.OfflineCredentialsBannerPopupBlockedMessage,
-          )}
-          cancelledMessage={t(
-            ScheduledTasksI18nKeys.OfflineCredentialsBannerCancelledMessage,
-          )}
-          timeoutMessage={t(
-            ScheduledTasksI18nKeys.OfflineCredentialsBannerTimeoutMessage,
-          )}
-          failedMessage={t(
-            ScheduledTasksI18nKeys.OfflineCredentialsBannerFailedMessage,
-          )}
-          liveAnnouncement={liveAnnouncement}
-          onLogIn={connect ? logIn : undefined}
-        />
-      }
-    />
+    <>
+      <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
+        {isBannerSlotEmpty ? liveAnnouncement : ''}
+      </LiveRegion>
+      <ScheduledTasks
+        labels={labels}
+        styles={PAGE_STYLES}
+        onCreateClick={isLimitedAccess ? undefined : handleCreateClick}
+        searchQuery={searchQuery}
+        onSearchQueryChange={setSearchQuery}
+        sortKey={sortKey}
+        onSortChange={setSortKey}
+        items={items}
+        isLoading={isLoading}
+        error={error}
+        onRetry={refetch}
+        hasMore={hasMore}
+        isLoadingMore={isLoadingMore}
+        loadMoreError={loadMoreError}
+        onLoadMore={loadMore}
+        onRetryLoadMore={retryLoadMore}
+        onCardClick={handleCardClick}
+        banner={
+          isLimitedAccess ? (
+            <ScheduledTasksLimitedAccessBanner
+              title={t(ScheduledTasksI18nKeys.LimitedAccessBannerTitle)}
+              body={t(ScheduledTasksI18nKeys.LimitedAccessBannerBody)}
+            />
+          ) : bannerState != null ? (
+            <ScheduledTasksLoginBanner
+              state={bannerState}
+              title={t(ScheduledTasksI18nKeys.OfflineCredentialsBannerTitle)}
+              body={t(ScheduledTasksI18nKeys.OfflineCredentialsBannerBody)}
+              loginButtonLabel={t(ButtonsI18nKeys.LogIn)}
+              retryButtonLabel={t(ButtonsI18nKeys.Retry)}
+              loggingInLabel={t(
+                ScheduledTasksI18nKeys.OfflineCredentialsBannerLoggingInLabel,
+              )}
+              popupBlockedMessage={t(
+                ScheduledTasksI18nKeys.OfflineCredentialsBannerPopupBlockedMessage,
+              )}
+              cancelledMessage={t(
+                ScheduledTasksI18nKeys.OfflineCredentialsBannerCancelledMessage,
+              )}
+              timeoutMessage={t(
+                ScheduledTasksI18nKeys.OfflineCredentialsBannerTimeoutMessage,
+              )}
+              failedMessage={t(
+                ScheduledTasksI18nKeys.OfflineCredentialsBannerFailedMessage,
+              )}
+              liveAnnouncement={liveAnnouncement}
+              onLogIn={connect ? logIn : undefined}
+            />
+          ) : undefined
+        }
+      />
+    </>
   );
 };
 

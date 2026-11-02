@@ -28,20 +28,20 @@ const apiError = (body: unknown, status = 500) => ({
   },
 });
 
-beforeEach(() => {
-  vi.clearAllMocks();
-  vi.spyOn(console, 'error').mockImplementation(() => undefined);
-  setOnLine(true);
-  vi.mocked(useNotification).mockReturnValue(
-    createNotificationContextValue(mockShowNotification),
-  );
-});
-
-afterEach(() => {
-  vi.restoreAllMocks();
-});
-
 describe('usePublishErrorNotification', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    setOnLine(true);
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(mockShowNotification),
+    );
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('shows a connection-specific error notification without a request ID while offline', async () => {
     setOnLine(false);
     const { result } = renderHook(() => usePublishErrorNotification());

@@ -123,28 +123,49 @@ describe('runtime metrics', () => {
     const finishAttach = trackSseSubscription(
       SseSubscriptionKind.GenerationAttach,
     );
+    const finishTitles = trackSseSubscription(
+      SseSubscriptionKind.ConversationTitles,
+    );
+    const finishProjectsWatch = trackSseSubscription(
+      SseSubscriptionKind.ProjectsWatch,
+    );
     finishOperations.push(
       finishClient,
       finishOtherClient,
       finishWatch,
       finishAttach,
+      finishTitles,
+      finishProjectsWatch,
     );
 
     expect(await collectValues('dial.chat.sse.active')).toEqual([
       { value: 2, attributes: { kind: SseSubscriptionKind.ClientChannel } },
       { value: 1, attributes: { kind: SseSubscriptionKind.ConversationWatch } },
       { value: 1, attributes: { kind: SseSubscriptionKind.GenerationAttach } },
+      {
+        value: 1,
+        attributes: { kind: SseSubscriptionKind.ConversationTitles },
+      },
+      { value: 1, attributes: { kind: SseSubscriptionKind.ProjectsWatch } },
     ]);
 
     finishClient();
     finishClient();
     finishWatch();
     finishAttach();
+    finishTitles();
+    finishTitles();
+    finishProjectsWatch();
 
     expect(await collectValues('dial.chat.sse.active')).toEqual([
       { value: 1, attributes: { kind: SseSubscriptionKind.ClientChannel } },
       { value: 0, attributes: { kind: SseSubscriptionKind.ConversationWatch } },
       { value: 0, attributes: { kind: SseSubscriptionKind.GenerationAttach } },
+      {
+        value: 0,
+        attributes: { kind: SseSubscriptionKind.ConversationTitles },
+      },
+      { value: 0, attributes: { kind: SseSubscriptionKind.ProjectsWatch } },
     ]);
   });
 

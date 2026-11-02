@@ -495,6 +495,51 @@ describe('Celebration runtime', () => {
     ).toContain(CELEBRATIONS_CLASS.sceneLayer);
   });
 
+  /* Characterization for hosts that rebuild loaders and selection on every
+     render: neither may reload the event nor cut a scene short. */
+  const renderStable = (
+    loader: () => Promise<CelebrationEvent>,
+    selection?: Record<string, { disabledScenes?: readonly string[] }>,
+  ) => (
+    <CelebrationProvider
+      events={{ 'test-event': loader }}
+      activeEventId="test-event"
+      resetKey="stable"
+      selection={selection}
+      onNotify={showSuccessNotification}
+    >
+      <Triggers />
+    </CelebrationProvider>
+  );
+
+  it('keeps the loaded event when the loader function identity changes', async () => {
+    const { rerender } = render(
+      renderStable(() => mockLoadEvent('test-event')),
+    );
+    await expectEventLoaded();
+    fireEvent.click(screen.getByRole('button', { name: 'long' }));
+    rerender(renderStable(() => mockLoadEvent('test-event')));
+    await act(async () => undefined);
+
+    expect(mockLoadEvent).toHaveBeenCalledOnce();
+    expect(screen.getByTestId('long-scene')).toBeTruthy();
+  });
+
+  it('keeps a playing scene mounted when selection changes', async () => {
+    const loader = () => mockLoadEvent('test-event');
+    const { rerender } = render(renderStable(loader));
+    await expectEventLoaded();
+    fireEvent.click(screen.getByRole('button', { name: 'long' }));
+    const scene = screen.getByTestId('long-scene');
+    rerender(
+      renderStable(loader, { 'test-event': { disabledScenes: ['short'] } }),
+    );
+    await act(async () => undefined);
+
+    expect(mockLoadEvent).toHaveBeenCalledOnce();
+    expect(screen.getByTestId('long-scene')).toBe(scene);
+  });
+
   it('is inert when the optional provider is absent', () => {
     render(<Triggers />);
     fireEvent.click(screen.getByRole('button', { name: 'activate' }));

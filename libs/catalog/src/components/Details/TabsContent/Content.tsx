@@ -7,6 +7,8 @@ import {
   Dropdown,
   ElementSize,
   InlineSelectTrigger,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import { FC, type ReactNode, useId } from 'react';
 import type {
@@ -197,7 +199,16 @@ export const ContentTab: FC<ContentTabProps> = ({
               renderFileTree ? (
                 renderFileTree(fileTreeProps)
               ) : (
-                <ContentFileTree {...fileTreeProps} />
+                <ContentFileTree
+                  {...fileTreeProps}
+                  colors={{
+                    rowHoverBackground:
+                      detailsStyles?.colors?.contentFileTreeRowHoverBackground,
+                    rowSelectedBackground:
+                      detailsStyles?.colors
+                        ?.contentFileTreeRowSelectedBackground,
+                  }}
+                />
               )
             }
           >
@@ -240,16 +251,15 @@ export const ContentTab: FC<ContentTabProps> = ({
           'min-h-0 flex-1 text-start',
           filePreviewContent != null
             ? 'overflow-hidden'
-            : 'overflow-auto break-words',
+            : 'overflow-auto wrap-break-word',
           filePreviewContent == null && styles.body,
           filePreviewContent == null && bodyClassName,
         )}
       >
-        {isFileLoading && (
-          <span role="status" className="sr-only">
-            {fileLoadingLabel}
-          </span>
-        )}
+        {/* Always mounted so the region exists before the file starts loading. */}
+        <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
+          {isFileLoading ? fileLoadingLabel : ''}
+        </LiveRegion>
         {renderPreview()}
       </div>
     </div>

@@ -12,6 +12,7 @@ export enum NotifiableEntity {
   Conversation = 'conversation',
   File = 'file',
   Folder = 'folder',
+  Project = 'project',
 }
 
 /** User-initiated operation that confirms itself with a success notification. */

@@ -1,5 +1,10 @@
-import { formatFileSize, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
+  buildCssVars,
+  formatFileSize,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
+import {
+  CaptionText,
   DIAL_KIT_ICON_STROKE,
   ErrorText,
   FileDropzone,
@@ -7,6 +12,9 @@ import {
   GhostIconButton,
   RadioGroup,
   Spinner,
+  LiveRegion,
+  LiveRegionElement,
+  LiveRegionPoliteness,
 } from '@epam/ai-dial-ui-kit';
 import { IconTrashX } from '@tabler/icons-react';
 import type { FC } from 'react';
@@ -29,6 +37,15 @@ import { SkillFileUploadMode } from '../../types/skill-file-upload-mode';
 import { resolveCandidatePath } from '../../utils/candidate-path';
 import { buildDuplicatePath, joinSkillPath } from '../../utils/file-tree';
 import { SkillEditorDialog } from '../SkillEditorDialog/SkillEditorDialog';
+import styles from './SkillFileUploadDialog.module.scss';
+
+/** Color overrides for `SkillFileUploadDialog`, applied as CSS custom properties. */
+export interface SkillFileUploadDialogColors {
+  /** Border color of the drop zone while every staged file is invalid. Defaults to `--stroke-error`. */
+  invalidDropZoneBorder?: string;
+  /** Border color of each staged row. Defaults to `--stroke-tertiary`. */
+  rowBorder?: string;
+}
 
 /** Props for `SkillFileUploadDialog`. */
 export interface SkillFileUploadDialogProps {
@@ -58,12 +75,14 @@ export interface SkillFileUploadDialogProps {
   onCommitted?: (candidates: SkillFileUploadCandidate[]) => void;
   /** Typography class of the Replace-or-duplicate message. Defaults to `'dial-small-text'`. */
   messageClassName?: string;
-  /** Typography and color classes of a staged row's size and notes. Defaults to `'dial-tiny-text text-secondary'`. */
+  /** Typography and color classes merged over a staged row's size and notes, which render `'dial-tiny-text text-secondary'` when unset. */
   rowCaptionClassName?: string;
   /** Text overrides. */
   labels?: SkillEditorLabels;
   /** Color overrides for the mobile sheet footer. */
   dialogColors?: SkillEditorDialogColors;
+  /** Color overrides for the drop zone and staged rows. */
+  colors?: SkillFileUploadDialogColors;
 }
 
 const ARCHIVE_ACCEPT = '.zip,application/zip';
@@ -97,9 +116,10 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
   existingFilePaths = NO_EXISTING_FILE_PATHS,
   onCommitted,
   messageClassName = 'dial-small-text',
-  rowCaptionClassName = 'dial-tiny-text text-secondary',
+  rowCaptionClassName,
   labels,
   dialogColors,
+  colors,
 }) => {
   const t = labels ?? {};
   const [candidates, setCandidates] = useState<SkillFileUploadCandidate[]>([]);
@@ -131,6 +151,7 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
 
   const liveRegionId = useId();
   const dropzoneInputId = useId();
+  const rowErrorIdPrefix = useId();
   const conflictMessageRef = useRef<HTMLParagraphElement>(null);
   const hasShownConflictRef = useRef(false);
   const activeConflictId = pendingConflicts[0]?.id;
@@ -303,6 +324,17 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
       (candidate) =>
         results.get(candidate.id)?.status === SkillFileValidationStatus.Invalid,
     );
+  /* Row errors arrive after async validation, so the live region reads them out too. */
+  const announcedErrors = [
+    ...batchErrors,
+    ...candidates.flatMap((candidate) => {
+      const result = results.get(candidate.id);
+      return result?.status === SkillFileValidationStatus.Invalid &&
+        result.error
+        ? [`${candidate.path}: ${result.error}`]
+        : [];
+    }),
+  ];
   const canConfirm =
     candidates.length > 0 &&
     !hasInvalidCandidate &&
@@ -413,7 +445,13 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
       onCancel={onClose}
       colors={dialogColors}
     >
-      <div className="flex flex-col gap-4 px-4 py-4 desktop:px-6">
+      <div
+        className="flex flex-col gap-4 px-4 py-4 desktop:px-6"
+        style={buildCssVars({
+          '--se-upload-invalid-dropzone-border': colors?.invalidDropZoneBorder,
+          '--se-upload-row-border': colors?.rowBorder,
+        })}
+      >
         <FileDropzone
           label={
             <>
@@ -441,9 +479,7 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
           ariaLabel={t.uploadDropZoneAriaLabel ?? 'Upload files'}
           multiple
           accept={isArchiveMode ? ARCHIVE_ACCEPT : undefined}
-          className={
-            isAllInvalid ? 'border-error hover:border-error' : undefined
-          }
+          className={isAllInvalid ? styles.invalidDropZone : undefined}
           onChange={addFiles}
           onReject={
             isArchiveMode
@@ -457,23 +493,23 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
             ariaLabel={t.uploadArchiveExtractingAriaLabel ?? 'Reading archive'}
           />
         )}
-        <div role="alert">
-          {sourceError && <ErrorText text={sourceError} />}
-        </div>
+        <ErrorText
+          text={sourceError}
+          announce={LiveRegionPoliteness.Assertive}
+        />
 
-        <span
-          role="status"
-          aria-live="polite"
-          className="sr-only"
+        <LiveRegion
+          visuallyHidden
+          as={LiveRegionElement.Span}
           id={liveRegionId}
         >
-          {batchErrors
+          {announcedErrors
             .map(
               (message) =>
                 `${t.uploadBatchErrorAriaPrefix ?? 'Upload error: '}${message}`,
             )
             .join(' ')}
-        </span>
+        </LiveRegion>
         {batchErrors.map((message) => (
           <ErrorText key={message} text={message} />
         ))}
@@ -486,33 +522,43 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
                 result?.kind === SkillFileCandidateKind.Manifest;
               const isInvalid =
                 result?.status === SkillFileValidationStatus.Invalid;
+              const rowError = isInvalid ? result?.error : undefined;
+              const rowErrorId = `${rowErrorIdPrefix}${candidate.id}`;
               return (
                 <li
                   key={candidate.id}
-                  className="flex items-center gap-2 rounded-lg border border-tertiary p-2"
+                  className={mergeClasses(
+                    'flex items-center gap-2 rounded-lg border p-2',
+                    styles.row,
+                  )}
                 >
                   <FileName
                     name={candidate.path}
                     className="min-w-0 flex-1"
                     details={
                       <>
-                        <span className={rowCaptionClassName}>
-                          {formatFileSize(candidate.file.size)}
-                        </span>
-                        {isInvalid && result?.error && (
-                          <ErrorText text={result.error} />
-                        )}
+                        <CaptionText
+                          className={rowCaptionClassName}
+                          text={formatFileSize(candidate.file.size)}
+                        />
+                        <ErrorText id={rowErrorId} text={rowError} />
                         {isManifest && !isInvalid && (
-                          <span className={rowCaptionClassName}>
-                            {t.uploadManifestRowNote ??
-                              "Will replace this Skill's name, description, and instructions"}
-                          </span>
+                          <CaptionText
+                            className={rowCaptionClassName}
+                            text={
+                              t.uploadManifestRowNote ??
+                              "Will replace this Skill's name, description, and instructions"
+                            }
+                          />
                         )}
                         {candidate.replacesExisting && !isInvalid && (
-                          <span className={rowCaptionClassName}>
-                            {t.uploadReplaceRowNote ??
-                              'Will replace the existing file'}
-                          </span>
+                          <CaptionText
+                            className={rowCaptionClassName}
+                            text={
+                              t.uploadReplaceRowNote ??
+                              'Will replace the existing file'
+                            }
+                          />
                         )}
                       </>
                     }
@@ -529,6 +575,7 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
                       t.uploadRemoveCandidateLabel?.(candidate.path) ??
                       `Remove ${candidate.path}`
                     }
+                    aria-describedby={rowError ? rowErrorId : undefined}
                     onClick={() => removeCandidate(candidate.id)}
                   />
                 </li>
@@ -537,7 +584,10 @@ export const SkillFileUploadDialog: FC<SkillFileUploadDialogProps> = ({
           </ul>
         )}
 
-        {commitError && <ErrorText text={commitError} />}
+        <ErrorText
+          text={commitError}
+          announce={LiveRegionPoliteness.Assertive}
+        />
       </div>
     </SkillEditorDialog>
   );

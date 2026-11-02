@@ -19,6 +19,9 @@ import { FeatureGuard } from './feature-flags/feature.guard';
     FeatureFlagsService,
     FeatureGuard,
   ],
-  exports: [AppConfigService, FeatureFlagsService, FeatureGuard],
+  /* Nest instantiates `@UseGuards(FeatureGuard)` in each consumer module's
+   * injector, so the guard's own dependencies — including AuthModule's
+   * `UserRolesService` — must be visible there too. */
+  exports: [AppConfigService, FeatureFlagsService, FeatureGuard, AuthModule],
 })
 export class AppConfigModule {}

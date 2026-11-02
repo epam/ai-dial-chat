@@ -1,4 +1,3 @@
-import { type CatalogItem } from '@epam/ai-dial-catalog';
 import * as chatHooksModule from '@epam/ai-dial-chat-hooks';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { ShareLinkAccess, type SharePopoverProps } from '@epam/ai-dial-share';
@@ -9,6 +8,7 @@ import {
   ShareI18nKeys,
 } from '../../../constants/translation-keys';
 import { shareApi } from '../../../server-api/api-client';
+import { canEditShareAccess } from '../../../utils/share';
 import SharePopoverContainer from '../SharePopoverContainer';
 
 const { mockSharePopover, mockT } = vi.hoisted(() => ({
@@ -30,17 +30,6 @@ vi.mock('@epam/ai-dial-share', () => ({
   ShareLinkAccess: { View: 'view', Edit: 'edit' },
   SharePopover: mockSharePopover,
 }));
-
-const makeItem = (type: CatalogEntityType): CatalogItem => ({
-  id: 'item-1',
-  type,
-  name: 'Claude',
-  version: '1',
-  lastUsed: 'now',
-  description: '',
-  folder: [],
-  topics: [],
-});
 
 const mockUseShareLink = (
   overrides: Partial<ReturnType<typeof chatHooksModule.useShareLink>> = {},
@@ -70,7 +59,8 @@ describe('SharePopoverContainer', () => {
 
     render(
       <SharePopoverContainer
-        item={makeItem(CatalogEntityType.Agent)}
+        itemId="item-1"
+        canEditAccess={canEditShareAccess(CatalogEntityType.Agent)}
         onClose={vi.fn()}
       />,
     );
@@ -104,7 +94,8 @@ describe('SharePopoverContainer', () => {
 
     render(
       <SharePopoverContainer
-        item={makeItem(CatalogEntityType.Agent)}
+        itemId="item-1"
+        canEditAccess={canEditShareAccess(CatalogEntityType.Agent)}
         onClose={vi.fn()}
       />,
     );
@@ -133,7 +124,8 @@ describe('SharePopoverContainer', () => {
 
     render(
       <SharePopoverContainer
-        item={makeItem(CatalogEntityType.Agent)}
+        itemId="item-1"
+        canEditAccess={canEditShareAccess(CatalogEntityType.Agent)}
         onClose={vi.fn()}
       />,
     );
@@ -153,7 +145,8 @@ describe('SharePopoverContainer', () => {
 
     render(
       <SharePopoverContainer
-        item={makeItem(CatalogEntityType.Agent)}
+        itemId="item-1"
+        canEditAccess={canEditShareAccess(CatalogEntityType.Agent)}
         onClose={vi.fn()}
       />,
     );
@@ -171,7 +164,8 @@ describe('SharePopoverContainer', () => {
     mockUseShareLink();
     render(
       <SharePopoverContainer
-        item={makeItem(CatalogEntityType.Agent)}
+        itemId="item-1"
+        canEditAccess={canEditShareAccess(CatalogEntityType.Agent)}
         onClose={vi.fn()}
       />,
     );
@@ -186,7 +180,8 @@ describe('SharePopoverContainer', () => {
     mockUseShareLink();
     render(
       <SharePopoverContainer
-        item={makeItem(CatalogEntityType.Model)}
+        itemId="item-1"
+        canEditAccess={canEditShareAccess(CatalogEntityType.Model)}
         onClose={vi.fn()}
       />,
     );
@@ -201,7 +196,8 @@ describe('SharePopoverContainer', () => {
     mockUseShareLink();
     render(
       <SharePopoverContainer
-        item={makeItem(CatalogEntityType.Prompt)}
+        itemId="item-1"
+        canEditAccess={canEditShareAccess(CatalogEntityType.Prompt)}
         onClose={vi.fn()}
       />,
     );
@@ -216,7 +212,8 @@ describe('SharePopoverContainer', () => {
     mockUseShareLink();
     render(
       <SharePopoverContainer
-        item={makeItem(CatalogEntityType.Agent)}
+        itemId="item-1"
+        canEditAccess={canEditShareAccess(CatalogEntityType.Agent)}
         onClose={vi.fn()}
       />,
     );
@@ -233,7 +230,8 @@ describe('SharePopoverContainer', () => {
     mockUseShareLink();
     render(
       <SharePopoverContainer
-        item={makeItem(CatalogEntityType.Agent)}
+        itemId="item-1"
+        canEditAccess={canEditShareAccess(CatalogEntityType.Agent)}
         isQuickApp
         onClose={vi.fn()}
       />,
@@ -253,7 +251,8 @@ describe('SharePopoverContainer', () => {
     mockUseShareLink();
     render(
       <SharePopoverContainer
-        item={makeItem(CatalogEntityType.Prompt)}
+        itemId="item-1"
+        canEditAccess={canEditShareAccess(CatalogEntityType.Prompt)}
         onClose={vi.fn()}
       />,
     );
@@ -268,7 +267,8 @@ describe('SharePopoverContainer', () => {
     mockUseShareLink();
     render(
       <SharePopoverContainer
-        item={makeItem(CatalogEntityType.Model)}
+        itemId="item-1"
+        canEditAccess={canEditShareAccess(CatalogEntityType.Model)}
         onClose={vi.fn()}
       />,
     );

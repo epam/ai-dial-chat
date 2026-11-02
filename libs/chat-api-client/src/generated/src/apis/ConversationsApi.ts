@@ -21,6 +21,8 @@ import type {
   ConversationMetadataDto,
   ConversationModelHiddenErrorDto,
   ConversationResponseDto,
+  ConversationTitlesBodyDto,
+  ConversationTitlesResponseDto,
   CreateConversationDto,
   DeleteAllConversationsBodyDto,
   DeleteConversationsBodyDto,
@@ -34,6 +36,7 @@ import type {
   SaveConversationBodyDto,
   SendCompletionDto,
   StopCompletionDto,
+  StreamConversationTitlesBodyDto,
   UnpublishConversationDto,
   UnpublishConversationResultDto,
   WatchConversationBodyDto,
@@ -80,6 +83,10 @@ export interface GetConversationPublishHistoryRequest {
   path: string;
 }
 
+export interface GetConversationTitlesRequest {
+  conversationTitlesBodyDto: ConversationTitlesBodyDto;
+}
+
 export interface ListConversationsRequest {
   limit?: number;
   nextToken?: string;
@@ -111,6 +118,10 @@ export interface StopCompletionRequest {
 export interface StreamCompletionRequest {
   sendCompletionDto: SendCompletionDto;
   xTimezone?: string;
+}
+
+export interface StreamConversationTitlesRequest {
+  streamConversationTitlesBodyDto: StreamConversationTitlesBodyDto;
 }
 
 export interface UnpublishConversationRequest {
@@ -735,7 +746,68 @@ export class ConversationsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Returns a flat conversation list for the authenticated user. Without limit or nextToken, follows all personal and public DIAL Core metadata pages with recursive=true, merges shared conversations, and sorts the complete result by latest activity. Explicit pagination parameters request one page per bucket.
+   * Returns cached or freshly read display titles for up to 25 full conversation resource URLs. Uses the current session permissions. Individual missing, forbidden, or unavailable resources are omitted; conversation messages are never returned.
+   * Resolve conversation display titles
+   */
+  async getConversationTitlesRaw(
+    requestParameters: GetConversationTitlesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ConversationTitlesResponseDto>> {
+    if (requestParameters['conversationTitlesBodyDto'] == null) {
+      throw new runtime.RequiredError(
+        'conversationTitlesBodyDto',
+        'Required parameter "conversationTitlesBodyDto" was null or undefined when calling getConversationTitles().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/conversations/titles`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['conversationTitlesBodyDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ConversationTitlesResponseDto>(response);
+  }
+
+  /**
+   * Returns cached or freshly read display titles for up to 25 full conversation resource URLs. Uses the current session permissions. Individual missing, forbidden, or unavailable resources are omitted; conversation messages are never returned.
+   * Resolve conversation display titles
+   */
+  async getConversationTitles(
+    requestParameters: GetConversationTitlesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ConversationTitlesResponseDto> {
+    const response = await this.getConversationTitlesRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Returns a flat conversation list for the authenticated user. Without limit or nextToken, follows all personal and public DIAL Core metadata pages with recursive=true, merges shared conversations, and sorts the complete result by latest activity. Explicit pagination parameters request one page per bucket. Never reads conversation bodies; unresolved display titles are marked isTitlePending for background resolution.
    * List conversations
    */
   async listConversationsRaw(
@@ -779,7 +851,7 @@ export class ConversationsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Returns a flat conversation list for the authenticated user. Without limit or nextToken, follows all personal and public DIAL Core metadata pages with recursive=true, merges shared conversations, and sorts the complete result by latest activity. Explicit pagination parameters request one page per bucket.
+   * Returns a flat conversation list for the authenticated user. Without limit or nextToken, follows all personal and public DIAL Core metadata pages with recursive=true, merges shared conversations, and sorts the complete result by latest activity. Explicit pagination parameters request one page per bucket. Never reads conversation bodies; unresolved display titles are marked isTitlePending for background resolution.
    * List conversations
    */
   async listConversations(
@@ -794,7 +866,7 @@ export class ConversationsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Idempotently records that the authenticated user has opened this conversation. Used to clear the unread indicator for scheduler-created conversations.
+   * Idempotently records that the authenticated user has seen this conversation. Clears the unread indicator of scheduler-created conversations and of regular conversations whose answer arrived while the user was elsewhere.
    * Mark a conversation as viewed
    */
   async markConversationViewedRaw(
@@ -841,7 +913,7 @@ export class ConversationsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Idempotently records that the authenticated user has opened this conversation. Used to clear the unread indicator for scheduler-created conversations.
+   * Idempotently records that the authenticated user has seen this conversation. Clears the unread indicator of scheduler-created conversations and of regular conversations whose answer arrived while the user was elsewhere.
    * Mark a conversation as viewed
    */
   async markConversationViewed(
@@ -1177,6 +1249,71 @@ export class ConversationsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<void> {
     await this.streamCompletionRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * Opens a finite SSE stream that emits one `data:` JSON event per distinct requested ID as soon as its title read settles — `title`, `unavailable` (missing or forbidden), or `item_error` — then exactly one terminal `done` or `error` event. Each event payload is a `ConversationTitleStreamEventDto`. Reads share the process-wide title cache and read limit with `getConversationTitles`; up to 500 IDs (262144 bytes serialized) are admitted in request order. `done` with `reason: budget` means the 45-second admission window ended; IDs without an outcome may be requested again. A response that ends without a terminal event was interrupted. Conversation messages are never returned.
+   * Stream conversation display titles via SSE
+   */
+  async streamConversationTitlesRaw(
+    requestParameters: StreamConversationTitlesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<string>> {
+    if (requestParameters['streamConversationTitlesBodyDto'] == null) {
+      throw new runtime.RequiredError(
+        'streamConversationTitlesBodyDto',
+        'Required parameter "streamConversationTitlesBodyDto" was null or undefined when calling streamConversationTitles().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/conversations/titles/stream`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['streamConversationTitlesBodyDto'],
+      },
+      initOverrides,
+    );
+
+    if (this.isJsonMime(response.headers.get('content-type'))) {
+      return new runtime.JSONApiResponse<string>(response);
+    } else {
+      return new runtime.TextApiResponse(response);
+    }
+  }
+
+  /**
+   * Opens a finite SSE stream that emits one `data:` JSON event per distinct requested ID as soon as its title read settles — `title`, `unavailable` (missing or forbidden), or `item_error` — then exactly one terminal `done` or `error` event. Each event payload is a `ConversationTitleStreamEventDto`. Reads share the process-wide title cache and read limit with `getConversationTitles`; up to 500 IDs (262144 bytes serialized) are admitted in request order. `done` with `reason: budget` means the 45-second admission window ended; IDs without an outcome may be requested again. A response that ends without a terminal event was interrupted. Conversation messages are never returned.
+   * Stream conversation display titles via SSE
+   */
+  async streamConversationTitles(
+    requestParameters: StreamConversationTitlesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<string> {
+    const response = await this.streamConversationTitlesRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
   }
 
   /**

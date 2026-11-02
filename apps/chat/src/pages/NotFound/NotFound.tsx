@@ -16,7 +16,6 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import {
   ButtonsI18nKeys,
-  NavigationI18nKeys,
   NotFoundI18nKeys,
 } from '../../constants/translation-keys';
 import { ROUTES } from '../../types/routes';
@@ -43,7 +42,7 @@ const NotFoundPage: FC = () => {
           <p
             aria-label={t(NotFoundI18nKeys.Eyebrow)}
             className={mergeClasses(
-              'relative mb-4 inline-flex items-center justify-center [gap:0.04em] font-bold text-transparent',
+              'relative mb-4 inline-flex items-center justify-center gap-[0.04em] font-bold text-transparent',
               styles.code,
             )}
           >
@@ -91,7 +90,7 @@ const NotFoundPage: FC = () => {
           </div>
 
           <GhostButton
-            label={t(NavigationI18nKeys.Back)}
+            label={t(ButtonsI18nKeys.Back)}
             className="mt-6"
             iconBefore={
               <IconArrowLeft

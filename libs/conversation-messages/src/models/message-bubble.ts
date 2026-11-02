@@ -24,6 +24,8 @@ export interface MessageBubbleColors {
   text?: string;
   /** Divider color above quick-reply buttons. Falls back to `--color-secondary`. */
   startersDivider?: string;
+  /** Text color of the send time shown when `timestamp` is set. Defaults to `--text-secondary`. */
+  timestampText?: string;
 }
 
 /** Typography overrides for message bubble components. */
@@ -42,7 +44,7 @@ export interface MessageBubbleStyles {
   className?: string;
   /** Extra class(es) on the bubble element. */
   bubbleClassName?: string;
-  /** Typography and color classes on the send time shown when `timestamp` is set. Defaults to `'dial-small-text text-secondary'`. */
+  /** Typography class on the send time shown when `timestamp` is set. Defaults to `'dial-small-text'`. */
   timestampClassName?: string;
 }
 
@@ -139,6 +141,8 @@ interface BaseMessageBubbleProps {
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
   /** Fires with all downloadable attachments when "download all" is triggered. */
   onDownloadAll?: (attachments: DisplayAttachment[]) => void;
+  /** Whether an attachment can be downloaded; `false` hides its tile's download button and leaves it out of "download all". Defaults to every attachment being downloadable. */
+  isAttachmentDownloadable?: (attachment: DisplayAttachment) => boolean;
   /** Fires when a failed attachment upload is retried. */
   onAttachmentRetry?: (id: string) => void;
   /** ID of the attachment currently open in the canvas panel, if any. Renders that tile's selected visual state. */

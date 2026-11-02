@@ -38,7 +38,7 @@ export const LimitRow: FC<LimitRowProps> = ({
       max={getProgressMax(row.total)}
       size={ElementSize.Small}
       className={mergeClasses(
-        '!h-1 w-full',
+        'h-1! w-full',
         styles.progressTrack,
         progressStatus === ProgressStatus.Default && styles.progressFillDefault,
         progressStatus === ProgressStatus.Warning && styles.progressFillWarning,
@@ -51,7 +51,11 @@ export const LimitRow: FC<LimitRowProps> = ({
 
   const caption = row.captionLabel != null && (
     <span
-      className={mergeClasses('break-words', captionClassName, styles.label)}
+      className={mergeClasses(
+        'wrap-break-word',
+        captionClassName,
+        styles.label,
+      )}
     >
       {row.captionLabel}
     </span>
@@ -68,7 +72,7 @@ export const LimitRow: FC<LimitRowProps> = ({
         dateTime={row.resetIsoValue}
         aria-hidden={row.resetAriaLabel != null || undefined}
         className={mergeClasses(
-          'break-words',
+          'wrap-break-word',
           captionClassName,
           styles.resetLabel,
         )}
@@ -92,7 +96,7 @@ export const LimitRow: FC<LimitRowProps> = ({
         <div className="flex items-baseline justify-between gap-3">
           <span
             className={mergeClasses(
-              'min-w-0 break-words',
+              'min-w-0 wrap-break-word',
               labelClassName,
               styles.valuePrimary,
             )}
@@ -136,7 +140,11 @@ export const LimitRow: FC<LimitRowProps> = ({
     >
       <div className="flex min-w-0 flex-1 flex-col">
         <span
-          className={mergeClasses('break-words', labelClassName, styles.label)}
+          className={mergeClasses(
+            'wrap-break-word',
+            labelClassName,
+            styles.label,
+          )}
         >
           {row.label}
         </span>

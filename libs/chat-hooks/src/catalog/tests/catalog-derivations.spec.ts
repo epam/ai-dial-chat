@@ -70,6 +70,20 @@ describe('filterCatalogItemsBySelector', () => {
       filterCatalogItemsBySelector([chatApp, mcpApp, prompt], visible),
     ).toEqual([chatApp, prompt]);
   });
+
+  it('omits applications listed only under Toolsets', () => {
+    const toolsetOnly = makeItem('mcp', CatalogEntityType.Agent, {
+      catalogTabs: [CatalogEntityType.Toolset],
+    });
+    const dual = makeItem('dual', CatalogEntityType.Agent, {
+      catalogTabs: [CatalogEntityType.Agent, CatalogEntityType.Toolset],
+    });
+    const legacy = makeItem('legacy', CatalogEntityType.Agent);
+    const visible = new Set([CatalogEntityType.Model, CatalogEntityType.Agent]);
+    expect(
+      filterCatalogItemsBySelector([toolsetOnly, dual, legacy], visible),
+    ).toEqual([dual, legacy]);
+  });
 });
 
 describe('filterHiddenOwnedItems', () => {
@@ -155,6 +169,23 @@ describe('deriveAvailableTabIds', () => {
   it('returns empty array when no items match any tab', () => {
     const skill = makeItem('s', CatalogEntityType.Skill);
     expect(deriveAvailableTabIds([skill], TAB_ORDER)).toEqual([]);
+  });
+
+  it('follows tab membership rather than the entity kind', () => {
+    const mcpApp = makeItem('mcp', CatalogEntityType.Agent, {
+      catalogTabs: [CatalogEntityType.Toolset],
+    });
+    const model = makeItem('m', CatalogEntityType.Model);
+    expect(
+      deriveAvailableTabIds(
+        [mcpApp, model],
+        [
+          CatalogEntityType.Model,
+          CatalogEntityType.Agent,
+          CatalogEntityType.Toolset,
+        ],
+      ),
+    ).toEqual([CatalogEntityType.Model, CatalogEntityType.Toolset]);
   });
 });
 

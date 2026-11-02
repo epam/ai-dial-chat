@@ -40,7 +40,7 @@ Defined once in `tools/tailwind/theme.css` as Tailwind v4 custom variants, which
 <button className="h-12 mobile:h-14">…</button>
 ```
 
-**Escape hatch: `useBreakpoint` / `useIsMobile`** from `apps/chat/src/hooks/breakpoint/useBreakpoint.ts`. Reach for these only when:
+**Escape hatch: `useIsMobile`** from `@epam/ai-dial-chat-shared`. Reach for these only when:
 
 - A component must mount entirely different subtrees per breakpoint (e.g. drawer vs. persistent sidebar) and a CSS-only `hidden`/`block` swap would still mount both
 - An effect or imperative handler needs to branch on viewport size (focus, autoplay, virtualisation row count)
@@ -82,7 +82,7 @@ When implementing or modifying a component:
 - [ ] Modals, popovers, and dropdowns are reachable and dismissable on touch (no `:hover`-only affordances)
 - [ ] Inputs use the correct `inputmode` / `type` so mobile keyboards show the right layout
 - [ ] Sticky and fixed elements account for mobile browser chrome (`dvh`/`svh` over `vh` when relevant)
-- [ ] Conditional layouts that swap components use `useBreakpoint`, not `window.innerWidth` reads
+- [ ] Conditional layouts that swap components use `useIsMobile`, not `window.innerWidth` reads
 - [ ] If the change adds new strings, they fit at 360px without truncation in the supported locales
 
 ## Figma alignment
@@ -100,7 +100,7 @@ For any responsive change:
 
 1. **DevTools** — exercise the feature at 360 and 900 (mobile/tablet) and 1280, 1920 (desktop)
 2. **Touch** — verify interactive elements work without hover (use the DevTools touch simulator)
-3. **Unit tests** — when a component branches on `useBreakpoint`, add a test per branch by mocking the hook
+3. **Unit tests** — when a component branches on `useIsMobile`, add a test per branch by mocking the hook
 4. **Lint / typecheck** — `npm exec nx lint chat`, `npm exec nx test chat` for the projects you touched
 5. **Note in the PR** which breakpoints were exercised; a "verified desktop only" change is incomplete
 
@@ -169,7 +169,7 @@ Playwright MCP is pre-configured in `.mcp.json` — no manual setup needed. It s
 ## Anti-patterns
 
 - `className={isMobile ? 'flex-col' : 'flex-row'}` — use `flex-col desktop:flex-row` instead
-- Reading `window.innerWidth` in render or effects — use `useBreakpoint`
+- Reading `window.innerWidth` in render or effects — use `useIsMobile`
 - Hiding mobile UI with `display:none` while still mounting heavy subtrees — branch with the hook
 - Authoring desktop-first and then trying to reset on `mobile:` — invert it
 - Using `sm:` / `md:` / `lg:` / `xl:` — they are not configured here

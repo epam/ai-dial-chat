@@ -311,3 +311,57 @@ export const fromUpstreamRun = (
     ...(errorText ? { errorText } : {}),
   };
 };
+
+/*
+ * The DIAL Scheduler list endpoint returns a paginated envelope
+ * (`{ count, limit, offset, results, next, previous }`), not a bare array
+ * or an `{ items }` wrapper — `results` is checked first since it's the
+ * shape confirmed against a live instance; `items`/array are kept as
+ * fallbacks in case a future Scheduler version changes the envelope.
+ */
+export const extractScheduleListItems = (
+  result: UpstreamScheduleResponse,
+): UpstreamScheduleResponse[] => {
+  if (Array.isArray(result)) {
+    return result as unknown as UpstreamScheduleResponse[];
+  }
+  const envelope = result as unknown as {
+    results?: UpstreamScheduleResponse[];
+    items?: UpstreamScheduleResponse[];
+  };
+  return envelope.results ?? envelope.items ?? [];
+};
+
+/*
+ * Only present when the upstream response is the paginated envelope
+ * (`{ count, limit, offset, results, next, previous }`); a bare array or
+ * an `{ items }` fallback shape has none of these, so every field stays
+ * `undefined` in that case.
+ */
+export const extractScheduleListPagination = (
+  result: UpstreamScheduleResponse,
+): {
+  count?: number;
+  limit?: number;
+  offset?: number;
+  next?: string | null;
+  previous?: string | null;
+} => {
+  if (Array.isArray(result)) {
+    return {};
+  }
+  const envelope = result as unknown as {
+    count?: number;
+    limit?: number;
+    offset?: number;
+    next?: string | null;
+    previous?: string | null;
+  };
+  return {
+    count: envelope.count,
+    limit: envelope.limit,
+    offset: envelope.offset,
+    next: envelope.next,
+    previous: envelope.previous,
+  };
+};

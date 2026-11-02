@@ -232,27 +232,33 @@ describe('QuickAppSetup', () => {
     });
   });
 
-  it('forwards the trimmed Metadata to the embedded editor and reasserts on save', async () => {
-    const handle = mountSetup({ appId: 'app' });
+  it.each([
+    ['save', (handle: ApplicationSetupHandle) => handle.save(METADATA)],
+    [
+      'startPreview',
+      (handle: ApplicationSetupHandle) => handle.startPreview?.(METADATA),
+    ],
+  ])(
+    'forwards the trimmed Metadata as general to the embedded editor on %s and makes no follow-up update',
+    async (_name, run) => {
+      const handle = mountSetup({ appId: 'app' });
 
-    let savePromise: Promise<void> | undefined;
-    act(() => {
-      savePromise = handle.current?.save(METADATA);
-    });
-    expect(mockTriggerSave).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'My App', display_version: '1.2' }),
-    );
+      let promise: Promise<void> | undefined;
+      act(() => {
+        promise = run(handle.current as ApplicationSetupHandle);
+      });
+      expect(mockTriggerSave).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'My App', display_version: '1.2' }),
+      );
 
-    await act(async () => {
-      getIframeProps()?.onSaveSuccess?.(false);
-      await savePromise;
-    });
+      await act(async () => {
+        getIframeProps()?.onSaveSuccess?.(false);
+        await promise;
+      });
 
-    expect(updateApplication).toHaveBeenCalledWith(
-      'app',
-      expect.objectContaining({ name: 'My App' }),
-    );
-  });
+      expect(updateApplication).not.toHaveBeenCalled();
+    },
+  );
 
   it('times out a save that never gets a response and shows the timeout error', async () => {
     vi.useFakeTimers();

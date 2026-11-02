@@ -50,6 +50,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   textSegments,
   onAttachmentClick,
   onDownloadAll,
+  isAttachmentDownloadable,
   onAttachmentRetry,
   selectedAttachmentId,
   markdownClassNames,
@@ -121,6 +122,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
     '--cm-bubble-user-border': colors?.userBorder,
     '--cm-bubble-fade-start': colors?.fadeStart,
     '--cm-bubble-text': colors?.text,
+    '--cm-timestamp-text': colors?.timestampText,
     '--cm-bubble-collapsed-height': isOverflowing
       ? `${collapsedMaxHeight}px`
       : undefined,
@@ -179,6 +181,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
               : undefined
           }
           onDownloadAll={onDownloadAll}
+          isAttachmentDownloadable={isAttachmentDownloadable}
           onRetry={onAttachmentRetry}
           labels={{
             clickLabel: attachmentClickLabel,
@@ -222,14 +225,8 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
                   ref={textRef}
                   className={mergeClasses(
                     textClass,
-                    /*
-                     * `overflow-wrap` inherits: one class here breaks an
-                     * unbreakable token in every markdown element, including
-                     * ones whose per-element class carries none.
-                     */
-                    'max-w-full min-w-0 text-start [overflow-wrap:anywhere]',
+                    'max-w-full min-w-0 text-start',
                     MARKDOWN_EDGE_MARGIN_CLASS_NAME,
-                    CONVERSATION_MESSAGES_CLASS.userContent,
                   )}
                 >
                   {/*

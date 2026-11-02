@@ -48,6 +48,7 @@ const DEFAULT_VALUES: ScheduledTaskCreateFormValues = {
   repeat: ScheduledTaskRepeat.Daily,
   time: '09:00',
   minute: '0',
+  everyWeeks: '1',
   startDate: undefined,
   endDate: undefined,
   modelId: '',

@@ -28,7 +28,7 @@ When a batch contains files rejected for unsupported type and other files reject
 
 **Feature flag**: none.
 
-**RTL**: notification is direction-agnostic (top-center portal). No additional directional changes.
+**RTL**: the notification renders inside the shared `NotificationContainer`, whose bottom-end logical anchor is owned by the `notification-placement` capability. No additional directional changes.
 
 **Accessibility**: `Notification` carries `role="alert"`; no additional ARIA required.
 

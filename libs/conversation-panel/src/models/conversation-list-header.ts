@@ -29,6 +29,8 @@ export interface ConversationListHeaderColors {
   titleFocus?: string;
   /** Color of the dot on the filter trigger while a filter is applied. Defaults to `--text-accent`. */
   filterIndicator?: string;
+  /** Color of each filter row's current value in the filter menu. Defaults to `--text-secondary`. */
+  filterValue?: string;
 }
 
 /** Typography overrides for `ConversationListHeader`. */

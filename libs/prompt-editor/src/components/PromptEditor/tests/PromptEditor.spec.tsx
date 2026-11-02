@@ -203,6 +203,10 @@ describe('PromptEditor', () => {
     );
 
     await waitFor(() => expect(instructions.matches(':focus')).toBe(true));
+    expect(instructions.getAttribute('aria-invalid')).toBe('true');
+    expect(instructions.getAttribute('aria-describedby')).toBe(
+      screen.getByText('Prompt is required').id,
+    );
   });
 
   it('leaves focus to the metadata form when Name is invalid too', async () => {
@@ -237,7 +241,7 @@ describe('PromptEditor', () => {
   it('renders a labelled spinner instead of the form while loading', () => {
     renderEditor({ isEditMode: true, isLoading: true });
 
-    expect(screen.getByRole('status', { name: 'Loading prompt' })).toBeTruthy();
+    expect(screen.getByRole('img', { name: 'Loading prompt' })).toBeTruthy();
     expect(screen.queryByRole('textbox', { name: /Name/ })).toBeNull();
   });
 
@@ -497,7 +501,7 @@ describe('PromptEditor', () => {
       ).toBeNull();
     });
 
-    it('replaces the description with the refined text and offers Undo', async () => {
+    it('replaces the description with the refined text and offers Restore original', async () => {
       const onRefineDescription = vi.fn().mockResolvedValue('Refined draft');
       renderEditor({ initialValues, onRefineDescription });
 
@@ -514,7 +518,9 @@ describe('PromptEditor', () => {
       });
       await waitFor(() => expect(description.value).toBe('Refined draft'));
 
-      await user.click(screen.getByRole('button', { name: 'Undo' }));
+      await user.click(
+        screen.getByRole('button', { name: 'Restore original' }),
+      );
 
       expect(description.value).toBe('Draft');
     });
@@ -527,7 +533,7 @@ describe('PromptEditor', () => {
       content: 'Summarize:',
     };
 
-    it('replaces the instructions with the refined text and offers Undo', async () => {
+    it('replaces the instructions with the refined text and offers Restore original', async () => {
       const refined = '## Summarize\n- Key points';
       const onRefineInstructions = vi.fn().mockResolvedValue(refined);
       const onFieldChange = vi.fn();
@@ -547,7 +553,9 @@ describe('PromptEditor', () => {
       await waitFor(() => expect(content.value).toBe(refined));
       expect(onFieldChange).toHaveBeenCalledWith('content', refined);
 
-      await user.click(screen.getByRole('button', { name: 'Undo' }));
+      await user.click(
+        screen.getByRole('button', { name: 'Restore original' }),
+      );
 
       expect(content.value).toBe('Summarize:');
     });

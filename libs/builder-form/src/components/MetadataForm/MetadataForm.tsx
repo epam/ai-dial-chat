@@ -23,6 +23,7 @@ const MetadataFormComponent: FC<MetadataFormProps> = ({
   availableLocaleOptions,
   fields = ALL_METADATA_FIELDS,
   isNameReadOnly,
+  nameReadOnlyTooltip,
   nameCaption,
   isDescriptionRequired,
   descriptionCaption,
@@ -83,6 +84,7 @@ const MetadataFormComponent: FC<MetadataFormProps> = ({
         availableLocaleOptions={availableLocaleOptions}
         fields={renderedFields}
         isNameReadOnly={isNameReadOnly}
+        nameReadOnlyTooltip={nameReadOnlyTooltip}
         nameCaption={nameCaption}
         isDescriptionRequired={isDescriptionRequired}
         descriptionCaption={descriptionCaption}

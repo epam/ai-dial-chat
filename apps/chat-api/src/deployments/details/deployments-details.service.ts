@@ -699,9 +699,6 @@ export class DeploymentsDetailsService {
           extractDialErrorMessage(result.error),
         );
       }
-      this.logger.debug(
-        `DIAL Core user usage raw response: ${JSON.stringify(result.data)}`,
-      );
       return result.data as unknown as UserLimitStatsResponseDto;
     } catch (err) {
       if (err instanceof HttpException) {

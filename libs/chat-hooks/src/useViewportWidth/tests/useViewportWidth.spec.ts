@@ -12,11 +12,11 @@ const setInnerWidth = (width: number) => {
 
 const originalInnerWidth = window.innerWidth;
 
-afterEach(() => {
-  setInnerWidth(originalInnerWidth);
-});
-
 describe('useViewportWidth', () => {
+  afterEach(() => {
+    setInnerWidth(originalInnerWidth);
+  });
+
   it('returns the current window.innerWidth on mount', () => {
     setInnerWidth(1024);
     const { result } = renderHook(() => useViewportWidth());

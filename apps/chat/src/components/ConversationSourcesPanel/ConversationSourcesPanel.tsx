@@ -1,4 +1,7 @@
-import { useOpenAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
+import {
+  useLatestCanvasRequest,
+  useOpenAttachmentCanvas,
+} from '@epam/ai-dial-attachment-canvas';
 import {
   useAttachmentAction,
   isDownloadableAttachment,
@@ -10,6 +13,10 @@ import {
   isExternalSourcePreviewable,
   resolveExternalSourceContentType,
 } from '@epam/ai-dial-chat-hooks/file-manager';
+import {
+  ActiveScheduledTaskDetailState,
+  ActiveScheduledTaskStatus,
+} from '@epam/ai-dial-chat-hooks/scheduled-tasks';
 import { usePanelMaxWidth } from '@epam/ai-dial-chat-hooks/viewport-layout';
 import type {
   AttachmentDisplayResolvers,
@@ -20,6 +27,7 @@ import {
   AttachmentType,
   MIMEType,
   RequestStatus,
+  useIsMobile,
 } from '@epam/ai-dial-chat-shared';
 import { parsePdfPageReference } from '@epam/ai-dial-quotations';
 import { ConversationSourcesPanel } from '@epam/ai-dial-source-panel';
@@ -43,13 +51,8 @@ import {
   useSourcesSidebarData,
 } from '../../context/SourcesSidebarContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
-import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useCloseSourcesSidebarOnSubjectChange } from '../../hooks/sources-sidebar/useCloseSourcesSidebarOnSubjectChange';
 import useLocalStorage from '../../hooks/useLocalStorage';
-import {
-  ActiveScheduledTaskDetailState,
-  ActiveScheduledTaskStatus,
-} from '../../types/active-scheduled-task';
 import { StorageKey } from '../../types/storage-key';
 import { resolveDialFileDownloadUrl } from '../../utils/dial-file';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
@@ -104,6 +107,7 @@ const ConversationSourcesPanelContainer: FC = () => {
   });
   const { resolvers, options } = useAttachmentCanvasResolvers();
   const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
+  const startCanvasRequest = useLatestCanvasRequest();
   const activeScheduledTask = useActiveScheduledTask();
   const isTaskConversation =
     activeScheduledTask.status === ActiveScheduledTaskStatus.TaskConversation;
@@ -118,15 +122,18 @@ const ConversationSourcesPanelContainer: FC = () => {
 
   const handleAttachmentClick = useCallback(
     (attachment: DisplayAttachment) => {
-      void openAttachmentCanvas(attachment).then((opened) => {
-        if (opened) {
-          handleClose();
-        } else {
-          downloadAttachment(attachment);
-        }
-      });
+      const shouldCommit = startCanvasRequest();
+      void openAttachmentCanvas(attachment, undefined, shouldCommit).then(
+        (opened) => {
+          if (opened) {
+            handleClose();
+          } else if (shouldCommit()) {
+            downloadAttachment(attachment);
+          }
+        },
+      );
     },
-    [openAttachmentCanvas, downloadAttachment, handleClose],
+    [openAttachmentCanvas, startCanvasRequest, downloadAttachment, handleClose],
   );
 
   /*
@@ -167,6 +174,7 @@ const ConversationSourcesPanelContainer: FC = () => {
       /* A `…pdf#page=N` source goes through the canvas's reference-PDF
        * resolver (it only runs for `referenceUrl` with no `url`), which keeps the
        * page; the generic PDF path strips the fragment and opens page 1. */
+      const shouldCommit = startCanvasRequest();
       const pageReference = parsePdfPageReference(url);
       if (pageReference?.page != null) {
         const pageAttachment: DisplayAttachment = {
@@ -177,10 +185,13 @@ const ConversationSourcesPanelContainer: FC = () => {
           status: RequestStatus.Idle,
           referenceUrl: url,
         };
-        if (await openAttachmentCanvas(pageAttachment)) {
+        if (
+          await openAttachmentCanvas(pageAttachment, undefined, shouldCommit)
+        ) {
           handleClose();
           return;
         }
+        if (!shouldCommit()) return;
         if (isDialFileId(pageReference.baseUrl)) {
           downloadAttachment({
             ...pageAttachment,
@@ -206,18 +217,23 @@ const ConversationSourcesPanelContainer: FC = () => {
         status: RequestStatus.Idle,
         url,
       };
-      const opened = await openAttachmentCanvas(attachment);
+      const opened = await openAttachmentCanvas(
+        attachment,
+        undefined,
+        shouldCommit,
+      );
       if (opened) {
         handleClose();
         return;
       }
+      if (!shouldCommit()) return;
       if (!isDialFileId(url)) {
         window.open(url, '_blank', 'noopener,noreferrer');
       } else {
         downloadAttachment(attachment);
       }
     },
-    [openAttachmentCanvas, downloadAttachment, handleClose],
+    [openAttachmentCanvas, startCanvasRequest, downloadAttachment, handleClose],
   );
 
   const downloadableAttachments = useMemo(
@@ -249,6 +265,7 @@ const ConversationSourcesPanelContainer: FC = () => {
     () => ({
       ariaLabel: t(SidebarI18nKeys.AriaLabel),
       closeLabel: t(ButtonsI18nKeys.Close),
+      resizeLabel: t(SidebarI18nKeys.ResizePanel),
       searchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
       searchClearLabel: t(BasicI18nKeys.ClearSearch),
       noDataLabel: t(SidebarI18nKeys.SourcesEmptyTitle),

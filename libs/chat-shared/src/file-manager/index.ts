@@ -15,11 +15,11 @@ export * from './OperationLoaderModal/OperationLoaderModal';
  * ones whose import of `@epam/ai-dial-react-file-manager` a bundler has to
  * resolve. This barrel is reached from the root entry (`src/index.ts`), so
  * exporting them here would put that import in the closure of every host that
- * imports this package at all — which is what made the "optional peer, scoped
- * to `./file-manager`" promise in the README untrue
- * ([#8719](https://github.com/epam/ai-dial-chat/issues/8719)). Both
+ * imports this package at all. Both
  * components are exported from the `./file-manager` entry
  * (`src/entry-points/file-manager.ts`), which is where a host that installs
  * the grid imports them from. Everything left in this barrel touches the grid
- * in type position only, which erases at build time.
+ * in type position only, which erases at build time. Those public types still
+ * require File Manager and AG Grid to be installed for declaration checking;
+ * package metadata declares that closure even for a root-only consumer.
  */

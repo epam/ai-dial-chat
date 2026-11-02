@@ -1,14 +1,17 @@
 import type {
-  AvatarPickerFileManagerModalProps,
   DeploymentCreationFormLocaleOption,
+  MetadataFormAvatarPicker,
 } from '@epam/ai-dial-builder-form';
 import type {
   TextRefinementCallback,
   TextRefinementLabels,
 } from '@epam/ai-dial-chat-shared';
-import type { ComponentType } from 'react';
-import type { GeneralFormLabels } from './general-form-props';
-import type { SettingsFormLabels } from './settings-form-props';
+import type { GeneralFormLabels } from './general-form-labels';
+import type {
+  SettingsFormColors,
+  SettingsFormLabels,
+  SettingsFormTypography,
+} from './settings-form-props';
 import type {
   ToolsetAuthActions,
   ToolsetAuthFormData,
@@ -26,7 +29,7 @@ export interface ToolsetEditorValidationLabels {
   nameControlCharacters?: string;
   /** Message for a description over the shared length limit. Defaults to `'Use 2000 characters or fewer.'`. */
   descriptionTooLong?: string;
-  /** Message for a malformed version. Defaults to `'Version must follow semantic versioning (e.g., 1.0.0)'`. */
+  /** Message for a malformed version. Defaults to `'Version may only contain letters, digits, dots, underscores, and dashes'`. */
   versionInvalid?: string;
   /** Message for a missing endpoint. Defaults to `'Endpoint is required'`. */
   endpointRequired?: string;
@@ -40,6 +43,10 @@ export interface ToolsetEditorValidationLabels {
   clientIdRequired?: string;
   /** Message for a missing OAuth client secret in create mode. Defaults to `'Client secret is required'`. */
   clientSecretRequired?: string;
+  /** Message for a missing OAuth authorization endpoint. Defaults to `'Authorization endpoint is required'`. */
+  authorizationEndpointRequired?: string;
+  /** Message for a missing OAuth token endpoint. Defaults to `'Token endpoint is required'`. */
+  tokenEndpointRequired?: string;
 }
 
 /** Labels for the editor chrome (header, actions, section titles), all optional with English defaults. */
@@ -80,6 +87,18 @@ export interface ToolsetEditorLabels {
   settings?: SettingsFormLabels;
   /** Validation messages keyed by field. */
   validation?: ToolsetEditorValidationLabels;
+}
+
+/** Color overrides for the composed Toolset editor, grouped like its labels. */
+export interface ToolsetEditorColors {
+  /** Colors of the Setup section form. */
+  settings?: SettingsFormColors;
+}
+
+/** Typography class overrides for the composed Toolset editor, grouped like its labels. */
+export interface ToolsetEditorTypography {
+  /** Typography of the Setup section form. */
+  settings?: SettingsFormTypography;
 }
 
 /** Props of the composed Toolset editor. */
@@ -147,20 +166,16 @@ export interface ToolsetEditorProps {
   onNotifySuccess: (message: string) => void;
   /** Shows an error notification with the given message and optional trace id. */
   onNotifyError: (message: string, requestId?: string) => void;
-  /** Storage bucket whose files the avatar picker browses. */
-  bucket: string;
-  /** Host file-manager modal rendered inside the avatar picker. */
-  FileManagerModal: ComponentType<AvatarPickerFileManagerModalProps>;
-  /** Resolves an icon URL into the previewable URL the form renders. */
-  resolveIconUrl: (url: string) => string;
-  /** MIME types the avatar picker accepts. */
-  allowedMimeTypes: string[];
-  /** Maximum avatar file size in bytes. */
-  maxFileSizeBytes: number;
+  /** Host wiring for the avatar picker: bucket, file manager, icon URL resolution, picked-file resolution and file limits. */
+  avatarPicker: MetadataFormAvatarPicker;
   /** Locale options offered by the "Add locale" popup. */
   availableLocaleOptions: DeploymentCreationFormLocaleOption[];
   /** Optional Description rewrite callback; omission hides the Refine with AI action. */
   onRefineDescription?: TextRefinementCallback;
   /** Pre-translated labels; each group falls back to English defaults. */
   labels?: ToolsetEditorLabels;
+  /** Color overrides, applied as CSS custom properties. */
+  colors?: ToolsetEditorColors;
+  /** Typography class overrides. */
+  typography?: ToolsetEditorTypography;
 }

@@ -295,10 +295,13 @@ const mapModelPricing = (
 
   const prices = [...(pricing.prices ?? [])]
     .sort((a, b) => getPricingKeyRank(a.key) - getPricingKeyRank(b.key))
-    .map(({ key, price }) => ({
-      label: formatPricingKeyLabel(key, unit),
-      price,
-    }));
+    .map(({ key, price, condition }) => {
+      const label = formatPricingKeyLabel(key, unit);
+      return {
+        label: condition != null ? `${label} (${condition})` : label,
+        price,
+      };
+    });
 
   if (prices.length === 0) return undefined;
   return unit === CatalogPricingUnit.Character ? { prices, unit } : { prices };
@@ -585,10 +588,115 @@ const mapFeaturesToCapabilities = (
   };
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value != null && !Array.isArray(value);
+
+/* DIAL Core's pricing `test` operators, with the one that holds when a test fails. */
+const NEGATED_PRICING_OPERATORS: Record<string, string> = {
+  '==': '!=',
+  '!=': '==',
+  '>': '<=',
+  '<': '>=',
+  '>=': '<',
+  '<=': '>',
+};
+
+const PRICING_OPERATOR_SYMBOLS: Record<string, string> = {
+  '==': '=',
+  '!=': '≠',
+  '>': '>',
+  '<': '<',
+  '>=': '≥',
+  '<=': '≤',
+};
+
+const formatPricingConditionValue = (value: unknown): string => {
+  const n = typeof value === 'number' ? value : Number(value);
+  if (typeof value === 'boolean' || value === '' || !Number.isFinite(n)) {
+    return String(value);
+  }
+  if (n >= 1_000_000) return `${n / 1_000_000}M`;
+  if (n >= 1_000) return `${n / 1_000}K`;
+  return String(n);
+};
+
+/** A DIAL Core pricing `test`, formatted for both of its branches. */
+interface PricingCondition {
+  /** Shown on the `ifTrue` branch, e.g. `prompt tokens > 200K`. */
+  holds: string;
+  /** Shown on the `ifFalse` branch, e.g. `prompt tokens ≤ 200K`. */
+  fails: string;
+  /** Whether `ifTrue` is the upper tier, so the `ifFalse` tier is listed first. */
+  isLowerBound: boolean;
+}
+
+const formatPricingCondition = (
+  test: unknown,
+): PricingCondition | undefined => {
+  if (!isRecord(test)) return undefined;
+
+  const { field, operator, value } = test;
+  if (typeof field !== 'string' || field.trim() === '') return undefined;
+  if (typeof operator !== 'string') return undefined;
+  const negated = NEGATED_PRICING_OPERATORS[operator];
+  if (negated == null) return undefined;
+
+  const subject = field
+    .replace(/([a-z\d])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .trim()
+    .toLowerCase();
+  const formattedValue = formatPricingConditionValue(value);
+
+  return {
+    holds: `${subject} ${PRICING_OPERATOR_SYMBOLS[operator]} ${formattedValue}`,
+    fails: `${subject} ${PRICING_OPERATOR_SYMBOLS[negated]} ${formattedValue}`,
+    isLowerBound: operator === '>' || operator === '>=',
+  };
+};
+
+/** One leaf of a DIAL Core pricing tree: a per-unit price and the conditions leading to it. */
+interface PricingBranch {
+  rate: string;
+  conditions: string[];
+}
+
+/*
+ * A DIAL Core price is a per-unit string, `{ rate }`, or a conditional tree
+ * `{ test, ifTrue, ifFalse }` whose branches are prices of the same shape —
+ * e.g. a higher prompt rate once `promptTokens > 200000`. Every leaf becomes
+ * its own branch carrying the conditions on its path, lower tier first.
+ */
+const flattenPricingRate = (
+  value: unknown,
+  conditions: string[] = [],
+): PricingBranch[] => {
+  if (typeof value === 'string') {
+    return value.trim() === '' ? [] : [{ rate: value, conditions }];
+  }
+  if (!isRecord(value)) return [];
+
+  const condition = formatPricingCondition(value.test);
+  if (condition == null) return flattenPricingRate(value.rate, conditions);
+
+  const trueBranches = flattenPricingRate(value.ifTrue, [
+    ...conditions,
+    condition.holds,
+  ]);
+  const falseBranches = flattenPricingRate(value.ifFalse, [
+    ...conditions,
+    condition.fails,
+  ]);
+  return condition.isLowerBound
+    ? [...falseBranches, ...trueBranches]
+    : [...trueBranches, ...falseBranches];
+};
+
 /*
  * DIAL Core reports pricing as an open-ended map, so every key except `unit`
  * — which names the billing unit the other keys are priced in — is surfaced as
- * a price row in the order Core returned it.
+ * a price row in the order Core returned it; a conditional price yields one
+ * row per tier.
  */
 const mapPricingDto = (
   pricing: NonNullable<DeploymentDetailsDto['modelDetails']>['pricing'],
@@ -598,10 +706,14 @@ const mapPricingDto = (
   const unit = typeof pricing.unit === 'string' ? pricing.unit : undefined;
   const prices = Object.entries(pricing).flatMap(([key, value]) => {
     if (key === PRICING_UNIT_KEY) return [];
-    if (typeof value !== 'string' || value.trim() === '') return [];
 
-    const price = formatUnitPrice(value, unit);
-    return price != null ? [{ key, price }] : [];
+    return flattenPricingRate(value).flatMap(({ rate, conditions }) => {
+      const price = formatUnitPrice(rate, unit);
+      if (price == null) return [];
+      return conditions.length > 0
+        ? [{ key, price, condition: conditions.join(', ') }]
+        : [{ key, price }];
+    });
   });
 
   return prices.length > 0 ? { prices, unit } : undefined;

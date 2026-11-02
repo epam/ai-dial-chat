@@ -1,12 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { borrowPenguinStarElement } from '../penguin-star-selector';
 
-afterEach(() => {
-  document.body.replaceChildren();
-  vi.restoreAllMocks();
-});
-
 describe('borrowPenguinStarElement', () => {
+  afterEach(() => {
+    document.body.replaceChildren();
+    vi.restoreAllMocks();
+  });
+
   it('flies the existing control to the flipper and restores its own animation', () => {
     const button = document.createElement('button');
     button.textContent = 'A suggestion';

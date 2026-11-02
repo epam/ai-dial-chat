@@ -36,25 +36,17 @@
   },
   "peerDependencies": {
     "react": "^19.2.8",
-    "@epam/ai-dial-ui-kit": "^0.16.0-dev.35",
-    "@epam/ai-dial-react-file-manager": "^0.4.0-dev.11",
-    "ag-grid-community": "^35.3.0"
-  },
-  "peerDependenciesMeta": {
-    "@epam/ai-dial-react-file-manager": {
-      "optional": true
-    },
-    "ag-grid-community": {
-      "optional": true
-    }
+    "@epam/ai-dial-ui-kit": "^0.16.0-dev.59",
+    "@epam/ai-dial-react-file-manager": "^0.4.0-dev.25"
   },
   "dependencies": {
-    "@tabler/icons-react": "^3.44.0",
+    "ag-grid-community": "^35.3.0",
+    "@tabler/icons-react": "^3.50.0",
     "classnames": "2.5.1",
     "dompurify": "3.4.17",
-    "katex": "^0.19.0",
+    "katex": "^0.19.1",
     "react-markdown": "^10.1.0",
-    "react-syntax-highlighter": "^16.1.1",
+    "react-syntax-highlighter": "^16.1.2",
     "rehype-katex": "^7.0.1",
     "rehype-raw": "^7.0.0",
     "rehype-sanitize": "^6.0.0",
@@ -64,12 +56,13 @@
     "remark-math": "^6.0.0",
     "remark-parse": "^11.0.0",
     "remark-rehype": "^11.1.2",
-    "tailwind-merge": "^3.6.0",
+    "tailwind-merge": "^3.7.0",
     "unified": "^11.0.5"
   },
   "nx": {
     "tags": [
-      "publishable"
+      "publishable",
+      "type:shared"
     ],
     "targets": {
       "publish": {

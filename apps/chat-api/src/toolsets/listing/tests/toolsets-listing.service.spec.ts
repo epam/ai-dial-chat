@@ -725,6 +725,58 @@ describe('ToolsetsListingService', () => {
       ).toBeUndefined();
     });
 
+    it('returns the client secret hint from the custom resource but never the secret', async () => {
+      const { service } = makeService();
+      const id = 'toolsets/bucket/hinted-toolset';
+      vi.spyOn(
+        service['dialClient'].client,
+        'getCustomToolSet',
+      ).mockResolvedValue(
+        okResponse({
+          display_name: 'Hinted toolset',
+          auth_settings: {
+            authentication_type: 'OAUTH',
+            client_id: 'client-id',
+            client_secret: 'super-secret',
+            client_secret_hint: 'd4c6',
+          },
+        }),
+      );
+      vi.spyOn(service['dialClient'].client, 'getToolset').mockResolvedValue(
+        okResponse({ id, toolset: id, object: 'toolset' }),
+      );
+
+      const result = await service.getToolset('user1', 'token', 'bucket', id);
+
+      expect(result.authSettings?.clientSecretHint).toBe('d4c6');
+      expect(result.authSettings).not.toHaveProperty('clientSecret');
+      expect(JSON.stringify(result)).not.toContain('super-secret');
+    });
+
+    it('leaves the client secret hint absent when DIAL Core sends none', async () => {
+      const { service } = makeService();
+      const id = 'toolsets/bucket/unhinted-toolset';
+      vi.spyOn(
+        service['dialClient'].client,
+        'getCustomToolSet',
+      ).mockResolvedValue(
+        okResponse({
+          display_name: 'Unhinted toolset',
+          auth_settings: {
+            authentication_type: 'OAUTH',
+            client_id: 'client-id',
+          },
+        }),
+      );
+      vi.spyOn(service['dialClient'].client, 'getToolset').mockResolvedValue(
+        okResponse({ id, toolset: id, object: 'toolset' }),
+      );
+
+      const result = await service.getToolset('user1', 'token', 'bucket', id);
+
+      expect(result.authSettings?.clientSecretHint).toBeUndefined();
+    });
+
     it('loads a saved API key header from the custom resource', async () => {
       const { service } = makeService();
       const id = 'toolsets/bucket/api-toolset';

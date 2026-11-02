@@ -29,12 +29,14 @@ interface Point {
   x: number;
   y: number;
 }
+
 interface Pose extends Point {
   time: number;
   angle?: number;
   opacity?: number;
   easing?: WitchEasing;
 }
+
 enum WitchEasing {
   Smooth = 'cubic-bezier(0.45, 0, 0.55, 1)',
   Settle = 'cubic-bezier(0.22, 1, 0.36, 1)',
@@ -42,6 +44,7 @@ enum WitchEasing {
   Linear = 'linear',
   Hold = 'steps(1, end)',
 }
+
 interface Hop {
   from: number;
   to: number;
@@ -49,6 +52,7 @@ interface Hop {
   end: Point;
   height: number;
 }
+
 interface WitchActor {
   mentor: boolean;
   size: number;
@@ -57,6 +61,7 @@ interface WitchActor {
   frames: Keyframe[];
   parts: Record<WitchPart, Keyframe[]>;
 }
+
 interface WitchButton {
   target: CelebrationSnapshotTarget;
   entry: number;
@@ -65,6 +70,7 @@ interface WitchButton {
   legFrames: Keyframe[];
   hops: Hop[];
 }
+
 interface Spell {
   frames: Keyframe[];
   mentor: boolean;

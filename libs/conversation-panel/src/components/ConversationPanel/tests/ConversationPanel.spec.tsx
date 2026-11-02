@@ -9,7 +9,15 @@ import { ConversationPanel } from '../ConversationPanel';
 /* Records one entry per ConversationRow body render (its title renders once). */
 const rowRenderLog = vi.hoisted((): string[] => []);
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
+vi.mock('@epam/ai-dial-ui-kit', async () => ({
+  /* The real live region: a hand-rolled stub would hide its always-mounted markup. */
+  ...(await vi
+    .importActual<typeof import('@epam/ai-dial-ui-kit')>('@epam/ai-dial-ui-kit')
+    .then(({ LiveRegion, LiveRegionElement, LiveRegionPoliteness }) => ({
+      LiveRegion,
+      LiveRegionElement,
+      LiveRegionPoliteness,
+    }))),
   DIAL_KIT_ICON_STROKE: 1.5,
   mergeClasses: (...args: (string | undefined | false | null)[]) =>
     args.filter(Boolean).join(' '),
@@ -199,25 +207,36 @@ vi.mock('react-window', () => ({
     rowCount,
     rowProps,
     role,
+    onRowsRendered,
   }: {
     rowComponent: React.ComponentType<Record<string, unknown>>;
     rowCount: number;
     rowProps: Record<string, unknown>;
     role?: string;
+    onRowsRendered?: (visibleRows: {
+      startIndex: number;
+      stopIndex: number;
+    }) => void;
     [key: string]: unknown;
-  }) => (
-    <div role={role}>
-      {Array.from({ length: rowCount }, (_, index) => (
-        <RowComponent
-          key={index}
-          index={index}
-          style={{}}
-          ariaAttributes={{}}
-          {...rowProps}
-        />
-      ))}
-    </div>
-  ),
+  }) => {
+    /* The whole list fits the test viewport. */
+    React.useEffect(() => {
+      onRowsRendered?.({ startIndex: 0, stopIndex: rowCount - 1 });
+    });
+    return (
+      <div role={role}>
+        {Array.from({ length: rowCount }, (_, index) => (
+          <RowComponent
+            key={index}
+            index={index}
+            style={{}}
+            ariaAttributes={{}}
+            {...rowProps}
+          />
+        ))}
+      </div>
+    );
+  },
 }));
 
 vi.mock('@tabler/icons-react', () => ({
@@ -296,6 +315,20 @@ const items: ConversationItem[] = [
 ];
 
 describe('ConversationPanel', () => {
+  it('forwards visible conversation IDs from its list', () => {
+    const onVisibleConversationIdsChange = vi.fn();
+    render(
+      <ConversationPanel
+        {...BASE_PROPS}
+        conversations={items}
+        onVisibleConversationIdsChange={onVisibleConversationIdsChange}
+      />,
+    );
+    expect(onVisibleConversationIdsChange).toHaveBeenLastCalledWith(
+      expect.arrayContaining(items.map(({ id }) => id)),
+    );
+  });
+
   it('renders all conversation rows when open', () => {
     render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
     /* Every conversation row, plus one list item per group header. */
@@ -308,6 +341,26 @@ describe('ConversationPanel', () => {
     render(<ConversationPanel {...BASE_PROPS} conversations={[]} />);
     expect(screen.queryByRole('listitem')).toBeNull();
     expect(screen.getAllByText('No conversations yet')).toBeTruthy();
+  });
+
+  it('forwards labels.tabEmptyLabels to the list for the active filter tab', () => {
+    render(
+      <ConversationPanel
+        {...BASE_PROPS}
+        conversations={[]}
+        activeFilter={FilterTab.Shared}
+        labels={{
+          ...BASE_PROPS.labels,
+          tabEmptyLabels: {
+            [FilterTab.Shared]: { label: 'No shared chats yet' },
+          },
+        }}
+      />,
+    );
+
+    expect(screen.getAllByText('No shared chats yet').length).toBeGreaterThan(
+      0,
+    );
   });
 
   it('marks the active conversation with aria-current="page"', () => {

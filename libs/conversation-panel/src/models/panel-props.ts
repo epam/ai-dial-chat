@@ -152,6 +152,10 @@ export interface ConversationPanelProps {
   conversations: ConversationItem[];
   /** When true, renders skeleton rows instead of the conversation list. */
   isLoading?: boolean;
+  /** True while the host resolves titles in the background; existing rows remain usable. */
+  isUpdatingTitles?: boolean;
+  /** Keeps an opened search result visible after its title changes, until the query changes. Defaults to `false`. */
+  preserveActiveSearchResult?: boolean;
   /** Whether the panel is currently expanded. */
   isOpen: boolean;
   /** Called with the conversation `id` when a row is clicked. */
@@ -188,6 +192,8 @@ export interface ConversationPanelProps {
    * See `ConversationMove` for the payload shape.
    */
   onMoveConversation?: (move: ConversationMove) => void;
+  /** Called with the distinct IDs of conversation rows in the visible viewport, in row order, whenever that sequence changes; excludes group headers and overscan rows, and is empty when no rows are visible. */
+  onVisibleConversationIdsChange?: (ids: string[]) => void;
   /** Programmatically sets the active filter tab. Pass `undefined` to leave the tab unchanged. */
   activeFilter?: FilterTab;
   /** Called when the active filter tab changes. */

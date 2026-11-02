@@ -1,4 +1,6 @@
 import nx from '@nx/eslint-plugin';
+import stylistic from '@stylistic/eslint-plugin';
+import vitest from '@vitest/eslint-plugin';
 import prettier from 'eslint-plugin-prettier';
 import prettierConfig from 'eslint-config-prettier';
 import importPlugin from 'eslint-plugin-import';
@@ -6,7 +8,22 @@ import jsxA11y from 'eslint-plugin-jsx-a11y';
 import reactHooks from 'eslint-plugin-react-hooks';
 import tailwindcss from 'eslint-plugin-tailwindcss';
 import testingLibrary from 'eslint-plugin-testing-library';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+
+// Every `type:ui` lib's package name, read from the Nx tags so new feature libs are covered.
+const uiLibPackageNames = readdirSync(new URL('./libs', import.meta.url))
+  .map((dir) => new URL(`./libs/${dir}/package.json`, import.meta.url))
+  .filter((manifestUrl) => existsSync(manifestUrl))
+  .map((manifestUrl) => JSON.parse(readFileSync(manifestUrl, 'utf8')))
+  .filter((manifest) => manifest.nx?.tags?.includes('type:ui'))
+  .map((manifest) => manifest.name);
+
+const relativeImportExtensionPattern = {
+  regex: '^\\.{1,2}/.+\\.(?:js|jsx|ts|tsx)$',
+  message:
+    'Omit JavaScript and TypeScript extensions from relative source imports.',
+};
 
 export default [
   ...nx.configs['flat/base'],
@@ -32,6 +49,11 @@ export default [
     // adding per-path `allow` exceptions every time a build config needs to
     // reach a sibling. The rest of the lint rules below keep their broader
     // scope.
+    //
+    // Every project carries exactly one `type:*` tag (see docs/architecture.md
+    // "Module boundary rules"). A kind that may import nothing lists only its
+    // own tag, because Nx treats an empty `onlyDependOnLibsWithTags` as "any".
+    // `type:hooks` -> `type:ui` and `type:ui` -> `type:hooks` are known debt.
     files: ['**/src/**/*.{ts,tsx,js,jsx,cts,mts,cjs,mjs}'],
     rules: {
       'no-console': ['error', { allow: ['warn', 'error', 'info'] }],
@@ -42,8 +64,49 @@ export default [
           allow: ['^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$'],
           depConstraints: [
             {
-              sourceTag: '*',
-              onlyDependOnLibsWithTags: ['*'],
+              sourceTag: 'type:app',
+              onlyDependOnLibsWithTags: [
+                'type:shared',
+                'type:ui',
+                'type:hooks',
+                'type:api-client',
+              ],
+            },
+            {
+              sourceTag: 'type:hooks',
+              onlyDependOnLibsWithTags: [
+                'type:shared',
+                'type:ui',
+                'type:api-client',
+              ],
+            },
+            {
+              sourceTag: 'type:ui',
+              onlyDependOnLibsWithTags: [
+                'type:shared',
+                'type:ui',
+                'type:hooks',
+              ],
+            },
+            {
+              sourceTag: 'type:shared',
+              onlyDependOnLibsWithTags: ['type:shared'],
+            },
+            {
+              sourceTag: 'type:api-client',
+              onlyDependOnLibsWithTags: ['type:api-client'],
+            },
+            {
+              sourceTag: 'type:backend',
+              onlyDependOnLibsWithTags: ['type:backend'],
+            },
+            {
+              sourceTag: 'type:fixture',
+              onlyDependOnLibsWithTags: [
+                'type:shared',
+                'type:ui',
+                'type:hooks',
+              ],
             },
           ],
         },
@@ -53,6 +116,7 @@ export default [
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
     plugins: {
+      '@stylistic': stylistic,
       prettier,
       import: importPlugin,
       'jsx-a11y': jsxA11y,
@@ -66,18 +130,45 @@ export default [
         cssConfigPath: fileURLToPath(
           new URL('./tools/tailwind/index.css', import.meta.url),
         ),
+        // Replaces the plugin's default list, so the defaults are repeated;
+        // `mergeClasses` (ui-kit) is how most class strings here are built.
+        functions: [
+          'mergeClasses',
+          'classnames',
+          'classNames',
+          'clsx',
+          'cn',
+          'ctl',
+          'cva',
+          'tv',
+          'tw',
+          'twMerge',
+          'twJoin',
+        ],
       },
     },
     rules: {
       // Prettier rules
       'prettier/prettier': 'error',
 
+      // Layout rules Prettier leaves alone
+      'one-var': ['error', 'never'],
+      '@stylistic/padding-line-between-statements': [
+        'error',
+        { blankLine: 'always', prev: 'import', next: '*' },
+        { blankLine: 'any', prev: 'import', next: 'import' },
+        { blankLine: 'always', prev: '*', next: ['interface', 'type'] },
+        { blankLine: 'always', prev: ['interface', 'type'], next: '*' },
+        { blankLine: 'always', prev: '*', next: 'export' },
+        { blankLine: 'any', prev: 'export', next: 'export' },
+      ],
+
       // React Hooks rules
       'react-hooks/rules-of-hooks': 'off',
       'react-hooks/exhaustive-deps': 'error',
       'react-hooks/set-state-in-effect': 'off',
       'tailwindcss/no-contradicting-classname': 'error',
-      'tailwindcss/enforces-canonical-classname': 'warn',
+      'tailwindcss/enforces-canonical-classname': 'error',
 
       // Import rules
       'import/order': [
@@ -102,15 +193,7 @@ export default [
       'import/no-unresolved': 'off', // TypeScript handles this
       'no-restricted-imports': [
         'error',
-        {
-          patterns: [
-            {
-              regex: '^\\.{1,2}/.+\\.(?:js|jsx|ts|tsx)$',
-              message:
-                'Omit JavaScript and TypeScript extensions from relative source imports.',
-            },
-          ],
-        },
+        { patterns: [relativeImportExtensionPattern] },
       ],
 
       // Accessibility rules
@@ -132,6 +215,83 @@ export default [
       'jsx-a11y/role-has-required-aria-props': 'warn',
       'jsx-a11y/role-supports-aria-props': 'warn',
       'jsx-a11y/scope': 'warn',
+    },
+  },
+  {
+    /*
+     * Consumer fixtures install packed lib tarballs into their own
+     * node_modules, so their imports resolve to no Nx project or npm node and
+     * `@nx/enforce-module-boundaries` skips them. Like any external host, a
+     * fixture must not reach for the generated API client directly. This block
+     * must come after the general one above, which also sets this rule.
+     */
+    files: ['tools/*-consumer-fixture/src/**/*.{ts,tsx,js,jsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            relativeImportExtensionPattern,
+            {
+              group: [
+                '@epam/ai-dial-chat-api-client',
+                '@epam/ai-dial-chat-api-client/*',
+              ],
+              message:
+                'Consumer fixtures are external hosts: use the published lib APIs, not the generated DIAL Chat API client.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    /*
+     * `chat-hooks` may take a feature lib's types, enums and pure functions to
+     * build that lib's props, but never its hooks: it holds non-rendering
+     * code only. Like the fixture block, this must follow the general block.
+     */
+    files: ['libs/chat-hooks/src/**/*.{ts,tsx}'],
+    ignores: ['**/*.spec.*', '**/tests/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            relativeImportExtensionPattern,
+            {
+              group: uiLibPackageNames.flatMap((name) => [name, `${name}/*`]),
+              importNamePattern: '^use[A-Z]',
+              message:
+                "chat-hooks may import a feature lib's types, enums and pure functions, not its hooks.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    /*
+     * Among feature libs only `toolset-editor` imports `chat-hooks` (see
+     * AGENTS.md "Library isolation"); any other feature lib takes behaviour
+     * through props and callbacks instead.
+     */
+    files: ['libs/*/src/**/*.{ts,tsx}'],
+    ignores: ['libs/chat-hooks/**', 'libs/toolset-editor/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            relativeImportExtensionPattern,
+            {
+              group: ['@epam/ai-dial-chat-hooks', '@epam/ai-dial-chat-hooks/*'],
+              message:
+                'Only toolset-editor among feature libs may import chat-hooks; take the behaviour through props or callbacks.',
+            },
+          ],
+        },
+      ],
     },
   },
   {
@@ -165,9 +325,20 @@ export default [
     files: ['**/*.spec.ts', '**/*.spec.tsx'],
     plugins: {
       'testing-library': testingLibrary,
+      vitest,
     },
     rules: {
       ...testingLibrary.configs['flat/react'].rules,
+      'vitest/require-top-level-describe': 'error',
+      'vitest/expect-expect': [
+        'error',
+        /*
+         * `expect*` covers local assertion helpers (`expectRejection(...)`);
+         * `**.expect` covers supertest chains, including ones built by a
+         * helper (`postCompletion().expect(503)`).
+         */
+        { assertFunctionNames: ['expect*', '**.expect'] },
+      ],
     },
   },
   prettierConfig,

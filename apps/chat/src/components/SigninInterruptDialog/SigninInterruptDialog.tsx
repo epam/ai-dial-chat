@@ -1,6 +1,14 @@
-import type { DialToolsetDto } from '@epam/ai-dial-chat-api-client';
+import type {
+  DialToolsetDto,
+  GetExternalServiceResponseDto,
+} from '@epam/ai-dial-chat-api-client';
 import {
   buildExternalServiceScopeId,
+  ExternalServiceAuthType,
+  ExternalServiceCredentialsLevel,
+  ExternalServiceLoginOutcomeType,
+  type PendingSigninEvent,
+  PendingSigninEventKind,
   ToolsetAuthTypes,
   ToolsetCredentialsLevel,
   ToolsetLoginOutcomeType,
@@ -16,6 +24,10 @@ import {
   PopupSize,
   PrimaryButton,
   Input,
+  LinkButton,
+  LiveRegion,
+  LiveRegionElement,
+  LiveRegionPoliteness,
 } from '@epam/ai-dial-ui-kit';
 import { IconAlertCircleFilled } from '@tabler/icons-react';
 import {
@@ -35,27 +47,14 @@ import {
 import { useFeatureFlag } from '../../context/AppConfigContext';
 import { useClientChannel } from '../../context/ClientChannelContext';
 import { useDeployments } from '../../context/DeploymentsContext';
-import {
-  ExternalServiceLoginOutcomeType,
-  useExternalServiceLogin,
-} from '../../hooks/externalServices/useExternalServiceLogin';
+import { useExternalServiceLogin } from '../../hooks/externalServices/useExternalServiceLogin';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useToolsetLogin } from '../../hooks/toolsets/useToolsetLogin';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import type { ResolvedRowInfo } from '../../models/signin-interrupt';
 import { ClientChannelReportResult } from '../../server-api/client-channel';
-import {
-  ExternalServiceAuthType,
-  ExternalServiceCredentialsLevel,
-  getExternalService,
-  type GetExternalServiceResponseDto,
-} from '../../server-api/external-services';
+import { getExternalService } from '../../server-api/external-services';
 import { getToolset } from '../../server-api/toolsets';
-import {
-  PendingSigninEventKind,
-  type PendingSigninEvent,
-} from '../../types/client-channel';
-import { RowAuthType } from '../../types/signin-interrupt';
 import {
   resolveExternalServiceInfo,
   resolveToolsetInfo,
@@ -93,8 +92,8 @@ const SigninRow: FC<SigninRowProps> = ({
 }) => {
   const { t } = useTranslation();
   const isProcessing = rowState.status === RowStatus.Processing;
-  const isApiKey = info.authenticationType === RowAuthType.ApiKey;
-  const isNoAuth = info.authenticationType === RowAuthType.None;
+  const isApiKey = info.authenticationType === ExternalServiceAuthType.ApiKey;
+  const isNoAuth = info.authenticationType === ExternalServiceAuthType.None;
   const canSubmitLogin = !isApiKey || rowState.apiKey.trim().length > 0;
 
   return (
@@ -123,24 +122,24 @@ const SigninRow: FC<SigninRowProps> = ({
         />
       )}
 
-      {rowState.error && (
-        <div
-          role="alert"
-          className="dial-small-text flex flex-wrap items-center gap-2 wrap-break-word text-error"
-        >
-          <IconAlertCircleFilled size={DIAL_ICON_SIZE.SM} aria-hidden />
-          <span>{rowState.error}</span>
-          <button
-            type="button"
-            className="dial-small-text underline"
-            onClick={() => onLogin(event, info)}
-          >
-            {t(ToolsetSigninI18nKeys.ErrorRetry)}
-          </button>
-        </div>
-      )}
+      <LiveRegion
+        politeness={LiveRegionPoliteness.Assertive}
+        className="dial-small-text flex flex-wrap items-center gap-2 wrap-break-word text-error"
+      >
+        {rowState.error && (
+          <>
+            <IconAlertCircleFilled size={DIAL_ICON_SIZE.SM} aria-hidden />
+            <span>{rowState.error}</span>
+            <LinkButton
+              className="h-auto"
+              label={t(ButtonsI18nKeys.Retry)}
+              onClick={() => onLogin(event, info)}
+            />
+          </>
+        )}
+      </LiveRegion>
 
-      {info.authenticationType === RowAuthType.DialNative && (
+      {info.authenticationType === ExternalServiceAuthType.DialNative && (
         <p className="dial-small-text wrap-break-word text-secondary">
           {t(ToolsetSigninI18nKeys.DialNativeHint)}
         </p>
@@ -355,7 +354,7 @@ const SigninInterruptDialog: FC = () => {
       if (event.kind !== PendingSigninEventKind.ExternalService) continue;
       const key = getResourceKey(event);
       const info = infoByResourceKey.get(key);
-      if (info?.authenticationType !== RowAuthType.None) continue;
+      if (info?.authenticationType !== ExternalServiceAuthType.None) continue;
       if (autoResolvedRef.current.has(event.id)) continue;
 
       autoResolvedRef.current.add(event.id);
@@ -512,8 +511,8 @@ const SigninInterruptDialog: FC = () => {
           serviceId: event.serviceName,
           credentialsLevel:
             info.credentialsLevel as ExternalServiceCredentialsLevel,
-          authenticationType: (info.authenticationType ??
-            ExternalServiceAuthType.ApiKey) as ExternalServiceAuthType,
+          authenticationType:
+            info.authenticationType ?? ExternalServiceAuthType.ApiKey,
           apiKey: rowState.apiKey,
           oauthSettings: info.oauthSettings,
           forceStale: true,
@@ -616,9 +615,9 @@ const SigninInterruptDialog: FC = () => {
         <p className="dial-small-text text-secondary">
           {t(ToolsetSigninI18nKeys.DialogDescription)}
         </p>
-        <span role="status" aria-live="polite" className="sr-only">
+        <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
           {statusMessage}
-        </span>
+        </LiveRegion>
         <div className="flex flex-col">
           {pendingEvents.map((event) => {
             const key = getResourceKey(event);
@@ -644,7 +643,8 @@ const SigninInterruptDialog: FC = () => {
             getResourceKey(event),
           )?.authenticationType;
           return (
-            authType === RowAuthType.ApiKey || authType === RowAuthType.OAuth
+            authType === ExternalServiceAuthType.ApiKey ||
+            authType === ExternalServiceAuthType.OAuth
           );
         }) && (
           <Checkbox

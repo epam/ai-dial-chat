@@ -34,22 +34,16 @@ export const ModelSelectorSkeletonLabel: FC<
   </span>
 );
 
-interface ModelSelectorSkeletonRowsProps {
-  loadingLabel?: string;
-}
-
-/** Stacked skeleton rows shown while the model selector is loading. */
-export const ModelSelectorSkeletonRows: FC<ModelSelectorSkeletonRowsProps> = ({
-  loadingLabel,
-}) => (
-  <div role="status" aria-label={loadingLabel}>
+/**
+ * Stacked, `aria-hidden` skeleton rows shown while the model selector is
+ * loading. The parent announces the loading text through its own
+ * always-mounted live region.
+ */
+export const ModelSelectorSkeletonRows: FC = () => (
+  <div aria-hidden="true">
     {Array.from({ length: MODEL_SELECTOR_SKELETON_ROW_COUNT }).map(
       (_, index) => (
-        <div
-          key={index}
-          className="flex h-11 items-center gap-3 px-4"
-          aria-hidden="true"
-        >
+        <div key={index} className="flex h-11 items-center gap-3 px-4">
           <ModelSelectorSkeletonIcon />
           <ModelSelectorSkeletonLabel />
         </div>

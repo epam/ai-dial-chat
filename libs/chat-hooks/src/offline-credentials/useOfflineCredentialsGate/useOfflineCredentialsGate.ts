@@ -1,3 +1,4 @@
+import { SchedulerServiceConsentStatus } from '@epam/ai-dial-chat-api-client';
 import type { OfflineCredentialsApi } from '@epam/ai-dial-chat-api-client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { mapOfflineCredentialsResponse } from '../map-offline-credentials-response';
@@ -31,6 +32,8 @@ export interface OfflineCredentialsStatusResult {
   connected: boolean;
   /** OAuth client settings usable for a login — present only while available and not connected. */
   connect?: OfflineCredentialsConnectSettings;
+  /** Consent state of the scheduler external service; `unknown` when the response omitted it (older BFF). */
+  schedulerServiceConsent: SchedulerServiceConsentStatus;
 }
 
 export interface UseOfflineCredentialsGateResult {
@@ -39,6 +42,8 @@ export interface UseOfflineCredentialsGateResult {
   connect: OfflineCredentialsConnectSettings | undefined;
   /** Whether the most recent successful check reported a stored offline-credentials grant; a failed check keeps the last resolved value. `false` before the first check resolves. */
   connected: boolean;
+  /** Scheduler service consent from the most recent check; `unknown` before the first check resolves or while it failed. The hook parses and exposes the field only — each surface decides its UI. */
+  schedulerServiceConsent: SchedulerServiceConsentStatus;
   /**
    * Re-runs the status check and returns its freshly resolved
    * `{ available, connected }` result (or `null` on failure/abort), so a
@@ -74,6 +79,10 @@ export const useOfflineCredentialsGate = ({
     OfflineCredentialsConnectSettings | undefined
   >(undefined);
   const [connected, setConnected] = useState(false);
+  const [schedulerServiceConsent, setSchedulerServiceConsent] =
+    useState<SchedulerServiceConsentStatus>(
+      SchedulerServiceConsentStatus.Unknown,
+    );
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const fetchStatus =
@@ -93,6 +102,7 @@ export const useOfflineCredentialsGate = ({
           available,
           connected,
           connect: connectSettings,
+          schedulerServiceConsent,
         } = mapOfflineCredentialsResponse(response);
 
         setStatus(
@@ -104,11 +114,20 @@ export const useOfflineCredentialsGate = ({
         );
         setConnect(connectSettings);
         setConnected(connected);
-        return { available, connected, connect: connectSettings };
+        setSchedulerServiceConsent(schedulerServiceConsent);
+        return {
+          available,
+          connected,
+          connect: connectSettings,
+          schedulerServiceConsent,
+        };
       } catch {
         if (controller.signal.aborted) return null;
         setStatus(OfflineCredentialsGateStatus.Error);
         setConnect(undefined);
+        /* A failed check asserts no connection state, so the consent resets
+         * rather than surfacing a stale limited-access value. */
+        setSchedulerServiceConsent(SchedulerServiceConsentStatus.Unknown);
         return null;
       }
     }, [offlineCredentialsClient]);
@@ -125,6 +144,7 @@ export const useOfflineCredentialsGate = ({
     status,
     connect,
     connected,
+    schedulerServiceConsent,
     refetch: fetchStatus,
   };
 };

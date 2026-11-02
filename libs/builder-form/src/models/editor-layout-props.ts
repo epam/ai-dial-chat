@@ -32,10 +32,18 @@ export interface EditorLayoutColors {
   sidebarBorderColor?: string;
 }
 
+/** Typography class overrides for `EditorLayout`. */
+export interface EditorLayoutTypography {
+  /** Typography class of the header title. Defaults to `'dial-h2-text'`. */
+  titleClassName?: string;
+}
+
 /** Style overrides for `EditorLayout`. */
 export interface EditorLayoutStyles {
   /** Color token overrides. */
   colors?: EditorLayoutColors;
+  /** Typography class overrides. */
+  typography?: EditorLayoutTypography;
 }
 
 /** Props for `EditorLayout`. */

@@ -27,6 +27,8 @@ import {
 import {
   getAccessRulesLabels,
   getPublishAuthorLabels,
+  getPublishFooterProgressLabels,
+  getPublishPanelCommonLabels,
   getPublishFolderLabel,
 } from '../../utils/publish';
 
@@ -166,6 +168,7 @@ const PublishConversationPanelContainer: FC<Props> = ({
       footerLabels={{
         cancelLabel: t(ButtonsI18nKeys.Cancel),
         publishDefaultLabel: t(ButtonsI18nKeys.Publish),
+        ...getPublishFooterProgressLabels(t),
       }}
       panelLabels={{
         replaceWarning: t(ConversationPublishI18nKeys.AlreadyPublishedWarning),
@@ -183,6 +186,7 @@ const PublishConversationPanelContainer: FC<Props> = ({
         rootFolderLabel: t(BasicI18nKeys.Organization),
         accessRulesLabels: getAccessRulesLabels(t),
         ...getPublishAuthorLabels(t),
+        ...getPublishPanelCommonLabels(t),
       }}
       labels={{
         title: t(ButtonsI18nKeys.Publish),

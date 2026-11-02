@@ -14,6 +14,11 @@ export default defineConfig(() => ({
     dts({
       entryRoot: 'src',
       tsconfigPath: path.join(import.meta.dirname, 'tsconfig.lib.json'),
+      /* Source aliases must not become private paths in published types. */
+      aliasesExclude: [
+        '@epam/ai-dial-chat-shared',
+        '@epam/ai-dial-builder-form',
+      ],
     }),
   ],
   resolve: {

@@ -10,6 +10,8 @@ import {
   DIAL_KIT_ICON_STROKE,
   ElementSize,
   GhostIconButton,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconMarkdown,
@@ -50,18 +52,21 @@ export const MessageActions: FC<MessageActionsProps> = ({
   const { tooltips, ariaLabels } = labels ?? {};
   const [copied, setCopied] = useState<'copy' | 'markdown' | null>(null);
   const [copyStatus, setCopyStatus] = useState('');
+  const copiedResetTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
   /*
-   * The copied feedback auto-resets on one tracked timer, cancelled on
-   * unmount — a bare setTimeout would keep firing after the component is
-   * gone (a stray setState, and a ReferenceError in torn-down test
-   * environments), and a second copy click restarts the countdown rather
-   * than stacking a second timer.
+   * A pending "Copied" reset must not outlive the toolbar: a setState from a
+   * stale timer after unmount fires after jsdom teardown in tests
+   * ("window is not defined") and is wasted work in the browser.
    */
-  const copyResetTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  useEffect(() => () => clearTimeout(copyResetTimer.current), []);
+  useEffect(() => () => clearTimeout(copiedResetTimerRef.current), []);
+
   const scheduleCopiedReset = useCallback(() => {
-    clearTimeout(copyResetTimer.current);
-    copyResetTimer.current = setTimeout(() => setCopied(null), COPIED_RESET_MS);
+    clearTimeout(copiedResetTimerRef.current);
+    copiedResetTimerRef.current = setTimeout(
+      () => setCopied(null),
+      COPIED_RESET_MS,
+    );
   }, []);
 
   const hasAnyAction =
@@ -126,9 +131,9 @@ export const MessageActions: FC<MessageActionsProps> = ({
       )}
     >
       {leadingContent}
-      <span role="status" aria-live="polite" className="sr-only">
+      <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
         {copyStatus}
-      </span>
+      </LiveRegion>
       {role === MessageRole.User ? (
         <>
           {onCopy && (

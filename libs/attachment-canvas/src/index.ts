@@ -19,6 +19,7 @@ export {
   useAttachmentCanvas,
 } from './context/AttachmentCanvasContext';
 export type { AttachmentCanvasContextValue } from './context/AttachmentCanvasContext';
+export { useLatestCanvasRequest } from './context/AttachmentCanvasContext';
 export { useOpenAttachmentCanvas } from './hooks/useOpenAttachmentCanvas/useOpenAttachmentCanvas';
 export type {
   OpenAttachmentCanvas,

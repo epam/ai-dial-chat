@@ -17,6 +17,7 @@ import {
   ConversationMessageDto,
   ConversationMessageRole,
 } from './dto/conversation-message.dto';
+import type { GenerationPreparationStep } from './generation/generation.types';
 import { GENERATION_PERSISTENCE_ERROR } from './generation/persistence-error';
 
 const STALE_ENTRY_FLOOR_MS = 30 * 60 * 1000; // 30 minutes
@@ -157,7 +158,11 @@ interface GenerationEntry {
    * release, never ownership. See `requestFinalizationBound`.
    */
   finalizeTimer?: NodeJS.Timeout;
-  /** Guards `releaseResources` so it runs at most once per entry. */
+  /**
+   * Guards `releaseResources` so it runs at most once per entry, and gates
+   * `attach`: once set, no later terminal notification will run for this
+   * emitter, so a retained entry must not hand it to a new subscriber.
+   */
   resourcesReleased: boolean;
   /**
    * The generation runs as a DIAL Core background job, so its state lives in the
@@ -193,7 +198,8 @@ interface GenerationEntry {
  * Every entry present in the registry — in any lifecycle state other than
  * `Released` — is owned. `register` therefore never removes or replaces an
  * existing entry; the key is freed only by the owning worker's own single
- * settlement, once its one terminal save attempt has settled
+ * settlement, once its one terminal save attempt — or, when none is made, the
+ * preparation step that failed or was abandoned — has settled
  * (`generation-registry`, D2).
  */
 @Injectable()
@@ -266,7 +272,8 @@ export class ConversationGenerationService implements OnModuleDestroy {
   /**
    * Frees the registry key and the entry's gauge count. Only ever reached
    * once the owning worker's single settlement runs — a `Settling` entry
-   * keeps contributing to the gauge until its real write settles here.
+   * keeps contributing to the gauge until its pending write or abandoned
+   * preparation step settles here.
    */
   private releaseKey(entry: GenerationEntry): void {
     if (this.registry.get(entry.key) === entry) {
@@ -340,14 +347,23 @@ export class ConversationGenerationService implements OnModuleDestroy {
   private requestFinalizationBound(entry: GenerationEntry): void {
     entry.finalizeTimer = setTimeout(() => {
       if (entry.resourcesReleased) return;
-      const outcome: GenerationTerminalEvent =
-        entry.cancelReason === GenerationCancelReason.UserStop
-          ? { type: 'stopped' }
-          : { type: 'error' };
-      entry.lifecycleState = GenerationLifecycleState.Settling;
-      entry.metrics.setState(toGaugeState(entry.lifecycleState));
-      this.releaseResources(entry, outcome);
+      this.retainUnsettled(entry);
     }, this.finalizeTimeoutMs);
+  }
+
+  /**
+   * Moves an entry whose pending operation outlived its bound into
+   * `Settling` and releases its subscribers and timers, keeping the key.
+   * Only a user Stop is reported as `stopped`.
+   */
+  private retainUnsettled(entry: GenerationEntry): void {
+    const outcome: GenerationTerminalEvent =
+      entry.cancelReason === GenerationCancelReason.UserStop
+        ? { type: 'stopped' }
+        : { type: 'error' };
+    entry.lifecycleState = GenerationLifecycleState.Settling;
+    entry.metrics.setState(toGaugeState(entry.lifecycleState));
+    this.releaseResources(entry, outcome);
   }
 
   register(
@@ -475,15 +491,17 @@ export class ConversationGenerationService implements OnModuleDestroy {
 
   /**
    * Synchronously returns the current assembled-message snapshot and the
-   * emitter to subscribe to, or `undefined` when no entry exists for this
-   * ownerKey+path — including one that already finalized. Callers MUST
-   * attach their listener in the same synchronous step as reading
-   * `assembledMessage` (no `await` in between), so no chunk emitted
-   * concurrently can land in the gap between the two.
+   * emitter to subscribe to, or `undefined` when there is no entry for this
+   * ownerKey+path — including one that already finalized — or one whose
+   * subscribers were already released while its key is retained
+   * (`generation-registry`). Callers MUST attach their listener in the same
+   * synchronous step as reading `assembledMessage` (no `await` in between),
+   * so no chunk emitted concurrently can land in the gap between the two and
+   * no release can run between this check and the subscription.
    */
   attach(ownerKey: string, path: string): GenerationAttachment | undefined {
     const entry = this.registry.get(this.buildKey(ownerKey, path));
-    if (!entry) return undefined;
+    if (!entry || entry.resourcesReleased) return undefined;
     return {
       assembledMessage: entry.assembledMessage,
       generationId: entry.generationId,
@@ -569,6 +587,28 @@ export class ConversationGenerationService implements OnModuleDestroy {
     entry.lifecycleState = GenerationLifecycleState.Finalizing;
     entry.metrics.setState(toGaugeState(entry.lifecycleState));
     this.requestFinalizationBound(entry);
+  }
+
+  /**
+   * Bounds subscriber and resource release when preparation outlives
+   * `GENERATION_PREPARATION_TIMEOUT_MS` (`generation-registry`). Ownership is
+   * retained exactly as for the finalization bound: the abandoned step may be
+   * the unconditional start-state write, so the key stays owned until the
+   * worker settles this lease once that step settles. A no-op if the lease's
+   * entry has been replaced or released, or already released its resources.
+   * @param lease - the preparing generation's lease
+   * @param step - the preparation step still pending at the deadline
+   */
+  abandonPreparation(
+    lease: GenerationLease,
+    step: GenerationPreparationStep,
+  ): void {
+    const entry = this.resolveByLease(lease);
+    if (!entry || entry.resourcesReleased) return;
+    this.logger.warn(
+      `Abandoning generation preparation past GENERATION_PREPARATION_TIMEOUT_MS at ${step}: ${entry.logLabel}`,
+    );
+    this.retainUnsettled(entry);
   }
 
   /** Thin lease-checked wrapper around `settle` for the success outcome. */

@@ -73,6 +73,27 @@ describe('ConfirmationFooter', () => {
 
     expect(screen.queryByText('Deleting')).toBeNull();
   });
+
+  it('keeps the status region mounted before loading starts and fills it once it does', () => {
+    const footer = (isLoading: boolean) => (
+      <ConfirmationFooter
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+        isLoading={isLoading}
+        loadingStatusLabel="Deleting"
+      />
+    );
+    const { rerender } = render(footer(false));
+    const status = screen.getByRole('status');
+    expect(status.textContent).toBe('');
+
+    rerender(footer(true));
+
+    expect(status.textContent).toBe('Deleting');
+    expect(status.isConnected).toBe(true);
+  });
 });
 
 /*

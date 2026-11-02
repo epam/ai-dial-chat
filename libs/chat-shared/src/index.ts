@@ -55,6 +55,9 @@ export * from './components/CopyButton/CopyButton';
 export * from './utils/initials';
 export * from './utils/avatar-color';
 export * from './components/PanelEmptyState/PanelEmptyState';
+export * from './components/FullScreenAlert/FullScreenAlert';
+export * from './components/NewVersionAlert/NewVersionAlert';
+export * from './components/ErrorAlert/ErrorAlert';
 export * from './components/ItemHeader/ItemHeader';
 export * from './components/EntityTypeLabel/EntityTypeLabel';
 export * from './components/FeaturedChip/FeaturedChip';
@@ -71,7 +74,9 @@ export * from './components/MarkdownRenderer/Table/TableHeader';
 export * from './components/TextRefinementField/TextRefinementField';
 export * from './entry-points/markdown';
 export * from './hooks/useAvailableHeightCap';
+export * from './hooks/useControlErrorAssociation';
 export * from './hooks/useIsMobile';
+export * from './hooks/useIsTextClipped';
 export * from './hooks/useTextRefinement';
 export * from './hooks/useUnsavedChangesGuard';
 
@@ -88,3 +93,5 @@ export * from './hooks/useUnsavedChangesGuard';
 export * from './file-manager/index';
 export { CHAT_SHARED_CLASS } from './constants/public-class-names';
 export { isSkillSelectionUnsupported } from './utils/is-skill-selection-unsupported';
+
+export * from './conversation-transfer/conversation-transfer-queue';

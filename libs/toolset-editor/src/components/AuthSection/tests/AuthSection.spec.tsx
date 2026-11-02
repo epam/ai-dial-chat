@@ -438,6 +438,105 @@ describe('AuthSection', () => {
       ).toBe(false);
     });
 
+    it('marks the authorization and token endpoints as required', () => {
+      renderSection({ auth: oauthWithConfigAuth() });
+      for (const label of ['Authorization endpoint', 'Token endpoint']) {
+        expect(
+          (screen.getByLabelText(label) as HTMLInputElement).required,
+        ).toBe(true);
+      }
+    });
+
+    it('keeps Log in disabled while an OAuth endpoint is empty', () => {
+      renderSection({
+        auth: { ...oauthWithConfigAuth(), tokenEndpoint: '' },
+      });
+      expect(
+        (screen.getByRole('button', { name: 'Log in' }) as HTMLButtonElement)
+          .disabled,
+      ).toBe(true);
+    });
+
+    describe('saved client secret hint', () => {
+      const hintedAuth = (): ToolsetAuthFormData => ({
+        ...oauthWithConfigAuth(),
+        clientSecret: '',
+        clientSecretHint: 'd4c6',
+      });
+      const clientSecretInput = () =>
+        screen.getByLabelText(/^Client secret/) as HTMLInputElement;
+      const expectDescribedBy = (input: HTMLInputElement, text: string) =>
+        expect(input.getAttribute('aria-describedby')).toBe(
+          screen.getByText(text).id,
+        );
+
+      it('shows the masked hint and the keep caption while editing with no new secret', () => {
+        renderSection({ auth: hintedAuth() });
+
+        const input = clientSecretInput();
+        expect(input.value).toBe('');
+        expect(input.placeholder).toBe('******d4c6');
+        expectDescribedBy(input, 'Leave empty to keep the saved secret.');
+      });
+
+      it('drops the hint once a new secret is typed', () => {
+        renderSection({ auth: { ...hintedAuth(), clientSecret: 'new' } });
+
+        const input = clientSecretInput();
+        expect(input.placeholder).toBe('Enter client secret');
+        expect(input.getAttribute('aria-describedby')).toBeNull();
+        expect(
+          screen.queryByText('Leave empty to keep the saved secret.'),
+        ).toBeNull();
+      });
+
+      it('ignores the hint while creating a toolset', () => {
+        renderSection({ auth: hintedAuth(), isEditMode: false });
+
+        expect(clientSecretInput().placeholder).toBe('Enter client secret');
+        expect(clientSecretLabelText()).toContain('(required)');
+        expect(
+          screen.queryByText('Leave empty to keep the saved secret.'),
+        ).toBeNull();
+      });
+
+      it('renders the regular field when there is no hint', () => {
+        renderSection({ auth: { ...oauthWithConfigAuth(), clientSecret: '' } });
+
+        expect(clientSecretInput().placeholder).toBe('Enter client secret');
+        expect(
+          screen.queryByText('Leave empty to keep the saved secret.'),
+        ).toBeNull();
+      });
+
+      it('uses host-supplied copy for the hint', () => {
+        renderSection({
+          auth: hintedAuth(),
+          labels: {
+            clientSecretHintPlaceholder: (hint) => `•••• ${hint}`,
+            clientSecretKeepCaption: 'Keep the saved secret',
+          },
+        });
+
+        const input = clientSecretInput();
+        expect(input.placeholder).toBe('•••• d4c6');
+        expectDescribedBy(input, 'Keep the saved secret');
+      });
+
+      it('hands the host no client secret derived from the hint on Log in', async () => {
+        const auth = hintedAuth();
+        renderSection({ auth });
+
+        await user.click(screen.getByRole('button', { name: 'Log in' }));
+
+        expect(onOAuthLogin).toHaveBeenCalledWith(
+          expect.objectContaining({
+            auth: expect.objectContaining({ clientSecret: '' }),
+          }),
+        );
+      });
+    });
+
     it('renders OAuth endpoint URL validation errors', () => {
       const errors: ToolsetFormErrors = {
         authorizationEndpoint: 'Invalid authorization endpoint',

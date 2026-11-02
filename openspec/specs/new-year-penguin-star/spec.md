@@ -42,9 +42,45 @@ The full story SHALL run on mobile and RTL with direction-aware side entrance an
 
 ### Requirement: Resources and existing event behavior remain bounded
 
-The scene MUST use one lazy-loaded Lottie player, at most one short WAAPI animation, at most 140 generated SVG artwork nodes, 32 animated properties, 80 keys per property and 120 KB serialized composition data. It MUST use no external asset, filter, mask, per-frame host measurement or React update. All observers, listeners, timers and animations MUST be released on stop. Existing GiftWrapping, Snow, Confetti and Sleigh scenes, `UI_EVENT` selection, translated notification, gift activation and confetti secret phrase SHALL remain available.
+The scene's resources SHALL be bounded:
+
+- one lazy-loaded Lottie player;
+- at most one short WAAPI animation;
+- at most 140 generated SVG artwork nodes;
+- at most 32 animated properties and 80 keys per property;
+- at most 120 KB of serialized composition data.
+
+It MUST use no external asset, filter, mask, per-frame host measurement or React update. All observers, listeners, timers and animations MUST be released on stop.
+
+The gift click pool SHALL contain PenguinStar and SnowmanDelivery, and a gift click SHALL pick between the enabled ones at random. The `happy new year` secret phrase SHALL select enabled GiftWrapping or ReindeerTakeoff without consecutive repeats, independently of gift clicks. Existing event selection and translated notifications SHALL remain available. Snow, Confetti and Sleigh SHALL no longer be registered.
 
 #### Scenario: Host disables PenguinStar
 
 - **WHEN** the host excludes PenguinStar from the event selection
-- **THEN** the gift chooses among the remaining allowed scenes and confetti secret-phrase behavior is unchanged
+- **THEN** the gift plays only SnowmanDelivery when it is enabled, and nothing otherwise
+- **AND** the secret phrase still selects enabled GiftWrapping or ReindeerTakeoff without consecutive repeats
+
+### Requirement: Connected penguin acting and handoffs
+
+The existing scene-local Lottie composition SHALL preserve the penguin's monochrome drawing while keeping its working flipper attached to the torso during every lean. The captured page control, paper ball and thrown star SHALL use the rendered flipper's grip, with <=1.5 px handoff error in LTR and RTL. The stage SHALL mirror drawing coordinates once, while host text, selection and restored appearance remain unchanged. Existing host-anchor, provider, interruption, static fallback, timing and resource contracts SHALL remain unchanged; no new state owner, API, strings, flags, telemetry or persistence SHALL be introduced.
+
+#### Scenario: Borrowing and throwing while leaning
+
+- **WHEN** the penguin leans into capture or winds up to throw
+- **THEN** its shoulder stays attached to the same point on the torso
+- **AND** the captured fragment and released star meet the actual flipper tip in both writing directions
+
+### Requirement: Purposeful walking and continuous star flight
+
+Entrance, approach to the fir and departure SHALL each include alternating short foot lifts coordinated with body travel. During held acting poses the feet SHALL settle. The star SHALL follow one continuous arc from release to the fir without repeated easing stops at intermediate samples. The existing story, 20-second duration, artwork and ceilings of 140 SVG descendants, 32 animated properties, 80 keys per property and 120 KB composition data SHALL remain intact.
+
+#### Scenario: The penguin approaches after decorating the fir
+
+- **WHEN** the penguin walks from its throwing position to the fir
+- **THEN** its feet alternate rather than remain in a static pose while sliding
+- **AND** both feet settle before the bow
+
+#### Scenario: The released star reaches the crown
+
+- **WHEN** the star leaves the flipper
+- **THEN** it follows a continuous arc and joins the crown star without a visible position jump

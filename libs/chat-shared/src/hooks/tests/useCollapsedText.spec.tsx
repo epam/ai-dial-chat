@@ -44,11 +44,11 @@ const mockParagraphScrollHeight = (scrollHeight: number) => {
   );
 };
 
-afterEach(() => {
-  vi.restoreAllMocks();
-});
-
 describe('useCollapsedText', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('marks text as collapsed and overflowing when rendered text exceeds the collapsed height', async () => {
     mockParagraphScrollHeight(72);
 

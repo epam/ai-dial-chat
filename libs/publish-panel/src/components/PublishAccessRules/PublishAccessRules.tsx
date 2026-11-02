@@ -9,6 +9,8 @@ import {
   NotificationType,
   NotificationVariant,
   Spinner,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import { IconPlus, IconTrashX } from '@tabler/icons-react';
 import { FC, useEffect, useId, useRef, useState } from 'react';
@@ -221,9 +223,9 @@ export const PublishAccessRules: FC<PublishAccessRulesProps> = ({
       style={cssVars}
       className={mergeClasses(disabled && 'pointer-events-none opacity-60')}
     >
-      <span role="status" aria-live="polite" className="sr-only">
+      <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
         {statusMessage}
-      </span>
+      </LiveRegion>
 
       <div className="mb-1 flex items-center justify-between gap-2">
         <div

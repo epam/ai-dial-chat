@@ -130,7 +130,7 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
         /* min-w-0 lets the card shrink below its content's min-content width
          * inside its grid track, so an unbreakable description value wraps
          * instead of stretching the card past the grid. */
-        'h-[var(--st-card-height,232px)] min-w-0',
+        'h-(--st-card-height,232px) min-w-0',
         styles.card,
         onCardClick && 'cursor-pointer',
         className,
@@ -171,7 +171,7 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
          * hides the lines past the ellipsis. */
         <p
           className={mergeClasses(
-            'line-clamp-3 max-h-[72px] min-h-0 min-w-0 flex-1 overflow-hidden [overflow-wrap:anywhere]',
+            'line-clamp-3 max-h-[72px] min-h-0 min-w-0 flex-1 overflow-hidden wrap-anywhere',
             descriptionClassName,
             styles.description,
           )}

@@ -39,13 +39,13 @@ it while preserving the control's accessible name and keyboard behaviour.
 
 ### ScheduledTasks
 
-Page shell: header with title/subtitle/create action, a search + sort toolbar, an optional `banner` slot, and a content region that shows a loading spinner, an error with retry, the empty state, a no-results state, or a section-grouped card grid, depending on `isLoading`/`error`/`items`.
+Page shell: header with title/subtitle and an optional create action (the header renders the create button only while `onCreateClick` is provided — omit the callback to withdraw the affordance entirely), a search + sort toolbar, an optional `banner` slot, and a content region that shows a loading spinner, an error with retry, the empty state, a no-results state, or a section-grouped card grid, depending on `isLoading`/`error`/`items`.
 
 The sort control's trigger shows the active option's label, falling back to `labels.sortLabel` when `sortKey` matches no option. Inside the menu each option is a `menuitemcheckbox` whose `aria-checked` marks the sort currently in effect, with a check icon carrying the same meaning visually; picking one reports through `onSortChange` and closes the menu. The lib never sorts `items` — it renders them in the order it receives them.
 
-`banner` renders between the toolbar and the content region, in every content-region state (loading, error, empty, populated). It is opaque `ReactNode` content — the host app decides what it contains (e.g. a status notice); the lib attaches no behavior or styling to it beyond layout placement.
+`banner` renders between the toolbar and the content region, in every content-region state (loading, error, empty, populated), inside a wrapper capped to the card grid's `maxWidth` (`gridLayout?.maxWidth`, default `SCHEDULED_TASKS_GRID_DEFAULT_MAX_WIDTH` = `'1180px'`) so the banner stays aligned with the cards; pass no `banner` while it would render nothing visible, so the hidden slot adds no gap between the toolbar and the content. It is opaque `ReactNode` content — the host app decides what it contains (e.g. a status notice); the lib attaches no behavior or styling to it beyond layout placement.
 
-The create button collapses to an icon-only 40px circle below 1280px.
+The create button collapses to an icon-only 40px circle below 1280px. With no `onCreateClick` callback the header renders no create button at all.
 
 ```tsx
 import {
@@ -116,7 +116,9 @@ import { ScheduledTaskCard } from '@epam/ai-dial-scheduled-tasks';
 
 ### ScheduledTaskCreateForm
 
-Presentational create-task form: a back-navigable header, display name, a one-shot/recurring schedule section (with an optional Start date / End date pair bounding a recurring schedule's activity window), a Model or Agent field, a description field, and a markdown Instructions editor. Field values and validation errors are supplied by the host app; the Model or Agent field's control is a fully-composed `modelSelector` element the host renders — the lib wraps it with the field's required label and error message. Other fields, including the masked time-of-day picker (shown when `repeat` is "daily", "weekly", or "monthly"), is lib-owned: the picker shows the viewer's timezone hint and validates its visible draft on blur, since the ui kit's masked time input only reports complete `HH:mm` values through `onChange` — while that blur error is set, Save stays disabled so a half-typed draft cannot be saved as the stale last-complete value. Every blur reports the visible draft through `onFieldChange('time', …)` — complete or not — so a host that clears a field's error on change also clears its own `errors.time` without the value having to change; the blur pass validates the draft separately and keeps showing its own message for incomplete ones. The one-shot run-at picker is the internal `ScheduledTaskRunAtField` component: it cannot select a moment earlier than the field's mount time — the earliest selectable moment is pinned when the field mounts, so past days render unselectable while the mount date and future days stay selectable. The Start date / End date pair is bounded the same way: both pickers pin the earliest selectable day at the form's mount date, so days before it render unselectable. For `hourly` repeats the pair becomes two full-width date-and-time pickers (labels "Start date and time" / "End date and time" via `labels.startDateAndTimeLabel` / `labels.endDateAndTimeLabel`) writing `YYYY-MM-DDTHH:mm` boundary values, one per row, while day-based repeats keep the date-only pickers sharing one row; a repeat switch that changes the boundary shape (between hourly and a day-based cadence) clears both boundaries — the two shapes mean different things (an exact picked instant vs a whole local day) — while a switch between day-based cadences keeps them, and validation rejects a boundary whose shape does not match the cadence. The form's only internal state is the time field's blur error, which resets when a repeat switch hides the field.
+Presentational create-task form: a back-navigable header, display name, a one-shot/recurring schedule section (with an optional Start date / End date pair bounding a recurring schedule's activity window), a Model or Agent field, a description field, and a markdown Instructions editor. Field values and validation errors are supplied by the host app; the Model or Agent field's control is a fully-composed `modelSelector` element the host renders — the lib wraps it with the field's required label and error message. Other fields, including the masked time-of-day picker (shown when `repeat` is "daily", "weekly", "monthly", or "custom"), is lib-owned: the picker shows the viewer's timezone hint and validates its visible draft on blur, since the ui kit's masked time input only reports complete `HH:mm` values through `onChange` — while that blur error is set, Save stays disabled so a half-typed draft cannot be saved as the stale last-complete value. Every blur reports the visible draft through `onFieldChange('time', …)` — complete or not — so a host that clears a field's error on change also clears its own `errors.time` without the value having to change; the blur pass validates the draft separately and keeps showing its own message for incomplete ones. The one-shot run-at picker is the internal `ScheduledTaskRunAtField` component: it cannot select a moment earlier than the field's mount time — the earliest selectable moment is pinned when the field mounts, so past days render unselectable while the mount date and future days stay selectable. The Start date / End date pair is bounded the same way: both pickers pin the earliest selectable day at the form's mount date, so days before it render unselectable. For `hourly` repeats the pair becomes two full-width date-and-time pickers (labels "Start date and time" / "End date and time" via `labels.startDateAndTimeLabel` / `labels.endDateAndTimeLabel`) writing `YYYY-MM-DDTHH:mm` boundary values, one per row, while day-based repeats keep the date-only pickers sharing one row; a repeat switch that changes the boundary shape (between hourly and a day-based cadence, or into or out of `custom`) clears both boundaries — the two shapes mean different things (an exact picked instant vs a whole local day), and `custom` renders no boundary pickers at all — while a switch between day-based cadences keeps them, and validation rejects a boundary whose shape does not match the cadence. The form's only internal state is the time field's blur error, which resets when a repeat switch hides the field.
+
+When `repeat` is `ScheduledTaskRepeat.Custom`, the schedule section renders an "Every" dropdown (`labels.everyLabel`, options `labels.everyWeekOptions`, value `values.everyWeeks` — `'1'`–`'10'`), the time-of-day picker, and below it a single-select day-of-week button row under a visible required "Day" label (`labels.dayOfWeekLabel`, also the row's accessible name via `aria-labelledby`): circular 40×40px kit `Button`s at a 2px gap — Primary Solid selected, Neutral Solid unselected — built from `labels.customDayOptions`, each button carrying its full day name as the accessible name and an `aria-pressed` selection state, writing `values.dayOfWeek` in the same APScheduler `'0'`=Monday–`'6'`=Sunday convention the Weekly picker uses. Custom has no Start date / End date pair and blocks Save until a day is selected.
 
 `isSubmitting` disables Cancel and Save **and** gives Save a busy affordance — a spinner, `aria-busy`, and an announcement of `labels.submittingLabel` (default `'Saving'`). Save is equally disabled whenever a required field is empty or the time draft is invalid, so the affordance is the only thing that separates "submitting" from "not ready".
 
@@ -217,9 +219,10 @@ import {
 When the host omits `renderInstructions`, `instructionsMarkdown` is rendered by
 the built-in `MDMessageViewer` from `@epam/ai-dial-chat-shared` at the
 summary's small 14/20 scale (paragraphs and lists at `dial-small-text`,
-headings at `dial-small-semi-text`) — pass `instructionsClassNames` (a
-`MarkdownRendererClassNames` map, replacing the default wholesale) to change
-it. Name the viewer's controls through the optional
+headings at `dial-small-semi-text`). Change the type step through
+`styles.typography.instructionsTextClassName` /
+`instructionsHeadingClassName`, or pass `instructionsClassNames` (a
+`MarkdownRendererClassNames` map merged key by key over the defaults). Name the viewer's controls through the optional
 `labels.codeBlockCopyLabel`, `labels.codeBlockCopiedLabel`,
 `labels.codeBlockDownloadLabel`, `labels.tableScrollRegionAriaLabel` and
 `labels.mathScrollRegionAriaLabel` (the `ScheduledTaskInstructionsMarkdownLabels`
@@ -227,7 +230,10 @@ fields); each falls back to the renderer's English default (`'Copy code'`,
 `'Copied!'`, `'Download code'`, `'Scrollable table'`, `'Scrollable formula'`).
 `ScheduledTaskDetailsSummary` takes the same fields as its `markdownLabels`
 prop. A host-supplied `renderInstructions` owns its own labels and classNames,
-and these are ignored.
+and these are ignored. `styles.colors.fieldLabel`
+(`ScheduledTaskDetailsSummaryColors`) sets the field labels' color through
+`--stds-field-label` (default `--text-secondary`); `styles.typography` sets
+their type step (default `'dial-tiny-text'`).
 
 ```tsx
 import {
@@ -316,7 +322,11 @@ state, pagination callbacks, and labels are all supplied by the host; a run row
 renders as clickable only when its item carries a `conversationId` and
 `onRunClick` is supplied. An `Error` row whose item carries `errorText` reveals
 that text in a tooltip on its status icon (hover or focus) and appends it to the
-row's accessible name; `errorText` is ignored for every other status. Set
+row's accessible name; `errorText` is ignored for every other status.
+`colors.unavailableText` (`ScheduledTaskConversationHistorySectionColors`,
+var `--stch-unavailable-text`, default `--text-secondary`) colors the
+unavailable message; `unavailableTextClassName` sets its type step (default
+`'dial-body-text'`). Set
 `isUnavailable` when the history exists but cannot be shown to the viewer (for
 example a task shared by its owner): `labels.unavailableLabel` then replaces the
 runs, the error message, the retry action and the footer — mirroring
@@ -382,6 +392,10 @@ name its controls through `markdownLabels`
 `ScheduledTaskDetailsSummary` takes) and rescale it through
 `instructionsClassNames` (the same prop `ScheduledTaskDetailsSummary` takes);
 both are ignored when `renderInstructions` is supplied.
+`colors.unavailableText` (`ScheduledTaskConversationDetailsSectionColors`,
+var `--stcd-unavailable-text`, default `--text-secondary`) colors the
+unavailable message; `unavailableTextClassName` sets its type step (default
+`'dial-body-text'`).
 
 ```tsx
 import {
@@ -450,6 +464,9 @@ import { validateScheduledTaskFormValues } from '@epam/ai-dial-scheduled-tasks/v
 
 const errors = validateScheduledTaskFormValues(values, { now: new Date() });
 ```
+
+A one-shot `runAt` must lie at least `minimumLeadMs` ahead of `now`. The default is the exported
+`SCHEDULED_TASK_MINIMUM_LEAD_MS` (one minute); pass `minimumLeadMs` only to apply a different lead.
 
 For a recurring schedule, an activity-window boundary earlier than the
 injected clock's local today is rejected with `StartDateInPast` /
@@ -560,7 +577,8 @@ Do not import builder source styles: compiling a module as plain CSS loses
 the class names used by the published JavaScript.
 
 - `gridLayout` (or CardGrid's `layout`) supports `maxColumns` (3),
-  `minCardWidth` (320px), `maxWidth` (1180px), `gap` (20px) and
+  `minCardWidth` (320px), `maxWidth` (`SCHEDULED_TASKS_GRID_DEFAULT_MAX_WIDTH`,
+  1180px), `gap` (20px) and
   `cardHeight` (232px). Columns respond to the available container width;
   skeletons inherit the same height. `cardHeight` applies from the desktop
   breakpoint (1280px) up; below it cards and skeletons size to their content,
@@ -604,21 +622,23 @@ application scenarios belong in the separate e2e suite.
 
 The form accepts optional `onRefineDescription` and `onRefineInstructions` callbacks, each `(value: string, signal: AbortSignal) => Promise<string>`. Each callback independently opts its field into refinement; omit it to hide the action. The host owns transport, availability, purpose selection, and translations. Instructions updates the controlled `prompt` field through `onFieldChange`; Description updates `description`. Remount the form with a draft/entity `key` when switching drafts, including equal-text entities.
 
-Both fields stay editable while pending. Editing the active field (including Markdown toolbar edits) aborts and invalidates its request. Both Refine actions and Save are disabled during a request; Cancel/Back abort before invoking the host. Late responses are ignored even if the callback ignores its signal. Repeated refinement retains the original baseline; Undo restores it exactly. Manual/external edits, callback removal, submission, and leaving the editor clear the baseline. Errors preserve text and allow retry. Identical output announces no change without writing the value.
+While a field refines, its control is read-only and keeps showing the text that was sent, and its action reads "Refining" with a spinner; the other field stays editable. An edit that still reaches the refining field (a Markdown toolbar action) aborts and invalidates its request. Both Refine actions and Save are disabled during a request; Cancel/Back abort before invoking the host. Late responses are ignored even if the callback ignores its signal. After a result the field offers "Restore original" and "Regenerate" instead of "Refine with AI"; Regenerate refines the original draft again for a fresh variant, and Restore original restores that draft exactly. Manual/external edits, callback removal, submission, and leaving the editor clear the baseline. Errors preserve text and allow retry. Identical output announces no change without writing the value.
 
 Optional label overrides (English defaults):
 
 | Label                      | Default                                       |
 | -------------------------- | --------------------------------------------- |
 | `refineWithAiLabel`        | Refine with AI                                |
-| `refineUndoLabel`          | Undo                                          |
+| `refineRefiningLabel`      | Refining                                      |
+| `refineRegenerateLabel`    | Regenerate                                    |
+| `refineUndoLabel`          | Restore original                              |
 | `refineErrorLabel`         | Could not refine this text. Please try again. |
 | `refinePendingAriaLabel`   | Refining text                                 |
 | `refineSuccessAriaLabel`   | Text refined                                  |
 | `refineUndoAriaLabel`      | Original text restored.                       |
 | `refineUnchangedAriaLabel` | No changes were needed.                       |
 
-`styles.colors.refineActionText` and `refineErrorText` set `--stcf-refine-action-text` and `--stcf-refine-error-text`; `refineErrorText` defaults to `--text-error` with standalone fallback `#ae2f2f`. `refineActionText` colors the status feedback; unset, the status keeps the kit `CaptionText` styling (`dial-tiny-text`, `--text-secondary`), the same as input captions. The Refine and Undo buttons are kit `GhostButton`s and keep the kit's styling. `styles.typography.refineFeedbackClassName` has no default; the kit caption class applies when it is unset. Direction is inherited; label rows wrap, and feedback uses live regions.
+`styles.colors.refineActionText` and `refineErrorText` set `--stcf-refine-action-text` and `--stcf-refine-error-text`; `refineErrorText` defaults to `--text-error` with standalone fallback `#ae2f2f`. `refineActionText` colors the visible status feedback (the no-change message; success and restore are announced only); unset, the status keeps the kit `CaptionText` styling (`dial-tiny-text`, `--text-secondary`), the same as input captions. The Refine with AI, Restore original, and Regenerate buttons are kit `GhostButton`s and keep the kit's styling. `styles.typography.refineFeedbackClassName` has no default; the kit caption class applies when it is unset. Direction is inherited; label rows wrap, and feedback uses live regions.
 
 | Public class key | Class                                  | Element        |
 | ---------------- | -------------------------------------- | -------------- |

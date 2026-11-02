@@ -40,6 +40,9 @@
   ],
   "references": [
     {
+      "path": "../../libs/projects/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/builder-form/tsconfig.lib.json"
     },
     {

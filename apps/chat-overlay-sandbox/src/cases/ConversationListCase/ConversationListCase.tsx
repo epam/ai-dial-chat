@@ -55,7 +55,7 @@ const ConversationListControls: FC<ConversationListControlsProps> = ({
     <section className="mb-4 max-w-[960px]">
       <div className="grid grid-cols-1 gap-3 desktop:grid-cols-2">
         <fieldset className="m-0 min-w-0 rounded-lg border border-secondary px-3 py-3">
-          <legend className="px-1 font-semibold">Read</legend>
+          <legend className="dial-small-semi-text px-1">Read</legend>
           <div className="flex flex-wrap gap-2 *:min-h-11 *:min-w-[160px] *:flex-1">
             <NeutralButton
               type="button"
@@ -84,7 +84,9 @@ const ConversationListControls: FC<ConversationListControlsProps> = ({
           </div>
         </fieldset>
         <fieldset className="m-0 min-w-0 rounded-lg border border-secondary px-3 py-3">
-          <legend className="px-1 font-semibold">Create persisted</legend>
+          <legend className="dial-small-semi-text px-1">
+            Create persisted
+          </legend>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,220px),1fr))] items-end gap-2.5">
             <Input
               id="deployment-id"
@@ -110,7 +112,7 @@ const ConversationListControls: FC<ConversationListControlsProps> = ({
           </div>
         </fieldset>
         <fieldset className="m-0 min-w-0 rounded-lg border border-secondary px-3 py-3 desktop:col-span-2">
-          <legend className="px-1 font-semibold">Mutate by id</legend>
+          <legend className="dial-small-semi-text px-1">Mutate by id</legend>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,220px),1fr))] items-end gap-2.5">
             <Select
               id="conversation-id-select"
@@ -284,7 +286,7 @@ const ConversationListCase: FC = () => {
 
   return (
     <div className="max-w-[960px] pb-6">
-      <h1 className="text-3xl font-bold">Conversation-list methods case</h1>
+      <h1 className="dial-display2-text">Conversation-list methods case</h1>
       <ConversationListControls
         isReady={isDirectReady}
         conversations={directConversations}

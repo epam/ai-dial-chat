@@ -6,10 +6,11 @@ import { NavigableBottomSheet } from '../NavigableBottomSheet';
 
 /* The sheet is the real kit `BottomSheet`; the rest stays stubbed. */
 vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
-  const { BottomSheet } =
+  const { BottomSheet, NotificationVariant } =
     await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
   return {
     BottomSheet,
+    NotificationVariant,
     DIAL_KIT_ICON_STROKE: 1.5,
     DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
     ElementSize: { Standard: 'standard' },

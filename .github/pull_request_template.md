@@ -29,11 +29,5 @@
    - `test` - Adding missing tests or correcting existing tests
    - `ci` - Changes to our CI configuration files and scripts
    - `chore` - Other changes that are minor and/or not user-facing
-2. scope (optional, current repo suggestions below)
-   - `chat`
-   - `overlay`
-   - `shared`
-   - `sandbox-overlay`
-   - `visualizer-connector`
 
 </details>

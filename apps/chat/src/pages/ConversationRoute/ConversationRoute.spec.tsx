@@ -1,3 +1,4 @@
+import { AttachmentCanvasProvider } from '@epam/ai-dial-attachment-canvas';
 import {
   DeploymentItemDto,
   DialToolsetDto,
@@ -115,6 +116,10 @@ vi.mock('../../context/IsolatedModelViewContext', async (importOriginal) => {
     >();
   return { ...actual, useIsolatedModelView: vi.fn() };
 });
+vi.mock(
+  '../../context/SkillsContext',
+  async () => import('../../context/tests/skills-context-mock'),
+);
 vi.mock('../../context/ConversationsContext', () => ({
   useConversations: () => ({ refreshConversations: vi.fn() }),
 }));
@@ -273,6 +278,7 @@ const renderRoute = () =>
     <MemoryRouter>
       <ConversationRoute />
     </MemoryRouter>,
+    { wrapper: AttachmentCanvasProvider },
   );
 
 const RouteStateDriver = ({ deploymentId }: { deploymentId: string }) => {
@@ -297,6 +303,7 @@ const renderRouteWithDeploymentState = (deploymentId: string) =>
       <RouteStateDriver deploymentId={deploymentId} />
       <ConversationRoute />
     </MemoryRouter>,
+    { wrapper: AttachmentCanvasProvider },
   );
 
 describe('ConversationRoute', () => {
@@ -432,6 +439,7 @@ describe('ConversationRoute', () => {
       >
         <ConversationRoute />
       </MemoryRouter>,
+      { wrapper: AttachmentCanvasProvider },
     );
 
     await waitFor(() => {
@@ -454,6 +462,7 @@ describe('ConversationRoute', () => {
         <LocationStateProbe />
         <ConversationRoute />
       </MemoryRouter>,
+      { wrapper: AttachmentCanvasProvider },
     );
 
     await waitFor(() => {
@@ -483,6 +492,7 @@ describe('ConversationRoute', () => {
           <ConversationRoute />
         </OverlayTestCtx.Provider>
       </MemoryRouter>,
+      { wrapper: AttachmentCanvasProvider },
     );
 
     await waitFor(() => {
@@ -514,6 +524,7 @@ describe('ConversationRoute', () => {
           <ConversationRoute />
         </OverlayDriver>
       </MemoryRouter>,
+      { wrapper: AttachmentCanvasProvider },
     );
 
     expect(overlayMocks.notifyConversationLoaded).not.toHaveBeenCalled();
@@ -1264,6 +1275,7 @@ describe('ConversationRoute', () => {
         >
           <ConversationRoute />
         </MemoryRouter>,
+        { wrapper: AttachmentCanvasProvider },
       );
 
       await waitFor(() => {
@@ -1291,6 +1303,7 @@ describe('ConversationRoute', () => {
         >
           <ConversationRoute />
         </MemoryRouter>,
+        { wrapper: AttachmentCanvasProvider },
       );
 
       await waitFor(() => {
@@ -1450,6 +1463,7 @@ describe('ConversationRoute', () => {
         >
           <ConversationRoute />
         </MemoryRouter>,
+        { wrapper: AttachmentCanvasProvider },
       );
 
       await waitFor(() => {

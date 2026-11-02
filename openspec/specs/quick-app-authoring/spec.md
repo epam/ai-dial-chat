@@ -76,28 +76,25 @@ In edit mode (an `appId` is known, whether from the URL or from an in-place crea
 
 When Save is clicked, the editor SHALL do the following:
 
-- It SHALL always include the current metadata values (name, description, icon URL, topics and `display_version`) as a `general` payload on the `TriggerSave` message posted to the embedded Setup editor. The embedded editor persists them as part of the single save it already performs.
+- It SHALL always include the current metadata values (name, description, icon URL, topics and `display_version`) as a `general` payload on the `TriggerSave` message posted to the embedded Setup editor, for both Save and Preview. The embedded editor persists them as part of the single save it already performs and is the single writer: the host makes no follow-up `updateApplication` request.
 - The `general` payload SHALL NOT include an `intro` property or the backend `version` field.
-- After the embedded editor reports `SaveSuccess`, `QuickAppSetup` SHALL make one follow-up `updateApplication` request (`reassertSkillsSupport`) carrying the current name, description, icon URL, topics and `locales`/`primaryLocale` (never `display_version`, `version` or `application_properties`), so the backend force-sets `features.skills_supported` (see `applications-write-api`); the save counts as successful only once that request finishes. The same follow-up runs after the `TriggerSave` issued for Preview.
 - The `general` payload SHALL NOT alter the application's setup configuration (`application_properties`, including orchestrator/tool set state) or its `version`.
-
-Triggering Preview SHALL NOT include a `general` payload.
 
 #### Scenario: Save forwards edited metadata to the embedded editor
 - **WHEN** a user edits Topic, Description, Icon, Name or Version of an existing Quick App and clicks Save
-- **THEN** the `TriggerSave` message includes a `general` payload carrying the edited values (with no `intro` property), and the host's only own request is the follow-up `updateApplication` skills-support reassertion
+- **THEN** the `TriggerSave` message includes a `general` payload carrying the edited values (with no `intro` property), and the host makes no `updateApplication` request of its own
 
 #### Scenario: Save still forwards metadata when it is unchanged
 - **WHEN** a user clicks Save without editing any metadata field
-- **THEN** the `TriggerSave` message still includes a `general` payload carrying the current values, followed by the same `updateApplication` skills-support reassertion
+- **THEN** the `TriggerSave` message still includes a `general` payload carrying the current values
 
 #### Scenario: Save after an in-place create forwards metadata
 - **WHEN** a user creates a Quick App in this session, edits its Description in the Metadata section and clicks Save
 - **THEN** the `TriggerSave` message includes a `general` payload carrying the edited Description
 
-#### Scenario: Preview does not forward metadata
+#### Scenario: Preview forwards metadata
 - **WHEN** a user triggers Preview
-- **THEN** the `TriggerSave` message posted to the embedded editor has no `general` payload
+- **THEN** the `TriggerSave` message posted to the embedded editor includes the same `general` payload as Save, and the host makes no `updateApplication` request after `SaveSuccess`
 
 #### Scenario: Save does not affect setup configuration or version
 - **WHEN** metadata edits are forwarded on Save for an app that already has orchestrator or tool set configuration, or a `version`

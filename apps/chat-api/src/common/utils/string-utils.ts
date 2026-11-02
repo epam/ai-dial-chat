@@ -56,7 +56,7 @@ export class StringUtils {
    * (U+0085), all of which log aggregators can treat as line separators)
    * and Unicode bidi-override/zero-width codepoints (which can spoof log
    * lines the same way they can spoof filenames, see
-   * `conversation.utils.ts`'s `notAllowedSymbolsRegex`), then truncates to
+   * `DIAL_ENTITY_NAME_FORBIDDEN_CHARS_RE` in `dial-entity-name.validator.ts`), then truncates to
    * a bounded length. Intended for short, bounded-in-practice inputs
    * (model names, event type labels) — the input is pre-truncated to a
    * generous multiple of `maxLength` before the regex runs, so an

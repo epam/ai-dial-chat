@@ -105,6 +105,12 @@ import type { AttachmentTrayStyles } from '@epam/ai-dial-attachment-input';
 
 `Input` takes the same object as a top-level `attachmentTray` prop.
 
+`styles.typography.input` (`InputTypography`) sets the composer's type:
+`fontClassName` on the textarea (default `'dial-body-paragraph-text'`), and
+`modelSelectorNameClassName` / `modelSelectorVersionClassName` on the selected
+model's name and version on the selector trigger (default `'dial-small-text'` /
+`'dial-tiny-text'`).
+
 `styles.modelMenu` themes the model menu in both presentations — the desktop
 dropdown and the mobile bottom sheet — with one `ModelMenuStyles` object.
 `className` lands on the menu panel (also when `modelPickerOverlay` supplies
@@ -114,14 +120,15 @@ to `itemClassName`. Each is merged after the component's own classes, so a
 conflicting utility replaces the default instead of landing beside it.
 `colors` takes runtime values, in both presentations:
 
-| Field                    | Colours                       | Default                                                        |
-| ------------------------ | ----------------------------- | -------------------------------------------------------------- |
-| `searchHeaderBackground` | The search row                | `--bg-layer-raised` on desktop, transparent in the sheet       |
-| `itemText`               | Every row's label and icon    | `--text-primary`                                               |
-| `itemHoverBackground`    | A hovered row                 | `--bg-control-accent-alpha-hover` / `--bg-layer-raised`        |
-| `selectedItemBackground` | The selected row at rest      | None                                                           |
-| `selectedItemText`       | The selected row's label      | `itemText`                                                     |
-| `checkIcon`              | The selected row's check mark | The row's text colour on desktop, `--text-accent` in the sheet |
+| Field                    | Colours                                                          | Default                                                        |
+| ------------------------ | ---------------------------------------------------------------- | -------------------------------------------------------------- |
+| `searchHeaderBackground` | The search row                                                   | `--bg-layer-raised` on desktop, transparent in the sheet       |
+| `itemText`               | Every row's label and icon                                       | `--text-primary`                                               |
+| `itemHoverBackground`    | A hovered row                                                    | `--bg-control-accent-alpha-hover` / `--bg-layer-raised`        |
+| `selectedItemBackground` | The selected row at rest                                         | None                                                           |
+| `selectedItemText`       | The selected row's label                                         | `itemText`                                                     |
+| `checkIcon`              | The selected row's check mark                                    | The row's text colour on desktop, `--text-accent` in the sheet |
+| `overlayBackground`      | The desktop panel when `modelPickerOverlay` supplies the content | `--bg-layer-raised`                                            |
 
 A row colour that is not set leaves that part of the row exactly as the kit
 draws it. The desktop panel renders in a portal outside the composer, so these
@@ -162,6 +169,13 @@ its `text` in at the caret each time its `revision` changes and leaves the rest 
 the draft alone, and `Ctrl`/`Cmd`+`Z` undoes it. Use `message` to seed or reset the composer, and
 `textInsertion` for anything the user triggers while a draft may already exist —
 a prompt picked from a library, a snippet, a slash-command expansion.
+
+When `Input` mounts already holding a `message` and is autofocused, it places the
+caret at the end of that text. A `textInsertion` into a composer the user has never
+focused, whose caret is still at the browser's default start position, lands at the
+end of the text rather than in front of it; once the user has focused the composer,
+or a host has placed the caret through `caretPositionOverride`, the insertion goes
+at that caret.
 
 ```tsx
 import type { TextInsertion } from '@epam/ai-dial-conversation-input';
@@ -242,8 +256,8 @@ For a usage-limit notice, pass a [`UsageLimitBannerView`](#usagelimitbannerview)
 ### UsageLimitBannerView
 
 A presentational usage-limit notice built for `aboveInputSlot`: a section
-message whose markup mirrors the kit `Notification` (general variant — neutral
-`bg-layer-sunken` surface), with a limit sentence in semibold and an optional
+message rendered with the kit `Notification` (warning / error variant, kept on
+the neutral `--bg-layer-sunken` surface, recoloured by `colors.background`), with a limit sentence in semibold and an optional
 reset sentence after it. `UsageLimitBannerSeverity.Warning` renders the kit's
 filled warning icon and `UsageLimitBannerSeverity.Reached` its filled error icon.
 Both announce politely through `role="status"`, because the banner reports
@@ -289,7 +303,8 @@ import {
 `limitTextClassName` (default `'dial-small-paragraph-semi-text'`) and
 `resetTextClassName` (default `'dial-small-paragraph-text'`) take classes from
 the kit type scale; `className` lands on the banner root next to
-`dial-ci-usage-banner`.
+`dial-ci-usage-banner`. `colors` (`UsageLimitBannerColors`) sets `background`
+(default `--bg-layer-sunken`).
 
 ### EditMessageInput
 
@@ -306,6 +321,8 @@ import { EditMessageInput } from '@epam/ai-dial-conversation-input';
   onUploadAttachment={uploadAttachment}
 />;
 ```
+
+`sendOnEnter` (a `SendOnEnter` member, default `SendOnEnter.Enter`) picks the key combination that saves the edit, with the same rules as on `Input` and `ConversationInput`. Pass the host's send-key preference so editing behaves like the main composer.
 
 ### Input
 
@@ -390,6 +407,8 @@ import { ChatSettingsModal } from '@epam/ai-dial-conversation-input';
   );
 }
 ```
+
+`colors.background` (`ChatSettingsModalColors`, default `--bg-layer-raised`) recolours the surface. `Popup` portals the modal, so the value travels on the popup overlay (`overlayStyle`). Inside `Input`, pass it as `chatSettings.modalColors`.
 
 ### BottomSheetShell
 

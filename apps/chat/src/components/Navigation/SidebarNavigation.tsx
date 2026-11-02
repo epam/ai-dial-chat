@@ -1,5 +1,6 @@
 import { useCelebration } from '@epam/ai-dial-celebrations';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
+import { useIsMobile } from '@epam/ai-dial-chat-shared';
 import {
   NavigationSidebar,
   NavigationSidebarVariant,
@@ -32,7 +33,6 @@ import { useUser } from '../../context/auth/UserContext';
 import { useIsolatedModelView } from '../../context/IsolatedModelViewContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useUnsavedChanges } from '../../context/UnsavedChangesContext';
-import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useLogout } from '../../hooks/logout/useLogout';
 import { useMobileSidebarContent } from '../../hooks/navigation/useMobileSidebarContent';
 import { useNavigationItems } from '../../hooks/navigation/useNavigationItems';
@@ -119,6 +119,12 @@ const SidebarNavigation: FC<Props> = ({
     if (isMobile && isOpen) onClose?.();
   }, [pathname, isMobile, isOpen, onClose]);
 
+  /* A link to the page already on screen changes no route, so the effect
+     above never fires: the click itself ends the drawer. */
+  const handleLinkClick = useCallback(() => {
+    if (isMobile && isOpen) onClose?.();
+  }, [isMobile, isOpen, onClose]);
+
   const isNavigationShown = isMobile ? hasNavigation : !isIsolatedView;
   const isUserMenuShown =
     status === AuthStatus.Authenticated &&
@@ -173,7 +179,7 @@ const SidebarNavigation: FC<Props> = ({
       isOpen={isOpen}
       onClose={onClose}
       renderLink={(item, children, linkProps) => (
-        <Link to={item.id} {...linkProps}>
+        <Link to={item.id} {...linkProps} onClick={handleLinkClick}>
           {children}
         </Link>
       )}
@@ -195,7 +201,9 @@ const SidebarNavigation: FC<Props> = ({
           />
         )
       }
-      footerActions={isUsageShown ? <UsageLink /> : undefined}
+      footerActions={
+        isUsageShown ? <UsageLink onClick={handleLinkClick} /> : undefined
+      }
     >
       {chats}
     </NavigationSidebar>

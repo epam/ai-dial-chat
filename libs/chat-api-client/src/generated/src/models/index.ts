@@ -886,6 +886,584 @@ export type BackgroundGenerationStatus =
 /**
  *
  * @export
+ * @interface CatalogCreationPermissionsDto
+ */
+export interface CatalogCreationPermissionsDto {
+  /**
+   * Creation types the caller may create, in the fixed order custom-app, schema-app, toolset, prompt, skill. Evaluated from CATALOG_CREATION_ROLES; a type without a rule is always present. Controls client creation workflows only.
+   * @type {Array<CatalogCreationType>}
+   * @memberof CatalogCreationPermissionsDto
+   */
+  allowedTypes: Array<CatalogCreationType>;
+  /**
+   * Exact application schema ids whose CATALOG_CREATION_ROLES rule the caller fails, in configuration order. Reported independently of the schema-app type; creating a schema app requires both.
+   * @type {Array<string>}
+   * @memberof CatalogCreationPermissionsDto
+   */
+  restrictedSchemaIds: Array<string>;
+}
+
+/**
+ * Creation types the caller may create, in the fixed order custom-app, schema-app, toolset, prompt, skill. Evaluated from CATALOG_CREATION_ROLES; a type without a rule is always present. Controls client creation workflows only.
+ * @export
+ */
+export const CatalogCreationType = {
+  CustomApp: 'custom-app',
+  SchemaApp: 'schema-app',
+  Toolset: 'toolset',
+  Prompt: 'prompt',
+  Skill: 'skill',
+} as const;
+export type CatalogCreationType =
+  (typeof CatalogCreationType)[keyof typeof CatalogCreationType];
+
+/**
+ *
+ * @export
+ * @interface CelebrationAssetDto
+ */
+export interface CelebrationAssetDto {
+  /**
+   * Asset ID, unique across the catalog; ends with the first 16 hex characters of its SHA-256.
+   * @type {string}
+   * @memberof CelebrationAssetDto
+   */
+  assetId: string;
+  /**
+   * Media type the asset is served with.
+   * @type {CelebrationMediaType}
+   * @memberof CelebrationAssetDto
+   */
+  mediaType: CelebrationMediaType;
+  /**
+   * Exact byte length of the uncompressed asset.
+   * @type {number}
+   * @memberof CelebrationAssetDto
+   */
+  bytes: number;
+  /**
+   * Lowercase hex SHA-256 of the uncompressed asset.
+   * @type {string}
+   * @memberof CelebrationAssetDto
+   */
+  sha256: string;
+}
+
+/**
+ *
+ * @export
+ * @interface CelebrationCatalogDto
+ */
+export interface CelebrationCatalogDto {
+  /**
+   * Schema version of the published celebration index.
+   * @type {number}
+   * @memberof CelebrationCatalogDto
+   */
+  schemaVersion: number;
+  /**
+   * Catalog revision. Changes whenever the published index changes; every pack resolved from this index reports it as catalogRevision.
+   * @type {string}
+   * @memberof CelebrationCatalogDto
+   */
+  revision: string;
+  /**
+   * Every published pack version, in index order.
+   * @type {Array<CelebrationCatalogPackDto>}
+   * @memberof CelebrationCatalogDto
+   */
+  packs: Array<CelebrationCatalogPackDto>;
+  /**
+   * Default pack per event ID. Each value names a listed pack whose eventId equals the key; invalid entries are dropped.
+   * @type {{ [key: string]: CelebrationPackRefDto; }}
+   * @memberof CelebrationCatalogDto
+   */
+  defaults: { [key: string]: CelebrationPackRefDto };
+}
+/**
+ *
+ * @export
+ * @interface CelebrationCatalogPackDto
+ */
+export interface CelebrationCatalogPackDto {
+  /**
+   * Pack ID, lowercase kebab-case.
+   * @type {string}
+   * @memberof CelebrationCatalogPackDto
+   */
+  packId: string;
+  /**
+   * Pack version, strict semver.
+   * @type {string}
+   * @memberof CelebrationCatalogPackDto
+   */
+  version: string;
+  /**
+   * Celebration event the pack belongs to.
+   * @type {string}
+   * @memberof CelebrationCatalogPackDto
+   */
+  eventId: string;
+}
+/**
+ *
+ * @export
+ * @interface CelebrationDecorationDto
+ */
+export interface CelebrationDecorationDto {
+  /**
+   * Decoration template ID.
+   * @type {string}
+   * @memberof CelebrationDecorationDto
+   */
+  template: string;
+  /**
+   * Asset ID of the trigger image.
+   * @type {string}
+   * @memberof CelebrationDecorationDto
+   */
+  posterAssetId: string;
+  /**
+   * Label ID of the trigger accessible name.
+   * @type {string}
+   * @memberof CelebrationDecorationDto
+   */
+  labelId: string;
+}
+/**
+ *
+ * @export
+ * @interface CelebrationDeliveryDto
+ */
+export interface CelebrationDeliveryDto {
+  /**
+   * Where scenes come from. Sourced from UI_EVENT_DELIVERY_MODE; bundled unless it is prefer-external.
+   * @type {CelebrationDeliveryMode}
+   * @memberof CelebrationDeliveryDto
+   */
+  mode: CelebrationDeliveryMode;
+  /**
+   * Operator revision of this policy, from UI_EVENT_DELIVERY_REVISION; changing it restarts a playing scene. Defaults to "0".
+   * @type {string}
+   * @memberof CelebrationDeliveryDto
+   */
+  revision: string;
+  /**
+   * Scenes of compiled events that may come from a pack, from UI_EVENT_EXTERNAL_SCENES. Empty by default.
+   * @type {Array<CelebrationExternalSceneDto>}
+   * @memberof CelebrationDeliveryDto
+   */
+  externalScenes: Array<CelebrationExternalSceneDto>;
+  /**
+   * Event IDs without a compiled module that may come entirely from a pack, from UI_EVENT_EXTERNAL_EVENTS. Empty by default.
+   * @type {Array<string>}
+   * @memberof CelebrationDeliveryDto
+   */
+  externalEvents: Array<string>;
+}
+
+/**
+ * Where scenes come from. Sourced from UI_EVENT_DELIVERY_MODE; bundled unless it is prefer-external.
+ * @export
+ */
+export const CelebrationDeliveryMode = {
+  Bundled: 'bundled',
+  PreferExternal: 'prefer-external',
+} as const;
+export type CelebrationDeliveryMode =
+  (typeof CelebrationDeliveryMode)[keyof typeof CelebrationDeliveryMode];
+
+/**
+ *
+ * @export
+ * @interface CelebrationEventDto
+ */
+export interface CelebrationEventDto {
+  /**
+   * Label ID of the notification title.
+   * @type {string}
+   * @memberof CelebrationEventDto
+   */
+  titleLabelId: string;
+  /**
+   * Scenes the trigger plays, each a declared scene ID.
+   * @type {Array<string>}
+   * @memberof CelebrationEventDto
+   */
+  clickSceneIds: Array<string>;
+  /**
+   * Asset ID of the event icon.
+   * @type {string}
+   * @memberof CelebrationEventDto
+   */
+  iconAssetId?: string;
+  /**
+   * The static trigger.
+   * @type {CelebrationDecorationDto}
+   * @memberof CelebrationEventDto
+   */
+  decoration: CelebrationDecorationDto;
+}
+/**
+ *
+ * @export
+ * @interface CelebrationExternalSceneDto
+ */
+export interface CelebrationExternalSceneDto {
+  /**
+   * Celebration event ID.
+   * @type {string}
+   * @memberof CelebrationExternalSceneDto
+   */
+  eventId: string;
+  /**
+   * Scene ID within the event.
+   * @type {string}
+   * @memberof CelebrationExternalSceneDto
+   */
+  sceneId: string;
+}
+
+/**
+ * Media type the asset is served with.
+ * @export
+ */
+export const CelebrationMediaType = {
+  ApplicationJson: 'application/json',
+  ImageSvgxml: 'image/svg+xml',
+  ImagePng: 'image/png',
+  ImageWebp: 'image/webp',
+} as const;
+export type CelebrationMediaType =
+  (typeof CelebrationMediaType)[keyof typeof CelebrationMediaType];
+
+/**
+ *
+ * @export
+ * @interface CelebrationPackDto
+ */
+export interface CelebrationPackDto {
+  /**
+   * Pack ID.
+   * @type {string}
+   * @memberof CelebrationPackDto
+   */
+  packId: string;
+  /**
+   * Pack version.
+   * @type {string}
+   * @memberof CelebrationPackDto
+   */
+  version: string;
+  /**
+   * Celebration event ID.
+   * @type {string}
+   * @memberof CelebrationPackDto
+   */
+  eventId: string;
+  /**
+   * Revision of the celebration index the pack was resolved from.
+   * @type {string}
+   * @memberof CelebrationPackDto
+   */
+  catalogRevision: string;
+  /**
+   * Capabilities the pack as a whole requires.
+   * @type {Array<string>}
+   * @memberof CelebrationPackDto
+   */
+  requiredCapabilities: Array<string>;
+  /**
+   * Every asset the pack declares.
+   * @type {Array<CelebrationAssetDto>}
+   * @memberof CelebrationPackDto
+   */
+  assets: Array<CelebrationAssetDto>;
+  /**
+   * Pack labels as locale → label ID → plain text. Includes en whenever it is non-empty.
+   * @type {{ [key: string]: { [key: string]: string; }; }}
+   * @memberof CelebrationPackDto
+   */
+  labels: { [key: string]: { [key: string]: string } };
+  /**
+   * Event-level fields; present only for an external-only event.
+   * @type {CelebrationEventDto}
+   * @memberof CelebrationPackDto
+   */
+  event?: CelebrationEventDto;
+  /**
+   * Scenes in declaration order.
+   * @type {Array<CelebrationSceneDto>}
+   * @memberof CelebrationPackDto
+   */
+  scenes: Array<CelebrationSceneDto>;
+}
+/**
+ *
+ * @export
+ * @interface CelebrationPackRefDto
+ */
+export interface CelebrationPackRefDto {
+  /**
+   * Pack ID, lowercase kebab-case.
+   * @type {string}
+   * @memberof CelebrationPackRefDto
+   */
+  packId: string;
+  /**
+   * Pack version, strict semver.
+   * @type {string}
+   * @memberof CelebrationPackRefDto
+   */
+  version: string;
+}
+/**
+ *
+ * @export
+ * @interface CelebrationPlacementDto
+ */
+export interface CelebrationPlacementDto {
+  /**
+   * Placement template ID. Templates other than viewport-stage-v1 are passed as the ID alone, and clients without the matching capability skip the scene.
+   * @type {string}
+   * @memberof CelebrationPlacementDto
+   */
+  template: string;
+  /**
+   * How the stage scales into the viewport (viewport-stage-v1).
+   * @type {CelebrationStageFit}
+   * @memberof CelebrationPlacementDto
+   */
+  fit?: CelebrationStageFit;
+  /**
+   * Where the stage sits in the viewport, in logical terms (viewport-stage-v1).
+   * @type {CelebrationStageAlign}
+   * @memberof CelebrationPlacementDto
+   */
+  align?: CelebrationStageAlign;
+}
+
+/**
+ * How the scene adapts to a right-to-left host.
+ * @export
+ */
+export const CelebrationSceneDirection = {
+  None: 'none',
+  Mirror: 'mirror',
+  Variant: 'variant',
+} as const;
+export type CelebrationSceneDirection =
+  (typeof CelebrationSceneDirection)[keyof typeof CelebrationSceneDirection];
+
+/**
+ *
+ * @export
+ * @interface CelebrationSceneDto
+ */
+export interface CelebrationSceneDto {
+  /**
+   * Scene ID; a scene that replaces a bundled scene uses its bundled ID.
+   * @type {string}
+   * @memberof CelebrationSceneDto
+   */
+  id: string;
+  /**
+   * Label ID of the notification text shown with the scene.
+   * @type {string}
+   * @memberof CelebrationSceneDto
+   */
+  labelId: string;
+  /**
+   * Renderer capability ID.
+   * @type {string}
+   * @memberof CelebrationSceneDto
+   */
+  renderer: string;
+  /**
+   * Capabilities the client must support to play the scene.
+   * @type {Array<string>}
+   * @memberof CelebrationSceneDto
+   */
+  requiredCapabilities: Array<string>;
+  /**
+   * Scene placement.
+   * @type {CelebrationPlacementDto}
+   * @memberof CelebrationSceneDto
+   */
+  placement: CelebrationPlacementDto;
+  /**
+   * How the scene adapts to a right-to-left host.
+   * @type {CelebrationSceneDirection}
+   * @memberof CelebrationSceneDto
+   */
+  direction: CelebrationSceneDirection;
+  /**
+   * Scene timing.
+   * @type {CelebrationTimingDto}
+   * @memberof CelebrationSceneDto
+   */
+  timing: CelebrationTimingDto;
+  /**
+   * Asset ID of the static poster.
+   * @type {string}
+   * @memberof CelebrationSceneDto
+   */
+  posterAssetId: string;
+  /**
+   * How long the poster stays, from 1000 to maxLifetimeMs.
+   * @type {number}
+   * @memberof CelebrationSceneDto
+   */
+  posterDurationMs: number;
+  /**
+   * One to eight variants, in declaration order.
+   * @type {Array<CelebrationVariantDto>}
+   * @memberof CelebrationSceneDto
+   */
+  variants: Array<CelebrationVariantDto>;
+}
+
+/**
+ * Where the stage sits in the viewport, in logical terms (viewport-stage-v1).
+ * @export
+ */
+export const CelebrationStageAlign = {
+  Center: 'center',
+  Top: 'top',
+  Bottom: 'bottom',
+  TopStart: 'top-start',
+  TopEnd: 'top-end',
+  BottomStart: 'bottom-start',
+  BottomEnd: 'bottom-end',
+} as const;
+export type CelebrationStageAlign =
+  (typeof CelebrationStageAlign)[keyof typeof CelebrationStageAlign];
+
+/**
+ * How the stage scales into the viewport (viewport-stage-v1).
+ * @export
+ */
+export const CelebrationStageFit = {
+  Contain: 'contain',
+  Cover: 'cover',
+} as const;
+export type CelebrationStageFit =
+  (typeof CelebrationStageFit)[keyof typeof CelebrationStageFit];
+
+/**
+ *
+ * @export
+ * @interface CelebrationTimingDto
+ */
+export interface CelebrationTimingDto {
+  /**
+   * Authored story length.
+   * @type {number}
+   * @memberof CelebrationTimingDto
+   */
+  playbackDurationMs: number;
+  /**
+   * Time allowed for the player and animation data, at most 2000.
+   * @type {number}
+   * @memberof CelebrationTimingDto
+   */
+  loadTimeoutMs: number;
+  /**
+   * Time from loadAnimation to renderer readiness, at most 250.
+   * @type {number}
+   * @memberof CelebrationTimingDto
+   */
+  readyTimeoutMs: number;
+  /**
+   * Total lifetime from mount, at least load + ready + playback and at most 32000.
+   * @type {number}
+   * @memberof CelebrationTimingDto
+   */
+  maxLifetimeMs: number;
+}
+
+/**
+ * Required color scheme.
+ * @export
+ */
+export const CelebrationVariantColorScheme = {
+  Light: 'light',
+  Dark: 'dark',
+} as const;
+export type CelebrationVariantColorScheme =
+  (typeof CelebrationVariantColorScheme)[keyof typeof CelebrationVariantColorScheme];
+
+/**
+ *
+ * @export
+ * @interface CelebrationVariantConditionsDto
+ */
+export interface CelebrationVariantConditionsDto {
+  /**
+   * Required host layout.
+   * @type {CelebrationVariantLayout}
+   * @memberof CelebrationVariantConditionsDto
+   */
+  layout?: CelebrationVariantLayout;
+  /**
+   * Required text direction.
+   * @type {CelebrationVariantDirection}
+   * @memberof CelebrationVariantConditionsDto
+   */
+  direction?: CelebrationVariantDirection;
+  /**
+   * Required color scheme.
+   * @type {CelebrationVariantColorScheme}
+   * @memberof CelebrationVariantConditionsDto
+   */
+  colorScheme?: CelebrationVariantColorScheme;
+}
+
+/**
+ * Required text direction.
+ * @export
+ */
+export const CelebrationVariantDirection = {
+  Ltr: 'ltr',
+  Rtl: 'rtl',
+} as const;
+export type CelebrationVariantDirection =
+  (typeof CelebrationVariantDirection)[keyof typeof CelebrationVariantDirection];
+
+/**
+ *
+ * @export
+ * @interface CelebrationVariantDto
+ */
+export interface CelebrationVariantDto {
+  /**
+   * Conditions the variant requires.
+   * @type {CelebrationVariantConditionsDto}
+   * @memberof CelebrationVariantDto
+   */
+  when: CelebrationVariantConditionsDto;
+  /**
+   * Asset ID of the Lottie JSON.
+   * @type {string}
+   * @memberof CelebrationVariantDto
+   */
+  animationAssetId: string;
+}
+
+/**
+ * Required host layout.
+ * @export
+ */
+export const CelebrationVariantLayout = {
+  Mobile: 'mobile',
+  Desktop: 'desktop',
+} as const;
+export type CelebrationVariantLayout =
+  (typeof CelebrationVariantLayout)[keyof typeof CelebrationVariantLayout];
+
+/**
+ *
+ * @export
  * @interface CellAddressDto
  */
 export interface CellAddressDto {
@@ -1207,6 +1785,36 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   celebrationsEnabledByDefault: boolean;
+  /**
+   * Operator policy for external celebration packs, from UI_EVENT_DELIVERY_MODE, UI_EVENT_DELIVERY_REVISION, UI_EVENT_EXTERNAL_SCENES and UI_EVENT_EXTERNAL_EVENTS. The default is bundled with empty lists, in which case the client makes no celebration request.
+   * @type {CelebrationDeliveryDto}
+   * @memberof ClientConfigDto
+   */
+  celebrationDelivery: CelebrationDeliveryDto;
+  /**
+   * Maximum size in bytes of one project context file. Sourced from PROJECT_CONTEXT_FILE_MAX_BYTES, which POST /api/v1/projects enforces.
+   * @type {number}
+   * @memberof ClientConfigDto
+   */
+  projectContextFileMaxBytes: number;
+  /**
+   * Maximum combined size in bytes of a project's context files. Sourced from PROJECT_CONTEXT_TOTAL_MAX_BYTES, which POST /api/v1/projects enforces.
+   * @type {number}
+   * @memberof ClientConfigDto
+   */
+  projectContextTotalMaxBytes: number;
+  /**
+   * Lower-case file extensions, without a dot, accepted as project context files. Sourced from PROJECT_CONTEXT_ALLOWED_EXTENSIONS, which POST /api/v1/projects enforces.
+   * @type {Array<string>}
+   * @memberof ClientConfigDto
+   */
+  projectContextAllowedExtensions: Array<string>;
+  /**
+   * The caller's resolved catalog creation permissions, evaluated from the server-only CATALOG_CREATION_ROLES and the session roles. Independent of enabledUiFeatures, which it never filters. Never carries role names or the raw policy.
+   * @type {CatalogCreationPermissionsDto}
+   * @memberof ClientConfigDto
+   */
+  catalogCreationPermissions: CatalogCreationPermissionsDto;
 }
 
 /**
@@ -1396,11 +2004,17 @@ export interface ConversationListItemDto {
    */
   id: string;
   /**
-   * Human-readable conversation title (the resource `name` from DIAL Core).
+   * Cached display title, or the filename-derived title while background title resolution is pending.
    * @type {string}
    * @memberof ConversationListItemDto
    */
   title: string;
+  /**
+   * True when the title has not been resolved from the stored conversation yet, or its cached value expired. Resolve it with POST /conversations/titles.
+   * @type {boolean}
+   * @memberof ConversationListItemDto
+   */
+  isTitlePending?: boolean;
   /**
    * Unix epoch milliseconds of the resource creation, as reported by DIAL Core metadata. Absent when DIAL Core does not report it, and always absent for conversations shared with the current user.
    * @type {number}
@@ -1456,7 +2070,7 @@ export interface ConversationListItemDto {
    */
   runId?: string;
   /**
-   * True when this scheduler-created conversation has not yet been opened by the user. Present only when `isScheduledTask` is true.
+   * True when the conversation holds an answer the user has not seen. A scheduler-created conversation always carries it (true until first opened); a regular conversation in the caller's own bucket carries it, as true, only when it was updated after the user's read-before baseline and has not been viewed since. Omitted otherwise, including for published and shared conversations.
    * @type {boolean}
    * @memberof ConversationListItemDto
    */
@@ -1916,6 +2530,283 @@ export interface ConversationStartersDto {
 /**
  *
  * @export
+ * @interface ConversationTitleDto
+ */
+export interface ConversationTitleDto {
+  /**
+   * The exact conversation resource URL supplied in the request.
+   * @type {string}
+   * @memberof ConversationTitleDto
+   */
+  id: string;
+  /**
+   * Current display title without conversation messages.
+   * @type {string}
+   * @memberof ConversationTitleDto
+   */
+  title: string;
+}
+/**
+ *
+ * @export
+ * @interface ConversationTitleStreamDoneEventDto
+ */
+export interface ConversationTitleStreamDoneEventDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationTitleStreamDoneEventDto
+   */
+  type: ConversationTitleStreamDoneEventDtoTypeEnum;
+  /**
+   * `complete` when every distinct ID has an outcome; `budget` when the request lifetime ended and IDs without an outcome may be requested again.
+   * @type {ConversationTitleStreamDoneReason}
+   * @memberof ConversationTitleStreamDoneEventDto
+   */
+  reason: ConversationTitleStreamDoneReason;
+  /**
+   * Item outcome events emitted (title, unavailable, item_error).
+   * @type {number}
+   * @memberof ConversationTitleStreamDoneEventDto
+   */
+  processed: number;
+  /**
+   * Distinct requested IDs.
+   * @type {number}
+   * @memberof ConversationTitleStreamDoneEventDto
+   */
+  total: number;
+}
+
+/**
+ * @export
+ */
+export const ConversationTitleStreamDoneEventDtoTypeEnum = {
+  Done: 'done',
+} as const;
+export type ConversationTitleStreamDoneEventDtoTypeEnum =
+  (typeof ConversationTitleStreamDoneEventDtoTypeEnum)[keyof typeof ConversationTitleStreamDoneEventDtoTypeEnum];
+
+/**
+ * `complete` when every distinct ID has an outcome; `budget` when the request lifetime ended and IDs without an outcome may be requested again.
+ * @export
+ */
+export const ConversationTitleStreamDoneReason = {
+  Complete: 'complete',
+  Budget: 'budget',
+} as const;
+export type ConversationTitleStreamDoneReason =
+  (typeof ConversationTitleStreamDoneReason)[keyof typeof ConversationTitleStreamDoneReason];
+
+/**
+ * Paired with `status`: 401/unauthenticated, 502/upstream_error, 503/unavailable.
+ * @export
+ */
+export const ConversationTitleStreamErrorCode = {
+  Unauthenticated: 'unauthenticated',
+  UpstreamError: 'upstream_error',
+  Unavailable: 'unavailable',
+} as const;
+export type ConversationTitleStreamErrorCode =
+  (typeof ConversationTitleStreamErrorCode)[keyof typeof ConversationTitleStreamErrorCode];
+
+/**
+ *
+ * @export
+ * @interface ConversationTitleStreamErrorEventDto
+ */
+export interface ConversationTitleStreamErrorEventDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationTitleStreamErrorEventDto
+   */
+  type: ConversationTitleStreamErrorEventDtoTypeEnum;
+  /**
+   * HTTP-equivalent status of the stream-fatal failure; the response status was already 200.
+   * @type {number}
+   * @memberof ConversationTitleStreamErrorEventDto
+   */
+  status: ConversationTitleStreamErrorEventDtoStatusEnum;
+  /**
+   * Paired with `status`: 401/unauthenticated, 502/upstream_error, 503/unavailable.
+   * @type {ConversationTitleStreamErrorCode}
+   * @memberof ConversationTitleStreamErrorEventDto
+   */
+  code: ConversationTitleStreamErrorCode;
+}
+
+/**
+ * @export
+ */
+export const ConversationTitleStreamErrorEventDtoTypeEnum = {
+  Error: 'error',
+} as const;
+export type ConversationTitleStreamErrorEventDtoTypeEnum =
+  (typeof ConversationTitleStreamErrorEventDtoTypeEnum)[keyof typeof ConversationTitleStreamErrorEventDtoTypeEnum];
+
+/**
+ * @export
+ */
+export const ConversationTitleStreamErrorEventDtoStatusEnum = {
+  NUMBER_401: 401,
+  NUMBER_502: 502,
+  NUMBER_503: 503,
+} as const;
+export type ConversationTitleStreamErrorEventDtoStatusEnum =
+  (typeof ConversationTitleStreamErrorEventDtoStatusEnum)[keyof typeof ConversationTitleStreamErrorEventDtoStatusEnum];
+
+/**
+ * @type ConversationTitleStreamEventDto
+ * One `data:` JSON payload of the conversation title stream, discriminated by `type`.
+ * @export
+ */
+export type ConversationTitleStreamEventDto =
+  | ({ type: 'done' } & ConversationTitleStreamDoneEventDto)
+  | ({ type: 'error' } & ConversationTitleStreamErrorEventDto)
+  | ({ type: 'item_error' } & ConversationTitleStreamItemErrorEventDto)
+  | ({ type: 'title' } & ConversationTitleStreamTitleEventDto)
+  | ({ type: 'unavailable' } & ConversationTitleStreamUnavailableEventDto);
+
+/**
+ * Why this attempted item failed. It is not retried by the stream.
+ * @export
+ */
+export const ConversationTitleStreamItemErrorCode = {
+  UpstreamError: 'upstream_error',
+  Timeout: 'timeout',
+} as const;
+export type ConversationTitleStreamItemErrorCode =
+  (typeof ConversationTitleStreamItemErrorCode)[keyof typeof ConversationTitleStreamItemErrorCode];
+
+/**
+ *
+ * @export
+ * @interface ConversationTitleStreamItemErrorEventDto
+ */
+export interface ConversationTitleStreamItemErrorEventDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationTitleStreamItemErrorEventDto
+   */
+  type: ConversationTitleStreamItemErrorEventDtoTypeEnum;
+  /**
+   * The exact conversation resource URL supplied in the request.
+   * @type {string}
+   * @memberof ConversationTitleStreamItemErrorEventDto
+   */
+  id: string;
+  /**
+   * Why this attempted item failed. It is not retried by the stream.
+   * @type {ConversationTitleStreamItemErrorCode}
+   * @memberof ConversationTitleStreamItemErrorEventDto
+   */
+  code: ConversationTitleStreamItemErrorCode;
+}
+
+/**
+ * @export
+ */
+export const ConversationTitleStreamItemErrorEventDtoTypeEnum = {
+  ItemError: 'item_error',
+} as const;
+export type ConversationTitleStreamItemErrorEventDtoTypeEnum =
+  (typeof ConversationTitleStreamItemErrorEventDtoTypeEnum)[keyof typeof ConversationTitleStreamItemErrorEventDtoTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface ConversationTitleStreamTitleEventDto
+ */
+export interface ConversationTitleStreamTitleEventDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationTitleStreamTitleEventDto
+   */
+  type: ConversationTitleStreamTitleEventDtoTypeEnum;
+  /**
+   * The exact conversation resource URL supplied in the request.
+   * @type {string}
+   * @memberof ConversationTitleStreamTitleEventDto
+   */
+  id: string;
+  /**
+   * Current display title without conversation messages.
+   * @type {string}
+   * @memberof ConversationTitleStreamTitleEventDto
+   */
+  title: string;
+}
+
+/**
+ * @export
+ */
+export const ConversationTitleStreamTitleEventDtoTypeEnum = {
+  Title: 'title',
+} as const;
+export type ConversationTitleStreamTitleEventDtoTypeEnum =
+  (typeof ConversationTitleStreamTitleEventDtoTypeEnum)[keyof typeof ConversationTitleStreamTitleEventDtoTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface ConversationTitleStreamUnavailableEventDto
+ */
+export interface ConversationTitleStreamUnavailableEventDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationTitleStreamUnavailableEventDto
+   */
+  type: ConversationTitleStreamUnavailableEventDtoTypeEnum;
+  /**
+   * The exact conversation resource URL supplied in the request. The conversation is missing or inaccessible; which one is not disclosed.
+   * @type {string}
+   * @memberof ConversationTitleStreamUnavailableEventDto
+   */
+  id: string;
+}
+
+/**
+ * @export
+ */
+export const ConversationTitleStreamUnavailableEventDtoTypeEnum = {
+  Unavailable: 'unavailable',
+} as const;
+export type ConversationTitleStreamUnavailableEventDtoTypeEnum =
+  (typeof ConversationTitleStreamUnavailableEventDtoTypeEnum)[keyof typeof ConversationTitleStreamUnavailableEventDtoTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface ConversationTitlesBodyDto
+ */
+export interface ConversationTitlesBodyDto {
+  /**
+   * Full DIAL Core conversation resource URLs. Duplicate IDs are read once. Missing or inaccessible conversations are omitted.
+   * @type {Array<string>}
+   * @memberof ConversationTitlesBodyDto
+   */
+  ids: Array<string>;
+}
+/**
+ *
+ * @export
+ * @interface ConversationTitlesResponseDto
+ */
+export interface ConversationTitlesResponseDto {
+  /**
+   *
+   * @type {Array<ConversationTitleDto>}
+   * @memberof ConversationTitlesResponseDto
+   */
+  items: Array<ConversationTitleDto>;
+}
+/**
+ *
+ * @export
  * @interface ConversationsConfigDto
  */
 export interface ConversationsConfigDto {
@@ -2220,6 +3111,43 @@ export interface CreateFolderResponseDto {
    * @memberof CreateFolderResponseDto
    */
   folderId: string;
+}
+/**
+ *
+ * @export
+ * @interface CreateProjectResponseDto
+ */
+export interface CreateProjectResponseDto {
+  /**
+   * DIAL Core resource id, `projects/{bucket}/{path}` without a trailing slash.
+   * @type {string}
+   * @memberof CreateProjectResponseDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateProjectResponseDto
+   */
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateProjectResponseDto
+   */
+  bucket: string;
+  /**
+   * Path of the project within its bucket.
+   * @type {string}
+   * @memberof CreateProjectResponseDto
+   */
+  path: string;
+  /**
+   * Aggregate ETag of the created project, when DIAL Core returns one.
+   * @type {string}
+   * @memberof CreateProjectResponseDto
+   */
+  etag?: string;
 }
 /**
  *
@@ -3724,6 +4652,12 @@ export interface DialToolsetAuthSettingsDto {
    */
   clientId?: string;
   /**
+   * Last characters of the stored OAuth client secret, as returned by DIAL Core. Never the secret itself.
+   * @type {string}
+   * @memberof DialToolsetAuthSettingsDto
+   */
+  clientSecretHint?: string;
+  /**
    *
    * @type {string}
    * @memberof DialToolsetAuthSettingsDto
@@ -4681,7 +5615,14 @@ export interface GetOfflineCredentialsResponseDto {
    * @memberof GetOfflineCredentialsResponseDto
    */
   connect?: OfflineCredentialsConnectDto;
+  /**
+   * Consent state of the DIAL_NATIVE scheduler external service: 'signed_out' when the administrator's application consent is missing or revoked, 'signed_in' when it is in place, and 'unknown' when the consent read itself failed (the offline-credentials status is still valid).
+   * @type {SchedulerServiceConsentStatus}
+   * @memberof GetOfflineCredentialsResponseDto
+   */
+  schedulerServiceConsent: SchedulerServiceConsentStatus;
 }
+
 /**
  *
  * @export
@@ -4865,6 +5806,25 @@ export interface ListMcpToolNamesResponseDto {
    * @memberof ListMcpToolNamesResponseDto
    */
   toolNames: Array<string>;
+}
+/**
+ *
+ * @export
+ * @interface ListProjectsResponseDto
+ */
+export interface ListProjectsResponseDto {
+  /**
+   * Every project visible to the caller across the personal, organization and shared sources, de-duplicated by id. Order is unspecified.
+   * @type {Array<ProjectDto>}
+   * @memberof ListProjectsResponseDto
+   */
+  items: Array<ProjectDto>;
+  /**
+   * Sources that failed or were truncated at the page cap, so `items` may be missing projects from them. Empty when every source answered in full.
+   * @type {Array<ProjectSource>}
+   * @memberof ListProjectsResponseDto
+   */
+  incompleteSources: Array<ProjectSource>;
 }
 /**
  *
@@ -5341,16 +6301,16 @@ export interface ModelLimitsDto {
 export interface ModelPricingRateDto {
   /**
    *
-   * @type {ModelPricingRateDto}
+   * @type {ModelPricingRateDtoIfFalse}
    * @memberof ModelPricingRateDto
    */
-  ifFalse?: ModelPricingRateDto;
+  ifFalse?: ModelPricingRateDtoIfFalse;
   /**
    *
-   * @type {ModelPricingRateDto}
+   * @type {ModelPricingRateDtoIfTrue}
    * @memberof ModelPricingRateDto
    */
-  ifTrue?: ModelPricingRateDto;
+  ifTrue?: ModelPricingRateDtoIfTrue;
   /**
    * Per-unit price for this pricing branch
    * @type {string}
@@ -5364,6 +6324,18 @@ export interface ModelPricingRateDto {
    */
   test?: { [key: string]: unknown };
 }
+/**
+ * @type ModelPricingRateDtoIfFalse
+ * Price applied when `test` fails: a per-unit price or a nested pricing branch
+ * @export
+ */
+export type ModelPricingRateDtoIfFalse = ModelPricingRateDto | string;
+/**
+ * @type ModelPricingRateDtoIfTrue
+ * Price applied when `test` holds: a per-unit price or a nested pricing branch
+ * @export
+ */
+export type ModelPricingRateDtoIfTrue = ModelPricingRateDto | string;
 /**
  *
  * @export
@@ -5563,6 +6535,376 @@ export interface OfflineCredentialsSigninBodyDto {
    * @memberof OfflineCredentialsSigninBodyDto
    */
   redirectUri: string;
+}
+/**
+ *
+ * @export
+ * @interface ProjectContextFileDto
+ */
+export interface ProjectContextFileDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectContextFileDto
+   */
+  name: string;
+  /**
+   * Size in bytes.
+   * @type {number}
+   * @memberof ProjectContextFileDto
+   */
+  size: number;
+}
+/**
+ *
+ * @export
+ * @interface ProjectConversationItemDto
+ */
+export interface ProjectConversationItemDto {
+  /**
+   * Locator of the conversation, `projects/{bucket}/{projectPath}/conversations/{name}`; it is the conversation id.
+   * @type {string}
+   * @memberof ProjectConversationItemDto
+   */
+  id: string;
+  /**
+   * File name under the project `conversations/` folder.
+   * @type {string}
+   * @memberof ProjectConversationItemDto
+   */
+  name: string;
+  /**
+   * Display title: the stored body's `name`, or the title derived from the file name when the body cannot be read.
+   * @type {string}
+   * @memberof ProjectConversationItemDto
+   */
+  title: string;
+  /**
+   * Display name of the conversation's last writer, from DIAL Core.
+   * @type {string}
+   * @memberof ProjectConversationItemDto
+   */
+  author?: string;
+  /**
+   * Last update time, in epoch milliseconds.
+   * @type {number}
+   * @memberof ProjectConversationItemDto
+   */
+  updatedAt?: number;
+}
+/**
+ *
+ * @export
+ * @interface ProjectConversationListResponseDto
+ */
+export interface ProjectConversationListResponseDto {
+  /**
+   * Conversations, newest first.
+   * @type {Array<ProjectConversationItemDto>}
+   * @memberof ProjectConversationListResponseDto
+   */
+  items: Array<ProjectConversationItemDto>;
+  /**
+   * Whether the project holds more conversations than `items`.
+   * @type {boolean}
+   * @memberof ProjectConversationListResponseDto
+   */
+  hasMore: boolean;
+}
+
+/**
+ *
+ * @export
+ */
+export const ProjectCreateErrorCode = {
+  InvalidName: 'invalid-name',
+  NameTaken: 'name-taken',
+  InvalidFileName: 'invalid-file-name',
+  DuplicateFileName: 'duplicate-file-name',
+  UnsupportedFileType: 'unsupported-file-type',
+  FileTooLarge: 'file-too-large',
+  CapacityExceeded: 'capacity-exceeded',
+  TooManyFiles: 'too-many-files',
+  ProjectChanged: 'project-changed',
+  IfMatchRequired: 'if-match-required',
+  ProjectTooLarge: 'project-too-large',
+  UnknownFile: 'unknown-file',
+  ProjectStorageFull: 'project-storage-full',
+} as const;
+export type ProjectCreateErrorCode =
+  (typeof ProjectCreateErrorCode)[keyof typeof ProjectCreateErrorCode];
+
+/**
+ *
+ * @export
+ * @interface ProjectCreateErrorDto
+ */
+export interface ProjectCreateErrorDto {
+  /**
+   *
+   * @type {number}
+   * @memberof ProjectCreateErrorDto
+   */
+  statusCode: number;
+  /**
+   *
+   * @type {ScheduledTaskValidationErrorDtoMessage}
+   * @memberof ProjectCreateErrorDto
+   */
+  message: ScheduledTaskValidationErrorDtoMessage;
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectCreateErrorDto
+   */
+  error: string;
+  /**
+   *
+   * @type {ProjectCreateErrorCode}
+   * @memberof ProjectCreateErrorDto
+   */
+  code?: ProjectCreateErrorCode;
+  /**
+   * `name`, or the name of the rejected context file.
+   * @type {string}
+   * @memberof ProjectCreateErrorDto
+   */
+  field?: string;
+}
+
+/**
+ *
+ * @export
+ * @interface ProjectDetailsDto
+ */
+export interface ProjectDetailsDto {
+  /**
+   * DIAL Core resource id, `projects/{bucket}/{path}` without a trailing slash.
+   * @type {string}
+   * @memberof ProjectDetailsDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectDetailsDto
+   */
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectDetailsDto
+   */
+  bucket: string;
+  /**
+   * Path of the project within its bucket.
+   * @type {string}
+   * @memberof ProjectDetailsDto
+   */
+  path: string;
+  /**
+   * Grouping folder path the project sits in, when nested.
+   * @type {string}
+   * @memberof ProjectDetailsDto
+   */
+  parentPath?: string;
+  /**
+   *
+   * @type {ProjectSource}
+   * @memberof ProjectDetailsDto
+   */
+  source: ProjectSource;
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectDetailsDto
+   */
+  author?: string;
+  /**
+   * Creation time, epoch milliseconds.
+   * @type {number}
+   * @memberof ProjectDetailsDto
+   */
+  createdAt?: number;
+  /**
+   * Last update time, epoch milliseconds.
+   * @type {number}
+   * @memberof ProjectDetailsDto
+   */
+  updatedAt?: number;
+  /**
+   * Plain-text description from `PROJECT.md`; empty when absent.
+   * @type {string}
+   * @memberof ProjectDetailsDto
+   */
+  description: string;
+  /**
+   * Markdown instructions from `PROJECT.md`; empty when absent.
+   * @type {string}
+   * @memberof ProjectDetailsDto
+   */
+  instructions: string;
+  /**
+   * Files directly under `context/`, sorted by name.
+   * @type {Array<ProjectContextFileDto>}
+   * @memberof ProjectDetailsDto
+   */
+  contextFiles: Array<ProjectContextFileDto>;
+  /**
+   * Aggregate ETag of the version these details were read from. It changes on every write, project conversation writes included.
+   * @type {string}
+   * @memberof ProjectDetailsDto
+   */
+  etag: string;
+  /**
+   * Version of the project content (`PROJECT.md`, `context/` and every other non-conversation file). A conversation write leaves it unchanged. Send it as `If-Match` on update and delete.
+   * @type {string}
+   * @memberof ProjectDetailsDto
+   */
+  contentVersion: string;
+  /**
+   * Number of conversations stored in the project.
+   * @type {number}
+   * @memberof ProjectDetailsDto
+   */
+  conversationCount: number;
+  /**
+   * Whether the caller may edit, delete, share and publish the project — `true` only in the caller's own bucket.
+   * @type {boolean}
+   * @memberof ProjectDetailsDto
+   */
+  canEdit: boolean;
+}
+
+/**
+ *
+ * @export
+ * @interface ProjectDto
+ */
+export interface ProjectDto {
+  /**
+   * DIAL Core resource id, `projects/{bucket}/{path}` without a trailing slash.
+   * @type {string}
+   * @memberof ProjectDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectDto
+   */
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectDto
+   */
+  bucket: string;
+  /**
+   * Path of the project within its bucket.
+   * @type {string}
+   * @memberof ProjectDto
+   */
+  path: string;
+  /**
+   * Grouping folder path the project sits in, when nested.
+   * @type {string}
+   * @memberof ProjectDto
+   */
+  parentPath?: string;
+  /**
+   *
+   * @type {ProjectSource}
+   * @memberof ProjectDto
+   */
+  source: ProjectSource;
+  /**
+   *
+   * @type {string}
+   * @memberof ProjectDto
+   */
+  author?: string;
+  /**
+   * Creation time, epoch milliseconds.
+   * @type {number}
+   * @memberof ProjectDto
+   */
+  createdAt?: number;
+  /**
+   * Last update time, epoch milliseconds.
+   * @type {number}
+   * @memberof ProjectDto
+   */
+  updatedAt?: number;
+}
+
+/**
+ *
+ * @export
+ */
+export const ProjectSource = {
+  Personal: 'personal',
+  Shared: 'shared',
+  Organization: 'organization',
+} as const;
+export type ProjectSource = (typeof ProjectSource)[keyof typeof ProjectSource];
+
+/**
+ *
+ * @export
+ */
+export const ProjectWatchAction = {
+  Create: 'CREATE',
+  Update: 'UPDATE',
+  Delete: 'DELETE',
+} as const;
+export type ProjectWatchAction =
+  (typeof ProjectWatchAction)[keyof typeof ProjectWatchAction];
+
+/**
+ *
+ * @export
+ * @interface ProjectWatchEventDto
+ */
+export interface ProjectWatchEventDto {
+  /**
+   * Id of the watched project the event is about.
+   * @type {string}
+   * @memberof ProjectWatchEventDto
+   */
+  id: string;
+  /**
+   *
+   * @type {ProjectWatchAction}
+   * @memberof ProjectWatchEventDto
+   */
+  action: ProjectWatchAction;
+  /**
+   * Epoch ms at which DIAL Core published the event; within milliseconds of the stored `updatedAt`, but not equal to it.
+   * @type {number}
+   * @memberof ProjectWatchEventDto
+   */
+  timestamp: number;
+  /**
+   * The project's new aggregate ETag; absent on `DELETE`.
+   * @type {string}
+   * @memberof ProjectWatchEventDto
+   */
+  etag?: string;
+}
+
+/**
+ *
+ * @export
+ * @interface ProjectsConfigDto
+ */
+export interface ProjectsConfigDto {
+  /**
+   * Pinned project identifiers (`projects/{bucket}/{path}`).
+   * @type {Array<string>}
+   * @memberof ProjectsConfigDto
+   */
+  pinnedIds: Array<string>;
 }
 /**
  *
@@ -5902,6 +7244,7 @@ export const PublishHistoryEntryDtoEntityTypeEnum = {
   Application: 'application',
   Prompt: 'prompt',
   Skill: 'skill',
+  Project: 'project',
 } as const;
 export type PublishHistoryEntryDtoEntityTypeEnum =
   (typeof PublishHistoryEntryDtoEntityTypeEnum)[keyof typeof PublishHistoryEntryDtoEntityTypeEnum];
@@ -5959,6 +7302,7 @@ export const PublishResultDtoEntityTypeEnum = {
   Application: 'application',
   Prompt: 'prompt',
   Skill: 'skill',
+  Project: 'project',
 } as const;
 export type PublishResultDtoEntityTypeEnum =
   (typeof PublishResultDtoEntityTypeEnum)[keyof typeof PublishResultDtoEntityTypeEnum];
@@ -6074,7 +7418,7 @@ export interface RefineTextRequestDto {
    */
   purpose: TextRefinementPurpose;
   /**
-   * Exact nonblank draft. Unicode code point limits: skill Description 4000, task Description 500, application/toolset/prompt Description 2000, skill/task/prompt Instructions 32000.
+   * Exact nonblank draft. Unicode code point limits: skill/project Description 4000, task Description 500, application/toolset/prompt Description 2000, skill/task/prompt/project Instructions 32000.
    * @type {string}
    * @memberof RefineTextRequestDto
    */
@@ -6661,6 +8005,19 @@ export interface ScheduledTaskValidationErrorDto {
  * @export
  */
 export type ScheduledTaskValidationErrorDtoMessage = Array<string> | string;
+
+/**
+ * Consent state of the DIAL_NATIVE scheduler external service: 'signed_out' when the administrator's application consent is missing or revoked, 'signed_in' when it is in place, and 'unknown' when the consent read itself failed (the offline-credentials status is still valid).
+ * @export
+ */
+export const SchedulerServiceConsentStatus = {
+  SignedIn: 'signed_in',
+  SignedOut: 'signed_out',
+  Unknown: 'unknown',
+} as const;
+export type SchedulerServiceConsentStatus =
+  (typeof SchedulerServiceConsentStatus)[keyof typeof SchedulerServiceConsentStatus];
+
 /**
  *
  * @export
@@ -7216,6 +8573,19 @@ export interface StopCompletionDto {
    */
   content?: string;
 }
+/**
+ *
+ * @export
+ * @interface StreamConversationTitlesBodyDto
+ */
+export interface StreamConversationTitlesBodyDto {
+  /**
+   * Full DIAL Core conversation resource URLs, at most 500 and 262144 bytes as a serialized JSON array. Duplicate IDs produce one outcome; visible conversations should come first, because IDs are admitted in order.
+   * @type {Array<string>}
+   * @memberof StreamConversationTitlesBodyDto
+   */
+  ids: Array<string>;
+}
 
 /**
  * Server-owned rewriting purpose
@@ -7230,6 +8600,8 @@ export const TextRefinementPurpose = {
   ToolsetDescription: 'toolset-description',
   PromptDescription: 'prompt-description',
   PromptInstructions: 'prompt-instructions',
+  ProjectDescription: 'project-description',
+  ProjectInstructions: 'project-instructions',
 } as const;
 export type TextRefinementPurpose =
   (typeof TextRefinementPurpose)[keyof typeof TextRefinementPurpose];
@@ -7485,6 +8857,12 @@ export interface ToolsetAuthSettingsDto {
    * @memberof ToolsetAuthSettingsDto
    */
   clientId?: string;
+  /**
+   * (OAuth only) Last characters of the stored OAuth client secret, as returned by DIAL Core. Never the secret itself.
+   * @type {string}
+   * @memberof ToolsetAuthSettingsDto
+   */
+  clientSecretHint?: string;
   /**
    * (OAuth only) OAuth redirect URI
    * @type {string}
@@ -7991,6 +9369,7 @@ export const UnpublishResultDtoEntityTypeEnum = {
   Application: 'application',
   Prompt: 'prompt',
   Skill: 'skill',
+  Project: 'project',
 } as const;
 export type UnpublishResultDtoEntityTypeEnum =
   (typeof UnpublishResultDtoEntityTypeEnum)[keyof typeof UnpublishResultDtoEntityTypeEnum];
@@ -8138,15 +9517,58 @@ export interface UpdateInstalledSkillDto {
  */
 export interface UpdatePinsDto {
   /**
-   * Full DIAL Core resource URL of the conversation to pin or unpin (matches `id` in `ConversationListItemDto`).
+   * Full DIAL Core resource URL of the conversation or project to pin or unpin (matches `id` in `ConversationListItemDto` or `ProjectDto`). A `projects/` id is stored under `projects.pinnedIds`.
    * @type {string}
    * @memberof UpdatePinsDto
    */
   path: string;
   /**
-   * Pass `true` to pin the conversation, `false` to unpin.
+   * Pass `true` to pin the conversation or project, `false` to unpin.
    * @type {boolean}
    * @memberof UpdatePinsDto
+   */
+  isPinned: boolean;
+}
+/**
+ *
+ * @export
+ * @interface UpdateProjectResponseDto
+ */
+export interface UpdateProjectResponseDto {
+  /**
+   * The project id after the save — a new id when it was renamed.
+   * @type {string}
+   * @memberof UpdateProjectResponseDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateProjectResponseDto
+   */
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateProjectResponseDto
+   */
+  bucket: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UpdateProjectResponseDto
+   */
+  path: string;
+  /**
+   * Aggregate ETag of the saved version. Absent when the project was renamed and its new ETag could not be read back; the save itself committed, so reload the project for a fresh one.
+   * @type {string}
+   * @memberof UpdateProjectResponseDto
+   */
+  etag?: string;
+  /**
+   * Whether the project is in the caller's pins after the save.
+   * @type {boolean}
+   * @memberof UpdateProjectResponseDto
    */
   isPinned: boolean;
 }
@@ -8428,6 +9850,12 @@ export interface UserConfigDto {
   conversations: ConversationsConfigDto;
   /**
    *
+   * @type {ProjectsConfigDto}
+   * @memberof UserConfigDto
+   */
+  projects: ProjectsConfigDto;
+  /**
+   *
    * @type {ToolsetsConfigDto}
    * @memberof UserConfigDto
    */
@@ -8524,6 +9952,12 @@ export interface UserProfileDto {
    * @memberof UserProfileDto
    */
   isAdmin: boolean;
+  /**
+   * URL of the user's profile picture: the IdP's absolute http(s) `picture` claim, or the same-origin `GET /auth/me/picture` path when the IdP supplied the image inline. Omitted when there is no picture.
+   * @type {string}
+   * @memberof UserProfileDto
+   */
+  pictureUrl?: string;
 }
 /**
  *
@@ -8537,4 +9971,17 @@ export interface WatchConversationBodyDto {
    * @memberof WatchConversationBodyDto
    */
   path: string;
+}
+/**
+ *
+ * @export
+ * @interface WatchProjectsBodyDto
+ */
+export interface WatchProjectsBodyDto {
+  /**
+   * Unique ids of the listed projects, `projects/{bucket}/{path}` each.
+   * @type {Array<string>}
+   * @memberof WatchProjectsBodyDto
+   */
+  ids: Array<string>;
 }

@@ -24,6 +24,7 @@ export type {
   ScheduledTaskCardGridLabels,
   ScheduledTaskCardGridLayout,
 } from './models/scheduled-task-card-grid-props';
+export { SCHEDULED_TASKS_GRID_DEFAULT_MAX_WIDTH } from './models/scheduled-task-card-grid-props';
 export { ScheduledTaskCardSkeleton } from './components/ScheduledTaskCardSkeleton/ScheduledTaskCardSkeleton';
 export type {
   ScheduledTaskCardSkeletonProps,
@@ -45,6 +46,8 @@ export type {
   ScheduledTaskCreateFormColors,
   ScheduledTaskCreateFormTypography,
   ScheduledTaskRepeatOption,
+  ScheduledTaskEveryWeekOption,
+  ScheduledTaskCustomDayOption,
 } from './models/scheduled-task-create-form-props';
 export { DESCRIPTION_MAX_LENGTH } from './constants/scheduled-task-create-form';
 export { TIME_OF_DAY_PATTERN } from './utils/calendar-value';
@@ -75,11 +78,13 @@ export { ScheduledTaskDetailsSummary } from './components/ScheduledTaskDetailsSu
 export type { ScheduledTaskInstructionsMarkdownLabels } from './models/scheduled-task-instructions';
 export { ScheduledTaskConversationHistorySection } from './components/ScheduledTaskConversationHistorySection/ScheduledTaskConversationHistorySection';
 export type {
+  ScheduledTaskConversationHistorySectionColors,
   ScheduledTaskConversationHistorySectionProps,
   ScheduledTaskConversationHistorySectionLabels,
 } from './components/ScheduledTaskConversationHistorySection/ScheduledTaskConversationHistorySection';
 export { ScheduledTaskConversationDetailsSection } from './components/ScheduledTaskConversationDetailsSection/ScheduledTaskConversationDetailsSection';
 export type {
+  ScheduledTaskConversationDetailsSectionColors,
   ScheduledTaskConversationDetailsSectionProps,
   ScheduledTaskConversationDetailsSectionLabels,
 } from './components/ScheduledTaskConversationDetailsSection/ScheduledTaskConversationDetailsSection';
@@ -91,6 +96,7 @@ export type {
   ScheduledTaskDeleteConfirmationStyles,
 } from './components/ScheduledTaskDeleteConfirmation/ScheduledTaskDeleteConfirmation';
 export type {
+  ScheduledTaskDetailsSummaryColors,
   ScheduledTaskDetailsSummaryProps,
   ScheduledTaskDetailsSummaryStyles,
   ScheduledTaskDetailsSummaryTypography,

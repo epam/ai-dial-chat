@@ -21,8 +21,17 @@ resolved from four states, matching the legacy Marketplace decision tree:
 Outside the "Manage credentials" state, the label depends on the authentication type. An `OAUTH`
 toolset shows **"Log in"** (Log in / Login with my creds) or **"Log out"** (Log out). An `API_KEY`
 toolset shows **"API key"** (Log in / Login with my creds) or **"Change API key"** (Log out), and
-the action opens a personal API-key popover (`CredentialsApiKeyOverlay`, `USER` level) instead of
-logging in or out directly.
+the action opens an API-key popover (`CredentialsApiKeyOverlay`) instead of logging in or out
+directly.
+
+Outside the "Manage credentials" state there is no level chooser, so the direct "Log in" and the
+API-key popover act on one level resolved by `getDirectCredentialsLevel` (`libs/catalog`), matching
+DIAL Core's public/private toolset convention (`resolveToolsetCredentialsLevel` in
+`libs/chat-hooks`) and the legacy chat: a public toolset (`credentials.isPublic`) at `USER` level, a
+private toolset at `GLOBAL` level — the owner's own credential, which is the one DIAL Core copies
+onto a copy published with shared credentials (see `catalog-publish-flow`). A private toolset
+already signed in at `USER` level keeps resolving to `USER`, so a key added there earlier can still
+be changed or deleted from the same popover.
 
 Label/text overrides flow through `ItemDetailsTexts` fields (`manageCredentialsActionLabel`,
 `loginActionLabel`, `logoutActionLabel`, `apiKeyActionLabel`, `changeApiKeyActionLabel`), each
@@ -52,12 +61,23 @@ defaulting to English text. There is no `loginWithMyCredsActionLabel` override.
 #### Scenario: API-key toolset shows API key or Change API key
 - **WHEN** a user outside the admin+public case opens the Details Panel for an `API_KEY` toolset
 - **THEN** the action reads "API key" when the toolset is not signed in, or "Change API key" when
-  it is, and clicking it opens the personal API-key popover
+  it is, and clicking it opens the API-key popover at the level `getDirectCredentialsLevel` resolves
 
 #### Scenario: Signed out toolset shows Log in
 - **WHEN** a user opens the Details Panel for a toolset that is not public, or where the user is
   an admin on a private toolset, and the toolset is signed out at both `USER` and `GLOBAL` level
 - **THEN** the panel shows "Log in" for an `OAUTH` toolset ("API key" for an `API_KEY` toolset)
+
+#### Scenario: Owner of a private toolset signs in at GLOBAL level
+- **GIVEN** a private toolset (`isPublic` not set) signed out at both `USER` and `GLOBAL` level,
+  outside the admin+public case
+- **WHEN** the user clicks "Log in", or submits a key in the API-key popover
+- **THEN** the login is requested with `credentialsLevel: GLOBAL`
+
+#### Scenario: Private toolset signed in at USER level keeps managing that key
+- **GIVEN** a private `API_KEY` toolset whose `USER`-level status is `SIGNED_IN`
+- **WHEN** the user opens the popover from "Change API key"
+- **THEN** the popover acts on the `USER` level, so "Delete" removes that key
 
 #### Scenario: Signed-in toolset shows Log out
 - **WHEN** a user opens the Details Panel for a toolset signed in at `USER` or `GLOBAL` level,
@@ -75,7 +95,8 @@ action ("Log in" for OAuth, an API-key input with "Add" for `API_KEY`), and, onc
 out" (OAuth) or "Delete" for the configured key (`API_KEY`). Personal credentials take
 precedence: the organization row's checkmark is hidden while the personal row is signed in. The
 rows are not collapsible sections. In every other case there is no level chooser: the header
-action acts on the `USER` level, or on the signed-in level for "Log out".
+action acts on the level `getDirectCredentialsLevel` resolves (`USER` for a public toolset, `GLOBAL`
+for a private one), or on the signed-in level for "Log out".
 
 #### Scenario: Admin sees both credential levels independently
 - **WHEN** an admin clicks "Manage credentials" on a public toolset
@@ -111,7 +132,7 @@ input as the input's accessible description (`aria-describedby`; default text
 popover or row submitted (`USER` or `GLOBAL`).
 
 #### Scenario: Submit API key at USER level
-- **WHEN** a user enters an API key in the personal API-key popover or the "Personal
+- **WHEN** a user enters an API key in the API-key popover of a public toolset or the "Personal
   credentials" row and submits
 - **THEN** the system calls `POST /api/v1/toolsets/{toolsetName}/login` with
   `credentialsLevel: USER` and the entered `apiKey`
@@ -134,7 +155,7 @@ popover or row submitted (`USER` or `GLOBAL`).
 ### Requirement: OAuth login opens in a new window at the resolved level
 For `authenticationType: OAUTH` toolsets, the system SHALL present, in the header action or a
 `CredentialsManagementPanel` row, a "Log in" button that initiates the OAuth handshake with `credentialsLevel` set
-to the level of the header action (`USER`) or of the row (`USER` or `GLOBAL`) by opening a same-origin popup window synchronously (so a blocked
+to the level of the header action (resolved by `getDirectCredentialsLevel`) or of the row (`USER` or `GLOBAL`) by opening a same-origin popup window synchronously (so a blocked
 popup can be reliably detected), then navigating that popup to the provider's authorization page,
 leaving the Catalog tab or Toolset Editor tab on its current page. The authorize URL SHALL
 use the `http:` or `https:` scheme; the system SHALL reject any other scheme before opening a
@@ -183,12 +204,12 @@ block re-authentication.
 
 ### Requirement: Logout confirmation
 Logging out at any credentials level SHALL require confirmation before the logout endpoint is
-called, except for the "Delete" action in the personal API-key popover. The confirmation is an
+called, except for the "Delete" action in the API-key popover. The confirmation is an
 in-panel `ConfirmationView` sub-view of the Details Panel (`DetailsConfirmationKind.Logout`,
 holding the pending level), not a modal dialog. The level is the one passed by a
 `CredentialsManagementPanel` row, or the signed-in level from `getSignedInLevel` for the header's
 "Log out" action. Deleting a configured API key from a `CredentialsManagementPanel` row uses a
-separate `DetailsConfirmationKind.DeleteApiKey` confirmation. The "Delete" action in the personal
+separate `DetailsConfirmationKind.DeleteApiKey` confirmation. The "Delete" action in the
 API-key popover calls logout directly, without a confirmation step.
 
 #### Scenario: Confirm logout

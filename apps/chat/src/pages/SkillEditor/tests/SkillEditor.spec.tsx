@@ -1,4 +1,6 @@
+import { CatalogCreationType } from '@epam/ai-dial-chat-api-client';
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -13,6 +15,10 @@ import { EntityNotificationsI18nKeys } from '../../../constants/translation-keys
 import { useUser } from '../../../context/auth/UserContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { useSkills } from '../../../context/SkillsContext';
+import {
+  resetCatalogCreationState,
+  setCatalogCreationState,
+} from '../../../context/tests/catalog-creation-state';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import {
   createSkill,
@@ -83,9 +89,17 @@ vi.mock('../../../context/ThemeContext', () => ({
   useTheme: () => ({ currentTheme: 'light' }),
 }));
 
-vi.mock('../../../context/AppConfigContext', () => ({
-  useAppConfig: () => ({ config: { allowedConnectOrigins: [] } }),
-}));
+vi.mock('../../../context/AppConfigContext', async () => {
+  const { useCatalogCreationState } =
+    await import('../../../context/tests/catalog-creation-state');
+  return {
+    useAppConfig: () => ({
+      status: 'ready',
+      config: { allowedConnectOrigins: [] },
+      ...useCatalogCreationState(),
+    }),
+  };
+});
 
 vi.mock('../../../context/NotificationContext', () => ({
   useNotification: vi.fn(),
@@ -98,8 +112,10 @@ vi.mock('../../../context/SkillsContext', () => ({
 vi.mock('@epam/ai-dial-attachment-canvas', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@epam/ai-dial-attachment-canvas')>();
+  const beginRequest = () => () => true;
   return {
     ...actual,
+    useLatestCanvasRequest: () => beginRequest,
     useAttachmentCanvas: () => ({
       isOpen: false,
       isLoading: false,
@@ -188,6 +204,13 @@ const confirmUpload = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.click(button());
 };
 
+/* The editor keeps its alert region mounted, so "no alert" means every region is empty. */
+const alertText = () =>
+  screen
+    .queryAllByRole('alert')
+    .map((region) => region.textContent)
+    .join('');
+
 /*
  * The library renders the Cancel/Create pair twice (once in the desktop
  * header row, once in the mobile sticky footer) and toggles visibility with
@@ -200,7 +223,7 @@ const getCancelButton = () =>
 const getCreateButton = () =>
   screen.getAllByRole('button', { name: 'buttons.create' })[0];
 const getSaveButton = () =>
-  screen.getAllByRole('button', { name: 'skillEditor.saveLabel' })[0];
+  screen.getAllByRole('button', { name: 'buttons.save' })[0];
 
 /*
  * The `Input`/`Textarea`/`MarkdownEditor` fields render their `labelProps`
@@ -266,7 +289,9 @@ describe('SkillEditor page', { timeout: 15000 }, () => {
 
     render(<SkillEditor />);
 
-    expect(screen.getAllByRole('alert').length).toBeGreaterThan(0);
+    expect(
+      screen.getByRole('region', { name: 'skillEditor.bucketMissingTitle' }),
+    ).toBeTruthy();
     expect(screen.getByText('skillEditor.bucketMissingMessage')).toBeTruthy();
     expect(createSkill).not.toHaveBeenCalled();
   });
@@ -1025,14 +1050,14 @@ describe('SkillEditor page — edit mode', () => {
     expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
   });
 
-  it('renders the Name field as read-only', async () => {
+  it('renders the Name field as disabled', async () => {
     vi.mocked(downloadSkill).mockResolvedValue(buildSkillResponse(manifest));
 
     render(<SkillEditor />);
 
     await waitFor(() =>
       expect(
-        (screen.getByDisplayValue('docs-helper') as HTMLInputElement).readOnly,
+        (screen.getByDisplayValue('docs-helper') as HTMLInputElement).disabled,
       ).toBe(true),
     );
   });
@@ -1148,9 +1173,7 @@ describe('SkillEditor page — edit mode', () => {
     await user.click(
       screen.getByRole('button', { name: 'skillEditor.reloadLatestLabel' }),
     );
-    await user.click(
-      screen.getByRole('button', { name: 'skillEditor.reloadConfirmLabel' }),
-    );
+    await user.click(screen.getByRole('button', { name: 'buttons.reload' }));
 
     await waitFor(() => expect(downloadSkill).toHaveBeenCalledTimes(2));
   });
@@ -1310,13 +1333,13 @@ describe('SkillEditor page — Back control and preview round trip', () => {
 
   /*
    * The Back control's accessible name depends on the current selection —
-   * `backAriaLabel` on the manifest view, `backToManifestAriaLabel` while a
+   * `buttons.back` on the manifest view, `backToManifestAriaLabel` while a
    * supporting file is selected — so it is matched by either name here and
    * asserted explicitly in the dedicated accessible-name test.
    */
   const getBackButton = () =>
     screen.getByRole('button', {
-      name: /^skillEditor\.back(AriaLabel|ToManifestAriaLabel)$/,
+      name: /^(buttons\.back|skillEditor\.backToManifestAriaLabel)$/,
     });
 
   const selectNode = async (name: string) => {
@@ -1398,9 +1421,7 @@ describe('SkillEditor page — Back control and preview round trip', () => {
 
   it('describes returning to SKILL.md in the Back control accessible name while a supporting file is selected', async () => {
     await renderEditorWithSupportingFile();
-    expect(
-      screen.getByRole('button', { name: 'skillEditor.backAriaLabel' }),
-    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'buttons.back' })).toBeTruthy();
 
     await selectNode('analyzer.md');
 
@@ -1409,9 +1430,7 @@ describe('SkillEditor page — Back control and preview round trip', () => {
         name: 'skillEditor.backToManifestAriaLabel',
       }),
     ).toBeTruthy();
-    expect(
-      screen.queryByRole('button', { name: 'skillEditor.backAriaLabel' }),
-    ).toBeNull();
+    expect(screen.queryByRole('button', { name: 'buttons.back' })).toBeNull();
   });
 
   it('preserves edited manifest fields, uploaded files, and dirty state across a preview round trip', async () => {
@@ -1487,5 +1506,93 @@ describe('SkillEditor page — Back control and preview round trip', () => {
     await user.click(getCancelButton());
 
     expect(mockNavigate).toHaveBeenCalledWith('/catalog');
+  });
+});
+
+describe('SkillEditor page — creation permissions', { timeout: 15000 }, () => {
+  const user = userEvent.setup({ delay: null });
+  const manifest =
+    '---\nname: docs-helper\ndescription: Explains docs\n---\n\ninstr';
+  const denySkills = () =>
+    setCatalogCreationState({
+      allowedTypes: Object.values(CatalogCreationType).filter(
+        (type) => type !== CatalogCreationType.Skill,
+      ),
+      restrictedSchemaIds: [],
+    });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    resetCatalogCreationState();
+    mockSearchParams = new URLSearchParams();
+    vi.mocked(useUser).mockReturnValue({
+      user: { bucket: 'my-bucket' },
+    } as unknown as ReturnType<typeof useUser>);
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(showNotification),
+    );
+    refetchSkills.mockResolvedValue(undefined);
+    vi.mocked(useSkills).mockReturnValue({
+      skills: [],
+      publicSkills: [],
+      sharedWithMe: [],
+      isLoading: false,
+      error: null,
+      refetchSkills,
+      mergeSharedSkill: vi.fn(),
+    });
+    vi.mocked(createSkill).mockResolvedValue({
+      etag: 'etag-1',
+    } as unknown as Awaited<ReturnType<typeof createSkill>>);
+  });
+
+  it.each([
+    ['no id parameter', ''],
+    ['an empty id parameter', 'id='],
+  ])('shows the denied state for %s and mounts no form', (_label, search) => {
+    denySkills();
+    mockSearchParams = new URLSearchParams(search);
+    render(<SkillEditor />);
+
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: 'catalog.creation.denied',
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByPlaceholderText('skillEditor.namePlaceholder'),
+    ).toBeNull();
+    expect(createSkill).not.toHaveBeenCalled();
+  });
+
+  it('blocks the create request when permission is lost while the form is open', async () => {
+    render(<SkillEditor />);
+    await fillRequiredFields(user, 'Helper', 'Helps');
+
+    act(() => denySkills());
+    await user.click(getCreateButton());
+
+    expect(createSkill).not.toHaveBeenCalled();
+    expect(showNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'catalog.creation.denied' }),
+    );
+  });
+
+  it('loads and saves an existing skill when creation is denied', async () => {
+    denySkills();
+    mockSearchParams = new URLSearchParams({ id: 'team-a/docs-helper' });
+    vi.mocked(downloadSkill).mockResolvedValue(buildSkillResponse(manifest));
+    vi.mocked(updateSkill).mockResolvedValue({
+      etag: 'etag-2',
+    } as unknown as Awaited<ReturnType<typeof updateSkill>>);
+    render(<SkillEditor />);
+
+    expect(await screen.findByDisplayValue('docs-helper')).toBeTruthy();
+    await user.click(getSaveButton());
+
+    await waitFor(() => expect(updateSkill).toHaveBeenCalled());
+    expect(createSkill).not.toHaveBeenCalled();
+    expect(alertText()).toBe('');
   });
 });

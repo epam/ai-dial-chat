@@ -106,6 +106,12 @@
       "import": "./dist/scheduled-tasks.js",
       "default": "./dist/scheduled-tasks.js"
     },
+    "./project": {
+      "@epam/source": "./src/entry-points/project.ts",
+      "types": "./dist/project.d.ts",
+      "import": "./dist/project.js",
+      "default": "./dist/project.js"
+    },
     "./sharing": {
       "@epam/source": "./src/entry-points/sharing.ts",
       "types": "./dist/sharing.d.ts",
@@ -141,6 +147,12 @@
       "types": "./dist/mcp-apps.d.ts",
       "import": "./dist/mcp-apps.js",
       "default": "./dist/mcp-apps.js"
+    },
+    "./external-services": {
+      "@epam/source": "./src/entry-points/external-services.ts",
+      "types": "./dist/external-services.d.ts",
+      "import": "./dist/external-services.js",
+      "default": "./dist/external-services.js"
     }
   },
   "dependencies": {
@@ -149,7 +161,7 @@
     "fflate": "^0.8.3",
     "lru-cache": "^10.4.3",
     "mime-types": "^3.0.2",
-    "yaml": "^2.9.0"
+    "yaml": "^2.9.1"
   },
   "peerDependencies": {
     "react": "^19.2.8",
@@ -160,18 +172,18 @@
     "@epam/ai-dial-chat-shared": "*",
     "@epam/ai-dial-conversation-input": "*",
     "@epam/ai-dial-mcp-apps": "*",
+    "@epam/ai-dial-projects": "*",
     "@epam/ai-dial-publish-panel": "*",
     "@epam/ai-dial-quotations": "*",
-    "@epam/ai-dial-react-file-manager": "^0.4.0-dev.11",
+    "@epam/ai-dial-react-file-manager": "^0.4.0-dev.25",
     "@epam/ai-dial-scheduled-tasks": "*",
     "@epam/ai-dial-share": "*",
     "@epam/ai-dial-skill-editor": "*",
     "@epam/ai-dial-source-panel": "*",
-    "@epam/ai-dial-ui-kit": "^0.16.0-dev.35",
+    "@epam/ai-dial-ui-kit": "^0.16.0-dev.59",
     "@epam/ai-dial-usage-dashboard": "*",
-    "@modelcontextprotocol/sdk": "^1.32.1",
-    "@epam/pdf-highlighter-kit": "^0.0.19",
-    "@mcp-ui/client": "^7.1.1"
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "@epam/pdf-highlighter-kit": "^0.0.19"
   },
   "peerDependenciesMeta": {
     "@epam/ai-dial-attachment-canvas": {
@@ -193,6 +205,9 @@
       "optional": true
     },
     "@epam/ai-dial-mcp-apps": {
+      "optional": true
+    },
+    "@epam/ai-dial-projects": {
       "optional": true
     },
     "@epam/ai-dial-publish-panel": {
@@ -222,9 +237,6 @@
     "@epam/ai-dial-usage-dashboard": {
       "optional": true
     },
-    "@mcp-ui/client": {
-      "optional": true
-    },
     "@modelcontextprotocol/sdk": {
       "optional": true
     },
@@ -240,7 +252,8 @@
   ],
   "nx": {
     "tags": [
-      "publishable"
+      "publishable",
+      "type:hooks"
     ],
     "targets": {
       "build": {

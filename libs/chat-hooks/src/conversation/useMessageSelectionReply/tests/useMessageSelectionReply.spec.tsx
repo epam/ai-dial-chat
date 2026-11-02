@@ -16,25 +16,6 @@ const RECT = new DOMRect(50, 100, 120, 20);
 const noFiles: File[] = [];
 const consume = vi.fn();
 
-beforeEach(() => {
-  Object.defineProperty(Range.prototype, 'getClientRects', {
-    configurable: true,
-    value: () => [RECT],
-  });
-  Object.defineProperty(document.documentElement, 'clientWidth', {
-    configurable: true,
-    value: 360,
-  });
-  Object.defineProperty(document.documentElement, 'clientHeight', {
-    configurable: true,
-    value: 800,
-  });
-});
-afterEach(() => {
-  window.getSelection()?.removeAllRanges();
-  vi.restoreAllMocks();
-});
-
 const select = (element: HTMLElement) => {
   const range = document.createRange();
   range.selectNodeContents(element);
@@ -105,6 +86,26 @@ const Harness = ({
 };
 
 describe('useMessageSelectionReply', () => {
+  beforeEach(() => {
+    Object.defineProperty(Range.prototype, 'getClientRects', {
+      configurable: true,
+      value: () => [RECT],
+    });
+    Object.defineProperty(document.documentElement, 'clientWidth', {
+      configurable: true,
+      value: 360,
+    });
+    Object.defineProperty(document.documentElement, 'clientHeight', {
+      configurable: true,
+      value: 800,
+    });
+  });
+
+  afterEach(() => {
+    window.getSelection()?.removeAllRanges();
+    vi.restoreAllMocks();
+  });
+
   it('leaves Tab navigation intact while the host action has no portal destination', async () => {
     const { result } = renderHook(() =>
       useMessageSelectionReply({

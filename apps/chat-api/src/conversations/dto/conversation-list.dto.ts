@@ -11,10 +11,17 @@ export class ConversationListItemDto {
 
   @ApiProperty({
     description:
-      'Human-readable conversation title (the resource `name` from DIAL Core).',
+      'Cached display title, or the filename-derived title while background title resolution is pending.',
     example: 'My chat',
   })
   title!: string;
+
+  @ApiPropertyOptional({
+    description:
+      'True when the title has not been resolved from the stored conversation yet, or its cached value expired. Resolve it with POST /conversations/titles.',
+    example: true,
+  })
+  isTitlePending?: boolean;
 
   @ApiPropertyOptional({
     description:
@@ -79,7 +86,7 @@ export class ConversationListItemDto {
 
   @ApiPropertyOptional({
     description:
-      'True when this scheduler-created conversation has not yet been opened by the user. Present only when `isScheduledTask` is true.',
+      "True when the conversation holds an answer the user has not seen. A scheduler-created conversation always carries it (true until first opened); a regular conversation in the caller's own bucket carries it, as true, only when it was updated after the user's read-before baseline and has not been viewed since. Omitted otherwise, including for published and shared conversations.",
     example: true,
   })
   isUnread?: boolean;

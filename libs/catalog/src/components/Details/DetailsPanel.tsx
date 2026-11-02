@@ -22,6 +22,8 @@ import {
   SideDrawer,
   Skeleton,
   Tabs,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import {
   FC,
@@ -269,6 +271,12 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
     '--cat-cred-row-description-text':
       detailsColors?.credentialsRowDescriptionText,
     '--cat-cred-error-text': detailsColors?.credentialsErrorText,
+    '--cat-cred-delete-action-text': detailsColors?.credentialsDeleteActionText,
+    '--cat-details-limit-reached-bg': detailsColors?.limitReachedBackground,
+    '--cat-details-limit-reached-text': detailsColors?.limitReachedText,
+    '--cat-details-limit-running-low-bg':
+      detailsColors?.limitRunningLowBackground,
+    '--cat-details-limit-running-low-text': detailsColors?.limitRunningLowText,
     '--cat-cred-card-bg': detailsColors?.credentialsCardBackground,
     '--cat-cred-card-icon': detailsColors?.credentialsCardIcon,
     '--cat-cred-card-title-text': detailsColors?.credentialsCardTitleText,
@@ -1294,14 +1302,14 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                 )}
                 tabClassName="shrink-0"
               />
+              {/* Always mounted, so the loading text is announced when fetching starts. */}
+              <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
+                {isDetailsLoading
+                  ? (texts?.detailsLoadingAriaLabel ?? 'Loading details')
+                  : ''}
+              </LiveRegion>
               {isDetailsLoading && (
-                <div
-                  role="status"
-                  aria-label={
-                    texts?.detailsLoadingAriaLabel ?? 'Loading details'
-                  }
-                  className="shrink-0"
-                >
+                <div aria-hidden className="shrink-0">
                   <Skeleton
                     showTitle={false}
                     paragraph={{ rows: 1, width: '72px' }}

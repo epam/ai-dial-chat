@@ -259,6 +259,11 @@ describe('CustomApiRegistryService', () => {
 
     it.each([
       '/../admin',
+      '/..',
+      '/.',
+      '/items/../admin',
+      '/items/./all',
+      '/items/..',
       '/%2e%2e/admin',
       '/%252e%252e/admin',
       '//other-host',
@@ -284,6 +289,17 @@ describe('CustomApiRegistryService', () => {
       expect(service.get('data-products')?.corePath).toBe(
         '/catalog/data-products',
       );
+    });
+
+    it.each([
+      '/v1/deployments/applications/public/team/runner__1.0.0/route/editor/browse',
+      '/items/.well-known',
+      '/items/v1.2/...',
+    ])('accepts dots inside a segment in %p', async (corePath) => {
+      const service = await createService(
+        buildConfig([{ ...VALID_OPERATION, corePath }]),
+      );
+      expect(service.get('data-products')?.corePath).toBe(corePath);
     });
   });
 
@@ -350,5 +366,21 @@ describe('resolveCustomApiDestination', () => {
       'https://other.example/../admin?x=1#f',
     );
     expect(destination.hash).toBe('');
+  });
+
+  it('keeps dots inside a segment unchanged', () => {
+    const destination = resolveCustomApiDestination(
+      'https://core-api.com',
+      '/v1/deployments/applications/public/team/runner__1.0.0/route/x',
+    );
+    expect(destination.pathname).toBe(
+      '/v1/deployments/applications/public/team/runner__1.0.0/route/x',
+    );
+  });
+
+  it('throws when a dot segment would move the destination', () => {
+    expect(() =>
+      resolveCustomApiDestination('https://core-api.com', '/items/../admin'),
+    ).toThrow('escaped the configured Core base');
   });
 });

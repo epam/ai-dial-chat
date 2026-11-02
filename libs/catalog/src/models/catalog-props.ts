@@ -88,6 +88,8 @@ export interface CatalogTitles {
   viewToggleLabel?: string;
   /** ARIA label for the page/grid. Default: 'Catalog'. */
   ariaLabel?: string;
+  /** Accessible name and tooltip of the button that returns a scrolled catalog to its top. Default: 'Scroll to top'. */
+  scrollToTopLabel?: string;
   /**
    * Display labels for entity-type filter tabs. Only types present in `items`
    * are shown, and the row is hidden entirely when fewer than two types are

@@ -1,6 +1,5 @@
 import { encodePlainDialResourcePath } from '../common/utils/encode-dial-path';
 import { safeDecodeURIComponent } from '../common/utils/uri';
-import { SEMVER_VERSION_PATTERN } from '../common/validators/semver-version.pattern';
 
 /*
  * Confirmed against DIAL Core's own OpenAPI spec (`/v1/ops/publication/create`
@@ -216,12 +215,15 @@ export const getPublishedAttachmentTargetUrl = (
  */
 const VERSIONED_RESOURCE_PREFIXES = new Set(['applications', 'toolsets']);
 const RESOURCE_VERSION_SEPARATOR = '__';
+// The charset the application and toolset DTOs accept, never only dots.
+const TARGET_VERSION_PATTERN = /^(?!\.+$)[\w.+-]{1,64}$/;
 
 /**
  * The published copy's resource name for `version`: `resourceName`'s own
  * `{name}__{version}` suffix replaced by `version`. Returns `resourceName`
  * unchanged for an unversioned resource type, a name with no suffix, or a
- * `version` that is not valid SemVer (so free text never reaches the path).
+ * `version` outside the DTO version charset (so free text never reaches the
+ * path).
  */
 export const getVersionedTargetResourceName = (
   resourceTypePrefix: string,
@@ -233,7 +235,7 @@ export const getVersionedTargetResourceName = (
     !VERSIONED_RESOURCE_PREFIXES.has(resourceTypePrefix) ||
     separatorIndex === -1 ||
     !version ||
-    !SEMVER_VERSION_PATTERN.test(version)
+    !TARGET_VERSION_PATTERN.test(version)
   ) {
     return resourceName;
   }

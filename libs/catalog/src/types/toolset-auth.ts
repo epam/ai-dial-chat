@@ -22,7 +22,7 @@ export enum CredentialStatus {
 export enum CredentialsLevel {
   /** The current user's own, personal credentials. */
   User = 'USER',
-  /** Organization-wide credentials shared by all users of a public toolset. */
+  /** Toolset-level credentials: organization-wide on a public toolset, the owner's own on a private one. */
   Global = 'GLOBAL',
 }
 

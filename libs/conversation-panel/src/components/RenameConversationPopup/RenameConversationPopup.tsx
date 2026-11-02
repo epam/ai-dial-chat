@@ -9,6 +9,9 @@ import {
   DIAL_KIT_ICON_STROKE,
   GhostIconButton,
   Input,
+  LiveRegion,
+  LiveRegionElement,
+  LiveRegionPoliteness,
   Popup,
   PopupSize,
   Spinner,
@@ -140,16 +143,21 @@ export const RenameConversationPopup: FC<RenameConversationPopupProps> = memo(
         }
       >
         <div className={styles?.bodyClassName} style={styles?.cssVars}>
+          {/* Outside the saving switch, so it stays mounted while the save runs
+              and the failure that ends it is announced. */}
+          <LiveRegion
+            politeness={LiveRegionPoliteness.Assertive}
+            visuallyHidden
+            as={LiveRegionElement.Span}
+          >
+            {!isSaving && !isTooLong && failureMessage}
+          </LiveRegion>
           {isSaving ? (
             <div className="h-[120px] px-6 py-4">
               <Spinner size={50} />
             </div>
           ) : (
             <div className="flex items-start gap-2 px-6 py-3">
-              {/* Stays mounted so the failure is announced when it appears. */}
-              <span role="alert" className="sr-only">
-                {isTooLong ? '' : (failureMessage ?? '')}
-              </span>
               <div className="min-w-0 flex-1">
                 <Input
                   inputRef={inputRef}

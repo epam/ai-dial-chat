@@ -1,4 +1,8 @@
-import { TAG_INPUT_TAG_CLASS_NAME } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  mergeClasses,
+  TAG_INPUT_TAG_CLASS_NAME,
+} from '@epam/ai-dial-chat-shared';
 import { Input, RadioGroup, Select, TagInput } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { useEffect, useMemo, useState } from 'react';
@@ -7,6 +11,7 @@ import type { SettingsFormProps } from '../../models/settings-form-props';
 import { isToolsetAuthValid } from '../../utils/toolsets';
 import { AuthSection } from '../AuthSection/AuthSection';
 import ConnectMcpUrlContent from '../ConnectMcpUrlContent/ConnectMcpUrlContent';
+import styles from './SettingsForm.module.scss';
 
 /** Setup section form: endpoint, protocol, allowed tools, authentication block, and the Connect section. */
 export const SettingsForm: FC<SettingsFormProps> = ({
@@ -25,6 +30,8 @@ export const SettingsForm: FC<SettingsFormProps> = ({
   onAuthChange,
   onEnsureSaved,
   labels,
+  colors,
+  typography,
 }) => {
   /**
    * Discovered tool names for the "Allowed tools" picker, fetched from the
@@ -80,7 +87,15 @@ export const SettingsForm: FC<SettingsFormProps> = ({
   }, [toolsetId, isEditMode, form.auth, form.endpoint, listToolNames]);
 
   return (
-    <div className="flex max-w-[1060px] flex-col gap-4">
+    <div
+      className="flex max-w-[1060px] flex-col gap-4"
+      style={buildCssVars({
+        '--te-connect-title': colors?.connectTitle,
+        '--te-connect-description': colors?.connectDescription,
+        '--te-connect-divider': colors?.connectDivider,
+        '--te-open-access-description': colors?.openAccessDescription,
+      })}
+    >
       <Input
         id="toolset-endpoint"
         value={form.endpoint}
@@ -159,13 +174,19 @@ export const SettingsForm: FC<SettingsFormProps> = ({
         onAuthChange={onAuthChange}
         onEnsureSaved={onEnsureSaved}
         labels={labels?.auth}
+        titleClassName={typography?.authTitleClassName}
+        openAccessDescriptionClassName={
+          typography?.openAccessDescriptionClassName
+        }
       />
 
       {isConnectVisible && (
         <ConnectMcpUrlContent
           url={connectUrl ?? ''}
           labels={labels?.connect}
-          className="border-t border-tertiary pt-4"
+          titleClassName={typography?.connectTitleClassName}
+          descriptionClassName={typography?.connectDescriptionClassName}
+          className={mergeClasses('border-t pt-4', styles.connectDivider)}
         />
       )}
     </div>

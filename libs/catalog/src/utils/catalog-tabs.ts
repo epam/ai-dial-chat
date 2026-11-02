@@ -15,7 +15,7 @@ const DEFAULT_TAB_LABELS: Record<CatalogEntityType, string> = {
 };
 
 /** Canonical display order for entity type tabs. */
-const TAB_ORDER: CatalogEntityType[] = [
+export const CATALOG_TAB_ORDER: readonly CatalogEntityType[] = [
   CatalogEntityType.Model,
   CatalogEntityType.Agent,
   CatalogEntityType.Toolset,
@@ -23,17 +23,36 @@ const TAB_ORDER: CatalogEntityType[] = [
   CatalogEntityType.Prompt,
 ];
 
-/** Derives entity-type tabs from items present in the catalog, sorted by canonical order. */
+/** Returns the Browse tabs `item` is listed under: its non-empty `catalogTabs`, otherwise `[item.type]`. */
+export const getCatalogItemTabs = (
+  item: CatalogItem,
+): readonly CatalogEntityType[] =>
+  item.catalogTabs != null && item.catalogTabs.length > 0
+    ? item.catalogTabs
+    : [item.type];
+
+/** Returns the entity type `item` is labeled with under `activeTab`: the tab itself when the item is listed there, otherwise `item.type`. */
+export const getCatalogItemDisplayType = (
+  item: CatalogItem,
+  activeTab?: CatalogEntityType,
+): CatalogEntityType =>
+  activeTab != null && getCatalogItemTabs(item).includes(activeTab)
+    ? activeTab
+    : item.type;
+
+/** Derives entity-type tabs from the tabs the catalog's items are listed under, sorted by canonical order. */
 export const buildCatalogTabs = (
   items: CatalogItem[],
   tabLabels?: Partial<Record<CatalogEntityType, string>>,
 ): TabModel[] => {
   const labels = { ...DEFAULT_TAB_LABELS, ...tabLabels };
-  const presentTypes = new Set(items.map((item) => item.type));
-  return TAB_ORDER.filter((type) => presentTypes.has(type)).map((type) => ({
-    id: type,
-    label: labels[type] ?? type,
-  }));
+  const presentTypes = new Set(items.flatMap(getCatalogItemTabs));
+  return CATALOG_TAB_ORDER.filter((type) => presentTypes.has(type)).map(
+    (type) => ({
+      id: type,
+      label: labels[type] ?? type,
+    }),
+  );
 };
 
 /** Scrolls a horizontally scrolling tab row just enough to bring its selected tab fully into view. */

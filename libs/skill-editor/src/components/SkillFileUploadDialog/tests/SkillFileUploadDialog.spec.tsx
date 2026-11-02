@@ -12,7 +12,18 @@ import {
 import { SkillFileUploadMode } from '../../../types/skill-file-upload-mode';
 import { SkillFileUploadDialog } from '../SkillFileUploadDialog';
 
-vi.mock('@epam/ai-dial-ui-kit', () => ({
+vi.mock('@epam/ai-dial-ui-kit', async () => ({
+  /* The real live region and ErrorText: a hand-rolled stub would hide the always-mounted region `announce` renders. */
+  ...(await vi
+    .importActual<typeof import('@epam/ai-dial-ui-kit')>('@epam/ai-dial-ui-kit')
+    .then(
+      ({ ErrorText, LiveRegion, LiveRegionElement, LiveRegionPoliteness }) => ({
+        ErrorText,
+        LiveRegion,
+        LiveRegionElement,
+        LiveRegionPoliteness,
+      }),
+    )),
   DIAL_KIT_ICON_STROKE: 1.5,
   DIAL_ICON_SIZE: { LG: 24, MD: 20, SM: 16 },
   ButtonVariant: { Primary: 'primary', Neutral: 'neutral', Danger: 'danger' },
@@ -56,7 +67,8 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
         ))}
       </div>
     ) : null,
-  ErrorText: ({ text }: { text?: string }) => <span>{text}</span>,
+  CaptionText: ({ text, className }: { text?: string; className?: string }) =>
+    text ? <span className={className}>{text}</span> : null,
   FileDropzone: ({
     id,
     label,
@@ -109,12 +121,18 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     icon,
     onClick,
     'aria-label': ariaLabel,
+    'aria-describedby': ariaDescribedBy,
   }: {
     icon: ReactNode;
     onClick?: () => void;
     'aria-label'?: string;
+    'aria-describedby'?: string;
   }) => (
-    <button aria-label={ariaLabel} onClick={onClick}>
+    <button
+      aria-label={ariaLabel}
+      aria-describedby={ariaDescribedBy}
+      onClick={onClick}
+    >
       {icon}
     </button>
   ),
@@ -260,7 +278,16 @@ describe('SkillFileUploadDialog', () => {
     );
 
     stageFile(new File(['content'], 'huge.md'));
-    await screen.findByText('Too large');
+    const rowError = await screen.findByText('Too large');
+
+    expect(
+      screen
+        .getByRole('button', { name: 'Remove huge.md' })
+        .getAttribute('aria-describedby'),
+    ).toBe(rowError.id);
+    expect(screen.getByRole('status').textContent).toContain(
+      'huge.md: Too large',
+    );
 
     expect(
       (screen.getByRole('button', { name: 'Add' }) as HTMLButtonElement)
@@ -348,6 +375,39 @@ describe('SkillFileUploadDialog', () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
+  it('announces a commit failure in an alert region', async () => {
+    const onClose = vi.fn();
+    render(
+      <SkillFileUploadDialog
+        isOpen
+        onClose={onClose}
+        fileActions={buildFileActions({
+          validateBatch: vi.fn(
+            async (candidates: SkillFileUploadCandidate[]) => ({
+              results: candidates.map((c) => ({
+                candidateId: c.id,
+                status: SkillFileValidationStatus.Valid,
+                kind: SkillFileCandidateKind.SupportingFile,
+              })),
+              batchErrors: [],
+            }),
+          ),
+          commitBatch: vi.fn(async () => ({ error: 'Upload failed' })),
+        })}
+      />,
+    );
+
+    stageFile(new File(['content'], 'a.md'));
+    await screen.findByText('a.md');
+    await userEvent.click(screen.getByRole('button', { name: 'Add' }));
+
+    await screen.findByText('Upload failed');
+    expect(
+      screen.getAllByRole('alert').map((alert) => alert.textContent),
+    ).toContain('Upload failed');
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
   it('prefixes staged paths with the target folder', async () => {
     render(
       <SkillFileUploadDialog
@@ -398,9 +458,9 @@ describe('SkillFileUploadDialog', () => {
       screen.getByRole('button', { name: 'Simulate rejected drop' }),
     );
 
-    expect(screen.getByRole('alert').textContent).toBe(
-      "Couldn't read this archive",
-    );
+    expect(
+      screen.getAllByRole('alert').map((alert) => alert.textContent),
+    ).toContain("Couldn't read this archive");
   });
 
   it('keeps Add disabled while an archive is being read', async () => {

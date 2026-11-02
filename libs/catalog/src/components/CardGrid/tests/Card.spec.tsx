@@ -42,6 +42,32 @@ describe('Card — selected state', () => {
   });
 });
 
+describe('Card — type label (#9615)', () => {
+  const mcpAgent = makeItem({
+    type: CatalogEntityType.Agent,
+    catalogTabs: [CatalogEntityType.Agent, CatalogEntityType.Toolset],
+  });
+
+  it('labels an agent listed under Toolsets as a toolset in the Toolsets tab', () => {
+    render(<Card item={mcpAgent} activeTab={CatalogEntityType.Toolset} />);
+
+    expect(screen.getByText(CatalogEntityType.Toolset)).toBeTruthy();
+    expect(screen.queryByText(CatalogEntityType.Agent)).toBeNull();
+  });
+
+  it('labels the same agent as an agent in the Agents tab', () => {
+    render(<Card item={mcpAgent} activeTab={CatalogEntityType.Agent} />);
+
+    expect(screen.getByText(CatalogEntityType.Agent)).toBeTruthy();
+  });
+
+  it('falls back to the entity kind without an active tab', () => {
+    render(<Card item={mcpAgent} />);
+
+    expect(screen.getByText(CatalogEntityType.Agent)).toBeTruthy();
+  });
+});
+
 describe('Card — name and version split', () => {
   /* The name box is the clamped wrapper around the kit `Highlight` that holds the text. */
   const getNameBox = () =>
@@ -89,7 +115,7 @@ describe('Card — long name (#9121)', () => {
     // eslint-disable-next-line testing-library/no-node-access -- the clamped name box has no role or name of its own; it is the text's direct parent.
     const name = screen.getByText('Claude').parentElement as HTMLElement;
     expect(name.className).toContain('line-clamp-2');
-    expect(name.className).toContain('break-words');
+    expect(name.className).toContain('wrap-break-word');
   });
 
   it('shows the full name in a tooltip only while the clamp hides part of it', async () => {

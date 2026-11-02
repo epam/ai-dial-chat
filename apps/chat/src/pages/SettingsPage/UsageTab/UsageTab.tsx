@@ -4,7 +4,7 @@ import {
   mapUsageDataToDashboard,
   mapUserUsageToModelLimits,
 } from '@epam/ai-dial-chat-hooks/usage';
-import { Spinner } from '@epam/ai-dial-ui-kit';
+import { Spinner, LiveRegion, LiveRegionElement } from '@epam/ai-dial-ui-kit';
 import {
   ModelLimitsSection,
   UsageLimitCardGroup,
@@ -260,9 +260,9 @@ const UsageTab: FC = () => {
           {t(UsageI18nKeys.PageDescription)}
         </p>
       </div>
-      <p role="status" aria-live="polite" className="sr-only">
+      <LiveRegion visuallyHidden as={LiveRegionElement.P}>
         {statusMessage}
-      </p>
+      </LiveRegion>
       <div className="flex flex-1 flex-col gap-6 overflow-y-auto px-8 py-4">
         {isLoading ? (
           <div className="flex flex-1 items-center justify-center" aria-hidden>

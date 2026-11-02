@@ -6,6 +6,7 @@ export enum ScheduledTaskTriggerDescriptionKind {
   OneTime = 'oneTime',
   Hourly = 'hourly',
   EveryNMinutes = 'everyNMinutes',
+  EveryNWeeks = 'everyNWeeks',
   Daily = 'daily',
   Weekly = 'weekly',
   Monthly = 'monthly',
@@ -19,6 +20,8 @@ export interface ScheduledTaskTriggerDescription {
   dayOfWeek?: string;
   dayOfMonth?: string;
   intervalMinutes?: number;
+  /** Week count of an `EveryNWeeks` description (the cron `week` step). */
+  intervalWeeks?: number;
   date?: Date;
   expression?: string;
   sourceTimezone: 'utc';
@@ -70,6 +73,9 @@ export const describeScheduledTaskTrigger = (
     result(ScheduledTaskTriggerDescriptionKind.Custom, {
       expression: JSON.stringify(fields),
     });
+  /* The Custom repeat's stored `week` step: a star-step with N in 1–10.
+   * Anything else set on `week` keeps the raw-expression Custom kind. */
+  const weekStep = fields.week?.match(/^\*\/(10|[1-9])$/);
   const ranges: Record<string, [number, number]> = {
     hour: [0, 23],
     minute: [0, 59],
@@ -91,6 +97,11 @@ export const describeScheduledTaskTrigger = (
       return result(ScheduledTaskTriggerDescriptionKind.Invalid);
     /* An explicit wildcard second means every second, not the default zero. */
     if (key === 'second' && value !== '0') return custom();
+    if (key === 'week') {
+      /* Only the editor's star-step is described structurally below. */
+      if (!weekStep) return custom();
+      continue;
+    }
     if (
       !['hour', 'minute', 'day', 'day_of_week'].includes(key) &&
       value !== '*' &&
@@ -128,6 +139,8 @@ export const describeScheduledTaskTrigger = (
   )
     return custom();
   const everyHour = hour == null || hour === '*';
+  /* A week constraint must not disappear into a simpler cadence label. */
+  if (weekStep && (everyHour || !weekday || day)) return custom();
   const interval = minute?.match(/^\*\/(\d+)$/);
   if (everyHour && interval && !day && !weekday) {
     const count = Number(interval[1]);
@@ -176,6 +189,16 @@ export const describeScheduledTaskTrigger = (
   );
   const dayShift = Math.round((localDate.getTime() - utcDay) / 86400000);
   const time = part('hour') + ':' + part('minute');
+  if (weekStep) {
+    /* The Custom repeat's shape: a fixed time-of-day on one weekday, every
+     * N weeks. The week step is a count and needs no conversion; the
+     * weekday shifts across the UTC day boundary exactly like Weekly's. */
+    return result(ScheduledTaskTriggerDescriptionKind.EveryNWeeks, {
+      intervalWeeks: Number(weekStep[1]),
+      time,
+      dayOfWeek: String((Number(weekday) + dayShift + 7) % 7),
+    });
+  }
   if (everyHour)
     return result(ScheduledTaskTriggerDescriptionKind.Hourly, {
       time: part('minute'),

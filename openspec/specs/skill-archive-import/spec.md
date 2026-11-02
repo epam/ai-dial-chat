@@ -3,9 +3,12 @@
 ## Purpose
 Specifies the Catalog "Upload" entry point and the `POST /api/v1/skills/import` BFF endpoint that let a user create a whole Skill from a single ZIP archive or from a standalone `SKILL.md` file: server-side extraction and validation, atomic creation via the existing multipart Skill contract, and the frontend workflow that wires file selection to the API call and Catalog refresh.
 ## Requirements
+
 ### Requirement: Catalog "Upload" entry imports a Skill archive or a standalone manifest
 
-The Catalog Create dropdown's "Upload" entry (child of the "Skill" submenu, see `catalog-create-options`) SHALL open the "Upload skill" dialog (`apps/chat/src/components/SkillArchiveUploadDialog`, a host adapter over `@epam/ai-dial-skills`' `SkillArchiveUploadDialog`, which renders the ui-kit `FileDropzone`) whose accepted-file hint is `SKILL_ARCHIVE_ACCEPT` (`'.zip,.md'`, `apps/chat/src/constants/skills.ts`). The picked or dropped file SHALL be uploaded to the BFF's import endpoint through `apps/chat/src/hooks/skills/useSkillArchiveImport.ts` (host adapter over the headless `useSkillArchiveImport` controller in `@epam/ai-dial-chat-hooks`), and — on success — the host SHALL raise the Skill-created success notification, refresh `SkillsContext`, and close the dialog, so the newly created Skill appears in the Catalog without a manual page reload. The `accept` attribute is a browser-level hint only; the BFF, not the picker, is the authority on whether a given upload is accepted.
+When skill creation permission passes, the Catalog Create dropdown's "Upload" entry (child of the "Skill" submenu, see `catalog-create-options`) SHALL open the "Upload skill" dialog (`apps/chat/src/components/SkillArchiveUploadDialog`, a host adapter over `@epam/ai-dial-skills`' `SkillArchiveUploadDialog`, which renders the ui-kit `FileDropzone`) whose accepted-file hint is `SKILL_ARCHIVE_ACCEPT` (`'.zip,.md'`, `apps/chat/src/constants/skills.ts`). The picked or dropped file SHALL be uploaded to the BFF's import endpoint through `apps/chat/src/hooks/skills/useSkillArchiveImport.ts` (host adapter over the headless `useSkillArchiveImport` controller in `@epam/ai-dial-chat-hooks`), and — on success — the host SHALL raise the Skill-created success notification, refresh `SkillsContext`, and close the dialog, so the newly created Skill appears in the Catalog without a manual page reload. The `accept` attribute is a browser-level hint only; the BFF, not the picker, is the authority on whether a given upload is accepted.
+
+The app adapter SHALL consult the same skill creation decision as the catalog menu before opening the dialog, accepting a selected/dropped file, and dispatching an import request. Denied, loading, or unavailable permission SHALL block all three actions. Losing permission SHALL close an idle dialog, and an already-open picker or stale callback MUST NOT dispatch a new request. The reusable import controller SHALL receive guarded callbacks without learning about roles, app config, or auth. Existing skill editing/file replacement flows SHALL remain unaffected. Requests already sent are not retroactively revoked by this UI policy. Successful import scenarios below assume creation permission passes.
 
 Before submitting, the client SHALL perform a filename pre-check as a UX shortcut, not a security control: a selected file whose name ends in `.md` (case-insensitive) but is not exactly `SKILL.md` (case-sensitive) SHALL be rejected locally with `SkillArchiveSelectionRejectionReason.UnsupportedFilename` (rendered as `SkillArchiveImportI18nKeys.ErrorUnsupportedFilename` under the drop area), without calling the import endpoint. A drop whose files `accept` excluded SHALL be rejected the same way. Any other file (including any `.zip`, or a file named exactly `SKILL.md`) SHALL be submitted to the BFF.
 
@@ -37,6 +40,14 @@ Before submitting, the client SHALL perform a filename pre-check as a UX shortcu
 #### Scenario: Closing the dialog mid-upload aborts the request
 - **WHEN** the user closes the "Upload skill" dialog while an import request is still in flight
 - **THEN** the request is aborted, its eventual outcome is ignored, and "Upload" reopens the dialog immediately in its idle state
+
+#### Scenario: Denied skill creation never sends an import
+- **WHEN** skill creation is denied and a file selection or upload callback is invoked
+- **THEN** no ZIP or standalone-manifest import request is dispatched
+
+#### Scenario: Permission changes while the picker is open
+- **WHEN** the picker was opened with permission but config now denies creation before file selection
+- **THEN** selecting the file does not dispatch an import and the idle dialog closes
 
 ### Requirement: `POST /api/v1/skills/import` accepts one ZIP archive or one standalone SKILL.md and creates a Skill atomically
 
@@ -299,4 +310,3 @@ The system SHALL NOT apply the archive-specific compressed-ingress limit (`SKILL
 #### Scenario: A standalone manifest within the per-file limit is not subject to archive-specific limits
 - **WHEN** a standalone `SKILL.md` upload is larger than would be allowed inside an archive's per-entry check only due to archive-specific overhead accounting, but is within `SKILL_FILE_UPLOAD_MAX_BYTES`
 - **THEN** the upload is accepted for content validation and is not rejected on the basis of any archive-specific limit
-

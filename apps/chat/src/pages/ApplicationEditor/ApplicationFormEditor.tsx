@@ -18,6 +18,8 @@ import {
   DIAL_KIT_ICON_STROKE,
   GhostButton,
   Spinner,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import { IconEye } from '@tabler/icons-react';
 import type { FC, ReactNode } from 'react';
@@ -35,6 +37,7 @@ import { useNavigate, useSearchParams } from 'react-router';
 import {
   AppsEditorI18nKeys,
   ButtonsI18nKeys,
+  CatalogI18nKeys,
   EditorI18nKeys,
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
@@ -42,8 +45,8 @@ import { useNotification } from '../../context/NotificationContext';
 import { useApplicationAvatarPicker } from '../../hooks/application-editor/useApplicationAvatarPicker';
 import { useEditedApplication } from '../../hooks/application-editor/useEditedApplication';
 import { useMetadataLabels } from '../../hooks/application-editor/useMetadataLabels';
+import { useCatalogCreationDecision } from '../../hooks/catalog/useCatalogCreationDecision';
 import { useBuilderLeaveGuard } from '../../hooks/unsaved-changes/useBuilderLeaveGuard';
-import useLocalStorage from '../../hooks/useLocalStorage';
 import { useOperationNotification } from '../../hooks/useOperationNotification';
 import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
 import { useTextRefinementLabels } from '../../hooks/useTextRefinementLabels';
@@ -54,10 +57,11 @@ import type {
   ApplicationSetupHandle,
   ApplicationSetupValues,
 } from '../../models/application-editor';
+import type { CatalogCreationCheck } from '../../models/catalog-creation';
 import { ApplicationCreateStrategy } from '../../types/application-editor';
+import { CatalogCreationDecision } from '../../types/catalog-creation';
 import { EntityOperation } from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
-import { StorageKey } from '../../types/storage-key';
 import {
   areSetupValuesEqual,
   deploymentToMetadata,
@@ -67,6 +71,8 @@ import { buildAdditionalLocaleOptions } from '../../utils/locale';
 
 interface Props {
   definition: ApplicationEditorFormDefinition<ApplicationSetupValues>;
+  /** What creating a new application is checked against, re-read right before each create. */
+  creationCheck: CatalogCreationCheck;
 }
 
 type SetupErrors = ApplicationSetupErrors<Record<string, unknown>>;
@@ -74,7 +80,7 @@ type SetupErrors = ApplicationSetupErrors<Record<string, unknown>>;
 /* Matches the fixed Metadata column width the editor had before it became resizable. */
 const DEFAULT_METADATA_COLUMN_WIDTH = 400;
 
-const ApplicationFormEditor: FC<Props> = ({ definition }) => {
+const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -86,6 +92,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
   const isEditMode = Boolean(appId);
   const isMetadataFirst =
     definition.createStrategy === ApplicationCreateStrategy.MetadataFirst;
+  const creationDecision = useCatalogCreationDecision(creationCheck);
   const returnUrl = ROUTES.Catalog;
   const context = useMemo<ApplicationEditorContext>(
     () => ({ searchParams, schemas, t }),
@@ -192,18 +199,13 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
   }, [appId, definition]);
 
   const { avatarPicker, avatarPickerLabels } = useApplicationAvatarPicker();
-  const [storedMetadataWidth, setStoredMetadataWidth] = useLocalStorage<number>(
-    StorageKey.ApplicationEditorMetadataWidth,
+  /* View preference only: it is not persisted, so every editor open starts at the default. */
+  const [metadataWidth, setMetadataWidth] = useState(
     DEFAULT_METADATA_COLUMN_WIDTH,
   );
   const resizableMetadata = useMemo(
-    () => ({
-      width: Number.isFinite(storedMetadataWidth)
-        ? storedMetadataWidth
-        : DEFAULT_METADATA_COLUMN_WIDTH,
-      onWidthChange: setStoredMetadataWidth,
-    }),
-    [storedMetadataWidth, setStoredMetadataWidth],
+    () => ({ width: metadataWidth, onWidthChange: setMetadataWidth }),
+    [metadataWidth],
   );
   const metadataFormLabels = useMetadataLabels(
     definition.getMetadataLabelOverrides,
@@ -356,6 +358,18 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
   );
 
   const persist = useCallback(async () => {
+    /* The form may have opened under a permission the current config no
+     * longer grants; nothing is created then. */
+    if (!isEditMode && creationDecision !== CatalogCreationDecision.Allowed) {
+      showErrorNotification({
+        message: t(
+          creationDecision === CatalogCreationDecision.Denied
+            ? CatalogI18nKeys.CreationDenied
+            : CatalogI18nKeys.CreationUnavailable,
+        ),
+      });
+      return;
+    }
     setIsSaving(true);
     try {
       if (!isEditMode) {
@@ -420,6 +434,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
     allowNextNavigation,
     appId,
     context,
+    creationDecision,
     definition,
     isEditMode,
     isMetadataFirst,
@@ -576,7 +591,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
           resizableLeftColumn={resizableMetadata}
           labels={{
             backAriaLabel: t(EditorI18nKeys.BackAriaLabel),
-            savingStatusLabel: t(EditorI18nKeys.SavingStatus),
+            savingStatusLabel: t(ButtonsI18nKeys.Saving),
             metadataTitle: t(EditorI18nKeys.MetadataSectionTitle),
             setupTitle: t(EditorI18nKeys.SetupSectionTitle),
             resizeHandleLabel: t(EditorI18nKeys.ResizeHandleAriaLabel),
@@ -642,9 +657,9 @@ const ApplicationFormEditor: FC<Props> = ({ definition }) => {
         </div>
       )}
       {/* Always mounted so screen readers announce the label when it is filled in. */}
-      <span role="status" aria-live="polite" className="sr-only">
+      <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
         {isBusy ? overlayLabel : ''}
-      </span>
+      </LiveRegion>
       {isBusy && (
         <div
           className="absolute inset-0 flex items-center justify-center bg-backdrop"

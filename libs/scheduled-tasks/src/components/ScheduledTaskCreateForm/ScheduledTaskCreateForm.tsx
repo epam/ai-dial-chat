@@ -10,8 +10,12 @@ import {
   useTextRefinement,
   useUnsavedChangesGuard,
   type TextRefinementCallback,
+  useControlErrorAssociation,
 } from '@epam/ai-dial-chat-shared';
 import {
+  Button,
+  ButtonAppearance,
+  ButtonVariant,
   ConfirmationPopupVariant,
   ErrorText,
   DIAL_ICON_SIZE,
@@ -25,6 +29,7 @@ import {
   NumberInput,
   Spinner,
   Select,
+  LiveRegionPoliteness,
 } from '@epam/ai-dial-ui-kit';
 import { LazyMarkdownEditor } from '@epam/ai-dial-ui-kit/editors';
 import { IconArrowNarrowLeft } from '@tabler/icons-react';
@@ -50,6 +55,7 @@ import { SCHEDULED_TASKS_CLASS } from '../../constants/public-class-names';
 import { DESCRIPTION_MAX_LENGTH } from '../../constants/scheduled-task-create-form';
 import { ScheduledTaskCreateFormProps } from '../../models/scheduled-task-create-form-props';
 import { ScheduledTaskRepeat } from '../../types/scheduled-task-schedule';
+import { findElementLabelledBy } from '../../utils/aria';
 import {
   calendarValueToDayOfWeek,
   dayOfWeekToCalendarValue,
@@ -99,6 +105,11 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
 }) => {
   const descriptionId = useId();
   const instructionsEditorId = useId();
+  const dayOfWeekLabelId = useId();
+  const modelErrorId = useId();
+  const dayOfWeekErrorId = useId();
+  const timeErrorId = useId();
+  const promptErrorId = useId();
   const refinementLock = useRef<AbortSignal | undefined>(undefined);
   const guardRefinement = (
     callback?: TextRefinementCallback,
@@ -241,6 +252,10 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
    * boundaries (see `handleRepeatChange`), so the shape always matches the
    * pickers. */
   const isHourlyRepeat = values.repeat === ScheduledTaskRepeat.Hourly;
+  const isCustomRepeat = values.repeat === ScheduledTaskRepeat.Custom;
+  /* Custom blocks Save until a weekday is selected, like the other
+   * required fields. */
+  const isCustomDayMissing = isCustomRepeat && !values.dayOfWeek;
   const boundaryMode = isHourlyRepeat
     ? CalendarMode.DateTime
     : CalendarMode.Date;
@@ -267,7 +282,41 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
     ? (timeBlurError ?? errors.time)
     : undefined;
 
+  /* The model selector is host-composed; its contract is to carry `modelLabelId` in `aria-labelledby`. */
+  useControlErrorAssociation(
+    () => findElementLabelledBy(modelLabelId),
+    modelErrorId,
+    Boolean(errors.modelId),
+  );
+  useControlErrorAssociation(
+    () => document.getElementById('scheduled-task-day-of-week'),
+    dayOfWeekErrorId,
+    Boolean(errors.dayOfWeek),
+  );
+  useControlErrorAssociation(
+    () => document.getElementById('scheduled-task-time'),
+    timeErrorId,
+    Boolean(timeError),
+  );
+  useControlErrorAssociation(
+    () => document.getElementById(instructionsEditorId),
+    promptErrorId,
+    Boolean(errors.prompt),
+  );
+
   const handleRunAtChange = (value: string) => onFieldChange('runAt', value);
+
+  const handleEveryWeeksChange = (next: string | string[]) => {
+    onFieldChange('everyWeeks', next as string);
+  };
+
+  /* The Custom day row is single-select and required, so re-activating the
+   * already-selected day is a no-op — exactly one day stays selected. */
+  const handleCustomDaySelect = (day: string) => {
+    if (day !== values.dayOfWeek) {
+      onFieldChange('dayOfWeek', day);
+    }
+  };
 
   const isCreateDisabled =
     isSubmitting ||
@@ -284,6 +333,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
     /* An empty shown time blocks Save immediately, like the other required
      * fields — the blur error alone would only catch it on blur or submit. */
     (isTimeFieldShown && !values.time) ||
+    isCustomDayMissing ||
     Boolean(timeError);
 
   return (
@@ -407,6 +457,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
               {modelSelector}
               {errors.modelId && (
                 <ErrorText
+                  id={modelErrorId}
                   className={mergeClasses(
                     instructionsErrorClassName,
                     styles.instructionsError,
@@ -441,6 +492,17 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
 
               {values.repeat !== ScheduledTaskRepeat.OneTime && (
                 <>
+                  {isCustomRepeat && (
+                    <Select
+                      id="scheduled-task-every-weeks"
+                      labelProps={{ label: labels.everyLabel }}
+                      value={values.everyWeeks ?? ''}
+                      onChange={handleEveryWeeksChange}
+                      options={labels.everyWeekOptions}
+                      disabled={isSubmitting}
+                    />
+                  )}
+
                   {values.repeat === ScheduledTaskRepeat.Weekly && (
                     <div className="flex flex-col gap-1">
                       <Calendar
@@ -461,6 +523,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                       />
                       {errors.dayOfWeek && (
                         <ErrorText
+                          id={dayOfWeekErrorId}
                           className={mergeClasses(
                             instructionsErrorClassName,
                             styles.instructionsError,
@@ -486,11 +549,69 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                       />
                       {timeError && (
                         <ErrorText
+                          id={timeErrorId}
                           className={mergeClasses(
                             instructionsErrorClassName,
                             styles.instructionsError,
                           )}
                           text={timeError}
+                        />
+                      )}
+                    </div>
+                  )}
+
+                  {isCustomRepeat && (
+                    <div className="flex flex-col gap-1">
+                      {/* The visible "Day" label doubles as the button row's
+                       * accessible name, mirroring the Model or Agent field's
+                       * Label id + aria-labelledby linkage. */}
+                      <Label
+                        id={dayOfWeekLabelId}
+                        label={labels.dayOfWeekLabel}
+                        required
+                      />
+                      <div
+                        role="group"
+                        aria-labelledby={dayOfWeekLabelId}
+                        className="flex gap-0.5"
+                      >
+                        {/* Circular single-select day row: Neutral Solid when
+                         * unselected, Primary Solid when selected. */}
+                        {labels.customDayOptions.map((day) => {
+                          const isSelected = day.value === values.dayOfWeek;
+                          return (
+                            <Button
+                              key={day.value}
+                              aria-label={day.fullName}
+                              aria-pressed={isSelected}
+                              aria-describedby={
+                                errors.dayOfWeek ? dayOfWeekErrorId : undefined
+                              }
+                              variant={
+                                isSelected
+                                  ? ButtonVariant.Primary
+                                  : ButtonVariant.Neutral
+                              }
+                              appearance={ButtonAppearance.Solid}
+                              /* 40x40px circular: the kit's Standard size
+                               * already gives a 40px height; the fixed
+                               * width makes the row a circle run. */
+                              className="w-10 rounded-full"
+                              label={day.shortLabel}
+                              onClick={() => handleCustomDaySelect(day.value)}
+                              disabled={isSubmitting}
+                            />
+                          );
+                        })}
+                      </div>
+                      {errors.dayOfWeek && (
+                        <ErrorText
+                          id={dayOfWeekErrorId}
+                          className={mergeClasses(
+                            instructionsErrorClassName,
+                            styles.instructionsError,
+                          )}
+                          text={errors.dayOfWeek}
                         />
                       )}
                     </div>
@@ -542,41 +663,45 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                       error={errors.minute}
                     />
                   )}
-                  {/* The two boundary fields share one row for time-of-day
-                   * repeats; for hourly repeats each takes its own
-                   * full-width row as a date-and-time picker. */}
-                  <div
-                    className={mergeClasses(
-                      'gap-3',
-                      isHourlyRepeat ? 'flex flex-col' : 'flex flex-row',
-                    )}
-                  >
-                    <ScheduledTaskBoundaryField
-                      id="scheduled-task-start-date"
-                      mode={boundaryMode}
-                      label={startBoundaryLabel}
-                      placeholder={labels.startDatePlaceholder}
-                      value={values.startDate}
-                      onChange={(value) => onFieldChange('startDate', value)}
-                      minDate={minDate}
-                      error={errors.startDate}
-                      errorClassName={instructionsErrorClassName}
-                      disabled={isSubmitting}
-                    />
+                  {/* Custom renders no boundary fields — it has no activity
+                   * window by design (see the Custom repeat requirement). */}
+                  {!isCustomRepeat && (
+                    /* The two boundary fields share one row for time-of-day
+                     * repeats; for hourly repeats each takes its own
+                     * full-width row as a date-and-time picker. */
+                    <div
+                      className={mergeClasses(
+                        'gap-3',
+                        isHourlyRepeat ? 'flex flex-col' : 'flex flex-row',
+                      )}
+                    >
+                      <ScheduledTaskBoundaryField
+                        id="scheduled-task-start-date"
+                        mode={boundaryMode}
+                        label={startBoundaryLabel}
+                        placeholder={labels.startDatePlaceholder}
+                        value={values.startDate}
+                        onChange={(value) => onFieldChange('startDate', value)}
+                        minDate={minDate}
+                        error={errors.startDate}
+                        errorClassName={instructionsErrorClassName}
+                        disabled={isSubmitting}
+                      />
 
-                    <ScheduledTaskBoundaryField
-                      id="scheduled-task-end-date"
-                      mode={boundaryMode}
-                      label={endBoundaryLabel}
-                      placeholder={labels.endDatePlaceholder}
-                      value={values.endDate}
-                      onChange={(value) => onFieldChange('endDate', value)}
-                      minDate={minDate}
-                      error={errors.endDate}
-                      errorClassName={instructionsErrorClassName}
-                      disabled={isSubmitting}
-                    />
-                  </div>
+                      <ScheduledTaskBoundaryField
+                        id="scheduled-task-end-date"
+                        mode={boundaryMode}
+                        label={endBoundaryLabel}
+                        placeholder={labels.endDatePlaceholder}
+                        value={values.endDate}
+                        onChange={(value) => onFieldChange('endDate', value)}
+                        minDate={minDate}
+                        error={errors.endDate}
+                        errorClassName={instructionsErrorClassName}
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -600,17 +725,16 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
           {skillSelector != null ? (
             <div className="w-full max-w-[996px] min-w-0">{skillSelector}</div>
           ) : (
-            errors.skillUrls && (
-              <div aria-live="polite">
-                <ErrorText
-                  className={mergeClasses(
-                    instructionsErrorClassName,
-                    styles.instructionsError,
-                  )}
-                  text={errors.skillUrls}
-                />
-              </div>
-            )
+            /* Always mounted so the polite region exists before the error
+               arrives; the kit region takes no space while empty. */
+            <ErrorText
+              announce={LiveRegionPoliteness.Polite}
+              className={mergeClasses(
+                instructionsErrorClassName,
+                styles.instructionsError,
+              )}
+              text={errors.skillUrls ?? ''}
+            />
           )}
           {/*
            * Cap the whole group, not just the editor: the Refine action sits at the
@@ -667,6 +791,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
                 </div>
                 {errors.prompt && (
                   <ErrorText
+                    id={promptErrorId}
                     className={mergeClasses(
                       instructionsErrorClassName,
                       styles.instructionsError,

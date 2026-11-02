@@ -112,11 +112,14 @@ Both surfaces build the `McpUiHostContext` sent on `ui/initialize` with `useMcpA
 | `displayMode`           | `'inline'` for the preview, `'fullscreen'` for the canvas                                               |
 | `availableDisplayModes` | `['inline', 'fullscreen']`                                                                              |
 | `styles.variables`      | The standard MCP UI CSS variables (`--color-background-primary`, …) read from `<html>`'s computed style |
+| `styleExtensions`       | Custom style variables (`--button-*`), read from `<html>`'s computed style                              |
 | `containerDimensions`   | Measured at init, then updated live (canvas only)                                                       |
 
 `hostInfo` — the host's identity, separate from the context — is `{ name: MCP_APP_HOST_NAME ?? 'ai-dial-chat', version: <app version> }`.
 
 The MCP UI CSS variables are mapped from the chat's own design tokens in `apps/chat/src/styles.scss`, so a mounted app picks up the current theme.
+
+`styleExtensions` is a custom field outside the MCP Apps standard: `styles.variables` accepts only the standard names, so the chat sends additional variables beside it, as `{ variables: { '--button-radius': …, … } }`. It carries the button corner radii (`--button-radius`, `--button-radius-small`), the primary button gradient (`--button-primary-gradient-start`/`-end`, plus `-hover-` and `-active-` stops) and the primary button label colour (`--button-primary-text`). Each is read from the chat's `--mcp-ext-<name>` variable in `apps/chat/src/styles/mcp-app-ui-vars.scss`. An app that does not know the field ignores it.
 
 ## Caching
 

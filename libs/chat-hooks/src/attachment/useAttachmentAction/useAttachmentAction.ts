@@ -14,7 +14,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { parsePdfPageReference } from '@epam/ai-dial-quotations';
 import { useCallback } from 'react';
-import { isDialFileId } from '../../files/dial-file';
+import { isDialFileId, isDialFolderId } from '../../files/dial-file';
 
 /** Resolves a DIAL Core file id to a downloadable URL. Host-owned — encodes the app's own file-download endpoint. */
 export type ResolveDownloadUrl = (fileId: string) => string | undefined;
@@ -31,12 +31,15 @@ export interface UseAttachmentActionResult {
   handleAttachmentClick: (attachment: DisplayAttachment) => void;
 }
 
-/** Returns true when `downloadAttachment` can trigger a download for `attachment`. */
+/* DIAL Core serves no download for a folder id (`files/{bucket}/{path}/`). */
+const isDownloadableDialFileId = (url: string | undefined): url is string =>
+  url != null && isDialFileId(url) && !isDialFolderId(url);
+
+/** Returns true when `downloadAttachment` can trigger a download for `attachment`; a DIAL folder attachment is not downloadable. */
 export const isDownloadableAttachment = (
   attachment: DisplayAttachment,
 ): boolean =>
-  (attachment.url != null && isDialFileId(attachment.url)) ||
-  attachment.data != null;
+  isDownloadableDialFileId(attachment.url) || attachment.data != null;
 
 /**
  * Downloads an attachment that carries its own content: a DIAL-hosted file
@@ -51,7 +54,7 @@ export const downloadAttachment = (
 ): boolean => {
   const { url, name, contentType, data } = attachment;
 
-  if (url != null && isDialFileId(url)) {
+  if (isDownloadableDialFileId(url)) {
     const downloadUrl = resolveDownloadUrl(url);
     if (downloadUrl == null) return false;
 

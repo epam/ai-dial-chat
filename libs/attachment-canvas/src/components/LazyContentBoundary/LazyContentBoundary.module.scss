@@ -1,0 +1,4 @@
+/* Inherits `--ac-status-text` from the `AttachmentCanvasBody` root. */
+.errorLabel {
+  color: var(--ac-status-text, var(--text-secondary, #57647a));
+}

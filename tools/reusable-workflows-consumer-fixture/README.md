@@ -6,6 +6,16 @@ A single script (`scripts/run.mjs`) that proves `@epam/ai-dial-skills`'s and
 Decision 5. The client application adoption map built on it is
 [`docs/reusable-chat-workflows.md`](../../docs/reusable-chat-workflows.md).
 
+## Reusable controller coverage
+
+The fixture also packs `chat-hooks` and `attachment-canvas`, explicitly
+re-exporting all new controller functions and reachable option/result types
+from their documented subpaths and package root, plus `useLatestCanvasRequest`. The existing
+real typecheck, production bundle, stylesheet and lazy engine checks remain.
+`REUSABLE_CONTROLLER_EXPORTS` in `libs/chat-hooks/e2e-fixtures/fixtures.mjs`
+is shared with the per-entry fixture runner. This proves artifact readiness
+only when installation and all checks pass; it never proves client adoption.
+
 ## Why this exists
 
 Every in-repo consumer of `@epam/ai-dial-skills`/`@epam/ai-dial-prompts`
@@ -140,3 +150,11 @@ npm test
 Set `KEEP_FIXTURES=1` when running `node scripts/run.mjs` directly to skip the
 final cleanup and inspect the isolated fixture's `node_modules`/typecheck/
 bundle output by hand.
+
+## Remaining reuse contracts
+
+The fixture additionally packs quotations and chat-shared roots, imports the external-services
+subpath, executes public contract smoke tests and two-instance JSON/incremental title tests
+against installed artifacts. Vitest, jsdom and Testing Library are fixture-only dependencies
+pinned from the workspace lockfile. No source aliases or package overrides are used in the
+isolated install. Publication and downstream application verification are not performed.

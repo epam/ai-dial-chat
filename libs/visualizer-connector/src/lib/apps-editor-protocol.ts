@@ -75,6 +75,17 @@ export const parseAppsEditorClientMessage = (
       return isIdentifier(data.appId)
         ? { type: data.type, appId: data.appId }
         : null;
+    case AppsEditorMessages.RequestExternalServiceLogin:
+      return isIdentifier(data.appId) &&
+        isIdentifier(data.serviceId) &&
+        typeof data.offlineUsageConsent === 'boolean'
+        ? {
+            type: data.type,
+            appId: data.appId,
+            serviceId: data.serviceId,
+            offlineUsageConsent: data.offlineUsageConsent,
+          }
+        : null;
     default:
       return null;
   }
@@ -109,6 +120,18 @@ export const parseAppsEditorHostMessage = (
         reason,
         credentials,
       };
+    }
+    case AppsEditorMessages.ExternalServiceLoginResult: {
+      const { appId, serviceId, success, reason } = data;
+      if (
+        !isIdentifier(appId) ||
+        !isIdentifier(serviceId) ||
+        typeof success !== 'boolean' ||
+        (reason !== undefined && typeof reason !== 'string')
+      ) {
+        return null;
+      }
+      return { type: data.type, appId, serviceId, success, reason };
     }
     default:
       return null;

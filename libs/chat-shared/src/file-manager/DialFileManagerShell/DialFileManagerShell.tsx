@@ -8,11 +8,16 @@ import {
   type FileTreeOptions,
 } from '@epam/ai-dial-react-file-manager';
 import {
+  Button,
+  ButtonAppearance,
   ButtonVariant,
+  ElementSize,
+  ErrorMessageNotification,
   NOT_ALLOWED_SYMBOLS_REGEXP,
-  PrimaryButton,
   Spinner,
   TransferQueue,
+  LiveRegion,
+  LiveRegionElement,
 } from '@epam/ai-dial-ui-kit';
 import {
   memo,
@@ -350,7 +355,10 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
       containerClassName:
         treeContainerClassName ??
         (variant === DialFileManagerVariant.Attach
-          ? 'min-h-0 h-full w-[360px] shrink-0 border-e border-tertiary bg-layer-raised'
+          ? mergeClasses(
+              'min-h-0 h-full w-[360px] shrink-0 border-e',
+              styles.tree,
+            )
           : undefined),
       tabsAriaLabel: labels.treeHeaderByTab[activeTab],
       tabs,
@@ -610,14 +618,29 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
 
   const surfaceCssVars = buildCssVars({
     '--dfms-surface': shellStyles?.colors?.surface,
+    '--dfms-tree-bg': shellStyles?.colors?.treeBackground,
+    '--dfms-tree-border': shellStyles?.colors?.treeBorder,
+    '--dfms-overlay-backdrop': shellStyles?.colors?.overlayBackdrop,
   });
 
   return (
     <>
       {error != null ? (
-        <div role="alert" className="flex flex-col items-center gap-4 p-6">
-          <p>{labels.errorMessage}</p>
-          <PrimaryButton label={labels.retryLabel} onClick={retry} />
+        /* The kit error section message is an assertive `alert` live region,
+           with Retry in its `action` slot. */
+        <div className="p-6">
+          <ErrorMessageNotification
+            message={labels.errorMessage}
+            action={
+              <Button
+                variant={ButtonVariant.Neutral}
+                appearance={ButtonAppearance.Outlined}
+                size={ElementSize.Small}
+                label={labels.retryLabel}
+                onClick={retry}
+              />
+            }
+          />
         </div>
       ) : (
         <div
@@ -705,10 +728,16 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
             getDisabledTooltip={getDisabledTooltip}
             unsupportedFileTypeTooltip={unsupportedFileTypeTooltip}
           />
+          {/* Always mounted so the polite region exists before the overlay appears. */}
+          <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
+            {overlayLabel ?? ''}
+          </LiveRegion>
           {overlayLabel != null && (
             <div
-              aria-live="polite"
-              className="absolute inset-0 z-52 flex items-center justify-center bg-backdrop desktop:p-4"
+              className={mergeClasses(
+                'absolute inset-0 z-52 flex items-center justify-center desktop:p-4',
+                styles.overlay,
+              )}
             >
               <Spinner size={32} fullWidth={false} ariaLabel={overlayLabel} />
             </div>
@@ -741,6 +770,8 @@ export const DialFileManagerShell: FC<DialFileManagerShellProps> = ({
           text={isMoving ? labels.movingLabel : labels.copyingLabel}
           cancelLabel={labels.operationLoaderCancelLabel}
           onCancel={cancelCopyMove}
+          colors={shellStyles?.operationLoader}
+          textClassName={shellStyles?.operationLoaderTextClassName}
         />
       )}
     </>
