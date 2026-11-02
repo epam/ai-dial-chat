@@ -7,6 +7,7 @@ import {
   type ConversationTitleItem,
   type ConversationTitleEnrichmentOptions,
 } from '../useConversationTitleEnrichmentController';
+
 const row = (id: string): ConversationTitleItem => ({
   id,
   title: id,

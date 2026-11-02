@@ -39,20 +39,20 @@ vi.mock('../../../context/ActiveScheduledTaskContext', () => ({
   }),
 }));
 
-beforeEach(() => {
-  vi.clearAllMocks();
-  contextMocks.status = 'task-conversation';
-  contextMocks.scheduleId = 'schedule-1';
-  contextMocks.runId = 'run-1';
-  contextMocks.conversationUpdatedAt = undefined;
-  contextMocks.taskState = 'success';
-  contextMocks.task = { id: 'schedule-1', displayName: 'Weekly digest' } as {
-    displayName: string;
-  };
-  contextMocks.historyItems = [];
-});
-
 describe('ScheduledTaskConversationBanner', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    contextMocks.status = 'task-conversation';
+    contextMocks.scheduleId = 'schedule-1';
+    contextMocks.runId = 'run-1';
+    contextMocks.conversationUpdatedAt = undefined;
+    contextMocks.taskState = 'success';
+    contextMocks.task = { id: 'schedule-1', displayName: 'Weekly digest' } as {
+      displayName: string;
+    };
+    contextMocks.historyItems = [];
+  });
+
   it('shows only the task name when neither the matching run nor the conversation timestamp is available', () => {
     renderBanner();
 

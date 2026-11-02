@@ -23,12 +23,19 @@ import {
   type useOfflineCredentialsLogin,
 } from '../offline-credentials/useOfflineCredentialsLogin/useOfflineCredentialsLogin';
 import { buildExternalServiceScopeId } from '../shared/external-services';
+
 /** External-service authentication method. */
 export enum ExternalServiceAuthType {
   None = 'NONE',
   ApiKey = 'API_KEY',
   OAuth = 'OAUTH',
   DialNative = 'DIAL_NATIVE',
+}
+/** Sign-in state DIAL Core reports for one credentials level of an external service. */
+export enum ExternalServiceAuthStatus {
+  SignedIn = 'SIGNED_IN',
+  SignedOut = 'SIGNED_OUT',
+  Failed = 'FAILED',
 }
 /** Credential ownership level. */
 export enum ExternalServiceCredentialsLevel {
@@ -175,11 +182,11 @@ export const useExternalServiceLogin = ({
 
       try {
         const service = await getExternalService(appId, serviceId);
-        if (service.appLevelAuthStatus !== 'SIGNED_IN') {
+        if (service.appLevelAuthStatus !== ExternalServiceAuthStatus.SignedIn) {
           popup.close();
           return {
             type:
-              service.appLevelAuthStatus === 'SIGNED_OUT'
+              service.appLevelAuthStatus === ExternalServiceAuthStatus.SignedOut
                 ? ExternalServiceLoginOutcomeType.AdminConsentRequired
                 : ExternalServiceLoginOutcomeType.Failure,
           };
@@ -204,9 +211,11 @@ export const useExternalServiceLogin = ({
           const refreshed = await getExternalService(appId, serviceId);
           return {
             type:
-              refreshed.appLevelAuthStatus === 'SIGNED_IN'
+              refreshed.appLevelAuthStatus ===
+              ExternalServiceAuthStatus.SignedIn
                 ? ExternalServiceLoginOutcomeType.Success
-                : refreshed.appLevelAuthStatus === 'SIGNED_OUT'
+                : refreshed.appLevelAuthStatus ===
+                    ExternalServiceAuthStatus.SignedOut
                   ? ExternalServiceLoginOutcomeType.AdminConsentRequired
                   : ExternalServiceLoginOutcomeType.Failure,
           };
@@ -340,7 +349,7 @@ export const useExternalServiceLogin = ({
             credentialsLevel === ExternalServiceCredentialsLevel.User
               ? refreshed.userLevelAuthStatus
               : refreshed.globalAuthStatus;
-          if (statusField === 'SIGNED_IN') {
+          if (statusField === ExternalServiceAuthStatus.SignedIn) {
             return { type: ExternalServiceLoginOutcomeType.Success };
           }
         } catch {

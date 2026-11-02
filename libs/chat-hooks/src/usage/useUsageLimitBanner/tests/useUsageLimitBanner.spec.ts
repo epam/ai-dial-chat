@@ -32,11 +32,11 @@ const setup = (
   return { ...view, getDeploymentUsage, getAccountUsage };
 };
 
-afterEach(() => {
-  resetUsageLimitBannerDismissals();
-});
-
 describe('useUsageLimitBanner', () => {
+  afterEach(() => {
+    resetUsageLimitBannerDismissals();
+  });
+
   it('returns no banner without a deployment', () => {
     const { result, getDeploymentUsage, getAccountUsage } = setup({
       deploymentId: undefined,

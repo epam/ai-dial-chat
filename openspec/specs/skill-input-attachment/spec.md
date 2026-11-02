@@ -63,7 +63,7 @@ Activating the "Skills" item (desktop hover/focus, mobile tap) opens a second-le
 
 Each favorite row SHALL show the skill's icon, its name, and — on the right — a filled star icon with `aria-pressed="true"` (toggling it off removes the skill from favorites via the existing `toggleFavorite(id, false, FavoriteEntityType.Skill)` and the row animates out without closing the panel). Clicking/activating a row's body SHALL select the skill (see the selection requirement below).
 
-Each favorite row SHALL be wrapped in the ui-kit `InteractiveTooltip` (see the interactive-tooltip requirement below).
+In `apps/chat` a favorite row carries no tooltip; the lib can wrap it in the ui-kit `InteractiveTooltip` for a host that keeps one (see the interactive-tooltip requirement below).
 
 With zero favorites, the list area SHALL instead show "Star a skill to pin it here" (i18n key `SkillSelectorI18nKeys.EmptyHint`, `skillSelector.emptyHint`) in a secondary text color.
 
@@ -88,20 +88,28 @@ With zero favorites, the list area SHALL instead show "Star a skill to pin it he
 
 ### Requirement: Interactive tooltip on favorite-skill rows
 
-Each favorite-skill row in the Skills panel SHALL be wrapped in the ui-kit `InteractiveTooltip` (with `asChild`, so the row itself remains the trigger). The panel SHALL open on row hover or keyboard focus, place itself to the row's end side on desktop (kit-default Right placement, flipping with direction), and be reachable by Tab from the row in the Add-menu panel (in the slash dropdown the "View details" button leaves the Tab sequence — see the slash-dropdown keyboard requirement below). The open state SHALL be the kit's own uncontrolled behavior — the upgraded ui-kit's hover handling keeps the panel open while the pointer travels between the row and the panel, so no panel-managed open state or close timers exist. The app SHALL mount a portal container for these panels at its root (`<div id="interactive-tooltip-portal" />` in `apps/chat/src/main.tsx`): the kit portals every `InteractiveTooltip` panel through floating-ui into `document.getElementById('interactive-tooltip-portal')`, and with no such element in the document the panel silently renders nothing (this container serves every `InteractiveTooltip` in the app, including the prompts panel's migrated rows and the `ChatSkill` chip's tooltip). Its content SHALL be, top to bottom: the skill's description paragraph (the listing's `description` value — see the description-from-listing requirement; the paragraph omitted entirely for a skill whose listing entry carries no description), and below it a link-style "View details" button (ui-kit `Button`, `variant Primary` + `appearance Link`, 24px total height via a `h-[24px]` override of the kit Standard button's 40px — its label class `dial-small-paragraph-semi-text`, 14px/24px semibold, is the design spec, so the kit's `ElementSize.Small` is not used — with `self-start` so it hugs the content's start edge instead of stretching across the panel) with an `IconEye` on its inline-start and its label from `skillSelector.viewDetailsLabel` ("View details"). The panel's max width on desktop SHALL be 550px (via the kit's `contentClassName`, overriding its 320px default). On a touch-only device the tooltip SHALL render nothing — the row still selects the skill on tap, and the row's accessible name SHALL never depend on the tooltip.
+`FavoriteSkillsPanel` SHALL take `isRowTooltipHidden` (default `false`), and `useSkillSelectorOverlay` SHALL forward it to both the Add-menu and the slash-dropdown panels. `apps/chat` SHALL pass `isRowTooltipHidden: true` (PR #9433, issue #9250 — skill details open on click or tap, never on hover): in the chat a favorite-skill row renders with no tooltip and no "View details" button, and activating it still selects the skill. A skill's details are then reached from the selected skill's `ChatSkill` chip, whose tooltip the app opens on click (`activeMentionDetailsTrigger: 'click'`).
+
+The rest of this requirement describes the row tooltip a host gets when it leaves `isRowTooltipHidden` unset and passes `onViewDetails`. Each favorite-skill row in the Skills panel is then wrapped in the ui-kit `InteractiveTooltip` (with `asChild`, so the row itself remains the trigger). The panel SHALL open on row hover or keyboard focus, place itself to the row's end side on desktop (kit-default Right placement, flipping with direction), and be reachable by Tab from the row in the Add-menu panel (in the slash dropdown the "View details" button leaves the Tab sequence — see the slash-dropdown keyboard requirement below). The open state SHALL be the kit's own uncontrolled behavior — the upgraded ui-kit's hover handling keeps the panel open while the pointer travels between the row and the panel, so no panel-managed open state or close timers exist. The app SHALL mount a portal container for these panels at its root (`<div id="interactive-tooltip-portal" />` in `apps/chat/src/main.tsx`): the kit portals every `InteractiveTooltip` panel through floating-ui into `document.getElementById('interactive-tooltip-portal')`, and with no such element in the document the panel silently renders nothing (this container serves every `InteractiveTooltip` in the app, including the prompts panel's migrated rows and the `ChatSkill` chip's tooltip). Its content SHALL be, top to bottom: the skill's description paragraph (the listing's `description` value — see the description-from-listing requirement; the paragraph omitted entirely for a skill whose listing entry carries no description), and below it a link-style "View details" button (ui-kit `Button`, `variant Primary` + `appearance Link`, 24px total height via a `h-[24px]` override of the kit Standard button's 40px — its label class `dial-small-paragraph-semi-text`, 14px/24px semibold, is the design spec, so the kit's `ElementSize.Small` is not used — with `self-start` so it hugs the content's start edge instead of stretching across the panel) with an `IconEye` on its inline-start and its label from `skillSelector.viewDetailsLabel` ("View details"). The panel's max width on desktop SHALL be 550px (via the kit's `contentClassName`, overriding its 320px default). On a touch-only device the tooltip SHALL render nothing — the row still selects the skill on tap, and the row's accessible name SHALL never depend on the tooltip.
 
 Clicking "View details" SHALL open the skill details side panel (next requirement) and close the Add menu and its tooltip.
 
+#### Scenario: No row tooltip in the chat
+
+- **WHEN** in `apps/chat` the pointer rests on, or keyboard focus reaches, a favorite row in the Add-menu Skills panel or the slash dropdown
+- **THEN** no tooltip opens and no "View details" button renders
+- **AND** activating the row still selects the skill
+
 #### Scenario: Hover with a listing description
 
-- **WHEN** the pointer rests on a favorite row whose listing entry carries a description
+- **WHEN** in a host that leaves `isRowTooltipHidden` unset, the pointer rests on a favorite row whose listing entry carries a description
 - **THEN** the interactive tooltip opens beside the row showing the description above the "View details" button
 - **AND** it stays open while the pointer moves onto the panel itself
 - **AND** no request is issued to resolve the description
 
 #### Scenario: Skill whose listing carries no description
 
-- **WHEN** a skill's listing entry has no `description`
+- **WHEN** in a host that leaves `isRowTooltipHidden` unset, a skill's listing entry has no `description`
 - **THEN** the panel shows the "View details" button alone on every open, with no error surfaced
 
 #### Scenario: Touch-only device
@@ -111,18 +119,18 @@ Clicking "View details" SHALL open the skill details side panel (next requiremen
 
 #### Scenario: "View details" click
 
-- **WHEN** the user clicks "View details" in a row's tooltip
+- **WHEN** in a host that leaves `isRowTooltipHidden` unset, the user clicks "View details" in a row's tooltip
 - **THEN** the skill details side panel opens for that skill and the Add menu and tooltip close
 
 ### Requirement: "View details" opens the skill details side panel
 
-The "View details" action in a row's tooltip SHALL open a right-anchored side panel on the chat route showing the selected skill's details, composed from `DetailsPanel` exported by `@epam/ai-dial-catalog` (see the `skill-details-panel` delta) via a `SkillDetailsSidePanel` wrapper in `libs/skills`. The wrapper SHALL NOT wrap or mount the full `CatalogView` (no tab persistence, sort/filter, or page chrome). The host SHALL own the panel's open state and supply the `CatalogItem` (built with the existing `mapSkillToCatalogItem`), the details fetch (reusing the existing skill details resolution — manifest + file listing — not a duplicate), and close handling; the panel's content-first tab behavior for skills SHALL match the Catalog page's skill details. The panel SHALL render information-only — read-only (`isReadonly`, which withholds the favorite star and every mutating action: Share, Publish/Unpublish, Edit, Delete, "Remove from My List", "Revoke access", and the credentials actions) with the primary "Use in chat" action and Download also hidden. Selecting a skill SHALL stay with the favorites rows, the slash menu, the browse modal, and the Catalog page; favorite toggling SHALL stay with the favorites rows; the Catalog page's own `DetailsPanel` rendering SHALL keep its actions unchanged.
+The "View details" action — in the `ChatSkill` chip's tooltip, or in a favorite row's tooltip where a host keeps it — SHALL open a right-anchored side panel on the chat route showing the selected skill's details, composed from `DetailsPanel` exported by `@epam/ai-dial-catalog` (see the `skill-details-panel` delta) via a `SkillDetailsSidePanel` wrapper in `libs/skills`. The wrapper SHALL NOT wrap or mount the full `CatalogView` (no tab persistence, sort/filter, or page chrome). The host SHALL own the panel's open state and supply the `CatalogItem` (built with the existing `mapSkillToCatalogItem`), the details fetch (reusing the existing skill details resolution — manifest + file listing — not a duplicate), and close handling; the panel's content-first tab behavior for skills SHALL match the Catalog page's skill details. The panel SHALL render information-only — read-only (`isReadonly`, which withholds the favorite star and every mutating action: Share, Publish/Unpublish, Edit, Delete, "Remove from My List", "Revoke access", and the credentials actions) with the primary "Use in chat" action and Download also hidden. Selecting a skill SHALL stay with the favorites rows, the slash menu, the browse modal, and the Catalog page; favorite toggling SHALL stay with the favorites rows; the Catalog page's own `DetailsPanel` rendering SHALL keep its actions unchanged.
 
 The app-owned `SkillDetailsPanelContainer` SHALL close the global attachment canvas through `useAttachmentCanvas().closeCanvas` when a non-null skill is selected for details. This applies to "View details" from conversation skill mentions as well as the skill-selection UI, on both mobile and desktop, whether the attachment preview is displaying content or still loading. The details panel and its backdrop SHALL be visible without the previous file preview covering the panel. A mounted details container with no selected skill SHALL NOT close an attachment preview. This panel coordination SHALL remain in `apps/chat`, outside the reusable skill components.
 
 #### Scenario: Opening the side panel
 
-- **WHEN** the user clicks "View details" in a favorite row's tooltip
+- **WHEN** the user clicks "View details" in the selected skill's `ChatSkill` chip tooltip
 - **THEN** the side panel opens anchored to the chat route's end edge, showing that skill's details with the content-first tabs and no action buttons
 
 #### Scenario: Opening skill details while a generated attachment is previewed
@@ -416,7 +424,7 @@ The caret is not required to sit outside an already-selected skill's `/{name}` t
 
 #### Scenario: Add-menu selection consumes a stray query left by an outside click
 
-- **WHEN** the text area reads `/qa` because an earlier dropdown session for it was dismissed with an outside click and never reopened, and the user opens the `+` menu and picks a favorite row (or Browse, or View details) under "Skills"
+- **WHEN** the text area reads `/qa` because an earlier dropdown session for it was dismissed with an outside click and never reopened, and the user opens the `+` menu and picks a favorite row (or Browse) under "Skills"
 - **THEN** the `/qa` text is removed from the input before the mention is inserted (or the browse/details action is applied), exactly as picking it from the slash dropdown itself would have
 
 #### Scenario: Space or second slash ends the session
@@ -453,7 +461,7 @@ The caret is not required to sit outside an already-selected skill's `/{name}` t
 
 ### Requirement: Library boundaries for the skill-selection UI
 
-The host-agnostic skill-selection UI SHALL live in a new `libs/skills` (`@epam/ai-dial-skills`) library — the favorites panel (rows wrapped in the ui-kit `InteractiveTooltip`, plus the optional `searchQuery` filter mode the slash dropdown uses), the shared tooltip content component the rows and `ChatSkill` render (including its unsupported-model message variant), the `ChatSkill` inline component itself with its error state, the `SkillDetailsSidePanel` wrapper composing `@epam/ai-dial-catalog`'s exported `DetailsPanel` (the lib peers on `@epam/ai-dial-catalog`), and the `FavoriteSkillItem` model — together with the state-owning, host-agnostic `useSkillSelectorOverlay` hook, `useSkillMentions`, `SkillCatalogModal`, and the mention-tracking utilities (`diffTextChange`, `findMentionAtCaret`, `insertAnchor`, `reconcileAnchors`, `matchSkillMentions`). The lib's `useSkillSelectorOverlay` owns the modal, mention, and side-panel state and hands `libs/conversation-input` the generic overlay config, the slash `commandMenu` config, and the `activeMentions`/`onBackspaceAtCaret` wiring; it receives the skill listings, favorite ids, viewer bucket, `onToggleFavorite`, labels, `renderCatalogContent`, `detailsPanelComponent`, and `isSkillsSupported` as options. App-owned wiring SHALL stay in `apps/chat`: `apps/chat/src/components/SkillSelector/useSkillSelectorOverlay.tsx` is a thin wrapper that reads `SkillsContext`, `FavoriteApplicationsContext`, and `UserContext`, builds the translated labels, supplies the lazy `CatalogView` content and `SkillDetailsPanelContainer`, takes `isSkillsSupported` from its caller, and adds `selectSkillByUrl` for the catalog's "Use in chat". Neither library SHALL read the feature flag or the deployment-support signal itself, import app contexts, i18n, routing, or server-api modules, or import deployment types; all strings arrive as props with English defaults, description data arrives from the host-supplied listing entries, and the support value arrives as a plain boolean resolved by the app.
+The host-agnostic skill-selection UI SHALL live in a new `libs/skills` (`@epam/ai-dial-skills`) library — the favorites panel (rows wrapped in the ui-kit `InteractiveTooltip` unless the host sets `isRowTooltipHidden`, as `apps/chat` does, plus the optional `searchQuery` filter mode the slash dropdown uses), the shared tooltip content component the rows and `ChatSkill` render (including its unsupported-model message variant), the `ChatSkill` inline component itself with its error state, the `SkillDetailsSidePanel` wrapper composing `@epam/ai-dial-catalog`'s exported `DetailsPanel` (the lib peers on `@epam/ai-dial-catalog`), and the `FavoriteSkillItem` model — together with the state-owning, host-agnostic `useSkillSelectorOverlay` hook, `useSkillMentions`, `SkillCatalogModal`, and the mention-tracking utilities (`diffTextChange`, `findMentionAtCaret`, `insertAnchor`, `reconcileAnchors`, `matchSkillMentions`). The lib's `useSkillSelectorOverlay` owns the modal, mention, and side-panel state and hands `libs/conversation-input` the generic overlay config, the slash `commandMenu` config, and the `activeMentions`/`onBackspaceAtCaret` wiring; it receives the skill listings, favorite ids, viewer bucket, `onToggleFavorite`, labels, `renderCatalogContent`, `detailsPanelComponent`, and `isSkillsSupported` as options. App-owned wiring SHALL stay in `apps/chat`: `apps/chat/src/components/SkillSelector/useSkillSelectorOverlay.tsx` is a thin wrapper that reads `SkillsContext`, `FavoriteApplicationsContext`, and `UserContext`, builds the translated labels, supplies the lazy `CatalogView` content and `SkillDetailsPanelContainer`, takes `isSkillsSupported` from its caller, and adds `selectSkillByUrl` for the catalog's "Use in chat". Neither library SHALL read the feature flag or the deployment-support signal itself, import app contexts, i18n, routing, or server-api modules, or import deployment types; all strings arrive as props with English defaults, description data arrives from the host-supplied listing entries, and the support value arrives as a plain boolean resolved by the app.
 
 #### Scenario: Libs contain no app knowledge
 
@@ -472,7 +480,7 @@ All new skill-selection UI SHALL use logical Tailwind classes (`ms-*`/`me-*`/`ps
 #### Scenario: RTL layout
 
 - **WHEN** the document direction is RTL
-- **THEN** the Skills panel, its interactive tooltip, the browse modal, and the details side panel flip to follow the writing direction
+- **THEN** the Skills panel, the browse modal, and the details side panel flip to follow the writing direction
 
 ---
 
@@ -527,11 +535,11 @@ The capability SHALL NOT introduce new backend endpoints, generated-client metho
 
 ### Requirement: Description comes from the listing
 
-A skill's description SHALL come from the already-loaded skill listing (`SkillMetadataItemDto.description`, populated by the BFF from DIAL Core's item-metadata `attributes` — see the `skills-bff-api` capability). The favorites panel rows, their interactive tooltips, and the `ChatSkill` chip SHALL render the listing's `description` directly; a skill whose listing entry carries no `description` renders no description paragraph (the tooltip shows the "View details" button alone). No per-skill `SKILL.md` download, manifest parse, description cache, in-flight tracking, or first-open callback SHALL exist anywhere in the skill-selection UI — opening a tooltip triggers zero requests.
+A skill's description SHALL come from the already-loaded skill listing (`SkillMetadataItemDto.description`, populated by the BFF from DIAL Core's item-metadata `attributes` — see the `skills-bff-api` capability). The favorites panel rows, their interactive tooltips (where a host keeps them), and the `ChatSkill` chip SHALL render the listing's `description` directly; a skill whose listing entry carries no `description` renders no description paragraph (the tooltip shows the "View details" button alone). No per-skill `SKILL.md` download, manifest parse, description cache, in-flight tracking, or first-open callback SHALL exist anywhere in the skill-selection UI — opening a tooltip triggers zero requests.
 
 #### Scenario: Tooltip shows the listing description with no request
 
-- **WHEN** the pointer rests on a favorite row whose listing entry carries `description`
+- **WHEN** the `ChatSkill` chip's tooltip opens for a skill whose listing entry carries `description`
 - **THEN** the tooltip opens showing that description above the "View details" button
 - **AND** no network request is issued for the skill's manifest or files
 

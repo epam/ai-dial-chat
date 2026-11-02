@@ -34,11 +34,11 @@ const renderSharing = (overrides: Partial<UseDialFileSharingOptions> = {}) => {
   return { result, bumpRetry, onNotification, filesApi };
 };
 
-afterEach(() => {
-  vi.clearAllMocks();
-});
-
 describe('useDialFileSharing', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   describe('onUnshareFiles and onRemoveFilesAccess', () => {
     const sharedWithMeFile: DialFile = {
       id: `files/${OWNER_BUCKET}/team-docs/`,

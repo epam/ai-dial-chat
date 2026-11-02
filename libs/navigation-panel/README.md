@@ -115,7 +115,9 @@ owns the drawer behaviour: it is fixed to the start edge and slides in
 (mirrored under `dir="rtl"`) when `isOpen` turns `true`, is `inert` and hidden
 while `isOpen` is `false` (its default), moves focus into itself on opening and back to the
 control that opened it on closing, and calls `onClose` on an Escape pressed
-inside it (one that comes from a dialog its children render elsewhere in the DOM is ignored). `id` names the
+inside it (one that comes from a dialog its children render elsewhere in the DOM is ignored).
+Tab and Shift+Tab wrap around its own controls, so keyboard focus cannot leave it
+while it is open. `id` names the
 `<nav>` element, so the host's toggle can point `aria-controls` at it. The host
 still owns the toggle that sets `isOpen`, the backdrop if it wants one, and
 closing on navigation. A drawer with no backdrop leaves the page behind it

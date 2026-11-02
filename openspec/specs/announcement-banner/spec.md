@@ -235,7 +235,7 @@ When the combined title and description exceed the width available on the banner
 
 Truncation SHALL be achieved with CSS text-overflow (the Tailwind `truncate` class) applied separately to the title and description spans, leaving the full text in the DOM. The close control SHALL sit outside the truncating container and SHALL NEVER be clipped, pushed out of view, or made unreachable by long text.
 
-When either the title or the description is actually clipped (measured by the app-local `useIsTextClipped` hook), the banner SHALL show an expand/collapse disclosure control (`IconChevronDown`, rotated when expanded) between the text and the trailing controls. It SHALL carry `aria-expanded`, `aria-controls` pointing at the text paragraph, and an i18n `aria-label` (`AnnouncementBannerI18nKeys.ExpandLabel` / `CollapseLabel`). Expanding SHALL drop the truncation and stack the title above the description so the full text wraps; collapsing restores the single truncated line.
+When either the title or the description is actually clipped (measured by the `useIsTextClipped` hook from `@epam/ai-dial-chat-shared`), the banner SHALL show an expand/collapse disclosure control (`IconChevronDown`, rotated when expanded) between the text and the trailing controls. It SHALL carry `aria-expanded`, `aria-controls` pointing at the text paragraph, and an i18n `aria-label` (`AnnouncementBannerI18nKeys.ExpandLabel` / `CollapseLabel`). Expanding SHALL drop the truncation and stack the title above the description so the full text wraps; collapsing restores the single truncated line.
 
 #### Scenario: Long text truncates on one line
 
@@ -289,7 +289,7 @@ The layout's **structure and behavior** are the contract — centered text, dism
 
 ### Requirement: Banner layout is mobile-first and responsive
 
-The banner SHALL be usable on narrow viewports without horizontal overflow, without clipping the close control, and — while collapsed — without growing beyond its single-line height. Truncation (and the expand/collapse control it triggers) SHALL apply at every viewport width. Any JavaScript branching on viewport size SHALL use `useBreakpoint`/`useIsMobile` rather than reading `window.innerWidth`. Only the project's named Tailwind breakpoints (`mobile`, `desktop`) SHALL be used.
+The banner SHALL be usable on narrow viewports without horizontal overflow, without clipping the close control, and — while collapsed — without growing beyond its single-line height. Truncation (and the expand/collapse control it triggers) SHALL apply at every viewport width. Any JavaScript branching on viewport size SHALL use `useIsMobile` rather than reading `window.innerWidth`. Only the project's named Tailwind breakpoints (`mobile`, `desktop`) SHALL be used.
 
 #### Scenario: Mobile layout truncates without overflow
 

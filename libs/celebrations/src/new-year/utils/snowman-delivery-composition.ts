@@ -700,6 +700,7 @@ export const buildSnowmanDeliveryComposition = (
     sy: number;
     facing: number;
   }
+
   const pose = (t: number): Pose => ({
     root: point(root.value(t)),
     lean: lean.at(t),
@@ -839,6 +840,7 @@ export const buildSnowmanDeliveryComposition = (
   rest(B.turn);
 
   type Grips = [front: Point, back: Point];
+
   /** Windows where the mittens follow a held object's grips, in rig coordinates. */
   const windows: { t0: number; t1: number; grips: (t: number) => Grips }[] = [];
   const presentGrips = (t: number): Grips => {

@@ -8,7 +8,11 @@ import {
   useViewportWidth,
 } from '@epam/ai-dial-chat-hooks/viewport-layout';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
-import { CodeBlockTheme, FilterTab } from '@epam/ai-dial-chat-shared';
+import {
+  CodeBlockTheme,
+  FilterTab,
+  useIsMobile,
+} from '@epam/ai-dial-chat-shared';
 import {
   lazy,
   memo,
@@ -57,7 +61,6 @@ import { useSourcesSidebar } from '../context/SourcesSidebarContext';
 import { useTheme } from '../context/ThemeContext';
 import { useCanvasVisualizerMessageHandler } from '../hooks/attachment/useCanvasVisualizerMessageHandler';
 import { usePdfPreviewLoader } from '../hooks/attachment/usePdfPreviewLoader';
-import { useIsMobile } from '../hooks/breakpoint/useBreakpoint';
 import { useConversationListBridge } from '../hooks/conversation/useConversationListBridge';
 import { useConversationPanelRouteState } from '../hooks/conversation-panel/useConversationPanelRouteState';
 import { useOverlayPendingModel } from '../hooks/overlay/useOverlayPendingModel';

@@ -9,6 +9,7 @@ import {
 import { isPromptResourceUrl } from '../../prompts/utils/prompt-mapper.util';
 
 type ResourceKind = components['schemas']['ResourceTypes'];
+
 type Invitation = components['schemas']['Invitation'];
 
 /*

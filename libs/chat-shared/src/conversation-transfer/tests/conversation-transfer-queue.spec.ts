@@ -8,6 +8,7 @@ import {
   ConversationTransferWarningCode,
 } from '../../models/conversation-transfer';
 import { toConversationTransferQueueItems as toTransferQueueItems } from '../conversation-transfer-queue';
+
 describe('toTransferQueueItems', () => {
   const makeJob = (
     overrides: Partial<ConversationTransferJob> = {},
@@ -93,8 +94,8 @@ describe('toTransferQueueItems', () => {
       makeJob({ status: ConversationTransferJobStatus.Warning }),
     );
     const jobs = Object.freeze([failed, warning]);
-    const error = vi.fn(() => 'error'),
-      warn = vi.fn(() => 'warning');
+    const error = vi.fn(() => 'error');
+    const warn = vi.fn(() => 'warning');
     const result = toTransferQueueItems(jobs, {
       getErrorMessage: error,
       getWarningMessage: warn,

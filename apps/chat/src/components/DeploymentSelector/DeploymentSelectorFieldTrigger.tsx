@@ -1,5 +1,5 @@
 import { DeploymentSelectorField } from '@epam/ai-dial-catalog';
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { mergeClasses, useIsMobile } from '@epam/ai-dial-chat-shared';
 import { BottomSheetShell } from '@epam/ai-dial-conversation-input';
 import {
   DIAL_ICON_SIZE,
@@ -10,7 +10,6 @@ import { IconChevronDown } from '@tabler/icons-react';
 import { memo, useCallback, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DeploymentSelectorI18nKeys } from '../../constants/translation-keys';
-import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import type { DeploymentSelectorExtraOption } from './DeploymentSelectorPanel';
 import { useDeploymentSelectorFieldOverlay } from './useDeploymentSelectorFieldOverlay';
 

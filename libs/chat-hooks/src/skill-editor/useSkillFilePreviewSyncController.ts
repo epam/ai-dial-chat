@@ -11,6 +11,7 @@ import {
   skillFileToAttachment,
   type SkillFileContent,
 } from '../skill/skill-file-preview';
+
 /** Presentation state of a supporting-file preview. */
 export enum SkillFilePreviewState {
   Idle = 'idle',

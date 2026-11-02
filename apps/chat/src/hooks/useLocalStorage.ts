@@ -11,4 +11,5 @@ const useLocalStorage = <T>(
   initialValue: T,
 ): [T, (value: T) => void] =>
   usePersistedState({ key, initialValue, storage, codec });
+
 export default useLocalStorage;

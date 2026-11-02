@@ -143,19 +143,19 @@ const renderContainer = (
     />,
   );
 
-beforeEach(() => {
-  vi.clearAllMocks();
-  vi.mocked(usePublishFolders).mockReturnValue(baseFoldersResult);
-  vi.mocked(useNotification).mockReturnValue(
-    createNotificationContextValue(mockShowNotification),
-  );
-  useAppConfigMock.mockReturnValue({
-    config: { publicationFilterSources: ['title', 'role', 'dial_roles'] },
-  });
-  vi.mocked(getPublishRules).mockResolvedValue([]);
-});
-
 describe('PublishConversationPanelContainer', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(usePublishFolders).mockReturnValue(baseFoldersResult);
+    vi.mocked(useNotification).mockReturnValue(
+      createNotificationContextValue(mockShowNotification),
+    );
+    useAppConfigMock.mockReturnValue({
+      config: { publicationFilterSources: ['title', 'role', 'dial_roles'] },
+    });
+    vi.mocked(getPublishRules).mockResolvedValue([]);
+  });
+
   it('renders the conversation title as the resource summary', async () => {
     await renderContainer();
     expect(screen.getByText('Q3 planning notes')).toBeTruthy();

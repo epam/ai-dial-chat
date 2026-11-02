@@ -175,509 +175,507 @@ const makeController = (
     generationService as unknown as ConversationGenerationService,
   );
 
-afterEach(() => {
-  vi.useRealTimers();
-  vi.restoreAllMocks();
-});
-
-describe('streamCompletion — downstream response lifecycle under backpressure', () => {
-  it('stops writing, finishes the generation, and destroys the response when it cannot flush within the bound', async () => {
-    /*
-     * Only `setTimeout` is faked: the release timer must be advanceable
-     * without a 15s test, while `setImmediate` stays real so `waitUntil` can
-     * still yield to the event loop.
-     */
-    vi.useFakeTimers({ toFake: ['setTimeout'] });
-
-    const events: string[] = [];
-    const { res } = createStalledResponse();
-    const termination = spyOnTermination(res, events);
-    const generationService = makeGenerationService();
-    const streamingService = makeStreamingService(events, CHUNKS_PAST_LIMIT);
-    const writeSpy = vi.spyOn(res as unknown as Writable, 'write');
-
-    const handled = makeController(
-      streamingService,
-      generationService,
-    ).streamCompletion(TEST_REQUEST, res, VALID_COMPLETION_BODY, undefined);
-
-    await waitUntil(() => events.includes('end'), 'the response to be ended');
-
-    // (a) Writes stopped at the limit instead of buffering every chunk.
-    expect(writeSpy.mock.calls.length).toBeLessThan(CHUNKS_PAST_LIMIT + 1);
-    const writesAtDetachment = writeSpy.mock.calls.length;
-
-    // (b) Persistence settled before the response was released.
-    expect(events.indexOf('persisted')).toBeLessThan(events.indexOf('end'));
-
-    // Graceful end alone cannot complete — `write` never calls back, so
-    // `'finish'` never fires and the bounded fallback must take over.
-    expect(termination.destroy).not.toHaveBeenCalled();
-    await vi.advanceTimersByTimeAsync(SSE_RELEASE_TIMEOUT_MS);
-    await handled;
-
-    // (c) The generation was never cancelled on account of the slow client.
-    expect(generationService.abort).not.toHaveBeenCalled();
-    // (d) The response is terminal, and no chunk was written after detachment.
-    expect(termination.destroy).toHaveBeenCalledOnce();
-    expect((res as unknown as Writable).writableEnded).toBe(true);
-    expect((res as unknown as Writable).destroyed).toBe(true);
-    expect(writeSpy.mock.calls.length).toBe(writesAtDetachment);
+describe('completion-response-lifecycle', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
-  it('ends a detached response gracefully, without destroying it, when the client drains in time', async () => {
-    const events: string[] = [];
-    const { res, resume } = createStalledResponse();
-    const termination = spyOnTermination(res, events);
-    const generationService = makeGenerationService();
-    const streamingService = makeStreamingService(events, CHUNKS_PAST_LIMIT);
+  describe('streamCompletion — downstream response lifecycle under backpressure', () => {
+    it('stops writing, finishes the generation, and destroys the response when it cannot flush within the bound', async () => {
+      /*
+       * Only `setTimeout` is faked: the release timer must be advanceable
+       * without a 15s test, while `setImmediate` stays real so `waitUntil` can
+       * still yield to the event loop.
+       */
+      vi.useFakeTimers({ toFake: ['setTimeout'] });
 
-    const handled = makeController(
-      streamingService,
-      generationService,
-    ).streamCompletion(TEST_REQUEST, res, VALID_COMPLETION_BODY, undefined);
+      const events: string[] = [];
+      const { res } = createStalledResponse();
+      const termination = spyOnTermination(res, events);
+      const generationService = makeGenerationService();
+      const streamingService = makeStreamingService(events, CHUNKS_PAST_LIMIT);
+      const writeSpy = vi.spyOn(res as unknown as Writable, 'write');
 
-    await waitUntil(() => events.includes('end'), 'the response to be ended');
-    // The peer starts reading again after `end()`, so the queue drains and
-    // `'finish'` arrives well inside `SSE_RELEASE_TIMEOUT_MS`.
-    resume();
-    await handled;
+      const handled = makeController(
+        streamingService,
+        generationService,
+      ).streamCompletion(TEST_REQUEST, res, VALID_COMPLETION_BODY, undefined);
 
-    /*
-     * `writableFinished` is what proves the graceful path was taken: a
-     * response terminated by the bounded `destroy()` fallback never reaches
-     * it. A `destroy` spy would not prove it — Node's own `autoDestroy`
-     * destroys the stream after `'finish'` either way.
-     */
-    expect((res as unknown as Writable).writableFinished).toBe(true);
-    expect(termination.end).toHaveBeenCalledOnce();
-    expect(generationService.abort).not.toHaveBeenCalled();
-  });
+      await waitUntil(() => events.includes('end'), 'the response to be ended');
 
-  it('never detaches a client whose buffered output stays under the limit, and ends it exactly once', async () => {
-    const events: string[] = [];
-    const writable = new Writable({
-      highWaterMark: 1024,
-      write(_chunk, _encoding, callback) {
-        // Drains immediately — `writableLength` returns to 0 after each write.
-        callback();
-      },
-    });
-    Object.assign(writable, { setHeader: vi.fn(), flushHeaders: vi.fn() });
-    const res = writable as unknown as ExpressResponse;
-    const termination = spyOnTermination(res, events);
-    const generationService = makeGenerationService();
-    const streamingService = makeStreamingService(events, CHUNKS_PAST_LIMIT);
-    const writeSpy = vi.spyOn(writable, 'write');
+      // (a) Writes stopped at the limit instead of buffering every chunk.
+      expect(writeSpy.mock.calls.length).toBeLessThan(CHUNKS_PAST_LIMIT + 1);
+      const writesAtDetachment = writeSpy.mock.calls.length;
 
-    await makeController(streamingService, generationService).streamCompletion(
-      TEST_REQUEST,
-      res,
-      VALID_COMPLETION_BODY,
-      undefined,
-    );
+      // (b) Persistence settled before the response was released.
+      expect(events.indexOf('persisted')).toBeLessThan(events.indexOf('end'));
 
-    // Every chunk plus the `: init` comment reached the client.
-    expect(writeSpy).toHaveBeenCalledTimes(CHUNKS_PAST_LIMIT + 1);
-    expect(termination.end).toHaveBeenCalledOnce();
-    expect(writable.writableEnded).toBe(true);
-  });
+      // Graceful end alone cannot complete — `write` never calls back, so
+      // `'finish'` never fires and the bounded fallback must take over.
+      expect(termination.destroy).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(SSE_RELEASE_TIMEOUT_MS);
+      await handled;
 
-  it('leaves a closed response untouched while still draining the generation', async () => {
-    const events: string[] = [];
-    const { res } = createStalledResponse();
-    const termination = spyOnTermination(res, events);
-    const generationService = makeGenerationService();
-    const emitClose = () => (res as unknown as Writable).emit('close');
-    const streamingService = makeStreamingService(
-      events,
-      CHUNKS_PAST_LIMIT,
-      emitClose,
-    );
-    const writeSpy = vi.spyOn(res as unknown as Writable, 'write');
-
-    await makeController(streamingService, generationService).streamCompletion(
-      TEST_REQUEST,
-      res,
-      VALID_COMPLETION_BODY,
-      undefined,
-    );
-
-    // The generator still ran to its natural end and persisted.
-    expect(events).toContain('persisted');
-    expect(generationService.abort).not.toHaveBeenCalled();
-    // Nothing was written, ended, or destroyed against the closed response.
-    expect(writeSpy.mock.calls.length).toBeLessThan(CHUNKS_PAST_LIMIT + 1);
-    expect(termination.end).not.toHaveBeenCalled();
-    expect(termination.destroy).not.toHaveBeenCalled();
-  });
-});
-
-describe('streamCompletion — viewed-id removal ordering', () => {
-  it('finishes removing the viewed id before the first chunk reaches the client', async () => {
-    const order: string[] = [];
-    const writable = new Writable({
-      write(chunk, _encoding, callback) {
-        order.push(String(chunk).startsWith(':') ? 'init' : 'chunk');
-        callback();
-      },
-    });
-    Object.assign(writable, { setHeader: vi.fn(), flushHeaders: vi.fn() });
-    const streamingService = makeStreamingService([], 2);
-    streamingService.markConversationUnviewed.mockImplementation(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 20));
-      order.push('unviewed');
+      // (c) The generation was never cancelled on account of the slow client.
+      expect(generationService.abort).not.toHaveBeenCalled();
+      // (d) The response is terminal, and no chunk was written after detachment.
+      expect(termination.destroy).toHaveBeenCalledOnce();
+      expect((res as unknown as Writable).writableEnded).toBe(true);
+      expect((res as unknown as Writable).destroyed).toBe(true);
+      expect(writeSpy.mock.calls.length).toBe(writesAtDetachment);
     });
 
-    await makeController(
-      streamingService,
-      makeGenerationService(),
-    ).streamCompletion(
-      TEST_REQUEST,
-      writable as unknown as ExpressResponse,
-      VALID_COMPLETION_BODY,
-      undefined,
-    );
+    it('ends a detached response gracefully, without destroying it, when the client drains in time', async () => {
+      const events: string[] = [];
+      const { res, resume } = createStalledResponse();
+      const termination = spyOnTermination(res, events);
+      const generationService = makeGenerationService();
+      const streamingService = makeStreamingService(events, CHUNKS_PAST_LIMIT);
 
-    expect(order.indexOf('unviewed')).toBeGreaterThan(-1);
-    expect(order.indexOf('unviewed')).toBeLessThan(order.indexOf('chunk'));
-  });
-});
+      const handled = makeController(
+        streamingService,
+        generationService,
+      ).streamCompletion(TEST_REQUEST, res, VALID_COMPLETION_BODY, undefined);
 
-describe('streamCompletion — viewed-id removal on a failed start', () => {
-  it('finishes removing the viewed id even when the generation fails before its first chunk', async () => {
-    const events: string[] = [];
-    const writable = new Writable({
-      write(_chunk, _encoding, callback) {
-        callback();
-      },
+      await waitUntil(() => events.includes('end'), 'the response to be ended');
+      // The peer starts reading again after `end()`, so the queue drains and
+      // `'finish'` arrives well inside `SSE_RELEASE_TIMEOUT_MS`.
+      resume();
+      await handled;
+
+      /*
+       * `writableFinished` is what proves the graceful path was taken: a
+       * response terminated by the bounded `destroy()` fallback never reaches
+       * it. A `destroy` spy would not prove it — Node's own `autoDestroy`
+       * destroys the stream after `'finish'` either way.
+       */
+      expect((res as unknown as Writable).writableFinished).toBe(true);
+      expect(termination.end).toHaveBeenCalledOnce();
+      expect(generationService.abort).not.toHaveBeenCalled();
     });
-    Object.assign(writable, { setHeader: vi.fn(), flushHeaders: vi.fn() });
-    const streamingService = {
-      markConversationUnviewed: vi.fn().mockImplementation(async () => {
+
+    it('never detaches a client whose buffered output stays under the limit, and ends it exactly once', async () => {
+      const events: string[] = [];
+      const writable = new Writable({
+        highWaterMark: 1024,
+        write(_chunk, _encoding, callback) {
+          // Drains immediately — `writableLength` returns to 0 after each write.
+          callback();
+        },
+      });
+      Object.assign(writable, { setHeader: vi.fn(), flushHeaders: vi.fn() });
+      const res = writable as unknown as ExpressResponse;
+      const termination = spyOnTermination(res, events);
+      const generationService = makeGenerationService();
+      const streamingService = makeStreamingService(events, CHUNKS_PAST_LIMIT);
+      const writeSpy = vi.spyOn(writable, 'write');
+
+      await makeController(
+        streamingService,
+        generationService,
+      ).streamCompletion(TEST_REQUEST, res, VALID_COMPLETION_BODY, undefined);
+
+      // Every chunk plus the `: init` comment reached the client.
+      expect(writeSpy).toHaveBeenCalledTimes(CHUNKS_PAST_LIMIT + 1);
+      expect(termination.end).toHaveBeenCalledOnce();
+      expect(writable.writableEnded).toBe(true);
+    });
+
+    it('leaves a closed response untouched while still draining the generation', async () => {
+      const events: string[] = [];
+      const { res } = createStalledResponse();
+      const termination = spyOnTermination(res, events);
+      const generationService = makeGenerationService();
+      const emitClose = () => (res as unknown as Writable).emit('close');
+      const streamingService = makeStreamingService(
+        events,
+        CHUNKS_PAST_LIMIT,
+        emitClose,
+      );
+      const writeSpy = vi.spyOn(res as unknown as Writable, 'write');
+
+      await makeController(
+        streamingService,
+        generationService,
+      ).streamCompletion(TEST_REQUEST, res, VALID_COMPLETION_BODY, undefined);
+
+      // The generator still ran to its natural end and persisted.
+      expect(events).toContain('persisted');
+      expect(generationService.abort).not.toHaveBeenCalled();
+      // Nothing was written, ended, or destroyed against the closed response.
+      expect(writeSpy.mock.calls.length).toBeLessThan(CHUNKS_PAST_LIMIT + 1);
+      expect(termination.end).not.toHaveBeenCalled();
+      expect(termination.destroy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('streamCompletion — viewed-id removal ordering', () => {
+    it('finishes removing the viewed id before the first chunk reaches the client', async () => {
+      const order: string[] = [];
+      const writable = new Writable({
+        write(chunk, _encoding, callback) {
+          order.push(String(chunk).startsWith(':') ? 'init' : 'chunk');
+          callback();
+        },
+      });
+      Object.assign(writable, { setHeader: vi.fn(), flushHeaders: vi.fn() });
+      const streamingService = makeStreamingService([], 2);
+      streamingService.markConversationUnviewed.mockImplementation(async () => {
         await new Promise((resolve) => setTimeout(resolve, 20));
-        events.push('unviewed');
-      }),
-      streamCompletion: vi.fn().mockImplementation(async function* (
-        ...args: unknown[]
-      ) {
-        (args[ON_READY_TO_STREAM_ARG] as () => void)();
-        throw new Error('upstream failed before the first chunk');
-        // eslint-disable-next-line no-unreachable
-        yield Buffer.alloc(1);
-      }),
-    };
+        order.push('unviewed');
+      });
 
-    await expect(
-      makeController(
-        streamingService as never,
+      await makeController(
+        streamingService,
         makeGenerationService(),
       ).streamCompletion(
         TEST_REQUEST,
         writable as unknown as ExpressResponse,
         VALID_COMPLETION_BODY,
         undefined,
-      ),
-    ).rejects.toThrow('upstream failed');
-
-    /* The client may mark the chat viewed right after the failure; the un-view must already have landed. */
-    expect(events).toEqual(['unviewed']);
-  });
-});
-
-describe('streamCompletion — SSE keepalive', () => {
-  const KEEPALIVE = ': keepalive\n\n';
-  const KEEPALIVE_INTERVAL_MS = 15_000;
-
-  /** A response that drains immediately and records every written payload as text. */
-  const createRecordingResponse = () => {
-    const written: string[] = [];
-    const writable = new Writable({
-      write(chunk: Buffer, _encoding, callback) {
-        written.push(chunk.toString());
-        callback();
-      },
-    });
-    Object.assign(writable, { setHeader: vi.fn(), flushHeaders: vi.fn() });
-    return { res: writable as unknown as ExpressResponse, written };
-  };
-
-  const countKeepalives = (written: string[]) =>
-    written.filter((payload) => payload === KEEPALIVE).length;
-
-  /**
-   * A generation that opens the stream and then yields each step's chunk
-   * only when the test releases it, so a silent upstream phase can be held
-   * open while the keepalive interval is advanced.
-   */
-  const makeControlledStreamingService = (chunks: string[]) => {
-    const releases: Array<() => void> = [];
-    const service = {
-      markConversationUnviewed: vi.fn().mockResolvedValue(undefined),
-      streamCompletion: vi.fn().mockImplementation(async function* (
-        ...args: unknown[]
-      ) {
-        (args[ON_READY_TO_STREAM_ARG] as () => void)();
-        for (const chunk of chunks) {
-          await new Promise<void>((resolve) => releases.push(resolve));
-          yield Buffer.from(chunk);
-        }
-        await new Promise<void>((resolve) => releases.push(resolve));
-      }),
-    };
-    const releaseNext = async () => {
-      await waitUntil(() => releases.length > 0, 'the generator to wait');
-      releases.shift()?.();
-      await new Promise((resolve) => setImmediate(resolve));
-    };
-    return { service, releaseNext };
-  };
-
-  it('sends a keepalive comment while the generation is silent', async () => {
-    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
-    const { res, written } = createRecordingResponse();
-    const { service, releaseNext } = makeControlledStreamingService([
-      'data: {"choices":[]}\n\n',
-    ]);
-
-    const handled = makeController(
-      service as unknown as ReturnType<typeof makeStreamingService>,
-      makeGenerationService(),
-    ).streamCompletion(TEST_REQUEST, res, VALID_COMPLETION_BODY, undefined);
-
-    await releaseNext();
-    await vi.advanceTimersByTimeAsync(40_000);
-    expect(countKeepalives(written)).toBe(2);
-
-    await releaseNext();
-    await handled;
-  });
-
-  it('skips a keepalive tick while the last relayed slice ends mid-line', async () => {
-    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
-    const { res, written } = createRecordingResponse();
-    const { service, releaseNext } = makeControlledStreamingService([
-      'data: {"choices":[{"delta":{"content":"Hel',
-      'lo"}}]}\n\n',
-    ]);
-
-    const handled = makeController(
-      service as unknown as ReturnType<typeof makeStreamingService>,
-      makeGenerationService(),
-    ).streamCompletion(TEST_REQUEST, res, VALID_COMPLETION_BODY, undefined);
-
-    await releaseNext();
-    await vi.advanceTimersByTimeAsync(KEEPALIVE_INTERVAL_MS * 2);
-    expect(countKeepalives(written)).toBe(0);
-
-    await releaseNext();
-    await vi.advanceTimersByTimeAsync(KEEPALIVE_INTERVAL_MS);
-    expect(countKeepalives(written)).toBe(1);
-    // The comment follows the completed line, never splits it.
-    expect(written.slice(-2)).toEqual(['lo"}}]}\n\n', KEEPALIVE]);
-
-    await releaseNext();
-    await handled;
-  });
-
-  it('writes no keepalive after the client closes the response', async () => {
-    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
-    const { res, written } = createRecordingResponse();
-    const { service, releaseNext } = makeControlledStreamingService([
-      'data: {"choices":[]}\n\n',
-    ]);
-
-    const handled = makeController(
-      service as unknown as ReturnType<typeof makeStreamingService>,
-      makeGenerationService(),
-    ).streamCompletion(TEST_REQUEST, res, VALID_COMPLETION_BODY, undefined);
-
-    await releaseNext();
-    (res as unknown as Writable).emit('close');
-    await vi.advanceTimersByTimeAsync(KEEPALIVE_INTERVAL_MS * 3);
-    expect(countKeepalives(written)).toBe(0);
-
-    await releaseNext();
-    await handled;
-  });
-
-  it('writes no keepalive and keeps the rejection when the generation fails before the stream opens', async () => {
-    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
-    const { res, written } = createRecordingResponse();
-    const conflict = new Error('Generation is already active');
-    const service = {
-      /* Rejects on the first `next()`, before `onReadyToStream` is ever called. */
-      markConversationUnviewed: vi.fn().mockResolvedValue(undefined),
-      streamCompletion: vi.fn().mockImplementation(() => ({
-        [Symbol.asyncIterator]: () => ({
-          next: () => Promise.reject(conflict),
-        }),
-      })),
-    };
-
-    await expect(
-      makeController(
-        service as unknown as ReturnType<typeof makeStreamingService>,
-        makeGenerationService(),
-      ).streamCompletion(TEST_REQUEST, res, VALID_COMPLETION_BODY, undefined),
-    ).rejects.toBe(conflict);
-    await vi.advanceTimersByTimeAsync(KEEPALIVE_INTERVAL_MS * 2);
-
-    expect(written).toEqual([]);
-    expect(vi.getTimerCount()).toBe(0);
-  });
-
-  it('leaves no keepalive timer behind once the generation finishes', async () => {
-    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
-    const { res } = createRecordingResponse();
-    const { service, releaseNext } = makeControlledStreamingService([
-      'data: {"choices":[]}\n\n',
-    ]);
-
-    const handled = makeController(
-      service as unknown as ReturnType<typeof makeStreamingService>,
-      makeGenerationService(),
-    ).streamCompletion(TEST_REQUEST, res, VALID_COMPLETION_BODY, undefined);
-
-    await releaseNext();
-    expect(vi.getTimerCount()).toBe(1);
-    await releaseNext();
-    await handled;
-
-    expect(vi.getTimerCount()).toBe(0);
-  });
-});
-
-describe('streamCompletion — downstream response lifecycle over real HTTP', () => {
-  /*
-   * 8 MiB of intent, so that even a socket whose underlying write never
-   * completes still crosses the 1 MiB threshold on its own — the queueing
-   * this asserts comes from the write below, not from chunk count.
-   */
-  const REAL_HTTP_CHUNKS = 128;
-
-  const startServer = async (
-    handle: (req: http.IncomingMessage, res: http.ServerResponse) => void,
-  ): Promise<{ server: http.Server; port: number }> => {
-    const server = http.createServer(handle);
-    await new Promise<void>((resolve) => server.listen(0, resolve));
-    const address = server.address();
-    if (address === null || typeof address === 'string') {
-      throw new Error('Expected a TCP address');
-    }
-    return { server, port: address.port };
-  };
-
-  /**
-   * Makes the response's underlying TCP socket withhold every in-flight
-   * write, so `res` never drains regardless of the machine's OS-level
-   * socket buffer size.
-   *
-   * `socket.pause()`-ing the *client* was tried first and is what this
-   * replaces: on a real network stack the kernel's receive window can
-   * absorb megabytes before the sender ever blocks, so whether the payload
-   * below has fully flushed by the time this test samples it is a race
-   * against that buffer's size — observed to flip `writableFinished` to
-   * `true` early on a CI runner with a larger window than the machine this
-   * was authored on.
-   *
-   * Patching the *internal* `_write` (not the public `write()`) is what
-   * keeps `res.writableLength`'s own bookkeeping correct: the public API is
-   * where `Writable` increments it, and only the paired `_write` callback
-   * decrements it, so withholding that callback reproduces genuine
-   * backpressure deterministically. `_destroy` is patched too, to abort any
-   * outstanding write with an error before tearing down — mirroring what a
-   * real socket handle does on destroy (and is *why* `destroy()` reclaims
-   * the buffer on a genuine stalled connection) — because a stand-in `_write`
-   * that never calls back has no other way to resolve it.
-   */
-  const stallSocketWrites = (socket: net.Socket): void => {
-    const pendingCallbacks: Array<(err?: Error) => void> = [];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (socket as any)._write = (
-      _chunk: unknown,
-      _encoding: unknown,
-      callback: (err?: Error) => void,
-    ) => {
-      pendingCallbacks.push(callback);
-    };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const originalDestroy = (socket as any)._destroy.bind(socket);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (socket as any)._destroy = (
-      err: Error | null,
-      cb: (err?: Error) => void,
-    ) => {
-      const stalled = pendingCallbacks.splice(0);
-      originalDestroy(err, cb);
-      stalled.forEach((callback) => callback(err ?? new Error('destroyed')));
-    };
-  };
-
-  /** A client that sends the request and is never read by the test. */
-  const connectClient = (port: number): net.Socket => {
-    const socket = net.connect(port, '127.0.0.1', () => {
-      socket.write(
-        'POST /api/v1/conversations/completions HTTP/1.1\r\nHost: localhost\r\nContent-Length: 0\r\n\r\n',
       );
+
+      expect(order.indexOf('unviewed')).toBeGreaterThan(-1);
+      expect(order.indexOf('unviewed')).toBeLessThan(order.indexOf('chunk'));
     });
-    socket.on('error', () => undefined);
-    return socket;
-  };
+  });
 
-  it('releases a real ServerResponse whose underlying socket stopped accepting writes: ended, then destroyed with its buffer reclaimed', async () => {
-    vi.useFakeTimers({ toFake: ['setTimeout'] });
+  describe('streamCompletion — viewed-id removal on a failed start', () => {
+    it('finishes removing the viewed id even when the generation fails before its first chunk', async () => {
+      const events: string[] = [];
+      const writable = new Writable({
+        write(_chunk, _encoding, callback) {
+          callback();
+        },
+      });
+      Object.assign(writable, { setHeader: vi.fn(), flushHeaders: vi.fn() });
+      const streamingService = {
+        markConversationUnviewed: vi.fn().mockImplementation(async () => {
+          await new Promise((resolve) => setTimeout(resolve, 20));
+          events.push('unviewed');
+        }),
+        streamCompletion: vi.fn().mockImplementation(async function* (
+          ...args: unknown[]
+        ) {
+          (args[ON_READY_TO_STREAM_ARG] as () => void)();
+          throw new Error('upstream failed before the first chunk');
+          // eslint-disable-next-line no-unreachable
+          yield Buffer.alloc(1);
+        }),
+      };
 
-    const events: string[] = [];
-    const generationService = makeGenerationService();
-    const streamingService = makeStreamingService(events, REAL_HTTP_CHUNKS);
-
-    let serverResponse: http.ServerResponse | undefined;
-    let handled: Promise<void> | undefined;
-    const { server, port } = await startServer((req, res) => {
-      stallSocketWrites(req.socket);
-      serverResponse = res;
-      Object.assign(req, TEST_REQUEST);
-      handled = makeController(streamingService, generationService)
-        .streamCompletion(
-          req as unknown as ExpressRequest,
-          res as unknown as ExpressResponse,
+      await expect(
+        makeController(
+          streamingService as never,
+          makeGenerationService(),
+        ).streamCompletion(
+          TEST_REQUEST,
+          writable as unknown as ExpressResponse,
           VALID_COMPLETION_BODY,
           undefined,
-        )
-        .catch(() => undefined);
+        ),
+      ).rejects.toThrow('upstream failed');
+
+      /* The client may mark the chat viewed right after the failure; the un-view must already have landed. */
+      expect(events).toEqual(['unviewed']);
     });
-    const socket = connectClient(port);
+  });
 
-    try {
-      await waitUntil(
-        () => serverResponse?.writableEnded === true,
-        'the real response to be ended',
-      );
+  describe('streamCompletion — SSE keepalive', () => {
+    const KEEPALIVE = ': keepalive\n\n';
+    const KEEPALIVE_INTERVAL_MS = 15_000;
 
-      /*
-       * The pre-fix fingerprint, verified against this exact setup: `end()`
-       * flips `writableEnded` but leaves the queued megabytes in place and
-       * `'finish'` never arrives, so the bound is what reclaims them.
-       */
-      expect(serverResponse?.writableFinished).toBe(false);
-      expect(serverResponse?.writableLength).toBeGreaterThan(1024 * 1024);
-      expect(serverResponse?.destroyed).toBe(false);
+    /** A response that drains immediately and records every written payload as text. */
+    const createRecordingResponse = () => {
+      const written: string[] = [];
+      const writable = new Writable({
+        write(chunk: Buffer, _encoding, callback) {
+          written.push(chunk.toString());
+          callback();
+        },
+      });
+      Object.assign(writable, { setHeader: vi.fn(), flushHeaders: vi.fn() });
+      return { res: writable as unknown as ExpressResponse, written };
+    };
 
-      await vi.advanceTimersByTimeAsync(SSE_RELEASE_TIMEOUT_MS);
+    const countKeepalives = (written: string[]) =>
+      written.filter((payload) => payload === KEEPALIVE).length;
+
+    /**
+     * A generation that opens the stream and then yields each step's chunk
+     * only when the test releases it, so a silent upstream phase can be held
+     * open while the keepalive interval is advanced.
+     */
+    const makeControlledStreamingService = (chunks: string[]) => {
+      const releases: Array<() => void> = [];
+      const service = {
+        markConversationUnviewed: vi.fn().mockResolvedValue(undefined),
+        streamCompletion: vi.fn().mockImplementation(async function* (
+          ...args: unknown[]
+        ) {
+          (args[ON_READY_TO_STREAM_ARG] as () => void)();
+          for (const chunk of chunks) {
+            await new Promise<void>((resolve) => releases.push(resolve));
+            yield Buffer.from(chunk);
+          }
+          await new Promise<void>((resolve) => releases.push(resolve));
+        }),
+      };
+      const releaseNext = async () => {
+        await waitUntil(() => releases.length > 0, 'the generator to wait');
+        releases.shift()?.();
+        await new Promise((resolve) => setImmediate(resolve));
+      };
+      return { service, releaseNext };
+    };
+
+    it('sends a keepalive comment while the generation is silent', async () => {
+      vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+      const { res, written } = createRecordingResponse();
+      const { service, releaseNext } = makeControlledStreamingService([
+        'data: {"choices":[]}\n\n',
+      ]);
+
+      const handled = makeController(
+        service as unknown as ReturnType<typeof makeStreamingService>,
+        makeGenerationService(),
+      ).streamCompletion(TEST_REQUEST, res, VALID_COMPLETION_BODY, undefined);
+
+      await releaseNext();
+      await vi.advanceTimersByTimeAsync(40_000);
+      expect(countKeepalives(written)).toBe(2);
+
+      await releaseNext();
+      await handled;
+    });
+
+    it('skips a keepalive tick while the last relayed slice ends mid-line', async () => {
+      vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+      const { res, written } = createRecordingResponse();
+      const { service, releaseNext } = makeControlledStreamingService([
+        'data: {"choices":[{"delta":{"content":"Hel',
+        'lo"}}]}\n\n',
+      ]);
+
+      const handled = makeController(
+        service as unknown as ReturnType<typeof makeStreamingService>,
+        makeGenerationService(),
+      ).streamCompletion(TEST_REQUEST, res, VALID_COMPLETION_BODY, undefined);
+
+      await releaseNext();
+      await vi.advanceTimersByTimeAsync(KEEPALIVE_INTERVAL_MS * 2);
+      expect(countKeepalives(written)).toBe(0);
+
+      await releaseNext();
+      await vi.advanceTimersByTimeAsync(KEEPALIVE_INTERVAL_MS);
+      expect(countKeepalives(written)).toBe(1);
+      // The comment follows the completed line, never splits it.
+      expect(written.slice(-2)).toEqual(['lo"}}]}\n\n', KEEPALIVE]);
+
+      await releaseNext();
+      await handled;
+    });
+
+    it('writes no keepalive after the client closes the response', async () => {
+      vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+      const { res, written } = createRecordingResponse();
+      const { service, releaseNext } = makeControlledStreamingService([
+        'data: {"choices":[]}\n\n',
+      ]);
+
+      const handled = makeController(
+        service as unknown as ReturnType<typeof makeStreamingService>,
+        makeGenerationService(),
+      ).streamCompletion(TEST_REQUEST, res, VALID_COMPLETION_BODY, undefined);
+
+      await releaseNext();
+      (res as unknown as Writable).emit('close');
+      await vi.advanceTimersByTimeAsync(KEEPALIVE_INTERVAL_MS * 3);
+      expect(countKeepalives(written)).toBe(0);
+
+      await releaseNext();
+      await handled;
+    });
+
+    it('writes no keepalive and keeps the rejection when the generation fails before the stream opens', async () => {
+      vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+      const { res, written } = createRecordingResponse();
+      const conflict = new Error('Generation is already active');
+      const service = {
+        /* Rejects on the first `next()`, before `onReadyToStream` is ever called. */
+        markConversationUnviewed: vi.fn().mockResolvedValue(undefined),
+        streamCompletion: vi.fn().mockImplementation(() => ({
+          [Symbol.asyncIterator]: () => ({
+            next: () => Promise.reject(conflict),
+          }),
+        })),
+      };
+
+      await expect(
+        makeController(
+          service as unknown as ReturnType<typeof makeStreamingService>,
+          makeGenerationService(),
+        ).streamCompletion(TEST_REQUEST, res, VALID_COMPLETION_BODY, undefined),
+      ).rejects.toBe(conflict);
+      await vi.advanceTimersByTimeAsync(KEEPALIVE_INTERVAL_MS * 2);
+
+      expect(written).toEqual([]);
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it('leaves no keepalive timer behind once the generation finishes', async () => {
+      vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+      const { res } = createRecordingResponse();
+      const { service, releaseNext } = makeControlledStreamingService([
+        'data: {"choices":[]}\n\n',
+      ]);
+
+      const handled = makeController(
+        service as unknown as ReturnType<typeof makeStreamingService>,
+        makeGenerationService(),
+      ).streamCompletion(TEST_REQUEST, res, VALID_COMPLETION_BODY, undefined);
+
+      await releaseNext();
+      expect(vi.getTimerCount()).toBe(1);
+      await releaseNext();
       await handled;
 
-      expect(serverResponse?.destroyed).toBe(true);
-      // The bytes still queued for the aborted in-flight write are released
-      // as part of destroying the socket, the same as a real stalled
-      // connection — not left buffered on an object nothing references
-      // anymore.
-      expect(serverResponse?.writableLength).toBe(0);
-      expect(generationService.abort).not.toHaveBeenCalled();
-      expect(events).toContain('persisted');
-    } finally {
-      socket.destroy();
-      await new Promise<void>((resolve) => server.close(() => resolve()));
-    }
+      expect(vi.getTimerCount()).toBe(0);
+    });
+  });
+
+  describe('streamCompletion — downstream response lifecycle over real HTTP', () => {
+    /*
+     * 8 MiB of intent, so that even a socket whose underlying write never
+     * completes still crosses the 1 MiB threshold on its own — the queueing
+     * this asserts comes from the write below, not from chunk count.
+     */
+    const REAL_HTTP_CHUNKS = 128;
+
+    const startServer = async (
+      handle: (req: http.IncomingMessage, res: http.ServerResponse) => void,
+    ): Promise<{ server: http.Server; port: number }> => {
+      const server = http.createServer(handle);
+      await new Promise<void>((resolve) => server.listen(0, resolve));
+      const address = server.address();
+      if (address === null || typeof address === 'string') {
+        throw new Error('Expected a TCP address');
+      }
+      return { server, port: address.port };
+    };
+
+    /**
+     * Makes the response's underlying TCP socket withhold every in-flight
+     * write, so `res` never drains regardless of the machine's OS-level
+     * socket buffer size.
+     *
+     * `socket.pause()`-ing the *client* was tried first and is what this
+     * replaces: on a real network stack the kernel's receive window can
+     * absorb megabytes before the sender ever blocks, so whether the payload
+     * below has fully flushed by the time this test samples it is a race
+     * against that buffer's size — observed to flip `writableFinished` to
+     * `true` early on a CI runner with a larger window than the machine this
+     * was authored on.
+     *
+     * Patching the *internal* `_write` (not the public `write()`) is what
+     * keeps `res.writableLength`'s own bookkeeping correct: the public API is
+     * where `Writable` increments it, and only the paired `_write` callback
+     * decrements it, so withholding that callback reproduces genuine
+     * backpressure deterministically. `_destroy` is patched too, to abort any
+     * outstanding write with an error before tearing down — mirroring what a
+     * real socket handle does on destroy (and is *why* `destroy()` reclaims
+     * the buffer on a genuine stalled connection) — because a stand-in `_write`
+     * that never calls back has no other way to resolve it.
+     */
+    const stallSocketWrites = (socket: net.Socket): void => {
+      const pendingCallbacks: Array<(err?: Error) => void> = [];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (socket as any)._write = (
+        _chunk: unknown,
+        _encoding: unknown,
+        callback: (err?: Error) => void,
+      ) => {
+        pendingCallbacks.push(callback);
+      };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const originalDestroy = (socket as any)._destroy.bind(socket);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (socket as any)._destroy = (
+        err: Error | null,
+        cb: (err?: Error) => void,
+      ) => {
+        const stalled = pendingCallbacks.splice(0);
+        originalDestroy(err, cb);
+        stalled.forEach((callback) => callback(err ?? new Error('destroyed')));
+      };
+    };
+
+    /** A client that sends the request and is never read by the test. */
+    const connectClient = (port: number): net.Socket => {
+      const socket = net.connect(port, '127.0.0.1', () => {
+        socket.write(
+          'POST /api/v1/conversations/completions HTTP/1.1\r\nHost: localhost\r\nContent-Length: 0\r\n\r\n',
+        );
+      });
+      socket.on('error', () => undefined);
+      return socket;
+    };
+
+    it('releases a real ServerResponse whose underlying socket stopped accepting writes: ended, then destroyed with its buffer reclaimed', async () => {
+      vi.useFakeTimers({ toFake: ['setTimeout'] });
+
+      const events: string[] = [];
+      const generationService = makeGenerationService();
+      const streamingService = makeStreamingService(events, REAL_HTTP_CHUNKS);
+
+      let serverResponse: http.ServerResponse | undefined;
+      let handled: Promise<void> | undefined;
+      const { server, port } = await startServer((req, res) => {
+        stallSocketWrites(req.socket);
+        serverResponse = res;
+        Object.assign(req, TEST_REQUEST);
+        handled = makeController(streamingService, generationService)
+          .streamCompletion(
+            req as unknown as ExpressRequest,
+            res as unknown as ExpressResponse,
+            VALID_COMPLETION_BODY,
+            undefined,
+          )
+          .catch(() => undefined);
+      });
+      const socket = connectClient(port);
+
+      try {
+        await waitUntil(
+          () => serverResponse?.writableEnded === true,
+          'the real response to be ended',
+        );
+
+        /*
+         * The pre-fix fingerprint, verified against this exact setup: `end()`
+         * flips `writableEnded` but leaves the queued megabytes in place and
+         * `'finish'` never arrives, so the bound is what reclaims them.
+         */
+        expect(serverResponse?.writableFinished).toBe(false);
+        expect(serverResponse?.writableLength).toBeGreaterThan(1024 * 1024);
+        expect(serverResponse?.destroyed).toBe(false);
+
+        await vi.advanceTimersByTimeAsync(SSE_RELEASE_TIMEOUT_MS);
+        await handled;
+
+        expect(serverResponse?.destroyed).toBe(true);
+        // The bytes still queued for the aborted in-flight write are released
+        // as part of destroying the socket, the same as a real stalled
+        // connection — not left buffered on an object nothing references
+        // anymore.
+        expect(serverResponse?.writableLength).toBe(0);
+        expect(generationService.abort).not.toHaveBeenCalled();
+        expect(events).toContain('persisted');
+      } finally {
+        socket.destroy();
+        await new Promise<void>((resolve) => server.close(() => resolve()));
+      }
+    });
   });
 });

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+
 /** Host selection and conversation lifecycle inputs. */
 export interface DeploymentChangeTrackingOptions {
   /** Active conversation identity; absent outside a conversation. */

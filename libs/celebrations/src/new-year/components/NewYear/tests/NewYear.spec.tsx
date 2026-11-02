@@ -23,62 +23,64 @@ vi.mock(
   },
 );
 
-afterEach(() => vi.restoreAllMocks());
+describe('NewYear', () => {
+  afterEach(() => vi.restoreAllMocks());
 
-describe('NewYearDecor', () => {
-  it('activates the supplied behavior with mouse, Enter, and Space', async () => {
-    const onActivate = vi.fn();
-    render(<NewYearDecor onActivate={onActivate} />);
-    const user = userEvent.setup();
-    await user.tab();
-    await user.keyboard('{Enter}');
-    await user.keyboard(' ');
-    await user.click(screen.getByRole('button', { name: 'New Year gift' }));
-    expect(onActivate).toHaveBeenCalledTimes(3);
-    expect(screen.queryByRole('img')).toBeNull();
-  });
-});
-
-describe('New Year event contract', () => {
-  it('offers the penguin and the snowman on gift clicks and only the elves for the phrase', () => {
-    expect(newYear.scenes.map(({ id }) => id)).toEqual([
-      NewYearScene.PenguinStar,
-      NewYearScene.GiftWrapping,
-      NewYearScene.SnowmanDelivery,
-    ]);
-    expect(newYear.clickSceneIds).toEqual([
-      NewYearScene.PenguinStar,
-      NewYearScene.SnowmanDelivery,
-    ]);
-    expect(newYear.secretTrigger?.sceneIds).toEqual([
-      NewYearScene.GiftWrapping,
-    ]);
+  describe('NewYearDecor', () => {
+    it('activates the supplied behavior with mouse, Enter, and Space', async () => {
+      const onActivate = vi.fn();
+      render(<NewYearDecor onActivate={onActivate} />);
+      const user = userEvent.setup();
+      await user.tab();
+      await user.keyboard('{Enter}');
+      await user.keyboard(' ');
+      await user.click(screen.getByRole('button', { name: 'New Year gift' }));
+      expect(onActivate).toHaveBeenCalledTimes(3);
+      expect(screen.queryByRole('img')).toBeNull();
+    });
   });
 
-  it.each([
-    [NewYearScene.SnowmanDelivery, [NewYearScene.PenguinStar]],
-    [NewYearScene.PenguinStar, [NewYearScene.SnowmanDelivery]],
-  ])(
-    'keeps the other click scene when the host disables %s',
-    (disabled, expected) => {
-      const pools = resolveCelebrationPools(newYear, {
-        disabledScenes: [disabled],
-      });
-      expect(pools.clickSceneIds).toEqual(expected);
-      expect(pools.secretSceneIds).toEqual([NewYearScene.GiftWrapping]);
-    },
-  );
+  describe('New Year event contract', () => {
+    it('offers the penguin and the snowman on gift clicks and only the elves for the phrase', () => {
+      expect(newYear.scenes.map(({ id }) => id)).toEqual([
+        NewYearScene.PenguinStar,
+        NewYearScene.GiftWrapping,
+        NewYearScene.SnowmanDelivery,
+      ]);
+      expect(newYear.clickSceneIds).toEqual([
+        NewYearScene.PenguinStar,
+        NewYearScene.SnowmanDelivery,
+      ]);
+      expect(newYear.secretTrigger?.sceneIds).toEqual([
+        NewYearScene.GiftWrapping,
+      ]);
+    });
 
-  it('has a runnable scene for every trigger and a secret hint in every notification', () => {
-    const sceneIds = newYear.scenes.map((scene) => scene.id);
-    expect(new Set(sceneIds).size).toBe(sceneIds.length);
-    newYear.clickSceneIds.forEach((id) => expect(sceneIds).toContain(id));
-    newYear.secretTrigger?.sceneIds.forEach((id) =>
-      expect(sceneIds).toContain(id),
+    it.each([
+      [NewYearScene.SnowmanDelivery, [NewYearScene.PenguinStar]],
+      [NewYearScene.PenguinStar, [NewYearScene.SnowmanDelivery]],
+    ])(
+      'keeps the other click scene when the host disables %s',
+      (disabled, expected) => {
+        const pools = resolveCelebrationPools(newYear, {
+          disabledScenes: [disabled],
+        });
+        expect(pools.clickSceneIds).toEqual(expected);
+        expect(pools.secretSceneIds).toEqual([NewYearScene.GiftWrapping]);
+      },
     );
-    newYear.scenes.forEach(({ labelId }) => {
-      const key = labelId as keyof typeof NEW_YEAR_LABELS;
-      expect(NEW_YEAR_LABELS[key]).toContain('{{phrase}}');
+
+    it('has a runnable scene for every trigger and a secret hint in every notification', () => {
+      const sceneIds = newYear.scenes.map((scene) => scene.id);
+      expect(new Set(sceneIds).size).toBe(sceneIds.length);
+      newYear.clickSceneIds.forEach((id) => expect(sceneIds).toContain(id));
+      newYear.secretTrigger?.sceneIds.forEach((id) =>
+        expect(sceneIds).toContain(id),
+      );
+      newYear.scenes.forEach(({ labelId }) => {
+        const key = labelId as keyof typeof NEW_YEAR_LABELS;
+        expect(NEW_YEAR_LABELS[key]).toContain('{{phrase}}');
+      });
     });
   });
 });

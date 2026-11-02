@@ -23,6 +23,7 @@ import {
 } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
 import ScheduledTaskDetailPage from '../ScheduledTaskDetailPage';
+
 vi.mock('../../../context/SkillsContext', () => ({
   useSkills: () => ({ skills: [], publicSkills: [], sharedWithMe: [] }),
 }));
@@ -1745,8 +1746,15 @@ describe('ScheduledTaskDetailPage', () => {
       unmount();
 
       // Resolving after unmount must not trigger a setState-on-unmounted-component warning/error.
+      const consoleError = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => undefined);
       resolvePause({ ...activeTask, isActive: false });
       await Promise.resolve();
+
+      expect(pauseScheduledTaskMock).toHaveBeenCalledOnce();
+      expect(consoleError).not.toHaveBeenCalled();
+      consoleError.mockRestore();
     });
 
     it('renders the switch disabled for a completed one-time schedule, without calling pause or resume', async () => {

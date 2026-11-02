@@ -1,4 +1,14 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
+import {
+  type IncomingHttpHeaders,
+  type IncomingMessage,
+  type ServerResponse,
+  createServer,
+  request as httpRequest,
+} from 'node:http';
+import type { AddressInfo } from 'node:net';
+import { tmpdir } from 'node:os';
+import { resolve, sep } from 'node:path';
 import {
   BadGatewayException,
   ConflictException,
@@ -21,6 +31,8 @@ import {
   createHelmetOptions,
   createHtmlPreviewCspHeader,
 } from '../../config/csp';
+import type { EnvironmentVariables } from '../../config/environment.config';
+import type { DialClientService } from '../../dial/dial-client.service';
 import { ArchiveUploadInterceptor } from '../archive-upload.interceptor';
 import { FileUploadInterceptor } from '../file-upload.interceptor';
 import { FilesController } from '../files.controller';
@@ -29,6 +41,7 @@ import {
   HTML_PREVIEW_FRAME_DOCUMENT,
   HTML_PREVIEW_FRAME_RENDER_MESSAGE,
 } from '../html-preview-frame';
+import { FilesUploadService } from '../upload/files-upload.service';
 
 const TEST_USER = {
   sub: 'user-123',
@@ -414,6 +427,324 @@ describe('FilesController — upload', () => {
       .field('uploadMode', 'create-only')
       .attach('file', Buffer.from('hello'), 'file.pdf')
       .expect(409);
+  });
+
+  it('still stages the multipart file under the OS temp dir', async () => {
+    let stagedPath = '';
+    service.uploadFile.mockImplementation(
+      async (_bucket: string, _path: string, file: { path: string }) => {
+        stagedPath = file.path;
+        return { url: 'files/my-bucket/folder/file.pdf' };
+      },
+    );
+
+    await request(app.getHttpServer())
+      .post('/api/v1/files')
+      .field('bucket', 'my-bucket')
+      .field('path', 'folder/file.pdf')
+      .attach('file', Buffer.from('hello'), 'file.pdf')
+      .expect(201);
+
+    expect(stagedPath.startsWith(`${resolve(tmpdir())}${sep}`)).toBe(true);
+  });
+});
+
+interface CoreRequestRecord {
+  url: string;
+  headers: IncomingHttpHeaders;
+  chunks: Buffer[];
+  isAborted: boolean;
+}
+
+type CoreHandler = (
+  req: IncomingMessage,
+  res: ServerResponse,
+  record: CoreRequestRecord,
+) => void;
+
+const answerAfterBody =
+  (status: number): CoreHandler =>
+  (req, res) => {
+    req.on('end', () => res.writeHead(status).end());
+  };
+
+/* Multer's diskStorage names staged files with 16 random bytes in hex. */
+const STAGED_FILE_NAME = /^[0-9a-f]{32}$/;
+const listStagedFiles = (): string[] =>
+  readdirSync(tmpdir()).filter((name) => STAGED_FILE_NAME.test(name));
+
+describe('FilesController — uploadFileContent (DIAL Core stubbed)', () => {
+  let app: INestApplication;
+  let core: ReturnType<typeof createServer>;
+  let requests: CoreRequestRecord[];
+  let coreHandler: CoreHandler;
+  let appPort: number;
+
+  const body = (record: CoreRequestRecord): Buffer =>
+    Buffer.concat(record.chunks);
+
+  const startApp = async (fileSizeLimit?: number): Promise<void> => {
+    const { port: corePort } = core.address() as AddressInfo;
+    const dialClient = {
+      baseUrl: `http://127.0.0.1:${corePort}`,
+      fetchCore: globalThis.fetch,
+    } as unknown as DialClientService;
+    const uploadConfig = {
+      get: (key: string) =>
+        key === 'FILE_TRANSFER_TIMEOUT_MS' ? 30_000 : undefined,
+    } as unknown as ConfigService<EnvironmentVariables>;
+    const uploadService = new FilesUploadService(dialClient, uploadConfig);
+    const unused = {} as never;
+    const filesService = new FilesService(
+      unused,
+      uploadService,
+      unused,
+      unused,
+      unused,
+      unused,
+      unused,
+    );
+    app = await buildApp(filesService, { fileSizeLimit });
+    appPort = (app.getHttpServer().address() as AddressInfo).port;
+  };
+
+  const put = (query: string) =>
+    request(app.getHttpServer())
+      .put(`/api/v1/files/content?${query}`)
+      .set('Content-Type', 'application/octet-stream');
+
+  beforeEach(async () => {
+    requests = [];
+    coreHandler = answerAfterBody(201);
+    core = createServer((req, res) => {
+      const record: CoreRequestRecord = {
+        url: req.url ?? '',
+        headers: req.headers,
+        chunks: [],
+        isAborted: false,
+      };
+      requests.push(record);
+      req.on('data', (chunk: Buffer) => record.chunks.push(chunk));
+      req.on('close', () => {
+        if (!req.complete) {
+          record.isAborted = true;
+        }
+      });
+      coreHandler(req, res, record);
+    });
+    await new Promise<void>((done) => core.listen(0, '127.0.0.1', done));
+  });
+
+  afterEach(async () => {
+    vi.clearAllMocks();
+    await app?.close();
+    core.closeAllConnections();
+    await new Promise<void>((done) => core.close(() => done()));
+  });
+
+  it('streams a multi-megabyte body to DIAL Core with the exact Content-Length and returns 201', async () => {
+    await startApp();
+    const payload = Buffer.from(
+      Array.from({ length: 4 * 1024 * 1024 }, (_, i) => i % 251),
+    );
+
+    const res = await put(
+      'bucket=my-bucket&path=reports%2Fq3.csv&uploadMode=create-only&contentType=text%2Fcsv',
+    )
+      .send(payload)
+      .expect(201);
+
+    expect(res.body).toEqual({ url: 'files/my-bucket/reports/q3.csv' });
+    expect(requests).toHaveLength(1);
+    const [record] = requests;
+    const received = body(record);
+    expect(record.url).toBe('/v1/files/my-bucket/reports/q3.csv');
+    expect(record.headers.authorization).toBe(`Bearer ${TEST_USER.at}`);
+    expect(record.headers['if-none-match']).toBe('*');
+    expect(record.headers['transfer-encoding']).toBeUndefined();
+    expect(record.headers['content-length']).toBe(String(received.length));
+    expect(received.includes(payload)).toBe(true);
+    expect(received.toString('latin1')).toContain(
+      'filename="q3.csv"\r\nContent-Type: text/csv\r\n',
+    );
+  });
+
+  it('writes nothing to the OS temp dir while streaming', async () => {
+    await startApp();
+    const before = new Set(listStagedFiles());
+    let duringTransfer: string[] = [];
+    coreHandler = (req, res) => {
+      req.once('data', () => {
+        duringTransfer = listStagedFiles();
+      });
+      req.on('end', () => res.writeHead(201).end());
+    };
+
+    await put('bucket=my-bucket&path=big.bin')
+      .send(Buffer.alloc(2 * 1024 * 1024, 'z'))
+      .expect(201);
+
+    const created = [...duringTransfer, ...listStagedFiles()].filter(
+      (name) => !before.has(name),
+    );
+    expect(created).toEqual([]);
+  });
+
+  it('delivers a JSON file intact, unread by the JSON body parser', async () => {
+    await startApp();
+    const json = Buffer.from('{"rows":[1,2,3],"name":"report"}');
+
+    await put('bucket=my-bucket&path=data.json&contentType=application%2Fjson')
+      .send(json)
+      .expect(201);
+
+    const received = body(requests[0]).toString();
+    expect(received).toContain('Content-Type: application/json\r\n\r\n');
+    expect(received).toContain(json.toString());
+  });
+
+  it.each([
+    ['an invalid bucket', 'bucket=bad%2Fbucket&path=file.txt'],
+    ['an invalid contentType', 'bucket=my-bucket&path=f.csv&contentType=text'],
+    ['an undeclared parameter', 'bucket=my-bucket&path=f.csv&admin=true'],
+  ])('returns 400 for %s without calling DIAL Core', async (_label, query) => {
+    await startApp();
+
+    await put(query).send(Buffer.from('hello')).expect(400);
+
+    expect(requests).toHaveLength(0);
+  });
+
+  it('returns 415 for a request type other than application/octet-stream', async () => {
+    await startApp();
+
+    await request(app.getHttpServer())
+      .put('/api/v1/files/content?bucket=my-bucket&path=file.json')
+      .set('Content-Type', 'application/json')
+      .send('{"a":1}')
+      .expect(415);
+    await request(app.getHttpServer())
+      .put('/api/v1/files/content?bucket=my-bucket&path=file.txt')
+      .attach('file', Buffer.from('hello'), 'file.txt')
+      .expect(415);
+
+    expect(requests).toHaveLength(0);
+  });
+
+  it('returns 411 for a chunked body without Content-Length', async () => {
+    await startApp();
+
+    const status = await new Promise<number>((done, fail) => {
+      const req = httpRequest(
+        {
+          port: appPort,
+          host: '127.0.0.1',
+          method: 'PUT',
+          path: '/api/v1/files/content?bucket=my-bucket&path=file.bin',
+          headers: { 'Content-Type': 'application/octet-stream' },
+        },
+        (res) => {
+          res.resume();
+          done(res.statusCode ?? 0);
+        },
+      );
+      req.on('error', fail);
+      req.write(Buffer.from('hello'));
+      req.end();
+    });
+
+    expect(status).toBe(411);
+    expect(requests).toHaveLength(0);
+  });
+
+  it('returns 413 for a declared size over FILE_UPLOAD_MAX_BYTES without calling DIAL Core', async () => {
+    await startApp(1024);
+
+    const res = await put('bucket=my-bucket&path=file.bin')
+      .send(Buffer.alloc(2048))
+      .expect(413);
+
+    expect(res.body.message).toBe('File too large');
+    expect(requests).toHaveLength(0);
+  });
+
+  it.each([
+    [412, 409],
+    [413, 413],
+    [401, 401],
+    [500, 502],
+  ])('maps a DIAL Core %i to %i', async (coreStatus, status) => {
+    await startApp();
+    coreHandler = answerAfterBody(coreStatus);
+
+    await put('bucket=my-bucket&path=file.bin&uploadMode=create-only')
+      .send(Buffer.from('hello'))
+      .expect(status);
+  });
+
+  it('sends an early DIAL Core rejection with Connection: close before the body ends', async () => {
+    await startApp();
+    coreHandler = (req, res) => {
+      req.once('data', () => res.writeHead(413).end());
+    };
+
+    const response = await new Promise<{
+      status: number;
+      connection: string | undefined;
+    }>((done, fail) => {
+      const req = httpRequest(
+        {
+          port: appPort,
+          host: '127.0.0.1',
+          method: 'PUT',
+          path: '/api/v1/files/content?bucket=my-bucket&path=file.bin',
+          headers: {
+            'Content-Type': 'application/octet-stream',
+            'Content-Length': String(8 * 1024 * 1024),
+          },
+        },
+        (res) => {
+          res.resume();
+          done({
+            status: res.statusCode ?? 0,
+            connection: res.headers.connection,
+          });
+          req.destroy();
+        },
+      );
+      req.on('error', fail);
+      req.write(Buffer.alloc(256 * 1024));
+    });
+
+    expect(response).toEqual({ status: 413, connection: 'close' });
+  });
+
+  it('aborts the DIAL Core request when the client disconnects mid-body', async () => {
+    await startApp();
+    let onCoreData: () => void = () => undefined;
+    const coreReceivedData = new Promise<void>((done) => {
+      onCoreData = done;
+    });
+    coreHandler = (req) => {
+      req.once('data', onCoreData);
+    };
+
+    const client = httpRequest({
+      port: appPort,
+      host: '127.0.0.1',
+      method: 'PUT',
+      path: '/api/v1/files/content?bucket=my-bucket&path=file.bin',
+      headers: {
+        'Content-Type': 'application/octet-stream',
+        'Content-Length': String(8 * 1024 * 1024),
+      },
+    });
+    client.on('error', () => undefined);
+    client.write(Buffer.alloc(256 * 1024));
+    await coreReceivedData;
+    client.destroy();
+
+    await vi.waitFor(() => expect(requests[0].isAborted).toBe(true));
   });
 });
 

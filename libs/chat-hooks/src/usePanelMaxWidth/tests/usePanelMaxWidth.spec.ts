@@ -12,11 +12,11 @@ const setInnerWidth = (width: number) => {
 
 const originalInnerWidth = window.innerWidth;
 
-afterEach(() => {
-  setInnerWidth(originalInnerWidth);
-});
-
 describe('usePanelMaxWidth', () => {
+  afterEach(() => {
+    setInnerWidth(originalInnerWidth);
+  });
+
   it('leaves room for the minimum content area', () => {
     setInnerWidth(1200);
     const { result } = renderHook(() => usePanelMaxWidth(400));

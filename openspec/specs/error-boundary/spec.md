@@ -44,13 +44,13 @@ interface Props extends FallbackProps {
 ---
 
 ### Requirement: Accessible fallback UI
-The default `ErrorFallback` component SHALL render an accessible, user-friendly error UI instead of a blank screen, through the shared full-screen `AlertShell` layout (`apps/chat/src/components/AlertShell/AlertShell.tsx`), which wraps the kit `StateScreen` in a `role="alert"` container.
+The default `ErrorFallback` component SHALL render an accessible, user-friendly error UI instead of a blank screen, by rendering `ErrorAlert` from `@epam/ai-dial-chat-shared` (`libs/chat-shared/src/components/ErrorAlert/ErrorAlert.tsx`) with translated labels and `resetErrorBoundary` as its action. `ErrorAlert` draws the shared full-screen `FullScreenAlert` layout, which wraps the kit `StateScreen`.
 
 **Accessibility requirements:**
-- The root element SHALL have `role="alert"` so screen readers announce it on mount.
+- The fallback SHALL carry no live-region role: it replaces the whole view, and the auto-focused action moves focus into the `section` named by the heading, which is what gets announced.
 - The first interactive element (recovery button) SHALL receive `autoFocus` so keyboard users can act immediately.
 - The warning icon SHALL have `aria-hidden="true"` as it is decorative.
-- The heading SHALL render as the screen's `<h1>` (drawn by the kit `StateScreen` that `AlertShell` wraps).
+- The heading SHALL render as the screen's `<h1>` (drawn by the kit `StateScreen` that `FullScreenAlert` wraps).
 - The recovery button SHALL be keyboard-accessible and focusable.
 
 **RTL requirements:**

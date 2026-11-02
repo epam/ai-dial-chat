@@ -89,8 +89,8 @@ The hook SHALL:
 - Call `useLocalStorage<string[]>(StorageKey.CatalogFilterTopics, [])` to obtain the persisted filter topics array and its setter.
 - Call `useLocalStorage<boolean>(StorageKey.CatalogIsMyAppsActive, false)` for the persisted "My Apps" toggle.
 - Expose `sortKey: CatalogSortKey`, `setSortKey: (key: CatalogSortKey) => void`, `filterTopics: Set<string>`, `setFilterTopics: (topics: Set<string>) => void`, `isMyAppsActive: boolean`, and `setIsMyAppsActive: (isActive: boolean) => void`; a non-boolean persisted toggle value falls back to `false`.
-- Validate the value from `useLocalStorage` against the `CatalogSortKey` enum; an unknown value falls back to `CatalogSortKey.RecentlyUpdated`.
-- Rehydrate the filter topics array from `useLocalStorage` as a `Set` of its string entries (non-string entries are dropped); a non-array value falls back to an empty `Set`.
+- Validate the value from `useLocalStorage` against the `CatalogSortKey` enum; an unknown value falls back to `CatalogSortKey.RecentlyUpdated` (`resolveCatalogSortKey` from `@epam/ai-dial-chat-hooks`).
+- Rehydrate the filter topics array from `useLocalStorage` as a `Set` of its string entries (non-string entries are dropped); a non-array value falls back to an empty `Set` (`parseCatalogFilterTopics` from `@epam/ai-dial-chat-hooks`).
 - On every `setSortKey` call, forward the new value to the underlying `useLocalStorage` setter for `StorageKey.CatalogSortKey`.
 - On every `setFilterTopics` call, forward `Array.from(topics)` to the underlying `useLocalStorage` setter for `StorageKey.CatalogFilterTopics`.
 - Rely on `useLocalStorage`'s own `try`/`catch` handling for `localStorage` read/write failures (e.g. storage disabled, quota exceeded) — the hook does not need its own storage-access error handling.

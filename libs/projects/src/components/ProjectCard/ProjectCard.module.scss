@@ -18,6 +18,24 @@
   color: var(--pr-path-text, var(--text-secondary, #57647a));
 }
 
+/* Above the stretched link's `::after`, so the toggle takes its own clicks. */
+.pinToggle {
+  z-index: 1;
+}
+
+/* An unpinned toggle appears with the card's hover or keyboard focus; where
+ * nothing can hover (touch), it stays visible. */
+@media (hover: hover) {
+  .pinToggleIdle {
+    opacity: 0;
+  }
+
+  .card:hover .pinToggleIdle,
+  .card:focus-within .pinToggleIdle {
+    opacity: 1;
+  }
+}
+
 /* Stretched link: the name's `::after` covers the card, so the whole card is
  * the click target while the link stays its single tab stop. */
 .link {

@@ -12,6 +12,7 @@ import { ProjectsController } from './projects.controller';
 import { ProjectsService } from './projects.service';
 import { ProjectsSnapshotService } from './snapshot/projects-snapshot.service';
 import { ProjectsUpdateService } from './update/projects-update.service';
+import { ProjectsWatchService } from './watch/projects-watch.service';
 
 @Module({
   imports: [AppConfigModule, UserConfigModule, ConversationModule],
@@ -22,6 +23,7 @@ import { ProjectsUpdateService } from './update/projects-update.service';
     ProjectsDownloadService,
     ProjectsSnapshotService,
     ProjectsUpdateService,
+    ProjectsWatchService,
     ProjectContextUploadInterceptor,
     ProjectConversationsService,
     ProjectConversationsListService,

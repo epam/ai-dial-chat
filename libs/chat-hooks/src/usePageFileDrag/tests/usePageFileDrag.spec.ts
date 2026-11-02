@@ -18,11 +18,11 @@ const makeDragEvent = (
   return event;
 };
 
-afterEach(() => {
-  vi.restoreAllMocks();
-});
-
 describe('usePageFileDrag', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('preserves newer dropped files when an earlier batch is acknowledged', () => {
     const { result } = renderHook(() => usePageFileDrag());
     const first = new File(['a'], 'a.txt');

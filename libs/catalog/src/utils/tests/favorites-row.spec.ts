@@ -40,68 +40,70 @@ const buildRow = (
   return { row, cards };
 };
 
-afterEach(() => {
-  document.body.innerHTML = '';
-});
-
-describe('getRowScrollDelta', () => {
-  it('returns the distance from a card to the row start in LTR', () => {
-    const { row, cards } = buildRow(3);
-
-    expect(getRowScrollDelta(row, cards[0])).toBe(0);
-    expect(getRowScrollDelta(row, cards[1])).toBe(CARD_WIDTH + GAP);
+describe('favorites-row', () => {
+  afterEach(() => {
+    document.body.innerHTML = '';
   });
 
-  it('returns a negative distance toward the start edge in RTL', () => {
-    const { row, cards } = buildRow(3, { dir: 'rtl' });
+  describe('getRowScrollDelta', () => {
+    it('returns the distance from a card to the row start in LTR', () => {
+      const { row, cards } = buildRow(3);
 
-    expect(getRowScrollDelta(row, cards[0])).toBe(0);
-    expect(getRowScrollDelta(row, cards[1])).toBe(-(CARD_WIDTH + GAP));
-  });
-});
-
-describe('getRowActiveIndex', () => {
-  it('returns the card nearest the start edge', () => {
-    const { row, cards } = buildRow(4, { scroll: CARD_WIDTH + GAP - 20 });
-
-    expect(getRowActiveIndex(row, cards)).toBe(1);
-  });
-
-  it('returns the card nearest the start edge in RTL', () => {
-    const { row, cards } = buildRow(4, {
-      scroll: CARD_WIDTH + GAP + 20,
-      dir: 'rtl',
+      expect(getRowScrollDelta(row, cards[0])).toBe(0);
+      expect(getRowScrollDelta(row, cards[1])).toBe(CARD_WIDTH + GAP);
     });
 
-    expect(getRowActiveIndex(row, cards)).toBe(1);
+    it('returns a negative distance toward the start edge in RTL', () => {
+      const { row, cards } = buildRow(3, { dir: 'rtl' });
+
+      expect(getRowScrollDelta(row, cards[0])).toBe(0);
+      expect(getRowScrollDelta(row, cards[1])).toBe(-(CARD_WIDTH + GAP));
+    });
   });
 
-  it('returns the last card once the row is scrolled to its end', () => {
-    const cardCount = 4;
-    const contentWidth =
-      PADDING * 2 + cardCount * CARD_WIDTH + (cardCount - 1) * GAP;
-    const { row, cards } = buildRow(cardCount, {
-      scroll: contentWidth - ROW_WIDTH,
+  describe('getRowActiveIndex', () => {
+    it('returns the card nearest the start edge', () => {
+      const { row, cards } = buildRow(4, { scroll: CARD_WIDTH + GAP - 20 });
+
+      expect(getRowActiveIndex(row, cards)).toBe(1);
     });
 
-    expect(getRowActiveIndex(row, cards)).toBe(cardCount - 1);
-  });
+    it('returns the card nearest the start edge in RTL', () => {
+      const { row, cards } = buildRow(4, {
+        scroll: CARD_WIDTH + GAP + 20,
+        dir: 'rtl',
+      });
 
-  it('returns the last card at the end of an RTL row', () => {
-    const cardCount = 4;
-    const contentWidth =
-      PADDING * 2 + cardCount * CARD_WIDTH + (cardCount - 1) * GAP;
-    const { row, cards } = buildRow(cardCount, {
-      scroll: contentWidth - ROW_WIDTH,
-      dir: 'rtl',
+      expect(getRowActiveIndex(row, cards)).toBe(1);
     });
 
-    expect(getRowActiveIndex(row, cards)).toBe(cardCount - 1);
-  });
+    it('returns the last card once the row is scrolled to its end', () => {
+      const cardCount = 4;
+      const contentWidth =
+        PADDING * 2 + cardCount * CARD_WIDTH + (cardCount - 1) * GAP;
+      const { row, cards } = buildRow(cardCount, {
+        scroll: contentWidth - ROW_WIDTH,
+      });
 
-  it('returns 0 for a row with no cards', () => {
-    const { row } = buildRow(0);
+      expect(getRowActiveIndex(row, cards)).toBe(cardCount - 1);
+    });
 
-    expect(getRowActiveIndex(row, [])).toBe(0);
+    it('returns the last card at the end of an RTL row', () => {
+      const cardCount = 4;
+      const contentWidth =
+        PADDING * 2 + cardCount * CARD_WIDTH + (cardCount - 1) * GAP;
+      const { row, cards } = buildRow(cardCount, {
+        scroll: contentWidth - ROW_WIDTH,
+        dir: 'rtl',
+      });
+
+      expect(getRowActiveIndex(row, cards)).toBe(cardCount - 1);
+    });
+
+    it('returns 0 for a row with no cards', () => {
+      const { row } = buildRow(0);
+
+      expect(getRowActiveIndex(row, [])).toBe(0);
+    });
   });
 });

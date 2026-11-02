@@ -6,6 +6,7 @@ import {
   SkillFilePreviewState,
   type SkillFilePreviewSyncOptions,
 } from '../useSkillFilePreviewSyncController';
+
 const setup = () => {
   let token = 0;
   const beginRequest = () => {
@@ -97,23 +98,23 @@ describe('skill preview controller', () => {
     expect(options.closeCanvas).toHaveBeenCalledOnce();
     expect(result.current.state).toBe(SkillFilePreviewState.Idle);
   });
-});
 
-it('retires A to B to A requests and its final request on unmount', () => {
-  const options = setup();
-  const { rerender, unmount } = renderHook(
-    (props) => useSkillFilePreviewSyncController(props),
-    { initialProps: options },
-  );
-  const first = vi.mocked(options.openAttachmentCanvas).mock.calls[0][2];
-  rerender({ ...options, canvasAttachmentId: 'b' });
-  const second = vi.mocked(options.openAttachmentCanvas).mock.calls[1][2];
-  rerender({ ...options });
-  const third = vi.mocked(options.openAttachmentCanvas).mock.calls[2][2];
-  expect(first()).toBe(false);
-  expect(second()).toBe(false);
-  expect(third()).toBe(true);
-  unmount();
-  expect(third()).toBe(false);
-  expect(options.closeCanvas).toHaveBeenCalledOnce();
+  it('retires A to B to A requests and its final request on unmount', () => {
+    const options = setup();
+    const { rerender, unmount } = renderHook(
+      (props) => useSkillFilePreviewSyncController(props),
+      { initialProps: options },
+    );
+    const first = vi.mocked(options.openAttachmentCanvas).mock.calls[0][2];
+    rerender({ ...options, canvasAttachmentId: 'b' });
+    const second = vi.mocked(options.openAttachmentCanvas).mock.calls[1][2];
+    rerender({ ...options });
+    const third = vi.mocked(options.openAttachmentCanvas).mock.calls[2][2];
+    expect(first()).toBe(false);
+    expect(second()).toBe(false);
+    expect(third()).toBe(true);
+    unmount();
+    expect(third()).toBe(false);
+    expect(options.closeCanvas).toHaveBeenCalledOnce();
+  });
 });

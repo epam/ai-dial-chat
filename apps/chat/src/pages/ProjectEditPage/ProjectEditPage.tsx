@@ -57,7 +57,6 @@ import NotFoundPage from '../NotFound/NotFound';
 
 const EMPTY_VALUES: ProjectCreateFormValues = {
   name: '',
-  description: '',
   instructions: '',
 };
 
@@ -75,9 +74,6 @@ const ProjectEditPage: FC = () => {
     dismissNotification,
   } = useNotification();
   const { replacePinnedProjectId } = useUserConfig();
-  const onRefineDescription = useTextRefinementCallback(
-    TextRefinementPurpose.ProjectDescription,
-  );
   const onRefineInstructions = useTextRefinementCallback(
     TextRefinementPurpose.ProjectInstructions,
   );
@@ -109,7 +105,6 @@ const ProjectEditPage: FC = () => {
       return;
     setValues({
       name: project.name,
-      description: project.description,
       instructions: project.instructions,
     });
     setContextFiles(mapStoredContextFiles(project));
@@ -139,7 +134,6 @@ const ProjectEditPage: FC = () => {
   const isDirty =
     isSeeded &&
     (values.name !== project.name ||
-      values.description !== project.description ||
       values.instructions !== project.instructions ||
       removedFileNames.length > 0 ||
       newFiles.length > 0);
@@ -346,7 +340,6 @@ const ProjectEditPage: FC = () => {
         onPickFromFileManager={
           user?.bucket ? picker.pickFromFileManager : undefined
         }
-        onRefineDescription={onRefineDescription}
         onRefineInstructions={onRefineInstructions}
         onBack={handleLeave}
         onCancel={handleLeave}

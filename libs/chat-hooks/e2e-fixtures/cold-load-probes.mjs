@@ -17,6 +17,7 @@ import {
   CHAT_SHARED_ROOT_PEERS,
   SUBPATH_FIXTURES,
 } from './fixtures.mjs';
+
 export const PROBE_DEFINITIONS = [
   {
     name: 'chat-shared-root-filtertab',
@@ -85,6 +86,7 @@ export const PROBE_DEFINITIONS = [
 ];
 const probeEntrySource = ({ exportName, specifier }) =>
   `import { ${exportName} } from '${specifier}';\nglobalThis.__probe = ${exportName};\n`;
+
 export const buildProbeSourceFixture = ({ workspaceRoot, tmpRoot, probe }) => {
   const dir = createFixtureDir(tmpRoot, `${probe.name}-source`);
   writeFileSync(path.join(dir, 'entry.ts'), probeEntrySource(probe));

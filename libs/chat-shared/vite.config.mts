@@ -7,6 +7,7 @@ import { createLibTailwindUtilities } from '../../tools/vite-lib-tailwind-utilit
 import * as path from 'path';
 import { createIsExternalPeerImport } from '../../tools/vite-external-matcher.mjs';
 import { createVerifyPublishedStyles } from '../../tools/vite-verify-published-styles.mjs';
+
 const ownPackageJson = JSON.parse(
   readFileSync(path.join(import.meta.dirname, 'package.json'), 'utf8'),
 ) as {
@@ -22,6 +23,7 @@ const REQUIRED_PUBLISHED_STYLE_MARKERS = [
   '.desktop\\:p-4',
   '.text-start',
 ] as const;
+
 export default defineConfig(() => ({
   root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/libs/chat-shared',

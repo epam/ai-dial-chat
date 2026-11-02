@@ -30,6 +30,7 @@ const EXCLUDED =
   '[hidden], [inert], [aria-hidden="true"], [data-celebration-snapshot]';
 const CLIPPED = /^(auto|scroll|hidden|clip)$/;
 const TRANSPARENT = /^(transparent|rgba\(0, 0, 0, 0\))$/;
+
 export const RAVEN_ROW_NODE_LIMIT = 80;
 export const RAVEN_FRAGMENT_NODE_LIMIT = 16;
 export const RAVEN_FRAGMENT_CLIP =

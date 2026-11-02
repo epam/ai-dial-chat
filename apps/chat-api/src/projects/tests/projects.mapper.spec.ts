@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { ProjectSource } from '../dto/project-source.enum';
+import { ProjectWatchAction } from '../dto/project-watch-action.enum';
 import {
   type DialProjectMetadata,
   mapProjectMetadata,
+  mapResourceEventToProjectEvent,
   mapSharedProject,
 } from '../projects.mapper';
 
@@ -98,6 +100,37 @@ describe('mapSharedProject', () => {
     });
   });
 
+  it('keeps the createdAt and updatedAt a newer DIAL Core sends for shared items', () => {
+    expect(
+      mapSharedProject(
+        item({
+          bucket: undefined,
+          name: undefined,
+          url: 'projects/z9y8x7/shared-research',
+          createdAt: 1790000000000,
+          updatedAt: 1791234567000,
+        }),
+      ),
+    ).toMatchObject({
+      id: 'projects/z9y8x7/shared-research',
+      source: ProjectSource.Shared,
+      createdAt: 1790000000000,
+      updatedAt: 1791234567000,
+    });
+  });
+
+  it('leaves both dates unset when an older DIAL Core sends none', () => {
+    const result = mapSharedProject(
+      item({
+        bucket: undefined,
+        name: undefined,
+        url: 'projects/z9y8x7/shared-research',
+      }),
+    );
+    expect(result?.createdAt).toBeUndefined();
+    expect(result?.updatedAt).toBeUndefined();
+  });
+
   it('decodes a percent-encoded shared url', () => {
     const result = mapSharedProject(
       item({ url: 'projects/z9y8x7/Q4%20Launch' }),
@@ -121,5 +154,82 @@ describe('mapSharedProject', () => {
       mapSharedProject({ nodeType: 'FOLDER', url: 'projects/z9y8x7/f/' }),
     ).toBeNull();
     expect(mapSharedProject(item({ url: undefined }))).toBeNull();
+  });
+});
+
+describe('mapResourceEventToProjectEvent', () => {
+  const watched = new Set(['projects/a1b2c3/marketing/q4 launch']);
+
+  it('maps a URL-encoded project event to the watched id', () => {
+    expect(
+      mapResourceEventToProjectEvent(
+        {
+          url: 'projects/a1b2c3/marketing/q4%20launch/',
+          action: 'UPDATE',
+          timestamp: 1761560100000,
+          etag: '"c3d4"',
+          senderPodId: 'pod-1',
+        },
+        watched,
+      ),
+    ).toEqual({
+      id: 'projects/a1b2c3/marketing/q4 launch',
+      action: ProjectWatchAction.Update,
+      timestamp: 1761560100000,
+      etag: '"c3d4"',
+    });
+  });
+
+  it('omits the etag of a DELETE', () => {
+    expect(
+      mapResourceEventToProjectEvent(
+        {
+          url: 'projects/a1b2c3/marketing/q4%20launch',
+          action: 'DELETE',
+          timestamp: 1,
+        },
+        watched,
+      ),
+    ).toEqual({
+      id: 'projects/a1b2c3/marketing/q4 launch',
+      action: ProjectWatchAction.Delete,
+      timestamp: 1,
+    });
+  });
+
+  it('drops the events of files inside a project', () => {
+    expect(
+      mapResourceEventToProjectEvent(
+        {
+          url: 'projects/a1b2c3/marketing/q4%20launch/files/brief.md',
+          action: 'UPDATE',
+          timestamp: 1,
+        },
+        watched,
+      ),
+    ).toBeNull();
+  });
+
+  it('drops an event for a project that is not watched', () => {
+    expect(
+      mapResourceEventToProjectEvent(
+        { url: 'projects/a1b2c3/other', action: 'UPDATE', timestamp: 1 },
+        watched,
+      ),
+    ).toBeNull();
+  });
+
+  it('drops an event without a timestamp or with an unknown action', () => {
+    const url = 'projects/a1b2c3/marketing/q4%20launch';
+
+    expect(
+      mapResourceEventToProjectEvent({ url, action: 'UPDATE' }, watched),
+    ).toBeNull();
+    expect(
+      mapResourceEventToProjectEvent(
+        { url, action: 'MOVE' as never, timestamp: 1 },
+        watched,
+      ),
+    ).toBeNull();
   });
 });

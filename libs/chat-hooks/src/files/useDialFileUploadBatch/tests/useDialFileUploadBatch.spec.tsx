@@ -54,17 +54,17 @@ const renderUploadBatch = (
   return { result, invalidateFolders, bumpRetry, onNotification, filesApi };
 };
 
-beforeEach(() => {
-  vi.mocked(fileNameUtils.sanitizeFileName).mockImplementation(
-    (name: string) => name,
-  );
-});
-
-afterEach(() => {
-  vi.clearAllMocks();
-});
-
 describe('useDialFileUploadBatch', () => {
+  beforeEach(() => {
+    vi.mocked(fileNameUtils.sanitizeFileName).mockImplementation(
+      (name: string) => name,
+    );
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   describe('sanitize -> conflict resolution -> upload mode', () => {
     it('sanitizes file names via onValidateUpload before upload', async () => {
       const mockSanitize = vi.mocked(fileNameUtils.sanitizeFileName);

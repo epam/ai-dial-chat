@@ -49,9 +49,11 @@ enum CsrfErrorCode {
 }
 
 type UnauthorizedListener = (url: string) => void;
+
 const listeners = new Set<UnauthorizedListener>();
 
 let _csrfToken: string | null = null;
+
 export const setCsrfToken = (token: string | null): void => {
   _csrfToken = token;
 };

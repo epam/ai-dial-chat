@@ -58,7 +58,8 @@ vi.mock('../../hooks/attachment/useCanvasVisualizerMessageHandler', () => ({
 vi.mock('../../hooks/attachment/usePdfPreviewLoader', () => ({
   usePdfPreviewLoader: () => undefined,
 }));
-vi.mock('../../hooks/breakpoint/useBreakpoint', () => ({
+vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
   useIsMobile: () => mocks.isMobile,
 }));
 vi.mock('../../hooks/conversation/useConversationListBridge', () => ({
@@ -172,16 +173,16 @@ const renderApp = () =>
     </MemoryRouter>,
   );
 
-beforeEach(() => {
-  mocks.isMobile = false;
-  mocks.isPanelOpen = true;
-  mocks.routeStateArgs = [];
-});
-
 const getSidebar = () =>
   screen.getByRole('navigation', { name: 'sidebar navigation' });
 
 describe('App — navigation', () => {
+  beforeEach(() => {
+    mocks.isMobile = false;
+    mocks.isPanelOpen = true;
+    mocks.routeStateArgs = [];
+  });
+
   it('renders the panel view inside the sidebar on a desktop viewport', () => {
     renderApp();
 

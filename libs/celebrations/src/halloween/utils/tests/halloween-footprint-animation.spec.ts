@@ -40,76 +40,6 @@ const rect = (
   vi.spyOn(element, 'getBoundingClientRect').mockReturnValue(bounds);
   return { element, rect: bounds };
 };
-beforeEach(() => {
-  vi.useFakeTimers();
-  vi.clearAllMocks();
-  recorded.length = 0;
-  fixture = document.createElement('section');
-  fixture.innerHTML =
-    '<div><textarea aria-label="Message">Unsent draft</textarea><button>Model</button></div><button>Starter card</button>';
-  document.body.appendChild(fixture);
-  draft = fixture.querySelector('textarea')!;
-  draft.focus();
-  draft.setSelectionRange(2, 7, 'backward');
-  vi.runOnlyPendingTimers();
-  const composer = fixture.firstElementChild as HTMLElement;
-  plan = buildFootprintPlan(
-    {
-      width: 1280,
-      height: 800,
-      composer: rect(composer, 400, 300, 500, 150),
-      card: rect(fixture.lastElementChild as HTMLElement, 480, 230, 140, 44),
-    },
-    false,
-  );
-  host = document.createElement('div');
-  copies = document.createElement('div');
-  host.appendChild(copies);
-  document.body.appendChild(host);
-  prints = plan.prints.map(() => {
-    const element = document.createElement('div');
-    host.appendChild(element);
-    return element;
-  });
-  surface = document.createElement('div');
-  face = document.createElement('div');
-  Object.keys(plan.faceParts).forEach((part) => {
-    const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    group.setAttribute('data-footprint-part', part);
-    face.appendChild(group);
-  });
-  host.append(surface, face);
-  vi.stubGlobal(
-    'ResizeObserver',
-    class {
-      constructor(callback: ResizeObserverCallback) {
-        onResize = callback;
-      }
-      observe = vi.fn();
-      disconnect = disconnected;
-    },
-  );
-  Object.defineProperty(Element.prototype, 'animate', {
-    configurable: true,
-    value: vi.fn(function (this: Element, frames: Keyframe[]) {
-      const animation = { cancel: vi.fn() };
-      recorded.push({ element: this, frames, animation });
-      return animation;
-    }),
-  });
-});
-afterEach(() => {
-  stop?.();
-  stop = undefined;
-  host.remove();
-  fixture.remove();
-  vi.unstubAllGlobals();
-  vi.restoreAllMocks();
-  vi.useRealTimers();
-  if (originalAnimate)
-    Object.defineProperty(Element.prototype, 'animate', originalAnimate);
-  else Reflect.deleteProperty(Element.prototype, 'animate');
-});
 const play = () => {
   stop = animateFootprints(
     plan,
@@ -128,6 +58,78 @@ const expectStopped = () => {
 };
 
 describe('invisible cat playback ownership', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    recorded.length = 0;
+    fixture = document.createElement('section');
+    fixture.innerHTML =
+      '<div><textarea aria-label="Message">Unsent draft</textarea><button>Model</button></div><button>Starter card</button>';
+    document.body.appendChild(fixture);
+    draft = fixture.querySelector('textarea')!;
+    draft.focus();
+    draft.setSelectionRange(2, 7, 'backward');
+    vi.runOnlyPendingTimers();
+    const composer = fixture.firstElementChild as HTMLElement;
+    plan = buildFootprintPlan(
+      {
+        width: 1280,
+        height: 800,
+        composer: rect(composer, 400, 300, 500, 150),
+        card: rect(fixture.lastElementChild as HTMLElement, 480, 230, 140, 44),
+      },
+      false,
+    );
+    host = document.createElement('div');
+    copies = document.createElement('div');
+    host.appendChild(copies);
+    document.body.appendChild(host);
+    prints = plan.prints.map(() => {
+      const element = document.createElement('div');
+      host.appendChild(element);
+      return element;
+    });
+    surface = document.createElement('div');
+    face = document.createElement('div');
+    Object.keys(plan.faceParts).forEach((part) => {
+      const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      group.setAttribute('data-footprint-part', part);
+      face.appendChild(group);
+    });
+    host.append(surface, face);
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(callback: ResizeObserverCallback) {
+          onResize = callback;
+        }
+        observe = vi.fn();
+        disconnect = disconnected;
+      },
+    );
+    Object.defineProperty(Element.prototype, 'animate', {
+      configurable: true,
+      value: vi.fn(function (this: Element, frames: Keyframe[]) {
+        const animation = { cancel: vi.fn() };
+        recorded.push({ element: this, frames, animation });
+        return animation;
+      }),
+    });
+  });
+
+  afterEach(() => {
+    stop?.();
+    stop = undefined;
+    host.remove();
+    fixture.remove();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+    if (originalAnimate)
+      Object.defineProperty(Element.prototype, 'animate', originalAnimate);
+    else Reflect.deleteProperty(Element.prototype, 'animate');
+  });
+
   it.each([true, false])(
     'animates only an input outline, preserving focused drafts, mobile=%s',
     (mobile) => {

@@ -28,6 +28,7 @@ import type {
   SendCompletionDto,
   StopCompletionDto,
   UpdateProjectResponseDto,
+  WatchProjectsBodyDto,
 } from '../models/index';
 
 export interface AttachToProjectGenerationRequest {
@@ -113,6 +114,10 @@ export interface UpdateProjectRequest {
   fileNames?: string;
   removedFileNames?: string;
   files?: Array<Blob>;
+}
+
+export interface WatchProjectsRequest {
+  watchProjectsBodyDto: WatchProjectsBodyDto;
 }
 
 /**
@@ -1309,6 +1314,71 @@ export class ProjectsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<UpdateProjectResponseDto> {
     const response = await this.updateProjectRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Opens one DIAL Core resource subscription for the given project ids and streams project-level changes as SSE: each `data:` line is a `ProjectWatchEventDto`. Events of files inside a project are dropped, and a `: keepalive` comment is sent every 15 seconds. The stream lasts until the client disconnects or DIAL Core ends it.
+   * Follow changes to listed projects via SSE
+   */
+  async watchProjectsRaw(
+    requestParameters: WatchProjectsRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<string>> {
+    if (requestParameters['watchProjectsBodyDto'] == null) {
+      throw new runtime.RequiredError(
+        'watchProjectsBodyDto',
+        'Required parameter "watchProjectsBodyDto" was null or undefined when calling watchProjects().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/projects/watch`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['watchProjectsBodyDto'],
+      },
+      initOverrides,
+    );
+
+    if (this.isJsonMime(response.headers.get('content-type'))) {
+      return new runtime.JSONApiResponse<string>(response);
+    } else {
+      return new runtime.TextApiResponse(response);
+    }
+  }
+
+  /**
+   * Opens one DIAL Core resource subscription for the given project ids and streams project-level changes as SSE: each `data:` line is a `ProjectWatchEventDto`. Events of files inside a project are dropped, and a `: keepalive` comment is sent every 15 seconds. The stream lasts until the client disconnects or DIAL Core ends it.
+   * Follow changes to listed projects via SSE
+   */
+  async watchProjects(
+    requestParameters: WatchProjectsRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<string> {
+    const response = await this.watchProjectsRaw(
       requestParameters,
       initOverrides,
     );

@@ -10,6 +10,8 @@ import {
   type CatalogEditNavigationLabels,
   type CatalogEditNavigationUrls,
   findDeploymentByIdOrReference,
+  findSchemaDisplayName,
+  resolveFavoriteEntityType,
   type ToolsetCredentialsLabels,
   useCatalogEditNavigation,
   useCatalogToolsetCredentials,
@@ -79,11 +81,7 @@ import {
   getCatalogNoResultsTitle,
   getCatalogSearchPlaceholder,
 } from '../../utils/catalog';
-import {
-  findSchemaDisplayName,
-  resolveCatalogItemEntity,
-} from '../../utils/entity-notification';
-import { resolveFavoriteEntityType } from '../../utils/favorites';
+import { resolveCatalogItemEntity } from '../../utils/entity-notification';
 import {
   getAccessRulesLabels,
   getPublishAuthorLabels,
@@ -240,6 +238,7 @@ const CatalogView: FC<Props> = ({
     prompts,
     sharedWithMe: sharedPrompts,
     publicPrompts,
+    error: promptsError,
     refetchPrompts,
   } = usePrompts();
 
@@ -274,6 +273,12 @@ const CatalogView: FC<Props> = ({
     if (skillsError == null) return;
     showErrorNotification({ message: t(CatalogI18nKeys.SkillsLoadError) });
   }, [skillsError, showErrorNotification, t]);
+
+  // Same for prompts: without it the Prompts tab silently disappears.
+  useEffect(() => {
+    if (!isPromptsEnabled || promptsError == null) return;
+    showErrorNotification({ message: t(CatalogI18nKeys.PromptsLoadError) });
+  }, [isPromptsEnabled, promptsError, showErrorNotification, t]);
 
   const {
     quickAppDeploymentIds,

@@ -17,16 +17,16 @@ class IntersectionObserverMock {
   }
 }
 
-beforeEach(() => {
-  vi.stubGlobal('IntersectionObserver', IntersectionObserverMock);
-});
-
-afterEach(() => {
-  vi.unstubAllGlobals();
-  vi.useRealTimers();
-});
-
 describe('TableHeader', () => {
+  beforeEach(() => {
+    vi.stubGlobal('IntersectionObserver', IntersectionObserverMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+
   it('renders action descriptors as accessible tooltip buttons', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     const user = userEvent.setup({ delay: null });

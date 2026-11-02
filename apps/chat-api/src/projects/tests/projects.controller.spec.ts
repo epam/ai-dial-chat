@@ -26,6 +26,7 @@ import { ProjectsService } from '../projects.service';
 import { ProjectCreateErrorCode } from '../types/project-create-error-code.enum';
 import { ProjectsUpdateService } from '../update/projects-update.service';
 import { projectConflict } from '../utils/project-create-error.util';
+import { ProjectsWatchService } from '../watch/projects-watch.service';
 
 const TEST_USER = {
   sub: 'user-1',
@@ -82,6 +83,7 @@ const buildApp = async (
       { provide: ProjectsService, useValue: service },
       { provide: ProjectsDownloadService, useValue: downloadService },
       { provide: ProjectsUpdateService, useValue: updateService },
+      { provide: ProjectsWatchService, useValue: { watchProjects: vi.fn() } },
       ProjectContextUploadInterceptor,
       { provide: ConfigService, useValue: testConfig },
     ],

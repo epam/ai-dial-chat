@@ -1,5 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, registerDecorator } from 'class-validator';
+import {
+  IsString,
+  registerDecorator,
+  type ValidationOptions,
+} from 'class-validator';
 import { IsDialEntityName } from '../../common/validators/dial-entity-name.validator';
 import { parseProjectId } from '../utils/project-id.util';
 
@@ -14,18 +18,21 @@ export const PROJECT_ID_PARAM = {
 };
 
 /** class-validator decorator: the value parses as a `projects/{bucket}/{path…}` id. */
-const IsProjectId = () => (object: object, propertyName: string) => {
-  registerDecorator({
-    name: 'isProjectId',
-    target: object.constructor,
-    propertyName,
-    validator: {
-      validate: (value: unknown) => parseProjectId(value) != null,
-      defaultMessage: () =>
-        `${propertyName} must be a projects/{bucket}/{path} id whose segments are valid DIAL names`,
-    },
-  });
-};
+export const IsProjectId =
+  (validationOptions?: ValidationOptions) =>
+  (object: object, propertyName: string) => {
+    registerDecorator({
+      name: 'isProjectId',
+      target: object.constructor,
+      propertyName,
+      options: validationOptions,
+      validator: {
+        validate: (value: unknown) => parseProjectId(value) != null,
+        defaultMessage: () =>
+          `${propertyName} must be a projects/{bucket}/{path} id whose segments are valid DIAL names`,
+      },
+    });
+  };
 
 /** `:id` path param of the per-project endpoints. */
 export class ProjectIdParamDto {

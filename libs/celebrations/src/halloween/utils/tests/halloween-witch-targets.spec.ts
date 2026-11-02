@@ -21,26 +21,28 @@ const add = (label: string) => {
   rect(button, 420 + composer.children.length * 5, 390);
   return button;
 };
-beforeEach(() => {
-  root = document.createElement('section');
-  root.setAttribute('role', 'region');
-  composer = document.createElement('div');
-  composer.className = anchors.composer;
-  root.appendChild(composer);
-  document.body.appendChild(root);
-  vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(
-    1280,
-  );
-  vi.spyOn(document.documentElement, 'clientHeight', 'get').mockReturnValue(
-    800,
-  );
-  rect(composer, 350, 300, 600, 160);
-});
-afterEach(() => {
-  root.remove();
-  vi.restoreAllMocks();
-});
 describe('witch target eligibility', () => {
+  beforeEach(() => {
+    root = document.createElement('section');
+    root.setAttribute('role', 'region');
+    composer = document.createElement('div');
+    composer.className = anchors.composer;
+    root.appendChild(composer);
+    document.body.appendChild(root);
+    vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(
+      1280,
+    );
+    vi.spyOn(document.documentElement, 'clientHeight', 'get').mockReturnValue(
+      800,
+    );
+    rect(composer, 350, 300, 600, 160);
+  });
+
+  afterEach(() => {
+    root.remove();
+    vi.restoreAllMocks();
+  });
+
   it('selects two desktop or one mobile button without copying the composer', () => {
     add('Attach');
     add('Model');

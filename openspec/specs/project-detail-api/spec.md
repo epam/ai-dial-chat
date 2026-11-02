@@ -140,6 +140,11 @@ The project `name` SHALL always be the last segment of the path, as in the listi
 - **WHEN** the stored `PROJECT.md` frontmatter is `name: q4`, `description: old`, `owner: research`, and the user saves a new description
 - **THEN** the written `PROJECT.md` frontmatter is `name: q4`, `description: new`, `owner: research`, in that order
 
+#### Scenario: An update without a description keeps the stored one
+
+- **WHEN** the stored `PROJECT.md` frontmatter has `description: old` and a `PUT` omits the `description` field (the chat's edit form has no description field)
+- **THEN** the written `PROJECT.md` frontmatter keeps `description: old`
+
 #### Scenario: Missing PROJECT.md falls back
 
 - **WHEN** the snapshot of `projects/a1b2c3/marketing/q4-launch` has no `PROJECT.md`

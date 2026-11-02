@@ -351,4 +351,5 @@ const HalloweenMimic: FC = () => {
     </div>
   );
 };
+
 export default HalloweenMimic;

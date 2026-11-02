@@ -16,28 +16,30 @@ import {
   mapStages,
   messageHasStages,
   openAnnotationAttachment,
+  prepareStageCitations,
   referenceAttachmentToPdfCanvasContent,
   resolveGroupedVisualizerCanvasContent,
   useAttachmentAction,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
-  CodeBlockTheme,
-  COMPACT_MARKDOWN_CLASS_NAMES,
-  isStatusMessage,
-  mergeClasses,
-  MessageRole,
   type Annotation,
   type Attachment,
   type AttachmentErrorReason,
+  CodeBlockTheme,
+  COMPACT_MARKDOWN_CLASS_NAMES,
   type DisplayAttachment,
-  type MessageRating,
+  isStatusMessage,
+  mergeClasses,
   type Message as MessageType,
-  type ResponseFormat,
+  type MessageRating,
+  MessageRole,
   type RequestSkill,
+  type ResponseFormat,
   type StarterOption,
   type TextSegment,
   type UploadedAttachmentResult,
+  useIsMobile,
 } from '@epam/ai-dial-chat-shared';
 import type {
   CommandMenuConfig,
@@ -107,7 +109,6 @@ import {
 import { useTheme } from '../../context/ThemeContext';
 import { useApplicationVisualizers } from '../../hooks/attachment/useApplicationVisualizers';
 import { useMcpAppHostAdapter } from '../../hooks/attachment/useMcpAppHostAdapter';
-import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { ThemeId } from '../../types/theme-id';
@@ -126,7 +127,6 @@ import {
   getMessageStarterProps,
   getStatusMessageProps,
   isStreamingMessage,
-  prepareStageCitations,
 } from './utils/message-display';
 
 const EditMessageInput = lazy(async () => {

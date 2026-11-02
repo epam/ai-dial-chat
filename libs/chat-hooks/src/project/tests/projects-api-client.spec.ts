@@ -25,6 +25,7 @@ const makeClient = () => {
     renameProjectConversation: vi.fn(),
     deleteProjectConversation: vi.fn(),
     attachToProjectGenerationRaw: vi.fn(),
+    watchProjectsRaw: vi.fn(),
   };
   return {
     generated,
@@ -191,5 +192,23 @@ describe('createProjectsApiClient', () => {
       id: PROJECT_ID,
       attachGenerationDto: { path: 'a1b2c3/q4/conversations/x' },
     });
+  });
+
+  it('returns the watch stream for the ids with the caller signal and rejects an empty body', async () => {
+    const { client, generated } = makeClient();
+    const signal = new AbortController().signal;
+    generated.watchProjectsRaw
+      .mockResolvedValueOnce({ raw: new Response(new ReadableStream()) })
+      .mockResolvedValueOnce({ raw: new Response(null) });
+
+    await expect(
+      client.watchProjects([PROJECT_ID], signal),
+    ).resolves.toBeInstanceOf(ReadableStream);
+    await expect(client.watchProjects([PROJECT_ID])).rejects.toThrow();
+    expect(generated.watchProjectsRaw).toHaveBeenNthCalledWith(
+      1,
+      { watchProjectsBodyDto: { ids: [PROJECT_ID] } },
+      { signal },
+    );
   });
 });

@@ -72,47 +72,47 @@ const animateDescriptor = Object.getOwnPropertyDescriptor(
   'animate',
 );
 
-beforeEach(() => {
-  vi.clearAllMocks();
-  vi.mocked(buildCatPlan).mockReset();
-  state.mobile = false;
-  state.reduced = false;
-  state.listeners.clear();
-  Object.defineProperty(Element.prototype, 'animate', {
-    configurable: true,
-    writable: true,
-    value: vi.fn(),
-  });
-  vi.mocked(animateCat).mockReturnValue(stop);
-  vi.mocked(getCatTargets).mockReturnValue({
-    width: 1280,
-    height: 900,
-    composer: {
-      element: document.createElement('section'),
-      rect: new DOMRect(420, 420, 540, 100),
-    },
-    buttons: [
-      {
-        element: document.createElement('button'),
-        rect: new DOMRect(440, 470, 40, 40),
-      },
-      {
-        element: document.createElement('button'),
-        rect: new DOMRect(492, 470, 40, 40),
-      },
-    ],
-    supports: [],
-  });
-});
-
-afterEach(() => {
-  if (animateDescriptor)
-    Object.defineProperty(Element.prototype, 'animate', animateDescriptor);
-  else Reflect.deleteProperty(Element.prototype, 'animate');
-  vi.restoreAllMocks();
-});
-
 describe('cat scene integration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(buildCatPlan).mockReset();
+    state.mobile = false;
+    state.reduced = false;
+    state.listeners.clear();
+    Object.defineProperty(Element.prototype, 'animate', {
+      configurable: true,
+      writable: true,
+      value: vi.fn(),
+    });
+    vi.mocked(animateCat).mockReturnValue(stop);
+    vi.mocked(getCatTargets).mockReturnValue({
+      width: 1280,
+      height: 900,
+      composer: {
+        element: document.createElement('section'),
+        rect: new DOMRect(420, 420, 540, 100),
+      },
+      buttons: [
+        {
+          element: document.createElement('button'),
+          rect: new DOMRect(440, 470, 40, 40),
+        },
+        {
+          element: document.createElement('button'),
+          rect: new DOMRect(492, 470, 40, 40),
+        },
+      ],
+      supports: [],
+    });
+  });
+
+  afterEach(() => {
+    if (animateDescriptor)
+      Object.defineProperty(Element.prototype, 'animate', animateDescriptor);
+    else Reflect.deleteProperty(Element.prototype, 'animate');
+    vi.restoreAllMocks();
+  });
+
   it.each([true, false])(
     'connects articulated artwork without disturbing the focused draft, mobile=%s',
     async (mobile) => {

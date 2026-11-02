@@ -1,6 +1,9 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import type { SkillEditorProps } from '../../../models/skill-editor-props';
+import { SkillEditor } from '../SkillEditor';
+
 vi.mock('@epam/ai-dial-ui-kit/editors', () => ({
   LazyMarkdownEditor: () =>
     Promise.resolve({
@@ -50,8 +53,7 @@ const field = (name = 'Description') =>
   screen.getByRole<HTMLTextAreaElement>('textbox', {
     name: new RegExp('^' + name),
   });
-import type { SkillEditorProps } from '../../../models/skill-editor-props';
-import { SkillEditor } from '../SkillEditor';
+
 vi.mock('@epam/ai-dial-react-file-manager', async (importOriginal) => ({
   ...(await importOriginal<object>()),
   DialFoldersTree: () => null,

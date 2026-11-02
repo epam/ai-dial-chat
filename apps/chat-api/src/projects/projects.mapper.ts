@@ -2,13 +2,21 @@ import type { components } from '@epam/ai-dial-typescript-sdk';
 import { StringUtils } from '../common/utils/string-utils';
 import { safeDecodeURIComponent } from '../common/utils/uri';
 import { ProjectSource } from './dto/project-source.enum';
+import { ProjectWatchAction } from './dto/project-watch-action.enum';
+import type { ProjectWatchEventDto } from './dto/project-watch-event.dto';
 import type { ProjectDto } from './dto/project.dto';
 
 export type DialProjectMetadata = components['schemas']['MetadataBase'] & {
   nextToken?: string;
 };
 
+type DialResourceEvent = components['schemas']['ResourceEvent'];
+
 const PROJECTS_URL_PREFIX = 'projects';
+
+const WATCH_ACTIONS: ReadonlySet<string> = new Set(
+  Object.values(ProjectWatchAction),
+);
 
 const buildProject = (
   bucket: string,
@@ -76,4 +84,36 @@ export const mapSharedProject = (
   if (segments.length === 0) return null;
 
   return buildProject(bucket, segments, ProjectSource.Shared, item);
+};
+
+/**
+ * Maps one DIAL Core resource event to a watch event for the project it
+ * names. The decoded url must equal a watched id exactly, so the events of
+ * files inside a project (`{id}/files/...`) and anything unexpected are
+ * dropped (`null`) rather than parsed.
+ */
+export const mapResourceEventToProjectEvent = (
+  event: DialResourceEvent,
+  watchedIds: ReadonlySet<string>,
+): ProjectWatchEventDto | null => {
+  if (
+    event.url == null ||
+    event.action == null ||
+    !WATCH_ACTIONS.has(event.action) ||
+    typeof event.timestamp !== 'number'
+  ) {
+    return null;
+  }
+
+  const id = StringUtils.stripTrailingSlashes(
+    safeDecodeURIComponent(event.url),
+  );
+  if (!watchedIds.has(id)) return null;
+
+  return {
+    id,
+    action: event.action as ProjectWatchAction,
+    timestamp: event.timestamp,
+    ...(event.etag != null && { etag: event.etag }),
+  };
 };

@@ -22,9 +22,6 @@ import {
   SkillSelectorI18nKeys,
 } from '../constants/translation-keys';
 
-/** Minimum lead time a one-shot `runAt` must be ahead of "now" to be accepted. */
-export const RUN_AT_MIN_LEAD_MS = 60_000;
-
 const VALIDATION_ERROR_KEYS: Record<
   ScheduledTaskValidationErrorCode,
   EditorI18nKeys | ScheduledTasksI18nKeys | SkillSelectorI18nKeys
@@ -144,9 +141,6 @@ export const validateScheduledTaskForm = (
   t: TFunction,
 ): ScheduledTaskCreateFormErrors =>
   mapScheduledTaskValidationErrors(
-    validateScheduledTaskFormValues(data, {
-      now: new Date(),
-      minimumLeadMs: RUN_AT_MIN_LEAD_MS,
-    }),
+    validateScheduledTaskFormValues(data, { now: new Date() }),
     t,
   );

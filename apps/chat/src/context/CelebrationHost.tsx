@@ -4,6 +4,7 @@ import {
   type CelebrationEventLoader,
   type CelebrationNotification,
 } from '@epam/ai-dial-celebrations';
+import { useIsMobile } from '@epam/ai-dial-chat-shared';
 import { CONVERSATION_INPUT_CLASS } from '@epam/ai-dial-conversation-input';
 import { STARTER_BUTTONS_CLASS } from '@epam/ai-dial-starter-buttons';
 import { useCallback, useMemo, type FC, type ReactNode } from 'react';
@@ -14,7 +15,6 @@ import {
   HalloweenI18nKeys,
   NewYearI18nKeys,
 } from '../constants/translation-keys';
-import { useIsMobile } from '../hooks/breakpoint/useBreakpoint';
 import { useCelebrationPreference } from '../hooks/celebration/useCelebrationPreference';
 import { ROUTES } from '../types/routes';
 import { UserConfigStatus } from '../types/user-config-status';

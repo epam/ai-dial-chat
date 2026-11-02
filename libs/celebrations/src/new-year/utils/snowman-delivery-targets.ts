@@ -69,6 +69,7 @@ const TRAVEL = {
   mobile: { min: 100, max: 220 },
 };
 const VIEWPORT_MARGIN = 16;
+
 /* Native-unit spacing of the staged props. */
 /** He stands this far before the card's near edge to grip its bottom edge. */
 export const STANCE_TO_CARD = 14;

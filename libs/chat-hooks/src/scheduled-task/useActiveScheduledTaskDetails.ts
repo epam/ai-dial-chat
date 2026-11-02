@@ -2,6 +2,7 @@ import type { ScheduledTaskDto } from '@epam/ai-dial-chat-api-client';
 import { useCallback, useEffect, useState } from 'react';
 import { getApiErrorStatus } from '../api-error/api-error';
 import { ActiveScheduledTaskDetailState } from './active-scheduled-task';
+
 /** Host-supplied cancellable task loader. */
 export type ActiveScheduledTaskLoader = (
   id: string,

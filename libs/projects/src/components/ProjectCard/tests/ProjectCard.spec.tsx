@@ -1,5 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it, vi } from 'vitest';
 import { ProjectSource } from '../../../types/project-source';
 import { ProjectCard, type ProjectCardProps } from '../ProjectCard';
 
@@ -17,6 +18,7 @@ const renderCard = (overrides: Partial<ProjectCardProps> = {}) =>
         sourceLabel="Organization"
         folderPathLabel="Project location"
         pinnedLabel="Pinned"
+        pinLabel="Pin"
         now={Date.UTC(2026, 2, 4)}
         locale="en"
         updatedAtClassName="dial-tiny-text"
@@ -86,5 +88,46 @@ describe('ProjectCard', () => {
 
     expect(screen.queryByRole('link')).toBeNull();
     expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  describe('ProjectCard — pin toggle', () => {
+    it('offers a pressed toggle on a pinned card and unpins it', async () => {
+      const onTogglePin = vi.fn();
+      renderCard({
+        project: {
+          id: 'p1',
+          name: 'Handbook',
+          source: ProjectSource.Organization,
+          isPinned: true,
+        },
+        onTogglePin,
+      });
+
+      const toggle = screen.getByRole('button', { name: 'Pin' });
+      expect(toggle.getAttribute('aria-pressed')).toBe('true');
+      expect(screen.queryByText('Pinned')).toBeNull();
+
+      await userEvent.click(toggle);
+      expect(onTogglePin).toHaveBeenCalledWith('p1', false);
+    });
+
+    it('pins an unpinned card without following its link', async () => {
+      const onTogglePin = vi.fn();
+      const onOpen = vi.fn();
+      renderCard({ onTogglePin, onOpen, href: '/projects/view/p1' });
+
+      const toggle = screen.getByRole('button', { name: 'Pin' });
+      expect(toggle.getAttribute('aria-pressed')).toBe('false');
+
+      await userEvent.click(toggle);
+      expect(onTogglePin).toHaveBeenCalledWith('p1', true);
+      expect(onOpen).not.toHaveBeenCalled();
+    });
+
+    it('shows no toggle without onTogglePin', () => {
+      renderCard();
+
+      expect(screen.queryByRole('button', { name: 'Pin' })).toBeNull();
+    });
   });
 });

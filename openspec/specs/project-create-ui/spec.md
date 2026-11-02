@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The flag-gated `/projects/new` page and the host-agnostic `ProjectCreateForm` in `@epam/ai-dial-projects`: fields, Refine with AI, context files from the device and the file manager, the capacity meter, validation, submission, the leave guard, i18n, and the mobile-first, RTL and WCAG 2.1 AAA requirements.
+The flag-gated `/projects/new` page and the host-agnostic `ProjectCreateForm` in `@epam/ai-dial-projects`: fields, Refine with AI, context files from the device and the file manager, validation, submission, the leave guard, i18n, and the mobile-first, RTL and WCAG 2.1 AAA requirements.
 
 ## Requirements
 
@@ -26,7 +26,7 @@ The application SHALL register `ROUTES.ProjectCreate` (`/projects/new`) as a laz
 
 `ProjectCreatePage` SHALL own the form state:
 
-- `values: ProjectCreateFormValues` (`{ name, description, instructions }`, all initially `''`);
+- `values: ProjectCreateFormValues` (`{ name, instructions }`, both initially `''`);
 - `contextFiles: Attachment[]`, using the `Attachment` type from `@epam/ai-dial-chat-shared`, initially `[]`;
 - `errors: ProjectCreateFormErrors`.
 
@@ -34,9 +34,9 @@ No new React context is introduced.
 
 Submission goes through a `useCreateProject` hook (`apps/chat/src/hooks/projects/useCreateProject.ts`, one hook per file, with JSDoc on why it exists).
 
-- The hook calls `createProject(values, files, signal)` in `apps/chat/src/server-api/projects.api.ts`, which calls `projectsApi.createProject({ name, description, instructions, fileNames: JSON.stringify(names), files })` on the generated `ProjectsApi`.
+- The hook calls `createProject(values, files, signal)` in `apps/chat/src/server-api/projects.api.ts`, which calls `projectsApi.createProject({ name, instructions, fileNames: JSON.stringify(names), files })` on the generated `ProjectsApi`. The form has no description field, so no `description` is sent and the BFF stores an empty one.
 - The request is aborted on unmount.
-- Before submitting, the page trims leading and trailing whitespace from `name`. Description and instructions are sent unchanged.
+- Before submitting, the page trims leading and trailing whitespace from `name`. Instructions are sent unchanged.
 
 The page maps outcomes as follows:
 
@@ -59,7 +59,7 @@ The page maps outcomes as follows:
 #### Scenario: Duplicate name stays inline
 
 - **WHEN** `createProject` rejects with `409` and `code: 'name-taken'`
-- **THEN** the Name field shows the localized "A project with this name already exists" error, no toast is shown, and the entered description, instructions and files are kept
+- **THEN** the Name field shows the localized "A project with this name already exists" error, no toast is shown, and the entered instructions and files are kept
 
 #### Scenario: Upstream failure keeps the draft
 
@@ -70,7 +70,7 @@ The page maps outcomes as follows:
 
 `libs/projects` SHALL export `ProjectCreateForm`, together with:
 
-- the `ProjectCreateFormProps`, `ProjectCreateFormLabels`, `ProjectCreateFormValues`, `ProjectCreateFormErrors` and `ProjectCreateFormStyles` types;
+- the `ProjectCreateFormProps`, `ProjectCreateFormLabels`, `ProjectCreateFormValues`, `ProjectCreateFormErrors`, `ProjectCreateFormStyles` and `ProjectDropZoneLinks` types;
 - the `ProjectCreateFormColors` and `ProjectCreateFormTypography` types;
 - the `ProjectContextFile` and `StoredProjectContextFile` types;
 - the `ProjectNameError` and `ContextFileRejection` string enums;
@@ -102,8 +102,7 @@ Its props:
 | `allowedExtensions` | `string[]` (lower-case, without a dot) |
 | `maxFileBytes` | `number` |
 | `maxTotalBytes` | `number` |
-| `onPickFromFileManager` | optional `() => Promise<File[] \| undefined>`; the File manager source is hidden when omitted |
-| `onRefineDescription` | optional `(value: string, signal: AbortSignal) => Promise<string>` |
+| `onPickFromFileManager` | optional `() => Promise<File[] \| undefined>`; the drop zone's file manager link is absent when omitted |
 | `onRefineInstructions` | optional `(value: string, signal: AbortSignal) => Promise<string>` |
 | `onBack` | `() => void` |
 | `onCancel` | `() => void` |
@@ -118,7 +117,7 @@ Every declared prop SHALL be read. The same component serves the edit page (`pro
 `ProjectCreatePage` supplies the host-owned pieces:
 
 - `allowedExtensions`, `maxFileBytes` and `maxTotalBytes`, from `useAppConfig().config`;
-- the refinement callbacks, from `useTextRefinementCallback`;
+- the Instructions refinement callback, from `useTextRefinementCallback`;
 - `onPickFromFileManager`, from `useProjectFileManagerPicker`;
 - every string, from `useProjectCreateFormLabels`, which formats the limits named in `labels.dropZoneHint` and the too-large message with `formatFileSize` from `@epam/ai-dial-chat-shared`.
 
@@ -163,7 +162,7 @@ While `isSubmitting`, Create shows the kit loading state and its accessible name
 
 #### Scenario: Cancel with unsaved changes asks for confirmation
 
-- **WHEN** the user has typed a description and activates Cancel
+- **WHEN** the user has typed instructions and activates Cancel
 - **THEN** the unsaved-changes confirmation opens, and the route changes only after the user confirms
 
 #### Scenario: Clean form leaves without confirmation
@@ -204,24 +203,25 @@ The client error appears after the field is first blurred, or after a submit att
 - **WHEN** `errors.name` is "A project with this name already exists"
 - **THEN** that text is rendered, and the Name input's `aria-describedby` includes its element id
 
-### Requirement: Description and Instructions support Refine with AI
+### Requirement: Instructions support Refine with AI
 
-- **Description** SHALL be a multi-line `Textarea` with the label `labels.descriptionLabel` and the placeholder `labels.descriptionPlaceholder` ("Describe what the project is about").
+The form SHALL have no Description field (design: Figma "Projects - Create project", nodes `1:1675` and `1:1692`). Name is followed directly by Instructions.
+
 - **Instructions** SHALL be the `MarkdownEditor` from `LazyMarkdownEditor()` (`@epam/ai-dial-ui-kit/editors`). It is loaded lazily, exactly as `libs/skill-editor/src/components/SkillEditor/SkillEditor.tsx` does, with its toolbar (bold, italic, strike, heading, lists, quote, link, code, table) and its edit / split / preview / fullscreen modes. It has the label `labels.instructionsLabel` and the placeholder `labels.instructionsPlaceholder` ("Explain your reasoning step by step for complex problems. Use specific examples.").
 
-Each field is wrapped in `TextRefinementField` and driven by `useTextRefinement` from `@epam/ai-dial-chat-shared`, wired as in the Skill Editor:
+The field is wrapped in `TextRefinementField` and driven by `useTextRefinement` from `@epam/ai-dial-chat-shared`, wired as in the Skill Editor:
 
-- The Refine with AI action renders only when its callback is supplied.
-- At most one refinement is pending per form. While it is pending, the other Refine action and Create are disabled.
+- The Refine with AI action renders only when `onRefineInstructions` is supplied.
+- While a refinement is pending, Create is disabled.
 - Undo restores the pre-refinement text.
-- The refined text is published through `onFieldChange('description' | 'instructions', text)`.
+- The refined text is published through `onFieldChange('instructions', text)`.
 
-`labels.refinement` (`TextRefinementLabels`) carries the copy. The app uses `TextRefinementPurpose.ProjectDescription` / `ProjectInstructions`, and supplies the callbacks only when `config.aiTextRefinementAvailable` is true.
+`labels.refinement` (`TextRefinementLabels`) carries the copy. The app uses `TextRefinementPurpose.ProjectInstructions`, and supplies the callback only when `config.aiTextRefinementAvailable` is true.
 
-#### Scenario: Refine Description
+#### Scenario: No description field
 
-- **WHEN** the user activates Refine with AI on Description
-- **THEN** `onRefineDescription` is called with the current text and an `AbortSignal`, the result replaces Description through `onFieldChange('description', …)`, and Undo restores the original text
+- **WHEN** the form renders
+- **THEN** there is no Description control between Name and Instructions
 
 #### Scenario: Refine Instructions keeps markdown
 
@@ -230,16 +230,17 @@ Each field is wrapped in `TextRefinementField` and driven by `useTextRefinement`
 
 #### Scenario: Refinement unavailable
 
-- **WHEN** neither refinement callback is supplied
-- **THEN** neither field shows the Refine with AI action
+- **WHEN** `onRefineInstructions` is not supplied
+- **THEN** Instructions shows no Refine with AI action
 
 ### Requirement: Context files are added from the device or the file manager
 
 The Context section SHALL render:
 
-- **A drop zone**: the kit `FileDropzone`. Its label is `labels.dropZoneLabel` ("Drag&drop context, upload from device or file manager"), and its hint is the host-resolved `labels.dropZoneHint` ("File formats .csv, .pdf, .xlsx (max 1 MB)"), which names the same limits the host passes as props. The kit renders the area as a label over a visually hidden file input, so it is keyboard-operable and announced as a file input. The `accept` attribute is built from `allowedExtensions`.
+- **A drop zone**: the kit `FileDropzone`. Its label is `labels.dropZoneLabel(links)` ("Drag&drop context, upload from device or file manager"), where `links` (`ProjectDropZoneLinks`) holds two empty elements the host fills with their text: `fromDevice`, an underlined span (the whole zone opens the device picker), and `fileManager`, a button that calls `onPickFromFileManager()` without opening the device picker, present only when that prop is supplied. The app renders the sentence with `Trans` and the keys `projects.create.context.dropZone` / `projects.create.context.dropZoneDeviceOnly`. The file input's accessible name is `labels.dropZoneAriaLabel` ("Upload context from device"). Its hint is the host-resolved `labels.dropZoneHint` ("File formats .csv, .pdf, .xlsx (max 1 MB)"), which names the same limits the host passes as props. The kit renders the area as a label over a visually hidden file input, so it is keyboard-operable and announced as a file input. The `accept` attribute is built from `allowedExtensions`.
 - **A drag overlay**: `FileDndOverlay` from `@epam/ai-dial-attachment-input`, shown while a file-bearing drag is over the form.
-- **An Add menu**: a kit `ButtonDropdown` labelled `labels.addLabel`, with two items. `labels.addFromDeviceLabel` opens the native picker. `labels.addFromFileManagerLabel` calls `onPickFromFileManager()`, and is present only when that prop is supplied.
+
+The Context header carries only the `labels.contextLabel` heading: there is no Add menu and no capacity meter.
 
 Files from every source go through `checkContextFiles(incoming, contextFiles, { allowedExtensions, maxFileBytes, maxTotalBytes })`. The helper returns `{ accepted: Attachment[]; rejected: { name: string; reason: ContextFileRejection }[] }`. The members of `ContextFileRejection` are `UnsupportedType = 'unsupported-type'`, `TooLarge = 'too-large'`, `CapacityExceeded = 'capacity-exceeded'`, `Duplicate = 'duplicate'` and `InvalidName = 'invalid-name'`. The helper rejects:
 
@@ -249,7 +250,7 @@ Files from every source go through `checkContextFiles(incoming, contextFiles, { 
 - a name already present in `contextFiles` or earlier in the same batch;
 - a name that fails `validateProjectName`.
 
-Accepted files are appended through `onContextFilesChange`. Each rejection is listed under the drop zone as `labels.fileRejections[reason](name)`. Rejections are replaced by the next add and cleared by a remove. A non-empty `errors.context` renders in the same place.
+Accepted files are appended through `onContextFilesChange`. Each rejection, `labels.fileRejections[reason](name)`, is shown as the kit `FileDropzone` `errorText`, one rejection per line, followed by a non-empty `errors.context`. The kit draws it in the error color under the area, gives the area an error border, and links it to the file input with `aria-describedby` and `aria-invalid`. Rejections are replaced by the next add and cleared by a remove; there is no toast.
 
 `useProjectFileManagerPicker` (`apps/chat/src/hooks/projects/useProjectFileManagerPicker.ts`) is the app-level adapter. It follows `useSkillFileSystemPicker`:
 
@@ -264,13 +265,13 @@ Accepted files are appended through `onContextFilesChange`. Each rejection is li
 
 #### Scenario: Add from the file manager
 
-- **WHEN** the user picks `survey.xlsx` in the file manager and attaches it
+- **WHEN** the user activates the drop zone's "file manager" link, picks `survey.xlsx` and attaches it
 - **THEN** the app downloads it, and a `survey.xlsx` card appears exactly as for a device upload
 
 #### Scenario: Unsupported and oversized files are rejected on the client
 
 - **WHEN** the user drops `notes.docx` and a 2 MB `big.pdf` with the default limits
-- **THEN** neither is added, and both rejection messages are listed and announced
+- **THEN** neither is added, and both rejection messages are shown as the drop zone error and announced
 
 #### Scenario: Capacity overflow is rejected on the client
 
@@ -280,9 +281,9 @@ Accepted files are appended through `onContextFilesChange`. Each rejection is li
 #### Scenario: Keyboard upload
 
 - **WHEN** a keyboard user tabs to the drop zone's file input and activates it
-- **THEN** the native file picker opens, and the input's accessible name is `labels.dropZoneLabel`
+- **THEN** the native file picker opens, and the input's accessible name is `labels.dropZoneAriaLabel`; the "file manager" link is the next tab stop
 
-### Requirement: Added files show as removable cards with a capacity meter
+### Requirement: Added files show as removable cards
 
 Each context file, stored or new, SHALL render as an `AttachmentCard` from `@epam/ai-dial-attachment-input`, with an `onRemove` handler and `labels.removeFileLabel(name)` as the remove button's accessible name. The card shows:
 
@@ -290,31 +291,19 @@ Each context file, stored or new, SHALL render as an `AttachmentCard` from `@epa
 - the type icon;
 - the extension.
 
-Cards wrap in a flex-wrap list (`<ul>` with one `<li>` each). Removing a card calls `onContextFilesChange` without that file.
+Cards wrap in a flex-wrap list (`<ul>` with one `<li>` each). Removing a card calls `onContextFilesChange` without that file. The form SHALL render no capacity meter; `maxTotalBytes` is still enforced by `checkContextFiles`.
 
-Once at least one file is present, a capacity meter SHALL render:
+**Layout and type (design).** The form column is at most 1048px wide (`max-w-262`) with `24px 32px` padding and `20px` between fields. Field labels are `dial-tiny-semi-text` (12/16 semibold, `--text-secondary`) with `8px` to their control; the instructions editor is 176px high. The Context section uses `8px` gaps, and the file list has `12px` top padding (20px below the drop zone).
 
-- an element with `role="meter"`, `aria-valuemin={0}`, `aria-valuemax={maxTotalBytes}` and `aria-valuenow={usedBytes}`;
-- `aria-valuetext={labels.capacityLabel(percent)}`, the same text as the visible label "N% of capacity used".
-
-`percent` is `Math.min(100, Math.round(usedBytes / maxTotalBytes * 100))`. `usedBytes` is the sum of `file.size` for new files and `size` for stored files. The meter is not rendered while there are no files.
-
-**Layout and type (design).** The form column is at most 1040px wide with `24px 32px` padding and `20px` between fields. Field labels are `dial-tiny-semi-text` (12/16 semibold, `--text-secondary`) with `8px` to their control; the instructions editor is 176px high. The Context header carries the label on the inline start and, on the inline end, the meter — a 60px bar with the percentage beside it — then the small (24px) neutral **Add** menu, `16px` apart. The Context section uses `8px` gaps, and the file list has `4px` extra top padding (12px below the drop zone).
-
-#### Scenario: Meter appears with the first file
+#### Scenario: No capacity meter
 
 - **WHEN** a 1 MB file is added with a 10 MB total limit
-- **THEN** a `role="meter"` element appears with the text "10% of capacity used" and `aria-valuenow` of 1048576
+- **THEN** its card appears and no `role="meter"` element renders
 
-#### Scenario: Removing the last file hides the meter
+#### Scenario: Removing the last file
 
 - **WHEN** the only file's remove button ("Remove tickets.csv") is activated
-- **THEN** the card and the meter are gone, and `onContextFilesChange` received `[]`
-
-#### Scenario: Stored file sizes feed the meter
-
-- **WHEN** the form renders one stored file with `size: 2097152` and a 10 MB total limit
-- **THEN** the meter reads "20% of capacity used"
+- **THEN** the card is gone, and `onContextFilesChange` received `[]`
 
 ### Requirement: Form status is announced
 
@@ -325,7 +314,7 @@ The form SHALL contain a visually hidden `role="status"` `aria-live="polite"` re
 - each remove (`labels.fileRemovedStatus(name)`);
 - the start of a submission (`labels.creatingStatus`, "Creating project…").
 
-The generated client exposes no upload progress, so no percentage is announced. Host errors (`errors.name`, `errors.context`) render in `role="alert"` elements.
+The generated client exposes no upload progress, so no percentage is announced. Host errors (`errors.name`, `errors.context`) are announced through `role="alert"` regions mounted before the error arrives; the visible `errors.context` is the drop zone error.
 
 #### Scenario: Submission is announced
 
@@ -334,26 +323,22 @@ The generated client exposes no upload progress, so no percentage is announced. 
 
 ### Requirement: Projects create strings flow through react-i18next
 
-Every user-visible string SHALL be resolved in `ProjectCreatePage` with `useTranslation().t()`, and passed to the lib as a plain string or a formatter. The new keys live in the `projects` namespace of `apps/chat/src/i18n/locales/en.json`, and are referenced through `ProjectsI18nKeys`:
+Every user-visible string SHALL be resolved in `ProjectCreatePage` with `useTranslation().t()` (or `Trans` for the drop zone sentence), and passed to the lib as a plain string or a formatter. The new keys live in the `projects` namespace of `apps/chat/src/i18n/locales/en.json`, and are referenced through `ProjectsI18nKeys`:
 
 - `projects.page.newProject`
 - `projects.create.title`
 - `projects.create.name.label`
 - `projects.create.name.placeholder`
-- `projects.create.description.label`
-- `projects.create.description.placeholder`
 - `projects.create.instructions.label`
 - `projects.create.instructions.placeholder`
 - `projects.create.context.label`
-- `projects.create.context.dropZone`
+- `projects.create.context.dropZone` (wraps `<device>` and `<manager>`)
+- `projects.create.context.dropZoneDeviceOnly` (wraps `<device>`)
+- `projects.create.context.uploadFromDevice`
 - `projects.create.context.hint` (interpolates `{{extensions}}` and `{{maxSize}}`)
-- `projects.create.context.fromDevice`
-- `projects.create.context.fromFileManager`
 - `projects.create.context.fileManagerTitle`
 - `projects.create.context.dropOverlayTitle`
 - `projects.create.context.dropOverlaySubtitle`
-- `projects.create.context.capacityMeter`
-- `projects.create.context.capacity` (interpolates `{{percent}}`)
 - `projects.create.context.remove` (interpolates `{{name}}`)
 - `projects.create.status.added` (with `{{count}}` plural forms)
 - `projects.create.status.removed` (interpolates `{{name}}`)
@@ -374,7 +359,7 @@ Every user-visible string SHALL be resolved in `ProjectCreatePage` with `useTran
 - `projects.create.toast.error`
 - `projects.create.toast.fileManagerError`
 
-The Cancel, Create and Add labels reuse `ButtonsI18nKeys.Cancel`, `ButtonsI18nKeys.Create` and `ButtonsI18nKeys.Add`, and the back button reuses `NavigationI18nKeys.Back`. The Refine with AI copy comes from the existing `useTextRefinementLabels`.
+The Cancel and Create labels reuse `ButtonsI18nKeys.Cancel` and `ButtonsI18nKeys.Create`, and the back button reuses `NavigationI18nKeys.Back`. The Refine with AI copy comes from the existing `useTextRefinementLabels`.
 
 #### Scenario: Keys exist
 
@@ -403,8 +388,7 @@ The New project page and `ProjectCreateForm` SHALL meet the layout, RTL, accessi
 
 - Every field has a visible, programmatically associated label.
 - Name has `aria-required="true"`, and its error is linked by `aria-describedby`.
-- The drop zone and the Add menu are keyboard-operable.
-- The capacity meter is a `role="meter"` with a text value.
+- The drop zone and its file manager link are keyboard-operable.
 - Status is announced through `aria-live`.
 - Remove buttons have accessible names.
 - Every Tabler icon passes `stroke={DIAL_KIT_ICON_STROKE}`. Decorative icons are `aria-hidden`.
@@ -413,7 +397,7 @@ The New project page and `ProjectCreateForm` SHALL meet the layout, RTL, accessi
 **Memoisation:**
 
 - The page memoises `labels` with `useMemo`, and its handlers with `useCallback`.
-- The form computes `usedBytes`, `percent` and the `accept` string in `useMemo`.
+- The form computes the `accept` string in `useMemo`.
 
 #### Scenario: Narrow viewport
 

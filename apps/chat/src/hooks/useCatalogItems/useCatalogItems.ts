@@ -1,4 +1,4 @@
-import type { CatalogItem } from '@epam/ai-dial-catalog';
+import { CATALOG_TAB_ORDER, type CatalogItem } from '@epam/ai-dial-catalog';
 import type {
   ApplicationSchemaSummaryDto,
   DeploymentItemDto,
@@ -39,7 +39,6 @@ import {
   getSkillMetadata,
   listSkillFiles,
 } from '../../server-api/skills.api';
-import { CATALOG_TAB_ORDER } from '../../types/catalog';
 import { buildSkillOverviewLabels } from '../../utils/catalog';
 import {
   buildDeploymentFolderLabels,

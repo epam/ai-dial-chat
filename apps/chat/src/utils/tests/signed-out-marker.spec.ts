@@ -5,13 +5,13 @@ import {
   SIGNED_OUT_MARKER_STORAGE_KEY,
 } from '../signed-out-marker';
 
-afterEach(() => {
-  window.sessionStorage.clear();
-  vi.restoreAllMocks();
-  vi.useRealTimers();
-});
-
 describe('signed-out marker', () => {
+  afterEach(() => {
+    window.sessionStorage.clear();
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
   it('reports not signed out when storage is empty', () => {
     expect(consumeSignedOut()).toBe(false);
   });

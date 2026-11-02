@@ -114,13 +114,16 @@ The DIAL TypeScript SDK (`0.2.0-dev.11`) provides no dedicated `createFolder` me
 **Backend implementation**, owned by `FilesFolderService` (`apps/chat-api/src/files/folder/files-folder.service.ts`), which injects `FilesUploadService` to perform the marker-file write (`FilesFolderService.createFolder`):
 
 1. Build marker path: `${parentPath ?? ''}${name}/.dial_folder`.
-2. Check for existence: call `client.getFileMetadata(bucket, markerPath, ...)`.
+2. Check that the parent exists, unless `parentPath` is empty (the bucket root always exists). Call `client.getFileMetadata(bucket, parentPath, { params: { query: { limit: 1 } } })`. Without this probe, DIAL Core would create a missing parent implicitly when the marker is uploaded.
+   - If `404` → throw `NotFoundException` (`404`) and upload nothing.
+   - Any other error (including `403`) → `handleDialSdkError`.
+3. Check for existence: call `client.getFileMetadata(bucket, markerPath, ...)`.
    - If `200` **and** `markerMetadataMatches(data, bucket, markerPath)` → throw `ConflictException` (`409`).
    - If `200` but probe does **not** match the requested marker path (false positive from parent marker) → proceed to upload.
    - If `404` → proceed.
    - Any other error (including `403`) → `handleDialSdkError`.
-3. Upload zero-byte marker via `FilesUploadService.uploadFile(bucket, markerPath, { buffer: Buffer.alloc(0), mimetype: 'application/octet-stream', originalname: MARKER_NAME }, at)`.
-4. Return `CreateFolderResponseDto` with full DIAL resource paths (`files/{bucket}/...`). Non-`HttpException` failures are logged and passed to `handleDialSdkError`.
+4. Upload zero-byte marker via `FilesUploadService.uploadFile(bucket, markerPath, { buffer: Buffer.alloc(0), mimetype: 'application/octet-stream', originalname: MARKER_NAME }, at)`.
+5. Return `CreateFolderResponseDto` with full DIAL resource paths (`files/{bucket}/...`). Non-`HttpException` failures are logged and passed to `handleDialSdkError`.
 
 **MARKER_NAME constant**: a local literal `'.dial_folder'` in `apps/chat-api/src/files/files.constants.ts`, with a comment requiring it to stay in sync with `HIDDEN_FILE` in `libs/chat-shared/src/constants/dial.ts`.
 
@@ -289,6 +292,15 @@ No new metrics or analytics events beyond `MetricsInterceptor` (request duration
 - **WHEN** `createFolder` is called for `child`
 - **THEN** `markerMetadataMatches` returns false
 - **AND** the BFF proceeds to upload the marker at `parent/child/.dial_folder`
+
+---
+
+### Scenario: Missing parent folder is rejected
+
+- **GIVEN** no object exists under the prefix `missing/`
+- **WHEN** `createFolder` is called with `parentPath: 'missing/'`
+- **THEN** the parent probe returns `404` and the BFF responds `404`
+- **AND** no marker is uploaded, so neither `missing/` nor its child is created
 
 ---
 

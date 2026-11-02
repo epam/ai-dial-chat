@@ -185,12 +185,12 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-projects` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.4.0-dev.19
+- `@epam/ai-dial-react-file-manager` ^0.4.0-dev.25
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.56
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.59
 - `@epam/ai-dial-usage-dashboard` \*
 - `@modelcontextprotocol/sdk` ^1.32.1
 - `@epam/pdf-highlighter-kit` ^0.0.19
@@ -456,6 +456,17 @@ const ProjectsPage = () => {
   // …
 };
 ```
+
+`useProjects` keeps the list current while it is mounted when the client
+offers `watchProjects` (`createProjectsApiClient` always does). After a
+successful load it watches the first 1000 listed ids:
+
+- an `UPDATE` or `CREATE` moves that project's `updatedAt` forward, never back;
+- a `DELETE` removes it;
+- a stream that drops is reopened after 1, 2, 4, 8 and 16 seconds, and each successful reopen is followed by a silent reload, without the loading state;
+- a watch that cannot be opened is not retried for the rest of the visit.
+
+A client without `watchProjects` gets a one-off load, as before.
 
 ```tsx
 // ./offline-credentials — no peer beyond react
@@ -1706,6 +1717,16 @@ const Composer = ({ allowedMimeTypes }: { allowedMimeTypes: string[] }) => {
 
 **Returns** (`UseAttachmentValidationResult`): `{ inputAttachmentTypes: string[], isAttachmentsAllowed: boolean, validateAttachment: (attachment: Attachment) => AttachmentErrorReason | undefined, fileAccept: string | undefined }`.
 
+### useConversationAnnotationPool
+
+Groups the html-tag citation annotations a conversation persisted in `customViewState.annotations` by citation id, through `useHtmlTagAnnotationGroups` from `@epam/ai-dial-quotations`. Malformed or absent annotations yield the shared empty result, so a host can pass any conversation, `null` or `undefined`. Available from the root and `./conversation-sources`.
+
+```ts
+import { useConversationAnnotationPool } from '@epam/ai-dial-chat-hooks/conversation-sources';
+
+const fallbackCitationGroups = useConversationAnnotationPool(conversation);
+```
+
 ### useConversationSources
 
 Derives, via a pure `useMemo` computation, a deduplicated list of a conversation's uploaded/generated attachments and its quotation sources from a message list.
@@ -1729,6 +1750,16 @@ const SourcesPanel = ({ messages }: { messages: Message[] }) => {
 **Returns** (`UseConversationSourcesResult`): `{ uploaded: DisplayAttachment[], generated: DisplayAttachment[], sources: QuotationSource[] }`.
 
 `sources` gets one entry per distinct URL. A reference-only attachment keeps its `reference_url` as is. For a citation annotation on a `.pdf` file, the hook appends the cited page from its `pdf_bbox`/`pdf_region` selector (`files/bucket/doc.pdf#page=12`). This applies only when the URL has no fragment yet. As a result, each cited page of a document is a separate source, and two citations of the same page collapse into one.
+
+### prepareStageCitations
+
+Returns a message's stages with the citation markup in each stage's `content` prepared for rendering: hidden while the message streams, unsupported shapes escaped once it has finished. Stages without `<cit` markup — and the array itself when none has any — are returned by reference, so memoized stage rows do not re-render. Available from the root and `./conversation-sources`.
+
+```ts
+import { prepareStageCitations } from '@epam/ai-dial-chat-hooks/conversation-sources';
+
+const renderedStages = prepareStageCitations(stages, isStreaming);
+```
 
 ### useChatSettingsFormConfig
 
@@ -1947,6 +1978,45 @@ const CatalogCard = ({
 | `favoriteIds`    | `ReadonlySet<string>`                                                                 | Current set of favorited IDs across all entity types.                                                                                                |
 | `isLoading`      | `boolean`                                                                             | `true` while the initial load is in flight.                                                                                                          |
 | `toggleFavorite` | `(id: string, isFavorite: boolean, entityType?: FavoriteEntityType) => Promise<void>` | Optimistically updates `favoriteIds`, calls `updateFavorite`, and rolls back on rejection. `entityType` defaults to `FavoriteEntityType.Deployment`. |
+
+### resolveFavoriteEntityType
+
+Returns the `FavoriteEntityType` — the user-config section — a catalog item's favorite state is stored in: `Toolset`, `Prompt` and `Skill` items map to their own section, and every other type, or an unknown one, to `Deployment`. Available from the root and `./catalog`.
+
+```ts
+import { resolveFavoriteEntityType } from '@epam/ai-dial-chat-hooks/catalog';
+
+await updateFavorite(item.id, isFavorite, resolveFavoriteEntityType(item.type));
+```
+
+### resolveCatalogSortKey / parseCatalogFilterTopics / resolveCatalogActiveTab
+
+Validate catalog view preferences a host read back from its own storage, which may be stale or malformed. `resolveCatalogSortKey(stored)` keeps a known `CatalogSortKey` and otherwise returns `CatalogSortKey.RecentlyUpdated`. `parseCatalogFilterTopics(stored)` returns the string entries of a stored array as a `Set`, and an empty set for anything else. `resolveCatalogActiveTab(stored, availableTabIds)` keeps a stored tab that is still available and otherwise returns the first available tab id (`undefined` when there is none). The functions never read or write storage. Available from the root and `./catalog`.
+
+```ts
+import {
+  parseCatalogFilterTopics,
+  resolveCatalogActiveTab,
+  resolveCatalogSortKey,
+} from '@epam/ai-dial-chat-hooks/catalog';
+
+const sortKey = resolveCatalogSortKey(storedSortKey);
+const filterTopics = parseCatalogFilterTopics(storedFilterTopics);
+const activeTab = resolveCatalogActiveTab(storedActiveTab, availableTabIds);
+```
+
+### findSkillByUrl
+
+Finds the listed skill a `skills/{bucket}/{path}` resource URL names, across the personal, shared and organisation listings (`SkillListingPools` — the shape `useSkillsState` returns). Both sides are compared per-segment normalized, so a URL that arrives decoded, e.g. from a query string, still matches the percent-encoded `url` DIAL Core lists. Available from the root and `./skills-state`.
+
+```ts
+import { findSkillByUrl } from '@epam/ai-dial-chat-hooks/skills-state';
+
+const skill = findSkillByUrl(
+  { skills, sharedWithMe, publicSkills },
+  'skills/bucket/My skill',
+);
+```
 
 ### useSkillsState
 
@@ -2666,6 +2736,31 @@ const uploadFileWithProgress = createUploadFileWithProgress({
 });
 ```
 
+The optional `bodyEncoding` dep (`UploadBodyEncoding`) selects how the request carries the file; it must match what the endpoint at `uploadUrl` accepts:
+
+| Member                                   | Request                                                                                                                                                                                                                   |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `UploadBodyEncoding.Multipart` (default) | `POST uploadUrl` with a `FormData` body carrying `file`, `bucket`, `path` and, when set, `uploadMode`                                                                                                                     |
+| `UploadBodyEncoding.Raw`                 | `PUT uploadUrl?bucket=…&path=…` (plus `uploadMode` when set and `contentType` when `file.type` is non-empty) with `Content-Type: application/octet-stream` and the `File` itself as the body, so the server can stream it |
+
+Progress, abort, CSRF and `401` handling are the same for both.
+
+```ts
+import {
+  UploadBodyEncoding,
+  createUploadFileWithProgress,
+} from '@epam/ai-dial-chat-hooks';
+
+const uploadFileWithProgress = createUploadFileWithProgress({
+  getCsrfToken,
+  setCsrfToken,
+  notifyUnauthorized,
+  createUnauthorizedError: (url) => new UnauthorizedError(url),
+  uploadUrl: '/api/v1/files/content',
+  bodyEncoding: UploadBodyEncoding.Raw,
+});
+```
+
 ### createChatStreamApi
 
 Builds the streamed-completion transport (`streamCompletion`/`stopCompletion`), parameterized by the host's CSRF state, completions base path, and an optional timezone resolver.
@@ -2807,6 +2902,23 @@ import { getBrowserTimezone } from '@epam/ai-dial-chat-hooks';
 getBrowserTimezone(); // e.g. 'Europe/Warsaw'
 ```
 
+### applyThemeColors / getOsPreferredTheme / ColorScheme
+
+`applyThemeColors(element, colors?)` writes each entry of `colors` to `element` as a `--<key>` custom property, first removing the properties its previous call wrote to that same element — so switching to a theme that declares fewer keys does not keep the old theme's values. Called without `colors`, it only removes them. Properties it never wrote are left alone. `getOsPreferredTheme()` returns `ColorScheme.Dark` or `ColorScheme.Light` from the `prefers-color-scheme` media query. Available from the root and `./utils`.
+
+```ts
+import {
+  applyThemeColors,
+  ColorScheme,
+  getOsPreferredTheme,
+} from '@epam/ai-dial-chat-hooks/utils';
+
+const themeId = getOsPreferredTheme(); // ColorScheme.Dark | ColorScheme.Light
+const theme = themes.find(({ id }) => id === themeId);
+
+applyThemeColors(document.documentElement, theme?.colors);
+```
+
 ### apSchedulerDayToJsDay / jsDayToApSchedulerDay
 
 Converts between DIAL Scheduler's APScheduler weekday convention (Monday=0..Sunday=6) and JS `Date`'s weekday convention (Sunday=0..Saturday=6).
@@ -2877,6 +2989,56 @@ import { parseExternalServiceUrl } from '@epam/ai-dial-chat-hooks';
 
 parseExternalServiceUrl('applications/bucket/app/external_services/jira');
 // { appId: 'applications/bucket/app', serviceName: 'jira' }
+```
+
+### Client-channel sign-in events
+
+DIAL Core asks the user to sign in mid-completion through client-channel RPC requests on the `subscribe` SSE stream. `ClientChannelRpcRequest` is that request's shape, and `TOOLSET_SIGNIN_METHOD` (`'toolset/signin'`) and `EXTERNAL_SERVICE_SIGNIN_METHOD` (`'external-service/signin'`) are the two method names a host answers. `PendingSigninEvent` — a union of `PendingToolsetSigninEvent` and `PendingExternalServiceSigninEvent`, told apart by `PendingSigninEventKind` — is a request the host has queued while it waits for the user to sign in or decline. Available from the root and `./utils`.
+
+```ts
+import {
+  EXTERNAL_SERVICE_SIGNIN_METHOD,
+  parseExternalServiceUrl,
+  PendingSigninEventKind,
+  TOOLSET_SIGNIN_METHOD,
+  type ClientChannelRpcRequest,
+  type PendingSigninEvent,
+} from '@epam/ai-dial-chat-hooks/utils';
+
+const toPendingEvent = (
+  request: ClientChannelRpcRequest,
+): PendingSigninEvent | undefined => {
+  const url = String(request.params?.url ?? '');
+  if (request.method === TOOLSET_SIGNIN_METHOD) {
+    return {
+      kind: PendingSigninEventKind.Toolset,
+      id: request.id,
+      toolsetId: url,
+    };
+  }
+  const service =
+    request.method === EXTERNAL_SERVICE_SIGNIN_METHOD
+      ? parseExternalServiceUrl(url)
+      : undefined;
+  return service
+    ? {
+        kind: PendingSigninEventKind.ExternalService,
+        id: request.id,
+        ...service,
+      }
+    : undefined;
+};
+```
+
+### ExternalServiceAuthType / ExternalServiceAuthStatus / ExternalServiceCredentialsLevel
+
+The external-service auth enums `useExternalServiceLogin` takes and compares: the authentication method (`None`, `ApiKey`, `OAuth`, `DialNative`), the sign-in state DIAL Core reports per credentials level (`SignedIn`, `SignedOut`, `Failed` — the values of `GetExternalServiceResponseDto`'s `*AuthStatus` fields), and the level credentials belong to (`Global`, `Application`, `User`). Available from the root and `./external-services`.
+
+```ts
+import { ExternalServiceAuthStatus } from '@epam/ai-dial-chat-hooks';
+
+const isSignedIn =
+  service.userLevelAuthStatus === ExternalServiceAuthStatus.SignedIn;
 ```
 
 ## OAuth Popup Flow
@@ -3654,6 +3816,26 @@ getPublicCatalogEntityFolderPath(
 ); // ['Data Science']
 ```
 
+### resolveCatalogEntityKind / findSchemaDisplayName / CatalogEntityKind
+
+`resolveCatalogEntityKind(type, deployment?, schemas = [])` returns the `CatalogEntityKind` of a catalog item. Non-application types map one to one (`Model`, `Toolset`, `Skill`, `Prompt`). An `Agent` item is narrowed by its deployment's `applicationTypeSchemaId`: `CustomApp` with no schema, `QuickApp` for the QuickApp schema (matched by id or display name, as `isQuickAppSchema` does), `SchemaApp` when the schema's display name is known, and `Agent` otherwise or when no deployment is given. `findSchemaDisplayName(schemas, schemaId)` returns that schema's display name, or `undefined`. A host maps the kind onto its own copy — for example a notification noun. Available from the root and `./catalog`.
+
+```ts
+import {
+  CatalogEntityKind,
+  findSchemaDisplayName,
+  resolveCatalogEntityKind,
+} from '@epam/ai-dial-chat-hooks';
+
+const kind = resolveCatalogEntityKind(item.type, deployment, schemas);
+if (kind === CatalogEntityKind.SchemaApp) {
+  const schemaName = findSchemaDisplayName(
+    schemas,
+    deployment?.applicationTypeSchemaId,
+  );
+}
+```
+
 ## Prompt Utilities
 
 ### validatePromptName / validatePromptDescription / validatePromptContent / getRemainingCharacters / buildPromptPath
@@ -3752,6 +3934,19 @@ const result = mapScheduledTaskDtoToFormValues(scheduledTaskDto);
 if (result.ok) {
   // result.values: ScheduledTaskCreateFormValues
 }
+```
+
+### getNextCronOccurrence
+
+Returns the next UTC time a cron trigger with a fixed `hour`/`minute` fires after `from` (default: now), honouring its `day_of_week` (APScheduler Monday=0) or `day` (a number or `'last'`) constraint. Returns `undefined` when the fields are not plain values it can evaluate (`*`, ranges, lists). Available from the root and `./scheduled-tasks`.
+
+```ts
+import { getNextCronOccurrence } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
+
+getNextCronOccurrence(
+  { fields: { hour: '9', minute: '0', day_of_week: '0' } },
+  new Date('2026-10-07T08:00:00.000Z'),
+); // 2026-10-12T09:00:00.000Z — the next Monday
 ```
 
 ## Catalog Hooks
@@ -5000,6 +5195,39 @@ The hook owns no client configuration, localization, UI or login flow. The host
 maps returned service DTOs into its view models and calls `refresh` after a
 successful credential mutation. Errors, including offline-status failures, set
 `hasError`; `refresh` retries them.
+
+### mapApplicationCredentials / buildApplicationCredentialLoginParams
+
+Pure adapters between `useApplicationCredentials` and the catalog's
+`ApplicationCredentials` forms. `mapApplicationCredentials(services, options)`
+returns one `ApplicationCredential` per service: a `DIAL_NATIVE` service counts
+as signed in only when `isOfflineConnected` and its app-level status is
+`SIGNED_IN`, and it can be neither logged out nor offered offline consent;
+every other service follows its user-level status, and shows
+`hasSharedCredentials` while signed out with a global or app-level login.
+`buildApplicationCredentialLoginParams(appId, service, params)` returns the
+user-level `ExternalServiceLoginParams` for `useExternalServiceLogin().login`,
+with the service's OAuth settings and `forceStale` when its user-level status
+is `FAILED`.
+
+```tsx
+import {
+  buildApplicationCredentialLoginParams,
+  mapApplicationCredentials,
+} from '@epam/ai-dial-chat-hooks/catalog';
+
+const credentials = mapApplicationCredentials(services, {
+  isOfflineConnected,
+  dialNativeHint: t('toolsetSignin.dialNativeHint'),
+});
+
+const outcome = await login(
+  buildApplicationCredentialLoginParams(appId, service, params),
+);
+```
+
+`MapApplicationCredentialsOptions` is exported. The host keeps localization,
+the outcome-to-message mapping and logout.
 
 ### useOfflineCredentialsGate
 

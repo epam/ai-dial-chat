@@ -2,12 +2,12 @@
  * The single source of truth for the app-wide responsive boundary. Every
  * mechanism that branches on viewport width must resolve to the same band:
  * the named Tailwind screens in the root tailwind.config.js, the
- * useBreakpoint hook (apps/chat), this package's useIsMobile hook, the
+ * useIsMobile hook (used by the app and the libs), the
  * catalog grid virtualizer, the chat-overlay manager, and the SCSS @media
  * mirrors in libs/*. The sites that cannot import this module — the root
  * tailwind config (plain CJS), SCSS stylesheets, and chat-overlay (which has
  * no dependencies) — repeat the literal and are pinned to it by
- * apps/chat/src/hooks/breakpoint/breakpoint-sync.spec.ts.
+ * libs/chat-shared/src/constants/tests/breakpoint-sync.spec.ts.
  */
 
 /** The viewport width (inclusive) where the desktop presentation begins. */

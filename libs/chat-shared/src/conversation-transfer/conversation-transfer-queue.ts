@@ -8,6 +8,7 @@ import {
   ConversationTransferJobStatus,
   type ConversationTransferWarningCode,
 } from '../models/conversation-transfer';
+
 /** Resolves the translated reason shown on a failed or warned queue row. */
 export interface TransferQueueMessageResolvers {
   /** Resolves a failure code, including an absent code. */

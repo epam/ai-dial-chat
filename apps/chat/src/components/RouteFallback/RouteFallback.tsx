@@ -6,4 +6,5 @@ const RouteFallback: FC = () => (
     <Spinner />
   </div>
 );
+
 export default memo(RouteFallback);

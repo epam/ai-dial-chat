@@ -78,6 +78,7 @@ const options: ConversationTitleEnrichmentOptions = {
   maxPendingUpdates: 100,
   protectionMs: 315_000,
 };
+
 /** Resolves list titles using host transports and cache protection policy. */
 export const useConversationTitleEnrichment = (
   userSub: string | undefined,

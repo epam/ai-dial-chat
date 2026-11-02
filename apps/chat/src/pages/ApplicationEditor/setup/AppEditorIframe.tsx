@@ -5,6 +5,10 @@ import type {
 } from '@epam/ai-dial-chat-api-client';
 import {
   decodeToolsetId,
+  ExternalServiceAuthStatus,
+  ExternalServiceAuthType,
+  ExternalServiceCredentialsLevel,
+  ExternalServiceLoginOutcomeType,
   mapDeploymentDetailsDtoToEntityDetails,
   mapToolsetCredentials,
   navigateToolsetOAuthPopup,
@@ -19,9 +23,6 @@ import {
   ToolsetOAuthInitiationResultType,
   ToolsetOAuthResultType,
   waitForToolsetOAuthResult,
-  ExternalServiceLoginOutcomeType,
-  ExternalServiceAuthType,
-  ExternalServiceCredentialsLevel,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
@@ -573,7 +574,8 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
               codeChallengeMethod: service.codeChallengeMethod,
             },
             offlineUsageConsent,
-            forceStale: service.userLevelAuthStatus === 'FAILED',
+            forceStale:
+              service.userLevelAuthStatus === ExternalServiceAuthStatus.Failed,
             popup,
           });
           if (outcome.type === ExternalServiceLoginOutcomeType.Success) {

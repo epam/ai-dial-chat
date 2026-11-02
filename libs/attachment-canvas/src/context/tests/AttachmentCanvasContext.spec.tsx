@@ -10,30 +10,30 @@ import {
   useLatestCanvasRequest,
 } from '../AttachmentCanvasContext';
 
-it('shares ordering within a provider and isolates other providers', () => {
-  const view = renderHook(
-    () => ({
-      source: useLatestCanvasRequest(),
-      message: useLatestCanvasRequest(),
-    }),
-    { wrapper: AttachmentCanvasProvider },
-  );
-  const utils = renderHook(() => useLatestCanvasRequest(), {
-    wrapper: AttachmentCanvasProvider,
-  });
-  const message = view.result.current.message();
-  const independent = utils.result.current();
-  expect(message()).toBe(true);
-  const source = view.result.current.source();
-  expect(message()).toBe(false);
-  expect(source()).toBe(true);
-  expect(independent()).toBe(true);
-  view.unmount();
-  expect(source()).toBe(false);
-  expect(independent()).toBe(true);
-});
-
 describe('AttachmentCanvasProvider', () => {
+  it('shares ordering within a provider and isolates other providers', () => {
+    const view = renderHook(
+      () => ({
+        source: useLatestCanvasRequest(),
+        message: useLatestCanvasRequest(),
+      }),
+      { wrapper: AttachmentCanvasProvider },
+    );
+    const utils = renderHook(() => useLatestCanvasRequest(), {
+      wrapper: AttachmentCanvasProvider,
+    });
+    const message = view.result.current.message();
+    const independent = utils.result.current();
+    expect(message()).toBe(true);
+    const source = view.result.current.source();
+    expect(message()).toBe(false);
+    expect(source()).toBe(true);
+    expect(independent()).toBe(true);
+    view.unmount();
+    expect(source()).toBe(false);
+    expect(independent()).toBe(true);
+  });
+
   beforeEach(() => {
     URL.revokeObjectURL = vi.fn();
   });

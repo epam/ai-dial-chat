@@ -6,10 +6,36 @@
   }
 }
 
-.helper {
-  color: var(--pcf-helper-text, var(--text-secondary, #57647a));
+/* One rejection per line in the kit drop zone's error text. */
+.dropZone + :global(.dial-kit-error-text) {
+  white-space: pre-line;
 }
 
 .label {
   color: var(--pcf-label-text, var(--text-secondary, #57647a));
+}
+
+.link {
+  color: var(--pcf-link-text, inherit);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+
+  &:is(button) {
+    cursor: pointer;
+  }
+
+  &:is(button):hover,
+  &:is(button):focus-visible {
+    text-decoration-thickness: 2px;
+  }
+
+  &:focus-visible {
+    outline: 2px solid currentcolor;
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
 }

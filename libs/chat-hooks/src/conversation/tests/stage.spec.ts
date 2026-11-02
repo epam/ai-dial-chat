@@ -227,6 +227,7 @@ describe('mapStages — nested stage snapshots', () => {
  * input contract diverged.
  */
 type AssertAssignable<Target, Source extends Target> = Source;
+
 type _DtoProof = AssertAssignable<RawStage, StageDto>;
 
 describe('RawStage / StageDto', () => {

@@ -116,6 +116,14 @@ export interface UploadFileRequest {
   uploadMode?: UploadFileUploadModeEnum;
 }
 
+export interface UploadFileContentRequest {
+  bucket: string;
+  path: string;
+  body: Blob;
+  uploadMode?: UploadFileContentUploadModeEnum;
+  contentType?: string;
+}
+
 /**
  *
  */
@@ -1242,6 +1250,97 @@ export class FilesApi extends runtime.BaseAPI {
     const response = await this.uploadFileRaw(requestParameters, initOverrides);
     return await response.value();
   }
+
+  /**
+   * Streams the request body to DIAL Core without staging it. Requires Content-Type: application/octet-stream and a Content-Length; the file MIME type goes in the contentType query parameter.
+   * Upload a file streamed as the raw request body
+   */
+  async uploadFileContentRaw(
+    requestParameters: UploadFileContentRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<FileUploadResponseDto>> {
+    if (requestParameters['bucket'] == null) {
+      throw new runtime.RequiredError(
+        'bucket',
+        'Required parameter "bucket" was null or undefined when calling uploadFileContent().',
+      );
+    }
+
+    if (requestParameters['path'] == null) {
+      throw new runtime.RequiredError(
+        'path',
+        'Required parameter "path" was null or undefined when calling uploadFileContent().',
+      );
+    }
+
+    if (requestParameters['body'] == null) {
+      throw new runtime.RequiredError(
+        'body',
+        'Required parameter "body" was null or undefined when calling uploadFileContent().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['bucket'] != null) {
+      queryParameters['bucket'] = requestParameters['bucket'];
+    }
+
+    if (requestParameters['path'] != null) {
+      queryParameters['path'] = requestParameters['path'];
+    }
+
+    if (requestParameters['uploadMode'] != null) {
+      queryParameters['uploadMode'] = requestParameters['uploadMode'];
+    }
+
+    if (requestParameters['contentType'] != null) {
+      queryParameters['contentType'] = requestParameters['contentType'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/octet-stream';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/files/content`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'PUT',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['body'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<FileUploadResponseDto>(response);
+  }
+
+  /**
+   * Streams the request body to DIAL Core without staging it. Requires Content-Type: application/octet-stream and a Content-Length; the file MIME type goes in the contentType query parameter.
+   * Upload a file streamed as the raw request body
+   */
+  async uploadFileContent(
+    requestParameters: UploadFileContentRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<FileUploadResponseDto> {
+    const response = await this.uploadFileContentRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
 }
 
 /**
@@ -1253,3 +1352,12 @@ export const UploadFileUploadModeEnum = {
 } as const;
 export type UploadFileUploadModeEnum =
   (typeof UploadFileUploadModeEnum)[keyof typeof UploadFileUploadModeEnum];
+/**
+ * @export
+ */
+export const UploadFileContentUploadModeEnum = {
+  Overwrite: 'overwrite',
+  CreateOnly: 'create-only',
+} as const;
+export type UploadFileContentUploadModeEnum =
+  (typeof UploadFileContentUploadModeEnum)[keyof typeof UploadFileContentUploadModeEnum];
