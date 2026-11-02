@@ -2328,6 +2328,30 @@ const FileManagerHost = ({
 
 **Returns** (`UseDialFileManagerResult`): the full set of props `DialFileManager` needs — `items`, `isLoading`, `path`/`onPathChange`, search (`onSearchFiles`/`searchResults`/`isSearching`), tree expand state, upload (`onUploadFiles`/`onUploadArchive`/`uploadBatchState`), create/rename/move/copy/delete callbacks and their `isXxx` flags, sharing (`onUnshareFiles`/`onRemoveFilesAccess`), metadata (`onGetInfo`/`fileMetadata`), `actionLabels`, `visibleColumns`, and the aggregate `isAnyOperationInProgress`. See the exported `UseDialFileManagerResult` type for the complete shape.
 
+### useUnshareConfirmationState
+
+The file manager unshares shared-with-me items as soon as the action is
+clicked. `useUnshareConfirmationState(controller)` returns the controller with
+`onUnshareFiles` replaced by a request that only records `pendingItems`;
+`confirm()` calls the original `onUnshareFiles` with them and `cancel()` drops
+them. The host renders its own confirmation while `pendingItems` is set.
+`UnshareConfirmationController` and `UnshareConfirmationState` are exported.
+Available from the root and `./file-manager`.
+
+```tsx
+import { useUnshareConfirmationState } from '@epam/ai-dial-chat-hooks/file-manager';
+
+const { controller, pendingItems, confirm, cancel } =
+  useUnshareConfirmationState(fileManagerController);
+
+<DialFileManagerShell controller={controller} />;
+{
+  pendingItems && (
+    <ConfirmationDialog open onConfirm={confirm} onClose={cancel} />
+  );
+}
+```
+
 ### useDialFileManagerSections
 
 Runs one `useDialFileManager` per source tab (My files, Shared, Organization). On a single tab it returns that section's result; on `DialFileManagerTabs.All` it merges each enabled section's root into one tree and routes every callback to the section whose `rootLabel` is the path's first segment, so each top-level folder keeps its own tab's columns, upload rules, and actions. A download, delete, unshare, or remove-access batch that spans sections is split into one call per owning section. A copy or move is refused with a `CrossSectionTransferUnsupported` notification unless every item and the destination are in one section. A root label that is empty, contains `/`, or repeats an earlier one is replaced by the tab id, since paths are routed by their first segment. A section still loading outside the browsed one reports its folder in `folderPopupLoadingPaths`, and a root listing that fails there is reported once as a `FolderLoadFailed` notification. `DIAL_FILE_MANAGER_SECTION_TABS` lists the source tabs the hook can merge, in display order.

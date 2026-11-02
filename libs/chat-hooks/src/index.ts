@@ -163,6 +163,7 @@ export * from './files/attachment-canvas';
 export * from './files/source-content';
 export * from './files/attachment-dto-to-display';
 export * from './files/dial-file';
+export * from './files/useUnshareConfirmationState/useUnshareConfirmationState';
 export * from './files/dial-file-to-attachment';
 export * from './files/download-destination';
 export * from './files/prepare-download-destination';
