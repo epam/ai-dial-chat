@@ -6,6 +6,8 @@ import {
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  hasPublishFolderWriteAccess,
+  rememberPublishFolderKey,
   usePublishFolders,
   type UsePublishFoldersParams,
 } from '../usePublishFolders';
@@ -241,5 +243,42 @@ describe('usePublishFolders', () => {
     expect(
       result.current.folderItems[0].children?.map((child) => child.name),
     ).toContain('Archive');
+  });
+});
+
+describe('rememberPublishFolderKey', () => {
+  it('moves a re-used key to the front', () => {
+    expect(rememberPublishFolderKey(['a', 'b', 'c'], 'c')).toEqual([
+      'c',
+      'a',
+      'b',
+    ]);
+  });
+
+  it('returns undefined when the key is empty or already first', () => {
+    expect(rememberPublishFolderKey(['a'], 'a')).toBeUndefined();
+    expect(rememberPublishFolderKey(['a'], '')).toBeUndefined();
+  });
+
+  it('ignores a malformed stored value and non-string entries', () => {
+    expect(rememberPublishFolderKey('oops', 'a')).toEqual(['a']);
+    expect(rememberPublishFolderKey([1, 'b'], 'a')).toEqual(['a', 'b']);
+  });
+
+  it('caps the list at 50 keys', () => {
+    const stored = Array.from({ length: 50 }, (_, index) => `k${index}`);
+
+    const next = rememberPublishFolderKey(stored, 'new');
+
+    expect(next).toHaveLength(50);
+    expect(next?.[0]).toBe('new');
+    expect(next).not.toContain('k49');
+  });
+});
+
+describe('hasPublishFolderWriteAccess', () => {
+  it('denies folders under a Production segment', () => {
+    expect(hasPublishFolderWriteAccess(['Team', 'Production'])).toBe(false);
+    expect(hasPublishFolderWriteAccess(['Team', 'Drafts'])).toBe(true);
   });
 });

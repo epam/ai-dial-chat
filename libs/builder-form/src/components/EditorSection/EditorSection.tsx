@@ -19,7 +19,7 @@ export const EditorSection: FC<EditorSectionProps> = ({
   return (
     <section
       className={mergeClasses(
-        'flex h-full flex-col gap-4 rounded border p-6',
+        'flex h-full flex-col gap-4 rounded border',
         styles.section,
         className,
         BUILDER_FORM_CLASS.section,

@@ -185,6 +185,9 @@ vi.mock('@epam/ai-dial-scheduled-tasks', async (importOriginal) => ({
   hasScheduledTaskFormChanges: (
     await importOriginal<typeof import('@epam/ai-dial-scheduled-tasks')>()
   ).hasScheduledTaskFormChanges,
+  SCHEDULED_TASK_CREATE_DEFAULT_VALUES: (
+    await importOriginal<typeof import('@epam/ai-dial-scheduled-tasks')>()
+  ).SCHEDULED_TASK_CREATE_DEFAULT_VALUES,
   ScheduledTaskRepeat: {
     OneTime: 'oneTime',
     Hourly: 'hourly',

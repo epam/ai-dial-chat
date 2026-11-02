@@ -48,6 +48,8 @@ export interface NotificationStackLabels {
   requestIdCopied?: string;
   /** Announcement after a failed copy. Defaults to `"Couldn't copy request ID"`. */
   requestIdCopyFailed?: string;
+  /** Accessible name of each toast's close button. Defaults to `'Close notification'`. */
+  close?: string;
 }
 
 /** Props for `NotificationStack`. */
@@ -203,6 +205,7 @@ const NotificationEntry: FC<NotificationEntryProps> = memo(
         message={composedMessage}
         action={item.action}
         closable
+        closeAriaLabel={labels.close}
         onClose={() => onDismiss(item.id)}
       />
     );
@@ -229,6 +232,7 @@ export const NotificationStack: FC<NotificationStackProps> = memo(
         requestIdCopied: labels?.requestIdCopied ?? 'Request ID copied',
         requestIdCopyFailed:
           labels?.requestIdCopyFailed ?? "Couldn't copy request ID",
+        close: labels?.close ?? 'Close notification',
       }),
       [labels],
     );

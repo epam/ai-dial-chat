@@ -190,7 +190,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.62
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.66
 - `@epam/ai-dial-usage-dashboard` \*
 - `@modelcontextprotocol/sdk` ^1.32.2
 - `@epam/pdf-highlighter-kit` ^0.0.19
@@ -2970,6 +2970,20 @@ text stays with the host.
 
 ## Locale Utilities
 
+### getAcceptInvitationErrorItemName
+
+`getAcceptInvitationErrorItemName(error)` resolves the shared item's title that
+a refused `acceptInvitation` call carries in its `AcceptInvitationErrorDto` body,
+or `undefined` when the error is not a `ResponseError`, the body is not JSON or
+the title is empty. The response is cloned, so the body stays readable. Available
+from the root and `./utils`.
+
+```ts
+import { getAcceptInvitationErrorItemName } from '@epam/ai-dial-chat-hooks';
+
+const itemName = await getAcceptInvitationErrorItemName(error);
+```
+
 ### toBaseLocale / resolveLocalizedText / appendLocaleCode
 
 Resolves DIAL Core's `LocalizedText` shape (a plain string, or a map of locale code to translated value) to a single display string, with base-language and primary-locale fallback.
@@ -3372,12 +3386,13 @@ For OAuth, a reported cancellation is re-checked against the backend through `ge
 
 **Parameters**:
 
-| Name            | Type                                                                  | Description                                           |
-| --------------- | --------------------------------------------------------------------- | ----------------------------------------------------- |
-| `callbackPath`  | `string`                                                              | The host's OAuth callback route.                      |
-| `loginToolset`  | `(toolsetId: string, body: ToolsetLoginBodyDto) => Promise<unknown>`  | Submits credentials at one level.                     |
-| `logoutToolset` | `(toolsetId: string, body: ToolsetLogoutBodyDto) => Promise<unknown>` | Clears credentials at one level.                      |
-| `getToolset`    | `(toolsetId: string) => Promise<DialToolsetDto>`                      | Re-reads a toolset to verify a reported cancellation. |
+| Name                       | Type                                                                  | Description                                                                                                                                                                                                                                                             |
+| -------------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `callbackPath`             | `string`                                                              | The host's OAuth callback route.                                                                                                                                                                                                                                        |
+| `loginToolset`             | `(toolsetId: string, body: ToolsetLoginBodyDto) => Promise<unknown>`  | Submits credentials at one level.                                                                                                                                                                                                                                       |
+| `logoutToolset`            | `(toolsetId: string, body: ToolsetLogoutBodyDto) => Promise<unknown>` | Clears credentials at one level.                                                                                                                                                                                                                                        |
+| `getToolset`               | `(toolsetId: string) => Promise<DialToolsetDto>`                      | Re-reads a toolset to verify a reported cancellation.                                                                                                                                                                                                                   |
+| `shouldFetchOAuthSettings` | `boolean`                                                             | Optional, default `false`. An OAuth login opens the popup first, then reads the toolset's current OAuth settings with `getToolset` instead of using `params.oauthSettings`; a popup closed meanwhile resolves cancelled, a toolset no longer on OAuth resolves failure. |
 
 **Returns**: `{ login: (params: ToolsetLoginParams) => Promise<ToolsetLoginOutcome> }` — `login` is `useCallback`-stable while the injected callbacks are unchanged.
 
@@ -3998,6 +4013,15 @@ const error = validatePromptName('My Prompt'); // PromptFieldError | null
 const remaining = getRemainingCharacters('My Prompt', PROMPT_NAME_MAX_LENGTH);
 ```
 
+`PROMPT_FIELD_VALIDATORS` maps each prompt form field (`name`, `description`, `content`) to its validator, and `PromptFieldErrors` holds one optional `PromptFieldError` per field — the shape a prompt form validates into on each change.
+
+```ts
+import { PROMPT_FIELD_VALIDATORS } from '@epam/ai-dial-chat-hooks';
+
+const validateField = PROMPT_FIELD_VALIDATORS[field];
+const error = validateField(value) ?? undefined;
+```
+
 ### PromptSource / parsePromptResourceUrl
 
 `PromptSource` identifies which prompt namespace a catalog prompt item came from. `CatalogItem.id` for a prompt is always the full `prompts/{bucket}/{path}` resource path, regardless of source; `parsePromptResourceUrl` splits it back into `{ bucket, path }` for the one caller that still needs the bucket-relative sub-path on its own — the organisation (public) prompt read, whose endpoint kept a bucket-relative `path` argument.
@@ -4383,6 +4407,56 @@ const {
   canCreateSkill,
   canCreateSchema,
 });
+```
+
+### useCatalogItemDelete
+
+The delete handler `useCatalogEditNavigation` returns, for a host that builds its
+own Edit and Create flows. `useCatalogItemDelete(params)` returns
+`(item) => Promise<void>`: it deletes a prompt, toolset or skill through its own
+operation (a skill by the bucket and path parsed from its resource URL) and any
+other item as an application, refetches that listing and calls
+`onDeleteSuccess`. On failure it calls `onNotify` with `deleteErrorLabel` and
+the request's trace id, then rethrows so a confirmation stays open.
+`UseCatalogItemDeleteParams` and `CatalogItemDeleteNotification` are exported.
+Available from the root and `./catalog`.
+
+```ts
+import { useCatalogItemDelete } from '@epam/ai-dial-chat-hooks/catalog';
+
+const handleDelete = useCatalogItemDelete({
+  deletePrompt,
+  deleteToolset,
+  deleteSkill,
+  deleteApplication,
+  refetchPrompts,
+  refetchToolsets,
+  refetchSkills,
+  refetchDeployments,
+  onDeleteSuccess: notifyDeleted,
+  deleteErrorLabel: t('catalog.details.deleteError'),
+  onNotify: showErrorNotification,
+});
+```
+
+### rememberPublishFolderKey / hasPublishFolderWriteAccess
+
+The publish-destination rules `usePublishFolders` applies, for a host that
+builds its own folder tree. `rememberPublishFolderKey(storedKeys, folderKey)`
+returns the remembered destination keys with `folderKey` moved to the front and
+the list capped at 50, or `undefined` when nothing changes (an empty key, or one
+already first); a stored value that is not an array of strings is ignored.
+`hasPublishFolderWriteAccess(folderPath)` is `false` for a folder under a
+`Production` segment. Available from the root and `./catalog`.
+
+```ts
+import {
+  hasPublishFolderWriteAccess,
+  rememberPublishFolderKey,
+} from '@epam/ai-dial-chat-hooks/catalog';
+
+const next = rememberPublishFolderKey(storedKeys, toFolderPathKey(folderPath));
+if (next) setStoredKeys(next);
 ```
 
 ### useCatalogToolsetCredentials
@@ -5140,6 +5214,33 @@ const panelActiveConversationId = useActiveConversationSync({
 | `shouldMarkViewed`       | `(item: ConversationListItemDto) => boolean` | Optional. Whether the matched active conversation is marked viewed; defaults to every one.    |
 
 **Returns**: `string | undefined` — the panel-space id to highlight.
+
+### readConversationTitleStream / createSseFrameDecoder / parseConversationTitleStreamEvent
+
+Typed reader for the body of `streamConversationTitles` (the finite SSE title
+stream). `readConversationTitleStream(body)` yields each event as a
+`ConversationTitleStreamEventDto`; `createSseFrameDecoder` splits bytes into SSE
+frames and `parseConversationTitleStreamEvent` validates one `data:` payload
+against the generated event union. A frame over
+`CONVERSATION_TITLE_STREAM_MAX_FRAME_BYTES` or a payload outside the union throws
+`ConversationTitleStreamProtocolError`, after which the attempt must stop
+without retrying. `isConversationTitleStreamUnsupported(error)` is `true` when
+the route answered 404 or 405 (an older backend), so the host can fall back to
+the JSON titles endpoint. `CONVERSATION_TITLE_STREAM_MAX_IDS` and
+`CONVERSATION_TITLE_STREAM_MAX_ID_BYTES` are the request bounds. Available from
+the root and `./conversation`.
+
+```ts
+import { readConversationTitleStream } from '@epam/ai-dial-chat-hooks/conversation';
+
+const response = await conversationsApi.streamConversationTitlesRaw(
+  { streamConversationTitlesBodyDto: { ids } },
+  { signal },
+);
+for await (const event of readConversationTitleStream(response.raw.body!)) {
+  applyTitleEvent(event);
+}
+```
 
 ### useVisibleConversationIdsReporter
 

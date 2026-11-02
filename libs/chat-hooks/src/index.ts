@@ -29,6 +29,7 @@ export * from './catalog/catalog-preferences';
 export * from './catalog/usage-limit-rows';
 export * from './catalog/catalog-primary-action';
 export * from './catalog/useCatalogEditNavigation/useCatalogEditNavigation';
+export * from './catalog/useCatalogItemDelete/useCatalogItemDelete';
 export * from './catalog/useCatalogItemDetails';
 export * from './catalog/useCatalogToolsetCredentials/useCatalogToolsetCredentials';
 export * from './catalog/application-credentials';
@@ -258,6 +259,7 @@ export * from './scheduled-task/active-scheduled-task';
 export * from './scheduled-task/useActiveScheduledTaskDetails';
 
 export * from './conversation/useConversationTitleEnrichmentController';
+export * from './conversation/conversation-title-stream';
 export * from './conversation/useVisibleConversationIdsReporter/useVisibleConversationIdsReporter';
 export * from './conversation/conversation-list';
 

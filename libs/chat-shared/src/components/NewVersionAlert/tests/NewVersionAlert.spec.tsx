@@ -40,6 +40,23 @@ describe('NewVersionAlert', () => {
     expect(screen.getByRole('button', { name: 'Перезагрузить' })).toBeTruthy();
   });
 
+  it('renders a region named by the heading, not a live region', () => {
+    renderAlert();
+
+    expect(
+      screen.getByRole('region', { name: 'New version available' }),
+    ).toBeTruthy();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('focuses the reload button on mount', () => {
+    renderAlert();
+
+    expect(
+      screen.getByRole('button', { name: 'Reload the page' }).matches(':focus'),
+    ).toBe(true);
+  });
+
   it('calls onReload when the reload button is clicked', async () => {
     const onReload = vi.fn();
     render(<NewVersionAlert onReload={onReload} />);

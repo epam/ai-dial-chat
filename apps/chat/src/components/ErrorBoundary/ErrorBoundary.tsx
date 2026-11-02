@@ -1,8 +1,11 @@
+import { ErrorBoundary } from '@epam/ai-dial-ui-kit';
 import { memo, type FC, type ReactNode } from 'react';
-import { ErrorBoundary } from 'react-error-boundary';
+import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router';
-import { ErrorBoundaryI18nKeys } from '../../constants/translation-keys';
-import ErrorFallback from './ErrorFallback';
+import {
+  ButtonsI18nKeys,
+  ErrorBoundaryI18nKeys,
+} from '../../constants/translation-keys';
 
 // ─── RootErrorBoundary ────────────────────────────────────────────────────────
 
@@ -10,22 +13,23 @@ interface RootErrorBoundaryProps {
   children: ReactNode;
 }
 
-const RootErrorBoundaryInner: FC<RootErrorBoundaryProps> = ({ children }) => (
-  <ErrorBoundary
-    fallbackRender={({ error }) => (
-      <ErrorFallback
-        error={error}
-        resetErrorBoundary={() => window.location.reload()}
-        actionLabel={ErrorBoundaryI18nKeys.ReloadLabel}
-      />
-    )}
-    onError={(error, info) =>
-      console.error('[ErrorBoundary] Caught root error:', error, info)
-    }
-  >
-    {children}
-  </ErrorBoundary>
-);
+// No `onReset`: the kit boundary reloads the page, since app state may be corrupt.
+const RootErrorBoundaryInner: FC<RootErrorBoundaryProps> = ({ children }) => {
+  const { t } = useTranslation();
+
+  return (
+    <ErrorBoundary
+      title={t(ErrorBoundaryI18nKeys.Heading)}
+      description={t(ErrorBoundaryI18nKeys.Description)}
+      actionLabel={t(ErrorBoundaryI18nKeys.ReloadLabel)}
+      onError={(error, info) =>
+        console.error('[ErrorBoundary] Caught root error:', error, info)
+      }
+    >
+      {children}
+    </ErrorBoundary>
+  );
+};
 
 export const RootErrorBoundary = memo(RootErrorBoundaryInner);
 
@@ -35,10 +39,20 @@ interface RouteErrorBoundaryProps {
   children: ReactNode;
 }
 
+const handleRouteReset = () => undefined;
+
 const RouteErrorBoundaryInner: FC<RouteErrorBoundaryProps> = ({ children }) => {
+  const { t } = useTranslation();
   const { pathname } = useLocation();
+
   return (
-    <ErrorBoundary FallbackComponent={ErrorFallback} resetKeys={[pathname]}>
+    <ErrorBoundary
+      title={t(ErrorBoundaryI18nKeys.Heading)}
+      description={t(ErrorBoundaryI18nKeys.Description)}
+      actionLabel={t(ButtonsI18nKeys.TryAgain)}
+      onReset={handleRouteReset}
+      resetKeys={[pathname]}
+    >
       {children}
     </ErrorBoundary>
   );
