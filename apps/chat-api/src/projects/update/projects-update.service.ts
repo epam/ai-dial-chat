@@ -44,6 +44,7 @@ import {
 } from '../utils/project-id.util';
 import {
   buildProjectManifest,
+  getArtifactContentType,
   PROJECT_CONTEXT_FOLDER,
   PROJECT_MANIFEST_FILE,
 } from '../utils/project-manifest.util';
@@ -194,7 +195,7 @@ export class ProjectsUpdateService {
         );
       } else {
         this.logger.log(
-          `Project saved (kept=${keptFiles.length}, added=${files.length}, removed=${removedFileNames.length}, conversations=${snapshot.conversationEntries.length}, bytes=${totalBytes})`,
+          `Project saved (kept=${keptFiles.length}, added=${files.length}, removed=${removedFileNames.length}, conversations=${snapshot.conversationEntries.length}, artifacts=${snapshot.artifactEntries.length}, bytes=${totalBytes})`,
         );
       }
     }
@@ -352,11 +353,6 @@ export class ProjectsUpdateService {
     addedFileNames.forEach((name, index) => {
       this.createService.appendContextFile(formData, name, files[index].buffer);
     });
-    /*
-     * Files another client wrote outside the chat's layout keep their bytes
-     * and path, but not their content type: the archive carries none, so
-     * they are re-uploaded as `application/octet-stream`.
-     */
     /* Project conversations keep their bytes; their stored type is always JSON. */
     for (const { name } of snapshot.conversationEntries) {
       const entryPath = `${PROJECT_CONVERSATIONS_FOLDER}/${name}`;
@@ -368,6 +364,25 @@ export class ProjectsUpdateService {
         entryPath,
       );
     }
+    /*
+     * The agents' outputs keep their bytes and path. The archive carries no
+     * content type, so it is re-derived from the extension
+     * (`getArtifactContentType`); the chat never adds, renames or removes one.
+     */
+    for (const entryPath of snapshot.artifactEntries) {
+      formData.append(
+        'file',
+        new Blob([await snapshot.readEntry(entryPath)], {
+          type: getArtifactContentType(entryPath),
+        }),
+        entryPath,
+      );
+    }
+    /*
+     * Files another client wrote outside the chat's layout keep their bytes
+     * and path, but not their content type: the archive carries none, so
+     * they are re-uploaded as `application/octet-stream`.
+     */
     for (const entryPath of snapshot.otherEntries) {
       formData.append(
         'file',

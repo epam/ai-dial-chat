@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { parse as parseYaml } from 'yaml';
 import {
   buildProjectManifest,
+  getArtifactContentType,
   parseProjectManifest,
   PROJECT_CONTEXT_FOLDER,
   PROJECT_MANIFEST_FILE,
@@ -178,5 +179,18 @@ describe('buildProjectManifest with extra frontmatter', () => {
         extraFrontmatter: parsed.extraFrontmatter,
       }),
     ).toBe('---\nname: q4\ndescription: new\nowner: research\n---\n\nSteps');
+  });
+});
+
+describe('getArtifactContentType', () => {
+  it.each([
+    ['artifacts/report.pdf', 'application/pdf'],
+    ['artifacts/run-1/summary.md', 'text/markdown'],
+    ['artifacts/script.ts', 'text/typescript'],
+    ['artifacts/module.MTS', 'text/typescript'],
+    ['artifacts/build.py', 'application/octet-stream'],
+    ['artifacts/Makefile', 'application/octet-stream'],
+  ])('types %s as %s', (path, type) => {
+    expect(getArtifactContentType(path)).toBe(type);
   });
 });

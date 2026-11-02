@@ -62,12 +62,17 @@ On an `UPDATE` (or `CREATE`) event for the watched project, `useProjectWatch` SH
 - otherwise call `options.onChange()`, with at most one call in flight. Events that arrive while a call runs set one pending flag. When the call settles, one trailing `onChange()` runs if the flag is set and the flag clears. Ten events during one refresh therefore cause exactly one more refresh.
 - An event without `etag` is never skipped.
 
-`ProjectViewPage` SHALL pass `onChange` as one memoised callback that runs `Promise.all([refreshProject(), refreshConversations()])` (see the `project-view-ui` and `project-conversations-ui` capabilities). Neither refresh shows a `Spinner` or resets `isLoading`. Both keep their current data on failure. `contextSearchQuery`, the scroll position, focus and any open dropdown or dialog are untouched, because no state is remounted.
+`ProjectViewPage` SHALL pass `onChange` as one memoised callback that runs `Promise.all([refreshProject(), refreshConversations(), refreshArtifacts()])` (see the `project-view-ui` and `project-conversations-ui` capabilities). An agent's artifact write is a write to the project resource, so Core emits an `UPDATE` with a new `etag` for it like for any other write, and the new output appears without a reload. No refresh shows a `Spinner` or resets `isLoading`. Each keeps its current data on failure. `contextSearchQuery`, the scroll position, focus and any open dropdown or dialog are untouched, because no state is remounted.
 
 #### Scenario: Another user edits the instructions
 
 - **WHEN** the page shows `etag: '"9f2c"'` and an `UPDATE` with `etag: '"c3d4"'` arrives
-- **THEN** `getProject` and `listProjectConversations` are each called once more, no spinner renders, and the new instructions show
+- **THEN** `getProject`, `listProjectConversations` and `listProjectArtifacts` are each called once more, no spinner renders, and the new instructions show
+
+#### Scenario: An agent saves a new output
+
+- **WHEN** the page shows one output and an agent writes `artifacts/summary.md`, so an `UPDATE` with a new `etag` arrives
+- **THEN** `listProjectArtifacts` is called once more, and the `summary.md` card appears first in the Outputs row without a reload or a spinner
 
 #### Scenario: Event for the loaded version is skipped
 

@@ -1,3 +1,4 @@
+import { lookup } from 'mime-types';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 
 /**
@@ -10,6 +11,9 @@ export const PROJECT_MANIFEST_FILE = 'PROJECT.md';
 
 /** Folder, relative to the project root, that holds the context files. */
 export const PROJECT_CONTEXT_FOLDER = 'context';
+
+/** Folder, relative to the project root, where the agents of the project's chats save their outputs; the chat only reads it. */
+export const PROJECT_ARTIFACTS_FOLDER = 'artifacts';
 
 const CONTEXT_CONTENT_TYPES: Record<string, string> = {
   csv: 'text/csv',
@@ -30,6 +34,27 @@ export const getFileExtension = (fileName: string): string => {
 export const getContextFileContentType = (fileName: string): string =>
   CONTEXT_CONTENT_TYPES[getFileExtension(fileName)] ??
   'application/octet-stream';
+
+/*
+ * Extensions mime-db maps to a type that is wrong for an agent's output:
+ * `.ts` is MPEG transport stream there, never TypeScript source. The values
+ * match `inferMimeTypeFromPath` in `libs/chat-shared`, which the chat uses for
+ * the same file names.
+ */
+const ARTIFACT_CONTENT_TYPE_OVERRIDES: Record<string, string> = {
+  ts: 'text/typescript',
+  mts: 'text/typescript',
+  cts: 'text/typescript',
+};
+
+/**
+ * The content type an artifact is re-uploaded with on a project save: an
+ * override for the extensions mime-db gets wrong, else mime-db's type for the
+ * path, else `application/octet-stream`. Core's archive carries no stored type.
+ */
+export const getArtifactContentType = (path: string): string =>
+  ARTIFACT_CONTENT_TYPE_OVERRIDES[getFileExtension(path)] ??
+  (lookup(path) || 'application/octet-stream');
 
 export interface ProjectManifestInput {
   name: string;

@@ -883,13 +883,15 @@ URL-encoded into one path segment; the bucket comes from the id, and DIAL Core
 authorizes each call with the caller's token. All of them are gated by
 `features.projectsEnabled`.
 
-| Method and path                            | Handler               | What it does                                                                                                                     |
-| ------------------------------------------ | --------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /api/v1/projects/:id`                 | `getProject`          | Name, description, instructions, context files with sizes, `etag`, `contentVersion`, `conversationCount`, `source` and `canEdit` |
-| `GET /api/v1/projects/:id/archive`         | `downloadProject`     | Streams Core's ZIP as an attachment                                                                                              |
-| `GET /api/v1/projects/:id/files/:fileName` | `downloadProjectFile` | Streams `context/{fileName}` as an attachment with `X-Content-Type-Options: nosniff`                                             |
-| `PUT /api/v1/projects/:id`                 | `updateProject`       | One atomic save; a different `name` then moves the project                                                                       |
-| `DELETE /api/v1/projects/:id`              | `deleteProject`       | Conditional delete, then removes the caller's pin                                                                                |
+| Method and path                                | Handler                   | What it does                                                                                                                                  |
+| ---------------------------------------------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/v1/projects/:id`                     | `getProject`              | Name, description, instructions, context files with sizes, `etag`, `contentVersion`, `conversationCount`, `source` and `canEdit`              |
+| `GET /api/v1/projects/:id/archive`             | `downloadProject`         | Streams Core's ZIP as an attachment                                                                                                           |
+| `GET /api/v1/projects/:id/files/:fileName`     | `downloadProjectFile`     | Streams `context/{fileName}` as an attachment with `X-Content-Type-Options: nosniff`                                                          |
+| `GET /api/v1/projects/:id/artifacts`           | `listProjectArtifacts`    | Lists the files directly under `artifacts/`, where the agents of the project's chats save their outputs, newest first; any reader may call it |
+| `GET /api/v1/projects/:id/artifacts/:fileName` | `downloadProjectArtifact` | Streams `artifacts/{fileName}` as an attachment with `X-Content-Type-Options: nosniff`; any reader may call it                                |
+| `PUT /api/v1/projects/:id`                     | `updateProject`           | One atomic save; a different `name` then moves the project                                                                                    |
+| `DELETE /api/v1/projects/:id`                  | `deleteProject`           | Conditional delete, then removes the caller's pin                                                                                             |
 
 DIAL Core's project metadata carries no file sizes, so `getProject` and
 `updateProject` read the project archive (`downloadProjectFolder`): its `ETag`
@@ -904,17 +906,20 @@ one of its two reads fails or the client disconnects.
 
 `PUT` takes the create fields plus `removedFileNames` (JSON) and a required
 `If-Match` carrying the details' `contentVersion` — a hash of every file except
-the project's conversations — not its `etag`, which every project chat write
-changes. `fileNames`/`files` carry only the added files; replacing a file
-lists its name in both. The BFF rebuilds `PROJECT.md` (keeping any frontmatter
+the project's conversations and its `artifacts/` — not its `etag`, which every
+project chat write and every artifact an agent saves changes.
+`fileNames`/`files` carry only the added files; replacing a file lists its
+name in both. The BFF rebuilds `PROJECT.md` (keeping any frontmatter
 key other than `name` and `description`), keeps every stored context file not
-removed, adds the new ones, keeps the stored conversations (as JSON) and any
-other file, and makes **one** `uploadProjectFolder` conditioned on the fresh
+removed, adds the new ones, keeps the stored conversations (as JSON), the
+agents' `artifacts/` (never added, renamed or removed by the chat) and any other
+file, and makes **one** `uploadProjectFolder` conditioned on the fresh
 snapshot's ETag, so an edit commits whole or not at all. A Core `412` (usually a
-chat written in between) re-reads the snapshot and, while `contentVersion` is
-unchanged, rebuilds and writes again — at most three writes. `DELETE` takes the
+chat or an artifact written in between) re-reads the snapshot and, while
+`contentVersion` is unchanged, rebuilds and writes again — at most three writes. `DELETE` takes the
 same `contentVersion` and retries a `412` the same way; it deletes the project's
-conversations with it.
+conversations and `artifacts/` with it, including an output an agent wrote
+after the caller read the project.
 On a rename it then calls `/v1/ops/resource/move` (after checking the
 destination is free), migrates the caller's pin and reads the new ETag back.
 The rename steps run under their own 30-second deadline, not the client's
@@ -923,8 +928,11 @@ when the read-back fails.
 
 Known limitation: a save keeps every kept file's bytes but not its stored
 content type, because Core's archive carries none. A kept context file is
-retyped from its extension, as on create, and a file outside the chat's layout
-is re-uploaded as `application/octet-stream`.
+retyped from its extension, as on create; an artifact is retyped from its
+extension with `mime-types` (`text/typescript` for `.ts`, which mime-db reads
+as `video/mp2t`; `application/octet-stream` for an unknown one);
+any other file outside the chat's layout is re-uploaded as
+`application/octet-stream`.
 
 `PUT` and `DELETE` act only on a project in the caller's own bucket (`403`
 otherwise, before any Core call), matching `canEdit`.
@@ -941,8 +949,8 @@ Conditional writes answer:
   manifest limit, instead of overwriting a manifest the BFF never read;
 - `400 unknown-file` for a removed name the project does not have.
 
-Downloads (`/archive`, `/files/:fileName`) give Core 60 seconds to answer with
-headers; the streamed body has no deadline and stops only when the client
+Downloads (`/archive`, `/files/:fileName`, `/artifacts/:fileName`) give Core 60
+seconds to answer with headers; the streamed body has no deadline and stops only when the client
 disconnects.
 
 The capacity and file-type rules are the create rules, applied to the
@@ -1878,13 +1886,15 @@ URL-encoded into one path segment; the bucket comes from the id, and DIAL Core
 authorizes each call with the caller's token. All of them are gated by
 `features.projectsEnabled`.
 
-| Method and path                            | Handler               | What it does                                                                                                                     |
-| ------------------------------------------ | --------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /api/v1/projects/:id`                 | `getProject`          | Name, description, instructions, context files with sizes, `etag`, `contentVersion`, `conversationCount`, `source` and `canEdit` |
-| `GET /api/v1/projects/:id/archive`         | `downloadProject`     | Streams Core's ZIP as an attachment                                                                                              |
-| `GET /api/v1/projects/:id/files/:fileName` | `downloadProjectFile` | Streams `context/{fileName}` as an attachment with `X-Content-Type-Options: nosniff`                                             |
-| `PUT /api/v1/projects/:id`                 | `updateProject`       | One atomic save; a different `name` then moves the project                                                                       |
-| `DELETE /api/v1/projects/:id`              | `deleteProject`       | Conditional delete, then removes the caller's pin                                                                                |
+| Method and path                                | Handler                   | What it does                                                                                                                                  |
+| ---------------------------------------------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/v1/projects/:id`                     | `getProject`              | Name, description, instructions, context files with sizes, `etag`, `contentVersion`, `conversationCount`, `source` and `canEdit`              |
+| `GET /api/v1/projects/:id/archive`             | `downloadProject`         | Streams Core's ZIP as an attachment                                                                                                           |
+| `GET /api/v1/projects/:id/files/:fileName`     | `downloadProjectFile`     | Streams `context/{fileName}` as an attachment with `X-Content-Type-Options: nosniff`                                                          |
+| `GET /api/v1/projects/:id/artifacts`           | `listProjectArtifacts`    | Lists the files directly under `artifacts/`, where the agents of the project's chats save their outputs, newest first; any reader may call it |
+| `GET /api/v1/projects/:id/artifacts/:fileName` | `downloadProjectArtifact` | Streams `artifacts/{fileName}` as an attachment with `X-Content-Type-Options: nosniff`; any reader may call it                                |
+| `PUT /api/v1/projects/:id`                     | `updateProject`           | One atomic save; a different `name` then moves the project                                                                                    |
+| `DELETE /api/v1/projects/:id`                  | `deleteProject`           | Conditional delete, then removes the caller's pin                                                                                             |
 
 DIAL Core's project metadata carries no file sizes, so `getProject` and
 `updateProject` read the project archive (`downloadProjectFolder`): its `ETag`
@@ -1899,17 +1909,20 @@ one of its two reads fails or the client disconnects.
 
 `PUT` takes the create fields plus `removedFileNames` (JSON) and a required
 `If-Match` carrying the details' `contentVersion` — a hash of every file except
-the project's conversations — not its `etag`, which every project chat write
-changes. `fileNames`/`files` carry only the added files; replacing a file
-lists its name in both. The BFF rebuilds `PROJECT.md` (keeping any frontmatter
+the project's conversations and its `artifacts/` — not its `etag`, which every
+project chat write and every artifact an agent saves changes.
+`fileNames`/`files` carry only the added files; replacing a file lists its
+name in both. The BFF rebuilds `PROJECT.md` (keeping any frontmatter
 key other than `name` and `description`), keeps every stored context file not
-removed, adds the new ones, keeps the stored conversations (as JSON) and any
-other file, and makes **one** `uploadProjectFolder` conditioned on the fresh
+removed, adds the new ones, keeps the stored conversations (as JSON), the
+agents' `artifacts/` (never added, renamed or removed by the chat) and any other
+file, and makes **one** `uploadProjectFolder` conditioned on the fresh
 snapshot's ETag, so an edit commits whole or not at all. A Core `412` (usually a
-chat written in between) re-reads the snapshot and, while `contentVersion` is
-unchanged, rebuilds and writes again — at most three writes. `DELETE` takes the
+chat or an artifact written in between) re-reads the snapshot and, while
+`contentVersion` is unchanged, rebuilds and writes again — at most three writes. `DELETE` takes the
 same `contentVersion` and retries a `412` the same way; it deletes the project's
-conversations with it.
+conversations and `artifacts/` with it, including an output an agent wrote
+after the caller read the project.
 On a rename it then calls `/v1/ops/resource/move` (after checking the
 destination is free), migrates the caller's pin and reads the new ETag back.
 The rename steps run under their own 30-second deadline, not the client's
@@ -1918,8 +1931,11 @@ when the read-back fails.
 
 Known limitation: a save keeps every kept file's bytes but not its stored
 content type, because Core's archive carries none. A kept context file is
-retyped from its extension, as on create, and a file outside the chat's layout
-is re-uploaded as `application/octet-stream`.
+retyped from its extension, as on create; an artifact is retyped from its
+extension with `mime-types` (`text/typescript` for `.ts`, which mime-db reads
+as `video/mp2t`; `application/octet-stream` for an unknown one);
+any other file outside the chat's layout is re-uploaded as
+`application/octet-stream`.
 
 `PUT` and `DELETE` act only on a project in the caller's own bucket (`403`
 otherwise, before any Core call), matching `canEdit`.
@@ -1936,8 +1952,8 @@ Conditional writes answer:
   manifest limit, instead of overwriting a manifest the BFF never read;
 - `400 unknown-file` for a removed name the project does not have.
 
-Downloads (`/archive`, `/files/:fileName`) give Core 60 seconds to answer with
-headers; the streamed body has no deadline and stops only when the client
+Downloads (`/archive`, `/files/:fileName`, `/artifacts/:fileName`) give Core 60
+seconds to answer with headers; the streamed body has no deadline and stops only when the client
 disconnects.
 
 The capacity and file-type rules are the create rules, applied to the
@@ -2859,13 +2875,15 @@ URL-encoded into one path segment; the bucket comes from the id, and DIAL Core
 authorizes each call with the caller's token. All of them are gated by
 `features.projectsEnabled`.
 
-| Method and path                            | Handler               | What it does                                                                                                                     |
-| ------------------------------------------ | --------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /api/v1/projects/:id`                 | `getProject`          | Name, description, instructions, context files with sizes, `etag`, `contentVersion`, `conversationCount`, `source` and `canEdit` |
-| `GET /api/v1/projects/:id/archive`         | `downloadProject`     | Streams Core's ZIP as an attachment                                                                                              |
-| `GET /api/v1/projects/:id/files/:fileName` | `downloadProjectFile` | Streams `context/{fileName}` as an attachment with `X-Content-Type-Options: nosniff`                                             |
-| `PUT /api/v1/projects/:id`                 | `updateProject`       | One atomic save; a different `name` then moves the project                                                                       |
-| `DELETE /api/v1/projects/:id`              | `deleteProject`       | Conditional delete, then removes the caller's pin                                                                                |
+| Method and path                                | Handler                   | What it does                                                                                                                                  |
+| ---------------------------------------------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/v1/projects/:id`                     | `getProject`              | Name, description, instructions, context files with sizes, `etag`, `contentVersion`, `conversationCount`, `source` and `canEdit`              |
+| `GET /api/v1/projects/:id/archive`             | `downloadProject`         | Streams Core's ZIP as an attachment                                                                                                           |
+| `GET /api/v1/projects/:id/files/:fileName`     | `downloadProjectFile`     | Streams `context/{fileName}` as an attachment with `X-Content-Type-Options: nosniff`                                                          |
+| `GET /api/v1/projects/:id/artifacts`           | `listProjectArtifacts`    | Lists the files directly under `artifacts/`, where the agents of the project's chats save their outputs, newest first; any reader may call it |
+| `GET /api/v1/projects/:id/artifacts/:fileName` | `downloadProjectArtifact` | Streams `artifacts/{fileName}` as an attachment with `X-Content-Type-Options: nosniff`; any reader may call it                                |
+| `PUT /api/v1/projects/:id`                     | `updateProject`           | One atomic save; a different `name` then moves the project                                                                                    |
+| `DELETE /api/v1/projects/:id`                  | `deleteProject`           | Conditional delete, then removes the caller's pin                                                                                             |
 
 DIAL Core's project metadata carries no file sizes, so `getProject` and
 `updateProject` read the project archive (`downloadProjectFolder`): its `ETag`
@@ -2880,17 +2898,20 @@ one of its two reads fails or the client disconnects.
 
 `PUT` takes the create fields plus `removedFileNames` (JSON) and a required
 `If-Match` carrying the details' `contentVersion` — a hash of every file except
-the project's conversations — not its `etag`, which every project chat write
-changes. `fileNames`/`files` carry only the added files; replacing a file
-lists its name in both. The BFF rebuilds `PROJECT.md` (keeping any frontmatter
+the project's conversations and its `artifacts/` — not its `etag`, which every
+project chat write and every artifact an agent saves changes.
+`fileNames`/`files` carry only the added files; replacing a file lists its
+name in both. The BFF rebuilds `PROJECT.md` (keeping any frontmatter
 key other than `name` and `description`), keeps every stored context file not
-removed, adds the new ones, keeps the stored conversations (as JSON) and any
-other file, and makes **one** `uploadProjectFolder` conditioned on the fresh
+removed, adds the new ones, keeps the stored conversations (as JSON), the
+agents' `artifacts/` (never added, renamed or removed by the chat) and any other
+file, and makes **one** `uploadProjectFolder` conditioned on the fresh
 snapshot's ETag, so an edit commits whole or not at all. A Core `412` (usually a
-chat written in between) re-reads the snapshot and, while `contentVersion` is
-unchanged, rebuilds and writes again — at most three writes. `DELETE` takes the
+chat or an artifact written in between) re-reads the snapshot and, while
+`contentVersion` is unchanged, rebuilds and writes again — at most three writes. `DELETE` takes the
 same `contentVersion` and retries a `412` the same way; it deletes the project's
-conversations with it.
+conversations and `artifacts/` with it, including an output an agent wrote
+after the caller read the project.
 On a rename it then calls `/v1/ops/resource/move` (after checking the
 destination is free), migrates the caller's pin and reads the new ETag back.
 The rename steps run under their own 30-second deadline, not the client's
@@ -2899,8 +2920,11 @@ when the read-back fails.
 
 Known limitation: a save keeps every kept file's bytes but not its stored
 content type, because Core's archive carries none. A kept context file is
-retyped from its extension, as on create, and a file outside the chat's layout
-is re-uploaded as `application/octet-stream`.
+retyped from its extension, as on create; an artifact is retyped from its
+extension with `mime-types` (`text/typescript` for `.ts`, which mime-db reads
+as `video/mp2t`; `application/octet-stream` for an unknown one);
+any other file outside the chat's layout is re-uploaded as
+`application/octet-stream`.
 
 `PUT` and `DELETE` act only on a project in the caller's own bucket (`403`
 otherwise, before any Core call), matching `canEdit`.
@@ -2917,8 +2941,8 @@ Conditional writes answer:
   manifest limit, instead of overwriting a manifest the BFF never read;
 - `400 unknown-file` for a removed name the project does not have.
 
-Downloads (`/archive`, `/files/:fileName`) give Core 60 seconds to answer with
-headers; the streamed body has no deadline and stops only when the client
+Downloads (`/archive`, `/files/:fileName`, `/artifacts/:fileName`) give Core 60
+seconds to answer with headers; the streamed body has no deadline and stops only when the client
 disconnects.
 
 The capacity and file-type rules are the create rules, applied to the
@@ -3839,13 +3863,15 @@ URL-encoded into one path segment; the bucket comes from the id, and DIAL Core
 authorizes each call with the caller's token. All of them are gated by
 `features.projectsEnabled`.
 
-| Method and path                            | Handler               | What it does                                                                                                                     |
-| ------------------------------------------ | --------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /api/v1/projects/:id`                 | `getProject`          | Name, description, instructions, context files with sizes, `etag`, `contentVersion`, `conversationCount`, `source` and `canEdit` |
-| `GET /api/v1/projects/:id/archive`         | `downloadProject`     | Streams Core's ZIP as an attachment                                                                                              |
-| `GET /api/v1/projects/:id/files/:fileName` | `downloadProjectFile` | Streams `context/{fileName}` as an attachment with `X-Content-Type-Options: nosniff`                                             |
-| `PUT /api/v1/projects/:id`                 | `updateProject`       | One atomic save; a different `name` then moves the project                                                                       |
-| `DELETE /api/v1/projects/:id`              | `deleteProject`       | Conditional delete, then removes the caller's pin                                                                                |
+| Method and path                                | Handler                   | What it does                                                                                                                                  |
+| ---------------------------------------------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/v1/projects/:id`                     | `getProject`              | Name, description, instructions, context files with sizes, `etag`, `contentVersion`, `conversationCount`, `source` and `canEdit`              |
+| `GET /api/v1/projects/:id/archive`             | `downloadProject`         | Streams Core's ZIP as an attachment                                                                                                           |
+| `GET /api/v1/projects/:id/files/:fileName`     | `downloadProjectFile`     | Streams `context/{fileName}` as an attachment with `X-Content-Type-Options: nosniff`                                                          |
+| `GET /api/v1/projects/:id/artifacts`           | `listProjectArtifacts`    | Lists the files directly under `artifacts/`, where the agents of the project's chats save their outputs, newest first; any reader may call it |
+| `GET /api/v1/projects/:id/artifacts/:fileName` | `downloadProjectArtifact` | Streams `artifacts/{fileName}` as an attachment with `X-Content-Type-Options: nosniff`; any reader may call it                                |
+| `PUT /api/v1/projects/:id`                     | `updateProject`           | One atomic save; a different `name` then moves the project                                                                                    |
+| `DELETE /api/v1/projects/:id`                  | `deleteProject`           | Conditional delete, then removes the caller's pin                                                                                             |
 
 DIAL Core's project metadata carries no file sizes, so `getProject` and
 `updateProject` read the project archive (`downloadProjectFolder`): its `ETag`
@@ -3860,17 +3886,20 @@ one of its two reads fails or the client disconnects.
 
 `PUT` takes the create fields plus `removedFileNames` (JSON) and a required
 `If-Match` carrying the details' `contentVersion` — a hash of every file except
-the project's conversations — not its `etag`, which every project chat write
-changes. `fileNames`/`files` carry only the added files; replacing a file
-lists its name in both. The BFF rebuilds `PROJECT.md` (keeping any frontmatter
+the project's conversations and its `artifacts/` — not its `etag`, which every
+project chat write and every artifact an agent saves changes.
+`fileNames`/`files` carry only the added files; replacing a file lists its
+name in both. The BFF rebuilds `PROJECT.md` (keeping any frontmatter
 key other than `name` and `description`), keeps every stored context file not
-removed, adds the new ones, keeps the stored conversations (as JSON) and any
-other file, and makes **one** `uploadProjectFolder` conditioned on the fresh
+removed, adds the new ones, keeps the stored conversations (as JSON), the
+agents' `artifacts/` (never added, renamed or removed by the chat) and any other
+file, and makes **one** `uploadProjectFolder` conditioned on the fresh
 snapshot's ETag, so an edit commits whole or not at all. A Core `412` (usually a
-chat written in between) re-reads the snapshot and, while `contentVersion` is
-unchanged, rebuilds and writes again — at most three writes. `DELETE` takes the
+chat or an artifact written in between) re-reads the snapshot and, while
+`contentVersion` is unchanged, rebuilds and writes again — at most three writes. `DELETE` takes the
 same `contentVersion` and retries a `412` the same way; it deletes the project's
-conversations with it.
+conversations and `artifacts/` with it, including an output an agent wrote
+after the caller read the project.
 On a rename it then calls `/v1/ops/resource/move` (after checking the
 destination is free), migrates the caller's pin and reads the new ETag back.
 The rename steps run under their own 30-second deadline, not the client's
@@ -3879,8 +3908,11 @@ when the read-back fails.
 
 Known limitation: a save keeps every kept file's bytes but not its stored
 content type, because Core's archive carries none. A kept context file is
-retyped from its extension, as on create, and a file outside the chat's layout
-is re-uploaded as `application/octet-stream`.
+retyped from its extension, as on create; an artifact is retyped from its
+extension with `mime-types` (`text/typescript` for `.ts`, which mime-db reads
+as `video/mp2t`; `application/octet-stream` for an unknown one);
+any other file outside the chat's layout is re-uploaded as
+`application/octet-stream`.
 
 `PUT` and `DELETE` act only on a project in the caller's own bucket (`403`
 otherwise, before any Core call), matching `canEdit`.
@@ -3897,8 +3929,8 @@ Conditional writes answer:
   manifest limit, instead of overwriting a manifest the BFF never read;
 - `400 unknown-file` for a removed name the project does not have.
 
-Downloads (`/archive`, `/files/:fileName`) give Core 60 seconds to answer with
-headers; the streamed body has no deadline and stops only when the client
+Downloads (`/archive`, `/files/:fileName`, `/artifacts/:fileName`) give Core 60
+seconds to answer with headers; the streamed body has no deadline and stops only when the client
 disconnects.
 
 The capacity and file-type rules are the create rules, applied to the

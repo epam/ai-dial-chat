@@ -167,7 +167,7 @@ The component's stylesheet ships in the lib's existing `./styles.css` export, an
 
 ### Requirement: The project view's main column holds the chat input and the Chats list
 
-`ProjectViewPage` (`apps/chat/src/pages/ProjectViewPage/ProjectViewPage.tsx`) SHALL own the Chats list state through `useProjectConversations(projectId)` (`apps/chat/src/hooks/projects/useProjectConversations.ts`, the adapter of `libs/chat-hooks/src/project/use-project-conversations.ts`). It passes that state to `ProjectConversationsSection` (`apps/chat/src/components/ProjectConversationsSection/ProjectConversationsSection.tsx`) as the new `conversations` prop, and passes the section to `ProjectView` as `mainContent`. The page owns the state so the project watch can refresh it (see the `project-view-live-updates` capability).
+`ProjectViewPage` (`apps/chat/src/pages/ProjectViewPage/ProjectViewPage.tsx`) SHALL own the Chats list state through `useProjectConversations(projectId)` (`apps/chat/src/hooks/projects/useProjectConversations.ts`, the adapter of `libs/chat-hooks/src/project/use-project-conversations.ts`). It passes that state to `ProjectConversationsSection` (`apps/chat/src/components/ProjectConversationsSection/ProjectConversationsSection.tsx`) as the new `conversations` prop, together with an optional `outputs` node (the page's `ProjectOutputs`, see the `project-view-ui` capability), and passes the section to `ProjectView` as `mainContent`. The page owns the state so the project watch can refresh it (see the `project-view-live-updates` capability).
 
 The section renders:
 
@@ -175,7 +175,10 @@ The section renders:
    - It is `NewConversationComposer` with a new `ComposerLayout.Embedded` (`apps/chat/src/types/conversation-composer.ts`): no greeting, no page footer (`FooterMessage`: operator message and app version), the input in normal flow at the top of the column, with the model selector, attachments, tools, the `+` menu's Prompts and Skills entries, the `/` command menu, skill mentions (sent as the first message's `skills`, restored on a failed create) and the deployment's `isChatMessageInputDisabled`, exactly as on the new-conversation screen. Both screens take the prompt and skill wiring from one hook, `useComposerMenus` (`apps/chat/src/hooks/conversation/useComposerMenus.tsx`), so the two composers cannot drift apart.
    - The selection comes from `DeploymentsContext`, and the section calls `restoreDefaultSelection` on mount, as `ConversationRoute` does, so a model restored from a viewed chat does not leak in.
    - Its placeholder is the shared `chat.placeholder` ("How can I help you today?").
-2. **`ProjectConversationList`**, fed by the `conversations` prop.
+2. **The Outputs section, when `outputs` is set**, for every reader (owner or not).
+   - The section passes `outputs` to `ProjectConversationsPanel`'s new `outputs?: ReactNode` slot (`libs/projects/src/models/project-conversations-panel-props.ts`, documented as "Content between `composer` and the Chats list; omitted when unset").
+   - The panel renders `composer`, then `outputs`, then `ProjectConversationList`, with no wrapper of its own around `outputs`, so the host's node sits in the column's flow. The panel knows nothing about outputs beyond the slot.
+3. **`ProjectConversationList`**, fed by the `conversations` prop.
    - The hook owns `{ items, isLoading, hasError, hasMore, isLoadingMore, retry, loadMore, rename, remove, refresh, markViewed }` in local state. It follows the `useFavicon` pattern: `AbortController` cleanup, async/await.
    - While `hasMore`, the list ends with a See more link (`buttons.seeMore`). `loadMore` requests the next page with `offset` set to the rows already listed, appends it without repeating a row, and a failure keeps the rows and shows `projects.chats.error`.
    - Items map from `ProjectConversationItemDto` (`title`, `author` → `authorName`, `isUnread`).
@@ -209,6 +212,16 @@ After a delete, the project view's chat count (the delete-project message and th
 The section labels pass `unreadLabel: t(ConversationPanelI18nKeys.UnreadIndicatorLabel)`, which reuses `conversationPanel.unreadIndicatorLabel`, through `useProjectConversationsPanelLabels`.
 
 Handlers are memoised with `useCallback`, and the mapped items with `useMemo`.
+
+#### Scenario: Outputs sit between the input and the Chats list
+
+- **WHEN** the owner opens a project with one output and two chats
+- **THEN** in document order the chat input comes first, then the Outputs heading and card, then the Chats heading and its rows
+
+#### Scenario: The panel renders no outputs slot when unset
+
+- **WHEN** `ProjectConversationsPanel` renders with a `composer` and no `outputs`
+- **THEN** the Chats list directly follows the composer, and the rendered markup is unchanged from before
 
 #### Scenario: First message opens the new chat
 

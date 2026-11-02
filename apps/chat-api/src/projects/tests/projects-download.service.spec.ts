@@ -97,6 +97,46 @@ describe('ProjectsDownloadService', () => {
     );
   });
 
+  it('streams one artifact from the artifacts folder as an attachment', async () => {
+    const { service, client } = makeService(okResponse());
+
+    const download = await service.downloadArtifact(
+      project,
+      'report.pdf',
+      'token',
+      USER_BUCKET,
+    );
+
+    expect(client.downloadProjectFile).toHaveBeenCalledWith(
+      USER_BUCKET,
+      'marketing/Q4%20launch',
+      'artifacts/report.pdf',
+      expect.objectContaining({
+        headers: { Authorization: 'Bearer token' },
+        parseAs: 'stream',
+      }),
+    );
+    expect(download.headers).toEqual({
+      'content-type': 'application/zip',
+      etag: '"e1"',
+      'content-disposition':
+        'attachment; filename="report.pdf"; filename*=UTF-8\'\'report.pdf',
+      'x-content-type-options': 'nosniff',
+      'cache-control': 'private, no-store',
+    });
+  });
+
+  it('reports a missing artifact as not found', async () => {
+    const { service } = makeService({
+      error: { message: 'missing' },
+      response: { status: 404, headers: new Headers() },
+    });
+
+    await expect(
+      service.downloadArtifact(project, 'report.pdf', 'token', USER_BUCKET),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
   it('reports a missing file as not found', async () => {
     const { service } = makeService({
       error: { message: 'missing' },

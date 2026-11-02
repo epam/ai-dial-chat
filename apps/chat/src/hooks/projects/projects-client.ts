@@ -18,6 +18,7 @@ import {
   downloadProjectArchive,
   downloadProjectContextFile,
   getProject,
+  listProjectArtifacts,
   listProjects,
   updateProject,
   watchProjects,
@@ -56,6 +57,7 @@ export const projectsClient: ProjectsApiClient = {
   deleteProject: (...args) => deleteProject(...args),
   downloadProjectArchive: (...args) => downloadProjectArchive(...args),
   downloadProjectContextFile: (...args) => downloadProjectContextFile(...args),
+  listProjectArtifacts: (...args) => listProjectArtifacts(...args),
   listProjectConversations: (...args) => listProjectConversations(...args),
   createProjectConversation: (
     projectId,

@@ -6,6 +6,7 @@ import {
 import { triggerBrowserDownload } from '@epam/ai-dial-chat-hooks/utils';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ReactNode } from 'react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -27,6 +28,7 @@ import {
   deleteProject,
   downloadProjectArchive,
   getProject,
+  listProjectArtifacts,
   watchProjects,
 } from '../../../server-api/projects.api';
 import ProjectViewPage from '../ProjectViewPage';
@@ -51,6 +53,7 @@ vi.mock('../../../server-api/projects.api', () => ({
   getProject: vi.fn(),
   deleteProject: vi.fn(),
   downloadProjectArchive: vi.fn(),
+  listProjectArtifacts: vi.fn(),
   watchProjects: vi.fn(),
 }));
 vi.mock('../../../server-api/project-conversations.api', () => ({
@@ -89,14 +92,17 @@ vi.mock(
       canEdit,
       conversations,
       onConversationDeleted,
+      outputs,
     }: {
       projectId: string;
       canEdit: boolean;
       conversations: { items: { title: string; isUnread?: boolean }[] };
       onConversationDeleted?: () => void;
+      outputs?: ReactNode;
     }) => (
       <>
         <p>{`chats of ${projectId}, editable: ${String(canEdit)}`}</p>
+        {outputs}
         <ul aria-label="chat rows">
           {conversations.items.map((item) => (
             <li key={item.title}>
@@ -178,6 +184,7 @@ describe('ProjectViewPage', () => {
       items: [],
       hasMore: false,
     });
+    vi.mocked(listProjectArtifacts).mockResolvedValue({ items: [] });
   });
 
   it('renders NotFound without a request when the flag is off', () => {
@@ -493,6 +500,132 @@ describe('ProjectViewPage', () => {
     });
   });
 
+  describe('outputs', () => {
+    const findOutputs = () =>
+      screen.findByRole('region', { name: ProjectsI18nKeys.OutputsTitle });
+    const outputs = (...names: string[]) => ({
+      items: names.map((name, index) => ({
+        name,
+        updatedAt: names.length - index,
+      })),
+    });
+
+    it("renders the project's outputs in the main column, newest first", async () => {
+      vi.mocked(listProjectArtifacts).mockResolvedValue(
+        outputs('summary.md', 'report.pdf'),
+      );
+      renderAt();
+
+      const region = await findOutputs();
+
+      expect(listProjectArtifacts).toHaveBeenCalledWith(
+        PROJECT_ID,
+        expect.any(AbortSignal),
+      );
+      const cards = within(region).getAllByRole('button', {
+        name: ProjectsI18nKeys.ViewOpenFile,
+      });
+      expect(cards).toHaveLength(2);
+      expect(
+        within(region).queryByRole('button', { name: /rename|delete/i }),
+      ).toBeNull();
+    });
+
+    it('renders no Outputs section when the project has none', async () => {
+      renderAt();
+      await screen.findByText(`chats of ${PROJECT_ID}, editable: true`);
+      await waitFor(() => expect(listProjectArtifacts).toHaveBeenCalled());
+
+      expect(
+        screen.queryByRole('region', { name: ProjectsI18nKeys.OutputsTitle }),
+      ).toBeNull();
+    });
+
+    it('announces a failed read and keeps the section and focus through Retry', async () => {
+      vi.mocked(listProjectArtifacts)
+        .mockRejectedValueOnce(new Error('down'))
+        .mockResolvedValue(outputs('report.pdf'));
+      renderAt();
+
+      const region = await findOutputs();
+      /* The live region, not the visible aria-hidden copy, carries the announcement. */
+      expect(
+        screen.getByText(ProjectsI18nKeys.OutputsError, {
+          selector: '[role="status"]',
+        }),
+      ).toBeTruthy();
+
+      await userEvent.click(
+        within(region).getByRole('button', { name: ButtonsI18nKeys.Retry }),
+      );
+
+      expect(
+        await within(region).findByRole('button', {
+          name: ProjectsI18nKeys.ViewOpenFile,
+        }),
+      ).toBeTruthy();
+      expect(
+        screen.getByRole('region', { name: ProjectsI18nKeys.OutputsTitle }),
+      ).toBe(region);
+      // eslint-disable-next-line testing-library/no-node-access -- Focus has no role query.
+      expect(document.activeElement).toBe(
+        within(region).getByRole('heading', {
+          name: ProjectsI18nKeys.OutputsTitle,
+        }),
+      );
+      expect(listProjectArtifacts).toHaveBeenCalledTimes(2);
+    });
+
+    it('shows the outputs of a shared read-only project', async () => {
+      vi.mocked(getProject).mockResolvedValue(details({ canEdit: false }));
+      vi.mocked(listProjectArtifacts).mockResolvedValue(outputs('report.pdf'));
+      renderAt();
+
+      expect(await findOutputs()).toBeTruthy();
+    });
+
+    it('opens an output in the canvas through the artifact locator and selects only its card', async () => {
+      vi.mocked(getProject).mockResolvedValue(
+        details({ contextFiles: [{ name: 'report.pdf', size: 10 }] }),
+      );
+      vi.mocked(listProjectArtifacts).mockResolvedValue(outputs('report.pdf'));
+      renderAt();
+      const region = await findOutputs();
+      const outputCard = within(region).getByRole('button', {
+        name: ProjectsI18nKeys.ViewOpenFile,
+      });
+      const detailsPanel = screen.getByRole('complementary', {
+        name: ProjectsI18nKeys.ViewDetails,
+      });
+      const contextCard = within(detailsPanel).getByRole('button', {
+        name: ProjectsI18nKeys.ViewOpenFile,
+      });
+
+      await userEvent.click(outputCard);
+
+      await waitFor(() =>
+        expect(screen.getByLabelText('canvas').textContent).toBe(
+          `${PROJECT_ID}::artifacts/report.pdf`,
+        ),
+      );
+      await waitFor(() =>
+        expect(previewResolvers.resolvePdfContent).toHaveBeenCalledOnce(),
+      );
+      expect(previewResolvers.resolvePdfContent.mock.calls[0][0]).toMatchObject(
+        {
+          name: 'report.pdf',
+          url: `${PROJECT_ID}/files/artifacts/report.pdf`,
+        },
+      );
+      await waitFor(() =>
+        expect(outputCard.getAttribute('aria-pressed')).toBe('true'),
+      );
+      expect(contextCard.getAttribute('aria-pressed')).toBe('false');
+      expect(detailsPanel.className).not.toContain('desktop:w-[488px]');
+      expect(triggerBrowserDownload).not.toHaveBeenCalled();
+    });
+  });
+
   it('reloads the project when a delete loses to a concurrent change', async () => {
     vi.mocked(deleteProject).mockRejectedValue(
       new ResponseError(
@@ -598,6 +731,42 @@ describe('ProjectViewPage', () => {
 
       expect(await screen.findByText('Edited elsewhere')).toBeTruthy();
       expect(await screen.findByText('c2 (unread)')).toBeTruthy();
+      expect(
+        screen.getByRole('heading', { level: 1, name: 'q4' }),
+      ).toBeTruthy();
+    });
+
+    it('shows a new output on an update without a reload', async () => {
+      vi.mocked(listProjectArtifacts).mockResolvedValue({
+        items: [{ name: 'report.pdf', updatedAt: 1 }],
+      });
+      const { watch } = await renderWatched();
+      const region = await screen.findByRole('region', {
+        name: ProjectsI18nKeys.OutputsTitle,
+      });
+      vi.mocked(getProject).mockResolvedValue(details({ etag: '"e2"' }));
+      vi.mocked(listProjectArtifacts).mockResolvedValue({
+        items: [
+          { name: 'summary.md', updatedAt: 2 },
+          { name: 'report.pdf', updatedAt: 1 },
+        ],
+      });
+
+      watch.send({
+        id: PROJECT_ID,
+        action: 'UPDATE',
+        timestamp: 1,
+        etag: '"e2"',
+      });
+
+      await waitFor(() =>
+        expect(
+          within(region).getAllByRole('button', {
+            name: ProjectsI18nKeys.ViewOpenFile,
+          }),
+        ).toHaveLength(2),
+      );
+      expect(listProjectArtifacts).toHaveBeenCalledTimes(2);
       expect(
         screen.getByRole('heading', { level: 1, name: 'q4' }),
       ).toBeTruthy();
