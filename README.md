@@ -292,7 +292,7 @@ ai-dial-chat/
 
 **Development Tools**
 
-- Nx 23.2
+- Nx 24.0
 - ESLint 9.39
 - Prettier 3.9
 - Vitest 4.1
