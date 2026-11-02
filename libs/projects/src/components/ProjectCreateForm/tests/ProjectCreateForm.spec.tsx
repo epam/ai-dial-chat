@@ -1,8 +1,15 @@
 import { readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { cloneElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { ProjectCreateFormProps } from '../../../models/project-create-form-props';
 import { ContextFileRejection } from '../../../types/context-file-rejection';
@@ -35,18 +42,17 @@ const LABELS: ProjectCreateFormProps['labels'] = {
     [ProjectNameError.Reserved]: 'This name is reserved',
     [ProjectNameError.TooLong]: 'Name is too long',
   },
-  descriptionLabel: 'Description',
-  descriptionPlaceholder: 'Describe what the project is about',
   instructionsLabel: 'Instructions',
   instructionsPlaceholder: 'Explain your reasoning step by step',
   contextLabel: 'Context',
-  dropZoneLabel: 'Drag&drop context, upload from device or file manager',
+  dropZoneLabel: ({ fromDevice, fileManager }) => (
+    <>
+      Drag&drop context, upload {cloneElement(fromDevice, {}, 'from device')}
+      {fileManager && <> or {cloneElement(fileManager, {}, 'file manager')}</>}
+    </>
+  ),
+  dropZoneAriaLabel: 'Upload context from device',
   dropZoneHint: 'File formats .csv, .pdf and .xlsx (max 1 MB)',
-  addLabel: 'Add',
-  addFromDeviceLabel: 'Upload from device',
-  addFromFileManagerLabel: 'From file manager',
-  capacityMeterLabel: 'Context capacity',
-  capacityLabel: (percent) => `${percent}% of capacity used`,
   removeFileLabel: (name) => `Remove ${name}`,
   fileRejections: {
     [ContextFileRejection.UnsupportedType]: (name) =>
@@ -89,7 +95,7 @@ vi.mock('@epam/ai-dial-ui-kit/editors', () => ({
 
 type FormProps = ProjectCreateFormProps;
 
-const EMPTY_VALUES = { name: '', description: '', instructions: '' };
+const EMPTY_VALUES = { name: '', instructions: '' };
 
 const renderForm = (overrides: Partial<FormProps> = {}) => {
   const props: FormProps = {
@@ -115,7 +121,13 @@ const getCreateButton = () =>
   screen.getAllByRole('button', { name: 'Create' })[0];
 
 const getDropzoneInput = () =>
-  screen.getByLabelText(/Drag&drop context/) as HTMLInputElement;
+  screen.getByLabelText('Upload context from device') as HTMLInputElement;
+
+/* The kit drop zone links its error text to the file input. */
+const getDropzoneError = () => {
+  const id = getDropzoneInput().getAttribute('aria-describedby');
+  return id ? screen.queryByText((_, element) => element?.id === id) : null;
+};
 
 /* Kit controls render their own status regions; the form's is the last one. */
 const getFormStatus = () => screen.getAllByRole('status').at(-1) as HTMLElement;
@@ -294,14 +306,14 @@ describe('ProjectCreateForm', () => {
       expect(getDropzoneInput().getAttribute('accept')).toBe('.csv,.pdf,.xlsx');
     });
 
-    it('adds files picked from the file manager through the Add menu', async () => {
+    it('adds files picked through the file manager link in the drop zone', async () => {
       const file = makeFile('survey.xlsx', 100);
       const onPickFromFileManager = vi.fn().mockResolvedValue([file]);
       const { props } = renderForm({ onPickFromFileManager });
+      const clickInput = vi.spyOn(getDropzoneInput(), 'click');
 
-      await userEvent.click(screen.getByRole('button', { name: 'Add' }));
       await userEvent.click(
-        await screen.findByRole('menuitem', { name: 'From file manager' }),
+        screen.getByRole('button', { name: 'file manager' }),
       );
 
       await waitFor(() =>
@@ -309,19 +321,14 @@ describe('ProjectCreateForm', () => {
           expect.objectContaining({ name: 'survey.xlsx', file }),
         ]),
       );
+      expect(clickInput).not.toHaveBeenCalled();
     });
 
-    it('hides the file manager source when the host offers none', async () => {
+    it('omits the file manager link when the host offers none', () => {
       renderForm();
 
-      await userEvent.click(screen.getByRole('button', { name: 'Add' }));
-
-      expect(
-        await screen.findByRole('menuitem', { name: 'Upload from device' }),
-      ).toBeTruthy();
-      expect(
-        screen.queryByRole('menuitem', { name: 'From file manager' }),
-      ).toBeNull();
+      expect(screen.getByText('from device')).toBeTruthy();
+      expect(screen.queryByRole('button', { name: 'file manager' })).toBeNull();
     });
 
     it('lists and announces files the client rejects', async () => {
@@ -333,15 +340,16 @@ describe('ProjectCreateForm', () => {
         ]);
       const { props } = renderForm({ onPickFromFileManager });
 
-      await userEvent.click(screen.getByRole('button', { name: 'Add' }));
       await userEvent.click(
-        await screen.findByRole('menuitem', { name: 'From file manager' }),
+        screen.getByRole('button', { name: 'file manager' }),
       );
 
-      expect(
-        await screen.findByText('notes.docx: unsupported file type'),
-      ).toBeTruthy();
-      expect(screen.getByText('big.pdf: file is too large')).toBeTruthy();
+      await waitFor(() =>
+        expect(getDropzoneError()?.textContent).toBe(
+          'notes.docx: unsupported file type\nbig.pdf: file is too large',
+        ),
+      );
+      expect(getDropzoneInput().getAttribute('aria-invalid')).toBe('true');
       expect(getFormStatus().textContent).toContain(
         'notes.docx: unsupported file type',
       );
@@ -360,9 +368,9 @@ describe('ProjectCreateForm', () => {
 
       await userEvent.upload(getDropzoneInput(), makeFile('c.csv', 800_000));
 
-      expect(
-        screen.getByText('c.csv: not enough capacity', { selector: 'li' }),
-      ).toBeTruthy();
+      expect(getDropzoneError()?.textContent).toBe(
+        'c.csv: not enough capacity',
+      );
       expect(props.onContextFilesChange).not.toHaveBeenCalled();
     });
 
@@ -378,7 +386,7 @@ describe('ProjectCreateForm', () => {
       expect(getFormStatus().textContent).toBe('tickets.csv removed');
     });
 
-    it('renders a stored file as a removable card that feeds the meter', async () => {
+    it('renders a stored file as a removable card', async () => {
       const storedFile = {
         id: 'stored:tickets.csv',
         name: 'tickets.csv',
@@ -393,9 +401,6 @@ describe('ProjectCreateForm', () => {
         maxTotalBytes: 10_485_760,
       });
 
-      expect(screen.getByRole('meter').getAttribute('aria-valuenow')).toBe(
-        '2097152',
-      );
       await userEvent.click(
         screen.getByRole('button', { name: 'Remove tickets.csv' }),
       );
@@ -403,26 +408,41 @@ describe('ProjectCreateForm', () => {
       expect(props.onContextFilesChange).toHaveBeenCalledWith([]);
     });
 
-    it('shows the capacity meter only once a file is added', () => {
-      const { rerender, props } = renderForm();
+    it('shows no capacity meter', () => {
+      renderForm({ contextFiles: stageFiles([makeFile('a.csv', 1_048_576)]) });
+
       expect(screen.queryByRole('meter')).toBeNull();
-
-      rerender(
-        <ProjectCreateForm
-          {...props}
-          contextFiles={stageFiles([makeFile('a.csv', 1_048_576)])}
-        />,
-      );
-
-      expect(
-        screen
-          .getByRole('meter', { name: 'Context capacity' })
-          .getAttribute('aria-valuetext'),
-      ).toBe('10% of capacity used');
     });
 
-    it('shows a host context error as an alert', () => {
+    it('shows a dropped oversized file as the drop zone error', () => {
+      const { props } = renderForm();
+      const big = makeFile('big.pdf', 2 * 1_048_576, 'application/pdf');
+
+      fireEvent.drop(screen.getByText('from device'), {
+        dataTransfer: { files: [big], types: ['Files'] },
+      });
+
+      expect(getDropzoneError()?.textContent).toBe(
+        'big.pdf: file is too large',
+      );
+      expect(getDropzoneError()?.className).toContain('dial-kit-error-text');
+      expect(props.onContextFilesChange).not.toHaveBeenCalled();
+    });
+
+    it('clears the drop zone error after a file is added', async () => {
+      renderForm();
+
+      await userEvent.upload(getDropzoneInput(), makeFile('c.csv', 2_000_000));
+      expect(getDropzoneError()).toBeTruthy();
+      await userEvent.upload(getDropzoneInput(), makeFile('d.csv', 10));
+
+      expect(getDropzoneError()).toBeNull();
+    });
+
+    it('shows a host context error as the drop zone error and announces it', () => {
       renderForm({ errors: { context: 'Some files were rejected' } });
+
+      expect(getDropzoneError()?.textContent).toBe('Some files were rejected');
 
       expect(
         screen
@@ -439,29 +459,6 @@ describe('ProjectCreateForm', () => {
       expect(
         screen.queryByRole('button', { name: /Refine with AI/ }),
       ).toBeNull();
-    });
-
-    it('refines the description and offers undo', async () => {
-      const onRefineDescription = vi.fn().mockResolvedValue('Refined text');
-      const { props } = renderForm({
-        values: { ...EMPTY_VALUES, description: 'draft' },
-        onRefineDescription,
-      });
-
-      await userEvent.click(
-        screen.getByRole('button', { name: /Refine with AI/ }),
-      );
-
-      await waitFor(() =>
-        expect(props.onFieldChange).toHaveBeenCalledWith(
-          'description',
-          'Refined text',
-        ),
-      );
-      expect(onRefineDescription).toHaveBeenCalledWith(
-        'draft',
-        expect.any(AbortSignal),
-      );
     });
 
     it('refines the instructions through onFieldChange', async () => {
@@ -483,28 +480,28 @@ describe('ProjectCreateForm', () => {
       );
     });
 
-    it('disables Create and the other action while a refinement is pending', async () => {
-      const onRefineDescription = vi.fn(
+    it('disables Create while a refinement is pending', async () => {
+      const onRefineInstructions = vi.fn(
         () => new Promise<string>(() => undefined),
       );
       renderForm({
-        values: { name: 'Handbook', description: 'draft', instructions: 'x' },
-        onRefineDescription,
-        onRefineInstructions: vi.fn(),
+        values: { name: 'Handbook', instructions: 'x' },
+        onRefineInstructions,
       });
 
-      const [descriptionAction] = screen.getAllByRole('button', {
-        name: /Refine with AI/,
-      });
-      await userEvent.click(descriptionAction);
+      await userEvent.click(
+        screen.getByRole('button', { name: /Refine with AI/ }),
+      );
 
       await waitFor(() =>
         expect(getCreateButton().hasAttribute('disabled')).toBe(true),
       );
-      const remaining = screen
-        .queryAllByRole('button', { name: /Refine with AI/ })
-        .filter((button) => !button.hasAttribute('disabled'));
-      expect(remaining).toHaveLength(0);
+    });
+
+    it('renders no description field', () => {
+      renderForm();
+
+      expect(screen.queryByLabelText(/Description/)).toBeNull();
     });
   });
 });
@@ -522,11 +519,10 @@ describe('ProjectCreateForm — layout', () => {
     expect(source).not.toMatch(/\b(sm|md|lg|xl):/);
   });
 
-  it('shows the capacity meter in the Context header with the design label type', () => {
+  it('labels the Context section with the design label type', () => {
     renderForm({ contextFiles: stageFiles([makeFile('a.csv', 4)]) });
 
     const context = screen.getByRole('region', { name: 'Context' });
-    expect(within(context).getByRole('meter')).toBeTruthy();
     expect(
       within(context).getByRole('heading', { name: 'Context' }).className,
     ).toContain('dial-tiny-semi-text');

@@ -1,3 +1,4 @@
+import { resolveCatalogActiveTab } from '@epam/ai-dial-chat-hooks';
 import { useCallback } from 'react';
 import { StorageKey } from '../../types/storage-key';
 import useLocalStorage from '../useLocalStorage';
@@ -21,9 +22,7 @@ export const useCatalogActiveTabPreference = (
     null,
   );
 
-  const activeTab = availableTabIds.includes(storedActiveTab ?? '')
-    ? (storedActiveTab as string)
-    : availableTabIds[0];
+  const activeTab = resolveCatalogActiveTab(storedActiveTab, availableTabIds);
 
   const setActiveTab = useCallback(
     (tabId: string) => setStoredActiveTab(tabId),

@@ -1,14 +1,11 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import {
-  DESKTOP_BREAKPOINT_PX,
-  MOBILE_MAX_WIDTH_PX,
-} from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
+import { DESKTOP_BREAKPOINT_PX, MOBILE_MAX_WIDTH_PX } from '../breakpoint';
 
 /*
  * The responsive boundary is single-sourced in chat-shared's breakpoint
- * constants. The sites that can import them (useBreakpoint, useIsMobile, the
+ * constants. The sites that can import them (useIsMobile, the
  * catalog virtualizer) cannot drift; the sites that cannot — the Tailwind
  * theme stylesheet, SCSS stylesheets, and the dependency-less chat-overlay
  * package — repeat the literal. This spec pins
@@ -16,7 +13,7 @@ import { describe, expect, it } from 'vitest';
  * behind silently.
  */
 
-/* The spec lives at apps/chat/src/hooks/breakpoint/, five levels below the repo root. */
+/* The spec lives at libs/chat-shared/src/constants/tests/, five levels below the repo root. */
 const REPO_ROOT = join(__dirname, '..', '..', '..', '..', '..');
 
 const readRepoFile = (relativePath: string): string =>

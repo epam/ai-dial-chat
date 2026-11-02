@@ -185,12 +185,12 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-projects` \*
 - `@epam/ai-dial-publish-panel` \*
 - `@epam/ai-dial-quotations` \*
-- `@epam/ai-dial-react-file-manager` ^0.4.0-dev.19
+- `@epam/ai-dial-react-file-manager` ^0.4.0-dev.25
 - `@epam/ai-dial-scheduled-tasks` \*
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.56
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.59
 - `@epam/ai-dial-usage-dashboard` \*
 - `@modelcontextprotocol/sdk` ^1.32.1
 - `@epam/pdf-highlighter-kit` ^0.0.19
@@ -1717,6 +1717,16 @@ const Composer = ({ allowedMimeTypes }: { allowedMimeTypes: string[] }) => {
 
 **Returns** (`UseAttachmentValidationResult`): `{ inputAttachmentTypes: string[], isAttachmentsAllowed: boolean, validateAttachment: (attachment: Attachment) => AttachmentErrorReason | undefined, fileAccept: string | undefined }`.
 
+### useConversationAnnotationPool
+
+Groups the html-tag citation annotations a conversation persisted in `customViewState.annotations` by citation id, through `useHtmlTagAnnotationGroups` from `@epam/ai-dial-quotations`. Malformed or absent annotations yield the shared empty result, so a host can pass any conversation, `null` or `undefined`. Available from the root and `./conversation-sources`.
+
+```ts
+import { useConversationAnnotationPool } from '@epam/ai-dial-chat-hooks/conversation-sources';
+
+const fallbackCitationGroups = useConversationAnnotationPool(conversation);
+```
+
 ### useConversationSources
 
 Derives, via a pure `useMemo` computation, a deduplicated list of a conversation's uploaded/generated attachments and its quotation sources from a message list.
@@ -1968,6 +1978,32 @@ const CatalogCard = ({
 | `favoriteIds`    | `ReadonlySet<string>`                                                                 | Current set of favorited IDs across all entity types.                                                                                                |
 | `isLoading`      | `boolean`                                                                             | `true` while the initial load is in flight.                                                                                                          |
 | `toggleFavorite` | `(id: string, isFavorite: boolean, entityType?: FavoriteEntityType) => Promise<void>` | Optimistically updates `favoriteIds`, calls `updateFavorite`, and rolls back on rejection. `entityType` defaults to `FavoriteEntityType.Deployment`. |
+
+### resolveFavoriteEntityType
+
+Returns the `FavoriteEntityType` — the user-config section — a catalog item's favorite state is stored in: `Toolset`, `Prompt` and `Skill` items map to their own section, and every other type, or an unknown one, to `Deployment`. Available from the root and `./catalog`.
+
+```ts
+import { resolveFavoriteEntityType } from '@epam/ai-dial-chat-hooks/catalog';
+
+await updateFavorite(item.id, isFavorite, resolveFavoriteEntityType(item.type));
+```
+
+### resolveCatalogSortKey / parseCatalogFilterTopics / resolveCatalogActiveTab
+
+Validate catalog view preferences a host read back from its own storage, which may be stale or malformed. `resolveCatalogSortKey(stored)` keeps a known `CatalogSortKey` and otherwise returns `CatalogSortKey.RecentlyUpdated`. `parseCatalogFilterTopics(stored)` returns the string entries of a stored array as a `Set`, and an empty set for anything else. `resolveCatalogActiveTab(stored, availableTabIds)` keeps a stored tab that is still available and otherwise returns the first available tab id (`undefined` when there is none). The functions never read or write storage. Available from the root and `./catalog`.
+
+```ts
+import {
+  parseCatalogFilterTopics,
+  resolveCatalogActiveTab,
+  resolveCatalogSortKey,
+} from '@epam/ai-dial-chat-hooks/catalog';
+
+const sortKey = resolveCatalogSortKey(storedSortKey);
+const filterTopics = parseCatalogFilterTopics(storedFilterTopics);
+const activeTab = resolveCatalogActiveTab(storedActiveTab, availableTabIds);
+```
 
 ### findSkillByUrl
 
@@ -5159,6 +5195,39 @@ The hook owns no client configuration, localization, UI or login flow. The host
 maps returned service DTOs into its view models and calls `refresh` after a
 successful credential mutation. Errors, including offline-status failures, set
 `hasError`; `refresh` retries them.
+
+### mapApplicationCredentials / buildApplicationCredentialLoginParams
+
+Pure adapters between `useApplicationCredentials` and the catalog's
+`ApplicationCredentials` forms. `mapApplicationCredentials(services, options)`
+returns one `ApplicationCredential` per service: a `DIAL_NATIVE` service counts
+as signed in only when `isOfflineConnected` and its app-level status is
+`SIGNED_IN`, and it can be neither logged out nor offered offline consent;
+every other service follows its user-level status, and shows
+`hasSharedCredentials` while signed out with a global or app-level login.
+`buildApplicationCredentialLoginParams(appId, service, params)` returns the
+user-level `ExternalServiceLoginParams` for `useExternalServiceLogin().login`,
+with the service's OAuth settings and `forceStale` when its user-level status
+is `FAILED`.
+
+```tsx
+import {
+  buildApplicationCredentialLoginParams,
+  mapApplicationCredentials,
+} from '@epam/ai-dial-chat-hooks/catalog';
+
+const credentials = mapApplicationCredentials(services, {
+  isOfflineConnected,
+  dialNativeHint: t('toolsetSignin.dialNativeHint'),
+});
+
+const outcome = await login(
+  buildApplicationCredentialLoginParams(appId, service, params),
+);
+```
+
+`MapApplicationCredentialsOptions` is exported. The host keeps localization,
+the outcome-to-message mapping and logout.
 
 ### useOfflineCredentialsGate
 

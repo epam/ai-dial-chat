@@ -431,6 +431,55 @@ describe('NavigationSidebar', () => {
       expect(onClose).toHaveBeenCalledOnce();
     });
 
+    /* eslint-disable testing-library/no-node-access -- focus is a property of the document, not of a queryable node */
+    it('wraps Tab from its last control back to the first', () => {
+      renderDrawer();
+      const last = screen.getByRole('button', { name: 'usage' });
+      last.focus();
+
+      fireEvent.keyDown(last, { key: 'Tab' });
+
+      expect(document.activeElement).toBe(
+        screen.getByRole('link', { name: LOGO.ariaLabel }),
+      );
+    });
+
+    it('wraps Shift+Tab from its first control to the last', () => {
+      renderDrawer();
+      const first = screen.getByRole('link', { name: LOGO.ariaLabel });
+      first.focus();
+
+      fireEvent.keyDown(first, { key: 'Tab', shiftKey: true });
+
+      expect(document.activeElement).toBe(
+        screen.getByRole('button', { name: 'usage' }),
+      );
+    });
+
+    it('wraps Shift+Tab from the drawer itself to its last control', () => {
+      renderDrawer();
+      const drawer = screen.getByRole('navigation');
+      drawer.focus();
+
+      fireEvent.keyDown(drawer, { key: 'Tab', shiftKey: true });
+
+      expect(document.activeElement).toBe(
+        screen.getByRole('button', { name: 'usage' }),
+      );
+    });
+
+    it('leaves Tab between its inner controls to the browser', () => {
+      renderDrawer();
+      const first = screen.getByRole('link', { name: LOGO.ariaLabel });
+      first.focus();
+
+      const isNotPrevented = fireEvent.keyDown(first, { key: 'Tab' });
+
+      expect(isNotPrevented).toBe(true);
+      expect(document.activeElement).toBe(first);
+    });
+    /* eslint-enable testing-library/no-node-access */
+
     it('ignores an Escape that comes from a dialog its children render elsewhere', () => {
       const onClose = vi.fn();
       const PortalledDialog = () =>

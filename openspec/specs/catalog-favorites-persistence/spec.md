@@ -140,7 +140,7 @@ See also: `user-config-deployment-management/spec.md` — the DTO and endpoint a
   hook (`apps/chat/src/hooks/useCatalogItemActions/useCatalogItemActions.tsx`),
   which `CatalogView` calls with `toggleFavorite` and the combined
   `isLoading`. It SHALL resolve the item's `FavoriteEntityType` with
-  `resolveFavoriteEntityType` (`apps/chat/src/utils/favorites.ts`) and call
+  `resolveFavoriteEntityType` (`libs/chat-hooks/src/catalog/favorite-entity-type.ts`) and call
   `toggleFavorite(id, isFavorite, entityType)`.
 - `onToggleFavorite` SHALL be disabled (no-op) while the catalog's combined
   loading state is `true` — favorites are only one of its inputs.

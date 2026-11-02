@@ -1,5 +1,4 @@
-import { DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
-import { IconAlertTriangle } from '@tabler/icons-react';
+import { ErrorAlert } from '@epam/ai-dial-chat-shared';
 import type { ParseKeys } from 'i18next';
 import { memo, type FC } from 'react';
 import type { FallbackProps } from 'react-error-boundary';
@@ -8,7 +7,6 @@ import {
   ErrorBoundaryI18nKeys,
   ButtonsI18nKeys,
 } from '../../constants/translation-keys';
-import AlertShell from '../AlertShell/AlertShell';
 
 interface Props extends FallbackProps {
   actionLabel?: ParseKeys<'translation'>;
@@ -22,19 +20,13 @@ const ErrorFallback: FC<Props> = ({
   const { t } = useTranslation();
 
   return (
-    <AlertShell
-      icon={
-        <IconAlertTriangle
-          aria-hidden="true"
-          size={48}
-          stroke={DIAL_KIT_ICON_STROKE}
-          className="text-error"
-        />
-      }
-      heading={t(ErrorBoundaryI18nKeys.Heading)}
-      message={t(ErrorBoundaryI18nKeys.Description)}
-      actionLabel={t(actionLabel ?? ButtonsI18nKeys.TryAgain)}
+    <ErrorAlert
       onAction={resetErrorBoundary}
+      labels={{
+        heading: t(ErrorBoundaryI18nKeys.Heading),
+        message: t(ErrorBoundaryI18nKeys.Description),
+        actionLabel: t(actionLabel ?? ButtonsI18nKeys.TryAgain),
+      }}
     />
   );
 };

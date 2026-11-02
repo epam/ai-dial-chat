@@ -10,6 +10,7 @@ import {
   parsePromptResourceUrl,
   parseSkillResourceUrl,
   resolveCatalogPrimaryAction,
+  resolveFavoriteEntityType,
   sanitizeFileName,
   serializePromptExport,
   type SkillFileContent,
@@ -35,7 +36,6 @@ import {
   NotifiableEntity,
 } from '../../types/entity-notification';
 import { ROUTES } from '../../types/routes';
-import { resolveFavoriteEntityType } from '../../utils/favorites';
 import type { useOperationNotification } from '../useOperationNotification';
 
 interface NotificationParams {

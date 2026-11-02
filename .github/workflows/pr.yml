@@ -98,6 +98,11 @@ jobs:
       # Needs no build, so it belongs in this fast job.
       - name: Validate documentation and lib manifests
         run: npm run validate:docs
+      # Source-only: an app enum with the same value set as a lib enum is a copy
+      # (allowlist: scripts/lib-duplicates.allow.json).
+      - name: Validate apps do not re-declare lib enums
+        if: ${{ !cancelled() }}
+        run: npm run validate:lib-duplicates
       - name: Test spec-reference and spec-impact scripts
         if: ${{ !cancelled() }}
         run: npm run validate:specs:test

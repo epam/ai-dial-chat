@@ -9,6 +9,7 @@ import {
   messageAttachmentToDisplayAttachment,
   RequestStatus,
 } from '@epam/ai-dial-chat-shared';
+import { getUrlFileName } from './source-content';
 
 /**
  * Maps a message attachment payload to the display-only attachment model used by UI components.
@@ -26,7 +27,7 @@ export const annotationToDisplayAttachment = (
   if (att == null) return null;
   return {
     id: att.url,
-    name: att.url.split('/').pop() ?? att.url,
+    name: getUrlFileName(att.url),
     contentType: att.type,
     type: att.type.startsWith('image/')
       ? AttachmentType.Image

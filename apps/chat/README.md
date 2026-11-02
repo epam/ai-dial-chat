@@ -314,7 +314,7 @@ apps/chat/
 │   ├── components/              # Feature components (see below)
 │   ├── constants/               # Route helpers, translation keys, feature keys
 │   ├── context/                 # React context providers (see below)
-│   ├── hooks/                   # Shared hooks, incl. breakpoint/useBreakpoint
+│   ├── hooks/                   # Shared hooks
 │   ├── i18n/                    # i18n configuration and locale JSON
 │   ├── models/                  # App-level domain models
 │   ├── pages/                   # Route-level pages
@@ -433,8 +433,8 @@ shape — is in
 | `desktop` | `min-width: 1280px` |
 
 Do not introduce `sm:`/`md:`/`lg:`/`xl:` or tablet variants. When a component
-must branch in JavaScript, use `useBreakpoint` / `useIsMobile` from
-`src/hooks/breakpoint/useBreakpoint.ts` instead of reading `window.innerWidth`.
+must branch in JavaScript, use `useIsMobile` from `@epam/ai-dial-chat-shared`
+instead of reading `window.innerWidth`.
 
 ### RTL
 

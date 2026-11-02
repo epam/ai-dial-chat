@@ -318,7 +318,9 @@ export class ProjectsUpdateService {
         [
           buildProjectManifest({
             name: input.name,
-            description: input.description ?? '',
+            /* The chat's form no longer edits the description; keep the stored one. */
+            description:
+              input.description ?? snapshot.manifest?.description ?? '',
             instructions: input.instructions ?? '',
             extraFrontmatter: snapshot.manifest?.extraFrontmatter,
           }),

@@ -1,5 +1,5 @@
 import { FavoriteEntityType, findSkillByUrl } from '@epam/ai-dial-chat-hooks';
-import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
+import { CatalogEntityType, useIsMobile } from '@epam/ai-dial-chat-shared';
 import {
   getSkillFallbackName,
   useSkillSelectorOverlay as useHostAgnosticSkillSelectorOverlay,
@@ -17,7 +17,6 @@ import {
 import { useUser } from '../../context/auth/UserContext';
 import { useFavoriteApplications } from '../../context/FavoriteApplicationsContext';
 import { useSkills } from '../../context/SkillsContext';
-import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 
 const CatalogView = lazy(async () => {
   const module = await import('../CatalogView/CatalogView');

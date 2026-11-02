@@ -50,6 +50,7 @@
     "validate:agent-docs:test": "node --test scripts/validate-agent-docs.spec.mjs",
     "validate:docs": "node scripts/validate-docs.mjs && node scripts/generate-install-matrix.mjs --check",
     "validate:specs": "node scripts/validate-spec-references.mjs",
+    "validate:lib-duplicates": "node scripts/validate-lib-duplicates.mjs",
     "validate:specs:test": "node --test scripts/validate-spec-references.spec.mjs scripts/spec-impact.spec.mjs",
     "spec:impact": "node scripts/spec-impact.mjs",
     "prepare": "git config core.hooksPath .githooks",
@@ -134,9 +135,9 @@
     "webpack-node-externals": "^3.0.0"
   },
   "dependencies": {
-    "@epam/ai-dial-react-file-manager": "0.4.0-dev.19",
+    "@epam/ai-dial-react-file-manager": "0.4.0-dev.25",
     "@epam/ai-dial-react-pdf-highlighter": "0.3.0-dev.6",
-    "@epam/ai-dial-ui-kit": "^0.16.0-dev.56",
+    "@epam/ai-dial-ui-kit": "^0.16.0-dev.59",
     "@epam/pdf-highlighter-kit": "^0.0.19",
     "@mcp-ui/client": "^7.1.1",
     "@monaco-editor/react": "^4.7.0",
@@ -196,13 +197,15 @@
     "js-yaml": "^4.1.1 || ^5.4.1",
     "katex": "^0.19.0",
     "brace-expansion@^5.0.0": "^5.0.12",
+    "glob@^10.0.0": "^14.0.3",
+    "glob@^13.0.0": "^14.0.3",
     "postcss-selector-parser": "^7.1.6",
     "smol-toml": "^1.9.0",
     "shell-quote": "1.11.0",
     "axios": "1.20.0",
     "basic-ftp": "6.2.1",
     "dompurify": "3.4.17",
-    "follow-redirects": "1.16.1",
+    "follow-redirects": "1.16.2",
     "multer": "2.5.0",
     "@mcp-ui/client": {
       "zod": "^4.6.6"

@@ -4,8 +4,8 @@ import {
   ProjectNameError,
   type ProjectCreateFormLabels,
 } from '@epam/ai-dial-projects';
-import { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
+import { createElement, useMemo } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
 import {
   ButtonsI18nKeys,
   ProjectsI18nKeys,
@@ -57,26 +57,27 @@ export const useProjectCreateFormLabels = ({
         ),
         [ProjectNameError.TooLong]: t(ProjectsI18nKeys.CreateErrorNameTooLong),
       },
-      descriptionLabel: t(ProjectsI18nKeys.CreateDescriptionLabel),
-      descriptionPlaceholder: t(ProjectsI18nKeys.CreateDescriptionPlaceholder),
       instructionsLabel: t(ProjectsI18nKeys.CreateInstructionsLabel),
       instructionsPlaceholder: t(
         ProjectsI18nKeys.CreateInstructionsPlaceholder,
       ),
       contextLabel: t(ProjectsI18nKeys.CreateContextLabel),
-      dropZoneLabel: t(ProjectsI18nKeys.CreateContextDropZone),
+      dropZoneLabel: ({ fromDevice, fileManager }) =>
+        createElement(Trans, {
+          i18nKey: fileManager
+            ? ProjectsI18nKeys.CreateContextDropZone
+            : ProjectsI18nKeys.CreateContextDropZoneDeviceOnly,
+          components: fileManager
+            ? { device: fromDevice, manager: fileManager }
+            : { device: fromDevice },
+        }),
+      dropZoneAriaLabel: t(ProjectsI18nKeys.CreateContextUploadFromDevice),
       dropZoneHint: t(ProjectsI18nKeys.CreateContextHint, {
         extensions,
         maxSize,
       }),
-      addLabel: t(ButtonsI18nKeys.Add),
-      addFromDeviceLabel: t(ProjectsI18nKeys.CreateContextFromDevice),
-      addFromFileManagerLabel: t(ProjectsI18nKeys.CreateContextFromFileManager),
       dropOverlayTitle: t(ProjectsI18nKeys.CreateContextDropOverlayTitle),
       dropOverlaySubtitle: t(ProjectsI18nKeys.CreateContextDropOverlaySubtitle),
-      capacityMeterLabel: t(ProjectsI18nKeys.CreateContextCapacityMeter),
-      capacityLabel: (percent) =>
-        t(ProjectsI18nKeys.CreateContextCapacity, { percent }),
       removeFileLabel: (name) =>
         t(ProjectsI18nKeys.CreateContextRemove, { name }),
       fileRejections: {

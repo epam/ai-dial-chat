@@ -5,6 +5,7 @@ import {
   mergeClasses,
   SELECT_LIST_MAX_HEIGHT_CLASS_NAME,
   SELECT_LIST_MAX_HEIGHT_PX,
+  useIsMobile,
 } from '@epam/ai-dial-chat-shared';
 import {
   CaptionText,
@@ -29,7 +30,6 @@ import {
   type FC,
   type ReactNode,
 } from 'react';
-import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { scrollChildIntoContainerView } from '../../utils/scroll';
 import styles from './DeploymentSelectorPanel.module.scss';
 

@@ -463,6 +463,9 @@ import { validateScheduledTaskFormValues } from '@epam/ai-dial-scheduled-tasks/v
 const errors = validateScheduledTaskFormValues(values, { now: new Date() });
 ```
 
+A one-shot `runAt` must lie at least `minimumLeadMs` ahead of `now`. The default is the exported
+`SCHEDULED_TASK_MINIMUM_LEAD_MS` (one minute); pass `minimumLeadMs` only to apply a different lead.
+
 For a recurring schedule, an activity-window boundary earlier than the
 injected clock's local today is rejected with `StartDateInPast` /
 `EndDateInPast` — the same rule the form's date pickers enforce by making past

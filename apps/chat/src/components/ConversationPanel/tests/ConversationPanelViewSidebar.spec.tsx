@@ -336,7 +336,8 @@ vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: () => deploymentsValue,
 }));
 const mockUseIsMobile = vi.hoisted(() => vi.fn(() => false));
-vi.mock('../../../hooks/breakpoint/useBreakpoint', () => ({
+vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
   useIsMobile: mockUseIsMobile,
 }));
 vi.mock('../../../hooks/useUiFeature');

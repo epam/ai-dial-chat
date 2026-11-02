@@ -90,11 +90,11 @@ The same fetched history SHALL be handed to `PublishConversationPanelContainer` 
 
 ### Requirement: Conversation unpublish confirms in a popup, not a slide-in panel
 
-Selecting `Unpublish` SHALL open a `ConfirmationPopup` — the same component the conversation panel's other destructive row actions use. Conversations have no details panel, so the catalog's in-place confirmation sub-view has no equivalent here, and introducing a second slide-in panel for one confirmation would not be worth the surface.
+Selecting `Unpublish` SHALL open a `ConfirmationDialog` (`@epam/ai-dial-chat-shared`), the same dialog the panel's "Delete all conversations" action uses. The kit `ConfirmationPopup` is not used because with `isLoading` it removes both buttons and shows a spinner instead. Conversations have no details panel, so the catalog's in-place confirmation sub-view has no equivalent here, and introducing a second slide-in panel for one confirmation would not be worth the surface.
 
 The popup body follows the catalog flow's folder rule: with exactly one published folder it names that folder in static copy and enables the confirm button immediately; with more than one it renders the folders as a single-select radio group, none preselected, with confirm disabled until a choice is made. The radio group carries an accessible group label (`conversationUnpublish.folderGroupAriaLabel`).
 
-Confirm and cancel SHALL both be disabled while the request is in flight, and the in-flight state SHALL be announced through an `aria-live="polite"` status region rather than by a spinner alone.
+Confirm and cancel SHALL stay rendered and both be disabled while the request is in flight, and every dismissal route (Escape, outside click) SHALL be blocked. The in-flight state SHALL be announced (`conversationUnpublish.requestingStatus`) through the footer's `aria-live="polite"` status region, which is mounted before loading starts, rather than by a spinner alone.
 
 All strings SHALL come from `t()` with keys declared in `apps/chat/src/constants/translation-keys.ts`.
 

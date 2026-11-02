@@ -95,8 +95,8 @@ export interface ProjectsConfiguredClient {
 export interface ProjectFields {
   /** Project name; also the last path segment of its id. */
   name: string;
-  /** Plain-text description. */
-  description: string;
+  /** Plain-text description; when omitted, a save keeps the stored one. */
+  description?: string;
   /** Markdown instructions, stored as the `PROJECT.md` body. */
   instructions: string;
 }

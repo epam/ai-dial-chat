@@ -1,7 +1,7 @@
-import { FavoriteEntityType } from '@epam/ai-dial-chat-hooks';
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
-import { resolveFavoriteEntityType } from '../favorites';
+import { resolveFavoriteEntityType } from '../favorite-entity-type';
+import { FavoriteEntityType } from '../useFavoriteEntitiesState/useFavoriteEntitiesState';
 
 describe('resolveFavoriteEntityType', () => {
   it('maps a prompt to the prompts config section', () => {

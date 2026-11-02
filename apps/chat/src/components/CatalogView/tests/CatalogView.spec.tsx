@@ -1358,6 +1358,28 @@ describe('CatalogView', () => {
         ...overrides,
       });
 
+    it('notifies once when the prompt listing fails and still renders the catalog', async () => {
+      enablePrompts();
+      const showNotification = vi.fn();
+      vi.mocked(useNotification).mockReturnValue(
+        createNotificationContextValue(showNotification),
+      );
+      mockPrompts({ prompts: [], publicPrompts: [], error: new Error('down') });
+
+      render(<CatalogView />);
+
+      await waitFor(() =>
+        expect(showNotification).toHaveBeenCalledWith(
+          expect.objectContaining({
+            variant: 'error',
+            message: CatalogI18nKeys.PromptsLoadError,
+          }),
+        ),
+      );
+      expect(showNotification).toHaveBeenCalledOnce();
+      expect(screen.getByLabelText('Catalog item ids')).toBeTruthy();
+    });
+
     it('offers both a favourite and an unshare control for a prompt', () => {
       enablePrompts();
       mockPrompts();
