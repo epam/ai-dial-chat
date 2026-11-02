@@ -58,6 +58,7 @@ export * from './components/PanelEmptyState/PanelEmptyState';
 export * from './components/FullScreenAlert/FullScreenAlert';
 export * from './components/NewVersionAlert/NewVersionAlert';
 export * from './components/ErrorAlert/ErrorAlert';
+export * from './components/NotificationStack/NotificationStack';
 export * from './components/ItemHeader/ItemHeader';
 export * from './components/EntityTypeLabel/EntityTypeLabel';
 export * from './components/FeaturedChip/FeaturedChip';

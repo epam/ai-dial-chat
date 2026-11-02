@@ -329,7 +329,7 @@ The reason navigation buttons (Prev/Next) must not cause a close: they update `a
 
 ### Requirement: "Preview" action opens the cited attachment inline
 
-When the "Preview" button is clicked in `CitationCard`, the app (`handleCitationPreview` in `apps/chat/src/components/ConversationView/ConversationMessageItem.tsx`) SHALL first try to open the annotation in the attachment canvas — `annotationToPdfCanvasContent`, then `annotationToOoxmlCanvasContent`, opened with the attachment title or decoded last URL segment as the file name — and only when neither applies invoke the existing attachment-preview flow with the `Annotation.body.source.attachment` converted to a `DisplayAttachment` (`annotationToDisplayAttachment`).
+When the "Preview" button is clicked in `CitationCard`, the app (`handleCitationPreview` in `apps/chat/src/components/ConversationView/ConversationMessageItem.tsx`) SHALL first try to open the annotation in the attachment canvas — `annotationToPdfCanvasContent`, then `annotationToOoxmlCanvasContent`, opened with the attachment title or decoded last URL segment as the file name, all through `resolveAnnotationCanvasContent` from `@epam/ai-dial-chat-hooks` — and only when neither applies invoke the existing attachment-preview flow with the `Annotation.body.source.attachment` converted to a `DisplayAttachment` (`annotationToDisplayAttachment`).
 
 #### Scenario: Preview opens the attachment
 

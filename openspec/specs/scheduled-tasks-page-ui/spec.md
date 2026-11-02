@@ -171,7 +171,7 @@ The component MUST NOT import from `apps/chat`, `server-api`, any generated API 
 
 ### Requirement: ScheduledTaskCard renders a single task with highlighted search matches
 
-`libs/scheduled-tasks` SHALL export a `ScheduledTaskCard` component, rendered on the kit's `CardShell`, showing: a title (highlighting the current search match via the shared `Highlight` component from `@epam/ai-dial-ui-kit`, per `.claude/rules/search-results-highlight.md`), an optional "NEW" badge when `item.isNew` is set, an optional description/prompt-preview line (clamped to four lines from the desktop breakpoint up and to two lines below it, where the card also drops its fixed height and lets the title wrap to two lines), a schedule/status pill, and an optional location breadcrumb built from `locationSegments` through the kit's `FolderPath` (outermost segment first). The card has no overflow menu and no per-task action callbacks: its only callback is `onCardClick`; Edit and Delete are offered only in the detail page header (see `scheduled-task-detail-page`).
+`libs/scheduled-tasks` SHALL export a `ScheduledTaskCard` component, rendered on the kit's `CardShell`, showing: a title (highlighting the current search match via the shared `Highlight` component from `@epam/ai-dial-ui-kit`, per `.claude/rules/search-results-highlight.md`), an optional "NEW" badge when `item.isNew` is set, an optional description/prompt-preview line (clamped to three lines from the desktop breakpoint up and to two lines below it, where the card also drops its fixed height and lets the title wrap to two lines; a preview value too long to break at a space — a long URL and the like — SHALL wrap inside the card via `overflow-wrap: anywhere` instead of stretching the card past its grid track, and ordinary words SHALL wrap whole; whitespace in the preview SHALL collapse — line breaks and blank lines in the raw description value do not consume the clamp budget (unlike the detail page's description, which preserves the author's line breaks — see `scheduled-task-detail-page`)), a schedule/status pill, and an optional location breadcrumb built from `locationSegments` through the kit's `FolderPath` (outermost segment first). The card has no overflow menu and no per-task action callbacks: its only callback is `onCardClick`; Edit and Delete are offered only in the detail page header (see `scheduled-task-detail-page`).
 
 The schedule/status pill SHALL render the schedule pill showing `scheduleLabel` when `item.isActive` is `true` or `undefined`, and a "Paused" badge (with a pause icon) in that same position when `item.isActive` is explicitly `false`. The two are mutually exclusive — the card never renders both at once. This is a display-only distinction; the card issues no pause/resume request and takes no other action based on `isActive` (the mutating pause/resume switch is confined to the detail page — see `scheduled-task-detail-page`).
 
@@ -216,6 +216,16 @@ The schedule/status pill SHALL render the schedule pill showing `scheduleLabel` 
 
 - **WHEN** `ScheduledTaskCard` renders without `onCardClick`
 - **THEN** the card root is `role="group"`, is not focusable, and clicking it invokes no callback
+
+#### Scenario: Unbreakable description token wraps inside the card instead of stretching it
+
+- **WHEN** `ScheduledTaskCard` renders with a `descriptionPreview` containing a single token longer than the card's width (a long URL)
+- **THEN** the token wraps within the card's description area, the card does not stretch past its grid track, and the description still clamps at its line budget with an ellipsis
+
+#### Scenario: Leading blank lines in the description preview do not consume the clamp budget
+
+- **WHEN** `ScheduledTaskCard` renders with a `descriptionPreview` whose value begins with blank lines (the raw textarea description)
+- **THEN** the preview collapses whitespace, so the visible clamp budget is spent on text and the card never renders as an empty description area
 
 ### Requirement: Card click navigates to the task detail route
 
@@ -597,7 +607,7 @@ Below 768px (a phone-width cutoff inside the `mobile` band — tablets keep both
 
 ### Requirement: Limited-access banner and create gating on the list page
 
-When the route-scoped offline-credentials status check reports `schedulerServiceConsent: 'signed_out'`, the Scheduled Tasks list page (`apps/chat/src/pages/ScheduledTasksPage/ScheduledTasksPage.tsx`) SHALL render a non-blocking inline limited-access banner — the kit `Notification` (`@epam/ai-dial-ui-kit`) with `variant={NotificationVariant.Error}` and `type={NotificationType.SectionMessage}`, rendered through a thin `ScheduledTasksLimitedAccessBanner` wrapper (`apps/chat/src/components/ScheduledTasksLimitedAccessBanner/ScheduledTasksLimitedAccessBanner.tsx`) that takes the localized title/body as props — in the lib's existing `banner` slot, directly above the task cards, and SHALL NOT pass an `onCreateClick` callback to the `ScheduledTasks` lib component, so no "New task" button renders.
+When the route-scoped offline-credentials status check reports `schedulerServiceConsent: 'signed_out'`, the Scheduled Tasks list page (`apps/chat/src/pages/ScheduledTasksPage/ScheduledTasksPage.tsx`) SHALL render a non-blocking inline limited-access banner — the kit `Notification` (`@epam/ai-dial-ui-kit`) with `variant={NotificationVariant.Error}` and `type={NotificationType.SectionMessage}`, rendered through a thin `ScheduledTasksLimitedAccessBanner` wrapper (`apps/chat/src/components/ScheduledTasksLimitedAccessBanner/ScheduledTasksLimitedAccessBanner.tsx`) that takes the localized title/body as props and renders `ScheduledTasksLimitedAccessBanner` from `@epam/ai-dial-scheduled-tasks` — in the lib's existing `banner` slot, directly above the task cards, and SHALL NOT pass an `onCreateClick` callback to the `ScheduledTasks` lib component, so no "New task" button renders.
 
 The banner SHALL follow the error-alert Notification design: the error variant's own container styling (radius, border, padding — nothing hand-set), the error variant's built-in assertive `role="alert"` live region, no action control, and no close button. The banner SHALL render on **one line**: a semibold localized "Limited access." title span followed by the localized description "You can't create or edit tasks. Contact your administrator for more details." (the kit stacks its `title` prop above the message, so the single line is composed inside the `message` ReactNode — the same bold-title-plus-supporting-text one-baseline-row composition the login banner uses). Strings resolve from the keys `scheduledTasks.limitedAccessBanner.title` ("Limited access.") and `scheduledTasks.limitedAccessBanner.body` ("You can't create or edit tasks. Contact your administrator for more details.") in `apps/chat/src/i18n/locales/en.json`, declared via `ScheduledTasksI18nKeys` in `apps/chat/src/constants/translation-keys.ts`.
 

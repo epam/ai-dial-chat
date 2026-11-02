@@ -2,7 +2,11 @@ import {
   ResponseError,
   TextRefinementPurpose,
 } from '@epam/ai-dial-chat-api-client';
-import type { Attachment } from '@epam/ai-dial-chat-shared';
+import {
+  AttachmentType,
+  RequestStatus,
+  type Attachment,
+} from '@epam/ai-dial-chat-shared';
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router';
@@ -18,6 +22,10 @@ import {
   useFeatureFlag as useFeatureFlagMock,
 } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
+import {
+  previewResolvers,
+  withPreviewCanvas,
+} from '../../../hooks/projects/tests/project-preview-test-helpers';
 import { renderWithLeaveGuard } from '../../../hooks/unsaved-changes/tests/render-with-leave-guard';
 import { createProject } from '../../../server-api/projects.api';
 import { refineText } from '../../../server-api/text-refinement.api';
@@ -45,6 +53,11 @@ vi.mock(
   '../../../components/ProjectFileManagerModal/ProjectFileManagerModal',
   () => ({ default: () => null }),
 );
+vi.mock('../../../hooks/attachment/useAttachmentCanvasResolvers', async () => {
+  const { previewCanvasResolvers: stub } =
+    await import('../../../hooks/projects/tests/project-preview-test-helpers');
+  return { useAttachmentCanvasResolvers: () => stub };
+});
 
 interface FakeFormProps {
   values: { name: string; instructions: string };
@@ -52,6 +65,8 @@ interface FakeFormProps {
   onFieldChange: (field: string, value: string) => void;
   contextFiles: Attachment[];
   onContextFilesChange: (files: Attachment[]) => void;
+  onContextFileClick?: (id: string) => void;
+  selectedContextFileId?: string;
   allowedExtensions: string[];
   maxFileBytes: number;
   maxTotalBytes: number;
@@ -93,6 +108,8 @@ vi.mock('@epam/ai-dial-projects', async (importOriginal) => ({
                 id: 'file-1',
                 name: 'tickets.csv',
                 contentType: 'text/csv',
+                type: AttachmentType.File,
+                status: RequestStatus.Idle,
                 file: new File(['a,b'], 'tickets.csv', { type: 'text/csv' }),
               } as Attachment,
             ])
@@ -100,6 +117,16 @@ vi.mock('@epam/ai-dial-projects', async (importOriginal) => ({
         >
           add file
         </button>
+        {props.contextFiles.map((file) => (
+          <button
+            key={file.id}
+            type="button"
+            aria-pressed={file.id === props.selectedContextFileId}
+            onClick={() => props.onContextFileClick?.(file.id)}
+          >
+            {`Preview ${file.name}`}
+          </button>
+        ))}
         <button type="button" onClick={props.onCancel}>
           cancel
         </button>
@@ -135,12 +162,14 @@ const READY_CONFIG = {
 
 const renderAtRoute = () =>
   renderWithLeaveGuard(
-    <Routes>
-      <Route path="/projects/new" element={<ProjectCreatePage />} />
-      <Route path="/projects" element={<p>projects list</p>} />
-      <Route path="/projects/view/:bucket/*" element={<p>project view</p>} />
-      <Route path="/catalog" element={<p>catalog page</p>} />
-    </Routes>,
+    withPreviewCanvas(
+      <Routes>
+        <Route path="/projects/new" element={<ProjectCreatePage />} />
+        <Route path="/projects" element={<p>projects list</p>} />
+        <Route path="/projects/view/:bucket/*" element={<p>project view</p>} />
+        <Route path="/catalog" element={<p>catalog page</p>} />
+      </Routes>,
+    ),
     ['/projects/new'],
   );
 
@@ -330,6 +359,91 @@ describe('ProjectCreatePage', () => {
     typeName('Handbook 2');
 
     expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  describe('context file preview', () => {
+    const addFile = async () => {
+      await userEvent.click(screen.getByRole('button', { name: 'add file' }));
+    };
+    const getCanvas = () => screen.getByLabelText('canvas');
+
+    it('opens an added file in the canvas from its local File, without any request', async () => {
+      const fetchSpy = vi.spyOn(globalThis, 'fetch');
+      renderAtRoute();
+      await addFile();
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Preview tickets.csv' }),
+      );
+
+      expect(getCanvas().textContent).toBe('new::file-1');
+      await waitFor(() =>
+        expect(previewResolvers.resolveOoxmlContent).toHaveBeenCalledOnce(),
+      );
+      const [opened] = previewResolvers.resolveOoxmlContent.mock
+        .calls[0] as unknown as [{ file: File }];
+      expect(opened.file.name).toBe('tickets.csv');
+      expect(fetchSpy).not.toHaveBeenCalled();
+      expect(createProject).not.toHaveBeenCalled();
+      fetchSpy.mockRestore();
+    });
+
+    it('marks only the open file selected', async () => {
+      renderAtRoute();
+      await addFile();
+      const card = screen.getByRole('button', { name: 'Preview tickets.csv' });
+      expect(card.getAttribute('aria-pressed')).toBe('false');
+
+      await userEvent.click(card);
+
+      await waitFor(() =>
+        expect(card.getAttribute('aria-pressed')).toBe('true'),
+      );
+    });
+
+    it('opens the file again when its open card is activated again, as a conversation attachment does', async () => {
+      renderAtRoute();
+      await addFile();
+      const card = screen.getByRole('button', { name: 'Preview tickets.csv' });
+
+      await userEvent.click(card);
+      await waitFor(() =>
+        expect(previewResolvers.resolveOoxmlContent).toHaveBeenCalledTimes(1),
+      );
+      await userEvent.click(card);
+
+      await waitFor(() =>
+        expect(previewResolvers.resolveOoxmlContent).toHaveBeenCalledTimes(2),
+      );
+      expect(getCanvas().textContent).toBe('new::file-1');
+    });
+
+    it('leaves the canvas open when the open file is removed from the form', async () => {
+      renderAtRoute();
+      await addFile();
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Preview tickets.csv' }),
+      );
+      await waitFor(() => expect(getCanvas().textContent).toBe('new::file-1'));
+
+      act(() => formProps.current?.onContextFilesChange([]));
+
+      expect(getCanvas().textContent).toBe('new::file-1');
+    });
+
+    it('leaves the form values and files untouched when a preview opens', async () => {
+      renderAtRoute();
+      await addFile();
+      const filesBefore = formProps.current?.contextFiles;
+      const valuesBefore = formProps.current?.values;
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Preview tickets.csv' }),
+      );
+
+      expect(formProps.current?.contextFiles).toBe(filesBefore);
+      expect(formProps.current?.values).toBe(valuesBefore);
+    });
   });
 
   describe('leave guard', () => {

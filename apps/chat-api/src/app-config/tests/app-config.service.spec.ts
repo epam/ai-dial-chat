@@ -1,6 +1,6 @@
 import { BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PACKAGE_VERSION } from '../../common/utils/app-version';
 import {
   CATALOG_CREATION_TYPES,
@@ -82,17 +82,29 @@ describe('AppConfigService', () => {
         (await service.getClientConfig(ctx)).config.allowedConnectOrigins,
       ).toEqual(origins);
     });
-    it.each([undefined, '', '  ', 'refinement-model', ' refinement-model '])(
-      'exposes only refinement availability for model %s',
-      async (model) => {
-        const { service } = makeService(async () => undefined, model);
-        const result = await service.getClientConfig(ctx);
-        expect(result.config.aiTextRefinementAvailable).toBe(
-          Boolean(model?.trim()),
-        );
-        expect(JSON.stringify(result)).not.toContain('refinement-model');
-      },
-    );
+
+    describe('aiTextRefinementAvailable', () => {
+      /* ConfigService resolves process.env before its constructor config, so
+       * a shell (or local env file) carrying UTILITY_MODEL — set to run the
+       * dev chat-api — leaks in and flips the false cases. Each case stubs
+       * the env to its value so the test is hermetic. */
+      afterEach(() => {
+        vi.unstubAllEnvs();
+      });
+
+      it.each([undefined, '', '  ', 'refinement-model', ' refinement-model '])(
+        'exposes only refinement availability for model %s',
+        async (model) => {
+          vi.stubEnv('UTILITY_MODEL', model ?? '');
+          const { service } = makeService(async () => undefined, model);
+          const result = await service.getClientConfig(ctx);
+          expect(result.config.aiTextRefinementAvailable).toBe(
+            Boolean(model?.trim()),
+          );
+          expect(JSON.stringify(result)).not.toContain('refinement-model');
+        },
+      );
+    });
 
     it('keeps client-owned variables in their own namespace without overriding built-in config', async () => {
       const custom = {

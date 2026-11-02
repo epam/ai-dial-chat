@@ -1,5 +1,9 @@
 import type { ProviderInfoDto } from '@epam/ai-dial-chat-api-client';
-import { NeutralButton } from '@epam/ai-dial-ui-kit';
+import {
+  LiveRegion,
+  LiveRegionElement,
+  LoginScreen,
+} from '@epam/ai-dial-ui-kit';
 import {
   memo,
   useCallback,
@@ -10,37 +14,13 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
-import ProviderIcon from '../../components/ProviderIcon/ProviderIcon';
 import { AuthI18nKeys } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthRedirect } from '../../hooks/auth/useAuthRedirect';
 import { getProviders } from '../../server-api/auth.api';
+import { toLoginScreenProviders } from '../../utils/auth';
 import { getIconPath } from '../../utils/icon-path';
-
-const renderProviders = (
-  providers: ProviderInfoDto[],
-  callbackUrl: string,
-  signInLabel: string,
-) => (
-  <>
-    <p className="dial-body-text text-center text-primary">{signInLabel}</p>
-    <div className="flex w-full flex-col gap-3">
-      {providers.map((provider) => {
-        const href = `/api/v1/auth/login/${encodeURIComponent(provider.id)}?callbackUrl=${encodeURIComponent(callbackUrl)}`;
-        return (
-          <NeutralButton
-            key={provider.id}
-            href={href}
-            className="w-full"
-            iconBefore={<ProviderIcon providerId={provider.id} />}
-            label={provider.label}
-          />
-        );
-      })}
-    </div>
-  </>
-);
 
 const LoginPage: FC = () => {
   const { t } = useTranslation();
@@ -89,56 +69,33 @@ const LoginPage: FC = () => {
     };
   }, [loadProviders]);
 
+  const loginProviders = useMemo(
+    () =>
+      !hasError && providers
+        ? toLoginScreenProviders(providers, callbackUrl)
+        : [],
+    [callbackUrl, hasError, providers],
+  );
+
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-layer-sunken mobile:bg-layer-raised mobile:px-6">
-      <div
-        className="pointer-events-none absolute inset-0 size-full"
-        aria-hidden="true"
+    <LoginScreen
+      className="min-h-screen"
+      logoSrc={
+        currentThemeFavicon ? getIconPath(currentThemeFavicon) : undefined
+      }
+      title={t(AuthI18nKeys.LoginTitle)}
+      description={t(AuthI18nKeys.LoginDescription)}
+      providersLabel={t(AuthI18nKeys.LoginProvidersLabel)}
+      providers={loginProviders}
+    >
+      <LiveRegion
+        as={LiveRegionElement.P}
+        className="dial-body-text text-center text-primary"
       >
-        <picture className="block size-full">
-          <source media="(min-width: 1920px)" srcSet="/1920_login.svg" />
-          <img src="/768_login.svg" alt="" className="size-full object-cover" />
-        </picture>
-      </div>
-
-      <div className="relative mx-6 flex flex-col items-center gap-12 overflow-hidden rounded-xl bg-layer-raised p-16 mobile:mx-0 mobile:mt-10 mobile:w-full mobile:rounded-none mobile:bg-transparent mobile:p-0">
-        {currentThemeFavicon && (
-          <span
-            style={{
-              backgroundImage: `url("${getIconPath(currentThemeFavicon)}")`,
-            }}
-            className="size-8 shrink-0 bg-contain bg-center bg-no-repeat"
-            aria-hidden="true"
-          />
-        )}
-
-        <div className="flex w-full flex-col items-center gap-8 mobile:gap-6">
-          <h1 className="dial-display2-text mobile:dial-h1-text text-center text-primary">
-            {t(AuthI18nKeys.LoginTitle)}
-          </h1>
-
-          <div className="flex w-full flex-col items-center gap-5 desktop:w-[400px]">
-            {hasError && (
-              <p className="text-center text-primary">
-                {t(AuthI18nKeys.ProvidersError)}
-              </p>
-            )}
-            {!hasError && !providers && (
-              <p className="text-center text-primary">
-                {t(AuthI18nKeys.Loading)}
-              </p>
-            )}
-            {!hasError &&
-              providers &&
-              renderProviders(
-                providers,
-                callbackUrl,
-                t(AuthI18nKeys.LoginDescription),
-              )}
-          </div>
-        </div>
-      </div>
-    </div>
+        {hasError && t(AuthI18nKeys.ProvidersError)}
+        {!hasError && !providers && t(AuthI18nKeys.Loading)}
+      </LiveRegion>
+    </LoginScreen>
   );
 };
 

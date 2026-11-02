@@ -1,3 +1,8 @@
+import {
+  useAttachmentCanvas,
+  useLatestCanvasRequest,
+  useOpenAttachmentCanvas,
+} from '@epam/ai-dial-attachment-canvas';
 import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
 import { getMimeTypesForExtensions } from '@epam/ai-dial-chat-hooks/project';
 import { MIME_TYPE_EXT_MAP } from '@epam/ai-dial-chat-shared';
@@ -20,6 +25,7 @@ import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
 import { useCreateProject } from '../../hooks/projects/useCreateProject';
 import { useProjectCreateFormLabels } from '../../hooks/projects/useProjectCreateFormLabels';
 import { useProjectFileManagerPicker } from '../../hooks/projects/useProjectFileManagerPicker';
@@ -29,12 +35,20 @@ import { ROUTES } from '../../types/routes';
 import { ThemeId } from '../../types/theme-id';
 import { UserConfigStatus } from '../../types/user-config-status';
 import { mapProjectCreateError } from '../../utils/project-create-errors';
+import {
+  fromProjectPreviewKey,
+  toProjectContextFileAttachment,
+  toProjectPreviewKey,
+} from '../../utils/project-file-preview';
 import NotFoundPage from '../NotFound/NotFound';
 
 const DEFAULT_VALUES: ProjectCreateFormValues = {
   name: '',
   instructions: '',
 };
+
+/* Canvas key scope: the project has no id until it is created. */
+const PREVIEW_SCOPE = 'new';
 
 const ProjectCreatePage: FC = () => {
   const { t } = useTranslation();
@@ -64,6 +78,29 @@ const ProjectCreatePage: FC = () => {
   const isDirty =
     values.name !== '' || values.instructions !== '' || contextFiles.length > 0;
   const { allowNextNavigation } = useBuilderLeaveGuard({ isDirty });
+
+  /* Opens a context file in the canvas the way the conversation opens an attachment. */
+  const { attachmentId } = useAttachmentCanvas();
+  const { resolvers, options } = useAttachmentCanvasResolvers();
+  const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
+  const startCanvasRequest = useLatestCanvasRequest();
+  const selectedContextFileId = fromProjectPreviewKey(
+    PREVIEW_SCOPE,
+    attachmentId,
+  );
+  const handleContextFileClick = useCallback(
+    (id: string) => {
+      const file = contextFiles.find((item) => item.id === id);
+      const attachment = file && toProjectContextFileAttachment(file, null);
+      if (!attachment) return;
+      void openAttachmentCanvas(
+        attachment,
+        toProjectPreviewKey(PREVIEW_SCOPE, id),
+        startCanvasRequest(),
+      );
+    },
+    [contextFiles, openAttachmentCanvas, startCanvasRequest],
+  );
 
   const { create, isSubmitting } = useCreateProject();
   const picker = useProjectFileManagerPicker(user?.bucket);
@@ -163,6 +200,8 @@ const ProjectCreatePage: FC = () => {
         onFieldChange={handleFieldChange}
         contextFiles={contextFiles}
         onContextFilesChange={handleContextFilesChange}
+        onContextFileClick={handleContextFileClick}
+        selectedContextFileId={selectedContextFileId}
         allowedExtensions={allowedExtensions}
         maxFileBytes={maxFileBytes}
         maxTotalBytes={maxTotalBytes}

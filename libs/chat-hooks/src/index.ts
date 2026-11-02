@@ -3,6 +3,7 @@ export * from './api-transport/create-csrf-middleware';
 export * from './api-transport/create-unauthorized-middleware';
 export * from './attachment/useAttachmentAction/useAttachmentAction';
 export * from './attachment/useAttachmentValidation/useAttachmentValidation';
+export * from './attachment/attach-constraints';
 export { EXPORT_APP_NAME } from './conversation/conversation-transfer/export-conversation';
 export {
   formatDateYM,
@@ -25,6 +26,7 @@ export * from './catalog/catalog-derivations';
 export * from './catalog/catalog-entity-kind';
 export * from './catalog/favorite-entity-type';
 export * from './catalog/catalog-preferences';
+export * from './catalog/usage-limit-rows';
 export * from './catalog/catalog-primary-action';
 export * from './catalog/useCatalogEditNavigation/useCatalogEditNavigation';
 export * from './catalog/useCatalogItemDetails';
@@ -92,6 +94,7 @@ export * from './offline-credentials/useOfflineCredentialsGate/useOfflineCredent
 export * from './offline-credentials/useOfflineCredentialsLogin/useOfflineCredentialsLogin';
 export * from './offline-credentials/useOfflineCredentialsAuth/useOfflineCredentialsAuth';
 export * from './offline-credentials/map-offline-credentials-response';
+export * from './offline-credentials/scheduled-tasks-login-banner';
 export * from './scheduled-task/check-scheduled-task-auth-session-error';
 export * from './skill/skill';
 export * from './skill/skill-file-batch-validation';
@@ -163,6 +166,7 @@ export * from './files/attachment-canvas';
 export * from './files/source-content';
 export * from './files/attachment-dto-to-display';
 export * from './files/dial-file';
+export * from './files/useUnshareConfirmationState/useUnshareConfirmationState';
 export * from './files/dial-file-to-attachment';
 export * from './files/download-destination';
 export * from './files/prepare-download-destination';
@@ -254,6 +258,8 @@ export * from './scheduled-task/active-scheduled-task';
 export * from './scheduled-task/useActiveScheduledTaskDetails';
 
 export * from './conversation/useConversationTitleEnrichmentController';
+export * from './conversation/useVisibleConversationIdsReporter/useVisibleConversationIdsReporter';
+export * from './conversation/conversation-list';
 
 export * from './skill-editor/useSkillFilePreviewSyncController';
 

@@ -1,4 +1,9 @@
 import {
+  useAttachmentCanvas,
+  useLatestCanvasRequest,
+  useOpenAttachmentCanvas,
+} from '@epam/ai-dial-attachment-canvas';
+import {
   mapProjectDetailsToViewModel,
   ProjectRefreshOutcome,
 } from '@epam/ai-dial-chat-hooks/project';
@@ -27,6 +32,7 @@ import { ProjectsI18nKeys } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useUserConfig } from '../../context/UserConfigContext';
+import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
 import { useProject } from '../../hooks/projects/useProject';
 import { useProjectActions } from '../../hooks/projects/useProjectActions';
 import { useProjectConversations } from '../../hooks/projects/useProjectConversations';
@@ -35,6 +41,11 @@ import { useProjectWatch } from '../../hooks/projects/useProjectWatch';
 import { useDeleteConfirmationLabels } from '../../hooks/useDeleteConfirmationLabels';
 import { ROUTES } from '../../types/routes';
 import { UserConfigStatus } from '../../types/user-config-status';
+import {
+  fromProjectPreviewKey,
+  toProjectPreviewKey,
+  toStoredProjectFileAttachment,
+} from '../../utils/project-file-preview';
 import NotFoundPage from '../NotFound/NotFound';
 
 const BOLD_COMPONENTS = { bold: <strong /> };
@@ -93,6 +104,34 @@ const ProjectViewPage: FC = () => {
     () => (project ? mapProjectDetailsToViewModel(project) : null),
     [project],
   );
+  /* Opens a context file in the canvas the way the conversation opens an attachment. A saved file's card id is its name. */
+  const { attachmentId } = useAttachmentCanvas();
+  const { resolvers, options } = useAttachmentCanvasResolvers();
+  const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
+  const startCanvasRequest = useLatestCanvasRequest();
+  const previewScope = projectId ?? '';
+  const selectedContextFileId = fromProjectPreviewKey(
+    previewScope,
+    attachmentId,
+  );
+  const handleContextFileClick = useCallback(
+    (name: string) => {
+      const file = viewModel?.contextFiles.find((item) => item.name === name);
+      if (!file || projectId == null) return;
+      void openAttachmentCanvas(
+        toStoredProjectFileAttachment({ id: name, ...file }, projectId),
+        toProjectPreviewKey(previewScope, name),
+        startCanvasRequest(),
+      );
+    },
+    [
+      viewModel,
+      projectId,
+      previewScope,
+      openAttachmentCanvas,
+      startCanvasRequest,
+    ],
+  );
   const canEdit = project?.canEdit ?? false;
   /* Chats deleted from the list since `project` was read; a fresh read resets the count. */
   const [deletedChats, setDeletedChats] = useState({ project, count: 0 });
@@ -127,19 +166,13 @@ const ProjectViewPage: FC = () => {
     setIsPublishOpen(true);
   }, []);
   const handleClosePublish = useCallback(() => setIsPublishOpen(false), []);
-  const { togglePin, downloadArchive, openFile, confirmDelete } = actions;
+  const { togglePin, downloadArchive, confirmDelete } = actions;
   const handleTogglePin = useCallback(() => {
     void togglePin();
   }, [togglePin]);
   const handleDownload = useCallback(() => {
     void downloadArchive();
   }, [downloadArchive]);
-  const handleOpenFile = useCallback(
-    (fileName: string) => {
-      void openFile(fileName);
-    },
-    [openFile],
-  );
   const handleConfirmDelete = useCallback(() => {
     void confirmDelete();
   }, [confirmDelete]);
@@ -173,7 +206,9 @@ const ProjectViewPage: FC = () => {
           onShare={canEdit ? handleShare : undefined}
           onDelete={canEdit ? actions.requestDelete : undefined}
           onDownload={handleDownload}
-          onOpenFile={handleOpenFile}
+          onContextFileClick={handleContextFileClick}
+          selectedContextFileId={selectedContextFileId}
+          isDetailsStacked={selectedContextFileId != null}
           onRetry={retry}
           onBrowseProjects={handleBrowseProjects}
           mainContent={

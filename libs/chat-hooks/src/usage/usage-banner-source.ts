@@ -3,8 +3,11 @@ import type {
   LimitStatsDto,
 } from '@epam/ai-dial-chat-api-client';
 import { UsageLimitBannerSeverity } from '@epam/ai-dial-conversation-input';
+import { isCappedStat } from '../shared/usage-stat';
 import { UsagePeriod } from './usage-period';
 import type { UsageLimitsSources } from './useDeploymentUsageLimits/useDeploymentUsageLimits';
+
+export { isCappedStat };
 
 /** The day/week/month usage stat the composer banner reports on, and how close it is to its limit. */
 export interface UsageBannerSource {
@@ -17,16 +20,6 @@ export interface UsageBannerSource {
   /** DIAL Core's `resetsAt` for the stat, when it sent one. */
   resetsAt: string | undefined;
 }
-
-/*
- * DIAL Core reports an unlimited stat with this sentinel as its `total`; it is
- * not a cap, so it never competes for "worst".
- */
-const UNLIMITED_TOTAL_SENTINEL = Number.MAX_SAFE_INTEGER;
-
-/** `true` when `total` is a real cap: finite, positive, and below DIAL Core's unlimited sentinel. */
-export const isCappedStat = (total: number): boolean =>
-  Number.isFinite(total) && total > 0 && total < UNLIMITED_TOTAL_SENTINEL;
 
 type CalendarStatKey = keyof Pick<
   DeploymentLimitsResponseDto,

@@ -6,6 +6,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import {
+  getEffectiveDeploymentIds,
   getFormSchemaToolSyncKey,
   getLastDeploymentId,
   getLastUserMessageToolConfiguration,
@@ -486,5 +487,39 @@ describe('getFormSchemaToolSyncKey', () => {
       ['deep_research'],
     );
     expect(off?.key).not.toBe(on?.key);
+  });
+});
+
+describe('getEffectiveDeploymentIds', () => {
+  it('falls back to the initial model until a model_changed status switches it', () => {
+    const messages: Message[] = [
+      userMessage(),
+      assistantMessage(),
+      statusModelChanged('model-b'),
+      userMessage(),
+    ];
+
+    expect(getEffectiveDeploymentIds(messages, 'model-a')).toEqual([
+      'model-a',
+      'model-a',
+      'model-b',
+      'model-b',
+    ]);
+  });
+
+  it("prefers a message's own deploymentId without changing the running model", () => {
+    const messages: Message[] = [
+      assistantMessage('hi', 'model-x'),
+      userMessage(),
+    ];
+
+    expect(getEffectiveDeploymentIds(messages, 'model-a')).toEqual([
+      'model-x',
+      'model-a',
+    ]);
+  });
+
+  it('returns undefined entries when nothing names a deployment', () => {
+    expect(getEffectiveDeploymentIds([userMessage()])).toEqual([undefined]);
   });
 });

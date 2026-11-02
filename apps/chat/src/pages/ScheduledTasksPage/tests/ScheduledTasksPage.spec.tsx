@@ -63,7 +63,15 @@ const makeAuthResult = (
   ...overrides,
 });
 
-vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
+vi.mock('@epam/ai-dial-scheduled-tasks', async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import('@epam/ai-dial-scheduled-tasks')
+  >().then(
+    ({ ScheduledTasksLimitedAccessBanner, ScheduledTasksLoginBanner }) => ({
+      ScheduledTasksLimitedAccessBanner,
+      ScheduledTasksLoginBanner,
+    }),
+  )),
   ScheduledTasksSortKey: {
     FirstToRun: 'firstToRun',
     LastToRun: 'lastToRun',

@@ -190,7 +190,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.59
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.62
 - `@epam/ai-dial-usage-dashboard` \*
 - `@modelcontextprotocol/sdk` ^1.32.2
 - `@epam/pdf-highlighter-kit` ^0.0.19
@@ -1766,6 +1766,24 @@ const Composer = ({ allowedMimeTypes }: { allowedMimeTypes: string[] }) => {
 
 **Returns** (`UseAttachmentValidationResult`): `{ inputAttachmentTypes: string[], isAttachmentsAllowed: boolean, validateAttachment: (attachment: Attachment) => AttachmentErrorReason | undefined, fileAccept: string | undefined }`.
 
+### buildAttachConstraintDescription / areAllMimeTypesAllowed
+
+`buildAttachConstraintDescription(constraints, labels)` returns the attach dialog's limits as text: the size and type limits as one sentence (`maxSizeWithTypes`, `maxSizeOnly`, or the type label alone), then `upToFiles`, joined with `. ` and ending in `.` — or `null` when nothing is limited. The type label is `allowedTypesLabel` when given, `labels.allTypes` when `allowedTypes` holds `*` or `*/*`, otherwise the extension labels of `allowedTypes`. `areAllMimeTypesAllowed(types)` is that wildcard check. `AttachConstraints` and `AttachConstraintLabels` are exported. Available from the root and `./attachments`.
+
+```ts
+import { buildAttachConstraintDescription } from '@epam/ai-dial-chat-hooks/attachments';
+
+const description = buildAttachConstraintDescription(
+  { allowedTypes, maxFileSize, maxCount },
+  {
+    allTypes: t('allTypes'),
+    maxSizeWithTypes: (maxSize, types) => t('maxSizeTypes', { maxSize, types }),
+    maxSizeOnly: (maxSize) => t('maxSize', { maxSize }),
+    upToFiles: (count) => t('upToFiles', { count }),
+  },
+);
+```
+
 ### useConversationAnnotationPool
 
 Groups the html-tag citation annotations a conversation persisted in `customViewState.annotations` by citation id, through `useHtmlTagAnnotationGroups` from `@epam/ai-dial-quotations`. Malformed or absent annotations yield the shared empty result, so a host can pass any conversation, `null` or `undefined`. Available from the root and `./conversation-sources`.
@@ -1880,6 +1898,16 @@ const ComposerSettings = ({
 `labels` (`Partial<ChatSettingsFormLabels>`) overrides English fallbacks for every visible string; `onSaved` is called after a successful save so the host can surface its own toast. `isQuickApp` forces the temperature field off regardless of `deploymentFeatures`.
 
 **Returns** (`UseChatSettingsFormConfigResult`): `{ features, responseFormat, systemPrompt, temperature, onSave, menuItemLabel, title, responseFormatLabel, responseFormatHint, responseFormatMarkdownLabel, responseFormatPlainTextLabel, systemPromptLabel, systemPromptTooltip, temperatureLabel, temperatureLabels, temperatureHint, saveLabel, saveDisabledTooltip }` — spread directly into `ChatSettingsModal` / `ChatSettingsBottomSheet` from `@epam/ai-dial-conversation-input`.
+
+### DEFAULT_CHAT_SETTINGS
+
+The `Required<ChatSettingsValues>` a conversation starts with before the user changes anything: `ResponseFormat.Markdown`, an empty system prompt and temperature `0.5`. Available from the root and `./conversation`.
+
+```ts
+import { DEFAULT_CHAT_SETTINGS } from '@epam/ai-dial-chat-hooks';
+
+const [settings, setSettings] = useState(DEFAULT_CHAT_SETTINGS);
+```
 
 ### useAttachmentAction
 
@@ -2052,6 +2080,19 @@ import {
 const sortKey = resolveCatalogSortKey(storedSortKey);
 const filterTopics = parseCatalogFilterTopics(storedFilterTopics);
 const activeTab = resolveCatalogActiveTab(storedActiveTab, availableTabIds);
+```
+
+### canEditShareAccess
+
+`canEditShareAccess(type)` is `true` for the catalog entity types whose share link may grant edit access — Agent, Prompt, Skill and Toolset — and `false` for Model, which is only ever shared view-only. Available from the root and `./catalog`.
+
+```tsx
+import { canEditShareAccess } from '@epam/ai-dial-chat-hooks/catalog';
+
+<SharePopoverContainer
+  itemId={item.id}
+  canEditAccess={canEditShareAccess(item.type)}
+/>;
 ```
 
 ### findSkillByUrl
@@ -2335,6 +2376,30 @@ const FileManagerHost = ({
 **Parameters** (`UseDialFileManagerOptions`): `filesApi`, `bucket`, `labels`, `locale`, `disabledNewButtonTooltip`, `downloadDestination`, and `buildValidationErrorMessage` are required; `rootLabel` (default `'My files'`), `activeTab` (default `MyFiles`), `isActive` (default `true`; `false` issues no request), `sessionKey` (a change resets navigation like a tab switch), `variant` (default `Attach`), `actionProfile`, `forbiddenSymbolsRegExp`, `onNotification`, and `onOperationSuccess` are optional. See the exported `UseDialFileManagerOptions` type for the complete shape.
 
 **Returns** (`UseDialFileManagerResult`): the full set of props `DialFileManager` needs — `items`, `isLoading`, `path`/`onPathChange`, search (`onSearchFiles`/`searchResults`/`isSearching`), tree expand state, upload (`onUploadFiles`/`onUploadArchive`/`uploadBatchState`), create/rename/move/copy/delete callbacks and their `isXxx` flags, sharing (`onUnshareFiles`/`onRemoveFilesAccess`), metadata (`onGetInfo`/`fileMetadata`), `actionLabels`, `visibleColumns`, and the aggregate `isAnyOperationInProgress`. See the exported `UseDialFileManagerResult` type for the complete shape.
+
+### useUnshareConfirmationState
+
+The file manager unshares shared-with-me items as soon as the action is
+clicked. `useUnshareConfirmationState(controller)` returns the controller with
+`onUnshareFiles` replaced by a request that only records `pendingItems`;
+`confirm()` calls the original `onUnshareFiles` with them and `cancel()` drops
+them. The host renders its own confirmation while `pendingItems` is set.
+`UnshareConfirmationController` and `UnshareConfirmationState` are exported.
+Available from the root and `./file-manager`.
+
+```tsx
+import { useUnshareConfirmationState } from '@epam/ai-dial-chat-hooks/file-manager';
+
+const { controller, pendingItems, confirm, cancel } =
+  useUnshareConfirmationState(fileManagerController);
+
+<DialFileManagerShell controller={controller} />;
+{
+  pendingItems && (
+    <ConfirmationDialog open onConfirm={confirm} onClose={cancel} />
+  );
+}
+```
 
 ### useDialFileManagerSections
 
@@ -3175,6 +3240,16 @@ selectToolsetAuthStatus(toolset.authSettings, credentialsLevel);
 // toolset.authSettings?.globalAuthStatus
 ```
 
+### getToolsetFallbackName
+
+`getToolsetFallbackName(toolsetId)` returns a display name for a toolset whose metadata has not loaded: the last path segment, without its `__version` suffix, percent-decoded (kept as is when it is not valid encoding). Available from the root and `./oauth`.
+
+```ts
+import { getToolsetFallbackName } from '@epam/ai-dial-chat-hooks/oauth';
+
+getToolsetFallbackName('toolsets/bucket/My%20Toolset__1.0.0'); // 'My Toolset'
+```
+
 ### getToolsetRedirectUri / buildToolsetAuthorizeUrl
 
 `getToolsetRedirectUri` resolves the host's own callback path against `window.location.origin`. `buildToolsetAuthorizeUrl` builds an authorization-code URL carrying `response_type=code`, `client_id`, `redirect_uri` and `state`, plus `code_challenge`/`code_challenge_method` and a space-joined `scope` when the supplied settings carry them. It returns `null` — never throws — for a configuration that cannot produce a valid URL: a missing or blank `clientId`/`authorizationEndpoint`, an unparseable endpoint, or an endpoint whose scheme is not `http:`/`https:` (so `javascript:` and `data:` URLs never reach the popup). Plain `http:` is accepted for any host.
@@ -3434,6 +3509,16 @@ import { getLastDeploymentId } from '@epam/ai-dial-chat-hooks';
 getLastDeploymentId(conversation.messages); // string | null
 ```
 
+### getEffectiveDeploymentIds
+
+`getEffectiveDeploymentIds(messages, initialModelId?)` returns, index for index, the deployment each message ran on: its own `deploymentId`, otherwise the model set by the latest preceding `model_changed` status message, otherwise `initialModelId`. One linear pass. Available from the root and `./conversation`.
+
+```ts
+import { getEffectiveDeploymentIds } from '@epam/ai-dial-chat-hooks/conversation';
+
+const deploymentIds = getEffectiveDeploymentIds(messages, initialModelId);
+```
+
 ### getToolConfigurationFromFormSchema / getLatestToolConfiguration / getFormSchemaToolSyncKey
 
 Let a DIAL app drive a tools-menu toggle from an assistant message's `custom_content.form_schema`. A property counts when it carries a boolean `default`, or, with no `default`, a `oneOf` with exactly one entry whose `const` is a boolean. `getToolConfigurationFromFormSchema` returns those values keyed by property name. `getLatestToolConfiguration` returns the last user message's `configuration_value` overlaid by the `form_schema` values of the assistant messages after it, for restoring a (re-)loaded conversation. `getFormSchemaToolSyncKey` returns the last assistant message's values restricted to the given tool ids plus a key that changes only when those values do, so a host applies each app value once and keeps a later user toggle.
@@ -3678,6 +3763,16 @@ const limits = mapDeploymentLimitsToInput(
   labels,
   formatResetTime,
 );
+```
+
+### findWorstCappedRow
+
+`findWorstCappedRow(limits)` returns the capped row closest to its limit across every group of a `CatalogItemLimits` — `{ label, usedPercent }` (`WorstCappedRow`), the percentage rounded and clamped to 0–100 — or `undefined` when no row is capped. Unlimited rows and DIAL Core's unlimited sentinel never count. Available from the root and `./catalog`.
+
+```ts
+import { findWorstCappedRow } from '@epam/ai-dial-chat-hooks/catalog';
+
+const worst = findWorstCappedRow(mapDeploymentLimitsToInput(limits, labels));
 ```
 
 ### mapDeploymentLimitsDtoToCatalogLimits
@@ -4774,6 +4869,21 @@ resolveDialFileBucketAndPath('files/my-bucket/reports/q1.pdf');
 isDialFolderId('files/my-bucket/reports/'); // true
 ```
 
+### FileSelectionKind / getFileSelectionKind / resolveDialFolderPath
+
+`getFileSelectionKind(items)` returns `FileSelectionKind.File` or `Folder` for a single file-manager item, by its `nodeType`, and `Multiple` otherwise — the host maps it to its confirmation copy. `resolveDialFolderPath(file, bucket)` returns the `files/{bucket}/{path}/` DIAL folder path for a file-manager folder (its own `bucket` wins over the given one, an existing `files/` path is kept, `.`/`..` segments are dropped), or `null` when it has neither `url` nor `id`. Available from the root and `./file-manager`.
+
+```ts
+import {
+  FileSelectionKind,
+  getFileSelectionKind,
+  resolveDialFolderPath,
+} from '@epam/ai-dial-chat-hooks/file-manager';
+
+const isFolder = getFileSelectionKind(items) === FileSelectionKind.Folder;
+const folderPath = resolveDialFolderPath(folder, bucket);
+```
+
 ### openAnnotationAttachment
 
 Default click behavior for a cited/referenced attachment: triggers a browser download for DIAL-hosted files via the injected `resolveDownloadUrl`, otherwise opens the URL in a new tab.
@@ -4852,6 +4962,22 @@ const content = annotationToOoxmlCanvasContent(
   resolvers,
 );
 if (content != null) openCanvas(content, fileName);
+```
+
+### resolveAnnotationCanvasContent
+
+`resolveAnnotationCanvasContent(annotation, groups, annotations, resolvers)` tries `annotationToPdfCanvasContent` and then `annotationToOoxmlCanvasContent`, and returns `{ content, fileName }` (`AnnotationCanvasContent`) — `fileName` is the source attachment's `title`, or, when that is missing or empty, the decoded last segment of its URL — or `null` when the citation opens in neither viewer, so the host can fall back to opening the plain attachment.
+
+```ts
+import { resolveAnnotationCanvasContent } from '@epam/ai-dial-chat-hooks';
+
+const canvas = resolveAnnotationCanvasContent(
+  annotation,
+  citationGroups,
+  messageAnnotations,
+  resolvers,
+);
+if (canvas != null) openCanvas(canvas.content, canvas.fileName);
 ```
 
 ### attachmentDtoToDisplayAttachment / attachmentDtosToDisplayAttachments / annotationToDisplayAttachment
@@ -5003,16 +5129,52 @@ const panelActiveConversationId = useActiveConversationSync({
 
 **Parameters** (`UseActiveConversationSyncParams`):
 
-| Name                     | Type                                | Description                                                                                   |
-| ------------------------ | ----------------------------------- | --------------------------------------------------------------------------------------------- |
-| `activeConversationId`   | `string \| undefined`               | The app's currently active conversation (context-space).                                      |
-| `items`                  | `ConversationListItemDto[]`         | Raw DTOs from the API.                                                                        |
-| `refreshConversations`   | `() => Promise<void>`               | Called when the active conversation is not found in `items`.                                  |
-| `markConversationViewed` | `(id: string) => Promise<void>`     | Called with the matching raw DTO id when the active conversation or matched identity changes. |
-| `conversationIdsMatch`   | `(a: string, b: string) => boolean` | Equality predicate for context-space ids.                                                     |
-| `toPanelConversationId`  | `(id: string) => string`            | Maps a DTO `id` to the panel-space identifier.                                                |
+| Name                     | Type                                         | Description                                                                                   |
+| ------------------------ | -------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `activeConversationId`   | `string \| undefined`                        | The app's currently active conversation (context-space).                                      |
+| `items`                  | `ConversationListItemDto[]`                  | Raw DTOs from the API.                                                                        |
+| `refreshConversations`   | `() => Promise<void>`                        | Called when the active conversation is not found in `items`.                                  |
+| `markConversationViewed` | `(id: string) => Promise<void>`              | Called with the matching raw DTO id when the active conversation or matched identity changes. |
+| `conversationIdsMatch`   | `(a: string, b: string) => boolean`          | Equality predicate for context-space ids.                                                     |
+| `toPanelConversationId`  | `(id: string) => string`                     | Maps a DTO `id` to the panel-space identifier.                                                |
+| `shouldMarkViewed`       | `(item: ConversationListItemDto) => boolean` | Optional. Whether the matched active conversation is marked viewed; defaults to every one.    |
 
 **Returns**: `string | undefined` — the panel-space id to highlight.
+
+### useVisibleConversationIdsReporter
+
+Feeds the conversation panel's viewport report into title-enrichment priority. It returns the `(panelIds: string[]) => void` callback the panel calls with its visible rows, maps those panel ids back to list ids through `toPanelConversationId`, and registers them with `setVisibleConversationIds(viewKey, ids)` (from `useConversationTitleEnrichmentController`) under a per-instance key. While `isVisible` is `false` it registers `null` but keeps the last report, so reopening restores priority without a scroll; unmounting withdraws the registration. `UseVisibleConversationIdsReporterParams` is exported.
+
+```tsx
+import { useVisibleConversationIdsReporter } from '@epam/ai-dial-chat-hooks/conversation';
+
+const handleVisibleConversationIdsChange = useVisibleConversationIdsReporter({
+  items,
+  isVisible,
+  toPanelConversationId,
+  setVisibleConversationIds,
+});
+
+<ConversationListSection
+  onVisibleConversationIdsChange={handleVisibleConversationIdsChange}
+/>;
+```
+
+### isTotalDeletionFailure / resolveConversationPinChange
+
+Conversation-list decisions. `isTotalDeletionFailure(result)` is `true` when a delete-all `ConversationDeletionResultDto` reports failures and nothing deleted or already absent. `resolveConversationPinChange(targetGroupKey, isPinned)` returns the pin state for a conversation dragged into a group: `true` for `FilterTab.Pinned`, `false` when a pinned conversation leaves it, and `undefined` otherwise. Available from the root and `./conversation`.
+
+```ts
+import {
+  isTotalDeletionFailure,
+  resolveConversationPinChange,
+} from '@epam/ai-dial-chat-hooks/conversation';
+
+if (isTotalDeletionFailure(await deleteAllConversations())) throw new Error();
+
+const pinned = resolveConversationPinChange(targetGroupKey, item.isPinned);
+if (pinned != null) void pinConversation(id, pinned);
+```
 
 ### useAsyncConfirmDialog
 
@@ -5351,6 +5513,23 @@ const { isLoggingIn, loginOutcome, isLoggingOut, logIn, logOut } =
 host-configured client (only `signOutOfflineCredentials`) and the callback
 path. `logIn` no-ops while `connect` is absent; `logOut` resolves
 `Disconnected` only when a fresh refetch confirms `connected: false`.
+
+### ScheduledTasksLoginBannerState / getScheduledTasksLoginRetryState / resolveScheduledTasksLoginBannerState
+
+State of the scheduled-tasks offline-credentials login banner. `getScheduledTasksLoginRetryState(outcome)` turns an `OfflineCredentialsLoginOutcomeType` into the retry state it leaves (`undefined` after `Success`). `resolveScheduledTasksLoginBannerState({ isLoggingIn, retryState, status })` returns `LoginInProgress` while a login runs, then the retry state, then `Shown` while the gate reports `Available` or `Unavailable`, and `undefined` to hide the banner. Available from the root and `./offline-credentials`.
+
+```ts
+import {
+  getScheduledTasksLoginRetryState,
+  resolveScheduledTasksLoginBannerState,
+} from '@epam/ai-dial-chat-hooks/offline-credentials';
+
+const bannerState = resolveScheduledTasksLoginBannerState({
+  isLoggingIn,
+  retryState: loginOutcome && getScheduledTasksLoginRetryState(loginOutcome),
+  status,
+});
+```
 
 ### mapOfflineCredentialsResponse / normalizeOfflineCredentialsConnectSettings
 

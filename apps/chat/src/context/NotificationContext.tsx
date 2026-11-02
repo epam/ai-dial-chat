@@ -1,4 +1,7 @@
-import { generateUUID } from '@epam/ai-dial-chat-shared';
+import {
+  generateUUID,
+  type NotificationStackItem,
+} from '@epam/ai-dial-chat-shared';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import {
   createContext,
@@ -9,24 +12,8 @@ import {
   useState,
 } from 'react';
 
-export interface NotificationItem {
-  id: string;
-  variant: NotificationVariant;
-  title?: string;
-  message?: ReactNode;
-  /**
-   * Optional control (typically a small `Button`) rendered at the toast's
-   * inline end, after the text. Action-bearing notifications stay until
-   * manually dismissed, so the action cannot vanish before it is used.
-   */
-  action?: ReactNode;
-  /**
-   * Validated 32-hex W3C trace ID, shown as a "Request ID" under the
-   * notification. Omitted for client-only/validation errors and any non-error
-   * notification.
-   */
-  requestId?: string;
-}
+/** A toast in the app's stack; the shape `NotificationStack` renders. */
+export type NotificationItem = NotificationStackItem;
 
 export type ShowNotificationOptions = Omit<NotificationItem, 'id'> & {
   /**

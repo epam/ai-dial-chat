@@ -3,7 +3,11 @@ import {
   ResponseError,
   type ProjectDetailsDto,
 } from '@epam/ai-dial-chat-api-client';
-import type { Attachment } from '@epam/ai-dial-chat-shared';
+import {
+  AttachmentType,
+  RequestStatus,
+  type Attachment,
+} from '@epam/ai-dial-chat-shared';
 import type { ProjectContextFile } from '@epam/ai-dial-projects';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -20,6 +24,10 @@ import {
   useFeatureFlag as useFeatureFlagMock,
 } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
+import {
+  previewResolvers,
+  withPreviewCanvas,
+} from '../../../hooks/projects/tests/project-preview-test-helpers';
 import { renderWithLeaveGuard } from '../../../hooks/unsaved-changes/tests/render-with-leave-guard';
 import { getProject, updateProject } from '../../../server-api/projects.api';
 import ProjectEditPage from '../ProjectEditPage';
@@ -48,6 +56,11 @@ vi.mock(
   '../../../components/ProjectFileManagerModal/ProjectFileManagerModal',
   () => ({ default: () => null }),
 );
+vi.mock('../../../hooks/attachment/useAttachmentCanvasResolvers', async () => {
+  const { previewCanvasResolvers: stub } =
+    await import('../../../hooks/projects/tests/project-preview-test-helpers');
+  return { useAttachmentCanvasResolvers: () => stub };
+});
 
 interface FakeFormProps {
   values: { name: string; instructions: string };
@@ -55,6 +68,8 @@ interface FakeFormProps {
   onFieldChange: (field: string, value: string) => void;
   contextFiles: ProjectContextFile[];
   onContextFilesChange: (files: ProjectContextFile[]) => void;
+  onContextFileClick?: (id: string) => void;
+  selectedContextFileId?: string;
   onCancel: () => void;
   onSubmit: () => void;
   labels: { title: string; createLabel: string };
@@ -80,6 +95,13 @@ vi.mock('@epam/ai-dial-projects', async (importOriginal) => ({
               {file.name}
               <button
                 type="button"
+                aria-pressed={file.id === props.selectedContextFileId}
+                onClick={() => props.onContextFileClick?.(file.id)}
+              >
+                {`Preview ${file.name}`}
+              </button>
+              <button
+                type="button"
                 onClick={() =>
                   props.onContextFilesChange(
                     props.contextFiles.filter((f) => f.id !== file.id),
@@ -102,6 +124,8 @@ vi.mock('@epam/ai-dial-projects', async (importOriginal) => ({
                 id: 'new-1',
                 name: 'retro.pdf',
                 contentType: 'application/pdf',
+                type: AttachmentType.File,
+                status: RequestStatus.Idle,
                 file: new File(['%PDF-'], 'retro.pdf'),
               } as Attachment,
             ])
@@ -161,11 +185,13 @@ const responseError = (status: number, body: unknown) =>
 
 const renderAt = (path = '/projects/edit/my-bucket/q4') =>
   renderWithLeaveGuard(
-    <Routes>
-      <Route path="/projects/edit/:bucket/*" element={<ProjectEditPage />} />
-      <Route path="/projects/view/:bucket/*" element={<p>project view</p>} />
-      <Route path="/projects" element={<p>projects list</p>} />
-    </Routes>,
+    withPreviewCanvas(
+      <Routes>
+        <Route path="/projects/edit/:bucket/*" element={<ProjectEditPage />} />
+        <Route path="/projects/view/:bucket/*" element={<p>project view</p>} />
+        <Route path="/projects" element={<p>projects list</p>} />
+      </Routes>,
+    ),
     [path],
   );
 
@@ -232,6 +258,96 @@ describe('ProjectEditPage', () => {
 
     expect(await screen.findByText('project view')).toBeTruthy();
     expect(router.state.location.pathname).toBe('/projects/view/my-bucket/q4');
+  });
+
+  describe('context file preview', () => {
+    const PROJECT_ID = 'projects/my-bucket/q4';
+    const getCanvas = () => screen.getByLabelText('canvas');
+    const openEditor = async () => {
+      renderAt();
+      await screen.findByRole('heading', { name: ProjectsI18nKeys.EditTitle });
+    };
+
+    it('opens a stored file as an attachment with the project file locator, so the shared resolvers fetch it', async () => {
+      await openEditor();
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Preview tickets.csv' }),
+      );
+
+      await waitFor(() =>
+        expect(getCanvas().textContent).toBe(
+          `${PROJECT_ID}::stored:tickets.csv`,
+        ),
+      );
+      await waitFor(() =>
+        expect(previewResolvers.resolveOoxmlContent).toHaveBeenCalledOnce(),
+      );
+      expect(
+        previewResolvers.resolveOoxmlContent.mock.calls[0][0],
+      ).toMatchObject({
+        id: 'stored:tickets.csv',
+        name: 'tickets.csv',
+        url: `${PROJECT_ID}/files/context/tickets.csv`,
+      });
+    });
+
+    it('opens a file added in the session from its local File', async () => {
+      await openEditor();
+      await userEvent.click(screen.getByRole('button', { name: 'add file' }));
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Preview retro.pdf' }),
+      );
+
+      expect(getCanvas().textContent).toBe(`${PROJECT_ID}::new-1`);
+      await waitFor(() =>
+        expect(previewResolvers.resolvePdfContent).toHaveBeenCalledOnce(),
+      );
+      const [opened] = previewResolvers.resolvePdfContent.mock
+        .calls[0] as unknown as [{ file: File; url?: string }];
+      expect(opened.file.name).toBe('retro.pdf');
+      expect(opened.url).toBeUndefined();
+    });
+
+    it('marks only the open file selected', async () => {
+      await openEditor();
+      const card = screen.getByRole('button', { name: 'Preview tickets.csv' });
+
+      await userEvent.click(card);
+
+      await waitFor(() =>
+        expect(card.getAttribute('aria-pressed')).toBe('true'),
+      );
+      expect(
+        screen
+          .getByRole('button', { name: 'Preview survey.xlsx' })
+          .getAttribute('aria-pressed'),
+      ).toBe('false');
+    });
+
+    it('does not ask to discard changes after only previewing a file', async () => {
+      const { router } = renderAt();
+      await screen.findByRole('heading', { name: ProjectsI18nKeys.EditTitle });
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Preview tickets.csv' }),
+      );
+      await waitFor(() =>
+        expect(getCanvas().textContent).toBe(
+          `${PROJECT_ID}::stored:tickets.csv`,
+        ),
+      );
+
+      await userEvent.click(screen.getByRole('button', { name: 'cancel' }));
+
+      expect(await screen.findByText('project view')).toBeTruthy();
+      expect(router.state.location.pathname).toBe(
+        '/projects/view/my-bucket/q4',
+      );
+      expect(
+        screen.queryByRole('dialog', { name: UnsavedChangesI18nKeys.Title }),
+      ).toBeNull();
+    });
   });
 
   it('asks before leaving after a stored file is removed', async () => {

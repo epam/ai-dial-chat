@@ -35,6 +35,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => ({
 const labels: ProjectViewLabels = {
   backLabel: 'Back',
   pinLabel: 'Pin',
+  unpinLabel: 'Unpin',
   publishLabel: 'Publish',
   editLabel: 'Edit',
   moreActionsLabel: 'More actions',
@@ -51,7 +52,7 @@ const labels: ProjectViewLabels = {
   contextResultCountLabel: (count) => `${count} files found`,
   emptyContextLabel: 'No context files',
   noContextMatchesLabel: 'No files match your search',
-  openFileLabel: (name) => `Download ${name}`,
+  openFileLabel: (name) => `Preview ${name}`,
   errorLabel: 'Could not load the project',
   retryLabel: 'Retry',
   notFoundLabel: 'Project not found',
@@ -84,7 +85,7 @@ const baseProps = (): ProjectViewProps => ({
   onShare: vi.fn(),
   onDelete: vi.fn(),
   onDownload: vi.fn(),
-  onOpenFile: vi.fn(),
+  onContextFileClick: vi.fn(),
   onRetry: vi.fn(),
   onBrowseProjects: vi.fn(),
   labels,
@@ -158,14 +159,35 @@ describe('ProjectView', () => {
     expect(screen.queryByRole('meter')).toBeNull();
   });
 
-  it('calls onOpenFile with the name of the activated context card', async () => {
-    const { onOpenFile } = renderView();
+  it('calls onContextFileClick with the name of the activated context card', async () => {
+    const { onContextFileClick } = renderView();
 
     await userEvent.click(
-      screen.getByRole('button', { name: 'Download tickets.csv' }),
+      screen.getByRole('button', { name: 'Preview tickets.csv' }),
     );
 
-    expect(onOpenFile).toHaveBeenCalledWith('tickets.csv');
+    expect(onContextFileClick).toHaveBeenCalledWith('tickets.csv');
+  });
+
+  it('renders only the card named by selectedContextFileId as selected', () => {
+    renderView({ selectedContextFileId: 'tickets.csv' });
+
+    expect(
+      screen
+        .getByRole('button', { name: 'Preview tickets.csv' })
+        .getAttribute('aria-pressed'),
+    ).toBe('true');
+    expect(
+      screen
+        .getByRole('button', { name: 'Preview survey.xlsx' })
+        .getAttribute('aria-pressed'),
+    ).toBe('false');
+  });
+
+  it('renders no card as selected when selectedContextFileId is unset', () => {
+    renderView();
+
+    expect(screen.queryByRole('button', { pressed: true })).toBeNull();
   });
 
   it('filters the context files and announces the match count', async () => {
@@ -177,13 +199,13 @@ describe('ProjectView', () => {
     );
 
     expect(
-      screen.getByRole('button', { name: 'Download tickets.csv' }),
+      screen.getByRole('button', { name: 'Preview tickets.csv' }),
     ).toBeTruthy();
     expect(
-      screen.getByRole('button', { name: 'Download ticket-archive.pdf' }),
+      screen.getByRole('button', { name: 'Preview ticket-archive.pdf' }),
     ).toBeTruthy();
     expect(
-      screen.queryByRole('button', { name: 'Download survey.xlsx' }),
+      screen.queryByRole('button', { name: 'Preview survey.xlsx' }),
     ).toBeNull();
     /* Each attachment card keeps its own (empty) error status region mounted. */
     expect(
@@ -221,22 +243,21 @@ describe('ProjectView', () => {
     expect(screen.queryByRole('search')).toBeNull();
   });
 
-  it('exposes the pin state through aria-pressed and calls onTogglePin', async () => {
+  it('shows Pin on an unpinned project and calls onTogglePin', async () => {
     const { onTogglePin } = renderView();
 
     const pin = screen.getByRole('button', { name: 'Pin' });
-    expect(pin.getAttribute('aria-pressed')).toBe('false');
+    expect(pin.hasAttribute('aria-pressed')).toBe(false);
     await userEvent.click(pin);
 
     expect(onTogglePin).toHaveBeenCalledOnce();
   });
 
-  it('keeps the toggle name stable and reports the pinned state as pressed', () => {
+  it('shows Unpin on a pinned project', () => {
     renderView({ isPinned: true });
 
-    expect(
-      screen.getByRole('button', { name: 'Pin' }).getAttribute('aria-pressed'),
-    ).toBe('true');
+    expect(screen.getByRole('button', { name: 'Unpin' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Pin' })).toBeNull();
   });
 
   it('keeps the toggle focusable and ignores it while a pin change is pending', async () => {
@@ -394,6 +415,72 @@ describe('ProjectView', () => {
     expect(
       main.compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+  });
+
+  it('places the Details panel beside the main column on desktop by default', () => {
+    renderView({ mainContent: <p>Chats go here</p> });
+
+    const details = screen.getByRole('complementary');
+    expect(details.className).toContain('desktop:w-[488px]');
+    expect(details.className).toContain('desktop:border-s');
+    expect(details.parentElement?.className).toContain('desktop:flex-row');
+  });
+
+  it('stacks the Details panel below the main column on desktop when isDetailsStacked is set', () => {
+    renderView({ mainContent: <p>Chats go here</p>, isDetailsStacked: true });
+
+    const details = screen.getByRole('complementary');
+    expect(details.className).not.toContain('desktop:w-[488px]');
+    expect(details.className).not.toContain('desktop:border-s');
+    expect(details.className).toContain('border-t');
+    expect(details.parentElement?.className).not.toContain('desktop:flex-row');
+    expect(
+      within(details).getByRole('button', { name: 'Preview tickets.csv' }),
+    ).toBeTruthy();
+  });
+
+  it('uses no physical-direction utility and no fixed width below desktop on the stacked Details panel', () => {
+    renderView({ mainContent: <p>Chats go here</p>, isDetailsStacked: true });
+
+    const classes = screen.getByRole('complementary').className.split(/\s+/);
+    const physical = classes.filter((name) =>
+      /^(?:[a-z_]+:)*(?:-?m[lr]|p[lr]|left|right|border-[lr]|text-(?:left|right)|rounded-[lr]|rounded-t[lr]|rounded-b[lr])(?:-|$)/.test(
+        name,
+      ),
+    );
+    const fixedWidthBelowDesktop = classes.filter((name) => /^w-\[/.test(name));
+    expect(physical).toEqual([]);
+    expect(fixedWidthBelowDesktop).toEqual([]);
+    expect(classes).toContain('w-full');
+  });
+
+  it('keeps the Details panel readable in RTL when stacked', () => {
+    document.documentElement.dir = 'rtl';
+    try {
+      renderView({ mainContent: <p>Chats go here</p>, isDetailsStacked: true });
+
+      const details = screen.getByRole('complementary');
+      expect(details.className).toContain('border-t');
+      expect(details.className).not.toContain('desktop:border-s');
+    } finally {
+      document.documentElement.dir = '';
+    }
+  });
+
+  it('does not bottom-align a stacked Details panel when there is no main column', () => {
+    renderView({ isDetailsStacked: true });
+
+    const details = screen.getByRole('complementary');
+    expect(details.parentElement?.className).not.toContain(
+      'desktop:justify-end',
+    );
+  });
+
+  it('keeps pushing the Details panel to the inline end without a main column', () => {
+    renderView();
+
+    const details = screen.getByRole('complementary');
+    expect(details.parentElement?.className).toContain('desktop:justify-end');
   });
 
   it('omits the main column when no content is given', () => {

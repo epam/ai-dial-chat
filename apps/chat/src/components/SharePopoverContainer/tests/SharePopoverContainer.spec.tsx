@@ -8,7 +8,6 @@ import {
   ShareI18nKeys,
 } from '../../../constants/translation-keys';
 import { shareApi } from '../../../server-api/api-client';
-import { canEditShareAccess } from '../../../utils/share';
 import SharePopoverContainer from '../SharePopoverContainer';
 
 const { mockSharePopover, mockT } = vi.hoisted(() => ({
@@ -60,7 +59,9 @@ describe('SharePopoverContainer', () => {
     render(
       <SharePopoverContainer
         itemId="item-1"
-        canEditAccess={canEditShareAccess(CatalogEntityType.Agent)}
+        canEditAccess={chatHooksModule.canEditShareAccess(
+          CatalogEntityType.Agent,
+        )}
         onClose={vi.fn()}
       />,
     );
@@ -95,7 +96,9 @@ describe('SharePopoverContainer', () => {
     render(
       <SharePopoverContainer
         itemId="item-1"
-        canEditAccess={canEditShareAccess(CatalogEntityType.Agent)}
+        canEditAccess={chatHooksModule.canEditShareAccess(
+          CatalogEntityType.Agent,
+        )}
         onClose={vi.fn()}
       />,
     );
@@ -125,7 +128,9 @@ describe('SharePopoverContainer', () => {
     render(
       <SharePopoverContainer
         itemId="item-1"
-        canEditAccess={canEditShareAccess(CatalogEntityType.Agent)}
+        canEditAccess={chatHooksModule.canEditShareAccess(
+          CatalogEntityType.Agent,
+        )}
         onClose={vi.fn()}
       />,
     );
@@ -146,7 +151,9 @@ describe('SharePopoverContainer', () => {
     render(
       <SharePopoverContainer
         itemId="item-1"
-        canEditAccess={canEditShareAccess(CatalogEntityType.Agent)}
+        canEditAccess={chatHooksModule.canEditShareAccess(
+          CatalogEntityType.Agent,
+        )}
         onClose={vi.fn()}
       />,
     );
@@ -165,7 +172,9 @@ describe('SharePopoverContainer', () => {
     render(
       <SharePopoverContainer
         itemId="item-1"
-        canEditAccess={canEditShareAccess(CatalogEntityType.Agent)}
+        canEditAccess={chatHooksModule.canEditShareAccess(
+          CatalogEntityType.Agent,
+        )}
         onClose={vi.fn()}
       />,
     );
@@ -181,7 +190,9 @@ describe('SharePopoverContainer', () => {
     render(
       <SharePopoverContainer
         itemId="item-1"
-        canEditAccess={canEditShareAccess(CatalogEntityType.Model)}
+        canEditAccess={chatHooksModule.canEditShareAccess(
+          CatalogEntityType.Model,
+        )}
         onClose={vi.fn()}
       />,
     );
@@ -197,7 +208,9 @@ describe('SharePopoverContainer', () => {
     render(
       <SharePopoverContainer
         itemId="item-1"
-        canEditAccess={canEditShareAccess(CatalogEntityType.Prompt)}
+        canEditAccess={chatHooksModule.canEditShareAccess(
+          CatalogEntityType.Prompt,
+        )}
         onClose={vi.fn()}
       />,
     );
@@ -213,7 +226,9 @@ describe('SharePopoverContainer', () => {
     render(
       <SharePopoverContainer
         itemId="item-1"
-        canEditAccess={canEditShareAccess(CatalogEntityType.Agent)}
+        canEditAccess={chatHooksModule.canEditShareAccess(
+          CatalogEntityType.Agent,
+        )}
         onClose={vi.fn()}
       />,
     );
@@ -231,7 +246,9 @@ describe('SharePopoverContainer', () => {
     render(
       <SharePopoverContainer
         itemId="item-1"
-        canEditAccess={canEditShareAccess(CatalogEntityType.Agent)}
+        canEditAccess={chatHooksModule.canEditShareAccess(
+          CatalogEntityType.Agent,
+        )}
         isQuickApp
         onClose={vi.fn()}
       />,
@@ -252,7 +269,9 @@ describe('SharePopoverContainer', () => {
     render(
       <SharePopoverContainer
         itemId="item-1"
-        canEditAccess={canEditShareAccess(CatalogEntityType.Prompt)}
+        canEditAccess={chatHooksModule.canEditShareAccess(
+          CatalogEntityType.Prompt,
+        )}
         onClose={vi.fn()}
       />,
     );
@@ -268,7 +287,9 @@ describe('SharePopoverContainer', () => {
     render(
       <SharePopoverContainer
         itemId="item-1"
-        canEditAccess={canEditShareAccess(CatalogEntityType.Model)}
+        canEditAccess={chatHooksModule.canEditShareAccess(
+          CatalogEntityType.Model,
+        )}
         onClose={vi.fn()}
       />,
     );

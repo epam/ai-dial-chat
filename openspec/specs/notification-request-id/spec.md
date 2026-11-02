@@ -25,7 +25,7 @@ unchanged.
 - **THEN** the resulting `NotificationItem` carries that `requestId`
 
 ### Requirement: Error notifications with a request ID render a Copy row
-`apps/chat/src/components/Notification/NotificationContainer.tsx` SHALL render, only when
+`NotificationStack` from `@epam/ai-dial-chat-shared` (`libs/chat-shared/src/components/NotificationStack/NotificationStack.tsx`), which `apps/chat/src/components/Notification/NotificationContainer.tsx` renders with translated labels, SHALL render, only when
 `item.requestId` is set, a row below the existing message containing: a localized "Request ID"
 label, the hexadecimal ID forced to LTR direction regardless of the active locale, and a Copy
 button. This row is composed into the `ReactNode` passed to the ui-kit `Notification`'s `message`

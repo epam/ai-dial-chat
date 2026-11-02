@@ -103,14 +103,6 @@ vi.mock('../../../hooks/offlineCredentials/useOfflineCredentialsLogin', () => ({
 vi.mock(
   '../../../components/ScheduledTasksLoginBanner/ScheduledTasksLoginBanner',
   () => ({
-    ScheduledTasksLoginBannerState: {
-      Shown: 'shown',
-      LoginInProgress: 'login-in-progress',
-      RetryPopupBlocked: 'retry-popup-blocked',
-      RetryCancelled: 'retry-cancelled',
-      RetryTimeout: 'retry-timeout',
-      RetryFailed: 'retry-failed',
-    },
     default: ({
       state,
       title,

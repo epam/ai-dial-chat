@@ -690,6 +690,36 @@ export const annotationToOoxmlCanvasContent = (
   };
 };
 
+/** Canvas content for a citation, with the file name its canvas tab shows. */
+export interface AnnotationCanvasContent {
+  /** PDF or OOXML viewer content with the citation highlighted. */
+  content: PdfCanvasContent | OoxmlCanvasContent;
+  /** The source attachment's title, or the decoded last segment of its URL. */
+  fileName: string;
+}
+
+/**
+ * Returns the highlighted canvas content for a citation — PDF first, then a
+ * DOCX/PPTX/XLSX document — or `null` when the source opens neither way.
+ */
+export const resolveAnnotationCanvasContent = (
+  annotation: Annotation,
+  groups: AnnotationGroup[],
+  annotations: Annotation[],
+  resolvers: AttachmentCanvasUrlResolvers,
+): AnnotationCanvasContent | null => {
+  const content =
+    annotationToPdfCanvasContent(annotation, groups, resolvers) ??
+    annotationToOoxmlCanvasContent(annotation, annotations, resolvers);
+  if (content == null) return null;
+  const attachment = annotation.body?.source?.attachment;
+  const rawSegment = attachment?.url?.split('/').pop() ?? '';
+  return {
+    content,
+    fileName: attachment?.title || decodeURIComponent(rawSegment),
+  };
+};
+
 /**
  * Builds a `PdfCanvasContent` for a reference-only attachment whose
  * `reference_url` points at a PDF file (optionally with a `#page=N`

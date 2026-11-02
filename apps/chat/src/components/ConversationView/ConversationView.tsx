@@ -8,8 +8,9 @@ import {
   isMimeTypeAllowed,
 } from '@epam/ai-dial-attachment-input';
 import {
-  AttachmentValidationErrorReason,
+  type AttachmentValidationErrorEvent,
   findDeploymentByIdOrReference,
+  getEffectiveDeploymentIds,
   getQuickAppConversationStarters,
   isQuickAppSchema,
   normalizeResponseFormat,
@@ -36,14 +37,11 @@ import {
   type Attachment,
   type Conversation,
   DisplayAttachment,
-  formatFileSize,
-  isStatusMessage,
   mergeClasses,
   type Message as MessageType,
   type MessageRating,
   type RequestSkill,
   type StarterOption,
-  StatusEvent,
   type ToolMenuItem,
   type UploadedAttachmentResult,
   useIsMobile,
@@ -114,6 +112,7 @@ import { useLanguage } from '../../hooks/language/useLanguage';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { mcpAppsApiClient } from '../../server-api/mcp-apps';
 import { attachmentCanvasUrlResolvers } from '../../utils/attachment-display-resolvers';
+import { buildAttachmentValidationNotification } from '../../utils/attachment-validation-notification';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
 import { useDeploymentSelectorOverlay } from '../DeploymentSelector/useDeploymentSelectorOverlay';
@@ -627,42 +626,8 @@ const ConversationView: FC<Props> = ({
   );
 
   const handleAttachmentValidationError = useCallback(
-    ({
-      reason,
-      formats,
-      maxFileSizeBytes,
-    }: {
-      reason: AttachmentValidationErrorReason;
-      formats?: string;
-      maxFileSizeBytes?: number;
-    }) => {
-      if (reason === AttachmentValidationErrorReason.FileTooLarge) {
-        showErrorNotification({
-          title: t(AttachmentsI18nKeys.FileTooLargeTitle),
-          message: t(AttachmentsI18nKeys.FileTooLargeMessage, {
-            maxSize:
-              maxFileSizeBytes != null ? formatFileSize(maxFileSizeBytes) : '',
-          }),
-        });
-        return;
-      }
-
-      const noTypesAllowed =
-        reason === AttachmentValidationErrorReason.NoTypesAllowed;
-      showErrorNotification({
-        title: t(
-          noTypesAllowed
-            ? AttachmentsI18nKeys.NoAttachmentsAllowedTitle
-            : AttachmentsI18nKeys.UnsupportedTypeTitle,
-        ),
-        message: t(
-          noTypesAllowed
-            ? AttachmentsI18nKeys.NoAttachmentsAllowedMessage
-            : AttachmentsI18nKeys.UnsupportedTypeMessage,
-          noTypesAllowed ? undefined : { formats },
-        ),
-      });
-    },
+    (event: AttachmentValidationErrorEvent) =>
+      showErrorNotification(buildAttachmentValidationNotification(event, t)),
     [showErrorNotification, t],
   );
 
@@ -815,21 +780,10 @@ const ConversationView: FC<Props> = ({
    * For each message, resolve the deployment active at that point in the conversation.
    * Scans status messages in order so messages before a model change get the initial model icon.
    */
-  const effectiveDeploymentIds = useMemo<(string | undefined)[]>(() => {
-    /* Single linear pass — copying the accumulator per message was O(n²) on long conversations. */
-    const result: (string | undefined)[] = [];
-    let activeId = initialModelId;
-    for (const msg of messages) {
-      if (
-        isStatusMessage(msg) &&
-        msg.custom_content?.event_type === StatusEvent.ModelChanged
-      ) {
-        activeId = msg.custom_content.new_deployment_id;
-      }
-      result.push(msg.deploymentId ?? activeId);
-    }
-    return result;
-  }, [messages, initialModelId]);
+  const effectiveDeploymentIds = useMemo(
+    () => getEffectiveDeploymentIds(messages, initialModelId),
+    [messages, initialModelId],
+  );
 
   const messageHistory = useMemo(
     () => getInputMessageHistory(messages, isInputHistoryNavigationDisabled),

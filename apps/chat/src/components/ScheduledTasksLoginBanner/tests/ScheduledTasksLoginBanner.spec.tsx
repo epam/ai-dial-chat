@@ -1,9 +1,8 @@
+import { ScheduledTasksLoginBannerState } from '@epam/ai-dial-chat-hooks';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import ScheduledTasksLoginBanner, {
-  ScheduledTasksLoginBannerState,
-} from '../ScheduledTasksLoginBanner';
+import ScheduledTasksLoginBanner from '../ScheduledTasksLoginBanner';
 
 const BASE_PROPS = {
   title: 'Log in required.',

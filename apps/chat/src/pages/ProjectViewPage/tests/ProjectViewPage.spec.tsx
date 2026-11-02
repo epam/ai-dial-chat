@@ -3,6 +3,7 @@ import {
   ResponseError,
   type ProjectDetailsDto,
 } from '@epam/ai-dial-chat-api-client';
+import { triggerBrowserDownload } from '@epam/ai-dial-chat-hooks/utils';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
@@ -17,6 +18,10 @@ import {
   useFeatureFlag as useFeatureFlagMock,
 } from '../../../context/tests/app-config-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
+import {
+  previewResolvers,
+  withPreviewCanvas,
+} from '../../../hooks/projects/tests/project-preview-test-helpers';
 import { listProjectConversations } from '../../../server-api/project-conversations.api';
 import {
   deleteProject,
@@ -46,7 +51,6 @@ vi.mock('../../../server-api/projects.api', () => ({
   getProject: vi.fn(),
   deleteProject: vi.fn(),
   downloadProjectArchive: vi.fn(),
-  downloadProjectContextFile: vi.fn(),
   watchProjects: vi.fn(),
 }));
 vi.mock('../../../server-api/project-conversations.api', () => ({
@@ -59,6 +63,11 @@ vi.mock('@epam/ai-dial-chat-hooks/utils', async (importOriginal) => ({
     async (_response: Response, name: string) => name,
   ),
 }));
+vi.mock('../../../hooks/attachment/useAttachmentCanvasResolvers', async () => {
+  const { previewCanvasResolvers: stub } =
+    await import('../../../hooks/projects/tests/project-preview-test-helpers');
+  return { useAttachmentCanvasResolvers: () => stub };
+});
 vi.mock(
   '../../../components/PublishProjectPanelContainer/PublishProjectPanelContainer',
   () => ({
@@ -145,7 +154,7 @@ const renderAt = (path = '/projects/view/a1b2c3/marketing/q4') => {
     ],
     { initialEntries: [path] },
   );
-  render(<RouterProvider router={router} />);
+  render(withPreviewCanvas(<RouterProvider router={router} />));
   return { router };
 };
 
@@ -252,10 +261,8 @@ describe('ProjectViewPage', () => {
     await screen.findByRole('heading', { level: 1, name: 'q4' });
 
     expect(
-      screen
-        .getByRole('button', { name: ButtonsI18nKeys.Pin })
-        .getAttribute('aria-pressed'),
-    ).toBe('true');
+      screen.getByRole('button', { name: ButtonsI18nKeys.Unpin }),
+    ).toBeTruthy();
   });
 
   it('downloads the project archive', async () => {
@@ -413,6 +420,77 @@ describe('ProjectViewPage', () => {
     expect(
       screen.getByRole('region', { name: ProjectsI18nKeys.ViewMainContent }),
     ).toBeTruthy();
+  });
+
+  describe('context file preview', () => {
+    const getCanvas = () => screen.getByLabelText('canvas');
+    const findCard = () =>
+      screen.findByRole('button', { name: ProjectsI18nKeys.ViewOpenFile });
+
+    it('opens a context file in the canvas through the project file locator, not as a download', async () => {
+      renderAt();
+
+      await userEvent.click(await findCard());
+
+      await waitFor(() =>
+        expect(getCanvas().textContent).toBe(`${PROJECT_ID}::tickets.csv`),
+      );
+      await waitFor(() =>
+        expect(previewResolvers.resolveOoxmlContent).toHaveBeenCalledOnce(),
+      );
+      expect(
+        previewResolvers.resolveOoxmlContent.mock.calls[0][0],
+      ).toMatchObject({
+        id: 'tickets.csv',
+        name: 'tickets.csv',
+        url: `${PROJECT_ID}/files/context/tickets.csv`,
+      });
+      expect(triggerBrowserDownload).not.toHaveBeenCalled();
+    });
+
+    it('marks the open file selected', async () => {
+      renderAt();
+      const card = await findCard();
+      expect(card.getAttribute('aria-pressed')).toBe('false');
+
+      await userEvent.click(card);
+
+      await waitFor(() =>
+        expect(card.getAttribute('aria-pressed')).toBe('true'),
+      );
+    });
+
+    it('stacks the Details panel under the chats while a file is open and restores it when the canvas closes', async () => {
+      renderAt();
+      const card = await findCard();
+      const details = screen.getByRole('complementary', {
+        name: ProjectsI18nKeys.ViewDetails,
+      });
+      expect(details.className).toContain('desktop:w-[488px]');
+
+      await userEvent.click(card);
+      await waitFor(() =>
+        expect(details.className).not.toContain('desktop:w-[488px]'),
+      );
+      await userEvent.click(
+        screen.getByRole('button', { name: 'close canvas' }),
+      );
+
+      await waitFor(() =>
+        expect(details.className).toContain('desktop:w-[488px]'),
+      );
+    });
+
+    it('previews a file of a shared read-only project', async () => {
+      vi.mocked(getProject).mockResolvedValue(details({ canEdit: false }));
+      renderAt();
+
+      await userEvent.click(await findCard());
+
+      await waitFor(() =>
+        expect(getCanvas().textContent).toBe(`${PROJECT_ID}::tickets.csv`),
+      );
+    });
   });
 
   it('reloads the project when a delete loses to a concurrent change', async () => {

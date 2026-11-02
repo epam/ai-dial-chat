@@ -91,6 +91,8 @@ A single scheduled task rendered as a card: title, optional description/prompt p
 
 Supply `labels.completedBadgeLabel` for localized completed-state copy.
 
+The description/prompt-preview line defaults to `dial-small-paragraph-text` (14px/24px) and clamps to three lines on desktop cards (two below the desktop breakpoint); override it with `styles.typography.descriptionClassName`. Whitespace in the preview collapses (unlike the detail view's description, which preserves the author's line breaks): the preview is typically the raw `description` field, and preserved blank lines would spend the whole clamp budget before any text.
+
 The Completed badge mirrors the Paused badge's theming contract: `styles.colors.completedBadgeBackground` / `completedBadgeBorder` / `completedBadgeText` (CSS vars `--stc-completed-*`, set on the card root; the badge background defaults to transparent — only the schedule pill keeps a filled background) and `styles.typography.completedBadgeClassName` (defaults to `'dial-tiny-text'`).
 
 ```tsx
@@ -114,7 +116,7 @@ import { ScheduledTaskCard } from '@epam/ai-dial-scheduled-tasks';
 
 ### ScheduledTaskCreateForm
 
-Presentational create-task form: a back-navigable header, display name, a one-shot/recurring schedule section (with an optional Start date / End date pair bounding a recurring schedule's activity window), a Model or Agent field, a description field, and a markdown Instructions editor. Field values and validation errors are supplied by the host app; the Model or Agent field's control is a fully-composed `modelSelector` element the host renders — the lib wraps it with the field's required label and error message. Other fields, including the masked time-of-day picker (shown when `repeat` is "daily", "weekly", "monthly", or "custom"), is lib-owned: the picker shows the viewer's timezone hint and validates its visible draft on blur, since the ui kit's masked time input only reports complete `HH:mm` values through `onChange` — while that blur error is set, Save stays disabled so a half-typed draft cannot be saved as the stale last-complete value. Every blur reports the visible draft through `onFieldChange('time', …)` — complete or not — so a host that clears a field's error on change also clears its own `errors.time` without the value having to change; the blur pass validates the draft separately and keeps showing its own message for incomplete ones. The one-shot run-at picker is the internal `ScheduledTaskRunAtField` component: it cannot select a moment earlier than the field's mount time — the earliest selectable moment is pinned when the field mounts, so past days render unselectable while the mount date and future days stay selectable. The Start date / End date pair is bounded the same way: both pickers pin the earliest selectable day at the form's mount date, so days before it render unselectable. For `hourly` repeats the pair becomes two full-width date-and-time pickers (labels "Start date and time" / "End date and time" via `labels.startDateAndTimeLabel` / `labels.endDateAndTimeLabel`) writing `YYYY-MM-DDTHH:mm` boundary values, one per row, while day-based repeats keep the date-only pickers sharing one row; a repeat switch that changes the boundary shape (between hourly and a day-based cadence, or into or out of `custom`) clears both boundaries — the two shapes mean different things (an exact picked instant vs a whole local day), and `custom` renders no boundary pickers at all — while a switch between day-based cadences keeps them, and validation rejects a boundary whose shape does not match the cadence. The form's only internal state is the time field's blur error, which resets when a repeat switch hides the field.
+Presentational create-task form: a back-navigable header, display name, a one-shot/recurring schedule section (with an optional Start date / End date pair bounding a recurring schedule's activity window), a Model or Agent field, a description field, and a markdown Instructions editor. Field values and validation errors are supplied by the host app; the Model or Agent field's control is a fully-composed `modelSelector` element the host renders — the lib wraps it with the field's required label and error message. Other fields, including the masked time-of-day picker (shown when `repeat` is "daily", "weekly", "monthly", or "custom"), is lib-owned: the picker shows the viewer's timezone hint and validates its visible draft on blur, since the ui kit's masked time input only reports complete `HH:mm` values through `onChange` — while that blur error is set, Save stays disabled so a half-typed draft cannot be saved as the stale last-complete value. Every blur reports the visible draft through `onFieldChange('time', …)` — complete or not — so a host that clears a field's error on change also clears its own `errors.time` without the value having to change; the blur pass validates the draft separately and keeps showing its own message for incomplete ones. The one-shot run-at picker is the internal `ScheduledTaskRunAtField` component: it cannot select a moment earlier than the field's mount time — the earliest selectable moment is pinned when the field mounts, so past days render unselectable while the mount date and future days stay selectable. Its popover footer's time control opens an hour/minute list from a clock button, besides accepting typed `HH:mm`. The Start date / End date pair is bounded the same way: both pickers pin the earliest selectable day at the form's mount date, so days before it render unselectable. A repeat switch into or out of `custom` clears both boundaries, since `custom` renders no boundary pickers at all; a switch between the other cadences keeps them. The form's only internal state is the time field's blur error, which resets when a repeat switch hides the field.
 
 When `repeat` is `ScheduledTaskRepeat.Custom`, the schedule section renders an "Every" dropdown (`labels.everyLabel`, options `labels.everyWeekOptions`, value `values.everyWeeks` — `'1'`–`'10'`), the time-of-day picker, and below it a single-select day-of-week button row under a visible required "Day" label (`labels.dayOfWeekLabel`, also the row's accessible name via `aria-labelledby`): circular 40×40px kit `Button`s at a 2px gap — Primary Solid selected, Neutral Solid unselected — built from `labels.customDayOptions`, each button carrying its full day name as the accessible name and an `aria-pressed` selection state, writing `values.dayOfWeek` in the same APScheduler `'0'`=Monday–`'6'`=Sunday convention the Weekly picker uses. Custom has no Start date / End date pair and blocks Save until a day is selected.
 
@@ -177,7 +179,7 @@ labels stay as accessible names), and the back arrow stays on the first row if
 the actions wrap. The back arrow mirrors in RTL, while the Start now play icon
 does not.
 
-Presentational detail page for a single scheduled task: a back-navigable header with an optional Edit action, a Details/Configuration body (description, model/agent, recurrence, activity window, read-only markdown instructions), and a paginated History panel listing past runs with a status icon, timestamp, and duration per row, with a "Show more" button (not scroll-triggered) for loading further pages. A run row renders as clickable only when its item carries a non-empty `conversationId` and `onRunClick` is supplied — rows without a `conversationId` stay static even if `onRunClick` is passed for the list. A row whose item has `isUnread: true` additionally renders a small unread-dot indicator before its timestamp. An `Error` row whose item carries `errorText` shows it in a tooltip on the status icon and appends it to the row's accessible name. At the desktop breakpoint the Details, Configuration, and History sections render side by side in a three-column layout and scroll independently beneath the fixed header; below it (mobile and tablet) they render as a tab row — Details active by default — inside one body scroll container, with one section visible at a time and the History panel in standard top-to-bottom page flow (inline "Show more", no self-scrolling card). The page root clips overflow so the document itself does not become the scrolling surface. The header can render an Active switch and a Delete action when their props are supplied; a task with `isCompleted: true` renders no Active switch at all — the completed line in the Details summary carries the state. Field values, runs, and markdown rendering are all supplied by the host app; this component performs no routing, i18n, or network calls, and its only internal state is the selected mobile tab.
+Presentational detail page for a single scheduled task: a back-navigable header with an optional Edit action, a Details/Configuration body (description, model/agent, recurrence, activity window, read-only markdown instructions), and a paginated History panel listing past runs with a status icon, timestamp, and duration per row, with a "Show more" button (not scroll-triggered) for loading further pages. A run row renders as clickable only when its item carries a non-empty `conversationId` and `onRunClick` is supplied — rows without a `conversationId` stay static even if `onRunClick` is passed for the list. A row whose item has `isUnread: true` additionally renders a small unread-dot indicator before its timestamp. An `Error` row whose item carries `errorText` shows it in a tooltip on the status icon and appends it to the row's accessible name. At the desktop breakpoint the Details, Configuration, and History sections render side by side in a three-column layout and scroll independently beneath the fixed header; below it (mobile and tablet) they render as a tab row — Details active by default — inside one body scroll container, with one section visible at a time and the History panel in standard top-to-bottom page flow (inline "Show more", no self-scrolling card). The page root clips overflow so the document itself does not become the scrolling surface. The header title ellipsizes instead of stretching the header — capped at 600px on every breakpoint (phones never reach the cap and truncate at the row edge; tablets and the desktop header stop the line at 600px) — so a long title never pushes the action buttons out or overflows the header; the title text renders through the kit's `EllipsisTooltip` (the same mechanism as the card title), showing the full name in a tooltip only when actually clipped. The Details description renders at the field-value step (`dial-small-text`, 14px/20px, via `styles.typography.fieldValueClassName`) alongside every other value in the section, while the built-in instructions render at the 14px/24px prose step (`dial-small-paragraph-text` — the same step as the card description and run timestamps, list items included) through a lib-scoped `MarkdownRendererClassNames` record spread from `COMPACT_MARKDOWN_CLASS_NAMES`; the shared presets themselves are untouched, so no other markdown surface changes. The header can render an Active switch and a Delete action when their props are supplied; a task with `isCompleted: true` renders no Active switch at all — the completed line in the Details summary carries the state. Field values, runs, and markdown rendering are all supplied by the host app; this component performs no routing, i18n, or network calls, and its only internal state is the selected mobile tab.
 
 ```tsx
 import {
@@ -254,6 +256,43 @@ const markdownLabels: ScheduledTaskInstructionsMarkdownLabels = {
   instructionsMarkdown="Summarize my inbox"
   markdownLabels={markdownLabels}
 />;
+```
+
+### ScheduledTasksLoginBanner
+
+Non-dismissible warning banner (kit `WarningMessageNotification`, neutral
+surface) asking the user to log in so scheduled tasks keep running offline.
+`isVisible` draws it; `isLoggingIn` disables the button and shows
+`labels.loggingIn`; a `retryMessage` switches the button to `labels.retry` and
+is announced. A visually hidden `LiveRegion` stays mounted whether or not the
+banner is visible and announces `retryMessage` or, without one,
+`liveAnnouncement`. Omitting `onLogIn` hides the button. Strings come from
+`ScheduledTasksLoginBannerLabels` with English defaults.
+
+```tsx
+import { ScheduledTasksLoginBanner } from '@epam/ai-dial-scheduled-tasks';
+
+<ScheduledTasksLoginBanner
+  isVisible={needsLogin}
+  isLoggingIn={isLoggingIn}
+  retryMessage={retryMessage}
+  liveAnnouncement={announcement}
+  onLogIn={logIn}
+/>;
+```
+
+### ScheduledTasksLimitedAccessBanner
+
+Non-dismissible error section message for missing scheduler access, with the
+bold title and the body on one line. Strings come from
+`ScheduledTasksLimitedAccessBannerLabels` (English defaults); typography from
+`titleClassName` (default `'dial-small-paragraph-semi-text'`) and
+`bodyClassName` (default `'dial-small-paragraph-text'`).
+
+```tsx
+import { ScheduledTasksLimitedAccessBanner } from '@epam/ai-dial-scheduled-tasks';
+
+<ScheduledTasksLimitedAccessBanner labels={{ title, body }} />;
 ```
 
 ### ScheduledTaskDeleteConfirmation
@@ -580,7 +619,11 @@ the class names used by the published JavaScript.
   `cardHeight` (232px). Columns respond to the available container width;
   skeletons inherit the same height. `cardHeight` applies from the desktop
   breakpoint (1280px) up; below it cards and skeletons size to their content,
-  the title wraps to two lines and the description clamps to two lines.
+  the title wraps to two lines and the description clamps to two lines. A
+  description value too long to break at a space (a long URL and the like)
+  wraps inside the card instead of stretching it past its grid track, and a
+  long Description in the detail view's Details section preserves the
+  author's line breaks while wrapping long tokens the same way.
 - CardGrid accepts every card badge label.
 - Form `styles.layout.detailsWidth` and `columnGap` configure the shared
   builder layout. The scheduler uses two wrapping columns without an empty

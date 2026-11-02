@@ -170,6 +170,8 @@ export const ImageAttachment: FC<ImageAttachmentProps> = ({
           <button
             type="button"
             aria-label={isExpandable ? expandLabel : clickLabel}
+            /* The selected state is a toggle only for an `onClick` tile, not an expandable pasted one. */
+            aria-pressed={isClickable ? isSelected : undefined}
             onClick={handleCardClick}
             className={mergeClasses(
               'absolute inset-0 cursor-pointer rounded-xl',

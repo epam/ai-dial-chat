@@ -24,8 +24,10 @@ export interface ProjectViewModel {
 export interface ProjectViewLabels {
   /** Accessible name of the back button. */
   backLabel: string;
-  /** Accessible name of the Pin toggle; its state is announced through `aria-pressed`. */
+  /** Pin action label, shown while the project is not pinned. */
   pinLabel: string;
+  /** Unpin action label, shown while the project is pinned. */
+  unpinLabel: string;
   /** Publish action label. */
   publishLabel: string;
   /** Edit action label. */
@@ -58,7 +60,7 @@ export interface ProjectViewLabels {
   emptyContextLabel: string;
   /** Shown when the context query matches no file. */
   noContextMatchesLabel: string;
-  /** Accessible name of a context file card, e.g. "Download tickets.csv". */
+  /** Accessible name of a context file card, e.g. "Preview tickets.csv". */
   openFileLabel: (name: string) => string;
   /** Shown when the project could not be loaded. */
   errorLabel: string;
@@ -143,8 +145,12 @@ export interface ProjectViewProps {
   onDelete?: () => void;
   /** Called from the Download action. */
   onDownload: () => void;
-  /** Called with a file name when the user activates its context card. */
-  onOpenFile: (fileName: string) => void;
+  /** Called with a file name when the user activates its context card; the host decides what that opens. */
+  onContextFileClick: (id: string) => void;
+  /** Name of the context file whose card renders selected; no card is selected when unset. */
+  selectedContextFileId?: string;
+  /** Renders the Details panel below the main column at every width instead of beside it on desktop. Defaults to `false`. */
+  isDetailsStacked?: boolean;
   /** Called from the retry action of the error state. */
   onRetry: () => void;
   /** Called from the not-found state's action. */

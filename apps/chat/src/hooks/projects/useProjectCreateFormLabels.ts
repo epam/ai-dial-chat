@@ -80,6 +80,7 @@ export const useProjectCreateFormLabels = ({
       dropOverlaySubtitle: t(ProjectsI18nKeys.CreateContextDropOverlaySubtitle),
       removeFileLabel: (name) =>
         t(ProjectsI18nKeys.CreateContextRemove, { name }),
+      openFileLabel: (name) => t(ProjectsI18nKeys.CreateContextOpen, { name }),
       fileRejections: {
         [ContextFileRejection.UnsupportedType]: (name) =>
           t(ProjectsI18nKeys.CreateErrorUnsupportedType, { name }),

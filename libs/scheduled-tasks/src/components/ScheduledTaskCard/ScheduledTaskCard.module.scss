@@ -27,7 +27,7 @@
 /* Below the desktop breakpoint the card sizes to its content (the host's
  * `cardHeight` applies from 1280px up) and the description clamps to two
  * lines, matching the compact mobile list. The self-chained selectors beat
- * the unlayered Tailwind `h-[…]`/`line-clamp-4` utilities, which are injected
+ * the unlayered Tailwind `h-[…]`/`line-clamp-3` utilities, which are injected
  * after this module's CSS; 1279px mirrors MOBILE_MAX_WIDTH_PX from
  * @epam/ai-dial-chat-shared (SCSS cannot import it). */
 .card.card {

@@ -55,6 +55,8 @@ The implementation SHALL:
 1. Call `deleteAllConversations` from `apps/chat/src/server-api/conversations.api.ts`.
 2. When `result.deleted > 0 || result.alreadyAbsent > 0 || result.failed.length === 0` (any item deleted/absent, or complete success): call `refreshConversations()` to re-fetch from the server. This preserves shared and published conversations that were not deleted.
 3. When `result.failed.length > 0 && result.deleted === 0 && result.alreadyAbsent === 0` (total failure): leave local state unchanged.
+
+Both the context and `ConversationPanelMenu` decide total failure with `isTotalDeletionFailure` from `@epam/ai-dial-chat-hooks`.
 4. Return `result` in all cases.
 5. If the API call throws: propagate the error without modifying local state.
 

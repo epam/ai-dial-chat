@@ -44,10 +44,7 @@ export interface ProjectActionsHandlers {
  * @param handlers - Host behaviour the actions delegate to.
  */
 export const useProjectActions = (
-  client: Pick<
-    ProjectsApiClient,
-    'deleteProject' | 'downloadProjectArchive' | 'downloadProjectContextFile'
-  >,
+  client: Pick<ProjectsApiClient, 'deleteProject' | 'downloadProjectArchive'>,
   project: ProjectDetailsDto | null,
   {
     isPinned,
@@ -97,22 +94,6 @@ export const useProjectActions = (
     }
   }, [client, project, saveFile, onArchiveDownloaded, reportError]);
 
-  const openFile = useCallback(
-    async (fileName: string) => {
-      if (project == null) return;
-      try {
-        const response = await client.downloadProjectContextFile(
-          project.id,
-          fileName,
-        );
-        await saveFile(response, fileName);
-      } catch (err) {
-        await reportError(err, ProjectActionError.Download);
-      }
-    },
-    [client, project, saveFile, reportError],
-  );
-
   const requestDelete = useCallback(() => setIsDeleteOpen(true), []);
   const cancelDelete = useCallback(() => {
     if (!isDeleting) setIsDeleteOpen(false);
@@ -145,7 +126,6 @@ export const useProjectActions = (
       isPinPending,
       togglePin,
       downloadArchive,
-      openFile,
       isDeleteOpen,
       isDeleting,
       requestDelete,
@@ -157,7 +137,6 @@ export const useProjectActions = (
       isPinPending,
       togglePin,
       downloadArchive,
-      openFile,
       isDeleteOpen,
       isDeleting,
       requestDelete,
