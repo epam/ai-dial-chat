@@ -67,9 +67,17 @@ export default defineConfig(() => ({
         import.meta.dirname,
         '../chat-shared/src/index.ts',
       ),
+      '@epam/ai-dial-conversation-input': path.resolve(
+        import.meta.dirname,
+        '../conversation-input/src/index.ts',
+      ),
       '@epam/ai-dial-mcp-apps': path.resolve(
         import.meta.dirname,
         '../mcp-apps/src/index.ts',
+      ),
+      '@epam/ai-dial-projects': path.resolve(
+        import.meta.dirname,
+        '../projects/src/index.ts',
       ),
       '@epam/ai-dial-publish-panel': path.resolve(
         import.meta.dirname,
@@ -98,6 +106,18 @@ export default defineConfig(() => ({
       '@epam/ai-dial-source-panel': path.resolve(
         import.meta.dirname,
         '../source-panel/src/index.ts',
+      ),
+      '@epam/ai-dial-sidebar': path.resolve(
+        import.meta.dirname,
+        '../sidebar/src/index.ts',
+      ),
+      '@epam/ai-dial-usage-dashboard': path.resolve(
+        import.meta.dirname,
+        '../usage-dashboard/src/index.ts',
+      ),
+      '@epam/ai-dial-visualizer-connector': path.resolve(
+        import.meta.dirname,
+        '../visualizer-connector/src/index.ts',
       ),
     },
   },

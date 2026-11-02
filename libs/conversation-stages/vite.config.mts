@@ -44,12 +44,16 @@ export default defineConfig(() => ({
     globals: true,
     environment: 'jsdom',
     /*
-     * Resolve chat-shared from source for tests only: its published bundle
-     * imports `.scss` modules that are not emitted to `dist`, which vitest
+     * Resolve workspace peers from source for tests only: their published bundles
+     * import `.scss` modules that are not emitted to `dist`, which vitest
      * cannot load. Kept out of the shared `resolve.alias` so it never
      * affects this lib's own production build.
      */
     alias: {
+      '@epam/ai-dial-attachment-input': path.resolve(
+        import.meta.dirname,
+        '../attachment-input/src/index.ts',
+      ),
       '@epam/ai-dial-chat-shared': path.resolve(
         import.meta.dirname,
         '../chat-shared/src/index.ts',
