@@ -163,9 +163,9 @@ describe('ScheduledTaskCard', () => {
     expect(screen.getByText('a'.repeat(600)).className).toContain(
       'line-clamp-3',
     );
-    expect(screen.getByText('a'.repeat(600)).className).toContain(
-      'max-h-[72px]',
-    );
+    /* A flex-grown box is taller than its clamped lines, and the lines past
+     * the ellipsis would show through — the clamp needs the auto height. */
+    expect(screen.getByText('a'.repeat(600)).className).not.toContain('flex-1');
   });
 
   it('renders the description as dial-small-paragraph-text by default', () => {

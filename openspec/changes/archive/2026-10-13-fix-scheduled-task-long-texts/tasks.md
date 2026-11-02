@@ -18,7 +18,7 @@ Slicing strategy: vertical — each slice is one independently verifiable surfac
 
 ## 3. Details description + skill names: wrap whole words, theme-safe ink
 
-- [x] In `libs/scheduled-tasks/src/components/ScheduledTaskDetailsSection/ScheduledTaskDetailsSection.tsx` and its `.module.scss`: replace `break-all` with `[overflow-wrap:anywhere]` (keeping `whitespace-pre-wrap`), and add the `.description` ink rule chained `var(--stdv-description-text, var(--text-primary, #1b212d))`.
+- [x] In `libs/scheduled-tasks/src/components/ScheduledTaskDetailsSection/ScheduledTaskDetailsSection.tsx` and its `.module.scss`: replace `break-all` with `[overflow-wrap:anywhere]` (keeping `whitespace-pre-wrap`), and add the `.description` ink rule chained `var(--stdv-description-text, var(--text-primary, #161b2d))`.
 - [x] Thread `styles.colors.descriptionText` → `--stdv-description-text` from `ScheduledTaskDetailView` (`scheduled-task-detail-view-props.ts` + the view's `buildCssVars`).
 - [x] Replace `break-all` with `[overflow-wrap:anywhere]` on the skill-name rows in `ScheduledTaskConfigurationSection.tsx` and `ScheduledTaskDetailsSummary.tsx`.
 

@@ -51,6 +51,22 @@ describe('ScheduledTaskDetailsSection', () => {
     expect(value.className).not.toContain('break-all');
   });
 
+  it('drops blank lines around the description but keeps its inner line breaks', () => {
+    renderSection({ description: '\n\nFirst line\nSecond line\n\n' });
+
+    /* getByText collapses whitespace for matching; textContent is the
+     * pre-wrap text actually rendered. */
+    expect(screen.getByText('First line Second line').textContent).toBe(
+      'First line\nSecond line',
+    );
+  });
+
+  it('omits a whitespace-only description', () => {
+    renderSection({ description: ' \n\n ' });
+
+    expect(screen.queryByText('Description')).toBeNull();
+  });
+
   it('renders the description at the same field step as the other values', () => {
     renderSection({
       description: 'Summarize the news',

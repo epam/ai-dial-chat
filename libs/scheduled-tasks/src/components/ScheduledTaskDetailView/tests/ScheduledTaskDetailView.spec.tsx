@@ -369,7 +369,7 @@ describe('ScheduledTaskDetailView', () => {
 
     /* CSS custom property on the view root, which carries no accessible
      * role of its own; the Details section's stylesheet reads it as the
-     * description ink (default #1b212d). */
+     * description ink (default #161b2d). */
     // eslint-disable-next-line testing-library/no-node-access -- asserting a CSS custom property on the root element
     const root = container.firstElementChild as HTMLElement;
     expect(root.style.getPropertyValue('--stdv-description-text')).toBe(

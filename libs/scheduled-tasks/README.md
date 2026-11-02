@@ -91,7 +91,7 @@ A single scheduled task rendered as a card: title, optional description/prompt p
 
 Supply `labels.completedBadgeLabel` for localized completed-state copy.
 
-The description/prompt-preview line defaults to `dial-small-paragraph-text` (14px/24px) and clamps to three lines on desktop cards (two below the desktop breakpoint); override it with `styles.typography.descriptionClassName` — note the clamp's height cap is fixed at 72px (three lines of the default step's 24px line-height), so a taller step clips the last clamped line — the third on desktop, the second below the desktop breakpoint — mid-glyph. Whitespace in the preview collapses (unlike the detail view's description, which preserves the author's line breaks): the preview is typically the raw `description` field, and preserved blank lines would spend the whole clamp budget before any text.
+The description/prompt-preview line defaults to `dial-small-paragraph-text` (14px/24px) and clamps to three lines on desktop cards (two below the desktop breakpoint); override it with `styles.typography.descriptionClassName`. Whitespace in the preview collapses (unlike the detail view's description, which preserves the author's line breaks): the preview is typically the raw `description` field, and preserved blank lines would spend the whole clamp budget before any text.
 
 The Completed badge mirrors the Paused badge's theming contract: `styles.colors.completedBadgeBackground` / `completedBadgeBorder` / `completedBadgeText` (CSS vars `--stc-completed-*`, set on the card root; the badge background defaults to transparent — only the schedule pill keeps a filled background) and `styles.typography.completedBadgeClassName` (defaults to `'dial-tiny-text'`).
 

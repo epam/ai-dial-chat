@@ -13,7 +13,7 @@ All fixes are prop-scoped inside `libs/scheduled-tasks` (no shared-surface chang
 
 - Card: `min-w-0` + `[overflow-wrap:anywhere]` on the description so unbreakable tokens wrap inside the card instead of stretching its grid track; clamp contract fixed to three lines desktop / two below.
 - Detail view header: title carries `min-w-0 max-w-[600px]` on both copies (desktop header and mobile/tablet row) and renders its text through the kit's `EllipsisTooltip` — ellipsis plus a tooltip that appears only when actually clipped, with the full name kept as the accessible name.
-- Details description: `whitespace-pre-wrap [overflow-wrap:anywhere]` (words wrap whole; only a token that cannot fit a line breaks) at the 14px/20px field step, with its own ink chained through `--text-primary` (dark-theme safe; `#1b212d` last-resort fallback) overridable via `styles.colors.descriptionText`.
+- Details description: `whitespace-pre-wrap [overflow-wrap:anywhere]` (words wrap whole; only a token that cannot fit a line breaks) at the 14px/20px field step, with its own ink chained through `--text-primary` (dark-theme safe; `#161b2d` last-resort fallback) overridable via `styles.colors.descriptionText`.
 - Instructions: a lib-scoped `MarkdownRendererClassNames` record spread from `COMPACT_MARKDOWN_CLASS_NAMES` with `ul`/`ol` carrying the prose step, passed through the viewer's existing `classNames` prop — the shared presets are untouched, so chat messages, attachment canvas, and quotations render exactly as before.
 - Both skill-name rows: `break-all` → `[overflow-wrap:anywhere]`.
 
@@ -31,7 +31,7 @@ All fixes are prop-scoped inside `libs/scheduled-tasks` (no shared-surface chang
 
 ## Alternatives considered
 
-Fixing list-item typography by adding the paragraph step to the shared `DEFAULT`/`COMPACT_MARKDOWN_CLASS_NAMES` presets — rejected: every markdown surface consumes those presets, so a scheduled-task fix would reflow chat messages, attachment canvas, and quotations; the scoped record achieves the same result with zero blast radius. (A hardcoded `#1b212d` ink was also rejected mid-review in favor of the theme-token chain — a literal that ignores dark mode renders near-black on dark.)
+Fixing list-item typography by adding the paragraph step to the shared `DEFAULT`/`COMPACT_MARKDOWN_CLASS_NAMES` presets — rejected: every markdown surface consumes those presets, so a scheduled-task fix would reflow chat messages, attachment canvas, and quotations; the scoped record achieves the same result with zero blast radius. (A hardcoded `#161b2d` ink was also rejected mid-review in favor of the theme-token chain — a literal that ignores dark mode renders near-black on dark.)
 
 ## Rollback / backward compatibility
 

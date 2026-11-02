@@ -8,7 +8,7 @@ Retroactive design record for the implemented fix on `fix/scheduled-task-view-mo
 
 ### 1. Card description: wrap-don't-stretch, fixed clamp contract
 
-`ScheduledTaskCard`'s description is `min-w-0` + `[overflow-wrap:anywhere]` inside the fixed-height card (`ScheduledTaskCard.tsx`), so an unbreakable token wraps within the card instead of pushing it past the grid track. The clamp is `line-clamp-3 max-h-[72px]` (3 × the default step's 24px line-height) on desktop and two lines below the breakpoint. A dynamic line pool (the design's 1+3/2+2/3+1 split) was analyzed and deferred: pure CSS cannot place the `line-clamp` ellipsis on the last visible line when the box is flex-shrunk below the clamp count, and whole-line arithmetic would require every card zone to be a multiple of the line-height. The agreed future mechanism (a small `useLineClampBudget` hook reading the rendered line height) is recorded in project memory, not implemented here.
+`ScheduledTaskCard`'s description is `min-w-0` + `[overflow-wrap:anywhere]` inside the fixed-height card (`ScheduledTaskCard.tsx`), so an unbreakable token wraps within the card instead of pushing it past the grid track. The clamp is `line-clamp-3` on desktop and two lines below the breakpoint; the description does not flex-grow (the footer's `mt-auto` pins it to the bottom), so the clamped box keeps its auto height and no line-height-specific cap is needed. A dynamic line pool (the design's 1+3/2+2/3+1 split) was analyzed and deferred: pure CSS cannot place the `line-clamp` ellipsis on the last visible line when the box is flex-shrunk below the clamp count, and whole-line arithmetic would require every card zone to be a multiple of the line-height. The agreed future mechanism (a small `useLineClampBudget` hook reading the rendered line height) is recorded in project memory, not implemented here.
 
 ### 2. Header title: width contract + kit tooltip
 
@@ -16,7 +16,7 @@ Both title copies (desktop header `<h1>`, mobile/tablet standalone row) carry `m
 
 ### 3. Details description: words wrap whole
 
-`whitespace-pre-wrap [overflow-wrap:anywhere]` replaces `break-all` (which allowed breaks between any two characters and chopped ordinary words at every column edge). Typography stays at the single-line field step (`dial-small-text`, 14px/20px) via the existing `fieldValueClassName`. The ink is a dedicated `.description` rule reading `var(--stdv-description-text, var(--text-primary, #1b212d))` — chained through the theme token so it flips in dark mode (a bare `#1b212d` literal would render near-black on a dark background), with the design's literal as the last-resort fallback and the view's `styles.colors.descriptionText` as the override channel, mirroring the existing `--stdv-subtitle-text` cascade.
+`whitespace-pre-wrap [overflow-wrap:anywhere]` replaces `break-all` (which allowed breaks between any two characters and chopped ordinary words at every column edge). Typography stays at the single-line field step (`dial-small-text`, 14px/20px) via the existing `fieldValueClassName`. The ink is a dedicated `.description` rule reading `var(--stdv-description-text, var(--text-primary, #161b2d))` — chained through the theme token so it flips in dark mode (a bare `#161b2d` literal would render near-black on a dark background), with the design's literal as the last-resort fallback and the view's `styles.colors.descriptionText` as the override channel, mirroring the existing `--stdv-subtitle-text` cascade.
 
 ### 4. Instructions: scoped classNames record, shared presets untouched
 

@@ -164,14 +164,13 @@ export const ScheduledTaskCard: FC<ScheduledTaskCardProps> = ({
          * contains a token too long to break at a space (a URL or the
          * like). Whitespace collapses (the default, no pre-wrap) — the
          * preview is the raw textarea description, and preserved blank
-         * lines would spend the whole clamp budget before any text. The
-         * 72px max-height is 3 × the default step's 24px line-height —
-         * the -webkit-box clamp alone leaves the box as tall as its
-         * content in some engines, so the height cap is what actually
-         * hides the lines past the ellipsis. */
+         * lines would spend the whole clamp budget before any text. No
+         * flex-1: the clamp hides lines past the ellipsis only while the
+         * box keeps its auto height, and the footer's mt-auto already pins
+         * it to the bottom. */
         <p
           className={mergeClasses(
-            'line-clamp-3 max-h-[72px] min-h-0 min-w-0 flex-1 overflow-hidden wrap-anywhere',
+            'line-clamp-3 min-h-0 min-w-0 overflow-hidden wrap-anywhere',
             descriptionClassName,
             styles.description,
           )}
