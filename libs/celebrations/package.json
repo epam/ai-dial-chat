@@ -32,7 +32,7 @@
   },
   "dependencies": {
     "lottie-web": "5.13.0",
-    "react-error-boundary": "^6.1.5"
+    "react-error-boundary": "^6.1.6"
   },
   "peerDependencies": {
     "@epam/ai-dial-chat-shared": "*",

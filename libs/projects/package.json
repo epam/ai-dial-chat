@@ -21,9 +21,9 @@
   "dependencies": {
     "@epam/ai-dial-attachment-input": "*",
     "@epam/ai-dial-builder-form": "*",
-    "@tabler/icons-react": "^3.44.0",
+    "@tabler/icons-react": "^3.50.0",
     "@uiw/react-markdown-preview": "^5.2.1",
-    "@uiw/react-md-editor": "^4.1.1"
+    "@uiw/react-md-editor": "^4.2.2"
   },
   "peerDependencies": {
     "@epam/ai-dial-chat-shared": "*",
