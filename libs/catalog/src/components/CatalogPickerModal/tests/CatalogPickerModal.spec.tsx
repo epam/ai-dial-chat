@@ -1,9 +1,18 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { useImperativeHandle } from 'react';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  type MockInstance,
+  vi,
+} from 'vitest';
 import type { CatalogItem } from '../../../models/catalog-item';
-import type { ListViewProps } from '../../../models/list-props';
+import type { ListViewHandle, ListViewProps } from '../../../models/list-props';
 import { CatalogLoadStatus } from '../../../types/load-status';
 import { ListView } from '../../ListView/ListView';
 import {
@@ -11,19 +20,26 @@ import {
   type CatalogPickerModalProps,
 } from '../CatalogPickerModal';
 
+const listViewScrollToTop = vi.hoisted(() => vi.fn());
+
 // The default list as a plain one: ListView's own behaviour has its own spec.
 vi.mock('../../ListView/ListView', () => ({
-  ListView: vi.fn(({ items, query, ariaLabel, onItemClick }: ListViewProps) => (
-    <ul aria-label={`${ariaLabel} for "${query}"`}>
-      {items.map((item) => (
-        <li key={item.id}>
-          <button type="button" onClick={() => onItemClick?.(item)}>
-            {item.name}
-          </button>
-        </li>
-      ))}
-    </ul>
-  )),
+  ListView: vi.fn(
+    ({ items, query, ariaLabel, onItemClick, ref }: ListViewProps) => {
+      useImperativeHandle(ref, () => ({ scrollToTop: listViewScrollToTop }));
+      return (
+        <ul aria-label={`${ariaLabel} for "${query}"`}>
+          {items.map((item) => (
+            <li key={item.id}>
+              <button type="button" onClick={() => onItemClick?.(item)}>
+                {item.name}
+              </button>
+            </li>
+          ))}
+        </ul>
+      );
+    },
+  ),
 }));
 
 const makeItem = (id: string, name: string): CatalogItem => ({
@@ -206,5 +222,160 @@ describe('CatalogPickerModal', () => {
     expect(screen.getByText('Effort: high')).toBeTruthy();
     await userEvent.click(screen.getByRole('button', { name: 'Add' }));
     expect(onConfirm).toHaveBeenCalledOnce();
+  });
+  describe('scroll to top', () => {
+    const LIST_HEIGHT = 400;
+    let pendingFrames: FrameRequestCallback[] = [];
+    let clientHeight: MockInstance;
+    const originalScrollTo = Element.prototype.scrollTo;
+
+    beforeEach(() => {
+      listViewScrollToTop.mockClear();
+      pendingFrames = [];
+      vi.stubGlobal(
+        'requestAnimationFrame',
+        (callback: FrameRequestCallback) => {
+          pendingFrames.push(callback);
+          return pendingFrames.length;
+        },
+      );
+      vi.stubGlobal('cancelAnimationFrame', vi.fn());
+      // jsdom has no layout: every box reports the list's height.
+      clientHeight = vi
+        .spyOn(HTMLElement.prototype, 'clientHeight', 'get')
+        .mockReturnValue(LIST_HEIGHT);
+      Element.prototype.scrollTo = vi.fn();
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+      clientHeight.mockRestore();
+      Element.prototype.scrollTo = originalScrollTo;
+    });
+
+    const renderListPicker = (props: Partial<CatalogPickerModalProps> = {}) =>
+      render(
+        <CatalogPickerModal
+          items={ITEMS}
+          labels={{ title: 'Change model', catalog: 'Models catalog' }}
+          status={CatalogLoadStatus.Ready}
+          listProps={{ type: CatalogEntityType.Model }}
+          onConfirm={vi.fn()}
+          onClose={vi.fn()}
+          {...(props as object)}
+        />,
+      );
+
+    const flushFrames = () => {
+      act(() => {
+        const frames = pendingFrames;
+        pendingFrames = [];
+        frames.forEach((frame) => frame(0));
+      });
+    };
+
+    /* The grid reports its rows' offset; the update lands on the next frame. */
+    const scrollRows = (top: number) => {
+      act(() => {
+        vi.mocked(ListView).mock.lastCall?.[0].onRowsScroll?.(top);
+      });
+      flushFrames();
+    };
+
+    const queryButton = (name = 'Scroll to top') =>
+      screen.queryByRole('button', { name });
+
+    it('is not offered at the top of the list', () => {
+      renderListPicker();
+
+      expect(queryButton()).toBeNull();
+    });
+
+    it('is offered once the rows are scrolled by one list height', () => {
+      renderListPicker();
+
+      scrollRows(LIST_HEIGHT - 1);
+      expect(queryButton()).toBeNull();
+
+      scrollRows(LIST_HEIGHT);
+      expect(queryButton()).toBeTruthy();
+
+      scrollRows(0);
+      expect(queryButton()).toBeNull();
+    });
+
+    it('returns the rows to the first row and focuses search', async () => {
+      renderListPicker();
+      scrollRows(LIST_HEIGHT * 2);
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Scroll to top' }),
+      );
+
+      expect(listViewScrollToTop).toHaveBeenCalledOnce();
+      // Focus is a document-level fact; no Testing Library query reports it.
+      expect(document.activeElement).toBe(
+        screen.getByRole('textbox', { name: 'Search' }),
+      );
+    });
+
+    it('is named by labels.scrollToTop', () => {
+      renderListPicker({
+        labels: {
+          title: 'Change model',
+          catalog: 'Models catalog',
+          scrollToTop: 'Nach oben',
+        },
+      });
+
+      scrollRows(LIST_HEIGHT);
+
+      expect(queryButton('Nach oben')).toBeTruthy();
+    });
+
+    it('goes with the list when a search empties it, and stays hidden when the list returns', async () => {
+      renderListPicker();
+      scrollRows(LIST_HEIGHT);
+
+      // Frames are stubbed here, so the field is typed into directly rather
+      // than after the dialog's deferred focus.
+      const search = screen.getByRole('textbox', { name: 'Search' });
+      await userEvent.type(search, 'zz');
+      expect(screen.getByText('No results found')).toBeTruthy();
+      expect(queryButton()).toBeNull();
+
+      await userEvent.clear(search);
+      flushFrames();
+      expect(
+        screen.getByRole('list', { name: 'Models catalog for ""' }),
+      ).toBeTruthy();
+      expect(queryButton()).toBeNull();
+    });
+
+    it('is never offered for a list from renderList', () => {
+      renderPicker();
+
+      expect(queryButton()).toBeNull();
+    });
+
+    it("still reports row scroll to the host's onRowsScroll", () => {
+      const onRowsScroll = vi.fn();
+      renderListPicker({
+        listProps: { type: CatalogEntityType.Model, onRowsScroll },
+      });
+
+      scrollRows(480);
+
+      expect(onRowsScroll).toHaveBeenCalledWith(480);
+    });
+
+    it("still hands the list's handle to the host's ref", () => {
+      const ref: { current: ListViewHandle | null } = { current: null };
+      renderListPicker({ listProps: { type: CatalogEntityType.Model, ref } });
+
+      ref.current?.scrollToTop();
+
+      expect(listViewScrollToTop).toHaveBeenCalledOnce();
+    });
   });
 });

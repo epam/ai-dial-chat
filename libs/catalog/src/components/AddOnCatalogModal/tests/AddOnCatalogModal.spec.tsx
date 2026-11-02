@@ -1,5 +1,5 @@
 import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { CatalogItem } from '../../../models/catalog-item';
@@ -17,8 +17,14 @@ vi.mock('../../ListView/ListView', () => ({
     selectedItemIds = new Set(),
     onSelectionChange,
     selectRowAriaLabel,
+    onRowsScroll,
   }: ListViewProps) => (
     <ul>
+      <li>
+        <button type="button" onClick={() => onRowsScroll?.(400)}>
+          Scroll rows
+        </button>
+      </li>
       {items.map((item) => (
         <li key={item.id}>
           <input
@@ -109,5 +115,37 @@ describe('AddOnCatalogModal', () => {
     expect(screen.getByText('2 checked')).toBeTruthy();
     await userEvent.click(checkbox('Jira'));
     expect(screen.getByText('3 checked')).toBeTruthy();
+  });
+
+  it('offers "Scroll to top" once the rows are scrolled by one list height', async () => {
+    const frames: FrameRequestCallback[] = [];
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) =>
+      frames.push(callback),
+    );
+    vi.stubGlobal('cancelAnimationFrame', vi.fn());
+    // jsdom has no layout: every box reports a 400px height.
+    const clientHeight = vi
+      .spyOn(HTMLElement.prototype, 'clientHeight', 'get')
+      .mockReturnValue(400);
+    try {
+      renderPicker({
+        labels: {
+          title: 'Add toolset',
+          catalog: 'Toolsets catalog',
+          scrollToTop: 'Back to top',
+        },
+      });
+      expect(screen.queryByRole('button', { name: 'Back to top' })).toBeNull();
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Scroll rows' }),
+      );
+      act(() => frames.splice(0).forEach((frame) => frame(0)));
+
+      expect(screen.getByRole('button', { name: 'Back to top' })).toBeTruthy();
+    } finally {
+      clientHeight.mockRestore();
+      vi.unstubAllGlobals();
+    }
   });
 });
