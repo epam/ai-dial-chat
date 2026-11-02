@@ -89,7 +89,10 @@ const ScheduledTaskCreatePage: FC = () => {
   /* The page owns the unsaved-changes guard, so the form gets no
    * `initialValues` and shows no dialog of its own. */
   const { allowNextNavigation } = useBuilderLeaveGuard({
-    isDirty: hasScheduledTaskFormChanges(values, DEFAULT_VALUES),
+    isDirty: hasScheduledTaskFormChanges(
+      values,
+      SCHEDULED_TASK_CREATE_DEFAULT_VALUES,
+    ),
   });
 
   const labels = useScheduledTaskFormLabels('create');
