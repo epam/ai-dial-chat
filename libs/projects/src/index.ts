@@ -28,6 +28,15 @@ export type {
   ProjectConversationsPanelLabels,
   ProjectConversationsPanelProps,
 } from './models/project-conversations-panel-props';
+export { ProjectOutputs } from './components/ProjectOutputs/ProjectOutputs';
+export type {
+  ProjectOutputItem,
+  ProjectOutputsColors,
+  ProjectOutputsLabels,
+  ProjectOutputsProps,
+  ProjectOutputsStyles,
+  ProjectOutputsTypography,
+} from './models/project-outputs-props';
 export { ProjectChatHeader } from './components/ProjectChatHeader/ProjectChatHeader';
 export type { ProjectChatHeaderProps } from './models/project-chat-header-props';
 export type {

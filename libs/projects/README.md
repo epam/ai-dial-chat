@@ -363,13 +363,14 @@ An item with `isUnread: true` shows its title in `unreadRowTitleClassName` and a
 
 ### ProjectConversationsPanel
 
-A project's chat column for `ProjectView.mainContent`: the host's chat input (`composer`, any node), then `ProjectConversationList`, plus the rename dialog (a labelled input seeded with the title, an inline error for an empty name, Cancel and Save buttons, Enter to save, the trimmed value sent to `onRename`) and the delete confirmation. `hasMore`, `isLoadingMore` and `onLoadMore` pass through to the list, and so do `listTypography` and `listColors` (as its `typography` and `colors`). A rename or delete dialog whose row disappears from `items` (a live refresh) closes, and focus moves to the list. Both dialogs return focus to the row's ⋮ trigger when they close; after a delete, whose row is gone, focus moves to the row now in its place, the one before it, or the list. They stay open, and cannot be closed, while the host's promise is pending, and stay open while it rejects, so the host only reports the failure. Omitting `onRename` and `onDelete` makes it read-only.
+A project's chat column for `ProjectView.mainContent`: the host's chat input (`composer`, any node), then the host's `outputs` node (any node, typically `ProjectOutputs`; nothing renders in its place when it is unset), then `ProjectConversationList`, plus the rename dialog (a labelled input seeded with the title, an inline error for an empty name, Cancel and Save buttons, Enter to save, the trimmed value sent to `onRename`) and the delete confirmation. `hasMore`, `isLoadingMore` and `onLoadMore` pass through to the list, and so do `listTypography` and `listColors` (as its `typography` and `colors`). A rename or delete dialog whose row disappears from `items` (a live refresh) closes, and focus moves to the list. Both dialogs return focus to the row's ⋮ trigger when they close; after a delete, whose row is gone, focus moves to the row now in its place, the one before it, or the list. They stay open, and cannot be closed, while the host's promise is pending, and stay open while it rejects, so the host only reports the failure. Omitting `onRename` and `onDelete` makes it read-only.
 
 ```tsx
 import { ProjectConversationsPanel } from '@epam/ai-dial-projects';
 
 <ProjectConversationsPanel
   composer={<MyChatInput />}
+  outputs={<MyOutputs />}
   items={[{ id: 'c1', title: 'Weekly support summary' }]}
   onRetry={() => {}}
   onOpen={(id) => {}}
@@ -398,6 +399,42 @@ import { ProjectConversationsPanel } from '@epam/ai-dial-projects';
   }}
 />;
 ```
+
+### ProjectOutputs
+
+A project's outputs, the files the agents of its chats saved under the project's `artifacts/` folder, for `ProjectConversationsPanel`'s `outputs` slot.
+
+- **Layout.** A `<section>` named by its `<h2>` (`labels.title`, default `'Outputs'`), then one `AttachmentCard` per item: the same 100×100 file cards as the Details panel's context, with the name and the type icon.
+- **Preview row.** The first `previewLimit` items (default `6`) render in one row that scrolls horizontally inside its column at every width, so the page itself never scrolls sideways.
+- **See all.** When there are more items, a See all link (`labels.seeAllLabel(count)`, default `` `See all (${count})` ``, with `aria-expanded` and `aria-controls`) expands the section in place into a wrapping grid of every item. Show less (`labels.showLessLabel`, default `'Show less'`) collapses it again. A new `items` array keeps the expanded state.
+- **Opening.** Activating a card calls `onOpenOutput` with the file name. The card whose name equals `selectedOutputName` renders selected (`aria-pressed`). Each card is named `labels.openOutputLabel(name)` (default `` `Preview ${name}` ``).
+- **Read-only.** The section offers no rename, delete or upload action. The lib downloads and opens nothing; the host decides.
+- **Empty.** When `items` is empty and `hasError` is `false`, it renders no section, only an empty visually hidden live region, so render it unconditionally and let it decide.
+- **Error.** `hasError` shows `labels.errorLabel` (default `'Could not load outputs'`), announced through that always-mounted live region, plus a Retry button (`labels.retryLabel`, default `'Retry'`) when `onRetry` is set. When `hasError` clears after Retry, focus moves to the section heading.
+
+```tsx
+import { ProjectOutputs } from '@epam/ai-dial-projects';
+
+<ProjectOutputs
+  items={[
+    { name: 'summary.md', contentType: 'text/markdown' },
+    { name: 'report.pdf', contentType: 'application/pdf' },
+  ]}
+  onOpenOutput={(name) => {}}
+  selectedOutputName={undefined}
+  previewLimit={6}
+  labels={{
+    title: 'Outputs',
+    seeAllLabel: (count) => `See all (${count})`,
+    showLessLabel: 'Show less',
+    openOutputLabel: (name) => `Preview ${name}`,
+    errorLabel: 'Could not load outputs',
+    retryLabel: 'Retry',
+  }}
+/>;
+```
+
+`styles.colors` fields fall back to `--text-primary` (`headingText`) and `--text-secondary` (`secondaryText`). `styles.typography` defaults to `'dial-body-semi-text'` (`titleClassName`) and `'dial-tiny-text'` (`helperClassName`).
 
 ### ProjectChatHeader
 
@@ -479,4 +516,6 @@ Why a context file was not added: `UnsupportedType` (`'unsupported-type'`), `Too
 - `ProjectViewStyles`, `ProjectViewColors`, `ProjectViewTypography` — style overrides of `ProjectView`.
 - `ProjectConversationListProps`, `ProjectConversationListItem`, `ProjectConversationListLabels`, `ProjectConversationListTypography`, `ProjectConversationListColors` — the props, rows, strings, typography and colours of `ProjectConversationList`.
 - `ProjectConversationsPanelProps`, `ProjectConversationsPanelLabels` — the props and strings of `ProjectConversationsPanel`.
+- `ProjectOutputsProps`, `ProjectOutputItem`, `ProjectOutputsLabels` — the props, cards (`{ name, contentType }`) and strings of `ProjectOutputs`.
+- `ProjectOutputsStyles`, `ProjectOutputsColors`, `ProjectOutputsTypography` — style overrides of `ProjectOutputs`.
 - `ProjectChatHeaderProps` — the props of `ProjectChatHeader`.

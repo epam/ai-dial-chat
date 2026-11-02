@@ -33,6 +33,8 @@ export interface ProjectConversationsPanelLabels {
 export interface ProjectConversationsPanelProps {
   /** Content above the Chats list, typically the host's chat input; omitted when unset. */
   composer?: ReactNode;
+  /** Content between `composer` and the Chats list, typically the host's Outputs section; omitted when unset. */
+  outputs?: ReactNode;
   /** Conversations, in display order. */
   items: ProjectConversationListItem[];
   /** Shows the list's loading state. Defaults to `false`. */

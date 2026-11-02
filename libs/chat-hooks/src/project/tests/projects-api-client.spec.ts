@@ -19,6 +19,7 @@ const makeClient = () => {
     downloadProjectRaw: vi.fn(async () => ({ raw: new Response('zip') })),
     downloadProjectFileRaw: vi.fn(async () => ({ raw: new Response('f') })),
     listProjectConversations: vi.fn(),
+    listProjectArtifacts: vi.fn(),
     createProjectConversation: vi.fn(),
     getProjectConversation: vi.fn(),
     saveProjectConversation: vi.fn(),
@@ -135,6 +136,18 @@ describe('createProjectsApiClient', () => {
       id: PROJECT_ID,
       offset: 50,
     });
+  });
+
+  it("lists a project's outputs with the caller's abort signal", async () => {
+    const { client, generated } = makeClient();
+    const controller = new AbortController();
+
+    await client.listProjectArtifacts(PROJECT_ID, controller.signal);
+
+    expect(generated.listProjectArtifacts).toHaveBeenCalledWith(
+      { id: PROJECT_ID },
+      { signal: controller.signal },
+    );
   });
 
   it('creates a project conversation with the first-message fields of a top-level create', async () => {

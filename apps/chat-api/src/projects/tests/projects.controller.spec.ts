@@ -18,6 +18,7 @@ import { FEATURE_KEY_METADATA } from '../../app-config/feature-flags/require-fea
 import { AuthSource } from '../../auth/auth-source.enum';
 import { SessionGuard } from '../../auth/session/session.guard';
 import type { SessionUser } from '../../auth/session/session.types';
+import { ProjectArtifactsListService } from '../artifacts/projects-artifacts-list.service';
 import { ProjectsDownloadService } from '../download/projects-download.service';
 import { ProjectSource } from '../dto/project-source.enum';
 import { ProjectContextUploadInterceptor } from '../project-context-upload.interceptor';
@@ -63,6 +64,7 @@ type ServiceMock = {
 type DownloadMock = {
   downloadProject: ReturnType<typeof vi.fn>;
   downloadContextFile: ReturnType<typeof vi.fn>;
+  downloadArtifact: ReturnType<typeof vi.fn>;
 };
 
 const updateService = { updateProject: vi.fn() };
@@ -70,7 +72,10 @@ const updateService = { updateProject: vi.fn() };
 const downloadService: DownloadMock = {
   downloadProject: vi.fn(),
   downloadContextFile: vi.fn(),
+  downloadArtifact: vi.fn(),
 };
+
+const artifactsListService = { listArtifacts: vi.fn() };
 
 const buildApp = async (
   service: ServiceMock,
@@ -84,6 +89,7 @@ const buildApp = async (
       { provide: ProjectsDownloadService, useValue: downloadService },
       { provide: ProjectsUpdateService, useValue: updateService },
       { provide: ProjectsWatchService, useValue: { watchProjects: vi.fn() } },
+      { provide: ProjectArtifactsListService, useValue: artifactsListService },
       ProjectContextUploadInterceptor,
       { provide: ConfigService, useValue: testConfig },
     ],
@@ -516,6 +522,161 @@ describe('ProjectsController (integration)', () => {
         .expect(403);
 
       expect(downloadService.downloadProject).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('project artifacts', () => {
+    const PROJECT_ID = 'projects/test-bucket/q4';
+    const OTHER_USER_PROJECT_ID = 'projects/other-bucket/q4';
+    const artifactsUrl = (id: string) =>
+      `/api/v1/projects/${encodeURIComponent(id)}/artifacts`;
+
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it('lists the outputs newest first with a no-store cache header', async () => {
+      const outputs = {
+        items: [
+          { name: 'summary.md', updatedAt: 300, author: 'Jane Doe' },
+          { name: 'report.pdf', updatedAt: 100, author: 'Jane Doe' },
+        ],
+      };
+      artifactsListService.listArtifacts.mockResolvedValue(outputs);
+      app = await buildApp(service);
+
+      const res = await request(app.getHttpServer())
+        .get(artifactsUrl(PROJECT_ID))
+        .expect(200);
+
+      expect(res.body).toEqual(outputs);
+      expect(res.headers['cache-control']).toBe('private, no-store');
+      expect(artifactsListService.listArtifacts).toHaveBeenCalledWith(
+        expect.objectContaining({ id: PROJECT_ID, bucket: 'test-bucket' }),
+        TEST_USER.at,
+        TEST_USER.bucket,
+      );
+    });
+
+    it("lets a reader list the outputs of another user's project", async () => {
+      artifactsListService.listArtifacts.mockResolvedValue({ items: [] });
+      app = await buildApp(service);
+
+      await request(app.getHttpServer())
+        .get(artifactsUrl(OTHER_USER_PROJECT_ID))
+        .expect(200);
+
+      expect(artifactsListService.listArtifacts).toHaveBeenCalledWith(
+        expect.objectContaining({ bucket: 'other-bucket' }),
+        TEST_USER.at,
+        TEST_USER.bucket,
+      );
+    });
+
+    it('rejects a traversal project id with 400', async () => {
+      app = await buildApp(service);
+
+      await request(app.getHttpServer())
+        .get(artifactsUrl('projects/test-bucket/../other'))
+        .expect(400);
+
+      expect(artifactsListService.listArtifacts).not.toHaveBeenCalled();
+    });
+
+    it('streams one output with the attachment and nosniff headers', async () => {
+      downloadService.downloadArtifact.mockResolvedValue({
+        stream: new ReadableStream({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode('%PDF'));
+            controller.close();
+          },
+        }),
+        headers: {
+          'content-type': 'application/pdf',
+          'content-disposition':
+            'attachment; filename="report.pdf"; filename*=UTF-8\'\'report.pdf',
+          'x-content-type-options': 'nosniff',
+        },
+        abortOnDisconnect: vi.fn(),
+      });
+      app = await buildApp(service);
+
+      const res = await request(app.getHttpServer())
+        .get(`${artifactsUrl(PROJECT_ID)}/report.pdf`)
+        .expect(200);
+
+      expect(res.headers['content-type']).toBe('application/pdf');
+      expect(res.headers['content-disposition']).toMatch(/^attachment;/);
+      expect(res.headers['x-content-type-options']).toBe('nosniff');
+      expect(downloadService.downloadArtifact).toHaveBeenCalledWith(
+        expect.objectContaining({ id: PROJECT_ID }),
+        'report.pdf',
+        TEST_USER.at,
+        TEST_USER.bucket,
+      );
+    });
+
+    it("lets a reader download an output of another user's project", async () => {
+      downloadService.downloadArtifact.mockResolvedValue({
+        stream: new ReadableStream({
+          start: (controller) => controller.close(),
+        }),
+        headers: { 'content-type': 'text/markdown' },
+        abortOnDisconnect: vi.fn(),
+      });
+      app = await buildApp(service);
+
+      await request(app.getHttpServer())
+        .get(`${artifactsUrl(OTHER_USER_PROJECT_ID)}/summary.md`)
+        .expect(200);
+
+      expect(downloadService.downloadArtifact).toHaveBeenCalledWith(
+        expect.objectContaining({ bucket: 'other-bucket' }),
+        'summary.md',
+        TEST_USER.at,
+        TEST_USER.bucket,
+      );
+    });
+
+    /* A bare `..` never reaches the route: WHATWG URL parsing resolves it,
+     * `%2E%2E` included, to the parent path. `ProjectArtifactParamDto`'s unit
+     * test covers it. */
+    it.each([
+      encodeURIComponent('../context/tickets.csv'),
+      encodeURIComponent('context/tickets.csv'),
+    ])('rejects the encoded output name %s with 400', async (encodedName) => {
+      app = await buildApp(service);
+
+      await request(app.getHttpServer())
+        .get(`${artifactsUrl(PROJECT_ID)}/${encodedName}`)
+        .expect(400);
+
+      expect(downloadService.downloadArtifact).not.toHaveBeenCalled();
+    });
+
+    it('answers 404 when the output does not exist', async () => {
+      downloadService.downloadArtifact.mockRejectedValue(
+        new NotFoundException('Project or file not found'),
+      );
+      app = await buildApp(service);
+
+      await request(app.getHttpServer())
+        .get(`${artifactsUrl(PROJECT_ID)}/missing.pdf`)
+        .expect(404);
+    });
+
+    it('rejects both routes with 403 when the feature is disabled', async () => {
+      app = await buildApp(service, false);
+
+      await request(app.getHttpServer())
+        .get(artifactsUrl(PROJECT_ID))
+        .expect(403);
+      await request(app.getHttpServer())
+        .get(`${artifactsUrl(PROJECT_ID)}/report.pdf`)
+        .expect(403);
+
+      expect(artifactsListService.listArtifacts).not.toHaveBeenCalled();
+      expect(downloadService.downloadArtifact).not.toHaveBeenCalled();
     });
   });
 

@@ -8,12 +8,14 @@ The per-project BFF endpoints under `/api/v1/projects/:id`: id and file-name val
 
 ### Requirement: Per-project endpoints are flag-gated and address a project by its encoded DIAL id
 
-`ProjectsController` (`apps/chat-api/src/projects/projects.controller.ts`) SHALL add five handlers under its existing class-level `@UseGuards(FeatureGuard)` + `@RequireFeature(FeatureKey.ProjectsEnabled)`:
+`ProjectsController` (`apps/chat-api/src/projects/projects.controller.ts`) SHALL add seven handlers under its existing class-level `@UseGuards(FeatureGuard)` + `@RequireFeature(FeatureKey.ProjectsEnabled)`:
 
 | Method and path | Handler / `operationId` |
 | --- | --- |
 | `GET /api/v1/projects/:id` | `getProject` |
 | `GET /api/v1/projects/:id/files/:fileName` | `downloadProjectFile` |
+| `GET /api/v1/projects/:id/artifacts` | `listProjectArtifacts` |
+| `GET /api/v1/projects/:id/artifacts/:fileName` | `downloadProjectArtifact` |
 | `GET /api/v1/projects/:id/archive` | `downloadProject` |
 | `PUT /api/v1/projects/:id` | `updateProject` |
 | `DELETE /api/v1/projects/:id` | `deleteProject` |
@@ -26,7 +28,7 @@ The per-project BFF endpoints under `/api/v1/projects/:id`: id and file-name val
   - a trailing `/`.
 - The bucket and path are parsed from `:id`, never from the session. Core authorizes every call with the caller's token.
 
-**The `:fileName` parameter.** `ProjectFileParamDto.fileName` SHALL be validated with `IsDialEntityName` (`apps/chat-api/src/common/validators/dial-entity-name.validator.ts`), the rule create applies to context file names.
+**The `:fileName` parameter.** `ProjectFileParamDto.fileName` SHALL be validated with `IsDialEntityName` (`apps/chat-api/src/common/validators/dial-entity-name.validator.ts`), the rule create applies to context file names. `ProjectArtifactParamDto.fileName` (`apps/chat-api/src/projects/dto/project-id-param.dto.ts`) SHALL apply the same `@IsString()` and `IsDialEntityName` checks to the artifact name; only its Swagger description (a file directly under `artifacts/`) differs.
 
 Every Core call sends `getBearerAuthHeaders(accessToken)` and goes through `DialClientService.client`.
 
@@ -34,7 +36,7 @@ Every Core call sends `getBearerAuthHeaders(accessToken)` and goes through `Dial
 
 #### Scenario: Flag off rejects every per-project route
 
-- **WHEN** `PROJECTS_ENABLED` is unset and an authenticated user calls any of the five routes
+- **WHEN** `PROJECTS_ENABLED` is unset and an authenticated user calls any of the seven routes
 - **THEN** `FeatureGuard` answers `403` and no DIAL Core call is made
 
 #### Scenario: Path traversal in the id is rejected
@@ -45,6 +47,11 @@ Every Core call sends `getBearerAuthHeaders(accessToken)` and goes through `Dial
 #### Scenario: Path traversal in the file name is rejected
 
 - **WHEN** `GET /api/v1/projects/projects%2Fa1b2c3%2Fq4/files/..%2F..%2Fsecret` is called
+- **THEN** the response is `400`, and no DIAL Core call is made
+
+#### Scenario: Path traversal in the artifact name is rejected
+
+- **WHEN** `GET /api/v1/projects/projects%2Fa1b2c3%2Fq4/artifacts/..%2Fcontext%2Ftickets.csv` is called
 - **THEN** the response is `400`, and no DIAL Core call is made
 
 #### Scenario: Foreign prefix is rejected
@@ -71,8 +78,9 @@ Every Core call sends `getBearerAuthHeaders(accessToken)` and goes through `Dial
   - `PROJECT.md`;
   - `contextFiles`: direct children of `context/`, as `{ name, size }`;
   - `conversationEntries`: direct children of `conversations/` (project conversations, see the `project-conversations-api` capability), as `{ name, size }`. They are never inflated by a read. Only the edit save (`PUT`) inflates them, to carry them into the new version;
+  - `artifactEntries`: every path under `artifacts/`, nested paths included, sorted. These are the files the agents of the project's chats write. They are never inflated by a read. Only the edit save (`PUT`) inflates them, to carry them into the new version;
   - `otherEntries`: every other path, including nested paths under `context/` and `conversations/`.
-- **`contentVersion`:** the snapshot SHALL compute a content version over every entry that is not in `conversationEntries`. It is a SHA-256, hex-encoded and quoted like an entity tag (`"…"`), of the lines `{path}\t{crc32}\t{uncompressedSize}`, one per entry, sorted by path. The CRC-32 and size come from the ZIP central directory, so nothing is inflated. A conversation write therefore never changes `contentVersion`, while any write to `PROJECT.md`, `context/` or another non-conversation path does.
+- **`contentVersion`:** the snapshot SHALL compute a content version over every entry that is in neither `conversationEntries` nor `artifactEntries`. It is a SHA-256, hex-encoded and quoted like an entity tag (`"…"`), of the lines `{path}\t{crc32}\t{uncompressedSize}`, one per entry, sorted by path. The CRC-32 and size come from the ZIP central directory, so nothing is inflated. A conversation write or an artifact write therefore never changes `contentVersion`, while any write to `PROJECT.md`, `context/` or another path does.
 
 **Logging.** `log` and `warn` logs carry counts and byte totals only, never a file name, bucket or content. An unreadable archive is logged with the error's `name` only, because `yauzl`'s messages quote entry file names. At `debug` level (`LOG_LEVEL=debug`, off by default) the snapshot also logs what Core's archive held — the ETag, the archive size, whether `PROJECT.md` parsed, and every entry's path and size — and `getProject` logs the item metadata exactly as Core returned it. File content and tokens are never logged at any level.
 
@@ -110,6 +118,16 @@ Every Core call sends `getBearerAuthHeaders(accessToken)` and goes through `Dial
 #### Scenario: A conversation write does not change contentVersion
 
 - **WHEN** two archives differ only in the bytes of `conversations/gpt-4o__Q4 summary__1b2c.json`
+- **THEN** both snapshots have the same `contentVersion` and different `etag`s
+
+#### Scenario: Artifact entries are classified but not inflated
+
+- **WHEN** the archive contains `PROJECT.md`, `artifacts/report.pdf` and `artifacts/run-1/data.csv`
+- **THEN** `artifactEntries` is `['artifacts/report.pdf', 'artifacts/run-1/data.csv']`, neither is in `otherEntries`, and only `PROJECT.md` is inflated
+
+#### Scenario: An artifact write does not change contentVersion
+
+- **WHEN** two archives differ only in that the second also contains `artifacts/report.pdf` and `artifacts/run-1/data.csv`
 - **THEN** both snapshots have the same `contentVersion` and different `etag`s
 
 #### Scenario: A context change changes contentVersion
@@ -308,14 +326,18 @@ It also requires an `If-Match` header carrying the `contentVersion` the client r
    - every kept context file, inflated from the snapshot;
    - every new file;
    - every `conversationEntries` file, inflated from the snapshot;
+   - every `artifactEntries` path, inflated from the snapshot;
    - every `otherEntries` path, inflated from the snapshot.
 
    Kept files keep their bytes and path, but not their stored content type, because Core's archive carries none:
    - a kept context file is retyped from its extension, as on create;
    - a `conversationEntries` file is uploaded as `application/json`;
+   - an `artifactEntries` file is uploaded with the content type `getArtifactContentType(path)` (`apps/chat-api/src/projects/utils/project-manifest.util.ts`) gives it: `text/typescript` for `.ts`, `.mts` and `.cts`, where mime-db would say `video/mp2t`; otherwise `lookup(path)` from `mime-types`; else `application/octet-stream`. `inferMimeTypeFromPath` is not used, because `@epam/ai-dial-chat-shared` is a frontend lib a `type:backend` project may not import;
    - an `otherEntries` file is uploaded as `application/octet-stream`. This is a known limitation.
+
+   The save never adds, renames or removes an `artifacts/` entry: the chat only reads that folder.
 7. **Write once per attempt.** Make one `uploadProjectFolder(bucket, encodeDialResourcePath(path), …)` call with `If-Match: <snapshot etag>`, under `AbortSignal.any([disconnect, AbortSignal.timeout(60_000)])`.
-   - On a Core `412`, a write landed between the read and the write, typically a project conversation. Go back to step 3 with a fresh snapshot. The new files stay in memory and are not re-sent.
+   - On a Core `412`, a write landed between the read and the write, typically a project conversation or an agent's artifact. Go back to step 3 with a fresh snapshot. The new files stay in memory and are not re-sent.
    - When the fresh `contentVersion` still equals `If-Match`, rebuild the `FormData` from the fresh snapshot (so the newer conversation bytes are carried, not the older ones) and write again.
    - At most `PROJECT_WRITE_ATTEMPTS` (3, in `apps/chat-api/src/projects/constants/project-context.constants.ts`) writes are made. A `412` on the last one, or a changed `contentVersion`, is `409 project-changed`.
 8. **Move on rename.** The write has committed, so every rename step runs under a fresh `AbortSignal.timeout(30_000)` only — not the client-disconnect signal — and a closed tab cannot stop the rename half-way. Call `moveResource({ body: { sourceUrl, destinationUrl, overwrite: false } })`.
@@ -396,7 +418,7 @@ Every error code is a `ProjectCreateErrorCode` member. The enum gains `ProjectCh
 
 - **WHEN** the user changes only the description, with the current `contentVersion`
 - **THEN** exactly one `uploadProjectFolder` call is made with `If-Match` equal to the snapshot ETag
-- **AND** its parts are the rebuilt `PROJECT.md`, every stored context file and every stored conversation, and no move is made
+- **AND** its parts are the rebuilt `PROJECT.md`, every stored context file, every stored conversation and every stored artifact, and no move is made
 
 #### Scenario: Stale contentVersion is detected before writing
 
@@ -412,6 +434,21 @@ Every error code is a `ProjectCreateErrorCode` member. The enum gains `ProjectCh
 
 - **WHEN** Core answers the first `uploadProjectFolder` call with `412`, and the re-read snapshot has the same `contentVersion` and newer bytes for `conversations/gpt-4o__Q4 summary__1b2c.json`
 - **THEN** a second `uploadProjectFolder` call is made with the fresh ETag and the newer conversation bytes, and the response is `200`
+
+#### Scenario: An artifact written while editing does not fail the save
+
+- **WHEN** an agent wrote `artifacts/report.pdf` after the edit page loaded, so the snapshot `etag` differs from the one the page read but `contentVersion` equals `If-Match`
+- **THEN** the save answers `200`, and the written `FormData` contains `artifacts/report.pdf` with its stored bytes
+
+#### Scenario: An artifact written between read and write is retried
+
+- **WHEN** Core answers the first `uploadProjectFolder` call with `412`, and the re-read snapshot has the same `contentVersion` and a new `artifacts/summary.md`
+- **THEN** a second `uploadProjectFolder` call is made with the fresh ETag and includes `artifacts/summary.md`, and the response is `200`
+
+#### Scenario: Artifacts keep their content type through an edit
+
+- **WHEN** the snapshot contains `artifacts/report.pdf`, `artifacts/run-1/deck.pptx` and `artifacts/raw.unknownext`, and the user saves a description change
+- **THEN** they are written at the same paths with their original bytes and the types `application/pdf`, `application/vnd.openxmlformats-officedocument.presentationml.presentation` and `application/octet-stream`, and `artifacts/script.ts` as `text/typescript`
 
 #### Scenario: Concurrent content edit between read and write
 
@@ -495,11 +532,11 @@ Every error code is a `ProjectCreateErrorCode` member. The enum gains `ProjectCh
 
 1. Reads the snapshot. A `contentVersion` that differs from `If-Match` is `409 project-changed`, without deleting.
 2. Calls `deleteProjectFolder(bucket, encodeDialResourcePath(path), { headers: { 'If-Match': <snapshot etag> } })`.
-   - Core `412` (a conversation write landed in between) goes back to step 1, at most `PROJECT_WRITE_ATTEMPTS` times in total, then `409 project-changed`.
+   - Core `412` (a conversation or artifact write landed in between) goes back to step 1, at most `PROJECT_WRITE_ATTEMPTS` times in total, then `409 project-changed`.
    - `404` is `404`.
    - Other errors go through `handleDialSdkError` with context `projects.deleteProject`.
 
-Deleting a project deletes its `conversations/` with it. On success it calls `UserConfigService.removeProjectPin(id, …)` as a best effort, and answers `204`.
+Deleting a project deletes its `conversations/` and `artifacts/` with it. Neither is part of `contentVersion`, so an output an agent wrote after the caller read the project does not make the delete answer `409`: it is deleted with the project, as a conversation written meanwhile is. On success it calls `UserConfigService.removeProjectPin(id, …)` as a best effort, and answers `204`.
 
 Example request:
 
@@ -633,3 +670,135 @@ Only the caller's own file is changed. A share recipient's entry under the old i
 
 - **WHEN** writing `.viewed-conversations.json` fails after the project was deleted
 - **THEN** `DELETE /api/v1/projects/:id` still answers `204`, and one `warn` is logged
+
+### Requirement: GET /api/v1/projects/:id/artifacts lists a project's outputs newest first
+
+`ProjectsController` SHALL expose `listProjectArtifacts` at `GET /api/v1/projects/:id/artifacts`, with `@Header('Cache-Control', 'private, no-store')`. It delegates to `ProjectArtifactsListService.listArtifacts(project, accessToken)` (`apps/chat-api/src/projects/artifacts/projects-artifacts-list.service.ts`), which SHALL:
+
+- call `listProjectFileMetadata(bucket, encodeDialResourcePath(path), 'artifacts/', { params: { query: { limit: 1000, recursive: false, token? } } })` with `getBearerAuthHeaders(accessToken)`, following `nextToken` until it is empty;
+- keep only items with `nodeType === 'ITEM'` and a non-empty `name`, so nested folders and their files are not listed;
+- sort newest first by `updatedAt` (a missing one counts as `0`), then by name;
+- return every item, without pagination, because DIAL Core caps a project at 1,000 files;
+- answer an empty list when Core answers `404` (the project has no `artifacts/` folder yet);
+- map other failures through `handleDialSdkError`. A `403` in the caller's own bucket, which is Core masking a missing project, is `404`.
+
+Any caller who can read the project may call it. Core authorizes the listing with the caller's token, and no ownership check is made. The flag is the controller's `FeatureGuard` (`FeatureKey.ProjectsEnabled`). No BFF cache is used, so a listing taken right after a write reflects it. Logs carry the count only, never names.
+
+Response DTOs (`apps/chat-api/src/projects/dto/project-artifact-list-response.dto.ts`) are classes with `@ApiProperty` on every field:
+
+- `ProjectArtifactListResponseDto { items: ProjectArtifactItemDto[] }`;
+- `ProjectArtifactItemDto { name: string; updatedAt?: number; author?: string }`, where `updatedAt` is in epoch milliseconds and the optional fields are omitted when Core sends none.
+
+Example request:
+
+```http
+GET /api/v1/projects/projects%2Fa1b2c3%2Fq4-launch/artifacts HTTP/1.1
+```
+
+Example `200` response:
+
+```json
+{
+  "items": [
+    { "name": "summary.md", "updatedAt": 1793606400000, "author": "Jane Doe" },
+    { "name": "report.pdf", "updatedAt": 1793520000000, "author": "Jane Doe" }
+  ]
+}
+```
+
+Status codes:
+
+| Status | When |
+| --- | --- |
+| `200` | The outputs. A project without `artifacts/` lists none. |
+| `400` | Invalid `:id`. |
+| `401` | No valid session. |
+| `403` | The flag is off, or Core denied read access. |
+| `404` | No such project. |
+| `429` / `502` / `503` | Upstream (`@ApiDialCoreErrors()`). |
+
+**Generated-client impact:** `ProjectsApi.listProjectArtifacts({ id })` returns `ProjectArtifactListResponseDto`, and the client exports `ProjectArtifactListResponseDto` and `ProjectArtifactItemDto`. Callers use the normal (non-`Raw`) method.
+
+#### Scenario: Outputs are listed newest first
+
+- **WHEN** Core lists `report.pdf` (`updatedAt` 100), `summary.md` (`updatedAt` 300) and `deck.pptx` (`updatedAt` 200) under `artifacts/`
+- **THEN** the response `items` are `summary.md`, `deck.pptx`, `report.pdf`, in that order
+
+#### Scenario: Nested folders are not listed
+
+- **WHEN** Core lists the item `report.pdf` and the folder `run-1/` under `artifacts/`
+- **THEN** the response lists only `report.pdf`
+
+#### Scenario: A project without outputs
+
+- **WHEN** Core answers `listProjectFileMetadata` for `artifacts/` with `404`
+- **THEN** the response is `200` with `{ "items": [] }`
+
+#### Scenario: Listing follows Core's pages
+
+- **WHEN** Core's first page carries `nextToken: 't1'` and the second carries none
+- **THEN** two Core calls are made, the second with `token: 't1'`, and the response holds the items of both
+
+#### Scenario: A reader of a shared project can list outputs
+
+- **WHEN** a user whose bucket is `z9y8x7` lists the outputs of `projects/a1b2c3/q4-launch`, which is shared with them
+- **THEN** the BFF makes the Core call with that user's token, without an ownership check, and answers `200`
+
+### Requirement: GET /api/v1/projects/:id/artifacts/:fileName streams one output
+
+`ProjectsController` SHALL expose `downloadProjectArtifact` at `GET /api/v1/projects/:id/artifacts/:fileName`, taking `ProjectArtifactParamDto`. It streams `ProjectsDownloadService.downloadArtifact(project, fileName, accessToken, callerBucket)` through the same `streamDownload` helper as `downloadProjectFile`.
+
+`downloadArtifact` SHALL call `downloadProjectFile(bucket, encodeDialResourcePath(path), encodeDialResourcePath('artifacts/' + fileName), { parseAs: 'stream' })` through the shared `download` helper. It therefore has the same behaviour as a context-file download:
+
+- a 60-second deadline until Core's response headers arrive, after which a slow client is not cut off;
+- only `content-type` and `etag` forwarded from Core;
+- `Content-Disposition: attachment` with the ASCII fallback and the RFC 5987 `filename*`, `X-Content-Type-Options: nosniff` and `Cache-Control: private, no-store`;
+- Core's `404`, or its `403` in the caller's own bucket, answered as `404`.
+
+Any caller who can read the project may call it. Swagger declares `@ApiProduces('application/octet-stream')`, `@ApiParam` for `:id` and `:fileName`, `@ApiDialCoreErrors()`, and an `@ApiResponse` for `200` (binary), `400`, `401`, `403`, `404`, `502` and `503`.
+
+Example request:
+
+```http
+GET /api/v1/projects/projects%2Fa1b2c3%2Fq4-launch/artifacts/report.pdf HTTP/1.1
+```
+
+Example `200` response headers:
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/pdf
+Content-Disposition: attachment; filename="report.pdf"; filename*=UTF-8''report.pdf
+X-Content-Type-Options: nosniff
+Cache-Control: private, no-store
+```
+
+**Generated-client impact:** the generator emits `Blob | void`, so callers use `ProjectsApi.downloadProjectArtifactRaw({ id, fileName })`. The project view's canvas reaches the route by URL through `resolveDialUrl` (see the `project-view-ui` capability), so `ProjectsApiClient` gains no download method.
+
+After the change, `npm run openapi` and `npm run openapi:check` SHALL pass, and `libs/chat-api-client` SHALL build and lint.
+
+#### Scenario: An output is downloaded as an attachment
+
+- **WHEN** `GET /api/v1/projects/projects%2Fa1b2c3%2Fq4-launch/artifacts/report.pdf` is called and Core streams the file with `Content-Type: application/pdf`
+- **THEN** the response streams it with `Content-Type: application/pdf`, `Content-Disposition: attachment; filename="report.pdf"; filename*=UTF-8''report.pdf` and `X-Content-Type-Options: nosniff`
+- **AND** Core was asked for `artifacts/report.pdf` of `projects/a1b2c3/q4-launch`
+
+#### Scenario: A missing output
+
+- **WHEN** Core answers `downloadProjectFile` with `404`
+- **THEN** the response is `404`
+
+#### Scenario: A context file cannot be reached through the artifacts route
+
+- **WHEN** `:fileName` decodes to `../context/tickets.csv` or `context/tickets.csv`
+- **THEN** the response is `400`, and no DIAL Core call is made
+
+#### Scenario: A reader of a shared project can download an output
+
+- **WHEN** a user whose bucket is `z9y8x7` downloads `report.pdf` from `projects/a1b2c3/q4-launch`, which is shared with them
+- **THEN** the Core call is made with that user's token and the file streams with `200`
+
+#### Scenario: Generated client exposes the artifact operations
+
+- **WHEN** `npm run openapi` runs
+- **THEN** `ProjectsApi` has `listProjectArtifacts` and `downloadProjectArtifactRaw`

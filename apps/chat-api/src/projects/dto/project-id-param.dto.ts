@@ -56,3 +56,15 @@ export class ProjectFileParamDto extends ProjectIdParamDto {
   @IsDialEntityName()
   fileName!: string;
 }
+
+/** `:id` and `:fileName` path params of the artifact download. */
+export class ProjectArtifactParamDto extends ProjectIdParamDto {
+  @ApiProperty({
+    description:
+      'Name of a file directly under the project `artifacts/` folder.',
+    example: 'report.pdf',
+  })
+  @IsString()
+  @IsDialEntityName()
+  fileName!: string;
+}

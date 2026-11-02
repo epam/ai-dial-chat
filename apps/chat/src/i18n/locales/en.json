@@ -959,6 +959,11 @@
       "createError": "Could not start the chat",
       "storageFull": "The project is full. Delete chats or context files to start a new chat."
     },
+    "outputs": {
+      "title": "Outputs",
+      "seeAll": "See all ({{count}})",
+      "error": "Could not load outputs"
+    },
     "chat": {
       "backToProject": "Back to {{name}}",
       "notFound": "Chat not found"

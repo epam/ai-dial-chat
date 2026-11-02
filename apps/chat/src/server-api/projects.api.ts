@@ -1,6 +1,7 @@
 import type {
   CreateProjectResponseDto,
   ListProjectsResponseDto,
+  ProjectArtifactListResponseDto,
   ProjectDetailsDto,
   UpdateProjectResponseDto,
 } from '@epam/ai-dial-chat-api-client';
@@ -42,6 +43,13 @@ export const watchProjects = (
   signal?: AbortSignal,
 ): Promise<ReadableStream<Uint8Array>> =>
   projectsRequests.watchProjects(ids, signal);
+
+/** Lists the files the agents saved under a project's `artifacts/` folder, newest first, with caller cancellation. */
+export const listProjectArtifacts = (
+  id: string,
+  signal?: AbortSignal,
+): Promise<ProjectArtifactListResponseDto> =>
+  projectsRequests.listProjectArtifacts(id, signal);
 
 /** Downloads a whole project as Core's ZIP archive. */
 export const downloadProjectArchive = (

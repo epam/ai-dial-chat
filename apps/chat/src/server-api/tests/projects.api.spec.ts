@@ -1,12 +1,18 @@
 import { ProjectSource } from '@epam/ai-dial-chat-api-client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { projectsApi } from '../api-client';
-import { createProject, listProjects, watchProjects } from '../projects.api';
+import {
+  createProject,
+  listProjectArtifacts,
+  listProjects,
+  watchProjects,
+} from '../projects.api';
 
 vi.mock('../api-client', () => ({
   projectsApi: {
     listProjects: vi.fn(),
     createProject: vi.fn(),
+    listProjectArtifacts: vi.fn(),
     watchProjectsRaw: vi.fn(),
   },
 }));
@@ -32,6 +38,20 @@ describe('Projects adapter', () => {
 
     await expect(listProjects({ signal })).resolves.toBe(listing);
     expect(projectsApi.listProjects).toHaveBeenCalledWith({ signal });
+  });
+
+  it("lists a project's outputs through the normal generated method with the caller signal", async () => {
+    const signal = new AbortController().signal;
+    const outputs = { items: [{ name: 'report.pdf', updatedAt: 1 }] };
+    vi.mocked(projectsApi.listProjectArtifacts).mockResolvedValue(outputs);
+
+    await expect(listProjectArtifacts('projects/b/q4', signal)).resolves.toBe(
+      outputs,
+    );
+    expect(projectsApi.listProjectArtifacts).toHaveBeenCalledWith(
+      { id: 'projects/b/q4' },
+      { signal },
+    );
   });
 
   it('propagates errors to the caller', async () => {

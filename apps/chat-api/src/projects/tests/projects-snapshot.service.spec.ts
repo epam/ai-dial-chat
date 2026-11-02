@@ -188,6 +188,57 @@ describe('ProjectsSnapshotService', () => {
     expect(second.etag).not.toBe(first.etag);
   });
 
+  it('classifies every artifacts/ path, nested ones included, without inflating them', async () => {
+    const zip = await buildZip({
+      'PROJECT.md': buildProjectManifest({
+        name: 'q4',
+        description: '',
+        instructions: '',
+      }),
+      'artifacts/run-1/data.csv': 'd',
+      'artifacts/report.pdf': '%PDF',
+    });
+    const { service } = makeService(archiveResponse(zip));
+    const openReadStream = vi.spyOn(
+      (await import('yauzl')).ZipFile.prototype,
+      'openReadStreamPromise',
+    );
+
+    const snapshot = await read(service);
+
+    expect(snapshot.artifactEntries).toEqual([
+      'artifacts/report.pdf',
+      'artifacts/run-1/data.csv',
+    ]);
+    expect(snapshot.otherEntries).toEqual([]);
+    expect(snapshot.contextFiles).toEqual([]);
+    expect(openReadStream).toHaveBeenCalledOnce();
+    openReadStream.mockRestore();
+  });
+
+  it('keeps contentVersion when an agent writes artifacts', async () => {
+    const base = { 'PROJECT.md': 'p', 'context/tickets.csv': 't' };
+    const first = await read(
+      makeService(archiveResponse(await buildZip(base), { etag: '"e1"' }))
+        .service,
+    );
+    const second = await read(
+      makeService(
+        archiveResponse(
+          await buildZip({
+            ...base,
+            'artifacts/report.pdf': '%PDF',
+            'artifacts/run-1/data.csv': 'd',
+          }),
+          { etag: '"e2"' },
+        ),
+      ).service,
+    );
+
+    expect(second.contentVersion).toBe(first.contentVersion);
+    expect(second.etag).not.toBe(first.etag);
+  });
+
   it('changes contentVersion when a context file changes', async () => {
     const first = await read(
       makeService(

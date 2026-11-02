@@ -6539,6 +6539,44 @@ export interface OfflineCredentialsSigninBodyDto {
 /**
  *
  * @export
+ * @interface ProjectArtifactItemDto
+ */
+export interface ProjectArtifactItemDto {
+  /**
+   * File name under the project `artifacts/` folder.
+   * @type {string}
+   * @memberof ProjectArtifactItemDto
+   */
+  name: string;
+  /**
+   * Last update time, in epoch milliseconds.
+   * @type {number}
+   * @memberof ProjectArtifactItemDto
+   */
+  updatedAt?: number;
+  /**
+   * Display name of the file's last writer, from DIAL Core.
+   * @type {string}
+   * @memberof ProjectArtifactItemDto
+   */
+  author?: string;
+}
+/**
+ *
+ * @export
+ * @interface ProjectArtifactListResponseDto
+ */
+export interface ProjectArtifactListResponseDto {
+  /**
+   * Files directly under `artifacts/`, newest first; nested paths are not listed.
+   * @type {Array<ProjectArtifactItemDto>}
+   * @memberof ProjectArtifactListResponseDto
+   */
+  items: Array<ProjectArtifactItemDto>;
+}
+/**
+ *
+ * @export
  * @interface ProjectContextFileDto
  */
 export interface ProjectContextFileDto {

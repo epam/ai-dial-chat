@@ -39,6 +39,7 @@ const snapshotOf = (
     { name: 'tickets.csv', size: 3 },
   ],
   conversationEntries: [],
+  artifactEntries: [],
   otherEntries: [],
   readEntry: vi.fn(async (path: string) => Buffer.from(entries[path] ?? '')),
   ...extra,
@@ -464,6 +465,129 @@ describe('ProjectsUpdateService', () => {
     expect(status).toBe(413);
     expect(body.code).toBe('capacity-exceeded');
     expect(client.uploadProjectFolder).not.toHaveBeenCalled();
+  });
+
+  it('keeps every stored artifact with the content type of its extension', async () => {
+    const { service, client } = makeService({
+      snapshot: snapshotOf(
+        {
+          artifactEntries: [
+            'artifacts/raw.unknownext',
+            'artifacts/report.pdf',
+            'artifacts/run-1/deck.pptx',
+            'artifacts/script.ts',
+          ],
+        },
+        {
+          'context/tickets.csv': 'a',
+          'context/survey.csv': 'b',
+          'artifacts/raw.unknownext': 'raw',
+          'artifacts/report.pdf': '%PDF',
+          'artifacts/run-1/deck.pptx': 'deck',
+          'artifacts/script.ts': 'export {};',
+        },
+      ),
+    });
+
+    await service.updateProject(
+      PROJECT,
+      { name: 'q4', description: 'new' },
+      [],
+      '"cv1"',
+      USER_BUCKET,
+      'token',
+    );
+
+    const parts = uploadedParts(client);
+    expect(parts.names.sort()).toEqual([
+      'PROJECT.md',
+      'artifacts/raw.unknownext',
+      'artifacts/report.pdf',
+      'artifacts/run-1/deck.pptx',
+      'artifacts/script.ts',
+      'context/survey.csv',
+      'context/tickets.csv',
+    ]);
+    expect(await parts.file('artifacts/report.pdf')?.text()).toBe('%PDF');
+    expect(parts.file('artifacts/report.pdf')?.type).toBe('application/pdf');
+    expect(parts.file('artifacts/run-1/deck.pptx')?.type).toBe(
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    );
+    expect(parts.file('artifacts/raw.unknownext')?.type).toBe(
+      'application/octet-stream',
+    );
+    expect(parts.file('artifacts/script.ts')?.type).toBe('text/typescript');
+  });
+
+  it('saves when an agent wrote an artifact after the edit page loaded', async () => {
+    const { service, client } = makeService({
+      snapshot: snapshotOf(
+        {
+          etag: '"after-artifact"',
+          artifactEntries: ['artifacts/report.pdf'],
+        },
+        {
+          'context/tickets.csv': 'a',
+          'context/survey.csv': 'b',
+          'artifacts/report.pdf': '%PDF',
+        },
+      ),
+    });
+
+    const result = await service.updateProject(
+      PROJECT,
+      { name: 'q4', description: 'new' },
+      [],
+      '"cv1"',
+      USER_BUCKET,
+      'token',
+    );
+
+    const parts = uploadedParts(client);
+    expect(parts.headers['If-Match']).toBe('"after-artifact"');
+    expect(await parts.file('artifacts/report.pdf')?.text()).toBe('%PDF');
+    expect(result.etag).toBe('"e2"');
+  });
+
+  it('retries a 412 caused by a new artifact and carries it into the write', async () => {
+    const { service, client } = makeService({
+      snapshots: [
+        snapshotOf(),
+        snapshotOf(
+          { etag: '"e2"', artifactEntries: ['artifacts/summary.md'] },
+          {
+            'context/tickets.csv': 'a,b',
+            'context/survey.csv': 'c,d',
+            'artifacts/summary.md': '# Summary',
+          },
+        ),
+      ],
+    });
+    client.uploadProjectFolder.mockImplementationOnce(async () => ({
+      error: { message: 'precondition' },
+      response: { status: 412, headers: new Headers() },
+    }));
+
+    await service.updateProject(
+      PROJECT,
+      { name: 'q4' },
+      [],
+      '"cv1"',
+      USER_BUCKET,
+      'token',
+    );
+
+    expect(client.uploadProjectFolder).toHaveBeenCalledTimes(2);
+    const [, , retry] = client.uploadProjectFolder.mock.calls[1] as [
+      string,
+      string,
+      { headers: Record<string, string>; body: FormData },
+    ];
+    expect(retry.headers['If-Match']).toBe('"e2"');
+    const artifact = (retry.body.getAll('file') as File[]).find(
+      (file) => file.name === 'artifacts/summary.md',
+    );
+    expect(await artifact?.text()).toBe('# Summary');
   });
 
   it('keeps files another client wrote outside the context folder', async () => {
