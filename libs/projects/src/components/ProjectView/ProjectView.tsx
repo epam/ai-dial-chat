@@ -66,7 +66,9 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
   onShare,
   onDelete,
   onDownload,
-  onOpenFile,
+  onContextFileClick,
+  selectedContextFileId,
+  isDetailsStacked = false,
   onRetry,
   onBrowseProjects,
   mainContent,
@@ -247,7 +249,8 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
                 <AttachmentCard
                   attachment={toDisplayAttachment(file)}
                   searchQuery={trimmedQuery}
-                  onClick={onOpenFile}
+                  onClick={onContextFileClick}
+                  isSelected={file.name === selectedContextFileId}
                   labels={{ clickLabel: labels.openFileLabel(file.name) }}
                 />
               </li>
@@ -336,8 +339,9 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
 
       <div
         className={mergeClasses(
-          'flex min-w-0 flex-1 flex-col desktop:flex-row',
-          mainContent == null && 'desktop:justify-end',
+          'flex min-w-0 flex-1 flex-col',
+          !isDetailsStacked && 'desktop:flex-row',
+          mainContent == null && !isDetailsStacked && 'desktop:justify-end',
         )}
       >
         {mainContent != null && (
@@ -353,7 +357,9 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
         <aside
           aria-labelledby={detailsHeadingId}
           className={mergeClasses(
-            'flex w-full min-w-0 flex-col gap-5 border-t px-4 py-6 desktop:w-[488px] desktop:shrink-0 desktop:border-s desktop:border-t-0 desktop:px-8',
+            'flex w-full min-w-0 flex-col gap-5 border-t px-4 py-6 desktop:px-8',
+            !isDetailsStacked &&
+              'desktop:w-[488px] desktop:shrink-0 desktop:border-s desktop:border-t-0',
             styles.panel,
           )}
         >

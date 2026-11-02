@@ -157,7 +157,7 @@ Controlled New project form inside the builder-form shell: a header with a back 
 
 - **Name** is required. `validateProjectName` checks it after the field is first blurred; a host `errors.name` (for example a taken name) takes precedence, is announced as an alert, and moves focus back to the field. The error is linked through `aria-describedby`.
 - **Instructions** (the kit markdown editor) get a Refine with AI action when `onRefineInstructions` is supplied. The form has no description field.
-- **Context** files come from the kit `FileDropzone` (a click or a drop opens and takes the device picker) or a drag anywhere over the form. `labels.dropZoneLabel` places two link elements in its sentence: an underlined "from device" span — the whole zone opens the device picker — and, when `onPickFromFileManager` is supplied, a "file manager" button that opens the host's picker instead. `labels.dropZoneAriaLabel` names the zone's file input. `checkContextFiles` filters the files against `maxFileBytes` and `maxTotalBytes`; each rejection, and a host `errors.context` after them, shows as the kit drop zone's `errorText` — one per line in the error color, with an error border, linked to the file input through `aria-describedby` / `aria-invalid` — and is announced. Each file renders as an `AttachmentCard` with a named remove button. The form shows no capacity meter.
+- **Context** files come from the kit `FileDropzone` (a click or a drop opens and takes the device picker) or a drag anywhere over the form. `labels.dropZoneLabel` places two link elements in its sentence: an underlined "from device" span — the whole zone opens the device picker — and, when `onPickFromFileManager` is supplied, a "file manager" button that opens the host's picker instead. `labels.dropZoneAriaLabel` names the zone's file input. `checkContextFiles` filters the files against `maxFileBytes` and `maxTotalBytes`; each rejection, and a host `errors.context` after them, shows as the kit drop zone's `errorText` — one per line in the error color, with an error border, linked to the file input through `aria-describedby` / `aria-invalid` — and is announced. Each file renders as an `AttachmentCard` with a named remove button. When the host passes `onContextFileClick`, each card is also a button named `labels.openFileLabel(name)` (optional, defaulting to `Preview {name}`) that reports the card's `ProjectContextFile.id`, and the card whose id equals `selectedContextFileId` renders selected (`aria-pressed`); what a click opens, and where its bytes come from, is the host's decision, so the lib never loads a file. The form shows no capacity meter.
 - **Create** is disabled while the name is invalid, a refinement is pending, or `isSubmitting` is true.
 
 The form shows no unsaved-changes dialog: leaving is the host's decision through `onBack` / `onCancel`.
@@ -175,6 +175,8 @@ import { cloneElement } from 'react';
   onFieldChange={(field, value) => {}}
   contextFiles={[]}
   onContextFilesChange={(files) => {}}
+  onContextFileClick={(id) => {}}
+  selectedContextFileId={undefined}
   allowedExtensions={['csv', 'pdf', 'xlsx']}
   maxFileBytes={1048576}
   maxTotalBytes={10485760}
@@ -211,6 +213,7 @@ import { cloneElement } from 'react';
     dropZoneAriaLabel: 'Upload context from device',
     dropZoneHint: 'File formats .csv, .pdf, .xlsx (max 1 MB)',
     removeFileLabel: (name) => `Remove ${name}`,
+    openFileLabel: (name) => `Preview ${name}`,
     fileRejections: {
       [ContextFileRejection.UnsupportedType]: (name) =>
         `${name}: this file format isn't supported`,
@@ -253,6 +256,8 @@ A project's home page: a header with back, the name (an `<h1>`, truncated with a
 
 `mainContent` fills a main column rendered before the Details panel (stacked above it on mobile), named by `mainContentLabel` (default `'Project content'`); without it the panel stays on the inline end. The host puts its own content there, such as a chat input and a `ProjectConversationList`.
 
+Activating a context card calls `onContextFileClick` with the file's name, and the card whose name equals `selectedContextFileId` renders selected (`aria-pressed`). The lib downloads and opens nothing: the host decides, for example by previewing the file in a canvas beside the page. While such a preview takes the inline end, the host sets `isDetailsStacked` (default `false`) so the Details panel and its cards move below the main column at every width, with a top border instead of the inline-start one, and stay reachable.
+
 Read-only mode is the host omitting `onPublish`, `onEdit`, `onShare` and `onDelete`: each hides its action. Exactly one state renders — loading (`isLoading`), error with Retry (`hasError`), not found with a way back (`isNotFound`), or the loaded `project`.
 
 ```tsx
@@ -272,7 +277,9 @@ import { ProjectView } from '@epam/ai-dial-projects';
   onTogglePin={() => {}}
   onEdit={() => {}}
   onDownload={() => {}}
-  onOpenFile={(fileName) => {}}
+  onContextFileClick={(id) => {}}
+  selectedContextFileId={undefined}
+  isDetailsStacked={false}
   onRetry={() => {}}
   onBrowseProjects={() => {}}
   labels={{
@@ -294,7 +301,7 @@ import { ProjectView } from '@epam/ai-dial-projects';
     contextResultCountLabel: (count) => `${count} files found`,
     emptyContextLabel: 'No context files',
     noContextMatchesLabel: 'No files match your search',
-    openFileLabel: (name) => `Download ${name}`,
+    openFileLabel: (name) => `Preview ${name}`,
     errorLabel: 'Could not load the project',
     retryLabel: 'Retry',
     notFoundLabel: 'Project not found',

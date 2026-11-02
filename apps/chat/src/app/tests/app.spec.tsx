@@ -29,11 +29,20 @@ const mocks = vi.hoisted(() => ({
   togglePanel: () => undefined,
   canvas: { closeCanvas: () => undefined, isOpen: false },
   enabledFeatures: new Set<string>(),
-  canvasProps: null as { minWidth?: number } | null,
+  canvasProps: null as {
+    minWidth?: number;
+    leftActions?: ReactNode;
+    isMobile?: boolean;
+  } | null,
+  isMobile: false,
 }));
 
 vi.mock('@epam/ai-dial-attachment-canvas', () => ({
-  AttachmentCanvasContainer: (props: { minWidth?: number }) => {
+  AttachmentCanvasContainer: (props: {
+    minWidth?: number;
+    leftActions?: ReactNode;
+    isMobile?: boolean;
+  }) => {
     mocks.canvasProps = props;
     return <aside aria-label="attachment canvas" />;
   },
@@ -70,7 +79,7 @@ vi.mock('../../hooks/attachment/usePdfPreviewLoader', () => ({
 }));
 vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
-  useIsMobile: () => false,
+  useIsMobile: () => mocks.isMobile,
 }));
 vi.mock('../../hooks/conversation/useConversationListBridge', () => ({
   useConversationListBridge: () => undefined,
@@ -120,7 +129,7 @@ vi.mock(
 );
 vi.mock('../../components/Header/Header', () => ({ default: () => null }));
 vi.mock('../../components/Header/SourcesSidebarToggle', () => ({
-  default: () => null,
+  default: () => <button>sources toggle</button>,
 }));
 vi.mock('../../components/Navigation/SidebarNavigation', () => ({
   default: ({ chats }: { chats?: ReactNode }) => <nav>{chats}</nav>,
@@ -149,6 +158,12 @@ vi.mock('../../pages/ProjectsPage/ProjectsPage', () => ({
 vi.mock('../../pages/ProjectCreatePage/ProjectCreatePage', () => ({
   default: () => <p>New project page</p>,
 }));
+vi.mock('../../pages/ProjectEditPage/ProjectEditPage', () => ({
+  default: () => <p>Edit project page</p>,
+}));
+vi.mock('../../pages/ProjectViewPage/ProjectViewPage', () => ({
+  default: () => <p>View project page</p>,
+}));
 
 const SidebarValueHost: FC = () => {
   const [value, setValue] = useState({ revision: 0 });
@@ -171,6 +186,7 @@ describe('app', () => {
     mocks.panelCommits = 0;
     mocks.enabledFeatures = new Set();
     mocks.canvasProps = null;
+    mocks.isMobile = false;
   });
 
   describe('App — conversation panel memo boundary', () => {
@@ -234,6 +250,53 @@ describe('app', () => {
       await renderAt('/catalog', [OverlayFeature.AttachmentsManager]);
 
       expect(queryCanvas()).toBeNull();
+    });
+
+    it.each([
+      ['New project', '/projects/new'],
+      ['project edit', '/projects/edit/bucket-1/projects/support'],
+      ['project view', '/projects/view/bucket-1/projects/support'],
+    ])(
+      'renders the canvas on the %s page without the AttachmentsManager feature',
+      async (_, path) => {
+        await renderAt(path);
+
+        expect(queryCanvas()).toBeTruthy();
+      },
+    );
+
+    it('does not render the canvas on the projects list', async () => {
+      await renderAt('/projects');
+
+      expect(queryCanvas()).toBeNull();
+    });
+
+    it('keeps the conversation default width on a project page', async () => {
+      await renderAt('/projects/new');
+
+      expect(mocks.canvasProps?.minWidth).toBeUndefined();
+    });
+
+    it('renders the canvas in its mobile full-screen mode on a mobile project page', async () => {
+      mocks.isMobile = true;
+      await renderAt('/projects/new');
+
+      expect(queryCanvas()).toBeTruthy();
+      expect(mocks.canvasProps?.isMobile).toBe(true);
+    });
+
+    it('offers no sources toggle in the canvas header on a mobile project page', async () => {
+      mocks.isMobile = true;
+      await renderAt('/projects/view/bucket-1/projects/support');
+
+      expect(mocks.canvasProps?.leftActions).toBeUndefined();
+    });
+
+    it('keeps the sources toggle in the canvas header on a mobile conversation route', async () => {
+      mocks.isMobile = true;
+      await renderAt('/', [OverlayFeature.AttachmentsManager]);
+
+      expect(mocks.canvasProps?.leftActions).toBeTruthy();
     });
   });
 

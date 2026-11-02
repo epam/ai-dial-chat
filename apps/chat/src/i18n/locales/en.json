@@ -855,7 +855,8 @@
         "fileManagerTitle": "Add context from file manager",
         "dropOverlayTitle": "Upload files",
         "dropOverlaySubtitle": "Drop files here to add them to this project",
-        "remove": "Remove {{name}}"
+        "remove": "Remove {{name}}",
+        "open": "Preview {{name}}"
       },
       "status": {
         "added_one": "{{count}} file added",
@@ -894,7 +895,7 @@
       "contextResultCount_other": "{{count}} files found",
       "emptyContext": "No context files",
       "noContextMatches": "No files match your search",
-      "openFile": "Download {{name}}",
+      "openFile": "Preview {{name}}",
       "error": "Could not load the project",
       "notFound": "Project not found",
       "browseProjects": "Back to projects",
