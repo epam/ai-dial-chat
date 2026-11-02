@@ -64,6 +64,10 @@ export default defineConfig(() => ({
         import.meta.dirname,
         '../publish-panel/src/styles.css',
       ),
+      '@epam/ai-dial-publish-panel': path.resolve(
+        import.meta.dirname,
+        '../publish-panel/src/index.ts',
+      ),
       '@epam/ai-dial-catalog': path.resolve(
         import.meta.dirname,
         '../catalog/src/index.ts',

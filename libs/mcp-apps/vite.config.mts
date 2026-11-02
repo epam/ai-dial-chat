@@ -70,6 +70,14 @@ export default defineConfig(() => ({
         import.meta.dirname,
         '../chat-shared/src/index.ts',
       ),
+      '@epam/ai-dial-sidebar': path.resolve(
+        import.meta.dirname,
+        '../sidebar/src/index.ts',
+      ),
+      '@epam/ai-dial-visualizer-connector': path.resolve(
+        import.meta.dirname,
+        '../visualizer-connector/src/index.ts',
+      ),
     },
     include: ['{src,tests}/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
