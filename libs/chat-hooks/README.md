@@ -4191,6 +4191,73 @@ const { acceptedRuns, isStarting, statusFeedback, start, refreshStatus } =
 const historyRuns = mergeScheduledTaskRuns(acceptedRuns, runs);
 ```
 
+### Scheduled-task display adapters
+
+Turn scheduler DTOs into the props `@epam/ai-dial-scheduled-tasks` renders.
+The lib decides everything the response determines — the trigger kind and the
+timezone it is shown in, the duration units, whether a run started today, the
+run status, and which delete or mutation error applies — and the host supplies
+every word through formatter objects. Available from the root and
+`./scheduled-tasks`.
+
+| Export                                                              | Returns                                                                                                                                      |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `formatScheduledTaskScheduleLabel(task, labels, options?)`          | One `ScheduledTaskScheduleLabels` member's output; `options.timeZone` defaults to the browser's, `options.locale` formats dates and weekdays |
+| `toScheduledTaskItem` / `toScheduledTaskItems`                      | `ScheduledTaskItem`(s) with the schedule label; the other fields are copied unchanged                                                        |
+| `formatScheduledTaskRunDuration(seconds, labels)`                   | Non-zero hour/minute/second units wrapped by `labels.suffix`, or `undefined` when absent                                                     |
+| `formatScheduledTaskRunTimestamp(start, seconds, labels, options?)` | `todayAt` or `dateAt`, plus the duration when `options.durationLabels` is given; `options.now` defaults to the current time                  |
+| `toScheduledTaskRunItem` / `toScheduledTaskRunItems`                | `ScheduledTaskRunItem`(s); an unknown status maps to `Missed`, `isUnread` uses the host's `conversationIdsMatch`                             |
+| `classifyScheduledTaskDeleteError(status)`                          | `ScheduledTaskDeleteErrorKind`: `NotFound` (404/409), `Retryable` (502), otherwise `Generic`                                                 |
+| `selectScheduledTaskErrorMessage(details, messages)`                | `messages.adminConsentRequired`, else the trimmed upstream reason, else `messages.fallback`                                                  |
+
+```ts
+import {
+  toScheduledTaskItems,
+  toScheduledTaskRunItems,
+  type ScheduledTaskRunDurationLabels,
+  type ScheduledTaskRunTimestampLabels,
+  type ScheduledTaskScheduleLabels,
+} from '@epam/ai-dial-chat-hooks/scheduled-tasks';
+
+const scheduleLabels: ScheduledTaskScheduleLabels = {
+  onceAt: (date) => `Once on ${date}`,
+  everyNMinutes: (count) => `Every ${count} minutes`,
+  hourlyAt: (minute) => `Every hour at :${minute}`,
+  dailyAt: (time) => `Every day at ${time}`,
+  weeklyAt: (day, time) => `Every ${day} at ${time}`,
+  everyNWeeks: (count, day, time) =>
+    `Every ${count} weeks on ${day} at ${time}`,
+  monthlyAt: (day, time) => `Monthly on day ${day} at ${time}`,
+  invalid: 'Invalid schedule',
+  recurringFallback: 'Recurring',
+};
+const durationLabels: ScheduledTaskRunDurationLabels = {
+  hours: (count) => `${count}h`,
+  minutes: (count) => `${count}m`,
+  seconds: (count) => `${count}s`,
+  suffix: (duration) => `(${duration})`,
+};
+const timestampLabels: ScheduledTaskRunTimestampLabels = {
+  todayAt: (time) => `Today at ${time}`,
+  dateAt: (date, time) => `${date} at ${time}`,
+};
+
+const items = toScheduledTaskItems(tasks, scheduleLabels, { locale: 'en' });
+const runItems = toScheduledTaskRunItems(runs, {
+  timestampLabels,
+  durationLabels,
+  conversations,
+  conversationIdsMatch: (left, right) => left === right,
+});
+```
+
+Keep the formatter objects stable (module constants or `useMemo`) when the
+mapping runs inside a memoized selector. `apps/chat` wraps these as
+`buildScheduleLabel`, `mapScheduledTaskDtoToItem(s)`, `formatRunDuration`,
+`formatRunTimestamp`, `mapScheduledTaskRunDtoToItem(s)`,
+`getDeleteErrorMessageKey` and `resolveScheduledTaskErrorMessage`, each
+building the formatters from `t()`.
+
 ### mapFormValuesToCreateBody / mapFormValuesToUpdateBody / mapScheduledTaskDtoToFormValues
 
 Maps validated scheduled-task create/edit form values to their request bodies (converting local wall-clock time to the UTC cron fields DIAL Scheduler expects), and inverts that mapping back to editable form values — failing closed with an `UnsupportedTriggerReason` when a task's trigger cannot be represented losslessly by the editor.

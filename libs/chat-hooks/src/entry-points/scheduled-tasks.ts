@@ -1,5 +1,6 @@
 export * from '../scheduled-task/scheduled-task-mapping';
 export * from '../scheduled-task/scheduled-task-description';
+export * from '../scheduled-task/scheduled-task-display';
 export * from '../scheduled-task/scheduled-task-preparation';
 export * from '../scheduled-task/scheduled-tasks-api-client';
 export * from '../scheduled-task/scheduled-task-trigger';
