@@ -172,6 +172,22 @@ describe('ModelLimitsSection', () => {
     expect(screen.queryByText(/find any results/)).toBeNull();
   });
 
+  it('reserves body height for the empty state when there are no rows', async () => {
+    await renderSection({ rows: [] });
+
+    expect(
+      screen.getByRole('region', { name: 'Model tokens limits 0' }).className,
+    ).toMatch(/emptyGrid/);
+  });
+
+  it('leaves the body height to the rows when there are rows', async () => {
+    await renderSection();
+
+    expect(
+      screen.getByRole('region', { name: 'Model tokens limits 1' }).className,
+    ).not.toMatch(/emptyGrid/);
+  });
+
   it('renders exactly the fixed comparison headers in order', async () => {
     await renderSection();
 
