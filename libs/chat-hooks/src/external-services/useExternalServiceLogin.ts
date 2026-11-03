@@ -6,17 +6,16 @@ import type {
 } from '@epam/ai-dial-chat-api-client';
 import { useCallback } from 'react';
 import { waitForToolsetOAuthResult } from '../oauth/handshake';
+import type { ToolsetOAuthSettings } from '../oauth/models';
 import {
   navigateToolsetOAuthPopup,
   openToolsetOAuthPopup,
 } from '../oauth/popup';
 import {
   OAuthResourceKind,
-  ToolsetAuthTypes,
   ToolsetCredentialsLevel,
   ToolsetOAuthInitiationResultType,
   ToolsetOAuthResultType,
-  WithLogin,
 } from '../oauth/types';
 import {
   OfflineCredentialsLoginOutcomeType,
@@ -71,19 +70,8 @@ export interface ExternalServiceLoginOptions {
     typeof useOfflineCredentialsLogin
   >['login'];
 }
-/** OAuth client settings needed to build the authorize URL — a subset of an external service's `auth_settings`. */
-export interface ExternalServiceOAuthSettings {
-  /** OAuth client identity. */
-  clientId?: string;
-  /** Authorize URL supplied by the host. */
-  authorizationEndpoint?: string;
-  /** Requested OAuth scopes. */
-  scopes?: string[];
-  /** PKCE challenge. */
-  codeChallenge?: string;
-  /** PKCE challenge method. */
-  codeChallengeMethod?: string;
-}
+/** OAuth client settings needed to build the authorize URL — the same shape a toolset login takes. */
+export type ExternalServiceOAuthSettings = ToolsetOAuthSettings;
 
 /** Terminal external-service login outcome. */
 export enum ExternalServiceLoginOutcomeType {
@@ -275,16 +263,6 @@ export const useExternalServiceLogin = ({
        */
       const correlationId = buildExternalServiceScopeId(appId, serviceId);
       const toolsetLevel = toToolsetCredentialsLevel(credentialsLevel);
-      const authFormData = {
-        authenticationType: ToolsetAuthTypes.OAuth,
-        withLogin: WithLogin.WithConfig,
-        isLoggedIn: false,
-        clientId: oauthSettings?.clientId,
-        authorizationEndpoint: oauthSettings?.authorizationEndpoint,
-        scopes: oauthSettings?.scopes,
-        codeChallenge: oauthSettings?.codeChallenge,
-        codeChallengeMethod: oauthSettings?.codeChallengeMethod,
-      };
 
       /*
        * The popup must be opened as the very first synchronous statement so
@@ -309,7 +287,7 @@ export const useExternalServiceLogin = ({
       try {
         const initiation = navigateToolsetOAuthPopup(
           popup,
-          authFormData,
+          oauthSettings ?? {},
           correlationId,
           callbackPath,
           toolsetLevel,

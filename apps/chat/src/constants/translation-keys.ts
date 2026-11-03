@@ -638,6 +638,7 @@ export enum ScheduledTasksI18nKeys {
   DetailHistoryDurationHours = 'scheduledTasks.detail.historyDurationHours',
   DetailHistoryDurationMinutes = 'scheduledTasks.detail.historyDurationMinutes',
   DetailHistoryDurationSeconds = 'scheduledTasks.detail.historyDurationSeconds',
+  DetailHistoryOpenConversationLabel = 'scheduledTasks.detail.historyOpenConversationLabel',
   DetailStatusSuccess = 'scheduledTasks.detail.statusSuccess',
   DetailStatusError = 'scheduledTasks.detail.statusError',
   DetailStatusInProgress = 'scheduledTasks.detail.statusInProgress',
@@ -1469,6 +1470,9 @@ export enum ToolsetEditorI18nKeys {
   TokenEndpointRequired = 'toolsetEditor.auth.tokenEndpointRequired',
   ScopesLabel = 'toolsetEditor.auth.scopesLabel',
   ScopesPlaceholder = 'toolsetEditor.auth.scopesPlaceholder',
+  ResourceLabel = 'toolsetEditor.auth.resourceLabel',
+  ResourcePlaceholder = 'toolsetEditor.auth.resourcePlaceholder',
+  ResourceInvalid = 'toolsetEditor.auth.resourceInvalid',
   LogoutConfirmDescription = 'toolsetEditor.auth.logoutConfirmDescription',
   // Errors
   ErrorCreateFailed = 'toolsetEditor.error.createFailed',

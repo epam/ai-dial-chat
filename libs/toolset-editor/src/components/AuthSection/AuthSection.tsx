@@ -389,6 +389,16 @@ export const AuthSection: FC<AuthSectionProps> = ({
             disabled={isControlsDisabled}
             tagClassName={TAG_INPUT_TAG_CLASS_NAME}
           />
+          <Input
+            id="toolset-resource"
+            value={auth.resource ?? ''}
+            onChange={(value) => onAuthChange({ resource: value ?? '' })}
+            labelProps={{ label: labels?.resourceLabel ?? 'Resource' }}
+            placeholder={labels?.resourcePlaceholder ?? 'Enter resource URI'}
+            error={errors.resource || undefined}
+            invalid={!!errors.resource}
+            disabled={isControlsDisabled}
+          />
         </div>
       )}
 

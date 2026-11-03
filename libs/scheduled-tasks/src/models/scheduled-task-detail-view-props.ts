@@ -67,6 +67,8 @@ export interface ScheduledTaskDetailViewLabels extends ScheduledTaskInstructions
   runStatusLabels: Record<ScheduledTaskRunStatus, string>;
   /** `sr-only` label announced alongside the unread-dot indicator on a run row whose `isUnread` is `true`. Defaults to `'Unread'`. */
   unreadIndicatorLabel?: string;
+  /** Label of the link inside an expanded failed run's details that opens its conversation. Defaults to `'Open conversation'`. */
+  openConversationLabel?: string;
   /** Accessible name for the mobile/tablet body's tab row. Defaults to `'Scheduled task sections'`. */
   tabsAriaLabel?: string;
 }

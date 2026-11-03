@@ -65,6 +65,10 @@ export interface AuthSectionLabels {
   scopesLabel?: string;
   /** Placeholder for the OAuth scopes field. Defaults to `'Enter scopes'`. */
   scopesPlaceholder?: string;
+  /** Label for the OAuth resource indicator field. Defaults to `'Resource'`. */
+  resourceLabel?: string;
+  /** Placeholder for the OAuth resource indicator field. Defaults to `'Enter resource URI'`. */
+  resourcePlaceholder?: string;
   /** Label for the log-in action. Defaults to `'Log in'`. */
   logInLabel?: string;
   /** Label for the log-out action. Defaults to `'Log out'`. */

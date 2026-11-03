@@ -1,8 +1,8 @@
+import type { DeploymentSelectorExtraOption } from '@epam/ai-dial-catalog';
 import { Label } from '@epam/ai-dial-ui-kit';
 import { memo, useId, useMemo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import DeploymentSelectorFieldTrigger from '../../../components/DeploymentSelector/DeploymentSelectorFieldTrigger';
-import type { DeploymentSelectorExtraOption } from '../../../components/DeploymentSelector/DeploymentSelectorPanel';
 import {
   DeploymentSelectorI18nKeys,
   SettingsI18nKeys,

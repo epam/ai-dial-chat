@@ -259,6 +259,65 @@ describe('ToolsetsMutationService', () => {
       });
     });
 
+    it.each([
+      ['a value', 'https://mcp.example.com/mcp'],
+      ['a blank value, which clears it in DIAL Core', ''],
+    ])('forwards an OAuth resource given as %s', async (_label, resource) => {
+      const { service } = makeWriteService();
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getUserBucket',
+      ).mockResolvedValue(bucketSdkOk);
+      const saveSpy = vi
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'saveToolSet',
+        )
+        .mockResolvedValue(mutationSdkOk);
+
+      await service.createToolset('user1', 'token', {
+        ...baseBody,
+        authSettings: {
+          authenticationType: ToolsetAuthType.OAuth,
+          clientId: 'client-id',
+          resource,
+        },
+      });
+
+      const sentBody = saveSpy.mock.calls[0][2].body as {
+        authSettings: Record<string, unknown>;
+      };
+      expect(sentBody.authSettings.resource).toBe(resource);
+    });
+
+    it('drops a resource sent with a non-OAuth authentication type', async () => {
+      const { service } = makeWriteService();
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getUserBucket',
+      ).mockResolvedValue(bucketSdkOk);
+      const saveSpy = vi
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'saveToolSet',
+        )
+        .mockResolvedValue(mutationSdkOk);
+
+      await service.createToolset('user1', 'token', {
+        ...baseBody,
+        authSettings: {
+          authenticationType: ToolsetAuthType.ApiKey,
+          apiKeyHeader: 'X-Api-Key',
+          resource: 'https://mcp.example.com/mcp',
+        },
+      });
+
+      const sentBody = saveSpy.mock.calls[0][2].body as {
+        authSettings: Record<string, unknown>;
+      };
+      expect(sentBody.authSettings).not.toHaveProperty('resource');
+    });
+
     it('maps OAuth with-login redirect URI without requiring configured endpoints', async () => {
       const { service } = makeWriteService();
       vi.spyOn(
@@ -536,6 +595,46 @@ describe('ToolsetsMutationService', () => {
         scopes_supported: ['read', 'write'],
         redirect_uri: 'https://chat.example.com/auth/toolset-signin',
       });
+    });
+
+    it('leaves an omitted resource to DIAL Core instead of re-sending the stored one', async () => {
+      const { service } = makeWriteService();
+      vi.spyOn(
+        (service['dialClient'] as DialClientService).client,
+        'getCustomToolSet',
+      ).mockResolvedValue(
+        okResponse({
+          authSettings: {
+            authentication_type: 'OAUTH',
+            client_id: 'existing-client',
+            client_secret: 'existing-secret',
+            resource: 'https://mcp.example.com/mcp',
+          },
+        }),
+      );
+      const saveSpy = vi
+        .spyOn(
+          (service['dialClient'] as DialClientService).client,
+          'saveToolSet',
+        )
+        .mockResolvedValue(mutationSdkOk);
+
+      await service.updateToolset('user1', 'token', id, {
+        ...baseBody,
+        authSettings: {
+          authenticationType: ToolsetAuthType.OAuth,
+          redirectUri: 'https://chat.example.com/auth/toolset-signin',
+        },
+      });
+
+      const sentBody = saveSpy.mock.calls[0][2].body as {
+        authSettings: Record<string, unknown>;
+      };
+      expect(sentBody.authSettings).toMatchObject({
+        client_id: 'existing-client',
+        client_secret: 'existing-secret',
+      });
+      expect(sentBody.authSettings).not.toHaveProperty('resource');
     });
 
     it('throws NotFoundException on upstream 404', async () => {

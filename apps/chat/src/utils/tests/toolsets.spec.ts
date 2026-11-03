@@ -142,6 +142,63 @@ describe('formToToolsetBody', () => {
     });
   });
 
+  describe('OAuth resource', () => {
+    const staticOAuthForm = (resource?: string): ToolsetFormData => ({
+      ...baseForm(),
+      auth: {
+        authenticationType: ToolsetAuthTypes.OAuth,
+        withLogin: WithLogin.WithConfig,
+        isLoggedIn: false,
+        clientId: 'client',
+        authorizationEndpoint: 'https://auth.example.com/authorize',
+        tokenEndpoint: 'https://auth.example.com/token',
+        resource,
+      },
+    });
+
+    it('sends the trimmed resource of a static client on create and update', () => {
+      for (const isUpdate of [false, true]) {
+        expect(
+          formToToolsetBody(
+            staticOAuthForm('  https://mcp.example.com/mcp  '),
+            undefined,
+            isUpdate,
+          ).authSettings.resource,
+        ).toBe('https://mcp.example.com/mcp');
+      }
+    });
+
+    it('sends a cleared resource as an empty string on update so DIAL Core removes it', () => {
+      const body = formToToolsetBody(staticOAuthForm(' '), undefined, true);
+      expect(body.authSettings).toHaveProperty('resource', '');
+    });
+
+    it('leaves a blank resource out on create so DIAL Core may resolve one', () => {
+      const body = formToToolsetBody(staticOAuthForm(''), undefined, false);
+      expect(body.authSettings).not.toHaveProperty('resource');
+    });
+
+    it('never sends a resource for a dynamically registered client', () => {
+      const form = staticOAuthForm('https://mcp.example.com/mcp');
+      form.auth.withLogin = WithLogin.WithLogin;
+      const body = formToToolsetBody(form, undefined, true);
+      expect(body.authSettings).not.toHaveProperty('resource');
+    });
+
+    it('never sends a resource for API-key authentication', () => {
+      const form = baseForm();
+      form.auth = {
+        authenticationType: ToolsetAuthTypes.ApiKey,
+        withLogin: WithLogin.WithLogin,
+        isLoggedIn: false,
+        keyHeader: 'X-API-Key',
+        resource: 'https://mcp.example.com/mcp',
+      };
+      const body = formToToolsetBody(form, undefined, true);
+      expect(body.authSettings).not.toHaveProperty('resource');
+    });
+  });
+
   it('includes the OAuth redirect URI when OAuth with login is selected', () => {
     const form = baseForm();
     form.auth = {
@@ -252,6 +309,7 @@ describe('toolsetDtoToForm', () => {
         scopesSupported: ['read', 'write'],
         codeChallenge: 'challenge-value',
         codeChallengeMethod: 'S256',
+        resource: 'https://mcp.example.com/mcp',
         userLevelAuthStatus: 'SIGNED_IN',
       },
     };
@@ -273,6 +331,7 @@ describe('toolsetDtoToForm', () => {
       scopes: ['read', 'write'],
       codeChallenge: 'challenge-value',
       codeChallengeMethod: 'S256',
+      resource: 'https://mcp.example.com/mcp',
     });
     expect(form.auth.clientSecret).toBeUndefined();
   });
