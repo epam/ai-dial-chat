@@ -9,7 +9,7 @@ import DeploymentSelectorPanel from '../DeploymentSelectorPanel';
 const breakpoint = vi.hoisted(() => ({ isMobile: false }));
 vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
-  useIsMobile: () => breakpoint.isMobile,
+  useIsPhone: () => breakpoint.isMobile,
 }));
 
 const makeItem = (id: string, type: CatalogEntityType): CatalogItem => ({

@@ -495,6 +495,8 @@ export interface ConversationInputProps {
    * popover after a selection or an explicit dismiss.
    */
   modelPickerOverlay?: (onClose: () => void) => ReactNode;
+  /** Reports picker open/dismiss events so host-owned search can reset on dismissal; breakpoint changes keep it open. */
+  onModelPickerOpenChange?: (open: boolean) => void;
   /** Resolved tool toggle items rendered in a "Tools" submenu. When empty or absent, no Tools item is shown. */
   toolsMenuItems?: ToolMenuItem[];
   /** Called when a tool row is toggled. Receives the tool id. */

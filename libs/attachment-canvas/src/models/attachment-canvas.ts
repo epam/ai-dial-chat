@@ -551,6 +551,8 @@ export interface AttachmentCanvasProps {
   tableDownloadFilename?: string;
   /** Whether the viewport is in mobile breakpoint — disables drag-to-resize. */
   isMobile?: boolean;
+  /** Opt into the bounded inline-end overlay while keeping legacy layout defaults. */
+  isBoundedOverlay?: boolean;
   /** Initial panel width in pixels (when resizable). Defaults to `min(maxWidth, 2/3 of viewport width)`. */
   defaultWidth?: number;
   /** Minimum panel width in pixels (when resizable). Defaults to `600`. */

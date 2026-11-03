@@ -100,7 +100,11 @@ const ProjectConversationsSection: FC<Props> = ({
     isLoading: isDeploymentsLoading,
     error: deploymentsError,
   } = useDeployments();
-  const { renderOverlay, catalogModal } = useDeploymentSelectorOverlay();
+  const {
+    renderOverlay,
+    catalogModal,
+    onOpenChange: onModelPickerOpenChange,
+  } = useDeploymentSelectorOverlay();
 
   /* A model restored from a viewed chat must not leak into a new project chat, as on the new-conversation screen. */
   useEffect(() => {
@@ -317,6 +321,7 @@ const ProjectConversationsSection: FC<Props> = ({
               placeholder={t(ChatI18nKeys.Placeholder)}
               onCreateConversation={handleCreateConversation}
               modelPickerOverlay={renderOverlay}
+              onModelPickerOpenChange={onModelPickerOpenChange}
               toolsMenuItems={toolsMenuItems}
               onToolToggle={onToolToggle}
               toolsMenuTitle={t(ToolsI18nKeys.MenuTitle)}

@@ -156,3 +156,7 @@ SOURCE_PANEL_CLASS.panel; // 'dial-source-panel-panel'
 
 Write host overrides with CSS logical properties (`margin-inline-start`,
 `inset-inline-end`) so they keep working under `dir="rtl"`.
+
+## Tablet presentation
+
+Pass `isBoundedOverlay={useIsTablet()}` to opt into a bounded inline-end overlay. The parent containing block must be positioned. Existing `isMobile` remains supported; bounded overlays keep resizing available and ignore the mobile full-width override. Width, labels, close/resize callbacks and persistence remain host-owned; no app routing or storage is read by this library.

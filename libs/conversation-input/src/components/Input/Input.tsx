@@ -6,6 +6,7 @@ import {
   buildCssVars,
   mergeClasses,
   useIsMobile,
+  useIsPhone,
 } from '@epam/ai-dial-chat-shared';
 import {
   BASE_ICON_SIZE,
@@ -150,6 +151,7 @@ export const Input = forwardRef<InputHandle, InputProps>(
       validateAttachment,
       onAttachmentClick,
       modelPickerOverlay,
+      onModelPickerOpenChange,
       maximumAttachmentsAmount,
       onAttachmentsLimitExceeded,
       isAttachmentsEnabled = true,
@@ -160,7 +162,12 @@ export const Input = forwardRef<InputHandle, InputProps>(
     ref,
   ) => {
     const isMobile = useIsMobile();
+    const isPhone = useIsPhone();
     const [isPickerOpen, setIsPickerOpen] = useState(false);
+    const handlePickerOpenChange = (open: boolean) => {
+      setIsPickerOpen(open);
+      onModelPickerOpenChange?.(open);
+    };
     const historyNav = useInputHistoryNavigation(messageHistory);
     const mentionRanges = activeMentions ?? [];
     const hasActiveMentions = mentionRanges.length > 0;
@@ -1351,13 +1358,13 @@ export const Input = forwardRef<InputHandle, InputProps>(
                     nameClassName={typography?.modelSelectorNameClassName}
                     versionClassName={typography?.modelSelectorVersionClassName}
                     isStreaming={isStreaming}
-                    isMobile={isMobile}
+                    isMobile={isPhone}
                     isDisabled={isModelSelectorDisabled}
                     style={cssVars}
                     modelPickerOverlay={modelPickerOverlay}
                     isPickerOpen={isPickerOpen}
-                    onPickerToggle={() => setIsPickerOpen((prev) => !prev)}
-                    onPickerOpenChange={setIsPickerOpen}
+                    onPickerToggle={() => handlePickerOpenChange(!isPickerOpen)}
+                    onPickerOpenChange={handlePickerOpenChange}
                   />
                   {shouldShowMicButton && (
                     <GhostIconButton

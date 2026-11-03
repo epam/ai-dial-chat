@@ -5,7 +5,7 @@ import {
   mergeClasses,
   SELECT_LIST_MAX_HEIGHT_CLASS_NAME,
   SELECT_LIST_MAX_HEIGHT_PX,
-  useIsMobile,
+  useIsPhone,
 } from '@epam/ai-dial-chat-shared';
 import {
   CaptionText,
@@ -71,6 +71,9 @@ export interface DeploymentSelectorExtraOption {
 }
 
 interface Props {
+  /** Controlled search survives sheet/popover replacement. */
+  searchQuery?: string;
+  onSearchQueryChange?: (query: string) => void;
   /** Starred catalog items to display in the Favorites list. */
   favorites: CatalogItem[];
   /**
@@ -122,6 +125,8 @@ const matchesQuery = (item: CatalogItem, query: string): boolean => {
 const NO_EXTRA_OPTIONS: DeploymentSelectorExtraOption[] = [];
 
 const DeploymentSelectorPanel: FC<Props> = ({
+  searchQuery,
+  onSearchQueryChange,
   favorites,
   extraOptions = NO_EXTRA_OPTIONS,
   pinnedItem,
@@ -147,9 +152,11 @@ const DeploymentSelectorPanel: FC<Props> = ({
     unavailableLabel = 'Unavailable',
   } = labels;
 
-  const [query, setQuery] = useState('');
+  const [localQuery, setLocalQuery] = useState('');
+  const query = searchQuery ?? localQuery;
   const handleSearchChange = (value?: string) => {
-    setQuery(value ?? '');
+    setLocalQuery(value ?? '');
+    onSearchQueryChange?.(value ?? '');
   };
   const [leavingIds, setLeavingIds] = useState<Set<string>>(new Set());
   const leaveTimeoutsRef = useRef(
@@ -247,7 +254,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
     }
   }, []);
 
-  const isMobile = useIsMobile();
+  const isPhone = useIsPhone();
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   /*
@@ -259,9 +266,9 @@ const DeploymentSelectorPanel: FC<Props> = ({
    * keyboard over the list the user came to read.
    */
   useEffect(() => {
-    if (isMobile) return;
+    if (isPhone) return;
     searchInputRef.current?.focus();
-  }, [isMobile]);
+  }, [isPhone]);
 
   const handleSelectId = (id: string) => {
     onSelect(id);

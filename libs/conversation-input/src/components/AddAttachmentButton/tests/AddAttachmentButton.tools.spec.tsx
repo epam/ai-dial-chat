@@ -16,7 +16,11 @@ const { mockUseIsMobile } = vi.hoisted(() => ({
 vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@epam/ai-dial-chat-shared')>();
-  return { ...actual, useIsMobile: mockUseIsMobile };
+  return {
+    ...actual,
+    useIsMobile: mockUseIsMobile,
+    useIsPhone: mockUseIsMobile,
+  };
 });
 
 const baseProps = {
@@ -81,6 +85,57 @@ describe('AddAttachmentButton — tools submenu', () => {
   });
 
   describe('desktop keyboard interaction', () => {
+    it('navigates tool rows with arrow keys and Home/End', async () => {
+      const user = userEvent.setup();
+      render(
+        <AddAttachmentButton
+          {...baseProps}
+          toolsMenuItems={[
+            singleToolItem,
+            { ...singleToolItem, id: 'second', label: 'Second tool' },
+          ]}
+          onToolToggle={vi.fn()}
+        />,
+      );
+      await user.click(screen.getByRole('button', { name: 'Add' }));
+      await user.click(await screen.findByRole('menuitem', { name: 'Tools' }));
+      const first = await screen.findByRole('menuitemcheckbox', {
+        name: 'Deep Research',
+      });
+      const second = screen.getByRole('menuitemcheckbox', {
+        name: 'Second tool',
+      });
+      act(() => first.focus());
+      await user.keyboard('{ArrowDown}');
+      expect(second.matches(':focus')).toBe(true);
+      await user.keyboard('{Home}');
+      expect(first.matches(':focus')).toBe(true);
+      await user.keyboard('{End}');
+      expect(second.matches(':focus')).toBe(true);
+    });
+
+    it('keeps the active Tools submenu across phone/tablet transitions', async () => {
+      const user = userEvent.setup();
+      mockUseIsMobile.mockReturnValue(true);
+      const props = {
+        ...baseProps,
+        toolsMenuItems: [singleToolItem],
+        onToolToggle: vi.fn(),
+      };
+      const { rerender } = render(<AddAttachmentButton {...props} />);
+      await user.click(screen.getByRole('button', { name: 'Add' }));
+      await user.click(await screen.findByText('Tools'));
+      for (const phone of [false, true, false]) {
+        mockUseIsMobile.mockReturnValue(phone);
+        rerender(<AddAttachmentButton {...props} />);
+        const row = await screen.findByRole('menuitemcheckbox', {
+          name: 'Deep Research',
+        });
+        await user.click(row);
+      }
+      expect(props.onToolToggle).toHaveBeenCalledTimes(3);
+    });
+
     it.each([
       ['Enter', '{Enter}'],
       ['Space', ' '],

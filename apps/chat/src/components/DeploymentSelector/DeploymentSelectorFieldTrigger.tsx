@@ -1,5 +1,5 @@
 import { DeploymentSelectorField } from '@epam/ai-dial-catalog';
-import { mergeClasses, useIsMobile } from '@epam/ai-dial-chat-shared';
+import { mergeClasses, useIsPhone } from '@epam/ai-dial-chat-shared';
 import { BottomSheetShell } from '@epam/ai-dial-conversation-input';
 import {
   DIAL_ICON_SIZE,
@@ -66,30 +66,37 @@ const DeploymentSelectorFieldTrigger: FC<Props> = ({
   labelTooltip,
 }) => {
   const { t } = useTranslation();
-  const isMobile = useIsMobile();
+  const isPhone = useIsPhone();
   /* One open state shared by both presentations (only one is ever mounted).
    * Crossing the breakpoint while open — device rotation — intentionally
    * keeps it open: the picker continues in the other presentation instead
    * of dismissing the user mid-selection. */
   const [isOpen, setIsOpen] = useState(false);
 
-  const { renderOverlay, catalogModal, isLoading, error, resolvedLabel } =
-    useDeploymentSelectorFieldOverlay(
-      selectedId,
-      (id) => {
-        onSelect(id);
-        setIsOpen(false);
-      },
-      extraOptions,
-      mergeClasses('min-w-0', panelClassName),
-    );
+  const {
+    renderOverlay,
+    catalogModal,
+    isLoading,
+    error,
+    resolvedLabel,
+    onOpenChange,
+  } = useDeploymentSelectorFieldOverlay(
+    selectedId,
+    (id) => {
+      onSelect(id);
+      setIsOpen(false);
+    },
+    extraOptions,
+    mergeClasses('min-w-0', panelClassName),
+  );
 
   const handleOpenChange = useCallback(
     (open: boolean) => {
       if (isDisabled) return;
       setIsOpen(open);
+      onOpenChange(open);
     },
-    [isDisabled],
+    [isDisabled, onOpenChange],
   );
 
   /*
@@ -132,7 +139,7 @@ const DeploymentSelectorFieldTrigger: FC<Props> = ({
           isDisabled={isDisabled}
           isInvalid={isInvalid}
           labelledById={labelledById}
-          ariaHasPopup={isMobile ? 'dialog' : 'listbox'}
+          ariaHasPopup={isPhone ? 'dialog' : 'listbox'}
           className={className}
           panelClassName={panelClassName}
           iconAfter={
@@ -157,7 +164,7 @@ const DeploymentSelectorFieldTrigger: FC<Props> = ({
           onOpenChange={handleOpenChange}
           renderPanel={renderOverlay}
           renderOverlay={
-            isMobile
+            isPhone
               ? (panel, open, close) => (
                   <BottomSheetShell
                     isOpen={open}

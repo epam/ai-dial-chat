@@ -627,7 +627,8 @@ whose composer is already wide below that width opts the narrower widths in with
 ```
 
 The flag affects the action row alone. The add menu and the model picker keep
-their bottom-sheet presentation below 1280px, so it does not turn an embed into
+their bottom-sheet presentation below 768px, independently of this flag, so it
+does not turn an embed into
 a desktop layout wholesale.
 
 Neither layout uses an `order-*` utility: each renders its children in the
@@ -646,3 +647,9 @@ npm exec nx build conversation-input
 ```sh
 npm exec nx test conversation-input
 ```
+
+## Responsive menu policy
+
+Attachment, tools, add-on and model menus switch from bottom sheets to anchored menus at 768px. Composer layout and Chat Settings destination presentation keep the existing 1280px layout boundary. ModelSelectorBottomSheet accepts optional `searchQuery` and `onSearchQueryChange` for a query shared across presentations; useModelSelector exposes those query controls. Omitting the new sheet inputs preserves local search state.
+
+`onModelPickerOpenChange(open)` reports picker opening and dismissal to the host. Use it to reset host-owned search on dismissal; presentation changes keep the picker open and retain its query.

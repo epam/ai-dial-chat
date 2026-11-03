@@ -10,7 +10,11 @@ const { mockUseIsMobile } = vi.hoisted(() => ({
 vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@epam/ai-dial-chat-shared')>();
-  return { ...actual, useIsMobile: mockUseIsMobile };
+  return {
+    ...actual,
+    useIsMobile: mockUseIsMobile,
+    useIsPhone: mockUseIsMobile,
+  };
 });
 
 const defaultProps = {

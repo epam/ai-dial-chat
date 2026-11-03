@@ -1,7 +1,7 @@
 import {
   CatalogEntityType,
   mergeClasses,
-  useIsMobile,
+  useIsPhone,
 } from '@epam/ai-dial-chat-shared';
 import { SelectOption, Spinner, Tabs } from '@epam/ai-dial-ui-kit';
 import {
@@ -151,7 +151,7 @@ export const Catalog: FC<CatalogProps> = ({
   const { typography, headingRowClassName = 'h-[64px]' } = catalogStyles ?? {};
   const cssVars = getStyles(catalogStyles);
 
-  const isMobile = useIsMobile();
+  const isPhone = useIsPhone();
 
   const pageTitle = titles?.pageTitle ?? 'Catalog';
   const createLabel = titles?.createLabel ?? 'Create';
@@ -540,10 +540,9 @@ export const Catalog: FC<CatalogProps> = ({
   }, []);
 
   const isCreateButtonVisible = !hideCreateButton && !isReadonly;
-  /* Below the desktop breakpoint the header's Create button becomes a round
+  /* On phones the header's Create button becomes a round
    * "+" pinned to the bottom of the catalog, as on other mobile screens. */
-  const isFloatingCreateVisible = isCreateButtonVisible && isMobile;
-  const isHeaderCreateVisible = isCreateButtonVisible && !isMobile;
+  const isFloatingCreateVisible = isCreateButtonVisible && isPhone;
 
   /* State, not a ref: the scroll body mounts only after loading, and the
      scroll-to-top hook must subscribe to it once it exists. */
@@ -683,12 +682,13 @@ export const Catalog: FC<CatalogProps> = ({
       )}
       style={cssVars}
     >
-      {(!hidePageTitle || isHeaderCreateVisible) && (
+      {(!hidePageTitle || isCreateButtonVisible) && (
         <div className={mergeClasses('shrink-0', styles.heading)}>
           <div
             className={mergeClasses(
               'flex w-full items-center justify-between px-4 desktop:px-8',
-              headingRowClassName,
+              !(hidePageTitle && isFloatingCreateVisible) &&
+                headingRowClassName,
             )}
           >
             {!hidePageTitle && (
@@ -701,14 +701,21 @@ export const Catalog: FC<CatalogProps> = ({
                 {pageTitle}
               </h1>
             )}
-            {isHeaderCreateVisible && <CreateButton {...createButtonProps} />}
+            {isCreateButtonVisible && (
+              <div
+                className={
+                  isFloatingCreateVisible
+                    ? 'absolute inset-e-4 bottom-4 z-10'
+                    : undefined
+                }
+              >
+                <CreateButton
+                  {...createButtonProps}
+                  isFloating={isFloatingCreateVisible}
+                />
+              </div>
+            )}
           </div>
-        </div>
-      )}
-
-      {isFloatingCreateVisible && (
-        <div className="absolute inset-e-4 bottom-4 z-10">
-          <CreateButton {...createButtonProps} isFloating />
         </div>
       )}
 

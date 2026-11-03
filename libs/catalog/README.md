@@ -265,7 +265,7 @@ navigation (a category tree, etc.).
 
 #### Mobile browse settings
 
-Below the desktop breakpoint (`useIsMobile` from `@epam/ai-dial-chat-shared`)
+Below 768px (`useIsPhone` from `@epam/ai-dial-chat-shared`)
 the Browse toolbar drops the view toggle, the sort dropdown and the filter
 dropdown. In their place, next to the search field, it shows one settings
 button that opens a bottom sheet with View, Sorting and Filtering pages.
@@ -295,8 +295,8 @@ const browseSettings: Partial<BrowseSettingsSheetLabels> = {
 `createOptions` may contain `DropdownItemType.Divider` and
 `DropdownItemType.PlainText` items to split the Create menu into sections, for
 example a divider plus a section header. Search highlighting leaves them alone.
-The desktop dropdown renders them with the kit's own styles. Below the desktop
-breakpoint, the bottom sheet renders the divider as `role="separator"` and the
+The anchored dropdown renders them with the kit's own styles from 768px. Below
+768px, the bottom sheet renders the divider as `role="separator"` and the
 header as a non-interactive caption, neither of them a `menuitem`. Restyle them
 through `styles.colors.createMenu` (`CreateMenuColors`) and
 `styles.typography.createMenuSectionHeaderClassName` (defaults to
@@ -391,7 +391,7 @@ empty state for free.
 
 Once the user has scrolled the catalog down by at least one screen — the page
 plus, in list view, the table's own rows — a floating `FabButton` appears in the
-bottom inline-end corner (above the floating Create button on mobile).
+bottom inline-end corner (above the floating Create button below 768px).
 Activating it scrolls the page and the list rows back to the top and moves focus
 to the search field. The scroll is instant under
 `prefers-reduced-motion: reduce`. Pass a translated accessible name through
@@ -1800,3 +1800,7 @@ Existing toolset `onLogin` / `onLogout` contracts are unchanged.
 The public `DeploymentSelectorField` restores focus through the input's
 supported `onFocus` event and never requires a private input ref or DOM query.
 Its keyboard and Browse behavior is exercised by the packed scheduler consumer.
+
+## Responsive menus and details
+
+Create and browse view/sort/filter menus use phone sheets below 768px and existing anchored menus from 768px. Catalog shows a floating icon-only Create button below 768px and the normal labeled header button from 768px. Open Create menus and their search query survive this placement change; hidden/read-only rules still apply. Only the phone presentation reserves bottom content padding and stacks Scroll to top above Create. Catalog grids, gutters and catalog dialogs retain the existing 1280px layout boundary. DetailsPanel (also composed by SkillDetailsSidePanel) keeps its SideDrawer focus/scroll lifecycle; at 768-1279px the drawer uses its 540px preferred width capped to available width minus 32px.

@@ -179,6 +179,10 @@ Conversation-history reuse is split across three acyclic layers. `chat-shared` o
 
 Layout keys (`conversations-section`, `conversations-panel-toggle`, `showConversationsSectionByDefault`, `hide-conversations-filter`, `hide-new-conversation`, `hide-user-menu`, `hide-user-menu-identity`, `hide-settings-page`, `hide-usage-page`, `hide-navigation-menu`, `catalog`, `file-manager`) keep their meaning in the sidebar. The page headers of Catalog, File manager, Usage and Scheduled tasks share `PAGE_HEADER_ROW_CLASS`, and the File manager page frames the manager in a card from the desktop band up. The libraries keep the rail (`NavigationPanel`), the bottom sheet (`NavigationSheet`) and the panel (`ConversationPanel`) for hosts that compose them themselves; `apps/chat` no longer mounts them.
 
+### Surface-specific responsive policy
+
+Navigation, conversation panel and general page/form layout retain the 1280px boundary and `useIsMobile`. Menus use `useIsPhone` (below 768px); Catalog also uses it to switch from floating Create to the normal labeled header button at 768px. Sources/canvas opt into SidebarPanel's bounded overlay with `useIsTablet` (768px inclusive to 1280px exclusive). Catalog/skill details and standalone publication drawers use the same tablet width cap through their public SideDrawer class hook. Tablet overlays reserve no page-layout width and leave 32px of underlying content visible. Existing panel contexts and app adapters continue owning open state, route policy and persistence; no new global provider is introduced.
+
 ### Library isolation
 
 Libraries must stay free of host and external-system knowledge: no REST paths, generated clients, app contexts, auth/session/cookies, environment variables, feature flags, routing, analytics, storage keys, or third-party SDK setup. Applications adapt those concerns and pass data, resolved values, and behaviour into libs through props, typed callbacks, or narrow interfaces.

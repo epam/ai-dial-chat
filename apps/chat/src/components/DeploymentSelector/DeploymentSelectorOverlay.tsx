@@ -14,6 +14,8 @@ import type {
 const DeploymentSelectorPanel = lazy(() => import('./DeploymentSelectorPanel'));
 
 interface Props {
+  searchQuery?: string;
+  onSearchQueryChange?: (query: string) => void;
   favorites: CatalogItem[];
   extraOptions?: DeploymentSelectorExtraOption[];
   pinnedItem?: CatalogItem;
@@ -28,6 +30,8 @@ interface Props {
 }
 
 const DeploymentSelectorOverlay: FC<Props> = ({
+  searchQuery,
+  onSearchQueryChange,
   favorites,
   extraOptions,
   pinnedItem,
@@ -59,6 +63,8 @@ const DeploymentSelectorOverlay: FC<Props> = ({
   return (
     <Suspense fallback={null}>
       <DeploymentSelectorPanel
+        searchQuery={searchQuery}
+        onSearchQueryChange={onSearchQueryChange}
         favorites={favorites}
         extraOptions={extraOptions}
         pinnedItem={pinnedItem}

@@ -1,0 +1,56 @@
+## 1. Source-panel vertical slice
+
+Post-archive update: the user requested removal of this change's browser tests. The browser suite and its Nx target referenced in completed tasks below are historical and are no longer retained. All unit tests remain in place.
+
+Strategy: vertical slices, each with per-file verification followed by one `npm run verify:changed`. Dependencies: section 2 depends on section 1; section 3 depends on section 1; section 4 depends on sections 2 and 3. Paths marked **new** are proposed test files. Use role/label/text queries and observable behavior. Preserve unrelated local changes. Relative TypeScript imports remain extensionless and Vite module resolution remains bundler.
+
+- [x] 1.1 Add the 768px constants and **new** `libs/chat-shared/src/hooks/useIsPhone.ts` and `useIsTablet.ts`, export them through the existing public entry, and add scoped variants in `tools/tailwind/theme.css`. Preserve every old layout query.
+  Verification: `npm run test:file -- libs/chat-shared/src/constants/tests/breakpoint-sync.spec.ts`; `npm run test:file -- libs/chat-shared/src/hooks/tests/useIsMobile.spec.ts`.
+
+- [x] 1.2 Add dedicated hook/range tests (**new** `libs/chat-shared/src/hooks/tests/useIsPhone.spec.ts` and `useIsTablet.spec.ts`) covering all five widths, fractional boundaries, SSR/no-matchMedia, live query changes and cleanup. Extend `libs/chat-shared/src/constants/tests/breakpoint-sync.spec.ts` to pin new JS/Tailwind/participating SCSS mirrors while preserving old assertions.
+  Verification: `npm run test:file -- libs/chat-shared/src/hooks/tests/useIsPhone.spec.ts`; `npm run test:file -- libs/chat-shared/src/hooks/tests/useIsTablet.spec.ts`; `npm run test:file -- libs/chat-shared/src/constants/tests/breakpoint-sync.spec.ts`.
+
+- [x] 1.3 Add the explicit bounded-overlay contract in `libs/sidebar/src/models/panel-props.ts` and `libs/sidebar/src/components/SidebarPanel/SidebarPanel.tsx` plus its SCSS. Normalize/clamp every width path, preserve desktop preferred size and unchanged default/left-panel behavior. Add **new** pure sizing utility/tests under `libs/sidebar/src/utils/` and `libs/sidebar/src/utils/tests/panel-width.spec.ts`.
+  Verification: `npm run test:file -- libs/sidebar/src/utils/tests/panel-width.spec.ts`; `npm run test:file -- libs/sidebar/src/components/SidebarPanel/tests/SidebarPanel.spec.tsx`; `npm run test:file -- libs/sidebar/src/components/SidebarPanel/tests/SidebarPanel.classes.spec.tsx`.
+
+- [x] 1.4 Wire source-panel props and placement through `libs/source-panel/src/models/conversation-sources-panel-props.ts`, its ConversationSourcesPanel component, `apps/chat/src/components/ConversationSourcesPanel/ConversationSourcesPanel.tsx` and `apps/chat/src/app/app.tsx`. Add source overlay/close/focus transitions and ensure no layout reservation on tablet.
+  Verification: `npm run test:file -- libs/source-panel/src/components/ConversationSourcesPanel/tests/ConversationSourcesPanel.spec.tsx`; `npm run test:file -- apps/chat/src/app/tests/app.spec.tsx`; finish slice with `npm run verify:changed`.
+
+## 2. Remaining right-panel vertical slices
+
+- [x] 2.1 Forward the new presentation contract through `libs/attachment-canvas/src/models/attachment-canvas.ts`, AttachmentCanvasContainer and AttachmentCanvas; adapt the `apps/chat/src/utils/canvas-width.ts` call in `apps/chat/src/app/app.tsx` for tablet defaults/bounds on conversation, file and project mounts. Preserve resolver/content behavior and source/canvas exclusion.
+  Verification: `npm run test:file -- apps/chat/src/utils/tests/canvas-width.spec.ts`; `npm run test:file -- libs/attachment-canvas/src/components/AttachmentCanvas/tests/AttachmentCanvas.spec.tsx`; `npm run test:file -- apps/chat/src/hooks/conversation-panel/tests/useConversationPanelRouteState.spec.tsx`; `npm run test:file -- apps/chat/src/app/tests/app.spec.tsx`. Run `npm run verify:changed` after this canvas slice.
+
+- [x] 2.2 Apply bounded tablet sizing to `libs/catalog/src/components/Details/DetailsPanel.tsx` and `libs/publish-panel/src/components/PublishPanel/StandalonePublishPanel.tsx` and their SCSS; verify `libs/skills/src/components/SkillDetailsSidePanel/SkillDetailsSidePanel.tsx` composition inherits it. Keep nested content, drafts and modal mechanics. Confirm supported SideDrawer integration using ui-kit searchEntity/getEntityDetails before changing its composition.
+  Verification: run existing `libs/catalog/src/components/Details/tests/DetailsPanel.spec.tsx` and the browser geometry suite: `npm run test:file -- libs/catalog/src/components/Details/tests/DetailsPanel.spec.tsx`; `npm run test:file -- libs/publish-panel/src/components/PublishPanel/tests/StandalonePublishPanel.spec.tsx`; `npm run test:file -- apps/chat/src/components/PublishConversationPanelContainer/tests/PublishConversationPanelContainer.spec.tsx`. Run `npm run verify:changed` after this drawer slice.
+
+## 3. Menu vertical slices
+
+- [x] 3.1 Split menu and layout decisions in `libs/conversation-input/src/components/AddAttachmentButton/AddAttachmentButton.tsx`, `libs/conversation-input/src/components/Input/Input.tsx` and `libs/conversation-input/src/components/Input/ModelSelectorControl.tsx`. Adopt phone-menu queries for attachment/tools/add-ons/model selectors; preserve settings destination and composer layout. Handle open-menu migration and focus cleanup. Final review fix verified: controlled submenu state survives phone/tablet transitions.
+  Verification: `npm run test:file -- libs/conversation-input/src/components/AddAttachmentButton/tests/AddAttachmentButton.spec.tsx`; `npm run test:file -- libs/conversation-input/src/components/AddAttachmentButton/tests/AddAttachmentButton.tools.spec.tsx`; `npm run test:file -- libs/conversation-input/src/components/AddAttachmentButton/tests/AddAttachmentButton.prompts.spec.tsx`; `npm run test:file -- libs/conversation-input/src/components/Input/tests/ModelSelectorControl.spec.tsx`. Run `npm run verify:changed` after this input-menu slice.
+
+- [x] 3.2 Align sheet/popover, ARIA and initial focus in `apps/chat/src/components/DeploymentSelector/DeploymentSelectorFieldTrigger.tsx` and `DeploymentSelectorPanel.tsx` to 768px, retaining form layout, query and selected value across transitions.
+  Verification: `npm run test:file -- apps/chat/src/components/DeploymentSelector/tests/DeploymentSelectorFieldTrigger.spec.tsx`; `npm run test:file -- apps/chat/src/components/DeploymentSelector/tests/DeploymentSelectorPanel.spec.tsx`. Run `npm run verify:changed` after this selector slice.
+
+- [x] 3.3 Switch menu branches in `libs/catalog/src/components/Catalog/CreateButton.tsx` and `libs/catalog/src/components/Toolbar/Rows/TitleRow.tsx`; preserve catalog grid/dialog layout and sheet filter draft semantics (Create placement is extended in 5.1). Cleanly close and restore focus when browse triggers are replaced. Final review fix verified: focus returns to the explicit Browse settings trigger with nonempty search.
+  Verification: `npm run test:file -- libs/catalog/src/components/Catalog/tests/CreateButton.spec.tsx`; `npm run test:file -- libs/catalog/src/components/Catalog/tests/CreateButton.mobile.spec.tsx`; `npm run test:file -- libs/catalog/src/components/Toolbar/tests/Toolbar.mobile.spec.tsx`; add/run **new** `npm run test:file -- libs/catalog/src/components/Toolbar/tests/Toolbar.tablet.spec.tsx`. Run `npm run verify:changed` after this catalog-menu slice.
+
+## 4. Cross-surface verification and public contracts
+
+- [x] 4.1 Add dedicated RTL and focus regression cases to SidebarPanel, canvas, catalog drawer and menu tests: logical tablet anchoring, resize edge, nested Escape ordering, return focus, reduced motion and cleanup. Include unchanged left-panel defaults and NavigationSheet/ConversationPanel behavior.
+  Verification: `npm run test:file -- libs/sidebar/src/components/SidebarPanel/tests/SidebarPanel.spec.tsx`; `npm run test:file -- apps/chat/src/components/Navigation/tests/SidebarNavigation.spec.tsx`; `npm run test:file -- apps/chat/src/components/ConversationPanel/tests/ConversationPanelViewSidebar.spec.tsx`; `npm run test:file -- libs/catalog/src/components/Details/tests/DetailsPanel.spec.tsx`.
+
+- [x] 4.2 Add automated real-browser geometry/lifecycle coverage (**new** `apps/chat/browser-tests/tablet-responsive.browser.spec.mjs`) and an Nx target on the existing chat project using the repository's installed Playwright infrastructure. Resolve current targets with `npm exec nx show project @epam/chat --json` before wiring the target. Cover every inventory family at 767/768/1024/1279/1280px, both directions of viewport changes while open, remembered sizes, pointer/keyboard resize, RTL, nested menus/panels, main-content bounding boxes and scroll/focus cleanup. Use deterministic fixture data, not live backend dependencies.
+  Verification: `npm run test:file -- apps/chat/src/app/tests/app.spec.tsx` for app contract regressions; run the new browser suite through the added `npm exec nx run @epam/chat:test-tablet-responsive` target. Browser tests are separate from Vitest and must not be counted as passed by JSDOM checks.
+
+- [x] 4.3 Update `docs/architecture.md`, `apps/chat/README.md` and READMEs of chat-shared, sidebar, source-panel, attachment-canvas, catalog, conversation-input and publish-panel for changed responsive/public contracts; update affected diagrams only where their geometry/structure changes. Update responsive guidance to permit the explicitly scoped new variants. Audit all touched libraries for host-owned details: no routes, storage/auth/env, app contexts, client/SDK setup, generated API imports or telemetry. Preserve Labels/Colors/ClassName, package exports/styles.css and extensionless-import contracts; no manifest churn.
+  Verification: `npm run test:file -- libs/chat-shared/src/constants/tests/breakpoint-sync.spec.ts`; `npm run validate:docs`; `npm run validate:specs`; `npm run lint:boundaries:test`. Run `npm run verify:changed` after the cross-surface slice.
+
+- [x] 4.4 Run exactly one final `npm run verify:full` and `npm run build:quiet` (styles/public exports are affected); report every panel/menu changed, all checks and remaining limitations. Use the five-axis code-review-and-quality skill before any merge, as required by repository policy. Preserve .mcp.json and other work; do not edit chat_pg_copy.
+  Verification: the final Nx-backed verification/build commands above plus the browser target from 4.2; record results rather than treating this planning checklist as evidence of execution.
+
+## 5. Catalog Create placement clarification
+
+- [x] 5.1 Use the normal labeled header Create button from 768px in Catalog, retaining the floating icon-only button below 768px. Preserve hidden/read-only rules and other Catalog layout policies. Update design, responsive requirements and public documentation.
+  Verification: `npm run test:file -- libs/catalog/src/components/Catalog/tests/Catalog.mobile.spec.tsx libs/catalog/src/components/Catalog/tests/Catalog.spec.tsx`; extend `npm exec -- nx run @epam/chat:test-tablet-responsive` with real Catalog placement/menu checks at 767/768/1024/1279/1280px in LTR/RTL and live viewport transitions. Run `npm run verify:changed` after this slice; the full verification from 4.4 has already been executed.
+

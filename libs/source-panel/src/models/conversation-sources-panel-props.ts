@@ -96,6 +96,8 @@ export interface ConversationSourcesPanelProps {
   onDownloadAll?: () => void;
   /** Whether the viewport is in mobile breakpoint (disables resizing). */
   isMobile: boolean;
+  /** Opt into a bounded overlay without changing mobile content semantics. */
+  isBoundedOverlay?: boolean;
   /** Initial panel width in pixels. */
   defaultWidth?: number;
   /** Minimum panel width in pixels. */

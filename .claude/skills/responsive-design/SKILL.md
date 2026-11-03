@@ -31,6 +31,10 @@ Defined once in `tools/tailwind/theme.css` as Tailwind v4 custom variants, which
 >
 > **Do not use `sm:` / `md:` / `lg:` / `xl:`** — Tailwind's default breakpoints still exist (they come with its default theme) but are out of scope for this project and should not be used.
 
+## Scoped menu and right-panel breakpoints
+
+The existing layout boundary stays at 1280px. `phone:` (<768px), `tablet:` (768px <= width <1280px), and `tablet-up:` (>=768px) are approved only for menu presentation and bounded right overlays. Use `useIsPhone` for sheet versus anchored-menu decisions and `useIsTablet` for bounded overlays. Do not migrate navigation, conversation panels, forms, editors or page layout to these scoped hooks. Verify 767, 768, 1024, 1279 and 1280px, including an open surface crossing both boundaries.
+
 ## When to use Tailwind prefixes vs. a JS hook
 
 **Default: Tailwind utility prefixes.** They are SSR-safe, avoid first-paint flicker, and keep layout decisions in markup.

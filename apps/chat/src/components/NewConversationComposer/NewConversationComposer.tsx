@@ -101,6 +101,7 @@ interface Props {
   onDeploymentChange?: (id: string) => void;
   isModelSelectorDisabled?: boolean;
   modelPickerOverlay?: (onClose: () => void) => ReactNode;
+  onModelPickerOpenChange?: (open: boolean) => void;
   /** Backs attachment/audio-transcription validation and chat-settings feature gating. */
   selectedDeployment?: DeploymentItemDto;
   isModelSelectorLoading?: boolean;
@@ -182,6 +183,7 @@ const NewConversationComposer: FC<Props> = ({
   onDeploymentChange,
   isModelSelectorDisabled = false,
   modelPickerOverlay,
+  onModelPickerOpenChange,
   selectedDeployment,
   isModelSelectorLoading = false,
   modelSelectorError = null,
@@ -630,6 +632,7 @@ const NewConversationComposer: FC<Props> = ({
           onAttachmentClick={handleAttachmentClick}
           onMessageTooLong={handleMessageTooLong}
           modelPickerOverlay={modelPickerOverlay}
+          onModelPickerOpenChange={onModelPickerOpenChange}
           onChange={onChange}
           menuOverlays={menuOverlays}
           activeMentions={activeMentions}
