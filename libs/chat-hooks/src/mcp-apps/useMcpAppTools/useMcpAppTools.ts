@@ -10,9 +10,8 @@ import {
   type McpDeploymentKind,
 } from '@epam/ai-dial-mcp-apps';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { isPublicToolsetId } from '../../oauth/toolset-id';
 import type { McpAppsApiClient } from '../mcp-apps-api-client';
-
-const PUBLIC_TOOLSET_ID_PREFIX = 'toolsets/public/';
 
 /**
  * Drops a toolset when another toolset with the same display name is public.
@@ -23,13 +22,14 @@ const PUBLIC_TOOLSET_ID_PREFIX = 'toolsets/public/';
  * @param toolsets - toolsets whose name prefixes a tool call seen in the conversation
  */
 const preferPublicToolsets = (toolsets: DialToolsetDto[]): DialToolsetDto[] => {
-  const isPublic = (toolset: DialToolsetDto) =>
-    toolset.id.startsWith(PUBLIC_TOOLSET_ID_PREFIX);
   const nameOf = (toolset: DialToolsetDto) =>
     sanitizeToolName(`${toolset.displayName ?? toolset.id}`);
-  const publicNames = new Set(toolsets.filter(isPublic).map(nameOf));
+  const publicNames = new Set(
+    toolsets.filter((toolset) => isPublicToolsetId(toolset.id)).map(nameOf),
+  );
   return toolsets.filter(
-    (toolset) => isPublic(toolset) || !publicNames.has(nameOf(toolset)),
+    (toolset) =>
+      isPublicToolsetId(toolset.id) || !publicNames.has(nameOf(toolset)),
   );
 };
 
