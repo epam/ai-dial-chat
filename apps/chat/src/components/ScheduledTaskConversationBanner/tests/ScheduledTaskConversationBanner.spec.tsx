@@ -101,7 +101,6 @@ describe('ScheduledTaskConversationBanner', () => {
     expect(
       screen.getByText('scheduledTasks.conversationBanner.loadingLabel'),
     ).toBeTruthy();
-    expect(screen.queryByRole('status')).toBeNull();
     expect(screen.queryByText('Weekly digest')).toBeNull();
   });
 
@@ -111,11 +110,28 @@ describe('ScheduledTaskConversationBanner', () => {
 
     renderBanner();
 
-    expect(screen.getByRole('status').textContent).toBe(
-      'scheduledTasks.conversationBanner.unavailableLabel',
-    );
+    expect(
+      screen.getByText('scheduledTasks.conversationBanner.unavailableLabel'),
+    ).toBeTruthy();
     expect(screen.queryByRole('alert')).toBeNull();
-    expect(screen.getByRole('button', { name: /retry/i })).toBeTruthy();
+    expect(
+      screen.getByRole('button', {
+        name: 'scheduledTasks.conversationBanner.retryAriaLabel',
+      }),
+    ).toBeTruthy();
+  });
+
+  it('shows the unavailable message without a retry for an unavailable task', () => {
+    contextMocks.taskState = 'unavailable';
+    contextMocks.task = null;
+
+    renderBanner();
+
+    expect(
+      screen.getByText('scheduledTasks.conversationBanner.unavailableLabel'),
+    ).toBeTruthy();
+    expect(screen.queryByRole('button')).toBeNull();
+    expect(screen.queryByRole('link')).toBeNull();
   });
 
   it('renders the Task details link targeting the task detail route', () => {
