@@ -804,6 +804,14 @@ import { Favorites } from '@epam/ai-dial-catalog';
 
 A single favorite tile, exported for hosts composing their own favorites layout.
 
+A clickable `FavoriteCard` (and the browse-grid `Card`) stays an unroled
+`<article>`: the pointer clicks the card itself, and keyboard and
+screen-reader users reach it through a visually hidden native `<button>`
+named after the item, placed before the star. Its focus draws a ring around
+the card — `focusOutlineColor` on `FavoriteCard`, `styles.colors.focusOutline`
+on `Card` (vars `--fc-focus-outline` / `--cg-focus-outline`, default
+`--stroke-focus`).
+
 ### Filter / TopicTag
 
 Filter sidebar and topic label components.

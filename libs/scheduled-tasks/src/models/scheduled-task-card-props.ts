@@ -47,6 +47,8 @@ export interface ScheduledTaskCardColors {
   completedBadgeBorder?: string;
   /** "Completed" badge icon and text color. Fallback: `--text-secondary`. */
   completedBadgeText?: string;
+  /** Keyboard focus outline of a clickable card. Fallback: `--stroke-focus`. */
+  focusOutline?: string;
 }
 
 /** Typography overrides for the {@link ScheduledTaskCard} component. */

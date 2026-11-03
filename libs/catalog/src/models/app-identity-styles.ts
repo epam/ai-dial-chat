@@ -2,7 +2,7 @@
 export interface AppIdentityColors {
   /** Entity name text color. Fallback: `--text-primary`. */
   nameColor?: string;
-  /** Last-used line text color. Fallback: `--text-tertiary`. */
+  /** Last-used line text color. Fallback: `--text-secondary`. */
   lastUsedColor?: string;
   /** Version text color. Fallback: `--text-secondary`. */
   versionColor?: string;
