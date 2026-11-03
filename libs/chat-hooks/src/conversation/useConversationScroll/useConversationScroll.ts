@@ -70,6 +70,15 @@ export const useConversationScroll = <T>({
   const anchorScrollTopRef = useRef<number | null>(null);
   /* Last-known "at bottom" state, kept current by updateScrollButtonVisibility — see `openspec/changes/archive/2026-09-30-mcp-apps-support/design.md` D25. */
   const wasAtBottomRef = useRef(true);
+  /*
+   * Set by the bottom scroll on a history load or message-count change and kept
+   * until the user scrolls up, a turn starts, or the conversation changes.
+   * Scroll events fired mid-way through the smooth
+   * scroll report "not at bottom", so `wasAtBottomRef` alone would stop the
+   * content observer from following content that grows meanwhile.
+   */
+  const isFollowingBottomRef = useRef(false);
+  const lastScrollTopRef = useRef(0);
 
   /*
    * Message DOM nodes keyed by index, used to anchor the acted-on message
@@ -270,19 +279,25 @@ export const useConversationScroll = <T>({
 
     if (conversationChanged) {
       clearSpacer();
+      isFollowingBottomRef.current = false;
     }
 
     const anchorIndex = pendingAnchorIndexRef.current;
     if (anchorIndex != null && messageRefsMap.current.has(anchorIndex)) {
       pendingAnchorIndexRef.current = null;
+      isFollowingBottomRef.current = false;
       scrollMessageToTopWithReservation(anchorIndex);
       commitObservedScrollState();
       return;
     }
 
-    if (isAssistantTyping) return;
+    if (isAssistantTyping) {
+      isFollowingBottomRef.current = false;
+      return;
+    }
 
     if (lengthChanged || conversationChanged) {
+      isFollowingBottomRef.current = true;
       scrollToBottom(false);
     }
 
@@ -308,6 +323,17 @@ export const useConversationScroll = <T>({
   }, [isAssistantTyping, clearSettledSpacerIfPossible]);
 
   const handleScroll = useCallback(() => {
+    const container = containerRef.current;
+    if (container) {
+      // A smooth scroll to the bottom only moves down; moving up means the user took over.
+      if (
+        container.scrollTop <
+        lastScrollTopRef.current - SCROLL_CLAMP_TOLERANCE
+      ) {
+        isFollowingBottomRef.current = false;
+      }
+      lastScrollTopRef.current = container.scrollTop;
+    }
     clampScrollToVisibleContent();
     clearSettledSpacerIfPossible();
     updateScrollButtonVisibility();
@@ -342,7 +368,8 @@ export const useConversationScroll = <T>({
        * not to the bottom).
        */
       const shouldFollowToBottom =
-        wasAtBottomRef.current && !isSpacerActiveRef.current;
+        (wasAtBottomRef.current || isFollowingBottomRef.current) &&
+        !isSpacerActiveRef.current;
       clampScrollToVisibleContent();
       if (shouldFollowToBottom) {
         scrollToBottom(true);
