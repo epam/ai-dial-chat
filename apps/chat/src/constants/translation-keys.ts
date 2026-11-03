@@ -634,6 +634,7 @@ export enum ScheduledTasksI18nKeys {
   DetailHistoryDurationHours = 'scheduledTasks.detail.historyDurationHours',
   DetailHistoryDurationMinutes = 'scheduledTasks.detail.historyDurationMinutes',
   DetailHistoryDurationSeconds = 'scheduledTasks.detail.historyDurationSeconds',
+  DetailHistoryOpenConversationLabel = 'scheduledTasks.detail.historyOpenConversationLabel',
   DetailStatusSuccess = 'scheduledTasks.detail.statusSuccess',
   DetailStatusError = 'scheduledTasks.detail.statusError',
   DetailStatusInProgress = 'scheduledTasks.detail.statusInProgress',

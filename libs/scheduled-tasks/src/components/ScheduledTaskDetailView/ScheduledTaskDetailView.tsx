@@ -214,6 +214,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
         historyShowMoreLabel: labels.historyShowMoreLabel,
         runStatusLabels: labels.runStatusLabels,
         unreadIndicatorLabel: labels.unreadIndicatorLabel,
+        openConversationLabel: labels.openConversationLabel,
       }}
       nextRunLabel={nextRunLabel}
       items={runs}

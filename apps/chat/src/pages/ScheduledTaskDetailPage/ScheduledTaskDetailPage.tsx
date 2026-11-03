@@ -474,6 +474,9 @@ const ScheduledTaskDetailPage: FC = () => {
       startNowBusyLabel: t(ScheduledTasksI18nKeys.DetailStartBusy),
       startStatusAnnouncement,
       unreadIndicatorLabel: t(ConversationPanelI18nKeys.UnreadIndicatorLabel),
+      openConversationLabel: t(
+        ScheduledTasksI18nKeys.DetailHistoryOpenConversationLabel,
+      ),
       codeBlockCopyLabel: t(ButtonsI18nKeys.Copy),
       codeBlockCopiedLabel: t(ButtonsI18nKeys.Copied),
       codeBlockDownloadLabel: t(ButtonsI18nKeys.Download),

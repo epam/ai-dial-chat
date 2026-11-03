@@ -113,6 +113,9 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     <div data-skeleton {...props} />
   ),
   SkeletonVariant: { Default: 'default', Rectangular: 'rectangular' },
+  LinkButton: ({ label, onClick }: { label: string; onClick?: () => void }) => (
+    <button onClick={onClick}>{label}</button>
+  ),
   GhostButton: ({
     label,
     iconBefore,
@@ -216,6 +219,7 @@ vi.mock('@tabler/icons-react', () => ({
     />
   ),
   IconCheck: () => <svg data-icon="success" />,
+  IconChevronDown: () => <svg data-icon="chevron" />,
   IconCircleX: () => <svg data-icon="error" />,
   IconAlertTriangle: () => <svg data-icon="missed" />,
   IconClipboardX: () => <svg data-icon="empty" />,
@@ -1254,6 +1258,34 @@ describe('ScheduledTaskDetailView', () => {
       screen.getByRole('button', { name: 'Succeeded today at 9:01 AM (99s)' }),
     );
 
+    expect(onRunClick).toHaveBeenCalledWith(run);
+  });
+
+  it('opens a failed run conversation through the host-labelled link in its expanded details', async () => {
+    const onRunClick = vi.fn();
+    const run = buildRun({
+      status: ScheduledTaskRunStatus.Error,
+      errorText: 'connection timeout',
+      conversationId: 'conversations/c1',
+    });
+    render(
+      <ScheduledTaskDetailView
+        labels={{ ...labels, openConversationLabel: 'Open chat' }}
+        onBack={vi.fn()}
+        displayName="Daily summary"
+        runs={[run]}
+        onRunClick={onRunClick}
+      />,
+    );
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Failed today at 9:01 AM (99s)' }),
+    );
+    expect(onRunClick).not.toHaveBeenCalled();
+    expect(screen.getByText('connection timeout')).toBeTruthy();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Open chat' }));
+    expect(onRunClick).toHaveBeenCalledOnce();
     expect(onRunClick).toHaveBeenCalledWith(run);
   });
 
