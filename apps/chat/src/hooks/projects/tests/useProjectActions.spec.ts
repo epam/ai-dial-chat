@@ -169,6 +169,26 @@ describe('useProjectActions', () => {
     expect(mocks.setPinnedProject).not.toHaveBeenCalled();
   });
 
+  it('notifies and unpins but keeps the route when told not to leave', async () => {
+    vi.mocked(deleteProject).mockResolvedValue(undefined);
+    const { result } = renderHook(() =>
+      useProjectActions(project, vi.fn(), { leaveOnDelete: false }),
+    );
+
+    await act(() => result.current.confirmDelete());
+
+    expect(mocks.notifyOperationSuccess).toHaveBeenCalledWith(
+      NotifiableEntity.Project,
+      EntityOperation.Deleted,
+      { name: 'q4' },
+    );
+    expect(mocks.replacePinnedProjectId).toHaveBeenCalledWith(
+      'projects/b/q4',
+      null,
+    );
+    expect(mocks.navigate).not.toHaveBeenCalled();
+  });
+
   it('keeps its result stable across re-renders with unchanged state', () => {
     const onReload = vi.fn();
     const { result, rerender } = renderHook(() =>

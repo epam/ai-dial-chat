@@ -936,6 +936,8 @@ export enum ExtensionsI18nKeys {
 export enum ConversationPanelI18nKeys {
   UpdatingTitles = 'conversationPanel.updatingTitles',
   ChatsAndTasks = 'conversationPanel.chatsAndTasks',
+  SeeAll = 'conversationPanel.seeAll',
+  SeeAllProjectChats = 'conversationPanel.seeAllProjectChats',
   SearchOpen = 'conversationPanel.search.open',
   SearchClose = 'conversationPanel.search.close',
   Empty = 'conversationPanel.empty',

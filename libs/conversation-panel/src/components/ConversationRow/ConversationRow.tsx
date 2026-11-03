@@ -6,31 +6,22 @@ import {
 import {
   Button,
   DIAL_ICON_SIZE,
-  DIAL_KIT_ICON_STROKE,
-  Dropdown,
-  ElementSize,
-  GhostIconButton,
   Highlight,
   Skeleton,
   SkeletonVariant,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
-import { IconDotsVertical } from '@tabler/icons-react';
-import {
-  memo,
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-  type DragEvent,
-  type FC,
-} from 'react';
+import { memo, useCallback, useMemo, type DragEvent, type FC } from 'react';
+import { useRowActions } from '../../hooks/useRowActions';
 import { ConversationItem } from '../../models/panel-props';
+import type { NestedRowPosition } from '../../models/pinned-projects';
 import type { VirtualRow } from '../../models/virtual-row';
 import { ConversationRowVariant } from '../../types/conversation-row-variant';
 import { getButtonPaddingEnd } from '../../utils/conversation-row';
 import { getDropAfterId } from '../../utils/drag';
 import styles from '../ConversationPanel/ConversationPanel.module.scss';
+import projectStyles from '../ProjectRow/ProjectRow.module.scss';
+import { RowActionsMenu } from '../RowActionsMenu/RowActionsMenu';
 
 /** Props for `ConversationRow`. */
 export interface ConversationRowProps {
@@ -61,6 +52,8 @@ export interface ConversationRowProps {
   unreadIndicatorLabel?: string;
   /** Presentation of the row's leading slot and metrics. Defaults to `ConversationRowVariant.Avatar`. */
   variant?: ConversationRowVariant;
+  /** Renders the row nested under a pinned project: indented, with its guide-line segment and level-2 ARIA position. */
+  nesting?: NestedRowPosition;
   /** Group this row belongs to — required to enable drag-and-drop. */
   rowGroupKey?: FilterTab;
   /** The full virtual rows array — used to compute drop position. */
@@ -100,6 +93,7 @@ const ConversationRowComponent: FC<ConversationRowProps> = ({
   itemIconBadgeClassName,
   unreadIndicatorLabel = 'Unread',
   variant = ConversationRowVariant.Avatar,
+  nesting,
   rowGroupKey,
   rows,
   draggingId,
@@ -111,24 +105,15 @@ const ConversationRowComponent: FC<ConversationRowProps> = ({
   onDragLeave,
   onDrop,
 }) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const actionTriggerRef = useRef<HTMLButtonElement>(null);
-
-  const handleMenuOpenChange = useCallback(
-    (isOpen: boolean) => {
-      setIsMenuOpen(isOpen);
-      if (isOpen && actionTriggerRef.current) {
-        onActionMenuOpen?.(item, actionTriggerRef.current);
-      }
-    },
-    [item, onActionMenuOpen],
-  );
-
-  /* Built only when this row renders with a new item or a new `getActions`;
-     a host's new `getActions` (e.g. a landed revoke-count lookup) still
+  /* A host's new `getActions` (e.g. a landed revoke-count lookup) still
      refreshes an open menu. */
-  const menuItems = useMemo(() => getActions?.(item) ?? [], [getActions, item]);
-  const hasActions = menuItems.length > 0;
+  const {
+    menuItems,
+    hasActions,
+    isMenuOpen,
+    handleOpenChange: handleMenuOpenChange,
+    handleOpen: handleMenuOpen,
+  } = useRowActions(item, getActions, onActionMenuOpen);
 
   const deploymentIconLabels = useMemo(
     () => ({ tooltip: item.iconTooltip }),
@@ -163,7 +148,7 @@ const ConversationRowComponent: FC<ConversationRowProps> = ({
     />
   );
 
-  const buttonPaddingEnd = getButtonPaddingEnd(hasActions, isMenuOpen);
+  const buttonPaddingEnd = getButtonPaddingEnd(hasActions, isMenuOpen, variant);
 
   /*
    * The dot sits in a 24px trailing slot. Whenever the actions trigger is shown
@@ -174,10 +159,8 @@ const ConversationRowComponent: FC<ConversationRowProps> = ({
     <span className="flex size-6 shrink-0 items-center justify-center">
       <span
         className={mergeClasses(
-          'size-2 rounded-full',
-          item.isUnread
-            ? mergeClasses('size-[7.11px]', styles.unreadDot)
-            : styles.indicatorDot,
+          'size-[7.11px] rounded-full',
+          item.isUnread ? styles.unreadDot : styles.indicatorDot,
         )}
         aria-hidden
       />
@@ -234,8 +217,14 @@ const ConversationRowComponent: FC<ConversationRowProps> = ({
   return (
     // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <li
+      aria-level={nesting ? 2 : undefined}
+      aria-posinset={nesting?.posInSet}
+      aria-setsize={nesting?.setSize}
       className={mergeClasses(
         'group/conversation relative',
+        nesting && mergeClasses('ps-7', projectStyles.guideLine),
+        nesting?.isFirstNested && projectStyles.guideLineFirst,
+        nesting?.isLastNested && projectStyles.guideLineLast,
         isDragging && 'cursor-grabbing opacity-50',
         isDropTarget && isDropAllowed && 'rounded',
         isDropTarget && isDropAllowed && styles.dropZoneActive,
@@ -284,7 +273,7 @@ const ConversationRowComponent: FC<ConversationRowProps> = ({
           className={mergeClasses(
             /* The row's corner radius comes from `styles.item` (--cp-row-radius). */
             'h-8 w-full justify-start py-2 after:pointer-events-none',
-            isIndicator ? 'gap-0.5 ps-0' : 'gap-2 ps-3',
+            isIndicator ? 'gap-0.5 ps-2' : 'gap-2 ps-3',
             buttonPaddingEnd,
             styles.item,
             isIndicator && styles.itemIndicator,
@@ -295,41 +284,14 @@ const ConversationRowComponent: FC<ConversationRowProps> = ({
       </a>
 
       {hasActions && (
-        <div
-          className={mergeClasses(
-            'absolute inset-y-0 flex items-center',
-            isIndicator ? 'inset-e-2' : 'inset-e-1',
-            isMenuOpen
-              ? 'opacity-100'
-              : 'opacity-0 group-focus-within/conversation:opacity-100 group-hover/conversation:opacity-100',
-          )}
-        >
-          <Dropdown
-            items={menuItems}
-            onOpenChange={handleMenuOpenChange}
-            matchReferenceWidth={false}
-            listClassName="w-[200px]"
-          >
-            <GhostIconButton
-              ref={actionTriggerRef}
-              icon={
-                <IconDotsVertical
-                  size={isIndicator ? DIAL_ICON_SIZE.SM : DIAL_ICON_SIZE.MD}
-                  className={styles.triggerIcon}
-                  aria-hidden
-                  stroke={DIAL_KIT_ICON_STROKE}
-                />
-              }
-              size={ElementSize.Small}
-              aria-label={actionsLabel}
-              className={mergeClasses(
-                /* A 24px box around the 16px glyph (4px padding). */
-                isIndicator && 'size-6! min-h-0! min-w-0! p-1!',
-                isMenuOpen && styles.triggerActive,
-              )}
-            />
-          </Dropdown>
-        </div>
+        <RowActionsMenu
+          items={menuItems}
+          isOpen={isMenuOpen}
+          onOpenChange={handleMenuOpenChange}
+          onOpen={handleMenuOpen}
+          actionsLabel={actionsLabel}
+          variant={variant}
+        />
       )}
     </li>
   );

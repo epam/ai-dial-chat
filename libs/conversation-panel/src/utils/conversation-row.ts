@@ -6,6 +6,7 @@ import {
   INDICATOR_ITEM_ROW_HEIGHT,
   ITEM_ROW_HEIGHT,
 } from '../constants/virtual-list';
+import type { PinnedProjectGroup } from '../models/pinned-projects';
 import type { RowRendererData, VirtualRow } from '../models/virtual-row';
 import { ConversationRowVariant } from '../types/conversation-row-variant';
 import { VirtualRowKind } from '../types/virtual-row';
@@ -18,7 +19,7 @@ export const getSkeletonWidth = (i: number) => `${60 + ((i * 23) % 35)}%`;
 
 /**
  * Returns the inline-end padding Tailwind class for the row's ghost button based
- * on action state. The reserved gutter has to cover every state in which the
+ * on action state and row variant. The reserved gutter has to cover every state in which the
  * actions trigger is actually visible — hover *and* focus-within (see the
  * trigger's own visibility classes in `ConversationRow`). A row keeps focus
  * after it is clicked or dragged, so reserving on hover alone left the trigger
@@ -27,18 +28,28 @@ export const getSkeletonWidth = (i: number) => `${60 + ((i * 23) % 35)}%`;
 export const getButtonPaddingEnd = (
   hasActions: boolean,
   isMenuOpen: boolean,
+  variant: ConversationRowVariant = ConversationRowVariant.Avatar,
 ): string => {
-  if (!hasActions) return 'pe-3';
+  if (!hasActions) {
+    return variant === ConversationRowVariant.Indicator ? 'pe-2' : 'pe-3';
+  }
   if (isMenuOpen) return 'pe-9';
   return 'pe-2 group-focus-within/conversation:pe-9 group-hover/conversation:pe-9';
 };
 
-/** Returns the pixel height for a virtual list row (item, first group header, or subsequent group header) in the active row variant. */
+/** Returns the pixel height for a virtual list row (item, first group header, or subsequent group header) in the active row variant; pinned project rows always take the `Indicator` item height. */
 export const getRowHeight = (
   index: number,
   rowProps: RowRendererData,
 ): number => {
   const row = rowProps.rows[index];
+  if (
+    row.kind === VirtualRowKind.Project ||
+    row.kind === VirtualRowKind.ProjectConversation ||
+    row.kind === VirtualRowKind.ProjectSeeAll
+  ) {
+    return INDICATOR_ITEM_ROW_HEIGHT;
+  }
   if (rowProps.rowVariant === ConversationRowVariant.Indicator) {
     if (row.kind === VirtualRowKind.Item) return INDICATOR_ITEM_ROW_HEIGHT;
     return index === 0
@@ -80,3 +91,32 @@ export const getConversationIdsInRange = (
 export const isSameIdSequence = (left: string[], right: string[]): boolean =>
   left.length === right.length &&
   left.every((id, index) => id === right[index]);
+
+/** Returns a pinned project's rows: the project row, one row per conversation and the See all row when `hasMore` is set. */
+export const buildProjectRows = (project: PinnedProjectGroup): VirtualRow[] => {
+  const setSize = project.conversations.length + (project.hasMore ? 1 : 0);
+  const rows: VirtualRow[] = [{ kind: VirtualRowKind.Project, project }];
+  project.conversations.forEach((item, index) => {
+    rows.push({
+      kind: VirtualRowKind.ProjectConversation,
+      item,
+      projectId: project.id,
+      posInSet: index + 1,
+      setSize,
+      isFirstNested: index === 0,
+      isLastNested: index + 1 === setSize,
+    });
+  });
+  if (project.hasMore) {
+    rows.push({
+      kind: VirtualRowKind.ProjectSeeAll,
+      project,
+      projectId: project.id,
+      posInSet: setSize,
+      setSize,
+      isFirstNested: setSize === 1,
+      isLastNested: true,
+    });
+  }
+  return rows;
+};

@@ -26,17 +26,25 @@ const ERROR_MESSAGES: Record<ProjectActionError, ProjectsI18nKeys> = {
     ProjectsI18nKeys.ErrorsChangedElsewhere,
 };
 
+/** How the app's project actions behave around a delete. */
+interface ProjectActionsOptions {
+  /** Leaves for the Projects list after a delete; `false` keeps the current route. Defaults to `true`. */
+  leaveOnDelete?: boolean;
+}
+
 /**
  * App adapter of the shared `useProjectActions`: pins through the user
  * config, toasts through the notification context, and leaves for the
- * Projects list after a delete.
+ * Projects list after a delete unless `leaveOnDelete` is `false`.
  *
  * @param project - The loaded project, or `null` while none is loaded.
  * @param onReload - Re-reads the project, e.g. `useProject().retry`.
+ * @param options - Delete behaviour; leaves for the Projects list by default.
  */
 export const useProjectActions = (
   project: ProjectDetailsDto | null,
   onReload: () => void,
+  { leaveOnDelete = true }: ProjectActionsOptions = {},
 ) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -66,10 +74,11 @@ export const useProjectActions = (
       /* The BFF already removed the pin; mirror it so a recreated project of
        * the same name does not show as pinned. */
       replacePinnedProjectId(deleted.id, null);
+      if (!leaveOnDelete) return;
       /* Replace the deleted project's entry, so Back does not reopen it. */
       navigate(ROUTES.Projects, { replace: true });
     },
-    [navigate, notifyOperationSuccess, replacePinnedProjectId],
+    [leaveOnDelete, navigate, notifyOperationSuccess, replacePinnedProjectId],
   );
   const handleError = useCallback(
     (error: ProjectActionError, requestId?: string) =>

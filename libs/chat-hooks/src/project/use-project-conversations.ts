@@ -1,6 +1,7 @@
 import type { ProjectConversationItemDto } from '@epam/ai-dial-chat-api-client';
 import type { ProjectConversationListItem } from '@epam/ai-dial-projects';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { applyViewedMark, type ViewedMarks } from './project-viewed-marks';
 import type { ProjectsApiClient } from './projects-api-client';
 
 interface ProjectConversationsState {
@@ -40,39 +41,22 @@ const EMPTY_STATE: ProjectConversationsState = {
   isLoading: false,
 };
 
-/** Conversation id → its `updatedAt` when the viewer opened it from the list. */
-type ViewedMarks = Map<string, number | undefined>;
-
-/*
- * A row marked viewed stays read until a read reports a newer `updatedAt`
- * than the one it had when marked, so a read already in flight cannot bring
- * back the dot the user just cleared.
- */
+/* A row marked viewed stays read until a read reports a newer `updatedAt` (see `applyViewedMark`). */
 const toRows = (
   items: ProjectConversationItemDto[],
   viewed: ViewedMarks,
 ): ConversationRow[] =>
-  items.map(
-    ({ id, name, title, author, updatedAt, isUnread, isTitlePending }) => {
-      let isRowUnread = isUnread;
-      if (viewed.has(id)) {
-        const markedAt = viewed.get(id);
-        if (updatedAt != null && markedAt != null && updatedAt > markedAt) {
-          viewed.delete(id);
-        } else {
-          isRowUnread = false;
-        }
-      }
-      return {
-        id,
-        name,
-        title,
-        authorName: author,
-        isTitlePending: isTitlePending === true,
-        ...(isRowUnread ? { isUnread: true } : {}),
-      };
-    },
-  );
+  items.map((item) => {
+    const { id, name, title, author, isTitlePending } = item;
+    return {
+      id,
+      name,
+      title,
+      authorName: author,
+      isTitlePending: isTitlePending === true,
+      ...(applyViewedMark(viewed, item) ? { isUnread: true } : {}),
+    };
+  });
 
 /* Replaces the rows a titles read resolved, keeping every other row as it is. */
 const mergeResolved = (

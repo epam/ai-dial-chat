@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   isPanelOpen: true,
   routeStateArgs: [] as Record<string, unknown>[],
   selectConversation: undefined as ((id: string) => void) | undefined,
+  openRoute: undefined as ((path: string) => void) | undefined,
   panelCommits: 0,
   closeSourcesPanel: () => undefined,
   closePanel: () => undefined,
@@ -97,11 +98,14 @@ vi.mock(
       default: memo(
         ({
           onSelectConversation,
+          onOpenRoute,
         }: {
           onSelectConversation: (id: string) => void;
+          onOpenRoute: (path: string) => void;
         }) => {
           mocks.panelCommits += 1;
           mocks.selectConversation = onSelectConversation;
+          mocks.openRoute = onOpenRoute;
           return <div aria-label="conversation panel view" />;
         },
       ),
@@ -257,6 +261,21 @@ describe('App — navigation', () => {
     expect(getSidebar().getAttribute('data-open')).toBe('true');
 
     act(() => mocks.selectConversation?.('chat-1'));
+
+    expect(getSidebar().getAttribute('data-open')).toBe('false');
+  });
+
+  it('closes the mobile drawer behind a route the sidebar opens', async () => {
+    mocks.isMobile = true;
+    renderApp();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'toggle sidebar' }),
+    );
+    expect(getSidebar().getAttribute('data-open')).toBe('true');
+
+    act(() =>
+      mocks.openRoute?.('/projects/chat/bucket/support/conversations/c1'),
+    );
 
     expect(getSidebar().getAttribute('data-open')).toBe('false');
   });

@@ -25,14 +25,41 @@ import {
   watchProjects,
 } from '../../server-api/projects.api';
 
+/** Called with a project conversation's id after its viewed mark was written. */
+type ProjectConversationViewedListener = (conversationId: string) => void;
+
+const viewedListeners = new Set<ProjectConversationViewedListener>();
+
+/** Calls `listener` after every successful viewed write; returns the function that removes it. */
+export const subscribeProjectConversationViewed = (
+  listener: ProjectConversationViewedListener,
+): (() => void) => {
+  viewedListeners.add(listener);
+  return () => {
+    viewedListeners.delete(listener);
+  };
+};
+
+const notifyViewed = (conversationId: string) => {
+  for (const listener of [...viewedListeners]) {
+    try {
+      listener(conversationId);
+    } catch {
+      /* One listener's failure reaches neither the others nor the writer. */
+    }
+  }
+};
+
 /*
  * One queue for the viewed marks of both project pages: it outlives a route
  * change, runs one write at a time, and lets a starting generation drop a
- * mark still waiting for its chat.
+ * mark still waiting for its chat. Listeners hear of a write only once it
+ * succeeded: a dropped write never runs, and a failed one rejects first.
  */
-export const projectViewedWriter = createSerializedKeyedWriter((id) =>
-  markProjectConversationViewed(id),
-);
+export const projectViewedWriter = createSerializedKeyedWriter(async (id) => {
+  await markProjectConversationViewed(id);
+  notifyViewed(id);
+});
 
 /*
  * The project requests the chat-hooks project hooks run, resolved through the

@@ -5,6 +5,7 @@ import {
   type ProjectDto,
 } from '@epam/ai-dial-chat-api-client';
 import {
+  FilterTab,
   getAttachmentTypeFromMime,
   inferMimeTypeFromPath,
   RequestStatus,
@@ -32,6 +33,17 @@ const PROJECT_SOURCES: Record<ProjectSourceDto, ProjectSource> = {
 /** Maps a BFF project source onto the Projects lib's source. */
 export const mapProjectSource = (source: ProjectSourceDto): ProjectSource =>
   PROJECT_SOURCES[source];
+
+const PROJECT_SOURCE_TABS: Record<ProjectSourceDto, FilterTab> = {
+  [ProjectSourceDto.Personal]: FilterTab.MyChats,
+  [ProjectSourceDto.Shared]: FilterTab.Shared,
+  [ProjectSourceDto.Organization]: FilterTab.Organization,
+};
+
+/** Maps a BFF project source onto the conversation list's Origin filter tab. */
+export const mapProjectSourceToFilterTab = (
+  source: ProjectSourceDto,
+): FilterTab => PROJECT_SOURCE_TABS[source];
 
 /** Maps a BFF project to the card item the Projects lib renders; the sort date falls back to the creation time. */
 export const mapProjectDtoToItem = (project: ProjectDto): ProjectItem => ({

@@ -561,6 +561,70 @@ const ProjectPage = () => {
 };
 ```
 
+`usePinnedProjectChats(client, projectIds, { enabled, onProjectDeleted })`
+loads the trees a sidebar shows for pinned projects. For each id it reads the
+details (`getProject`) and the listing (`listProjectConversations`) in
+parallel, keeps the first `PINNED_PROJECT_CHATS_LIMIT` (10) chats newest first
+with `hasMore` set when the listing has more, and resolves the kept chats'
+pending titles in one `getProjectConversationTitles` call. It returns
+`{ projects, isLoading, markViewed, refresh }`: `projects` is a
+`PinnedProjectChats[]` (`project`, `chats` of `PinnedProjectChat` — `id`,
+`title`, `isUnread?` — and `hasMore`) in `projectIds` order, without the ids
+whose load failed.
+
+- A `404` from `getProject` drops the project and calls `onProjectDeleted(id)`
+  once. Any other details failure on the first load keeps it out and retries
+  after 1, 2, 4, 8 and 16 seconds, then gives up; a failed listing keeps it
+  with no chats.
+- Adding an id loads only that id, removing one drops it, and a reorder only
+  re-sorts. Requests abort on unmount, when `enabled` turns `false`, and for an
+  id that leaves.
+- Once the first load of the id set settles, one `watchProjects` stream
+  follows the sorted ids of the loaded projects (at most 1000); an id that
+  failed to load stays out, since the BFF rejects a watch over an unreadable
+  project. A changed project — an event whose
+  `etag` differs from the loaded one, or has none — is re-read silently, one
+  refresh at a time per project plus one trailing run; a `DELETE` drops it and
+  calls `onProjectDeleted`. A reconnect refreshes every project, and a watch
+  that cannot be opened is not retried for the same ids. A changed id set
+  reopens the stream.
+- `markViewed(conversationId)` clears a chat's unread state locally, with no
+  request, until a later listing reports a newer `updatedAt` — the rule
+  `useProjectConversations().markViewed` follows. `refresh(projectId)` re-reads
+  one project through the same per-project gate.
+- `mapProjectSourceToFilterTab(source)` maps a project's source onto the
+  conversation list's Origin tab (`personal` → `FilterTab.MyChats`).
+
+```tsx
+import {
+  PINNED_PROJECT_CHATS_LIMIT,
+  mapProjectSourceToFilterTab,
+  usePinnedProjectChats,
+  type PinnedProjectChats,
+} from '@epam/ai-dial-chat-hooks/project';
+
+const PinnedProjectsTree = () => {
+  const { projects, isLoading, markViewed } = usePinnedProjectChats(
+    projectsClient,
+    pinnedProjectIds,
+    {
+      enabled: isProjectsEnabled,
+      onProjectDeleted: (id) => unpin(id),
+    },
+  );
+  const groups = projects.map(
+    ({ project, chats, hasMore }: PinnedProjectChats) => ({
+      id: project.id,
+      name: project.name,
+      source: mapProjectSourceToFilterTab(project.source),
+      conversations: chats.slice(0, PINNED_PROJECT_CHATS_LIMIT),
+      hasMore,
+    }),
+  );
+  // …
+};
+```
+
 ```tsx
 // ./offline-credentials — no peer beyond react
 import { useOfflineCredentialsGate } from '@epam/ai-dial-chat-hooks/offline-credentials';

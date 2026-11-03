@@ -5,6 +5,8 @@ import { ConversationRowVariant } from '../../types/conversation-row-variant';
 import { VirtualRowKind } from '../../types/virtual-row';
 import { ConversationGroupHeader } from '../ConversationGroupHeader/ConversationGroupHeader';
 import { ConversationRow } from '../ConversationRow/ConversationRow';
+import { ProjectRow } from '../ProjectRow/ProjectRow';
+import { ProjectSeeAllRow } from '../ProjectRow/ProjectSeeAllRow';
 
 /** Returns the top padding class that separates a group header from the row above it. */
 const getHeaderPaddingClassName = (
@@ -15,7 +17,7 @@ const getHeaderPaddingClassName = (
   return index === 0 ? 'pt-0' : 'pt-8';
 };
 
-/** Renders a single virtual row — either a collapsible group header or a conversation item. */
+/** Renders a single virtual row — a collapsible group header, a conversation item, or a pinned project's row. */
 export const RowRenderer = ({
   index,
   style,
@@ -30,6 +32,14 @@ export const RowRenderer = ({
   onActionMenuOpen,
   actionsLabel,
   unreadIndicatorLabel,
+  activeProjectId,
+  onSelectProject,
+  onSelectProjectConversation,
+  onSeeAll,
+  getProjectActions,
+  onProjectActionMenuOpen,
+  seeAllLabel,
+  seeAllAriaLabel,
   styles,
   rowVariant = ConversationRowVariant.Avatar,
   draggingId,
@@ -66,6 +76,57 @@ export const RowRenderer = ({
           onDragOver={isPinnedHeader ? onDragOver : undefined}
           onDragLeave={isPinnedHeader ? onDragLeave : undefined}
           onDrop={isPinnedHeader ? onDrop : undefined}
+        />
+      </div>
+    );
+  }
+
+  if (row.kind === VirtualRowKind.Project) {
+    return (
+      <div role="presentation" style={style} className="pt-0.5">
+        <ProjectRow
+          project={row.project}
+          isActive={row.project.id === activeProjectId}
+          onSelectProject={onSelectProject}
+          searchQuery={searchQuery}
+          getActions={getProjectActions}
+          onActionMenuOpen={onProjectActionMenuOpen}
+          actionsLabel={actionsLabel}
+          titleClassName={styles?.itemTitleClassName}
+        />
+      </div>
+    );
+  }
+
+  if (row.kind === VirtualRowKind.ProjectSeeAll) {
+    return (
+      <div role="presentation" style={style} className="pt-0.5">
+        <ProjectSeeAllRow
+          project={row.project}
+          position={row}
+          onSeeAll={onSeeAll}
+          label={seeAllLabel}
+          ariaLabel={seeAllAriaLabel}
+          titleClassName={styles?.itemTitleClassName}
+        />
+      </div>
+    );
+  }
+
+  /* A nested chat has no actions and no drag: it is opened, nothing more. */
+  if (row.kind === VirtualRowKind.ProjectConversation) {
+    return (
+      <div role="presentation" style={style} className="pt-0.5">
+        <ConversationRow
+          variant={ConversationRowVariant.Indicator}
+          nesting={row}
+          item={row.item}
+          isActive={row.item.id === activeConversationId}
+          searchQuery={searchQuery}
+          onSelectConversation={onSelectProjectConversation}
+          unreadIndicatorLabel={unreadIndicatorLabel}
+          itemTitleClassName={styles?.itemTitleClassName}
+          unreadItemTitleClassName={styles?.unreadItemTitleClassName}
         />
       </div>
     );
