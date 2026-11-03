@@ -114,11 +114,7 @@ describe('ScheduledTaskConversationBanner', () => {
       screen.getByText('scheduledTasks.conversationBanner.unavailableLabel'),
     ).toBeTruthy();
     expect(screen.queryByRole('alert')).toBeNull();
-    expect(
-      screen.getByRole('button', {
-        name: 'scheduledTasks.conversationBanner.retryAriaLabel',
-      }),
-    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'buttons.retry' })).toBeTruthy();
   });
 
   it('shows the unavailable message without a retry for an unavailable task', () => {

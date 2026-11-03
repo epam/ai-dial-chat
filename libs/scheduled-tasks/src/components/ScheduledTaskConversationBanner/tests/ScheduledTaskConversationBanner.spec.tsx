@@ -109,9 +109,7 @@ describe('ScheduledTaskConversationBanner', () => {
         onRetry={onRetry}
       />,
     );
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Retry loading task details' }),
-    );
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
 
     expect(onRetry).toHaveBeenCalledOnce();
   });

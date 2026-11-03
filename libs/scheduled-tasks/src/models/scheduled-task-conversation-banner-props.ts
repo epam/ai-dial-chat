@@ -6,10 +6,8 @@ export interface ScheduledTaskConversationBannerLabels {
   loadingLabel?: string;
   /** Shown and announced when the task cannot be shown. Defaults to `'Task details are unavailable'`. */
   unavailableLabel?: string;
-  /** Visible label of the retry button. Defaults to `'Retry'`. */
+  /** Visible label and accessible name of the retry button. Defaults to `'Retry'`. */
   retryLabel?: string;
-  /** Accessible name of the retry button. Defaults to `'Retry loading task details'`. */
-  retryAriaLabel?: string;
   /** Visible label of the task details link. Defaults to `'Task details'`. */
   taskDetailsLabel?: string;
   /** Accessible name of the task details link for `taskName`. Defaults to `` (taskName) => `View task details for ${taskName}` ``. */

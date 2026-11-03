@@ -1124,7 +1124,6 @@
     "conversationBanner": {
       "loadingLabel": "Loading task details…",
       "unavailableLabel": "Task details are unavailable",
-      "retryAriaLabel": "Retry loading task details",
       "taskDetailsLabel": "Task details",
       "taskDetailsAriaLabel": "View task details for {{taskName}}"
     },

@@ -67,9 +67,6 @@ const ScheduledTaskConversationBannerContainer: FC = () => {
         ScheduledTasksI18nKeys.ConversationBannerUnavailableLabel,
       ),
       retryLabel: t(ButtonsI18nKeys.Retry),
-      retryAriaLabel: t(
-        ScheduledTasksI18nKeys.ConversationBannerRetryAriaLabel,
-      ),
       taskDetailsLabel: t(
         ScheduledTasksI18nKeys.ConversationBannerTaskDetailsLabel,
       ),

@@ -44,7 +44,6 @@ export const ScheduledTaskConversationBanner: FC<ScheduledTaskConversationBanner
         loadingLabel = 'Loading task details…',
         unavailableLabel = 'Task details are unavailable',
         retryLabel = 'Retry',
-        retryAriaLabel = 'Retry loading task details',
         taskDetailsLabel = 'Task details',
         taskDetailsAriaLabel = defaultTaskDetailsAriaLabel,
         taskDeletedLabel = 'Task was deleted',
@@ -75,11 +74,7 @@ export const ScheduledTaskConversationBanner: FC<ScheduledTaskConversationBanner
         );
       } else if (isUnavailable) {
         content = onRetry && (
-          <GhostButton
-            label={retryLabel}
-            aria-label={retryAriaLabel}
-            onClick={onRetry}
-          />
+          <GhostButton label={retryLabel} onClick={onRetry} />
         );
       } else {
         content = (
