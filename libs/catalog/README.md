@@ -559,7 +559,9 @@ The table frame, header, row dividers and selected-row tint come from the
 12px card with the MD shadow and inset row dividers. `styles.colors` (`ListViewColors`) covers cell content only:
 `starFilled`, `folderIcon`, `selectedRowCheckIcon`, `nameText` and `versionText`. With no items, the grid
 shows its own empty state from `emptyStateTitle` (default `'No results'`) and
-`emptyStateDescription`.
+`emptyStateDescription`. The message is announced only with `isEmptyStateLive`
+(default `false`); `Catalog` sets it when a search or topic filter left the tab
+empty.
 
 Name, Folder and Tags share the spare width (Name takes twice the share of the
 other two), so widening the table widens the columns that carry variable-length

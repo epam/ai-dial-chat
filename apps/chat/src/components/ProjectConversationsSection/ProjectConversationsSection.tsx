@@ -1,14 +1,16 @@
 import {
-  type ConversationResponseDto,
-  ProjectCreateErrorCode,
-} from '@epam/ai-dial-chat-api-client';
-import {
   attachmentsToDtos,
   findDeploymentByIdOrReference,
   getApiErrorDetails,
   hasActiveToolConfig,
   useToolsMenu,
 } from '@epam/ai-dial-chat-hooks';
+import {
+  classifyProjectChatCreateError,
+  createProjectChat,
+  ProjectChatCreateFailure,
+  type useProjectConversations,
+} from '@epam/ai-dial-chat-hooks/project';
 import type { Attachment, DeploymentItem } from '@epam/ai-dial-chat-shared';
 import { ProjectConversationsPanel } from '@epam/ai-dial-projects';
 import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
@@ -33,13 +35,9 @@ import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useComposerMenus } from '../../hooks/conversation/useComposerMenus';
 import { useLanguage } from '../../hooks/language/useLanguage';
-import type { ProjectConversationsState } from '../../hooks/projects/useProjectConversations';
+import { projectsClient } from '../../hooks/projects/projects-client';
 import { useProjectConversationsPanelLabels } from '../../hooks/projects/useProjectConversationsPanelLabels';
 import type { ProjectChatProjectSummary } from '../../models/project-chat';
-import {
-  createProjectConversation,
-  saveProjectConversation,
-} from '../../server-api/project-conversations.api';
 import { ComposerLayout } from '../../types/conversation-composer';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
@@ -47,6 +45,9 @@ import { useDeploymentSelectorOverlay } from '../DeploymentSelector/useDeploymen
 import NewConversationComposer, {
   type NewConversationChatSettings,
 } from '../NewConversationComposer/NewConversationComposer';
+
+/** Chats list state and actions, owned by the page. */
+type ProjectConversationsState = ReturnType<typeof useProjectConversations>;
 
 interface Props {
   /** The project whose chats this section lists. */
@@ -177,46 +178,45 @@ const ProjectConversationsSection: FC<Props> = ({
       }
       const skillsForSend = selectedSkills;
       resetSkillMentions();
-      let conversation: ConversationResponseDto;
+      let isCreated = false;
       try {
-        conversation = await createProjectConversation(
+        await createProjectChat(
+          projectsClient,
           projectId,
-          message,
-          selectedItemId,
-          attachmentsToDtos(attachments || []),
-          hasActiveToolConfig(toolConfigurationValue)
-            ? toolConfigurationValue
-            : undefined,
-          undefined,
-          skillsForSend,
+          {
+            firstMessage: message,
+            deploymentId: selectedItemId,
+            attachments: attachmentsToDtos(attachments || []),
+            configurationValue: hasActiveToolConfig(toolConfigurationValue)
+              ? toolConfigurationValue
+              : undefined,
+            skills: skillsForSend,
+          },
+          chatSettingsValues,
+          /* The chat exists either way; opening it avoids a duplicate on retry. */
+          (saved) => {
+            isCreated = true;
+            navigate(getProjectConversationRoute(saved.id), {
+              state: { conversation: saved, project },
+            });
+          },
         );
       } catch (error) {
+        /* A chat that exists but lost its settings was opened above; nothing else to report. */
+        if (isCreated) throw error;
         seedSkillMentions(message, skillsForSend);
-        const { code, traceId } = await getApiErrorDetails(error);
+        const { failure, requestId } =
+          await classifyProjectChatCreateError(error);
         showErrorNotification({
           message: t(
-            code === ProjectCreateErrorCode.ProjectStorageFull
+            failure === ProjectChatCreateFailure.StorageFull
               ? ProjectsI18nKeys.ChatsStorageFull
               : ProjectsI18nKeys.ChatsCreateError,
           ),
-          requestId: traceId,
+          requestId,
         });
         /* Rejecting keeps the draft in the composer. */
         throw error;
-      }
-      const savedConversation = {
-        ...conversation,
-        prompt: chatSettingsValues.systemPrompt,
-        temperature: chatSettingsValues.temperature,
-        responseFormat: chatSettingsValues.responseFormat,
-      } as ConversationResponseDto;
-      try {
-        await saveProjectConversation(conversation.id, savedConversation);
-      } finally {
-        /* The chat exists either way; opening it avoids a duplicate on retry. */
-        navigate(getProjectConversationRoute(conversation.id), {
-          state: { conversation: savedConversation, project },
-        });
       }
     },
     [

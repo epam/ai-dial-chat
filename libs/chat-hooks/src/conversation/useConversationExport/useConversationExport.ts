@@ -13,6 +13,7 @@ import {
   triggerBlobDownload,
 } from '@epam/ai-dial-chat-shared';
 import { useCallback } from 'react';
+import { sleep } from '../../shared/sleep';
 import { runWithConcurrency } from '../conversation-transfer/async';
 import {
   collectAttachmentRefs,
@@ -86,24 +87,6 @@ const getRateLimitRetryDelayMs = (
   }
   return DEFAULT_RATE_LIMIT_RETRY_MS * attempt;
 };
-
-/** Resolves after `ms`, or immediately once `signal` aborts. */
-const sleep = (ms: number, signal: AbortSignal): Promise<void> =>
-  new Promise((resolve) => {
-    if (signal.aborted) {
-      resolve();
-      return;
-    }
-    const timer = setTimeout(resolve, ms);
-    signal.addEventListener(
-      'abort',
-      () => {
-        clearTimeout(timer);
-        resolve();
-      },
-      { once: true },
-    );
-  });
 
 /**
  * Fetches one conversation, transparently retrying on 429 (chat-api's per-user

@@ -1,5 +1,6 @@
 import type { UseConversationHandlersParams } from '@epam/ai-dial-chat-hooks';
 import * as chatHooksModule from '@epam/ai-dial-chat-hooks';
+import { NO_CONVERSATION_LIST_SYNC } from '@epam/ai-dial-chat-hooks/conversation';
 import type { Conversation, ToolMenuItem } from '@epam/ai-dial-chat-shared';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -19,7 +20,6 @@ import { createNotificationContextValue } from '../../../context/tests/notificat
 import { CompletionMode } from '../../../server-api/chat-stream.api';
 import * as conversationsApi from '../../../server-api/conversations.api';
 import { ROUTES } from '../../../types/routes';
-import { NO_CONVERSATION_LIST_SYNC } from '../../../utils/regular-conversation-data-source';
 import { ConversationPage } from '../Conversation';
 
 const CONVERSATION_ID = 'conversations/bucket/gpt-4o__Hello';

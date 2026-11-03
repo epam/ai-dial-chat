@@ -122,7 +122,8 @@ vi.mock('react-i18next', () => ({
  *
  * The wrappers are plain functions (not classes) because Intl constructors
  * are legal to call without `new` (`Intl.DateTimeFormat()` in
- * map-scheduled-task-dto.ts does exactly that), and a class constructor
+ * `@epam/ai-dial-chat-hooks`' scheduled-task display adapters does exactly
+ * that), and a class constructor
  * would throw there. A function returning the real instance covers both
  * call styles; `setPrototypeOf` keeps the statics (`supportedLocalesOf`)
  * reachable.

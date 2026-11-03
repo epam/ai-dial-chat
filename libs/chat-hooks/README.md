@@ -95,7 +95,9 @@ abort obsolete requests. `UseScheduledTaskSkillDisplayNamesOptions` and
 `handleAttach` and `handleClose`. Only files are materialized, in selection
 order. Replacement, close and unmount cancel the old promise with `undefined`;
 late completions cannot settle a new attempt. The host owns downloads, paths,
-File construction and translated errors.
+File construction and translated errors. It is not tied to skills: the New project
+form's "File manager" source uses it with `T = File`. A host that imports it from
+`./skill-editor` needs that entry's peers, including `@epam/ai-dial-skill-editor`.
 
 ### Pending attachment results
 
@@ -517,6 +519,191 @@ type inferred from the file name.
 `createSerializedKeyedWriter(write)` returns `{ enqueue, drop }`, a queue that
 runs one write at a time and never queues a key twice, for hosts that mark
 chats viewed from more than one page.
+
+Project file preview helpers (root and `./project`) build the keys and
+attachments a host opens in its attachment canvas, so the New, Edit and view
+pages share one scheme. `toProjectPreviewKey(scope, cardId)` returns
+`{scope}::{cardId}` (the scope is the project id, or a fixed value before the
+project exists) and `fromProjectPreviewKey(scope, key)` reads the card id back
+only for the same scope. `toProjectOutputCardId(name)` returns `artifacts/{name}`,
+so an output never shares a card id with a context file, and
+`fromProjectOutputCardId` reverses it. `toStoredProjectFileAttachment`,
+`toProjectOutputAttachment` and `toProjectContextFileAttachment` return the
+`DisplayAttachment` to open: a file added in the session is its own attachment
+(it carries the `File`), a stored file or output gets `url` from the
+`ProjectFileLocatorBuilder` the host passes. The locator scheme and its mapping
+to the project file endpoints stay with the host.
+
+```ts
+import {
+  fromProjectPreviewKey,
+  toProjectContextFileAttachment,
+  toProjectPreviewKey,
+} from '@epam/ai-dial-chat-hooks/project';
+
+/* The host owns the locator scheme its canvas content resolvers understand. */
+const toLocator = (projectId: string, name: string) =>
+  `${projectId}/files/context/${name}`;
+
+const attachment = toProjectContextFileAttachment(file, projectId, toLocator);
+const key = toProjectPreviewKey(projectId, file.id);
+const openCardId = fromProjectPreviewKey(projectId, canvasAttachmentId);
+```
+
+`useProjectFilePreview` (root and `./project`) is the controller the New project,
+Edit project and project view pages share, the project analogue of
+`useDialFilePreview`. It calls no canvas hook: the host passes the canvas
+`attachmentId`, `openAttachment(attachment, key, shouldCommit)`, `closeCanvas`,
+`startRequest()` (returns the commit guard of the latest request) and
+`resolveContextAttachment(cardId)`, plus `resolveOutputAttachment(name)` where
+outputs are shown. It derives `selectedCardId`, `selectedContextFileId` and
+`selectedOutputName` from the canvas, so there is no second state to keep in
+step, and returns `onContextFileClick`, `onOutputClick` and
+`closeIfRemoved(cards)`. Activating the open card closes the canvas, a card the
+host resolves to nothing is ignored, and `closeIfRemoved` closes the canvas only
+when the open context card is no longer among `cards`. Callbacks keep their
+identity while their inputs do; memoise `resolveContextAttachment` and
+`resolveOutputAttachment` on the cards they read. `UseProjectFilePreviewOptions`
+and `UseProjectFilePreviewResult` are public.
+
+```tsx
+import {
+  toProjectContextFileAttachment,
+  useProjectFilePreview,
+} from '@epam/ai-dial-chat-hooks/project';
+
+const { attachmentId, closeCanvas } = useAttachmentCanvas();
+const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
+const startRequest = useLatestCanvasRequest();
+const resolveContextAttachment = useCallback(
+  (id: string) => {
+    const file = files.find((item) => item.id === id);
+    return file && toProjectContextFileAttachment(file, projectId, toLocator);
+  },
+  [files, projectId],
+);
+const { selectedContextFileId, onContextFileClick, closeIfRemoved } =
+  useProjectFilePreview({
+    scope: projectId,
+    attachmentId,
+    openAttachment: openAttachmentCanvas,
+    closeCanvas,
+    startRequest,
+    resolveContextAttachment,
+  });
+```
+
+`useProjectDraft` (root and `./project`) owns the state of the New project and
+Edit project forms. Pass `{ mode: ProjectDraftMode.Create }`, or
+`{ mode: ProjectDraftMode.Edit, project }` with the loaded `ProjectDetailsDto`
+(or `null` while it loads). It returns `values`, `contextFiles`, `errors` and
+`setErrors` (for a rejection the host maps to a field), `onFieldChange` (a name
+change clears the name error), `onContextFilesChange` (clears the context
+error), `isDirty`, `isSeeded`, `removedFileNames` and `newFiles`. In edit mode
+the draft seeds itself from the project once per `contentVersion`, so a reload
+after a conflict replaces it and a re-render never does; it is neither seeded
+nor dirty until a project arrives. In create mode it is dirty once a field is
+non-empty or a file is staged. Navigation, the unsaved-changes guard, toasts and
+the canvas stay with the host; compose `onContextFilesChange` with
+`useProjectFilePreview`'s `closeIfRemoved`.
+
+```tsx
+import {
+  ProjectDraftMode,
+  useProjectDraft,
+} from '@epam/ai-dial-chat-hooks/project';
+
+const {
+  values,
+  contextFiles,
+  onFieldChange,
+  isDirty,
+  removedFileNames,
+  newFiles,
+} = useProjectDraft({ mode: ProjectDraftMode.Edit, project });
+```
+
+`createProjectChat(client, projectId, request, settings, onCreated)` (root and
+`./project`) creates a project chat from its first message (`request` is a
+`ConversationCreateRequest`: message, deployment, attachments, tool
+configuration, form values, skills), saves `settings` (`systemPrompt`,
+`temperature`, `responseFormat`) onto it, and calls `onCreated` with the saved
+chat even when saving the settings fails, then rethrows that failure; the chat
+exists either way, so a host that opens it avoids a duplicate on retry. A failed
+create rejects without calling `onCreated`. `classifyProjectChatCreateError(error)`
+resolves to `{ failure, requestId }` where `failure` is
+`ProjectChatCreateFailure.StorageFull` for the BFF's `project-storage-full` code
+and `ProjectChatCreateFailure.Failed` otherwise. The model selection, tool
+configuration, skill mentions, toasts and navigation stay with the host.
+
+```ts
+import {
+  classifyProjectChatCreateError,
+  createProjectChat,
+  ProjectChatCreateFailure,
+} from '@epam/ai-dial-chat-hooks/project';
+
+try {
+  await createProjectChat(
+    projectsClient,
+    projectId,
+    { firstMessage, deploymentId },
+    chatSettings,
+    (saved) => openChat(saved),
+  );
+} catch (error) {
+  const { failure, requestId } = await classifyProjectChatCreateError(error);
+  showError(failure === ProjectChatCreateFailure.StorageFull, requestId);
+}
+```
+
+`ConversationDataSource`, `ConversationListSync` and `NO_CONVERSATION_LIST_SYNC`
+(root and `./conversation`) are the contract a conversation page reads and writes
+through: the stream transport, `getConversation`/`saveConversation`, the
+save/delete `handlersApi`, `watchTitle`, the conversation and exit routes,
+`isReadOnly`, the sidebar `listSync`, `canDuplicate` and a host-resolved
+`notFoundMessageKey` string. `NO_CONVERSATION_LIST_SYNC` is the list sync of a
+conversation that has no sidebar row.
+
+`createProjectConversationDataSource(options)` (root and `./project`) returns that
+contract for a chat stored inside a project. It reads, saves, deletes, streams and
+attaches through the `client` you pass (`getProjectConversation`,
+`saveProjectConversation`, `deleteProjectConversation`,
+`attachToProjectGeneration`); maps a stream path to a conversation id by adding
+`projects/` only when it is missing; opens read-only unless `canEdit`; offers no
+Duplicate; marks the open chat viewed through your `viewedWriter` (a
+`SerializedKeyedWriter` you share with the project pages) and drops a waiting mark
+when a generation starts; and, because Core resource subscriptions inside a
+project are unavailable, polls the watch stream every five seconds and re-reads
+the conversation up to five times, two seconds apart, for the title its first
+reply produces. The host supplies `stream` (`completionsBasePath`, `getCsrfToken`,
+`setCsrfToken`), `routes` and `notFoundMessageKey`.
+
+```ts
+import { createProjectConversationDataSource } from '@epam/ai-dial-chat-hooks/project';
+
+const source = createProjectConversationDataSource({
+  projectId,
+  canEdit,
+  client: projectsClient,
+  stream: {
+    completionsBasePath: `/api/projects/${encodeURIComponent(projectId)}/conversations`,
+    getCsrfToken,
+    setCsrfToken,
+  },
+  routes: { getConversationRoute, getExitRoute: () => projectRoute },
+  viewedWriter,
+});
+```
+
+`usePublishHistory({ isOpen, entityId, loadHistory })` (root and `./catalog`) returns
+the `PublishHistoryEntry[]` a publish panel uses to block a folder the entity is
+already published to. It reads through your `loadHistory(entityId)` each time
+`isOpen` turns true, so a publication requested since the last open shows, leaves
+the history empty when a read fails (the backend still refuses a duplicate), and
+ignores a read that finishes after the panel closed or `entityId` changed. The
+request and its mapping to `PublishHistoryEntry` (for the catalog endpoint,
+`mapPublishHistoryEntryDto`) stay with the host.
 
 ```tsx
 import {
@@ -4145,6 +4332,118 @@ changed schedule. The older `mapFormValuesToCreateBody` and
 stale generations, distinguish `initialError` from `loadMoreError`, preserve
 loaded records after a page failure, and expose `retryLoadMore`. No hook
 constructs a client or reads application state.
+
+### useStartScheduledTask / mergeScheduledTaskRuns
+
+`useStartScheduledTask` owns one manual "Start now" request for a schedule and
+the run it accepts. `start()` sends at most one request while one is pending,
+while `canStart` is false, or while any accepted or `loadedRuns` entry is
+`InProgress`. An accepted `InProgress` run is polled every 2s for up to 70s;
+polling pauses while the tab is hidden, honours `Retry-After`, and stops on a
+terminal status, a 401/403/404, or a terminal copy of the run in `loadedRuns`.
+`statusFeedback` is `ScheduledTaskRunStatusFeedback.Unavailable` after a
+failed status request and `Delayed` once the deadline passes;
+`refreshStatus()` polls once more on demand. Changing `scheduleId` or
+`enabled` resets everything.
+
+`mergeScheduledTaskRuns(acceptedRuns, loadedRuns)` deduplicates runs by id,
+keeping first-seen order and never replacing a terminal status with
+`InProgress`. All three are available from the root and `./scheduled-tasks`.
+
+```ts
+import {
+  mergeScheduledTaskRuns,
+  useStartScheduledTask,
+  type StartScheduledTaskApi,
+} from '@epam/ai-dial-chat-hooks/scheduled-tasks';
+
+// Bound to the host's configured client; keep the object stable.
+const startApi: StartScheduledTaskApi = {
+  startScheduledTask: (scheduleId) => client.startScheduledTask({ scheduleId }),
+  getScheduledTaskRun: (scheduleId, runId, signal) =>
+    client.getScheduledTaskRun(
+      { scheduleId, runId },
+      signal ? { signal } : undefined,
+    ),
+};
+
+const { acceptedRuns, isStarting, statusFeedback, start, refreshStatus } =
+  useStartScheduledTask({
+    api: startApi,
+    scheduleId,
+    enabled: true,
+    canStart: task != null,
+    loadedRuns: runs,
+  });
+const historyRuns = mergeScheduledTaskRuns(acceptedRuns, runs);
+```
+
+### Scheduled-task display adapters
+
+Turn scheduler DTOs into the props `@epam/ai-dial-scheduled-tasks` renders.
+The lib decides everything the response determines — the trigger kind and the
+timezone it is shown in, the duration units, whether a run started today, the
+run status, and which delete or mutation error applies — and the host supplies
+every word through formatter objects. Available from the root and
+`./scheduled-tasks`.
+
+| Export                                                              | Returns                                                                                                                                      |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `formatScheduledTaskScheduleLabel(task, labels, options?)`          | One `ScheduledTaskScheduleLabels` member's output; `options.timeZone` defaults to the browser's, `options.locale` formats dates and weekdays |
+| `toScheduledTaskItem` / `toScheduledTaskItems`                      | `ScheduledTaskItem`(s) with the schedule label; the other fields are copied unchanged                                                        |
+| `formatScheduledTaskRunDuration(seconds, labels)`                   | Non-zero hour/minute/second units wrapped by `labels.suffix`, or `undefined` when absent                                                     |
+| `formatScheduledTaskRunTimestamp(start, seconds, labels, options?)` | `todayAt` or `dateAt`, plus the duration when `options.durationLabels` is given; `options.now` defaults to the current time                  |
+| `toScheduledTaskRunItem` / `toScheduledTaskRunItems`                | `ScheduledTaskRunItem`(s); an unknown status maps to `Missed`, `isUnread` uses the host's `conversationIdsMatch`                             |
+| `classifyScheduledTaskDeleteError(status)`                          | `ScheduledTaskDeleteErrorKind`: `NotFound` (404/409), `Retryable` (502), otherwise `Generic`                                                 |
+| `selectScheduledTaskErrorMessage(details, messages)`                | `messages.adminConsentRequired`, else the trimmed upstream reason, else `messages.fallback`                                                  |
+
+```ts
+import {
+  toScheduledTaskItems,
+  toScheduledTaskRunItems,
+  type ScheduledTaskRunDurationLabels,
+  type ScheduledTaskRunTimestampLabels,
+  type ScheduledTaskScheduleLabels,
+} from '@epam/ai-dial-chat-hooks/scheduled-tasks';
+
+const scheduleLabels: ScheduledTaskScheduleLabels = {
+  onceAt: (date) => `Once on ${date}`,
+  everyNMinutes: (count) => `Every ${count} minutes`,
+  hourlyAt: (minute) => `Every hour at :${minute}`,
+  dailyAt: (time) => `Every day at ${time}`,
+  weeklyAt: (day, time) => `Every ${day} at ${time}`,
+  everyNWeeks: (count, day, time) =>
+    `Every ${count} weeks on ${day} at ${time}`,
+  monthlyAt: (day, time) => `Monthly on day ${day} at ${time}`,
+  invalid: 'Invalid schedule',
+  recurringFallback: 'Recurring',
+};
+const durationLabels: ScheduledTaskRunDurationLabels = {
+  hours: (count) => `${count}h`,
+  minutes: (count) => `${count}m`,
+  seconds: (count) => `${count}s`,
+  suffix: (duration) => `(${duration})`,
+};
+const timestampLabels: ScheduledTaskRunTimestampLabels = {
+  todayAt: (time) => `Today at ${time}`,
+  dateAt: (date, time) => `${date} at ${time}`,
+};
+
+const items = toScheduledTaskItems(tasks, scheduleLabels, { locale: 'en' });
+const runItems = toScheduledTaskRunItems(runs, {
+  timestampLabels,
+  durationLabels,
+  conversations,
+  conversationIdsMatch: (left, right) => left === right,
+});
+```
+
+Keep the formatter objects stable (module constants or `useMemo`) when the
+mapping runs inside a memoized selector. `apps/chat` wraps these as
+`buildScheduleLabel`, `mapScheduledTaskDtoToItem(s)`, `formatRunDuration`,
+`formatRunTimestamp`, `mapScheduledTaskRunDtoToItem(s)`,
+`getDeleteErrorMessageKey` and `resolveScheduledTaskErrorMessage`, each
+building the formatters from `t()`.
 
 ### mapFormValuesToCreateBody / mapFormValuesToUpdateBody / mapScheduledTaskDtoToFormValues
 

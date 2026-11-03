@@ -149,6 +149,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
     isEditMode && Boolean(definition.loadSetup),
   );
   const [isSetupReady, setIsSetupReady] = useState(true);
+  const [isEmbeddedEditorLoaded, setIsEmbeddedEditorLoaded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
   /*
@@ -603,6 +604,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
               ? null
               : undefined
           }
+          hasSetupSectionPadding={!isEmbeddedEditorLoaded}
           metadata={
             <MetadataForm
               values={metadata.values}
@@ -633,6 +635,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
               onSubmit={handleSubmit}
               isSubmitting={isSaving}
               onReadyChange={setIsSetupReady}
+              onEmbeddedEditorLoadedChange={setIsEmbeddedEditorLoaded}
             />
           }
         />

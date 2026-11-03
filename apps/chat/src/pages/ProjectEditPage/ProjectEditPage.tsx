@@ -8,28 +8,22 @@ import {
   TextRefinementPurpose,
 } from '@epam/ai-dial-chat-api-client';
 import {
-  mapStoredContextFiles,
   getMimeTypesForExtensions,
+  ProjectDraftMode,
+  useProject,
+  useProjectDraft,
+  useProjectFilePreview,
+  useSaveProject,
 } from '@epam/ai-dial-chat-hooks/project';
 import { generateUUID, MIME_TYPE_EXT_MAP } from '@epam/ai-dial-chat-shared';
 import {
-  isStoredContextFile,
   ProjectCreateForm,
   type ProjectContextFile,
-  type ProjectCreateFormErrors,
   type ProjectCreateFormLabels,
-  type ProjectCreateFormValues,
   ProjectView,
 } from '@epam/ai-dial-projects';
 import { EditorThemes, GhostButton } from '@epam/ai-dial-ui-kit';
-import {
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type FC,
-} from 'react';
+import { memo, useCallback, useEffect, useMemo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 import ProjectFileManagerModal from '../../components/ProjectFileManagerModal/ProjectFileManagerModal';
@@ -48,28 +42,18 @@ import { useNotification } from '../../context/NotificationContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useUserConfig } from '../../context/UserConfigContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
-import { useProject } from '../../hooks/projects/useProject';
+import { projectsClient } from '../../hooks/projects/projects-client';
 import { useProjectCreateFormLabels } from '../../hooks/projects/useProjectCreateFormLabels';
 import { useProjectFileManagerPicker } from '../../hooks/projects/useProjectFileManagerPicker';
 import { useProjectViewLabels } from '../../hooks/projects/useProjectViewLabels';
-import { useSaveProject } from '../../hooks/projects/useSaveProject';
 import { useBuilderLeaveGuard } from '../../hooks/unsaved-changes/useBuilderLeaveGuard';
 import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
 import { ROUTES } from '../../types/routes';
 import { ThemeId } from '../../types/theme-id';
 import { UserConfigStatus } from '../../types/user-config-status';
 import { mapProjectCreateError } from '../../utils/project-create-errors';
-import {
-  fromProjectPreviewKey,
-  toProjectContextFileAttachment,
-  toProjectPreviewKey,
-} from '../../utils/project-file-preview';
+import { toProjectContextFileAttachment } from '../../utils/project-file-preview';
 import NotFoundPage from '../NotFound/NotFound';
-
-const EMPTY_VALUES: ProjectCreateFormValues = {
-  name: '',
-  instructions: '',
-};
 
 const ProjectEditPage: FC = () => {
   const { t } = useTranslation();
@@ -91,6 +75,7 @@ const ProjectEditPage: FC = () => {
 
   const projectId = parseProjectRouteParams(params);
   const { project, isLoading, hasError, isNotFound, retry } = useProject(
+    projectsClient,
     projectId,
     isEnabled,
   );
@@ -102,52 +87,18 @@ const ProjectEditPage: FC = () => {
     projectContextTotalMaxBytes: maxTotalBytes,
   } = config;
 
-  const [values, setValues] = useState<ProjectCreateFormValues>(EMPTY_VALUES);
-  const [contextFiles, setContextFiles] = useState<ProjectContextFile[]>([]);
-  const [errors, setErrors] = useState<ProjectCreateFormErrors>({});
-  const [seededContentVersion, setSeededContentVersion] = useState<
-    string | null
-  >(null);
-
-  /* The draft is seeded once per loaded version, so a reload after a
-   * conflict replaces it and a re-render never does. */
-  useEffect(() => {
-    if (project == null || project.contentVersion === seededContentVersion)
-      return;
-    setValues({
-      name: project.name,
-      instructions: project.instructions,
-    });
-    setContextFiles(mapStoredContextFiles(project));
-    setErrors({});
-    setSeededContentVersion(project.contentVersion);
-  }, [project, seededContentVersion]);
-
-  const removedFileNames = useMemo(() => {
-    if (project == null) return [];
-    const kept = new Set(
-      contextFiles.filter(isStoredContextFile).map((file) => file.name),
-    );
-    return project.contextFiles
-      .map((file) => file.name)
-      .filter((name) => !kept.has(name));
-  }, [project, contextFiles]);
-  const newFiles = useMemo(
-    () =>
-      contextFiles.flatMap((file) =>
-        isStoredContextFile(file) ? [] : [file.file],
-      ),
-    [contextFiles],
-  );
-
-  const isSeeded =
-    project != null && seededContentVersion === project.contentVersion;
-  const isDirty =
-    isSeeded &&
-    (values.name !== project.name ||
-      values.instructions !== project.instructions ||
-      removedFileNames.length > 0 ||
-      newFiles.length > 0);
+  const {
+    values,
+    contextFiles,
+    errors,
+    setErrors,
+    onFieldChange: handleFieldChange,
+    onContextFilesChange,
+    isSeeded,
+    isDirty,
+    removedFileNames,
+    newFiles,
+  } = useProjectDraft({ mode: ProjectDraftMode.Edit, project });
   const { allowNextNavigation } = useBuilderLeaveGuard({ isDirty });
 
   /* Opens a context file in the canvas the way the conversation opens an attachment. */
@@ -155,40 +106,27 @@ const ProjectEditPage: FC = () => {
   const { resolvers, options } = useAttachmentCanvasResolvers();
   const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
   const startCanvasRequest = useLatestCanvasRequest();
-  const previewScope = projectId ?? '';
-  const selectedContextFileId = fromProjectPreviewKey(
-    previewScope,
-    attachmentId,
-  );
-  const handleContextFileClick = useCallback(
+  const resolveContextAttachment = useCallback(
     (id: string) => {
-      /* The open file's card closes the canvas, as its pressed state says. */
-      if (id === selectedContextFileId) {
-        closeCanvas();
-        return;
-      }
       const file = contextFiles.find((item) => item.id === id);
-      const attachment =
-        file && toProjectContextFileAttachment(file, projectId);
-      if (!attachment) return;
-      void openAttachmentCanvas(
-        attachment,
-        toProjectPreviewKey(previewScope, id),
-        startCanvasRequest(),
-      );
+      return file && toProjectContextFileAttachment(file, projectId);
     },
-    [
-      closeCanvas,
-      contextFiles,
-      projectId,
-      previewScope,
-      openAttachmentCanvas,
-      selectedContextFileId,
-      startCanvasRequest,
-    ],
+    [contextFiles, projectId],
   );
+  const {
+    selectedContextFileId,
+    onContextFileClick: handleContextFileClick,
+    closeIfRemoved,
+  } = useProjectFilePreview({
+    scope: projectId ?? '',
+    attachmentId,
+    openAttachment: openAttachmentCanvas,
+    closeCanvas,
+    startRequest: startCanvasRequest,
+    resolveContextAttachment,
+  });
 
-  const { save, isSubmitting } = useSaveProject();
+  const { save, isSubmitting } = useSaveProject(projectsClient);
   const picker = useProjectFileManagerPicker(user?.bucket);
   const createLabels = useProjectCreateFormLabels({
     allowedExtensions,
@@ -218,34 +156,12 @@ const ProjectEditPage: FC = () => {
     }
   }, [project, projectId, navigate]);
 
-  const handleFieldChange = useCallback(
-    <K extends keyof ProjectCreateFormValues>(
-      field: K,
-      value: ProjectCreateFormValues[K],
-    ) => {
-      setValues((prev) => ({ ...prev, [field]: value }));
-      if (field === 'name') {
-        setErrors((prev) => (prev.name ? { ...prev, name: undefined } : prev));
-      }
-    },
-    [],
-  );
-
   const handleContextFilesChange = useCallback(
     (files: ProjectContextFile[]) => {
-      setContextFiles(files);
-      setErrors((prev) =>
-        prev.context ? { ...prev, context: undefined } : prev,
-      );
-      /* Removing the file the canvas shows closes it. */
-      if (
-        selectedContextFileId != null &&
-        !files.some((file) => file.id === selectedContextFileId)
-      ) {
-        closeCanvas();
-      }
+      onContextFilesChange(files);
+      closeIfRemoved(files);
     },
-    [closeCanvas, selectedContextFileId],
+    [closeIfRemoved, onContextFilesChange],
   );
 
   const handleLeave = useCallback(() => {
@@ -328,6 +244,7 @@ const ProjectEditPage: FC = () => {
     values,
     newFiles,
     removedFileNames,
+    setErrors,
     save,
     showSuccessNotification,
     showErrorNotification,

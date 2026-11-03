@@ -7,6 +7,11 @@ import {
   mapProjectArtifactsToOutputs,
   mapProjectDetailsToViewModel,
   ProjectRefreshOutcome,
+  useProject,
+  useProjectArtifacts,
+  useProjectConversations,
+  useProjectFilePreview,
+  useProjectWatch,
 } from '@epam/ai-dial-chat-hooks/project';
 import { DeleteConfirmationDialog } from '@epam/ai-dial-chat-shared';
 import { ProjectOutputs, ProjectView } from '@epam/ai-dial-projects';
@@ -34,22 +39,15 @@ import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useUserConfig } from '../../context/UserConfigContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
-import { useProject } from '../../hooks/projects/useProject';
+import { projectsClient } from '../../hooks/projects/projects-client';
 import { useProjectActions } from '../../hooks/projects/useProjectActions';
-import { useProjectArtifacts } from '../../hooks/projects/useProjectArtifacts';
-import { useProjectConversations } from '../../hooks/projects/useProjectConversations';
 import { useProjectOutputsLabels } from '../../hooks/projects/useProjectOutputsLabels';
 import { useProjectViewLabels } from '../../hooks/projects/useProjectViewLabels';
-import { useProjectWatch } from '../../hooks/projects/useProjectWatch';
 import { useDeleteConfirmationLabels } from '../../hooks/useDeleteConfirmationLabels';
 import { ROUTES } from '../../types/routes';
 import { UserConfigStatus } from '../../types/user-config-status';
 import {
-  fromProjectOutputCardId,
-  fromProjectPreviewKey,
   toProjectOutputAttachment,
-  toProjectOutputCardId,
-  toProjectPreviewKey,
   toStoredProjectFileAttachment,
 } from '../../utils/project-file-preview';
 import NotFoundPage from '../NotFound/NotFound';
@@ -64,10 +62,13 @@ const ProjectViewPage: FC = () => {
   const isEnabled = useFeatureFlag('projectsEnabled');
   const projectId = parseProjectRouteParams(params);
   const { project, isLoading, hasError, isNotFound, retry, refresh } =
-    useProject(projectId, isEnabled);
+    useProject(projectsClient, projectId, isEnabled);
   const actions = useProjectActions(project, retry);
-  const conversations = useProjectConversations(project?.id ?? null);
-  const artifacts = useProjectArtifacts(project?.id ?? null);
+  const conversations = useProjectConversations(
+    projectsClient,
+    project?.id ?? null,
+  );
+  const artifacts = useProjectArtifacts(projectsClient, project?.id ?? null);
   const { showInfoNotification } = useNotification();
   const { replacePinnedProjectId } = useUserConfig();
 
@@ -96,7 +97,7 @@ const ProjectViewPage: FC = () => {
     ]);
     if (outcome === ProjectRefreshOutcome.NotFound) handleDeletedElsewhere();
   }, [handleDeletedElsewhere, refresh, refreshArtifacts, refreshConversations]);
-  useProjectWatch(project?.id ?? null, {
+  useProjectWatch(projectsClient, project?.id ?? null, {
     etag: project?.etag,
     onChange: handleProjectChanged,
     onDelete: handleDeletedElsewhere,
@@ -122,65 +123,41 @@ const ProjectViewPage: FC = () => {
   const { resolvers, options } = useAttachmentCanvasResolvers();
   const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
   const startCanvasRequest = useLatestCanvasRequest();
-  const previewScope = projectId ?? '';
-  const selectedCardId = fromProjectPreviewKey(previewScope, attachmentId);
-  /* An output's card id is `artifacts/{name}`, which no context file name can match. */
-  const selectedOutputName = fromProjectOutputCardId(selectedCardId);
-  const selectedContextFileId =
-    selectedOutputName == null ? selectedCardId : undefined;
-  const handleContextFileClick = useCallback(
-    (name: string) => {
-      /* The open file's card closes the canvas, as its pressed state says. */
-      if (name === selectedContextFileId) {
-        closeCanvas();
-        return;
-      }
-      const file = viewModel?.contextFiles.find((item) => item.name === name);
-      if (!file || projectId == null) return;
-      void openAttachmentCanvas(
-        toStoredProjectFileAttachment({ id: name, ...file }, projectId),
-        toProjectPreviewKey(previewScope, name),
-        startCanvasRequest(),
-      );
-    },
-    [
-      closeCanvas,
-      selectedContextFileId,
-      viewModel,
-      projectId,
-      previewScope,
-      openAttachmentCanvas,
-      startCanvasRequest,
-    ],
-  );
   const outputItems = useMemo(
     () => mapProjectArtifactsToOutputs(artifacts.items),
     [artifacts.items],
   );
-  const handleOpenOutput = useCallback(
+  const resolveContextAttachment = useCallback(
     (name: string) => {
-      if (name === selectedOutputName) {
-        closeCanvas();
-        return;
-      }
-      const item = outputItems.find((output) => output.name === name);
-      if (!item || projectId == null) return;
-      void openAttachmentCanvas(
-        toProjectOutputAttachment(item, projectId),
-        toProjectPreviewKey(previewScope, toProjectOutputCardId(name)),
-        startCanvasRequest(),
-      );
+      const file = viewModel?.contextFiles.find((item) => item.name === name);
+      if (!file || projectId == null) return undefined;
+      return toStoredProjectFileAttachment({ id: name, ...file }, projectId);
     },
-    [
-      closeCanvas,
-      selectedOutputName,
-      outputItems,
-      projectId,
-      previewScope,
-      openAttachmentCanvas,
-      startCanvasRequest,
-    ],
+    [viewModel, projectId],
   );
+  const resolveOutputAttachment = useCallback(
+    (name: string) => {
+      const item = outputItems.find((output) => output.name === name);
+      if (!item || projectId == null) return undefined;
+      return toProjectOutputAttachment(item, projectId);
+    },
+    [outputItems, projectId],
+  );
+  const {
+    selectedCardId,
+    selectedOutputName,
+    selectedContextFileId,
+    onContextFileClick: handleContextFileClick,
+    onOutputClick: handleOpenOutput,
+  } = useProjectFilePreview({
+    scope: projectId ?? '',
+    attachmentId,
+    openAttachment: openAttachmentCanvas,
+    closeCanvas,
+    startRequest: startCanvasRequest,
+    resolveContextAttachment,
+    resolveOutputAttachment,
+  });
   const canEdit = project?.canEdit ?? false;
   /* Chats deleted from the list since `project` was read; a fresh read resets the count. */
   const [deletedChats, setDeletedChats] = useState({ project, count: 0 });

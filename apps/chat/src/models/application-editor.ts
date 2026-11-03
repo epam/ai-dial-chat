@@ -57,6 +57,8 @@ export interface ApplicationSetupProps<TSetup> {
   isSubmitting: boolean;
   /** Reports whether the Setup can be saved right now; `false` disables the primary button, e.g. while the Setup still loads what validation needs. */
   onReadyChange: (isReady: boolean) => void;
+  /** Reports whether the Setup shows a successfully loaded embedded editor, which the page renders edge to edge without section padding. */
+  onEmbeddedEditorLoadedChange?: (isLoaded: boolean) => void;
   /** Handle a kind whose Setup saves itself exposes to the page. */
   ref?: Ref<ApplicationSetupHandle>;
 }
