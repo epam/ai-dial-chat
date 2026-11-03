@@ -72,6 +72,7 @@ describe what happens to a legacy deployment's variables. The source of truth is
 | `HIDDEN_ENTITY_TAG`         | `HIDDEN_ENTITY_TAGS`                                       | Now plural, comma-separated.                                                                                                             |
 | `PUBLICATION_FILTERS`       | `PUBLICATION_FILTER_SOURCES`                               | —                                                                                                                                        |
 | `ANNOUNCEMENT_HTML_MESSAGE` | kept, or `ANNOUNCEMENT_TITLE` + `ANNOUNCEMENT_DESCRIPTION` | The legacy variable still works; the structured form is opt-in.                                                                          |
+| `PROXY_LANGUAGE_HEADER`     | none — fixed `X-Lang` header                               | Legacy named the outbound language header (default `accept-language` since #8377); 1.0 always sends the UI language as `X-Lang` and has no variable for it. DIAL Core reads it through its own `PROXY_LANGUAGE_HEADER` setting, which deployments must point at `X-Lang`. |
 
 ### Carried over unchanged
 

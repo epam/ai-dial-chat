@@ -1,6 +1,6 @@
 ## Why
 
-DIAL Core agents and MCP-backed tools (for example office MCP search returning localized document names) receive no indication of the user's preferred language, so they cannot reliably decide which language to return documents and names in. Legacy PR [#6488](https://github.com/epam/ai-dial-chat/pull/6488) established the intent: forward the frontend's current UI language to DIAL Core as an `X-Lang` request header (the header name DIAL Core reads via its `PROXY_LANGUAGE_HEADER` setting, set to `X-Lang` in our deployment). That PR targeted the removed Next.js route-handler architecture; the current BFF architecture needs the same pipeline the browser timezone uses.
+DIAL Core agents and MCP-backed tools (for example office MCP search returning localized document names) receive no indication of the user's preferred language, so they cannot reliably decide which language to return documents and names in. Legacy PR [#6488](https://github.com/epam/ai-dial-chat/pull/6488) established the intent: forward the frontend's current UI language to DIAL Core as an `X-Lang` request header. Note that `PROXY_LANGUAGE_HEADER` is a DIAL Core setting naming the header Core reads — the legacy chat also had a same-named variable for the outbound header (default `accept-language` since #8377), which is not carried over; deployments must point DIAL Core's setting at `X-Lang` (see `docs/legacy-chat-migration-guide.md`). That PR targeted the removed Next.js route-handler architecture; the current BFF architecture needs the same pipeline the browser timezone uses.
 
 ### Problem
 
@@ -8,7 +8,7 @@ A conversation completion currently carries the user's timezone (`X-Timezone`) b
 
 ### Solution
 
-Resolve the application's current UI language on each conversation completion request, send it as an optional `X-Lang` header to the BFF, validate it at the completion endpoint, and forward the accepted value to DIAL Core on both supported generation APIs (Chat Completions and Responses). The header name is fixed (`X-Lang`), mirroring `X-Timezone` — DIAL Core in this deployment is already configured with `PROXY_LANGUAGE_HEADER: X-Lang`.
+Resolve the application's current UI language on each conversation completion request, send it as an optional `X-Lang` header to the BFF, validate it at the completion endpoint, and forward the accepted value to DIAL Core on both supported generation APIs (Chat Completions and Responses). The header name is fixed (`X-Lang`), mirroring `X-Timezone` — deployments configure DIAL Core's own `PROXY_LANGUAGE_HEADER` setting to `X-Lang`.
 
 ### Non-goals
 
@@ -36,8 +36,8 @@ Resolve the application's current UI language on each conversation completion re
 
 ### Alternatives considered
 
-- **Selected — fixed `X-Lang` header, resolved per completion:** mirrors `X-Timezone`, matches the deployed DIAL Core `PROXY_LANGUAGE_HEADER` value, no new configuration surface.
-- **Configurable header name via `PROXY_LANGUAGE_HEADER` env in chat-api (legacy PR #6488 pattern):** rejected — adds configuration surface and a second name source; the deployment standardizes on `X-Lang`.
+- **Selected — fixed `X-Lang` header, resolved per completion:** mirrors `X-Timezone`, no new configuration surface; deployments point DIAL Core's own `PROXY_LANGUAGE_HEADER` setting at `X-Lang`.
+- **Configurable header name via an env in chat-api (legacy PR #6488's `PROXY_LANGUAGE_HEADER` variable, default `accept-language` since #8377):** rejected — adds configuration surface and a second name source; the deployment standardizes on `X-Lang` (change recorded in `docs/legacy-chat-migration-guide.md`).
 - **Language in the JSON completion DTO:** rejected — transport metadata does not belong in conversation content.
 - **`Accept-Language` reuse:** rejected — the app's chosen UI locale is authoritative for the user's expectation, and DIAL Core reads `X-Lang`.
 

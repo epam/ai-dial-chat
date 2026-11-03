@@ -15,10 +15,10 @@
 
 ## 3. Generated Contract and Documentation
 
-- [ ] 3.1 Regenerate Swagger/OpenAPI with `npm run openapi`; verify optional `xLang?: string` on `StreamCompletionRequest`; do not hand-edit generated files. **Blocked in this environment**: the openapi-spec generation script (and every `nx` target) fails silently before writing — reproduced on a clean HEAD worktree, unrelated to this change. `npm run openapi:check` passes (client and openapi.json remain mutually consistent). Run this on a working toolchain before merge; the runtime `@ApiHeader` annotation is already in place.
-- [x] 3.2 Updated `docs/responses-api-integration.md` with the browser-to-BFF-to-DIAL-Core `X-Lang` flow for both generation modes; README updated. `npm run validate:docs` and `npm run validate:specs` pending a final run (see 4.1 note).
+- [x] 3.1 Regenerate Swagger/OpenAPI with `npm run openapi`; verify optional `xLang?: string` on `StreamCompletionRequest`; do not hand-edit generated files. Regenerated `libs/chat-api-client/openapi.json` and the generated client (ConversationsApi gains `xLang?: string` and the `X-Lang` header emission); `npm run openapi:check` passes. Local toolchain notes: the openapi-spec script needs the validated env vars exported before the process starts, and the SDK step needs a JDK on `PATH` (`brew install openjdk`).
+- [x] 3.2 Updated `docs/responses-api-integration.md` with the browser-to-BFF-to-DIAL-Core `X-Lang` flow for both generation modes; README updated. `npm run validate:docs` and `npm run validate:specs` pass (0 errors).
 
 ## 4. Final Verification
 
-- [ ] 4.1 Run affected test/lint/typecheck/build against `origin/development` (blocked by the same pre-existing `@nx/vite` toolchain failure in this workspace; direct vitest runs above are green).
-- [ ] 4.2 Audit the diff against `specs/browser-language-forwarding/spec.md`: optional, request-local, both generation paths covered, invalid values fail before Core, no language values in logs.
+- [x] 4.1 Run affected test/lint/typecheck/build against `origin/development`: `nx test chat-api` (conversations suite 1189/1189), `nx test chat` (server-api/utils/i18n slices 266/266), `nx run-many -t lint -p chat-api,chat,chat-hooks` all green; `npm run openapi:check`, `validate:docs`, `validate:specs` pass.
+- [x] 4.2 Audit the diff against `specs/browser-language-forwarding/spec.md`: optional, request-local, both generation paths covered, invalid values fail before Core, no language values in logs — covered by `lang-header.spec.ts`, completions integration tests, and adapter/streaming-service specs asserting header presence/absence.

@@ -673,26 +673,25 @@ export class ConversationStreamingService {
               jobTitle,
               { extraHeaders: buildProjectHeadersForPath(conversationPath) },
             )
-          : this.chatCompletionsAdapter.stream(
+          : this.chatCompletionsAdapter.stream({
               model,
-              this.chatCompletionsAdapter.buildRequest({
+              requestBody: this.chatCompletionsAdapter.buildRequest({
                 startConversation,
                 messagesForCompletion,
                 temperatureSupported,
                 configuration,
               }),
               token,
-              lease.abortController.signal,
-              assembledMessage,
-              clientChannelId,
-              timezone,
-              lang,
+              signal: lease.abortController.signal,
+              initialAssembledMessage: assembledMessage,
+              context: { clientChannelId, timezone, lang, jobTitle },
               timing,
-              startConversation.id,
-              publishChunk,
-              jobTitle,
-              { extraHeaders: buildProjectHeadersForPath(conversationPath) },
-            );
+              conversationId: startConversation.id,
+              onChunkApplied: publishChunk,
+              options: {
+                extraHeaders: buildProjectHeadersForPath(conversationPath),
+              },
+            });
     }
     let relayCompletedNormally = false;
     try {

@@ -375,7 +375,7 @@ export class ConversationController {
   @ApiResponse({ status: 200, description: 'SSE stream of completion chunks' })
   @ApiResponse({
     status: 400,
-    description: 'Invalid request body or X-Timezone header',
+    description: 'Invalid request body or X-Timezone/X-Lang header',
   })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   @ApiResponse({

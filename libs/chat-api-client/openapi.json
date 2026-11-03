@@ -3584,6 +3584,18 @@
         "operationId": "streamCompletion",
         "parameters": [
           {
+            "name": "X-Lang",
+            "in": "header",
+            "description": "Current UI language forwarded to DIAL Core for language-sensitive tools and agents.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 35,
+              "pattern": "^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$",
+              "example": "en"
+            }
+          },
+          {
             "name": "X-Timezone",
             "in": "header",
             "description": "Current browser IANA timezone forwarded to DIAL Core for date- and time-sensitive tools.",
@@ -3611,7 +3623,7 @@
             "description": "SSE stream of completion chunks"
           },
           "400": {
-            "description": "Invalid request body or X-Timezone header"
+            "description": "Invalid request body or X-Timezone/X-Lang header"
           },
           "401": {
             "description": "Not authenticated"

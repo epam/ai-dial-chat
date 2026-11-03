@@ -191,10 +191,10 @@ put it into metrics, or include it in logs.
 ### Browser language context
 
 The same pipeline carries the app's current UI language. For each completion
-request, the frontend resolves the active i18n locale
-(`i18n.resolvedLanguage`, the language the UI actually renders — the user's
-best predictor of the language they expect documents and names in) and sends
-it as the optional request header:
+request, the frontend resolves the active i18n locale (`i18n.language`, the
+user's chosen UI language — the best predictor of the language they expect
+documents and names in, even when it has no registered translation bundle and
+the UI renders English) and sends it as the optional request header:
 
 ```http
 X-Lang: en
@@ -207,8 +207,13 @@ a single BCP-47-like string of at most 35 characters
 input returns `400 Bad Request` without calling DIAL Core; an absent header is
 accepted for backward compatibility. The validated value stays request-local
 and the BFF forwards it unchanged as `X-Lang` through both upstream paths
-(Chat Completions and Responses), where DIAL Core reads it via its
-`PROXY_LANGUAGE_HEADER` setting for language-sensitive tools and agents. Chat
+(Chat Completions and Responses) for language-sensitive tools and agents.
+Deployments whose DIAL Core reads a language header must set DIAL Core's own
+`PROXY_LANGUAGE_HEADER` setting to `X-Lang`; note that
+`PROXY_LANGUAGE_HEADER` is a DIAL Core setting, not a legacy chat variable —
+the legacy chat's same-named variable (default `accept-language` since #8377)
+is gone, and 1.0 always sends `X-Lang` with no configuration of its own (see
+[`legacy-chat-migration-guide.md`](./legacy-chat-migration-guide.md)). Chat
 does not persist, cache, or log the value.
 
 ## Responses API Request

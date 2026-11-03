@@ -1,17 +1,15 @@
 import i18n from 'i18next';
 
 /*
- * The active UI language for `X-Lang` completion forwarding. `resolvedLanguage`
- * describes the language actually rendered (the detected `language` can be an
- * untranslated code falling back to English), which is the language the user
- * expects document names and agent answers in. Resolved per request by the
+ * The active UI language for `X-Lang` completion forwarding. `i18n.language`
+ * is the app's current locale — the language the user chose for the UI and the
+ * best predictor of the language they expect documents and names in. It may
+ * be a code without a registered translation bundle (e.g. a detected `uk`
+ * falling back to English rendering), which still must be forwarded instead
+ * of collapsing to `resolvedLanguage`'s `en`. Resolved per request by the
  * stream transport; never cached here.
  */
 export const getUiLanguage = (): string | undefined => {
-  try {
-    const lang = i18n.resolvedLanguage ?? i18n.language;
-    return typeof lang === 'string' && lang.length > 0 ? lang : undefined;
-  } catch {
-    return undefined;
-  }
+  const lang = i18n.language;
+  return typeof lang === 'string' && lang.length > 0 ? lang : undefined;
 };

@@ -176,15 +176,14 @@ describe('ChatCompletionsAdapter', () => {
       );
 
       await drain(
-        adapter.stream(
-          'gpt-4o',
-          {},
-          'token',
-          new AbortController().signal,
-          assistantSeed,
-          undefined,
-          'Europe/Berlin',
-        ),
+        adapter.stream({
+          model: 'gpt-4o',
+          requestBody: {},
+          token: 'token',
+          signal: new AbortController().signal,
+          initialAssembledMessage: assistantSeed,
+          context: { timezone: 'Europe/Berlin' },
+        }),
       );
       expect(sentHeaders(sendChatCompletionRequest)).toHaveProperty(
         'X-Timezone',
@@ -193,13 +192,13 @@ describe('ChatCompletionsAdapter', () => {
 
       sendChatCompletionRequest.mockClear();
       await drain(
-        adapter.stream(
-          'gpt-4o',
-          {},
-          'token',
-          new AbortController().signal,
-          assistantSeed,
-        ),
+        adapter.stream({
+          model: 'gpt-4o',
+          requestBody: {},
+          token: 'token',
+          signal: new AbortController().signal,
+          initialAssembledMessage: assistantSeed,
+        }),
       );
       expect(sentHeaders(sendChatCompletionRequest)).not.toHaveProperty(
         'X-Timezone',
@@ -213,16 +212,14 @@ describe('ChatCompletionsAdapter', () => {
       );
 
       await drain(
-        adapter.stream(
-          'gpt-4o',
-          {},
-          'token',
-          new AbortController().signal,
-          assistantSeed,
-          undefined,
-          undefined,
-          'en',
-        ),
+        adapter.stream({
+          model: 'gpt-4o',
+          requestBody: {},
+          token: 'token',
+          signal: new AbortController().signal,
+          initialAssembledMessage: assistantSeed,
+          context: { lang: 'en' },
+        }),
       );
       expect(sentHeaders(sendChatCompletionRequest)).toHaveProperty(
         'X-Lang',
@@ -231,13 +228,13 @@ describe('ChatCompletionsAdapter', () => {
 
       sendChatCompletionRequest.mockClear();
       await drain(
-        adapter.stream(
-          'gpt-4o',
-          {},
-          'token',
-          new AbortController().signal,
-          assistantSeed,
-        ),
+        adapter.stream({
+          model: 'gpt-4o',
+          requestBody: {},
+          token: 'token',
+          signal: new AbortController().signal,
+          initialAssembledMessage: assistantSeed,
+        }),
       );
       expect(sentHeaders(sendChatCompletionRequest)).not.toHaveProperty(
         'X-Lang',
@@ -251,21 +248,14 @@ describe('ChatCompletionsAdapter', () => {
       );
 
       await drain(
-        adapter.stream(
-          'gpt-4o',
-          {},
-          'token',
-          new AbortController().signal,
-          assistantSeed,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          { extraHeaders: { 'x-project-id': 'projects/a1b2c3/q4' } },
-        ),
+        adapter.stream({
+          model: 'gpt-4o',
+          requestBody: {},
+          token: 'token',
+          signal: new AbortController().signal,
+          initialAssembledMessage: assistantSeed,
+          options: { extraHeaders: { 'x-project-id': 'projects/a1b2c3/q4' } },
+        }),
       );
 
       expect(sentHeaders(sendChatCompletionRequest)).toHaveProperty(
@@ -286,19 +276,14 @@ describe('ChatCompletionsAdapter', () => {
       const onChunkApplied = vi.fn();
 
       const outcome = await drain(
-        adapter.stream(
-          'gpt-4o',
-          {},
-          'token',
-          new AbortController().signal,
-          assistantSeed,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
+        adapter.stream({
+          model: 'gpt-4o',
+          requestBody: {},
+          token: 'token',
+          signal: new AbortController().signal,
+          initialAssembledMessage: assistantSeed,
           onChunkApplied,
-        ),
+        }),
       );
 
       expect(onChunkApplied).toHaveBeenCalledTimes(2);
@@ -321,13 +306,13 @@ describe('ChatCompletionsAdapter', () => {
       });
 
       const outcome = await drain(
-        adapter.stream(
-          'gpt-4o',
-          {},
-          'token',
-          new AbortController().signal,
-          assistantSeed,
-        ),
+        adapter.stream({
+          model: 'gpt-4o',
+          requestBody: {},
+          token: 'token',
+          signal: new AbortController().signal,
+          initialAssembledMessage: assistantSeed,
+        }),
       );
 
       expect(outcome).toEqual({

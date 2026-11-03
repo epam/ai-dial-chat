@@ -31,6 +31,32 @@ const getValidAttachments = (
     Boolean(attachment.data || attachment.url),
   );
 
+/**
+ * Request-scoped context the relay forwards to DIAL Core as headers. Grouped
+ * into one object so each new header stops adding a positional `string |
+ * undefined` parameter that callers must pad and can silently swap.
+ */
+export type ChatCompletionsRequestContext = {
+  clientChannelId?: string;
+  timezone?: string;
+  lang?: string;
+  jobTitle?: string;
+};
+
+/*
+ * Builds the optional context headers for the model call, omitting every
+ * header whose value is absent (DIAL Core must not see an empty value).
+ */
+const buildRequestContextHeaders = (
+  context: ChatCompletionsRequestContext = {},
+): Record<string, string> => ({
+  ...(context.clientChannelId
+    ? { 'X-DIAL-CLIENT-CHANNEL-ID': context.clientChannelId }
+    : {}),
+  ...(context.timezone ? { 'X-Timezone': context.timezone } : {}),
+  ...(context.lang ? { 'X-Lang': context.lang } : {}),
+});
+
 /*
  * `custom_content.skills[].url` is persisted verbatim from the frontend
  * (e.g. `skills/public/my chats/123`), unlike every other DIAL resource path
@@ -118,27 +144,36 @@ export class ChatCompletionsAdapter {
    * Log lines keep the `relayModelCompletion` prefix this relay had inside
    * `ConversationStreamingService`, so existing log searches still match.
    */
-  async *stream(
-    model: string,
-    requestBody: unknown,
-    token: string,
-    signal: AbortSignal,
-    initialAssembledMessage: ConversationMessageDto,
-    clientChannelId?: string,
-    timezone?: string,
-    lang?: string,
-    timing?: GenerationRelayTiming,
-    conversationId?: string,
+  async *stream(params: {
+    model: string;
+    requestBody: unknown;
+    token: string;
+    signal: AbortSignal;
+    initialAssembledMessage: ConversationMessageDto;
+    context?: ChatCompletionsRequestContext;
+    timing?: GenerationRelayTiming;
+    conversationId?: string;
     onChunkApplied?: (
       rawChunk: unknown,
       message: ConversationMessageDto,
-    ) => void,
-    jobTitle?: string,
+    ) => void;
     options?: {
       /** Added to the model call, e.g. `x-project-id` for a project conversation. */
       extraHeaders?: Record<string, string>;
-    },
-  ): AsyncGenerator<Uint8Array, GenerationRelayOutcome, void> {
+    };
+  }): AsyncGenerator<Uint8Array, GenerationRelayOutcome, void> {
+    const {
+      model,
+      requestBody,
+      token,
+      signal,
+      initialAssembledMessage,
+      context,
+      timing,
+      conversationId,
+      onChunkApplied,
+      options,
+    } = params;
     let assembledMessage = initialAssembledMessage;
     let upstreamReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
     const cancelUpstreamOnAbort = (): void => {
@@ -152,13 +187,9 @@ export class ChatCompletionsAdapter {
           headers: {
             ...getBearerAuthHeaders(token),
             Accept: 'text/event-stream',
-            ...(clientChannelId
-              ? { 'X-DIAL-CLIENT-CHANNEL-ID': clientChannelId }
-              : {}),
-            ...(timezone ? { 'X-Timezone': timezone } : {}),
-            ...(lang ? { 'X-Lang': lang } : {}),
+            ...buildRequestContextHeaders(context),
             ...buildConversationIdHeaders(conversationId),
-            ...buildJobTitleHeaders(jobTitle),
+            ...buildJobTitleHeaders(context?.jobTitle),
             ...options?.extraHeaders,
           },
           params: { query: { 'api-version': this.dialClient.dialApiVersion } },

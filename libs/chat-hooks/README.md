@@ -2838,7 +2838,7 @@ const { streamCompletion, stopCompletion } = createChatStreamApi({
   setCsrfToken,
   completionsBasePath: '/api/v1/conversations',
   getTimezone: getBrowserTimezone,
-  getLanguage: () => i18n.resolvedLanguage,
+  getLanguage: () => i18n.language,
 });
 ```
 
