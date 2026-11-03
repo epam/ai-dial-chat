@@ -6612,7 +6612,7 @@ export interface ProjectConversationItemDto {
    */
   name: string;
   /**
-   * Display title: the stored body's `name`, or the title derived from the file name when the body cannot be read.
+   * Display title: the stored body's `name`, or the title derived from the file name when the body cannot be read or is not read yet (`isTitlePending`).
    * @type {string}
    * @memberof ProjectConversationItemDto
    */
@@ -6630,11 +6630,17 @@ export interface ProjectConversationItemDto {
    */
   updatedAt?: number;
   /**
-   * Whether the conversation changed after the caller's read baseline and since the caller last viewed it; `false` when the caller's read state cannot be read.
+   * Whether the conversation changed after the caller's read baseline and since the caller last viewed it; `false` when the caller's read state cannot be read or the title is pending.
    * @type {boolean}
    * @memberof ProjectConversationItemDto
    */
   isUnread: boolean;
+  /**
+   * Present and `true` when the body was not read for this listing: `title` is the file-name title and `isUnread` is `false`. `POST /api/v1/projects/:id/conversations/titles` resolves both.
+   * @type {boolean}
+   * @memberof ProjectConversationItemDto
+   */
+  isTitlePending?: boolean;
 }
 /**
  *
@@ -6643,17 +6649,37 @@ export interface ProjectConversationItemDto {
  */
 export interface ProjectConversationListResponseDto {
   /**
-   * Conversations, newest first.
+   * Every conversation of the project, newest first. Titles of the first 20 and of cached ones are resolved; the rest carry `isTitlePending`.
    * @type {Array<ProjectConversationItemDto>}
    * @memberof ProjectConversationListResponseDto
    */
   items: Array<ProjectConversationItemDto>;
+}
+/**
+ *
+ * @export
+ * @interface ProjectConversationTitlesBodyDto
+ */
+export interface ProjectConversationTitlesBodyDto {
   /**
-   * Whether the project holds more conversations than `items`.
-   * @type {boolean}
-   * @memberof ProjectConversationListResponseDto
+   * File names under the project `conversations/` folder, as listed in `name`. Duplicates are resolved once; names the project does not hold are omitted.
+   * @type {Array<string>}
+   * @memberof ProjectConversationTitlesBodyDto
    */
-  hasMore: boolean;
+  names: Array<string>;
+}
+/**
+ *
+ * @export
+ * @interface ProjectConversationTitlesResponseDto
+ */
+export interface ProjectConversationTitlesResponseDto {
+  /**
+   * The requested conversations the project holds, in request order, with their titles and read state resolved.
+   * @type {Array<ProjectConversationItemDto>}
+   * @memberof ProjectConversationTitlesResponseDto
+   */
+  items: Array<ProjectConversationItemDto>;
 }
 
 /**

@@ -38,6 +38,42 @@ describe('ProjectCard', () => {
     expect(within(card).getAllByText('Handbook').length).toBeGreaterThan(0);
   });
 
+  it('opens the project from a click on its folder path', async () => {
+    const onOpen = vi.fn();
+    renderCard({ onOpen, href: '/projects/view/p1' });
+
+    await userEvent.click(
+      within(
+        screen.getByRole('navigation', { name: 'Project location' }),
+      ).getByText('Organization'),
+    );
+
+    expect(onOpen).toHaveBeenCalledWith('p1');
+  });
+
+  it('leaves a modified click on the folder path to the browser', async () => {
+    const user = userEvent.setup();
+    const onOpen = vi.fn();
+    renderCard({ onOpen, href: '/projects/view/p1' });
+    const link = screen.getByRole('link');
+    const linkClicks: boolean[] = [];
+    link.addEventListener('click', (event) => {
+      linkClicks.push(event.metaKey);
+      event.preventDefault();
+    });
+
+    await user.keyboard('{Meta>}');
+    await user.click(
+      within(
+        screen.getByRole('navigation', { name: 'Project location' }),
+      ).getByText('Organization'),
+    );
+    await user.keyboard('{/Meta}');
+
+    expect(linkClicks).toEqual([true]);
+    expect(onOpen).not.toHaveBeenCalled();
+  });
+
   it('shows the source as the folder path of a root project', () => {
     renderCard();
 

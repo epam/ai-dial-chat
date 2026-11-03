@@ -135,7 +135,6 @@ describe('ProjectConversationsSection', () => {
     );
     vi.mocked(listProjectConversations).mockResolvedValue({
       items: [{ id: CHAT_ID, name: 'gpt-4o__Old__1', title: 'Old title' }],
-      hasMore: false,
     });
   });
 
@@ -149,7 +148,6 @@ describe('ProjectConversationsSection', () => {
           isUnread: true,
         },
       ],
-      hasMore: false,
     });
     vi.mocked(markProjectConversationViewed).mockResolvedValue(undefined);
     const { router } = renderSection();
@@ -252,7 +250,6 @@ describe('ProjectConversationsSection', () => {
   it('shows the empty state', async () => {
     vi.mocked(listProjectConversations).mockResolvedValue({
       items: [],
-      hasMore: false,
     });
     renderSection();
 

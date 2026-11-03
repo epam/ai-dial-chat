@@ -10412,7 +10412,7 @@
     },
     "/api/v1/projects/{id}/conversations": {
       "get": {
-        "description": "Lists the conversations stored in the project's `conversations/` folder, newest first, with their titles and authors.",
+        "description": "Lists every conversation stored in the project's `conversations/` folder, newest first, with their authors. DIAL Core cannot page the folder in this order, so the list is not paged; the client pages it locally. Bodies are read for the 20 newest conversations only: the others have a cached title or carry `isTitlePending`, which `POST /api/v1/projects/:id/conversations/titles` resolves.",
         "operationId": "listProjectConversations",
         "parameters": [
           {
@@ -10423,31 +10423,6 @@
             "schema": {
               "example": "projects%2Fa1b2c3%2Fmarketing%2Fq4-launch",
               "type": "string"
-            }
-          },
-          {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "description": "Maximum number of conversations to return, newest first. `hasMore` tells whether more exist.",
-            "schema": {
-              "minimum": 1,
-              "maximum": 100,
-              "default": 50,
-              "example": 50,
-              "type": "number"
-            }
-          },
-          {
-            "name": "offset",
-            "required": false,
-            "in": "query",
-            "description": "Number of conversations to skip in the newest-first order; the next page starts at the count already loaded.",
-            "schema": {
-              "minimum": 0,
-              "default": 0,
-              "example": 0,
-              "type": "number"
             }
           }
         ],
@@ -10463,7 +10438,7 @@
             }
           },
           "400": {
-            "description": "Invalid id, limit or offset"
+            "description": "Invalid id"
           },
           "401": {
             "description": "Not authenticated"
@@ -10571,6 +10546,78 @@
           }
         },
         "summary": "Create a project conversation",
+        "tags": ["projects"]
+      }
+    },
+    "/api/v1/projects/{id}/conversations/titles": {
+      "post": {
+        "description": "Reads the bodies of the named conversations, as listed with `isTitlePending`, and returns them with their titles and read state resolved. Up to 100 names per request. Any reader of the project may call it.",
+        "operationId": "getProjectConversationTitles",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The DIAL project id `projects/{bucket}/{path}`, URL-encoded into one path segment.",
+            "schema": {
+              "example": "projects%2Fa1b2c3%2Fmarketing%2Fq4-launch",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectConversationTitlesBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The named conversations the project holds, in request order; unknown names are omitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectConversationTitlesResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid id or body"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "The projectsEnabled feature is not enabled for this user, or DIAL Core denied read access"
+          },
+          "404": {
+            "description": "The project does not exist"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core returned a server error or an unexpected response"
+          },
+          "503": {
+            "description": "DIAL Core is unreachable or timed out"
+          }
+        },
+        "summary": "Resolve project conversations' titles",
         "tags": ["projects"]
       }
     },
@@ -19292,7 +19339,7 @@
           },
           "title": {
             "type": "string",
-            "description": "Display title: the stored body's `name`, or the title derived from the file name when the body cannot be read.",
+            "description": "Display title: the stored body's `name`, or the title derived from the file name when the body cannot be read or is not read yet (`isTitlePending`).",
             "example": "Write a weekly support health summary for the VP of Customer Success."
           },
           "author": {
@@ -19307,8 +19354,13 @@
           },
           "isUnread": {
             "type": "boolean",
-            "description": "Whether the conversation changed after the caller's read baseline and since the caller last viewed it; `false` when the caller's read state cannot be read.",
+            "description": "Whether the conversation changed after the caller's read baseline and since the caller last viewed it; `false` when the caller's read state cannot be read or the title is pending.",
             "example": false
+          },
+          "isTitlePending": {
+            "type": "boolean",
+            "description": "Present and `true` when the body was not read for this listing: `title` is the file-name title and `isUnread` is `false`. `POST /api/v1/projects/:id/conversations/titles` resolves both.",
+            "example": true
           }
         },
         "required": ["id", "name", "title", "isUnread"]
@@ -19317,19 +19369,43 @@
         "type": "object",
         "properties": {
           "items": {
-            "description": "Conversations, newest first.",
+            "description": "Every conversation of the project, newest first. Titles of the first 20 and of cached ones are resolved; the rest carry `isTitlePending`.",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ProjectConversationItemDto"
             }
-          },
-          "hasMore": {
-            "type": "boolean",
-            "description": "Whether the project holds more conversations than `items`.",
-            "example": false
           }
         },
-        "required": ["items", "hasMore"]
+        "required": ["items"]
+      },
+      "ProjectConversationTitlesBodyDto": {
+        "type": "object",
+        "properties": {
+          "names": {
+            "description": "File names under the project `conversations/` folder, as listed in `name`. Duplicates are resolved once; names the project does not hold are omitted.",
+            "minItems": 1,
+            "maxItems": 100,
+            "example": ["gpt-4o__Weekly support health summary__7c1d"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["names"]
+      },
+      "ProjectConversationTitlesResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "The requested conversations the project holds, in request order, with their titles and read state resolved.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectConversationItemDto"
+            }
+          }
+        },
+        "required": ["items"]
       },
       "OfflineCredentialsConnectDto": {
         "type": "object",

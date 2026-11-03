@@ -35,7 +35,7 @@ The page SHALL:
 
 ### Requirement: The edit page seeds ProjectCreateForm from the loaded project
 
-`ProjectEditPage` SHALL render `ProjectCreateForm` with its state seeded once per loaded `etag`:
+`ProjectEditPage` SHALL render `ProjectCreateForm` with its state seeded once per loaded `contentVersion`:
 
 - `values` = `{ name, instructions }` from the DTO; the form has no description field, so the DTO's `description` is not edited;
 - `contextFiles` = one `StoredProjectContextFile` per `contextFiles[]` entry: `{ id: 'stored:' + name, name, size, contentType, type, status: RequestStatus.Idle, isStored: true }`, with `contentType` and `type` inferred from the name.
@@ -163,7 +163,7 @@ The edit page SHALL inherit `ProjectCreateForm`'s layout, RTL and accessibility 
 - The Reload action of the conflict toast is a keyboard-operable button.
 - Focus moves to Name on `name-taken`.
 - Stored context cards have the same named remove buttons as new ones (`labels.removeFileLabel(name)`).
-- The page's handlers are `useCallback`. The draft is seeded by an effect once per loaded `etag` (a `seededEtag` gate), and the page shows `RouteFallback` until it is seeded.
+- The page's handlers are `useCallback`. The draft is seeded by an effect once per loaded `contentVersion` (a `seededContentVersion` gate), and the page shows `RouteFallback` until it is seeded.
 
 #### Scenario: Remove button is named
 

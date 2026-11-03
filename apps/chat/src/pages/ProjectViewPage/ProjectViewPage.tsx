@@ -118,7 +118,7 @@ const ProjectViewPage: FC = () => {
     [project],
   );
   /* Opens a context file in the canvas the way the conversation opens an attachment. A saved file's card id is its name. */
-  const { attachmentId } = useAttachmentCanvas();
+  const { attachmentId, closeCanvas } = useAttachmentCanvas();
   const { resolvers, options } = useAttachmentCanvasResolvers();
   const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
   const startCanvasRequest = useLatestCanvasRequest();
@@ -130,6 +130,11 @@ const ProjectViewPage: FC = () => {
     selectedOutputName == null ? selectedCardId : undefined;
   const handleContextFileClick = useCallback(
     (name: string) => {
+      /* The open file's card closes the canvas, as its pressed state says. */
+      if (name === selectedContextFileId) {
+        closeCanvas();
+        return;
+      }
       const file = viewModel?.contextFiles.find((item) => item.name === name);
       if (!file || projectId == null) return;
       void openAttachmentCanvas(
@@ -139,6 +144,8 @@ const ProjectViewPage: FC = () => {
       );
     },
     [
+      closeCanvas,
+      selectedContextFileId,
       viewModel,
       projectId,
       previewScope,
@@ -152,6 +159,10 @@ const ProjectViewPage: FC = () => {
   );
   const handleOpenOutput = useCallback(
     (name: string) => {
+      if (name === selectedOutputName) {
+        closeCanvas();
+        return;
+      }
       const item = outputItems.find((output) => output.name === name);
       if (!item || projectId == null) return;
       void openAttachmentCanvas(
@@ -161,6 +172,8 @@ const ProjectViewPage: FC = () => {
       );
     },
     [
+      closeCanvas,
+      selectedOutputName,
       outputItems,
       projectId,
       previewScope,
@@ -255,6 +268,8 @@ const ProjectViewPage: FC = () => {
                 canEdit={canEdit}
                 conversations={conversations}
                 onConversationDeleted={handleConversationDeleted}
+                /* An Outputs section with files or an error is content of its own, so no "no outputs" empty state under it. */
+                hasOutputs={outputItems.length > 0 || artifacts.hasError}
                 /* Always mounted: it shows nothing until there are outputs or an error, and keeps its live region in place. */
                 outputs={
                   <ProjectOutputs

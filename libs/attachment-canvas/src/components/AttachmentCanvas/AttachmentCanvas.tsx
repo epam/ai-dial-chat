@@ -37,6 +37,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   isOpen,
   isLoading = false,
   onClose,
+  onRetry,
   content,
   fileName,
   leftActions,
@@ -54,6 +55,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     visualizerErrorLabel,
     unsupportedLabel = 'Preview is not supported for this file',
     loadErrorLabel = 'Failed to load file',
+    loadErrorRetryLabel = 'Retry',
     forbiddenErrorLabel = "You don't have permission to access this file",
     htmlFrameBlockedLabel = 'This page cannot be displayed in preview',
     htmlOpenInNewTabLabel = 'Open in new tab',
@@ -420,9 +422,11 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
             ? setMcpAppInfo
             : undefined
         }
+        onRetry={onRetry}
         labels={{
           unsupportedLabel,
           loadErrorLabel,
+          loadErrorRetryLabel,
           forbiddenErrorLabel,
           visualizerErrorLabel,
           htmlFrameBlockedLabel,

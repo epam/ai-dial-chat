@@ -4,7 +4,11 @@ import {
   MarkdownRenderer,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
-import { DIAL_KIT_ICON_STROKE, Spinner } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_KIT_ICON_STROKE,
+  GhostButton,
+  Spinner,
+} from '@epam/ai-dial-ui-kit';
 import { IconAlertTriangle, IconLock } from '@tabler/icons-react';
 import {
   type FC,
@@ -99,6 +103,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
   labels: {
     unsupportedLabel = 'Preview is not supported for this file',
     loadErrorLabel = 'Failed to load file',
+    loadErrorRetryLabel = 'Retry',
     forbiddenErrorLabel = "You don't have permission to access this file",
     visualizerErrorLabel,
     htmlFrameBlockedLabel = 'This page cannot be displayed in preview',
@@ -132,6 +137,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
   hidePdfToolbar = false,
   configurePdfWorker,
   onAppInfo,
+  onRetry,
   onVisualizerSendMessage,
 }) => {
   const {
@@ -514,6 +520,9 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
             <p className={mergeClasses('text-center', styles.statusLabel)}>
               {isForbidden ? forbiddenErrorLabel : loadErrorLabel}
             </p>
+            {!isForbidden && onRetry != null && (
+              <GhostButton label={loadErrorRetryLabel} onClick={onRetry} />
+            )}
           </div>
         );
       }
@@ -532,6 +541,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     codeBlockTheme,
     unsupportedLabel,
     loadErrorLabel,
+    loadErrorRetryLabel,
     forbiddenErrorLabel,
     visualizerErrorLabel,
     onVisualizerSendMessage,
@@ -543,6 +553,7 @@ const AttachmentCanvasBodyBase: FC<AttachmentCanvasBodyProps> = ({
     hidePdfToolbar,
     configurePdfWorker,
     onAppInfo,
+    onRetry,
     pdfThumbnailsLabel,
     pdfShowThumbnailsLabel,
     pdfHideThumbnailsLabel,

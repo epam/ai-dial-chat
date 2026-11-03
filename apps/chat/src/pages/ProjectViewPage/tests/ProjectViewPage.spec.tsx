@@ -93,15 +93,18 @@ vi.mock(
       conversations,
       onConversationDeleted,
       outputs,
+      hasOutputs,
     }: {
       projectId: string;
       canEdit: boolean;
       conversations: { items: { title: string; isUnread?: boolean }[] };
       onConversationDeleted?: () => void;
       outputs?: ReactNode;
+      hasOutputs?: boolean;
     }) => (
       <>
         <p>{`chats of ${projectId}, editable: ${String(canEdit)}`}</p>
+        <p>{`has outputs: ${String(hasOutputs)}`}</p>
         {outputs}
         <ul aria-label="chat rows">
           {conversations.items.map((item) => (
@@ -182,7 +185,6 @@ describe('ProjectViewPage', () => {
     vi.mocked(watchProjects).mockRejectedValue(new Error('no watch'));
     vi.mocked(listProjectConversations).mockResolvedValue({
       items: [],
-      hasMore: false,
     });
     vi.mocked(listProjectArtifacts).mockResolvedValue({ items: [] });
   });
@@ -488,6 +490,20 @@ describe('ProjectViewPage', () => {
       );
     });
 
+    it('closes the canvas when the card of the open file is activated again', async () => {
+      renderAt();
+      const card = await findCard();
+
+      await userEvent.click(card);
+      await waitFor(() =>
+        expect(getCanvas().textContent).toBe(`${PROJECT_ID}::tickets.csv`),
+      );
+      await userEvent.click(card);
+
+      expect(getCanvas().textContent).toBe('closed');
+      expect(card.getAttribute('aria-pressed')).toBe('false');
+    });
+
     it('previews a file of a shared read-only project', async () => {
       vi.mocked(getProject).mockResolvedValue(details({ canEdit: false }));
       renderAt();
@@ -539,6 +555,14 @@ describe('ProjectViewPage', () => {
       expect(
         screen.queryByRole('region', { name: ProjectsI18nKeys.OutputsTitle }),
       ).toBeNull();
+      expect(screen.getByText('has outputs: false')).toBeTruthy();
+    });
+
+    it('tells the Chats list that outputs are shown, so it drops the empty state', async () => {
+      vi.mocked(listProjectArtifacts).mockResolvedValue(outputs('report.pdf'));
+      renderAt();
+
+      expect(await screen.findByText('has outputs: true')).toBeTruthy();
     });
 
     it('announces a failed read and keeps the section and focus through Retry', async () => {
@@ -695,7 +719,6 @@ describe('ProjectViewPage', () => {
             isUnread: false,
           },
         ],
-        hasMore: false,
       });
     });
 
@@ -719,7 +742,6 @@ describe('ProjectViewPage', () => {
             isUnread: false,
           },
         ],
-        hasMore: false,
       });
 
       watch.send({

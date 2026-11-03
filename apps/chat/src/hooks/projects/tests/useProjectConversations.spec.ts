@@ -19,7 +19,6 @@ const listing = {
     { id: 'c1', name: 'n1', title: 'First', author: 'Valery Tester' },
     { id: 'c2', name: 'n2', title: 'Second' },
   ],
-  hasMore: false,
 };
 
 describe('useProjectConversations', () => {

@@ -31,14 +31,17 @@ export interface AttachmentCanvasContextValue {
   attachmentId: string | undefined;
   /** Open the canvas immediately in a loading state before content has resolved. */
   openCanvasLoading: (fileName?: string, attachmentId?: string) => void;
-  /** Open the canvas with the given content and optional file name. */
+  /** Open the canvas with the given content and optional file name; `onRetry` re-opens it from a load error. */
   openCanvas: (
     content: AttachmentCanvasContent,
     fileName?: string,
     attachmentId?: string,
+    onRetry?: () => void,
   ) => void;
   /** Close the canvas. */
   closeCanvas: () => void;
+  /** Re-opens the current attachment after a load error; unset when the opener gave no retry. */
+  retryCanvas: (() => void) | undefined;
 }
 
 const AttachmentCanvasContext = createContext<
@@ -75,11 +78,15 @@ export const AttachmentCanvasProvider = ({
   const [attachmentId, setAttachmentId] = useState<string | undefined>(
     undefined,
   );
+  const [retryCanvas, setRetryCanvas] = useState<(() => void) | undefined>(
+    undefined,
+  );
 
   const openCanvasLoading = useCallback(
     (newFileName?: string, newAttachmentId?: string) => {
       setFileName(newFileName);
       setAttachmentId(newAttachmentId);
+      setRetryCanvas(undefined);
       setIsLoading(true);
       setIsOpen(true);
     },
@@ -91,10 +98,13 @@ export const AttachmentCanvasProvider = ({
       newContent: AttachmentCanvasContent,
       newFileName?: string,
       newAttachmentId?: string,
+      onRetry?: () => void,
     ) => {
       setContent(newContent);
       setFileName(newFileName);
       setAttachmentId(newAttachmentId);
+      /* A function state value must be wrapped, or React calls it as an updater. */
+      setRetryCanvas(onRetry == null ? undefined : () => onRetry);
       setIsLoading(false);
       setIsOpen(true);
     },
@@ -106,6 +116,7 @@ export const AttachmentCanvasProvider = ({
     setIsOpen(false);
     setIsLoading(false);
     setAttachmentId(undefined);
+    setRetryCanvas(undefined);
   }, []);
 
   /* Revokes the outgoing content's object URL whenever it is replaced by new
@@ -130,6 +141,7 @@ export const AttachmentCanvasProvider = ({
           openCanvasLoading,
           openCanvas,
           closeCanvas,
+          retryCanvas,
         }),
         [
           isOpen,
@@ -140,6 +152,7 @@ export const AttachmentCanvasProvider = ({
           openCanvasLoading,
           openCanvas,
           closeCanvas,
+          retryCanvas,
         ],
       )}
     >
@@ -160,6 +173,10 @@ export const useAttachmentCanvas = (): AttachmentCanvasContextValue => {
   }
   return value;
 };
+
+/** The provider's request starter, or `undefined` outside a provider; for library hooks that must not throw. */
+export const useCanvasRequestStarter = (): (() => () => boolean) | undefined =>
+  useContext(CanvasRequestContext);
 
 /** Starts a provider-scoped preview request, valid until superseded or the caller unmounts. */
 export const useLatestCanvasRequest = (): (() => () => boolean) => {

@@ -82,7 +82,7 @@ Every Core call sends `getBearerAuthHeaders(accessToken)` and goes through `Dial
   - `otherEntries`: every other path, including nested paths under `context/` and `conversations/`.
 - **`contentVersion`:** the snapshot SHALL compute a content version over every entry that is in neither `conversationEntries` nor `artifactEntries`. It is a SHA-256, hex-encoded and quoted like an entity tag (`"…"`), of the lines `{path}\t{crc32}\t{uncompressedSize}`, one per entry, sorted by path. The CRC-32 and size come from the ZIP central directory, so nothing is inflated. A conversation write or an artifact write therefore never changes `contentVersion`, while any write to `PROJECT.md`, `context/` or another path does.
 
-**Logging.** `log` and `warn` logs carry counts and byte totals only, never a file name, bucket or content. An unreadable archive is logged with the error's `name` only, because `yauzl`'s messages quote entry file names. At `debug` level (`LOG_LEVEL=debug`, off by default) the snapshot also logs what Core's archive held — the ETag, the archive size, whether `PROJECT.md` parsed, and every entry's path and size — and `getProject` logs the item metadata exactly as Core returned it. File content and tokens are never logged at any level.
+**Logging.** `log` and `warn` logs carry counts and byte totals only, never a file name, bucket or content. An unreadable archive is logged with the error's `name` only, because `yauzl`'s messages quote entry file names. At `debug` level (`LOG_LEVEL=debug`, off by default) the snapshot also logs what Core's archive held — the ETag, the archive size, whether `PROJECT.md` parsed, and every entry's path and size. `getProject` does not log Core's item metadata. File content and tokens are never logged at any level.
 
 #### Scenario: Snapshot ETag comes from the archive response
 
@@ -631,7 +631,7 @@ Each new handler SHALL declare:
 
 After the change, `npm run openapi` and `npm run openapi:check` SHALL pass, and `libs/chat-api-client` SHALL build and lint.
 
-**Observability:** no new metric is added. The routes are covered by `MetricsInterceptor`. Domain logs at `log`/`warn` never include tokens, ETags, bucket ids, file names or content; the `debug` logs of Core's project metadata and archive entries (see the snapshot requirement) include ETags, ids and paths but never tokens or file content.
+**Observability:** no new metric is added. The routes are covered by `MetricsInterceptor`. Domain logs at `log`/`warn` never include tokens, ETags, bucket ids, file names or content; the `debug` logs of the archive entries (see the snapshot requirement) include ETags, ids and paths but never tokens or file content.
 
 #### Scenario: Generated client exposes the operations
 
