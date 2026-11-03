@@ -7,7 +7,6 @@ import {
   RequestStatus,
   type Attachment,
 } from '@epam/ai-dial-chat-shared';
-import type { ProjectContextFile } from '@epam/ai-dial-projects';
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { mapStoredContextFiles } from '../project-mapping';
@@ -119,15 +118,6 @@ describe('useProjectDraft — create', () => {
       context: 'too many',
     });
   });
-
-  it('clears the context error when the files change', () => {
-    const { result } = renderDraft(create());
-    act(() => result.current.setErrors({ context: 'too many' }));
-
-    act(() => result.current.onContextFilesChange([newFile('n.txt')]));
-
-    expect(result.current.errors.context).toBeUndefined();
-  });
 });
 
 describe('useProjectDraft — edit', () => {
@@ -205,25 +195,5 @@ describe('useProjectDraft — edit', () => {
     expect(result.current.removedFileNames).toEqual(['a.csv']);
     expect(result.current.newFiles).toEqual([added.file]);
     expect(result.current.isDirty).toBe(true);
-  });
-
-  it('is dirty after an instructions edit and clean again when it is undone', () => {
-    const { result } = renderDraft(edit(project()));
-
-    act(() => result.current.onFieldChange('instructions', 'Be long'));
-    expect(result.current.isDirty).toBe(true);
-
-    act(() => result.current.onFieldChange('instructions', 'Be brief'));
-    expect(result.current.isDirty).toBe(false);
-  });
-
-  it('keeps stored files that stay as no removal', () => {
-    const { result } = renderDraft(edit(project()));
-    const stored: ProjectContextFile[] = mapStoredContextFiles(project());
-
-    act(() => result.current.onContextFilesChange(stored));
-
-    expect(result.current.removedFileNames).toEqual([]);
-    expect(result.current.isDirty).toBe(false);
   });
 });

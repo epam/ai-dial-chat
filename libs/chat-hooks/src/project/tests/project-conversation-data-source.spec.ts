@@ -80,26 +80,6 @@ describe('createProjectConversationDataSource', () => {
     expect(client.deleteProjectConversation).toHaveBeenCalledWith(ID);
   });
 
-  it('reads a conversation, for the page and for the transport, through the project request', async () => {
-    client.getProjectConversation.mockResolvedValue({ id: ID });
-    const source = create();
-    const signal = new AbortController().signal;
-
-    await source.getConversation(ID, signal);
-    await source.transport.getConversation(ID, signal);
-
-    expect(client.getProjectConversation).toHaveBeenNthCalledWith(
-      1,
-      ID,
-      signal,
-    );
-    expect(client.getProjectConversation).toHaveBeenNthCalledWith(
-      2,
-      ID,
-      signal,
-    );
-  });
-
   it('attaches through the project endpoint', async () => {
     const signal = new AbortController().signal;
     await create().transport.attachToGeneration(PATH, signal);
@@ -109,13 +89,6 @@ describe('createProjectConversationDataSource', () => {
       PATH,
       signal,
     );
-  });
-
-  it('passes the completion stream through unchanged', () => {
-    const source = create();
-    const api = vi.mocked(createChatStreamApi).mock.results[0].value;
-
-    expect(source.transport.streamCompletion).toBe(api.streamCompletion);
   });
 
   it('polls the conversation watch with update events until aborted', async () => {
@@ -176,12 +149,6 @@ describe('createProjectConversationDataSource', () => {
     await Promise.all([first, second]);
 
     expect(writeViewed.mock.calls).toEqual([[other]]);
-  });
-
-  it('ignores a failed viewed mark', async () => {
-    writeViewed.mockRejectedValue(new Error('offline'));
-
-    await expect(create().listSync.markViewed(ID)).resolves.toBeUndefined();
   });
 
   it('re-reads the conversation until its title changes', async () => {

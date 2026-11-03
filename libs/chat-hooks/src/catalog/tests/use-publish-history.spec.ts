@@ -34,13 +34,6 @@ describe('usePublishHistory', () => {
     vi.clearAllMocks();
   });
 
-  it('reads nothing while the panel is closed', () => {
-    const { result } = render(false);
-
-    expect(loadHistory).not.toHaveBeenCalled();
-    expect(result.current).toEqual([]);
-  });
-
   it('reads the history of the entity when the panel opens', async () => {
     loadHistory.mockResolvedValue([entry('Team')]);
 

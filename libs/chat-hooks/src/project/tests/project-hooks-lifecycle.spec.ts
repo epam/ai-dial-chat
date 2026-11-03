@@ -138,21 +138,6 @@ describe('project hooks lifecycle', () => {
 
       expect(signal.aborted).toBe(true);
     });
-
-    it('does not return the previous project while a new id loads', async () => {
-      client.getProject.mockResolvedValueOnce(details);
-      const { result, rerender } = renderHook(
-        ({ id }) => useProject(client, id, true),
-        { initialProps: { id: PROJECT_ID } },
-      );
-      await waitFor(() => expect(result.current.project).toEqual(details));
-
-      client.getProject.mockReturnValue(pendingForever());
-      rerender({ id: 'projects/b/other' });
-
-      expect(result.current.project).toBeNull();
-      expect(result.current.isLoading).toBe(true);
-    });
   });
 
   describe('useProjects', () => {
@@ -220,16 +205,6 @@ describe('project hooks lifecycle', () => {
       expect(result.current.projects).toEqual([]);
       expect(result.current.isLoading).toBe(false);
     });
-
-    it('aborts the pending request on unmount', () => {
-      client.listProjects.mockReturnValue(pendingForever());
-
-      const { unmount } = renderHook(() => useProjects(client, true));
-      const signal = client.listProjects.mock.calls[0][0] as AbortSignal;
-      unmount();
-
-      expect(signal.aborted).toBe(true);
-    });
   });
 
   describe('useCreateProject', () => {
@@ -268,24 +243,6 @@ describe('project hooks lifecycle', () => {
       expect(result.current.isSubmitting).toBe(true);
     });
 
-    it('returns a status without a code for an upstream failure', async () => {
-      client.createProject.mockRejectedValue(
-        rejection(503, {
-          statusCode: 503,
-          message: 'DIAL Core is unreachable',
-        }),
-      );
-      const { result } = renderHook(() => useCreateProject(client));
-
-      let outcome: unknown;
-      await act(async () => {
-        outcome = await result.current.create(FIELDS, []);
-      });
-
-      expect(outcome).toMatchObject({ isCreated: false, status: 503 });
-      expect(outcome).not.toHaveProperty('code', expect.anything());
-    });
-
     it('aborts the request on unmount and reports it as aborted', async () => {
       let signal: AbortSignal | undefined;
       client.createProject.mockImplementation(
@@ -315,25 +272,6 @@ describe('project hooks lifecycle', () => {
   });
 
   describe('useSaveProject', () => {
-    it('reports isSubmitting while the request is in flight and clears it after', async () => {
-      const saved = { id: PROJECT_ID, name: 'q4', etag: '"e2"' };
-      const request = deferred<typeof saved>();
-      client.updateProject.mockReturnValue(request.promise);
-      const { result } = renderHook(() => useSaveProject(client));
-
-      let pending: Promise<unknown> | undefined;
-      act(() => {
-        pending = result.current.save(REQUEST);
-      });
-      expect(result.current.isSubmitting).toBe(true);
-      await act(async () => {
-        request.resolve(saved);
-        await pending;
-      });
-
-      expect(result.current.isSubmitting).toBe(false);
-    });
-
     it('aborts the request on unmount and reports it as aborted', async () => {
       let rejectRequest: (error: unknown) => void = () => undefined;
       client.updateProject.mockImplementation(

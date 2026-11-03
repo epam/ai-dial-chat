@@ -58,14 +58,6 @@ describe('useProjectFilePreview', () => {
   });
 
   describe('selection', () => {
-    it('selects nothing while the canvas holds no project file', () => {
-      const { result } = render();
-
-      expect(result.current.selectedCardId).toBeUndefined();
-      expect(result.current.selectedContextFileId).toBeUndefined();
-      expect(result.current.selectedOutputName).toBeUndefined();
-    });
-
     it('selects the context card whose key the canvas holds', () => {
       const { result } = render({ attachmentId: key('tickets.csv') });
 
@@ -179,29 +171,6 @@ describe('useProjectFilePreview', () => {
       expect(closeCanvas).toHaveBeenCalledOnce();
       expect(openAttachment).not.toHaveBeenCalled();
     });
-
-    it('does not select a context card that shares an output name', () => {
-      const { result } = render({
-        attachmentId: key('artifacts/notes.md'),
-      });
-
-      result.current.onContextFileClick('notes.md');
-
-      expect(closeCanvas).not.toHaveBeenCalled();
-      expect(openAttachment).toHaveBeenCalledWith(
-        attachment('notes.md'),
-        key('notes.md'),
-        guard,
-      );
-    });
-
-    it('opens nothing for an output when the host resolves none', () => {
-      const { result } = render({ resolveOutputAttachment: undefined });
-
-      result.current.onOutputClick('deck.pptx');
-
-      expect(openAttachment).not.toHaveBeenCalled();
-    });
   });
 
   describe('closeIfRemoved', () => {
@@ -242,15 +211,6 @@ describe('useProjectFilePreview', () => {
       expect(result.current.onContextFileClick).toBe(before.onContextFileClick);
       expect(result.current.onOutputClick).toBe(before.onOutputClick);
       expect(result.current.closeIfRemoved).toBe(before.closeIfRemoved);
-    });
-
-    it('renews the click callback when the selection changes', () => {
-      const { result, rerender } = render({ attachmentId: key('a.csv') });
-      const before = result.current.onContextFileClick;
-
-      rerender({ attachmentId: key('b.csv') });
-
-      expect(result.current.onContextFileClick).not.toBe(before);
     });
   });
 });

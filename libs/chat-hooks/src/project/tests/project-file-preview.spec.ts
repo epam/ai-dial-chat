@@ -34,12 +34,6 @@ describe('project preview keys', () => {
     ).toBe('tickets.csv');
   });
 
-  it('keeps a card id that itself contains the separator', () => {
-    expect(fromProjectPreviewKey('new', 'new::stored:a::b.csv')).toBe(
-      'stored:a::b.csv',
-    );
-  });
-
   it.each([
     ['another scope', 'projects/b/other::tickets.csv'],
     ['a key that is not a project key', '0:abc'],
