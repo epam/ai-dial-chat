@@ -109,6 +109,7 @@ describe('buildApplicationCredentialLoginParams', () => {
       scopesSupported: ['repo'],
       codeChallenge: 'challenge',
       codeChallengeMethod: 'S256',
+      resource: 'https://mcp.example.com/mcp',
     });
 
     expect(
@@ -127,6 +128,7 @@ describe('buildApplicationCredentialLoginParams', () => {
         scopes: ['repo'],
         codeChallenge: 'challenge',
         codeChallengeMethod: 'S256',
+        resource: 'https://mcp.example.com/mcp',
       },
       forceStale: false,
     });

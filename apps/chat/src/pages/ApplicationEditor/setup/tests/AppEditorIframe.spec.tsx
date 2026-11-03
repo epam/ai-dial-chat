@@ -1793,6 +1793,7 @@ describe('AppEditorIframe — external-service login request', () => {
     scopesSupported: ['read_repository'],
     codeChallenge: 'challenge',
     codeChallengeMethod: 'S256',
+    resource: 'https://gitlab.example.com/api/mcp',
   };
 
   let popup: { close: ReturnType<typeof vi.fn> } | undefined;
@@ -1919,6 +1920,7 @@ describe('AppEditorIframe — external-service login request', () => {
         scopes: ['read_repository'],
         codeChallenge: 'challenge',
         codeChallengeMethod: 'S256',
+        resource: 'https://gitlab.example.com/api/mcp',
       },
       offlineUsageConsent: true,
       forceStale: false,

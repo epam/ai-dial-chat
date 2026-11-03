@@ -1470,6 +1470,9 @@ export enum ToolsetEditorI18nKeys {
   TokenEndpointRequired = 'toolsetEditor.auth.tokenEndpointRequired',
   ScopesLabel = 'toolsetEditor.auth.scopesLabel',
   ScopesPlaceholder = 'toolsetEditor.auth.scopesPlaceholder',
+  ResourceLabel = 'toolsetEditor.auth.resourceLabel',
+  ResourcePlaceholder = 'toolsetEditor.auth.resourcePlaceholder',
+  ResourceInvalid = 'toolsetEditor.auth.resourceInvalid',
   LogoutConfirmDescription = 'toolsetEditor.auth.logoutConfirmDescription',
   // Errors
   ErrorCreateFailed = 'toolsetEditor.error.createFailed',

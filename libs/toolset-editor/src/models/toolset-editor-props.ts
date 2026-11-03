@@ -47,6 +47,8 @@ export interface ToolsetEditorValidationLabels {
   authorizationEndpointRequired?: string;
   /** Message for a missing OAuth token endpoint. Defaults to `'Token endpoint is required'`. */
   tokenEndpointRequired?: string;
+  /** Message for an OAuth resource that is not an absolute URI or carries a fragment. Defaults to `'Enter an absolute URI without a fragment'`. */
+  resourceInvalid?: string;
 }
 
 /** Labels for the editor chrome (header, actions, section titles), all optional with English defaults. */

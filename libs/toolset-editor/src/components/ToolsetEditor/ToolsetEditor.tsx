@@ -30,6 +30,7 @@ import type {
 import {
   isToolsetFormValid,
   isValidEndpointUrl,
+  isValidOAuthResource,
   pickToolsetMetadata,
   splitToolsetFormPatch,
 } from '../../utils/toolsets';
@@ -42,6 +43,7 @@ const AUTH_ERROR_FIELDS: (keyof ToolsetFormErrors)[] = [
   'clientSecret',
   'authorizationEndpoint',
   'tokenEndpoint',
+  'resource',
 ];
 
 /* Setup-section fields; Metadata errors are owned by `useMetadataForm`. */
@@ -330,6 +332,11 @@ export const ToolsetEditor: FC<ToolsetEditorProps> = ({
           } else if (!isValidEndpointUrl(data.auth.tokenEndpoint)) {
             nextErrors.tokenEndpoint =
               validationLabels?.endpointInvalid ?? 'Enter a valid http(s) URL';
+          }
+          if (!isValidOAuthResource(data.auth.resource)) {
+            nextErrors.resource =
+              validationLabels?.resourceInvalid ??
+              'Enter an absolute URI without a fragment';
           }
         }
       }
