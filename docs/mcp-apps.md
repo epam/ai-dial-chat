@@ -100,6 +100,8 @@ Before mounting, `resolveMcpAppToolResult` decides which tool result the app get
 - For the streaming-only guess (no confirmed call), it passes the transcript result through unchanged.
 - If the live call throws, it falls back to the transcript result.
 
+The app receives `toolInput` and `toolResult` once per mount, because the MCP Apps spec sends `ui/notifications/tool-input` at most once per view and an app that gets it again drops its result and shows its loading state. `useMcpAppInlinePreview` therefore reloads only when the seed's data (`computeMcpAppSeedKey`), the match, the sandbox URL or the cache key changes, or the user reloads. A message update with the same data, such as a like or a streamed chunk, does not remount the app or re-send its input.
+
 ### 5. Host context
 
 Both surfaces build the `McpUiHostContext` sent on `ui/initialize` with `useMcpAppHostContext`:

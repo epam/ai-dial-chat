@@ -126,6 +126,7 @@ When an assistant message matches a discovered MCP App tool, the message body SH
 - While `isOpenedInCanvas` is `true` (the message's canvas is currently open), the header above still renders unchanged, but the body area shows `openedInCanvasLabel` centered (`role="status" aria-live="polite"`, `text-secondary`) instead of the loading spinner/error/`McpAppCanvasRenderer` below — the app is never mounted twice at once.
 - A loading spinner, an error message, or the mounted `McpAppCanvasRenderer` inside that box, depending on fetch/resolve status.
 - An app-initiated `ui/request-display-mode` request for `'fullscreen'` expands into the full-width canvas via the same `onExpand` callback the expand button uses; any other requested mode (including `'pip'` and `'inline'`) keeps the preview, and the app is answered with `'inline'` (see the display-mode requirement in `mcp-app-canvas`). The preview passes this mapping to `useMcpAppInlinePreview`'s optional `onRequestDisplayMode` parameter — the hook itself has no opinion on surface switching.
+- `useMcpAppInlinePreview` SHALL reload and re-send data to the mounted app only when `computeMcpAppSeedKey(toolCall)`, the `match`, the sandbox URL or the cache key changes, or the user reloads. A message update that hands it a new `toolCall` object with the same data (a like or dislike, a streamed chunk) SHALL NOT unmount the app, re-send `toolInput` or change `content.toolInput`/`content.toolResult`: the MCP Apps spec sends `ui/notifications/tool-input` at most once per view, and an app that receives it again discards its result and waits for one that never arrives.
 
 #### Scenario: Message with a matched tool shows the inline preview below its stages
 
@@ -151,6 +152,11 @@ When an assistant message matches a discovered MCP App tool, the message body SH
 
 - **WHEN** the user activates the inline preview's expand button
 - **THEN** `onOpenApp` is called with the message's matched tool, canvas key, and tool-call seed, opening `AttachmentCanvas`
+
+#### Scenario: A message update does not re-send tool input to a rendered app
+
+- **WHEN** the inline preview is `Ready` and the message is updated (for example liked), so the preview receives a new `toolCall` object with the same `toolInput`
+- **THEN** the preview stays `Ready`, `content.toolInput` and `content.toolResult` keep their identity, and the tool is not called again
 
 ---
 
