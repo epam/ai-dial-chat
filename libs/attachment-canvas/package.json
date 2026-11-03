@@ -30,7 +30,7 @@
     "@modelcontextprotocol/sdk": "^1.32.2",
     "@modelcontextprotocol/ext-apps": "1.7.5",
     "zod": "^4.6.6",
-    "pdfjs-dist": "^5.6.205",
+    "pdfjs-dist": "^6.5.438",
     "@epam/ai-dial-sidebar": "*"
   },
   "peerDependencies": {
