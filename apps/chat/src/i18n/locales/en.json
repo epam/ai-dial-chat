@@ -383,6 +383,8 @@
     "noSkillsLabel": "No skills available",
     "unsupportedTooltipLabel": "Selected model does not support skills. Remove the skill or select different model to proceed.",
     "unavailableHintLabel": "Selected model does not support skills. Select a different model to use a skill.",
+    "unavailableSkillTooltip": "The skill has been deleted or access revoked",
+    "unavailableSkillName": "{{name}} (unavailable)",
     "deletedTooltipLabel": "This skill has been deleted. Its details are no longer available.",
     "notSharedTooltipLabel": "You don't have access to this skill, so its details aren't shown. Ask the chat owner to share it with you.",
     "viewDetailsLabel": "View details",
@@ -970,6 +972,8 @@
     }
   },
   "scheduledTasks": {
+    "unavailableModelName": "{{name}} (unavailable)",
+    "unavailableModelTooltip": "The model or agent has been deleted or access revoked",
     "typeLabel": "Scheduled task",
     "page": {
       "navLabel": "Scheduled tasks",

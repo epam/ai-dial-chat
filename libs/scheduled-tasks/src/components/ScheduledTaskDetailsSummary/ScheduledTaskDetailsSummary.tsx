@@ -41,8 +41,10 @@ export const ScheduledTaskDetailsSummary: FC<
   ScheduledTaskDetailsSummaryProps
 > = ({
   modelLabel,
+  renderModelName,
   skillLabel,
   skillDisplayNames,
+  renderSkillName,
   instructionsLabel,
   modelDisplayName,
   instructionsMarkdown,
@@ -103,7 +105,11 @@ export const ScheduledTaskDetailsSummary: FC<
       {modelDisplayName && (
         <div className="flex flex-col gap-2">
           <span className={fieldLabelClassName}>{modelLabel}</span>
-          <p className={fieldValueClassName}>{modelDisplayName}</p>
+          <p className={fieldValueClassName}>
+            {renderModelName
+              ? renderModelName(modelDisplayName)
+              : modelDisplayName}
+          </p>
         </div>
       )}
 
@@ -118,7 +124,7 @@ export const ScheduledTaskDetailsSummary: FC<
           >
             {skillDisplayNames?.map((name, index) => (
               <span className="block" key={`${index}:${name}`}>
-                {name}
+                {renderSkillName ? renderSkillName(name, index) : name}
               </span>
             ))}
           </p>

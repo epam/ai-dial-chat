@@ -1,5 +1,4 @@
 import type { ScheduledTaskDto } from '@epam/ai-dial-chat-api-client';
-import { findDeploymentByIdOrReference } from '@epam/ai-dial-chat-hooks';
 import { ActiveScheduledTaskDetailState } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
 import {
   ScheduledTaskConversationDetailsSection,
@@ -12,11 +11,9 @@ import {
   ChatI18nKeys,
   ScheduledTasksI18nKeys,
 } from '../../../constants/translation-keys';
-import { useDeployments } from '../../../context/DeploymentsContext';
 import { useSourcesSidebarData } from '../../../context/SourcesSidebarContext';
-import { useLanguage } from '../../../hooks/language/useLanguage';
-import { useScheduledTaskSkillDisplayNames } from '../../../hooks/scheduled-tasks/useScheduledTaskSkillDisplayNames';
-import { resolveLocalizedText } from '../../../utils/locale';
+import { useScheduledTaskModelPreview } from '../../../hooks/scheduled-tasks/useScheduledTaskModelPreview';
+import { useScheduledTaskSkillPreview } from '../../../hooks/scheduled-tasks/useScheduledTaskSkillPreview';
 
 /* Maps the app's fetch status to the lib section's display state; idle/loading resolve to the summary branch. */
 const DETAIL_STATE_MAP: Record<
@@ -59,10 +56,10 @@ const TaskDetailsSection: FC<Props> = ({
   scheduleId,
 }) => {
   const { t } = useTranslation();
-  const { language } = useLanguage();
   const { conversationModelId } = useSourcesSidebarData();
-  const { items: deploymentItems } = useDeployments();
-  const skillDisplayNames = useScheduledTaskSkillDisplayNames(task?.skillUrls);
+  const { skillDisplayNames, renderSkillName } = useScheduledTaskSkillPreview(
+    task?.skillUrls,
+  );
 
   /*
    * The section describes this run, so its Model field must show the
@@ -71,17 +68,8 @@ const TaskDetailsSection: FC<Props> = ({
    * schedule's current `model`, which a later edit may have changed after
    * this run fired.
    */
-  const modelDisplayName = useMemo(() => {
-    if (!conversationModelId) return undefined;
-    const deployment = findDeploymentByIdOrReference(
-      deploymentItems,
-      conversationModelId,
-    );
-    return deployment
-      ? resolveLocalizedText(deployment.displayName, language) ||
-          conversationModelId
-      : conversationModelId;
-  }, [conversationModelId, deploymentItems, language]);
+  const { modelDisplayName, renderModelName } =
+    useScheduledTaskModelPreview(conversationModelId);
 
   const labels = useMemo(
     () => ({
@@ -115,7 +103,9 @@ const TaskDetailsSection: FC<Props> = ({
       state={DETAIL_STATE_MAP[taskState]}
       onRetry={onRetry}
       modelDisplayName={modelDisplayName}
+      renderModelName={renderModelName}
       skillDisplayNames={skillDisplayNames}
+      renderSkillName={renderSkillName}
       instructionsMarkdown={task?.prompt}
       markdownLabels={markdownLabels}
       labels={labels}

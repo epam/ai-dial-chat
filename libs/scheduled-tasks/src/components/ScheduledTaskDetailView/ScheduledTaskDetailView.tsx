@@ -82,12 +82,14 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
   onRetry,
   description,
   modelLabel,
+  renderModelName,
   repeatsLabel,
   activeWindowLabel,
   completedLabel,
   nextRunLabel,
   instructionsMarkdown,
   skillDisplayNames,
+  renderSkillName,
   renderInstructions,
   runs,
   runsIsLoading = false,
@@ -172,6 +174,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
       }}
       description={description}
       modelLabel={modelLabel}
+      renderModelName={renderModelName}
       repeatsLabel={repeatsLabel}
       activeWindowLabel={activeWindowLabel}
       completedLabel={completedLabel}
@@ -185,6 +188,7 @@ export const ScheduledTaskDetailView: FC<ScheduledTaskDetailViewProps> = ({
       instructionsLabel={labels.instructionsLabel}
       skillLabel={labels.skillLabel}
       skillDisplayNames={skillDisplayNames}
+      renderSkillName={renderSkillName}
       instructionsMarkdown={instructionsMarkdown}
       renderInstructions={renderInstructions}
       markdownLabels={{

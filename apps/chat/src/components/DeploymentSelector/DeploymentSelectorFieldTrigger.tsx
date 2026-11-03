@@ -5,6 +5,7 @@ import {
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   Spinner,
+  Tooltip,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown } from '@tabler/icons-react';
 import { memo, useCallback, useState, type FC } from 'react';
@@ -37,6 +38,10 @@ interface Props {
   extraOptions?: DeploymentSelectorExtraOption[];
   /** Additional classes merged over the selector panel root's defaults. */
   panelClassName?: string;
+  /** Host-resolved display value, including unavailable states. */
+  selectedLabel?: string;
+  /** Explanation attached to the field on hover and focus. */
+  labelTooltip?: string;
 }
 
 /**
@@ -57,6 +62,8 @@ const DeploymentSelectorFieldTrigger: FC<Props> = ({
   className,
   extraOptions,
   panelClassName,
+  selectedLabel,
+  labelTooltip,
 }) => {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
@@ -103,63 +110,69 @@ const DeploymentSelectorFieldTrigger: FC<Props> = ({
 
   return (
     <>
-      <DeploymentSelectorField
-        selectedId={selectedId}
-        selectedLabel={resolvedLabel}
-        records={[]}
-        placeholder={effectivePlaceholder}
-        labels={{
-          searchPlaceholder: t(DeploymentSelectorI18nKeys.SearchPlaceholder),
-          searchAriaLabel: t(DeploymentSelectorI18nKeys.AriaLabel),
-          emptyLabel: t(DeploymentSelectorI18nKeys.EmptyHint),
-          errorLabel: t(DeploymentSelectorI18nKeys.Error),
-        }}
-        onSelect={onSelect}
-        isLoading={isLoading}
-        error={error}
-        isDisabled={isDisabled}
-        isInvalid={isInvalid}
-        labelledById={labelledById}
-        ariaHasPopup={isMobile ? 'dialog' : 'listbox'}
-        className={className}
-        panelClassName={panelClassName}
-        iconAfter={
-          isLoading ? (
-            <Spinner
-              size={DIAL_ICON_SIZE.SM}
-              ariaLabel={t(DeploymentSelectorI18nKeys.Loading)}
-            />
-          ) : (
-            <IconChevronDown
-              size={DIAL_ICON_SIZE.MD}
-              className={mergeClasses(
-                'transition-transform',
-                isOpen && 'rotate-180',
-              )}
-              aria-hidden
-              stroke={DIAL_KIT_ICON_STROKE}
-            />
-          )
-        }
-        open={isOpen}
-        onOpenChange={handleOpenChange}
-        renderPanel={renderOverlay}
-        renderOverlay={
-          isMobile
-            ? (panel, open, close) => (
-                <BottomSheetShell
-                  isOpen={open}
-                  title={t(DeploymentSelectorI18nKeys.AriaLabel)}
-                  closeLabel={t(DeploymentSelectorI18nKeys.CloseLabel)}
-                  onClose={close}
-                  className="max-h-[90dvh]"
-                >
-                  {panel}
-                </BottomSheetShell>
-              )
-            : undefined
-        }
-      />
+      <Tooltip
+        tooltip={labelTooltip}
+        hideTooltip={!labelTooltip}
+        triggerClassName="block w-full min-w-0"
+      >
+        <DeploymentSelectorField
+          selectedId={selectedId}
+          selectedLabel={selectedLabel ?? resolvedLabel}
+          records={[]}
+          placeholder={effectivePlaceholder}
+          labels={{
+            searchPlaceholder: t(DeploymentSelectorI18nKeys.SearchPlaceholder),
+            searchAriaLabel: t(DeploymentSelectorI18nKeys.AriaLabel),
+            emptyLabel: t(DeploymentSelectorI18nKeys.EmptyHint),
+            errorLabel: t(DeploymentSelectorI18nKeys.Error),
+          }}
+          onSelect={onSelect}
+          isLoading={isLoading}
+          error={error}
+          isDisabled={isDisabled}
+          isInvalid={isInvalid}
+          labelledById={labelledById}
+          ariaHasPopup={isMobile ? 'dialog' : 'listbox'}
+          className={className}
+          panelClassName={panelClassName}
+          iconAfter={
+            isLoading ? (
+              <Spinner
+                size={DIAL_ICON_SIZE.SM}
+                ariaLabel={t(DeploymentSelectorI18nKeys.Loading)}
+              />
+            ) : (
+              <IconChevronDown
+                size={DIAL_ICON_SIZE.MD}
+                className={mergeClasses(
+                  'transition-transform',
+                  isOpen && 'rotate-180',
+                )}
+                aria-hidden
+                stroke={DIAL_KIT_ICON_STROKE}
+              />
+            )
+          }
+          open={isOpen}
+          onOpenChange={handleOpenChange}
+          renderPanel={renderOverlay}
+          renderOverlay={
+            isMobile
+              ? (panel, open, close) => (
+                  <BottomSheetShell
+                    isOpen={open}
+                    title={t(DeploymentSelectorI18nKeys.AriaLabel)}
+                    closeLabel={t(DeploymentSelectorI18nKeys.CloseLabel)}
+                    onClose={close}
+                    className="max-h-[90dvh]"
+                  >
+                    {panel}
+                  </BottomSheetShell>
+                )
+              : undefined
+          }
+        />
+      </Tooltip>
       {catalogModal}
     </>
   );

@@ -49,13 +49,13 @@ import {
 } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useConversations } from '../../context/ConversationsContext';
-import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useOfflineCredentialsGate } from '../../hooks/offlineCredentials/useOfflineCredentialsGate';
 import { useOfflineCredentialsLogin } from '../../hooks/offlineCredentials/useOfflineCredentialsLogin';
+import { useScheduledTaskModelPreview } from '../../hooks/scheduled-tasks/useScheduledTaskModelPreview';
 import { useScheduledTaskRuns } from '../../hooks/scheduled-tasks/useScheduledTaskRuns';
-import { useScheduledTaskSkillDisplayNames } from '../../hooks/scheduled-tasks/useScheduledTaskSkillDisplayNames';
+import { useScheduledTaskSkillPreview } from '../../hooks/scheduled-tasks/useScheduledTaskSkillPreview';
 import {
   mergeScheduledTaskRuns,
   ScheduledTaskRunStatusFeedback,
@@ -70,7 +70,6 @@ import {
 } from '../../server-api/scheduled-tasks.api';
 import { ROUTES } from '../../types/routes';
 import { UserConfigStatus } from '../../types/user-config-status';
-import { resolveLocalizedText } from '../../utils/locale';
 import {
   buildScheduleLabel,
   getDeleteErrorMessageKey,
@@ -116,12 +115,13 @@ const ScheduledTaskDetailPage: FC = () => {
   const isEnabled = useFeatureFlag('scheduledTasksEnabled');
   const navigate = useNavigate();
   const { scheduleId = '' } = useParams<{ scheduleId: string }>();
-  const { items: deploymentItems } = useDeployments();
   const { language } = useLanguage();
   const { conversations, refreshConversations } = useConversations();
 
   const [task, setTask] = useState<ScheduledTaskDto | null>(null);
-  const skillDisplayNames = useScheduledTaskSkillDisplayNames(task?.skillUrls);
+  const { skillDisplayNames, renderSkillName } = useScheduledTaskSkillPreview(
+    task?.skillUrls,
+  );
   const [isTaskLoading, setIsTaskLoading] = useState(true);
   const [taskError, setTaskError] = useState<Error | null>(null);
   const [isNotFound, setIsNotFound] = useState(false);
@@ -383,14 +383,8 @@ const ScheduledTaskDetailPage: FC = () => {
     [navigate],
   );
 
-  const taskModel = task?.model;
-  const modelLabel = useMemo(() => {
-    if (!taskModel) return undefined;
-    const deployment = deploymentItems.find((item) => item.id === taskModel);
-    return deployment
-      ? resolveLocalizedText(deployment.displayName, language) || taskModel
-      : taskModel;
-  }, [taskModel, deploymentItems, language]);
+  const { modelDisplayName: modelLabel, renderModelName } =
+    useScheduledTaskModelPreview(task?.model);
 
   const repeatsLabel = useMemo(
     () => (task ? buildScheduleLabel(task, t, language) : undefined),
@@ -782,12 +776,14 @@ const ScheduledTaskDetailPage: FC = () => {
         onRetry={handleRetry}
         description={task?.description}
         modelLabel={modelLabel}
+        renderModelName={renderModelName}
         repeatsLabel={repeatsLabel}
         activeWindowLabel={activeWindowLabel}
         completedLabel={completedLabel}
         nextRunLabel={nextRunLabel}
         instructionsMarkdown={task?.prompt}
         skillDisplayNames={skillDisplayNames}
+        renderSkillName={renderSkillName}
         runs={runItems}
         runsIsLoading={runsIsLoading && mergedRunDtos.length === 0}
         runsIsLoadingMore={runsIsLoadingMore}

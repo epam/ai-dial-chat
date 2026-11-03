@@ -108,7 +108,23 @@ allowing retry when support recovers without requiring the user to reselect
 the model or skill.
 
 Detail and conversation task summaries show a resolved skill name, falling
-back to its full reference while metadata loads or cannot be read. These
+back to its full reference only after a temporary metadata error. Skill names
+remain hidden until all selected references finish resolving, avoiding a flash
+of raw resource paths.
+Metadata responses 400, 403 and 404 mark the reference unavailable: previews
+show the decoded final path segment followed by ` (unavailable)` in the error
+text color, with the tooltip ?The skill has been deleted or access revoked?.
+Unavailable skills use a pointer cursor; the tooltip is also available on keyboard focus.
+HTTP 400 is included because this metadata endpoint returns it for deleted
+skills as well. Availability is not cached for the whole session: changing
+the selection or reopening the editor retries metadata for missing references.
+Removing and re-adding a reference also retries if it is selectable again;
+a deleted skill absent from the catalog cannot be re-added from the dropdown.
+Model/agent previews similarly wait for the deployment catalog, then mark a
+missing deployment with a short name, ` (unavailable)`, error text, a pointer
+cursor, and ?The model or agent has been deleted or access revoked?. Catalog
+failures do not imply deletion. Matching supports IDs, references and encoded
+application names. The conversation panel continues to show the run?s model. These
 lookups belong to app adapters; the libraries receive resolved values and
 callbacks.
 
@@ -607,3 +623,11 @@ the provider's consent popup, and answers with `EXTERNAL_SERVICE_LOGIN_RESULT`.
 Skill, scheduled-task, and prompt forms opt into Description and Instructions refinement, and the application and toolset editors into Description refinement, only when the backend returns `config.aiTextRefinementAvailable: true`. The host selects one of eight `TextRefinementPurpose` values and passes a stable callback, cancellation signal, and translated labels to the libraries. Fields remain editable during requests; editing the active field cancels it. Save waits for refinement, and Undo is local to the current draft.
 
 Run `npm exec -- nx run @epam/chat:test-refinement-browser` for Chromium checks of both forms at 360/900/1280/1920px, in LTR and Arabic RTL, using deterministic callbacks without a live model. Geometry evidence is written to `tmp/text-refinement-browser/geometry.json`.
+
+The task editor marks unavailable skills with removable error tags and marks
+an unavailable model/agent field invalid. Unavailable skills also show a field-level
+error caption explaining why Save is blocked. Both use short names, the unavailable
+suffix and explanatory tooltips. Save stays disabled during availability checks
+and while any unavailable selection remains; submission also validates this
+state before calling the API. Removing the skill or replacing the model restores
+saving once the remaining form values are valid.

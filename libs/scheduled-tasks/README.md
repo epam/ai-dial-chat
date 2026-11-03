@@ -493,6 +493,13 @@ optional `skillLabel` / `skillDisplayNames`. `ScheduledTaskDetailView` accepts
 `skillDisplayNames` and `labels.skillLabel`. Supply `skillDisplayNames: string[]`, using the full reference as fallback
 for each unresolved name. Skill appears before Instructions as plain text; absent
 skills and empty instructions render no field. Libraries perform no lookup.
+All four preview components (including `ScheduledTaskConversationDetailsSection`)
+accept `renderSkillName(name, index)` to render host-resolved availability,
+localized text, and tooltips. Without it, names remain plain text.
+`ScheduledTaskDetailView`, `ScheduledTaskDetailsSection`,
+`ScheduledTaskDetailsSummary` and `ScheduledTaskConversationDetailsSection` also
+accept `renderModelName(name)` for host-resolved model availability. Omit the
+model value or pass an empty skill list while the host is resolving metadata.
 
 Use the pure validation entry before an app submits a task. It returns typed
 error codes rather than translated text, and accepts an injected clock for
@@ -716,3 +723,7 @@ Optional label overrides (English defaults):
 | Public class key | Class                                  | Element        |
 | ---------------- | -------------------------------------- | -------------- |
 | `refineFeedback` | `dial-scheduled-tasks-refine-feedback` | Field feedback |
+
+`ScheduledTaskCreateForm.isSubmitDisabled` lets the host block Save while it
+checks external selections. Model field errors also disable Save. The host
+must enforce availability again in its submit handler.
