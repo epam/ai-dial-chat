@@ -53,19 +53,24 @@ vi.mock(
       value,
       onChange,
       isSkillsSupported,
+      error,
     }: {
       value: string[];
       onChange: (value: string[]) => void;
       isSkillsSupported: boolean;
+      error?: string;
     }) => (
-      <input
-        aria-label="skillUrls"
-        aria-invalid={!isSkillsSupported}
-        value={value.join(',')}
-        onChange={(event) =>
-          onChange(event.target.value ? event.target.value.split(',') : [])
-        }
-      />
+      <>
+        <input
+          aria-label="skillUrls"
+          aria-invalid={!isSkillsSupported}
+          value={value.join(',')}
+          onChange={(event) =>
+            onChange(event.target.value ? event.target.value.split(',') : [])
+          }
+        />
+        {error && <span data-testid="skill-field-error">{error}</span>}
+      </>
     ),
   }),
 );
@@ -281,7 +286,6 @@ vi.mock('@epam/ai-dial-scheduled-tasks', async (importOriginal) => ({
       <output aria-label="modelLabelId">{modelLabelId}</output>
       {modelSelector}
       {skillSelector}
-      {errors.skillUrls && <span>{errors.skillUrls}</span>}
       {errors.displayName && <span>{errors.displayName}</span>}
       {errors.startDate && <span>{errors.startDate}</span>}
       <button onClick={onCancel}>{labels.cancelButtonLabel}</button>
@@ -350,6 +354,11 @@ describe('ScheduledTaskEditPage', () => {
       const view = renderEditPage();
       const save = await screen.findByRole('button', { name: 'buttons.save' });
       expect((save as HTMLButtonElement).disabled).toBe(true);
+      if (kind === 'skill') {
+        expect(screen.getByTestId('skill-field-error').textContent).toBe(
+          'skillSelector.unavailableSkillTooltip',
+        );
+      }
       await userEvent.click(save);
       await userEvent.click(
         screen.getByRole('button', { name: 'submit directly' }),

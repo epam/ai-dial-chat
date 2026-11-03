@@ -22,6 +22,12 @@ Explain unavailable saved skills and deployments in scheduled-task previews and 
 - **WHEN** skill metadata returns 503 or the deployments catalog fails
 - **THEN** the resource is not labeled deleted or revoked and its unresolved reference remains available as a fallback after loading settles
 
+#### Scenario: Retry a previously unavailable reference
+
+- **WHEN** a reference whose metadata returned 400 is removed and later selected again, or the editor is reopened with that reference
+- **THEN** missing metadata is requested again rather than retaining a session-wide unavailable result
+- **AND** removing a deleted reference does not make it selectable from a catalog where it is absent
+
 #### Scenario: Selection changes during a request
 
 - **WHEN** an earlier metadata request settles after selection changed or its owner unmounted
@@ -58,6 +64,12 @@ The full task preview SHALL use the task model; the conversation sources panel S
 
 - **WHEN** the saved model is absent from the successfully loaded catalog
 - **THEN** the field is invalid but the user can open its desktop dropdown or mobile sheet and choose an available model
+
+#### Scenario: Explain invalid skill selections
+
+- **WHEN** an unavailable selected skill blocks saving
+- **THEN** the skill field SHALL show the availability error as a caption alongside the error tags
+- **AND** if the model also does not support skills, the field SHALL retain its unsupported-model tooltip
 
 ### Requirement: Availability is checked before updates
 

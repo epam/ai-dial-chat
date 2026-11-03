@@ -115,6 +115,11 @@ Metadata responses 400, 403 and 404 mark the reference unavailable: previews
 show the decoded final path segment followed by ` (unavailable)` in the error
 text color, with the tooltip ?The skill has been deleted or access revoked?.
 Unavailable skills use a pointer cursor; the tooltip is also available on keyboard focus.
+HTTP 400 is included because this metadata endpoint returns it for deleted
+skills as well. Availability is not cached for the whole session: changing
+the selection or reopening the editor retries metadata for missing references.
+Removing and re-adding a reference also retries if it is selectable again;
+a deleted skill absent from the catalog cannot be re-added from the dropdown.
 Model/agent previews similarly wait for the deployment catalog, then mark a
 missing deployment with a short name, ` (unavailable)`, error text, a pointer
 cursor, and ?The model or agent has been deleted or access revoked?. Catalog
@@ -620,7 +625,8 @@ Skill, scheduled-task, and prompt forms opt into Description and Instructions re
 Run `npm exec -- nx run @epam/chat:test-refinement-browser` for Chromium checks of both forms at 360/900/1280/1920px, in LTR and Arabic RTL, using deterministic callbacks without a live model. Geometry evidence is written to `tmp/text-refinement-browser/geometry.json`.
 
 The task editor marks unavailable skills with removable error tags and marks
-an unavailable model/agent field invalid. Both use short names, the unavailable
+an unavailable model/agent field invalid. Unavailable skills also show a field-level
+error caption explaining why Save is blocked. Both use short names, the unavailable
 suffix and explanatory tooltips. Save stays disabled during availability checks
 and while any unavailable selection remains; submission also validates this
 state before calling the API. Removing the skill or replacing the model restores

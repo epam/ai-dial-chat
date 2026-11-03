@@ -63,6 +63,42 @@ describe('SkillSelectorField', () => {
     await user.keyboard('{Enter}');
     expect(onChange).toHaveBeenCalledWith(['skills/public/summary']);
   });
+  it('explains unsupported models even when a selected skill is unavailable', async () => {
+    const user = userEvent.setup();
+    render(
+      field({
+        value: ['skills/public/deleted'],
+        unavailableValues: ['skills/public/deleted'],
+        displayNames: { 'skills/public/deleted': 'Deleted (unavailable)' },
+        isSkillsSupported: false,
+      }),
+    );
+    await user.hover(screen.getByRole('combobox', { name: /^Skills/ }));
+    expect((await screen.findByRole('tooltip')).textContent).toBe(
+      'Unsupported',
+    );
+    expect(
+      screen.getByRole('button', { name: 'Remove Deleted (unavailable)' }),
+    ).toBeTruthy();
+  });
+
+  it('shows a field error alongside unavailable tags', () => {
+    render(
+      field({
+        value: ['skills/public/deleted'],
+        unavailableValues: ['skills/public/deleted'],
+        displayNames: { 'skills/public/deleted': 'Deleted (unavailable)' },
+        error: 'The skill has been deleted or access revoked',
+      }),
+    );
+    const trigger = screen.getByRole('combobox', { name: /^Skills/ });
+    expect(trigger.getAttribute('aria-invalid')).toBe('true');
+    expect(trigger.getAttribute('aria-describedby')).toBe(
+      screen.getByText('The skill has been deleted or access revoked').id,
+    );
+    expect(screen.getByText('Deleted (unavailable)')).toBeTruthy();
+  });
+
   it('lists every skill as an option and toggles selection in RTL', async () => {
     const user = userEvent.setup();
     const Host = () => {

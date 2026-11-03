@@ -97,7 +97,7 @@ export const SkillSelectorField: FC<SkillSelectorFieldProps> = ({
     >
       <Tooltip
         tooltip={unsupportedReason}
-        hideTooltip={isSkillsSupported || unavailableValues.length > 0}
+        hideTooltip={isSkillsSupported}
         triggerClassName="block w-full min-w-0"
       >
         <div inert={isDisabled ? true : undefined}>

@@ -667,3 +667,6 @@ other selected tags remain normal. Unavailable tags suppress the native HTML
 title tooltip and show only the custom availability tooltip. Supply localized `labels.unavailableTooltipLabel`
 and `labels.removeLabel`. The tag colors are overridden by
 `styles.colors.unavailableTagBackground` and `unavailableTagBorder`.
+The host's `error` remains visible as a field caption alongside unavailable
+tags. If the model also does not support skills, the field still exposes
+`labels.unsupportedTooltipLabel`; unavailable tag tooltips do not suppress it.

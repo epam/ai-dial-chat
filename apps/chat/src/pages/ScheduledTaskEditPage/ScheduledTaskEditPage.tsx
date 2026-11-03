@@ -432,7 +432,7 @@ const ScheduledTaskEditPage: FC = () => {
           onChange={(value) => handleFieldChange('skillUrls', value)}
           isSkillsSupported={isSkillsSupported}
           isDisabled={isSubmitting}
-          error={hasUnavailableSkills ? undefined : effectiveErrors.skillUrls}
+          error={effectiveErrors.skillUrls}
         />
       }
       modelSelector={
