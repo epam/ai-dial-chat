@@ -138,6 +138,21 @@ describe('project hooks lifecycle', () => {
 
       expect(signal.aborted).toBe(true);
     });
+
+    it('does not return the previous project while a new id loads', async () => {
+      client.getProject.mockResolvedValueOnce(details);
+      const { result, rerender } = renderHook(
+        ({ id }) => useProject(client, id, true),
+        { initialProps: { id: PROJECT_ID } },
+      );
+      await waitFor(() => expect(result.current.project).toEqual(details));
+
+      client.getProject.mockReturnValue(pendingForever());
+      rerender({ id: 'projects/b/other' });
+
+      expect(result.current.project).toBeNull();
+      expect(result.current.isLoading).toBe(true);
+    });
   });
 
   describe('useProjects', () => {
@@ -269,6 +284,24 @@ describe('project hooks lifecycle', () => {
         isAborted: true,
       });
     });
+
+    it('returns a status without a code for an upstream failure', async () => {
+      client.createProject.mockRejectedValue(
+        rejection(503, {
+          statusCode: 503,
+          message: 'DIAL Core is unreachable',
+        }),
+      );
+      const { result } = renderHook(() => useCreateProject(client));
+
+      let outcome: unknown;
+      await act(async () => {
+        outcome = await result.current.create(FIELDS, []);
+      });
+
+      expect(outcome).toMatchObject({ isCreated: false, status: 503 });
+      expect(outcome).not.toHaveProperty('code', expect.anything());
+    });
   });
 
   describe('useSaveProject', () => {
@@ -294,6 +327,25 @@ describe('project hooks lifecycle', () => {
       await expect(pending).resolves.toEqual({
         isSaved: false,
         isAborted: true,
+      });
+    });
+
+    it('normalises a rejection into its status and code', async () => {
+      client.updateProject.mockRejectedValue(
+        rejection(409, { code: 'project-changed' }),
+      );
+      const { result } = renderHook(() => useSaveProject(client));
+
+      let outcome: unknown;
+      await act(async () => {
+        outcome = await result.current.save(REQUEST);
+      });
+
+      expect(outcome).toMatchObject({
+        isSaved: false,
+        isAborted: false,
+        status: 409,
+        code: 'project-changed',
       });
     });
   });

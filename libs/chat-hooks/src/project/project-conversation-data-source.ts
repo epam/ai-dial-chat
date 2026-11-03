@@ -15,6 +15,7 @@ import {
 import type { ConversationStreamTransport } from '../conversation/useConversationStream/useConversationStream';
 import { getBrowserTimezone } from '../shared/browser-timezone';
 import type { SerializedKeyedWriter } from '../shared/serialized-writer';
+import { sleep } from '../shared/sleep';
 import type { ProjectsApiClient } from './projects-api-client';
 
 const PROJECTS_PREFIX = 'projects/';
@@ -61,19 +62,6 @@ export interface ProjectConversationDataSourceOptions {
 const toConversationId = (path: string): string =>
   path.startsWith(PROJECTS_PREFIX) ? path : `${PROJECTS_PREFIX}${path}`;
 
-const waitFor = (ms: number, signal: AbortSignal): Promise<void> =>
-  new Promise((resolve) => {
-    const timer = window.setTimeout(resolve, ms);
-    signal.addEventListener(
-      'abort',
-      () => {
-        window.clearTimeout(timer);
-        resolve();
-      },
-      { once: true },
-    );
-  });
-
 /*
  * Core resource subscriptions inside a project are not available, so the
  * watch emits a synthetic `UPDATE` event every `WATCH_POLL_INTERVAL_MS`, and
@@ -88,7 +76,7 @@ const watchProjectConversation = (
   return new ReadableStream<Uint8Array>(
     {
       async pull(controller) {
-        await waitFor(WATCH_POLL_INTERVAL_MS, signal);
+        await sleep(WATCH_POLL_INTERVAL_MS, signal);
         if (signal.aborted) {
           controller.close();
           return;
@@ -117,7 +105,7 @@ const watchProjectConversationTitle = (
   const controller = new AbortController();
   const run = async () => {
     for (let attempt = 0; attempt < TITLE_READ_ATTEMPTS; attempt++) {
-      await waitFor(TITLE_READ_DELAY_MS, controller.signal);
+      await sleep(TITLE_READ_DELAY_MS, controller.signal);
       if (controller.signal.aborted) return;
       try {
         const { name } = await readConversation(

@@ -80,6 +80,21 @@ describe('usePublishHistory', () => {
     expect(result.current).toEqual([entry('Other')]);
   });
 
+  it("never shows another entity's history while the new entity's loads", async () => {
+    const second = deferred<PublishHistoryEntry[]>();
+    loadHistory
+      .mockResolvedValueOnce([entry('First')])
+      .mockReturnValueOnce(second.promise);
+    const { result, rerender } = render(true, 'projects/a/q4');
+    await waitFor(() => expect(result.current).toEqual([entry('First')]));
+
+    rerender({ isOpen: true, entityId: 'projects/a/other' });
+
+    expect(result.current).toEqual([]);
+    await act(async () => second.resolve([entry('Second')]));
+    expect(result.current).toEqual([entry('Second')]);
+  });
+
   it('shows an empty history when the read fails', async () => {
     loadHistory
       .mockResolvedValueOnce([entry('Team')])

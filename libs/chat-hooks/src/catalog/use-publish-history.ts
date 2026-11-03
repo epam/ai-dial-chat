@@ -13,35 +13,43 @@ export interface UsePublishHistoryOptions {
   loadHistory: (entityId: string) => Promise<PublishHistoryEntry[]>;
 }
 
+interface LoadedHistory {
+  /** The entity the entries belong to. */
+  entityId: string;
+  /** Its publication history. */
+  entries: PublishHistoryEntry[];
+}
+
 /**
  * Returns the publication history of an entity for a publish panel, read again
  * on every open so a publication requested since the last one already blocks its
  * folder. A failed read leaves the history empty (the backend still refuses a
- * duplicate publication), and a read that finishes after the panel closed or
- * the entity changed is ignored.
+ * duplicate publication), a read that finishes after the panel closed or the
+ * entity changed is ignored, and another entity's history is never returned.
  */
 export const usePublishHistory = ({
   isOpen,
   entityId,
   loadHistory,
 }: UsePublishHistoryOptions): PublishHistoryEntry[] => {
-  const [history, setHistory] = useState<PublishHistoryEntry[]>(EMPTY_HISTORY);
+  const [loaded, setLoaded] = useState<LoadedHistory | undefined>();
   /* The host may pass a new function each render; only an open or an entity change reads. */
   const loadHistoryRef = useRef(loadHistory);
   useEffect(() => {
     loadHistoryRef.current = loadHistory;
-  });
+  }, [loadHistory]);
 
   useEffect(() => {
     if (!isOpen) return;
     let isCancelled = false;
     const load = async () => {
+      let entries = EMPTY_HISTORY;
       try {
-        const entries = await loadHistoryRef.current(entityId);
-        if (!isCancelled) setHistory(entries);
+        entries = await loadHistoryRef.current(entityId);
       } catch {
-        if (!isCancelled) setHistory(EMPTY_HISTORY);
+        /* Left empty: the backend still refuses a duplicate publication. */
       }
+      if (!isCancelled) setLoaded({ entityId, entries });
     };
     void load();
     return () => {
@@ -49,5 +57,5 @@ export const usePublishHistory = ({
     };
   }, [isOpen, entityId]);
 
-  return history;
+  return loaded?.entityId === entityId ? loaded.entries : EMPTY_HISTORY;
 };
