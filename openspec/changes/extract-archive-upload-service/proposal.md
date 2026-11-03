@@ -55,7 +55,7 @@ No behavior changes:
 ### Acceptance criteria
 
 - `files-upload.service.ts` is under 450 lines and contains no `yauzl`, `mkdtemp`, archive limit or conflict-retry code.
-- `files-archive-upload.service.ts` is under 350 lines. `archive-upload.ts` has no Nest provider and no I/O.
+- `files-archive-upload.service.ts` is about 400 lines (394 at apply time; the original estimate of under 350 undercounted the moved comments and the pipeline itself, which moved verbatim). `archive-upload.ts` has no Nest provider and no I/O.
 - Every moved test passes from its new file with the same assertions, and all other `files` specs pass. `npm exec nx test chat-api`, `lint` and `build` pass. `npm run openapi:check` reports no diff.
 
 ### Alternatives considered

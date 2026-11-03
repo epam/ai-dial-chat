@@ -1,0 +1,448 @@
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { crc32 } from 'node:zlib';
+import {
+  BadRequestException,
+  ServiceUnavailableException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import archiver from 'archiver';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { EnvironmentVariables } from '../../../config/environment.config';
+import type { DialClientService } from '../../../dial/dial-client.service';
+import { FilesArchiveUploadService } from '../../upload/files-archive-upload.service';
+import { FilesUploadService } from '../../upload/files-upload.service';
+
+type SdkClient = {
+  uploadFile: ReturnType<typeof vi.fn>;
+};
+
+function makeService(configOverrides: Record<string, unknown> = {}) {
+  const configService = {
+    get: vi.fn((key: string) => {
+      if (key in configOverrides) return configOverrides[key];
+      if (key === 'DIAL_CORE_URL') return 'http://dial-core';
+      if (key === 'FILE_TRANSFER_TIMEOUT_MS') return 30_000;
+      return undefined;
+    }),
+  } as unknown as ConfigService<EnvironmentVariables>;
+
+  const sdkClient: SdkClient = {
+    uploadFile: vi.fn(),
+  };
+  const fetchCore = vi.fn();
+
+  const dialClient = {
+    client: sdkClient,
+    baseUrl: 'http://dial-core',
+    dialApiVersion: '2024-10-21',
+    fetchCore,
+  } as unknown as DialClientService;
+
+  const service = new FilesArchiveUploadService(
+    configService,
+    new FilesUploadService(dialClient, configService),
+  );
+
+  return { service, sdkClient, fetchCore };
+}
+
+const readBody = async (body: unknown, delayMs = 0): Promise<Buffer> => {
+  const reader = (body as ReadableStream<Uint8Array>).getReader();
+  const parts: Buffer[] = [];
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    parts.push(Buffer.from(value));
+    if (delayMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+  return Buffer.concat(parts);
+};
+
+const buildZipBuffer = (
+  entries: Array<{ name: string; content?: string }>,
+): Promise<Buffer> =>
+  new Promise((resolve, reject) => {
+    const archive = archiver('zip', { store: true });
+    const chunks: Buffer[] = [];
+    archive.on('data', (chunk: Buffer) => chunks.push(chunk));
+    archive.on('error', reject);
+    archive.on('end', () => resolve(Buffer.concat(chunks)));
+    for (const entry of entries) {
+      archive.append(Buffer.from(entry.content ?? 'content'), {
+        name: entry.name,
+      });
+    }
+    void archive.finalize();
+  });
+
+const okFetchUpload = (): Response => new Response(null, { status: 200 });
+
+const withArchiveFixture = async <T>(
+  buffer: Buffer,
+  run: (archiveFile: { path: string; size: number }) => Promise<T>,
+): Promise<T> => {
+  const directory = await mkdtemp(join(tmpdir(), 'files-upload-archive-'));
+  const archivePath = join(directory, 'archive.zip');
+  await writeFile(archivePath, buffer);
+
+  try {
+    return await run({ path: archivePath, size: buffer.length });
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+};
+
+/*
+ * `archiver` sanitizes entry names (strips `..`/leading `/`) before writing,
+ * so it cannot produce a zip-slip fixture. This hand-rolls a minimal, single
+ * central-directory-record ZIP (stored/uncompressed) with an arbitrary raw
+ * entry name to exercise the service's own path-safety rejection.
+ */
+const buildRawZipBuffer = (
+  entries: Array<{ name: string; content?: string }>,
+): Buffer => {
+  const localEntries: Buffer[] = [];
+  const centralEntries: Buffer[] = [];
+  let offset = 0;
+
+  for (const { name, content = 'content' } of entries) {
+    const nameBuf = Buffer.from(name, 'utf8');
+    const contentBuf = Buffer.from(content, 'utf8');
+    const crc = crc32(contentBuf);
+
+    const localHeader = Buffer.alloc(30);
+    localHeader.writeUInt32LE(0x04034b50, 0);
+    localHeader.writeUInt16LE(20, 4);
+    localHeader.writeUInt16LE(0, 6);
+    localHeader.writeUInt16LE(0, 8);
+    localHeader.writeUInt16LE(0, 10);
+    localHeader.writeUInt16LE(0, 12);
+    localHeader.writeUInt32LE(crc, 14);
+    localHeader.writeUInt32LE(contentBuf.length, 18);
+    localHeader.writeUInt32LE(contentBuf.length, 22);
+    localHeader.writeUInt16LE(nameBuf.length, 26);
+    localHeader.writeUInt16LE(0, 28);
+
+    const localEntry = Buffer.concat([localHeader, nameBuf, contentBuf]);
+    localEntries.push(localEntry);
+
+    const centralHeader = Buffer.alloc(46);
+    centralHeader.writeUInt32LE(0x02014b50, 0);
+    centralHeader.writeUInt16LE(20, 4);
+    centralHeader.writeUInt16LE(20, 6);
+    centralHeader.writeUInt16LE(0, 8);
+    centralHeader.writeUInt16LE(0, 10);
+    centralHeader.writeUInt16LE(0, 12);
+    centralHeader.writeUInt16LE(0, 14);
+    centralHeader.writeUInt32LE(crc, 16);
+    centralHeader.writeUInt32LE(contentBuf.length, 20);
+    centralHeader.writeUInt32LE(contentBuf.length, 24);
+    centralHeader.writeUInt16LE(nameBuf.length, 28);
+    centralHeader.writeUInt16LE(0, 30);
+    centralHeader.writeUInt16LE(0, 32);
+    centralHeader.writeUInt16LE(0, 34);
+    centralHeader.writeUInt16LE(0, 36);
+    centralHeader.writeUInt32LE(0, 38);
+    centralHeader.writeUInt32LE(offset, 42);
+
+    centralEntries.push(Buffer.concat([centralHeader, nameBuf]));
+    offset += localEntry.length;
+  }
+
+  const localSection = Buffer.concat(localEntries);
+  const centralSection = Buffer.concat(centralEntries);
+
+  const eocd = Buffer.alloc(22);
+  eocd.writeUInt32LE(0x06054b50, 0);
+  eocd.writeUInt16LE(0, 4);
+  eocd.writeUInt16LE(0, 6);
+  eocd.writeUInt16LE(entries.length, 8);
+  eocd.writeUInt16LE(entries.length, 10);
+  eocd.writeUInt32LE(centralSection.length, 12);
+  eocd.writeUInt32LE(localSection.length, 16);
+  eocd.writeUInt16LE(0, 20);
+
+  return Buffer.concat([localSection, centralSection, eocd]);
+};
+
+describe('FilesArchiveUploadService', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe('uploadArchive', () => {
+    it('uploads all entries successfully', async () => {
+      const { service, fetchCore } = makeService();
+      fetchCore.mockResolvedValue(okFetchUpload());
+      const buffer = await buildZipBuffer([
+        { name: 'a.txt' },
+        { name: 'b.txt' },
+      ]);
+
+      const result = await withArchiveFixture(buffer, (archiveFile) =>
+        service.uploadArchive('bucket', 'reports', archiveFile, 'token'),
+      );
+
+      expect(result.results).toEqual([
+        { path: 'reports/a.txt', success: true },
+        { path: 'reports/b.txt', success: true },
+      ]);
+      expect(fetchCore).toHaveBeenCalledTimes(2);
+      expect(fetchCore.mock.calls[0]?.[0]).toBe(
+        'http://dial-core/v1/files/bucket/reports/a.txt',
+      );
+      const [, init] = fetchCore.mock.calls[0] as [string, RequestInit];
+      expect(init).toMatchObject({
+        method: 'PUT',
+        duplex: 'half',
+      });
+      expect(init.headers).toMatchObject({
+        Authorization: 'Bearer token',
+        'If-None-Match': '*',
+      });
+      expect((init.headers as Record<string, string>)['Content-Type']).toMatch(
+        /^multipart\/form-data; boundary=dial-upload-/,
+      );
+    });
+
+    it('sends each archive entry with a Content-Length equal to its body bytes', async () => {
+      const { service, fetchCore } = makeService();
+      const sent: Array<{ header: string; bytes: number }> = [];
+      fetchCore.mockImplementation(async (_: string, init: RequestInit) => {
+        const bytes = (await readBody(init.body)).length;
+        sent.push({
+          header: (init.headers as Record<string, string>)['Content-Length'],
+          bytes,
+        });
+        return okFetchUpload();
+      });
+      const buffer = await buildZipBuffer([
+        { name: 'a.txt', content: 'short' },
+        { name: 'b.txt', content: 'a somewhat longer entry body' },
+      ]);
+
+      await withArchiveFixture(buffer, (archiveFile) =>
+        service.uploadArchive('bucket', 'reports', archiveFile, 'token'),
+      );
+
+      expect(sent).toHaveLength(2);
+      for (const { header, bytes } of sent) {
+        expect(header).toBe(String(bytes));
+      }
+    });
+
+    it('returns an empty results array for an empty archive', async () => {
+      const { service } = makeService();
+      const buffer = await buildZipBuffer([]);
+
+      const result = await withArchiveFixture(buffer, (archiveFile) =>
+        service.uploadArchive('bucket', 'reports', archiveFile, 'token'),
+      );
+
+      expect(result.results).toEqual([]);
+    });
+
+    it('uploads archive entries to the bucket root when destination is empty', async () => {
+      const { service, fetchCore } = makeService();
+      fetchCore.mockResolvedValue(okFetchUpload());
+      const buffer = await buildZipBuffer([{ name: 'a.txt' }]);
+
+      const result = await withArchiveFixture(buffer, (archiveFile) =>
+        service.uploadArchive('bucket', '', archiveFile, 'token'),
+      );
+
+      expect(result.results).toEqual([{ path: 'a.txt', success: true }]);
+      expect(fetchCore.mock.calls[0]?.[0]).toBe(
+        'http://dial-core/v1/files/bucket/a.txt',
+      );
+    });
+
+    it('throws a validation error for a non-ZIP buffer', async () => {
+      const { service } = makeService();
+      const buffer = Buffer.from('not a zip file');
+
+      await withArchiveFixture(buffer, async (archiveFile) => {
+        await expect(
+          service.uploadArchive('bucket', 'reports', archiveFile, 'token'),
+        ).rejects.toThrow(BadRequestException);
+      });
+    });
+
+    it('rejects with 422 and zero uploads when the archive exceeds the file-count limit', async () => {
+      const { service, fetchCore } = makeService({
+        ARCHIVE_UPLOAD_MAX_FILES: 1,
+      });
+      fetchCore.mockResolvedValue(okFetchUpload());
+      const buffer = await buildZipBuffer([
+        { name: 'a.txt' },
+        { name: 'b.txt' },
+      ]);
+
+      await withArchiveFixture(buffer, async (archiveFile) => {
+        await expect(
+          service.uploadArchive('bucket', 'reports', archiveFile, 'token'),
+        ).rejects.toThrow(UnprocessableEntityException);
+      });
+      expect(fetchCore).toHaveBeenCalledTimes(0);
+    });
+
+    it('aborts mid-extraction once cumulative uncompressed bytes exceed the limit, retaining prior successful uploads', async () => {
+      const { service, fetchCore } = makeService({
+        ARCHIVE_UPLOAD_MAX_UNCOMPRESSED_BYTES: 10,
+      });
+      fetchCore.mockResolvedValue(okFetchUpload());
+      const buffer = await buildZipBuffer([
+        { name: 'small.txt', content: 'a'.repeat(5) },
+        { name: 'big.txt', content: 'b'.repeat(50) },
+      ]);
+
+      await withArchiveFixture(buffer, async (archiveFile) => {
+        await expect(
+          service.uploadArchive('bucket', 'reports', archiveFile, 'token'),
+        ).rejects.toThrow(UnprocessableEntityException);
+      });
+      expect(fetchCore).toHaveBeenCalledTimes(1);
+      expect(fetchCore.mock.calls[0]?.[0]).toBe(
+        'http://dial-core/v1/files/bucket/reports/small.txt',
+      );
+    });
+
+    it('uploads a conflicting entry with a deduplicated file name', async () => {
+      const { service, fetchCore } = makeService();
+      fetchCore
+        .mockResolvedValueOnce(new Response(null, { status: 412 }))
+        .mockResolvedValueOnce(okFetchUpload())
+        .mockResolvedValueOnce(okFetchUpload());
+      const buffer = await buildZipBuffer([
+        { name: 'a.txt' },
+        { name: 'b.txt' },
+      ]);
+
+      const result = await withArchiveFixture(buffer, (archiveFile) =>
+        service.uploadArchive('bucket', 'reports', archiveFile, 'token'),
+      );
+
+      expect(result.results).toEqual([
+        { path: 'reports/a (1).txt', success: true },
+        { path: 'reports/b.txt', success: true },
+      ]);
+      expect(fetchCore).toHaveBeenCalledTimes(3);
+      expect(fetchCore.mock.calls[1]?.[0]).toBe(
+        'http://dial-core/v1/files/bucket/reports/a%20(1).txt',
+      );
+    });
+
+    it('increments the deduplicated file name until upload succeeds', async () => {
+      const { service, fetchCore } = makeService();
+      fetchCore
+        .mockResolvedValueOnce(new Response(null, { status: 412 }))
+        .mockResolvedValueOnce(new Response(null, { status: 412 }))
+        .mockResolvedValueOnce(okFetchUpload());
+      const buffer = await buildZipBuffer([{ name: 'a.txt' }]);
+
+      const result = await withArchiveFixture(buffer, (archiveFile) =>
+        service.uploadArchive('bucket', 'reports', archiveFile, 'token'),
+      );
+
+      expect(result.results).toEqual([
+        { path: 'reports/a (2).txt', success: true },
+      ]);
+      expect(fetchCore).toHaveBeenCalledTimes(3);
+      expect(fetchCore.mock.calls[2]?.[0]).toBe(
+        'http://dial-core/v1/files/bucket/reports/a%20(2).txt',
+      );
+    });
+
+    it('rejects path-traversal entries without attempting to upload them', async () => {
+      const { service, fetchCore } = makeService();
+      fetchCore.mockResolvedValue(okFetchUpload());
+      const buffer = buildRawZipBuffer([
+        { name: '../../etc/passwd' },
+        { name: 'safe.txt' },
+      ]);
+
+      const result = await withArchiveFixture(buffer, (archiveFile) =>
+        service.uploadArchive('bucket', 'reports', archiveFile, 'token'),
+      );
+
+      expect(result.results).toEqual([
+        { path: '../../etc/passwd', success: false, error: 'Invalid path' },
+        { path: 'reports/safe.txt', success: true },
+      ]);
+      expect(fetchCore).toHaveBeenCalledTimes(1);
+    });
+
+    it('throws ServiceUnavailableException and stops scheduling uploads when the timeout is exceeded', async () => {
+      const { service, fetchCore } = makeService({
+        ARCHIVE_UPLOAD_TIMEOUT_MS: 250,
+      });
+      fetchCore.mockImplementation(
+        (_input, init) =>
+          new Promise<Response>((resolve, reject) => {
+            const signal = (init as RequestInit | undefined)?.signal;
+            signal?.addEventListener(
+              'abort',
+              () => {
+                reject(
+                  Object.assign(new Error('Aborted'), {
+                    name: 'AbortError',
+                  }),
+                );
+              },
+              { once: true },
+            );
+            setTimeout(() => resolve(okFetchUpload()), 1_000);
+          }),
+      );
+      const buffer = await buildZipBuffer([
+        { name: 'a.txt' },
+        { name: 'b.txt' },
+      ]);
+
+      await withArchiveFixture(buffer, async (archiveFile) => {
+        await expect(
+          service.uploadArchive('bucket', 'reports', archiveFile, 'token'),
+        ).rejects.toThrow(ServiceUnavailableException);
+      });
+      await new Promise((resolve) => setTimeout(resolve, 30));
+      expect(fetchCore).toHaveBeenCalledTimes(1);
+    });
+
+    it('throws ServiceUnavailableException when the final entry upload times out', async () => {
+      const { service, fetchCore } = makeService({
+        ARCHIVE_UPLOAD_TIMEOUT_MS: 250,
+      });
+      fetchCore.mockImplementation(
+        (_input, init) =>
+          new Promise<Response>((resolve, reject) => {
+            const signal = (init as RequestInit | undefined)?.signal;
+            signal?.addEventListener(
+              'abort',
+              () => {
+                reject(
+                  Object.assign(new Error('Aborted'), {
+                    name: 'AbortError',
+                  }),
+                );
+              },
+              { once: true },
+            );
+            setTimeout(() => resolve(okFetchUpload()), 1_000);
+          }),
+      );
+      const buffer = await buildZipBuffer([{ name: 'only.txt' }]);
+
+      await withArchiveFixture(buffer, async (archiveFile) => {
+        await expect(
+          service.uploadArchive('bucket', 'reports', archiveFile, 'token'),
+        ).rejects.toThrow(ServiceUnavailableException);
+      });
+      expect(fetchCore).toHaveBeenCalledTimes(1);
+    });
+  });
+});

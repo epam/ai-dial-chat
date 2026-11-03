@@ -503,6 +503,7 @@ describe('FilesController — uploadFileContent (DIAL Core stubbed)', () => {
       unused,
       unused,
       unused,
+      unused,
     );
     app = await buildApp(filesService, { fileSizeLimit });
     appPort = (app.getHttpServer().address() as AddressInfo).port;

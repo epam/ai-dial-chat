@@ -1,23 +1,15 @@
 import { randomUUID } from 'node:crypto';
-import { createReadStream, createWriteStream } from 'node:fs';
-import { mkdtemp, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { Readable, Transform } from 'node:stream';
-import { pipeline } from 'node:stream/promises';
+import { createReadStream } from 'node:fs';
+import { Readable } from 'node:stream';
 import {
   BadRequestException,
   ConflictException,
   HttpException,
-  HttpStatus,
   Injectable,
   Logger,
-  PayloadTooLargeException,
   ServiceUnavailableException,
-  UnprocessableEntityException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as yauzl from 'yauzl';
 import {
   handleDialFetchError,
   mapDialHttpStatus,
@@ -31,12 +23,9 @@ import {
   buildDialFileUrl,
   encodeDialFilePath,
 } from '../dial-resource-path.util';
-import type {
-  UploadArchiveEntryResultDto,
-  UploadArchiveResponseDto,
-} from '../dto/upload-archive.dto';
 import type { FileUploadResponseDto } from '../dto/upload-file-response.dto';
 import type { UploadMode } from '../dto/upload-file.dto';
+import { throwIfArchiveUploadAborted } from './archive-upload';
 import {
   UPLOAD_CHUNK_BYTES,
   UPLOAD_MAX_DURATION_MS,
@@ -46,17 +35,6 @@ import {
   type UploadWatchdogLimits,
   sliceBuffer,
 } from './upload-watchdog';
-
-interface ArchiveEntryPathResult {
-  isDirectory: boolean;
-  safeRelativePath: string | null;
-}
-
-interface ArchiveFileEntry {
-  entry: yauzl.Entry;
-  fileName: string;
-  safeRelativePath: string | null;
-}
 
 interface UploadedFileMeta {
   mimetype: string;
@@ -94,59 +72,6 @@ export interface UploadedArchiveFile {
 
 const getFileNameFromPath = (path: string): string =>
   path.split('/').filter(Boolean).pop() ?? 'file';
-
-const DIAL_RESOURCE_SEGMENT_BYTE_LIMIT = 255;
-const ARCHIVE_ENTRY_CONFLICT_RETRY_LIMIT = 50;
-
-const splitFilePath = (
-  path: string,
-): { parentPath: string; fileName: string } => {
-  const slashIndex = path.lastIndexOf('/');
-  if (slashIndex === -1) {
-    return { parentPath: '', fileName: path };
-  }
-
-  return {
-    parentPath: path.slice(0, slashIndex + 1),
-    fileName: path.slice(slashIndex + 1),
-  };
-};
-
-const buildDeduplicatedFileName = (fileName: string, index: number): string => {
-  const dotIndex = fileName.lastIndexOf('.');
-  const hasExtension = dotIndex > 0;
-  const baseName = hasExtension ? fileName.slice(0, dotIndex) : fileName;
-  const extension = hasExtension ? fileName.slice(dotIndex) : '';
-  const suffix = ` (${index})`;
-  const suffixBytes = StringUtils.getUtf8ByteLength(suffix);
-  const extensionLimit = Math.max(
-    0,
-    DIAL_RESOURCE_SEGMENT_BYTE_LIMIT - suffixBytes - 1,
-  );
-  const safeExtension = StringUtils.truncateToUtf8Bytes(
-    extension,
-    extensionLimit,
-  );
-  const baseLimit = Math.max(
-    1,
-    DIAL_RESOURCE_SEGMENT_BYTE_LIMIT -
-      suffixBytes -
-      StringUtils.getUtf8ByteLength(safeExtension),
-  );
-  const safeBase =
-    StringUtils.truncateToUtf8Bytes(baseName, baseLimit).trimEnd() ||
-    StringUtils.truncateToUtf8Bytes('file', baseLimit);
-
-  return `${safeBase}${suffix}${safeExtension}`;
-};
-
-const buildDeduplicatedFilePath = (path: string, index: number): string => {
-  const { parentPath, fileName } = splitFilePath(path);
-  return `${parentPath}${buildDeduplicatedFileName(fileName, index)}`;
-};
-
-const isConflictError = (err: unknown): boolean =>
-  err instanceof HttpException && err.getStatus() === HttpStatus.CONFLICT;
 
 const UPLOAD_ABORT_MESSAGES: Record<UploadAbortReason, string> = {
   [UploadAbortReason.Stalled]:
@@ -199,7 +124,7 @@ const readUploadedFile = (
   return createReadStream(file.path, { highWaterMark: UPLOAD_CHUNK_BYTES });
 };
 
-interface StreamUploadOptions {
+export interface StreamUploadOptions {
   /** Sends `If-None-Match: *` so DIAL Core rejects an existing path with 412. Defaults to true. */
   createOnly?: boolean;
   fileName?: string;
@@ -308,326 +233,10 @@ export class FilesUploadService {
     }
   }
 
-  async uploadArchive(
-    bucket: string,
-    destinationPath: string,
-    archiveFile: UploadedArchiveFile,
-    token: string,
-  ): Promise<UploadArchiveResponseDto> {
-    if (archiveFile.path === '') {
-      throw new BadRequestException('file is required');
-    }
-
-    const maxArchiveBytes =
-      this.configService.get<number>('ARCHIVE_UPLOAD_MAX_BYTES') ?? 536_870_912;
-    if (archiveFile.size != null && archiveFile.size > maxArchiveBytes) {
-      throw new PayloadTooLargeException('Archive payload too large');
-    }
-
-    const maxFiles =
-      this.configService.get<number>('ARCHIVE_UPLOAD_MAX_FILES') ?? 1000;
-    const maxUncompressedBytes =
-      this.configService.get<number>('ARCHIVE_UPLOAD_MAX_UNCOMPRESSED_BYTES') ??
-      2_147_483_648;
-    const timeoutMs =
-      this.configService.get<number>('ARCHIVE_UPLOAD_TIMEOUT_MS') ?? 300_000;
-
-    const abortController = new AbortController();
-    const timeoutHandle = setTimeout(() => abortController.abort(), timeoutMs);
-
-    try {
-      const results = await this.extractAndUploadArchive(
-        bucket,
-        destinationPath,
-        archiveFile.path,
-        token,
-        maxFiles,
-        maxUncompressedBytes,
-        abortController.signal,
-      );
-
-      const successCount = results.filter((r) => r.success).length;
-      this.logger.log(
-        `Archive upload completed: successCount=${successCount}, failedCount=${results.length - successCount}`,
-      );
-
-      return { results };
-    } catch (err) {
-      if (abortController.signal.aborted) {
-        this.logger.error(
-          `Archive upload timed out: bucket=${bucket}, timeoutMs=${timeoutMs}`,
-        );
-        throw new ServiceUnavailableException('Archive upload timed out');
-      }
-      if (err instanceof HttpException) {
-        throw err;
-      }
-      this.logger.warn(
-        `Archive upload failed to open or extract: bucket=${bucket}, error=${err instanceof Error ? err.message : String(err)}`,
-      );
-      throw new BadRequestException('Invalid or corrupted ZIP archive');
-    } finally {
-      clearTimeout(timeoutHandle);
-    }
-  }
-
-  private async extractAndUploadArchive(
-    bucket: string,
-    destinationPath: string,
-    archivePath: string,
-    token: string,
-    maxFiles: number,
-    maxUncompressedBytes: number,
-    signal: AbortSignal,
-  ): Promise<UploadArchiveEntryResultDto[]> {
-    let normalizedDestination = destinationPath;
-    while (normalizedDestination.endsWith('/')) {
-      normalizedDestination = normalizedDestination.slice(0, -1);
-    }
-    const results: UploadArchiveEntryResultDto[] = [];
-    let cumulativeBytes = 0;
-    const tempDirectory = await mkdtemp(join(tmpdir(), 'dial-upload-archive-'));
-
-    /*
-     * decodeStrings: false — yauzl's own filename validation aborts the
-     * *whole* archive on the first unsafe entry name, but D4 requires
-     * per-entry rejection (record a failed result, keep processing the
-     * rest). Reading the raw name lets resolveArchiveEntryPath be the sole
-     * zip-slip authority.
-     *
-     * autoClose: false — keep the file descriptor open after eachEntry()
-     * exhausts all central-directory records so the extraction pass can call
-     * openReadStreamPromise() on the pre-collected entries.
-     */
-    const zipfile = await yauzl
-      .openPromise(archivePath, {
-        lazyEntries: true,
-        decodeStrings: false,
-        autoClose: false,
-      })
-      .catch(async (err: unknown) => {
-        await this.removeArchiveUploadTempDirectory(tempDirectory);
-        throw err;
-      });
-
-    this.logger.log(
-      `Archive upload started: bucket=${bucket}, entryCount=${zipfile.entryCount}`,
-    );
-
-    try {
-      /*
-       * Pass 1: read all central-directory metadata without opening any read
-       * streams. Enforcing the file-count limit here ensures no bytes are
-       * extracted before the check fires, as required by spec.
-       *
-       * Guard against directory-entry amplification: directory entries are
-       * skipped by the per-file counter below, so a crafted archive with many
-       * directory entries would iterate them all unchecked. The compressed-size
-       * pre-check already bounds the central-directory size; this caps the
-       * total iteration count (directories + files combined).
-       */
-      if (zipfile.entryCount > maxFiles * 10) {
-        throw new UnprocessableEntityException(
-          `Archive contains too many entries`,
-        );
-      }
-
-      const fileEntries: ArchiveFileEntry[] = [];
-      let fileEntryCount = 0;
-      for await (const entry of zipfile.eachEntry()) {
-        const fileName = this.decodeArchiveEntryName(entry.fileName);
-        const { isDirectory, safeRelativePath } =
-          this.resolveArchiveEntryPath(fileName);
-        if (isDirectory) {
-          continue;
-        }
-
-        fileEntryCount += 1;
-        if (fileEntryCount > maxFiles) {
-          throw new UnprocessableEntityException(
-            `Archive contains more than ${maxFiles} files`,
-          );
-        }
-
-        fileEntries.push({ entry, fileName, safeRelativePath });
-      }
-
-      /*
-       * Pass 2: extract and upload. The file-count limit has already been
-       * validated; the abort signal and uncompressed-bytes budget are still
-       * enforced per entry.
-       */
-      let entryIndex = 0;
-      for (const { entry, fileName, safeRelativePath } of fileEntries) {
-        this.throwIfArchiveUploadAborted(signal);
-
-        entryIndex += 1;
-
-        if (safeRelativePath == null) {
-          results.push({
-            path: fileName,
-            success: false,
-            error: 'Invalid path',
-          });
-          continue;
-        }
-
-        const entryPath = normalizedDestination
-          ? `${normalizedDestination}/${safeRelativePath}`
-          : safeRelativePath;
-        const entryTempPath = join(
-          tempDirectory,
-          `${entryIndex}-${randomUUID()}.entry`,
-        );
-
-        const stream = await zipfile.openReadStreamPromise(entry);
-        const entryBytes = await this.stageArchiveEntryToTemp(
-          stream,
-          entryTempPath,
-          maxUncompressedBytes - cumulativeBytes,
-          signal,
-        );
-        cumulativeBytes += entryBytes;
-
-        try {
-          const uploadedPath =
-            await this.uploadArchiveEntryWithDeduplicatedName(
-              bucket,
-              entryPath,
-              entryTempPath,
-              entryBytes,
-              token,
-              signal,
-            );
-          results.push({ path: uploadedPath, success: true });
-        } catch (err) {
-          this.throwIfArchiveUploadAborted(signal);
-
-          results.push({
-            path: entryPath,
-            success: false,
-            error: isConflictError(err)
-              ? 'Conflict'
-              : err instanceof HttpException
-                ? err.message
-                : 'Upload failed',
-          });
-        }
-      }
-    } finally {
-      zipfile.close();
-      await this.removeArchiveUploadTempDirectory(tempDirectory);
-    }
-
-    return results;
-  }
-
-  private async uploadArchiveEntryWithDeduplicatedName(
-    bucket: string,
-    path: string,
-    tempPath: string,
-    fileSize: number,
-    token: string,
-    signal: AbortSignal,
-  ): Promise<string> {
-    let nextPath = path;
-
-    for (
-      let conflictIndex = 0;
-      conflictIndex <= ARCHIVE_ENTRY_CONFLICT_RETRY_LIMIT;
-      conflictIndex += 1
-    ) {
-      try {
-        await this.uploadArchiveEntryFromTemp(
-          bucket,
-          nextPath,
-          tempPath,
-          fileSize,
-          token,
-          signal,
-        );
-        return nextPath;
-      } catch (err) {
-        this.throwIfArchiveUploadAborted(signal);
-
-        if (
-          !isConflictError(err) ||
-          conflictIndex === ARCHIVE_ENTRY_CONFLICT_RETRY_LIMIT
-        ) {
-          throw err;
-        }
-
-        nextPath = buildDeduplicatedFilePath(path, conflictIndex + 1);
-        this.logger.warn(
-          `Archive entry upload conflict: bucket=${bucket}, originalPath=${path}, retryPath=${nextPath}`,
-        );
-      }
-    }
-
-    throw new ConflictException('File already exists at this path');
-  }
-
-  private async stageArchiveEntryToTemp(
-    stream: Readable,
-    tempPath: string,
-    remainingBudget: number,
-    signal: AbortSignal,
-  ): Promise<number> {
-    this.throwIfArchiveUploadAborted(signal);
-
-    if (remainingBudget < 0) {
-      throw new UnprocessableEntityException(
-        'Archive uncompressed size exceeds the configured limit',
-      );
-    }
-
-    let readBytes = 0;
-    const limiter = new Transform({
-      transform(chunk: Buffer, _encoding, callback) {
-        readBytes += chunk.length;
-        if (readBytes > remainingBudget) {
-          callback(
-            new UnprocessableEntityException(
-              'Archive uncompressed size exceeds the configured limit',
-            ),
-          );
-          return;
-        }
-        callback(null, chunk);
-      },
-    });
-    const abortCurrentEntry = (): void => {
-      const error = new Error('ARCHIVE_UPLOAD_ABORTED');
-      stream.destroy(error);
-      limiter.destroy(error);
-    };
-
-    signal.addEventListener('abort', abortCurrentEntry, { once: true });
-
-    try {
-      await pipeline(stream, limiter, createWriteStream(tempPath));
-      this.throwIfArchiveUploadAborted(signal);
-      return readBytes;
-    } finally {
-      signal.removeEventListener('abort', abortCurrentEntry);
-    }
-  }
-
-  private async uploadArchiveEntryFromTemp(
-    bucket: string,
-    path: string,
-    tempPath: string,
-    fileSize: number,
-    token: string,
-    signal: AbortSignal,
-  ): Promise<void> {
-    const stream = createReadStream(tempPath);
-    await this.uploadFileStream(bucket, path, stream, fileSize, token, signal);
-  }
-
   /*
    * Single DIAL Core upload implementation, shared by uploadFile() (buffered
-   * single files) and archive extraction (staged files streamed from disk).
+   * single files) and FilesArchiveUploadService (archive entries staged on
+   * disk and streamed from there).
    * Raw fetch instead of the SDK helper, which requires a whole FormData/Blob.
    * Create-only (`If-None-Match: '*'`, 412 -> 409 Conflict) unless
    * `options.createOnly` is false.
@@ -636,7 +245,7 @@ export class FilesUploadService {
    * carries an exact `Content-Length` instead of chunked transfer encoding.
    * DIAL Core enforces `storage.maxUploadedFileSize` against that header only.
    */
-  private async uploadFileStream(
+  async uploadFileStream(
     bucket: string,
     path: string,
     fileStream: Readable,
@@ -651,7 +260,7 @@ export class FilesUploadService {
       contentType = 'application/octet-stream',
       encodePath = encodeDialFilePath,
     } = options;
-    this.throwIfArchiveUploadAborted(signal);
+    throwIfArchiveUploadAborted(signal);
 
     /* boundary is UUIDv4 and cannot be influenced by user input — safe to
        interpolate directly into Content-Type and the multipart preamble. */
@@ -760,53 +369,5 @@ export class FilesUploadService {
   private buildDialUploadUrl(bucket: string, encodedPath: string): string {
     const baseUrl = StringUtils.stripTrailingSlashes(this.dialClient.baseUrl);
     return `${baseUrl}/v1/files/${encodeURIComponent(bucket)}/${encodedPath}`;
-  }
-
-  private async removeArchiveUploadTempDirectory(
-    tempDirectory: string,
-  ): Promise<void> {
-    await rm(tempDirectory, { recursive: true, force: true }).catch(
-      (err: unknown) => {
-        this.logger.warn(
-          `Failed to remove archive upload temp directory: ${err instanceof Error ? err.message : String(err)}`,
-        );
-      },
-    );
-  }
-
-  private throwIfArchiveUploadAborted(signal: AbortSignal): void {
-    if (signal.aborted) {
-      throw new ServiceUnavailableException('Archive upload timed out');
-    }
-  }
-
-  /** Decodes a yauzl entry name read with `decodeStrings: false` (raw `Buffer`), or passes a string through unchanged. */
-  private decodeArchiveEntryName(rawFileName: string): string {
-    const raw: unknown = rawFileName;
-    return Buffer.isBuffer(raw) ? raw.toString('utf8') : rawFileName;
-  }
-
-  /**
-   * Zip-slip defense for an uploaded archive entry (D4): rejects absolute
-   * paths, drive letters, `..` segments, and backslashes. Directory entries
-   * (trailing `/`) are flagged so callers can skip them silently rather than
-   * treat them as a failed result.
-   */
-  resolveArchiveEntryPath(entryFileName: string): ArchiveEntryPathResult {
-    if (entryFileName.endsWith('/')) {
-      return { isDirectory: true, safeRelativePath: null };
-    }
-
-    const isUnsafe =
-      entryFileName === '' ||
-      entryFileName.startsWith('/') ||
-      /^[a-zA-Z]:/.test(entryFileName) ||
-      entryFileName.includes('\\') ||
-      entryFileName.split('/').some((seg) => seg === '..' || seg === '.');
-
-    return {
-      isDirectory: false,
-      safeRelativePath: isUnsafe ? null : entryFileName,
-    };
   }
 }
