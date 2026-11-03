@@ -7,6 +7,7 @@ export * from '../scheduled-task/scheduled-task-next-occurrence';
 export * from '../scheduled-task/check-scheduled-task-auth-session-error';
 export * from '../scheduled-task/use-scheduled-tasks';
 export * from '../scheduled-task/use-scheduled-task-runs';
+export * from '../scheduled-task/useStartScheduledTask';
 export * from '../scheduled-task/useScheduledTaskSkillDisplayNames/useScheduledTaskSkillDisplayNames';
 
 export * from '../scheduled-task/active-scheduled-task';

@@ -7,10 +7,14 @@ import {
   getApiErrorStatus,
   getNextCronOccurrence,
   getScheduledTasksLoginRetryState,
+  mergeScheduledTaskRuns,
   OfflineCredentialsGateStatus,
   OfflineCredentialsLoginOutcomeType,
   resolveScheduledTasksLoginBannerState,
+  ScheduledTaskRunStatusFeedback,
   ScheduledTasksLoginBannerState,
+  useStartScheduledTask,
+  type StartScheduledTaskApi,
 } from '@epam/ai-dial-chat-hooks';
 import {
   ScheduledTaskDetailView,
@@ -56,17 +60,14 @@ import { useOfflineCredentialsLogin } from '../../hooks/offlineCredentials/useOf
 import { useScheduledTaskModelPreview } from '../../hooks/scheduled-tasks/useScheduledTaskModelPreview';
 import { useScheduledTaskRuns } from '../../hooks/scheduled-tasks/useScheduledTaskRuns';
 import { useScheduledTaskSkillPreview } from '../../hooks/scheduled-tasks/useScheduledTaskSkillPreview';
-import {
-  mergeScheduledTaskRuns,
-  ScheduledTaskRunStatusFeedback,
-  useStartScheduledTask,
-} from '../../hooks/scheduled-tasks/useStartScheduledTask';
 import { useStaleGuard } from '../../hooks/useStaleGuard';
 import {
   deleteScheduledTask,
   getScheduledTask,
+  getScheduledTaskRun,
   pauseScheduledTask,
   resumeScheduledTask,
+  startScheduledTask,
 } from '../../server-api/scheduled-tasks.api';
 import { ROUTES } from '../../types/routes';
 import { UserConfigStatus } from '../../types/user-config-status';
@@ -106,6 +107,12 @@ const RUN_STATUS_LABEL_KEYS: Record<
   [ScheduledTaskRunDtoStatusEnum.Error]: 'error',
   [ScheduledTaskRunDtoStatusEnum.InProgress]: 'inProgress',
   [ScheduledTaskRunDtoStatusEnum.Missed]: 'missed',
+};
+
+/* Module-level so the hook's polling effects keep a stable dependency. */
+const START_SCHEDULED_TASK_API: StartScheduledTaskApi = {
+  startScheduledTask,
+  getScheduledTaskRun,
 };
 
 const ScheduledTaskDetailPage: FC = () => {
@@ -191,6 +198,7 @@ const ScheduledTaskDetailPage: FC = () => {
     start: startTask,
     terminalRun,
   } = useStartScheduledTask({
+    api: START_SCHEDULED_TASK_API,
     scheduleId,
     enabled: isEnabled,
     canStart:

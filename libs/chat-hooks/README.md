@@ -4146,6 +4146,51 @@ stale generations, distinguish `initialError` from `loadMoreError`, preserve
 loaded records after a page failure, and expose `retryLoadMore`. No hook
 constructs a client or reads application state.
 
+### useStartScheduledTask / mergeScheduledTaskRuns
+
+`useStartScheduledTask` owns one manual "Start now" request for a schedule and
+the run it accepts. `start()` sends at most one request while one is pending,
+while `canStart` is false, or while any accepted or `loadedRuns` entry is
+`InProgress`. An accepted `InProgress` run is polled every 2s for up to 70s;
+polling pauses while the tab is hidden, honours `Retry-After`, and stops on a
+terminal status, a 401/403/404, or a terminal copy of the run in `loadedRuns`.
+`statusFeedback` is `ScheduledTaskRunStatusFeedback.Unavailable` after a
+failed status request and `Delayed` once the deadline passes;
+`refreshStatus()` polls once more on demand. Changing `scheduleId` or
+`enabled` resets everything.
+
+`mergeScheduledTaskRuns(acceptedRuns, loadedRuns)` deduplicates runs by id,
+keeping first-seen order and never replacing a terminal status with
+`InProgress`. All three are available from the root and `./scheduled-tasks`.
+
+```ts
+import {
+  mergeScheduledTaskRuns,
+  useStartScheduledTask,
+  type StartScheduledTaskApi,
+} from '@epam/ai-dial-chat-hooks/scheduled-tasks';
+
+// Bound to the host's configured client; keep the object stable.
+const startApi: StartScheduledTaskApi = {
+  startScheduledTask: (scheduleId) => client.startScheduledTask({ scheduleId }),
+  getScheduledTaskRun: (scheduleId, runId, signal) =>
+    client.getScheduledTaskRun(
+      { scheduleId, runId },
+      signal ? { signal } : undefined,
+    ),
+};
+
+const { acceptedRuns, isStarting, statusFeedback, start, refreshStatus } =
+  useStartScheduledTask({
+    api: startApi,
+    scheduleId,
+    enabled: true,
+    canStart: task != null,
+    loadedRuns: runs,
+  });
+const historyRuns = mergeScheduledTaskRuns(acceptedRuns, runs);
+```
+
 ### mapFormValuesToCreateBody / mapFormValuesToUpdateBody / mapScheduledTaskDtoToFormValues
 
 Maps validated scheduled-task create/edit form values to their request bodies (converting local wall-clock time to the UTC cron fields DIAL Scheduler expects), and inverts that mapping back to editable form values — failing closed with an `UnsupportedTriggerReason` when a task's trigger cannot be represented losslessly by the editor.

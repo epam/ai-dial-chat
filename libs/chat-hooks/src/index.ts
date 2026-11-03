@@ -71,6 +71,7 @@ export * from './scheduled-task/scheduled-task-preparation';
 export * from './scheduled-task/scheduled-tasks-api-client';
 export * from './scheduled-task/use-scheduled-tasks';
 export * from './scheduled-task/use-scheduled-task-runs';
+export * from './scheduled-task/useStartScheduledTask';
 export * from './scheduled-task/scheduled-task-trigger';
 export * from './scheduled-task/scheduled-task-next-occurrence';
 export * from './project/projects-api-client';
