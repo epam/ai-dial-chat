@@ -139,6 +139,10 @@ const ModelRow = ({
 
 /** Props for the mobile bottom-sheet model selector. */
 export interface ModelSelectorBottomSheetProps {
+  /** Controlled query shared with an alternate selector presentation. */
+  searchQuery?: string;
+  /** Reports query edits when controlled. */
+  onSearchQueryChange?: (query: string) => void;
   /** Controls sheet visibility. */
   isOpen: boolean;
   /** Title displayed in the sheet header and used as the dialog accessible name. */
@@ -191,12 +195,16 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
   labelClassName = 'dial-small-text',
   colors,
   menuStyles,
+  searchQuery,
+  onSearchQueryChange,
 }) => {
-  const [query, setQuery] = useState('');
+  const [localQuery, setLocalQuery] = useState('');
+  const query = searchQuery ?? localQuery;
+  const setQuery = onSearchQueryChange ?? setLocalQuery;
 
-  // Reset search query each time the sheet closes
+  /* Controlled query belongs to the selector, including while changing presentation. */
   useEffect(() => {
-    if (!isOpen) setQuery('');
+    if (!isOpen) setLocalQuery('');
   }, [isOpen]);
 
   const hasDeployments = deployments && deployments.length > 0;

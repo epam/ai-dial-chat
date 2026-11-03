@@ -2,8 +2,14 @@ import { DropdownItem, DropdownItemType } from '@epam/ai-dial-ui-kit';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CreateButton } from '../CreateButton';
+
+const breakpoint = vi.hoisted(() => ({ isPhone: false }));
+vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
+  useIsPhone: () => breakpoint.isPhone,
+}));
 
 const SearchableCreateButton = ({
   onChange,
@@ -46,6 +52,55 @@ const SECTIONED_OPTIONS: DropdownItem[] = [
 ];
 
 describe('CreateButton', () => {
+  afterEach(() => {
+    breakpoint.isPhone = false;
+  });
+
+  it('keeps an open searchable menu and query across phone and tablet presentations', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    const { rerender } = render(<SearchableCreateButton onChange={onChange} />);
+    await user.click(screen.getByRole('button', { name: 'Create' }));
+    await user.type(
+      screen.getByRole('textbox', { name: 'Find a runner' }),
+      'oc',
+    );
+    breakpoint.isPhone = true;
+    rerender(<SearchableCreateButton onChange={onChange} />);
+    expect(screen.getByRole('dialog', { name: 'Create' })).toBeTruthy();
+    expect(
+      screen.getByRole<HTMLInputElement>('textbox', { name: 'Find a runner' })
+        .value,
+    ).toBe('oc');
+    breakpoint.isPhone = false;
+    rerender(<SearchableCreateButton onChange={onChange} />);
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.getByRole('menu', { name: 'Create' })).toBeTruthy();
+    expect(
+      screen.getByRole<HTMLInputElement>('textbox', { name: 'Find a runner' })
+        .value,
+    ).toBe('oc');
+    expect(
+      screen
+        .getByRole('button', { name: 'Create' })
+        .getAttribute('aria-expanded'),
+    ).toBe('true');
+  });
+
+  it('exposes the popup state for a floating tablet trigger', async () => {
+    const user = userEvent.setup();
+    render(
+      <CreateButton label="Create" isFloating options={SECTIONED_OPTIONS} />,
+    );
+    const trigger = screen.getByRole('button', { name: 'Create' });
+    expect(trigger.getAttribute('aria-haspopup')).toBe('menu');
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    await user.click(trigger);
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByRole('menu', { name: 'Create' })).toBeTruthy();
+    await user.keyboard('{Escape}');
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+  });
   it('renders a search field above the options and reports each edit', async () => {
     const onChange = vi.fn();
     render(<SearchableCreateButton onChange={onChange} />);

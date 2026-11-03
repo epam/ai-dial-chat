@@ -5,7 +5,7 @@ import {
   mergeClasses,
   SELECT_LIST_MAX_HEIGHT_CLASS_NAME,
   SELECT_LIST_MAX_HEIGHT_PX,
-  useIsMobile,
+  useIsPhone,
 } from '@epam/ai-dial-chat-shared';
 import {
   CaptionText,
@@ -59,6 +59,8 @@ const NO_EXTRA_OPTIONS: DeploymentSelectorExtraOption[] = [];
 
 /** Searchable model/agent picker panel with a selected row, favourites with star toggles, and a catalog footer button. */
 export const DeploymentSelectorPanel: FC<DeploymentSelectorPanelProps> = ({
+  searchQuery,
+  onSearchQueryChange,
   favorites,
   extraOptions = NO_EXTRA_OPTIONS,
   pinnedItem,
@@ -92,9 +94,11 @@ export const DeploymentSelectorPanel: FC<DeploymentSelectorPanelProps> = ({
   } = labels;
   const isSectioned = layout === DeploymentSelectorLayout.Sectioned;
 
-  const [query, setQuery] = useState('');
+  const [localQuery, setLocalQuery] = useState('');
+  const query = searchQuery ?? localQuery;
   const handleSearchChange = (value?: string) => {
-    setQuery(value ?? '');
+    setLocalQuery(value ?? '');
+    onSearchQueryChange?.(value ?? '');
   };
   const [leavingIds, setLeavingIds] = useState<Set<string>>(new Set());
   const leaveTimeoutsRef = useRef(
@@ -196,21 +200,21 @@ export const DeploymentSelectorPanel: FC<DeploymentSelectorPanelProps> = ({
     }
   }, []);
 
-  const isMobile = useIsMobile();
+  const isPhone = useIsPhone();
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   /*
    * The kit's 2.0 `Dropdown` mounts its overlay with `initialFocus={-1}`, so
    * it never moves focus off the trigger — a keyboard user would open the
    * panel and stay parked outside it. Claiming focus here is what makes the
-   * panel keyboard-operable. Skipped on mobile, where the same panel renders
+   * panel keyboard-operable. Skipped on phones, where the same panel renders
    * inside a bottom sheet and focusing the field would raise the on-screen
    * keyboard over the list the user came to read.
    */
   useEffect(() => {
-    if (isMobile) return;
+    if (isPhone) return;
     searchInputRef.current?.focus();
-  }, [isMobile]);
+  }, [isPhone]);
 
   const handleSelectId = (id: string) => {
     onSelect(id);

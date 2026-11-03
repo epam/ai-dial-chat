@@ -441,16 +441,19 @@ shape — is in
 
 ### Breakpoints
 
-`tools/tailwind/theme.css` defines exactly two named variants:
+`tools/tailwind/theme.css` defines the default layout variants:
 
 | Variant   | Query               |
 | --------- | ------------------- |
 | `mobile`  | `max-width: 1279px` |
 | `desktop` | `min-width: 1280px` |
 
-Do not introduce `sm:`/`md:`/`lg:`/`xl:` or tablet variants. When a component
-must branch in JavaScript, use `useIsMobile` from `@epam/ai-dial-chat-shared`
-instead of reading `window.innerWidth`.
+Menu and right-panel policies additionally use `phone` (<768px), `tablet`
+(768px inclusive to 1280px exclusive) and `tablet-up` (>=768px). Use
+`useIsMobile` for layout, `useIsPhone` for menus and `useIsTablet` for bounded
+right overlays, all from `@epam/ai-dial-chat-shared`. Do not use
+`sm:`/`md:`/`lg:`/`xl:`, deprecated tablet prefixes, or `window.innerWidth`
+to choose presentation.
 
 ### RTL
 
@@ -631,3 +634,7 @@ suffix and explanatory tooltips. Save stays disabled during availability checks
 and while any unavailable selection remains; submission also validates this
 state before calling the API. Removing the skill or replacing the model restores
 saving once the remaining form values are valid.
+
+## Tablet menus and right panels
+
+From 768px menus use anchored dropdown/popover presentation and Catalog uses its normal labeled header Create button; below 768px Create remains a floating icon-only button. At 768-1279px sources, attachment previews, catalog/skill details and publication drawers overlay the page with bounded widths; navigation and conversation-panel layout retain their 1280px boundary. The app owns route-specific canvas defaults and sources-width persistence.

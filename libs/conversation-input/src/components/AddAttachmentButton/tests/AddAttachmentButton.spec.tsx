@@ -3,14 +3,19 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AddAttachmentButton } from '../AddAttachmentButton';
 
-const { mockUseIsMobile } = vi.hoisted(() => ({
+const { mockUseIsMobile, mockUseIsPhone } = vi.hoisted(() => ({
   mockUseIsMobile: vi.fn(() => false),
+  mockUseIsPhone: vi.fn(),
 }));
 
 vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@epam/ai-dial-chat-shared')>();
-  return { ...actual, useIsMobile: mockUseIsMobile };
+  return {
+    ...actual,
+    useIsMobile: mockUseIsMobile,
+    useIsPhone: mockUseIsPhone,
+  };
 });
 
 const defaultProps = {
@@ -24,6 +29,30 @@ const defaultProps = {
 describe('AddAttachmentButton', () => {
   beforeEach(() => {
     mockUseIsMobile.mockReturnValue(false);
+    mockUseIsPhone.mockImplementation(() => mockUseIsMobile());
+  });
+
+  it('keeps the settings drill-in indicator in the tablet menu', async () => {
+    mockUseIsMobile.mockReturnValue(true);
+    mockUseIsPhone.mockReturnValue(false);
+    render(
+      <AddAttachmentButton
+        {...defaultProps}
+        chatSettings={{
+          features: { systemPrompt: false, temperature: false },
+          systemPrompt: '',
+          temperature: 0,
+          onSave: vi.fn(),
+        }}
+      />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Add' }));
+    const settings = screen.getByRole('menuitem', { name: 'Chat settings' });
+    // eslint-disable-next-line testing-library/no-node-access -- the decorative drill-in indicator has no accessible role
+    expect(settings.querySelector('.tabler-icon-chevron-right')).toBeTruthy();
+    await userEvent.click(settings);
+    expect(screen.getByRole('dialog', { name: 'Chat settings' })).toBeTruthy();
+    expect(screen.queryByRole('menu', { name: 'Add' })).toBeNull();
   });
 
   it('renders only "Attach file" when extraMenuItems is absent', async () => {

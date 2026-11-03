@@ -28,6 +28,8 @@ const CatalogModal = lazy(async () => {
 interface UseDeploymentSelectorFieldOverlayResult {
   /** Render at the position where the dropdown overlay content should appear. */
   renderOverlay: (onClose: () => void) => ReactNode;
+  /** Clear the query on dismissal, retaining it across presentation changes. */
+  onOpenChange: (open: boolean) => void;
   /** Render this element at a stable level outside the popover (e.g. next to the trigger). */
   catalogModal: ReactNode;
   /** True while the deployment list is being fetched. */
@@ -59,6 +61,10 @@ export function useDeploymentSelectorFieldOverlay(
   panelClassName?: string,
 ): UseDeploymentSelectorFieldOverlayResult {
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const onOpenChange = useCallback((open: boolean) => {
+    if (!open) setSearchQuery('');
+  }, []);
 
   const { t } = useTranslation();
   const { items, isLoading, error } = useDeployments();
@@ -110,6 +116,8 @@ export function useDeploymentSelectorFieldOverlay(
     (onClose: () => void): ReactNode => (
       <Suspense fallback={null}>
         <DeploymentSelectorOverlay
+          searchQuery={searchQuery}
+          onSearchQueryChange={setSearchQuery}
           favorites={favoriteCatalogItems}
           extraOptions={extraOptions}
           selectedId={selectedId}
@@ -123,6 +131,7 @@ export function useDeploymentSelectorFieldOverlay(
       </Suspense>
     ),
     [
+      searchQuery,
       favoriteCatalogItems,
       extraOptions,
       selectedId,
@@ -143,5 +152,12 @@ export function useDeploymentSelectorFieldOverlay(
     </Suspense>
   );
 
-  return { renderOverlay, catalogModal, isLoading, error, resolvedLabel };
+  return {
+    onOpenChange,
+    renderOverlay,
+    catalogModal,
+    isLoading,
+    error,
+    resolvedLabel,
+  };
 }

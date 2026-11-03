@@ -526,7 +526,11 @@ const ConversationRoute: FC = () => {
     ],
   );
 
-  const { renderOverlay, catalogModal } = useDeploymentSelectorOverlay();
+  const {
+    renderOverlay,
+    catalogModal,
+    onOpenChange: onModelPickerOpenChange,
+  } = useDeploymentSelectorOverlay();
 
   // TODO: remove in next release
   if (isIsolatedModelNotFound) {
@@ -568,6 +572,7 @@ const ConversationRoute: FC = () => {
         {...composerProps}
         onCreateConversation={handleCreateConversation}
         modelPickerOverlay={renderOverlay}
+        onModelPickerOpenChange={onModelPickerOpenChange}
         toolsMenuItems={toolsMenuItems}
         onToolToggle={onToolToggle}
         toolsMenuTitle={t(ToolsI18nKeys.MenuTitle)}

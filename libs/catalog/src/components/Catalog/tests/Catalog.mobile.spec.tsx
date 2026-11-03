@@ -9,7 +9,7 @@ import { Catalog } from '../Catalog';
 vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@epam/ai-dial-chat-shared')>();
-  return { ...actual, useIsMobile: () => true };
+  return { ...actual, useIsMobile: () => true, useIsPhone: () => true };
 });
 
 // The sections around the Create button are covered by their own suites.
@@ -37,6 +37,10 @@ const favorite: CatalogItem = {
   folder: [],
   lastUsed: '',
 };
+
+const getScrollBody = (button: HTMLElement) =>
+  // eslint-disable-next-line testing-library/no-node-access
+  button.closest('section')?.querySelector('.overflow-y-auto') as Element;
 
 describe('Catalog — mobile', () => {
   const renderCatalog = (props?: Partial<CatalogProps>) =>
@@ -66,8 +70,7 @@ describe('Catalog — mobile', () => {
     renderCatalog();
 
     const create = screen.getByRole('button', { name: 'Create' });
-    // eslint-disable-next-line testing-library/no-node-access
-    const scrollBody = create.parentElement?.nextElementSibling;
+    const scrollBody = getScrollBody(create);
     expect(scrollBody?.className).toContain('pb-16');
   });
 
@@ -125,8 +128,7 @@ describe('Catalog — mobile scroll to top', () => {
   it('stacks the button above the floating Create button', async () => {
     render(<Catalog items={[]} favorites={[]} />);
     const create = screen.getByRole('button', { name: 'Create' });
-    // eslint-disable-next-line testing-library/no-node-access
-    scrollDownOneScreen(create.parentElement?.nextElementSibling as Element);
+    scrollDownOneScreen(getScrollBody(create));
 
     const scrollToTop = await screen.findByRole('button', {
       name: 'Scroll to top',
@@ -155,8 +157,7 @@ describe('Catalog — mobile scroll to top', () => {
     document.documentElement.dir = 'rtl';
     render(<Catalog items={[]} favorites={[]} />);
     const create = screen.getByRole('button', { name: 'Create' });
-    // eslint-disable-next-line testing-library/no-node-access
-    scrollDownOneScreen(create.parentElement?.nextElementSibling as Element);
+    scrollDownOneScreen(getScrollBody(create));
 
     const scrollToTop = await screen.findByRole('button', {
       name: 'Scroll to top',

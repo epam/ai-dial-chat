@@ -292,6 +292,9 @@
  */
 @custom-variant mobile (@media (max-width: 1279px));
 @custom-variant desktop (@media (min-width: 1280px));
+@custom-variant phone (@media (width < 768px));
+@custom-variant tablet (@media (768px <= width < 1280px));
+@custom-variant tablet-up (@media (min-width: 768px));
 
 /*
  * `fill-*` paints surfaces (a tooltip arrow, a chart area), so it takes the

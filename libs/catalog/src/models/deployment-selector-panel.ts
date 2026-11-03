@@ -42,6 +42,10 @@ export interface DeploymentSelectorPanelColors {
 
 /** Props for `DeploymentSelectorPanel`. */
 export interface DeploymentSelectorPanelProps {
+  /** Controlled search value, retained by the host across sheet/popover replacement. Defaults to local state. */
+  searchQuery?: string;
+  /** Called when the user changes or clears the search value. */
+  onSearchQueryChange?: (query: string) => void;
   /** Starred catalog items to display in the Favorites list. */
   favorites: CatalogItem[];
   /** Non-deployment rows rendered above every catalog section. Defaults to none. */

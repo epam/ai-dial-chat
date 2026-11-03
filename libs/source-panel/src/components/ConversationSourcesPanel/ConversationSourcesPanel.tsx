@@ -40,6 +40,7 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
   onSourceClick,
   onDownloadAll,
   isMobile,
+  isBoundedOverlay = false,
   defaultWidth,
   minWidth,
   maxWidth,
@@ -169,10 +170,11 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
   return (
     <SidebarPanel
       isOpen={isOpen}
+      isBoundedOverlay={isBoundedOverlay}
       orientation={SidebarOrientation.Right}
       styles={{
         className: mergeClasses(
-          isMobile && isOpen && 'w-full',
+          isMobile && !isBoundedOverlay && isOpen && 'w-full',
           SOURCE_PANEL_CLASS.panel,
         ),
         bodyClassName: 'flex flex-col overflow-hidden p-0',
@@ -180,7 +182,7 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
       labels={labels}
       title={title}
       onClose={onClose}
-      resizable={!isMobile}
+      resizable={!isMobile || isBoundedOverlay}
       defaultWidth={defaultWidth}
       minWidth={minWidth}
       maxWidth={maxWidth}

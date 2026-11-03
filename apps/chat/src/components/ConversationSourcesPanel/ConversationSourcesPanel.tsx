@@ -28,6 +28,7 @@ import {
   MIMEType,
   RequestStatus,
   useIsMobile,
+  useIsTablet,
 } from '@epam/ai-dial-chat-shared';
 import { parsePdfPageReference } from '@epam/ai-dial-quotations';
 import { ConversationSourcesPanel } from '@epam/ai-dial-source-panel';
@@ -251,7 +252,10 @@ const ConversationSourcesPanelContainer: FC = () => {
   }, [downloadableAttachments]);
 
   const isMobile = useIsMobile();
-  const maxPanelWidth = usePanelMaxWidth(MIN_CONTENT_AREA_WIDTH);
+  const isTablet = useIsTablet();
+  const maxPanelWidth = usePanelMaxWidth(
+    isTablet ? 32 : MIN_CONTENT_AREA_WIDTH,
+  );
   const [storedWidth, setStoredWidth] = useLocalStorage(
     StorageKey.ConversationSourcesWidth,
     DEFAULT_PANEL_WIDTH,
@@ -301,6 +305,7 @@ const ConversationSourcesPanelContainer: FC = () => {
         downloadableAttachments.length > 0 ? handleDownloadAll : undefined
       }
       isMobile={isMobile}
+      isBoundedOverlay={isTablet}
       defaultWidth={defaultPanelWidth}
       minWidth={MIN_PANEL_WIDTH}
       maxWidth={maxPanelWidth}

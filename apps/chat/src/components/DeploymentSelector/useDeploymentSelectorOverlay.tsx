@@ -28,12 +28,18 @@ const CatalogModal = lazy(async () => {
 interface UseDeploymentSelectorOverlayResult {
   /** Pass directly as the `modelPickerOverlay` prop of `ConversationInput`. */
   renderOverlay: (onClose: () => void) => ReactNode;
+  /** Clear the query on dismissal, retaining it across presentation changes. */
+  onOpenChange: (open: boolean) => void;
   /** Render this element at a stable level outside the popover (e.g. next to the input). */
   catalogModal: ReactNode;
 }
 
 export function useDeploymentSelectorOverlay(): UseDeploymentSelectorOverlayResult {
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const onOpenChange = useCallback((open: boolean) => {
+    if (!open) setSearchQuery('');
+  }, []);
 
   const { t } = useTranslation();
   const { items, selectedItemId, setSelectedItemId } = useDeployments();
@@ -104,6 +110,8 @@ export function useDeploymentSelectorOverlay(): UseDeploymentSelectorOverlayResu
     (onClose: () => void): ReactNode => (
       <Suspense fallback={null}>
         <DeploymentSelectorOverlay
+          searchQuery={searchQuery}
+          onSearchQueryChange={setSearchQuery}
           favorites={favoriteCatalogItems}
           pinnedItem={pinnedCatalogItem}
           selectedId={selectedItemId}
@@ -116,6 +124,7 @@ export function useDeploymentSelectorOverlay(): UseDeploymentSelectorOverlayResu
       </Suspense>
     ),
     [
+      searchQuery,
       favoriteCatalogItems,
       pinnedCatalogItem,
       selectedItemId,
@@ -134,5 +143,5 @@ export function useDeploymentSelectorOverlay(): UseDeploymentSelectorOverlayResu
     </Suspense>
   );
 
-  return { renderOverlay, catalogModal };
+  return { onOpenChange, renderOverlay, catalogModal };
 }

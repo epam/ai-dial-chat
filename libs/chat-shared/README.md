@@ -44,7 +44,7 @@ Peers:
 
 - `react` ^19.2.8
 - `react-dom` ^19.2.8 (`NotificationStack` portals into `document.body`)
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.69
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.71
 - `@epam/ai-dial-react-file-manager` ^0.4.0-dev.25
 
 Installed for you as dependencies: `ag-grid-community`, `@tabler/icons-react`, `react-markdown`,
@@ -1710,3 +1710,7 @@ toConversationTransferQueueItems accepts readonly ConversationTransferJob entrie
 TransferQueueMessageResolvers. Only failed rows resolve errors; only warning rows resolve
 warnings with warningNames. IDs, file names and progress are preserved without mutation.
 This root export is separate from the file-manager toTransferQueueItems helper.
+
+## Surface-specific responsive queries
+
+The layout hook `useIsMobile` and `mobile`/`desktop` variants retain their 1279/1280px boundary. Use `useIsPhone` for menus (width below 768px) and `useIsTablet` for bounded right overlays (768px inclusive to 1280px exclusive). Both hooks subscribe to media-query changes and safely return false without a browser. `TABLET_BREAKPOINT_PX`, `PHONE_MEDIA_QUERY` and `TABLET_MEDIA_QUERY` are public exports. The matching Tailwind variants are `phone`, `tablet` and `tablet-up`; they do not change layout variants.

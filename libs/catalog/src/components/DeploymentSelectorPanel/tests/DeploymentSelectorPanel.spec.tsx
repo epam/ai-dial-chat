@@ -7,10 +7,10 @@ import type { CatalogItem } from '../../../models/catalog-item';
 import { DeploymentSelectorLayout } from '../../../types/deployment-selector-layout';
 import { DeploymentSelectorPanel } from '../DeploymentSelectorPanel';
 
-const breakpoint = vi.hoisted(() => ({ isMobile: false }));
+const breakpoint = vi.hoisted(() => ({ isPhone: false }));
 vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
-  useIsMobile: () => breakpoint.isMobile,
+  useIsPhone: () => breakpoint.isPhone,
 }));
 
 const makeItem = (id: string, type: CatalogEntityType): CatalogItem => ({
@@ -44,7 +44,7 @@ describe('DeploymentSelectorPanel', () => {
   });
 
   afterEach(() => {
-    breakpoint.isMobile = false;
+    breakpoint.isPhone = false;
     vi.useRealTimers();
   });
 
@@ -400,8 +400,8 @@ describe('DeploymentSelectorPanel', () => {
       expect(search.matches(':focus')).toBe(true);
     });
 
-    it('leaves focus alone on mobile, where the panel opens in a bottom sheet', () => {
-      breakpoint.isMobile = true;
+    it('leaves focus alone on phones, where the panel opens in a bottom sheet', () => {
+      breakpoint.isPhone = true;
 
       renderPanel([makeItem('gpt-4o', CatalogEntityType.Model)]);
 
@@ -410,6 +410,25 @@ describe('DeploymentSelectorPanel', () => {
       });
       expect(search.matches(':focus')).toBe(false);
     });
+  });
+
+  it('restores a host-controlled query and reports clearing it', async () => {
+    const user = userEvent.setup();
+    const onSearchQueryChange = vi.fn();
+    renderPanel(
+      [
+        makeItem('gpt-4o', CatalogEntityType.Model),
+        makeItem('claude', CatalogEntityType.Model),
+      ],
+      { searchQuery: 'gpt', onSearchQueryChange },
+    );
+
+    expect(screen.getByRole<HTMLInputElement>('textbox').value).toBe('gpt');
+    expect(screen.getByRole('menuitemradio', { name: /gpt.*4o/ })).toBeTruthy();
+    expect(screen.queryByRole('menuitemradio', { name: 'claude' })).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: 'Clear search' }));
+    expect(onSearchQueryChange).toHaveBeenCalledWith('');
   });
 
   describe('DeploymentSelectorPanel — extra options', () => {

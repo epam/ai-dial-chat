@@ -23,6 +23,8 @@ export interface AttachmentCanvasContainerProps {
   leftActions?: ReactNode;
   /** Whether the viewport is in mobile breakpoint — disables drag-to-resize. Defaults to `false`. */
   isMobile?: boolean;
+  /** Opt into the bounded inline-end overlay while keeping legacy layout defaults. */
+  isBoundedOverlay?: boolean;
   /** Initial panel width in pixels. When omitted, SidebarPanel uses its own default. */
   defaultWidth?: number;
   /** Minimum panel width in pixels (desktop resize). Defaults to the panel's own minimum (600). */
@@ -58,6 +60,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
       labels,
       leftActions,
       isMobile = false,
+      isBoundedOverlay = false,
       defaultWidth,
       minWidth,
       maxWidth,
@@ -205,6 +208,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
           }
           tableDownloadFilename={tableDownloadFilename}
           isMobile={isMobile}
+          isBoundedOverlay={isBoundedOverlay}
           defaultWidth={defaultWidth}
           minWidth={minWidth}
           maxWidth={maxWidth}
