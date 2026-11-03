@@ -392,6 +392,30 @@ describe('ListView — public class names', () => {
   });
 });
 
+describe('ListView — selected row frame', () => {
+  const renderListView = () =>
+    render(
+      <ListView
+        items={[makeItem({ id: 'item-1', name: 'Claude' })]}
+        query=""
+        type={CatalogEntityType.Model}
+        ariaLabel="Catalog"
+        selectedItemId="item-1"
+      />,
+    );
+
+  it('scopes the outline-only selected row styles to single mode', () => {
+    renderListView();
+
+    expect(
+      closestWithClass(
+        screen.getByRole('button', { name: 'star item-1' }),
+        CATALOG_CLASS.listView,
+      )?.className,
+    ).toMatch(/singleSelect/);
+  });
+});
+
 describe('ListView — scroll handle', () => {
   type BodyScrollListener = (event: {
     direction: 'vertical' | 'horizontal';

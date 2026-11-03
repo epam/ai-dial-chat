@@ -34,13 +34,13 @@ describe('FavoriteCard — selected state', () => {
     expect(card.querySelector(':scope > svg[aria-hidden]')).toBeNull();
   });
 
-  it('shows the selected border, tint, and checkmark when isSelected is true', () => {
+  it('marks a selected card with the selected border only, without a checkmark', () => {
     render(<FavoriteCard item={makeItem()} isSelected />);
 
     const card = screen.getByLabelText('Claude');
     expect(card.className).toContain('selectedCard');
     // eslint-disable-next-line testing-library/no-node-access
-    expect(card.querySelector(':scope > svg[aria-hidden]')).toBeTruthy();
+    expect(card.querySelector(':scope > svg[aria-hidden]')).toBeNull();
   });
 });
 

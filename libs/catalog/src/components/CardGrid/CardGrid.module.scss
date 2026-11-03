@@ -25,16 +25,21 @@
   background: var(--cg-skeleton-card-bg, var(--bg-layer-raised, #fcfcfc));
 }
 
+/*
+ * Outline-only selected state: no shadow, no tint, a 1.5px accent stroke.
+ * `CardShell` draws a 2px transparent border, so the half pixel the thinner
+ * stroke frees goes back into the padding (`p-3` on `Card`) and the content
+ * does not move when the card is selected.
+ */
 .selectedCard {
+  border-width: 1.5px;
   border-color: var(--cg-selected-border, var(--stroke-accent, #1d4ed8));
+  padding: calc(0.75rem + 0.5px);
   background-color: var(
     --cg-selected-bg,
-    var(--bg-control-accent-alpha-active, #2764d933)
+    var(--bg-layer-raised, #fcfcfc)
   ) !important;
-}
-
-.checkIcon {
-  color: var(--cg-check-icon, var(--text-accent, #1d4ed8));
+  box-shadow: none !important;
 }
 
 .footer {
