@@ -4,17 +4,20 @@ import {
   useOpenAttachmentCanvas,
 } from '@epam/ai-dial-attachment-canvas';
 import { TextRefinementPurpose } from '@epam/ai-dial-chat-api-client';
-import { getMimeTypesForExtensions } from '@epam/ai-dial-chat-hooks/project';
+import {
+  getMimeTypesForExtensions,
+  ProjectDraftMode,
+  useCreateProject,
+  useProjectDraft,
+  useProjectFilePreview,
+} from '@epam/ai-dial-chat-hooks/project';
 import { MIME_TYPE_EXT_MAP } from '@epam/ai-dial-chat-shared';
 import {
-  isStoredContextFile,
   ProjectCreateForm,
   type ProjectContextFile,
-  type ProjectCreateFormErrors,
-  type ProjectCreateFormValues,
 } from '@epam/ai-dial-projects';
 import { EditorThemes } from '@epam/ai-dial-ui-kit';
-import { memo, useCallback, useMemo, useState, type FC } from 'react';
+import { memo, useCallback, useMemo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import ProjectFileManagerModal from '../../components/ProjectFileManagerModal/ProjectFileManagerModal';
@@ -26,7 +29,7 @@ import { useUser } from '../../context/auth/UserContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useAttachmentCanvasResolvers } from '../../hooks/attachment/useAttachmentCanvasResolvers';
-import { useCreateProject } from '../../hooks/projects/useCreateProject';
+import { projectsClient } from '../../hooks/projects/projects-client';
 import { useProjectCreateFormLabels } from '../../hooks/projects/useProjectCreateFormLabels';
 import { useProjectFileManagerPicker } from '../../hooks/projects/useProjectFileManagerPicker';
 import { useBuilderLeaveGuard } from '../../hooks/unsaved-changes/useBuilderLeaveGuard';
@@ -35,17 +38,8 @@ import { ROUTES } from '../../types/routes';
 import { ThemeId } from '../../types/theme-id';
 import { UserConfigStatus } from '../../types/user-config-status';
 import { mapProjectCreateError } from '../../utils/project-create-errors';
-import {
-  fromProjectPreviewKey,
-  toProjectContextFileAttachment,
-  toProjectPreviewKey,
-} from '../../utils/project-file-preview';
+import { toProjectContextFileAttachment } from '../../utils/project-file-preview';
 import NotFoundPage from '../NotFound/NotFound';
-
-const DEFAULT_VALUES: ProjectCreateFormValues = {
-  name: '',
-  instructions: '',
-};
 
 /* Canvas key scope: the project has no id until it is created. */
 const PREVIEW_SCOPE = 'new';
@@ -68,15 +62,20 @@ const ProjectCreatePage: FC = () => {
     projectContextTotalMaxBytes: maxTotalBytes,
   } = config;
 
-  const [values, setValues] = useState<ProjectCreateFormValues>(DEFAULT_VALUES);
-  const [contextFiles, setContextFiles] = useState<ProjectContextFile[]>([]);
-  const [errors, setErrors] = useState<ProjectCreateFormErrors>({});
+  const {
+    values,
+    contextFiles,
+    errors,
+    setErrors,
+    onFieldChange: handleFieldChange,
+    onContextFilesChange,
+    isDirty,
+    newFiles,
+  } = useProjectDraft({ mode: ProjectDraftMode.Create });
 
   /* The page owns the unsaved-changes guard, as `ScheduledTaskCreatePage`
    * does: in-app navigation asks for confirmation and `beforeunload` is armed
    * while anything was entered. */
-  const isDirty =
-    values.name !== '' || values.instructions !== '' || contextFiles.length > 0;
   const { allowNextNavigation } = useBuilderLeaveGuard({ isDirty });
 
   /* Opens a context file in the canvas the way the conversation opens an attachment. */
@@ -84,36 +83,27 @@ const ProjectCreatePage: FC = () => {
   const { resolvers, options } = useAttachmentCanvasResolvers();
   const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
   const startCanvasRequest = useLatestCanvasRequest();
-  const selectedContextFileId = fromProjectPreviewKey(
-    PREVIEW_SCOPE,
-    attachmentId,
-  );
-  const handleContextFileClick = useCallback(
+  const resolveContextAttachment = useCallback(
     (id: string) => {
-      /* The open file's card closes the canvas, as its pressed state says. */
-      if (id === selectedContextFileId) {
-        closeCanvas();
-        return;
-      }
       const file = contextFiles.find((item) => item.id === id);
-      const attachment = file && toProjectContextFileAttachment(file, null);
-      if (!attachment) return;
-      void openAttachmentCanvas(
-        attachment,
-        toProjectPreviewKey(PREVIEW_SCOPE, id),
-        startCanvasRequest(),
-      );
+      return file && toProjectContextFileAttachment(file, null);
     },
-    [
-      closeCanvas,
-      contextFiles,
-      openAttachmentCanvas,
-      selectedContextFileId,
-      startCanvasRequest,
-    ],
+    [contextFiles],
   );
+  const {
+    selectedContextFileId,
+    onContextFileClick: handleContextFileClick,
+    closeIfRemoved,
+  } = useProjectFilePreview({
+    scope: PREVIEW_SCOPE,
+    attachmentId,
+    openAttachment: openAttachmentCanvas,
+    closeCanvas,
+    startRequest: startCanvasRequest,
+    resolveContextAttachment,
+  });
 
-  const { create, isSubmitting } = useCreateProject();
+  const { create, isSubmitting } = useCreateProject(projectsClient);
   const picker = useProjectFileManagerPicker(user?.bucket);
   const labels = useProjectCreateFormLabels({
     allowedExtensions,
@@ -127,34 +117,12 @@ const ProjectCreatePage: FC = () => {
   const markdownEditorTheme: EditorThemes =
     currentTheme === ThemeId.Dark ? EditorThemes.dark : EditorThemes.light;
 
-  const handleFieldChange = useCallback(
-    <K extends keyof ProjectCreateFormValues>(
-      field: K,
-      value: ProjectCreateFormValues[K],
-    ) => {
-      setValues((prev) => ({ ...prev, [field]: value }));
-      if (field === 'name') {
-        setErrors((prev) => (prev.name ? { ...prev, name: undefined } : prev));
-      }
-    },
-    [],
-  );
-
   const handleContextFilesChange = useCallback(
     (files: ProjectContextFile[]) => {
-      setContextFiles(files);
-      setErrors((prev) =>
-        prev.context ? { ...prev, context: undefined } : prev,
-      );
-      /* Removing the file the canvas shows closes it. */
-      if (
-        selectedContextFileId != null &&
-        !files.some((file) => file.id === selectedContextFileId)
-      ) {
-        closeCanvas();
-      }
+      onContextFilesChange(files);
+      closeIfRemoved(files);
     },
-    [closeCanvas, selectedContextFileId],
+    [closeIfRemoved, onContextFilesChange],
   );
 
   const handleLeave = useCallback(() => {
@@ -163,13 +131,7 @@ const ProjectCreatePage: FC = () => {
 
   const handleSubmit = useCallback(async () => {
     const name = values.name.trim();
-    const outcome = await create(
-      { ...values, name },
-      /* A new project has no stored files; the guard narrows the union. */
-      contextFiles.flatMap((file) =>
-        isStoredContextFile(file) ? [] : [file.file],
-      ),
-    );
+    const outcome = await create({ ...values, name }, newFiles);
 
     if (outcome.isCreated) {
       showSuccessNotification({
@@ -189,8 +151,9 @@ const ProjectCreatePage: FC = () => {
     showErrorNotification({ message: t(ProjectsI18nKeys.CreateToastError) });
   }, [
     values,
-    contextFiles,
+    newFiles,
     create,
+    setErrors,
     showSuccessNotification,
     showErrorNotification,
     allowNextNavigation,

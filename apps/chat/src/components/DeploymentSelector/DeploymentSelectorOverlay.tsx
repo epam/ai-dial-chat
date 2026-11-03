@@ -1,17 +1,16 @@
-import type { CatalogItem } from '@epam/ai-dial-catalog';
-import { lazy, memo, Suspense, type FC } from 'react';
+import {
+  DeploymentSelectorPanel,
+  type CatalogItem,
+  type DeploymentSelectorExtraOption,
+  type DeploymentSelectorPanelLabels,
+} from '@epam/ai-dial-catalog';
+import { memo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   BasicI18nKeys,
   DeploymentSelectorI18nKeys,
   FavoritesI18nKeys,
 } from '../../constants/translation-keys';
-import type {
-  DeploymentSelectorExtraOption,
-  DeploymentSelectorLabels,
-} from './DeploymentSelectorPanel';
-
-const DeploymentSelectorPanel = lazy(() => import('./DeploymentSelectorPanel'));
 
 interface Props {
   favorites: CatalogItem[];
@@ -41,7 +40,7 @@ const DeploymentSelectorOverlay: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
 
-  const labels: DeploymentSelectorLabels = {
+  const labels: DeploymentSelectorPanelLabels = {
     searchPlaceholder: t(DeploymentSelectorI18nKeys.SearchPlaceholder),
     clearSearchLabel: t(BasicI18nKeys.ClearSearch),
     favoritesLabel: t(FavoritesI18nKeys.FavoritesLabel),
@@ -57,21 +56,19 @@ const DeploymentSelectorOverlay: FC<Props> = ({
   };
 
   return (
-    <Suspense fallback={null}>
-      <DeploymentSelectorPanel
-        favorites={favorites}
-        extraOptions={extraOptions}
-        pinnedItem={pinnedItem}
-        selectedId={selectedId}
-        selectedItem={selectedItem}
-        onSelect={onSelect}
-        onToggleFavorite={onToggleFavorite}
-        onBrowseCatalog={onBrowseCatalog}
-        onClose={onClose}
-        labels={labels}
-        className={panelClassName}
-      />
-    </Suspense>
+    <DeploymentSelectorPanel
+      favorites={favorites}
+      extraOptions={extraOptions}
+      pinnedItem={pinnedItem}
+      selectedId={selectedId}
+      selectedItem={selectedItem}
+      onSelect={onSelect}
+      onToggleFavorite={onToggleFavorite}
+      onBrowseCatalog={onBrowseCatalog}
+      onClose={onClose}
+      labels={labels}
+      className={panelClassName}
+    />
   );
 };
 

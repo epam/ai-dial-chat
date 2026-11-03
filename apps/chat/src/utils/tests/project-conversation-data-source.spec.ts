@@ -1,5 +1,5 @@
-import { createChatStreamApi } from '@epam/ai-dial-chat-hooks';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ProjectsI18nKeys } from '../../constants/translation-keys';
 import {
   attachToProjectGeneration,
   deleteProjectConversation,
@@ -8,15 +8,7 @@ import {
   saveProjectConversation,
 } from '../../server-api/project-conversations.api';
 import { createProjectConversationDataSource } from '../project-conversation-data-source';
-import { NO_CONVERSATION_LIST_SYNC } from '../regular-conversation-data-source';
 
-vi.mock('@epam/ai-dial-chat-hooks', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@epam/ai-dial-chat-hooks')>()),
-  createChatStreamApi: vi.fn(() => ({
-    streamCompletion: vi.fn(),
-    stopCompletion: vi.fn(),
-  })),
-}));
 vi.mock('../../server-api/project-conversations.api', () => ({
   attachToProjectGeneration: vi.fn(),
   deleteProjectConversation: vi.fn(),
@@ -32,45 +24,43 @@ const PATH = 'a1b2c3/q4/conversations/gpt-4o__Hi__1';
 const create = (canEdit = true) =>
   createProjectConversationDataSource({ projectId: PROJECT_ID, canEdit });
 
+/* The behaviour of the source is covered where it lives, in `chat-hooks`; this checks the app's bindings. */
 describe('createProjectConversationDataSource', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   afterEach(() => {
-    vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
-  it('streams through the project base path', () => {
-    create();
+  it('streams through the project base path with the app session', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(null, { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
 
-    expect(createChatStreamApi).toHaveBeenCalledWith(
-      expect.objectContaining({
-        completionsBasePath: `/api/v1/projects/${encodeURIComponent(PROJECT_ID)}/conversations`,
-      }),
+    await create().transport.stopCompletion({ generationId: 'g1', path: PATH });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `/api/v1/projects/${encodeURIComponent(PROJECT_ID)}/conversations/completions/stop`,
+      expect.objectContaining({ method: 'POST', credentials: 'include' }),
     );
   });
 
-  it('maps stream paths back to the conversation id on save and delete', async () => {
+  it('reads, saves, deletes and attaches through the project requests', async () => {
     const source = create();
     const body = { id: ID } as never;
-
-    await source.saveConversation(PATH, body);
-    await source.handlersApi.saveConversation({
-      path: PATH,
-      saveConversationBodyDto: { conversation: body },
-    });
-    await source.handlersApi.deleteConversation({ path: PATH });
-
-    expect(saveProjectConversation).toHaveBeenNthCalledWith(1, ID, body);
-    expect(saveProjectConversation).toHaveBeenNthCalledWith(2, ID, body);
-    expect(deleteProjectConversation).toHaveBeenCalledWith(ID);
-  });
-
-  it('attaches through the project endpoint', async () => {
     const signal = new AbortController().signal;
-    await create().transport.attachToGeneration(PATH, signal);
 
+    await source.getConversation(ID, signal);
+    await source.saveConversation(PATH, body);
+    await source.handlersApi.deleteConversation({ path: PATH });
+    await source.transport.attachToGeneration(PATH, signal);
+
+    expect(getProjectConversation).toHaveBeenCalledWith(ID, signal);
+    expect(saveProjectConversation).toHaveBeenCalledWith(ID, body);
+    expect(deleteProjectConversation).toHaveBeenCalledWith(ID);
     expect(attachToProjectGeneration).toHaveBeenCalledWith(
       PROJECT_ID,
       PATH,
@@ -78,107 +68,23 @@ describe('createProjectConversationDataSource', () => {
     );
   });
 
-  it('passes the completion stream through unchanged', () => {
-    const source = create();
-    const api = vi.mocked(createChatStreamApi).mock.results[0].value;
-
-    expect(source.transport.streamCompletion).toBe(api.streamCompletion);
-  });
-
-  it('polls the conversation watch with update events until aborted', async () => {
-    vi.useFakeTimers();
-    const controller = new AbortController();
-    const stream = await create().transport.watchConversation(
-      PATH,
-      controller.signal,
-    );
-    const reader = stream.getReader();
-
-    const first = reader.read();
-    await vi.advanceTimersByTimeAsync(5_000);
-    const { value } = await first;
-    expect(new TextDecoder().decode(value)).toBe(
-      'data: {"action":"UPDATE"}\n\n',
-    );
-
-    const second = reader.read();
-    controller.abort();
-    expect((await second).done).toBe(true);
-  });
-
-  it('routes inside the project and never syncs the sidebar or duplicates', () => {
+  it('routes inside the project and names the project not-found message', () => {
     const source = create(false);
 
     expect(source.getConversationRoute(ID)).toBe(
       '/projects/chat/a1b2c3/q4/conversations/gpt-4o__Hi__1',
     );
     expect(source.getExitRoute()).toBe('/projects/view/a1b2c3/q4');
+    expect(source.notFoundMessageKey).toBe(ProjectsI18nKeys.ChatNotFound);
     expect(source.isReadOnly(ID)).toBe(true);
     expect(create(true).isReadOnly(ID)).toBe(false);
-    expect(source.listSync).toMatchObject({
-      updateTitle: NO_CONVERSATION_LIST_SYNC.updateTitle,
-      bumpActivity: NO_CONVERSATION_LIST_SYNC.bumpActivity,
-      remove: NO_CONVERSATION_LIST_SYNC.remove,
-      refresh: NO_CONVERSATION_LIST_SYNC.refresh,
-      shouldMarkOpenChatViewed: true,
-    });
-    expect(source.canDuplicate).toBe(false);
   });
 
-  it('marks the open chat viewed through the shared queue and drops a waiting mark when a generation starts', async () => {
-    let releaseFirst!: () => void;
-    vi.mocked(markProjectConversationViewed)
-      .mockReturnValueOnce(
-        new Promise<void>((resolve) => {
-          releaseFirst = resolve;
-        }),
-      )
-      .mockResolvedValue(undefined);
-    const { listSync } = create();
-    const other = 'projects/a1b2c3/q4/conversations/gpt-4o__Other__2';
+  it('marks the open chat viewed through the project requests', async () => {
+    vi.mocked(markProjectConversationViewed).mockResolvedValue(undefined);
 
-    const first = listSync.markViewed(other);
-    const second = listSync.markViewed(ID);
-    listSync.markUnread(ID);
-    releaseFirst();
-    await Promise.all([first, second]);
+    await create().listSync.markViewed(ID);
 
-    expect(vi.mocked(markProjectConversationViewed).mock.calls).toEqual([
-      [other],
-    ]);
-  });
-
-  it('re-reads the conversation until its title changes', async () => {
-    vi.useFakeTimers();
-    vi.mocked(getProjectConversation)
-      .mockResolvedValueOnce({ name: 'Hi' } as never)
-      .mockResolvedValueOnce({ name: 'Greeting' } as never);
-    const onUpdated = vi.fn();
-
-    create().watchTitle(ID, 'Hi', onUpdated);
-    await vi.advanceTimersByTimeAsync(2_000);
-    expect(onUpdated).not.toHaveBeenCalled();
-    await vi.advanceTimersByTimeAsync(2_000);
-
-    expect(onUpdated).toHaveBeenCalledWith('Greeting');
-    await vi.advanceTimersByTimeAsync(10_000);
-    expect(getProjectConversation).toHaveBeenCalledTimes(2);
-  });
-
-  it('stops re-reading after the cleanup or five attempts', async () => {
-    vi.useFakeTimers();
-    vi.mocked(getProjectConversation).mockResolvedValue({
-      name: 'Hi',
-    } as never);
-
-    create().watchTitle(ID, 'Hi', vi.fn());
-    await vi.advanceTimersByTimeAsync(20_000);
-    expect(getProjectConversation).toHaveBeenCalledTimes(5);
-
-    vi.mocked(getProjectConversation).mockClear();
-    const cleanup = create().watchTitle(ID, 'Hi', vi.fn());
-    cleanup();
-    await vi.advanceTimersByTimeAsync(20_000);
-    expect(getProjectConversation).not.toHaveBeenCalled();
+    expect(markProjectConversationViewed).toHaveBeenCalledWith(ID);
   });
 });

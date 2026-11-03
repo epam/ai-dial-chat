@@ -34,7 +34,7 @@ The app and lib side of project chats: `ConversationPage` reading through `Conve
 
 The provider supplies it at `AppRoot` level, so `/conversations/*` and `/` behave exactly as before. `useConversationDataSource` returns the nearest provided value, or the regular one when no provider overrides it (it needs `ConversationsContext`, so it fails outside `ConversationsProvider`), which keeps a bare `<ConversationPage />` working as before.
 
-**Project value.** `createProjectConversationDataSource({ projectId, canEdit })` (`apps/chat/src/utils/project-conversation-data-source.ts`) uses:
+**Project value.** `createProjectConversationDataSource({ projectId, canEdit })` (`apps/chat/src/utils/project-conversation-data-source.ts`, which binds the shared factory of the same name in `@epam/ai-dial-chat-hooks/project` to the app's project requests, CSRF store, routes and viewed-mark queue) uses:
 
 - `createChatStreamApi({ completionsBasePath: '/api/v1/projects/{encodeURIComponent(projectId)}/conversations' })`, plus `getProjectConversation` for the transport;
 - `server-api/project-conversations.api.ts` for get, save and delete;
@@ -171,7 +171,7 @@ The component's stylesheet ships in the lib's existing `./styles.css` export, an
 
 ### Requirement: The project view's main column holds the chat input and the Chats list
 
-`ProjectViewPage` (`apps/chat/src/pages/ProjectViewPage/ProjectViewPage.tsx`) SHALL own the Chats list state through `useProjectConversations(projectId)` (`apps/chat/src/hooks/projects/useProjectConversations.ts`, the adapter of `libs/chat-hooks/src/project/use-project-conversations.ts`). It passes that state to `ProjectConversationsSection` (`apps/chat/src/components/ProjectConversationsSection/ProjectConversationsSection.tsx`) as the new `conversations` prop, together with an optional `outputs` node (the page's `ProjectOutputs`, see the `project-view-ui` capability), and passes the section to `ProjectView` as `mainContent`. The page owns the state so the project watch can refresh it (see the `project-view-live-updates` capability).
+`ProjectViewPage` (`apps/chat/src/pages/ProjectViewPage/ProjectViewPage.tsx`) SHALL own the Chats list state through `useProjectConversations(projectsClient, projectId)` (`libs/chat-hooks/src/project/use-project-conversations.ts`, exported from `@epam/ai-dial-chat-hooks/project`, called directly with the app's `projectsClient` from `apps/chat/src/hooks/projects/projects-client.ts`). It passes that state to `ProjectConversationsSection` (`apps/chat/src/components/ProjectConversationsSection/ProjectConversationsSection.tsx`) as the new `conversations` prop, together with an optional `outputs` node (the page's `ProjectOutputs`, see the `project-view-ui` capability), and passes the section to `ProjectView` as `mainContent`. The page owns the state so the project watch can refresh it (see the `project-view-live-updates` capability).
 
 The section renders:
 

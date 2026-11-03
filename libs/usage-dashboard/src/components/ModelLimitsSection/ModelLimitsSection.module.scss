@@ -83,3 +83,14 @@
 .neutralStatus {
   color: var(--mls-badge-neutral-text, var(--text-secondary, #57647a));
 }
+
+/*
+ * The kit's auto-height grid sets `min-height: 0` on its body, so with no rows
+ * ag-grid's overlay — the grid below its header — has no height and centres
+ * the empty state over the column titles (Issue #9695). Reserve the empty
+ * state's height (97px illustration + title, with 32px above and below).
+ * The doubled class outranks the kit's three-class rule.
+ */
+.emptyGrid.emptyGrid :global(.ag-layout-auto-height .ag-center-cols-viewport) {
+  min-height: 216px;
+}

@@ -241,6 +241,13 @@ export interface UseSkillSelectorOverlayResult {
     skills: RequestSkill[] | undefined,
   ) => void;
   /**
+   * Seeds the draft with a single `/{name} ` mention of `url`, naming it from
+   * the listing pools or, when no pool lists it, the url's last non-empty
+   * segment. For a one-shot selection that carries only a url, such as a
+   * catalog "Use in chat" action or a deep link.
+   */
+  selectSkillByUrl: (url: string) => void;
+  /**
    * Marks `text` as about to be inserted into the composer (e.g. a picked
    * prompt): once the insertion reaches `onDraftChange`, every `/{name}` run
    * in it that names a listed skill becomes a tracked mention. Call right

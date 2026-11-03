@@ -1,7 +1,6 @@
-import { FavoriteEntityType, findSkillByUrl } from '@epam/ai-dial-chat-hooks';
+import { FavoriteEntityType } from '@epam/ai-dial-chat-hooks';
 import { CatalogEntityType, useIsMobile } from '@epam/ai-dial-chat-shared';
 import {
-  getSkillFallbackName,
   useSkillSelectorOverlay as useHostAgnosticSkillSelectorOverlay,
   type SkillSelectorOverlayLabels,
   type UseSkillSelectorOverlayResult,
@@ -44,19 +43,6 @@ const renderCatalogContent = (
   />
 );
 
-/** {@link UseSkillSelectorOverlayResult} plus an app-level convenience for the route-driven one-shot skill selection (the catalog's "Use in chat" action), which only has a URL and no caret position to work from. */
-export interface AppSkillSelectorOverlayResult extends UseSkillSelectorOverlayResult {
-  /**
-   * Seeds the composer's draft with a single mention for `url`, resolving its
-   * display name from the loaded skill listings (falling back to the url's
-   * last segment). For a one-shot selection that has no caret position and no
-   * `SkillListingEntry` in hand — e.g. a catalog "Use in chat" action or a
-   * route-state deep link — unlike `insertMention`-backed flows, which always
-   * have both.
-   */
-  selectSkillByUrl: (url: string) => void;
-}
-
 /**
  * Host wiring for the lib's skill selector overlay hook: the deployment's
  * skills support signal, the skills and favorites contexts, i18n labels, the
@@ -67,7 +53,7 @@ export const useSkillSelectorOverlay = ({
 }: {
   /** Whether the input's current deployment supports skills (`features.skillsSupported === true`). */
   isSkillsSupported: boolean;
-}): AppSkillSelectorOverlayResult => {
+}): UseSkillSelectorOverlayResult => {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   const { user } = useUser();
@@ -117,7 +103,7 @@ export const useSkillSelectorOverlay = ({
     ? 'dial-small-paragraph-text'
     : 'dial-body-text';
 
-  const overlay = useHostAgnosticSkillSelectorOverlay({
+  return useHostAgnosticSkillSelectorOverlay({
     isSkillsSupported,
     skills,
     sharedWithMe,
@@ -134,23 +120,4 @@ export const useSkillSelectorOverlay = ({
     renderCatalogContent,
     detailsPanelComponent: SkillDetailsPanelContainer,
   });
-
-  const { seedSkillMentions } = overlay;
-
-  /*
-   * Name resolution mirrors the lib hook's own internal `skillByUrl` lookup —
-   * the lib does not export it, so URL-only call sites (this one and the URL
-   * preselection) share `findSkillByUrl` from `@epam/ai-dial-chat-hooks` instead.
-   */
-  const selectSkillByUrl = useCallback(
-    (url: string) => {
-      const name =
-        findSkillByUrl({ skills, sharedWithMe, publicSkills }, url)?.name ??
-        getSkillFallbackName(url);
-      seedSkillMentions(`/${name} `, [{ url }]);
-    },
-    [skills, sharedWithMe, publicSkills, seedSkillMentions],
-  );
-
-  return { ...overlay, selectSkillByUrl };
 };
