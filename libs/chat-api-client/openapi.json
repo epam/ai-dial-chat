@@ -14149,6 +14149,11 @@
               "type": "string"
             }
           },
+          "resource": {
+            "type": "string",
+            "description": "RFC 8707 resource indicator DIAL Core sends on the token exchange; the client puts the same value on the authorization URL.",
+            "example": "https://mcp.example.com/mcp"
+          },
           "globalAuthStatus": {
             "type": "string",
             "example": "SIGNED_OUT",
@@ -14343,6 +14348,12 @@
           "codeChallenge": {
             "type": "string",
             "example": "abc123"
+          },
+          "resource": {
+            "type": "string",
+            "example": "https://mcp.example.com/mcp",
+            "maxLength": 2048,
+            "description": "OAUTH with a static client: the RFC 8707 resource indicator DIAL Core sends on the token exchange. Omitted keeps the stored value, an empty string clears it. DIAL Core rejects it for a dynamically registered client."
           }
         },
         "required": ["authenticationType"]
@@ -15080,6 +15091,11 @@
             "type": "string",
             "example": "S256"
           },
+          "resource": {
+            "type": "string",
+            "description": "RFC 8707 resource indicator DIAL Core sends on the token exchange; the client puts the same value on the authorization URL.",
+            "example": "https://mcp.example.com/mcp"
+          },
           "id": {
             "type": "string",
             "description": "External-service identifier within the application",
@@ -15141,6 +15157,11 @@
           "codeChallengeMethod": {
             "type": "string",
             "example": "S256"
+          },
+          "resource": {
+            "type": "string",
+            "description": "RFC 8707 resource indicator DIAL Core sends on the token exchange; the client puts the same value on the authorization URL.",
+            "example": "https://mcp.example.com/mcp"
           }
         },
         "required": ["displayName", "authenticationType"]
@@ -15240,6 +15261,12 @@
             "items": {
               "type": "string"
             }
+          },
+          "resource": {
+            "type": "string",
+            "description": "OAUTH: the RFC 8707 resource indicator DIAL Core sends on the token exchange. An empty string clears it. The PUT replaces the whole service, so leaving it out erases a stored value — resend it when editing a service.",
+            "example": "https://mcp.example.com/mcp",
+            "maxLength": 2048
           }
         },
         "required": ["authenticationType"]

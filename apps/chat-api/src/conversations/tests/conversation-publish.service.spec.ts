@@ -1,5 +1,6 @@
 import {
   BadGatewayException,
+  ConflictException,
   ForbiddenException,
   UnprocessableEntityException,
 } from '@nestjs/common';
@@ -13,10 +14,14 @@ import {
 import { ConversationErrorCode } from '../types/conversation-error-code.enum';
 
 const okResponse = (data: unknown) =>
-  ({ data, response: {} as Response }) as never;
+  ({ data, response: { ok: true, status: 200 } as Response }) as never;
 
 const errResponse = (status: number) =>
-  ({ error: {}, response: { status } as Response }) as never;
+  ({ error: {}, response: { ok: false, status } as Response }) as never;
+
+// `openapi-fetch` leaves `error` undefined when the error body is empty.
+const emptyErrResponse = (status: number) =>
+  ({ response: { ok: false, status } as Response }) as never;
 
 const makeCacheManager = () => ({
   get: vi.fn(),
@@ -371,6 +376,26 @@ describe('ConversationPublishService', () => {
           'Test User',
         ),
       ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
+    it('maps a Core 409 with an empty body on createPublication to ConflictException', async () => {
+      const { service, dialClient } = makeService();
+      vi.spyOn(dialClient.client, 'getConversation').mockResolvedValue(
+        okResponse({ name: 'Q3 planning notes' }),
+      );
+      vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+        emptyErrResponse(409),
+      );
+
+      await expect(
+        service.publish(
+          'token-abc',
+          'bucket-123',
+          'my-conversation-abc',
+          'Organization/Production',
+          'Test User',
+        ),
+      ).rejects.toBeInstanceOf(ConflictException);
     });
 
     it('maps an unexpected thrown error on createPublication to BadGatewayException', async () => {

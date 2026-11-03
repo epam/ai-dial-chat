@@ -162,7 +162,11 @@ const ToolsetApplicationEditor: FC = () => {
         return null;
       }
       try {
-        const body = formToToolsetBody(form, getToolsetRedirectUri());
+        const body = formToToolsetBody(
+          form,
+          getToolsetRedirectUri(),
+          Boolean(toolsetId),
+        );
         if (toolsetId) {
           const result = await updateToolset(toolsetId, body);
           return result.id;
@@ -328,6 +332,7 @@ const ToolsetApplicationEditor: FC = () => {
           ToolsetEditorI18nKeys.AuthorizationEndpointRequired,
         ),
         tokenEndpointRequired: t(ToolsetEditorI18nKeys.TokenEndpointRequired),
+        resourceInvalid: t(ToolsetEditorI18nKeys.ResourceInvalid),
       },
       general: {
         form: metadataFormLabels,
@@ -390,6 +395,8 @@ const ToolsetApplicationEditor: FC = () => {
           ),
           scopesLabel: t(ToolsetEditorI18nKeys.ScopesLabel),
           scopesPlaceholder: t(ToolsetEditorI18nKeys.ScopesPlaceholder),
+          resourceLabel: t(ToolsetEditorI18nKeys.ResourceLabel),
+          resourcePlaceholder: t(ToolsetEditorI18nKeys.ResourcePlaceholder),
           logInLabel: t(ButtonsI18nKeys.LogIn),
           logOutLabel: t(ButtonsI18nKeys.LogOut),
           cancelLabel: t(ButtonsI18nKeys.Cancel),

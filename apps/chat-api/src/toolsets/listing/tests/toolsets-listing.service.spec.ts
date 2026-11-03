@@ -777,6 +777,50 @@ describe('ToolsetsListingService', () => {
       expect(result.authSettings?.clientSecretHint).toBeUndefined();
     });
 
+    it('returns the stored OAuth resource, and none when DIAL Core has none', async () => {
+      const { service } = makeService();
+      const id = 'toolsets/bucket/resource-toolset';
+      const customSpy = vi
+        .spyOn(service['dialClient'].client, 'getCustomToolSet')
+        .mockResolvedValueOnce(
+          okResponse({
+            display_name: 'Resource toolset',
+            auth_settings: {
+              authentication_type: 'OAUTH',
+              client_id: 'client-id',
+              resource: 'https://mcp.example.com/mcp',
+            },
+          }),
+        );
+      vi.spyOn(service['dialClient'].client, 'getToolset').mockResolvedValue(
+        okResponse({ id, toolset: id, object: 'toolset' }),
+      );
+
+      const withResource = await service.getToolset(
+        'user1',
+        'token',
+        'bucket',
+        id,
+      );
+      expect(withResource.authSettings?.resource).toBe(
+        'https://mcp.example.com/mcp',
+      );
+
+      customSpy.mockResolvedValueOnce(
+        okResponse({
+          display_name: 'Resource toolset',
+          auth_settings: { authentication_type: 'OAUTH', client_id: 'c' },
+        }),
+      );
+      const withoutResource = await service.getToolset(
+        'user2',
+        'token',
+        'bucket',
+        id,
+      );
+      expect(withoutResource.authSettings?.resource).toBeUndefined();
+    });
+
     it('loads a saved API key header from the custom resource', async () => {
       const { service } = makeService();
       const id = 'toolsets/bucket/api-toolset';

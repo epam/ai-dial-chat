@@ -53,23 +53,25 @@ vi.mock('@epam/ai-dial-ui-kit', async () => ({
   ),
 }));
 
+const { runListProps } = vi.hoisted(() => ({ runListProps: vi.fn() }));
+
 vi.mock(
   '../../ScheduledTaskRunHistoryList/ScheduledTaskRunHistoryList',
   () => ({
-    ScheduledTaskRunHistoryList: ({
-      items,
-      footer,
-    }: {
+    ScheduledTaskRunHistoryList: (props: {
       items: ScheduledTaskRunItem[];
       footer?: ReactNode;
-    }) => (
-      <ul>
-        {items.map((item) => (
-          <li key={item.id}>{item.timestampLabel}</li>
-        ))}
-        {footer}
-      </ul>
-    ),
+    }) => {
+      runListProps(props);
+      return (
+        <ul>
+          {props.items.map((item) => (
+            <li key={item.id}>{item.timestampLabel}</li>
+          ))}
+          {props.footer}
+        </ul>
+      );
+    },
   }),
 );
 
@@ -110,6 +112,22 @@ describe('ScheduledTaskConversationHistorySection', () => {
     const historyButton = screen.getByRole('button', { name: 'History' });
     expect(historyButton.getAttribute('aria-expanded')).toBe('true');
     expect(screen.getByText('today at 9:01 AM (99s)')).toBeTruthy();
+  });
+
+  it('forwards the open-conversation label to the run list', () => {
+    render(
+      <ScheduledTaskConversationHistorySection
+        scheduleId="schedule-1"
+        items={runs}
+        labels={{ ...labels, openConversationLabel: 'Open chat' }}
+      />,
+    );
+
+    expect(runListProps).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        labels: expect.objectContaining({ openConversationLabel: 'Open chat' }),
+      }),
+    );
   });
 
   it('resets to expanded when the schedule changes while collapsed', async () => {

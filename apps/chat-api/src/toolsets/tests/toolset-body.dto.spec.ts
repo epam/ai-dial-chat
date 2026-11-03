@@ -155,6 +155,34 @@ describe('ToolsetBodyDto — authSettings', () => {
   });
 });
 
+describe('ToolsetBodyDto — OAuth resource', () => {
+  const withResource = (resource: unknown) => ({
+    ...BASE_BODY,
+    authSettings: {
+      authenticationType: ToolsetAuthType.OAuth,
+      clientId: 'client-id',
+      resource,
+    },
+  });
+
+  it.each(['https://mcp.example.com/mcp', ''])(
+    'accepts resource %j',
+    async (resource) => {
+      expect(await validateDto(withResource(resource))).toHaveLength(0);
+    },
+  );
+
+  it.each([
+    'mcp.example.com/mcp',
+    'https://mcp.example.com/mcp#tools',
+    'https://mcp.example.com/ mcp',
+    `https://mcp.example.com/${'a'.repeat(2048)}`,
+  ])('rejects resource %j', async (resource) => {
+    const errors = await validateDto(withResource(resource));
+    expect(errors.some((e) => e.property === 'authSettings')).toBe(true);
+  });
+});
+
 describe('ToolsetBodyDto — name and description length', () => {
   it('accepts a 256-character name', async () => {
     const errors = await validateDto({ ...BASE_BODY, name: 'a'.repeat(256) });

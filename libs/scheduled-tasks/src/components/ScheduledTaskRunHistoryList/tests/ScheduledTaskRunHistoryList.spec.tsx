@@ -1,7 +1,6 @@
 import { DIAL_ICON_SIZE, DIAL_KIT_ICON_STROKE } from '@epam/ai-dial-ui-kit';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { ScheduledTaskRunHistoryListLabels } from '../../../models/scheduled-task-run-history-list-props';
 import type { ScheduledTaskRunItem } from '../../../models/scheduled-task-run-item';
@@ -63,23 +62,17 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     label: string;
     onClick?: () => void;
   }) => <button onClick={onClick}>{label}</button>,
-  Tooltip: ({
-    tooltip,
-    children,
-  }: {
-    tooltip: string;
-    children: ReactNode;
-  }) => (
-    <>
-      {children}
-      <span role="tooltip">{tooltip}</span>
-    </>
+  LinkButton: ({ label, onClick }: { label: string; onClick?: () => void }) => (
+    <button onClick={onClick}>{label}</button>
   ),
 }));
 
 vi.mock('@tabler/icons-react', () => ({
   IconCheck: (props: Record<string, unknown>) => (
     <svg data-icon="success" {...props} />
+  ),
+  IconChevronDown: (props: Record<string, unknown>) => (
+    <svg data-icon="chevron" {...props} />
   ),
   IconCircleX: (props: Record<string, unknown>) => (
     <svg data-icon="error" {...props} />
@@ -346,10 +339,16 @@ describe('ScheduledTaskRunHistoryList', () => {
     expect(screen.getByRole('listitem', { name: /Unread$/ })).toBeTruthy();
   });
 
-  describe('ScheduledTaskRunHistoryList — error details', () => {
+  describe('ScheduledTaskRunHistoryList — expandable failed runs', () => {
     const errorText = 'target request failed with status 502';
+    const failedRowName = 'Failed today at 9:01 AM (99s)';
+    const conversationId = 'conversations/bucket/.scheduler/sched_123/run_1';
 
-    it('shows errorText in a tooltip and the accessible name of an Error row', () => {
+    const getDetailsWrapper = (header: HTMLElement) =>
+      // eslint-disable-next-line testing-library/no-node-access -- the inert grid wrapper has no role; its `inert` attribute is the assertion
+      header.nextElementSibling as HTMLElement;
+
+    it('renders a collapsed disclosure with a chevron and keeps the error text out of its name', () => {
       render(
         <ScheduledTaskRunHistoryList
           items={[
@@ -359,16 +358,52 @@ describe('ScheduledTaskRunHistoryList', () => {
         />,
       );
 
-      expect(screen.getByRole('tooltip').textContent).toBe(errorText);
-      expect(
-        screen.getByRole('listitem', {
-          name: `Failed today at 9:01 AM (99s) — ${errorText}`,
-        }),
-      ).toBeTruthy();
+      const header = screen.getByRole('button', { name: failedRowName });
+      expect(header.getAttribute('aria-expanded')).toBe('false');
+      const details = screen.getByRole('region', {
+        name: failedRowName,
+        hidden: true,
+      });
+      expect(header.getAttribute('aria-controls')).toBe(details.id);
+      expect(details.textContent).toContain(errorText);
+      expect(getDetailsWrapper(header).hasAttribute('inert')).toBe(true);
+      // eslint-disable-next-line testing-library/no-node-access -- the chevron is aria-hidden; its presence in the end slot is the assertion
+      expect(header.querySelector('[data-icon="chevron"]')).toBeTruthy();
     });
 
-    it('makes the tooltip trigger focusable only when the row is static', () => {
-      const { rerender } = render(
+    it('toggles the details when the header is clicked, without calling onRunClick', async () => {
+      const onRunClick = vi.fn();
+      render(
+        <ScheduledTaskRunHistoryList
+          items={[
+            buildRun({
+              status: ScheduledTaskRunStatus.Error,
+              errorText,
+              conversationId,
+            }),
+          ]}
+          onRunClick={onRunClick}
+          labels={labels}
+        />,
+      );
+
+      const header = screen.getByRole('button', { name: failedRowName });
+      await userEvent.click(header);
+
+      expect(header.getAttribute('aria-expanded')).toBe('true');
+      expect(getDetailsWrapper(header).hasAttribute('inert')).toBe(false);
+      expect(screen.getByRole('region', { name: failedRowName })).toBeTruthy();
+      // eslint-disable-next-line testing-library/no-node-access -- the chevron's rotation is a CSS-level assertion
+      const chevron = header.querySelector('[data-icon="chevron"]');
+      expect(chevron?.getAttribute('class')).toContain('rotate-180');
+
+      await userEvent.click(header);
+      expect(header.getAttribute('aria-expanded')).toBe('false');
+      expect(onRunClick).not.toHaveBeenCalled();
+    });
+
+    it('toggles the details with Enter and Space', async () => {
+      render(
         <ScheduledTaskRunHistoryList
           items={[
             buildRun({ status: ScheduledTaskRunStatus.Error, errorText }),
@@ -376,9 +411,78 @@ describe('ScheduledTaskRunHistoryList', () => {
           labels={labels}
         />,
       );
-      const row = screen.getByRole('listitem');
-      // eslint-disable-next-line testing-library/no-node-access -- the trigger wrapper has no role; its tabIndex is the assertion
-      expect(row.querySelector('[tabindex="0"]')).toBeTruthy();
+
+      const header = screen.getByRole('button', { name: failedRowName });
+      header.focus();
+      await userEvent.keyboard('{Enter}');
+      expect(header.getAttribute('aria-expanded')).toBe('true');
+      await userEvent.keyboard(' ');
+      expect(header.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('offers an Open conversation link that calls onRunClick once when the run has a conversation', async () => {
+      const onRunClick = vi.fn();
+      const run = buildRun({
+        status: ScheduledTaskRunStatus.Error,
+        errorText,
+        conversationId,
+      });
+      render(
+        <ScheduledTaskRunHistoryList
+          items={[run]}
+          onRunClick={onRunClick}
+          labels={{ ...labels, openConversationLabel: 'Open chat' }}
+        />,
+      );
+
+      await userEvent.click(
+        screen.getByRole('button', { name: failedRowName }),
+      );
+      await userEvent.click(screen.getByRole('button', { name: 'Open chat' }));
+
+      expect(onRunClick).toHaveBeenCalledOnce();
+      expect(onRunClick).toHaveBeenCalledWith(run);
+    });
+
+    it('defaults the link label to Open conversation', async () => {
+      render(
+        <ScheduledTaskRunHistoryList
+          items={[
+            buildRun({
+              status: ScheduledTaskRunStatus.Error,
+              errorText,
+              conversationId,
+            }),
+          ]}
+          onRunClick={vi.fn()}
+          labels={labels}
+        />,
+      );
+
+      await userEvent.click(
+        screen.getByRole('button', { name: failedRowName }),
+      );
+      expect(
+        screen.getByRole('button', { name: 'Open conversation' }),
+      ).toBeTruthy();
+    });
+
+    it('renders no link without a conversation id or without onRunClick', async () => {
+      const { rerender } = render(
+        <ScheduledTaskRunHistoryList
+          items={[
+            buildRun({ status: ScheduledTaskRunStatus.Error, errorText }),
+          ]}
+          onRunClick={vi.fn()}
+          labels={labels}
+        />,
+      );
+      await userEvent.click(
+        screen.getByRole('button', { name: failedRowName }),
+      );
+      expect(
+        screen.queryByRole('button', { name: 'Open conversation' }),
+      ).toBeNull();
 
       rerender(
         <ScheduledTaskRunHistoryList
@@ -386,17 +490,30 @@ describe('ScheduledTaskRunHistoryList', () => {
             buildRun({
               status: ScheduledTaskRunStatus.Error,
               errorText,
-              conversationId: 'conversations/bucket/run_1',
+              conversationId,
             }),
           ]}
           labels={labels}
-          onRunClick={vi.fn()}
         />,
       );
-      const clickableRow = screen.getByRole('button');
-      // eslint-disable-next-line testing-library/no-node-access -- see above
-      expect(clickableRow.querySelector('[tabindex="0"]')).toBeNull();
-      expect(screen.getByRole('tooltip').textContent).toBe(errorText);
+      expect(
+        screen.queryByRole('button', { name: 'Open conversation' }),
+      ).toBeNull();
+    });
+
+    it('keeps an Error row without errorText a plain row with no chevron', () => {
+      render(
+        <ScheduledTaskRunHistoryList
+          items={[buildRun({ status: ScheduledTaskRunStatus.Error })]}
+          labels={labels}
+        />,
+      );
+
+      const row = screen.getByRole('listitem', { name: failedRowName });
+      expect(screen.queryByRole('button')).toBeNull();
+      expect(screen.queryByRole('region', { hidden: true })).toBeNull();
+      // eslint-disable-next-line testing-library/no-node-access -- the chevron is aria-hidden; its absence is the assertion
+      expect(row.querySelector('[data-icon="chevron"]')).toBeNull();
     });
 
     it('ignores errorText on a non-Error row', () => {
@@ -409,13 +526,188 @@ describe('ScheduledTaskRunHistoryList', () => {
         />,
       );
 
-      expect(screen.queryByRole('tooltip')).toBeNull();
+      expect(screen.queryByText(errorText)).toBeNull();
       expect(
         screen.getByRole('listitem', {
           name: 'Succeeded today at 9:01 AM (99s)',
         }),
       ).toBeTruthy();
     });
+
+    it('shows the chevron instead of the dot on an unread failed run and keeps the unread suffix', () => {
+      render(
+        <ScheduledTaskRunHistoryList
+          items={[
+            buildRun({
+              status: ScheduledTaskRunStatus.Error,
+              errorText,
+              isUnread: true,
+            }),
+          ]}
+          labels={labels}
+        />,
+      );
+
+      const header = screen.getByRole('button', {
+        name: `${failedRowName} — Unread`,
+      });
+      // eslint-disable-next-line testing-library/no-node-access -- the end slot is aria-hidden decoration; its contents are the assertion
+      const endSlot = header.lastElementChild as HTMLElement;
+      // eslint-disable-next-line testing-library/no-node-access -- see above
+      expect(endSlot.querySelector('[data-icon="chevron"]')).toBeTruthy();
+      // eslint-disable-next-line testing-library/no-node-access -- see above
+      expect(endSlot.querySelector('.rounded-full')).toBeNull();
+      expect(screen.getByText('today at 9:01 AM (99s)').className).toContain(
+        'dial-small-paragraph-semi-text',
+      );
+    });
+
+    it('keeps a row expanded when more runs are appended', async () => {
+      const failed = buildRun({
+        id: 'run_failed',
+        status: ScheduledTaskRunStatus.Error,
+        errorText,
+      });
+      const { rerender } = render(
+        <ScheduledTaskRunHistoryList items={[failed]} labels={labels} />,
+      );
+      await userEvent.click(
+        screen.getByRole('button', { name: failedRowName }),
+      );
+
+      rerender(
+        <ScheduledTaskRunHistoryList
+          items={[
+            { ...failed },
+            buildRun({
+              id: 'run_older',
+              status: ScheduledTaskRunStatus.Error,
+              errorText: 'older failure',
+              timestampLabel: 'Jun 26 at 9:46 AM',
+            }),
+          ]}
+          labels={labels}
+        />,
+      );
+
+      expect(
+        screen
+          .getByRole('button', { name: failedRowName })
+          .getAttribute('aria-expanded'),
+      ).toBe('true');
+      expect(
+        screen
+          .getByRole('button', { name: 'Failed Jun 26 at 9:46 AM' })
+          .getAttribute('aria-expanded'),
+      ).toBe('false');
+    });
+
+    it('applies the error-details typography and color overrides', async () => {
+      render(
+        <ScheduledTaskRunHistoryList
+          items={[
+            buildRun({ status: ScheduledTaskRunStatus.Error, errorText }),
+          ]}
+          labels={labels}
+          styles={{
+            typography: { errorDetailsClassName: 'custom-details' },
+            colors: { errorDetailsTextColor: '#111111' },
+            rowExpandedBackground: '#222222',
+          }}
+        />,
+      );
+
+      const text = screen.getByText(errorText);
+      expect(text.className).toContain('custom-details');
+      expect(text.className).toMatch(/errorDetailsText/);
+      const list = screen.getByRole('list', { name: 'History' });
+      expect(list.style.getPropertyValue('--strhl-error-details-text')).toBe(
+        '#111111',
+      );
+      expect(list.style.getPropertyValue('--strhl-row-expanded-bg')).toBe(
+        '#222222',
+      );
+
+      const header = screen.getByRole('button', { name: failedRowName });
+      expect(header.className).not.toMatch(/expandedRow/);
+      await userEvent.click(header);
+      expect(header.className).toMatch(/expandedRow/);
+    });
+
+    it('defaults the error details to the tiny text step', () => {
+      render(
+        <ScheduledTaskRunHistoryList
+          items={[
+            buildRun({ status: ScheduledTaskRunStatus.Error, errorText }),
+          ]}
+          labels={labels}
+        />,
+      );
+
+      expect(screen.getByText(errorText).className).toContain('dial-tiny-text');
+    });
+  });
+
+  it('gives hover feedback to navigable and expandable rows but not to static rows', () => {
+    render(
+      <ScheduledTaskRunHistoryList
+        items={[
+          buildRun({ id: 'run_1', conversationId: 'conversations/c1' }),
+          buildRun({
+            id: 'run_2',
+            status: ScheduledTaskRunStatus.Error,
+            errorText: 'boom',
+            timestampLabel: 'Jul 10 at 9:46 AM',
+          }),
+          buildRun({ id: 'run_3', timestampLabel: 'Jul 3 at 9:46 AM' }),
+        ]}
+        onRunClick={vi.fn()}
+        labels={labels}
+      />,
+    );
+
+    expect(
+      screen.getByRole('button', { name: 'Succeeded today at 9:01 AM (99s)' })
+        .className,
+    ).toMatch(/interactiveRow/);
+    expect(
+      screen.getByRole('button', { name: 'Failed Jul 10 at 9:46 AM' })
+        .className,
+    ).toMatch(/interactiveRow/);
+    expect(
+      screen.getByRole('listitem', { name: 'Succeeded Jul 3 at 9:46 AM' })
+        .className,
+    ).not.toMatch(/interactiveRow/);
+  });
+
+  it('keeps the status icon first and the end slot last under RTL', () => {
+    render(
+      <div dir="rtl">
+        <ScheduledTaskRunHistoryList
+          items={[
+            buildRun({
+              status: ScheduledTaskRunStatus.Error,
+              errorText: 'boom',
+            }),
+          ]}
+          labels={labels}
+        />
+      </div>,
+    );
+
+    const header = screen.getByRole('button', {
+      name: 'Failed today at 9:01 AM (99s)',
+    });
+    /* DOM order stays start → end; `dir` flips it visually, and the chevron is never mirrored. */
+    // eslint-disable-next-line testing-library/no-node-access -- row-internal child order has no semantic query
+    const startGroup = header.firstElementChild as HTMLElement;
+    // eslint-disable-next-line testing-library/no-node-access -- see above
+    const chevron = header.lastElementChild?.querySelector(
+      '[data-icon="chevron"]',
+    );
+    // eslint-disable-next-line testing-library/no-node-access -- see above
+    expect(startGroup.querySelector('[data-icon="error"]')).toBeTruthy();
+    expect(chevron?.getAttribute('class')).not.toContain('rtl:');
   });
 
   it('uses a custom unreadIndicatorLabel when provided', () => {
