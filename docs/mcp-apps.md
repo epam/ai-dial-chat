@@ -67,7 +67,7 @@ Spec: [`mcp-app-trigger`](../openspec/specs/mcp-app-trigger/spec.md).
 
 ### 2. Matching a message
 
-`findMcpAppForMessage(message, mcpAppTools, isStreaming)` runs per assistant message:
+`findMcpAppForMessage(message, mcpAppTools)` runs per assistant message:
 
 1. A discovered tool whose `toolName` was called this turn and has already returned a result wins. A call still running does not match.
 2. Otherwise, a `discovery: 'direct'` tool — the deployment _is_ the MCP server and typically never reports tool calls at all.
@@ -133,7 +133,7 @@ The MCP UI CSS variables are mapped from the chat's own design tokens in `apps/c
 | Resource + result | Browser, `useMcpAppResponseCache` | `${conversationId}:${mcpAppCanvasKey(index)}` + seed key | 15 min | Shared by the inline preview and the canvas, so expanding or collapsing never re-fetches. Concurrent loads share one fetch. |
 | Tool calls        | —                                 | —                                                        | —      | Never cached: a `tools/call` may have side effects.                                                                         |
 
-The browser cache is **seed-aware**: an entry written while the message was still streaming (no seed yet) is a miss once the real seed arrives, so the live re-call always happens exactly once after the message settles. Reload on either surface invalidates the entry.
+The browser cache is **seed-aware**: an entry is only served for the seed (`computeMcpAppSeedKey`) it was written for, so an entry written without a seed (a directly discovered app, which has no tool call) is a miss once a real seed exists. Reload on either surface invalidates the entry.
 
 ## BFF endpoints
 

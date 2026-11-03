@@ -74,7 +74,7 @@ This indirect source only ever adds entries alongside the direct source above; a
 
 ### Requirement: Each assistant message is matched against the discovered tools at the message level, not via `Stage`
 
-**Revised twice more** (supersedes stage-based correlation — see `design.md` D5, third revision — and the always-fallback bug fixed as tasks.md item 14.1/14.2). `libs/mcp-apps/src/utils/mcp-app.ts`'s `findMcpAppForMessage(message, mcpAppTools, isStreaming)` SHALL:
+**Revised twice more** (supersedes stage-based correlation — see `design.md` D5, third revision — and the always-fallback bug fixed as tasks.md item 14.1/14.2). `libs/mcp-apps/src/utils/mcp-app.ts`'s `findMcpAppForMessage(message, mcpAppTools)` SHALL:
 
 1. Return `undefined` immediately if `mcpAppTools` is empty or `message.role` is not `MessageRole.Assistant`.
 2. Read `message.custom_content.state` and, via `resolveToolCalls` (see the tool-call-data requirement below), collect the set of tool names actually called this turn from whichever of `tool_messages` or `tool_execution_history` is present.
@@ -89,20 +89,20 @@ This indirect source only ever adds entries alongside the direct source above; a
 - **WHEN** `message.custom_content.state.tool_messages` (or, equivalently, `state.tool_execution_history`) includes a call to a tool named `refresh_data`, and `mcpAppTools` contains an entry with `toolName: 'refresh_data'`
 - **THEN** `findMcpAppForMessage` returns that entry
 
-#### Scenario: Settled message with no tool-call data and only indirectly-discovered tools shows no preview
+#### Scenario: Message with no tool-call data and only indirectly-discovered tools shows no preview
 
-- **WHEN** `message.custom_content.state` is `undefined`, `isStreaming` is `false`, and every entry of `mcpAppTools` has `discovery: 'indirect'`
+- **WHEN** `message.custom_content.state` is `undefined` and every entry of `mcpAppTools` has `discovery: 'indirect'`
 - **THEN** `findMcpAppForMessage` returns `undefined`
 
-#### Scenario: Streaming message with no tool-call data yet falls back to the first discovered tool
+#### Scenario: A call without a result yet shows no preview
 
-- **WHEN** `message.custom_content.state` is `undefined`, `isStreaming` is `true`, and `mcpAppTools` is non-empty
-- **THEN** `findMcpAppForMessage` returns `mcpAppTools[0]`
+- **WHEN** `message.custom_content.state` lists a call to a discovered `discovery: 'indirect'` tool but no result for it, for example while the answer is still streaming
+- **THEN** `findMcpAppForMessage` returns `undefined`, so a later answer in a conversation that already used the tool does not mount the app before its own call has finished
 
-#### Scenario: Settled message with no tool-call data still matches a self-hosted MCP App
+#### Scenario: Message with no tool-call data still matches a self-hosted MCP App
 
-- **WHEN** `message.custom_content.state` is `undefined`, `isStreaming` is `false`, and `mcpAppTools` contains an entry with `discovery: 'direct'` (whatever its `kind`)
-- **THEN** `findMcpAppForMessage` returns that `discovery: 'direct'` entry, regardless of `isStreaming`
+- **WHEN** `message.custom_content.state` is `undefined` and `mcpAppTools` contains an entry with `discovery: 'direct'` (whatever its `kind`)
+- **THEN** `findMcpAppForMessage` returns that `discovery: 'direct'` entry
 
 #### Scenario: Non-assistant message never matches
 
@@ -117,7 +117,7 @@ When an assistant message matches a discovered MCP App tool, the message body SH
 
 **Revised four times** (supersedes the original `StageItem`-hosted action, the intermediate `MessageActions`-bar placement, the `Stage`-keyed lookup, and the unconditional-auto-open posture — see `design.md` D5, fourth revision / D11). Neither `libs/conversation-stages` (`StageItem`/`StagesPanel`/`CollapsedGroup`) nor `libs/conversation-messages` (`MessageActionsProps`/`MessageActions.tsx`) carry any MCP-Apps-related field. The component is `libs/mcp-apps/src/components/McpAppInlinePreview/McpAppInlinePreview.tsx`, rendered by `apps/chat/src/components/ConversationView/ConversationMessageItem.tsx` inside the message's `afterContent`, after the `CollapsedGroup` stages block and after the grouped visualizer block (`groupedVisualizer`, rendered as `InlineGroupedVisualizer` or an opened-in-canvas placeholder) when the message has one; without a grouped visualizer it comes directly after the stages.
 
-`ConversationMessageItem.tsx` SHALL compute `mcpAppMatch = findMcpAppForMessage(msg, mcpAppTools, isStreaming)` and, when both `mcpAppMatch` and an `onOpenApp` callback are available, render `McpAppInlinePreview` with `match={mcpAppMatch}`, `toolCall={resolveMcpAppToolCallSeed(msg, mcpAppMatch.toolName)}`, the shared `cache` (`McpAppResponseCache`, see the response-cache requirement below), `cacheKey={mcpAppCanvasKey(index)}`, `hostAdapter` (from the app's `useMcpAppHostAdapter('inline')`), `onExpand={() => onOpenApp(mcpAppMatch, mcpAppKey, toolCall)}`, `isOpenedInCanvas={isMcpAppOpenedInCanvas}`, and `openedInCanvasLabel`. **Revised**: `McpAppInlinePreview` is now always rendered — `isMcpAppOpenedInCanvas` no longer swaps the whole component out for a separate placeholder box. Instead, when the message's canvas *is* currently open, the header (tool name, appended app name/version) stays visible and only the body area shows `openedInCanvasLabel` centered in place of the mounted app, so the message and the full-width canvas never mount two live instances of the same app at once.
+`ConversationMessageItem.tsx` SHALL compute `mcpAppMatch = findMcpAppForMessage(msg, mcpAppTools)` and, when both `mcpAppMatch` and an `onOpenApp` callback are available, render `McpAppInlinePreview` with `match={mcpAppMatch}`, `toolCall={resolveMcpAppToolCallSeed(msg, mcpAppMatch.toolName)}`, the shared `cache` (`McpAppResponseCache`, see the response-cache requirement below), `cacheKey={mcpAppCanvasKey(index)}`, `hostAdapter` (from the app's `useMcpAppHostAdapter('inline')`), `onExpand={() => onOpenApp(mcpAppMatch, mcpAppKey, toolCall)}`, `isOpenedInCanvas={isMcpAppOpenedInCanvas}`, and `openedInCanvasLabel`. **Revised**: `McpAppInlinePreview` is now always rendered — `isMcpAppOpenedInCanvas` no longer swaps the whole component out for a separate placeholder box. Instead, when the message's canvas *is* currently open, the header (tool name, appended app name/version) stays visible and only the body area shows `openedInCanvasLabel` centered in place of the mounted app, so the message and the full-width canvas never mount two live instances of the same app at once.
 
 `McpAppInlinePreview` (backed by `useMcpAppInlinePreview`) independently fetches the resource HTML and resolves the tool result — it does not touch `AttachmentCanvas`'s panel/loading-state machinery, so it can render alongside the message instead of taking over a side panel. It renders:
 
@@ -257,7 +257,7 @@ For the canvas specifically (`displayMode: 'fullscreen'`), `McpAppCanvasRenderer
 
 `get(key, seedKey)` SHALL return `undefined` (a miss) — never a cached entry — when: no entry exists for `key`; the stored entry's `seedKey` does not equal the requested `seedKey`; or more than 15 minutes have elapsed since the entry was written (`cachedAt`). `seedKey` SHALL be computed by `libs/mcp-apps/src/utils/mcp-app.ts`'s `computeMcpAppSeedKey(toolCall)` — `undefined` when `toolCall` itself is `undefined` (a message whose `custom_content.state` has not yet arrived), otherwise `JSON.stringify(toolCall.toolInput ?? null)`.
 
-This exists because a freshly-streamed assistant message mounts its inline preview before `custom_content.state` carries a real tool call, writing a seedless entry (`seedKey: undefined`, `toolResult: undefined`); without seed-awareness, that entry would be served forever once the message settled and a real seed became available, permanently skipping D10's live tool re-call.
+This exists so an entry written without a seed (`seedKey: undefined`, as for a directly discovered app that has no tool call) is never served once a real seed becomes available, which would permanently skip D10's live tool re-call. An indirect match no longer produces a seedless entry: `findMcpAppForMessage` matches it only after its call has a result.
 
 `invalidate(key)` SHALL delete the entry (and any in-flight fetch for that key) unconditionally, used by both surfaces' reload actions. `getOrFetch(key, seedKey, fetchFn)` SHALL return the `get` hit when there is one, otherwise join an in-flight fetch for the same key and `seedKey`, or start `fetchFn`, `set` its result, and share that promise with concurrent callers until it settles.
 
