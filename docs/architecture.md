@@ -560,7 +560,7 @@ apps/chat-api/src/
 ├── telemetry/              # OpenTelemetry bootstrap, logger bridge, metrics
 ├── dial/                   # DIAL Core client wiring
 ├── custom-api/             # Deployment-configured custom Core API bridge (disabled by default)
-├── config/                 # class-validator env schema
+├── config/                 # class-validator env schema: domain classes in env/, composed in environment.config.ts
 ├── constants/  common/     # Shared decorators, interceptors, constants
 └── openapi/                # Response DTOs and OpenAPI document generation
 ```

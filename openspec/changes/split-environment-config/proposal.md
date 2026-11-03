@@ -1,12 +1,12 @@
 ## Why
 
-`apps/chat-api/src/config/environment.config.ts` is 1321 lines, and `EnvironmentVariables` is one class with 181 env vars. That class is the most-edited backend file: 33 commits in the last 60 days. It is item B6 (P2) of the 2026-10-26 refactoring audit.
+`apps/chat-api/src/config/environment.config.ts` is 1321 lines, and `EnvironmentVariables` is one class with 182 env vars. That class is the most-edited backend file: 33 commits in the last 60 days. It is item B6 (P2) of the 2026-10-26 refactoring audit.
 
 Almost every backend feature adds a var to it, and they all add at the bottom of one class, so parallel branches conflict there constantly. A reader looking for the scheduler's settings has to scroll past 76 `AUTH_*` declarations. Nothing groups a domain's vars, its decorators and its parse helpers (the celebration list parser, for example) together.
 
 ## What Changes
 
-- **New folder `apps/chat-api/src/config/env/`** with one class per domain. Each class carries its vars' existing decorators, initializers and JSDoc unchanged. The 181 vars are grouped mostly by prefix:
+- **New folder `apps/chat-api/src/config/env/`** with one class per domain. Each class carries its vars' existing decorators, initializers and JSDoc unchanged. The 182 vars are grouped mostly by prefix:
   - `server.env.ts`: HTTP server, CORS, CSP and logging.
   - `dial.env.ts`: DIAL Core connection, themes and the MCP app sandbox.
   - `auth.env.ts`: session, cookies, roles and header-token auth.
@@ -24,7 +24,7 @@ Almost every backend feature adds a var to it, and they all add at the bottom of
   - `validation.ts` is unchanged.
   - The 25 specs that cite `apps/chat-api/src/config/environment.config.ts` still resolve.
 - **A new `config/tests/environment-composition.spec.ts`** pins the composition:
-  - the composed class declares exactly the 181 var names, from a snapshot list in the spec;
+  - the composed class declares exactly the 182 var names, from a snapshot list in the spec;
   - no var is declared in two domain classes;
   - implicit conversion still turns a numeric string such as `PORT` into a number, and a list string into an array;
   - initializer defaults such as `PORT = 5000` survive.

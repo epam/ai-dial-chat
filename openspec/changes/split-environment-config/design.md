@@ -1,6 +1,6 @@
 ## Context
 
-`EnvironmentVariables` (`apps/chat-api/src/config/environment.config.ts`, 1321 lines) is one class-validator class with 181 env vars. Three of them are required: `DIAL_CORE_URL`, `AUTH_SESSION_SECRET` and `AUTH_CALLBACK_BASE_URL`. The rest are `@IsOptional()`, many with property-initializer defaults (`PORT = 5000`) and `@Transform` parsers for lists, numbers and enums.
+`EnvironmentVariables` (`apps/chat-api/src/config/environment.config.ts`, 1321 lines) is one class-validator class with 182 env vars. Three of them are required: `DIAL_CORE_URL`, `AUTH_SESSION_SECRET` and `AUTH_CALLBACK_BASE_URL`. The rest are `@IsOptional()`, many with property-initializer defaults (`PORT = 5000`) and `@Transform` parsers for lists, numbers and enums.
 
 The same file also holds:
 
@@ -81,7 +81,7 @@ Imports of `CspMode` (`../csp`), `CatalogCreation*` (`../catalog-creation.types`
 
 `config/tests/environment-composition.spec.ts`:
 
-1. `ENV_VAR_NAMES` is a frozen, sorted snapshot of the 181 names. It is generated once, before the move, from `getMetadataStorage().getTargetValidationMetadatas(EnvironmentVariables, …)` property names plus initializer-only properties, and pasted in as a literal.
+1. `ENV_VAR_NAMES` is a frozen, sorted snapshot of the 182 names. It is generated once, before the move, from `getMetadataStorage().getTargetValidationMetadatas(EnvironmentVariables, …)` property names plus initializer-only properties, and pasted in as a literal.
 2. It asserts that the composed class's validation-metadata property set equals `ENV_VAR_NAMES`.
 3. For each domain class it collects the property names, and asserts that their union equals `ENV_VAR_NAMES` and that pairwise intersections are empty.
 4. It runs `validate()` with the three required vars:
