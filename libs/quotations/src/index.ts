@@ -45,6 +45,7 @@ export {
   annotationsToPdfHighlights,
   annotationToOfficeHighlightLocations,
   getAnnotationPdfPage,
+  getCitationGroupPage,
   isDocxRangeSelector,
   isExcelRcRangeSelector,
   isPptxRangeSelector,

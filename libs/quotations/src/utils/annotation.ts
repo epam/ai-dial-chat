@@ -17,7 +17,9 @@ import type {
   InputHighlightData,
 } from '@epam/pdf-highlighter-kit';
 import type { OfficeHighlightLocation } from '../models/office-highlight';
+import type { AnnotationGroup } from './group-annotations-by-source';
 import { normalizeOfficeTableAnchor } from './office-table-anchor';
+import { parsePdfPageReference } from './reference-attachment';
 
 const CITATION_HIGHLIGHT_STYLE: HighlightStyle = {
   backgroundColor: 'transparent',
@@ -332,6 +334,27 @@ export const getAnnotationPdfPage = (
     if (page != null) return page;
   }
   return undefined;
+};
+
+/*
+ * A page token (`page`, `pages`, `pg`, `pp`, `p`) as a whole word followed by
+ * digits that do not run into a word, or a `#page=` fragment. Bare digits in a
+ * file name (`Group1-2.pdf`, `p2p.pdf`) are not a page mention.
+ */
+const PAGE_MENTION_RE =
+  /(?:^|[^\p{L}\p{N}])(?:pages?|pg|pp|p)\s*[.:]?\s*\d+(?![\p{L}\p{N}])|#page=\d/iu;
+
+/** Returns the 1-based PDF page a citation group's marker refers to, or `undefined` when none is known or `sourceName` already mentions a page. */
+export const getCitationGroupPage = (
+  group: AnnotationGroup,
+): number | undefined => {
+  // Some sources write the page into the title the pill already displays.
+  if (PAGE_MENTION_RE.test(group.sourceName)) return undefined;
+  return (
+    getAnnotationPdfPage(group.primaryAnnotation) ??
+    parsePdfPageReference(group.sourceUrl)?.page ??
+    undefined
+  );
 };
 
 /**
