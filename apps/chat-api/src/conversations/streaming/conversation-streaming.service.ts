@@ -782,7 +782,7 @@ export class ConversationStreamingService {
        * terminal outcome — e.g. an unexpected exception unwinding this
        * generator between a `yield` and the next `relayIterator.next()`
        * call. This is NOT reached merely because the downstream HTTP
-       * response closed: `ConversationController.streamCompletion` keeps
+       * response closed: `ConversationGenerationController.streamCompletion` keeps
        * consuming this generator after disconnect (see
        * backend-owned-generation-persistence — a completion's generation is
        * independent of the originating browser connection), so a closed

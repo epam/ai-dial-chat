@@ -14,8 +14,8 @@ import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthSource } from '../../auth/auth-source.enum';
 import type { SessionUser } from '../../auth/session/session.types';
+import { ConversationGenerationController } from '../conversation-generation.controller';
 import { ConversationGenerationService } from '../conversation-generation.service';
-import { ConversationController } from '../conversation.controller';
 import { ConversationService } from '../conversation.service';
 import {
   ConversationMessageDto,
@@ -91,7 +91,7 @@ describe('POST /conversations/completions/attach (integration)', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [ConversationController],
+      controllers: [ConversationGenerationController],
       providers: [
         ConversationCompletionsResponder,
         { provide: ConversationService, useValue: mockService },
@@ -325,7 +325,7 @@ describe('POST /conversations/completions/attach — header-authenticated caller
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [ConversationController],
+      controllers: [ConversationGenerationController],
       providers: [
         ConversationCompletionsResponder,
         { provide: ConversationService, useValue: mockService },
@@ -429,7 +429,7 @@ describe('POST /conversations/completions/attach — retained entry after the fi
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [ConversationController],
+      controllers: [ConversationGenerationController],
       providers: [
         ConversationCompletionsResponder,
         { provide: ConversationService, useValue: mockService },

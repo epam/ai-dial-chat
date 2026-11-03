@@ -18,16 +18,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthSource } from '../../auth/auth-source.enum';
 import type { SessionUser } from '../../auth/session/session.types';
 import { SSE_RELEASE_TIMEOUT_MS } from '../../common/utils/sse';
+import { ConversationGenerationController } from '../conversation-generation.controller';
 import {
   ConversationGenerationService,
   GenerationStatus,
   type GenerationLease,
 } from '../conversation-generation.service';
-import { ConversationController } from '../conversation.controller';
 import { ConversationService } from '../conversation.service';
 import type { SendCompletionDto } from '../dto/send-completion.dto';
 import { ConversationCompletionsResponder } from '../streaming/conversation-completions.responder';
-import { createConversationController } from './conversation-controller.fixture';
+import { createConversationGenerationController } from './conversation-controller.fixture';
 
 const TEST_USER = {
   sid: 'test-sid',
@@ -115,7 +115,7 @@ describe('POST /conversations/completions (integration)', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [ConversationController],
+      controllers: [ConversationGenerationController],
       providers: [
         ConversationCompletionsResponder,
         { provide: ConversationService, useValue: mockService },
@@ -484,7 +484,7 @@ describe('POST /conversations/completions (integration)', () => {
       reachedNaturalEnd = true;
     });
 
-    await createConversationController(
+    await createConversationGenerationController(
       mockService as unknown as ConversationService,
       mockGenerationService as unknown as ConversationGenerationService,
     ).streamCompletion(
@@ -552,7 +552,7 @@ describe('POST /conversations/completions — backpressure-driven detachment (di
       getStatus: vi.fn().mockReturnValue(GenerationStatus.Active),
     };
 
-    const controller = createConversationController(
+    const controller = createConversationGenerationController(
       mockService as unknown as ConversationService,
       mockGenerationService as unknown as ConversationGenerationService,
     );
@@ -627,7 +627,7 @@ describe('POST /conversations/completions/stop (integration)', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [ConversationController],
+      controllers: [ConversationGenerationController],
       providers: [
         ConversationCompletionsResponder,
         { provide: ConversationService, useValue: mockService },
@@ -769,7 +769,7 @@ describe('completions endpoints — header-authenticated (bearer) caller', () =>
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [ConversationController],
+      controllers: [ConversationGenerationController],
       providers: [
         ConversationCompletionsResponder,
         { provide: ConversationService, useValue: mockService },
@@ -910,7 +910,7 @@ describe('generation ownership isolation (real registry)', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [ConversationController],
+      controllers: [ConversationGenerationController],
       providers: [
         ConversationCompletionsResponder,
         { provide: ConversationService, useValue: mockService },

@@ -16,7 +16,7 @@ import { AUTH_STRATEGIES } from '../../auth/strategies/auth-strategies.token';
 import type { AuthStrategy } from '../../auth/strategies/auth-strategy.interface';
 import { DialClientService } from '../../dial/dial-client.service';
 import { ConversationGenerationService } from '../conversation-generation.service';
-import { ConversationController } from '../conversation.controller';
+import { ConversationTitlesController } from '../conversation-titles.controller';
 import { ConversationService } from '../conversation.service';
 import { ConversationTitleCacheService } from '../listing/conversation-title-cache.service';
 import {
@@ -141,7 +141,7 @@ describe('POST /conversations/titles/stream (integration)', () => {
         }),
     );
     const moduleRef = await Test.createTestingModule({
-      controllers: [ConversationController],
+      controllers: [ConversationTitlesController],
       providers: [
         ConversationCompletionsResponder,
         ConversationTitleCacheService,

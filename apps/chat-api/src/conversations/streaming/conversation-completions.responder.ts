@@ -57,7 +57,7 @@ const SSE_ATTACH_MAX_BUFFERED_BYTES = 1024 * 1024;
 /**
  * The HTTP side of completions, stop and attach: SSE framing, keepalive,
  * backpressure detach and bounded release around `ConversationService`.
- * `ConversationController` and the project conversations controller both
+ * `ConversationGenerationController` and the project conversations controller both
  * delegate here, with the conversation path already validated, so a project
  * conversation streams exactly like a top-level one. The path is also the
  * generation-registry key, so completions, stop and attach must receive the

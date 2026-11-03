@@ -13,7 +13,7 @@ import {
 } from './utils/conversation.utils';
 
 /*
- * Thin orchestrator for ConversationController. Every method here delegates
+ * Thin orchestrator for the conversations controllers. Every method here delegates
  * to exactly one of the four focused conversation services below — see
  * openspec/changes/archive/2026-08-07-split-conversation-service/design.md for the ownership
  * map and why the split follows this boundary. Pure 1:1 delegates are bound

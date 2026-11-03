@@ -21,6 +21,7 @@ import type { EnvironmentVariables } from '../../config/environment.config';
 import type { DeploymentsService } from '../../deployments/deployments.service';
 import { DialClientService } from '../../dial/dial-client.service';
 import type { ConversationResponseDto } from '../../openapi/openapi-response.dto';
+import { ConversationGenerationController } from '../conversation-generation.controller';
 import {
   ConversationGenerationService,
   type GenerationTerminalEvent,
@@ -214,7 +215,7 @@ describe('completion persistence over HTTP', () => {
       config,
     );
     const module = await Test.createTestingModule({
-      controllers: [ConversationController],
+      controllers: [ConversationController, ConversationGenerationController],
       providers: [
         ConversationCompletionsResponder,
         {

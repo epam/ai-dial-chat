@@ -4,12 +4,15 @@ import { DeploymentsModule } from '../deployments/deployments.module';
 import { FilesListingModule } from '../files/listing/files-listing.module';
 import { ScheduledTaskUnreadModule } from '../scheduled-task-unread/scheduled-task-unread.module';
 import { UserConfigModule } from '../user-config/user-config.module';
+import { ConversationGenerationController } from './conversation-generation.controller';
 import { ConversationGenerationService } from './conversation-generation.service';
 import { ConversationNamingService } from './conversation-naming.service';
 import { CONVERSATION_PERSISTENCE } from './conversation-persistence.port';
 import { ConversationPublishAttachmentsService } from './conversation-publish-attachments.service';
 import { ConversationPublishController } from './conversation-publish.controller';
 import { ConversationPublishService } from './conversation-publish.service';
+import { ConversationTitlesController } from './conversation-titles.controller';
+import { ConversationWatchController } from './conversation-watch.controller';
 import { ConversationController } from './conversation.controller';
 import { ConversationService } from './conversation.service';
 import { BackgroundGenerationService } from './generation/background-generation.service';
@@ -36,7 +39,13 @@ import { ConversationStreamingService } from './streaming/conversation-streaming
     DeploymentsModule,
     FilesListingModule,
   ],
-  controllers: [ConversationController, ConversationPublishController],
+  controllers: [
+    ConversationController,
+    ConversationGenerationController,
+    ConversationTitlesController,
+    ConversationWatchController,
+    ConversationPublishController,
+  ],
   providers: [
     ConversationService,
     ConversationPersistenceService,

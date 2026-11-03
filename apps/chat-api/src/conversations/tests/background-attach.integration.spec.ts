@@ -11,6 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthSource } from '../../auth/auth-source.enum';
 import { resolvePrincipalKey } from '../../auth/session/principal-key';
 import type { DialClientService } from '../../dial/dial-client.service';
+import { ConversationGenerationController } from '../conversation-generation.controller';
 import { ConversationGenerationService } from '../conversation-generation.service';
 import { ConversationController } from '../conversation.controller';
 import { ConversationService } from '../conversation.service';
@@ -145,7 +146,7 @@ describe('POST /conversations/completions/attach — background generations', ()
       { complete: vi.fn(), beginFinalizing: vi.fn() } as never,
     );
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [ConversationController],
+      controllers: [ConversationController, ConversationGenerationController],
       providers: [
         ConversationCompletionsResponder,
         {

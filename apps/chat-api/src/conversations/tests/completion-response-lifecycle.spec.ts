@@ -14,7 +14,7 @@ import {
 } from '../conversation-generation.service';
 import { ConversationService } from '../conversation.service';
 import type { SendCompletionDto } from '../dto/send-completion.dto';
-import { createConversationController } from './conversation-controller.fixture';
+import { createConversationGenerationController } from './conversation-controller.fixture';
 
 /*
  * Lifecycle of the downstream completion response itself — distinct from
@@ -170,7 +170,7 @@ const makeController = (
   streamingService: ReturnType<typeof makeStreamingService>,
   generationService: ReturnType<typeof makeGenerationService>,
 ) =>
-  createConversationController(
+  createConversationGenerationController(
     streamingService as unknown as ConversationService,
     generationService as unknown as ConversationGenerationService,
   );

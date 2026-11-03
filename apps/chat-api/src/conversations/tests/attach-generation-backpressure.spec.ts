@@ -15,14 +15,14 @@ import {
   initializeRuntimeMetrics,
   SseSubscriptionKind,
 } from '../../telemetry/runtime-metrics';
+import { ConversationGenerationController } from '../conversation-generation.controller';
 import { ConversationGenerationService } from '../conversation-generation.service';
-import { ConversationController } from '../conversation.controller';
 import { ConversationService } from '../conversation.service';
 import {
   ConversationMessageDto,
   ConversationMessageRole,
 } from '../dto/conversation-message.dto';
-import { createConversationController } from './conversation-controller.fixture';
+import { createConversationGenerationController } from './conversation-controller.fixture';
 
 /**
  * A minimal `Response`-shaped `EventEmitter` whose `writableLength` is
@@ -92,13 +92,13 @@ const makeMessage = (content: string): ConversationMessageDto => ({
 const makeController = (
   config: Partial<EnvironmentVariables> = {},
 ): {
-  controller: ConversationController;
+  controller: ConversationGenerationController;
   generationService: ConversationGenerationService;
 } => {
   const generationService = new ConversationGenerationService({
     get: (key: keyof EnvironmentVariables) => config[key],
   } as unknown as ConfigService<EnvironmentVariables>);
-  const controller = createConversationController(
+  const controller = createConversationGenerationController(
     {
       resolveBackgroundAttach: vi.fn().mockResolvedValue(null),
       stopBackgroundGeneration: vi.fn().mockResolvedValue('not_background'),
@@ -439,7 +439,7 @@ describe('attach-generation-backpressure', () => {
           };
         }
       };
-      const controller = createConversationController(
+      const controller = createConversationGenerationController(
         {
           resolveBackgroundAttach: vi.fn(
             async (
