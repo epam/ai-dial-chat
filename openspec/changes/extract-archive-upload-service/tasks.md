@@ -39,4 +39,4 @@ Verification: `npm run test:file -- apps/chat-api/src/files/tests/upload/files-a
 ## 4. Follow-up (out of scope)
 
 - [ ] 4.1 Rename `throwIfArchiveUploadAborted` to an upload-neutral name in its own change, deciding whether single-file uploads should keep the `Archive upload timed out` message.
-- [ ] 4.2 Propose `split-environment-config` (refactoring plan B6).
+- [x] 4.2 Propose `split-environment-config` (refactoring plan B6).
