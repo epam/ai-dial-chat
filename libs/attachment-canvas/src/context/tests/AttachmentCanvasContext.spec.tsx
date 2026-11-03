@@ -43,6 +43,36 @@ describe('AttachmentCanvasProvider', () => {
       wrapper: AttachmentCanvasProvider,
     });
 
+  it('keeps the retry of opened content until the canvas closes or reloads', () => {
+    const { result } = renderCanvas();
+    const onRetry = vi.fn();
+
+    act(() => {
+      result.current.openCanvas(
+        { type: AttachmentContentType.PlainText, text: '' },
+        'a.txt',
+        'a',
+        onRetry,
+      );
+    });
+    result.current.retryCanvas?.();
+    expect(onRetry).toHaveBeenCalledOnce();
+
+    act(() => result.current.openCanvasLoading('a.txt', 'a'));
+    expect(result.current.retryCanvas).toBeUndefined();
+
+    act(() => {
+      result.current.openCanvas(
+        { type: AttachmentContentType.PlainText, text: '' },
+        'a.txt',
+        'a',
+        onRetry,
+      );
+    });
+    act(() => result.current.closeCanvas());
+    expect(result.current.retryCanvas).toBeUndefined();
+  });
+
   it('revokes the previous blob object URL when new content replaces it', () => {
     const { result } = renderCanvas();
 

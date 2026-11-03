@@ -56,6 +56,8 @@ export interface ProjectConversationListColors {
   readDot?: string;
   /** Fill of an unread row's status point. Defaults to `--text-accent`. */
   unreadDot?: string;
+  /** Background of a hovered or focused row. Defaults to `--bg-control-accent-alpha-hover`. */
+  rowHoverBackground?: string;
 }
 
 /** Props for the {@link ProjectConversationList} component. */
@@ -74,6 +76,8 @@ export interface ProjectConversationListProps {
   isLoadingMore?: boolean;
   /** Called from the load-more action. */
   onLoadMore?: () => void;
+  /** Shows the empty state while there are no conversations; when `false`, the list renders nothing then. Defaults to `true`. */
+  isEmptyStateShown?: boolean;
   /** Called with a conversation id when the user activates its row. */
   onOpen: (id: string) => void;
   /** Called from a row's Rename item; the item is hidden when omitted. */

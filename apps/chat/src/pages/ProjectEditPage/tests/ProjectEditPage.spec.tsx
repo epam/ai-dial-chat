@@ -326,6 +326,24 @@ describe('ProjectEditPage', () => {
       ).toBe('false');
     });
 
+    it('closes the canvas when the open stored file is removed', async () => {
+      await openEditor();
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Preview tickets.csv' }),
+      );
+      await waitFor(() =>
+        expect(getCanvas().textContent).toBe(
+          `${PROJECT_ID}::stored:tickets.csv`,
+        ),
+      );
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'remove tickets.csv' }),
+      );
+
+      expect(getCanvas().textContent).toBe('closed');
+    });
+
     it('does not ask to discard changes after only previewing a file', async () => {
       const { router } = renderAt();
       await screen.findByRole('heading', { name: ProjectsI18nKeys.EditTitle });

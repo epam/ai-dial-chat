@@ -8,8 +8,11 @@ import {
   MIMEType,
   stripUrlQueryAndFragment,
 } from '@epam/ai-dial-chat-shared';
-import { useCallback } from 'react';
-import { useAttachmentCanvas } from '../../context/AttachmentCanvasContext';
+import { useCallback, useEffect, useRef } from 'react';
+import {
+  useAttachmentCanvas,
+  useCanvasRequestStarter,
+} from '../../context/AttachmentCanvasContext';
 import type {
   AttachmentCanvasContent,
   CodeCanvasContent,
@@ -181,7 +184,10 @@ export const useOpenAttachmentCanvas = (
   options: UseOpenAttachmentCanvasOptions,
 ): { openAttachmentCanvas: OpenAttachmentCanvas } => {
   const { openCanvas, openCanvasLoading, closeCanvas } = useAttachmentCanvas();
+  const startCanvasRequest = useCanvasRequestStarter();
   const { customVisualizers, themeId, onBeforeOpen } = options;
+  /* The retry of a file opens it again through the latest opener. */
+  const openRef = useRef<OpenAttachmentCanvas | null>(null);
 
   const openFileCanvas = useCallback(
     async (
@@ -426,12 +432,32 @@ export const useOpenAttachmentCanvas = (
           return true;
         }
         case AttachmentType.File: {
+          /* A retry is a new request, so a late answer to this one cannot replace it. */
+          const retry = () => {
+            void openRef.current?.(
+              attachment,
+              canvasAttachmentId,
+              startCanvasRequest?.(),
+            );
+          };
+          const commitFileCanvas: CommitCanvasContent = (
+            content,
+            fileName,
+            id,
+          ) => {
+            if (!canCommit()) {
+              releaseCanvasContent(content);
+              return false;
+            }
+            openCanvas(content, fileName, id, retry);
+            return true;
+          };
           onBeforeOpen?.();
           openCanvasLoading(attachment.name, canvasAttachmentId);
           const opened = await openFileCanvas(
             attachment,
             canvasAttachmentId,
-            commitCanvas,
+            commitFileCanvas,
           );
           /* `canCommit` is re-checked here rather than reused from the commit
              above: closing is itself a canvas write, and a request that has
@@ -461,8 +487,13 @@ export const useOpenAttachmentCanvas = (
       onBeforeOpen,
       openFileCanvas,
       resolvers,
+      startCanvasRequest,
     ],
   );
+
+  useEffect(() => {
+    openRef.current = openAttachmentCanvas;
+  }, [openAttachmentCanvas]);
 
   return { openAttachmentCanvas };
 };

@@ -489,6 +489,14 @@ successful load it watches the first 1000 listed ids:
 
 A client without `watchProjects` gets a one-off load, as before.
 
+`useProjectConversations` reads a project's whole conversation list once,
+because DIAL Core cannot page it in display order, and pages it locally:
+`items` holds the first 20 rows and `hasMore` tells whether more are loaded.
+`loadMore` shows 20 more; when some of them were listed with
+`isTitlePending`, it first reads their titles through the client's
+`getProjectConversationTitles(projectId, names, signal)`, and rejects when
+that read fails.
+
 A page that shows one project keeps it current with `useProjectWatch`. It
 opens once `etag` is known, skips an event carrying the loaded `etag`, runs
 `onChange` one at a time (plus one trailing run for whatever arrived

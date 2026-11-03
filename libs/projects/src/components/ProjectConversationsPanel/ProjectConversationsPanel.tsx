@@ -26,6 +26,7 @@ const ProjectConversationsPanelComponent: FC<
 > = ({
   composer,
   outputs,
+  hasOutputs = false,
   items,
   isLoading = false,
   hasError = false,
@@ -219,6 +220,7 @@ const ProjectConversationsPanelComponent: FC<
           hasMore={hasMore}
           isLoadingMore={isLoadingMore}
           onLoadMore={onLoadMore}
+          isEmptyStateShown={!hasOutputs}
           onOpen={onOpen}
           onRename={onRename ? handleRenameRequest : undefined}
           onDelete={onDelete ? handleDeleteRequest : undefined}

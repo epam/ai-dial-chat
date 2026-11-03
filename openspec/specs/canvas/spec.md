@@ -147,7 +147,7 @@ The canvas distinguishes two failure states, both represented by `ErrorCanvasCon
 | `LoadFailed` | Fetch threw (network error) or returned a non-`403` non-OK status | `loadErrorLabel`, default `"Failed to load file"` | Shown when `url` is present (retry via re-download is still possible) |
 | `Forbidden` | Fetch returned HTTP `403` | `forbiddenErrorLabel`, default `"You don't have permission to access this file"` | **Always hidden** — `isDownloadable` returns `false` for `Forbidden` regardless of `url` |
 
-Both messages render centered in the body, the same layout slot as the `Unsupported` message. `isDownloadable(content)` (`libs/attachment-canvas/src/utils/download.ts`) drives the download button's visibility for all content types, including `Error` and `Unsupported`:
+Both messages render centered in the body, the same layout slot as the `Unsupported` message. Under a `LoadFailed` message the body shows a Retry `GhostButton` (`loadErrorRetryLabel`, default `'Retry'`) when `onRetry` is given: `openCanvas` takes an optional `onRetry`, the context exposes it as `retryCanvas` until the canvas closes or starts loading again, `useOpenAttachmentCanvas` passes one for every file it opens, and `AttachmentCanvasContainer` forwards `retryCanvas` as `AttachmentCanvas`'s `onRetry`. `isDownloadable(content)` (`libs/attachment-canvas/src/utils/download.ts`) drives the download button's visibility for all content types, including `Error` and `Unsupported`:
 
 ```ts
 case AttachmentContentType.Unsupported:
@@ -595,6 +595,12 @@ A failed fetch SHALL resolve to `ErrorCanvasContent` carrying `errorType: Forbid
 
 - **WHEN** the fetch fails with a network error or a non-`403` status and a `url` is known
 - **THEN** the body shows `loadErrorLabel` and the download button is still offered
+
+#### Scenario: A failed file load offers Retry
+
+- **GIVEN** `useOpenAttachmentCanvas` opened a file whose load failed with `errorType: LoadFailed`
+- **WHEN** the user activates the Retry button under `loadErrorLabel` (`labels.loadErrorRetryLabel`, default `'Retry'`; the app passes `buttons.retry`)
+- **THEN** the hook opens the same attachment again as a new request (the provider's request starter), so a late answer to the failed request cannot replace it; a `Forbidden` error never shows Retry
 
 #### Scenario: Image failures surface in the renderer, not as error content
 

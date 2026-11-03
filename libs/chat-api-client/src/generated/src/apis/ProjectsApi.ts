@@ -21,6 +21,8 @@ import type {
   ListProjectsResponseDto,
   ProjectArtifactListResponseDto,
   ProjectConversationListResponseDto,
+  ProjectConversationTitlesBodyDto,
+  ProjectConversationTitlesResponseDto,
   ProjectCreateErrorDto,
   ProjectDetailsDto,
   RenameConversationBodyDto,
@@ -83,14 +85,17 @@ export interface GetProjectConversationRequest {
   conversationName: string;
 }
 
+export interface GetProjectConversationTitlesRequest {
+  id: string;
+  projectConversationTitlesBodyDto: ProjectConversationTitlesBodyDto;
+}
+
 export interface ListProjectArtifactsRequest {
   id: string;
 }
 
 export interface ListProjectConversationsRequest {
   id: string;
-  limit?: number;
-  offset?: number;
 }
 
 export interface MarkProjectConversationViewedRequest {
@@ -858,6 +863,80 @@ export class ProjectsApi extends runtime.BaseAPI {
   }
 
   /**
+   * Reads the bodies of the named conversations, as listed with `isTitlePending`, and returns them with their titles and read state resolved. Up to 100 names per request. Any reader of the project may call it.
+   * Resolve project conversations\' titles
+   */
+  async getProjectConversationTitlesRaw(
+    requestParameters: GetProjectConversationTitlesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ProjectConversationTitlesResponseDto>> {
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling getProjectConversationTitles().',
+      );
+    }
+
+    if (requestParameters['projectConversationTitlesBodyDto'] == null) {
+      throw new runtime.RequiredError(
+        'projectConversationTitlesBodyDto',
+        'Required parameter "projectConversationTitlesBodyDto" was null or undefined when calling getProjectConversationTitles().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearer', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/projects/{id}/conversations/titles`;
+    urlPath = urlPath.replace(
+      `{${'id'}}`,
+      encodeURIComponent(String(requestParameters['id'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['projectConversationTitlesBodyDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ProjectConversationTitlesResponseDto>(
+      response,
+    );
+  }
+
+  /**
+   * Reads the bodies of the named conversations, as listed with `isTitlePending`, and returns them with their titles and read state resolved. Up to 100 names per request. Any reader of the project may call it.
+   * Resolve project conversations\' titles
+   */
+  async getProjectConversationTitles(
+    requestParameters: GetProjectConversationTitlesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ProjectConversationTitlesResponseDto> {
+    const response = await this.getProjectConversationTitlesRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
    * Lists the files directly under the project `artifacts/` folder, where the agents of the project\'s chats save their outputs, newest first. Nested paths are not listed. Any reader of the project may call it.
    * List a project\'s outputs
    */
@@ -922,7 +1001,7 @@ export class ProjectsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Lists the conversations stored in the project\'s `conversations/` folder, newest first, with their titles and authors.
+   * Lists every conversation stored in the project\'s `conversations/` folder, newest first, with their authors. DIAL Core cannot page the folder in this order, so the list is not paged; the client pages it locally. Bodies are read for the 20 newest conversations only: the others have a cached title or carry `isTitlePending`, which `POST /api/v1/projects/:id/conversations/titles` resolves.
    * List a project\'s conversations
    */
   async listProjectConversationsRaw(
@@ -937,14 +1016,6 @@ export class ProjectsApi extends runtime.BaseAPI {
     }
 
     const queryParameters: runtime.HTTPQuery = {};
-
-    if (requestParameters['limit'] != null) {
-      queryParameters['limit'] = requestParameters['limit'];
-    }
-
-    if (requestParameters['offset'] != null) {
-      queryParameters['offset'] = requestParameters['offset'];
-    }
 
     const headerParameters: runtime.HTTPHeaders = {};
 
@@ -979,7 +1050,7 @@ export class ProjectsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Lists the conversations stored in the project\'s `conversations/` folder, newest first, with their titles and authors.
+   * Lists every conversation stored in the project\'s `conversations/` folder, newest first, with their authors. DIAL Core cannot page the folder in this order, so the list is not paged; the client pages it locally. Bodies are read for the 20 newest conversations only: the others have a cached title or carry `isTitlePending`, which `POST /api/v1/projects/:id/conversations/titles` resolves.
    * List a project\'s conversations
    */
   async listProjectConversations(

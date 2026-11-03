@@ -72,7 +72,12 @@ const ConversationRow: FC<RowProps> = ({
   );
 
   return (
-    <li className="group/row flex min-w-0 items-center gap-1 rounded-xl focus-within:bg-(--bg-accent-primary-alpha,rgba(92,141,234,0.15)) hover:bg-(--bg-accent-primary-alpha,rgba(92,141,234,0.15))">
+    <li
+      className={mergeClasses(
+        'group/row flex min-w-0 items-center gap-1 rounded-xl',
+        styles.row,
+      )}
+    >
       <button
         type="button"
         aria-label={labels.openLabel(item.title, item.authorName)}
@@ -142,6 +147,7 @@ const ProjectConversationListComponent: FC<ProjectConversationListProps> = ({
   hasMore = false,
   isLoadingMore = false,
   onLoadMore,
+  isEmptyStateShown = true,
   onOpen,
   onRename,
   onDelete,
@@ -159,8 +165,9 @@ const ProjectConversationListComponent: FC<ProjectConversationListProps> = ({
       buildCssVars({
         '--pcl-read-dot': colors?.readDot,
         '--pcl-unread-dot': colors?.unreadDot,
+        '--pcl-row-hover': colors?.rowHoverBackground,
       }),
-    [colors?.readDot, colors?.unreadDot],
+    [colors?.readDot, colors?.unreadDot, colors?.rowHoverBackground],
   );
   const messageClassName = typography?.messageClassName ?? 'dial-small-text';
   /* The design shows only the empty state, with no Chats heading, while the project has no chats. */
@@ -228,6 +235,8 @@ const ProjectConversationListComponent: FC<ProjectConversationListProps> = ({
       </>
     );
   };
+
+  if (isEmpty && !isEmptyStateShown) return null;
 
   return (
     <section

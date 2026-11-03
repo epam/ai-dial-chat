@@ -48,6 +48,13 @@ const openRowMenu = async (item: 'Rename' | 'Delete') => {
 };
 
 describe('ProjectConversationsPanel', () => {
+  it('drops the Chats empty state while the outputs slot shows content', () => {
+    renderPanel({ items: [], hasOutputs: true, outputs: <p>outputs</p> });
+
+    expect(screen.getByText('outputs')).toBeTruthy();
+    expect(screen.queryByText(labels.list.emptyTitle)).toBeNull();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
   });

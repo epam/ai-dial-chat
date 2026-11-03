@@ -91,7 +91,7 @@ export interface ProjectViewColors {
 
 /** Typography overrides for the {@link ProjectView} component. */
 export interface ProjectViewTypography {
-  /** CSS class applied to the project name. Defaults to `'dial-h2-text'`. */
+  /** CSS class applied to the project name. Defaults to `'dial-h1-text'`. */
   titleClassName?: string;
   /** CSS class applied to the Details panel heading. Defaults to `'dial-body-semi-text'`. */
   panelTitleClassName?: string;
