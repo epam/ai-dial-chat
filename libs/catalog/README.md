@@ -27,7 +27,7 @@ It already includes the styles of the publish flow from `@epam/ai-dial-publish-p
 ## Peer Dependencies
 
 - `react`
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.67 (requires the public `/grid` entry)
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.69 (requires the public `/grid` entry)
 - `@epam/ai-dial-chat-shared`
 
 `ag-grid-community` and `@epam/ai-dial-publish-panel` are normal package
@@ -499,7 +499,9 @@ The table frame, header, row dividers and selected-row tint come from the
 12px card with the MD shadow and inset row dividers. `styles.colors` (`ListViewColors`) covers cell content only:
 `starFilled`, `folderIcon`, `selectedRowCheckIcon`, `nameText` and `versionText`. With no items, the grid
 shows its own empty state from `emptyStateTitle` (default `'No results'`) and
-`emptyStateDescription`.
+`emptyStateDescription`. The message is announced only with `isEmptyStateLive`
+(default `false`); `Catalog` sets it when a search or topic filter left the tab
+empty.
 
 Name, Folder and Tags share the spare width (Name takes twice the share of the
 other two), so widening the table widens the columns that carry variable-length
