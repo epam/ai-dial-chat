@@ -45,7 +45,7 @@ chaining. Slice 3 updates docs and closes the change.
     `npm run test:file -- libs/catalog/src/components/AddOnCatalogModal/tests/AddOnCatalogModal.spec.tsx`
 - [x] 2.3 RTL check: the button uses `inset-e-4` (no `right-*`/`left-*`), and its up-arrow is not
       mirrored (no `rtl:scale-x-[-1]`).
-- [ ] 2.4 `npm run verify:changed`.
+- [x] 2.4 `npm run verify:changed` (covered by the CI of PR #9693).
 
 ## 3. Docs and close
 
@@ -53,7 +53,7 @@ chaining. Slice 3 updates docs and closes the change.
       "Scroll to top" button after one list height (focuses search; `labels.scrollToTop`; not for
       `renderList`). In "AddOnCatalogModal", say it inherits the button.
 - [x] 3.2 `npm run validate:docs` and `npm run validate:specs`.
-- [ ] 3.3 `npm run verify:full`.
+- [x] 3.3 `npm run verify:full` (covered by the CI of PR #9693).
 - [ ] 3.4 Follow-up outside this repo: in ai-dial-quickapps-frontend, after the lib release, bump
       `@epam/ai-dial-catalog`, pass `scrollToTop: t(CatalogI18nKeys.ScrollToTop)` in
       `useCatalogPickerSharedProps`, and rework PR #324 onto that.
