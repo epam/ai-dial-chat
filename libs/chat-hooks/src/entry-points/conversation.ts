@@ -63,3 +63,4 @@ export * from '../conversation/useVisibleConversationIdsReporter/useVisibleConve
 export * from '../conversation/conversation-list';
 
 export * from '../conversation/useDeploymentChangeTracking';
+export * from '../conversation/conversation-data-source';

@@ -27,7 +27,7 @@ The application SHALL register `ROUTES.Projects` (`/projects`) in `apps/chat/src
 
 ### Requirement: The app owns project data through useProjects
 
-Data state SHALL be owned by the `useProjects(enabled: boolean)` hook (`apps/chat/src/hooks/projects/useProjects.ts`, one hook per file, with JSDoc on why it exists). It adapts the shared `useProjects` of `libs/chat-hooks/src/project/use-projects.ts` to the app's `projectsClient`. No new React context is introduced, because only the page consumes the data.
+Data state SHALL be owned by the shared `useProjects(client, enabled: boolean)` hook (`libs/chat-hooks/src/project/use-projects.ts`), which the page calls with the app's `projectsClient` (`apps/chat/src/hooks/projects/projects-client.ts`). No new React context is introduced, because only the page consumes the data.
 
 The hook calls `listProjects({ signal })` from `apps/chat/src/server-api/projects.api.ts`. That wrapper calls `projectsApi.listProjects(...)` on the `ProjectsApi` instance exported from `apps/chat/src/server-api/api-client.ts`; no `fetch` and no `base.ts` helper is used. The hook maps each `ProjectDto` through `mapProjectDtoToItem` (`libs/chat-hooks/src/project/project-mapping.ts`), which maps `ProjectSource` onto the lib's `ProjectSource`.
 

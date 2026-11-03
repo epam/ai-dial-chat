@@ -95,7 +95,9 @@ abort obsolete requests. `UseScheduledTaskSkillDisplayNamesOptions` and
 `handleAttach` and `handleClose`. Only files are materialized, in selection
 order. Replacement, close and unmount cancel the old promise with `undefined`;
 late completions cannot settle a new attempt. The host owns downloads, paths,
-File construction and translated errors.
+File construction and translated errors. It is not tied to skills: the New project
+form's "File manager" source uses it with `T = File`. A host that imports it from
+`./skill-editor` needs that entry's peers, including `@epam/ai-dial-skill-editor`.
 
 ### Pending attachment results
 
@@ -517,6 +519,191 @@ type inferred from the file name.
 `createSerializedKeyedWriter(write)` returns `{ enqueue, drop }`, a queue that
 runs one write at a time and never queues a key twice, for hosts that mark
 chats viewed from more than one page.
+
+Project file preview helpers (root and `./project`) build the keys and
+attachments a host opens in its attachment canvas, so the New, Edit and view
+pages share one scheme. `toProjectPreviewKey(scope, cardId)` returns
+`{scope}::{cardId}` (the scope is the project id, or a fixed value before the
+project exists) and `fromProjectPreviewKey(scope, key)` reads the card id back
+only for the same scope. `toProjectOutputCardId(name)` returns `artifacts/{name}`,
+so an output never shares a card id with a context file, and
+`fromProjectOutputCardId` reverses it. `toStoredProjectFileAttachment`,
+`toProjectOutputAttachment` and `toProjectContextFileAttachment` return the
+`DisplayAttachment` to open: a file added in the session is its own attachment
+(it carries the `File`), a stored file or output gets `url` from the
+`ProjectFileLocatorBuilder` the host passes. The locator scheme and its mapping
+to the project file endpoints stay with the host.
+
+```ts
+import {
+  fromProjectPreviewKey,
+  toProjectContextFileAttachment,
+  toProjectPreviewKey,
+} from '@epam/ai-dial-chat-hooks/project';
+
+/* The host owns the locator scheme its canvas content resolvers understand. */
+const toLocator = (projectId: string, name: string) =>
+  `${projectId}/files/context/${name}`;
+
+const attachment = toProjectContextFileAttachment(file, projectId, toLocator);
+const key = toProjectPreviewKey(projectId, file.id);
+const openCardId = fromProjectPreviewKey(projectId, canvasAttachmentId);
+```
+
+`useProjectFilePreview` (root and `./project`) is the controller the New project,
+Edit project and project view pages share, the project analogue of
+`useDialFilePreview`. It calls no canvas hook: the host passes the canvas
+`attachmentId`, `openAttachment(attachment, key, shouldCommit)`, `closeCanvas`,
+`startRequest()` (returns the commit guard of the latest request) and
+`resolveContextAttachment(cardId)`, plus `resolveOutputAttachment(name)` where
+outputs are shown. It derives `selectedCardId`, `selectedContextFileId` and
+`selectedOutputName` from the canvas, so there is no second state to keep in
+step, and returns `onContextFileClick`, `onOutputClick` and
+`closeIfRemoved(cards)`. Activating the open card closes the canvas, a card the
+host resolves to nothing is ignored, and `closeIfRemoved` closes the canvas only
+when the open context card is no longer among `cards`. Callbacks keep their
+identity while their inputs do; memoise `resolveContextAttachment` and
+`resolveOutputAttachment` on the cards they read. `UseProjectFilePreviewOptions`
+and `UseProjectFilePreviewResult` are public.
+
+```tsx
+import {
+  toProjectContextFileAttachment,
+  useProjectFilePreview,
+} from '@epam/ai-dial-chat-hooks/project';
+
+const { attachmentId, closeCanvas } = useAttachmentCanvas();
+const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
+const startRequest = useLatestCanvasRequest();
+const resolveContextAttachment = useCallback(
+  (id: string) => {
+    const file = files.find((item) => item.id === id);
+    return file && toProjectContextFileAttachment(file, projectId, toLocator);
+  },
+  [files, projectId],
+);
+const { selectedContextFileId, onContextFileClick, closeIfRemoved } =
+  useProjectFilePreview({
+    scope: projectId,
+    attachmentId,
+    openAttachment: openAttachmentCanvas,
+    closeCanvas,
+    startRequest,
+    resolveContextAttachment,
+  });
+```
+
+`useProjectDraft` (root and `./project`) owns the state of the New project and
+Edit project forms. Pass `{ mode: ProjectDraftMode.Create }`, or
+`{ mode: ProjectDraftMode.Edit, project }` with the loaded `ProjectDetailsDto`
+(or `null` while it loads). It returns `values`, `contextFiles`, `errors` and
+`setErrors` (for a rejection the host maps to a field), `onFieldChange` (a name
+change clears the name error), `onContextFilesChange` (clears the context
+error), `isDirty`, `isSeeded`, `removedFileNames` and `newFiles`. In edit mode
+the draft seeds itself from the project once per `contentVersion`, so a reload
+after a conflict replaces it and a re-render never does; it is neither seeded
+nor dirty until a project arrives. In create mode it is dirty once a field is
+non-empty or a file is staged. Navigation, the unsaved-changes guard, toasts and
+the canvas stay with the host; compose `onContextFilesChange` with
+`useProjectFilePreview`'s `closeIfRemoved`.
+
+```tsx
+import {
+  ProjectDraftMode,
+  useProjectDraft,
+} from '@epam/ai-dial-chat-hooks/project';
+
+const {
+  values,
+  contextFiles,
+  onFieldChange,
+  isDirty,
+  removedFileNames,
+  newFiles,
+} = useProjectDraft({ mode: ProjectDraftMode.Edit, project });
+```
+
+`createProjectChat(client, projectId, request, settings, onCreated)` (root and
+`./project`) creates a project chat from its first message (`request` is a
+`ConversationCreateRequest`: message, deployment, attachments, tool
+configuration, form values, skills), saves `settings` (`systemPrompt`,
+`temperature`, `responseFormat`) onto it, and calls `onCreated` with the saved
+chat even when saving the settings fails, then rethrows that failure; the chat
+exists either way, so a host that opens it avoids a duplicate on retry. A failed
+create rejects without calling `onCreated`. `classifyProjectChatCreateError(error)`
+resolves to `{ failure, requestId }` where `failure` is
+`ProjectChatCreateFailure.StorageFull` for the BFF's `project-storage-full` code
+and `ProjectChatCreateFailure.Failed` otherwise. The model selection, tool
+configuration, skill mentions, toasts and navigation stay with the host.
+
+```ts
+import {
+  classifyProjectChatCreateError,
+  createProjectChat,
+  ProjectChatCreateFailure,
+} from '@epam/ai-dial-chat-hooks/project';
+
+try {
+  await createProjectChat(
+    projectsClient,
+    projectId,
+    { firstMessage, deploymentId },
+    chatSettings,
+    (saved) => openChat(saved),
+  );
+} catch (error) {
+  const { failure, requestId } = await classifyProjectChatCreateError(error);
+  showError(failure === ProjectChatCreateFailure.StorageFull, requestId);
+}
+```
+
+`ConversationDataSource`, `ConversationListSync` and `NO_CONVERSATION_LIST_SYNC`
+(root and `./conversation`) are the contract a conversation page reads and writes
+through: the stream transport, `getConversation`/`saveConversation`, the
+save/delete `handlersApi`, `watchTitle`, the conversation and exit routes,
+`isReadOnly`, the sidebar `listSync`, `canDuplicate` and a host-resolved
+`notFoundMessageKey` string. `NO_CONVERSATION_LIST_SYNC` is the list sync of a
+conversation that has no sidebar row.
+
+`createProjectConversationDataSource(options)` (root and `./project`) returns that
+contract for a chat stored inside a project. It reads, saves, deletes, streams and
+attaches through the `client` you pass (`getProjectConversation`,
+`saveProjectConversation`, `deleteProjectConversation`,
+`attachToProjectGeneration`); maps a stream path to a conversation id by adding
+`projects/` only when it is missing; opens read-only unless `canEdit`; offers no
+Duplicate; marks the open chat viewed through your `viewedWriter` (a
+`SerializedKeyedWriter` you share with the project pages) and drops a waiting mark
+when a generation starts; and, because Core resource subscriptions inside a
+project are unavailable, polls the watch stream every five seconds and re-reads
+the conversation up to five times, two seconds apart, for the title its first
+reply produces. The host supplies `stream` (`completionsBasePath`, `getCsrfToken`,
+`setCsrfToken`), `routes` and `notFoundMessageKey`.
+
+```ts
+import { createProjectConversationDataSource } from '@epam/ai-dial-chat-hooks/project';
+
+const source = createProjectConversationDataSource({
+  projectId,
+  canEdit,
+  client: projectsClient,
+  stream: {
+    completionsBasePath: `/api/projects/${encodeURIComponent(projectId)}/conversations`,
+    getCsrfToken,
+    setCsrfToken,
+  },
+  routes: { getConversationRoute, getExitRoute: () => projectRoute },
+  viewedWriter,
+});
+```
+
+`usePublishHistory({ isOpen, entityId, loadHistory })` (root and `./catalog`) returns
+the `PublishHistoryEntry[]` a publish panel uses to block a folder the entity is
+already published to. It reads through your `loadHistory(entityId)` each time
+`isOpen` turns true, so a publication requested since the last open shows, leaves
+the history empty when a read fails (the backend still refuses a duplicate), and
+ignores a read that finishes after the panel closed or `entityId` changed. The
+request and its mapping to `PublishHistoryEntry` (for the catalog endpoint,
+`mapPublishHistoryEntryDto`) stay with the host.
 
 ```tsx
 import {

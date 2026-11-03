@@ -12,66 +12,14 @@ import type { ProjectContextFile } from '@epam/ai-dial-projects';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { attachmentCanvasUrlResolvers } from '../attachment-display-resolvers';
 import {
-  fromProjectOutputCardId,
-  fromProjectPreviewKey,
   toProjectContextFileAttachment,
   toProjectOutputAttachment,
-  toProjectOutputCardId,
-  toProjectPreviewKey,
   toStoredProjectFileAttachment,
 } from '../project-file-preview';
 
 const PROJECT_ID = 'projects/b/q4';
 
-describe('project preview keys', () => {
-  it('prefixes the card id with its scope', () => {
-    expect(toProjectPreviewKey(PROJECT_ID, 'tickets.csv')).toBe(
-      'projects/b/q4::tickets.csv',
-    );
-  });
-
-  it('reads the card id back for the same scope', () => {
-    expect(
-      fromProjectPreviewKey(PROJECT_ID, 'projects/b/q4::tickets.csv'),
-    ).toBe('tickets.csv');
-  });
-
-  it('keeps a card id that itself contains the separator', () => {
-    expect(fromProjectPreviewKey('new', 'new::stored:a::b.csv')).toBe(
-      'stored:a::b.csv',
-    );
-  });
-
-  it.each([
-    ['another scope', 'projects/b/other::tickets.csv'],
-    ['a key that is not a project key', '0:abc'],
-    ['no key', undefined],
-  ])('returns nothing for %s', (_, key) => {
-    expect(fromProjectPreviewKey(PROJECT_ID, key)).toBeUndefined();
-  });
-});
-
-describe('project output cards', () => {
-  it('prefixes an output name so it never matches a context file name', () => {
-    const key = toProjectPreviewKey(
-      PROJECT_ID,
-      toProjectOutputCardId('notes.md'),
-    );
-
-    expect(key).toBe('projects/b/q4::artifacts/notes.md');
-    expect(fromProjectPreviewKey(PROJECT_ID, key)).not.toBe('notes.md');
-    expect(
-      fromProjectOutputCardId(fromProjectPreviewKey(PROJECT_ID, key)),
-    ).toBe('notes.md');
-  });
-
-  it.each([
-    ['a context file card id', 'notes.md'],
-    ['no card id', undefined],
-  ])('reads no output name from %s', (_, cardId) => {
-    expect(fromProjectOutputCardId(cardId)).toBeUndefined();
-  });
-
+describe('toProjectOutputAttachment', () => {
   it('builds an idle attachment whose url is the output locator', () => {
     expect(
       toProjectOutputAttachment(

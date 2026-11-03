@@ -1,3 +1,4 @@
+import { useProject } from '@epam/ai-dial-chat-hooks/project';
 import { useIsMobile } from '@epam/ai-dial-chat-shared';
 import { ProjectChatHeader } from '@epam/ai-dial-projects';
 import {
@@ -28,7 +29,7 @@ import { ProjectsI18nKeys } from '../../constants/translation-keys';
 import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useChatLayoutHeaderSlot } from '../../context/ChatLayoutHeaderSlotContext';
 import { ConversationDataSourceContext } from '../../context/ConversationDataSourceContext';
-import { useProject } from '../../hooks/projects/useProject';
+import { projectsClient } from '../../hooks/projects/projects-client';
 import type {
   ProjectChatNavigationState,
   ProjectChatProjectSummary,
@@ -57,7 +58,11 @@ const ProjectChatPage: FC = () => {
     [bucket, splat],
   );
   const projectId = route?.projectId ?? null;
-  const { project, isNotFound, hasError } = useProject(projectId, isEnabled);
+  const { project, isNotFound, hasError } = useProject(
+    projectsClient,
+    projectId,
+    isEnabled,
+  );
   /*
    * The opening page's project renders the chat at once; the details, which
    * read the whole project archive, replace it when they arrive.

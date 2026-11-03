@@ -1,9 +1,9 @@
 import type { ConversationListItemDto } from '@epam/ai-dial-chat-api-client';
-import { getConversationRoute } from '../constants/routes';
 import type {
   ConversationDataSource,
   ConversationListSync,
-} from '../models/conversation-data-source';
+} from '@epam/ai-dial-chat-hooks/conversation';
+import { getConversationRoute } from '../constants/routes';
 import { conversationsApi } from '../server-api/api-client';
 import {
   getConversation,
@@ -11,16 +11,6 @@ import {
 } from '../server-api/conversations.api';
 import { ROUTES } from '../types/routes';
 import { conversationStreamTransport } from './conversation-stream-transport';
-
-/** List side effects of a conversation that is not in the sidebar: each one does nothing. */
-export const NO_CONVERSATION_LIST_SYNC: ConversationListSync = {
-  updateTitle: () => undefined,
-  bumpActivity: () => undefined,
-  markUnread: () => undefined,
-  markViewed: async () => undefined,
-  remove: () => undefined,
-  refresh: async () => undefined,
-};
 
 /**
  * Whether a top-level conversation opens read-only: the list item's share
