@@ -35,7 +35,7 @@ The page SHALL:
 
 ### Requirement: The app owns project data through useProject
 
-`useProject(client, id: string | null, enabled: boolean)` (`libs/chat-hooks/src/project/use-project.ts`, exported from `@epam/ai-dial-chat-hooks/project`) SHALL call `client.getProject(id, signal)`. The app adapter `useProject(id, enabled)` (`apps/chat/src/hooks/projects/useProject.ts`) binds it to `projectsClient`, which wraps `getProject` from `apps/chat/src/server-api/projects.api.ts` (`projectsApi.getProject`). The hook returns `{ project, isLoading, hasError, isNotFound, retry, refresh }`:
+`useProject(client, id: string | null, enabled: boolean)` (`libs/chat-hooks/src/project/use-project.ts`, exported from `@epam/ai-dial-chat-hooks/project`) SHALL call `client.getProject(id, signal)`. The pages call it with `projectsClient` (`apps/chat/src/hooks/projects/projects-client.ts`), which wraps `getProject` from `apps/chat/src/server-api/projects.api.ts` (`projectsApi.getProject`). The hook returns `{ project, isLoading, hasError, isNotFound, retry, refresh }`:
 
 - `project` is the `ProjectDetailsDto`, or `null`.
 - The fetch runs in `useEffect` with an `AbortController`. It aborts on unmount and on an id change, and a cancelled request never sets state.
@@ -481,7 +481,7 @@ No new analytics event or metric SHALL be introduced. The BFF routes are covered
 
 ### Requirement: ProjectViewPage owns the project's outputs through useProjectArtifacts
 
-`ProjectViewPage` (`apps/chat/src/pages/ProjectViewPage/ProjectViewPage.tsx`) SHALL own the outputs state through `useProjectArtifacts(projectId)`. That is the app adapter `apps/chat/src/hooks/projects/useProjectArtifacts.ts`, which binds `projectsClient` to the shared hook `useProjectArtifacts(client, projectId)` in `libs/chat-hooks/src/project/use-project-artifacts.ts`. The page owns the state, not the section, so that the project watch can refresh it (see the `project-view-live-updates` capability). No new React context is added: the page is the only consumer.
+`ProjectViewPage` (`apps/chat/src/pages/ProjectViewPage/ProjectViewPage.tsx`) SHALL own the outputs state through `useProjectArtifacts(projectId)`. The page calls the shared hook `useProjectArtifacts(client, projectId)` in `libs/chat-hooks/src/project/use-project-artifacts.ts` with `projectsClient`. The page owns the state, not the section, so that the project watch can refresh it (see the `project-view-live-updates` capability). No new React context is added: the page is the only consumer.
 
 The shared hook SHALL:
 
@@ -616,7 +616,7 @@ Rendering:
 - `attachment = toStoredProjectFileAttachment({ id: name, name, contentType }, projectId)`, whose `url` is the output locator `{projectId}/files/artifacts/{name}`, from `toProjectArtifactUrl` in `apps/chat/src/utils/dial-file.ts`;
 - `key = toProjectPreviewKey(projectId, 'artifacts/' + name)`. A context file name cannot contain `/`, so an output and a context file with the same name are never the same preview and never both render selected.
 
-`toStoredProjectFileAttachment` (`apps/chat/src/utils/project-file-preview.ts`) SHALL take the locator builder for the folder, so that context and output cards share it.
+The shared `toStoredProjectFileAttachment` (`libs/chat-hooks/src/project/project-file-preview.ts`, exported from `@epam/ai-dial-chat-hooks/project`) SHALL take the locator builder for the folder as a required parameter, so that context and output cards share it; `apps/chat/src/utils/project-file-preview.ts` binds it to the app's locator builders.
 
 `resolveDialUrl` SHALL map an output locator to `GET /api/v1/projects/{encodeURIComponent(projectId)}/artifacts/{encodeURIComponent(name)}` (see the `project-detail-api` capability).
 

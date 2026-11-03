@@ -40,7 +40,7 @@ The page SHALL:
 - `values` = `{ name, instructions }` from the DTO; the form has no description field, so the DTO's `description` is not edited;
 - `contextFiles` = one `StoredProjectContextFile` per `contextFiles[]` entry: `{ id: 'stored:' + name, name, size, contentType, type, status: RequestStatus.Idle, isStored: true }`, with `contentType` and `type` inferred from the name.
 
-The page owns these, in `useState`:
+The page owns these through the shared `useProjectDraft` hook (edit mode, `libs/chat-hooks/src/project/use-project-draft.ts`, exported from `@epam/ai-dial-chat-hooks/project`), which keeps them in `useState`:
 
 - `values`;
 - `contextFiles`, a `ProjectContextFile[]`;
@@ -76,7 +76,7 @@ The page owns these, in `useState`:
 
 ### Requirement: Save sends one atomic update and handles every outcome
 
-`useSaveProject` (`apps/chat/src/hooks/projects/useSaveProject.ts`) SHALL call `updateProject(id, fields, newFiles, removedFileNames, contentVersion, signal)` in `apps/chat/src/server-api/projects.api.ts`. That wrapper calls:
+The shared `useSaveProject(client)` (`libs/chat-hooks/src/project/use-project-submit.ts`, called by the page with `projectsClient` from `apps/chat/src/hooks/projects/projects-client.ts`) SHALL call `updateProject(id, fields, newFiles, removedFileNames, contentVersion, signal)` in `apps/chat/src/server-api/projects.api.ts`. That wrapper calls:
 
 ```ts
 projectsApi.updateProject({
@@ -163,7 +163,7 @@ The edit page SHALL inherit `ProjectCreateForm`'s layout, RTL and accessibility 
 - The Reload action of the conflict toast is a keyboard-operable button.
 - Focus moves to Name on `name-taken`.
 - Stored context cards have the same named remove buttons as new ones (`labels.removeFileLabel(name)`).
-- The page's handlers are `useCallback`. The draft is seeded by an effect once per loaded `contentVersion` (a `seededContentVersion` gate), and the page shows `RouteFallback` until it is seeded.
+- The page's handlers are `useCallback`. The draft hook seeds itself by an effect once per loaded `contentVersion`, and the page shows `RouteFallback` until it is seeded.
 
 #### Scenario: Remove button is named
 

@@ -221,7 +221,7 @@ A silent refresh that started before the mark does not bring the dot back: `mark
 - `shouldMarkOpenChatViewed: true`;
 - the other members as `NO_CONVERSATION_LIST_SYNC`.
 
-`ConversationListSync` (`apps/chat/src/models/conversation-data-source.ts`) gains the optional `shouldMarkOpenChatViewed?: boolean`. When it is `true`, `ConversationPage` (`apps/chat/src/pages/Conversation/Conversation.tsx`) treats the open chat as unread-tracked without looking it up in `ConversationsContext`. Its existing effect therefore calls `listSync.markViewed(conversationId)`:
+`ConversationListSync` (`libs/chat-hooks/src/conversation/conversation-data-source.ts`, exported from `@epam/ai-dial-chat-hooks/conversation` and re-exported by `apps/chat/src/models/conversation-data-source.ts`) gains the optional `shouldMarkOpenChatViewed?: boolean`. When it is `true`, `ConversationPage` (`apps/chat/src/pages/Conversation/Conversation.tsx`) treats the open chat as unread-tracked without looking it up in `ConversationsContext`. Its existing effect therefore calls `listSync.markViewed(conversationId)`:
 
 - once when the conversation has loaded with no generation running and no failed recovery;
 - again when a generation ends while the chat is still open.

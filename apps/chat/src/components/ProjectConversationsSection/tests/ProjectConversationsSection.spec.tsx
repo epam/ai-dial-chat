@@ -1,4 +1,5 @@
 import { ResponseError } from '@epam/ai-dial-chat-api-client';
+import { useProjectConversations } from '@epam/ai-dial-chat-hooks/project';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
@@ -13,7 +14,7 @@ import { useDeployments } from '../../../context/DeploymentsContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { createDeploymentsContextValue } from '../../../context/tests/deployments-context-mock';
 import { createNotificationContextValue } from '../../../context/tests/notification-context-mock';
-import { useProjectConversations } from '../../../hooks/projects/useProjectConversations';
+import { projectsClient } from '../../../hooks/projects/projects-client';
 import {
   createProjectConversation,
   deleteProjectConversation,
@@ -95,7 +96,7 @@ const restoreDefaultSelection = vi.fn();
 
 /* The page owns the list state; the harness plays the page. */
 const SectionHarness = ({ canEdit }: { canEdit: boolean }) => {
-  const conversations = useProjectConversations(PROJECT_ID);
+  const conversations = useProjectConversations(projectsClient, PROJECT_ID);
   return (
     <ProjectConversationsSection
       projectId={PROJECT_ID}
@@ -198,6 +199,27 @@ describe('ProjectConversationsSection', () => {
       expect.objectContaining({ prompt: 'Be brief', temperature: 0.5 }),
     );
     expect(restoreDefaultSelection).toHaveBeenCalled();
+  });
+
+  it('still opens the new chat when saving its settings fails, without an error toast', async () => {
+    const created = { id: `${PROJECT_ID}/conversations/gpt-4o__Draft__2` };
+    vi.mocked(createProjectConversation).mockResolvedValue(created as never);
+    vi.mocked(saveProjectConversation).mockRejectedValue(new Error('save'));
+    const { router } = renderSection();
+
+    await userEvent.click(
+      screen.getByRole('button', {
+        name: ChatI18nKeys.Placeholder,
+      }),
+    );
+
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe(
+        '/projects/chat/a1b2c3/q4/conversations/gpt-4o__Draft__2',
+      ),
+    );
+    expect(showNotification).not.toHaveBeenCalled();
+    expect(composerMenus.seedSkillMentions).not.toHaveBeenCalled();
   });
 
   it('reports a full project and stays on the page', async () => {
