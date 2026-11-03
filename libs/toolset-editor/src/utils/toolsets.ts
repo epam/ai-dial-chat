@@ -53,6 +53,32 @@ const isValidEndpointUrlCandidate = (trimmed: string): boolean => {
 export const isValidEndpointUrl = (value: string): boolean =>
   isValidEndpointUrlCandidate(value.trim());
 
+/*
+ * RFC 8707: an absolute URI without a fragment. Any scheme is allowed — DIAL
+ * Core applies the same rule and sends the value on the token exchange as is.
+ * The pattern and length cap match what the backend accepts, so a value the
+ * editor lets through is never rejected on save.
+ */
+const OAUTH_RESOURCE_PATTERN = /^[A-Za-z][A-Za-z0-9+.-]*:[^\s#]+$/;
+const OAUTH_RESOURCE_MAX_LENGTH = 2048;
+
+/** Returns whether an OAuth resource indicator is blank or an absolute URI without whitespace or a fragment. */
+export const isValidOAuthResource = (value?: string): boolean => {
+  const trimmed = value?.trim() ?? '';
+  if (!trimmed) return true;
+  if (
+    trimmed.length > OAUTH_RESOURCE_MAX_LENGTH ||
+    !OAUTH_RESOURCE_PATTERN.test(trimmed)
+  ) {
+    return false;
+  }
+  try {
+    return Boolean(new URL(trimmed));
+  } catch {
+    return false;
+  }
+};
+
 const repairSingleSlashUrlScheme = (value: string): string =>
   value.replace(/^(https?):\/([^/])/, '$1://$2');
 
@@ -107,7 +133,8 @@ export const isToolsetAuthValid = (
       Boolean(auth.clientId?.trim()) &&
       (isEditMode || Boolean(auth.clientSecret?.trim())) &&
       isValidEndpointUrl(auth.authorizationEndpoint ?? '') &&
-      isValidEndpointUrl(auth.tokenEndpoint ?? '')
+      isValidEndpointUrl(auth.tokenEndpoint ?? '') &&
+      isValidOAuthResource(auth.resource)
     );
   }
   return true;

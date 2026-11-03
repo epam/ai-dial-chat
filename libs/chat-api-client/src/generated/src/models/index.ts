@@ -542,6 +542,12 @@ export interface ApplicationExternalServiceDto {
    */
   codeChallengeMethod?: string;
   /**
+   * RFC 8707 resource indicator DIAL Core sends on the token exchange; the client puts the same value on the authorization URL.
+   * @type {string}
+   * @memberof ApplicationExternalServiceDto
+   */
+  resource?: string;
+  /**
    * External-service identifier within the application
    * @type {string}
    * @memberof ApplicationExternalServiceDto
@@ -4694,6 +4700,12 @@ export interface DialToolsetAuthSettingsDto {
    */
   scopesSupported?: Array<string>;
   /**
+   * RFC 8707 resource indicator DIAL Core sends on the token exchange; the client puts the same value on the authorization URL.
+   * @type {string}
+   * @memberof DialToolsetAuthSettingsDto
+   */
+  resource?: string;
+  /**
    *
    * @type {string}
    * @memberof DialToolsetAuthSettingsDto
@@ -5249,6 +5261,12 @@ export interface ExternalServiceAuthSettingsBodyDto {
    * @memberof ExternalServiceAuthSettingsBodyDto
    */
   scopesSupported?: Array<string>;
+  /**
+   * OAUTH: the RFC 8707 resource indicator DIAL Core sends on the token exchange. An empty string clears it. The PUT replaces the whole service, so leaving it out erases a stored value — resend it when editing a service.
+   * @type {string}
+   * @memberof ExternalServiceAuthSettingsBodyDto
+   */
+  resource?: string;
 }
 
 /**
@@ -5577,6 +5595,12 @@ export interface GetExternalServiceResponseDto {
    * @memberof GetExternalServiceResponseDto
    */
   codeChallengeMethod?: string;
+  /**
+   * RFC 8707 resource indicator DIAL Core sends on the token exchange; the client puts the same value on the authorization URL.
+   * @type {string}
+   * @memberof GetExternalServiceResponseDto
+   */
+  resource?: string;
 }
 
 /**
@@ -8848,6 +8872,12 @@ export interface ToolsetAuthSettingsBodyDto {
    * @memberof ToolsetAuthSettingsBodyDto
    */
   codeChallenge?: string;
+  /**
+   * OAUTH with a static client: the RFC 8707 resource indicator DIAL Core sends on the token exchange. Omitted keeps the stored value, an empty string clears it. DIAL Core rejects it for a dynamically registered client.
+   * @type {string}
+   * @memberof ToolsetAuthSettingsBodyDto
+   */
+  resource?: string;
 }
 
 /**

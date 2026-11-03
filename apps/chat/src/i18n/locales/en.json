@@ -1565,6 +1565,9 @@
       "tokenEndpointRequired": "Token endpoint is required",
       "scopesLabel": "Scopes",
       "scopesPlaceholder": "Enter scopes",
+      "resourceLabel": "Resource",
+      "resourcePlaceholder": "Enter resource URI",
+      "resourceInvalid": "Enter an absolute URI without a fragment",
       "logoutConfirmDescription": "Are you sure you want to log out? You will need to re-enter your credentials to use this toolset again."
     },
     "error": {

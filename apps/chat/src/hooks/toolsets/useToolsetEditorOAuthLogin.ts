@@ -13,6 +13,7 @@ import {
 import type {
   ToolsetAuthFormData,
   ToolsetOAuthLoginHandler,
+  ToolsetOAuthLoginRequest,
   ToolsetOAuthLoginResult,
 } from '@epam/ai-dial-toolset-editor';
 import { ToolsetOAuthLoginStatus } from '@epam/ai-dial-toolset-editor';
@@ -74,6 +75,44 @@ const settleInitiation = async (
   return { status: ToolsetOAuthLoginStatus.Cancelled };
 };
 
+/** Popup reserved and the toolset saved, with the auth settings Core stored. */
+interface StoredAuthPopup {
+  popup: Window;
+  toolsetId: string;
+  storedAuth: ToolsetAuthFormData;
+}
+
+/**
+ * Opens the popup while the click still counts as a user gesture, persists
+ * the toolset, then reads the auth settings Core stored — including what it
+ * assigned during the save. Resolves the editor's outcome instead when any
+ * step stops the flow.
+ */
+const openPopupWithStoredAuth = async (
+  ensureSaved: ToolsetOAuthLoginRequest['ensureSaved'],
+): Promise<StoredAuthPopup | ToolsetOAuthLoginResult> => {
+  const popup = openToolsetOAuthPopup();
+  if (!popup) return { status: ToolsetOAuthLoginStatus.PopupBlocked };
+
+  const toolsetId = await ensureSaved();
+  if (!toolsetId) {
+    popup.close();
+    return { status: ToolsetOAuthLoginStatus.Cancelled };
+  }
+
+  try {
+    return {
+      popup,
+      toolsetId,
+      storedAuth: await fetchToolsetAuthSettings(toolsetId),
+    };
+  } catch (error) {
+    popup.close();
+    const { traceId } = await getApiErrorDetails(error);
+    return { status: ToolsetOAuthLoginStatus.Failed, traceId };
+  }
+};
+
 /**
  * Owns the toolset editor's OAuth login flow on the application side: the
  * popup, the callback route it returns through, the credentials level, and
@@ -87,48 +126,57 @@ export const useToolsetEditorOAuthLogin = (): ToolsetOAuthLoginHandler =>
      * "With Login" and no client id yet means this OAuth client relies on
      * Core's dynamic client registration (RFC 7591), which only assigns
      * `clientId`/`authorizationEndpoint` once the toolset is created — the
-     * pre-save form state never carries them. The popup is opened
-     * synchronously, before the persist/fetch awaits, so it stays a
-     * user-triggered popup rather than one browsers block as programmatic.
+     * pre-save form state never carries them.
      */
     const needsDynamicRegistration =
       auth.withLogin === WithLogin.WithLogin && !auth.clientId?.trim();
 
     if (needsDynamicRegistration) {
-      const popup = openToolsetOAuthPopup();
-      if (!popup) return { status: ToolsetOAuthLoginStatus.PopupBlocked };
-
-      const savedToolsetId = await ensureSaved();
-      if (!savedToolsetId) {
-        popup.close();
-        return { status: ToolsetOAuthLoginStatus.Cancelled };
-      }
-
-      let resolvedAuth: ToolsetAuthFormData;
-      try {
-        resolvedAuth = await fetchToolsetAuthSettings(savedToolsetId);
-      } catch (error) {
-        popup.close();
-        const { traceId } = await getApiErrorDetails(error);
-        return { status: ToolsetOAuthLoginStatus.Failed, traceId };
-      }
+      const prepared = await openPopupWithStoredAuth(ensureSaved);
+      if ('status' in prepared) return prepared;
+      const { popup, toolsetId, storedAuth } = prepared;
 
       const settled = await settleInitiation(
         navigateToolsetOAuthPopup(
           popup,
-          resolvedAuth,
-          savedToolsetId,
+          storedAuth,
+          toolsetId,
           ROUTES.ToolsetSignIn,
           ToolsetCredentialsLevel.User,
         ),
-        savedToolsetId,
+        toolsetId,
       );
       /*
        * Registration assigned the client fields, so they are reported back
        * whatever the outcome — the editor shows them even if authorizing
        * then failed.
        */
-      return { ...settled, auth: resolvedAuth };
+      return { ...settled, auth: storedAuth };
+    }
+
+    /*
+     * A static client saved without a resource may get one from the MCP
+     * server's Protected Resource Metadata during the save. Core sends that
+     * value on the token exchange, so the authorize URL has to carry it too
+     * or a server enforcing RFC 8707 rejects the exchange.
+     */
+    if (auth.withLogin === WithLogin.WithConfig && !auth.resource?.trim()) {
+      const prepared = await openPopupWithStoredAuth(ensureSaved);
+      if ('status' in prepared) return prepared;
+      const { popup, toolsetId, storedAuth } = prepared;
+
+      const settled = await settleInitiation(
+        navigateToolsetOAuthPopup(
+          popup,
+          { ...auth, resource: storedAuth.resource },
+          toolsetId,
+          ROUTES.ToolsetSignIn,
+          ToolsetCredentialsLevel.User,
+        ),
+        toolsetId,
+      );
+      // Only the resource: the rest of the stored settings lack the typed secret.
+      return { ...settled, auth: { resource: storedAuth.resource } };
     }
 
     const savedToolsetId = await ensureSaved();

@@ -7,6 +7,7 @@ import {
   isToolsetAuthValid,
   isToolsetFormValid,
   isValidEndpointUrl,
+  isValidOAuthResource,
   normalizeReturnedEndpointUrl,
 } from '../toolsets';
 
@@ -101,7 +102,56 @@ describe('normalizeReturnedEndpointUrl', () => {
   });
 });
 
+describe('isValidOAuthResource', () => {
+  it.each([
+    undefined,
+    '',
+    '   ',
+    'https://mcp.example.com/mcp',
+    '  https://mcp.example.com/mcp  ',
+    'urn:example:resource',
+  ])('accepts %j', (value) => {
+    expect(isValidOAuthResource(value)).toBe(true);
+  });
+
+  it.each([
+    'mcp.example.com/mcp',
+    '/mcp',
+    'https://mcp.example.com/mcp#tools',
+    'https://mcp.example.com/ mcp',
+    'foo:',
+    'mailto:',
+  ])('rejects %j', (value) => {
+    expect(isValidOAuthResource(value)).toBe(false);
+  });
+
+  it('accepts a resource of 2048 characters and rejects a longer one', () => {
+    const prefix = 'https://mcp.example.com/';
+    const atLimit = prefix + 'a'.repeat(2048 - prefix.length);
+
+    expect(isValidOAuthResource(atLimit)).toBe(true);
+    expect(isValidOAuthResource(`${atLimit}a`)).toBe(false);
+  });
+});
+
 describe('isToolsetAuthValid', () => {
+  it('rejects a static OAuth client whose resource is invalid and accepts a blank one', () => {
+    const auth = {
+      authenticationType: ToolsetAuthTypes.OAuth,
+      withLogin: WithLogin.WithConfig,
+      isLoggedIn: false,
+      clientId: 'client-id',
+      clientSecret: 'secret',
+      authorizationEndpoint: 'https://auth.example.com/authorize',
+      tokenEndpoint: 'https://auth.example.com/token',
+    };
+    expect(isToolsetAuthValid({ ...auth, resource: 'mcp/x' })).toBe(false);
+    expect(isToolsetAuthValid({ ...auth, resource: '' })).toBe(true);
+    expect(
+      isToolsetAuthValid({ ...auth, resource: 'https://mcp.example.com/mcp' }),
+    ).toBe(true);
+  });
+
   it('requires both API key header and value for API-key login', () => {
     expect(
       isToolsetAuthValid({

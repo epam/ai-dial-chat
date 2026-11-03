@@ -537,6 +537,81 @@ describe('AuthSection', () => {
       });
     });
 
+    describe('resource', () => {
+      it('renders an optional Resource field for OAuth with a static client', () => {
+        renderSection({ auth: oauthWithConfigAuth() });
+        const input = screen.getByLabelText('Resource') as HTMLInputElement;
+        expect(input.required).toBe(false);
+      });
+
+      it.each([
+        ['OAuth with dynamic registration', oauthWithLoginDynamicAuth()],
+        [
+          'API key',
+          {
+            authenticationType: ToolsetAuthTypes.ApiKey,
+            withLogin: WithLogin.WithLogin,
+            isLoggedIn: false,
+          },
+        ],
+        ['no authentication', noneAuth()],
+      ])('renders no Resource field for %s', (_label, auth) => {
+        renderSection({ auth });
+        expect(screen.queryByLabelText('Resource')).toBeNull();
+      });
+
+      it('reports the typed value to the host', async () => {
+        const onAuthChange = vi.fn();
+        renderSection({ auth: oauthWithConfigAuth(), onAuthChange });
+
+        await user.type(screen.getByLabelText('Resource'), 'u');
+
+        expect(onAuthChange).toHaveBeenLastCalledWith({ resource: 'u' });
+      });
+
+      it('shows the stored value and its validation error', () => {
+        renderSection({
+          auth: {
+            ...oauthWithConfigAuth(),
+            resource: 'https://mcp.example.com/mcp#x',
+          },
+          errors: { resource: 'Enter an absolute URI without a fragment' },
+        });
+
+        expect(
+          (screen.getByLabelText('Resource') as HTMLInputElement).value,
+        ).toBe('https://mcp.example.com/mcp#x');
+        expect(
+          screen.getByText('Enter an absolute URI without a fragment'),
+        ).toBeTruthy();
+      });
+
+      it('keeps Log in disabled while the resource is invalid', () => {
+        renderSection({
+          auth: { ...oauthWithConfigAuth(), resource: 'mcp.example.com/mcp' },
+        });
+        expect(
+          (screen.getByRole('button', { name: 'Log in' }) as HTMLButtonElement)
+            .disabled,
+        ).toBe(true);
+      });
+
+      it('disables the field while saving', () => {
+        renderSection({ auth: oauthWithConfigAuth(), isSaving: true });
+        expect(
+          (screen.getByLabelText('Resource') as HTMLInputElement).disabled,
+        ).toBe(true);
+      });
+
+      it('uses host-supplied copy', () => {
+        renderSection({
+          auth: oauthWithConfigAuth(),
+          labels: { resourceLabel: 'Ресурс', resourcePlaceholder: 'URI' },
+        });
+        expect(screen.getByLabelText('Ресурс')).toBeTruthy();
+      });
+    });
+
     it('renders OAuth endpoint URL validation errors', () => {
       const errors: ToolsetFormErrors = {
         authorizationEndpoint: 'Invalid authorization endpoint',

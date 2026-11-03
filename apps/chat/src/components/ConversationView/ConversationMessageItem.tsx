@@ -767,7 +767,7 @@ const ConversationMessageItem: FC<Props> = ({
       openAnnotationAttachment(attachment, resolveDialFileDownloadUrl);
   }, []);
 
-  const mcpAppMatch = findMcpAppForMessage(msg, mcpAppTools, isStreaming);
+  const mcpAppMatch = findMcpAppForMessage(msg, mcpAppTools);
   const mcpAppToolCallSeed = useMemo(
     () =>
       mcpAppMatch

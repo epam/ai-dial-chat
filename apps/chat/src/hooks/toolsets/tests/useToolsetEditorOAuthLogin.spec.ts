@@ -65,6 +65,7 @@ const configuredAuth = (): ToolsetAuthFormData => ({
   authorizationEndpoint: 'https://auth.example.com/authorize',
   tokenEndpoint: 'https://auth.example.com/token',
   scopes: [],
+  resource: 'https://mcp.example.com/mcp',
 });
 
 /** OAuth "With Login" with no configured client — relies on Core's dynamic client registration. */
@@ -201,6 +202,118 @@ describe('useToolsetEditorOAuthLogin', () => {
 
       await expect(promise).resolves.toEqual({
         status: ToolsetOAuthLoginStatus.Cancelled,
+      });
+    });
+  });
+
+  describe('useToolsetEditorOAuthLogin — configured client without a resource', () => {
+    const STORED_RESOURCE = 'https://mcp.example.com/mcp';
+    const blankResourceAuth = (): ToolsetAuthFormData => ({
+      ...configuredAuth(),
+      resource: '',
+    });
+
+    it('opens the popup before saving, then authorizes with the resource Core stored', async () => {
+      let releaseSave: (id: string) => void = () => {
+        /* replaced synchronously below */
+      };
+      const ensureSaved = vi.fn(
+        () =>
+          new Promise<string>((resolve) => {
+            releaseSave = resolve;
+          }),
+      );
+      vi.mocked(fetchToolsetAuthSettings).mockResolvedValue({
+        ...blankResourceAuth(),
+        clientSecret: undefined,
+        resource: STORED_RESOURCE,
+      });
+
+      const { result } = renderHook(() => useToolsetEditorOAuthLogin());
+      const promise = result.current({
+        auth: blankResourceAuth(),
+        ensureSaved,
+      });
+
+      expect(capturedPopup).toBeDefined();
+      expect(capturedPopup?.location.href).toBe('');
+
+      releaseSave(TOOLSET_ID);
+      await vi.waitFor(() =>
+        expect(capturedPopup?.location.href).toContain('client_id=client-id'),
+      );
+      expect(fetchToolsetAuthSettings).toHaveBeenCalledWith(TOOLSET_ID);
+      expect(
+        new URL(capturedPopup?.location.href ?? '').searchParams.get(
+          'resource',
+        ),
+      ).toBe(STORED_RESOURCE);
+
+      postOAuthResult(readFlowId(), {
+        type: ToolsetOAuthResultType.Success,
+        toolsetId: TOOLSET_ID,
+        credentialsLevel: ToolsetCredentialsLevel.User,
+      });
+
+      /* Only the resource comes back, so the typed client secret survives. */
+      await expect(promise).resolves.toEqual({
+        status: ToolsetOAuthLoginStatus.Success,
+        auth: { resource: STORED_RESOURCE },
+      });
+    });
+
+    it('authorizes without a resource when Core stored none', async () => {
+      vi.mocked(fetchToolsetAuthSettings).mockResolvedValue({
+        ...blankResourceAuth(),
+        resource: '',
+      });
+
+      const { promise } = runLogin(blankResourceAuth());
+      await vi.waitFor(() =>
+        expect(capturedPopup?.location.href).toContain('client_id=client-id'),
+      );
+      expect(
+        new URL(capturedPopup?.location.href ?? '').searchParams.has(
+          'resource',
+        ),
+      ).toBe(false);
+
+      postOAuthResult(readFlowId(), {
+        type: ToolsetOAuthResultType.Failure,
+        reason: 'denied',
+      });
+      await expect(promise).resolves.toMatchObject({
+        status: ToolsetOAuthLoginStatus.Failed,
+      });
+    });
+
+    it('closes the popup and reports the trace id when the stored settings cannot be read', async () => {
+      vi.mocked(fetchToolsetAuthSettings).mockRejectedValue(new Error('boom'));
+
+      const { promise } = runLogin(blankResourceAuth());
+
+      await expect(promise).resolves.toMatchObject({
+        status: ToolsetOAuthLoginStatus.Failed,
+      });
+      expect(capturedPopup?.close).toHaveBeenCalledOnce();
+    });
+
+    it('skips the extra read when the resource field is filled', async () => {
+      const { promise } = runLogin(configuredAuth());
+      await vi.waitFor(() =>
+        expect(capturedPopup?.location.href).toContain(
+          'resource=https%3A%2F%2Fmcp.example.com%2Fmcp',
+        ),
+      );
+      expect(fetchToolsetAuthSettings).not.toHaveBeenCalled();
+
+      postOAuthResult(readFlowId(), {
+        type: ToolsetOAuthResultType.Success,
+        toolsetId: TOOLSET_ID,
+        credentialsLevel: ToolsetCredentialsLevel.User,
+      });
+      await expect(promise).resolves.toEqual({
+        status: ToolsetOAuthLoginStatus.Success,
       });
     });
   });

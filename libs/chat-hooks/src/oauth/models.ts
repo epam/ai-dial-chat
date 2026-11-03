@@ -19,6 +19,32 @@ export interface ToolsetOAuthSettings {
   scopes?: string[];
   codeChallenge?: string;
   codeChallengeMethod?: string;
+  /**
+   * RFC 8707 resource indicator DIAL Core stored for the client and sends on
+   * the token exchange; the authorize URL must carry the same value.
+   */
+  resource?: string;
+}
+
+/**
+ * Public OAuth client fields of a DIAL Core auth-settings DTO, as both a
+ * toolset's `authSettings` and an external service's metadata carry them.
+ * Declared structurally so `toToolsetOAuthSettings` accepts either without
+ * this module importing the generated client.
+ */
+export interface ToolsetOAuthSettingsSource {
+  /** OAuth client id. */
+  clientId?: string;
+  /** Authorization endpoint the popup is sent to. */
+  authorizationEndpoint?: string;
+  /** Scopes the client may request. */
+  scopesSupported?: string[];
+  /** PKCE challenge. */
+  codeChallenge?: string;
+  /** PKCE challenge method. */
+  codeChallengeMethod?: string;
+  /** RFC 8707 resource indicator. */
+  resource?: string;
 }
 
 /**

@@ -22,6 +22,7 @@ import {
   ToolsetCredentialsLevel,
   ToolsetOAuthInitiationResultType,
   ToolsetOAuthResultType,
+  toToolsetOAuthSettings,
   waitForToolsetOAuthResult,
 } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
@@ -566,13 +567,7 @@ const AppEditorIframe = forwardRef<AppEditorIframeHandle, Props>(
             credentialsLevel: ExternalServiceCredentialsLevel.User,
             authenticationType:
               service.authenticationType as ExternalServiceAuthType,
-            oauthSettings: {
-              clientId: service.clientId,
-              authorizationEndpoint: service.authorizationEndpoint,
-              scopes: service.scopesSupported,
-              codeChallenge: service.codeChallenge,
-              codeChallengeMethod: service.codeChallengeMethod,
-            },
+            oauthSettings: toToolsetOAuthSettings(service),
             offlineUsageConsent,
             forceStale:
               service.userLevelAuthStatus === ExternalServiceAuthStatus.Failed,

@@ -12,6 +12,11 @@ import {
   MaxLength,
   ValidateNested,
 } from 'class-validator';
+import {
+  OAUTH_RESOURCE_MAX_LENGTH,
+  OAUTH_RESOURCE_PATTERN,
+  OAUTH_RESOURCE_VALIDATION_MESSAGE,
+} from '../../common/validators/oauth-resource.pattern';
 import { ExternalServiceAuthType } from './external-service.dto';
 
 /** The kinds of service an application may declare: an API-key vault or an OAuth client. */
@@ -96,6 +101,22 @@ export class ExternalServiceAuthSettingsBodyDto {
     message: 'each scope must be an OAuth scope token',
   })
   scopesSupported?: string[];
+
+  @ApiPropertyOptional({
+    description:
+      'OAUTH: the RFC 8707 resource indicator DIAL Core sends on the token exchange. ' +
+      'An empty string clears it. The PUT replaces the whole service, so leaving it ' +
+      'out erases a stored value — resend it when editing a service.',
+    example: 'https://mcp.example.com/mcp',
+    maxLength: OAUTH_RESOURCE_MAX_LENGTH,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(OAUTH_RESOURCE_MAX_LENGTH)
+  @Matches(OAUTH_RESOURCE_PATTERN, {
+    message: OAUTH_RESOURCE_VALIDATION_MESSAGE,
+  })
+  resource?: string;
 }
 
 /** The body of `PUT /api/v1/external-services/{appId}/{serviceId}`: one service of the application. */
