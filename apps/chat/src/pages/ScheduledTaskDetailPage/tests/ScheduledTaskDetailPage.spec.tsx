@@ -233,6 +233,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       codeBlockDownloadLabel?: string;
       tableScrollRegionAriaLabel?: string;
       mathScrollRegionAriaLabel?: string;
+      openConversationLabel?: string;
     };
     onBack: () => void;
     onEdit?: () => void;
@@ -287,6 +288,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', () => ({
       )}
       <span>nextRunLabel:{nextRunLabel}</span>
       <span>runs:{runs.length}</span>
+      <span>openConversationLabel:{labels.openConversationLabel}</span>
       <span>
         markdownLabels:
         {[
@@ -1526,7 +1528,7 @@ describe('ScheduledTaskDetailPage', () => {
     expect(await screen.findByText('modelLabel:GPT-4.1 mini')).toBeTruthy();
   });
 
-  it('falls back to the raw model id when unresolved', async () => {
+  it('marks a model absent from the loaded catalog unavailable', async () => {
     useFeatureFlagMock.mockReturnValue(true);
     useDeploymentsMock.mockReturnValue({ items: [] });
     getScheduledTaskMock.mockResolvedValue({
@@ -1537,7 +1539,9 @@ describe('ScheduledTaskDetailPage', () => {
     });
     renderDetailPage();
 
-    expect(await screen.findByText('modelLabel:unknown-model')).toBeTruthy();
+    expect(
+      await screen.findByText('modelLabel:scheduledTasks.unavailableModelName'),
+    ).toBeTruthy();
   });
 
   it('formats nextRunTime into a localized "Next run" label', async () => {
@@ -2212,6 +2216,27 @@ describe('ScheduledTaskDetailPage', () => {
       );
 
       expect(await screen.findByText('conversation view')).toBeTruthy();
+    });
+
+    it('passes the translated open-conversation label for failed-run details', async () => {
+      useFeatureFlagMock.mockReturnValue(true);
+      getScheduledTaskMock.mockResolvedValue(loadedTask);
+      useScheduledTaskRunsMock.mockReturnValue({
+        items: [],
+        isLoading: false,
+        isLoadingMore: false,
+        error: null,
+        hasMore: false,
+        loadMore: vi.fn(),
+        refetch: vi.fn(),
+      });
+      renderDetailPage();
+
+      expect(
+        await screen.findByText(
+          'openConversationLabel:scheduledTasks.detail.historyOpenConversationLabel',
+        ),
+      ).toBeTruthy();
     });
 
     it('does not navigate when a run has no conversationId', async () => {

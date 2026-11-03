@@ -73,6 +73,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
         downloadLabel = 'Download',
         unsupportedLabel = 'Preview is not supported for this file',
         loadErrorLabel = 'Failed to load file',
+        loadErrorRetryLabel,
         forbiddenErrorLabel = "You don't have permission to access this file",
         copyTextLabel,
         copiedTextLabel,
@@ -107,7 +108,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
         ooxmlHighlightNavigatedLabel,
       } = labels ?? {};
 
-      const { isOpen, isLoading, content, fileName, closeCanvas } =
+      const { isOpen, isLoading, content, fileName, closeCanvas, retryCanvas } =
         useAttachmentCanvas();
 
       const handleDownload = useCallback(() => {
@@ -141,6 +142,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
           isOpen={isOpen}
           isLoading={isLoading}
           onClose={closeCanvas}
+          onRetry={retryCanvas}
           content={content}
           fileName={fileName}
           leftActions={leftActions}
@@ -156,6 +158,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
             copiedJsonLabel,
             unsupportedLabel,
             loadErrorLabel,
+            loadErrorRetryLabel,
             forbiddenErrorLabel,
             htmlFrameBlockedLabel,
             htmlOpenInNewTabLabel,

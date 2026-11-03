@@ -73,6 +73,33 @@ describe('TaskHistorySection', () => {
     expect(historyButton.getAttribute('aria-expanded')).toBe('true');
   });
 
+  it('opens a failed run conversation from the translated link in its expanded details', async () => {
+    const user = userEvent.setup();
+    renderSection('schedule-1', [
+      {
+        id: 'run-2',
+        status: 'Error',
+        startTime: new Date().toISOString(),
+        errorText: 'connection timeout',
+        conversationId: 'conversations/bucket/run-2',
+      },
+    ]);
+
+    await user.click(
+      screen.getByRole('button', {
+        name: /^scheduledTasks\.detail\.statusError /,
+      }),
+    );
+    expect(mockNavigate).not.toHaveBeenCalled();
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'scheduledTasks.detail.historyOpenConversationLabel',
+      }),
+    );
+    expect(mockNavigate).toHaveBeenCalledOnce();
+  });
+
   it('shows the unavailable message without a retry action when the task is unavailable', () => {
     render(
       <TaskHistorySection

@@ -273,6 +273,15 @@ openCanvas(
 );
 ```
 
+`openCanvas` takes an optional fourth argument, `onRetry`, which the context
+exposes as `retryCanvas` until the canvas closes or starts loading again.
+`useOpenAttachmentCanvas` passes one for every file it opens, so a file that
+fails to load (`Error` content with `errorType: LoadFailed`) can be opened
+again as a new request. `AttachmentCanvasContainer` forwards `retryCanvas` to
+`AttachmentCanvas`'s `onRetry`, and the body then shows a Retry button
+(`labels.loadErrorRetryLabel`, default `'Retry'`) under the load error. A
+`Forbidden` error never offers Retry.
+
 ## Hooks
 
 ### useLatestCanvasRequest

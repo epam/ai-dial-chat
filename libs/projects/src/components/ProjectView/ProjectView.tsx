@@ -81,7 +81,7 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
   styles: viewStyles,
 }) => {
   const { colors, typography } = viewStyles ?? {};
-  const titleClassName = typography?.titleClassName ?? 'dial-h2-text';
+  const titleClassName = typography?.titleClassName ?? 'dial-h1-text';
   const panelTitleClassName =
     typography?.panelTitleClassName ?? 'dial-body-semi-text';
   const sectionTitleClassName =
@@ -287,17 +287,21 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
     );
   };
 
+  /* Beside each other on desktop the header stays put and each column
+   * scrolls on its own; stacked, the columns scroll together under it. */
+  const isSideBySide = !isDetailsStacked;
+
   return (
     <div
       style={cssVars}
       className={mergeClasses(
-        'flex h-full w-full min-w-0 flex-col overflow-y-auto',
+        'flex h-full w-full min-w-0 flex-col',
         styles.container,
       )}
     >
       <header
         className={mergeClasses(
-          'flex min-w-0 items-center gap-2 px-4 py-3 desktop:px-8',
+          'flex min-w-0 shrink-0 items-center gap-2 px-4 py-3 desktop:px-8 desktop:py-4',
           styles.header,
         )}
       >
@@ -377,17 +381,22 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
 
       <div
         className={mergeClasses(
-          'flex min-w-0 flex-1 flex-col',
-          !isDetailsStacked && 'desktop:flex-row',
-          mainContent == null && !isDetailsStacked && 'desktop:justify-end',
+          'flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto',
+          isSideBySide && 'desktop:flex-row desktop:overflow-hidden',
+          mainContent == null && isSideBySide && 'desktop:justify-end',
         )}
       >
         {mainContent != null && (
           <section
             aria-label={mainContentLabel}
-            className="flex min-w-0 flex-1 flex-col gap-6 px-4 py-6 desktop:px-8"
+            className={mergeClasses(
+              'flex min-w-0 flex-1 flex-col px-4 py-6 desktop:px-8',
+              isSideBySide && 'desktop:overflow-y-auto',
+            )}
           >
-            {mainContent}
+            <div className="mx-auto flex w-full max-w-[748px] min-w-0 flex-col gap-5">
+              {mainContent}
+            </div>
           </section>
         )}
         {/* No card: the panel is framed only by an inline-start border on
@@ -396,8 +405,8 @@ const ProjectViewComponent: FC<ProjectViewProps> = ({
           aria-labelledby={detailsHeadingId}
           className={mergeClasses(
             'flex w-full min-w-0 flex-col gap-5 border-t px-4 py-6 desktop:px-8',
-            !isDetailsStacked &&
-              'desktop:w-[488px] desktop:shrink-0 desktop:border-s desktop:border-t-0',
+            isSideBySide &&
+              'desktop:w-[488px] desktop:shrink-0 desktop:overflow-y-auto desktop:border-s desktop:border-t-0',
             styles.panel,
           )}
         >

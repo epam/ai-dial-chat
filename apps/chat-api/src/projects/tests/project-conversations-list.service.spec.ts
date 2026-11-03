@@ -92,7 +92,6 @@ describe('ProjectConversationsListService', () => {
         },
         expect.objectContaining({ name: OLDER, title: 'Body of Older chat' }),
       ],
-      hasMore: false,
     });
     expect(client.listProjectFileMetadata).toHaveBeenCalledWith(
       'a1b2c3',
@@ -104,7 +103,7 @@ describe('ProjectConversationsListService', () => {
     );
   });
 
-  it('follows Core cursors and applies the limit with hasMore', async () => {
+  it('follows Core cursors and lists every conversation', async () => {
     const { service, client } = makeService([
       listing([file('gpt-4o__A__1', 1)], 'next'),
       listing([file('gpt-4o__B__2', 2), file('gpt-4o__C__3', 3)]),
@@ -114,36 +113,114 @@ describe('ProjectConversationsListService', () => {
       PROJECT,
       'token',
       'a1b2c3',
-      2,
     );
 
     expect(client.listProjectFileMetadata).toHaveBeenCalledTimes(2);
     expect(result.items.map((item) => item.name)).toEqual([
       'gpt-4o__C__3',
       'gpt-4o__B__2',
+      'gpt-4o__A__1',
     ]);
-    expect(result.hasMore).toBe(true);
   });
 
-  it('returns the page after the offset, with hasMore only while more remain', async () => {
-    const { service } = makeService([
-      listing([
-        file('gpt-4o__A__1', 1),
-        file('gpt-4o__B__2', 2),
-        file('gpt-4o__C__3', 3),
-      ]),
-    ]);
+  it('reads the bodies of the 20 newest only and marks the uncached rest pending', async () => {
+    const names = Array.from({ length: 22 }, (_, i) => `gpt-4o__T${i}__${i}`);
+    const { service, store } = makeService(
+      [listing(names.map((name, i) => file(name, i + 1)))],
+      { readBefore: 0, versions: new Map() },
+    );
 
-    const result = await service.listProjectConversations(
+    const { items } = await service.listProjectConversations(
       PROJECT,
       'token',
       'a1b2c3',
-      2,
-      2,
     );
 
-    expect(result.items.map((item) => item.name)).toEqual(['gpt-4o__A__1']);
-    expect(result.hasMore).toBe(false);
+    expect(items).toHaveLength(22);
+    expect(store.readConversationWithEtag).toHaveBeenCalledTimes(20);
+    expect(items[19]).toEqual(
+      expect.objectContaining({ title: 'Body of T2', isUnread: true }),
+    );
+    expect(items[19].isTitlePending).toBeUndefined();
+    expect(items.slice(20)).toEqual([
+      expect.objectContaining({
+        name: 'gpt-4o__T1__1',
+        title: 'T1',
+        isUnread: false,
+        isTitlePending: true,
+      }),
+      expect.objectContaining({
+        name: 'gpt-4o__T0__0',
+        title: 'T0',
+        isUnread: false,
+        isTitlePending: true,
+      }),
+    ]);
+  });
+
+  it('lists a cached title past the newest 20 without reading its body', async () => {
+    const names = Array.from({ length: 21 }, (_, i) => `gpt-4o__T${i}__${i}`);
+    const { service, store } = makeService([
+      listing(names.map((name, i) => file(name, i + 1))),
+      listing(names.map((name, i) => file(name, i + 1))),
+    ]);
+    await service.resolveProjectConversations(
+      PROJECT,
+      ['gpt-4o__T0__0'],
+      'token',
+      'a1b2c3',
+    );
+    store.readConversationWithEtag.mockClear();
+
+    const { items } = await service.listProjectConversations(
+      PROJECT,
+      'token',
+      'a1b2c3',
+    );
+
+    expect(store.readConversationWithEtag).toHaveBeenCalledTimes(20);
+    expect(items[20]).toEqual(
+      expect.objectContaining({ name: 'gpt-4o__T0__0', title: 'Body of T0' }),
+    );
+    expect(items[20].isTitlePending).toBeUndefined();
+  });
+
+  describe('resolveProjectConversations', () => {
+    it('resolves the named conversations in request order and omits unknown names', async () => {
+      const { service, store } = makeService([
+        listing([file(OLDER, 1), file(NEWER, 2)]),
+      ]);
+
+      const { items } = await service.resolveProjectConversations(
+        PROJECT,
+        [OLDER, 'gpt-4o__Gone__9', NEWER, OLDER],
+        'token',
+        'a1b2c3',
+      );
+
+      expect(items).toEqual([
+        expect.objectContaining({ name: OLDER, title: 'Body of Older chat' }),
+        expect.objectContaining({ name: NEWER, title: 'Body of Newer chat' }),
+      ]);
+      expect(store.readConversationWithEtag).toHaveBeenCalledTimes(2);
+    });
+
+    it('reports the read state of a resolved conversation', async () => {
+      const { service } = makeService([listing([file(OLDER, 5)])], {
+        readBefore: 1,
+        versions: new Map(),
+      });
+
+      const { items } = await service.resolveProjectConversations(
+        PROJECT,
+        [OLDER],
+        'token',
+        'a1b2c3',
+      );
+
+      expect(items[0].isUnread).toBe(true);
+      expect(items[0].isTitlePending).toBeUndefined();
+    });
   });
 
   it('skips folders under conversations/', async () => {
@@ -213,7 +290,7 @@ describe('ProjectConversationsListService', () => {
 
     await expect(
       service.listProjectConversations(PROJECT, 'token', 'a1b2c3'),
-    ).resolves.toEqual({ items: [], hasMore: false });
+    ).resolves.toEqual({ items: [] });
   });
 
   it('reads at most four bodies at a time', async () => {

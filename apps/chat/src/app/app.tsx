@@ -604,6 +604,7 @@ const App: FC = () => {
               downloadLabel: t(AttachmentCanvasI18nKeys.DownloadLabel),
               unsupportedLabel: t(AttachmentCanvasI18nKeys.UnsupportedLabel),
               loadErrorLabel: t(AttachmentCanvasI18nKeys.LoadErrorLabel),
+              loadErrorRetryLabel: t(ButtonsI18nKeys.Retry),
               forbiddenErrorLabel: t(
                 AttachmentCanvasI18nKeys.ForbiddenErrorLabel,
               ),

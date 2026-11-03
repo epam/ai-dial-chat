@@ -421,6 +421,8 @@ export enum SkillSelectorI18nKeys {
   UnsupportedTooltipLabel = 'skillSelector.unsupportedTooltipLabel',
   UnavailableHintLabel = 'skillSelector.unavailableHintLabel',
   DeletedTooltipLabel = 'skillSelector.deletedTooltipLabel',
+  UnavailableSkillTooltip = 'skillSelector.unavailableSkillTooltip',
+  UnavailableSkillName = 'skillSelector.unavailableSkillName',
   NotSharedTooltipLabel = 'skillSelector.notSharedTooltipLabel',
   ViewDetailsLabel = 'skillSelector.viewDetailsLabel',
 }
@@ -546,6 +548,8 @@ export enum ProjectsI18nKeys {
 }
 
 export enum ScheduledTasksI18nKeys {
+  UnavailableModelName = 'scheduledTasks.unavailableModelName',
+  UnavailableModelTooltip = 'scheduledTasks.unavailableModelTooltip',
   TypeLabel = 'scheduledTasks.typeLabel',
   PageTitle = 'scheduledTasks.page.title',
   PageSubtitle = 'scheduledTasks.page.subtitle',
@@ -634,6 +638,7 @@ export enum ScheduledTasksI18nKeys {
   DetailHistoryDurationHours = 'scheduledTasks.detail.historyDurationHours',
   DetailHistoryDurationMinutes = 'scheduledTasks.detail.historyDurationMinutes',
   DetailHistoryDurationSeconds = 'scheduledTasks.detail.historyDurationSeconds',
+  DetailHistoryOpenConversationLabel = 'scheduledTasks.detail.historyOpenConversationLabel',
   DetailStatusSuccess = 'scheduledTasks.detail.statusSuccess',
   DetailStatusError = 'scheduledTasks.detail.statusError',
   DetailStatusInProgress = 'scheduledTasks.detail.statusInProgress',

@@ -17,11 +17,11 @@ import {
   PROJECT_CONVERSATIONS_FOLDER,
 } from '../utils/project-conversation-id.util';
 import type { ParsedProjectId } from '../utils/project-id.util';
-import { PROJECT_CONVERSATION_LIST_DEFAULT_LIMIT } from './dto/project-conversation-list-query.dto';
 import type {
   ProjectConversationItemDto,
   ProjectConversationListResponseDto,
 } from './dto/project-conversation-list-response.dto';
+import type { ProjectConversationTitlesResponseDto } from './dto/project-conversation-titles.dto';
 
 const LIST_CONTEXT = 'projects.conversations.list';
 /* Core's largest page; the folder is flat, so pages are only files. */
@@ -30,6 +30,8 @@ const TITLE_CACHE_PREFIX = 'projects:conversation-title:';
 const TITLE_CACHE_TTL_MS = 10 * 60 * 1000;
 /* Body reads one listing makes at once to resolve uncached titles. */
 const TITLE_READ_CONCURRENCY = 4;
+/* The newest conversations whose bodies a listing reads: the design's first page of chats. */
+const LIST_RESOLVED_COUNT = 20;
 
 /** One file of Core's `listProjectFileMetadata` answer. */
 interface CoreFileItem {
@@ -55,7 +57,11 @@ interface CachedTitle {
 interface ResolvedTitle {
   title: string;
   version?: string;
+  /** The body was not read, so the title is the file-name one. */
+  isPending?: boolean;
 }
+
+type ListedFile = CoreFileItem & { name: string };
 
 /* `openapi-fetch` resolves an empty-bodied error with `error: undefined`, so the status decides. */
 const isFailed = (error: unknown, response: Response | undefined): boolean =>
@@ -93,11 +99,15 @@ const mapWithConcurrency = async <T, R>(
 
 /**
  * Lists the conversations stored in a project's flat `conversations/`
- * folder, newest first. Titles come from each body's `name`, because a
- * renamed conversation keeps its file name, with the file-name title as the
- * fallback; they are cached per locator
- * while the listing's `updatedAt` is unchanged, and the write endpoints
- * evict them. Logs carry counts only, never names.
+ * folder, newest first. Core cannot page this folder in display order, so
+ * every listing reads the whole folder and returns all of it; the client
+ * pages locally. Titles come from each body's `name`, because a renamed
+ * conversation keeps its file name, with the file-name title as the
+ * fallback. A listing reads the bodies of the newest conversations only and
+ * marks the uncached rest pending; `resolveProjectConversations` reads them
+ * on demand. Titles are cached per locator while the listing's `updatedAt`
+ * is unchanged, and the write endpoints evict them. Logs carry counts only,
+ * never names.
  */
 @Injectable()
 export class ProjectConversationsListService {
@@ -114,36 +124,73 @@ export class ProjectConversationsListService {
    * @param project - the project to list
    * @param accessToken - caller's bearer token; Core checks read access
    * @param sessionBucket - caller's own bucket, which holds their read state
-   * @param limit - page size, newest first
-   * @param offset - conversations to skip in the newest-first order
    */
   async listProjectConversations(
     project: ParsedProjectId,
     accessToken: string,
     sessionBucket: string,
-    limit = PROJECT_CONVERSATION_LIST_DEFAULT_LIMIT,
-    offset = 0,
   ): Promise<ProjectConversationListResponseDto> {
-    /* Never rejects: a failed read state is `null`, so every chat reads as read. */
-    const [listed, readState] = await Promise.all([
-      this.listFiles(project, accessToken),
-      this.readStateService.getProjectReadState(
-        project.id,
-        accessToken,
-        sessionBucket,
+    const [listed, readState] = await this.readListing(
+      project,
+      accessToken,
+      sessionBucket,
+    );
+    const files = listed.sort(newestFirst);
+    const [head, tail] = await Promise.all([
+      mapWithConcurrency(
+        files.slice(0, LIST_RESOLVED_COUNT),
+        TITLE_READ_CONCURRENCY,
+        (file) => this.toItem(project, file, accessToken, readState, true),
+      ),
+      Promise.all(
+        files
+          .slice(LIST_RESOLVED_COUNT)
+          .map((file) =>
+            this.toItem(project, file, accessToken, readState, false),
+          ),
       ),
     ]);
-    const files = listed.sort(newestFirst);
-    const page = files.slice(offset, offset + limit);
+    const items = [...head, ...tail];
+    this.logger.debug(
+      `Listed project conversations (total=${items.length}, pending=${items.filter((item) => item.isTitlePending).length})`,
+    );
+    return { items };
+  }
+
+  /**
+   * Resolves the titles and read state of the named conversations, reading
+   * their bodies when the title cache misses.
+   * @param project - the project the conversations belong to
+   * @param names - file names under the project `conversations/` folder
+   * @param accessToken - caller's bearer token; Core checks read access
+   * @param sessionBucket - caller's own bucket, which holds their read state
+   */
+  async resolveProjectConversations(
+    project: ParsedProjectId,
+    names: string[],
+    accessToken: string,
+    sessionBucket: string,
+  ): Promise<ProjectConversationTitlesResponseDto> {
+    const [listed, readState] = await this.readListing(
+      project,
+      accessToken,
+      sessionBucket,
+    );
+    /* The listing supplies `updatedAt` and `author`, and drops names the project does not hold. */
+    const byName = new Map(listed.map((file) => [file.name, file]));
+    const files = [...new Set(names)].flatMap((name) => {
+      const file = byName.get(name);
+      return file ? [file] : [];
+    });
     const items = await mapWithConcurrency(
-      page,
+      files,
       TITLE_READ_CONCURRENCY,
-      (file) => this.toItem(project, file, accessToken, readState),
+      (file) => this.toItem(project, file, accessToken, readState, true),
     );
     this.logger.debug(
-      `Listed project conversations (total=${files.length}, returned=${items.length})`,
+      `Resolved project conversation titles (requested=${names.length}, returned=${items.length})`,
     );
-    return { items, hasMore: files.length > offset + page.length };
+    return { items };
   }
 
   /** Drops the cached title of one conversation; called on every write through the project endpoints. */
@@ -151,11 +198,27 @@ export class ProjectConversationsListService {
     await this.cacheManager.del(titleCacheKey(locator));
   }
 
+  /* Never rejects on the read state: a failed one is `null`, so every chat reads as read. */
+  private readListing(
+    project: ParsedProjectId,
+    accessToken: string,
+    sessionBucket: string,
+  ): Promise<[ListedFile[], ProjectReadState | null]> {
+    return Promise.all([
+      this.listFiles(project, accessToken),
+      this.readStateService.getProjectReadState(
+        project.id,
+        accessToken,
+        sessionBucket,
+      ),
+    ]);
+  }
+
   private async listFiles(
     project: ParsedProjectId,
     accessToken: string,
-  ): Promise<(CoreFileItem & { name: string })[]> {
-    const files: (CoreFileItem & { name: string })[] = [];
+  ): Promise<ListedFile[]> {
+    const files: ListedFile[] = [];
     let token: string | undefined;
     do {
       let listing: CoreFileListing;
@@ -197,15 +260,17 @@ export class ProjectConversationsListService {
 
   private async toItem(
     project: ParsedProjectId,
-    file: CoreFileItem & { name: string },
+    file: ListedFile,
     accessToken: string,
     readState: ProjectReadState | null,
+    canReadBody: boolean,
   ): Promise<ProjectConversationItemDto> {
     const locator = buildProjectConversationLocator(project, file.name);
-    const { title, version } = await this.resolveTitle(
+    const { title, version, isPending } = await this.resolveTitle(
       locator,
       file,
       accessToken,
+      canReadBody,
     );
     return {
       id: locator,
@@ -221,13 +286,15 @@ export class ProjectConversationsListService {
           file.updatedAt,
           version,
         ),
+      ...(isPending ? { isTitlePending: true } : {}),
     };
   }
 
   private async resolveTitle(
     locator: string,
-    file: CoreFileItem & { name: string },
+    file: ListedFile,
     accessToken: string,
+    canReadBody: boolean,
   ): Promise<ResolvedTitle> {
     const key = titleCacheKey(locator);
     const cached = await this.cacheManager.get<CachedTitle>(key);
@@ -241,6 +308,7 @@ export class ProjectConversationsListService {
     }
 
     const pathTitle = getConversationTitleFromName(file.name, false);
+    if (!canReadBody) return { title: pathTitle, isPending: true };
     try {
       const stored = await this.store.readConversationWithEtag(
         locator,

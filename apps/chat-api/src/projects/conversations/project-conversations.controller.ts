@@ -10,7 +10,6 @@ import {
   Patch,
   Post,
   Put,
-  Query,
   Req,
   Res,
   UseGuards,
@@ -46,9 +45,13 @@ import {
   ProjectIdParamDto,
 } from '../dto/project-id-param.dto';
 import { requireProjectId } from '../projects.service';
-import { ProjectConversationListQueryDto } from './dto/project-conversation-list-query.dto';
 import { ProjectConversationListResponseDto } from './dto/project-conversation-list-response.dto';
 import { ProjectConversationParamDto } from './dto/project-conversation-param.dto';
+import {
+  PROJECT_CONVERSATION_TITLES_MAX_NAMES,
+  ProjectConversationTitlesBodyDto,
+  ProjectConversationTitlesResponseDto,
+} from './dto/project-conversation-titles.dto';
 import { ProjectConversationsService } from './project-conversations.service';
 
 const CONVERSATION_NAME_PARAM = {
@@ -90,7 +93,7 @@ export class ProjectConversationsController {
     operationId: 'listProjectConversations',
     summary: "List a project's conversations",
     description:
-      "Lists the conversations stored in the project's `conversations/` folder, newest first, with their titles and authors.",
+      "Lists every conversation stored in the project's `conversations/` folder, newest first, with their authors. DIAL Core cannot page the folder in this order, so the list is not paged; the client pages it locally. Bodies are read for the 20 newest conversations only: the others have a cached title or carry `isTitlePending`, which `POST /api/v1/projects/:id/conversations/titles` resolves.",
   })
   @ApiParam(PROJECT_ID_PARAM)
   @ApiDialCoreErrors()
@@ -100,13 +103,12 @@ export class ProjectConversationsController {
       'The conversations; a project without conversations lists none',
     type: ProjectConversationListResponseDto,
   })
-  @ApiResponse({ status: 400, description: 'Invalid id, limit or offset' })
+  @ApiResponse({ status: 400, description: 'Invalid id' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   @ApiResponse({ status: 403, description: READ_FORBIDDEN })
   @ApiResponse({ status: 404, description: 'The project does not exist' })
   listProjectConversations(
     @Param() { id }: ProjectIdParamDto,
-    @Query() { limit, offset }: ProjectConversationListQueryDto,
     @Req() req: Request,
   ): Promise<ProjectConversationListResponseDto> {
     const { at, bucket } = req.user as SessionUser;
@@ -114,8 +116,40 @@ export class ProjectConversationsController {
       requireProjectId(id),
       at,
       bucket,
-      limit,
-      offset,
+    );
+  }
+
+  @Post(':id/conversations/titles')
+  @HttpCode(200)
+  @Header('Cache-Control', 'private, no-store')
+  @ApiOperation({
+    operationId: 'getProjectConversationTitles',
+    summary: "Resolve project conversations' titles",
+    description: `Reads the bodies of the named conversations, as listed with \`isTitlePending\`, and returns them with their titles and read state resolved. Up to ${PROJECT_CONVERSATION_TITLES_MAX_NAMES} names per request. Any reader of the project may call it.`,
+  })
+  @ApiParam(PROJECT_ID_PARAM)
+  @ApiDialCoreErrors()
+  @ApiResponse({
+    status: 200,
+    description:
+      'The named conversations the project holds, in request order; unknown names are omitted',
+    type: ProjectConversationTitlesResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid id or body' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 403, description: READ_FORBIDDEN })
+  @ApiResponse({ status: 404, description: 'The project does not exist' })
+  getProjectConversationTitles(
+    @Param() { id }: ProjectIdParamDto,
+    @Body() { names }: ProjectConversationTitlesBodyDto,
+    @Req() req: Request,
+  ): Promise<ProjectConversationTitlesResponseDto> {
+    const { at, bucket } = req.user as SessionUser;
+    return this.conversationsService.resolveConversations(
+      requireProjectId(id),
+      names,
+      at,
+      bucket,
     );
   }
 

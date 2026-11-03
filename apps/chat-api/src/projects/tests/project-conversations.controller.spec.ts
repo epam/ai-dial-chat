@@ -31,6 +31,7 @@ describe('ProjectConversationsController', () => {
   let app: INestApplication;
   const service = {
     listConversations: vi.fn(),
+    resolveConversations: vi.fn(),
     createConversation: vi.fn(),
     getConversation: vi.fn(),
     saveConversation: vi.fn(),
@@ -89,11 +90,11 @@ describe('ProjectConversationsController', () => {
     ).toBe(FeatureKey.ProjectsEnabled);
   });
 
-  it('lists with the limit and a no-store cache header', async () => {
-    service.listConversations.mockResolvedValue({ items: [], hasMore: false });
+  it('lists every conversation with a no-store cache header', async () => {
+    service.listConversations.mockResolvedValue({ items: [] });
 
     const res = await request(app.getHttpServer())
-      .get(`/api/v1/projects/${ENCODED}/conversations?limit=10&offset=20`)
+      .get(`/api/v1/projects/${ENCODED}/conversations`)
       .expect(200);
 
     expect(res.headers['cache-control']).toBe('private, no-store');
@@ -101,16 +102,37 @@ describe('ProjectConversationsController', () => {
       expect.objectContaining({ id: PROJECT_ID }),
       USER.at,
       USER.bucket,
-      10,
-      20,
     );
   });
 
-  it.each(['limit=101', 'offset=-1'])('rejects %s', async (query) => {
+  it('resolves titles of the named conversations', async () => {
+    const names = ['gpt-4o__Hi__1', 'gpt-4o__Bye__2'];
+    service.resolveConversations.mockResolvedValue({ items: [] });
+
+    const res = await request(app.getHttpServer())
+      .post(`/api/v1/projects/${ENCODED}/conversations/titles`)
+      .send({ names })
+      .expect(200);
+
+    expect(res.headers['cache-control']).toBe('private, no-store');
+    expect(service.resolveConversations).toHaveBeenCalledWith(
+      expect.objectContaining({ id: PROJECT_ID }),
+      names,
+      USER.at,
+      USER.bucket,
+    );
+  });
+
+  it.each([
+    ['no names', { names: [] }],
+    ['a traversal name', { names: ['..'] }],
+    ['an unknown field', { names: ['gpt-4o__Hi__1'], limit: 1 }],
+  ])('rejects a titles body with %s', async (_label, body) => {
     await request(app.getHttpServer())
-      .get(`/api/v1/projects/${ENCODED}/conversations?${query}`)
+      .post(`/api/v1/projects/${ENCODED}/conversations/titles`)
+      .send(body)
       .expect(400);
-    expect(service.listConversations).not.toHaveBeenCalled();
+    expect(service.resolveConversations).not.toHaveBeenCalled();
   });
 
   it('delegates get, save, rename and delete with the decoded conversation name', async () => {

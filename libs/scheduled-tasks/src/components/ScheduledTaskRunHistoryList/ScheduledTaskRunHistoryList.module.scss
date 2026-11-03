@@ -21,8 +21,17 @@
   );
 }
 
+/* Defined before the hover rule so an expanded row still shows hover feedback, like the current-run row. */
+.expandedRow {
+  background: var(
+    --strhl-row-expanded-bg,
+    var(--bg-control-accent-alpha-active, #2764d933)
+  );
+}
+
 /* On the accent highlight the secondary grey drops below 4.5:1 (WCAG 1.4.3). */
-.currentRun .subtitleText {
+.currentRun .subtitleText,
+.expandedRow .subtitleText {
   color: var(--strhl-current-run-subtitle-text, var(--text-primary, #161b2d));
 }
 
@@ -49,4 +58,12 @@
 
 .unreadDot {
   background: var(--strhl-unread-dot, var(--text-accent, #1d4ed8));
+}
+
+.chevronIcon {
+  color: var(--strhl-chevron-icon, var(--text-secondary, #57647a));
+}
+
+.errorDetailsText {
+  color: var(--strhl-error-details-text, var(--text-secondary, #57647a));
 }

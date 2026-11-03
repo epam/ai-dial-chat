@@ -55,23 +55,25 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ),
 }));
 
+const { runListProps } = vi.hoisted(() => ({ runListProps: vi.fn() }));
+
 vi.mock(
   '../../ScheduledTaskRunHistoryList/ScheduledTaskRunHistoryList',
   () => ({
-    ScheduledTaskRunHistoryList: ({
-      items,
-      footer,
-    }: {
+    ScheduledTaskRunHistoryList: (props: {
       items: ScheduledTaskRunItem[];
       footer?: ReactNode;
-    }) => (
-      <ul>
-        {items.map((item) => (
-          <li key={item.id}>{item.timestampLabel}</li>
-        ))}
-        {footer}
-      </ul>
-    ),
+    }) => {
+      runListProps(props);
+      return (
+        <ul>
+          {props.items.map((item) => (
+            <li key={item.id}>{item.timestampLabel}</li>
+          ))}
+          {props.footer}
+        </ul>
+      );
+    },
   }),
 );
 
@@ -143,6 +145,44 @@ describe('ScheduledTaskHistorySection', () => {
 
     expect(screen.getByRole('alert')).toBe(region);
     expect(region.textContent).toBe(labels.historyErrorLabel);
+  });
+
+  it('forwards the open-conversation label and the failed-run styles to the run list', () => {
+    renderSection({
+      labels: { ...labels, openConversationLabel: 'Open chat' },
+      errorDetailsClassName: 'custom-details',
+      styles: {
+        rowExpandedBackground: '#222222',
+        colors: { errorDetailsTextColor: '#111111' },
+      },
+    });
+
+    expect(runListProps).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        labels: expect.objectContaining({ openConversationLabel: 'Open chat' }),
+        styles: expect.objectContaining({
+          rowExpandedBackground: '#222222',
+          colors: { errorDetailsTextColor: '#111111' },
+          typography: expect.objectContaining({
+            errorDetailsClassName: 'custom-details',
+          }),
+        }),
+      }),
+    );
+  });
+
+  it('defaults the error details to the tiny text step', () => {
+    renderSection();
+
+    expect(runListProps).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        styles: expect.objectContaining({
+          typography: expect.objectContaining({
+            errorDetailsClassName: 'dial-tiny-text',
+          }),
+        }),
+      }),
+    );
   });
 
   describe('ScheduledTaskHistorySection — card variant', () => {

@@ -401,24 +401,20 @@ describe('ProjectCreatePage', () => {
       );
     });
 
-    it('opens the file again when its open card is activated again, as a conversation attachment does', async () => {
+    it('closes the canvas when the card of the open file is activated again', async () => {
       renderAtRoute();
       await addFile();
       const card = screen.getByRole('button', { name: 'Preview tickets.csv' });
 
       await userEvent.click(card);
-      await waitFor(() =>
-        expect(previewResolvers.resolveOoxmlContent).toHaveBeenCalledTimes(1),
-      );
+      await waitFor(() => expect(getCanvas().textContent).toBe('new::file-1'));
       await userEvent.click(card);
 
-      await waitFor(() =>
-        expect(previewResolvers.resolveOoxmlContent).toHaveBeenCalledTimes(2),
-      );
-      expect(getCanvas().textContent).toBe('new::file-1');
+      expect(getCanvas().textContent).toBe('closed');
+      expect(previewResolvers.resolveOoxmlContent).toHaveBeenCalledTimes(1);
     });
 
-    it('leaves the canvas open when the open file is removed from the form', async () => {
+    it('closes the canvas when the open file is removed from the form', async () => {
       renderAtRoute();
       await addFile();
       await userEvent.click(
@@ -428,7 +424,7 @@ describe('ProjectCreatePage', () => {
 
       act(() => formProps.current?.onContextFilesChange([]));
 
-      expect(getCanvas().textContent).toBe('new::file-1');
+      expect(getCanvas().textContent).toBe('closed');
     });
 
     it('leaves the form values and files untouched when a preview opens', async () => {

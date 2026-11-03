@@ -75,6 +75,9 @@ const TaskHistorySection: FC<Props> = ({
         ScheduledTasksI18nKeys.ConversationPanelCurrentRunLabel,
       ),
       unreadIndicatorLabel: t(ConversationPanelI18nKeys.UnreadIndicatorLabel),
+      openConversationLabel: t(
+        ScheduledTasksI18nKeys.DetailHistoryOpenConversationLabel,
+      ),
     }),
     [t],
   );

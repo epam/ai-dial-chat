@@ -181,7 +181,7 @@ labels stay as accessible names), and the back arrow stays on the first row if
 the actions wrap. The back arrow mirrors in RTL, while the Start now play icon
 does not.
 
-Presentational detail page for a single scheduled task: a back-navigable header with an optional Edit action, a Details/Configuration body (description, model/agent, recurrence, activity window, read-only markdown instructions), and a paginated History panel listing past runs with a status icon, timestamp, and duration per row, with a "Show more" button (not scroll-triggered) for loading further pages. A run row renders as clickable only when its item carries a non-empty `conversationId` and `onRunClick` is supplied — rows without a `conversationId` stay static even if `onRunClick` is passed for the list. A row whose item has `isUnread: true` additionally renders a small unread-dot indicator before its timestamp. An `Error` row whose item carries `errorText` shows it in a tooltip on the status icon and appends it to the row's accessible name. At the desktop breakpoint the Details, Configuration, and History sections render side by side in a three-column layout and scroll independently beneath the fixed header; below it (mobile and tablet) they render as a tab row — Details active by default — inside one body scroll container, with one section visible at a time and the History panel in standard top-to-bottom page flow (inline "Show more", no self-scrolling card). The page root clips overflow so the document itself does not become the scrolling surface. The header title ellipsizes instead of stretching the header — capped at 600px on every breakpoint (phones never reach the cap and truncate at the row edge; tablets and the desktop header stop the line at 600px) — so a long title never pushes the action buttons out or overflows the header; the title text renders through the kit's `EllipsisTooltip` (the same mechanism as the card title), showing the full name in a tooltip only when actually clipped. The Details description renders at the field-value step (`dial-small-text`, 14px/20px, via `styles.typography.fieldValueClassName`) alongside every other value in the section, while the built-in instructions render at the 14px/24px prose step (`dial-small-paragraph-text` — the same step as the card description and run timestamps, list items included) through a lib-scoped `MarkdownRendererClassNames` record spread from `COMPACT_MARKDOWN_CLASS_NAMES`; the shared presets themselves are untouched, so no other markdown surface changes. The header can render an Active switch and a Delete action when their props are supplied; a task with `isCompleted: true` renders no Active switch at all — the completed line in the Details summary carries the state. Field values, runs, and markdown rendering are all supplied by the host app; this component performs no routing, i18n, or network calls, and its only internal state is the selected mobile tab.
+Presentational detail page for a single scheduled task: a back-navigable header with an optional Edit action, a Details/Configuration body (description, model/agent, recurrence, activity window, read-only markdown instructions), and a paginated History panel listing past runs with a status icon, timestamp, and duration per row, with a "Show more" button (not scroll-triggered) for loading further pages. A run row renders as clickable only when its item carries a non-empty `conversationId` and `onRunClick` is supplied — rows without a `conversationId` stay static even if `onRunClick` is passed for the list. A row whose item has `isUnread: true` renders its timestamp semibold and a small unread dot in a fixed slot at the row's end. An `Error` row whose item carries non-empty `errorText` is expandable. Clicking it, or pressing Enter or Space, toggles the error text under the row, and a chevron in the row's end slot shows whether it is open. The row header exposes `aria-expanded`/`aria-controls`, and the error text is not part of its accessible name. When that run also has a `conversationId` and `onRunClick` is supplied, the expanded details add a link labelled `labels.openConversationLabel` (default `'Open conversation'`) that calls `onRunClick`; the header itself only toggles. Rows start collapsed, and the run list keeps which rows are expanded in its own local state. The details text takes `historyStyles.colors.errorDetailsTextColor` (var `--strhl-error-details-text`, default `--text-secondary`) and `ScheduledTaskHistorySection`'s `errorDetailsClassName` (default `'dial-tiny-text'`). The chevron takes `historyStyles.colors.chevronIconColor` (var `--strhl-chevron-icon`, default `--text-secondary`). An expanded header uses `historyStyles.rowExpandedBackground` (var `--strhl-row-expanded-bg`, default `--bg-control-accent-alpha-active`). At the desktop breakpoint the Details, Configuration, and History sections render side by side in a three-column layout and scroll independently beneath the fixed header; below it (mobile and tablet) they render as a tab row — Details active by default — inside one body scroll container, with one section visible at a time and the History panel in standard top-to-bottom page flow (inline "Show more", no self-scrolling card). The page root clips overflow so the document itself does not become the scrolling surface. The header title ellipsizes instead of stretching the header — capped at 600px on every breakpoint (phones never reach the cap and truncate at the row edge; tablets and the desktop header stop the line at 600px) — so a long title never pushes the action buttons out or overflows the header; the title text renders through the kit's `EllipsisTooltip` (the same mechanism as the card title), showing the full name in a tooltip only when actually clipped. The Details description renders at the field-value step (`dial-small-text`, 14px/20px, via `styles.typography.fieldValueClassName`) alongside every other value in the section, while the built-in instructions render at the 14px/24px prose step (`dial-small-paragraph-text` — the same step as the card description and run timestamps, list items included) through a lib-scoped `MarkdownRendererClassNames` record spread from `COMPACT_MARKDOWN_CLASS_NAMES`; the shared presets themselves are untouched, so no other markdown surface changes. The header can render an Active switch and a Delete action when their props are supplied; a task with `isCompleted: true` renders no Active switch at all — the completed line in the Details summary carries the state. Field values, runs, and markdown rendering are all supplied by the host app; this component performs no routing, i18n, or network calls, and its only internal state is the selected mobile tab (plus the run list's set of expanded failed rows).
 
 ```tsx
 import {
@@ -190,7 +190,11 @@ import {
 } from '@epam/ai-dial-scheduled-tasks';
 
 <ScheduledTaskDetailView
-  labels={{/* ..., unreadIndicatorLabel: 'Unread' */}}
+  labels={{
+    /* ...the required labels, plus: */
+    unreadIndicatorLabel: 'Unread',
+    openConversationLabel: 'Open conversation',
+  }}
   onBack={() => {}}
   onEdit={() => {}}
   onStartNow={() => {}}
@@ -359,9 +363,12 @@ default, resetting to expanded whenever `scheduleId` changes — while the list
 itself stays bare for hosts that need their own chrome. Runs, loading/error
 state, pagination callbacks, and labels are all supplied by the host; a run row
 renders as clickable only when its item carries a `conversationId` and
-`onRunClick` is supplied. An `Error` row whose item carries `errorText` reveals
-that text in a tooltip on its status icon (hover or focus) and appends it to the
-row's accessible name; `errorText` is ignored for every other status.
+`onRunClick` is supplied. An `Error` row whose item carries non-empty
+`errorText` is expandable instead. Activating it toggles the error text under
+the row, behind a chevron at the row's end. When the run has a `conversationId`,
+the expanded details add a `labels.openConversationLabel` link (default
+`'Open conversation'`) that calls `onRunClick`. `errorText` is never part of the
+row's accessible name, and is ignored for every other status.
 `colors.unavailableText` (`ScheduledTaskConversationHistorySectionColors`,
 var `--stch-unavailable-text`, default `--text-secondary`) colors the
 unavailable message; `unavailableTextClassName` sets its type step (default
@@ -412,6 +419,7 @@ import {
     },
     currentRunLabel: 'Current run',
     unreadIndicatorLabel: 'Unread',
+    openConversationLabel: 'Open conversation',
   }}
 />;
 ```
@@ -493,6 +501,13 @@ optional `skillLabel` / `skillDisplayNames`. `ScheduledTaskDetailView` accepts
 `skillDisplayNames` and `labels.skillLabel`. Supply `skillDisplayNames: string[]`, using the full reference as fallback
 for each unresolved name. Skill appears before Instructions as plain text; absent
 skills and empty instructions render no field. Libraries perform no lookup.
+All four preview components (including `ScheduledTaskConversationDetailsSection`)
+accept `renderSkillName(name, index)` to render host-resolved availability,
+localized text, and tooltips. Without it, names remain plain text.
+`ScheduledTaskDetailView`, `ScheduledTaskDetailsSection`,
+`ScheduledTaskDetailsSummary` and `ScheduledTaskConversationDetailsSection` also
+accept `renderModelName(name)` for host-resolved model availability. Omit the
+model value or pass an empty skill list while the host is resolving metadata.
 
 Use the pure validation entry before an app submits a task. It returns typed
 error codes rather than translated text, and accepts an injected clock for
@@ -716,3 +731,7 @@ Optional label overrides (English defaults):
 | Public class key | Class                                  | Element        |
 | ---------------- | -------------------------------------- | -------------- |
 | `refineFeedback` | `dial-scheduled-tasks-refine-feedback` | Field feedback |
+
+`ScheduledTaskCreateForm.isSubmitDisabled` lets the host block Save while it
+checks external selections. Model field errors also disable Save. The host
+must enforce availability again in its submit handler.

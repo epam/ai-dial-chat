@@ -4,6 +4,10 @@ import type { CSSProperties } from 'react';
 export interface SkillSelectorFieldLabels {
   /** Visible and accessible field label. */
   fieldLabel: string;
+  /** Explanation for an unavailable selection. Defaults to 'The skill has been deleted or access revoked'. */
+  unavailableTooltipLabel?: string;
+  /** Accessible remove action label for unavailable tags. Defaults to the kit label. */
+  removeLabel?: string;
   /** Empty selection text. */
   placeholder: string;
   /** Explanation shown when the selected model cannot use skills. */
@@ -30,6 +34,10 @@ export interface SkillSelectorFieldStyles {
     border?: string;
     /** Invalid-state text and border. */
     error?: string;
+    /** Unavailable tag fill. */
+    unavailableTagBackground?: string;
+    /** Unavailable tag border. */
+    unavailableTagBorder?: string;
   };
   /** Label typography overrides. */
   typography?: {
@@ -72,4 +80,6 @@ export interface SkillSelectorFieldProps {
   onChange: (value: string[]) => void;
   /** Host-resolved names keyed by reference; missing entries display the URL. */
   displayNames?: Record<string, string>;
+  /** Host-confirmed unavailable selected references; tags remain removable. */
+  unavailableValues?: string[];
 }

@@ -121,7 +121,8 @@ Props:
 
 - it is named by `labels.mainContentLabel`, a new optional label;
 - it is `flex-1 min-w-0`, with `24px 32px` padding on `desktop`;
-- its content is centered at the design's 748px max width.
+- its content is centered at the design's 748px max width, with `20px` between its blocks;
+- while the Details panel sits beside it on `desktop`, the header stays in place and the main column and the panel each scroll on their own (Figma node `23:24330`); wherever the panel stacks, both scroll together below the header.
 
 On `mobile`, and on `desktop` while `isDetailsStacked` is `true`, the section stacks above the Details panel. Without `mainContent`, the layout is unchanged, so the Details panel is pushed to the inline end; a panel stacked by `isDetailsStacked` without `mainContent` stays at the top instead. The lib renders the node as given: the chat input and the Chats list are composed by the host.
 
@@ -163,8 +164,8 @@ Every declared prop SHALL be read. Read-only mode is expressed only by omitting 
 
 The `ProjectView` header SHALL render, in inline order:
 
-- a back kit `GhostIconButton` named `labels.backLabel`, with `IconArrowNarrowLeft` (`aria-hidden`, `stroke={DIAL_KIT_ICON_STROKE}`, `rtl:scale-x-[-1]`), calling `onBack`;
-- the name as the page's `<h1>`, truncated to one line with `EllipsisTooltip`, so the full name is in the tooltip;
+- a back kit `GhostIconButton` named `labels.backLabel`, with `IconArrowNarrowLeft` (`aria-hidden`, `stroke={DIAL_KIT_ICON_STROKE}`, `rtl:scale-x-[-1]`), calling `onBack` (Figma node `1:2756`);
+- the name as the page's `<h1>` in `typography.titleClassName` (default `dial-h1-text`, 20/28 semibold), truncated to one line with `EllipsisTooltip`, so the full name is in the tooltip;
 - a Pin kit `GhostButton` with an icon and a text label:
   - `IconPin` and `labels.pinLabel` when unpinned, `IconPinOff` (a crossed-out `IconPin` drawn in `libs/projects/src/components/IconPinOff/IconPinOff.ts`, since Tabler has none) and `labels.unpinLabel` when pinned, so the label names the action and shows the state; it has no `aria-pressed`, because a pressed state would contradict a label that already changes;
   - while `isPinPending` it is `aria-disabled` and ignores activation but stays focusable, so keyboard focus is not dropped to `<body>`;
@@ -342,7 +343,7 @@ It submits through `publishCatalogEntity({ entityType: CatalogPublishEntityType.
 
 **Chats warning.** DIAL Core publishes a project as a whole, `conversations/` included. When `conversationCount > 0`, the container renders a kit `Notification` with the warning variant through `StandalonePublishPanel`'s `renderSummary`, after the resource title, so `libs/publish-panel` is not changed.
 
-- Its text is `projects.publish.chatsWarning`, pluralised by `count`: "This project's {{count}} chats will be published with it and visible to everyone who can see the project."
+- Its text is `projects.publish.chatsWarning`, pluralised by `count`: "The {{count}} chats in this project are published with it."
 - The warning does not block submission: publishing stays the user's choice.
 - It sits inside the panel's labelled region, so screen readers read it with the summary.
 
@@ -363,11 +364,11 @@ It submits through `publishCatalogEntity({ entityType: CatalogPublishEntityType.
 
 ### Requirement: Project view strings flow through react-i18next
 
-`ProjectViewPage` SHALL resolve every `ProjectViewLabels` value with `useTranslation().t()`, through `ProjectsI18nKeys` / `ButtonsI18nKeys` / `NavigationI18nKeys` members in `apps/chat/src/constants/translation-keys.ts`. The labels object is memoised with `useMemo` on `t`.
+`ProjectViewPage` SHALL resolve every `ProjectViewLabels` value with `useTranslation().t()`, through `ProjectsI18nKeys` / `ButtonsI18nKeys` members in `apps/chat/src/constants/translation-keys.ts`. The labels object is memoised with `useMemo` on `t`.
 
 **Reused keys:**
 
-- `navigation.back` (back);
+- `buttons.back` (back);
 - `buttons.publish`, `buttons.edit`, `buttons.download`, `buttons.delete`, `buttons.retry`, `buttons.cancel`;
 - `basic.clearSearch`.
 
