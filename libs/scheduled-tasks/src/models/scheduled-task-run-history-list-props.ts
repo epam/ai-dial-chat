@@ -20,6 +20,8 @@ export interface ScheduledTaskRunHistoryListLabels {
   currentRunLabel?: string;
   /** `sr-only` label announced alongside the unread-dot indicator on a row whose `isUnread` is `true`. Defaults to `'Unread'`. */
   unreadIndicatorLabel?: string;
+  /** Label of the link inside an expanded failed run's details that opens its conversation. Defaults to `'Open conversation'`. */
+  openConversationLabel?: string;
 }
 
 /**
@@ -41,6 +43,10 @@ export interface ScheduledTaskRunHistoryListColors {
   currentRunSubtitleTextColor?: string;
   /** Unread-dot indicator fill color. Fallback: `--text-accent`. */
   unreadDotColor?: string;
+  /** Error text color inside an expanded failed run's details. Fallback: `--text-secondary`. */
+  errorDetailsTextColor?: string;
+  /** Expand/collapse chevron color on a failed run's row. Fallback: `--text-secondary`. */
+  chevronIconColor?: string;
 }
 
 /** Typography overrides for the {@link ScheduledTaskRunHistoryList} component. */
@@ -51,6 +57,8 @@ export interface ScheduledTaskRunHistoryListTypography {
   runTimestampUnreadClassName?: string;
   /** CSS class applied to the error and empty-state messages. Defaults to `'dial-body-text'`. */
   subtitleClassName?: string;
+  /** CSS class applied to the error text inside an expanded failed run's details. Defaults to `'dial-tiny-text'`. */
+  errorDetailsClassName?: string;
 }
 
 /** Style overrides for the {@link ScheduledTaskRunHistoryList} component. */
@@ -67,6 +75,8 @@ export interface ScheduledTaskRunHistoryListStyles {
   rowFocusBackground?: string;
   /** Outline color of an interactive run row on keyboard focus. Defaults to `--text-accent`. */
   rowFocusOutline?: string;
+  /** Header background of an expanded failed run row. Defaults to `--bg-control-accent-alpha-active`. */
+  rowExpandedBackground?: string;
 }
 
 /** Props for the {@link ScheduledTaskRunHistoryList} component. */
@@ -85,7 +95,7 @@ export interface ScheduledTaskRunHistoryListProps {
   onRetry?: () => void;
   /** The `id` of the run to render with the current-run visual and accessible treatment. Omit to mark no row as current. */
   currentRunId?: string;
-  /** Called with the run when the user clicks a row whose `conversationId` is set. Rows without a `conversationId` never invoke this, regardless of whether it is supplied. */
+  /** Called with the run when the user clicks a row whose `conversationId` is set, or the "Open conversation" link in an expanded failed run that has one. Rows without a `conversationId` never invoke this, regardless of whether it is supplied. */
   onRunClick?: (run: ScheduledTaskRunItem) => void;
   /** Localized labels. */
   labels: ScheduledTaskRunHistoryListLabels;

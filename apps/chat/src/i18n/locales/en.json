@@ -1079,6 +1079,7 @@
       "historyDurationHours": "{{count}}h",
       "historyDurationMinutes": "{{count}}m",
       "historyDurationSeconds": "{{count}}s",
+      "historyOpenConversationLabel": "Open conversation",
       "statusSuccess": "Succeeded",
       "statusError": "Failed",
       "statusInProgress": "Running",
