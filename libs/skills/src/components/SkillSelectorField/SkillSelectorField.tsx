@@ -8,6 +8,8 @@ import {
   DIAL_ICON_SIZE,
   Highlight,
   Select,
+  Tag,
+  TagAppearance,
   Tooltip,
 } from '@epam/ai-dial-ui-kit';
 import { useId, useState, type FC } from 'react';
@@ -28,6 +30,7 @@ export const SkillSelectorField: FC<SkillSelectorFieldProps> = ({
   value,
   onChange,
   displayNames,
+  unavailableValues = [],
   skills = EMPTY_SKILLS,
   isSkillsSupported,
   isDisabled = false,
@@ -68,7 +71,7 @@ export const SkillSelectorField: FC<SkillSelectorFieldProps> = ({
       <Highlight text={item.name} query={query} maxLines={1} />
     ) : undefined,
     icon: <DeploymentIcon size={DIAL_ICON_SIZE.SM} initialsName={item.name} />,
-    disabled: !isSkillsSupported,
+    disabled: !isSkillsSupported || unavailableValues.includes(item.id),
   }));
   const cssVars = {
     ...buildCssVars({
@@ -76,6 +79,8 @@ export const SkillSelectorField: FC<SkillSelectorFieldProps> = ({
       '--ssf-bg': fieldStyles?.colors?.background,
       '--ssf-border': fieldStyles?.colors?.border,
       '--ssf-error': fieldStyles?.colors?.error,
+      '--ssf-unavailable-tag-bg': fieldStyles?.colors?.unavailableTagBackground,
+      '--ssf-unavailable-tag-border': fieldStyles?.colors?.unavailableTagBorder,
     }),
     ...fieldStyles?.cssVars,
   };
@@ -92,12 +97,53 @@ export const SkillSelectorField: FC<SkillSelectorFieldProps> = ({
     >
       <Tooltip
         tooltip={unsupportedReason}
-        hideTooltip={isSkillsSupported}
+        hideTooltip={isSkillsSupported || unavailableValues.length > 0}
         triggerClassName="block w-full min-w-0"
       >
         <div inert={isDisabled ? true : undefined}>
           <Select
             multiple
+            customMultiSelectTagsRenderer={
+              unavailableValues.length
+                ? (options, selectedValues, removeTag) =>
+                    selectedValues.map((url) => {
+                      const label =
+                        options.find((option) => option.value === url)?.label ??
+                        url;
+                      const unavailable = unavailableValues.includes(url);
+                      const tag = (
+                        <Tag
+                          label={label}
+                          title={unavailable ? '' : undefined}
+                          appearance={TagAppearance.Bordered}
+                          closable
+                          disabled={isDisabled}
+                          removeLabel={labels.removeLabel}
+                          onRemove={(event) => removeTag(event, url)}
+                          className={
+                            unavailable ? styles.unavailableTag : undefined
+                          }
+                        />
+                      );
+                      return unavailable ? (
+                        <Tooltip
+                          key={url}
+                          tooltip={
+                            labels.unavailableTooltipLabel ??
+                            'The skill has been deleted or access revoked'
+                          }
+                          triggerClassName="min-w-0 cursor-pointer"
+                        >
+                          {tag}
+                        </Tooltip>
+                      ) : (
+                        <span key={url} className="min-w-0">
+                          {tag}
+                        </span>
+                      );
+                    })
+                : undefined
+            }
             searchable
             open={open}
             onOpenChange={handleOpenChange}

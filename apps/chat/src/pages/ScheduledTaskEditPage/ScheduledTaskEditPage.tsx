@@ -55,8 +55,10 @@ import { useAppConfig, useFeatureFlag } from '../../context/AppConfigContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useScheduledTaskFormLabels } from '../../hooks/scheduled-tasks/useScheduledTaskFormLabels';
+import { useScheduledTaskModelPreview } from '../../hooks/scheduled-tasks/useScheduledTaskModelPreview';
 import { useScheduledTaskSkillSupport } from '../../hooks/scheduled-tasks/useScheduledTaskSkillSupport';
 import { useScheduledTaskSubmit } from '../../hooks/scheduled-tasks/useScheduledTaskSubmit';
+import { useScheduledTaskSkillDetails } from '../../hooks/scheduled-tasks/useUnavailableScheduledTaskSkills';
 import { useBuilderLeaveGuard } from '../../hooks/unsaved-changes/useBuilderLeaveGuard';
 import { useTextRefinementCallback } from '../../hooks/useTextRefinementCallback';
 import {
@@ -114,6 +116,16 @@ const ScheduledTaskEditPage: FC = () => {
   }>({});
   const [errors, setErrors] = useState<ScheduledTaskCreateFormErrors>({});
   const isSkillsSupported = useScheduledTaskSkillSupport(values?.modelId);
+  const selectedSkills = useScheduledTaskSkillDetails(values?.skillUrls);
+  const hasUnavailableSkills = selectedSkills.some(
+    (skill) => skill.isUnavailable,
+  );
+  const modelPreview = useScheduledTaskModelPreview(values?.modelId);
+  const isCheckingAvailability =
+    Boolean(modelPreview.isLoading) ||
+    selectedSkills.some((skill) => skill.isLoading);
+  const hasUnavailableSelection =
+    hasUnavailableSkills || modelPreview.isUnavailable;
   /* A capability change invalidates a prior server rejection. Local validation
    * below continues to block a selected skill until support is confirmed. */
   useEffect(() => {
@@ -123,11 +135,16 @@ const ScheduledTaskEditPage: FC = () => {
   }, [isSkillsSupported]);
   const effectiveErrors = {
     ...errors,
-    skillUrls: values?.skillUrls?.some((url) =>
-      isSkillSelectionUnsupported(url, isSkillsSupported),
-    )
-      ? t(SkillSelectorI18nKeys.UnsupportedTooltipLabel)
-      : errors.skillUrls,
+    modelId: modelPreview.isUnavailable
+      ? t(ScheduledTasksI18nKeys.UnavailableModelTooltip)
+      : errors.modelId,
+    skillUrls: hasUnavailableSkills
+      ? t(SkillSelectorI18nKeys.UnavailableSkillTooltip)
+      : values?.skillUrls?.some((url) =>
+            isSkillSelectionUnsupported(url, isSkillsSupported),
+          )
+        ? t(SkillSelectorI18nKeys.UnsupportedTooltipLabel)
+        : errors.skillUrls,
   };
 
   const returnUrl = useMemo(
@@ -256,7 +273,8 @@ const ScheduledTaskEditPage: FC = () => {
 
   /** Prepares the update body from the current values; `null` while the form is not loaded yet or validation fails (field errors already applied). */
   const prepareUpdateBody = useCallback(() => {
-    if (!values) return null;
+    if (!values || isCheckingAvailability || hasUnavailableSelection)
+      return null;
     const prepared = prepareScheduledTaskUpdateBody(values, {
       now: new Date(),
       isSkillsSupported,
@@ -268,7 +286,14 @@ const ScheduledTaskEditPage: FC = () => {
       return null;
     }
     return prepared.body;
-  }, [values, originalWindowDates, isSkillsSupported, t]);
+  }, [
+    values,
+    originalWindowDates,
+    isSkillsSupported,
+    t,
+    isCheckingAvailability,
+    hasUnavailableSelection,
+  ]);
 
   /** Performs the update request for this task. */
   const saveTaskUpdate = useCallback(
@@ -402,11 +427,12 @@ const ScheduledTaskEditPage: FC = () => {
       skillSelector={
         <ScheduledTaskSkillField
           fieldLabel={labels.skillLabel}
+          resolvedSkills={selectedSkills}
           value={values.skillUrls ?? []}
           onChange={(value) => handleFieldChange('skillUrls', value)}
           isSkillsSupported={isSkillsSupported}
           isDisabled={isSubmitting}
-          error={effectiveErrors.skillUrls}
+          error={hasUnavailableSkills ? undefined : effectiveErrors.skillUrls}
         />
       }
       modelSelector={
@@ -416,7 +442,16 @@ const ScheduledTaskEditPage: FC = () => {
           placeholder={t(ScheduledTasksI18nKeys.CreateModelPlaceholder)}
           labelledById={modelLabelId}
           isDisabled={isSubmitting}
-          isInvalid={Boolean(errors.modelId)}
+          isInvalid={Boolean(effectiveErrors.modelId)}
+          selectedLabel={
+            modelPreview.modelDisplayName ??
+            (isCheckingAvailability ? '' : undefined)
+          }
+          labelTooltip={
+            modelPreview.isUnavailable
+              ? t(ScheduledTasksI18nKeys.UnavailableModelTooltip)
+              : undefined
+          }
           panelClassName="desktop:min-w-[320px] [--ds-search-inline:12px]"
         />
       }
@@ -426,6 +461,7 @@ const ScheduledTaskEditPage: FC = () => {
       onCancel={handleCancel}
       onSubmit={handleSubmitVoid}
       isSubmitting={isSubmitting}
+      isSubmitDisabled={isCheckingAvailability || hasUnavailableSelection}
       markdownEditorTheme={markdownEditorTheme}
     />
   );

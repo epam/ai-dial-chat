@@ -108,7 +108,7 @@ When `values.repeat === 'custom'`, the form SHALL render exactly the **Every** d
 
 `values` SHALL NOT include a `stream` field, and the form MUST NOT render a stream toggle — streaming is fixed server-side (`stream: true`) and is not a user-configurable option.
 
-`description` is optional and MUST NOT participate in the Create-button required-field guard. The Create action SHALL be disabled while `isSubmitting` is `true` or while `displayName` or `values.modelId` is empty, while both trimmed `prompt` and `values.skillUrls` are empty, while `errors.skillUrls` is present, or — when `values.repeat === 'custom'` — while `values.dayOfWeek` or `values.time` is empty (minimum client-side guard; full validation uses shared checked preparation at the app boundary). `values.modelId` itself continues to be owned and set by the host via the `modelSelector` element's own `onSelect` callback (bound to `onFieldChange('modelId', ...)` by the host, outside the lib) — the lib's required-field guard reads `values.modelId` exactly as it did before this change; only the rendered control changed.
+`description` is optional and MUST NOT participate in the Create-button required-field guard. The Create action SHALL be disabled while `isSubmitting` or host-supplied `isSubmitDisabled` is `true`, while `errors.modelId` is present, or while `displayName` or `values.modelId` is empty, while both trimmed `prompt` and `values.skillUrls` are empty, while `errors.skillUrls` is present, or — when `values.repeat === 'custom'` — while `values.dayOfWeek` or `values.time` is empty (minimum client-side guard; full validation uses shared checked preparation at the app boundary). `values.modelId` itself continues to be owned and set by the host via the `modelSelector` element's own `onSelect` callback (bound to `onFieldChange('modelId', ...)` by the host, outside the lib) — the lib's required-field guard reads `values.modelId` exactly as it did before this change; only the rendered control changed.
 
 The `Run at` and `Time` `Calendar` controls' `onChange` callbacks (inside `ScheduledTaskRunAtField` for `runAt`, in the form for `time`) MUST adapt the ui-kit's `CalendarValue` (`Date | string | null`) into calls to `onFieldChange('runAt', ...)` / `onFieldChange('time', ...)` using the same value shapes the page already consumes (`values.runAt` as a `Date`-constructible value, `values.time` as an `"HH:mm"` string) — this is a UI-control swap, not a change to the `values`/`onFieldChange` contract.
 
@@ -857,7 +857,7 @@ Edit state SHALL distinguish loading, ready, not-found, load-error and unsupport
 
 ### Requirement: Scheduled task configuration exposes a controlled optional Skill field
 
-Create and edit SHALL render Skill above Instructions. `ScheduledTaskCreateForm` SHALL accept optional `skillSelector: ReactNode` and render it without duplicating the composed control's label/error markup. The host-composed UI-kit Select SHALL receive `labels.skillLabel` and `errors.skillUrls` so its own label and error are associated with its combobox. When the slot is absent, the form SHALL still render `errors.skillUrls` as a live form-level error. The library SHALL add `skillUrls?: string[]` to form values and `skillUrls?: string` to localized errors; it SHALL NOT resolve catalog data or feature flags.
+Create and edit SHALL render Skill above Instructions. `ScheduledTaskCreateForm` SHALL accept optional `skillSelector: ReactNode` and render it without duplicating the composed control's label/error markup. The host-composed UI-kit Select SHALL receive `labels.skillLabel` and ordinary field errors so its own label and error are associated with its combobox. Host-confirmed unavailable skills SHALL instead carry the per-tag unavailable state and tooltip without making healthy tags erroneous; the form still receives the availability error for its save guard. When the slot is absent, the form SHALL still render `errors.skillUrls` as a live form-level error. The library SHALL add `skillUrls?: string[]` to form values and `skillUrls?: string` to localized errors; it SHALL NOT resolve catalog data or feature flags.
 
 Existing page-local controlled form values SHALL own selection. `SkillSelectorField` from `@epam/ai-dial-skills` SHALL report append/removal through `onFieldChange('skillUrls', value)` via the app adapter. No new context or second uncontrolled selection state SHALL be introduced. The library minimum save guard SHALL accept nonblank instructions or a nonempty skill array, and SHALL reject a skill field error; checked preparation remains mandatory before writing.
 
@@ -872,7 +872,7 @@ Existing page-local controlled form values SHALL own selection. `SkillSelectorFi
 - **WHEN** the user opens the Skill field
 - **THEN** the app supplies every personal, shared, and public skill (deduplicated by reference) as a checkbox option, without favorites filtering, a Browse action, or a change to chat's selection
 - **AND** every breakpoint uses the responsive UI-kit `Select` multiple popover with search
-- **AND** the input uses the model selector's UI-kit styling and renders selected skills with the Select's built-in removable tags
+- **AND** the input uses the model selector's UI-kit styling and renders selected skills with removable UI-kit tags, including the unavailable-tag renderer when needed
 - **AND** the Skill field and Instructions editor share the same available width and 996px maximum width
 
 #### Scenario: Instructions only skill only and combined content
@@ -891,19 +891,21 @@ Existing page-local controlled form values SHALL own selection. `SkillSelectorFi
 
 - **WHEN** the selected model or agent does not support skills
 - **THEN** an empty Skill field is disabled; with saved selections, opening and adding are prevented while the UI-kit tags remain removable
-- **AND** hovering it shows a tooltip with the reason `skillSelector.unsupportedTooltipLabel` while at least one skill is selected; with no skill selected there is no tooltip or caption
+- **AND** hovering it shows a tooltip with the reason `skillSelector.unsupportedTooltipLabel` while at least one skill is selected, unless an unavailable tag owns the more specific tooltip; with no skill selected there is no tooltip or caption
 - **AND** on a touch-only device the tooltip renders nothing, so the reason is not shown visually there
 
 #### Scenario: Missing skill metadata cannot bypass validation
 
 - **WHEN** a saved skill URL is present but the catalog is loading or no longer returns that skill
-- **THEN** the field displays its raw reference, retains removal, and capability validation still uses URL presence
+- **THEN** the edit page waits for the availability check before enabling Save; pending or unavailable references use their decoded short name, confirmed unavailability adds the localized suffix and error tag, and removal remains possible
+- **AND** capability validation still uses URL presence and a temporary metadata failure SHALL NOT imply deletion
 
 #### Scenario: Capability recovers after a server rejection
 
 - **WHEN** a save returns `scheduledTaskSkillUnsupported` and deployment support subsequently changes from false to true
 - **THEN** the stale server error clears and the unchanged draft can be submitted again
 - **AND** unrelated rerenders do not clear a server rejection while capability data remains unchanged
+
 ### Requirement: Scheduled Skill UI preserves localization accessibility and responsive behavior
 
 The host SHALL translate `scheduledTasks.create.skillLabel`, `scheduledTasks.create.skillPlaceholder`, `scheduledTasks.create.instructionsOrSkillRequired`, and `skillSelector.removeSkillLabel`; reuse `skillSelector.unsupportedTooltipLabel` for every unsupported message about a selected skill. Existing `scheduledTasksEnabled` route gating and its resolution through the app-config registry key `features.scheduledTasksEnabled` (`FeatureKey.ScheduledTasksEnabled`) SHALL remain unchanged; no new flag/role is introduced.

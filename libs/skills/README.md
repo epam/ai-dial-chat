@@ -660,3 +660,10 @@ reference. The host supplies `labels.fieldLabel` as the Select's accessible
 name. Unavailable metadata falls back to the URL. Unsupported models disable
 adding but allow removal; submission makes the Select inert and disables all
 actions. `SkillSelectorFieldProps` is the single exported field contract.
+
+`SkillSelectorField.unavailableValues` identifies host-confirmed unavailable
+selections. These retain removable compact tags with an error fill and border;
+other selected tags remain normal. Unavailable tags suppress the native HTML
+title tooltip and show only the custom availability tooltip. Supply localized `labels.unavailableTooltipLabel`
+and `labels.removeLabel`. The tag colors are overridden by
+`styles.colors.unavailableTagBackground` and `unavailableTagBorder`.

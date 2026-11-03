@@ -1526,7 +1526,7 @@ describe('ScheduledTaskDetailPage', () => {
     expect(await screen.findByText('modelLabel:GPT-4.1 mini')).toBeTruthy();
   });
 
-  it('falls back to the raw model id when unresolved', async () => {
+  it('marks a model absent from the loaded catalog unavailable', async () => {
     useFeatureFlagMock.mockReturnValue(true);
     useDeploymentsMock.mockReturnValue({ items: [] });
     getScheduledTaskMock.mockResolvedValue({
@@ -1537,7 +1537,9 @@ describe('ScheduledTaskDetailPage', () => {
     });
     renderDetailPage();
 
-    expect(await screen.findByText('modelLabel:unknown-model')).toBeTruthy();
+    expect(
+      await screen.findByText('modelLabel:scheduledTasks.unavailableModelName'),
+    ).toBeTruthy();
   });
 
   it('formats nextRunTime into a localized "Next run" label', async () => {
