@@ -1,8 +1,8 @@
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
 import { describe, expect, it } from 'vitest';
-import { ProjectConversationListQueryDto } from '../conversations/dto/project-conversation-list-query.dto';
 import { ProjectConversationParamDto } from '../conversations/dto/project-conversation-param.dto';
+import { ProjectConversationTitlesBodyDto } from '../conversations/dto/project-conversation-titles.dto';
 
 const PROJECT_ID = 'projects/a1b2c3/support-quality';
 
@@ -10,8 +10,8 @@ const validate = (conversationName: unknown, id: unknown = PROJECT_ID) =>
   validateSync(
     plainToInstance(ProjectConversationParamDto, { id, conversationName }),
   );
-const validateLimit = (limit: unknown) =>
-  validateSync(plainToInstance(ProjectConversationListQueryDto, { limit }));
+const validateNames = (names: unknown) =>
+  validateSync(plainToInstance(ProjectConversationTitlesBodyDto, { names }));
 
 describe('ProjectConversationParamDto', () => {
   it.each([
@@ -41,12 +41,22 @@ describe('ProjectConversationParamDto', () => {
   });
 });
 
-describe('ProjectConversationListQueryDto', () => {
-  it.each([undefined, '1', '50', '100'])('accepts limit %s', (limit) => {
-    expect(validateLimit(limit)).toHaveLength(0);
+describe('ProjectConversationTitlesBodyDto', () => {
+  it.each([
+    ['one name', ['gpt-4o__Weekly summary__7c1d']],
+    ['100 names', Array.from({ length: 100 }, (_, i) => `gpt-4o__T__${i}`)],
+  ])('accepts %s', (_label, names) => {
+    expect(validateNames(names)).toHaveLength(0);
   });
 
-  it.each(['0', '101', 'x', '1.5'])('rejects limit %s', (limit) => {
-    expect(validateLimit(limit)).not.toHaveLength(0);
+  it.each([
+    ['no names', []],
+    ['101 names', Array.from({ length: 101 }, (_, i) => `gpt-4o__T__${i}`)],
+    ['traversal', ['..']],
+    ['a path', ['../context/tickets.csv']],
+    ['a non-string', [42]],
+    ['a non-array', 'gpt-4o__T__1'],
+  ])('rejects %s', (_label, names) => {
+    expect(validateNames(names)).not.toHaveLength(0);
   });
 });

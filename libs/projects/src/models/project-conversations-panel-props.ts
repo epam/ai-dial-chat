@@ -35,6 +35,8 @@ export interface ProjectConversationsPanelProps {
   composer?: ReactNode;
   /** Content between `composer` and the Chats list, typically the host's Outputs section; omitted when unset. */
   outputs?: ReactNode;
+  /** Whether `outputs` shows content; the Chats list then renders nothing while empty instead of its empty state. Defaults to `false`. */
+  hasOutputs?: boolean;
   /** Conversations, in display order. */
   items: ProjectConversationListItem[];
   /** Shows the list's loading state. Defaults to `false`. */

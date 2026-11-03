@@ -7,6 +7,7 @@ import {
   createProjectConversation,
   deleteProjectConversation,
   getProjectConversation,
+  getProjectConversationTitles,
   listProjectConversations,
   markProjectConversationViewed,
   renameProjectConversation,
@@ -59,6 +60,8 @@ export const projectsClient: ProjectsApiClient = {
   downloadProjectContextFile: (...args) => downloadProjectContextFile(...args),
   listProjectArtifacts: (...args) => listProjectArtifacts(...args),
   listProjectConversations: (...args) => listProjectConversations(...args),
+  getProjectConversationTitles: (...args) =>
+    getProjectConversationTitles(...args),
   createProjectConversation: (
     projectId,
     {

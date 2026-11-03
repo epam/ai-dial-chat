@@ -9,7 +9,7 @@ import {
   Highlight,
 } from '@epam/ai-dial-ui-kit';
 import { IconPin, IconPinFilled } from '@tabler/icons-react';
-import type { FC, MouseEvent } from 'react';
+import { type FC, type MouseEvent, useRef } from 'react';
 import type { ProjectItem } from '../../models/project-item';
 import { formatRelativeTime } from '../../utils/relative-time';
 import styles from './ProjectCard.module.scss';
@@ -94,10 +94,38 @@ export const ProjectCard: FC<ProjectCardProps> = ({
     />
   );
 
+  const folderPath = (
+    <FolderPath
+      segments={getFolderSegments(sourceLabel, project.parentPath)}
+      ariaLabel={folderPathLabel}
+      labelClassName={mergeClasses(pathLabelClassName, styles.path)}
+      leafClassName={mergeClasses(pathLeafClassName, styles.path)}
+    />
+  );
+
+  const linkRef = useRef<HTMLAnchorElement | null>(null);
+
   const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
     if (onOpen == null || !isPlainPrimaryClick(event)) return;
     event.preventDefault();
     onOpen(project.id);
+  };
+
+  /* The folder path sits above the stretched link for its tooltips, so its
+   * clicks are replayed on the link, modifiers included: a plain click opens
+   * the project, a modified one keeps the browser's own behaviour. */
+  const handlePathClick = (event: MouseEvent<HTMLDivElement>) => {
+    linkRef.current?.dispatchEvent(
+      new window.MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+        button: event.button,
+        ctrlKey: event.ctrlKey,
+        metaKey: event.metaKey,
+        shiftKey: event.shiftKey,
+        altKey: event.altKey,
+      }),
+    );
   };
 
   return (
@@ -133,6 +161,7 @@ export const ProjectCard: FC<ProjectCardProps> = ({
         >
           {href != null ? (
             <a
+              ref={linkRef}
               href={href}
               onClick={handleClick}
               className={mergeClasses('min-w-0 flex-1', styles.link)}
@@ -184,13 +213,14 @@ export const ProjectCard: FC<ProjectCardProps> = ({
             )
           )}
         </div>
-        <FolderPath
-          segments={getFolderSegments(sourceLabel, project.parentPath)}
-          ariaLabel={folderPathLabel}
-          labelClassName={mergeClasses(pathLabelClassName, styles.path)}
-          leafClassName={mergeClasses(pathLeafClassName, styles.path)}
-          className={mergeClasses(href != null && styles.aboveLink)}
-        />
+        {href != null ? (
+          // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- pointer only: the card link stays the single tab stop and owns keyboard activation
+          <div className={styles.aboveLink} onClick={handlePathClick}>
+            {folderPath}
+          </div>
+        ) : (
+          folderPath
+        )}
       </CardShell>
     </li>
   );

@@ -301,7 +301,7 @@ describe('ProjectView', () => {
 
     const heading = screen.getByRole('heading', { name: 'Steps' });
     expect(heading.className).toContain('dial-small-semi-text');
-    expect(heading.className).not.toContain('dial-h2-text');
+    expect(heading.className).not.toContain('dial-h1-text');
   });
 
   it('calls onBack from the back button', async () => {

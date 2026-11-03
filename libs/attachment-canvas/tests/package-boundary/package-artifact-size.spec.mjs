@@ -78,8 +78,10 @@ describe('publish-ready package artifact size', () => {
      * plus their README paragraph; measured at 244,617.
      * Raised from 245_500: hardcoded typography moved onto props (`codeClassName`,
      * `jsonCollapsedClassName`, `errorMessageClassName`, `CodeContent`/`PdfContent`/
-     * `LazyContentBoundary` class props) plus their README lines; measured at 246,709. */
-    expect(artifact.unpackedSize).toBeLessThanOrEqual(247_500);
+     * `LazyContentBoundary` class props) plus their README lines; measured at 246,709.
+     * Raised from 247_500: Retry for a failed file load (`onRetry`, `retryCanvas`,
+     * `loadErrorRetryLabel`) plus its README paragraph; measured at 248,632. */
+    expect(artifact.unpackedSize).toBeLessThanOrEqual(249_500);
   });
 
   it('contains no private OOXML renderer or worker chunks', () => {

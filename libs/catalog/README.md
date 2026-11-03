@@ -582,8 +582,9 @@ The shell of a picker dialog over catalog items (Add toolset, Change model):
 the header with sort, search and the From filter, and the loading, failure and
 empty states. The list is a `ListView` of the searched, filtered and sorted
 items, given `listProps` (everything but `items` and `query`; `ariaLabel`
-defaults to `labels.catalog`). It scrolls in the dialog's body, with its column
-header stuck to the top. Mount it only while open, so search, filter and sort
+defaults to `labels.catalog`). It fills the body below the search and filters
+and scrolls its own rows, with its column header fixed at the top. Mount it
+only while open, so search, filter and sort
 start fresh each time.
 
 ```tsx
@@ -620,6 +621,12 @@ receives the searched, filtered and sorted items and the search query.
   (`CatalogPickerModalColors`), falling back to `--stroke-tertiary`.
 - `headingClassName` sets the type of the heading above the list, defaulting to
   `'dial-body-semi-text'`.
+- Once the default list's rows are scrolled down by the list's own height, a
+  floating "Scroll to top" button appears at the list's bottom inline-end
+  corner. It returns the rows to the first row and focuses search. It is named
+  by `labels.scrollToTop` (default `'Scroll to top'`). A `ref` or
+  `onRowsScroll` passed in `listProps` still receives the handle and every row
+  offset. A list from `renderList` gets no button.
 
 ### AddOnCatalogModal
 
@@ -657,6 +664,7 @@ import { CatalogEntityType } from '@epam/ai-dial-chat-shared';
   `credentialsBadgeLoggedOutLabel`, …); the selection props are the picker's own.
 - `labels.selectAll` and `labels.selectRow` default to `'Select all'` and `Select <name>`.
 - `headingClassName` is forwarded to `CatalogPickerModal` (default `'dial-body-semi-text'`).
+- The list gets `CatalogPickerModal`'s "Scroll to top" button, named by `labels.scrollToTop`.
 
 ### AddOnListItem
 

@@ -106,6 +106,14 @@ describe('ProjectConversationList', () => {
     expect(onDelete).toHaveBeenCalledWith('c2');
   });
 
+  it('renders nothing while empty when the empty state is not shown', () => {
+    renderList({ items: [], isEmptyStateShown: false });
+
+    expect(screen.queryByText('No outputs or chats yet')).toBeNull();
+    expect(screen.queryByRole('region')).toBeNull();
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
   it('shows the empty state in a status region', () => {
     renderList({ items: [] });
 

@@ -22,6 +22,7 @@ import {
 } from '../utils/project-conversation-id.util';
 import type { ParsedProjectId } from '../utils/project-id.util';
 import type { ProjectConversationListResponseDto } from './dto/project-conversation-list-response.dto';
+import type { ProjectConversationTitlesResponseDto } from './dto/project-conversation-titles.dto';
 import { ProjectConversationsListService } from './project-conversations-list.service';
 
 /**
@@ -70,15 +71,26 @@ export class ProjectConversationsService {
     project: ParsedProjectId,
     accessToken: string,
     sessionBucket: string,
-    limit?: number,
-    offset?: number,
   ): Promise<ProjectConversationListResponseDto> {
     return this.listService.listProjectConversations(
       project,
       accessToken,
       sessionBucket,
-      limit,
-      offset,
+    );
+  }
+
+  /** Resolves the titles and read state of the named conversations; names the project does not hold are omitted. */
+  resolveConversations(
+    project: ParsedProjectId,
+    names: string[],
+    accessToken: string,
+    sessionBucket: string,
+  ): Promise<ProjectConversationTitlesResponseDto> {
+    return this.listService.resolveProjectConversations(
+      project,
+      names,
+      accessToken,
+      sessionBucket,
     );
   }
 
