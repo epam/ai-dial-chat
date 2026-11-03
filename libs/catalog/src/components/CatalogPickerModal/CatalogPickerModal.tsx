@@ -15,9 +15,17 @@ import {
   Spinner,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
-import { type FC, type ReactNode, useCallback, useMemo, useState } from 'react';
+import {
+  type FC,
+  type ReactNode,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { useCatalogScrollToTop } from '../../hooks/useCatalogScrollToTop/useCatalogScrollToTop';
 import type { CatalogItem } from '../../models/catalog-item';
-import type { ListViewProps } from '../../models/list-props';
+import type { ListViewHandle, ListViewProps } from '../../models/list-props';
 import { CatalogLoadStatus } from '../../types/load-status';
 import { CatalogSortKey } from '../../types/sort';
 import {
@@ -26,6 +34,7 @@ import {
 } from '../../utils/catalog-filter';
 import { Filter } from '../Filter/Filter';
 import { ListView } from '../ListView/ListView';
+import { ScrollToTopButton } from '../ScrollToTopButton/ScrollToTopButton';
 import styles from './CatalogPickerModal.module.scss';
 
 /** User-visible strings of `CatalogPickerModal`; pass translated ones in a localised host. */
@@ -72,6 +81,8 @@ export interface CatalogPickerModalLabels {
   clear?: string;
   /** From filter Apply button. Defaults to `'Apply'`. */
   apply?: string;
+  /** Accessible name and tooltip of the default list's "Scroll to top" button. Defaults to `'Scroll to top'`. */
+  scrollToTop?: string;
 }
 
 /**
@@ -174,6 +185,49 @@ export const CatalogPickerModal: FC<CatalogPickerModalProps> = ({
   const [isMyOnly, setIsMyOnly] = useState(false);
   const [sortKey, setSortKey] = useState<string>(
     CatalogSortKey.RecentlyUpdated,
+  );
+
+  /* The default list's box: the grid scrolls its own rows inside it, so the
+     box only gives the scroll-to-top rule its height. */
+  const [listBox, setListBox] = useState<HTMLDivElement | null>(null);
+  const listViewRef = useRef<ListViewHandle | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const {
+    isVisible: isScrollToTopVisible,
+    handleRowsScroll,
+    scrollToTop,
+  } = useCatalogScrollToTop({
+    scrollBody: listBox,
+    searchInputRef,
+    listViewRef,
+    isListView: true,
+  });
+  /* Read through a ref so the box's callback ref keeps one identity. */
+  const handleRowsScrollRef = useRef(handleRowsScroll);
+  handleRowsScrollRef.current = handleRowsScroll;
+  const handleListBoxRef = useCallback((node: HTMLDivElement | null) => {
+    /* A list shown again starts at its first row without reporting a scroll,
+       so the offset kept from before it unmounted is dropped. */
+    if (node == null) handleRowsScrollRef.current(0);
+    setListBox(node);
+  }, []);
+
+  const hostListRef = listProps?.ref;
+  const setListViewRef = useCallback(
+    (handle: ListViewHandle | null) => {
+      listViewRef.current = handle;
+      if (typeof hostListRef === 'function') hostListRef(handle);
+      else if (hostListRef != null) hostListRef.current = handle;
+    },
+    [hostListRef],
+  );
+  const hostOnRowsScroll = listProps?.onRowsScroll;
+  const handleListRowsScroll = useCallback(
+    (top: number) => {
+      handleRowsScroll(top);
+      hostOnRowsScroll?.(top);
+    },
+    [handleRowsScroll, hostOnRowsScroll],
   );
 
   const isReady = status === CatalogLoadStatus.Ready;
@@ -313,13 +367,23 @@ export const CatalogPickerModal: FC<CatalogPickerModalProps> = ({
     /* The grid scrolls its own rows, so this box only gives it the height left
        below the search and filters. */
     return (
-      <div className="min-h-0 flex-1">
+      <div ref={handleListBoxRef} className="relative min-h-0 flex-1">
         <ListView
           ariaLabel={labels.catalog}
           {...listProps}
+          ref={setListViewRef}
+          onRowsScroll={handleListRowsScroll}
           items={rows}
           query={search}
         />
+        {isScrollToTopVisible && (
+          <div className="absolute inset-e-4 bottom-4 z-10">
+            <ScrollToTopButton
+              label={labels.scrollToTop ?? 'Scroll to top'}
+              onClick={scrollToTop}
+            />
+          </div>
+        )}
       </div>
     );
   };
@@ -369,6 +433,7 @@ export const CatalogPickerModal: FC<CatalogPickerModalProps> = ({
               placeholder={searchLabel}
               aria-label={searchLabel}
               clearLabel={labels.clearSearch ?? 'Clear search'}
+              inputRef={searchInputRef}
             />
           </div>
           <Filter
