@@ -1,3 +1,4 @@
+import type { ConversationDataSource } from '@epam/ai-dial-chat-hooks/conversation';
 import { createProjectConversationDataSource as createSharedProjectConversationDataSource } from '@epam/ai-dial-chat-hooks/project';
 import {
   getProjectConversationRoute,
@@ -8,7 +9,6 @@ import {
   projectsClient,
   projectViewedWriter,
 } from '../hooks/projects/projects-client';
-import type { ConversationDataSource } from '../models/conversation-data-source';
 import { ApiEndpoints, getCsrfToken, setCsrfToken } from '../server-api/base';
 
 /**

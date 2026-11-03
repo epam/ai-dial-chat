@@ -1,7 +1,7 @@
+import type { ConversationDataSource } from '@epam/ai-dial-chat-hooks/conversation';
 import { renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ConversationDataSource } from '../../models/conversation-data-source';
 import { conversationsApi } from '../../server-api/api-client';
 import { ROUTES } from '../../types/routes';
 import { conversationStreamTransport } from '../../utils/conversation-stream-transport';
