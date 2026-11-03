@@ -7,9 +7,9 @@ Slicing: vertical, inside-out. First the pure helpers move, with their tests. Th
   - `resolveArchiveEntryPath`, previously a method;
   - `decodeArchiveEntryName`, previously a method;
   - `buildDeduplicatedFilePath`, with private `splitFilePath`/`buildDeduplicatedFileName` and `DIAL_RESOURCE_SEGMENT_BYTE_LIMIT`;
-  - `ARCHIVE_ENTRY_CONFLICT_RETRY_LIMIT`, `isConflictError` and `throwIfArchiveUploadAborted`.
+  - `ARCHIVE_ENTRY_CONFLICT_RETRY_LIMIT` and `isConflictError`.
 
-  Import them in `upload/files-upload.service.ts` and remove the originals.
+  Move `throwIfArchiveUploadAborted` to `upload/upload-abort.ts` as `throwIfUploadAborted`, with the same message. Import them in `upload/files-upload.service.ts` and remove the originals.
 - [x] 1.2 Move `describe('resolveArchiveEntryPath')` from `tests/upload/files-upload.service.spec.ts` to a new `tests/upload/archive-upload.spec.ts`, calling the module function. The cases and expectations stay the same.
 
 Verification: `npm run test:file -- apps/chat-api/src/files/tests/upload/archive-upload.spec.ts apps/chat-api/src/files/tests/upload/files-upload.service.spec.ts`
@@ -24,7 +24,7 @@ Verification: `npm run test:file -- apps/chat-api/src/files/tests/upload/archive
   - `files.module.ts` `providers`;
   - `files.service.ts`: append the `filesArchiveUploadService` constructor parameter and delegate `uploadArchive` to it (design D3);
   - `tests/files.controller.spec.ts`: one more constructor argument.
-- [x] 2.3 Move `describe('uploadArchive')` unchanged, with the helpers it uses, to a new `tests/upload/files-archive-upload.service.spec.ts`. Use a setup that returns `{ service, sdkClient, fetchCore }` with `service` being the archive service (design D4).
+- [x] 2.3 Move `describe('uploadArchive')` unchanged, with the helpers it uses, to a new `tests/upload/files-archive-upload.service.spec.ts`. Use a setup that returns `{ service, sdkClient, fetchCore }` with `service` being the archive service, and move the mock wiring and `readBody` that both upload specs use to `tests/upload/files-upload.fixtures.ts` (design D4).
 
 Verification: `npm run test:file -- apps/chat-api/src/files/tests/upload/files-archive-upload.service.spec.ts apps/chat-api/src/files/tests/upload/files-upload.service.spec.ts apps/chat-api/src/files/tests/files.controller.spec.ts apps/chat-api/src/files/tests/folder/files-folder.service.spec.ts`
 
@@ -38,5 +38,5 @@ Verification: `npm run test:file -- apps/chat-api/src/files/tests/upload/files-a
 
 ## 4. Follow-up (out of scope)
 
-- [ ] 4.1 Rename `throwIfArchiveUploadAborted` to an upload-neutral name in its own change, deciding whether single-file uploads should keep the `Archive upload timed out` message.
+- [ ] 4.1 Decide whether single-file uploads should keep the `Archive upload timed out` message from `throwIfUploadAborted` (the rename itself landed in task 1.1).
 - [x] 4.2 Propose `split-environment-config` (refactoring plan B6).

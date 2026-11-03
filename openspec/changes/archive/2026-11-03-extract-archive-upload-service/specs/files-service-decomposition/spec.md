@@ -39,3 +39,9 @@ The backend SHALL implement the files feature's business logic in `apps/chat-api
 
 - **WHEN** `files-upload.service.ts` is inspected
 - **THEN** it contains no ZIP parsing, archive limit, temp staging or conflict-retry code, and `FilesService.uploadArchive` delegates to `FilesArchiveUploadService.uploadArchive`
+
+#### Scenario: Archive upload reaches DIAL Core only through the upload transport
+
+- **WHEN** `files-archive-upload.service.ts` is inspected
+- **THEN** its constructor declares only `ConfigService` and `FilesUploadService` (no `DialClientService`), it makes no direct `fetchCore` or SDK client call, and every entry upload goes through `FilesUploadService.uploadFileStream`
+- **AND** a unit test of `FilesArchiveUploadService` mocks DIAL Core at the `DialClientService` behind a real `FilesUploadService`, so the archive pipeline is exercised against the same create-only transport it uses in production

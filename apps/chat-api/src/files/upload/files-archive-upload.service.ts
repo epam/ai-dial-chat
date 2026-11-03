@@ -28,12 +28,12 @@ import {
   decodeArchiveEntryName,
   isConflictError,
   resolveArchiveEntryPath,
-  throwIfArchiveUploadAborted,
 } from './archive-upload';
 import {
   FilesUploadService,
   type UploadedArchiveFile,
 } from './files-upload.service';
+import { throwIfUploadAborted } from './upload-abort';
 
 interface ArchiveFileEntry {
   entry: yauzl.Entry;
@@ -207,7 +207,7 @@ export class FilesArchiveUploadService {
        */
       let entryIndex = 0;
       for (const { entry, fileName, safeRelativePath } of fileEntries) {
-        throwIfArchiveUploadAborted(signal);
+        throwIfUploadAborted(signal);
 
         entryIndex += 1;
 
@@ -249,7 +249,7 @@ export class FilesArchiveUploadService {
             );
           results.push({ path: uploadedPath, success: true });
         } catch (err) {
-          throwIfArchiveUploadAborted(signal);
+          throwIfUploadAborted(signal);
 
           results.push({
             path: entryPath,
@@ -296,7 +296,7 @@ export class FilesArchiveUploadService {
         );
         return nextPath;
       } catch (err) {
-        throwIfArchiveUploadAborted(signal);
+        throwIfUploadAborted(signal);
 
         if (
           !isConflictError(err) ||
@@ -321,7 +321,7 @@ export class FilesArchiveUploadService {
     remainingBudget: number,
     signal: AbortSignal,
   ): Promise<number> {
-    throwIfArchiveUploadAborted(signal);
+    throwIfUploadAborted(signal);
 
     if (remainingBudget < 0) {
       throw new UnprocessableEntityException(
@@ -354,7 +354,7 @@ export class FilesArchiveUploadService {
 
     try {
       await pipeline(stream, limiter, createWriteStream(tempPath));
-      throwIfArchiveUploadAborted(signal);
+      throwIfUploadAborted(signal);
       return readBytes;
     } finally {
       signal.removeEventListener('abort', abortCurrentEntry);

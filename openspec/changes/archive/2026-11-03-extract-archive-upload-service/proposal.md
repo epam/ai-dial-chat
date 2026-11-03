@@ -20,9 +20,10 @@ Archive changes, such as limits, conflict policy and path safety, have to be rea
   - `resolveArchiveEntryPath` (now a module function, previously a public method) and `ArchiveEntryPathResult`;
   - `decodeArchiveEntryName`;
   - `buildDeduplicatedFilePath` with its `splitFilePath`/`buildDeduplicatedFileName` helpers and the `DIAL_RESOURCE_SEGMENT_BYTE_LIMIT`/`ARCHIVE_ENTRY_CONFLICT_RETRY_LIMIT` constants;
-  - `isConflictError`;
-  - `throwIfArchiveUploadAborted`.
+  - `isConflictError`.
+- **New transport-side module `apps/chat-api/src/files/upload/upload-abort.ts`.** It holds the shared abort check as `throwIfUploadAborted` (previously `throwIfArchiveUploadAborted`), with the same 503 `Archive upload timed out`, so the transport imports nothing from the archive module.
 - **New `FilesArchiveUploadService`** (`apps/chat-api/src/files/upload/files-archive-upload.service.ts`, injectable). It takes `ConfigService` and `FilesUploadService` and owns, moved unchanged:
+  - `ArchiveFileEntry`;
   - `uploadArchive`;
   - `extractAndUploadArchive`;
   - `uploadArchiveEntryWithDeduplicatedName`;
@@ -36,6 +37,7 @@ Archive changes, such as limits, conflict policy and path safety, have to be rea
 - **Tests:**
   - `describe('resolveArchiveEntryPath')` moves to `tests/upload/archive-upload.spec.ts` and calls the module function; the assertions do not change.
   - `describe('uploadArchive')` moves to `tests/upload/files-archive-upload.service.spec.ts`, with assertions and mocks unchanged and a setup helper that builds both services.
+  - The mock wiring and `readBody` that both upload specs need live in `tests/upload/files-upload.fixtures.ts` rather than being copied.
   - The `new FilesService(...)` call in `tests/files.controller.spec.ts` gains one argument.
 
 No behavior changes:
@@ -82,10 +84,10 @@ None.
 ## Impact
 
 - **Code:** `apps/chat-api/src/files/`.
-  - New: `upload/archive-upload.ts` and `upload/files-archive-upload.service.ts`.
+  - New: `upload/archive-upload.ts`, `upload/upload-abort.ts` and `upload/files-archive-upload.service.ts`.
   - Edited: `upload/files-upload.service.ts`, `files.service.ts` and `files.module.ts`.
 - **Tests:**
-  - New: `tests/upload/archive-upload.spec.ts` and `tests/upload/files-archive-upload.service.spec.ts`.
+  - New: `tests/upload/archive-upload.spec.ts`, `tests/upload/files-archive-upload.service.spec.ts` and `tests/upload/files-upload.fixtures.ts`.
   - Edited: `tests/upload/files-upload.service.spec.ts` (the blocks move out) and `tests/files.controller.spec.ts` (constructor arity).
 - **Docs:** `apps/chat-api/src/skills/utils/skill-path.util.ts` cites `resolveArchiveEntryPath` in a comment, and the name stays valid. No `docs/` file names these internals.
 - **Unaffected:**

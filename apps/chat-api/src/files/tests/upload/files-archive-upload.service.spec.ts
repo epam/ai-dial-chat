@@ -7,40 +7,15 @@ import {
   ServiceUnavailableException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import archiver from 'archiver';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { EnvironmentVariables } from '../../../config/environment.config';
-import type { DialClientService } from '../../../dial/dial-client.service';
 import { FilesArchiveUploadService } from '../../upload/files-archive-upload.service';
 import { FilesUploadService } from '../../upload/files-upload.service';
-
-type SdkClient = {
-  uploadFile: ReturnType<typeof vi.fn>;
-};
+import { makeUploadServiceDeps, readBody } from './files-upload.fixtures';
 
 function makeService(configOverrides: Record<string, unknown> = {}) {
-  const configService = {
-    get: vi.fn((key: string) => {
-      if (key in configOverrides) return configOverrides[key];
-      if (key === 'DIAL_CORE_URL') return 'http://dial-core';
-      if (key === 'FILE_TRANSFER_TIMEOUT_MS') return 30_000;
-      return undefined;
-    }),
-  } as unknown as ConfigService<EnvironmentVariables>;
-
-  const sdkClient: SdkClient = {
-    uploadFile: vi.fn(),
-  };
-  const fetchCore = vi.fn();
-
-  const dialClient = {
-    client: sdkClient,
-    baseUrl: 'http://dial-core',
-    dialApiVersion: '2024-10-21',
-    fetchCore,
-  } as unknown as DialClientService;
-
+  const { configService, dialClient, sdkClient, fetchCore } =
+    makeUploadServiceDeps(configOverrides);
   const service = new FilesArchiveUploadService(
     configService,
     new FilesUploadService(dialClient, configService),
@@ -48,20 +23,6 @@ function makeService(configOverrides: Record<string, unknown> = {}) {
 
   return { service, sdkClient, fetchCore };
 }
-
-const readBody = async (body: unknown, delayMs = 0): Promise<Buffer> => {
-  const reader = (body as ReadableStream<Uint8Array>).getReader();
-  const parts: Buffer[] = [];
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    parts.push(Buffer.from(value));
-    if (delayMs > 0) {
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
-    }
-  }
-  return Buffer.concat(parts);
-};
 
 const buildZipBuffer = (
   entries: Array<{ name: string; content?: string }>,

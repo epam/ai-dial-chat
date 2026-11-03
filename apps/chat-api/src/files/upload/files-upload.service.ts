@@ -25,7 +25,7 @@ import {
 } from '../dial-resource-path.util';
 import type { FileUploadResponseDto } from '../dto/upload-file-response.dto';
 import type { UploadMode } from '../dto/upload-file.dto';
-import { throwIfArchiveUploadAborted } from './archive-upload';
+import { throwIfUploadAborted } from './upload-abort';
 import {
   UPLOAD_CHUNK_BYTES,
   UPLOAD_MAX_DURATION_MS,
@@ -260,7 +260,7 @@ export class FilesUploadService {
       contentType = 'application/octet-stream',
       encodePath = encodeDialFilePath,
     } = options;
-    throwIfArchiveUploadAborted(signal);
+    throwIfUploadAborted(signal);
 
     /* boundary is UUIDv4 and cannot be influenced by user input — safe to
        interpolate directly into Content-Type and the multipart preamble. */

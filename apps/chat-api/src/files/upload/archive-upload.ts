@@ -1,8 +1,4 @@
-import {
-  HttpException,
-  HttpStatus,
-  ServiceUnavailableException,
-} from '@nestjs/common';
+import { HttpException, HttpStatus } from '@nestjs/common';
 import { StringUtils } from '../../common/utils/string-utils';
 
 export interface ArchiveEntryPathResult {
@@ -67,16 +63,6 @@ export const buildDeduplicatedFilePath = (
 
 export const isConflictError = (err: unknown): boolean =>
   err instanceof HttpException && err.getStatus() === HttpStatus.CONFLICT;
-
-/*
- * Also called by the single-file transport (`FilesUploadService.uploadFileStream`),
- * which therefore reports an already-aborted signal with the same message.
- */
-export const throwIfArchiveUploadAborted = (signal: AbortSignal): void => {
-  if (signal.aborted) {
-    throw new ServiceUnavailableException('Archive upload timed out');
-  }
-};
 
 /** Decodes a yauzl entry name read with `decodeStrings: false` (raw `Buffer`), or passes a string through unchanged. */
 export const decodeArchiveEntryName = (rawFileName: string): string => {

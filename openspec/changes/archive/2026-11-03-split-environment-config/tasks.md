@@ -63,4 +63,4 @@ Verification: `npm run validate:docs`
 ## 6. Follow-up (out of scope)
 
 - [ ] 6.1 Narrow `ConfigService<EnvironmentVariables>` injections to their domain class where a service reads only one domain.
-- [ ] 6.2 Rename `throwIfArchiveUploadAborted` (carried from `extract-archive-upload-service` 4.1).
+- [ ] 6.2 Decide the single-file abort message of `throwIfUploadAborted` (carried from `extract-archive-upload-service` 4.1; the rename is done).
