@@ -406,6 +406,30 @@ describe('useSkillSelectorOverlay', () => {
     ]);
   });
 
+  it('seeds a single listed skill mention via selectSkillByUrl', () => {
+    const { result } = renderHook(() => useSkillSelectorOverlay(baseOptions));
+
+    act(() => {
+      result.current.selectSkillByUrl(abcSkill.url);
+    });
+
+    expect(result.current.message).toBe(`/${abcSkill.name} `);
+    expect(result.current.selectedSkills).toEqual([{ url: abcSkill.url }]);
+  });
+
+  it('names an unlisted skill after its url in selectSkillByUrl', () => {
+    const { result } = renderHook(() => useSkillSelectorOverlay(baseOptions));
+
+    act(() => {
+      result.current.selectSkillByUrl('skills/bucket/folder/missing-skill');
+    });
+
+    expect(result.current.message).toBe('/missing-skill ');
+    expect(result.current.selectedSkills).toEqual([
+      { url: 'skills/bucket/folder/missing-skill' },
+    ]);
+  });
+
   it('folds an unsupported deployment into isSkillUnsupported only once a mention exists', () => {
     const { result, rerender } = renderHook(
       (props: UseSkillSelectorOverlayOptions) => useSkillSelectorOverlay(props),
