@@ -27,10 +27,10 @@ import type {
 } from './dto/revoke-access.dto';
 import type { UploadArchiveResponseDto } from './dto/upload-archive.dto';
 import type { FileUploadResponseDto } from './dto/upload-file-response.dto';
-import type { UploadMode } from './dto/upload-file.dto';
 import { FilesFolderService } from './folder/files-folder.service';
 import { FilesListingService } from './listing/files-listing.service';
 import { FilesSharingService } from './sharing/files-sharing.service';
+import type { UploadMode } from './types/upload-mode.enum';
 import type {
   StreamedUploadFile,
   UploadedArchiveFile,

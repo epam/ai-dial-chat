@@ -9,16 +9,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { initializeRuntimeMetrics } from '../../telemetry/runtime-metrics';
 import {
+  ConversationMessageDto,
+  ConversationMessageRole,
+} from '../dto/conversation-message.dto';
+import {
   ConversationGenerationService,
   GenerationCancelReason,
   GenerationStatus,
   type GenerationLease,
-} from '../conversation-generation.service';
-import {
-  ConversationMessageDto,
-  ConversationMessageRole,
-} from '../dto/conversation-message.dto';
-import { GenerationPreparationStep } from '../generation/generation.types';
+} from './conversation-generation.service';
+import { GenerationPreparationStep } from './generation.types';
 
 /*
  * Opaque principal keys, as `resolvePrincipalKey` produces them — the service

@@ -12,7 +12,6 @@ import { AuthSource } from '../../auth/auth-source.enum';
 import { resolvePrincipalKey } from '../../auth/session/principal-key';
 import type { DialClientService } from '../../dial/dial-client.service';
 import { ConversationGenerationController } from '../conversation-generation.controller';
-import { ConversationGenerationService } from '../conversation-generation.service';
 import { ConversationController } from '../conversation.controller';
 import { ConversationService } from '../conversation.service';
 import { BackgroundGenerationStatus } from '../dto/background-generation.dto';
@@ -22,6 +21,7 @@ import {
 } from '../dto/conversation-message.dto';
 import { BackgroundGenerationService } from '../generation/background-generation.service';
 import { neutralizeForeignPendingMessages } from '../generation/background-message';
+import { ConversationGenerationService } from '../generation/conversation-generation.service';
 import {
   CoreResponseResultKind,
   type CoreResponsesClient,

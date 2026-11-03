@@ -16,12 +16,12 @@ import {
   SseSubscriptionKind,
 } from '../../telemetry/runtime-metrics';
 import { ConversationGenerationController } from '../conversation-generation.controller';
-import { ConversationGenerationService } from '../conversation-generation.service';
 import { ConversationService } from '../conversation.service';
 import {
   ConversationMessageDto,
   ConversationMessageRole,
 } from '../dto/conversation-message.dto';
+import { ConversationGenerationService } from '../generation/conversation-generation.service';
 import { createConversationGenerationController } from './conversation-controller.fixture';
 
 /**

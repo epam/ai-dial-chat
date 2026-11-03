@@ -1,7 +1,7 @@
 import { ConversationGenerationController } from '../conversation-generation.controller';
-import type { ConversationGenerationService } from '../conversation-generation.service';
 import { ConversationWatchController } from '../conversation-watch.controller';
 import type { ConversationService } from '../conversation.service';
+import type { ConversationGenerationService } from '../generation/conversation-generation.service';
 import { ConversationCompletionsResponder } from '../streaming/conversation-completions.responder';
 
 /**

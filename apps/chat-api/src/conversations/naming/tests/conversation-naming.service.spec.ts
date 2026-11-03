@@ -7,16 +7,16 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { beforeEach, describe, expect, it, vi, type Mocked } from 'vitest';
-import type { AppConfigService } from '../../app-config/app-config.service';
-import { FeatureKey } from '../../app-config/feature-flags/feature-key.enum';
-import type { EnvironmentVariables } from '../../config/environment.config';
-import type { DialClientService } from '../../dial/dial-client.service';
-import type { ConversationResponseDto } from '../../openapi/openapi-response.dto';
+import type { AppConfigService } from '../../../app-config/app-config.service';
+import { FeatureKey } from '../../../app-config/feature-flags/feature-key.enum';
+import type { EnvironmentVariables } from '../../../config/environment.config';
+import type { DialClientService } from '../../../dial/dial-client.service';
+import type { ConversationResponseDto } from '../../../openapi/openapi-response.dto';
+import type { ConversationPersistencePort } from '../../conversation-persistence.port';
+import { ConversationMessageRole } from '../../dto/conversation-message.dto';
+import { runConditionalUpdate } from '../../persistence/conversation-persistence.service';
+import { CONVERSATION_NAMING_SYSTEM_PROMPT } from '../../prompts/conversation-naming.prompt';
 import { ConversationNamingService } from '../conversation-naming.service';
-import type { ConversationPersistencePort } from '../conversation-persistence.port';
-import { ConversationMessageRole } from '../dto/conversation-message.dto';
-import { runConditionalUpdate } from '../persistence/conversation-persistence.service';
-import { CONVERSATION_NAMING_SYSTEM_PROMPT } from '../prompts/conversation-naming.prompt';
 
 const makeConversation = (
   overrides: Partial<ConversationResponseDto> = {},

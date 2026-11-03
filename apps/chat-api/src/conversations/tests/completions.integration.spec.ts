@@ -19,13 +19,13 @@ import { AuthSource } from '../../auth/auth-source.enum';
 import type { SessionUser } from '../../auth/session/session.types';
 import { SSE_RELEASE_TIMEOUT_MS } from '../../common/utils/sse';
 import { ConversationGenerationController } from '../conversation-generation.controller';
+import { ConversationService } from '../conversation.service';
+import type { SendCompletionDto } from '../dto/send-completion.dto';
 import {
   ConversationGenerationService,
   GenerationStatus,
   type GenerationLease,
-} from '../conversation-generation.service';
-import { ConversationService } from '../conversation.service';
-import type { SendCompletionDto } from '../dto/send-completion.dto';
+} from '../generation/conversation-generation.service';
 import { ConversationCompletionsResponder } from '../streaming/conversation-completions.responder';
 import { createConversationGenerationController } from './conversation-controller.fixture';
 

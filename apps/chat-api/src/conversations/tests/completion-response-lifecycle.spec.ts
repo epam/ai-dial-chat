@@ -8,12 +8,12 @@ import type {
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AuthSource } from '../../auth/auth-source.enum';
 import { SSE_RELEASE_TIMEOUT_MS } from '../../common/utils/sse';
+import { ConversationService } from '../conversation.service';
+import type { SendCompletionDto } from '../dto/send-completion.dto';
 import {
   ConversationGenerationService,
   GenerationStatus,
-} from '../conversation-generation.service';
-import { ConversationService } from '../conversation.service';
-import type { SendCompletionDto } from '../dto/send-completion.dto';
+} from '../generation/conversation-generation.service';
 import { createConversationGenerationController } from './conversation-controller.fixture';
 
 /*

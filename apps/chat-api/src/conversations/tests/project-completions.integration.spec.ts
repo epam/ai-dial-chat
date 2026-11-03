@@ -6,7 +6,6 @@ import type { EnvironmentVariables } from '../../config/environment.config';
 import type { DeploymentsService } from '../../deployments/deployments.service';
 import type { DialClientService } from '../../dial/dial-client.service';
 import type { ConversationResponseDto } from '../../openapi/openapi-response.dto';
-import { ConversationGenerationService } from '../conversation-generation.service';
 import { BackgroundGenerationStatus } from '../dto/background-generation.dto';
 import {
   type ConversationMessageDto,
@@ -15,6 +14,7 @@ import {
 import { CompletionMode } from '../dto/send-completion.dto';
 import { BackgroundGenerationService } from '../generation/background-generation.service';
 import { ChatCompletionsAdapter } from '../generation/chat-completions.adapter';
+import { ConversationGenerationService } from '../generation/conversation-generation.service';
 import {
   CoreResponseResultKind,
   type CoreResponsesClient,

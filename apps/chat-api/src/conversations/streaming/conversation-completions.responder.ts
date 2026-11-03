@@ -19,15 +19,15 @@ import {
   SseSubscriptionKind,
   trackSseSubscription,
 } from '../../telemetry/runtime-metrics';
-import {
-  ConversationGenerationService,
-  type GenerationTerminalEvent,
-} from '../conversation-generation.service';
 import { ConversationService } from '../conversation.service';
 import type { AttachGenerationDto } from '../dto/attach-generation.dto';
 import type { SendCompletionDto } from '../dto/send-completion.dto';
 import type { StopCompletionDto } from '../dto/stop-completion.dto';
 import { BackgroundStopResult } from '../generation/background-generation.service';
+import {
+  ConversationGenerationService,
+  type GenerationTerminalEvent,
+} from '../generation/conversation-generation.service';
 import { assertValidOptionalTimezone } from '../utils/timezone-header';
 import {
   completionResponseTerminations,

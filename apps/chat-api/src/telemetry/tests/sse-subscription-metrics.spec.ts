@@ -9,9 +9,9 @@ import { AuthSource } from '../../auth/auth-source.enum';
 import { ClientChannelController } from '../../client-channel/client-channel.controller';
 import { ClientChannelService } from '../../client-channel/client-channel.service';
 import { ConversationGenerationController } from '../../conversations/conversation-generation.controller';
-import { ConversationGenerationService } from '../../conversations/conversation-generation.service';
 import { ConversationWatchController } from '../../conversations/conversation-watch.controller';
 import { ConversationService } from '../../conversations/conversation.service';
+import { ConversationGenerationService } from '../../conversations/generation/conversation-generation.service';
 import { ConversationCompletionsResponder } from '../../conversations/streaming/conversation-completions.responder';
 import {
   initializeRuntimeMetrics,

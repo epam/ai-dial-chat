@@ -13,12 +13,6 @@ import type { EnvironmentVariables } from '../../config/environment.config';
 import { DeploymentsService } from '../../deployments/deployments.service';
 import { DialClientService } from '../../dial/dial-client.service';
 import type { ConversationResponseDto } from '../../openapi/openapi-response.dto';
-import {
-  ConversationGenerationService,
-  GenerationCancelReason,
-  GenerationStatus,
-  type GenerationLease,
-} from '../conversation-generation.service';
 import type { VersionedConversation } from '../conversation-persistence.port';
 import {
   ConversationMessageDto,
@@ -39,6 +33,12 @@ import {
   type StoredMessage,
 } from '../generation/background-message';
 import { ChatCompletionsAdapter } from '../generation/chat-completions.adapter';
+import {
+  ConversationGenerationService,
+  GenerationCancelReason,
+  GenerationStatus,
+  type GenerationLease,
+} from '../generation/conversation-generation.service';
 import { GenerationApi } from '../generation/generation-api';
 import { GenerationApiSelector } from '../generation/generation-api-selector.service';
 import {

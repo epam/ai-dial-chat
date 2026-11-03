@@ -12,17 +12,17 @@ import type { DeploymentsService } from '../../../deployments/deployments.servic
 import { DeploymentItemType } from '../../../deployments/dto/deployment-item.dto';
 import type { DialClientService } from '../../../dial/dial-client.service';
 import {
-  ConversationGenerationService,
-  GenerationCancelReason,
-  type GenerationLease,
-} from '../../conversation-generation.service';
-import {
   ConversationMessageRole,
   StatusEvent,
 } from '../../dto/conversation-message.dto';
 import { CompletionMode } from '../../dto/send-completion.dto';
 import { BackgroundGenerationService } from '../../generation/background-generation.service';
 import { ChatCompletionsAdapter } from '../../generation/chat-completions.adapter';
+import {
+  ConversationGenerationService,
+  GenerationCancelReason,
+  type GenerationLease,
+} from '../../generation/conversation-generation.service';
 import { CoreResponsesClient } from '../../generation/core-responses.client';
 import { GenerationApiSelector } from '../../generation/generation-api-selector.service';
 import {

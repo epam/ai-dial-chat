@@ -231,6 +231,24 @@ export class ConversationListingService {
             const scheduledTask = overrides.isOwnBucket
               ? parseScheduledTaskConversationPath(id)
               : null;
+            let readStateFields: {
+              scheduleId?: string;
+              runId?: string;
+              isUnread?: boolean;
+            } = {};
+            if (scheduledTask !== null) {
+              readStateFields = {
+                scheduleId: scheduledTask.scheduleId,
+                runId: scheduledTask.runId,
+                isUnread: !viewedSet.has(decodedId),
+              };
+            } else if (
+              overrides.isOwnBucket &&
+              readState &&
+              isRegularConversationUnread(readState, id, item.updatedAt ?? 0)
+            ) {
+              readStateFields = { isUnread: true };
+            }
             return {
               id,
               title: getConversationTitleFromName(
@@ -248,21 +266,7 @@ export class ConversationListingService {
               isPinned: pinnedSet.has(decodedId),
               isReadonly,
               isScheduledTask: scheduledTask !== null,
-              ...(scheduledTask !== null
-                ? {
-                    scheduleId: scheduledTask.scheduleId,
-                    runId: scheduledTask.runId,
-                    isUnread: !viewedSet.has(decodedId),
-                  }
-                : overrides.isOwnBucket &&
-                    readState &&
-                    isRegularConversationUnread(
-                      readState,
-                      id,
-                      item.updatedAt ?? 0,
-                    )
-                  ? { isUnread: true }
-                  : {}),
+              ...readStateFields,
             };
           });
 
