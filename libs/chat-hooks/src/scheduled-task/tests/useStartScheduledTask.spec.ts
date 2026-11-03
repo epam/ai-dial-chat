@@ -8,20 +8,17 @@ import {
   mergeScheduledTaskRuns,
   ScheduledTaskRunStatusFeedback,
   useStartScheduledTask,
+  type StartScheduledTaskApi,
 } from '../useStartScheduledTask';
 
 const startScheduledTaskMock = vi.fn();
 const getScheduledTaskRunMock = vi.fn();
 
-vi.mock('../../../server-api/scheduled-tasks.api', () => ({
-  startScheduledTask: (scheduleId: string) =>
-    startScheduledTaskMock(scheduleId),
-  getScheduledTaskRun: (
-    scheduleId: string,
-    runId: string,
-    signal: AbortSignal,
-  ) => getScheduledTaskRunMock(scheduleId, runId, signal),
-}));
+const api: StartScheduledTaskApi = {
+  startScheduledTask: (scheduleId) => startScheduledTaskMock(scheduleId),
+  getScheduledTaskRun: (scheduleId, runId, signal) =>
+    getScheduledTaskRunMock(scheduleId, runId, signal),
+};
 
 const inProgressRun: ScheduledTaskRunDto = {
   id: 'run_1',
@@ -49,6 +46,7 @@ describe('useStartScheduledTask', () => {
     startScheduledTaskMock.mockResolvedValue(inProgressRun);
     const { result } = renderHook(() =>
       useStartScheduledTask({
+        api,
         scheduleId: 'sched_123',
         enabled: true,
         canStart: true,
@@ -74,7 +72,12 @@ describe('useStartScheduledTask', () => {
     );
     const { result, rerender } = renderHook(
       ({ scheduleId }) =>
-        useStartScheduledTask({ scheduleId, enabled: true, canStart: true }),
+        useStartScheduledTask({
+          api,
+          scheduleId,
+          enabled: true,
+          canStart: true,
+        }),
       { initialProps: { scheduleId: 'sched_123' } },
     );
 
@@ -91,6 +94,7 @@ describe('useStartScheduledTask', () => {
   it('does not start an ineligible schedule', async () => {
     const { result } = renderHook(() =>
       useStartScheduledTask({
+        api,
         scheduleId: 'sched_123',
         enabled: true,
         canStart: false,
@@ -115,6 +119,7 @@ describe('useStartScheduledTask', () => {
       );
       const { result, unmount } = renderHook(() =>
         useStartScheduledTask({
+          api,
           scheduleId: 'sched_123',
           enabled: true,
           canStart: true,
@@ -143,6 +148,7 @@ describe('useStartScheduledTask', () => {
     const { result, rerender } = renderHook(
       ({ enabled }) =>
         useStartScheduledTask({
+          api,
           scheduleId: 'sched_123',
           enabled,
           canStart: true,
@@ -172,6 +178,7 @@ describe('useStartScheduledTask', () => {
     );
     const { result } = renderHook(() =>
       useStartScheduledTask({
+        api,
         scheduleId: 'sched_123',
         enabled: true,
         canStart: true,
@@ -215,6 +222,7 @@ describe('useStartScheduledTask', () => {
     );
     const { result } = renderHook(() =>
       useStartScheduledTask({
+        api,
         scheduleId: 'sched_123',
         enabled: true,
         canStart: true,
@@ -262,6 +270,7 @@ describe('useStartScheduledTask', () => {
     const { result, rerender } = renderHook(
       ({ loadedRuns }) =>
         useStartScheduledTask({
+          api,
           scheduleId: 'sched_123',
           enabled: true,
           canStart: true,
@@ -303,6 +312,7 @@ describe('useStartScheduledTask', () => {
     getScheduledTaskRunMock.mockResolvedValue(completedRun);
     const { result } = renderHook(() =>
       useStartScheduledTask({
+        api,
         scheduleId: 'sched_123',
         enabled: true,
         canStart: true,
@@ -340,7 +350,12 @@ describe('useStartScheduledTask', () => {
     );
     const { result, rerender } = renderHook(
       ({ scheduleId }) =>
-        useStartScheduledTask({ scheduleId, enabled: true, canStart: true }),
+        useStartScheduledTask({
+          api,
+          scheduleId,
+          enabled: true,
+          canStart: true,
+        }),
       { initialProps: { scheduleId: 'sched_123' } },
     );
 
@@ -371,6 +386,7 @@ describe('useStartScheduledTask', () => {
       .mockResolvedValue(inProgressRun);
     const { result } = renderHook(() =>
       useStartScheduledTask({
+        api,
         scheduleId: 'sched_123',
         enabled: true,
         canStart: true,
@@ -416,6 +432,7 @@ describe('useStartScheduledTask', () => {
         .mockResolvedValue(inProgressRun);
       const { result } = renderHook(() =>
         useStartScheduledTask({
+          api,
           scheduleId: 'sched_123',
           enabled: true,
           canStart: true,
@@ -468,6 +485,7 @@ describe('useStartScheduledTask', () => {
         .mockResolvedValue(completedRun);
       const { result } = renderHook(() =>
         useStartScheduledTask({
+          api,
           scheduleId: 'sched_123',
           enabled: true,
           canStart: true,
@@ -516,6 +534,7 @@ describe('useStartScheduledTask', () => {
       });
       const { result } = renderHook(() =>
         useStartScheduledTask({
+          api,
           scheduleId: 'sched_123',
           enabled: true,
           canStart: true,
@@ -550,6 +569,7 @@ describe('useStartScheduledTask', () => {
     });
     const { result } = renderHook(() =>
       useStartScheduledTask({
+        api,
         scheduleId: 'sched_123',
         enabled: true,
         canStart: true,
@@ -587,6 +607,7 @@ describe('useStartScheduledTask', () => {
     getScheduledTaskRunMock.mockResolvedValue(inProgressRun);
     const { result } = renderHook(() =>
       useStartScheduledTask({
+        api,
         scheduleId: 'sched_123',
         enabled: true,
         canStart: true,
@@ -620,6 +641,7 @@ describe('useStartScheduledTask', () => {
     const { result, rerender } = renderHook(
       ({ loadedRuns }) =>
         useStartScheduledTask({
+          api,
           scheduleId: 'sched_123',
           enabled: true,
           canStart: true,

@@ -76,6 +76,7 @@ export const ListView: FC<ListViewProps> = ({
   ariaLabel = 'Catalog',
   emptyStateTitle = 'No results',
   emptyStateDescription,
+  isEmptyStateLive = false,
   styles: listStyles,
   onToggleFavorite,
   isFavoriteVisible,
@@ -251,6 +252,7 @@ export const ListView: FC<ListViewProps> = ({
         onGridApiChange={handleGridApiChange}
         emptyStateTitle={emptyStateTitle}
         emptyStateDescription={emptyStateDescription ?? ''}
+        emptyStateLive={isEmptyStateLive}
         additionalGridOptions={gridOptions}
         ariaLabel={ariaLabel}
         {...(isMultiSelect

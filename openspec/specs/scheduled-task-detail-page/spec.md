@@ -1013,7 +1013,7 @@ The three section bodies (Details fields, Configuration instructions, History ru
 
 ### Requirement: Start now immediately exposes the accepted run in History
 
-`ScheduledTaskDetailPage` SHALL use a page-scoped app hook `useStartScheduledTask` in `apps/chat/src/hooks/scheduled-tasks/` for manual-run mutation state, accepted run DTOs and status tracking; the existing `useScheduledTaskRuns` SHALL retain history pagination ownership. No new context SHALL be introduced. The feature SHALL inherit `scheduledTasksEnabled` and its existing role policy.
+`ScheduledTaskDetailPage` SHALL use the page-scoped hook `useStartScheduledTask` from `libs/chat-hooks/src/scheduled-task/useStartScheduledTask.ts` (root and `./scheduled-tasks`), bound to the app's `startScheduledTask`/`getScheduledTaskRun` server-api functions through its `api` option, for manual-run mutation state, accepted run DTOs and status tracking; the existing `useScheduledTaskRuns` SHALL retain history pagination ownership. No new context SHALL be introduced. The feature SHALL inherit `scheduledTasksEnabled` and its existing role policy.
 
 For a loaded, non-deleted task, Start now SHALL execute the saved definition through `startScheduledTask(scheduleId)` exactly once per activation, with no confirmation dialog or payload override. The action SHALL be disabled while its POST is pending, deletion or Active mutation is pending, or any known run is InProgress. A synchronous guard SHALL prevent duplicate dispatch before the disabled state renders. Paused, completed and expired schedules SHALL remain manually runnable; the operation SHALL NOT resume or edit them.
 

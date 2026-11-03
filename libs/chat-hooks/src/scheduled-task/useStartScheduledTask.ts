@@ -2,7 +2,6 @@ import {
   ScheduledTaskRunDtoStatusEnum,
   type ScheduledTaskRunDto,
 } from '@epam/ai-dial-chat-api-client';
-import { getApiErrorDetails } from '@epam/ai-dial-chat-hooks';
 import {
   useCallback,
   useEffect,
@@ -10,16 +9,16 @@ import {
   useRef,
   useState,
 } from 'react';
-import {
-  getScheduledTaskRun,
-  startScheduledTask,
-} from '../../server-api/scheduled-tasks.api';
+import { getApiErrorDetails } from '../api-error/api-error';
 
 const POLL_INTERVAL_MS = 2_000;
 const POLL_DEADLINE_MS = 70_000;
 
+/** Why a manually started run's status is not shown as live. */
 export enum ScheduledTaskRunStatusFeedback {
+  /** A status request failed; the last known state is shown. */
   Unavailable = 'unavailable',
+  /** The run is still in progress after the polling deadline. */
   Delayed = 'delayed',
 }
 
@@ -34,8 +33,22 @@ interface PollRequest {
   allowPastDeadline: boolean;
 }
 
+/** Scheduler operations {@link useStartScheduledTask} calls, bound to an already configured client by the host. */
+export interface StartScheduledTaskApi {
+  /** Starts one run of the saved schedule and resolves with the accepted run. */
+  startScheduledTask: (scheduleId: string) => Promise<ScheduledTaskRunDto>;
+  /** Resolves with the latest state of one run. */
+  getScheduledTaskRun: (
+    scheduleId: string,
+    runId: string,
+    signal?: AbortSignal,
+  ) => Promise<ScheduledTaskRunDto>;
+}
+
 /** Inputs controlling a manual scheduled-task launch for the current detail page. */
 export interface UseStartScheduledTaskOptions {
+  /** Scheduler operations used to start the run and poll its status. */
+  api: StartScheduledTaskApi;
   /** Identifier of the schedule currently displayed by the page. */
   scheduleId: string;
   /** Whether the scheduled-tasks feature is available to this user. */
@@ -93,6 +106,7 @@ export const mergeScheduledTaskRuns = (
 
 /** Owns one page-scoped manual-run request and its accepted history entries. */
 export const useStartScheduledTask = ({
+  api,
   scheduleId,
   enabled,
   canStart,
@@ -210,7 +224,7 @@ export const useStartScheduledTask = ({
       pollAbortController.current = controller;
 
       try {
-        const run = await getScheduledTaskRun(
+        const run = await api.getScheduledTaskRun(
           scheduleId,
           currentPollingRun.id,
           controller.signal,
@@ -284,6 +298,7 @@ export const useStartScheduledTask = ({
       cancelled = true;
     };
   }, [
+    api,
     clearPolling,
     enabled,
     pollRequest,
@@ -366,7 +381,7 @@ export const useStartScheduledTask = ({
     const requestGeneration = generation.current;
 
     try {
-      const acceptedRun = await startScheduledTask(scheduleId);
+      const acceptedRun = await api.startScheduledTask(scheduleId);
       if (generation.current !== requestGeneration) return undefined;
 
       updateAcceptedRun(acceptedRun);
@@ -393,7 +408,7 @@ export const useStartScheduledTask = ({
         setIsStarting(false);
       }
     }
-  }, [clearPolling, enabled, schedulePoll, scheduleId, updateAcceptedRun]);
+  }, [api, clearPolling, enabled, schedulePoll, scheduleId, updateAcceptedRun]);
 
   const refreshStatus = useCallback((): void => {
     const currentPollingRun = pollingRun.current;

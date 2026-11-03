@@ -894,6 +894,7 @@ export const Catalog: FC<CatalogProps> = ({
                     ariaLabel={resolvedAriaLabel}
                     emptyStateTitle={emptyTitle}
                     emptyStateDescription={emptyDescription}
+                    isEmptyStateLive={isNarrowed}
                     onToggleFavorite={onToggleFavorite}
                     isFavoriteVisible={isFavoriteVisible}
                     columnVisibility={columnVisibility}

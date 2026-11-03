@@ -213,7 +213,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.67
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.69
 - `@epam/ai-dial-usage-dashboard` \*
 - `@modelcontextprotocol/sdk` ^1.32.2
 - `@epam/pdf-highlighter-kit` ^0.0.19
@@ -4332,6 +4332,118 @@ changed schedule. The older `mapFormValuesToCreateBody` and
 stale generations, distinguish `initialError` from `loadMoreError`, preserve
 loaded records after a page failure, and expose `retryLoadMore`. No hook
 constructs a client or reads application state.
+
+### useStartScheduledTask / mergeScheduledTaskRuns
+
+`useStartScheduledTask` owns one manual "Start now" request for a schedule and
+the run it accepts. `start()` sends at most one request while one is pending,
+while `canStart` is false, or while any accepted or `loadedRuns` entry is
+`InProgress`. An accepted `InProgress` run is polled every 2s for up to 70s;
+polling pauses while the tab is hidden, honours `Retry-After`, and stops on a
+terminal status, a 401/403/404, or a terminal copy of the run in `loadedRuns`.
+`statusFeedback` is `ScheduledTaskRunStatusFeedback.Unavailable` after a
+failed status request and `Delayed` once the deadline passes;
+`refreshStatus()` polls once more on demand. Changing `scheduleId` or
+`enabled` resets everything.
+
+`mergeScheduledTaskRuns(acceptedRuns, loadedRuns)` deduplicates runs by id,
+keeping first-seen order and never replacing a terminal status with
+`InProgress`. All three are available from the root and `./scheduled-tasks`.
+
+```ts
+import {
+  mergeScheduledTaskRuns,
+  useStartScheduledTask,
+  type StartScheduledTaskApi,
+} from '@epam/ai-dial-chat-hooks/scheduled-tasks';
+
+// Bound to the host's configured client; keep the object stable.
+const startApi: StartScheduledTaskApi = {
+  startScheduledTask: (scheduleId) => client.startScheduledTask({ scheduleId }),
+  getScheduledTaskRun: (scheduleId, runId, signal) =>
+    client.getScheduledTaskRun(
+      { scheduleId, runId },
+      signal ? { signal } : undefined,
+    ),
+};
+
+const { acceptedRuns, isStarting, statusFeedback, start, refreshStatus } =
+  useStartScheduledTask({
+    api: startApi,
+    scheduleId,
+    enabled: true,
+    canStart: task != null,
+    loadedRuns: runs,
+  });
+const historyRuns = mergeScheduledTaskRuns(acceptedRuns, runs);
+```
+
+### Scheduled-task display adapters
+
+Turn scheduler DTOs into the props `@epam/ai-dial-scheduled-tasks` renders.
+The lib decides everything the response determines — the trigger kind and the
+timezone it is shown in, the duration units, whether a run started today, the
+run status, and which delete or mutation error applies — and the host supplies
+every word through formatter objects. Available from the root and
+`./scheduled-tasks`.
+
+| Export                                                              | Returns                                                                                                                                      |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `formatScheduledTaskScheduleLabel(task, labels, options?)`          | One `ScheduledTaskScheduleLabels` member's output; `options.timeZone` defaults to the browser's, `options.locale` formats dates and weekdays |
+| `toScheduledTaskItem` / `toScheduledTaskItems`                      | `ScheduledTaskItem`(s) with the schedule label; the other fields are copied unchanged                                                        |
+| `formatScheduledTaskRunDuration(seconds, labels)`                   | Non-zero hour/minute/second units wrapped by `labels.suffix`, or `undefined` when absent                                                     |
+| `formatScheduledTaskRunTimestamp(start, seconds, labels, options?)` | `todayAt` or `dateAt`, plus the duration when `options.durationLabels` is given; `options.now` defaults to the current time                  |
+| `toScheduledTaskRunItem` / `toScheduledTaskRunItems`                | `ScheduledTaskRunItem`(s); an unknown status maps to `Missed`, `isUnread` uses the host's `conversationIdsMatch`                             |
+| `classifyScheduledTaskDeleteError(status)`                          | `ScheduledTaskDeleteErrorKind`: `NotFound` (404/409), `Retryable` (502), otherwise `Generic`                                                 |
+| `selectScheduledTaskErrorMessage(details, messages)`                | `messages.adminConsentRequired`, else the trimmed upstream reason, else `messages.fallback`                                                  |
+
+```ts
+import {
+  toScheduledTaskItems,
+  toScheduledTaskRunItems,
+  type ScheduledTaskRunDurationLabels,
+  type ScheduledTaskRunTimestampLabels,
+  type ScheduledTaskScheduleLabels,
+} from '@epam/ai-dial-chat-hooks/scheduled-tasks';
+
+const scheduleLabels: ScheduledTaskScheduleLabels = {
+  onceAt: (date) => `Once on ${date}`,
+  everyNMinutes: (count) => `Every ${count} minutes`,
+  hourlyAt: (minute) => `Every hour at :${minute}`,
+  dailyAt: (time) => `Every day at ${time}`,
+  weeklyAt: (day, time) => `Every ${day} at ${time}`,
+  everyNWeeks: (count, day, time) =>
+    `Every ${count} weeks on ${day} at ${time}`,
+  monthlyAt: (day, time) => `Monthly on day ${day} at ${time}`,
+  invalid: 'Invalid schedule',
+  recurringFallback: 'Recurring',
+};
+const durationLabels: ScheduledTaskRunDurationLabels = {
+  hours: (count) => `${count}h`,
+  minutes: (count) => `${count}m`,
+  seconds: (count) => `${count}s`,
+  suffix: (duration) => `(${duration})`,
+};
+const timestampLabels: ScheduledTaskRunTimestampLabels = {
+  todayAt: (time) => `Today at ${time}`,
+  dateAt: (date, time) => `${date} at ${time}`,
+};
+
+const items = toScheduledTaskItems(tasks, scheduleLabels, { locale: 'en' });
+const runItems = toScheduledTaskRunItems(runs, {
+  timestampLabels,
+  durationLabels,
+  conversations,
+  conversationIdsMatch: (left, right) => left === right,
+});
+```
+
+Keep the formatter objects stable (module constants or `useMemo`) when the
+mapping runs inside a memoized selector. `apps/chat` wraps these as
+`buildScheduleLabel`, `mapScheduledTaskDtoToItem(s)`, `formatRunDuration`,
+`formatRunTimestamp`, `mapScheduledTaskRunDtoToItem(s)`,
+`getDeleteErrorMessageKey` and `resolveScheduledTaskErrorMessage`, each
+building the formatters from `t()`.
 
 ### mapFormValuesToCreateBody / mapFormValuesToUpdateBody / mapScheduledTaskDtoToFormValues
 
