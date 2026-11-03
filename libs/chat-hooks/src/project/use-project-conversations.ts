@@ -125,6 +125,8 @@ export const useProjectConversations = (
   /* Aborts the project's reads when the project changes, the list reloads or the view unmounts. */
   const pageControllerRef = useRef<AbortController | null>(null);
   const refreshControllerRef = useRef<AbortController | null>(null);
+  /* Set synchronously, so a second See more before the next render is ignored. */
+  const isLoadingMoreRef = useRef(false);
   const viewedRef = useRef<ViewedMarks>(new Map());
   const updatedAtRef = useRef(new Map<string, number | undefined>());
   const stateRef = useRef(state);
@@ -138,16 +140,14 @@ export const useProjectConversations = (
     }
   }, []);
 
-  /* Reads the pending titles among the first `count` rows; resolves the rows it read. */
+  /* Reads the pending titles among `rows`; resolves the rows it read. */
   const resolvePending = useCallback(
     async (
       rows: ConversationRow[],
-      count: number,
       signal: AbortSignal,
     ): Promise<ConversationRow[]> => {
       if (projectId == null) return [];
       const names = rows
-        .slice(0, count)
         .filter((row) => row.isTitlePending)
         .map((row) => row.name);
       const resolved: ProjectConversationItemDto[] = [];
@@ -169,7 +169,7 @@ export const useProjectConversations = (
   const fillPending = useCallback(
     async (rows: ConversationRow[], count: number, signal: AbortSignal) => {
       try {
-        const resolved = await resolvePending(rows, count, signal);
+        const resolved = await resolvePending(rows.slice(0, count), signal);
         if (signal.aborted) return;
         setState((prev) => ({
           ...prev,
@@ -226,19 +226,16 @@ export const useProjectConversations = (
   const loadMore = useCallback(async () => {
     const controller = pageControllerRef.current;
     const current = stateRef.current;
-    if (projectId == null || controller == null || current.isLoadingMore) {
+    if (projectId == null || controller == null || isLoadingMoreRef.current) {
       return;
     }
+    isLoadingMoreRef.current = true;
     const nextCount = current.visibleCount + PAGE_SIZE;
     const nextRows = current.rows.slice(current.visibleCount, nextCount);
     /* The next rows show once their titles are read, so none flashes its file name. */
     setState((prev) => ({ ...prev, isLoadingMore: true }));
     try {
-      const resolved = await resolvePending(
-        nextRows,
-        nextRows.length,
-        controller.signal,
-      );
+      const resolved = await resolvePending(nextRows, controller.signal);
       if (controller.signal.aborted) return;
       setState((prev) => ({
         ...prev,
@@ -250,6 +247,8 @@ export const useProjectConversations = (
       if (controller.signal.aborted) return;
       setState((prev) => ({ ...prev, isLoadingMore: false }));
       throw error;
+    } finally {
+      isLoadingMoreRef.current = false;
     }
   }, [projectId, resolvePending]);
 

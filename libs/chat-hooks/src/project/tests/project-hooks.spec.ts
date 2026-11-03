@@ -302,6 +302,31 @@ describe('project hooks', () => {
       expect(result.current.hasMore).toBe(false);
     });
 
+    it('ignores a second See more while the first one reads titles', async () => {
+      client.listProjectConversations.mockResolvedValue({
+        items: [...rows(0, 20), ...pendingRows(20, 5)],
+      });
+      client.getProjectConversationTitles.mockImplementation(
+        async (_projectId: string, names: string[]) => ({
+          items: names.map((name) => row(name)),
+        }),
+      );
+      const { result } = renderHook(() =>
+        useProjectConversations(client, PROJECT_ID),
+      );
+      await waitFor(() => expect(result.current.hasMore).toBe(true));
+
+      await act(async () => {
+        await Promise.all([
+          result.current.loadMore(),
+          result.current.loadMore(),
+        ]);
+      });
+
+      expect(client.getProjectConversationTitles).toHaveBeenCalledOnce();
+      expect(result.current.items).toHaveLength(25);
+    });
+
     it('shows more rows without a request when their titles are known', async () => {
       client.listProjectConversations.mockResolvedValue({ items: rows(0, 30) });
       const { result } = renderHook(() =>
