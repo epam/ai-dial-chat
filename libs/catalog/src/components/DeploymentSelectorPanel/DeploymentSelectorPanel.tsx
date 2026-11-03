@@ -1,5 +1,5 @@
-import { type CatalogItem, getCatalogItemTabs } from '@epam/ai-dial-catalog';
 import {
+  buildCssVars,
   CatalogEntityType,
   DeploymentIcon,
   mergeClasses,
@@ -21,7 +21,6 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconStar, IconStarFilled } from '@tabler/icons-react';
 import {
-  memo,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -30,81 +29,13 @@ import {
   type FC,
   type ReactNode,
 } from 'react';
-import { scrollChildIntoContainerView } from '../../utils/scroll';
+import type { CatalogItem } from '../../models/catalog-item';
+import type { DeploymentSelectorPanelProps } from '../../models/deployment-selector-panel';
+import { DeploymentSelectorLayout } from '../../types/deployment-selector-layout';
+import { getCatalogItemTabs } from '../../utils/catalog-tabs';
+import { scrollChildIntoContainerView } from '../../utils/scroll-window';
+import type { DeploymentSelectorExtraOption } from '../DeploymentSelectorField/DeploymentSelectorField';
 import styles from './DeploymentSelectorPanel.module.scss';
-
-/** Localizable string labels for `DeploymentSelectorPanel`. */
-export interface DeploymentSelectorLabels {
-  /** Placeholder and accessible label for the search input. Default: `'Search models, agents…'`. */
-  searchPlaceholder?: string;
-  /** Accessible label for the clear-search button. Default: `'Clear search'`. */
-  clearSearchLabel?: string;
-  /** Heading above the favorites list. Default: `'Favorites'`. */
-  favoritesLabel?: string;
-  /** Hint shown when Favorites is empty. Default: `'Star a model or agent to pin it here.'`. */
-  emptyHint?: string;
-  /** Label for the footer action button. Default: `'Catalog'`. */
-  browseCatalogLabel?: string;
-  /** Accessible label for the remove-from-favorites button. Default: `'Remove from favorites'`. */
-  removeFromFavoritesLabel?: string;
-  /** Heading above the currently-selected row. Default: `'Currently selected'`. */
-  currentlySelectedLabel?: string;
-  /** Accessible label for the add-to-favorites button on the currently-selected row. Default: `'Add to favorites'`. */
-  addToFavoritesLabel?: string;
-  /** Accessible label for the list of selectable deployments. Default: `'Select model'`. */
-  listAriaLabel?: string;
-  /** Note on a currently-selected row whose deployment the operator has hidden. Default: `'Unavailable'`. */
-  unavailableLabel?: string;
-}
-
-/**
- * A row that is not a deployment: a sentinel/mode choice the host pins above
- * every catalog section (e.g. the "Default agent" / "Last used agent" modes of
- * the default-agent preference). It carries no icon and no favourite toggle, so
- * it reads as a mode rather than as an agent.
- */
-export interface DeploymentSelectorExtraOption {
-  /** Value handed to `onSelect` when the row is picked. */
-  id: string;
-  /** Row text; also what the search box filters the row on. */
-  label: string;
-}
-
-interface Props {
-  /** Starred catalog items to display in the Favorites list. */
-  favorites: CatalogItem[];
-  /**
-   * Non-deployment rows rendered above every catalog section. Defaults to none,
-   * which is the plain deployment picker.
-   */
-  extraOptions?: DeploymentSelectorExtraOption[];
-  /** Operator-default item pinned ahead of favorites, whether starred or not. */
-  pinnedItem?: CatalogItem;
-  /** ID of the currently selected deployment. */
-  selectedId?: string | null;
-  /**
-   * Full catalog item for the currently selected deployment. Pass this even
-   * when the item isn't in `favorites` so the panel can surface it in a
-   * dedicated "Currently selected" row above the Favorites list, which then
-   * omits it.
-   */
-  selectedItem?: CatalogItem;
-  /** Called with the selected item's id. The panel closes itself after calling this. */
-  onSelect: (id: string) => void;
-  /** Called when the star button is clicked to add/remove an item from favorites. */
-  onToggleFavorite: (id: string, isFavorite: boolean) => Promise<void> | void;
-  /** Called when the user clicks "Browse". */
-  onBrowseCatalog?: () => void;
-  /** Called by the panel to request that the parent popover close. */
-  onClose: () => void;
-  /** Optional i18n string overrides. */
-  labels?: DeploymentSelectorLabels;
-  /** Additional classes merged over the panel root's defaults. */
-  className?: string;
-}
-
-const SECTION_HEADING_CLASS_NAME =
-  'dial-tiny-lead-semi-text px-3 pb-2 pt-2 text-tertiary';
 
 // Must match the .rowLeaving exit-animation duration in DeploymentSelectorPanel.module.scss.
 const ROW_LEAVE_ANIMATION_MS = 180;
@@ -118,20 +49,33 @@ const matchesQuery = (item: CatalogItem, query: string): boolean => {
   );
 };
 
+const isModelOrAgent = (item: CatalogItem): boolean =>
+  getCatalogItemTabs(item).some(
+    (tab) => tab === CatalogEntityType.Model || tab === CatalogEntityType.Agent,
+  );
+
 /* Module-level so the default never changes identity between renders. */
 const NO_EXTRA_OPTIONS: DeploymentSelectorExtraOption[] = [];
 
-const DeploymentSelectorPanel: FC<Props> = ({
+/** Searchable model/agent picker panel with a selected row, favourites with star toggles, and a catalog footer button. */
+export const DeploymentSelectorPanel: FC<DeploymentSelectorPanelProps> = ({
   favorites,
   extraOptions = NO_EXTRA_OPTIONS,
   pinnedItem,
+  canFavoritePinnedItem = true,
   selectedId,
   selectedItem,
+  isSelectableItem = isModelOrAgent,
+  layout = DeploymentSelectorLayout.Sectioned,
   onSelect,
   onToggleFavorite,
   onBrowseCatalog,
   onClose,
   labels = {},
+  colors,
+  sectionHeadingClassName = 'dial-tiny-lead-semi-text',
+  itemNameClassName = 'dial-small-text',
+  emptyHintClassName = 'dial-small-text',
   className,
 }) => {
   const {
@@ -146,6 +90,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
     listAriaLabel = 'Select model',
     unavailableLabel = 'Unavailable',
   } = labels;
+  const isSectioned = layout === DeploymentSelectorLayout.Sectioned;
 
   const [query, setQuery] = useState('');
   const handleSearchChange = (value?: string) => {
@@ -164,8 +109,8 @@ const DeploymentSelectorPanel: FC<Props> = ({
     };
   }, []);
 
-  const talkableItems = useMemo(() => {
-    const quickItems =
+  const quickItems = useMemo(() => {
+    const items =
       pinnedItem == null
         ? favorites
         : [
@@ -173,44 +118,49 @@ const DeploymentSelectorPanel: FC<Props> = ({
             ...favorites.filter((item) => item.id !== pinnedItem.id),
           ];
     /* Entities tagged with an operator HIDDEN_ENTITY_TAGS tag stay out of the
-       picker the same way the Catalog drops them ([#9150](https://github.com/epam/ai-dial-chat/issues/9150)). */
-    return quickItems.filter(
-      (f) =>
-        !f.isHidden &&
-        getCatalogItemTabs(f).some(
-          (tab) =>
-            tab === CatalogEntityType.Model || tab === CatalogEntityType.Agent,
-        ),
-    );
-  }, [favorites, pinnedItem]);
+       picker the same way the Catalog drops them. */
+    return items.filter((item) => !item.isHidden && isSelectableItem(item));
+  }, [favorites, pinnedItem, isSelectableItem]);
 
   const favoriteIds = useMemo(
     () => new Set(favorites.map((item) => item.id)),
     [favorites],
   );
 
-  /* The selected item always gets its own section, so the Favorites list
-     never repeats it. */
-  const filteredFavorites = useMemo(() => {
-    const listItems = talkableItems.filter((f) => f.id !== selectedItem?.id);
-    if (!query.trim()) return listItems;
-    return listItems.filter((f) => matchesQuery(f, query));
-  }, [talkableItems, query, selectedItem?.id]);
+  const trimmedQuery = query.trim();
+
+  /*
+   * The sectioned layout gives the selection its own section, so the list
+   * never repeats it; the flat layout adds the selection to the list only
+   * when the list does not already hold it.
+   */
+  const isSelectionInList =
+    selectedItem != null &&
+    quickItems.some((item) => item.id === selectedItem.id);
+  const showSelected =
+    selectedItem != null &&
+    isSelectableItem(selectedItem) &&
+    (isSectioned || !isSelectionInList) &&
+    (!trimmedQuery || matchesQuery(selectedItem, query));
+
+  const filteredItems = useMemo(() => {
+    const listItems = isSectioned
+      ? quickItems.filter((item) => item.id !== selectedItem?.id)
+      : quickItems;
+    if (!trimmedQuery) return listItems;
+    return listItems.filter((item) => matchesQuery(item, query));
+  }, [quickItems, isSectioned, trimmedQuery, query, selectedItem?.id]);
 
   const filteredExtraOptions = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = trimmedQuery.toLowerCase();
     if (!q) return extraOptions;
     return extraOptions.filter((o) => o.label.toLowerCase().includes(q));
-  }, [extraOptions, query]);
-
-  const showCurrentlySelected =
-    selectedItem != null &&
-    (!query.trim() || matchesQuery(selectedItem, query));
+  }, [extraOptions, trimmedQuery]);
 
   /*
    * Animates the scrollable list's own height across structural changes
-   * (a row moving to/from the "Currently selected" section) instead of
-   * letting it snap instantly, since CSS can't transition height: auto.
+   * (a row moving into or out of the selected slot) instead of letting it
+   * snap instantly, since CSS can't transition height: auto.
    */
   const listContentRef = useRef<HTMLDivElement>(null);
   const [listHeight, setListHeight] = useState<number>();
@@ -224,7 +174,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
         ),
       );
     }
-  }, [filteredFavorites, filteredExtraOptions, showCurrentlySelected]);
+  }, [filteredItems, filteredExtraOptions, showSelected]);
 
   /*
    * Panel is remounted fresh each time the popover opens, so without this the
@@ -236,8 +186,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
 
   /* Scoped to the list: `scrollIntoView` would also scroll the mobile bottom
      sheet's backdrop while the sheet is still sliding up, so the sheet jumps
-     past its resting place and snaps back
-     ([#9618](https://github.com/epam/ai-dial-chat/issues/9618)). */
+     past its resting place and snaps back. */
   useEffect(() => {
     if (listScrollRef.current && selectedRowRef.current) {
       scrollChildIntoContainerView(
@@ -268,8 +217,6 @@ const DeploymentSelectorPanel: FC<Props> = ({
     onClose();
   };
 
-  const handleSelect = (item: CatalogItem) => handleSelectId(item.id);
-
   const handleBrowse = () => {
     onBrowseCatalog?.();
     onClose();
@@ -294,6 +241,20 @@ const DeploymentSelectorPanel: FC<Props> = ({
     leaveTimeoutsRef.current.set(id, timeout);
   };
 
+  const renderName = (text: string): ReactNode =>
+    trimmedQuery ? (
+      <Highlight
+        text={text}
+        query={query}
+        className={mergeClasses(itemNameClassName, 'min-w-0 flex-initial!')}
+      />
+    ) : (
+      <EllipsisTooltip
+        text={text}
+        className={mergeClasses(itemNameClassName, 'min-w-0 flex-initial!')}
+      />
+    );
+
   /*
    * Same row chrome as a deployment row — tinted when chosen, `menuitemradio`
    * in the same menu — minus the icon and the favourite toggle, neither of
@@ -313,20 +274,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
           mark={MenuItemMark.Tint}
           selected={isSelected}
           className="h-auto py-1.5"
-          label={
-            query.trim() ? (
-              <Highlight
-                text={option.label}
-                query={query}
-                className="dial-small-text min-w-0 flex-initial!"
-              />
-            ) : (
-              <EllipsisTooltip
-                text={option.label}
-                className="dial-small-text min-w-0 flex-initial!"
-              />
-            )
-          }
+          label={renderName(option.label)}
           onClick={() => handleSelectId(option.id)}
         />
       </li>
@@ -335,14 +283,16 @@ const DeploymentSelectorPanel: FC<Props> = ({
 
   const renderRow = (
     item: CatalogItem,
-    isFavoriteRow: boolean,
     isSelectedSectionRow = false,
   ): ReactNode => {
     const isSelected = item.id === selectedId;
+    const isFavoriteRow = favoriteIds.has(item.id);
     /* An existing chat can still point at a deployment the operator has since
        hidden via HIDDEN_ENTITY_TAGS. It stays visible as the current choice but
-       can't be re-picked or starred ([#9183](https://github.com/epam/ai-dial-chat/issues/9183)). */
+       can't be re-picked or starred. */
     const isUnavailable = !!item.isHidden;
+    const hasStar =
+      !isUnavailable && (canFavoritePinnedItem || item.id !== pinnedItem?.id);
     // The selected section keeps its row when unstarred, so it never plays the exit animation.
     const isLeaving = !isSelectedSectionRow && leavingIds.has(item.id);
     return (
@@ -376,18 +326,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
           }
           label={
             <span className="flex min-w-0 flex-1 flex-wrap items-start gap-x-1.5 whitespace-normal">
-              {query.trim() ? (
-                <Highlight
-                  text={item.name}
-                  query={query}
-                  className="dial-small-text min-w-0 flex-initial!"
-                />
-              ) : (
-                <EllipsisTooltip
-                  text={item.name}
-                  className="dial-small-text min-w-0 flex-initial!"
-                />
-              )}
+              {renderName(item.name)}
               {item.version && (
                 <CaptionText
                   text={item.version}
@@ -396,9 +335,9 @@ const DeploymentSelectorPanel: FC<Props> = ({
               )}
             </span>
           }
-          onClick={() => handleSelect(item)}
+          onClick={() => handleSelectId(item.id)}
           rightControl={
-            isUnavailable ? undefined : (
+            hasStar ? (
               <ToggleIconButton
                 icon={
                   <IconStar
@@ -410,7 +349,7 @@ const DeploymentSelectorPanel: FC<Props> = ({
                 selectedIcon={
                   <IconStarFilled
                     size={DIAL_ICON_SIZE.SM}
-                    className="text-warning-icon"
+                    className={styles.starFilledIcon}
                     aria-hidden
                   />
                 }
@@ -423,10 +362,85 @@ const DeploymentSelectorPanel: FC<Props> = ({
                   handleToggleFavorite(item.id, !isFavoriteRow);
                 }}
               />
-            )
+            ) : undefined
           }
         />
       </li>
+    );
+  };
+
+  const renderEmptyHint = (): ReactNode => (
+    <p
+      className={mergeClasses(
+        emptyHintClassName,
+        'px-4 py-4 text-center',
+        styles.emptyHint,
+      )}
+    >
+      {emptyHint}
+    </p>
+  );
+
+  const renderSectionedList = (): ReactNode => (
+    <>
+      {showSelected && selectedItem && (
+        <>
+          <p
+            className={mergeClasses(
+              sectionHeadingClassName,
+              'px-3 pt-2 pb-2',
+              styles.sectionHeading,
+            )}
+          >
+            {currentlySelectedLabel}
+          </p>
+          <ul role="group" className="flex flex-col gap-1 px-1 pb-1">
+            {renderRow(selectedItem, true)}
+          </ul>
+        </>
+      )}
+
+      {(showSelected || filteredItems.length > 0) && (
+        <p
+          className={mergeClasses(
+            sectionHeadingClassName,
+            'sticky top-0 z-10 px-3 pt-2 pb-2 will-change-transform',
+            styles.sectionHeading,
+            styles.stickyHeading,
+          )}
+        >
+          {favoritesLabel}
+        </p>
+      )}
+
+      {filteredItems.length > 0 ? (
+        <ul role="group" className="flex flex-col gap-1 px-1 pb-1">
+          {filteredItems.map((item) => renderRow(item))}
+        </ul>
+      ) : (
+        renderEmptyHint()
+      )}
+    </>
+  );
+
+  const renderFlatList = (): ReactNode => {
+    const [first, ...rest] = filteredItems;
+    const hasPinnedRow = first != null && first.id === pinnedItem?.id;
+    const favoriteRows = hasPinnedRow ? rest : filteredItems;
+    const rows = [
+      ...(hasPinnedRow ? [first] : []),
+      ...(showSelected && selectedItem ? [selectedItem] : []),
+      ...favoriteRows,
+    ];
+    return (
+      <>
+        {rows.length > 0 && (
+          <ul role="group" className="flex flex-col gap-1 px-1 py-1">
+            {rows.map((item) => renderRow(item))}
+          </ul>
+        )}
+        {favoriteRows.length === 0 && !hasPinnedRow && renderEmptyHint()}
+      </>
     );
   };
 
@@ -442,13 +456,19 @@ const DeploymentSelectorPanel: FC<Props> = ({
        */
       style={{
         maxHeight: 'calc(var(--fui-available-height, 9999px) - 8px)',
+        ...buildCssVars({
+          '--ds-surface': colors?.surface,
+          '--ds-section-heading': colors?.sectionHeading,
+          '--ds-empty-hint': colors?.emptyHint,
+          '--ds-footer-border': colors?.footerBorder,
+          '--ds-star-filled': colors?.starFilled,
+        }),
       }}
     >
-      {/* Sticky search header */}
       <div
         role="search"
         className={mergeClasses(
-          'sticky top-0 z-10 bg-layer-raised pt-2 pb-3',
+          'sticky top-0 z-10 pt-2 pb-3',
           styles.searchHeader,
         )}
       >
@@ -479,49 +499,11 @@ const DeploymentSelectorPanel: FC<Props> = ({
               {filteredExtraOptions.map(renderExtraRow)}
             </ul>
           )}
-
-          {showCurrentlySelected && selectedItem && (
-            <>
-              <p className={SECTION_HEADING_CLASS_NAME}>
-                {currentlySelectedLabel}
-              </p>
-              <ul role="group" className="flex flex-col gap-1 px-1 pb-1">
-                {renderRow(
-                  selectedItem,
-                  favoriteIds.has(selectedItem.id),
-                  true,
-                )}
-              </ul>
-            </>
-          )}
-
-          {(showCurrentlySelected || filteredFavorites.length > 0) && (
-            <p
-              className={mergeClasses(
-                SECTION_HEADING_CLASS_NAME,
-                'sticky top-0 z-10 bg-layer-raised will-change-transform',
-                styles.stickyLabelSeamFix,
-              )}
-            >
-              {favoritesLabel}
-            </p>
-          )}
-
-          {filteredFavorites.length > 0 ? (
-            <ul role="group" className="flex flex-col gap-1 px-1 pb-1">
-              {filteredFavorites.map((item) =>
-                renderRow(item, favoriteIds.has(item.id)),
-              )}
-            </ul>
-          ) : (
-            <p className="dial-small-text px-4 py-4 text-center text-secondary">
-              {emptyHint}
-            </p>
-          )}
+          {isSectioned ? renderSectionedList() : renderFlatList()}
         </div>
       </div>
 
-      <div className="border-t border-tertiary bg-layer-raised px-2 py-3">
+      <div className={mergeClasses('px-2 py-3', styles.footer)}>
         <GhostButton
           label={browseCatalogLabel}
           className="w-full justify-center"
@@ -531,5 +513,3 @@ const DeploymentSelectorPanel: FC<Props> = ({
     </div>
   );
 };
-
-export default memo(DeploymentSelectorPanel);

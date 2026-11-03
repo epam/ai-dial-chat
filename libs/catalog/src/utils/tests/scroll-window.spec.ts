@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { scrollChildIntoContainerView } from '../scroll';
+import { scrollChildIntoContainerView } from '../scroll-window';
 
 const withRect = (top: number, bottom: number): HTMLElement => {
   const element = document.createElement('div');

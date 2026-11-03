@@ -1,4 +1,7 @@
-import { DeploymentSelectorField } from '@epam/ai-dial-catalog';
+import {
+  DeploymentSelectorField,
+  type DeploymentSelectorExtraOption,
+} from '@epam/ai-dial-catalog';
 import { mergeClasses, useIsMobile } from '@epam/ai-dial-chat-shared';
 import { BottomSheetShell } from '@epam/ai-dial-conversation-input';
 import {
@@ -11,7 +14,6 @@ import { IconChevronDown } from '@tabler/icons-react';
 import { memo, useCallback, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DeploymentSelectorI18nKeys } from '../../constants/translation-keys';
-import type { DeploymentSelectorExtraOption } from './DeploymentSelectorPanel';
 import { useDeploymentSelectorFieldOverlay } from './useDeploymentSelectorFieldOverlay';
 
 interface Props {
