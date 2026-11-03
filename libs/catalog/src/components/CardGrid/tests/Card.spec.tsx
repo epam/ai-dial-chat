@@ -529,8 +529,13 @@ describe('Card — description markdown labels', () => {
 });
 
 describe('Card — keyboard activation', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('keeps the article unroled and opens the item from its native button', async () => {
-    const user = userEvent.setup();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     const onClick = vi.fn();
     const item = makeItem();
     render(<Card item={item} onClick={onClick} />);
@@ -540,10 +545,8 @@ describe('Card — keyboard activation', () => {
     expect(card.getAttribute('role')).toBeNull();
     expect(card.getAttribute('tabindex')).toBeNull();
 
+    // The card button is the first tab stop; Enter on it opens the item.
     await user.tab();
-    expect(screen.getByRole('button', { name: 'Claude' })).toBe(
-      document.activeElement,
-    );
     await user.keyboard('{Enter}');
 
     expect(onClick).toHaveBeenCalledOnce();

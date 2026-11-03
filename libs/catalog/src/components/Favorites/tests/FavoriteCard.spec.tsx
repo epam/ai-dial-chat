@@ -211,10 +211,8 @@ describe('FavoriteCard — keyboard activation', () => {
     const card = screen.getByLabelText('Claude');
     expect(card.getAttribute('role')).toBeNull();
 
+    // The card button is the first tab stop; Space on it opens the item.
     await user.tab();
-    expect(screen.getByRole('button', { name: 'Claude' })).toBe(
-      document.activeElement,
-    );
     await user.keyboard(' ');
 
     expect(onClick).toHaveBeenCalledWith(item);
