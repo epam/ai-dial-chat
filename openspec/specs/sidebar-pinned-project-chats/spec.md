@@ -245,7 +245,7 @@ The adapter SHALL build `getActions` for project rows (the See all row is only a
 | Edit (`ButtonsI18nKeys.Edit`) | `project.canEdit` | opens `getProjectEditRoute(id)` through `onOpenRoute` |
 | Publish (`ButtonsI18nKeys.Publish`) | `project.canEdit` | opens `PublishProjectPanelContainer` for the project, returning focus to the row's ⋮ trigger on close |
 | Share (`ButtonsI18nKeys.Share`) | `project.canEdit` | opens `ProjectShareOverlay` for the project |
-| Delete (`ButtonsI18nKeys.Delete`) | `project.canEdit` | opens the project delete confirmation, with the same copy as `ProjectViewPage` |
+| Delete (`ButtonsI18nKeys.Delete`) | `project.canEdit` | opens `ProjectDeleteConfirmation`, the dialog `ProjectViewPage` uses |
 
 For a shared or organization project (`canEdit: false`), the menu offers Unpin only.
 

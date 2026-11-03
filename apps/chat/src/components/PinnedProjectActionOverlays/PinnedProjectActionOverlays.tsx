@@ -1,17 +1,12 @@
-import { DeleteConfirmationDialog } from '@epam/ai-dial-chat-shared';
+import { makeOutsideInert } from '@epam/ai-dial-chat-shared';
 import { memo, useCallback, useEffect, useRef, type FC } from 'react';
 import { createPortal } from 'react-dom';
-import { Trans, useTranslation } from 'react-i18next';
-import { ProjectsI18nKeys } from '../../constants/translation-keys';
 import type { PinnedProjectActionOverlay } from '../../hooks/projects/usePinnedProjectsPanel';
 import { useProjectActions } from '../../hooks/projects/useProjectActions';
-import { useDeleteConfirmationLabels } from '../../hooks/useDeleteConfirmationLabels';
 import { PinnedProjectActionKind } from '../../types/pinned-project-action';
-import { makeOutsideInert } from '../../utils/dom';
+import ProjectDeleteConfirmation from '../ProjectDeleteConfirmation/ProjectDeleteConfirmation';
 import ProjectShareOverlay from '../ProjectShareOverlay/ProjectShareOverlay';
 import PublishProjectPanelContainer from '../PublishProjectPanelContainer/PublishProjectPanelContainer';
-
-const BOLD_COMPONENTS = { bold: <strong /> };
 
 type Props = PinnedProjectActionOverlay;
 
@@ -29,8 +24,6 @@ const PinnedProjectActionOverlays: FC<Props> = ({
   onClose,
   onProjectChanged,
 }) => {
-  const { t } = useTranslation();
-  const deleteLabels = useDeleteConfirmationLabels();
   const isOpenAction = (kind: PinnedProjectActionKind) =>
     action?.kind === kind && action.isOpen && project != null;
 
@@ -117,30 +110,11 @@ const PinnedProjectActionOverlays: FC<Props> = ({
         />
       )}
       {deleteTarget != null && (
-        <DeleteConfirmationDialog
-          open={isDeleteOpen}
-          title={t(ProjectsI18nKeys.ActionsDeleteConfirmTitle, {
-            name: project.name,
-          })}
-          names={[project.name]}
-          message={
-            conversationCount > 0 ? (
-              <Trans
-                i18nKey={
-                  ProjectsI18nKeys.ActionsDeleteConfirmWithChatsDescription
-                }
-                count={conversationCount}
-                components={BOLD_COMPONENTS}
-              />
-            ) : (
-              <Trans
-                i18nKey={ProjectsI18nKeys.ActionsDeleteConfirmDescription}
-                components={BOLD_COMPONENTS}
-              />
-            )
-          }
-          labels={deleteLabels}
-          isLoading={isDeleting}
+        <ProjectDeleteConfirmation
+          isOpen={isDeleteOpen}
+          projectName={project.name}
+          conversationCount={conversationCount}
+          isDeleting={isDeleting}
           onConfirm={handleConfirmDelete}
           onClose={cancelDelete}
         />

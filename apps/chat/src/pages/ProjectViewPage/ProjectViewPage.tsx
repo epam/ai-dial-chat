@@ -13,7 +13,6 @@ import {
   useProjectFilePreview,
   useProjectWatch,
 } from '@epam/ai-dial-chat-hooks/project';
-import { DeleteConfirmationDialog } from '@epam/ai-dial-chat-shared';
 import { ProjectOutputs, ProjectView } from '@epam/ai-dial-projects';
 import {
   memo,
@@ -24,9 +23,10 @@ import {
   useState,
   type FC,
 } from 'react';
-import { Trans, useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 import ProjectConversationsSection from '../../components/ProjectConversationsSection/ProjectConversationsSection';
+import ProjectDeleteConfirmation from '../../components/ProjectDeleteConfirmation/ProjectDeleteConfirmation';
 import ProjectShareOverlay from '../../components/ProjectShareOverlay/ProjectShareOverlay';
 import PublishProjectPanelContainer from '../../components/PublishProjectPanelContainer/PublishProjectPanelContainer';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
@@ -43,7 +43,6 @@ import { projectsClient } from '../../hooks/projects/projects-client';
 import { useProjectActions } from '../../hooks/projects/useProjectActions';
 import { useProjectOutputsLabels } from '../../hooks/projects/useProjectOutputsLabels';
 import { useProjectViewLabels } from '../../hooks/projects/useProjectViewLabels';
-import { useDeleteConfirmationLabels } from '../../hooks/useDeleteConfirmationLabels';
 import { ROUTES } from '../../types/routes';
 import { UserConfigStatus } from '../../types/user-config-status';
 import {
@@ -51,8 +50,6 @@ import {
   toStoredProjectFileAttachment,
 } from '../../utils/project-file-preview';
 import NotFoundPage from '../NotFound/NotFound';
-
-const BOLD_COMPONENTS = { bold: <strong /> };
 
 const ProjectViewPage: FC = () => {
   const { t } = useTranslation();
@@ -104,7 +101,6 @@ const ProjectViewPage: FC = () => {
   });
   const labels = useProjectViewLabels();
   const outputsLabels = useProjectOutputsLabels();
-  const deleteLabels = useDeleteConfirmationLabels();
 
   const [contextSearchQuery, setContextSearchQuery] = useState('');
   const [isShareOpen, setIsShareOpen] = useState(false);
@@ -282,30 +278,11 @@ const ProjectViewPage: FC = () => {
         />
       )}
       {project && (
-        <DeleteConfirmationDialog
-          open={actions.isDeleteOpen}
-          title={t(ProjectsI18nKeys.ActionsDeleteConfirmTitle, {
-            name: project.name,
-          })}
-          names={[project.name]}
-          message={
-            conversationCount > 0 ? (
-              <Trans
-                i18nKey={
-                  ProjectsI18nKeys.ActionsDeleteConfirmWithChatsDescription
-                }
-                count={conversationCount}
-                components={BOLD_COMPONENTS}
-              />
-            ) : (
-              <Trans
-                i18nKey={ProjectsI18nKeys.ActionsDeleteConfirmDescription}
-                components={BOLD_COMPONENTS}
-              />
-            )
-          }
-          labels={deleteLabels}
-          isLoading={actions.isDeleting}
+        <ProjectDeleteConfirmation
+          isOpen={actions.isDeleteOpen}
+          projectName={project.name}
+          conversationCount={conversationCount}
+          isDeleting={actions.isDeleting}
           onConfirm={handleConfirmDelete}
           onClose={actions.cancelDelete}
         />

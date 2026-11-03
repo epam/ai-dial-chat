@@ -204,6 +204,7 @@ The app SHALL create one module-level serialized writer for project viewed marks
 - At most one write runs at a time, in call order, and a write for an id already queued is not queued twice.
 - `drop(id)` removes a queued (not yet started) write for that id.
 - A failed write rejects only its own caller, and the queue continues.
+- `subscribe(listener)` calls `listener` with the key of every write that succeeded, before that write's callers resume, and returns the function that removes it.
 
 It mirrors the `viewedWriteQueueRef` serialization of `markConversationViewed` in `apps/chat/src/context/ConversationsContext.tsx`. `projectsClient.markProjectConversationViewed` goes through it, so `ProjectViewPage` and `ProjectChatPage` share one queue across route changes.
 
@@ -268,12 +269,12 @@ Project read state SHALL meet the following cross-cutting contract.
 
 ### Requirement: Successful project viewed writes notify app listeners
 
-`apps/chat/src/hooks/projects/projects-client.ts` SHALL export `subscribeProjectConversationViewed(listener: (conversationId: string) => void): () => void`. `projectsClient.markProjectConversationViewed(id)` SHALL await `projectViewedWriter.enqueue(id)`, then call every subscribed listener with `id`. The returned function removes the listener.
+`apps/chat/src/hooks/projects/projects-client.ts` SHALL export `subscribeProjectConversationViewed(listener: (conversationId: string) => void): () => void`, which is `projectViewedWriter.subscribe`. `projectsClient.markProjectConversationViewed(id)` SHALL await `projectViewedWriter.enqueue(id)`, and a successful write calls every subscribed listener with `id`. The returned function removes the listener.
 
 - A failed write notifies no listener and still rejects its own caller, as before.
 - A write dropped by `drop(id)` notifies no listener.
 - A listener that throws does not stop the others, nor the caller's promise.
-- The listener registry is app-owned, module-level state. `createSerializedKeyedWriter` in `libs/chat-hooks/src/shared/serialized-writer.ts` does not change.
+- The listener registry belongs to the writer: `createSerializedKeyedWriter` in `libs/chat-hooks/src/shared/serialized-writer.ts` keeps it, and the app owns only the module-level writer instance. `createProjectConversationDataSource` takes only the writer's `enqueue` and `drop`.
 
 The sidebar's pinned-project tree subscribes (see the `sidebar-pinned-project-chats` capability), so a chat marked viewed by `ProjectChatPage` or by the project view's Chats list loses its dot in the sidebar too.
 

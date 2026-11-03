@@ -284,7 +284,7 @@ The error and not-found titles are announced through `role="alert"`.
 
 **Delete.**
 
-- The page opens `DeleteConfirmationDialog` (`@epam/ai-dial-chat-shared`). Its title is `projects.actions.deleteConfirmTitle` (interpolating `{{name}}`), and its labels are the shared confirm and cancel labels. Its body is:
+- The page opens `ProjectDeleteConfirmation` (`apps/chat/src/components/ProjectDeleteConfirmation/ProjectDeleteConfirmation.tsx`), the app's one project delete dialog, which renders `DeleteConfirmationDialog` (`@epam/ai-dial-chat-shared`). Its title is `projects.actions.deleteConfirmTitle` (interpolating `{{name}}`), and its labels are the shared confirm and cancel labels. Its body is:
   - `projects.actions.deleteConfirmDescription` when the loaded project has `conversationCount: 0`;
   - otherwise `projects.actions.deleteConfirmWithChatsDescription`, pluralised by `count` (`_one` / `_other`), which says the project's chats are deleted too.
 - Confirming calls `deleteProject(id, contentVersion)`, and the dialog shows `isLoading` while the request runs.

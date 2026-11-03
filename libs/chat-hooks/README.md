@@ -516,9 +516,14 @@ newest first) and returns `{ items, isLoading, hasError, retry, refresh }`;
 `mapProjectArtifactsToOutputs(items)` turns them into the `ProjectOutputItem`s
 that `ProjectOutputs` from `@epam/ai-dial-projects` renders, with each content
 type inferred from the file name.
-`createSerializedKeyedWriter(write)` returns `{ enqueue, drop }`, a queue that
-runs one write at a time and never queues a key twice, for hosts that mark
-chats viewed from more than one page.
+`createSerializedKeyedWriter(write)` returns `{ enqueue, drop, subscribe }`, a
+queue that runs one write at a time and never queues a key twice, for hosts that
+mark chats viewed from more than one page. `subscribe(listener)` calls
+`listener` with the key of every write that succeeded (a dropped or failed write
+notifies nobody, and a throwing listener stops neither the others nor the
+caller) and returns the function that removes it, so a surface outside the
+project pages, such as the sidebar's `usePinnedProjectChats` tree, can call its
+`markViewed` for marks written elsewhere.
 
 Project file preview helpers (root and `./project`) build the keys and
 attachments a host opens in its attachment canvas, so the New, Edit and view
@@ -799,6 +804,8 @@ const PinnedProjectsTree = () => {
       onProjectDeleted: (id) => unpin(id),
     },
   );
+  /* The project pages' viewed writer from above: a chat read there loses its dot here too. */
+  useEffect(() => viewedWriter.subscribe(markViewed), [markViewed]);
   const groups = projects.map(
     ({ project, chats, hasMore }: PinnedProjectChats) => ({
       id: project.id,
