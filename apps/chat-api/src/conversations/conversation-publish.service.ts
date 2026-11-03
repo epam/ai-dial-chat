@@ -183,7 +183,12 @@ export class ConversationPublishService {
       throw new BadGatewayException('Failed to publish to DIAL Core');
     }
 
-    if (result.error) {
+    /*
+     * An empty error body (Core's `409` has none) leaves `result.error`
+     * undefined, so the status decides — see the same guard in
+     * `publish.service.ts`.
+     */
+    if (!result.response.ok || result.error != null) {
       return mapDialHttpStatus(
         result.response.status,
         `publish conversation "${sourceUrl}"`,
@@ -203,7 +208,7 @@ export class ConversationPublishService {
     return {
       path: sourceUrl,
       folderPath,
-      publishedAt: publication.createdAt
+      publishedAt: publication?.createdAt
         ? new Date(publication.createdAt).toISOString()
         : new Date().toISOString(),
       publishedBy: readPublicationDisplayAuthor(publication, author),
@@ -321,7 +326,7 @@ export class ConversationPublishService {
       );
     }
 
-    if (result.error) {
+    if (!result.response.ok || result.error != null) {
       return mapDialHttpStatus(
         result.response.status,
         `unpublish conversation "${sourceUrl}"`,
@@ -341,7 +346,7 @@ export class ConversationPublishService {
     return {
       path: sourceUrl,
       folderPath,
-      requestedAt: publication.createdAt
+      requestedAt: publication?.createdAt
         ? new Date(publication.createdAt).toISOString()
         : new Date().toISOString(),
       requestedBy: readPublicationDisplayAuthor(publication, author),

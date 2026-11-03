@@ -113,7 +113,7 @@ const colors: McpAppInlinePreviewColors = {
 
 ## Utilities
 
-- `findMcpAppForMessage(message, mcpAppTools)` — matches a message to the MCP App tool it called, or the deployment's first discovered tool.
+- `findMcpAppForMessage(message, mcpAppTools)` — matches a message to the MCP App tool it called and got a result from, or to a directly discovered tool. Returns `undefined` otherwise, with no guess while the message streams.
 - `resolveMcpAppToolCallSeed(message, toolName)` — extracts a message's real tool-call arguments/result as an `McpAppToolCallSeed`.
 - `resolveMcpAppToolResult(match, seed, callTool)` — resolves the tool result an app should be seeded with, live-re-calling `callTool` when the match is unambiguous.
 - `computeMcpAppSeedKey(toolCall)` — identifies which seed a cache entry was resolved from.

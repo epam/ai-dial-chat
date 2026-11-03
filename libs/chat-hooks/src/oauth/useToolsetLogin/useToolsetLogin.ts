@@ -5,6 +5,7 @@ import type {
 } from '@epam/ai-dial-chat-api-client';
 import { useCallback } from 'react';
 import { emitToolsetLoginSuccess } from '../../shared/toolset-login-events';
+import { toToolsetOAuthSettings } from '../authorize-url';
 import { waitForToolsetOAuthResult } from '../handshake';
 import type { ToolsetOAuthSettings } from '../models';
 import {
@@ -150,13 +151,7 @@ export const useToolsetLogin = ({
         forceStale,
         offlineUsageConsent,
       } = params;
-      const authSettings: ToolsetOAuthSettings = {
-        clientId: oauthSettings?.clientId,
-        authorizationEndpoint: oauthSettings?.authorizationEndpoint,
-        scopes: oauthSettings?.scopes,
-        codeChallenge: oauthSettings?.codeChallenge,
-        codeChallengeMethod: oauthSettings?.codeChallengeMethod,
-      };
+      const authSettings: ToolsetOAuthSettings = oauthSettings ?? {};
 
       /*
        * When a pre-emptive logout is needed, the popup must still be opened
@@ -189,13 +184,7 @@ export const useToolsetLogin = ({
               popup.close();
               return { type: ToolsetLoginOutcomeType.Failure };
             }
-            settings = {
-              clientId: fresh.clientId,
-              authorizationEndpoint: fresh.authorizationEndpoint,
-              scopes: fresh.scopesSupported,
-              codeChallenge: fresh.codeChallenge,
-              codeChallengeMethod: fresh.codeChallengeMethod,
-            };
+            settings = toToolsetOAuthSettings(fresh);
           } catch {
             popup.close();
             return { type: ToolsetLoginOutcomeType.Failure };

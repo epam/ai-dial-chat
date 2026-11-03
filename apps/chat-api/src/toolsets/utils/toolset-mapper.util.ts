@@ -106,7 +106,9 @@ export type DialToolsetSaveBody = {
  * the "With Login" mode only sends { authentication_type, redirect_uri } to
  * reuse an already-configured client and reauthenticate, so every other
  * OAuth field has to be carried over from the stored config or DIAL Core
- * would receive (and likely reject) a wiped-out registration.
+ * would receive (and likely reject) a wiped-out registration. `resource` is
+ * deliberately absent: DIAL Core keeps an omitted value itself, and re-sending
+ * a stored one for a dynamically registered client makes Core reject the save.
  */
 const OAUTH_MERGEABLE_KEYS = [
   'client_id',
@@ -170,6 +172,8 @@ export const toDialAuthSettings = (
       ...(auth.codeChallengeMethod != null
         ? { code_challenge_method: auth.codeChallengeMethod }
         : {}),
+      // `''` is forwarded: DIAL Core reads a blank value as "clear it".
+      ...(auth.resource != null ? { resource: auth.resource } : {}),
     };
   }
 
@@ -378,6 +382,7 @@ export const mapAuthSettings = (
     codeChallenge: getString(raw, 'code_challenge'),
     codeChallengeMethod: getString(raw, 'code_challenge_method'),
     scopesSupported: getStringArray(raw, 'scopes_supported'),
+    resource: getString(raw, 'resource'),
     globalAuthStatus: getString(raw, 'global_auth_status'),
     userLevelAuthStatus: getString(raw, 'user_level_auth_status'),
   };
