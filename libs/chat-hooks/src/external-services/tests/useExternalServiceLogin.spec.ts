@@ -304,6 +304,47 @@ describe('useExternalServiceLogin', () => {
   });
 
   describe('OAuth login', () => {
+    it('hands the stored resource to the popup so the authorize URL carries it', async () => {
+      const fakePopup = {} as Window;
+      vi.mocked(openToolsetOAuthPopup).mockReturnValue(fakePopup);
+      vi.mocked(navigateToolsetOAuthPopup).mockReturnValue({
+        type: ToolsetOAuthInitiationResultType.Started,
+        popup: fakePopup,
+        flowId: 'flow-1',
+      });
+      vi.mocked(waitForToolsetOAuthResult).mockResolvedValue({
+        type: ToolsetOAuthResultType.Success,
+        toolsetId: SCOPE_ID,
+        credentialsLevel: 'USER' as never,
+      });
+      const { result } = renderHook(() => useExternalServiceLogin());
+
+      await result.current.login({
+        appId: APP_ID,
+        serviceId: SERVICE_ID,
+        credentialsLevel: ExternalServiceCredentialsLevel.User,
+        authenticationType: ExternalServiceAuthType.OAuth,
+        oauthSettings: {
+          clientId: 'dial-chat',
+          authorizationEndpoint: 'https://mcp.notion.com/authorize',
+          resource: 'https://mcp.notion.com/mcp',
+        },
+      });
+
+      expect(navigateToolsetOAuthPopup).toHaveBeenCalledWith(
+        fakePopup,
+        expect.objectContaining({
+          clientId: 'dial-chat',
+          resource: 'https://mcp.notion.com/mcp',
+        }),
+        SCOPE_ID,
+        ROUTES.ToolsetSignIn,
+        'USER',
+        'external-service',
+        undefined,
+      );
+    });
+
     it('opens the popup synchronously, logs out when forceStale is set, then navigates it using the full scope id', async () => {
       const fakePopup = {} as Window;
       vi.mocked(openToolsetOAuthPopup).mockReturnValue(fakePopup);

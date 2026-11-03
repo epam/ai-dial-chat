@@ -12,6 +12,7 @@ import type {
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { useCallback } from 'react';
 import { getApiErrorDetails } from '../../api-error/api-error';
+import { toToolsetOAuthSettings } from '../../oauth/authorize-url';
 import { ToolsetAuthTypes, ToolsetCredentialsLevel } from '../../oauth/types';
 import {
   ToolsetLoginOutcomeType,
@@ -242,13 +243,7 @@ export const useCatalogToolsetCredentials = ({
         credentialsLevel,
         authenticationType: toToolsetAuthType(authenticationType),
         apiKey: params.apiKey,
-        oauthSettings: {
-          clientId: toolset?.authSettings?.clientId,
-          authorizationEndpoint: toolset?.authSettings?.authorizationEndpoint,
-          scopes: toolset?.authSettings?.scopesSupported,
-          codeChallenge: toolset?.authSettings?.codeChallenge,
-          codeChallengeMethod: toolset?.authSettings?.codeChallengeMethod,
-        },
+        oauthSettings: toToolsetOAuthSettings(toolset?.authSettings),
         isCurrentlyFailed:
           getLevelStatus(item, params.level) === CredentialStatus.Failed,
       });

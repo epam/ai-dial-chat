@@ -3221,25 +3221,26 @@ The module imports only browser APIs, `@epam/ai-dial-chat-shared`, and `@epam/ai
 
 ### OAuth enums and models
 
-| Name                                | Kind      | Purpose                                                                                              |
-| ----------------------------------- | --------- | ---------------------------------------------------------------------------------------------------- |
-| `ToolsetAuthTypes`                  | enum      | `NONE` / `API_KEY` / `OAUTH` — the mechanism a toolset requires.                                     |
-| `ToolsetAuthStatus`                 | enum      | `SIGNED_IN` / `SIGNED_OUT` / `FAILED` — sign-in state for one credentials level.                     |
-| `ToolsetCredentialsLevel`           | enum      | `GLOBAL` / `USER` / `APP` — scope the submitted credentials apply to.                                |
-| `WithLogin`                         | enum      | `with-login` / `without-login` / `with-config`.                                                      |
-| `OAuthResourceKind`                 | enum      | `toolset` / `external-service` / `offline-credentials`.                                              |
-| `ToolsetOAuthInitiationResultType`  | enum      | `started` / `blocked` / `invalid-config`.                                                            |
-| `ToolsetOAuthResultType`            | enum      | `success` / `failure` / `cancelled`.                                                                 |
-| `ToolsetOAuthFailureReason`         | enum      | `missing-code` / `missing-redirect-state` / `state-mismatch` / `login-request-failed`.               |
-| `ToolsetOAuthChannelControlType`    | enum      | `result-acknowledged` — the opener's consumption acknowledgement.                                    |
-| `ToolsetOAuthCallbackQuery`         | enum      | `toolsetOAuthResult` / `toolsetOAuthFailureReason` — query keys written into the callback popup URL. |
-| `TOOLSET_REDIRECT_STATE_KEY`        | const     | `sessionStorage` key the redirect state is written under, inside the popup.                          |
-| `ToolsetOAuthSettings`              | interface | `clientId` / `authorizationEndpoint` / `scopes` / `codeChallenge` / `codeChallengeMethod`.           |
-| `ToolsetRedirectState`              | interface | State handed to the popup: `toolsetId`, `credentialsLevel`, `redirectUri`, `state`, `resourceKind`.  |
-| `ToolsetOAuthInitiationResult`      | type      | Discriminated result of opening/navigating the popup.                                                |
-| `ToolsetOAuthResult`                | type      | Discriminated result resolved to the initiating tab.                                                 |
-| `ToolsetOAuthChannelMessage`        | type      | Non-secret success/failure message posted by the callback.                                           |
-| `ToolsetOAuthResultAcknowledgement` | interface | Control message confirming the opener consumed a result.                                             |
+| Name                                | Kind      | Purpose                                                                                                 |
+| ----------------------------------- | --------- | ------------------------------------------------------------------------------------------------------- |
+| `ToolsetAuthTypes`                  | enum      | `NONE` / `API_KEY` / `OAUTH` — the mechanism a toolset requires.                                        |
+| `ToolsetAuthStatus`                 | enum      | `SIGNED_IN` / `SIGNED_OUT` / `FAILED` — sign-in state for one credentials level.                        |
+| `ToolsetCredentialsLevel`           | enum      | `GLOBAL` / `USER` / `APP` — scope the submitted credentials apply to.                                   |
+| `WithLogin`                         | enum      | `with-login` / `without-login` / `with-config`.                                                         |
+| `OAuthResourceKind`                 | enum      | `toolset` / `external-service` / `offline-credentials`.                                                 |
+| `ToolsetOAuthInitiationResultType`  | enum      | `started` / `blocked` / `invalid-config`.                                                               |
+| `ToolsetOAuthResultType`            | enum      | `success` / `failure` / `cancelled`.                                                                    |
+| `ToolsetOAuthFailureReason`         | enum      | `missing-code` / `missing-redirect-state` / `state-mismatch` / `login-request-failed`.                  |
+| `ToolsetOAuthChannelControlType`    | enum      | `result-acknowledged` — the opener's consumption acknowledgement.                                       |
+| `ToolsetOAuthCallbackQuery`         | enum      | `toolsetOAuthResult` / `toolsetOAuthFailureReason` — query keys written into the callback popup URL.    |
+| `TOOLSET_REDIRECT_STATE_KEY`        | const     | `sessionStorage` key the redirect state is written under, inside the popup.                             |
+| `ToolsetOAuthSettings`              | interface | `clientId` / `authorizationEndpoint` / `scopes` / `codeChallenge` / `codeChallengeMethod` / `resource`. |
+| `ToolsetOAuthSettingsSource`        | interface | Public OAuth fields of a DIAL Core auth-settings DTO, as `toToolsetOAuthSettings` reads them.           |
+| `ToolsetRedirectState`              | interface | State handed to the popup: `toolsetId`, `credentialsLevel`, `redirectUri`, `state`, `resourceKind`.     |
+| `ToolsetOAuthInitiationResult`      | type      | Discriminated result of opening/navigating the popup.                                                   |
+| `ToolsetOAuthResult`                | type      | Discriminated result resolved to the initiating tab.                                                    |
+| `ToolsetOAuthChannelMessage`        | type      | Non-secret success/failure message posted by the callback.                                              |
+| `ToolsetOAuthResultAcknowledgement` | interface | Control message confirming the opener consumed a result.                                                |
 
 These declarations live in the package rather than being copied per host: TypeScript string enums are nominal, so a structurally identical host-side copy would not type-check against a lib signature that names the enum.
 
@@ -3308,9 +3309,9 @@ import { getToolsetFallbackName } from '@epam/ai-dial-chat-hooks/oauth';
 getToolsetFallbackName('toolsets/bucket/My%20Toolset__1.0.0'); // 'My Toolset'
 ```
 
-### getToolsetRedirectUri / buildToolsetAuthorizeUrl
+### getToolsetRedirectUri / buildToolsetAuthorizeUrl / toToolsetOAuthSettings
 
-`getToolsetRedirectUri` resolves the host's own callback path against `window.location.origin`. `buildToolsetAuthorizeUrl` builds an authorization-code URL carrying `response_type=code`, `client_id`, `redirect_uri` and `state`, plus `code_challenge`/`code_challenge_method` and a space-joined `scope` when the supplied settings carry them. It returns `null` — never throws — for a configuration that cannot produce a valid URL: a missing or blank `clientId`/`authorizationEndpoint`, an unparseable endpoint, or an endpoint whose scheme is not `http:`/`https:` (so `javascript:` and `data:` URLs never reach the popup). Plain `http:` is accepted for any host.
+`getToolsetRedirectUri` resolves the host's own callback path against `window.location.origin`. `buildToolsetAuthorizeUrl` builds an authorization-code URL carrying `response_type=code`, `client_id`, `redirect_uri` and `state`, plus `code_challenge`/`code_challenge_method`, a space-joined `scope` and the RFC 8707 `resource` when the supplied settings carry them. `resource` is the value DIAL Core stored for the client and sends on the token exchange; it is added trimmed and otherwise verbatim, and left out when blank — servers that check it on both legs reject a mismatch with `invalid_target`. It returns `null` — never throws — for a configuration that cannot produce a valid URL: a missing or blank `clientId`/`authorizationEndpoint`, an unparseable endpoint, or an endpoint whose scheme is not `http:`/`https:` (so `javascript:` and `data:` URLs never reach the popup). Plain `http:` is accepted for any host.
 
 **Parameters** (`buildToolsetAuthorizeUrl`):
 
@@ -3332,10 +3333,24 @@ const url = buildToolsetAuthorizeUrl(
     clientId: 'client',
     authorizationEndpoint: 'https://auth.example.com/authorize',
     scopes: ['read', 'write'],
+    resource: 'https://mcp.example.com/mcp',
   },
   redirectUri,
   crypto.randomUUID(),
 );
+```
+
+`toToolsetOAuthSettings(source?)` maps the public OAuth fields of a toolset's `authSettings` or an external service's metadata (`clientId`, `authorizationEndpoint`, `scopesSupported`, `codeChallenge`, `codeChallengeMethod`, `resource`) onto `ToolsetOAuthSettings`, so every login entry point passes the same fields; an absent source yields all-`undefined` settings. Available from the root and `./oauth`.
+
+```ts
+import { toToolsetOAuthSettings } from '@epam/ai-dial-chat-hooks';
+
+await login({
+  toolsetId: toolset.id,
+  credentialsLevel,
+  authenticationType: ToolsetAuthTypes.OAuth,
+  oauthSettings: toToolsetOAuthSettings(toolset.authSettings),
+});
 ```
 
 ### openToolsetOAuthPopup / navigateToolsetOAuthPopup / initiateOAuthLogin
@@ -5563,8 +5578,9 @@ every other service follows its user-level status, and shows
 `hasSharedCredentials` while signed out with a global or app-level login.
 `buildApplicationCredentialLoginParams(appId, service, params)` returns the
 user-level `ExternalServiceLoginParams` for `useExternalServiceLogin().login`,
-with the service's OAuth settings and `forceStale` when its user-level status
-is `FAILED`.
+with the service's OAuth settings (including its `resource`, through
+`toToolsetOAuthSettings`) and `forceStale` when its user-level status is
+`FAILED`.
 
 ```tsx
 import {
@@ -5877,7 +5893,9 @@ useExternalServiceLogin and its params/outcome/auth enums are available from the
 root and external-services entry. ExternalServiceLoginOptions supplies callbackPath,
 service get/sign-in/sign-out operations, offline status and offline login callbacks.
 The controller uses the existing OAuth popup/handshake implementation; hosts retain
-client configuration and callback code exchange. A reserved popup is reused, stale
+client configuration and callback code exchange. `ExternalServiceOAuthSettings`
+is an alias of `ToolsetOAuthSettings`, `resource` included, so the authorize URL
+carries the service's RFC 8707 resource indicator. A reserved popup is reused, stale
 logout is best-effort, API keys are trimmed, ambiguous cancellation is checked against
 fresh service status and DIAL-native login verifies administrator consent again after
 successful offline login. Offline timeout maps explicitly to failure.

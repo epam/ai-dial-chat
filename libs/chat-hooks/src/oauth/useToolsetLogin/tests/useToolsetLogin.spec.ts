@@ -225,11 +225,17 @@ describe('useToolsetLogin', () => {
         toolsetId: TOOLSET_ID,
         credentialsLevel: ToolsetCredentialsLevel.User,
         authenticationType: ToolsetAuthTypes.OAuth,
-        oauthSettings: { clientId: 'client' },
+        oauthSettings: {
+          clientId: 'client',
+          resource: 'https://mcp.example.com/mcp',
+        },
       });
 
       expect(initiateOAuthLogin).toHaveBeenCalledWith(
-        expect.objectContaining({ clientId: 'client' }),
+        expect.objectContaining({
+          clientId: 'client',
+          resource: 'https://mcp.example.com/mcp',
+        }),
         TOOLSET_ID,
         '/some/other/callback',
         ToolsetCredentialsLevel.User,
@@ -290,6 +296,7 @@ describe('useToolsetLogin', () => {
           clientId: 'fresh-client',
           authorizationEndpoint: 'https://idp.example/authorize',
           scopesSupported: ['read'],
+          resource: 'https://mcp.example.com/mcp',
         },
       });
       vi.mocked(navigateToolsetOAuthPopup).mockReturnValue({
@@ -316,6 +323,7 @@ describe('useToolsetLogin', () => {
         expect.objectContaining({
           clientId: 'fresh-client',
           scopes: ['read'],
+          resource: 'https://mcp.example.com/mcp',
         }),
         TOOLSET_ID,
         CALLBACK_PATH,

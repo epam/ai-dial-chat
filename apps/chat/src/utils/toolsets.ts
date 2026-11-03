@@ -79,6 +79,7 @@ const authSettingsDtoToForm = (
     scopes: authSettings?.scopesSupported ?? [],
     codeChallenge: authSettings?.codeChallenge,
     codeChallengeMethod: authSettings?.codeChallengeMethod,
+    resource: authSettings?.resource ?? '',
   };
 };
 
@@ -117,10 +118,15 @@ export const fetchToolsetAuthSettings = async (
   return authSettingsDtoToForm(dto.authSettings);
 };
 
-/** Maps editor form state into the create/update request body. */
+/**
+ * Maps editor form state into the create/update request body. `isUpdate`
+ * decides how a blank OAuth resource is sent: as `''` on update, so DIAL Core
+ * clears the stored value, and not at all on create, so Core may resolve one.
+ */
 export const formToToolsetBody = (
   form: ToolsetFormData,
   redirectUri?: string,
+  isUpdate = false,
 ): ToolsetBodyDto => {
   const auth = form.auth;
   const authSettings: ToolsetBodyDto['authSettings'] = {
@@ -138,6 +144,14 @@ export const formToToolsetBody = (
     authSettings.redirectUri = redirectUri?.trim() || undefined;
     authSettings.scopesSupported =
       auth.scopes && auth.scopes.length > 0 ? auth.scopes : undefined;
+    /*
+     * DIAL Core accepts a resource only for a static client; a dynamically
+     * registered one gets it from the server's metadata.
+     */
+    if (auth.withLogin === WithLogin.WithConfig) {
+      const resource = auth.resource?.trim() ?? '';
+      if (resource || isUpdate) authSettings.resource = resource;
+    }
   }
 
   const locales = composeLocalePayload(form.otherLocales, PRIMARY_LOCALE);

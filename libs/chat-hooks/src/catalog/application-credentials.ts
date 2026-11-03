@@ -11,6 +11,7 @@ import {
   ExternalServiceCredentialsLevel,
   type ExternalServiceLoginParams,
 } from '../external-services/useExternalServiceLogin';
+import { toToolsetOAuthSettings } from '../oauth/authorize-url';
 
 /** Host-resolved inputs of `mapApplicationCredentials`. */
 export interface MapApplicationCredentialsOptions {
@@ -67,13 +68,7 @@ export const buildApplicationCredentialLoginParams = (
   ...params,
   credentialsLevel: ExternalServiceCredentialsLevel.User,
   authenticationType: service.authenticationType as ExternalServiceAuthType,
-  oauthSettings: {
-    clientId: service.clientId,
-    authorizationEndpoint: service.authorizationEndpoint,
-    scopes: service.scopesSupported,
-    codeChallenge: service.codeChallenge,
-    codeChallengeMethod: service.codeChallengeMethod,
-  },
+  oauthSettings: toToolsetOAuthSettings(service),
   // A failed personal credential is stale; re-login must replace it rather than reuse it.
   forceStale: service.userLevelAuthStatus === ExternalServiceAuthStatus.Failed,
 });

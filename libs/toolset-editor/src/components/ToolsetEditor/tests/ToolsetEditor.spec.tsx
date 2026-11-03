@@ -124,6 +124,7 @@ vi.mock('../../SettingsForm/SettingsForm', () => ({
       endpoint?: string;
       authorizationEndpoint?: string;
       tokenEndpoint?: string;
+      resource?: string;
     };
     isSaving?: boolean;
     toolsetId?: string;
@@ -154,6 +155,13 @@ vi.mock('../../SettingsForm/SettingsForm', () => ({
           <p role="alert">{errors.authorizationEndpoint}</p>
         )}
         {errors?.tokenEndpoint && <p role="alert">{errors.tokenEndpoint}</p>}
+        {errors?.resource && <p role="alert">{errors.resource}</p>}
+        <label>
+          resource
+          <input
+            onChange={(event) => onAuthChange({ resource: event.target.value })}
+          />
+        </label>
         <button type="button" onClick={() => onChange({ endpoint: '' })}>
           touch-empty-endpoint
         </button>
@@ -531,6 +539,39 @@ describe('ToolsetEditor', () => {
     );
 
     await waitFor(() => expect(saveButton.disabled).toBe(true));
+  });
+
+  it('blocks saving with an inline error while the OAuth resource is not an absolute URI without a fragment', async () => {
+    renderEditor();
+
+    const saveButton = (await screen.findByRole('button', {
+      name: 'Create',
+    })) as HTMLButtonElement;
+    await user.click(
+      screen.getByRole('button', { name: 'fill-oauth-toolset' }),
+    );
+    await waitFor(() => expect(saveButton.disabled).toBe(false));
+
+    for (const invalid of [
+      'mcp.example.com/mcp',
+      'https://mcp.example.com/mcp#tools',
+    ]) {
+      await user.clear(screen.getByLabelText('resource'));
+      await user.type(screen.getByLabelText('resource'), invalid);
+
+      await waitFor(() => expect(saveButton.disabled).toBe(true));
+      expect(screen.getByRole('alert').textContent).toBe(
+        'Enter an absolute URI without a fragment',
+      );
+    }
+
+    await user.clear(screen.getByLabelText('resource'));
+    await user.type(
+      screen.getByLabelText('resource'),
+      'https://mcp.example.com/mcp',
+    );
+    await waitFor(() => expect(saveButton.disabled).toBe(false));
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 
   it('shows required errors once the OAuth endpoints are cleared', async () => {

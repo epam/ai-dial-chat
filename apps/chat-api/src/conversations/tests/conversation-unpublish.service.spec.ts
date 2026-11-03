@@ -1,5 +1,6 @@
 import {
   BadGatewayException,
+  ConflictException,
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
@@ -11,10 +12,14 @@ const CONVERSATION_PATH = 'my-conversation-abc';
 const SOURCE_URL = 'conversations/bucket-123/my-conversation-abc';
 
 const okResponse = (data: unknown) =>
-  ({ data, response: {} as Response }) as never;
+  ({ data, response: { ok: true, status: 200 } as Response }) as never;
 
 const errResponse = (status: number) =>
-  ({ error: {}, response: { status } as Response }) as never;
+  ({ error: {}, response: { ok: false, status } as Response }) as never;
+
+// `openapi-fetch` leaves `error` undefined when the error body is empty.
+const emptyErrResponse = (status: number) =>
+  ({ response: { ok: false, status } as Response }) as never;
 
 const makeCacheManager = () => ({
   get: vi.fn(),
@@ -209,6 +214,27 @@ describe('ConversationPublishService.unpublish', () => {
         'Test User',
       ),
     ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(cacheManager.del).not.toHaveBeenCalled();
+  });
+
+  it('maps a Core 409 with an empty body on createPublication to ConflictException without invalidating the cache', async () => {
+    const { service, dialClient, cacheManager } = makeService([]);
+    vi.spyOn(dialClient.client, 'getConversation').mockResolvedValue(
+      okResponse({ name: 'Q3 planning notes' }),
+    );
+    vi.spyOn(dialClient.client, 'createPublication').mockResolvedValue(
+      emptyErrResponse(409),
+    );
+
+    await expect(
+      service.unpublish(
+        'token-abc',
+        'bucket-123',
+        CONVERSATION_PATH,
+        'Organization/Shared chats',
+        'Test User',
+      ),
+    ).rejects.toBeInstanceOf(ConflictException);
     expect(cacheManager.del).not.toHaveBeenCalled();
   });
 

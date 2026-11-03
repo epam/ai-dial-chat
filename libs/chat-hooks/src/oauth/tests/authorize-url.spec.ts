@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildToolsetAuthorizeUrl,
   getToolsetRedirectUri,
+  toToolsetOAuthSettings,
 } from '../authorize-url';
 
 const REDIRECT_URI = 'http://localhost/auth/toolset-signin';
@@ -162,5 +163,70 @@ describe('buildToolsetAuthorizeUrl', () => {
     ])('returns null for a non-http(s) endpoint (%s)', (endpoint) => {
       expect(build(endpoint)).toBeNull();
     });
+  });
+
+  describe('resource', () => {
+    const build = (resource?: string) =>
+      buildToolsetAuthorizeUrl(
+        { ...validOAuthConfig, resource },
+        REDIRECT_URI,
+        'state',
+      );
+
+    it('carries exactly one resource parameter with the stored value', () => {
+      const url = new URL(build('https://mcp.notion.com/mcp') ?? '');
+      expect(url.searchParams.getAll('resource')).toEqual([
+        'https://mcp.notion.com/mcp',
+      ]);
+    });
+
+    it('trims the stored value', () => {
+      const url = new URL(build('  https://mcp.notion.com/mcp  ') ?? '');
+      expect(url.searchParams.get('resource')).toBe(
+        'https://mcp.notion.com/mcp',
+      );
+    });
+
+    it.each([undefined, '', '   '])(
+      'omits the parameter for %j and otherwise builds the same URL',
+      (resource) => {
+        expect(build(resource)).toBe(build());
+        expect(
+          new URL(build(resource) ?? '').searchParams.has('resource'),
+        ).toBe(false);
+      },
+    );
+  });
+});
+
+describe('toToolsetOAuthSettings', () => {
+  it('maps every public OAuth field of a DIAL Core auth-settings DTO', () => {
+    expect(
+      toToolsetOAuthSettings({
+        clientId: 'c',
+        authorizationEndpoint: 'https://idp/authorize',
+        scopesSupported: ['a', 'b'],
+        codeChallenge: 'x',
+        codeChallengeMethod: 'S256',
+        resource: 'https://mcp.example.com/mcp',
+      }),
+    ).toEqual({
+      clientId: 'c',
+      authorizationEndpoint: 'https://idp/authorize',
+      scopes: ['a', 'b'],
+      codeChallenge: 'x',
+      codeChallengeMethod: 'S256',
+      resource: 'https://mcp.example.com/mcp',
+    });
+  });
+
+  it('returns settings that cannot build a URL when there is no source', () => {
+    const settings = toToolsetOAuthSettings(undefined);
+    expect(Object.values(settings).every((value) => value === undefined)).toBe(
+      true,
+    );
+    expect(
+      buildToolsetAuthorizeUrl(settings, REDIRECT_URI, 'state'),
+    ).toBeNull();
   });
 });
