@@ -52,7 +52,7 @@ The 768px policy SHALL NOT change mobile navigation sheets, conversation panel, 
 
 ### Requirement: Presentation transitions preserve accessible state
 
-At a 768px crossing, an open menu whose trigger survives SHALL preserve its logical open state, query and committed selections while transferring focus to equivalent content in exactly one presentation. Browse controls whose triggers change SHALL close the old sheet, discard uncommitted filtering and restore focus to the corresponding new control. Menu ARIA roles, expanded state and focus logic SHALL match the actual presentation, including `DeploymentSelectorPanel` in `apps/chat/src/components/DeploymentSelector/DeploymentSelectorPanel.tsx`. RTL SHALL use logical anchoring and preserve existing keyboard semantics.
+At a 768px crossing, an open menu whose trigger survives SHALL preserve its logical open state, query and committed selections while transferring focus to equivalent content in exactly one presentation. Browse controls whose triggers change SHALL close the old sheet, discard uncommitted filtering and restore focus to the corresponding new control. Menu ARIA roles, expanded state and focus logic SHALL match the actual presentation, including `DeploymentSelectorPanel` in `libs/catalog/src/components/DeploymentSelectorPanel/DeploymentSelectorPanel.tsx`. RTL SHALL use logical anchoring and preserve existing keyboard semantics.
 
 #### Scenario: Selector changes while open
 - **WHEN** an open model or deployment selector crosses 768px in either direction

@@ -35,6 +35,7 @@ export const ScheduledTaskHistorySection: FC<
   onRunClick,
   runTimestampClassName = 'dial-small-text',
   runTimestampUnreadClassName = 'dial-small-semi-text',
+  errorDetailsClassName = 'dial-tiny-text',
   sectionTitleClassName = 'dial-body-semi-text',
   colors,
   styles: historyStyles,
@@ -115,15 +116,21 @@ export const ScheduledTaskHistorySection: FC<
         retryLabel: labels.historyRetryLabel,
         runStatusLabels: labels.runStatusLabels,
         unreadIndicatorLabel: labels.unreadIndicatorLabel,
+        openConversationLabel: labels.openConversationLabel,
       }}
       footer={footer}
       styles={{
-        typography: { runTimestampClassName, runTimestampUnreadClassName },
+        typography: {
+          runTimestampClassName,
+          runTimestampUnreadClassName,
+          errorDetailsClassName,
+        },
         colors: historyStyles?.colors ?? colors,
         rowMinHeight: historyStyles?.rowMinHeight,
         rowHoverBackground: historyStyles?.rowHoverBackground,
         rowFocusBackground: historyStyles?.rowFocusBackground,
         rowFocusOutline: historyStyles?.rowFocusOutline,
+        rowExpandedBackground: historyStyles?.rowExpandedBackground,
       }}
     />
   );

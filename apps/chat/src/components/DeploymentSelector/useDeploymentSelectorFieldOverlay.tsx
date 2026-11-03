@@ -1,3 +1,4 @@
+import type { DeploymentSelectorExtraOption } from '@epam/ai-dial-catalog';
 import { findDeploymentByIdOrReference } from '@epam/ai-dial-chat-hooks';
 import { OverlayFeature } from '@epam/ai-dial-chat-overlay';
 import {
@@ -14,7 +15,6 @@ import { useFavoriteApplications } from '../../context/FavoriteApplicationsConte
 import { useLanguage } from '../../hooks/language/useLanguage';
 import { useUiFeature } from '../../hooks/useUiFeature';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
-import type { DeploymentSelectorExtraOption } from './DeploymentSelectorPanel';
 
 const DeploymentSelectorOverlay = lazy(
   () => import('./DeploymentSelectorOverlay'),

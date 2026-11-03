@@ -377,6 +377,13 @@ export class DialToolsetAuthSettingsDto {
   scopesSupported?: string[];
 
   @ApiPropertyOptional({
+    description:
+      'RFC 8707 resource indicator DIAL Core sends on the token exchange; the client puts the same value on the authorization URL.',
+    example: 'https://mcp.example.com/mcp',
+  })
+  resource?: string;
+
+  @ApiPropertyOptional({
     example: 'SIGNED_OUT',
     enum: ['SIGNED_IN', 'SIGNED_OUT'],
   })

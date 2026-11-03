@@ -8,17 +8,28 @@ import {
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useConversationScroll } from '../useConversationScroll';
 
-/* jsdom has no ResizeObserver; a no-op stub is enough since these tests
- * drive content-growth checks via `fireEvent.scroll`, not resize callbacks. */
+/* jsdom has no ResizeObserver; the stub records callbacks so a test can
+ * simulate content growth with `triggerResize`. */
+const resizeCallbacks = new Set<() => void>();
+const triggerResize = () => {
+  act(() => {
+    resizeCallbacks.forEach((callback) => callback());
+  });
+};
+
 class ResizeObserverMock {
+  private readonly callback: () => void;
+  constructor(callback: () => void) {
+    this.callback = callback;
+  }
   observe() {
-    // No-op in JSDOM.
+    resizeCallbacks.add(this.callback);
   }
   unobserve() {
     // No-op in JSDOM.
   }
   disconnect() {
-    // No-op in JSDOM.
+    resizeCallbacks.delete(this.callback);
   }
 }
 vi.stubGlobal('ResizeObserver', ResizeObserverMock);
@@ -316,6 +327,56 @@ describe('useConversationScroll', () => {
     expect(scrollToMock).toHaveBeenCalledWith({
       top: 800,
       behavior: 'smooth',
+    });
+  });
+
+  describe('content growth after a history load', () => {
+    /* Renders a loaded conversation, then puts scrollTop mid-way through the smooth scroll to the bottom. */
+    const renderMidSmoothScroll = () => {
+      const messages = makeMessages(6);
+      const view = render(
+        <ScrollHarness conversationId="conversation-a" messages={messages} />,
+      );
+      const scrollContainer = getScrollContainer(view.container);
+      scrollContainer.scrollTop = 325;
+      fireEvent.scroll(scrollContainer);
+      scrollToMock.mockClear();
+      return { ...view, messages, scrollContainer };
+    };
+
+    it('follows the content to its new bottom when it grows during the smooth scroll', () => {
+      const { rerender, messages } = renderMidSmoothScroll();
+
+      rerender(
+        <ScrollHarness
+          conversationId="conversation-a"
+          messages={messages}
+          contentHeight={1_500}
+        />,
+      );
+      triggerResize();
+
+      expect(scrollToMock).toHaveBeenCalledWith({
+        top: 1_100,
+        behavior: 'instant',
+      });
+    });
+
+    it('stops following the content once the user scrolls up', () => {
+      const { rerender, messages, scrollContainer } = renderMidSmoothScroll();
+
+      scrollContainer.scrollTop = 200;
+      fireEvent.scroll(scrollContainer);
+      rerender(
+        <ScrollHarness
+          conversationId="conversation-a"
+          messages={messages}
+          contentHeight={1_500}
+        />,
+      );
+      triggerResize();
+
+      expect(scrollToMock).not.toHaveBeenCalled();
     });
   });
 

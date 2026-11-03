@@ -4,7 +4,7 @@ import {
   type McpAppDisplayMode,
 } from '@epam/ai-dial-attachment-canvas';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   McpAppInlinePreviewStatus,
   type McpAppHostAdapter,
@@ -59,7 +59,22 @@ export const useMcpAppInlinePreview = (
   const { hostContext, hostInfo, sandboxUrl, fetchResourceHtml, callTool } =
     hostAdapter;
   const [html, setHtml] = useState<string>();
+  const [toolInput, setToolInput] = useState<Record<string, unknown>>();
   const [toolResult, setToolResult] = useState<CallToolResult>();
+  /*
+   * A message update (a like, a streamed chunk) hands this hook a new
+   * `toolCall` object with the same data. The effect below is keyed on
+   * `seedKey` and reads the latest `toolCall` through this ref, so such a
+   * re-render neither tears down the mounted app nor re-sends `toolInput` to
+   * it: the spec sends `ui/notifications/tool-input` at most once per view,
+   * and an app that receives it again drops its result and waits for one that
+   * never comes.
+   */
+  const toolCallRef = useRef(toolCall);
+  useEffect(() => {
+    toolCallRef.current = toolCall;
+  });
+  const seedKey = computeMcpAppSeedKey(toolCall);
   /*
    * Lazy-initialized so an unconfigured sandbox never renders the loading
    * spinner for a frame before the effect below flips it to `Unavailable` —
@@ -84,24 +99,25 @@ export const useMcpAppInlinePreview = (
       if (match == null || sandboxUrl == null) return;
 
       try {
-        const seedKey = computeMcpAppSeedKey(toolCall);
+        const toolCallSeed = toolCallRef.current;
         const { html: fetchedHtml, toolResult: resolvedResult } =
           await cache.getOrFetch(cacheKey, seedKey, async () => {
             const [html, toolResult] = await Promise.all([
               fetchResourceHtml(match.toolsetId, match.resourceUri),
-              resolveMcpAppToolResult(match, toolCall, callTool),
+              resolveMcpAppToolResult(match, toolCallSeed, callTool),
             ]);
             return { html, toolResult };
           });
         if (isCancelled()) return;
         setHtml(fetchedHtml);
+        setToolInput(toolCallSeed?.toolInput);
         setToolResult(resolvedResult);
         setStatus(McpAppInlinePreviewStatus.Ready);
       } catch {
         if (!isCancelled()) setStatus(McpAppInlinePreviewStatus.Error);
       }
     },
-    [match, toolCall, sandboxUrl, cache, cacheKey, fetchResourceHtml, callTool],
+    [match, seedKey, sandboxUrl, cache, cacheKey, fetchResourceHtml, callTool],
   );
 
   useEffect(() => {
@@ -146,7 +162,7 @@ export const useMcpAppInlinePreview = (
       type: AttachmentContentType.McpApp,
       html,
       sandboxUrl,
-      toolInput: toolCall?.toolInput,
+      toolInput,
       toolResult,
       hostContext,
       hostInfo,

@@ -78,6 +78,13 @@ export class GetExternalServiceResponseDto {
 
   @ApiPropertyOptional({ example: 'S256' })
   codeChallengeMethod?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'RFC 8707 resource indicator DIAL Core sends on the token exchange; the client puts the same value on the authorization URL.',
+    example: 'https://mcp.example.com/mcp',
+  })
+  resource?: string;
 }
 
 export class ApplicationExternalServiceDto extends GetExternalServiceResponseDto {

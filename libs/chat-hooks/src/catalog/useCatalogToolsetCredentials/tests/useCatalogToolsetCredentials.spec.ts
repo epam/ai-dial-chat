@@ -384,6 +384,43 @@ describe('useCatalogToolsetCredentials', () => {
       );
     });
 
+    it("sends the toolset's stored resource on the authorize URL", async () => {
+      const toolsets = [
+        {
+          ...oauthToolset,
+          authSettings: {
+            ...oauthToolset.authSettings,
+            resource: 'https://mcp.example.com/mcp',
+          },
+        } as DialToolsetDto,
+      ];
+      const { result } = renderCredentials({ toolsets });
+
+      const loginPromise = act(async () => {
+        await result.current.handleLogin(oauthCatalogItem, {
+          level: CredentialsLevel.User,
+        });
+      });
+
+      await waitFor(() => expect(capturedPopup?.location.href).toBeTruthy());
+      expect(
+        new URL(capturedPopup?.location.href ?? '').searchParams.get(
+          'resource',
+        ),
+      ).toBe('https://mcp.example.com/mcp');
+
+      const { state: flowId } = decodeJsonFromBase64<ToolsetRedirectState>(
+        capturedPopup?.sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY) ??
+          encodeJsonToBase64({}),
+      );
+      postOAuthResult(flowId ?? '', {
+        type: ToolsetOAuthResultType.Success,
+        toolsetId: oauthToolset.id,
+        credentialsLevel: 'USER',
+      });
+      await loginPromise;
+    });
+
     it('shows the success notification on the first attempt when the channel event is missed', async () => {
       const toolsets: DialToolsetDto[] = [oauthToolset as DialToolsetDto];
       const { result, onNotify, refetchToolsets, getToolset } =

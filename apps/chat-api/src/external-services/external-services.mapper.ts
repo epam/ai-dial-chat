@@ -93,6 +93,7 @@ export const mapDialExternalServiceToDto = (
   scopesSupported: data.auth_settings?.scopes_supported,
   codeChallenge: data.auth_settings?.code_challenge,
   codeChallengeMethod: data.auth_settings?.code_challenge_method,
+  resource: data.auth_settings?.resource,
 });
 
 /** A service definition as DIAL Core's `putExternalService` takes it. Fields left out stay out. */
@@ -109,6 +110,7 @@ export const toDialExternalServiceDefinition = (
       authorization_endpoint: auth.authorizationEndpoint,
       token_endpoint: auth.tokenEndpoint,
       scopes_supported: auth.scopesSupported,
+      resource: auth.resource,
     }).filter(([, value]) => value !== undefined),
   ) as DialExternalServiceDefinition['auth_settings'];
   return {
