@@ -617,7 +617,11 @@ describe('DeploymentSelectorPanel', () => {
         colors: { surface: '#111111', starFilled: '#222222' },
       });
 
-      /* CSS-variable assertion; no semantic query exposes inline styles. */
+      /*
+       * CSS-variable assertion on the unlabeled root `<div>`: no role or text
+       * reaches it and no semantic query exposes inline styles.
+       */
+      // eslint-disable-next-line testing-library/no-node-access
       const root = container.firstElementChild as HTMLElement;
       expect(root.style.getPropertyValue('--ds-surface')).toBe('#111111');
       expect(root.style.getPropertyValue('--ds-star-filled')).toBe('#222222');
