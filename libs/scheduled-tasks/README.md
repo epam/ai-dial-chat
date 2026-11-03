@@ -190,11 +190,11 @@ import {
 } from '@epam/ai-dial-scheduled-tasks';
 
 <ScheduledTaskDetailView
-  labels={
-    {
-      /* ..., unreadIndicatorLabel: 'Unread', openConversationLabel: 'Open conversation' */
-    }
-  }
+  labels={{
+    /* ...the required labels, plus: */
+    unreadIndicatorLabel: 'Unread',
+    openConversationLabel: 'Open conversation',
+  }}
   onBack={() => {}}
   onEdit={() => {}}
   onStartNow={() => {}}
