@@ -3,7 +3,6 @@ import { IsOptional, IsString } from 'class-validator';
 
 /** Per-identity-provider OIDC settings (`AUTH_<PROVIDER>_*`). */
 export class AuthProvidersEnv {
-  // Auth providers
   @IsOptional()
   @IsString()
   AUTH_AUTH0_CLIENT_ID?: string;

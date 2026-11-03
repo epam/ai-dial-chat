@@ -2,7 +2,6 @@ import { getMetadataStorage } from 'class-validator';
 import { describe, expect, it } from 'vitest';
 import { AuthProvidersEnv } from '../env/auth-providers.env';
 import { AuthEnv } from '../env/auth.env';
-import { CelebrationsEnv } from '../env/celebrations.env';
 import { ClientUiEnv } from '../env/client-ui.env';
 import { DialEnv } from '../env/dial.env';
 import { FeatureFlagsEnv } from '../env/feature-flags.env';
@@ -203,6 +202,16 @@ const ENV_VAR_NAMES = [
   'WELCOME_SCREEN_DESCRIPTION',
 ];
 
+/* Celebration vars stay on the root class while the feature is in development. */
+const ROOT_VAR_NAMES = [
+  'UI_EVENT',
+  'UI_EVENT_DELIVERY_MODE',
+  'UI_EVENT_DELIVERY_REVISION',
+  'UI_EVENT_ENABLED_BY_DEFAULT',
+  'UI_EVENT_EXTERNAL_EVENTS',
+  'UI_EVENT_EXTERNAL_SCENES',
+];
+
 const DOMAIN_CLASSES = [
   ServerEnv,
   DialEnv,
@@ -211,7 +220,6 @@ const DOMAIN_CLASSES = [
   FilesEnv,
   GenerationEnv,
   ClientUiEnv,
-  CelebrationsEnv,
   FeatureFlagsEnv,
   IntegrationsEnv,
 ];
@@ -236,9 +244,9 @@ describe('EnvironmentVariables composition', () => {
     expect(getDeclaredNames(EnvironmentVariables)).toEqual(ENV_VAR_NAMES);
   });
 
-  it('declares every var in exactly one domain class', () => {
+  it('declares every var in exactly one domain class or on the root', () => {
     const perDomain = DOMAIN_CLASSES.map(getDeclaredNames);
-    const all = perDomain.flat();
+    const all = [...perDomain.flat(), ...ROOT_VAR_NAMES];
 
     expect([...all].sort()).toEqual(ENV_VAR_NAMES);
     expect(new Set(all).size).toBe(all.length);

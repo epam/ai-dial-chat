@@ -321,7 +321,9 @@ throw new HttpException('Oops', 500);      // ❌ generic — use a typed except
 - All env vars MUST be declared on their domain class in
   `apps/chat-api/src/config/env/<domain>.env.ts`; `EnvironmentVariables` in
   `apps/chat-api/src/config/environment.config.ts` composes those classes with
-  `IntersectionType` and declares nothing itself. A new domain gets its own
+  `IntersectionType` and itself declares only the celebration (`UI_EVENT*`)
+  vars, which stay there unchanged while that feature is under development
+  (`.claude/skills/refactoring-audit/SKILL.md` "Excluded areas"). A new domain gets its own
   `<domain>.env.ts`, added to that composition. Add the name to the snapshot in
   `config/tests/environment-composition.spec.ts` in the same change.
 - Each field has at least one `class-validator` decorator. URL fields use

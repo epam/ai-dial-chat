@@ -35,6 +35,10 @@ This skill, its templates, and `repo-rules-checklist.md` describe **patterns, th
 
 **Git rule:** These files MUST stay out of git. After writing, ensure each path is listed in `.git/info/exclude`. Run `git check-ignore -v <file>` and confirm `git ls-files` does not list them. **Never** `git add` refactoring docs. Do not add them to `.gitignore` unless the user explicitly wants team-wide ignore rules in the repo.
 
+## Excluded areas
+
+Leave celebration code out of every audit: the `celebrations` Nx project (`@epam/ai-dial-celebrations`), the chat-api celebration domain and anything it owns (`celebration`-named services, types and config), and the `UI_EVENT*` env vars. The feature is still under development, so do not collect metrics, smells, dead-code candidates or phase items for it, and do not propose moving, splitting or renaming it, even when it trips a threshold. Mention the exclusion once in `refactoring.md`.
+
 ## When to use
 
 - User asks for refactoring plan, tech-debt review, or codebase analysis

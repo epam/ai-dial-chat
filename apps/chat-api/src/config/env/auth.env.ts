@@ -36,7 +36,6 @@ export class AuthEnv {
   AUTH_SESSION_PREV_SECRET?: string;
 
   @IsOptional()
-  // Preserve fractional or malformed values so validation rejects them.
   @Transform(({ value }) => Number(value))
   @IsInt()
   @Min(1)
