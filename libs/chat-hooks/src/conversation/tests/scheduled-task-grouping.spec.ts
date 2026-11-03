@@ -364,7 +364,10 @@ describe('getScheduledTaskRunGroupKey', () => {
 
 describe('isScheduledTaskRunCollapsible', () => {
   const item = (patch: Partial<ConversationListItemDto>) =>
-    ({ id: 'conversations/bucket-a/run.json', ...patch }) as ConversationListItemDto;
+    ({
+      id: 'conversations/bucket-a/run.json',
+      ...patch,
+    }) as ConversationListItemDto;
 
   it('allows an own unpinned run to collapse', () => {
     expect(isScheduledTaskRunCollapsible(item({}))).toBe(true);
@@ -375,8 +378,8 @@ describe('isScheduledTaskRunCollapsible', () => {
     expect(isScheduledTaskRunCollapsible(item({ sharedWithMe: true }))).toBe(
       false,
     );
-    expect(
-      isScheduledTaskRunCollapsible(item({ publishedWithMe: true })),
-    ).toBe(false);
+    expect(isScheduledTaskRunCollapsible(item({ publishedWithMe: true }))).toBe(
+      false,
+    );
   });
 });
