@@ -69,9 +69,9 @@ Spec: [`mcp-app-trigger`](../openspec/specs/mcp-app-trigger/spec.md).
 
 `findMcpAppForMessage(message, mcpAppTools, isStreaming)` runs per assistant message:
 
-1. A discovered tool whose `toolName` was actually called this turn wins.
+1. A discovered tool whose `toolName` was called this turn and has already returned a result wins. A call still running does not match.
 2. Otherwise, a `discovery: 'direct'` tool — the deployment _is_ the MCP server and typically never reports tool calls at all.
-3. Otherwise, while the message is still streaming, the first discovered tool (tool-call data may not have arrived yet). A settled message that called none of the indirect tools shows nothing.
+3. Otherwise nothing: there is no guess while the message streams. A message shows the app only once its tool call has finished, so the app never mounts on an answer that does not call the tool.
 
 Tool-call data comes from `message.custom_content.state`, which the SSE chunk merge copies verbatim. Two orchestrator shapes are understood: `tool_messages` (LangChain-style) and `tool_execution_history` (OpenAI chat-completion style). `resolveMcpAppToolCallSeed` turns the **last** matching call — a retry beats an earlier failure — into the seed `{ toolInput, toolResult }` the app is mounted with.
 
@@ -97,7 +97,7 @@ Specs: [`mcp-app-canvas`](../openspec/specs/mcp-app-canvas/spec.md), [`mcp-app-t
 Before mounting, `resolveMcpAppToolResult` decides which tool result the app gets:
 
 - For a `direct` match, or an `indirect` match with a real tool call in `custom_content.state`, it **calls the tool again live** with the seed's arguments (or `{}` for a direct match with no seed) and hands the app the fresh `CallToolResult`. The transcript's text result is often not what the app's UI expects.
-- For the streaming-only guess (no confirmed call), it passes the transcript result through unchanged.
+- For an indirect match with no seed (matching no longer produces one), it passes the transcript result through unchanged.
 - If the live call throws, it falls back to the transcript result.
 
 The app receives `toolInput` and `toolResult` once per mount, because the MCP Apps spec sends `ui/notifications/tool-input` at most once per view and an app that gets it again drops its result and shows its loading state. `useMcpAppInlinePreview` therefore reloads only when the seed's data (`computeMcpAppSeedKey`), the match, the sandbox URL or the cache key changes, or the user reloads. A message update with the same data, such as a like or a streamed chunk, does not remount the app or re-send its input.
