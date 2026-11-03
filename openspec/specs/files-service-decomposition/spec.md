@@ -8,10 +8,11 @@ The ownership map for the split files-domain services, and the contracts that sp
 
 ### Requirement: Files domain service ownership map
 
-The backend SHALL implement the files feature's business logic in `apps/chat-api/src/files/` as seven single-concern injectable services, each constructor-injecting `DialClientService` (`apps/chat-api/src/dial/dial-client.service.ts`) and `ConfigService` directly — never extending a base class:
+The backend SHALL implement the files feature's business logic in `apps/chat-api/src/files/` as eight single-concern injectable services, each (except `FilesArchiveUploadService`, which reaches DIAL Core only through `FilesUploadService`) constructor-injecting `DialClientService` (`apps/chat-api/src/dial/dial-client.service.ts`) and `ConfigService` directly — never extending a base class:
 
 - `FilesListingService` (`listing/files-listing.service.ts`) — read-only listing/metadata (`listFiles`, `listPublicFiles`, `listSharedFiles`, `listSharedByMe`, `getFileMetadata`) plus the shared recursive folder-traversal primitive (`expandFolderContents`, `buildArchivePath`, and the private `getRelativeChildPath`) used by every batch and archive-download operation below. The bucket-relative path helper `toRelativePath` lives in `dial-resource-path.util.ts`, alongside `encodeDialFilePath`, and is imported by the listing, download, and archive services.
-- `FilesUploadService` (`upload/files-upload.service.ts`) — single-file and archive upload, temp-file staging, multipart streaming.
+- `FilesUploadService` (`upload/files-upload.service.ts`) — single-file upload and the shared DIAL Core upload transport (`uploadFileStream`: multipart streaming, create-only `If-None-Match`, upload watchdog).
+- `FilesArchiveUploadService` (`upload/files-archive-upload.service.ts`) — ZIP archive upload (`uploadArchive`): limits and timeout, central-directory scan, per-entry temp staging, conflict renaming and temp cleanup; injects `ConfigService` and `FilesUploadService` and uploads every entry through `FilesUploadService.uploadFileStream`. Its dependency-free helpers (`resolveArchiveEntryPath`, `decodeArchiveEntryName`, `buildDeduplicatedFilePath`) live in the pure module `upload/archive-upload.ts`.
 - `FilesFolderService` (`folder/files-folder.service.ts`) — folder creation; injects `FilesUploadService` for the marker-file write.
 - `FilesDownloadService` (`download/files-download.service.ts`) — single-file download; returns `{ stream, headers }`.
 - `FilesArchiveDownloadService` (`archive/files-archive-download.service.ts`) — zip download; injects `FilesListingService` for folder expansion; returns an `ArchiveDownloadResult` (`{ stream, headers, abortOnDisconnect }`) rather than writing to an Express `Response` directly.
@@ -40,6 +41,11 @@ The backend SHALL implement the files feature's business logic in `apps/chat-api
 - **WHEN** the existing `files-batch-operations.service.spec.ts` suite runs against the deduplicated service
 - **THEN** every test passes unchanged — including rename never overwriting, the move-only "Cannot move a folder into itself or its subfolders" rejection, the 400-conflict probe, and the "Partial rename" / "Partial copy" / "Partial move" strings
 
+#### Scenario: Archive upload is owned by its own service
+
+- **WHEN** `files-upload.service.ts` is inspected
+- **THEN** it contains no ZIP parsing, archive limit, temp staging or conflict-retry code, and `FilesService.uploadArchive` delegates to `FilesArchiveUploadService.uploadArchive`
+
 ### Requirement: No REST contract change from the split
 
 Splitting `FilesService` into sub-services SHALL NOT change any route path, HTTP method, request/response DTO shape, status code, or (barring an explicitly documented and verified exception) generated OpenAPI schema name for any `/api/v1/files/*` endpoint.
@@ -67,4 +73,5 @@ Splitting `FilesService` into sub-services SHALL NOT change any route path, HTTP
 
 - **WHEN** `apps/chat-api/src/files/**/*.service.ts` (excluding the controller) is searched for `express`/`Response`/`Request` imports
 - **THEN** no matches are found
+
 
