@@ -58,6 +58,8 @@ The UI resource is a property of the **tool declaration**, not of a stage or too
 Every ref keeps two names. `toolName` is the name as it appears in the message (prefixed for indirect discovery) and is used for matching. `mcpToolName` is the tool's real name and is what a live re-call sends — the app only recognizes its own name.
 
 > The name-prefix match is a temporary heuristic. It will be replaced once the orchestrator reports which toolset a call belongs to.
+>
+> When a public toolset and another toolset share a display name, only the public one is queried. A private copy cannot have `forward_auth_token`, so a call to it reaches the MCP server without the user's identity. This is the same temporary heuristic.
 
 `kind` (`'toolset'` or `'application'`) on a ref only selects the Core MCP proxy route — `/v1/toolset/{id}/mcp` or `/v1/deployments/{id}/mcp`. A wrong prefix is a `404` from Core.
 
