@@ -2,15 +2,15 @@ import { mergeClasses, useIsPhone } from '@epam/ai-dial-chat-shared';
 import {
   Button,
   ButtonAppearance,
+  ButtonDropdown,
   ButtonVariant,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
-  Dropdown,
   DropdownItem,
   PrimaryButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconPlus } from '@tabler/icons-react';
-import { FC, MouseEvent, useRef, useState } from 'react';
+import { FC, MouseEvent, useState } from 'react';
 import {
   CREATE_MENU_LIST_CLASS_NAME,
   CREATE_MENU_VISIBLE_ROWS,
@@ -68,7 +68,6 @@ export const CreateButton: FC<CreateButtonProps> = ({
   sectionHeaderClassName,
   isFloating = false,
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const isPhone = useIsPhone();
 
@@ -144,33 +143,28 @@ export const CreateButton: FC<CreateButtonProps> = ({
 
   if (search || (isFloating && options?.length)) {
     return (
-      <div ref={containerRef}>
-        <Dropdown
-          items={options ?? []}
-          searchable={!!search}
-          searchValue={search?.value}
-          onSearchChange={search?.onChange}
-          searchPlaceholder={searchPlaceholder}
-          searchClearLabel={searchClearLabel}
-          noResultsLabel={noResultsLabel}
-          maxVisibleItems={CREATE_MENU_VISIBLE_ROWS}
-          placement="bottom-end"
-          matchReferenceWidth={false}
-          listClassName={CREATE_MENU_LIST_CLASS_NAME}
-          open={isOpen}
-          onOpenChange={setIsOpen}
-        >
-          <Button
-            {...(isFloating
-              ? floatingShapeProps
-              : { label, iconAfter: chevron })}
-            variant={variant}
-            appearance={ButtonAppearance.Solid}
-            aria-haspopup="menu"
-            aria-expanded={isOpen}
-          />
-        </Dropdown>
-      </div>
+      <ButtonDropdown
+        {...(isFloating
+          ? { ...floatingShapeProps, iconAfter: null }
+          : { label })}
+        variant={variant}
+        appearance={ButtonAppearance.Solid}
+        items={options ?? []}
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        dropdownProps={{
+          searchable: !!search,
+          searchValue: search?.value,
+          onSearchChange: search?.onChange,
+          searchPlaceholder,
+          searchClearLabel,
+          noResultsLabel,
+          maxVisibleItems: CREATE_MENU_VISIBLE_ROWS,
+          placement: 'bottom-end',
+          matchReferenceWidth: false,
+          listClassName: CREATE_MENU_LIST_CLASS_NAME,
+        }}
+      />
     );
   }
 
@@ -192,15 +186,13 @@ export const CreateButton: FC<CreateButtonProps> = ({
   }
 
   return (
-    <div ref={containerRef}>
-      <Dropdown items={options} open={isOpen} onOpenChange={setIsOpen}>
-        <Button
-          appearance={ButtonAppearance.Solid}
-          label={label}
-          variant={variant}
-          iconAfter={chevron}
-        />
-      </Dropdown>
-    </div>
+    <ButtonDropdown
+      appearance={ButtonAppearance.Solid}
+      label={label}
+      variant={variant}
+      items={options}
+      open={isOpen}
+      onOpenChange={setIsOpen}
+    />
   );
 };

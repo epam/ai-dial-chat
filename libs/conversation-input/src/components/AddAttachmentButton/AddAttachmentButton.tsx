@@ -13,9 +13,6 @@ import {
   Dropdown,
   GhostIconButton,
   MenuItemMark,
-  MenuItem,
-  DropdownTrigger,
-  DropdownOverlayRole,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
 import {
@@ -30,7 +27,6 @@ import {
   CSSProperties,
   type FC,
   type ReactNode,
-  type KeyboardEvent,
   useMemo,
   useRef,
   useEffect,
@@ -45,120 +41,6 @@ import { ChatSettingsModal } from '../ChatSettingsModal/ChatSettingsModal';
 import { ToolsBottomSheet } from '../ToolsBottomSheet/ToolsBottomSheet';
 import styles from './AddAttachmentButton.module.scss';
 
-const focusMenuItem = (
-  event: KeyboardEvent,
-  refs: (HTMLButtonElement | null)[],
-) => {
-  const nodes = refs.filter((node) => node?.isConnected && !node.disabled);
-  const index = nodes.findIndex((node) => node === event.target);
-  if (index < 0) return;
-  let next = index;
-  if (event.key === 'ArrowDown') next = (index + 1) % nodes.length;
-  else if (event.key === 'ArrowUp')
-    next = (index - 1 + nodes.length) % nodes.length;
-  else if (event.key === 'Home') next = 0;
-  else if (event.key === 'End') next = nodes.length - 1;
-  else return;
-  event.preventDefault();
-  event.stopPropagation();
-  nodes[next]?.focus();
-};
-
-/* Own the active submenu through the public Dropdown composition API so its
- * state survives replacing the desktop menu with phone sheets. */
-const AttachmentSubmenu = ({
-  item,
-  open,
-  onOpenChange,
-  items,
-  renderOverlay,
-  triggerRef,
-}: {
-  triggerRef?: (node: HTMLButtonElement | null) => void;
-  item: DropdownItem;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  items?: DropdownItem[];
-  renderOverlay?: () => ReactNode;
-}) => {
-  const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const [isRtl, setIsRtl] = useState(false);
-  return (
-    <Dropdown
-      open={open}
-      onOpenChange={onOpenChange}
-      trigger={[DropdownTrigger.Click, DropdownTrigger.Hover]}
-      placement={isRtl ? 'left-start' : 'right-start'}
-      matchReferenceWidth={false}
-      overlayRole={DropdownOverlayRole.None}
-      renderOverlay={() => (
-        <div
-          role="menu"
-          onKeyDown={(event) => {
-            focusMenuItem(event, itemRefs.current);
-            const rtl =
-              getComputedStyle(event.currentTarget).direction === 'rtl';
-            if (
-              event.key === 'Escape' ||
-              (items && event.key === (rtl ? 'ArrowRight' : 'ArrowLeft'))
-            ) {
-              event.preventDefault();
-              event.stopPropagation();
-              onOpenChange(false);
-            }
-          }}
-        >
-          {items
-            ? items.map((entry, index) => (
-                <MenuItem
-                  ref={(node) => {
-                    itemRefs.current[index] = node;
-                  }}
-                  key={entry.key}
-                  role="menuitemcheckbox"
-                  aria-checked={entry.checked}
-                  selected={entry.checked}
-                  mark={entry.mark}
-                  label={entry.label}
-                  icon={entry.icon}
-                  onClick={(event) =>
-                    entry.onClick?.({ key: entry.key, domEvent: event })
-                  }
-                />
-              ))
-            : renderOverlay?.()}
-        </div>
-      )}
-    >
-      <MenuItem
-        ref={(node) => {
-          triggerRef?.(node);
-          if (node) setIsRtl(getComputedStyle(node).direction === 'rtl');
-        }}
-        role="menuitem"
-        aria-haspopup="menu"
-        label={item.label}
-        icon={item.icon}
-        onKeyDown={(event) => {
-          const rtl = getComputedStyle(event.currentTarget).direction === 'rtl';
-          if (event.key === (rtl ? 'ArrowLeft' : 'ArrowRight')) {
-            event.preventDefault();
-            onOpenChange(true);
-          }
-        }}
-        trailing={
-          <IconChevronRight
-            size={BASE_ICON_SIZE}
-            stroke={DIAL_KIT_ICON_STROKE}
-            className="rtl:scale-x-[-1]"
-            aria-hidden
-          />
-        }
-      />
-    </Dropdown>
-  );
-};
-
 /** A single item injected into the attachment menu by the host app. */
 interface ExtraMenuItem {
   /** Unique key for the item. */
@@ -170,6 +52,8 @@ interface ExtraMenuItem {
   /** Callback when the item is selected. */
   onClick: () => void;
 }
+
+type AttachmentMenuItem = DropdownItem & ExtraMenuItem;
 
 /** Props for the AddAttachmentButton component. */
 interface AddAttachmentButtonProps {
@@ -210,7 +94,7 @@ interface AddAttachmentButtonProps {
    * "Tools" item and "Chat settings", in array order. Each item's submenu
    * (desktop flyout / mobile stacked bottom sheet) renders the entry's
    * host-owned overlay. On desktop this is a real nested `Dropdown` submenu
-   * (through controlled `Dropdown` composition) that stays open alongside the main attachment
+   * (through controlled `DropdownItem` submenus) that stays open alongside the main attachment
    * menu, mirroring how the "Tools" item's submenu behaves. Each overlay's
    * `renderOverlay` receives a callback to close the whole menu once
    * selection is complete.
@@ -259,7 +143,6 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
   const isMobile = useIsMobile();
   const isPhone = useIsPhone();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const menuItemRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const desktopInitialFocusRef = useRef<0 | -1>(0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isChatSettingsOpen, setIsChatSettingsOpen] = useState(false);
@@ -327,7 +210,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
     [toolsMenuItems, onToolToggle, cssVars],
   );
 
-  const menuItems = useMemo(
+  const menuItems = useMemo<AttachmentMenuItem[]>(
     () => [
       ...(onAttachClick != null
         ? [
@@ -379,23 +262,12 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
                     ),
                   }
                 : {
-                    renderSubmenuTrigger: (
-                      item: DropdownItem,
-                      index: number,
-                    ) => (
-                      <AttachmentSubmenu
-                        triggerRef={(node) => {
-                          menuItemRefs.current[index] = node;
-                        }}
-                        item={item}
-                        open={isToolsSheetOpen}
-                        onOpenChange={(open) => {
-                          setIsToolsSheetOpen(open);
-                          if (open) setOpenMenuOverlayKey(null);
-                        }}
-                        items={toolsSubmenuChildren}
-                      />
-                    ),
+                    children: toolsSubmenuChildren,
+                    subMenuOpen: isToolsSheetOpen,
+                    onSubMenuOpenChange: (open: boolean) => {
+                      setIsToolsSheetOpen(open);
+                      if (open) setOpenMenuOverlayKey(null);
+                    },
                   }),
             },
           ]
@@ -425,25 +297,18 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
               ),
             }
           : {
-              renderSubmenuTrigger: (item: DropdownItem, index: number) => (
-                <AttachmentSubmenu
-                  triggerRef={(node) => {
-                    menuItemRefs.current[index] = node;
-                  }}
-                  item={item}
-                  open={openMenuOverlayKey === overlay.key}
-                  onOpenChange={(open) => {
-                    setOpenMenuOverlayKey(open ? overlay.key : null);
-                    if (open) setIsToolsSheetOpen(false);
-                  }}
-                  renderOverlay={() =>
-                    overlay.renderOverlay(
-                      () => handleMenuOpenChange(false),
-                      getCaretPosition?.() ?? 0,
-                    )
-                  }
-                />
-              ),
+              subMenuOpen: openMenuOverlayKey === overlay.key,
+              onSubMenuOpenChange: (open: boolean) => {
+                setOpenMenuOverlayKey((current) =>
+                  open ? overlay.key : current === overlay.key ? null : current,
+                );
+                if (open) setIsToolsSheetOpen(false);
+              },
+              renderSubMenu: () =>
+                overlay.renderOverlay(
+                  () => handleMenuOpenChange(false),
+                  getCaretPosition?.() ?? 0,
+                ),
             }),
       })),
       ...(onRecordVoice != null
@@ -522,38 +387,9 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
       matchReferenceWidth={false}
       placement="bottom-start"
       listClassName={listClassName}
-      overlayContentClassName="flex flex-col gap-1"
       initialFocus={desktopInitialFocusRef.current}
-      overlayRole={DropdownOverlayRole.None}
-      renderOverlay={() => (
-        <div
-          role="menu"
-          className="flex flex-col gap-1"
-          onKeyDown={(event) => {
-            focusMenuItem(event, menuItemRefs.current);
-          }}
-        >
-          {menuItems.map((item, index) =>
-            'renderSubmenuTrigger' in item && item.renderSubmenuTrigger ? (
-              <div key={item.key}>{item.renderSubmenuTrigger(item, index)}</div>
-            ) : (
-              <MenuItem
-                key={item.key}
-                ref={(node) => {
-                  menuItemRefs.current[index] = node;
-                }}
-                role="menuitem"
-                label={item.label}
-                icon={item.icon}
-                onClick={() => {
-                  item.onClick?.();
-                  handleMenuOpenChange(false);
-                }}
-              />
-            ),
-          )}
-        </div>
-      )}
+      overlayAriaLabel={addMenuTitle}
+      items={menuItems}
       disabled={isDisabled}
       open={isMenuOpen}
       onOpenChange={handleMenuOpenChange}

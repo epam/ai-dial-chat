@@ -211,7 +211,7 @@ Full peer set (the root `.` entry needs all of them; a subpath needs only its ow
 - `@epam/ai-dial-share` \*
 - `@epam/ai-dial-skill-editor` \*
 - `@epam/ai-dial-source-panel` \*
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.67
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.71
 - `@epam/ai-dial-usage-dashboard` \*
 - `@modelcontextprotocol/sdk` ^1.32.2
 - `@epam/pdf-highlighter-kit` ^0.0.19

@@ -156,6 +156,7 @@ describe('AddAttachmentButton — tools submenu', () => {
       const toolsTrigger = await screen.findByRole('menuitem', {
         name: 'Tools',
       });
+      expect(screen.getByRole('menu', { name: 'Add' })).toBeTruthy();
       await waitFor(() =>
         expect(
           screen
@@ -171,6 +172,7 @@ describe('AddAttachmentButton — tools submenu', () => {
         await screen.findByRole('menuitemcheckbox', { name: 'Deep Research' }),
       ).toBeTruthy();
       expect(toolsTrigger.getAttribute('aria-expanded')).toBe('true');
+      expect(screen.getByRole('menu', { name: 'Tools' })).toBeTruthy();
     });
 
     it('reflects isSelected as aria-checked on the desktop tool row', async () => {

@@ -301,6 +301,19 @@ export const Catalog: FC<CatalogProps> = ({
     CatalogItemDetailsFetchResult | undefined
   >(undefined);
   const [isDetailsLoading, setIsDetailsLoading] = useState(false);
+  const detailsCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+
+  useEffect(
+    () => () => {
+      if (detailsCloseTimeoutRef.current !== null) {
+        clearTimeout(detailsCloseTimeoutRef.current);
+      }
+    },
+    [],
+  );
+
   const pendingItemIdRef = useRef<string | null>(null);
   /*
    * Identifies each in-flight `onFetchDetails` call by a monotonically
@@ -341,6 +354,12 @@ export const Catalog: FC<CatalogProps> = ({
     async (
       item: CatalogItem,
     ): Promise<CatalogItemDetailsFetchResult | undefined> => {
+      if (detailsCloseTimeoutRef.current !== null) {
+        clearTimeout(detailsCloseTimeoutRef.current);
+        detailsCloseTimeoutRef.current = null;
+        /* The panel is still mounted, including when reopening the same item. */
+        setIsDetailsOpen(true);
+      }
       setSelectedItem(item);
       setFetchedDetails(undefined);
       return fetchDetails(item);
@@ -445,7 +464,11 @@ export const Catalog: FC<CatalogProps> = ({
     pendingItemIdRef.current = null;
     /* Invalidates the in-flight request's token, so a response arriving after close cannot resurrect the closed panel. */
     pendingRequestIdRef.current += 1;
-    setTimeout(() => {
+    if (detailsCloseTimeoutRef.current !== null) {
+      clearTimeout(detailsCloseTimeoutRef.current);
+    }
+    detailsCloseTimeoutRef.current = setTimeout(() => {
+      detailsCloseTimeoutRef.current = null;
       setSelectedItem(null);
       setFetchedDetails(undefined);
       setIsDetailsLoading(false);
