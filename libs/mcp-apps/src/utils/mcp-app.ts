@@ -10,6 +10,16 @@ import type {
   McpAppToolRef,
 } from '../models/mcp-apps';
 
+const LIVE_CALL_RETRY_DELAY_MS = 500;
+const LIVE_CALL_RETRY_JITTER_MS = 500;
+
+/**
+ * Resolves after the given delay.
+ * @param ms - delay in milliseconds
+ */
+const waitFor = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
 /** A tool-call request paired with its result content, keyed by `tool_call_id`. */
 interface ResolvedToolCall {
   name: string;
@@ -225,8 +235,9 @@ export const resolveMcpAppToolCallSeed = (
  * An `indirect` match with no seed is skipped — that toolset/tool pairing
  * is unconfirmed, and re-calling it could hit the wrong tool or re-trigger a
  * non-idempotent side effect; it keeps `seed?.toolResult` as-is. Falls back to
- * `seed?.toolResult` if an attempted live call fails (e.g. the deployment
- * has no live MCP session outside the original conversation turn).
+ * `seed?.toolResult` if an attempted live call fails twice (e.g. the
+ * deployment has no live MCP session outside the original conversation turn).
+ * A failed live call is retried once after a short randomized delay.
  */
 export const resolveMcpAppToolResult = async (
   match: McpAppToolRef,
@@ -238,13 +249,30 @@ export const resolveMcpAppToolResult = async (
     return seed?.toolResult;
   }
 
-  try {
-    return await callTool(
+  const liveCall = () =>
+    callTool(
       match.toolsetId,
       match.mcpToolName,
       seed?.toolInput ?? {},
       match.kind,
     );
+
+  try {
+    return await liveCall();
+  } catch {
+    /*
+     * Retried on any error on purpose: this call already re-runs on every
+     * mount, so one more attempt adds no new kind of risk, and the lib cannot
+     * tell a lost response from a failed request. The jitter keeps sibling
+     * cards that failed together from retrying as one burst.
+     */
+    await waitFor(
+      LIVE_CALL_RETRY_DELAY_MS + Math.random() * LIVE_CALL_RETRY_JITTER_MS,
+    );
+  }
+
+  try {
+    return await liveCall();
   } catch {
     return seed?.toolResult;
   }
