@@ -6,7 +6,7 @@ export interface AddAvatarColors {
   boxBorderColor?: string;
   /** Color of the placeholder photo icon shown when no avatar is set. Defaults to `--text-secondary`. */
   placeholderIconColor?: string;
-  /** Color of the format/size caption text. Defaults to `--text-secondary`. */
+  /** Color of the format/size caption text. Defaults to `--text-tertiary`. */
   captionColor?: string;
 }
 

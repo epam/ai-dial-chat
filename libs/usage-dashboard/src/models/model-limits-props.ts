@@ -144,7 +144,7 @@ export interface ModelLimitsLabels {
 export interface ModelLimitsColors {
   /** Heading text color. Fallback: `--text-primary`. */
   headingColor?: string;
-  /** Heading count color. Fallback: `--text-secondary`. */
+  /** Heading count color. Fallback: `--text-tertiary`. */
   headingCountColor?: string;
   /** Model name text color. Fallback: `--text-primary`. */
   nameColor?: string;
