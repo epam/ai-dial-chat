@@ -12,6 +12,27 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { McpAppsApiClient } from '../mcp-apps-api-client';
 
+const PUBLIC_TOOLSET_ID_PREFIX = 'toolsets/public/';
+
+/**
+ * Drops a toolset when another toolset with the same display name is public.
+ * Temporary heuristic until MCP Apps are fully supported: a private copy of a
+ * published toolset (same name, user bucket) cannot have `forward_auth_token`,
+ * so a call to it reaches the MCP server without the user's identity. The
+ * toolset an application delegates to is the published one.
+ * @param toolsets - toolsets whose name prefixes a tool call seen in the conversation
+ */
+const preferPublicToolsets = (toolsets: DialToolsetDto[]): DialToolsetDto[] => {
+  const isPublic = (toolset: DialToolsetDto) =>
+    toolset.id.startsWith(PUBLIC_TOOLSET_ID_PREFIX);
+  const nameOf = (toolset: DialToolsetDto) =>
+    sanitizeToolName(`${toolset.displayName ?? toolset.id}`);
+  const publicNames = new Set(toolsets.filter(isPublic).map(nameOf));
+  return toolsets.filter(
+    (toolset) => isPublic(toolset) || !publicNames.has(nameOf(toolset)),
+  );
+};
+
 /**
  * Discovers MCP Apps-capable tools available to the current conversation, merging two
  * sources:
@@ -81,11 +102,13 @@ export const useMcpAppTools = (
   useEffect(() => {
     if (toolCallNames.size === 0) return;
 
-    const candidateToolsets = toolsets.filter((toolset) => {
-      if (fetchedToolsetIdsRef.current.has(toolset.id)) return false;
+    const matchingToolsets = toolsets.filter((toolset) => {
       const prefix = sanitizeToolName(`${toolset.displayName ?? toolset.id}_`);
       return [...toolCallNames].some((name) => name.startsWith(prefix));
     });
+    const candidateToolsets = preferPublicToolsets(matchingToolsets).filter(
+      (toolset) => !fetchedToolsetIdsRef.current.has(toolset.id),
+    );
     if (candidateToolsets.length === 0) return;
 
     for (const toolset of candidateToolsets) {
