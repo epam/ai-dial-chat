@@ -560,9 +560,9 @@ describe('DeploymentSelectorPanel', () => {
         canFavoritePinnedItem: false,
       });
 
-      expect(
-        screen.getAllByRole('button', { name: /favorites/ }),
-      ).toHaveLength(1);
+      expect(screen.getAllByRole('button', { name: /favorites/ })).toHaveLength(
+        1,
+      );
       expect(
         screen.getByRole('button', { name: 'Remove from favorites' }),
       ).toBeTruthy();
