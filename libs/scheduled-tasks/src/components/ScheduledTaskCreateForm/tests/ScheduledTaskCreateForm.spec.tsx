@@ -1296,6 +1296,27 @@ describe('ScheduledTaskCreateForm', () => {
     expect(getSaveButtons()[0].disabled).toBe(false);
   });
 
+  it('blocks Save while the host checks availability or reports a model error', async () => {
+    const values = {
+      ...baseValues,
+      displayName: 'Report',
+      modelId: 'gpt-4o',
+      prompt: 'Report',
+      repeat: ScheduledTaskRepeat.OneTime,
+      runAt: '2027-06-15T09:30',
+    };
+    const { rerender } = await renderForm({ values, isSubmitDisabled: true });
+    expect(getSaveButtons()[0].disabled).toBe(true);
+    rerender(
+      <ScheduledTaskCreateForm
+        {...buildFormProps({ values, errors: { modelId: 'Unavailable' } })}
+      />,
+    );
+    expect(getSaveButtons()[0].disabled).toBe(true);
+    rerender(<ScheduledTaskCreateForm {...buildFormProps({ values })} />);
+    expect(getSaveButtons()[0].disabled).toBe(false);
+  });
+
   it('disables Save while a submit-time run-at error is set', async () => {
     await renderForm({
       values: {

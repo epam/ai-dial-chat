@@ -96,6 +96,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
   onCancel,
   onSubmit,
   isSubmitting = false,
+  isSubmitDisabled = false,
   onRefineDescription,
   onRefineInstructions,
   markdownEditorTheme,
@@ -302,6 +303,8 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
   };
 
   const isCreateDisabled =
+    isSubmitDisabled ||
+    Boolean(errors.modelId) ||
     isSubmitting ||
     isRefining ||
     !values.displayName.trim() ||

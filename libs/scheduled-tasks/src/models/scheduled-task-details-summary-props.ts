@@ -34,12 +34,16 @@ export interface ScheduledTaskDetailsSummaryProps {
   skillLabel?: string;
   /** Resolved skill names or full saved references, in selection order; omit or pass [] to hide the field. */
   skillDisplayNames?: string[];
+  /** Optional host renderer for a skill name and its availability, in selection order. */
+  renderSkillName?: (name: string, index: number) => ReactNode;
   /** Label for the model field, e.g. "Model". */
   modelLabel: string;
   /** Label for the instructions field, e.g. "Instructions". */
   instructionsLabel: string;
   /** Resolved "Model" display value (already resolved to a display name, or the raw id as a fallback). Omit to hide the field. */
   modelDisplayName?: string;
+  /** Optional host renderer for model availability and its explanation. */
+  renderModelName?: (name: string) => ReactNode;
   /** Raw instructions markdown, passed to `renderInstructions` when supplied, or rendered via the default `MDMessageViewer` otherwise. Omit to hide the field entirely. */
   instructionsMarkdown?: string;
   /** Renders `instructionsMarkdown` as a ReactNode. When omitted, `instructionsMarkdown` is rendered via `MDMessageViewer` (the same markdown stack chat assistant messages use). */

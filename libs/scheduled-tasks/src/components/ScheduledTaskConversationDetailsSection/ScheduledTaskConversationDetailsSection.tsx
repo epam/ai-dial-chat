@@ -64,8 +64,12 @@ export interface ScheduledTaskConversationDetailsSectionProps {
   onRetry?: () => void;
   /** Resolved "Model" display value (already resolved to a display name, or the raw id as a fallback). Omit to hide the field. */
   modelDisplayName?: string;
+  /** Optional host renderer for model availability and its explanation. */
+  renderModelName?: (name: string) => ReactNode;
   /** Resolved skill names or full saved references, in selection order; omit or pass [] to hide the field. */
   skillDisplayNames?: string[];
+  /** Optional host renderer for a skill name and its availability, in selection order. */
+  renderSkillName?: (name: string, index: number) => ReactNode;
   /** Raw instructions markdown, passed to `renderInstructions` when supplied, or rendered via the default `MDMessageViewer` otherwise. Omit to hide the field entirely. */
   instructionsMarkdown?: string;
   /** Renders `instructionsMarkdown` as a ReactNode. When omitted, `instructionsMarkdown` is rendered via `MDMessageViewer` (the same markdown stack chat assistant messages use). */
@@ -99,7 +103,9 @@ export const ScheduledTaskConversationDetailsSection: FC<
   state,
   onRetry,
   modelDisplayName,
+  renderModelName,
   skillDisplayNames,
+  renderSkillName,
   instructionsMarkdown,
   renderInstructions,
   instructionsClassNames,
@@ -150,7 +156,9 @@ export const ScheduledTaskConversationDetailsSection: FC<
           instructionsLabel={labels.instructionsLabel}
           skillLabel={labels.skillLabel}
           skillDisplayNames={skillDisplayNames}
+          renderSkillName={renderSkillName}
           modelDisplayName={modelDisplayName}
+          renderModelName={renderModelName}
           instructionsMarkdown={instructionsMarkdown}
           renderInstructions={renderInstructions}
           instructionsClassNames={instructionsClassNames}
