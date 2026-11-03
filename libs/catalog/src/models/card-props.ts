@@ -33,9 +33,11 @@ export interface CardColors {
   textSecondary?: string;
   /** Border color of a selected card. Fallback: `--stroke-accent`. */
   selectedBorder?: string;
-  /** Background color (tint) of a selected card. Fallback: `--bg-control-accent-alpha-active`. */
+  /** Background color of a selected card. Fallback: `--bg-layer-raised` (the card's regular background). */
   selectedBackground?: string;
-  /** Selected-checkmark icon color. Fallback: `--text-accent`. */
+  /**
+   * @deprecated No effect: a selected card is marked by its border only and no longer renders a checkmark.
+   */
   checkIcon?: string;
   /** Top border color of the footer row (folder path / star button). Fallback: `--stroke-tertiary`. */
   footerBorder?: string;

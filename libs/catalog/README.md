@@ -554,10 +554,13 @@ the height of its parent and scrolls its rows inside that box, with the column
 header staying in view. Give the parent a definite height (a flex child with
 `min-h-0` works). Rows are a fixed 60 px.
 
-The table frame, header, row dividers and selected-row tint come from the
-`Grid` theme: the list renders the kit's `GridAppearance.Chat`, a borderless
-12px card with the MD shadow and inset row dividers. `styles.colors` (`ListViewColors`) covers cell content only:
-`starFilled`, `folderIcon`, `selectedRowCheckIcon`, `nameText` and `versionText`. With no items, the grid
+The table frame, header and row dividers come from the `Grid` theme: the list
+renders the kit's `GridAppearance.Chat`, a borderless 12px card with the MD
+shadow and inset row dividers. Outside multi-select, the selected row keeps its
+regular background and is framed with a 1.5px `--stroke-accent` border, the same
+outline-only look as a selected card. `styles.colors` (`ListViewColors`) covers cell content only:
+`starFilled`, `folderIcon`, `nameText` and `versionText` (`selectedRowCheckIcon`
+is deprecated and has no effect). With no items, the grid
 shows its own empty state from `emptyStateTitle` (default `'No results'`) and
 `emptyStateDescription`. The message is announced only with `isEmptyStateLive`
 (default `false`); `Catalog` sets it when a search or topic filter left the tab

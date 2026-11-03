@@ -37,14 +37,15 @@ describe('NameCellRenderer — selected state', () => {
     expect(container.querySelector('svg')).toBeNull();
   });
 
-  it('renders a checkmark when the row matches selectedItemId', () => {
+  it('does not render a checkmark when the row matches selectedItemId', () => {
     const { container } = render(
       <NameCellRenderer
         {...makeParams(makeItem({ id: '1' }), { selectedItemId: '1' })}
       />,
     );
+    /* The selected row is marked by the row frame in ListView.module.scss. */
     // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container
-    expect(container.querySelector('svg')).toBeTruthy();
+    expect(container.querySelector('svg')).toBeNull();
   });
 
   it('does not render a checkmark for a different selected row', () => {

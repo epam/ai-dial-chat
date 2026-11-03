@@ -22,7 +22,9 @@ export interface ListViewColors {
   starFilled?: string;
   /** Color of the folder icon in the folder column. Fallback: `--text-secondary`. */
   folderIcon?: string;
-  /** Color of the checkmark icon in the selected row's name cell. Fallback: `--text-accent`. */
+  /**
+   * @deprecated No effect: the selected row is marked by an accent frame and no longer renders a checkmark.
+   */
   selectedRowCheckIcon?: string;
   /** Color of the item name in the name cell. Fallback: `--text-primary`. */
   nameText?: string;
