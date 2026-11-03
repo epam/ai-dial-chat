@@ -151,7 +151,7 @@ const ProjectEditPage: FC = () => {
   const { allowNextNavigation } = useBuilderLeaveGuard({ isDirty });
 
   /* Opens a context file in the canvas the way the conversation opens an attachment. */
-  const { attachmentId } = useAttachmentCanvas();
+  const { attachmentId, closeCanvas } = useAttachmentCanvas();
   const { resolvers, options } = useAttachmentCanvasResolvers();
   const { openAttachmentCanvas } = useOpenAttachmentCanvas(resolvers, options);
   const startCanvasRequest = useLatestCanvasRequest();
@@ -162,6 +162,11 @@ const ProjectEditPage: FC = () => {
   );
   const handleContextFileClick = useCallback(
     (id: string) => {
+      /* The open file's card closes the canvas, as its pressed state says. */
+      if (id === selectedContextFileId) {
+        closeCanvas();
+        return;
+      }
       const file = contextFiles.find((item) => item.id === id);
       const attachment =
         file && toProjectContextFileAttachment(file, projectId);
@@ -173,10 +178,12 @@ const ProjectEditPage: FC = () => {
       );
     },
     [
+      closeCanvas,
       contextFiles,
       projectId,
       previewScope,
       openAttachmentCanvas,
+      selectedContextFileId,
       startCanvasRequest,
     ],
   );
@@ -230,8 +237,15 @@ const ProjectEditPage: FC = () => {
       setErrors((prev) =>
         prev.context ? { ...prev, context: undefined } : prev,
       );
+      /* Removing the file the canvas shows closes it. */
+      if (
+        selectedContextFileId != null &&
+        !files.some((file) => file.id === selectedContextFileId)
+      ) {
+        closeCanvas();
+      }
     },
-    [],
+    [closeCanvas, selectedContextFileId],
   );
 
   const handleLeave = useCallback(() => {

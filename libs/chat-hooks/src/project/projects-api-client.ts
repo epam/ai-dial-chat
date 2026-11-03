@@ -6,6 +6,7 @@ import type {
   ListProjectsResponseDto,
   ProjectArtifactListResponseDto,
   ProjectConversationListResponseDto,
+  ProjectConversationTitlesResponseDto,
   ProjectDetailsDto,
   RenameConversationResponseDto,
   UpdateProjectResponseDto,
@@ -57,9 +58,16 @@ export interface ProjectsConfiguredClient {
     options?: RequestInit,
   ) => Promise<RawApiResponse>;
   listProjectConversations: (
-    request: { id: string; limit?: number; offset?: number },
+    request: { id: string },
     options?: RequestInit,
   ) => Promise<ProjectConversationListResponseDto>;
+  getProjectConversationTitles: (
+    request: {
+      id: string;
+      projectConversationTitlesBodyDto: { names: string[] };
+    },
+    options?: RequestInit,
+  ) => Promise<ProjectConversationTitlesResponseDto>;
   listProjectArtifacts: (
     request: { id: string },
     options?: RequestInit,
@@ -124,14 +132,6 @@ export interface ProjectUpdateRequest {
   contentVersion: string;
 }
 
-/** One page of a project's conversations, newest first. */
-export interface ProjectConversationListPage {
-  /** Page size, `1..100`; the BFF defaults to 50. */
-  limit?: number;
-  /** Conversations to skip; the next page starts at the count already loaded. */
-  offset?: number;
-}
-
 /** The first message of a new top-level or project conversation. */
 export interface ConversationCreateRequest {
   /** The first user message. */
@@ -179,8 +179,12 @@ export interface ProjectsApiClient {
   listProjectConversations: (
     projectId: string,
     signal?: AbortSignal,
-    page?: ProjectConversationListPage,
   ) => Promise<ProjectConversationListResponseDto>;
+  getProjectConversationTitles: (
+    projectId: string,
+    names: string[],
+    signal?: AbortSignal,
+  ) => Promise<ProjectConversationTitlesResponseDto>;
   createProjectConversation: (
     projectId: string,
     request: ConversationCreateRequest,
@@ -322,9 +326,11 @@ export const createProjectsApiClient = (
     ).raw,
   listProjectArtifacts: (projectId, signal) =>
     client.listProjectArtifacts({ id: projectId }, ...withSignal(signal)),
-  listProjectConversations: (projectId, signal, page) =>
-    client.listProjectConversations(
-      { id: projectId, ...page },
+  listProjectConversations: (projectId, signal) =>
+    client.listProjectConversations({ id: projectId }, ...withSignal(signal)),
+  getProjectConversationTitles: (projectId, names, signal) =>
+    client.getProjectConversationTitles(
+      { id: projectId, projectConversationTitlesBodyDto: { names } },
       ...withSignal(signal),
     ),
   createProjectConversation: (projectId, request) =>

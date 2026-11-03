@@ -447,6 +447,8 @@ export interface AttachmentCanvasLabels {
   unsupportedLabel?: string;
   /** Message shown in the canvas body when content type is `Error` with `errorType: LoadFailed`. Defaults to `'Failed to load file'`. */
   loadErrorLabel?: string;
+  /** Label of the retry action under an `Error` with `errorType: LoadFailed`, shown when `onRetry` is given. Defaults to `'Retry'`. */
+  loadErrorRetryLabel?: string;
   /** Message shown in the canvas body when content type is `Error` with `errorType: Forbidden`. Defaults to `"You don't have permission to access this file"`. */
   forbiddenErrorLabel?: string;
   /** Accessible label for the download button. Defaults to `'Download'`. */
@@ -527,6 +529,8 @@ export interface AttachmentCanvasProps {
   isLoading?: boolean;
   /** Called when the user activates the built-in close button. */
   onClose: () => void;
+  /** Called from the retry action of an `Error` with `errorType: LoadFailed`; the action is hidden when omitted. */
+  onRetry?: () => void;
   /** The attachment content to render inside the canvas. */
   content: AttachmentCanvasContent;
   /** File name displayed as the panel title. */
@@ -586,6 +590,7 @@ export type AttachmentCanvasBodyLabels = Pick<
   AttachmentCanvasLabels,
   | 'unsupportedLabel'
   | 'loadErrorLabel'
+  | 'loadErrorRetryLabel'
   | 'forbiddenErrorLabel'
   | 'visualizerErrorLabel'
   | 'htmlFrameBlockedLabel'
@@ -636,6 +641,8 @@ export interface AttachmentCanvasBodyProps {
   codeBlockTheme?: CodeBlockTheme;
   /** Filename used when downloading a `MarkdownTable`'s content as CSV. Defaults to `'table.csv'`. Only relevant when content type is `MarkdownTable`. */
   tableDownloadFilename?: string;
+  /** Called from the retry action of an `Error` with `errorType: LoadFailed`; the action is hidden when omitted. */
+  onRetry?: () => void;
   /** Called once a mounted `McpApp` completes its `ui/initialize` handshake, with its declared name/version. Only relevant when content type is `McpApp`; omitted when the app didn't declare an `appInfo`. */
   onAppInfo?: (appInfo: Implementation) => void;
   /**

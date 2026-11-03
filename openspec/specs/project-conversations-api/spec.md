@@ -129,13 +129,13 @@ A project conversation SHALL be stored as the file `conversations/{name}` inside
 
 ### Requirement: GET /api/v1/projects/:id/conversations lists a project's conversations
 
-`listProjectConversations` (`ProjectConversationsListService`, `apps/chat-api/src/projects/conversations/project-conversations-list.service.ts`) SHALL page through `listProjectFileMetadata(bucket, path, 'conversations/')` (non-recursive, following `nextToken`). It then:
+`listProjectConversations` (`ProjectConversationsListService`, `apps/chat-api/src/projects/conversations/project-conversations-list.service.ts`) SHALL page through `listProjectFileMetadata(bucket, path, 'conversations/')` (non-recursive, following `nextToken` with `limit: 1000`). It then:
 
 1. keeps file items that are direct children of `conversations/`;
 2. sorts them by `updatedAt`, newest first, then by name;
-3. skips the first `offset` items (query, default 0, `>= 0`) and returns the next `limit` (query, default 50, `1..100`), with `hasMore` when more exist after them. The app's next page passes the count it already lists as `offset`.
+3. returns all of them. DIAL Core cannot page the folder in this order, so the endpoint takes no `limit` or `offset` and has no `hasMore`; the client pages the list locally.
 
-**Titles.** Every returned item's `title` is the conversation's display name:
+**Titles.** Every returned item's `title` is the conversation's display name, resolved for the 20 newest items and for any item whose title is cached:
 
 - An LLM- or user-renamed conversation keeps its file name, so the title is read from the body's `name`.
 - The read is cached in the in-memory cache manager:
@@ -146,13 +146,14 @@ A project conversation SHALL be stored as the file `conversations/{name}` inside
 - A miss, or a different `updatedAt`, reads the file through `ProjectConversationStore`, at most 4 reads at a time.
 - Save, rename and delete through these endpoints evict the key, which is the invalidation event.
 - A failed read falls back to `getConversationTitleFromName(name)`.
+- Past the 20 newest, an item without a usable cache entry is not read: its `title` is `getConversationTitleFromName(name)`, `isUnread` is `false`, and it carries `isTitlePending: true`, which `POST /api/v1/projects/:id/conversations/titles` resolves.
 
-**Response.** `ProjectConversationListResponseDto { items: ProjectConversationItemDto[]; hasMore: boolean }`, where each `ProjectConversationItemDto` is `{ id: string (locator); name: string (file name); title: string; author?: string; updatedAt?: number }`. `author` is Core's file `author`, the writer's display name. The response carries `Cache-Control: private, no-store`.
+**Response.** `ProjectConversationListResponseDto { items: ProjectConversationItemDto[] }`, where each `ProjectConversationItemDto` is `{ id: string (locator); name: string (file name); title: string; author?: string; updatedAt?: number; isUnread: boolean; isTitlePending?: true }`. `author` is Core's file `author`, the writer's display name. The response carries `Cache-Control: private, no-store`.
 
 Example request:
 
 ```http
-GET /api/v1/projects/projects%2Fa1b2c3%2Fsupport-quality/conversations?limit=50 HTTP/1.1
+GET /api/v1/projects/projects%2Fa1b2c3%2Fsupport-quality/conversations HTTP/1.1
 Cookie: <session cookie>
 ```
 
@@ -166,10 +167,18 @@ Example `200` response:
       "name": "gpt-4o__Weekly support health summary__7c1d",
       "title": "Write a weekly support health summary for the VP of Customer Success.",
       "author": "Valery Tester",
-      "updatedAt": 1793000000000
+      "updatedAt": 1793000000000,
+      "isUnread": false
+    },
+    {
+      "id": "projects/a1b2c3/support-quality/conversations/gpt-4o__Billing reply template__91aa",
+      "name": "gpt-4o__Billing reply template__91aa",
+      "title": "Billing reply template",
+      "updatedAt": 1792000000000,
+      "isUnread": false,
+      "isTitlePending": true
     }
-  ],
-  "hasMore": false
+  ]
 }
 ```
 
@@ -178,13 +187,13 @@ Status codes:
 | Status | When |
 | --- | --- |
 | `200` | Listed. A project with no `conversations/` folder lists `items: []`. |
-| `400` | Invalid `:id`, `limit` or `offset`. |
+| `400` | Invalid `:id`. |
 | `401` | No valid session. |
 | `403` | The flag is off, or Core denied read access. |
 | `404` | No such project. |
 | `429` / `502` / `503` | Upstream, through `handleDialSdkError`. |
 
-**Generated-client impact:** operationId `listProjectConversations`, so `ProjectsApi.listProjectConversations({ id, limit, offset })` returns `ProjectConversationListResponseDto`. Callers use the normal method.
+**Generated-client impact:** operationId `listProjectConversations`, so `ProjectsApi.listProjectConversations({ id })` returns `ProjectConversationListResponseDto`. Callers use the normal method. The former `limit`/`offset` query and `hasMore` field are removed; the only caller is `apps/chat` through `libs/chat-hooks`, which changes in the same commit.
 
 #### Scenario: Newest first with titles
 
@@ -196,15 +205,56 @@ Status codes:
 - **WHEN** the list is requested twice and no conversation changed in between
 - **THEN** the second request makes no `downloadProjectFile` call
 
-#### Scenario: The next page starts after the offset
+#### Scenario: Every conversation is listed, past the 20 newest pending
 
-- **WHEN** the project holds three conversations and the list is requested with `limit=2&offset=2`
-- **THEN** the response holds the oldest one only, with `hasMore: false`
+- **WHEN** the project holds 22 conversations and none of their titles is cached
+- **THEN** the response holds all 22, the bodies of the 20 newest are read, and the two oldest carry `isTitlePending: true` with their file-name titles
 
 #### Scenario: Empty project
 
 - **WHEN** Core answers the listing with `404` for `conversations/` on an existing project
-- **THEN** the response is `200` with `items: []` and `hasMore: false`
+- **THEN** the response is `200` with `items: []`
+
+### Requirement: POST /api/v1/projects/:id/conversations/titles resolves pending titles
+
+`getProjectConversationTitles` (`ProjectConversationsController`, served by `ProjectConversationsListService.resolveProjectConversations`) SHALL resolve the titles and read state of the named conversations, for the client's See more:
+
+- **Request.** `POST /api/v1/projects/:id/conversations/titles` with `ProjectConversationTitlesBodyDto { names: string[] }` (`apps/chat-api/src/projects/conversations/dto/project-conversation-titles.dto.ts`): 1 to 100 file names under `conversations/`, each a safe DIAL path segment (no traversal, separator, `%` or control character) of at most 1024 UTF-8 bytes. Any reader of the project may call it.
+- **Behaviour.** It lists the folder once, the same way as `GET`, for each file's `updatedAt` and `author`. It then resolves each listed name through the same title cache and body read, at most 4 reads at a time. A resolved title is cached, so a later `GET` lists it without `isTitlePending`. Duplicate names are resolved once; names the project does not hold are omitted.
+- **Response.** `200` with `ProjectConversationTitlesResponseDto { items: ProjectConversationItemDto[] }`, in request order, without `isTitlePending`, and `Cache-Control: private, no-store`.
+
+Example request:
+
+```http
+POST /api/v1/projects/projects%2Fa1b2c3%2Fsupport-quality/conversations/titles HTTP/1.1
+Cookie: <session cookie>
+Content-Type: application/json
+
+{ "names": ["gpt-4o__Billing reply template__91aa"] }
+```
+
+Status codes:
+
+| Status | When |
+| --- | --- |
+| `200` | Resolved; unknown names are omitted. |
+| `400` | Invalid `:id`, an empty or over-long `names`, an unsafe name, or an unknown body field. |
+| `401` | No valid session. |
+| `403` | The flag is off, or Core denied read access. |
+| `404` | No such project. |
+| `429` / `502` / `503` | Upstream, through `handleDialSdkError`. |
+
+**Generated-client impact:** operationId `getProjectConversationTitles`, so `ProjectsApi.getProjectConversationTitles({ id, projectConversationTitlesBodyDto: { names } })` returns `ProjectConversationTitlesResponseDto`.
+
+#### Scenario: Pending titles are resolved in request order
+
+- **WHEN** the titles of two listed conversations and one unknown name are requested
+- **THEN** the response holds the two listed ones in request order with their body titles, and omits the unknown name
+
+#### Scenario: An unsafe name is rejected
+
+- **WHEN** `names` holds `..`
+- **THEN** the response is `400`, and no Core call is made
 
 ### Requirement: Project conversations can be created, read, saved, renamed and deleted
 
@@ -349,8 +399,7 @@ The response stays `200` with `Cache-Control: private, no-store`, and logs still
       "updatedAt": 1793000000000,
       "isUnread": true
     }
-  ],
-  "hasMore": false
+  ]
 }
 ```
 

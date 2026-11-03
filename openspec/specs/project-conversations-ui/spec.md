@@ -96,12 +96,16 @@ The page owns no conversation state: `ConversationPage` and `GenerationContext` 
 | `isLoading` | optional `boolean` |
 | `hasError` | optional `boolean` |
 | `onRetry` | `() => void` |
+| `hasMore` | optional `boolean`, default `false`: more conversations exist after `items` |
+| `isLoadingMore` | optional `boolean`, default `false`: disables the See more link |
+| `onLoadMore` | optional `() => void`; the See more link is hidden when omitted |
+| `isEmptyStateShown` | optional `boolean`, default `true`: with `false`, an empty list renders nothing instead of the empty state |
 | `onOpen` | `(id: string) => void` |
 | `onRename` | optional `(id: string) => void`; the menu item is hidden when omitted |
 | `onDelete` | optional `(id: string) => void`; the menu item is hidden when omitted |
 | `labels` | `ProjectConversationListLabels`, including the optional `unreadLabel` (default `'Unread'`) and `loadMoreLabel` (default `'See more'`) |
 | `typography` | optional `ProjectConversationListTypography`, including `unreadRowTitleClassName` (default `'dial-body-semi-text'`) |
-| `colors` | optional `ProjectConversationListColors` `{ readDot?: string; unreadDot?: string }`, applied with `buildCssVars` as `--pcl-read-dot` and `--pcl-unread-dot` |
+| `colors` | optional `ProjectConversationListColors` `{ readDot?: string; unreadDot?: string; rowHoverBackground?: string }`, applied with `buildCssVars` as `--pcl-read-dot`, `--pcl-unread-dot` and `--pcl-row-hover` |
 
 **Rendering:**
 - a `<section>` named by its `<h2>` `labels.title` ("Chats"). While the project has no chats (not loading, no error, no items) the heading is not rendered and the section is named by `aria-label={labels.title}` instead, so only the empty state shows, as in the design;
@@ -110,7 +114,7 @@ The page owns no conversation state: `ConversationPage` and `GenerationContext` 
   - the **status point**, an `aria-hidden` `16px` slot holding a `7.11px` circle: an outline when the chat is read (`.readDot { border: 1.5px solid var(--pcl-read-dot, var(--stroke-secondary, #d1dbea)); }`) and a fill when it is unread (`.unreadDot { background: var(--pcl-unread-dot, var(--text-accent, #1d4ed8)); }`), both in `ProjectConversationList.module.scss`. It replaces the author avatar of the earlier design; the author stays in the accessible name;
   - the title in `dial-body-text` (16/24), truncated to one line with `EllipsisTooltip`, or in `typography.unreadRowTitleClassName` when `isUnread`.
 
-  Rows have the design's hover and focus-visible background (`--bg-accent-primary-alpha` fallback).
+  A hovered or focused row has the background `.row:hover, .row:focus-within { background: var(--pcl-row-hover, var(--bg-control-accent-alpha-hover, #2764d924)); }` in `ProjectConversationList.module.scss`, set through `colors.rowHoverBackground`.
 - **Unread rows** (`isUnread: true`) follow the indicator rows of `ConversationRow` in `libs/conversation-panel`, which this lib does not import: the filled point and the semibold title. The row button carries `aria-describedby` pointing to a visually hidden `<span>` with `labels.unreadLabel`, so screen readers announce "…, Unread" after the accessible name without changing it. A read row has the outline point and no description. The point is always visible.
 - when `onRename` or `onDelete` is supplied, a ⋮ kit `Dropdown` per row, triggered by a `GhostIconButton` named `labels.moreActionsLabel(title)`, with Rename and Delete. The arrow keys, Enter and Space come from the kit. The design shows rows without a trigger, so on `desktop` the trigger is transparent (`desktop:opacity-0`) until the row is hovered or holds focus, and it stays visible while its menu is open. It stays in the tab order, so focusing it reveals it. On `mobile`, which has no hover, it is always visible.
 - with `hasMore` and `onLoadMore`, a kit `LinkButton` (`labels.loadMoreLabel`, default `'See more'`) at the inline start follows the rows, disabled while `isLoadingMore`.
@@ -177,17 +181,19 @@ The section renders:
    - Its placeholder is the shared `chat.placeholder` ("How can I help you today?").
 2. **The Outputs section, when `outputs` is set**, for every reader (owner or not).
    - The section passes `outputs` to `ProjectConversationsPanel`'s new `outputs?: ReactNode` slot (`libs/projects/src/models/project-conversations-panel-props.ts`, documented as "Content between `composer` and the Chats list; omitted when unset").
-   - The panel renders `composer`, then `outputs`, then `ProjectConversationList`, with no wrapper of its own around `outputs`, so the host's node sits in the column's flow. The panel knows nothing about outputs beyond the slot.
+   - The panel renders `composer`, then `outputs`, then `ProjectConversationList`, with no wrapper of its own around `outputs`, so the host's node sits in the column's flow. The panel knows nothing about outputs beyond the slot and its `hasOutputs` flag (default `false`), which it passes to the list as `isEmptyStateShown={!hasOutputs}`.
+   - `ProjectViewPage` sets `hasOutputs` while the Outputs section shows files or its error, so a project with outputs but no chats does not say "No outputs or chats yet".
 3. **`ProjectConversationList`**, fed by the `conversations` prop.
    - The hook owns `{ items, isLoading, hasError, hasMore, isLoadingMore, retry, loadMore, rename, remove, refresh, markViewed }` in local state. It follows the `useFavicon` pattern: `AbortController` cleanup, async/await.
-   - While `hasMore`, the list ends with a See more link (`buttons.seeMore`). `loadMore` requests the next page with `offset` set to the rows already listed, appends it without repeating a row, and a failure keeps the rows and shows `projects.chats.error`.
+   - DIAL Core cannot page a project's conversations in display order, so the hook reads the whole list once (`listProjectConversations(projectId, signal)`, no paging) and pages it locally: `items` is the first 20 rows, as in the design (node `23:24330`), and `hasMore` is whether more rows are loaded than shown. While `hasMore`, the list ends with a See more link (`buttons.seeMore`).
+   - `loadMore` shows the next 20 rows. When any of them carries `isTitlePending`, it first reads their titles with `getProjectConversationTitles(projectId, names, signal)` (`POST /api/v1/projects/:id/conversations/titles`), with `isLoadingMore` set meanwhile, so no row shows its file-name title. Without pending rows it makes no request. A failed read rejects, keeps the rows shown so far, and the host shows `projects.chats.error`.
    - Items map from `ProjectConversationItemDto` (`title`, `author` → `authorName`, `isUnread`).
-   - `refresh()` re-reads the rows already shown, silently:
-     - it reads from `offset: 0` in pages of at most 100 rows (`limit = min(100, rows still to cover)`) until it has covered `max(items.length, 50)` rows or a page answers `hasMore: false`;
-     - it then replaces `items` and `hasMore` in one update, so new, renamed, deleted and newly answered chats appear without a reload;
+   - `refresh()` re-reads the whole list silently:
+     - it replaces the rows in one update and keeps the number shown, so new, renamed, deleted and newly answered chats appear without a reload;
+     - it then reads the titles of the shown rows that are still pending, in batches of at most 100 names, and a failed read keeps their file-name titles;
      - it never sets `isLoading` or `hasError`, and a failure keeps the current rows;
-     - a newer `refresh`, a `retry`, a project change or unmount aborts it;
-     - a `loadMore` that settles after a refresh started is dropped, so pages never interleave.
+     - a newer `refresh`, a `retry`, a project change or unmount aborts it.
+   - A delete that brings a pending row into view reads its title the same way, silently.
    - `markViewed(id)` sets that item's `isUnread` to `false` immediately, fires `client.markProjectConversationViewed?.(id)` without awaiting it, and swallows its failure. Until a later read reports a newer `updatedAt` for that item, every `refresh` result keeps it read. This hides the old dot when a refresh that started before the mark lands after it.
 
 **First message.** Submitting the input SHALL:
@@ -243,10 +249,15 @@ Handlers are memoised with `useCallback`, and the mapped items with `useMemo`.
 - **WHEN** a collaborator's tab creates chat D and the page's watch triggers `refresh()`
 - **THEN** D appears at the top of the list, and no spinner renders
 
-#### Scenario: Refresh keeps loaded pages
+#### Scenario: See more pages locally
 
-- **WHEN** 120 rows are listed after two `loadMore` calls and `refresh()` runs
-- **THEN** it reads `offset 0, limit 100` and `offset 100, limit 20`, and the list still shows up to 120 rows plus any new ones
+- **WHEN** the project holds 45 chats, the 25 oldest listed with `isTitlePending`, and the user activates See more
+- **THEN** one titles request names the 21st to 40th chats, the list then shows 40 rows with their body titles, and the list itself is not requested again
+
+#### Scenario: Refresh keeps the shown rows
+
+- **WHEN** 25 rows are shown after a `loadMore` and `refresh()` runs
+- **THEN** it reads the whole list once, still shows 25 rows plus any new ones, and reads the titles of the shown rows the list left pending
 
 #### Scenario: Opening marks the chat read
 

@@ -14,6 +14,7 @@ import { useOpenAttachmentCanvas } from '../useOpenAttachmentCanvas';
 const mockOpenCanvas = vi.fn();
 const mockOpenCanvasLoading = vi.fn();
 const mockCloseCanvas = vi.fn();
+const mockStartRequest = vi.fn(() => () => true);
 
 vi.mock('../../../context/AttachmentCanvasContext', () => ({
   useAttachmentCanvas: () => ({
@@ -21,6 +22,7 @@ vi.mock('../../../context/AttachmentCanvasContext', () => ({
     openCanvasLoading: mockOpenCanvasLoading,
     closeCanvas: mockCloseCanvas,
   }),
+  useCanvasRequestStarter: () => mockStartRequest,
 }));
 
 const mockResolveMarkdown = vi.fn();
@@ -119,7 +121,12 @@ describe('useOpenAttachmentCanvas routing', () => {
       expect.objectContaining({ name, contentType: mimeType }),
       format,
     );
-    expect(mockOpenCanvas).toHaveBeenCalledWith(content, name, name);
+    expect(mockOpenCanvas).toHaveBeenCalledWith(
+      content,
+      name,
+      name,
+      expect.any(Function),
+    );
   });
 
   it('routes an OOXML attachment by extension when its MIME type is generic', async () => {
@@ -171,6 +178,7 @@ describe('useOpenAttachmentCanvas routing', () => {
       content,
       'Quarterly Report',
       'Quarterly Report',
+      expect.any(Function),
     );
   });
 
@@ -189,6 +197,7 @@ describe('useOpenAttachmentCanvas routing', () => {
       expect.objectContaining({ type: 'unsupported' }),
       'report.docx',
       'report.docx',
+      expect.any(Function),
     );
   });
 
@@ -209,6 +218,7 @@ describe('useOpenAttachmentCanvas routing', () => {
       forbidden,
       'budget.xlsx',
       'budget.xlsx',
+      expect.any(Function),
     );
   });
 
@@ -284,7 +294,26 @@ describe('useOpenAttachmentCanvas routing', () => {
     );
 
     expect(opened).toBe(true);
-    expect(mockOpenCanvas).toHaveBeenCalledWith(content, 'doc.md', 'doc.md');
+    expect(mockOpenCanvas).toHaveBeenCalledWith(
+      content,
+      'doc.md',
+      'doc.md',
+      expect.any(Function),
+    );
+  });
+
+  it('opens a file again as a new request from the retry it hands the canvas', async () => {
+    mockResolveMarkdown.mockResolvedValue({ type: 'markdown', text: '# Doc' });
+    const { result } = renderOpenAttachmentCanvas();
+    await result.current.openAttachmentCanvas(makeAttachment('doc.md'));
+    const retry = mockOpenCanvas.mock.calls[0][3] as () => void;
+
+    retry();
+
+    await vi.waitFor(() =>
+      expect(mockResolveMarkdown).toHaveBeenCalledTimes(2),
+    );
+    expect(mockStartRequest).toHaveBeenCalledOnce();
   });
 
   it('routes text/markdown MIME type to the markdown resolver (ignores .pdf extension in title)', async () => {
@@ -377,6 +406,7 @@ describe('useOpenAttachmentCanvas routing', () => {
       pdfContent,
       'doc.pdf',
       'doc.pdf',
+      expect.any(Function),
     );
   });
 
@@ -443,6 +473,7 @@ describe('useOpenAttachmentCanvas routing', () => {
       pdfContent,
       'report.pdf',
       'report.pdf',
+      expect.any(Function),
     );
     expect(mockResolveMarkdown).not.toHaveBeenCalled();
   });
@@ -488,6 +519,7 @@ describe('useOpenAttachmentCanvas routing', () => {
       },
       'Revised prompt',
       'Revised prompt',
+      expect.any(Function),
     );
   });
 
@@ -515,6 +547,7 @@ describe('useOpenAttachmentCanvas routing', () => {
         { type: 'html', url: 'https://example.com/docs/page.html' },
         'routed source',
         'routed source',
+        expect.any(Function),
       );
     });
 
@@ -542,6 +575,7 @@ describe('useOpenAttachmentCanvas routing', () => {
         htmlContent,
         'AI Factory scope roadmap',
         'AI Factory scope roadmap',
+        expect.any(Function),
       );
     });
 
@@ -565,6 +599,7 @@ describe('useOpenAttachmentCanvas routing', () => {
         expect.objectContaining({ type: 'unsupported' }),
         'huge.html',
         'huge.html',
+        expect.any(Function),
       );
     });
 
@@ -587,6 +622,7 @@ describe('useOpenAttachmentCanvas routing', () => {
         { type: 'html', url: 'files/bucket/path/page.html' },
         'page.html',
         'page.html',
+        expect.any(Function),
       );
     });
 
@@ -605,6 +641,7 @@ describe('useOpenAttachmentCanvas routing', () => {
         { type: 'html', srcdoc: '<p>Hello</p>' },
         'page.html',
         'page.html',
+        expect.any(Function),
       );
     });
   });
@@ -808,6 +845,7 @@ describe('useOpenAttachmentCanvas — visualizer routing', () => {
       vizContent,
       'chart.x-my-viz',
       'chart.x-my-viz',
+      expect.any(Function),
     );
     expect(mockResolveMarkdown).not.toHaveBeenCalled();
   });
@@ -832,6 +870,7 @@ describe('useOpenAttachmentCanvas — visualizer routing', () => {
       expect.objectContaining({ visualizerName: 'my-viz' }),
       'f.viz',
       'f.viz',
+      expect.any(Function),
     );
   });
 
@@ -859,6 +898,7 @@ describe('useOpenAttachmentCanvas — visualizer routing', () => {
       expect.objectContaining({ mimeType: 'application/x-my-viz' }),
       'f.viz',
       'f.viz',
+      expect.any(Function),
     );
   });
 
@@ -892,6 +932,7 @@ describe('useOpenAttachmentCanvas — visualizer routing', () => {
       expect.objectContaining({ type: 'unsupported' }),
       'chart.viz',
       'chart.viz',
+      expect.any(Function),
     );
   });
 

@@ -61,6 +61,8 @@ interface Props {
   onConversationDeleted?: () => void;
   /** The page's Outputs section, rendered between the chat input and the Chats list; omitted when unset. */
   outputs?: ReactNode;
+  /** Whether the Outputs section shows content, so an empty Chats list hides its "No outputs or chats yet" state. */
+  hasOutputs?: boolean;
 }
 
 const ProjectConversationsSection: FC<Props> = ({
@@ -70,6 +72,7 @@ const ProjectConversationsSection: FC<Props> = ({
   conversations,
   onConversationDeleted,
   outputs,
+  hasOutputs,
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -326,6 +329,7 @@ const ProjectConversationsSection: FC<Props> = ({
           ) : undefined
         }
         outputs={outputs}
+        hasOutputs={hasOutputs}
         items={items}
         isLoading={isLoading}
         hasError={hasError}

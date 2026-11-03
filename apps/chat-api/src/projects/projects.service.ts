@@ -296,10 +296,6 @@ export class ProjectsService {
         ),
       ),
     ]);
-    /* Debug only (LOG_LEVEL=debug): the item metadata exactly as Core sent it. */
-    this.logger.debug(
-      `DIAL Core project metadata: ${JSON.stringify(metadata)}`,
-    );
     const source = resolveProjectSource(parsed.bucket, sessionBucket);
 
     return {
