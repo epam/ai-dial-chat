@@ -527,3 +527,35 @@ describe('Card — description markdown labels', () => {
     ).toBeTruthy();
   });
 });
+
+describe('Card — keyboard activation', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('keeps the article unroled and opens the item from its native button', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const onClick = vi.fn();
+    const item = makeItem();
+    render(<Card item={item} onClick={onClick} />);
+
+    // An `<article>` may not take `role="button"` (axe aria-allowed-role).
+    const card = screen.getByRole('article', { hidden: true });
+    expect(card.getAttribute('role')).toBeNull();
+    expect(card.getAttribute('tabindex')).toBeNull();
+
+    // The card button is the first tab stop; Enter on it opens the item.
+    await user.tab();
+    await user.keyboard('{Enter}');
+
+    expect(onClick).toHaveBeenCalledOnce();
+    expect(onClick).toHaveBeenCalledWith(item);
+  });
+
+  it('renders no card button when the card is not clickable', () => {
+    render(<Card item={makeItem()} />);
+
+    expect(screen.queryByRole('button', { name: 'Claude' })).toBeNull();
+  });
+});

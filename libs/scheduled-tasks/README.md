@@ -87,7 +87,7 @@ import {
 
 ### ScheduledTaskCard
 
-A single scheduled task rendered as a card: title, optional description/prompt preview, a status pill, and optional location breadcrumb and "new" badge. The status pill is resolved by `getScheduledTaskStatus`: an explicit `item.presentationStatus` wins over the derived statuses; otherwise `item.isCompleted: true` renders a "Completed" badge (check icon), `item.isActive: false` renders a "Paused" badge, and otherwise the schedule label renders as the schedule pill — exactly one of the three, never two together. When `onCardClick` is supplied, the whole card becomes an activatable element (click or Enter/Space) reporting the task id.
+A single scheduled task rendered as a card: title, optional description/prompt preview, a status pill, and optional location breadcrumb and "new" badge. The status pill is resolved by `getScheduledTaskStatus`: an explicit `item.presentationStatus` wins over the derived statuses; otherwise `item.isCompleted: true` renders a "Completed" badge (check icon), `item.isActive: false` renders a "Paused" badge, and otherwise the schedule label renders as the schedule pill — exactly one of the three, never two together. When `onCardClick` is supplied, the title renders as a native `<button>` stretched over the whole card (the card stays an unroled `<article>`), so a click anywhere or Enter/Space on the button reports the task id; keyboard focus outlines the card with `styles.colors.focusOutline` (var `--stc-focus-outline`, default `--stroke-focus`).
 
 Supply `labels.completedBadgeLabel` for localized completed-state copy.
 

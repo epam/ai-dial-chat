@@ -935,6 +935,8 @@ export enum ExtensionsI18nKeys {
 export enum ConversationPanelI18nKeys {
   UpdatingTitles = 'conversationPanel.updatingTitles',
   ChatsAndTasks = 'conversationPanel.chatsAndTasks',
+  SeeAll = 'conversationPanel.seeAll',
+  SeeAllProjectChats = 'conversationPanel.seeAllProjectChats',
   SearchOpen = 'conversationPanel.search.open',
   SearchClose = 'conversationPanel.search.close',
   Empty = 'conversationPanel.empty',
@@ -1147,6 +1149,9 @@ export enum CitationsI18nKeys {
   MarkerLabel = 'citations.marker.label',
   MarkerLabelWithOverflow = 'citations.marker.labelWithOverflow',
   MarkerAriaLabel = 'citations.marker.ariaLabel',
+  MarkerLabelWithPage = 'citations.marker.labelWithPage',
+  MarkerLabelWithPageAndOverflow = 'citations.marker.labelWithPageAndOverflow',
+  MarkerAriaLabelWithPage = 'citations.marker.ariaLabelWithPage',
   PopupSwitcher = 'citations.popup.switcher',
   PopupOpenInBrowser = 'citations.popup.openInBrowser',
   PopupPreviousCitation = 'citations.popup.previousCitation',

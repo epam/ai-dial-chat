@@ -279,7 +279,7 @@ describe('McpAppCanvasRenderer', () => {
         new Error('Timed out waiting for sandbox proxy iframe to be ready'),
       );
 
-      await screen.findByText(/Failed to load MCP App/);
+      await screen.findAllByText(/Failed to load MCP App/);
       const status = screen
         .getAllByRole('status')
         .find((region) =>
@@ -299,7 +299,9 @@ describe('McpAppCanvasRenderer', () => {
       );
       await waitFor(() => expect(appFrames).toHaveLength(1));
       appFrames[0].onError?.(new Error('boom'));
-      expect(await screen.findByText(/Failed to load/)).toBeTruthy();
+      expect(
+        (await screen.findAllByText(/Failed to load/)).length,
+      ).toBeGreaterThan(0);
 
       rerender(<McpAppCanvasRenderer key="attempt-2" content={baseContent} />);
 

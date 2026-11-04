@@ -6,9 +6,11 @@ import {
   ITEM_ROW_HEIGHT,
 } from '../../constants/virtual-list';
 import type { RowRendererData } from '../../models/virtual-row';
+import { ConversationRowVariant } from '../../types/conversation-row-variant';
 import { VirtualRowKind } from '../../types/virtual-row';
 import {
   getButtonPaddingEnd,
+  getNestedRowProps,
   getOverscanCount,
   getRowHeight,
   getSkeletonWidth,
@@ -50,9 +52,29 @@ describe('getSkeletonWidth', () => {
 });
 
 describe('getButtonPaddingEnd', () => {
-  it('returns pe-3 when there are no actions', () => {
+  it('returns pe-3 for an Avatar row without actions', () => {
     expect(getButtonPaddingEnd(false, false)).toBe('pe-3');
     expect(getButtonPaddingEnd(false, true)).toBe('pe-3');
+    expect(
+      getButtonPaddingEnd(false, false, ConversationRowVariant.Avatar),
+    ).toBe('pe-3');
+  });
+
+  it('returns pe-2 for an Indicator row without actions', () => {
+    expect(
+      getButtonPaddingEnd(false, false, ConversationRowVariant.Indicator),
+    ).toBe('pe-2');
+  });
+
+  it('keeps the trigger gutter for an Indicator row with actions', () => {
+    expect(
+      getButtonPaddingEnd(true, true, ConversationRowVariant.Indicator),
+    ).toBe('pe-9');
+    expect(
+      getButtonPaddingEnd(true, false, ConversationRowVariant.Indicator),
+    ).toBe(
+      'pe-2 group-focus-within/conversation:pe-9 group-hover/conversation:pe-9',
+    );
   });
 
   it('returns pe-9 when actions exist and the menu is open', () => {
@@ -128,5 +150,36 @@ describe('getOverscanCount', () => {
 
   it('overscans half a viewport on each side for a tall list', () => {
     expect(getOverscanCount(900)).toBe(13);
+  });
+});
+
+describe('getNestedRowProps', () => {
+  it('returns the level-2 position and the guide-line classes of a first nested row', () => {
+    const props = getNestedRowProps({
+      posInSet: 1,
+      setSize: 3,
+      isFirstNested: true,
+      isLastNested: false,
+    });
+
+    expect(props['aria-level']).toBe(2);
+    expect(props['aria-posinset']).toBe(1);
+    expect(props['aria-setsize']).toBe(3);
+    expect(props.className).toMatch(/ps-7/);
+    expect(props.className).toMatch(/guideLine/);
+    expect(props.className).toMatch(/guideLineFirst/);
+    expect(props.className).not.toMatch(/guideLineLast/);
+  });
+
+  it('marks only the last segment of a last nested row', () => {
+    const { className } = getNestedRowProps({
+      posInSet: 3,
+      setSize: 3,
+      isFirstNested: false,
+      isLastNested: true,
+    });
+
+    expect(className).toMatch(/guideLineLast/);
+    expect(className).not.toMatch(/guideLineFirst/);
   });
 });

@@ -21,6 +21,7 @@ import archiver from 'archiver';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../../../config/environment.config';
 import type { DialClientService } from '../../../dial/dial-client.service';
+import { streamingFetch } from '../../../dial/streaming-fetch';
 import { UploadMode } from '../../types/upload-mode.enum';
 import { FilesUploadService } from '../../upload/files-upload.service';
 import { UPLOAD_RESPONSE_TIMEOUT_MS } from '../../upload/upload-watchdog';
@@ -49,6 +50,7 @@ function makeService(configOverrides: Record<string, unknown> = {}) {
     baseUrl: 'http://dial-core',
     dialApiVersion: '2024-10-21',
     fetchCore,
+    uploadCore: fetchCore,
   } as unknown as DialClientService;
 
   const service = new FilesUploadService(dialClient, configService);
@@ -466,8 +468,8 @@ describe('FilesUploadService', () => {
           }
         ).dialClient.baseUrl = `http://127.0.0.1:${port}`;
         (
-          service as unknown as { dialClient: { fetchCore: typeof fetch } }
-        ).dialClient.fetchCore = globalThis.fetch;
+          service as unknown as { dialClient: { uploadCore: typeof fetch } }
+        ).dialClient.uploadCore = streamingFetch;
         const payload = Buffer.alloc(3 * 1024 * 1024, 'x');
 
         const result = await service.uploadFile(

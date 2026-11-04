@@ -27,7 +27,7 @@ It already includes the styles of the publish flow from `@epam/ai-dial-publish-p
 ## Peer Dependencies
 
 - `react`
-- `@epam/ai-dial-ui-kit` ^0.16.0-dev.71 (requires the public `/grid` entry)
+- `@epam/ai-dial-ui-kit` ^0.16.0-dev.72 (requires the public `/grid` entry)
 - `@epam/ai-dial-chat-shared`
 
 `ag-grid-community` and `@epam/ai-dial-publish-panel` are normal package
@@ -803,6 +803,14 @@ import { Favorites } from '@epam/ai-dial-catalog';
 ### FavoriteCard
 
 A single favorite tile, exported for hosts composing their own favorites layout.
+
+A clickable `FavoriteCard` (and the browse-grid `Card`) stays an unroled
+`<article>`: the pointer clicks the card itself, and keyboard and
+screen-reader users reach it through a visually hidden native `<button>`
+named after the item, placed before the star. Its focus draws a ring around
+the card — `focusOutlineColor` on `FavoriteCard`, `styles.colors.focusOutline`
+on `Card` (vars `--fc-focus-outline` / `--cg-focus-outline`, default
+`--stroke-focus`).
 
 ### Filter / TopicTag
 
