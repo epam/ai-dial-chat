@@ -61,7 +61,7 @@ vi.mock('../../../hooks/useDeleteConfirmationLabels', () => ({
 }));
 vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@epam/ai-dial-chat-shared')>()),
-  DeleteConfirmationDialog: ({
+  DeleteConfirmationDrawer: ({
     open,
     title,
     message,
@@ -204,11 +204,11 @@ describe('PinnedProjectActionOverlays', () => {
 
     expect(
       screen.getByRole('dialog', {
-        name: 'projects.actions.deleteConfirmTitle:Support',
+        name: 'buttons.delete',
       }),
     ).toBeTruthy();
     expect(
-      screen.getByText('projects.actions.deleteConfirmWithChatsDescription'),
+      screen.getByText('catalog.details.delete.confirmMessage'),
     ).toBeTruthy();
   });
 

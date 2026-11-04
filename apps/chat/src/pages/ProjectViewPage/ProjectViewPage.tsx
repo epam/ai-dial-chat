@@ -277,7 +277,6 @@ const ProjectViewPage: FC = () => {
         <ProjectDeleteConfirmation
           isOpen={actions.isDeleteOpen}
           projectName={project.name}
-          conversationCount={conversationCount}
           isDeleting={actions.isDeleting}
           onConfirm={handleConfirmDelete}
           onClose={actions.cancelDelete}

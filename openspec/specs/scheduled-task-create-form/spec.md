@@ -971,6 +971,7 @@ The dialog copy SHALL come from the optional labels below, each falling back to 
 | `labels.discardTitle` | "Discard unsaved changes?" |
 | `labels.discardMessage` | "You have unsaved changes. Leaving now will discard them." |
 | `labels.discardConfirmLabel` | "Discard changes" |
+| `labels.discardConfirmMobileLabel` | "Discard" (used below the desktop breakpoint, `useIsMobile`) |
 | `labels.discardCancelLabel` | "Keep editing" |
 
 When `initialValues` is omitted, the form SHALL behave as before: no confirmation and no `beforeunload` listener. This lets a host own unsaved-change handling itself.

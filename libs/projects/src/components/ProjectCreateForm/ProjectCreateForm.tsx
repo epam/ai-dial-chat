@@ -1,5 +1,8 @@
 import { FileDndOverlay, AttachmentCard } from '@epam/ai-dial-attachment-input';
-import { BuilderFormContainer } from '@epam/ai-dial-builder-form';
+import {
+  BuilderFormActionsOrder,
+  BuilderFormContainer,
+} from '@epam/ai-dial-builder-form';
 import {
   buildCssVars,
   MARKDOWN_EDITOR_MAX_HEIGHT_CLASS_NAME,
@@ -180,6 +183,7 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
   const cssVars = buildCssVars({
     '--pcf-label-text': colors?.labelText,
     '--pcf-link-text': colors?.linkText,
+    '--pcf-dropzone-bg': colors?.dropZoneBackground,
   });
   const refinementLabels = labels.refinement;
   const contextError = errors.context;
@@ -230,6 +234,7 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
         isCancelDisabled={isSubmitting}
         isSubmitDisabled={isCreateDisabled}
         isSubmitting={isSubmitting}
+        footerActionsOrder={BuilderFormActionsOrder.SubmitFirst}
         backIcon={
           <IconArrowNarrowLeft
             size={DIAL_ICON_SIZE.LG}

@@ -651,6 +651,26 @@ import { InitialsAvatar } from '@epam/ai-dial-chat-shared';
 />;
 ```
 
+### ActionMenu
+
+Action menu around a trigger: the kit `Dropdown` on tablet and desktop, a titled
+bottom sheet on a phone (`useIsPhone`). The trigger must accept `onClick`; on a
+phone it receives the click handler plus `aria-haspopup="dialog"` and
+`aria-expanded`. The sheet lists plain actions only — dividers, plain-text rows
+and nested items appear in the dropdown but are skipped in the sheet.
+
+```tsx
+import { ActionMenu } from '@epam/ai-dial-chat-shared';
+
+<ActionMenu
+  title="More actions"
+  closeLabel="Close"
+  items={[{ key: 'delete', label: 'Delete', danger: true, onClick: onDelete }]}
+>
+  <GhostIconButton aria-label="More actions" icon={<IconDotsVertical />} />
+</ActionMenu>;
+```
+
 ### PanelEmptyState
 
 Generic empty-state placeholder used inside panels, built on the kit's
@@ -972,7 +992,7 @@ import { ConfirmationPopupVariant } from '@epam/ai-dial-ui-kit';
 
 The delete confirmation body every delete surface shows, built on
 [`ConfirmationView`](#confirmationview). Pass `names`: one name goes in a
-neutral `ResourceSummary` card, with the optional `icon` and `typeLabel`;
+neutral `ResourceSummary` card (red with `identityVariant={ConfirmationPopupVariant.Danger}`), with the optional `icon` and `typeLabel`;
 several are counted in the card (`labels.itemCount`) and listed under the
 message, up to `maxListedNames` (10), with the rest summed up by
 `labels.moreItems`. `consequences` are listed before the final
@@ -1023,6 +1043,33 @@ import { DeleteConfirmationDialog } from '@epam/ai-dial-chat-shared';
 >
   {error && <ErrorMessageNotification message={error} />}
 </DeleteConfirmationDialog>;
+```
+
+### DeleteConfirmationDrawer
+
+[`DeleteConfirmationView`](#deleteconfirmationview) in the kit's `SideDrawer` — the side panel the catalog shows for an item — with a danger [`ConfirmationFooter`](#confirmationfooter) pinned under the scrolling body. It takes the same props as the view plus `open`, `title`, `isLoading`, `onConfirm` and `onClose`. While `isLoading` is set, Cancel, the close control, Escape and a backdrop press are all blocked. `labels` adds `confirm`, `cancel`, `deleting` and `close` (all English by default) to the view's labels.
+
+```tsx
+import { DeleteConfirmationDrawer } from '@epam/ai-dial-chat-shared';
+
+<DeleteConfirmationDrawer
+  open={isDeleteOpen}
+  title="Delete project"
+  names={[project.name]}
+  message={
+    <>
+      Are you sure you want to delete <strong>{project.name}</strong>? This
+      action is permanent and cannot be undone.
+    </>
+  }
+  consequences={[
+    'All shared configurations will be lost',
+    'Users who rely on it will lose access',
+  ]}
+  isLoading={isDeleting}
+  onConfirm={handleDelete}
+  onClose={closeDelete}
+/>;
 ```
 
 ### TextRefinementField

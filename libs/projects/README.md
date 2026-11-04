@@ -235,12 +235,13 @@ import { cloneElement } from 'react';
 
 `styles.colors` overrides the CSS custom properties:
 
-| Field          | Fallback            |
-| -------------- | ------------------- |
-| `background`   | `--bg-layer-base`   |
-| `headerBorder` | `--stroke-tertiary` |
-| `labelText`    | `--text-secondary`  |
-| `linkText`     | drop zone text      |
+| Field                | Fallback                            |
+| -------------------- | ----------------------------------- |
+| `background`         | `--bg-layer-base`                   |
+| `headerBorder`       | `--stroke-tertiary`                 |
+| `labelText`          | `--text-secondary`                  |
+| `linkText`           | drop zone text                      |
+| `dropZoneBackground` | `--bg-layer-raised`, then `#d1dbea` |
 
 `styles.typography` overrides the type-scale classes:
 
@@ -315,7 +316,7 @@ import { ProjectView } from '@epam/ai-dial-projects';
 
 ### ProjectConversationList
 
-A project's conversations as a `<section>` named by its `<h2>` (`labels.title`; with no chats the heading is hidden and the section keeps the name through `aria-label`), with one row per item: a button named `labels.openLabel(title, authorName)` holding an `aria-hidden` status point (an outline when read, filled when unread) and the title truncated with a tooltip. When `onRename` or `onDelete` is given, each row also has a ⋮ menu (`labels.moreActionsLabel(title)`) with those items, shown on `desktop` only while the row is hovered or focused or the menu is open (always on `mobile`); without both it is read-only and rows only open. Exactly one state renders — loading, error with Retry, the empty state, or the rows — and the loading, error and empty states are a `role="status"` region. With `hasMore` and `onLoadMore`, a See more link button (`labels.loadMoreLabel`, default `'See more'`) follows the rows and is disabled while `isLoadingMore`. With `isEmptyStateShown={false}` (default `true`) an empty list renders nothing instead of the empty state. The lib loads nothing: the host passes the rows and handles the callbacks.
+A project's conversations as a `<section>` named by its `<h2>` (`labels.title`; with no chats the heading is hidden and the section keeps the name through `aria-label`), with one row per item: a button named `labels.openLabel(title, authorName)` holding an `aria-hidden` status point (an outline when read, filled when unread; an item's `leading` node replaces it and an unread item then shows the dot at the row's end instead, which its `trailing` node replaces) and the title truncated with a tooltip. When `onRename` or `onDelete` is given, each row also has a ⋮ menu (`labels.moreActionsLabel(title)`) with those items — a dropdown, or on a phone a bottom sheet closed by `labels.closeLabel` (default `'Close'`) — shown on `desktop` only while the row is hovered or focused or the menu is open (always on `mobile`); without both it is read-only and rows only open. Exactly one state renders — loading, error with Retry, the empty state, or the rows — and the loading, error and empty states are a `role="status"` region. With `hasMore` and `onLoadMore`, a See more link button (`labels.loadMoreLabel`, default `'See more'`) follows the rows and is disabled while `isLoadingMore`. With `isEmptyStateShown={false}` (default `true`) an empty list renders nothing instead of the empty state. The lib loads nothing: the host passes the rows and handles the callbacks.
 
 ```tsx
 import { ProjectConversationList } from '@epam/ai-dial-projects';

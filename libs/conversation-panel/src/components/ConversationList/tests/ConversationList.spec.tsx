@@ -1072,6 +1072,46 @@ describe('ConversationList — pinned projects', () => {
     return row;
   };
 
+  it('draws nested chats as Indicator rows unless the Avatar variant is set', () => {
+    const { rerender } = render(
+      <ConversationList
+        {...BASE_PROPS}
+        conversations={[pinned]}
+        onSelectConversation={vi.fn()}
+        onMoveConversation={vi.fn()}
+        rowVariant={ConversationRowVariant.Indicator}
+        pinnedProjects={{
+          projects: [makeProject({ hasMore: false })],
+          onSelectProject: vi.fn(),
+          onSelectConversation: vi.fn(),
+          onSeeAll: vi.fn(),
+        }}
+      />,
+    );
+    /* The mocked kit button keeps its class, which is all the variant leaves on a row here. */
+    const getNestedButton = () =>
+      within(getListItem('Weekly summary')).getByRole('button');
+    expect(getNestedButton().className).toMatch(/itemIndicator/);
+
+    rerender(
+      <ConversationList
+        {...BASE_PROPS}
+        conversations={[pinned]}
+        onSelectConversation={vi.fn()}
+        onMoveConversation={vi.fn()}
+        rowVariant={ConversationRowVariant.Indicator}
+        pinnedProjects={{
+          projects: [makeProject({ hasMore: false })],
+          conversationRowVariant: ConversationRowVariant.Avatar,
+          onSelectProject: vi.fn(),
+          onSelectConversation: vi.fn(),
+          onSeeAll: vi.fn(),
+        }}
+      />,
+    );
+    expect(getNestedButton().className).not.toMatch(/itemIndicator/);
+  });
+
   it('offers the project actions on the project row only, not on See all', () => {
     renderList({
       projects: [makeProject({ conversations: tenChats, hasMore: true })],

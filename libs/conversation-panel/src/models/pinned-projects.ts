@@ -1,5 +1,6 @@
 import type { FilterTab } from '@epam/ai-dial-chat-shared';
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
+import type { ConversationRowVariant } from '../types/conversation-row-variant';
 import type { ConversationItem } from './panel-props';
 
 /** A pinned project and the chats the host chose to list under it. */
@@ -37,6 +38,8 @@ export interface PinnedProjects {
   ) => void;
   /** Id of the project the host currently shows; its row gets `aria-current="page"`. */
   activeProjectId?: string;
+  /** Presentation of the chats nested under a project: `Avatar` gives them the deployment avatar (or `leadingIcon`) and a trailing unread dot like the panel's own rows. Defaults to `ConversationRowVariant.Indicator`. */
+  conversationRowVariant?: ConversationRowVariant;
 }
 
 /** Position of a row nested under a project row, for its ARIA attributes and guide-line segment. */

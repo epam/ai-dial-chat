@@ -608,6 +608,27 @@ describe('ProjectCreateForm — layout', () => {
     ).toContain('dial-tiny-semi-text');
   });
 
+  it('lists Cancel first in the header and Create first in the mobile footer', () => {
+    renderForm();
+
+    const names = screen
+      .getAllByRole('button', { name: /^(Create|Cancel)$/ })
+      .map((button) => button.textContent);
+
+    expect(names).toEqual(['Cancel', 'Create', 'Create', 'Cancel']);
+  });
+
+  it('paints the idle drop zone with the layer-raised background', () => {
+    const styles = readFileSync(
+      join(__dirname, '../ProjectCreateForm.module.scss'),
+      'utf-8',
+    );
+
+    expect(styles).toMatch(
+      /--pcf-dropzone-bg, var\(--bg-layer-raised, #d1dbea\)/,
+    );
+  });
+
   it('renders every file card as an item of one list', () => {
     const files = stageFiles([makeFile('a.csv', 1), makeFile('b.csv', 1)]);
     renderForm({ contextFiles: files });
