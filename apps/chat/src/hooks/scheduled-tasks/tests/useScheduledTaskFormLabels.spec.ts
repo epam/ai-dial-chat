@@ -16,6 +16,11 @@ describe('useScheduledTaskFormLabels', () => {
       label: 'scheduledTasks.create.repeatCustom',
     });
     expect(result.current.createButtonLabel).toBe('buttons.create');
+    expect(result.current.daysOfWeekLabel).toBe(
+      'scheduledTasks.create.daysOfWeekLabel',
+    );
+    expect(result.current).not.toHaveProperty('everyLabel');
+    expect(result.current).not.toHaveProperty('everyWeekOptions');
 
     rerender({ mode: 'edit' });
     expect(result.current.createButtonLabel).toBe('buttons.save');

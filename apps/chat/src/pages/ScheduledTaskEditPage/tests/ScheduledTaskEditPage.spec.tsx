@@ -183,7 +183,7 @@ interface FormProps {
     repeat: string;
     time: string;
     minute?: string;
-    everyWeeks?: string;
+    daysOfWeek?: string[];
     dayOfWeek?: string;
     startDate?: string;
     endDate?: string;
@@ -266,7 +266,7 @@ vi.mock('@epam/ai-dial-scheduled-tasks', async (importOriginal) => ({
       <span>prompt:{values.prompt}</span>
       <span>minute:{values.minute ?? ''}</span>
       <span>repeat:{values.repeat}</span>
-      <span>everyWeeks:{values.everyWeeks ?? ''}</span>
+      <span>daysOfWeek:{values.daysOfWeek?.join(',') ?? ''}</span>
       <button onClick={onBack}>back</button>
       <input
         aria-label="displayName"
@@ -694,17 +694,12 @@ describe('ScheduledTaskEditPage', () => {
     expect(screen.queryByText(/displayName:/)).not.toBeTruthy();
   });
 
-  it('hydrates a custom week-step task into the form instead of the unsupported state', async () => {
+  it('hydrates a custom weekday-list task into the form instead of the unsupported state', async () => {
     getScheduledTaskMock.mockResolvedValue({
       ...baseTask,
       trigger: {
         cron: {
-          fields: {
-            week: '*/2',
-            hour: '9',
-            minute: '0',
-            day_of_week: '0',
-          },
+          fields: { hour: '9', minute: '0', day_of_week: '0,2' },
         },
       },
     });
@@ -712,10 +707,27 @@ describe('ScheduledTaskEditPage', () => {
 
     expect(await screen.findByText('displayName:Daily summary')).toBeTruthy();
     expect(await screen.findByText('repeat:custom')).toBeTruthy();
-    expect(await screen.findByText('everyWeeks:2')).toBeTruthy();
+    expect(await screen.findByText('daysOfWeek:0,2')).toBeTruthy();
     expect(
       screen.queryByText('scheduledTasks.edit.invalidScheduleLabel'),
     ).not.toBeTruthy();
+  });
+
+  it('shows the unsupported state for a task with a week step', async () => {
+    getScheduledTaskMock.mockResolvedValue({
+      ...baseTask,
+      trigger: {
+        cron: {
+          fields: { week: '*/2', hour: '9', minute: '0', day_of_week: '0' },
+        },
+      },
+    });
+    renderEditPage();
+
+    expect(
+      await screen.findByText('scheduledTasks.edit.invalidScheduleLabel'),
+    ).toBeTruthy();
+    expect(screen.queryByText(/displayName:/)).not.toBeTruthy();
   });
 
   it('shows a non-destructive message when required fields are missing', async () => {

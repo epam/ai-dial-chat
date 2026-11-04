@@ -8,9 +8,6 @@ import {
 } from '../../constants/translation-keys';
 import { useTextRefinementLabels } from '../useTextRefinementLabels';
 
-/** Week counts offered by the Custom repeat's "Every" dropdown. */
-const EVERY_WEEKS_COUNTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
-
 /** APScheduler-convention day values (`'0'` Monday – `'6'` Sunday) for the Custom repeat's day row. */
 const CUSTOM_DAY_VALUES = ['0', '1', '2', '3', '4', '5', '6'] as const;
 
@@ -68,11 +65,7 @@ export const useScheduledTaskFormLabels = (mode: 'create' | 'edit') => {
           }[key],
         ),
       })),
-      everyLabel: t(ScheduledTasksI18nKeys.CreateEveryLabel),
-      everyWeekOptions: EVERY_WEEKS_COUNTS.map((count) => ({
-        value: String(count),
-        label: t(ScheduledTasksI18nKeys.CreateEveryWeeksOption, { count }),
-      })),
+      daysOfWeekLabel: t(ScheduledTasksI18nKeys.CreateDaysOfWeekLabel),
       /* 2023-01-02 is a Monday; the APScheduler day value counts Monday-first,
        * so the reference lands on each segment's own day. Both formatters run
        * in UTC so the localized weekday is the segment's day, not the local

@@ -4387,15 +4387,15 @@ run status, and which delete or mutation error applies — and the host supplies
 every word through formatter objects. Available from the root and
 `./scheduled-tasks`.
 
-| Export                                                              | Returns                                                                                                                                      |
-| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `formatScheduledTaskScheduleLabel(task, labels, options?)`          | One `ScheduledTaskScheduleLabels` member's output; `options.timeZone` defaults to the browser's, `options.locale` formats dates and weekdays |
-| `toScheduledTaskItem` / `toScheduledTaskItems`                      | `ScheduledTaskItem`(s) with the schedule label; the other fields are copied unchanged                                                        |
-| `formatScheduledTaskRunDuration(seconds, labels)`                   | Non-zero hour/minute/second units wrapped by `labels.suffix`, or `undefined` when absent                                                     |
-| `formatScheduledTaskRunTimestamp(start, seconds, labels, options?)` | `todayAt` or `dateAt`, plus the duration when `options.durationLabels` is given; `options.now` defaults to the current time                  |
-| `toScheduledTaskRunItem` / `toScheduledTaskRunItems`                | `ScheduledTaskRunItem`(s); an unknown status maps to `Missed`, `isUnread` uses the host's `conversationIdsMatch`                             |
-| `classifyScheduledTaskDeleteError(status)`                          | `ScheduledTaskDeleteErrorKind`: `NotFound` (404/409), `Retryable` (502), otherwise `Generic`                                                 |
-| `selectScheduledTaskErrorMessage(details, messages)`                | `messages.adminConsentRequired`, else the trimmed upstream reason, else `messages.fallback`                                                  |
+| Export                                                              | Returns                                                                                                                                                                                           |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `formatScheduledTaskScheduleLabel(task, labels, options?)`          | One `ScheduledTaskScheduleLabels` member's output; `options.timeZone` defaults to the browser's, `options.locale` formats dates and weekdays (several weekdays are joined with `Intl.ListFormat`) |
+| `toScheduledTaskItem` / `toScheduledTaskItems`                      | `ScheduledTaskItem`(s) with the schedule label; the other fields are copied unchanged                                                                                                             |
+| `formatScheduledTaskRunDuration(seconds, labels)`                   | Non-zero hour/minute/second units wrapped by `labels.suffix`, or `undefined` when absent                                                                                                          |
+| `formatScheduledTaskRunTimestamp(start, seconds, labels, options?)` | `todayAt` or `dateAt`, plus the duration when `options.durationLabels` is given; `options.now` defaults to the current time                                                                       |
+| `toScheduledTaskRunItem` / `toScheduledTaskRunItems`                | `ScheduledTaskRunItem`(s); an unknown status maps to `Missed`, `isUnread` uses the host's `conversationIdsMatch`                                                                                  |
+| `classifyScheduledTaskDeleteError(status)`                          | `ScheduledTaskDeleteErrorKind`: `NotFound` (404/409), `Retryable` (502), otherwise `Generic`                                                                                                      |
+| `selectScheduledTaskErrorMessage(details, messages)`                | `messages.adminConsentRequired`, else the trimmed upstream reason, else `messages.fallback`                                                                                                       |
 
 ```ts
 import {
@@ -4412,8 +4412,6 @@ const scheduleLabels: ScheduledTaskScheduleLabels = {
   hourlyAt: (minute) => `Every hour at :${minute}`,
   dailyAt: (time) => `Every day at ${time}`,
   weeklyAt: (day, time) => `Every ${day} at ${time}`,
-  everyNWeeks: (count, day, time) =>
-    `Every ${count} weeks on ${day} at ${time}`,
   monthlyAt: (day, time) => `Monthly on day ${day} at ${time}`,
   invalid: 'Invalid schedule',
   recurringFallback: 'Recurring',
@@ -4464,7 +4462,7 @@ if (result.ok) {
 
 ### getNextCronOccurrence
 
-Returns the next UTC time a cron trigger with a fixed `hour`/`minute` fires after `from` (default: now), honouring its `day_of_week` (APScheduler Monday=0) or `day` (a number or `'last'`) constraint. Returns `undefined` when the fields are not plain values it can evaluate (`*`, ranges, lists). Available from the root and `./scheduled-tasks`.
+Returns the next UTC time a cron trigger with a fixed `hour`/`minute` fires after `from` (default: now), honouring its `day_of_week` (APScheduler Monday=0, one weekday or a comma list such as `'0,2,4'`) or `day` (a number or `'last'`) constraint. Returns `undefined` when the fields are not plain values it can evaluate (`*`, ranges, steps). Available from the root and `./scheduled-tasks`.
 
 ```ts
 import { getNextCronOccurrence } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
@@ -6100,7 +6098,10 @@ displaying local time should explicitly pass
 determines the offset for the existing UTC-storage policy; this is not a
 timezone-aware future scheduler. Numeric weekday values use Monday = 0.
 Hourly `time` is the local minute; daily/weekly/monthly `time` is HH:mm.
-`EveryNMinutes` supplies `intervalMinutes`.
+`EveryNMinutes` supplies `intervalMinutes`. A `Weekly` description also
+carries `daysOfWeek`, every local weekday Monday first, so a `day_of_week`
+list such as `'0,2,4'` (the Custom repeat) is described as one weekly
+schedule. Any `week` constraint is `Custom`.
 
 The scheduler APIs are available from both the root barrel and the
 `/scheduled-tasks` entry; prefer the subpath for a focused dependency graph.

@@ -46,7 +46,6 @@ export type {
   ScheduledTaskCreateFormColors,
   ScheduledTaskCreateFormTypography,
   ScheduledTaskRepeatOption,
-  ScheduledTaskEveryWeekOption,
   ScheduledTaskCustomDayOption,
 } from './models/scheduled-task-create-form-props';
 export {

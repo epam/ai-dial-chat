@@ -11,7 +11,6 @@ export const SCHEDULED_TASK_CREATE_DEFAULT_VALUES: Readonly<ScheduledTaskCreateF
     repeat: ScheduledTaskRepeat.Daily,
     time: '09:00',
     minute: '0',
-    everyWeeks: '1',
     startDate: undefined,
     endDate: undefined,
     modelId: '',
