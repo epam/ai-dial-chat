@@ -288,8 +288,8 @@ its parent gives it, with the list scrolling inside.
 
 ### Pinned projects
 
-`pinnedProjects` (on `ConversationList` and `ConversationListSection`) renders
-host-supplied project trees at the top of the Pinned group, before the pinned
+`pinnedProjects` (on `ConversationList`, `ConversationListSection` and
+`ConversationPanel`) renders host-supplied project trees at the top of the Pinned group, before the pinned
 conversations. The list does not trim, sort or fetch: each project renders as a
 project row (briefcase icon, name, ⋮ actions), one nested `Indicator` row per
 conversation in the given order, and a See all row when `hasMore` is set. The
@@ -374,6 +374,29 @@ const pinnedProjects: PinnedProjects = {
   `labels.seeAllAriaLabel(name)` (default `` `See all chats in ${name}` ``),
   its visible text `labels.seeAllLabel` (default `'See all'`). A row focused
   with the keyboard is tinted like a hovered one.
+
+In `ConversationPanel` the prop works the same way: the panel forwards it, and
+`labels.seeAllLabel` and `labels.seeAllAriaLabel`, to its list, and its own
+search field and filter chips drive the list's `searchQuery` and
+`activeFilter`, so they filter the project trees as above. The panel is
+memoized: pass a referentially stable `pinnedProjects` object and
+`seeAllAriaLabel` (for example from `useMemo` and `useCallback`), or it
+re-renders on every host render.
+
+```tsx
+<ConversationPanel
+  conversations={conversations}
+  isOpen={isPanelOpen}
+  onSelectConversation={openConversation}
+  onNewChat={handleNewChat}
+  pinnedProjects={pinnedProjects}
+  labels={{
+    ...panelLabels,
+    seeAllLabel: 'See all',
+    seeAllAriaLabel: (name) => `See all chats in ${name}`,
+  }}
+/>
+```
 
 ### Corner radii
 
