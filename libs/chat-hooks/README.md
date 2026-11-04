@@ -845,10 +845,20 @@ const { status, connect, connected, schedulerServiceConsent, refetch } =
 
 ```tsx
 // ./sharing
-import { useShareRecipientsCount } from '@epam/ai-dial-chat-hooks/sharing';
+import {
+  useAcceptShareInvitation,
+  useShareRecipientsCount,
+} from '@epam/ai-dial-chat-hooks/sharing';
 
 const { requestRecipientsCount, getRecipientsCount } =
   useShareRecipientsCount(shareApi);
+
+useAcceptShareInvitation({
+  invitationId,
+  acceptInvitation,
+  onAccepted,
+  onError,
+});
 ```
 
 ```tsx
@@ -1570,6 +1580,64 @@ const RevokeAccessMenuItem = ({
 | `invalidateRecipientsCount` | `(itemId: string) => void`                 | Drops the resource's cached result so the next request fetches again. |
 
 `RecipientsCountEntry.status` is a `RecipientsCountStatus` of `Idle` / `Loading` / `Resolved` / `Unknown` (`Unknown` on a failed lookup, so a "Revoke access" action stays reachable without a number).
+
+### useAcceptShareInvitation
+
+Accept flow for the landing route of an opened share link. Accepts the invitation once per mount, awaits `refreshLists`, then hands the backend-resolved summaries to `onSharedItem` (model, application or toolset) and `onSharedSkill`, and finally calls `onAccepted`. The summaries are merged after the refresh, never before or in parallel, so a stale bulk list that does not yet reflect the share cannot overwrite them. Any failure — the accept, the refresh or a callback — reaches `onError` already classified by `resolveAcceptShareInvitationError`. Callbacks are read at call time, so new identities never re-run the accept. The hook takes an already-configured `acceptInvitation` function and owns no routing, notification or copy: the host navigates, shows the notification and passes translated `labels`. Available from the root and from `@epam/ai-dial-chat-hooks/sharing`.
+
+```tsx
+import { useAcceptShareInvitation } from '@epam/ai-dial-chat-hooks/sharing';
+
+useAcceptShareInvitation({
+  invitationId,
+  acceptInvitation: (id) => shareApi.acceptInvitation({ invitationId: id }),
+  refreshLists: () => Promise.all([refetchDeployments(), refetchSkills()]),
+  onSharedItem: mergeSharedItem,
+  onSharedSkill: mergeSharedSkill,
+  onAccepted: ({ itemId }) =>
+    navigate(`/catalog?itemId=${encodeURIComponent(itemId)}`),
+  onError: ({ message, requestId }) => {
+    showErrorNotification({ message, requestId });
+    navigate('/catalog');
+  },
+});
+```
+
+**Parameters** (`UseAcceptShareInvitationOptions`):
+
+| Name               | Type                                                             | Description                                                                                 |
+| ------------------ | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `invitationId`     | `string \| undefined`                                            | Invitation id from the link; nothing is accepted while it is `undefined`.                   |
+| `acceptInvitation` | `(invitationId: string) => Promise<AcceptInvitationResponseDto>` | Already-configured accept call.                                                             |
+| `refreshLists`     | `(response) => Promise<unknown>`                                 | Optional. Refreshes the host's lists before the summaries are merged; skipped when omitted. |
+| `onSharedItem`     | `(item: DeploymentItemDto \| DialToolsetDto) => void`            | Optional. Receives `sharedDeployment ?? sharedToolset` when the backend resolved one.       |
+| `onSharedSkill`    | `(skill: SkillMetadataItemDto) => void`                          | Optional. Receives `sharedSkill` when the backend resolved one.                             |
+| `onAccepted`       | `(response: AcceptInvitationResponseDto) => void`                | Called last on success.                                                                     |
+| `onError`          | `(error: AcceptShareInvitationError) => void`                    | Called with the classified failure.                                                         |
+| `labels`           | `Partial<AcceptShareInvitationErrorLabels>`                      | Optional. Failure sentences; defaults to `DEFAULT_ACCEPT_SHARE_INVITATION_ERROR_LABELS`.    |
+
+**Returns**: nothing.
+
+### resolveAcceptShareInvitationError
+
+`resolveAcceptShareInvitationError(error, labels?)` classifies a failed accept into an `AcceptShareInvitationError` — `{ kind, message, requestId?, itemName?, cause }`. `kind` is an `AcceptShareInvitationErrorKind`:
+
+| Member              | When                                                                          | `message`                                                                  | `requestId` |
+| ------------------- | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ----------- |
+| `NotFound`          | `code` is `ShareInvitationErrorCode.ShareInvitationNotFound`                  | `labels.notFound`                                                          | never       |
+| `UsersLimitReached` | `code` is `ShareInvitationErrorCode.ShareInvitationAcceptedUsersLimitReached` | `labels.usersLimitReached(itemName)`, or `labels.usersLimitReachedUnnamed` | never       |
+| `Failed`            | anything else                                                                 | the API or `Error` message, or `labels.acceptError`                        | trace id    |
+
+Expired and over-the-limit links are expected outcomes, so they carry no Request ID. `DEFAULT_ACCEPT_SHARE_INVITATION_ERROR_LABELS` holds the English defaults (`notFound`, `usersLimitReached`, `usersLimitReachedUnnamed`, `acceptError`). Available from the root and `./sharing`.
+
+```ts
+import { resolveAcceptShareInvitationError } from '@epam/ai-dial-chat-hooks/sharing';
+
+const { kind, message, requestId } = await resolveAcceptShareInvitationError(
+  error,
+  labels,
+);
+```
 
 ### useAttachmentUpload
 
@@ -3330,7 +3398,8 @@ text stays with the host.
 a refused `acceptInvitation` call carries in its `AcceptInvitationErrorDto` body,
 or `undefined` when the error is not a `ResponseError`, the body is not JSON or
 the title is empty. The response is cloned, so the body stays readable. Available
-from the root and `./utils`.
+from the root and `./utils`. `resolveAcceptShareInvitationError` (see
+[useAcceptShareInvitation](#useacceptshareinvitation)) already calls it.
 
 ```ts
 import { getAcceptInvitationErrorItemName } from '@epam/ai-dial-chat-hooks';

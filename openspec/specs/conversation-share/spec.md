@@ -204,6 +204,8 @@ The frontend SHALL register `ROUTES.ConversationSharedInvitation = '/conversatio
 
 `SharedInvitationPage` (`apps/chat/src/pages/SharedInvitation/SharedInvitation.tsx`) SHALL accept optional `getTargetRoute?: (itemId: string) => string` and `errorFallbackRoute?: string` props, defaulting to the existing catalog behavior (`${ROUTES.Catalog}?itemId=...` / `ROUTES.Catalog`) so no existing catalog-invitation behavior changes. A new `ConversationSharedInvitationPage` (`apps/chat/src/pages/ConversationSharedInvitation/`) SHALL render `SharedInvitationPage` with `getTargetRoute={getConversationRoute}` and `errorFallbackRoute={ROUTES.Root}`.
 
+The accept-once flow and its error classification SHALL live in `libs/chat-hooks` as `useAcceptShareInvitation` and `resolveAcceptShareInvitationError` (`libs/chat-hooks/src/share-invitation/`, exported from the root and `@epam/ai-dial-chat-hooks/sharing`). `SharedInvitationPage` SHALL stay a thin adapter that passes the server-api `acceptInvitation`, the catalog-list refresh, the context merge callbacks, translated labels, and the navigate/notification side effects into that hook.
+
 #### Scenario: Conversation share link routes to the conversation accept page
 
 - **WHEN** `ShareInvitationService.createShareLink` is called with a conversation `itemId` (starting with `conversations/`)
