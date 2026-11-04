@@ -261,6 +261,14 @@ export class ClientConfigDto {
 
   @ApiProperty({
     description:
+      "Additional content locales (canonical BCP-47 tags) a toolset's or application's Name/Description can be translated into. Sourced from ADDITIONAL_CONTENT_LOCALES, or the deprecated AVAILABLE_LOCALES when that is absent; empty when neither is set. May include the primary locale, which the client drops.",
+    type: [String],
+    example: ['de', 'fr-FR'],
+  })
+  additionalContentLocales!: string[];
+
+  @ApiProperty({
+    description:
       'Maximum attachment/upload file size in bytes. Sourced from FILE_UPLOAD_MAX_BYTES — the same variable that bounds the POST /api/v1/files Multer limit — so the client can reject an oversized file before attempting to upload it.',
     example: 536870912,
   })

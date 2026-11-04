@@ -105,6 +105,8 @@ vi.mock('@epam/ai-dial-toolset-editor', async (importOriginal) => {
       signal: AbortSignal,
     ) => Promise<string>;
     listToolNames?: (toolsetId: string) => Promise<string[]>;
+    availableLocaleOptions?: { code: string; label: string }[];
+    formatLocaleLabel?: (code: string) => string;
     onPersist: (
       form: { name: string },
       toolsetId: string,
@@ -142,6 +144,12 @@ vi.mock('@epam/ai-dial-toolset-editor', async (importOriginal) => {
         <span>{props.toolsetId}</span>
         <span>{props.onOAuthLogin ? 'oauth-handler' : 'no-oauth-handler'}</span>
         <span>{props.labels?.layout?.createLabel}</span>
+        {props.availableLocaleOptions?.map(({ code, label }) => (
+          <span key={code}>{`locale-option-${code}-${label}`}</span>
+        ))}
+        {props.formatLocaleLabel && (
+          <span>{`retained-label-${props.formatLocaleLabel('it')}`}</span>
+        )}
         {props.onRefineDescription && (
           <button
             type="button"
@@ -255,6 +263,7 @@ const mockRefineText = vi.fn();
 const mockAppConfig = {
   dialCoreExternalUrl: 'https://dial-core.example.com',
   aiTextRefinementAvailable: false,
+  additionalContentLocales: [] as string[],
 };
 
 const NEW_TOOLSET_ID = 'toolsets/b/my__0.0.1';
@@ -304,6 +313,29 @@ describe('ApplicationEditorPage — toolset', () => {
     );
     mockAppConfig.dialCoreExternalUrl = 'https://dial-core.example.com';
     mockAppConfig.aiTextRefinementAvailable = false;
+    mockAppConfig.additionalContentLocales = [];
+  });
+
+  it('offers the configured content locales without the primary one', async () => {
+    mockAppConfig.additionalContentLocales = ['en', 'de'];
+    renderPage();
+
+    expect(await screen.findByText('locale-option-de-Deutsch')).toBeTruthy();
+    expect(screen.queryByText(/locale-option-en-/)).toBeNull();
+  });
+
+  it('names a stored but unconfigured locale through its language name', async () => {
+    mockAppConfig.additionalContentLocales = ['de'];
+    renderPage();
+
+    expect(await screen.findByText('retained-label-italiano')).toBeTruthy();
+  });
+
+  it('offers no content locales when none are configured', async () => {
+    renderPage();
+
+    await screen.findByRole('button', { name: 'adapter-persist' });
+    expect(screen.queryByText(/locale-option-/)).toBeNull();
   });
 
   it('omits description refinement when the capability is unavailable', async () => {

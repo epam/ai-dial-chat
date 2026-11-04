@@ -3227,16 +3227,19 @@ resolveLocalizedText({ en: 'Name', fr: 'Nom' }, 'fr-FR', 'en'); // 'Nom'
 
 ### composeLocalePayload / decomposeLocalizedFields / buildAdditionalLocaleOptions
 
-Round-trips a deployment-creation form's "Add locale" popup entries against DIAL Core's `LocaleTextEntryDto[]` write payload, and builds the popup's selectable locale options.
+Round-trips a deployment-creation form's "Add locale" popup entries against DIAL Core's `LocaleTextEntryDto[]` write payload, and builds the popup's selectable locale options. `buildAdditionalLocaleOptions(codes, primaryLocale, formatLabel?)` drops the exact `primaryLocale` match (so `en-GB` stays next to `en`) and labels each option with `formatLabel`, which defaults to `code.toUpperCase()`. The host supplies the codes and any language-name resolver; the lib reads no configuration.
 
 ```ts
 import {
+  buildAdditionalLocaleOptions,
   composeLocalePayload,
   decomposeLocalizedFields,
 } from '@epam/ai-dial-chat-hooks';
 
 const payload = composeLocalePayload(otherLocales, 'en'); // LocaleTextEntryDto[] | undefined
 const rows = decomposeLocalizedFields(displayName, description, 'en');
+const options = buildAdditionalLocaleOptions(['en', 'de'], 'en'); // [{ code: 'de', label: 'DE' }]
+const named = buildAdditionalLocaleOptions(['de'], 'en', resolveLanguageName);
 ```
 
 ## Shared Utilities

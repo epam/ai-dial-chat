@@ -524,6 +524,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'PUBLICATION_FILTER_SOURCES',
   },
   {
+    key: 'content.additionalLocales',
+    type: 'config',
+    valueType: 'json',
+    visibility: 'client',
+    defaultValue: [],
+    critical: false,
+    description:
+      "Additional content locales (BCP-47 tags) a toolset's or application's Name/Description can be translated into. Sourced from ADDITIONAL_CONTENT_LOCALES (comma-separated); when that is absent, the deprecated AVAILABLE_LOCALES is read. Canonicalised and de-duplicated; the frontend drops the primary locale.",
+    owner: 'chat-team',
+    envVar: 'ADDITIONAL_CONTENT_LOCALES',
+  },
+  {
     key: 'attachments.maxFileSizeBytes',
     type: 'config',
     valueType: 'number',

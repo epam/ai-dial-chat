@@ -116,6 +116,7 @@ const ToolsetEditorPage = () => {
       onNotifyError={(message, requestId) => showError(message, requestId)}
       avatarPicker={avatarPicker}
       availableLocaleOptions={localeOptions}
+      formatLocaleLabel={resolveLanguageName}
       labels={labels}
     />
   );
@@ -123,6 +124,8 @@ const ToolsetEditorPage = () => {
 ```
 
 `avatarPicker` is a `MetadataFormAvatarPicker` from `@epam/ai-dial-builder-form` — the same object `MetadataForm` takes: the user's `bucket`, the host `FileManagerModal`, `resolveIconUrl`, `allowedMimeTypes`, `maxFileSizeBytes`, and `resolveAttachedIconUrl`, which turns the picked file into the stored icon URL. The editor passes it to `MetadataForm` unchanged and never builds a DIAL file path itself.
+
+`availableLocaleOptions` and the optional `formatLocaleLabel` are forwarded to `MetadataForm` unchanged. `formatLocaleLabel` names a stored locale code that is not among the options (default `code.toUpperCase()`); see `DeploymentLocalesField` in `@epam/ai-dial-builder-form`.
 
 `initialForm` re-seeds the editor whenever its object identity changes, so a
 host that loads asynchronously should memoize it and produce a new object only
