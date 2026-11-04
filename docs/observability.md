@@ -231,7 +231,8 @@ and its population/boundary differs from the raw HTTP listener. All three phases
 together, including zero Core time for requests without Core calls; `total = core + chat`.
 
 The [Core observer](../apps/chat-api/src/telemetry/core-request-timing.ts) tags the shared
-`DialClientService.fetchCore` transport, including SDK calls and direct Core escape hatches.
+`DialClientService.fetchCore` transport, including SDK calls and direct Core escape hatches, and
+the `DialClientService.uploadCore` transport used for streamed file uploads.
 Undici request creation starts an interval; body completion or error ends it. This includes
 client queueing/connection establishment and transfer, not just the wait for headers.
 Failures before request creation accrue no Core interval. Other upstream fetches are excluded.
