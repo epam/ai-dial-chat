@@ -21,6 +21,7 @@ import archiver from 'archiver';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../../../config/environment.config';
 import type { DialClientService } from '../../../dial/dial-client.service';
+import { UploadMode } from '../../types/upload-mode.enum';
 import { FilesUploadService } from '../../upload/files-upload.service';
 import { UPLOAD_RESPONSE_TIMEOUT_MS } from '../../upload/upload-watchdog';
 
@@ -396,7 +397,7 @@ describe('FilesUploadService', () => {
       const { service, fetchCore } = makeService();
       fetchCore.mockImplementation(respondWith(201));
 
-      await service.uploadFile('b', 'p', mockFile, 't', 'overwrite');
+      await service.uploadFile('b', 'p', mockFile, 't', UploadMode.Overwrite);
 
       expect(putCall(fetchCore).headers).not.toHaveProperty('If-None-Match');
     });
@@ -414,7 +415,7 @@ describe('FilesUploadService', () => {
       const { service, fetchCore } = makeService();
       fetchCore.mockImplementation(respondWith(201));
 
-      await service.uploadFile('b', 'p', mockFile, 't', 'create-only');
+      await service.uploadFile('b', 'p', mockFile, 't', UploadMode.CreateOnly);
 
       expect(putCall(fetchCore).headers).toMatchObject({
         'If-None-Match': '*',
@@ -426,7 +427,7 @@ describe('FilesUploadService', () => {
       fetchCore.mockImplementation(respondWith(412));
 
       const error = await service
-        .uploadFile('b', 'p', mockFile, 't', 'create-only')
+        .uploadFile('b', 'p', mockFile, 't', UploadMode.CreateOnly)
         .catch((err: unknown) => err);
 
       expect(error).toBeInstanceOf(HttpException);
@@ -478,7 +479,7 @@ describe('FilesUploadService', () => {
             originalname: 'big file.csv',
           },
           'tok',
-          'create-only',
+          UploadMode.CreateOnly,
         );
 
         expect(result).toEqual({ url: 'files/bucket/dir/big file.csv' });
@@ -679,7 +680,7 @@ describe('FilesUploadService', () => {
               'p',
               streamedFile(PATTERN),
               't',
-              'create-only',
+              UploadMode.CreateOnly,
             ),
           ).rejects.toThrow(error);
         },
