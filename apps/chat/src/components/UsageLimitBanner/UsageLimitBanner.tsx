@@ -1,5 +1,6 @@
 import { useUsageLimitBanner } from '@epam/ai-dial-chat-hooks';
 import { UsageLimitBannerView } from '@epam/ai-dial-conversation-input';
+import { LiveRegion } from '@epam/ai-dial-ui-kit';
 import { type FC, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '../../context/AppConfigContext';
@@ -38,11 +39,14 @@ const UsageLimitBanner: FC<Props> = ({
     t,
   });
 
-  if (banner == null) {
-    return null;
-  }
-
-  return <UsageLimitBannerView {...banner} />;
+  /* Always mounted, so a banner that appears after streaming is announced; empty, it takes no space. */
+  return (
+    <LiveRegion>
+      {banner != null && (
+        <UsageLimitBannerView {...banner} isLiveRegion={false} />
+      )}
+    </LiveRegion>
+  );
 };
 
 export default memo(UsageLimitBanner);

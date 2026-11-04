@@ -7,31 +7,31 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AppConfigService } from '../app-config/app-config.service';
-import { FeatureKey } from '../app-config/feature-flags/feature-key.enum';
+import { AppConfigService } from '../../app-config/app-config.service';
+import { FeatureKey } from '../../app-config/feature-flags/feature-key.enum';
 import {
   extractDialErrorMessage,
   handleDialFetchError,
   mapDialHttpStatus,
-} from '../common/dial/dial-error.mapper';
+} from '../../common/dial/dial-error.mapper';
 import {
   getApiKeyAuthHeaders,
   getBearerAuthHeaders,
-} from '../common/utils/auth-header';
-import { resolvePrompt } from '../common/utils/resolve-prompt';
-import { EnvironmentVariables } from '../config/environment.config';
-import { DialClientService } from '../dial/dial-client.service';
-import { ConversationResponseDto } from '../openapi/openapi-response.dto';
-import { parseProjectConversationLocator } from '../projects/utils/project-conversation-id.util';
-import { ConversationReadStateService } from '../scheduled-task-unread/conversation-read-state.service';
+} from '../../common/utils/auth-header';
+import { resolvePrompt } from '../../common/utils/resolve-prompt';
+import { EnvironmentVariables } from '../../config/environment.config';
+import { DialClientService } from '../../dial/dial-client.service';
+import { ConversationResponseDto } from '../../openapi/openapi-response.dto';
+import { parseProjectConversationLocator } from '../../projects/utils/project-conversation-id.util';
+import { ConversationReadStateService } from '../../scheduled-task-unread/conversation-read-state.service';
 import {
   ConditionalUpdateStatus,
   CONVERSATION_PERSISTENCE,
   type ConversationPersistencePort,
-} from './conversation-persistence.port';
-import { ConversationMessageRole } from './dto/conversation-message.dto';
-import { CONVERSATION_NAMING_SYSTEM_PROMPT } from './prompts/conversation-naming.prompt';
-import { prepareEntityName } from './utils/conversation.utils';
+} from '../conversation-persistence.port';
+import { ConversationMessageRole } from '../dto/conversation-message.dto';
+import { CONVERSATION_NAMING_SYSTEM_PROMPT } from '../prompts/conversation-naming.prompt';
+import { prepareEntityName } from '../utils/conversation.utils';
 
 const SERVER_APP_CONFIG_CONTEXT = { appId: 'chat-api' };
 

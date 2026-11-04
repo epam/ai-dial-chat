@@ -13,12 +13,6 @@ import type { EnvironmentVariables } from '../../config/environment.config';
 import { DeploymentsService } from '../../deployments/deployments.service';
 import { DialClientService } from '../../dial/dial-client.service';
 import type { ConversationResponseDto } from '../../openapi/openapi-response.dto';
-import {
-  ConversationGenerationService,
-  GenerationCancelReason,
-  GenerationStatus,
-  type GenerationLease,
-} from '../conversation-generation.service';
 import type { VersionedConversation } from '../conversation-persistence.port';
 import {
   ConversationMessageDto,
@@ -39,6 +33,12 @@ import {
   type StoredMessage,
 } from '../generation/background-message';
 import { ChatCompletionsAdapter } from '../generation/chat-completions.adapter';
+import {
+  ConversationGenerationService,
+  GenerationCancelReason,
+  GenerationStatus,
+  type GenerationLease,
+} from '../generation/conversation-generation.service';
 import { GenerationApi } from '../generation/generation-api';
 import { GenerationApiSelector } from '../generation/generation-api-selector.service';
 import {
@@ -365,6 +365,7 @@ export class ConversationStreamingService {
     sub: string,
     clientChannelId?: string,
     timezone?: string,
+    lang?: string,
     jobTitle?: string,
   ): AsyncGenerator<Uint8Array | string, void, void> {
     this.logger.debug(
@@ -494,6 +495,7 @@ export class ConversationStreamingService {
           onReadyToStream,
           clientChannelId,
           timezone,
+          lang,
           jobTitle,
           storedConversation,
         });
@@ -664,31 +666,32 @@ export class ConversationStreamingService {
               assembledMessage,
               clientChannelId,
               timezone,
+              lang,
               timing,
               startConversation.id,
               publishChunk,
               jobTitle,
               { extraHeaders: buildProjectHeadersForPath(conversationPath) },
             )
-          : this.chatCompletionsAdapter.stream(
+          : this.chatCompletionsAdapter.stream({
               model,
-              this.chatCompletionsAdapter.buildRequest({
+              requestBody: this.chatCompletionsAdapter.buildRequest({
                 startConversation,
                 messagesForCompletion,
                 temperatureSupported,
                 configuration,
               }),
               token,
-              lease.abortController.signal,
-              assembledMessage,
-              clientChannelId,
-              timezone,
+              signal: lease.abortController.signal,
+              initialAssembledMessage: assembledMessage,
+              context: { clientChannelId, timezone, lang, jobTitle },
               timing,
-              startConversation.id,
-              publishChunk,
-              jobTitle,
-              { extraHeaders: buildProjectHeadersForPath(conversationPath) },
-            );
+              conversationId: startConversation.id,
+              onChunkApplied: publishChunk,
+              options: {
+                extraHeaders: buildProjectHeadersForPath(conversationPath),
+              },
+            });
     }
     let relayCompletedNormally = false;
     try {
@@ -782,7 +785,7 @@ export class ConversationStreamingService {
        * terminal outcome — e.g. an unexpected exception unwinding this
        * generator between a `yield` and the next `relayIterator.next()`
        * call. This is NOT reached merely because the downstream HTTP
-       * response closed: `ConversationController.streamCompletion` keeps
+       * response closed: `ConversationGenerationController.streamCompletion` keeps
        * consuming this generator after disconnect (see
        * backend-owned-generation-persistence — a completion's generation is
        * independent of the originating browser connection), so a closed

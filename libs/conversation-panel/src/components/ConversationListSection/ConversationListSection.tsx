@@ -28,6 +28,7 @@ export const ConversationListSection: FC<ConversationListSectionProps> = memo(
     onActionMenuOpen,
     onMoveConversation,
     onVisibleConversationIdsChange,
+    pinnedProjects,
     styles,
     listClassName,
     className,
@@ -136,6 +137,7 @@ export const ConversationListSection: FC<ConversationListSectionProps> = memo(
             onActionMenuOpen={onActionMenuOpen}
             onMoveConversation={onMoveConversation}
             onVisibleConversationIdsChange={onVisibleConversationIdsChange}
+            pinnedProjects={pinnedProjects}
             styles={styles?.list}
             className={listClassName}
           />

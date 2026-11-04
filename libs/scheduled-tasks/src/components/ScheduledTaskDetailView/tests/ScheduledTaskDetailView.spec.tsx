@@ -766,7 +766,11 @@ describe('ScheduledTaskDetailView', () => {
       />,
     );
 
-    expect(screen.getByText('Failed to load history')).toBeTruthy();
+    expect(
+      screen
+        .getAllByRole('status')
+        .some((region) => region.textContent === 'Failed to load history'),
+    ).toBe(true);
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(onRunsRetry).toHaveBeenCalledOnce();
   });

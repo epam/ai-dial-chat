@@ -18,7 +18,8 @@ apps/chat-api/src/
 │   ├── app.controller.ts
 │   └── app.service.ts
 ├── config/
-│   ├── environment.config.ts     # EnvironmentVariables class-validator schema
+│   ├── env/                      # one class-validator class per domain (<domain>.env.ts)
+│   ├── environment.config.ts     # EnvironmentVariables = IntersectionType of the env/ classes
 │   └── validation.ts             # validate() used by ConfigModule.forRoot
 ├── common/
 │   └── interceptors/             # cross-cutting: metrics, logging
@@ -59,7 +60,7 @@ Reference files (read these before adding new code):
 - Service pattern → `apps/chat-api/src/themes/theme.service.ts`
 - DIAL SDK client pattern → `apps/chat-api/src/app/app.service.ts`
 - DTO pattern → `apps/chat-api/src/themes/dto/get-theme-icon.dto.ts`
-- Env validation → `apps/chat-api/src/config/environment.config.ts` + `validation.ts`
+- Env validation → `apps/chat-api/src/config/env/*.env.ts` (declarations), `environment.config.ts` (composition) + `validation.ts`
 - Health check → `apps/chat-api/src/health/health.controller.ts`
 
 ---
@@ -317,8 +318,14 @@ throw new HttpException('Oops', 500);      // ❌ generic — use a typed except
 
 ## 7. Environment & Configuration
 
-- All env vars MUST be declared on the `EnvironmentVariables` class in
-  `apps/chat-api/src/config/environment.config.ts`.
+- All env vars MUST be declared on their domain class in
+  `apps/chat-api/src/config/env/<domain>.env.ts`; `EnvironmentVariables` in
+  `apps/chat-api/src/config/environment.config.ts` composes those classes with
+  `IntersectionType` and itself declares only the celebration (`UI_EVENT*`)
+  vars, which stay there unchanged while that feature is under development
+  (`.claude/skills/refactoring-audit/SKILL.md` "Excluded areas"). A new domain gets its own
+  `<domain>.env.ts`, added to that composition. Add the name to the snapshot in
+  `config/tests/environment-composition.spec.ts` in the same change.
 - Each field has at least one `class-validator` decorator. URL fields use
   `@IsUrl({ require_tld: false })`. Numeric fields use `@Transform(({ value }) =>
 parseInt(value, 10))` + `@IsNumber()`.

@@ -31,6 +31,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
     DIAL_KIT_ICON_STROKE: 1.5,
     DIAL_ICON_SIZE: { SM: 16 },
     MenuItemMark: { None: 'none', Check: 'check', Checkbox: 'checkbox' },
+    DropdownOverlayRole: { Menu: 'menu', Dialog: 'dialog', None: 'none' },
     /* Mirrors the kit row's contract: the row is the button that carries the
      role and aria-checked, and the checkbox box is decorative. */
     MenuItem: ({

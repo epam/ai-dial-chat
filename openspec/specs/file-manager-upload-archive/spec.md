@@ -10,9 +10,9 @@ The archive-upload endpoint with zip-slip validation and server-side conflict re
 
 The BFF SHALL expose `POST /api/v1/files/upload-archive` (multipart/form-data) that accepts a ZIP archive and a destination, streams-extracts its entries via `yauzl`, and uploads each valid entry to DIAL Core using the create-only contract. If DIAL Core reports a name collision for an entry, the service SHALL retry that same entry with a deduplicated sibling name (`name (1).ext`, `name (2).ext`, etc.) until the upload succeeds or the retry limit is reached. The endpoint returns a per-entry result array with the final uploaded path for successful entries.
 
-The file-count limit SHALL be enforced before extraction/upload starts. `FilesUploadService` SHALL enumerate ZIP central-directory metadata and count non-directory entries before opening any entry read stream, staging entry bytes, or calling DIAL Core upload. Before that count, if the archive's total entry count (directories included) exceeds `ARCHIVE_UPLOAD_MAX_FILES * 10`, the endpoint SHALL fail with `422 Unprocessable Entity` and the message `Archive contains too many entries` (directory-entry amplification guard). If the non-directory count exceeds `ARCHIVE_UPLOAD_MAX_FILES`, the endpoint SHALL fail with `422 Unprocessable Entity`, return the message `Archive contains more than {maxFiles} files`, and attempt zero entry uploads. This all-or-nothing rule applies only to the file-count limit; the uncompressed-size limit remains a mid-extraction guard and may leave entries uploaded before the abort.
+The file-count limit SHALL be enforced before extraction/upload starts. `FilesArchiveUploadService` SHALL enumerate ZIP central-directory metadata and count non-directory entries before opening any entry read stream, staging entry bytes, or calling DIAL Core upload. Before that count, if the archive's total entry count (directories included) exceeds `ARCHIVE_UPLOAD_MAX_FILES * 10`, the endpoint SHALL fail with `422 Unprocessable Entity` and the message `Archive contains too many entries` (directory-entry amplification guard). If the non-directory count exceeds `ARCHIVE_UPLOAD_MAX_FILES`, the endpoint SHALL fail with `422 Unprocessable Entity`, return the message `Archive contains more than {maxFiles} files`, and attempt zero entry uploads. This all-or-nothing rule applies only to the file-count limit; the uncompressed-size limit remains a mid-extraction guard and may leave entries uploaded before the abort.
 
-**State ownership**: `FilesUploadService` (`apps/chat-api/src/files/upload/files-upload.service.ts`) owns all extraction/upload logic, including single-file upload (`uploadFile`, `uploadFileStream`) and archive extraction (`extractAndUploadArchive` and its temp-file staging helpers); `FilesController` delegates through the `FilesService` facade (thin-controller pattern).
+**State ownership**: `FilesArchiveUploadService` (`apps/chat-api/src/files/upload/files-archive-upload.service.ts`) owns archive extraction (`uploadArchive`, `extractAndUploadArchive` and its temp-file staging and conflict-renaming helpers), with its dependency-free path and name helpers in `apps/chat-api/src/files/upload/archive-upload.ts`; every entry is uploaded through the single-file transport `FilesUploadService.uploadFileStream` (`apps/chat-api/src/files/upload/files-upload.service.ts`), which also serves `uploadFile`; `FilesController` delegates through the `FilesService` facade (thin-controller pattern).
 
 **Authorization**: session cookie → `req.user.at`, identical to `POST /api/v1/files`. Core enforces WRITE permission on the destination per entry, surfaced as a per-entry `"Forbidden"` result (matching how `/copy`/`/move` surface per-item Core-side authorization failures).
 
@@ -74,7 +74,7 @@ uploadArchive(
 ): Promise<UploadArchiveResponseDto> // throws BadRequestException('file is required') when file is missing
 ```
 
-`FilesUploadService.uploadArchive` reads the staged archive by its `path` (not an in-memory buffer) and also rejects an empty `path` with `400 file is required`.
+`FilesArchiveUploadService.uploadArchive` reads the staged archive by its `path` (not an in-memory buffer) and also rejects an empty `path` with `400 file is required`.
 
 #### Generated-client impact
 
@@ -186,7 +186,7 @@ Every archive entry SHALL be rejected (recorded as a failed result, not extracte
 
 ### Requirement: Upload-archive observability
 
-`FilesUploadService` SHALL emit structured log lines at the start and end of `uploadArchive`, including `entryCount`, `successCount`, and `failedCount`. Log lines SHALL NOT include archive entry file names, file contents, or the destination path beyond what is already logged for ordinary uploads.
+`FilesArchiveUploadService` SHALL emit structured log lines at the start and end of `uploadArchive`, including `entryCount`, `successCount`, and `failedCount`. Log lines SHALL NOT include archive entry file names, file contents, or the destination path beyond what is already logged for ordinary uploads.
 
 #### Scenario: Upload-archive call logged on start and completion
 
@@ -301,3 +301,4 @@ Upload archive SHALL NOT be gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_
 
 - **WHEN** the standalone page has `actionProfile: Full`
 - **THEN** the upload-archive toolbar entry is available without checking any `ENABLED_FEATURES` entry
+

@@ -128,7 +128,7 @@ jobs:
     # `!= 'false'` rather than `== 'true'`: if `changes` itself fails, its
     # output is empty and the checks still run instead of silently skipping.
     if: ${{ !cancelled() && needs.changes.outputs.code != 'false' }}
-    uses: epam/ai-dial-ci/.github/workflows/node_pr.yml@4.13.1
+    uses: epam/ai-dial-ci/.github/workflows/node_pr.yml@4.13.2
     with:
       node-version: 24
       maximize-build-space: false

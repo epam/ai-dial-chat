@@ -18,6 +18,7 @@ const setCsrfToken = (token: string | null) => {
 describe('createChatStreamApi', () => {
   const fetchMock = vi.fn();
   let getTimezone: () => string | undefined;
+  let getLanguage: () => string | undefined;
 
   const makeApi = () =>
     createChatStreamApi({
@@ -25,6 +26,7 @@ describe('createChatStreamApi', () => {
       setCsrfToken,
       completionsBasePath: '/api/v1/conversations',
       getTimezone: () => getTimezone(),
+      getLanguage: () => getLanguage(),
       fetchImpl: fetchMock,
     });
 
@@ -32,6 +34,7 @@ describe('createChatStreamApi', () => {
     fetchMock.mockReset();
     csrfToken = null;
     getTimezone = () => undefined;
+    getLanguage = () => undefined;
   });
 
   afterEach(() => {
@@ -600,6 +603,50 @@ describe('createChatStreamApi', () => {
 
     const request = fetchMock.mock.calls[0]?.[1] as RequestInit;
     expect(new Headers(request.headers).has('X-Timezone')).toBe(false);
+  });
+
+  it('sends the current UI language with each completion request', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(emptyStream(), {
+        status: 200,
+        headers: { 'Content-Type': 'text/event-stream' },
+      }),
+    );
+    const languages = ['en', 'uk'];
+    let call = 0;
+    getLanguage = () => languages[call++];
+
+    await completeStreamRequest();
+    await completeStreamRequest();
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      '/api/v1/conversations/completions',
+      expect.objectContaining({
+        headers: expect.objectContaining({ 'X-Lang': 'en' }),
+      }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      '/api/v1/conversations/completions',
+      expect.objectContaining({
+        headers: expect.objectContaining({ 'X-Lang': 'uk' }),
+      }),
+    );
+  });
+
+  it('omits the language header when the resolver has no value', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(emptyStream(), {
+        status: 200,
+        headers: { 'Content-Type': 'text/event-stream' },
+      }),
+    );
+
+    await completeStreamRequest();
+
+    const request = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    expect(new Headers(request.headers).has('X-Lang')).toBe(false);
   });
 
   it('preserves CSRF and request body behavior when adding the timezone', async () => {

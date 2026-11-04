@@ -132,6 +132,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
     const liveName = cleanStageName(liveStage.name).name;
     summary = (
       <span
+        // eslint-disable-next-line no-restricted-syntax -- mounted with the first stage and kept for the whole stream; only the stage name inside it changes
         role="status"
         aria-live="polite"
         className="flex min-w-0 items-center gap-2"

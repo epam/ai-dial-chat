@@ -32,6 +32,7 @@ export * from './utils/message-attachment-to-display';
 export * from './utils/mime-type';
 export * from './utils/is-audio-transcription-supported';
 export * from './utils/copy-to-clipboard';
+export * from './utils/dom';
 export * from './utils/format-last-used';
 export * from './utils/format-file-size';
 export * from './utils/format-price';

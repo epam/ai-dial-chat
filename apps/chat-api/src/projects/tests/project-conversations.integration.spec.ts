@@ -12,8 +12,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FeatureGuard } from '../../app-config/feature-flags/feature.guard';
 import { AuthSource } from '../../auth/auth-source.enum';
 import type { SessionUser } from '../../auth/session/session.types';
-import { ConversationGenerationService } from '../../conversations/conversation-generation.service';
 import { ConversationService } from '../../conversations/conversation.service';
+import { ConversationGenerationService } from '../../conversations/generation/conversation-generation.service';
 import { ProjectConversationStore } from '../../conversations/persistence/project-conversation.store';
 import { ConversationCompletionsResponder } from '../../conversations/streaming/conversation-completions.responder';
 import { DialClientService } from '../../dial/dial-client.service';
@@ -370,6 +370,7 @@ describe('ProjectConversationsController (integration)', () => {
       OWNER_KEY,
       expect.any(Function),
       USER.sub,
+      undefined,
       undefined,
       undefined,
       undefined,

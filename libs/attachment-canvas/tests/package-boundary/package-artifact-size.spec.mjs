@@ -80,8 +80,11 @@ describe('publish-ready package artifact size', () => {
      * `jsonCollapsedClassName`, `errorMessageClassName`, `CodeContent`/`PdfContent`/
      * `LazyContentBoundary` class props) plus their README lines; measured at 246,709.
      * Raised from 247_500: Retry for a failed file load (`onRetry`, `retryCanvas`,
-     * `loadErrorRetryLabel`) plus its README paragraph; measured at 248,632. */
-    expect(artifact.unpackedSize).toBeLessThanOrEqual(249_500);
+     * `loadErrorRetryLabel`) plus its README paragraph; measured at 248,632.
+     * Raised from 249_500: always-mounted `LiveRegion`s for load failures (LazyContentBoundary split
+     * into a region-owning wrapper and an inner error catcher, PdfContent, MCP App, visualizer and
+     * OOXML overlays); measured at 249,691. */
+    expect(artifact.unpackedSize).toBeLessThanOrEqual(250_500);
   });
 
   it('contains no private OOXML renderer or worker chunks', () => {

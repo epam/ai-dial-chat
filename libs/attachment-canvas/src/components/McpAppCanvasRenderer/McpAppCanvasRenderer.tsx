@@ -1,5 +1,9 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_KIT_ICON_STROKE, Spinner } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_KIT_ICON_STROKE,
+  LiveRegion,
+  Spinner,
+} from '@epam/ai-dial-ui-kit';
 import { AppFrame } from '@mcp-ui/client';
 import type { Implementation } from '@modelcontextprotocol/sdk/types.js';
 import { IconAlertTriangle } from '@tabler/icons-react';
@@ -141,6 +145,10 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
           <Spinner />
         </div>
       )}
+      {/* Mounted before the overlay so the failure is announced when it appears. */}
+      <LiveRegion visuallyHidden>
+        {isErrored && [errorLabel, errorDetail].filter(Boolean).join('. ')}
+      </LiveRegion>
       {isErrored && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4">
           <IconAlertTriangle
@@ -150,7 +158,7 @@ export const McpAppCanvasRenderer: FC<McpAppCanvasRendererProps> = ({
             className={styles.errorIcon}
           />
           <p
-            role="status"
+            aria-hidden
             className={mergeClasses('text-center', styles.statusLabel)}
           >
             {errorLabel}

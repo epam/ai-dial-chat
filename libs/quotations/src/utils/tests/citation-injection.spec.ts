@@ -246,6 +246,40 @@ describe('replaceCitTagsWithSourceNames', () => {
     ).toBe('own.pdf other.pdf');
   });
 
+  it('replaces a resolved cit element with the formatLabel output when provided', () => {
+    expect(
+      replaceCitTagsWithSourceNames(
+        '555 <cit data-id="e1"></cit>',
+        [makeCitGroup('e1')],
+        [],
+        (group) => `${group.sourceName}, p. 1`,
+      ),
+    ).toBe('555 doc.pdf, p. 1');
+  });
+
+  it('escapes Markdown syntax in the formatLabel output', () => {
+    expect(
+      replaceCitTagsWithSourceNames(
+        '<cit data-id="e1"></cit>',
+        [makeCitGroup('e1')],
+        [],
+        () => 'a|b_c.pdf, p. 1',
+      ),
+    ).toBe(String.raw`a\|b\_c.pdf, p. 1`);
+  });
+
+  it('leaves an unresolved cit element untouched when formatLabel is provided', () => {
+    const content = 'See <cit data-id="missing"></cit>.';
+    expect(
+      replaceCitTagsWithSourceNames(
+        content,
+        [makeCitGroup('e1')],
+        [],
+        () => 'unused',
+      ),
+    ).toBe(content);
+  });
+
   it('ignores offset-based groups', () => {
     const content = 'Text <cit data-id="e1"></cit>';
     expect(replaceCitTagsWithSourceNames(content, [makeOffsetGroup(4)])).toBe(

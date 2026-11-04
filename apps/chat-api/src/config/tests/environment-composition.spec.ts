@@ -1,0 +1,279 @@
+import { getMetadataStorage } from 'class-validator';
+import { describe, expect, it } from 'vitest';
+import { AuthProvidersEnv } from '../env/auth-providers.env';
+import { AuthEnv } from '../env/auth.env';
+import { ClientUiEnv } from '../env/client-ui.env';
+import { DialEnv } from '../env/dial.env';
+import { FeatureFlagsEnv } from '../env/feature-flags.env';
+import { FilesEnv } from '../env/files.env';
+import { GenerationEnv } from '../env/generation.env';
+import { IntegrationsEnv } from '../env/integrations.env';
+import { ServerEnv } from '../env/server.env';
+import { EnvironmentVariables } from '../environment.config';
+import { validate } from '../validation';
+
+/*
+ * Snapshot of every env var EnvironmentVariables declared before the schema
+ * was split into domain classes. A var lost or added during a move fails here;
+ * a deliberate new var is added to this list in the same change.
+ */
+const ENV_VAR_NAMES = [
+  'ADDITIONAL_CONTENT_LOCALES',
+  'ADMIN_ROLE_NAMES',
+  'ALLOWED_CONNECT_ORIGINS',
+  'ALLOWED_IFRAME_ORIGINS',
+  'ALLOW_VISUALIZER_SEND_MESSAGES',
+  'ANNOUNCEMENTS',
+  'ANNOUNCEMENT_DESCRIPTION',
+  'ANNOUNCEMENT_HTML_MESSAGE',
+  'ANNOUNCEMENT_TITLE',
+  'API_PREFIX',
+  'APPLICATION_VISUALIZERS',
+  'ARCHIVE_DOWNLOAD_CONCURRENCY',
+  'ARCHIVE_MAX_FILES',
+  'ARCHIVE_MAX_ITEMS',
+  'ARCHIVE_MAX_UNCOMPRESSED_BYTES',
+  'ARCHIVE_TIMEOUT_MS',
+  'ARCHIVE_UPLOAD_MAX_BYTES',
+  'ARCHIVE_UPLOAD_MAX_FILES',
+  'ARCHIVE_UPLOAD_MAX_UNCOMPRESSED_BYTES',
+  'ARCHIVE_UPLOAD_TIMEOUT_MS',
+  'ASR_ENABLED_ROLES',
+  'ASR_MODEL',
+  'AUTH_AUTH0_ADMIN_ROLE_NAMES',
+  'AUTH_AUTH0_AUDIENCE',
+  'AUTH_AUTH0_CLIENT_ID',
+  'AUTH_AUTH0_DIAL_ROLES_FIELD',
+  'AUTH_AUTH0_HOST',
+  'AUTH_AUTH0_NAME',
+  'AUTH_AUTH0_SCOPE',
+  'AUTH_AUTH0_SECRET',
+  'AUTH_AZURE_AD_ADMIN_ROLE_NAMES',
+  'AUTH_AZURE_AD_CLIENT_ID',
+  'AUTH_AZURE_AD_DIAL_ROLES_FIELD',
+  'AUTH_AZURE_AD_NAME',
+  'AUTH_AZURE_AD_SCOPE',
+  'AUTH_AZURE_AD_SECRET',
+  'AUTH_AZURE_AD_TENANT_ID',
+  'AUTH_AZURE_B2C_ADMIN_ROLE_NAMES',
+  'AUTH_AZURE_B2C_CLIENT_ID',
+  'AUTH_AZURE_B2C_CLIENT_SECRET',
+  'AUTH_AZURE_B2C_DIAL_ROLES_FIELD',
+  'AUTH_AZURE_B2C_ISSUER',
+  'AUTH_AZURE_B2C_NAME',
+  'AUTH_AZURE_B2C_SCOPE',
+  'AUTH_AZURE_B2C_TENANT_ID',
+  'AUTH_AZURE_B2C_USER_FLOW',
+  'AUTH_CALLBACK_BASE_URL',
+  'AUTH_COGNITO_ADMIN_ROLE_NAMES',
+  'AUTH_COGNITO_CLIENT_ID',
+  'AUTH_COGNITO_DIAL_ROLES_FIELD',
+  'AUTH_COGNITO_HOST',
+  'AUTH_COGNITO_NAME',
+  'AUTH_COGNITO_SCOPE',
+  'AUTH_COGNITO_SECRET',
+  'AUTH_COOKIE_SECURE',
+  'AUTH_GITLAB_ADMIN_ROLE_NAMES',
+  'AUTH_GITLAB_CLIENT_ID',
+  'AUTH_GITLAB_DIAL_ROLES_FIELD',
+  'AUTH_GITLAB_HOST',
+  'AUTH_GITLAB_NAME',
+  'AUTH_GITLAB_SCOPE',
+  'AUTH_GITLAB_SECRET',
+  'AUTH_GOOGLE_CLIENT_ID',
+  'AUTH_GOOGLE_NAME',
+  'AUTH_GOOGLE_SCOPE',
+  'AUTH_GOOGLE_SECRET',
+  'AUTH_HEADER_TOKEN_ALLOWED_ISSUERS',
+  'AUTH_HEADER_TOKEN_BUCKET_CACHE_TTL_SECONDS',
+  'AUTH_HEADER_TOKEN_CLOCK_TOLERANCE_SECONDS',
+  'AUTH_HEADER_TOKEN_ENABLED',
+  'AUTH_HEADER_TOKEN_JWKS_CACHE_TTL_SECONDS',
+  'AUTH_KEYCLOAK_ADMIN_ROLE_NAMES',
+  'AUTH_KEYCLOAK_CLIENT_ID',
+  'AUTH_KEYCLOAK_DIAL_ROLES_FIELD',
+  'AUTH_KEYCLOAK_HOST',
+  'AUTH_KEYCLOAK_NAME',
+  'AUTH_KEYCLOAK_SCOPE',
+  'AUTH_KEYCLOAK_SECRET',
+  'AUTH_LEGACY_COOKIE_NAMES',
+  'AUTH_OKTA_ADMIN_ROLE_NAMES',
+  'AUTH_OKTA_CLIENT_ID',
+  'AUTH_OKTA_CLIENT_SECRET',
+  'AUTH_OKTA_DIAL_ROLES_FIELD',
+  'AUTH_OKTA_ISSUER',
+  'AUTH_OKTA_NAME',
+  'AUTH_OKTA_SCOPE',
+  'AUTH_PING_ID_ADMIN_ROLE_NAMES',
+  'AUTH_PING_ID_CLIENT_ID',
+  'AUTH_PING_ID_DIAL_ROLES_FIELD',
+  'AUTH_PING_ID_HOST',
+  'AUTH_PING_ID_NAME',
+  'AUTH_PING_ID_SCOPE',
+  'AUTH_PING_ID_SECRET',
+  'AUTH_POST_LOGOUT_REDIRECT_URI',
+  'AUTH_SESSION_COOKIE_NAME',
+  'AUTH_SESSION_MAX_AGE_SECONDS',
+  'AUTH_SESSION_PREV_SECRET',
+  'AUTH_SESSION_SECRET',
+  'AUTH_TRANSACTION_COOKIE_NAME',
+  'AVAILABLE_LOCALES',
+  'CATALOG_CREATION_ROLES',
+  'CHAT_VERSION',
+  'CONVERSATION_BODY_SIZE_LIMIT_BYTES',
+  'CONVERSATION_NAMING_SYSTEM_PROMPT',
+  'CORS_ORIGIN',
+  'CSP_MODE',
+  'CSP_REPORT_URI',
+  'CUSTOM_CLIENT_VARIABLES',
+  'CUSTOM_CORE_API_CONFIG',
+  'CUSTOM_VISUALIZERS',
+  'DEFAULT_DEPLOYMENT',
+  'DEFAULT_DEPLOYMENT_PINNED',
+  'DEV_QUICKAPPS_EDITOR_URL',
+  'DIAL_API_KEY',
+  'DIAL_API_VERSION',
+  'DIAL_CORE_EXTERNAL_URL',
+  'DIAL_CORE_URL',
+  'DIAL_ROLES_FIELD',
+  'ENABLED_UI_FEATURES',
+  'FEATURED_MODEL_IDS',
+  'FILE_MANAGER_AVAILABLE_TABS',
+  'FILE_TRANSFER_TIMEOUT_MS',
+  'FILE_UPLOAD_MAX_BYTES',
+  'FOOTER_HTML_MESSAGE',
+  'GENERATION_FINALIZE_TIMEOUT_MS',
+  'GENERATION_PREPARATION_TIMEOUT_MS',
+  'HIDDEN_ENTITY_TAGS',
+  'LIVE_CHAT_INTERACTION_ENABLED',
+  'LIVE_CHAT_INTERACTION_ENABLED_ROLES',
+  'LLM_CONVERSATION_NAMING_ENABLED',
+  'LOG_LEVEL',
+  'MAX_GENERATION_DURATION_MS',
+  'MCP_APP_HOST_NAME',
+  'MCP_APP_SANDBOX_URL',
+  'MCP_APP_THEME',
+  'MCP_APP_USER_AGENT',
+  'OVERLAY_ENABLED',
+  'OVERLAY_SANDBOX_ENABLED',
+  'PORT',
+  'PROJECTS_ENABLED',
+  'PROJECTS_ENABLED_ROLES',
+  'PROJECT_CONTEXT_ALLOWED_EXTENSIONS',
+  'PROJECT_CONTEXT_FILE_MAX_BYTES',
+  'PROJECT_CONTEXT_TOTAL_MAX_BYTES',
+  'PUBLICATION_FILTER_SOURCES',
+  'PUBLISH_ATTACHMENTS_MAX_FILES',
+  'RESPONSES_API_ENABLED',
+  'RESPONSES_BACKGROUND_ENABLED',
+  'SCHEDULED_TASKS_ENABLED',
+  'SCHEDULED_TASKS_ENABLED_ROLES',
+  'SCHEDULER_APP_ID',
+  'SCHEDULER_SERVICE_ID',
+  'SCHEDULER_SERVICE_TIMEOUT_MS',
+  'SKILL_ARCHIVE_UPLOAD_MAX_BYTES',
+  'SKILL_FILE_UPLOAD_MAX_BYTES',
+  'SKILL_TRANSFER_TIMEOUT_MS',
+  'SKILL_UPLOAD_MAX_FILES',
+  'SKILL_UPLOAD_MAX_TOTAL_BYTES',
+  'TEXT_REFINEMENT_APPLICATION_DESCRIPTION_PROMPT',
+  'TEXT_REFINEMENT_PROJECT_DESCRIPTION_PROMPT',
+  'TEXT_REFINEMENT_PROJECT_INSTRUCTIONS_PROMPT',
+  'TEXT_REFINEMENT_PROMPT_DESCRIPTION_PROMPT',
+  'TEXT_REFINEMENT_PROMPT_INSTRUCTIONS_PROMPT',
+  'TEXT_REFINEMENT_SCHEDULED_TASK_DESCRIPTION_PROMPT',
+  'TEXT_REFINEMENT_SCHEDULED_TASK_INSTRUCTIONS_PROMPT',
+  'TEXT_REFINEMENT_SKILL_DESCRIPTION_PROMPT',
+  'TEXT_REFINEMENT_SKILL_INSTRUCTIONS_PROMPT',
+  'TEXT_REFINEMENT_TOOLSET_DESCRIPTION_PROMPT',
+  'THEMES_CONFIG_URL',
+  'THEMES_SERVICE_TIMEOUT_MS',
+  'TRANSCRIBE_SIZE_LIMIT_BYTES',
+  'TRANSCRIPTION_PROMPT',
+  'UI_EVENT',
+  'UI_EVENT_DELIVERY_MODE',
+  'UI_EVENT_DELIVERY_REVISION',
+  'UI_EVENT_ENABLED_BY_DEFAULT',
+  'UI_EVENT_EXTERNAL_EVENTS',
+  'UI_EVENT_EXTERNAL_SCENES',
+  'USAGE_LIMITS_CONTROL_ENABLED',
+  'USAGE_LIMITS_WARNING_THRESHOLD_PERCENT',
+  'USER_USAGE_DEPLOYMENT_TYPES',
+  'UTILITY_MODEL',
+  'UTILITY_NAMING_TIMEOUT_MS',
+  'WELCOME_SCREEN_DESCRIPTION',
+];
+
+/* Celebration vars stay on the root class while the feature is in development. */
+const ROOT_VAR_NAMES = [
+  'UI_EVENT',
+  'UI_EVENT_DELIVERY_MODE',
+  'UI_EVENT_DELIVERY_REVISION',
+  'UI_EVENT_ENABLED_BY_DEFAULT',
+  'UI_EVENT_EXTERNAL_EVENTS',
+  'UI_EVENT_EXTERNAL_SCENES',
+];
+
+const DOMAIN_CLASSES = [
+  ServerEnv,
+  DialEnv,
+  AuthEnv,
+  AuthProvidersEnv,
+  FilesEnv,
+  GenerationEnv,
+  ClientUiEnv,
+  FeatureFlagsEnv,
+  IntegrationsEnv,
+];
+
+const validBaseConfig = {
+  DIAL_CORE_URL: 'https://dial-core.example.com',
+  AUTH_SESSION_SECRET: 'a'.repeat(64),
+  AUTH_CALLBACK_BASE_URL: 'http://localhost:5000',
+};
+
+const getDeclaredNames = (target: new () => object): string[] =>
+  [
+    ...new Set(
+      getMetadataStorage()
+        .getTargetValidationMetadatas(target, '', true, false)
+        .map((metadata) => metadata.propertyName),
+    ),
+  ].sort();
+
+describe('EnvironmentVariables composition', () => {
+  it('declares exactly the snapshot of env var names', () => {
+    expect(getDeclaredNames(EnvironmentVariables)).toEqual(ENV_VAR_NAMES);
+  });
+
+  it('declares every var in exactly one domain class or on the root', () => {
+    const perDomain = DOMAIN_CLASSES.map(getDeclaredNames);
+    const all = [...perDomain.flat(), ...ROOT_VAR_NAMES];
+
+    expect([...all].sort()).toEqual(ENV_VAR_NAMES);
+    expect(new Set(all).size).toBe(all.length);
+  });
+
+  it('converts a numeric string through implicit conversion', () => {
+    expect(validate({ ...validBaseConfig, PORT: '8080' }).PORT).toBe(8080);
+  });
+
+  it('keeps the initializer default when a var is unset', () => {
+    expect(validate(validBaseConfig).PORT).toBe(5000);
+  });
+
+  it('parses a comma-separated list var into an array', () => {
+    expect(
+      validate({ ...validBaseConfig, ADMIN_ROLE_NAMES: 'a, b' })
+        .ADMIN_ROLE_NAMES,
+    ).toEqual(['a', 'b']);
+  });
+
+  it('rejects an invalid value with the same constraint messages', () => {
+    expect(() =>
+      validate({ ...validBaseConfig, FILE_TRANSFER_TIMEOUT_MS: 'abc' }),
+    ).toThrow(
+      'Environment validation failed:\nFILE_TRANSFER_TIMEOUT_MS must not be less than 1000, FILE_TRANSFER_TIMEOUT_MS must be an integer number',
+    );
+  });
+});

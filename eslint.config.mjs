@@ -219,6 +219,33 @@ export default [
   },
   {
     /*
+     * A hand-rolled `role="status"`/`role="alert"` is usually rendered in the
+     * same commit as its text, which screen readers announce late or not at
+     * all (`.claude/rules/a11y.md` "Status feedback for dynamic content"). The
+     * kit `LiveRegion` is always mounted; kit components that take a `role`
+     * prop (`Notification`, `ErrorText`) are capitalised and not matched.
+     */
+    files: ['apps/*/src/**/*.tsx', 'libs/*/src/**/*.tsx'],
+    ignores: [
+      '**/*.spec.tsx',
+      '**/tests/**',
+      '**/stories/**',
+      '**/*.stories.tsx',
+    ],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            "JSXOpeningElement[name.name=/^[a-z]/] > JSXAttribute[name.name='role'] Literal[value=/^(status|alert)$/]",
+          message:
+            'Use the kit LiveRegion (always mounted, condition on its children) instead of a raw role="status"/"alert" element. See .claude/rules/a11y.md.',
+        },
+      ],
+    },
+  },
+  {
+    /*
      * Consumer fixtures install packed lib tarballs into their own
      * node_modules, so their imports resolve to no Nx project or npm node and
      * `@nx/enforce-module-boundaries` skips them. Like any external host, a

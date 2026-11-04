@@ -6,12 +6,6 @@ import {
 } from '@nestjs/common';
 import { ConversationResponseDto } from '../../openapi/openapi-response.dto';
 import {
-  ConversationGenerationService,
-  GenerationCancelReason,
-  type GenerationLease,
-  type GenerationTerminalEvent,
-} from '../conversation-generation.service';
-import {
   CONDITIONAL_WRITE_ATTEMPTS,
   ConditionalUpdateStatus,
   type ConditionalUpdateResult,
@@ -46,6 +40,12 @@ import {
   toStoredTerminalEvent,
   toTerminalFields,
 } from './background-terminal';
+import {
+  ConversationGenerationService,
+  GenerationCancelReason,
+  type GenerationLease,
+  type GenerationTerminalEvent,
+} from './conversation-generation.service';
 import {
   CoreResponseResultKind,
   CoreResponsesClient,
@@ -121,6 +121,7 @@ export interface BackgroundStartParams {
   onReadyToStream: () => void;
   clientChannelId?: string;
   timezone?: string;
+  lang?: string;
   jobTitle?: string;
   /** The conversation version read at request start; reused for the placeholder write. */
   storedConversation?: VersionedConversation;
@@ -187,6 +188,7 @@ export class BackgroundGenerationService {
       placeholderMessage,
       params.clientChannelId,
       params.timezone,
+      params.lang,
       undefined,
       placeholder.conversation.id,
       undefined,
@@ -580,6 +582,7 @@ export class BackgroundGenerationService {
         context.token,
         signal,
         message,
+        undefined,
         undefined,
         undefined,
         undefined,

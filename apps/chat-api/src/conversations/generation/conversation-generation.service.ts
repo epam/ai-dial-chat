@@ -7,18 +7,18 @@ import {
   OnModuleDestroy,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { EnvironmentVariables } from '../config/environment.config';
+import type { EnvironmentVariables } from '../../config/environment.config';
 import {
   GenerationGaugeState,
   trackGeneration,
   type GenerationTracker,
-} from '../telemetry/runtime-metrics';
+} from '../../telemetry/runtime-metrics';
 import {
   ConversationMessageDto,
   ConversationMessageRole,
-} from './dto/conversation-message.dto';
-import type { GenerationPreparationStep } from './generation/generation.types';
-import { GENERATION_PERSISTENCE_ERROR } from './generation/persistence-error';
+} from '../dto/conversation-message.dto';
+import type { GenerationPreparationStep } from './generation.types';
+import { GENERATION_PERSISTENCE_ERROR } from './persistence-error';
 
 const STALE_ENTRY_FLOOR_MS = 30 * 60 * 1000; // 30 minutes
 const STALE_GRACE_MS = 60 * 1000; // 1 minute
