@@ -25,7 +25,7 @@ Two more facts the design builds on:
 - Organization destination = save + publication request.
 - Version is read-only in edit mode.
 
-**Non-Goals**: skills, Versions history, Dependencies, access-disabled rows, author / credentials in this panel, create-flow changes (see the proposal).
+**Non-Goals**: Versions history, Dependencies, access-disabled rows, author / credentials in this panel (see the proposal).
 
 ## Decisions
 
@@ -178,6 +178,15 @@ No data migration. Ship order:
 6. Prompts.
 
 Each slice ships independently. Rollback = revert that editor's wiring.
+
+## Extension: create mode, skills, and the shared flow
+
+Added after the first review round.
+
+- **Create adapters.** `ResourceSaveAdapter` is an edit adapter (`saveInPlace`, `move`, `saveAsNewVersion`) or a create adapter (`createIn(folderPath)`, `isVersioned: false`); `isResourceCreateAdapter` tells them apart, and the result carries `isCreated`. `runResourceSave` creates straight in the chosen Personal folder, or at the Personal root before publishing. The adapter types and `ResourceSaveError` sit in the dependency-free `libs/chat-hooks/src/catalog/resource-save-adapter.ts`, so the `./skill-editor` entry point that imports them gains no `@epam/ai-dial-publish-panel` peer.
+- **Shared flow.** `useResourceSavePanel` (in `libs/chat-hooks`) returns the panel's state props; the host passes its folder listing, Organization folder state, publish client, version pattern and translated copy, and notifies from `onSaved`. The adapters in `libs/chat-hooks/src/catalog/resource-save-adapters.ts` take configured generated clients; the editor-specific steps (embedded save, definition create/update, form bodies, translated commit copy) stay host callbacks.
+- **Skills.** `useSkillEditorSubmit` takes `onSaveRequest(adapter, values)` and `client.moveSkill`. Validation stays inline; write failures become `ResourceSaveError` messages matching the inline flow's copy, and a stale edit still raises the page's conflict state. The skill move is `POST /api/v1/skills/move`, which calls DIAL Core's generic `moveResource` on `skills/{bucket}/{path}` without overwriting. That DIAL Core moves a v2 skill folder through this operation is not yet verified against a live DIAL Core; a failure leaves the skill saved and shows the "saved but not moved" notification.
+- **Toolset drafts.** The toolset editor's pre-login draft save also goes through the panel in create mode; a toolset created this way is then edited as the user's own.
 
 ## Open Questions
 

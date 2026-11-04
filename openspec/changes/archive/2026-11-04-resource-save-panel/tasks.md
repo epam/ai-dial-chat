@@ -119,3 +119,17 @@ Slices 4–6 each depend only on slices 1–3. Run `npm run verify:changed` once
 - [x] 7.2 Run `npm run validate:specs` and fix any missing path cited in this change's specs.
 - [x] 7.3 Run `npm run verify:full` once, then `npm run build:quiet` (lazy-loaded panel bundling).
   - Result: `typecheck:full` passed; `lint:check` failed only on `scheduled-tasks-consumer-fixture` (the stray local `tools/scheduled-tasks-consumer-fixture/.npm-cache/`, unrelated to this change); `test:full` passed (939s); `build:quiet` passed (`build:affected`, 116s). Run with `NODE_OPTIONS=--max-old-space-size=8192` and `NX_SKIP_NX_CACHE=true` because of local memory limits and an Nx cache file lock.
+
+## 8. Extension: create mode, skills, shared flow
+
+- [x] 8.1 Move the Save flow into `libs/chat-hooks`: `runResourceSave`, models, enums, `useResourceSavePanel` and the resource save adapters (taking configured generated clients); the app keeps a thin `ResourceSavePanelContainer` and `useResourceSaveNotification`.
+  - Verification: `npm exec nx test @epam/ai-dial-chat-hooks -- --run resource-save useResourceSavePanel`
+- [x] 8.2 Add create adapters (`createIn`, `isResourceCreateAdapter`, `isCreated`) and route Create through the panel in the application, toolset and prompt editors; a new Quick App offers Personal only.
+  - Verification: `npm exec nx test chat -- --run pages/ApplicationEditor pages/PromptEditor`
+- [x] 8.3 Add `POST /api/v1/skills/move` with DTO, service, controller and tests; regenerate the client.
+  - Verification: `npm exec nx test chat-api -- --run skills`; `npm run openapi:check`
+- [x] 8.4 Route the skill editor through the panel: `onSaveRequest` and `moveSkill` in `useSkillEditorSubmit`, `createSkillFolderLister`, page wiring.
+  - Verification: `npm exec nx test chat -- --run pages/SkillEditor`; `npm exec nx test @epam/ai-dial-chat-hooks -- --run useSkillEditorSubmit`
+- [x] 8.5 Show the destination with the kit `FolderName` in a secondary color and make Change a small ghost button.
+  - Verification: `npm exec nx test @epam/ai-dial-publish-panel -- --run SaveToFolderPanel`
+

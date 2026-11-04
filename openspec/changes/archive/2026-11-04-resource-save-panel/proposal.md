@@ -18,7 +18,7 @@ Saving an existing resource in its editor writes it back in place. There is no w
 
 - **In-scope editors**: Quick Apps, schema-form apps, custom apps, toolsets and prompts. In each, **Save in edit mode opens a "Save {Resource}" panel** instead of saving immediately. Create keeps today's behaviour. The panel is an end-edge `SideDrawer`, modelled on `StandalonePublishPanel` (`libs/publish-panel/src/components/PublishPanel/StandalonePublishPanel.tsx`), with:
   - an entity summary card: icon, type badge, name and current version (`ResourceSummary`);
-  - a **Save to folder** row showing the current destination as a breadcrumb, plus a **Change** action;
+  - a **Save to folder** row showing the current destination with the file manager's folder icon, plus a small **Change** action;
   - a **Version** radio group, *for versioned resources only* (applications, toolsets): "Keep version {current}" (default) or "Save as new version" with a version input (`SEMVER_VERSION_PATTERN`, must differ from the current version). Prompts render no Version section;
   - a Cancel / Save footer.
 - **Change folder view** replaces the panel body. It has a back arrow, folder search, and a tree with two roots:
@@ -34,15 +34,17 @@ Saving an existing resource in its editor writes it back in place. There is no w
   - **Organization**: do the Personal save in the resource's current folder (keeping or forking the version), then send the existing catalog publish request for the saved resource with `folderPath` = the chosen folder.
   - On success, notify and return to the Catalog, as Save does today.
 - **The Version field is read-only in edit mode** for applications and toolsets. `MetadataForm` gains `isVersionReadOnly`, following `isNameReadOnly`.
-- **New BFF endpoints** for applications and toolsets: list Personal folders, move to a folder, and a `folderPath` on create-only writes. Applications also get fork/commit for Quick Apps. Prompts reuse the existing folder listing and `POST /api/v1/prompts/move`. See design.md.
+- **New BFF endpoints** for applications and toolsets: list Personal folders, move to a folder, and a `folderPath` on create-only writes. Applications also get fork/commit for Quick Apps. Prompts reuse the existing folder listing and `POST /api/v1/prompts/move`. Skills get `POST /api/v1/skills/move`. See design.md.
+- **Create mode** goes through the same panel: a new resource is created in the chosen Personal folder, or at the Personal root and then published for an Organization folder. It offers no version choice. A new Quick App offers Personal folders only, because that first Save only starts it.
+- **Skills** use the panel in both modes. The skill editor's submit hook hands a validated submit to the panel instead of writing it.
+- **Reusable flow.** The panel state, the orchestrator and the per-resource adapters live in `@epam/ai-dial-chat-hooks`, so another DIAL host renders the same panel with its own copy and API clients.
 
 ## Non-goals
 
-- **Skills.** DIAL Core has no move or rename for a whole skill, and `skill-editing` forbids create-then-delete. The skill editor keeps its in-place Save.
 - The **Versions history** list and the **Dependencies** section shown in the mockups.
 - Disabling folders the user cannot write to, or the "You have no access" tooltip.
 - Author and credential opt-in in this panel. Publishing from here sends the default author and no credentials. Access rules are edited under the folder tree for an Organization folder.
-- Changing any create flow, and changing models (not edited in chat).
+- Changing models (not edited in chat).
 - Real backend folder creation. A new folder exists only in the client until a save, move or publish writes to it, as in the Publish flow.
 
 ## Alternatives considered
@@ -90,12 +92,12 @@ Saving an existing resource in its editor writes it back in place. There is no w
 
   The Organization branch reuses the publish call from `useCatalogPublishing`.
 - **i18n**: new strings in a new `ResourceSavePanelI18nKeys` group: title per resource, "Save to folder", "Change", "Change folder", "Version", "Keep version", "Save as new version", the version placeholder, the "Personal" root, validation errors, success / publish-requested / partial-failure notifications. Generic Save, Cancel and Select come from `ButtonsI18nKeys`.
-- **RTL / a11y**: the panel uses logical properties. The back arrow and breadcrumb chevrons are mirrored. The kit `RadioGroup` carries a legend. Status goes through `LiveRegion`. The panel is a modal `SideDrawer` with focus return.
+- **RTL / a11y**: the panel uses logical properties. The back arrow is mirrored. The kit `RadioGroup` carries a legend. Status goes through `LiveRegion`. The panel is a modal `SideDrawer` with focus return.
 - **Docs**: READMEs for `libs/publish-panel`, `libs/builder-form` and `libs/chat-hooks`, `docs/architecture.md` (new endpoints), and `docs/host-install-matrix.md` if peer dependencies change.
 
 ## Acceptance criteria
 
-1. In every in-scope editor, Save in edit mode opens the panel and persists nothing until the panel's Save. Cancel or Escape closes it with nothing persisted. The skill editor is unchanged.
+1. In every in-scope editor, including the skill editor, Create and the Save of an own resource open the panel and persist nothing until the panel's Save. Cancel or Escape closes it with nothing persisted. A shared resource saves in place.
 2. Version is read-only in edit mode for applications and toolsets and editable on create. Prompts show no Version section.
 3. Change shows a searchable tree with Personal (that resource type's folders) and Organization roots. Every folder is selectable, and inline creation works under both roots.
 4. Keep version to the same Personal folder behaves exactly like today's Save. A different Personal folder also moves the resource, and the Catalog shows it under the new id.

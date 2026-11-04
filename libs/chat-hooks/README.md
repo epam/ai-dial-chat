@@ -4940,9 +4940,12 @@ The host owns everything else: the resource summary, the panel's own labels,
 hook reads no i18n, app context or storage.
 
 `runResourceSave(adapter, choice, publish)` is the orchestrator the hook runs.
-It saves in place or as a new version through the host's
-`ResourceSaveAdapter`, then moves into another Personal folder, or publishes
-to an Organization folder. A failure after the save resolves with the
+With an edit adapter (`ResourceEditSaveAdapter`) it saves in place or as a
+new version, then moves into another Personal folder, or publishes to an
+Organization folder. With a create adapter (`ResourceCreateSaveAdapter`, told
+apart by `isResourceCreateAdapter`) it calls `createIn` with the chosen
+Personal folder, or with the root before publishing; the result's `isCreated`
+is then `true`, and the panel offers no version choice. A failure after the save resolves with the
 `ResourceSaveOutcome` `SavedButMoveFailed` or `SavedButPublishFailed`.
 
 The module also exports:
@@ -5002,10 +5005,16 @@ Each one takes a configured generated client and never creates one:
   it updates the prompt and then moves it.
 - **`createPromptFolderLister(promptsApi)`** returns the `listPersonalFolders`
   for prompts, one folder level built from the prompt listing.
+- **`createToolsetCreateAdapter({ toolsetsApi, body })`** and
+  **`createPromptCreateAdapter({ promptsApi, body })`** create a new toolset
+  (create-only) or prompt in the chosen folder.
+- **`createSkillFolderLister(skillsApi, bucket)`** returns the
+  `listPersonalFolders` for skills: the grouping folders of one level, across
+  every listing page.
 
 The client parameters are typed as the narrow `Pick`s
-`ResourceSaveApplicationsApi`, `ResourceSaveToolsetsApi` and
-`ResourceSavePromptsApi`. All of it is available from the root and
+`ResourceSaveApplicationsApi`, `ResourceSaveToolsetsApi`,
+`ResourceSavePromptsApi` and `ResourceSaveSkillsApi`. All of it is available from the root and
 `./catalog`.
 
 ```ts
@@ -5300,6 +5309,13 @@ const {
   onNotify: (notification) => showNotification(notification),
 });
 ```
+
+Pass `onSaveRequest(adapter, values)` to save through the Save panel (`useResourceSavePanel`). A submit that passes validation then writes nothing itself. Instead it hands the host a `ResourceSaveAdapter`:
+
+- **Create mode:** `createIn(folderPath)` creates the skill under the chosen folder.
+- **Edit mode:** `saveInPlace()` updates the skill with the loaded ETag, and `move(id, folderPath)` calls `client.moveSkill`.
+
+In this mode the hook shows no success notification and does not navigate; the panel does both. Write failures reject with a `ResourceSaveError` whose message is the matching `messages` text. A stale edit (412) still sets `conflict`.
 
 ### useSkillFileActions
 

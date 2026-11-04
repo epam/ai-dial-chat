@@ -18,6 +18,8 @@ The components SHALL know no resource ids, REST paths, i18n, routing or storage.
 
 The version section renders only when `version` (`SaveToFolderVersionProps`) is provided. `StandaloneSaveToFolderPanel` owns the view state (`SaveToFolderView`: `Main`, `ChangeFolder`) and the pending Change-view destination, and renders the per-view header (the kit `SideDrawer`'s `onBack` in the Change view) and footer (Save, or Select). `SaveToFolderPanel` is the controlled body: it takes `view`, `pendingDestination`, `onPendingDestinationChange` and `onChangeFolderClick`.
 
+The main view shows the committed destination as the kit `FolderName` (the path joined with " / ", `destinationClassName` defaulting to `dial-small-semi-text`, color `destinationText`) followed by a small ghost Change button. When `accessRules` (`SaveToFolderAccessRulesProps`) is passed and the pending destination belongs to a root with `hasAccessRules`, `PublishAccessRules` renders below the tree in the Change view; the shell reports the pending destination through `onPendingDestinationChange`, including the reset to `destination` on entering and leaving that view, so the host can load that folder's rules.
+
 #### Scenario: Unversioned host
 - **WHEN** a host renders `SaveToFolderPanel` without `versionMode`
 - **THEN** no Version section is rendered

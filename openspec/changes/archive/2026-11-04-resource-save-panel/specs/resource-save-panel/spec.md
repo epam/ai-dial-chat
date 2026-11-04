@@ -1,22 +1,33 @@
 ## ADDED Requirements
 
-### Requirement: Save in edit mode opens the Save panel in every in-scope editor
+### Requirement: Save opens the Save panel in every in-scope editor
 
-In edit mode, the primary Save action of these editors SHALL open the Save panel instead of persisting immediately:
+The primary Save (or Create) action of these editors SHALL open the Save panel instead of persisting immediately:
 
 - the Quick App editor, schema-form app editor and custom app editor (`apps/chat/src/pages/ApplicationEditor/ApplicationFormEditor.tsx`);
 - the toolset editor (`apps/chat/src/pages/ApplicationEditor/toolset/ToolsetApplicationEditor.tsx`);
-- the prompt editor (`apps/chat/src/pages/PromptEditor/PromptEditor.tsx`).
+- the prompt editor (`apps/chat/src/pages/PromptEditor/PromptEditor.tsx`);
+- the skill editor (`apps/chat/src/pages/SkillEditor/SkillEditor.tsx`).
 
-The editor's existing validation SHALL run first. When it fails, the panel SHALL NOT open and the existing inline errors SHALL show. Create mode SHALL keep its current behaviour. The skill editor (`apps/chat/src/pages/SkillEditor/SkillEditor.tsx`) SHALL keep its in-place Save and render no Save panel.
+The editor's existing validation, including the creation-permission check in create mode, SHALL run first. When it fails, the panel SHALL NOT open and the existing inline errors SHALL show.
 
-The panel opens only for a resource the user owns (`isMy` on the loaded deployment, toolset or prompt, or an application created in this session). For a resource shared with the user, Save keeps saving in place, because moving and forking act on the caller's own bucket.
+The panel opens when creating a resource, and when editing one the user owns (`isMy` on the loaded deployment, toolset or prompt, an application or toolset created in this session, or a skill in the user's own bucket). For a resource shared with the user, Save keeps saving in place, because moving and forking act on the caller's own bucket.
 
-State ownership: each editor owns `isOpen` and the adapter it built when the panel opened; `useResourceSavePanel` (`libs/chat-hooks/src/catalog/useResourceSavePanel/useResourceSavePanel.ts`) owns the committed destination, the version mode, the new-version value, the version error and the submitting state.
+In create mode the editor passes a `ResourceCreateSaveAdapter` (`createIn(folderPath)`, `libs/chat-hooks/src/catalog/resource-save-adapter.ts`) and the panel offers no Version section; the version comes from the form. A new Quick App, which that Save only starts before its embedded editor is set up, SHALL offer the Personal root only; after the create the page switches to edit mode in place, and later Saves offer both roots.
+
+State ownership: each editor owns `isOpen` and the adapter it built when the panel opened; `useResourceSavePanel` (`libs/chat-hooks/src/catalog/useResourceSavePanel/useResourceSavePanel.ts`) owns the committed destination, the version mode, the new-version value, the version error, the access rules and the submitting state.
 
 #### Scenario: Save opens the panel without persisting
-- **WHEN** a user edits an existing Quick App, toolset, custom app, schema-form app or prompt and clicks Save with a valid form
+- **WHEN** a user edits an existing Quick App, toolset, custom app, schema-form app, prompt or skill they own and clicks Save with a valid form
 - **THEN** the Save panel opens, and no save, update, move or publish request has been sent
+
+#### Scenario: Create opens the panel
+- **WHEN** a user fills a new prompt and clicks Create
+- **THEN** the Save panel opens with no Version section, and no create request is sent until the panel's Save is confirmed
+
+#### Scenario: New Quick App offers Personal folders only
+- **WHEN** a user clicks Create on a new Quick App
+- **THEN** the panel's Change folder view lists only the Personal root, and after the panel's Save the page switches to edit mode for the created application
 
 #### Scenario: Invalid form keeps the panel closed
 - **WHEN** the user clicks Save while a required metadata field is invalid
@@ -26,24 +37,16 @@ State ownership: each editor owns `isOpen` and the adapter it built when the pan
 - **WHEN** the panel is open and the user presses Cancel, the close button or Escape
 - **THEN** the panel closes, focus returns to the Save button, nothing is persisted, and the unsaved edits remain in the editor
 
-#### Scenario: Create mode is unchanged
-- **WHEN** the user clicks Create on a new resource
-- **THEN** the resource is created exactly as before and no Save panel opens
-
 #### Scenario: Shared resource saves in place
 - **WHEN** the user edits a toolset shared with them (`isMy: false`) and clicks Save
 - **THEN** the toolset is updated in place and no Save panel opens
-
-#### Scenario: Skill editor is unchanged
-- **WHEN** the user clicks Save in `/skill-editor` for an existing skill
-- **THEN** the skill is saved in place and no Save panel opens
 
 ### Requirement: Save panel main view
 
 The panel SHALL be `StandaloneSaveToFolderPanel` from `@epam/ai-dial-publish-panel`, an end-edge `SideDrawer` that behaves as a modal dialog. Its title is an `h1` reading "Save {resource type}". The main view SHALL render, in order:
 
 1. the entity summary (`ResourceSummary`): icon, type badge, name, and current version for versioned resources;
-2. a **Save to folder** section showing the committed destination as a breadcrumb (root label, then folder segments) with a **Change** action. Long paths collapse their middle segments to "…" with the full path in a tooltip;
+2. a **Save to folder** section showing the committed destination as the kit `FolderName` — the file manager's folder icon, then the root label and folder segments joined with " / " in a secondary text color, truncated with the full path in a tooltip — followed by a small ghost **Change** action;
 3. for versioned resources only (applications, toolsets), a **Version** section rendered as the kit `RadioGroup` with a visible legend:
    - "Keep version {current}", selected by default;
    - "Save as new version", which reveals a required Version input;
@@ -58,7 +61,7 @@ i18n keys:
 - `ResourceSavePanelI18nKeys.Title` (with `{type}`), `SaveToFolderHeading`, `ChangeFolder`, `VersionHeading`, `KeepVersion` (with `{version}`), `SaveAsNewVersion`, `NewVersionLabel`, `NewVersionPlaceholder`, `PersonalRoot`;
 - `ButtonsI18nKeys.Save`, `ButtonsI18nKeys.Cancel`.
 
-RTL: logical properties only. The breadcrumb separators (chevrons) are mirrored with `rtl:scale-x-[-1]`.
+RTL: logical properties only.
 
 #### Scenario: Default state for a versioned resource
 - **WHEN** the panel opens for Quick App `Design Review Agent` at version `1.0.0` in the Personal root
@@ -66,7 +69,7 @@ RTL: logical properties only. The breadcrumb separators (chevrons) are mirrored 
 
 #### Scenario: Default state for a prompt in a folder
 - **WHEN** the panel opens for a prompt whose id is `prompts/{bucket}/Work/AI/Summarize`
-- **THEN** Save to folder reads "Personal › Work › AI" and no Version section is rendered
+- **THEN** Save to folder reads "Personal / Work / AI" and no Version section is rendered
 
 #### Scenario: No history or dependencies
 - **WHEN** the panel is open for any resource
@@ -105,7 +108,7 @@ Empty and loading states: a root whose first level is loading shows the tree's l
 
 #### Scenario: User picks a Personal subfolder
 - **WHEN** the user opens Change, expands Personal, selects `Design/Audit Agents` and presses Select
-- **THEN** the main view shows "Personal › Design › Audit Agents" as the destination
+- **THEN** the main view shows "Personal / Design / Audit Agents" as the destination
 
 #### Scenario: Back discards the pending choice
 - **WHEN** the user selects an Organization folder in the Change view and presses Back
@@ -130,16 +133,18 @@ On the panel's Save, `runResourceSave` (`libs/chat-hooks/src/catalog/resource-sa
 | Personal, any folder | New | `saveAsNewVersion(version, folder)` |
 | Organization folder | Keep | `saveInPlace`, then `publishCatalogEntity(type, savedId, { folderPath, version: current })` |
 | Organization folder | New | `saveAsNewVersion(version, currentPersonalFolder)`, then `publishCatalogEntity(type, newId, { folderPath, version })` |
+| Personal folder (create) | — | `createIn(folder)` |
+| Organization folder (create) | — | `createIn([])` (the Personal root), then `publishCatalogEntity(type, newId, { folderPath, version: form version })` |
 
 In the Change folder view, while an Organization folder is selected, the access rules editor (`PublishAccessRules`) SHALL render below the tree, pre-filled with that folder's existing rules. The publish request SHALL carry those rules, and no `author` and no `publishCredentials`. After a successful publish the orchestrator SHALL call `rememberPublishFolder(folderPath)`.
 
 Notifications, shown on success through `useOperationNotification` / `useNotification` helpers:
 
-- `EntityOperation.Edited` for a keep-version save;
+- `EntityOperation.Created` for a create, `EntityOperation.Edited` for a keep-version save;
 - `ResourceSavePanelI18nKeys.NewVersionSaved` for a new version;
 - the existing `EntityOperation.PublishRequested` copy of `useOperationNotification` when a publish followed.
 
-After any outcome in which the save succeeded, the editor SHALL refetch its list, allow the next navigation, and navigate to `ROUTES.Catalog`. When a later step fails (move or publish), the editor SHALL show `ResourceSavePanelI18nKeys.SavedButMoveFailed` or `SavedButPublishFailed` with the backend message and trace id, and still navigate. When the first step fails, the panel SHALL stay open with its submitting state cleared and an error announced through an assertive `LiveRegion`.
+After any outcome in which the save succeeded, the editor SHALL refetch its list, allow the next navigation, and navigate to `ROUTES.Catalog` (a created skill to its catalog item; a created Quick App stays in the editor, now in edit mode). When a later step fails (move or publish), the editor SHALL show `ResourceSavePanelI18nKeys.SavedButMoveFailed` or `SavedButPublishFailed` with the backend message and trace id, and still navigate. When the first step fails, the panel SHALL stay open with its submitting state cleared and an error announced through an assertive `LiveRegion`.
 
 While a save runs, every panel control SHALL be disabled, and the Save button SHALL show the kit loading state labelled `ButtonsI18nKeys.Saving`.
 
@@ -204,3 +209,25 @@ Memoisation: the container SHALL pass the labels object through `useMemo` and ev
 #### Scenario: Phone layout
 - **WHEN** the viewport is under 768px wide
 - **THEN** the panel spans the full width with the footer pinned to the bottom
+
+### Requirement: Skill editor saves through the Save panel
+
+`useSkillEditorSubmit` (`libs/chat-hooks/src/skill/useSkillEditorSubmit.ts`) SHALL accept an optional `onSaveRequest(adapter, values)`. When the page passes it, a submit that passes the hook's validation SHALL NOT write anything itself: it SHALL build a `ResourceSaveAdapter`, hand it to `onSaveRequest`, and show no success notification and not navigate.
+
+- Create: `createIn(folderPath)` calls `client.createSkill(bucket, [...folderPath, normalizedName].join('/'), …)`, refetches the skills, and resolves `skills/{bucket}/{path}`.
+- Edit: `saveInPlace()` calls `client.updateSkill(…, etag)` and advances the stored ETag; `move(id, folderPath)` calls `client.moveSkill(path, folderPath)` (`POST /api/v1/skills/move`). A skill has no version, so the panel offers no Version section.
+- Every write failure rejects with a `ResourceSaveError` carrying the message the inline flow showed: 409 → name conflict; 412 on edit → the stale-edit message, while the page's conflict state with Reload latest still appears; 413; 503; 400 → the backend message or the path-invalid fallback; otherwise the generic save error.
+
+The Personal tree lists the skill's grouping folders through `createSkillFolderLister(skillsApi, bucket)` (`libs/chat-hooks/src/catalog/resource-save-adapters.ts`).
+
+#### Scenario: A new skill is created in the chosen folder
+- **WHEN** the user creates skill "Good morning" and picks Personal `team-a` in the panel
+- **THEN** `createSkill(bucket, 'team-a/good-morning', …)` is sent and the page navigates to the catalog item `skills/{bucket}/team-a/good-morning`
+
+#### Scenario: A name conflict shows in the panel
+- **WHEN** `createSkill` rejects with 409 during the panel's Save
+- **THEN** the panel shows the name-conflict message, stays open, and the form keeps its values
+
+#### Scenario: A skill shared with the user saves in place
+- **WHEN** the user saves a writable skill in another user's bucket
+- **THEN** `updateSkill` is sent directly and no Save panel opens
