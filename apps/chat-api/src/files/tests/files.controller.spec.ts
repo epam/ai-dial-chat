@@ -33,6 +33,7 @@ import {
 } from '../../config/csp';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import type { DialClientService } from '../../dial/dial-client.service';
+import { streamingFetch } from '../../dial/streaming-fetch';
 import { ArchiveUploadInterceptor } from '../archive-upload.interceptor';
 import { FileUploadInterceptor } from '../file-upload.interceptor';
 import { FilesController } from '../files.controller';
@@ -488,6 +489,7 @@ describe('FilesController — uploadFileContent (DIAL Core stubbed)', () => {
     const dialClient = {
       baseUrl: `http://127.0.0.1:${corePort}`,
       fetchCore: globalThis.fetch,
+      uploadCore: streamingFetch,
     } as unknown as DialClientService;
     const uploadConfig = {
       get: (key: string) =>

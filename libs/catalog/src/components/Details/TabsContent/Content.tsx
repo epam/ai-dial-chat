@@ -5,6 +5,7 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   Dropdown,
+  DropdownOverlayRole,
   ElementSize,
   InlineSelectTrigger,
   LiveRegion,
@@ -195,6 +196,8 @@ export const ContentTab: FC<ContentTabProps> = ({
             matchReferenceWidth={false}
             listClassName="w-[280px] shadow-md"
             placement="bottom-start"
+            /* The file tree is a `role="tree"` of its own, not menu items. */
+            overlayRole={DropdownOverlayRole.None}
             renderOverlay={() =>
               renderFileTree ? (
                 renderFileTree(fileTreeProps)

@@ -67,16 +67,16 @@ describe('OverlayLoginGate', () => {
       isLoadingProviders: true,
     });
 
-    const { container } = render(<OverlayLoginGate />);
+    render(<OverlayLoginGate />);
 
+    const loading = screen.getByText(AuthI18nKeys.OverlayProviderPickerLoading);
+    // The StateScreen section is a landmark named by its h1.
     expect(
-      screen.getByText(AuthI18nKeys.OverlayProviderPickerLoading),
+      screen.getByRole('region', { name: AuthI18nKeys.OverlayLoginTitle }),
     ).toBeTruthy();
-    // The root <section> has no accessible name/role of its own (it's a plain
-    // wrapper), so there is no semantic query that can reach its aria-busy
-    // attribute; falling back to container access is the only option here.
-    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
-    expect(container.querySelector('section')?.getAttribute('aria-busy')).toBe(
+    // aria-busy sits on the action block, which has no role of its own.
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(loading.closest('[aria-busy]')?.getAttribute('aria-busy')).toBe(
       'true',
     );
   });
