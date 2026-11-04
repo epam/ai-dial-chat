@@ -3,7 +3,11 @@ import {
   type CustomVisualizerData,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
-import { DIAL_KIT_ICON_STROKE, Spinner } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_KIT_ICON_STROKE,
+  LiveRegion,
+  Spinner,
+} from '@epam/ai-dial-ui-kit';
 /*
  * Host side of the custom-visualizer protocol, ported from the npm 0.48.0
  * release into `libs/visualizer-connector`. Visualizer authors still consume
@@ -199,6 +203,10 @@ export const VisualizerCanvasRenderer: FC<VisualizerCanvasRendererProps> = ({
           )}
         </div>
       )}
+      {/* Mounted before the overlay so the failure is announced when it appears. */}
+      <LiveRegion visuallyHidden>
+        {status === RendererStatus.Error && errorLabel}
+      </LiveRegion>
       {status === RendererStatus.Error && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
           <IconAlertTriangle
@@ -208,7 +216,7 @@ export const VisualizerCanvasRenderer: FC<VisualizerCanvasRendererProps> = ({
             className={styles.errorIcon}
           />
           <p
-            role="status"
+            aria-hidden
             className={mergeClasses('text-center', styles.statusLabel)}
           >
             {errorLabel}

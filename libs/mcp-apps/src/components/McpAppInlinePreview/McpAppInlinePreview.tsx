@@ -132,6 +132,11 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
     return null;
   }
 
+  let statusText = '';
+  if (isOpenedInCanvas) statusText = openedInCanvasLabel;
+  else if (status === McpAppInlinePreviewStatus.Error)
+    statusText = loadErrorLabel;
+
   return (
     <div
       style={cssVars}
@@ -207,9 +212,9 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
         </div>
       </div>
       <div className="relative min-h-[100px] w-full">
-        {/* Always mounted so the polite region exists before the canvas opens. */}
+        {/* Always mounted so the polite region exists before the canvas opens or the load fails. */}
         <LiveRegion visuallyHidden as={LiveRegionElement.Span}>
-          {isOpenedInCanvas ? openedInCanvasLabel : ''}
+          {statusText}
         </LiveRegion>
         {isOpenedInCanvas ? (
           <div
@@ -242,7 +247,7 @@ const McpAppInlinePreviewBase: FC<McpAppInlinePreviewProps> = ({
                   className={styles.errorIcon}
                 />
                 <p
-                  role="status"
+                  aria-hidden
                   className={mergeClasses(
                     messageClassName,
                     'text-center',

@@ -398,8 +398,9 @@ describe('SkillEditor page — supporting file preview', () => {
  * last one consulted and a `null` from it closes the canvas outright.
  */
 /*
- * Name stays in Metadata while a supporting file is selected, and the kit
- * renders its helper caption with role="alert" too, so pick the preview error.
+ * Name stays in Metadata while a supporting file is selected, and other
+ * assertive regions (the editor's own LiveRegion) may render role="alert"
+ * too, so pick the preview error.
  */
 const findPreviewAlert = async () => {
   const alerts = await screen.findAllByRole('alert');

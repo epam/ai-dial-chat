@@ -261,7 +261,10 @@ the neutral `--bg-layer-sunken` surface, recoloured by `colors.background`), wit
 reset sentence after it. `UsageLimitBannerSeverity.Warning` renders the kit's
 filled warning icon and `UsageLimitBannerSeverity.Reached` its filled error icon.
 Both announce politely through `role="status"`, because the banner reports
-state rather than replying to an action.
+state rather than replying to an action. A banner mounted together with its
+text is not announced reliably, so a host that shows it conditionally should
+keep a kit `LiveRegion` mounted around it and pass `isLiveRegion={false}` —
+the root then takes `role="none"` and the host's region is the only one.
 
 The component holds no state and knows nothing about usage data. The host
 decides when to render it and passes every string already translated and

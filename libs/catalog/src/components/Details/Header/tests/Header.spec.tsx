@@ -19,6 +19,7 @@ import {
 import { Header } from '../Header';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DropdownOverlayRole: { Menu: 'menu', Dialog: 'dialog', None: 'none' },
   LiveRegionPoliteness: { Polite: 'polite', Assertive: 'assertive' },
   LiveRegionElement: { Div: 'div', Span: 'span', P: 'p' },
   LiveRegion: ({

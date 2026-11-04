@@ -356,7 +356,9 @@ describe('OoxmlContent', () => {
 
     renderContent(OoxmlFileType.Pptx);
 
-    expect(await screen.findByText('Failed to load file')).toBeTruthy();
+    await waitFor(() =>
+      expect(screen.getByRole('alert').textContent).toBe('Failed to load file'),
+    );
   });
 
   it('shows an alert when the viewer reports a rendering error', async () => {
@@ -368,8 +370,8 @@ describe('OoxmlContent', () => {
     };
     act(() => options.onError());
 
-    expect((await screen.findByRole('alert')).textContent).toContain(
-      'Failed to load file',
+    await waitFor(() =>
+      expect(screen.getByRole('alert').textContent).toBe('Failed to load file'),
     );
   });
 
@@ -380,7 +382,7 @@ describe('OoxmlContent', () => {
 
     const container = screen.getByRole('document');
     expect(container.getAttribute('aria-busy')).toBe('true');
-    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('alert').textContent).toBe('');
   });
 
   it('labels the container with the file name', () => {
@@ -481,7 +483,7 @@ describe('OoxmlContent', () => {
         'false',
       ),
     );
-    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('alert').textContent).toBe('');
     expect(screen.queryByText('Failed to load file')).toBeNull();
   });
 
@@ -490,7 +492,9 @@ describe('OoxmlContent', () => {
 
     renderContent(OoxmlFileType.Docx);
 
-    expect(await screen.findByText('Failed to load file')).toBeTruthy();
+    await waitFor(() =>
+      expect(screen.getByRole('alert').textContent).toBe('Failed to load file'),
+    );
     expect(mockLoad).not.toHaveBeenCalled();
   });
 
@@ -499,7 +503,9 @@ describe('OoxmlContent', () => {
 
     renderContent(OoxmlFileType.Docx);
 
-    await screen.findByText('Failed to load file');
+    await waitFor(() =>
+      expect(screen.getByRole('alert').textContent).toBe('Failed to load file'),
+    );
     expect(mockDestroy).toHaveBeenCalled();
     // eslint-disable-next-line testing-library/no-node-access -- the viewer container is intentionally opaque; emptiness is only observable via the DOM
     expect(screen.getByRole('document').childElementCount).toBe(0);
@@ -905,7 +911,7 @@ describe('OoxmlContent highlights', () => {
     expect(
       screen.queryByRole('region', { name: 'Cited locations' }),
     ).toBeNull();
-    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('alert').textContent).toBe('');
   });
 
   it('discards a run collection that resolves after unmount', async () => {
@@ -1034,7 +1040,7 @@ describe('OoxmlContent highlights', () => {
     expect(
       screen.queryByRole('region', { name: 'Cited locations' }),
     ).toBeNull();
-    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('alert').textContent).toBe('');
     expect((await screen.findByRole('status')).textContent).toBe(
       'Scrolled to the cited location',
     );
@@ -1056,7 +1062,7 @@ describe('OoxmlContent highlights', () => {
     expect(
       screen.queryByRole('region', { name: 'Cited locations' }),
     ).toBeNull();
-    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('alert').textContent).toBe('');
   });
 
   it('switches to a citation on a later page, then to one on an earlier page', async () => {
@@ -1239,7 +1245,7 @@ describe('OoxmlContent highlights', () => {
 
     expect(mockScrollToPage).not.toHaveBeenCalled();
     expect(mockDocxScrollTo).not.toHaveBeenCalled();
-    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('alert').textContent).toBe('');
   });
 
   it('settles on the later of two rapidly selected citations', async () => {
@@ -1415,7 +1421,7 @@ describe('OoxmlContent highlights', () => {
     renderHighlighted([highlight('a', [3, 1])], 'a');
 
     await waitFor(() => expect(mockFromDocument).toHaveBeenCalledOnce());
-    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('alert').textContent).toBe('');
     expect(
       screen.queryByRole('region', { name: 'Cited locations' }),
     ).toBeNull();
@@ -1755,7 +1761,7 @@ describe('OoxmlContent PPTX highlights', () => {
     renderPptxHighlighted([pptxHighlight(99, '7')], 'a');
 
     await waitFor(() => expect(mockFromPresentation).toHaveBeenCalledOnce());
-    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('alert').textContent).toBe('');
     expect(
       screen.queryByRole('region', { name: 'Cited locations' }),
     ).toBeNull();
@@ -1772,7 +1778,7 @@ describe('OoxmlContent PPTX highlights', () => {
     renderPptxHighlighted([pptxHighlight(1, '7')], 'a');
 
     await waitFor(() => expect(mockScrollToSlide).toHaveBeenCalledWith(0));
-    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('alert').textContent).toBe('');
     expect(
       screen.queryByRole('region', { name: 'Cited locations' }),
     ).toBeNull();
@@ -1784,7 +1790,7 @@ describe('OoxmlContent PPTX highlights', () => {
     renderPptxHighlighted([pptxHighlight(1, '7')], 'a');
 
     await waitFor(() => expect(mockScrollToSlide).toHaveBeenCalledWith(0));
-    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('alert').textContent).toBe('');
     expect(
       screen.queryByRole('region', { name: 'Cited locations' }),
     ).toBeNull();
@@ -1894,7 +1900,7 @@ describe('OoxmlContent XLSX highlights', () => {
     renderXlsxHighlighted([xlsxHighlight('Missing')], 'a');
 
     await waitFor(() => expect(mockXlsxConstructor).toHaveBeenCalledOnce());
-    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('alert').textContent).toBe('');
     expect(
       screen.queryByRole('region', { name: 'Cited locations' }),
     ).toBeNull();

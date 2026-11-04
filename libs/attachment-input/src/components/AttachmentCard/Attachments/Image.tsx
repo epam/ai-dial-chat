@@ -189,7 +189,10 @@ export const ImageAttachment: FC<ImageAttachmentProps> = ({
               styles.track,
             )}
           >
-            <Spinner size={32} />
+            {/* The progressbar already names the state; the kit Spinner would add its own English "Loading" status. */}
+            <span aria-hidden className="flex">
+              <Spinner size={32} />
+            </span>
           </div>
         )}
       </div>
