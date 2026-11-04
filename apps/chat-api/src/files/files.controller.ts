@@ -66,6 +66,7 @@ import { UploadFileDto } from './dto/upload-file.dto';
 import { FileUploadInterceptor } from './file-upload.interceptor';
 import { FilesService } from './files.service';
 import { HTML_PREVIEW_FRAME_DOCUMENT } from './html-preview-frame';
+import { UploadMode } from './types/upload-mode.enum';
 import {
   closeConnectionAfterResponse,
   readStreamedUploadSize,
@@ -96,7 +97,7 @@ export class FilesController {
         path: { type: 'string' },
         uploadMode: {
           type: 'string',
-          enum: ['overwrite', 'create-only'],
+          enum: Object.values(UploadMode),
           description:
             "Optional upload mode. 'overwrite' (default) overwrites; 'create-only' fails with 409 if file exists.",
         },

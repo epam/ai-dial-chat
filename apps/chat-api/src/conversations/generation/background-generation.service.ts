@@ -6,12 +6,6 @@ import {
 } from '@nestjs/common';
 import { ConversationResponseDto } from '../../openapi/openapi-response.dto';
 import {
-  ConversationGenerationService,
-  GenerationCancelReason,
-  type GenerationLease,
-  type GenerationTerminalEvent,
-} from '../conversation-generation.service';
-import {
   CONDITIONAL_WRITE_ATTEMPTS,
   ConditionalUpdateStatus,
   type ConditionalUpdateResult,
@@ -46,6 +40,12 @@ import {
   toStoredTerminalEvent,
   toTerminalFields,
 } from './background-terminal';
+import {
+  ConversationGenerationService,
+  GenerationCancelReason,
+  type GenerationLease,
+  type GenerationTerminalEvent,
+} from './conversation-generation.service';
 import {
   CoreResponseResultKind,
   CoreResponsesClient,

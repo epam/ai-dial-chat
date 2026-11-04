@@ -12,17 +12,17 @@ import type { DeploymentsService } from '../../../deployments/deployments.servic
 import { DeploymentItemType } from '../../../deployments/dto/deployment-item.dto';
 import type { DialClientService } from '../../../dial/dial-client.service';
 import {
-  ConversationGenerationService,
-  GenerationCancelReason,
-  type GenerationLease,
-} from '../../conversation-generation.service';
-import {
   ConversationMessageRole,
   StatusEvent,
 } from '../../dto/conversation-message.dto';
 import { CompletionMode } from '../../dto/send-completion.dto';
 import { BackgroundGenerationService } from '../../generation/background-generation.service';
 import { ChatCompletionsAdapter } from '../../generation/chat-completions.adapter';
+import {
+  ConversationGenerationService,
+  GenerationCancelReason,
+  type GenerationLease,
+} from '../../generation/conversation-generation.service';
 import { CoreResponsesClient } from '../../generation/core-responses.client';
 import { GenerationApiSelector } from '../../generation/generation-api-selector.service';
 import {
@@ -125,7 +125,7 @@ describe('ConversationStreamingService', () => {
   let persistenceService: ConversationPersistenceService;
 
   /*
-   * Mirrors ConversationController.streamCompletion: sets SSE headers via the
+   * Mirrors ConversationGenerationController.streamCompletion: sets SSE headers via the
    * `onReadyToStream` callback at the exact point the service is ready to
    * stream, then writes every yielded chunk to `res` — the same split of
    * responsibility the controller uses in production.
@@ -2314,7 +2314,7 @@ describe('ConversationStreamingService', () => {
       );
 
       /*
-       * `ConversationController.streamCompletion` no longer abandons its
+       * `ConversationGenerationController.streamCompletion` no longer abandons its
        * consuming loop merely because the downstream response closed (see
        * backend-owned-generation-persistence) — it keeps calling `.next()`
        * to the generator's natural end regardless of disconnect. This test

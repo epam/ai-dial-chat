@@ -516,9 +516,14 @@ newest first) and returns `{ items, isLoading, hasError, retry, refresh }`;
 `mapProjectArtifactsToOutputs(items)` turns them into the `ProjectOutputItem`s
 that `ProjectOutputs` from `@epam/ai-dial-projects` renders, with each content
 type inferred from the file name.
-`createSerializedKeyedWriter(write)` returns `{ enqueue, drop }`, a queue that
-runs one write at a time and never queues a key twice, for hosts that mark
-chats viewed from more than one page.
+`createSerializedKeyedWriter(write)` returns `{ enqueue, drop, subscribe }`, a
+queue that runs one write at a time and never queues a key twice, for hosts that
+mark chats viewed from more than one page. `subscribe(listener)` calls
+`listener` with the key of every write that succeeded (a dropped or failed write
+notifies nobody, and a throwing listener stops neither the others nor the
+caller) and returns the function that removes it, so a surface outside the
+project pages, such as the sidebar's `usePinnedProjectChats` tree, can call its
+`markViewed` for marks written elsewhere.
 
 Project file preview helpers (root and `./project`) build the keys and
 attachments a host opens in its attachment canvas, so the New, Edit and view
@@ -744,6 +749,72 @@ const ProjectPage = () => {
     },
     onDelete: leavePage,
   });
+  // …
+};
+```
+
+`usePinnedProjectChats(client, projectIds, { enabled, onProjectDeleted })`
+loads the trees a sidebar shows for pinned projects. For each id it reads the
+details (`getProject`) and the listing (`listProjectConversations`) in
+parallel, keeps the first `PINNED_PROJECT_CHATS_LIMIT` (10) chats newest first
+with `hasMore` set when the listing has more, and resolves the kept chats'
+pending titles in one `getProjectConversationTitles` call. It returns
+`{ projects, isLoading, markViewed, refresh }`: `projects` is a
+`PinnedProjectChats[]` (`project`, `chats` of `PinnedProjectChat` — `id`,
+`title`, `isUnread?` — and `hasMore`) in `projectIds` order, without the ids
+whose load failed.
+
+- A `404` from `getProject` drops the project and calls `onProjectDeleted(id)`
+  once. Any other details failure on the first load keeps it out and retries
+  after 1, 2, 4, 8 and 16 seconds, then gives up; a failed listing keeps it
+  with no chats.
+- Adding an id loads only that id, removing one drops it, and a reorder only
+  re-sorts. Requests abort on unmount, when `enabled` turns `false`, and for an
+  id that leaves.
+- Once the first load of the id set settles, one `watchProjects` stream
+  follows the sorted ids of the loaded projects (at most 1000); an id that
+  failed to load stays out, since the BFF rejects a watch over an unreadable
+  project. A changed project — an event whose
+  `etag` differs from the loaded one, or has none — is re-read silently, one
+  refresh at a time per project plus one trailing run; a `DELETE` drops it and
+  calls `onProjectDeleted`. A reconnect refreshes every project, and a watch
+  that cannot be opened is not retried for the same ids. A changed id set
+  reopens the stream.
+- `markViewed(conversationId)` clears a chat's unread state locally, with no
+  request, until a later listing reports a newer `updatedAt` — the rule
+  `useProjectConversations().markViewed` follows. `refresh(projectId)` re-reads
+  one project through the same per-project gate.
+- `mapProjectSourceToFilterTab(source)` maps a project's source onto the
+  conversation list's Origin tab (`personal` → `FilterTab.MyChats`).
+
+```tsx
+import {
+  PINNED_PROJECT_CHATS_LIMIT,
+  mapProjectSourceToFilterTab,
+  usePinnedProjectChats,
+  type PinnedProjectChats,
+} from '@epam/ai-dial-chat-hooks/project';
+
+const PinnedProjectsTree = () => {
+  const { projects, isLoading, markViewed } = usePinnedProjectChats(
+    projectsClient,
+    pinnedProjectIds,
+    {
+      enabled: isProjectsEnabled,
+      onProjectDeleted: (id) => unpin(id),
+    },
+  );
+  /* The project pages' viewed writer from above: a chat read there loses its dot here too. */
+  useEffect(() => viewedWriter.subscribe(markViewed), [markViewed]);
+  const groups = projects.map(
+    ({ project, chats, hasMore }: PinnedProjectChats) => ({
+      id: project.id,
+      name: project.name,
+      source: mapProjectSourceToFilterTab(project.source),
+      conversations: chats.slice(0, PINNED_PROJECT_CHATS_LIMIT),
+      hasMore,
+    }),
+  );
   // …
 };
 ```

@@ -5,8 +5,17 @@
  * runs at the top of main.ts, ahead of NestFactory.create()).
  */
 
-export type SingleSignalExporter = 'otlp' | 'none';
-export type MetricsExporter = 'otlp' | 'prometheus';
+/** Exporter choice for a signal that has at most one exporter (traces, logs). */
+export enum SingleSignalExporter {
+  Otlp = 'otlp',
+  None = 'none',
+}
+
+/** One active metrics exporter; several may be enabled at once. */
+export enum MetricsExporter {
+  Otlp = 'otlp',
+  Prometheus = 'prometheus',
+}
 
 export interface OtelConfig {
   disabled: boolean;
@@ -31,7 +40,9 @@ const parseBooleanEnv = (
 const parseSingleSignalExporter = (
   raw: string | undefined,
 ): SingleSignalExporter =>
-  raw?.trim().toLowerCase() === 'none' ? 'none' : 'otlp';
+  raw?.trim().toLowerCase() === SingleSignalExporter.None
+    ? SingleSignalExporter.None
+    : SingleSignalExporter.Otlp;
 
 const parseMetricsExporters = (raw: string | undefined): MetricsExporter[] => {
   const tokens = (raw ?? '')
@@ -39,11 +50,11 @@ const parseMetricsExporters = (raw: string | undefined): MetricsExporter[] => {
     .map((token) => token.trim().toLowerCase())
     .filter((token) => token.length > 0);
 
-  if (tokens.length === 0) return ['prometheus'];
+  if (tokens.length === 0) return [MetricsExporter.Prometheus];
   if (tokens.includes('none')) return [];
 
   const isMetricsExporter = (token: string): token is MetricsExporter =>
-    token === 'otlp' || token === 'prometheus';
+    (Object.values(MetricsExporter) as string[]).includes(token);
 
   return Array.from(new Set(tokens.filter(isMetricsExporter)));
 };

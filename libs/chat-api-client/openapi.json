@@ -3405,108 +3405,6 @@
         "tags": ["conversations"]
       }
     },
-    "/api/v1/conversations/titles": {
-      "post": {
-        "description": "Returns cached or freshly read display titles for up to 25 full conversation resource URLs. Uses the current session permissions. Individual missing, forbidden, or unavailable resources are omitted; conversation messages are never returned.",
-        "operationId": "getConversationTitles",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ConversationTitlesBodyDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Resolved conversation titles",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ConversationTitlesResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid IDs or batch size; expected 1–25 full conversation resource URLs"
-          },
-          "401": {
-            "description": "Not authenticated or DIAL Core rejected the session token"
-          },
-          "403": {
-            "description": "Invalid CSRF token"
-          },
-          "502": {
-            "description": "No titles resolved because DIAL Core returned upstream errors"
-          },
-          "503": {
-            "description": "No titles resolved because DIAL Core is unavailable or the bounded read queue is full"
-          }
-        },
-        "summary": "Resolve conversation display titles",
-        "tags": ["conversations"]
-      }
-    },
-    "/api/v1/conversations/titles/stream": {
-      "post": {
-        "description": "Opens a finite SSE stream that emits one `data:` JSON event per distinct requested ID as soon as its title read settles — `title`, `unavailable` (missing or forbidden), or `item_error` — then exactly one terminal `done` or `error` event. Each event payload is a `ConversationTitleStreamEventDto`. Reads share the process-wide title cache and read limit with `getConversationTitles`; up to 500 IDs (262144 bytes serialized) are admitted in request order. `done` with `reason: budget` means the 45-second admission window ended; IDs without an outcome may be requested again. A response that ends without a terminal event was interrupted. Conversation messages are never returned.",
-        "operationId": "streamConversationTitles",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/StreamConversationTitlesBodyDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "SSE stream of ConversationTitleStreamEventDto payloads. Failures after headers are sent are reported by a terminal `error` event, never by the HTTP status.",
-            "content": {
-              "text/event-stream": {
-                "schema": {
-                  "type": "string"
-                },
-                "examples": {
-                  "complete": {
-                    "summary": "A later ID resolves first; the stream completes",
-                    "value": ": init\n\ndata: {\"type\":\"title\",\"id\":\"conversations/default-bucket/gpt-4o__Second\",\"title\":\"Second renamed title\"}\n\ndata: {\"type\":\"title\",\"id\":\"conversations/default-bucket/gpt-4o__First\",\"title\":\"First renamed title\"}\n\ndata: {\"type\":\"done\",\"reason\":\"complete\",\"processed\":2,\"total\":2}\n\n"
-                  },
-                  "fatal": {
-                    "summary": "DIAL Core becomes unavailable after an item outcome",
-                    "value": ": init\n\ndata: {\"type\":\"unavailable\",\"id\":\"conversations/default-bucket/gpt-4o__First\"}\n\ndata: {\"type\":\"error\",\"status\":503,\"code\":\"unavailable\"}\n\n"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid IDs or count; expected 1–500 full conversation resource URLs"
-          },
-          "401": {
-            "description": "Not authenticated"
-          },
-          "403": {
-            "description": "Invalid CSRF token"
-          },
-          "413": {
-            "description": "Serialized IDs exceed 262144 bytes"
-          },
-          "503": {
-            "description": "Too many concurrent title streams on this instance"
-          }
-        },
-        "summary": "Stream conversation display titles via SSE",
-        "tags": ["conversations"]
-      }
-    },
     "/api/v1/conversations/metadata": {
       "get": {
         "operationId": "getConversationMetadata",
@@ -3575,273 +3473,6 @@
           }
         },
         "summary": "Get metadata for a conversation",
-        "tags": ["conversations"]
-      }
-    },
-    "/api/v1/conversations/completions": {
-      "post": {
-        "description": "Appends the user message to the conversation history, streams a completion from DIAL Core as SSE, persists the result, and returns the raw event stream. Backend owns persistence.",
-        "operationId": "streamCompletion",
-        "parameters": [
-          {
-            "name": "X-Lang",
-            "in": "header",
-            "description": "Current UI language forwarded to DIAL Core for language-sensitive tools and agents.",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "maxLength": 35,
-              "pattern": "^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$",
-              "example": "en"
-            }
-          },
-          {
-            "name": "X-Timezone",
-            "in": "header",
-            "description": "Current browser IANA timezone forwarded to DIAL Core for date- and time-sensitive tools.",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "maxLength": 255,
-              "pattern": "^[A-Za-z0-9._+-]+(?:/[A-Za-z0-9._+-]+)*$",
-              "example": "Europe/Warsaw"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SendCompletionDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "SSE stream of completion chunks"
-          },
-          "400": {
-            "description": "Invalid request body or X-Timezone/X-Lang header"
-          },
-          "401": {
-            "description": "Not authenticated"
-          },
-          "403": {
-            "description": "Insufficient permissions on conversation, or (`code: conversationModelHidden`) the requested model is hidden through HIDDEN_ENTITY_TAGS",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ConversationModelHiddenErrorDto"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Conversation not found"
-          },
-          "409": {
-            "description": "Another generation is already active for this conversation and principal, or the conversation has a pending background answer (started by any instance or session)"
-          },
-          "413": {
-            "description": "DIAL Core rejected the payload as too large"
-          },
-          "422": {
-            "description": "DIAL Core could not process the request"
-          },
-          "429": {
-            "description": "DIAL Core rate-limited the request"
-          },
-          "502": {
-            "description": "DIAL Core error"
-          },
-          "503": {
-            "description": "DIAL Core unreachable"
-          }
-        },
-        "summary": "Stream a chat completion",
-        "tags": ["conversations"]
-      }
-    },
-    "/api/v1/conversations/completions/stop": {
-      "post": {
-        "operationId": "stopCompletion",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/StopCompletionDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "204": {
-            "description": "Generation stopped successfully"
-          },
-          "401": {
-            "description": "Not authenticated"
-          },
-          "404": {
-            "description": "No active generation found for this principal for the given path and generationId"
-          },
-          "503": {
-            "description": "The stopped state of a background generation could not be saved; the generation keeps running and Stop can be retried"
-          }
-        },
-        "summary": "Stop an active generation",
-        "tags": ["conversations"]
-      }
-    },
-    "/api/v1/conversations/completions/attach": {
-      "post": {
-        "description": "Opens an SSE stream for the active generation on this conversation path: one `snapshot` event carrying the assistant message as assembled so far and, when the generation runs on this instance outside DIAL Core background mode, its `generationId` — the id `completions/stop` accepts for this path, so a client that attached after a refresh can stop it — then a `chunk` event for every subsequent delta, then exactly one terminal event (`done`/`error`/`stopped`). Used by the frontend to show progressive content when reopening a conversation mid-generation instead of only a typing indicator. Principal-scoped — only the principal that could stop the generation can attach to it.",
-        "operationId": "attachToGeneration",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AttachGenerationDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "SSE stream: one snapshot event, live chunk events, then one terminal event"
-          },
-          "400": {
-            "description": "Invalid or missing path"
-          },
-          "401": {
-            "description": "Not authenticated"
-          },
-          "404": {
-            "description": "No active generation found for the given path for this principal — including one that already finished"
-          }
-        },
-        "summary": "Attach to an active generation and replay it live",
-        "tags": ["conversations"]
-      }
-    },
-    "/api/v1/conversations/watch": {
-      "post": {
-        "description": "Opens an SSE stream that proxies DIAL Core resource-update events for the given conversation path. Used by the frontend to detect when LLM naming completes.",
-        "operationId": "watchConversation",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/WatchConversationBodyDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "SSE stream of resource events"
-          },
-          "400": {
-            "description": "Invalid or missing path"
-          },
-          "401": {
-            "description": "Not authenticated"
-          },
-          "403": {
-            "description": "DIAL Core denied access to the resource"
-          },
-          "404": {
-            "description": "DIAL Core resource not found"
-          },
-          "409": {
-            "description": "DIAL Core reported a conflict with the current resource state"
-          },
-          "413": {
-            "description": "DIAL Core rejected the payload as too large"
-          },
-          "422": {
-            "description": "DIAL Core could not process the request"
-          },
-          "429": {
-            "description": "DIAL Core rate-limited the request"
-          },
-          "502": {
-            "description": "DIAL Core subscription failed"
-          },
-          "503": {
-            "description": "DIAL Core is unreachable or timed out"
-          }
-        },
-        "summary": "Subscribe to conversation resource updates via SSE",
-        "tags": ["conversations"]
-      }
-    },
-    "/api/v1/conversations/generate-title": {
-      "post": {
-        "description": "Generates a title for an existing conversation using the operator-configured utility model, based on the most recent messages. The suggestion is returned but NOT persisted — the caller confirms the rename separately. Does not read or set the llmNamingDone flag.",
-        "operationId": "generateConversationTitle",
-        "parameters": [
-          {
-            "name": "path",
-            "required": true,
-            "in": "query",
-            "description": "Conversation path (uuid__name). May contain slashes.",
-            "schema": {
-              "example": "gpt-4o__My Conversation__UUID",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Generated title suggestion",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GenerateTitleResponseDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Missing or invalid path, or conversation has no content"
-          },
-          "401": {
-            "description": "Not authenticated, or DIAL Core rejected the calling user’s token for the configured utility model"
-          },
-          "403": {
-            "description": "Not authorized to use the configured utility model"
-          },
-          "404": {
-            "description": "Conversation not found"
-          },
-          "409": {
-            "description": "DIAL Core reported a conflict with the current resource state"
-          },
-          "413": {
-            "description": "DIAL Core rejected the payload as too large"
-          },
-          "422": {
-            "description": "DIAL Core could not process the request"
-          },
-          "429": {
-            "description": "DIAL Core rate-limited the request"
-          },
-          "502": {
-            "description": "LLM title generation failed"
-          },
-          "503": {
-            "description": "LLM title generation unavailable or timed out"
-          }
-        },
-        "summary": "Generate an LLM-based title suggestion for a conversation",
         "tags": ["conversations"]
       }
     },
@@ -4051,6 +3682,363 @@
           }
         },
         "summary": "Mark a conversation as viewed",
+        "tags": ["conversations"]
+      }
+    },
+    "/api/v1/conversations/completions": {
+      "post": {
+        "description": "Appends the user message to the conversation history, streams a completion from DIAL Core as SSE, persists the result, and returns the raw event stream. Backend owns persistence.",
+        "operationId": "streamCompletion",
+        "parameters": [
+          {
+            "name": "X-Timezone",
+            "in": "header",
+            "description": "Current browser IANA timezone forwarded to DIAL Core for date- and time-sensitive tools.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 255,
+              "pattern": "^[A-Za-z0-9._+-]+(?:/[A-Za-z0-9._+-]+)*$",
+              "example": "Europe/Warsaw"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendCompletionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SSE stream of completion chunks"
+          },
+          "400": {
+            "description": "Invalid request body or X-Timezone header"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Insufficient permissions on conversation, or (`code: conversationModelHidden`) the requested model is hidden through HIDDEN_ENTITY_TAGS",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationModelHiddenErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conversation not found"
+          },
+          "409": {
+            "description": "Another generation is already active for this conversation and principal, or the conversation has a pending background answer (started by any instance or session)"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable"
+          }
+        },
+        "summary": "Stream a chat completion",
+        "tags": ["conversations"]
+      }
+    },
+    "/api/v1/conversations/completions/stop": {
+      "post": {
+        "operationId": "stopCompletion",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StopCompletionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Generation stopped successfully"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "No active generation found for this principal for the given path and generationId"
+          },
+          "503": {
+            "description": "The stopped state of a background generation could not be saved; the generation keeps running and Stop can be retried"
+          }
+        },
+        "summary": "Stop an active generation",
+        "tags": ["conversations"]
+      }
+    },
+    "/api/v1/conversations/completions/attach": {
+      "post": {
+        "description": "Opens an SSE stream for the active generation on this conversation path: one `snapshot` event carrying the assistant message as assembled so far and, when the generation runs on this instance outside DIAL Core background mode, its `generationId` — the id `completions/stop` accepts for this path, so a client that attached after a refresh can stop it — then a `chunk` event for every subsequent delta, then exactly one terminal event (`done`/`error`/`stopped`). Used by the frontend to show progressive content when reopening a conversation mid-generation instead of only a typing indicator. Principal-scoped — only the principal that could stop the generation can attach to it.",
+        "operationId": "attachToGeneration",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttachGenerationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SSE stream: one snapshot event, live chunk events, then one terminal event"
+          },
+          "400": {
+            "description": "Invalid or missing path"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "No active generation found for the given path for this principal — including one that already finished"
+          }
+        },
+        "summary": "Attach to an active generation and replay it live",
+        "tags": ["conversations"]
+      }
+    },
+    "/api/v1/conversations/titles": {
+      "post": {
+        "description": "Returns cached or freshly read display titles for up to 25 full conversation resource URLs. Uses the current session permissions. Individual missing, forbidden, or unavailable resources are omitted; conversation messages are never returned.",
+        "operationId": "getConversationTitles",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConversationTitlesBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved conversation titles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationTitlesResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid IDs or batch size; expected 1–25 full conversation resource URLs"
+          },
+          "401": {
+            "description": "Not authenticated or DIAL Core rejected the session token"
+          },
+          "403": {
+            "description": "Invalid CSRF token"
+          },
+          "502": {
+            "description": "No titles resolved because DIAL Core returned upstream errors"
+          },
+          "503": {
+            "description": "No titles resolved because DIAL Core is unavailable or the bounded read queue is full"
+          }
+        },
+        "summary": "Resolve conversation display titles",
+        "tags": ["conversations"]
+      }
+    },
+    "/api/v1/conversations/titles/stream": {
+      "post": {
+        "description": "Opens a finite SSE stream that emits one `data:` JSON event per distinct requested ID as soon as its title read settles — `title`, `unavailable` (missing or forbidden), or `item_error` — then exactly one terminal `done` or `error` event. Each event payload is a `ConversationTitleStreamEventDto`. Reads share the process-wide title cache and read limit with `getConversationTitles`; up to 500 IDs (262144 bytes serialized) are admitted in request order. `done` with `reason: budget` means the 45-second admission window ended; IDs without an outcome may be requested again. A response that ends without a terminal event was interrupted. Conversation messages are never returned.",
+        "operationId": "streamConversationTitles",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StreamConversationTitlesBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SSE stream of ConversationTitleStreamEventDto payloads. Failures after headers are sent are reported by a terminal `error` event, never by the HTTP status.",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                },
+                "examples": {
+                  "complete": {
+                    "summary": "A later ID resolves first; the stream completes",
+                    "value": ": init\n\ndata: {\"type\":\"title\",\"id\":\"conversations/default-bucket/gpt-4o__Second\",\"title\":\"Second renamed title\"}\n\ndata: {\"type\":\"title\",\"id\":\"conversations/default-bucket/gpt-4o__First\",\"title\":\"First renamed title\"}\n\ndata: {\"type\":\"done\",\"reason\":\"complete\",\"processed\":2,\"total\":2}\n\n"
+                  },
+                  "fatal": {
+                    "summary": "DIAL Core becomes unavailable after an item outcome",
+                    "value": ": init\n\ndata: {\"type\":\"unavailable\",\"id\":\"conversations/default-bucket/gpt-4o__First\"}\n\ndata: {\"type\":\"error\",\"status\":503,\"code\":\"unavailable\"}\n\n"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid IDs or count; expected 1–500 full conversation resource URLs"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Invalid CSRF token"
+          },
+          "413": {
+            "description": "Serialized IDs exceed 262144 bytes"
+          },
+          "503": {
+            "description": "Too many concurrent title streams on this instance"
+          }
+        },
+        "summary": "Stream conversation display titles via SSE",
+        "tags": ["conversations"]
+      }
+    },
+    "/api/v1/conversations/generate-title": {
+      "post": {
+        "description": "Generates a title for an existing conversation using the operator-configured utility model, based on the most recent messages. The suggestion is returned but NOT persisted — the caller confirms the rename separately. Does not read or set the llmNamingDone flag.",
+        "operationId": "generateConversationTitle",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Conversation path (uuid__name). May contain slashes.",
+            "schema": {
+              "example": "gpt-4o__My Conversation__UUID",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Generated title suggestion",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerateTitleResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or invalid path, or conversation has no content"
+          },
+          "401": {
+            "description": "Not authenticated, or DIAL Core rejected the calling user’s token for the configured utility model"
+          },
+          "403": {
+            "description": "Not authorized to use the configured utility model"
+          },
+          "404": {
+            "description": "Conversation not found"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "LLM title generation failed"
+          },
+          "503": {
+            "description": "LLM title generation unavailable or timed out"
+          }
+        },
+        "summary": "Generate an LLM-based title suggestion for a conversation",
+        "tags": ["conversations"]
+      }
+    },
+    "/api/v1/conversations/watch": {
+      "post": {
+        "description": "Opens an SSE stream that proxies DIAL Core resource-update events for the given conversation path. Used by the frontend to detect when LLM naming completes.",
+        "operationId": "watchConversation",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WatchConversationBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SSE stream of resource events"
+          },
+          "400": {
+            "description": "Invalid or missing path"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "DIAL Core denied access to the resource"
+          },
+          "404": {
+            "description": "DIAL Core resource not found"
+          },
+          "409": {
+            "description": "DIAL Core reported a conflict with the current resource state"
+          },
+          "413": {
+            "description": "DIAL Core rejected the payload as too large"
+          },
+          "422": {
+            "description": "DIAL Core could not process the request"
+          },
+          "429": {
+            "description": "DIAL Core rate-limited the request"
+          },
+          "502": {
+            "description": "DIAL Core subscription failed"
+          },
+          "503": {
+            "description": "DIAL Core is unreachable or timed out"
+          }
+        },
+        "summary": "Subscribe to conversation resource updates via SSE",
         "tags": ["conversations"]
       }
     },
@@ -15676,6 +15664,325 @@
         },
         "required": ["items"]
       },
+      "ConversationMetadataDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Hello"
+          },
+          "author": {
+            "type": "string",
+            "example": "user@example.com"
+          },
+          "parentPath": {
+            "type": "string",
+            "example": "test-bucket"
+          },
+          "bucket": {
+            "type": "string",
+            "example": "test-bucket"
+          },
+          "url": {
+            "type": "string",
+            "example": "files/test-bucket/uuid__Hello"
+          },
+          "nodeType": {
+            "type": "string",
+            "example": "ITEM"
+          },
+          "resourceType": {
+            "type": "string",
+            "example": "Conversation"
+          },
+          "etag": {
+            "type": "string",
+            "example": "abc123"
+          },
+          "createdAt": {
+            "type": "number",
+            "example": 1779206400000
+          },
+          "updatedAt": {
+            "type": "number",
+            "example": 1779206400000
+          },
+          "permissions": {
+            "example": ["READ", "WRITE"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "parentPath",
+          "bucket",
+          "url",
+          "nodeType",
+          "resourceType"
+        ]
+      },
+      "SaveConversationBodyDto": {
+        "type": "object",
+        "properties": {
+          "conversation": {
+            "description": "Full conversation object to persist",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConversationResponseDto"
+              }
+            ]
+          }
+        },
+        "required": ["conversation"]
+      },
+      "RenameConversationBodyDto": {
+        "type": "object",
+        "properties": {
+          "newTitle": {
+            "type": "string",
+            "description": "New title for the conversation",
+            "example": "My renamed chat"
+          }
+        },
+        "required": ["newTitle"]
+      },
+      "RenameConversationResponseDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Sanitised stored display name of the renamed conversation",
+            "example": "My renamed chat"
+          }
+        },
+        "required": ["name"]
+      },
+      "DuplicateConversationResponseDto": {
+        "type": "object",
+        "properties": {
+          "newPath": {
+            "type": "string",
+            "description": "Path of the newly created duplicate conversation",
+            "example": "conversations/bucket/gpt-4o__My conversation"
+          }
+        },
+        "required": ["newPath"]
+      },
+      "ConversationErrorCode": {
+        "type": "string",
+        "enum": [
+          "conversationDuplicateModelHidden",
+          "conversationModelHidden",
+          "conversationAttachmentMissing"
+        ],
+        "description": "Present when the request was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`, so it cannot be duplicated. `conversationModelHidden`: the model a completion, share or publish would use is hidden through `HIDDEN_ENTITY_TAGS`."
+      },
+      "DuplicateConversationErrorDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 403
+          },
+          "error": {
+            "type": "string",
+            "example": "Forbidden"
+          },
+          "message": {
+            "type": "string",
+            "example": "The conversation's model is not available for new conversations"
+          },
+          "code": {
+            "description": "Present when the request was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`, so it cannot be duplicated. `conversationModelHidden`: the model a completion, share or publish would use is hidden through `HIDDEN_ENTITY_TAGS`.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConversationErrorCode"
+              }
+            ]
+          }
+        },
+        "required": ["statusCode", "error", "message"]
+      },
+      "DeleteConversationsBodyDto": {
+        "type": "object",
+        "properties": {
+          "ids": {
+            "description": "Stable DIAL Core conversation IDs to delete. 1–100 IDs. Duplicates are silently deduplicated.",
+            "minItems": 1,
+            "maxItems": 100,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["ids"]
+      },
+      "ConversationDeletionFailureDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Conversation ID that failed to delete"
+          },
+          "code": {
+            "type": "string",
+            "description": "Stable application error code",
+            "enum": ["NOT_FOUND", "FORBIDDEN", "UPSTREAM_ERROR", "UNKNOWN"]
+          }
+        },
+        "required": ["id", "code"]
+      },
+      "ConversationDeletionResultDto": {
+        "type": "object",
+        "properties": {
+          "requested": {
+            "type": "number",
+            "description": "Total number of IDs received in the request (after deduplication)"
+          },
+          "deleted": {
+            "type": "number",
+            "description": "Number of conversations successfully deleted from DIAL Core"
+          },
+          "alreadyAbsent": {
+            "type": "number",
+            "description": "Number of IDs that were already absent from DIAL Core (counted as success)"
+          },
+          "failed": {
+            "description": "Items that could not be deleted",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConversationDeletionFailureDto"
+            }
+          }
+        },
+        "required": ["requested", "deleted", "alreadyAbsent", "failed"]
+      },
+      "DeleteAllConversationsBodyDto": {
+        "type": "object",
+        "properties": {
+          "confirm": {
+            "type": "boolean",
+            "description": "Must be `true` to confirm intentional deletion of all conversations.",
+            "example": true
+          }
+        },
+        "required": ["confirm"]
+      },
+      "SendCompletionDto": {
+        "type": "object",
+        "properties": {
+          "generationId": {
+            "type": "string",
+            "description": "Client-generated UUID identifying this generation attempt.",
+            "example": "cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8",
+            "format": "uuid"
+          },
+          "path": {
+            "type": "string",
+            "description": "Conversation path ({deploymentId}__{name}__{uuid}). May contain slashes.",
+            "example": "gpt-4o__My Conversation__cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8"
+          },
+          "model": {
+            "type": "string",
+            "description": "DIAL Core deployment name to use for completion",
+            "example": "anthropic.claude-v3-sonnet",
+            "maxLength": 256
+          },
+          "mode": {
+            "type": "string",
+            "enum": ["append", "continue_last_user", "regenerate", "edit"],
+            "description": "How the message should be inserted into history. append = new user+assistant turn; continue_last_user = conversation already ends with a user message; regenerate = replace assistant at messageIndex; edit = replace user message at messageIndex."
+          },
+          "message": {
+            "type": "string",
+            "description": "The new user message to send. May be empty when custom_content carries attachments, form_value, or configuration_value.",
+            "example": "What is the capital of France?",
+            "maxLength": 50000
+          },
+          "messageIndex": {
+            "type": "number",
+            "description": "Zero-based message index for regenerate and edit modes. Ignored for append/continue_last_user.",
+            "example": 3
+          },
+          "custom_content": {
+            "description": "Extra DIAL payload attached to the user message",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MessageCustomContentDto"
+              }
+            ]
+          },
+          "clientChannelId": {
+            "type": "string",
+            "description": "Active DIAL Core client-channel id (from `POST /v1/client-channel/subscribe`), forwarded to DIAL Core so a mid-completion `toolset/signin` event can be correlated to this request. Omitted when no channel is active yet.",
+            "example": "a1b2c3d4-e5f6-4789-a012-3456789abcde"
+          }
+        },
+        "required": ["generationId", "path", "model", "mode"]
+      },
+      "ConversationModelHiddenErrorDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 403
+          },
+          "error": {
+            "type": "string",
+            "example": "Forbidden"
+          },
+          "message": {
+            "type": "string",
+            "example": "The conversation model is no longer available"
+          },
+          "code": {
+            "description": "Present when the request was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`, so it cannot be duplicated. `conversationModelHidden`: the model a completion, share or publish would use is hidden through `HIDDEN_ENTITY_TAGS`.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConversationErrorCode"
+              }
+            ]
+          }
+        },
+        "required": ["statusCode", "error", "message"]
+      },
+      "StopCompletionDto": {
+        "type": "object",
+        "properties": {
+          "generationId": {
+            "type": "string",
+            "description": "Generation ID that was returned by the active stream.",
+            "example": "cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8",
+            "format": "uuid"
+          },
+          "path": {
+            "type": "string",
+            "description": "Conversation path of the active generation.",
+            "example": "gpt-4o__My Conversation__cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8"
+          },
+          "content": {
+            "type": "string",
+            "description": "Answer text the client has shown so far. Saved as the stopped answer of a background generation, whose text the backend never assembles; ignored for every other generation, whose answer the backend already holds.",
+            "maxLength": 1000000
+          }
+        },
+        "required": ["generationId", "path"]
+      },
+      "AttachGenerationDto": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Conversation sub-path (bucket-stripped), e.g. \"gpt-4o__My Chat\".",
+            "example": "gpt-4o__My Chat"
+          }
+        },
+        "required": ["path"]
+      },
       "ConversationTitlesBodyDto": {
         "type": "object",
         "properties": {
@@ -15864,233 +16171,6 @@
         },
         "required": ["ids"]
       },
-      "ConversationMetadataDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "example": "Hello"
-          },
-          "author": {
-            "type": "string",
-            "example": "user@example.com"
-          },
-          "parentPath": {
-            "type": "string",
-            "example": "test-bucket"
-          },
-          "bucket": {
-            "type": "string",
-            "example": "test-bucket"
-          },
-          "url": {
-            "type": "string",
-            "example": "files/test-bucket/uuid__Hello"
-          },
-          "nodeType": {
-            "type": "string",
-            "example": "ITEM"
-          },
-          "resourceType": {
-            "type": "string",
-            "example": "Conversation"
-          },
-          "etag": {
-            "type": "string",
-            "example": "abc123"
-          },
-          "createdAt": {
-            "type": "number",
-            "example": 1779206400000
-          },
-          "updatedAt": {
-            "type": "number",
-            "example": 1779206400000
-          },
-          "permissions": {
-            "example": ["READ", "WRITE"],
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "required": [
-          "name",
-          "parentPath",
-          "bucket",
-          "url",
-          "nodeType",
-          "resourceType"
-        ]
-      },
-      "SaveConversationBodyDto": {
-        "type": "object",
-        "properties": {
-          "conversation": {
-            "description": "Full conversation object to persist",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ConversationResponseDto"
-              }
-            ]
-          }
-        },
-        "required": ["conversation"]
-      },
-      "SendCompletionDto": {
-        "type": "object",
-        "properties": {
-          "generationId": {
-            "type": "string",
-            "description": "Client-generated UUID identifying this generation attempt.",
-            "example": "cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8",
-            "format": "uuid"
-          },
-          "path": {
-            "type": "string",
-            "description": "Conversation path ({deploymentId}__{name}__{uuid}). May contain slashes.",
-            "example": "gpt-4o__My Conversation__cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8"
-          },
-          "model": {
-            "type": "string",
-            "description": "DIAL Core deployment name to use for completion",
-            "example": "anthropic.claude-v3-sonnet",
-            "maxLength": 256
-          },
-          "mode": {
-            "type": "string",
-            "enum": ["append", "continue_last_user", "regenerate", "edit"],
-            "description": "How the message should be inserted into history. append = new user+assistant turn; continue_last_user = conversation already ends with a user message; regenerate = replace assistant at messageIndex; edit = replace user message at messageIndex."
-          },
-          "message": {
-            "type": "string",
-            "description": "The new user message to send. May be empty when custom_content carries attachments, form_value, or configuration_value.",
-            "example": "What is the capital of France?",
-            "maxLength": 50000
-          },
-          "messageIndex": {
-            "type": "number",
-            "description": "Zero-based message index for regenerate and edit modes. Ignored for append/continue_last_user.",
-            "example": 3
-          },
-          "custom_content": {
-            "description": "Extra DIAL payload attached to the user message",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/MessageCustomContentDto"
-              }
-            ]
-          },
-          "clientChannelId": {
-            "type": "string",
-            "description": "Active DIAL Core client-channel id (from `POST /v1/client-channel/subscribe`), forwarded to DIAL Core so a mid-completion `toolset/signin` event can be correlated to this request. Omitted when no channel is active yet.",
-            "example": "a1b2c3d4-e5f6-4789-a012-3456789abcde"
-          }
-        },
-        "required": ["generationId", "path", "model", "mode"]
-      },
-      "ConversationErrorCode": {
-        "type": "string",
-        "enum": [
-          "conversationDuplicateModelHidden",
-          "conversationModelHidden",
-          "conversationAttachmentMissing"
-        ],
-        "description": "Present when the request was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`, so it cannot be duplicated. `conversationModelHidden`: the model a completion, share or publish would use is hidden through `HIDDEN_ENTITY_TAGS`."
-      },
-      "ConversationModelHiddenErrorDto": {
-        "type": "object",
-        "properties": {
-          "statusCode": {
-            "type": "number",
-            "example": 403
-          },
-          "error": {
-            "type": "string",
-            "example": "Forbidden"
-          },
-          "message": {
-            "type": "string",
-            "example": "The conversation model is no longer available"
-          },
-          "code": {
-            "description": "Present when the request was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`, so it cannot be duplicated. `conversationModelHidden`: the model a completion, share or publish would use is hidden through `HIDDEN_ENTITY_TAGS`.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ConversationErrorCode"
-              }
-            ]
-          }
-        },
-        "required": ["statusCode", "error", "message"]
-      },
-      "StopCompletionDto": {
-        "type": "object",
-        "properties": {
-          "generationId": {
-            "type": "string",
-            "description": "Generation ID that was returned by the active stream.",
-            "example": "cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8",
-            "format": "uuid"
-          },
-          "path": {
-            "type": "string",
-            "description": "Conversation path of the active generation.",
-            "example": "gpt-4o__My Conversation__cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8"
-          },
-          "content": {
-            "type": "string",
-            "description": "Answer text the client has shown so far. Saved as the stopped answer of a background generation, whose text the backend never assembles; ignored for every other generation, whose answer the backend already holds.",
-            "maxLength": 1000000
-          }
-        },
-        "required": ["generationId", "path"]
-      },
-      "AttachGenerationDto": {
-        "type": "object",
-        "properties": {
-          "path": {
-            "type": "string",
-            "description": "Conversation sub-path (bucket-stripped), e.g. \"gpt-4o__My Chat\".",
-            "example": "gpt-4o__My Chat"
-          }
-        },
-        "required": ["path"]
-      },
-      "WatchConversationBodyDto": {
-        "type": "object",
-        "properties": {
-          "path": {
-            "type": "string",
-            "description": "Conversation sub-path (bucket-stripped), e.g. \"gpt-4o__My Chat\".",
-            "example": "gpt-4o__My Chat"
-          }
-        },
-        "required": ["path"]
-      },
-      "RenameConversationBodyDto": {
-        "type": "object",
-        "properties": {
-          "newTitle": {
-            "type": "string",
-            "description": "New title for the conversation",
-            "example": "My renamed chat"
-          }
-        },
-        "required": ["newTitle"]
-      },
-      "RenameConversationResponseDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "description": "Sanitised stored display name of the renamed conversation",
-            "example": "My renamed chat"
-          }
-        },
-        "required": ["name"]
-      },
       "GenerateTitleResponseDto": {
         "type": "object",
         "properties": {
@@ -16102,108 +16182,16 @@
         },
         "required": ["name"]
       },
-      "DuplicateConversationResponseDto": {
+      "WatchConversationBodyDto": {
         "type": "object",
         "properties": {
-          "newPath": {
+          "path": {
             "type": "string",
-            "description": "Path of the newly created duplicate conversation",
-            "example": "conversations/bucket/gpt-4o__My conversation"
+            "description": "Conversation sub-path (bucket-stripped), e.g. \"gpt-4o__My Chat\".",
+            "example": "gpt-4o__My Chat"
           }
         },
-        "required": ["newPath"]
-      },
-      "DuplicateConversationErrorDto": {
-        "type": "object",
-        "properties": {
-          "statusCode": {
-            "type": "number",
-            "example": 403
-          },
-          "error": {
-            "type": "string",
-            "example": "Forbidden"
-          },
-          "message": {
-            "type": "string",
-            "example": "The conversation's model is not available for new conversations"
-          },
-          "code": {
-            "description": "Present when the request was refused by a chat-api rule rather than by DIAL Core. `conversationDuplicateModelHidden`: the conversation's current model is hidden through `HIDDEN_ENTITY_TAGS`, so it cannot be duplicated. `conversationModelHidden`: the model a completion, share or publish would use is hidden through `HIDDEN_ENTITY_TAGS`.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/ConversationErrorCode"
-              }
-            ]
-          }
-        },
-        "required": ["statusCode", "error", "message"]
-      },
-      "DeleteConversationsBodyDto": {
-        "type": "object",
-        "properties": {
-          "ids": {
-            "description": "Stable DIAL Core conversation IDs to delete. 1–100 IDs. Duplicates are silently deduplicated.",
-            "minItems": 1,
-            "maxItems": 100,
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "required": ["ids"]
-      },
-      "ConversationDeletionFailureDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Conversation ID that failed to delete"
-          },
-          "code": {
-            "type": "string",
-            "description": "Stable application error code",
-            "enum": ["NOT_FOUND", "FORBIDDEN", "UPSTREAM_ERROR", "UNKNOWN"]
-          }
-        },
-        "required": ["id", "code"]
-      },
-      "ConversationDeletionResultDto": {
-        "type": "object",
-        "properties": {
-          "requested": {
-            "type": "number",
-            "description": "Total number of IDs received in the request (after deduplication)"
-          },
-          "deleted": {
-            "type": "number",
-            "description": "Number of conversations successfully deleted from DIAL Core"
-          },
-          "alreadyAbsent": {
-            "type": "number",
-            "description": "Number of IDs that were already absent from DIAL Core (counted as success)"
-          },
-          "failed": {
-            "description": "Items that could not be deleted",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ConversationDeletionFailureDto"
-            }
-          }
-        },
-        "required": ["requested", "deleted", "alreadyAbsent", "failed"]
-      },
-      "DeleteAllConversationsBodyDto": {
-        "type": "object",
-        "properties": {
-          "confirm": {
-            "type": "boolean",
-            "description": "Must be `true` to confirm intentional deletion of all conversations.",
-            "example": true
-          }
-        },
-        "required": ["confirm"]
+        "required": ["path"]
       },
       "PublishRuleDto": {
         "type": "object",

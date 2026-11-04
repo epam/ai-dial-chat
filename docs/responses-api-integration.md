@@ -40,7 +40,7 @@ Browser
   |
   | POST /api/v1/conversations/completions
   v
-ConversationController
+ConversationGenerationController
   |
   v
 ConversationStreamingService
@@ -171,7 +171,7 @@ The streaming frontend deliberately continues to use raw `fetch` for
 `xTimezone?: string`, neither that method nor its `Raw` variant exposes the live
 response body needed by the existing SSE reader.
 
-`ConversationController` validates a present header before generation starts.
+`ConversationGenerationController` validates a present header before generation starts.
 It must be a single IANA timezone string, no longer than 255 characters, match
 the safe timezone-segment syntax, and be accepted by `Intl.DateTimeFormat`.
 Malformed, unknown, oversized, or multi-value input returns `400 Bad Request`
@@ -538,7 +538,7 @@ Possible `generation.api` values:
 | Responses request and SSE parser            | `apps/chat-api/src/conversations/generation/responses.adapter.ts`                                                                                                                 |
 | Active Chat Completions flow                | `apps/chat-api/src/conversations/streaming/conversation-streaming.service.ts`                                                                                                     |
 | Browser timezone resolution and SSE request | `apps/chat/src/utils/browser-timezone.ts`, `apps/chat/src/server-api/chat-stream.api.ts`                                                                                          |
-| Timezone header validation                  | `apps/chat-api/src/conversations/utils/timezone-header.ts`, `apps/chat-api/src/conversations/conversation.controller.ts`                                                          |
+| Timezone header validation                  | `apps/chat-api/src/conversations/utils/timezone-header.ts`, `apps/chat-api/src/conversations/conversation-generation.controller.ts`                                               |
 | Metrics                                     | `apps/chat-api/src/conversations/generation/generation-metrics.ts`                                                                                                                |
 | Orchestration and conversation persistence  | `apps/chat-api/src/conversations/conversation.service.ts`                                                                                                                         |
 | Deployment-details retrieval and caching    | `apps/chat-api/src/deployments/deployments.service.ts`                                                                                                                            |

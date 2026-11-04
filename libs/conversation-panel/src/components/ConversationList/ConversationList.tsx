@@ -18,16 +18,19 @@ import {
 import { List, type ListImperativeAPI } from 'react-window';
 import { CONVERSATION_PANEL_CLASS } from '../../constants/public-class-names';
 import type { ConversationListProps } from '../../models/conversation-list';
+import type { PinnedProjectGroup } from '../../models/pinned-projects';
 import type { RowRendererData, VirtualRow } from '../../models/virtual-row';
 import { ConversationTypeFilter } from '../../types/conversation-kind';
 import { ConversationRowVariant } from '../../types/conversation-row-variant';
 import { VirtualRowKind } from '../../types/virtual-row';
 import {
+  filterPinnedProjects,
   matchesKind,
   matchesSearch,
   matchesTab,
 } from '../../utils/conversation-filter';
 import {
+  buildProjectRows,
   getConversationIdsInRange,
   getOverscanCount,
   getRowHeight,
@@ -49,6 +52,8 @@ const ALL_GROUP_KEYS = new Set<string>([
   FilterTab.Organization,
 ]);
 
+const NO_PROJECTS: PinnedProjectGroup[] = [];
+
 /** Virtualized, grouped, collapsible list of conversations without any panel chrome. */
 export const ConversationList: FC<ConversationListProps> = memo(
   ({
@@ -68,6 +73,7 @@ export const ConversationList: FC<ConversationListProps> = memo(
     onActionMenuOpen,
     onMoveConversation,
     onVisibleConversationIdsChange,
+    pinnedProjects,
     styles,
     id,
     className,
@@ -85,7 +91,18 @@ export const ConversationList: FC<ConversationListProps> = memo(
       groupLabels,
       actionsLabel,
       unreadIndicatorLabel,
+      seeAllLabel,
+      seeAllAriaLabel,
     } = labels;
+    const {
+      projects: pinnedProjectGroups,
+      onSelectProject,
+      onSelectConversation: onSelectPinnedProjectConversation,
+      onSeeAll,
+      getActions: getProjectActions,
+      onActionMenuOpen: onProjectActionMenuOpen,
+      activeProjectId,
+    } = pinnedProjects ?? {};
 
     /*
      * Dropped before any tab/search filtering so a hidden source never
@@ -206,6 +223,7 @@ export const ConversationList: FC<ConversationListProps> = memo(
       '--cp-skeleton-color': colors?.skeletonColor,
       '--cp-unread-dot': colors?.unreadDot,
       '--cp-indicator-dot': colors?.indicatorDot,
+      '--cp-project-guide-line': colors?.projectGuideLine,
       '--cp-list-font-family': typography?.fontFamily,
     });
 
@@ -278,6 +296,53 @@ export const ConversationList: FC<ConversationListProps> = memo(
       ],
     );
 
+    const visibleProjects = useMemo(
+      () =>
+        pinnedProjectGroups
+          ? filterPinnedProjects(pinnedProjectGroups, {
+              searchQuery,
+              activeFilter,
+              activeTypeFilter,
+              hiddenSources,
+            })
+          : NO_PROJECTS,
+      [
+        pinnedProjectGroups,
+        searchQuery,
+        activeFilter,
+        activeTypeFilter,
+        hiddenSources,
+      ],
+    );
+
+    const projectIdByConversationId = useMemo(() => {
+      const ids = new Map<string, string>();
+      for (const project of visibleProjects) {
+        for (const item of project.conversations) ids.set(item.id, project.id);
+      }
+      return ids;
+    }, [visibleProjects]);
+
+    const handleSelectProject = useCallback(
+      (projectId: string) => onSelectProject?.(projectId),
+      [onSelectProject],
+    );
+
+    const handleSelectProjectConversation = useCallback(
+      (conversationId: string) => {
+        const projectId = projectIdByConversationId.get(conversationId);
+        if (projectId != null) {
+          onSelectPinnedProjectConversation?.(conversationId, projectId);
+        }
+      },
+      [projectIdByConversationId, onSelectPinnedProjectConversation],
+    );
+
+    const handleSeeAll = useCallback(
+      (projectId: string) => onSeeAll?.(projectId),
+      [onSeeAll],
+    );
+
     const pinnedItems = useMemo(
       () => filteredItems.filter((item) => item.isPinned),
       [filteredItems],
@@ -339,20 +404,26 @@ export const ConversationList: FC<ConversationListProps> = memo(
     const virtualRows = useMemo(() => {
       const rows: VirtualRow[] = [];
       for (const group of groups) {
-        if (group.items.length === 0) continue;
+        /* Project trees open the Pinned section, before its conversations. */
+        const groupProjects =
+          group.key === FilterTab.Pinned ? visibleProjects : NO_PROJECTS;
+        if (group.items.length === 0 && groupProjects.length === 0) continue;
         rows.push({
           kind: VirtualRowKind.Header,
           groupKey: group.key,
           label: group.label,
         });
         if (expandedGroups.has(group.key)) {
+          for (const project of groupProjects) {
+            rows.push(...buildProjectRows(project));
+          }
           for (const item of group.items) {
             rows.push({ kind: VirtualRowKind.Item, item, groupKey: group.key });
           }
         }
       }
       return rows;
-    }, [groups, expandedGroups]);
+    }, [groups, visibleProjects, expandedGroups]);
 
     useEffect(() => {
       if (!activeConversationId) return;
@@ -361,7 +432,8 @@ export const ConversationList: FC<ConversationListProps> = memo(
 
       const index = virtualRows.findIndex(
         (row) =>
-          row.kind === VirtualRowKind.Item &&
+          (row.kind === VirtualRowKind.Item ||
+            row.kind === VirtualRowKind.ProjectConversation) &&
           row.item.id === activeConversationId,
       );
       if (index >= 0) {
@@ -398,6 +470,14 @@ export const ConversationList: FC<ConversationListProps> = memo(
         onActionMenuOpen,
         actionsLabel,
         unreadIndicatorLabel,
+        activeProjectId,
+        onSelectProject: handleSelectProject,
+        onSelectProjectConversation: handleSelectProjectConversation,
+        onSeeAll: handleSeeAll,
+        getProjectActions,
+        onProjectActionMenuOpen,
+        seeAllLabel,
+        seeAllAriaLabel,
         rowVariant,
         styles: {
           groupHeaderClassName: typography?.groupHeaderClassName,
@@ -426,6 +506,14 @@ export const ConversationList: FC<ConversationListProps> = memo(
         onActionMenuOpen,
         actionsLabel,
         unreadIndicatorLabel,
+        activeProjectId,
+        handleSelectProject,
+        handleSelectProjectConversation,
+        handleSeeAll,
+        getProjectActions,
+        onProjectActionMenuOpen,
+        seeAllLabel,
+        seeAllAriaLabel,
         rowVariant,
         typography?.groupHeaderClassName,
         typography?.itemTitleClassName,
@@ -448,7 +536,9 @@ export const ConversationList: FC<ConversationListProps> = memo(
       searchQuery !== '' ||
       activeFilter !== FilterTab.All ||
       activeTypeFilter !== ConversationTypeFilter.All;
-    const isListEmpty = filteredItems.length === 0;
+    /* A list whose only rows are project trees is not empty. */
+    const isListEmpty =
+      filteredItems.length === 0 && visibleProjects.length === 0;
     const isNoResults = isListEmpty && isNarrowed;
     const isEmpty = isListEmpty && !isNarrowed;
     /* A tab that alone narrows the list has no query to rephrase: the host can

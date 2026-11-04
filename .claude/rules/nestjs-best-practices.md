@@ -35,8 +35,10 @@ alwaysApply: false
 - **Errors are typed HTTP exceptions**: `NotFoundException`, `BadGatewayException`,
   `ServiceUnavailableException`, `UnauthorizedException`, `ForbiddenException`. Never
   return `null` to signal failure; never swallow without logging.
-- **Env is validated at boot**: add new vars to
-  `apps/chat-api/src/config/environment.config.ts` (`EnvironmentVariables`). Fail fast
+- **Env is validated at boot**: add new vars to their domain class in
+  `apps/chat-api/src/config/env/<domain>.env.ts` (composed into `EnvironmentVariables`
+  in `environment.config.ts`) and to the snapshot in
+  `config/tests/environment-composition.spec.ts`. Fail fast
   on missing/invalid values; never cast.
 - **Security defaults**: `helmet` + global `ValidationPipe` ({ whitelist:true,
   forbidNonWhitelisted:true, transform:true }) are mandatory. Auth/session cookies are

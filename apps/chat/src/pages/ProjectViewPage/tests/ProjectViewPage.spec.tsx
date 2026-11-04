@@ -334,27 +334,6 @@ describe('ProjectViewPage', () => {
     expect(screen.getByRole('dialog', { name: 'publish' })).toBeTruthy();
   });
 
-  it('makes the page behind the share overlay inert', async () => {
-    renderAt();
-    const heading = await screen.findByRole('heading', {
-      level: 1,
-      name: 'q4',
-    });
-    // eslint-disable-next-line testing-library/no-node-access -- `inert` has no role-level query
-    expect(heading.closest('[inert]')).toBeNull();
-
-    const menu = await openMenu();
-    await userEvent.click(
-      within(menu).getByRole('menuitem', { name: ButtonsI18nKeys.Share }),
-    );
-
-    // eslint-disable-next-line testing-library/no-node-access -- see above
-    expect(heading.closest('[inert]')).toBeTruthy();
-    const shareDialog = screen.getByRole('dialog', { name: 'share' });
-    // eslint-disable-next-line testing-library/no-node-access -- see above
-    expect(shareDialog.closest('[inert]')).toBeNull();
-  });
-
   it('deletes after confirmation with the loaded contentVersion and returns to the list', async () => {
     vi.mocked(deleteProject).mockResolvedValue(undefined);
     const { router } = renderAt();

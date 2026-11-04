@@ -107,6 +107,7 @@ import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useLanguage } from '../../hooks/language/useLanguage';
+import { usePinnedProjectsPanel } from '../../hooks/projects/usePinnedProjectsPanel';
 import { usePublishErrorNotification } from '../../hooks/publish/usePublishErrorNotification';
 import { useConversationPublishHistory } from '../../hooks/useConversationPublishHistory/useConversationPublishHistory';
 import { useDeleteConfirmationLabels } from '../../hooks/useDeleteConfirmationLabels';
@@ -144,6 +145,7 @@ import {
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { resolveLocalizedText } from '../../utils/locale';
 import { getPublishFolderLabel } from '../../utils/publish';
+import PinnedProjectActionOverlays from '../PinnedProjectActionOverlays/PinnedProjectActionOverlays';
 import ShareConversationPopoverContainer from '../ShareConversationPopoverContainer/ShareConversationPopoverContainer';
 import ConversationPanelMenu from './ConversationPanelMenu';
 
@@ -182,6 +184,8 @@ const isScheduledTaskConversation = (item: ConversationListItemDto) =>
 interface ConversationPanelViewProps {
   activeConversationId?: string;
   onSelectConversation: (id: string) => void;
+  /* Opens an app route from the sidebar, e.g. a pinned project's chat; must be stable. */
+  onOpenRoute: (path: string) => void;
   requestedFilter?: FilterTab;
   onRequestedFilterChange?: () => void;
   onActiveFilterChange?: (tab: FilterTab) => void;
@@ -193,6 +197,7 @@ interface ConversationPanelViewProps {
 const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   activeConversationId,
   onSelectConversation,
+  onOpenRoute,
   requestedFilter,
   onRequestedFilterChange,
   onActiveFilterChange,
@@ -412,6 +417,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     toPanelConversationId,
     shouldMarkViewed: isScheduledTaskConversation,
   });
+  const {
+    pinnedProjects,
+    activeConversationId: activeProjectConversationId,
+    actionOverlay: pinnedProjectActionOverlay,
+  } = usePinnedProjectsPanel(onOpenRoute);
   /* Read by row actions at click time, so `getActions` keeps its identity
      across navigation and the panel does not rebuild every row's menu. */
   const panelActiveConversationIdRef = useRef(panelActiveConversationId);
@@ -1426,6 +1436,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       groupLabels,
       actionsLabel: t(ButtonsI18nKeys.MoreActions),
       unreadIndicatorLabel,
+      seeAllLabel: t(ConversationPanelI18nKeys.SeeAll),
+      seeAllAriaLabel: (name: string) =>
+        t(ConversationPanelI18nKeys.SeeAllProjectChats, { name }),
     }),
     [t, filterLabels, groupLabels, unreadIndicatorLabel],
   );
@@ -1436,7 +1449,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       isLoading={isLoading}
       isUpdatingTitles={isUpdatingTitles}
       preserveActiveSearchResult
-      activeConversationId={panelActiveConversationId}
+      activeConversationId={
+        activeProjectConversationId ?? panelActiveConversationId
+      }
       requestedFilter={requestedFilter}
       isFilterHidden={isConversationsFilterHidden}
       isTypeFilterHidden={!isScheduledTasksEnabled}
@@ -1448,6 +1463,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       onActionMenuOpen={handleActionMenuOpen}
       onMoveConversation={handleMoveConversation}
       onVisibleConversationIdsChange={handleVisibleConversationIdsChange}
+      pinnedProjects={pinnedProjects}
       listClassName={CELEBRATION_HISTORY_CLASS}
     />
   );
@@ -1613,6 +1629,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         onCancel={handleCloseRevokeDialog}
         onClose={handleCloseRevokeDialog}
       />
+
+      <PinnedProjectActionOverlays {...pinnedProjectActionOverlay} />
 
       <RenameConversationPopup
         isOpen={isRenamePending}

@@ -91,6 +91,7 @@ export * from './project/use-project-watch';
 export * from './project/project-refresh';
 export * from './project/use-project-submit';
 export * from './project/use-project-conversations';
+export * from './project/use-pinned-project-chats';
 export * from './project/use-project-artifacts';
 export * from './project/use-project-actions';
 export * from './shared/serialized-writer';
