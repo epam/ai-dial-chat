@@ -1239,6 +1239,49 @@ const { guard, isConfirmOpen, confirm, dismiss } =
 />;
 ```
 
+### UnsavedChangesProvider, useUnsavedChanges and the leave-guard hooks
+
+A page-wide unsaved-changes guard: one "Discard unsaved changes?" dialog shared by every form page below the provider, the dirty state of the one form mounted at a time, and a confirm/discard flow for exits that are not router transitions (such as Log out). It knows no router — the host builds its blocker on the two leave-guard hooks. All of it is in the root entry, with no peer beyond the package's own.
+
+- `UnsavedChangesProvider` renders `ConfirmationDialog` with `ConfirmationPopupVariant.Danger`. `labels` (`UnsavedChangesLabels`) takes `title` (default `'Discard unsaved changes?'`), `message` (default `'You have unsaved changes. Leaving now will discard them.'`), `confirmLabel` (default `'Discard changes'`) and `cancelLabel` (default `'Keep editing'`); each omitted field keeps its default. Escape, the close control and an outside click act as Keep editing.
+- `useUnsavedChanges()` returns `{ hasUnsavedChanges, requestDiscard }` (`UnsavedChangesContextValue`) and throws outside the provider. `requestDiscard(onDiscard)` opens the dialog; Discard changes lets the next page unload pass without the native prompt, closes the dialog and runs `onDiscard`; Keep editing runs nothing.
+- `useUnsavedChangesLeaveGuard({ isDirty })` registers the form's dirty state with the provider (cleared on unmount), adds a `beforeunload` listener while `isDirty` is `true` unless a confirmed `requestDiscard` already allowed the unload, and returns `{ shouldBlockLeave, allowNextNavigation }` (`UnsavedChangesLeaveGuardResult`). `shouldBlockLeave(isLeaving)` is stable and reads the latest `isDirty`: it returns `isDirty && isLeaving`, except that the first call after `allowNextNavigation()` returns `false` and consumes that one-shot bypass. Pass your own "does this transition leave the form" decision as `isLeaving`.
+- `useUnsavedChangesLeaveConfirmation({ isBlocked, onDiscard, onKeep })` opens the dialog while `isBlocked` is `true` — Discard changes runs `onDiscard`, Keep editing or a dismissal runs `onKeep` — and closes it without running either once `isBlocked` turns `false` or the caller unmounts. A dialog opened by `requestDiscard` is left open.
+
+Call both leave-guard hooks from one page at a time, inside the provider. With react-router's `useBlocker`:
+
+```tsx
+import {
+  UnsavedChangesProvider,
+  useUnsavedChangesLeaveConfirmation,
+  useUnsavedChangesLeaveGuard,
+} from '@epam/ai-dial-chat-shared';
+import { useCallback } from 'react';
+import { useBlocker, type BlockerFunction } from 'react-router';
+
+const useLeaveGuard = (isDirty: boolean) => {
+  const { shouldBlockLeave, allowNextNavigation } = useUnsavedChangesLeaveGuard(
+    { isDirty },
+  );
+  const shouldBlock = useCallback<BlockerFunction>(
+    ({ currentLocation, nextLocation }) =>
+      shouldBlockLeave(currentLocation.pathname !== nextLocation.pathname),
+    [shouldBlockLeave],
+  );
+  const blocker = useBlocker(shouldBlock);
+  useUnsavedChangesLeaveConfirmation({
+    isBlocked: blocker.state === 'blocked',
+    onDiscard: () => blocker.proceed?.(),
+    onKeep: () => blocker.reset?.(),
+  });
+  return allowNextNavigation;
+};
+
+<UnsavedChangesProvider labels={{ title: t('unsavedChanges.title') }}>
+  <App />
+</UnsavedChangesProvider>;
+```
+
 ## Utilities
 
 ```tsx

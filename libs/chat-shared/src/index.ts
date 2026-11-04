@@ -83,6 +83,13 @@ export * from './hooks/useIsTablet';
 export * from './hooks/useIsTextClipped';
 export * from './hooks/useTextRefinement';
 export * from './hooks/useUnsavedChangesGuard';
+export * from './hooks/useUnsavedChangesLeaveGuard';
+export * from './hooks/useUnsavedChangesLeaveConfirmation';
+export * from './components/UnsavedChangesProvider/UnsavedChangesProvider';
+export {
+  useUnsavedChanges,
+  type UnsavedChangesContextValue,
+} from './components/UnsavedChangesProvider/unsaved-changes-context';
 
 /*
  * Explicit `/index` avoids a declaration-resolution collision with this
