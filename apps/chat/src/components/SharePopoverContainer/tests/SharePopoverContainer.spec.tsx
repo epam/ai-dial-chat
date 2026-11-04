@@ -306,4 +306,44 @@ describe('SharePopoverContainer', () => {
       undefined,
     );
   });
+
+  it('passes the default deployment-worded visibility notes', () => {
+    mockUseShareLink();
+    render(
+      <SharePopoverContainer itemId="item-1" canEditAccess onClose={vi.fn()} />,
+    );
+
+    expect(mockSharePopover).toHaveBeenCalledWith(
+      expect.objectContaining({
+        labels: expect.objectContaining({
+          visibilityNote: ShareI18nKeys.VisibilityNote,
+          visibilityNoteEdit: ShareI18nKeys.VisibilityNoteEdit,
+        }),
+      }),
+      undefined,
+    );
+  });
+
+  it('passes the visibility notes the host supplies instead of the defaults', () => {
+    mockUseShareLink();
+    render(
+      <SharePopoverContainer
+        itemId="projects/a1b2c3/q4"
+        canEditAccess
+        visibilityNote="Project view note"
+        visibilityNoteEdit="Project edit note"
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(mockSharePopover).toHaveBeenCalledWith(
+      expect.objectContaining({
+        labels: expect.objectContaining({
+          visibilityNote: 'Project view note',
+          visibilityNoteEdit: 'Project edit note',
+        }),
+      }),
+      undefined,
+    );
+  });
 });

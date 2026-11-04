@@ -72,7 +72,8 @@ interface FakeFormProps {
   selectedContextFileId?: string;
   onCancel: () => void;
   onSubmit: () => void;
-  labels: { title: string; createLabel: string };
+  isNameReadOnly?: boolean;
+  labels: { title: string; createLabel: string; nameReadOnlyHint?: string };
 }
 
 const formProps: { current?: FakeFormProps } = {};
@@ -87,8 +88,10 @@ vi.mock('@epam/ai-dial-projects', async (importOriginal) => ({
         <input
           aria-label="name"
           value={props.values.name}
+          readOnly={props.isNameReadOnly}
           onChange={(event) => props.onFieldChange('name', event.target.value)}
         />
+        {props.isNameReadOnly && <p>{props.labels.nameReadOnlyHint}</p>}
         <ul>
           {props.contextFiles.map((file) => (
             <li key={file.id}>
@@ -162,6 +165,7 @@ const details = (
   contentVersion: '"cv1"',
   conversationCount: 0,
   canEdit: true,
+  canManage: true,
   ...extra,
 });
 
@@ -238,7 +242,11 @@ describe('ProjectEditPage', () => {
 
   it('sends the project to its view page when it cannot be edited', async () => {
     vi.mocked(getProject).mockResolvedValue(
-      details({ source: ProjectSource.Shared, canEdit: false }),
+      details({
+        source: ProjectSource.Shared,
+        canEdit: false,
+        canManage: false,
+      }),
     );
     const { router } = renderAt();
 
@@ -417,6 +425,55 @@ describe('ProjectEditPage', () => {
     expect(contentVersion).toBe('"cv1"');
     expect(
       screen.queryByRole('dialog', { name: UnsavedChangesI18nKeys.Title }),
+    ).toBeNull();
+  });
+
+  it('lets a shared editor save new instructions under the stored name', async () => {
+    vi.mocked(getProject).mockResolvedValue(
+      details({
+        source: ProjectSource.Shared,
+        canEdit: true,
+        canManage: false,
+      }),
+    );
+    vi.mocked(updateProject).mockResolvedValue({
+      id: 'projects/my-bucket/q4',
+      name: 'q4',
+      bucket: 'my-bucket',
+      path: 'q4',
+      etag: '"e2"',
+      isPinned: false,
+    });
+    const { router } = renderAt();
+    await screen.findByRole('heading', { name: ProjectsI18nKeys.EditTitle });
+
+    expect(
+      screen.getByRole('textbox', { name: 'name' }).hasAttribute('readonly'),
+    ).toBe(true);
+    expect(
+      screen.getByText(ProjectsI18nKeys.EditNameReadOnlyHint),
+    ).toBeTruthy();
+    await userEvent.click(screen.getByRole('button', { name: 'add file' }));
+    await userEvent.click(screen.getByRole('button', { name: 'buttons.save' }));
+
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe(
+        '/projects/view/my-bucket/q4',
+      ),
+    );
+    const [, fields] = vi.mocked(updateProject).mock.calls[0];
+    expect(fields).toMatchObject({ name: 'q4' });
+  });
+
+  it('keeps the name editable for the owner', async () => {
+    renderAt();
+    await screen.findByRole('heading', { name: ProjectsI18nKeys.EditTitle });
+
+    expect(
+      screen.getByRole('textbox', { name: 'name' }).hasAttribute('readonly'),
+    ).toBe(false);
+    expect(
+      screen.queryByText(ProjectsI18nKeys.EditNameReadOnlyHint),
     ).toBeNull();
   });
 

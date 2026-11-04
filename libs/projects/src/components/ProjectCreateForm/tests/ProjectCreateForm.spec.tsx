@@ -286,6 +286,62 @@ describe('ProjectCreateForm', () => {
 
       expect(props.onFieldChange).toHaveBeenCalledWith('name', 'a');
     });
+
+    it('keeps the name editable without a hint by default', () => {
+      renderForm({ values: { ...EMPTY_VALUES, name: 'research' } });
+
+      const input = screen.getByRole('textbox', { name: /Name/ });
+      expect(input.hasAttribute('readonly')).toBe(false);
+      expect(
+        screen.queryByText('Only the project owner can rename it.'),
+      ).toBeNull();
+    });
+  });
+
+  describe('read-only name', () => {
+    it('shows the stored name read-only with the default hint linked to it', () => {
+      renderForm({
+        values: { ...EMPTY_VALUES, name: 'research' },
+        isNameReadOnly: true,
+      });
+
+      const input = screen.getByRole('textbox', { name: /Name/ });
+      const hint = screen.getByText('Only the project owner can rename it.');
+      expect((input as HTMLInputElement).value).toBe('research');
+      expect(input.hasAttribute('readonly')).toBe(true);
+      expect(input.getAttribute('aria-describedby')).toBe(hint.id);
+    });
+
+    it('uses the host hint and links it next to a name error', () => {
+      renderForm({
+        values: { ...EMPTY_VALUES, name: 'research' },
+        errors: { name: 'A project with this name already exists' },
+        isNameReadOnly: true,
+        labels: { ...LABELS, nameReadOnlyHint: 'Ask the owner to rename it' },
+      });
+
+      const input = screen.getByRole('textbox', { name: /Name/ });
+      const hint = screen.getByText('Ask the owner to rename it');
+      const error = screen.getByText('A project with this name already exists');
+      expect(input.getAttribute('aria-describedby')?.split(' ')).toEqual([
+        hint.id,
+        error.id,
+      ]);
+    });
+
+    it('never reports typing into a read-only name', async () => {
+      const { props } = renderForm({
+        values: { ...EMPTY_VALUES, name: 'research' },
+        isNameReadOnly: true,
+      });
+
+      await userEvent.type(screen.getByRole('textbox', { name: /Name/ }), 'a');
+
+      expect(props.onFieldChange).not.toHaveBeenCalledWith(
+        'name',
+        expect.anything(),
+      );
+    });
   });
 
   describe('context files', () => {
@@ -330,6 +386,20 @@ describe('ProjectCreateForm', () => {
 
       expect(screen.getByText('from device')).toBeTruthy();
       expect(screen.queryByRole('button', { name: 'file manager' })).toBeNull();
+    });
+
+    it('opens the device picker from the "from device" link only', async () => {
+      renderForm();
+      const onInputClick = vi.fn();
+      getDropzoneInput().addEventListener('click', onInputClick);
+
+      await userEvent.click(
+        screen.getByText('File formats .csv, .pdf and .xlsx (max 1 MB)'),
+      );
+      expect(onInputClick).not.toHaveBeenCalled();
+
+      await userEvent.click(screen.getByText('from device'));
+      expect(onInputClick).toHaveBeenCalledOnce();
     });
 
     it('lists and announces files the client rejects', async () => {

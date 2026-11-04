@@ -139,6 +139,7 @@ const ProjectEditPage: FC = () => {
       createLabel: t(ButtonsI18nKeys.Save),
       submittingLabel: t(ProjectsI18nKeys.EditSaving),
       creatingStatus: t(ProjectsI18nKeys.EditSavingStatus),
+      nameReadOnlyHint: t(ProjectsI18nKeys.EditNameReadOnlyHint),
     }),
     [createLabels, t],
   );
@@ -320,6 +321,8 @@ const ProjectEditPage: FC = () => {
         onCancel={handleLeave}
         onSubmit={handleFormSubmit}
         isSubmitting={isSubmitting}
+        /* Only the owner renames: a share recipient with edit access saves the stored name. */
+        isNameReadOnly={!project.canManage}
         labels={labels}
         markdownEditorTheme={markdownEditorTheme}
       />

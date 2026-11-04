@@ -18,6 +18,7 @@ import { ProjectConversationStore } from '../../conversations/persistence/projec
 import { ConversationCompletionsResponder } from '../../conversations/streaming/conversation-completions.responder';
 import { DialClientService } from '../../dial/dial-client.service';
 import { ConversationReadStateService } from '../../scheduled-task-unread/conversation-read-state.service';
+import { ProjectAccessService } from '../access/project-access.service';
 import { ProjectConversationsListService } from '../conversations/project-conversations-list.service';
 import { ProjectConversationsController } from '../conversations/project-conversations.controller';
 import { ProjectConversationsService } from '../conversations/project-conversations.service';
@@ -39,12 +40,26 @@ const ok = (data?: unknown) => ({
   response: new Response(null, { status: 200 }),
 });
 
-const buildApp = async (isFeatureEnabled = true) => {
+const buildApp = async (
+  isFeatureEnabled = true,
+  sharedPermissions: string[] = ['READ'],
+) => {
   const client = {
     uploadProjectFile: vi.fn(async () => ok()),
     downloadProjectFile: vi.fn(),
     deleteProjectFile: vi.fn(async () => ok()),
     listProjectFileMetadata: vi.fn(async () => ok({ items: [] })),
+    getSharedResources: vi.fn(async () =>
+      ok({
+        resources: [
+          {
+            nodeType: 'ITEM',
+            url: 'projects/z9y8x7/research',
+            permissions: sharedPermissions,
+          },
+        ],
+      }),
+    ),
   };
   const conversationService = {
     getConversation: vi.fn(),
@@ -65,6 +80,7 @@ const buildApp = async (isFeatureEnabled = true) => {
   const module = await Test.createTestingModule({
     controllers: [ProjectConversationsController],
     providers: [
+      ProjectAccessService,
       ProjectConversationsService,
       ProjectConversationsListService,
       ProjectConversationStore,
@@ -140,7 +156,7 @@ describe('ProjectConversationsController (integration)', () => {
     expect(built.client.listProjectFileMetadata).not.toHaveBeenCalled();
   });
 
-  it('refuses a write to a shared project with 403 before any Core call', async () => {
+  it("refuses a view-only recipient's writes with 403 before any Core write or model call", async () => {
     const built = await buildApp();
     app = built.app;
 
@@ -165,6 +181,64 @@ describe('ProjectConversationsController (integration)', () => {
     expect(built.client.uploadProjectFile).not.toHaveBeenCalled();
     expect(built.client.deleteProjectFile).not.toHaveBeenCalled();
     expect(built.conversationService.streamCompletion).not.toHaveBeenCalled();
+  });
+
+  it('lets a recipient with WRITE create a chat in the owner bucket', async () => {
+    const built = await buildApp(true, ['READ', 'WRITE']);
+    app = built.app;
+
+    const res = await request(app.getHttpServer())
+      .post(`/api/v1/projects/${SHARED}/conversations`)
+      .send({ firstMessage: 'Hi', deploymentId: 'gpt-4o' })
+      .expect(201);
+
+    expect(res.body.id).toMatch(/^projects\/z9y8x7\/research\/conversations\//);
+    const [bucket] = built.client.uploadProjectFile.mock
+      .calls[0] as unknown as [string];
+    expect(bucket).toBe('z9y8x7');
+  });
+
+  it('streams a completion for a recipient with WRITE', async () => {
+    const built = await buildApp(true, ['READ', 'WRITE']);
+    app = built.app;
+    built.conversationService.streamCompletion.mockImplementation(
+      async function* (..._args: unknown[]) {
+        const onReady = _args[10] as () => void;
+        onReady();
+        yield 'data: {}\n\n';
+      },
+    );
+
+    await request(app.getHttpServer())
+      .post(`/api/v1/projects/${SHARED}/conversations/completions`)
+      .send({
+        path: 'z9y8x7/research/conversations/x',
+        generationId: GENERATION_ID,
+        model: 'gpt-4o',
+        mode: 'append',
+        message: 'Hi',
+      })
+      .expect(200);
+
+    const [locator, token] = built.conversationService.streamCompletion.mock
+      .calls[0] as unknown as [string, string];
+    expect(locator).toBe('projects/z9y8x7/research/conversations/x');
+    expect(token).toBe(USER.at);
+  });
+
+  it('refuses a write to an organization project without asking DIAL Core', async () => {
+    const built = await buildApp();
+    app = built.app;
+
+    await request(app.getHttpServer())
+      .post(
+        `/api/v1/projects/${encodeURIComponent('projects/public/handbook')}/conversations`,
+      )
+      .send({ firstMessage: 'Hi', deploymentId: 'gpt-4o' })
+      .expect(403);
+
+    expect(built.client.getSharedResources).not.toHaveBeenCalled();
+    expect(built.client.uploadProjectFile).not.toHaveBeenCalled();
   });
 
   it('answers 400 for a completion path outside the addressed project', async () => {

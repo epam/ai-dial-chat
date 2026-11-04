@@ -733,7 +733,7 @@ export class ProjectsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Returns one project\'s name, description, instructions, context files with their sizes, and the ETag of the version they were read from. The BFF reads the project archive from DIAL Core, because project metadata carries no file sizes; `canEdit` is true only for a project in the caller\'s own bucket.
+   * Returns one project\'s name, description, instructions, context files with their sizes, and the ETag of the version they were read from. The BFF reads the project archive from DIAL Core, because project metadata carries no file sizes. `canEdit` is true for the owner and for a recipient the project is shared with with WRITE; `canManage` (rename, delete, share, publish) is true only for a project in the caller\'s own bucket.
    * Get a project
    */
   async getProjectRaw(
@@ -780,7 +780,7 @@ export class ProjectsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Returns one project\'s name, description, instructions, context files with their sizes, and the ETag of the version they were read from. The BFF reads the project archive from DIAL Core, because project metadata carries no file sizes; `canEdit` is true only for a project in the caller\'s own bucket.
+   * Returns one project\'s name, description, instructions, context files with their sizes, and the ETag of the version they were read from. The BFF reads the project archive from DIAL Core, because project metadata carries no file sizes. `canEdit` is true for the owner and for a recipient the project is shared with with WRITE; `canManage` (rename, delete, share, publish) is true only for a project in the caller\'s own bucket.
    * Get a project
    */
   async getProject(
@@ -1491,7 +1491,7 @@ export class ProjectsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Saves the name, description, instructions and context of a project in one conditional DIAL Core write: the BFF rebuilds PROJECT.md, keeps every stored context file not listed in `removedFileNames`, adds the `files` parts, carries the stored conversations over, and writes the whole project conditioned on the fresh snapshot\'s ETag, retrying a concurrent conversation write while `If-Match` still names the `contentVersion`. A different name then moves the project in its folder and keeps the caller\'s pin. Only a project in the caller\'s own bucket can be saved. Every domain rejection carries a ProjectCreateErrorCode.
+   * Saves the name, description, instructions and context of a project in one conditional DIAL Core write: the BFF rebuilds PROJECT.md, keeps every stored context file not listed in `removedFileNames`, adds the `files` parts, carries the stored conversations over, and writes the whole project conditioned on the fresh snapshot\'s ETag, retrying a concurrent conversation write while `If-Match` still names the `contentVersion`. A different name then moves the project in its folder and keeps the caller\'s pin. The owner and a recipient the project is shared with with WRITE may save; only the owner may rename. Every domain rejection carries a ProjectCreateErrorCode.
    * Save a project edit
    */
   async updateProjectRaw(
@@ -1601,7 +1601,7 @@ export class ProjectsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Saves the name, description, instructions and context of a project in one conditional DIAL Core write: the BFF rebuilds PROJECT.md, keeps every stored context file not listed in `removedFileNames`, adds the `files` parts, carries the stored conversations over, and writes the whole project conditioned on the fresh snapshot\'s ETag, retrying a concurrent conversation write while `If-Match` still names the `contentVersion`. A different name then moves the project in its folder and keeps the caller\'s pin. Only a project in the caller\'s own bucket can be saved. Every domain rejection carries a ProjectCreateErrorCode.
+   * Saves the name, description, instructions and context of a project in one conditional DIAL Core write: the BFF rebuilds PROJECT.md, keeps every stored context file not listed in `removedFileNames`, adds the `files` parts, carries the stored conversations over, and writes the whole project conditioned on the fresh snapshot\'s ETag, retrying a concurrent conversation write while `If-Match` still names the `contentVersion`. A different name then moves the project in its folder and keeps the caller\'s pin. The owner and a recipient the project is shared with with WRITE may save; only the owner may rename. Every domain rejection carries a ProjectCreateErrorCode.
    * Save a project edit
    */
   async updateProject(

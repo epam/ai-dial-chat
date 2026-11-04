@@ -54,7 +54,7 @@ interface Props {
   projectId: string;
   /** The project's display name, handed to the chat page it opens. */
   projectName: string;
-  /** Whether the caller owns the project: only an owner chats, renames and deletes. */
+  /** Whether the caller may write the project's chats (the owner, or a recipient with edit access): only then the input, rename and delete show. */
   canEdit: boolean;
   /** The Chats list state, owned by the page so its live updates can refresh it. */
   conversations: ProjectConversationsState;

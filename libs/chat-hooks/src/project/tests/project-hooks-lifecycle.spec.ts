@@ -25,6 +25,7 @@ const details: ProjectDetailsDto = {
   contentVersion: '"cv1"',
   conversationCount: 0,
   canEdit: true,
+  canManage: true,
 };
 const listing = {
   items: [

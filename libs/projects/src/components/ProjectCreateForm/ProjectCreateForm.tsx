@@ -10,6 +10,7 @@ import {
   useTextRefinement,
 } from '@epam/ai-dial-chat-shared';
 import {
+  CaptionText,
   DIAL_ICON_SIZE,
   DIAL_KIT_ICON_STROKE,
   ErrorText,
@@ -56,6 +57,7 @@ const MarkdownEditor = lazy(async () => {
 });
 
 const DEFAULT_OPEN_FILE_LABEL = (name: string): string => `Preview ${name}`;
+const DEFAULT_NAME_READ_ONLY_HINT = 'Only the project owner can rename it.';
 
 /** Presentational New and Edit project form: name, instructions and context files, including stored ones when editing. */
 export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
@@ -75,6 +77,7 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
   onCancel,
   onSubmit,
   isSubmitting = false,
+  isNameReadOnly = false,
   labels,
   markdownEditorTheme,
   className,
@@ -82,9 +85,11 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
 }) => {
   const nameId = useId();
   const nameErrorId = useId();
+  const nameHintId = useId();
   const instructionsId = useId();
   const contextLabelId = useId();
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const deviceLinkRef = useRef<HTMLSpanElement>(null);
   const instructionsCapRef = useAvailableHeightCap<HTMLDivElement>();
   const [isNameTouched, setIsNameTouched] = useState(false);
   const [rejections, setRejections] = useState<RejectedContextFile[]>([]);
@@ -166,6 +171,20 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
     }
   };
 
+  const handleDropZoneClickCapture = (event: MouseEvent<HTMLDivElement>) => {
+    /*
+     * The kit area is a label over the file input, so any click on it opens the device picker.
+     * Only the links pick files: a click elsewhere on the area is cancelled, while the input's
+     * own click (keyboard activation, or the one the "from device" link forwards) goes through.
+     */
+    const { target } = event;
+    if (target instanceof HTMLInputElement) return;
+    if (target instanceof Node && deviceLinkRef.current?.contains(target)) {
+      return;
+    }
+    event.preventDefault();
+  };
+
   const handleSubmit = () => {
     if (!isCreateDisabled) onSubmit();
   };
@@ -193,7 +212,7 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
     .filter(Boolean)
     .join('\n');
   const dropZoneLabel = labels.dropZoneLabel({
-    fromDevice: <span className={styles.link} />,
+    fromDevice: <span ref={deviceLinkRef} className={styles.link} />,
     fileManager: onPickFromFileManager ? (
       <button
         type="button"
@@ -258,16 +277,31 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
               id={nameId}
               inputRef={nameInputRef}
               value={values.name}
-              onChange={(value) => onFieldChange('name', value ?? '')}
+              onChange={(value) => {
+                if (!isNameReadOnly) onFieldChange('name', value ?? '');
+              }}
               onBlur={() => setIsNameTouched(true)}
               placeholder={labels.namePlaceholder}
               labelProps={{ label: labels.nameLabel, required: true }}
               required
               aria-required
+              /* `readOnly`, not `disabled`: the value stays focusable and is announced as read-only. */
+              readOnly={isNameReadOnly}
               invalid={Boolean(nameError)}
               aria-invalid={Boolean(nameError)}
-              aria-describedby={nameError ? nameErrorId : undefined}
+              aria-describedby={
+                [isNameReadOnly && nameHintId, nameError && nameErrorId]
+                  .filter(Boolean)
+                  .join(' ') || undefined
+              }
             />
+            {isNameReadOnly && (
+              <CaptionText
+                id={nameHintId}
+                className={helperClassName}
+                text={labels.nameReadOnlyHint ?? DEFAULT_NAME_READ_ONLY_HINT}
+              />
+            )}
             {/* Mounted before a host error (a taken name) arrives, so it is announced; out of the column gap while empty. Inline validation stays outside it. */}
             <ErrorText
               announce={LiveRegionPoliteness.Assertive}
@@ -333,18 +367,23 @@ export const ProjectCreateForm: FC<ProjectCreateFormProps> = ({
             <h2 id={contextLabelId} className={labelClassName}>
               {labels.contextLabel}
             </h2>
-            <FileDropzone
-              label={dropZoneLabel}
-              ariaLabel={labels.dropZoneAriaLabel}
-              description={labels.dropZoneHint}
-              accept={accept}
-              multiple
-              disabled={isSubmitting}
-              onChange={addFiles}
-              onReject={addFiles}
-              errorText={dropZoneError || undefined}
-              className={styles.dropZone}
-            />
+            <div onClickCapture={handleDropZoneClickCapture}>
+              <FileDropzone
+                label={dropZoneLabel}
+                ariaLabel={labels.dropZoneAriaLabel}
+                description={labels.dropZoneHint}
+                accept={accept}
+                multiple
+                disabled={isSubmitting}
+                onChange={addFiles}
+                onReject={addFiles}
+                errorText={dropZoneError || undefined}
+                className={mergeClasses(
+                  styles.dropZone,
+                  !isSubmitting && styles.linkClicksOnly,
+                )}
+              />
+            </div>
             {/* Mounted before a host context error arrives, so it is announced; the drop zone shows it. Client rejections go through the status region. */}
             <LiveRegion
               visuallyHidden

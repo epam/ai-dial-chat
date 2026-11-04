@@ -1,9 +1,4 @@
-import {
-  ForbiddenException,
-  HttpException,
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { HttpException, Injectable, Logger } from '@nestjs/common';
 import {
   extractDialErrorMessage,
   handleDialSdkError,
@@ -14,6 +9,7 @@ import { encodeDialResourcePath } from '../../common/utils/encode-dial-path';
 import { DialClientService } from '../../dial/dial-client.service';
 import { ConversationReadStateService } from '../../scheduled-task-unread/conversation-read-state.service';
 import { UserConfigService } from '../../user-config/user-config.service';
+import { ProjectAccessService } from '../access/project-access.service';
 import {
   PROJECT_MANIFEST_MAX_BYTES,
   PROJECT_WRITE_ATTEMPTS,
@@ -95,8 +91,11 @@ const describeError = (err: unknown): string =>
  * re-reads the snapshot and, while `contentVersion` is unchanged, rebuilds
  * and writes again, up to `PROJECT_WRITE_ATTEMPTS` writes. A rename is a Core move that follows the write, because Core's
  * move takes no ETag (`openspec/changes/add-project-view-page/design.md` D5).
- * Only the owner edits: a project outside the caller's bucket is refused
- * before any Core call, matching `canEdit`. Logs carry counts and byte
+ * Access comes from `ProjectAccessService`, matching `canEdit` and
+ * `canManage`: a rename is owner-only and refused before any Core call,
+ * because Core's move needs `ALL` on the source and a share link grants
+ * `READ` + `WRITE`; any save needs `canEdit`, so a recipient with `WRITE`
+ * saves the content into the owner's bucket. Logs carry counts and byte
  * totals, never names or content.
  */
 @Injectable()
@@ -109,6 +108,7 @@ export class ProjectsUpdateService {
     private readonly snapshotService: ProjectsSnapshotService,
     private readonly userConfigService: UserConfigService,
     private readonly readStateService: ConversationReadStateService,
+    private readonly accessService: ProjectAccessService,
   ) {}
 
   async updateProject(
@@ -120,10 +120,22 @@ export class ProjectsUpdateService {
     accessToken: string,
     signal?: AbortSignal,
   ): Promise<UpdateProjectResponseDto> {
-    if (project.bucket !== sessionBucket) {
-      throw new ForbiddenException('Only the owner can edit a project');
-    }
+    const isRename = input.name !== project.name;
+    /* Only the owner renames: Core's move needs `ALL` on the source. */
+    if (isRename) this.accessService.assertCanManage(project, sessionBucket);
     const expectedVersion = requireSingleIfMatch(ifMatch);
+
+    const timeoutSignal = AbortSignal.timeout(PROJECT_UPDATE_TIMEOUT_MS);
+    const requestSignal = signal
+      ? AbortSignal.any([signal, timeoutSignal])
+      : timeoutSignal;
+
+    await this.accessService.assertCanWrite(
+      project,
+      sessionBucket,
+      accessToken,
+      requestSignal,
+    );
 
     this.createService.validateName(input.name);
     const fileNames = this.createService.validateIncomingFiles(
@@ -132,15 +144,9 @@ export class ProjectsUpdateService {
     );
     const removedFileNames = this.parseRemovedFileNames(input.removedFileNames);
 
-    const timeoutSignal = AbortSignal.timeout(PROJECT_UPDATE_TIMEOUT_MS);
-    const requestSignal = signal
-      ? AbortSignal.any([signal, timeoutSignal])
-      : timeoutSignal;
-
-    const destination =
-      input.name === project.name
-        ? null
-        : buildSiblingProjectId(project, input.name);
+    const destination = isRename
+      ? buildSiblingProjectId(project, input.name)
+      : null;
 
     let writtenEtag: string | null = null;
     for (

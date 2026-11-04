@@ -154,7 +154,9 @@ const ProjectViewPage: FC = () => {
     resolveContextAttachment,
     resolveOutputAttachment,
   });
+  /* `canEdit`: change the content and write the chats (the owner, or a share with edit access); `canManage`: rename, delete, share and publish (the owner only). */
   const canEdit = project?.canEdit ?? false;
+  const canManage = project?.canManage ?? false;
   /* Chats deleted from the list since `project` was read; a fresh read resets the count. */
   const [deletedChats, setDeletedChats] = useState({ project, count: 0 });
   const deletedChatCount =
@@ -220,10 +222,10 @@ const ProjectViewPage: FC = () => {
         onContextSearchQueryChange={setContextSearchQuery}
         onBack={handleBrowseProjects}
         onTogglePin={handleTogglePin}
-        onPublish={canEdit ? handlePublish : undefined}
+        onPublish={canManage ? handlePublish : undefined}
         onEdit={canEdit ? handleEdit : undefined}
-        onShare={canEdit ? handleShare : undefined}
-        onDelete={canEdit ? actions.requestDelete : undefined}
+        onShare={canManage ? handleShare : undefined}
+        onDelete={canManage ? actions.requestDelete : undefined}
         onDownload={handleDownload}
         onContextFileClick={handleContextFileClick}
         selectedContextFileId={selectedContextFileId}
@@ -263,7 +265,7 @@ const ProjectViewPage: FC = () => {
           onClose={handleCloseShare}
         />
       )}
-      {project && canEdit && hasOpenedPublish && (
+      {project && canManage && hasOpenedPublish && (
         <PublishProjectPanelContainer
           isOpen={isPublishOpen}
           projectId={project.id}

@@ -108,11 +108,12 @@ Its props:
 | `onCancel` | `() => void` |
 | `onSubmit` | `() => void` |
 | `isSubmitting` | optional `boolean`, default `false` |
-| `labels` | `ProjectCreateFormLabels` |
+| `isNameReadOnly` | optional `boolean`, default `false`; see "The Name field can be read-only" |
+| `labels` | `ProjectCreateFormLabels`, including the optional `nameReadOnlyHint` |
 | `markdownEditorTheme` | optional `EditorThemes` |
 | `styles` | optional `ProjectCreateFormStyles`, applied via `buildCssVars` |
 
-Every declared prop SHALL be read. The same component serves the edit page (`project-edit-ui`). The host changes only the strings it already owns (`labels.title`, `labels.createLabel`, `labels.submittingLabel`, `labels.creatingStatus`) and passes stored files.
+Every declared prop SHALL be read. The same component serves the edit page (`project-edit-ui`). The host changes only the strings it already owns (`labels.title`, `labels.createLabel`, `labels.submittingLabel`, `labels.creatingStatus`, and `labels.nameReadOnlyHint` when it locks the name), passes stored files, and sets `isNameReadOnly` for a caller who may not rename.
 
 `ProjectCreatePage` supplies the host-owned pieces:
 
@@ -120,6 +121,8 @@ Every declared prop SHALL be read. The same component serves the edit page (`pro
 - the Instructions refinement callback, from `useTextRefinementCallback`;
 - `onPickFromFileManager`, from `useProjectFileManagerPicker`;
 - every string, from `useProjectCreateFormLabels`, which formats the limits named in `labels.dropZoneHint` and the too-large message with `formatFileSize` from `@epam/ai-dial-chat-shared`.
+
+`ProjectCreatePage` never sets `isNameReadOnly`.
 
 #### Scenario: Lib has no host integration knowledge
 
@@ -237,7 +240,7 @@ The field is wrapped in `TextRefinementField` and driven by `useTextRefinement` 
 
 The Context section SHALL render:
 
-- **A drop zone**: the kit `FileDropzone`. Its label is `labels.dropZoneLabel(links)` ("Drag&drop context, upload from device or file manager"), where `links` (`ProjectDropZoneLinks`) holds two empty elements the host fills with their text: `fromDevice`, an underlined span (the whole zone opens the device picker), and `fileManager`, a button that calls `onPickFromFileManager()` without opening the device picker, present only when that prop is supplied. The app renders the sentence with `Trans` and the keys `projects.create.context.dropZone` / `projects.create.context.dropZoneDeviceOnly`. The file input's accessible name is `labels.dropZoneAriaLabel` ("Upload context from device"). Its hint is the host-resolved `labels.dropZoneHint` ("File formats .csv, .pdf, .xlsx (max 1 MB)"), which names the same limits the host passes as props. The kit renders the area as a label over a visually hidden file input, so it is keyboard-operable and announced as a file input. The `accept` attribute is built from `allowedExtensions`.
+- **A drop zone**: the kit `FileDropzone`. Its label is `labels.dropZoneLabel(links)` ("Drag&drop context, upload from device or file manager"), where `links` (`ProjectDropZoneLinks`) holds two empty elements the host fills with their text: `fromDevice`, an underlined span that opens the device picker (a click anywhere else on the zone opens no picker), and `fileManager`, a button that calls `onPickFromFileManager()` without opening the device picker, present only when that prop is supplied. The app renders the sentence with `Trans` and the keys `projects.create.context.dropZone` / `projects.create.context.dropZoneDeviceOnly`. The file input's accessible name is `labels.dropZoneAriaLabel` ("Upload context from device"). Its hint is the host-resolved `labels.dropZoneHint` ("File formats .csv, .pdf, .xlsx (max 1 MB)"), which names the same limits the host passes as props. The kit renders the area as a label over a visually hidden file input, so it is keyboard-operable and announced as a file input. The `accept` attribute is built from `allowedExtensions`.
 - **A drag overlay**: `FileDndOverlay` from `@epam/ai-dial-attachment-input`, shown while a file-bearing drag is over the form.
 
 The Context header carries only the `labels.contextLabel` heading: there is no Add menu and no capacity meter.
@@ -277,6 +280,11 @@ Accepted files are appended through `onContextFilesChange`. Each rejection, `lab
 
 - **WHEN** files totalling 9.5 MB are added and the user adds a further 0.8 MB file with a 10 MB total limit
 - **THEN** that file is rejected with the capacity message, and the existing files stay
+
+#### Scenario: Only the links open a picker
+
+- **WHEN** the user clicks the drop zone outside the "from device" and "file manager" links
+- **THEN** no picker opens, and the area shows the default cursor while the links show a pointer
 
 #### Scenario: Keyboard upload
 
@@ -417,3 +425,31 @@ No new client telemetry event SHALL be added. Project creation is observed throu
 
 - **WHEN** a create request completes with `409`
 - **THEN** the HTTP lifecycle metric for `POST /api/v1/projects` records status `409`
+
+### Requirement: The Name field can be read-only
+
+`ProjectCreateForm` SHALL accept `isNameReadOnly?: boolean` (default `false`) and `labels.nameReadOnlyHint?: string` (English default "Only the project owner can rename it."). With `isNameReadOnly`:
+
+- **The input.** The Name `Input` renders `values.name` with the native `readOnly` attribute, not `disabled`, so it stays in the tab order and screen readers announce it as read-only. It keeps its visible label and `required`. `onFieldChange('name', …)` is never called.
+- **The hint.** The form renders `labels.nameReadOnlyHint` as helper text under the field, with the form's helper typography (`helperClassName`), and gives it an `id`. The input's `aria-describedby` includes that id; when a name error is also shown, it includes both ids.
+- **Validation.** `validateProjectName` still runs on the value and can still disable Submit. In practice it does not, because the host passes a stored, valid name.
+- **Everything else** (instructions, context files, Refine with AI, header and footer buttons) behaves as without the prop.
+
+Without `isNameReadOnly`, the hint does not render and the field behaves as before. The lib does not know why the name is locked: the host decides, and supplies the translated hint.
+
+**RTL impact:** none. The hint is text in normal flow, and it has no directional icon.
+
+#### Scenario: Read-only name
+
+- **WHEN** `ProjectCreateForm` renders with `isNameReadOnly` and `values.name` `research`
+- **THEN** the textbox named by `labels.nameLabel` has the value `research` and is read-only, and the hint text is rendered and linked from its `aria-describedby`
+
+#### Scenario: Typing does not change a read-only name
+
+- **WHEN** the user focuses the read-only Name input and types
+- **THEN** `onFieldChange` is not called
+
+#### Scenario: Editable by default
+
+- **WHEN** the form renders without `isNameReadOnly`
+- **THEN** the Name input is editable, and no hint renders

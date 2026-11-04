@@ -146,6 +146,7 @@ const details = (
   contentVersion: '"cv1"',
   conversationCount: 0,
   canEdit: true,
+  canManage: true,
   ...extra,
 });
 
@@ -227,7 +228,11 @@ describe('ProjectViewPage', () => {
 
   it('opens a shared project read-only: Pin and Download only', async () => {
     vi.mocked(getProject).mockResolvedValue(
-      details({ source: ProjectSource.Shared, canEdit: false }),
+      details({
+        source: ProjectSource.Shared,
+        canEdit: false,
+        canManage: false,
+      }),
     );
     renderAt();
     await screen.findByRole('heading', { level: 1, name: 'q4' });
@@ -240,6 +245,38 @@ describe('ProjectViewPage', () => {
     ).toBeNull();
     expect(
       screen.getByRole('button', { name: ButtonsI18nKeys.Pin }),
+    ).toBeTruthy();
+    const menu = await openMenu();
+    expect(
+      within(menu).queryByRole('menuitem', { name: ButtonsI18nKeys.Delete }),
+    ).toBeNull();
+    expect(
+      within(menu).queryByRole('menuitem', { name: ButtonsI18nKeys.Share }),
+    ).toBeNull();
+    expect(
+      within(menu).getByRole('menuitem', { name: ButtonsI18nKeys.Download }),
+    ).toBeTruthy();
+  });
+
+  it('lets a shared editor edit and chat but not publish, share or delete', async () => {
+    vi.mocked(getProject).mockResolvedValue(
+      details({
+        source: ProjectSource.Shared,
+        canEdit: true,
+        canManage: false,
+      }),
+    );
+    renderAt();
+    await screen.findByRole('heading', { level: 1, name: 'q4' });
+
+    expect(
+      screen.getByRole('button', { name: ButtonsI18nKeys.Edit }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole('button', { name: ButtonsI18nKeys.Publish }),
+    ).toBeNull();
+    expect(
+      screen.getByText(`chats of ${PROJECT_ID}, editable: true`),
     ).toBeTruthy();
     const menu = await openMenu();
     expect(
@@ -302,7 +339,7 @@ describe('ProjectViewPage', () => {
     );
   });
 
-  it('opens the view-only share overlay and the publish panel', async () => {
+  it('opens the share overlay and the publish panel for the owner', async () => {
     renderAt();
     await screen.findByRole('heading', { level: 1, name: 'q4' });
 
@@ -484,7 +521,9 @@ describe('ProjectViewPage', () => {
     });
 
     it('previews a file of a shared read-only project', async () => {
-      vi.mocked(getProject).mockResolvedValue(details({ canEdit: false }));
+      vi.mocked(getProject).mockResolvedValue(
+        details({ canEdit: false, canManage: false }),
+      );
       renderAt();
 
       await userEvent.click(await findCard());
@@ -580,7 +619,9 @@ describe('ProjectViewPage', () => {
     });
 
     it('shows the outputs of a shared read-only project', async () => {
-      vi.mocked(getProject).mockResolvedValue(details({ canEdit: false }));
+      vi.mocked(getProject).mockResolvedValue(
+        details({ canEdit: false, canManage: false }),
+      );
       vi.mocked(listProjectArtifacts).mockResolvedValue(outputs('report.pdf'));
       renderAt();
 
