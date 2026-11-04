@@ -365,6 +365,7 @@ export class ConversationStreamingService {
     sub: string,
     clientChannelId?: string,
     timezone?: string,
+    lang?: string,
     jobTitle?: string,
   ): AsyncGenerator<Uint8Array | string, void, void> {
     this.logger.debug(
@@ -494,6 +495,7 @@ export class ConversationStreamingService {
           onReadyToStream,
           clientChannelId,
           timezone,
+          lang,
           jobTitle,
           storedConversation,
         });
@@ -664,31 +666,32 @@ export class ConversationStreamingService {
               assembledMessage,
               clientChannelId,
               timezone,
+              lang,
               timing,
               startConversation.id,
               publishChunk,
               jobTitle,
               { extraHeaders: buildProjectHeadersForPath(conversationPath) },
             )
-          : this.chatCompletionsAdapter.stream(
+          : this.chatCompletionsAdapter.stream({
               model,
-              this.chatCompletionsAdapter.buildRequest({
+              requestBody: this.chatCompletionsAdapter.buildRequest({
                 startConversation,
                 messagesForCompletion,
                 temperatureSupported,
                 configuration,
               }),
               token,
-              lease.abortController.signal,
-              assembledMessage,
-              clientChannelId,
-              timezone,
+              signal: lease.abortController.signal,
+              initialAssembledMessage: assembledMessage,
+              context: { clientChannelId, timezone, lang, jobTitle },
               timing,
-              startConversation.id,
-              publishChunk,
-              jobTitle,
-              { extraHeaders: buildProjectHeadersForPath(conversationPath) },
-            );
+              conversationId: startConversation.id,
+              onChunkApplied: publishChunk,
+              options: {
+                extraHeaders: buildProjectHeadersForPath(conversationPath),
+              },
+            });
     }
     let relayCompletedNormally = false;
     try {
