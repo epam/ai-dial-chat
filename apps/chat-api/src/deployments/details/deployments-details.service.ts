@@ -39,6 +39,17 @@ import {
   toAdditionalProperties,
 } from '../utils/deployment-mapper.util';
 
+/* The first candidate that is a plain object, or undefined. */
+const pickRecord = (
+  ...candidates: unknown[]
+): Record<string, unknown> | undefined => candidates.find(isRecord);
+
+/* The first candidate that is a string, or undefined. */
+const pickString = (...candidates: unknown[]): string | undefined =>
+  candidates.find(
+    (candidate): candidate is string => typeof candidate === 'string',
+  );
+
 @Injectable()
 export class DeploymentsDetailsService {
   private readonly logger = new Logger(DeploymentsDetailsService.name);
@@ -408,11 +419,10 @@ export class DeploymentsDetailsService {
       type: DeploymentItemType.Application,
       applicationDetails: {
         displayName: resolveLocalizedValue(raw.display_name),
-        applicationProperties: isRecord(customAppRaw?.application_properties)
-          ? customAppRaw.application_properties
-          : isRecord(raw.application_properties)
-            ? raw.application_properties
-            : undefined,
+        applicationProperties: pickRecord(
+          customAppRaw?.application_properties,
+          raw.application_properties,
+        ),
         /* The Custom App editor's Features textarea reads/writes the
          * top-level DIAL Core `features` JSON (via updateApplication's
          * `features` field) — distinct from application_properties.features,
@@ -433,12 +443,7 @@ export class DeploymentsDetailsService {
           : undefined,
         catalogProperties: mapCatalogProperties(raw.catalog_properties),
         applicationTypeSchemaId: raw.application_type_schema_id,
-        endpoint:
-          typeof customAppRaw?.endpoint === 'string'
-            ? customAppRaw.endpoint
-            : typeof rawRecord.endpoint === 'string'
-              ? rawRecord.endpoint
-              : undefined,
+        endpoint: pickString(customAppRaw?.endpoint, rawRecord.endpoint),
         maxInputAttachments:
           typeof raw.max_input_attachments === 'number'
             ? raw.max_input_attachments

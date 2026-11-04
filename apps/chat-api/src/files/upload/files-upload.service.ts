@@ -36,7 +36,7 @@ import type {
   UploadArchiveResponseDto,
 } from '../dto/upload-archive.dto';
 import type { FileUploadResponseDto } from '../dto/upload-file-response.dto';
-import type { UploadMode } from '../dto/upload-file.dto';
+import { UploadMode } from '../types/upload-mode.enum';
 import {
   UPLOAD_CHUNK_BYTES,
   UPLOAD_MAX_DURATION_MS,
@@ -272,7 +272,7 @@ export class FilesUploadService {
         token,
         signal,
         {
-          createOnly: uploadMode === 'create-only',
+          createOnly: uploadMode === UploadMode.CreateOnly,
           fileName: file.originalname ?? getFileNameFromPath(path),
           contentType: file.mimetype,
           encodePath: encodeDialResourcePath,
@@ -506,6 +506,7 @@ export class FilesUploadService {
           results.push({
             path: entryPath,
             success: false,
+            // eslint-disable-next-line no-nested-ternary -- archive upload moves to files-archive-upload.service.ts in #9703; rewrite there
             error: isConflictError(err)
               ? 'Conflict'
               : err instanceof HttpException

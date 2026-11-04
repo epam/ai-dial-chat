@@ -98,18 +98,14 @@ export const toPublicItemId = (itemId: string): string =>
  * catalog accept-invitation route, conversations on the conversation one, so
  * each redirects into the right place after acceptance.
  *
- * These string literals MUST stay in sync with `ROUTES.SharedInvitation` and
- * `ROUTES.ConversationSharedInvitation` in `apps/chat/src/types/routes.ts` —
- * apps cannot import each other's route constants across the Nx module
- * boundary, so there is no single shared source of truth. Renaming either
- * frontend route without updating the matching constant here (or vice versa)
- * compiles cleanly but silently breaks the generated share link. The tests
- * in `share-invitation.service.spec.ts` assert the exact URL prefix for both
- * kinds — update them alongside any rename here.
+ * These literals mirror `ROUTES.SharedInvitation`,
+ * `ROUTES.ConversationSharedInvitation` and `ROUTES.ProjectSharedInvitation`
+ * in `apps/chat/src/types/routes.ts`; chat-api cannot import that enum across
+ * the Nx module boundary. `share/tests/share-invitation-routes.spec.ts`
+ * compares both sides and fails when only one of them changes.
  */
 const CATALOG_SHARE_INVITATION_ROUTE_PATH = '/catalog/shared';
 const CONVERSATION_SHARE_INVITATION_ROUTE_PATH = '/conversations/shared';
-/** Must match the frontend's `ROUTES.ProjectSharedInvitation`. */
 const PROJECT_SHARE_INVITATION_ROUTE_PATH = '/projects/shared';
 
 /** DIAL Core conversation resource paths always start with this prefix. */

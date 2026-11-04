@@ -24,15 +24,16 @@ import { DialClientService } from '../../dial/dial-client.service';
 import { ConversationReadStateService } from '../../scheduled-task-unread/conversation-read-state.service';
 import { ScheduledTaskUnreadService } from '../../scheduled-task-unread/scheduled-task-unread.service';
 import { UserConfigService } from '../../user-config/user-config.service';
-import {
-  ConversationGenerationService,
-  GenerationStatus,
-} from '../conversation-generation.service';
-import { ConversationNamingService } from '../conversation-naming.service';
+import { ConversationGenerationController } from '../conversation-generation.controller';
+import { ConversationTitlesController } from '../conversation-titles.controller';
 import { ConversationController } from '../conversation.controller';
 import { ConversationService } from '../conversation.service';
 import { BackgroundGenerationService } from '../generation/background-generation.service';
 import { ChatCompletionsAdapter } from '../generation/chat-completions.adapter';
+import {
+  ConversationGenerationService,
+  GenerationStatus,
+} from '../generation/conversation-generation.service';
 import { CoreResponsesClient } from '../generation/core-responses.client';
 import { GenerationApiSelector } from '../generation/generation-api-selector.service';
 import { ResponsesAdapter } from '../generation/responses.adapter';
@@ -41,6 +42,7 @@ import { ConversationListingService } from '../listing/conversation-listing.serv
 import { ConversationTitleCacheService } from '../listing/conversation-title-cache.service';
 import { ConversationTitleStreamService } from '../listing/conversation-title-stream.service';
 import { ConversationTitlesService } from '../listing/conversation-titles.service';
+import { ConversationNamingService } from '../naming/conversation-naming.service';
 import { ConversationPersistenceService } from '../persistence/conversation-persistence.service';
 import { ProjectConversationStore } from '../persistence/project-conversation.store';
 import { PublishedFolderAttachmentsService } from '../published-folder-attachments.service';
@@ -101,7 +103,11 @@ describe('ConversationController (integration)', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [ConversationController],
+      controllers: [
+        ConversationController,
+        ConversationGenerationController,
+        ConversationTitlesController,
+      ],
       providers: [
         ConversationCompletionsResponder,
         { provide: ConversationService, useValue: service },
@@ -341,7 +347,11 @@ describe('ConversationController (integration)', () => {
       };
 
       const realModule: TestingModule = await Test.createTestingModule({
-        controllers: [ConversationController],
+        controllers: [
+          ConversationController,
+          ConversationGenerationController,
+          ConversationTitlesController,
+        ],
         providers: [
           ConversationCompletionsResponder,
           { provide: ConfigService, useValue: configService },
@@ -1082,7 +1092,7 @@ describe('ConversationController (integration)', () => {
        */
       const metadata = Reflect.getMetadata(
         FEATURE_KEY_METADATA,
-        ConversationController.prototype.streamCompletion,
+        ConversationGenerationController.prototype.streamCompletion,
       );
       expect(metadata).toBeUndefined();
     });
@@ -1126,7 +1136,11 @@ describe('ConversationController (integration)', () => {
       };
 
       const module: TestingModule = await Test.createTestingModule({
-        controllers: [ConversationController],
+        controllers: [
+          ConversationController,
+          ConversationGenerationController,
+          ConversationTitlesController,
+        ],
         providers: [
           ConversationCompletionsResponder,
           { provide: ConversationService, useValue: streamingStub },
