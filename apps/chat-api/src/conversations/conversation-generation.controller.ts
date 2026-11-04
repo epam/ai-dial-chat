@@ -15,6 +15,7 @@ import { ConversationModelHiddenErrorDto } from './dto/conversation-model-hidden
 import { SendCompletionDto } from './dto/send-completion.dto';
 import { StopCompletionDto } from './dto/stop-completion.dto';
 import { ConversationCompletionsResponder } from './streaming/conversation-completions.responder';
+import { LANG_HEADER, LANG_MAX_LENGTH } from './utils/lang-header';
 import { TIMEZONE_HEADER, TIMEZONE_MAX_LENGTH } from './utils/timezone-header';
 
 /**
@@ -49,6 +50,17 @@ export class ConversationGenerationController {
       example: 'Europe/Warsaw',
     },
   })
+  @ApiHeader({
+    name: LANG_HEADER,
+    required: false,
+    description:
+      'Current UI language forwarded to DIAL Core for language-sensitive tools and agents.',
+    schema: {
+      type: 'string',
+      maxLength: LANG_MAX_LENGTH,
+      example: 'en',
+    },
+  })
   @ApiDialCoreErrors()
   @ApiResponse({ status: 200, description: 'SSE stream of completion chunks' })
   @ApiResponse({
@@ -75,12 +87,14 @@ export class ConversationGenerationController {
     @Res() res: Response,
     @Body() dto: SendCompletionDto,
     @Headers(TIMEZONE_HEADER) timezoneHeader: string | string[] | undefined,
+    @Headers(LANG_HEADER) langHeader: string | string[] | undefined,
   ): Promise<void> {
     return this.completionsResponder.streamCompletion(
       req,
       res,
       dto,
       timezoneHeader,
+      langHeader,
       dto.path,
       { isUnreadTracked: true },
     );

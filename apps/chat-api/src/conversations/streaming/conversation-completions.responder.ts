@@ -28,6 +28,7 @@ import {
   ConversationGenerationService,
   type GenerationTerminalEvent,
 } from '../generation/conversation-generation.service';
+import { assertValidOptionalLang } from '../utils/lang-header';
 import { assertValidOptionalTimezone } from '../utils/timezone-header';
 import {
   completionResponseTerminations,
@@ -82,6 +83,7 @@ export class ConversationCompletionsResponder {
     res: Response,
     dto: SendCompletionDto,
     timezoneHeader: string | string[] | undefined,
+    langHeader: string | string[] | undefined,
     path: string,
     { isUnreadTracked = false }: { isUnreadTracked?: boolean } = {},
   ): Promise<void> {
@@ -89,6 +91,7 @@ export class ConversationCompletionsResponder {
     const { at, bucket, claims, sub } = user;
     const ownerKey = resolvePrincipalKey(user, req.authSource);
     const timezone = assertValidOptionalTimezone(timezoneHeader);
+    const lang = assertValidOptionalLang(langHeader);
     /*
      * Set when the generation is accepted (`onReadyToStream`), so a request
      * rejected before it starts (409, validation) leaves the viewed ids alone.
@@ -124,6 +127,7 @@ export class ConversationCompletionsResponder {
       sub,
       dto.clientChannelId,
       timezone,
+      lang,
       getJobTitleClaim(claims),
     );
 
