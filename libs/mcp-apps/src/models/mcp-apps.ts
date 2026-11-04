@@ -161,8 +161,6 @@ export interface McpAppInlinePreviewColors {
 export interface McpAppInlinePreviewTypography {
   /** Typography class of the header strip's tool and app names. Defaults to `'dial-tiny-lead-semi-text'`. */
   headerNameClassName?: string;
-  /** Typography class of the app version beside its name. Defaults to `'dial-caption-text'`. */
-  versionClassName?: string;
   /** Typography class of the "opened in canvas" and load-error messages. Defaults to `'dial-body-text'`. */
   messageClassName?: string;
 }
