@@ -118,6 +118,32 @@ describe('ScheduledTaskCreateForm — unsaved changes', () => {
     expect(screen.queryByText('Discard unsaved changes?')).toBeNull();
   });
 
+  it('shortens the confirming action to Discard on a mobile screen', async () => {
+    try {
+      vi.stubGlobal(
+        'matchMedia',
+        vi.fn(() => ({
+          matches: true,
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+        })),
+      );
+      const props = buildProps({
+        values: { ...initialValues, displayName: 'Changed' },
+      });
+      render(<ScheduledTaskCreateForm {...props} />);
+
+      await userEvent.click(
+        screen.getAllByRole('button', { name: 'Cancel' })[0],
+      );
+      await userEvent.click(screen.getByRole('button', { name: 'Discard' }));
+
+      expect(props.onCancel).toHaveBeenCalledOnce();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('calls onCancel only after Discard changes is chosen', async () => {
     const props = buildProps({
       values: { ...initialValues, displayName: 'Changed' },

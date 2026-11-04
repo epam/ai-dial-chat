@@ -1030,20 +1030,22 @@ interface PinnedProjects {
   ) => void;
   /** Id of the project the host currently shows; its row gets `aria-current="page"`. */
   activeProjectId?: string;
+  /** Presentation of the chats nested under a project. Defaults to `ConversationRowVariant.Indicator`. */
+  conversationRowVariant?: ConversationRowVariant;
 }
 ```
 
 **Rendering.** The lib SHALL NOT trim, sort or fetch: it renders exactly what the host passes. With `pinnedProjects` present, the Pinned group SHALL render each visible project, in order, before the pinned conversations, as these rows:
 
 1. **Project row.** It has the project icon (default Tabler `IconBriefcase`, 16px glyph in the 24px slot, `aria-hidden`, `DIAL_KIT_ICON_STROKE`, in the `textSecondary` color), the name truncated through `Highlight`, and the ⋮ trigger when `getActions` returns items.
-2. **One nested row per conversation.** It is an `Indicator` row (status point, title, `aria-current` when it matches `activeConversationId`) without a ⋮ trigger.
+2. **One nested row per conversation.** By default it is an `Indicator` row (status point, title, `aria-current` when it matches `activeConversationId`) without a ⋮ trigger. With `conversationRowVariant: ConversationRowVariant.Avatar` it is the panel's own `Avatar` row instead — the deployment avatar or `leadingIcon`, the title, and the trailing unread dot — still without a ⋮ trigger or drag, and with the same indent and guide line.
 3. **A See all row, when `hasMore` is set.** Its visible text is `labels.seeAllLabel` (default `'See all'`) in the `textSecondary` color, and its accessible name is `labels.seeAllAriaLabel(name)` (default `` `See all chats in ${name}` ``). It is only a link to the project: it has no ⋮ trigger, whatever `getActions` returns.
 
 The Pinned header SHALL render when the section has at least one visible project or pinned conversation. Collapsing it hides the project rows too.
 
 **Layout**, per the Figma frame "Chat - Project - See all" (`ao2NXcmfF23QrZigbiHC8M`, node `17:14375`):
 
-- Every row is 32px high with a 2px gap: `INDICATOR_ITEM_ROW_HEIGHT` (34).
+- Every row is 32px high with a 2px gap: `INDICATOR_ITEM_ROW_HEIGHT` (34); a nested row in the `Avatar` variant is `ITEM_ROW_HEIGHT` (36).
 - The project row has the same 8px inline padding and 2px icon gap as an `Indicator` row.
 - Nested and See all rows are offset 28px from the list's inline start (`padding-inline-start`). The See all row has no icon slot, so its text starts at the 8px row padding; it is start-aligned (`text-start`), since the kit `Button` centres its content.
 - A 1px vertical guide line is drawn at `inset-inline-start: 20px`, the centre of the project icon. Each nested and See all row draws its segment, so the line is continuous across the virtualized rows. The first segment starts 5px below its row's top, and the last segment (See all, or the last chat when there is none) ends 5px above its row's bottom.
@@ -1119,6 +1121,11 @@ The Pinned header SHALL render when the section has at least one visible project
 
 - **WHEN** `pinnedProjects` is absent
 - **THEN** the list renders the same rows as before this change, with no project, nested or See all row
+
+#### Scenario: Nested chats in the Avatar variant
+
+- **WHEN** `pinnedProjects.conversationRowVariant` is `ConversationRowVariant.Avatar`
+- **THEN** each nested chat renders as an `Avatar` row (avatar first, unread dot last) at `ITEM_ROW_HEIGHT`, while the project and See all rows keep `INDICATOR_ITEM_ROW_HEIGHT`
 
 ### Requirement: `ConversationPanel` shows host-supplied pinned project trees
 

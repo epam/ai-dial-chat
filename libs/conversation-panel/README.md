@@ -291,8 +291,8 @@ its parent gives it, with the list scrolling inside.
 `pinnedProjects` (on `ConversationList`, `ConversationListSection` and
 `ConversationPanel`) renders host-supplied project trees at the top of the Pinned group, before the pinned
 conversations. The list does not trim, sort or fetch: each project renders as a
-project row (briefcase icon, name, ⋮ actions), one nested `Indicator` row per
-conversation in the given order, and a See all row when `hasMore` is set. The
+project row (briefcase icon, name, ⋮ actions), one nested row per
+conversation in the given order (`Indicator` by default; `conversationRowVariant: ConversationRowVariant.Avatar` gives them the deployment avatar or `leadingIcon` and a trailing unread dot, like the panel's own rows, at the 36px row height), and a See all row when `hasMore` is set. The
 rows are never draggable nor drop targets, and project rows cannot collapse on
 their own: collapsing the Pinned group hides them with the rest of it.
 
@@ -359,7 +359,7 @@ const pinnedProjects: PinnedProjects = {
   (default `FilterTab.MyChats`), `hiddenSources` removes it, and
   `ConversationTypeFilter.Task` hides every project. A list whose only rows are
   projects is not empty.
-- **Layout.** Every row is 32px with a 2px gap. Nested and See all rows are
+- **Layout.** Every row is 32px with a 2px gap (36px for nested chats in the `Avatar` variant). Nested and See all rows are
   indented 28px (`ps-7`); a 1px guide line at `inset-inline-start: 20px` (the
   centre of the project icon) runs from 5px below the first nested row's top
   to 5px above the last one's bottom. Its color is
@@ -581,7 +581,7 @@ import type {
 `PinnedProjectGroup` (`id`, `name`, `href?`, `source?`, `conversations`,
 `hasMore`) and `PinnedProjects` (`projects`, `onSelectProject`,
 `onSelectConversation`, `onSeeAll`, `getActions?`, `onActionMenuOpen?`,
-`activeProjectId?`) are described under [Pinned projects](#pinned-projects).
+`activeProjectId?`, `conversationRowVariant?`) are described under [Pinned projects](#pinned-projects).
 
 ### ConversationItem
 

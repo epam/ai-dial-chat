@@ -42,6 +42,7 @@ export const RowRenderer = ({
   seeAllAriaLabel,
   styles,
   rowVariant = ConversationRowVariant.Avatar,
+  projectConversationVariant = ConversationRowVariant.Indicator,
   draggingId,
   dragOverId,
   allowedDropGroups,
@@ -118,7 +119,7 @@ export const RowRenderer = ({
     return (
       <div role="presentation" style={style} className="pt-0.5">
         <ConversationRow
-          variant={ConversationRowVariant.Indicator}
+          variant={projectConversationVariant}
           nesting={row}
           item={row.item}
           isActive={row.item.id === activeConversationId}
@@ -127,6 +128,7 @@ export const RowRenderer = ({
           unreadIndicatorLabel={unreadIndicatorLabel}
           itemTitleClassName={styles?.itemTitleClassName}
           unreadItemTitleClassName={styles?.unreadItemTitleClassName}
+          itemIconBadgeClassName={styles?.itemIconBadgeClassName}
         />
       </div>
     );

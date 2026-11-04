@@ -34,6 +34,8 @@ export interface ProjectViewLabels {
   editLabel: string;
   /** Accessible name of the more-actions menu trigger. */
   moreActionsLabel: string;
+  /** Accessible name of the close button of the phone actions sheet. Defaults to `'Close'`. */
+  closeLabel?: string;
   /** Share action label. */
   shareLabel: string;
   /** Download action label. */

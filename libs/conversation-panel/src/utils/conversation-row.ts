@@ -58,12 +58,18 @@ export const getNestedRowProps = (
   ),
 });
 
-/** Returns the pixel height for a virtual list row (item, first group header, or subsequent group header) in the active row variant; pinned project rows always take the `Indicator` item height. */
+/** Returns the pixel height for a virtual list row (item, first group header, or subsequent group header) in the active row variant; pinned project rows take the `Indicator` item height, except chats nested under a project in the `Avatar` variant. */
 export const getRowHeight = (
   index: number,
   rowProps: RowRendererData,
 ): number => {
   const row = rowProps.rows[index];
+  if (
+    row.kind === VirtualRowKind.ProjectConversation &&
+    rowProps.projectConversationVariant === ConversationRowVariant.Avatar
+  ) {
+    return ITEM_ROW_HEIGHT;
+  }
   if (
     row.kind === VirtualRowKind.Project ||
     row.kind === VirtualRowKind.ProjectConversation ||

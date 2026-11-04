@@ -8,6 +8,7 @@ import {
   useAvailableHeightCap,
   TextRefinementField,
   useTextRefinement,
+  useIsMobile,
   useUnsavedChangesGuard,
   type TextRefinementCallback,
   useControlErrorAssociation,
@@ -150,6 +151,7 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
     initialValues && hasScheduledTaskFormChanges(values, initialValues),
   );
   const leaveGuard = useUnsavedChangesGuard(isDirty);
+  const isMobile = useIsMobile();
   const handleBack = () =>
     leaveGuard.guard(() => {
       resetRefinement();
@@ -766,7 +768,11 @@ export const ScheduledTaskCreateForm: FC<ScheduledTaskCreateFormProps> = ({
             labels.discardMessage ??
             'You have unsaved changes. Leaving now will discard them.'
           }
-          confirmLabel={labels.discardConfirmLabel ?? 'Discard changes'}
+          confirmLabel={
+            isMobile
+              ? (labels.discardConfirmMobileLabel ?? 'Discard')
+              : (labels.discardConfirmLabel ?? 'Discard changes')
+          }
           cancelLabel={labels.discardCancelLabel ?? 'Keep editing'}
           variant={ConfirmationPopupVariant.Danger}
           onConfirm={leaveGuard.confirm}
