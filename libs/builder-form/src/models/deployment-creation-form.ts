@@ -149,6 +149,8 @@ export interface DeploymentCreationFormProps {
   styles?: DeploymentCreationFormStyles;
   /** Selectable language options for additional-locale rows. Defaults to an empty list (no locales addable). */
   availableLocaleOptions?: DeploymentCreationFormLocaleOption[];
+  /** Labels a stored locale code that is not in `availableLocaleOptions`. Defaults to `code.toUpperCase()`. */
+  formatLocaleLabel?: (code: string) => string;
   /**
    * Fields to render, always in the fixed order Avatar, Name + Version,
    * Description, Locales, Tags. Defaults to every field. When `Version` is

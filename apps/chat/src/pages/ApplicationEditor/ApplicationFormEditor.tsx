@@ -51,6 +51,7 @@ import {
   EditorI18nKeys,
   ResourceSavePanelI18nKeys,
 } from '../../constants/translation-keys';
+import { useAppConfig } from '../../context/AppConfigContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useApplicationAvatarPicker } from '../../hooks/application-editor/useApplicationAvatarPicker';
@@ -80,7 +81,10 @@ import {
   deploymentToMetadata,
 } from '../../utils/application-editor';
 import { translateDeploymentCreationErrors } from '../../utils/entity-field-validation';
-import { buildAdditionalLocaleOptions } from '../../utils/locale';
+import {
+  buildAdditionalLocaleOptions,
+  getLocaleDisplayName,
+} from '../../utils/locale';
 
 /* Loaded on the first Save of an edit session, so opening the editor fetches no folder listing. */
 const ResourceSavePanelContainer = lazy(
@@ -234,7 +238,13 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
     () => ({ form: metadataFormLabels, avatarPicker: avatarPickerLabels }),
     [metadataFormLabels, avatarPickerLabels],
   );
-  const localeOptions = useMemo(() => buildAdditionalLocaleOptions(), []);
+  const {
+    config: { additionalContentLocales },
+  } = useAppConfig();
+  const localeOptions = useMemo(
+    () => buildAdditionalLocaleOptions(additionalContentLocales),
+    [additionalContentLocales],
+  );
 
   const onRefineDescription = useTextRefinementCallback(
     TextRefinementPurpose.ApplicationDescription,
@@ -755,6 +765,7 @@ const ApplicationFormEditor: FC<Props> = ({ definition, creationCheck }) => {
               )}
               avatarPicker={avatarPicker}
               availableLocaleOptions={localeOptions}
+              formatLocaleLabel={getLocaleDisplayName}
               renderDescription={renderRefinableDescription}
               labels={metadataLabels}
               focusRequestKey={metadata.submitAttemptCount}

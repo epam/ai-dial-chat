@@ -42,6 +42,22 @@ destinations use the prepared fallback name and propagate stream failures. A
 missing response body aborts the writable and rejects. Cancelled destinations
 return the fallback without consuming the response.
 
+### Query-string cleanup
+
+`getCleanedLocationTarget(keys)` returns the `{ search, hash }` of the current
+`window.location` with `keys` dropped from the query string; the remaining
+pairs are kept byte for byte. It reads `window.location` at call time, so a
+host can pass the result to its router's `replace` navigation without relying
+on a router location that may lag. Available from the root and `./utils`.
+
+```ts
+import { getCleanedLocationTarget } from '@epam/ai-dial-chat-hooks/utils';
+
+navigate(getCleanedLocationTarget(['deployment-id', 'skill-id']), {
+  replace: true,
+});
+```
+
 ### Scheduled conversation controllers
 
 The root and `./conversation` export `groupScheduledTaskConversations`,
@@ -1392,6 +1408,39 @@ const ResizableSidePanel = () => {
 | Name                  | Type     | Description                                                                   |
 | --------------------- | -------- | ----------------------------------------------------------------------------- |
 | `minContentAreaWidth` | `number` | Minimum pixel width the main content area must retain when the panel is open. |
+
+### useAppVersionCheck
+
+Reports when a long-lived tab runs a build that is no longer deployed, so the
+host can replace the app with a reload prompt. The host passes its health
+request; the hook keeps the first `buildId` as the tab's baseline and flags a
+different one. It also flags a new version at once when Vite fails to load a
+chunk of the running build (`vite:preloadError`). Available from the root and
+from `@epam/ai-dial-chat-hooks/utils`.
+
+```tsx
+import { useAppVersionCheck } from '@epam/ai-dial-chat-hooks/utils';
+
+const checkHealth = (signal: AbortSignal) =>
+  healthApi.check({ cache: 'no-store', signal });
+
+const App = () => {
+  const { isNewVersionAvailable } = useAppVersionCheck({ checkHealth });
+  return isNewVersionAvailable ? <NewVersionFallback /> : <Layout />;
+};
+```
+
+| Option             | Type                                             | Description                                                                                  |
+| ------------------ | ------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| `checkHealth`      | `(signal: AbortSignal) => Promise<AppBuildInfo>` | Reads the deployed `buildId`; should bypass HTTP caches. A new function each render is fine. |
+| `pollIntervalMs`   | `number`                                         | Minimum time between checks while the tab is visible. Defaults to `300000` (5 minutes).      |
+| `requestTimeoutMs` | `number`                                         | Time after which one health request is aborted. Defaults to `10000`.                         |
+
+Checks run on mount, on the interval while the tab is visible, when the tab
+becomes visible again (`visibilitychange`, `focus`, `pageshow`), and on the
+first `pointerdown`/`keydown` after an idle period of at least
+`pollIntervalMs`. Only one request is in flight at a time; a missing `buildId`
+or a failed request is ignored. Once a new version is reported, all checks stop.
 
 ### useShareLink
 
@@ -3179,7 +3228,7 @@ const uploadFileWithProgress = createUploadFileWithProgress({
 
 ### createChatStreamApi
 
-Builds the streamed-completion transport (`streamCompletion`/`stopCompletion`), parameterized by the host's CSRF state, completions base path, and an optional timezone resolver.
+Builds the streamed-completion transport (`streamCompletion`/`stopCompletion`), parameterized by the host's CSRF state, completions base path, and optional timezone and language resolvers.
 
 ```ts
 import { createChatStreamApi } from '@epam/ai-dial-chat-hooks';
@@ -3189,8 +3238,11 @@ const { streamCompletion, stopCompletion } = createChatStreamApi({
   setCsrfToken,
   completionsBasePath: '/api/v1/conversations',
   getTimezone: getBrowserTimezone,
+  getLanguage: () => i18n.language,
 });
 ```
+
+`getLanguage`, like `getTimezone`, is resolved per request; a non-empty value is sent as the `X-Lang` request header on `POST .../completions` (validated by the chat-api BFF and forwarded to DIAL Core for language-sensitive tools), and an absent value omits the header.
 
 `streamCompletion` reports a `409` from the completions endpoint as a `GenerationConflictError` (message defaulting to `DEFAULT_GENERATION_CONFLICT_MESSAGE`) rather than a generic transport error, so callers can present it as an expected state — the conversation is already generating, typically in another browser tab of the same session. `useConversationStream` uses that distinction to show its `generationConflictMessage`. Both the error class and the default message are exported:
 
@@ -3298,16 +3350,19 @@ resolveLocalizedText({ en: 'Name', fr: 'Nom' }, 'fr-FR', 'en'); // 'Nom'
 
 ### composeLocalePayload / decomposeLocalizedFields / buildAdditionalLocaleOptions
 
-Round-trips a deployment-creation form's "Add locale" popup entries against DIAL Core's `LocaleTextEntryDto[]` write payload, and builds the popup's selectable locale options.
+Round-trips a deployment-creation form's "Add locale" popup entries against DIAL Core's `LocaleTextEntryDto[]` write payload, and builds the popup's selectable locale options. `buildAdditionalLocaleOptions(codes, primaryLocale, formatLabel?)` drops the exact `primaryLocale` match (so `en-GB` stays next to `en`) and labels each option with `formatLabel`, which defaults to `code.toUpperCase()`. The host supplies the codes and any language-name resolver; the lib reads no configuration.
 
 ```ts
 import {
+  buildAdditionalLocaleOptions,
   composeLocalePayload,
   decomposeLocalizedFields,
 } from '@epam/ai-dial-chat-hooks';
 
 const payload = composeLocalePayload(otherLocales, 'en'); // LocaleTextEntryDto[] | undefined
 const rows = decomposeLocalizedFields(displayName, description, 'en');
+const options = buildAdditionalLocaleOptions(['en', 'de'], 'en'); // [{ code: 'de', label: 'DE' }]
+const named = buildAdditionalLocaleOptions(['de'], 'en', resolveLanguageName);
 ```
 
 ## Shared Utilities
@@ -4107,6 +4162,16 @@ import { findWorstCappedRow } from '@epam/ai-dial-chat-hooks/catalog';
 const worst = findWorstCappedRow(mapDeploymentLimitsToInput(limits, labels));
 ```
 
+### getGaugeNeedleAngle
+
+`getGaugeNeedleAngle(usedPercent)` returns the angle, in degrees clockwise from 12 o'clock, at which a usage dial's needle points: `-135` at 0%, `0` at 50% and `135` at 100%, with the percentage clamped to 0–100. Available from the root and `./usage-limits`.
+
+```ts
+import { getGaugeNeedleAngle } from '@epam/ai-dial-chat-hooks/usage-limits';
+
+const style = { '--usage-angle': getGaugeNeedleAngle(worst.usedPercent) };
+```
+
 ### mapDeploymentLimitsDtoToCatalogLimits
 
 Maps a deployment limits DTO into display-ready `CatalogItemLimits` — a single "token limits" group of day/week/month `UsageLimitProgressRow` entries plus the worst-case `CatalogLimitStatus` across them — or `undefined` when no qualifying stats exist. Rows cover the current UTC calendar day, week, and month — the same periods the Usage page reports — and, when `labels.formatResetTime` is given, each carries the reset line built from its own `resetsAt`. A row whose total is effectively unlimited gets a "follows cost limit" note instead of a total. The DTO's cost stats are ignored: they are the caller's account-wide budget and spend across every deployment, not the queried deployment's own spend, so no row carries a `captionLabel`. Stat labels and value/aria formatters are injected through a `DeploymentLimitsLabels` object so the function stays i18n-free.
@@ -4458,15 +4523,15 @@ run status, and which delete or mutation error applies — and the host supplies
 every word through formatter objects. Available from the root and
 `./scheduled-tasks`.
 
-| Export                                                              | Returns                                                                                                                                      |
-| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `formatScheduledTaskScheduleLabel(task, labels, options?)`          | One `ScheduledTaskScheduleLabels` member's output; `options.timeZone` defaults to the browser's, `options.locale` formats dates and weekdays |
-| `toScheduledTaskItem` / `toScheduledTaskItems`                      | `ScheduledTaskItem`(s) with the schedule label; the other fields are copied unchanged                                                        |
-| `formatScheduledTaskRunDuration(seconds, labels)`                   | Non-zero hour/minute/second units wrapped by `labels.suffix`, or `undefined` when absent                                                     |
-| `formatScheduledTaskRunTimestamp(start, seconds, labels, options?)` | `todayAt` or `dateAt`, plus the duration when `options.durationLabels` is given; `options.now` defaults to the current time                  |
-| `toScheduledTaskRunItem` / `toScheduledTaskRunItems`                | `ScheduledTaskRunItem`(s); an unknown status maps to `Missed`, `isUnread` uses the host's `conversationIdsMatch`                             |
-| `classifyScheduledTaskDeleteError(status)`                          | `ScheduledTaskDeleteErrorKind`: `NotFound` (404/409), `Retryable` (502), otherwise `Generic`                                                 |
-| `selectScheduledTaskErrorMessage(details, messages)`                | `messages.adminConsentRequired`, else the trimmed upstream reason, else `messages.fallback`                                                  |
+| Export                                                              | Returns                                                                                                                                                                                           |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `formatScheduledTaskScheduleLabel(task, labels, options?)`          | One `ScheduledTaskScheduleLabels` member's output; `options.timeZone` defaults to the browser's, `options.locale` formats dates and weekdays (several weekdays are joined with `Intl.ListFormat`) |
+| `toScheduledTaskItem` / `toScheduledTaskItems`                      | `ScheduledTaskItem`(s) with the schedule label; the other fields are copied unchanged                                                                                                             |
+| `formatScheduledTaskRunDuration(seconds, labels)`                   | Non-zero hour/minute/second units wrapped by `labels.suffix`, or `undefined` when absent                                                                                                          |
+| `formatScheduledTaskRunTimestamp(start, seconds, labels, options?)` | `todayAt` or `dateAt`, plus the duration when `options.durationLabels` is given; `options.now` defaults to the current time                                                                       |
+| `toScheduledTaskRunItem` / `toScheduledTaskRunItems`                | `ScheduledTaskRunItem`(s); an unknown status maps to `Missed`, `isUnread` uses the host's `conversationIdsMatch`                                                                                  |
+| `classifyScheduledTaskDeleteError(status)`                          | `ScheduledTaskDeleteErrorKind`: `NotFound` (404/409), `Retryable` (502), otherwise `Generic`                                                                                                      |
+| `selectScheduledTaskErrorMessage(details, messages)`                | `messages.adminConsentRequired`, else the trimmed upstream reason, else `messages.fallback`                                                                                                       |
 
 ```ts
 import {
@@ -4483,8 +4548,6 @@ const scheduleLabels: ScheduledTaskScheduleLabels = {
   hourlyAt: (minute) => `Every hour at :${minute}`,
   dailyAt: (time) => `Every day at ${time}`,
   weeklyAt: (day, time) => `Every ${day} at ${time}`,
-  everyNWeeks: (count, day, time) =>
-    `Every ${count} weeks on ${day} at ${time}`,
   monthlyAt: (day, time) => `Monthly on day ${day} at ${time}`,
   invalid: 'Invalid schedule',
   recurringFallback: 'Recurring',
@@ -4535,7 +4598,7 @@ if (result.ok) {
 
 ### getNextCronOccurrence
 
-Returns the next UTC time a cron trigger with a fixed `hour`/`minute` fires after `from` (default: now), honouring its `day_of_week` (APScheduler Monday=0) or `day` (a number or `'last'`) constraint. Returns `undefined` when the fields are not plain values it can evaluate (`*`, ranges, lists). Available from the root and `./scheduled-tasks`.
+Returns the next UTC time a cron trigger with a fixed `hour`/`minute` fires after `from` (default: now), honouring its `day_of_week` (APScheduler Monday=0, one weekday or a comma list such as `'0,2,4'`) or `day` (a number or `'last'`) constraint. Returns `undefined` when the fields are not plain values it can evaluate (`*`, ranges, steps). Available from the root and `./scheduled-tasks`.
 
 ```ts
 import { getNextCronOccurrence } from '@epam/ai-dial-chat-hooks/scheduled-tasks';
@@ -6321,7 +6384,10 @@ displaying local time should explicitly pass
 determines the offset for the existing UTC-storage policy; this is not a
 timezone-aware future scheduler. Numeric weekday values use Monday = 0.
 Hourly `time` is the local minute; daily/weekly/monthly `time` is HH:mm.
-`EveryNMinutes` supplies `intervalMinutes`.
+`EveryNMinutes` supplies `intervalMinutes`. A `Weekly` description also
+carries `daysOfWeek`, every local weekday Monday first, so a `day_of_week`
+list such as `'0,2,4'` (the Custom repeat) is described as one weekly
+schedule. Any `week` constraint is `Custom`.
 
 The scheduler APIs are available from both the root barrel and the
 `/scheduled-tasks` entry; prefer the subpath for a focused dependency graph.

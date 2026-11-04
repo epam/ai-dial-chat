@@ -215,8 +215,14 @@ import { AddAvatar } from '@epam/ai-dial-builder-form';
 
 The host-side counterpart to `DeploymentCreationForm`'s `onAddAvatarClick`: a file manager modal restricted to a single image, for picking an entity's avatar. It never talks to a backend, a specific file-manager implementation, or a storage identifier itself — `FileManagerModal` is the host's own DIAL file manager modal component (rendered for the actual browsing/upload UI), `bucket` comes from the host's user/session, `onAttach` is where the host resolves the picked file to a DIAL resource URL (and closes the modal), and every string is pre-translated through `labels`.
 
+`AVATAR_ALLOWED_MIME_TYPES` (PNG, JPEG, SVG) and `AVATAR_MAX_FILE_SIZE_BYTES` (1 MB) are the avatar limits both DIAL hosts pass; a host with other limits passes its own values.
+
 ```tsx
-import { AvatarPickerModal } from '@epam/ai-dial-builder-form';
+import {
+  AVATAR_ALLOWED_MIME_TYPES,
+  AVATAR_MAX_FILE_SIZE_BYTES,
+  AvatarPickerModal,
+} from '@epam/ai-dial-builder-form';
 
 <AvatarPickerModal
   isOpen={isAvatarPickerOpen}
@@ -438,7 +444,9 @@ import { DeploymentCreationForm } from '@epam/ai-dial-builder-form';
 
 The additional-locales summary row plus its editing popup, usable on its own when a host needs the locale editor without the surrounding fields. `value`, `onChange`, and `labels` are required; `onChange` receives the full updated list when the user saves.
 
-`availableLocaleOptions` drives whether the control exists at all: with an empty list (its default) the component renders `null` — no summary, no "Add locales" link. Every row needs a language and a name before Save enables, so a popup with nothing to pick from could never be satisfied. `value` is left untouched when the control hides, so locales already stored on the deployment survive.
+`availableLocaleOptions` and `value` together decide whether the control exists. With an empty list (its default) and no retained entry, the component renders `null` — no summary, no "Add locales" link. Every row needs a language and a name before Save enables, so a popup with nothing to pick from could never be satisfied. `value` is left untouched when the control hides, so locales already stored on the deployment survive.
+
+A **retained** entry is one whose `language` is not among `availableLocaleOptions` — typically a translation stored under a code the host no longer offers. The component derives these from `value` itself. A retained row keeps its own code in its language select, labelled through `formatLocaleLabel` (default `code.toUpperCase()`), and can be edited, switched to a configured language, or deleted. Its code is never offered to another row, and it does not count toward the "Add locale" limit, which is reached once every configured code is in use. A retained entry keeps the control visible even when `availableLocaleOptions` is empty. The summary row always shows the uppercased codes (`Locales: [DE], [IT]`), whatever the option labels are. `DeploymentCreationForm` and `MetadataForm` forward `formatLocaleLabel` unchanged.
 
 ```tsx
 import { DeploymentLocalesField } from '@epam/ai-dial-builder-form';
@@ -446,7 +454,8 @@ import { DeploymentLocalesField } from '@epam/ai-dial-builder-form';
 <DeploymentLocalesField
   value={values.otherLocales}
   onChange={handleLocalesChange}
-  availableLocaleOptions={localeOptions}
+  availableLocaleOptions={[{ code: 'de', label: 'Deutsch' }]}
+  formatLocaleLabel={(code) => code.toUpperCase()}
   labels={localeLabels}
 />;
 ```

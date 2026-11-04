@@ -60,7 +60,7 @@ vi.mock('../../../context/AppConfigContext', async () => {
   return {
     useAppConfig: () => ({
       status: 'ready',
-      config: {},
+      config: { additionalContentLocales: [] },
       ...useCatalogCreationState(),
     }),
   };

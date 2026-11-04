@@ -272,6 +272,20 @@ describe('AppConfigService', () => {
       ]);
     });
 
+    it('surfaces configured additionalContentLocales and defaults them to []', async () => {
+      const { service } = makeService(async (key: string) =>
+        key === 'content.additionalLocales' ? ['de', 'fr-FR'] : undefined,
+      );
+      const result = await service.getClientConfig(ctx);
+
+      expect(result.config.additionalContentLocales).toEqual(['de', 'fr-FR']);
+
+      const { service: unset } = makeService(async () => undefined);
+      expect(
+        (await unset.getClientConfig(ctx)).config.additionalContentLocales,
+      ).toEqual([]);
+    });
+
     it('surfaces the resolved customVisualizers registry verbatim', async () => {
       const entry = {
         contentType: 'application/x-my-viz',
@@ -1441,6 +1455,7 @@ describe('AppConfigService', () => {
         [1, null],
         [1, null],
       ],
+      ['content.additionalLocales', 'additionalContentLocales', 'de', []],
       ['overlay.allowedOrigins', 'overlayAllowedOrigins', {}, []],
       ['documents.allowedConnectOrigins', 'allowedConnectOrigins', {}, []],
       ['customVisualizers', 'customVisualizers', {}, []],
@@ -1529,6 +1544,7 @@ describe('AppConfigService', () => {
         'applicationVisualizers',
         'customVariables',
         'publicationFilterSources',
+        'additionalContentLocales',
         'maxAttachmentFileSizeBytes',
         'usageLimitsWarningThresholdPercent',
         'celebrationsEnabledByDefault',

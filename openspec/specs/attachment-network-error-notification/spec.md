@@ -22,7 +22,7 @@ The host turns the callback into UI: `buildNetworkUploadErrorNotification(filena
 
 Failed cards SHALL retain their retry and remove buttons so the user can reattempt once the connection is restored.
 
-Every surface that uploads attachments SHALL wire the callback: the existing-conversation page (`Conversation.tsx`), the new-conversation composer (`NewConversationComposer.tsx`), and the Apps-editor preview chat (`AppPreviewChat.tsx`). Each supplies its own `handleNetworkUploadError`, so a surface that mounts its own composer cannot silently drop the notification. `NewConversationComposer.tsx` passes it straight to `useAttachmentUpload` as `onNetworkError` (with `debounceMs: NETWORK_ERROR_DEBOUNCE_MS` from `apps/chat/src/constants/upload.ts`, also 700 ms); `Conversation.tsx` and `AppPreviewChat.tsx` pass it to `useConversationHandlers` as `showNetworkError`, which forwards it to its internal `useAttachmentUpload` as `onNetworkError`.
+Every surface that uploads attachments SHALL wire the callback: the existing-conversation page (`Conversation.tsx`), the new-conversation composer (`NewConversationComposer.tsx`), and the Apps-editor preview chat (`AppPreviewChat.tsx`). Each supplies its own `handleNetworkUploadError`, so a surface that mounts its own composer cannot silently drop the notification. `NewConversationComposer.tsx` passes it straight to `useAttachmentUpload` as `onNetworkError` and relies on the hook's default 700 ms `debounceMs`; `Conversation.tsx` and `AppPreviewChat.tsx` pass it to `useConversationHandlers` as `showNetworkError`, which forwards it to its internal `useAttachmentUpload` as `onNetworkError`.
 
 **i18n keys added:**
 - `attachments.networkError.title`

@@ -82,7 +82,8 @@ vi.mock(
 vi.mock('../../hooks/overlay/useOverlayPendingModel', () => ({
   useOverlayPendingModel: () => undefined,
 }));
-vi.mock('../../hooks/useAppVersionCheck/useAppVersionCheck', () => ({
+vi.mock('@epam/ai-dial-chat-hooks/utils', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@epam/ai-dial-chat-hooks/utils')>()),
   useAppVersionCheck: () => ({ isNewVersionAvailable: false }),
 }));
 vi.mock('../../hooks/useUiFeature', () => ({

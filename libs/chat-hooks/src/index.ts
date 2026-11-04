@@ -224,6 +224,7 @@ export * from './usage/map-user-usage-to-model-limits';
 export * from './usage/usage-banner-source';
 export * from './usage/usage-period';
 export * from './usage/usage-reset-time';
+export * from './usage/usage-gauge';
 export * from './usage/useDeploymentUsageLimits/useDeploymentUsageLimits';
 export * from './usage/useRefreshUsageAfterGeneration/useRefreshUsageAfterGeneration';
 export * from './usage/useUsageLimitBanner/useUsageLimitBanner';
@@ -267,6 +268,8 @@ export * from './files/useDialFilePreview/useDialFilePreview';
 export * from './conversation/useEntityPreselection/useEntityPreselection';
 export * from './viewport-layout/canvas-width';
 export * from './shared/usePersistedState/usePersistedState';
+export * from './shared/useAppVersionCheck/useAppVersionCheck';
+export * from './shared/url-cleanup';
 
 export * from './conversation/generation-registry';
 

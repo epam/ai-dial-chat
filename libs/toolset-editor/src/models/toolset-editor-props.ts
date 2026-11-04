@@ -174,6 +174,8 @@ export interface ToolsetEditorProps {
   avatarPicker: MetadataFormAvatarPicker;
   /** Locale options offered by the "Add locale" popup. */
   availableLocaleOptions: DeploymentCreationFormLocaleOption[];
+  /** Labels a stored locale code that is not in `availableLocaleOptions`. Defaults to `code.toUpperCase()`. */
+  formatLocaleLabel?: (code: string) => string;
   /** Optional Description rewrite callback; omission hides the Refine with AI action. */
   onRefineDescription?: TextRefinementCallback;
   /** Pre-translated labels; each group falls back to English defaults. */

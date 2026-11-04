@@ -4106,6 +4106,17 @@
         "operationId": "streamCompletion",
         "parameters": [
           {
+            "name": "X-Lang",
+            "in": "header",
+            "description": "Current UI language forwarded to DIAL Core for language-sensitive tools and agents.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 35,
+              "example": "en"
+            }
+          },
+          {
             "name": "X-Timezone",
             "in": "header",
             "description": "Current browser IANA timezone forwarded to DIAL Core for date- and time-sensitive tools.",
@@ -12651,6 +12662,14 @@
               "type": "string"
             }
           },
+          "additionalContentLocales": {
+            "description": "Additional content locales (canonical BCP-47 tags) a toolset's or application's Name/Description can be translated into. Sourced from ADDITIONAL_CONTENT_LOCALES, or the deprecated AVAILABLE_LOCALES when that is absent; empty when neither is set. May include the primary locale, which the client drops.",
+            "example": ["de", "fr-FR"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "maxAttachmentFileSizeBytes": {
             "type": "number",
             "description": "Maximum attachment/upload file size in bytes. Sourced from FILE_UPLOAD_MAX_BYTES — the same variable that bounds the POST /api/v1/files Multer limit — so the client can reject an oversized file before attempting to upload it.",
@@ -12716,6 +12735,7 @@
           "applicationVisualizers",
           "customVariables",
           "publicationFilterSources",
+          "additionalContentLocales",
           "maxAttachmentFileSizeBytes",
           "usageLimitsWarningThresholdPercent",
           "celebrationsEnabledByDefault",

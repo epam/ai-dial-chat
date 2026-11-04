@@ -147,6 +147,22 @@ once the data has arrived. The root `SKILL.md` node is synthesised internally
 and is always present, first, and selected by default — it never appears in
 the `files` prop and never exposes a rename/move/delete affordance.
 
+### Folder preview
+
+Selecting a folder fills the main pane with a breadcrumb trail
+(`Skill › agents › reviewers`) and the folder's direct children: folders first,
+then files, each sorted by name, with an item count on each folder row. A
+folder that exists only through deeper file paths is listed too. An empty folder
+shows an empty state instead of a list. Activating a row or a crumb selects that
+node and expands the folders leading to it in the Files tree; the root crumb
+returns to `SKILL.md`. Text comes from `labels.folderPreviewRootLabel`,
+`folderPreviewBreadcrumbAriaLabel`, `folderPreviewOverflowAriaLabel`,
+`folderPreviewListAriaLabel`, `folderEmptyTitle`, `folderEmptyDescription` and
+`folderItemCountLabel`; colors from `colors.folderRowBorder` and
+`colors.folderRowHoverBackground` (the count text takes `colors.helperText`);
+the count's type step from `typography.folderItemCountClassName` (default
+`'dial-tiny-text'`).
+
 ### Adding files and folders
 
 The Files pane header renders an **Add** dropdown (ui-kit `ButtonDropdown`), and

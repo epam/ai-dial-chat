@@ -373,6 +373,7 @@ describe('ProjectConversationsController (integration)', () => {
       undefined,
       undefined,
       undefined,
+      undefined,
     );
   });
 });

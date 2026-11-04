@@ -131,6 +131,8 @@ export interface CreateChatStreamApiDeps {
   completionsBasePath: string;
   /** Resolves the caller's current timezone, attached as `X-Timezone` when non-empty. */
   getTimezone?: () => string | undefined;
+  /** Resolves the caller's current UI language, attached as `X-Lang` when non-empty. */
+  getLanguage?: () => string | undefined;
   /** `fetch` implementation to issue requests through. Defaults to the global `fetch`. */
   fetchImpl?: typeof fetch;
   /**
@@ -349,6 +351,7 @@ export const createChatStreamApi = (
       let response: Response;
       try {
         const timezone = deps.getTimezone?.();
+        const language = deps.getLanguage?.();
         response = await doFetch(`${completionsBasePath}/completions`, {
           method: 'POST',
           credentials: 'include',
@@ -359,6 +362,7 @@ export const createChatStreamApi = (
               ? { 'X-CSRF-Token': deps.getCsrfToken() as string }
               : {}),
             ...(timezone ? { 'X-Timezone': timezone } : {}),
+            ...(language ? { 'X-Lang': language } : {}),
           },
           body: JSON.stringify({
             path,

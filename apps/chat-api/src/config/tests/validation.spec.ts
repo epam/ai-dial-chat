@@ -498,6 +498,53 @@ describe('validate', () => {
     ).toThrow(/Environment validation failed/);
   });
 
+  describe('content locales', () => {
+    it('accepts a comma-separated list of BCP-47 tags', () => {
+      expect(
+        validate({
+          ...baseConfig,
+          ADDITIONAL_CONTENT_LOCALES: 'de, ar,pt-BR,zh-Hant',
+        }).ADDITIONAL_CONTENT_LOCALES,
+      ).toEqual(['de', 'ar', 'pt-BR', 'zh-Hant']);
+    });
+
+    it('leaves both variables undefined when absent', () => {
+      const config = validate({ ...baseConfig });
+
+      expect(config.ADDITIONAL_CONTENT_LOCALES).toBeUndefined();
+      expect(config.AVAILABLE_LOCALES).toBeUndefined();
+    });
+
+    it('resolves a present but empty value to an empty list', () => {
+      expect(
+        validate({ ...baseConfig, ADDITIONAL_CONTENT_LOCALES: '' })
+          .ADDITIONAL_CONTENT_LOCALES,
+      ).toEqual([]);
+    });
+
+    it.each(['de,not a tag', 'e$', `de,${'a'.repeat(36)}`, 'de,en-'])(
+      'rejects ADDITIONAL_CONTENT_LOCALES=%j at startup',
+      (value) => {
+        expect(() =>
+          validate({ ...baseConfig, ADDITIONAL_CONTENT_LOCALES: value }),
+        ).toThrow(/ADDITIONAL_CONTENT_LOCALES/);
+      },
+    );
+
+    it('strips 0.x brackets and quotes from AVAILABLE_LOCALES', () => {
+      expect(
+        validate({ ...baseConfig, AVAILABLE_LOCALES: '["ar","en"]' })
+          .AVAILABLE_LOCALES,
+      ).toEqual(['ar', 'en']);
+    });
+
+    it('rejects a malformed AVAILABLE_LOCALES entry at startup', () => {
+      expect(() =>
+        validate({ ...baseConfig, AVAILABLE_LOCALES: 'en,e$' }),
+      ).toThrow(/AVAILABLE_LOCALES/);
+    });
+  });
+
   describe('header bearer-token auth env vars', () => {
     it('defaults AUTH_HEADER_TOKEN_ENABLED to false when unset', () => {
       const config = validate({ ...baseConfig });

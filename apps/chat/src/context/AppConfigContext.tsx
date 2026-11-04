@@ -66,6 +66,8 @@ export interface AppConfigState {
     customVisualizers: CustomVisualizer[];
     applicationVisualizers: ApplicationVisualizerRegistry;
     publicationFilterSources: string[];
+    /** Additional content locales (BCP-47) the editors offer for Name/Description translations; may include the primary locale. */
+    additionalContentLocales: string[];
     maxAttachmentFileSizeBytes: number;
     /** Percentage of a capped usage limit at which the composer banner appears. */
     usageLimitsWarningThresholdPercent: number;
@@ -130,6 +132,7 @@ const INITIAL_STATE: ProviderState = {
     customVisualizers: [],
     applicationVisualizers: {},
     publicationFilterSources: DEFAULT_PUBLICATION_FILTER_SOURCES,
+    additionalContentLocales: [],
     maxAttachmentFileSizeBytes: DEFAULT_MAX_ATTACHMENT_FILE_SIZE_BYTES,
     usageLimitsWarningThresholdPercent:
       DEFAULT_USAGE_LIMITS_WARNING_THRESHOLD_PERCENT,
@@ -208,6 +211,8 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
             publicationFilterSources:
               response.config?.publicationFilterSources ??
               DEFAULT_PUBLICATION_FILTER_SOURCES,
+            additionalContentLocales:
+              response.config?.additionalContentLocales ?? [],
             maxAttachmentFileSizeBytes:
               response.config?.maxAttachmentFileSizeBytes ??
               DEFAULT_MAX_ATTACHMENT_FILE_SIZE_BYTES,

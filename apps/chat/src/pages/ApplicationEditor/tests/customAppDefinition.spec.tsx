@@ -40,7 +40,10 @@ import { ROUTES } from '../../../types/routes';
 import ApplicationEditorPage from '../ApplicationEditorPage';
 
 const { refinementConfig, mockRefineText } = vi.hoisted(() => ({
-  refinementConfig: { aiTextRefinementAvailable: false },
+  refinementConfig: {
+    aiTextRefinementAvailable: false,
+    additionalContentLocales: [] as string[],
+  },
   mockRefineText: vi.fn(),
 }));
 vi.mock('../../../context/AppConfigContext', async () => {

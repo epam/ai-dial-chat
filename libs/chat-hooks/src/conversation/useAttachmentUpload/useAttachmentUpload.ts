@@ -10,6 +10,10 @@ import type { UploadPathAllocator } from '../conversation-transfer/build-upload-
 import { createUploadPathAllocator } from '../conversation-transfer/build-upload-path';
 import { formatDateYM } from '../conversation-transfer/date';
 
+/*
+ * Must exceed ConversationInput's inter-upload interval (60 000 ms / MAX_UPLOADS_PER_MINUTE = 600 ms)
+ * so that all failures from a single batch are accumulated before the notification fires.
+ */
 const DEFAULT_NETWORK_ERROR_DEBOUNCE_MS = 700;
 
 /** How many ` (n)` alternatives an upload tries before giving up on a name the server keeps reporting as taken. */
