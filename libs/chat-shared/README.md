@@ -1158,7 +1158,8 @@ fold stays usable) and `cssVariable` (default
 
 `useControlErrorAssociation(getControl, errorId, hasError)` links a field
 error to a control that takes no `aria-describedby` / `aria-invalid` prop —
-the kit `MarkdownEditor` and `Calendar`, or a host-composed selector. While
+the kit `MarkdownEditor`, or a host-composed selector (the kit `Calendar`
+takes `ariaDescribedBy` and `invalid` since kit 0.16, so pass those instead). While
 `hasError` is `true` it adds `errorId` to the control's `aria-describedby`
 (keeping any other ids) and sets `aria-invalid`; otherwise it removes both.
 It runs after every render, so a lazily mounted control is picked up once it
